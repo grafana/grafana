@@ -18,10 +18,11 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({ get: mockGet }),
 }));
 
-jest.mock('../utils/utils', () => ({
-  ...jest.requireActual('../utils/utils'),
-  getDashboardSceneFor: () => ({ state: { uid: 'a uid' } }),
-}));
+jest.mock('../utils/utils', () =>
+  jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(jest.requireActual('../utils/utils'), { getDashboardSceneFor: () => ({ state: { uid: 'a uid' } }) })
+);
 
 function getTestContext() {
   jest.clearAllMocks();

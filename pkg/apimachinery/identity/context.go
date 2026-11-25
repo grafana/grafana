@@ -10,11 +10,11 @@ import (
 	"github.com/grafana/authlib/types"
 )
 
-// provisioningServiceAudience is the API group the provisioning (Git Sync) service token carries
-// as an audience in multi-tenant deployments. It mirrors the provisioning apiserver's group
+// provisioningServiceIdentity is the service identity the provisioning (Git Sync) service token
+// carries in multi-tenant deployments. It mirrors the provisioning apiserver's group
 // ("provisioning.grafana.app"); it is duplicated here as a literal to keep apimachinery free of
 // dependencies on app packages.
-const provisioningServiceAudience = "provisioning.grafana.app"
+const provisioningServiceIdentity = "provisioning.grafana.app"
 
 type ctxUserKey struct{}
 type metadataIdentityUIDKey struct{}
@@ -107,7 +107,7 @@ func newInternalIdentity(name string, namespace string, orgID int64, opts ...Ide
 		UserUID:        name,
 		AuthID:         name,
 		Login:          name,
-		OrgRole:        RoleAdmin,
+		OrgRole:        types.RoleAdmin,
 		Namespace:      namespace,
 		IsGrafanaAdmin: true,
 		OrgID:          orgID,
@@ -226,6 +226,7 @@ var serviceIdentityTokenPermissions = []string{
 	"folder.grafana.app:*",
 	"dashboard.grafana.app:*",
 	"playlist.grafana.app:*",
+	"dashboardtemplates.grafana.app:*",
 	"reporting.grafana.app/reports:*",
 	"reporting.grafana.app/reportsettings:*",
 	"secret.grafana.app:*",
@@ -245,6 +246,7 @@ var serviceIdentityTokenPermissions = []string{
 	"alertingassistant.grafana.app/alert-rule-reviews:update",
 	"advisor.grafana.app:*",
 	"annotation.grafana.app:*",
+	"banners.grafana.app:*",
 	"setting.grafana.app:*",
 
 	// allow access to all datasource types
@@ -295,8 +297,8 @@ func IsServiceIdentityAuth(auth types.AuthInfo) bool {
 }
 
 // IsProvisioningServiceIdentity reports whether auth is the provisioning (Git Sync) service
-// identity — identified either by its access-policy UID (single-tenant / OSS) or by carrying the
-// provisioning API group as a token audience (multi-tenant). Use it to grant the provisioning
+// identity — identified either by its access-policy UID (single-tenant / OSS) or by the service
+// identity of its access token (multi-tenant). Use it to grant the provisioning
 // service write paths that are otherwise closed to regular users. The unified storage backend
 // enforces the same rule on managed resources (pkg/storage/unified/apistore); this is the shared
 // predicate so legacy services that bypass that backend can apply it consistently.
@@ -305,5 +307,5 @@ func IsProvisioningServiceIdentity(auth types.AuthInfo) bool {
 		return false
 	}
 	return auth.GetUID() == types.NewTypeID(types.TypeAccessPolicy, serviceNameForProvisioning) ||
-		slices.Contains(auth.GetAudience(), provisioningServiceAudience)
+		(auth.GetIdentityType() == types.TypeAccessPolicy && slices.Contains(auth.GetExtra()[authn.ServiceIdentityKey], provisioningServiceIdentity))
 }

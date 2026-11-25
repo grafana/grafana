@@ -668,21 +668,21 @@ type ChangeUserPasswordParams struct {
 type GetUserByIDParams struct {
 	// in:path
 	// required:true
-	UserID int64 `json:"user_id"`
+	UserID string `json:"user_id"`
 }
 
 // swagger:parameters getUserOrgList
 type GetUserOrgListParams struct {
 	// in:path
 	// required:true
-	UserID int64 `json:"user_id"`
+	UserID string `json:"user_id"`
 }
 
 // swagger:parameters getUserTeams
 type GetUserTeamsParams struct {
 	// in:path
 	// required:true
-	UserID int64 `json:"user_id"`
+	UserID string `json:"user_id"`
 }
 
 // swagger:parameters getUserByLoginOrEmail
@@ -701,7 +701,7 @@ type UpdateUserParams struct {
 	Body user.UpdateUserCommand `json:"body"`
 	// in:path
 	// required:true
-	UserID int64 `json:"user_id"`
+	UserID string `json:"user_id"`
 }
 
 // swagger:response userResponse

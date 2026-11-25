@@ -10,7 +10,6 @@ import { getMockConfig, setupMswServer } from '../../../mockApi';
 import { grantUserPermissions, mockAlertQuery, mockAlertmanagerAlert } from '../../../mocks';
 import { mockPreviewApiResponse } from '../../../mocks/grafanaRulerApi';
 import { type Folder } from '../../../types/rule-form';
-import * as dataSource from '../../../utils/datasource';
 import {
   type AlertManagerDataSource,
   GRAFANA_RULES_SOURCE_NAME,
@@ -22,16 +21,16 @@ import { NotificationPreview } from './NotificationPreview';
 
 jest.mock('../../../useRouteGroupsMatcher');
 
-jest
-  .spyOn(dataSource, 'useGetAlertManagerDataSourcesByPermissionAndConfig')
-  .mockReturnValue([{ name: GRAFANA_RULES_SOURCE_NAME, imgUrl: '', hasConfigurationAPI: true }]);
+jest.mock('../../../utils/datasource', () =>
+  jest.requireActual('test/helpers/partialMock').partialMock(jest.requireActual('../../../utils/datasource'), {
+    useGetAlertManagerDataSourcesByPermissionAndConfig: jest.fn(),
+    getDatasourceAPIUid: jest.fn((ds: string) => ds),
+  })
+);
 
-jest.spyOn(dataSource, 'getDatasourceAPIUid').mockImplementation((ds: string) => ds);
-
-const getAlertManagerDataSourcesByPermissionAndConfigMock =
-  useGetAlertManagerDataSourcesByPermissionAndConfig as jest.MockedFunction<
-    typeof useGetAlertManagerDataSourcesByPermissionAndConfig
-  >;
+const getAlertManagerDataSourcesByPermissionAndConfigMock = jest.mocked(
+  useGetAlertManagerDataSourcesByPermissionAndConfig
+);
 
 const ui = {
   contactPointGroup: byRole('list'),
@@ -49,6 +48,9 @@ const server = setupMswServer();
 
 beforeEach(() => {
   jest.clearAllMocks();
+  getAlertManagerDataSourcesByPermissionAndConfigMock.mockReturnValue([
+    { name: GRAFANA_RULES_SOURCE_NAME, imgUrl: '', hasConfigurationAPI: true },
+  ]);
 });
 
 const alertQuery = mockAlertQuery({ datasourceUid: 'whatever', refId: 'A' });

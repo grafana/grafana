@@ -1,11 +1,15 @@
+import { http, HttpResponse } from 'msw';
+import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setBackendSrv } from '@grafana/runtime';
-import { setupMockServer } from '@grafana/test-utils/server';
+import { starsRoute } from '@grafana/test-utils/handlers';
+import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { StarToolbarButton } from './StarToolbarButton';
 import { itemStarred } from './analytics/main';
@@ -35,6 +39,8 @@ const setup = (
   itemForStarButton: typeof existingStarredItem | typeof itemToStar,
   { group = 'dashboard.grafana.app', kind = 'Dashboard' } = {}
 ) => render(<StarToolbarButton title={itemForStarButton.title} group={group} kind={kind} id={itemForStarButton.uid} />);
+
+testWithStarsUser();
 
 describe('StarToolbarButton', () => {
   beforeEach(() => {
@@ -119,5 +125,35 @@ describe('StarToolbarButton', () => {
       });
     });
     expect(itemStarred).toHaveBeenCalledTimes(1);
+  });
+
+  describe('for a user without a stars resource', () => {
+    const starsRequest = jest.fn();
+
+    beforeEach(() => {
+      starsRequest.mockClear();
+      server.use(
+        http.get(starsRoute, () => {
+          starsRequest();
+          return HttpResponse.json({});
+        })
+      );
+    });
+
+    const expectNoStarButton = async () => {
+      setup(itemToStar);
+      expect(screen.queryByTestId(selectors.components.NavToolbar.markAsFavorite)).not.toBeInTheDocument();
+      await waitFor(() => expect(starsRequest).not.toHaveBeenCalled());
+    };
+
+    it('renders nothing and reads no stars for an anonymous user', async () => {
+      jest.replaceProperty(contextSrv, 'isSignedIn', false);
+      await expectNoStarButton();
+    });
+
+    it('renders nothing and reads no stars for a user without a uid', async () => {
+      jest.replaceProperty(contextSrv.user, 'uid', '');
+      await expectNoStarButton();
+    });
   });
 });

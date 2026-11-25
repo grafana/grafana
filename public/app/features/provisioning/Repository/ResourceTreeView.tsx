@@ -24,13 +24,14 @@ import {
   useGetRepositoryFilesQuery,
   useGetRepositoryResourcesQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { type FlatTreeItem, type TreeItem } from '../types';
-import { getRepoFileUrl } from '../utils/git';
-import { getKindInfoByItemType } from '../utils/resourceKinds';
+import { getRepoFileUrl, getRepoHrefForProvider } from '../utils/git';
+import { getKindInfoByKind, getKindInfoByResource } from '../utils/resourceKinds';
 import {
   buildTree,
-  filterByStatusCategories,
+  filterByStatusAndResources,
   filterTree,
   flattenTree,
   getIconName,
@@ -47,7 +48,7 @@ type TreeCell<T extends keyof FlatTreeItem = keyof FlatTreeItem> = CellProps<Fla
 
 function getGrafanaLink(item: TreeItem) {
   if (item.resourceName) {
-    return getKindInfoByItemType(item.type)?.getRoute?.(item.resourceName);
+    return getKindInfoByKind(item.type)?.getRoute?.(item.resourceName);
   }
   return undefined;
 }
@@ -62,8 +63,11 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusCategory[]>([]);
   const statusFilterLabelId = useId();
-  // Folder paths that are currently unfolded. Empty by default so the tree starts fully folded.
-  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
+  const [queryParams, updateQueryParams] = useQueryParams();
+  const resourceFilter = useMemo(() => [queryParams['resource'] ?? []].flat().map(String), [queryParams]);
+  const resourceFilterLabelId = useId();
+  // Folder paths that are currently unfolded. Only the repository root (empty path) starts unfolded.
+  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set(['']));
 
   const isLoading = filesQuery.isLoading || resourcesQuery.isLoading;
 
@@ -76,6 +80,14 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
     []
   );
 
+  const resourceFilterOptions: Array<ComboboxOption<string>> = useMemo(() => {
+    const resources = new Set(resourcesQuery.data?.items?.map((item) => item.resource));
+    return Array.from(resources, (value) => ({
+      label: getKindInfoByResource(value)?.getPluralLabel() ?? value,
+      value,
+    }));
+  }, [resourcesQuery.data?.items]);
+
   const tree = useMemo(() => {
     const files = filesQuery.data?.items ?? [];
     const resources = resourcesQuery.data?.items ?? [];
@@ -85,14 +97,14 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
 
     // Filter by status before search: status filtering relies on the aggregate folder statuses
     // computed by buildTree, which filterTree would leave stale after pruning hidden children.
-    const statusFiltered = statusFilter.length > 0 ? filterByStatusCategories(built, statusFilter) : built;
+    const filtered = filterByStatusAndResources(built, statusFilter, resourceFilter);
 
-    return searchQuery ? filterTree(statusFiltered, searchQuery) : statusFiltered;
-  }, [filesQuery.data?.items, resourcesQuery.data?.items, searchQuery, statusFilter]);
+    return searchQuery ? filterTree(filtered, searchQuery) : filtered;
+  }, [filesQuery.data?.items, resourcesQuery.data?.items, searchQuery, statusFilter, resourceFilter]);
 
-  // A search or a status filter narrows the tree, so ignore the folded state while either is
+  // A search or a filter narrows the tree, so ignore the folded state while any is
   // active to keep every matching item visible instead of hidden inside a collapsed folder.
-  const isFiltering = !!searchQuery || statusFilter.length > 0;
+  const isFiltering = !!searchQuery || statusFilter.length > 0 || resourceFilter.length > 0;
   const flatItems = useMemo(
     () => flattenTree(tree, isFiltering ? undefined : expandedPaths),
     [tree, expandedPaths, isFiltering]
@@ -132,7 +144,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
                   name={isExpanded ? 'angle-down' : 'angle-right'}
                   size="sm"
                   onClick={() => handleToggleExpand(item.path)}
-                  // A search or status filter forces every folder open, so the toggle can't
+                  // A search or filter forces every folder open, so the toggle can't
                   // change what's shown.
                   disabled={isFiltering}
                   aria-expanded={isExpanded}
@@ -221,7 +233,10 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
 
           const viewLink = getGrafanaLink(item);
           let sourceLink: string | undefined = undefined;
-          if (item.hasFile && repo.spec?.type) {
+          if (!item.path) {
+            const repoHref = getRepoHrefForProvider(repo.spec);
+            sourceLink = repoHref ? textUtil.sanitizeUrl(repoHref) : undefined;
+          } else if (item.hasFile && repo.spec?.type) {
             const spec = repo.spec;
             const config = spec.github || spec.githubEnterprise || spec.gitlab || spec.bitbucket;
             if (config) {
@@ -229,29 +244,21 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
                 repoType: spec.type,
                 url: config.url,
                 branch: config.branch,
-                filePath: item.path,
+                filePath: item.metadataPath ?? item.path,
                 pathPrefix: config.path,
               });
               sourceLink = rawSourceLink ? textUtil.sanitizeUrl(rawSourceLink) : undefined;
             }
           }
 
-          if (!viewLink && !sourceLink) {
-            return null;
-          }
-
           return (
             <Stack direction="row" gap={1}>
-              {viewLink && (
-                <LinkButton href={viewLink} size="sm" variant="secondary">
-                  <Trans i18nKey="provisioning.resource-tree.view">View</Trans>
-                </LinkButton>
-              )}
-              {sourceLink && (
-                <LinkButton href={sourceLink} size="sm" variant="secondary" target="_blank">
-                  <Trans i18nKey="provisioning.resource-tree.source">Source</Trans>
-                </LinkButton>
-              )}
+              <LinkButton href={viewLink} size="sm" variant="secondary" disabled={!viewLink}>
+                <Trans i18nKey="provisioning.resource-tree.view">View</Trans>
+              </LinkButton>
+              <LinkButton href={sourceLink} size="sm" variant="secondary" target="_blank" disabled={!sourceLink}>
+                <Trans i18nKey="provisioning.resource-tree.source">Source</Trans>
+              </LinkButton>
             </Stack>
           );
         },
@@ -292,6 +299,19 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
           width={30}
           placeholder={t('provisioning.resource-tree.status-filter-placeholder', 'Filter by status')}
           aria-labelledby={statusFilterLabelId}
+        />
+        <span id={resourceFilterLabelId} className="sr-only">
+          {t('provisioning.resource-tree.resource-filter-aria-label', 'Filter by resource type')}
+        </span>
+        <MultiCombobox
+          prefixIcon="filter"
+          options={resourceFilterOptions}
+          value={resourceFilter}
+          onChange={(options) => updateQueryParams({ resource: options.map((option) => option.value) }, true)}
+          isClearable
+          width={30}
+          placeholder={t('provisioning.resource-tree.resource-filter-placeholder', 'Filter by resource type')}
+          aria-labelledby={resourceFilterLabelId}
         />
       </Stack>
       <InteractiveTable

@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 import { type CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 import { type Count, type uWrap, varPreLine } from 'uwrap';
@@ -16,6 +16,7 @@ import {
   type DisplayProcessor,
   isDataFrame,
   isDataFrameWithValue,
+  isTimeSeriesFrame,
   reduceField,
   ReducerID,
   type FieldSparkline,
@@ -36,7 +37,6 @@ import { TableCellInspectorMode } from '../TableCellInspector';
 import { type OpenLayersContextValue, isGeometry } from '../geo';
 import { type TableCellOptions } from '../types';
 
-import { AutoCellRenderer, getAutoRendererDisplayMode, getCellRenderer } from './Cells/renderers';
 import { getCellLinks } from './cellLinks';
 import {
   CELL_HORIZONTAL_CHROME,
@@ -64,7 +64,6 @@ import type {
   MeasureCellHeightEntry,
   GetActionsFunctionLocal,
   TableColumn,
-  TextWrapFallback,
 } from './types';
 
 // inferPills lives here rather than in PillCell.tsx to avoid a circular dependency:
@@ -125,6 +124,24 @@ export function shouldTextWrap(field: Field): boolean {
   return Boolean(field.config.custom?.wrapText);
 }
 
+/** @internal */
+export function getAutoRendererDisplayMode(field: Field): TableCellOptions['type'] {
+  if (field.type === FieldType.geo) {
+    return TableCellDisplayMode.Geo;
+  }
+  if (field.type === FieldType.frame) {
+    const firstValue = field.values[0];
+    if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
+      return TableCellDisplayMode.Sparkline;
+    }
+  }
+  // `other` values have no scalar form, so Auto pretty-prints them as JSON.
+  if (field.type === FieldType.other) {
+    return TableCellDisplayMode.JSONView;
+  }
+  return TableCellDisplayMode.Auto;
+}
+
 /**
  * @internal
  * Returns true if the field's cells pretty-print their value as JSON. An `other` field only does so
@@ -136,16 +153,6 @@ export function rendersAsJson(field: Field, cellType = getCellOptions(field).typ
     ((cellType == null || cellType === TableCellDisplayMode.Auto) &&
       getAutoRendererDisplayMode(field) === TableCellDisplayMode.JSONView)
   );
-}
-
-/**
- * @internal wrap a cell height measurer to clamp its output to the maxHeight defined in the field, if any.
- */
-function clampByMaxHeight(measurer: MeasureCellHeight, maxHeight = Infinity): MeasureCellHeight {
-  return (value, width, field, rowIdx, lineHeight) => {
-    const rawHeight = measurer(value, width, field, rowIdx, lineHeight);
-    return Math.min(rawHeight, maxHeight);
-  };
 }
 
 /**
@@ -295,7 +302,7 @@ export function getDataLinksHeightMeasurer(): MeasureCellHeight {
   };
 }
 
-const getPillMetrics = (theme?: GrafanaTheme2) => {
+export const getPillMetrics = (theme?: GrafanaTheme2) => {
   if (!theme) {
     throw new Error('A theme is required to measure pill cells');
   }
@@ -400,88 +407,6 @@ export function buildHeaderHeightMeasurers(
 }
 
 const spaceRegex = /[\s-]/;
-
-/**
- * @internal return a text height measurer for every field which has wrapHeaderText enabled. we do this once as we're rendering
- * the table, and then getRowHeight uses the output of this to caluclate the height of each row.
- */
-export function buildCellHeightMeasurers(
-  fields: Field[],
-  typographyCtx: TypographyCtx,
-  theme: GrafanaTheme2,
-  maxHeight?: number,
-  wrapFallback?: TextWrapFallback
-): MeasureCellHeightEntry[] | undefined {
-  const result: Record<string, MeasureCellHeightEntry> = {};
-  let wrappedFields = 0;
-
-  const measurerFactory: Record<
-    TableCellDisplayMode.Auto | TableCellDisplayMode.DataLinks | TableCellDisplayMode.Pill,
-    () => [MeasureCellHeight, MeasureCellHeight?]
-  > = {
-    // for string fields, we estimate the length of a line using `avgCharWidth` to limit expensive calls `count`.
-    [TableCellDisplayMode.Auto]: () => [typographyCtx.measureHeight, typographyCtx.estimateHeight],
-    [TableCellDisplayMode.DataLinks]: () => [getDataLinksHeightMeasurer(), undefined],
-    // pills use a different font size, so they require their own typography context.
-    [TableCellDisplayMode.Pill]: () => {
-      const { fontSize, spacing, gap } = getPillMetrics(theme);
-      const pillTypographyCtx = createTypographyContext(
-        fontSize,
-        typographyCtx.fontFamily,
-        typographyCtx.letterSpacing
-      );
-      return [
-        getPillCellHeightMeasurer((value) => pillTypographyCtx.ctx.measureText(value).width, spacing, gap),
-        undefined,
-      ];
-    },
-  } as const;
-
-  const setupMeasurerForIdx = (measurerFactoryKey: keyof typeof measurerFactory, fieldIdx: number) => {
-    if (!result[measurerFactoryKey]) {
-      const [measure, estimate] = measurerFactory[measurerFactoryKey]();
-      const guard = (measurer: MeasureCellHeight): MeasureCellHeight => {
-        if (measurerFactoryKey !== TableCellDisplayMode.Auto || wrapFallback == null) {
-          return measurer;
-        }
-        return (value, width, field, rowIdx, lineHeight) =>
-          wrapFallback.shouldDisable(field, value) ? -1 : measurer(value, width, field, rowIdx, lineHeight);
-      };
-      result[measurerFactoryKey] = {
-        measure: guard(clampByMaxHeight(measure, maxHeight)),
-        estimate: estimate != null ? guard(clampByMaxHeight(estimate, maxHeight)) : undefined,
-        fieldIdxs: [],
-      };
-    }
-    result[measurerFactoryKey].fieldIdxs.push(fieldIdx);
-  };
-
-  for (let fieldIdx = 0; fieldIdx < fields.length; fieldIdx++) {
-    const field = fields[fieldIdx];
-    if (shouldTextWrap(field) && !wrapFallback?.disabledFields.has(getDisplayName(field))) {
-      wrappedFields++;
-
-      const cellType = getCellOptions(field).type;
-      if (cellType === TableCellDisplayMode.DataLinks) {
-        setupMeasurerForIdx(TableCellDisplayMode.DataLinks, fieldIdx);
-      } else if (cellType === TableCellDisplayMode.Pill) {
-        setupMeasurerForIdx(TableCellDisplayMode.Pill, fieldIdx);
-      } else if (rendersAsJson(field) || getCellRenderer(field, getCellOptions(field)) === AutoCellRenderer) {
-        // JSON and Auto cells can produce multiline formatted strings, so both need measurement.
-        setupMeasurerForIdx(TableCellDisplayMode.Auto, fieldIdx);
-      } else {
-        // no measurer was configured for this cell type
-        wrappedFields--;
-      }
-    }
-  }
-
-  if (wrappedFields === 0) {
-    return undefined;
-  }
-
-  return Object.values(result);
-}
 
 // in some cases, the estimator might return a value that is less than 1, but when calculated by the measurer, it actually
 // realizes that it's a multi-line cell. to avoid this, we want to give a little buffer away from 1 before we fully trust

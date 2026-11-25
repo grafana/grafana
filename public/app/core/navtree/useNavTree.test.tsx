@@ -1,10 +1,19 @@
 import { http, HttpResponse } from 'msw';
 import { useState } from 'react';
+import { testWithAppKind } from 'test/helpers/testWithAppKind';
+import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
+import { getAPIGroupHandler, getKindSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures, setMockStarredDashboards, setMockStarredFolders } from '@grafana/test-utils/unstable';
+import {
+  getFolderFixtures,
+  MOCK_APP_KIND,
+  setMockStarredAppKind,
+  setMockStarredDashboards,
+  setMockStarredFolders,
+} from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type GrafanaSearcher, type SearchQuery } from 'app/features/search/service/types';
@@ -19,6 +28,8 @@ const mockedGetGrafanaSearcher = jest.mocked(getGrafanaSearcher);
 const [_, { dashbdD, folderA_dashbdD, folderA }] = getFolderFixtures();
 // The starred fixtures are: dashbdD.item.uid, folderA_dashbdD.item.uid
 const starredDashboards = [dashbdD.item, folderA_dashbdD.item];
+const THING = 't1';
+const THING_ROW = `synced-starred/things.ext.grafana.app/Thing/${THING}`;
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -35,7 +46,7 @@ const TestHarness = () => {
       <span data-testid="error-state">{String(starredError)}</span>
       <ul data-testid="starred-list">
         {starred?.children?.map((child) => (
-          <li key={child.id} data-testid={`synced-${child.id}`} data-icon={child.icon}>
+          <li key={child.id} data-testid={`synced-${child.id}`} data-icon={child.icon} data-url={child.url}>
             {child.text}
           </li>
         ))}
@@ -102,6 +113,9 @@ function setupSearchMock(items: SearchRow[]) {
   mockedGetGrafanaSearcher.mockReturnValue(mockSearcher as unknown as GrafanaSearcher);
   return mockSearcher;
 }
+
+testWithStarsUser();
+testWithAppKind();
 
 describe('useNavTree', () => {
   beforeEach(() => {
@@ -213,6 +227,22 @@ describe('useNavTree', () => {
       expect(screen.getByTestId('starred-list').children).toHaveLength(51);
     });
     expect(screen.getByTestId('synced-starred/dashboard/d50')).toBeInTheDocument();
+  });
+
+  it('lists the rows of a kind in title order, whatever order the search answers in', async () => {
+    const [first, second] = starredDashboards;
+    setupSearchMock([
+      { uid: first.uid, name: 'Zulu', url: `/d/${first.uid}`, kind: 'dashboard' },
+      { uid: second.uid, name: 'Alpha', url: `/d/${second.uid}`, kind: 'dashboard' },
+    ]);
+
+    render(<TestHarness />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('starred-list').children).toHaveLength(2);
+    });
+    const titles = Array.from(screen.getByTestId('starred-list').children).map((el) => el.textContent);
+    expect(titles).toEqual(['Alpha', 'Zulu']);
   });
 
   describe('with starred folders in the star set', () => {
@@ -334,6 +364,42 @@ describe('useNavTree', () => {
       });
       expect(screen.getByTestId(`synced-starred/dashboard/${uid}`)).toHaveTextContent('My Dashboard');
       expect(screen.getByTestId('starred-list').children).toHaveLength(2);
+    });
+
+    it('lists a starred app object after the dashboard and folder rows, as a leaf of its kind', async () => {
+      const dashUid = dashbdD.item.uid;
+      const folderUid = folderA.item.uid;
+      setMockStarredDashboards([dashUid]);
+      setMockStarredFolders([folderUid]);
+      setMockStarredAppKind(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, [THING]);
+      server.use(
+        getAPIGroupHandler(MOCK_APP_KIND.group, MOCK_APP_KIND.version),
+        // The title sorts before both other titles, so a pure alphabetical sort would render it first
+        getKindSearchHandler(MOCK_APP_KIND, [{ name: THING, title: 'AAA Thing' }])
+      );
+      setupSearchMock([
+        { uid: dashUid, name: 'My Dashboard', url: `/d/${dashUid}`, kind: 'dashboard' },
+        { uid: folderUid, name: 'My Folder', url: `/dashboards/f/${folderUid}`, kind: 'folder' },
+      ]);
+
+      render(<TestHarness />);
+
+      const row = await screen.findByTestId(THING_ROW);
+      expect(row).toHaveTextContent('AAA Thing');
+      expect(row).toHaveAttribute('data-url', '/a/test-things-app/things/t1');
+      expect(row).toHaveAttribute('data-icon', 'cube');
+
+      // Kind grouping wins over the alphabet: dashboard, then folder, then the app kind
+      await waitFor(() => {
+        const rowIds = Array.from(screen.getByTestId('starred-list').children).map((el) =>
+          el.getAttribute('data-testid')
+        );
+        expect(rowIds).toEqual([
+          `synced-starred/dashboard/${dashUid}`,
+          `synced-starred/folder/${folderUid}`,
+          THING_ROW,
+        ]);
+      });
     });
   });
 });

@@ -1,5 +1,5 @@
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
-import * as folderHooks from 'app/api/clients/folder/v1beta1/hooks';
+import { getCombinedFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
   AnnoKeyFolder,
@@ -15,6 +15,15 @@ import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { type DashboardWithAccessInfo } from './types';
 import { K8sDashboardAPI } from './v1';
+jest.mock('app/api/clients/folder/v1beta1/hooks', () =>
+  jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(jest.requireActual('app/api/clients/folder/v1beta1/hooks'), {
+      getCombinedFolder: jest.fn((...args) =>
+        jest.requireActual('app/api/clients/folder/v1beta1/hooks').getCombinedFolder(...args)
+      ),
+    })
+);
 
 const mockDashboardDto: DashboardWithAccessInfo<DashboardDataDTO> = {
   kind: 'DashboardWithAccessInfo',
@@ -138,7 +147,7 @@ describe('v1 dashboard API', () => {
       },
     });
 
-    jest.spyOn(folderHooks, 'getCombinedFolder').mockResolvedValueOnce({
+    jest.mocked(getCombinedFolder).mockResolvedValueOnce({
       id: 1,
       uid: 'new-folder',
       title: 'New Folder',
@@ -183,9 +192,7 @@ describe('v1 dashboard API', () => {
         annotations: { [AnnoKeyFolder]: 'new-folder' },
       },
     });
-    jest
-      .spyOn(folderHooks, 'getCombinedFolder')
-      .mockRejectedValueOnce({ message: 'folder not found', status: 'not-found' });
+    jest.mocked(getCombinedFolder).mockRejectedValueOnce({ message: 'folder not found', status: 'not-found' });
 
     const api = new K8sDashboardAPI();
     await expect(api.getDashboardDTO('test')).rejects.toThrow('Failed to load folder');
@@ -196,7 +203,7 @@ describe('v1 dashboard API', () => {
       ...mockDashboardDto,
       metadata: { ...mockDashboardDto.metadata, annotations: { [AnnoKeyFolder]: 'new-folder' } },
     });
-    jest.spyOn(folderHooks, 'getCombinedFolder').mockRejectedValueOnce({ message: 'folder not found', status: 403 });
+    jest.mocked(getCombinedFolder).mockRejectedValueOnce({ message: 'folder not found', status: 403 });
 
     const api = new K8sDashboardAPI();
     const dashboardDTO = await api.getDashboardDTO('test');
@@ -571,6 +578,46 @@ describe('v1 dashboard API', () => {
       const result = await api.getDeletedDashboard('deleted-dash-1');
 
       expect(result).toBeUndefined();
+    });
+  });
+
+  describe('getDashboardHistoryVersions', () => {
+    it('should stop requesting history once the requested versions are found', async () => {
+      mockGet.mockResolvedValueOnce({
+        metadata: { resourceVersion: '1', continue: 'token-page2' },
+        items: [
+          { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 3 } },
+          { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 2 } },
+        ],
+      });
+
+      const api = new K8sDashboardAPI();
+      const result = await api.getDashboardHistoryVersions('dash-uid', [3]);
+
+      expect(result.map((item) => item.metadata.generation)).toEqual([3]);
+      expect(mockGet).toHaveBeenCalledTimes(1);
+    });
+
+    it('should follow the continue token while versions are still missing', async () => {
+      mockGet
+        .mockResolvedValueOnce({
+          metadata: { resourceVersion: '1', continue: 'token-page2' },
+          items: [{ ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 3 } }],
+        })
+        .mockResolvedValueOnce({
+          metadata: { resourceVersion: '1' },
+          items: [{ ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 1 } }],
+        });
+
+      const api = new K8sDashboardAPI();
+      const result = await api.getDashboardHistoryVersions('dash-uid', [1]);
+
+      expect(result.map((item) => item.metadata.generation)).toEqual([1]);
+      expect(mockGet).toHaveBeenCalledTimes(2);
+      expect(mockGet).toHaveBeenLastCalledWith(
+        expect.any(String),
+        expect.objectContaining({ limit: 1000, continue: 'token-page2' })
+      );
     });
   });
 

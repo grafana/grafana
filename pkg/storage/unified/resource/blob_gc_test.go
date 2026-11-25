@@ -15,10 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestResourceReferencesBlob(t *testing.T) {
@@ -71,8 +68,15 @@ func TestBlobGarbageCollector(t *testing.T) {
 			case "restart":
 				gc = NewBlobGarbageCollector(store, 100, 0)
 			}
+			var deleted []kv.BlobKey
+			gc.onDeleted = func(key kv.BlobKey) { deleted = append(deleted, key) }
 			count, err = gc.Collect(t.Context(), now.Add(2*time.Hour), time.Hour, scenario == "dry run", referenced)
 			require.Equal(t, scenario == "read error", err != nil)
+			if scenario == "orphan" || scenario == "restart" {
+				require.Equal(t, []kv.BlobKey{key}, deleted)
+			} else {
+				require.Empty(t, deleted)
+			}
 			expectedCount := 0
 			if scenario == "orphan" || scenario == "dry run" || scenario == "restart" {
 				expectedCount = 1
@@ -126,6 +130,8 @@ func TestBlobGCPagedKeys(t *testing.T) {
 
 func TestKVBlobGCOptInAndDryRun(t *testing.T) {
 	b := setupTestStorageBackend(t)
+	logger := &blobGCShutdownLogger{}
+	b.log = logger
 	b.kv = setupSqlKV(t)
 	b.dataStore = newDataStore(b.kv)
 	key := kv.BlobKey{Group: "group", Resource: "resource", Namespace: "default", Name: "snap", UID: "unreferenced"}
@@ -147,10 +153,13 @@ func TestKVBlobGCOptInAndDryRun(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, reader.Close())
 
+	require.Equal(t, []string{"blob garbage collection finished", "blob garbage collection finished"}, logger.infos)
 	b.garbageCollection.BlobDryRun = false
 	b.collectBlobs(t.Context())
 	_, err = b.kv.Get(t.Context(), kv.BlobDataSection, key.String())
 	require.ErrorIs(t, err, kv.ErrNotFound)
+	require.Equal(t, []string{"blob garbage collection delete succeeded", "blob garbage collection finished"}, logger.infos[2:])
+	require.Equal(t, []any{"uid", key.UID, "group", key.Group, "resource", key.Resource}, logger.infoFields[2])
 }
 
 type blobGCShutdownStore struct {
@@ -179,11 +188,15 @@ func (s blobGCShutdownStore) Delete(context.Context, string, string) error {
 
 type blobGCShutdownLogger struct {
 	logging.NoOpLogger
-	infos  []string
-	errors []string
+	infos      []string
+	infoFields [][]any
+	errors     []string
 }
 
-func (l *blobGCShutdownLogger) Info(msg string, _ ...any)  { l.infos = append(l.infos, msg) }
+func (l *blobGCShutdownLogger) Info(msg string, fields ...any) {
+	l.infos = append(l.infos, msg)
+	l.infoFields = append(l.infoFields, fields)
+}
 func (l *blobGCShutdownLogger) Error(msg string, _ ...any) { l.errors = append(l.errors, msg) }
 
 func TestKVBlobGCShutdown(t *testing.T) {
@@ -295,7 +308,8 @@ func TestKVBlobGCPartialProgress(t *testing.T) {
 			require.Equal(t, float64(1), testutil.ToFloat64(metrics.Runs))
 			require.Equal(t, float64(1), testutil.ToFloat64(metrics.Deleted))
 			require.Equal(t, float64(7), testutil.ToFloat64(metrics.Candidates))
-			require.Empty(t, logger.infos)
+			require.Equal(t, []string{"blob garbage collection delete succeeded"}, logger.infos)
+			require.Equal(t, []any{"uid", "blob", "group", "group", "resource", "resource"}, logger.infoFields[0])
 			if scenario == "cancellation" {
 				require.Zero(t, testutil.ToFloat64(metrics.Errors))
 				require.Empty(t, logger.errors)
@@ -399,44 +413,6 @@ func TestBlobGCPreservesProvisioningPreviewURL(t *testing.T) {
 	reader, err := store.Get(t.Context(), kv.BlobDataSection, key.String())
 	require.NoError(t, err)
 	require.NoError(t, reader.Close())
-}
-
-func TestCDKBlobGCStore(t *testing.T) {
-	bucket, err := OpenBlobBucket(t.Context(), "mem://")
-	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, bucket.Close()) })
-	blobStore, err := NewCDKBlobSupport(t.Context(), CDKBlobSupportOptions{Bucket: bucket})
-	require.NoError(t, err)
-	resourceKey := &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "snapshots", Namespace: "default", Name: "snap"}
-	response, err := blobStore.PutResourceBlob(t.Context(), &resourcepb.PutBlobRequest{Resource: resourceKey, ContentType: "image/png", Value: []byte("image")})
-	require.NoError(t, err)
-	store := NewCDKBlobGCStore(bucket, "")
-	gc := NewBlobGarbageCollector(store, 100, 0)
-	now := time.Now()
-	key := kv.BlobKey{Group: resourceKey.Group, Resource: resourceKey.Resource, Namespace: resourceKey.Namespace, Name: resourceKey.Name, UID: response.Uid}
-	count, err := gc.Collect(t.Context(), now, time.Hour, false, func(_ context.Context, got kv.BlobKey) (bool, error) {
-		require.Equal(t, key, got)
-		return false, nil
-	})
-	require.NoError(t, err)
-	require.Zero(t, count)
-	count, err = gc.Collect(t.Context(), now.Add(2*time.Hour), time.Hour, false, func(context.Context, kv.BlobKey) (bool, error) { return false, nil })
-	require.NoError(t, err)
-	require.Equal(t, 1, count)
-	_, err = blobStore.GetResourceBlob(t.Context(), resourceKey, &utils.BlobInfo{UID: response.Uid, MimeType: "image/png"}, true)
-	require.Error(t, err)
-
-	preview := &resourcepb.ResourceKey{Group: "provisioning.grafana.app", Resource: "repositories", Namespace: "", Name: "repo"}
-	previewResponse, err := blobStore.PutResourceBlob(t.Context(), &resourcepb.PutBlobRequest{Resource: preview, ContentType: "image/png", Value: []byte("preview")})
-	require.NoError(t, err)
-	for _, at := range []time.Time{now.Add(3 * time.Hour), now.Add(48 * time.Hour)} {
-		count, err = gc.Collect(t.Context(), at, time.Hour, false, func(context.Context, kv.BlobKey) (bool, error) { return false, nil })
-		require.NoError(t, err)
-		require.Zero(t, count)
-	}
-	value, err := blobStore.GetResourceBlob(t.Context(), preview, &utils.BlobInfo{UID: previewResponse.Uid, MimeType: "image/png"}, true)
-	require.NoError(t, err)
-	require.Equal(t, []byte("preview"), value.Value)
 }
 
 func TestBlobReferencedPreservesHistory(t *testing.T) {

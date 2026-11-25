@@ -338,12 +338,10 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	}
 
 	// Make sure we are looking at the correct namespace
-	if meta.GetNamespace() != rkey.Namespace {
-		if meta.GetNamespace() == "" {
-			meta.SetNamespace(rkey.Namespace)
-		} else {
-			return apierrors.NewBadRequest("namespace mismatch")
-		}
+	if meta.GetNamespace() == "" {
+		meta.SetNamespace(rkey.Namespace) // set a missing namespace
+	} else if meta.GetNamespace() != rkey.Namespace {
+		return apierrors.NewBadRequest("namespace mismatch")
 	}
 
 	v, err := s.prepareObjectForStorage(ctx, obj)
@@ -457,6 +455,9 @@ func (s *Storage) Delete(
 		return storage.NewKeyNotFoundError(key, 0)
 	}
 
+	// The user a service deletes on behalf of; the server records them as the deleter.
+	actingUser, _ := identity.MetadataIdentityUIDFrom(ctx)
+
 	var lastErr error
 	bo := backoff.New(ctx, updateRetryConfig)
 	for bo.Ongoing() {
@@ -464,7 +465,7 @@ func (s *Storage) Delete(
 			return err
 		}
 
-		cmd := &resourcepb.DeleteRequest{Key: k}
+		cmd := &resourcepb.DeleteRequest{Key: k, ActingUserUid: actingUser}
 
 		if preconditions != nil {
 			if err := preconditions.Check(key, out); err != nil {
@@ -485,15 +486,24 @@ func (s *Storage) Delete(
 		if err != nil {
 			return fmt.Errorf("unable to read object %w", err)
 		}
-		if err = identity.CheckManagerOnDelete(info, meta); err != nil {
-			_, err = s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
-			return err
-		}
-
-		cmd.ResourceVersion, err = meta.GetResourceVersionInt64()
+		// Read the version before routing: the routing re-reads into out, and the
+		// delete must stay conditional on the version that passed the checks above.
+		resourceVersion, err := meta.GetResourceVersionInt64()
 		if err != nil {
 			return resourceutil.StatusError(resourceutil.AsErrorResult(err))
 		}
+		if err = identity.CheckManagerOnDelete(info, meta); err != nil {
+			// Nothing left in git to delete, so remove the resource here rather than strand it.
+			if !s.isOrphanedRepositoryRootFolder(ctx, meta) {
+				_, err = s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
+				if !errors.Is(err, errManagerGone) {
+					return err
+				}
+			}
+			logging.FromContext(ctx).Info("deleting managed resource whose repository is gone", "key", key)
+		}
+
+		cmd.ResourceVersion = resourceVersion
 		rsp, err := s.store.Delete(ctx, cmd)
 		if err != nil {
 			// Classify before normalization so attached gRPC status details remain available.
@@ -748,6 +758,13 @@ func (s *Storage) processItem(ctx context.Context, item *resourcepb.ResourceWrap
 }
 
 func (s *Storage) processDecodedItem(obj runtime.Object, resourceVersion int64, opts storage.ListOptions, predicate storage.SelectionPredicate) (runtime.Object, bool, error) {
+	if declared := s.opts.GVK; !declared.Empty() {
+		gvk := obj.GetObjectKind().GroupVersionKind()
+		if gvk.Group == declared.Group {
+			obj.GetObjectKind().SetGroupVersionKind(declared.GroupVersion().WithKind(gvk.Kind))
+		}
+	}
+
 	if err := s.versioner.UpdateObject(obj, uint64(resourceVersion)); err != nil {
 		return nil, false, err
 	}

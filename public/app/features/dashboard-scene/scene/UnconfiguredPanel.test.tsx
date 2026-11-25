@@ -281,7 +281,12 @@ describe('UnconfiguredPanelComp', () => {
         await user.hover(root);
         await user.click(screen.getByRole('button', { name: /configure visualization/i }));
 
-        expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('configure', 1, 'panel');
+        expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith(
+          'configure',
+          1,
+          'panel',
+          '__unconfigured-panel'
+        );
       });
     });
 
@@ -305,7 +310,12 @@ describe('UnconfiguredPanelComp', () => {
         await user.hover(root);
         await user.click(screen.getByRole('button', { name: /use library panel/i }));
 
-        expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('use_library_panel', 1, 'panel');
+        expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith(
+          'use_library_panel',
+          1,
+          'panel',
+          '__unconfigured-panel'
+        );
       });
     });
 

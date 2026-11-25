@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -165,7 +165,7 @@ func TestAuthorizeAccessToRule(t *testing.T) {
 
 func TestAuthorizeRuleChanges(t *testing.T) {
 	testUser := &user.SignedInUser{}
-	change := &rulestore.GroupDelta{}
+	change := &ngrulesvc.GroupDelta{}
 
 	t.Run("should return nil when user has rules permissions", func(t *testing.T) {
 		rs := &fakes.FakeRuleService{}
@@ -198,7 +198,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 		rs.HasAccessFunc = func(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
 			return false, nil
 		}
-		rs.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, delta *rulestore.GroupDelta) error {
+		rs.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, delta *ngrulesvc.GroupDelta) error {
 			return nil
 		}
 
@@ -230,7 +230,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			return false, nil
 		}
 		expected = errors.New("test2")
-		rs.AuthorizeRuleChangesFunc = func(ctx context.Context, requester identity.Requester, delta *rulestore.GroupDelta) error {
+		rs.AuthorizeRuleChangesFunc = func(ctx context.Context, requester identity.Requester, delta *ngrulesvc.GroupDelta) error {
 			return expected
 		}
 

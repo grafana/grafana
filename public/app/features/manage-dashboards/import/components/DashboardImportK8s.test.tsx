@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { AppEvents } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -92,8 +92,11 @@ describe('DashboardImportK8s with dashboardNewLayouts disabled', () => {
     setTestFlags({ [FlagKeys.DashboardNewLayouts]: false });
   });
 
-  afterEach(() => {
-    setTestFlags({});
+  afterEach(async () => {
+    // The flag change re-renders the still-mounted form, which must happen inside act.
+    await act(async () => {
+      setTestFlags({});
+    });
   });
 
   it.each([

@@ -35,6 +35,8 @@ import { defaultOptions, HeatmapColorMode, HeatmapColorScale, type Options } fro
 import { defaultOptions as fullDefaultOptions } from './types';
 import * as heatmapUtils from './utils';
 
+jest.mock('./utils', () => makeSpyable('./utils'));
+
 const width = 648;
 const height = 378;
 

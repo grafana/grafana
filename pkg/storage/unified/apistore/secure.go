@@ -3,11 +3,13 @@ package apistore
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secret "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
@@ -28,7 +30,7 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 
 	v.ref = owner
 
-	var previous common.InlineSecureValues
+	var previous resource.InlineSecureValues
 	if previousObject == nil {
 		if len(secure) == 0 {
 			return nil // nothing needs to change
@@ -36,13 +38,16 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 		if store == nil {
 			return fmt.Errorf("secure value support is not configured (create)")
 		}
-		previous = make(common.InlineSecureValues, 0)
+		previous = make(resource.InlineSecureValues, 0)
 	} else {
 		// Merge in any values from the previous object and handle remove
 		previous, err = previousObject.GetSecureValues()
 		if err != nil {
 			return err
 		}
+		// The accessor can return the live map. The code below removes keys, and callers compare
+		// the previous object with the new one afterwards, so it must not change the previous object.
+		previous = maps.Clone(previous)
 		for _, p := range previous {
 			if p.Name == "" || p.Remove || !p.Create.IsZero() {
 				return fmt.Errorf("invalid state, saved values must only have a name")
@@ -79,7 +84,7 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 				}
 				v.createdSecureValues = append(v.createdSecureValues, n)
 				v.hasChanged = true
-				secure[k] = common.InlineSecureValue{Name: n}
+				secure[k] = resource.InlineSecureValue{Name: n}
 
 				// Avoid exposing a raw secret in the kubectl metadata
 				obj.SetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig, "")
@@ -126,7 +131,7 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 }
 
 // make sure the registered changes are unique and valid
-func cleanupSecureValues(v *objectForStorage, obj utils.GrafanaMetaAccessor, secure common.InlineSecureValues) error {
+func cleanupSecureValues(v *objectForStorage, obj utils.GrafanaMetaAccessor, secure resource.InlineSecureValues) error {
 	// Make sure the deleted list is unique and does not contain any referenced values
 	if len(v.deleteSecureValues) > 0 && len(secure) > 0 {
 		confirm := v.deleteSecureValues

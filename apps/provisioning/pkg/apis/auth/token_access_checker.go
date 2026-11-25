@@ -9,7 +9,6 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 // tokenAccessChecker implements AccessChecker using access tokens from context.
@@ -24,7 +23,7 @@ func NewTokenAccessChecker(inner authlib.AccessChecker) AccessChecker {
 }
 
 // WithFallbackRole returns the same checker since fallback is not supported.
-func (c *tokenAccessChecker) WithFallbackRole(_ identity.RoleType) AccessChecker {
+func (c *tokenAccessChecker) WithFallbackRole(_ authlib.RoleType) AccessChecker {
 	return c
 }
 
