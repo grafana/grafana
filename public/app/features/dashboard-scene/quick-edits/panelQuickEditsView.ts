@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
 
+import { type VizPanel } from '@grafana/scenes';
+
 /**
  * How long a panel keeps showing its quick edits after its popover closes. A stray hover over something else and
  * back keeps them; going off to edit something else for longer brings back the panel's actions.
  */
 export const QUICK_EDITS_RESET_DELAY_MS = 5000;
 
-const shown = new Set<string>();
-const resets = new Map<string, ReturnType<typeof setTimeout>>();
+// Keyed by the panel itself rather than its key, as keys like `panel-1` repeat on every dashboard.
+const shown = new WeakSet<VizPanel>();
+const resets = new WeakMap<VizPanel, ReturnType<typeof setTimeout>>();
 const listeners = new Set<() => void>();
 
 function subscribe(listener: () => void) {
@@ -17,7 +20,7 @@ function subscribe(listener: () => void) {
   };
 }
 
-function setShown(key: string, show: boolean) {
+function setShown(key: VizPanel, show: boolean) {
   if (show === shown.has(key)) {
     return;
   }
@@ -29,7 +32,7 @@ function setShown(key: string, show: boolean) {
   listeners.forEach((listener) => listener());
 }
 
-function cancelReset(key: string) {
+function cancelReset(key: VizPanel) {
   clearTimeout(resets.get(key));
   resets.delete(key);
 }
@@ -38,7 +41,7 @@ function cancelReset(key: string) {
  * Whether the panel's edit popover shows its quick edits instead of its actions. Lives outside the popover, as its
  * content unmounts each time it closes. Call it from content that is mounted only while the popover is open.
  */
-export function usePanelQuickEditsView(key: string): [boolean, (show: boolean) => void] {
+export function usePanelQuickEditsView(key: VizPanel): [boolean, (show: boolean) => void] {
   const isShown = useSyncExternalStore(subscribe, () => shown.has(key));
 
   useEffect(() => {

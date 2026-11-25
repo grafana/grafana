@@ -5,13 +5,14 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useFlagGrafanaPanelQuickEdits } from '@grafana/runtime/internal';
 import { type VizPanel } from '@grafana/scenes';
-import { IconButton, useStyles2 } from '@grafana/ui';
+import { IconButton, Text, useStyles2 } from '@grafana/ui';
 
 import { QuickEditButtons } from '../../quick-edits/QuickEditButtons';
 import { usePanelQuickEditsView } from '../../quick-edits/panelQuickEditsView';
 import { useQuickEdits } from '../../quick-edits/useQuickEdits';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
+import { isLibraryPanel } from '../../utils/utils';
 import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 
 import { getActionStyles } from './EditActions';
@@ -19,11 +20,16 @@ import { useEditActionsPopover } from './EditActionsPopover';
 
 /**
  * Whether the panel's actions lead with quick edits. A repeat clone takes its options from the source panel, so only
- * the source offers them.
+ * the source offers them. A library panel's changes are saved only from the panel editor, so it offers none.
  */
 export function useOffersQuickEdits(panel: VizPanel): boolean {
   const isQuickEditsEnabled = useFlagGrafanaPanelQuickEdits();
-  return isQuickEditsEnabled && !isRepeatCloneOrChildOf(panel) && Boolean(panel.getPlugin()?.getQuickEdits().length);
+  return (
+    isQuickEditsEnabled &&
+    !isRepeatCloneOrChildOf(panel) &&
+    !isLibraryPanel(panel) &&
+    Boolean(panel.getPlugin()?.getQuickEdits().length)
+  );
 }
 
 /** The padding and gap of each popover the quick edits swap into, in theme spacing units. */
@@ -47,8 +53,10 @@ interface Props {
 export function PanelActionsWithQuickEdits({ panel, spacing = 'edit-actions', children }: Props) {
   const styles = useStyles2(getActionStyles);
   const swapStyles = useStyles2(getSwapStyles, spacing);
-  const quickEdits = useQuickEdits(panel);
-  const [showQuickEdits, setShowQuickEdits] = usePanelQuickEditsView(panel.state.key!);
+  const offersQuickEdits = useOffersQuickEdits(panel);
+  const [showQuickEdits, setShowQuickEdits] = usePanelQuickEditsView(panel);
+  // Built only once shown, as the popover mounts on every hover in edit mode.
+  const quickEdits = useQuickEdits(panel, showQuickEdits);
   const { holdOpen, getReference } = useEditActionsPopover();
   const [bar, setBar] = useState<HTMLDivElement | null>(null);
   const boltRef = useRef<HTMLButtonElement>(null);
@@ -62,7 +70,7 @@ export function PanelActionsWithQuickEdits({ panel, spacing = 'edit-actions', ch
     focusAfterSwap.current = null;
   }, [showQuickEdits]);
 
-  if (!quickEdits.edits.length) {
+  if (!offersQuickEdits) {
     return <>{children}</>;
   }
 
@@ -74,6 +82,13 @@ export function PanelActionsWithQuickEdits({ panel, spacing = 'edit-actions', ch
       focusAfterSwap.current = show ? backRef.current : boltRef.current;
     }
     setShowQuickEdits(show);
+  };
+
+  // Closing a card from the card itself ends the quick edit, so the bar goes back to the panel's actions. The card has
+  // just returned focus to its button, which the swap makes inert.
+  const onCardDismiss = () => {
+    focusAfterSwap.current = boltRef.current;
+    setShowQuickEdits(false);
   };
 
   const onShowQuickEdits = (event: MouseEvent<HTMLButtonElement>) => {
@@ -116,6 +131,11 @@ export function PanelActionsWithQuickEdits({ panel, spacing = 'edit-actions', ch
             />
           </div>
           <div className={swapStyles.inset} ref={setBar}>
+            {showQuickEdits && !quickEdits.edits.length && (
+              <Text variant="bodySmall" color="secondary">
+                {t('dashboard-scene.panel-edit-actions.no-quick-edits', "No quick edits for this panel's settings")}
+              </Text>
+            )}
             {/* Remounted on each swap, so a card left open closes as the quick edits slide away. */}
             <HeldQuickEditButtons
               key={String(showQuickEdits)}
@@ -124,6 +144,7 @@ export function PanelActionsWithQuickEdits({ panel, spacing = 'edit-actions', ch
               getPanelElement={getReference}
               bar={bar}
               holdOpen={holdOpen}
+              onCardDismiss={onCardDismiss}
             />
           </div>
         </div>
@@ -227,8 +248,9 @@ const getSwapStyles = (theme: GrafanaTheme2, spacing: keyof typeof BAR_SPACING) 
       flex: 1,
       gap: theme.spacing(gap),
       padding: theme.spacing(paddingY, 1),
-      background: theme.colors.background.canvas,
-      borderRadius: `${theme.shape.radius.default} 0 0 ${theme.shape.radius.default}`,
+      // Darker than the bar's dropdown background in the dark theme, so the quick edits read as their own set.
+      background: theme.colors.background.primary,
+      borderRadius: theme.shape.radius.default,
     }),
   };
 };

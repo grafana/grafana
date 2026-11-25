@@ -8073,6 +8073,7 @@
       "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "No quick edits for this panel's settings",
       "panels-selected_one": "{{count}} panel selected",
       "panels-selected_other": "{{count}} panels selected",
       "show-panel-actions": "Back to panel actions",

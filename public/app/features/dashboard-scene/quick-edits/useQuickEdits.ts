@@ -7,7 +7,7 @@ import {
   type PanelQuickEditSummary,
 } from '@grafana/data';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
-import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 
@@ -29,7 +29,8 @@ export interface QuickEdits {
 /**
  * The quick edits the panel's plugin declares, built from the same option items as the full editor, so each control
  * is the real editor and each change is an ordinary undoable edit. A quick edit is left out when the panel offers
- * none of its options.
+ * none of its options. Building them means building the full editor's options, so nothing is built while `enabled`
+ * is false.
  */
 export function useQuickEdits(panel: VizPanel, enabled = true): QuickEdits {
   const { options, fieldConfig, _pluginInstanceState } = panel.useState();
@@ -63,8 +64,7 @@ export function useQuickEdits(panel: VizPanel, enabled = true): QuickEdits {
     return declared.flatMap((quickEdit) => {
       const items = quickEdit.optionIds.flatMap((id) => {
         const item = byId.get(id);
-        const label = quickEdit.labels?.[id];
-        return item ? [label ? relabel(item, label) : item] : [];
+        return item ? [toCardItem(item, quickEdit.title, quickEdit.labels?.[id])] : [];
       });
       const offered = quickEdit.presets ? plugin.hasPresetsSupplier() : items.length > 0;
       if (!offered) {
@@ -79,9 +79,14 @@ export function useQuickEdits(panel: VizPanel, enabled = true): QuickEdits {
   return { edits, applyPreset };
 }
 
-/** The same option item under another name, for options whose own name relies on their category. */
-function relabel(item: OptionsPaneItemDescriptor, title: string) {
-  const relabelled = new OptionsPaneItemDescriptor({ ...item.props, title });
-  relabelled.parent = item.parent;
-  return relabelled;
+/**
+ * The option item as the card shows it, optionally under another name for options whose own name relies on their
+ * category. The editor leaves out an option's name when it is its category's, as the category's heading shows it.
+ * The card shows its own heading instead, so the item goes under a copy of its category named like the card.
+ */
+function toCardItem(item: OptionsPaneItemDescriptor, cardTitle: string, title = item.props.title) {
+  const cardItem = new OptionsPaneItemDescriptor({ ...item.props, title });
+  cardItem.parent = new OptionsPaneCategoryDescriptor({ ...item.parent.props, title: cardTitle });
+  cardItem.parent.parent = item.parent.parent;
+  return cardItem;
 }

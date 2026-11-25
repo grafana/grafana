@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 
 import { colorManipulator, type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getPortalContainer, Icon, IconButton, Portal, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, Portal, useStyles2 } from '@grafana/ui';
 
 const GAP = 8;
 
@@ -17,6 +17,8 @@ interface Props {
   /** The bar that opened the card. Presses on it don't close the card, and the card clears it when placed above. */
   bar: Element | null;
   onClose: () => void;
+  /** Called as well when the card is closed from its close button or Escape, rather than by a press elsewhere. */
+  onDismiss?: () => void;
   children: ReactNode;
 }
 
@@ -27,7 +29,7 @@ interface Props {
  * opens are used (they portal elsewhere) and closes on Escape or a press anywhere else. Closing it from the keyboard
  * or its close button returns focus to the button that opened it.
  */
-export function QuickEditCard({ title, icon, panel, bar, onClose, children }: Props) {
+export function QuickEditCard({ title, icon, panel, bar, onClose, onDismiss, children }: Props) {
   const styles = useStyles2(getStyles);
   const {
     floatingStyles,
@@ -63,6 +65,7 @@ export function QuickEditCard({ title, icon, panel, bar, onClose, children }: Pr
 
   const closeAndReturnFocus = () => {
     onClose();
+    onDismiss?.();
     if (returnFocusTo.current instanceof HTMLElement) {
       returnFocusTo.current.focus({ preventScroll: true });
     }
@@ -71,10 +74,9 @@ export function QuickEditCard({ title, icon, panel, bar, onClose, children }: Pr
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     // In the capture phase, so a press that something else stops still closes the card. The verdict waits until the
-    // press has reached the card's own handler.
+    // press has reached the card's own handler, which also sees presses in the menus it portals elsewhere.
     const onPress = (event: PointerEvent) => {
-      const target = event.target instanceof Node ? event.target : null;
-      const inside = target !== null && (bar?.contains(target) || getPortalContainer().contains(target));
+      const inside = event.target instanceof Node && Boolean(bar?.contains(event.target));
       pressedInside.current = false;
       clearTimeout(timer);
       timer = setTimeout(() => {
@@ -190,12 +192,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(1, 1, 1, 2),
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       color: theme.colors.text.primary,
+      flexShrink: 0,
     }),
     title: css({
       flex: 1,
       fontWeight: theme.typography.fontWeightMedium,
     }),
+    // Shrinks to the card's height when that is capped to fit beside the panel, and scrolls the rest.
     body: css({
+      minHeight: 0,
       padding: theme.spacing(2),
       overflowY: 'auto',
       // The full editor's fields, minus their trailing margin on the last one.

@@ -808,21 +808,23 @@ describe('<PanelActionsWrapper />', () => {
         return context;
       }
 
-      test('closing a quick edit card with its close button keeps the popover open and refocuses its button', async () => {
+      test('closing a quick edit card with its close button keeps the popover open on its actions', async () => {
         const { user } = await openLegendCard();
 
         await user.click(within(screen.getByRole('dialog', { name: 'Legend' })).getByRole('button', { name: 'Close' }));
 
-        expect(within(getToolbar()).getByRole('button', { name: 'Legend: Shown' })).toHaveFocus();
+        expect(within(getToolbar()).getByRole('button', { name: 'Quick edits' })).toHaveFocus();
+        expect(within(getToolbar()).getByRole('button', { name: 'Panel settings' }).closest('[inert]')).toBeNull();
       });
 
-      test('Escape on a quick edit card the pointer is over keeps the popover open and refocuses its button', async () => {
+      test('Escape on a quick edit card the pointer is over keeps the popover open on its actions', async () => {
         const { user } = await openLegendCard();
 
         await user.hover(screen.getByRole('dialog', { name: 'Legend' }));
         await user.keyboard('{Escape}');
 
-        expect(within(getToolbar()).getByRole('button', { name: 'Legend: Shown' })).toHaveFocus();
+        expect(within(getToolbar()).getByRole('button', { name: 'Quick edits' })).toHaveFocus();
+        expect(within(getToolbar()).getByRole('button', { name: 'Panel settings' }).closest('[inert]')).toBeNull();
       });
 
       test('after a quick edit card closes, the popover closes once the pointer moves off the panel', async () => {

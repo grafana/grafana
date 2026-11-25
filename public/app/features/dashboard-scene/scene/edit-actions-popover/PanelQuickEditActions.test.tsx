@@ -5,9 +5,11 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { getPortalContainer } from '@grafana/ui';
 
 import { activateFullSceneTree } from '../../utils/test-utils';
 import { DashboardScene } from '../DashboardScene';
+import { LibraryPanelBehavior } from '../LibraryPanelBehavior';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
@@ -40,8 +42,18 @@ const withUnofferedQuickEdits = getPanelPlugin({ id: 'with-unoffered-quick-edits
 
 const withoutQuickEdits = getPanelPlugin({ id: 'without-quick-edits' });
 
+// The editor leaves out the name of an option named like its category, whose heading the card doesn't show.
+const withCategoryNamedOption = getPanelPlugin({ id: 'with-category-named-option' })
+  .setPanelOptions((builder) =>
+    builder.addBooleanSwitch({ path: 'legend.showLegend', name: 'Legend', category: ['Legend'], defaultValue: true })
+  )
+  .setQuickEdits(() => [{ id: 'display', title: 'Display', icon: 'eye', optionIds: ['legend.showLegend'] }]);
+
 const plugins = Object.fromEntries(
-  [withQuickEdits, withUnofferedQuickEdits, withoutQuickEdits].map((plugin) => [plugin.meta.id, plugin])
+  [withQuickEdits, withUnofferedQuickEdits, withoutQuickEdits, withCategoryNamedOption].map((plugin) => [
+    plugin.meta.id,
+    plugin,
+  ])
 );
 setPluginImportUtils({
   importPanelPlugin: async (id) => plugins[id],
@@ -57,9 +69,18 @@ afterEach(() => {
 // Whether a panel shows its quick edits outlives its popover and is keyed by the panel's key, so each test gets its own.
 let panelCount = 0;
 
-function setup({ pluginId = 'with-quick-edits', flag = true }: { pluginId?: string; flag?: boolean } = {}) {
+function setup({
+  pluginId = 'with-quick-edits',
+  flag = true,
+  libraryPanel = false,
+}: { pluginId?: string; flag?: boolean; libraryPanel?: boolean } = {}) {
   setTestFlags({ 'grafana.panelQuickEdits': flag });
-  const panel = new VizPanel({ key: `panel-${++panelCount}`, pluginId, options: { legend: { showLegend: true } } });
+  const panel = new VizPanel({
+    key: `panel-${++panelCount}`,
+    pluginId,
+    options: { legend: { showLegend: true } },
+    $behaviors: libraryPanel ? [new LibraryPanelBehavior({ uid: 'lib-1', name: 'Library panel', isLoaded: true })] : [],
+  });
   const dashboard = new DashboardScene({
     isEditing: true,
     body: new AutoGridLayoutManager({ layout: new AutoGridLayout({ children: [new AutoGridItem({ body: panel })] }) }),
@@ -78,12 +99,32 @@ it('leads the panel actions with a quick edits button when the plugin declares q
 it.each([
   { desc: 'the flag is off', pluginId: 'with-quick-edits', flag: false },
   { desc: 'the plugin declares none', pluginId: 'without-quick-edits', flag: true },
-  { desc: 'the panel offers none of their options', pluginId: 'with-unoffered-quick-edits', flag: true },
-])('shows only the panel actions when $desc', ({ pluginId, flag }) => {
-  setup({ pluginId, flag });
+  // Its changes are saved only from the panel editor.
+  { desc: 'the panel is a library panel', pluginId: 'with-quick-edits', flag: true, libraryPanel: true },
+])('shows only the panel actions when $desc', ({ pluginId, flag, libraryPanel }) => {
+  setup({ pluginId, flag, libraryPanel });
 
   expect(screen.getByRole('button', { name: 'Panel settings' })).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Quick edits' })).not.toBeInTheDocument();
+});
+
+it('builds the quick edits from the full editor only once they are shown', async () => {
+  const buildOptions = jest.spyOn(withQuickEdits, 'getPanelOptionsSupplier');
+  const { user } = setup();
+  expect(buildOptions).not.toHaveBeenCalled();
+
+  await user.click(screen.getByRole('button', { name: 'Quick edits' }));
+
+  expect(buildOptions).toHaveBeenCalled();
+  buildOptions.mockRestore();
+});
+
+it('explains that there are no quick edits once shown, when the panel offers none of their options', async () => {
+  const { user } = setup({ pluginId: 'with-unoffered-quick-edits' });
+
+  await user.click(screen.getByRole('button', { name: 'Quick edits' }));
+
+  expect(screen.getByText("No quick edits for this panel's settings")).toBeInTheDocument();
 });
 
 it('swaps the actions for the quick edits, each named with its current value', async () => {
@@ -105,7 +146,7 @@ it('keeps focus on the bar as the quick edits swap in and out', async () => {
   expect(screen.getByRole('button', { name: 'Quick edits' })).toHaveFocus();
 });
 
-it('focuses the quick edit card as it opens, and Escape closes it and refocuses its button', async () => {
+it('focuses the quick edit card as it opens, and Escape closes it and goes back to the panel actions', async () => {
   const { user } = setup();
   await user.click(screen.getByRole('button', { name: 'Quick edits' }));
 
@@ -114,7 +155,8 @@ it('focuses the quick edit card as it opens, and Escape closes it and refocuses 
 
   await user.keyboard('{Escape}');
   expect(screen.queryByRole('dialog', { name: 'Legend' })).not.toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Legend: Shown' })).toHaveFocus();
+  expect(screen.getByRole('button', { name: 'Quick edits' })).toHaveFocus();
+  expect(screen.getByRole('button', { name: 'Panel settings' }).closest('[inert]')).toBeNull();
 });
 
 it('moves Tab from the open quick edit card into its controls', async () => {
@@ -127,7 +169,7 @@ it('moves Tab from the open quick edit card into its controls', async () => {
   expect(within(screen.getByRole('dialog', { name: 'Legend' })).getByRole('button', { name: 'Close' })).toHaveFocus();
 });
 
-it('refocuses the quick edit button when the card is closed with its close button', async () => {
+it('goes back to the panel actions and focuses the bolt when the card is closed with its close button', async () => {
   const { user } = setup();
   await user.click(screen.getByRole('button', { name: 'Quick edits' }));
   await user.click(screen.getByRole('button', { name: 'Legend: Shown' }));
@@ -135,7 +177,8 @@ it('refocuses the quick edit button when the card is closed with its close butto
   await user.click(within(screen.getByRole('dialog', { name: 'Legend' })).getByRole('button', { name: 'Close' }));
 
   expect(screen.queryByRole('dialog', { name: 'Legend' })).not.toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Legend: Shown' })).toHaveFocus();
+  expect(screen.getByRole('button', { name: 'Quick edits' })).toHaveFocus();
+  expect(screen.getByRole('button', { name: 'Panel settings' }).closest('[inert]')).toBeNull();
 });
 
 it('changes the option from the quick edit card as an undoable edit', async () => {
@@ -160,6 +203,8 @@ it('closes the quick edit card when its button is pressed again', async () => {
   await user.click(screen.getByRole('button', { name: 'Legend: Shown' }));
 
   expect(screen.queryByRole('dialog', { name: 'Legend' })).not.toBeInTheDocument();
+  // The pointer is on the bar, so it keeps the quick edits.
+  expect(screen.getByRole('button', { name: 'Legend: Shown' }).closest('[inert]')).toBeNull();
 });
 
 it("names an option by the quick edit's label instead of its own name", async () => {
@@ -181,4 +226,27 @@ it('explains that there are no styles to show while the panel has none for its d
 
   const card = screen.getByRole('dialog', { name: 'Style' });
   expect(within(card).getByText("No styles to show for this panel's data")).toBeInTheDocument();
+});
+
+it("names an option that shares its category's name, as the card's heading is the quick edit's", async () => {
+  const { user } = setup({ pluginId: 'with-category-named-option' });
+  await user.click(screen.getByRole('button', { name: 'Quick edits' }));
+
+  await user.click(screen.getByRole('button', { name: 'Display' }));
+
+  const card = screen.getByRole('dialog', { name: 'Display' });
+  expect(within(card).getByRole('switch', { name: 'Legend' })).toBeInTheDocument();
+});
+
+it("closes the quick edit card on a press in another overlay, such as another panel's actions", async () => {
+  const { user } = setup();
+  await user.click(screen.getByRole('button', { name: 'Quick edits' }));
+  await user.click(screen.getByRole('button', { name: 'Legend: Shown' }));
+  const overlay = document.createElement('button');
+  getPortalContainer().appendChild(overlay);
+
+  await user.click(overlay);
+
+  expect(screen.queryByRole('dialog', { name: 'Legend' })).not.toBeInTheDocument();
+  overlay.remove();
 });

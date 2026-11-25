@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useLayoutEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -22,6 +22,8 @@ interface Props {
   bar: Element | null;
   /** Called as a card opens and closes, so the surface holding the buttons can stay put while one is open. */
   onCardOpenChange?: (open: boolean) => void;
+  /** Called when a card is closed from its close button or Escape, which ends the quick edit. */
+  onCardDismiss?: () => void;
   buttonClassName?: string;
 }
 
@@ -32,6 +34,7 @@ export function QuickEditButtons({
   getPanelElement,
   bar,
   onCardOpenChange,
+  onCardDismiss,
   buttonClassName,
 }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -44,9 +47,9 @@ export function QuickEditButtons({
   }
 
   // Follows whether a card is showing rather than each open and close, so a card that goes with its quick edit lets
-  // go too.
+  // go too. In a layout effect, so the surface holds before the card takes focus away from it in its own effect.
   const isCardOpen = open !== undefined;
-  useEffect(() => {
+  useLayoutEffect(() => {
     onCardOpenChange?.(isCardOpen);
   }, [isCardOpen, onCardOpenChange]);
 
@@ -84,6 +87,7 @@ export function QuickEditButtons({
           panel={getPanelElement()}
           bar={bar}
           onClose={close}
+          onDismiss={onCardDismiss}
         >
           {open.quickEdit.presets ? (
             <QuickEditPresets panel={panel} onApplyPreset={applyPreset} />
@@ -172,9 +176,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
       borderRadius: theme.shape.radius.default,
     },
   }),
-  // Primary text can be neutral in a theme; the accent always marks the open card.
+  // Primary text can be neutral in a theme; the accent always marks the open card, also while hovered.
   active: css({
-    color: theme.colors.accent.text,
+    '&, &:hover': {
+      color: theme.colors.accent.text,
+    },
   }),
   swatches: css({
     position: 'absolute',
