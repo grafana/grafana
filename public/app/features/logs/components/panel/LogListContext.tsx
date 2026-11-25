@@ -272,7 +272,7 @@ export const LogListContextProvider = ({
   const [unwrappedColumns, setUnwrappedColumnsState] = useState(unwrappedColumnsProp);
   const [showLevel, setShowLevelState] = useState(showLevelProp);
   const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
-  const timeMachineLogsEnabled = useBooleanFlagValue('logs.enableTimeMachine', false);
+  const timeMachineLogsEnabled = useBooleanFlagValue('adaptivelogs.enableTimeMachine', false);
 
   useEffect(() => {
     if (noInteractions) {

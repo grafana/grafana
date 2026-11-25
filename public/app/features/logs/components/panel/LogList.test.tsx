@@ -301,7 +301,7 @@ describe('LogList', () => {
 
   describe('Time Machine log lines', () => {
     test('Shows the Time Machine icon and tooltip when the flag is enabled', async () => {
-      setBooleanFlags({ 'logs.enableTimeMachine': true });
+      setBooleanFlags({ 'adaptivelogs.enableTimeMachine': true });
       const user = userEvent.setup();
       const timeMachineLogs = [createLogRow({ uid: '1', labels: { __time_machine__: 'true' } })];
 
@@ -316,7 +316,7 @@ describe('LogList', () => {
     });
 
     test('Hides the Time Machine icon when the flag is disabled, even if the log has the marker', () => {
-      setBooleanFlags({ 'logs.enableTimeMachine': false });
+      setBooleanFlags({ 'adaptivelogs.enableTimeMachine': false });
       const timeMachineLogs = [createLogRow({ uid: '1', labels: { __time_machine__: 'true' } })];
 
       render(<LogList {...defaultProps} logs={timeMachineLogs} />);

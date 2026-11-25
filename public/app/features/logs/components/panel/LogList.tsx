@@ -336,7 +336,7 @@ const LogListComponent = ({
   );
   const styles = useStyles2(getStyles, dimensions, displayedFields, { unwrappedColumns }, listHeight);
   const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
-  const timeMachineLogsEnabled = useBooleanFlagValue('logs.enableTimeMachine', false);
+  const timeMachineLogsEnabled = useBooleanFlagValue('adaptivelogs.enableTimeMachine', false);
   const widthContainer = wrapperRef.current ?? containerElement;
   const {
     closePopoverMenu,
