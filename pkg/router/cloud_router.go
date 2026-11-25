@@ -121,6 +121,12 @@ func newPluginManifestsClient(section *setting.DynamicSection, prefix string) (*
 // token on every request, unless they set discovery_auth = none.
 func NewCloudRoutesLoader(cfg *setting.Cfg, deps PluginDependencies) (RoutesLoader, error) {
 	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
+	if cloudAppSettingsEnabled(cfg) {
+		if section.Key("plugins_url").MustString("") == "" || deps.Settings.LegacyStore == nil || deps.Settings.AccessChecker == nil {
+			return nil, fmt.Errorf("cloud_router: app_settings_enabled requires plugins_url, a legacy settings provider, and legacy app authorization")
+		}
+	}
+	deps.Cfg = cfg
 
 	aggregateTargetConfigs, err := parseAggregateTargets(cfg)
 	if err != nil {

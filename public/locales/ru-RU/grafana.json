@@ -6840,7 +6840,8 @@
           "title": "Вставьте панель"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "Добавить строку",
@@ -10115,10 +10116,6 @@
       "of": "ИЗ",
       "to": "К",
       "when": "КОГДА"
-    },
-    "expression-query-editor": {
-      "helper-text-sql": "Выполните SQL-запрос на диалекте MySQL к таблицам, возвращенным вашими источниками данных. Запросы к источникам данных (например, «A», «B») доступны в виде таблиц с ссылкой на них по имени запроса. Поля доступны в виде столбцов, возвращенных источником данных.",
-      "label-operation": "Операция"
     },
     "math": {
       "available-math-functions": "Доступные математические функции",
@@ -14006,12 +14003,11 @@
     },
     "megamenu-item": {
       "children-error": "Не удалось загрузить элементы",
+      "children-partial-error": "",
       "collapse-aria-label": "Свернуть раздел: {{sectionName}}",
       "expand-aria-label": "Развернуть раздел: {{sectionName}}",
       "loading-aria-label": "Загружается {{sectionName}}",
-      "reorder-aria-label": "Изменить порядок {{itemName}}",
-      "starred-dashboard-icon": "Дашборд",
-      "starred-folder-icon": "Папка"
+      "reorder-aria-label": "Изменить порядок {{itemName}}"
     },
     "org-switcher": {
       "aria-label": "Изменить организацию"
@@ -17788,6 +17784,7 @@
     "description-page-size": "Количество строк на странице. Если значение не указано, размер страницы определяется на основе высоты панели.",
     "description-show-columns-sidebar": "Открывайте боковую панель управления столбцами с помощью панели, а не из меню столбца",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "Поле, содержащее объекты JSON со свойствами CSS",
     "description-tooltip-from-field": "Отобразите ячейку из поля (скрытого или видимого) в подсказке",
     "description-zebra-striping": "Чередовать цвет фона каждой второй строки",
@@ -17832,6 +17829,7 @@
     "name-show-columns-sidebar": "Показать боковую панель столбцов",
     "name-show-row-numbers": "",
     "name-show-table-header": "Показать заголовок таблицы",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "Показывать подсказку при наведении курсора",
     "name-styling-from-field": "Стилевое оформление из поля",
     "name-tooltip-from-field": "Подсказка из поля",
