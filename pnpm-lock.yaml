@@ -751,13 +751,13 @@ importers:
         version: 1.6.3(@emnapi/core@2.0.0-beta.2)(@emnapi/runtime@2.0.0-beta.2)(@rsbuild/core@2.2.5(core-js@3.44.0))(@rspack/core@2.2.4(@swc/helpers@0.5.17))(supports-color@7.2.0)(webpack@5.105.0)
       '@rspack/cli':
         specifier: ^2
-        version: 2.1.8(@rspack/core@2.2.4(@swc/helpers@0.5.17))(@rspack/dev-server@2.2.1(@rspack/core@2.2.4(@swc/helpers@0.5.17)))
+        version: 2.1.8(@rspack/core@2.2.4(@swc/helpers@0.5.17))(@rspack/dev-server@2.2.2(@rspack/core@2.2.4(@swc/helpers@0.5.17)))
       '@rspack/core':
         specifier: ^2.1.7
         version: 2.2.4(@swc/helpers@0.5.17)
       '@rspack/dev-server':
-        specifier: 2.2.1
-        version: 2.2.1(@rspack/core@2.2.4(@swc/helpers@0.5.17))
+        specifier: 2.2.2
+        version: 2.2.2(@rspack/core@2.2.4(@swc/helpers@0.5.17))
       '@rspack/plugin-react-refresh':
         specifier: 2.0.3
         version: 2.0.3(@rspack/core@2.2.4(@swc/helpers@0.5.17))(react-refresh@0.18.0)
@@ -2732,7 +2732,7 @@ importers:
         version: link:../../../../../packages/grafana-plugin-configs
       '@rspack/cli':
         specifier: ^2
-        version: 2.1.8(@rspack/core@2.2.4(@swc/helpers@0.5.23))(@rspack/dev-server@2.2.1(@rspack/core@2.2.4(@swc/helpers@0.5.23)))
+        version: 2.1.8(@rspack/core@2.2.4(@swc/helpers@0.5.23))(@rspack/dev-server@2.2.2(@rspack/core@2.2.4(@swc/helpers@0.5.23)))
       '@rspack/core':
         specifier: ^2.1.7
         version: 2.2.4(@swc/helpers@0.5.23)
@@ -6325,8 +6325,8 @@ packages:
       '@swc/helpers':
         optional: true
 
-  '@rspack/dev-middleware@2.0.3':
-    resolution: {integrity: sha512-GxnGj9jy76G3eCPyZei81fwKLAMLZaPEEqFz1/QDYquhwi/qYZX5fekFJ1XVpuwxGEK9KSX3hxZylfwrs4cmLA==}
+  '@rspack/dev-middleware@2.0.6':
+    resolution: {integrity: sha512-Rcx7dlDZQ9ddUJGuutFvnSeAKl+ZOc1fnC3htibs8yew3zMD9VgvSUe4MAwEn94Gb390l5heA+s/j5KhoSG5MQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
     peerDependencies:
       '@rspack/core': ^2.0.0
@@ -6334,8 +6334,8 @@ packages:
       '@rspack/core':
         optional: true
 
-  '@rspack/dev-server@2.2.1':
-    resolution: {integrity: sha512-Il8HbYGK3rH5rM0XmUOsOGZVw69BKRpBZ61P28Fy8ry35CtfniDBWtbo/rvJtIT/sK0qwijmNrhF498ltsV+uA==}
+  '@rspack/dev-server@2.2.2':
+    resolution: {integrity: sha512-pK4V9YJW8dkfjy6WYJ2T6DrPkcIn2yjA1HiaU146141j8UCxHok5lsplyqudLzerOhvwqMrNFmnsuXLnFbfn4Q==}
     engines: {node: ^20.19.0 || >=22.12.0}
     peerDependencies:
       '@rspack/core': ^2.0.0
@@ -19252,17 +19252,17 @@ snapshots:
       '@rspack/binding-win32-ia32-msvc': 2.2.4
       '@rspack/binding-win32-x64-msvc': 2.2.4
 
-  '@rspack/cli@2.1.8(@rspack/core@2.2.4(@swc/helpers@0.5.17))(@rspack/dev-server@2.2.1(@rspack/core@2.2.4(@swc/helpers@0.5.17)))':
+  '@rspack/cli@2.1.8(@rspack/core@2.2.4(@swc/helpers@0.5.17))(@rspack/dev-server@2.2.2(@rspack/core@2.2.4(@swc/helpers@0.5.17)))':
     dependencies:
       '@rspack/core': 2.2.4(@swc/helpers@0.5.17)
     optionalDependencies:
-      '@rspack/dev-server': 2.2.1(@rspack/core@2.2.4(@swc/helpers@0.5.17))
+      '@rspack/dev-server': 2.2.2(@rspack/core@2.2.4(@swc/helpers@0.5.17))
 
-  '@rspack/cli@2.1.8(@rspack/core@2.2.4(@swc/helpers@0.5.23))(@rspack/dev-server@2.2.1(@rspack/core@2.2.4(@swc/helpers@0.5.23)))':
+  '@rspack/cli@2.1.8(@rspack/core@2.2.4(@swc/helpers@0.5.23))(@rspack/dev-server@2.2.2(@rspack/core@2.2.4(@swc/helpers@0.5.23)))':
     dependencies:
       '@rspack/core': 2.2.4(@swc/helpers@0.5.23)
     optionalDependencies:
-      '@rspack/dev-server': 2.2.1(@rspack/core@2.2.4(@swc/helpers@0.5.23))
+      '@rspack/dev-server': 2.2.2(@rspack/core@2.2.4(@swc/helpers@0.5.23))
 
   '@rspack/core@2.2.4(@swc/helpers@0.5.17)':
     dependencies:
@@ -19276,24 +19276,24 @@ snapshots:
     optionalDependencies:
       '@swc/helpers': 0.5.23
 
-  '@rspack/dev-middleware@2.0.3(@rspack/core@2.2.4(@swc/helpers@0.5.17))':
+  '@rspack/dev-middleware@2.0.6(@rspack/core@2.2.4(@swc/helpers@0.5.17))':
     optionalDependencies:
       '@rspack/core': 2.2.4(@swc/helpers@0.5.17)
 
-  '@rspack/dev-middleware@2.0.3(@rspack/core@2.2.4(@swc/helpers@0.5.23))':
+  '@rspack/dev-middleware@2.0.6(@rspack/core@2.2.4(@swc/helpers@0.5.23))':
     optionalDependencies:
       '@rspack/core': 2.2.4(@swc/helpers@0.5.23)
     optional: true
 
-  '@rspack/dev-server@2.2.1(@rspack/core@2.2.4(@swc/helpers@0.5.17))':
+  '@rspack/dev-server@2.2.2(@rspack/core@2.2.4(@swc/helpers@0.5.17))':
     dependencies:
       '@rspack/core': 2.2.4(@swc/helpers@0.5.17)
-      '@rspack/dev-middleware': 2.0.3(@rspack/core@2.2.4(@swc/helpers@0.5.17))
+      '@rspack/dev-middleware': 2.0.6(@rspack/core@2.2.4(@swc/helpers@0.5.17))
 
-  '@rspack/dev-server@2.2.1(@rspack/core@2.2.4(@swc/helpers@0.5.23))':
+  '@rspack/dev-server@2.2.2(@rspack/core@2.2.4(@swc/helpers@0.5.23))':
     dependencies:
       '@rspack/core': 2.2.4(@swc/helpers@0.5.23)
-      '@rspack/dev-middleware': 2.0.3(@rspack/core@2.2.4(@swc/helpers@0.5.23))
+      '@rspack/dev-middleware': 2.0.6(@rspack/core@2.2.4(@swc/helpers@0.5.23))
     optional: true
 
   '@rspack/lite-tapable@1.1.5': {}
