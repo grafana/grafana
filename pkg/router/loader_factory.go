@@ -105,7 +105,7 @@ func (noRoutesLoader) Notify(context.Context) (<-chan struct{}, error) {
 // returns (nil, nil) when [cloud_router] configures no source.
 //
 // The edition-specific Wire graph supplies the remote legacy settings provider.
-// Settings routes require app_settings_enabled; this constructs no local SQL services.
+// Settings routes require app_settings_plugins; this constructs no local SQL services.
 func ProvideCloudRoutesLoader(
 	cfg *setting.Cfg,
 	clients RoutesLoaderClients,
