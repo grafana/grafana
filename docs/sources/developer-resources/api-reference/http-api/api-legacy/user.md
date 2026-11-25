@@ -39,7 +39,7 @@ To use the instance-wide API endpoints you must have the Grafana server administ
 
 In Grafana OSS, the default `admin` user has permissions to use these API endpoints. If you're running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](ref:role-based-access-control-permissions) for more information.
 
-Because Grafana Cloud stacks are multi-tenant, **no Grafana Cloud account is allowed to call the instance-wide endpoints**. That level of access is reserved only for Grafana platform operators. If you're a Grafana Cloud user, refer to the [Organization HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/http_api/api-legacy/org/) or [Get teams for user](#get-teams-for-user) for current-organization team memberships.
+Because Grafana Cloud stacks are multi-tenant, **no Grafana Cloud account is allowed to call the instance-wide endpoints**. That level of access is reserved only for Grafana platform operators. If you're a Grafana Cloud user, refer to the [Organization HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/org/) or [Get teams for user](#get-teams-for-user) for current-organization team memberships.
 
 ## Authentication
 
