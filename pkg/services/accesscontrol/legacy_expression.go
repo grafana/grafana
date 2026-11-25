@@ -92,10 +92,13 @@ func (e *legacyExpressionExporter) convert(
 func (e *legacyExpressionExporter) convertPermission(
 	permission permissionEvaluator,
 ) (*authzextv1.LegacyExpression, error) {
-	// Local evaluation never grants an empty action, so callers use it as a
-	// never-true placeholder. An empty ANY preserves that without sending an
-	// action the server rejects.
 	if permission.Action == "" {
+		if len(permission.Scopes) > 0 {
+			return nil, errors.New("legacy permission action is required")
+		}
+
+		// Callers use an unscoped empty action as a deny placeholder.
+		// Encode it as an empty ANY rather than an invalid permission.
 		return &authzextv1.LegacyExpression{
 			Node: &authzextv1.LegacyExpression_Any{Any: &authzextv1.LegacyExpressionList{}},
 		}, nil

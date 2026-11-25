@@ -59,13 +59,23 @@ func TestToLegacyExpression(t *testing.T) {
 		},
 		{
 			name:      "empty action is a never-true any",
-			evaluator: EvalPermission("", "dashboards:*"),
+			evaluator: EvalPermission(""),
+			expected:  `{"any": {}}`,
+		},
+		{
+			name:      "empty action with an empty scope list",
+			evaluator: EvalPermission("", []string{}...),
 			expected:  `{"any": {}}`,
 		},
 		{
 			name:      "empty action inside any",
 			evaluator: EvalAny(EvalPermission(""), EvalPermission("x:y")),
 			expected:  `{"any": {"expressions": [{"any": {}}, {"permission": {"action": "x:y"}}]}}`,
+		},
+		{
+			name:      "empty action inside all",
+			evaluator: EvalAll(EvalPermission(""), EvalPermission("x:y")),
+			expected:  `{"all": {"expressions": [{"any": {}}, {"permission": {"action": "x:y"}}]}}`,
 		},
 		{
 			name: "nesting order and separate checks for the same action",
@@ -195,6 +205,16 @@ func TestToLegacyExpressionRejectsInvalidEvaluators(t *testing.T) {
 			error:     "legacy any evaluator is required",
 		},
 		{
+			name:      "empty action with scopes",
+			evaluator: EvalPermission("", "dashboards:uid:missing"),
+			error:     "legacy permission action is required",
+		},
+		{
+			name:      "empty action with an explicit empty scope",
+			evaluator: EvalPermission("", ""),
+			error:     "legacy permission action is required",
+		},
+		{
 			name:      "unsupported custom evaluator",
 			evaluator: unsupportedLegacyEvaluator{},
 			error:     "unsupported legacy evaluator type",
@@ -301,10 +321,10 @@ func TestToLegacyExpressionLimits(t *testing.T) {
 			error:     "",
 		},
 		{
-			name: "empty actions do not count toward action or scope limits",
+			name: "empty actions do not count toward action limits",
 			evaluator: EvalAny(append(
 				distinctLegacyPermissionEvaluators(maxLegacyExpressionActions),
-				EvalPermission("", make([]string, maxLegacyExpressionScopes+1)...),
+				EvalPermission(""),
 			)...),
 			error: "",
 		},

@@ -64,6 +64,13 @@ func TestLegacyCheckReference_EmptyExpressions(t *testing.T) {
 			),
 			allowedWithXY: true,
 		},
+		{
+			name: "empty action in all",
+			evaluator: accesscontrol.EvalAll(
+				accesscontrol.EvalPermission(""),
+				accesscontrol.EvalPermission("x:y"),
+			),
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Run("no effective permissions", func(t *testing.T) {
