@@ -42,4 +42,25 @@ describe('getUplotStyles', () => {
     expect(styles).toContain(`border-right:1px dashed ${getCrosshairColor(theme)}`);
     expect(styles).toContain(`border-bottom:1px dashed ${getCrosshairColor(theme)}`);
   });
+
+  it.each(THEME_IDS)('applies standard focus-visible styles to .uplot in %s', (themeId) => {
+    const theme = getThemeById(themeId);
+    const { styles } = getUplotStyles(theme);
+
+    expect(styles).toContain('.uplot:focus-visible');
+    expect(styles).toContain(theme.colors.accent.main);
+  });
+
+  it.each(THEME_IDS)('focus ring accent clears 3:1 contrast against panel and canvas in %s', (themeId) => {
+    const theme = getThemeById(themeId);
+
+    expect(
+      colorManipulator.getContrastRatio(theme.colors.accent.main, theme.components.panel.background)
+    ).toBeGreaterThanOrEqual(3);
+    expect(
+      colorManipulator.getContrastRatio(theme.colors.accent.main, theme.colors.background.canvas)
+    ).toBeGreaterThanOrEqual(3);
+  });
+
+
 });
