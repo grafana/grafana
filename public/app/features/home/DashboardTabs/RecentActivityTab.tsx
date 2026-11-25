@@ -135,7 +135,7 @@ export function RecentActivityTab({ recent, foldersByUid }: Props) {
                         title={item.dashboard.name}
                         group="dashboard.grafana.app"
                         kind="Dashboard"
-                        name={item.uid}
+                        id={item.uid}
                       />
                     )}
                   </span>
