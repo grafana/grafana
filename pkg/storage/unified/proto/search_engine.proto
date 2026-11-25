@@ -15,7 +15,8 @@ service SearchEngine {
   // Reads known IDs, omitting documents that disappeared.
   // With query set, also omits documents that no longer match it.
   rpc ReadDocuments(ReadDocumentsRequest) returns (ReadDocumentsResponse);
-  // Creates the configured index, or verifies that it was created for this scope.
+  // Creates the configured index from the schema identified by IndexReference,
+  // or verifies that it was created for this scope.
   rpc EnsureIndex(EnsureIndexRequest) returns (google.protobuf.Empty);
   // Applies one batch of distinct document keys. Success means its effects are visible to search.
   // Submit batches sequentially. On failure some items may already have been applied.
@@ -30,7 +31,7 @@ message EnsureIndexRequest {
 
 message WriteDocumentsRequest {
   IndexScope index_scope = 1;
-  // Type and array declarations for app-defined fields in this batch.
+  // Describes how to decode app-defined values in this batch, not how to index them.
   repeated resource.ResourceSearchField fields = 2;
   repeated DocumentWrite writes = 3;
 }
@@ -131,6 +132,10 @@ message IndexReference {
   string group = 1;
   string resource = 2;
   string generation = 3;
+  // Identifies a logical field schema known to both Grafana and the adapter,
+  // including capabilities such as exact filtering and full-text search.
+  // The adapter chooses the physical mapping and returns FAILED_PRECONDITION
+  // if it does not recognize the revision for this group and resource.
   string schema_revision = 4;
 }
 
@@ -188,6 +193,8 @@ message DocumentScope {
 enum DocumentState {
   DOCUMENT_STATE_UNSPECIFIED = 0;
   DOCUMENT_STATE_LIVE = 1;
+  // SearchCandidates and ReadDocuments with a query must return UNIMPLEMENTED
+  // if the adapter cannot query trash. An empty success means no matches.
   DOCUMENT_STATE_TRASH = 2;
 }
 

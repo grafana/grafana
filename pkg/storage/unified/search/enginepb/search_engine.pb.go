@@ -151,7 +151,9 @@ type DocumentState int32
 const (
 	DocumentState_DOCUMENT_STATE_UNSPECIFIED DocumentState = 0
 	DocumentState_DOCUMENT_STATE_LIVE        DocumentState = 1
-	DocumentState_DOCUMENT_STATE_TRASH       DocumentState = 2
+	// SearchCandidates and ReadDocuments with a query must return UNIMPLEMENTED
+	// if the adapter cannot query trash. An empty success means no matches.
+	DocumentState_DOCUMENT_STATE_TRASH DocumentState = 2
 )
 
 // Enum value maps for DocumentState.
@@ -251,7 +253,7 @@ func (x *EnsureIndexRequest) GetRequireNew() bool {
 type WriteDocumentsRequest struct {
 	state      protoimpl.MessageState `protogen:"open.v1"`
 	IndexScope *IndexScope            `protobuf:"bytes,1,opt,name=index_scope,json=indexScope,proto3" json:"index_scope,omitempty"`
-	// Type and array declarations for app-defined fields in this batch.
+	// Describes how to decode app-defined values in this batch, not how to index them.
 	Fields        []*resourcepb.ResourceSearchField `protobuf:"bytes,2,rep,name=fields,proto3" json:"fields,omitempty"`
 	Writes        []*DocumentWrite                  `protobuf:"bytes,3,rep,name=writes,proto3" json:"writes,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1067,11 +1069,15 @@ func (x *IndexScope) GetRequiredFeatures() []string {
 // Together with namespace, group/resource matches the existing NamespacedResource.
 // The adapter resolves this to a local Bleve index or native engine index.
 type IndexReference struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Group          string                 `protobuf:"bytes,1,opt,name=group,proto3" json:"group,omitempty"`
-	Resource       string                 `protobuf:"bytes,2,opt,name=resource,proto3" json:"resource,omitempty"`
-	Generation     string                 `protobuf:"bytes,3,opt,name=generation,proto3" json:"generation,omitempty"`
-	SchemaRevision string                 `protobuf:"bytes,4,opt,name=schema_revision,json=schemaRevision,proto3" json:"schema_revision,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	Group      string                 `protobuf:"bytes,1,opt,name=group,proto3" json:"group,omitempty"`
+	Resource   string                 `protobuf:"bytes,2,opt,name=resource,proto3" json:"resource,omitempty"`
+	Generation string                 `protobuf:"bytes,3,opt,name=generation,proto3" json:"generation,omitempty"`
+	// Identifies a logical field schema known to both Grafana and the adapter,
+	// including capabilities such as exact filtering and full-text search.
+	// The adapter chooses the physical mapping and returns FAILED_PRECONDITION
+	// if it does not recognize the revision for this group and resource.
+	SchemaRevision string `protobuf:"bytes,4,opt,name=schema_revision,json=schemaRevision,proto3" json:"schema_revision,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }

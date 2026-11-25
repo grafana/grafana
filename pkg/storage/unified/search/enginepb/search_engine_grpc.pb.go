@@ -35,7 +35,8 @@ type SearchEngineClient interface {
 	// Reads known IDs, omitting documents that disappeared.
 	// With query set, also omits documents that no longer match it.
 	ReadDocuments(ctx context.Context, in *ReadDocumentsRequest, opts ...grpc.CallOption) (*ReadDocumentsResponse, error)
-	// Creates the configured index, or verifies that it was created for this scope.
+	// Creates the configured index from the schema identified by IndexReference,
+	// or verifies that it was created for this scope.
 	EnsureIndex(ctx context.Context, in *EnsureIndexRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Applies one batch of distinct document keys. Success means its effects are visible to search.
 	// Submit batches sequentially. On failure some items may already have been applied.
@@ -99,7 +100,8 @@ type SearchEngineServer interface {
 	// Reads known IDs, omitting documents that disappeared.
 	// With query set, also omits documents that no longer match it.
 	ReadDocuments(context.Context, *ReadDocumentsRequest) (*ReadDocumentsResponse, error)
-	// Creates the configured index, or verifies that it was created for this scope.
+	// Creates the configured index from the schema identified by IndexReference,
+	// or verifies that it was created for this scope.
 	EnsureIndex(context.Context, *EnsureIndexRequest) (*emptypb.Empty, error)
 	// Applies one batch of distinct document keys. Success means its effects are visible to search.
 	// Submit batches sequentially. On failure some items may already have been applied.
