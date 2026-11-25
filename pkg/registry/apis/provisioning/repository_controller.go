@@ -63,6 +63,11 @@ func (s *RepositoryControllerService) running(ctx context.Context) error {
 	// loopback credentials before a remote backend.
 	restConfig, err := s.builder.awaitLoopbackConfig(ctx)
 	if err == nil {
+		// A changed or cleared bootstrap_path must be applied before the
+		// controller syncs the repository it replaces.
+		err = s.builder.awaitBootstrapReconciled(ctx)
+	}
+	if err == nil {
 		err = s.run(ctx, restConfig)
 	}
 	if errors.Is(err, context.Canceled) && ctx.Err() != nil {
