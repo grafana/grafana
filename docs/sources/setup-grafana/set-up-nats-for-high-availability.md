@@ -16,6 +16,8 @@ title: Set up NATS for high availability
 weight: 950
 ---
 
+{{< docs/public-preview product="Embedded NATS" >}}
+
 # Set up NATS for high availability
 
 In a high availability (HA) setup, every Grafana instance must learn about the changes that the other instances write to the shared database.
@@ -30,7 +32,7 @@ This page explains how to turn on embedded NATS in an HA cluster, how to protect
 {{< admonition type="note" >}}
 Embedded NATS is available in Grafana 13.4 and later behind the `[nats]` settings on this page.
 It's off by default.
-Test it on a non-production cluster before you turn it on in production.
+Test it on a non-production cluster before you turn it on in production, and share your feedback in a [GitHub issue](https://github.com/grafana/grafana/issues/new/choose).
 {{< /admonition >}}
 
 ## Before you begin
