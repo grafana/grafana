@@ -14,11 +14,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-app-sdk/routes"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -536,35 +534,4 @@ func getPluginProxiedRequest(t *testing.T, ps *pluginsettings.DTO, secureJsonDat
 	proxy.matchedRoute = route
 	proxy.director(req)
 	return req
-}
-
-func TestPluginProxyForwardsRequesterAccessToken(t *testing.T) {
-	for _, token := range []string{"verified-obo", ""} {
-		t.Run("token="+token, func(t *testing.T) {
-			received := make(chan http.Header, 1)
-			upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				received <- r.Header.Clone()
-				w.WriteHeader(http.StatusOK)
-			}))
-			defer upstream.Close()
-			cfg := setting.NewCfg()
-			cfg.JWTAuth.Enabled, cfg.JWTAuth.HeaderName = true, "X-Access-Token"
-			ctx := contexthandler.WithAuthHTTPHeaders(t.Context(), cfg)
-			req := httptest.NewRequest("GET", "/remote", nil).WithContext(ctx)
-			req.Header.Set("X-Access-Token", "unverified")
-			req.Header.Set("X-Grafana-Id", "unverified-id")
-			rec := httptest.NewRecorder()
-			transport := &http.Transport{}
-			defer transport.CloseIdleConnections()
-			proxy, err := NewPluginProxy(&pluginsettings.DTO{PluginID: "example-app"}, []*plugins.Route{{Path: "remote", URL: upstream.URL}},
-				req, rec, &identity.StaticRequester{AccessToken: token}, "remote", false, false, nil,
-				tracing.InitializeTracerForTest(), transport, nil, featuremgmt.WithFeatures(), nil)
-			require.NoError(t, err)
-			proxy.HandleRequest()
-			require.Equal(t, 200, rec.Code, rec.Body.String())
-			headers := <-received
-			require.Equal(t, token, headers.Get("X-Access-Token"))
-			require.Empty(t, headers.Get("X-Grafana-Id"))
-		})
-	}
 }

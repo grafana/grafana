@@ -1,7 +1,7 @@
 # App settings in the multi tenant router
 
 Status: shared ST/MT handlers and read-only MT storage are implemented on the local branches.
-Writes and dual-write migration are follow-up work.
+Reads honor migration modes, including unified-only mode 5. Writes and migration execution are follow-up work.
 
 ## Goal
 
@@ -16,7 +16,7 @@ needs no per-tenant plugin-version lookup and supplies no explicit Grafana versi
 | --- | --- | --- |
 | Enterprise `pkg/apppluginext/builder.go` | Cloudconfig | Existing MT v2 health/resources and proxy, including legacy tenant/version machinery |
 | ST router `pluginroute.NewAppSettingsHandler` | SQL adapter, unified storage, or dual writer | Shared v2 health/resources and HTTP proxy |
-| MT router settings | Read-only cloudconfig adapter | The same handler as ST, calling the configured plugin deployment |
+| MT router settings | Cloudconfig or unified storage, selected by migration policy; read-only API | The same handler as ST, calling the configured plugin deployment |
 | MT router manifest groups | Unified storage | v3 routes, admission, and conversion |
 | Legacy `/api/plugins/:id/settings` | SQL through `pluginsettings.Service` | Existing legacy writes and cache invalidation |
 
@@ -57,24 +57,33 @@ There is no `ExternalSubresources` option or composite HTTP fallback. The settin
 settings, health, resources, and proxy. A frontend-only deployment can still serve settings
 and declared proxy routes; backend calls report MethodNotImplemented without a v2 host.
 
-Read-only mode selects get/list storage and skips the dual writer. It does not select a
-separate subresource implementation. The shared handlers load enabled settings, resolve
+Read-only mode wraps the storage selected by the shared migration policy, exposing only
+get/list. Legacy mode reads cloudconfig; dual-write mode returns legacy reads and checks
+unified storage; unified-only mode 5 reads unified storage without reading cloudconfig.
+The standalone cloud loader uses config-based migration status without local SQL. It resolves
+`app.*-app` defaults for dynamically discovered plugins without mutating shared config, and
+registers migration metrics once per loader. A supplied migration service takes precedence.
+Storage selection also applies to health, resource, and proxy settings reads. The shared handlers load enabled settings, resolve
 secrets, execute the plugin, and apply proxy route authorization as they do in ST. Proxy
 registration uses ST's `apppluginsHandleProxyRequests` feature gate.
 
 MT supplies only the context and credentials needed for these requests:
 
-- Namespace, requester, and app instance settings in the plugin context. OrgID remains a
-  legacy SDK compatibility field; it does not select a tenant.
-- Forward the authenticated requester's OBO token in `X-Access-Token` on health, resource,
-  and proxy calls. No ID-token derivation is needed. Existing plugin service-token middleware
-  remains separate; the router and enterprise apiserver share its audience policy.
+- Namespace, requester, and app instance settings in the plugin context.
+- Existing plugin service-token middleware; the router and enterprise apiserver share its
+  audience policy. The new settings path does not derive ID tokens.
 - Remote legacy RBAC for app access and proxy `reqAction` checks. Incoming token scopes and
   namespace restrictions are checked before execution; proxy roles use the shared handler.
 
 No stack-settings lookup, tenant-context middleware, installed-version lookup, or Grafana
 version is introduced into the new path. Existing `pkg/apppluginext` remains available for
 separate deployments; removing its compatibility machinery is separate work.
+
+### Follow-up: caller token exchange
+
+Handle OBO credentials in the plugin client alongside token exchange. Decide the audience and
+scope for backend calls, and cover health, resources, and proxy behavior there. This PR does
+not add access-token forwarding or header manipulation to the settings handlers or proxy.
 
 ### 4. Add writes and dual write — next
 
@@ -85,10 +94,8 @@ Preserve legacy envelope encryption and key access, secure-field merge/removal, 
 plugin-state events, and cache invalidation. SQL-proxy transactions do not support
 `SELECT FOR UPDATE`; an unknown commit outcome requires reconciliation, not blind retries.
 
-Use the same dual-write handler as ST once a writable adapter exists. Add migration policy
-for dynamically discovered plugin IDs, resolve `app.*-app` defaults without mutating shared
-maps, and register dual-write metrics once. Do not permit configuration to turn the current
-read-only adapter into a writer.
+Enable writes through the shared dual-write handler once a writable adapter exists.
+Do not permit migration configuration to turn the current read-only API into a writer.
 
 ### 5. Complete migration
 

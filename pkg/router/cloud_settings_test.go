@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/appsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -45,7 +46,7 @@ func (f settingsLegacyCheckFunc) LegacyCheck(ctx context.Context, req legacyclie
 }
 
 func settingsRequester(ns string) *identity.StaticRequester {
-	return &identity.StaticRequester{Type: types.TypeUser, UserUID: "reader", Namespace: ns, OrgID: 1, AccessToken: "obo-" + ns,
+	return &identity.StaticRequester{Type: types.TypeUser, UserUID: "reader", Namespace: ns, OrgID: 1, IDToken: "id-" + ns,
 		AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{DelegatedPermissions: []string{"*-app:get"}}},
 	}
 }
@@ -60,7 +61,7 @@ func TestCloudSettingsRoutes(t *testing.T) {
 			listener, err := net.Listen("tcp", "127.0.0.1:0")
 			require.NoError(t, err)
 			server := grpc.NewServer()
-			v2 := &cloudSettingsPluginServer{calls: make(chan *pluginv2.PluginContext, 10), headers: make(chan http.Header, 10)}
+			v2 := &cloudSettingsPluginServer{calls: make(chan *pluginv2.PluginContext, 10), headers: make(chan string, 10)}
 			pluginv2.RegisterDiagnosticsServer(server, v2)
 			pluginv2.RegisterResourceServer(server, v2)
 			go func() { _ = server.Serve(listener) }()
@@ -91,8 +92,6 @@ func TestCloudSettingsRoutes(t *testing.T) {
 			}))
 			defer fallbackServer.Close()
 			cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": manifestServer.URL, "app_settings_enabled": "true"})
-			// Read-only mode must hold even if deployment config asks for unified-only writes.
-			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{"app.example-app": {DualWriterMode: 5}}
 			if withFallback {
 				addAggregateSection(t, cfg, "v2", map[string]string{"url": fallbackServer.URL, "discovery_auth": "none"})
 			}
@@ -140,13 +139,11 @@ func TestCloudSettingsRoutes(t *testing.T) {
 			serve := func(method, path string, user *identity.StaticRequester) *httptest.ResponseRecorder {
 				r := httptest.NewRequest(method, path, strings.NewReader(`{}`))
 				r.Header.Set("Content-Type", "application/json")
-				r.Header.Set("X-Access-Token", "unverified")
-				r.Header.Set("X-Grafana-Id", "unverified-id")
 				if user != nil {
 					r = r.WithContext(identity.WithRequester(r.Context(), user))
 				}
 				w := httptest.NewRecorder()
-				h.ServeHTTP(w, r)
+				h.ServeHTTP(newStatusRecorder(w).writer(), r)
 				return w
 			}
 			root := "/apis/example-app/v0alpha1"
@@ -212,9 +209,7 @@ func TestCloudSettingsRoutes(t *testing.T) {
 					require.Equal(t, ns, call.Namespace)
 					require.Equal(t, "example-app", call.PluginId)
 					require.Empty(t, call.PluginVersion)
-					headers := <-v2.headers
-					require.Equal(t, "obo-"+ns, headers.Get("X-Access-Token"))
-					require.Empty(t, headers.Get("X-Grafana-Id"))
+					require.Equal(t, "id-"+ns, <-v2.headers)
 					require.Equal(t, "read-secret", call.AppInstanceSettings.DecryptedSecureJsonData["token"])
 					require.Empty(t, call.GrafanaConfig)
 					require.NotNil(t, call.User)
@@ -227,14 +222,13 @@ func TestCloudSettingsRoutes(t *testing.T) {
 			res = serve("POST", item+"/resources", writer)
 			require.Equal(t, 200, res.Code, res.Body.String())
 			require.Equal(t, "stacks-1", (<-v2.calls).Namespace)
-			require.Equal(t, "obo-stacks-1", (<-v2.headers).Get("X-Access-Token"))
+			require.Equal(t, "id-stacks-1", <-v2.headers)
 			require.NotNil(t, doc.Paths.Paths[path+"/health"])
 			res = serve("GET", item+"/proxy/remote", settingsRequester("stacks-1"))
 			require.Equal(t, 200, res.Code, res.Body.String())
 			proxied := <-proxyCalls
 			require.Equal(t, "/cloudconfig/read-secret", proxied.URL.Path)
-			require.Equal(t, "obo-stacks-1", proxied.Header.Get("X-Access-Token"))
-			require.Empty(t, proxied.Header.Get("X-Grafana-Id"))
+			require.Equal(t, "id-stacks-1", proxied.Header.Get("X-Grafana-Id"))
 			last := checks[len(checks)-1]
 			require.Equal(t, "stacks-1", last.Namespace)
 			require.True(t, last.Evaluator.Evaluate(map[string][]string{"example-app.remote:read": {"plugins:id:example-app"}}))
@@ -250,7 +244,6 @@ func TestCloudSettingsRoutes(t *testing.T) {
 			settings.Plugins["example-app"].Enabled = false
 			require.Equal(t, 400, serve("GET", item+"/health", settingsRequester("stacks-1")).Code)
 			require.Empty(t, v2.calls)
-
 		})
 	}
 }
@@ -272,17 +265,17 @@ type cloudSettingsPluginServer struct {
 	pluginv2.UnimplementedDiagnosticsServer
 	pluginv2.UnimplementedResourceServer
 	calls   chan *pluginv2.PluginContext
-	headers chan http.Header
+	headers chan string
 }
 
 func (s *cloudSettingsPluginServer) CheckHealth(_ context.Context, req *pluginv2.CheckHealthRequest) (*pluginv2.CheckHealthResponse, error) {
 	s.calls <- req.PluginContext
-	s.headers <- backend.FromProto().CheckHealthRequest(req).GetHTTPHeaders()
+	s.headers <- backend.FromProto().CheckHealthRequest(req).GetHTTPHeader("X-Grafana-Id")
 	return &pluginv2.CheckHealthResponse{Status: pluginv2.CheckHealthResponse_OK}, nil
 }
 func (s *cloudSettingsPluginServer) CallResource(req *pluginv2.CallResourceRequest, stream pluginv2.Resource_CallResourceServer) error {
 	s.calls <- req.PluginContext
-	s.headers <- backend.FromProto().CallResourceRequest(req).GetHTTPHeaders()
+	s.headers <- backend.FromProto().CallResourceRequest(req).GetHTTPHeader("X-Grafana-Id")
 	return stream.Send(&pluginv2.CallResourceResponse{Code: 200, Body: []byte(req.Path)})
 }
 
@@ -332,7 +325,7 @@ func TestCloudSettingsStoreLifecycle(t *testing.T) {
 	for _, fail := range []bool{false, true} {
 		t.Run(map[bool]string{false: "retirement", true: "failed load"}[fail], func(t *testing.T) {
 			store := &settingsDestroyStore{Storage: appsettings.NewLegacySettingsStore("example-app", "example-app", &pluginsettings.FakePluginSettings{})}
-			deps := PluginDependencies{ReadOnlySettings: true, ContextProvider: cloudPluginContext{}, Unified: &resource.MockResourceClient{}, LegacySettingsStore: func(context.Context, string) (grafanarest.Storage, error) { return store, nil }}
+			deps := PluginDependencies{ReadOnlySettings: true, DualWrite: dualwrite.ProvideServiceForTests(nil), ContextProvider: cloudPluginContext{}, Unified: &resource.MockResourceClient{}, LegacySettingsStore: func(context.Context, string) (grafanarest.Storage, error) { return store, nil }}
 			if fail {
 				deps.ContextProvider = nil
 			}

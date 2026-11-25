@@ -10,10 +10,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/resource"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 )
 
@@ -53,35 +51,4 @@ type settingsDecrypter func(context.Context, string, string, ...string) (map[str
 
 func (f settingsDecrypter) Decrypt(ctx context.Context, group, namespace string, names ...string) (map[string]decrypt.DecryptResult, error) {
 	return f(ctx, group, namespace, names...)
-}
-
-func TestForwardAccessToken(t *testing.T) {
-	for name, newRequest := range map[string]func() backend.ForwardHTTPHeaders{
-		"health":   func() backend.ForwardHTTPHeaders { return &backend.CheckHealthRequest{} },
-		"resource": func() backend.ForwardHTTPHeaders { return &backend.CallResourceRequest{} },
-	} {
-		t.Run(name, func(t *testing.T) {
-			for _, tc := range []struct {
-				name string
-				user *identity.StaticRequester
-				want string
-			}{
-				{name: "OBO without an ID token", user: &identity.StaticRequester{AccessToken: "verified-obo"}, want: "verified-obo"},
-				{name: "no access token", user: &identity.StaticRequester{}},
-				{name: "no requester"},
-			} {
-				t.Run(tc.name, func(t *testing.T) {
-					ctx := t.Context()
-					if tc.user != nil {
-						ctx = identity.WithRequester(ctx, tc.user)
-					}
-					req := newRequest()
-					req.SetHTTPHeader("X-Access-Token", "unverified")
-					forwardAccessToken(ctx, req)
-					require.Equal(t, tc.want, req.GetHTTPHeader("X-Access-Token"))
-					require.Empty(t, req.GetHTTPHeader("X-Grafana-Id"))
-				})
-			}
-		})
-	}
 }

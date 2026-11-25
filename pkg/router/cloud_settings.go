@@ -3,9 +3,11 @@ package router
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	authzlib "github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/types"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -17,7 +19,31 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 )
+
+// Cloud plugins are discovered after startup, so resolve wildcard defaults at
+// lookup time without adding plugin IDs to the shared configuration map.
+type cloudSettingsMigrationStatusReader struct {
+	unifiedmigrations.MigrationStatusReader
+	config map[string]setting.UnifiedStorageConfig
+}
+
+func newCloudSettingsMigrationStatusReader(cfg *setting.Cfg) unifiedmigrations.MigrationStatusReader {
+	return cloudSettingsMigrationStatusReader{
+		MigrationStatusReader: dualwrite.NewConfigBasedMigrationStatusReader(cfg),
+		config:                maps.Clone(cfg.UnifiedStorage),
+	}
+}
+
+func (r cloudSettingsMigrationStatusReader) GetStorageMode(ctx context.Context, gr schema.GroupResource) (unifiedmigrations.StorageMode, error) {
+	if _, explicit := r.config[gr.String()]; !explicit && gr.Resource == appv0.APP_RESOURCE_NAME && isAppPluginID(gr.Group) {
+		gr.Group = "*-app"
+	}
+	return r.MigrationStatusReader.GetStorageMode(ctx, gr)
+}
 
 func cloudSettingsAccessChecker(client legacyclient.LegacyAccessClient) pluginaccesscontrol.AppAccessChecker {
 	if client == nil {
@@ -83,7 +109,7 @@ func (cloudPluginContext) PluginContextForApp(ctx context.Context, id string, se
 	}
 	return ctx, backend.PluginContext{
 		Namespace: ns, PluginID: id, AppInstanceSettings: settings,
-		OrgID: user.GetOrgID(), User: adapters.BackendUserFromSignedInUser(user),
+		User: adapters.BackendUserFromSignedInUser(user),
 	}, nil
 }
 

@@ -55,7 +55,7 @@ type PluginContextWrapper interface {
 
 type Options struct {
 	RegisterProxy bool
-	// ReadOnly serves the legacy store directly, independent of migration modes.
+	// ReadOnly disables settings writes and watches without changing storage selection.
 	ReadOnly bool
 
 	DataProxyLogging         bool // from cfg
@@ -108,9 +108,6 @@ func NewBuilder(
 ) (*Builder, error) {
 	if client == nil || contextProvider == nil {
 		return nil, fmt.Errorf("plugin %q: settings require a plugin client and context provider", plugin.JSONData.ID)
-	}
-	if opts.ReadOnly && opts.LegacyStore == nil {
-		return nil, fmt.Errorf("plugin %q: read-only settings require a legacy store", plugin.JSONData.ID)
 	}
 	return &Builder{
 		group:           plugin.JSONData.ID,
@@ -165,10 +162,6 @@ func (b *Builder) InstallSchema(scheme *runtime.Scheme) error {
 
 func (b *Builder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	registerSubresourceMetrics(opts.MetricsRegister)
-	if b.opts.ReadOnly {
-		return b.installSettingsStorage(apiGroupInfo, readOnlyStorage{b.opts.LegacyStore})
-	}
-
 	settingsRI := apppluginV0.SettingsResourceInfo.WithGroupAndShortName(
 		b.group, b.pluginJSON.ID,
 	)
@@ -192,12 +185,15 @@ func (b *Builder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo
 	if err != nil {
 		return err
 	}
-	var settingsStorage rest.Storage = unified
+	var settingsStorage grafanarest.Storage = unified
 	if b.opts.LegacyStore != nil && opts.DualWriteBuilder != nil {
 		settingsStorage, err = opts.DualWriteBuilder(settingsRI.GroupResource(), b.opts.LegacyStore, unified)
 		if err != nil {
 			return err
 		}
+	}
+	if b.opts.ReadOnly {
+		return b.installSettingsStorage(apiGroupInfo, readOnlyStorage{settingsStorage})
 	}
 
 	// The subresources are served by SubresourceHandler.

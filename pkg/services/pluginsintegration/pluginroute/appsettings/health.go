@@ -23,9 +23,9 @@ func (r *healthHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	call := &backend.CheckHealthRequest{PluginContext: pluginCtx}
-	forwardAccessToken(ctx, call)
-	healthResponse, err := r.client.CheckHealth(ctx, call)
+	healthResponse, err := r.client.CheckHealth(ctx, &backend.CheckHealthRequest{
+		PluginContext: pluginCtx,
+	})
 	if err != nil {
 		_ = errhttp.Write(req.Context(), err, w)
 		return

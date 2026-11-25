@@ -57,16 +57,14 @@ func (r *resourcesHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	call := &backend.CallResourceRequest{
+	err = r.client.CallResource(ctx, &backend.CallResourceRequest{
 		PluginContext: pluginCtx,
 		Path:          clonedReq.URL.Path,
 		Method:        req.Method,
 		URL:           clonedReq.URL.String(),
 		Body:          body,
 		Headers:       clonedReq.Header,
-	}
-	forwardAccessToken(ctx, call)
-	err = r.client.CallResource(ctx, call, httpresponsesender.New(w))
+	}, httpresponsesender.New(w))
 
 	if err != nil {
 		backend.Logger.Error("plugin resource request failed", "error", err)

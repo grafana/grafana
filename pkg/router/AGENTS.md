@@ -91,7 +91,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   (`newPluginSettingsBackend`): the single `app` resource, always named `instance`. A plugin ID
   must be a DNS label with a hyphen, so it can never name a core or manifest group. The standalone cloud loader can serve read-only settings when
   `[cloud_router] app_settings_enabled` is enabled and a remote legacy provider and app-access
-  checker are supplied. It bypasses unified migration modes and installs get/list settings storage.
+  checker are supplied. It selects storage using the migration policy, then exposes only get/list settings storage.
   Health/resources call the deployment's v2 client; proxy uses the shared ST handler and feature gate. The local
   standalone plugin loader still serves no settings.
 - **One bad backend or plugin fails only its own group;** it must never stop the reconcile loop.

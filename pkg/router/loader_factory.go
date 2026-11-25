@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -117,7 +118,19 @@ func ProvideCloudRoutesLoader(
 	if err != nil {
 		return nil, err
 	}
+	var builderMetrics *builder.BuilderMetrics
+	if cfg.SectionWithEnvOverrides(cloudRouterSection).Key("app_settings_enabled").MustBool(false) {
+		if clients.DualWrite == nil {
+			clients.DualWrite, err = dualwrite.ProvideService(cfg, dualwrite.NewFakeMigrator(), newCloudSettingsMigrationStatusReader(cfg), reg)
+			if err != nil {
+				return nil, err
+			}
+		}
+		builderMetrics = builder.ProvideBuilderMetrics(reg)
+	}
 	return NewCloudRoutesLoader(cfg, PluginDependencies{
+		DualWrite:           clients.DualWrite,
+		BuilderMetrics:      builderMetrics,
 		LegacySettingsStore: settings.LegacyStore,
 		ReadOnlySettings:    true,
 		ContextProvider:     cloudPluginContext{},

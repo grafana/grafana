@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -129,15 +128,4 @@ func (b *Builder) getPluginContext(ctx context.Context) (context.Context, backen
 		return ctx, backend.PluginContext{}, fmt.Errorf("error decrypting secure values: %w", err)
 	}
 	return b.contextProvider.PluginContextForApp(ctx, b.pluginJSON.ID, instance)
-}
-
-// Forward the verified caller's token, including for health calls that have no
-// incoming headers. An unverified or stale header must not survive without it.
-func forwardAccessToken(ctx context.Context, req backend.ForwardHTTPHeaders) {
-	req.DeleteHTTPHeader("X-Access-Token")
-	if user, err := identity.GetRequester(ctx); err == nil {
-		if token := user.GetAccessToken(); token != "" {
-			req.SetHTTPHeader("X-Access-Token", token)
-		}
-	}
 }
