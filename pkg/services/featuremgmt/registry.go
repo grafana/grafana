@@ -18,6 +18,15 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
+			Name:         "dataviz.statRefresh",
+			Description:  "Enables the new stat panel",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			Generate:     Generate{React: true},
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:        "panelTitleSearch",
 			Description: "Search for dashboards using panel title",
 			Stage:       FeatureStagePublicPreview,

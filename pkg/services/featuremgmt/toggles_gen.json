@@ -2351,6 +2351,21 @@
     },
     {
       "metadata": {
+        "name": "dataviz.statRefresh",
+        "resourceVersion": "1795534928177",
+        "creationTimestamp": "2026-11-24T15:42:08Z"
+      },
+      "spec": {
+        "description": "Enables the new stat panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dataviz.tabularNums",
         "resourceVersion": "1790951488017",
         "creationTimestamp": "2026-10-02T15:19:46Z",

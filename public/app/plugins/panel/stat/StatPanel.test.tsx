@@ -13,8 +13,9 @@ import { BigValueGraphMode, BigValueTextMode } from '@grafana/schema';
 
 import { getPanelProps } from '../test-utils';
 
-import { StatPanel } from './StatPanel';
+import { StatPanel as StatPanelV1 } from './StatPanel';
 import { defaultOptions, type Options } from './panelcfg.gen';
+import { StatPanel as StatPanelV2 } from './v2/StatPanel';
 
 const defaultPanelOptions: Options = {
   ...defaultOptions,
@@ -38,30 +39,33 @@ function createTimeSeriesFrame(values = [10, 20, 30]): DataFrame {
   });
 }
 
-function renderStatPanel(
-  optionsOverrides?: Partial<Options>,
-  dataOverrides?: Partial<{ series: DataFrame[] }>,
-  fieldConfig?: Partial<FieldConfigSource>,
-  propOverrides?: Partial<{ title: string }>
-) {
-  const props = getPanelProps<Options>(
-    { ...defaultPanelOptions, ...optionsOverrides },
-    {
-      data: {
-        state: LoadingState.Done,
-        series: [createNumericFrame()],
-        timeRange: getDefaultTimeRange(),
-        ...dataOverrides,
-      },
-      fieldConfig: { defaults: {}, overrides: [], ...fieldConfig } as FieldConfigSource,
-      replaceVariables: (v: string) => v,
-      ...propOverrides,
-    }
-  );
-  return render(<StatPanel {...props} />);
-}
+describe.each([
+  ['v1', StatPanelV1],
+  ['v2', StatPanelV2],
+] as const)('StatPanel %s', (_version, StatPanel) => {
+  function renderStatPanel(
+    optionsOverrides?: Partial<Options>,
+    dataOverrides?: Partial<{ series: DataFrame[] }>,
+    fieldConfig?: Partial<FieldConfigSource>,
+    propOverrides?: Partial<{ title: string }>
+  ) {
+    const props = getPanelProps<Options>(
+      { ...defaultPanelOptions, ...optionsOverrides },
+      {
+        data: {
+          state: LoadingState.Done,
+          series: [createNumericFrame()],
+          timeRange: getDefaultTimeRange(),
+          ...dataOverrides,
+        },
+        fieldConfig: { defaults: {}, overrides: [], ...fieldConfig } as FieldConfigSource,
+        replaceVariables: (v: string) => v,
+        ...propOverrides,
+      }
+    );
+    return render(<StatPanel {...props} />);
+  }
 
-describe('StatPanel', () => {
   it('renders the reduced value for numeric data', () => {
     renderStatPanel();
 
