@@ -135,7 +135,7 @@ func (s *terminatingStore) Delete(ctx context.Context, name string, validate res
 
 func (s *terminatingStore) Update(ctx context.Context, name string, info rest.UpdatedObjectInfo, cv rest.ValidateObjectFunc, uv rest.ValidateObjectUpdateFunc, force bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	s.updates++
-	if s.updateErr != nil || (s.rejectLiveUpdates && s.existing[name].DeletionTimestamp == nil) {
+	if cur, ok := s.existing[name]; s.updateErr != nil || (s.rejectLiveUpdates && ok && cur.DeletionTimestamp == nil) {
 		return nil, false, errors.Join(s.updateErr, errors.New("update rejected"))
 	}
 	updated, async, err := s.fakeFolderStorage.Update(ctx, name, info, cv, uv, force, options)
@@ -287,6 +287,9 @@ func TestCascadeDelete_StampSkippedWhenFolderChangedAfterDelete(t *testing.T) {
 		"recreated under the same name": {func(s *terminatingStore) {
 			replacement := finalizerFolder("f")
 			replacement.UID = "new"
+			// Terminating, so the late write reaches its uid check instead of being rejected as a live update.
+			now := metav1.Now()
+			replacement.DeletionTimestamp = &now
 			s.existing["f"] = replacement
 		}, ""},
 		"another request stamped first": {func(s *terminatingStore) {
@@ -298,8 +301,11 @@ func TestCascadeDelete_StampSkippedWhenFolderChangedAfterDelete(t *testing.T) {
 			f := finalizerFolder("f")
 			f.UID = "old"
 			store := newTerminatingStore(f)
+			// The version cap rejects the early stamp, so the late write is the one under test.
+			store.rejectLiveUpdates = true
 			store.afterDelete = tc.change
 			require.NoError(t, forceDeleteAs(store, userA, forceDelete(), nil))
+			require.Equal(t, 2, store.updates, "the rejected early stamp and the late write")
 			if got, ok := store.existing["f"]; ok {
 				require.Equal(t, tc.want, got.Annotations[annoKeyCascadeDeleteRequester])
 			}
