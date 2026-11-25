@@ -295,3 +295,6 @@ analytics-report.md
 debug-storybook.log
 .superpowers/
 docs/superpowers/
+
+# Vendored public testing skill provenance.
+!/.claude/skills/shared-testing-source.json
