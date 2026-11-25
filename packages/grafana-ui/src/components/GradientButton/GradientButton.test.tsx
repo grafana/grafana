@@ -56,6 +56,24 @@ describe('GradientButton', () => {
       });
     }
   );
+
+  it('keeps the disabled background when an aria-disabled button with a tooltip is pressed', () => {
+    const theme = createTheme();
+    render(
+      <GradientButton icon="ai-sparkle" fill="solid" tooltip="Assistant is unavailable" disabled>
+        Analyze with Assistant
+      </GradientButton>
+    );
+    const button = screen.getByRole('button', { name: 'Analyze with Assistant' });
+    const className = [...button.classList].find((name) => name.includes('gradient-button'));
+    const activeRules = Array.from(document.styleSheets)
+      .flatMap((sheet) => Array.from(sheet.cssRules))
+      .filter(
+        (rule): rule is CSSStyleRule => rule instanceof CSSStyleRule && rule.selectorText === `.${className}:active`
+      );
+    // The last :active rule wins, so it has to be the disabled one
+    expect(activeRules.at(-1)?.style.background).toBe(theme.colors.action.disabledBackground);
+  });
 });
 
 describe('getGradientButtonFillStyles', () => {

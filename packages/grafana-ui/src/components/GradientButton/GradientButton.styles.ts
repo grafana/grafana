@@ -57,6 +57,7 @@ export const getGradientButtonStyles = (
       '&:hover': disabledStyles,
       '&:focus': disabledStyles,
       '&:focus-visible': disabledStyles,
+      '&:active': disabledStyles,
       '&[aria-expanded="true"]': disabledStyles,
     }),
     icon: iconOnly
