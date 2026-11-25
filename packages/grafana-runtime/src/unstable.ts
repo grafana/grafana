@@ -20,6 +20,7 @@ export {
   type KindLabelOptions,
   type KindRegistry,
 } from './services/KindRegistry';
+export { getStarsSrv, type StarredResourceRef, type StarsSrv } from './services/StarsSrv';
 // Plugins bundling @grafana/plugin-compat < 0.5.0 only look for these here.
 export {
   /** @deprecated Import from `@grafana/runtime` instead. */

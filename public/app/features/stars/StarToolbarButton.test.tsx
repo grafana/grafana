@@ -4,16 +4,15 @@ import { render, screen, waitFor } from 'test/test-utils';
 
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { setBackendSrv, setStarsSrv } from '@grafana/runtime';
-import { starsRoute } from '@grafana/test-utils/handlers';
+import { setBackendSrv } from '@grafana/runtime';
+import { starsRoute, starUpdateRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { StarToolbarButton } from './StarToolbarButton';
+import { StarToolbarButton, StarToolbarButtonExposed } from './StarToolbarButton';
 import { itemStarred } from './analytics/main';
-import { CollectionsStarsSrv } from './service';
 
 jest.mock('./analytics/main', () => ({
   itemStarred: jest.fn(),
@@ -22,7 +21,6 @@ jest.mock('./analytics/main', () => ({
 const [_, { dashbdD, folderA, folderA_folderB_dashbdB }] = getFolderFixtures();
 
 setBackendSrv(backendSrv);
-setStarsSrv(new CollectionsStarsSrv());
 setupMockServer();
 locationUtil.initialize({
   config: { appSubUrl: '/foo/bar' } as GrafanaConfig,
@@ -115,12 +113,7 @@ describe('StarToolbarButton', () => {
   });
 
   it('reports no analytics event when the star is not stored', async () => {
-    server.use(
-      http.put(
-        '/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars/:name/update/:group/:kind/:id',
-        () => new HttpResponse(null, { status: 500 })
-      )
-    );
+    server.use(http.put(starUpdateRoute, () => new HttpResponse(null, { status: 500 })));
     const { user } = setup(itemToStar);
 
     await user.click(await findStarButton(itemToStar.title, false));
@@ -173,5 +166,27 @@ describe('StarToolbarButton', () => {
       jest.replaceProperty(contextSrv.user, 'uid', '');
       await expectNoStarButton();
     });
+  });
+});
+
+describe('StarToolbarButtonExposed', () => {
+  it('stars the object a plugin names', async () => {
+    const { user } = render(
+      <StarToolbarButtonExposed title="Capacity review" group="things.ext.grafana.app" kind="Thing" name="t1" />
+    );
+
+    await user.click(await findStarButton('Capacity review', false));
+
+    expect(await findStarButton('Capacity review', true)).toBeInTheDocument();
+  });
+
+  it('renders nothing, and says why, when a plugin names no object', () => {
+    const error = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    render(<StarToolbarButtonExposed title="Capacity review" group="things.ext.grafana.app" kind="Thing" />);
+
+    expect(error).toHaveBeenCalledWith('[StarToolbarButton] Pass title, group, kind and name: the object to star.');
+    expect(screen.queryByTestId(selectors.components.NavToolbar.markAsFavorite)).not.toBeInTheDocument();
+    error.mockRestore();
   });
 });

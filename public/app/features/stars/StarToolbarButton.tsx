@@ -2,10 +2,11 @@ import { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { getStarsSrv } from '@grafana/runtime';
 import { Icon, ToolbarButton } from '@grafana/ui';
+import { useDispatch } from 'app/types/store';
 
 import { itemStarred } from './analytics/main';
+import { setStarred } from './api';
 import { useStarredItems } from './hooks';
 import { canUseStars } from './utils';
 
@@ -33,6 +34,7 @@ export function StarToolbarButton(props: Props) {
 
 function StarToggle({ title, group, kind, name }: Props) {
   const tooltips = getStarTooltips(title);
+  const dispatch = useDispatch();
 
   const { data: stars, isLoading } = useStarredItems(group, kind);
 
@@ -43,9 +45,8 @@ function StarToggle({ title, group, kind, name }: Props) {
   }, [name, stars]);
 
   const handleStarToggle = async () => {
-    const ref = { group, kind, name };
     try {
-      await (isStarred ? getStarsSrv().unstar(ref) : getStarsSrv().star(ref));
+      await dispatch(setStarred({ group, kind, name }, !isStarred));
     } catch {
       // Grafana refused the change — the button keeps showing the state that persisted
       return;
@@ -105,5 +106,5 @@ export function StarToolbarButtonExposed(props: Partial<Props>) {
     console.error('[StarToolbarButton] Pass title, group, kind and name: the object to star.');
     return null;
   }
-  return <StarToolbarButton {...props} title={title} group={group} kind={kind} name={name} />;
+  return <StarToolbarButton title={title} group={group} kind={kind} name={name} />;
 }

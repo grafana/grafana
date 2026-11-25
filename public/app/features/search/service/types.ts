@@ -68,6 +68,12 @@ export interface DashboardQueryResult {
   [key: string]: unknown;
 }
 
+/**
+ * The fields of a search row that an object of any kind has a value for. A row of the dashboard search is one as
+ * it stands.
+ */
+export type SearchRow = Pick<DashboardQueryResult, 'kind' | 'uid' | 'name' | 'url' | 'description' | 'location'>;
+
 export interface LocationInfo {
   kind: string;
   name: string;

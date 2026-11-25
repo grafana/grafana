@@ -2,13 +2,13 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useMemo } from 'react';
 
 import { useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
-import { type DashboardQueryResult } from 'app/features/search/service/types';
+import { type DashboardQueryResult, type SearchRow } from 'app/features/search/service/types';
 import { useDispatch } from 'app/types/store';
 
 import { refetchStarred, useSearchStarredQuery } from './api';
 import { refetchStarredAppKinds, useSearchStarredAppKindsQuery } from './kindSearch';
 import { getStarredAppKinds, STARRED_INDEX_KINDS, type StarredKind } from './kinds';
-import { byTitle, canUseStars, findStarredNames, type StarredRow, userStarsFieldSelector } from './utils';
+import { byTitle, canUseStars, findStarredNames, userStarsFieldSelector } from './utils';
 
 /**
  * Get starred items from the app platform API
@@ -111,7 +111,7 @@ export const useStarredSearch = ({ refetchOnMountOrArgChange }: { refetchOnMount
   const { names } = useStarredNames(getStarredAppKinds());
   const apps = useSearchStarredAppKindsQuery(names ?? skipToken, { refetchOnMountOrArgChange });
 
-  const rows = useMemo((): StarredRow[] | undefined => {
+  const rows = useMemo((): SearchRow[] | undefined => {
     if (!apps.data?.length) {
       return indexed.rows;
     }

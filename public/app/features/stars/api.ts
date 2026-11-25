@@ -1,12 +1,20 @@
 import { chunk } from 'lodash';
 
+import { type StarredResourceRef } from '@grafana/runtime/unstable';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
-import { type ThunkResult } from 'app/types/store';
+import { type StoreState, type ThunkResult } from 'app/types/store';
 
 import { STARRED_INDEX_KINDS } from './kinds';
-import { byTitle, type StarredNames, starsHoldName, userStarsFieldSelector } from './utils';
+import {
+  byTitle,
+  canUseStars,
+  findStarredNames,
+  type StarredNames,
+  userStarsFieldSelector,
+  userStarsName,
+} from './utils';
 
 /** Tag for the starred search rows, invalidated by changes that rewrite rows without changing the star set. */
 const STARRED_SEARCH_TAG = 'StarredSearch';
@@ -56,6 +64,27 @@ const starsAPI = collectionsAPIv1alpha1.enhanceEndpoints({ addTagTypes: [STARRED
   }),
 });
 
+/** The current user's star set as the cache holds it; undefined until it is read. */
+export const selectUserStars = (state: StoreState) =>
+  collectionsAPIv1alpha1.endpoints.listStars.select({ fieldSelector: userStarsFieldSelector() })(state).data;
+
+/**
+ * Stars or unstars an object for the current user. Rejects when the server refuses, and for a user without a stars
+ * resource. The mutation invalidates the `Stars` tag, so every starred view follows the set it reads again.
+ */
+export const setStarred =
+  ({ group, kind, name }: StarredResourceRef, starred: boolean): ThunkResult<Promise<void>> =>
+  async (dispatch) => {
+    if (!canUseStars()) {
+      throw new Error('Cannot change stars: the current user has no stars resource');
+    }
+    const { addStar, removeStar } = collectionsAPIv1alpha1.endpoints;
+    const endpoint = starred ? addStar : removeStar;
+    // The route names the starred object `id`; its `name` is the user's stars resource. Untracked: nothing reads
+    // this mutation's state, and a tracked entry stays in the store until it is reset
+    await dispatch(endpoint.initiate({ group, kind, id: name, name: userStarsName() }, { track: false })).unwrap();
+  };
+
 /**
  * Re-searches the starred rows. Renames and deletions change a row without changing the star set, so nothing the
  * star mutations invalidate would refresh it. Subscribed entries refetch; unmounted ones are dropped and searched
@@ -72,10 +101,9 @@ export const invalidateStarredSearch = () => starsAPI.util.invalidateTags([STARR
 export const invalidateStarredSearchFor =
   (uids: string[]): ThunkResult<void> =>
   (dispatch, getState) => {
-    const { data } = collectionsAPIv1alpha1.endpoints.listStars.select({ fieldSelector: userStarsFieldSelector() })(
-      getState()
-    );
-    if (starsHoldName(data, STARRED_INDEX_KINDS, uids)) {
+    const data = selectUserStars(getState());
+    const starredNames = new Set(STARRED_INDEX_KINDS.flatMap(({ group, kind }) => findStarredNames(data, group, kind)));
+    if (uids.some((uid) => starredNames.has(uid))) {
       dispatch(invalidateStarredSearch());
     }
   };

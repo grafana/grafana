@@ -1,85 +1,62 @@
 import { isEqual } from 'lodash';
 import { defer, distinctUntilChanged, filter, finalize, from, map, type Observable, of } from 'rxjs';
 
-import { type StarredResourceRef, type StarsSrv } from '@grafana/runtime';
+import { type StarredResourceRef, type StarsSrv } from '@grafana/runtime/unstable';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
-import { contextSrv } from 'app/core/services/context_srv';
-import { dispatch, store } from 'app/store/store';
+import { dispatch, getState, store } from 'app/store/store';
 
-import { invalidateStarredSearchFor } from './api';
-import { refetchStarredAppKindsFor } from './kindSearch';
-import { findStarredKind } from './kinds';
-import { findStarredNames, userStarsFieldSelector } from './utils';
+import { invalidateStarredSearch, selectUserStars, setStarred } from './api';
+import { refetchStarredAppKinds } from './kindSearch';
+import { findStarredKind, STARRED_INDEX_KINDS } from './kinds';
+import { canUseStars, findStarredNames, userStarsFieldSelector } from './utils';
+
+function starred(group: string, kind: string): Observable<readonly string[]> {
+  // A user without a stars resource has nothing starred, so the set is empty and never changes
+  if (!canUseStars()) {
+    return of([]);
+  }
+
+  return defer(() => {
+    const args = { fieldSelector: userStarsFieldSelector() };
+    // Keeps the listStars cache entry alive (and refetching on tag invalidation) while subscribed.
+    const query = dispatch(collectionsAPIv1alpha1.endpoints.listStars.initiate(args));
+    const select = collectionsAPIv1alpha1.endpoints.listStars.select(args);
+
+    return from(store).pipe(
+      map((state) => select(state)),
+      // Hold the first emission until the read settles, so subscribers never see a spurious empty set.
+      // A failed read is an empty set, not an error: an error would end the stream before a later read succeeds.
+      filter(({ data, isError }) => data !== undefined || isError),
+      map(({ data }) => findStarredNames(data, group, kind)),
+      distinctUntilChanged(isEqual),
+      finalize(() => query.unsubscribe())
+    );
+  });
+}
 
 /**
- * Stars objects over the collections API. Every starred view reads the star set and its search rows from RTK
- * cache, so a star change shows through the `Stars` tag the mutations invalidate, and a write to a starred object
- * through a re-search of the rows.
+ * Searches again for the row of an object after a write to it. A write to an object that is not starred changes no
+ * row, so the search is spared.
  */
-export class CollectionsStarsSrv implements StarsSrv {
-  canStar(group: string, kind: string): Promise<boolean> {
-    return Promise.resolve(findStarredKind(group, kind) !== undefined);
+function searchAgain({ group, kind, name }: StarredResourceRef): void {
+  const starredKind = findStarredKind(group, kind);
+  if (!starredKind || !findStarredNames(selectUserStars(getState()), group, kind).includes(name)) {
+    return;
   }
-
-  star(ref: StarredResourceRef): Promise<void> {
-    return this.mutate(ref, true);
-  }
-
-  unstar(ref: StarredResourceRef): Promise<void> {
-    return this.mutate(ref, false);
-  }
-
-  starred(group: string, kind: string): Observable<string[]> {
-    // A signed-out user has no stars resource to read, so the set is empty and never changes.
-    if (!contextSrv.isSignedIn) {
-      return of([]);
-    }
-
-    return defer(() => {
-      const args = { fieldSelector: userStarsFieldSelector() };
-      // Keeps the listStars cache entry alive (and refetching on tag invalidation) while subscribed.
-      const query = dispatch(collectionsAPIv1alpha1.endpoints.listStars.initiate(args));
-      const select = collectionsAPIv1alpha1.endpoints.listStars.select(args);
-
-      return from(store).pipe(
-        map((state) => select(state)),
-        // Hold the first emission until the read settles, so subscribers never see a spurious empty set.
-        // A failed read is an empty set, not an error: an error would end the stream before a later read succeeds.
-        filter(({ data, isError }) => data !== undefined || isError),
-        map(({ data }) => findStarredNames(data, group, kind)),
-        distinctUntilChanged(isEqual),
-        finalize(() => query.unsubscribe())
-      );
-    });
-  }
-
-  resourceUpdated(name: string): void {
-    this.searchAgainFor(name);
-  }
-
-  resourceDeleted(name: string): void {
-    this.searchAgainFor(name);
-  }
-
-  private async mutate(ref: StarredResourceRef, isStarred: boolean): Promise<void> {
-    if (!contextSrv.isSignedIn) {
-      throw new Error('Cannot change stars while signed out');
-    }
-
-    const { group, kind, name } = ref;
-    const endpoint = isStarred ? collectionsAPIv1alpha1.endpoints.addStar : collectionsAPIv1alpha1.endpoints.removeStar;
-
-    // Rejects on server error; the Stars tag invalidation refetches listStars, so starred() and every view follow.
-    // Untracked: nothing reads this mutation's state, and a tracked entry stays in the store until it is reset
-    // The route names the starred object `id`, and its `name` is the user's Stars object
-    await dispatch(
-      endpoint.initiate({ group, kind, id: name, name: `user-${contextSrv.user.uid}` }, { track: false })
-    ).unwrap();
-  }
-
-  /** Searches again for the rows of whatever is starred under the name: a dashboard, a folder or an app object. */
-  private searchAgainFor(name: string): void {
-    dispatch(invalidateStarredSearchFor([name]));
-    dispatch(refetchStarredAppKindsFor([name]));
-  }
+  // The dashboard index lists its own kinds; an app kind is searched through its plugin's API
+  dispatch(STARRED_INDEX_KINDS.includes(starredKind) ? invalidateStarredSearch() : refetchStarredAppKinds());
 }
+
+/**
+ * The stars service that app plugins get through `getStarsSrv()`. Every starred view reads the star set and its
+ * search rows from RTK cache. A star change shows through the `Stars` tag the mutations invalidate, and a write to
+ * a starred object through a new search of its row.
+ */
+export const starsSrv: StarsSrv = {
+  showsStarsOf: (group, kind) => findStarredKind(group, kind) !== undefined,
+  star: (ref) => dispatch(setStarred(ref, true)),
+  unstar: (ref) => dispatch(setStarred(ref, false)),
+  starred,
+  resourceUpdated: searchAgain,
+  resourceDeleted: searchAgain,
+};

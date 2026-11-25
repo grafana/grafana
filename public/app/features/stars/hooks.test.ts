@@ -24,7 +24,7 @@ import { addKinds } from 'app/core/kinds/coreKinds';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { useStarredSearch } from './hooks';
-import { CollectionsStarsSrv } from './service';
+import { starsSrv } from './service';
 
 const { group: GROUP, kind: KIND, version: VERSION, resource: RESOURCE } = MOCK_APP_KIND;
 const DASHBOARD: DashboardHit = { resource: 'dashboards', name: 'dash-1', title: 'Bravo dashboard', field: {} };
@@ -34,9 +34,6 @@ setBackendSrv(backendSrv);
 setupMockServer();
 testWithStarsUser();
 testWithAppKind();
-
-// The star button stars through this service
-const stars = new CollectionsStarsSrv();
 
 /** The starred search, and the names of its rows. */
 function renderStarredSearch() {
@@ -222,7 +219,7 @@ describe('useStarredSearch', () => {
     });
 
     await act(async () => {
-      await stars.star({ group: 'folder.grafana.app', kind: 'Folder', name: FOLDER.name });
+      await starsSrv.star({ group: 'folder.grafana.app', kind: 'Folder', name: FOLDER.name });
     });
 
     // The API of a plugin that has yet to answer does not hold up a star made meanwhile
@@ -281,7 +278,7 @@ describe('useStarredSearch', () => {
     });
 
     await act(async () => {
-      await stars.unstar({ group: GROUP, kind: KIND, name: 't1' });
+      await starsSrv.unstar({ group: GROUP, kind: KIND, name: 't1' });
     });
     await waitFor(() => {
       expect(starred.rowNames()).toEqual([]);
@@ -289,7 +286,7 @@ describe('useStarredSearch', () => {
 
     const thingSearch = holdThingSearch([{ name: 't2', title: 'Second thing' }]);
     await act(async () => {
-      await stars.star({ group: GROUP, kind: KIND, name: 't2' });
+      await starsSrv.star({ group: GROUP, kind: KIND, name: 't2' });
     });
     await waitFor(() => {
       expect(thingSearch.asked).toHaveBeenCalledTimes(1);
