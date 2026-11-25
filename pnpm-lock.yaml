@@ -747,7 +747,7 @@ importers:
         specifier: 3.31.0
         version: 3.31.0(react@19.2.8)
       '@rsdoctor/rspack-plugin':
-        specifier: ^1.0.0
+        specifier: ^1.6.3
         version: 1.6.3(@emnapi/core@2.0.0-beta.2)(@emnapi/runtime@2.0.0-beta.2)(@rsbuild/core@2.2.5(core-js@3.44.0))(@rspack/core@2.2.4(@swc/helpers@0.5.17))(supports-color@7.2.0)(webpack@5.105.0)
       '@rspack/cli':
         specifier: ^2
