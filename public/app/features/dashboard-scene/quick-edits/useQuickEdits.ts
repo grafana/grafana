@@ -12,7 +12,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 
 import { changeViewPanelFieldConfig, changeViewPanelOptions } from '../actions/panel/changeViewPanelOptions';
-import { createPresetApplyHandler } from '../panel-edit/getPanelFrameOptions';
+import { createPresetApplyHandler } from '../panel-edit/createPresetApplyHandler';
 
 export interface ResolvedQuickEdit {
   quickEdit: ReturnType<PanelPlugin['getQuickEdits']>[number];
