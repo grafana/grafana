@@ -1284,6 +1284,7 @@ func newPreviousReadTestServer(t *testing.T, beforeRead func(context.Context, in
 func newQueuedPreviousReadTestServer(t *testing.T, beforeRead func(context.Context, int64)) (*server, *previousReadBackend) {
 	t.Helper()
 	srv, backend := newPreviousReadTestServer(t, beforeRead)
+	// This queue runs callbacks synchronously while exercising the QoS watch path.
 	srv.queue = previousReadQueueFunc(func(run func()) error {
 		run()
 		return nil
@@ -1469,7 +1470,7 @@ func TestWatchPreviousReadAuthorizesUnderQoS(t *testing.T) {
 						require.NoError(t, err)
 						require.EqualValues(t, previousReadTestRV, rsp.ResourceVersion)
 					}
-					// The watch can report its deadline before the inline callback unwinds.
+					// The watch can report its deadline before the queue callback unwinds.
 					synctest.Wait()
 					require.EqualValues(t, i+1, queue.admissions.Load(), "each watch should use one QoS admission")
 				}
@@ -1617,7 +1618,7 @@ func TestWatchPreviousReadWithoutQoSCancelsWhenLastWaiterLeaves(t *testing.T) {
 	})
 }
 
-func TestWatchPreviousReadStopsWaitingForStalledInlineRetry(t *testing.T) {
+func TestWatchPreviousReadStopsWaitingForStalledQueuedRetry(t *testing.T) {
 	for _, stalled := range []string{"backend", "authorization"} {
 		t.Run(stalled, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
@@ -1653,7 +1654,7 @@ func TestWatchPreviousReadStopsWaitingForStalledInlineRetry(t *testing.T) {
 	}
 }
 
-func TestWatchPreviousReadRetriesWhenInitialInlineReadStalls(t *testing.T) {
+func TestWatchPreviousReadRetriesWhenInitialQueuedReadStalls(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		release := make(chan struct{})
 		defer close(release)
