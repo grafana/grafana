@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/grafana/dskit/services"
@@ -149,19 +150,38 @@ func TestStart_MultipleServices(t *testing.T) {
 		require.Equal(t, services.Terminated, healthy.State())
 	})
 
-	t.Run("stops services in reverse start order", func(t *testing.T) {
-		var stopped []string
-		newService := func(name string) services.Service {
-			return services.NewIdleService(nil, func(error) error {
-				stopped = append(stopped, name)
-				return nil
-			})
-		}
+	t.Run("stops services one at a time in reverse start order", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			svcs := newBlockingServices("subscriber", "watcher", "controller")
+			_, stop, err := Start(t.Context(), svcs.services()...)
+			require.NoError(t, err)
 
-		_, stop, err := Start(t.Context(), newService("subscriber"), newService("watcher"))
-		require.NoError(t, err)
-		require.NoError(t, stop())
-		require.Equal(t, []string{"watcher", "subscriber"}, stopped)
+			stopErr := make(chan error, 1)
+			go func() { stopErr <- stop() }()
+			svcs.requireStoppedInOrder(t, "controller", "watcher", "subscriber")
+			require.NoError(t, <-stopErr)
+		})
+	})
+
+	t.Run("parent cancellation leaves services running until stop", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			parent, cancel := context.WithCancel(t.Context())
+			svcs := newBlockingServices("subscriber", "watcher", "controller")
+			ctx, stop, err := Start(parent, svcs.services()...)
+			require.NoError(t, err)
+
+			cancel()
+			synctest.Wait()
+			require.ErrorIs(t, ctx.Err(), context.Canceled)
+			for _, svc := range svcs.services() {
+				require.Equal(t, services.Running, svc.State())
+			}
+
+			stopErr := make(chan error, 1)
+			go func() { stopErr <- stop() }()
+			svcs.requireStoppedInOrder(t, "controller", "watcher", "subscriber")
+			require.NoError(t, <-stopErr)
+		})
 	})
 
 	t.Run("no services", func(t *testing.T) {
@@ -170,4 +190,64 @@ func TestStart_MultipleServices(t *testing.T) {
 		require.NoError(t, ctx.Err())
 		require.NoError(t, stop())
 	})
+}
+
+// blockingServices run until their context is cancelled, then block in their
+// stopping function until released, so a test can see which ones are stopping.
+type blockingServices struct {
+	names    []string
+	byName   map[string]services.Service
+	stopping map[string]chan struct{}
+	release  map[string]chan struct{}
+}
+
+func newBlockingServices(names ...string) *blockingServices {
+	b := &blockingServices{
+		names:    names,
+		byName:   map[string]services.Service{},
+		stopping: map[string]chan struct{}{},
+		release:  map[string]chan struct{}{},
+	}
+	for _, name := range names {
+		stopping, release := make(chan struct{}), make(chan struct{})
+		b.stopping[name], b.release[name] = stopping, release
+		b.byName[name] = services.NewIdleService(nil, func(error) error {
+			close(stopping)
+			<-release
+			return nil
+		})
+	}
+	return b
+}
+
+func (b *blockingServices) services() []services.Service {
+	svcs := make([]services.Service, 0, len(b.names))
+	for _, name := range b.names {
+		svcs = append(svcs, b.byName[name])
+	}
+	return svcs
+}
+
+// requireStoppedInOrder releases the services one at a time and requires that
+// only the next one in order has started stopping each time. Call it inside a
+// synctest bubble while stop runs in another goroutine.
+func (b *blockingServices) requireStoppedInOrder(t *testing.T, order ...string) {
+	t.Helper()
+	for i, name := range order {
+		synctest.Wait()
+		for _, later := range order[i+1:] {
+			require.False(t, isClosed(b.stopping[later]), "%s started stopping before %s finished", later, name)
+		}
+		require.True(t, isClosed(b.stopping[name]), "%s did not start stopping", name)
+		close(b.release[name])
+	}
+}
+
+func isClosed(ch <-chan struct{}) bool {
+	select {
+	case <-ch:
+		return true
+	default:
+		return false
+	}
 }
