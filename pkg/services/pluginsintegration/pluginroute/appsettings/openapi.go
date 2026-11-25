@@ -288,7 +288,6 @@ func defaultSchema() *pluginschema.PluginSchema {
 							},
 							Spec: apppluginV0.SettingsSpec{
 								Enabled:  true,
-								Pinned:   true,
 								JsonData: kcommon.Unstructured{},
 							},
 						},
