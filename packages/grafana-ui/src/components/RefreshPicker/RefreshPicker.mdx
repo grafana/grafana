@@ -6,12 +6,28 @@ import * as RefreshPickerStories from './RefreshPicker.story';
 
 # Refresh Picker
 
+## When to use
+
 This component is used on dashboards to refresh visualizations. Grafana does not do this automatically, queries run on their own schedule according to the panel settings. Grafana cancels any pending requests when a new refresh is triggered.
+
+## Never use for
+
+No component-specific guidance documented yet.
+
+## Do's and don'ts
+
+No component-specific guidance documented yet.
+
+## Usage
 
 **The refresh icon:** will immediately run the query and refresh the visualizations.
 
 **The down arrow:** will display a list of refresh intervals. If one of them is selected the dashboard will regularly refresh according to that schedule.
 
 <Canvas of={RefreshPickerStories.Examples} />
+
+## Accessibility
+
+## Props
 
 <ArgTypes of={RefreshPicker} />

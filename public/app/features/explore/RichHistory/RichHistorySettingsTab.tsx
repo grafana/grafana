@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
-import { useStyles2, Select, Button, Field, InlineField, InlineSwitch, Alert } from '@grafana/ui';
+import { useStyles2, Select, Button, Field, InlineField, InlineSwitch, Alert, Stack } from '@grafana/ui';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { MAX_HISTORY_ITEMS } from 'app/core/history/RichHistoryLocalStorage';
 import { notifyApp } from 'app/core/reducers/appNotification';
@@ -87,43 +87,54 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
 
   return (
     <div className={styles.container}>
-      {supportedFeatures().changeRetention ? (
-        <Field
-          label={t('explore.rich-history-settings-tab.history-time-span', 'History time span')}
-          description={t(
-            'explore.rich-history-settings-tab.history-time-span-description',
-            'Select the period of time for which Grafana will save your query history. Up to {{MAX_HISTORY_ITEMS}} entries will be stored.',
-            { MAX_HISTORY_ITEMS }
-          )}
-        >
-          <div className={styles.input}>
-            <Select value={selectedOption} options={retentionPeriodOptions} onChange={onChangeRetentionPeriod}></Select>
-          </div>
-        </Field>
-      ) : (
-        <Alert severity="info" title={t('explore.rich-history-settings-tab.history-time-span', 'History time span')}>
-          {t(
-            'explore.rich-history-settings-tab.alert-info',
-            "Grafana will keep entries up to {{optionLabel}}.Starred entries won't be deleted.",
-            {
-              optionLabel: selectedOption?.label,
-            }
-          )}
-        </Alert>
-      )}
-      <InlineField
-        label={t(
-          'explore.rich-history-settings-tab.change-default-tab',
-          'Change the default active tab from “Query history” to “Starred”'
+      <Stack direction="column" gap={2}>
+        {supportedFeatures().changeRetention ? (
+          <Field
+            label={t('explore.rich-history-settings-tab.history-time-span', 'History time span')}
+            description={t(
+              'explore.rich-history-settings-tab.history-time-span-description',
+              'Select the period of time for which Grafana will save your query history. Up to {{MAX_HISTORY_ITEMS}} entries will be stored.',
+              { MAX_HISTORY_ITEMS }
+            )}
+            noMargin
+          >
+            <div className={styles.input}>
+              <Select
+                value={selectedOption}
+                options={retentionPeriodOptions}
+                onChange={onChangeRetentionPeriod}
+              ></Select>
+            </div>
+          </Field>
+        ) : (
+          <Alert
+            severity="info"
+            title={t('explore.rich-history-settings-tab.history-time-span', 'History time span')}
+            bottomSpacing={0}
+          >
+            {t(
+              'explore.rich-history-settings-tab.alert-info',
+              "Grafana will keep entries up to {{optionLabel}}.Starred entries won't be deleted.",
+              {
+                optionLabel: selectedOption?.label,
+              }
+            )}
+          </Alert>
         )}
-        className={styles.spaceBetween}
-      >
-        <InlineSwitch
-          id="explore-query-history-settings-default-active-tab"
-          value={starredTabAsFirstTab}
-          onChange={toggleStarredTabAsFirstTab}
-        />
-      </InlineField>
+        <InlineField
+          label={t(
+            'explore.rich-history-settings-tab.change-default-tab',
+            'Change the default active tab from “Query history” to “Starred”'
+          )}
+          className={styles.spaceBetween}
+        >
+          <InlineSwitch
+            id="explore-query-history-settings-default-active-tab"
+            value={starredTabAsFirstTab}
+            onChange={toggleStarredTabAsFirstTab}
+          />
+        </InlineField>
+      </Stack>
       {supportedFeatures().onlyActiveDataSource && (
         <InlineField
           label={t(

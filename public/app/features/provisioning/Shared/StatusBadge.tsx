@@ -77,12 +77,13 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ repo, displayOnly = false }: StatusBadgeProps) {
+  const repoName = repo?.metadata?.name;
   const handleClick = useCallback(() => {
-    if (displayOnly || !repo?.metadata?.name) {
+    if (displayOnly || !repoName) {
       return;
     }
-    locationService.push(getRepositoryOverviewUrl(repo.metadata.name));
-  }, [repo?.metadata?.name, displayOnly]);
+    locationService.push(getRepositoryOverviewUrl(repoName));
+  }, [repoName, displayOnly]);
 
   if (!repo) {
     return null;

@@ -2,7 +2,8 @@
 
 Use `Exec` for a standalone write and `Transaction` for commands on one transaction stream.
 The [schema](proto/dbproxy/v1/query.proto) and [generated Go API](api/dbproxy/v1) define the wire types.
-These methods are published as bindings before proxy and SQL driver runtime support is available.
+The Go SQL driver supports these methods when the proxy server implements them.
+Older servers return `UNIMPLEMENTED`; the driver does not fall back to another method.
 For read response values, column metadata, authentication, and message limits, see the [Query contract](grpc-contract.md).
 
 ## Send a standalone write
@@ -14,7 +15,7 @@ Write calls require authorization for the service and target namespace.
 For standalone and transaction `Exec`, the writer's `ClientFoundRows=true` setting makes `UPDATE` count matched rows, including unchanged matches.
 An `Exec` failure returns a gRPC status with optional `QueryError` detail.
 Only final gRPC `OK` confirms standalone `Exec` success.
-`client.NewConn` currently installs stream authentication only; unary `Exec` needs authenticated unary transport when server support arrives.
+`client.NewConn` installs authenticated unary and stream interceptors for these calls.
 
 ## Run a transaction
 
@@ -38,7 +39,9 @@ While the transaction is active, clients must reject missing, unknown, or out-of
 Use `Statement.query_name`, `sql`, and `parameters` for each `query` or `exec` command.
 Query responses follow the [Query value and metadata rules](grpc-contract.md#values-and-column-metadata).
 `ok` for a pending `query` confirms it finished successfully; receiving some rows does not rule out a later error.
-If you close rows early, drain to `ok` or `error` for that query before continuing.
+If you close transaction rows early, the Go SQL driver drains to `ok` or `error` with bounded memory before continuing.
+If the drain exceeds one second, the driver cancels the stream and aborts the transaction.
+Standalone `Query` still cancels on early close.
 A new error discovered during `Rows.Close` aborts the transaction.
 Errors already reported by `Rows.Next` or `Exec` remain recoverable when the database permits.
 The `ok` acknowledgment for a pending `commit` confirms success even if stream teardown then fails.
@@ -61,7 +64,8 @@ Treat it as `FAILED_PRECONDITION` with `ERROR_REASON_SQL_ERROR`; the stream rema
 Whole-transaction rollback, such as a deadlock, or uncertain transaction state is fatal; execute no later SQL.
 Only errors that leave the transaction usable return in-band `error` frames.
 Fatal errors close the stream with a gRPC status and may include `QueryError` detail.
-Treat lost replies after a possibly dispatched standalone `Exec` or transaction `commit` as an unknown outcome.
+For a lost reply after a possibly dispatched standalone `Exec` or transaction `commit`, check `errors.Is(err, sqldriver.ErrOutcomeUnknown)` in Go.
+The write may have taken effect; reconcile its state before taking another action.
 The proxy reports `ERROR_REASON_OUTCOME_UNKNOWN` with gRPC `UNKNOWN` when it can.
 Transport failure or cancellation may omit that detail; track pending standalone writes and commits yourself.
 Do not automatically retry a possibly dispatched write or commit, or convert that failure to `driver.ErrBadConn`.

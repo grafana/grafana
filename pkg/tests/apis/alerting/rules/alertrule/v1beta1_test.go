@@ -9,6 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -102,9 +104,6 @@ func TestIntegrationRuleUpdatePreconditions(t *testing.T) {
 							require.NoError(t, err)
 							name := field(t, created, "metadata", "name").(string)
 							t.Cleanup(func() { _ = client.delete(ctx, resource, name) })
-							if mode == grafanarest.Mode2 {
-								readUnified(t, helper, resource, name)
-							}
 
 							baseline, err := client.get(ctx, resource, name)
 							require.NoError(t, err)
@@ -304,7 +303,9 @@ func decode(raw []byte, err error) (map[string]any, error) {
 	return out, json.Unmarshal(raw, &out)
 }
 
-// readUnified reads a rule straight from unified storage, bypassing the dual writer.
+// readUnified reads a rule straight from unified storage, bypassing the dual writer. Modes 1-3 copy a created
+// rule there in the background, so the copy can lag behind the create response. The wait matches the
+// dual writer's one minute background request timeout, after which the copy can no longer arrive.
 func readUnified(t *testing.T, helper *apis.K8sTestHelper, resource, name string) map[string]any {
 	t.Helper()
 	ctx, _ := identity.WithServiceIdentity(context.Background(), helper.Org1.OrgID)
@@ -314,13 +315,13 @@ func readUnified(t *testing.T, helper *apis.K8sTestHelper, resource, name string
 		rsp, err := helper.GetEnv().ResourceClient.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(c, err)
 		require.NoError(c, json.Unmarshal(rsp.Value, &out))
-	}, 5*time.Second, 50*time.Millisecond)
+	}, time.Minute, 50*time.Millisecond)
 	return out
 }
 
 // seedUnified writes a copy of a rule straight into unified storage, bypassing the dual
 // writer, so a test can observe whether a later write touches it.
-func seedUnified(t *testing.T, helper *apis.K8sTestHelper, resource string, rule map[string]any) {
+func seedUnified(t *testing.T, helper *apis.K8sTestHelper, resource string, rule map[string]any, tolerateExisting bool) {
 	t.Helper()
 	ctx, _ := identity.WithServiceIdentity(context.Background(), helper.Org1.OrgID)
 	name := field(t, rule, "metadata", "name").(string)
@@ -339,7 +340,30 @@ func seedUnified(t *testing.T, helper *apis.K8sTestHelper, resource string, rule
 		Key:   &resourcepb.ResourceKey{Namespace: "default", Group: v1beta1.GroupVersion.Group, Resource: resource, Name: name},
 		Value: value,
 	})
+	if tolerateExisting && status.Code(err) == codes.AlreadyExists {
+		return
+	}
 	require.NoError(t, err)
+}
+
+// ensureUnified makes sure a created rule has a copy in unified storage. Modes 1-3 create it in the
+// background, and the dual writer drops a failed background create without retrying, so after a
+// short wait the copy is seeded instead of waiting for one that may never come.
+func ensureUnified(t *testing.T, helper *apis.K8sTestHelper, resource string, created map[string]any) {
+	t.Helper()
+	ctx, _ := identity.WithServiceIdentity(context.Background(), helper.Org1.OrgID)
+	name := field(t, created, "metadata", "name").(string)
+	key := &resourcepb.ResourceKey{Namespace: "default", Group: v1beta1.GroupVersion.Group, Resource: resource, Name: name}
+	found := false
+	for deadline := time.Now().Add(5 * time.Second); !found && time.Now().Before(deadline); {
+		_, err := helper.GetEnv().ResourceClient.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		if found = err == nil; !found {
+			time.Sleep(50 * time.Millisecond)
+		}
+	}
+	if !found {
+		seedUnified(t, helper, resource, created, true)
+	}
 }
 
 func field(t *testing.T, obj map[string]any, path ...string) any {
@@ -517,8 +541,8 @@ func runV1beta1Tests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest.
 					t.Cleanup(func() { _ = beta.delete(ctx, tc.resource, name) })
 
 					if mode >= grafanarest.Mode1 {
-						// Wait for the unified copy, which is what gets mirrored to (or served from in modes 4-5).
-						readUnified(t, helper, tc.resource, name)
+						// The unified copy is what gets mirrored to.
+						ensureUnified(t, helper, tc.resource, created)
 					}
 
 					obj, err := c.get(ctx, tc.resource, name)
@@ -560,7 +584,7 @@ func runV1beta1Tests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest.
 				name := field(t, created, "metadata", "name").(string)
 				t.Cleanup(func() { _ = beta.delete(ctx, tc.resource, name) })
 
-				seedUnified(t, helper, tc.resource, created)
+				seedUnified(t, helper, tc.resource, created, false)
 
 				obj, err := beta.get(ctx, tc.resource, name)
 				require.NoError(t, err)

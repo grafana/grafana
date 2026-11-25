@@ -8,6 +8,7 @@ import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { useScopesServices } from '../ScopesContextProvider';
+import { useScopeActions } from '../selector/useScopeActions';
 
 import { isCurrentPath, normalizePath, serializeFolderPath } from './scopeNavgiationUtils';
 
@@ -39,6 +40,7 @@ export function ScopesNavigationTreeLink({
   const linkIcon = useMemo(() => getLinkIcon(to), [to]);
   const locPathname = useLocation().pathname;
   const services = useScopesServices();
+  const { getAppliedScopes, changeScopes } = useScopeActions();
   // Ignore query params
   const isCurrent = isCurrentPath(locPathname, to);
 
@@ -47,7 +49,7 @@ export function ScopesNavigationTreeLink({
       e.preventDefault(); // Prevent default Link navigation
 
       // Set current scope to navigation scope and subScope to scope
-      const currentScope = services?.scopesSelectorService?.state.appliedScopes[0]?.scopeId;
+      const currentScope = getAppliedScopes()[0]?.scopeId;
       const currentNavigationScope = services?.scopesDashboardsService?.state.navigationScope;
 
       // Parse the URL to extract path and existing query params
@@ -82,7 +84,7 @@ export function ScopesNavigationTreeLink({
       const newUrl = urlUtil.renderUrl(pathname, queryMap);
 
       // Change scopes first (this updates the state)
-      services?.scopesSelectorService?.changeScopes([subScope], undefined, undefined, false);
+      changeScopes([subScope], { redirect: false });
 
       // Then navigate to the URL with updated query params
       locationService.push(newUrl);

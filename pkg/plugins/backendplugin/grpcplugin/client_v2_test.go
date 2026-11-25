@@ -208,21 +208,22 @@ type recordingWriter interface {
 	written() []string
 }
 
-// typedWriter keeps the refID and the name of each frame.
+// typedWriter keeps the refID and the name of each frame, and the refID and the message of each error.
 type typedWriter struct {
-	frames []string
+	writes []string
 }
 
 func (w *typedWriter) written() []string {
-	return w.frames
+	return w.writes
 }
 
 func (w *typedWriter) WriteFrame(_ context.Context, refID string, _ string, f *data.Frame) error {
-	w.frames = append(w.frames, refID+":"+f.Name)
+	w.writes = append(w.writes, refID+":"+f.Name)
 	return nil
 }
 
-func (w *typedWriter) WriteError(context.Context, string, backend.Status, error) error {
+func (w *typedWriter) WriteError(_ context.Context, refID string, _ backend.Status, err error) error {
+	w.writes = append(w.writes, refID+":error:"+err.Error())
 	return nil
 }
 
@@ -232,6 +233,9 @@ type rawWriter struct {
 }
 
 func (w *rawWriter) OnChunk(chunk *pluginv2.QueryChunkedDataResponse) error {
+	if chunk.Error != "" {
+		return w.WriteError(context.Background(), chunk.RefId, backend.Status(chunk.Status), errors.New(chunk.Error))
+	}
 	f, err := data.UnmarshalArrowFrame(chunk.Frame)
 	if err != nil {
 		return err
@@ -292,6 +296,20 @@ func TestClientV2QueryChunkedDataWithSDKPlugin(t *testing.T) {
 
 				assert.Equal(t, []string{"A:chunked"}, w.written())
 				assert.Zero(t, plugin.queryDataCalls.Load())
+			})
+
+			t.Run("delivers the errors of the plugin", func(t *testing.T) {
+				plugin := &sdkPlugin{chunked: func(ctx context.Context, _ *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+					if err := w.WriteFrame(ctx, "A", "1", namedFrame("chunked")); err != nil {
+						return err
+					}
+					return w.WriteError(ctx, "A", backend.StatusBadRequest, errors.New("bad query"))
+				}}
+				w := tc.writer()
+
+				require.NoError(t, plugin.client(t).QueryChunkedData(context.Background(), req, w))
+
+				assert.Equal(t, []string{"A:chunked", "A:error:bad query"}, w.written())
 			})
 		})
 	}

@@ -2739,6 +2739,9 @@ func (s *searchServer) buildWithOptions(ctx context.Context, nsr NamespacedResou
 		if err != nil {
 			return 0, 0, err
 		}
+		if err := ctx.Err(); err != nil {
+			return 0, 0, err
+		}
 
 		// Update timestamp of calling the given `sinceRV` to be used the next
 		// time this function is called.
@@ -2846,6 +2849,9 @@ func (s *searchServer) indexResourceType(
 			phases.recordConvert(time.Since(convertStart), err == nil)
 			if err != nil {
 				span.RecordError(err)
+				if isDocumentBuildInterrupted(err) {
+					return err
+				}
 				logger.Error("error building search document", "key", SearchID(key), "err", err)
 				continue
 			}
@@ -2930,7 +2936,10 @@ func (s *searchServer) applyModifiedSince(
 
 		docs++
 
-		item := updateItem(ctx, builder, res, keepDeleted, phases, span, logger)
+		item, err := updateItem(ctx, builder, res, keepDeleted, phases, span, logger)
+		if err != nil {
+			return 0, 0, err
+		}
 		if item == nil {
 			// Logged already. Not remembered as processed, so a later update
 			// tries it again.
@@ -2983,9 +2992,21 @@ func (d modifiedDedup) add(keys []string) {
 	}
 }
 
-// updateItem turns one change storage reported into the item that brings an
-// index in line with it. It returns nil for a change that cannot be applied,
-// after logging why.
+// An interrupted read doesn't mean a document is invalid. Fail the build or
+// refresh so it can't publish a checkpoint that skips that document.
+func isDocumentBuildInterrupted(err error) bool {
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		return true
+	}
+	switch status.Code(err) {
+	case codes.DeadlineExceeded, codes.Canceled:
+		return true
+	default:
+		return false
+	}
+}
+
+// updateItem skips invalid documents but stops the refresh on interrupted reads.
 func updateItem(
 	ctx context.Context,
 	builder DocumentBuilder,
@@ -2994,7 +3015,7 @@ func updateItem(
 	phases *buildPhaseRecorder,
 	span trace.Span,
 	logger log.Logger,
-) *BulkIndexItem {
+) (*BulkIndexItem, error) {
 	key := &res.Key
 	switch res.Action {
 	case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
@@ -3005,10 +3026,13 @@ func updateItem(
 		phases.recordConvert(time.Since(convertStart), err == nil)
 		if err != nil {
 			span.RecordError(err)
+			if isDocumentBuildInterrupted(err) {
+				return nil, err
+			}
 			logger.Error("error building search document", "key", SearchID(key), "err", err)
-			return nil
+			return nil, nil
 		}
-		return &BulkIndexItem{Action: ActionIndex, Doc: doc}
+		return &BulkIndexItem{Action: ActionIndex, Doc: doc}, nil
 
 	case resourcepb.WatchEvent_DELETED:
 		// The delete event carries the object as it was, so trash searches can
@@ -3034,14 +3058,14 @@ func updateItem(
 		}
 		if doc == nil {
 			span.AddEvent("deleting document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
-			return &BulkIndexItem{Action: ActionDelete, Key: &res.Key}
+			return &BulkIndexItem{Action: ActionDelete, Key: &res.Key}, nil
 		}
 		span.AddEvent("marking document deleted", trace.WithAttributes(attribute.String("name", res.Key.Name)))
-		return &BulkIndexItem{Action: ActionIndex, Doc: doc}
+		return &BulkIndexItem{Action: ActionIndex, Doc: doc}, nil
 
 	default:
 		logger.Error("can't update index with item, unknown action", "action", res.Action, "key", key)
-		return nil
+		return nil, nil
 	}
 }
 

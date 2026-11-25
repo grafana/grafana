@@ -3,14 +3,14 @@ package dualwrite
 import (
 	"context"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana-app-sdk/resource"
 )
 
 type ctxKey struct{}
 type mirroredUpdateKey struct{}
 
 type dualWriteContext struct {
-	updatedSecureValues common.InlineSecureValues
+	updatedSecureValues resource.InlineSecureValues
 }
 
 func addToContext(ctx context.Context) context.Context {
@@ -18,7 +18,7 @@ func addToContext(ctx context.Context) context.Context {
 }
 
 // Get the Requester from context
-func SetUpdatedSecureValues(ctx context.Context, sv common.InlineSecureValues) {
+func SetUpdatedSecureValues(ctx context.Context, sv resource.InlineSecureValues) {
 	u, ok := ctx.Value(ctxKey{}).(*dualWriteContext)
 	if !ok || u == nil {
 		return // OK, this can happen when things are in mode 0 (legacy only)
@@ -27,7 +27,7 @@ func SetUpdatedSecureValues(ctx context.Context, sv common.InlineSecureValues) {
 }
 
 // Get the Requester from context
-func getUpdatedSecureValues(ctx context.Context) common.InlineSecureValues {
+func getUpdatedSecureValues(ctx context.Context) resource.InlineSecureValues {
 	u, ok := ctx.Value(ctxKey{}).(*dualWriteContext)
 	if !ok || u == nil {
 		return nil

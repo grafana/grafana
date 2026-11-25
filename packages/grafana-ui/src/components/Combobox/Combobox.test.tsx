@@ -3,7 +3,8 @@ import { act, render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { mockComboboxRect } from '../../test-utils/mockDom';
+import { mockComboboxRect } from '@grafana/test-utils';
+
 import { Drawer } from '../Drawer/Drawer';
 import { Field } from '../Forms/Field';
 import { Modal } from '../Modal/Modal';

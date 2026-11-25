@@ -18,3 +18,4 @@ export {
   useDefaultDataSourceInstanceListItem,
   type UseDefaultDataSourceInstanceListItemResult,
 } from './datasources/useDefaultDataSourceInstanceListItem';
+export { callDataSourcePluginProxy } from './datasources/callDataSourcePluginProxy';

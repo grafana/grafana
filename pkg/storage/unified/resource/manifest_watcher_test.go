@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
+	"k8s.io/client-go/rest"
 	k8stesting "k8s.io/client-go/testing"
 	"k8s.io/client-go/transport"
 )
@@ -580,6 +581,23 @@ func TestManifestFromUnstructured_PreservesEmbeddingVersions(t *testing.T) {
 	require.False(t, data.Versions[1].Served)
 	require.Equal(t, []app.ManifestVersionKindEmbedField{{Name: "title", Path: "spec.oldTitle"}}, data.Versions[1].Kinds[0].Embed.Fields)
 	require.Equal(t, before, obj)
+}
+
+func TestManifestWatcherConfig_ExchangerReplacesTheTokenSettings(t *testing.T) {
+	exchanger := &fakeTokenExchanger{token: "exchanged-token"}
+
+	got, err := newManifestTokenExchanger(ManifestWatcherConfig{Exchanger: exchanger})
+
+	require.NoError(t, err, "no token and no token exchange URL are set")
+	require.Same(t, exchanger, got)
+}
+
+func TestManifestWatcherConfig_TLSReplacesTheCASettings(t *testing.T) {
+	tlsConfig := rest.TLSClientConfig{CAFile: "/etc/router/ca.crt", ServerName: "router"}
+
+	got := newManifestRESTConfig(ManifestWatcherConfig{CAFile: "/etc/other/ca.crt", AllowInsecure: true, TLS: &tlsConfig}, "https://router", nil)
+
+	require.Equal(t, tlsConfig, got.TLSClientConfig)
 }
 
 func TestNewManifestWatcherConfig(t *testing.T) {

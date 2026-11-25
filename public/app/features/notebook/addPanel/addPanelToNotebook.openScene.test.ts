@@ -334,7 +334,8 @@ describe('adding to a notebook that is open', () => {
       1,
       expect.objectContaining({ isLibraryPanel: false }),
       false,
-      false
+      false,
+      undefined
     );
   });
 

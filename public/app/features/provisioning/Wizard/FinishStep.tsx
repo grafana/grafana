@@ -113,7 +113,7 @@ export const FinishStep = memo(function FinishStep() {
           })}
           label={t('provisioning.finish-step.label-read-only', 'Read only')}
           description={t(
-            'provisioning.finish-step.description-read-only',
+            'provisioning.config-form.description-read-only',
             "Resources can't be modified through Grafana."
           )}
         />

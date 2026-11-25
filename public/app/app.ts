@@ -57,6 +57,7 @@ import {
   setDataSourcePicker,
   setJourneyRegistry,
   setJourneyTracker,
+  setKindRegistry,
   setPanelDataErrorView,
   setPanelRenderer,
   setPluginPage,
@@ -85,6 +86,7 @@ import { createErrorNotification } from './core/copy/appNotification';
 import { initializeCrashDetection } from './core/crash';
 import { NAMESPACES, GRAFANA_NAMESPACE } from './core/internationalization/constants';
 import { loadTranslations } from './core/internationalization/loadTranslations';
+import { kindRegistry } from './core/kinds/coreKinds';
 import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
 import { handleRedirectTo } from './core/navigation/handleRedirectTo';
@@ -247,6 +249,7 @@ export class GrafanaApp {
       setPanelDataErrorView(LazyPanelDataErrorView);
       setLocationSrv(locationService);
       setCorrelationsService(new CorrelationsService());
+      setKindRegistry(kindRegistry);
       setPanelScreenshotService(new PanelScreenshotServiceImpl());
       setEmbeddedDashboard(EmbeddedDashboardLazy);
       setTimeZoneResolver(() => contextSrv.user.timezone);

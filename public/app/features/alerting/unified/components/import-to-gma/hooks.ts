@@ -1,14 +1,14 @@
 import { isEmpty } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
-import { useAsync } from 'react-use';
 
 import { type ComboboxOption } from '@grafana/ui';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
-import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { type RulerCloudRulesConfigDTO, type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
+import { useAsync } from '../../hooks/useAsync';
 import { type Folder } from '../../types/rule-form';
 import { useGetNameSpacesByDatasourceName, useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
 
@@ -61,7 +61,7 @@ export function useGetRulesToBeImported(skip: boolean, selectedDatasourceName: s
   return { rulesToBeImported, isloadingCloudRules };
 }
 
-const EMPTY_RULER_CONFIG: RulerRulesConfigDTO = {};
+const EMPTY_RULER_CONFIG: RulerCloudRulesConfigDTO = {};
 
 interface UseRulesToImportArgs {
   rulesSource: 'datasource' | 'yaml';
@@ -85,12 +85,24 @@ export function useRulesToImport({
     rulesSource === 'datasource' ? (rulesDatasourceName ?? undefined) : undefined
   );
 
-  const { value: rulesFromYaml = EMPTY_RULER_CONFIG } = useAsync(async () => {
-    if (!rulesYamlFile || rulesSource !== 'yaml') {
-      return EMPTY_RULER_CONFIG;
+  const yamlFile = rulesSource === 'yaml' ? rulesYamlFile : null;
+  const [{ execute: parseYaml }, parseState] = useAsync(async (file: File) => ({
+    file,
+    config: await parseYamlFileToRulerRulesConfigDTO(file, file.name),
+  }));
+
+  useEffect(() => {
+    if (yamlFile) {
+      // A failed parse lands in parseState.error.
+      parseYaml(yamlFile).catch(() => {});
     }
-    return await parseYamlFileToRulerRulesConfigDTO(rulesYamlFile, rulesYamlFile.name);
-  }, [rulesSource, rulesYamlFile]);
+  }, [yamlFile, parseYaml]);
+
+  // The file travels with its rules because the state keeps the previous result while the next one loads.
+  const isCurrentYaml = Boolean(yamlFile) && parseState.result?.file === yamlFile;
+  const rulesFromYaml = isCurrentYaml ? parseState.result!.config : EMPTY_RULER_CONFIG;
+  const rulesError = yamlFile && parseState.status === 'error' ? parseState.error : undefined;
+  const isLoadingRules = Boolean(yamlFile) && !isCurrentYaml && !rulesError;
 
   const { rulesToBeImported, someRulesAreSkipped } = useMemo(() => {
     if (rulesSource === 'datasource') {
@@ -107,7 +119,7 @@ export function useRulesToImport({
     rulesToBeImported
   );
 
-  return { rulesToBeImported, someRulesAreSkipped, rulesThatMightBeOverwritten };
+  return { rulesToBeImported, someRulesAreSkipped, rulesThatMightBeOverwritten, isLoadingRules, rulesError };
 }
 
 /** The namespace and group filter options of the chosen data source. */

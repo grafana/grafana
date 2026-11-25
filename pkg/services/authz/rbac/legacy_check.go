@@ -19,6 +19,7 @@ import (
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 // LegacyCheck is a deprecated compatibility RPC used by ST callers during the
@@ -88,7 +89,7 @@ func (s *Service) legacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 	// TODO: Complete in subsequent PRs:
 	//   - Standalone scope resolution: replace embedded service dependencies with namespace-aware providers.
 	//			MT AuthZ: https://github.com/grafana/identity-access-team/issues/2436
-	ns, err := validateNamespace(ctx, req.GetNamespace())
+	ns, err := s.validateLegacyCheckNamespace(ctx, req)
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
@@ -109,6 +110,11 @@ func (s *Service) legacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 		isInternalIdentity = req.GetInternalIdentity() != nil
 	)
 	if !isInternalIdentity {
+		// An explicit empty restriction cannot grant access, even for an untyped requester.
+		if restriction := req.GetRestriction(); restriction != nil && len(restriction.GetActions()) == 0 {
+			return &authzextv1.LegacyCheckResponse{Allowed: false}, nil
+		}
+
 		userUID, idType, err = s.validateSubject(ctx, req.GetSubject())
 		if err != nil {
 			return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
@@ -174,6 +180,27 @@ func (s *Service) legacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 	return &authzextv1.LegacyCheckResponse{Allowed: allowed}, nil
 }
 
+func (s *Service) validateLegacyCheckNamespace(ctx context.Context, req *authzextv1.LegacyCheckRequest) (types.NamespaceInfo, error) {
+	namespace := req.GetNamespace()
+	if namespace == "*" {
+		if s.legacyScopeNamespace == nil {
+			return types.NamespaceInfo{}, errors.New("wildcard legacy namespace requires the embedded server")
+		}
+		if req.RequesterOrgId == nil {
+			return types.NamespaceInfo{}, errors.New("legacy check requires requester org ID")
+		}
+
+		orgID := req.GetRequesterOrgId()
+		if orgID < 1 {
+			return types.NamespaceInfo{}, errors.New("wildcard legacy namespace requires a positive requester org ID")
+		}
+		namespace = s.legacyScopeNamespace(orgID)
+	}
+
+	// Authorize the concrete target, including when the credential has a wildcard namespace.
+	return validateNamespace(ctx, namespace)
+}
+
 func legacyRequesterOrgID(req *authzextv1.LegacyCheckRequest, namespace types.NamespaceInfo) (int64, error) {
 	if namespace.OrgID < 1 {
 		return 0, errors.New("legacy check requires a concrete namespace")
@@ -225,16 +252,10 @@ func (s *Service) getLegacyIdentityPermissions(
 	case types.TypeAnonymous:
 		query.Role = s.settings.AnonOrgRole
 	case types.TypeRenderService:
-		for _, action := range actions {
-			scopes, err := s.getRendererPermissions(ctx, action)
-			if err != nil {
-				return nil, fmt.Errorf("could not get renderer permissions: %w", err)
-			}
-			if scopes["*"] {
-				permissions[action] = []string{"*"}
-			}
-		}
-		return permissions, nil
+		// TODO: this is a "temporary" fix. We are aiming to ask a render team to use JWT tokens intead
+		//		and remove the types.TypeRenderService.
+		// Local evaluation authenticates the render service with the Admin org role.
+		query.Role = string(org.RoleAdmin)
 	default:
 		return nil, fmt.Errorf("unsupported identity type: %s", idType)
 	}

@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -77,16 +79,21 @@ func (s embeddedStream) Context() context.Context { return s.ctx }
 
 type embeddedServer struct {
 	authzv1.UnimplementedLegacyAuthzServiceServer
-	loader *Loader
-	cfg    *setting.Cfg
-	guard  *int
+	loader  *Loader
+	cfg     *setting.Cfg
+	guard   *int
+	metrics *serverMetrics
 }
 
 // NewEmbeddedClient owns a private in-process channel. The legacy handler is
 // deliberately never registered on a network server or the Check/List channel.
 func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.LegacyUserPermissionsClient {
+	return newEmbeddedClient(loader, cfg, nil)
+}
+
+func newEmbeddedClient(loader *Loader, cfg *setting.Cfg, reg prometheus.Registerer) legacyclient.LegacyUserPermissionsClient {
 	guard := new(int)
-	server := &embeddedServer{loader: loader, cfg: cfg, guard: guard}
+	server := &embeddedServer{loader: loader, cfg: cfg, guard: guard, metrics: newMetrics(reg, "embedded")}
 	channel := (&inprocgrpc.Channel{}).WithServerStreamInterceptor(func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		ctx := stream.Context()
 		if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
@@ -116,6 +123,9 @@ func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.LegacyUser
 }
 
 func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
+	started := time.Now()
+	result := "error"
+	defer func() { s.metrics.observe(started, result) }()
 	ctx := stream.Context()
 	if s.guard == nil || ctx.Value(embeddedCallKey{}) != s.guard {
 		return status.Error(codes.PermissionDenied, "legacy enumeration is embedded-only")
@@ -154,7 +164,7 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 		orgID = -1
 	}
 	requester := &legacyRequester{
-		SignedInUser: &user.SignedInUser{OrgID: orgID, OrgRole: identity.RoleType(req.Identity.OrgRole), IsGrafanaAdmin: req.Identity.IsGrafanaAdmin, TeamIDs: req.Identity.TeamIds}, //nolint:staticcheck // The compatibility contract carries numeric RBAC memberships separately from contextual groups.
+		SignedInUser: &user.SignedInUser{OrgID: orgID, OrgRole: types.RoleType(req.Identity.OrgRole), IsGrafanaAdmin: req.Identity.IsGrafanaAdmin, TeamIDs: req.Identity.TeamIds}, //nolint:staticcheck // The compatibility contract carries numeric RBAC memberships separately from contextual groups.
 		identity:     req.Identity, namespace: namespace,
 	}
 	permissions, err := s.loader.GetUserPermissions(ctx, requester, ac.Options{ReloadCache: req.ReloadCache, SkipZanzanaCache: req.SkipZanzanaCache})
@@ -176,6 +186,7 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 			return err
 		}
 	}
+	result = "ok"
 	return nil
 }
 
@@ -218,7 +229,7 @@ func (r *legacyRequester) GetCacheKey() string {
 	if !r.HasUniqueId() {
 		id = string(r.GetOrgRole())
 		if id == "" {
-			id = string(identity.RoleNone)
+			id = string(types.RoleNone)
 		}
 	}
 	return fmt.Sprintf("%d-%s-%s", r.GetOrgID(), r.GetIdentityType(), id)

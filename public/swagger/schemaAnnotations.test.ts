@@ -5,6 +5,8 @@ import { fireEvent, screen } from '@testing-library/react';
 import * as annotations from './annotationValue';
 import { schemaAnnotations } from './schemaAnnotations';
 
+jest.mock('./annotationValue', () => makeSpyable('./annotationValue'));
+
 let view: EditorView;
 
 afterEach(() => {

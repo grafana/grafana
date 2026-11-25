@@ -13,11 +13,12 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { isDashboardReviewing, isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
+import { canArrangeLayout, isDashboardReviewing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { addElement } from '../../actions/element/addElement';
 import { removeElement } from '../../actions/element/removeElement';
 import { edit } from '../../actions/utils/edit';
+import { remapQuestionSources } from '../../questions/questionSources';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -165,6 +166,7 @@ export class RowsLayoutManager
 
   public duplicateRow(row: RowItem) {
     const newRow = row.duplicate();
+    remapQuestionSources(row, newRow, { keepOutside: true });
     this.addNewRow(newRow);
   }
 
@@ -184,7 +186,7 @@ export class RowsLayoutManager
       perform: () => {
         this.setState({ rows: [...this.state.rows, newRow] });
         const dashboard = getDashboardSceneFor(this);
-        newRow.getLayout().editModeChanged?.(isFullDashboardEditing(dashboard.state));
+        newRow.getLayout().editModeChanged?.(canArrangeLayout(dashboard.state));
       },
       undo: () => this.setState({ rows: this.state.rows.filter((r) => r !== newRow) }),
     });

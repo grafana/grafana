@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/cache"
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator"
-	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 // Validator implements validator.DatasourceValidator for Prometheus datasources
@@ -60,7 +59,7 @@ func (v *Validator) ValidateQueries(ctx context.Context, queries []validator.Que
 // Uses GetMetricsSet to return the cached set directly, avoiding a per-call
 // []string → map[string]bool conversion (28MB for 500K metrics).
 func fetchAvailableMetrics(ctx context.Context, metricsCache *cache.MetricsCache, datasource validator.Datasource) (map[string]bool, error) {
-	availableSet, err := metricsCache.GetMetricsSet(ctx, datasource.OrgID, datasources.DS_PROMETHEUS, datasource.UID, datasource.URL, datasource.HTTPClient)
+	availableSet, err := metricsCache.GetMetricsSet(ctx, datasource.OrgID, "prometheus", datasource.UID, datasource.URL, datasource.HTTPClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch metrics from Prometheus: %w", err)
 	}

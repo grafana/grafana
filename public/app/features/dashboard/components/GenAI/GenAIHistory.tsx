@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState, useCallback, useRef } from 'react';
+import { useLayoutEffect, useState, useCallback, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -38,7 +38,9 @@ export const GenAIHistory = ({
 
   // Keep ref in sync with messages prop to avoid stale closure issues
   const messagesRef = useRef(messages);
-  messagesRef.current = messages;
+  useLayoutEffect(() => {
+    messagesRef.current = messages;
+  });
 
   const onResponse = useCallback(
     (response: string) => {

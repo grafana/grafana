@@ -15,11 +15,21 @@ export interface Props {
   'aria-label'?: string;
   /** Close after delete button is clicked */
   closeOnConfirm?: boolean;
+  /** Custom data attributes (for example `data-analytics-id`), rendered on the delete button */
+  [key: `data-${string}`]: string | undefined;
 }
 
-export const DeleteButton = ({ size, disabled, onConfirm, 'aria-label': ariaLabel, closeOnConfirm }: Props) => {
+export const DeleteButton = ({
+  size,
+  disabled,
+  onConfirm,
+  'aria-label': ariaLabel,
+  closeOnConfirm,
+  ...dataAttributes
+}: Props) => {
   return (
     <ConfirmButton
+      {...dataAttributes}
       confirmText={t('grafana-ui.confirm-button.confirmText-delete', 'Delete')}
       confirmVariant="destructive"
       size={size || 'md'}
