@@ -2570,6 +2570,9 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					case errors.Is(err, errPreviousReadPanic):
 						return status.Error(codes.Internal, "internal server error")
 					case code == codes.DeadlineExceeded, code == codes.ResourceExhausted, code == codes.Canceled:
+						if ctx.Err() == nil {
+							s.log.Warn("expiring watch after previous object read failed", "key", event.Key, "resource_version", event.PreviousRV, "error", err)
+						}
 						// Relist so the client can recover a selector transition that needs Previous.
 						return expired()
 					case err != nil:
