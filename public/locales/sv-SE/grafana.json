@@ -6740,7 +6740,8 @@
           "title": "Klistra in panel"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "Lägg till rad",
@@ -9967,10 +9968,6 @@
       "of": "AV",
       "to": "TILL",
       "when": "NÄR"
-    },
-    "expression-query-editor": {
-      "helper-text-sql": "Kör MySQL-dialect SQL mot tabellerna som returneras från dina datakällor. Datakällfrågor (dvs. ”A”, ”B”) är tillgängliga som tabeller och refereras av frågenamn. Fält är tillgängliga som kolumner, som returneras från datakällan.",
-      "label-operation": "Drift"
     },
     "math": {
       "available-math-functions": "Tillgängliga matematikfunktioner",
@@ -13792,12 +13789,11 @@
     },
     "megamenu-item": {
       "children-error": "Det gick inte att ladda alternativ",
+      "children-partial-error": "",
       "collapse-aria-label": "Dölj avsnitt: {{sectionName}}",
       "expand-aria-label": "Expandera avsnitt: {{sectionName}}",
       "loading-aria-label": "Laddar {{sectionName}}",
-      "reorder-aria-label": "Ändra ordning för {{itemName}}",
-      "starred-dashboard-icon": "Instrumentpanel",
-      "starred-folder-icon": "Mapp"
+      "reorder-aria-label": "Ändra ordning för {{itemName}}"
     },
     "org-switcher": {
       "aria-label": "Ändra organisation"
@@ -17502,6 +17498,7 @@
     "description-page-size": "Antal rader per sida. När den är tom baseras sidstorleken på panelens höjd.",
     "description-show-columns-sidebar": "Öppna sidofältet för kolumnhantering med panelen, snarare än från en kolumnmeny",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "Ett fält som innehåller JSON-objekt med CSS-egenskaper",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Växla bakgrundsfärg varannan rad",
@@ -17546,6 +17543,7 @@
     "name-show-columns-sidebar": "Visa sidofält för kolumner",
     "name-show-row-numbers": "",
     "name-show-table-header": "Visa tabellsidhuvud",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "Visa verktygstips vid hovring",
     "name-styling-from-field": "Styling från fält",
     "name-tooltip-from-field": "",
