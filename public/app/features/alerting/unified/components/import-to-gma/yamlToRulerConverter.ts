@@ -1,11 +1,7 @@
 import { load } from 'js-yaml';
 import * as z from 'zod/mini';
 
-import {
-  type RulerCloudRuleDTO,
-  type RulerCloudRulesConfigDTO,
-  type RulerRuleGroupDTO,
-} from 'app/types/unified-alerting-dto';
+import { type RulerCloudRuleDTO, type RulerCloudRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 // The fields below are typed the way the backend decodes them (PrometheusRuleGroup, PrometheusRule),
 // so a file the backend would reject fails in the file step and not when the import is submitted.
@@ -20,12 +16,16 @@ const prometheusDuration = z
       'must be a Prometheus duration, for example 5m or 1h30m'
     )
   );
-// A null value is fine: the backend ignores it.
+// The backend decodes a null value as an empty string, so a null is not an error.
 const stringMap = z.record(z.string(), z.nullable(z.string()));
 
+function nullValuesToEmptyStrings(map: z.infer<typeof stringMap> | null | undefined) {
+  return map ? Object.fromEntries(Object.entries(map).map(([key, value]) => [key, value ?? ''])) : undefined;
+}
+
 // Loose objects keep keys the backend ignores instead of stripping them.
-const ruleSchema = z
-  .looseObject({
+const ruleSchema = z.pipe(
+  z.looseObject({
     alert: z.nullish(z.string()),
     record: z.nullish(z.string()),
     expr: nonEmptyString,
@@ -33,13 +33,31 @@ const ruleSchema = z
     keep_firing_for: z.nullish(prometheusDuration),
     labels: z.nullish(stringMap),
     annotations: z.nullish(stringMap),
-  })
-  .check(
-    z.refine(
-      (rule) => nonEmptyString.safeParse(rule.alert).success !== nonEmptyString.safeParse(rule.record).success,
-      'a rule needs either an alert or a record name, not both'
-    )
-  );
+  }),
+  z.transform(
+    ({ alert, record, for: pendingPeriod, keep_firing_for, labels, annotations, ...rest }, ctx): RulerCloudRuleDTO => {
+      const rule = {
+        ...rest,
+        for: pendingPeriod ?? undefined,
+        keep_firing_for: keep_firing_for ?? undefined,
+        labels: nullValuesToEmptyStrings(labels),
+        annotations: nullValuesToEmptyStrings(annotations),
+      };
+      if (alert && !record) {
+        return { ...rule, alert };
+      }
+      if (record && !alert) {
+        return { ...rule, record };
+      }
+      ctx.issues.push({
+        code: 'custom',
+        message: 'a rule needs either an alert or a record name, not both',
+        input: rest,
+      });
+      return z.NEVER;
+    }
+  )
+);
 
 const groupSchema = z.looseObject({
   name: nonEmptyString,
@@ -77,9 +95,7 @@ export function parseYamlToRulerRulesConfigDTO(
 
   const { namespace = defaultNamespace, groups } = result.data;
 
-  // The schema can't express the alert/record union, so the validated shape is asserted to the DTO type.
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return { [namespace]: groups as unknown as Array<RulerRuleGroupDTO<RulerCloudRuleDTO>> };
+  return { [namespace]: groups };
 }
 
 export async function parseYamlFileToRulerRulesConfigDTO(

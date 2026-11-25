@@ -205,6 +205,12 @@ ${indent(group, 4)}
       expect(errorOf(withRule(rule))).toContain(expected);
     });
 
+    it('points at the rule that has both an alert and a record', () => {
+      const yaml =
+        'groups:\n  - name: g\n    rules:\n      - alert: A\n        expr: up\n      - alert: B\n        record: r\n        expr: up';
+      expect(errorOf(yaml)).toContain('at groups[0].rules[1]');
+    });
+
     it('rejects a rule without expr', () => {
       expect(errorOf('groups:\n  - name: g\n    rules:\n      - alert: A')).toContain('groups[0].rules[0].expr');
     });
@@ -298,9 +304,15 @@ groups:
       });
     });
 
-    it('accepts an empty alert when record is set', () => {
+    it('drops the empty alert of a recording rule', () => {
       expect(parse(withRule('alert: ""\nrecord: r'))).toEqual({
-        'default-namespace': [{ name: 'g', rules: [{ alert: '', record: 'r', expr: 'up == 0' }] }],
+        'default-namespace': [{ name: 'g', rules: [{ record: 'r', expr: 'up == 0' }] }],
+      });
+    });
+
+    it('drops the empty record of an alerting rule', () => {
+      expect(parse(withRule('alert: A\nrecord: ""'))).toEqual({
+        'default-namespace': [{ name: 'g', rules: [{ alert: 'A', expr: 'up == 0' }] }],
       });
     });
 
@@ -368,6 +380,39 @@ groups:
           summary:
 `;
       expect(() => parse(yaml)).not.toThrow();
+    });
+
+    it('leaves no null in a rule: empty values are dropped and empty label values become empty strings', () => {
+      const yaml = `
+groups:
+  - name: g
+    rules:
+      - alert:
+        record: r
+        expr: up
+        for:
+        keep_firing_for:
+        labels:
+          severity:
+        annotations:
+      - alert: A
+        record:
+        expr: up
+        labels:
+        annotations:
+          summary:
+`;
+      expect(parse(yaml)).toEqual({
+        'default-namespace': [
+          {
+            name: 'g',
+            rules: [
+              { record: 'r', expr: 'up', labels: { severity: '' } },
+              { alert: 'A', expr: 'up', annotations: { summary: '' } },
+            ],
+          },
+        ],
+      });
     });
 
     it('accepts every duration unit in descending order, and a quoted zero', () => {
