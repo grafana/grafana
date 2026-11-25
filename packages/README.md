@@ -74,9 +74,9 @@ The `Release NPM independent packages` workflow runs when a change to an indepen
 
 Merging the version pull request releases the packages.
 
-To preview a release, run the workflow from the Actions tab with `dry_run` enabled. To publish again after a failed run, re-run the failed jobs: jobs that succeeded keep their results, and tags that already exist are skipped. Or run the workflow with `tags` set to a comma-separated list of existing tags, which publishes them and does not prepare a version pull request.
+To preview a release, run the workflow from the Actions tab with `dry_run` enabled. To publish again after a failed run, re-run the failed jobs: jobs that succeeded keep their results, and tags that already exist are skipped.
 
-If the `tag` job failed after a version pull request was merged, re-run the failed jobs or start the workflow by hand, with `tags` empty, within 2 to 3 days: after that a new run no longer finds the merged version pull request. Later than that, add the label `nx-release:pending` to the merged version pull request again and start the workflow by hand, or create the missing tags with the `Create Release Tag` workflow.
+If the `tag` job failed after a version pull request was merged, re-run the failed jobs or start the workflow by hand within 2 to 3 days: after that a new run no longer finds the merged version pull request. Later than that, add the label `nx-release:pending` to the merged version pull request again and start the workflow by hand.
 
 Nx finds the changes since the last release from the `<name>@<version>` git tag of the package, for example `@grafana/plugin-compat@0.10.0`, which the `tag` job creates. Do not delete these tags. If the tag for the version on `main` is missing, the `release` job fails with an error that names the tag and does not open a version pull request. Create the tag on the commit that published that version, for example by running the `Create Release Tag` workflow from the Actions tab with the tag and the commit, and run the workflow again.
 

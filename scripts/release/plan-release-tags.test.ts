@@ -4,8 +4,6 @@ import type { IndependentPackage } from './lib/independent-packages.mjs';
 import {
   formatOutputs,
   planReleaseTags,
-  readTags,
-  resolveDispatchTags,
   selectPendingPrs,
   type ClosedPr,
   type VersionedPr,
@@ -131,60 +129,6 @@ describe('planReleaseTags', () => {
   });
 });
 
-describe('resolveDispatchTags', () => {
-  const packages = [pluginCompat, other];
-
-  it('resolves the given tags to the commit they point at, reading the version after the last @', () => {
-    const commits = { [PLUGIN_COMPAT_TAG]: 'm1', '@grafana/other@1.1.0': 'm1' };
-
-    expect(resolveDispatchTags([PLUGIN_COMPAT_TAG, '@grafana/other@1.1.0'], packages, commits)).toEqual({
-      pr: null,
-      sha: 'm1',
-      tagged: [
-        pluginCompatTag,
-        {
-          name: '@grafana/other',
-          version: '1.1.0',
-          tag: '@grafana/other@1.1.0',
-          path: 'packages/grafana-other',
-          commit: 'm1',
-        },
-      ],
-    });
-  });
-
-  it('rejects an empty list', () => {
-    expect(() => resolveDispatchTags([], packages, {})).toThrow('Pass at least one tag to publish.');
-  });
-
-  it.each(['plugin-compat', '@grafana', '@grafana/plugin-compat@'])(
-    'rejects %s because it is not name@version',
-    (tag) => {
-      expect(() => resolveDispatchTags([tag], packages, {})).toThrow(`Invalid tag ${tag}: expected name@version.`);
-    }
-  );
-
-  it('rejects a package that is not independent', () => {
-    expect(() => resolveDispatchTags(['@grafana/data@1.0.0'], packages, {})).toThrow(
-      'Tag @grafana/data@1.0.0 is not an independent package.'
-    );
-  });
-
-  it('rejects a tag that does not exist', () => {
-    expect(() => resolveDispatchTags([PLUGIN_COMPAT_TAG], packages, { [PLUGIN_COMPAT_TAG]: null })).toThrow(
-      `Tag ${PLUGIN_COMPAT_TAG} does not exist.`
-    );
-  });
-
-  it('rejects tags that point at different commits', () => {
-    const commits = { [PLUGIN_COMPAT_TAG]: 'm1', '@grafana/other@1.1.0': 'm2' };
-
-    expect(() => resolveDispatchTags([PLUGIN_COMPAT_TAG, '@grafana/other@1.1.0'], packages, commits)).toThrow(
-      'Tags point at different commits: m1, m2.'
-    );
-  });
-});
-
 describe('selectPendingPrs', () => {
   const pending = [{ name: 'nx-release:pending' }];
 
@@ -246,20 +190,5 @@ describe('formatOutputs', () => {
       sha: 'm1',
     });
     expect(Object.values(outputs).every((value) => !value.includes('\n'))).toBe(true);
-  });
-});
-
-describe('readTags', () => {
-  it('is empty when no tags were given', () => {
-    expect(readTags({})).toBeUndefined();
-  });
-
-  it('treats an unset workflow input, which GitHub passes as an empty string, as not given', () => {
-    expect(readTags({ TAGS: '' })).toBeUndefined();
-    expect(readTags({ TAGS: '  ' })).toBeUndefined();
-  });
-
-  it('reads a comma separated list', () => {
-    expect(readTags({ TAGS: 'a@1, b@2' })).toEqual(['a@1', 'b@2']);
   });
 });

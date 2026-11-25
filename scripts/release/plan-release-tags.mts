@@ -3,11 +3,9 @@
 // create-release-tag.yml and then swaps the label, so this script only reads.
 //
 // Usage: node scripts/release/plan-release-tags.mts >> "$GITHUB_OUTPUT"
-// Reads its input from the environment: GITHUB_REPOSITORY, GITHUB_SHA, a GH_TOKEN that may read pull requests,
-// and optionally TAGS=<name@version>[,<name@version>...]. With TAGS it only checks that the given tags exist and
-// reports them, which is how a manual run publishes. Prints pr (the PR to finish, empty when there is none),
-// tagged (a JSON list of {name, version, tag, path, commit}), matrix (the same list in the form a job matrix
-// reads), release_created and sha to stdout.
+// Reads its input from the environment: GITHUB_REPOSITORY, GITHUB_SHA and a GH_TOKEN that may read pull requests.
+// Prints pr (the PR to finish, empty when there is none), tagged (a JSON list of {name, version, tag, path,
+// commit}), matrix (the same list in the form a job matrix reads), release_created and sha to stdout.
 
 import { execFileSync } from 'node:child_process';
 
@@ -38,15 +36,6 @@ export interface Plan {
   pr: number | null;
   sha: string;
   tagged: PlannedTag[];
-}
-
-export function readTags(env: Record<string, string | undefined>): string[] | undefined {
-  const tags = (env.TAGS ?? '')
-    .split(',')
-    .map((tag) => tag.trim())
-    .filter(Boolean);
-
-  return tags.length > 0 ? tags : undefined;
 }
 
 function changedPackages(packages: IndependentPackage[], pr: VersionedPr): PlannedTag[] {
@@ -90,47 +79,6 @@ export function planReleaseTags(
   }
 
   return { plan: { pr: release.pr.number, sha: release.pr.mergeCommit, tagged: release.changed }, warnings };
-}
-
-// The commit of each tag is null when the tag does not exist.
-export function resolveDispatchTags(
-  tags: string[],
-  packages: IndependentPackage[],
-  commits: Record<string, string | null>
-): Plan {
-  if (tags.length === 0) {
-    throw new Error('Pass at least one tag to publish.');
-  }
-
-  const tagged: PlannedTag[] = [];
-  const found = new Set<string>();
-
-  for (const tag of tags) {
-    const separator = tag.lastIndexOf('@');
-    if (separator <= 0 || separator === tag.length - 1) {
-      throw new Error(`Invalid tag ${tag}: expected name@version.`);
-    }
-
-    const name = tag.slice(0, separator);
-    const pkg = packages.find((candidate) => candidate.name === name);
-    if (!pkg) {
-      throw new Error(`Tag ${tag} is not an independent package.`);
-    }
-
-    const commit = commits[tag] ?? null;
-    if (commit === null) {
-      throw new Error(`Tag ${tag} does not exist.`);
-    }
-
-    found.add(commit);
-    tagged.push({ name, version: tag.slice(separator + 1), tag, path: pkg.root, commit });
-  }
-
-  if (found.size > 1) {
-    throw new Error(`Tags point at different commits: ${[...found].join(', ')}.`);
-  }
-
-  return { pr: null, sha: [...found][0], tagged };
 }
 
 export function formatOutputs(plan: Plan): Record<string, string> {
@@ -224,37 +172,17 @@ function versionsAt(commit: string, packages: IndependentPackage[]): Versions {
   );
 }
 
-function tagCommit(tag: string): string | null {
-  try {
-    return run('git', ['rev-parse', '-q', '--verify', `refs/tags/${tag}^{commit}`]).trim();
-  } catch (error) {
-    // rev-parse --verify answers 1 when the tag does not exist; any other failure is a real problem.
-    if (error instanceof Error && 'status' in error && error.status === 1) {
-      return null;
-    }
-    throw error;
-  }
-}
-
 if (import.meta.main) {
   try {
     const packages = await getIndependentPackages();
-    const tags = readTags(process.env);
+    const prs = listMergedPendingPrs(requireEnv('GITHUB_REPOSITORY')).map((pr) => ({
+      ...pr,
+      before: versionsAt(run('git', ['rev-parse', `${pr.mergeCommit}^1`]).trim(), packages),
+      after: versionsAt(pr.mergeCommit, packages),
+    }));
 
-    let plan: Plan;
-    if (tags) {
-      plan = resolveDispatchTags(tags, packages, Object.fromEntries(tags.map((tag) => [tag, tagCommit(tag)])));
-    } else {
-      const prs = listMergedPendingPrs(requireEnv('GITHUB_REPOSITORY')).map((pr) => ({
-        ...pr,
-        before: versionsAt(run('git', ['rev-parse', `${pr.mergeCommit}^1`]).trim(), packages),
-        after: versionsAt(pr.mergeCommit, packages),
-      }));
-
-      const planned = planReleaseTags(packages, requireEnv('GITHUB_SHA'), prs);
-      planned.warnings.forEach((warning) => console.error(`::warning::${warning}`));
-      plan = planned.plan;
-    }
+    const { plan, warnings } = planReleaseTags(packages, requireEnv('GITHUB_SHA'), prs);
+    warnings.forEach((warning) => console.error(`::warning::${warning}`));
 
     for (const [key, value] of Object.entries(formatOutputs(plan))) {
       console.log(`${key}=${value}`);
