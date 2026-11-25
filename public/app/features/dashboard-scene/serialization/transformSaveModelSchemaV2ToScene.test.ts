@@ -92,6 +92,21 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('transformSaveModelSchemaV2ToScene', () => {
+  it.each([
+    { editable: true, canEdit: true },
+    { editable: false, canEdit: false },
+    { editable: undefined, canEdit: false },
+  ])('sets edit and save availability to $canEdit for editable=$editable', ({ editable, canEdit }) => {
+    const scene = transformSaveModelSchemaV2ToScene({
+      ...defaultDashboard,
+      spec: { ...defaultDashboard.spec, editable },
+      access: { ...defaultDashboard.access, canEdit: true, canSave: true },
+    });
+
+    expect(scene.state.meta.canEdit).toBe(canEdit);
+    expect(scene.state.meta.canSave).toBe(canEdit);
+  });
+
   it('should merge a default GroupByVariable into the default adhoc variable on the same datasource', () => {
     const scene = transformSaveModelSchemaV2ToScene(defaultDashboard, {
       uid: 'dashboard-uid',

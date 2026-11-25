@@ -92,6 +92,16 @@ var (
 	}
 )
 
+// NewIsolatedHTTPClient gives a test its own connection pool with the default test
+// HTTP settings.
+func NewIsolatedHTTPClient(t *testing.T) *http.Client {
+	t.Helper()
+	client := *sharedHTTPClient
+	client.Transport = sharedHTTPClient.Transport.(*http.Transport).Clone()
+	t.Cleanup(client.CloseIdleConnections)
+	return &client
+}
+
 type K8sTestHelper struct {
 	t               *testing.T
 	listenerAddress string
@@ -118,7 +128,7 @@ type K8sTestHelperOpts struct {
 	Org1Users *OrgUsers
 	OrgBUsers *OrgUsers
 	// CustomHTTPClient replaces the shared HTTP client for this helper only.
-	// When nil, the shared default client is used.
+	// Discovery and resource clients reuse its transport when supplied.
 	CustomHTTPClient *http.Client
 	// ReuseExistingUsers looks up the default test users by login instead of failing when
 	// they already exist, so a new process can start against a database provisioned by
@@ -374,6 +384,13 @@ func newOptimizedRestConfig(host string) *rest.Config {
 	}
 }
 
+func (c *K8sTestHelper) restConfigWithCustomTransport(cfg *rest.Config) *rest.Config {
+	if c.httpClient != sharedHTTPClient && c.httpClient.Transport != nil {
+		cfg.Transport = c.httpClient.Transport
+	}
+	return cfg
+}
+
 // This will set the expected Group/Version/Resource and return the discovery info if found
 func (c *K8sTestHelper) GetResourceClient(args ResourceClientArgs) *K8sResourceClient {
 	c.t.Helper()
@@ -391,17 +408,15 @@ func (c *K8sTestHelper) GetResourceClient(args ResourceClientArgs) *K8sResourceC
 		}
 	}
 
-	var client dynamic.Interface
-	var clientErr error
-
+	var cfg *rest.Config
 	if args.User != (User{}) {
-		client, clientErr = dynamic.NewForConfig(args.User.NewRestConfig())
+		cfg = args.User.NewRestConfig()
 	} else {
 		// Use service account token for authentication
-		cfg := newOptimizedRestConfig(fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr()))
+		cfg = newOptimizedRestConfig(fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr()))
 		cfg.BearerToken = args.ServiceAccountToken
-		client, clientErr = dynamic.NewForConfig(cfg)
 	}
+	client, clientErr := dynamic.NewForConfig(c.restConfigWithCustomTransport(cfg))
 	require.NoError(c.t, clientErr)
 
 	return &K8sResourceClient{
@@ -756,6 +771,12 @@ func (c *K8sTestHelper) List(user User, namespace string, gvr schema.GroupVersio
 
 func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResponse[T] {
 	c.t.Helper()
+	return DoRequestForTest(c.t, c, params, result)
+}
+
+// DoRequestForTest reports request failures on t when a subtest shares its parent's helper.
+func DoRequestForTest[T any](t *testing.T, c *K8sTestHelper, params RequestParams, result *T) K8sResponse[T] {
+	t.Helper()
 
 	if params.Method == "" {
 		params.Method = http.MethodGet
@@ -786,7 +807,7 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 		baseUrl,
 		params.Path,
 	), body)
-	require.NoError(c.t, err)
+	require.NoError(t, err, "%s %s", params.Method, params.Path)
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
 	}
@@ -798,7 +819,7 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 	}
 
 	rsp, err := c.httpClient.Do(req)
-	require.NoError(c.t, err)
+	require.NoError(t, err, "%s %s", params.Method, params.Path)
 
 	r := K8sResponse[T]{
 		Response: rsp,
@@ -807,7 +828,8 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 	defer func() {
 		_ = rsp.Body.Close() // ignore any close errors
 	}()
-	r.Body, _ = io.ReadAll(rsp.Body)
+	r.Body, err = io.ReadAll(rsp.Body)
+	require.NoError(t, err, "read %s %s response", params.Method, params.Path)
 	if json.Valid(r.Body) {
 		_ = json.Unmarshal(r.Body, r.Result)
 
@@ -1063,7 +1085,7 @@ func (c *K8sTestHelper) NewAdminRestConfig() *rest.Config {
 	cfg := newOptimizedRestConfig(baseUrl)
 	cfg.Username = c.Org1.Admin.Identity.GetLogin()
 	cfg.Password = c.Org1.Admin.password
-	return cfg
+	return c.restConfigWithCustomTransport(cfg)
 }
 
 func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {

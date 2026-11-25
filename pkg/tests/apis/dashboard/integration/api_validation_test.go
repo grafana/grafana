@@ -24,6 +24,7 @@ import (
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboards" // TODO: Check if we can remove this import
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -83,6 +84,66 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 	t.Run("Dashboard quota tests", func(t *testing.T) {
 		runQuotaTests(t, org1Ctx)
 	})
+}
+
+func TestIntegrationDashboardTrashDeletionMetadata(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
+		GrafanaOpts:      testinfra.GrafanaOpts{DisableAnonymous: true},
+		CustomHTTPClient: apis.NewIsolatedHTTPClient(t),
+	})
+	t.Cleanup(helper.Shutdown)
+	admin, editor := helper.Org1.Admin, helper.Org1.Editor
+	gvr := getDashboardGVR()
+	adminClient := getResourceClient(t, helper, admin, gvr)
+	editorClient := getResourceClient(t, helper, editor, gvr)
+
+	const title = "Dashboard deleted by another user"
+	f, err := createFolder(t, helper, admin, "Trash metadata test")
+	require.NoError(t, err)
+	dashboard, err := createDashboard(t, adminClient, title, &f.UID, nil, helper)
+	require.NoError(t, err)
+	require.Equal(t, admin.Identity.GetUID(), dashboard.GetAnnotations()[utils.AnnoKeyUpdatedBy])
+	deleter := editor.Identity.GetUID()
+	require.NotEqual(t, admin.Identity.GetUID(), deleter)
+
+	name := dashboard.GetName()
+	require.NoError(t, editorClient.Resource.Delete(t.Context(), name, v1.DeleteOptions{}))
+	trash, err := adminClient.Resource.List(t.Context(), v1.ListOptions{
+		LabelSelector: utils.LabelKeyGetTrash + "=true",
+		FieldSelector: "metadata.name=" + name,
+	})
+	require.NoError(t, err)
+	require.Len(t, trash.Items, 1)
+	item := trash.Items[0]
+	require.Equal(t, name, item.GetName())
+	require.Equal(t, deleter, item.GetAnnotations()[utils.AnnoKeyUpdatedBy])
+	deletedAt := item.GetDeletionTimestamp()
+	require.NotNil(t, deletedAt)
+	require.False(t, deletedAt.IsZero())
+
+	path := fmt.Sprintf("/apis/%s/namespaces/%s/%s/trash", gvr.GroupVersion(),
+		helper.Namespacer(admin.Identity.GetOrgID()), gvr.Resource)
+	body, err := json.Marshal(searchv0.TrashQuery{
+		TypeMeta: v1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindTrashQuery},
+		Fields:   []string{"title", "folder", "tags", "deleted_by", "deletion_time"},
+		Limit:    100,
+	})
+	require.NoError(t, err)
+	rsp := apis.DoRequestForTest(t, helper, apis.RequestParams{
+		User: admin, Method: http.MethodPost, Path: path, Body: body,
+	}, (*searchv0.TrashResults)(nil))
+	require.Equal(t, http.StatusOK, rsp.Response.StatusCode, "%s", rsp.Body)
+	var page searchv0.TrashResults
+	require.NoError(t, json.Unmarshal(rsp.Body, &page))
+	i := slices.IndexFunc(page.Items, func(row searchv0.ResultItem) bool { return row.Resource.Name == name })
+	require.NotEqual(t, -1, i, "dashboard %s on the recently deleted page", name)
+	fields := page.Items[i].Fields
+	require.NotNil(t, fields)
+	require.Equal(t, title, fields.Object["title"])
+	require.Equal(t, f.UID, fields.Object["folder"])
+	require.Equal(t, deleter, fields.Object["deleted_by"])
+	require.Equal(t, float64(deletedAt.UnixMilli()), fields.Object["deletion_time"])
 }
 
 // TestIntegrationDashboardAPIZanzana runs the single-org Zanzana subtests against
