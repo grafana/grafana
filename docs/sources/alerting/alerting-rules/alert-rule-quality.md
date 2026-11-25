@@ -62,7 +62,6 @@ Before you begin, check that you have the following permissions in your Grafana 
 
 - **Rule access:** Have permission to view the Grafana-managed alert rules you want to assess.
 - **Policy permissions:** To configure the quality policy, have the Admin role in your organization or a role with `alert.rules.quality:write` and `alert.rules:read`.
-  This applies to Team policies too: only organization administrators create, edit, and delete them.
 - **Rule updates:** To fix findings, have permission to update the affected rules.
   For provisioned rules, you also need access to their source configuration and permission to reapply it.
 
@@ -70,8 +69,8 @@ For more information about alerting permissions and folder access, refer to [Con
 
 ## Understand policy scope
 
-The _Org policy_ is a single quality policy, configured by an organization administrator, that applies to Grafana-managed alert rules across all folders in your organization.
-Until you configure one, Alert Advisor has no requirements to check.
+The _Org policy_ is a single quality policy that applies to Grafana-managed alert rules across all folders in your organization.
+Until you configure it, Alert Advisor has no requirements to check.
 You can also give a team its own policy, called a _Team policy_, which applies to the folders that team owns. Refer to [Team policies](#team-policies).
 Data source-managed alert rules, recording rules, and alert rules provided by plugins are excluded.
 
@@ -109,15 +108,14 @@ A Team policy lets a team define what the alert rules in its own folders must ca
 The policy that applies to a rule depends on the folder the rule is saved in.
 Grafana checks these policies when a rule is written to a folder through a [supported enforcement path](#supported-enforcement-paths).
 
-- **Team policy:** Applies to every as-code write into a folder that the team owns.
-- **Org policy:** Applies when no owning team of the folder or any of its ancestors has a Team policy, so folders without an owning team are covered by the Org policy, if one is configured.
+- **Team policy:** Applies to every rule written to a folder that the team owns.
+- **Org policy:** Applies when no owning team of the folder or any of its ancestors has a Team policy.
 
 A team has at most one Team policy.
 
 ### Folder ownership
 
 A team owns a folder when the team is set as the folder's team owner.
-Grafana doesn't infer ownership from folder permissions or basic roles. Granting a team access to a folder, or having the Editor or Admin role, doesn't make that team an owner.
 
 Ownership is inherited by subfolders.
 A rule in a subfolder is covered by the policies of the teams that own the subfolder and of the teams that own any of its ancestor folders.
@@ -128,8 +126,8 @@ One team's lenient policy can't relax another owning team's requirements.
 
 ### Team policies and the Org policy
 
-The Org policy is a default, not a minimum.
-A team that has a Team policy is held only to the Team policies that apply, and not to the Org policy, for its folders.
+The Org policy applies by default.
+A team that has a Team policy is held only to the Team policies that apply to its folders.
 A lenient or empty Team policy therefore opts that team's folders out of the Org requirements.
 
 If a team owns a folder but has no Team policy, it doesn't affect which policy applies.
@@ -139,7 +137,6 @@ If a team owns a folder but has no Team policy, it doesn't affect which policy a
 A rejected write lists every policy the rule failed, and the missing fields for each rule under each policy.
 It shows every missing enforced requirement, including requirements set by other teams that you aren't a member of, so you can fix the source configuration in one pass.
 Each failing policy is named: either the Org policy or the policy of a team.
-The message also says that organization administrators can change the policy.
 
 Team policies change only which requirements are enforced. Enforcement scope stays the same as described in [Supported enforcement paths](#supported-enforcement-paths):
 
@@ -148,14 +145,10 @@ Team policies change only which requirements are enforced. Enforcement scope sta
 - Each requirement keeps its own **Enforce** setting inside its policy.
 
 Grafana evaluates policies when a write happens, using the folder's current owners.
-Changing a policy or a folder's owners doesn't re-check existing rules.
-
-If Grafana can't resolve a folder's owners or read a policy, the write isn't blocked on that account. Grafana applies the Org policy instead, if one is configured.
 
 ### Manage Team policies
 
-In this version, only organization administrators create, edit, and delete policies, Team policies included.
-Team admins can't manage their team's policy.
+To create, edit, or delete policies, including Team policies, you need the Admin role or a role with `alert.rules.quality:write`.
 
 To create a Team policy, follow these steps:
 
@@ -214,10 +207,9 @@ Each missing field appears as a badge. To check whether a requirement is enforce
 
 ### Policies in the quality check and score
 
-When Team policies are on, the **Alert quality** tab checks each rule against the same policies that apply to writes into its folder.
+The **Alert quality** tab checks each rule against the same policies that apply to writes into its folder.
 That is the policy of every team that owns the rule's folder or one of its ancestors, or the Org policy when none of those teams has a policy.
 The findings and the score use those policies, so a rule in a team's folder isn't reported for requirements that only the Org policy sets.
-The tab shows the policies for the rules you can view and doesn't change what Grafana enforces on a write.
 
 An empty Team policy leaves its rules with nothing to miss, so they count as meeting the policy.
 
