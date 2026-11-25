@@ -3,6 +3,7 @@ package authnimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"slices"
@@ -18,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -726,4 +728,47 @@ func setupTests(t *testing.T, opts ...func(svc *Service)) *Service {
 	}
 
 	return s
+}
+
+func TestService_ErrorLogFunc(t *testing.T) {
+	t.Run("should log missing user token at debug level", func(t *testing.T) {
+		fakeLog := &fromContextFakeLogger{}
+		s := &Service{log: fakeLog}
+
+		logFn := s.errorLogFunc(context.Background(), auth.ErrUserTokenNotFound)
+		logFn("Failed to authenticate request")
+
+		assert.Equal(t, 1, fakeLog.DebugLogs.Calls)
+		assert.Equal(t, 0, fakeLog.WarnLogs.Calls)
+	})
+
+	t.Run("should log wrapped missing user token at debug level", func(t *testing.T) {
+		fakeLog := &fromContextFakeLogger{}
+		s := &Service{log: fakeLog}
+
+		logFn := s.errorLogFunc(context.Background(), fmt.Errorf("session lookup: %w", auth.ErrUserTokenNotFound))
+		logFn("Failed to authenticate request")
+
+		assert.Equal(t, 1, fakeLog.DebugLogs.Calls)
+		assert.Equal(t, 0, fakeLog.WarnLogs.Calls)
+	})
+
+	t.Run("should log unexpected errors at warn level", func(t *testing.T) {
+		fakeLog := &fromContextFakeLogger{}
+		s := &Service{log: fakeLog}
+
+		logFn := s.errorLogFunc(context.Background(), errors.New("unexpected"))
+		logFn("Failed to authenticate request")
+
+		assert.Equal(t, 0, fakeLog.DebugLogs.Calls)
+		assert.Equal(t, 1, fakeLog.WarnLogs.Calls)
+	})
+}
+
+type fromContextFakeLogger struct {
+	logtest.Fake
+}
+
+func (f *fromContextFakeLogger) FromContext(_ context.Context) log.Logger {
+	return f
 }
