@@ -9,8 +9,12 @@ import { getFocusStyles } from '@grafana/ui/internal';
 /** The navigation's height above the plugin section, once the user has resized it. */
 export const MEGA_MENU_NAV_HEIGHT_STORAGE_KEY = 'grafana.navigation.megaMenuNavHeight';
 
-/** The smallest share of the menu the plugin section keeps when the user drags the handle down. */
-const SECTION_MIN_HEIGHT = '25%';
+/**
+ * The plugin section's height when the user drags the handle all the way down, in theme spacing units: 160px, room for
+ * its heading, a search field and a few rows. A fixed height, like the navigation's, so the limit is the same on every
+ * screen; the section folds to its heading for less.
+ */
+const SECTION_MIN_SPACING = 20;
 
 /** On the plugin section's region, so the layout can tell whether the section shows anything. */
 const SECTION_ATTRIBUTE = 'data-mega-menu-section';
@@ -147,7 +151,7 @@ export function useMegaMenuSectionSplitter(hasSection: boolean, collapsed: boole
       // far the navigation can grow. Collapsed, the section is as tall as its heading.
       style: collapsed
         ? { ...secondaryProps.style, flexGrow: 0, flexShrink: 0, flexBasis: 'auto', minHeight: 0 }
-        : { ...secondaryProps.style, minHeight: SECTION_MIN_HEIGHT },
+        : { ...secondaryProps.style, minHeight: theme.spacing(SECTION_MIN_SPACING) },
       [SECTION_ATTRIBUTE]: '',
     },
   };
