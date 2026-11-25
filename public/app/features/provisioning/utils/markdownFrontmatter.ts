@@ -1,6 +1,8 @@
-import { FAILSAFE_SCHEMA, loadAll } from 'js-yaml';
+import { FAILSAFE_SCHEMA } from 'js-yaml';
 
-export type YamlNode = string | null | YamlNode[] | YamlMapping;
+import { loadYaml } from 'app/core/utils/yaml';
+
+export type YamlNode = string | YamlNode[] | YamlMapping;
 export type YamlMapping = { [key: string]: YamlNode };
 
 // `---` on the first line (BOM allowed) through a closing `---` or `...` line; CRLF and trailing spaces OK.
@@ -28,21 +30,17 @@ export function splitFrontmatter(markdown: string): { frontmatter?: YamlMapping;
 // The failsafe schema keeps scalars as written (`1.10`, `01234`, `0x1F`, `false`) instead of
 // coercing them; an explicit non-string tag like `!!int` throws and the block stays in the document.
 // `json` lets a repeated key override instead of failing.
-// An empty or comment-only block has no documents (`load` throws on that); treat it as `{}` so its fences are stripped too.
+// An empty or comment-only block parses to nothing; treat it as `{}` so its fences are stripped too.
 function parseMapping(yaml: string): YamlMapping | undefined {
   try {
-    const docs = loadAll(yaml, { schema: FAILSAFE_SCHEMA, json: true });
-    if (docs.length > 1) {
-      return undefined;
-    }
-    const parsed = docs[0] ?? {};
+    const parsed = loadYaml(yaml, { schema: FAILSAFE_SCHEMA, json: true }) ?? {};
     return isYamlMapping(parsed) ? parsed : undefined;
   } catch {
     return undefined;
   }
 }
 
-// Only sound because the failsafe schema yields nothing but strings, nulls, arrays and plain objects.
+// Only sound because the failsafe schema yields nothing but strings, arrays and plain objects.
 function isYamlMapping(value: unknown): value is YamlMapping {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

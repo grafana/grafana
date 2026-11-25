@@ -1,6 +1,4 @@
-import { load } from 'js-yaml';
-
-import { YAML_LOAD_OPTIONS } from 'app/core/utils/yaml';
+import { loadYaml } from 'app/core/utils/yaml';
 import {
   type RulerCloudRuleDTO,
   type RulerCloudRulesConfigDTO,
@@ -118,8 +116,7 @@ export function parseYamlToRulerRulesConfigDTO(
   yamlAsString: string,
   defaultNamespace: string
 ): RulerCloudRulesConfigDTO {
-  // don't attempt to load empty YAML
-  const obj = yamlAsString.trim() ? load(yamlAsString, YAML_LOAD_OPTIONS) : undefined;
+  const obj = loadYaml(yamlAsString);
   const validation = validatePrometheusYamlFile(obj);
 
   if (!validation.isValid) {
