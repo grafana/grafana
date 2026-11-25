@@ -149,7 +149,9 @@ func TestCloudSettingsRoutes(t *testing.T) {
 			root := "/apis/example-app/v0alpha1"
 			item := root + "/namespaces/stacks-1/app/instance"
 			for _, ns := range []string{"stacks-1", "stacks-2"} {
-				res := serve("GET", root+"/namespaces/"+ns+"/app/instance", settingsRequester(ns))
+				requester := settingsRequester(ns)
+				requester.Groups = []string{"team:example"}
+				res := serve("GET", root+"/namespaces/"+ns+"/app/instance", requester)
 				require.Equal(t, 200, res.Code, res.Body.String())
 				var obj appv0.Settings
 				require.NoError(t, json.Unmarshal(res.Body.Bytes(), &obj))
@@ -160,6 +162,7 @@ func TestCloudSettingsRoutes(t *testing.T) {
 				require.Equal(t, ns, last.Namespace)
 				require.Equal(t, "user:reader", last.Subject)
 				require.NotNil(t, last.RequesterOrgID)
+				require.Nil(t, last.TeamIDs)
 				ok := last.Evaluator.Evaluate(map[string][]string{pluginaccesscontrol.ActionAppAccess: {"plugins:id:example-app"}})
 				require.True(t, ok)
 			}

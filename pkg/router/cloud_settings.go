@@ -102,9 +102,10 @@ func (a cloudSettingsAccessControl) Evaluate(ctx context.Context, user identity.
 		return false, nil
 	}
 	orgID := user.GetOrgID()
+	// Let AuthZ resolve team memberships. Overrides require the embedded server.
 	return a.client.LegacyCheck(ctx, legacyclient.LegacyCheckRequest{
 		Namespace: ns, Subject: user.GetUID(), RequesterOrgID: &orgID,
-		Teams: user.GetGroups(), Evaluator: evaluator,
+		Evaluator: evaluator,
 	})
 }
 
