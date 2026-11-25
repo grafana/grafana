@@ -91,19 +91,21 @@ You can create a playlist to present dashboards in a sequence, with a set order 
 
    Added dashboards are displayed in a list in the **Dashboards** section of the page, in the order you added them. This is also the play order of the dashboards.
 
-1. Optional: [Set a per-dashboard interval](#set-a-per-dashboard-interval) for any dashboard that should display for a different amount of time.
+1. (Optional) [Set a per-dashboard interval](#set-a-per-dashboard-interval) for any dashboard that should display for a different amount of time.
 1. Click **Save**.
 
 ## Set a per-dashboard interval
 
-By default, every dashboard in a playlist is displayed for the playlist's **Interval**. You can override the interval for individual dashboards, for example to keep an overview dashboard on screen longer than the others.
+By default, every dashboard in a playlist is displayed for the playlist's **Interval**. You can override the interval for individual dashboards. For example, you might want to keep an overview dashboard on screen longer than the others.
 
-1. Open the playlist for editing, or start creating a new one.
+1. Click **Dashboards** in the main menu.
+1. Click **Playlists**.
+1. Open a playlist for editing, or start creating a new one.
 1. In the list of dashboards, find the dashboard you want to change.
 1. In the interval field next to the dashboard, enter a duration such as `30s`, `5m`, or `1h`. Supported units are `ms`, `s`, `m`, and `h`. A number without a unit is read as seconds.
 1. Click **Save**.
 
-If you leave the field blank, the dashboard uses the playlist's **Interval**; the field's placeholder shows that value. If an entry isn't a valid duration, the field is highlighted and you can't save the playlist until you fix or clear it.
+If you leave the field empty, the dashboard uses the playlist's **Interval** value. The interval field for the dashboard displays that value as a placeholder. If an entry isn't a valid duration, the field is highlighted and you can't save the playlist until you fix or clear it.
 
 When you add dashboards by tag, every dashboard that matches the tag uses the interval set on that tag entry.
 
