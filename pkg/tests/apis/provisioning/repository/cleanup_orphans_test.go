@@ -1,15 +1,14 @@
 package repository
 
 import (
-	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -25,22 +24,24 @@ func orphanRepository(t *testing.T, helper *common.ProvisioningTestHelper, repo 
 	})
 	helper.RequireRepoDashboardCount(t, repo, 3)
 	helper.RequireRepoFolderCount(t, repo, 6)
+	deleteRepositoryKeepResources(t, helper, repo)
+}
 
-	// Keep only the cleanup finalizer, so the repository goes away and its resources stay.
-	_, err := helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, []byte(`[
-		{"op": "replace", "path": "/metadata/finalizers", "value": ["cleanup"]}
-	]`), metav1.PatchOptions{})
+// deleteRepositoryKeepResources keeps only the cleanup finalizer, so the repository goes away and its
+// resources stay.
+func deleteRepositoryKeepResources(t *testing.T, helper *common.ProvisioningTestHelper, repo string) {
+	t.Helper()
+	patch := fmt.Appendf(nil, `[{"op":"replace","path":"/metadata/finalizers","value":[%q]}]`, repository.CleanFinalizer)
+	_, err := helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, patch, metav1.PatchOptions{})
 	require.NoError(t, err)
 	require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
 	helper.WaitForRepositoryDeleted(t, repo)
 }
 
 // TestIntegrationProvisioning_CleanupAllResourcesRemovesOrphans guards the cleanup every test starts
-// with: resources left behind by a repository that is gone cannot be deleted directly, so the cleanup has
-// to run the orphan cleanup job, as the UI does, or it would fail every test that follows.
+// with: it has to remove the resources that a repository which is gone left behind, or it would fail
+// every test that follows.
 func TestIntegrationProvisioning_CleanupAllResourcesRemovesOrphans(t *testing.T) {
-	t.Skip("Disabled: provisioning sync jobs time out in CI")
-
 	helper := sharedHelper(t)
 
 	orphanRepository(t, helper, "cleanup-removes-orphans")
@@ -59,13 +60,10 @@ func TestIntegrationProvisioning_CleanupAllResourcesRemovesOrphans(t *testing.T)
 	require.Empty(t, dashboards.Items)
 }
 
-// TestIntegrationProvisioning_DeleteOrphanReportsMissingRepository guards what deleteAndWait relies on.
-// Deleting a resource whose repository is gone returns a NotFound, which a caller usually reads as
-// "already deleted". The details of that NotFound name the repository, so a caller can tell that the
-// resource itself is still there.
-func TestIntegrationProvisioning_DeleteOrphanReportsMissingRepository(t *testing.T) {
-	t.Skip("Disabled: provisioning sync jobs time out in CI")
-
+// TestIntegrationProvisioning_DeleteOrphanRemovesOnlyThatResource guards that deleting a resource whose
+// repository is gone removes the resource itself. The delete used to return a NotFound that named the
+// repository and left the resource behind.
+func TestIntegrationProvisioning_DeleteOrphanRemovesOnlyThatResource(t *testing.T) {
 	helper := sharedHelper(t)
 
 	const repo = "orphan-delete-details"
@@ -73,18 +71,14 @@ func TestIntegrationProvisioning_DeleteOrphanReportsMissingRepository(t *testing
 
 	dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
 	require.NoError(t, err)
-	require.NotEmpty(t, dashboards.Items)
+	require.Len(t, dashboards.Items, 3)
 	dashboard := dashboards.Items[0]
 	require.Equal(t, repo, dashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 
-	err = helper.DashboardsV1.Resource.Delete(t.Context(), dashboard.GetName(), metav1.DeleteOptions{})
+	require.NoError(t, helper.DashboardsV1.Resource.Delete(t.Context(), dashboard.GetName(), metav1.DeleteOptions{}))
 
-	statusErr, ok := errors.AsType[*apierrors.StatusError](err)
-	require.True(t, ok, "expected a StatusError, got %T: %v", err, err)
-	status := statusErr.ErrStatus
-	require.Equal(t, metav1.StatusReasonNotFound, status.Reason)
-	require.NotNil(t, status.Details)
-	require.Equal(t, provisioning.RepositoryResourceInfo.GroupResource().Group, status.Details.Group)
-	require.Equal(t, provisioning.RepositoryResourceInfo.GroupResource().Resource, status.Details.Kind)
-	require.Equal(t, repo, status.Details.Name)
+	helper.RequireDashboardsNotFound(t, dashboard.GetName())
+	remaining, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err)
+	require.Len(t, remaining.Items, 2, "the other orphans should be untouched")
 }

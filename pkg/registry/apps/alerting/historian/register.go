@@ -58,6 +58,7 @@ func RegisterAppInstaller(
 				Enabled: nhCfg.Enabled,
 				Loki: historianAppConfig.LokiConfig{
 					LokiConfig: lokiConfig,
+					InjectUser: nhCfg.LokiInjectUser,
 				},
 				// Restrict notification history to the folders whose alert rules the
 				// caller can read. RBAC resolves accessible folders via the folder API

@@ -30,15 +30,16 @@ const RepositoryControllerServiceName = "provisioning-repository-controller"
 type RepositoryControllerService struct {
 	services.NamedService
 
-	builder *APIBuilder
-	run     func(ctx context.Context, restConfig *clientrest.Config) error
+	builder   *APIBuilder
+	bootstrap *BootstrapService
+	run       func(ctx context.Context, restConfig *clientrest.Config) error
 }
 
 // ProvideRepositoryControllerService is called by Wire. Depending on the
 // builder orders it after [RegisterAPIService], which registers the
 // provisioning API group with the API server.
-func ProvideRepositoryControllerService(builder *APIBuilder) *RepositoryControllerService {
-	s := &RepositoryControllerService{builder: builder}
+func ProvideRepositoryControllerService(builder *APIBuilder, bootstrap *BootstrapService) *RepositoryControllerService {
+	s := &RepositoryControllerService{builder: builder, bootstrap: bootstrap}
 	s.run = s.runController
 	s.NamedService = services.NewBasicService(nil, s.running, nil).WithName(RepositoryControllerServiceName)
 	return s
@@ -62,6 +63,15 @@ func (s *RepositoryControllerService) running(ctx context.Context) error {
 	// routed config would send them through the router, which strips the
 	// loopback credentials before a remote backend.
 	restConfig, err := s.builder.awaitLoopbackConfig(ctx)
+	if err == nil {
+		// A changed or cleared bootstrap_path must be applied before the
+		// controller syncs the repository it replaces.
+		select {
+		case <-s.bootstrap.Done():
+		case <-ctx.Done():
+			err = context.Cause(ctx)
+		}
+	}
 	if err == nil {
 		err = s.run(ctx, restConfig)
 	}

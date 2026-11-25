@@ -18,6 +18,14 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
+			Name:        "grafana.responsiveTimePickerTabs",
+			Description: "Enable tabs and an inline calendar in the compact time range picker",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "panelTitleSearch",
 			Description: "Search for dashboards using panel title",
 			Stage:       FeatureStagePublicPreview,
@@ -3545,6 +3553,15 @@ var (
 		{
 			Name:         "grafana.dashboardSidebarExplicitOpen",
 			Description:  "In dashboard edit mode, opens the sidebar only through explicit user actions and keeps it closed until explicitly reopened",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "grafana.panelQuickEdits",
+			Description:  "Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,

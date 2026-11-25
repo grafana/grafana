@@ -3730,6 +3730,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.panelQuickEdits",
+        "resourceVersion": "1795097237850",
+        "creationTimestamp": "2026-11-19T14:07:17Z"
+      },
+      "spec": {
+        "description": "Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.pluginExtensionReactElementProps",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-15T14:07:35Z"
@@ -3833,6 +3848,20 @@
         "frontend": true,
         "hideFromDocs": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.responsiveTimePickerTabs",
+        "resourceVersion": "1795130480782",
+        "creationTimestamp": "2026-11-19T23:21:20Z"
+      },
+      "spec": {
+        "description": "Enable tabs and an inline calendar in the compact time range picker",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
