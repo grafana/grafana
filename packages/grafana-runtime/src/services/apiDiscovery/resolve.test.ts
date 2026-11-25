@@ -33,6 +33,12 @@ describe('resolveAPIVersion', () => {
     await expect(resolveAPIVersion('folder.grafana.app', ['v1', 'v1beta1'])).resolves.toBe('v1');
   });
 
+  it("returns the caller's version type", async () => {
+    const version: 'v1' | 'v1beta1' | undefined = await resolveAPIVersion('folder.grafana.app', ['v1', 'v1beta1']);
+
+    expect(version).toBe('v1');
+  });
+
   it('returns undefined when the group is not served', async () => {
     await expect(resolveAPIVersion('annotation.grafana.app', ['v1beta1'])).resolves.toBeUndefined();
   });

@@ -21,7 +21,10 @@ export interface ResolveAPIBaseURLOptions {
  *
  * @alpha
  */
-export async function resolveAPIVersion(group: string, supported: readonly string[]): Promise<string | undefined> {
+export async function resolveAPIVersion<V extends string>(
+  group: string,
+  supported: readonly V[]
+): Promise<V | undefined> {
   const info = await getAPIGroup(group);
   return info ? selectAPIVersion(info, supported) : undefined;
 }

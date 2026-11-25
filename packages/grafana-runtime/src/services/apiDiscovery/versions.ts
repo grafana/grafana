@@ -37,9 +37,7 @@ export function compareAPIVersions(a: string, b: string): number {
  * The server's preferred version if the caller supports it, otherwise the most stable version both
  * support. Never a version the caller did not list.
  */
-export function selectAPIVersion(group: APIGroupInfo, supported: readonly string[]): string | undefined {
-  if (supported.includes(group.preferredVersion)) {
-    return group.preferredVersion;
-  }
-  return group.versions.filter((version) => supported.includes(version)).sort(compareAPIVersions)[0];
+export function selectAPIVersion<V extends string>(group: APIGroupInfo, supported: readonly V[]): V | undefined {
+  const common = supported.filter((version) => group.versions.includes(version));
+  return common.find((version) => version === group.preferredVersion) ?? common.sort(compareAPIVersions)[0];
 }

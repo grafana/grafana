@@ -41,6 +41,12 @@ describe('selectAPIVersion', () => {
     expect(selectAPIVersion(group, ['v0alpha1', 'v2beta1'])).toBe('v2beta1');
   });
 
+  it("returns the caller's version type", () => {
+    const version: 'v2beta1' | 'v0alpha1' | undefined = selectAPIVersion(group, ['v2beta1', 'v0alpha1']);
+
+    expect(version).toBe('v2beta1');
+  });
+
   it('returns undefined when the caller and the server have no version in common', () => {
     expect(selectAPIVersion(group, ['v1', 'v2'])).toBeUndefined();
     expect(selectAPIVersion(group, [])).toBeUndefined();
