@@ -64,11 +64,17 @@ export function usePanning<T extends Element>({ scale = 1, bounds, focus }: Opti
   });
 
   useEffect(() => {
+    const ref = panRef.current;
+    // The element can render in another window than this one, such as a Document Picture-in-Picture window. Its
+    // events are that window's, and only its document sees a drag's moves and release.
+    const panDocument = ref?.ownerDocument ?? document;
+    const panWindow = panDocument.defaultView ?? window;
+
     const startPanning = (event: Event) => {
       if (!isPanning.current && isMounted()) {
         isPanning.current = true;
         // Snapshot the current position of both mouse pointer and the element
-        startMousePosition.current = getEventXY(event);
+        startMousePosition.current = getEventXY(event, panWindow);
         prevPosition.current = { ...currentPosition.current };
         setState((state) => ({ ...state, isPanning: true }));
         bindEvents();
@@ -89,22 +95,22 @@ export function usePanning<T extends Element>({ scale = 1, bounds, focus }: Opti
     };
 
     const bindEvents = () => {
-      document.addEventListener('mousemove', onPan);
-      document.addEventListener('mouseup', stopPanning);
-      document.addEventListener('touchmove', onPan);
-      document.addEventListener('touchend', stopPanning);
+      panDocument.addEventListener('mousemove', onPan);
+      panDocument.addEventListener('mouseup', stopPanning);
+      panDocument.addEventListener('touchmove', onPan);
+      panDocument.addEventListener('touchend', stopPanning);
     };
 
     const unbindEvents = () => {
-      document.removeEventListener('mousemove', onPan);
-      document.removeEventListener('mouseup', stopPanning);
-      document.removeEventListener('touchmove', onPan);
-      document.removeEventListener('touchend', stopPanning);
+      panDocument.removeEventListener('mousemove', onPan);
+      panDocument.removeEventListener('mouseup', stopPanning);
+      panDocument.removeEventListener('touchmove', onPan);
+      panDocument.removeEventListener('touchend', stopPanning);
     };
 
     const onPan = (event: Event) => {
       cancelAnimationFrame(frame.current);
-      const pos = getEventXY(event);
+      const pos = getEventXY(event, panWindow);
 
       frame.current = requestAnimationFrame(() => {
         if (isMounted() && panRef.current) {
@@ -127,7 +133,6 @@ export function usePanning<T extends Element>({ scale = 1, bounds, focus }: Opti
       });
     };
 
-    const ref = panRef.current;
     if (ref) {
       ref.addEventListener('mousedown', onPanStart);
       ref.addEventListener('touchstart', onPanStart);
@@ -186,10 +191,11 @@ function inBounds(value: number, min: number | undefined, max: number | undefine
 // The issue here is that TouchEvent is undefined while using instanceof in Firefox and Safari
 // which will throw an exception but if it's event.changedTouches it will be undefined
 // and the if check will fail so it will go to the else but will not throw an exception
-function getEventXY(event: Event): { x: number; y: number } {
-  if ('changedTouches' in event && event instanceof TouchEvent) {
+// eventWindow is the window the event happened in, whose constructors its events are instances of.
+function getEventXY(event: Event, eventWindow: typeof window): { x: number; y: number } {
+  if ('changedTouches' in event && event instanceof eventWindow.TouchEvent) {
     return { x: event.changedTouches[0].clientX, y: event.changedTouches[0].clientY };
-  } else if (event instanceof MouseEvent) {
+  } else if (event instanceof eventWindow.MouseEvent) {
     return { x: event.clientX, y: event.clientY };
   }
   return { x: 0, y: 0 };
