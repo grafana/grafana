@@ -9,6 +9,18 @@ import { setupRuleListBackend } from '../mocks/ruleListBackend';
 
 import AlertRulesPage from './AlertRulesPage';
 
+jest.mock('@grafana/runtime', () => {
+  const actual = jest.requireActual('@grafana/runtime');
+  return {
+    ...actual,
+    // The render helper replaces the location service for each test.
+    get locationService() {
+      return actual.locationService;
+    },
+    reportInteraction: jest.fn(),
+  };
+});
+
 setupMswServer();
 
 const FOLDERS = [
@@ -53,12 +65,15 @@ describe('AlertRulesPage Folders mode', () => {
 
   beforeEach(() => {
     intersection = installControllableIntersectionObserver();
-    reportInteraction = jest.spyOn(runtime, 'reportInteraction').mockImplementation(() => {});
+    reportInteraction = jest
+      .mocked(runtime.reportInteraction)
+      .mockReset()
+      .mockImplementation(() => {});
   });
 
   afterEach(() => {
     intersection.restore();
-    reportInteraction.mockRestore();
+    jest.mocked(runtime.reportInteraction).mockReset();
   });
 
   it('opens in Folders mode with collapsed folders holding rules, in title order, each with its direct Alert-rule count', async () => {

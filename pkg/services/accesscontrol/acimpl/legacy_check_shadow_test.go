@@ -45,7 +45,7 @@ func newCheckShadowAccessControl(t *testing.T, server *checkShadowServer) *Acces
 	ac := ProvideAccessControlTest()
 	channel := &inprocgrpc.Channel{}
 	authzv1.RegisterLegacyAuthzServiceServer(channel, server)
-	require.NoError(t, ac.SetLegacyCheckClient(legacyclient.NewLegacyClient(channel), false, types.OrgNamespaceFormatter, prometheus.NewRegistry()))
+	require.NoError(t, ac.SetLegacyCheckClient(legacyclient.NewLegacyClient(channel), types.OrgNamespaceFormatter, prometheus.NewRegistry()))
 	return ac
 }
 
@@ -56,7 +56,6 @@ func checkShadowUser() *identity.StaticRequester {
 		UserUID:   "checked-user",
 		OrgID:     12,
 		Namespace: "org-12",
-		Groups:    []string{"team-one"},
 		Permissions: map[int64]map[string][]string{
 			12: {"folders:read": {"folders:uid:allowed"}},
 		},
@@ -250,7 +249,6 @@ func TestLegacyCheckShadowSnapshotsAndDetaches(t *testing.T) {
 
 		cancel()
 		requester.UserUID = "changed"
-		requester.Groups[0] = "changed"
 		requester.GetPermissions()["users:delete"] = []string{"*"}
 		scopes[0] = "folders:uid:changed"
 		children[0] = accesscontrol.EvalPermission("users:delete")
@@ -265,7 +263,6 @@ func TestLegacyCheckShadowSnapshotsAndDetaches(t *testing.T) {
 			Namespace:      "org-12",
 			Subject:        "user:checked-user",
 			RequesterOrgId: proto.Int64(12),
-			Teams:          []string{"team-one"},
 			Restriction:    &authzv1.LegacyActionRestriction{Actions: []string{"folders:read"}},
 			Expression:     expression,
 		}
@@ -370,7 +367,7 @@ type customCheckShadowEvaluator struct{ accesscontrol.Evaluator }
 
 type panicCheckShadowRequester struct{ identity.Requester }
 
-func (panicCheckShadowRequester) GetGroups() []string { panic("request snapshot failed") }
+func (panicCheckShadowRequester) GetNamespace() string { panic("request snapshot failed") }
 
 func TestLegacyCheckShadowPreparationFailuresPreservePrimary(t *testing.T) {
 	for _, tc := range []struct {
