@@ -1,5 +1,7 @@
 import { dump, load } from 'js-yaml';
 
+import { YAML_LOAD_OPTIONS } from 'app/core/utils/yaml';
+
 import type { NotificationChannelOption, NotifierDTO } from '../../../types/alerting';
 
 export class PreviewRedactionError extends Error {}
@@ -53,7 +55,7 @@ export function reformatPreviewContent(rawContent: string, format: 'yaml' | 'jso
 
 function parseContent(content: string): unknown {
   try {
-    return load(content);
+    return load(content, YAML_LOAD_OPTIONS);
   } catch (e) {
     throw new PreviewRedactionError(e instanceof Error ? e.message : String(e));
   }

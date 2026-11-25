@@ -134,6 +134,26 @@ describe('parseYamlToRulerRulesConfigDTO', () => {
     );
   });
 
+  it('should resolve YAML merge keys', () => {
+    const yaml = `
+      groups:
+        - name: test-group
+          rules:
+            - alert: TestAlert
+              expr: up == 0
+              labels: &common
+                team: infra
+            - alert: OtherAlert
+              expr: up == 1
+              labels:
+                <<: *common
+                severity: critical
+    `;
+
+    const result = parseYamlToRulerRulesConfigDTO(yaml, 'default-namespace');
+    expect(result['default-namespace'][0].rules[1].labels).toEqual({ team: 'infra', severity: 'critical' });
+  });
+
   it('should throw error for empty YAML string', () => {
     const emptyYaml = '';
     expect(() => parseYamlToRulerRulesConfigDTO(emptyYaml, 'default-namespace')).toThrow(

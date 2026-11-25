@@ -2,6 +2,7 @@ import { load } from 'js-yaml';
 
 import { type AlertmanagerUserConfig } from '@grafana/alerting/convert';
 import { t } from '@grafana/i18n';
+import { YAML_LOAD_OPTIONS } from 'app/core/utils/yaml';
 
 import { fetchAlertManagerConfig } from '../../api/alertmanager';
 
@@ -37,7 +38,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function loadYaml(content: string, { embedded = false } = {}): unknown {
   try {
-    return load(content);
+    return load(content, YAML_LOAD_OPTIONS);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     // Fail locally instead of shipping invalid YAML to the backend for a generic error there.
