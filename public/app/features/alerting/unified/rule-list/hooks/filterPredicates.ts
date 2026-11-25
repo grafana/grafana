@@ -1,5 +1,5 @@
 import { attempt, compact, isString } from 'lodash';
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 
 import { isDefaultRoutingTreeName } from '@grafana/alerting';
 import type { Matcher } from 'app/plugins/datasource/alertmanager/types';

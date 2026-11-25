@@ -41,7 +41,7 @@ func TestShouldCheckHealth(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Generation: 2},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.RepositoryHealthStatus{
 						Healthy: true,
 						Checked: time.Now().UnixMilli(),
 					},
@@ -58,7 +58,7 @@ func TestShouldCheckHealth(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.RepositoryHealthStatus{
 						Healthy: false,
 						Error:   provisioning.HealthFailureHook,
 						Checked: time.Now().UnixMilli(),
@@ -76,7 +76,7 @@ func TestShouldCheckHealth(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.RepositoryHealthStatus{
 						Healthy: false,
 						Error:   provisioning.HealthFailureHook,
 						// Older than recentUnhealthyDuration (1 minute) so the cooldown
@@ -101,7 +101,7 @@ func TestShouldCheckHealth(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.RepositoryHealthStatus{
 						Healthy: false,
 						Error:   provisioning.HealthFailureHook,
 						Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
@@ -116,7 +116,7 @@ func TestShouldCheckHealth(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Generation: 1},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.RepositoryHealthStatus{
 						Healthy: true,
 						Checked: time.Now().Add(-time.Minute * 3).UnixMilli(), // 3 minutes ago
 					},
@@ -130,7 +130,7 @@ func TestShouldCheckHealth(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Generation: 1},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.RepositoryHealthStatus{
 						Healthy: true,
 						Checked: time.Now().Add(-time.Minute * 6).UnixMilli(), // 6 minutes ago
 					},
@@ -144,7 +144,7 @@ func TestShouldCheckHealth(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Generation: 1},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.RepositoryHealthStatus{
 						Healthy: false,
 						Error:   provisioning.HealthFailureHealth,
 						Checked: time.Now().Add(-time.Second * 30).UnixMilli(), // 30 seconds ago
@@ -159,7 +159,7 @@ func TestShouldCheckHealth(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Generation: 1},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.RepositoryHealthStatus{
 						Healthy: false,
 						Error:   provisioning.HealthFailureHealth,
 						Checked: time.Now().Add(-time.Minute * 2).UnixMilli(), // 2 minutes ago
@@ -174,7 +174,7 @@ func TestShouldCheckHealth(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Generation: 1},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.RepositoryHealthStatus{
 						Checked: 0, // Never checked
 					},
 				},
@@ -201,13 +201,13 @@ func TestShouldCheckHealth(t *testing.T) {
 func TestHasRecentFailure(t *testing.T) {
 	tests := []struct {
 		name         string
-		healthStatus provisioning.HealthStatus
-		failureType  provisioning.HealthFailureType
+		healthStatus provisioning.RepositoryHealthStatus
+		failureType  provisioning.RepositoryHealthFailureType
 		expected     bool
 	}{
 		{
 			name: "no recent failure when never checked",
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.RepositoryHealthStatus{
 				Checked: 0,
 			},
 			failureType: provisioning.HealthFailureHook,
@@ -215,7 +215,7 @@ func TestHasRecentFailure(t *testing.T) {
 		},
 		{
 			name: "recent hook failure",
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHook,
 				Checked: time.Now().Add(-time.Second * 30).UnixMilli(),
@@ -225,7 +225,7 @@ func TestHasRecentFailure(t *testing.T) {
 		},
 		{
 			name: "old hook failure",
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHook,
 				Checked: time.Now().Add(-time.Minute * 2).UnixMilli(),
@@ -235,7 +235,7 @@ func TestHasRecentFailure(t *testing.T) {
 		},
 		{
 			name: "recent health failure",
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHealth,
 				Checked: time.Now().Add(-time.Second * 30).UnixMilli(),
@@ -245,7 +245,7 @@ func TestHasRecentFailure(t *testing.T) {
 		},
 		{
 			name: "old health failure",
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHealth,
 				Checked: time.Now().Add(-time.Minute * 2).UnixMilli(),
@@ -255,7 +255,7 @@ func TestHasRecentFailure(t *testing.T) {
 		},
 		{
 			name: "wrong failure type",
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHook,
 				Checked: time.Now().Add(-time.Second * 30).UnixMilli(),
@@ -265,7 +265,7 @@ func TestHasRecentFailure(t *testing.T) {
 		},
 		{
 			name: "healthy status with wrong failure type",
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: true,
 				Checked: time.Now().Add(-time.Second * 30).UnixMilli(),
 			},
@@ -292,7 +292,7 @@ func TestHasRecentFailure(t *testing.T) {
 func TestRecordFailure(t *testing.T) {
 	tests := []struct {
 		name        string
-		failureType provisioning.HealthFailureType
+		failureType provisioning.RepositoryHealthFailureType
 		err         error
 		patchError  error
 		expectError bool
@@ -331,7 +331,7 @@ func TestRecordFailure(t *testing.T) {
 
 			repo := &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
-					Health: provisioning.HealthStatus{
+					Health: provisioning.RepositoryHealthStatus{
 						Healthy: true,
 						Checked: time.Now().Add(-time.Hour).UnixMilli(),
 					},
@@ -349,7 +349,7 @@ func TestRecordFailure(t *testing.T) {
 						assert.Equal(t, "replace", patchOp["op"])
 						assert.Equal(t, "/status/health", patchOp["path"])
 
-						healthStatus := patchOp["value"].(provisioning.HealthStatus)
+						healthStatus := patchOp["value"].(provisioning.RepositoryHealthStatus)
 						assert.False(t, healthStatus.Healthy)
 						assert.Equal(t, tt.failureType, healthStatus.Error)
 						assert.Contains(t, healthStatus.Message, tt.err.Error())
@@ -393,7 +393,7 @@ func TestRefreshHealth(t *testing.T) {
 		testResult     *provisioning.TestResults
 		testError      error
 		patchError     error
-		existingStatus provisioning.HealthStatus
+		existingStatus provisioning.RepositoryHealthStatus
 		expectError    bool
 		expectedHealth bool
 		expectPatch    bool
@@ -405,7 +405,7 @@ func TestRefreshHealth(t *testing.T) {
 				Code:    200,
 			},
 			testError: nil,
-			existingStatus: provisioning.HealthStatus{
+			existingStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHealth,
 				Checked: time.Now().Add(-time.Hour).UnixMilli(),
@@ -425,7 +425,7 @@ func TestRefreshHealth(t *testing.T) {
 				},
 			},
 			testError: nil,
-			existingStatus: provisioning.HealthStatus{
+			existingStatus: provisioning.RepositoryHealthStatus{
 				Healthy: true,
 				Checked: time.Now().Add(-time.Hour).UnixMilli(),
 			},
@@ -437,7 +437,7 @@ func TestRefreshHealth(t *testing.T) {
 			name:       "test repository error",
 			testResult: nil,
 			testError:  errors.New("repository test failed"),
-			existingStatus: provisioning.HealthStatus{
+			existingStatus: provisioning.RepositoryHealthStatus{
 				Healthy: true,
 				Checked: time.Now().Add(-time.Hour).UnixMilli(),
 			},
@@ -452,7 +452,7 @@ func TestRefreshHealth(t *testing.T) {
 				Code:    200,
 			},
 			testError: nil,
-			existingStatus: provisioning.HealthStatus{
+			existingStatus: provisioning.RepositoryHealthStatus{
 				Healthy: true,
 				Checked: time.Now().Add(-15 * time.Second).UnixMilli(),
 			},
@@ -471,7 +471,7 @@ func TestRefreshHealth(t *testing.T) {
 				},
 			},
 			testError: nil,
-			existingStatus: provisioning.HealthStatus{
+			existingStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHealth,
 				Checked: time.Now().Add(-15 * time.Second).UnixMilli(),
@@ -488,7 +488,7 @@ func TestRefreshHealth(t *testing.T) {
 				Code:    200,
 			},
 			testError: nil,
-			existingStatus: provisioning.HealthStatus{
+			existingStatus: provisioning.RepositoryHealthStatus{
 				Healthy: true,
 				Checked: time.Now().Add(-time.Hour).UnixMilli(),
 			},
@@ -507,7 +507,7 @@ func TestRefreshHealth(t *testing.T) {
 				},
 			},
 			testError: nil,
-			existingStatus: provisioning.HealthStatus{
+			existingStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHealth,
 				Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
@@ -528,7 +528,7 @@ func TestRefreshHealth(t *testing.T) {
 			},
 			testError:  nil,
 			patchError: errors.New("patch failed"),
-			existingStatus: provisioning.HealthStatus{
+			existingStatus: provisioning.RepositoryHealthStatus{
 				Healthy: true,
 				Checked: time.Now().Add(-time.Hour).UnixMilli(),
 			},
@@ -577,7 +577,7 @@ func TestRefreshHealth(t *testing.T) {
 							assert.Equal(t, "replace", patchOp["op"])
 							assert.Equal(t, "/status/health", patchOp["path"])
 
-							healthStatus := patchOp["value"].(provisioning.HealthStatus)
+							healthStatus := patchOp["value"].(provisioning.RepositoryHealthStatus)
 							assert.Equal(t, tt.expectedHealth, healthStatus.Healthy)
 						})
 				}
@@ -606,7 +606,7 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 		name               string
 		testResult         *provisioning.TestResults
 		testError          error
-		existingStatus     provisioning.HealthStatus
+		existingStatus     provisioning.RepositoryHealthStatus
 		existingConditions []metav1.Condition
 		expectError        bool
 		expectedHealth     bool
@@ -620,7 +620,7 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 				Code:    200,
 			},
 			testError: nil,
-			existingStatus: provisioning.HealthStatus{
+			existingStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHealth,
 				Checked: time.Now().Add(-time.Hour).UnixMilli(),
@@ -640,7 +640,7 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 				},
 			},
 			testError: nil,
-			existingStatus: provisioning.HealthStatus{
+			existingStatus: provisioning.RepositoryHealthStatus{
 				Healthy: true,
 				Checked: time.Now().Add(-time.Hour).UnixMilli(),
 			},
@@ -656,7 +656,7 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 				Code:    200,
 			},
 			testError: nil,
-			existingStatus: provisioning.HealthStatus{
+			existingStatus: provisioning.RepositoryHealthStatus{
 				Healthy: true,
 				Checked: time.Now().Add(-15 * time.Second).UnixMilli(),
 			},
@@ -678,7 +678,7 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 			name:       "test repository error",
 			testResult: nil,
 			testError:  errors.New("repository test failed"),
-			existingStatus: provisioning.HealthStatus{
+			existingStatus: provisioning.RepositoryHealthStatus{
 				Healthy: true,
 				Checked: time.Now().Add(-time.Hour).UnixMilli(),
 			},
@@ -759,14 +759,14 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 func TestBuildReadyConditionWithReasonFromHealth(t *testing.T) {
 	tests := []struct {
 		name            string
-		healthStatus    provisioning.HealthStatus
+		healthStatus    provisioning.RepositoryHealthStatus
 		expectedStatus  metav1.ConditionStatus
 		expectedReason  string
 		expectedMessage string
 	}{
 		{
 			name: "healthy status returns ready condition",
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: true,
 				Checked: time.Now().UnixMilli(),
 			},
@@ -776,7 +776,7 @@ func TestBuildReadyConditionWithReasonFromHealth(t *testing.T) {
 		},
 		{
 			name: "unhealthy status with messages uses first message",
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHealth,
 				Checked: time.Now().UnixMilli(),
@@ -788,7 +788,7 @@ func TestBuildReadyConditionWithReasonFromHealth(t *testing.T) {
 		},
 		{
 			name: "unhealthy status without messages uses default message",
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHealth,
 				Checked: time.Now().UnixMilli(),
@@ -799,7 +799,7 @@ func TestBuildReadyConditionWithReasonFromHealth(t *testing.T) {
 		},
 		{
 			name: "unhealthy status with single message",
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHook,
 				Checked: time.Now().UnixMilli(),
@@ -811,7 +811,7 @@ func TestBuildReadyConditionWithReasonFromHealth(t *testing.T) {
 		},
 		{
 			name:            "zero-value health status returns not ready",
-			healthStatus:    provisioning.HealthStatus{},
+			healthStatus:    provisioning.RepositoryHealthStatus{},
 			expectedStatus:  metav1.ConditionFalse,
 			expectedReason:  provisioning.ReasonInvalidSpec,
 			expectedMessage: "Resource is unavailable",
@@ -833,17 +833,17 @@ func TestBuildReadyConditionWithReasonFromHealth(t *testing.T) {
 func TestHasHealthStatusChanged(t *testing.T) {
 	tests := []struct {
 		name     string
-		old      provisioning.HealthStatus
-		new      provisioning.HealthStatus
+		old      provisioning.RepositoryHealthStatus
+		new      provisioning.RepositoryHealthStatus
 		expected bool
 	}{
 		{
 			name: "healthy status changed",
-			old: provisioning.HealthStatus{
+			old: provisioning.RepositoryHealthStatus{
 				Healthy: true,
 				Message: []string{},
 			},
-			new: provisioning.HealthStatus{
+			new: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Message: []string{"error"},
 			},
@@ -851,11 +851,11 @@ func TestHasHealthStatusChanged(t *testing.T) {
 		},
 		{
 			name: "different message count",
-			old: provisioning.HealthStatus{
+			old: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Message: []string{"error1"},
 			},
-			new: provisioning.HealthStatus{
+			new: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Message: []string{"error1", "error2"},
 			},
@@ -863,11 +863,11 @@ func TestHasHealthStatusChanged(t *testing.T) {
 		},
 		{
 			name: "different messages",
-			old: provisioning.HealthStatus{
+			old: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Message: []string{"error1"},
 			},
-			new: provisioning.HealthStatus{
+			new: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Message: []string{"error2"},
 			},
@@ -875,11 +875,11 @@ func TestHasHealthStatusChanged(t *testing.T) {
 		},
 		{
 			name: "no change",
-			old: provisioning.HealthStatus{
+			old: provisioning.RepositoryHealthStatus{
 				Healthy: true,
 				Message: []string{},
 			},
-			new: provisioning.HealthStatus{
+			new: provisioning.RepositoryHealthStatus{
 				Healthy: true,
 				Message: []string{},
 			},
@@ -887,11 +887,11 @@ func TestHasHealthStatusChanged(t *testing.T) {
 		},
 		{
 			name: "same messages",
-			old: provisioning.HealthStatus{
+			old: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Message: []string{"error1", "error2"},
 			},
-			new: provisioning.HealthStatus{
+			new: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Message: []string{"error1", "error2"},
 			},
@@ -903,12 +903,12 @@ func TestHasHealthStatusChanged(t *testing.T) {
 			// content/reachability failure), so Error must be compared on its
 			// own rather than relying on Message to catch this case.
 			name: "same messages, different error type",
-			old: provisioning.HealthStatus{
+			old: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHook,
 				Message: []string{"error1"},
 			},
-			new: provisioning.HealthStatus{
+			new: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHealth,
 				Message: []string{"error1"},
@@ -917,12 +917,12 @@ func TestHasHealthStatusChanged(t *testing.T) {
 		},
 		{
 			name: "same messages, same error type",
-			old: provisioning.HealthStatus{
+			old: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHealth,
 				Message: []string{"error1"},
 			},
-			new: provisioning.HealthStatus{
+			new: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHealth,
 				Message: []string{"error1"},

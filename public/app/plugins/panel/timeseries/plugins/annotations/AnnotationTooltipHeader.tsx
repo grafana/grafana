@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 import { useEffect, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';

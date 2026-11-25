@@ -4,13 +4,16 @@ import ( "time"
 
 	// Definitions shared by more than one kind. Schemas reference them directly; redeclaring one
 	// under the same name inside a schema generates a self-referencing OpenAPI component.
+	// App SDK codegen emits a copy of each per kind, prefixed with the kind name (RepositoryHealthStatus).
 )
+
+#HealthFailureType: "hook" | "health"
 
 #HealthStatus: {
 	// When not healthy, requests will not be executed
 	healthy: bool
 	// The type of the error
-	error?: "hook" | "health"
+	error?: #HealthFailureType
 	// When the health was checked last time
 	checked?: int64
 	// Summary messages (can be shown to users)

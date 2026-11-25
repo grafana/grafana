@@ -6,7 +6,7 @@ jest.mock('@grafana/runtime', () => {
   const originalRuntime = jest.requireActual('@grafana/runtime');
   return {
     ...originalRuntime,
-    getBackendSrv: mockBackendSrv,
+    getBackendSrv: () => mockBackendSrv(),
   };
 });
 

@@ -46,6 +46,21 @@ const esModules = [
   'yaml',
 ].join('|');
 
+// Keep these options in line with createSwcRule in scripts/rspack/rspack.common.ts so tests
+// compile code the same way as the production build (for example, swc's default
+// useDefineForClassFields: true, which tsconfig's es2018 target would otherwise turn off).
+function swcTransform(parser) {
+  return [
+    require.resolve('@swc/jest'),
+    {
+      jsc: {
+        parser,
+        transform: { react: { runtime: 'automatic' } },
+      },
+    },
+  ];
+}
+
 module.exports = {
   verbose: false,
   // Recycle a worker once it exceeds this cap so heap growth over a run (most acute during
@@ -57,7 +72,9 @@ module.exports = {
     customExportConditions: ['@grafana-app/source', 'browser'],
   },
   transform: {
-    '^.+\\.(ts|tsx|js|jsx|mjs)$': [require.resolve('ts-jest')],
+    '^.+\\.ts$': swcTransform({ syntax: 'typescript' }),
+    '^.+\\.tsx$': swcTransform({ syntax: 'typescript', tsx: true }),
+    '^.+\\.(js|jsx|mjs)$': swcTransform({ syntax: 'ecmascript', jsx: true }),
   },
   transformIgnorePatterns: [
     // Transform listed ESM packages at the top level or nested under another package

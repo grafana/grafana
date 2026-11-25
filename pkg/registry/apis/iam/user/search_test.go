@@ -64,7 +64,7 @@ func TestSearchFallback(t *testing.T) {
 			searchClient := dualwrite.NewSelector[SearchBackend](dual, iamv0.UserResourceInfo.GroupResource(),
 				NewUserLegacySearchClient(legacyService, tracing.NewNoopTracerService(), cfg),
 				NewUnifiedSearchClient(mockClient, cfg))
-			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, nil)
+			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, nil, nil)
 
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/searchUsers", nil)
@@ -329,6 +329,7 @@ func TestSearchSort(t *testing.T) {
 				tracing.NewNoopTracerService(),
 				selectorForBackend(NewUnifiedSearchClient(mockClient, &setting.Cfg{})),
 				authlib.FixedAccessClient(true),
+				nil,
 			)
 
 			rr := httptest.NewRecorder()
@@ -518,6 +519,7 @@ func TestAccessControl(t *testing.T) {
 				tracing.NewNoopTracerService(),
 				selectorForBackend(NewUnifiedSearchClient(mockClientWithHits(), &setting.Cfg{})),
 				tc.client,
+				nil,
 			)
 
 			rr := httptest.NewRecorder()

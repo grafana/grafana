@@ -23,6 +23,23 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+// cleanupUser deletes a test user. A failure is logged rather than asserted.
+func cleanupUser(t *testing.T, helper *apis.K8sTestHelper, userID int64) {
+	t.Helper()
+	rsp := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: "DELETE",
+		Path:   fmt.Sprintf("/api/admin/users/%d", userID),
+	}, &struct{}{})
+	if rsp.Response == nil || rsp.Response.StatusCode != 200 {
+		status, body := 0, ""
+		if rsp.Response != nil {
+			status, body = rsp.Response.StatusCode, string(rsp.Body)
+		}
+		t.Logf("cleanup: deleting user %d returned status %d, body: %s", userID, status, body)
+	}
+}
+
 // go test --tags "pro" -timeout 120s -run ^TestIntegrationUserServiceGet$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
 func TestIntegrationUserServiceGet(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
@@ -81,16 +98,8 @@ func TestIntegrationUserServiceGet(t *testing.T) {
 			require.NotEmpty(t, secondUser.Result.UID)
 
 			t.Cleanup(func() {
-				apis.DoRequest(helper, apis.RequestParams{
-					User:   helper.Org1.Admin,
-					Method: "DELETE",
-					Path:   fmt.Sprintf("/api/admin/users/%d", firstUser.Result.ID),
-				}, &struct{}{})
-				apis.DoRequest(helper, apis.RequestParams{
-					User:   helper.Org1.Admin,
-					Method: "DELETE",
-					Path:   fmt.Sprintf("/api/admin/users/%d", secondUser.Result.ID),
-				}, &struct{}{})
+				cleanupUser(t, helper, firstUser.Result.ID)
+				cleanupUser(t, helper, secondUser.Result.ID)
 			})
 
 			// /api/users/lookup routes through UserK8sService.GetByLogin
@@ -179,11 +188,7 @@ func TestIntegrationUserServiceUpdate(t *testing.T) {
 				require.NotZero(t, createRsp.Result.ID)
 
 				t.Cleanup(func() {
-					apis.DoRequest(helper, apis.RequestParams{
-						User:   helper.Org1.Admin,
-						Method: "DELETE",
-						Path:   fmt.Sprintf("/api/admin/users/%d", createRsp.Result.ID),
-					}, &struct{}{})
+					cleanupUser(t, helper, createRsp.Result.ID)
 				})
 
 				updateRsp := apis.DoRequest(helper, apis.RequestParams{
@@ -207,7 +212,7 @@ func TestIntegrationUserServiceUpdate(t *testing.T) {
 					Path:   fmt.Sprintf("/api/users/%d", createRsp.Result.ID),
 				}, &getUserResponse{})
 
-				require.Equal(t, 200, getRsp.Response.StatusCode)
+				require.Equal(t, 200, getRsp.Response.StatusCode, "body: %s", string(getRsp.Body))
 				require.Equal(t, "Updated Name", getRsp.Result.Name)
 				require.Equal(t, "updated@example.com", getRsp.Result.Email)
 				require.Equal(t, "updated-user", getRsp.Result.Login)
@@ -258,6 +263,10 @@ func TestIntegrationUserService(t *testing.T) {
 			t.Run("should create user via k8s service and verify it using /api/users/:id", func(t *testing.T) {
 				require.NotZero(t, createRsp.Result.ID)
 
+				t.Cleanup(func() {
+					cleanupUser(t, helper, createRsp.Result.ID)
+				})
+
 				type getUserResponse struct {
 					ID    int64  `json:"id"`
 					UID   string `json:"uid"`
@@ -272,19 +281,12 @@ func TestIntegrationUserService(t *testing.T) {
 					Path:   fmt.Sprintf("/api/users/%d", createRsp.Result.ID),
 				}, &getUserResponse{})
 
-				require.Equal(t, 200, getRsp.Response.StatusCode)
+				require.Equal(t, 200, getRsp.Response.StatusCode, "body: %s", string(getRsp.Body))
 				require.Equal(t, createRsp.Result.ID, getRsp.Result.ID)
 				require.Equal(t, createRsp.Result.UID, getRsp.Result.UID)
 				require.Equal(t, "K8s Service User", getRsp.Result.Name)
 				require.Equal(t, "k8s-service-user@example.com", getRsp.Result.Email)
 				require.Equal(t, "k8s-service-user", getRsp.Result.Login)
-
-				deleteRsp := apis.DoRequest(helper, apis.RequestParams{
-					User:   helper.Org1.Admin,
-					Method: "DELETE",
-					Path:   fmt.Sprintf("/api/admin/users/%d", createRsp.Result.ID),
-				}, &struct{}{})
-				require.Equal(t, 200, deleteRsp.Response.StatusCode)
 			})
 		})
 	}
@@ -454,16 +456,8 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 			time.Sleep(2 * time.Second)
 
 			t.Cleanup(func() {
-				apis.DoRequest(helper, apis.RequestParams{
-					User:   helper.Org1.Admin,
-					Method: "DELETE",
-					Path:   fmt.Sprintf("/api/admin/users/%d", alphaUser.Result.ID),
-				}, &struct{}{})
-				apis.DoRequest(helper, apis.RequestParams{
-					User:   helper.Org1.Admin,
-					Method: "DELETE",
-					Path:   fmt.Sprintf("/api/admin/users/%d", betaUser.Result.ID),
-				}, &struct{}{})
+				cleanupUser(t, helper, alphaUser.Result.ID)
+				cleanupUser(t, helper, betaUser.Result.ID)
 			})
 
 			t.Run("should return users with correct fields", func(t *testing.T) {
@@ -668,16 +662,8 @@ func TestIntegrationUserServiceOrgUsers(t *testing.T) {
 			require.NotEmpty(t, secondUser.Result.UID)
 
 			t.Cleanup(func() {
-				apis.DoRequest(helper, apis.RequestParams{
-					User:   helper.Org1.Admin,
-					Method: "DELETE",
-					Path:   fmt.Sprintf("/api/admin/users/%d", firstUser.Result.ID),
-				}, &struct{}{})
-				apis.DoRequest(helper, apis.RequestParams{
-					User:   helper.Org1.Admin,
-					Method: "DELETE",
-					Path:   fmt.Sprintf("/api/admin/users/%d", secondUser.Result.ID),
-				}, &struct{}{})
+				cleanupUser(t, helper, firstUser.Result.ID)
+				cleanupUser(t, helper, secondUser.Result.ID)
 			})
 
 			t.Run("GET /api/org/users returns the org users via the redirect", func(t *testing.T) {

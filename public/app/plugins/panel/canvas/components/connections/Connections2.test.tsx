@@ -7,26 +7,14 @@ import { Connections2 } from './Connections2';
 // Mock the utils module — real implementations except coords helpers used by Connections2
 jest.mock('../../utils', () => {
   const originalModule = jest.requireActual('../../utils');
-  return {
-    ...originalModule,
+  return jest.requireActual('test/helpers/partialMock').partialMock(originalModule, {
     calculateCoordinates2: jest.fn((source, target, info) => ({
       x1: 100,
       y1: 100,
       x2: 200,
       y2: 200,
     })),
-    getParentBoundingClientRect: jest.fn(() => ({
-      left: 0,
-      top: 0,
-      width: 1000,
-      height: 1000,
-      right: 1000,
-      bottom: 1000,
-      x: 0,
-      y: 0,
-      toJSON: () => {},
-    })),
-  };
+  });
 });
 
 const { calculateCoordinates2 } = jest.requireMock('../../utils');

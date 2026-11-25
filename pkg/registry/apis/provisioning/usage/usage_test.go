@@ -165,7 +165,7 @@ func TestMetricCollector_RepositoryDimensions(t *testing.T) {
 					Connection: &provisioning.ConnectionInfo{Name: "my-conn"},
 				},
 				Status: provisioning.RepositoryStatus{
-					Health: provisioning.HealthStatus{Healthy: true},
+					Health: provisioning.RepositoryHealthStatus{Healthy: true},
 					Sync:   provisioning.SyncStatus{State: provisioning.JobStateSuccess},
 					Conditions: []metav1.Condition{
 						{Type: provisioning.ConditionTypeReady, Reason: provisioning.ReasonAvailable},
@@ -181,7 +181,7 @@ func TestMetricCollector_RepositoryDimensions(t *testing.T) {
 					Sync:  provisioning.SyncOptions{Enabled: false, Target: provisioning.SyncTargetTypeFolder},
 				},
 				Status: provisioning.RepositoryStatus{
-					Health: provisioning.HealthStatus{Healthy: false},
+					Health: provisioning.RepositoryHealthStatus{Healthy: false},
 					Sync:   provisioning.SyncStatus{State: provisioning.JobStateError},
 					Conditions: []metav1.Condition{
 						{Type: provisioning.ConditionTypeReady, Reason: provisioning.ReasonInvalidSpec},
@@ -241,7 +241,7 @@ func TestMetricCollector_ConnectionStats(t *testing.T) {
 		return []provisioning.Connection{
 			{
 				Spec:   provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
-				Status: provisioning.ConnectionStatus{Health: provisioning.HealthStatus{Healthy: true}},
+				Status: provisioning.ConnectionStatus{Health: provisioning.ConnectionHealthStatus{Healthy: true}},
 			},
 			{
 				Spec: provisioning.ConnectionSpec{
@@ -249,7 +249,7 @@ func TestMetricCollector_ConnectionStats(t *testing.T) {
 					Webhook: &provisioning.ConnectionWebhookConfig{Disabled: true},
 				},
 				Status: provisioning.ConnectionStatus{
-					Health: provisioning.HealthStatus{Healthy: false},
+					Health: provisioning.ConnectionHealthStatus{Healthy: false},
 					Conditions: []metav1.Condition{
 						{Type: provisioning.ConditionTypeReady, Reason: provisioning.ReasonAuthenticationFailed},
 					},
