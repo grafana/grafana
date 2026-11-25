@@ -64,7 +64,7 @@ func flagEvaluationContext(pluginCtx backend.PluginContext, hostAttrs map[string
 }
 
 // ofrepFlags evaluates flags against the host's OFREP endpoint and caches each
-// answer for the host's TTL. A failed request keeps the previous answer.
+// answer for the host's TTL. A failed request caches false.
 type ofrepFlags struct {
 	group     singleflight.Group
 	mu        sync.Mutex
@@ -94,16 +94,14 @@ func (f *ofrepFlags) isEnabled(ctx context.Context, logger log.Logger, of config
 		maps.Copy(flat, evalCtx.Attributes())
 		// Every caller in the TTL window shares the answer, so one caller's cancellation must not fail it.
 		detail := f.provider(of.URL).BooleanEvaluation(context.WithoutCancel(ctx), flag, false, flat)
+		failed := detail.Reason == openfeature.ErrorReason
+		if failed {
+			logger.Warn("Feature flag evaluation failed", "flag", flag, "error", detail.ResolutionError.Error())
+		}
+		a := ofrepAnswer{enabled: !failed && detail.Value, expires: time.Now().Add(cmp.Or(of.CacheTTL, ofrepDefaultCacheTTL))}
 
 		f.mu.Lock()
 		defer f.mu.Unlock()
-		a := f.answers[key]
-		if detail.Reason == openfeature.ErrorReason {
-			logger.Warn("Feature flag evaluation failed", "flag", flag, "error", detail.ResolutionError.Error())
-		} else {
-			a.enabled = detail.Value
-		}
-		a.expires = time.Now().Add(cmp.Or(of.CacheTTL, ofrepDefaultCacheTTL))
 		f.answers[key] = a
 		return a, nil
 	})

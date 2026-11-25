@@ -207,13 +207,13 @@ func TestStreamingRenderDecoderEnabledOverOFREP(t *testing.T) {
 		assert.False(t, service().streamingRenderDecoderEnabled(ctx, pluginCtx))
 	})
 
-	t.Run("a failed refresh keeps the previous answer", func(t *testing.T) {
+	t.Run("off when a refresh fails", func(t *testing.T) {
 		host, ctx := ofrepHost(t)
 		s := service()
 		require.True(t, s.streamingRenderDecoderEnabled(ctx, pluginCtx))
 		expireAnswers(s.ofrep)
-		host.set(http.StatusInternalServerError, false)
-		assert.True(t, s.streamingRenderDecoderEnabled(ctx, pluginCtx))
+		host.set(http.StatusInternalServerError, true)
+		assert.False(t, s.streamingRenderDecoderEnabled(ctx, pluginCtx))
 		assert.Len(t, host.requests(), 2)
 	})
 
