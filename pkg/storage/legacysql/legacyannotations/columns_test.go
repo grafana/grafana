@@ -45,6 +45,11 @@ func TestColumnsRoundTrip(t *testing.T) {
 			},
 		},
 		{
+			name:        "an identity without a kind round-trips",
+			annotations: map[string]string{utils.AnnoKeyManagerIdentity: "my-repo"},
+			want:        Columns{ManagerIdentity: "my-repo"},
+		},
+		{
 			name:        "an unmanaged resource writes nothing",
 			annotations: nil,
 		},

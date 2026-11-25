@@ -73,9 +73,9 @@ func (c Columns) manager() map[string]string {
 	manager := make(map[string]string, 2)
 	if c.ManagerKind != "" {
 		manager[utils.AnnoKeyManagerKind] = c.ManagerKind
-		if c.ManagerIdentity != "" {
-			manager[utils.AnnoKeyManagerIdentity] = c.ManagerIdentity
-		}
+	}
+	if c.ManagerIdentity != "" {
+		manager[utils.AnnoKeyManagerIdentity] = c.ManagerIdentity
 	}
 	return manager
 }
