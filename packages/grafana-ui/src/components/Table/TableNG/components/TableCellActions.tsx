@@ -16,12 +16,14 @@ const TRIGGER_SELECTOR = `[data-testid="${selectors.components.Panels.Visualizat
 
 export function handleCellActionsKeyDown(event: KeyboardEvent<HTMLElement>) {
   const { currentTarget: cell, target } = event;
+  // the table can render in another window than this one, such as a Document Picture-in-Picture window
+  const cellWindow = cell.ownerDocument.defaultView ?? window;
   if (
     (event.key !== 'Tab' && event.key !== 'Enter') ||
     event.altKey ||
     event.ctrlKey ||
     event.metaKey ||
-    !(target instanceof Node) ||
+    !(target instanceof cellWindow.Node) ||
     !cell.contains(target)
   ) {
     return;

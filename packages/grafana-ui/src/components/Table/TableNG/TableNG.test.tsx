@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
@@ -3662,6 +3662,33 @@ describe('TableNG', () => {
 
       expect(screen.getByText('Test Title')).toBeInTheDocument();
       expect(screen.getByText('Test Title2')).toBeInTheDocument();
+    });
+
+    // A Document Picture-in-Picture window (the Grafana Assistant pop-out) is another realm, as an iframe is: the
+    // clicked link fails this window's `instanceof HTMLElement`.
+    it('shows multiple datalinks in the tooltip when the table is in another window', async () => {
+      const iframe = document.createElement('iframe');
+      document.body.appendChild(iframe);
+      const otherDocument = iframe.contentDocument!;
+      const container = otherDocument.body.appendChild(otherDocument.createElement('div'));
+      const dataFrame = createBasicDataFrame();
+      const links: DataLink[] = [
+        { url: 'http://asdasd.com', title: 'Test Title' },
+        { url: 'http://asdasd2.com', title: 'Test Title2' },
+      ];
+      dataFrame.fields[0].config.links = links;
+      dataFrame.fields[0].getLinks = () => links.map(toLinkModel);
+
+      const { unmount } = render(<TableNG data={dataFrame} width={800} height={600} />, { container });
+      // eslint-disable-next-line testing-library/prefer-user-event
+      fireEvent.click(within(otherDocument.body).getByText('A1'));
+
+      expect(screen.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper)).toHaveTextContent(
+        'Test Title2'
+      );
+      // Unmount before the iframe goes, or React cannot remove the table from it.
+      unmount();
+      iframe.remove();
     });
 
     it('shows data links as menu items with the table refresh enabled', async () => {

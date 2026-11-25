@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type Field, FieldType } from '@grafana/data';
@@ -366,4 +366,41 @@ it('closes on Escape after clicking the histogram without bubbling to the panel'
   await userEvent.keyboard('{Escape}');
   expect(onClose).toHaveBeenCalledTimes(1);
   expect(buttonElement).toHaveFocus();
+});
+
+// A Document Picture-in-Picture window (the Grafana Assistant pop-out) is another realm, as an iframe is: its nodes
+// fail this window's `instanceof` checks, and its presses and keys never reach this window's listeners.
+describe('FilterPopup in another window', () => {
+  it('closes on a click outside it in that window', () => {
+    const iframe = document.createElement('iframe');
+    document.body.appendChild(iframe);
+    const otherDocument = iframe.contentDocument!;
+    const container = otherDocument.body.appendChild(otherDocument.createElement('div'));
+    const onClose = jest.fn();
+    const { unmount } = render(
+      <FilterPopup
+        rows={makeRows('Status', ['active', 'inactive'])}
+        filterValue={undefined}
+        onApplyValues={jest.fn()}
+        onClear={jest.fn()}
+        onClose={onClose}
+        field={makeField('Status')}
+        searchFilter=""
+        setSearchFilter={jest.fn()}
+        operator={defaultOperator}
+        setOperator={jest.fn()}
+        buttonElement={null}
+      />,
+      { container }
+    );
+
+    // user-event drives pointer input through this window's document, so fire the other window's event directly
+    // eslint-disable-next-line testing-library/prefer-user-event
+    fireEvent.click(otherDocument.body);
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    // Unmount before the iframe goes, or React cannot remove the popup from it.
+    unmount();
+    iframe.remove();
+  });
 });

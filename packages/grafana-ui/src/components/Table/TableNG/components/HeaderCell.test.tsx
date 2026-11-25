@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useEffect } from 'react';
 
@@ -820,5 +820,33 @@ describe('HeaderCell', () => {
       expect(selectFirstCell).not.toHaveBeenCalled();
     });
     /* eslint-enable testing-library/prefer-user-event */
+  });
+});
+
+// A Document Picture-in-Picture window (the Grafana Assistant pop-out) is another realm, as an iframe is: its nodes
+// fail this window's `instanceof` checks, and its presses and keys never reach this window's listeners.
+describe('HeaderCell in another window', () => {
+  it('moves into the grid on Tab from the last header control', () => {
+    const iframe = document.createElement('iframe');
+    document.body.appendChild(iframe);
+    const otherDocument = iframe.contentDocument!;
+    const container = otherDocument.body.appendChild(otherDocument.createElement('div'));
+    const selectFirstCell = jest.fn();
+    const { unmount } = render(
+      <div role="row">
+        <div role="columnheader">
+          <HeaderCell {...baseProps} field={makeField()} selectFirstCell={selectFirstCell} />
+        </div>
+      </div>,
+      { container }
+    );
+
+    // eslint-disable-next-line testing-library/prefer-user-event
+    fireEvent.keyDown(within(otherDocument.body).getByRole('button', { name: 'Field1' }), { key: 'Tab' });
+
+    expect(selectFirstCell).toHaveBeenCalledTimes(1);
+    // Unmount before the iframe goes, or React cannot remove the header from it.
+    unmount();
+    iframe.remove();
   });
 });

@@ -162,11 +162,6 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
         return;
       }
 
-      const tableTabbedElement = ev.target;
-      if (!(tableTabbedElement instanceof HTMLElement)) {
-        return;
-      }
-
       const headerContent = ref.current;
       const headerCell = headerContent?.parentNode;
       const row = headerCell?.parentNode;
@@ -176,7 +171,9 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
 
       // The last tabbable control may be nested inside the label wrapper.
       const tabbables = headerContent.querySelectorAll<HTMLElement>(TABBABLE_SELECTOR);
-      if (tabbables[tabbables.length - 1] === tableTabbedElement) {
+      // Compared by identity: an element of another window, such as a Document Picture-in-Picture window the table
+      // renders in, fails this window's `instanceof HTMLElement`.
+      if (tabbables[tabbables.length - 1] === ev.target) {
         selectFirstCell();
       }
     };

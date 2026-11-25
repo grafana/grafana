@@ -212,7 +212,12 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const field = (column as unknown as TableColumn).field;
 
-      if (ev.target instanceof HTMLElement && ev.target.closest('a[aria-haspopup], .rdg-cell')?.matches('a')) {
+      // the table can render in another window than this one, such as a Document Picture-in-Picture window
+      const cellWindow = ev.currentTarget.ownerDocument.defaultView ?? window;
+      if (
+        ev.target instanceof cellWindow.HTMLElement &&
+        ev.target.closest('a[aria-haspopup], .rdg-cell')?.matches('a')
+      ) {
         const rowIdx = row.__index;
         setTooltipState({
           coords: { clientX: ev.clientX, clientY: ev.clientY },

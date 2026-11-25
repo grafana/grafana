@@ -52,8 +52,11 @@ const FilterPopupEditor = memo((props: FilterPopupProps) => {
 
   // Sliders can release a pointer gesture outside the popup; dismiss only on a separate outside click.
   useEffect(() => {
+    // the table can render in another window than this one, such as a Document Picture-in-Picture window
+    const popupWindow = containerRef.current?.ownerDocument.defaultView ?? window;
     const onPointerDown = (event: PointerEvent) => {
-      pointerStartedInside.current = event.target instanceof Node && !!containerRef.current?.contains(event.target);
+      pointerStartedInside.current =
+        event.target instanceof popupWindow.Node && !!containerRef.current?.contains(event.target);
     };
     const onOutsideClick = (event: Event) => {
       const domNode = containerRef.current;
@@ -62,15 +65,15 @@ const FilterPopupEditor = memo((props: FilterPopupProps) => {
       }
       const startedInside = pointerStartedInside.current;
       pointerStartedInside.current = false;
-      if (event.target instanceof Node && !domNode.contains(event.target) && !startedInside) {
+      if (event.target instanceof popupWindow.Node && !domNode.contains(event.target) && !startedInside) {
         onClose();
       }
     };
-    window.addEventListener('pointerdown', onPointerDown, true);
-    window.addEventListener('click', onOutsideClick, true);
+    popupWindow.addEventListener('pointerdown', onPointerDown, true);
+    popupWindow.addEventListener('click', onOutsideClick, true);
     return () => {
-      window.removeEventListener('pointerdown', onPointerDown, true);
-      window.removeEventListener('click', onOutsideClick, true);
+      popupWindow.removeEventListener('pointerdown', onPointerDown, true);
+      popupWindow.removeEventListener('click', onOutsideClick, true);
     };
   }, [onClose]);
 

@@ -1,7 +1,7 @@
 /* eslint-disable testing-library/prefer-user-event */
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type RefObject } from 'react';
+import { type ReactElement, type RefObject } from 'react';
 
 import { createTheme, type DataFrame, type Field, FieldType, toDataFrame } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -610,5 +610,49 @@ describe('TableCellTooltip', () => {
       await user.click(screen.getByRole('button', { name: CARET_LABEL }));
       expect(screen.queryByTestId('tooltip-content')).not.toBeInTheDocument();
     });
+  });
+});
+
+// A Document Picture-in-Picture window (the Grafana Assistant pop-out) is another realm, as an iframe is: its nodes
+// fail this window's `instanceof` checks, and its presses and keys never reach this window's listeners.
+function renderInOtherWindow(ui: ReactElement) {
+  const iframe = document.createElement('iframe');
+  document.body.appendChild(iframe);
+  const otherDocument = iframe.contentDocument!;
+  const container = otherDocument.body.appendChild(otherDocument.createElement('div'));
+  const view = render(ui, { container });
+  return {
+    ...view,
+    otherDocument,
+    cleanUp: () => {
+      // Unmount before the iframe goes, or React cannot remove the nodes from it.
+      view.unmount();
+      iframe.remove();
+    },
+  };
+}
+
+describe('TableCellTooltip in another window', () => {
+  it('dismisses a pinned tooltip on Escape and on a click outside it, pressed in that window', () => {
+    const { otherDocument, cleanUp } = renderInOtherWindow(
+      <div className="rdg-cell">
+        <TableCellTooltip {...makeProps()}>
+          <span>cell content</span>
+        </TableCellTooltip>
+      </div>
+    );
+    const caret = within(otherDocument.body).getByRole('button', { name: CARET_LABEL });
+
+    fireEvent.click(caret);
+    expect(caret).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.keyDown(otherDocument.body, { key: 'Escape' });
+    expect(caret).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.click(caret);
+    expect(caret).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(otherDocument.body);
+    expect(caret).toHaveAttribute('aria-pressed', 'false');
+
+    cleanUp();
   });
 });

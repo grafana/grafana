@@ -1,13 +1,16 @@
-import { render, screen } from '@testing-library/react';
+/* eslint-disable testing-library/prefer-user-event */
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { type ReactElement } from 'react';
 
 import { type Field, FieldType } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { TableCellInspectorMode } from '../../TableCellInspector';
 import { getCellMenuOptions } from '../cellMenuOptions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, type TableCellActionsProps } from '../types';
 
-import { TableCellActions } from './TableCellActions';
+import { handleCellActionsKeyDown, TableCellActions } from './TableCellActions';
 
 function setup(overrides: Partial<TableCellActionsProps> = {}) {
   const field: Field = {
@@ -269,5 +272,44 @@ describe('TableCellActions', () => {
     );
     await userEvent.click(screen.getByLabelText('Inspect value'));
     expect(parentClick).not.toHaveBeenCalled();
+  });
+});
+
+// A Document Picture-in-Picture window (the Grafana Assistant pop-out) is another realm, as an iframe is: its nodes
+// fail this window's `instanceof` checks, and its presses and keys never reach this window's listeners.
+function renderInOtherWindow(ui: ReactElement) {
+  const iframe = document.createElement('iframe');
+  document.body.appendChild(iframe);
+  const otherDocument = iframe.contentDocument!;
+  const container = otherDocument.body.appendChild(otherDocument.createElement('div'));
+  const view = render(ui, { container });
+  return {
+    ...view,
+    otherDocument,
+    cleanUp: () => {
+      // Unmount before the iframe goes, or React cannot remove the nodes from it.
+      view.unmount();
+      iframe.remove();
+    },
+  };
+}
+
+describe('handleCellActionsKeyDown in another window', () => {
+  it('moves focus from the cell content to the actions trigger on Tab', () => {
+    const { otherDocument, cleanUp } = renderInOtherWindow(
+      <div tabIndex={0} onKeyDown={handleCellActionsKeyDown}>
+        <span tabIndex={0}>cell content</span>
+        <button data-testid={selectors.components.Panels.Visualization.TableNG.cellActions.triggerButton}>
+          actions
+        </button>
+      </div>
+    );
+    const content = within(otherDocument.body).getByText('cell content');
+    content.focus();
+
+    fireEvent.keyDown(content, { key: 'Tab' });
+
+    expect(within(otherDocument.body).getByRole('button', { name: 'actions' })).toHaveFocus();
+    cleanUp();
   });
 });

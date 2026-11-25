@@ -109,10 +109,13 @@ export const TableCellTooltip = memo(
       if (!show) {
         return;
       }
+      // the table can render in another window than this one, such as a Document Picture-in-Picture window
+      const ownerDocument = tooltipCaretRef.current?.ownerDocument ?? document;
+      const ownerWindow = ownerDocument.defaultView ?? window;
       const onEscape = (event: KeyboardEvent) => {
         if (event.key === 'Escape') {
           if (
-            event.target instanceof Node &&
+            event.target instanceof ownerWindow.Node &&
             (tooltipCaretRef.current?.contains(event.target) || tooltipContentRef.current?.contains(event.target))
           ) {
             event.stopPropagation();
@@ -123,28 +126,31 @@ export const TableCellTooltip = memo(
           dismiss();
         }
       };
-      document.addEventListener('keydown', onEscape, true);
-      return () => document.removeEventListener('keydown', onEscape, true);
+      ownerDocument.addEventListener('keydown', onEscape, true);
+      return () => ownerDocument.removeEventListener('keydown', onEscape, true);
     }, [show, dismiss]);
 
     useEffect(() => {
       if (!show) {
         return;
       }
+      // the table can render in another window than this one, such as a Document Picture-in-Picture window
+      const ownerDocument = tooltipCaretRef.current?.ownerDocument ?? document;
+      const ownerWindow = ownerDocument.defaultView ?? window;
       const onOutsideClick = (event: MouseEvent) => {
-        if (!pinned && !tooltipContentRef.current?.contains(document.activeElement)) {
+        if (!pinned && !tooltipContentRef.current?.contains(ownerDocument.activeElement)) {
           return;
         }
         if (
-          event.target instanceof Node &&
+          event.target instanceof ownerWindow.Node &&
           (tooltipCaretRef.current?.contains(event.target) || tooltipContentRef.current?.contains(event.target))
         ) {
           return;
         }
         dismiss();
       };
-      document.addEventListener('click', onOutsideClick, true);
-      return () => document.removeEventListener('click', onOutsideClick, true);
+      ownerDocument.addEventListener('click', onOutsideClick, true);
+      return () => ownerDocument.removeEventListener('click', onOutsideClick, true);
     }, [show, pinned, dismiss]);
 
     useEffect(() => {
