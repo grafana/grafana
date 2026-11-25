@@ -42,6 +42,7 @@ type manifestBuilder struct {
 	getter        getter
 	kinds         map[schema.GroupVersionResource]*kindstore.Store
 	kindPolicies  map[string]kindPolicy
+	writes        map[writeEndpointKey]*writeEndpoint
 
 	// documents serves what the API server cannot for versions without kinds.
 	// NewHandler sets it before the handler chain is built.

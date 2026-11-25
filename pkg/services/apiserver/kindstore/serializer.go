@@ -28,6 +28,24 @@ type conversionSerializer struct {
 	client appclientv3.ConversionClient
 }
 
+// ConvertObject uses the same conversion checks and metadata preservation for
+// incoming writes as for objects read from storage.
+func ConvertObject(ctx context.Context, client appclientv3.ConversionClient, target schema.GroupVersionKind, obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+	if obj.GroupVersionKind() == target {
+		return obj, nil
+	}
+	raw, err := obj.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	s := conversionSerializer{gvk: target, client: client}
+	converted, err := s.convertObjects(ctx, []*unstructured.Unstructured{obj}, [][]byte{raw})
+	if err != nil {
+		return nil, err
+	}
+	return converted[0], nil
+}
+
 func (c *conversionSerializer) Encode(ctx context.Context, obj runtime.Object) (json.RawMessage, error) {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(obj); err != nil {
@@ -63,7 +81,7 @@ func (s *conversionSerializer) DecodeBatch(ctx context.Context, data [][]byte) (
 	results := make([]runtime.Object, len(data))
 	var indices []int
 	var objects [][]byte
-	var namespace string
+	var originals []*unstructured.Unstructured
 	for i, raw := range data {
 		if err := ctx.Err(); err != nil {
 			return nil, err
@@ -77,16 +95,33 @@ func (s *conversionSerializer) DecodeBatch(ctx context.Context, data [][]byte) (
 		if source == s.gvk {
 			continue
 		}
-		if len(objects) == 0 {
-			namespace = original.GetNamespace()
-		} else if namespace != original.GetNamespace() {
-			namespace = ""
-		}
+		originals = append(originals, original)
 		objects = append(objects, raw)
 		indices = append(indices, i)
 	}
 	if len(objects) == 0 {
 		return results, nil
+	}
+	converted, err := s.convertObjects(ctx, originals, objects)
+	if err != nil {
+		return nil, err
+	}
+	for offset, idx := range indices {
+		results[idx] = converted[offset]
+	}
+	return results, nil
+}
+
+func (s *conversionSerializer) convertObjects(ctx context.Context, originals []*unstructured.Unstructured, objects [][]byte) ([]*unstructured.Unstructured, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	namespace := originals[0].GetNamespace()
+	for _, obj := range originals[1:] {
+		if obj.GetNamespace() != namespace {
+			namespace = ""
+			break
+		}
 	}
 	target := &pluginv3.GroupVersionKind{}
 	target.SetGroup(s.gvk.Group)
@@ -110,12 +145,13 @@ func (s *conversionSerializer) DecodeBatch(ctx context.Context, data [][]byte) (
 	if len(converted) != len(objects) {
 		return nil, fmt.Errorf("conversion to %s returned %d objects, expected %d", s.gvk, len(converted), len(objects))
 	}
-	for offset, idx := range indices {
-		obj, err := s.finishConversion(results[idx].(*unstructured.Unstructured), converted[offset].GetRaw())
+	results := make([]*unstructured.Unstructured, len(originals))
+	for i, original := range originals {
+		obj, err := s.finishConversion(original, converted[i].GetRaw())
 		if err != nil {
 			return nil, err
 		}
-		results[idx] = obj
+		results[i] = obj
 	}
 	for _, obj := range converted {
 		for _, w := range obj.GetWarnings() {

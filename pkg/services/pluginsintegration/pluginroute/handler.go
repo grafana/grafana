@@ -286,6 +286,11 @@ func newServerHandler(b builder.APIGroupBuilder, opts Options, reg prometheus.Re
 	if err := server.InstallAPIGroup(&info); err != nil {
 		return nil, fmt.Errorf("%s: install group: %w", group, err)
 	}
+	if manifest, ok := b.(*manifestBuilder); ok {
+		if err := manifest.configureWrites(&info, config.Config, server.EquivalentResourceRegistry); err != nil {
+			return nil, fmt.Errorf("%s: configure writes: %w", group, err)
+		}
+	}
 	if err := builder.AugmentWebServicesWithCustomRoutes(server.Handler.GoRestfulContainer, builders, reg, resources); err != nil {
 		return nil, fmt.Errorf("%s: install custom routes: %w", group, err)
 	}
@@ -388,9 +393,9 @@ func (b *manifestBuilder) unionAuthorizer() (authorizer.Authorizer, error) {
 func (b *manifestBuilder) buildHandlerChain(builders []builder.APIGroupBuilder, reg prometheus.Registerer) builder.BuildHandlerChainFunc {
 	chain := builder.GetDefaultBuildHandlerChainFunc(builders, reg)
 	return func(delegate http.Handler, c *genericapiserver.Config) http.Handler {
-		next := delegate
+		next := b.serveWrites(delegate)
 		if b.documents != nil {
-			next = b.documents(delegate)
+			next = b.documents(next)
 		}
 		return strategicMergeAsMergePatch(chain(b.routeMux(next, reg), c))
 	}
