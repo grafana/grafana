@@ -38,3 +38,9 @@ export function userStarsName(): string {
 export function userStarsFieldSelector(): string {
   return `metadata.name=${userStarsName()}`;
 }
+
+/**
+ * Subscription options of every reader of the star set. A star changed in another tab, or by someone else, is
+ * reported to no one here, so the set is read again when the window regains focus.
+ */
+export const STAR_SET_SUBSCRIPTION = { refetchOnFocus: true };

@@ -9,14 +9,17 @@ import { useDispatch } from 'app/types/store';
 import { refetchStarred, useSearchStarredQuery } from './api';
 import { refetchStarredAppKinds, useSearchStarredAppKindsQuery } from './kindSearch';
 import { getStarredAppKinds, STARRED_INDEX_KINDS, type StarredKind } from './kinds';
-import { byTitle, canUseStars, findStarredNames, userStarsFieldSelector } from './utils';
+import { byTitle, canUseStars, findStarredNames, STAR_SET_SUBSCRIPTION, userStarsFieldSelector } from './utils';
 
 /**
  * Get starred items from the app platform API
  */
 export const useStarredItems = (group: string, kind: string) => {
   const canStar = canUseStars();
-  const response = useListStarsQuery(canStar ? { fieldSelector: userStarsFieldSelector() } : skipToken);
+  const response = useListStarsQuery(
+    canStar ? { fieldSelector: userStarsFieldSelector() } : skipToken,
+    STAR_SET_SUBSCRIPTION
+  );
 
   // Keyed on the response data, not the response: a refetch that returns the same stars keeps the same array.
   const { data, isLoading, isUninitialized } = response;
@@ -56,7 +59,10 @@ const NO_STARRED_ROWS: DashboardQueryResult[] = [];
  * set is read, which `skip` and a user without a stars resource never do.
  */
 const useStarredNames = (kinds: readonly StarredKind[], skip = false) => {
-  const stars = useListStarsQuery(skip || !canUseStars() ? skipToken : { fieldSelector: userStarsFieldSelector() });
+  const stars = useListStarsQuery(
+    skip || !canUseStars() ? skipToken : { fieldSelector: userStarsFieldSelector() },
+    STAR_SET_SUBSCRIPTION
+  );
   const names = useMemo(
     () =>
       stars.data &&
@@ -74,10 +80,10 @@ const useStarredNames = (kinds: readonly StarredKind[], skip = false) => {
  * cache every star toggle invalidates and the search is keyed by it, so a toggle anywhere re-searches while the
  * previous rows stay up. Every caller shares one cache entry per star set; a view cuts the rows it shows after
  * sorting them. `skip` leaves both requests unmade for a view that does not render stars, and a user without a
- * stars resource never makes them. The rows are searched again when the window regains focus: a rename or delete
- * made in another tab, or by someone else, is reported to no one here. `refetchOnMountOrArgChange` searches again
- * on each mount as well. `refetch` re-runs both requests; it is stable, so a view can call it from an effect on
- * its own refresh schedule.
+ * stars resource never makes them. The star set is read and its rows searched again when the window regains focus:
+ * a star, rename or delete made in another tab, or by someone else, is reported to no one here.
+ * `refetchOnMountOrArgChange` searches again on each mount as well. `refetch` re-runs both requests; it is stable,
+ * so a view can call it from an effect on its own refresh schedule.
  */
 export const useStarredDashboardsAndFolders = ({
   skip,
