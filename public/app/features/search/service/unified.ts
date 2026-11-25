@@ -19,7 +19,7 @@ import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import kbn from 'app/core/utils/kbn';
-import { STARRED_KINDS } from 'app/features/stars/kinds';
+import { STARRED_INDEX_KINDS } from 'app/features/stars/kinds';
 import { canUseStars, findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
 import { dispatch } from 'app/store/store';
 
@@ -92,7 +92,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       })
     );
     // One uid may be starred as several kinds, so the search gets each uid once
-    const starsIds = [...new Set(STARRED_KINDS.flatMap((k) => findStarredNames(result.data, k.group, k.kind)))];
+    const starsIds = [...new Set(STARRED_INDEX_KINDS.flatMap((k) => findStarredNames(result.data, k.group, k.kind)))];
 
     if (starsIds.length) {
       return this.doSearchQuery({

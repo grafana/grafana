@@ -32,6 +32,7 @@ import {
   usePanelActionsOverlays,
 } from './PanelActionsOverlayContext';
 import { PanelEditActionsBulk, PanelEditActionsWrapper } from './PanelEditActions';
+import { PanelActionsWithQuickEdits, useOffersQuickEdits } from './PanelQuickEditActions';
 
 const POPOVER_OFFSET = { mainAxis: -8, alignmentAxis: 8 };
 
@@ -183,6 +184,7 @@ function PanelActions({
 
   const isExpanded = Boolean(viewPanel);
   const isRepeat = isRepeatCloneOrChildOf(panel);
+  const offersQuickEdits = useOffersQuickEdits(panel) && isEditing;
   // Like isEditEntryBlocked, which the panel menu checks: on small screens, editing can't be started from here.
   const isEditEntryBlocked = useIsMobileEditDeprecated() && !isEditing;
   // Like the panel menu: no Edit in composer mode, where only the Composer session writes.
@@ -271,7 +273,7 @@ function PanelActions({
     );
   }
 
-  return (
+  const actions = (
     <>
       {hoverHeader && <div ref={onHoverSlotChange} className={styles.headerSlot} />}
 
@@ -391,6 +393,15 @@ function PanelActions({
         />
       )}
     </>
+  );
+
+  if (!offersQuickEdits) {
+    return actions;
+  }
+  return (
+    <PanelActionsWithQuickEdits panel={panel} spacing="panel-actions">
+      {actions}
+    </PanelActionsWithQuickEdits>
   );
 }
 
