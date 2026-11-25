@@ -821,8 +821,17 @@ func TestRuleRoutine(t *testing.T) {
 
 		t.Run("and send resolved notifications if errRuleDeleted is the reason for stopping", func(t *testing.T) {
 			stoppedChan := make(chan error)
+			var sendCtxErr error
+			var sendHasDeadline bool
+			var sendRuleKey models.AlertRuleKey
+			var sendHasRuleKey bool
 			sender := NewSyncAlertsSenderMock()
-			sender.EXPECT().Send(mock.Anything, mock.Anything, mock.Anything).Times(1)
+			sender.EXPECT().Send(mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, _ models.AlertRuleKey, _ definitions.PostableAlerts) {
+				// Capture context state during Send; Run() cancels its cleanup timeout context via defer on return.
+				sendCtxErr = ctx.Err()
+				_, sendHasDeadline = ctx.Deadline()
+				sendRuleKey, sendHasRuleKey = models.RuleKeyFromContext(ctx)
+			}).Times(1)
 			sch, _, _, _ := createSchedule(t, make(chan time.Time, 1), sender, clock.NewMock())
 
 			_, _ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
@@ -841,6 +850,10 @@ func TestRuleRoutine(t *testing.T) {
 
 			require.Empty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
 			sender.AssertExpectations(t)
+			require.NoError(t, sendCtxErr)
+			require.True(t, sendHasDeadline)
+			require.True(t, sendHasRuleKey)
+			require.Equal(t, rule.GetKey(), sendRuleKey)
 		})
 	})
 
