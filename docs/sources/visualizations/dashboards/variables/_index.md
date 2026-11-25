@@ -41,13 +41,14 @@ You can use variables in:
 - [Dashboard and panel links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/manage-dashboard-links/)
 - Titles
 - Descriptions
+- Panel options, such as thresholds. With the `grafana.panelOptionInterpolation` feature toggle enabled, you can also use variables in other numeric options, such as **Min** and **Max**, and in string options, such as **Unit** and value mapping display text.
 - [Transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/transform-data/)
 
 To work with variables, you typically do the following:
 
 1. Choose the type of variable that matches the value you want viewers to control.
 1. Add the variable to the dashboard.
-1. Use the variable in queries, titles, links, or other dashboard fields.
+1. Use the variable in queries, titles, links, panel options, or other dashboard fields.
 1. Manage the variable order, dependencies, and URL behavior as the dashboard grows.
 
 To see variable settings, select **Editing** in the dashboard mode drop-down list, click the **Dashboard options** icon in the toolbar, and expand the **Variables** section.
