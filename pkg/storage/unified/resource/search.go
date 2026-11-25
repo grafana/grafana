@@ -1685,7 +1685,7 @@ func (s *searchServer) startupIndexStats(ctx context.Context) ([]ResourceStats, 
 	if err != nil {
 		return nil, err
 	}
-	return slices.DeleteFunc(stats, func(info ResourceStats) bool { return info.Count <= int64(s.initMinSize) }), nil
+	return slices.DeleteFunc(stats, func(info ResourceStats) bool { return startupIndexSize(info) <= int64(s.initMinSize) }), nil
 }
 
 func (s *searchServer) startupResourceStats(ctx context.Context, filter NamespacedResource, minCount int) ([]ResourceStats, error) {
@@ -1693,16 +1693,33 @@ func (s *searchServer) startupResourceStats(ctx context.Context, filter Namespac
 	// decision needs an exact count above the higher threshold.
 	limit := max(s.initMinSize, int(s.search.SnapshotCountThreshold())) + 1
 	start := time.Now()
-	stats, err := s.storage.GetResourceStatsWithLimit(ctx, filter, minCount, limit)
+	getStats := s.storage.GetResourceStatsWithLimit
+	if storage, ok := s.storage.(interface {
+		getResourceStatsWithDeleted(context.Context, NamespacedResource, int, int) ([]ResourceStats, error)
+	}); ok {
+		// Use the combined count for discovery without changing the live-only
+		// contract for callers and backends that don't opt into trash stats.
+		getStats = storage.getResourceStatsWithDeleted
+	}
+	stats, err := getStats(ctx, filter, minCount, limit)
 	s.log.Debug("startupIndexStats: got resource stats from storage", "elapsed", time.Since(start).String(), "stats", len(stats), "err", err, "countLimit", limit, "group", filter.Group, "resource", filter.Resource)
 	return stats, err
+}
+
+func startupIndexSize(info ResourceStats) int64 {
+	// New per-resource indexes keep trash; namespace-wide indexes don't.
+	// Saved index stats already carry the full document count in Count.
+	if info.IsGlobal() {
+		return info.Count
+	}
+	return info.Count + info.DeletedCount
 }
 
 func (s *searchServer) buildStartupIndex(ctx context.Context, info ResourceStats, lastImportTime time.Time) error {
 	if s.search.PeekIndex(info.NamespacedResource) != nil {
 		return nil
 	}
-	_, err := s.buildWithOptions(ctx, info.NamespacedResource, info.Count, "init", false, lastImportTime, BuildIndexOptions{SkipIfBuilding: true, LastSearchedAt: info.LastSearchedAt})
+	_, err := s.buildWithOptions(ctx, info.NamespacedResource, startupIndexSize(info), "init", false, lastImportTime, BuildIndexOptions{SkipIfBuilding: true, LastSearchedAt: info.LastSearchedAt})
 	return err
 }
 
