@@ -144,6 +144,7 @@ describe('getAPIGroup', () => {
       ['a 401', () => Promise.reject(fetchError(401))],
       ['a 403', () => Promise.reject(fetchError(403))],
       ['a response that is not a group list', () => Promise.resolve('<!doctype html>')],
+      ['a group list with a malformed group', () => Promise.resolve({ groups: [{ name: 'x', versions: [null] }] })],
     ])('falls back to the group endpoint on %s', async (_, root) => {
       respondTo({ '/apis': root, '/apis/dashboard.grafana.app/': () => Promise.resolve(dashboardGroup) });
 
@@ -158,6 +159,19 @@ describe('getAPIGroup', () => {
       await expect(getAPIGroup('annotation.grafana.app')).resolves.toBeUndefined();
 
       expect(requestedUrls()).toEqual(['/apis', '/apis/annotation.grafana.app/']);
+    });
+
+    it('treats a malformed group endpoint answer as unknown', async () => {
+      respondTo({
+        '/apis': () => Promise.reject(fetchError(500)),
+        '/apis/dashboard.grafana.app/': () => Promise.resolve({ name: 'dashboard.grafana.app', versions: [null] }),
+      });
+
+      await expect(getAPIGroup('dashboard.grafana.app')).resolves.toBeUndefined();
+      expect(logger.logError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({ url: '/apis/dashboard.grafana.app/' })
+      );
     });
 
     it('memoizes the group answer instead of retrying the root request for that group', async () => {

@@ -186,17 +186,11 @@ function toAPIGroupInfo(apiGroup: K8sAPIGroup): APIGroupInfo | undefined {
   return { group: apiGroup.name, versions, preferredVersion };
 }
 
+// Only the top level is checked. A malformed group makes the parsing throw, which is logged as unknown.
 function isK8sAPIGroupList(value: unknown): value is K8sAPIGroupList {
-  return isObject(value) && 'groups' in value && Array.isArray(value.groups) && value.groups.every(isK8sAPIGroup);
+  return isObject(value) && 'groups' in value && Array.isArray(value.groups);
 }
 
 function isK8sAPIGroup(value: unknown): value is K8sAPIGroup {
-  return (
-    isObject(value) &&
-    'name' in value &&
-    typeof value.name === 'string' &&
-    'versions' in value &&
-    Array.isArray(value.versions) &&
-    value.versions.every((v) => isObject(v) && 'version' in v && typeof v.version === 'string')
-  );
+  return isObject(value) && 'versions' in value && Array.isArray(value.versions);
 }
