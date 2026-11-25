@@ -6740,7 +6740,8 @@
           "title": "Panel einfügen"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "Zeile hinzufügen",
@@ -9967,10 +9968,6 @@
       "of": "VON",
       "to": "BIS",
       "when": "WANN"
-    },
-    "expression-query-editor": {
-      "helper-text-sql": "Führen Sie MySQL-Dialekt-SQL für die von Ihren Datenquellen zurückgegebenen Tabellen aus. Datenquellenabfragen (z. B. „A“, „B“) sind als Tabellen verfügbar und werden durch den Abfragenamen referenziert. Felder sind als Spalten verfügbar, wie von der Datenquelle zurückgegeben.",
-      "label-operation": "Operation"
     },
     "math": {
       "available-math-functions": "Verfügbare mathematische Funktionen",
@@ -13792,12 +13789,11 @@
     },
     "megamenu-item": {
       "children-error": "Es konnten keine Elemente geladen werden",
+      "children-partial-error": "",
       "collapse-aria-label": "Abschnitt einklappen: {{sectionName}}",
       "expand-aria-label": "Abschnitt ausklappen: {{sectionName}}",
       "loading-aria-label": "Laden {{sectionName}}",
-      "reorder-aria-label": "Neu anordnen {{itemName}}",
-      "starred-dashboard-icon": "Dashboard",
-      "starred-folder-icon": "Ordner"
+      "reorder-aria-label": "Neu anordnen {{itemName}}"
     },
     "org-switcher": {
       "aria-label": "Organisation ändern"
@@ -17502,6 +17498,7 @@
     "description-page-size": "Anzahl der Zeilen pro Seite. Wenn dies leer ist, basiert die Seitengröße auf der Panel-Höhe.",
     "description-show-columns-sidebar": "Öffnen Sie die Seitenleiste der Spaltenverwaltung mit dem Panel und nicht über ein Spaltenmenü",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "Ein Feld, das JSON-Objekte mit CSS-Eigenschaften enthält",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Hintergrundfarbe jeder zweiten Zeile abwechseln",
@@ -17546,6 +17543,7 @@
     "name-show-columns-sidebar": "Seitenleiste der Spalten anzeigen",
     "name-show-row-numbers": "",
     "name-show-table-header": "Tabellenüberschirft anzeigen",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "Hover-Tooltip anzeigen",
     "name-styling-from-field": "Gestaltung über das Feld",
     "name-tooltip-from-field": "",

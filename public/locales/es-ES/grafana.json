@@ -6740,7 +6740,8 @@
           "title": "Pegar panel"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "Añadir fila",
@@ -9967,10 +9968,6 @@
       "of": "DE",
       "to": "HASTA",
       "when": "CUÁNDO"
-    },
-    "expression-query-editor": {
-      "helper-text-sql": "Ejecuta el dialecto SQL de MySQL en las tablas devueltas desde tus fuentes de datos. Las consultas de fuentes de datos (es decir, «A», «B») están disponibles como tablas y se hace referencia a ellas mediante el nombre de la consulta. Los campos están disponibles como columnas, tal y como se devuelven desde la fuente de datos.",
-      "label-operation": "Operación"
     },
     "math": {
       "available-math-functions": "Funciones matemáticas disponibles",
@@ -13792,12 +13789,11 @@
     },
     "megamenu-item": {
       "children-error": "Error al cargar los elementos",
+      "children-partial-error": "",
       "collapse-aria-label": "Contraer sección: {{sectionName}}",
       "expand-aria-label": "Expandir sección: {{sectionName}}",
       "loading-aria-label": "Cargando {{sectionName}}",
-      "reorder-aria-label": "Reordenar {{itemName}}",
-      "starred-dashboard-icon": "Dashboard",
-      "starred-folder-icon": "Carpeta"
+      "reorder-aria-label": "Reordenar {{itemName}}"
     },
     "org-switcher": {
       "aria-label": "Cambiar la organización"
@@ -17502,6 +17498,7 @@
     "description-page-size": "Número de filas por página. Cuando está vacío, el tamaño de la página se basa en la altura del panel.",
     "description-show-columns-sidebar": "Abre la barra lateral de gestión de columnas con el panel, en lugar de hacerlo desde un menú de columna",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "Un campo que contiene objetos JSON con propiedades CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Alternar el color de fondo de una fila sí y otra no",
@@ -17546,6 +17543,7 @@
     "name-show-columns-sidebar": "Mostrar barra lateral de columnas",
     "name-show-row-numbers": "",
     "name-show-table-header": "Mostrar encabezado de tabla",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "Mostrar descripción emergente al pasar el ratón por encima",
     "name-styling-from-field": "Estilo desde el campo",
     "name-tooltip-from-field": "",

@@ -6690,7 +6690,8 @@
           "title": "패널 붙여넣기"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "행 추가",
@@ -9893,10 +9894,6 @@
       "of": "의",
       "to": "다음으로 설정",
       "when": "다음과 같은 때"
-    },
-    "expression-query-editor": {
-      "helper-text-sql": "데이터 소스에서 반환된 테이블에 대해 MySQL 방언 SQL을 실행합니다. 데이터 소스 쿼리(예: \"A\", \"B\")는 테이블로 사용할 수 있으며 query-name으로 참조됩니다. 필드는 데이터 소스에서 반환된 그대로 열로 사용할 수 있습니다.",
-      "label-operation": "연산"
     },
     "math": {
       "available-math-functions": "사용 가능한 수학 함수",
@@ -13685,12 +13682,11 @@
     },
     "megamenu-item": {
       "children-error": "항목 로딩 실패",
+      "children-partial-error": "",
       "collapse-aria-label": "섹션 접기: {{sectionName}}",
       "expand-aria-label": "섹션 펼치기: {{sectionName}}",
       "loading-aria-label": "{{sectionName}} 로딩 중",
-      "reorder-aria-label": "{{itemName}} 순서 변경",
-      "starred-dashboard-icon": "대시보드",
-      "starred-folder-icon": "폴더"
+      "reorder-aria-label": "{{itemName}} 순서 변경"
     },
     "org-switcher": {
       "aria-label": "조직 변경"
@@ -17359,6 +17355,7 @@
     "description-page-size": "페이지당 행 수. 비어 있는 경우 페이지 크기는 패널 높이를 기준으로 합니다.",
     "description-show-columns-sidebar": "열 메뉴가 아닌 패널을 사용하여 열 관리 사이드바를 엽니다.",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "CSS 속성이 있는 JSON 객체가 포함된 필드",
     "description-tooltip-from-field": "툴팁에서 (숨겨져 있거나 표시된) 필드의 셀을 렌더링합니다.",
     "description-zebra-striping": "한 행씩 번갈아 배경색 적용",
@@ -17403,6 +17400,7 @@
     "name-show-columns-sidebar": "열 사이드바 표시",
     "name-show-row-numbers": "",
     "name-show-table-header": "테이블 머리말 표시",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "마우스 오버 툴팁 표시",
     "name-styling-from-field": "필드에서 스타일링",
     "name-tooltip-from-field": "필드 툴팁",

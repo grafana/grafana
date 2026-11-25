@@ -6840,7 +6840,8 @@
           "title": "Wklej panel"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "Dodaj wiersz",
@@ -10115,10 +10116,6 @@
       "of": "OF",
       "to": "DO",
       "when": "KIEDY"
-    },
-    "expression-query-editor": {
-      "helper-text-sql": "Uruchom zapytanie SQL w dialekcie MySQL na tabelach zwróconych ze źródeł danych. Zapytania do źródeł danych (tj. „A”, „B”) są dostępne jako tabele i odnosi się do nich nazwa zapytania. Pola są dostępne jako kolumny zwracane ze źródła danych.",
-      "label-operation": "Operacja"
     },
     "math": {
       "available-math-functions": "Dostępne funkcje matematyczne",
@@ -14006,12 +14003,11 @@
     },
     "megamenu-item": {
       "children-error": "Nie udało się wczytać elementów",
+      "children-partial-error": "",
       "collapse-aria-label": "Zwiń sekcję: {{sectionName}}",
       "expand-aria-label": "Rozwiń sekcję: {{sectionName}}",
       "loading-aria-label": "Wczytywanie: {{sectionName}}",
-      "reorder-aria-label": "Zmień kolejność: {{itemName}}",
-      "starred-dashboard-icon": "Pulpit",
-      "starred-folder-icon": "Folder"
+      "reorder-aria-label": "Zmień kolejność: {{itemName}}"
     },
     "org-switcher": {
       "aria-label": "Zmień organizację"
@@ -17788,6 +17784,7 @@
     "description-page-size": "Liczba wierszy na stronie. Gdy pole jest puste, rozmiar strony jest oparty na wysokości panelu.",
     "description-show-columns-sidebar": "Otwórz pasek boczny zarządzania kolumnami za pomocą panelu, a nie z menu kolumny",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "Pole zawierające obiekty JSON z właściwościami CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Naprzemiennie zmieniaj kolor tła co drugi wiersz",
@@ -17832,6 +17829,7 @@
     "name-show-columns-sidebar": "Pokaż pasek boczny kolumn",
     "name-show-row-numbers": "",
     "name-show-table-header": "Pokaż nagłówek tabeli",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "Pokaż podpowiedź po najechaniu kursorem",
     "name-styling-from-field": "Styl z pola",
     "name-tooltip-from-field": "",

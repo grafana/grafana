@@ -6740,7 +6740,8 @@
           "title": "Coller le panneau"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "Ajoutez une ligne",
@@ -9967,10 +9968,6 @@
       "of": "DE",
       "to": "AU",
       "when": "QUAND"
-    },
-    "expression-query-editor": {
-      "helper-text-sql": "Exécutez des requêtes SQL au format MySQL sur les tables retournées par vos sources de données. Les requêtes des sources (c’est-à-dire « A » et « B ») sont accessibles sous forme de tables et référencées par leur nom. Les champs sont disponibles sous forme de colonnes, tels que renvoyés par la source de données.",
-      "label-operation": "Opération"
     },
     "math": {
       "available-math-functions": "Fonctions mathématiques disponibles",
@@ -13792,12 +13789,11 @@
     },
     "megamenu-item": {
       "children-error": "Échec du chargement des éléments",
+      "children-partial-error": "",
       "collapse-aria-label": "Réduire la section : {{sectionName}}",
       "expand-aria-label": "Élargir la section : {{sectionName}}",
       "loading-aria-label": "Chargement de {{sectionName}}",
-      "reorder-aria-label": "Réorganiser {{itemName}}",
-      "starred-dashboard-icon": "Tableau de bord",
-      "starred-folder-icon": "Dossier"
+      "reorder-aria-label": "Réorganiser {{itemName}}"
     },
     "org-switcher": {
       "aria-label": "Changer l’organisation"
@@ -17502,6 +17498,7 @@
     "description-page-size": "Nombre de lignes par page. Lorsque ce champ est vide, la taille de la page est basée sur la hauteur du panneau.",
     "description-show-columns-sidebar": "Ouvrir la barre latérale de gestion des colonnes en même temps que le panneau, plutôt que depuis un menu de colonne",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "Un champ contenant des objets JSON avec des propriétés CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Alterner la couleur d’arrière-plan d’une ligne sur deux",
@@ -17546,6 +17543,7 @@
     "name-show-columns-sidebar": "Afficher la barre latérale des colonnes",
     "name-show-row-numbers": "",
     "name-show-table-header": "Afficher l’en-tête du tableau",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "Afficher la bulle d’aide au survol",
     "name-styling-from-field": "Style basé sur le champ",
     "name-tooltip-from-field": "",

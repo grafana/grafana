@@ -6740,7 +6740,8 @@
           "title": "Incolla pannello"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "Aggiungi riga",
@@ -9967,10 +9968,6 @@
       "of": "DI",
       "to": "A",
       "when": "QUANDO"
-    },
-    "expression-query-editor": {
-      "helper-text-sql": "Esegui SQL con dialetto MySQL sulle tabelle restituite dalle origini dati. Le query dell'origine dati (ad esempio \"A\", \"B\") sono disponibili come tabelle e sono referenziate tramite il nome della query. I campi sono disponibili come colonne, così come restituiti dall'origine dati.",
-      "label-operation": "Operazione"
     },
     "math": {
       "available-math-functions": "Funzioni matematiche disponibili",
@@ -13792,12 +13789,11 @@
     },
     "megamenu-item": {
       "children-error": "Impossibile caricare gli elementi",
+      "children-partial-error": "",
       "collapse-aria-label": "Riduci sezione: {{sectionName}}",
       "expand-aria-label": "Ingrandisci sezione: {{sectionName}}",
       "loading-aria-label": "Caricamento {{sectionName}}",
-      "reorder-aria-label": "Riordina {{itemName}}",
-      "starred-dashboard-icon": "Dashboard",
-      "starred-folder-icon": "Cartella"
+      "reorder-aria-label": "Riordina {{itemName}}"
     },
     "org-switcher": {
       "aria-label": "Cambia organizzazione"
@@ -17502,6 +17498,7 @@
     "description-page-size": "Numero di righe per pagina. Quando è vuoto, il formato della pagina si basa sull'altezza del pannello.",
     "description-show-columns-sidebar": "",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "Un campo contenente oggetti JSON con proprietà CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Alterna il colore di sfondo di ogni seconda riga",
@@ -17546,6 +17543,7 @@
     "name-show-columns-sidebar": "",
     "name-show-row-numbers": "",
     "name-show-table-header": "Mostra intestazione tabella",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "Stile dal campo",
     "name-tooltip-from-field": "",

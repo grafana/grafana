@@ -6690,7 +6690,8 @@
           "title": "貼上面板"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "新增列",
@@ -9893,10 +9894,6 @@
       "of": "的",
       "to": "至",
       "when": "當"
-    },
-    "expression-query-editor": {
-      "helper-text-sql": "針對從資料來源返回的表格執行 MySQL 特定語法 SQL。資料來源查詢（即「A」、「B」）可作為表格使用，並由查詢名稱引用。欄位可作為從資料來源返回的欄使用。",
-      "label-operation": "操作"
     },
     "math": {
       "available-math-functions": "可用的數學函數",
@@ -13685,12 +13682,11 @@
     },
     "megamenu-item": {
       "children-error": "無法載入項目",
+      "children-partial-error": "",
       "collapse-aria-label": "收闔工作階段：{{sectionName}}",
       "expand-aria-label": "展開工作階段：{{sectionName}}",
       "loading-aria-label": "正在載入{{sectionName}}",
-      "reorder-aria-label": "重新排序{{itemName}}",
-      "starred-dashboard-icon": "儀表板",
-      "starred-folder-icon": "資料夾"
+      "reorder-aria-label": "重新排序{{itemName}}"
     },
     "org-switcher": {
       "aria-label": "變更組織"
@@ -17359,6 +17355,7 @@
     "description-page-size": "每頁的列數。留空時，頁面大小會依面板高度決定。",
     "description-show-columns-sidebar": "使用面板開啟欄管理側邊欄，而非從欄選單開啟",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "包含 JSON 物件與 CSS 屬性的欄位",
     "description-tooltip-from-field": "在工具提示中從欄位（無論隱藏或顯示）轉譯儲存格",
     "description-zebra-striping": "每隔一列變更背景色彩",
@@ -17403,6 +17400,7 @@
     "name-show-columns-sidebar": "顯示欄側邊欄",
     "name-show-row-numbers": "",
     "name-show-table-header": "顯示表格頁首",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "顯示滑鼠懸停工具提示",
     "name-styling-from-field": "欄位的樣式",
     "name-tooltip-from-field": "",
