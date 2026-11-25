@@ -4,7 +4,6 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { useStepperState } from './StepperState';
-import { getWizardSteps } from './steps';
 import { type StepKey, StepState } from './types';
 
 /**
@@ -16,10 +15,17 @@ import { type StepKey, StepState } from './types';
  */
 export const Stepper = () => {
   const styles = useStyles2(getStyles);
-  const { activeStep, setActiveStep, setVisitedStep, visitedSteps, isStepCompleted, isStepSkipped, hasStepErrors } =
-    useStepperState();
+  const {
+    steps,
+    activeStep,
+    setActiveStep,
+    setVisitedStep,
+    visitedSteps,
+    isStepCompleted,
+    isStepSkipped,
+    hasStepErrors,
+  } = useStepperState();
 
-  const steps = getWizardSteps();
   const lastStep = steps[steps.length - 1];
 
   const handleStepClick = (stepId: StepKey) => {
