@@ -7,6 +7,7 @@ describe('timeShiftToMs', () => {
   it.each([
     { desc: 'a provisioned number as seconds', shift: 90, expected: 90_000 },
     { desc: 'a provisioned 0 as no shift', shift: 0, expected: 0 },
+    { desc: 'fractional provisioned seconds', shift: -0.25, expected: -250 },
     { desc: 'a value of another type as unset', shift: true, expected: -120_000 },
   ])('reads $desc', ({ shift, expected }) => {
     expect(timeShiftToMs(shift as unknown as string, -120_000)).toBe(expected);

@@ -344,6 +344,44 @@ describe('TraceToLogsSettings', () => {
 
       expect(change.mock.lastCall![0].jsonData.tracesToLogsV2).toEqual(b);
     });
+
+    it('displays provisioned numeric shifts on an additional destination', async () => {
+      const provisioned = {
+        ...second,
+        spanStartTimeShift: -15,
+        spanEndTimeShift: 0.25,
+      } as unknown as TraceToLogsOptionsV2;
+
+      render(
+        <TraceToLogsSettings
+          options={withJsonData({ tracesToLogsV2: first, tracesToLogsAdditional: [provisioned] })}
+          onOptionsChange={jest.fn()}
+          allowMultipleDestinations
+        />
+      );
+
+      expect(await screen.findByRole('textbox', { name: 'Span start time shift for Audit' })).toHaveValue('-15s');
+      expect(screen.getByRole('textbox', { name: 'Span end time shift for Audit' })).toHaveValue('250ms');
+    });
+
+    it('does not commit a focused draft to a surviving destination with the same tag', async () => {
+      const user = userEvent.setup();
+      const change = jest.fn();
+      const a = { name: 'Primary', customQuery: false, tags: [{ key: 'pod' }] };
+      const b = { ...a, name: 'Audit' };
+      const editor = (jsonData: TraceToLogsData) => (
+        <TraceToLogsSettings options={withJsonData(jsonData)} onOptionsChange={change} allowMultipleDestinations />
+      );
+
+      const { rerender } = render(editor({ tracesToLogsV2: a, tracesToLogsAdditional: [b] }));
+      await user.click(screen.getAllByText('pod')[0]);
+      await user.type(screen.getByDisplayValue('pod'), '.draft');
+      rerender(editor({ tracesToLogsV2: b }));
+      await user.tab();
+
+      expect(change).not.toHaveBeenCalled();
+      expect(screen.getByText('pod')).toBeInTheDocument();
+    });
   });
 });
 
@@ -390,6 +428,24 @@ describe('getTraceToLogsDestinations', () => {
         ],
       },
       expected: [{ ...additional, tags: [{ key: 'app' }] }],
+    },
+    {
+      name: 'keeps a numeric data source uid as a string, so it does not resolve to the default data source',
+      data: { tracesToLogsAdditional: [{ ...additional, datasourceUid: 12345 }] },
+      expected: [{ ...additional, datasourceUid: '12345' }],
+    },
+    {
+      name: 'drops a numeric data source uid beyond the safe integer range, whose digits may have changed',
+      data: { tracesToLogsAdditional: [{ ...additional, datasourceUid: Number.MAX_SAFE_INTEGER + 2 }] },
+      expected: [{ ...additional, datasourceUid: undefined }],
+    },
+    {
+      name: 'keeps a valid additional destination when legacy tags are a scalar',
+      data: {
+        tracesToLogs: { datasourceUid: first.datasourceUid, tags: 'service.name' },
+        tracesToLogsAdditional: [additional],
+      },
+      expected: [first, additional],
     },
   ])('$name', ({ data, expected }) => {
     expect(getTraceToLogsDestinations(data as unknown as TraceToLogsData)).toEqual(expected);

@@ -142,8 +142,13 @@ export function createTraceLogsLink({
  * building links.
  */
 export function timeShiftToMs(shift: string | number | undefined, defaultMs = 0): number {
-  // Provisioning keeps a YAML number such as `spanStartTimeShift: 0` as a number, and any other type is not a shift.
-  const value: unknown = typeof shift === 'number' ? String(shift) : shift;
+  // Provisioning keeps a YAML number such as `spanStartTimeShift: 0` as a number of seconds.
+  if (typeof shift === 'number') {
+    const milliseconds = shift * 1000;
+    return Number.isFinite(milliseconds) ? milliseconds : defaultMs;
+  }
+  // Any other type is not a shift.
+  const value: unknown = shift;
   if (typeof value !== 'string' || !value.trim()) {
     return defaultMs;
   }

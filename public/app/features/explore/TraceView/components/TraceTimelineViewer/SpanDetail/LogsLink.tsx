@@ -145,7 +145,8 @@ export const LogsLinkMenuItem = ({
     <Menu.Item
       label={resolvedLinkModel.title}
       icon={isLoading ? 'spinner' : 'gf-logs'}
-      ariaLabel={tooltip}
+      // With several destinations the tooltip is the same for each, so the label tells them apart.
+      ariaLabel={disableDatasourceFallback ? `${resolvedLinkModel.title}: ${tooltip}` : tooltip}
       disabled={presence !== 'present'}
       onClick={(event: React.MouseEvent) => resolvedLinkModel.onClick?.(event)}
     />

@@ -146,7 +146,7 @@ Refer to each individual data source's documentation for configuration instructi
 Expand a span and click its logs button to query logs related to that span. In Explore, the logs open in a split view.
 
 If a Tempo data source has more than one logs destination, the span details show a logs link for each destination that can query logs for the span.
-A destination has no link when none of its tags match the span or when its data source no longer exists.
+A destination has no link when its data source no longer exists or when Grafana can't build a query for the span, for example because none of its tags match. A custom query that doesn't use tags can still get a link when no tags match, as long as its other variables resolve.
 Each link is labeled with the destination's **Link label**, or with the logs data source name when no label is set.
 When a span has more than three links, they're grouped in the **Links** menu.
 

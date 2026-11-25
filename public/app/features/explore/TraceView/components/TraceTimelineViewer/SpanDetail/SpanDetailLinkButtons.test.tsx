@@ -206,8 +206,8 @@ describe('SpanDetailLinkButtons', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Links' }));
 
       const menu = await screen.findByRole('menu');
-      expect(within(menu).getByText('Application logs')).toBeInTheDocument();
-      expect(within(menu).getByText('loki-audit')).toBeInTheDocument();
+      expect(within(menu).getByRole('menuitem', { name: /^Application logs:/ })).toBeInTheDocument();
+      expect(within(menu).getByRole('menuitem', { name: /^loki-audit:/ })).toBeInTheDocument();
       expect(within(menu).getByText('Dashboard')).toBeInTheDocument();
       expect(within(menu).queryByText('Logs for this span')).not.toBeInTheDocument();
     });

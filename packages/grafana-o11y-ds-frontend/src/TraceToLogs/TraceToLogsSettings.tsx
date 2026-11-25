@@ -74,7 +74,9 @@ export function getTraceToLogsOptions(data?: TraceToLogsData): TraceToLogsOption
   traceToLogs.datasourceUid = data.tracesToLogs.datasourceUid;
   traceToLogs.tags = data.tracesToLogs.mapTagNamesEnabled
     ? data.tracesToLogs.mappedTags
-    : data.tracesToLogs.tags?.map((tag) => ({ key: tag }));
+    : Array.isArray(data.tracesToLogs.tags)
+      ? data.tracesToLogs.tags.filter((tag) => typeof tag === 'string').map((key) => ({ key }))
+      : undefined;
   traceToLogs.filterByTraceID = data.tracesToLogs.filterByTraceID;
   traceToLogs.filterBySpanID = data.tracesToLogs.filterBySpanID;
   traceToLogs.spanStartTimeShift = data.tracesToLogs.spanStartTimeShift;
@@ -101,17 +103,25 @@ export function getTraceToLogsDestinations(data?: TraceToLogsData): TraceToLogsO
 
 /**
  * Provisioning keeps YAML scalars as they are, so a label such as `name: 404` arrives as a number and tags can be any
- * shape. Malformed values are dropped rather than passed on to code that expects strings and tag objects.
+ * shape. Malformed values are dropped rather than passed on to code that expects strings and tag objects. A numeric
+ * data source uid, such as an unquoted `datasourceUid: 12345`, is kept as a string: as a number, the lookup would fall
+ * back to the default data source. Beyond the safe integer range the digits may already have changed, so it is dropped.
  */
 function withoutMalformedFields(destination: TraceToLogsOptionsV2): TraceToLogsOptionsV2 {
-  const { name, tags }: { name?: unknown; tags?: unknown } = destination;
+  const { name, tags, datasourceUid }: { name?: unknown; tags?: unknown; datasourceUid?: unknown } = destination;
+  const uidIsValid = datasourceUid == null || typeof datasourceUid === 'string';
   const nameIsValid = name == null || typeof name === 'string';
   const tagsAreValid = tags == null || (Array.isArray(tags) && tags.every(isTag));
-  if (nameIsValid && tagsAreValid) {
+  if (uidIsValid && nameIsValid && tagsAreValid) {
     return destination;
   }
   return {
     ...destination,
+    datasourceUid: uidIsValid
+      ? destination.datasourceUid
+      : typeof datasourceUid === 'number' && Number.isSafeInteger(datasourceUid)
+        ? String(datasourceUid)
+        : undefined,
     name: nameIsValid ? destination.name : undefined,
     tags: tagsAreValid ? destination.tags : Array.isArray(tags) ? tags.filter(isTag) : undefined,
   };
@@ -160,9 +170,11 @@ export function TraceToLogsSettings({ options, onOptionsChange, allowMultipleDes
   // Inputs such as the tag editor keep what is being edited in local state. Stable keys keep that state with its own
   // destination when an earlier destination is removed, instead of handing it to the one that moves into its place.
   const [destinationKeys, setDestinationKeys] = useState(() => destinations.map(newDestinationKey));
-  let keys = destinationKeys.slice(0, destinations.length);
-  if (keys.length < destinations.length) {
-    keys = [...keys, ...destinations.slice(keys.length).map(newDestinationKey)];
+  // Add and remove update the keys themselves. Any other change in the number of destinations comes from outside the
+  // editor, so every destination gets a new key rather than handing an unsaved edit to whatever moved into its place.
+  let keys = destinationKeys;
+  if (keys.length !== destinations.length) {
+    keys = destinations.map(newDestinationKey);
     setDestinationKeys(keys);
   }
 
@@ -268,6 +280,16 @@ interface TraceToLogsDestinationSettingsProps {
   updateTracesToLogs: (value: Partial<TraceToLogsOptionsV2>) => void;
 }
 
+/**
+ * Formats a provisioned numeric time shift, which counts seconds, for the interval input. The input only reads strings.
+ */
+function timeShiftForInput(value: unknown): string {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Number.isInteger(value) ? `${value}s` : `${value * 1000}ms`;
+  }
+  return typeof value === 'string' ? value : '';
+}
+
 function TraceToLogsDestinationSettings({
   index,
   traceToLogs,
@@ -328,7 +350,7 @@ function TraceToLogsDestinationSettings({
           label={getTimeShiftLabel('start')}
           ariaLabel={hasMultipleDestinations ? `${getTimeShiftLabel('start')} for ${destinationLabel}` : undefined}
           tooltip={getTimeShiftTooltip('start', '0')}
-          value={traceToLogs.spanStartTimeShift || ''}
+          value={timeShiftForInput(traceToLogs.spanStartTimeShift)}
           onChange={(val) => {
             updateTracesToLogs({ spanStartTimeShift: val });
           }}
@@ -341,7 +363,7 @@ function TraceToLogsDestinationSettings({
           label={getTimeShiftLabel('end')}
           ariaLabel={hasMultipleDestinations ? `${getTimeShiftLabel('end')} for ${destinationLabel}` : undefined}
           tooltip={getTimeShiftTooltip('end', '0')}
-          value={traceToLogs.spanEndTimeShift || ''}
+          value={timeShiftForInput(traceToLogs.spanEndTimeShift)}
           onChange={(val) => {
             updateTracesToLogs({ spanEndTimeShift: val });
           }}

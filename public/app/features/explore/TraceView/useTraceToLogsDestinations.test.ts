@@ -1,10 +1,10 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { type TraceToLogsData } from '@grafana/o11y-ds-frontend';
 import { getDataSourceInstanceSettings, logError } from '@grafana/runtime';
 
-import { useTraceToLogsDestinations } from './useTraceToLogsDestinations';
+import { keepUnchangedSlots, useTraceToLogsDestinations } from './useTraceToLogsDestinations';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -88,6 +88,31 @@ describe('useTraceToLogsDestinations', () => {
     );
   });
 
+  it('does not revive a retired slot while its new lookup is pending', async () => {
+    const primary = { customQuery: false, datasourceUid: appLogs.uid };
+    const both: TraceToLogsData = {
+      tracesToLogsV2: primary,
+      tracesToLogsAdditional: [{ customQuery: false, datasourceUid: auditLogs.uid }],
+    };
+    const { result, rerender } = renderHook((data: TraceToLogsData) => useTraceToLogsDestinations(data), {
+      initialProps: both,
+    });
+    await waitFor(() => expect(result.current.map((d) => d.index)).toEqual([0, 1]));
+
+    const refreshedApp = { ...appLogs, name: 'Renamed app logs' };
+    jest.mocked(getDataSourceInstanceSettings).mockResolvedValueOnce(refreshedApp);
+    rerender({ tracesToLogsV2: primary });
+    await waitFor(() => expect(result.current[0]?.settings).toBe(refreshedApp));
+
+    jest
+      .mocked(getDataSourceInstanceSettings)
+      .mockImplementation((ref) => (ref === auditLogs.uid ? new Promise(() => {}) : Promise.resolve(refreshedApp)));
+    rerender(both);
+    // Lets the first destination's new lookup settle; the second one stays pending.
+    await act(async () => {});
+    expect(result.current.map((d) => d.index)).toEqual([0]);
+  });
+
   it('logs a failed lookup and keeps the other destinations', async () => {
     const failure = new Error('failed to load the settings');
     jest.mocked(getDataSourceInstanceSettings).mockImplementation(async (ref) => {
@@ -131,5 +156,16 @@ describe('useTraceToLogsDestinations', () => {
         },
       ])
     );
+  });
+});
+
+describe('keepUnchangedSlots', () => {
+  it('drops a result that a removed slot left behind when the slot is added again', () => {
+    const app = { datasourceUid: appLogs.uid, settings: appLogs };
+    const lateAudit = { datasourceUid: auditLogs.uid, settings: auditLogs };
+    const withoutAudit = [{ customQuery: false, datasourceUid: appLogs.uid }];
+    const withAudit = [...withoutAudit, { customQuery: false, datasourceUid: auditLogs.uid }];
+
+    expect(keepUnchangedSlots([app, lateAudit], withoutAudit, withAudit)).toEqual([app, undefined]);
   });
 });

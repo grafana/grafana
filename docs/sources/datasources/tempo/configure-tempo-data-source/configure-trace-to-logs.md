@@ -97,7 +97,7 @@ To change the target log data source, for example from Elasticsearch to Loki, se
    For more information, refer to [Cardinality](https://grafana.com/docs/loki/latest/get-started/labels/cardinality/).
 
    {{< admonition type="note" >}}
-   When using Loki, the **Logs for this span** link only appears on a span if at least one of the configured tags exists on that span.
+   With the automatically generated Loki query, the **Logs for this span** link only appears on a span if at least one of the configured or default tags exists on that span.
    If none of the tags match, the link doesn't appear and no error is shown.
    {{< /admonition >}}
 
@@ -148,7 +148,7 @@ Grafana versions without support for multiple logs destinations only show the fi
 1. Click **Save & test**.
 
 The span details in the trace view show a logs link for each destination that can query logs for the span.
-A destination has no link when none of its tags match the span or when its data source no longer exists.
+A destination has no link when its data source no longer exists or when Grafana can't build a query for the span, for example because none of its tags match. A custom query that doesn't use tags can still get a link when no tags match, as long as its other variables resolve.
 Each link is labeled with the destination's **Link label**, or with the logs data source name when no label is set.
 When a span has more than three links, they're grouped in the **Links** menu.
 The logs button in the trace header uses the first destination.
