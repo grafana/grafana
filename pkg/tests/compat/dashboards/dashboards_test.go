@@ -8,9 +8,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -33,6 +35,7 @@ func TestMain(m *testing.M) {
 // deletes trashed-by-setup.
 func TestCompatSetup(t *testing.T) {
 	h := compat.NewHelper(t)
+	versions := dashboardVersions(t, h)
 	ctx := context.Background()
 
 	_, err := resource(h, folderGVR).Create(ctx, &unstructured.Unstructured{Object: map[string]any{
@@ -43,16 +46,25 @@ func TestCompatSetup(t *testing.T) {
 	}}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	c := newClient(h, fixtureWrites{})
-	c.writes.Setup = c.apiGroupVersion()
-	c.create(t, history, revision(1))
-	c.save(t, history, revision(2))
-	c.create(t, trashedBySetup, savedRevision{content: trashed[trashedBySetup]})
-	c.create(t, trashedByUpdate, savedRevision{content: trashed[trashedByUpdate]})
-	c.writes.SetupTrash = c.deleteToTrash(t, trashedBySetup)
-	c.checkHistory(t, revision(1), revision(2))
-	c.checkTrashed(t, trashedBySetup)
-	saveFixtureWrites(t, map[string]fixtureWrites{"v1": c.writes})
+	writes := make(map[string]fixtureWrites, len(roundTrips))
+	for _, trip := range roundTrips {
+		t.Run(trip.name, func(t *testing.T) {
+			c := client{roundTrip: trip, h: h, served: versions}
+			w := c.withWriter(t, trip.setup)
+			c.writes.Setup = w.apiGroupVersion()
+			w.create(t, history, revision(1))
+			w.save(t, history, revision(2))
+			w.create(t, trashedBySetup, savedRevision{content: trashed[trashedBySetup]})
+			w.create(t, trashedByUpdate, savedRevision{content: trashed[trashedByUpdate]})
+			editor := c.withWriter(t, trip.edit)
+			editor.writes.SetupTrash = editor.deleteToTrash(t, trashedBySetup)
+
+			editor.checkHistory(t, revision(1), revision(2))
+			editor.checkTrashed(t, trashedBySetup)
+			writes[trip.name] = editor.writes
+		})
+	}
+	saveFixtureWrites(t, writes)
 }
 
 // TestCompatUpdate runs on the other version: it reads the history and the trash the
@@ -60,19 +72,33 @@ func TestCompatSetup(t *testing.T) {
 // deletes trashed-by-update.
 func TestCompatUpdate(t *testing.T) {
 	writes := readFixtureWrites(t)
+	require.NoError(t, validateSetupFixtures(writes, compat.IsNewer()))
 
 	h := compat.NewHelper(t)
-	c := newClient(h, writes["v1"])
-	c.writes.Update = c.apiGroupVersion()
-	c.checkHistory(t, revision(1), revision(2))
-	c.save(t, history, revision(3))
-	rollback := rolledBackRevision()
-	c.rollBack(t, history, 1, rollback.message)
-	c.checkHistory(t, revision(1), revision(2), revision(3), rollback)
-	c.restore(t, trashedBySetup)
-	c.writes.UpdateTrash = c.deleteToTrash(t, trashedByUpdate)
-	c.checkTrashed(t, trashedByUpdate)
-	writes["v1"] = c.writes
+	versions := dashboardVersions(t, h)
+	for _, trip := range roundTrips {
+		written, exists := writes[trip.name]
+		if !exists {
+			// Setup may have run a release from before this fixture was added.
+			continue
+		}
+		t.Run(trip.name, func(t *testing.T) {
+			requireWriterVersion(t, versions, written.Setup)
+			c := client{roundTrip: trip, h: h, served: versions, writes: written}.withWriter(t, trip.edit)
+			c.writes.Update = c.apiGroupVersion()
+			c.checkHistory(t, revision(1), revision(2))
+			c.save(t, history, revision(3))
+			rollback := rolledBackRevision()
+			c.rollBack(t, history, 1, rollback.message)
+			c.checkHistory(t, revision(1), revision(2), revision(3), rollback)
+
+			c.restore(t, trashedBySetup)
+
+			c.writes.UpdateTrash = c.deleteToTrash(t, trashedByUpdate)
+			c.checkTrashed(t, trashedByUpdate)
+			writes[trip.name] = c.writes
+		})
+	}
 	saveFixtureWrites(t, writes)
 }
 
@@ -80,13 +106,33 @@ func TestCompatUpdate(t *testing.T) {
 // wrote, restores trashed-by-update, and deletes everything.
 func TestCompatVerify(t *testing.T) {
 	h := compat.NewHelper(t)
-	c := newClient(h, readFixtureWrites(t)["v1"])
-	c.checkHistory(t, revision(1), revision(2), revision(3), rolledBackRevision())
-	c.checkRestored(t, trashedBySetup)
-	c.restore(t, trashedByUpdate)
+	versions := dashboardVersions(t, h)
+	writes := readFixtureWrites(t)
 	ctx := context.Background()
-	for _, name := range []string{history, trashedBySetup, trashedByUpdate} {
-		require.NoError(t, c.Delete(ctx, c.fixture(name), metav1.DeleteOptions{}), name)
+	for _, trip := range roundTrips {
+		t.Run(trip.name, func(t *testing.T) {
+			written, exists := writes[trip.name]
+			require.True(t, exists, "setup did not record fixture %s", trip.name)
+			c := client{roundTrip: trip, h: h, served: versions, writes: written}.withWriter(t, trip.edit)
+			live := []string{history, trashedByUpdate}
+			if written.Update == "" {
+				// The other release may predate this fixture.
+				c.checkHistory(t, revision(1), revision(2))
+				c.checkTrashed(t, trashedBySetup)
+				for _, view := range c.views() {
+					view.checkLive(t, trashedByUpdate, trashed[trashedByUpdate])
+				}
+			} else {
+				requireWriterVersion(t, versions, written.Update)
+				c.checkHistory(t, revision(1), revision(2), revision(3), rolledBackRevision())
+				c.checkRestored(t, trashedBySetup, written.Update)
+				c.restore(t, trashedByUpdate)
+				live = append(live, trashedBySetup)
+			}
+			for _, name := range live {
+				require.NoError(t, c.Delete(ctx, c.fixture(name), metav1.DeleteOptions{}), name)
+			}
+		})
 	}
 	require.NoError(t, resource(h, folderGVR).Delete(ctx, folder, metav1.DeleteOptions{}))
 }
@@ -155,6 +201,33 @@ var trashed = map[string]content{
 	trashedByUpdate: panel("Compat trashed by update", "Trashed by update", `up{trashed="update"}`),
 }
 
+// schemaFamily is one dashboard schema with the API versions that serve it.
+type schemaFamily struct {
+	stable, beta string
+	spec         func(*testing.T, content) map[string]any
+	// fieldValidation is what the family's editor sends on save.
+	fieldValidation string
+}
+
+// apiVersion follows the editor's preference for its schema family.
+func (f schemaFamily) apiVersion(t *testing.T, versions []string) string {
+	t.Helper()
+	version := f.beta
+	switch {
+	case versions[0] == f.stable || versions[0] == f.beta:
+		version = versions[0]
+	case slices.Contains(versions, f.stable):
+		version = f.stable
+	}
+	require.Contains(t, versions, version)
+	return version
+}
+
+type roundTrip struct {
+	name        string
+	setup, edit schemaFamily
+}
+
 // fixtureWrites carries the selected API versions and trash metadata from
 // the writing phase to the next phase.
 type fixtureWrites struct {
@@ -188,20 +261,84 @@ func saveFixtureWrites(t *testing.T, writes map[string]fixtureWrites) {
 	require.NoError(t, os.WriteFile(filepath.Join(compat.Dir(t), fixtureManifestFile), data, 0o600))
 }
 
+func validateSetupFixtures(writes map[string]fixtureWrites, newer bool) error {
+	if !newer {
+		return nil
+	}
+	for _, name := range slices.Sorted(maps.Keys(writes)) {
+		if !slices.ContainsFunc(roundTrips, func(trip roundTrip) bool { return trip.name == name }) {
+			return fmt.Errorf("newer Update does not recognize Setup fixture %q", name)
+		}
+	}
+	return nil
+}
+
 const fixtureManifestFile = "dashboard-write-versions.json"
 
+var (
+	v1Family = schemaFamily{stable: "v1", beta: "v1beta1", spec: v1Spec, fieldValidation: metav1.FieldValidationIgnore}
+
+	roundTrips = []roundTrip{
+		{name: "v1", setup: v1Family, edit: v1Family},
+	}
+)
+
+func (r roundTrip) fixture(name string) string {
+	if r.name == "v1" {
+		return "compat-dashboard-" + name
+	}
+	return "compat-dashboard-" + r.name + "-" + name
+}
+
+// client reads or writes a round trip's fixtures in one dashboard API version.
 type client struct {
-	h      *apis.K8sTestHelper
-	writes fixtureWrites
+	roundTrip
+	writer  schemaFamily
+	h       *apis.K8sTestHelper
+	version string
+	served  []string
+	writes  fixtureWrites
 	dynamic.ResourceInterface
 }
 
-func newClient(h *apis.K8sTestHelper, writes fixtureWrites) client {
-	return client{h: h, writes: writes, ResourceInterface: resource(h, dashboardGR.WithVersion("v1"))}
+func dashboardVersions(t *testing.T, h *apis.K8sTestHelper) []string {
+	t.Helper()
+	res, ok := compat.Served(t, h)[dashboardGR]
+	require.True(t, ok, "dashboards are not served")
+	return res.Versions
 }
 
-func (c client) fixture(name string) string {
-	return "compat-dashboard-" + name
+func requireWriterVersion(t *testing.T, served []string, apiVersion string) {
+	t.Helper()
+	if !compat.IsNewer() {
+		return
+	}
+	gv, err := schema.ParseGroupVersion(apiVersion)
+	require.NoError(t, err)
+	require.Equal(t, dashboardGR.Group, gv.Group, "dashboard writer API group in %q", apiVersion)
+	require.Contains(t, served, gv.Version, "older Grafana wrote dashboards in %s, which newer Grafana must still serve", apiVersion)
+}
+
+func (c client) withWriter(t *testing.T, writer schemaFamily) client {
+	t.Helper()
+	c.writer = writer
+	return c.withVersion(writer.apiVersion(t, c.served))
+}
+
+// views reads each fixture through every served version, including new versions that
+// do not have a fixture writer or content parser yet.
+func (c client) views() []client {
+	views := make([]client, 0, len(c.served))
+	for _, version := range c.served {
+		views = append(views, c.withVersion(version))
+	}
+	return views
+}
+
+func (c client) withVersion(version string) client {
+	c.version = version
+	c.ResourceInterface = resource(c.h, dashboardGR.WithVersion(version))
+	return c
 }
 
 func (c client) create(t *testing.T, name string, want savedRevision) {
@@ -214,15 +351,20 @@ func (c client) create(t *testing.T, name string, want savedRevision) {
 		"apiVersion": c.apiGroupVersion(),
 		"kind":       "Dashboard",
 		"metadata":   map[string]any{"name": c.fixture(name), "annotations": annotations},
-		"spec":       v1Spec(t, want.content),
+		"spec":       c.writeSpec(t, want.content),
 	}}, metav1.CreateOptions{})
-	require.NoError(t, err, "create %s", c.fixture(name))
+	require.NoError(t, err, "create %s in %s", c.fixture(name), c.version)
 }
 
 // save replaces the dashboard's content with another revision of the same schema.
 func (c client) save(t *testing.T, name string, want savedRevision) {
 	t.Helper()
-	c.saveSpec(t, c.getDashboard(t, name), v1Spec(t, want.content), want.message)
+	c.saveSpec(t, c.getDashboard(t, name), c.writeSpec(t, want.content), want.message)
+}
+
+func (c client) writeSpec(t *testing.T, want content) map[string]any {
+	t.Helper()
+	return c.writer.spec(t, want)
 }
 
 // saveSpec sends the update the dashboard editor sends: it keeps the folder, sets the
@@ -238,8 +380,8 @@ func (c client) saveSpec(t *testing.T, live *unstructured.Unstructured, spec map
 			utils.AnnoKeyMessage:          message,
 		}},
 		"spec": spec,
-	}}, metav1.UpdateOptions{FieldValidation: metav1.FieldValidationIgnore})
-	require.NoError(t, err, "save %s", live.GetName())
+	}}, metav1.UpdateOptions{FieldValidation: c.writer.fieldValidation})
+	require.NoError(t, err, "save %s in %s", live.GetName(), c.version)
 }
 
 // rollBack saves the spec of an earlier revision as a new one, as the version history
@@ -271,31 +413,53 @@ func (c client) restore(t *testing.T, name string) {
 	rsp := apis.DoRequest(c.h, apis.RequestParams{
 		User:   c.h.Org1.Admin,
 		Method: http.MethodPost,
-		Path:   c.dashboardsPath(),
+		Path:   c.dashboardsPath(c.version),
 		Body:   body,
 	}, (*unstructured.Unstructured)(nil))
-	require.Equal(t, http.StatusCreated, rsp.Response.StatusCode, "restore %s: %s", c.fixture(name), rsp.Body)
+	require.Equal(t, http.StatusCreated, rsp.Response.StatusCode, "restore %s in %s: %s", c.fixture(name), c.version, rsp.Body)
 	var restored unstructured.Unstructured
-	require.NoError(t, json.Unmarshal(rsp.Body, &restored), "decode restored %s", c.fixture(name))
-	require.Equal(t, c.fixture(name), restored.GetName(), "restored dashboard")
-	c.checkRestored(t, name)
+	require.NoError(t, json.Unmarshal(rsp.Body, &restored), "decode restored %s in %s", c.fixture(name), c.version)
+	require.Equal(t, c.fixture(name), restored.GetName(), "restored dashboard in %s", c.version)
+	c.checkRestored(t, name, c.apiGroupVersion())
 }
 
-// checkHistory compares the saved revisions in the newest-first order used by the API.
+// checkHistory checks every saved revision of history, given oldest first, in the order
+// the API returns them, and that the live dashboard is the last one, in its folder.
 func (c client) checkHistory(t *testing.T, want ...savedRevision) {
 	t.Helper()
-	items := c.listRevisions(t, history, utils.LabelKeyGetHistory)
-	require.Len(t, items, len(want))
+	for _, v := range c.views() {
+		items := v.listRevisions(t, history, utils.LabelKeyGetHistory)
+		read := func(obj *unstructured.Unstructured) (content, bool) {
+			return v.readContent(t, history, obj)
+		}
+		require.NoError(t, historyError(items, read, want...), "%s in %s", v.fixture(history), v.version)
+
+		live := v.checkLive(t, history, want[len(want)-1].content)
+		require.EqualValues(t, len(want), live.GetGeneration(), "%s in %s", v.fixture(history), v.version)
+	}
+
+}
+
+// historyError compares the history entries, which the API returns newest first, with
+// the expected revisions, oldest first. The reader reports whether it knows the schema.
+func historyError(items []unstructured.Unstructured, read func(*unstructured.Unstructured) (content, bool), want ...savedRevision) error {
+	if len(items) != len(want) {
+		return fmt.Errorf("want %d history revisions, got %d", len(want), len(items))
+	}
 	for i := range items {
 		generation := len(want) - i
-		require.Equal(t, int64(generation), items[i].GetGeneration())
-		revision := want[generation-1]
-		require.Equal(t, revision.message, items[i].GetAnnotations()[utils.AnnoKeyMessage])
-		c.checkDashboard(t, history, &items[i], revision.content)
+		if got := items[i].GetGeneration(); got != int64(generation) {
+			return fmt.Errorf("history, newest first: want generation %d at index %d, got %d", generation, i, got)
+		}
+		expected := want[generation-1]
+		if message := items[i].GetAnnotations()[utils.AnnoKeyMessage]; message != expected.message {
+			return fmt.Errorf("history generation %d: want message %q, got %q", generation, expected.message, message)
+		}
+		if got, known := read(&items[i]); known && got != expected.content {
+			return fmt.Errorf("history generation %d: want %+v, got %+v", generation, expected.content, got)
+		}
 	}
-	live := c.getDashboard(t, history)
-	require.Equal(t, int64(len(want)), live.GetGeneration())
-	c.checkDashboard(t, history, live, want[len(want)-1].content)
+	return nil
 }
 
 func (c client) deleteToTrash(t *testing.T, name string) trashMetadata {
@@ -305,7 +469,7 @@ func (c client) deleteToTrash(t *testing.T, name string) trashMetadata {
 	require.NotEmpty(t, legacyID, "legacy ID of %s before delete", c.fixture(name))
 	require.NoError(t, c.Delete(context.Background(), c.fixture(name), metav1.DeleteOptions{}))
 	obj := c.trashEntry(t, name)
-	require.NotNil(t, obj, "%s in the trash in %s", c.fixture(name), "v1")
+	require.NotNil(t, obj, "%s in the trash in %s", c.fixture(name), c.version)
 	deletedAt := obj.GetDeletionTimestamp()
 	require.NotNil(t, deletedAt, "deletion timestamp of %s", c.fixture(name))
 	require.False(t, deletedAt.IsZero(), "deletion timestamp of %s", c.fixture(name))
@@ -316,65 +480,124 @@ func (c client) deleteToTrash(t *testing.T, name string) trashMetadata {
 	}
 }
 
-// checkTrashed returns the trash entry for restore.
+// checkTrashed returns the validated trash entry in the editing API's version for restore.
 func (c client) checkTrashed(t *testing.T, name string) *unstructured.Unstructured {
 	t.Helper()
-	_, err := c.Get(context.Background(), c.fixture(name), metav1.GetOptions{})
-	require.True(t, apierrors.IsNotFound(err), "%s after delete: expected not found, got %v", name, err)
-	obj := c.trashEntry(t, name)
-	require.NotNil(t, obj, "%s in the trash", name)
-	c.checkDashboard(t, name, obj, trashed[name])
-	return obj
+	want, _ := c.expectedTrash(name)
+	wantTrash := c.expectedTrashMetadata(name)
+	require.NotEmpty(t, wantTrash.LegacyID, "manifest legacy ID for %s", c.fixture(name))
+	var forRestore *unstructured.Unstructured
+	for _, v := range c.views() {
+		_, err := v.Get(context.Background(), v.fixture(name), metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "%s after delete: expected not found, got %v", v.fixture(name), err)
+		obj := v.trashEntry(t, name)
+		require.NotNil(t, obj, "%s in the trash in %s", v.fixture(name), v.version)
+		v.checkDashboard(t, name, obj, want)
+		require.Equal(t, wantTrash.LegacyID, obj.GetLabels()[utils.LabelKeyDeprecatedInternalID], //nolint:staticcheck
+			"legacy ID of %s in the trash in %s", v.fixture(name), v.version)
+		require.Equal(t, wantTrash.DeletedBy, obj.GetAnnotations()[utils.AnnoKeyUpdatedBy],
+			"deleter of %s in the trash in %s", v.fixture(name), v.version)
+		deletedAt := obj.GetDeletionTimestamp()
+		require.NotNil(t, deletedAt, "deletion timestamp of %s in %s", v.fixture(name), v.version)
+		require.Equal(t, wantTrash.DeletedAtMillis, deletedAt.UnixMilli(),
+			"deletion timestamp of %s in %s", v.fixture(name), v.version)
+		if v.version == c.version {
+			forRestore = obj
+		}
+	}
+	require.NotNil(t, forRestore, "%s in the trash in %s", c.fixture(name), c.version)
+	return forRestore
 }
 
-func (c client) checkRestored(t *testing.T, name string) {
+func (c client) expectedTrash(name string) (content, string) {
+	return trashed[name], c.writes.Setup
+}
+
+func (c client) expectedTrashMetadata(name string) trashMetadata {
+	if name == trashedByUpdate {
+		return c.writes.UpdateTrash
+	}
+	return c.writes.SetupTrash
+}
+
+// checkRestored checks a restored dashboard: it is back in its folder with its content,
+// and no longer in the trash.
+func (c client) checkRestored(t *testing.T, name, writerAPIVersion string) {
 	t.Helper()
-	c.checkDashboard(t, name, c.getDashboard(t, name), trashed[name])
-	require.Nil(t, c.trashEntry(t, name), "%s in the trash after restore", name)
+	want, _ := c.expectedTrash(name)
+	legacyID := c.expectedTrashMetadata(name).LegacyID
+	require.NotEmpty(t, legacyID, "manifest legacy ID for %s", c.fixture(name))
+	for _, v := range c.views() {
+		obj := v.checkLive(t, name, want)
+		require.Equal(t, legacyID, obj.GetLabels()[utils.LabelKeyDeprecatedInternalID], //nolint:staticcheck
+			"legacy ID of restored %s in %s", v.fixture(name), v.version)
+		require.Nil(t, v.trashEntry(t, name), "%s in the trash after restore in %s", v.fixture(name), v.version)
+	}
 }
 
 func (c client) getDashboard(t *testing.T, name string) *unstructured.Unstructured {
 	t.Helper()
 	obj, err := c.Get(context.Background(), c.fixture(name), metav1.GetOptions{})
-	require.NoError(t, err, "get %s", c.fixture(name))
-	require.Equal(t, c.fixture(name), obj.GetName(), "get dashboard")
+	require.NoError(t, err, "get %s in %s", c.fixture(name), c.version)
+	require.Equal(t, c.fixture(name), obj.GetName(), "get dashboard in %s", c.version)
+	return obj
+}
+
+func (c client) checkLive(t *testing.T, name string, want content) *unstructured.Unstructured {
+	t.Helper()
+	obj := c.getDashboard(t, name)
+	c.checkDashboard(t, name, obj, want)
 	return obj
 }
 
 func (c client) checkDashboard(t *testing.T, name string, obj *unstructured.Unstructured, want content) {
 	t.Helper()
+	if got, known := c.readContent(t, name, obj); known {
+		require.Equal(t, want, got, "%s in %s", c.fixture(name), c.version)
+	}
+	require.Equal(t, folder, obj.GetAnnotations()[utils.AnnoKeyFolder], "folder of %s in %s", c.fixture(name), c.version)
+}
+
+func (c client) readContent(t *testing.T, name string, obj *unstructured.Unstructured) (content, bool) {
+	t.Helper()
 	spec := c.dashboardSpec(t, name, obj)
-	title, _, err := unstructured.NestedString(spec, "title")
-	require.NoError(t, err)
-	require.Equal(t, want.Title, title, "%s title", name)
-	require.Equal(t, folder, obj.GetAnnotations()[utils.AnnoKeyFolder], "%s folder", name)
+	var got content
+	var err error
+	switch c.version {
+	case "v0alpha1", "v1", "v1beta1":
+		got, err = parseV1(spec, false)
+	default:
+		return content{}, false
+	}
+	require.NoError(t, err, "%s in %s", c.fixture(name), c.version)
+	return got, true
 }
 
 // dashboardSpec validates the common response before returning the version-specific spec.
 func (c client) dashboardSpec(t *testing.T, name string, obj *unstructured.Unstructured) map[string]any {
 	t.Helper()
-	require.Equal(t, c.fixture(name), obj.GetName(), "dashboard in %s", "v1")
+	require.Equal(t, c.fixture(name), obj.GetName(), "dashboard in %s", c.version)
 	require.Equal(t, c.apiGroupVersion(), obj.GetAPIVersion(), "%s", c.fixture(name))
-	require.Equal(t, "Dashboard", obj.GetKind(), "%s", c.fixture(name))
+	require.Equal(t, "Dashboard", obj.GetKind(), "%s in %s", c.fixture(name), c.version)
 	failed, _, err := unstructured.NestedBool(obj.Object, "status", "conversion", "failed")
-	require.NoError(t, err, "%s", c.fixture(name))
+	require.NoError(t, err, "%s in %s", c.fixture(name), c.version)
 	if failed {
 		msg, _, _ := unstructured.NestedString(obj.Object, "status", "conversion", "error")
-		t.Fatalf("%s in %s: conversion failed: %s", c.fixture(name), "v1", msg)
+		t.Fatalf("%s in %s: conversion failed: %s", c.fixture(name), c.version, msg)
 	}
 	spec, _, err := unstructured.NestedMap(obj.Object, "spec")
-	require.NoError(t, err, "%s", c.fixture(name))
-	require.NotEmpty(t, spec, "%s spec in %s", c.fixture(name), "v1")
+	require.NoError(t, err, "%s in %s", c.fixture(name), c.version)
+	require.NotEmpty(t, spec, "%s spec in %s", c.fixture(name), c.version)
 	return spec
 }
 
 func (c client) apiGroupVersion() string {
-	return dashboardGR.WithVersion("v1").GroupVersion().String()
+	return dashboardGR.WithVersion(c.version).GroupVersion().String()
 }
 
-func (c client) dashboardsPath() string {
+func (c client) dashboardsPath(version string) string {
 	namespace := c.h.Namespacer(c.h.Org1.Admin.Identity.GetOrgID())
-	return fmt.Sprintf("/apis/%s/namespaces/%s/%s", c.apiGroupVersion(), namespace, dashboardGR.Resource)
+	return fmt.Sprintf("/apis/%s/namespaces/%s/%s", dashboardGR.WithVersion(version).GroupVersion(), namespace, dashboardGR.Resource)
 }
 
 func (c client) trashEntry(t *testing.T, name string) *unstructured.Unstructured {
@@ -393,7 +616,7 @@ func (c client) listRevisions(t *testing.T, name, label string) []unstructured.U
 		LabelSelector: label + "=true",
 		FieldSelector: "metadata.name=" + c.fixture(name),
 	})
-	require.NoError(t, err, "%s with %s", c.fixture(name), label)
+	require.NoError(t, err, "%s in %s with %s", c.fixture(name), c.version, label)
 	require.Equal(t, c.apiGroupVersion(), list.GetAPIVersion(), "%s list with %s", c.fixture(name), label)
 	return list.Items
 }
@@ -405,7 +628,7 @@ func v1Spec(_ *testing.T, c content) map[string]any {
 		"panels": []any{map[string]any{
 			"id":      int64(1),
 			"title":   c.Panel,
-			"gridPos": map[string]any{"x": int64(0), "y": int64(0), "w": int64(panelWidth), "h": int64(panelHeight)},
+			"gridPos": classicGridPosition(0, panelWidth, panelHeight),
 			"type":    c.Viz,
 			"targets": []any{map[string]any{
 				"refId":      "A",
