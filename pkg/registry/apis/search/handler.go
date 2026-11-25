@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -17,11 +18,14 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -97,6 +101,15 @@ func (h *Handler) SearchFor(kind kindRef) http.HandlerFunc {
 			allowFolderTree := openfeature.NewDefaultClient().Boolean(r.Context(), featuremgmt.FlagSearchPerResourceFolderTree, false, openfeature.TransactionContext(r.Context()))
 			gvr := kind.gvr()
 			req, ferrs := translateSearchQuery(&q, gvr, namespace, newFieldSet(gvr, h.provider, allowFolderTree))
+			if req != nil && gvr.Group == "folder.grafana.app" && gvr.Resource == "folders" {
+				requester, _ := identity.GetRequester(r.Context())
+				if !identity.IsServiceIdentity(r.Context()) && (requester == nil || !requester.IsIdentityType(claims.TypeServiceAccount)) {
+					req.Options.Fields = append(req.Options.Fields,
+						&resourcepb.Requirement{Key: resource.SEARCH_FIELD_NAME, Operator: string(selection.NotIn), Values: []string{accesscontrol.K6FolderUID}},
+						&resourcepb.Requirement{Key: resource.SEARCH_FIELD_FOLDER, Operator: string(selection.NotIn), Values: []string{accesscontrol.K6FolderUID}},
+					)
+				}
+			}
 			return req, ferrs, nil
 		},
 		func(req *resourcepb.ResourceSearchRequest, res *resourcepb.ResourceSearchResponse) (any, error) {

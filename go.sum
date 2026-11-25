@@ -1591,6 +1591,8 @@ github.com/grafana/alerting/apps/historian v0.0.0-20260729133334-340f1168af6c h1
 github.com/grafana/alerting/apps/historian v0.0.0-20260729133334-340f1168af6c/go.mod h1:VeTh5j/IeWxbj5v1itvbbH6wt+nYH7qF0/BwH7GpK+U=
 github.com/grafana/authlib v0.0.0-20261120113603-423cd15e9545 h1:a3QPmwwRg21XC7Wa5QVwQLY00Y0evUvyNN6Y71GDviU=
 github.com/grafana/authlib v0.0.0-20261120113603-423cd15e9545/go.mod h1:byN2GJCn9fWuMtyHujH3u7VNX7HLOBVssbD24ukTZdM=
+github.com/grafana/authlib v0.0.0-20261123120419-80ba73ec11b0 h1:0AZawiQjl6UyR65pkC1uf0FEdQOt5Y4o2vpxl08pmcQ=
+github.com/grafana/authlib v0.0.0-20261123120419-80ba73ec11b0/go.mod h1:byN2GJCn9fWuMtyHujH3u7VNX7HLOBVssbD24ukTZdM=
 github.com/grafana/authlib/types v0.0.0-20261120113603-423cd15e9545 h1:i3aNB3oqkz8NCLMgAppYal2dDKNl30nnhX/iYwp/AB8=
 github.com/grafana/authlib/types v0.0.0-20261120113603-423cd15e9545/go.mod h1:SbL0IDzpCoLNCEPRzj+YxQnWfelyKagbjcjVS5gkyuw=
 github.com/grafana/dataplane/examples v0.0.1 h1:K9M5glueWyLoL4//H+EtTQq16lXuHLmOhb6DjSCahzA=

@@ -707,7 +707,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 		// first call gets all dashboards user has permission for
 		firstCall := mockClient.MockCalls[0]
-		assert.Equal(t, []string{"dashboardinroot", "dashboardinprivatefolder", "dashboardinpublicfolder", "sharedfolder"}, firstCall.Options.Fields[0].Values)
+		assert.Equal(t, []string{"dashboardinroot", "dashboardinprivatefolder", "dashboardinpublicfolder", "sharedfolder"}, searchRequirementValues(firstCall, resource.SEARCH_FIELD_NAME, selection.In))
 		// verify federated field is set to include folders
 		assert.NotNil(t, firstCall.Federated)
 		assert.Equal(t, 1, len(firstCall.Federated))
@@ -715,11 +715,11 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		assert.Equal(t, "folders", firstCall.Federated[0].Resource)
 		// second call gets folders associated with the previous dashboards
 		secondCall := mockClient.MockCalls[1]
-		assert.Equal(t, []string{"privatefolder", "publicfolder"}, secondCall.Options.Fields[0].Values)
+		assert.Equal(t, []string{"privatefolder", "publicfolder"}, searchRequirementValues(secondCall, resource.SEARCH_FIELD_NAME, selection.In))
 		// lastly, search ONLY for dashboards and folders user has permission to read that are within folders the user does NOT have
 		// permission to read
 		thirdCall := mockClient.MockCalls[2]
-		assert.Equal(t, []string{"dashboardinprivatefolder", "sharedfolder"}, thirdCall.Options.Fields[1].Values)
+		assert.Equal(t, []string{"dashboardinprivatefolder", "sharedfolder"}, searchRequirementValues(thirdCall, resource.SEARCH_FIELD_NAME, selection.In))
 
 		resp := rr.Result()
 		defer func() {
@@ -818,15 +818,15 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 		firstCall := mockClient.MockCalls[0]
 		assert.Equal(t, int64(dashboardaccess.PERMISSION_EDIT), firstCall.Permission)
-		assert.Equal(t, []string{"dashboardinprivatefolder", "dashboardinpublicfolder"}, firstCall.Options.Fields[0].Values)
+		assert.Equal(t, []string{"dashboardinprivatefolder", "dashboardinpublicfolder"}, searchRequirementValues(firstCall, resource.SEARCH_FIELD_NAME, selection.In))
 
 		secondCall := mockClient.MockCalls[1]
 		assert.Equal(t, int64(dashboardaccess.PERMISSION_EDIT), secondCall.Permission)
-		assert.Equal(t, []string{"privatefolder", "publicfolder"}, secondCall.Options.Fields[0].Values)
+		assert.Equal(t, []string{"privatefolder", "publicfolder"}, searchRequirementValues(secondCall, resource.SEARCH_FIELD_NAME, selection.In))
 
 		thirdCall := mockClient.MockCalls[2]
 		assert.Equal(t, int64(dashboardaccess.PERMISSION_EDIT), thirdCall.Permission)
-		assert.Equal(t, []string{"dashboardinprivatefolder"}, thirdCall.Options.Fields[1].Values)
+		assert.Equal(t, []string{"dashboardinprivatefolder"}, searchRequirementValues(thirdCall, resource.SEARCH_FIELD_NAME, selection.In))
 
 		resp := rr.Result()
 		defer func() {
@@ -916,10 +916,10 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		assert.Equal(t, 3, mockClient.CallCount)
 		// the root ("general") dashboard contributes no parent folder to look up
 		secondCall := mockClient.MockCalls[1]
-		assert.Equal(t, []string{"privatefolder"}, secondCall.Options.Fields[0].Values)
+		assert.Equal(t, []string{"privatefolder"}, searchRequirementValues(secondCall, resource.SEARCH_FIELD_NAME, selection.In))
 		// and the root dashboard is not treated as shared
 		thirdCall := mockClient.MockCalls[2]
-		assert.Equal(t, []string{"dashboardinprivatefolder"}, thirdCall.Options.Fields[1].Values)
+		assert.Equal(t, []string{"dashboardinprivatefolder"}, searchRequirementValues(thirdCall, resource.SEARCH_FIELD_NAME, selection.In))
 
 		resp := rr.Result()
 		defer func() {
@@ -1614,10 +1614,13 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		require.Len(t, result.Options.Fields, 1)
+		require.Len(t, result.Options.Fields, 2)
 		assert.Equal(t, resource.SEARCH_FIELD_NAME, result.Options.Fields[0].Key)
 		assert.Equal(t, string(selection.NotIn), result.Options.Fields[0].Operator)
 		assert.Equal(t, []string{accesscontrol.K6FolderUID}, result.Options.Fields[0].Values)
+		assert.Equal(t, resource.SEARCH_FIELD_FOLDER, result.Options.Fields[1].Key)
+		assert.Equal(t, string(selection.NotIn), result.Options.Fields[1].Operator)
+		assert.Equal(t, []string{accesscontrol.K6FolderUID}, result.Options.Fields[1].Values)
 	})
 
 	t.Run("keeps k6 folder visible for service accounts", func(t *testing.T) {
@@ -1715,6 +1718,16 @@ func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRe
 
 	return response, err
 }
+
+func searchRequirementValues(req *resourcepb.ResourceSearchRequest, key string, operator selection.Operator) []string {
+	for _, requirement := range req.Options.Fields {
+		if requirement.Key == key && requirement.Operator == string(operator) {
+			return requirement.Values
+		}
+	}
+	return nil
+}
+
 func (m *MockClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
 	return nil, nil
 }

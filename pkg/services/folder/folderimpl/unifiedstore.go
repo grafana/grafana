@@ -16,6 +16,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
@@ -287,13 +288,20 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 	}
 	// Exclude k6 folder for non-service-account callers. Bleve honours NotIn
 	// at the query level.
-	allowK6Folder := q.SignedInUser != nil && q.SignedInUser.IsIdentityType(claims.TypeServiceAccount)
+	allowK6Folder := identity.IsServiceIdentity(ctx) || q.SignedInUser != nil && q.SignedInUser.IsIdentityType(claims.TypeServiceAccount)
 	if !allowK6Folder {
-		fields = append(fields, &resourcepb.Requirement{
-			Key:      resource.SEARCH_FIELD_NAME,
-			Operator: string(selection.NotIn),
-			Values:   []string{accesscontrol.K6FolderUID},
-		})
+		fields = append(fields,
+			&resourcepb.Requirement{
+				Key:      resource.SEARCH_FIELD_NAME,
+				Operator: string(selection.NotIn),
+				Values:   []string{accesscontrol.K6FolderUID},
+			},
+			&resourcepb.Requirement{
+				Key:      resource.SEARCH_FIELD_FOLDER,
+				Operator: string(selection.NotIn),
+				Values:   []string{accesscontrol.K6FolderUID},
+			},
+		)
 	}
 
 	req := &resourcepb.ResourceSearchRequest{
@@ -522,6 +530,13 @@ func (ss *FolderUnifiedStoreImpl) searchAllFolders(ctx context.Context, orgID in
 	defer span.End()
 
 	var fields []*resourcepb.Requirement
+	requester, _ := identity.GetRequester(ctx)
+	if !identity.IsServiceIdentity(ctx) && (requester == nil || !requester.IsIdentityType(claims.TypeServiceAccount)) {
+		fields = append(fields,
+			&resourcepb.Requirement{Key: resource.SEARCH_FIELD_NAME, Operator: string(selection.NotIn), Values: []string{accesscontrol.K6FolderUID}},
+			&resourcepb.Requirement{Key: resource.SEARCH_FIELD_FOLDER, Operator: string(selection.NotIn), Values: []string{accesscontrol.K6FolderUID}},
+		)
+	}
 	limit := int64(searchPageSize)
 	if len(uids) > 0 {
 		uids = slices.Clone(uids)
@@ -534,9 +549,9 @@ func (ss *FolderUnifiedStoreImpl) searchAllFolders(ctx context.Context, orgID in
 		if len(uids) == 0 {
 			return nil, nil
 		}
-		fields = []*resourcepb.Requirement{{
+		fields = append(fields, &resourcepb.Requirement{
 			Key: resource.SEARCH_FIELD_NAME, Operator: string(selection.In), Values: uids,
-		}}
+		})
 		// Leave room past every possible match so authorization can establish an exact total.
 		limit = min(limit, int64(len(uids))+1)
 	}
