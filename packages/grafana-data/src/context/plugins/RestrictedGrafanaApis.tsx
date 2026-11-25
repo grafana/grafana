@@ -38,10 +38,14 @@ interface ComposerAPI {
   ): Promise<unknown>;
   /**
    * Without `options`, the listener enters Composer on dashboards only. Return `false` from the listener to
-   * decline a request; it then ends at once.
+   * decline a request; it then ends at once. `request.assistantEdit` is true when Grafana opened the Assistant's
+   * own edit in Editing for Composer to run over.
    */
   onEnterRequested(
-    listener: (target: { resource: 'dashboard' | 'notebook'; uid: string }) => boolean | void,
+    listener: (
+      target: { resource: 'dashboard' | 'notebook'; uid: string },
+      request: { assistantEdit: boolean }
+    ) => boolean | void,
     options?: { resources?: Array<'dashboard' | 'notebook'> }
   ): () => void;
 }

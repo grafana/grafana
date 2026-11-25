@@ -1,11 +1,16 @@
 import { useMemo } from 'react';
+import { Provider } from 'react-redux';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Icon, ToolbarButton } from '@grafana/ui';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
+import { store } from 'app/store/store';
+import { useDispatch } from 'app/types/store';
 
-import { itemStarred } from './analytics/main';
-import { useStarItem, useStarredItems } from './hooks';
+import { setStarred } from './api';
+import { useStarredItems } from './hooks';
 import { canUseStars } from './utils';
 
 const getStarTooltips = (title: string) => ({
@@ -19,6 +24,10 @@ type Props = {
   title: string;
   group: string;
   kind: string;
+  /**
+   * The object's `metadata.name`, which a dashboard or folder calls its uid. Not `metadata.uid`, which the server
+   * generates: stars are stored and searched by name.
+   */
   id: string;
 };
 
@@ -32,8 +41,7 @@ export function StarToolbarButton(props: Props) {
 
 function StarToggle({ title, group, kind, id }: Props) {
   const tooltips = getStarTooltips(title);
-
-  const handleItemStar = useStarItem(group, kind);
+  const dispatch = useDispatch();
 
   const { data: stars, isLoading } = useStarredItems(group, kind);
 
@@ -44,13 +52,22 @@ function StarToggle({ title, group, kind, id }: Props) {
   }, [id, stars]);
 
   const handleStarToggle = async () => {
-    await handleItemStar(id, !isStarred);
-    itemStarred({
-      group,
-      kind,
-      status: !isStarred ? 'starred' : 'unstarred',
-      origin: 'StarToolbarButton',
-    });
+    try {
+      await dispatch(setStarred({ group, kind, name: id }, !isStarred, 'StarToolbarButton'));
+    } catch {
+      // Grafana refused the change — the button keeps showing the state that persisted
+      return;
+    }
+    // The write itself confirms nothing: a plugin that stars through the service confirms in its own way
+    dispatch(
+      notifyApp(
+        createSuccessNotification(
+          isStarred
+            ? t('dashboard.toolbar.star-removed', 'Removed from starred')
+            : t('dashboard.toolbar.star-added', 'Added to starred')
+        )
+      )
+    );
   };
 
   const iconProps = useMemo(() => {
@@ -80,5 +97,30 @@ function StarToggle({ title, group, kind, id }: Props) {
       data-testid={selectors.components.NavToolbar.markAsFavorite}
       onClick={handleStarToggle}
     />
+  );
+}
+
+/**
+ * EXPOSED COMPONENT (stable): grafana/star-toolbar-button/v1
+ *
+ * Plugins render this through the Plugin Extensions system, so its props and behavior are a
+ * contract. A breaking change goes under a new ID (v2), not in place.
+ *
+ * Props are widened because the registry types every exposed component as `ComponentType<{}>`;
+ * the contract is only checked on the consuming side, through `usePluginComponent`'s generic.
+ * A plugin that names no object has nothing to star, so this renders nothing rather than
+ * throwing out of someone else's React tree. A plugin may also render it under a Redux provider
+ * of its own, so it brings Grafana's store, which holds the stars.
+ */
+export function StarToolbarButtonExposed(props: Partial<Props>) {
+  const { title, group, kind, id } = props;
+  if (!title || !group || !kind || !id) {
+    console.error('[StarToolbarButton] Pass title, group, kind and id: the object to star.');
+    return null;
+  }
+  return (
+    <Provider store={store}>
+      <StarToolbarButton title={title} group={group} kind={kind} id={id} />
+    </Provider>
   );
 }

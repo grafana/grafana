@@ -8,16 +8,11 @@ import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1'
 import { config, reportInteraction, setBackendSrv } from '@grafana/runtime';
 import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
-import {
-  getAPIGroupHandler,
-  getCustomSearchHandler,
-  getKindSearchHandler,
-  searchRoute,
-} from '@grafana/test-utils/handlers';
+import { getAppKindHandlers, getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   MOCK_APP_KIND,
-  setMockStarredAppKind,
+  setMockStarred,
   setMockStarredDashboards,
   setMockStarredFolders,
 } from '@grafana/test-utils/unstable';
@@ -162,11 +157,8 @@ describe('DashboardTabs', () => {
 
   it('lists a starred object of an app kind among the starred dashboards, linking into the plugin', async () => {
     setMockStarredDashboards(['starred-1']);
-    setMockStarredAppKind(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
-    server.use(
-      getAPIGroupHandler(MOCK_APP_KIND.group, MOCK_APP_KIND.version),
-      getKindSearchHandler(MOCK_APP_KIND, [{ name: 't1', title: 'Capacity review' }])
-    );
+    setMockStarred(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
+    server.use(...getAppKindHandlers(MOCK_APP_KIND, [{ name: 't1', title: 'Capacity review' }]));
 
     render(<DashboardTabs />);
 
@@ -175,24 +167,25 @@ describe('DashboardTabs', () => {
       'href',
       '/a/test-things-app/things/t1'
     );
-    expect(screen.getByText('Starred Dashboard 1')).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /starred.*2/i })).toBeInTheDocument();
+    // The two searches answer in either order
+    expect(await screen.findByText('Starred Dashboard 1')).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: /starred.*2/i })).toBeInTheDocument();
   });
 
   it('lists the starred objects that loaded under a retryable warning when the dashboard search fails', async () => {
     setMockStarredDashboards(['starred-1']);
-    setMockStarredAppKind(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
+    setMockStarred(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
     server.use(
       http.get(searchRoute, () => HttpResponse.json({}, { status: 500 })),
-      getAPIGroupHandler(MOCK_APP_KIND.group, MOCK_APP_KIND.version),
-      getKindSearchHandler(MOCK_APP_KIND, [{ name: 't1', title: 'Capacity review' }])
+      ...getAppKindHandlers(MOCK_APP_KIND, [{ name: 't1', title: 'Capacity review' }])
     );
 
     const { user } = render(<DashboardTabs />);
 
     // Recent is empty, so the card lands on Starred.
     expect(await screen.findByRole('link', { name: 'Capacity review' })).toBeInTheDocument();
-    expect(screen.getByText('Could not load starred dashboards')).toBeInTheDocument();
+    // The dashboard search may fail after the app row shows
+    expect(await screen.findByText('Could not load starred dashboards')).toBeInTheDocument();
     expect(screen.queryByText('Starred Dashboard 1')).not.toBeInTheDocument();
 
     server.use(getCustomSearchHandler(starredHits));
