@@ -86,7 +86,8 @@ For the complete list of variable settings and type-specific steps, refer to [Ad
 
 You can use variables in field options that have a number field, and in the text options listed in this section.
 Field options are the options in **Standard options** and the options that a visualization applies to each field, such as axis settings.
-Panel-wide options, such as legend, tooltip, and text size settings, don't accept variables, even if they have a number field.
+Most panel-wide options, such as legend, tooltip, and text size settings, don't accept variables, even if they have a number field.
+Some visualizations support variables in specific options, which their documentation describes.
 Options that you set with a drop-down list, radio buttons, a switch, or a slider don't accept variables either.
 
 The following panel options accept variables:
