@@ -11,8 +11,7 @@
 
 import { execFileSync } from 'node:child_process';
 
-import { getIndependentPackages, type IndependentPackage } from './lib/independent-packages.mts';
-import { tagFor } from './lib/tags.mts';
+import { getIndependentPackages, tagFor, type IndependentPackage } from './lib/independent-packages.mts';
 
 export interface PendingPr {
   number: number;

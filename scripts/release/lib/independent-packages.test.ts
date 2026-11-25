@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { selectIndependentPackages } from './independent-packages.mjs';
+import { selectIndependentPackages, tagFor } from './independent-packages.mjs';
 
 describe('selectIndependentPackages', () => {
   const nodes = {
@@ -35,5 +35,11 @@ describe('selectIndependentPackages', () => {
     const names = selectIndependentPackages({ ...nodes, '@grafana/other': second }).map(({ name }) => name);
 
     expect(names).toEqual(['@grafana/other', '@grafana/plugin-compat']);
+  });
+});
+
+describe('tagFor', () => {
+  it('joins the package name and version the way nx names tags of independent projects', () => {
+    expect(tagFor('@grafana/plugin-compat', '0.11.0')).toBe('@grafana/plugin-compat@0.11.0');
   });
 });

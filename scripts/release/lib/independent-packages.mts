@@ -26,3 +26,7 @@ export async function getIndependentPackages(): Promise<IndependentPackage[]> {
   const graph = await createProjectGraphAsync({ exitOnError: true });
   return selectIndependentPackages(graph.nodes);
 }
+
+export function tagFor(name: string, version: string): string {
+  return `${name}@${version}`;
+}

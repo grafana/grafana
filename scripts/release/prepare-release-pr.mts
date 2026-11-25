@@ -10,8 +10,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { releaseChangelog, releaseVersion } from 'nx/release';
 
-import { getIndependentPackages, type IndependentPackage } from './lib/independent-packages.mts';
-import { tagFor } from './lib/tags.mts';
+import { getIndependentPackages, tagFor, type IndependentPackage } from './lib/independent-packages.mts';
 
 // Nx counts commits from the tag of the last release. Without it, it would version from commits that were
 // already released, so the first package whose tag is missing is reported.
