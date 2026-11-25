@@ -2,12 +2,12 @@ import { type DataFrame, type LoadingState, type LogRowModel, type TimeRange } f
 import { usePluginComponent } from '@grafana/runtime';
 import { type LogsSortOrder, type DataQuery } from '@grafana/schema';
 
-export const INCLUDE_DROPPED_LOGS_COMPONENT_ID = 'grafana-adaptivelogs-app/include-dropped-logs/v1';
+const INCLUDE_DROPPED_LOGS_COMPONENT_ID = 'grafana-adaptivelogs-app/include-dropped-logs/v1';
 
 /**
  * Indicate which logs are currently visible on screen (so we can include more in that range)
  */
-export type RenderedLogsWindow = {
+type RenderedLogsWindow = {
   startRowIndex: number;
   endRowIndex: number;
   logsSortOrder: LogsSortOrder;
@@ -16,9 +16,9 @@ export type RenderedLogsWindow = {
 /**
  * A callback for an external component to include additional logs into the view.
  */
-export type IncludeAdditionalLogs = (frames: DataFrame[]) => Promise<IncludeAdditionalLogsResult>;
+type IncludeAdditionalLogs = (frames: DataFrame[]) => Promise<IncludeAdditionalLogsResult>;
 
-export type IncludeAdditionalLogsResult = {
+type IncludeAdditionalLogsResult = {
   addedUniqueLogs: number;
   totalUniqueLogs: number;
 };
