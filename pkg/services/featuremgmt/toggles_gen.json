@@ -6260,6 +6260,20 @@
     },
     {
       "metadata": {
+        "name": "resourcePermissionsBulkUserValidation",
+        "resourceVersion": "1795599391266",
+        "creationTimestamp": "2026-11-25T09:36:31Z"
+      },
+      "spec": {
+        "description": "Resolves and validates users in bulk when setting permissions for many users at once, such as SCIM team membership sync",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "restrictedPluginApis",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2025-07-31T22:56:50Z",

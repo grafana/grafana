@@ -2348,6 +2348,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "resourcePermissionsBulkUserValidation",
+			Description:  "Resolves and validates users in bulk when setting permissions for many users at once, such as SCIM team membership sync",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
+		},
+		{
 			Name:         "kubernetesUsersApi",
 			Description:  "Enables user APIs in the app platform",
 			Stage:        FeatureStageExperimental,

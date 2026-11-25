@@ -770,6 +770,10 @@ const (
 	// Redirects the request of the team endpoints to the app platform APIs
 	FlagKubernetesTeamsRedirect = "kubernetesTeamsRedirect"
 
+	// FlagResourcePermissionsBulkUserValidation
+	// Resolves and validates users in bulk when setting permissions for many users at once, such as SCIM team membership sync
+	FlagResourcePermissionsBulkUserValidation = "resourcePermissionsBulkUserValidation"
+
 	// FlagKubernetesUsersApi
 	// Enables user APIs in the app platform
 	FlagKubernetesUsersApi = "kubernetesUsersApi"
