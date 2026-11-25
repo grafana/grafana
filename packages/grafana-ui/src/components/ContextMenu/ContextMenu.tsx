@@ -66,7 +66,6 @@ export const ContextMenu = React.memo(
       if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
-        onClose?.();
       }
     };
 
@@ -80,6 +79,7 @@ export const ContextMenu = React.memo(
           ariaLabel={selectors.components.Menu.MenuComponent('Context')}
           onOpen={onOpen}
           onClick={onClose}
+          onClose={onClose}
           onKeyDown={onKeyDown}
         >
           {menuItems}
