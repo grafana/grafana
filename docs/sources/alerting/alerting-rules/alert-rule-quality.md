@@ -102,8 +102,6 @@ Writes from the Grafana rule editor aren't enforced, but the resulting rules can
 ## Team policies
 
 A Team policy lets a team define what the alert rules in its own folders must carry, without changing the requirements for the rest of the organization.
-Team policies are behind the `alerting.ruleQualityTeamPolicies` feature toggle.
-While the toggle is off, nothing changes: Grafana evaluates only the Org policy, and the policy drawer shows only the Org policy.
 
 ### When a policy applies
 
@@ -304,7 +302,7 @@ Use the following guidance when you can't access the feature, resolve a finding,
 | A finding remains after enforcement is disabled.                           | Detect-only requirements still produce findings. Fill in the missing value or remove the requirement from the policy.                                                                     |
 | A provisioning write is rejected by the quality policy.                    | Use the rule and field details in the error to update the source configuration, then reapply it.                                                                                          |
 | A rejection names a team policy that you didn't expect.                    | The write goes to a folder, or a subfolder of a folder, owned by that team. Add the fields every named policy lists, or ask an organization administrator to change the policy.           |
-| A rule in a team's folder isn't checked against the Org policy.            | The team has its own policy, which replaces the Org policy for its folders. Check that `alerting.ruleQualityTeamPolicies` is on and review the team's policy.                             |
+| A rule in a team's folder isn't checked against the Org policy.            | The team has its own policy, which replaces the Org policy for its folders. Review the team's policy.                                                                                     |
 | A write succeeds despite a quality finding.                                | Check that the requirement is enforced and the policy is saved. Confirm that the write uses a [supported enforcement path](#supported-enforcement-paths) and isn't one of its exceptions. |
 
 ## Next steps
