@@ -1,25 +1,31 @@
 import { customAlphabet } from 'nanoid';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
+import useMountedState from 'react-use/lib/useMountedState';
 
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack, Text } from '@grafana/ui';
-import { type RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  type RepositoryView,
+  useDeleteRepositoryFilesWithPathMutation,
+  useGetFrontendSettingsQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
 import {
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
   ManagerKind,
 } from 'app/features/apiserver/types';
+import { useDispatch } from 'app/types/store';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useCommitTarget } from '../../hooks/useCommitTarget';
 import { useCreateOrUpdateRepositoryFile } from '../../hooks/useCreateOrUpdateRepositoryFile';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
-import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
-import { useProvisionedResourceDrawerHandlers } from '../../hooks/useProvisionedResourceDrawerHandlers';
+import { useLastBranch } from '../../hooks/useLastBranch';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
@@ -36,7 +42,18 @@ import { getCanPushToConfiguredBranch, getDefaultRef } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
 import { slugifyForFilename } from '../utils/path';
 
+import { ProvisionedCommitSteps } from './ProvisionedCommitSteps';
+import { ProvisionedCommitSuccess } from './ProvisionedCommitSuccess';
+import { ProvisionedDrawerLayout } from './ProvisionedDrawerLayout';
+import { RepositorySelect } from './RepositorySelect';
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
+import {
+  type ProvisionedCommitOutcome,
+  buildCommitOutcome,
+  clearStoredCommitOutcome,
+  parseStoredCommitOutcome,
+  storeCommitOutcome,
+} from './provisionedCommitOutcome';
 
 /** Commit action handled by this drawer. */
 type ProvisionedResourceAction = 'create' | 'update' | 'delete';
@@ -63,7 +80,7 @@ function getNewResourcePath(title: string, kindKey: string): string {
   return `${slugifyForFilename(title) || kindKey}.json`;
 }
 
-interface BaseDrawerProps {
+export interface SaveProvisionedResourceDrawerProps {
   /**
    * The resource to commit (`create`/`update`) or remove (`delete`). It carries everything the drawer
    * needs: its `apiVersion`+`kind` resolve the {@link ResourceKindInfo} (label, invalidation),
@@ -78,59 +95,47 @@ interface BaseDrawerProps {
    * comes from `resource.spec`.
    */
   title: string;
-  /** Notification shown on a successful write to the configured branch. */
-  successMessage?: string;
   /** Message shown when the repository can't be edited from the UI. */
   readOnlyMessage?: string;
   /** Prefix for generated branch names. Defaults to the kind's key. */
   branchPrefix?: string;
-  /**
-   * In-app page to redirect to once the commit succeeds, and where the PR workflow shows the
-   * pull-request banner. The caller owns its own routes.
-   */
-  redirectUrl: string;
+  action: ProvisionedResourceAction;
+  repositoryName?: string;
+  redirectUrl?: string;
   onDismiss?: () => void;
 }
 
-/**
- * `action` + `repositoryName` are a discriminated union: `create` requires a `repositoryName` (a new
- * resource has no manager annotations yet, so they're synthesised for the chosen repository), while
- * `update`/`delete` resolve the repository from the existing resource's annotations and take none.
- */
-export type SaveProvisionedResourceDrawerProps = BaseDrawerProps &
-  ({ action: 'create'; repositoryName: string } | { action: 'update' | 'delete'; repositoryName?: never });
-
 interface FormProps {
   kindKey: ResourceKindKey;
-  redirectUrl: string;
   resourceName: string;
   title: string;
   body?: Record<string, unknown>;
   action: ProvisionedResourceAction;
   isNew: boolean;
-  successMessage?: string;
   initialValues: BaseProvisionedFormData;
   repository?: RepositoryView;
   canPushToConfiguredBranch: boolean;
+  onCommitted: (outcome: ProvisionedCommitOutcome) => void;
   onDismiss?: () => void;
 }
 
 function FormContent({
   kindKey,
-  redirectUrl,
   resourceName,
   title,
   body,
   action,
   isNew,
-  successMessage,
   initialValues,
   repository,
   canPushToConfiguredBranch,
+  onCommitted,
   onDismiss,
 }: FormProps) {
+  const dispatch = useDispatch();
+  const { setLastBranch } = useLastBranch();
   const [error, setError] = useState<string | undefined>(undefined);
-  const kind: ResourceKindInfo = resourceKindInfos[kindKey];
+  const resourceType = kindKey;
   const isDelete = action === 'delete';
   // New resources are POSTed (create), existing ones PUT (replace). The wrapper keys off the
   // original path: passing it selects update, omitting it selects create.
@@ -142,11 +147,9 @@ function FormContent({
   const { handleSubmit, watch, formState } = methods;
   const ref = watch('ref') ?? '';
 
-  const { onWriteSuccess, onBranchSuccess } = useProvisionedResourceDrawerHandlers(kind, redirectUrl, action);
-
   const templateVars: CommitTemplateVars = {
     action,
-    resourceKind: kindKey,
+    resourceKind: resourceType,
     resourceID: resourceName,
     title,
     ...getCurrentCommitUser(),
@@ -159,8 +162,8 @@ function FormContent({
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
-  // Branch-name template fill/lock and the PR title for the banner follow from the target branch.
-  const { workflow, isNewBranch, isResolving, lockBranch, prTitle } = useCommitTarget({
+  // Branch-name template fill/lock and the PR title follow from the target branch.
+  const { workflow, isResolving, lockBranch, prTitle } = useCommitTarget({
     repository,
     vars: templateVars,
     ref,
@@ -171,27 +174,6 @@ function FormContent({
   const showError = (err: unknown) => {
     setError(getProvisionedRequestError(err, t('provisioning.save-resource.error-saving', 'Failed to save changes')));
   };
-
-  const { handleSuccess } = useProvisionedRequestHandler({
-    isNewBranch,
-    resourceType: kindKey,
-    repository,
-    successMessage,
-    handlers: {
-      onDismiss,
-      onWriteSuccess,
-      // Pushed to a branch: pass the repo info so the destination page can render the PR banner.
-      onBranchSuccess: ({ ref, urls }) =>
-        onBranchSuccess({
-          ref,
-          urls,
-          repoType: repository?.type,
-          configuredBranch: repository?.branch,
-          repoUrl: repository?.url,
-          prTitle,
-        }),
-    },
-  });
 
   const doSave = async ({ ref, path }: BaseProvisionedFormData) => {
     setError(undefined);
@@ -207,7 +189,7 @@ function FormContent({
     const branchRef = getRequestRef(repository, ref);
 
     reportInteraction('grafana_provisioning_resource_save_submitted', {
-      resourceType: kindKey,
+      resourceType,
       workflow,
       repositoryName: repoName,
       repositoryType: repository?.type ?? 'unknown',
@@ -217,7 +199,28 @@ function FormContent({
       const data = isDelete
         ? await deleteFile({ name: repoName, path, ref: branchRef, message }).unwrap()
         : await saveFile({ name: repoName, path, ref: branchRef, message, body: body ?? {} }).unwrap();
-      handleSuccess(data);
+
+      const landedOn = data.ref || repository?.branch;
+      if (landedOn) {
+        setLastBranch(repoName, landedOn);
+      }
+      const kind: ResourceKindInfo = resourceKindInfos[kindKey];
+      const invalidateAction = kind.invalidateListTags?.();
+      if (invalidateAction) {
+        dispatch(invalidateAction);
+      }
+
+      onCommitted(
+        buildCommitOutcome({
+          action,
+          ref: data.ref,
+          urls: data.urls,
+          message,
+          prTitle,
+          repository,
+          pendingSync: !isDelete && !data.resource?.upsert,
+        })
+      );
     } catch (err) {
       showError(err);
     }
@@ -225,21 +228,10 @@ function FormContent({
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(doSave)}>
-        <Stack direction="column" gap={2}>
-          <ResourceEditFormSharedFields
-            resourceType={kindKey}
-            isNew={isNew}
-            canPushToConfiguredBranch={canPushToConfiguredBranch}
-            repository={repository}
-            lockComment={locked}
-            commitMessage={message}
-            lockBranch={lockBranch}
-          />
-
-          {error && <ProvisioningAlert error={error} />}
-
-          <Stack gap={2}>
+      <ProvisionedDrawerLayout
+        onSubmit={handleSubmit(doSave)}
+        footer={
+          <>
             <Button
               type="submit"
               variant={isDelete ? 'destructive' : 'primary'}
@@ -250,16 +242,129 @@ function FormContent({
                   ? t('provisioning.save-resource.button-deleting', 'Deleting...')
                   : t('provisioning.save-resource.button-delete', 'Delete')
                 : request.isLoading
-                  ? t('provisioning.save-resource.button-saving', 'Saving...')
-                  : t('provisioning.save-resource.button-save', 'Save')}
+                  ? t('provisioning.save-resource.button-committing', 'Committing...')
+                  : t('provisioning.save-resource.button-commit', 'Commit')}
             </Button>
-            <Button variant="secondary" fill="outline" onClick={onDismiss}>
+            <Button variant="secondary" fill="outline" onClick={() => onDismiss?.()}>
               {t('provisioning.save-resource.button-cancel', 'Cancel')}
             </Button>
-          </Stack>
+          </>
+        }
+      >
+        <Stack direction="column" gap={2}>
+          <ResourceEditFormSharedFields
+            resourceType={resourceType}
+            isNew={isNew}
+            canPushToConfiguredBranch={canPushToConfiguredBranch}
+            repository={repository}
+            lockComment={locked}
+            commitMessage={message}
+            lockBranch={lockBranch}
+          />
+
+          {error && <ProvisioningAlert error={error} />}
         </Stack>
-      </form>
+      </ProvisionedDrawerLayout>
     </FormProvider>
+  );
+}
+
+interface SuccessProps {
+  outcome: ProvisionedCommitOutcome;
+  onDismiss: () => void;
+  onBack?: () => void;
+  backLabel?: string;
+}
+
+interface RepositoryStepProps {
+  onSelect: (repositoryName: string) => void;
+  onDismiss?: () => void;
+}
+
+function RepositoryStep({ onSelect, onDismiss }: RepositoryStepProps) {
+  const { data } = useGetFrontendSettingsQuery();
+  const [selected, setSelected] = useState('');
+
+  return (
+    <ProvisionedDrawerLayout
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSelect(selected);
+      }}
+      footer={
+        <>
+          <Button type="submit" disabled={!selected}>
+            {t('provisioning.save-resource.button-next', 'Next')}
+          </Button>
+          <Button variant="secondary" fill="outline" onClick={() => onDismiss?.()}>
+            {t('provisioning.save-resource.button-cancel', 'Cancel')}
+          </Button>
+        </>
+      }
+    >
+      <RepositorySelect
+        repositories={data?.items ?? []}
+        value={selected}
+        onChange={setSelected}
+        description={t(
+          'provisioning.save-resource.repository-description',
+          "The repository to commit this resource to. This can't be changed after the resource is created."
+        )}
+      />
+    </ProvisionedDrawerLayout>
+  );
+}
+
+function SuccessContent({ outcome, onDismiss, onBack, backLabel }: SuccessProps) {
+  return (
+    <ProvisionedDrawerLayout
+      footer={<ProvisionedCommitSteps outcome={outcome} onDismiss={onDismiss} onBack={onBack} backLabel={backLabel} />}
+    >
+      <ProvisionedCommitSuccess outcome={outcome} />
+    </ProvisionedDrawerLayout>
+  );
+}
+
+function getDrawerTitle(isDelete: boolean, resource: string) {
+  return isDelete
+    ? t('provisioning.save-resource.drawer-title-delete', 'Delete provisioned {{resource}}', { resource })
+    : t('provisioning.save-resource.drawer-title-save', 'Save provisioned {{resource}}', { resource });
+}
+
+export function CommitOutcomeDrawer({ stored, onDismiss }: { stored: string; onDismiss: () => void }) {
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const parsed = useMemo(() => parseStoredCommitOutcome(stored, pathname), [stored, pathname]);
+  const dismiss = () => {
+    clearStoredCommitOutcome();
+    onDismiss();
+    if (parsed?.redirectUrl) {
+      navigate(parsed.redirectUrl);
+    }
+  };
+  useEffect(() => {
+    if (!parsed) {
+      clearStoredCommitOutcome();
+      onDismiss();
+    }
+  }, [parsed, onDismiss]);
+  if (!parsed) {
+    return null;
+  }
+  return (
+    <Drawer
+      size="sm"
+      scrollableContent={false}
+      title={getDrawerTitle(parsed.outcome.action === 'delete', parsed.kindLabel)}
+      onClose={dismiss}
+    >
+      <SuccessContent
+        outcome={parsed.outcome}
+        onDismiss={dismiss}
+        onBack={parsed.redirectUrl ? dismiss : undefined}
+        backLabel={parsed.pluralLabel}
+      />
+    </Drawer>
   );
 }
 
@@ -267,8 +372,7 @@ function FormContent({
  * Drawer for committing a repository-managed resource to git — usable directly from a resource's
  * pages with no per-kind wrapper. Pass the resource, its title and the action: the drawer resolves
  * the kind from the resource's `apiVersion`+`kind` and derives the rest — the committed file body, a
- * new resource's name/path/annotations and the commit message. After the commit it redirects to
- * `redirectUrl`. `delete` commits no body. Renders nothing if the resource isn't a registered provisioning kind (pages only
+ * new resource's name/path/annotations and the commit message. `delete` commits no body. Renders nothing if the resource isn't a registered provisioning kind (pages only
  * open it for known managed resources).
  */
 export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDrawerProps) {
@@ -293,18 +397,22 @@ type ResourceDrawerContentProps = SaveProvisionedResourceDrawerProps & { kindKey
 
 function ResourceDrawerContent({
   kindKey,
-  redirectUrl,
   resource,
   action,
   title,
   repositoryName,
-  successMessage,
   readOnlyMessage,
   branchPrefix,
+  redirectUrl,
   onDismiss,
 }: ResourceDrawerContentProps) {
+  const navigate = useNavigate();
   const isNew = action === 'create';
   const isDelete = action === 'delete';
+  const [outcome, setOutcome] = useState<ProvisionedCommitOutcome | undefined>(undefined);
+  useEffect(() => (outcome ? clearStoredCommitOutcome : undefined), [outcome]);
+  const isMounted = useMountedState();
+  const [selectedRepository, setSelectedRepository] = useState(repositoryName);
 
   // A new resource needs a name; generate one once for the lifetime of the drawer as a fallback.
   const generatedName = useMemo(() => generateResourceName(), []);
@@ -320,7 +428,7 @@ function ResourceDrawerContent({
         metadata: {
           annotations: {
             [AnnoKeyManagerKind]: ManagerKind.Repo,
-            [AnnoKeyManagerIdentity]: repositoryName ?? '',
+            [AnnoKeyManagerIdentity]: selectedRepository ?? '',
             [AnnoKeySourcePath]: getNewResourcePath(title, kindKey),
           },
         },
@@ -340,14 +448,24 @@ function ResourceDrawerContent({
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
   const sourcePath = getSourcePath(managedResource);
 
-  // Title combines a shared translated template with the kind's translated noun (interpolated, so
-  // translators control word order), instead of a per-kind "Save/Delete provisioned <kind>" string.
-  const resourceLabel = resourceKindInfos[kindKey].getLabel({ upperFirst: false });
-  const drawerTitle = isDelete
-    ? t('provisioning.save-resource.drawer-title-delete', 'Delete provisioned {{resource}}', {
-        resource: resourceLabel,
-      })
-    : t('provisioning.save-resource.drawer-title-save', 'Save provisioned {{resource}}', { resource: resourceLabel });
+  const kindLabel = resourceKindInfos[kindKey].getLabel({ upperFirst: false });
+  const pluralLabel = resourceKindInfos[kindKey].getPluralLabel({ upperFirst: false });
+  const drawerTitle = getDrawerTitle(isDelete, kindLabel);
+
+  const onCommitted = (committed: ProvisionedCommitOutcome) => {
+    if (!isMounted()) {
+      return;
+    }
+    setOutcome(committed);
+    storeCommitOutcome({ outcome: committed, kindLabel, pluralLabel, redirectUrl });
+  };
+
+  const dismiss = () => {
+    onDismiss?.();
+    if (outcome && redirectUrl) {
+      navigate(redirectUrl);
+    }
+  };
 
   const initialValues = useMemo<BaseProvisionedFormData | undefined>(() => {
     if (!repository || isLoading) {
@@ -364,43 +482,55 @@ function ResourceDrawerContent({
 
   return (
     <Drawer
+      size="sm"
+      scrollableContent={false}
       title={
         <Text variant="h3" element="h2">
           {drawerTitle}
         </Text>
       }
       subtitle={title}
-      onClose={() => onDismiss?.()}
+      onClose={dismiss}
     >
-      <ProvisionedFormGate
-        isLoading={isLoading}
-        isMissingRepo={isMissingRepo}
-        isReadOnly={isReadOnlyRepo}
-        readOnlyMessage={
-          readOnlyMessage ??
-          t(
-            'provisioning.save-resource.read-only-message',
-            'To edit this resource, please update it in your repository directly.'
-          )
-        }
-      >
-        {initialValues && (
-          <FormContent
-            kindKey={kindKey}
-            redirectUrl={redirectUrl}
-            resourceName={resourceName}
-            title={title}
-            body={body}
-            action={action}
-            isNew={isNew}
-            successMessage={successMessage}
-            initialValues={initialValues}
-            repository={repository}
-            canPushToConfiguredBranch={canPushToConfiguredBranch}
-            onDismiss={onDismiss}
-          />
-        )}
-      </ProvisionedFormGate>
+      {outcome ? (
+        <SuccessContent
+          outcome={outcome}
+          onDismiss={dismiss}
+          onBack={redirectUrl ? dismiss : undefined}
+          backLabel={pluralLabel}
+        />
+      ) : isNew && !selectedRepository ? (
+        <RepositoryStep onSelect={setSelectedRepository} onDismiss={onDismiss} />
+      ) : (
+        <ProvisionedFormGate
+          isLoading={isLoading}
+          isMissingRepo={isMissingRepo}
+          isReadOnly={isReadOnlyRepo}
+          readOnlyMessage={
+            readOnlyMessage ??
+            t(
+              'provisioning.save-resource.read-only-message',
+              'To edit this resource, please update it in your repository directly.'
+            )
+          }
+        >
+          {initialValues && (
+            <FormContent
+              kindKey={kindKey}
+              resourceName={resourceName}
+              title={title}
+              body={body}
+              action={action}
+              isNew={isNew}
+              initialValues={initialValues}
+              repository={repository}
+              canPushToConfiguredBranch={canPushToConfiguredBranch}
+              onCommitted={onCommitted}
+              onDismiss={onDismiss}
+            />
+          )}
+        </ProvisionedFormGate>
+      )}
     </Drawer>
   );
 }
