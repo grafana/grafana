@@ -47,8 +47,8 @@ behavior (a default disabled object, and a one-item list) match ST exactly. Clou
 version is the legacy `updated` time in milliseconds, so it maps back to `DTO.Updated` without loss.
 Writes, including dry runs, return MethodNotSupported.
 
-Cloudconfig reads go through a 5s in-memory cache, so MT reads can trail writes made through
-the legacy `/api/plugins/:id/settings` endpoints by up to that long.
+The router's cloudconfig app-settings client is a pass-through and adds no local settings
+cache. Cloudconfig's server-side caches can delay visibility of legacy settings writes.
 
 The router's separate cloud Wire graph receives `CloudSettingsDependencies`: the legacy store and
 plugin credential middleware. It constructs no local SQL

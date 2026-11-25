@@ -238,8 +238,9 @@ func (t *pluginManifestsTarget) newSettingsBackend(ctx context.Context, entry de
 		return nil, err
 	}
 	b.source = sourcePlugins
-	b.hasBackend = entry.Host != ""
+	// Settings call the plugin over v2 only, which a BaaS HTTP host does not serve.
 	if host := entry.Host; host != "" && !baasbridge.IsHTTPHost(host) { //nolint:staticcheck
+		b.hasBackend = true
 		b.acquire = func() (func(), error) { return t.acquireConnection(host, plugin.JSONData.ID) }
 	}
 	return b, nil

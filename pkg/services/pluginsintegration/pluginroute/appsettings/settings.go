@@ -11,6 +11,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -143,14 +145,35 @@ func (s *settingsStorage) Get(ctx context.Context, name string, _ *metav1.GetOpt
 	return s.get(ctx)
 }
 
-func (s *settingsStorage) List(ctx context.Context, _ *internalversion.ListOptions) (runtime.Object, error) {
+func (s *settingsStorage) List(ctx context.Context, opts *internalversion.ListOptions) (runtime.Object, error) {
+	if opts != nil && opts.Continue != "" {
+		return nil, apierrors.NewBadRequest("continue is not supported for singleton settings")
+	}
+	if opts != nil && opts.FieldSelector != nil {
+		for _, req := range opts.FieldSelector.Requirements() {
+			if req.Field != "metadata.name" && req.Field != "metadata.namespace" {
+				return nil, apierrors.NewBadRequest(fmt.Sprintf("field selector %q is not supported", req.Field))
+			}
+		}
+	}
 	obj, err := s.get(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return &apppluginV0.SettingsList{
-		Items: []apppluginV0.Settings{*obj},
-	}, nil
+	out := &apppluginV0.SettingsList{
+		ListMeta: metav1.ListMeta{ResourceVersion: obj.ResourceVersion},
+		Items:    []apppluginV0.Settings{},
+	}
+	if opts != nil {
+		if opts.LabelSelector != nil && !opts.LabelSelector.Matches(labels.Set(obj.Labels)) {
+			return out, nil
+		}
+		if opts.FieldSelector != nil && !opts.FieldSelector.Matches(fields.Set{"metadata.name": obj.Name, "metadata.namespace": obj.Namespace}) {
+			return out, nil
+		}
+	}
+	out.Items = append(out.Items, *obj)
+	return out, nil
 }
 
 func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error) {

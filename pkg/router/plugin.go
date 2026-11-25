@@ -61,7 +61,7 @@ type LegacySettingsStoreProvider func(ctx context.Context, pluginID string) (gra
 // legacy store; the cloud loader supplies the rest.
 type SettingsDependencies struct {
 	ReadOnly bool
-	// LegacyStore gets the legacy store for a plugin, or nil to disable the settings API.
+	// LegacyStore gets the legacy store for a plugin. Without one, settings use unified storage.
 	LegacyStore LegacySettingsStoreProvider
 	// AccessChecker replaces the default legacy app-access check.
 	AccessChecker pluginaccesscontrol.AppAccessChecker

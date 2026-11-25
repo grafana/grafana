@@ -192,23 +192,19 @@ func (b *Builder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo
 			return err
 		}
 	}
-	if b.opts.ReadOnly {
-		return b.installSettingsStorage(apiGroupInfo, readOnlyStorage{settingsStorage})
-	}
-
 	// The subresources are served by SubresourceHandler.
-	return b.installSettingsStorage(apiGroupInfo, settingsStorage)
-}
-
-func (b *Builder) installSettingsStorage(apiGroupInfo *genericapiserver.APIGroupInfo, settingsStorage rest.Storage) error {
+	served := rest.Storage(settingsStorage)
+	if b.opts.ReadOnly {
+		served = readOnlyStorage{settingsStorage}
+	}
 	apiGroupInfo.VersionedResourcesStorageMap[apppluginV0.VERSION] = map[string]rest.Storage{
-		apppluginV0.APP_RESOURCE_NAME: settingsStorage,
+		settingsRI.StoragePath(): served,
 	}
 
 	// Direct reads of this plugin's own storage, by group version resource.
 	b.getter = func(ctx context.Context, gvr schema.GroupVersionResource, name string) (runtime.Object, error) {
 		if gvr.Resource == apppluginV0.APP_RESOURCE_NAME {
-			return settingsStorage.(rest.Getter).Get(ctx, name, &v1.GetOptions{})
+			return settingsStorage.Get(ctx, name, &v1.GetOptions{})
 		}
 
 		return nil, apierrors.NewInternalError(fmt.Errorf("no storage registered for %s", gvr))

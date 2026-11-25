@@ -8,12 +8,16 @@ import (
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 )
 
@@ -101,6 +105,68 @@ func TestSettingsList(t *testing.T) {
 	require.Equal(t, "instance", list.Items[0].Name)
 	require.True(t, list.Items[0].Spec.Enabled)
 	require.Equal(t, map[string]any{"key": "value"}, list.Items[0].Spec.JsonData.Object)
+}
+
+func TestSettingsListOptions(t *testing.T) {
+	for _, persisted := range []bool{false, true} {
+		name, version := "default settings", "0"
+		settings := map[string]*pluginsettings.DTO{}
+		if persisted {
+			name, version = "persisted settings", "123"
+			settings["test-app"] = &pluginsettings.DTO{Enabled: true, Updated: time.UnixMilli(123)}
+		}
+		t.Run(name, func(t *testing.T) {
+			for mode, store := range map[string]grafanarest.Storage{
+				"read-write": newTestStorage(settings),
+				"read-only":  NewReadOnlyLegacySettingsStore("test-app", readOnlySettings{settings}),
+			} {
+				t.Run(mode, func(t *testing.T) {
+					for _, tc := range []struct {
+						name string
+						opts *internalversion.ListOptions
+						want int
+					}{
+						{name: "no options", want: 1},
+						{name: "matching name", opts: &internalversion.ListOptions{FieldSelector: fields.OneTermEqualSelector("metadata.name", "instance")}, want: 1},
+						{name: "other name", opts: &internalversion.ListOptions{FieldSelector: fields.OneTermEqualSelector("metadata.name", "other")}},
+						{name: "matching namespace", opts: &internalversion.ListOptions{FieldSelector: fields.OneTermEqualSelector("metadata.namespace", "default")}, want: 1},
+						{name: "other namespace", opts: &internalversion.ListOptions{FieldSelector: fields.OneTermEqualSelector("metadata.namespace", "other")}},
+						{name: "missing label", opts: &internalversion.ListOptions{LabelSelector: labels.SelectorFromSet(labels.Set{"missing": "value"})}},
+						{name: "all labels", opts: &internalversion.ListOptions{LabelSelector: labels.Everything()}, want: 1},
+						{name: "singleton limit", opts: &internalversion.ListOptions{Limit: 1}, want: 1},
+					} {
+						t.Run(tc.name, func(t *testing.T) {
+							obj, err := store.List(request.WithNamespace(t.Context(), "default"), tc.opts)
+							require.NoError(t, err)
+							list := obj.(*apppluginV0.SettingsList)
+							require.NotNil(t, list.Items)
+							require.Len(t, list.Items, tc.want)
+							require.Equal(t, version, list.ResourceVersion)
+							require.Empty(t, list.Continue)
+						})
+					}
+				})
+			}
+		})
+	}
+}
+
+func TestSettingsListRejectsUnsupportedOptionsBeforeReading(t *testing.T) {
+	store := NewReadOnlyLegacySettingsStore("test-app", failingSettings{errors.New("unexpected storage read")})
+	for name, opts := range map[string]*internalversion.ListOptions{
+		"continue":            {Continue: "token"},
+		"spec field selector": {FieldSelector: fields.OneTermEqualSelector("spec.enabled", "true")},
+		"mixed field selector": {FieldSelector: fields.AndSelectors(
+			fields.OneTermEqualSelector("metadata.name", "instance"),
+			fields.OneTermEqualSelector("metadata.uid", "x"),
+		)},
+	} {
+		t.Run(name, func(t *testing.T) {
+			obj, err := store.List(request.WithNamespace(t.Context(), "default"), opts)
+			require.Nil(t, obj)
+			require.True(t, apierrors.IsBadRequest(err), err)
+		})
+	}
 }
 
 func TestSettingsCreate(t *testing.T) {

@@ -348,3 +348,30 @@ func TestCloudSettingsStoreLifecycle(t *testing.T) {
 		})
 	}
 }
+
+func TestCloudSettingsBackendStatus(t *testing.T) {
+	target, err := newPluginManifestsTarget(sourcePlugins, "http://127.0.0.1:1/plugins", nil, http.DefaultClient, defaultPluginGRPCConfig(), PluginDependencies{})
+	require.NoError(t, err)
+	t.Cleanup(target.close)
+	for _, tc := range []struct {
+		host string
+		want bool
+	}{
+		{host: "", want: false},
+		{host: "example-app.plugins.svc:10000", want: true},
+		// A BaaS HTTP host serves v3 only, and settings use v2.
+		{host: "https://example-app.baas.example", want: false},
+	} {
+		t.Run(tc.host, func(t *testing.T) {
+			b, err := target.newSettingsBackend(t.Context(), definition.PluginDeployment{
+				Host:       tc.host,
+				Definition: definition.PluginDefinition{JSONData: plugins.JSONData{ID: "example-app", Type: plugins.TypeApp}},
+			})
+			require.NoError(t, err)
+			status, ok := b.PluginStatus()
+			require.True(t, ok)
+			require.Equal(t, tc.want, status.HasBackend)
+			require.Equal(t, tc.want, b.acquire != nil)
+		})
+	}
+}
