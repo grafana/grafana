@@ -25,9 +25,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   snapshots always go to the stacks; otherwise users' writes go to the stacks, and reads and every
   request from a non-user identity (access policies, service accounts) stay on its backend. That
   group is still one backend, and its discovery and OpenAPI still come from the backend that owns it.
-  Read-only cloud app settings similarly retain the lower-priority HTTP backend for v2
-  health/resources/proxy subresources; `cloud_settings.go` owns the composite, its discovery,
-  and both handlers' retirement.
+  Cloud app settings use the same plugin backend and settings/subresource handlers as ST.
+  The namespace identifies the tenant; storage and credential dependencies are supplied by the cloud loader.
 - **Keep connection pools across a reload.** Reconcile rebuilds only groups whose `Key()` changed,
   and each source keeps its transports or gRPC connections across polls, so a rebuilt group reuses
   its pool. Never recreate unrelated backends on a route change.
@@ -92,8 +91,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   (`newPluginSettingsBackend`): the single `app` resource, always named `instance`. A plugin ID
   must be a DNS label with a hyphen, so it can never name a core or manifest group. The standalone cloud loader can serve read-only settings when
   `[cloud_router] app_settings_enabled` is enabled and a remote legacy provider and app-access
-  checker are supplied. It bypasses unified migration modes, installs only get/list, and retains
-  the group's lower-priority HTTP backend for v2 health/resources/proxy execution. The local
+  checker are supplied. It bypasses unified migration modes and installs get/list settings storage.
+  Health/resources call the deployment's v2 client; proxy uses the shared ST handler and feature gate. The local
   standalone plugin loader still serves no settings.
 - **One bad backend or plugin fails only its own group;** it must never stop the reconcile loop.
   A backend that fails to load is retried only when its own backoff passes (`loadGroup`, up to

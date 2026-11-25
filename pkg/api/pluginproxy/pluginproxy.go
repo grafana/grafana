@@ -215,6 +215,13 @@ func (proxy PluginProxy) director(req *http.Request) {
 	proxyutil.ApplyUserHeader(proxy.sendUserHeader, req, proxy.signedInUser)
 	proxyutil.ApplyForwardIDHeader(req.Context(), req, proxy.signedInUser, proxy.idTokenDeriver)
 
+	// Authentication may have consumed the incoming header. Forward only the
+	// verified requester's token, after the proxy strips authentication headers.
+	req.Header.Del("X-Access-Token")
+	if token := proxy.signedInUser.GetAccessToken(); token != "" {
+		req.Header.Set("X-Access-Token", token)
+	}
+
 	if err := addHeaders(&req.Header, proxy.matchedRoute, data); err != nil {
 		writeJSONErr(proxy.resp, proxy.req, 500, "Failed to render plugin headers", err)
 		return

@@ -98,9 +98,6 @@ func newPluginManifestsTarget(
 		return nil, fmt.Errorf("router: %s must be absolute (scheme and host required): url=%q", source, rawURL)
 	}
 
-	// Managed plugins have no local plugin settings for the legacy app-access
-	// check, so it always grants access (pluginManifestAccessControl).
-	deps.AccessControl = pluginManifestAccessControl{}
 	t := &pluginManifestsTarget{
 		pluginConnections: newPluginConnections(source, grpcConfig, deps.MetricsRegister),
 		keyPrefix:         source,
@@ -154,7 +151,7 @@ func (t *pluginManifestsTarget) fetch(ctx context.Context) ([]Backend, int, erro
 			continue
 		}
 		if t.settings && entry.Definition.JSONData.Type == plugins.TypeApp && matchesAnyPattern(entry.Definition.JSONData.ID, t.patterns) {
-			backend, err := newCloudSettingsBackend(ctx, entry, t.deps)
+			backend, err := t.newSettingsBackend(ctx, entry)
 			if err != nil {
 				logging.FromContext(ctx).Warn("router: skipping app plugin settings", "pluginId", entry.Definition.JSONData.ID, "err", err)
 				skipped++
@@ -179,8 +176,11 @@ func (t *pluginManifestsTarget) fetch(ctx context.Context) ([]Backend, int, erro
 				return t.pluginClients(entry.Host, connectionID, manifest)
 			}
 
+			// Manifest APIs use their declared access checks; settings use legacy app access.
+			manifestDeps := t.deps
+			manifestDeps.AccessControl = pluginManifestAccessControl{}
 			// Only the operator-configured core source may serve core groups.
-			backend, err := buildPluginBackend(entry.Definition.JSONData.ID, manifest, clients, t.deps, nil, t.source == sourceCore)
+			backend, err := buildPluginBackend(entry.Definition.JSONData.ID, manifest, clients, manifestDeps, nil, t.source == sourceCore)
 
 			if entry.Definition.JSONData.ID == "" && errors.Is(err, errNoServedVersions) {
 				// A core or bridge entry has no plugin ID, and one with no served
@@ -216,6 +216,33 @@ func (t *pluginManifestsTarget) fetch(ctx context.Context) ([]Backend, int, erro
 		}
 	}
 	return backends, skipped, nil
+}
+
+func (t *pluginManifestsTarget) newSettingsBackend(ctx context.Context, entry definition.PluginDeployment) (*PluginBackend, error) {
+	plugin := entry.Definition
+	loadSettingsManifest(ctx, &plugin)
+	clients := func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
+		client, _, err := t.pluginClients(entry.Host, plugin.JSONData.ID, plugin.Settings)
+		if err != nil {
+			return nil, nil, err
+		}
+		client, err = cloudSettingsClient(client, t.deps.SettingsMiddleware)
+		return client, nil, err
+	}
+	b, err := newPluginSettingsBackend(plugin, clients, t.deps)
+	if err != nil {
+		return nil, err
+	}
+	b.key, err = pluginDeploymentKey(sourcePlugins+":settings", entry, nil)
+	if err != nil {
+		return nil, err
+	}
+	b.source = sourcePlugins
+	b.hasBackend = entry.Host != ""
+	if host := entry.Host; host != "" && !baasbridge.IsHTTPHost(host) { //nolint:staticcheck
+		b.acquire = func() (func(), error) { return t.acquireConnection(host, plugin.JSONData.ID) }
+	}
+	return b, nil
 }
 
 // close implements [sourceCloser].
@@ -259,7 +286,7 @@ func (p *pluginConnections) pluginClients(host, pluginID string, manifest *app.M
 	if err != nil {
 		return nil, nil, err
 	}
-	// NOTE: ClientV2 is missing ALL the middleware...
+	// The settings backend wraps this raw client with its configured middleware.
 	return &backendgrpcplugin.ClientV2{
 		DiagnosticsClient: pluginv2.NewDiagnosticsClient(conn),
 		ResourceClient:    pluginv2.NewResourceClient(conn),

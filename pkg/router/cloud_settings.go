@@ -3,25 +3,20 @@ package router
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"slices"
-	"strings"
-	"sync"
 
 	authzlib "github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
-	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	appv0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
-	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/appsettings"
 )
 
 func cloudSettingsAccessChecker(client legacyclient.LegacyAccessClient) pluginaccesscontrol.AppAccessChecker {
@@ -44,17 +39,13 @@ func cloudSettingsAccessChecker(client legacyclient.LegacyAccessClient) pluginac
 		}
 		service := authzlib.CheckServicePermissions(user, id, appv0.APP_RESOURCE_NAME, verb)
 		if !service.Allowed {
-			return authorizer.DecisionDeny, "token does not allow settings reads", nil
+			return authorizer.DecisionDeny, "token does not allow this app operation", nil
 		}
 		if service.ServiceCall {
 			return authorizer.DecisionAllow, "", nil
 		}
-		orgID := user.GetOrgID()
-		allowed, err := client.LegacyCheck(ctx, legacyclient.LegacyCheckRequest{
-			Namespace: ns, Subject: user.GetUID(),
-			RequesterOrgID: &orgID, Teams: user.GetGroups(),
-			Evaluator: accesscontrol.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginaccesscontrol.ScopeProvider.GetResourceScope(id)),
-		})
+		allowed, err := (cloudSettingsAccessControl{client}).Evaluate(request.WithNamespace(ctx, ns), user,
+			accesscontrol.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginaccesscontrol.ScopeProvider.GetResourceScope(id)))
 		if err != nil || !allowed {
 			return authorizer.DecisionDeny, "app access denied", err
 		}
@@ -77,116 +68,58 @@ func cloudSettingsNamespaceAuthorizer(ctx context.Context, attr authorizer.Attri
 	return authorizer.DecisionNoOpinion, "", nil
 }
 
-// cloudSettingsBackend owns the settings group while retaining its previous
-// HTTP backend for v2 execution. Neither path calls the raw managed v2 client.
-type cloudSettingsBackend struct {
-	*PluginBackend
-	fallback Backend
-}
+// The namespace is the tenant identity. The deployment already selects the
+// plugin process; no stack configuration or per-tenant version lookup is needed.
+type cloudPluginContext struct{}
 
-func newCloudSettingsBackend(ctx context.Context, entry definition.PluginDeployment, deps PluginDependencies) (*cloudSettingsBackend, error) {
-	plugin := entry.Definition
-	loadSettingsManifest(ctx, &plugin)
-	b, err := newPluginSettingsBackend(plugin, nil, deps)
+func (cloudPluginContext) PluginContextForApp(ctx context.Context, id string, settings *backend.AppInstanceSettings) (context.Context, backend.PluginContext, error) {
+	ns := request.NamespaceValue(ctx)
+	if ns == "" || ns == "*" {
+		return ctx, backend.PluginContext{}, fmt.Errorf("a concrete namespace is required")
+	}
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
-		return nil, err
+		return ctx, backend.PluginContext{}, err
 	}
-	key, err := pluginDeploymentKey(sourcePlugins+":settings", entry, nil)
-	if err != nil {
-		return nil, err
-	}
-	b.key, b.source = key, sourcePlugins
-	return &cloudSettingsBackend{PluginBackend: b}, nil
+	return ctx, backend.PluginContext{
+		Namespace: ns, PluginID: id, AppInstanceSettings: settings,
+		OrgID: user.GetOrgID(), User: adapters.BackendUserFromSignedInUser(user),
+	}, nil
 }
 
-func (b *cloudSettingsBackend) Key() string {
-	if b.fallback != nil {
-		return b.PluginBackend.Key() + ":" + b.fallback.Key()
-	}
-	return b.PluginBackend.Key()
+type cloudSettingsAccessControl struct {
+	client legacyclient.LegacyAccessClient
 }
 
-func (b *cloudSettingsBackend) Manifest() (*app.ManifestData, bool) {
-	if b.fallback != nil {
-		return b.PluginBackend.Manifest()
+func (a cloudSettingsAccessControl) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
+	ns := request.NamespaceValue(ctx)
+	if ns == "" || ns == "*" || a.client == nil {
+		return false, nil
 	}
-	// A deployment without an HTTP fallback serves only settings reads.
-	plugin := *b.settings
-	plugin.Settings, plugin.JSONData.Routes = nil, nil
-	manifest, _ := definition.NewSettingsManifest(plugin, nil)
-	return manifest, manifest != nil
-}
-
-func (b *cloudSettingsBackend) Load(ctx context.Context) (http.Handler, error) {
-	store, err := b.deps.LegacySettingsStore(ctx, b.pluginID)
-	if err != nil {
-		return nil, fmt.Errorf("plugin %q: legacy settings store: %w", b.pluginID, err)
-	}
-	if store == nil {
-		return nil, fmt.Errorf("plugin %q: legacy settings store provider returned no store", b.pluginID)
-	}
-	var fallback http.Handler
-	loaded := false
-	defer func() {
-		if !loaded {
-			destroyHandler(fallback)
-			store.Destroy()
-		}
-	}()
-	if b.fallback != nil {
-		fallback, err = b.fallback.Load(ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
-	opts := pluginroute.Options{
-		PluginInfo:          b.info,
-		Storage:             pluginroute.UnifiedStorage(b.deps.Unified, b.deps.SecureValues, b.deps.RESTConfigProvider),
-		AccessChecker:       b.deps.SettingsAccessChecker,
-		NamespaceAuthorizer: authorizer.AuthorizerFunc(cloudSettingsNamespaceAuthorizer),
-		Tracer:              b.deps.Tracer, Features: b.deps.Features, MetricsRegister: b.deps.MetricsRegister,
-		Settings: appsettings.Options{
-			ReadOnly: true, LegacyStore: store, ExternalSubresources: fallback, RegisterProxy: fallback != nil,
-		},
-	}
-	handler, err := pluginroute.NewAppSettingsHandler(*b.settings, opts)
-	if err != nil {
-		return nil, err
-	}
-	local := &tracedPluginHandler{Handler: handler, pluginID: b.pluginID, group: b.pluginID}
-	loaded = true
-	return &cloudSettingsHandler{local: local, fallback: fallback, group: b.pluginID}, nil
-}
-
-type cloudSettingsHandler struct {
-	local, fallback http.Handler
-	group           string
-	once            sync.Once
-}
-
-func (h *cloudSettingsHandler) handlerFor(req *http.Request) http.Handler {
-	parts := strings.Split(strings.Trim(req.URL.Path, "/"), "/")
-	if h.fallback != nil && len(parts) >= 8 && parts[0] == "apis" && parts[1] == h.group && parts[2] == appv0.VERSION &&
-		parts[3] == "namespaces" && parts[4] != "" && parts[5] == "app" && parts[6] == "instance" &&
-		slices.Contains([]string{"health", "resources", "proxy"}, parts[7]) {
-		return h.fallback
-	}
-	return h.local
-}
-
-func (h *cloudSettingsHandler) groupHandler() http.Handler { return h.local }
-func (h *cloudSettingsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.handlerFor(r).ServeHTTP(w, r)
-}
-func (h *cloudSettingsHandler) Destroy() {
-	h.once.Do(func() {
-		destroyHandler(h.local)
-		destroyHandler(h.fallback)
+	orgID := user.GetOrgID()
+	return a.client.LegacyCheck(ctx, legacyclient.LegacyCheckRequest{
+		Namespace: ns, Subject: user.GetUID(), RequesterOrgID: &orgID,
+		Teams: user.GetGroups(), Evaluator: evaluator,
 	})
 }
 
-func destroyHandler(h http.Handler) {
-	if d, ok := h.(interface{ Destroy() }); ok {
-		d.Destroy()
+func (cloudSettingsAccessControl) RegisterScopeAttributeResolver(string, accesscontrol.ScopeAttributeResolver) {
+}
+
+func (a cloudSettingsAccessControl) WithoutResolvers() accesscontrol.AccessControl { return a }
+func (cloudSettingsAccessControl) InvalidateResolverCache(int64, string)           {}
+
+func cloudSettingsClient(client plugins.Client, middleware []backend.HandlerMiddleware) (plugins.Client, error) {
+	if client == nil {
+		// Frontend-only apps can serve settings and proxy routes without a v2 backend.
+		client = &backend.Handlers{
+			CheckHealthHandler: backend.CheckHealthHandlerFunc(func(context.Context, *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+				return nil, plugins.ErrMethodNotImplemented
+			}),
+			CallResourceHandler: backend.CallResourceHandlerFunc(func(context.Context, *backend.CallResourceRequest, backend.CallResourceResponseSender) error {
+				return plugins.ErrMethodNotImplemented
+			}),
+		}
 	}
+	return backend.HandlerFromMiddlewares(client, middleware...)
 }

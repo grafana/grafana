@@ -8,8 +8,10 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -18,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -105,7 +108,7 @@ func (noRoutesLoader) Notify(context.Context) (<-chan struct{}, error) {
 func ProvideCloudRoutesLoader(
 	cfg *setting.Cfg,
 	clients RoutesLoaderClients,
-	legacySettings LegacySettingsStoreProvider,
+	settings CloudSettingsDependencies,
 	tracer tracing.Tracer,
 	features featuremgmt.FeatureToggles,
 	reg prometheus.Registerer,
@@ -115,19 +118,34 @@ func ProvideCloudRoutesLoader(
 		return nil, err
 	}
 	return NewCloudRoutesLoader(cfg, PluginDependencies{
-		LegacySettingsStore:   legacySettings,
-		SettingsAccessChecker: cloudSettingsAccessChecker(clients.LegacyAccess),
-		SecureValues:          clients.SecureValues,
-		MetricsRegister:       reg,
-		RESTConfigProvider:    clients.RESTConfigProvider,
-		Unified:               clients.Resource,
-		AccessClient:          clients.Access,
-		Decrypter:             decrypter,
-		TokenExchanger:        newClientV3TokenExchanger(cfg),
-		Tracer:                tracer,
-		Features:              features,
-		Cfg:                   cfg,
+		LegacySettingsStore: settings.LegacyStore,
+		ReadOnlySettings:    true,
+		ContextProvider:     cloudPluginContext{},
+		AccessControl:       cloudSettingsAccessControl{clients.LegacyAccess},
+		SettingsMiddleware: append([]backend.HandlerMiddleware{
+			clientmiddleware.NewTracingHeaderMiddleware(),
+			clientmiddleware.NewForwardIDMiddleware(nil),
+		}, settings.Middleware...),
+		SettingsAccessChecker:       cloudSettingsAccessChecker(clients.LegacyAccess),
+		SettingsNamespaceAuthorizer: authorizer.AuthorizerFunc(cloudSettingsNamespaceAuthorizer),
+		SecureValues:                clients.SecureValues,
+		MetricsRegister:             reg,
+		RESTConfigProvider:          clients.RESTConfigProvider,
+		Unified:                     clients.Resource,
+		AccessClient:                clients.Access,
+		Decrypter:                   decrypter,
+		TokenExchanger:              newClientV3TokenExchanger(cfg),
+		Tracer:                      tracer,
+		Features:                    features,
+		Cfg:                         cfg,
 	})
+}
+
+// CloudSettingsDependencies supplies edition-specific storage and plugin credentials.
+// ST and MT use the same settings and subresource handlers.
+type CloudSettingsDependencies struct {
+	LegacyStore LegacySettingsStoreProvider
+	Middleware  []backend.HandlerMiddleware
 }
 
 // remoteDecrypter returns the secrets manager's gRPC client, or nil when it is

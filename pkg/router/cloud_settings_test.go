@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -11,8 +12,14 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/spec3"
 
@@ -38,16 +45,36 @@ func (f settingsLegacyCheckFunc) LegacyCheck(ctx context.Context, req legacyclie
 }
 
 func settingsRequester(ns string) *identity.StaticRequester {
-	return &identity.StaticRequester{Type: types.TypeUser, UserUID: "reader", Namespace: ns, OrgID: 1,
+	return &identity.StaticRequester{Type: types.TypeUser, UserUID: "reader", Namespace: ns, OrgID: 1, AccessToken: "obo-" + ns,
 		AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{DelegatedPermissions: []string{"*-app:get"}}},
 	}
 }
 
 func TestCloudSettingsRoutes(t *testing.T) {
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagApppluginsHandleProxyRequests: setting.NewInMemoryFlag(featuremgmt.FlagApppluginsHandleProxyRequests, true),
+	})))
+	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 	for _, withFallback := range []bool{false, true} {
-		t.Run(map[bool]string{false: "settings only", true: "retained v2 backend"}[withFallback], func(t *testing.T) {
-			deployment := definition.PluginDeployments{Plugins: []definition.PluginDeployment{{Definition: definition.PluginDefinition{
-				JSONData: plugins.JSONData{ID: "example-app", Type: plugins.TypeApp},
+		t.Run(map[bool]string{false: "settings only", true: "supersedes v2 HTTP backend"}[withFallback], func(t *testing.T) {
+			listener, err := net.Listen("tcp", "127.0.0.1:0")
+			require.NoError(t, err)
+			server := grpc.NewServer()
+			v2 := &cloudSettingsPluginServer{calls: make(chan *pluginv2.PluginContext, 10), headers: make(chan http.Header, 10)}
+			pluginv2.RegisterDiagnosticsServer(server, v2)
+			pluginv2.RegisterResourceServer(server, v2)
+			go func() { _ = server.Serve(listener) }()
+			t.Cleanup(server.Stop)
+			proxyCalls := make(chan *http.Request, 10)
+			proxyServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				proxyCalls <- r
+				w.WriteHeader(200)
+			}))
+			defer proxyServer.Close()
+			deployment := definition.PluginDeployments{Plugins: []definition.PluginDeployment{{Host: listener.Addr().String(), Definition: definition.PluginDefinition{
+				JSONData: plugins.JSONData{ID: "example-app", Type: plugins.TypeApp, Routes: []*plugins.Route{{
+					Path: "remote", Method: "GET", URL: proxyServer.URL + "/{{.JsonData.origin}}/{{.SecureJsonData.token}}", ReqAction: "example-app.remote:read",
+				}}},
 			}}}}
 			manifestServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				require.NoError(t, json.NewEncoder(w).Encode(deployment))
@@ -71,18 +98,23 @@ func TestCloudSettingsRoutes(t *testing.T) {
 			}
 			var checks []legacyclient.LegacyCheckRequest
 			allowed := true
+			routeAllowed := true
 			checkErr := error(nil)
 			legacy := settingsLegacyCheckFunc(func(_ context.Context, req legacyclient.LegacyCheckRequest) (bool, error) {
 				checks = append(checks, req)
-				return allowed, checkErr
+				permissions := map[string][]string{pluginaccesscontrol.ActionAppAccess: {"plugins:id:example-app"}}
+				if routeAllowed {
+					permissions["example-app.remote:read"] = []string{"plugins:id:example-app"}
+				}
+				return allowed && req.Evaluator.Evaluate(permissions), checkErr
 			})
-			settings := &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{"example-app": {Enabled: true, Pinned: true, JSONData: map[string]any{"origin": "cloudconfig"}}}}
+			settings := &cloudSettingsTestService{FakePluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{"example-app": {Enabled: true, Pinned: true, JSONData: map[string]any{"origin": "cloudconfig"}, SecureJSONData: map[string][]byte{"token": []byte("encrypted")}}}}}
 			factoryCalls := 0
 			provider := func(_ context.Context, id string) (grafanarest.Storage, error) {
 				factoryCalls++
 				return appsettings.NewLegacySettingsStore(id, id, settings), nil
 			}
-			loader, err := ProvideCloudRoutesLoader(cfg, RoutesLoaderClients{Resource: &resource.MockResourceClient{}, LegacyAccess: legacy}, provider, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), prometheus.NewRegistry())
+			loader, err := ProvideCloudRoutesLoader(cfg, RoutesLoaderClients{Resource: &resource.MockResourceClient{}, LegacyAccess: legacy}, CloudSettingsDependencies{LegacyStore: provider}, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), prometheus.NewRegistry())
 			require.NoError(t, err)
 			cloud := loader.(*cloudLoader)
 			defer func() { require.NoError(t, cloud.stopping(nil)) }()
@@ -92,15 +124,14 @@ func TestCloudSettingsRoutes(t *testing.T) {
 			backends, err := cloud.Load(t.Context())
 			require.NoError(t, err)
 			require.Len(t, backends, 1)
-			b := backends[0].(*cloudSettingsBackend)
+			b := backends[0].(*PluginBackend)
 			require.Equal(t, "example-app", b.Group().Name)
-			require.Equal(t, withFallback, b.fallback != nil)
 			deployment.Plugins = append(deployment.Plugins, deployment.Plugins[0])
 			pluginManifestsTargetOf(cloud, sourcePlugins).poll(t.Context(), cloud.dirty)
 			duplicates, err := cloud.Load(t.Context())
 			require.NoError(t, err)
 			require.Len(t, duplicates, 1)
-			require.Equal(t, b.Key(), duplicates[0].Key(), "duplicate plugin entries must retain the same HTTP fallback")
+			require.Equal(t, b.Key(), duplicates[0].Key(), "duplicate plugin entries must retain the same deployment")
 			require.Nil(t, pluginManifestsTargetOf(cloud, sourcePlugins).connections)
 			h, err := b.Load(t.Context())
 			require.NoError(t, err)
@@ -109,6 +140,8 @@ func TestCloudSettingsRoutes(t *testing.T) {
 			serve := func(method, path string, user *identity.StaticRequester) *httptest.ResponseRecorder {
 				r := httptest.NewRequest(method, path, strings.NewReader(`{}`))
 				r.Header.Set("Content-Type", "application/json")
+				r.Header.Set("X-Access-Token", "unverified")
+				r.Header.Set("X-Grafana-Id", "unverified-id")
 				if user != nil {
 					r = r.WithContext(identity.WithRequester(r.Context(), user))
 				}
@@ -125,6 +158,7 @@ func TestCloudSettingsRoutes(t *testing.T) {
 				require.NoError(t, json.Unmarshal(res.Body.Bytes(), &obj))
 				require.Equal(t, ns, obj.Namespace)
 				require.True(t, obj.Spec.Pinned)
+				require.NotContains(t, res.Body.String(), "read-secret")
 				last := checks[len(checks)-1]
 				require.Equal(t, ns, last.Namespace)
 				require.Equal(t, "user:reader", last.Subject)
@@ -170,18 +204,53 @@ func TestCloudSettingsRoutes(t *testing.T) {
 			require.NotNil(t, doc.Paths.Paths[path].Get)
 			require.Nil(t, doc.Paths.Paths[path].Put)
 			require.Nil(t, doc.Paths.Paths[path].Delete)
-			for _, sub := range []string{"health", "resources", "proxy"} {
-				res = serve("GET", item+"/"+sub, settingsRequester("stacks-1"))
-				if withFallback {
-					require.Equal(t, 202, res.Code)
-				} else {
-					require.Equal(t, 404, res.Code)
+			for _, ns := range []string{"stacks-1", "stacks-2"} {
+				for _, sub := range []string{"health", "resources"} {
+					res = serve("GET", root+"/namespaces/"+ns+"/app/instance/"+sub, settingsRequester(ns))
+					require.Equal(t, 200, res.Code, res.Body.String())
+					call := <-v2.calls
+					require.Equal(t, ns, call.Namespace)
+					require.Equal(t, "example-app", call.PluginId)
+					require.Empty(t, call.PluginVersion)
+					headers := <-v2.headers
+					require.Equal(t, "obo-"+ns, headers.Get("X-Access-Token"))
+					require.Empty(t, headers.Get("X-Grafana-Id"))
+					require.Equal(t, "read-secret", call.AppInstanceSettings.DecryptedSecureJsonData["token"])
+					require.Empty(t, call.GrafanaConfig)
+					require.NotNil(t, call.User)
+					require.JSONEq(t, `{"origin":"cloudconfig"}`, string(call.AppInstanceSettings.JsonData))
 				}
 			}
-			require.Equal(t, withFallback, doc.Paths.Paths[path+"/health"] != nil)
-			if withFallback {
-				require.Len(t, fallbackCalls, 3)
-			}
+			require.Equal(t, 403, serve("POST", item+"/resources", settingsRequester("stacks-1")).Code)
+			writer := settingsRequester("stacks-1")
+			writer.AccessTokenClaims.Rest.DelegatedPermissions = append(writer.AccessTokenClaims.Rest.DelegatedPermissions, "example-app:create")
+			res = serve("POST", item+"/resources", writer)
+			require.Equal(t, 200, res.Code, res.Body.String())
+			require.Equal(t, "stacks-1", (<-v2.calls).Namespace)
+			require.Equal(t, "obo-stacks-1", (<-v2.headers).Get("X-Access-Token"))
+			require.NotNil(t, doc.Paths.Paths[path+"/health"])
+			res = serve("GET", item+"/proxy/remote", settingsRequester("stacks-1"))
+			require.Equal(t, 200, res.Code, res.Body.String())
+			proxied := <-proxyCalls
+			require.Equal(t, "/cloudconfig/read-secret", proxied.URL.Path)
+			require.Equal(t, "obo-stacks-1", proxied.Header.Get("X-Access-Token"))
+			require.Empty(t, proxied.Header.Get("X-Grafana-Id"))
+			last := checks[len(checks)-1]
+			require.Equal(t, "stacks-1", last.Namespace)
+			require.True(t, last.Evaluator.Evaluate(map[string][]string{"example-app.remote:read": {"plugins:id:example-app"}}))
+			routeAllowed = false
+			require.Equal(t, 403, serve("GET", item+"/proxy/remote", settingsRequester("stacks-1")).Code)
+			require.Empty(t, proxyCalls)
+			routeAllowed = true
+			require.Empty(t, fallbackCalls, "all endpoints are served by the shared handler")
+			allowed = false
+			require.Equal(t, 403, serve("GET", item+"/health", settingsRequester("stacks-1")).Code)
+			require.Empty(t, v2.calls)
+			allowed = true
+			settings.Plugins["example-app"].Enabled = false
+			require.Equal(t, 400, serve("GET", item+"/health", settingsRequester("stacks-1")).Code)
+			require.Empty(t, v2.calls)
+
 		})
 	}
 }
@@ -199,56 +268,22 @@ type settingsDestroyStore struct {
 
 func (s *settingsDestroyStore) Destroy() { s.destroyed++ }
 
-type settingsFallbackBackend struct {
-	*dummyBackend
-	handler http.Handler
-	err     error
-	key     string
+type cloudSettingsPluginServer struct {
+	pluginv2.UnimplementedDiagnosticsServer
+	pluginv2.UnimplementedResourceServer
+	calls   chan *pluginv2.PluginContext
+	headers chan http.Header
 }
 
-func (b *settingsFallbackBackend) Key() string { return b.key }
-func (b *settingsFallbackBackend) Load(context.Context) (http.Handler, error) {
-	return b.handler, b.err
+func (s *cloudSettingsPluginServer) CheckHealth(_ context.Context, req *pluginv2.CheckHealthRequest) (*pluginv2.CheckHealthResponse, error) {
+	s.calls <- req.PluginContext
+	s.headers <- backend.FromProto().CheckHealthRequest(req).GetHTTPHeaders()
+	return &pluginv2.CheckHealthResponse{Status: pluginv2.CheckHealthResponse_OK}, nil
 }
-
-type settingsDestroyHandler struct{ destroyed int }
-
-func (h *settingsDestroyHandler) ServeHTTP(http.ResponseWriter, *http.Request) {}
-func (h *settingsDestroyHandler) Destroy()                                     { h.destroyed++ }
-
-func TestCloudSettingsLifecycle(t *testing.T) {
-	for _, fail := range []bool{false, true} {
-		t.Run(map[bool]string{false: "retired handler", true: "failed load"}[fail], func(t *testing.T) {
-			store := &settingsDestroyStore{Storage: appsettings.NewLegacySettingsStore("example-app", "example-app", &pluginsettings.FakePluginSettings{})}
-			b, err := newCloudSettingsBackend(t.Context(), definition.PluginDeployment{Definition: definition.PluginDefinition{JSONData: plugins.JSONData{ID: "example-app", Type: plugins.TypeApp}}}, PluginDependencies{
-				Unified: &resource.MockResourceClient{}, LegacySettingsStore: func(context.Context, string) (grafanarest.Storage, error) { return store, nil },
-			})
-			require.NoError(t, err)
-			key := b.Key()
-			external := &settingsDestroyHandler{}
-			fallback := &settingsFallbackBackend{dummyBackend: &dummyBackend{group: "example-app"}, handler: external, key: "v2:1"}
-			b.fallback = fallback
-			require.NotEqual(t, key, b.Key())
-			key = b.Key()
-			fallback.key = "v2:2"
-			require.NotEqual(t, key, b.Key())
-			if fail {
-				fallback.err = errors.New("fallback failed")
-			}
-			h, err := b.Load(t.Context())
-			if fail {
-				require.ErrorContains(t, err, "fallback failed")
-			} else {
-				require.NoError(t, err)
-				require.Zero(t, store.destroyed)
-				require.Zero(t, external.destroyed)
-				h.(interface{ Destroy() }).Destroy()
-				h.(interface{ Destroy() }).Destroy()
-			}
-			require.Equal(t, 1, store.destroyed)
-			require.Equal(t, 1, external.destroyed)
-		})
-	}
+func (s *cloudSettingsPluginServer) CallResource(req *pluginv2.CallResourceRequest, stream pluginv2.Resource_CallResourceServer) error {
+	s.calls <- req.PluginContext
+	s.headers <- backend.FromProto().CallResourceRequest(req).GetHTTPHeaders()
+	return stream.Send(&pluginv2.CallResourceResponse{Code: 200, Body: []byte(req.Path)})
 }
 
 func TestCloudSettingsSourceGateAndFilter(t *testing.T) {
@@ -282,5 +317,41 @@ func TestCloudSettingsSourceGateAndFilter(t *testing.T) {
 		require.Zero(t, skipped)
 		require.Len(t, backends, tc.want)
 		target.close()
+	}
+}
+
+type cloudSettingsTestService struct {
+	*pluginsettings.FakePluginSettings
+}
+
+func (*cloudSettingsTestService) DecryptedValues(*pluginsettings.DTO) map[string]string {
+	return map[string]string{"token": "read-secret"}
+}
+
+func TestCloudSettingsStoreLifecycle(t *testing.T) {
+	for _, fail := range []bool{false, true} {
+		t.Run(map[bool]string{false: "retirement", true: "failed load"}[fail], func(t *testing.T) {
+			store := &settingsDestroyStore{Storage: appsettings.NewLegacySettingsStore("example-app", "example-app", &pluginsettings.FakePluginSettings{})}
+			deps := PluginDependencies{ReadOnlySettings: true, ContextProvider: cloudPluginContext{}, Unified: &resource.MockResourceClient{}, LegacySettingsStore: func(context.Context, string) (grafanarest.Storage, error) { return store, nil }}
+			if fail {
+				deps.ContextProvider = nil
+			}
+			plugin := definition.PluginDefinition{JSONData: plugins.JSONData{ID: "example-app", Type: plugins.TypeApp}}
+			loadSettingsManifest(t.Context(), &plugin)
+			b, err := newPluginSettingsBackend(plugin, func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
+				return struct{ plugins.Client }{}, nil, nil
+			}, deps)
+			require.NoError(t, err)
+			h, err := b.Load(t.Context())
+			if fail {
+				require.ErrorContains(t, err, "context provider")
+			} else {
+				require.NoError(t, err)
+				require.Zero(t, store.destroyed)
+				h.(interface{ Destroy() }).Destroy()
+				h.(interface{ Destroy() }).Destroy()
+			}
+			require.Equal(t, 1, store.destroyed)
+		})
 	}
 }

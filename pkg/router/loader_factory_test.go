@@ -22,7 +22,7 @@ func TestProvideCloudRoutesLoader_LegacySettingsProvider(t *testing.T) {
 		gotContext, gotID = ctx, id
 		return nil, nil
 	}
-	loader, err := ProvideCloudRoutesLoader(cfg, RoutesLoaderClients{}, provider,
+	loader, err := ProvideCloudRoutesLoader(cfg, RoutesLoaderClients{}, CloudSettingsDependencies{LegacyStore: provider},
 		tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), prometheus.NewRegistry())
 	require.NoError(t, err)
 	target := pluginManifestsTargetOf(loader.(*cloudLoader), sourcePlugins)
@@ -36,7 +36,7 @@ func TestProvideCloudRoutesLoader_LegacySettingsProvider(t *testing.T) {
 }
 
 func provideTestCloudRoutesLoader(cfg *setting.Cfg, reg prometheus.Registerer) (RoutesLoader, error) {
-	return ProvideCloudRoutesLoader(cfg, RoutesLoaderClients{}, nil, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), reg)
+	return ProvideCloudRoutesLoader(cfg, RoutesLoaderClients{}, CloudSettingsDependencies{}, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), reg)
 }
 
 func TestProvideCloudRoutesLoader_NotConfigured(t *testing.T) {
@@ -121,7 +121,7 @@ func TestProvideCloudRoutesLoader_StandaloneIgnoresMiddlewareFlag(t *testing.T) 
 	cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": "https://plugins.invalid/plugins"})
 	cfg.Target = []string{"router"}
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
-	loader, err := ProvideCloudRoutesLoader(cfg, RoutesLoaderClients{}, nil, tracing.InitializeTracerForTest(), features, prometheus.NewRegistry())
+	loader, err := ProvideCloudRoutesLoader(cfg, RoutesLoaderClients{}, CloudSettingsDependencies{}, tracing.InitializeTracerForTest(), features, prometheus.NewRegistry())
 	require.NoError(t, err)
 	require.IsType(t, &cloudLoader{}, loader)
 	require.False(t, MiddlewareEnabled(cfg, features))

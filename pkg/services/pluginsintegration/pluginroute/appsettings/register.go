@@ -3,13 +3,13 @@ package appsettings
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 
@@ -57,8 +57,6 @@ type Options struct {
 	RegisterProxy bool
 	// ReadOnly serves the legacy store directly, independent of migration modes.
 	ReadOnly bool
-	// ExternalSubresources retains v2 execution in an existing HTTP backend.
-	ExternalSubresources http.Handler
 
 	DataProxyLogging         bool // from cfg
 	SendUserHeader           bool // from cfg
@@ -81,8 +79,7 @@ type Builder struct {
 	contextProvider PluginContextWrapper
 	schemas         map[string]*pluginschema.PluginSchema
 	decrypter       decrypt.DecryptService
-	accessChecker   pluginaccesscontrol.AppAccessChecker
-	writeChecker    pluginaccesscontrol.AppAccessChecker
+	authorizer      authorizer.Authorizer
 	features        featuremgmt.FeatureToggles
 	tracer          tracing.Tracer
 
@@ -109,15 +106,11 @@ func NewBuilder(
 	tracer tracing.Tracer, // needed for proxy
 	features featuremgmt.FeatureToggles, // needed for proxy
 ) (*Builder, error) {
-	if !opts.ReadOnly && (client == nil || contextProvider == nil) {
+	if client == nil || contextProvider == nil {
 		return nil, fmt.Errorf("plugin %q: settings require a plugin client and context provider", plugin.JSONData.ID)
 	}
 	if opts.ReadOnly && opts.LegacyStore == nil {
 		return nil, fmt.Errorf("plugin %q: read-only settings require a legacy store", plugin.JSONData.ID)
-	}
-	var writeChecker pluginaccesscontrol.AppAccessChecker
-	if opts.AccessControl != nil {
-		writeChecker = pluginaccesscontrol.NewSettingsWriteChecker(opts.AccessControl)
 	}
 	return &Builder{
 		group:           plugin.JSONData.ID,
@@ -127,8 +120,7 @@ func NewBuilder(
 		contextProvider: contextProvider,
 		schemas:         plugin.Schemas,
 		decrypter:       decrypter,
-		accessChecker:   accessChecker,
-		writeChecker:    writeChecker,
+		authorizer:      newSettingsAuthorizer(plugin.JSONData.ID, accessChecker, opts),
 		opts:            opts,
 		features:        features,
 		tracer:          tracer,
@@ -172,13 +164,10 @@ func (b *Builder) InstallSchema(scheme *runtime.Scheme) error {
 }
 
 func (b *Builder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	if b.opts.ReadOnly {
-		apiGroupInfo.VersionedResourcesStorageMap[apppluginV0.VERSION] = map[string]rest.Storage{
-			apppluginV0.APP_RESOURCE_NAME: readOnlyStorage{b.opts.LegacyStore},
-		}
-		return nil
-	}
 	registerSubresourceMetrics(opts.MetricsRegister)
+	if b.opts.ReadOnly {
+		return b.installSettingsStorage(apiGroupInfo, readOnlyStorage{b.opts.LegacyStore})
+	}
 
 	settingsRI := apppluginV0.SettingsResourceInfo.WithGroupAndShortName(
 		b.group, b.pluginJSON.ID,
@@ -212,8 +201,12 @@ func (b *Builder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo
 	}
 
 	// The subresources are served by SubresourceHandler.
+	return b.installSettingsStorage(apiGroupInfo, settingsStorage)
+}
+
+func (b *Builder) installSettingsStorage(apiGroupInfo *genericapiserver.APIGroupInfo, settingsStorage rest.Storage) error {
 	apiGroupInfo.VersionedResourcesStorageMap[apppluginV0.VERSION] = map[string]rest.Storage{
-		settingsRI.StoragePath(): settingsStorage,
+		apppluginV0.APP_RESOURCE_NAME: settingsStorage,
 	}
 
 	// Direct reads of this plugin's own storage, by group version resource.

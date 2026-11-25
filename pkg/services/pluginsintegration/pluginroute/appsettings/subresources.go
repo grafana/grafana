@@ -17,21 +17,6 @@ import (
 // the API server's handler chain, which authenticates and authorizes the request
 // and adds the request info it dispatches on.
 func (b *Builder) SubresourceHandler(next http.Handler) http.Handler {
-	if b.opts.ReadOnly {
-		if b.opts.ExternalSubresources == nil {
-			return next
-		}
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			info, ok := request.RequestInfoFrom(r.Context())
-			if ok && info.APIGroup == b.group && info.APIVersion == apppluginV0.VERSION &&
-				info.Resource == apppluginV0.APP_RESOURCE_NAME && info.Name == apppluginV0.INSTANCE_NAME &&
-				slices.Contains([]string{"health", "resources", "proxy"}, info.Subresource) {
-				b.opts.ExternalSubresources.ServeHTTP(w, r)
-				return
-			}
-			next.ServeHTTP(w, r)
-		})
-	}
 	handlers := map[string]subresource{
 		"health": {methods: []string{http.MethodGet}, handler: &healthHandler{
 			group:           b.group,

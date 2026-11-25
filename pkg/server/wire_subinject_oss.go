@@ -34,7 +34,7 @@ import (
 
 // InitializeCloudRoutesLoader has no remote legacy settings adapter in OSS builds.
 func InitializeCloudRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg promclient.Registerer) (router.RoutesLoader, error) {
-	wire.Build(router.ProvideCloudRoutesLoader, wire.Value(router.LegacySettingsStoreProvider(nil)))
+	wire.Build(router.ProvideCloudRoutesLoader, wire.Value(router.CloudSettingsDependencies{}))
 	return nil, nil
 }
 

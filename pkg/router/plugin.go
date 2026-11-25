@@ -17,10 +17,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
@@ -57,24 +59,27 @@ type LegacySettingsStoreProvider func(ctx context.Context, pluginID string) (gra
 
 // The dependencies are configured at startup and used across all plugins
 type PluginDependencies struct {
-	PluginClient          plugins.Client
-	ContextProvider       appsettings.PluginContextWrapper
-	AccessControl         accesscontrol.AccessControl
-	AccessClient          types.AccessClient // runs the access checks manifest routes declare
-	DualWrite             dualwrite.Service
-	SecureValues          secret.InlineSecureValueSupport
-	MetricsRegister       prometheus.Registerer
-	BuilderMetrics        *builder.BuilderMetrics
-	RESTConfigProvider    restcfg.RestConfigProvider
-	LegacySettingsStore   LegacySettingsStoreProvider
-	SettingsAccessChecker pluginaccesscontrol.AppAccessChecker
-	Unified               resource.ResourceClient
-	Decrypter             decrypt.DecryptService
-	TokenExchanger        authn.TokenExchanger       // used for delegation
-	PluginAuth            *pluginauth.Config         // whether Grafana signs plugin tokens itself
-	Tracer                tracing.Tracer             // needed for proxy (legacy)
-	Features              featuremgmt.FeatureToggles // needed for proxy (legacy)
-	Cfg                   *setting.Cfg
+	PluginClient                plugins.Client
+	ContextProvider             appsettings.PluginContextWrapper
+	AccessControl               accesscontrol.AccessControl
+	AccessClient                types.AccessClient // runs the access checks manifest routes declare
+	DualWrite                   dualwrite.Service
+	SecureValues                secret.InlineSecureValueSupport
+	MetricsRegister             prometheus.Registerer
+	BuilderMetrics              *builder.BuilderMetrics
+	RESTConfigProvider          restcfg.RestConfigProvider
+	LegacySettingsStore         LegacySettingsStoreProvider
+	SettingsAccessChecker       pluginaccesscontrol.AppAccessChecker
+	SettingsNamespaceAuthorizer authorizer.Authorizer
+	ReadOnlySettings            bool
+	SettingsMiddleware          []backend.HandlerMiddleware
+	Unified                     resource.ResourceClient
+	Decrypter                   decrypt.DecryptService
+	TokenExchanger              authn.TokenExchanger       // used for delegation
+	PluginAuth                  *pluginauth.Config         // whether Grafana signs plugin tokens itself
+	Tracer                      tracing.Tracer             // needed for proxy (legacy)
+	Features                    featuremgmt.FeatureToggles // needed for proxy (legacy)
+	Cfg                         *setting.Cfg
 }
 
 type PluginLoaderDependencies struct {
@@ -558,12 +563,17 @@ func (b *PluginBackend) load(ctx context.Context) (*pluginroute.Handler, error) 
 // loadSettings serves the settings API, which calls the plugin through its
 // v2 client only.
 func (b *PluginBackend) loadSettings(ctx context.Context, cfg *setting.Cfg, opts pluginroute.Options, client plugins.Client) (*pluginroute.Handler, error) {
+	if b.deps.SettingsAccessChecker != nil {
+		opts.AccessChecker = b.deps.SettingsAccessChecker
+	}
+	opts.NamespaceAuthorizer = b.deps.SettingsNamespaceAuthorizer
 	if client != nil {
 		opts.PluginClient = &breakerPluginClient{Client: client}
 	}
 	opts.ContextProvider = b.deps.ContextProvider
 	opts.Features = b.deps.Features
 	opts.Settings = appsettings.Options{
+		ReadOnly:                 b.deps.ReadOnlySettings,
 		RegisterProxy:            openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsHandleProxyRequests, false, openfeature.TransactionContext(ctx)),
 		AccessControl:            b.deps.AccessControl,
 		DataProxyLogging:         cfg.DataProxyLogging,
@@ -583,7 +593,11 @@ func (b *PluginBackend) loadSettings(ctx context.Context, cfg *setting.Cfg, opts
 	opts.DualWrite = b.deps.DualWrite
 	opts.StorageOpts = &options.StorageOptions{UnifiedStorageConfig: cfg.UnifiedStorage}
 	opts.BuilderMetrics = b.deps.BuilderMetrics
-	return pluginroute.NewAppSettingsHandler(*b.settings, opts)
+	handler, err := pluginroute.NewAppSettingsHandler(*b.settings, opts)
+	if err != nil && opts.Settings.LegacyStore != nil {
+		opts.Settings.LegacyStore.Destroy()
+	}
+	return handler, err
 }
 
 // loadManifest serves a manifest's kinds and routes, which call the plugin

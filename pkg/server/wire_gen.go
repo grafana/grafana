@@ -38,8 +38,8 @@ import (
 
 // InitializeCloudRoutesLoader has no remote legacy settings adapter in OSS builds.
 func InitializeCloudRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (router.RoutesLoader, error) {
-	legacySettingsStoreProvider := _wireLegacySettingsStoreProviderValue
-	routesLoader, err := router.ProvideCloudRoutesLoader(cfg, clients, legacySettingsStoreProvider, tracer, features, reg)
+	cloudSettingsDependencies := _wireCloudSettingsDependenciesValue
+	routesLoader, err := router.ProvideCloudRoutesLoader(cfg, clients, cloudSettingsDependencies, tracer, features, reg)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func InitializeCloudRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderCl
 }
 
 var (
-	_wireLegacySettingsStoreProviderValue = router.LegacySettingsStoreProvider(nil)
+	_wireCloudSettingsDependenciesValue = router.CloudSettingsDependencies{}
 )
 
 // InitializeModuleServer is a simplified set of dependencies for the CLI,

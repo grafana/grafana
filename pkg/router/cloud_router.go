@@ -366,18 +366,6 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 		}
 		for _, b := range snapshot.backends {
 			group := b.Group().Name
-			if settings, ok := b.(*cloudSettingsBackend); ok {
-				copy := *settings
-				copy.fallback = lookup[group]
-				if previous, ok := copy.fallback.(*cloudSettingsBackend); ok {
-					// Duplicate plugin entries replace settings, not the retained HTTP backend.
-					copy.fallback = previous.fallback
-					shadowed = append(shadowed, shadowedGroup{Group: group, Source: previous.Source(), By: b.Source()})
-				}
-				lookup[group] = &copy
-				fromFallback[group] = false
-				continue
-			}
 			if previous, ok := lookup[group]; ok && !fromFallback[group] {
 				shadowed = append(shadowed, shadowedGroup{Group: group, Source: previous.Source(), By: b.Source()})
 			}
