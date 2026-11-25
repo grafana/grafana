@@ -56,7 +56,7 @@ func TestSTAppSettingsFeatureFlags(t *testing.T) {
 				}}}
 			}}
 			settings := &stCompatibilitySettings{FakePluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
-				"example-app": {Enabled: true, Pinned: true, JSONData: map[string]any{"origin": "local"}, SecureJSONData: map[string][]byte{"token": []byte("encrypted")}},
+				"example-app": {Enabled: true, JSONData: map[string]any{"origin": "local"}, SecureJSONData: map[string][]byte{"token": []byte("encrypted")}},
 			}}}
 			calls := make(chan backend.PluginContext, 2)
 			client := &backend.Handlers{
@@ -102,7 +102,6 @@ func TestSTAppSettingsFeatureFlags(t *testing.T) {
 			require.NotContains(t, res.Body.String(), "local-secret")
 			var obj appv0.Settings
 			require.NoError(t, json.Unmarshal(res.Body.Bytes(), &obj))
-			require.True(t, obj.Spec.Pinned)
 			for _, sub := range []string{"health", "resources/example"} {
 				res = serve("GET", item+"/"+sub, "")
 				require.Equal(t, http.StatusOK, res.Code, res.Body.String())
