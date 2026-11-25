@@ -589,7 +589,7 @@ describe('applyPluginNav', () => {
     });
 
     it('adds an Assistant stub when only the onboarding app is installed', () => {
-      const merged = merge(app('grafana-assistant-onboarding-app', 'Assistant onboarding', []));
+      const merged = merge(app('grafana-assistantonboarding-app', 'Assistant onboarding', []));
 
       const stub = findById(merged, 'plugin-page-grafana-assistant-app');
       expect(stub?.text).toBe('Assistant');
@@ -598,7 +598,7 @@ describe('applyPluginNav', () => {
 
     it('does not add the Assistant stub when the real app is installed', () => {
       const merged = merge(
-        app('grafana-assistant-onboarding-app', 'Assistant onboarding', []),
+        app('grafana-assistantonboarding-app', 'Assistant onboarding', []),
         app('grafana-assistant-app', 'Assistant', [page('Workspace', '/a/grafana-assistant-app/workspace')])
       );
 

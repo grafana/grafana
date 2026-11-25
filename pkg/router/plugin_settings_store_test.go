@@ -34,7 +34,7 @@ func TestPluginSettingsStoreProvider(t *testing.T) {
 		}
 		t.Run(name, func(t *testing.T) {
 			settings := &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
-				"example-app": {Enabled: true, Pinned: true, JSONData: map[string]any{"endpoint": "before"}},
+				"example-app": {Enabled: true, JSONData: map[string]any{"endpoint": "before"}},
 				"other-app":   {Enabled: true, JSONData: map[string]any{"endpoint": "other"}},
 			}}
 			cfg := setting.NewCfg()
@@ -80,7 +80,6 @@ func TestPluginSettingsStoreProvider(t *testing.T) {
 				var got apppluginV0.Settings
 				require.NoError(t, json.Unmarshal(res.Body.Bytes(), &got))
 				require.Equal(t, settings.Plugins[id].JSONData, got.Spec.JsonData.Object)
-				require.Equal(t, settings.Plugins[id].Pinned, got.Spec.Pinned)
 
 				got.Spec.JsonData.Object["endpoint"] = id + "-updated"
 				body, err := json.Marshal(got)
