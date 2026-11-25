@@ -32,7 +32,7 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
   // the order of middleware is important!
   const middleware = getPositioningMiddleware(placement);
 
-  const { reference: virtual } = useAnchoredMenu(coords, onTooltipClose);
+  const { reference: virtual } = useAnchoredMenu(coords, onTooltipClose, false);
 
   const { context, refs, floatingStyles } = useFloating({
     open: true,

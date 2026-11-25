@@ -8,7 +8,7 @@ export interface MenuAnchor {
   contextElement?: Element;
 }
 
-export function useAnchoredMenu(anchor: MenuAnchor | undefined, onClose?: () => void) {
+export function useAnchoredMenu(anchor: MenuAnchor | undefined, onClose?: () => void, trackPosition = true) {
   const close = useRef(onClose);
   useEffect(() => {
     close.current = onClose;
@@ -58,9 +58,11 @@ export function useAnchoredMenu(anchor: MenuAnchor | undefined, onClose?: () => 
         close.current?.();
         return;
       }
-      setTracked((previous) =>
-        previous?.anchor === anchor && previous.x === x && previous.y === y ? previous : { anchor, x, y }
-      );
+      if (trackPosition) {
+        setTracked((previous) =>
+          previous?.anchor === anchor && previous.x === x && previous.y === y ? previous : { anchor, x, y }
+        );
+      }
     };
 
     const observer = new MutationObserver(() => {
@@ -79,7 +81,7 @@ export function useAnchoredMenu(anchor: MenuAnchor | undefined, onClose?: () => 
       window.removeEventListener('scroll', update, true);
       window.removeEventListener('resize', update);
     };
-  }, [anchor, reference]);
+  }, [anchor, reference, trackPosition]);
 
   return {
     reference,
