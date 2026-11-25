@@ -11,3 +11,9 @@ import type { AccessControlAction } from 'app/types/accessControl';
 export function evaluateAccess(actions: AccessControlAction[]) {
   return () => contextSrv.evaluatePermission(actions);
 }
+
+/** Like `evaluateAccess`, for a check the "any of these actions" rule can't express, e.g. requiring several. */
+export function allowIf(isAllowed: () => boolean) {
+  // 'Reject' is the role no user has, which is how route guards deny access.
+  return () => (isAllowed() ? [] : ['Reject']);
+}
