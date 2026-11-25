@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useRef } from 'react';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
@@ -77,7 +78,8 @@ export function AssistantToolbarButtons() {
   const { availableComponents, dockedComponentId, floatingHidden } = useExtensionSidebarContext();
   // The top bar also renders outside a router, so the location comes from the location service.
   const location = useObservable(locationService.getLocationObservable(), locationService.getLocation());
-  const onWorkspace = isAssistantWorkspacePath(location.pathname);
+  const pagesStandalone = usePagesOpenStandalone();
+  const onWorkspace = isAssistantWorkspacePath(location.pathname, { pagesStandalone });
 
   const assistantComponentTitle = availableComponents.get(ASSISTANT_PLUGIN_ID)?.addedComponents[0]?.title;
   const assistantComponentId = assistantComponentTitle
@@ -86,7 +88,7 @@ export function AssistantToolbarButtons() {
   // Held hidden, the sidebar reads as closed, so the button shows it instead of closing it unseen.
   const isOpen = assistantComponentId !== undefined && dockedComponentId === assistantComponentId && !floatingHidden;
 
-  useRememberPageBeforeWorkspace(workspaceEnabled, location, onWorkspace);
+  useRememberPageBeforeWorkspace(workspaceEnabled, location, onWorkspace, pagesStandalone);
   useCollapseMegaMenuOnWorkspace(workspaceEnabled && onWorkspace);
 
   if (!workspaceEnabled || isSmallScreen) {
@@ -163,7 +165,8 @@ export function AssistantToolbarButtons() {
 function useRememberPageBeforeWorkspace(
   enabled: boolean,
   location: { pathname: string; search: string; hash: string },
-  onWorkspace: boolean
+  onWorkspace: boolean,
+  pagesStandalone: boolean
 ) {
   const { dockedComponentId, setDockedComponentId, floatingHidden } = useExtensionSidebarContext();
   const previousPathname = useRef(location.pathname);
@@ -172,7 +175,7 @@ function useRememberPageBeforeWorkspace(
     !floatingHidden && getComponentMetaFromComponentId(dockedComponentId ?? '')?.pluginId === ASSISTANT_PLUGIN_ID;
 
   useEffect(() => {
-    const leftWorkspace = isAssistantWorkspacePath(previousPathname.current) && !onWorkspace;
+    const leftWorkspace = isAssistantWorkspacePath(previousPathname.current, { pagesStandalone }) && !onWorkspace;
     previousPathname.current = pathname;
     if (!enabled || onWorkspace) {
       return;
@@ -186,7 +189,27 @@ function useRememberPageBeforeWorkspace(
       }
     }
     rememberPageBeforeWorkspace({ pathname, search, hash }, assistantDocked ? dockedComponentId : undefined);
-  }, [enabled, onWorkspace, pathname, search, hash, assistantDocked, dockedComponentId, setDockedComponentId]);
+  }, [
+    enabled,
+    onWorkspace,
+    pagesStandalone,
+    pathname,
+    search,
+    hash,
+    assistantDocked,
+    dockedComponentId,
+    setDockedComponentId,
+  ]);
+}
+
+/**
+ * Whether the plugin opens New page in its Pages standalone view rather than in the workspace, by the plugin's own
+ * flags.
+ */
+function usePagesOpenStandalone(): boolean {
+  const pages = useBooleanFlagValue('assistant.frontend.pages', false);
+  const standaloneView = useBooleanFlagValue('assistant.frontend.pages-standalone-view', false);
+  return pages && standaloneView;
 }
 
 /**

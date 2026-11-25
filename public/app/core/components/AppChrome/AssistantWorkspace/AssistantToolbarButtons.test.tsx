@@ -247,6 +247,50 @@ describe('AssistantToolbarButtons', () => {
     expect(store.set).not.toHaveBeenCalledWith('grafana.navigation.open', expect.anything());
   });
 
+  describe('with Pages in their standalone view', () => {
+    beforeEach(async () => {
+      await act(async () => {
+        setTestFlags({
+          [FULLSCREEN_WORKSPACE_FLAG]: true,
+          'assistant.frontend.pages': true,
+          'assistant.frontend.pages-standalone-view': true,
+        });
+      });
+    });
+
+    it('keeps the docked mega menu open on New page, which is a Pages view there', () => {
+      const chrome = new AppChromeService();
+      chrome.update({ megaMenuDocked: true, megaMenuOpen: true });
+      renderButtons('/a/grafana-assistant-app/pages/my-page', chrome);
+
+      navigate('/a/grafana-assistant-app/pages/new/chat-1?page=page-1');
+
+      expect(chrome.state.getValue().megaMenuOpen).toBe(true);
+      expect(screen.getByText('Chat')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Exit Workspace' })).not.toBeInTheDocument();
+    });
+
+    it('still closes it on the workspace itself', () => {
+      const chrome = new AppChromeService();
+      chrome.update({ megaMenuDocked: true, megaMenuOpen: true });
+      renderButtons('/explore?left=1', chrome);
+
+      navigate('/a/grafana-assistant-app/workspace');
+
+      expect(chrome.state.getValue().megaMenuOpen).toBe(false);
+    });
+  });
+
+  it('closes the docked mega menu on New page when it opens the workspace on the page builder', () => {
+    const chrome = new AppChromeService();
+    chrome.update({ megaMenuDocked: true, megaMenuOpen: true });
+    renderButtons('/explore?left=1', chrome);
+
+    navigate('/a/grafana-assistant-app/pages/new/chat-1?page=page-1');
+
+    expect(chrome.state.getValue().megaMenuOpen).toBe(false);
+  });
+
   it('keeps the mega menu closed after the workspace when it was closed before', () => {
     const chrome = new AppChromeService();
     chrome.update({ megaMenuDocked: true, megaMenuOpen: false });

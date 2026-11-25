@@ -1,8 +1,9 @@
 export const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';
 const ASSISTANT_WORKSPACE_URL = `/a/${ASSISTANT_PLUGIN_ID}/workspace`;
 
-// `/pages/new` is the workspace opened on the page builder, so it gets the same top bar.
-const WORKSPACE_PATHS = [ASSISTANT_WORKSPACE_URL, `/a/${ASSISTANT_PLUGIN_ID}/pages/new`];
+// `/pages/new` is the workspace opened on the page builder, so it gets the same top bar. In the plugin's Pages
+// standalone view it is a Pages view instead, which keeps Grafana's navigation, as a dashboard does.
+const PAGE_BUILDER_URL = `/a/${ASSISTANT_PLUGIN_ID}/pages/new`;
 
 // Per browser tab, so Exit Workspace returns where this tab came from.
 const PAGE_BEFORE_WORKSPACE_KEY = 'grafana.assistant.workspace.pageBefore';
@@ -19,8 +20,9 @@ interface PageBeforeWorkspace {
   sidebarComponentId?: string;
 }
 
-export function isAssistantWorkspacePath(pathname: string): boolean {
-  return WORKSPACE_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+export function isAssistantWorkspacePath(pathname: string, { pagesStandalone = false } = {}): boolean {
+  const paths = pagesStandalone ? [ASSISTANT_WORKSPACE_URL] : [ASSISTANT_WORKSPACE_URL, PAGE_BUILDER_URL];
+  return paths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
 
 export function workspaceUrlFor(chatId: string | undefined): string {
