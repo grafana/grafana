@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 import { type CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 import { type Count, type uWrap, varPreLine } from 'uwrap';

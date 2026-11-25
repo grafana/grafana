@@ -254,7 +254,9 @@ export function TemplateSelector({ onSelect, onClose, option, valueInForm, filte
                   'Copy selected notification template to clipboard. You can use it in the custom tab.'
                 )}
                 onClick={() =>
-                  copyTextToClipboard(template?.value?.content ?? defaultTemplateValue?.value?.content ?? '').catch()
+                  copyTextToClipboard(template?.value?.content ?? defaultTemplateValue?.value?.content ?? '').catch(
+                    () => {}
+                  )
                 }
                 name="copy"
               />

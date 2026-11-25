@@ -69,7 +69,7 @@ func testIntegrationDataSourceDelegatedPermissions(t *testing.T) {
 		require.NoError(t, err)
 		return token
 	}
-	identityClaims := authnlib.Claims[authnlib.IDTokenClaims]{
+	baseIdentityClaims := authnlib.Claims[authnlib.IDTokenClaims]{
 		Claims: jwt.Claims{
 			Subject: caller.Identity.GetID(),
 			Expiry:  jwt.NewNumericDate(time.Now().Add(time.Hour)),
@@ -79,13 +79,26 @@ func testIntegrationDataSourceDelegatedPermissions(t *testing.T) {
 			Namespace: caller.Identity.GetNamespace(), Username: caller.Identity.GetLogin(),
 		},
 	}
-	idToken := sign(authnlib.TokenTypeID, identityClaims)
 
 	// Warm the user's permission cache before authenticating restricted tokens.
 	requireDataSourceRead(t, helper, caller, "/api/datasources/uid/"+target.UID, http.StatusOK, target.UID)
 
-	for _, mode := range []string{"on behalf of user", "access token and ID token"} {
-		t.Run(mode, func(t *testing.T) {
+	for _, mode := range []struct {
+		name       string
+		namespace  string
+		useIDToken bool
+	}{
+		{name: "on behalf of user/concrete namespace", namespace: caller.Identity.GetNamespace()},
+		{name: "on behalf of user/wildcard namespace", namespace: "*"},
+		{name: "access token and ID token/concrete namespace", namespace: caller.Identity.GetNamespace(), useIDToken: true},
+		{name: "access token and ID token/wildcard namespace", namespace: "*", useIDToken: true},
+	} {
+		t.Run(mode.name, func(t *testing.T) {
+			// With a separate ID token, its namespace becomes the requester's namespace.
+			identityClaims := baseIdentityClaims
+			identityClaims.Rest.Namespace = mode.namespace
+			idToken := sign(authnlib.TokenTypeID, identityClaims)
+
 			for _, tc := range []struct {
 				name       string
 				actions    []string
@@ -111,11 +124,11 @@ func testIntegrationDataSourceDelegatedPermissions(t *testing.T) {
 							IssuedAt: jwt.NewNumericDate(time.Now()), Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 						},
 						Rest: authnlib.AccessTokenClaims{
-							Namespace: caller.Identity.GetNamespace(), DelegatedPermissions: tc.actions,
+							Namespace: mode.namespace, DelegatedPermissions: tc.actions,
 						},
 					}
 					headers := map[string]string{}
-					if mode == "on behalf of user" {
+					if !mode.useIDToken {
 						claims.Rest.Actor = &authnlib.ActorClaims{
 							Subject: identityClaims.Subject, IDTokenClaims: identityClaims.Rest,
 						}

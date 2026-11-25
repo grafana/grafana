@@ -125,6 +125,12 @@ export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
     origin: VariableOrigin.Template,
   },
   ...timeRangeVars,
+  {
+    value: DataLinkBuiltInVars.keepTabs,
+    label: t('panel.get-panel-links-variable-suggestions.label.current-dashboard-tabs', 'Current dashboard tabs'),
+    documentation: 'Adds selected dashboard tabs as URL parameters',
+    origin: VariableOrigin.BuiltIn,
+  },
 ];
 
 const getFieldVars = (dataFrames: DataFrame[]) => {

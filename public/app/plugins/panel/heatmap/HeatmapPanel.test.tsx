@@ -16,11 +16,22 @@ import { type UPlotConfigBuilder } from '@grafana/ui';
 import { getPanelProps } from '../test-utils';
 
 import { HeatmapPanel } from './HeatmapPanel';
+import { prepareHeatmapData } from './fields';
 import { defaultOptions, type Options } from './panelcfg.gen';
 import { defaultOptions as fullDefaultOptions } from './types';
-import * as heatmapUtils from './utils';
+import { prepConfig } from './utils';
 
 const { prepConfig: realPrepConfig } = jest.requireActual('./utils');
+
+jest.mock('./utils', () => ({
+  ...jest.requireActual('./utils'),
+  prepConfig: jest.fn((...args) => jest.requireActual('./utils').prepConfig(...args)),
+}));
+
+jest.mock('./fields', () => ({
+  ...jest.requireActual('./fields'),
+  prepareHeatmapData: jest.fn((...args) => jest.requireActual('./fields').prepareHeatmapData(...args)),
+}));
 
 /**
  * Generates a 2D array of heatmap bucket values for testing.
@@ -148,8 +159,7 @@ describe('HeatmapPanel', () => {
 
   it('shows error view when prepareHeatmapData throws', () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-    const fieldsModule = require('./fields');
-    const prepareSpy = jest.spyOn(fieldsModule, 'prepareHeatmapData').mockImplementation(() => {
+    const prepareMock = jest.mocked(prepareHeatmapData).mockImplementation(() => {
       throw new Error('prepare failed');
     });
 
@@ -158,7 +168,7 @@ describe('HeatmapPanel', () => {
     expect(screen.getByText(/prepare failed/)).toBeVisible();
     expect(screen.queryByTestId(selectors.components.VizLayout.container)).not.toBeInTheDocument();
 
-    prepareSpy.mockRestore();
+    prepareMock.mockReset().mockImplementation(jest.requireActual('./fields').prepareHeatmapData);
     consoleSpy.mockRestore();
   });
 
@@ -181,7 +191,7 @@ describe('HeatmapPanel', () => {
     let plot: uPlot | undefined;
 
     beforeEach(() => {
-      jest.spyOn(heatmapUtils, 'prepConfig').mockImplementation((opts) => {
+      jest.mocked(prepConfig).mockImplementation((opts) => {
         const builder: UPlotConfigBuilder = realPrepConfig(opts);
         builder.addHook('setData', (u: uPlot) => {
           plot = u;
@@ -192,6 +202,7 @@ describe('HeatmapPanel', () => {
 
     afterEach(() => {
       jest.restoreAllMocks();
+      jest.mocked(prepConfig).mockImplementation(realPrepConfig);
       plot = undefined;
     });
 

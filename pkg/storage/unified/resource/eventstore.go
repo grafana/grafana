@@ -205,8 +205,12 @@ func (n *eventStore) Get(ctx context.Context, key EventKey) (Event, error) {
 	return event, nil
 }
 
-// ListSince returns a sequence of events since the given resource version.
+// ListKeysSince returns event keys since the given resource version.
 func (n *eventStore) ListKeysSince(ctx context.Context, sinceRV int64, sortOrder SortOrder) iter.Seq2[string, error] {
+	return n.listKeysSince(ctx, sinceRV, sortOrder, 0)
+}
+
+func (n *eventStore) listKeysSince(ctx context.Context, sinceRV int64, sortOrder SortOrder, pageTimeout time.Duration) iter.Seq2[string, error] {
 	ctx, span := tracer.Start(ctx, "resource.eventStore.ListKeysSince", trace.WithAttributes(
 		attribute.Int64("sinceRV", sinceRV),
 	))
@@ -216,7 +220,7 @@ func (n *eventStore) ListKeysSince(ctx context.Context, sinceRV int64, sortOrder
 	}
 	return func(yield func(string, error) bool) {
 		defer span.End()
-		for evtKey, err := range pagedKeys(ctx, n.kv, eventsSection, opts, keyPageSize) {
+		for evtKey, err := range pagedKeysWithTimeout(ctx, n.kv, eventsSection, opts, keyPageSize, pageTimeout) {
 			if err != nil {
 				yield("", err)
 				return

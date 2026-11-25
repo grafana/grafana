@@ -2,7 +2,9 @@ package authnserver
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"net/http"
 	"slices"
 	"strings"
 
@@ -35,7 +37,8 @@ type Client interface {
 }
 
 // Service implements authnv1.AuthnServiceServer by dispatching to
-// registered Clients. Clients are tried in registration order.
+// registered Clients. Clients are tried in registration order. A request no
+// client's Test claims is rejected as unauthorized.
 type Service struct {
 	authnv1.UnimplementedAuthnServiceServer
 
@@ -73,10 +76,12 @@ func (s *Service) Authenticate(ctx context.Context, req *authnv1.AuthenticateReq
 
 	grpclog.AddFields(ctx, grpclog.Fields{"authn.headers", headerNames(req.GetHttpHeaders())})
 
+	identified := false
 	for _, c := range s.clients {
 		if !c.Test(ctx, req) {
 			continue
 		}
+		identified = true
 
 		span.SetAttributes(attribute.String("authn.client", c.Name()))
 
@@ -93,10 +98,32 @@ func (s *Service) Authenticate(ctx context.Context, req *authnv1.AuthenticateReq
 		}
 	}
 
+	// Clients claim every auth method a caller may use, including those they
+	// defer with NOT_HANDLED, so a request none of them claims carries no usable
+	// credentials.
+	if !identified {
+		grpclog.AddFields(ctx, grpclog.Fields{"authn.client", "none", "authn.code", authnv1.AuthenticateCode_AUTHENTICATE_CODE_FAILED.String(), "authn.namespace", req.GetNamespace()})
+		return unauthorized(ctx), nil
+	}
+
 	grpclog.AddFields(ctx, grpclog.Fields{"authn.client", "none", "authn.code", authnv1.AuthenticateCode_AUTHENTICATE_CODE_NOT_HANDLED.String(), "authn.namespace", req.GetNamespace()})
 	return &authnv1.AuthenticateResponse{
 		Code: authnv1.AuthenticateCode_AUTHENTICATE_CODE_NOT_HANDLED,
 	}, nil
+}
+
+// unauthorized carries a body because callers only relay a FAILED verdict that
+// has one. It matches WriteErrOrFallback's 401 body, whose traceID the frontend
+// shows in its error toast.
+func unauthorized(ctx context.Context) *authnv1.AuthenticateResponse {
+	body, _ := json.Marshal(map[string]any{
+		"traceID": tracing.TraceIDFromContext(ctx, false),
+		"message": http.StatusText(http.StatusUnauthorized),
+	})
+	return &authnv1.AuthenticateResponse{
+		Code:         authnv1.AuthenticateCode_AUTHENTICATE_CODE_FAILED,
+		ResponseBody: body,
+	}
 }
 
 func headerNames(headers map[string]string) string {

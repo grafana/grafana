@@ -189,6 +189,7 @@ function getLegend(props: Props, displayValues: FieldDisplay[], gradientFills?: 
         placement={legendOptions.placement}
         displayMode={legendOptions.displayMode}
         overflow={legendOptions.overflow}
+        limit={legendOptions.limit}
       />
     </VizLayout.Legend>
   );

@@ -143,11 +143,12 @@ func newTestLegacyStorageWithStores(t *testing.T, validator legacy.RuleMutationV
 	folderService := foldertest.NewFakeService()
 	folderService.ExpectedFolder = &folder.Folder{UID: "test-folder-uid", Title: "Test Folder"}
 
-	svc := legacy.NewLegacyRuleService(
+	svc := legacy.New(
 		ruleStore, provenanceStore, folderService, &quotas, ruleStore,
 		60, log.NewNopLogger(), nil, fakeRuleAccessControl{}, validator,
+		request.GetNamespaceMapper(&setting.Cfg{}),
 	)
-	return &legacyStorage{rules: legacy.NewAlertRules(svc, request.GetNamespaceMapper(&setting.Cfg{}))}, ruleStore, provenanceStore
+	return &legacyStorage{rules: svc.AlertRules()}, ruleStore, provenanceStore
 }
 
 // TestCreate_QualityPolicyRejection exercises Create end-to-end, asserting the status

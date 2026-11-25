@@ -1,15 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
-import { mockStarredDashboardsMap, mockStarredFoldersMap } from '../../../../fixtures/starred';
-
-// Maps a stars resource (keyed by `${group}/${kind}`) to the in-memory set backing it
-const STARRED_RESOURCE_MAPS = {
-  'dashboard.grafana.app/Dashboard': mockStarredDashboardsMap,
-  'folder.grafana.app/Folder': mockStarredFoldersMap,
-};
-
-const getStarsMapFor = (group: string, kind: string) =>
-  STARRED_RESOURCE_MAPS[`${group}/${kind}` as keyof typeof STARRED_RESOURCE_MAPS];
+import { getMockStarSet, mockStarSets } from '../../../../fixtures/starred';
 
 export const starsRoute = '/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars';
 
@@ -30,9 +21,9 @@ const getStarsHandler = () =>
             creationTimestamp: '2025-05-14T14:02:10Z',
           },
           spec: {
-            resource: Object.entries(STARRED_RESOURCE_MAPS).map(([key, map]) => {
+            resource: Array.from(mockStarSets, ([key, names]) => {
               const [group, kind] = key.split('/');
-              return { group, kind, names: Array.from(map.keys()) };
+              return { group, kind, names: Array.from(names) };
             }),
           },
           status: {},
@@ -42,8 +33,7 @@ const getStarsHandler = () =>
     return HttpResponse.json(mockStarsResponse);
   });
 
-const UPDATE_STARS_URL =
-  '/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars/:name/update/:group/:kind/:id';
+export const starUpdateRoute = `${starsRoute}/:name/update/:group/:kind/:id`;
 
 type UpdateOrDeleteStarsParams = {
   namespace: string;
@@ -61,16 +51,16 @@ const successResponse = {
 };
 
 const addStarHandler = () =>
-  http.put<UpdateOrDeleteStarsParams>(UPDATE_STARS_URL, ({ params }) => {
+  http.put<UpdateOrDeleteStarsParams>(starUpdateRoute, ({ params }) => {
     const { id, group, kind } = params;
-    getStarsMapFor(group, kind).set(id, true);
+    getMockStarSet(group, kind).add(id);
     return HttpResponse.json(successResponse);
   });
 
 const removeStarHandler = () =>
-  http.delete<UpdateOrDeleteStarsParams>(UPDATE_STARS_URL, ({ params }) => {
+  http.delete<UpdateOrDeleteStarsParams>(starUpdateRoute, ({ params }) => {
     const { id, group, kind } = params;
-    getStarsMapFor(group, kind).delete(id);
+    getMockStarSet(group, kind).delete(id);
     return HttpResponse.json(successResponse);
   });
 
