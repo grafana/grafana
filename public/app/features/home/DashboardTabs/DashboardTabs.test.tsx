@@ -8,16 +8,11 @@ import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1'
 import { config, reportInteraction, setBackendSrv, setStarsSrv } from '@grafana/runtime';
 import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
-import {
-  getAPIGroupHandler,
-  getCustomSearchHandler,
-  getKindSearchHandler,
-  searchRoute,
-} from '@grafana/test-utils/handlers';
+import { getAppKindHandlers, getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   MOCK_APP_KIND,
-  setMockStarredAppKind,
+  setMockStarred,
   setMockStarredDashboards,
   setMockStarredFolders,
 } from '@grafana/test-utils/unstable';
@@ -164,11 +159,8 @@ describe('DashboardTabs', () => {
 
   it('lists a starred object of an app kind among the starred dashboards, linking into the plugin', async () => {
     setMockStarredDashboards(['starred-1']);
-    setMockStarredAppKind(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
-    server.use(
-      getAPIGroupHandler(MOCK_APP_KIND.group, MOCK_APP_KIND.version),
-      getKindSearchHandler(MOCK_APP_KIND, [{ name: 't1', title: 'Capacity review' }])
-    );
+    setMockStarred(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
+    server.use(...getAppKindHandlers(MOCK_APP_KIND, [{ name: 't1', title: 'Capacity review' }]));
 
     render(<DashboardTabs />);
 
@@ -184,11 +176,10 @@ describe('DashboardTabs', () => {
 
   it('lists the starred objects that loaded under a retryable warning when the dashboard search fails', async () => {
     setMockStarredDashboards(['starred-1']);
-    setMockStarredAppKind(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
+    setMockStarred(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
     server.use(
       http.get(searchRoute, () => HttpResponse.json({}, { status: 500 })),
-      getAPIGroupHandler(MOCK_APP_KIND.group, MOCK_APP_KIND.version),
-      getKindSearchHandler(MOCK_APP_KIND, [{ name: 't1', title: 'Capacity review' }])
+      ...getAppKindHandlers(MOCK_APP_KIND, [{ name: 't1', title: 'Capacity review' }])
     );
 
     const { user } = render(<DashboardTabs />);

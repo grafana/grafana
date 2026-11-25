@@ -68,3 +68,8 @@ export function getKindSearchHandler(kind: MockAppKind, objects: MockAppKindObje
     });
   });
 }
+
+/** Serves an app kind for the given objects: its API group, at the kind's version, and its search. */
+export function getAppKindHandlers(kind: MockAppKind, objects: MockAppKindObject[]) {
+  return [getAPIGroupHandler(kind.group, kind.version), getKindSearchHandler(kind, objects)];
+}

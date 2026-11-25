@@ -2,7 +2,7 @@ import { Chance } from 'chance';
 import { HttpResponse, http } from 'msw';
 
 import { wellFormedTree } from '../../../fixtures/folders';
-import { mockStarredDashboardsMap } from '../../../fixtures/starred';
+import { getMockStarSet } from '../../../fixtures/starred';
 
 import { SORT_OPTIONS } from './constants';
 
@@ -47,7 +47,7 @@ const getLegacySearchHandler = () =>
         }
 
         if (starredFilter) {
-          filters.push(({ item }) => mockStarredDashboardsMap.has(item.uid));
+          filters.push(({ item }) => getMockStarSet('dashboard.grafana.app', 'Dashboard').has(item.uid));
         }
 
         if (folderFilter && folderFilter !== 'general') {

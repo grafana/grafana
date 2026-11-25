@@ -1,17 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
-import { mockStarSets } from '../../../../fixtures/starred';
-
-// The Stars API accepts any group/kind, so a star of an unseen kind starts a new set
-const getStarsMapFor = (group: string, kind: string) => {
-  const key = `${group}/${kind}`;
-  let names = mockStarSets.get(key);
-  if (!names) {
-    names = new Map();
-    mockStarSets.set(key, names);
-  }
-  return names;
-};
+import { getMockStarSet, mockStarSets } from '../../../../fixtures/starred';
 
 export const starsRoute = '/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars';
 
@@ -34,7 +23,7 @@ const getStarsHandler = () =>
           spec: {
             resource: Array.from(mockStarSets, ([key, names]) => {
               const [group, kind] = key.split('/');
-              return { group, kind, names: Array.from(names.keys()) };
+              return { group, kind, names: Array.from(names) };
             }),
           },
           status: {},
@@ -65,14 +54,14 @@ const successResponse = {
 const addStarHandler = () =>
   http.put<UpdateOrDeleteStarsParams>(UPDATE_STARS_URL, ({ params }) => {
     const { id, group, kind } = params;
-    getStarsMapFor(group, kind).set(id, true);
+    getMockStarSet(group, kind).add(id);
     return HttpResponse.json(successResponse);
   });
 
 const removeStarHandler = () =>
   http.delete<UpdateOrDeleteStarsParams>(UPDATE_STARS_URL, ({ params }) => {
     const { id, group, kind } = params;
-    getStarsMapFor(group, kind).delete(id);
+    getMockStarSet(group, kind).delete(id);
     return HttpResponse.json(successResponse);
   });
 
