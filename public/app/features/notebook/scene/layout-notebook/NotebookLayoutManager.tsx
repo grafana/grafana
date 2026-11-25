@@ -1546,7 +1546,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   list: css({
     display: 'flex',
     flexDirection: 'column',
-    gap: theme.spacing(2),
+    gap: theme.spacing(1),
     width: '100%',
   }),
   listEditing: css({

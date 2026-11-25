@@ -2,17 +2,20 @@ package userpermissions
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
 	authlib "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -104,7 +107,16 @@ func (h *Handler) writePermissions(w http.ResponseWriter, req *http.Request, inf
 		Namespace: namespace,
 	})
 	if err != nil {
-		errhttp.Write(ctx, err, w)
+		var status metav1.Status
+		var statusErr apierrors.APIStatus
+		if errors.As(err, &statusErr) {
+			status = statusErr.Status()
+		} else {
+			log.New("iam.userpermissions").FromContext(ctx).Error("Failed to get user permissions", "error", err)
+			status = apierrors.NewInternalError(errors.New("failed to get user permissions")).Status()
+		}
+		status.TypeMeta = metav1.TypeMeta{Kind: "Status", APIVersion: "v1"}
+		errhttp.Write(ctx, &apierrors.StatusError{ErrStatus: status}, w)
 		return
 	}
 

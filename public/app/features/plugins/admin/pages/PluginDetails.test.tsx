@@ -29,6 +29,8 @@ import {
 
 import PluginDetailsPage from './PluginDetails';
 
+jest.mock('../api', () => makeSpyable('../api'));
+
 jest.mock('@grafana/runtime', () => {
   const runtime = jest.requireActual('@grafana/runtime');
   runtime.config.buildInfo.version = 'v8.1.0';

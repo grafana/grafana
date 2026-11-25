@@ -235,7 +235,9 @@ export function QueryEditorContextWrapper({
 
   // Update the ref every render so the stable callback inside useSelectionState
   // always delegates to the latest clearSideEffects.
-  clearSideEffectsRef.current = clearSideEffects;
+  useLayoutEffect(() => {
+    clearSideEffectsRef.current = clearSideEffects;
+  });
 
   // Hoisted out of `uiState` so they stay referentially stable across selection changes —
   // consumers that put these in a useEffect/useMemo dep array only re-fire when multi-select

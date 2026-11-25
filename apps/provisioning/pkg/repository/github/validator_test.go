@@ -8,8 +8,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func TestValidate(t *testing.T) {
@@ -79,8 +79,8 @@ func TestValidate(t *testing.T) {
 					},
 				},
 				Secure: provisioning.SecureValues{
-					Token: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-token"),
+					Token: resource.InlineSecureValue{
+						Create: resource.NewSecretValue("test-token"),
 					},
 				},
 			},
@@ -101,8 +101,8 @@ func TestValidate(t *testing.T) {
 					},
 				},
 				Secure: provisioning.SecureValues{
-					Token: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-token"),
+					Token: resource.InlineSecureValue{
+						Create: resource.NewSecretValue("test-token"),
 					},
 				},
 			},
@@ -138,8 +138,8 @@ func TestValidate(t *testing.T) {
 					},
 				},
 				Secure: provisioning.SecureValues{
-					Token: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-token"),
+					Token: resource.InlineSecureValue{
+						Create: resource.NewSecretValue("test-token"),
 					},
 				},
 			},

@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"strings"
 
+	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -105,7 +107,7 @@ func (w *closeNotifierResponseWriter) CloseNotify() <-chan bool {
 func serviceIdentityUser(orgID int64, login string) *user.SignedInUser {
 	return &user.SignedInUser{
 		OrgID:          orgID,
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		Login:          login,
 		IsGrafanaAdmin: true,
 		Permissions: map[int64]map[string][]string{

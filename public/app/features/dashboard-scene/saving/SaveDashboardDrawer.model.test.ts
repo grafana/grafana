@@ -3,8 +3,12 @@ import { type CorsWorker } from 'app/core/utils/CorsWorker';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
-import * as createDetectChangesWorker from './createDetectChangesWorker';
+import { createWorker } from './createDetectChangesWorker';
 import { type DashboardChangesRequest, type DashboardChangesResponse } from './shared';
+
+jest.mock('./createDetectChangesWorker', () => ({
+  createWorker: jest.fn(),
+}));
 
 describe('SaveDashboardDrawer', () => {
   afterEach(() => {
@@ -17,7 +21,7 @@ describe('SaveDashboardDrawer', () => {
       onmessage: null as ((event: MessageEvent<DashboardChangesResponse>) => void) | null,
       terminate: jest.fn(),
     };
-    jest.spyOn(createDetectChangesWorker, 'createWorker').mockReturnValue(worker as unknown as CorsWorker);
+    jest.mocked(createWorker).mockReturnValue(worker as unknown as CorsWorker);
 
     const dashboard = new DashboardScene({
       title: 'Initial title',

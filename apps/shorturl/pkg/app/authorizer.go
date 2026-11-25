@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 
+	authlib "github.com/grafana/authlib/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -35,7 +36,7 @@ func GetAuthorizer() authorizer.Authorizer {
 		// verbs can change or remove short URLs owned by other users. The goto
 		// redirect bumps lastSeenAt on the status subresource under a
 		// provisioning identity, so it does not rely on this grant.
-		if user.GetOrgRole() == identity.RoleAdmin {
+		if user.GetOrgRole() == authlib.RoleAdmin {
 			return authorizer.DecisionAllow, "", nil
 		}
 		return authorizer.DecisionDeny, "admin role is required", nil

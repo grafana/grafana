@@ -23,7 +23,7 @@ type RepositoryStatusApplyConfiguration struct {
 	// Conditions represent the latest available observations of the repository's state.
 	Conditions []v1.ConditionApplyConfiguration `json:"conditions,omitempty"`
 	// This will get updated with the current health status (and updated periodically)
-	Health *HealthStatusApplyConfiguration `json:"health,omitempty"`
+	Health *RepositoryHealthStatusApplyConfiguration `json:"health,omitempty"`
 	// Sync information with the last sync information
 	Sync *SyncStatusApplyConfiguration `json:"sync,omitempty"`
 	// The object count when sync last ran
@@ -31,7 +31,7 @@ type RepositoryStatusApplyConfiguration struct {
 	// Webhook Information (if applicable)
 	Webhook *WebhookStatusApplyConfiguration `json:"webhook,omitempty"`
 	// Token will get updated with current token information
-	Token *TokenStatusApplyConfiguration `json:"token,omitempty"`
+	Token *RepositoryTokenStatusApplyConfiguration `json:"token,omitempty"`
 	// Error information during repository deletion (if any).
 	// Deprecated: prefer the structured Deletion field. Retained for
 	// backwards compatibility with clients that read the concise string.
@@ -87,7 +87,7 @@ func (b *RepositoryStatusApplyConfiguration) WithConditions(values ...*v1.Condit
 // WithHealth sets the Health field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Health field is set to the value of the last call.
-func (b *RepositoryStatusApplyConfiguration) WithHealth(value *HealthStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
+func (b *RepositoryStatusApplyConfiguration) WithHealth(value *RepositoryHealthStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
 	b.Health = value
 	return b
 }
@@ -124,7 +124,7 @@ func (b *RepositoryStatusApplyConfiguration) WithWebhook(value *WebhookStatusApp
 // WithToken sets the Token field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Token field is set to the value of the last call.
-func (b *RepositoryStatusApplyConfiguration) WithToken(value *TokenStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
+func (b *RepositoryStatusApplyConfiguration) WithToken(value *RepositoryTokenStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
 	b.Token = value
 	return b
 }

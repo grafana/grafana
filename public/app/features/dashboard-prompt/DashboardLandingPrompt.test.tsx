@@ -1,5 +1,5 @@
 import { screen } from '@testing-library/react';
-import { lazy } from 'react';
+import { lazy, type ReactNode } from 'react';
 import { render } from 'test/test-utils';
 
 import { type ChatContextItem } from '@grafana/assistant';
@@ -15,10 +15,13 @@ jest.mock('@grafana/runtime', () => ({
 const usePluginComponentMock = jest.mocked(usePluginComponent);
 
 interface CapturedPromptProps {
-  onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void;
+  onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void | Promise<void>;
   placeholder?: string;
   hideModeSelector?: boolean;
   mode?: string;
+  hostContextItems?: ChatContextItem[];
+  onHostContextItemRemove?: (id: string) => void;
+  renderHostActions?: () => ReactNode;
 }
 
 describe('DashboardLandingPrompt', () => {
@@ -76,17 +79,72 @@ describe('DashboardLandingPrompt', () => {
       isLoading: false,
     } as unknown as ReturnType<typeof usePluginComponent>);
 
-    render(<DashboardLandingPrompt onSubmit={onSubmit} />);
+    const hostContextItems: ChatContextItem[] = [
+      { node: { id: 'template-red', name: 'Dashboard Template: RED metrics', navigable: false }, occurrences: [] },
+    ];
+    const onHostContextItemRemove = jest.fn();
+    const renderHostActions = () => null;
+
+    render(
+      <DashboardLandingPrompt
+        onSubmit={onSubmit}
+        hostContextItems={hostContextItems}
+        onHostContextItemRemove={onHostContextItemRemove}
+        renderHostActions={renderHostActions}
+      />
+    );
 
     expect(STANDALONE_PROMPT_COMPONENT_ID).toBe('grafana-assistant-app/standalone-prompt/v1');
     expect(usePluginComponentMock).toHaveBeenCalledWith(STANDALONE_PROMPT_COMPONENT_ID);
     expect(received).toHaveLength(1);
     expect(received[0]).toEqual({
-      onSubmit,
+      onSubmit: expect.any(Function),
       placeholder: 'Describe your dashboard. This will open the assistant chat and start a conversation.',
       hideModeSelector: true,
       mode: 'dashboarding',
+      hostContextItems,
+      onHostContextItemRemove,
+      renderHostActions,
     });
+    received[0].onSubmit('monitor checkout', []);
+    expect(onSubmit).toHaveBeenCalledWith('monitor checkout', []);
+  });
+
+  it('hands a refused send back to the plugin, so it keeps the prompt', async () => {
+    const received: CapturedPromptProps[] = [];
+    const Prompt = (props: CapturedPromptProps) => {
+      received.push(props);
+      return null;
+    };
+    usePluginComponentMock.mockReturnValue({
+      component: Prompt,
+      isLoading: false,
+    } as unknown as ReturnType<typeof usePluginComponent>);
+
+    render(<DashboardLandingPrompt onSubmit={() => Promise.reject(new Error('Could not reach the Assistant'))} />);
+
+    await expect(received[0].onSubmit('monitor checkout', [])).rejects.toThrow('Could not reach the Assistant');
+  });
+
+  it('keeps a refused send from going unhandled when an older plugin drops the promise', async () => {
+    const received: CapturedPromptProps[] = [];
+    const Prompt = (props: CapturedPromptProps) => {
+      received.push(props);
+      return null;
+    };
+    usePluginComponentMock.mockReturnValue({
+      component: Prompt,
+      isLoading: false,
+    } as unknown as ReturnType<typeof usePluginComponent>);
+    const onSubmit = jest.fn().mockRejectedValue(new Error('Could not reach the Assistant'));
+
+    render(<DashboardLandingPrompt onSubmit={onSubmit} />);
+
+    // An older plugin calls onSubmit and ignores what it returns.
+    received[0].onSubmit('monitor checkout', []);
+    // jest-setup fails the run on an unhandled rejection; give one the chance to surface.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(onSubmit).toHaveBeenCalledWith('monitor checkout', []);
   });
 
   it('renders nothing when the plugin prompt is unavailable', () => {

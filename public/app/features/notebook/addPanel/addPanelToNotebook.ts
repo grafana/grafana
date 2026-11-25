@@ -136,7 +136,8 @@ export async function addToExistingNotebook(
   entryPoint: NotebookEntryPoint,
   source: AppendedCellSource = 'user',
   lockTimeRange = false,
-  hasText = false
+  hasText = false,
+  originPluginId?: string
 ): Promise<AddedToNotebook> {
   const { spec, firstPosition } = await appendToExistingNotebook(uid, cells, source);
 
@@ -152,7 +153,8 @@ export async function addToExistingNotebook(
       firstPosition + index,
       cell.kind === 'panel' ? addedPanel(cell) : undefined,
       lockTimeRange,
-      hasText
+      hasText,
+      originPluginId
     );
   });
 
@@ -165,7 +167,8 @@ export async function createNotebookWithContent(
   entryPoint: NotebookEntryPoint,
   source: AppendedCellSource = 'user',
   lockTimeRange = false,
-  hasText = false
+  hasText = false,
+  originPluginId?: string
 ): Promise<AddedToNotebook> {
   const spec = appendElementsToNotebook({ ...defaultNotebookSpec(), title: fields.title }, cells, source);
 
@@ -178,7 +181,8 @@ export async function createNotebookWithContent(
     spec.layout.spec.cells.length,
     panels.length === 1 ? addedPanel(panels[0]) : undefined,
     lockTimeRange,
-    hasText
+    hasText,
+    originPluginId
   );
 
   return { uid: created.uid, title: spec.title };

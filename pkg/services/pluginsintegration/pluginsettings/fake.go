@@ -21,7 +21,6 @@ func (ps *FakePluginSettings) GetPluginSettings(_ context.Context, _ *GetArgs) (
 			PluginID:      dto.PluginID,
 			OrgID:         dto.OrgID,
 			Enabled:       dto.Enabled,
-			Pinned:        dto.Pinned,
 			PluginVersion: dto.PluginVersion,
 		})
 	}
@@ -57,7 +56,6 @@ func (ps *FakePluginSettings) UpdatePluginSetting(ctx context.Context, args *Upd
 		JSONData:       args.JSONData,
 		SecureJSONData: secureData,
 		Enabled:        args.Enabled,
-		Pinned:         args.Pinned,
 		Updated:        time.Now(),
 	}
 	return nil

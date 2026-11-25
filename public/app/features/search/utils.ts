@@ -1,37 +1,15 @@
-import { type UrlQueryMap } from '@grafana/data';
+import { store, type UrlQueryMap } from '@grafana/data';
 
 import { SECTION_STORAGE_KEY } from './constants';
 import { type SearchState } from './types';
-
-/**
- * Check if search query has filters enabled. Excludes folderId
- * @param query
- */
-export const hasFilters = (query: SearchState) => {
-  if (!query) {
-    return false;
-  }
-  return Boolean(query.query || query.tag?.length > 0 || query.ownerReference?.length || query.starred || query.sort);
-};
 
 /** Cleans up old local storage values that remembered many open folders */
 export const cleanupOldExpandedFolders = () => {
   const keyPrefix = SECTION_STORAGE_KEY + '.';
 
-  for (let index = 0; index < window.localStorage.length; index++) {
-    const lsKey = window.localStorage.key(index);
-    if (lsKey?.startsWith(keyPrefix)) {
-      window.localStorage.removeItem(lsKey);
-    }
+  for (const key of Object.keys(store.all(keyPrefix))) {
+    store.delete(keyPrefix + key);
   }
-};
-
-/**
- * Get a storage key for a dashboard folder by its title
- * @param title
- */
-export const getSectionStorageKey = (title = 'General') => {
-  return `${SECTION_STORAGE_KEY}.${title.toLowerCase()}`;
 };
 
 /**

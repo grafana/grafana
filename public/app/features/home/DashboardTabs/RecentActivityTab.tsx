@@ -67,6 +67,9 @@ export function RecentActivityTab({ recent, foldersByUid }: Props) {
     recentActivityShown({
       total_count: total,
       dashboard_count: counts.dashboard,
+      folder_count: counts.folder,
+      notebook_count: counts.notebook,
+      playlist_count: counts.playlist,
       page_count: counts.page,
       explore_count: counts.explore,
       alerting_count: counts.alerting,

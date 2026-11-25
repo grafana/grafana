@@ -229,7 +229,7 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		UserID:         1,
 		UserUID:        "u1",
 		Namespace:      ns,
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        claims.RoleAdmin,
 		IsGrafanaAdmin: true,
 	})
 
@@ -423,7 +423,7 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		}
 		const coldNS = "search-list-cold"
 		coldCtx := claims.WithAuthInfo(context.Background(), &identity.StaticRequester{
-			Type: claims.TypeUser, UserID: 1, UserUID: "u1", Namespace: coldNS, OrgRole: identity.RoleAdmin, IsGrafanaAdmin: true,
+			Type: claims.TypeUser, UserID: 1, UserUID: "u1", Namespace: coldNS, OrgRole: claims.RoleAdmin, IsGrafanaAdmin: true,
 		})
 		for i := range 100 {
 			writeIn(coldNS, fmt.Sprintf("cold-%03d", i), matchTeam, okFolder, "cold")

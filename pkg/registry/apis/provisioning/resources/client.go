@@ -4,9 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -15,11 +18,14 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
+	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana-app-sdk/app"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // Capabilities a supported resource can declare. Each names the opt-in state; absence is
@@ -197,8 +203,9 @@ type ClientFactory interface {
 
 type clientFactory struct {
 	clientsProvider clientsProvider
-	// configuredResources may still name collections rather than served groups.
-	configuredResources []SupportedResource
+	// supportedResourceProvider gives the supported resources. Its configured ones may still name collections rather
+	// than served groups.
+	supportedResourceProvider SupportedResourceProvider
 	// storageGroup is the group this factory's API server holds, empty for a single server that
 	// holds everything. It decides which collections are expanded here.
 	storageGroup string
@@ -210,7 +217,7 @@ type clientFactory struct {
 // holds reports whether this factory's API server stores a collection, and so expands it. A
 // factory without a storage group is the only server there is, and holds everything.
 func (f *clientFactory) holds(collection string) bool {
-	return f.storageGroup == "" || f.storageGroup == collection
+	return f.storageGroup == "" || f.storageGroup == AnyGroup || f.storageGroup == collection
 }
 
 // supportedResources resolves the configured set to served groups, caching the first success: a
@@ -226,8 +233,9 @@ func (f *clientFactory) supportedResources(ctx context.Context) ([]SupportedReso
 	// Expansion sees the disabled declarations too: a member declared on its own and disabled is
 	// excluded even when an active collection covers it. Discovery sees only the active ones, so
 	// a failure in a collection nobody acts on cannot fail the expansion.
-	active := activeResources(f.configuredResources)
-	expanded, err := expandCollections(ctx, discoveryKinds(f.clientsProvider, active, f.holds), f.configuredResources, f.holds)
+	configured := defaultSupportedResources(f.supportedResourceProvider.Configured())
+	active := activeResources(configured)
+	expanded, err := expandCollections(ctx, discoveryKinds(f.clientsProvider, active, f.holds), configured, f.holds)
 	if err != nil {
 		return nil, err
 	}
@@ -327,10 +335,13 @@ func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.G
 // resources that can be managed from the UI; the ResourceClients it produces expose only
 // the enabled subset via SupportedResources(). When none is provided it falls back to the
 // static SupportedProvisioningResources base set.
-func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...SupportedResource) ClientFactory {
+func NewClientFactory(configProvider apiserver.RestConfigProvider, supportedResourceProvider SupportedResourceProvider) ClientFactory {
+	if supportedResourceProvider == nil {
+		supportedResourceProvider = NewSupportedResourceProvider(nil)
+	}
 	return &clientFactory{
-		clientsProvider:     newSingleAPIClients(configProvider),
-		configuredResources: defaultSupportedResources(supported),
+		clientsProvider:           newSingleAPIClients(configProvider),
+		supportedResourceProvider: supportedResourceProvider,
 	}
 }
 
@@ -341,18 +352,20 @@ func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...
 // declared on its own is resolved the same way wherever it is resolved. Only the server that holds
 // a collection expands it: its members reach the merged set from there, and a server that holds no
 // collection asks discovery nothing, so its outage cannot fail the clients for other groups.
-func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, supported ...SupportedResource) ClientFactory {
-	configured := defaultSupportedResources(supported)
+func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, supportedResourceProvider SupportedResourceProvider) ClientFactory {
+	if supportedResourceProvider == nil {
+		supportedResourceProvider = NewSupportedResourceProvider(nil)
+	}
 	clientFactories := make(map[string]ClientFactory)
 	for api, configProvider := range configProviders {
 		clientFactories[api] = &clientFactory{
-			clientsProvider:     newSingleAPIClients(configProvider),
-			configuredResources: configured,
-			storageGroup:        api,
+			clientsProvider:           newSingleAPIClients(configProvider),
+			supportedResourceProvider: supportedResourceProvider,
+			storageGroup:              api,
 		}
 	}
 
-	return &multiClientFactory{clientFactories: clientFactories, collections: collectionPatterns(configured)}
+	return &multiClientFactory{clientFactories: clientFactories, collections: collectionPatterns(supportedResourceProvider.Configured())}
 }
 
 // activeResources returns only the active resources. Disabled resources are declared (and
@@ -374,6 +387,93 @@ func defaultSupportedResources(supported []SupportedResource) []SupportedResourc
 	}
 	return supported
 }
+
+// SupportedResourceProvider gives the resources that provisioning supports: the configured ones,
+// plus the kinds that the app manifests add while the process runs.
+type SupportedResourceProvider interface {
+	// Get returns the supported resources at the time of the call.
+	Get() []SupportedResource
+	// Update is the callback of a resource.ManifestWatcher. It replaces the added kinds with each
+	// kind that a published app manifest opts in to provisioning. A configured resource, or a
+	// configured collection that covers a kind, takes precedence over the kind.
+	Update(manifests []*app.ManifestData)
+	// Configured returns the configured resources. They do not change.
+	Configured() []SupportedResource
+	// Added returns the kinds that the app manifests added.
+	Added() []SupportedResource
+}
+
+func NewRemoteManifestWatcher(supportedResourceProvider SupportedResourceProvider, reg prometheus.Registerer, cfg resource.ManifestWatcherConfig) (services.Service, error) {
+	if cfg.DiscoveryURL == "" {
+		return services.NewIdleService(nil, nil), nil
+	}
+	watcherReg := prometheus.WrapRegistererWith(prometheus.Labels{"component": "provisioning"}, reg)
+	return resource.NewManifestWatcher(cfg, watcherReg, supportedResourceProvider.Update)
+}
+
+func NewSupportedResourceProvider(configured []SupportedResource) SupportedResourceProvider {
+	return &supportedResourceProvider{configured: configured}
+}
+
+type supportedResourceProvider struct {
+	configured []SupportedResource
+	added      atomic.Pointer[[]SupportedResource]
+}
+
+func (s *supportedResourceProvider) Get() []SupportedResource {
+	added := s.Added()
+	if len(added) == 0 {
+		return s.configured
+	}
+	return append(slices.Clip(defaultSupportedResources(s.configured)), added...)
+}
+
+func (s *supportedResourceProvider) Update(manifests []*app.ManifestData) {
+	added := []SupportedResource{}
+	seen := sets.New[schema.GroupKind]()
+	for _, r := range defaultSupportedResources(s.configured) {
+		seen.Insert(r.GroupKind)
+	}
+	for _, manifest := range manifests {
+		for _, version := range manifest.Versions {
+			for _, kind := range version.Kinds {
+				gk := schema.GroupKind{Group: manifest.Group, Kind: kind.Kind}
+				if !version.Served || !kind.IsProvisionable() || kind.Scope == "Cluster" ||
+					seen.Has(gk) || storingCollection(s.configured, gk) != "" {
+					continue
+				}
+				caps := sets.New[string]()
+				if kind.FolderScoped == nil || *kind.FolderScoped {
+					caps.Insert(CapabilityFolder)
+				}
+				added = append(added, SupportedResource{GroupKind: gk, Capabilities: caps})
+				seen.Insert(gk)
+			}
+		}
+	}
+	s.added.Store(&added)
+}
+
+func (s *supportedResourceProvider) Configured() []SupportedResource { return s.configured }
+
+func (s *supportedResourceProvider) Added() []SupportedResource {
+	if added := s.added.Load(); added != nil {
+		return *added
+	}
+	return nil
+}
+
+type pinnedKindsKey struct{}
+
+// WithPinnedKinds returns a context in which each Clients call uses the added kinds of the first
+// call. A job with more than one phase then sees one set: without it, a kind that a manifest adds
+// between an export and a cleanup is deleted and was never exported.
+func WithPinnedKinds(ctx context.Context) context.Context {
+	return context.WithValue(ctx, pinnedKindsKey{}, &atomic.Pointer[[]SupportedResource]{})
+}
+
+// AnyGroup keys the API server that serves each group without a server of its own.
+const AnyGroup = "*"
 
 type multiClientFactory struct {
 	clientFactories map[string]ClientFactory
@@ -438,10 +538,15 @@ func (f *clientFactory) Clients(ctx context.Context, namespace string) (Resource
 	if err != nil {
 		return nil, err
 	}
+	added := f.supportedResourceProvider.Added()
+	if pinned, ok := ctx.Value(pinnedKindsKey{}).(*atomic.Pointer[[]SupportedResource]); ok {
+		pinned.CompareAndSwap(nil, &added)
+		added = *pinned.Load()
+	}
 	return &resourceClients{
 		namespace:          namespace,
 		clientsProvider:    f.clientsProvider,
-		supportedResources: supported,
+		supportedResources: append(slices.Clip(supported), added...),
 		byKind:             make(map[schema.GroupVersionKind]*clientInfo),
 		byResource:         make(map[schema.GroupVersionResource]*clientInfo),
 	}, nil
@@ -651,7 +756,8 @@ func (c *multiResourceClients) clientsFor(group string) (ResourceClients, bool) 
 			return clients, true
 		}
 	}
-	return nil, false
+	clients, ok := c.resourceClientsByAPIGroup[AnyGroup]
+	return clients, ok
 }
 
 // ForEach applies the function to each resource returned from the list operation

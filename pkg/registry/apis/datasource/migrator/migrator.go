@@ -10,6 +10,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource/converter"
@@ -76,9 +77,9 @@ func ProvideDataSourceMigrator(
 				for k, v := range dsSecrets {
 					if v != "" {
 						if obj.Secure == nil {
-							obj.Secure = make(common.InlineSecureValues)
+							obj.Secure = make(resource.InlineSecureValues)
 						}
-						obj.Secure[k] = common.InlineSecureValue{Create: common.NewSecretValue(v)}
+						obj.Secure[k] = resource.InlineSecureValue{Create: resource.NewSecretValue(v)}
 					}
 				}
 
@@ -184,12 +185,12 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 	return nil
 }
 
-func (m *dataSourceMigrator) createSecrets(ctx context.Context, dsSecrets common.InlineSecureValues, objRef common.ObjectReference) (common.InlineSecureValues, error) {
+func (m *dataSourceMigrator) createSecrets(ctx context.Context, dsSecrets resource.InlineSecureValues, objRef common.ObjectReference) (resource.InlineSecureValues, error) {
 	if len(dsSecrets) == 0 {
 		return nil, nil
 	}
 
-	values := make(common.InlineSecureValues)
+	values := make(resource.InlineSecureValues)
 	for k, sv := range dsSecrets {
 		if sv.Create.IsZero() {
 			continue // skip Name-references and empty entries
@@ -198,14 +199,14 @@ func (m *dataSourceMigrator) createSecrets(ctx context.Context, dsSecrets common
 		if v == "" {
 			continue // do not create empty secret values
 		}
-		name, err := m.secretStore.CreateInline(ctx, objRef, common.NewSecretValue(v), nil)
+		name, err := m.secretStore.CreateInline(ctx, objRef, resource.NewSecretValue(v), nil)
 		if err != nil {
 			return nil, err
 		}
 		if name == "" {
 			return nil, fmt.Errorf("did not create a new secret")
 		}
-		values[k] = common.InlineSecureValue{
+		values[k] = resource.InlineSecureValue{
 			Name: name,
 		}
 	}

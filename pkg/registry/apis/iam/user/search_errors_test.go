@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -58,7 +59,7 @@ func TestUnifiedSearchErrorStatus(t *testing.T) {
 			}
 
 			backend := NewUnifiedSearchClient(index, &setting.Cfg{})
-			handler := NewSearchHandler(tracing.NewNoopTracerService(), selectorForBackend(backend), nil)
+			handler := NewSearchHandler(tracing.NewNoopTracerService(), selectorForBackend(backend), nil, nil)
 			req := httptest.NewRequest(http.MethodGet, "/searchUsers", nil)
 			req = req.WithContext(identity.WithRequester(req.Context(), &legacyuser.SignedInUser{Namespace: "stacks-1"}))
 			w := httptest.NewRecorder()
@@ -85,7 +86,7 @@ func TestUserAdmissionPreservesSearchErrorStatus(t *testing.T) {
 				backend := NewUnifiedSearchClient(&MockClient{MockResponses: index.MockResponses, MockError: index.MockError}, nil)
 				selector := selectorForBackend(backend)
 				ctx := identity.WithRequester(t.Context(), &legacyuser.SignedInUser{
-					Namespace: "stacks-1", IsGrafanaAdmin: true, OrgRole: identity.RoleAdmin,
+					Namespace: "stacks-1", IsGrafanaAdmin: true, OrgRole: authlib.RoleAdmin,
 				})
 				oldObj := &iamv0.User{Spec: iamv0.UserSpec{Login: "alice", Email: "alice@example.com", Role: "Admin"}}
 				obj := oldObj.DeepCopy()

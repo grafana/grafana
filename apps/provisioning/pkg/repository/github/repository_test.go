@@ -13,10 +13,10 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	repo "github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func TestNewGitHub(t *testing.T) {
@@ -90,7 +90,7 @@ func TestNewGitHub(t *testing.T) {
 				tt.config,
 				gitRepo,
 				factory,
-				common.RawSecureValue(tt.token),
+				resource.RawSecureValue(tt.token),
 			)
 
 			// Check results
@@ -183,7 +183,7 @@ func TestGitHubRepositoryTest(t *testing.T) {
 					Type: provisioning.GitHubRepositoryType,
 				},
 				Secure: provisioning.SecureValues{
-					Token: common.InlineSecureValue{
+					Token: resource.InlineSecureValue{
 						Name: "with-name",
 					},
 				},
@@ -210,7 +210,7 @@ func TestGitHubRepositoryTest(t *testing.T) {
 					Type: provisioning.GitHubRepositoryType,
 				},
 				Secure: provisioning.SecureValues{
-					Token: common.InlineSecureValue{
+					Token: resource.InlineSecureValue{
 						Name: "with-name",
 					},
 				},
@@ -858,7 +858,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 			Type: provisioning.GitHubRepositoryType,
 		},
 		Secure: provisioning.SecureValues{
-			Token: common.InlineSecureValue{
+			Token: resource.InlineSecureValue{
 				Name: "with-name",
 			},
 		},

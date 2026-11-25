@@ -12,6 +12,18 @@ import {
 import { FilterByValueTransformerEditor } from './FilterByValueTransformerEditor';
 
 describe('FilterByValueTransformerEditor', () => {
+  it('labels the include and exclude radio group with the filter type label', () => {
+    const options: FilterByValueTransformerOptions = {
+      type: FilterByValueType.include,
+      match: FilterByValueMatch.all,
+      filters: [],
+    };
+
+    render(<FilterByValueTransformerEditor input={[]} options={options} onChange={jest.fn()} />);
+
+    expect(screen.getByRole('radiogroup', { name: 'Filter type' })).toBeInTheDocument();
+  });
+
   it('displays the saved inSet matcher and values without changing the filter', () => {
     const onChange = jest.fn();
     const input: DataFrame[] = [
