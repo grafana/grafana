@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, type RenderOptions, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { createDataFrame } from '@grafana/data';
@@ -27,15 +27,19 @@ describe('FlameGraphCallTreeContainer', () => {
     jest.useRealTimers();
   });
 
-  const setup = async (props?: Partial<React.ComponentProps<typeof FlameGraphCallTreeContainer>>) => {
+  const setup = async (
+    props?: Partial<React.ComponentProps<typeof FlameGraphCallTreeContainer>>,
+    renderOptions?: RenderOptions
+  ) => {
     const flameGraphData = createDataFrame(data);
     const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
     const onSymbolClick = jest.fn();
     const onSandwich = jest.fn();
     const onSearch = jest.fn();
 
+    let view: ReturnType<typeof render> | undefined;
     await act(async () => {
-      render(
+      view = render(
         <FlameGraphCallTreeContainer
           data={container}
           onSymbolClick={onSymbolClick}
@@ -43,7 +47,8 @@ describe('FlameGraphCallTreeContainer', () => {
           search=""
           onSearch={onSearch}
           {...props}
-        />
+        />,
+        renderOptions
       );
     });
 
@@ -52,7 +57,7 @@ describe('FlameGraphCallTreeContainer', () => {
       jest.runAllTimers();
     });
 
-    return { container, mocks: { onSymbolClick, onSandwich, onSearch } };
+    return { container, unmount: () => view?.unmount(), mocks: { onSymbolClick, onSandwich, onSearch } };
   };
 
   it('should render correctly', async () => {
@@ -392,5 +397,42 @@ describe('FlameGraphCallTreeContainer', () => {
 
     expect(mocks.onSearch).toHaveBeenCalled();
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  // A Document Picture-in-Picture window (the Grafana Assistant pop-out) is another realm, as an iframe is: its
+  // elements fail this window's `instanceof Element`.
+  it('expands a row clicked in another window', async () => {
+    const iframe = document.createElement('iframe');
+    document.body.appendChild(iframe);
+    const otherWindow = iframe.contentDocument!.defaultView!;
+    const renderContainer = otherWindow.document.body.appendChild(otherWindow.document.createElement('div'));
+    // elements there use that window's prototypes; give AutoSizer the same size as in this window's tests
+    const rects = jest.spyOn(otherWindow.Element.prototype, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      width: 1600,
+      height: 500,
+      right: 1600,
+      bottom: 500,
+      toJSON: () => {},
+    });
+    const { mocks, unmount } = await setup({}, { container: renderContainer });
+    const [toggle] = within(otherWindow.document.body).getAllByRole('button', {
+      expanded: false,
+      name: (name) => name !== 'Actions',
+    });
+    const totalCell = within(toggle.closest('tr')!).getAllByRole('cell').at(-1)!;
+
+    // user-event drives pointer input through this window's document, so fire the other window's event directly
+    fireEvent.click(totalCell);
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(mocks.onSymbolClick).toHaveBeenCalledWith(toggle.textContent);
+    // Unmount before the iframe goes, or React cannot remove the tree from it.
+    unmount();
+    rects.mockRestore();
+    iframe.remove();
   });
 });

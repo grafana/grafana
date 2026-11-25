@@ -129,6 +129,8 @@ export function CallTreeTable({
                 {...rowProps}
                 ref={isSearchMatchRow ? searchMatchRowRef : null}
                 onClick={({ target, currentTarget }) => {
+                  // the tree can render in another window than this one, such as a Document Picture-in-Picture window
+                  const { Element } = currentTarget.ownerDocument.defaultView ?? window;
                   if (target instanceof Element && currentTarget.contains(target) && !target.closest('button')) {
                     onRowClick(row);
                   }
