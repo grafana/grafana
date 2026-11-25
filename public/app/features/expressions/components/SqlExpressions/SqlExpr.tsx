@@ -12,6 +12,7 @@ import { useFlagSqlExpressionsColumnAutoComplete } from '@grafana/runtime/intern
 import { type DataQuery } from '@grafana/schema';
 import { formatSQL, quoteIdentifierIfNecessary } from '@grafana/sql';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
+import { type QueryCoauthoringEditorHost } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/coauthoring/queryCoauthoringContracts';
 
 import { type ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
 import { type SqlExpressionQuery } from '../../types';
@@ -38,6 +39,7 @@ const EDITOR_BORDER_ADJUSTMENT = 2; // 1px border on top and bottom
 const SCHEMA_INSPECTOR_OPEN_KEY = 'grafana.sql-expression.schema-inspector-open';
 
 export interface SqlExprProps {
+  queryCoauthoring?: QueryCoauthoringEditorHost;
   refIds: Array<SelectableValue<string>>;
   query: SqlExpressionQuery;
   queries: DataQuery[] | undefined;
@@ -48,7 +50,16 @@ export interface SqlExprProps {
   metadata?: ExpressionQueryEditorProps;
 }
 
-export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, metadata, onRunQuery }: SqlExprProps) => {
+export const SqlExpr = ({
+  onChange,
+  refIds,
+  query,
+  alerting = false,
+  queries,
+  metadata,
+  onRunQuery,
+  queryCoauthoring,
+}: SqlExprProps) => {
   const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
   const containerRef = useRef<HTMLDivElement>(null);
   const interpolationScopedVars = metadata?.data?.request?.scopedVars;
@@ -306,6 +317,7 @@ LIMIT
             return useCodeMirrorEditor ? (
               <div style={{ width }}>
                 <SqlEditor
+                  queryCoauthoring={queryCoauthoring}
                   value={query.expression ?? initialQuery}
                   onChange={onEditorChange}
                   completionProvider={completionProvider}

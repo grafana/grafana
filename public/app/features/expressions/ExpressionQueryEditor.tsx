@@ -12,6 +12,7 @@ import {
   type PopoverContent,
   useStyles2,
 } from '@grafana/ui';
+import { type QueryEditorPropsWithCoauthoring } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/coauthoring/queryCoauthoringContracts';
 
 import { ClassicConditions } from './components/ClassicConditions';
 import { ExpressionTypeDropdown } from './components/ExpressionTypeDropdown';
@@ -22,7 +23,9 @@ import { Threshold } from './components/Threshold';
 import { type ExpressionQuery, ExpressionQueryType, expressionTypes } from './types';
 import { getDefaults } from './utils/expressionTypes';
 
-export type ExpressionQueryEditorProps = QueryEditorProps<DataSourceApi<ExpressionQuery>, ExpressionQuery>;
+export type ExpressionQueryEditorProps = QueryEditorPropsWithCoauthoring<
+  QueryEditorProps<DataSourceApi<ExpressionQuery>, ExpressionQuery>
+>;
 
 const labelWidth = 15;
 const SqlExpr = lazy(() =>
@@ -128,7 +131,15 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
 
     switch (query.type) {
       case ExpressionQueryType.math:
-        return <Math onChange={onChange} query={query} labelWidth={labelWidth} onRunQuery={onRunQuery} />;
+        return (
+          <Math
+            queryCoauthoring={props.queryCoauthoring}
+            onChange={onChange}
+            query={query}
+            labelWidth={labelWidth}
+            onRunQuery={onRunQuery}
+          />
+        );
 
       case ExpressionQueryType.reduce:
         return <Reduce refIds={refIds} onChange={onChange} labelWidth={labelWidth} query={query} app={app} />;
@@ -146,6 +157,7 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
         return (
           <Suspense fallback={null}>
             <SqlExpr
+              queryCoauthoring={props.queryCoauthoring}
               onChange={onChange}
               query={query}
               refIds={refIds}
