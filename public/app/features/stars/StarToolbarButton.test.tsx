@@ -42,8 +42,7 @@ const findStarButton = (title: string, isStarred: boolean) =>
 const setup = (
   itemForStarButton: typeof existingStarredItem | typeof itemToStar,
   { group = 'dashboard.grafana.app', kind = 'Dashboard' } = {}
-) =>
-  render(<StarToolbarButton title={itemForStarButton.title} group={group} kind={kind} name={itemForStarButton.uid} />);
+) => render(<StarToolbarButton title={itemForStarButton.title} group={group} kind={kind} id={itemForStarButton.uid} />);
 
 testWithStarsUser();
 
@@ -202,7 +201,7 @@ describe('StarToolbarButton', () => {
 describe('StarToolbarButtonExposed', () => {
   it('stars the object a plugin names', async () => {
     const { user } = render(
-      <StarToolbarButtonExposed title="Capacity review" group="things.ext.grafana.app" kind="Thing" name="t1" />
+      <StarToolbarButtonExposed title="Capacity review" group="things.ext.grafana.app" kind="Thing" id="t1" />
     );
 
     await user.click(await findStarButton('Capacity review', false));
@@ -214,7 +213,7 @@ describe('StarToolbarButtonExposed', () => {
     const pluginStore = configureStore({ reducer: () => ({}) });
     const { user } = render(
       <Provider store={pluginStore}>
-        <StarToolbarButtonExposed title="Capacity review" group="things.ext.grafana.app" kind="Thing" name="t1" />
+        <StarToolbarButtonExposed title="Capacity review" group="things.ext.grafana.app" kind="Thing" id="t1" />
       </Provider>
     );
 
@@ -228,7 +227,7 @@ describe('StarToolbarButtonExposed', () => {
 
     render(<StarToolbarButtonExposed title="Capacity review" group="things.ext.grafana.app" kind="Thing" />);
 
-    expect(error).toHaveBeenCalledWith('[StarToolbarButton] Pass title, group, kind and name: the object to star.');
+    expect(error).toHaveBeenCalledWith('[StarToolbarButton] Pass title, group, kind and id: the object to star.');
     expect(screen.queryByTestId(selectors.components.NavToolbar.markAsFavorite)).not.toBeInTheDocument();
     error.mockRestore();
   });

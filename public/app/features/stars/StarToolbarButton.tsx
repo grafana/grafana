@@ -24,7 +24,11 @@ type Props = {
   title: string;
   group: string;
   kind: string;
-  name: string;
+  /**
+   * The object's `metadata.name`, which a dashboard or folder calls its uid. Not `metadata.uid`, which the server
+   * generates: stars are stored and searched by name.
+   */
+  id: string;
 };
 
 /** Renders nothing for a user without a stars resource, such as an anonymous user, since starring would fail. */
@@ -35,7 +39,7 @@ export function StarToolbarButton(props: Props) {
   return <StarToggle {...props} />;
 }
 
-function StarToggle({ title, group, kind, name }: Props) {
+function StarToggle({ title, group, kind, id }: Props) {
   const tooltips = getStarTooltips(title);
   const dispatch = useDispatch();
 
@@ -44,12 +48,12 @@ function StarToggle({ title, group, kind, name }: Props) {
   const isStarred = useMemo(() => {
     const starredItems = stars || [];
 
-    return starredItems.includes(name);
-  }, [name, stars]);
+    return starredItems.includes(id);
+  }, [id, stars]);
 
   const handleStarToggle = async () => {
     try {
-      await dispatch(setStarred({ group, kind, name }, !isStarred, 'StarToolbarButton'));
+      await dispatch(setStarred({ group, kind, name: id }, !isStarred, 'StarToolbarButton'));
     } catch {
       // Grafana refused the change — the button keeps showing the state that persisted
       return;
@@ -109,14 +113,14 @@ function StarToggle({ title, group, kind, name }: Props) {
  * of its own, so it brings Grafana's store, which holds the stars.
  */
 export function StarToolbarButtonExposed(props: Partial<Props>) {
-  const { title, group, kind, name } = props;
-  if (!title || !group || !kind || !name) {
-    console.error('[StarToolbarButton] Pass title, group, kind and name: the object to star.');
+  const { title, group, kind, id } = props;
+  if (!title || !group || !kind || !id) {
+    console.error('[StarToolbarButton] Pass title, group, kind and id: the object to star.');
     return null;
   }
   return (
     <Provider store={store}>
-      <StarToolbarButton title={title} group={group} kind={kind} name={name} />
+      <StarToolbarButton title={title} group={group} kind={kind} id={id} />
     </Provider>
   );
 }
