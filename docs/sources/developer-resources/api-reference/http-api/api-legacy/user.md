@@ -31,19 +31,19 @@ refs:
 
 The User API is a special, instance-wide endpoint that lists users across every organization on all its Grafana instances.
 
-**This API does not work in Grafana Cloud**.
+**The instance-wide endpoints don't work in Grafana Cloud**. The [Get teams for user](#get-teams-for-user) endpoint supports current-organization reads with `org.users:read` permission.
 
 ## Permissions
 
-To use these API endpoints you must have the Grafana server administrator permissions.
+To use the instance-wide API endpoints you must have the Grafana server administrator permissions.
 
 In Grafana OSS, the default `admin` user has permissions to use these API endpoints. If you're running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](ref:role-based-access-control-permissions) for more information.
 
-Because Grafana Cloud stacks are multi-tenant, **no Grafana Cloud account is allowed to call these endpoints**. That level of access is reserved only for Grafana platform operators. If you're a Grafana Cloud user, refer to the [Organization HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/http_api/api-legacy/org/) instead.
+Because Grafana Cloud stacks are multi-tenant, **no Grafana Cloud account is allowed to call the instance-wide endpoints**. That level of access is reserved only for Grafana platform operators. If you're a Grafana Cloud user, refer to the [Organization HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/http_api/api-legacy/org/) or [Get teams for user](#get-teams-for-user) for current-organization team memberships.
 
 ## Authentication
 
-**You need basic authentication to use this API**, you can't authenticate with service account tokens. Service accounts are limited to an organization and an organization role, and can't be granted [Grafana server administrator permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators).
+**You need basic authentication to use the instance-wide endpoints**, you can't authenticate with service account tokens. Service accounts are limited to an organization and an organization role, and can't be granted [Grafana server administrator permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators).
 
 Alternatively, you can use the [Organization HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/org/#current-organization-api) with service account tokens to manage users in a specific organization
 
@@ -349,14 +349,20 @@ Content-Type: application/json
 
 `GET /api/users/:id/teams`
 
+Returns the user's team memberships in your current organization. The `:id` parameter accepts a user ID or UID.
+
 **Required permissions**
 
 See note in the [introduction](#user-api) for an explanation.
 
-| Action     | Scope           |
-| ---------- | --------------- |
-| users:read | global.users:\* |
-| teams:read | teams:\*        |
+You need either `org.users:read` in your current organization or `users:read` scoped to the target user.
+Results are filtered by your `teams:read` permissions.
+
+| Action         | Scope                                         |
+| -------------- | --------------------------------------------- |
+| org.users:read | No scope; alternative to users:read           |
+| users:read     | global.users:\* or global.users:id:&lt;id&gt; |
+| teams:read     | teams:\* or teams:id:&lt;id&gt;               |
 
 **Example Request**:
 
@@ -367,7 +373,7 @@ Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
-Requires basic authentication and that the authenticated user is a Grafana Admin.
+The example uses basic authentication. Organization readers can also use an authenticated session or a service account token with the required permissions.
 
 **Example Response**:
 

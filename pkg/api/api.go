@@ -311,7 +311,7 @@ func (hs *HTTPServer) registerRoutes() {
 			usersRoute.Get("/", authorize(ac.EvalPermission(ac.ActionUsersRead)), routing.Wrap(hs.searchUsersService.SearchUsers))
 			usersRoute.Get("/search", authorize(ac.EvalPermission(ac.ActionUsersRead)), routing.Wrap(hs.searchUsersService.SearchUsersWithPaging))
 			usersRoute.Get("/:id", userUIDResolver, authorize(ac.EvalPermission(ac.ActionUsersRead, userIDScope)), routing.Wrap(hs.GetUserByID))
-			usersRoute.Get("/:id/teams", userUIDResolver, authorize(ac.EvalPermission(ac.ActionUsersRead, userIDScope)), routing.Wrap(hs.GetUserTeams))
+			usersRoute.Get("/:id/teams", userUIDResolver, authorize(ac.EvalAny(ac.EvalPermission(ac.ActionOrgUsersRead), ac.EvalPermission(ac.ActionUsersRead, userIDScope))), routing.Wrap(hs.GetUserTeams))
 			usersRoute.Get("/:id/orgs", userUIDResolver, authorize(ac.EvalPermission(ac.ActionUsersRead, userIDScope)), routing.Wrap(hs.GetUserOrgList))
 			// query parameters /users/lookup?loginOrEmail=admin@example.com
 			usersRoute.Get("/lookup", authorize(ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(hs.GetUserByLoginOrEmail))
