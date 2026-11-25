@@ -27,7 +27,7 @@ func (r *GrafanaRouter) authenticate(w http.ResponseWriter, req *http.Request) *
 
 	var err error
 	errorType := "authentication_failure"
-	switch token := req.Header.Get("X-Access-Token"); {
+	switch token := req.Header.Get(accessTokenHeader); {
 	case token == "":
 		err = apierrors.NewUnauthorized("missing access token header")
 		errorType = "missing_token"
