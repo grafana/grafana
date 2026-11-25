@@ -96,19 +96,30 @@ func TestCloudSettingsStorageModes(t *testing.T) {
 			h, err := backends[0].Load(t.Context())
 			require.NoError(t, err)
 			defer h.(interface{ Destroy() }).Destroy()
-			serve := func(method, path string) *httptest.ResponseRecorder {
+			serveAs := func(method, path string, user *identity.StaticRequester) *httptest.ResponseRecorder {
 				r := httptest.NewRequest(method, path, strings.NewReader(`{}`))
 				r.Header.Set("Content-Type", "application/json")
-				user := settingsRequester("stacks-1")
-				user.AccessTokenClaims.Rest.DelegatedPermissions = []string{"*-app:*"}
 				r = r.WithContext(identity.WithRequester(r.Context(), user))
 				w := httptest.NewRecorder()
 				h.ServeHTTP(newStatusRecorder(w).writer(), r)
 				return w
 			}
+			serve := func(method, path string) *httptest.ResponseRecorder {
+				user := settingsRequester("stacks-1")
+				user.AccessTokenClaims.Rest.DelegatedPermissions = []string{"*-app:*"}
+				return serveAs(method, path, user)
+			}
 			root := "/apis/example-app/v0alpha1"
 			list := root + "/namespaces/stacks-1/app"
 			item := list + "/instance"
+			admin := settingsRequester("stacks-2")
+			admin.IsGrafanaAdmin = true
+			for _, path := range []string{item, list, item + "/health", item + "/resources", item + "/proxy/remote"} {
+				res := serveAs("GET", path, admin)
+				require.Equal(t, http.StatusForbidden, res.Code, res.Body.String())
+			}
+			require.Zero(t, legacy.reads.Load())
+			require.Zero(t, unified.reads.Load())
 			for _, path := range []string{item, list} {
 				res := serve("GET", path)
 				require.Equal(t, 200, res.Code, res.Body.String())

@@ -88,7 +88,7 @@ func cloudSettingsNamespaceAuthorizer(ctx context.Context, attr authorizer.Attri
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 	ns, err := types.ParseNamespace(attr.GetNamespace())
-	if err != nil || ns.StackID < 1 || (!types.NamespaceMatches(user.GetNamespace(), ns.Value) && !user.GetIsGrafanaAdmin()) {
+	if err != nil || ns.StackID < 1 || !types.NamespaceMatches(user.GetNamespace(), ns.Value) {
 		return authorizer.DecisionDeny, "a matching stack namespace is required", nil
 	}
 	return authorizer.DecisionNoOpinion, "", nil

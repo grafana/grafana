@@ -41,7 +41,8 @@ fail the affected group. An absent provider retains ST's existing unified-only b
 The enterprise adapter reuses the authenticated cloudconfig client. It validates the requested
 namespace and returned object, preserves enabled/pinned/JSON/metadata, redacts secure values,
 and supplies decrypted values through the existing secure-context shim for backend calls.
-Missing settings return NotFound. Writes, including dry runs, return MethodNotAllowed.
+Getting absent settings returns NotFound; listing them returns an empty list.
+Writes, including dry runs, return MethodNotAllowed.
 
 The router's separate cloud Wire graph receives `CloudSettingsDependencies`: the legacy store and
 plugin credential middleware. It constructs no local SQL
@@ -73,7 +74,9 @@ MT supplies only the context and credentials needed for these requests:
 - Existing plugin service-token middleware; the router and enterprise apiserver share its
   audience policy. The new settings path does not derive ID tokens.
 - Remote legacy RBAC for app access and proxy `reqAction` checks. Incoming token scopes and
-  namespace restrictions are checked before execution; proxy roles use the shared handler.
+  namespace restrictions are checked before execution, including for Grafana admins;
+  cross-namespace access requires a matching wildcard namespace on the requester.
+  Proxy roles use the shared handler.
 
 No stack-settings lookup, tenant-context middleware, installed-version lookup, or Grafana
 version is introduced into the new path. Existing `pkg/apppluginext` remains available for
@@ -134,5 +137,5 @@ Cover settings reads and rejected writes, namespace isolation, secret redaction 
 secret resolution, disabled settings, token scope and RBAC failures, health/resource gRPC
 calls, caller identity, proxy route permissions, discovery, provider failures, and retirement.
 Regenerate both Wire graphs and run the enterprise generated-injector test. Existing ST
-settings, proxy, and dual-write tests must keep passing. Semgrep remains a landing check when
-available in the development environment.
+settings, proxy, and dual-write tests must keep passing. The review scan ran 42 Semgrep Go
+rules across 36 routing, settings, and authorization files with no findings or parse errors.
