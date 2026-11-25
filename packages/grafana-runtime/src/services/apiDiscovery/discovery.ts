@@ -23,7 +23,8 @@ const ROOT_CACHE_KEY = 'grafana-runtime:api-discovery:root';
 // A DNS subdomain, as Kubernetes requires for group names. The name ends up in a URL path.
 const GROUP_NAME_PATTERN = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$/;
 
-// Groups with a pending or cached group-endpoint answer, so invalidation can find their cache entries.
+// Groups with a pending or cached group-endpoint answer. Lookups for them skip `/apis`, so a broken root
+// endpoint isn't retried on every call, and invalidation uses them to find their cache entries.
 const groupsFromFallback = new Set<string>();
 
 class DiscoveryTimeoutError extends Error {
@@ -70,7 +71,6 @@ export async function getAPIGroup(group: string): Promise<APIGroupInfo | undefin
     return undefined;
   }
 
-  // A group answered by the fallback stays answered, so a broken root endpoint is not retried for it.
   if (groupsFromFallback.has(group)) {
     return getAPIGroupFromFallback(group);
   }
