@@ -1618,11 +1618,12 @@ func TestWatchPreviousReadWithoutQoSCancelsWhenLastWaiterLeaves(t *testing.T) {
 		require.Len(t, canceled, 1, "leaving the last waiter must cancel the backend context")
 
 		next := startPreviousRead(t.Context(), srv)
-		require.EqualValues(t, 1, backend.reads.Load(), "the canceled read still owns the flight")
-		unblock()
-		require.Equal(t, codes.Canceled, status.Code(<-first))
+		require.Len(t, next, 1, "a new watch can finish a replacement read while the canceled call is blocked")
 		require.NoError(t, <-next)
 		require.EqualValues(t, 2, backend.reads.Load())
+		require.Empty(t, first, "the canceled call is still running inline")
+		unblock()
+		require.Equal(t, codes.Canceled, status.Code(<-first))
 	})
 }
 
