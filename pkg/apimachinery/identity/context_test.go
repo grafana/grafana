@@ -82,7 +82,7 @@ func TestServiceIdentityAlertReviewStoragePermissions(t *testing.T) {
 func TestServiceIdentityRuleCleanupPermissions(t *testing.T) {
 	_, requester := identity.WithServiceIdentity(context.Background(), 42)
 	require.Equal(t, int64(42), requester.GetOrgID())
-	for _, action := range []string{"alert.rules:read", "alert.rules:delete", "rules.alerting.grafana.app/configs:delete"} {
+	for _, action := range []string{"alert.rules:read", "alert.rules:delete", "alert.rules:create", "alert.rules:write", "rules.alerting.grafana.app/configs:delete"} {
 		require.Equal(t, []string{"*"}, requester.GetPermissions()[action])
 	}
 	for _, resource := range []string{"rulesequences", "alertrules", "recordingrules", "configs"} {

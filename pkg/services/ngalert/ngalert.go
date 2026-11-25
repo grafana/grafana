@@ -612,6 +612,7 @@ func (ng *AlertNG) init() error {
 	// setting and/or per-org via the rules Config resource; neither path needs
 	// a feature flag — setting the ini value or the resource's
 	// spec.externalRulerSync.datasourceUid is itself the enable signal.
+	convertedGroups := groupwriter.NewWriter(ng.clientGenerator, request.GetNamespaceMapper(ng.Cfg), log.New("ngalert.convertedgroups"))
 	ng.externalRulerSyncer = rulesync.NewExternalRulerSyncer(
 		&ng.Cfg.UnifiedAlerting,
 		log.New("ngalert.rulesync"),
@@ -624,6 +625,7 @@ func (ng *AlertNG) init() error {
 		ng.FolderResourcePermissions,
 		ng.clientGenerator,
 		request.GetNamespaceMapper(ng.Cfg),
+		convertedGroups,
 	)
 
 	ng.Api = &api.API{
@@ -654,7 +656,7 @@ func (ng *AlertNG) init() error {
 		LegacyRuleService:     legacyRuleService,
 		AlertsRouter:          alertsRouter,
 		ExternalRulerSync:     ng.externalRulerSyncer,
-		ConvertedGroups:       groupwriter.NewWriter(ng.clientGenerator, request.GetNamespaceMapper(ng.Cfg), log.New("ngalert.convertedgroups")),
+		ConvertedGroups:       convertedGroups,
 		EvaluatorFactory:      evalFactory,
 		ConditionValidator:    conditionValidator,
 		FeatureManager:        ng.FeatureToggles,

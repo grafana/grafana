@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/prom/groupwriter"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -61,12 +62,13 @@ type fakeRuleService struct {
 	mu         sync.Mutex
 	replaced   []*models.AlertRuleGroup
 	existing   []models.AlertRuleGroupWithFolderFullpath
-	deleted    []provisioning.FilterOptions
+	deleted    []groupwriter.GroupKey
 	replaceErr error
+	deleteErr  error
 	listErr    error
 }
 
-func (f *fakeRuleService) ReplaceRuleGroups(_ context.Context, _ identity.Requester, groups []*models.AlertRuleGroup, _ utils.ManagerProperties, _ string) error {
+func (f *fakeRuleService) ReplaceGroups(_ context.Context, _ int64, groups []*models.AlertRuleGroup, _ utils.ManagerProperties) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.replaceErr != nil {
@@ -75,11 +77,11 @@ func (f *fakeRuleService) ReplaceRuleGroups(_ context.Context, _ identity.Reques
 	f.replaced = groups
 	return nil
 }
-func (f *fakeRuleService) DeleteRuleGroups(_ context.Context, _ identity.Requester, _ utils.ManagerProperties, filterOpts *provisioning.FilterOptions) error {
+func (f *fakeRuleService) DeleteGroups(_ context.Context, _ int64, groups []groupwriter.GroupKey, _ utils.ManagerProperties) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.deleted = append(f.deleted, *filterOpts)
-	return nil
+	f.deleted = append(f.deleted, groups...)
+	return f.deleteErr
 }
 func (f *fakeRuleService) GetAlertGroupsWithFolderFullpath(_ context.Context, _ identity.Requester, filterOpts *provisioning.FilterOptions) ([]models.AlertRuleGroupWithFolderFullpath, error) {
 	f.mu.Lock()
@@ -223,6 +225,7 @@ func newTestSyncerWithConfigClient(t *testing.T, cs *fakeConfigClient, fetch *fa
 		datasources:       fakeDatasourceGetter{ds: &datasources.DataSource{UID: "ds1", OrgID: 1, Type: datasources.DS_PROMETHEUS, URL: "http://mimir/prometheus"}},
 		fetcher:           fetch,
 		ruleService:       rs,
+		groups:            rs,
 		namespaceStore:    fakeNamespaceStore{},
 		folderPermissions: &recordingFolderPermissions{},
 		state:             make(map[int64]*orgSyncState),
@@ -297,6 +300,33 @@ func TestSyncOrg_NotARuler(t *testing.T) {
 	assert.Nil(t, rs.replaced, "nothing synced when the datasource is not a ruler")
 }
 
+func TestSyncOrg_PruneFailure(t *testing.T) {
+	for name, tc := range map[string]struct {
+		err    error
+		synced bool
+	}{
+		"a group whose rules are already gone is pruned": {err: models.ErrAlertRuleGroupNotFound, synced: true},
+		"a failed delete fails the sync":                 {err: errors.New("delete failed")},
+	} {
+		t.Run(name, func(t *testing.T) {
+			cs := newFakeConfigClient()
+			cs.setSpec(1, "ds1")
+			rs := &fakeRuleService{existing: []models.AlertRuleGroupWithFolderFullpath{ownedGroup("folder-ns1", "stale-group")}, deleteErr: tc.err}
+			s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 7}, rs)
+			s.namespaceStore = fakeNamespaceStore{children: []*folder.FolderReference{{UID: "folder-ns1", Title: "ns1"}}}
+
+			s.SyncOrg(context.Background(), 1)
+
+			cond := syncedCondition(t, cs.statusFor(1))
+			if tc.synced {
+				require.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusTrue, cond.Status)
+				return
+			}
+			require.Equal(t, ReasonPrune.ConditionReason(), cond.Reason)
+		})
+	}
+}
+
 func TestSyncOrg_UnsupportedDatasourceType(t *testing.T) {
 	// IsRulerCandidate's cheap static check must reject the datasource before
 	// a fetch is even attempted: the operator-set ini UID skips the
@@ -332,11 +362,7 @@ func TestSyncOrg_PruneScopedByFolder(t *testing.T) {
 	s.SyncOrg(context.Background(), 1)
 
 	require.Len(t, rs.deleted, 1, "exactly one stale, in-folder group pruned")
-	assert.Equal(t, []string{"folder-ns1"}, rs.deleted[0].NamespaceUIDs)
-	assert.Equal(t, []string{"stale-group"}, rs.deleted[0].RuleGroups)
-	// Delete is scoped to converted-Prometheus rules only.
-	require.NotNil(t, rs.deleted[0].HasPrometheusRuleDefinition)
-	assert.True(t, *rs.deleted[0].HasPrometheusRuleDefinition)
+	assert.Equal(t, groupwriter.GroupKey{FolderUID: "folder-ns1", Title: "stale-group"}, rs.deleted[0])
 }
 
 func TestSyncOrg_SkipsUnconvertibleGroup(t *testing.T) {
