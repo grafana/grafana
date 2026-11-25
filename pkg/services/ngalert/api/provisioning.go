@@ -8,8 +8,7 @@ import (
 
 // deprecatedRuleProvisioningResponse sets deprecation notice headers on the
 // response per the API deprecation checklist. The X-API-Replacement path
-// currently points to the v0alpha1 app-platform resource; update it when the
-// API graduates to beta or stable.
+// points to the v1beta1 app-platform rules resources.
 func deprecatedRuleProvisioningResponse(resp response.Response, replacement string) response.Response {
 	if nr, ok := resp.(*response.NormalResponse); ok {
 		nr.SetHeader("Warning", `299 - "Deprecated API: use the Grafana App Platform alerting API instead."`)
@@ -25,17 +24,15 @@ func deprecatedRuleProvisioningResponse(resp response.Response, replacement stri
 }
 
 const (
-	appPlatformBase = "/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}"
+	appPlatformBase = "/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}"
 
 	// replacementAlertRules lists the app-platform collection endpoints
 	// that replace the legacy provisioning list/create/group endpoints.
-	// TODO: update when the API moves to beta.
 	replacementAlertRules = appPlatformBase + "/alertrules, " + appPlatformBase + "/recordingrules"
 
 	// replacementAlertRuleByUID lists the app-platform single-resource
 	// endpoints that replace the legacy provisioning get/update/delete
 	// endpoints.
-	// TODO: update when the API moves to beta.
 	replacementAlertRuleByUID = appPlatformBase + "/alertrules/{name}, " + appPlatformBase + "/recordingrules/{name}"
 
 	notificationAppPlatformBase = "/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}"

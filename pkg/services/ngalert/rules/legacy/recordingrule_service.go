@@ -19,11 +19,11 @@ import (
 // orgID is the org of the request's namespace. It is not always the user's org: Grafana server admins can call any
 // org's namespace, so it is passed in rather than taken from the user.
 type RecordingRules struct {
-	service    *LegacyRuleService
+	service    *legacyRuleService
 	namespacer request.NamespaceMapper
 }
 
-func NewRecordingRules(service *LegacyRuleService, namespacer request.NamespaceMapper) *RecordingRules {
+func newRecordingRules(service *legacyRuleService, namespacer request.NamespaceMapper) *RecordingRules {
 	return &RecordingRules{service: service, namespacer: namespacer}
 }
 
