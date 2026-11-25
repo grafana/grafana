@@ -8,6 +8,7 @@ import (
 	"slices"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
@@ -84,6 +85,15 @@ func newResourcePage(opts ListOptions) (resourcePage, error) {
 		page.after = &after
 	}
 	return page, nil
+}
+
+// passed reports whether every item of a resource sorts before where the page resumes, so the page
+// holds none of them.
+func (p resourcePage) passed(gr schema.GroupResource) bool {
+	if p.after == nil {
+		return false
+	}
+	return cmp.Or(cmp.Compare(gr.Group, p.after.Group), cmp.Compare(gr.Resource, p.after.Resource)) < 0
 }
 
 // of returns the page's items in the key order, with the token that resumes after it. Items are

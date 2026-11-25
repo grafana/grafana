@@ -82,6 +82,12 @@ func TestSupportedResourceCapabilities(t *testing.T) {
 	assert.True(t, skip.IsActive())
 
 	assert.False(t, disabled.IsActive())
+
+	assert.False(t, folder.IsExternallyStored(), "indexed unless declared otherwise")
+	parsed, err := ParseSupportedResources([]string{"playlist.grafana.app/Playlist:externalstorage"})
+	require.NoError(t, err)
+	assert.True(t, parsed[0].IsExternallyStored())
+	assert.True(t, parsed[0].IsActive())
 }
 
 func TestSupportsFolderAnnotation(t *testing.T) {

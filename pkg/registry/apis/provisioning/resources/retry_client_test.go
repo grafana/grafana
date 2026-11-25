@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -426,6 +427,26 @@ func TestRetryResourceInterface_ContextCancellation(t *testing.T) {
 	assert.Equal(t, context.Canceled, err)
 	// Should not retry after context cancellation
 	mockClient.AssertNumberOfCalls(t, "Create", 0)
+}
+
+// A caller cancelled while the client waits between attempts gets its cancellation back at once,
+// rather than after the wait and with the last transient error.
+func TestRetryResourceInterface_ContextCancelledDuringBackoff(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithCancel(t.Context())
+		mockClient := &MockDynamicResourceInterface{}
+		mockClient.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Run(func(mock.Arguments) { cancel() }).
+			Return(nil, apierrors.NewServiceUnavailable("service unavailable")).Once()
+
+		start := time.Now()
+		_, err := newRetryResourceInterface(mockClient, defaultRetryBackoff()).
+			Create(ctx, &unstructured.Unstructured{}, metav1.CreateOptions{})
+
+		assert.Equal(t, context.Canceled, err)
+		assert.Zero(t, time.Since(start), "the backoff is not waited out")
+		mockClient.AssertNumberOfCalls(t, "Create", 1)
+	})
 }
 
 func TestRetryResourceInterface_ExponentialBackoff(t *testing.T) {

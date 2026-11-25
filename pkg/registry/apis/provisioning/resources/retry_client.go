@@ -110,15 +110,10 @@ func (r *retryResourceInterface) retryWithBackoff(ctx context.Context, fn func()
 	attempt := 0
 	logger := logging.FromContext(ctx)
 
-	err := wait.ExponentialBackoff(r.backoff, func() (bool, error) {
+	// The context-aware backoff also stops waiting between attempts once ctx is done, so a
+	// cancelled caller is not held for up to the backoff cap.
+	err := wait.ExponentialBackoffWithContext(ctx, r.backoff, func(context.Context) (bool, error) {
 		attempt++
-
-		// Check if context is cancelled
-		if ctx.Err() != nil {
-			logger.Debug("Retry cancelled due to context cancellation", "attempt", attempt)
-			return false, ctx.Err()
-		}
-
 		err := fn()
 		if err == nil {
 			if attempt > 1 {
@@ -139,8 +134,11 @@ func (r *retryResourceInterface) retryWithBackoff(ctx context.Context, fn func()
 		return false, nil
 	})
 
-	// If wait.ExponentialBackoff returned an error, check if we actually retried
 	if err != nil {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			logger.Debug("Retry cancelled due to context cancellation", "attempt", attempt)
+			return ctxErr
+		}
 		if lastErr != nil {
 			// We had transient errors and exhausted all retry attempts
 			logger.Warn("All retry attempts exhausted", "total_attempts", attempt, "error", lastErr)
