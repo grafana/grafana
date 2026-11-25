@@ -14,6 +14,8 @@ import {
 
 // Flag key constants for programmatic access
 export const FlagKeys = {
+  /** Enables multiple points of integration for Adaptive Logs Time Machine. */
+  AdaptivelogsEnableTimeMachine: "adaptivelogs.enableTimeMachine",
   /** Enable configuration of alert enrichments in Grafana Cloud. */
   AlertEnrichment: "alertEnrichment",
   /** Enables the alert rule restore feature */
@@ -28,6 +30,8 @@ export const FlagKeys = {
   AlertingRuleQuality: "alerting.ruleQuality",
   /** Enable fixing alert rule quality issues with Grafana Assistant on the alert quality page. */
   AlertingRuleQualityFix: "alerting.ruleQualityFix",
+  /** Enable bulk fixes for alert rule quality issues on the alert quality page. */
+  AlertingRuleQualityFixAll: "alerting.ruleQualityFixAll",
   /** Enable assistant reviews on the alert quality page. */
   AlertingRuleReviews: "alerting.ruleReviews",
   /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
@@ -264,6 +268,8 @@ export const FlagKeys = {
   GrafanaPanelOptionInterpolation: "grafana.panelOptionInterpolation",
   /** Let panel plugins register system transformations */
   GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
+  /** Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode */
+  GrafanaPanelQuickEdits: "grafana.panelQuickEdits",
   /** Pass React elements in plugin extension props by reference */
   GrafanaPluginExtensionReactElementProps: "grafana.pluginExtensionReactElementProps",
   /** Nest app plugin navigation items in the mega menu based on their URL path hierarchy */
@@ -310,8 +316,6 @@ export const FlagKeys = {
   LibraryelementsKubernetesLibraryPanels: "libraryelements.kubernetesLibraryPanels",
   /** Connects Grafana Live to the live.grafana.app websocket instead of /api/live/ws */
   LiveUseAPIServerWebsocket: "live.useAPIServerWebsocket",
-  /** Enables multiple points of integration for Adaptive Logs Time Machine. */
-  LogsEnableTimeMachine: "logs.enableTimeMachine",
   /** Enables the logs tableNG panel to replace existing tableRT */
   LogsTablePanelNG: "logsTablePanelNG",
   /** Changes logs responses from Loki to be compliant with the dataplane specification. */
@@ -431,6 +435,17 @@ export const FlagKeys = {
 } as const;
 
 /**
+ * Enables multiple points of integration for Adaptive Logs Time Machine.
+ *
+ * **Details:**
+ * - flag key: `adaptivelogs.enableTimeMachine`
+ * - default value: `false`
+ */
+export const useFlagAdaptivelogsEnableTimeMachine = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("adaptivelogs.enableTimeMachine", false, options).value;
+};
+
+/**
  * Enable configuration of alert enrichments in Grafana Cloud.
  *
  * **Details:**
@@ -505,6 +520,17 @@ export const useFlagAlertingRuleQuality = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagAlertingRuleQualityFix = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alerting.ruleQualityFix", false, options).value;
+};
+
+/**
+ * Enable bulk fixes for alert rule quality issues on the alert quality page.
+ *
+ * **Details:**
+ * - flag key: `alerting.ruleQualityFixAll`
+ * - default value: `false`
+ */
+export const useFlagAlertingRuleQualityFixAll = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.ruleQualityFixAll", false, options).value;
 };
 
 /**
@@ -1806,6 +1832,17 @@ export const useFlagGrafanaPanelPluginTransformations = (options?: ReactFlagEval
 };
 
 /**
+ * Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode
+ *
+ * **Details:**
+ * - flag key: `grafana.panelQuickEdits`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPanelQuickEdits = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.panelQuickEdits", false, options).value;
+};
+
+/**
  * Pass React elements in plugin extension props by reference
  *
  * **Details:**
@@ -2056,17 +2093,6 @@ export const useFlagLibraryelementsKubernetesLibraryPanels = (options?: ReactFla
  */
 export const useFlagLiveUseAPIServerWebsocket = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("live.useAPIServerWebsocket", false, options).value;
-};
-
-/**
- * Enables multiple points of integration for Adaptive Logs Time Machine.
- *
- * **Details:**
- * - flag key: `logs.enableTimeMachine`
- * - default value: `false`
- */
-export const useFlagLogsEnableTimeMachine = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("logs.enableTimeMachine", false, options).value;
 };
 
 /**
