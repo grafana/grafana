@@ -1326,18 +1326,24 @@ func previousReadUpdate() *WrittenEvent {
 
 func TestWatchSharesPreviousVersionReads(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
+		_, queue := newTestServerWithQueue(t, 8, 1)
 		release := make(chan struct{})
 		releaseRead := sync.OnceFunc(func() { close(release) })
 		defer releaseRead()
-		srv, backend := newQueuedPreviousReadTestServer(t, func(ctx context.Context, _ int64) {
+		srv, backend := newPreviousReadTestServer(t, func(ctx context.Context, _ int64) {
 			select {
 			case <-release:
 			case <-ctx.Done():
 			}
 		})
+		srv.queue = queue
 		both, onlyB := newWatchTestUser(), newWatchTestUser()
 		onlyB.UserUID = "u456"
+		var previousChecks atomic.Int64
 		srv.access = previousReadAccess{srv.access, func(_ context.Context, user authlib.AuthInfo, folder string) (authlib.CheckResponse, error) {
+			if folder == "a" {
+				previousChecks.Add(1)
+			}
 			return authlib.CheckResponse{Allowed: folder == "b" || (folder == "a" && user.GetUID() == both.GetUID())}, nil
 		}}
 		users := []authlib.AuthInfo{both, both, onlyB, onlyB}
@@ -1365,6 +1371,8 @@ func TestWatchSharesPreviousVersionReads(t *testing.T) {
 				require.Nil(t, event.Previous, "the watch may see folder b but cannot read the prior revision in folder a")
 			}
 		}
+		require.EqualValues(t, 1, backend.reads.Load())
+		require.EqualValues(t, len(users), previousChecks.Load(), "each watch must authorize the previous revision")
 	})
 }
 
