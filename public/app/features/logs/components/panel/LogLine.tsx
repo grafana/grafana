@@ -253,11 +253,8 @@ const LogLineComponent = memo(
             </div>
           )}
           {(hasSampledLogs || hasLogsFromTimeMachine) && (
-            // isSampled and isFromTimeMachine are mutually exclusive per row - a dropped line is
-            // either still present at some sampled rate, or retrieved later via Time Machine, never
-            // both - so they share one reserved icon slot instead of each getting their own.
             <div className={`${styles.isSampled}`}>
-              {log.isSampled && (
+              {log.isSampled && !log.isFromTimeMachine && (
                 <Tooltip content={log.sampledMessage ?? ''} placement="right" theme="info">
                   <Icon
                     className={styles.logIconInfo}

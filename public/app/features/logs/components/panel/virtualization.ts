@@ -322,7 +322,7 @@ export function getLogLineSize(
     optionsWidth += virtualization.getGridSize() * 2 + iconsGap;
   }
   if (hasSampledLogs || hasLogsFromTimeMachine) {
-    // isSampled and isFromTimeMachine are mutually exclusive per row and share LogLine icon slot
+    // LogLine renders at most one of the sampled and Time Machine icons in this slot
     optionsWidth += virtualization.getGridSize() * 2 + iconsGap;
   }
   if (showTime) {
