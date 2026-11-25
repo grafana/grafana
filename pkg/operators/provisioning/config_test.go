@@ -171,8 +171,7 @@ func TestProvisioningRESTClientCarriesTheExchangedToken(t *testing.T) {
 	assert.Equal(t, "/apis/provisioning.grafana.app/v0alpha1/connections/list-keys", gotPath)
 }
 
-// The aggregated server is the router: it publishes the app manifests, and it serves each group
-// that has no server URL. Both requests carry a token for the provisioning audience.
+// The aggregated server is the router: it publishes the app manifests, and it serves each group.
 func TestClientsServeManifestKindsFromTheAggregatedServer(t *testing.T) {
 	router := routertest.NewServer(t, map[string]string{
 		"/apis/discovery/v1alpha2/manifests":                          `{"apiVersion":"apps.grafana.app/v1alpha2","kind":"AppManifestList","items":[{"apiVersion":"apps.grafana.app/v1alpha2","kind":"AppManifest","metadata":{"name":"example"},"spec":{"appName":"example","group":"example.ext.grafana.app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Widget","scope":"Namespaced","extensions":{"provisioning":{"enabled":true}}}]}]}}]}`,
@@ -197,17 +196,16 @@ func TestClientsServeManifestKindsFromTheAggregatedServer(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "Bearer token-for-grafana", router.AccessToken("/apis/discovery/v1alpha2/manifests"))
-	require.Equal(t, "Bearer token-for-"+apisprovisioning.GROUP, router.AccessToken("/apis/"+stubRouterGroup+"/v1/namespaces/default/widgets"))
+	require.Equal(t, "Bearer token-for-"+stubRouterGroup, router.AccessToken("/apis/"+stubRouterGroup+"/v1/namespaces/default/widgets"))
 }
 
-func TestClientsUseTheRouterForDashboardsWithTheRouterClientSetting(t *testing.T) {
+func TestClientsUseTheRouterForDashboards(t *testing.T) {
 	dashboards := "/apis/dashboard.grafana.app/v1/namespaces/default/dashboards"
 	router := routertest.NewServer(t, map[string]string{
 		"/apis/dashboard.grafana.app/v1": `{"kind":"APIResourceList","apiVersion":"v1","groupVersion":"dashboard.grafana.app/v1","resources":[{"name":"dashboards","namespaced":true,"kind":"Dashboard","verbs":["list"]}]}`,
 		dashboards:                       `{"apiVersion":"dashboard.grafana.app/v1","kind":"DashboardList","items":[]}`,
 	})
 	cfg := newClientsConfig(t, newStubSigner(t).URL, map[string]string{"aggregated_server_url": router.URL})
-	cfg.Settings.ProvisioningRouterClient = true
 
 	factory, err := cfg.Clients()
 	require.NoError(t, err)
@@ -221,37 +219,9 @@ func TestClientsUseTheRouterForDashboardsWithTheRouterClientSetting(t *testing.T
 	require.Equal(t, "Bearer token-for-dashboard.grafana.app", router.AccessToken(dashboards))
 }
 
-func TestClientsRequireTheAggregatedServerWithTheRouterClientSetting(t *testing.T) {
-	cfg := newClientsConfig(t, newStubSigner(t).URL, nil)
-	cfg.Settings.ProvisioningRouterClient = true
-
-	_, err := cfg.Clients()
-	require.ErrorContains(t, err, "aggregated_server_url is required")
-}
-
-// Production has no aggregated server yet, so the operators must run with the configured
-// resources only.
 func TestClientsWithoutAnAggregatedServer(t *testing.T) {
-	t.Run("serves the configured resources and watches no manifests", func(t *testing.T) {
-		cfg := newClientsConfig(t, newStubSigner(t).URL, nil)
-
-		factory, err := cfg.Clients()
-		require.NoError(t, err)
-		require.NoError(t, services.StartAndAwaitRunning(t.Context(), cfg.manifestWatcher))
-		t.Cleanup(cfg.manifestWatcher.StopAsync)
-
-		clients, err := factory.Clients(t.Context(), "default")
-		require.NoError(t, err)
-		require.Len(t, clients.SupportedResources(), len(cfg.Settings.ProvisioningResources))
-	})
-
-	t.Run("fails for a configured resource that has no server", func(t *testing.T) {
-		cfg := newClientsConfig(t, newStubSigner(t).URL, nil)
-		cfg.Settings.ProvisioningResources = append(cfg.Settings.ProvisioningResources, "playlist.grafana.app/Playlist")
-
-		_, err := cfg.Clients()
-		require.ErrorContains(t, err, "aggregated_server_url is required")
-	})
+	_, err := newClientsConfig(t, newStubSigner(t).URL, nil).Clients()
+	require.ErrorContains(t, err, "aggregated_server_url is required")
 }
 
 func TestControllersOwnNATSSubscriber(t *testing.T) {
@@ -407,14 +377,14 @@ func TestControllerConfigResourceLister(t *testing.T) {
 const stubRouterGroup = "example.ext.grafana.app"
 
 // newClientsConfig returns a config with the settings that Clients needs, plus the given
-// [operator] keys. Dashboards and folders have server URLs that no test calls.
+// [operator] keys.
 func newClientsConfig(t *testing.T, signerURL string, operator map[string]string) *ControllerConfig {
 	t.Helper()
 	cfg := setting.NewCfg()
 	cfg.ProvisioningResources = []string{"folder.grafana.app/Folder:folder", "dashboard.grafana.app/Dashboard:folder"}
 	sections := map[string]map[string]string{
 		"grpc_client_authentication": {"token": "operator-token", "token_exchange_url": signerURL},
-		"operator":                   {"dashboards_server_url": "https://dashboards.invalid", "folders_server_url": "https://folders.invalid"},
+		"operator":                   {},
 	}
 	for k, v := range operator {
 		sections["operator"][k] = v
