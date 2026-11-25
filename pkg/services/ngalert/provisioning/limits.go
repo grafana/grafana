@@ -61,7 +61,7 @@ func NewLimitsProvider(cfg setting.RemoteAlertmanagerSettings, remoteEnabled boo
 
 	remoteURL, err := url.Parse(cfg.URL)
 	if err != nil {
-		logger.Warn("Failed to parse remote alertmanager URL for limits provider, using noop limits", "error", err)
+		logger.Error("Failed to parse remote alertmanager URL for limits provider, using noop limits", "error", err)
 		return &NoopLimitsProvider{}
 	}
 
