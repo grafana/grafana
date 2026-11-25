@@ -3197,7 +3197,7 @@
           "recording": "Turn on to pause evaluation for this recording rule."
         },
         "select-folder-first-tooltip": "Select a folder first",
-        "ungrouped-rule-description": "This rule has its own evaluation interval. Rules created before evaluation groups were retired may still be in a group, where the group sets the interval."
+        "ungrouped-rule-description": "This rule has its own evaluation interval. Older rules may still be in an evaluation group, where the group sets the interval."
       },
       "evaluation-behaviour": {
         "description": {

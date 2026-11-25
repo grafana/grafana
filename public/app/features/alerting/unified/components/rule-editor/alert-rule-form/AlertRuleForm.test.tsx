@@ -163,6 +163,7 @@ describe('AlertRuleForm — alerting.gmaOnlyListView on (k8s rules API)', () => 
     setUpdateGrafanaRulerRuleNamespaceResolver(() => HttpResponse.json({ message: 'updated', updated: [] }));
 
     const { user } = renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
+    const replaceSpy = jest.spyOn(locationService, 'replace');
     expect(await ui.inputs.name.find()).toHaveValue(grafanaRulerRule.grafana_alert.title);
     expect(ui.inputs.group.get()).toHaveTextContent(grafanaRulerGroup.name);
     expect(screen.getByText(/This rule is in an evaluation group/i)).toBeInTheDocument();
@@ -171,6 +172,7 @@ describe('AlertRuleForm — alerting.gmaOnlyListView on (k8s rules API)', () => 
 
     expect(await screen.findByText(/Rule updated successfully/i)).toBeInTheDocument();
     expect(screen.queryByText(/k8s rules API was used/i)).not.toBeInTheDocument();
+    expect(replaceSpy).toHaveBeenCalled();
   });
 
   it('refreshes the rules list after saving a grouped rule through the ruler API', async () => {

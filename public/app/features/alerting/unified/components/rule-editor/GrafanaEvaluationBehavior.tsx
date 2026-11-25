@@ -188,7 +188,7 @@ export function GrafanaEvaluationBehaviorStep({
               gmaOnlyListView
                 ? t(
                     'alerting.rule-form.evaluation.ungrouped-rule-description',
-                    'This rule has its own evaluation interval. Rules created before evaluation groups were retired may still be in a group, where the group sets the interval.'
+                    'This rule has its own evaluation interval. Older rules may still be in an evaluation group, where the group sets the interval.'
                   )
                 : undefined
             }
