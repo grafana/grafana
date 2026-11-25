@@ -1532,6 +1532,54 @@ describe('prepConfig', () => {
       expect(bboxNotHovered).toMatchObject({ left: -10, top: -10, width: 0, height: 0 });
     });
 
+    it.each([
+      { edge: 'bottom', at: { left: 20, top: 95 }, box: { left: 0, top: 90.5, width: 39.5, height: 9.5 } },
+      { edge: 'top', at: { left: 20, top: 10 }, box: { left: 0, top: 0, width: 39.5, height: 89.5 } },
+    ])('points.bbox clips the hover box to the plotting area when the cell runs past the $edge', ({ at, box }) => {
+      const config = prepConfig({
+        dataRef: {
+          current: createSparseHeatmapData({
+            heatmapColors: { values: [0, 1, 2, 0], palette: ['#000', '#333', '#666'], minValue: 5, maxValue: 20 },
+          }),
+        },
+        theme,
+        timeZone: 'utc',
+        getTimeRange: () => timeRange,
+        exemplarColor: 'rgba(255,0,255,0.7)',
+        yAxisConfig: { axisPlacement: AxisPlacement.Left },
+      }).getConfig();
+      const drawClear = config.hooks?.drawClear?.[0];
+      const paths = config.series?.[1]?.paths;
+      const cursor = config.cursor;
+      if (!drawClear || !paths || !cursor?.dataIdx || !cursor.points?.bbox) {
+        throw new Error('Expected drawClear, heatmap paths, and cursor callbacks');
+      }
+
+      // Cells in a 100px plot that run past its edges, as a bucket starting at 0 does on a log axis:
+      // the first column starts 10px left of the plot, the 1-4 bucket ends 20px below it and the
+      // 4-16 bucket starts 30px above it.
+      const cells: SparseHeatmap = [
+        [1000, 1000, 2000, 2000],
+        [1, 4, 1, 4],
+        [4, 16, 4, 16],
+        [5, 10, 15, 20],
+      ];
+      const mockU = createMockU(cells);
+      Object.assign(mockU, { cursor: at, series: [{}, {}, {}] });
+      const orientSpy = jest
+        .spyOn(uPlot, 'orient')
+        .mockImplementation(createOrientMock(cells, { valToPosX: (v) => v / 20 - 10, valToPosY: (v) => 130 - v * 10 }));
+      try {
+        drawClear(mockU);
+        paths(mockU, 1, 0, cells[0].length);
+      } finally {
+        orientSpy.mockRestore();
+      }
+
+      cursor.dataIdx(mockU, 1, 0, 0);
+      expect(cursor.points.bbox(mockU, 1)).toEqual(box);
+    });
+
     it('cursor.drag reflects selectionMode (X, Y, Xy)', () => {
       expect(buildCursorConfig(HeatmapSelectionMode.X).drag).toMatchObject({ x: true, y: false });
       expect(buildCursorConfig(HeatmapSelectionMode.Y).drag).toMatchObject({ x: false, y: true });

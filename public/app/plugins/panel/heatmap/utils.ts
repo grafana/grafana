@@ -586,14 +586,23 @@ export function prepConfig(opts: PrepConfigOpts) {
     points: {
       fill: 'rgba(255,255,255, 0.3)',
       bbox: (u, seriesIdx) => {
-        let isHovered = hRect && seriesIdx === hRect.sidx;
+        if (!hRect || seriesIdx !== hRect.sidx) {
+          return { left: -10, top: -10, width: 0, height: 0 };
+        }
+
         const pxRatio = uPlot.pxRatio;
 
+        // cells are clipped to the plotting area when drawn, so their hover box has to be too
+        const left = Math.max(hRect.x, 0);
+        const top = Math.max(hRect.y, 0);
+        const right = Math.min(hRect.x + hRect.w, u.bbox.width);
+        const bottom = Math.min(hRect.y + hRect.h, u.bbox.height);
+
         return {
-          left: isHovered ? hRect!.x / pxRatio : -10,
-          top: isHovered ? hRect!.y / pxRatio : -10,
-          width: isHovered ? hRect!.w / pxRatio : 0,
-          height: isHovered ? hRect!.h / pxRatio : 0,
+          left: left / pxRatio,
+          top: top / pxRatio,
+          width: (right - left) / pxRatio,
+          height: (bottom - top) / pxRatio,
         };
       },
     },
