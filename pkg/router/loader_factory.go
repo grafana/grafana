@@ -8,15 +8,20 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -99,12 +104,12 @@ func (noRoutesLoader) Notify(context.Context) (<-chan struct{}, error) {
 // SQL database and run migrations. Like NewCloudRoutesLoader, it
 // returns (nil, nil) when [cloud_router] configures no source.
 //
-// Managed plugins get no plugin store, plugin settings, legacy access control
-// or dual writer (see pluginManifestsTarget), so the builder metrics, which
-// only the dual writer records, are not registered either.
+// The edition-specific Wire graph supplies the remote legacy settings provider.
+// Settings routes require app_settings_enabled; this constructs no local SQL services.
 func ProvideCloudRoutesLoader(
 	cfg *setting.Cfg,
 	clients RoutesLoaderClients,
+	settings CloudSettingsDependencies,
 	tracer tracing.Tracer,
 	features featuremgmt.FeatureToggles,
 	reg prometheus.Registerer,
@@ -113,7 +118,31 @@ func ProvideCloudRoutesLoader(
 	if err != nil {
 		return nil, err
 	}
+	var builderMetrics *builder.BuilderMetrics
+	if cloudAppSettingsEnabled(cfg) {
+		if clients.DualWrite == nil {
+			clients.DualWrite, err = dualwrite.ProvideService(cfg, dualwrite.NewFakeMigrator(), dualwrite.NewConfigBasedMigrationStatusReader(cfg), reg)
+			if err != nil {
+				return nil, err
+			}
+		}
+		builderMetrics = builder.ProvideBuilderMetrics(reg)
+	}
 	return NewCloudRoutesLoader(cfg, PluginDependencies{
+		DualWrite:       clients.DualWrite,
+		BuilderMetrics:  builderMetrics,
+		ContextProvider: cloudPluginContext{},
+		AccessControl:   cloudSettingsAccessControl{clients.LegacyAccess},
+		Settings: SettingsDependencies{
+			LegacyStore:         settings.LegacyStore,
+			ReadOnly:            true,
+			AccessChecker:       cloudSettingsAccessChecker(clients.LegacyAccess),
+			NamespaceAuthorizer: authorizer.AuthorizerFunc(cloudSettingsNamespaceAuthorizer),
+			Middleware: append([]backend.HandlerMiddleware{
+				clientmiddleware.NewTracingHeaderMiddleware(),
+				clientmiddleware.NewForwardIDMiddleware(nil),
+			}, settings.Middleware...),
+		},
 		SecureValues:       clients.SecureValues,
 		MetricsRegister:    reg,
 		RESTConfigProvider: clients.RESTConfigProvider,
@@ -125,6 +154,13 @@ func ProvideCloudRoutesLoader(
 		Features:           features,
 		Cfg:                cfg,
 	})
+}
+
+// CloudSettingsDependencies supplies edition-specific storage and plugin credentials.
+// ST and MT use the same settings and subresource handlers.
+type CloudSettingsDependencies struct {
+	LegacyStore LegacySettingsStoreProvider
+	Middleware  []backend.HandlerMiddleware
 }
 
 // remoteDecrypter returns the secrets manager's gRPC client, or nil when it is
@@ -143,6 +179,7 @@ type RoutesLoaderClients struct {
 	RESTConfigProvider restcfg.RestConfigProvider
 	Resource           resource.ResourceClient
 	Access             types.AccessClient
+	LegacyAccess       legacyclient.LegacyAccessClient
 	DualWrite          dualwrite.Service
 	SecureValues       secret.InlineSecureValueSupport
 }
@@ -176,9 +213,8 @@ func settingsEnabled(cfg *setting.Cfg) bool {
 	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsRegisterAPIServer, false, openfeature.TransactionContext(ctx))
 }
 
-// standaloneRouter reports whether this process runs the router target, which
-// serves no app plugin settings: they need the SQL settings store and dual
-// writer that only Grafana itself provides.
+// standaloneRouter reports whether this process runs the router target. Its
+// local loader has no SQL settings store; cloud settings have a separate gate.
 func standaloneRouter(cfg *setting.Cfg) bool {
 	return cfg != nil && slices.Contains(cfg.Target, "router")
 }

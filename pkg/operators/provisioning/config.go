@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
@@ -346,13 +345,17 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		if group == resources.AnyGroup {
 			audiences = []string{provisioning.GROUP}
 		}
+		var audienceProvider clientauth.AudienceProvider = clientauth.NewStaticAudienceProvider(audiences...)
+		if group == resources.AnyGroup && c.Settings.ProvisioningRouterClient {
+			audienceProvider = clientauth.NewRequestGroupAudienceProvider(setting.ExtJWTAccessTokenExpectAudience)
+		}
 
 		config := &rest.Config{
 			APIPath: "/apis",
 			Host:    url,
 			WrapTransport: clientauth.NewTokenExchangeTransportWrapper(
 				tokenExchangeClient,
-				clientauth.NewStaticAudienceProvider(audiences...),
+				audienceProvider,
 				clientauth.NewStaticNamespaceProvider(clientauth.WildcardNamespace),
 			),
 			Transport: &http.Transport{
@@ -368,7 +371,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 
 	c.manifestWatcher, err = resources.NewRemoteManifestWatcher(supportedResourceProvider, c.Registry(), resource.ManifestWatcherConfig{
 		DiscoveryURL:      aggregatedServerURL,
-		DiscoveryAudience: provisioning.GROUP,
+		DiscoveryAudience: setting.ExtJWTAccessTokenExpectAudience,
 		Exchanger:         tokenExchangeClient,
 		TLS:               &tlsConfig,
 		PollInterval:      time.Minute,
@@ -378,6 +381,12 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		return nil, fmt.Errorf("failed to create manifest watcher: %w", err)
 	}
 	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, supportedResourceProvider)
+	if c.Settings.ProvisioningRouterClient {
+		if aggregatedServerURL == "" {
+			return nil, fmt.Errorf("aggregated_server_url is required in [operator] section when [provisioning] router_client is enabled")
+		}
+		clients = resources.NewClientFactory(configProviders[resources.AnyGroup], supportedResourceProvider)
+	}
 	c.clients = clients
 	return clients, nil
 }
@@ -541,20 +550,13 @@ func (c *ControllerConfig) FreshnessMetrics() *informer.FreshnessMetrics {
 	return c.freshness
 }
 
-// ProvisioningKeysLister returns a keys lister for one kind when [provisioning]
-// keys_only_relist is set, and nil otherwise, which keeps the full-object
-// re-list.
-func (c *ControllerConfig) ProvisioningKeysLister(logger logging.Logger, gvr schema.GroupVersionResource) (keysapi.Lister, error) {
-	if !c.Settings.SectionWithEnvOverrides("provisioning").Key("keys_only_relist").MustBool(false) {
-		return nil, nil
-	}
-
+// ProvisioningKeysLister returns the keys lister the informer re-list reads one
+// kind through.
+func (c *ControllerConfig) ProvisioningKeysLister(gvr schema.GroupVersionResource) (keysapi.Lister, error) {
 	restClient, err := c.ProvisioningRESTClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provisioning REST client: %w", err)
 	}
-
-	logger.Info("provisioning re-list will ask for keys only", "transport", "http", "resource", gvr.Resource)
 
 	return keysapi.NewHTTPLister(restClient, gvr), nil
 }

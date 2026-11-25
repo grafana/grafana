@@ -308,7 +308,7 @@ You can set an absolute time range in the following ways:
 - Type values into the **From** and **To** fields. You can type exact time values or relative values, such as `now-24h`, and then click **Apply time range**.
 - Click in the **From** or **To** field. Grafana displays a calendar. Click the day or days you want to use as the current time range and then click **Apply time range**.
 
-This section also displays recently used absolute ranges.
+For precise ranges, include milliseconds after the seconds, for example `2020-05-14 00:00:00.123`. The **From** and **To** fields and the time picker tooltip show non-zero milliseconds. The toolbar and recently used range labels show them only for ranges shorter than one minute.
 
 #### Semi-relative time range
 

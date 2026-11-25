@@ -83,7 +83,7 @@ export const CORE_KINDS = {
     getLabel: label(() => t('core-kinds.playlist.label', 'playlist')),
     getPluralLabel: label(() => t('core-kinds.playlist.label-plural', 'playlists')),
     icon: 'presentation-play',
-    iconColor: 'semi-dark-orange',
+    iconColor: 'semi-dark-yellow',
     // The edit page, not /playlists/play, which starts the fullscreen slideshow at once
     getRoute: page('/playlists/edit'),
   },
@@ -136,6 +136,7 @@ export const CORE_KINDS = {
 } as const satisfies Record<CoreKindKey, CoreKindInfo>;
 
 const kinds: CoreKindInfo[] = Object.values(CORE_KINDS);
+const appKinds = new Map<string, KindInfo>();
 
 /**
  * Whether `group` names this kind: its own group, or for a collection kind a group served inside the
@@ -145,9 +146,23 @@ export function coversGroup(kind: KindInfo, group: string): boolean {
   return kind.group === group || (kind.collectionGroup === true && group.endsWith(`.${kind.group}`));
 }
 
-/** The kind an object of this API group and Kubernetes kind belongs to. */
+/** The kind an object of this API group and Kubernetes kind belongs to, among core and app kinds. */
 export function findKind(group: string, kind: string): KindInfo | undefined {
-  return kinds.find((row) => row.kind === kind && coversGroup(row, group));
+  return [...kinds, ...appKinds.values()].find((row) => row.kind === kind && coversGroup(row, group));
+}
+
+/** The kinds that app plugins add. */
+export function getAppKinds(): KindInfo[] {
+  return [...appKinds.values()];
+}
+
+/** Adds the kinds an app plugin serves. A kind that Grafana serves itself keeps its core row. */
+export function addKinds(added: KindInfo[]) {
+  for (const kind of added) {
+    if (!kinds.some((row) => row.kind === kind.kind && coversGroup(row, kind.group))) {
+      appKinds.set(`${kind.group}/${kind.kind}`, kind);
+    }
+  }
 }
 
 /** The kind behind a dashboard search row's kind string; undefined for rows such as panels. */
@@ -156,4 +171,4 @@ export function findKindBySearchKind(searchKind: string): KindInfo | undefined {
 }
 
 /** This table and its lookups as the `KindRegistry` that `@grafana/runtime` defines for plugins. */
-export const kindRegistry: KindRegistry = { coreKinds: CORE_KINDS, coversGroup, findKind };
+export const kindRegistry: KindRegistry = { coreKinds: CORE_KINDS, coversGroup, findKind, getAppKinds, addKinds };

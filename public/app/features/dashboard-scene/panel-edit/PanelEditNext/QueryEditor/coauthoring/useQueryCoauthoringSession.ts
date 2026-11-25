@@ -1,4 +1,4 @@
-import { type MutableRefObject, useCallback, useEffect, useReducer, useRef } from 'react';
+import { type MutableRefObject, useCallback, useEffect, useLayoutEffect, useReducer, useRef } from 'react';
 
 import { createAssistantContextItem, useAssistant, useInlineAssistant } from '@grafana/assistant';
 import { type PanelData } from '@grafana/data';
@@ -195,7 +195,9 @@ export function useQueryCoauthoringSession({
     return next !== previous;
   }, []);
   const previewDataRef = useRef(previewData);
-  previewDataRef.current = previewData;
+  useLayoutEffect(() => {
+    previewDataRef.current = previewData;
+  });
   const readCurrentPreviewData = useCallback(
     () => (readPreviewData ? readPreviewData() : previewDataRef.current),
     [readPreviewData]
@@ -245,7 +247,9 @@ export function useQueryCoauthoringSession({
   const previewActiveRef = useRef(false);
   const trackedOpenRef = useRef(false);
   const onRevertPreviewRef = useRef(onRevertPreview);
-  onRevertPreviewRef.current = onRevertPreview;
+  useLayoutEffect(() => {
+    onRevertPreviewRef.current = onRevertPreview;
+  });
 
   const revertQueryPreview = useCallback(() => {
     if (previewActiveRef.current) {

@@ -2225,6 +2225,9 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 	return pagedKeys
 }
 
+// A page or value read can stall, but a healthy scan may need many reads.
+const listModifiedSinceReadTimeout = 30 * time.Second
+
 // ListModifiedSince returns all resources that have changed since the given
 // resource version. If searchLookback is non-zero, a lookback window is applied
 // so that events committed concurrently with the previous call are not missed.
@@ -2281,7 +2284,12 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 	// Events past the retention period may already be pruned.
 	useDataStore := time.Since(effectiveRvTime) > k.maxEventStoreAge()
 
-	latestEvent, err := k.eventStore.LastEventKey(ctx)
+	readCtx, cancel := context.WithTimeout(ctx, listModifiedSinceReadTimeout)
+	latestEvent, err := k.eventStore.LastEventKey(readCtx)
+	if readErr := readCtx.Err(); readErr != nil {
+		err = readErr
+	}
+	cancel()
 	if errors.Is(err, ErrNotFound) {
 		// A write committed since the caller's last successful call would still
 		// have its event, so an empty event store means nothing changed since.
@@ -2356,6 +2364,9 @@ func convertEventType(action DataAction) resourcepb.WatchEvent_Type {
 }
 
 func (k *kvStorageBackend) getValueFromDataStore(ctx context.Context, dataKey DataKey) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(ctx, listModifiedSinceReadTimeout)
+	defer cancel()
+
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.getValueFromDataStore")
 	defer span.End()
 
@@ -2369,7 +2380,7 @@ func (k *kvStorageBackend) getValueFromDataStore(ctx context.Context, dataKey Da
 		return []byte{}, err
 	}
 
-	return value, nil
+	return value, ctx.Err()
 }
 
 // listModifiedSinceDataStore skips resources whose latest version is at or above belowRv.
@@ -2377,7 +2388,7 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 	return func(yield func(*ModifiedResource, error) bool) {
 		var lastSeenResource *ModifiedResource
 		var lastSeenDataKey DataKey
-		for dataKey, err := range k.dataStore.Keys(ctx, ListRequestKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}, SortOrderAsc) {
+		for dataKey, err := range k.dataStore.keys(ctx, ListRequestKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}, SortOrderAsc, listModifiedSinceReadTimeout) {
 			if err != nil {
 				yield(&ModifiedResource{}, err)
 				return
@@ -2454,7 +2465,7 @@ func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key 
 	return func(yield func(*ModifiedResource, error) bool) {
 		// we only care about the latest revision of every resource in the list
 		seen := make(map[string]struct{})
-		for evtKeyStr, err := range k.eventStore.ListKeysSince(ctx, sinceRv, SortOrderDesc) {
+		for evtKeyStr, err := range k.eventStore.listKeysSince(ctx, sinceRv, SortOrderDesc, listModifiedSinceReadTimeout) {
 			if err != nil {
 				yield(&ModifiedResource{}, err)
 				return

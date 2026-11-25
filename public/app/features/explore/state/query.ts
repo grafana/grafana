@@ -104,7 +104,7 @@ export interface ChangeQueriesPayload {
     skipAutoImport?: boolean;
   };
 }
-export const changeQueriesAction = createAction<ChangeQueriesPayload>('explore/changeQueries');
+const changeQueriesAction = createAction<ChangeQueriesPayload>('explore/changeQueries');
 
 /**
  * Cancel running queries.

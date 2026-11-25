@@ -1534,6 +1534,9 @@
         "alert-rules_other": "{{formatted}} aturan peringatan",
         "recording-rules_other": "{{formatted}} aturan perekaman"
       },
+      "saved-searches": {
+        "applied-default": ""
+      },
       "search": {
         "default-policy-unavailable": "Pemfilteran berdasarkan kebijakan default belum tersedia.",
         "folders-disabled": "Hapus filter untuk menelusuri berdasarkan folder",
@@ -1541,7 +1544,8 @@
           "contact-point": "Titik kontak langsung (saling eksklusif dengan kebijakan:).",
           "dashboard": "Dasbor yang menjadi acuan aturan tersebut (nilai kanonisnya adalah UID dasbor).",
           "datasource": "Kueri sumber data yang dirujuk oleh aturan (nilai kanonis adalah UID).",
-          "folder": "Folder (nilai kanonisnya adalah UID folder).",
+          "folder": "",
+          "folder-uid": "",
           "health": "Kesehatan aturan: ok, tidak ada data, kesalahan, atau tidak diketahui.",
           "label": "Pencocok label: label:key (ada), label:!kunci (tidak ada), label:kunci=nilai (sama), label:kunci!=nilai (tidak sama), label:kunci=~re (regex), label:kunci!~re (bukan regex). Tandai nilai dengan spasi: label:team=\"a b\".",
           "metric": "Nama metrik yang direkam (sangat cocok).",
@@ -1562,12 +1566,14 @@
         "invalid-tokens": "Beberapa filter tidak dapat diterapkan: {{tokens}}",
         "invalid-value": "Gunakan salah satu nilai ini untuk {{key}}: {{values}}",
         "label": "Cari",
+        "missing-value": "",
         "placeholder": "Cari berdasarkan nama atau masukkan kueri filter...",
         "property": {
           "contact-point": "Titik kontak",
           "dashboard": "Dasbor",
           "datasource": "Sumber data kueri",
           "folder": "Folder",
+          "folder-uid": "",
           "health": "Kesehatan",
           "labels": "Label",
           "metric": "Metrik yang direkam",
@@ -1603,6 +1609,8 @@
         "tooltip-with-interval": ""
       },
       "shared": {
+        "folder-search-limit": "",
+        "folder-search-limit-description": "",
         "load-more": "Muat lainnya",
         "load-more-error": "Gagal memuat lebih banyak hasil",
         "loading-rules": "Memuat aturan",
@@ -1980,6 +1988,7 @@
         "routing": "Perutean notifikasi",
         "routing-none": "Tidak ada pohon kebijakan yang dipilih",
         "routing-tree": "Pohon kebijakan: {{name}}",
+        "rules-error": "",
         "rules-skipped": "Aturan peringatan tidak akan diimpor.",
         "rules-title": "",
         "skipped": "Dilewati",
@@ -1992,6 +2001,7 @@
         "validation-warning": "Beberapa sumber daya akan diganti namanya untuk menghindari konflik.",
         "will-import-config": "Akan mengimpor konfigurasi ini",
         "will-import-rules": "Akan mengimpor aturan",
+        "yaml-datasource": "",
         "will-import-rules-count_other": "Akan mengimpor {{count}} aturan"
       },
       "rules-preview": "Pratinjau aturan peringatan",
@@ -2096,9 +2106,14 @@
         "target-datasource-required": "Pilih sumber data target",
         "target-folder": "Folder target",
         "target-folder-desc": "Folder tempat aturan yang diimpor akan disimpan",
+        "yaml-empty-group": "",
         "yaml-error": "Gagal mengurai file YAML: {{error}}",
         "yaml-file": "File aturan format YAML",
-        "yaml-required": "Pilih file"
+        "yaml-no-rules": "",
+        "yaml-required": "Pilih file",
+        "yaml-target-datasource": "",
+        "yaml-target-datasource-desc": "",
+        "yaml-target-datasource-required": ""
       },
       "success": "Berhasil mengimpor aturan peringatan ke aturan yang dikelola Grafana.",
       "target-folder": {
@@ -2991,12 +3006,12 @@
       },
       "empty": "",
       "error": "",
-      "load-more": "",
       "restore": {
         "body": "",
         "confirm": "",
         "conflict": "",
         "error": "",
+        "recording-title": "",
         "restoring": "",
         "title": ""
       },
@@ -3151,10 +3166,6 @@
         "group-name": "Nama grup evaluasi",
         "group-text": "Semua aturan dalam grup yang dipilih dievaluasi setiap {{evaluateEvery}}.",
         "interval-label": "Interval evaluasi",
-        "mode": {
-          "legacy": "Gunakan grup (Lama)",
-          "new": "Atur interval"
-        },
         "new-group": "Grup evaluasi baru",
         "pause": {
           "alerting": "Aktifkan untuk menjeda evaluasi untuk aturan peringatan ini.",
@@ -5692,6 +5703,10 @@
       "label": "",
       "label-plural": ""
     },
+    "notebook": {
+      "label": "",
+      "label-plural": ""
+    },
     "playlist": {
       "label": "",
       "label-plural": ""
@@ -6205,7 +6220,10 @@
       "add-visualization-body": "Pilih sumber data, kemudian kueri dan visualisasikan data Anda dengan bagan, statistik, dan tabel atau buat daftar, markdown, dan widget lainnya.",
       "add-visualization-button": "Tambahkan visualisasi",
       "add-visualization-header": "Mulai dasbor baru Anda dengan menambahkan visualisasi",
+      "assistant-limit-reached": "",
       "assistant-placeholder": "Jelaskan dasbor Anda. Ini akan membuka obrolan asisten dan memulai percakapan.",
+      "assistant-placeholder-template": "",
+      "assistant-sign-in": "",
       "auto-grid": "Kisi otomatis",
       "auto-grid-description": "Ukuran panel diubah agar pas dan membentuk kisi yang seragam",
       "build-assistant": "Buat dasbor Anda dengan Assistant",
@@ -6219,6 +6237,8 @@
       "mobile-not-available": "",
       "or-start-blank": "Atau buat sendiri",
       "select-layout-header": "Pilih tata letak",
+      "templates-empty": "",
+      "templates-title": "",
       "title": "Dasbor baru"
     },
     "errors": {
@@ -6669,6 +6689,9 @@
           "description": "Klik atau seret untuk menempelkan panel",
           "title": "Tempel panel"
         },
+        "question": {
+          "label": ""
+        },
         "row": {
           "add-label": "Tambahkan baris",
           "group-label": "Kelompokkan ke dalam baris"
@@ -6792,6 +6815,7 @@
         "objects": "Objek",
         "panel": "Panel",
         "panels": "Panel",
+        "question": "",
         "row": "Baris",
         "rows": "Baris",
         "section-filters-set": "Filter",
@@ -6841,6 +6865,34 @@
           "empty": "(kosong)",
           "no-title": "<tanpa judul>"
         }
+      },
+      "questions": {
+        "add-question": "",
+        "description-dashboard": "",
+        "description-row": "",
+        "description-tab": "",
+        "new-question": "",
+        "placeholder": "",
+        "question": "",
+        "question-title": "",
+        "question-title-description": "",
+        "question-title-placeholder": "",
+        "sources": {
+          "collapse": "",
+          "description-dashboard": "",
+          "description-row": "",
+          "description-tab": "",
+          "entire-dashboard": "",
+          "expand": "",
+          "label": "",
+          "no-panels": "",
+          "unavailable-panel": "",
+          "untitled-row": "",
+          "untitled-tab": "",
+          "panel-count_other": "",
+          "picked-count_other": ""
+        },
+        "title": ""
       },
       "row": {
         "header": {
@@ -7102,6 +7154,8 @@
     },
     "transformation-operation-row": {
       "body-delete": "Perhatikan bahwa menghapus satu transformasi dapat merusak yang lain. Jika hanya ada satu transformasi, Anda akan kembali ke layar pemilihan utama.",
+      "expander-close": "",
+      "expander-open": "",
       "render-actions": {
         "confirmText-delete": "Hapus",
         "title-debug": "Debug",
@@ -7186,6 +7240,7 @@
   },
   "dashboard-library": {
     "card": {
+      "attach-template-button-label": "",
       "community-badge": "Komunitas",
       "customize-with-assistant-button": "Sesuaikan dengan Assistant",
       "customize-with-assistant-button-label": "Sesuaikan dengan Assistant: {{title}}",
@@ -7202,6 +7257,9 @@
       "edit-template-menu-item": "Edit",
       "more-actions-label": "Tindakan lainnya untuk {{title}}",
       "no-preview": "Tidak ada pratinjau yang tersedia ",
+      "preview-template-button": "",
+      "preview-template-button-label": "",
+      "provisioned-by-grafana": "",
       "use-template-button": "Gunakan templat",
       "use-template-button-label": "Gunakan templat: {{title}}",
       "view-dashboard-button": "Lihat dasbor",
@@ -7236,6 +7294,10 @@
     "custom-dashboard-template-filters": {
       "creator-placeholder": "Filter menurut dibuat oleh",
       "search-placeholder": "Cari",
+      "sort": {
+        "asc": "",
+        "desc": ""
+      },
       "sort-placeholder": "Urutkan"
     },
     "dashboard-card": {
@@ -8061,6 +8123,20 @@
       },
       "selection-options": "Opsi pemilihan",
       "static-options-legend": "Opsi statis"
+    },
+    "question-actions": {
+      "add": "",
+      "remove": "",
+      "reorder": "",
+      "update": ""
+    },
+    "question-edit": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
+    "question-edit-actions": {
+      "tooltip-question-settings": ""
     },
     "refresh-select": {
       "options": {
@@ -11899,13 +11975,19 @@
       "filter-apps": "Aplikasi",
       "filter-dashboards": "Dasbor",
       "filter-explore": "Telusuri",
+      "filter-folders": "",
       "filter-label": "Hanya tampilkan",
+      "filter-notebooks": "",
       "filter-pages": "Halaman",
+      "filter-playlists": "",
       "kind-alerting": "Alerting",
       "kind-app": "Aplikasi",
       "kind-dashboard": "Dasbor",
       "kind-explore": "Telusuri",
+      "kind-folder": "",
+      "kind-notebook": "",
       "kind-page": "Halaman",
+      "kind-playlist": "",
       "loading": "Memuat aktivitas terbaru Anda..."
     },
     "recommendations": {
@@ -13523,7 +13605,7 @@
       "page-assistant-below": "",
       "page-floating-assistant": "",
       "page-only": "",
-      "pop-up": "",
+      "pop-out": "",
       "right": ""
     },
     "assistant-workspace": {
@@ -13822,8 +13904,8 @@
       "list-none": "Anda belum memiliki notebook. Buat satu notebook.",
       "list-none-read-only": "Anda belum memiliki notebook, dan tidak memiliki izin untuk membuatnya.",
       "list-truncated": "Tidak semua notebook ditampilkan. Persempit pencarian untuk menemukan yang lain.",
-      "lock-time-range": "Kunci ke {{range}}",
       "lock-time-range-description": "Pertahankan visualisasi ini di jendela tempat visualisasi ini diambil. Jika tidak dikunci, visualisasi ini mengikuti rentang waktu notebook.",
+      "lock-time-range-short": "",
       "lock-time-ranges": "Kunci panel ke rentang waktu yang ditampilkan",
       "lock-time-ranges-description": "Pertahankan setiap visualisasi pada jendela tempat visualisasi tersebut diambil. Jika tidak dikunci, visualisasi mengikuti rentang waktu notebook.",
       "note-description": "",
@@ -14058,32 +14140,6 @@
     },
     "units": {
       "clear-tooltip": "Hapus pemilihan unit"
-    },
-    "var-mapping-checks": {
-      "data-macro": "",
-      "not-allowed": "",
-      "not-found": "",
-      "not-number": "",
-      "not-one-value": "",
-      "out-of-range": "",
-      "resolves": "",
-      "values": ""
-    },
-    "var-mapping-toggle": {
-      "aria-label-picker": "",
-      "fallback-off": "",
-      "fallback-on": "",
-      "group-matching": "",
-      "group-other": "",
-      "hint-boolean": "",
-      "hint-number": "",
-      "hint-option": "",
-      "hint-option-no-fallback": "",
-      "new-variable": "",
-      "option-current": "",
-      "placeholder": "",
-      "use-fixed-value": "",
-      "use-variable": ""
     }
   },
   "org": {
@@ -14180,7 +14236,8 @@
     },
     "get-panel-links-variable-suggestions": {
       "label": {
-        "all-variables": "Semua variabel"
+        "all-variables": "Semua variabel",
+        "current-dashboard-tabs": ""
       }
     },
     "header-menu": {
@@ -15088,7 +15145,6 @@
     "finish-step": {
       "description-enable-previews": "Menambahkan pratinjau gambar dari perubahan dasbor di permintaan pull. Gambar dasbor Grafana Anda akan dibagikan di repositori Git Anda dan dapat dilihat oleh siapa saja yang memiliki akses repositori.",
       "description-image-rendering": "Membutuhkan rendering gambar. <2>Atur rendering gambar</2>",
-      "description-read-only": "Sumber daya tidak dapat dimodifikasi melalui Grafana.",
       "description-sync-interval": "Frekuens menyinkronkan perubahan dari repositori",
       "error-sync-interval-required": "Interval sinkronisasi wajib diisi",
       "label-enable-previews": "Aktifkan pratinjau dasbor dalam permintaan pull",
@@ -15850,6 +15906,17 @@
       "button-submitting": "Mengirim...",
       "error-instance-repository-exists": "Repositori instans sudah ada",
       "error-save-repository-setting": "Gagal menyimpan pengaturan repositori"
+    },
+    "workflow": {
+      "direct-push": "",
+      "direct-push-description": "",
+      "direct-push-description-no-branch": "",
+      "merge-request": "",
+      "merge-request-description": "",
+      "merge-request-description-no-branch": "",
+      "pull-request": "",
+      "pull-request-description": "",
+      "pull-request-description-no-branch": ""
     }
   },
   "public-dashboard": {
@@ -17500,6 +17567,16 @@
       "review": "",
       "text_other": ""
     },
+    "display-completion": {
+      "color": "",
+      "helper": "",
+      "icon": "",
+      "numeric": "",
+      "percent": "",
+      "prefix": "",
+      "suffix": "",
+      "text": ""
+    },
     "editor": {
       "aria-label-content": "Isi teks",
       "aria-label-mode": "Mode teks: {{mode}}",
@@ -17643,7 +17720,6 @@
     },
     "time-range": {
       "apply": "Gunakan rentang waktu",
-      "aria-role": "Pemilihan rentang waktu",
       "default-title": "Rentang waktu",
       "dialog-label": "Pemilih rentang waktu relatif",
       "example-title": "Contoh rentang waktu",

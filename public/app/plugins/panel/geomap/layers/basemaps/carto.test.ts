@@ -85,6 +85,16 @@ describe('CARTO basemap', () => {
     expect(applyMock.mock.calls[1][1].id).toBe(DARK_MATTER);
   });
 
+  it('warns with the HTTP status when the style request fails', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue(new Response('', { status: 404, statusText: 'Not Found' }));
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    await initLayer({ theme: LayerTheme.Light });
+
+    expect(warn).toHaveBeenCalledWith('Failed to load CARTO basemap style:', new Error('404 Not Found'));
+    expect(applyMock).not.toHaveBeenCalled();
+  });
+
   describe('attribution', () => {
     // The style's attribution is two chained requests away, so without carrying our own the credit
     // the raster source always showed is missing on first render and absent entirely offline.

@@ -208,7 +208,7 @@ func TestDashboardsAPIBuilderValidateVariableUpdateScopeChangeRejected(t *testin
 
 	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
 	ctx = identity.WithRequester(ctx, &identity.StaticRequester{
-		OrgRole: identity.RoleEditor,
+		OrgRole: authlib.RoleEditor,
 		OrgID:   1,
 	})
 
@@ -230,7 +230,7 @@ func TestDashboardsAPIBuilderValidateVariableUpdateScopeChangeToGlobalRejected(t
 
 	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
 	ctx = identity.WithRequester(ctx, &identity.StaticRequester{
-		OrgRole: identity.RoleEditor,
+		OrgRole: authlib.RoleEditor,
 		OrgID:   1,
 	})
 
@@ -251,7 +251,7 @@ func TestDashboardsAPIBuilderValidateVariableUpdateRenameRejected(t *testing.T) 
 
 	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
 	ctx = identity.WithRequester(ctx, &identity.StaticRequester{
-		OrgRole: identity.RoleEditor,
+		OrgRole: authlib.RoleEditor,
 		OrgID:   1,
 	})
 

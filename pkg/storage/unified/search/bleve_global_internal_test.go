@@ -239,6 +239,15 @@ func TestGlobalIndexSearchFields(t *testing.T) {
 	_, ok = perResource.keywordFields[resource.SEARCH_FIELD_GROUP_RESOURCE]
 	assert.False(t, ok, "the resource type must stay unavailable to per-resource search")
 
+	// The creator is faceted only here; per-resource search still filters on it.
+	f, ok = global.keywordFields[resource.SEARCH_FIELD_CREATED_BY]
+	require.True(t, ok)
+	assert.True(t, f.facetable)
+	f, ok = perResource.keywordFields[resource.SEARCH_FIELD_CREATED_BY]
+	require.True(t, ok)
+	assert.True(t, f.filterable)
+	assert.False(t, f.facetable)
+
 	// Timestamps are sortable in both, so results can be ordered by time.
 	for _, name := range []string{resource.SEARCH_FIELD_CREATED, resource.SEARCH_FIELD_UPDATED} {
 		assert.True(t, global.sortableFields[name], name)
@@ -321,6 +330,59 @@ func TestGlobalIndexPagesThroughSameNamedDocuments(t *testing.T) {
 		"dashboard.grafana.app/dashboards/zzz",
 	}, seen)
 	assert.Len(t, seen, 3, "no document is repeated")
+}
+
+// Counts per creator cover every document the caller may read, and nothing else,
+// so a client can group hits by owner. An unreadable document is left out even
+// when its type is readable. A document without a creator adds no term.
+func TestGlobalIndexFacetsOnCreator(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"})
+	key := resource.GlobalSearchKey("default")
+
+	doc := func(group, res, name, createdBy string) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				RV:        1,
+				Name:      name,
+				Title:     name,
+				CreatedBy: createdBy,
+				Key:       &resourcepb.ResourceKey{Namespace: key.Namespace, Group: group, Resource: res, Name: name},
+			},
+		}
+	}
+	index, err := backend.BuildIndex(ctx, key, 5, "test", func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			doc("dashboard.grafana.app", "dashboards", "a", "user:alice"),
+			doc("dashboard.grafana.app", "dashboards", "b", "user:alice"),
+			doc("folder.grafana.app", "folders", "c", "user:bob"),
+			doc("folder.grafana.app", "folders", "d", "user:carol"),
+			doc("dashboard.grafana.app", "dashboards", "e", ""),
+		}})
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+
+	// Bob's folder stays readable; Carol's is denied by name.
+	access := &folderAccessClient{denied: map[string]bool{"d": true}}
+	rsp, err := index.Search(ctx, access, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace}},
+		Limit:   10,
+		Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+			resource.SEARCH_FIELD_CREATED_BY: {Field: resource.SEARCH_FIELD_CREATED_BY, Limit: 10},
+		},
+	}, nil, nil)
+	require.NoError(t, err)
+
+	facet := rsp.Facet[resource.SEARCH_FIELD_CREATED_BY]
+	require.NotNil(t, facet)
+	counts := map[string]int64{}
+	for _, term := range facet.Terms {
+		counts[term.Term] = term.Count
+	}
+	assert.Equal(t, map[string]int64{"user:alice": 2, "user:bob": 1}, counts)
+	assert.Equal(t, int64(3), facet.Total)
+	assert.Equal(t, int64(1), facet.Missing, "the readable document without a creator")
 }
 
 var (

@@ -48,5 +48,6 @@ export const recordingRuleSearchSchema: RuleSearchSchema<RecordingRuleFilter, Re
         filter.targetDataSourceUid && hasWildcard(filter.targetDataSourceUid) ? 'invalid' : undefined,
     },
     sharedFilters.health,
+    sharedFilters.paused,
   ],
 };

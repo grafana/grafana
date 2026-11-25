@@ -33,6 +33,8 @@ import { LogListContext, type LogListContextData } from './LogListContext';
 import { defaultValue } from './__mocks__/LogListContext';
 import { createTempoDatasource } from './__mocks__/createTempoDatasource';
 
+jest.mock('../../utils', () => makeSpyable('../../utils'));
+
 const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
 const useFlagMock = jest.fn((_: string, defaultValue: boolean) => ({ value: defaultValue }));
 

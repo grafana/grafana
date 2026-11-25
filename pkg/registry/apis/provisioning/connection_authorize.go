@@ -115,7 +115,7 @@ func (c *connectionAuthorizeConnector) Connect(ctx context.Context, name string,
 		// Persist the expiration alongside the token so an OAuth token's very first
 		// lifetime is observable from status (matching the controller refresh path);
 		// a zero ExpiresAt means the provider issued a non-expiring token.
-		tokenStatus := provisioning.TokenStatus{LastUpdated: time.Now().UnixMilli()}
+		tokenStatus := provisioning.ConnectionTokenStatus{LastUpdated: time.Now().UnixMilli()}
 		if !token.ExpiresAt.IsZero() {
 			tokenStatus.Expiration = token.ExpiresAt.UnixMilli()
 		}
