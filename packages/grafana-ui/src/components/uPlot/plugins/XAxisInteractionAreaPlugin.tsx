@@ -46,6 +46,10 @@ export const setupXAxisPan = (
   }
 
   const xAxisEl = xAxis;
+  // The chart can render in another window than this one, such as a Document Picture-in-Picture window. Its mouse
+  // events, and the moves and release of a drag, happen in that window.
+  const plotDocument = xAxisEl.ownerDocument;
+  const plotWindow = plotDocument.defaultView ?? window;
 
   let activeMoveListener: ((e: MouseEvent) => void) | null = null;
   let activeUpListener: ((e: MouseEvent) => void) | null = null;
@@ -59,7 +63,7 @@ export const setupXAxisPan = (
   };
 
   const handleMouseDown = (e: Event) => {
-    if (!(e instanceof MouseEvent)) {
+    if (!(e instanceof plotWindow.MouseEvent)) {
       return;
     }
     e.preventDefault();
@@ -105,8 +109,8 @@ export const setupXAxisPan = (
         config.setState({ isPanning: false });
       }
 
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
+      plotDocument.removeEventListener('mousemove', onMove);
+      plotDocument.removeEventListener('mouseup', onUp);
       activeMoveListener = null;
       activeUpListener = null;
     };
@@ -114,8 +118,8 @@ export const setupXAxisPan = (
     activeMoveListener = onMove;
     activeUpListener = onUp;
 
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
+    plotDocument.addEventListener('mousemove', onMove);
+    plotDocument.addEventListener('mouseup', onUp);
   };
 
   xAxisEl.addEventListener('mouseenter', handleMouseEnter);
@@ -128,10 +132,10 @@ export const setupXAxisPan = (
     xAxisEl.removeEventListener('mousedown', handleMouseDown);
 
     if (activeMoveListener) {
-      document.removeEventListener('mousemove', activeMoveListener);
+      plotDocument.removeEventListener('mousemove', activeMoveListener);
     }
     if (activeUpListener) {
-      document.removeEventListener('mouseup', activeUpListener);
+      plotDocument.removeEventListener('mouseup', activeUpListener);
     }
   };
 };

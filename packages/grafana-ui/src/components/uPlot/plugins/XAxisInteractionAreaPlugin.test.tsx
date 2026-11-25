@@ -175,6 +175,38 @@ describe('XAxisInteractionAreaPlugin', () => {
     });
   });
 
+  // A Document Picture-in-Picture window (the Grafana Assistant pop-out) is another realm, as an iframe is: the events
+  // dispatched there belong to that window, even on nodes uPlot created with this window's document.
+  describe('when the chart is in another window', () => {
+    it('pans with a drag in that window', () => {
+      const iframe = document.createElement('iframe');
+      document.body.appendChild(iframe);
+      const otherWindow = iframe.contentDocument?.defaultView;
+      if (otherWindow == null) {
+        throw new Error('jsdom gave the iframe no window');
+      }
+      const mockQueryZoom = jest.fn();
+      const mockConfigBuilder = createMockConfigBuilder();
+      const xAxisElement = createMockXAxis();
+      const mockUPlot = createMockUPlot(xAxisElement);
+      otherWindow.document.body.appendChild(mockUPlot.root);
+
+      setupXAxisPan(asUPlot(mockUPlot), asConfigBuilder(mockConfigBuilder), mockQueryZoom);
+
+      xAxisElement.dispatchEvent(new otherWindow.MouseEvent('mousedown', { clientX: 400, bubbles: true }));
+      otherWindow.document.dispatchEvent(new otherWindow.MouseEvent('mousemove', { clientX: 350, bubbles: true }));
+
+      // 1000 time units over 800px: a 50px drag to the left moves the range 62.5 units later
+      expect(mockUPlot.setScale).toHaveBeenCalledWith('x', { min: 1062.5, max: 2062.5 });
+
+      otherWindow.document.dispatchEvent(new otherWindow.MouseEvent('mouseup', { clientX: 350, bubbles: true }));
+
+      expect(mockQueryZoom).toHaveBeenCalledWith({ from: 1062.5, to: 2062.5 });
+
+      iframe.remove();
+    });
+  });
+
   describe('event listeners', () => {
     afterEach(() => {
       document.body.innerHTML = '';
