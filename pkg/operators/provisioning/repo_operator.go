@@ -9,13 +9,13 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/operators/internal/supervision"
+	"github.com/grafana/grafana/pkg/operators/supervision"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/server"
 )
 
 func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (runErr error) {
-	logger := newOperatorLogger("provisioning-repo-controller")
+	logger := supervision.NewLogger("provisioning-repo-controller")
 	logger.Info("Starting provisioning repo controller")
 
 	controllerCfg, err := setupFromConfig(deps.Config, deps.Registerer)

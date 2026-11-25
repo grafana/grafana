@@ -2,10 +2,8 @@ package provisioning
 
 import (
 	"context"
-	"crypto/x509"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/grafana/authlib/authn"
@@ -23,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/tracingsetting"
+	"github.com/grafana/grafana/pkg/operators/operatorconfig"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
@@ -153,35 +152,6 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*Control
 	}
 
 	return controllerCfg, nil
-}
-
-func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSClientConfig, error) {
-	tlsConfig := rest.TLSClientConfig{
-		Insecure: insecure,
-	}
-
-	if certFile != "" && keyFile != "" {
-		tlsConfig.CertFile = certFile
-		tlsConfig.KeyFile = keyFile
-	}
-
-	if caFile != "" {
-		// caFile is set in operator.ini file
-		// nolint:gosec
-		caCert, err := os.ReadFile(caFile)
-		if err != nil {
-			return tlsConfig, fmt.Errorf("failed to read CA certificate file: %w", err)
-		}
-
-		caCertPool := x509.NewCertPool()
-		if !caCertPool.AppendCertsFromPEM(caCert) {
-			return tlsConfig, fmt.Errorf("failed to parse CA certificate")
-		}
-
-		tlsConfig.CAData = caCert
-	}
-
-	return tlsConfig, nil
 }
 
 // Unified Storage Client
@@ -599,23 +569,9 @@ func (c *ControllerConfig) TokenExchangeClient() (*authn.TokenExchangeClient, er
 		return c.tokenExchangeClient, nil
 	}
 
-	gRPCAuth := c.Settings.SectionWithEnvOverrides("grpc_client_authentication")
-	token := gRPCAuth.Key("token").String()
-	if token == "" {
-		return nil, fmt.Errorf("token is required in [grpc_client_authentication] section")
-	}
-	tokenExchangeURL := gRPCAuth.Key("token_exchange_url").String()
-	if tokenExchangeURL == "" {
-		return nil, fmt.Errorf("token_exchange_url is required in [grpc_client_authentication] section")
-	}
-
-	tokenExchangeClient, err := authn.NewTokenExchangeClient(authn.TokenExchangeConfig{
-		TokenExchangeURL: tokenExchangeURL,
-		Token:            token,
-	})
-
+	tokenExchangeClient, err := operatorconfig.TokenExchangeClient(c.Settings)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
+		return nil, err
 	}
 	c.tokenExchangeClient = tokenExchangeClient
 
@@ -627,17 +583,10 @@ func (c *ControllerConfig) TLSConfig() (rest.TLSClientConfig, error) {
 		return *c.tlsConfig, nil
 	}
 
-	tlsConfig, err := buildTLSConfig(
-		c.Settings.SectionWithEnvOverrides("operator").Key("tls_insecure").MustBool(false),
-		c.Settings.SectionWithEnvOverrides("operator").Key("tls_cert_file").String(),
-		c.Settings.SectionWithEnvOverrides("operator").Key("tls_key_file").String(),
-		c.Settings.SectionWithEnvOverrides("operator").Key("tls_ca_file").String(),
-	)
-
+	tlsConfig, err := operatorconfig.TLSConfig(c.Settings)
 	if err != nil {
-		return rest.TLSClientConfig{}, fmt.Errorf("failed to build TLS configuration: %w", err)
+		return rest.TLSClientConfig{}, err
 	}
-
 	c.tlsConfig = &tlsConfig
 
 	return tlsConfig, nil

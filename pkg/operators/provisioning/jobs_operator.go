@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/operators/supervision"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -15,7 +16,7 @@ import (
 )
 
 func RunJobController(ctx context.Context, deps server.OperatorDependencies) error {
-	logger := newOperatorLogger("provisioning-job-controller")
+	logger := supervision.NewLogger("provisioning-job-controller")
 	logger.Info("Starting provisioning job controller")
 
 	controllerCfg, err := setupJobsControllerFromConfig(deps.Config, deps.Registerer)
@@ -88,7 +89,7 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 	deps.HealthNotifier.SetNotReady()
 	logger.Info("shutdown signal received, waiting for goroutines to finish")
 
-	awaitShutdown(logger, &wg, 30*time.Second)
+	supervision.AwaitShutdown(logger, &wg, 30*time.Second)
 	return nil
 }
 
