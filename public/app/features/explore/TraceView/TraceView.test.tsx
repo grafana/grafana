@@ -39,6 +39,12 @@ jest.mock('@grafana/runtime', () => ({
   useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
 }));
 
+// Renders the real button unless a test stubs it, so tests can check what TraceView asks the button to do.
+jest.mock('./components/TraceTimelineViewer/SpanDetail/LogsLink', () => {
+  const actual = jest.requireActual('./components/TraceTimelineViewer/SpanDetail/LogsLink');
+  return { ...actual, LogsLinkButton: jest.fn(actual.LogsLinkButton) };
+});
+
 // The summary-span minimap gradient emits fractional rgb() channels that real browsers accept
 // but jest-canvas-mock rejects. The canvas render is not exercised by these tests, so stub it.
 jest.mock('./components/TracePageHeader/SpanGraph/render-into-canvas', () => ({
@@ -125,14 +131,13 @@ describe('TraceView', () => {
     }));
   });
 
-  // TraceViewContainer.test.tsx imports this file and runs these tests under its own module mocks, so they use spies.
   describe('trace-level logs link', () => {
-    let logsLinkButton: jest.SpyInstance;
+    const logsLinkButton = jest.mocked(LogsLink.LogsLinkButton);
     let getDataSourceInstanceSettings: jest.SpyInstance;
 
     beforeEach(() => {
       // Only checks what TraceView asks the button to do.
-      logsLinkButton = jest.spyOn(LogsLink, 'LogsLinkButton').mockImplementation(() => <></>);
+      logsLinkButton.mockImplementation(() => <></>);
       getDataSourceInstanceSettings = jest
         .spyOn(jest.requireMock<typeof Runtime>('@grafana/runtime'), 'getDataSourceInstanceSettings')
         .mockImplementation(
@@ -141,7 +146,9 @@ describe('TraceView', () => {
     });
 
     afterEach(() => {
-      logsLinkButton.mockRestore();
+      logsLinkButton.mockImplementation(
+        jest.requireActual<typeof LogsLink>('./components/TraceTimelineViewer/SpanDetail/LogsLink').LogsLinkButton
+      );
       getDataSourceInstanceSettings.mockRestore();
       jest.mocked(useDataSourceInstanceSettings).mockReturnValue({ isLoading: false, settings: undefined });
     });
@@ -150,14 +157,14 @@ describe('TraceView', () => {
       {
         name: 'stays on the first destination when there are several',
         tracesToLogsAdditional: [{ customQuery: false, datasourceUid: 'audit-uid' }],
-        expected: false,
+        disableDatasourceFallback: true,
       },
       {
         name: 'keeps data source fallback for a single destination',
         tracesToLogsAdditional: undefined,
-        expected: true,
+        disableDatasourceFallback: false,
       },
-    ])('$name', async ({ tracesToLogsAdditional, expected }) => {
+    ])('$name', async ({ tracesToLogsAdditional, disableDatasourceFallback }) => {
       const traceSettings = {
         uid: 'trace-uid',
         name: 'Tempo',
@@ -178,9 +185,11 @@ describe('TraceView', () => {
       );
 
       await waitFor(() => expect(logsLinkButton).toHaveBeenCalled());
-      expect(logsLinkButton.mock.lastCall?.[0]).toEqual(
-        expect.objectContaining({ forTrace: true, traceDatasourceUid: 'trace-uid', allowDatasourceFallback: expected })
+      const props = logsLinkButton.mock.lastCall?.[0];
+      expect(props).toEqual(
+        expect.objectContaining({ forTrace: true, traceDatasourceUid: 'trace-uid', disableDatasourceFallback })
       );
+      expect(props?.linkModel.interpolatedParams?.query?.datasource).toEqual({ type: 'loki', uid: 'app-uid' });
     });
   });
 

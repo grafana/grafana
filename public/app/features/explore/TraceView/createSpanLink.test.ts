@@ -8,7 +8,7 @@ import {
   type DataFrame,
 } from '@grafana/data';
 import { type TraceToLogsOptionsV2, type TraceToMetricsOptions } from '@grafana/o11y-ds-frontend';
-import { type DataSourceSrv, getDataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
+import { type DataSourceSrv, getDataSourceSrv, logError, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -58,6 +58,11 @@ const dummyDataFrameForProfiles = createDataFrame({
     },
   ],
 });
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  logError: jest.fn(),
+}));
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
@@ -1342,6 +1347,30 @@ describe('createSpanLinkFactory', () => {
       ]);
 
       expect(links.map((link) => link.title)).toEqual(['loki-app (1)', 'loki-app (2)', 'Audit']);
+    });
+
+    it('skips a generated label that another destination already uses', () => {
+      const links = createLinks([
+        { index: 0, options: { name: 'Audit', customQuery: true, query: '{job="a"}' }, settings: auditLogs },
+        { index: 1, options: { name: 'Audit', customQuery: true, query: '{job="b"}' }, settings: auditLogs },
+        { index: 2, options: { name: 'Audit (1)', customQuery: true, query: '{job="c"}' }, settings: auditLogs },
+      ]);
+
+      expect(links.map((link) => link.title)).toEqual(['Audit (2)', 'Audit (3)', 'Audit (1)']);
+    });
+
+    it('leaves out only the destination whose link cannot be built, and logs why', () => {
+      const links = createLinks([
+        {
+          index: 0,
+          options: { customQuery: false, tags: 'service.name' } as unknown as TraceToLogsOptionsV2,
+          settings: appLogs,
+        },
+        { index: 1, options: { customQuery: true, query: '{job="audit"}' }, settings: auditLogs },
+      ]);
+
+      expect(links.map((link) => link.title)).toEqual(['loki-audit']);
+      expect(logError).toHaveBeenCalledWith(expect.any(TypeError), { datasourceUid: 'loki-app-uid' });
     });
 
     it.each([

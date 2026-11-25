@@ -20,6 +20,7 @@ export const TagMappingInput = ({ values, onChange, id }: Props) => {
         values.map((value, idx) => (
           <div className={styles.pair} key={idx}>
             <SegmentInput
+              key={`key:${value.key}`}
               id={`${id}-key-${idx}`}
               placeholder={'Tag name'}
               value={value.key}
@@ -38,6 +39,7 @@ export const TagMappingInput = ({ values, onChange, id }: Props) => {
               as
             </InlineLabel>
             <SegmentInput
+              key={`value:${value.value ?? ''}`}
               id={`${id}-value-${idx}`}
               placeholder={'New name (optional)'}
               value={value.value || ''}

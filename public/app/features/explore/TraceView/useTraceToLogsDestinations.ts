@@ -25,25 +25,29 @@ export function useTraceToLogsDestinations(jsonData: TraceToLogsData | undefined
     }
 
     let cancelled = false;
-    Promise.all(
-      configured.map(async (options) => {
-        const datasourceUid = options.datasourceUid;
-        // An undefined uid would resolve to the default data source.
-        if (!datasourceUid) {
-          return undefined;
-        }
-        const settings = await getDataSourceInstanceSettings(datasourceUid).catch((error) => {
+    // Each lookup is published as soon as it settles, so a slow data source does not hold back the other links.
+    configured.forEach((options, index) => {
+      const datasourceUid = options.datasourceUid;
+      // An undefined uid would resolve to the default data source.
+      if (!datasourceUid) {
+        return;
+      }
+      getDataSourceInstanceSettings(datasourceUid)
+        .catch((error) => {
           // A data source that no longer exists resolves to undefined, so this is a failed load. Only this
-          // destination is dropped: one broken logs link should not break the trace view.
+          // destination is dropped, so one broken logs link does not hide the others.
           logError(error instanceof Error ? error : new Error(String(error)), { datasourceUid });
           return undefined;
+        })
+        .then((settings) => {
+          if (!cancelled) {
+            setResolvedSettings((previous) => {
+              const next = [...previous];
+              next[index] = { datasourceUid, settings };
+              return next;
+            });
+          }
         });
-        return { datasourceUid, settings };
-      })
-    ).then((settings) => {
-      if (!cancelled) {
-        setResolvedSettings(settings);
-      }
     });
 
     return () => {

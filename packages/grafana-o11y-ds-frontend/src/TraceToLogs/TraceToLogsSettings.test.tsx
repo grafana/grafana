@@ -326,6 +326,24 @@ describe('TraceToLogsSettings', () => {
       await user.click(screen.getByText('audit.tag'));
       expect(screen.getByDisplayValue('audit.tag')).toHaveAttribute('id', 'trace-to-logs-tags-1-key-0');
     });
+
+    it('preserves the surviving tag after an external removal', async () => {
+      const user = userEvent.setup();
+      const change = jest.fn();
+      const a = { customQuery: false, tags: [{ key: 'app.tag' }] };
+      const b = { customQuery: false, tags: [{ key: 'audit.tag' }] };
+      const editor = (jsonData: TraceToLogsData) => (
+        <TraceToLogsSettings options={withJsonData(jsonData)} onOptionsChange={change} allowMultipleDestinations />
+      );
+
+      const { rerender } = render(editor({ tracesToLogsV2: a, tracesToLogsAdditional: [b] }));
+      rerender(editor({ tracesToLogsV2: b }));
+
+      await user.click(screen.getByText('audit.tag'));
+      await user.tab();
+
+      expect(change.mock.lastCall![0].jsonData.tracesToLogsV2).toEqual(b);
+    });
   });
 });
 
@@ -353,6 +371,25 @@ describe('getTraceToLogsDestinations', () => {
       name: 'ignores additional entries that are not objects',
       data: { tracesToLogsAdditional: [null, 42, additional] },
       expected: [additional],
+    },
+    {
+      name: 'drops a label that is not a string, such as an unquoted YAML number',
+      data: { tracesToLogsV2: first, tracesToLogsAdditional: [{ ...additional, name: 404 }] },
+      expected: [first, { ...additional, name: undefined }],
+    },
+    {
+      name: 'drops tags that are not a list',
+      data: { tracesToLogsAdditional: [{ ...additional, tags: 'service.name' }] },
+      expected: [{ ...additional, tags: undefined }],
+    },
+    {
+      name: 'keeps only the tags that have a string key and an optional string value',
+      data: {
+        tracesToLogsAdditional: [
+          { ...additional, tags: [null, 'service.name', { key: 1 }, { key: 'pod', value: 2 }, { key: 'app' }] },
+        ],
+      },
+      expected: [{ ...additional, tags: [{ key: 'app' }] }],
     },
   ])('$name', ({ data, expected }) => {
     expect(getTraceToLogsDestinations(data as unknown as TraceToLogsData)).toEqual(expected);

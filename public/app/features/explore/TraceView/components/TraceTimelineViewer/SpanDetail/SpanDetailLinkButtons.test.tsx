@@ -182,35 +182,34 @@ describe('SpanDetailLinkButtons', () => {
       });
     });
 
-    it('shows a labeled button per destination and moves only the other links into the overflow menu', async () => {
+    it('labels each destination and moves its links into the overflow menu like the other links', async () => {
       createSpanLink.mockReturnValue([
         {
           type: SpanLinkType.Logs,
           href: '/app-logs',
           title: 'Application logs',
-          logsDestination: { options: { customQuery: false }, isOneOfMany: true },
+          logsDestination: { index: 0, options: { customQuery: false }, isOneOfMany: true },
         },
         {
           type: SpanLinkType.Logs,
           href: '/audit-logs',
           title: 'loki-audit',
-          logsDestination: { options: { customQuery: false }, isOneOfMany: true },
+          logsDestination: { index: 1, options: { customQuery: false }, isOneOfMany: true },
         },
-        ...otherLinks,
+        ...otherLinks.slice(0, 2),
       ]);
 
       renderButtons();
 
-      expect(screen.getByText('Application logs')).toBeInTheDocument();
-      expect(screen.getByText('loki-audit')).toBeInTheDocument();
-      expect(screen.queryByText('Logs for this span')).not.toBeInTheDocument();
-      expect(screen.queryByText('Runbook')).not.toBeInTheDocument();
+      expect(screen.queryByText('Application logs')).not.toBeInTheDocument();
 
       await userEvent.click(screen.getByRole('button', { name: 'Links' }));
 
       const menu = await screen.findByRole('menu');
-      expect(within(menu).getByText('Runbook')).toBeInTheDocument();
-      expect(within(menu).queryByText('Application logs')).not.toBeInTheDocument();
+      expect(within(menu).getByText('Application logs')).toBeInTheDocument();
+      expect(within(menu).getByText('loki-audit')).toBeInTheDocument();
+      expect(within(menu).getByText('Dashboard')).toBeInTheDocument();
+      expect(within(menu).queryByText('Logs for this span')).not.toBeInTheDocument();
     });
 
     it("labels a single named destination with its name instead of the filter's call to action", () => {
@@ -219,7 +218,7 @@ describe('SpanDetailLinkButtons', () => {
           type: SpanLinkType.Logs,
           href: '/app-logs',
           title: 'Application logs',
-          logsDestination: { options: { name: 'Application logs', customQuery: false }, isOneOfMany: false },
+          logsDestination: { index: 0, options: { name: 'Application logs', customQuery: false }, isOneOfMany: false },
         },
       ]);
 
@@ -235,7 +234,7 @@ describe('SpanDetailLinkButtons', () => {
           type: SpanLinkType.Logs,
           href: '/app-logs',
           title: 'Related logs',
-          logsDestination: { options: { customQuery: false, filterBySpanID: true }, isOneOfMany: false },
+          logsDestination: { index: 0, options: { customQuery: false, filterBySpanID: true }, isOneOfMany: false },
         },
         ...otherLinks.slice(0, 3),
       ]);
@@ -264,19 +263,16 @@ describe('SpanDetailLinkButtons', () => {
         jest.mocked(getDataSourceInstance).mockResolvedValue({ query: jest.fn() } as unknown as DataSourceApi);
       });
 
-      it('checks each destination only against its own data source', async () => {
-        const logsFrame = toDataFrame({
-          meta: { preferredVisualisationType: 'logs' },
-          fields: [
-            { name: 'time', values: [1] },
-            { name: 'message', values: ['hello'] },
-          ],
-        });
-        const emptyFrame = toDataFrame({ fields: [{ name: 'time', values: [] }] });
-        const queriesByUid: Record<string, jest.Mock> = {
-          'app-uid': jest.fn().mockReturnValue(of({ data: [emptyFrame] })),
-          'audit-uid': jest.fn().mockReturnValue(of({ data: [logsFrame] })),
-        };
+      const logsFrame = toDataFrame({
+        meta: { preferredVisualisationType: 'logs' },
+        fields: [
+          { name: 'time', values: [1] },
+          { name: 'message', values: ['hello'] },
+        ],
+      });
+      const emptyFrame = toDataFrame({ fields: [{ name: 'time', values: [] }] });
+
+      const mockLokiDataSources = (queriesByUid: Record<string, jest.Mock>) => {
         jest.mocked(useDataSourceInstanceList).mockReturnValue({
           isLoading: false,
           items: Object.keys(queriesByUid).map(
@@ -287,27 +283,38 @@ describe('SpanDetailLinkButtons', () => {
           const uid = typeof ref === 'object' && ref ? ref.uid : ref;
           return { query: queriesByUid[uid ?? ''], type: 'loki' } as unknown as DataSourceApi;
         });
+      };
 
-        const logsLink = (title: string, uid: string) => {
-          const queries = ['t2l:default:trace_id', 't2l:line-contains'].map((refId) => ({
-            refId,
-            datasource: { uid, type: 'loki' },
-          }));
-          return {
-            type: SpanLinkType.Logs,
+      const logsLink = (title: string, uid: string, index: number) => {
+        const queries = ['t2l:default:trace_id', 't2l:line-contains'].map((refId) => ({
+          refId,
+          datasource: { uid, type: 'loki' },
+        }));
+        return {
+          type: SpanLinkType.Logs,
+          href: `/${uid}`,
+          title,
+          logsDestination: { index, options: { customQuery: false }, isOneOfMany: true },
+          linkModel: {
             href: `/${uid}`,
             title,
-            logsDestination: { options: { customQuery: false }, isOneOfMany: true },
-            linkModel: {
-              href: `/${uid}`,
-              title,
-              target: '_blank',
-              origin: {},
-              interpolatedParams: { query: queries[0], alternativeQueries: queries },
-            },
-          };
+            target: '_blank',
+            origin: {},
+            interpolatedParams: { query: queries[0], alternativeQueries: queries },
+          },
         };
-        createSpanLink.mockReturnValue([logsLink('Application logs', 'app-uid'), logsLink('Audit logs', 'audit-uid')]);
+      };
+
+      it('checks each destination only against its own data source', async () => {
+        const queriesByUid: Record<string, jest.Mock> = {
+          'app-uid': jest.fn().mockReturnValue(of({ data: [emptyFrame] })),
+          'audit-uid': jest.fn().mockReturnValue(of({ data: [logsFrame] })),
+        };
+        mockLokiDataSources(queriesByUid);
+        createSpanLink.mockReturnValue([
+          logsLink('Application logs', 'app-uid', 0),
+          logsLink('Audit logs', 'audit-uid', 1),
+        ]);
 
         renderButtons();
 
@@ -316,6 +323,45 @@ describe('SpanDetailLinkButtons', () => {
         expect(await screen.findByText('No matching logs found for this span')).toBeInTheDocument();
         expect(queriesByUid['app-uid']).toHaveBeenCalledTimes(2);
         await waitFor(() => expect(queriesByUid['audit-uid']).toHaveBeenCalledTimes(1));
+      });
+
+      it('keeps a destination on its own data source when the link before it goes away', async () => {
+        mockLokiDataSources({
+          'app-uid': jest.fn().mockReturnValue(of({ data: [logsFrame] })),
+          'audit-uid': jest.fn().mockReturnValue(of({ data: [logsFrame] })),
+        });
+        // A single query, as non-Loki destinations build: the lookup result is written back into this query.
+        const singleQueryLink = (title: string, uid: string, index: number) => {
+          const link = logsLink(title, uid, index);
+          const query = { refId: 'A', datasource: { uid, type: 'elasticsearch' } };
+          return { ...link, linkModel: { ...link.linkModel, interpolatedParams: { query } } };
+        };
+        const buttons = (links: Array<ReturnType<typeof singleQueryLink>>) => (
+          <SpanDetailLinkButtons
+            span={span}
+            createSpanLink={jest.fn().mockReturnValue(links)}
+            datasourceType="test"
+            datasourceUid="test-datasource-uid"
+            traceToProfilesOptions={undefined}
+            timeRange={timeRange}
+            app={CoreApp.Explore}
+            focusSpanLink={focusSpanLink}
+          />
+        );
+        const { rerender } = render(
+          buttons([singleQueryLink('Application logs', 'app-uid', 0), singleQueryLink('Audit logs', 'audit-uid', 1)])
+        );
+        for (const name of [/Application logs/, /Audit logs/]) {
+          await waitFor(() => expect(screen.getByRole('button', { name })).toHaveAttribute('aria-disabled', 'false'));
+        }
+
+        const auditLink = singleQueryLink('Audit logs', 'audit-uid', 1);
+        rerender(buttons([auditLink]));
+
+        await waitFor(() =>
+          expect(screen.getByRole('button', { name: /Audit logs/ })).toHaveAttribute('aria-disabled', 'false')
+        );
+        expect(auditLink.linkModel.interpolatedParams.query.datasource.uid).toBe('audit-uid');
       });
     });
   });

@@ -1,7 +1,17 @@
 import { type DataSourceInstanceSettings } from '@grafana/data';
 
 import { type Trace, type TraceSpan } from './components/types/trace';
-import { createTraceLogsLink, getTimeRangeFromTimestamps } from './createTraceLink';
+import { createTraceLogsLink, getTimeRangeFromTimestamps, timeShiftToMs } from './createTraceLink';
+
+describe('timeShiftToMs', () => {
+  it.each([
+    { desc: 'a provisioned number as seconds', shift: 90, expected: 90_000 },
+    { desc: 'a provisioned 0 as no shift', shift: 0, expected: 0 },
+    { desc: 'a value of another type as unset', shift: true, expected: -120_000 },
+  ])('reads $desc', ({ shift, expected }) => {
+    expect(timeShiftToMs(shift as unknown as string, -120_000)).toBe(expected);
+  });
+});
 
 describe('getTimeRangeFromTimestamps', () => {
   const startTimeUs = 1_000_000;

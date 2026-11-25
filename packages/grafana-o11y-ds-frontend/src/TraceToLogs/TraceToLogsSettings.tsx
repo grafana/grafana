@@ -91,10 +91,38 @@ export function getTraceToLogsDestinations(data?: TraceToLogsData): TraceToLogsO
   // hiding them would make the next editor change drop them. The shape guards keep malformed config from crashing.
   const additional = Array.isArray(data?.tracesToLogsAdditional) ? data.tracesToLogsAdditional : [];
 
-  return [first, ...additional].filter(
-    (destination): destination is TraceToLogsOptionsV2 =>
-      destination !== null && typeof destination === 'object' && !Array.isArray(destination)
-  );
+  return [first, ...additional]
+    .filter(
+      (destination): destination is TraceToLogsOptionsV2 =>
+        destination !== null && typeof destination === 'object' && !Array.isArray(destination)
+    )
+    .map(withoutMalformedFields);
+}
+
+/**
+ * Provisioning keeps YAML scalars as they are, so a label such as `name: 404` arrives as a number and tags can be any
+ * shape. Malformed values are dropped rather than passed on to code that expects strings and tag objects.
+ */
+function withoutMalformedFields(destination: TraceToLogsOptionsV2): TraceToLogsOptionsV2 {
+  const { name, tags }: { name?: unknown; tags?: unknown } = destination;
+  const nameIsValid = name == null || typeof name === 'string';
+  const tagsAreValid = tags == null || (Array.isArray(tags) && tags.every(isTag));
+  if (nameIsValid && tagsAreValid) {
+    return destination;
+  }
+  return {
+    ...destination,
+    name: nameIsValid ? destination.name : undefined,
+    tags: tagsAreValid ? destination.tags : Array.isArray(tags) ? tags.filter(isTag) : undefined,
+  };
+}
+
+function isTag(tag: unknown): tag is TraceToLogsTag {
+  if (tag === null || typeof tag !== 'object') {
+    return false;
+  }
+  const { key, value }: { key?: unknown; value?: unknown } = tag;
+  return typeof key === 'string' && (value == null || typeof value === 'string');
 }
 
 let destinationKeyCounter = 0;

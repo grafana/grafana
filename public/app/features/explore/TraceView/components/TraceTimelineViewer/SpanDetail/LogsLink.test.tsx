@@ -612,7 +612,7 @@ describe('LogsLinkButton', () => {
     );
   });
 
-  describe('when datasource fallback is not allowed', () => {
+  describe('when datasource fallback is disabled', () => {
     const queries: DataQuery[] = [
       { refId: 't2l:default:trace_id', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
       { refId: 't2l:line-contains', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
@@ -643,7 +643,7 @@ describe('LogsLinkButton', () => {
         <LogsLinkButton
           linkModel={createLinkModel({ interpolatedParams: { query: queries[0], alternativeQueries: queries } })}
           traceDatasourceUid={TRACE_DATASOURCE_UID}
-          allowDatasourceFallback={false}
+          disableDatasourceFallback
         />
       );
 

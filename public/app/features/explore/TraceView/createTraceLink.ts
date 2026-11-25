@@ -141,16 +141,18 @@ export function createTraceLogsLink({
  * Converts a configured span time shift to milliseconds. An invalid shift is treated as unset so it cannot break
  * building links.
  */
-export function timeShiftToMs(shift: string | undefined, defaultMs = 0): number {
-  if (!shift?.trim()) {
+export function timeShiftToMs(shift: string | number | undefined, defaultMs = 0): number {
+  // Provisioning keeps a YAML number such as `spanStartTimeShift: 0` as a number, and any other type is not a shift.
+  const value: unknown = typeof shift === 'number' ? String(shift) : shift;
+  if (typeof value !== 'string' || !value.trim()) {
     return defaultMs;
   }
   // rangeUtil.intervalToMs reads a unit-less number as seconds but rejects a unit-less 0, which the editor suggests.
-  if (Number(shift) === 0) {
+  if (Number(value) === 0) {
     return 0;
   }
   try {
-    return rangeUtil.intervalToMs(shift);
+    return rangeUtil.intervalToMs(value);
   } catch {
     return defaultMs;
   }

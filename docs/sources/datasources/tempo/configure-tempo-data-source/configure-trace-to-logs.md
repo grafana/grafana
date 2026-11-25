@@ -147,8 +147,10 @@ Grafana versions without support for multiple logs destinations only show the fi
 1. Optional: Enter a **Link label** for each destination.
 1. Click **Save & test**.
 
-The span details in the trace view show one logs button per destination.
-Each button is labeled with the destination's **Link label**, or with the logs data source name when no label is set.
+The span details in the trace view show a logs link for each destination that can query logs for the span.
+A destination has no link when none of its tags match the span or when its data source no longer exists.
+Each link is labeled with the destination's **Link label**, or with the logs data source name when no label is set.
+When a span has more than three links, they're grouped in the **Links** menu.
 The logs button in the trace header uses the first destination.
 
 ## Configure the Loki data source

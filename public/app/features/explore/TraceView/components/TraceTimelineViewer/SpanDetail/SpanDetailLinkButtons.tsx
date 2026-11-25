@@ -167,34 +167,35 @@ export const SpanDetailLinkButtons = ({
     return links;
   }, [app, createSpanLink, datasourceType, datasourceUid, isLoading, pluginLinks, settings, span]);
 
-  // With several logs destinations, each one keeps its own button instead of counting toward the overflow menu.
-  const hasMultipleLogsDestinations = links.some((link) => link.logsDestination?.isOneOfMany);
-  const overflowCandidates = hasMultipleLogsDestinations
-    ? links.filter((link) => link.type !== SpanLinkType.Logs)
-    : links;
-  const overflowLinks = overflowCandidates.length > MAX_LINKS ? overflowCandidates : [];
-  const buttonLinks = links.filter((link) => !overflowLinks.includes(link));
-
   return (
     <span className={styles.linksContainer}>
-      {buttonLinks.map((spanLinkModel, index) =>
-        spanLinkModel.type === SpanLinkType.Logs ? (
-          <LogsLinkButton
-            linkModel={spanLinkModel.linkModel}
-            traceDatasourceUid={spanLinkModel.traceDatasourceUid}
-            traceToLogsOptions={spanLinkModel.logsDestination?.options}
-            allowDatasourceFallback={!spanLinkModel.logsDestination?.isOneOfMany}
-            key={index}
-          />
-        ) : (
-          <SingleLinkButton spanLinkModel={spanLinkModel} key={index} />
+      {links.length > MAX_LINKS ? (
+        <DropDownMenu links={links}></DropDownMenu>
+      ) : (
+        links.map((spanLinkModel, index) =>
+          spanLinkModel.type === SpanLinkType.Logs ? (
+            <LogsLinkButton
+              linkModel={spanLinkModel.linkModel}
+              traceDatasourceUid={spanLinkModel.traceDatasourceUid}
+              traceToLogsOptions={spanLinkModel.logsDestination?.options}
+              disableDatasourceFallback={spanLinkModel.logsDestination?.isOneOfMany}
+              key={getLinkKey(spanLinkModel, index)}
+            />
+          ) : (
+            <SingleLinkButton spanLinkModel={spanLinkModel} key={index} />
+          )
         )
       )}
-      {overflowLinks.length > 0 && <DropDownMenu links={overflowLinks}></DropDownMenu>}
       <ShareSpanButton focusSpanLink={focusSpanLink} />
     </span>
   );
 };
+
+// A logs link keeps the state of its own lookup, so it is keyed by its destination: a button never inherits the state
+// of another destination that used to be at the same position.
+function getLinkKey(spanLinkModel: SpanLinkModel, index: number) {
+  return spanLinkModel.logsDestination ? `logs-${spanLinkModel.logsDestination.index}` : index;
+}
 
 const styles = {
   linksContainer: css({
@@ -238,8 +239,8 @@ const DropDownMenu = ({ links }: { links: SpanLinkModel[] }) => {
               linkModel={spanLinkModel.linkModel}
               traceDatasourceUid={spanLinkModel.traceDatasourceUid}
               traceToLogsOptions={spanLinkModel.logsDestination?.options}
-              allowDatasourceFallback={!spanLinkModel.logsDestination?.isOneOfMany}
-              key={index}
+              disableDatasourceFallback={spanLinkModel.logsDestination?.isOneOfMany}
+              key={getLinkKey(spanLinkModel, index)}
             />
           ) : (
             <Menu.Item

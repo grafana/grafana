@@ -63,6 +63,31 @@ describe('useTraceToLogsDestinations', () => {
     expect(getDataSourceInstanceSettings).not.toHaveBeenCalledWith(undefined);
   });
 
+  it('publishes a resolved destination while another lookup is still pending', async () => {
+    jest
+      .mocked(getDataSourceInstanceSettings)
+      .mockImplementation((ref) =>
+        ref === 'loki-audit-uid' ? new Promise(() => {}) : Promise.resolve(settingsByRef[String(ref)])
+      );
+    const jsonData: TraceToLogsData = {
+      tracesToLogsV2: { customQuery: false, datasourceUid: 'loki-app-uid' },
+      tracesToLogsAdditional: [{ customQuery: false, datasourceUid: 'loki-audit-uid' }],
+    };
+
+    const { result } = renderHook(() => useTraceToLogsDestinations(jsonData));
+
+    await waitFor(() =>
+      expect(result.current).toEqual([
+        {
+          index: 0,
+          options: { customQuery: false, datasourceUid: 'loki-app-uid' },
+          settings: appLogs,
+          isOneOfMany: true,
+        },
+      ])
+    );
+  });
+
   it('logs a failed lookup and keeps the other destinations', async () => {
     const failure = new Error('failed to load the settings');
     jest.mocked(getDataSourceInstanceSettings).mockImplementation(async (ref) => {
