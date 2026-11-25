@@ -30,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -125,11 +124,11 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 		s.globalSem = semaphore.NewWeighted(int64(zanzanaCfg.MaxConcurrentRequests))
 	}
 
-	var clientFactory resources.ClientFactory
+	var clientFactory reconcilerClients
 	if cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
 		if restConfig != nil {
 			// Embedded mode: use LoopbackClientConfig via the eventual provider
-			clientFactory = resources.NewClientFactory(restConfig, nil)
+			clientFactory.loopback = restConfig
 		} else {
 			// Standalone mode: use explicit URLs with token exchange
 			if cfg.ZanzanaReconciler.FolderAPIServerURL == "" {
@@ -191,7 +190,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 				})
 			}
 
-			clientFactory = resources.NewClientFactoryForMultipleAPIServers(configProviders, nil)
+			clientFactory.byGroup = configProviders
 		}
 	}
 
@@ -206,7 +205,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 
 		mtReconciler = reconciler.NewReconciler(
 			s,
-			clientFactory,
+			&clientFactory,
 			reconciler.Config{
 				Workers:             cfg.ZanzanaReconciler.Workers,
 				Interval:            cfg.ZanzanaReconciler.Interval,

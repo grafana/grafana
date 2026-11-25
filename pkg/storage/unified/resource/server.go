@@ -263,7 +263,8 @@ type StorageBackend interface {
 	// Return the revisionVersion for this event or error
 	WriteEvent(context.Context, WriteEvent) (int64, error)
 
-	// Read a resource from storage optionally at an explicit version
+	// ReadResource reads a resource, optionally at an explicit version.
+	// It returns a non-nil response with any error in the Error field.
 	ReadResource(context.Context, *resourcepb.ReadRequest) *BackendReadResponse
 
 	// BatchReadResource reads several resources, yielding one response per request
@@ -347,7 +348,11 @@ type ModifiedResource struct {
 type ResourceStats struct {
 	NamespacedResource
 
-	Count           int64
+	// Count is the live count from storage, or the saved document count for an open index.
+	Count int64
+	// DeletedCount is populated only by trash-aware storage discovery. Both
+	// counts are lower bounds when discovery stops at the combined count limit.
+	DeletedCount    int64
 	ResourceVersion int64
 
 	// LastSearchedAt carries idle time across restarts. Zero when unknown.
@@ -724,6 +729,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &server{
+		previousReads:                  newPreviousReads(),
 		log:                            logger,
 		backend:                        opts.Backend,
 		vectorBackend:                  opts.VectorBackend,
@@ -828,6 +834,7 @@ type server struct {
 	writeHooks       WriteAccessHooks
 	now              func() int64
 	mostRecentRV     atomic.Int64 // The most recent resource version seen by the server
+	previousReads    *previousReads
 	storageMetrics   *StorageMetrics
 	overridesService *OverridesService
 	quotasConfig     QuotasConfig
@@ -839,7 +846,8 @@ type server struct {
 	// Background watch task -- this has permissions for everything
 	ctx          context.Context
 	cancel       context.CancelFunc
-	broadcaster  Broadcaster[*WrittenEvent]
+	watchMu      sync.Mutex // publishes broadcaster and watchStartup together
+	broadcaster  *broadcaster[*WrittenEvent]
 	watchStartup *watchStartup
 
 	// Graceful shutdown: tracks in-flight write operations so Stop can wait
@@ -952,9 +960,9 @@ func (s *server) Stop(ctx context.Context) error {
 
 	// Stops streaming (broadcaster, watch events).
 	s.cancel()
-	if s.watchStartup != nil {
+	if _, startup := s.watchState(); startup != nil {
 		select {
-		case <-s.watchStartup.stopped:
+		case <-startup.stopped:
 		case <-ctx.Done():
 			s.log.Warn("timed out waiting for watch startup and capture to stop")
 		}
@@ -1566,13 +1574,17 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 }
 
 func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
-	rsp := s.backend.ReadResource(ctx, req)
-	if errRes := s.authorizeRead(ctx, user, req.Key, rsp); errRes != nil {
-		return nil, s.rpcFailure(ctx, "server.read", req.Key, errRes)
+	return s.readResponse(ctx, user, req.Key, s.backend.ReadResource(ctx, req))
+}
+
+// readResponse authorizes a backend read for user and converts it.
+func (s *server) readResponse(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, rsp *BackendReadResponse) (*resourcepb.ReadResponse, error) {
+	if errRes := s.authorizeRead(ctx, user, key, rsp); errRes != nil {
+		return nil, s.rpcFailure(ctx, "server.read", key, errRes)
 	}
 	// This is an internal backend error, not the legacy gRPC response field.
 	if rsp.Error != nil {
-		return nil, s.rpcFailure(ctx, "server.read", req.Key, rsp.Error)
+		return nil, s.rpcFailure(ctx, "server.read", key, rsp.Error)
 	}
 	return &resourcepb.ReadResponse{
 		ResourceVersion: rsp.ResourceVersion,
@@ -2247,12 +2259,7 @@ func (s *server) initWatcher() error {
 		}
 	}()
 
-	s.broadcaster = newBroadcasterWithSizes(s.ctx, out, watchChanSize, defaultOverflowCap, s.storageMetrics.Broadcaster, func(e *WrittenEvent) string {
-		if e == nil || e.Key == nil {
-			return ""
-		}
-		return e.Key.Resource
-	}, &seededCacheConfig[*WrittenEvent]{identity: writtenEventIdentity})
+	s.setWatchState(newBroadcaster(s.ctx, out, s.storageMetrics.Broadcaster, writtenEventIdentity), nil)
 	return nil
 }
 
@@ -2265,8 +2272,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 	// Capture before setup: invalidations during subscription or snapshot reads must
 	// expire this watch too, even if it has not entered the live loop yet.
-	cached, _ := s.broadcaster.(*broadcaster[*WrittenEvent])
-	waitsForStartup := cached != nil && cached.cache.identity != nil && cached.starting()
+	b, startup := s.watchState()
+	waitsForStartup := startup != nil && b.starting()
 	watchExpiryC := s.watchExpiry.WatchInvalidation()
 
 	// Treat a closed client transport and cancellation of this watch's context
@@ -2320,31 +2327,32 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		requestedSince = ToSnowflakeRV(requestedSince)
 	}
 	name := fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace)
-	var stream <-chan *WrittenEvent
-	if b := cached; b != nil && b.cache.identity != nil {
-		// Invalidations before capture starts, such as the one when it first
-		// starts, predate the stream a waiting watch subscribes to. Later ones,
-		// even before the cache is ready, still expire it.
-		if waitsForStartup {
-			if err := b.ensureReady(ctx); err != nil {
-				return err
-			}
-			if expiry := s.watchStartup.expiryAtCapture(); expiry != nil {
-				watchExpiryC = expiry
-			}
-		}
-		var resume *watchResume
-		if req.Since > 0 && !req.SendInitialEvents {
-			resume = &watchResume{groupResource: GroupResource{Group: key.Group, Resource: key.Resource}, since: requestedSince, requestedRV: req.Since}
-		}
-		stream, err = b.subscribeWatch(ctx, name, key.Resource, resume)
-	} else {
-		stream, err = s.broadcaster.Subscribe(ctx, name, key.Resource)
+	// The gRPC service can take watches before storage initialization installs it.
+	if b == nil {
+		return status.Error(codes.Unavailable, "watch is not ready yet")
 	}
+	// Invalidations before capture starts, such as the one when it first
+	// starts, predate the stream a waiting watch subscribes to. Later ones,
+	// even before the cache is ready, still expire it.
+	if waitsForStartup {
+		if err := b.ensureReady(ctx); err != nil {
+			return err
+		}
+		if expiry := startup.expiryAtCapture(); expiry != nil {
+			watchExpiryC = expiry
+		}
+	}
+	var resume *watchResume
+	if req.Since != 0 && !req.SendInitialEvents {
+		resume = &watchResume{since: requestedSince, requestedRV: req.Since}
+	}
+	gr := GroupResource{Group: key.Group, Resource: key.Resource}
+	sub, err := b.subscribeWatch(ctx, name, gr, key.Namespace, resume)
 	if err != nil {
 		return err
 	}
-	defer s.broadcaster.Unsubscribe(stream)
+	stream := sub.events()
+	defer b.Unsubscribe(stream)
 
 	since := requestedSince
 	expired := func() error {
@@ -2398,14 +2406,20 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 		rv, err := s.backend.ListIterator(ctx, listReq, func(ListIterator) error { return nil })
 		if err != nil {
-			// Fallback to the broadcasterʼs view if the backend lookup fails.
-			// This preserves previous behaviour while still eliminating the
-			// common race in the majority of cases.
-			s.log.Warn("watch: failed to fetch current RV from backend, falling back to broadcaster", "err", err)
-			mostRecentRV = s.mostRecentRV.Load()
-		} else {
-			mostRecentRV = rv
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			if isKVBackend {
+				// KV notifications can be ahead of writes that commit after the watch starts.
+				s.log.Warn("watch: failed to fetch current RV from backend", "err", err)
+				return status.Error(codes.Unavailable, "watch: current resource version is unavailable")
+			}
+			// Some legacy backends cannot list this scope. We subscribed without
+			// replay, so use live delivery from registration as the start.
+			s.log.Debug("watch: starting live stream without current RV", "err", err)
+			rv = 0
 		}
+		mostRecentRV = rv
 	} else {
 		// For all other code-paths we either already have an explicit RV or we
 		// will derive it from the initial list below.
@@ -2488,6 +2502,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		defer ticker.Stop()
 		bookmarkC = ticker.C
 	}
+	// consumed counts the events this watch has taken from the stream.
+	var consumed int64
 
 	for {
 		// Prioritize known delivery gaps over buffered live events.
@@ -2505,6 +2521,16 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 			return expired()
 
 		case <-bookmarkC:
+			// Events of other collections and namespaces are not routed to this
+			// stream, so take their progress from the broadcaster. KV notifiers
+			// order events across collections, though a late write can still
+			// trail another collection's higher RV; legacy SQL polls each
+			// collection separately, so only its own collection establishes progress.
+			if isKVBackend {
+				processedRV = max(processedRV, sub.rv(consumed), sub.collectionRV(consumed))
+			} else {
+				processedRV = max(processedRV, sub.collectionRV(consumed))
+			}
 			cutoff := time.Now().Add(-filteredBookmarkDelay)
 			cutoffRV := cutoff.UnixMicro()
 			if IsSnowflake(processedRV) {
@@ -2523,12 +2549,9 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				s.log.Debug("watch events closed")
 				return nil
 			}
+			sub.requestRefill()
+			consumed++
 			if event.ResourceVersion <= since {
-				continue
-			}
-			// KV notifiers settle and order events across collections. Legacy SQL polls
-			// group/resources separately, so other collections cannot establish progress.
-			if !isKVBackend && (event.Key.Group != key.Group || event.Key.Resource != key.Resource) {
 				continue
 			}
 			if matchesQueryKey(key, event.Key) && checker(event.Key.Name, event.Folder) {
@@ -2546,15 +2569,28 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					},
 				}
 				if event.PreviousRV > 0 {
-					prevObj, err := s.Read(ctx, &resourcepb.ReadRequest{Key: event.Key, ResourceVersion: event.PreviousRV})
-					if err != nil && AsErrorResult(err).Code == http.StatusNotFound {
-						// History pruning can remove the previous revision while the event is still replayable.
-						s.log.Debug("previous object no longer available", "key", event.Key, "resource_version", event.PreviousRV)
-					} else if err != nil {
-						// This scenario should never happen, but if it does, we should log it and continue
-						// sending the event without the previous object. The client will decide what to do.
+					prevObj, err := s.readPrevious(ctx, user, event.Key, event.PreviousRV)
+					switch code := status.Code(err); {
+					case errors.Is(err, errPreviousReadPanic):
+						return status.Error(codes.Internal, "internal server error")
+					case code == codes.DeadlineExceeded, code == codes.ResourceExhausted, code == codes.Canceled:
+						if ctx.Err() == nil {
+							s.log.Warn("expiring watch after previous object read failed", "key", event.Key, "resource_version", event.PreviousRV, "error", err)
+						}
+						// Relist so the client can recover a selector transition that needs Previous.
+						return expired()
+					case err != nil:
+						httpCode := AsErrorResult(err).Code
+						if httpCode == http.StatusNotFound {
+							// History pruning can remove the previous revision while the event is still replayable.
+							s.log.Debug("previous object no longer available", "key", event.Key, "resource_version", event.PreviousRV)
+							break
+						}
 						s.log.Error("error reading previous object", "key", event.Key, "resource_version", event.PreviousRV, "error", err)
-					} else {
+						if httpCode >= http.StatusInternalServerError {
+							return expired()
+						}
+					default:
 						if prevObj.ResourceVersion != event.PreviousRV {
 							s.log.Error("resource version mismatch", "key", event.Key, "resource_version", event.PreviousRV, "actual", prevObj.ResourceVersion)
 							return fmt.Errorf("resource version mismatch")

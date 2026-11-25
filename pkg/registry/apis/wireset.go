@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
@@ -52,10 +51,8 @@ var WireSetExts = wire.NewSet(
 
 var provisioningExtras = wire.NewSet(
 	provisioning.ProvideSupportedResourceProvider,
-	pullrequest.ProvidePullRequestWorker,
 	webhooks.ProvideWebhooksWithImages,
 	extras.ProvideProvisioningExtraAPIs,
-	extras.ProvideExtraWorkers,
 	extras.ProvideQuotaGetter,
 )
 
@@ -87,6 +84,10 @@ var WireSet = wire.NewSet(
 	folders.RegisterAPIService,
 	iam.RegisterAPIService,
 	provisioning.RegisterAPIService,
+	provisioning.ProvideConnectionControllerService,
+	provisioning.ProvideHistoryJobCleanupService,
+	provisioning.ProvideRepositoryControllerService,
+	provisioning.ProvideJobQueueService,
 	service.RegisterAPIService,
 	query.RegisterAPIService,
 	preferences.RegisterAPIService,

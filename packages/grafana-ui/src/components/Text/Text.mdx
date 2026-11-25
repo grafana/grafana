@@ -11,58 +11,35 @@ import { ExampleFrame } from '../../utils/storybook/ExampleFrame';
 
 The Text component can be used to apply typography styles in a simple way, without the need of extra css.
 
----
-
-In this documentation you can find:
-
-1. [Usage](#usage)
-1. [Content](#content)
-1. [Formating](#formating)
-   1. [Anatomy](#anatomy)
-   1. [Behaviour](#behaviour)
-1. [Accessibility](#accessibility)
-1. [Props table](#propstable)
-
-<br />
-<br />
-
-## <a name="usage"/> Usage
-
-<br />
-
-### **When to use**
+## When to use
 
 - To display text, with styles applied consistently across the product, and to provide structure to each page.
 
-### **When not to use**
+## Never use for
 
 - If there is any straightforward interaction between the text and the user there should be a better component to use: Button, TextLink, Menu…
 
-### **Do's**
+## Do's and don'ts
 
 - Heading should be organized in hierarchy.
 - When a heading needs to have the appearance of another heading rank but it will affect the page heading hierarchy, use `variant` prop to modify its style instead.
 - Use weight or italic for emphasis.
 - Use the `tabular` prop when numbers should have a fixed width, such as in tables.
+- Don't use the `element` prop because of its appearance, use it to organize the structure of the page.
+- Don't use color for emphasis as colors are related to states such as `error`, `success`, `disabled` and so on.
+- Don't use the `code` variant for anything other than code snippets.
 
-### **Don'ts**
+## Usage
 
-- Do not use the `element` prop because of its appearance, use it to organize the structure of the page.
-- Do not use color for emphasis as colors are related to states such as `error`, `success`, `disabled` and so on.
-- Do not use the `code` variant for anything other than code snippets.
-
-  <br />
-  <br />
-
-## <a name="content"/> Content
+### Content
 
 The content of the text should be written according to the [Grafana writing style guide](https://grafana.com/docs/writers-toolkit/write/style-guide/).
 
-## <a name="formating"/> Formating
+### Formatting
 
-The following is the default behaviour and so, it will be applied according to its type.
+The following is the default behavior and so, it will be applied according to its type.
 
-### <a name="anatomy"/>**Anatomy**:<br/>
+#### Anatomy
 
 The Text component is mainly comprised by itself. In occasions, the Text component can have another Text or TextLink component as a child.
 
@@ -82,7 +59,7 @@ The Text component is mainly comprised by itself. In occasions, the Text compone
   </Text>
 </ExampleFrame>
 
-### <a name="behaviour"/>**Behaviour**:
+#### Behavior
 
 The Text component can be truncated. However, the Text component element rendered by default (no value set in element prop) is a `<span>`. As this is an inline container that must have a parent, which can be another Text component or not, the truncation must be applied to this parent element.
 
@@ -108,12 +85,12 @@ The Text component can be truncated. However, the Text component element rendere
   </Tooltip>
 </ExampleFrame>
 
-### <a name="accessibility"/>**Accessibility**:
+## Accessibility
 
 - There should be just a `h1` heading per page.
 - The headings should be organized regarding its importance: `h1` has the _rank 1_ while `h6` heading has the _rank 6_. For example, `h1` can be used in the page heading, `h2` for the titles of the sections and `h3` for the subsections.
 - The ranking of headings should be continuous. An `h2` should not be followed by an `h5` but an `h2` can follow an `h5` if this is closing the previous section. Skipping heading ranks should be avoided where possible as it can be confusing.
 
-## <a name="propstable"/>Props table
+## Props
 
 <ArgTypes of={Text} />

@@ -108,26 +108,13 @@ func (k *KubernetesGenericAPIServer) InstallAPIGroup(apiGroupInfo *genericapiser
 	}
 	// Make sure GroupVersions which have no resources still get installed
 	for _, gv := range apiGroupInfo.PrioritizedVersions {
-		if m, ok := apiGroupInfo.VersionedResourcesStorageMap[gv.Group]; ok && len(m) > 0 {
+		if m, ok := apiGroupInfo.VersionedResourcesStorageMap[gv.Version]; ok && len(m) > 0 {
 			continue
 		}
-		// Check if a WS exists for the path (it might if a different version for the group had kinds)
-		rootPath := fmt.Sprintf("/apis/%s/%s", gv.Group, gv.Version)
 		if k.Handler == nil || k.Handler.GoRestfulContainer == nil {
 			return errors.New("cannot install custom route: underlying Handler.GoRestfulContainer is nil")
 		}
-		found := false
-		for _, ws := range k.Handler.GoRestfulContainer.RegisteredWebServices() {
-			if ws.RootPath() == rootPath {
-				found = true
-				break
-			}
-		}
-		if !found {
-			ws := new(restful.WebService)
-			ws.Path(fmt.Sprintf("/apis/%s/%s", gv.Group, gv.Version)).Produces("application/json")
-			k.Handler.GoRestfulContainer.Add(ws)
-		}
+		installRouteOnlyVersion(k.Handler.GoRestfulContainer, k.AggregatedDiscoveryGroupManager, gv)
 	}
 	return nil
 }

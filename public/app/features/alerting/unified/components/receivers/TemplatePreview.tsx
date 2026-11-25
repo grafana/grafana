@@ -46,7 +46,7 @@ export function TemplatePreview({
     error: previewError,
   } = usePreviewTemplate(templateContent, templateName, payload, setPayloadFormatError, kind);
 
-  const previewToRender = getPreviewResults(previewError, payloadFormatError, data);
+  const previewToRender = getPreviewResults(previewError, payloadFormatError, data, styles);
 
   return (
     <div className={cx(styles.container, className)}>
@@ -193,12 +193,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
 function getPreviewResults(
   previewError: unknown | undefined,
   payloadFormatError: string | null,
-  data: TemplatePreviewResponse | undefined
+  data: TemplatePreviewResponse | undefined,
+  styles: ReturnType<typeof getStyles>
 ): JSX.Element {
   // ERRORS IN JSON OR IN REQUEST (endpoint not available, for example)
   const previewErrorRequest = previewError ? stringifyErrorLike(previewError) : undefined;
   const errorToRender = payloadFormatError || previewErrorRequest;
-  const styles = useStyles2(getStyles);
 
   //PREVIEW : RESULTS AND ERRORS
   const previewResponseResults = data?.results ?? [];

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	ngalertac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
@@ -26,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // fakeRuleAccessControl grants everything; authorization itself is covered by the service tests.
@@ -58,11 +60,12 @@ func newTestLegacyStorageWithStore(t *testing.T) (*legacyStorage, *fakes.RuleSto
 	folderService := foldertest.NewFakeService()
 	folderService.ExpectedFolder = &folder.Folder{UID: "folder-1", Title: "Folder"}
 
-	svc := legacy.NewLegacyRuleService(
+	svc := legacy.New(
 		ruleStore, fakes.NewFakeProvisioningStore(), folderService, &quotas, ruleStore,
 		60, log.NewNopLogger(), nil, fakeRuleAccessControl{}, nil,
+		request.GetNamespaceMapper(&setting.Cfg{}),
 	)
-	return &legacyStorage{service: *svc, namespacer: nsMapperForTest()}, ruleStore
+	return &legacyStorage{rules: svc.RecordingRules()}, ruleStore
 }
 
 func deleteCollectionTestContext() context.Context {

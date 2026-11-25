@@ -122,7 +122,7 @@ func (b *ownerFromName) nonUserNames() ([]string, bool) {
 // object.
 func (b *ownerFromName) allowsAll(user identity.Requester) bool {
 	return (b.allowGrafanaAdmin && user.GetIsGrafanaAdmin()) ||
-		(b.allowOrgAdmin && user.GetOrgRole() == identity.RoleAdmin)
+		(b.allowOrgAdmin && user.GetOrgRole() == authlib.RoleAdmin)
 }
 
 func (b *ownerFromName) parseOwner(name string) (resource.OwnerReference, bool) {
@@ -174,7 +174,7 @@ func (b *ownerFromName) authorize(ctx context.Context, user identity.Requester, 
 			// Everyone can see the namespace
 			return authorizer.DecisionAllow, "", nil
 		}
-		if user.GetOrgRole() == identity.RoleAdmin {
+		if user.GetOrgRole() == authlib.RoleAdmin {
 			return authorizer.DecisionAllow, "", nil
 		}
 		return authorizer.DecisionDeny, "must be an org admin to edit", nil

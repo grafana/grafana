@@ -7,13 +7,13 @@ import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Card, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
-import { ReadOnlyBadge } from 'app/core/components/ReadOnlyBadge/ReadOnlyBadge';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
 import { ManagedResourceBadge } from '../components/ManagedResourceBadge';
+import { WorkflowBadges } from '../components/WorkflowBadges';
 import { exportResourceAsJson } from '../utils/export';
-import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
+import { formatRepoUrl, getRemoteConfig, getRepoHrefForProvider } from '../utils/git';
 import {
   getManagerIdentity,
   getManagerKind,
@@ -21,9 +21,9 @@ import {
   isManaged,
   isProvisioningResourceReadOnly,
 } from '../utils/managedResource';
-import { getIsReadOnlyWorkflows, getRepositoryEditUrl, getRepositoryResourcesUrl } from '../utils/repository';
+import { getRepositoryEditUrl, getRepositoryResourcesUrl } from '../utils/repository';
 import { getKindInfoByStat, resourceKindInfos } from '../utils/resourceKinds';
-import { getManagedReadOnlyTooltip, getReadOnlyRepositoryTooltip } from '../utils/tooltip';
+import { getManagedReadOnlyTooltip } from '../utils/tooltip';
 
 import { SyncRepository } from './SyncRepository';
 
@@ -32,7 +32,6 @@ interface Props {
 }
 
 export function RepositoryListItem({ repository }: Props) {
-  const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
   const { metadata, spec, status } = repository;
   const name = metadata?.name ?? '';
   const styles = useStyles2(getStyles);
@@ -84,7 +83,7 @@ export function RepositoryListItem({ repository }: Props) {
         <Stack gap={2} direction="row" alignItems="center" wrap>
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
-          {isReadOnlyRepo && <ReadOnlyBadge tooltip={getReadOnlyRepositoryTooltip()} />}
+          <WorkflowBadges workflows={spec?.workflows} type={spec?.type} branch={getRemoteConfig(spec)?.branch} />
           {isManagedRepo && (
             <ManagedResourceBadge
               isReadOnly={isConfigReadOnly}

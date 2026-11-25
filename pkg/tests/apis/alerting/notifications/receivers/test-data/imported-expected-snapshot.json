@@ -151,7 +151,7 @@
         "name": "14febqzg8n62btzhc473kei52",
         "namespace": "default",
         "uid": "b6hah6ox4vOVz4k5onFLZ62gXiTiy2IPBrGZySc2jeQX",
-        "resourceVersion": "1d8b76076e47fb35",
+        "resourceVersion": "df30cd3cfe3a76fd",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -170,11 +170,14 @@
             "version": "v0mimir1",
             "disableResolveMessage": false,
             "settings": {
+              "api_type": "auto",
               "api_url": "http://localhost/jira",
               "custom_fields": {
                 "customfield_10000": "test customfield_10000"
               },
-              "description": "{{ template \"jira.default.description\" . }}",
+              "description": {
+                "template": "{{ template \"jira.default.description\" . }}"
+              },
               "http_config": {
                 "basic_auth": {
                   "username": "alertmanager@example.com"
@@ -194,7 +197,9 @@
               "priority": "{{ template \"jira.default.priority\" . }}",
               "project": "PROJ",
               "send_resolved": true,
-              "summary": "{{ template \"jira.default.summary\" . }}"
+              "summary": {
+                "template": "{{ template \"jira.default.summary\" . }}"
+              }
             },
             "secureFields": {
               "http_config.basic_auth.password": true

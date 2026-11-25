@@ -1685,7 +1685,7 @@ func (s *searchServer) startupIndexStats(ctx context.Context) ([]ResourceStats, 
 	if err != nil {
 		return nil, err
 	}
-	return slices.DeleteFunc(stats, func(info ResourceStats) bool { return info.Count <= int64(s.initMinSize) }), nil
+	return slices.DeleteFunc(stats, func(info ResourceStats) bool { return startupIndexSize(info) <= int64(s.initMinSize) }), nil
 }
 
 func (s *searchServer) startupResourceStats(ctx context.Context, filter NamespacedResource, minCount int) ([]ResourceStats, error) {
@@ -1693,16 +1693,33 @@ func (s *searchServer) startupResourceStats(ctx context.Context, filter Namespac
 	// decision needs an exact count above the higher threshold.
 	limit := max(s.initMinSize, int(s.search.SnapshotCountThreshold())) + 1
 	start := time.Now()
-	stats, err := s.storage.GetResourceStatsWithLimit(ctx, filter, minCount, limit)
+	getStats := s.storage.GetResourceStatsWithLimit
+	if storage, ok := s.storage.(interface {
+		getResourceStatsWithDeleted(context.Context, NamespacedResource, int, int) ([]ResourceStats, error)
+	}); ok {
+		// Use the combined count for discovery without changing the live-only
+		// contract for callers and backends that don't opt into trash stats.
+		getStats = storage.getResourceStatsWithDeleted
+	}
+	stats, err := getStats(ctx, filter, minCount, limit)
 	s.log.Debug("startupIndexStats: got resource stats from storage", "elapsed", time.Since(start).String(), "stats", len(stats), "err", err, "countLimit", limit, "group", filter.Group, "resource", filter.Resource)
 	return stats, err
+}
+
+func startupIndexSize(info ResourceStats) int64 {
+	// New per-resource indexes keep trash; namespace-wide indexes don't.
+	// Saved index stats already carry the full document count in Count.
+	if info.IsGlobal() {
+		return info.Count
+	}
+	return info.Count + info.DeletedCount
 }
 
 func (s *searchServer) buildStartupIndex(ctx context.Context, info ResourceStats, lastImportTime time.Time) error {
 	if s.search.PeekIndex(info.NamespacedResource) != nil {
 		return nil
 	}
-	_, err := s.buildWithOptions(ctx, info.NamespacedResource, info.Count, "init", false, lastImportTime, BuildIndexOptions{SkipIfBuilding: true, LastSearchedAt: info.LastSearchedAt})
+	_, err := s.buildWithOptions(ctx, info.NamespacedResource, startupIndexSize(info), "init", false, lastImportTime, BuildIndexOptions{SkipIfBuilding: true, LastSearchedAt: info.LastSearchedAt})
 	return err
 }
 
@@ -2739,6 +2756,9 @@ func (s *searchServer) buildWithOptions(ctx context.Context, nsr NamespacedResou
 		if err != nil {
 			return 0, 0, err
 		}
+		if err := ctx.Err(); err != nil {
+			return 0, 0, err
+		}
 
 		// Update timestamp of calling the given `sinceRV` to be used the next
 		// time this function is called.
@@ -2846,6 +2866,9 @@ func (s *searchServer) indexResourceType(
 			phases.recordConvert(time.Since(convertStart), err == nil)
 			if err != nil {
 				span.RecordError(err)
+				if isDocumentBuildInterrupted(err) {
+					return err
+				}
 				logger.Error("error building search document", "key", SearchID(key), "err", err)
 				continue
 			}
@@ -2930,7 +2953,10 @@ func (s *searchServer) applyModifiedSince(
 
 		docs++
 
-		item := updateItem(ctx, builder, res, keepDeleted, phases, span, logger)
+		item, err := updateItem(ctx, builder, res, keepDeleted, phases, span, logger)
+		if err != nil {
+			return 0, 0, err
+		}
 		if item == nil {
 			// Logged already. Not remembered as processed, so a later update
 			// tries it again.
@@ -2983,9 +3009,21 @@ func (d modifiedDedup) add(keys []string) {
 	}
 }
 
-// updateItem turns one change storage reported into the item that brings an
-// index in line with it. It returns nil for a change that cannot be applied,
-// after logging why.
+// An interrupted read doesn't mean a document is invalid. Fail the build or
+// refresh so it can't publish a checkpoint that skips that document.
+func isDocumentBuildInterrupted(err error) bool {
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		return true
+	}
+	switch status.Code(err) {
+	case codes.DeadlineExceeded, codes.Canceled:
+		return true
+	default:
+		return false
+	}
+}
+
+// updateItem skips invalid documents but stops the refresh on interrupted reads.
 func updateItem(
 	ctx context.Context,
 	builder DocumentBuilder,
@@ -2994,7 +3032,7 @@ func updateItem(
 	phases *buildPhaseRecorder,
 	span trace.Span,
 	logger log.Logger,
-) *BulkIndexItem {
+) (*BulkIndexItem, error) {
 	key := &res.Key
 	switch res.Action {
 	case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
@@ -3005,10 +3043,13 @@ func updateItem(
 		phases.recordConvert(time.Since(convertStart), err == nil)
 		if err != nil {
 			span.RecordError(err)
+			if isDocumentBuildInterrupted(err) {
+				return nil, err
+			}
 			logger.Error("error building search document", "key", SearchID(key), "err", err)
-			return nil
+			return nil, nil
 		}
-		return &BulkIndexItem{Action: ActionIndex, Doc: doc}
+		return &BulkIndexItem{Action: ActionIndex, Doc: doc}, nil
 
 	case resourcepb.WatchEvent_DELETED:
 		// The delete event carries the object as it was, so trash searches can
@@ -3034,14 +3075,14 @@ func updateItem(
 		}
 		if doc == nil {
 			span.AddEvent("deleting document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
-			return &BulkIndexItem{Action: ActionDelete, Key: &res.Key}
+			return &BulkIndexItem{Action: ActionDelete, Key: &res.Key}, nil
 		}
 		span.AddEvent("marking document deleted", trace.WithAttributes(attribute.String("name", res.Key.Name)))
-		return &BulkIndexItem{Action: ActionIndex, Doc: doc}
+		return &BulkIndexItem{Action: ActionIndex, Doc: doc}, nil
 
 	default:
 		logger.Error("can't update index with item, unknown action", "action", res.Action, "key", key)
-		return nil
+		return nil, nil
 	}
 }
 

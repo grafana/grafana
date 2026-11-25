@@ -7,6 +7,7 @@ import (
 	"testing"
 	"testing/synctest"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	grpccodes "google.golang.org/grpc/codes"
@@ -17,7 +18,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/storage"
 
-	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -47,7 +47,7 @@ func testStorage(t *testing.T, client resourceclient.ResourceClient) *Storage {
 }
 
 func testContext(t *testing.T) context.Context {
-	requester := &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, OrgRole: identity.RoleAdmin, IsGrafanaAdmin: true}
+	requester := &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, OrgRole: claims.RoleAdmin, IsGrafanaAdmin: true}
 	return identity.WithRequester(t.Context(), requester)
 }
 

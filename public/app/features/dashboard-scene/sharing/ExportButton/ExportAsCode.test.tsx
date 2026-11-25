@@ -71,7 +71,7 @@ function setup({ isViewingYAML = false, height = 320 } = {}) {
 
 describe('ExportAsCode', () => {
   beforeEach(() => {
-    Object.defineProperty(document, 'execCommand', { configurable: true, value: jest.fn() });
+    Object.defineProperty(document, 'execCommand', { configurable: true, value: jest.fn().mockReturnValue(true) });
   });
 
   it('renders autosized JSON in a read-only CodeMirror editor', async () => {

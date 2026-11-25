@@ -3353,6 +3353,72 @@ func TestIndexUpdateWithErrors(t *testing.T) {
 	}
 }
 
+func TestIndexUpdatePacesRetriesAfterFailure(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const initialRV int64 = 10
+		const minInterval = 100 * time.Millisecond
+		updateErr := errors.New("KV unavailable")
+		var attempts []int64
+		idx := newTestBleveUpdater(t, func(_ context.Context, _ resource.ResourceIndex, sinceRV int64) (int64, int, error) {
+			attempts = append(attempts, sinceRV)
+			if len(attempts) == 1 {
+				return sinceRV + 1, 1, updateErr
+			}
+			return sinceRV + 2, 1, nil
+		})
+		idx.resourceVersion.Store(initialRV)
+		idx.minUpdateInterval = minInterval
+
+		_, err := idx.UpdateIndex(t.Context())
+		require.ErrorIs(t, err, updateErr)
+		synctest.Sleep(minInterval - time.Nanosecond)
+		_, err = idx.UpdateIndex(t.Context())
+		require.ErrorIs(t, err, updateErr)
+		require.Equal(t, []int64{initialRV}, attempts)
+
+		synctest.Sleep(time.Nanosecond)
+		rv, err := idx.UpdateIndex(t.Context())
+		require.NoError(t, err)
+		require.Equal(t, initialRV+2, rv)
+		require.Equal(t, []int64{initialRV, initialRV}, attempts)
+
+		rv, err = idx.UpdateIndex(t.Context())
+		require.NoError(t, err)
+		require.Equal(t, initialRV+2, rv)
+		require.Len(t, attempts, 2)
+	})
+}
+
+func TestIndexUpdateCallerCancellationDoesNotCancelSharedUpdate(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		finish := make(chan struct{})
+		idx := newTestBleveUpdater(t, func(ctx context.Context, _ resource.ResourceIndex, sinceRV int64) (int64, int, error) {
+			select {
+			case <-ctx.Done():
+				return 0, 0, ctx.Err()
+			case <-finish:
+				return sinceRV + 1, 1, ctx.Err()
+			}
+		})
+
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		callerErr := make(chan error, 1)
+		go func() {
+			_, err := idx.UpdateIndex(ctx)
+			callerErr <- err
+		}()
+		synctest.Wait()
+
+		cancel()
+		require.ErrorIs(t, <-callerErr, context.Canceled)
+		close(finish)
+		synctest.Wait()
+
+		require.Equal(t, int64(1), idx.resourceVersion.Load())
+	})
+}
+
 func TestIndexBuildInfo(t *testing.T) {
 	ns := resource.NamespacedResource{
 		Namespace: "test",

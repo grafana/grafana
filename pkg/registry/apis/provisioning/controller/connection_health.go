@@ -31,7 +31,7 @@ type ConnectionHealthCheckerInterface interface {
 // and patch operations to be applied in a single status patch request.
 type ConnectionHealthResultWithPatchOps struct {
 	TestResults    *provisioning.TestResults
-	HealthStatus   provisioning.HealthStatus
+	HealthStatus   provisioning.ConnectionHealthStatus
 	ReadyCondition metav1.Condition
 	PatchOps       []map[string]interface{}
 }
@@ -80,7 +80,7 @@ func (hc *ConnectionHealthChecker) ShouldCheckHealth(conn *provisioning.Connecti
 }
 
 // hasRecentHealthCheck checks if a health check was performed recently (for timing purposes)
-func (hc *ConnectionHealthChecker) hasRecentHealthCheck(healthStatus provisioning.HealthStatus) bool {
+func (hc *ConnectionHealthChecker) hasRecentHealthCheck(healthStatus provisioning.ConnectionHealthStatus) bool {
 	if healthStatus.Checked == 0 {
 		return false // Never checked
 	}
@@ -93,7 +93,7 @@ func (hc *ConnectionHealthChecker) hasRecentHealthCheck(healthStatus provisionin
 }
 
 // hasHealthStatusChanged checks if the health status has meaningfully changed
-func (hc *ConnectionHealthChecker) hasHealthStatusChanged(old, new provisioning.HealthStatus) bool {
+func (hc *ConnectionHealthChecker) hasHealthStatusChanged(old, new provisioning.ConnectionHealthStatus) bool {
 	if old.Healthy != new.Healthy {
 		return true
 	}
@@ -172,7 +172,7 @@ func (hc *ConnectionHealthChecker) RefreshHealthWithPatchOps(ctx context.Context
 
 // refreshHealth performs a comprehensive health check
 // Returns test results, health status, and any error
-func (hc *ConnectionHealthChecker) refreshHealth(ctx context.Context, conn *provisioning.Connection, existingStatus provisioning.HealthStatus) (*provisioning.TestResults, provisioning.HealthStatus, error) {
+func (hc *ConnectionHealthChecker) refreshHealth(ctx context.Context, conn *provisioning.Connection, existingStatus provisioning.ConnectionHealthStatus) (*provisioning.TestResults, provisioning.ConnectionHealthStatus, error) {
 	logger := logging.FromContext(ctx)
 	start := time.Now()
 	outcome := utils.SuccessOutcome
@@ -198,7 +198,7 @@ func (hc *ConnectionHealthChecker) refreshHealth(ctx context.Context, conn *prov
 			}
 		}
 
-		healthStatus := provisioning.HealthStatus{
+		healthStatus := provisioning.ConnectionHealthStatus{
 			Healthy: false,
 			Error:   provisioning.HealthFailureHealth,
 			Checked: time.Now().UnixMilli(),
@@ -210,7 +210,7 @@ func (hc *ConnectionHealthChecker) refreshHealth(ctx context.Context, conn *prov
 
 	// Health check succeeded
 	now := time.Now()
-	healthStatus := provisioning.HealthStatus{
+	healthStatus := provisioning.ConnectionHealthStatus{
 		Healthy: true,
 		Checked: now.UnixMilli(),
 	}

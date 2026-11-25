@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useChromeHeaderHeight } from '@grafana/runtime';
-import { Box, Dropdown, EmptyState, LinkButton, Menu, Stack, useStyles2 } from '@grafana/ui';
+import { Dropdown, EmptyState, LinkButton, Menu, Stack, useStyles2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
 import MoreButton from '../../components/MoreButton';
@@ -16,6 +16,9 @@ import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
 import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
+import { RuleListSavedSearchIndicator, RuleListSavedSearches } from '../saved-searches/RuleListSavedSearches';
+import { useRuleListSavedSearches } from '../saved-searches/useRuleListSavedSearches';
+import { withSavedSearchesSetup } from '../saved-searches/withSavedSearchesSetup';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
 import { AlertRulesFilterSidebar } from './AlertRulesFilterSidebar';
@@ -31,6 +34,8 @@ function AlertRulesPage() {
   const rejectionIssues = useAlertRuleSearchRejection(filter, { parseIssues, mode });
   const issues = parseIssues.length > 0 ? parseIssues : rejectionIssues;
 
+  const savedSearches = useRuleListSavedSearches('alert');
+
   useTrackRuleListPageView('alert', mode);
 
   const headerHeight = useChromeHeaderHeight() ?? 0;
@@ -38,29 +43,39 @@ function AlertRulesPage() {
 
   return (
     <AlertingPageWrapper navId={navId} pageNav={pageNav} actions={<AlertRulesPageHeader />}>
-      <Box paddingTop={2}>
-        <Stack direction="column" gap={2}>
-          <div className={styles.searchRow}>
-            <RuleSearchInput
-              query={query}
-              onApply={applyQuery}
-              filterHelp={filterHelp}
-              issues={issues}
-              trailing={<RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />}
-            />
-          </div>
-          <FilterSidebarLayout sidebar={<AlertRulesFilterSidebar query={query} filter={filter} onApply={applyQuery} />}>
-            <RuleSequenceDrawerProvider>
-              <AlertRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
-            </RuleSequenceDrawerProvider>
-          </FilterSidebarLayout>
-        </Stack>
-      </Box>
+      <Stack direction="column" gap={1}>
+        <div className={styles.searchRow}>
+          <RuleSearchInput
+            query={query}
+            onApply={applyQuery}
+            filterHelp={filterHelp}
+            issues={issues}
+            appliedSavedSearch={
+              <RuleListSavedSearchIndicator
+                query={query}
+                schema={alertRuleSearchSchema}
+                savedSearches={savedSearches.savedSearches}
+              />
+            }
+            trailing={
+              <Stack direction="row" gap={1} alignItems="center">
+                <RuleListSavedSearches kind="alert" savedSearches={savedSearches} />
+                <RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />
+              </Stack>
+            }
+          />
+        </div>
+        <FilterSidebarLayout sidebar={<AlertRulesFilterSidebar query={query} filter={filter} onApply={applyQuery} />}>
+          <RuleSequenceDrawerProvider>
+            <AlertRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+          </RuleSequenceDrawerProvider>
+        </FilterSidebarLayout>
+      </Stack>
     </AlertingPageWrapper>
   );
 }
 
-export default withPageErrorBoundary(AlertRulesPage);
+export default withPageErrorBoundary(withSavedSearchesSetup('alert', AlertRulesPage));
 
 function AlertRulesPageHeader() {
   const [createSupported, createAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
@@ -123,6 +138,6 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number) => ({
     top: headerHeight,
     zIndex: theme.zIndex.navbarFixed,
     background: theme.colors.background.page,
-    padding: theme.spacing(1, 0),
+    paddingBottom: theme.spacing(1),
   }),
 });

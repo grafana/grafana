@@ -72,7 +72,7 @@ func (s *legacyCheckShadow) evaluate(ctx context.Context, ac *AccessControl, use
 		},
 		func() shadow.Work {
 			permissions := evaluator.GoString()
-			req, shadowErr := ac.buildLegacyCheckRequest(user, evaluator, ac.useExternalGroups, ac.legacyNamespace)
+			req, shadowErr := ac.buildLegacyCheckRequest(user, evaluator, ac.legacyNamespace)
 			var call func(context.Context) (bool, error)
 			if shadowErr == nil {
 				call, shadowErr = prepareLegacyCheck(ac.legacyCheckClient, req)

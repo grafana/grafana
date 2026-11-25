@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	extJWTAccessTokenExpectAudience = "grafana"
+	ExtJWTAccessTokenExpectAudience = "grafana"
 )
 
 type AuthJWTSettings struct {
@@ -55,7 +55,7 @@ func (cfg *Cfg) readAuthExtJWTSettings() {
 	jwtSettings.JWKSUrl = authExtendedJWT.Key("jwks_url").MustString("")
 	jwtSettings.WildcardOrgID = authExtendedJWT.Key("wildcard_org_id").MustInt64(0)
 	// for Grafana, this defaults to hard coded value, but we leave it as a configurable param for other use-cases
-	audiences := extJWTAccessTokenExpectAudience
+	audiences := ExtJWTAccessTokenExpectAudience
 	if authExtendedJWT.HasKey("audiences") {
 		audiences = authExtendedJWT.Key("audiences").String()
 	}
