@@ -213,14 +213,34 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 		if stamp && !annotationsFit(f, value) {
 			return nil, false, apierrors.NewBadRequest("folder annotations leave no room to record the requester; remove some and retry")
 		}
+		stampCtx := identity.WithServiceIdentityContext(ctx, ns.OrgID)
+		// Stamped before the delete so the controller, which wakes on the terminating write, already sees it.
+		// A live folder above the API-version cap can't be updated, so a failed early stamp falls back to
+		// stamping after the delete, when the folder is terminating and the cap exempts the write.
+		stampedRV := ""
+		if stamp && f.DeletionTimestamp == nil && len(options.DryRun) == 0 {
+			if rv, err := s.writeCascadeDeleteRequester(stampCtx, name, f.UID, current, value, f.ResourceVersion); err == nil && rv != "" {
+				stampedRV = rv
+				// The stamp moved the version the checks ran against; keep the delete pinned to it.
+				pinned := options.DeepCopy()
+				pinned.Preconditions.ResourceVersion = &rv
+				options = pinned
+				stamp = false
+			}
+		}
 		res, async, err := s.Storage.Delete(ctx, name, deleteValidation, options)
-		if err != nil || !stamp || len(options.DryRun) > 0 {
+		if err != nil {
+			if stampedRV != "" {
+				// Best effort: a stamp left on a folder that didn't start terminating must not be inherited by a later delete.
+				_, _ = s.writeCascadeDeleteRequester(stampCtx, name, f.UID, value, "", stampedRV)
+			}
 			return res, async, err
 		}
-		// Stamped after the delete so the write lands on a terminating folder, which the API-version cap exempts.
-		// If it fails the folder stays terminating and a retry stamps it, so the error is returned rather than hidden.
-		// Not atomic with the transition: concurrent deletes record the first stamper, not necessarily the first deleter.
-		if err := s.writeCascadeDeleteRequester(identity.WithServiceIdentityContext(ctx, ns.OrgID), name, f.UID, current, value); err != nil && !apierrors.IsNotFound(err) && !errors.Is(err, errSkipStamp) {
+		if !stamp || len(options.DryRun) > 0 {
+			return res, async, nil
+		}
+		// If the late stamp fails the folder stays terminating and a retry stamps it, so the error is returned rather than hidden.
+		if _, err := s.writeCascadeDeleteRequester(stampCtx, name, f.UID, current, value, ""); err != nil && !apierrors.IsNotFound(err) && !errors.Is(err, errSkipStamp) {
 			return nil, false, err
 		}
 		return res, async, nil
@@ -604,13 +624,15 @@ func (s *cascadeDeleteStorage) isCascadeSubfolderDelete(ctx context.Context, use
 
 var errSkipStamp = errors.New("requester stamp no longer applies")
 
-// writeCascadeDeleteRequester sets the annotation (an empty value clears it) on the terminating folder with
-// the given uid, only while it still holds expected, so it can't hit a recreated folder or override a
-// requester set meanwhile. ctx must carry the service identity so the write doesn't depend on the user's permissions.
-func (s *cascadeDeleteStorage) writeCascadeDeleteRequester(ctx context.Context, name string, uid types.UID, expected, value string) error {
+// writeCascadeDeleteRequester sets the annotation (an empty value clears it) on the folder with the given
+// uid, only while it still holds expected, so it can't hit a recreated folder or override a requester set
+// meanwhile. A non-empty rv stamps a live folder still at that version; an empty one stamps a terminating
+// folder. It returns the new resourceVersion. ctx must carry the service identity so the write doesn't
+// depend on the user's permissions.
+func (s *cascadeDeleteStorage) writeCascadeDeleteRequester(ctx context.Context, name string, uid types.UID, expected, value, rv string) (string, error) {
 	objInfo := rest.DefaultUpdatedObjectInfo(nil, func(_ context.Context, _, oldObj runtime.Object) (runtime.Object, error) {
 		f, ok := oldObj.(*foldersv1.Folder)
-		if !ok || f.UID != uid || f.DeletionTimestamp == nil || f.Annotations[annoKeyCascadeDeleteRequester] != expected {
+		if !ok || f.UID != uid || (f.DeletionTimestamp == nil) != (rv != "") || (rv != "" && f.ResourceVersion != rv) || f.Annotations[annoKeyCascadeDeleteRequester] != expected {
 			return nil, errSkipStamp
 		}
 		obj := f.DeepCopy()
@@ -624,8 +646,15 @@ func (s *cascadeDeleteStorage) writeCascadeDeleteRequester(ctx context.Context, 
 		}
 		return obj, nil
 	})
-	_, _, err := s.Update(ctx, name, objInfo, nil, nil, false, &metav1.UpdateOptions{})
-	return err
+	updated, _, err := s.Update(ctx, name, objInfo, nil, nil, false, &metav1.UpdateOptions{})
+	if err != nil {
+		return "", err
+	}
+	accessor, err := meta.Accessor(updated)
+	if err != nil {
+		return "", err
+	}
+	return accessor.GetResourceVersion(), nil
 }
 
 // markTerminating stamps the terminating label on the folder so the in-progress subtree deletion is

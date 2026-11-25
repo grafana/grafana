@@ -3,6 +3,7 @@ package folders
 import (
 	"context"
 	"errors"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -64,6 +65,7 @@ var (
 func finalizerFolder(name string) *foldersv1.Folder {
 	f := newFolder(name)
 	f.Finalizers = []string{foldersv1.CascadeDeleteFinalizer}
+	f.ResourceVersion = "1"
 	return f
 }
 
@@ -90,6 +92,10 @@ type terminatingStore struct {
 	deleteOptions     *metav1.DeleteOptions
 	// afterDelete simulates another request landing between the delete and the stamp.
 	afterDelete func(*terminatingStore)
+	// requesterAtDelete is the annotation the folder held when the delete transitioned it.
+	requesterAtDelete string
+	// beforeFail simulates another request landing before a failing delete returns.
+	beforeFail func(*terminatingStore)
 }
 
 func newTerminatingStore(f *foldersv1.Folder) *terminatingStore {
@@ -103,7 +109,13 @@ func (s *terminatingStore) Delete(ctx context.Context, name string, validate res
 		return nil, false, apierrors.NewNotFound(foldersv1.FolderResourceInfo.GroupResource(), name)
 	}
 	if s.deleteErr != nil {
+		if s.beforeFail != nil {
+			s.beforeFail(s)
+		}
 		return nil, false, s.deleteErr
+	}
+	if p := options.Preconditions; p != nil && p.ResourceVersion != nil && *p.ResourceVersion != fol.ResourceVersion {
+		return nil, false, apierrors.NewConflict(foldersv1.FolderResourceInfo.GroupResource(), name, errors.New("resourceVersion mismatch"))
 	}
 	if validate != nil {
 		if err := validate(ctx, fol); err != nil {
@@ -113,6 +125,7 @@ func (s *terminatingStore) Delete(ctx context.Context, name string, validate res
 	if len(options.DryRun) == 0 && fol.DeletionTimestamp == nil {
 		now := metav1.Now()
 		fol.DeletionTimestamp = &now
+		s.requesterAtDelete = fol.Annotations[annoKeyCascadeDeleteRequester]
 	}
 	if s.afterDelete != nil {
 		s.afterDelete(s)
@@ -125,7 +138,12 @@ func (s *terminatingStore) Update(ctx context.Context, name string, info rest.Up
 	if s.updateErr != nil || (s.rejectLiveUpdates && s.existing[name].DeletionTimestamp == nil) {
 		return nil, false, errors.Join(s.updateErr, errors.New("update rejected"))
 	}
-	return s.fakeFolderStorage.Update(ctx, name, info, cv, uv, force, options)
+	updated, async, err := s.fakeFolderStorage.Update(ctx, name, info, cv, uv, force, options)
+	if err == nil && len(options.DryRun) == 0 {
+		rv, _ := strconv.Atoi(s.existing[name].ResourceVersion)
+		s.existing[name].ResourceVersion = strconv.Itoa(rv + 1)
+	}
+	return updated, async, err
 }
 
 func (s *terminatingStore) requester() string {
@@ -169,23 +187,58 @@ func TestCascadeDelete_RequesterStamp(t *testing.T) {
 	}
 }
 
-func TestCascadeDelete_FailedDeleteDoesNotStamp(t *testing.T) {
-	for name, f := range map[string]*foldersv1.Folder{"live": finalizerFolder("f"), "terminating": terminatingFolder()} {
+func TestCascadeDelete_FailedDeleteDoesNotLeaveAStamp(t *testing.T) {
+	for name, tc := range map[string]struct {
+		folder      *foldersv1.Folder
+		wantUpdates int
+	}{
+		"live":        {finalizerFolder("f"), 2}, // stamped, then cleared
+		"terminating": {terminatingFolder(), 0},
+	} {
 		t.Run(name, func(t *testing.T) {
-			store := newTerminatingStore(f)
+			store := newTerminatingStore(tc.folder)
 			store.deleteErr = errors.New("boom")
 			require.Error(t, forceDeleteAs(store, userA, forceDelete(), nil))
-			require.Zero(t, store.updates)
+			require.Equal(t, tc.wantUpdates, store.updates)
 			require.Empty(t, store.requester())
 		})
 	}
 }
 
-func TestCascadeDelete_RejectedValidationDoesNotStamp(t *testing.T) {
+func TestCascadeDelete_FailedDeleteKeepsAStampSetMeanwhile(t *testing.T) {
+	store := newTerminatingStore(finalizerFolder("f"))
+	store.deleteErr = errors.New("boom")
+	store.beforeFail = func(s *terminatingStore) {
+		s.existing["f"].Annotations[annoKeyCascadeDeleteRequester] = "other"
+		s.existing["f"].ResourceVersion = "99"
+	}
+	require.Error(t, forceDeleteAs(store, userA, forceDelete(), nil))
+	require.Equal(t, "other", store.requester())
+}
+
+func TestCascadeDelete_StampLandsBeforeTheDeleteTransition(t *testing.T) {
+	store := newTerminatingStore(finalizerFolder("f"))
+	require.NoError(t, forceDeleteAs(store, userA, forceDelete(), nil))
+	require.JSONEq(t, userAValue, store.requesterAtDelete)
+	require.Equal(t, 1, store.updates, "one early write, none after the delete")
+}
+
+func TestCascadeDelete_StampOnAChangedFolderFallsBackToTheVersionPin(t *testing.T) {
+	store := newTerminatingStore(finalizerFolder("f"))
+	store.existing["f"].ResourceVersion = "5"
+	opts := forceDelete()
+	rv := "1"
+	opts.Preconditions = &metav1.Preconditions{ResourceVersion: &rv}
+	require.True(t, apierrors.IsConflict(forceDeleteAs(store, userA, opts, nil)))
+	require.Empty(t, store.requester())
+}
+
+func TestCascadeDelete_RejectedValidationLeavesNoStamp(t *testing.T) {
 	store := newTerminatingStore(finalizerFolder("f"))
 	err := forceDeleteAs(store, userA, forceDelete(), func(context.Context, runtime.Object) error { return errors.New("rejected") })
 	require.Error(t, err)
-	require.Zero(t, store.updates)
+	require.Empty(t, store.requester(), "the early stamp is cleared when validation rejects the delete")
+	require.Nil(t, store.existing["f"].DeletionTimestamp)
 }
 
 func TestCascadeDelete_StampFailureIsReturned(t *testing.T) {
@@ -208,7 +261,7 @@ func TestCascadeDelete_DeletePinsToCheckedVersion(t *testing.T) {
 	f.ResourceVersion = "1"
 	store := newTerminatingStore(f)
 	require.NoError(t, forceDeleteAs(store, userA, forceDelete(), nil))
-	require.Equal(t, "1", *store.deleteOptions.Preconditions.ResourceVersion)
+	require.Equal(t, "2", *store.deleteOptions.Preconditions.ResourceVersion, "pinned to the version the stamp produced")
 }
 
 func TestCascadeDelete_SubfolderDeleteByControllerLeavesRequester(t *testing.T) {
