@@ -65,7 +65,7 @@ func NewLimitsProvider(cfg setting.RemoteAlertmanagerSettings, remoteEnabled boo
 		return &NoopLimitsProvider{}
 	}
 
-	mimirClient, err := client.New(&client.Config{
+	amClient, err := client.New(&client.Config{
 		URL:      remoteURL,
 		TenantID: cfg.TenantID,
 		Password: cfg.Password,
@@ -73,7 +73,7 @@ func NewLimitsProvider(cfg setting.RemoteAlertmanagerSettings, remoteEnabled boo
 		Timeout:  cfg.Timeout,
 	}, m, tracer)
 	if err != nil {
-		logger.Warn("Failed to create MimirClient for limits provider, using noop limits", "error", err)
+		logger.Error("Failed to create Alertmanager client for limits provider, using noop limits", "error", err)
 		return &NoopLimitsProvider{}
 	}
 	return NewRemoteLimitsProvider(mimirClient)
