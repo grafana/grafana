@@ -337,29 +337,33 @@ func (n *eventStore) listIndexEventKeys(ctx context.Context, since, reuseFrom in
 			}
 		}
 
-		// An interrupted scan or one overtaken by pruning cannot establish coverage.
-		if ctx.Err() != nil || since >= before || time.Since(time.UnixMilli(snowflakeTimestampMillis(since))) > maxAge {
-			return
-		}
-		cacheSince := since
-		if cached != nil {
-			cacheSince = min(cacheSince, cached.since)
-		}
-		cacheSince = max(cacheSince, snowflakeFromTime(time.Now().Add(-maxAge)))
-		if len(keys) > indexEventCacheSize {
-			// Don't claim coverage for only some of the keys at the same RV.
-			cacheSince = max(cacheSince, keys[indexEventCacheSize].ResourceVersion+1)
-		}
-		if end := firstIndexEventBelow(keys, cacheSince); end < len(keys) {
-			keys = slices.Clone(keys[:end])
-		}
-		// Don't make a concurrent scan lose its update for an unchanged range.
-		if previous != nil && cacheSince == previous.since && before == previous.before &&
-			len(keys) == len(previous.keys) && (len(keys) == 0 || &keys[0] == &previous.keys[0] || slices.Equal(keys, previous.keys)) {
-			return
-		}
-		n.indexEventKeys.CompareAndSwap(previous, &indexEventKeyRange{since: cacheSince, before: before, keys: keys})
+		n.publishIndexEventKeys(ctx, previous, cached, since, before, maxAge, keys)
 	}
+}
+
+func (n *eventStore) publishIndexEventKeys(ctx context.Context, previous, cached *indexEventKeyRange, since, before int64, maxAge time.Duration, keys []EventKey) {
+	// An interrupted scan or one overtaken by pruning cannot establish coverage.
+	if ctx.Err() != nil || since >= before || time.Since(time.UnixMilli(snowflakeTimestampMillis(since))) > maxAge {
+		return
+	}
+	cacheSince := since
+	if cached != nil {
+		cacheSince = min(cacheSince, cached.since)
+	}
+	cacheSince = max(cacheSince, snowflakeFromTime(time.Now().Add(-maxAge)))
+	if len(keys) > indexEventCacheSize {
+		// Don't claim coverage for only some of the keys at the same RV.
+		cacheSince = max(cacheSince, keys[indexEventCacheSize].ResourceVersion+1)
+	}
+	if end := firstIndexEventBelow(keys, cacheSince); end < len(keys) {
+		keys = slices.Clone(keys[:end])
+	}
+	// Don't make a concurrent scan lose its update for an unchanged range.
+	if previous != nil && cacheSince == previous.since && before == previous.before &&
+		len(keys) == len(previous.keys) && (len(keys) == 0 || &keys[0] == &previous.keys[0] || slices.Equal(keys, previous.keys)) {
+		return
+	}
+	n.indexEventKeys.CompareAndSwap(previous, &indexEventKeyRange{since: cacheSince, before: before, keys: keys})
 }
 
 func firstIndexEventBelow(keys []EventKey, rv int64) int {
