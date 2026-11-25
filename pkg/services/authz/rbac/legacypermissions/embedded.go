@@ -122,10 +122,15 @@ func newEmbeddedClient(loader *Loader, cfg *setting.Cfg, reg prometheus.Register
 	return &embeddedClient{LegacyUserPermissionsClient: legacyclient.NewLegacyClient(channel)}
 }
 
-func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
+func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) (err error) {
 	started := time.Now()
-	result := "error"
-	defer func() { s.metrics.observe(started, result) }()
+	defer func() {
+		result := "ok"
+		if err != nil {
+			result = "error"
+		}
+		s.metrics.observe(started, result)
+	}()
 	ctx := stream.Context()
 	if s.guard == nil || ctx.Value(embeddedCallKey{}) != s.guard {
 		return status.Error(codes.PermissionDenied, "legacy enumeration is embedded-only")
@@ -163,11 +168,7 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 	} else if req.NoOrgMembership {
 		orgID = -1
 	}
-	if err := s.loader.streamPermissions(ctx, req, stream, namespace, orgID); err != nil {
-		return err
-	}
-	result = "ok"
-	return nil
+	return s.loader.streamPermissions(ctx, req, stream, namespace, orgID)
 }
 
 func (l *Loader) streamPermissions(ctx context.Context, req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer, namespace string, orgID int64) error {
