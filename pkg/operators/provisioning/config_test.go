@@ -196,9 +196,37 @@ func TestClientsServeManifestKindsFromTheAggregatedServer(t *testing.T) {
 	_, err = client.List(t.Context(), metav1.ListOptions{})
 	require.NoError(t, err)
 
-	token := "Bearer token-for-" + apisprovisioning.GROUP
-	require.Equal(t, token, router.AccessToken("/apis/discovery/v1alpha2/manifests"))
-	require.Equal(t, token, router.AccessToken("/apis/"+stubRouterGroup+"/v1/namespaces/default/widgets"))
+	require.Equal(t, "Bearer token-for-grafana", router.AccessToken("/apis/discovery/v1alpha2/manifests"))
+	require.Equal(t, "Bearer token-for-"+apisprovisioning.GROUP, router.AccessToken("/apis/"+stubRouterGroup+"/v1/namespaces/default/widgets"))
+}
+
+func TestClientsUseTheRouterForDashboardsWithTheRouterClientSetting(t *testing.T) {
+	dashboards := "/apis/dashboard.grafana.app/v1/namespaces/default/dashboards"
+	router := routertest.NewServer(t, map[string]string{
+		"/apis/dashboard.grafana.app/v1": `{"kind":"APIResourceList","apiVersion":"v1","groupVersion":"dashboard.grafana.app/v1","resources":[{"name":"dashboards","namespaced":true,"kind":"Dashboard","verbs":["list"]}]}`,
+		dashboards:                       `{"apiVersion":"dashboard.grafana.app/v1","kind":"DashboardList","items":[]}`,
+	})
+	cfg := newClientsConfig(t, newStubSigner(t).URL, map[string]string{"aggregated_server_url": router.URL})
+	cfg.Settings.ProvisioningRouterClient = true
+
+	factory, err := cfg.Clients()
+	require.NoError(t, err)
+	clients, err := factory.Clients(t.Context(), "default")
+	require.NoError(t, err)
+	client, _, err := clients.ForKind(t.Context(), resources.DashboardResource.GroupVersion().WithKind("Dashboard"))
+	require.NoError(t, err)
+	_, err = client.List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err)
+
+	require.Equal(t, "Bearer token-for-dashboard.grafana.app", router.AccessToken(dashboards))
+}
+
+func TestClientsRequireTheAggregatedServerWithTheRouterClientSetting(t *testing.T) {
+	cfg := newClientsConfig(t, newStubSigner(t).URL, nil)
+	cfg.Settings.ProvisioningRouterClient = true
+
+	_, err := cfg.Clients()
+	require.ErrorContains(t, err, "aggregated_server_url is required")
 }
 
 // Production has no aggregated server yet, so the operators must run with the configured

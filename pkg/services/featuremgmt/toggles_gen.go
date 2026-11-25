@@ -343,10 +343,6 @@ const (
 	// Enables RBAC for playlists
 	FlagPlaylistsRBAC = "playlistsRBAC"
 
-	// FlagSavedQueriesRBAC
-	// Enables Saved queries (query library) RBAC permissions
-	FlagSavedQueriesRBAC = "savedQueriesRBAC"
-
 	// FlagDashboardLibrary
 	// Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
 	FlagDashboardLibrary = "dashboardLibrary"
@@ -729,6 +725,10 @@ const (
 	// FlagPluginsUseMTPlugins
 	// Enables plugins decoupling from bootdata
 	FlagPluginsUseMTPlugins = "plugins.useMTPlugins"
+
+	// FlagPluginsUseMTPluginInstall
+	// Installs, updates and uninstalls plugins through the plugins API only, and falls back to the legacy API if that call fails
+	FlagPluginsUseMTPluginInstall = "plugins.useMTPluginInstall"
 
 	// FlagGlobalDashboardVariables
 	// Enables global and folder-scoped dashboard variables via dashboard.grafana.app

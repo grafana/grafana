@@ -106,6 +106,7 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
           value={props.value}
           field={props.field}
           timeRange={props.timeRange}
+          onTimeRangeSelected={props.onTimeRangeSelected}
           rowIdx={props.rowIdx}
           theme={props.theme}
           width={props.width}

@@ -1,6 +1,9 @@
 ---
 aliases:
   - ./manage-notifications/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/
+  - ./monitor-status/declare-incident-from-alert/ # /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/declare-incident-from-alert/
+  - ./manage-notifications/declare-incident-from-alert/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/declare-incident-from-alert/
+  - ./alerting-rules/declare-incident-from-alert/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/declare-incident-from-alert/
 canonical: https://grafana.com/docs/grafana/latest/alerting/monitor-status/
 description: Detect and respond for day-to-day triage and analysis of what’s going on and action you need to take
 keywords:
