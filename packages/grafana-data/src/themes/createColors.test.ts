@@ -21,7 +21,7 @@ describe('createColors', () => {
       `linear-gradient(90deg, ${refreshPalette.violet400}, ${refreshPalette.orange400})`
     );
     expect(createColors({ mode: 'light' }).gradients.button).toBe(
-      `linear-gradient(90deg, ${refreshPalette.violet600}, ${refreshPalette.orange600})`
+      `linear-gradient(90deg, ${refreshPalette.violet300}, ${refreshPalette.orange400})`
     );
   });
 

@@ -302,7 +302,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   gradients = {
     brandHorizontal: 'linear-gradient(90deg, #FF8833 0%, #F53E4C 100%)',
     brandVertical: 'linear-gradient(0.01deg, #F53E4C -31.2%, #FF8833 113.07%)',
-    button: `linear-gradient(90deg, ${refreshPalette.violet600}, ${refreshPalette.orange600})`,
+    button: `linear-gradient(90deg, ${refreshPalette.violet300}, ${refreshPalette.orange400})`,
   };
 
   scrollbar = `rgba(${this.blackBase}, 0.3)`;

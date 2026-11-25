@@ -88,11 +88,16 @@ describe('getGradientButtonFillStyles', () => {
     );
   });
 
-  it('fills the button with the gradient and uses the canvas color for text with fill solid', () => {
+  it('fills the button with the gradient and uses the canvas color for text in dark mode with fill solid', () => {
     const styles = getGradientButtonFillStyles(theme, 'solid');
     expect(styles.background).toBe(`${theme.colors.gradients.button} border-box`);
     expect(styles.color).toBe(theme.colors.background.canvas);
     expect(styles).toHaveProperty(['&:hover', 'background'], expect.stringContaining(theme.colors.action.hover));
+  });
+
+  it('uses black text on the gradient fill in light mode', () => {
+    const lightTheme = createTheme({ colors: { mode: 'light' } });
+    expect(getGradientButtonFillStyles(lightTheme, 'solid').color).toBe(lightTheme.colors.text.maxContrast);
   });
 
   it.each(['outline' as const, 'solid' as const])('has no !important or transition overrides (fill %s)', (fill) => {

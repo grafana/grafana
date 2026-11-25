@@ -2,8 +2,8 @@ import { cx } from '@emotion/css';
 import * as React from 'react';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { AbstractButton } from '../AbstractButton/AbstractButton';
 import { type ButtonProps } from '../Button/Button';
-import { StyledButton } from '../Button/StyledButton';
 
 import { getGradientButtonStyles } from './GradientButton.styles';
 
@@ -19,23 +19,23 @@ export type GradientButtonProps = DistributiveOmit<ButtonProps, 'variant' | 'fil
 };
 
 /**
- * A secondary Button with a gradient border or fill from the `theme.colors.gradients.button` theme token.
+ * A button with a gradient border or fill from the `theme.colors.gradients.button` theme token.
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-gradientbutton--docs
  */
 export const GradientButton = React.forwardRef<HTMLButtonElement, GradientButtonProps>(
-  ({ fill = 'outline', className, ...props }, ref) => {
-    const styles = useStyles2(getGradientButtonStyles);
+  ({ fill = 'outline', size = 'md', fullWidth = false, className, ...props }, ref) => {
+    const styles = useStyles2(getGradientButtonStyles, fill, size, fullWidth, !props.children);
 
-    // A disabled GradientButton looks like any disabled Button, so the gradient is left off.
     return (
-      <StyledButton
-        ref={ref}
+      <AbstractButton
         {...props}
-        variant="secondary"
-        fill="solid"
-        className={cx(!props.disabled && styles[fill], className)}
+        ref={ref}
         as="button"
+        className={cx(styles.button, { [styles.disabled]: props.disabled }, className)}
+        iconSize={size}
+        iconClassName={styles.icon}
+        contentClassName={styles.content}
       />
     );
   }
