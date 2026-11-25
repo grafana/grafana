@@ -56,6 +56,18 @@ func TestV2AuthenticationMiddleware(t *testing.T) {
 		require.Equal(t, "exchanged", gotHeader)
 		require.Equal(t, []authnlib.TokenExchangeRequest{{Namespace: "stacks-1", Audiences: []string{"my-app"}, SubjectToken: "at"}}, ex.reqs)
 	})
+	t.Run("adds the requested group when it differs from the plugin ID", func(t *testing.T) {
+		ex := &recordingExchanger{}
+		ctx := request.WithRequestInfo(callerCtx("at", ""), &request.RequestInfo{APIGroup: "my-app.grafana.app"})
+		require.NoError(t, health(handler(ex), ctx, "stacks-1"))
+		require.Equal(t, []string{"my-app.grafana.app", "my-app"}, ex.reqs[0].Audiences)
+	})
+	t.Run("does not repeat a group equal to the plugin ID", func(t *testing.T) {
+		ex := &recordingExchanger{}
+		ctx := request.WithRequestInfo(callerCtx("at", ""), &request.RequestInfo{APIGroup: "my-app"})
+		require.NoError(t, health(handler(ex), ctx, "stacks-1"))
+		require.Equal(t, []string{"my-app"}, ex.reqs[0].Audiences)
+	})
 	t.Run("falls back to the ID token", func(t *testing.T) {
 		ex := &recordingExchanger{}
 		require.NoError(t, health(handler(ex), callerCtx("", "id"), ""))

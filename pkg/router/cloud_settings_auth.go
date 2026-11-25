@@ -7,8 +7,9 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -57,6 +58,15 @@ func (h *v2AuthenticationHandler) CallResource(ctx context.Context, req *backend
 	return h.BaseHandler.CallResource(ctx, req, sender)
 }
 
+// audiences returns the API group being requested, from the request info in
+// ctx, and the plugin ID when it differs: a plugin accepts tokens for either.
+func audiences(ctx context.Context, pluginID string) []string {
+	if info, ok := request.RequestInfoFrom(ctx); ok && info.APIGroup != "" && info.APIGroup != pluginID {
+		return []string{info.APIGroup, pluginID}
+	}
+	return []string{pluginID}
+}
+
 // authenticate sets the exchanged token on the request's headers, replacing any
 // the caller sent.
 func (h *v2AuthenticationHandler) authenticate(ctx context.Context, namespace string, req backend.ForwardHTTPHeaders) error {
@@ -86,14 +96,14 @@ func (h *v2AuthenticationHandler) authenticate(ctx context.Context, namespace st
 	}
 	rsp, err := h.exchanger.Exchange(ctx, authnlib.TokenExchangeRequest{
 		Namespace:    namespace,
-		Audiences:    []string{h.pluginID},
+		Audiences:    audiences(ctx, h.pluginID),
 		SubjectToken: subjectToken,
 	})
 	if err != nil {
-		return fmt.Errorf("plugin token exchange: %w", err)
+		return fmt.Errorf("cloud plugin token exchange: %w", err)
 	}
 	if rsp == nil || rsp.Token == "" {
-		return errors.New("plugin token exchange: empty access token")
+		return errors.New("cloud plugin token exchange: empty access token")
 	}
 	req.SetHTTPHeader(accessTokenHeader, rsp.Token)
 
