@@ -2316,6 +2316,32 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(v2Manager.state.dashboard?.state.uid).toBe('linked-dash');
     });
 
+    // The page clears its state when it navigates, but the v2 manager keeps the dashboard it loaded.
+    it('does not show the dashboard an earlier page loaded while the next one loads', async () => {
+      setupV1FailureV2Success();
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+      manager.clearState();
+
+      setupDashboardAPI(
+        {
+          access: {},
+          apiVersion: 'v2beta1',
+          kind: 'DashboardWithAccessInfo',
+          metadata: { name: 'next-dash', creationTimestamp: '', resourceVersion: '2', generation: 2 },
+          spec: { ...defaultDashboardV2Spec(), title: 'Next dashboard' },
+        },
+        jest.fn()
+      );
+      const shown: Array<string | undefined> = [];
+      const subscription = manager.subscribeToState({ next: (state) => shown.push(state.dashboard?.state.uid) });
+      await manager.loadDashboard({ uid: 'next-dash', route: DashboardRoutes.Normal });
+      subscription.unsubscribe();
+
+      expect(shown).not.toContain('fake-dash');
+      expect(manager.state.dashboard?.state.uid).toBe('next-dash');
+    });
+
     it('clears the previous dashboard when a later load fails', async () => {
       setTestFlags({ dashboardNewLayouts: true });
       setupV1FailureV2Success();

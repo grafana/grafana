@@ -1516,7 +1516,8 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
 
   private async withVersionHandling<T>(
-    operation: (manager: DashboardScenePageStateManager | DashboardScenePageStateManagerV2) => Promise<T>
+    operation: (manager: DashboardScenePageStateManager | DashboardScenePageStateManagerV2) => Promise<T>,
+    syncState = true
   ): Promise<T> {
     try {
       return await operation(this.activeManager);
@@ -1531,7 +1532,9 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     } finally {
       // need to sync the state of the active manager with the unified manager
       // in cases when components are subscribed to unified manager's state
-      this.setState(this.activeManager.state);
+      if (syncState) {
+        this.setState(this.activeManager.state);
+      }
     }
   }
 
@@ -1545,10 +1548,14 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
         : Promise.resolve(undefined);
     let rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null;
     try {
-      rsp = await this.withVersionHandling<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null>((manager) =>
-        // The id the page read from its URL too, so a missing dashboard isn't alerted before the
-        // pending changes say whether they propose it.
-        manager.fetchDashboard({ ...options, pendingChanges: id })
+      rsp = await this.withVersionHandling<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null>(
+        (manager) =>
+          // The id the page read from its URL too, so a missing dashboard isn't alerted before the
+          // pending changes say whether they propose it.
+          manager.fetchDashboard({ ...options, pendingChanges: id }),
+        // A fetch changes nothing on the page, and a version manager's state can still hold the
+        // dashboard an earlier page loaded: copying it here would show that one until the scene is built.
+        false
       );
     } catch (error) {
       const preview = await loadingPreview;
