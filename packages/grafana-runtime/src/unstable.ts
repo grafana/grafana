@@ -20,6 +20,12 @@ export {
   type KindLabelOptions,
   type KindRegistry,
 } from './services/KindRegistry';
+export {
+  getPageHistoryService,
+  type PageHistoryItem,
+  type PageHistoryItemKind,
+  type PageHistoryService,
+} from './services/PageHistoryService';
 // Plugins bundling @grafana/plugin-compat < 0.5.0 only look for these here.
 export {
   /** @deprecated Import from `@grafana/runtime` instead. */
