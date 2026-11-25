@@ -453,6 +453,8 @@ type fakeFolderStorage struct {
 	stamped  []string
 	updates  int
 	getErr   map[string]error
+	// finalizersAtDelete records each folder's finalizers when it was deleted.
+	finalizersAtDelete map[string][]string
 	// beforeDelete runs at the start of Delete, to simulate a concurrent change.
 	beforeDelete  func()
 	deleteOptions *metav1.DeleteOptions
@@ -699,6 +701,10 @@ func (f *fakeFolderStorage) Delete(ctx context.Context, name string, deleteValid
 	if !ok {
 		return nil, false, apierrors.NewNotFound(foldersv1.FolderResourceInfo.GroupResource(), name)
 	}
+	if f.finalizersAtDelete == nil {
+		f.finalizersAtDelete = map[string][]string{}
+	}
+	f.finalizersAtDelete[name] = fol.Finalizers
 	// Mirror genericregistry: run delete admission against the fetched object before removing it.
 	if deleteValidation != nil {
 		if err := deleteValidation(ctx, fol); err != nil {
@@ -2506,6 +2512,26 @@ func TestCascadeDelete_AlignsFinalizerWithAsyncFlag(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, []string{"root"}, store.deleted, "the subtree is left to the controller")
 		require.Contains(t, store.existing, "child")
+	})
+
+	t.Run("a synchronous walk removes the finalizer from every descendant", func(t *testing.T) {
+		setCascadeToggles(t, true, false)
+		withFinalizer := func(name string) *foldersv1.Folder {
+			f := newFolder(name)
+			f.Finalizers = cascade
+			return f
+		}
+		store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{
+			"root": withFinalizer("root"), "child": withFinalizer("child"), "grandchild": withFinalizer("grandchild"),
+		}}
+		searcher := &fakeCascadeSearcher{childrenByParent: map[string][]string{"root": {"child"}, "child": {"grandchild"}}}
+		s, _ := newDashboardCascade(store, searcher)
+		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{"grandchild", "child", "root"}, store.deleted)
+		for name, finalizers := range store.finalizersAtDelete {
+			require.Empty(t, finalizers, "%s must not be left terminating for the controller", name)
+		}
 	})
 
 	t.Run("a forced delete of a finalizer folder is walked synchronously when the flag is off", func(t *testing.T) {

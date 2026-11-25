@@ -697,7 +697,9 @@ func (s *cascadeDeleteStorage) checkFolderDeleteAccess(ctx context.Context, user
 
 // markTerminating stamps the terminating label on the folder so the in-progress subtree deletion is
 // observable before its leaves are removed. It honors the delete dry-run so a dry-run folder delete
-// does not actually mutate folders.
+// does not actually mutate folders. It also drops the cascade finalizer: this walk deletes the
+// contents itself, and a descendant keeping the finalizer would outlive its parent waiting for the
+// controller.
 func (s *cascadeDeleteStorage) markTerminating(ctx context.Context, name string, options *metav1.DeleteOptions) error {
 	objInfo := rest.DefaultUpdatedObjectInfo(nil, func(_ context.Context, newObj, oldObj runtime.Object) (runtime.Object, error) {
 		// Updates may retry against a replacement; check the current stored object
@@ -721,6 +723,9 @@ func (s *cascadeDeleteStorage) markTerminating(ctx context.Context, name string,
 		}
 		labels[utils.LabelKeyFolderTerminating] = utils.LabelValueFolderTerminating
 		meta.SetLabels(labels)
+		if f, ok := obj.(*foldersv1.Folder); ok {
+			setCascadeDeleteFinalizer(f, false)
+		}
 		return obj, nil
 	})
 
