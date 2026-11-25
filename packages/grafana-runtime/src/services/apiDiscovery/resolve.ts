@@ -34,6 +34,10 @@ export async function resolveAPIVersion<V extends string>(
  * `/apis/<group>/<version>/namespaces/<namespace>` for the current namespace, or
  * `/apis/<group>/<version>` with `{ namespaced: false }`. Resolves `undefined` when no version resolves.
  *
+ * The URL is relative to Grafana's root. Pass it to `getBackendSrv()` or a client built on it, which adds
+ * the sub-path Grafana runs under. With a plain `fetch`, wrap it in `locationUtil.assureBaseUrl()` from
+ * `@grafana/data`.
+ *
  * @example
  * ```ts
  * const baseURL = await resolveAPIBaseURL('dashboard.grafana.app', ['v1beta1', 'v2beta1']);
