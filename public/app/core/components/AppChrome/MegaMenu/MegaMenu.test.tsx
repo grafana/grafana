@@ -6,7 +6,7 @@ import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils
 import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction, setBackendSrv } from '@grafana/runtime';
-import { getAPIGroupHandler, getKindSearchHandler } from '@grafana/test-utils/handlers';
+import { getAppKindHandlers } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   customGetUserPreferencesHandler,
@@ -14,7 +14,7 @@ import {
   getFolderFixtures,
   MOCK_APP_KIND,
   mockUserPreferences,
-  setMockStarredAppKind,
+  setMockStarred,
   setMockStarredDashboards,
   setMockStarredFolders,
   setMockUserPreferences,
@@ -825,11 +825,8 @@ describe('MegaMenu', () => {
 
   it('renders a starred app object with its kind icon titled for screen readers, linking into the plugin', async () => {
     setMockStarredDashboards([]);
-    setMockStarredAppKind(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
-    server.use(
-      getAPIGroupHandler(MOCK_APP_KIND.group, MOCK_APP_KIND.version),
-      getKindSearchHandler(MOCK_APP_KIND, [{ name: 't1', title: 'Capacity review' }])
-    );
+    setMockStarred(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
+    server.use(...getAppKindHandlers(MOCK_APP_KIND, [{ name: 't1', title: 'Capacity review' }]));
     setupSearcher([]);
 
     const { user } = renderMegaMenu();

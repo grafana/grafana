@@ -5,12 +5,12 @@ import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { config, getStarsSrv, setBackendSrv, setStarsSrv } from '@grafana/runtime';
-import { getAPIGroupHandler, getKindSearchHandler } from '@grafana/test-utils/handlers';
+import { getAppKindHandlers, getKindSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   getFolderFixtures,
   MOCK_APP_KIND,
-  setMockStarredAppKind,
+  setMockStarred,
   setMockStarredDashboards,
   setMockStarredFolders,
 } from '@grafana/test-utils/unstable';
@@ -239,11 +239,8 @@ describe('useNavTree', () => {
 
   it('re-searches a starred plugin object its plugin reports saved, and shows the saved title', async () => {
     setMockStarredDashboards([]);
-    setMockStarredAppKind(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, [THING]);
-    server.use(
-      getAPIGroupHandler(MOCK_APP_KIND.group, MOCK_APP_KIND.version),
-      getKindSearchHandler(MOCK_APP_KIND, [{ name: THING, title: 'Old title' }])
-    );
+    setMockStarred(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, [THING]);
+    server.use(...getAppKindHandlers(MOCK_APP_KIND, [{ name: THING, title: 'Old title' }]));
     setupSearchMock([]);
 
     render(<TestHarness />);
@@ -402,12 +399,9 @@ describe('useNavTree', () => {
       const folderUid = folderA.item.uid;
       setMockStarredDashboards([dashUid]);
       setMockStarredFolders([folderUid]);
-      setMockStarredAppKind(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, [THING]);
-      server.use(
-        getAPIGroupHandler(MOCK_APP_KIND.group, MOCK_APP_KIND.version),
-        // The title sorts before both other titles, so a pure alphabetical sort would render it first
-        getKindSearchHandler(MOCK_APP_KIND, [{ name: THING, title: 'AAA Thing' }])
-      );
+      setMockStarred(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, [THING]);
+      // The title sorts before both other titles, so a pure alphabetical sort would render it first
+      server.use(...getAppKindHandlers(MOCK_APP_KIND, [{ name: THING, title: 'AAA Thing' }]));
       setupSearchMock([
         { uid: dashUid, name: 'My Dashboard', url: `/d/${dashUid}`, kind: 'dashboard' },
         { uid: folderUid, name: 'My Folder', url: `/dashboards/f/${folderUid}`, kind: 'folder' },

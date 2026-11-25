@@ -6,12 +6,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 import { setBackendSrv, setStarsSrv } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import {
-  getFolderFixtures,
-  MOCK_APP_KIND,
-  setMockStarredAppKind,
-  setMockStarredFolders,
-} from '@grafana/test-utils/unstable';
+import { getFolderFixtures, MOCK_APP_KIND, setMockStarred, setMockStarredFolders } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { CollectionsStarsSrv } from 'app/features/stars/service';
@@ -82,7 +77,7 @@ describe('DashList', () => {
   });
 
   it('lists starred dashboards without asking for the API of the app kinds the stars also hold', async () => {
-    setMockStarredAppKind(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
+    setMockStarred(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
     const group = jest.fn(() => new HttpResponse(null, { status: 404 }));
     server.use(http.get(`/apis/${MOCK_APP_KIND.group}/`, group));
     const props = getPanelProps({ ...defaultOptions, showStarred: true });

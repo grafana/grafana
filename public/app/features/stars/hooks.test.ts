@@ -7,8 +7,8 @@ import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1'
 import { setBackendSrv } from '@grafana/runtime';
 import {
   getAPIGroupHandler,
+  getAppKindHandlers,
   getCustomSearchHandler,
-  getKindSearchHandler,
   kindSearchRoute,
   type MockAppKindObject,
   searchRoute,
@@ -16,7 +16,7 @@ import {
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   MOCK_APP_KIND,
-  setMockStarredAppKind,
+  setMockStarred,
   setMockStarredDashboards,
   setMockStarredFolders,
 } from '@grafana/test-utils/unstable';
@@ -42,11 +42,6 @@ const stars = new CollectionsStarsSrv();
 function renderStarredSearch() {
   const { result, rerender } = renderHook(() => useStarredSearch(), { wrapper: getWrapper({}) });
   return { result, rerender, rowNames: () => result.current.rows?.map((row) => row.name) };
-}
-
-/** Serves the test app kind: its API group, and its search over these objects. */
-function serveThings(things: MockAppKindObject[]) {
-  server.use(getAPIGroupHandler(GROUP, VERSION), getKindSearchHandler(MOCK_APP_KIND, things));
 }
 
 /** Serves the test app kind, holding its search open until `answer` is called; it then finds these objects. */
@@ -92,11 +87,13 @@ describe('useStarredSearch', () => {
   it('lists the starred objects of an app kind with the dashboards and folders, in title order', async () => {
     setMockStarredDashboards([DASHBOARD.name]);
     setMockStarredFolders([FOLDER.name]);
-    setMockStarredAppKind(GROUP, KIND, ['t1', 't2']);
-    serveThings([
-      { name: 't1', title: 'Echo thing' },
-      { name: 't2', title: 'Charlie thing' },
-    ]);
+    setMockStarred(GROUP, KIND, ['t1', 't2']);
+    server.use(
+      ...getAppKindHandlers(MOCK_APP_KIND, [
+        { name: 't1', title: 'Echo thing' },
+        { name: 't2', title: 'Charlie thing' },
+      ])
+    );
 
     const starred = renderStarredSearch();
 
@@ -109,7 +106,7 @@ describe('useStarredSearch', () => {
 
   it('leaves out the stars of a kind that is not in the kind registry', async () => {
     setMockStarredDashboards([DASHBOARD.name]);
-    setMockStarredAppKind('others.ext.grafana.app', 'Other', ['o1']);
+    setMockStarred('others.ext.grafana.app', 'Other', ['o1']);
     const group = jest.fn(() => new HttpResponse(null, { status: 404 }));
     server.use(http.get('/apis/others.ext.grafana.app/', group));
 
@@ -135,7 +132,7 @@ describe('useStarredSearch', () => {
       },
     ]);
     setMockStarredDashboards([DASHBOARD.name]);
-    setMockStarredAppKind('notes.ext.grafana.app', 'Note', ['n1']);
+    setMockStarred('notes.ext.grafana.app', 'Note', ['n1']);
     const group = jest.fn(() => new HttpResponse(null, { status: 404 }));
     server.use(http.get('/apis/notes.ext.grafana.app/', group));
 
@@ -150,11 +147,8 @@ describe('useStarredSearch', () => {
 
   it('shows the stars of an app kind its plugin adds after the first search', async () => {
     const late = { group: 'late.ext.grafana.app', version: 'v1', kind: 'Late', resource: 'lates' };
-    setMockStarredAppKind(late.group, late.kind, ['l1']);
-    server.use(
-      getAPIGroupHandler(late.group, late.version),
-      getKindSearchHandler(late, [{ name: 'l1', title: 'Late object' }])
-    );
+    setMockStarred(late.group, late.kind, ['l1']);
+    server.use(...getAppKindHandlers(late, [{ name: 'l1', title: 'Late object' }]));
     const starred = renderStarredSearch();
     await waitFor(() => {
       expect(starred.result.current.loading).toBe(false);
@@ -183,7 +177,7 @@ describe('useStarredSearch', () => {
 
   it('lists the dashboards, no longer loading, while the search of an app kind is still out', async () => {
     setMockStarredDashboards([DASHBOARD.name]);
-    setMockStarredAppKind(GROUP, KIND, ['t1']);
+    setMockStarred(GROUP, KIND, ['t1']);
     const thingSearch = holdThingSearch([{ name: 't1', title: 'Alpha thing' }]);
 
     const starred = renderStarredSearch();
@@ -201,7 +195,7 @@ describe('useStarredSearch', () => {
   });
 
   it('stays loading until the search of an app kind answers, when its objects are the only stars', async () => {
-    setMockStarredAppKind(GROUP, KIND, ['t1']);
+    setMockStarred(GROUP, KIND, ['t1']);
     const thingSearch = holdThingSearch([{ name: 't1', title: 'Alpha thing' }]);
 
     const starred = renderStarredSearch();
@@ -220,7 +214,7 @@ describe('useStarredSearch', () => {
   });
 
   it('lists a folder starred while the search of an app kind is still out', async () => {
-    setMockStarredAppKind(GROUP, KIND, ['t1']);
+    setMockStarred(GROUP, KIND, ['t1']);
     const thingSearch = holdThingSearch([{ name: 't1', title: 'Alpha thing' }]);
     const starred = renderStarredSearch();
     await waitFor(() => {
@@ -244,8 +238,8 @@ describe('useStarredSearch', () => {
 
   it('lists the app objects, with the error, when the search of dashboards and folders fails', async () => {
     setMockStarredDashboards([DASHBOARD.name]);
-    setMockStarredAppKind(GROUP, KIND, ['t1']);
-    serveThings([{ name: 't1', title: 'Alpha thing' }]);
+    setMockStarred(GROUP, KIND, ['t1']);
+    server.use(...getAppKindHandlers(MOCK_APP_KIND, [{ name: 't1', title: 'Alpha thing' }]));
     server.use(http.get(searchRoute, () => HttpResponse.json({}, { status: 500 })));
 
     const starred = renderStarredSearch();
@@ -261,14 +255,14 @@ describe('useStarredSearch', () => {
   });
 
   it('searches the app kinds again on refetch', async () => {
-    setMockStarredAppKind(GROUP, KIND, ['t1']);
-    serveThings([{ name: 't1', title: 'Old title' }]);
+    setMockStarred(GROUP, KIND, ['t1']);
+    server.use(...getAppKindHandlers(MOCK_APP_KIND, [{ name: 't1', title: 'Old title' }]));
     const starred = renderStarredSearch();
     await waitFor(() => {
       expect(starred.rowNames()).toEqual(['Old title']);
     });
 
-    serveThings([{ name: 't1', title: 'New title' }]);
+    server.use(...getAppKindHandlers(MOCK_APP_KIND, [{ name: 't1', title: 'New title' }]));
     act(() => {
       starred.result.current.refetch();
     });
@@ -279,8 +273,8 @@ describe('useStarredSearch', () => {
   });
 
   it('does not bring back an unstarred app object while a newly starred one is searched for', async () => {
-    setMockStarredAppKind(GROUP, KIND, ['t1']);
-    serveThings([{ name: 't1', title: 'First thing' }]);
+    setMockStarred(GROUP, KIND, ['t1']);
+    server.use(...getAppKindHandlers(MOCK_APP_KIND, [{ name: 't1', title: 'First thing' }]));
     const starred = renderStarredSearch();
     await waitFor(() => {
       expect(starred.rowNames()).toEqual(['First thing']);
