@@ -6,6 +6,12 @@ export function findStarredNames(stars: StarsList | undefined, group: string, ki
   return stars?.items?.[0]?.spec.resource.find((r) => r.group === group && r.kind === kind)?.names ?? [];
 }
 
+/** The starred names of one search kind. */
+export interface StarredNames {
+  kind: string;
+  names: string[];
+}
+
 /**
  * Whether the current user has a stars resource to read and write. Anonymous users and identities without a uid
  * have none, so the API rejects their `user-` name.

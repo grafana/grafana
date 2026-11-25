@@ -5,9 +5,23 @@ import { Avatar } from './Avatar';
 
 # Avatar
 
-A basic component for displaying a user's avatar. The default dimensions (width and height) of this component are set to 24 pixels, but these can be overridden by passing a `width` and `height` prop. Both props are `ThemeSpacingTokens`, meaning that instead of passing a specific pixel value, you should pass a token value which will be converted into pixels by multiplying it with the base spacing value - `8`.
+A basic component for displaying a user's avatar.
+
+## When to use
+
+No component-specific guidance documented yet.
+
+## Never use for
+
+No component-specific guidance documented yet.
+
+## Do's and don'ts
+
+No component-specific guidance documented yet.
 
 ## Usage
+
+The default dimensions (width and height) of this component are set to 24 pixels, but these can be overridden by passing a `width` and `height` prop. Both props are `ThemeSpacingTokens`, meaning that instead of passing a specific pixel value, you should pass a token value which will be converted into pixels by multiplying it with the base spacing value - `8`.
 
 ```jsx
 import { Avatar } from '@grafana/ui';
@@ -23,5 +37,9 @@ const Example = () => {
   return <Avatar src={user.avatarUrl} alt={`Avatar for the user ${user.name}`} width={4} height={4} />;
 };
 ```
+
+## Accessibility
+
+## Props
 
 <ArgTypes of={Avatar} />

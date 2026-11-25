@@ -1,3 +1,5 @@
+import { of } from 'rxjs';
+
 import { generatedAPI as correlationsAPIv0alpha1 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import {
   type DataFrame,
@@ -7,8 +9,9 @@ import {
   SupportedTransformationType,
   toDataFrame,
 } from '@grafana/data';
-import { config, type CorrelationData } from '@grafana/runtime';
+import { config, type CorrelationData, getBackendSrv, setBackendSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema/dist/esm/index';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { type ExploreItemState } from 'app/types/explore';
 
@@ -26,6 +29,8 @@ jest.mock('@grafana/runtime', () => ({
     },
   }),
 }));
+
+setBackendSrv(backendSrv);
 
 describe('correlations utils', () => {
   it('attaches correlations defined in the configuration', () => {
@@ -243,9 +248,24 @@ describe('correlations utils', () => {
     const originalFeatureToggles = config.featureToggles;
 
     const listCorrelationK8sMock = jest.spyOn(correlationsAPIv0alpha1.endpoints.listCorrelation, 'initiate');
-    const getCorrelationsLegacyMock = jest
-      .spyOn(utils, 'getCorrelationsBySourceUIDs')
-      .mockResolvedValue({ correlations: [], page: 0, limit: 100, totalCount: 0 });
+    const getCorrelationsLegacyMock = jest.spyOn(getBackendSrv(), 'fetch').mockReturnValue(
+      of({
+        data: { correlations: [], page: 0, limit: 100, totalCount: 0 },
+        status: 200,
+        statusText: 'OK',
+        headers: new Headers(),
+        config: { url: '/api/datasources/correlations' },
+        type: 'default',
+        ok: true,
+        redirected: false,
+        url: '/api/datasources/correlations',
+      })
+    );
+
+    afterAll(() => {
+      listCorrelationK8sMock.mockRestore();
+      getCorrelationsLegacyMock.mockRestore();
+    });
 
     afterEach(() => {
       config.featureToggles = originalFeatureToggles;
