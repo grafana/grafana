@@ -17,7 +17,6 @@ import {
   type RuleIdentifier,
   type RulesSource,
   type RulesSourceIdentifier,
-  type RulesSourceUid,
 } from 'app/types/unified-alerting';
 import grafanaIconSvg from 'img/grafana_icon.svg';
 
@@ -91,17 +90,6 @@ export function getRulesDataSources() {
     .filter((ds) => isSupportedExternalRulesSourceType(ds.type))
     .filter((ds) => isDataSourceManagingAlerts(ds))
     .sort((a, b) => collator.compare(a.name, b.name));
-}
-
-function getRulesDataSource(rulesSourceName: string) {
-  return getRulesDataSources().find((x) => x.name === rulesSourceName);
-}
-
-/**
- * @deprecated Reads `config.datasources` synchronously. Use `getDataSourcesForRules` and find the data source by uid.
- */
-export function getRulesDataSourceByUID(uid: string) {
-  return getRulesDataSources().find((x) => x.uid === uid);
 }
 
 export function getAlertManagerDataSources() {
@@ -286,25 +274,6 @@ export function getDatasourceAPIUid(dataSourceName: string) {
   const ds = getDataSourceByName(dataSourceName);
   if (!ds) {
     throw new Error(`Datasource "${dataSourceName}" not found`);
-  }
-  return ds.uid;
-}
-
-/**
- * @deprecated Reads `config.datasources` synchronously. Use `getDataSourcesForRules` and find the data source by name.
- */
-export function getDataSourceUID(rulesSourceIdentifier: { rulesSourceName: string } | { uid: RulesSourceUid }) {
-  if ('uid' in rulesSourceIdentifier) {
-    return rulesSourceIdentifier.uid;
-  }
-
-  if (rulesSourceIdentifier.rulesSourceName === GRAFANA_RULES_SOURCE_NAME) {
-    return GrafanaRulesSourceSymbol;
-  }
-
-  const ds = getRulesDataSource(rulesSourceIdentifier.rulesSourceName);
-  if (!ds) {
-    return undefined;
   }
   return ds.uid;
 }
