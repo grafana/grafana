@@ -492,6 +492,14 @@ func (s *Service) errorLogFunc(ctx context.Context, err error) func(msg string, 
 		return grfErr.LogLevel.LogFunc(l)
 	}
 
+	// A missing user token is an expected condition, for example when a
+	// session token has expired or been rotated server-side, and the request
+	// falls back to anonymous access. Log it at debug level instead of warn
+	// to avoid spamming logs on every request.
+	if errors.Is(err, auth.ErrUserTokenNotFound) {
+		return l.Debug
+	}
+
 	return l.Warn
 }
 
