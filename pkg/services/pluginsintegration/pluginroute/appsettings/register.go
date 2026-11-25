@@ -3,6 +3,7 @@ package appsettings
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -54,6 +55,10 @@ type PluginContextWrapper interface {
 
 type Options struct {
 	RegisterProxy bool
+	// ReadOnly serves the legacy store directly, independent of migration modes.
+	ReadOnly bool
+	// ExternalSubresources retains v2 execution in an existing HTTP backend.
+	ExternalSubresources http.Handler
 
 	DataProxyLogging         bool // from cfg
 	SendUserHeader           bool // from cfg
@@ -104,8 +109,11 @@ func NewBuilder(
 	tracer tracing.Tracer, // needed for proxy
 	features featuremgmt.FeatureToggles, // needed for proxy
 ) (*Builder, error) {
-	if client == nil || contextProvider == nil {
+	if !opts.ReadOnly && (client == nil || contextProvider == nil) {
 		return nil, fmt.Errorf("plugin %q: settings require a plugin client and context provider", plugin.JSONData.ID)
+	}
+	if opts.ReadOnly && opts.LegacyStore == nil {
+		return nil, fmt.Errorf("plugin %q: read-only settings require a legacy store", plugin.JSONData.ID)
 	}
 	var writeChecker pluginaccesscontrol.AppAccessChecker
 	if opts.AccessControl != nil {
@@ -164,6 +172,12 @@ func (b *Builder) InstallSchema(scheme *runtime.Scheme) error {
 }
 
 func (b *Builder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	if b.opts.ReadOnly {
+		apiGroupInfo.VersionedResourcesStorageMap[apppluginV0.VERSION] = map[string]rest.Storage{
+			apppluginV0.APP_RESOURCE_NAME: readOnlyStorage{b.opts.LegacyStore},
+		}
+		return nil
+	}
 	registerSubresourceMetrics(opts.MetricsRegister)
 
 	settingsRI := apppluginV0.SettingsResourceInfo.WithGroupAndShortName(

@@ -36,6 +36,7 @@ type pluginManifestsTarget struct {
 	client    *http.Client
 	patterns  []*regexp.Regexp
 	deps      PluginDependencies
+	settings  bool
 }
 
 // pluginConnections holds the connections to the plugin deployments of one
@@ -108,6 +109,7 @@ func newPluginManifestsTarget(
 		client:            client,
 		patterns:          patterns,
 	}
+	t.settings = source == sourcePlugins && deps.Cfg != nil && deps.Cfg.SectionWithEnvOverrides(cloudRouterSection).Key("app_settings_enabled").MustBool(false)
 	t.polledSource = polledSource{
 		source:   source,
 		fetcher:  t,
@@ -150,6 +152,15 @@ func (t *pluginManifestsTarget) fetch(ctx context.Context) ([]Backend, int, erro
 				skipped++
 			}
 			continue
+		}
+		if t.settings && entry.Definition.JSONData.Type == plugins.TypeApp && matchesAnyPattern(entry.Definition.JSONData.ID, t.patterns) {
+			backend, err := newCloudSettingsBackend(ctx, entry, t.deps)
+			if err != nil {
+				logging.FromContext(ctx).Warn("router: skipping app plugin settings", "pluginId", entry.Definition.JSONData.ID, "err", err)
+				skipped++
+			} else {
+				backends = append(backends, backend)
+			}
 		}
 		for _, manifest := range entry.Definition.Manifests {
 			if manifest == nil || !matchesAnyPattern(manifest.Group, t.patterns) {

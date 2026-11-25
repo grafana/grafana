@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/tracingsetting"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/server/reconciler"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/store"
@@ -34,6 +35,20 @@ import (
 )
 
 // Injectors from wire_subinject_oss.go:
+
+// InitializeCloudRoutesLoader has no remote legacy settings adapter in OSS builds.
+func InitializeCloudRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (router.RoutesLoader, error) {
+	legacySettingsStoreProvider := _wireLegacySettingsStoreProviderValue
+	routesLoader, err := router.ProvideCloudRoutesLoader(cfg, clients, legacySettingsStoreProvider, tracer, features, reg)
+	if err != nil {
+		return nil, err
+	}
+	return routesLoader, nil
+}
+
+var (
+	_wireLegacySettingsStoreProviderValue = router.LegacySettingsStoreProvider(nil)
+)
 
 // InitializeModuleServer is a simplified set of dependencies for the CLI,
 // suitable for running background services and targeting dskit modules.

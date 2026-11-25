@@ -1,0 +1,286 @@
+package router
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
+	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/kube-openapi/pkg/spec3"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	appv0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/appsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+)
+
+type settingsLegacyCheckFunc func(context.Context, legacyclient.LegacyCheckRequest) (bool, error)
+
+func (f settingsLegacyCheckFunc) LegacyCheck(ctx context.Context, req legacyclient.LegacyCheckRequest) (bool, error) {
+	return f(ctx, req)
+}
+
+func settingsRequester(ns string) *identity.StaticRequester {
+	return &identity.StaticRequester{Type: types.TypeUser, UserUID: "reader", Namespace: ns, OrgID: 1,
+		AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{DelegatedPermissions: []string{"*-app:get"}}},
+	}
+}
+
+func TestCloudSettingsRoutes(t *testing.T) {
+	for _, withFallback := range []bool{false, true} {
+		t.Run(map[bool]string{false: "settings only", true: "retained v2 backend"}[withFallback], func(t *testing.T) {
+			deployment := definition.PluginDeployments{Plugins: []definition.PluginDeployment{{Definition: definition.PluginDefinition{
+				JSONData: plugins.JSONData{ID: "example-app", Type: plugins.TypeApp},
+			}}}}
+			manifestServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				require.NoError(t, json.NewEncoder(w).Encode(deployment))
+			}))
+			defer manifestServer.Close()
+			var fallbackCalls []string
+			fallbackServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path == "/apis" {
+					require.NoError(t, json.NewEncoder(w).Encode(metav1.APIGroupList{Groups: []metav1.APIGroup{{Name: "example-app", Versions: []metav1.GroupVersionForDiscovery{{Version: "v0alpha1", GroupVersion: "example-app/v0alpha1"}}}}}))
+					return
+				}
+				fallbackCalls = append(fallbackCalls, r.Method+" "+r.URL.Path)
+				w.WriteHeader(http.StatusAccepted)
+			}))
+			defer fallbackServer.Close()
+			cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": manifestServer.URL, "app_settings_enabled": "true"})
+			// Read-only mode must hold even if deployment config asks for unified-only writes.
+			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{"app.example-app": {DualWriterMode: 5}}
+			if withFallback {
+				addAggregateSection(t, cfg, "v2", map[string]string{"url": fallbackServer.URL, "discovery_auth": "none"})
+			}
+			var checks []legacyclient.LegacyCheckRequest
+			allowed := true
+			checkErr := error(nil)
+			legacy := settingsLegacyCheckFunc(func(_ context.Context, req legacyclient.LegacyCheckRequest) (bool, error) {
+				checks = append(checks, req)
+				return allowed, checkErr
+			})
+			settings := &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{"example-app": {Enabled: true, Pinned: true, JSONData: map[string]any{"origin": "cloudconfig"}}}}
+			factoryCalls := 0
+			provider := func(_ context.Context, id string) (grafanarest.Storage, error) {
+				factoryCalls++
+				return appsettings.NewLegacySettingsStore(id, id, settings), nil
+			}
+			loader, err := ProvideCloudRoutesLoader(cfg, RoutesLoaderClients{Resource: &resource.MockResourceClient{}, LegacyAccess: legacy}, provider, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), prometheus.NewRegistry())
+			require.NoError(t, err)
+			cloud := loader.(*cloudLoader)
+			defer func() { require.NoError(t, cloud.stopping(nil)) }()
+			for _, source := range cloud.sources {
+				source.poll(t.Context(), cloud.dirty)
+			}
+			backends, err := cloud.Load(t.Context())
+			require.NoError(t, err)
+			require.Len(t, backends, 1)
+			b := backends[0].(*cloudSettingsBackend)
+			require.Equal(t, "example-app", b.Group().Name)
+			require.Equal(t, withFallback, b.fallback != nil)
+			deployment.Plugins = append(deployment.Plugins, deployment.Plugins[0])
+			pluginManifestsTargetOf(cloud, sourcePlugins).poll(t.Context(), cloud.dirty)
+			duplicates, err := cloud.Load(t.Context())
+			require.NoError(t, err)
+			require.Len(t, duplicates, 1)
+			require.Equal(t, b.Key(), duplicates[0].Key(), "duplicate plugin entries must retain the same HTTP fallback")
+			require.Nil(t, pluginManifestsTargetOf(cloud, sourcePlugins).connections)
+			h, err := b.Load(t.Context())
+			require.NoError(t, err)
+			t.Cleanup(h.(interface{ Destroy() }).Destroy)
+			require.Equal(t, 1, factoryCalls)
+			serve := func(method, path string, user *identity.StaticRequester) *httptest.ResponseRecorder {
+				r := httptest.NewRequest(method, path, strings.NewReader(`{}`))
+				r.Header.Set("Content-Type", "application/json")
+				if user != nil {
+					r = r.WithContext(identity.WithRequester(r.Context(), user))
+				}
+				w := httptest.NewRecorder()
+				h.ServeHTTP(w, r)
+				return w
+			}
+			root := "/apis/example-app/v0alpha1"
+			item := root + "/namespaces/stacks-1/app/instance"
+			for _, ns := range []string{"stacks-1", "stacks-2"} {
+				res := serve("GET", root+"/namespaces/"+ns+"/app/instance", settingsRequester(ns))
+				require.Equal(t, 200, res.Code, res.Body.String())
+				var obj appv0.Settings
+				require.NoError(t, json.Unmarshal(res.Body.Bytes(), &obj))
+				require.Equal(t, ns, obj.Namespace)
+				require.True(t, obj.Spec.Pinned)
+				last := checks[len(checks)-1]
+				require.Equal(t, ns, last.Namespace)
+				require.Equal(t, "user:reader", last.Subject)
+				require.NotNil(t, last.RequesterOrgID)
+				ok := last.Evaluator.Evaluate(map[string][]string{pluginaccesscontrol.ActionAppAccess: {"plugins:id:example-app"}})
+				require.True(t, ok)
+			}
+			res := serve("GET", root+"/namespaces/stacks-1/app", settingsRequester("stacks-1"))
+			require.Equal(t, 200, res.Code, res.Body.String())
+			for _, method := range []string{"POST", "PUT", "PATCH", "DELETE"} {
+				res := serve(method, item+"?dryRun=All", settingsRequester("stacks-1"))
+				require.GreaterOrEqual(t, res.Code, 400)
+				require.Less(t, res.Code, 500)
+			}
+			require.Empty(t, fallbackCalls)
+			allowed = false
+			require.Equal(t, 403, serve("GET", item, settingsRequester("stacks-1")).Code)
+			allowed = true
+			checkErr = errors.New("authz unavailable")
+			require.Equal(t, 500, serve("GET", item, settingsRequester("stacks-1")).Code)
+			checkErr = nil
+			require.Equal(t, 403, serve("GET", item, settingsRequester("stacks-2")).Code)
+			require.Equal(t, 401, serve("GET", item, nil).Code)
+			user := settingsRequester("stacks-1")
+			user.AccessTokenClaims = nil
+			require.Equal(t, 403, serve("GET", item, user).Code)
+			user = &identity.StaticRequester{Type: types.TypeAccessPolicy, Namespace: "*", AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{Permissions: []string{"*-app:get"}}}}
+			require.Equal(t, 200, serve("GET", item, user).Code)
+			user.AccessTokenClaims.Rest.Permissions = nil
+			require.Equal(t, 403, serve("GET", item, user).Code)
+			res = serve("GET", root, settingsRequester("stacks-1"))
+			require.Equal(t, 200, res.Code, res.Body.String())
+			var resources metav1.APIResourceList
+			require.NoError(t, json.Unmarshal(res.Body.Bytes(), &resources))
+			require.Len(t, resources.APIResources, 1)
+			require.ElementsMatch(t, []string{"get", "list"}, resources.APIResources[0].Verbs)
+			res = serve("GET", "/openapi/v3/apis/example-app/v0alpha1", settingsRequester("stacks-1"))
+			require.Equal(t, 200, res.Code, res.Body.String())
+			var doc spec3.OpenAPI
+			require.NoError(t, json.Unmarshal(res.Body.Bytes(), &doc))
+			path := root + "/namespaces/{namespace}/app/{name}"
+			require.NotNil(t, doc.Paths.Paths[path])
+			require.NotNil(t, doc.Paths.Paths[path].Get)
+			require.Nil(t, doc.Paths.Paths[path].Put)
+			require.Nil(t, doc.Paths.Paths[path].Delete)
+			for _, sub := range []string{"health", "resources", "proxy"} {
+				res = serve("GET", item+"/"+sub, settingsRequester("stacks-1"))
+				if withFallback {
+					require.Equal(t, 202, res.Code)
+				} else {
+					require.Equal(t, 404, res.Code)
+				}
+			}
+			require.Equal(t, withFallback, doc.Paths.Paths[path+"/health"] != nil)
+			if withFallback {
+				require.Len(t, fallbackCalls, 3)
+			}
+		})
+	}
+}
+
+func TestCloudSettingsEnablementRequiresDependencies(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": "https://plugins.invalid", "app_settings_enabled": "true"})
+	_, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
+	require.ErrorContains(t, err, "legacy settings provider")
+}
+
+type settingsDestroyStore struct {
+	grafanarest.Storage
+	destroyed int
+}
+
+func (s *settingsDestroyStore) Destroy() { s.destroyed++ }
+
+type settingsFallbackBackend struct {
+	*dummyBackend
+	handler http.Handler
+	err     error
+	key     string
+}
+
+func (b *settingsFallbackBackend) Key() string { return b.key }
+func (b *settingsFallbackBackend) Load(context.Context) (http.Handler, error) {
+	return b.handler, b.err
+}
+
+type settingsDestroyHandler struct{ destroyed int }
+
+func (h *settingsDestroyHandler) ServeHTTP(http.ResponseWriter, *http.Request) {}
+func (h *settingsDestroyHandler) Destroy()                                     { h.destroyed++ }
+
+func TestCloudSettingsLifecycle(t *testing.T) {
+	for _, fail := range []bool{false, true} {
+		t.Run(map[bool]string{false: "retired handler", true: "failed load"}[fail], func(t *testing.T) {
+			store := &settingsDestroyStore{Storage: appsettings.NewLegacySettingsStore("example-app", "example-app", &pluginsettings.FakePluginSettings{})}
+			b, err := newCloudSettingsBackend(t.Context(), definition.PluginDeployment{Definition: definition.PluginDefinition{JSONData: plugins.JSONData{ID: "example-app", Type: plugins.TypeApp}}}, PluginDependencies{
+				Unified: &resource.MockResourceClient{}, LegacySettingsStore: func(context.Context, string) (grafanarest.Storage, error) { return store, nil },
+			})
+			require.NoError(t, err)
+			key := b.Key()
+			external := &settingsDestroyHandler{}
+			fallback := &settingsFallbackBackend{dummyBackend: &dummyBackend{group: "example-app"}, handler: external, key: "v2:1"}
+			b.fallback = fallback
+			require.NotEqual(t, key, b.Key())
+			key = b.Key()
+			fallback.key = "v2:2"
+			require.NotEqual(t, key, b.Key())
+			if fail {
+				fallback.err = errors.New("fallback failed")
+			}
+			h, err := b.Load(t.Context())
+			if fail {
+				require.ErrorContains(t, err, "fallback failed")
+			} else {
+				require.NoError(t, err)
+				require.Zero(t, store.destroyed)
+				require.Zero(t, external.destroyed)
+				h.(interface{ Destroy() }).Destroy()
+				h.(interface{ Destroy() }).Destroy()
+			}
+			require.Equal(t, 1, store.destroyed)
+			require.Equal(t, 1, external.destroyed)
+		})
+	}
+}
+
+func TestCloudSettingsSourceGateAndFilter(t *testing.T) {
+	deployment := definition.PluginDeployments{Plugins: []definition.PluginDeployment{
+		{Definition: definition.PluginDefinition{JSONData: plugins.JSONData{ID: "example-app", Type: plugins.TypeApp}}},
+		{Definition: definition.PluginDefinition{JSONData: plugins.JSONData{ID: "other-app", Type: plugins.TypeApp}}},
+		{Definition: definition.PluginDefinition{JSONData: plugins.JSONData{ID: "data-source", Type: plugins.TypeDataSource}}},
+	}}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.NoError(t, json.NewEncoder(w).Encode(deployment))
+	}))
+	defer srv.Close()
+	for _, tc := range []struct {
+		source  string
+		enabled bool
+		pattern string
+		want    int
+	}{
+		{sourcePlugins, false, "", 0}, {sourcePlugins, true, "", 2}, {sourceCore, true, "", 0}, {sourceBridge, true, "", 0}, {sourcePlugins, true, "example-app", 1},
+	} {
+		cfg := setting.NewCfg()
+		cfg.Raw.Section(cloudRouterSection).Key("app_settings_enabled").SetValue(map[bool]string{true: "true", false: "false"}[tc.enabled])
+		var patterns []string
+		if tc.pattern != "" {
+			patterns = []string{tc.pattern}
+		}
+		target, err := newPluginManifestsTarget(tc.source, srv.URL, compileGroupPatterns(patterns), srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{Cfg: cfg})
+		require.NoError(t, err)
+		backends, skipped, err := target.fetch(t.Context())
+		require.NoError(t, err)
+		require.Zero(t, skipped)
+		require.Len(t, backends, tc.want)
+		target.close()
+	}
+}

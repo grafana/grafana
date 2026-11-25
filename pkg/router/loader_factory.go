@@ -16,6 +16,7 @@ import (
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -99,12 +100,12 @@ func (noRoutesLoader) Notify(context.Context) (<-chan struct{}, error) {
 // SQL database and run migrations. Like NewCloudRoutesLoader, it
 // returns (nil, nil) when [cloud_router] configures no source.
 //
-// Managed plugins get no plugin store, plugin settings, legacy access control
-// or dual writer (see pluginManifestsTarget), so the builder metrics, which
-// only the dual writer records, are not registered either.
+// The edition-specific Wire graph supplies the remote legacy settings provider.
+// Settings routes require app_settings_enabled; this constructs no local SQL services.
 func ProvideCloudRoutesLoader(
 	cfg *setting.Cfg,
 	clients RoutesLoaderClients,
+	legacySettings LegacySettingsStoreProvider,
 	tracer tracing.Tracer,
 	features featuremgmt.FeatureToggles,
 	reg prometheus.Registerer,
@@ -114,16 +115,18 @@ func ProvideCloudRoutesLoader(
 		return nil, err
 	}
 	return NewCloudRoutesLoader(cfg, PluginDependencies{
-		SecureValues:       clients.SecureValues,
-		MetricsRegister:    reg,
-		RESTConfigProvider: clients.RESTConfigProvider,
-		Unified:            clients.Resource,
-		AccessClient:       clients.Access,
-		Decrypter:          decrypter,
-		TokenExchanger:     newClientV3TokenExchanger(cfg),
-		Tracer:             tracer,
-		Features:           features,
-		Cfg:                cfg,
+		LegacySettingsStore:   legacySettings,
+		SettingsAccessChecker: cloudSettingsAccessChecker(clients.LegacyAccess),
+		SecureValues:          clients.SecureValues,
+		MetricsRegister:       reg,
+		RESTConfigProvider:    clients.RESTConfigProvider,
+		Unified:               clients.Resource,
+		AccessClient:          clients.Access,
+		Decrypter:             decrypter,
+		TokenExchanger:        newClientV3TokenExchanger(cfg),
+		Tracer:                tracer,
+		Features:              features,
+		Cfg:                   cfg,
 	})
 }
 
@@ -143,6 +146,7 @@ type RoutesLoaderClients struct {
 	RESTConfigProvider restcfg.RestConfigProvider
 	Resource           resource.ResourceClient
 	Access             types.AccessClient
+	LegacyAccess       legacyclient.LegacyAccessClient
 	DualWrite          dualwrite.Service
 	SecureValues       secret.InlineSecureValueSupport
 }
@@ -176,9 +180,8 @@ func settingsEnabled(cfg *setting.Cfg) bool {
 	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsRegisterAPIServer, false, openfeature.TransactionContext(ctx))
 }
 
-// standaloneRouter reports whether this process runs the router target, which
-// serves no app plugin settings: they need the SQL settings store and dual
-// writer that only Grafana itself provides.
+// standaloneRouter reports whether this process runs the router target. Its
+// local loader has no SQL settings store; cloud settings have a separate gate.
 func standaloneRouter(cfg *setting.Cfg) bool {
 	return cfg != nil && slices.Contains(cfg.Target, "router")
 }

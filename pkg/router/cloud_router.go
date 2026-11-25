@@ -121,6 +121,12 @@ func newPluginManifestsClient(section *setting.DynamicSection, prefix string) (*
 // token on every request, unless they set discovery_auth = none.
 func NewCloudRoutesLoader(cfg *setting.Cfg, deps PluginDependencies) (RoutesLoader, error) {
 	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
+	if section.Key("app_settings_enabled").MustBool(false) {
+		if section.Key("plugins_url").MustString("") == "" || deps.LegacySettingsStore == nil || deps.SettingsAccessChecker == nil {
+			return nil, fmt.Errorf("cloud_router: app_settings_enabled requires plugins_url, a legacy settings provider, and legacy app authorization")
+		}
+	}
+	deps.Cfg = cfg
 
 	aggregateTargetConfigs, err := parseAggregateTargets(cfg)
 	if err != nil {
@@ -360,6 +366,18 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 		}
 		for _, b := range snapshot.backends {
 			group := b.Group().Name
+			if settings, ok := b.(*cloudSettingsBackend); ok {
+				copy := *settings
+				copy.fallback = lookup[group]
+				if previous, ok := copy.fallback.(*cloudSettingsBackend); ok {
+					// Duplicate plugin entries replace settings, not the retained HTTP backend.
+					copy.fallback = previous.fallback
+					shadowed = append(shadowed, shadowedGroup{Group: group, Source: previous.Source(), By: b.Source()})
+				}
+				lookup[group] = &copy
+				fromFallback[group] = false
+				continue
+			}
 			if previous, ok := lookup[group]; ok && !fromFallback[group] {
 				shadowed = append(shadowed, shadowedGroup{Group: group, Source: previous.Source(), By: b.Source()})
 			}

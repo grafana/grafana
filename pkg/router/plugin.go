@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
@@ -50,25 +51,30 @@ import (
 
 type PluginClientProvider = func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error)
 
+// LegacySettingsStoreProvider binds a store to a plugin, not a tenant. The store
+// must resolve the namespace and requester from each storage operation's context.
+type LegacySettingsStoreProvider func(ctx context.Context, pluginID string) (grafanarest.Storage, error)
+
 // The dependencies are configured at startup and used across all plugins
 type PluginDependencies struct {
-	PluginClient       plugins.Client
-	ContextProvider    appsettings.PluginContextWrapper
-	AccessControl      accesscontrol.AccessControl
-	AccessClient       types.AccessClient // runs the access checks manifest routes declare
-	DualWrite          dualwrite.Service
-	SecureValues       secret.InlineSecureValueSupport
-	MetricsRegister    prometheus.Registerer
-	BuilderMetrics     *builder.BuilderMetrics
-	RESTConfigProvider restcfg.RestConfigProvider
-	PluginSettings     pluginsettings.Service
-	Unified            resource.ResourceClient
-	Decrypter          decrypt.DecryptService
-	TokenExchanger     authn.TokenExchanger       // used for delegation
-	PluginAuth         *pluginauth.Config         // whether Grafana signs plugin tokens itself
-	Tracer             tracing.Tracer             // needed for proxy (legacy)
-	Features           featuremgmt.FeatureToggles // needed for proxy (legacy)
-	Cfg                *setting.Cfg
+	PluginClient          plugins.Client
+	ContextProvider       appsettings.PluginContextWrapper
+	AccessControl         accesscontrol.AccessControl
+	AccessClient          types.AccessClient // runs the access checks manifest routes declare
+	DualWrite             dualwrite.Service
+	SecureValues          secret.InlineSecureValueSupport
+	MetricsRegister       prometheus.Registerer
+	BuilderMetrics        *builder.BuilderMetrics
+	RESTConfigProvider    restcfg.RestConfigProvider
+	LegacySettingsStore   LegacySettingsStoreProvider
+	SettingsAccessChecker pluginaccesscontrol.AppAccessChecker
+	Unified               resource.ResourceClient
+	Decrypter             decrypt.DecryptService
+	TokenExchanger        authn.TokenExchanger       // used for delegation
+	PluginAuth            *pluginauth.Config         // whether Grafana signs plugin tokens itself
+	Tracer                tracing.Tracer             // needed for proxy (legacy)
+	Features              featuremgmt.FeatureToggles // needed for proxy (legacy)
+	Cfg                   *setting.Cfg
 }
 
 type PluginLoaderDependencies struct {
@@ -100,7 +106,7 @@ func ProvidePluginLoaderDependencies(
 	restConfigProvider restcfg.RestConfigProvider,
 	pluginAuth *pluginauth.Config,
 ) PluginLoaderDependencies {
-	return PluginLoaderDependencies{
+	deps := PluginLoaderDependencies{
 		ClientV3Loader: clientV3Loader,
 		PluginSources:  pluginSources,
 		ACService:      acService,
@@ -114,7 +120,6 @@ func ProvidePluginLoaderDependencies(
 			MetricsRegister:    reg,
 			BuilderMetrics:     builderMetrics,
 			RESTConfigProvider: restConfigProvider,
-			PluginSettings:     pluginSettings,
 			Unified:            unified,
 			Decrypter:          decrypter,
 			Tracer:             tracer,
@@ -124,6 +129,12 @@ func ProvidePluginLoaderDependencies(
 			PluginAuth:         pluginAuth,
 		},
 	}
+	if pluginSettings != nil {
+		deps.LegacySettingsStore = func(_ context.Context, pluginID string) (grafanarest.Storage, error) {
+			return appsettings.NewLegacySettingsStore(pluginID, pluginID, pluginSettings), nil
+		}
+	}
+	return deps
 }
 
 func newClientV3TokenExchanger(cfg *setting.Cfg) authn.TokenExchanger {
@@ -559,8 +570,15 @@ func (b *PluginBackend) loadSettings(ctx context.Context, cfg *setting.Cfg, opts
 		SendUserHeader:           cfg.SendUserHeader,
 		PluginsAppsSkipVerifyTLS: cfg.PluginsAppsSkipVerifyTLS,
 	}
-	if b.deps.PluginSettings != nil {
-		opts.Settings.LegacyStore = appsettings.NewLegacySettingsStore(b.pluginID, b.pluginID, b.deps.PluginSettings)
+	if b.deps.LegacySettingsStore != nil {
+		store, err := b.deps.LegacySettingsStore(ctx, b.pluginID)
+		if err != nil {
+			return nil, fmt.Errorf("plugin %q: legacy settings store: %w", b.pluginID, err)
+		}
+		if store == nil {
+			return nil, fmt.Errorf("plugin %q: legacy settings store provider returned no store", b.pluginID)
+		}
+		opts.Settings.LegacyStore = store
 	}
 	opts.DualWrite = b.deps.DualWrite
 	opts.StorageOpts = &options.StorageOptions{UnifiedStorageConfig: cfg.UnifiedStorage}

@@ -19,6 +19,9 @@ func (b *Builder) GetAuthorizer() authorizer.Authorizer {
 			if err != nil {
 				return authorizer.DecisionDeny, "valid user is required", err
 			}
+			if b.opts.ReadOnly && !attr.IsResourceRequest() && attr.IsReadOnly() {
+				return authorizer.DecisionAllow, "settings discovery", nil
+			}
 			if attr.GetResource() == apppluginV0.APP_RESOURCE_NAME && attr.GetSubresource() == "" && !attr.IsReadOnly() {
 				if b.writeChecker == nil {
 					return authorizer.DecisionDeny, "no settings write checker is configured", nil

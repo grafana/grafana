@@ -52,8 +52,10 @@ func (b *Builder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error)
 	// The subresources are plain handlers, so the API server documents none of
 	// them. The settings manifest's resource and proxy routes are published
 	// here; the schema's routes, if it defines any, are added after them.
-	if err := b.addSubresourcePaths(oas, root+"namespaces/{namespace}/app/{name}", version); err != nil {
-		return nil, err
+	if !b.opts.ReadOnly || b.opts.ExternalSubresources != nil {
+		if err := b.addSubresourcePaths(oas, root+"namespaces/{namespace}/app/{name}", version); err != nil {
+			return nil, err
+		}
 	}
 
 	// Set explicit apiVersion and kind on the datasource
@@ -63,6 +65,9 @@ func (b *Builder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error)
 	}
 	ps.Properties["apiVersion"] = *spec.StringProperty().WithEnum(fmt.Sprintf("%s/%s", b.group, version))
 	ps.Properties["kind"] = *spec.StringProperty().WithEnum("Settings")
+	if b.opts.ReadOnly {
+		return oas, nil
+	}
 
 	// Always transform results
 	switch {

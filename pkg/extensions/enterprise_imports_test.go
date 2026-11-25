@@ -45,6 +45,8 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	_ "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	_ "github.com/grafana/grafana/pkg/services/org/orgtest"
+	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute"
+	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/appsettings"
 	_ "github.com/grafana/grafana/pkg/services/preference/preftest"
 	_ "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	_ "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"

@@ -19,12 +19,15 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   `cloud_router.go`, `aggregate_*.go`, `plugin_manifests*.go` and `st_*.go`.
 - **One backend owns every version of a group.** Dispatch is keyed by group (segment 2 of
   `/apis/<group>/...`). Don't reintroduce a path mux that flattens routes into prefixes. A duplicate
-  group in one `Load` makes the last one win, with a warning, and must never panic. The one
-  exception lives in the cloud loader: with the ST fallback, `dashboard.grafana.app` is split per
+  group in one `Load` makes the last one win, with a warning, and must never panic. A split lives
+  in the cloud loader: with the ST fallback, `dashboard.grafana.app` is split per
   request between its backend and the single-tenant stacks (`st_resources.go`). Library panels and
   snapshots always go to the stacks; otherwise users' writes go to the stacks, and reads and every
   request from a non-user identity (access policies, service accounts) stay on its backend. That
   group is still one backend, and its discovery and OpenAPI still come from the backend that owns it.
+  Read-only cloud app settings similarly retain the lower-priority HTTP backend for v2
+  health/resources/proxy subresources; `cloud_settings.go` owns the composite, its discovery,
+  and both handlers' retirement.
 - **Keep connection pools across a reload.** Reconcile rebuilds only groups whose `Key()` changed,
   and each source keeps its transports or gRPC connections across polls, so a rebuilt group reuses
   its pool. Never recreate unrelated backends on a route change.
@@ -87,8 +90,11 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   the same operator or first-party control. The local plugin
   loader also serves each app plugin's settings API under its plugin ID
   (`newPluginSettingsBackend`): the single `app` resource, always named `instance`. A plugin ID
-  must be a DNS label with a hyphen, so it can never name a core or manifest group. The standalone
-  router never serves settings (`standaloneRouter`): it has no SQL settings store or dual writer.
+  must be a DNS label with a hyphen, so it can never name a core or manifest group. The standalone cloud loader can serve read-only settings when
+  `[cloud_router] app_settings_enabled` is enabled and a remote legacy provider and app-access
+  checker are supplied. It bypasses unified migration modes, installs only get/list, and retains
+  the group's lower-priority HTTP backend for v2 health/resources/proxy execution. The local
+  standalone plugin loader still serves no settings.
 - **One bad backend or plugin fails only its own group;** it must never stop the reconcile loop.
   A backend that fails to load is retried only when its own backoff passes (`loadGroup`, up to
   `groupLoadRetryMax`), not on every reconcile retry, since a plugin's load builds an API server.
@@ -164,7 +170,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Metrics, access logs, tracing | `metrics.go`, `logging.go`, `tracing.go`, `plugin_tracing.go` |
 | Source names, loader status, the shared poll loop (`polledSource`) and backend wrapper (`wrappedBackend`) | `sources.go` |
 | Loader selection | `loader_factory.go` |
-| Cloud loader: settings, source priority | `cloud_router.go` |
+| Cloud loader: settings, source priority | `cloud_router.go`, `cloud_settings.go` |
 | Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
 | Dev targets (`router.dev.<name>`), served by the local plugin loader | `dev_targets.go` |
 | Managed plugins (`plugins_url`), core APIs (`core_url`) and bridge (`bridge_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
@@ -177,8 +183,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 Exactly one loader serves:
 
 1. **The cloud loader**, only in the standalone router, when any `[cloud_router]` source or
-   `[router.aggregate.<name>]` target is configured (see Settings). `pkg/server` builds it with
-   `ProvideCloudRoutesLoader`. Grafana itself never polls the cloud sources.
+   `[router.aggregate.<name>]` target is configured (see Settings). `pkg/server` builds it through
+   the edition-specific `InitializeCloudRoutesLoader` Wire graph and `ProvideCloudRoutesLoader`. Grafana itself never polls the cloud sources.
 2. **Otherwise the local plugin loader** (`ProvideRoutesLoader`), when plugin sources are
    available or any `[router.dev.<name>]` target is set. Dev targets come after the local
    plugins, so they win a shared group.
@@ -439,6 +445,8 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | --- | --- |
 | `cap_token`, `token_exchange_url` | Required when any aggregate target without `discovery_auth = none` is set. The CAP token is exchanged per request. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
+| `app_settings_enabled` | Opt in to read-only app settings from the plugins source. Requires a remote legacy settings provider and legacy AuthZ client. Defaults to false. Applies `plugins_group_patterns` to plugin-ID settings groups. |
+| `cloudconfig_url`, `cloudconfig_ca_file` | Enterprise settings client origin and optional CA file. Uses `[grpc_client_authentication]` token exchange; no local SQL connection. |
 | `plugins_group_patterns` | Globs that narrow the plugin groups, with the same semantics as `group_patterns`. The deprecated name `plugins_group_regex` is still read, with a warning; if both are set, the new name wins. |
 | `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_patterns`. Unlike other plugin sources, it is trusted to serve core groups. |
 | `bridge_url` | Same format as `plugins_url`, for bridge deployments. Needs no CAP token. Backend keys are prefixed `bridge:`. |
