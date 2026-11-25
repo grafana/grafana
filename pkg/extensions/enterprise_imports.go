@@ -503,6 +503,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginexternal"
 	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
+	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/appsettings"
 	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	_ "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsources"
