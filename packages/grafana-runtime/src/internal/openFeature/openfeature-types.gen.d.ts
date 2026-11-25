@@ -210,6 +210,7 @@ declare module "@openfeature/core" {
     | "dashboards.disablePublicDashboards"
     | "grafana.panelActionsPopover"
     | "grafana.dashboardSidebarExplicitOpen"
+    | "grafana.panelQuickEdits"
     | "grafana.folderPickerFolderEditAccess"
     | "grafana.panelOptionInterpolation"
     | "datasources.gatewayRateLimits"
