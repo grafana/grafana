@@ -1,5 +1,5 @@
 import { autoUpdate, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { type ReactNode } from 'react';
+import { type ReactNode, useCallback } from 'react';
 
 import { type ActionModel, type LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -34,11 +34,6 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
 
   const { reference: virtual } = useAnchoredMenu(coords, onTooltipClose);
 
-  const refCallback = (el: HTMLDivElement) => {
-    refs.setFloating(el);
-    refs.setReference(virtual ?? null);
-  };
-
   const { context, refs, floatingStyles } = useFloating({
     open: true,
     placement,
@@ -46,6 +41,15 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
     middleware,
     whileElementsMounted: autoUpdate,
   });
+
+  const { setFloating, setReference } = refs;
+  const refCallback = useCallback(
+    (el: HTMLDivElement | null) => {
+      setFloating(el);
+      setReference(virtual ?? null);
+    },
+    [setFloating, setReference, virtual]
+  );
 
   const dismiss = useDismiss(context);
 

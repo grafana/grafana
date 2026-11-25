@@ -52,7 +52,9 @@ export function useAnchoredMenu(anchor: MenuAnchor | undefined, onClose?: () => 
         close.current?.();
         return;
       }
-      setTracked({ anchor, x, y });
+      setTracked((previous) =>
+        previous?.anchor === anchor && previous.x === x && previous.y === y ? previous : { anchor, x, y }
+      );
     };
 
     // Capture includes scrolling inside dashboard and panel containers.
