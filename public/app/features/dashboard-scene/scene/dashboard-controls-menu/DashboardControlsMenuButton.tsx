@@ -22,8 +22,8 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
   const dashboardState = dashboard.useState();
   const { uid } = dashboardState;
   const isEditing = isFullDashboardEditing(dashboardState);
-  const { variables, links, annotations } = useDashboardControls(dashboard);
-  const dashboardControlsCount = variables.length + links.length + annotations.length;
+  const { variables, links, annotations, questionCount } = useDashboardControls(dashboard);
+  const dashboardControlsCount = variables.length + links.length + annotations.length + questionCount;
   const hasDashboardControls = dashboardControlsCount > 0;
   const [key, setKey] = useState('');
 
@@ -53,6 +53,7 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
           variables={variables}
           links={links}
           annotations={annotations}
+          hasQuestions={questionCount > 0}
           dashboardUID={uid}
           isEditing={isEditing}
           dashboard={dashboard}

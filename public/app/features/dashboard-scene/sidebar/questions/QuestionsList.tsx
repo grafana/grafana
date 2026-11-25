@@ -8,9 +8,9 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { type SceneQuestion } from '../../questions/types';
-import { getQuestionLabel } from '../../questions/utils';
+import { getQuestionLabel, isInControlsMenu, withQuestionPlacement } from '../../questions/utils';
 import { useCanEditQuestions } from '../../scene/DashboardControlsExtensionPoint';
-import { DraggableListItems } from '../dashboard/DraggableList';
+import { DraggableList, DraggableListItems } from '../dashboard/DraggableList';
 import { SidebarAddButton } from '../dashboard/SidebarAddButton';
 import { toDraggableListItemActions } from '../dashboard/helpers';
 import { SidebarCategoryType } from '../types';
@@ -28,7 +28,8 @@ const CATEGORY_IDS: Record<QuestionsOwnerKind, SidebarCategoryType> = {
 
 /**
  * The "Questions" category of a dashboard's, row's, or tab's options, laid out like "Links": a count, an add
- * button, and a list to reorder, edit, duplicate, or delete questions. Empty unless editors can edit questions (see
+ * button, and a list to reorder, edit, duplicate, or delete questions, which on a dashboard is split into the
+ * questions above it and those in its controls menu. Empty unless editors can edit questions (see
  * `useCanEditQuestions`).
  */
 export function useQuestionsCategory(
@@ -73,21 +74,29 @@ export function useQuestionsCategory(
 // Questions made Scene-like for DraggableListItems, keyed by their index.
 type QuestionItem = SceneQuestion & { state: { key: string; name: string } };
 
+/**
+ * The questions to reorder, edit, duplicate, or delete. A dashboard's are split into the ones above it and the ones in
+ * its controls menu, and dragging one to the other list moves it there, as for links. A row or tab has no controls
+ * menu, so it keeps its questions in one list.
+ */
 export function QuestionsList({ owner, ownerKind }: { owner: QuestionsOwner; ownerKind: QuestionsOwnerKind }) {
   const { DragDropContext, Droppable } = useDragAndDrop();
   const { questions } = owner.useState();
   const droppableId = `${CATEGORY_IDS[ownerKind]}-list`;
+  const controlsMenuDroppableId = `${droppableId}-controls-menu`;
+  const hasControlsMenu = ownerKind === 'dashboard';
 
-  const items = useMemo(
-    () =>
-      (questions ?? []).map(
-        (question, index): QuestionItem => ({
-          ...question,
-          state: { key: String(index), name: getQuestionLabel(question) },
-        })
-      ),
-    [questions]
-  );
+  const { above, controlsMenu } = useMemo(() => {
+    const items = (questions ?? []).map(
+      (question, index): QuestionItem => ({
+        ...question,
+        state: { key: String(index), name: getQuestionLabel(question) },
+      })
+    );
+    return hasControlsMenu
+      ? { above: items.filter((item) => !isInControlsMenu(item)), controlsMenu: items.filter(isInControlsMenu) }
+      : { above: items, controlsMenu: [] };
+  }, [questions, hasControlsMenu]);
 
   const actions = toDraggableListItemActions<QuestionItem>(
     (item) => openEditQuestionPane(owner, ownerKind, Number(item.state.key)),
@@ -102,23 +111,57 @@ export function QuestionsList({ owner, ownerKind }: { owner: QuestionsOwner; own
 
   const onDragEnd = useCallback(
     ({ source, destination }: DropResult) => {
-      if (destination && destination.index !== source.index) {
-        questionActions.move({ owner, from: source.index, to: destination.index });
+      if (!destination || (source.droppableId === destination.droppableId && source.index === destination.index)) {
+        return;
       }
+
+      const lists = { [droppableId]: [...above], [controlsMenuDroppableId]: [...controlsMenu] };
+      const [moved] = lists[source.droppableId].splice(source.index, 1);
+      lists[destination.droppableId].splice(destination.index, 0, moved);
+
+      const toQuestion = ({ state: _, ...question }: QuestionItem): SceneQuestion => question;
+      questionActions.reorder({
+        owner,
+        next: hasControlsMenu
+          ? [
+              ...lists[droppableId].map((item) => withQuestionPlacement(toQuestion(item), false)),
+              ...lists[controlsMenuDroppableId].map((item) => withQuestionPlacement(toQuestion(item), true)),
+            ]
+          : lists[droppableId].map(toQuestion),
+      });
     },
-    [owner]
+    [owner, above, controlsMenu, droppableId, controlsMenuDroppableId, hasControlsMenu]
   );
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <Droppable droppableId={droppableId} direction="vertical">
-        {(provided) => (
-          <div ref={provided.innerRef} {...provided.droppableProps}>
-            <DraggableListItems items={items} testId={droppableId} renderItemLabel={renderItemLabel} {...actions} />
-            {provided.placeholder}
-          </div>
-        )}
-      </Droppable>
+      {hasControlsMenu ? (
+        <>
+          <DraggableList
+            items={above}
+            droppableId={droppableId}
+            title={t('dashboard.sidebar.questions.title-above-dashboard', 'Above dashboard')}
+            renderItemLabel={renderItemLabel}
+            {...actions}
+          />
+          <DraggableList
+            items={controlsMenu}
+            droppableId={controlsMenuDroppableId}
+            title={t('dashboard.sidebar.questions.title-controls-menu', 'Controls menu')}
+            renderItemLabel={renderItemLabel}
+            {...actions}
+          />
+        </>
+      ) : (
+        <Droppable droppableId={droppableId} direction="vertical">
+          {(provided) => (
+            <div ref={provided.innerRef} {...provided.droppableProps}>
+              <DraggableListItems items={above} testId={droppableId} renderItemLabel={renderItemLabel} {...actions} />
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      )}
     </DragDropContext>
   );
 }

@@ -150,6 +150,62 @@ describe('DashboardControlsExtensionPoint', () => {
     expect(receivedProps.mock.lastCall?.[0].questions).toEqual([{ text: 'What stands out?' }]);
   });
 
+  describe('with questions placed in the controls menu', () => {
+    const questions: SceneQuestion[] = [
+      { text: 'What stands out?' },
+      { text: 'Why did errors rise?', placement: 'inControlsMenu' },
+      { text: 'What changed since yesterday?', placement: 'inControlsMenu' },
+    ];
+
+    it('leaves them out of the controls bar', () => {
+      setTestFlags({ 'grafana.dashboardQuestions': true });
+      renderControls(questions);
+
+      expect(receivedProps.mock.lastCall?.[0].questions).toEqual([{ text: 'What stands out?' }]);
+    });
+
+    it('renders no controls in the bar when they are all placed in the menu', () => {
+      setTestFlags({ 'grafana.dashboardQuestions': true });
+      const { container } = renderControls([{ text: 'Why did errors rise?', placement: 'inControlsMenu' }]);
+
+      expect(container).toBeEmptyDOMElement();
+    });
+
+    it('renders them in the menu, each as its own control, and leaves the others out', () => {
+      setTestFlags({ 'grafana.dashboardQuestions': true });
+      renderMenuControls(questions);
+
+      // The control joins the questions it gets, so one control for both would show them as one button.
+      expect(screen.getByRole('button', { name: 'Why did errors rise?' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'What changed since yesterday?' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'What stands out?' })).not.toBeInTheDocument();
+      expect(receivedProps.mock.lastCall?.[0]).toMatchObject({
+        scope: 'dashboard',
+        panels: [requests, errorRate, latency],
+      });
+    });
+
+    it('renders nothing in the menu while no question is placed there', () => {
+      setTestFlags({ 'grafana.dashboardQuestions': true });
+      const { container } = renderMenuControls([{ text: 'What stands out?' }]);
+
+      expect(container).toBeEmptyDOMElement();
+    });
+
+    // A row or tab has no controls menu, so its controls show all of its questions.
+    it('shows them on a row, which has no menu', () => {
+      setTestFlags({ 'grafana.dashboardQuestions': true });
+      renderRowControls({
+        questions: [{ text: 'Why did errors rise?', placement: 'inControlsMenu' }, { text: 'What stands out?' }],
+      });
+
+      expect(receivedProps.mock.lastCall?.[0].questions).toEqual([
+        { text: 'Why did errors rise?' },
+        { text: 'What stands out?' },
+      ]);
+    });
+  });
+
   it('gives a row control the row title as it reads after a variable changes', () => {
     setTestFlags({ 'grafana.dashboardQuestions': true });
     const service = new CustomVariable({ name: 'service', query: 'api,web', value: 'api', text: 'api' });
@@ -241,6 +297,24 @@ describe('DashboardControlsExtensionPoint', () => {
         expect(dashboard.state.sidebar.state.openPane?.getId()).toBe('element');
       }
     );
+
+    // The menu lists only the questions placed there, so its second control can be the third saved question.
+    it('opens a question in the controls menu for editing by its place in the saved list', async () => {
+      setTestFlags({ 'grafana.dashboardQuestions': true });
+      const { dashboard } = renderEditableControls(
+        [{ text: 'What stands out?' }, { text: 'Why did errors rise?', placement: 'inControlsMenu' }],
+        { inMenu: true }
+      );
+
+      await hoverAndRest(screen.getByRole('button', { name: 'Why did errors rise?' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Question settings' }));
+
+      await waitFor(() => {
+        const selected = dashboard.state.sidebar.getSelectedObject();
+        expect(selected instanceof QuestionEdit && selected.state.questionIndex).toBe(1);
+      });
+      expect(screen.queryByRole('button', { name: 'What stands out?' })).not.toBeInTheDocument();
+    });
 
     it('deletes a question from its control once the editor confirms', async () => {
       setTestFlags({ 'grafana.dashboardQuestions': true });
@@ -338,8 +412,13 @@ function renderControls(
   return render(<DashboardControlsExtensionPoint dashboard={dashboard} />);
 }
 
+function renderMenuControls(questions: SceneQuestion[]) {
+  const { dashboard } = buildDashboard({ questions }, {}, 'v2');
+  return render(<DashboardControlsExtensionPoint dashboard={dashboard} inMenu />);
+}
+
 /** The controls of an edited dashboard, with its sidebar active, which turns selection on. */
-function renderEditableControls(questions: SceneQuestion[]) {
+function renderEditableControls(questions: SceneQuestion[], { inMenu }: { inMenu?: boolean } = {}) {
   const { dashboard } = buildDashboard({ isEditing: true, questions }, {}, 'v2');
   act(() => {
     dashboard.state.sidebar.activate();
@@ -349,7 +428,7 @@ function renderEditableControls(questions: SceneQuestion[]) {
     <ElementSelectionContext.Provider value={dashboard.state.sidebar.state.selectionContext}>
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
       <div onPointerDown={onDashboardPointerDown}>
-        <DashboardControlsExtensionPoint dashboard={dashboard} />
+        <DashboardControlsExtensionPoint dashboard={dashboard} inMenu={inMenu} />
       </div>
     </ElementSelectionContext.Provider>
   );

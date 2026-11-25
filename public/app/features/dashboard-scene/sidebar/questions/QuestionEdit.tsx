@@ -2,14 +2,19 @@ import { type FormEvent, useId, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 import { SceneObjectBase, type SceneObjectRef, type SceneObjectState } from '@grafana/scenes';
-import { Field, Input, TextArea } from '@grafana/ui';
+import { Field, Input, Switch, TextArea } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { type SceneQuestion } from '../../questions/types';
-import { getQuestionLabel, getQuestionSelectionId } from '../../questions/utils';
+import {
+  getQuestionLabel,
+  getQuestionSelectionId,
+  isInControlsMenu,
+  withQuestionPlacement,
+} from '../../questions/utils';
 import { useSidebarInputAutoFocus } from '../../scene/layouts-shared/utils';
 import {
   type EditableDashboardElement,
@@ -157,33 +162,71 @@ function useQuestionOptions(this: QuestionEdit, isNewElement: boolean): OptionsP
   const textId = useId();
   const titleId = useId();
   const sourcesId = useId();
+  const placementId = useId();
 
-  return useMemo(
-    () => [
-      new OptionsPaneCategoryDescriptor({ title: '', id: categoryId })
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: '',
-            id: textId,
-            render: () => <QuestionTextInput questionEdit={questionEdit} autoFocus={isNewElement} />,
-          })
-        )
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: '',
-            id: titleId,
-            render: () => <QuestionTitleInput questionEdit={questionEdit} />,
-          })
-        )
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: '',
-            id: sourcesId,
-            render: () => <QuestionSourcesField questionEdit={questionEdit} />,
-          })
-        ),
-    ],
-    [categoryId, textId, titleId, sourcesId, questionEdit, isNewElement]
+  return useMemo(() => {
+    const category = new OptionsPaneCategoryDescriptor({ title: '', id: categoryId })
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          id: textId,
+          render: () => <QuestionTextInput questionEdit={questionEdit} autoFocus={isNewElement} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          id: titleId,
+          render: () => <QuestionTitleInput questionEdit={questionEdit} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          id: sourcesId,
+          render: () => <QuestionSourcesField questionEdit={questionEdit} />,
+        })
+      );
+
+    // Only the dashboard has a controls menu to show a question in.
+    if (questionEdit.state.ownerKind === 'dashboard') {
+      category.addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.sidebar.questions.show-in-controls-menu', 'Show in controls menu'),
+          id: placementId,
+          render: (descriptor) => <QuestionPlacementSwitch questionEdit={questionEdit} id={descriptor.props.id} />,
+        })
+      );
+    }
+
+    return [category];
+  }, [categoryId, textId, titleId, sourcesId, placementId, questionEdit, isNewElement]);
+}
+
+/** Shows a dashboard's question in its controls menu, instead of above its panels. Each change is one undoable edit. */
+export function QuestionPlacementSwitch({ questionEdit, id }: { questionEdit: QuestionEdit; id?: string }) {
+  const { ownerRef, questionIndex } = questionEdit.useState();
+  const owner = ownerRef.resolve();
+  const { questions } = owner.useState();
+  const question = questions?.[questionIndex];
+
+  if (!question) {
+    return null;
+  }
+
+  return (
+    <Switch
+      id={id}
+      value={isInControlsMenu(question)}
+      onChange={(event) =>
+        questionActions.update({
+          owner,
+          index: questionIndex,
+          previous: question,
+          next: withQuestionPlacement(question, event.currentTarget.checked),
+        })
+      }
+    />
   );
 }
 
