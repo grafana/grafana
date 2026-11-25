@@ -241,6 +241,16 @@ type globalDocumentSpec struct {
 }
 
 func (b *globalDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*IndexableDocument, error) {
+	doc, err := b.buildDocument(ctx, key, rv, value)
+	if err != nil && (!b.allowBlobFallback || doc == nil) {
+		return nil, err
+	}
+	return doc, nil
+}
+
+// buildDocument can return both a partial document and the blob read error.
+// Callers can update the indexed folder without marking the document current.
+func (b *globalDocumentBuilder) buildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*IndexableDocument, error) {
 	// Large panel and query payloads are not needed for standard fields.
 	var partial struct {
 		Metadata map[string]any     `json:"metadata"`
@@ -255,24 +265,23 @@ func (b *globalDocumentBuilder) BuildDocument(ctx context.Context, key *resource
 		return nil, err
 	}
 	spec := partial.Spec
+	var blobErr error
 
 	if info := meta.GetBlob(); info != nil {
 		if b.blob == nil {
 			return nil, fmt.Errorf("blob support is not configured")
 		}
 		body, err := ReadBlobForIndex(ctx, b.blob, key, info)
-		mayFallback := func(err error) bool {
-			return b.allowBlobFallback && ctx.Err() == nil && isDocumentBuildInterrupted(err)
-		}
-		if mayFallback(err) {
+		if b.allowBlobFallback && ctx.Err() == nil && isDocumentBuildInterrupted(err) {
 			body, err = ReadBlobForIndex(ctx, b.blob, key, info)
 		}
 		if err != nil {
-			if !mayFallback(err) {
+			if ctx.Err() != nil || !isDocumentBuildInterrupted(err) {
 				return nil, err
 			}
 			// Without a version, reconciliation will retry this partial document.
 			rv = 0
+			blobErr = err
 		} else {
 			var content struct {
 				globalDocumentSpec
@@ -301,7 +310,7 @@ func (b *globalDocumentBuilder) BuildDocument(ctx context.Context, key *resource
 		specValue["spec"] = map[string]any{"name": nested.Name}
 	}
 	obj.Object["spec"] = specValue
-	return NewIndexableDocument(key, rv, meta, ""), nil
+	return NewIndexableDocument(key, rv, meta, ""), blobErr
 }
 
 // GlobalIndexCoversType reports whether a global index holds documents of this
@@ -790,9 +799,9 @@ func (d *refDiff) compare(name string, indexedRV, storedRV int64) {
 // older versions, so comparing versions would leave them stale.
 //
 // Everything is written before anything is removed, so the type does not vanish
-// from search while the rebuild runs. Keep an object if its read is interrupted
-// and retry the rebuild. Remove an invalid document, which may describe what
-// the import replaced.
+// from search while the rebuild runs. If a blob read is interrupted, write a
+// partial document with current metadata and retry the rebuild. Remove invalid
+// documents rather than keeping results from before the import.
 func (s *searchServer) rebuildResourceType(ctx context.Context, index ResourceIndex, key, src NamespacedResource) (repairResult, error) {
 	if err := checkRepairTarget(key, src); err != nil {
 		return repairResult{}, err
@@ -837,21 +846,19 @@ func (s *searchServer) rebuildResourceType(ctx context.Context, index ResourceIn
 				return err
 			}
 			docKey := &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource, Name: iter.Name()}
-			doc, err := builder.BuildDocument(ctx, docKey, iter.ResourceVersion(), iter.Value())
+			doc, err := builder.buildDocument(ctx, docKey, iter.ResourceVersion(), iter.Value())
 			if ctx.Err() != nil {
 				return ctx.Err()
 			}
 			if err != nil {
 				result.Failed++
-				if isDocumentBuildInterrupted(err) {
-					// Keep the old document until a retry can replace it.
-					delete(indexed, docKey.Name)
-					if interrupted == nil {
-						interrupted = err
-					}
+				if interrupted == nil && isDocumentBuildInterrupted(err) {
+					interrupted = err
 				}
-				logger.Warn("failed to build a document while rebuilding a resource type", "key", SearchID(docKey), "error", err)
-				continue
+				logger.Warn("failed to build a full document while rebuilding a resource type", "key", SearchID(docKey), "error", err)
+				if doc == nil {
+					continue
+				}
 			}
 			delete(indexed, docKey.Name)
 			items = append(items, &BulkIndexItem{Action: ActionIndex, Doc: doc})
@@ -958,8 +965,8 @@ func (s *searchServer) removeFromIndex(index ResourceIndex, src NamespacedResour
 }
 
 // reindex repairs missing and previously indexed documents. Only previously
-// indexed names need a removal on NotFound. A blob timeout leaves the document
-// for retry without blocking the other repairs.
+// indexed names need a removal on NotFound. A blob timeout writes a partial
+// document for retry without blocking the other repairs.
 //
 // Reads go in small chunks, writes in full batches: each write is a separate
 // index batch with its own fixed cost.
@@ -1034,7 +1041,7 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 					}
 					continue
 				}
-				doc, err := builder.BuildDocument(ctx, response.Key, response.ResourceVersion, response.Value)
+				doc, err := builder.buildDocument(ctx, response.Key, response.ResourceVersion, response.Value)
 				if ctx.Err() != nil {
 					return result, ctx.Err()
 				}
@@ -1043,8 +1050,10 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 					if interrupted == nil && isDocumentBuildInterrupted(err) {
 						interrupted = err
 					}
-					logger.Warn("failed to build a document while reconciling", "key", SearchID(response.Key), "error", err)
-					continue
+					logger.Warn("failed to build a full document while reconciling", "key", SearchID(response.Key), "error", err)
+					if doc == nil {
+						continue
+					}
 				}
 				if err := add(&BulkIndexItem{Action: ActionIndex, Doc: doc}); err != nil {
 					return result, err
@@ -1244,8 +1253,8 @@ func (s *searchServer) applyWrittenKeys(ctx context.Context, batch []*WrittenEve
 // writeCurrentState reads the named objects of one type from storage and writes
 // what it finds: the object's document if it exists, a removal if it does not.
 // An object that cannot be built is removed too, the same as in a type rebuild,
-// so a reconcile sees it missing and tries again. An object whose storage read
-// fails or whose build is interrupted is left as it is, for a reconcile to repair.
+// so a reconcile sees it missing and tries again. A blob timeout writes a
+// partial document so authorization uses the current folder, not the old one.
 func (s *searchServer) writeCurrentState(ctx context.Context, index ResourceIndex, src NamespacedResource, names []string) error {
 	builder := &globalDocumentBuilder{blob: s.builders.blob}
 	logger := s.log.New("namespace", src.Namespace, "resource", src.GroupResource())
@@ -1279,13 +1288,16 @@ func (s *searchServer) writeCurrentState(ctx context.Context, index ResourceInde
 			logger.Warn("failed to read an object named in a write notification", "key", SearchID(key), "error", response.Error.Message)
 			continue
 		}
-		doc, err := builder.BuildDocument(ctx, key, response.ResourceVersion, response.Value)
+		doc, err := builder.buildDocument(ctx, key, response.ResourceVersion, response.Value)
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		if err != nil {
-			logger.Warn("failed to build a document for a write notification", "key", SearchID(key), "error", err)
-			if !isDocumentBuildInterrupted(err) {
+			logger.Warn("failed to build a full document for a write notification", "key", SearchID(key), "error", err)
+			if doc == nil {
 				items = append(items, &BulkIndexItem{Action: ActionDelete, Key: key})
+				continue
 			}
-			continue
 		}
 		items = append(items, &BulkIndexItem{Action: ActionIndex, Doc: doc})
 	}

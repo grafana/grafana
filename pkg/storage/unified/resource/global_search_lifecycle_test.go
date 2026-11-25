@@ -646,7 +646,7 @@ func TestGlobalIndexReplacementRetriesTimedOutBlob(t *testing.T) {
 	}
 }
 
-func TestGlobalIndexRetainsDocumentOnBlobReadTimeout(t *testing.T) {
+func TestGlobalIndexRefreshesFolderOnBlobReadTimeout(t *testing.T) {
 	for _, tc := range []struct {
 		name string
 		run  func(context.Context, *searchServer, *MockResourceIndex, NamespacedResource) error
@@ -668,7 +668,8 @@ func TestGlobalIndexRetainsDocumentOnBlobReadTimeout(t *testing.T) {
 			storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
 				live:    map[NamespacedResource][]string{src: {"dash-a", "dash-b", "dash-c"}},
 				listRVs: map[NamespacedResource]int64{src: 50},
-				bodies:  map[string][]byte{"dash-a": fmt.Appendf(nil, `{"metadata":{"name":"dash-a","annotations":{%q:"blob-uid"}}}`, utils.AnnoKeyBlob)},
+				bodies: map[string][]byte{"dash-a": fmt.Appendf(nil,
+					`{"metadata":{"name":"dash-a","annotations":{%q:"blob-uid",%q:"new-folder"}}}`, utils.AnnoKeyBlob, utils.AnnoKeyFolder)},
 			}}
 			refs := []DocumentRef{{Name: "dash-b", RV: 40}, {Name: "gone", RV: 40}}
 			if tc.name != "reconcile" {
@@ -688,19 +689,24 @@ func TestGlobalIndexRetainsDocumentOnBlobReadTimeout(t *testing.T) {
 					require.ErrorIs(t, err, context.DeadlineExceeded)
 				}
 				require.Equal(t, 30*time.Second, time.Since(start))
-				if tc.name == "write notification" {
-					require.Empty(t, idx.indexedItems(), "a timeout must not delete the existing document")
-					return
-				}
 				var indexed, removed []string
 				for _, item := range idx.indexedItems() {
 					if item.Action == ActionDelete {
 						removed = append(removed, item.Key.Name)
 					} else {
 						indexed = append(indexed, item.Doc.Key.Name)
+						if item.Doc.Key.Name == "dash-a" {
+							require.Equal(t, "new-folder", item.Doc.Folder)
+							require.Zero(t, item.Doc.RV, "a partial document must remain eligible for repair")
+						}
 					}
 				}
-				require.ElementsMatch(t, []string{"dash-b", "dash-c"}, indexed)
+				if tc.name == "write notification" {
+					require.Equal(t, []string{"dash-a"}, indexed)
+					require.Empty(t, removed)
+					return
+				}
+				require.ElementsMatch(t, []string{"dash-a", "dash-b", "dash-c"}, indexed)
 				require.Equal(t, []string{"gone"}, removed)
 			})
 
@@ -710,6 +716,8 @@ func TestGlobalIndexRetainsDocumentOnBlobReadTimeout(t *testing.T) {
 			for _, item := range idx.indexedItems() {
 				if item.Action == ActionIndex && item.Doc.Key.Name == "dash-a" {
 					require.Equal(t, "New title", item.Doc.Title)
+					require.Equal(t, "new-folder", item.Doc.Folder)
+					require.Equal(t, int64(50), item.Doc.RV)
 					return
 				}
 			}
@@ -1255,7 +1263,7 @@ func TestImportCheckContinuesAfterBlobTimeout(t *testing.T) {
 		err := server.syncTypes(t.Context(), key, nil)
 		require.ErrorIs(t, err, context.DeadlineExceeded)
 		require.Equal(t, []NamespacedResource{dashboards, folders}, storage.listed)
-		require.Equal(t, map[NamespacedResource][]string{folders: {"folder-a"}}, indexedNames(t, idx))
+		require.Equal(t, map[NamespacedResource][]string{dashboards: {"dash-a"}, folders: {"folder-a"}}, indexedNames(t, idx))
 		require.Equal(t, heldAt(importMonday, importTuesday), idx.completedTypeBuilds)
 	})
 
