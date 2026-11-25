@@ -83,6 +83,23 @@ describe('PageCanvasTabs', () => {
     expect(currentPath()).toBe('/d/checkout?var-env=prod');
   });
 
+  it('compares all of a param’s values, in any order', async () => {
+    const canvas = makeCanvas({
+      tabs: [
+        tab('Report'),
+        tab('Prod', { shows: 'page', href: '/d/checkout?var-env=prod' }),
+        tab('Both', { shows: 'page', href: '/d/checkout?var-env=prod&var-env=dev' }),
+      ],
+    });
+    const { user } = render(<PageCanvasTabs canvas={canvas} paneId="pane" />);
+    act(() => locationService.push('/d/checkout?orgId=1&var-env=dev&var-env=prod'));
+    await user.click(screen.getByRole('tab', { name: 'Both' }));
+    expect(currentPath()).toBe('/d/checkout?orgId=1&var-env=dev&var-env=prod');
+
+    await user.click(screen.getByRole('tab', { name: 'Prod' }));
+    expect(currentPath()).toBe('/d/checkout?var-env=prod');
+  });
+
   it('closes a tab from its close button, the Delete key and a middle click', async () => {
     const canvas = makeCanvas();
     const { user } = render(<PageCanvasTabs canvas={canvas} paneId="pane" />);

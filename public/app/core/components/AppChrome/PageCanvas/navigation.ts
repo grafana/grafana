@@ -2,9 +2,19 @@ import { locationService } from '@grafana/runtime';
 
 import { type PageCanvasModel, type PageCanvasTab } from './types';
 
+/** Whether two lists hold the same values, in any order. */
+function sameValues(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  const sortedB = [...b].sort();
+  return [...a].sort().every((value, index) => value === sortedB[index]);
+}
+
 /**
- * Whether the page at `href` is showing: the same path, with each of the href's params at the same value. The URL
- * can carry more params than the href, such as `orgId` or a plugin's own canvas params, and the hash doesn't count.
+ * Whether the page at `href` is showing: the same path, with each of the href's params at the same values, such as a
+ * multi-value variable's selection. The URL can carry params the href leaves out, such as `orgId` or a plugin's own
+ * canvas params, and the hash doesn't count.
  */
 function isShowing(href: string): boolean {
   const { pathname, search } = locationService.getLocation();
@@ -16,7 +26,7 @@ function isShowing(href: string): boolean {
   }
   const current = new URLSearchParams(search);
   const wanted = new URLSearchParams(queryStart === -1 ? '' : beforeHash.slice(queryStart + 1));
-  return [...wanted].every(([key, value]) => current.getAll(key).includes(value));
+  return [...new Set(wanted.keys())].every((key) => sameValues(wanted.getAll(key), current.getAll(key)));
 }
 
 /** Sends the router to `href`, unless the page there is already showing. */
