@@ -102,7 +102,7 @@ The following panel options accept variables:
 You can also use variables in these options in field overrides, so a variable can control an option for specific fields or series.
 
 {{< admonition type="note" >}}
-The variable input for numeric field options and **Unit** is only available in dashboards that use the v2 schema.
+The variable input for numeric field options and **Unit** is only available in dashboards that use the [v2 schema](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard/#use-the-v2-schema).
 {{< /admonition >}}
 
 ## Template variables {#templates}
