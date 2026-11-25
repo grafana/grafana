@@ -106,8 +106,8 @@ A Team policy lets a team define what the alert rules in its own folders must ca
 
 ### When a policy applies
 
-A policy follows the folder, not the person writing the rule.
-Grafana evaluates policies when an as-code write reaches a folder, whoever makes the write and whichever teams they belong to.
+The policy that applies to a rule depends on the folder the rule is saved in.
+Grafana checks these policies when a rule is written to a folder through a [supported enforcement path](#supported-enforcement-paths).
 
 - **Team policy:** Applies to every as-code write into a folder that the team owns.
 - **Org policy:** Applies when no owning team of the folder or any of its ancestors has a Team policy, so folders without an owning team are covered by the Org policy, if one is configured.
