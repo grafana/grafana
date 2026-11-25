@@ -88,9 +88,6 @@ describe('useSearchStarredAppKindsQuery', () => {
           url: '/a/test-things-app/things/t1',
           description: 'About the thing',
           location: 'folder-a',
-          tags: [],
-          panel_type: '',
-          ds_uid: [],
         },
       ]);
     });

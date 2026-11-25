@@ -6,7 +6,7 @@ import { type DashboardQueryResult } from 'app/features/search/service/types';
 import { type ThunkResult } from 'app/types/store';
 
 import { STARRED_INDEX_KINDS } from './kinds';
-import { type StarredNames, starsHoldName, userStarsFieldSelector } from './utils';
+import { byTitle, type StarredNames, starsHoldName, userStarsFieldSelector } from './utils';
 
 /** Tag for the starred search rows, invalidated by changes that rewrite rows without changing the star set. */
 const STARRED_SEARCH_TAG = 'StarredSearch';
@@ -14,9 +14,6 @@ const STARRED_SEARCH_TAG = 'StarredSearch';
 // Names per search request. The search is a GET that carries the names in its URL, so a large star set goes in
 // several requests rather than one long one.
 const NAMES_PER_REQUEST = 50;
-
-// Created once, not per sort
-const collator = new Intl.Collator();
 
 const starsAPI = collectionsAPIv1alpha1.enhanceEndpoints({ addTagTypes: [STARRED_SEARCH_TAG] }).injectEndpoints({
   endpoints: (build) => ({
@@ -49,7 +46,7 @@ const starsAPI = collectionsAPIv1alpha1.enhanceEndpoints({ addTagTypes: [STARRED
           const rows = responses
             .flatMap((response) => response.view.toArray())
             .filter((row) => starredByKind.get(row.kind)?.has(row.uid))
-            .sort((a, b) => collator.compare(a.name, b.name));
+            .sort(byTitle);
           return { data: rows };
         } catch (error) {
           return { error };
