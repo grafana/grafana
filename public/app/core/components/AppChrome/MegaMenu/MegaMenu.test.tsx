@@ -457,6 +457,8 @@ describe('MegaMenu', () => {
         };
 
         beforeEach(() => {
+          // The section starts folded, without the handle; these users have unfolded it.
+          window.localStorage.setItem(MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY, 'false');
           rectSpy = jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
             this: HTMLElement
           ) {
@@ -548,33 +550,31 @@ describe('MegaMenu', () => {
           }));
         });
 
-        it('folds and unfolds from the section, without the resize handle while folded, and remembers it', async () => {
+        it('starts folded, without the resize handle, then unfolds and folds from the section and remembers it', async () => {
           const { user } = renderMegaMenu();
           const toggle = await screen.findByRole('button', { name: 'Conversations' });
+          expect(toggle).toHaveAttribute('aria-expanded', 'false');
+          expect(screen.queryByRole('separator', { name: 'Resize navigation' })).not.toBeInTheDocument();
+
+          await user.click(toggle);
+
           expect(toggle).toHaveAttribute('aria-expanded', 'true');
+          expect(screen.getByRole('separator', { name: 'Resize navigation' })).toBeInTheDocument();
+          expect(storedCollapsed()).toBe('false');
 
           await user.click(toggle);
 
           expect(toggle).toHaveAttribute('aria-expanded', 'false');
           expect(screen.queryByRole('separator', { name: 'Resize navigation' })).not.toBeInTheDocument();
           expect(storedCollapsed()).toBe('true');
-
-          await user.click(toggle);
-
-          expect(toggle).toHaveAttribute('aria-expanded', 'true');
-          expect(screen.getByRole('separator', { name: 'Resize navigation' })).toBeInTheDocument();
-          expect(storedCollapsed()).toBeNull();
         });
 
-        it('opens with the section folded when the user left it folded', async () => {
-          window.localStorage.setItem(MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY, 'true');
+        it('opens with the section unfolded when the user left it unfolded', async () => {
+          window.localStorage.setItem(MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY, 'false');
           renderMegaMenu();
 
-          expect(await screen.findByRole('button', { name: 'Conversations' })).toHaveAttribute(
-            'aria-expanded',
-            'false'
-          );
-          expect(screen.queryByRole('separator', { name: 'Resize navigation' })).not.toBeInTheDocument();
+          expect(await screen.findByRole('button', { name: 'Conversations' })).toHaveAttribute('aria-expanded', 'true');
+          expect(screen.getByRole('separator', { name: 'Resize navigation' })).toBeInTheDocument();
         });
       });
     });

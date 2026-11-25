@@ -37,20 +37,21 @@ function storeNavHeight(height: number | undefined): void {
   }
 }
 
-/** Whether the user has folded the plugin section down to its heading. */
+/** Whether the plugin section is folded down to its heading: `'false'` once the user unfolds it, folded otherwise. */
 export const MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY = 'grafana.navigation.megaMenuSectionCollapsed';
 
+// The section starts folded, so it adds only its heading to the menu until the user opens it.
 function readStoredCollapsed(): boolean {
   try {
-    return store.getBool(MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY, false);
+    return store.getBool(MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY, true);
   } catch {
-    return false;
+    return true;
   }
 }
 
 /**
  * Whether the plugin section is folded to its heading at the bottom of the menu, and a setter the section calls from
- * its own heading. Remembered across page loads. Separate from the splitter, as the section needs it to render and the
+ * its own heading. Folded until the user unfolds it, and remembered across page loads. Separate from the splitter, as the section needs it to render and the
  * splitter needs to know whether the section rendered.
  */
 export function useMegaMenuSectionCollapsed(): [boolean, (collapsed: boolean) => void] {
@@ -58,11 +59,7 @@ export function useMegaMenuSectionCollapsed(): [boolean, (collapsed: boolean) =>
   const onCollapsedChange = useCallback((next: boolean) => {
     setCollapsed(next);
     try {
-      if (next) {
-        store.set(MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY, 'true');
-      } else {
-        store.delete(MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY);
-      }
+      store.set(MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY, String(next));
     } catch {
       // Kept for this page load only.
     }
