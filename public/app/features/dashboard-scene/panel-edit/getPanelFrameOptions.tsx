@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { CoreApp, type FieldConfigSource, type PanelPluginVisualizationSuggestion } from '@grafana/data';
+import { CoreApp } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
@@ -21,45 +21,7 @@ import { getPanelLinksChange, trackPanelSettingChange } from '../utils/trackPane
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { PanelStylesSection } from './PanelStylesSection';
-
-export function createPresetApplyHandler(panel: VizPanel) {
-  return function onApplyPreset(preset: PanelPluginVisualizationSuggestion, prevFieldConfig: FieldConfigSource) {
-    const prevOptions = panel.state.options;
-    edit({
-      meta: { actionId: 'panel.applyPreset' },
-      description: t('dashboard.edit-actions.panel-preset', 'Apply panel preset'),
-      source: panel,
-      perform: () => {
-        if (preset.fieldConfig) {
-          const { defaults, overrides } = panel.state.fieldConfig;
-          const presetDefaults = preset.fieldConfig.defaults;
-          panel.onFieldConfigChange(
-            {
-              defaults: {
-                ...defaults,
-                ...presetDefaults,
-                custom: { ...defaults.custom, ...presetDefaults?.custom },
-                ...(presetDefaults?.color && { color: presetDefaults.color }),
-                ...(presetDefaults?.thresholds && { thresholds: presetDefaults.thresholds }),
-              },
-              overrides,
-            },
-            true
-          );
-        }
-        if (preset.options) {
-          panel.onOptionsChange({ ...panel.state.options, ...preset.options }, true);
-        }
-      },
-      undo: () => {
-        panel.onFieldConfigChange(prevFieldConfig, true);
-        if (preset.options) {
-          panel.onOptionsChange(prevOptions, true);
-        }
-      },
-    });
-  };
-}
+import { createPresetApplyHandler } from './createPresetApplyHandler';
 
 export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescriptor {
   const descriptor = new OptionsPaneCategoryDescriptor({
