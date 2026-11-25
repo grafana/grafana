@@ -118,15 +118,6 @@ func (s *JobQueueService) runQueue(ctx context.Context, restConfig *clientrest.C
 	if err != nil {
 		return err
 	}
-	// Expired claims are only ever left behind by drivers, so the reaper runs
-	// wherever the drivers do.
-	cleanup := jobs.NewJobCleanupController(store, historyWriter, jobs.ClaimExpiry)
-	go func() {
-		if err := cleanup.Run(ctx); err != nil && ctx.Err() == nil {
-			logging.FromContext(ctx).Error("job cleanup controller failed", "error", err)
-		}
-	}()
-
 	logging.DefaultLogger.Info("starting provisioning job queue", "drivers", s.cfg.ConcurrentDrivers)
 	return queue.Run(ctx)
 }
