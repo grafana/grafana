@@ -13,10 +13,12 @@ labels:
     - enterprise
 title: Manage saved queries using Terraform
 menuTitle: Manage saved queries
-weight: 400
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/manage-saved-queries/
+weight: 200
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/grafana-resources/manage-saved-queries/
 aliases:
   - ../infrastructure-as-code/terraform/manage-saved-queries/
+  - ../manage-saved-queries/
+  - ../../infrastructure-as-code/terraform/manage-saved-queries/
 ---
 
 # Manage saved queries using Terraform
@@ -25,6 +27,10 @@ This guide shows you how to manage [saved queries](https://grafana.com/docs/graf
 
 {{< admonition type="note" >}}
 Saved queries are only available on Grafana Enterprise and Grafana Cloud.
+{{< /admonition >}}
+
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 {{< /admonition >}}
 
 ## Before you begin
@@ -64,7 +70,7 @@ Replace the following placeholders:
 - _`<SERVICE_ACCOUNT_TOKEN>`_ is the service account token that you created.
 - _`<STACK_ID>`_ is your numeric Grafana Cloud stack ID, for example `123456`.
 
-Saved queries are App Platform resources. In Grafana Cloud, the provider needs `stack_id` to send requests to your stack. Otherwise, Terraform fails with an `HTTP 403 - Forbidden` error. To learn more, refer to [Configure the Grafana provider for App Platform resources in Grafana Cloud](../terraform-app-platform-resources/).
+Saved queries are App Platform resources. In Grafana Cloud, the provider needs `stack_id` to send requests to your stack. Otherwise, Terraform fails with an `HTTP 403 - Forbidden` error. To learn more, refer to [Configure the Grafana provider for App Platform resources in Grafana Cloud](../../terraform-app-platform-resources/).
 
 ## Create a saved query resource
 

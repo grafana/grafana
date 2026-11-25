@@ -10,14 +10,20 @@ keywords:
   - Recording rules
   - Alerting rules
   - PromQL
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-knowledge-graph/prometheus-rules/
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-knowledge-graph/prometheus-rules/
 aliases:
   - ../../infrastructure-as-code/terraform/terraform-knowledge-graph/prometheus-rules/
+  - ../../terraform-knowledge-graph/prometheus-rules/
+  - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/prometheus-rules/
 ---
 
 # Manage Prometheus rules using Terraform
 
 Prometheus rules in the [Knowledge Graph](/docs/grafana-cloud/knowledge-graph/) allow you to define custom recording and alerting rules that are evaluated against your metrics data. Recording rules pre-compute frequently used or computationally expensive expressions and save the results as new time series. Alerting rules define conditions that, when met, trigger alerts.
+
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
 
 Using the `grafana_asserts_prom_rule_file` resource, you can manage these rules as code, enabling version control, review processes, and consistent deployments across environments.
 

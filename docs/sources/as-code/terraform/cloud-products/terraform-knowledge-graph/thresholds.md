@@ -10,14 +10,20 @@ keywords:
   - Request Thresholds
   - Resource Thresholds
   - Health Thresholds
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-knowledge-graph/thresholds/
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-knowledge-graph/thresholds/
 aliases:
   - ../../infrastructure-as-code/terraform/terraform-knowledge-graph/thresholds/
+  - ../../terraform-knowledge-graph/thresholds/
+  - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/thresholds/
 ---
 
 # Configure thresholds using Terraform
 
 Threshold configurations in [Knowledge Graph](/docs/grafana-cloud/knowledge-graph/) allow you to define custom thresholds for request, resource, and health assertions. These configurations help you set specific limits and conditions for monitoring your services and infrastructure.
+
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
 
 For information about managing thresholds in the Knowledge Graph UI, refer to [Manage thresholds](/docs/grafana-cloud/knowledge-graph/configure/manage-thresholds/).
 
@@ -30,28 +36,28 @@ Create a file named `thresholds.tf` and add the following:
 resource "grafana_asserts_thresholds" "basic" {
   provider = grafana.asserts
 
-  request_thresholds = [{
+  request_thresholds {
     entity_name     = "payment-service"
     assertion_name  = "ErrorRatioBreach"
     request_type    = "inbound"
     request_context = "/charge"
     value           = 0.01
-  }]
+  }
 
-  resource_thresholds = [{
+  resource_thresholds {
     assertion_name = "Saturation"
     resource_type  = "container"
     container_name = "worker"
     source         = "metrics"
     severity       = "warning"
     value          = 75
-  }]
+  }
 
-  health_thresholds = [{
+  health_thresholds {
     assertion_name = "ServiceDown"
     expression     = "up < 1"
     entity_type    = "Service"
-  }]
+  }
 }
 ```
 
@@ -64,29 +70,29 @@ Configure thresholds for different service request types and contexts:
 resource "grafana_asserts_thresholds" "request_thresholds" {
   provider = grafana.asserts
 
-  request_thresholds = [
-    {
-      entity_name     = "api-service"
-      assertion_name  = "ErrorRatioBreach"
-      request_type    = "inbound"
-      request_context = "/api/v1/users"
-      value           = 0.02
-    },
-    {
-      entity_name     = "api-service"
-      assertion_name  = "LatencyP99ErrorBuildup"
-      request_type    = "inbound"
-      request_context = "/api/v1/orders"
-      value           = 500
-    },
-    {
-      entity_name     = "payment-gateway"
-      assertion_name  = "RequestRateAnomaly"
-      request_type    = "outbound"
-      request_context = "/payment/process"
-      value           = 1000
-    }
-  ]
+  request_thresholds {
+    entity_name     = "api-service"
+    assertion_name  = "ErrorRatioBreach"
+    request_type    = "inbound"
+    request_context = "/api/v1/users"
+    value           = 0.02
+  }
+
+  request_thresholds {
+    entity_name     = "api-service"
+    assertion_name  = "LatencyP99ErrorBuildup"
+    request_type    = "inbound"
+    request_context = "/api/v1/orders"
+    value           = 500
+  }
+
+  request_thresholds {
+    entity_name     = "payment-gateway"
+    assertion_name  = "RequestRateAnomaly"
+    request_type    = "outbound"
+    request_context = "/payment/process"
+    value           = 1000
+  }
 }
 ```
 
@@ -99,32 +105,32 @@ Define resource thresholds for different severity levels:
 resource "grafana_asserts_thresholds" "resource_thresholds" {
   provider = grafana.asserts
 
-  resource_thresholds = [
-    {
-      assertion_name = "Saturation"
-      resource_type  = "container"
-      container_name = "web-server"
-      source         = "metrics"
-      severity       = "warning"
-      value          = 75
-    },
-    {
-      assertion_name = "Saturation"
-      resource_type  = "container"
-      container_name = "web-server"
-      source         = "metrics"
-      severity       = "critical"
-      value          = 90
-    },
-    {
-      assertion_name = "ResourceRateBreach"
-      resource_type  = "Pod"
-      container_name = "database"
-      source         = "logs"
-      severity       = "warning"
-      value          = 80
-    }
-  ]
+  resource_thresholds {
+    assertion_name = "Saturation"
+    resource_type  = "container"
+    container_name = "web-server"
+    source         = "metrics"
+    severity       = "warning"
+    value          = 75
+  }
+
+  resource_thresholds {
+    assertion_name = "Saturation"
+    resource_type  = "container"
+    container_name = "web-server"
+    source         = "metrics"
+    severity       = "critical"
+    value          = 90
+  }
+
+  resource_thresholds {
+    assertion_name = "ResourceRateBreach"
+    resource_type  = "Pod"
+    container_name = "database"
+    source         = "logs"
+    severity       = "warning"
+    value          = 80
+  }
 }
 ```
 
@@ -137,23 +143,23 @@ Configure health checks with Prometheus expressions:
 resource "grafana_asserts_thresholds" "health_thresholds" {
   provider = grafana.asserts
 
-  health_thresholds = [
-    {
-      assertion_name = "ServiceDown"
-      expression     = "up{job=\"api-service\"} < 1"
-      entity_type    = "Service"
-    },
-    {
-      assertion_name = "HighMemoryUsage"
-      expression     = "memory_usage_percent > 85"
-      entity_type    = "Service"
-    },
-    {
-      assertion_name = "DatabaseConnectivity"
-      expression     = "db_connection_pool_active / db_connection_pool_max > 0.9"
-      entity_type    = "Service"
-    }
-  ]
+  health_thresholds {
+    assertion_name = "ServiceDown"
+    expression     = "up{job=\"api-service\"} < 1"
+    entity_type    = "Service"
+  }
+
+  health_thresholds {
+    assertion_name = "HighMemoryUsage"
+    expression     = "memory_usage_percent > 85"
+    entity_type    = "Service"
+  }
+
+  health_thresholds {
+    assertion_name = "DatabaseConnectivity"
+    expression     = "db_connection_pool_active / db_connection_pool_max > 0.9"
+    entity_type    = "Service"
+  }
 }
 ```
 
@@ -166,54 +172,51 @@ Define comprehensive thresholds for production environments:
 resource "grafana_asserts_thresholds" "production" {
   provider = grafana.asserts
 
-  request_thresholds = [
-    {
-      entity_name     = "frontend"
-      assertion_name  = "ErrorRatioBreach"
-      request_type    = "inbound"
-      request_context = "/"
-      value           = 0.005
-    },
-    {
-      entity_name     = "backend-api"
-      assertion_name  = "LatencyP99ErrorBuildup"
-      request_type    = "inbound"
-      request_context = "/api"
-      value           = 200
-    }
-  ]
+  request_thresholds {
+    entity_name     = "frontend"
+    assertion_name  = "ErrorRatioBreach"
+    request_type    = "inbound"
+    request_context = "/"
+    value           = 0.005
+  }
 
-  resource_thresholds = [
-    {
-      assertion_name = "Saturation"
-      resource_type  = "container"
-      container_name = "frontend"
-      source         = "metrics"
-      severity       = "warning"
-      value          = 70
-    },
-    {
-      assertion_name = "Saturation"
-      resource_type  = "container"
-      container_name = "backend-api"
-      source         = "metrics"
-      severity       = "critical"
-      value          = 85
-    }
-  ]
+  request_thresholds {
+    entity_name     = "backend-api"
+    assertion_name  = "LatencyP99ErrorBuildup"
+    request_type    = "inbound"
+    request_context = "/api"
+    value           = 200
+  }
 
-  health_thresholds = [
-    {
-      assertion_name = "ServiceDown"
-      expression     = "up < 1"
-      entity_type    = "Service"
-    },
-    {
-      assertion_name = "NodeDown"
-      expression     = "up{job=\"node-exporter\"} < 1"
-      entity_type    = "Service"
-    }
-  ]
+  resource_thresholds {
+    assertion_name = "Saturation"
+    resource_type  = "container"
+    container_name = "frontend"
+    source         = "metrics"
+    severity       = "warning"
+    value          = 70
+  }
+
+  resource_thresholds {
+    assertion_name = "Saturation"
+    resource_type  = "container"
+    container_name = "backend-api"
+    source         = "metrics"
+    severity       = "critical"
+    value          = 85
+  }
+
+  health_thresholds {
+    assertion_name = "ServiceDown"
+    expression     = "up < 1"
+    entity_type    = "Service"
+  }
+
+  health_thresholds {
+    assertion_name = "NodeDown"
+    expression     = "up{job=\"node-exporter\"} < 1"
+    entity_type    = "Service"
+  }
 }
 ```
 
@@ -225,11 +228,11 @@ Manage Knowledge Graph threshold configurations through the Grafana API. This re
 
 #### Arguments
 
-| Name                  | Type           | Required | Description                                                                                                              |
-| --------------------- | -------------- | -------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `request_thresholds`  | `list(object)` | No       | List of request threshold configurations. Refer to [request thresholds block](#request-thresholds-block) for details.    |
-| `resource_thresholds` | `list(object)` | No       | List of resource threshold configurations. Refer to [resource thresholds block](#resource-thresholds-block) for details. |
-| `health_thresholds`   | `list(object)` | No       | List of health threshold configurations. Refer to [health thresholds block](#health-thresholds-block) for details.       |
+| Name                  | Type         | Required | Description                                                                                                              |
+| --------------------- | ------------ | -------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `request_thresholds`  | `block list` | No       | List of request threshold configurations. Refer to [request thresholds block](#request-thresholds-block) for details.    |
+| `resource_thresholds` | `block list` | No       | List of resource threshold configurations. Refer to [resource thresholds block](#resource-thresholds-block) for details. |
+| `health_thresholds`   | `block list` | No       | List of health threshold configurations. Refer to [health thresholds block](#health-thresholds-block) for details.       |
 
 #### Request thresholds block
 
@@ -273,28 +276,28 @@ Each `health_thresholds` block supports the following:
 resource "grafana_asserts_thresholds" "example" {
   provider = grafana.asserts
 
-  request_thresholds = [{
+  request_thresholds {
     entity_name     = "api-service"
     assertion_name  = "ErrorRatioBreach"
     request_type    = "inbound"
     request_context = "/api/v1/users"
     value           = 0.02
-  }]
+  }
 
-  resource_thresholds = [{
+  resource_thresholds {
     assertion_name = "Saturation"
     resource_type  = "container"
     container_name = "web-server"
     source         = "metrics"
     severity       = "warning"
     value          = 75
-  }]
+  }
 
-  health_thresholds = [{
+  health_thresholds {
     assertion_name = "ServiceDown"
     expression     = "up{job=\"api-service\"} < 1"
     entity_type    = "Service"
-  }]
+  }
 }
 ```
 
@@ -346,7 +349,7 @@ Consider the following best practices when configuring thresholds with Terraform
 After applying the Terraform configuration, verify that:
 
 - Threshold configurations are applied in your Knowledge Graph instance
-- Configurations appear in the Knowledge Graph UI under **Observability > Rules > Threshold**
+- Configurations appear in the Knowledge Graph UI under **Observability > Rules > Thresholds**
 - Request thresholds correctly identify breaches for specified services
 - Resource thresholds trigger at appropriate severity levels
 - Health thresholds accurately reflect service status
