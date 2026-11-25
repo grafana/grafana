@@ -16,7 +16,7 @@ import { DashListItem } from './DashListItem';
 import { type Options } from './panelcfg.gen';
 import { useDashListUrlParams } from './utils';
 
-export type Dashboard = DashboardQueryResult & {
+type Dashboard = DashboardQueryResult & {
   isSearchResult?: boolean;
   isRecent?: boolean;
 };

@@ -8,7 +8,8 @@ import { DashboardTabEmptyState } from './DashboardTabEmptyState';
 import { DashboardTabError, DashboardTabErrorAlert } from './DashboardTabError';
 
 interface Props {
-  dashboards: DashboardQueryResult[];
+  // The fields the tab and its rows read, which an object of any kind has
+  dashboards: Array<Pick<DashboardQueryResult, 'kind' | 'uid' | 'name' | 'url' | 'description' | 'location'>>;
   loading: boolean;
   error: boolean;
   retry: () => void;

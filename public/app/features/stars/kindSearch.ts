@@ -11,11 +11,10 @@ import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { getAPIGroupVersions } from 'app/features/apiserver/discovery';
-import { type DashboardQueryResult } from 'app/features/search/service/types';
 import { type ThunkResult } from 'app/types/store';
 
 import { getStarredAppKinds, type StarredAppKind } from './kinds';
-import { type StarredNames, starsHoldName, userStarsFieldSelector } from './utils';
+import { type StarredNames, type StarredRow, starsHoldName, userStarsFieldSelector } from './utils';
 
 /**
  * TODO: Switch to the global search when it is enabled, and delete this file. One search across
@@ -36,6 +35,18 @@ const MAX_SEARCH_LIMIT = 500;
 
 /** Tag for the starred rows of app kinds, which are searched apart from the dashboards and folders. */
 const STARRED_APP_SEARCH_TAG = 'StarredAppSearch';
+
+/**
+ * The search endpoint of a kind; undefined when the instance names no preferred version of the kind's group, as
+ * when the plugin that serves it is not installed.
+ */
+async function resolveSearchURL(kind: StarredAppKind): Promise<string | undefined> {
+  // TODO: Resolve the version through the shared API discovery service once there is one. Until then the kind
+  // is taken to be served at its group's preferred version, which is asked for with every search, not kept:
+  // an update of the plugin may change it
+  const version = (await getAPIGroupVersions(kind.group))?.preferred;
+  return version ? `${getAPIBaseURL(kind.group, version)}/${kind.resource}/search` : undefined;
+}
 
 /**
  * The objects with these names, which are no more than a page holds. A name matches one object at most, so one
@@ -71,71 +82,66 @@ async function searchNames(url: string, names: string[]): Promise<ResultItem[]> 
   return items;
 }
 
-/**
- * The starred objects of a kind that the user may read, as search rows carrying their kind and url. A kind whose
- * API is unavailable (plugin not installed, apiserver down, search opted out of) yields nothing: its stars go
- * unshown rather than failing the list around them.
- */
-async function searchStarredRows(kind: StarredAppKind, names: string[]): Promise<DashboardQueryResult[]> {
-  let items: ResultItem[];
-  try {
-    // TODO: Resolve the version through the shared API discovery service once there is one. Until then the kind
-    // is taken to be served at its group's preferred version, which is asked for with every search, not kept:
-    // an update of the plugin may change it
-    const group = await getAPIGroupVersions(kind.group);
-    const version = group?.preferred ?? group?.versions.values().next().value;
-    if (!version) {
-      // The instance does not serve the group: the plugin is not installed
-      return [];
-    }
-    const url = `${getAPIBaseURL(kind.group, version)}/${kind.resource}/search`;
-    // The requests succeed or fail together: part of a kind's stars would read as all of them
-    const batches = await Promise.all(chunk(names, MAX_SEARCH_LIMIT).map((batch) => searchNames(url, batch)));
-    items = batches.flat();
-  } catch (err) {
-    if (isFetchError(err) && err.status === 405) {
-      // The kind is served with no search endpoint: it opted out of search, or it is not namespaced
-      console.warn(
-        `${kind.group}/${kind.kind} can be starred, but it is served without a search endpoint, so its stars cannot be shown`
-      );
-    } else {
-      console.error(`Failed to resolve starred ${kind.group}/${kind.kind}`, err);
-    }
+/** A hit of a kind's search as a starred row, which carries the kind and links to the page of the object. */
+function toRow(kind: StarredAppKind, item: ResultItem): StarredRow {
+  // The generated type leaves the values unchecked
+  const fields: Record<string, unknown> = item.fields ?? {};
+  const { name } = item.resource;
+  return {
+    kind: kind.searchKind,
+    uid: name,
+    name: typeof fields.title === 'string' && fields.title ? fields.title : name,
+    // A kind's route leaves out the app sub path, which a link carries
+    url: locationUtil.assureBaseUrl(kind.getRoute(name)),
+    description: typeof fields.description === 'string' ? fields.description : '',
+    location: typeof fields.folder === 'string' ? fields.folder : '',
+  };
+}
+
+/** The starred objects of a kind that the user may read, as rows. Rejects when the kind's search fails. */
+async function searchStarredRows(kind: StarredAppKind, names: string[]): Promise<StarredRow[]> {
+  const url = await resolveSearchURL(kind);
+  if (!url) {
     return [];
   }
-
-  return items.map((item) => {
-    // The generated type leaves the values unchecked
-    const fields: Record<string, unknown> = item.fields ?? {};
-    const { name } = item.resource;
-    return {
-      kind: kind.searchKind,
-      uid: name,
-      name: typeof fields.title === 'string' && fields.title ? fields.title : name,
-      // A kind's route leaves out the app sub path, which a link carries
-      url: locationUtil.assureBaseUrl(kind.getRoute(name)),
-      description: typeof fields.description === 'string' ? fields.description : '',
-      location: typeof fields.folder === 'string' ? fields.folder : '',
-      // The rest of a dashboard search row, which an app object has no value for
-      tags: [],
-      panel_type: '',
-      ds_uid: [],
-    };
-  });
+  // A request names no more objects than a page holds, so it stays small however many are starred: the server
+  // refuses a body over 1 MiB. The requests succeed or fail together: part of a kind's stars would read as all
+  // of them
+  const batches = await Promise.all(chunk(names, MAX_SEARCH_LIMIT).map((batch) => searchNames(url, batch)));
+  return batches.flat().map((item) => toRow(kind, item));
 }
 
 // An endpoint of the search client, not of the stars client: a request that is still out holds back every
 // invalidation in the client it belongs to, and a star toggle must not wait for a plugin's API
 const kindSearchAPI = searchAPI.enhanceEndpoints({ addTagTypes: [STARRED_APP_SEARCH_TAG] }).injectEndpoints({
   endpoints: (build) => ({
-    /** Starred objects of app kinds as search rows, each kind through its own search endpoint, in no order. */
-    searchStarredAppKinds: build.query<DashboardQueryResult[], StarredNames[]>({
+    /**
+     * Starred objects of app kinds as rows, each kind through its own search endpoint, in no order. A kind whose
+     * API is unavailable (plugin not installed, apiserver down, search opted out of) yields nothing: its stars go
+     * unshown rather than failing the list around them.
+     */
+    searchStarredAppKinds: build.query<StarredRow[], StarredNames[]>({
       providesTags: [STARRED_APP_SEARCH_TAG],
       queryFn: async (starred) => {
         const rows = await Promise.all(
-          starred.map(({ kind: searchKind, names }) => {
+          starred.map(async ({ kind: searchKind, names }) => {
             const kind = getStarredAppKinds().find((candidate) => candidate.searchKind === searchKind);
-            return kind ? searchStarredRows(kind, names) : [];
+            if (!kind) {
+              return [];
+            }
+            try {
+              return await searchStarredRows(kind, names);
+            } catch (err) {
+              if (isFetchError(err) && err.status === 405) {
+                // The kind is served with no search endpoint: it opted out of search, or it is not namespaced
+                console.warn(
+                  `${kind.group}/${kind.kind} can be starred, but it is served without a search endpoint, so its stars cannot be shown`
+                );
+              } else {
+                console.error(`Failed to resolve starred ${kind.group}/${kind.kind}`, err);
+              }
+              return [];
+            }
           })
         );
         return { data: rows.flat() };

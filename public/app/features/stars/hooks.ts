@@ -8,7 +8,7 @@ import { useDispatch } from 'app/types/store';
 import { refetchStarred, useSearchStarredQuery } from './api';
 import { refetchStarredAppKinds, useSearchStarredAppKindsQuery } from './kindSearch';
 import { getStarredAppKinds, STARRED_INDEX_KINDS, type StarredKind } from './kinds';
-import { canUseStars, findStarredNames, userStarsFieldSelector } from './utils';
+import { byTitle, canUseStars, findStarredNames, type StarredRow, userStarsFieldSelector } from './utils';
 
 /**
  * Get starred items from the app platform API
@@ -48,9 +48,6 @@ export const useStarredItems = (group: string, kind: string) => {
 
 /** The settled rows of a user without a stars resource; one array, so views keyed on the rows keep their memos */
 const NO_STARRED_ROWS: DashboardQueryResult[] = [];
-
-// Created once, not per sort
-const collator = new Intl.Collator();
 
 /**
  * The star set as the argument of a starred search: the starred names of each of `kinds` that has any, by search
@@ -114,12 +111,12 @@ export const useStarredSearch = ({ refetchOnMountOrArgChange }: { refetchOnMount
   const { names } = useStarredNames(getStarredAppKinds());
   const apps = useSearchStarredAppKindsQuery(names ?? skipToken, { refetchOnMountOrArgChange });
 
-  const rows = useMemo(() => {
+  const rows = useMemo((): StarredRow[] | undefined => {
     if (!apps.data?.length) {
       return indexed.rows;
     }
     // Each search answers in its own order; sorted together, every kind reads as one list
-    return [...(indexed.rows ?? []), ...apps.data].sort((a, b) => collator.compare(a.name, b.name));
+    return [...(indexed.rows ?? []), ...apps.data].sort(byTitle);
   }, [indexed.rows, apps.data]);
   const dispatch = useDispatch();
   const { refetch: refetchIndexed } = indexed;
