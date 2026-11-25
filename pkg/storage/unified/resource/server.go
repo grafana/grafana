@@ -2572,11 +2572,17 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					case code == codes.DeadlineExceeded, code == codes.ResourceExhausted, code == codes.Canceled:
 						// Relist so the client can recover a selector transition that needs Previous.
 						return expired()
-					case err != nil && AsErrorResult(err).Code == http.StatusNotFound:
-						// History pruning can remove the previous revision while the event is still replayable.
-						s.log.Debug("previous object no longer available", "key", event.Key, "resource_version", event.PreviousRV)
 					case err != nil:
+						httpCode := AsErrorResult(err).Code
+						if httpCode == http.StatusNotFound {
+							// History pruning can remove the previous revision while the event is still replayable.
+							s.log.Debug("previous object no longer available", "key", event.Key, "resource_version", event.PreviousRV)
+							break
+						}
 						s.log.Error("error reading previous object", "key", event.Key, "resource_version", event.PreviousRV, "error", err)
+						if httpCode >= http.StatusInternalServerError {
+							return expired()
+						}
 					default:
 						if prevObj.ResourceVersion != event.PreviousRV {
 							s.log.Error("resource version mismatch", "key", event.Key, "resource_version", event.PreviousRV, "actual", prevObj.ResourceVersion)

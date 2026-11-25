@@ -1256,6 +1256,7 @@ type previousReadBackend struct {
 	legacyWatchBackend
 	reads      atomic.Int64
 	beforeRead func(context.Context, int64)
+	readError  *resourcepb.ErrorResult
 }
 
 func (b *previousReadBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
@@ -1266,7 +1267,7 @@ func (b *previousReadBackend) ReadResource(ctx context.Context, req *resourcepb.
 	if ctx.Err() != nil {
 		return nil
 	}
-	return &BackendReadResponse{Key: req.Key, ResourceVersion: req.ResourceVersion, Folder: "a", Value: []byte(`{"previous":true}`)}
+	return &BackendReadResponse{Key: req.Key, ResourceVersion: req.ResourceVersion, Folder: "a", Value: []byte(`{"previous":true}`), Error: b.readError}
 }
 
 func newPreviousReadTestServer(t *testing.T, beforeRead func(context.Context, int64)) (*server, *previousReadBackend) {
@@ -1729,6 +1730,39 @@ func (q heldPreviousReadQueue) Enqueue(ctx context.Context, _ string, run func()
 		return nil
 	case <-ctx.Done():
 		return ctx.Err()
+	}
+}
+
+func TestWatchExpiresWhenSharedBackendReadFails(t *testing.T) {
+	for _, code := range []int32{http.StatusInternalServerError, http.StatusServiceUnavailable} {
+		t.Run(http.StatusText(int(code)), func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				release := make(chan struct{})
+				unblock := sync.OnceFunc(func() { close(release) })
+				defer unblock()
+				srv, backend := newPreviousReadTestServer(t, func(context.Context, int64) {
+					<-release
+				})
+				backend.readError = &resourcepb.ErrorResult{Code: code}
+
+				owner, ownerDone := startPreviousReadWatch(t, srv, newWatchTestUser())
+				synctest.Wait()
+				backend.events <- previousReadUpdate()
+				synctest.Wait()
+				follower, followerDone := startPreviousReadWatch(t, srv, newWatchTestUser())
+				synctest.Wait()
+				unblock()
+				synctest.Wait()
+
+				require.EqualValues(t, 1, backend.reads.Load())
+				require.Empty(t, owner.events)
+				require.Empty(t, follower.events)
+				require.Len(t, ownerDone, 1)
+				require.Len(t, followerDone, 1)
+				require.True(t, IsResourceVersionExpired(<-ownerDone))
+				require.True(t, IsResourceVersionExpired(<-followerDone))
+			})
+		})
 	}
 }
 
