@@ -73,7 +73,7 @@ func TestCloudSettingsStorageModes(t *testing.T) {
 			}}}}
 			manifest := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { _ = json.NewEncoder(w).Encode(deployment) }))
 			defer manifest.Close()
-			cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": manifest.URL, "app_settings_enabled": "true"})
+			cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": manifest.URL, "app_settings_plugins": "example-app"})
 			cfg.UnifiedStorage = maps.Clone(tc.config)
 			legacy := &countingSettingsStore{Storage: appsettings.NewLegacySettingsStore("example-app", "example-app", &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
 				"example-app": {Enabled: true, JSONData: map[string]any{"origin": "cloudconfig"}},

@@ -668,7 +668,7 @@ describe('Assistant edits from Viewing while Composer is on', () => {
     resetComposerEnterRequestsForTests();
   });
 
-  it('uses Agent editing, as with Composer off, without asking Assistant to enter Composer', async () => {
+  it('uses Editing instead of Agent editing, without asking Assistant to enter Composer', async () => {
     const listener = jest.fn();
     stopListening = addComposerEnterRequestListener(listener);
     const scene = setup();
@@ -676,8 +676,16 @@ describe('Assistant edits from Viewing while Composer is on', () => {
     expect((await assistantChangesTitle(scene, 'Assistant draft')).success).toBe(true);
 
     expect(listener).not.toHaveBeenCalled();
-    expect(getDashboardMode(scene.state)).toBe('agent');
+    expect(getDashboardMode(scene.state)).toBe('edit');
     expect(scene.state.title).toBe('Assistant draft');
+  });
+
+  it('uses Editing on a dashboard without a uid too, though Composer waits for the first save', async () => {
+    const scene = setup(false, true);
+
+    expect((await assistantChangesTitle(scene, 'Assistant draft')).success).toBe(true);
+
+    expect(getDashboardMode(scene.state)).toBe('edit');
   });
 });
 

@@ -91,7 +91,7 @@ func TestCloudSettingsRoutes(t *testing.T) {
 				w.WriteHeader(http.StatusAccepted)
 			}))
 			defer fallbackServer.Close()
-			cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": manifestServer.URL, "app_settings_enabled": "true"})
+			cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": manifestServer.URL, "app_settings_plugins": "example-app"})
 			if withFallback {
 				addAggregateSection(t, cfg, "v2", map[string]string{"url": fallbackServer.URL, "discovery_auth": "none"})
 			}
@@ -252,9 +252,17 @@ func TestCloudSettingsRoutes(t *testing.T) {
 }
 
 func TestCloudSettingsEnablementRequiresDependencies(t *testing.T) {
-	cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": "https://plugins.invalid", "app_settings_enabled": "true"})
+	cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": "https://plugins.invalid", "app_settings_plugins": "example-app"})
 	_, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 	require.ErrorContains(t, err, "legacy settings provider")
+
+	// Without plugins to serve, settings are off and need no dependencies.
+	for _, plugins := range []string{"", " , ", "\t,\n,\u00a0"} {
+		cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": "https://plugins.invalid", "app_settings_plugins": plugins})
+		require.False(t, cloudAppSettingsEnabled(cfg))
+		_, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
+		require.NoError(t, err)
+	}
 }
 
 type settingsDestroyStore struct {
@@ -294,14 +302,26 @@ func TestCloudSettingsSourceGateAndFilter(t *testing.T) {
 	defer srv.Close()
 	for _, tc := range []struct {
 		source  string
-		enabled bool
+		plugins string
 		pattern string
-		want    int
+		want    []string
 	}{
-		{sourcePlugins, false, "", 0}, {sourcePlugins, true, "", 2}, {sourceCore, true, "", 0}, {sourceBridge, true, "", 0}, {sourcePlugins, true, "example-app", 1},
+		{sourcePlugins, "", "", nil},
+		{sourcePlugins, "\t,\n,\u00a0", "", nil},
+		{sourcePlugins, "*", "", []string{"example-app", "other-app"}},
+		{sourcePlugins, "example-app", "", []string{"example-app"}},
+		{sourcePlugins, "example-app, other-app", "", []string{"example-app", "other-app"}},
+		{sourcePlugins, " , example-app,\t,", "", []string{"example-app"}},
+		{sourcePlugins, "example-app,example-app", "", []string{"example-app"}},
+		{sourcePlugins, "*-app", "other-app", []string{"other-app"}},
+		{sourcePlugins, "example-app", "other-app", nil},
+		{sourcePlugins, "example-.*", "", nil},
+		{sourcePlugins, "example", "", nil},
+		{sourceCore, "*", "", nil},
+		{sourceBridge, "*", "", nil},
 	} {
 		cfg := setting.NewCfg()
-		cfg.Raw.Section(cloudRouterSection).Key("app_settings_enabled").SetValue(map[bool]string{true: "true", false: "false"}[tc.enabled])
+		cfg.Raw.Section(cloudRouterSection).Key("app_settings_plugins").SetValue(tc.plugins)
 		var patterns []string
 		if tc.pattern != "" {
 			patterns = []string{tc.pattern}
@@ -311,8 +331,42 @@ func TestCloudSettingsSourceGateAndFilter(t *testing.T) {
 		backends, skipped, err := target.fetch(t.Context())
 		require.NoError(t, err)
 		require.Zero(t, skipped)
-		require.Len(t, backends, tc.want)
+		var groups []string
+		for _, b := range backends {
+			groups = append(groups, b.Group().Name)
+		}
+		require.ElementsMatch(t, tc.want, groups, "source=%s plugins=%q pattern=%q", tc.source, tc.plugins, tc.pattern)
 		target.close()
+	}
+}
+
+func TestCloudSettingsAllowlistPreservesManifestRoutes(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(pluginManifestsFixture))
+	}))
+	defer srv.Close()
+	for _, tc := range []struct {
+		plugins string
+		want    []string
+	}{
+		{"", []string{"appsdktest.ext.grafana.app"}},
+		{"no-manifest-plugin", []string{"appsdktest.ext.grafana.app", "no-manifest-plugin"}},
+		{"grafana-appsdktest-app", []string{"appsdktest.ext.grafana.app", "grafana-appsdktest-app"}},
+	} {
+		t.Run(tc.plugins, func(t *testing.T) {
+			cfg := cfgWithCloudRouterSection(t, map[string]string{"app_settings_plugins": tc.plugins})
+			target, err := newPluginManifestsTarget(sourcePlugins, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{Cfg: cfg})
+			require.NoError(t, err)
+			t.Cleanup(target.close)
+			backends, skipped, err := target.fetch(t.Context())
+			require.NoError(t, err)
+			require.Zero(t, skipped)
+			var groups []string
+			for _, b := range backends {
+				groups = append(groups, b.Group().Name)
+			}
+			require.ElementsMatch(t, tc.want, groups)
+		})
 	}
 }
 
