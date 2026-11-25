@@ -1,14 +1,16 @@
+import { from, map, NEVER, Observable, throwError } from 'rxjs';
+
 import { type CurrentUserDTO, OrgRole } from '@grafana/data';
 import { mockLogger } from '@grafana/test-utils/unstable';
 
 import { config } from '../../config';
 import { type MonitoringLogger } from '../../utils/logging';
-import { type BackendSrv, type FetchError, setBackendSrv } from '../backendSrv';
+import { type BackendSrv, type BackendSrvRequest, type FetchError, setBackendSrv } from '../backendSrv';
 
 import { API_DISCOVERY_TIMEOUT_MS, getAPIGroup, invalidateAPIDiscovery, setAPIDiscoveryForTesting } from './discovery';
 import { type K8sAPIGroup, type K8sAPIGroupList } from './types';
 
-const backendGet = jest.fn();
+const backendFetch = jest.fn<Observable<{ data: unknown }>, [BackendSrvRequest]>();
 let logger: MonitoringLogger;
 const originalUser = config.bootData.user;
 const originalPublicDashboardAccessToken = config.publicDashboardAccessToken;
@@ -40,20 +42,24 @@ function setBootUser(user: Partial<CurrentUserDTO> | undefined) {
 }
 
 function respondTo(routes: Record<string, () => Promise<unknown>>) {
-  backendGet.mockImplementation((url: string) => {
+  backendFetch.mockImplementation(({ url }) => {
     const route = routes[url];
-    return route ? route() : Promise.reject(fetchError(404));
+    return from(route ? route() : Promise.reject(fetchError(404))).pipe(map((data) => ({ data })));
   });
 }
 
+function failWith(status: number) {
+  backendFetch.mockImplementation(() => throwError(() => fetchError(status)));
+}
+
 function requestedUrls(): string[] {
-  return backendGet.mock.calls.map(([url]) => url);
+  return backendFetch.mock.calls.map(([{ url }]) => url);
 }
 
 beforeEach(() => {
   jest.clearAllMocks();
   invalidateAPIDiscovery();
-  setBackendSrv({ get: backendGet } as unknown as BackendSrv);
+  setBackendSrv({ fetch: backendFetch } as unknown as BackendSrv);
   logger = mockLogger('grafana/runtime.apis.discovery');
   setBootUser({ isSignedIn: true, orgRole: OrgRole.Viewer });
   config.publicDashboardAccessToken = undefined;
@@ -78,14 +84,11 @@ describe('getAPIGroup', () => {
       await expect(getAPIGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
     });
 
-    it('requests the plain group list without an error toast', async () => {
+    it('requests the plain group list without an error toast, validating the path', async () => {
       await getAPIGroup('dashboard.grafana.app');
 
-      expect(backendGet).toHaveBeenCalledWith(
-        '/apis',
-        undefined,
-        undefined,
-        expect.objectContaining({ showErrorAlert: false })
+      expect(backendFetch).toHaveBeenCalledWith(
+        expect.objectContaining({ url: '/apis', method: 'GET', showErrorAlert: false, validatePath: true })
       );
     });
 
@@ -216,7 +219,7 @@ describe('getAPIGroup', () => {
       ['a 401', 401],
       ['a 403', 403],
     ])('returns undefined on %s, and retries on the next call', async (_, status) => {
-      backendGet.mockRejectedValue(fetchError(status));
+      failWith(status);
 
       await expect(getAPIGroup('dashboard.grafana.app')).resolves.toBeUndefined();
 
@@ -227,7 +230,7 @@ describe('getAPIGroup', () => {
     });
 
     it('logs both the failed root request and the failed group request', async () => {
-      backendGet.mockRejectedValue(fetchError(500));
+      failWith(500);
 
       await getAPIGroup('dashboard.grafana.app');
 
@@ -240,7 +243,7 @@ describe('getAPIGroup', () => {
 
     it('logs a failed request only to the discovery logger', async () => {
       const cacheLogger = mockLogger('grafana/runtime.utils.getCachedPromise');
-      backendGet.mockRejectedValue(fetchError(500));
+      failWith(500);
 
       await getAPIGroup('dashboard.grafana.app');
 
@@ -249,7 +252,7 @@ describe('getAPIGroup', () => {
 
     it('treats a request that outlasts the timeout as unknown, and retries on the next call', async () => {
       jest.useFakeTimers();
-      backendGet.mockReturnValue(new Promise(() => {}));
+      backendFetch.mockReturnValue(NEVER);
 
       const pending = getAPIGroup('dashboard.grafana.app');
       await jest.advanceTimersByTimeAsync(API_DISCOVERY_TIMEOUT_MS);
@@ -263,15 +266,15 @@ describe('getAPIGroup', () => {
       await expect(getAPIGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
     });
 
-    it('aborts a request that outlasts the timeout', async () => {
+    it('cancels a request that outlasts the timeout', async () => {
       jest.useFakeTimers();
-      backendGet.mockReturnValue(new Promise(() => {}));
+      const cancel = jest.fn();
+      backendFetch.mockReturnValue(new Observable(() => cancel));
 
       const pending = getAPIGroup('dashboard.grafana.app');
       await jest.advanceTimersByTimeAsync(API_DISCOVERY_TIMEOUT_MS);
 
-      const [, , , options] = backendGet.mock.calls[0];
-      expect(options.abortSignal.aborted).toBe(true);
+      expect(cancel).toHaveBeenCalledTimes(1);
 
       await jest.advanceTimersByTimeAsync(API_DISCOVERY_TIMEOUT_MS);
       await pending;
@@ -286,7 +289,7 @@ describe('getAPIGroup', () => {
       setBootUser(user);
 
       await expect(getAPIGroup('dashboard.grafana.app')).resolves.toBeUndefined();
-      expect(backendGet).not.toHaveBeenCalled();
+      expect(backendFetch).not.toHaveBeenCalled();
       expect(logger.logError).not.toHaveBeenCalled();
     });
 
@@ -296,7 +299,7 @@ describe('getAPIGroup', () => {
       config.publicDashboardAccessToken = 'public-token';
 
       await expect(getAPIGroup('dashboard.grafana.app')).resolves.toBeUndefined();
-      expect(backendGet).not.toHaveBeenCalled();
+      expect(backendFetch).not.toHaveBeenCalled();
     });
 
     it('requests the list once a session exists', async () => {
@@ -312,7 +315,7 @@ describe('getAPIGroup', () => {
 
   it('returns undefined without a request for a group name that is not a valid API group', async () => {
     await expect(getAPIGroup('../api/admin')).resolves.toBeUndefined();
-    expect(backendGet).not.toHaveBeenCalled();
+    expect(backendFetch).not.toHaveBeenCalled();
   });
 
   it('warns about a group name that is not a valid API group', async () => {
@@ -339,7 +342,7 @@ describe('setAPIDiscoveryForTesting', () => {
 
     await expect(getAPIGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
     await expect(getAPIGroup('annotation.grafana.app')).resolves.toBeUndefined();
-    expect(backendGet).not.toHaveBeenCalled();
+    expect(backendFetch).not.toHaveBeenCalled();
   });
 
   it('is cleared by invalidateAPIDiscovery()', async () => {

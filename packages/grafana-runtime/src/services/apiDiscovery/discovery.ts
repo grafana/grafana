@@ -1,3 +1,5 @@
+import { lastValueFrom, timeout, TimeoutError } from 'rxjs';
+
 import { isObject } from '@grafana/data';
 
 import {
@@ -25,13 +27,6 @@ const GROUP_NAME_PATTERN = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*
 // Groups with a pending or cached group-endpoint answer. Lookups for them skip `/apis`, so a broken root
 // endpoint isn't retried on every call, and invalidation uses them to find their cache entries.
 const groupsFromFallback = new Set<string>();
-
-class DiscoveryTimeoutError extends Error {
-  constructor(url: string) {
-    super(`API discovery request to ${url} timed out after ${API_DISCOVERY_TIMEOUT_MS}ms`);
-    this.name = 'DiscoveryTimeoutError';
-  }
-}
 
 /**
  * Rejects the cached request after the failure is logged with its URL and reason. The rejection keeps
@@ -162,29 +157,17 @@ async function fetchAPIGroup(group: string): Promise<APIGroupInfo | undefined> {
 }
 
 async function getWithTimeout(url: string): Promise<unknown> {
-  const controller = new AbortController();
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  // Racing the request, rather than relying on the abort alone, settles even if the request ignores the signal.
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => {
-      controller.abort();
-      reject(new DiscoveryTimeoutError(url));
-    }, API_DISCOVERY_TIMEOUT_MS);
-  });
-
-  try {
-    const request = getBackendSrv().get<unknown>(url, undefined, undefined, {
-      showErrorAlert: false,
-      abortSignal: controller.signal,
-    });
-    return await Promise.race([request, timeout]);
-  } finally {
-    clearTimeout(timer);
-  }
+  // On the deadline, `timeout` errors and unsubscribes, which cancels the request.
+  const { data } = await lastValueFrom(
+    getBackendSrv()
+      .fetch<unknown>({ url, method: 'GET', showErrorAlert: false, validatePath: true })
+      .pipe(timeout(API_DISCOVERY_TIMEOUT_MS))
+  );
+  return data;
 }
 
 function logRequestFailure(url: string, error: unknown): DiscoveryRequestError {
-  const timedOut = error instanceof DiscoveryTimeoutError;
+  const timedOut = error instanceof TimeoutError;
   logAPIDiscoveryError('API discovery: request failed', error, {
     ...getFetchErrorContext(error),
     url,
