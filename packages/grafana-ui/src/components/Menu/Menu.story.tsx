@@ -260,4 +260,13 @@ export function Examples() {
   );
 }
 
+export function CompactLinks() {
+  return (
+    <Menu size="sm" autoFocus={false}>
+      <Menu.Item label="Grafana documentation" url="https://grafana.com/docs/" variant="link" />
+      <Menu.Item label="Grafana community" url="https://community.grafana.com/" variant="link" />
+    </Menu>
+  );
+}
+
 export default meta;

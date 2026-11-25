@@ -169,3 +169,22 @@ it('does not overwrite submenu tab stops when the parent menu rerenders', async 
 
   expect(screen.getByRole('menuitem', { name: 'Nested' })).toHaveAttribute('tabindex', '0');
 });
+
+it.each([true, false])('restores access after an empty menu gains items (autoFocus=%s)', async (autoFocus) => {
+  const user = userEvent.setup();
+  const view = (populated: boolean) => (
+    <Menu autoFocus={autoFocus}>{populated && <MenuItem label="Loaded item" />}</Menu>
+  );
+  const { rerender } = render(view(false));
+  rerender(view(true));
+  const item = screen.getByRole('menuitem', { name: 'Loaded item' });
+  expect(item).toHaveAttribute('tabindex', '0');
+  if (!autoFocus) {
+    expect(item).not.toHaveFocus();
+    await user.tab();
+  }
+  expect(item).toHaveFocus();
+  rerender(view(false));
+  rerender(view(true));
+  expect(screen.getByRole('menuitem', { name: 'Loaded item' })).toHaveAttribute('tabindex', '0');
+});

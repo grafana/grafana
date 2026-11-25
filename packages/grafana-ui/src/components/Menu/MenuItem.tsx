@@ -320,7 +320,7 @@ const getStyles = (theme: GrafanaTheme2, size: 'sm' | 'md' | undefined) => {
         background: 'none',
         color: theme.colors.text.primary,
       },
-      '&:hover [data-role="menuitem-label"], &:focus-visible [data-role="menuitem-label"]': {
+      '&:hover > * > [data-role="menuitem-label"], &:focus-visible > * > [data-role="menuitem-label"]': {
         textDecoration: 'underline',
       },
     }),

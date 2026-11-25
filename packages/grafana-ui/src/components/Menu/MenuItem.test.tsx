@@ -122,7 +122,7 @@ describe('MenuItem', () => {
     expect(screen.getByRole('menuitem', { name: 'URL Item' })).toBeInTheDocument();
   });
 
-  it('keeps menu semantics while underlining only the link label', () => {
+  it('keeps menu semantics while underlining only the link label', async () => {
     render(
       <MenuItem
         label="External link"
@@ -131,6 +131,7 @@ describe('MenuItem', () => {
         component={() => <span>Custom content</span>}
         url="https://example.com"
         variant="link"
+        childItems={[<MenuItem key="nested" label="Nested action" />]}
       />
     );
 
@@ -153,9 +154,19 @@ describe('MenuItem', () => {
     for (const text of ['Link description', 'Ctrl+K', 'Custom content']) {
       expect(screen.getByText(text)).not.toHaveAttribute('data-role', 'menuitem-label');
     }
+    await user.hover(item);
+    const nestedLabel = await screen.findByText('Nested action');
     expect(underlineRules).toHaveLength(1);
-    expect(underlineRules[0]).toContain(':hover [data-role="menuitem-label"]');
-    expect(underlineRules[0]).toContain(':focus-visible [data-role="menuitem-label"]');
+    const selector = underlineRules[0]
+      .split('{')[0]
+      .replace(/\.[\w-]+/g, ':scope')
+      .replaceAll(':hover', '')
+      .replaceAll(':focus-visible', '');
+    const underlinedLabels = Array.from(item.querySelectorAll(selector));
+    expect(underlinedLabels).toContain(label);
+    expect(underlinedLabels).not.toContain(nestedLabel);
+    expect(underlineRules[0]).toContain(':hover>*>[data-role="menuitem-label"]');
+    expect(underlineRules[0]).toContain(':focus-visible>*>[data-role="menuitem-label"]');
   });
 
   it('renders extra component if provided', async () => {
