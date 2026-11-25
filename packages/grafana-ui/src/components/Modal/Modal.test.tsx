@@ -1,8 +1,9 @@
 import { UNSAFE_PortalProvider } from '@react-aria/overlays';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { type ReactNode, useEffect, useState } from 'react';
 
-import { getPortalContainer, PortalContainer } from '../Portal/Portal';
+import { getPortalContainer, Portal, PortalContainer } from '../Portal/Portal';
 
 import { Modal } from './Modal';
 
@@ -183,6 +184,138 @@ describe('Modal', () => {
       await userEvent.click(screen.getByTestId('page-content'));
 
       expect(onDismiss).toHaveBeenCalled();
+    });
+  });
+
+  // A Document Picture-in-Picture window (the Grafana Assistant pop-out) is another realm, as an iframe is. An app
+  // can render part of its tree there through a Portal; this window's portal container is not visible from there.
+  describe('inside a Portal in another window', () => {
+    let iframe: HTMLIFrameElement;
+    let otherDocument: Document;
+
+    beforeEach(() => {
+      iframe = document.createElement('iframe');
+      document.body.appendChild(iframe);
+      otherDocument = iframe.contentDocument!;
+    });
+
+    afterEach(() => {
+      iframe.remove();
+    });
+
+    // Mounts its portal at once and fills it later, as Combobox does with its options.
+    function LateOptions() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button onClick={() => setOpen(true)}>Show options</button>
+          <Portal>
+            <div role="listbox" aria-label="Options">
+              {open && (
+                <div role="option" aria-selected={false}>
+                  First
+                </div>
+              )}
+            </div>
+          </Portal>
+        </>
+      );
+    }
+
+    function MountCounter({ onMount }: { onMount: () => void }) {
+      useEffect(onMount, [onMount]);
+      return null;
+    }
+
+    function setup(onDismiss: jest.Mock, extraContent?: ReactNode) {
+      const ui = (isOpen: boolean) => (
+        <UNSAFE_PortalProvider getContainer={getPortalContainer}>
+          <PortalContainer />
+          <Portal root={otherDocument.body}>
+            <div data-testid="in-portal" />
+            <Modal title="Some Title" isOpen={isOpen} onDismiss={onDismiss}>
+              <div data-testid="modal-content">Content</div>
+              <LateOptions />
+              {extraContent}
+            </Modal>
+          </Portal>
+        </UNSAFE_PortalProvider>
+      );
+      const view = render(ui(false));
+      // A Portal hands its element to the portals inside it from its second render.
+      view.rerender(ui(false));
+      return { ...view, openModal: () => view.rerender(ui(true)) };
+    }
+
+    it('opens in that window', () => {
+      const { openModal, unmount } = setup(jest.fn());
+      openModal();
+
+      expect(within(otherDocument.body).getByRole('dialog')).toHaveTextContent('Content');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+      // Unmount before the iframe goes, or React cannot remove the portalled modal from it.
+      unmount();
+    });
+
+    it('pressing an overlay in the same Portal does not dismiss', async () => {
+      const onDismiss = jest.fn();
+      const { openModal, unmount } = setup(onDismiss);
+      openModal();
+
+      // Portals inside the modal render into the Portal it is in, next to the modal.
+      const overlay = otherDocument.createElement('button');
+      within(otherDocument.body).getByTestId('in-portal').parentElement?.appendChild(overlay);
+      await userEvent.click(overlay);
+
+      expect(onDismiss).not.toHaveBeenCalled();
+      unmount();
+    });
+
+    it('hides the rest of that Portal from assistive tech', () => {
+      const { openModal, unmount } = setup(jest.fn());
+      openModal();
+
+      // the content the app renders in the Portal next to the modal
+      expect(within(otherDocument.body).getByTestId('in-portal')).toHaveAttribute('aria-hidden', 'true');
+      unmount();
+    });
+
+    it('keeps options that a portal inside the modal shows later available to assistive tech', async () => {
+      const { openModal, unmount } = setup(jest.fn());
+      openModal();
+
+      await userEvent.click(within(otherDocument.body).getByRole('button', { name: 'Show options' }));
+
+      expect(within(otherDocument.body).getByRole('option', { name: 'First' })).toBeInTheDocument();
+      unmount();
+    });
+
+    it('mounts the portals inside the modal once, where they stay', () => {
+      const onMount = jest.fn();
+      const { openModal, unmount } = setup(
+        jest.fn(),
+        <Portal>
+          <MountCounter onMount={onMount} />
+        </Portal>
+      );
+      openModal();
+
+      // moving a portal to another element remounts what it holds
+      expect(onMount).toHaveBeenCalledTimes(1);
+      unmount();
+    });
+
+    it('clicking the backdrop still dismisses', async () => {
+      const onDismiss = jest.fn();
+      const { openModal, unmount } = setup(onDismiss);
+      openModal();
+
+      // hidden from assistive tech with the rest of the Portal, as it is only presentation
+      await userEvent.click(within(otherDocument.body).getByRole('presentation', { hidden: true }));
+
+      expect(onDismiss).toHaveBeenCalled();
+      unmount();
     });
   });
 });
