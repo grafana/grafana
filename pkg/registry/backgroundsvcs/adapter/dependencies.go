@@ -74,6 +74,10 @@ const (
 	// job queue.
 	ProvisioningJobQueue = provisioningapis.JobQueueServiceName
 
+	// ProvisioningBootstrap is the module name of the in-process provisioning
+	// bootstrap repository reconciler.
+	ProvisioningBootstrap = provisioningapis.BootstrapServiceName
+
 	// ProvisioningJobCleanup is the module name of the in-process provisioning
 	// expired-job cleanup controller.
 	ProvisioningJobCleanup = provisioningapis.JobCleanupServiceName
@@ -112,7 +116,8 @@ func dependencyMap() map[string][]string {
 		ProvisioningConnectionController: {GrafanaAPIServer},
 		ProvisioningRepositoryController: {GrafanaAPIServer},
 		ProvisioningJobQueue:             {GrafanaAPIServer},
+		ProvisioningBootstrap:            {GrafanaAPIServer},
 		ProvisioningJobCleanup:           {GrafanaAPIServer},
-		BackgroundServices:               {Core, Router, ProvisioningConnectionController, ProvisioningRepositoryController, ProvisioningJobQueue, ProvisioningJobCleanup},
+		BackgroundServices:               {Core, Router, ProvisioningConnectionController, ProvisioningRepositoryController, ProvisioningJobQueue, ProvisioningBootstrap, ProvisioningJobCleanup},
 	}
 }
