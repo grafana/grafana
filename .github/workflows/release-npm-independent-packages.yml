@@ -65,6 +65,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           node scripts/release/plan-release-tags.mts "$RUNNER_TEMP/plan.json"
           echo "::group::Plan"
           cat "$RUNNER_TEMP/plan.json"
@@ -136,6 +137,7 @@ jobs:
       - name: Version and generate changelogs
         id: prepare
         run: |
+          set -euo pipefail
           node scripts/release/prepare-release-pr.mts "$RUNNER_TEMP/prepare.json"
           echo "::group::Prepare"
           cat "$RUNNER_TEMP/prepare.json"
