@@ -3,8 +3,10 @@
 import {
   escapeStringForRegex,
   type FieldOverrideContext,
+  fieldReducers,
   getFieldDisplayName,
   type PanelOptionsEditorBuilder,
+  type PanelQuickEdit,
   ReducerID,
   standardEditorsRegistry,
 } from '@grafana/data';
@@ -102,6 +104,27 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
       defaultValue: '',
     });
   }
+}
+
+/**
+ * Whether to calculate a value or show all values, the calculation or row limit, and the fields it applies to, as a
+ * quick edit for panels that use {@link addStandardDataReduceOptions}. The choice comes first, as it hides either the
+ * calculation or the limit.
+ */
+export function calculationQuickEdit(): PanelQuickEdit<SingleStatBaseOptions> {
+  return {
+    id: 'calculation',
+    title: t('stat.quick-edits.calculation', 'Calculation'),
+    icon: 'calculator-alt',
+    optionIds: ['reduceOptions.values', 'reduceOptions.calcs', 'reduceOptions.limit', 'reduceOptions.fields'],
+    summary: ({ options }) => {
+      if (options.reduceOptions?.values) {
+        return { text: t('stat.add-standard-data-reduce-options.show-options.label-all-values', 'All values') };
+      }
+      const id = options.reduceOptions?.calcs?.[0] ?? ReducerID.lastNotNull;
+      return { text: fieldReducers.getIfExists(id)?.name ?? id };
+    },
+  };
 }
 
 export function addOrientationOption<T extends SingleStatBaseOptions>(
