@@ -77,13 +77,18 @@ func newCascadeDeleteStorage(store grafanarest.Storage, searcher resourcepb.Reso
 }
 
 // cascadeCollectionDeleter rejects collection deletes, which the registry runs item by item without
-// cascadeDeleteStorage.Delete: forced ones, and any selecting a folder the cascade controller finishes.
+// cascadeDeleteStorage.Delete: all of them while async cascade delete is on, otherwise forced ones and
+// any selecting a folder the cascade controller finishes.
 type cascadeCollectionDeleter struct {
 	lister rest.Lister
 	inner  rest.CollectionDeleter
 }
 
 func (c cascadeCollectionDeleter) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	// With async cascade delete on, every folder delete must go through Delete to reach the controller.
+	if folderAsyncCascadeDeleteEnabled(ctx) {
+		return nil, apierrors.NewMethodNotSupported(foldersv1.FolderResourceInfo.GroupResource(), "deletecollection")
+	}
 	if forceDeleteFromDeleteOptions(options) {
 		return nil, apierrors.NewBadRequest("forced collection delete is not supported for folders; delete folders individually")
 	}

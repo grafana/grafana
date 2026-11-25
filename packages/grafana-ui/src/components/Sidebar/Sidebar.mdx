@@ -1,5 +1,132 @@
 import { Meta, ArgTypes } from '@storybook/addon-docs/blocks';
 import { Sidebar } from './Sidebar';
+import { SidebarButton } from './SidebarButton';
 
-Sidebar
-When to use
+<Meta title="MDX|Sidebar" component={Sidebar} />
+
+# Sidebar
+
+`Sidebar` is a toolbar of icon buttons attached to the left or right edge of a view. Each `Sidebar.Button` opens or closes a pane next to the toolbar. The pane can be docked, so it pushes the main content aside, or undocked, so it floats over the content and closes when the user clicks outside it. Users can resize the pane, and resize the toolbar to show or hide button labels.
+
+## When to use
+
+- When a view has several tools or panels that users open and close while they keep working in the main content, for example settings, an outline or an "add element" panel in an editor
+- When only one of those panels is open at a time
+- With `tabsMode`, as a set of vertical tabs where one pane is always shown
+
+## Never use for
+
+- For a one-off panel opened from a single action, such as a details view or a form; use a [Drawer](?path=/docs/overlays-drawer--docs) instead
+- For a single toggle in a toolbar; use [ToolbarButton](?path=/docs/navigation-toolbarbutton--docs) instead. See [Toggle, selected and expanded states](?path=/docs/inputs-button--docs#toggle-selected-and-expanded-states) in the `Button` docs.
+- For items that really are tabs; use [TabsBar](?path=/docs/navigation-tabs--docs) instead. Tabs mode has no tab semantics, so screen readers don't announce the buttons as tabs.
+
+## Do's and don'ts
+
+- Do always pass a boolean to `active` on a `Sidebar.Button` that opens a pane (`active={openPane === 'settings'}`), so screen readers announce both the open and the closed state.
+- Don't add `aria-pressed` or your own active styles to `Sidebar.Button`. The component sets `aria-expanded` and the active style from `active`.
+
+## Usage
+
+`useSidebar` returns the sidebar state. Pass it to `Sidebar` as `contextValue`, and spread `outerWrapperProps` on the element that holds both the main content and the sidebar, so the content leaves room for the toolbar and a docked pane. That element needs `position: relative`.
+
+Render `Sidebar.OpenPane` for the pane that is open, and set `active` on its `Sidebar.Button`.
+
+```tsx
+import { useState } from 'react';
+import { Sidebar, useSidebar } from '@grafana/ui';
+
+const [openPane, setOpenPane] = useState('');
+const togglePane = (pane: string) => setOpenPane(openPane === pane ? '' : pane);
+
+const contextValue = useSidebar({
+  hasOpenPane: openPane !== '',
+  position: 'right',
+  persistenceKey: 'my-app',
+  onClosePane: () => setOpenPane(''),
+});
+
+<div className={styles.wrapper} {...contextValue.outerWrapperProps}>
+  <MainContent />
+  <Sidebar contextValue={contextValue}>
+    {openPane === 'settings' && (
+      <Sidebar.OpenPane>
+        <Sidebar.PaneHeader title="Settings" />
+        <SettingsForm />
+      </Sidebar.OpenPane>
+    )}
+    {openPane === 'outline' && (
+      <Sidebar.OpenPane>
+        <Sidebar.PaneHeader title="Outline" />
+        <Outline />
+      </Sidebar.OpenPane>
+    )}
+    <Sidebar.Toolbar>
+      <Sidebar.Button
+        icon="cog"
+        title="Settings"
+        active={openPane === 'settings'}
+        onClick={() => togglePane('settings')}
+      />
+      <Sidebar.Divider />
+      <Sidebar.Button
+        icon="list-ui-alt"
+        title="Outline"
+        active={openPane === 'outline'}
+        onClick={() => togglePane('outline')}
+      />
+    </Sidebar.Toolbar>
+  </Sidebar>
+</div>;
+```
+
+### Parts
+
+- `Sidebar`: the container. Takes `contextValue` from `useSidebar`.
+- `Sidebar.Toolbar`: the column of buttons.
+- `Sidebar.Button`: opens or closes a pane. Set `active` while its pane is open.
+- `Sidebar.Divider`: separates groups of buttons in the toolbar.
+- `Sidebar.OpenPane`: the open pane. Render one at a time.
+- `Sidebar.PaneHeader`: the pane title, with a dock toggle, a close button when `onClosePane` is set, a back button when `onGoBack` is set, and optional actions passed as children.
+
+### useSidebar options
+
+- `hasOpenPane`: whether a pane is open
+- `position`: `'right'` (default) or `'left'`
+- `tabsMode`: lays the sidebar out as vertical tabs, where you always render one pane. Disables resizing.
+- `defaultToCompact`: start with icons only, without labels. Defaults to `true`.
+- `defaultToDocked`: start with the pane docked. Defaults to `false`.
+- `defaultIsHidden`: start with the whole sidebar hidden
+- `persistenceKey`: stores docked, compact, size and hidden state in local storage under `grafana.ui.sidebar.{persistenceKey}`
+- `hiddenPersistenceKey`: a separate key for the hidden state, to share it across views that use different `persistenceKey` values
+- `onClosePane`: called when the pane closes, and on a click outside an undocked pane unless `onClickAway` is set
+- `onClickAway`: called instead of `onClosePane` on a click outside an undocked pane
+- `onGoBack` and `canGoBack`: show and enable the back button in `Sidebar.PaneHeader`
+- `edgeMargin`, `bottomMargin` and `contentMargin`: spacing in grid units. Each defaults to `2`.
+
+On small screens the pane is always undocked.
+
+### Tabs mode
+
+With `tabsMode`, the sidebar sits in the normal layout instead of over the content, so set it up differently from the example above:
+
+- Don't spread `outerWrapperProps`. It reserves space for a toolbar that already takes up its own space, which leaves an empty gap.
+- Don't pass `hasOpenPane` or `onClosePane`. With an undocked pane, a click outside it would close the pane, but in tabs mode one pane should always be shown.
+
+See the [Vertical tabs](?path=/story/overlays-sidebar--vertical-tabs) story for a working setup.
+
+## Accessibility
+
+- `Sidebar.Button` renders a native `<button>`. Its `title` is the accessible name (`aria-label`), the tooltip and, when labels are shown, the visible label. `tooltip` overrides the tooltip text only. Keep `title` short and unique within the toolbar.
+- `Sidebar.Button` sets `aria-expanded` from `active`, so screen readers announce whether its pane is open.
+- For a button that runs an action instead of opening a pane, leave `active` unset so it has no `aria-expanded`.
+- In tabs mode the buttons still use `aria-expanded`. There is no `tablist`, `tab` or `aria-selected`, so screen readers don't announce them as tabs.
+
+## Props
+
+### Sidebar
+
+<ArgTypes of={Sidebar} />
+
+### Sidebar.Button
+
+<ArgTypes of={SidebarButton} />

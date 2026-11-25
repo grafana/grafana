@@ -1,16 +1,14 @@
 import { generatedAPI } from '@grafana/api-clients/rtkq/collections/v1alpha1';
 import { t } from '@grafana/i18n';
 import { handleError } from 'app/api/utils';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
-import { notifyApp } from 'app/core/reducers/appNotification';
 
+// A star change reports its failure here, whoever made it. Confirming a stored change is left to the caller
 export const collectionsAPIv1alpha1 = generatedAPI.enhanceEndpoints({
   endpoints: {
     addStar: {
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
         try {
           await queryFulfilled;
-          dispatch(notifyApp(createSuccessNotification(t('dashboard.toolbar.star-added', 'Added to starred'))));
         } catch (e) {
           handleError(e, dispatch, t('dashboard.toolbar.star-add-error', 'Failed to add to starred'));
         }
@@ -20,7 +18,6 @@ export const collectionsAPIv1alpha1 = generatedAPI.enhanceEndpoints({
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
         try {
           await queryFulfilled;
-          dispatch(notifyApp(createSuccessNotification(t('dashboard.toolbar.star-removed', 'Removed from starred'))));
         } catch (e) {
           handleError(e, dispatch, t('dashboard.toolbar.star-remove-error', 'Failed to remove from starred'));
         }
