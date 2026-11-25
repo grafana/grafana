@@ -556,6 +556,39 @@ func TestConvertRolePermissionsToTuples(t *testing.T) {
 	})
 }
 
+func TestRoleToTuplesReportingGrants(t *testing.T) {
+	for _, tc := range []struct {
+		action, scope, relation string
+	}{
+		{"reports:read", "reports:*", "get"},
+		{"reports:write", "reports:id:*", "update"},
+		{"reports:delete", "reports:uid:*", "delete"},
+		{"reports:create", "", "create"},
+		{"reports:read", "*", "get"},
+		{"reports:read", "", ""},
+		{"reports:read", "reports:id:42", ""},
+		{"reports:write", "reports:uid:weekly", ""},
+		{"reports:create", "reports:id:42", ""},
+		{"reports:read", "dashboards:*", ""},
+		{"reports:read", "reports:other:*", ""},
+		{"reports:send", "reports:*", ""},
+	} {
+		t.Run(tc.action+"/"+tc.scope, func(t *testing.T) {
+			tuples, err := RoleToTuples("reporting", []*authzextv1.RolePermission{{Action: tc.action, Scope: tc.scope}})
+			require.NoError(t, err)
+			if tc.relation == "" {
+				require.Empty(t, tuples)
+				return
+			}
+			require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{{
+				User:     "role:reporting#assignee",
+				Relation: tc.relation,
+				Object:   "group_resource:reporting.grafana.app/reports",
+			}}), tupleKeyStrings(tuples))
+		})
+	}
+}
+
 func TestUserManagementToTuples(t *testing.T) {
 	const subject = "role:role-1#assignee"
 	const usersObject = "group_resource:iam.grafana.app/users"

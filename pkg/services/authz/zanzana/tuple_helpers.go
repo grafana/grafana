@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/datasourcek8s"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
@@ -153,6 +154,7 @@ func TupleStringWithoutCondition(tuple *openfgav1.TupleKey) string {
 // RolePermission represents a permission that can be converted to a Zanzana tuple.
 type RolePermission struct {
 	Action     string
+	Scope      string
 	Kind       string
 	Identifier string
 }
@@ -164,6 +166,8 @@ type RolePermission struct {
 // - Deduplication of tuples
 //
 // Returns a slice of tuples ready to be written to Zanzana, or nil if no valid tuples could be created.
+//
+//nolint:gocyclo
 func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission) ([]*openfgav1.TupleKey, error) {
 	if len(permissions) == 0 {
 		return nil, nil
@@ -177,6 +181,13 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 	folderResourceTuples := make(map[string]*openfgav1.TupleKey) // key is tuple without condition
 
 	for _, perm := range permissions {
+		if strings.HasPrefix(perm.Action, "reports:") {
+			if tuple := reportingPermissionTuple(subject, perm); tuple != nil {
+				tupleMap[tuple.String()] = tuple
+			}
+			continue
+		}
+
 		// Role-management actions (roles:read/write/delete) take a dedicated
 		// translation path — their scope kinds (permissions:type:delegate,
 		// roles:*) aren't in the standard resource translation table, so
@@ -284,6 +295,28 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 	return tuples, nil
 }
 
+func reportingPermissionTuple(subject string, perm RolePermission) *openfgav1.TupleKey {
+	if !accesscontrol.IsOrgWideReportGrant(perm.Action, perm.Scope) {
+		return nil
+	}
+
+	var relation string
+	switch perm.Action {
+	case "reports:read":
+		relation = RelationGet
+	case "reports:create":
+		relation = RelationCreate
+	case "reports:write":
+		relation = RelationUpdate
+	case "reports:delete":
+		relation = RelationDelete
+	default:
+		return nil
+	}
+
+	return NewGroupResourceTuple(subject, relation, "reporting.grafana.app", "reports", "")
+}
+
 // Datasource action sets and caching writes each grant multiple operations.
 // Expand these when writing roles so ordinary resource checks are sufficient.
 func datasourceRolePermissionTuples(subject string, perm RolePermission) []*openfgav1.TupleKey {
@@ -335,6 +368,7 @@ func RoleToTuples(roleUID string, permissions []*authzextv1.RolePermission) ([]*
 		kind, _, identifier := splitScope(perm.Scope)
 		rolePerms = append(rolePerms, RolePermission{
 			Action:     perm.Action,
+			Scope:      perm.Scope,
 			Kind:       kind,
 			Identifier: identifier,
 		})

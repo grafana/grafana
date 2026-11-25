@@ -344,7 +344,7 @@ func roleBindingsCollector(store db.DB) legacyTupleCollector {
 func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		var query = `
-			SELECT r.uid as role_uid, p.action, p.kind, p.identifier
+			SELECT r.uid as role_uid, p.action, p.scope, p.kind, p.identifier
 			FROM permission p
 			INNER JOIN role r ON p.role_id = r.id
 			LEFT JOIN builtin_role br ON r.id  = br.role_id
@@ -354,6 +354,7 @@ func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 
 		type Permission struct {
 			Action     string `xorm:"action"`
+			Scope      string
 			Kind       string
 			Identifier string
 			RoleUID    string `xorm:"role_uid"`
@@ -372,6 +373,7 @@ func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 		for _, p := range permissions {
 			rolePermissionsMap[p.RoleUID] = append(rolePermissionsMap[p.RoleUID], zanzana.RolePermission{
 				Action:     p.Action,
+				Scope:      p.Scope,
 				Kind:       p.Kind,
 				Identifier: p.Identifier,
 			})

@@ -1175,6 +1175,11 @@ func dualCheckFolderAuthz(verb string) (string, []string) {
 func (s *Service) getScopeMap(permissions []accesscontrol.Permission) map[string]bool {
 	permMap := make(map[string]bool, len(permissions))
 	for _, perm := range permissions {
+		// Filter report grants before wildcard normalization loses their scope.
+		if strings.HasPrefix(perm.Action, "reports:") && !accesscontrol.IsOrgWideReportGrant(perm.Action, perm.Scope) {
+			continue
+		}
+
 		// We've had cases where the scope wasn't split properly,
 		// failing wildcard checks. This is a recovery mechanism.
 		if perm.Kind == "" && perm.Scope != "" {
