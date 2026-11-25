@@ -5,14 +5,32 @@ import { ExperimentalTimeRangePicker as TimeRangePicker } from './TimeRangePicke
 
 Use `TimeRangePicker` to select relative or absolute time ranges, with optional timezone and fiscal-year controls.
 
+## When to use
+
+Use for dashboard or query time ranges that need relative presets, absolute dates, and time navigation.
+
+## Never use for
+
+Use `DatePicker` for a single date and `TimeOfDayPicker` for a time without a date range.
+
+## Do's and don'ts
+
+Keep `value` in sync with `onChange`. Use `quickRanges` to customize presets rather than changing the picker internals. Do not assume the picker persists `history`; supply it from the caller.
+
 ## Usage
 
 Import the supported component from `@grafana/ui`. Supply `value`, `onChange`, and the navigation callbacks. Use `quickRanges` to replace the built-in presets and `history` to supply recently used absolute ranges.
 
-## Experimental compact design
+### Experimental compact design
 
 Grafana's experimental tabbed design is available through `ExperimentalTimeRangePicker` in `@grafana/ui/internal`. Its `compactDesign`, `hideHistory`, and `hideFiscalYear` options are internal and may change without notice. They are not part of `TimeRangePickerProps`.
 
-The compact design separates Relative and Absolute ranges. Search accepts custom durations such as `3h`; Enter applies a result only when search is nonempty. Arrow keys, Home, and End switch tabs while preserving tab focus. The inline calendar updates the date inputs; **Apply time range** commits the range after any time edits.
+The compact design separates Relative and Absolute ranges. Search accepts custom durations such as `3h`; Enter applies a result only when search is nonempty. The inline calendar updates the date inputs; **Apply time range** commits the range after any time edits.
+
+## Accessibility
+
+In the experimental compact design, Arrow keys, Home, and End switch tabs while preserving tab focus. Enter applies a search result only when search is nonempty. Keep navigation callbacks connected to the corresponding time-range actions.
+
+## Props
 
 <ArgTypes of={TimeRangePicker} />
