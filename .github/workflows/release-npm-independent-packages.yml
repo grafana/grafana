@@ -64,7 +64,12 @@ jobs:
         id: plan
         env:
           GH_TOKEN: ${{ github.token }}
-        run: node scripts/release/plan-release-tags.mts >> "$GITHUB_OUTPUT"
+        run: |
+          node scripts/release/plan-release-tags.mts "$RUNNER_TEMP/plan.json"
+          echo "::group::Plan"
+          cat "$RUNNER_TEMP/plan.json"
+          echo "::endgroup::"
+          jq -r 'to_entries[] | "\(.key)=\(.value)"' "$RUNNER_TEMP/plan.json" >> "$GITHUB_OUTPUT"
 
   # One call of the shared workflow for each tag. It creates an annotated tag and does nothing when the same tag is
   # already there, so a retry is safe. A dry run does not create tags.
@@ -130,7 +135,12 @@ jobs:
 
       - name: Version and generate changelogs
         id: prepare
-        run: node scripts/release/prepare-release-pr.mts >> "$GITHUB_OUTPUT"
+        run: |
+          node scripts/release/prepare-release-pr.mts "$RUNNER_TEMP/prepare.json"
+          echo "::group::Prepare"
+          cat "$RUNNER_TEMP/prepare.json"
+          echo "::endgroup::"
+          jq -r 'to_entries[] | "\(.key)=\(.value)"' "$RUNNER_TEMP/prepare.json" >> "$GITHUB_OUTPUT"
 
       - name: Describe the dry run
         if: env.DRY_RUN == 'true' && steps.prepare.outputs.changed == 'true'

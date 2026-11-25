@@ -2,12 +2,13 @@
 // nx-release:pending and works out which independent packages it released. The workflow creates the tags with
 // create-release-tag.yml and then swaps the label, so this script only reads.
 //
-// Usage: node scripts/release/plan-release-tags.mts >> "$GITHUB_OUTPUT"
+// Usage: node scripts/release/plan-release-tags.mts <output-file>
 // Reads its input from the environment: GITHUB_REPOSITORY, GITHUB_SHA and a GH_TOKEN that may read pull requests.
-// Prints pr (the PR to finish, empty when there is none), tagged (a JSON list of {name, tag, commit}), matrix
-// (the same list in the form a job matrix reads), release_created and sha to stdout.
+// Writes pr (the PR to finish, empty when there is none), tagged (a JSON list of {name, tag, commit}), matrix
+// (the same list in the form a job matrix reads), release_created and sha to the output file.
 
 import { execFileSync } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
 
 import { getIndependentPackages, tagFor, type IndependentPackage } from './lib/independent-packages.mts';
 
@@ -172,6 +173,11 @@ function versionsAt(commit: string, packages: IndependentPackage[]): Versions {
 
 if (import.meta.main) {
   try {
+    const outputPath = process.argv[2];
+    if (!outputPath) {
+      throw new Error('Pass the path of the file to write the step outputs to.');
+    }
+
     const packages = await getIndependentPackages();
     const prs = listMergedPendingPrs(requireEnv('GITHUB_REPOSITORY')).map((pr) => ({
       ...pr,
@@ -182,9 +188,7 @@ if (import.meta.main) {
     const { plan, warnings } = planReleaseTags(packages, requireEnv('GITHUB_SHA'), prs);
     warnings.forEach((warning) => console.error(`::warning::${warning}`));
 
-    for (const [key, value] of Object.entries(formatOutputs(plan))) {
-      console.log(`${key}=${value}`);
-    }
+    writeFileSync(outputPath, JSON.stringify(formatOutputs(plan), null, 2));
   } catch (error) {
     console.error(`::error::${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
