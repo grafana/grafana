@@ -19,6 +19,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -114,9 +115,10 @@ func TestJobQueueService_Run(t *testing.T) {
 func newTestJobQueueService(t *testing.T) (*JobQueueService, *APIBuilder) {
 	t.Helper()
 	builder := &APIBuilder{
-		tracer:        tracing.NewNoopTracerService(),
-		registry:      prometheus.NewPedanticRegistry(),
-		loopbackReady: make(chan struct{}),
+		tracer:                    tracing.NewNoopTracerService(),
+		registry:                  prometheus.NewPedanticRegistry(),
+		loopbackReady:             make(chan struct{}),
+		supportedResourceProvider: resources.NewSupportedResourceProvider(nil),
 	}
 	return ProvideJobQueueService(setting.NewCfg(), builder, nil, nil), builder
 }

@@ -28,6 +28,7 @@ func newClassifierDriver(t *testing.T, natsBacked bool) *ConcurrentJobDriver {
 		prometheus.NewRegistry(),
 		nil,
 		natsBacked,
+		nil,
 	)
 	require.NoError(t, err)
 	return driver
@@ -223,7 +224,7 @@ func TestConcurrentJobDriver_AlreadyClaimedNotAttributed(t *testing.T) {
 
 	reg := prometheus.NewRegistry()
 	driver, err := NewConcurrentJobDriver(1, time.Minute, 30*time.Second, 30*time.Second,
-		store, &MockRepoGetter{}, &MockHistoryWriter{}, reg, nil, false)
+		store, &MockRepoGetter{}, &MockHistoryWriter{}, reg, nil, false, nil)
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -280,7 +281,7 @@ func TestConcurrentJobDriver_RecordsDeliveryLatency(t *testing.T) {
 
 	reg := prometheus.NewRegistry()
 	driver, err := NewConcurrentJobDriver(1, time.Minute, 30*time.Second, 30*time.Second,
-		store, repoGetter, history, reg, nil, false, worker)
+		store, repoGetter, history, reg, nil, false, nil, worker)
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -425,6 +426,7 @@ func newSuccessfulJobDriver(t *testing.T, natsBacked bool) (*ConcurrentJobDriver
 		reg,
 		nil,
 		natsBacked,
+		nil,
 		worker,
 	)
 	require.NoError(t, err)

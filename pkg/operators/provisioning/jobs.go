@@ -54,6 +54,11 @@ func buildJobQueue(
 		return nil, fmt.Errorf("failed to get URL provider: %w", err)
 	}
 
+	supportedResources, err := controllerCfg.SupportedResources()
+	if err != nil {
+		return nil, fmt.Errorf("get supported resources: %w", err)
+	}
+
 	return jobqueue.ProvideJobQueue(
 		jobqueue.Config{
 			ConcurrentDrivers:    controllerCfg.concurrentDrivers,
@@ -80,6 +85,7 @@ func buildJobQueue(
 			// The operator has no rendering service, so pull request comments carry no screenshots.
 			ScreenshotRenderer: pullrequest.NewNoOpRenderer(),
 			PullRequestURLs:    pullrequest.URLProvider{Internal: urlProvider, Public: urlProvider},
+			SupportedResources: supportedResources,
 		},
 	)
 }

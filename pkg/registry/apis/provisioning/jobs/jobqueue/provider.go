@@ -73,6 +73,9 @@ type Dependencies struct {
 	PullRequestURLs    pullrequest.URLProvider
 	// ExtraWorkers are appended to the built-in workers.
 	ExtraWorkers []jobs.Worker
+	// SupportedResources are the configured resources, used to name a job's summary rows by
+	// the collection covering a kind rather than by the group that served each resource.
+	SupportedResources []resources.SupportedResource
 }
 
 // Queue is a ConcurrentJobDriver fed by the jobs informer.
@@ -103,6 +106,7 @@ func ProvideJobQueue(cfg Config, deps Dependencies) (*Queue, error) {
 		deps.Registry,
 		&metrics,
 		nats.Enabled(deps.Subscriber),
+		deps.SupportedResources,
 		newWorkers(cfg, deps, metrics)...,
 	)
 	if err != nil {

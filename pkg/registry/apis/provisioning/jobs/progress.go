@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -64,9 +66,12 @@ type jobProgressRecorder struct {
 	metrics             *JobMetrics
 	action              provisioning.JobAction
 	variance            string
+	// supportedResources is the configured resource set, used to summarise a collection's
+	// members under the collection. Empty summarises every result under its served group.
+	supportedResources []resources.SupportedResource
 }
 
-func NewJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action provisioning.JobAction) JobProgressRecorder {
+func NewJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action provisioning.JobAction, supportedResources []resources.SupportedResource) JobProgressRecorder {
 	return &jobProgressRecorder{
 		started:             time.Now(),
 		notifyImmediatelyFn: maybeNotifyProgress(NotifyThrottleInterval, progressFn),
@@ -75,6 +80,7 @@ func NewJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action p
 		resultReasons:       make(map[string]struct{}),
 		metrics:             metrics,
 		action:              action,
+		supportedResources:  supportedResources,
 	}
 }
 
@@ -316,11 +322,14 @@ func (r *jobProgressRecorder) summary() []*provisioning.JobResourceSummary {
 
 func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 	// Note: This method is called from Record() which already holds the lock
-	key := result.Group() + ":" + result.Kind()
+	// A member is summarised under its collection, the group the rest of provisioning
+	// addresses it by, so one kind stays one row instead of one per served group.
+	group := resources.StorageGroup(r.supportedResources, schema.GroupKind{Group: result.Group(), Kind: result.Kind()})
+	key := group + ":" + result.Kind()
 	summary, exists := r.summaries[key]
 	if !exists {
 		summary = &provisioning.JobResourceSummary{
-			Group: result.Group(),
+			Group: group,
 			Kind:  result.Kind(),
 		}
 		r.summaries[key] = summary

@@ -141,6 +141,7 @@ func (s *JobQueueService) runQueue(ctx context.Context, restConfig *clientrest.C
 		ScreenshotRenderer:  s.screenshotRenderer,
 		PullRequestURLs:     s.pullRequestURLs,
 		ExtraWorkers:        b.extraWorkers,
+		SupportedResources:  b.supportedResourceProvider.Configured(),
 	})
 	if err != nil {
 		return err

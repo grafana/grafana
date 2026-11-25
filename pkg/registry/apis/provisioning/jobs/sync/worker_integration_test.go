@@ -63,7 +63,7 @@ func TestIntegrationSyncWorker_EarlySetupFailure(t *testing.T) {
 
 	progress := jobs.NewJobProgressRecorder(func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
-	}, nil, provisioning.JobActionPull)
+	}, nil, provisioning.JobActionPull, nil)
 
 	job := provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
