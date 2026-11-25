@@ -41,7 +41,7 @@ You can use variables in:
 - [Dashboard and panel links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/manage-dashboard-links/)
 - Titles
 - Descriptions
-- Panel options, such as thresholds. With the `grafana.panelOptionInterpolation` feature toggle enabled, you can also use variables in other numeric options, such as **Min** and **Max**, and in string options, such as **Unit** and value mapping display text.
+- [Panel options](#variables-in-panel-options) that you type a number or text into
 - [Transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/transform-data/)
 
 To work with variables, you typically do the following:
@@ -81,6 +81,19 @@ Choose a variable type based on how you want Grafana to get the value and how us
 | Switch        | Viewers need to toggle between two configured values.                                                                 |
 
 For the complete list of variable settings and type-specific steps, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/).
+
+## Variables in panel options
+
+You can use a variable in a panel option only if the option has a field that you type a number or text into.
+Options that you set with a drop-down list, radio buttons, a switch, or a slider don't accept variables.
+
+The following panel options accept variables:
+
+- **Numeric options:** Options with a number field, such as **Min**, **Max**, and **Decimals**. Requires the `grafana.panelOptionInterpolation` feature toggle.
+- **Unit:** Requires the `grafana.panelOptionInterpolation` feature toggle.
+- **Thresholds:** The value of each threshold step.
+- **Value mappings:** The display text of each mapping. The value, range, or regular expression that a mapping matches doesn't accept variables. Requires the `grafana.panelOptionInterpolation` feature toggle.
+- **Display name and axis label:** The **Display name** option and the axis **Label** option.
 
 ## Template variables {#templates}
 
