@@ -80,3 +80,88 @@ it('consumes an empty manual edit on blur before a later props-only preview', ()
   fireEvent.blur(input);
   expect(props.onRunQuery).not.toHaveBeenCalled();
 });
+
+it('repaints the Math change when browser wrapping moves it to another row', () => {
+  const originalObserver = window.ResizeObserver;
+  let resize: (() => void) | undefined;
+  const disconnect = jest.fn();
+  window.ResizeObserver = class implements ResizeObserver {
+    constructor(callback: ResizeObserverCallback) {
+      resize = () => callback([], this);
+    }
+    observe() {}
+    unobserve() {}
+    disconnect = disconnect;
+  };
+
+  let handle: QueryCoauthoringEditorHandle | undefined;
+  const host: QueryCoauthoringEditorHost = {
+    version: 1,
+    register(next) {
+      handle = next;
+      return () => {};
+    },
+    invoke: jest.fn(),
+  };
+  const expression = '$A + $B + $C + $D + 99';
+  const createRange = document.createRange.bind(document);
+  let rangeTop = 26;
+  const rangeMock = jest.spyOn(document, 'createRange').mockImplementation(() => {
+    const range = createRange();
+    // jsdom has no text layout, so supply the visual row from the browser.
+    const rect: DOMRect = {
+      x: 0,
+      y: rangeTop,
+      top: rangeTop,
+      right: 12,
+      bottom: rangeTop + 20,
+      left: 0,
+      width: 12,
+      height: 20,
+      toJSON: () => ({}),
+    };
+    range.getClientRects = () => Object.assign([rect], { item: (index: number) => (index === 0 ? rect : null) });
+    return range;
+  });
+  try {
+    const view = render(
+      <Math
+        query={{ refId: 'B', type: ExpressionQueryType.math, expression }}
+        onChange={jest.fn()}
+        onRunQuery={jest.fn()}
+        labelWidth={10}
+        queryCoauthoring={host}
+      />
+    );
+    const input = screen.getByRole('textbox');
+    if (!handle?.showChanges || !(input instanceof HTMLTextAreaElement)) {
+      throw new Error('Expected registered Math editor');
+    }
+    const width = jest.spyOn(input, 'clientWidth', 'get').mockReturnValue(250);
+    const background = jest.spyOn(input.style, 'backgroundImage', 'set');
+    const from = expression.indexOf('99');
+    handle.showChanges([
+      {
+        original: '$A + $B + $C + $D + 11',
+        proposed: expression,
+        originalRanges: [{ from, to: from + 2 }],
+        proposedRanges: [{ from, to: from + 2 }],
+      },
+    ]);
+    expect(background).toHaveBeenLastCalledWith(expect.stringContaining('transparent 54px'));
+    if (!resize) {
+      throw new Error('Expected Math editor resize observer');
+    }
+    rangeTop = 0;
+    width.mockReturnValue(780);
+    resize();
+    expect(background).toHaveBeenLastCalledWith(expect.stringContaining('transparent 2px'));
+    view.unmount();
+    expect(background).toHaveBeenLastCalledWith('');
+    background.mockRestore();
+    expect(disconnect).toHaveBeenCalledTimes(1);
+  } finally {
+    rangeMock.mockRestore();
+    window.ResizeObserver = originalObserver;
+  }
+});
