@@ -35,7 +35,7 @@ import { LazyFeatureControlFloating } from './FeatureControl/LazyFeatureControl'
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { useMegaMenuFocusHelper } from './MegaMenu/utils';
 import { PageAreaEndsAboveDockContext } from './PageAreaEnd';
-import { PageCanvasFrame } from './PageCanvas/PageCanvasFrame';
+import { isPageCovered, PAGE_CANVAS_PANE_ID, PageCanvasFrame } from './PageCanvas/PageCanvasFrame';
 import { PageCanvasJoinContext } from './PageCanvas/PageCanvasJoin';
 import { usePageCanvas } from './PageCanvas/usePageCanvas';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
@@ -83,6 +83,8 @@ export function AppChrome({ children }: Props) {
   // With a canvas, its tab strip stays above the page, so the page scrolls inside the page area as it does beside the
   // docked sidebar.
   const pageAreaContained = !state.chromeless && (isExtensionSidebarOpen || pageCanvas !== null);
+  // A pane tab leaves the page inert, so "Skip to main content" lands on the pane covering it.
+  const mainContentId = isPageCovered(pageCanvas) ? PAGE_CANVAS_PANE_ID : 'pageContent';
 
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const isScopesDashboardsOpen = Boolean(
@@ -208,10 +210,10 @@ export function AppChrome({ children }: Props) {
         <>
           <LinkButton
             className={styles.skipLink}
-            href="#pageContent"
+            href={`#${mainContentId}`}
             onClick={(e) => {
               e.preventDefault();
-              document.getElementById('pageContent')?.focus();
+              document.getElementById(mainContentId)?.focus();
             }}
           >
             <Trans i18nKey="app-chrome.skip-content-button">Skip to main content</Trans>

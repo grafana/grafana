@@ -74,9 +74,12 @@ function isFunction(value: unknown): value is (...args: unknown[]) => unknown {
   return typeof value === 'function';
 }
 
-/** A path in this Grafana: a plugin's data must not send the router to another origin or a script URL. */
+/**
+ * A path in this Grafana: a plugin's data must not send the router to another origin or a script URL. A backslash,
+ * whitespace or a control character never belongs in one.
+ */
 function isAppPath(value: unknown): value is string {
-  return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') && !/[\\\s]/.test(value);
+  return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') && !/[\\\s\p{Cc}]/u.test(value);
 }
 
 function parseIndicator(value: unknown): PageCanvasTabIndicator | undefined {

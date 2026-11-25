@@ -2,10 +2,26 @@ import { locationService } from '@grafana/runtime';
 
 import { type PageCanvasModel, type PageCanvasTab } from './types';
 
+/**
+ * Whether the page at `href` is showing: the same path, with each of the href's params at the same value. The URL
+ * can carry more params than the href, such as `orgId` or a plugin's own canvas params, and the hash doesn't count.
+ */
+function isShowing(href: string): boolean {
+  const { pathname, search } = locationService.getLocation();
+  const [beforeHash] = href.split('#');
+  const queryStart = beforeHash.indexOf('?');
+  const path = queryStart === -1 ? beforeHash : beforeHash.slice(0, queryStart);
+  if (path !== pathname) {
+    return false;
+  }
+  const current = new URLSearchParams(search);
+  const wanted = new URLSearchParams(queryStart === -1 ? '' : beforeHash.slice(queryStart + 1));
+  return [...wanted].every(([key, value]) => current.getAll(key).includes(value));
+}
+
 /** Sends the router to `href`, unless the page there is already showing. */
 function showPage(href: string) {
-  const { pathname, search } = locationService.getLocation();
-  if (`${pathname}${search}` !== href) {
+  if (!isShowing(href)) {
     locationService.push(href);
   }
 }

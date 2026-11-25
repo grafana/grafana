@@ -9,7 +9,7 @@ import { PageCanvasTabs, pageCanvasTabElementId } from './PageCanvasTabs';
 import { type PageCanvasModel } from './types';
 import { usePageCanvasShortcuts } from './usePageCanvasShortcuts';
 
-const PAGE_CANVAS_PANE_ID = 'page-canvas-pane';
+export const PAGE_CANVAS_PANE_ID = 'page-canvas-pane';
 
 interface Props {
   canvas: PageCanvasModel | null;
@@ -21,7 +21,7 @@ interface Props {
 }
 
 /** Whether the active tab covers the page: a pane tab does, and so does the reopen state when every tab is closed. */
-function isPageCovered(canvas: PageCanvasModel | null): boolean {
+export function isPageCovered(canvas: PageCanvasModel | null): boolean {
   if (!canvas) {
     return false;
   }
@@ -47,6 +47,7 @@ export function PageCanvasFrame({ canvas, pane, className, renderPage }: Props) 
           className={cx(styles.pane, covered && styles.paneCovering)}
           role={covered ? 'tabpanel' : undefined}
           aria-labelledby={covered && canvas && !allClosed ? pageCanvasTabElementId(canvas.activeTabId) : undefined}
+          tabIndex={covered ? -1 : undefined}
           data-testid="page-canvas-pane"
         >
           {allClosed && (

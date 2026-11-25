@@ -1584,6 +1584,38 @@ describe('AppChrome', () => {
       expect(screen.queryByTestId('page-canvas-plugin')).not.toBeInTheDocument();
     });
 
+    it('starts without a canvas when the plugin mounts again after kiosk mode', async () => {
+      const { context } = setup(<Page navId="child1">Children</Page>);
+      await screen.findByTestId('page-canvas-plugin');
+      act(() => mockPageCanvasPlugin.setCanvas!(canvasModel('report')));
+      expect(await screen.findByRole('tablist')).toBeInTheDocument();
+
+      act(() => context.chrome.update({ kioskMode: KioskMode.Full }));
+      await waitFor(() => {
+        expect(screen.queryByTestId('page-canvas-plugin')).not.toBeInTheDocument();
+      });
+      act(() => context.chrome.update({ kioskMode: undefined }));
+      await screen.findByTestId('page-canvas-plugin');
+      expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+
+      act(() => mockPageCanvasPlugin.setCanvas!(canvasModel('report')));
+      expect(await screen.findByRole('tablist')).toBeInTheDocument();
+    });
+
+    it('skips to the canvas pane while a pane tab covers the page, and to the page otherwise', async () => {
+      setup(<Page navId="child1">Children</Page>);
+      await screen.findByTestId('page-canvas-plugin');
+      const skipLink = await screen.findByRole('link', { name: 'Skip to main content' });
+
+      act(() => mockPageCanvasPlugin.setCanvas!(canvasModel('report')));
+      await userEvent.click(skipLink);
+      expect(screen.getByRole('tabpanel', { name: 'Report' })).toHaveFocus();
+
+      act(() => mockPageCanvasPlugin.setCanvas!(canvasModel('dash')));
+      await userEvent.click(skipLink);
+      expect(document.getElementById('pageContent')).toHaveFocus();
+    });
+
     it("passes the page's name, and the new name when the page's navigation changes", async () => {
       const { context } = setup(<Page navId="child1">Children</Page>);
       await screen.findByTestId('page-canvas-plugin');

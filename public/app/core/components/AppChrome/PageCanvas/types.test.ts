@@ -48,6 +48,9 @@ describe('parsePageCanvasModel', () => {
         tab({ id: 'elsewhere', shows: 'page', href: 'https://example.com/d/abc' }),
         tab({ id: 'protocol-relative', shows: 'page', href: '//example.com/d/abc' }),
         tab({ id: 'script', shows: 'pane', href: 'javascript:alert(1)' }),
+        tab({ id: 'backslash', shows: 'pane', href: '/\\example.com/d/abc' }),
+        tab({ id: 'null-byte', shows: 'pane', href: '/d/abc\u0000' }),
+        tab({ id: 'escape', shows: 'pane', href: '/d/abc\u001b[0m' }),
       ],
       closedTabs: [],
       ...callbacks(),
@@ -55,6 +58,9 @@ describe('parsePageCanvasModel', () => {
     expect(model?.tabs.map(({ id, href }) => ({ id, href }))).toEqual([
       { id: 'dash', href: '/d/abc?orgId=1' },
       { id: 'script', href: undefined },
+      { id: 'backslash', href: undefined },
+      { id: 'null-byte', href: undefined },
+      { id: 'escape', href: undefined },
     ]);
   });
 

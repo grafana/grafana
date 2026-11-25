@@ -37,7 +37,11 @@ export function usePageCanvas(enabled: boolean, chromeState: AppChromeState): Pa
     extensionPointId: PluginExtensionPoints.PageCanvas,
   });
   const pane = enabled ? renderLimitedComponents({ props, components, limit: 1, pluginId: ASSISTANT_PLUGIN_ID }) : null;
-  return { canvas: pane ? model : null, pane };
+  // The model's callbacks belong to the mounted component: a remount starts with no canvas until it sets one.
+  if (pane === null && model !== null) {
+    setModel(null);
+  }
+  return { canvas: pane === null ? null : model, pane };
 }
 
 /**

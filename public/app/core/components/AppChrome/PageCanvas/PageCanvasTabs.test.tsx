@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from 'test/test-utils';
+import { act, fireEvent, render, screen, within } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
 
@@ -60,6 +60,27 @@ describe('PageCanvasTabs', () => {
     await user.click(screen.getByRole('tab', { name: 'Checkout latency' }));
     expect(currentPath()).toBe('/d/checkout');
     expect(canvas.onSelect).toHaveBeenLastCalledWith('Checkout latency');
+  });
+
+  it('leaves a page tab’s page in place when the URL only adds params or encodes them differently', async () => {
+    const canvas = makeCanvas({
+      tabs: [tab('Report'), tab('Explore', { shows: 'page', href: '/explore?left=a+b#logs' })],
+    });
+    const { user } = render(<PageCanvasTabs canvas={canvas} paneId="pane" />);
+    act(() => locationService.push('/explore?orgId=1&left=a%20b&assistantCanvas=report'));
+    await user.click(screen.getByRole('tab', { name: 'Explore' }));
+    expect(currentPath()).toBe('/explore?orgId=1&left=a%20b&assistantCanvas=report');
+    expect(canvas.onSelect).toHaveBeenLastCalledWith('Explore');
+  });
+
+  it('shows a page tab’s page when one of its params has another value', async () => {
+    const canvas = makeCanvas({
+      tabs: [tab('Report'), tab('Prod', { shows: 'page', href: '/d/checkout?var-env=prod' })],
+    });
+    const { user } = render(<PageCanvasTabs canvas={canvas} paneId="pane" />);
+    act(() => locationService.push('/d/checkout?orgId=1&var-env=dev'));
+    await user.click(screen.getByRole('tab', { name: 'Prod' }));
+    expect(currentPath()).toBe('/d/checkout?var-env=prod');
   });
 
   it('closes a tab from its close button, the Delete key and a middle click', async () => {
