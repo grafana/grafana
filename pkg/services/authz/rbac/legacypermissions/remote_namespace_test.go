@@ -43,7 +43,7 @@ func TestRemoteRequesterNamespaces(t *testing.T) {
 func TestRemoteCacheKeyIncludesResolutionNamespace(t *testing.T) {
 	original := "org-0"
 	id := &authzv1.LegacyPermissionIdentity{Type: "user", Uid: "user-7", RequesterNamespace: &original}
-	sentinel := remoteIdentityCacheKey(id, "default", 0)
+	sentinel := testIdentityCacheKey(t, id, "default", 0)
 	original = "default"
-	require.NotEqual(t, sentinel, remoteIdentityCacheKey(id, "default", 0))
+	require.NotEqual(t, sentinel, testIdentityCacheKey(t, id, "default", 0))
 }

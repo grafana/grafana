@@ -33,10 +33,15 @@ func NewRemoteServer(loader *Loader, reg prometheus.Registerer, tracer tracing.T
 	return &RemoteServer{loader: loader, metrics: newMetrics(reg, "remote"), tracer: tracer}
 }
 
-func (s *RemoteServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
+func (s *RemoteServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) (err error) {
 	started := time.Now()
-	result := "error"
-	defer func() { s.metrics.observe(started, result) }()
+	defer func() {
+		result := "ok"
+		if err != nil {
+			result = "error"
+		}
+		s.metrics.observe(started, result)
+	}()
 	ctx := stream.Context()
 	ns, err := authorizeRemoteRequest(ctx, req)
 	if err != nil {
@@ -61,11 +66,7 @@ func (s *RemoteServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPermis
 	identity.RequesterNamespace = &resolutionNamespace
 	req = proto.Clone(req).(*authzv1.LegacyGetUserPermissionsRequest)
 	req.Identity = identity
-	if err := s.loader.streamPermissions(ctx, req, stream, resolutionNamespace, orgID); err != nil {
-		return err
-	}
-	result = "ok"
-	return nil
+	return s.loader.streamPermissions(ctx, req, stream, resolutionNamespace, orgID)
 }
 
 func authorizeRemoteRequest(ctx context.Context, req *authzv1.LegacyGetUserPermissionsRequest) (types.NamespaceInfo, error) {
@@ -80,8 +81,11 @@ func authorizeRemoteRequest(ctx context.Context, req *authzv1.LegacyGetUserPermi
 		return types.NamespaceInfo{}, status.Error(codes.InvalidArgument, "legacy identity is required")
 	}
 	ns, err := types.ParseNamespace(req.Namespace)
-	if err != nil || ns.OrgID < 1 || req.Namespace == "" || req.Namespace == "*" {
-		return types.NamespaceInfo{}, status.Error(codes.InvalidArgument, "concrete namespace required")
+	if err != nil {
+		return types.NamespaceInfo{}, status.Errorf(codes.InvalidArgument, "invalid namespace %q: %v", req.Namespace, err)
+	}
+	if ns.OrgID < 1 || req.Namespace == "" || req.Namespace == "*" {
+		return types.NamespaceInfo{}, status.Errorf(codes.InvalidArgument, "concrete namespace required, got %q", req.Namespace)
 	}
 	if !types.NamespaceMatches(caller.GetNamespace(), req.Namespace) {
 		return types.NamespaceInfo{}, status.Error(codes.PermissionDenied, "namespace does not match")
@@ -94,7 +98,9 @@ func authorizeRemoteRequest(ctx context.Context, req *authzv1.LegacyGetUserPermi
 		((req.GlobalOrg && original == types.OrgNamespaceFormatter(ac.GlobalOrgID)) ||
 			(req.NoOrgMembership && original == types.OrgNamespaceFormatter(ac.NoOrgID)))
 	if original != "" && original != req.Namespace && !sentinel {
-		return types.NamespaceInfo{}, status.Error(codes.PermissionDenied, "requester namespace does not match tenant scope")
+		return types.NamespaceInfo{}, status.Errorf(codes.PermissionDenied,
+			"requester namespace %q does not match tenant namespace %q (global_org=%t, no_org_membership=%t)",
+			original, req.Namespace, req.GlobalOrg, req.NoOrgMembership)
 	}
 	id := req.Identity
 	switch types.IdentityType(id.Type) {
@@ -116,18 +122,38 @@ func tenantCacheKey(ctx context.Context, key string) string {
 	return key
 }
 
-func remoteIdentityCacheKey(id *authzv1.LegacyPermissionIdentity, namespace string, orgID int64) string {
+// remoteIdentityClaims holds the claims that can change remote enumeration results.
+type remoteIdentityClaims struct {
+	Namespace           string   `json:"namespace"`
+	ResolutionNamespace string   `json:"resolutionNamespace"`
+	OrgID               int64    `json:"orgId"`
+	Type                string   `json:"type"`
+	UID                 string   `json:"uid"`
+	Role                string   `json:"role"`
+	InternalID          int64    `json:"internalId"`
+	Admin               bool     `json:"admin"`
+	Unique              bool     `json:"unique"`
+	Teams               []int64  `json:"teams"`
+	Groups              []string `json:"groups"`
+}
+
+func remoteIdentityCacheKey(id *authzv1.LegacyPermissionIdentity, namespace string, orgID int64) (string, error) {
 	// Ignore caller-selected cache keys. Include claims that can affect nested resolvers.
-	claims := struct {
-		Namespace           string
-		ResolutionNamespace string
-		OrgID               int64
-		Type, UID, Role     string
-		InternalID          int64
-		Admin, Unique       bool
-		Teams               []int64
-		Groups              []string
-	}{namespace, id.GetRequesterNamespace(), orgID, id.Type, id.Uid, id.OrgRole, id.GetInternalId(), id.IsGrafanaAdmin, id.HasUniqueId, id.TeamIds, id.Groups}
-	data, _ := json.Marshal(claims)
-	return fmt.Sprintf("%x", sha256.Sum256(data))
+	data, err := json.Marshal(remoteIdentityClaims{
+		Namespace:           namespace,
+		ResolutionNamespace: id.GetRequesterNamespace(),
+		OrgID:               orgID,
+		Type:                id.Type,
+		UID:                 id.Uid,
+		Role:                id.OrgRole,
+		InternalID:          id.GetInternalId(),
+		Admin:               id.IsGrafanaAdmin,
+		Unique:              id.HasUniqueId,
+		Teams:               id.TeamIds,
+		Groups:              id.Groups,
+	})
+	if err != nil {
+		return "", fmt.Errorf("encode remote identity cache key: %w", err)
+	}
+	return fmt.Sprintf("%x", sha256.Sum256(data)), nil
 }

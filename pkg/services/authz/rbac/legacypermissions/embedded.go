@@ -176,7 +176,11 @@ func (l *Loader) streamPermissions(ctx context.Context, req *authzv1.LegacyGetUs
 		identity:     req.Identity, namespace: namespace,
 	}
 	if ns, ok := ctx.Value(remoteNamespaceKey{}).(string); ok {
-		requester.remoteCacheKey = remoteIdentityCacheKey(req.Identity, ns, orgID)
+		key, err := remoteIdentityCacheKey(req.Identity, ns, orgID)
+		if err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
+		requester.remoteCacheKey = key
 	}
 	permissions, err := l.GetUserPermissions(ctx, requester, ac.Options{ReloadCache: req.ReloadCache, SkipZanzanaCache: req.SkipZanzanaCache})
 	if err != nil {

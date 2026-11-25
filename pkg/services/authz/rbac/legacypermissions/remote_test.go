@@ -80,12 +80,19 @@ func TestRemoteCacheIsolationAndRefresh(t *testing.T) {
 
 func TestRemoteIdentityKeysIgnoreCallerCacheKey(t *testing.T) {
 	id := &authzv1.LegacyPermissionIdentity{Type: "user", Uid: "one"}
-	before := remoteIdentityCacheKey(id, "stacks-1", 1)
+	before := testIdentityCacheKey(t, id, "stacks-1", 1)
 	arbitrary := "arbitrary"
 	id.CacheKey = &arbitrary
-	require.Equal(t, before, remoteIdentityCacheKey(id, "stacks-1", 1))
-	require.NotEqual(t, before, remoteIdentityCacheKey(id, "stacks-2", 1))
-	require.NotEqual(t, before, remoteIdentityCacheKey(id, "stacks-1", 0))
+	require.Equal(t, before, testIdentityCacheKey(t, id, "stacks-1", 1))
+	require.NotEqual(t, before, testIdentityCacheKey(t, id, "stacks-2", 1))
+	require.NotEqual(t, before, testIdentityCacheKey(t, id, "stacks-1", 0))
 	id.Uid = "two"
-	require.NotEqual(t, before, remoteIdentityCacheKey(id, "stacks-1", 1))
+	require.NotEqual(t, before, testIdentityCacheKey(t, id, "stacks-1", 1))
+}
+
+func testIdentityCacheKey(t *testing.T, id *authzv1.LegacyPermissionIdentity, namespace string, orgID int64) string {
+	t.Helper()
+	key, err := remoteIdentityCacheKey(id, namespace, orgID)
+	require.NoError(t, err)
+	return key
 }
