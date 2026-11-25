@@ -91,7 +91,7 @@ func (cloudPluginContext) PluginContextForApp(ctx context.Context, id string, se
 		return ctx, backend.PluginContext{}, err
 	}
 	return ctx, backend.PluginContext{
-		Namespace:  info.Namespace,
+		Namespace:  info.Namespace, // the tenant identity
 		APIVersion: info.APIVersion,
 		PluginID:   id, AppInstanceSettings: settings,
 		User: adapters.BackendUserFromSignedInUser(user),
