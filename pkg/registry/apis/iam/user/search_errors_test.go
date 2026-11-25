@@ -59,7 +59,7 @@ func TestUnifiedSearchErrorStatus(t *testing.T) {
 			}
 
 			backend := NewUnifiedSearchClient(index, &setting.Cfg{})
-			handler := NewSearchHandler(tracing.NewNoopTracerService(), selectorForBackend(backend), nil)
+			handler := NewSearchHandler(tracing.NewNoopTracerService(), selectorForBackend(backend), nil, nil)
 			req := httptest.NewRequest(http.MethodGet, "/searchUsers", nil)
 			req = req.WithContext(identity.WithRequester(req.Context(), &legacyuser.SignedInUser{Namespace: "stacks-1"}))
 			w := httptest.NewRecorder()

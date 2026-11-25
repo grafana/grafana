@@ -66,6 +66,10 @@ const (
 	// provisioning connection controller.
 	ProvisioningConnectionController = provisioningapis.ConnectionControllerServiceName
 
+	// ProvisioningRepositoryController is the module name of the in-process
+	// provisioning repository controller.
+	ProvisioningRepositoryController = provisioningapis.RepositoryControllerServiceName
+
 	// ProvisioningJobQueue is the module name of the in-process provisioning
 	// job queue.
 	ProvisioningJobQueue = provisioningapis.JobQueueServiceName
@@ -100,9 +104,10 @@ func dependencyMap() map[string][]string {
 		GlobalRoleSeeder: {GrafanaAPIServer},
 		Core:             {GrafanaAPIServer, PluginStore, PluginInstaller, FixedRolesLoader, Provisioning, InstallSync, GlobalRoleSeeder},
 		// Not behind Core: classic provisioning retries would delay connection
-		// token refresh and Git Sync job processing.
+		// token refresh, repository reconciliation and Git Sync job processing.
 		ProvisioningConnectionController: {GrafanaAPIServer},
+		ProvisioningRepositoryController: {GrafanaAPIServer},
 		ProvisioningJobQueue:             {GrafanaAPIServer},
-		BackgroundServices:               {Core, Router, ProvisioningConnectionController, ProvisioningJobQueue},
+		BackgroundServices:               {Core, Router, ProvisioningConnectionController, ProvisioningRepositoryController, ProvisioningJobQueue},
 	}
 }

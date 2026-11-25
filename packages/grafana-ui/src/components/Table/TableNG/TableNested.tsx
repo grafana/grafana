@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 import { useCallback, useId, useMemo, useRef, useState } from 'react';
 
 import { type DataFrame, type Field, FieldType } from '@grafana/data';
@@ -86,6 +86,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     disableKeyboardEvents,
     hoverOverflow,
     disableSanitizeHtml,
+    onTimeRangeSelected,
     jsonSyntaxHighlightingEnabled,
     enablePagination = false,
     enableSharedCrosshair = false,
@@ -502,6 +503,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       disableKeyboardEvents,
       hoverOverflow,
       disableSanitizeHtml,
+      onTimeRangeSelected,
       jsonSyntaxHighlightingEnabled,
       showTypeIcons,
       timeRange,
@@ -515,6 +517,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       disableKeyboardEvents,
       hoverOverflow,
       disableSanitizeHtml,
+      onTimeRangeSelected,
       jsonSyntaxHighlightingEnabled,
       getCellActions,
       getCellColorInlineStyles,

@@ -92,20 +92,14 @@ test.describe('Query Editor Next: Accessibility', { tag: ['@panels', '@queryEdit
   }) => {
     await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
 
-    await moreAddOptionsButton(page).click();
-    await page.getByRole('menuitem', { name: 'Add expression' }).click();
-    await page.getByRole('button', { name: 'Math', exact: true }).click();
-    await expect(page.locator('[data-query-sidebar-card="B"]')).toBeVisible();
-
     const handles = page.getByRole('separator', { name: 'Pane resize widget', includeHidden: true });
     await expect(handles).toHaveCount(3);
     const optionsHandle = handles.last();
     await expect(optionsHandle).toHaveAttribute('tabindex', '0');
 
-    const operation = page.getByRole('button', { name: 'Math', exact: true });
-    await operation.click();
-    await expect(page.getByRole('menuitem', { name: 'Math', exact: true })).toHaveCount(1);
-    await expect(page.getByRole('menuitem', { name: 'Reduce', exact: true })).toBeVisible();
+    const addOptions = moreAddOptionsButton(page);
+    await addOptions.click();
+    await expect(page.getByRole('menuitem', { name: 'Add expression' })).toBeVisible();
     await expect(optionsHandle).toHaveAttribute('tabindex', '-1');
 
     const report = await scanForA11yViolations({
@@ -115,7 +109,7 @@ test.describe('Query Editor Next: Accessibility', { tag: ['@panels', '@queryEdit
     expect(report).toHaveNoA11yViolations();
 
     await page.keyboard.press('Escape');
-    await expect(operation).toHaveAttribute('aria-expanded', 'false');
+    await expect(addOptions).toHaveAttribute('aria-expanded', 'false');
     await expect(optionsHandle).toHaveAttribute('tabindex', '0');
     await optionsHandle.focus();
     await expect(optionsHandle).toBeFocused();

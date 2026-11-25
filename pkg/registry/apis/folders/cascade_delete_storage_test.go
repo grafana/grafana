@@ -732,7 +732,7 @@ func (f *fakeFolderStorage) Update(ctx context.Context, name string, objInfo res
 		return updated, false, nil
 	}
 	f.existing[name] = updated
-	if updated.Labels[folderTerminatingLabel] == folderTerminatingLabelValue {
+	if updated.Labels[utils.LabelKeyFolderTerminating] == utils.LabelValueFolderTerminating {
 		f.stamped = append(f.stamped, name)
 	}
 	return updated, false, nil
@@ -1603,10 +1603,22 @@ func TestCascadeDelete_RejectsCollectionDeleteOfFinalizerFolders(t *testing.T) {
 		require.False(t, store.deletedCollection)
 	})
 
-	t.Run("resource version constraints are not supported", func(t *testing.T) {
+	t.Run("resource version constraints are accepted with a limit and reach the preflight", func(t *testing.T) {
+		store := newStore(newFolder("a"), newFolder("b"))
+		opts := &metainternalversion.ListOptions{Limit: 1, ResourceVersion: "7", ResourceVersionMatch: metav1.ResourceVersionMatchNotOlderThan}
+		_, err := deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, opts)
+		require.NoError(t, err)
+		require.True(t, store.deletedCollection)
+		require.Len(t, store.listCalls, 1)
+		require.Equal(t, "7", store.listCalls[0].ResourceVersion)
+		require.Equal(t, metav1.ResourceVersionMatchNotOlderThan, store.listCalls[0].ResourceVersionMatch)
+	})
+
+	t.Run("resource version constraints are not supported without a limit", func(t *testing.T) {
 		for name, opts := range map[string]*metainternalversion.ListOptions{
 			"resourceVersion":      {ResourceVersion: "7"},
 			"resourceVersionMatch": {ResourceVersionMatch: metav1.ResourceVersionMatchExact},
+			"negative limit":       {Limit: -1, ResourceVersion: "7", ResourceVersionMatch: metav1.ResourceVersionMatchExact},
 		} {
 			t.Run(name, func(t *testing.T) {
 				store := newStore(newFolder("a"))
@@ -1624,6 +1636,19 @@ func TestCascadeDelete_RejectsCollectionDeleteOfFinalizerFolders(t *testing.T) {
 		_, err := deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, &metainternalversion.ListOptions{Limit: 1})
 		require.NoError(t, err)
 		require.True(t, store.deletedCollection)
+	})
+
+	t.Run("the preflight pages with the registry's page size unless the caller sets a limit", func(t *testing.T) {
+		store := newStore(newFolder("a"))
+		_, err := deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
+		require.NoError(t, err)
+		require.NotEmpty(t, store.listCalls)
+		require.EqualValues(t, deleteCollectionPageSize, store.listCalls[0].Limit)
+
+		store = newStore(newFolder("a"), newFolder("b"))
+		_, err = deleter(store).DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, &metainternalversion.ListOptions{Limit: 1})
+		require.NoError(t, err)
+		require.EqualValues(t, 1, store.listCalls[0].Limit)
 	})
 
 	t.Run("folders without the finalizer are forwarded", func(t *testing.T) {
