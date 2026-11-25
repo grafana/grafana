@@ -71,7 +71,7 @@ export const MegaMenu = memo(
     });
     // Customising the navigation gives it the whole menu.
     const section = editMode ? null : pluginSection;
-    const { containerProps, navProps, separatorProps, sectionProps } = useMegaMenuSectionSplitter(
+    const { containerProps, navProps, separatorProps, sectionProps, sectionShown } = useMegaMenuSectionSplitter(
       section !== null,
       sectionCollapsed
     );
@@ -290,7 +290,7 @@ export const MegaMenu = memo(
                         </ul>
                       </>
                     )}
-                    <MegaMenuExtensionPoint />
+                    {!sectionShown && <MegaMenuExtensionPoint />}
                   </>
                 </ScrollContainer>
               </div>
@@ -308,6 +308,12 @@ export const MegaMenu = memo(
               </>
             )}
           </div>
+          {/* Below a plugin section, as the navigation's end then sits above the section, out of sight. */}
+          {sectionShown && (
+            <div className={styles.menuAction}>
+              <MegaMenuExtensionPoint />
+            </div>
+          )}
           {showFooter && <hr className={styles.dividerLine} />}
           {showFooter && (
             <div className={cx(styles.footer, editMode && styles.footerEditMode)}>
@@ -361,6 +367,9 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
     }),
     contentDocked: css({
       paddingTop: theme.spacing(0),
+    }),
+    menuAction: css({
+      flexShrink: 0,
     }),
     scrollArea: css({
       flex: 1,
