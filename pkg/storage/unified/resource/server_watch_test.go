@@ -1550,7 +1550,7 @@ func TestWatchPreviousReadWithoutQoSSharesInlineRead(t *testing.T) {
 	})
 }
 
-func TestWatchPreviousReadWithoutQoSWaitsForCanceledOwnerBeforeRetrying(t *testing.T) {
+func TestWatchPreviousReadWithoutQoSSurvivesOwnerCancellation(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		gate := make(chan struct{})
 		release := sync.OnceFunc(func() { close(gate) })
@@ -1566,19 +1566,53 @@ func TestWatchPreviousReadWithoutQoSWaitsForCanceledOwnerBeforeRetrying(t *testi
 		short, cancelShort := context.WithTimeout(t.Context(), time.Millisecond)
 		defer cancelShort()
 		shortWaiter := startPreviousRead(short, srv)
-		longWaiter := startPreviousRead(t.Context(), srv)
+		follower, _ := startPreviousReadWatch(t, srv, newWatchTestUser())
+		synctest.Wait()
+		backend.events <- previousReadUpdate()
+		synctest.Wait()
 
 		cancelOwner()
 		time.Sleep(time.Millisecond)
 		synctest.Wait()
 		require.Equal(t, codes.DeadlineExceeded, status.Code(<-shortWaiter))
 		require.Empty(t, first, "the inline owner still owns the blocked backend call")
-		require.Empty(t, longWaiter, "the follower still waits for the active read")
-		require.EqualValues(t, 1, backend.reads.Load(), "a canceled read must not be duplicated while it runs")
+		require.Empty(t, follower.events, "the follower still waits for the active read")
 
 		release()
 		require.Equal(t, codes.Canceled, status.Code(<-first))
-		require.NoError(t, <-longWaiter, "a live follower can retry once the canceled read returns")
+		synctest.Wait()
+		require.Len(t, follower.events, 1)
+		require.EqualValues(t, previousReadTestRV, (<-follower.events).GetPrevious().GetVersion())
+		require.EqualValues(t, 1, backend.reads.Load(), "the follower gets the result of the original read")
+	})
+}
+
+func TestWatchPreviousReadWithoutQoSCancelsWhenLastWaiterLeaves(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		canceled := make(chan struct{}, 1)
+		release := make(chan struct{})
+		unblock := sync.OnceFunc(func() { close(release) })
+		defer unblock()
+		srv, backend := newPreviousReadTestServer(t, func(ctx context.Context, attempt int64) {
+			if attempt == 1 {
+				<-ctx.Done()
+				canceled <- struct{}{}
+				<-release
+			}
+		})
+		owner, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		first := startPreviousRead(owner, srv)
+
+		cancel()
+		synctest.Wait()
+		require.Len(t, canceled, 1, "leaving the last waiter must cancel the backend context")
+
+		next := startPreviousRead(t.Context(), srv)
+		require.EqualValues(t, 1, backend.reads.Load(), "the canceled read still owns the flight")
+		unblock()
+		require.Equal(t, codes.Canceled, status.Code(<-first))
+		require.NoError(t, <-next)
 		require.EqualValues(t, 2, backend.reads.Load())
 	})
 }

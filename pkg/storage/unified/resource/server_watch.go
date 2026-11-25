@@ -315,7 +315,8 @@ type previousReadLoader func(context.Context, func(*BackendReadResponse)) previo
 
 type previousReadFlight struct {
 	waiters int
-	cancel  context.CancelFunc // only queued flights have a separate context
+	inline  bool
+	cancel  context.CancelFunc
 	result  previousReadResult // published by closing ready
 	ready   chan struct{}
 }
@@ -362,7 +363,7 @@ func (p *previousReads) add(id string, rsp *BackendReadResponse) {
 }
 
 // read shares the backend read of key at rv. Followers can retry a transient
-// queue failure or an expired inline owner once within their remaining budget.
+// queue or flight failure once within their remaining budget.
 func (p *previousReads) read(ctx context.Context, key *resourcepb.ResourceKey, rv int64, timeout time.Duration, inline bool, load previousReadLoader) previousReadResult {
 	id := previousReadID(key, rv)
 	result, follower := p.readOnce(ctx, id, rv, timeout, inline, load)
@@ -392,17 +393,26 @@ func (p *previousReads) readOnce(ctx context.Context, id string, rv int64, timeo
 	}
 	flight := p.flights[id]
 	owner := flight == nil
-	loadCtx := ctx
+	var loadCtx context.Context
 	if owner {
-		flight = &previousReadFlight{ready: make(chan struct{})}
-		if !inline {
-			loadCtx, flight.cancel = context.WithTimeoutCause(context.WithoutCancel(ctx), timeout, errQueueTimeout)
-		}
+		flight = &previousReadFlight{inline: inline, ready: make(chan struct{})}
+		loadCtx, flight.cancel = context.WithTimeoutCause(context.WithoutCancel(ctx), timeout, errQueueTimeout)
 		p.flights[id] = flight
 	}
 	flight.waiters++
 	p.mu.Unlock()
-	defer p.leave(id, flight)
+	leave := func() { p.leave(id, flight) }
+	if owner && inline {
+		// A blocked inline owner must release its waiter slot when it disconnects.
+		stop := context.AfterFunc(ctx, leave)
+		defer func() {
+			if stop() {
+				leave()
+			}
+		}()
+	} else {
+		defer leave()
+	}
 
 	if owner {
 		run := func() previousReadResult { return p.runFlight(loadCtx, id, rv, flight, load) }
@@ -451,8 +461,8 @@ func (p *previousReads) runFlight(ctx context.Context, id string, rv int64, flig
 			close(flight.ready)
 		})
 	}
-	if flight.cancel != nil {
-		defer flight.cancel()
+	defer flight.cancel()
+	if !flight.inline {
 		// Queued work can outlive the flight's deadline. Inline reads keep their
 		// flight until the backend returns so a retry cannot duplicate it.
 		stop := context.AfterFunc(ctx, func() { finish(previousReadResult{err: context.Cause(ctx)}) })
@@ -484,10 +494,10 @@ func (p *previousReads) leave(id string, flight *previousReadFlight) {
 	if p.flights[id] == flight {
 		flight.waiters--
 		if flight.waiters == 0 {
-			delete(p.flights, id)
-			if flight.cancel != nil {
-				flight.cancel()
+			if !flight.inline {
+				delete(p.flights, id)
 			}
+			flight.cancel()
 		}
 	}
 }
