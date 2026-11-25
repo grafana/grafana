@@ -5,6 +5,8 @@ import {
   useFlagAlertingImportAlertmanagerAPI,
   useFlagAlertingMigrationWizardUI,
 } from '@grafana/runtime/internal';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { getPreviewToggle } from './previewToggles';
 
@@ -12,6 +14,15 @@ export const shouldUsePrometheusRulesPrimary = () => config.featureToggles.alert
 
 export const shouldUseGmaOnlyListView = () =>
   getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingGmaOnlyListView, false);
+
+export const shouldShowLegacyGroupsMigration = () =>
+  shouldUseGmaOnlyListView() && getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingLegacyGroupsMigration, false);
+
+/** The Legacy groups tab is for users who can make the subfolder and move rules into it. */
+export const canMigrateLegacyGroups = () =>
+  shouldShowLegacyGroupsMigration() &&
+  contextSrv.hasPermission(AccessControlAction.FoldersCreate) &&
+  contextSrv.hasPermission(AccessControlAction.AlertingRuleUpdate);
 
 /**
  * Whether the new list view is turned on for this instance. When it's off, everyone gets the old list,
