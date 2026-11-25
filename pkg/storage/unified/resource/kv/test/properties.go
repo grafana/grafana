@@ -51,7 +51,7 @@ func RunKVPropertyTest(t *testing.T, kv kvpkg.KV, nsPrefix string) {
 }
 
 func runTestKVProperties(t *testing.T, kv kvpkg.KV, nsPrefix string) {
-	nsPrefix += "-property"
+	nsPrefix += "-property-" + GenerateRandomKVPrefix()
 	// Keep the keyspace fresh even when rapid reruns identical draws to shrink.
 	example := 0
 	rapid.Check(t, func(rt *rapid.T) {
