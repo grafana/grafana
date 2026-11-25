@@ -91,7 +91,7 @@ func TestCloudSettingsRoutes(t *testing.T) {
 				w.WriteHeader(http.StatusAccepted)
 			}))
 			defer fallbackServer.Close()
-			cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": manifestServer.URL, "app_settings_enabled": "true"})
+			cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": manifestServer.URL, "app_settings_plugins": "example-app"})
 			if withFallback {
 				addAggregateSection(t, cfg, "v2", map[string]string{"url": fallbackServer.URL, "discovery_auth": "none"})
 			}
@@ -249,9 +249,17 @@ func TestCloudSettingsRoutes(t *testing.T) {
 }
 
 func TestCloudSettingsEnablementRequiresDependencies(t *testing.T) {
-	cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": "https://plugins.invalid", "app_settings_enabled": "true"})
+	cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": "https://plugins.invalid", "app_settings_plugins": "example-app"})
 	_, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 	require.ErrorContains(t, err, "legacy settings provider")
+
+	// Without plugins to serve, settings are off and need no dependencies.
+	for _, plugins := range []string{"", " , "} {
+		cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": "https://plugins.invalid", "app_settings_plugins": plugins})
+		require.False(t, cloudAppSettingsEnabled(cfg))
+		_, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
+		require.NoError(t, err)
+	}
 }
 
 type settingsDestroyStore struct {
@@ -291,14 +299,21 @@ func TestCloudSettingsSourceGateAndFilter(t *testing.T) {
 	defer srv.Close()
 	for _, tc := range []struct {
 		source  string
-		enabled bool
+		plugins string
 		pattern string
 		want    int
 	}{
-		{sourcePlugins, false, "", 0}, {sourcePlugins, true, "", 2}, {sourceCore, true, "", 0}, {sourceBridge, true, "", 0}, {sourcePlugins, true, "example-app", 1},
+		{sourcePlugins, "", "", 0},
+		{sourcePlugins, "*", "", 2},
+		{sourcePlugins, "example-app", "", 1},
+		{sourcePlugins, "example-app, other-app", "", 2},
+		{sourcePlugins, "*-app", "other-app", 1},
+		{sourcePlugins, "example-app", "other-app", 0},
+		{sourceCore, "*", "", 0},
+		{sourceBridge, "*", "", 0},
 	} {
 		cfg := setting.NewCfg()
-		cfg.Raw.Section(cloudRouterSection).Key("app_settings_enabled").SetValue(map[bool]string{true: "true", false: "false"}[tc.enabled])
+		cfg.Raw.Section(cloudRouterSection).Key("app_settings_plugins").SetValue(tc.plugins)
 		var patterns []string
 		if tc.pattern != "" {
 			patterns = []string{tc.pattern}
