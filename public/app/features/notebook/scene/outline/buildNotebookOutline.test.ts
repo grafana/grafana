@@ -1,3 +1,4 @@
+import { renderTextPanelMarkdown } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 
 import { NotebookCellItem } from '../layout-notebook/NotebookCellItem';
@@ -53,6 +54,20 @@ describe('buildNotebookOutline', () => {
         (entry) => entry.label
       )
     ).toEqual(['Errors & retries', 'Latency <p99>']);
+  });
+
+  it('labels a heading the way the markdown renderer displays it, so a jump finds it by text', () => {
+    const headings = [
+      '## ![logo](a.png) Overview',
+      '## **Errors** &amp; `<retries>`',
+      '## Literal &amp;lt; stays',
+      '## [Docs](http://x) <em>and</em> more',
+    ];
+    const container = document.createElement('div');
+    container.innerHTML = renderTextPanelMarkdown(headings.join('\n\n'));
+    const rendered = Array.from(container.querySelectorAll('h2')).map((h) => (h.textContent ?? '').trim());
+
+    expect(summarize([markdown('a', headings.join('\n\n'))]).map((entry) => entry.label)).toEqual(rendered);
   });
 
   it('finds setext headings and headings inside quotes and lists, as the markdown renderer does', () => {

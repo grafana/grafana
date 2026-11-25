@@ -167,28 +167,37 @@ function extractHeadings(text: string): ExtractedHeading[] {
 
 /** The heading's text as rendered, without its markup: what a reader sees, and what search matches. */
 function inlineText(tokens: Token[]): string {
-  return decodeEntities(
-    tokens
-      .map((token) => {
-        // A tag renders as an element, not as text, so only what it wraps is left.
-        if (token.type === 'html') {
-          return '';
-        }
-        if ('tokens' in token && token.tokens) {
-          return inlineText(token.tokens);
-        }
-        return 'text' in token && typeof token.text === 'string' ? token.text : '';
-      })
-      .join('')
-  );
+  return decodeEntities(rawInlineText(tokens));
 }
 
-// The rendered heading's textContent has `&amp;` as `&`, and scrollToHeading matches on that.
+// Entities are decoded once, over the whole heading: decoding each nested token's text as well would
+// turn a literal `&amp;lt;` into `<`.
+function rawInlineText(tokens: Token[]): string {
+  return tokens
+    .map((token) => {
+      // A tag renders as an element, not as text, so only what it wraps is left. An image renders as an
+      // element too: its alt text is not part of the heading's textContent.
+      if (token.type === 'html' || token.type === 'image') {
+        return '';
+      }
+      if ('tokens' in token && token.tokens) {
+        return rawInlineText(token.tokens);
+      }
+      return 'text' in token && typeof token.text === 'string' ? token.text : '';
+    })
+    .join('');
+}
+
+// The rendered heading's textContent has `&amp;` as `&`, and scrollToHeading matches on that. A textarea
+// decodes entities without parsing what is left as markup, so a `<` that is plain text (a code span's)
+// stays.
 function decodeEntities(text: string): string {
   if (!text.includes('&')) {
     return text;
   }
-  return new DOMParser().parseFromString(text, 'text/html').documentElement.textContent ?? text;
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = text;
+  return textarea.value;
 }
 
 // marked's Token union includes a generic `{ type: string }` member, so checking `type` alone does not
