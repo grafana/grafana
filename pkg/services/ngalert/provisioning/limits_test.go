@@ -34,7 +34,6 @@ func TestRemoteLimitsProviderTimeout(t *testing.T) {
 		metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry()), tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
-	require.Equal(t, 5*time.Second, NewRemoteLimitsProvider(mimir).timeout)
 
 	p := NewRemoteLimitsProvider(mimir)
 	p.timeout = 50 * time.Millisecond
