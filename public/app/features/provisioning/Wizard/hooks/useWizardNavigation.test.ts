@@ -12,6 +12,7 @@ jest.mock('react-router-dom-v5-compat', () => ({
 }));
 
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
 }));
 

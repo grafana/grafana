@@ -21,4 +21,6 @@ type SearchQuery struct {
 	Page      int64
 	Offset    int64
 	Sort      []string
+	// MemberCount asks the backend to set MemberCount on hits when it can compute it cheaply.
+	MemberCount bool
 }

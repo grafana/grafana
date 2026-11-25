@@ -28,7 +28,7 @@ describe('AlertRulesFoldersView', () => {
 
     render(
       <RuleSequenceDrawerProvider>
-        <AlertRulesFoldersView folderUids={[]} />
+        <AlertRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -43,7 +43,7 @@ describe('AlertRulesFoldersView', () => {
 
     render(
       <RuleSequenceDrawerProvider>
-        <AlertRulesFoldersView folderUids={[]} />
+        <AlertRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -55,7 +55,7 @@ describe('AlertRulesFoldersView', () => {
 
     render(
       <RuleSequenceDrawerProvider>
-        <AlertRulesFoldersView folderUids={[]} />
+        <AlertRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -69,7 +69,7 @@ describe('AlertRulesFoldersView', () => {
 
     render(
       <RuleSequenceDrawerProvider>
-        <AlertRulesFoldersView folderUids={[]} />
+        <AlertRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -80,14 +80,14 @@ describe('AlertRulesFoldersView', () => {
   });
 
   it.each([
-    { name: 'a folder filter returns no folders', folderUids: ['platform'], text: 'No alert rules match this folder' },
-    { name: 'no folder filter is active', folderUids: [], text: 'No alert rules found' },
-  ])('says "$text" when $name', async ({ folderUids, text }) => {
-    setup({ alertRules: folderUids.length > 0 ? ALERT_RULES : [] });
+    { name: 'a folder filter returns no folders', folderName: 'Platform', text: 'No alert rules match this folder' },
+    { name: 'no folder filter is active', folderName: undefined, text: 'No alert rules found' },
+  ])('says "$text" when $name', async ({ folderName, text }) => {
+    setup({ alertRules: folderName ? ALERT_RULES : [] });
 
     render(
       <RuleSequenceDrawerProvider>
-        <AlertRulesFoldersView folderUids={folderUids} />
+        <AlertRulesFoldersView scope={{ folder: folderName, folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -99,7 +99,7 @@ describe('AlertRulesFoldersView', () => {
 
     const { user } = render(
       <RuleSequenceDrawerProvider>
-        <AlertRulesFoldersView folderUids={[]} />
+        <AlertRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -119,7 +119,7 @@ describe('AlertRulesFoldersView', () => {
 
     const { user } = render(
       <RuleSequenceDrawerProvider>
-        <AlertRulesFoldersView folderUids={[]} />
+        <AlertRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -140,7 +140,7 @@ describe('AlertRulesFoldersView', () => {
 
     render(
       <RuleSequenceDrawerProvider>
-        <AlertRulesFoldersView folderUids={[]} />
+        <AlertRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 

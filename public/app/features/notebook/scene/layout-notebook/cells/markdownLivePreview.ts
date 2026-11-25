@@ -1,6 +1,13 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import { syntaxTree } from '@codemirror/language';
-import { EditorSelection, type EditorState, type Extension, type Range, type SelectionRange } from '@codemirror/state';
+import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
+import {
+  EditorSelection,
+  type ChangeSpec,
+  type EditorState,
+  type Extension,
+  type Range,
+  type SelectionRange,
+} from '@codemirror/state';
 import {
   Decoration,
   type DecorationSet,
@@ -91,6 +98,129 @@ export function toggleSurroundInline(view: EditorView, before: string, after = b
     });
   }
   toggleSurround(view, before, after);
+}
+
+export type InlineMarkKind = 'bold' | 'italic' | 'strikethrough' | 'code';
+
+const INLINE_MARKS: Record<InlineMarkKind, { node: string; marker: string }> = {
+  bold: { node: BOLD_NODE, marker: '**' },
+  italic: { node: ITALIC_NODE, marker: '*' },
+  strikethrough: { node: STRIKETHROUGH_NODE, marker: '~~' },
+  code: { node: INLINE_CODE_NODE, marker: '`' },
+};
+
+/** Opening and closing delimiter children of an inline mark node, if it has both. */
+function delimiterRanges(node: SyntaxNode): Array<{ from: number; to: number }> {
+  const marks = node.getChildren(INLINE_MARK_CLOSING_TYPES[node.name]);
+  if (marks.length < 2) {
+    return [];
+  }
+  return [marks[0], marks[marks.length - 1]];
+}
+
+/**
+ * Toggles an inline mark (bold, italic, strikethrough, code) over the selection. Unlike plain
+ * `toggleSurround`, the selection is first widened to cover any inline mark whose delimiters it touches,
+ * so selecting just a leading or trailing `**` unwraps the span instead of piling more asterisks on.
+ * A selection holding several spans of the target mark merges them into one.
+ */
+export function toggleInlineMark(view: EditorView, kind: InlineMarkKind) {
+  const { state } = view;
+  const { node: targetName, marker } = INLINE_MARKS[kind];
+  const main = state.selection.main;
+  // Outside the block prefix; undefined for an empty selection or literal code, where plain wrapping applies.
+  const range = inlineMarkRange(state);
+  if (!range) {
+    toggleSurround(view, marker);
+    return;
+  }
+
+  const tree = ensureSyntaxTree(state, state.doc.length, 50) ?? syntaxTree(state);
+  const inlineNames = Object.keys(INLINE_MARK_CLOSING_TYPES);
+  let { from, to } = range;
+
+  // Widening can pull in further nodes (e.g. `***x***`), so repeat until nothing changes.
+  for (let changed = true; changed; ) {
+    changed = false;
+    tree.iterate({
+      from,
+      to,
+      enter: (ref) => {
+        if (!inlineNames.includes(ref.name) || (ref.from >= from && ref.to <= to)) {
+          return;
+        }
+        const overlapsDelimiter = delimiterRanges(ref.node).some((d) => d.from < to && from < d.to);
+        if (overlapsDelimiter) {
+          from = Math.min(from, ref.from);
+          to = Math.max(to, ref.to);
+          changed = true;
+        }
+      },
+    });
+  }
+
+  let enclosing: SyntaxNode | undefined;
+  const contained: SyntaxNode[] = [];
+  const delimiters: Array<{ from: number; to: number }> = [];
+  tree.iterate({
+    from,
+    to,
+    enter: (ref) => {
+      if (inlineNames.includes(ref.name)) {
+        delimiters.push(...delimiterRanges(ref.node));
+      }
+      if (ref.name !== targetName) {
+        return;
+      }
+      if (ref.from <= from && to <= ref.to) {
+        enclosing = ref.node;
+      } else if (ref.from >= from && ref.to <= to) {
+        contained.push(ref.node);
+      }
+    },
+  });
+
+  const changes: ChangeSpec[] = [];
+  const unwrap = (node: SyntaxNode) => {
+    for (const d of delimiterRanges(node)) {
+      changes.push({ from: d.from, to: d.to });
+    }
+  };
+
+  // Only actual delimiters count: a literal `_` next to the span is content, so the selection gets wrapped.
+  const onlyDelimiters = (start: number, end: number) => {
+    for (let pos = start; pos < end; ) {
+      const d = delimiters.find((r) => r.from <= pos && pos < r.to);
+      if (!d) {
+        return false;
+      }
+      pos = d.to;
+    }
+    return true;
+  };
+  const [only] = contained;
+  const onlyMarkedSpan =
+    !enclosing && contained.length === 1 && onlyDelimiters(from, only.from) && onlyDelimiters(only.to, to);
+
+  if (enclosing) {
+    unwrap(enclosing);
+  } else if (onlyMarkedSpan) {
+    unwrap(only);
+  } else {
+    contained.forEach(unwrap);
+    changes.push({ from, insert: marker }, { from: to, insert: marker });
+  }
+
+  const changeSet = state.changes(changes);
+  view.dispatch({
+    changes: changeSet,
+    selection:
+      main.anchor > main.head
+        ? EditorSelection.range(changeSet.mapPos(to, -1), changeSet.mapPos(from, 1))
+        : EditorSelection.range(changeSet.mapPos(from, 1), changeSet.mapPos(to, -1)),
+    userEvent: 'input',
+  });
+  view.focus();
 }
 
 /**
@@ -701,14 +831,14 @@ function buildKeymap(): readonly KeyBinding[] {
     {
       key: 'Mod-b',
       run: (view) => {
-        toggleSurroundInline(view, '**');
+        toggleInlineMark(view, 'bold');
         return true;
       },
     },
     {
       key: 'Mod-i',
       run: (view) => {
-        toggleSurroundInline(view, '*');
+        toggleInlineMark(view, 'italic');
         return true;
       },
     },

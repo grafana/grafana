@@ -72,7 +72,7 @@ func canReadDashboardsAndFolders(ctx context.Context, checker authorizer.Authori
 }
 
 // isNamespaceSearchRequest matches the GET routes under the namespace search
-// resource: search itself and its sortable, vector and hybrid variants. It does
+// resource: search itself and its sortable and vector variants. It does
 // not look at the namespace or API version: the checks delegated to the
 // fallback carry the namespace, and the route only exists for one version.
 func isNamespaceSearchRequest(attr authorizer.Attributes) bool {
@@ -85,7 +85,7 @@ func isNamespaceSearchRequest(attr authorizer.Attributes) bool {
 		return false
 	}
 	switch attr.GetName() {
-	case "", "sortable", "vector", "hybrid":
+	case "", "sortable", "vector":
 		return true
 	}
 	return false

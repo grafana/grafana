@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
 )
 
 const (
@@ -59,7 +60,8 @@ func newDashboardPreferencesStorage(store grafanarest.Storage, gvk schema.GroupV
 
 func (s *dashboardPreferencesStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	updated, created, err := s.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-	if err == nil || !isDashboardPreferencesNotFound(err, name) {
+	// Only this object's NotFound: another, such as a missing folder's, must not turn an update into a create.
+	if err == nil || !dashboardpreferences.IsNotFound(err, name) {
 		return updated, created, err
 	}
 	notFound := err
@@ -123,11 +125,6 @@ func dashboardPreferencesCreateOptionsFrom(options *metav1.UpdateOptions) *metav
 		opts.FieldValidation = options.FieldValidation
 	}
 	return opts
-}
-
-// True only for this resource and name: other NotFounds (for example a missing folder) must not turn an update into a create.
-func isDashboardPreferencesNotFound(err error, name string) bool {
-	return isNotFoundForObject(err, dashv2beta1.DashboardPreferencesResourceInfo.GroupResource(), name)
 }
 
 // True only for a NotFound whose details name this resource and object. A 404 that names nothing, such as one

@@ -115,7 +115,7 @@ func (m *LoggerMiddleware) QueryChunkedData(ctx context.Context, req *backend.Qu
 	// inspects and logs per-refID response errors.
 	cw := &errorRecordingChunkedWriter{ChunkedDataWriter: w}
 	return m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
-		innerErr := m.BaseHandler.QueryChunkedData(ctx, req, cw)
+		innerErr := m.BaseHandler.QueryChunkedData(ctx, req, cw.writer())
 
 		if innerErr == nil {
 			ctxLogger := m.logger.FromContext(ctx)
@@ -124,6 +124,7 @@ func (m *LoggerMiddleware) QueryChunkedData(ctx context.Context, req *backend.Qu
 					"refID", re.refID,
 					"status", int(re.status),
 					"error", re.err,
+					"statusSource", re.source.String(),
 					"target", m.pluginTarget(ctx, req.PluginContext),
 				)
 			}

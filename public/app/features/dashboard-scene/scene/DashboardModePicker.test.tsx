@@ -74,6 +74,9 @@ function sidebarContext(assistant: 'available' | 'missing', docked = false): Ext
     setExtensionSidebarHeight: jest.fn(),
     floatingExtensionSidebarWidth: 480,
     setFloatingExtensionSidebarWidth: jest.fn(),
+    floatingHeightOptions: null,
+    floatingExtensionSidebarHeight: undefined,
+    setFloatingExtensionSidebarHeight: jest.fn(),
     presentation: 'docked',
     dockSide: 'right',
     floatingHidden: false,
@@ -283,7 +286,7 @@ it('opens a closed Assistant sidebar already floating and hands the request to A
   expect(opened.map((event) => event.payload)).toEqual([{ pluginId: ASSISTANT, componentTitle: TITLE }]);
   // The request floats the sidebar before it opens (the floating flag is off here), so it never paints docked.
   expect(layoutWhenOpened).toEqual(['floating']);
-  expect(assistant).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'picker-test' });
+  expect(assistant).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'picker-test' }, { assistantEdit: false });
   expect(sidebarPresentation()).toBe('floating');
 });
 
@@ -295,7 +298,7 @@ it('asks a listening Assistant straight away without reopening its docked sideba
   await user.click(composerItem()!);
 
   expect(assistant).toHaveBeenCalledTimes(1);
-  expect(assistant).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'picker-test' });
+  expect(assistant).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'picker-test' }, { assistantEdit: false });
   expect(publish.mock.calls.some(([event]) => event instanceof OpenExtensionSidebarEvent)).toBe(false);
   // The session, once Assistant enters it, floats the sidebar; the request itself does not.
   expect(sidebarPresentation()).toBe('docked');
@@ -365,7 +368,7 @@ describe('before Assistant first registers', () => {
       stopAssistant = addComposerEnterRequestListener(listener);
     });
     expect(listener).toHaveBeenCalledTimes(1);
-    expect(listener).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'picker-test' });
+    expect(listener).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'picker-test' }, { assistantEdit: false });
   });
 
   it('releases the held request after 10 seconds, docking the sidebar again', () => {

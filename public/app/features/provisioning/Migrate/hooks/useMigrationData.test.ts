@@ -5,7 +5,7 @@ import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1'
 import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
-import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
+import { AnnoKeyFolder, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 
 import { setupProvisioningMswServer } from '../../mocks/server';
 import { getMigratableKinds, resourceKindInfos } from '../../utils/resourceKinds';
@@ -15,6 +15,7 @@ import { useMigrationData } from './useMigrationData';
 setupProvisioningMswServer();
 
 const PLAYLISTS_ROUTE = '/apis/playlist.grafana.app/v1/namespaces/:namespace/playlists';
+const LIBRARY_PANELS_ROUTE = '/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/librarypanels';
 
 // Kinds are derived from the registry. With no availableResources only the
 // always-on base (dashboards) is migratable; declaring the playlist kind brings
@@ -345,15 +346,33 @@ describe('useMigrationData (non-folder kinds)', () => {
     // Library panels are gated out of the migrate flow by default, but the kind
     // still knows how to list itself through its apiserver collection. A response
     // without an items array yields an empty list rather than throwing.
-    server.use(
-      http.get('/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/librarypanels', () =>
-        HttpResponse.json({ metadata: {} })
-      )
-    );
+    server.use(http.get(LIBRARY_PANELS_ROUTE, () => HttpResponse.json({ metadata: {} })));
 
     // Library panels list via getBackendSrv and ignore dispatch.
     const result = await resourceKindInfos.librarypanel.list();
     expect(result).toEqual([]);
+  });
+
+  it('nests library panels under the folder they are in', async () => {
+    mockSearch([folder('a')]);
+    server.use(
+      http.get(LIBRARY_PANELS_ROUTE, () =>
+        HttpResponse.json({
+          items: [
+            { metadata: { name: 'lp1', annotations: { [AnnoKeyFolder]: 'a' } }, spec: { title: 'In a' } },
+            { metadata: { name: 'lp2' }, spec: { title: 'At the root' } },
+          ],
+          metadata: {},
+        })
+      )
+    );
+    const kinds = getMigratableKinds([{ group: 'dashboard.grafana.app', kind: 'LibraryPanel' }]);
+
+    const { result } = renderHook(() => useMigrationData(kinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data.find((f) => f.uid === 'a')?.directResources.map((r) => r.uid)).toEqual(['lp1']);
+    expect(result.current.data.find((f) => f.uid === 'general')?.directResources.map((r) => r.uid)).toEqual(['lp2']);
   });
 
   it('enumerates folder-scoped and non-folder kinds together', async () => {

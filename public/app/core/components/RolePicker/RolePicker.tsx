@@ -117,11 +117,14 @@ export const RolePicker = ({
   const theme = useTheme2();
   const widthPx = typeof width === 'number' ? theme.spacing(width) : width;
 
-  // Sync internal state only when picker closes (transitions from open to closed)
-  useEffect(() => {
+  const [prevAppliedRoles, setPrevAppliedRoles] = useState(appliedRoles);
+  const [prevBasicRole, setPrevBasicRole] = useState(basicRole);
+  if (prevAppliedRoles !== appliedRoles || prevBasicRole !== basicRole) {
+    setPrevAppliedRoles(appliedRoles);
+    setPrevBasicRole(basicRole);
     setSelectedBuiltInRole(basicRole);
     setSelectedRoles(appliedRoles);
-  }, [appliedRoles, basicRole]);
+  }
 
   const setMenuPosition = useCallback(() => {
     const { horizontal, vertical, menuToLeft } = calculateMenuPosition(ref.current);

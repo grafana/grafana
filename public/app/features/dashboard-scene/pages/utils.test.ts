@@ -3,6 +3,8 @@ import { configureStore } from 'app/store/configureStore';
 
 import { updateNavModel } from './utils';
 
+jest.mock('app/api/clients/folder/v1beta1/hooks', () => makeSpyable('app/api/clients/folder/v1beta1/hooks'));
+
 describe('utils', () => {
   it('Should update nav model', async () => {
     const reduxStore = configureStore();

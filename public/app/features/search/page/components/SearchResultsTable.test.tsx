@@ -511,4 +511,43 @@ describe('SearchResultsTable', () => {
       expect(screen.queryByRole('table', { name: 'Search results table' })).not.toBeInTheDocument();
     });
   });
+
+  it('names a dashboard and a folder by their singular kind', async () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'kind', values: ['dashboard', 'folder'] },
+        { name: 'uid', values: ['dash', 'folder'] },
+        { name: 'name', values: ['A dashboard', 'A folder'] },
+        { name: 'url', values: ['/d/dash', '/dashboards/f/folder'] },
+        { name: 'tags', type: FieldType.other, values: [[], []] },
+        { name: 'location', values: ['', ''] },
+      ],
+    });
+    const [dataFrame] = applyFieldOverrides({
+      data: [frame],
+      fieldConfig: { defaults: {}, overrides: [] },
+      replaceVariables: (value) => value,
+      theme: createTheme(),
+    });
+    const response: QueryResponse = {
+      view: new DataFrameView<DashboardQueryResult>(dataFrame),
+      totalRows: frame.length,
+      isItemLoaded: jest.fn().mockReturnValue(true),
+      loadMoreItems: jest.fn(),
+    };
+
+    render(
+      <SearchResultsTable
+        response={response}
+        clearSelection={mockClearSelection}
+        onTagSelected={mockOnTagSelected}
+        keyboardEvents={mockKeyboardEvents}
+        height={1000}
+        width={1000}
+      />
+    );
+
+    expect(await screen.findByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Folder')).toBeInTheDocument();
+  });
 });

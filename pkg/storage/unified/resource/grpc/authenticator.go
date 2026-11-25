@@ -109,7 +109,7 @@ func (f *Authenticator) decodeMetadata(meta metadata.MD) (identity.Requester, er
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "invalid org id")
 	}
-	user.OrgRole = identity.RoleType(getter(mdOrgRole))
+	user.OrgRole = types.RoleType(getter(mdOrgRole))
 	return user, nil
 }
 

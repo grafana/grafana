@@ -103,6 +103,9 @@ export type Props = {
 
   /**
    * Render the top table with TableNG instead of the legacy Table.
+   *
+   * @deprecated The legacy Table is being removed. This prop will be removed in Grafana 14.0, after which the top
+   * table always renders with TableNG.
    */
   useTableNG?: boolean;
 
@@ -250,8 +253,8 @@ const FlameGraphContainer = ({
 
     const leftPane = (
       <FlameGraphPane
-        {...commonPaneProps}
         key="left-pane"
+        {...commonPaneProps}
         paneView={leftPaneView}
         viewMode={ViewMode.Split}
         paneViewForContextMenu={leftPaneView}
@@ -262,8 +265,8 @@ const FlameGraphContainer = ({
 
     const rightPane = (
       <FlameGraphPane
-        {...commonPaneProps}
         key="right-pane"
+        {...commonPaneProps}
         paneView={rightPaneView}
         viewMode={ViewMode.Split}
         paneViewForContextMenu={rightPaneView}

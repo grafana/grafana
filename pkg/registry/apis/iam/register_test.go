@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"sync"
 	"testing"
 
 	badger "github.com/dgraph-io/badger/v4"
@@ -23,6 +24,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -30,15 +32,20 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/userpermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
+	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences/dashboardpreferencestest"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -421,9 +428,8 @@ func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, authorizer.DecisionDeny, decision)
-	storage := map[string]rest.Storage{
-		iamv0.TeamResourceInfo.StoragePath(): &noopstorage.NoopREST{ResourceInfo: iamv0.TeamResourceInfo},
-	}
+	b.teamStorage = &noopstorage.NoopREST{ResourceInfo: iamv0.TeamResourceInfo}
+	storage := map[string]rest.Storage{}
 
 	err = b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage)
 	require.NoError(t, err)
@@ -520,6 +526,119 @@ func TestUpdateUsersAPIGroup_ReadOnly(t *testing.T) {
 			require.True(t, hasTeams)
 		})
 	}
+}
+
+func TestNewUserDeleteCascade(t *testing.T) {
+	authInfos := struct {
+		rest.Storage
+		rest.Lister
+		rest.GracefulDeleter
+	}{}
+	notAuthInfos := struct{ rest.Storage }{}
+	userStore := &struct{ storewrapper.K8sStorage }{}
+
+	for _, tt := range []struct {
+		name            string
+		authInfoStorage rest.Storage
+		preferences     dashboardpreferences.UserCleaner
+		readOnly        bool
+		wantCascade     bool
+	}{
+		{name: "nothing to cascade to"},
+		{name: "auth infos only", authInfoStorage: authInfos, wantCascade: true},
+		{name: "preferences only", preferences: &dashboardpreferencestest.FakeUserCleaner{}, wantCascade: true},
+		{name: "a storage that can't list and delete auth infos, and no preferences", authInfoStorage: notAuthInfos},
+		{name: "read-only API", authInfoStorage: authInfos, preferences: &dashboardpreferencestest.FakeUserCleaner{}, readOnly: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			got := newUserDeleteCascade(userStore, tt.authInfoStorage, tt.preferences, tt.readOnly)
+
+			cascade, isCascade := got.(*user.CascadeDeleter)
+			require.Equal(t, tt.wantCascade, isCascade)
+			if isCascade {
+				require.Same(t, userStore, cascade.K8sStorage)
+			} else {
+				require.Same(t, userStore, got)
+			}
+		})
+	}
+}
+
+func TestNewAPIService_WiresUserPreferencesCleanup(t *testing.T) {
+	newService := func(dialConfigs map[schema.GroupResource]iamauthorizer.DialConfig) *IdentityAccessManagementAPIBuilder {
+		return NewAPIService(
+			nil,
+			nil,
+			legacysql.NewDatabaseProvider(nil),
+			&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+			&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+			&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+			&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+			nil,
+			prometheus.NewRegistry(),
+			nil,
+			dialConfigs,
+			tracing.InitializeTracerForTest(),
+			resourcepermission.NewMappersRegistry(),
+			nil,
+			Features{UsersAPI: true},
+		)
+	}
+
+	t.Run("builds a cleaner from the dashboards dial config", func(t *testing.T) {
+		b := newService(map[schema.GroupResource]iamauthorizer.DialConfig{
+			{Group: "dashboard.grafana.app", Resource: "dashboards"}: {Host: "https://dashboards.invalid", Audience: "dashboard.grafana.app"},
+		})
+
+		require.NotNil(t, b.userPreferences)
+	})
+
+	t.Run("builds no cleaner without a dashboards dial config", func(t *testing.T) {
+		b := newService(nil)
+
+		require.Nil(t, b.userPreferences)
+	})
+}
+
+type recordingTokenExchanger struct {
+	mu       sync.Mutex
+	requests []authn.TokenExchangeRequest
+}
+
+func (e *recordingTokenExchanger) Exchange(_ context.Context, req authn.TokenExchangeRequest) (*authn.TokenExchangeResponse, error) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.requests = append(e.requests, req)
+	return &authn.TokenExchangeResponse{Token: "token-for-" + req.Namespace}, nil
+}
+
+func TestNewRemoteUserPreferencesCleaner_ExchangesATokenForEachNamespace(t *testing.T) {
+	var mu sync.Mutex
+	var received []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		received = append(received, r.Method+" "+r.URL.Path+" "+r.Header.Get("X-Access-Token"))
+		mu.Unlock()
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, `{"kind":"Status","apiVersion":"v1","status":"Success"}`)
+	}))
+	t.Cleanup(server.Close)
+	exchanger := &recordingTokenExchanger{}
+	cleaner := newRemoteUserPreferencesCleaner(map[schema.GroupResource]iamauthorizer.DialConfig{
+		{Group: "dashboard.grafana.app", Resource: "dashboards"}: {Host: server.URL, Audience: "dashboard.grafana.app"},
+	}, exchanger)
+
+	require.NoError(t, cleaner.DeleteUserPreferences(t.Context(), "stacks-1", "u1"))
+	require.NoError(t, cleaner.DeleteUserPreferences(t.Context(), "stacks-2", "u1"))
+
+	require.Equal(t, []authn.TokenExchangeRequest{
+		{Namespace: "stacks-1", Audiences: []string{"dashboard.grafana.app"}},
+		{Namespace: "stacks-2", Audiences: []string{"dashboard.grafana.app"}},
+	}, exchanger.requests)
+	require.Equal(t, []string{
+		"DELETE /apis/dashboard.grafana.app/v2beta1/namespaces/stacks-1/dashboardpreferences/user-u1 Bearer token-for-stacks-1",
+		"DELETE /apis/dashboard.grafana.app/v2beta1/namespaces/stacks-2/dashboardpreferences/user-u1 Bearer token-for-stacks-2",
+	}, received)
 }
 
 func TestInstallSchema_ResourcePermissionsGate(t *testing.T) {

@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/managedfields"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -47,6 +48,14 @@ type Options struct {
 	// cannot be completed without its options: they used to be declared through a
 	// separate by-GroupResource registration that every version of a kind shared.
 	StorageOptsGetter func(apistore.StorageOptions) generic.RESTOptionsGetter
+
+	// NamespaceReadable serves every get and list of a namespaced kind as the
+	// service identity, limited to the request's namespace. Anyone the
+	// authorizer let into the namespace can then read the kind's objects,
+	// without an RBAC grant storage would otherwise require. Writes, watches
+	// and access policies keep the caller's identity, so storage still
+	// authorizes them. Ignored for cluster-scoped kinds.
+	NamespaceReadable bool
 }
 
 func IsFolderScoped(kind app.ManifestVersionKind) bool {
@@ -69,6 +78,10 @@ type Store struct {
 	// users on cluster-scoped objects, since their identity is bound to a
 	// namespace, so reads the authorizer allowed are served as the service.
 	userReadable bool
+
+	// namespaceReadable marks a namespaced kind whose reads are served as the
+	// service, limited to the request's namespace (Options.NamespaceReadable).
+	namespaceReadable bool
 
 	// used for admission hooks
 	admission appclientv3.AdmissionClient
@@ -136,6 +149,8 @@ func New(
 		clusterScoped: clusterScoped,
 		userReadable:  clusterScoped && kind.UserReadable,
 		admission:     admission,
+
+		namespaceReadable: !clusterScoped && opts.NamespaceReadable,
 	}
 
 	if kind.Admission != nil {
@@ -270,16 +285,33 @@ func (s *Store) List(ctx context.Context, options *metainternalversion.ListOptio
 	return s.Store.List(s.readContext(ctx), options)
 }
 
-// readContext serves a user's read of a userReadable cluster-scoped kind as the
-// service identity. The appplugin authorizer only lets users get & list
-// these kinds, so this never widens what a user can do.
+// readContext serves a read as the service identity when the kind allows it:
+//   - a userReadable cluster-scoped kind, for any caller. The appplugin
+//     authorizer only lets users get & list these kinds, so this never widens
+//     what a user can do.
+//   - a namespaceReadable kind, limited to the namespace the request names.
+//     The authorizer has already let the caller into that namespace. A request
+//     that names no single tenant namespace (a list across all of them, or
+//     "*") keeps the caller, so the service identity never reads another
+//     tenant's objects.
+//
+// An access policy keeps its own identity: storage holds it to its token.
 func (s *Store) readContext(ctx context.Context) context.Context {
-	if !s.userReadable {
+	if !s.userReadable && !s.namespaceReadable {
 		return ctx
 	}
 	user, err := identity.GetRequester(ctx)
 	if err != nil || user.IsIdentityType(claims.TypeAccessPolicy) {
 		return ctx
+	}
+	if s.namespaceReadable {
+		ns, err := claims.ParseNamespace(request.NamespaceValue(ctx))
+		if err != nil || ns.OrgID < 1 {
+			return ctx
+		}
+		// WithServiceIdentityForSingleNamespace claims org 1 in every org, so
+		// set the namespace's own org and namespace instead.
+		return identity.WithServiceIdentityContext(ctx, ns.OrgID, func(id *identity.StaticRequester) { id.Namespace = ns.Value })
 	}
 	return identity.WithServiceIdentityContext(ctx, user.GetOrgID())
 }

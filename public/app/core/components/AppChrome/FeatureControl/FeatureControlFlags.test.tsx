@@ -8,8 +8,13 @@ import { FeatureControlContext } from './FeatureControlProvider';
 
 const setIsAccessible = jest.fn();
 const setIsOpen = jest.fn();
+const resetToDefaults = jest.fn();
+const restoreOverrides = jest.fn();
 
-const renderComponent = (overrides: Array<{ key: string; value: string }> = []) => {
+const renderComponent = (
+  overrides: Array<{ key: string; value: string }> = [],
+  { isSuspended = false }: { isSuspended?: boolean } = {}
+) => {
   return render(
     <FeatureControlContext.Provider
       value={{
@@ -18,6 +23,9 @@ const renderComponent = (overrides: Array<{ key: string; value: string }> = []) 
         isOpen: true,
         setIsOpen,
         overrides,
+        isSuspended,
+        resetToDefaults,
+        restoreOverrides,
       }}
     >
       <FeatureControlFlags />
@@ -47,16 +55,98 @@ describe('FeatureControlFlags', () => {
   });
 
   it('dismisses feature control without removing overrides', async () => {
+    const user = userEvent.setup();
     getLocalStorageProvider().setFlags({ alpha: true });
 
     renderComponent();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Open menu' }));
-    await userEvent.click(screen.getByRole('menuitem', { name: /Remove UI and toolbar button/ }));
+    await user.click(screen.getByRole('button', { name: 'Open menu' }));
+    await user.click(screen.getByRole('menuitem', { name: /Remove UI and toolbar button/ }));
 
     expect(setIsOpen).toHaveBeenCalledWith(false);
     expect(setIsAccessible).toHaveBeenCalledWith(false);
     expect(window.localStorage.getItem(getStorageKey('alpha'))).toBe('true');
+  });
+
+  it('temporarily resets overrides to defaults from the menu without removing the UI', async () => {
+    const user = userEvent.setup();
+    renderComponent([
+      { key: 'alpha', value: 'true' },
+      { key: 'beta', value: 'custom-value' },
+    ]);
+
+    await user.click(screen.getByRole('button', { name: 'Open menu' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Disable overrides' }));
+
+    expect(resetToDefaults).toHaveBeenCalled();
+    expect(setIsOpen).not.toHaveBeenCalled();
+    expect(setIsAccessible).not.toHaveBeenCalled();
+  });
+
+  it('disables the menu reset option when there are no overrides', async () => {
+    const user = userEvent.setup();
+    renderComponent();
+
+    await user.click(screen.getByRole('button', { name: 'Open menu' }));
+
+    expect(screen.getByRole('menuitem', { name: 'Disable overrides' })).toBeDisabled();
+    expect(screen.queryByText('Overrides are temporarily disabled')).not.toBeInTheDocument();
+  });
+
+  it('shows overrides greyed out and offers to restore them while suspended', async () => {
+    const user = userEvent.setup();
+    renderComponent([{ key: 'alpha', value: 'true' }], { isSuspended: true });
+
+    // A warning message explains the suspended state.
+    expect(screen.getByText('Overrides are temporarily disabled')).toBeInTheDocument();
+
+    // Overrides are still listed, but the row is marked disabled.
+    expect(screen.getByText('alpha').closest('details')).toHaveAttribute('aria-disabled', 'true');
+
+    // Adding new overrides is not possible while suspended.
+    expect(screen.queryByRole('button', { name: 'Add new flag override' })).not.toBeInTheDocument();
+
+    // The menu offers restore instead of disable.
+    await user.click(screen.getByRole('button', { name: 'Open menu' }));
+    expect(screen.queryByRole('menuitem', { name: 'Disable overrides' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('menuitem', { name: 'Restore overrides' }));
+
+    expect(restoreOverrides).toHaveBeenCalled();
+  });
+
+  it('closes the panel from the close button without affecting accessibility', async () => {
+    const user = userEvent.setup();
+    renderComponent();
+
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(setIsOpen).toHaveBeenCalledWith(false);
+    expect(setIsAccessible).not.toHaveBeenCalled();
+  });
+
+  it('reveals the new flag form when the new flag button is clicked', async () => {
+    const user = userEvent.setup();
+    renderComponent();
+
+    expect(screen.queryByRole('combobox', { name: 'Flag key' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Add new flag override' }));
+
+    expect(screen.getByRole('combobox', { name: 'Flag key' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+  });
+
+  it('hides the new flag form when cancel is clicked', async () => {
+    const user = userEvent.setup();
+    renderComponent();
+
+    await user.click(screen.getByRole('button', { name: 'Add new flag override' }));
+    expect(screen.getByRole('combobox', { name: 'Flag key' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByRole('combobox', { name: 'Flag key' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add new flag override' })).toBeInTheDocument();
   });
 
   it('does not show the preview assets message by default', () => {
@@ -75,6 +165,23 @@ describe('FeatureControlFlags', () => {
     expect(previewStatus).toHaveTextContent('Build pr_grafana_123456 live for just you.');
     expect(screen.getByRole('button', { name: 'Stop preview' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy share link' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /All open frontend preview PRs/ })).toHaveAttribute(
+      'href',
+      'https://github.com/grafana/grafana/pulls?q=is%3Apr+is%3Aopen+label%3Adeploy-frontend-preview+sort%3Aupdated-desc'
+    );
+
+    const openPr = screen.getByRole('link', { name: 'Open PR' });
+    expect(openPr).toHaveAttribute('href', 'https://github.com/grafana/grafana/pull/123456');
+    expect(openPr).toHaveAttribute('target', '_blank');
+  });
+
+  it('omits the Open PR button when the preview folder has no parseable PR', () => {
+    window.__grafanaPreviewAssets = 'custombuild';
+
+    renderComponent();
+
+    expect(screen.getByText('Frontend preview active')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Open PR' })).not.toBeInTheDocument();
   });
 
   it('copies a link that enables the active preview assets', async () => {

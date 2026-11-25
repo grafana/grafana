@@ -32,7 +32,6 @@ type DTO struct {
 	JSONData       map[string]any
 	SecureJSONData map[string][]byte
 	Enabled        bool
-	Pinned         bool
 	Updated        time.Time
 }
 
@@ -40,14 +39,12 @@ type InfoDTO struct {
 	PluginID      string
 	OrgID         int64
 	Enabled       bool
-	Pinned        bool
 	PluginVersion string
 	AutoEnabled   bool
 }
 
 type UpdateArgs struct {
 	Enabled                 bool
-	Pinned                  bool
 	JSONData                map[string]any
 	SecureJSONData          map[string]string
 	PluginVersion           string
@@ -89,7 +86,6 @@ type PluginSettingInfo struct {
 	PluginID      string `xorm:"plugin_id"`
 	OrgID         int64  `xorm:"org_id"`
 	Enabled       bool   `xorm:"enabled"`
-	Pinned        bool   `xorm:"pinned"`
 	PluginVersion string `xorm:"plugin_version"`
 }
 
@@ -99,7 +95,6 @@ type PluginSettingInfo struct {
 // Also acts as api DTO
 type UpdatePluginSettingCmd struct {
 	Enabled        bool              `json:"enabled"`
-	Pinned         bool              `json:"pinned"`
 	JsonData       map[string]any    `json:"jsonData"`
 	SecureJsonData map[string]string `json:"secureJsonData"`
 	PluginVersion  string            `json:"version"`

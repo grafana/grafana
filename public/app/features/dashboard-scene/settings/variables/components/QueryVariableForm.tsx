@@ -141,6 +141,7 @@ export function QueryVariableEditorForm({
           htmlFor="data-source-picker"
         >
           <DataSourcePicker
+            journeySurface="variable_editor"
             current={datasourceRef}
             onChange={datasourceChangeHandler}
             variables={true}

@@ -21,13 +21,13 @@ import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEdi
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 
 import { activePanelSubject, type InstanceState } from '../../CanvasPanel';
-import { addStandardCanvasEditorOptions } from '../../module';
 import { type Options } from '../../panelcfg.gen';
 import { InlineEditTabs } from '../../types';
 import { getElementTypes, onAddItem } from '../../utils';
 import { getConnectionEditor } from '../connectionEditor';
 import { getElementEditor } from '../element/elementEditor';
 import { getLayerEditor } from '../layer/layerEditor';
+import { addStandardCanvasEditorOptions } from '../standardOptions';
 
 import { TabsEditor } from './TabsEditor';
 
@@ -136,7 +136,7 @@ export function InlineEditBody() {
 // Recursively render options
 function renderOptionsPaneCategoryDescriptor(pane: OptionsPaneCategoryDescriptor) {
   return (
-    <OptionsPaneCategory {...pane.props} key={pane.props.id}>
+    <OptionsPaneCategory key={pane.props.id} {...pane.props}>
       <div>{pane.items.map((v) => v.renderElement())}</div>
       {pane.categories.map((c) => renderOptionsPaneCategoryDescriptor(c))}
     </OptionsPaneCategory>

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useRef } from 'react';
 
-import { type GrafanaTheme2, type LogRowModel } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Menu, useStyles2 } from '@grafana/ui';
@@ -16,7 +16,8 @@ interface PopoverMenuProps {
   onClickFilterOutString?: (value: string, refId?: string) => void;
   onClickSearchString?: (text: string) => void;
   onDisable: () => void;
-  row: LogRowModel;
+  refId?: string;
+  datasourceType?: string;
   close: () => void;
 }
 
@@ -27,7 +28,8 @@ export const PopoverMenu = ({
   onClickFilterOutString,
   onClickSearchString,
   selection,
-  row,
+  refId,
+  datasourceType,
   close,
   ...props
 }: PopoverMenuProps) => {
@@ -48,9 +50,9 @@ export const PopoverMenu = ({
   }, [close]);
 
   const onDisable = useCallback(() => {
-    track('popover_menu_disabled', selection.length, row.datasourceType);
+    track('popover_menu_disabled', selection.length, datasourceType);
     props.onDisable();
-  }, [props, row.datasourceType, selection.length]);
+  }, [props, datasourceType, selection.length]);
 
   const supported = onClickFilterString || onClickFilterOutString || onClickSearchString;
 
@@ -67,16 +69,16 @@ export const PopoverMenu = ({
             onClick={() => {
               copyText(selection, containerRef);
               close();
-              track('copy', selection.length, row.datasourceType);
+              track('copy', selection.length, datasourceType);
             }}
           />
           {onClickFilterString && (
             <Menu.Item
               label={t('logs.popover-menu.line-contains', 'Add as line contains filter')}
               onClick={() => {
-                onClickFilterString(selection, row.dataFrame.refId);
+                onClickFilterString(selection, refId);
                 close();
-                track('line_contains', selection.length, row.datasourceType);
+                track('line_contains', selection.length, datasourceType);
               }}
             />
           )}
@@ -84,9 +86,9 @@ export const PopoverMenu = ({
             <Menu.Item
               label={t('logs.popover-menu.line-contains-not', 'Add as line does not contain filter')}
               onClick={() => {
-                onClickFilterOutString(selection, row.dataFrame.refId);
+                onClickFilterOutString(selection, refId);
                 close();
-                track('line_does_not_contain', selection.length, row.datasourceType);
+                track('line_does_not_contain', selection.length, datasourceType);
               }}
             />
           )}
@@ -97,7 +99,7 @@ export const PopoverMenu = ({
               onClick={() => {
                 onClickSearchString(selection);
                 close();
-                track('search_text', selection.length, row.datasourceType);
+                track('search_text', selection.length, datasourceType);
               }}
             />
           )}

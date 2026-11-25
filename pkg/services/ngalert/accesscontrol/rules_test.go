@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
-	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/cmputil"
@@ -81,7 +81,7 @@ func getDatasourceScopesForRules(rules models.RulesGroup) []string {
 	return result
 }
 
-func mapUpdates(updates []rulestore.RuleDelta, mapFunc func(rulestore.RuleDelta) *models.AlertRule) models.RulesGroup {
+func mapUpdates(updates []ngrulesvc.RuleDelta, mapFunc func(ngrulesvc.RuleDelta) *models.AlertRule) models.RulesGroup {
 	result := make(models.RulesGroup, 0, len(updates))
 	for _, update := range updates {
 		result = append(result, mapFunc(update))
@@ -127,20 +127,20 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 
 	testCases := []struct {
 		name        string
-		changes     func() *rulestore.GroupDelta
-		permissions func(c *rulestore.GroupDelta) map[string][]string
+		changes     func() *ngrulesvc.GroupDelta
+		permissions func(c *ngrulesvc.GroupDelta) map[string][]string
 	}{
 		{
 			name: "if there are rules to add it should check create action and query for datasource",
-			changes: func() *rulestore.GroupDelta {
-				return &rulestore.GroupDelta{
+			changes: func() *ngrulesvc.GroupDelta {
+				return &ngrulesvc.GroupDelta{
 					GroupKey: groupKey,
 					New:      genWithGroupKey.GenerateManyRef(1, 5),
 					Update:   nil,
 					Delete:   nil,
 				}
 			},
-			permissions: func(c *rulestore.GroupDelta) map[string][]string {
+			permissions: func(c *ngrulesvc.GroupDelta) map[string][]string {
 				return map[string][]string{
 					ruleCreate: {
 						namespaceIdScope,
@@ -157,10 +157,10 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 		},
 		{
 			name: "if there are rules to delete it should check delete action and NOT query for datasource",
-			changes: func() *rulestore.GroupDelta {
+			changes: func() *ngrulesvc.GroupDelta {
 				rules := genWithGroupKey.GenerateManyRef(1, 5)
 				rules2 := genWithGroupKey.GenerateManyRef(1, 5)
-				return &rulestore.GroupDelta{
+				return &ngrulesvc.GroupDelta{
 					GroupKey: groupKey,
 					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
 						groupKey: append(rules, rules2...),
@@ -170,7 +170,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					Delete: rules2,
 				}
 			},
-			permissions: func(c *rulestore.GroupDelta) map[string][]string {
+			permissions: func(c *ngrulesvc.GroupDelta) map[string][]string {
 				return map[string][]string{
 					ruleRead: {
 						namespaceIdScope,
@@ -186,22 +186,22 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 		},
 		{
 			name: "if there are rules with query updates within the same namespace it should check update action and access to datasource",
-			changes: func() *rulestore.GroupDelta {
+			changes: func() *ngrulesvc.GroupDelta {
 				rules1 := genWithGroupKey.GenerateManyRef(1, 5)
 				rules := genWithGroupKey.GenerateManyRef(1, 5)
-				updates := make([]rulestore.RuleDelta, 0, len(rules))
+				updates := make([]ngrulesvc.RuleDelta, 0, len(rules))
 
 				for _, rule := range rules {
 					cp := models.CopyRule(rule)
 					cp.Data = []models.AlertQuery{models.GenerateAlertQuery()}
-					updates = append(updates, rulestore.RuleDelta{
+					updates = append(updates, ngrulesvc.RuleDelta{
 						Existing: rule,
 						New:      cp,
 						Diff:     getShallowQueryDiffs(cp.Data),
 					})
 				}
 
-				return &rulestore.GroupDelta{
+				return &ngrulesvc.GroupDelta{
 					GroupKey: groupKey,
 					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
 						groupKey: append(rules, rules1...),
@@ -211,8 +211,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					Delete: nil,
 				}
 			},
-			permissions: func(c *rulestore.GroupDelta) map[string][]string {
-				scopes := getDatasourceScopesForRules(mapUpdates(c.Update, func(update rulestore.RuleDelta) *models.AlertRule {
+			permissions: func(c *ngrulesvc.GroupDelta) map[string][]string {
+				scopes := getDatasourceScopesForRules(mapUpdates(c.Update, func(update ngrulesvc.RuleDelta) *models.AlertRule {
 					return update.New
 				}))
 				return map[string][]string{
@@ -231,16 +231,16 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 		},
 		{
 			name: "if there are rules w/o query updates to update within the same namespace it should check update action",
-			changes: func() *rulestore.GroupDelta {
+			changes: func() *ngrulesvc.GroupDelta {
 				rules1 := genWithGroupKey.GenerateManyRef(1, 5)
 				rules := genWithGroupKey.GenerateManyRef(1, 5)
-				updates := make([]rulestore.RuleDelta, 0, len(rules))
+				updates := make([]ngrulesvc.RuleDelta, 0, len(rules))
 
 				for _, rule := range rules {
 					cp := models.CopyRule(rule)
 					cp.IsPaused = !rule.IsPaused
 					cp.Title = rule.Title + " updated"
-					updates = append(updates, rulestore.RuleDelta{
+					updates = append(updates, ngrulesvc.RuleDelta{
 						Existing: rule,
 						New:      cp,
 						Diff: []cmputil.Diff{
@@ -254,7 +254,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					})
 				}
 
-				return &rulestore.GroupDelta{
+				return &ngrulesvc.GroupDelta{
 					GroupKey: groupKey,
 					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
 						groupKey: append(rules, rules1...),
@@ -264,7 +264,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					Delete: nil,
 				}
 			},
-			permissions: func(c *rulestore.GroupDelta) map[string][]string {
+			permissions: func(c *ngrulesvc.GroupDelta) map[string][]string {
 				return map[string][]string{
 					ruleRead: {
 						namespaceIdScope,
@@ -280,17 +280,17 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 		},
 		{
 			name: "if there are rules that are moved between namespaces it should check delete+add action and access to group where rules come from",
-			changes: func() *rulestore.GroupDelta {
+			changes: func() *ngrulesvc.GroupDelta {
 				rules1 := genWithGroupKey.GenerateManyRef(1, 5)
 				rules := genWithGroupKey.GenerateManyRef(1, 5)
 
 				targetGroupKey := models.GenerateGroupKey(groupKey.OrgID)
 
-				updates := make([]rulestore.RuleDelta, 0, len(rules))
+				updates := make([]ngrulesvc.RuleDelta, 0, len(rules))
 				for _, rule := range rules {
 					cp := models.CopyRule(rule, gen.WithGroupKey(targetGroupKey))
 
-					updates = append(updates, rulestore.RuleDelta{
+					updates = append(updates, ngrulesvc.RuleDelta{
 						Existing: rule,
 						New:      cp,
 						Diff: []cmputil.Diff{
@@ -307,7 +307,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					})
 				}
 
-				return &rulestore.GroupDelta{
+				return &ngrulesvc.GroupDelta{
 					GroupKey: targetGroupKey,
 					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
 						groupKey: append(rules, rules1...),
@@ -317,7 +317,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					Delete: nil,
 				}
 			},
-			permissions: func(c *rulestore.GroupDelta) map[string][]string {
+			permissions: func(c *ngrulesvc.GroupDelta) map[string][]string {
 				deleteScopes := make([]string, 0, len(c.AffectedGroups))
 				for key := range c.AffectedGroups {
 					deleteScopes = append(deleteScopes, folder.ScopeFoldersProvider.GetResourceScopeUID(key.NamespaceUID))
@@ -333,7 +333,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 		},
 		{
 			name: "if there are rules that are moved between groups in the same namespace it should check update action and access to all groups (source+target)",
-			changes: func() *rulestore.GroupDelta {
+			changes: func() *ngrulesvc.GroupDelta {
 				targetGroupKey := models.AlertRuleGroupKey{
 					OrgID:        groupKey.OrgID,
 					NamespaceUID: groupKey.NamespaceUID,
@@ -342,7 +342,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				sourceGroup := genWithGroupKey.GenerateManyRef(1, 5)
 				targetGroup := gen.With(gen.WithGroupKey(targetGroupKey)).GenerateManyRef(1, 5)
 
-				updates := make([]rulestore.RuleDelta, 0, len(sourceGroup))
+				updates := make([]ngrulesvc.RuleDelta, 0, len(sourceGroup))
 				toCopy := len(sourceGroup)
 				if toCopy > 1 {
 					toCopy = rand.Intn(toCopy-1) + 1
@@ -351,7 +351,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					rule := sourceGroup[0]
 					cp := models.CopyRule(rule, gen.WithGroupKey(targetGroupKey))
 
-					updates = append(updates, rulestore.RuleDelta{
+					updates = append(updates, ngrulesvc.RuleDelta{
 						Existing: rule,
 						New:      cp,
 						Diff: []cmputil.Diff{
@@ -368,7 +368,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					})
 				}
 
-				return &rulestore.GroupDelta{
+				return &ngrulesvc.GroupDelta{
 					GroupKey: targetGroupKey,
 					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
 						groupKey:       sourceGroup,
@@ -379,7 +379,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					Delete: nil,
 				}
 			},
-			permissions: func(c *rulestore.GroupDelta) map[string][]string {
+			permissions: func(c *ngrulesvc.GroupDelta) map[string][]string {
 				return map[string][]string{
 					ruleRead: {
 						folder.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
@@ -395,7 +395,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 		},
 		{
 			name: "if there are rules that are moved between groups in the same namespace AND the query is changed it should check update action and access to all groups (source+target) and datasources",
-			changes: func() *rulestore.GroupDelta {
+			changes: func() *ngrulesvc.GroupDelta {
 				targetGroupKey := models.AlertRuleGroupKey{
 					OrgID:        groupKey.OrgID,
 					NamespaceUID: groupKey.NamespaceUID,
@@ -404,7 +404,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				sourceGroup := genWithGroupKey.GenerateManyRef(1, 5)
 				targetGroup := gen.With(gen.WithGroupKey(targetGroupKey)).GenerateManyRef(1, 5)
 
-				updates := make([]rulestore.RuleDelta, 0, len(sourceGroup))
+				updates := make([]ngrulesvc.RuleDelta, 0, len(sourceGroup))
 				toCopy := len(sourceGroup)
 				if toCopy > 1 {
 					toCopy = rand.Intn(toCopy-1) + 1
@@ -413,7 +413,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					rule := sourceGroup[0]
 					cp := models.CopyRule(rule, gen.WithGroupKey(targetGroupKey), gen.WithQuery(models.GenerateAlertQuery()))
 
-					updates = append(updates, rulestore.RuleDelta{
+					updates = append(updates, ngrulesvc.RuleDelta{
 						Existing: rule,
 						New:      cp,
 						Diff: append(
@@ -433,7 +433,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					})
 				}
 
-				return &rulestore.GroupDelta{
+				return &ngrulesvc.GroupDelta{
 					GroupKey: targetGroupKey,
 					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
 						groupKey:       sourceGroup,
@@ -444,9 +444,9 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					Delete: nil,
 				}
 			},
-			permissions: func(c *rulestore.GroupDelta) map[string][]string {
+			permissions: func(c *ngrulesvc.GroupDelta) map[string][]string {
 				dsScopes := getDatasourceScopesForRules(
-					mapUpdates(c.Update, func(update rulestore.RuleDelta) *models.AlertRule {
+					mapUpdates(c.Update, func(update ngrulesvc.RuleDelta) *models.AlertRule {
 						return update.New
 					}),
 				)

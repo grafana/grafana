@@ -18,7 +18,7 @@ type MockHealthChecker struct {
 }
 
 // HasRecentFailure provides a mock function with given fields: healthStatus, failureType
-func (_m *MockHealthChecker) HasRecentFailure(healthStatus v0alpha1.HealthStatus, failureType v0alpha1.HealthFailureType) bool {
+func (_m *MockHealthChecker) HasRecentFailure(healthStatus v0alpha1.RepositoryHealthStatus, failureType v0alpha1.RepositoryHealthFailureType) bool {
 	ret := _m.Called(healthStatus, failureType)
 
 	if len(ret) == 0 {
@@ -26,7 +26,7 @@ func (_m *MockHealthChecker) HasRecentFailure(healthStatus v0alpha1.HealthStatus
 	}
 
 	var r0 bool
-	if rf, ok := ret.Get(0).(func(v0alpha1.HealthStatus, v0alpha1.HealthFailureType) bool); ok {
+	if rf, ok := ret.Get(0).(func(v0alpha1.RepositoryHealthStatus, v0alpha1.RepositoryHealthFailureType) bool); ok {
 		r0 = rf(healthStatus, failureType)
 	} else {
 		r0 = ret.Get(0).(bool)
@@ -36,7 +36,7 @@ func (_m *MockHealthChecker) HasRecentFailure(healthStatus v0alpha1.HealthStatus
 }
 
 // RecordFailure provides a mock function with given fields: ctx, failureType, err, repo
-func (_m *MockHealthChecker) RecordFailure(ctx context.Context, failureType v0alpha1.HealthFailureType, err error, repo *v0alpha1.Repository) error {
+func (_m *MockHealthChecker) RecordFailure(ctx context.Context, failureType v0alpha1.RepositoryHealthFailureType, err error, repo *v0alpha1.Repository) error {
 	ret := _m.Called(ctx, failureType, err, repo)
 
 	if len(ret) == 0 {
@@ -44,7 +44,7 @@ func (_m *MockHealthChecker) RecordFailure(ctx context.Context, failureType v0al
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.HealthFailureType, error, *v0alpha1.Repository) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.RepositoryHealthFailureType, error, *v0alpha1.Repository) error); ok {
 		r0 = rf(ctx, failureType, err, repo)
 	} else {
 		r0 = ret.Error(0)
@@ -54,7 +54,7 @@ func (_m *MockHealthChecker) RecordFailure(ctx context.Context, failureType v0al
 }
 
 // RefreshHealth provides a mock function with given fields: ctx, repo
-func (_m *MockHealthChecker) RefreshHealth(ctx context.Context, repo repository.Repository) (*v0alpha1.TestResults, v0alpha1.HealthStatus, error) {
+func (_m *MockHealthChecker) RefreshHealth(ctx context.Context, repo repository.Repository) (*v0alpha1.TestResults, v0alpha1.RepositoryHealthStatus, error) {
 	ret := _m.Called(ctx, repo)
 
 	if len(ret) == 0 {
@@ -62,9 +62,9 @@ func (_m *MockHealthChecker) RefreshHealth(ctx context.Context, repo repository.
 	}
 
 	var r0 *v0alpha1.TestResults
-	var r1 v0alpha1.HealthStatus
+	var r1 v0alpha1.RepositoryHealthStatus
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, repository.Repository) (*v0alpha1.TestResults, v0alpha1.HealthStatus, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, repository.Repository) (*v0alpha1.TestResults, v0alpha1.RepositoryHealthStatus, error)); ok {
 		return rf(ctx, repo)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, repository.Repository) *v0alpha1.TestResults); ok {
@@ -75,10 +75,10 @@ func (_m *MockHealthChecker) RefreshHealth(ctx context.Context, repo repository.
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, repository.Repository) v0alpha1.HealthStatus); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, repository.Repository) v0alpha1.RepositoryHealthStatus); ok {
 		r1 = rf(ctx, repo)
 	} else {
-		r1 = ret.Get(1).(v0alpha1.HealthStatus)
+		r1 = ret.Get(1).(v0alpha1.RepositoryHealthStatus)
 	}
 
 	if rf, ok := ret.Get(2).(func(context.Context, repository.Repository) error); ok {
@@ -91,7 +91,7 @@ func (_m *MockHealthChecker) RefreshHealth(ctx context.Context, repo repository.
 }
 
 // RefreshHealthWithPatchOps provides a mock function with given fields: ctx, repo
-func (_m *MockHealthChecker) RefreshHealthWithPatchOps(ctx context.Context, repo repository.Repository) (*v0alpha1.TestResults, v0alpha1.HealthStatus, []map[string]interface{}, error) {
+func (_m *MockHealthChecker) RefreshHealthWithPatchOps(ctx context.Context, repo repository.Repository) (*v0alpha1.TestResults, v0alpha1.RepositoryHealthStatus, []map[string]interface{}, error) {
 	ret := _m.Called(ctx, repo)
 
 	if len(ret) == 0 {
@@ -99,10 +99,10 @@ func (_m *MockHealthChecker) RefreshHealthWithPatchOps(ctx context.Context, repo
 	}
 
 	var r0 *v0alpha1.TestResults
-	var r1 v0alpha1.HealthStatus
+	var r1 v0alpha1.RepositoryHealthStatus
 	var r2 []map[string]interface{}
 	var r3 error
-	if rf, ok := ret.Get(0).(func(context.Context, repository.Repository) (*v0alpha1.TestResults, v0alpha1.HealthStatus, []map[string]interface{}, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, repository.Repository) (*v0alpha1.TestResults, v0alpha1.RepositoryHealthStatus, []map[string]interface{}, error)); ok {
 		return rf(ctx, repo)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, repository.Repository) *v0alpha1.TestResults); ok {
@@ -113,10 +113,10 @@ func (_m *MockHealthChecker) RefreshHealthWithPatchOps(ctx context.Context, repo
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, repository.Repository) v0alpha1.HealthStatus); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, repository.Repository) v0alpha1.RepositoryHealthStatus); ok {
 		r1 = rf(ctx, repo)
 	} else {
-		r1 = ret.Get(1).(v0alpha1.HealthStatus)
+		r1 = ret.Get(1).(v0alpha1.RepositoryHealthStatus)
 	}
 
 	if rf, ok := ret.Get(2).(func(context.Context, repository.Repository) []map[string]interface{}); ok {

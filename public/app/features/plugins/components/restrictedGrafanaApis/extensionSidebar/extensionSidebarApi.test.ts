@@ -1,9 +1,11 @@
+import { reportInteraction } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
   canCollapseFloatingExtensionSidebar,
   canPopOutExtensionSidebar,
   collapseFloatingExtensionSidebar,
   getEffectiveExtensionSidebarPresentation,
+  getFloatingExtensionSidebarHeightOptions,
   getRequestedExtensionSidebarDockSide,
   getRequestedExtensionSidebarPresentation,
   isExtensionSidebarPoppedOut,
@@ -16,7 +18,19 @@ import {
 
 import { extensionSidebarApi } from './extensionSidebarApi';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
 const FLOATING_FLAG = 'grafana.extensionSidebarFloating';
+
+/** The placement changes reported, without the event name. */
+const reportedPlacementChanges = () =>
+  jest
+    .mocked(reportInteraction)
+    .mock.calls.filter(([name]) => name === 'grafana_extension_sidebar_placement_changed')
+    .map(([, properties]) => properties);
 
 const PLACEMENTS_FLAG = 'grafana.extensionSidebarPlacements';
 
@@ -33,6 +47,7 @@ describe('extensionSidebarApi', () => {
   afterEach(() => {
     resetExtensionSidebarPresentationForTests();
     setTestFlags({});
+    jest.mocked(reportInteraction).mockClear();
   });
 
   describe('with grafana.extensionSidebarFloating on', () => {
@@ -49,6 +64,18 @@ describe('extensionSidebarApi', () => {
 
       extensionSidebarApi.setPresentation('docked');
       expect(getRequestedExtensionSidebarPresentation()).toBe('docked');
+    });
+
+    it('reports a move it makes as made by the plugin, docking on the side it last docked on', () => {
+      setExtensionSidebarDockSide('bottom');
+
+      extensionSidebarApi.setPresentation('docked');
+      placementApi().setPlacement('left');
+
+      expect(reportedPlacementChanges()).toEqual([
+        { placement: 'bottom', previous_placement: 'floating', source: 'plugin' },
+        { placement: 'left', previous_placement: 'bottom', source: 'plugin' },
+      ]);
     });
 
     it('ignores a value that is not a layout', () => {
@@ -134,6 +161,46 @@ describe('extensionSidebarApi', () => {
     expect(canCollapseFloatingExtensionSidebar()).toBe(false);
     collapseFloatingExtensionSidebar();
     expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it('resizes the floating height between the sizes the extension declares, until it leaves the height out', () => {
+    const { setSizing } = extensionSidebarApi;
+    if (!setSizing) {
+      throw new Error('setSizing is absent');
+    }
+
+    setSizing({ floating: { height: { min: 400.4, collapsed: 99.6 } } });
+    expect(getFloatingExtensionSidebarHeightOptions()).toEqual({ minHeight: 400, collapsedHeight: 100 });
+
+    setSizing({ floating: { height: { min: 400 } } });
+    expect(getFloatingExtensionSidebarHeightOptions()).toEqual({ minHeight: 400 });
+
+    // Collapsed, the extension leaves the height out: no height handles.
+    setSizing({ floating: {} });
+    expect(getFloatingExtensionSidebarHeightOptions()).toBeNull();
+
+    setSizing({ floating: { height: { min: 400 } } });
+    setSizing(null);
+    expect(getFloatingExtensionSidebarHeightOptions()).toBeNull();
+  });
+
+  it.each([
+    ['a value that is not an object', 'tall'],
+    ['no floating layout', {}],
+    ['a height that is not an object', { floating: { height: 400 } }],
+    ['no minimum', { floating: { height: { collapsed: 100 } } }],
+    ['a minimum that is not a positive number', { floating: { height: { min: -1 } } }],
+    ['a minimum that is not finite', { floating: { height: { min: Infinity } } }],
+  ])('shows no height handles for %s', (_, sizing) => {
+    extensionSidebarApi.setSizing?.({ floating: { height: { min: 400 } } });
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a plugin calling from untyped code
+    extensionSidebarApi.setSizing?.(sizing as unknown as null);
+    expect(getFloatingExtensionSidebarHeightOptions()).toBeNull();
+  });
+
+  it('leaves out a collapsed height that is not below the minimum', () => {
+    extensionSidebarApi.setSizing?.({ floating: { height: { min: 400, collapsed: 400 } } });
+    expect(getFloatingExtensionSidebarHeightOptions()).toEqual({ minHeight: 400 });
   });
 
   it('ignores a collapse subscriber that is not a function', () => {

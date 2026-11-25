@@ -118,9 +118,9 @@ const ADMIN_PLUGINS_CHILDREN: NavEntryBuilder[] = [
   },
   {
     when: () =>
-      config.buildInfo.env === 'development' ||
-      (getFeatureFlagClient().getBooleanValue(FlagKeys.EnableExtensionsAdminPage, false) &&
-        hasAny(AccessControlAction.PluginsWrite, AccessControlAction.PluginsInstall)),
+      (config.buildInfo.env === 'development' ||
+        getFeatureFlagClient().getBooleanValue(FlagKeys.EnableExtensionsAdminPage, false)) &&
+      hasAny(AccessControlAction.PluginsWrite, AccessControlAction.PluginsInstall),
     build: () => ({
       text: 'Extensions',
       icon: 'plug',

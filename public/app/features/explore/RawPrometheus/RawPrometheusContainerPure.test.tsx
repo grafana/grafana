@@ -4,7 +4,7 @@ import { type ComponentProps } from 'react';
 
 import { FieldType, InternalTimeZones, toDataFrame, LoadingState } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { mockClientSize } from '@grafana/test-utils';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { type TableNG } from '@grafana/ui/unstable';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
@@ -62,7 +62,7 @@ const renderContainer = (propOverrides = {}) =>
 describe('RawPrometheusContainerPure with rawPrometheus.tableNg', () => {
   beforeAll(() => {
     // JSDOM reports zero client dimensions, causing react-data-grid to virtualize away the text column.
-    mockClientSize({ width: 800, height: 600 });
+    mockBoundingClientRect({ width: 800, height: 600 });
     getTemplateSrv();
   });
 

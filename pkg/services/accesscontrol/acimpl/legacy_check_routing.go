@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -15,12 +16,17 @@ var _ legacyclient.LegacyCheckClientSetter = (*AccessControl)(nil)
 
 func (a *AccessControl) SetLegacyCheckClient(
 	client legacyclient.LegacyAccessClient,
-	useExternalGroups bool,
 	namespace types.NamespaceFormatter,
-) {
+	reg prometheus.Registerer,
+) error {
+	comparison, err := newLegacyCheckShadow(reg)
+	if err != nil {
+		return err
+	}
+	a.legacyCheckShadow = comparison
 	a.legacyCheckClient = client
-	a.useExternalGroups = useExternalGroups
 	a.legacyNamespace = namespace
+	return nil
 }
 
 func (a *AccessControl) evaluateLegacyCheck(
@@ -32,7 +38,7 @@ func (a *AccessControl) evaluateLegacyCheck(
 		return false, errors.New("legacy check client is not configured")
 	}
 
-	request, err := a.buildLegacyCheckRequest(user, evaluator, a.useExternalGroups, a.legacyNamespace)
+	request, err := a.buildLegacyCheckRequest(user, evaluator, a.legacyNamespace)
 	if err != nil {
 		return false, err
 	}

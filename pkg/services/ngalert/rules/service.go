@@ -29,10 +29,10 @@ type RuleService interface {
 	rulestore.ReceiverRenamer
 	rulestore.TimeIntervalRenamer
 	rulestore.ContactPointRoutingReader
-	rulestore.StatusWriter
 	folder.RegistryService
 	rulestore.FolderRuleCounter
 	rulestore.MaintenanceStore
+	DeltaCalculator
 
 	// isRuleService seals the interface so the SQL store cannot be passed where the wrapper is expected.
 	isRuleService()
@@ -122,6 +122,10 @@ func (s *Service) Count(ctx context.Context, orgID int64) (int64, error) {
 	return s.sql.Count(ctx, orgID)
 }
 
+func (s *Service) CountByOrg(ctx context.Context) (map[int64]int64, error) {
+	return s.sql.CountByOrg(ctx)
+}
+
 func (s *Service) CountRuleGroups(ctx context.Context, orgID int64) (int64, error) {
 	return s.sql.CountRuleGroups(ctx, orgID)
 }
@@ -170,10 +174,6 @@ func (s *Service) ListContactPointRoutings(ctx context.Context, q ngmodels.ListC
 	return s.sql.ListContactPointRoutings(ctx, q)
 }
 
-func (s *Service) SaveAlertRuleStatus(ctx context.Context, orgID int64, ruleUID string, data []byte) error {
-	return s.sql.SaveAlertRuleStatus(ctx, orgID, ruleUID, data)
-}
-
 func (s *Service) Kind() string {
 	return s.sql.Kind()
 }
@@ -200,4 +200,24 @@ func (s *Service) GetAllFoldersWithRulesByType(ctx context.Context, orgID int64,
 
 func (s *Service) CleanUpDeletedAlertRules(ctx context.Context) (int64, error) {
 	return s.sql.CleanUpDeletedAlertRules(ctx)
+}
+
+func (s *Service) CalculateChanges(ctx context.Context, groupKey ngmodels.AlertRuleGroupKey, submittedRules []*ngmodels.AlertRuleWithOptionals) (*GroupDelta, error) {
+	return CalculateChanges(ctx, s, groupKey, submittedRules)
+}
+
+func (s *Service) CalculateRuleCreate(ctx context.Context, rule *ngmodels.AlertRule) (*GroupDelta, error) {
+	return CalculateRuleCreate(ctx, s, rule)
+}
+
+func (s *Service) CalculateRuleUpdate(ctx context.Context, rule *ngmodels.AlertRuleWithOptionals) (*GroupDelta, error) {
+	return CalculateRuleUpdate(ctx, s, rule)
+}
+
+func (s *Service) CalculateRuleDelete(ctx context.Context, ruleKey ngmodels.AlertRuleKey) (*GroupDelta, error) {
+	return CalculateRuleDelete(ctx, s, ruleKey)
+}
+
+func (s *Service) CalculateRuleGroupsDelete(ctx context.Context, orgID int64, query *ngmodels.ListAlertRulesQuery) ([]*GroupDelta, error) {
+	return CalculateRuleGroupsDelete(ctx, s, orgID, query)
 }

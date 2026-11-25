@@ -14,6 +14,7 @@ import { getAppPluginConfigs, getExtensionPointPluginDependencies } from 'app/fe
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { type DashboardScene } from '../scene/DashboardScene';
+import { getDashboardMode } from '../scene/dashboardModes';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 
 import {
@@ -26,9 +27,12 @@ import { pendingChangesRecorded, recordPendingChange } from './pendingChangesHis
 import { setPendingChangesPageClose, takeEditingOnNextLoad } from './pendingChangesPageReload';
 import {
   discardScenePendingChanges,
+  finishCommittingPendingChanges,
+  getCommittedPendingChanges,
   getPendingChangesDiff,
   openPendingChangesForEditing,
   savePendingChanges,
+  takeComposerRequestOverAssistantEdit,
   withNewDashboardBaseline,
 } from './pendingChangesSave';
 
@@ -90,6 +94,17 @@ async function openDraftOnPage(pending: DashboardPendingChanges, newDashboard: D
   return scene;
 }
 
+/** The saved dashboard, as the page loads it with no pending changes. */
+function savedDashboardScene(): DashboardScene {
+  return transformSaveModelSchemaV2ToScene({
+    kind: 'DashboardWithAccessInfo',
+    apiVersion: 'dashboard.grafana.app/v2beta1',
+    metadata: { name: 'dash-1', generation: 3, resourceVersion: '3', creationTimestamp: '', annotations: {} },
+    access: { canEdit: true, canSave: true, canShare: true, canStar: true, canDelete: false, canAdmin: true },
+    spec: structuredClone(saved),
+  } as unknown as DashboardWithAccessInfo<DashboardV2Spec>);
+}
+
 /** The dashboard page showing `pending` to a dashboard saved at generation 3, as the page loads it. */
 async function openOnPage(pending: DashboardPendingChanges, savedSpec = saved): Promise<DashboardScene> {
   const preview = await loadOnPage(pending);
@@ -117,6 +132,53 @@ afterEach(() => {
 });
 
 describe('opening pending changes on the page', () => {
+  // The Assistant's edit opens in Editing for Composer to run over, as Assistant edits in the browser did.
+  describe('with Composer', () => {
+    const composerFlags = {
+      'assistant.dashboard.artifacts': true,
+      dashboardNewLayouts: true,
+      'grafana.dashboardPreviewMode': true,
+      'grafana.dashboardComposer': true,
+    };
+
+    afterEach(() => {
+      takeComposerRequestOverAssistantEdit('dash-1');
+    });
+
+    it('has the page ask the Assistant to enter Composer over them, once', async () => {
+      setTestFlags(composerFlags);
+      const scene = await openOnPage(pendingChanges());
+
+      expect(getDashboardMode(scene.state)).toBe('edit');
+      expect(takeComposerRequestOverAssistantEdit('dash-1')).toBe(true);
+      expect(takeComposerRequestOverAssistantEdit('dash-1')).toBe(false);
+    });
+
+    it('asks nothing with Composer off', async () => {
+      await openOnPage(pendingChanges());
+
+      expect(takeComposerRequestOverAssistantEdit('dash-1')).toBe(false);
+    });
+
+    it('asks nothing for pending changes that stay read-only', async () => {
+      setTestFlags(composerFlags);
+      await openOnPage(pendingChanges({ history: undefined }));
+
+      expect(takeComposerRequestOverAssistantEdit('dash-1')).toBe(false);
+    });
+
+    // The page left before the Assistant could take the request; the next visit shows no pending changes.
+    it('drops a request left untaken once the page loads the dashboard without them', async () => {
+      setTestFlags(composerFlags);
+      await openOnPage(pendingChanges());
+      clearPendingChangePreview('dash-1', 'chat-1');
+
+      openPendingChangesForEditing(savedDashboardScene());
+
+      expect(takeComposerRequestOverAssistantEdit('dash-1')).toBe(false);
+    });
+  });
+
   it('opens them in edit mode, as unsaved changes to the saved version', async () => {
     const scene = await openOnPage(pendingChanges());
 
@@ -231,6 +293,39 @@ describe('saving pending changes', () => {
       currentGeneration: 5,
     });
     expect(getScenePendingChangePreview(scene.state)?.id).toBe('chat-1');
+  });
+});
+
+describe('committing pending changes to a repository', () => {
+  it('has their plugin discard them once committed, then shows the saved dashboard', async () => {
+    const pending = pendingChanges();
+    const scene = await openOnPage(pending);
+    const committed = getCommittedPendingChanges(scene);
+
+    await finishCommittingPendingChanges(scene, committed!, { showSaved: true });
+
+    expect(pending.discard).toHaveBeenCalledTimes(1);
+    expect(pending.apply).not.toHaveBeenCalled();
+    expect(getScenePendingChangePreview(scene.state)).toBeUndefined();
+    expect(scene.state.isEditing).toBe(false);
+    expect(closePage).toHaveBeenCalledWith('dash-1');
+  });
+
+  it('leaves the page alone when the commit went to another branch, whose preview the requester is on', async () => {
+    const pending = pendingChanges();
+    const scene = await openOnPage(pending);
+
+    await finishCommittingPendingChanges(scene, getCommittedPendingChanges(scene)!, { showSaved: false });
+
+    expect(pending.discard).toHaveBeenCalledTimes(1);
+    expect(getScenePendingChangePreview(scene.state)).toBeUndefined();
+    expect(closePage).not.toHaveBeenCalled();
+  });
+
+  it('commits no pending changes for a draft, which a repository saves as a new dashboard', async () => {
+    const scene = await openDraftOnPage(pendingChanges({ baseGeneration: 0 }), { ...defaultSpec(), title: 'New' });
+
+    expect(getCommittedPendingChanges(scene)).toBeUndefined();
   });
 });
 

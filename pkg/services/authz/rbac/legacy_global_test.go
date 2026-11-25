@@ -381,7 +381,7 @@ func (s *legacyGlobalPermissionStore) GetGlobalUserPermissions(
 	requester identity.Requester,
 	actions []string,
 ) (map[string][]string, error) {
-	if requester.GetOrgID() != accesscontrol.GlobalOrgID || requester.GetOrgRole() != identity.RoleNone {
+	if requester.GetOrgID() != accesscontrol.GlobalOrgID || requester.GetOrgRole() != types.RoleNone {
 		return nil, errors.New("global loader received organization state")
 	}
 	permissions := make(map[string][]string)

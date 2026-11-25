@@ -3,6 +3,7 @@ package cascadedelete
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 	"time"
 
@@ -36,8 +37,8 @@ func DefaultRateLimiter() workqueue.TypedRateLimiter[string] {
 
 // Controller drives Reconcile from folder events. A folder is requeued right after a pass that
 // issued deletes, and a folder whose cascade is released wakes its parent, so a parent waiting on
-// its subfolders does no work until one of them finishes. Nothing polls: workers block on the
-// queue, and only errors are retried after a delay.
+// its subfolders does no work until one of them finishes. Workers block on the queue, and only
+// errors are retried after a delay.
 //
 // Event sources deliver only a folder's namespace and name, so the handler enqueues every folder
 // event and the worker reads the folder before reconciling it.
@@ -46,13 +47,14 @@ func DefaultRateLimiter() workqueue.TypedRateLimiter[string] {
 // after that disappears later with no event naming its parent, so that parent is picked up again
 // only by the event source's periodic resync.
 //
-// The initial list is not a source of work: a folder that was terminating when the controller
-// started, such as after a restart mid-cascade, waits for its next change. This is temporary; see
-// Handler.
+// The folder initial list is not a source of work. When pending recovery is enabled,
+// a separate startup and periodic scan supplies interrupted deletions.
 type Controller struct {
-	folders    FolderGetter
-	reconciler *Reconciler
-	queue      workqueue.TypedRateLimitingInterface[string]
+	folders        FolderGetter
+	reconciler     *Reconciler
+	queue          workqueue.TypedRateLimitingInterface[string]
+	pending        PendingStore
+	pendingMetrics *pendingMetrics
 
 	mu sync.Mutex
 	// seen lets a resync that repeats a folder's last version be dropped without reading it.
@@ -64,11 +66,11 @@ type Controller struct {
 // NewController builds a controller. A nil limiter uses DefaultRateLimiter. The queue starts its
 // own goroutine at once, so a controller must be Run, and Run only once: it shuts the queue down
 // when its context ends.
-func NewController(folders FolderGetter, r *Reconciler, limiter workqueue.TypedRateLimiter[string]) *Controller {
+func NewController(folders FolderGetter, r *Reconciler, limiter workqueue.TypedRateLimiter[string], opts ...ControllerOption) *Controller {
 	if limiter == nil {
 		limiter = DefaultRateLimiter()
 	}
-	return &Controller{
+	c := &Controller{
 		folders:    folders,
 		reconciler: r,
 		seen:       map[string]string{},
@@ -77,11 +79,19 @@ func NewController(folders FolderGetter, r *Reconciler, limiter workqueue.TypedR
 			Name: "folder_cascade_delete",
 		}),
 	}
+	for _, opt := range opts {
+		opt(c)
+	}
+	return c
 }
 
 // NewDefaultController assembles the controller every entry point runs, so they cannot drift. It
 // deletes subfolders and dashboards, then whatever the extra handlers cover.
 func NewDefaultController(dyn dynamic.Interface, searcher resourcepb.ResourceIndexClient, extra ...KindHandler) *Controller {
+	return NewDefaultControllerWithOptions(dyn, searcher, nil, extra...)
+}
+
+func NewDefaultControllerWithOptions(dyn dynamic.Interface, searcher resourcepb.ResourceIndexClient, opts []ControllerOption, extra ...KindHandler) *Controller {
 	clients := NewDynamicClients(dyn)
 	children := NewSearchChildLister(searcher)
 	handlers := make([]KindHandler, 0, 2+len(extra))
@@ -90,7 +100,7 @@ func NewDefaultController(dyn dynamic.Interface, searcher resourcepb.ResourceInd
 		KindHandler{Kind: ChildDashboard, Lister: children, Deleter: clients},
 	)
 	r := &Reconciler{Handlers: append(handlers, extra...), Folders: clients}
-	return NewController(clients, r, nil)
+	return NewController(clients, r, nil, opts...)
 }
 
 // Handler enqueues the folder behind each event, except a resync repeating a folder's last version
@@ -100,8 +110,7 @@ func NewDefaultController(dyn dynamic.Interface, searcher resourcepb.ResourceInd
 // but not which are terminating, so a cascade interrupted by a restart is not resumed until the
 // folder changes again, and resyncs drop it because its version is unchanged.
 //
-// TODO(filewalkwithme): resume such folders, for example with a startup pass over recently changed
-// folders or a slow sweep.
+// Pending recovery supplies this work without reading unrelated folders.
 func (c *Controller) Handler() cache.ResourceEventHandler {
 	return handler{c}
 }
@@ -212,6 +221,9 @@ func (c *Controller) ShutDown() {
 // Run processes the queue with the given number of workers until ctx is done.
 func (c *Controller) Run(ctx context.Context, workers int) {
 	var wg sync.WaitGroup
+	if c.pending != nil {
+		wg.Go(func() { c.runPendingScan(ctx) })
+	}
 	for range max(workers, 1) {
 		wg.Go(func() {
 			defer utilruntime.HandleCrash()
@@ -220,7 +232,7 @@ func (c *Controller) Run(ctx context.Context, workers int) {
 		})
 	}
 	<-ctx.Done()
-	c.queue.ShutDown()
+	c.ShutDown()
 	wg.Wait()
 }
 
@@ -236,6 +248,15 @@ func (c *Controller) processNext(ctx context.Context) bool {
 	}
 
 	logger := logging.FromContext(ctx).With("key", key)
+	if strings.HasPrefix(key, pendingQueuePrefix) {
+		if err := c.reconcilePending(ctx, key); err != nil {
+			logger.Warn("Folder pending deletion reconciliation failed", "error", err)
+			c.queue.AddRateLimited(key)
+		} else {
+			c.queue.Forget(key)
+		}
+		return true
+	}
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		logger.Warn("Folder cascade delete: invalid key", "error", err)
@@ -267,6 +288,9 @@ func (c *Controller) processNext(ctx context.Context) bool {
 		return true
 	}
 
+	if err := c.capturePending(ctx, f); err != nil {
+		logger.Warn("Folder pending deletion timestamp capture failed", "error", err)
+	}
 	c.setWaiting(key, cascadePending(f))
 	res, err := c.reconciler.Reconcile(ctx, f)
 	switch {

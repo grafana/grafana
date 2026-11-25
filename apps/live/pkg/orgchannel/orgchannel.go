@@ -13,6 +13,14 @@ func PrependK8sNamespace(ns string, channel string) string {
 	return ns + "/" + channel
 }
 
+// UserID returns the Centrifuge user ID for an identity.
+// Centrifuge commands that target a user (refresh, disconnect) reach every node
+// attached to the same broker, and those nodes can serve other namespaces, so
+// the ID has to be unique across namespaces as well as across identity types.
+func UserID(user authlib.AuthInfo) string {
+	return user.GetNamespace() + "/" + user.GetUID()
+}
+
 // StripK8sNamespace strips k8s namespace from the full channel ID.
 // We use the k8s namespace for multi-tenancy across orgs and stacks.
 // For backwards compatibility, bare numeric org IDs (e.g. "1") are also accepted.

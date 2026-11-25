@@ -10,12 +10,14 @@ import "@openfeature/core";
 
 declare module "@openfeature/core" {
   export type BooleanFlagKey =
+    | "grafana.responsiveTimePickerTabs"
     | "panelTitleSearch"
     | "publicDashboardsEmailSharing"
     | "canvasPanelNesting"
     | "cloudWatchCrossAccountQuerying"
     | "alertingBacktesting"
     | "lokiShardSplitting"
+    | "live.useAPIServerWebsocket"
     | "lokiLogsDataplane"
     | "faroSessionReplay"
     | "queryHistory.localOnly"
@@ -66,7 +68,6 @@ declare module "@openfeature/core" {
     | "grafana.filterablePanels"
     | "grafana.savedQueriesPage"
     | "playlistsRBAC"
-    | "savedQueriesRBAC"
     | "dashboardLibrary"
     | "suggestedDashboards"
     | "dashboardValidatorApp"
@@ -96,6 +97,7 @@ declare module "@openfeature/core" {
     | "alerting.ruleReviews"
     | "alerting.ruleQuality"
     | "alerting.ruleQualityFix"
+    | "alerting.ruleQualityFixAll"
     | "datasourceConnectionsTab"
     | "connectionsFilterSidebar"
     | "alertingJiraIntegration"
@@ -125,6 +127,7 @@ declare module "@openfeature/core" {
     | "pluginInsights"
     | "transformationsEmptyPlaceholder"
     | "plugins.useMTPlugins"
+    | "plugins.useMTPluginInstall"
     | "globalDashboardVariables"
     | "grafana.dashboardGlobalVariables"
     | "grafana.dashboardVariablesMigration"
@@ -183,6 +186,7 @@ declare module "@openfeature/core" {
     | "assistant.dashboardPlanEditing"
     | "grafana.multiTenantNavTree"
     | "grafana.navigationInfoArchRefresh"
+    | "grafana.navigationAdminSubNav"
     | "grafana.exploreMetricsSidebar"
     | "grafana.dynamicTraceToLogs"
     | "grafana.configFromQueryDynamicName"
@@ -208,10 +212,13 @@ declare module "@openfeature/core" {
     | "dashboards.disablePublicDashboards"
     | "grafana.panelActionsPopover"
     | "grafana.dashboardSidebarExplicitOpen"
+    | "grafana.panelQuickEdits"
     | "grafana.folderPickerFolderEditAccess"
     | "grafana.panelOptionInterpolation"
     | "datasources.gatewayRateLimits"
-    | "plugins.disableMTPluginsFallback";
+    | "plugins.disableMTPluginsFallback"
+    | "grafana.logsInfiniteScrollTop"
+    | "grafana.dashboardQuestions";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

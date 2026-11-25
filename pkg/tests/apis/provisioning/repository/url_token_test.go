@@ -19,9 +19,9 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/util/retry"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
-	commonapi "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -40,8 +40,8 @@ func TestIntegrationProvisioning_GitHubAppURLChangeRemovesToken(t *testing.T) {
 			GitHub:  &provisioning.GitHubConnectionConfig{AppID: "123456", InstallationID: "454545"},
 			Webhook: &provisioning.ConnectionWebhookConfig{Disabled: true},
 		},
-		Secure: provisioning.ConnectionSecure{PrivateKey: commonapi.InlineSecureValue{
-			Create: commonapi.RawSecureValue(base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))),
+		Secure: provisioning.ConnectionSecure{PrivateKey: resource.InlineSecureValue{
+			Create: resource.RawSecureValue(base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))),
 		}},
 	}
 	_, err := helper.CreateGithubConnection(t, common.MustToUnstructured(t, conn))
@@ -57,8 +57,8 @@ func TestIntegrationProvisioning_GitHubAppURLChangeRemovesToken(t *testing.T) {
 			Sync:       provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
 		},
 		Secure: provisioning.SecureValues{
-			Token:         commonapi.InlineSecureValue{Create: "old-token"},
-			WebhookSecret: commonapi.InlineSecureValue{Create: "webhook-secret"},
+			Token:         resource.InlineSecureValue{Create: "old-token"},
+			WebhookSecret: resource.InlineSecureValue{Create: "webhook-secret"},
 		},
 	}
 	for _, includeTokenReference := range []bool{false, true} {
@@ -84,7 +84,7 @@ func TestIntegrationProvisioning_GitHubAppURLChangeRemovesToken(t *testing.T) {
 				require.NotEmpty(t, updated.Secure.Token.Name)
 				updated.Spec.GitHub.URL += "-new"
 				if !includeTokenReference {
-					updated.Secure.Token = commonapi.InlineSecureValue{}
+					updated.Secure.Token = resource.InlineSecureValue{}
 				}
 				result, err := helper.Repositories.Resource.Update(t.Context(), common.MustToUnstructured(t, updated), metav1.UpdateOptions{})
 				if err != nil {
@@ -197,12 +197,12 @@ func TestIntegrationProvisioning_GitHubAppURLChangeTestEndpoint(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
 		repository string
-		token      commonapi.InlineSecureValue
+		token      resource.InlineSecureValue
 		statusCode int
 	}{
 		{name: "omitted token", repository: "new", statusCode: http.StatusOK},
 		{name: "stored reference", repository: "new", token: stored.Secure.Token, statusCode: http.StatusOK},
-		{name: "removal marker", repository: "new", token: commonapi.InlineSecureValue{Remove: true}, statusCode: http.StatusOK},
+		{name: "removal marker", repository: "new", token: resource.InlineSecureValue{Remove: true}, statusCode: http.StatusOK},
 		{name: "inaccessible repository", repository: "inaccessible", statusCode: http.StatusUnprocessableEntity},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

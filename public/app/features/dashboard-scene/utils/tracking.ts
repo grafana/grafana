@@ -44,6 +44,7 @@ export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: 
   });
 
   trackTextPanelUsage(dashboard);
+  trackTablePanelUsage(dashboard);
   trackPanelOptionVariableUsage(dashboard, 'load');
 }
 
@@ -150,6 +151,27 @@ function isTextV2WithNewFeatures() {
   );
 }
 
+function trackTablePanelUsage(dashboard: DashboardScene) {
+  const flags = getFeatureFlagClient();
+
+  if (!flags.getBooleanValue(FlagKeys.TableRefreshNewFeatures, false)) {
+    return;
+  }
+
+  const tablePanelCount = dashboard.state.body
+    .getVizPanels()
+    .filter((panel) => panel.state.pluginId === 'table').length;
+
+  if (tablePanelCount === 0) {
+    return;
+  }
+
+  DashboardInteractions.tablePanelUsage({
+    dashboard_uid: dashboard.state.uid,
+    table_panel_count: tablePanelCount,
+  });
+}
+
 function getTextPanelUsage(panels: VizPanel[]) {
   const textPanels = panels.filter((panel) => panel.state.pluginId === TEXT_PANEL_PLUGIN_ID);
 
@@ -203,8 +225,9 @@ function trackPanelOptionVariableUsage(dashboard: DashboardScene, trigger: 'load
   const usage = { panel_count: 0, field_config_count: 0, threshold_count: 0, value_mapping_count: 0 };
 
   for (const panel of dashboard.state.body.getVizPanels()) {
-    const { defaults, overrides } = panel.state.fieldConfig;
-    const properties = overrides.flatMap((rule) => rule.properties);
+    const { overrides } = panel.state.fieldConfig;
+    const defaults = panel.state.fieldConfig.defaults ?? {};
+    const properties = (overrides ?? []).flatMap((rule) => rule.properties ?? []);
     const valuesOf = (id: string) => properties.filter((prop) => prop.id === id).map((prop) => prop.value);
 
     const fieldConfig = Object.keys(defaults.varMappings ?? {}).length > 0 || properties.some(isVarMappingProp);

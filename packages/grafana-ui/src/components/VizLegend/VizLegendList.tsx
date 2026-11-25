@@ -17,7 +17,7 @@ export interface Props<T> extends VizLegendBaseProps<T> {}
  */
 export const VizLegendList = <T extends unknown>({
   items,
-  itemRenderer,
+  itemRenderer: itemRendererProp,
   onLabelMouseOver,
   onLabelMouseOut,
   onLabelClick,
@@ -31,9 +31,9 @@ export const VizLegendList = <T extends unknown>({
 
   const allItemsSelected = useMemo(() => !items.some((item) => item.disabled), [items]);
 
-  if (!itemRenderer) {
-    /* eslint-disable-next-line react/display-name */
-    itemRenderer = (item) => (
+  const itemRenderer =
+    itemRendererProp ??
+    ((item: VizLegendItem<T>) => (
       <VizLegendListItem
         item={item}
         onLabelClick={onLabelClick}
@@ -42,8 +42,7 @@ export const VizLegendList = <T extends unknown>({
         readonly={readonly}
         allItemsSelected={allItemsSelected}
       />
-    );
-  }
+    ));
 
   const leftItems = useMemo(
     () => (placement === 'right' ? items : items.filter((item) => item.yAxis === 1)),
@@ -59,7 +58,7 @@ export const VizLegendList = <T extends unknown>({
   switch (placement) {
     case 'right': {
       const renderItem = (item: VizLegendItem<T>, index: number) => {
-        return <span className={styles.itemRight}>{itemRenderer!(item, index)}</span>;
+        return <span className={styles.itemRight}>{itemRenderer(item, index)}</span>;
       };
 
       return (
@@ -72,7 +71,7 @@ export const VizLegendList = <T extends unknown>({
     case 'bottom':
     default: {
       const renderItem = (item: VizLegendItem<T>, index: number) => {
-        return <span className={styles.itemBottom}>{itemRenderer!(item, index)}</span>;
+        return <span className={styles.itemBottom}>{itemRenderer(item, index)}</span>;
       };
 
       return (

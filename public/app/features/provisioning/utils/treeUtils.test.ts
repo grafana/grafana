@@ -8,7 +8,7 @@ import {
   filterTree,
   flattenTree,
   getIconName,
-  getItemType,
+  getTreeItemKind,
   getStatus,
   getStatusCategory,
   mergeFilesAndResources,
@@ -190,33 +190,33 @@ describe('mergeFilesAndResources', () => {
   });
 });
 
-describe('getItemType', () => {
+describe('getTreeItemKind', () => {
   it('should return Dashboard for dashboard resources', () => {
-    const result = getItemType('dashboards/test.json', mockResource);
+    const result = getTreeItemKind('dashboards/test.json', mockResource);
 
     expect(result).toBe('Dashboard');
   });
 
   it('should return Folder for folder resources', () => {
-    const result = getItemType('dashboards', mockFolderResource);
+    const result = getTreeItemKind('dashboards', mockFolderResource);
 
     expect(result).toBe('Folder');
   });
 
   it('should return Playlist for playlist resources', () => {
-    const result = getItemType('my-playlist.json', mockPlaylistResource);
+    const result = getTreeItemKind('my-playlist.json', mockPlaylistResource);
 
     expect(result).toBe('Playlist');
   });
 
   it('should return File for unsynced files regardless of extension', () => {
-    const result = getItemType('some/path/file.json', undefined);
+    const result = getTreeItemKind('some/path/file.json', undefined);
 
     expect(result).toBe('File');
   });
 
   it('should return File for non-JSON paths without resource', () => {
-    const result = getItemType('some/path/file.txt', undefined);
+    const result = getTreeItemKind('some/path/file.txt', undefined);
 
     expect(result).toBe('File');
   });
@@ -227,19 +227,19 @@ describe('getItemType', () => {
       resource: 'unknown-type',
     };
 
-    const result = getItemType('some/path', unknownResource);
+    const result = getTreeItemKind('some/path', unknownResource);
 
     expect(result).toBe('File');
   });
 });
 
 describe('getIconName', () => {
-  it('should return the icon for a known resource-backed item type', () => {
+  it('should return the icon for a known resource-backed item', () => {
     expect(getIconName('Dashboard')).toBe('apps');
     expect(getIconName('Folder')).toBe('folder');
   });
 
-  it('should return the icon for a playlist item type', () => {
+  it('should return the icon for a playlist item', () => {
     expect(getIconName('Playlist')).toBe('presentation-play');
   });
 

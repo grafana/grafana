@@ -1,10 +1,10 @@
 import { type IconName } from '@grafana/ui';
 import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
-import { type FileDetails, type FlatTreeItem, type ItemType, type SyncStatus, type TreeItem } from '../types';
+import { type FileDetails, type FlatTreeItem, type TreeItemKind, type SyncStatus, type TreeItem } from '../types';
 
 import { getFolderMetadataPath, getParentFolderResourceHash, isFolderMetadataPath } from './folderMetadata';
-import { getKindInfoByItemType, getKindInfoByResource } from './resourceKinds';
+import { getKindInfoByKind, getKindInfoByResource, resourceKindInfos } from './resourceKinds';
 
 const collator = new Intl.Collator();
 
@@ -44,7 +44,7 @@ export function mergeFilesAndResources(files: unknown[], resources: ResourceList
   // Merge resources
   for (const resource of resources) {
     const path = resource.path.replace(/\/+$/, '');
-    if (!path && resource.resource !== 'folders') {
+    if (!path && resource.resource !== resourceKindInfos.folder.resource) {
       continue;
     }
     const existing = merged.get(path);
@@ -58,10 +58,10 @@ export function mergeFilesAndResources(files: unknown[], resources: ResourceList
   return Array.from(merged.values());
 }
 
-export function getItemType(path: string, resource?: ResourceListItem): ItemType {
+export function getTreeItemKind(path: string, resource?: ResourceListItem): TreeItemKind {
   const kindInfo = getKindInfoByResource(resource?.resource);
   if (kindInfo) {
-    return kindInfo.itemType;
+    return kindInfo.kind;
   }
   // Inferred folder (no extension means it's a folder from file paths)
   if (!resource && !path.includes('.')) {
@@ -78,8 +78,8 @@ function getDisplayTitle(path: string, resource?: ResourceListItem): string {
   return path.split('/').pop() ?? path;
 }
 
-export function getIconName(type: ItemType): IconName {
-  return getKindInfoByItemType(type)?.icon ?? 'file-alt';
+export function getIconName(type: TreeItemKind): IconName {
+  return getKindInfoByKind(type)?.icon ?? 'file-alt';
 }
 
 export function getStatus(fileHash?: string, resourceHash?: string): SyncStatus {
@@ -114,7 +114,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
 
   // Create all nodes (files, dashboards, folders)
   for (const item of mergedItems) {
-    const type = !item.resource && item.file?.hash === '' ? 'Folder' : getItemType(item.path, item.resource);
+    const type = !item.resource && item.file?.hash === '' ? 'Folder' : getTreeItemKind(item.path, item.resource);
     const isFolderMetadata = isFolderMetadataPath(item.path);
     // Show sync status for any provisioned resource kind (Folder, Dashboard, Playlist, ...) or for
     // unsynced .json files that haven't been turned into a resource yet. `type` is only 'File' for

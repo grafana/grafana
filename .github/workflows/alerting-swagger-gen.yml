@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-arm64
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - name: Checkout repository
@@ -23,10 +24,15 @@ jobs:
       - name: Build swagger
         run: |
           make -C pkg/services/ngalert/api/tooling post.json api.json
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+        with:
+          github_app: alerting-team
       - name: Open Pull Request
         uses: peter-evans/create-pull-request@4e1beaa7521e8b457b572c090b25bd3db56bf1c5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.get-github-app-token.outputs.token }}
           commit-message: "chore: update alerting swagger spec"
           title: "Alerting: Update Swagger spec"
           body: |

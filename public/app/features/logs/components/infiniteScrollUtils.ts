@@ -3,6 +3,8 @@ import { type MutableRefObject } from 'react';
 import { type AbsoluteTimeRange, type LogRowModel, type TimeRange, rangeUtil } from '@grafana/data';
 import { type DataQuery, LogsSortOrder, type TimeZone } from '@grafana/schema';
 
+import { LokiQueryDirection } from '../../loki-helpers/types';
+
 export enum ScrollDirection {
   Top = -1,
   Bottom = 1,
@@ -171,12 +173,16 @@ function updateCurrentRange(timeRange: TimeRange, timeZone: TimeZone) {
     : timeRange;
 }
 
-/** Copies the single nanosecond bound onto a Loki query. Other datasources are unchanged. */
+/**
+ * Copies the single nanosecond bound onto a Loki query, and sets the direction to read from that bound.
+ * Newer logs are read forward from the bound, otherwise the query would return the newest page of the range and skip
+ * the logs in between. Older logs are read backward for the same reason. Other datasources are unchanged.
+ */
 export function withLokiInfiniteScrollBound<T extends DataQuery & { supportingQueryType?: string }>(
   query: T,
   range: InfiniteScrollTimeRange,
   datasourceType?: string
-): T & { startNs?: string; endNs?: string } {
+): T & { startNs?: string; endNs?: string; direction?: LokiQueryDirection } {
   const { datasource } = query;
   const configuredType =
     datasource && typeof datasource === 'object' && 'type' in datasource ? datasource.type : undefined;
@@ -184,10 +190,10 @@ export function withLokiInfiniteScrollBound<T extends DataQuery & { supportingQu
     return query;
   }
   if (range.endNs !== undefined) {
-    return { ...query, endNs: range.endNs };
+    return { ...query, endNs: range.endNs, direction: LokiQueryDirection.Backward };
   }
   if (range.startNs !== undefined) {
-    return { ...query, startNs: range.startNs };
+    return { ...query, startNs: range.startNs, direction: LokiQueryDirection.Forward };
   }
   return query;
 }

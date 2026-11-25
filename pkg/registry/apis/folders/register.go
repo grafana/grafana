@@ -333,6 +333,13 @@ func (b *FolderAPIBuilder) storageForVersion(
 		}
 	}
 
+	var pendingStore grafanarest.Storage
+	if b.pendingDeletionStore != nil {
+		pendingStore = b.pendingDeletionStore
+	}
+	// The inner writer intercepts each descendant delete performed by the cascade.
+	b.storage = newPendingDeleteStorage(b.storage, pendingStore, folderPendingDeletionWritesEnabled, b.accessClient)
+
 	// Cascade delete wrapper -- always wired (both ST and MT). Recursively deletes a folder's
 	// subtree on delete; a no-op delegate unless kubernetesFolderCascadeDelete is enabled.
 	b.storage = newCascadeDeleteStorage(b.storage, b.searcher, b.dashboardClient, b.variableClient, b.contentsDeleter, b.accessClient)

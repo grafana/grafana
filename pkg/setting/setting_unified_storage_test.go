@@ -383,29 +383,30 @@ func TestKeyPathReconciliationEnabled(t *testing.T) {
 	}
 }
 
-func TestFastLatestKeyLookupEnabled(t *testing.T) {
+func TestSearchPostRankAuthzExactCountThreshold(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
 		configured string
 		env        string
-		want       bool
+		want       int
 	}{
 		{name: "default off"},
-		{name: "enabled", configured: "true", want: true},
-		{name: "disabled", configured: "false"},
-		{name: "environment enables", configured: "false", env: "true", want: true},
-		{name: "environment disables", configured: "true", env: "false"},
+		{name: "disabled", configured: "0"},
+		{name: "enabled", configured: "100", want: 100},
+		{name: "negative disables", configured: "-1"},
+		{name: "invalid disables", configured: "invalid"},
+		{name: "environment override", configured: "0", env: "1000", want: 1000},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := NewCfg()
 			if tc.configured != "" {
-				cfg.Raw.Section("unified_storage").Key("fast_latest_key_lookup_enabled").SetValue(tc.configured)
+				cfg.Raw.Section("unified_storage").Key("search_post_rank_authz_exact_count_threshold").SetValue(tc.configured)
 			}
 			if tc.env != "" {
-				t.Setenv("GF_UNIFIED_STORAGE_FAST_LATEST_KEY_LOOKUP_ENABLED", tc.env)
+				t.Setenv("GF_UNIFIED_STORAGE_SEARCH_POST_RANK_AUTHZ_EXACT_COUNT_THRESHOLD", tc.env)
 			}
 			cfg.setUnifiedStorageConfig()
-			require.Equal(t, tc.want, cfg.FastLatestKeyLookupEnabled)
+			require.Equal(t, tc.want, cfg.SearchPostRankAuthzExactCountThreshold)
 		})
 	}
 }

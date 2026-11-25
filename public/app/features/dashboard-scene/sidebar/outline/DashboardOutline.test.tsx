@@ -29,6 +29,7 @@ jest.mock('../../utils/interactions', () => ({
     editActorFirstChange: jest.fn(),
     outlineItemClicked: jest.fn(),
     dashboardEditDiscarded: jest.fn(),
+    panelSettingChanged: jest.fn(),
   },
 }));
 

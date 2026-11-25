@@ -149,6 +149,7 @@ func TestRunnerDetachesRequestAndSnapshotsBeforeReturn(t *testing.T) {
 		var actualContext context.Context
 
 		runner.Run(ctx, observer, func() {
+			require.False(t, IsShadow(ctx))
 			time.Sleep(2 * time.Millisecond)
 			primaryResult = true
 		}, func() Work {
@@ -183,6 +184,7 @@ func TestRunnerDetachesRequestAndSnapshotsBeforeReturn(t *testing.T) {
 		<-finished
 		synctest.Wait()
 
+		require.True(t, IsShadow(actualContext))
 		require.Nil(t, actualContext.Value(requestKey{}))
 		require.Equal(t, span, trace.SpanContextFromContext(actualContext))
 		require.Empty(t, runner.inFlight)

@@ -51,8 +51,10 @@ jest.mock('@grafana/assistant', () => ({
   useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
 }));
 
-jest.spyOn(actions, 'rulesInSameGroupHaveInvalidFor').mockReturnValue([]);
-jest.spyOn(apiRuler, 'rulerUrlBuilder');
+jest.mock('app/features/alerting/unified/state/actions', () => ({
+  ...jest.requireActual('app/features/alerting/unified/state/actions'),
+  rulesInSameGroupHaveInvalidFor: jest.fn(),
+}));
 
 setAppEvents(appEvents);
 setupPluginsExtensionsHook();

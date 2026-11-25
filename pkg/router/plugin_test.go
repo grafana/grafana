@@ -597,6 +597,32 @@ func TestPluginLoaderPreparesMultipleManifests(t *testing.T) {
 	require.NotEqual(t, updated[1].Key(), changed[1].Key())
 }
 
+// The settings manifest is served only by the settings backend, so changing it
+// must not rebuild the plugin's other groups and end their watches.
+func TestPluginManifestKeyDataLeavesOutSettings(t *testing.T) {
+	manifest := &app.ManifestData{AppName: "example", Group: "example.ext.grafana.app",
+		Versions: []app.ManifestVersion{{Name: "v1", Served: true}}}
+	plugin := definition.PluginDefinition{
+		JSONData:  plugins.JSONData{ID: "example-app", Type: plugins.TypeApp},
+		Manifests: []*app.ManifestData{manifest},
+		Settings:  &app.ManifestData{Group: "example-app", Versions: []app.ManifestVersion{{Name: "v0alpha1", Served: true}}},
+	}
+	before, err := pluginManifestKeyData(plugin, manifest, "")
+	require.NoError(t, err)
+	settingsBefore, err := pluginManifestKeyData(plugin, nil, "")
+	require.NoError(t, err)
+
+	plugin.Settings = &app.ManifestData{Group: "example-app", Versions: []app.ManifestVersion{{Name: "v0alpha1", Served: true,
+		OpenAPI: app.ManifestVersionOpenAPI{Paths: map[string]spec3.PathProps{definition.SettingsResourcesRoot + "/things": {}}}}}}
+	after, err := pluginManifestKeyData(plugin, manifest, "")
+	require.NoError(t, err)
+	settingsAfter, err := pluginManifestKeyData(plugin, nil, "")
+	require.NoError(t, err)
+
+	require.Equal(t, before, after, "the manifest's group is unchanged")
+	require.NotEqual(t, settingsBefore, settingsAfter, "the settings API is rebuilt")
+}
+
 func TestPluginLoaderIsolatesFingerprintFailure(t *testing.T) {
 	good := &app.ManifestData{AppName: "example", Group: "good.ext.grafana.app",
 		Versions: []app.ManifestVersion{{Name: "v1", Served: true}}}

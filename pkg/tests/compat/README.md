@@ -19,6 +19,7 @@ Until that release exists, it runs this commit against itself.
 It runs the Enterprise build (`-tags=enterprise`) for internal pull requests and `main`, and the OSS build for pull requests from forks, which cannot clone grafana-enterprise.
 For Enterprise, this commit pairs with the grafana-enterprise branch of the same name, or main, and the older release pairs with the grafana-enterprise tag of the same name.
 Each version runs the tests it ships with, so a change here reaches the older side only through a release that contains it.
+A package only the newer version ships runs against the newer version alone, on its own database, until a release that contains it is the older version.
 The job summary lists the commits that were tested and whether the run was really cross-version.
 When a phase fails, the job uploads the test logs, the manifests the phases hand to each other, and the SQLite databases as the `compat-<edition>` artifact, kept for 7 days.
 
@@ -39,12 +40,17 @@ If your resource needs more, the test fails on the PR that adds it and asks for 
 - a fixture in `smoke/testdata/<group>/<resource>.yaml`, in any served version; annotate it with `compat.grafana.app/server-named: "true"` if the server derives the name, or
 - an entry in `smoke/skip.yaml`, which also covers feature flags, legacy storage, and stale writes; its header explains each section.
 
+A failing smoke test logs the owners of the fixtures in `smoke/testdata/<group>/` when that directory has its own CODEOWNERS entry.
+Without one, failures go to the owners of `apps/<app>/`, or of `pkg/apps/<app>/` or `pkg/registry/<app>/` in grafana-enterprise for an Enterprise app, else to the owners of this directory.
+
 Each version follows its own `skip.yaml`, and stale entries fail the test, so the list shrinks as resources move on.
 
 ## Deep tests: one package per resource
 
 The smoke test cannot check field values or behavior across several objects.
-For that, add a package next to `smoke/` and give it a CODEOWNERS entry.
+For that, add a package next to `folders/` and give it a CODEOWNERS entry.
+`folders/` builds a small tree, has the other version move folders through both the k8s and the legacy API, and checks nesting in every served version, the `parents`, `children` (with paging), `counts`, `access`, and `status` subresources, folder permissions, list pagination and label selectors, and deleting a non-empty subtree.
+Copy it as a starting point.
 The package needs:
 
 - a `TestMain` that calls `compat.Main(m)`,
@@ -57,20 +63,44 @@ Change or remove a fixture only together with the older versions that check it.
 
 ## Running locally
 
-Check out the older version next to this one, then run the phases the workflow runs.
+Check out the older version next to this one, then run the phases the workflow runs, for the packages both checkouts ship.
 For the upgrade-then-rollback round trip:
 
 ```sh
 git worktree add ../grafana-old <older-ref>
+pkgs=(); for d in pkg/tests/compat/*/; do [ -d "../grafana-old/$d" ] && pkgs+=("./$d"); done
 export GRAFANA_COMPAT_DIR=$(mktemp -d)/upgrade-rollback
-(cd ../grafana-old && GRAFANA_COMPAT_ROLE=older go test -count=1 -run '^TestCompatSetup$' ./pkg/tests/compat/...)
-GRAFANA_COMPAT_ROLE=newer go test -count=1 -run '^TestCompatUpdate$' ./pkg/tests/compat/...
-(cd ../grafana-old && GRAFANA_COMPAT_ROLE=older go test -count=1 -run '^TestCompatVerify$' ./pkg/tests/compat/...)
+(cd ../grafana-old && GRAFANA_COMPAT_ROLE=older go test -count=1 -run '^TestCompatSetup$' "${pkgs[@]}")
+GRAFANA_COMPAT_ROLE=newer go test -count=1 -run '^TestCompatUpdate$' "${pkgs[@]}"
+(cd ../grafana-old && GRAFANA_COMPAT_ROLE=older go test -count=1 -run '^TestCompatVerify$' "${pkgs[@]}")
 ```
 
 For rollback then re-upgrade, swap the directories.
 For Enterprise, overlay grafana-enterprise onto both checkouts with its `build.sh` and set `GOFLAGS=-tags=enterprise`.
 
+Smoke resource assertion failures log their owners from CODEOWNERS and add a resource entry to the GitHub Actions job summary.
+For every failed phase, including a crash or timeout, the phase runner adds a package-owner entry with the version role and round trip. A crash can leave only the package entry.
 Update and Verify change and delete the data, so each round trip needs a new `GRAFANA_COMPAT_DIR`.
 Without `GRAFANA_COMPAT_DIR` every test skips, so these tests never run as part of the unit or integration suites.
 Only SQLite is supported for now.
+
+### Testing a SQL-to-KV switch
+
+The harness defaults to SQL-backed KV. Set `GF_UNIFIED_STORAGE_ENABLE_SQLKV_BACKEND=false` to use legacy SQL.
+From the newer checkout, use the older worktree above to run **older SQL → newer KV → older KV** on the same test databases.
+
+```bash
+(
+set -e
+old_checkout=../grafana-old
+export GRAFANA_COMPAT_DIR="$(mktemp -d)/sql-to-kv"
+(cd "$old_checkout" && GF_UNIFIED_STORAGE_ENABLE_SQLKV_BACKEND=false GRAFANA_COMPAT_ROLE=older \
+  go test -count=1 -run '^TestCompatSetup$' ./pkg/tests/compat/{smoke,folders})
+GF_UNIFIED_STORAGE_ENABLE_SQLKV_BACKEND=true GRAFANA_COMPAT_ROLE=newer \
+  go test -count=1 -run '^TestCompatUpdate$' ./pkg/tests/compat/{smoke,folders}
+(cd "$old_checkout" && GF_UNIFIED_STORAGE_ENABLE_SQLKV_BACKEND=true GRAFANA_COMPAT_ROLE=older \
+  go test -count=1 -run '^TestCompatVerify$' ./pkg/tests/compat/{smoke,folders})
+)
+```
+
+Set `old_checkout=.` to try this on one build. Verify fails if you switch back to legacy SQL after KV writes because legacy SQL reads stale rows.

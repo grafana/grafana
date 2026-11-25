@@ -20,11 +20,12 @@ export interface Props {
 export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPicker }: Props) {
   const { DragDropContext, Droppable, isReady } = useDragAndDrop();
   const styles = useStyles2(getStyles);
-  const [rows, updateRows] = useState<ValueMappingEditRowModel[]>([]);
-
-  useEffect(() => {
+  const [rows, updateRows] = useState<ValueMappingEditRowModel[]>(() => buildEditRowModels(value));
+  const [prevValue, setPrevValue] = useState(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
     updateRows(buildEditRowModels(value));
-  }, [value]);
+  }
 
   const onDragEnd = (result: DropResult) => {
     if (!value || !result.destination) {

@@ -6,17 +6,11 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/util/dryrun"
 )
 
 // ValidateDeleteCollectionRequest rejects requests legacy storage cannot honor safely.
-func ValidateDeleteCollectionRequest(options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) error {
-	// Delete does not support dry-run either, but ignoring it there deletes one rule; here it would delete a whole set.
-	if options != nil && dryrun.IsDryRun(options.DryRun) {
-		return k8serrors.NewBadRequest("dry-run is not supported for collection deletion")
-	}
+func ValidateDeleteCollectionRequest(listOptions *internalversion.ListOptions) error {
 	// The history and trash modes list past versions of rules, which carry the name of a live rule.
 	// Deleting them by name would delete that rule.
 	mode, _, err := ParseListMode(listOptions.LabelSelector, listOptions.FieldSelector)

@@ -68,6 +68,14 @@ userv0alpha1: userKind & {
 			description:      "Whether the user is disabled"
 		},
 		{
+			name: "provisioned"
+			path: "spec.provisioned"
+			type: "boolean"
+			capabilities: ["retrieve"]
+			emitZeroIfAbsent: true
+			description:      "Whether the user is provisioned"
+		},
+		{
 			name:  "externalAuthModules"
 			path:  "spec.externalAuthInfo[*].module"
 			type:  "string"
