@@ -6740,7 +6740,8 @@
           "title": "Paneel plakken"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "Rij toevoegen",
@@ -9967,10 +9968,6 @@
       "of": "VAN",
       "to": "TO",
       "when": "WANNEER"
-    },
-    "expression-query-editor": {
-      "helper-text-sql": "Voer SQL in MySQL-dialect uit op de tabellen die zijn opgehaald uit je gegevensbronnen. Query’s uit gegevensbronnen (zoals \"A\", \"B\") zijn beschikbaar als tabellen en kunnen worden aangeroepen via de querynaam. Velden zijn beschikbaar als kolommen, zoals geretourneerd door de gegevensbron.",
-      "label-operation": "Werking"
     },
     "math": {
       "available-math-functions": "Beschikbare wiskundige functies",
@@ -13792,12 +13789,11 @@
     },
     "megamenu-item": {
       "children-error": "Kan items niet laden",
+      "children-partial-error": "",
       "collapse-aria-label": "Sectie samenvouwen: {{sectionName}}",
       "expand-aria-label": "Sectie uitvouwen: {{sectionName}}",
       "loading-aria-label": "{{sectionName}} aan het laden",
-      "reorder-aria-label": "{{itemName}} opnieuw ordenen",
-      "starred-dashboard-icon": "Dashboard",
-      "starred-folder-icon": "Map"
+      "reorder-aria-label": "{{itemName}} opnieuw ordenen"
     },
     "org-switcher": {
       "aria-label": "Organisatie wijzigen"
@@ -17502,6 +17498,7 @@
     "description-page-size": "Aantal rijen per pagina. Wanneer leeg, is het paginaformaat gebaseerd op de paneelhoogte.",
     "description-show-columns-sidebar": "De zijbalk voor kolombeheer openen met het paneel, in plaats van vanuit een kolommenmenu",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "Een veld met JSON-objecten met CSS-eigenschappen",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "De achtergrondkleur van elke tweede rij afwisselen",
@@ -17546,6 +17543,7 @@
     "name-show-columns-sidebar": "Zijbalk met kolommen weergeven",
     "name-show-row-numbers": "",
     "name-show-table-header": "Header tabel tonen",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "Hover-tooltip weergeven",
     "name-styling-from-field": "Styling vanuit veld",
     "name-tooltip-from-field": "",

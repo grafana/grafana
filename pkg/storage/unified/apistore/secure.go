@@ -3,6 +3,7 @@ package apistore
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -44,6 +45,9 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 		if err != nil {
 			return err
 		}
+		// The accessor can return the live map. The code below removes keys, and callers compare
+		// the previous object with the new one afterwards, so it must not change the previous object.
+		previous = maps.Clone(previous)
 		for _, p := range previous {
 			if p.Name == "" || p.Remove || !p.Create.IsZero() {
 				return fmt.Errorf("invalid state, saved values must only have a name")

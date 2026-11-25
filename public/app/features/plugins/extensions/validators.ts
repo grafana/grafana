@@ -25,12 +25,6 @@ export function assertPluginExtensionLink(
   }
 }
 
-export function assertIsReactComponent(component: React.ComponentType) {
-  if (!isReactComponent(component)) {
-    throw new Error(`Invalid component extension, the "component" property needs to be a valid React component.`);
-  }
-}
-
 export function assertConfigureIsValid(config: PluginExtensionAddedLinkConfig) {
   if (!isConfigureFnValid(config.configure)) {
     throw new Error(
@@ -95,10 +89,6 @@ export function isExtensionPointIdValid({
   return true;
 }
 
-export function extensionPointEndsWithVersion(extensionPointId: string) {
-  return extensionPointId.match(/.*\/v\d+$/);
-}
-
 export function isGrafanaCoreExtensionPoint(extensionPointId: string) {
   return Object.values(PluginExtensionPoints)
     .map((v) => v.toString())
@@ -109,7 +99,7 @@ export function isConfigureFnValid(configure?: PluginAddedLinksConfigureFunc<obj
   return configure ? typeof configure === 'function' : true;
 }
 
-export function isStringPropValid(prop: unknown) {
+function isStringPropValid(prop: unknown) {
   return typeof prop === 'string' && prop.length > 0;
 }
 

@@ -18,11 +18,11 @@ import (
 var _ Backend = (*legacyClient)(nil)
 
 type legacyClient struct {
-	service legacy.LegacyRuleService
+	service legacy.Searcher
 	logger  log.Logger
 }
 
-func NewLegacyClient(service legacy.LegacyRuleService) *legacyClient {
+func NewLegacyClient(service legacy.Searcher) *legacyClient {
 	return &legacyClient{service: service, logger: log.New("alerting.rules.search.legacy")}
 }
 

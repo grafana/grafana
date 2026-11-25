@@ -28,6 +28,8 @@ export const FlagKeys = {
   AlertingRuleQuality: "alerting.ruleQuality",
   /** Enable fixing alert rule quality issues with Grafana Assistant on the alert quality page. */
   AlertingRuleQualityFix: "alerting.ruleQualityFix",
+  /** Enable bulk fixes for alert rule quality issues on the alert quality page. */
+  AlertingRuleQualityFixAll: "alerting.ruleQualityFixAll",
   /** Enable assistant reviews on the alert quality page. */
   AlertingRuleReviews: "alerting.ruleReviews",
   /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
@@ -264,6 +266,8 @@ export const FlagKeys = {
   GrafanaPanelOptionInterpolation: "grafana.panelOptionInterpolation",
   /** Let panel plugins register system transformations */
   GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
+  /** Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode */
+  GrafanaPanelQuickEdits: "grafana.panelQuickEdits",
   /** Pass React elements in plugin extension props by reference */
   GrafanaPluginExtensionReactElementProps: "grafana.pluginExtensionReactElementProps",
   /** Nest app plugin navigation items in the mega menu based on their URL path hierarchy */
@@ -338,6 +342,8 @@ export const FlagKeys = {
   PluginsDisableMTPluginsFallback: "plugins.disableMTPluginsFallback",
   /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
   PluginsInitDataSourcesAsync: "plugins.initDataSourcesAsync",
+  /** Installs, updates and uninstalls plugins through the plugins API only, and falls back to the legacy API if that call fails */
+  PluginsUseMTPluginInstall: "plugins.useMTPluginInstall",
   /** Enables plugins setting from new apis */
   PluginsUseMTPluginSettings: "plugins.useMTPluginSettings",
   /** Enables plugins decoupling from bootdata */
@@ -380,8 +386,6 @@ export const FlagKeys = {
   ReportingHeaderSettings: "reportingHeaderSettings",
   /** Enables the new role picker drawer design */
   RolePickerDrawer: "rolePickerDrawer",
-  /** Enables Saved queries (query library) RBAC permissions */
-  SavedQueriesRBAC: "savedQueriesRBAC",
   /** Enables the use of scope filters in Grafana */
   ScopeFilters: "scopeFilters",
   /** Enable scope search to include all levels of the scope node tree */
@@ -503,6 +507,17 @@ export const useFlagAlertingRuleQuality = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagAlertingRuleQualityFix = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alerting.ruleQualityFix", false, options).value;
+};
+
+/**
+ * Enable bulk fixes for alert rule quality issues on the alert quality page.
+ *
+ * **Details:**
+ * - flag key: `alerting.ruleQualityFixAll`
+ * - default value: `false`
+ */
+export const useFlagAlertingRuleQualityFixAll = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.ruleQualityFixAll", false, options).value;
 };
 
 /**
@@ -1804,6 +1819,17 @@ export const useFlagGrafanaPanelPluginTransformations = (options?: ReactFlagEval
 };
 
 /**
+ * Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode
+ *
+ * **Details:**
+ * - flag key: `grafana.panelQuickEdits`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPanelQuickEdits = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.panelQuickEdits", false, options).value;
+};
+
+/**
  * Pass React elements in plugin extension props by reference
  *
  * **Details:**
@@ -2211,6 +2237,17 @@ export const useFlagPluginsInitDataSourcesAsync = (options?: ReactFlagEvaluation
 };
 
 /**
+ * Installs, updates and uninstalls plugins through the plugins API only, and falls back to the legacy API if that call fails
+ *
+ * **Details:**
+ * - flag key: `plugins.useMTPluginInstall`
+ * - default value: `false`
+ */
+export const useFlagPluginsUseMTPluginInstall = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("plugins.useMTPluginInstall", false, options).value;
+};
+
+/**
  * Enables plugins setting from new apis
  *
  * **Details:**
@@ -2439,17 +2476,6 @@ export const useFlagReportingHeaderSettings = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagRolePickerDrawer = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("rolePickerDrawer", false, options).value;
-};
-
-/**
- * Enables Saved queries (query library) RBAC permissions
- *
- * **Details:**
- * - flag key: `savedQueriesRBAC`
- * - default value: `true`
- */
-export const useFlagSavedQueriesRBAC = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("savedQueriesRBAC", true, options).value;
 };
 
 /**

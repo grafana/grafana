@@ -3,9 +3,21 @@ import { Table } from './Table';
 
 # Table
 
+## When to use
+
 Used for displaying tabular data
 
-## Sub-tables
+## Never use for
+
+No component-specific guidance documented yet.
+
+## Do's and don'ts
+
+No component-specific guidance documented yet.
+
+## Usage
+
+### Sub-tables
 
 Sub-tables are supported by adding `FieldType.nestedFrames` to the field that contains the nested data in your dataframe.
 
@@ -13,11 +25,11 @@ This nested fields values can contain an array of one or more dataframes. Each o
 
 For each dataframe and index in the nested field, the dataframe will be rendered as one or more sub-tables below the main dataframe row at that index.
 
-### Unique rowId
+#### Unique rowId
 
 In some cases it makes sense to persist the opened/closed state of the sub-tables. For example: with streaming queries where a user may manipulate the state while additional data is still loading. In such cases use `dataframe.meta.uniqueRowIdFields` property to specify which fields create unique row id and table will use it to persist the state across data changes.
 
-## Custom dataframe properties
+### Custom dataframe properties
 
 Each dataframe also supports using the following custom property under `dataframe.meta.custom`:
 
@@ -26,7 +38,7 @@ Each dataframe also supports using the following custom property under `datafram
 - @deprecated use `FieldType.nestedFrames` instead
   - **parentRowIndex**: number - The index of the parent row in the main dataframe (under the `data` prop of the Table component).
 
-## Table rendering
+### Table rendering
 
 Table component only works in conjunction with the applyFieldOverrides function from the @grafana/data package otherwise data will not render.
 
@@ -69,7 +81,7 @@ const TableComponent = (dataFrame: DataFrame) => {
 }
 ```
 
-## Cell rendering
+### Cell rendering
 
 Cell rendering is controlled by table specific field config in the DataFrame passed as `data` prop. Each field can set its `field.config.custom` to be type `TableFieldOptions`. `TableFieldOptions` contain generic options to control some aspects of the cell and column rendering. They also contain `cellOptions` property which can be further used to control type of cell renderer that will be used. `cellOptions` subtypes:
 
@@ -82,6 +94,8 @@ Cell rendering is controlled by table specific field config in the DataFrame pas
 - **TableJsonViewCellOptions**: Shows a formatted and indented JSON text.
 - **TableCustomCellOptions**: Allows to specify a custom cell renderer as React function component.
 
-## Usage
+## Accessibility
+
+## Props
 
 <ArgTypes of={Table} />
