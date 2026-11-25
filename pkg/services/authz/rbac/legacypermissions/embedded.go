@@ -188,8 +188,12 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 
 func (l *Loader) streamPermissions(ctx context.Context, req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer, namespace string, orgID int64) error {
 	requester := &legacyRequester{
-		SignedInUser: &user.SignedInUser{OrgID: orgID, OrgRole: types.RoleType(req.Identity.OrgRole), IsGrafanaAdmin: req.Identity.IsGrafanaAdmin, TeamIDs: req.Identity.TeamIds}, //nolint:staticcheck // The compatibility contract carries numeric RBAC memberships separately from contextual groups.
-		identity:     req.Identity, namespace: namespace,
+		SignedInUser: &user.SignedInUser{
+			OrgID: orgID, OrgRole: types.RoleType(req.Identity.OrgRole), IsGrafanaAdmin: req.Identity.IsGrafanaAdmin,
+			TeamIDs:        req.Identity.TeamIds, //nolint:staticcheck // The compatibility contract carries numeric RBAC memberships separately from contextual groups.
+			ExternalGroups: req.Identity.GetGroups(),
+		},
+		identity: req.Identity, namespace: namespace,
 	}
 	if ns, ok := ctx.Value(remoteNamespaceKey{}).(string); ok {
 		key, err := remoteIdentityCacheKey(req.Identity, ns, orgID)
@@ -251,10 +255,9 @@ func (r *legacyRequester) GetInternalID() (int64, error) {
 	}
 	return *r.identity.InternalId, nil
 }
-func (r *legacyRequester) HasUniqueId() bool           { return r.identity.HasUniqueId }
-func (r *legacyRequester) GetNamespace() string        { return r.namespace }
-func (r *legacyRequester) GetGroups() []string         { return r.identity.Groups }
-func (r *legacyRequester) GetExternalGroups() []string { return r.identity.Groups }
+func (r *legacyRequester) HasUniqueId() bool    { return r.identity.HasUniqueId }
+func (r *legacyRequester) GetNamespace() string { return r.namespace }
+func (r *legacyRequester) GetGroups() []string  { return r.identity.Groups }
 func (r *legacyRequester) GetCacheKey() string {
 	if r.remoteCacheKey != "" {
 		return r.remoteCacheKey

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	authlibv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/rest"
 
@@ -39,14 +40,23 @@ func (s searchIAMTransport) GetDirectRestConfig(c *contextmodel.ReqContext) *res
 }
 
 func TestEmbeddedSearchDirectoryCallerAndZanzanaOnlyGrant(t *testing.T) {
-	for _, token := range []string{"signed-caller-token", ""} {
-		t.Run(fmt.Sprintf("caller-token-present=%t", token != ""), func(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		token          string
+		externalGroups []string
+	}{
+		{"signed token with external groups", "signed-caller-token", []string{"idp-group"}},
+		{"signed token without external groups", "signed-caller-token", nil},
+		{"missing token", "", []string{"idp-group"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.StackID = "12"
 			const namespace = "stacks-12"
 			const callerUID = "caller"
 			caller := &user.SignedInUser{
-				UserID: 42, UserUID: callerUID, OrgID: 1, Namespace: namespace, IDToken: token,
+				UserID: 42, UserUID: callerUID, OrgID: 1, Namespace: namespace, IDToken: tc.token,
+				TeamUIDs: []string{"team-uid"}, ExternalGroups: tc.externalGroups,
 				Permissions: map[int64]map[string][]string{1: {ac.ActionUsersPermissionsRead: {"users:id:3"}}},
 			}
 			ctx := identity.WithRequester(t.Context(), caller)
@@ -55,6 +65,8 @@ func TestEmbeddedSearchDirectoryCallerAndZanzanaOnlyGrant(t *testing.T) {
 			req.Namespace = namespace
 			req.Options = ac.SearchOptions{Action: "dashboards:read"}
 			req.Requester.Identity.RequesterNamespace = &caller.Namespace
+			req.Requester.Identity.Groups = caller.GetGroups()
+			req.Requester.ExternalGroups = caller.GetExternalGroups()
 			req.Requester.EffectivePermissions = caller.GetPermissions()
 			req.Requester.HasDirectoryContext = true
 			req.Requester.IAMIDToken = caller.GetIDToken()
@@ -66,8 +78,10 @@ func TestEmbeddedSearchDirectoryCallerAndZanzanaOnlyGrant(t *testing.T) {
 				actual, err := identity.GetRequester(r.Context())
 				require.NoError(t, err)
 				require.Equal(t, caller.GetUID(), actual.GetUID())
-				require.Equal(t, token, actual.GetIDToken())
-				require.Equal(t, token, c.GetIDToken())
+				require.Equal(t, tc.token, actual.GetIDToken())
+				require.Equal(t, tc.token, c.GetIDToken())
+				assert.Equal(t, caller.GetGroups(), actual.GetGroups())
+				assert.Equal(t, caller.GetExternalGroups(), actual.GetExternalGroups())
 				require.Equal(t, caller.GetPermissions(), actual.GetPermissions())
 				require.False(t, identity.IsServiceIdentity(r.Context()))
 				if actual.GetIDToken() == "" {
@@ -92,7 +106,7 @@ func TestEmbeddedSearchDirectoryCallerAndZanzanaOnlyGrant(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, want, got.Permissions)
 			require.Equal(t, 2, lookups)
-			if token != "" {
+			if tc.token != "" {
 				require.Equal(t, map[int64][]ac.Permission{
 					3: {{Action: "dashboards:read", Scope: "dashboards:uid:migrated-dashboard"}},
 				}, got.Permissions)
