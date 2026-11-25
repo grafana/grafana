@@ -33,13 +33,9 @@ func TestV2AuthenticationMiddleware(t *testing.T) {
 			Namespace: "stacks-1", AccessToken: access, IDToken: id,
 		})
 	}
-	var gotHeader, gotConfig string
+	var gotHeader string
 	next := backend.CheckHealthHandlerFunc(func(_ context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 		gotHeader = req.GetHTTPHeader(accessTokenHeader)
-		gotConfig = ""
-		if req.PluginContext.GrafanaConfig != nil {
-			gotConfig = req.PluginContext.GrafanaConfig.Get(pluginAccessTokenKey)
-		}
 		return &backend.CheckHealthResult{}, nil
 	})
 	handler := func(ex authnlib.TokenExchanger) backend.CheckHealthHandler {
@@ -58,7 +54,6 @@ func TestV2AuthenticationMiddleware(t *testing.T) {
 		ex := &recordingExchanger{}
 		require.NoError(t, health(handler(ex), callerCtx("at", "id"), "stacks-1"))
 		require.Equal(t, "exchanged", gotHeader)
-		require.Equal(t, "exchanged", gotConfig)
 		require.Equal(t, []authnlib.TokenExchangeRequest{{Namespace: "stacks-1", Audiences: []string{"my-app"}, SubjectToken: "at"}}, ex.reqs)
 	})
 	t.Run("falls back to the ID token", func(t *testing.T) {
@@ -87,7 +82,6 @@ func TestV2AuthenticationMiddleware(t *testing.T) {
 		gotHeader = ""
 		require.NoError(t, health(handler(nil), context.Background(), "stacks-1"))
 		require.Equal(t, "caller-supplied", gotHeader)
-		require.Empty(t, gotConfig)
 	})
 }
 

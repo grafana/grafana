@@ -4,31 +4,22 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"maps"
 
 	authnlib "github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	sdkconfig "github.com/grafana/grafana-plugin-sdk-go/config"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-const (
-	accessTokenHeader = "X-Access-Token"
-	// pluginAccessTokenKey is the GrafanaConfig key plugins read with
-	// GrafanaConfig.PluginAccessToken() for their own outbound calls.
-	pluginAccessTokenKey = "GF_PLUGIN_ACCESS_TOKEN"
-)
+const accessTokenHeader = "X-Access-Token"
 
 // newV2AuthenticationMiddleware authenticates v2 calls to a plugin the way
 // v3 calls are (see v3.WithAuthentication): each request carries an access
 // token exchanged for the caller, with the plugin ID as its audience, scoped to
-// the request's namespace. The same token is also set in the plugin context's
-// GrafanaConfig, where plugins read their access token. Missing caller
-// credentials fail the request, except for Grafana's own service identity,
-// which uses the service token. A nil exchanger leaves requests
-// unauthenticated, as for v3.
+// the request's namespace. Missing caller credentials fail the request, except
+// for Grafana's own service identity, which uses the service token. A nil
+// exchanger leaves requests unauthenticated, as for v3.
 func newV2AuthenticationMiddleware(pluginID string, exchanger authnlib.TokenExchanger) backend.HandlerMiddleware {
 	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		if exchanger == nil {
@@ -50,7 +41,7 @@ type v2AuthenticationHandler struct {
 
 func (h *v2AuthenticationHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if req != nil {
-		if err := h.authenticate(ctx, &req.PluginContext, req); err != nil {
+		if err := h.authenticate(ctx, req.PluginContext.Namespace, req); err != nil {
 			return nil, err
 		}
 	}
@@ -59,7 +50,7 @@ func (h *v2AuthenticationHandler) CheckHealth(ctx context.Context, req *backend.
 
 func (h *v2AuthenticationHandler) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if req != nil {
-		if err := h.authenticate(ctx, &req.PluginContext, req); err != nil {
+		if err := h.authenticate(ctx, req.PluginContext.Namespace, req); err != nil {
 			return err
 		}
 	}
@@ -67,9 +58,8 @@ func (h *v2AuthenticationHandler) CallResource(ctx context.Context, req *backend
 }
 
 // authenticate sets the exchanged token on the request's headers, replacing any
-// the caller sent, and in the plugin context's config.
-func (h *v2AuthenticationHandler) authenticate(ctx context.Context, pCtx *backend.PluginContext, req backend.ForwardHTTPHeaders) error {
-	namespace := pCtx.Namespace
+// the caller sent.
+func (h *v2AuthenticationHandler) authenticate(ctx context.Context, namespace string, req backend.ForwardHTTPHeaders) error {
 	caller, ok := authlib.AuthInfoFrom(ctx)
 	if !ok || caller == nil {
 		return errors.New("plugin token exchange: caller auth info is required")
@@ -107,12 +97,5 @@ func (h *v2AuthenticationHandler) authenticate(ctx context.Context, pCtx *backen
 	}
 	req.SetHTTPHeader(accessTokenHeader, rsp.Token)
 
-	// GrafanaCfg's map is unexported, so rebuild it with the token added.
-	cfg := map[string]string{}
-	if pCtx.GrafanaConfig != nil {
-		maps.Copy(cfg, pCtx.GrafanaConfig.Config())
-	}
-	cfg[pluginAccessTokenKey] = rsp.Token
-	pCtx.GrafanaConfig = sdkconfig.NewGrafanaCfg(cfg)
 	return nil
 }
