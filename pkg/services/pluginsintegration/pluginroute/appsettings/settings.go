@@ -11,6 +11,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -72,19 +74,42 @@ func toSecureJSONData(secure resource.InlineSecureValues) map[string]string {
 	return result
 }
 
+// LegacySettingsReader is the read side of [pluginsettings.Service]. A reader
+// that is not tenant-scoped by org ID can take the namespace from the context.
+type LegacySettingsReader interface {
+	GetPluginSettingByPluginID(ctx context.Context, args *pluginsettings.GetByPluginIDArgs) (*pluginsettings.DTO, error)
+	DecryptedValues(ps *pluginsettings.DTO) map[string]string
+}
+
+type legacySettingsWriter interface {
+	UpdatePluginSetting(ctx context.Context, args *pluginsettings.UpdateArgs) error
+}
+
 type settingsStorage struct {
-	pluginID       string
-	pluginSettings pluginsettings.Service // TODO we may need a caching version
+	pluginID string
+	// pluginSettings also implements legacySettingsWriter unless the store is read-only.
+	pluginSettings LegacySettingsReader // TODO we may need a caching version
 	resourceInfo   *utils.ResourceInfo
 }
 
 func NewLegacySettingsStore(group string, pluginID string, pluginSettings pluginsettings.Service) grafanarest.Storage {
+	return newLegacySettingsStore(group, pluginID, pluginSettings)
+}
+
+// NewReadOnlyLegacySettingsStore serves the same objects as NewLegacySettingsStore
+// from a reader that has no write path; writes return MethodNotSupported.
+func NewReadOnlyLegacySettingsStore(pluginID string, reader LegacySettingsReader) grafanarest.Storage {
+	// Hide any write method the reader's concrete type has.
+	return newLegacySettingsStore(pluginID, pluginID, struct{ LegacySettingsReader }{reader})
+}
+
+func newLegacySettingsStore(group string, pluginID string, reader LegacySettingsReader) *settingsStorage {
 	settingsRI := apppluginV0.SettingsResourceInfo.WithGroupAndShortName(
 		group, pluginID,
 	)
 	return &settingsStorage{
 		pluginID:       pluginID,
-		pluginSettings: pluginSettings,
+		pluginSettings: reader,
 		resourceInfo:   &settingsRI,
 	}
 }
@@ -120,14 +145,35 @@ func (s *settingsStorage) Get(ctx context.Context, name string, _ *metav1.GetOpt
 	return s.get(ctx)
 }
 
-func (s *settingsStorage) List(ctx context.Context, _ *internalversion.ListOptions) (runtime.Object, error) {
+func (s *settingsStorage) List(ctx context.Context, opts *internalversion.ListOptions) (runtime.Object, error) {
+	if opts != nil && opts.Continue != "" {
+		return nil, apierrors.NewBadRequest("continue is not supported for singleton settings")
+	}
+	if opts != nil && opts.FieldSelector != nil {
+		for _, req := range opts.FieldSelector.Requirements() {
+			if req.Field != "metadata.name" && req.Field != "metadata.namespace" {
+				return nil, apierrors.NewBadRequest(fmt.Sprintf("field selector %q is not supported", req.Field))
+			}
+		}
+	}
 	obj, err := s.get(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return &apppluginV0.SettingsList{
-		Items: []apppluginV0.Settings{*obj},
-	}, nil
+	out := &apppluginV0.SettingsList{
+		ListMeta: metav1.ListMeta{ResourceVersion: obj.ResourceVersion},
+		Items:    []apppluginV0.Settings{},
+	}
+	if opts != nil {
+		if opts.LabelSelector != nil && !opts.LabelSelector.Matches(labels.Set(obj.Labels)) {
+			return out, nil
+		}
+		if opts.FieldSelector != nil && !opts.FieldSelector.Matches(fields.Set{"metadata.name": obj.Name, "metadata.namespace": obj.Namespace}) {
+			return out, nil
+		}
+	}
+	out.Items = append(out.Items, *obj)
+	return out, nil
 }
 
 func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error) {
@@ -150,6 +196,10 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error
 		OrgID:    nsInfo.OrgID,
 	})
 	if err != nil && !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
+		// The apiserver reads status only from an unwrapped APIStatus error.
+		if _, ok := err.(apierrors.APIStatus); ok {
+			return nil, err
+		}
 		return nil, fmt.Errorf("failed to get plugin settings: %w", err)
 	}
 	if ps != nil {
@@ -186,6 +236,9 @@ func (s *settingsStorage) Create(ctx context.Context, obj runtime.Object, create
 }
 
 func (s *settingsStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, _ bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	if _, err := s.writer(); err != nil {
+		return nil, false, err
+	}
 	old, err := s.Get(ctx, name, nil)
 	if err != nil {
 		return nil, false, err
@@ -208,11 +261,18 @@ func (s *settingsStorage) Update(ctx context.Context, name string, objInfo rest.
 }
 
 func (s *settingsStorage) Delete(_ context.Context, _ string, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return nil, false, fmt.Errorf("not supported")
+	return nil, false, apierrors.NewMethodNotSupported(s.resourceInfo.GroupResource(), "delete")
 }
 
 func (s *settingsStorage) DeleteCollection(_ context.Context, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("not supported")
+	return nil, apierrors.NewMethodNotSupported(s.resourceInfo.GroupResource(), "deletecollection")
+}
+
+func (s *settingsStorage) writer() (legacySettingsWriter, error) {
+	if w, ok := s.pluginSettings.(legacySettingsWriter); ok {
+		return w, nil
+	}
+	return nil, apierrors.NewMethodNotSupported(s.resourceInfo.GroupResource(), "update")
 }
 
 func (s *settingsStorage) save(ctx context.Context, obj runtime.Object, isDryRun bool) (*apppluginV0.Settings, error) {
@@ -226,11 +286,16 @@ func (s *settingsStorage) save(ctx context.Context, obj runtime.Object, isDryRun
 		return nil, err
 	}
 
+	writer, err := s.writer()
+	if err != nil {
+		return nil, err
+	}
+
 	if isDryRun {
 		return p, nil
 	}
 
-	if err := s.pluginSettings.UpdatePluginSetting(ctx, &pluginsettings.UpdateArgs{
+	if err := writer.UpdatePluginSetting(ctx, &pluginsettings.UpdateArgs{
 		PluginID:       s.pluginID,
 		OrgID:          nsInfo.OrgID,
 		Enabled:        p.Spec.Enabled,
