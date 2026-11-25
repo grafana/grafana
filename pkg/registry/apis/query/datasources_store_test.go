@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -92,9 +93,10 @@ func (f *fakeStatus) Update(context.Context, dualwrite.StorageStatus) (dualwrite
 }
 
 type fakeUnified struct {
-	items []datasourceV0.DataSource
-	err   error
-	calls int
+	items    []datasourceV0.DataSource
+	err      error
+	calls    int
+	pageSize int // pages when set, answering with an opaque offset as the continue token
 }
 
 func (f *fakeUnified) Get(_ context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -110,12 +112,28 @@ func (f *fakeUnified) Get(_ context.Context, name string, _ *metav1.GetOptions) 
 	return nil, apierrors.NewNotFound(DataSourceCollectionResource, name)
 }
 
-func (f *fakeUnified) List(context.Context, *internalversion.ListOptions) (runtime.Object, error) {
+func (f *fakeUnified) List(_ context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	f.calls++
 	if f.err != nil {
 		return nil, f.err
 	}
-	return &datasourceV0.DataSourceList{Items: f.items}, nil
+	offset, size := 0, f.pageSize
+	if options != nil {
+		if options.Continue != "" {
+			offset, _ = strconv.Atoi(options.Continue)
+		}
+		if options.Limit > 0 && (size == 0 || int(options.Limit) < size) {
+			size = int(options.Limit)
+		}
+	}
+	list := &datasourceV0.DataSourceList{}
+	end := len(f.items)
+	if size > 0 && offset+size < end {
+		end = offset + size
+		list.Continue = strconv.Itoa(end)
+	}
+	list.Items = f.items[min(offset, end):end]
+	return list, nil
 }
 
 func (f *fakeUnified) NewList() runtime.Object { return &datasourceV0.DataSourceList{} }

@@ -100,18 +100,22 @@ func (b *QueryAPIBuilder) newDataSourcesStore(opts builder.APIGroupOptions) (*da
 		return nil, err
 	}
 	info := newDataSourcesResourceInfo(group)
-	b.lister = &dataSourceLister{
+	lister := &dataSourceLister{
 		resource: info.GroupResource(),
 		unified:  unified,
 		legacy:   b.datasources.legacy,
-		status:   b.datasources.storageStatus,
+		status:   opts.StorageStatus,
 		registry: b.registry,
 		ac:       b.datasources.accessControl,
 		mapper:   b.datasources.mapper,
 	}
+	// A host that supplies its own connections provider keeps it
+	if c, ok := b.connections.(interface{ useLister(*dataSourceLister) }); ok {
+		c.useLister(lister)
+	}
 	return &datasourcesStore{
 		resourceInfo:   info,
 		tableConverter: info.TableConverter(),
-		lister:         b.lister,
+		lister:         lister,
 	}, nil
 }

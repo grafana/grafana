@@ -38,7 +38,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 var (
@@ -60,20 +59,28 @@ type QueryAPIBuilder struct {
 	converter              *expr.ResultConverter
 	queryTypes             *datasourceV0.QueryTypeDefinitionList
 	legacyDatasourceLookup service.LegacyDataSourceLookup
+	connections            datasourceV0.DataSourceConnectionProvider
 	reportStatus           func(context.Context, int)
 	datasources            *dataSourcesOptions
-
-	// lister serves the datasources resource and the connections route; set with the storage
-	lister *dataSourceLister
 }
 
-// dataSourcesOptions are what the cross-type datasource listings read from. Without them neither
-// the datasources resource nor the connections route is served.
+// QueryAPIBuilderOption configures an optional part of the builder, so a host that builds it
+// directly keeps compiling when one is added.
+type QueryAPIBuilderOption func(*QueryAPIBuilder)
+
+// dataSourcesOptions are what the datasources listing reads from.
 type dataSourcesOptions struct {
 	legacy        legacyDataSources
-	storageStatus dualwrite.Service
 	accessControl accesscontrol.AccessControl
 	mapper        request.NamespaceMapper
+}
+
+// WithDataSourceListing serves the datasources resource, which lists every datasource type, and
+// answers the connections route from the same lister when its provider supports it.
+func WithDataSourceListing(legacy datasources.DataSourceService, ac accesscontrol.AccessControl, mapper request.NamespaceMapper) QueryAPIBuilderOption {
+	return func(b *QueryAPIBuilder) {
+		b.datasources = &dataSourcesOptions{legacy: legacy, accessControl: ac, mapper: mapper}
+	}
 }
 
 func NewQueryAPIBuilder(
@@ -84,9 +91,10 @@ func NewQueryAPIBuilder(
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
+	connections datasourceV0.DataSourceConnectionProvider,
 	concurrentQueryLimit int,
 	reportStatus func(context.Context, int),
-	datasources *dataSourcesOptions,
+	opts ...QueryAPIBuilderOption,
 ) (*QueryAPIBuilder, error) {
 	// Include well typed query definitions
 	var queryTypes *datasourceV0.QueryTypeDefinitionList
@@ -104,7 +112,7 @@ func NewQueryAPIBuilder(
 		}
 	}
 
-	return &QueryAPIBuilder{
+	b := &QueryAPIBuilder{
 		concurrentQueryLimit: concurrentQueryLimit,
 		log:                  log.New("query_apiserver"),
 		instanceProvider:     instanceProvider,
@@ -114,14 +122,18 @@ func NewQueryAPIBuilder(
 		tracer:               tracer,
 		features:             features,
 		queryTypes:           queryTypes,
+		connections:          connections,
 		converter: &expr.ResultConverter{
 			Features: features,
 			Tracer:   tracer,
 		},
 		legacyDatasourceLookup: legacyDatasourceLookup,
 		reportStatus:           reportStatus,
-		datasources:            datasources,
-	}, nil
+	}
+	for _, opt := range opts {
+		opt(b)
+	}
+	return b, nil
 }
 
 func RegisterAPIService(
@@ -137,7 +149,6 @@ func RegisterAPIService(
 	tracer tracing.Tracer,
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
 	exprService *expr.Service,
-	storageStatus dualwrite.Service,
 ) (*QueryAPIBuilder, error) {
 	if !featuremgmt.AnyEnabled(features,
 		featuremgmt.FlagQueryService,
@@ -171,6 +182,7 @@ func RegisterAPIService(
 		}).Inc()
 	}
 
+	connections := &listedConnections{fallback: dataSourcesService}
 	builder, err := NewQueryAPIBuilder(
 		features,
 		client.NewSingleTenantInstanceProvider(cfg, features, pluginClient, pCtxProvider, accessControl),
@@ -179,14 +191,10 @@ func RegisterAPIService(
 		registerer,
 		tracer,
 		legacyDatasourceLookup,
+		connections,
 		cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
 		reportStatus,
-		&dataSourcesOptions{
-			legacy:        dataSourcesService,
-			storageStatus: storageStatus,
-			accessControl: accessControl,
-			mapper:        request.GetNamespaceMapper(cfg),
-		},
+		WithDataSourceListing(dataSourcesService, accessControl, request.GetNamespaceMapper(cfg)),
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, err
@@ -245,7 +253,7 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 	// because connections and queries are handled directly
 	storage["noop"] = &noopREST{}
 
-	if b.datasources != nil {
+	if b.datasources != nil && opts.StorageStatus != nil {
 		store, err := b.newDataSourcesStore(opts)
 		if err != nil {
 			return err

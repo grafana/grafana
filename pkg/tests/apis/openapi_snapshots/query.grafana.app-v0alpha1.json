@@ -62,8 +62,8 @@
             "in": "query",
             "description": "Maximum number of connections to return; zero means no limit (server side maximum applies)",
             "schema": {
-              "type": "integer",
-              "format": "int64"
+              "format": "int64",
+              "type": "integer"
             }
           },
           {

@@ -30,7 +30,10 @@ var DataSourceCollectionResource = schema.GroupResource{
 	Resource: datasourceV0.DataSourceResourceInfo.GetName(),
 }
 
-var errExpectedDataSource = errors.New("expected a datasource")
+var (
+	errExpectedDataSource = errors.New("expected a datasource")
+	errUserNotInNamespace = errors.New("user must be in the requested namespace")
+)
 
 // collectionPageSize bounds each read when the whole collection is walked.
 const collectionPageSize = 500
@@ -197,6 +200,23 @@ func (l *dataSourceLister) list(ctx context.Context, user identity.Requester, or
 		return l.listTable(ctx, user, orgID, modes, q)
 	default:
 		return l.listMixed(ctx, user, orgID, modes, q)
+	}
+}
+
+// all lists every datasource, following the cursor.
+func (l *dataSourceLister) all(ctx context.Context, user identity.Requester, orgID int64) ([]listedDataSource, error) {
+	items := []listedDataSource{}
+	q := listQuery{}
+	for {
+		page, err := l.list(ctx, user, orgID, q)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, page.items...)
+		if page.cursor == "" {
+			return items, nil
+		}
+		q.cursor = page.cursor
 	}
 }
 
