@@ -46,7 +46,7 @@ const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
 
     const [handleKeys] = useMenuFocus({ isMenuOpen: true, autoFocus, localRef, onOpen, onClose, onKeyDown });
     const visualRefreshProps: Partial<BoxProps> = {
-      borderColor: 'weak',
+      borderColor: 'medium',
       borderStyle: 'solid',
       boxShadow: 'z2',
     };

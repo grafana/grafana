@@ -143,7 +143,7 @@ function getSignatureHelpTheme(theme: GrafanaTheme2): Extension {
   return EditorView.theme({
     '.cm-tooltip.cm-signature-help': {
       padding: theme.spacing(0.75, 1.25),
-      border: `1px solid ${theme.colors.border.weak}`,
+      border: `1px solid ${theme.flags.visualDesignRefresh ? theme.colors.border.medium : theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
       backgroundColor: theme.colors.background.elevated,
       color: theme.colors.text.primary,

@@ -98,7 +98,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         borderRadius: theme.shape.radius.default,
       },
       visualRefreshEnabled && {
-        border: `1px solid ${theme.colors.border.weak}`,
+        border: `1px solid ${theme.colors.border.medium}`,
         boxShadow: theme.shadows.z2,
       }
     ),

@@ -207,7 +207,7 @@ export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transpar
       '.cm-tooltip': {
         color: theme.colors.text.primary,
         backgroundColor: theme.colors.background.elevated,
-        borderColor: theme.colors.border.weak,
+        borderColor: theme.flags.visualDesignRefresh ? theme.colors.border.medium : theme.colors.border.weak,
         borderRadius: theme.shape.radius.default,
         boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
       },

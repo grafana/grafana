@@ -169,7 +169,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     editor: css({
       background: theme.colors.background.elevated,
-      border: `1px solid ${theme.colors.border.weak}`,
+      border: `1px solid ${theme.flags.visualDesignRefresh ? theme.colors.border.medium : theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
       boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
       userSelect: 'text',

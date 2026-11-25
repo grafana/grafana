@@ -178,7 +178,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   const info = buildTooltipTheme(
     theme,
     theme.colors.background.elevated,
-    theme.colors.border.weak,
+    theme.flags.visualDesignRefresh ? theme.colors.border.medium : theme.colors.border.weak,
     theme.components.tooltip.text,
     { topBottom: 2, rightLeft: 2 }
   );
