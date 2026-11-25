@@ -213,7 +213,6 @@ func ProvideAuthZClients(
 		if configurable, ok := accessControl.(legacyclient.LegacyCheckClientSetter); ok {
 			if err := configurable.SetLegacyCheckClient(
 				legacyAccessClient,
-				cfg.IDUseExternalGroupsForGroupsClaim,
 				apirequest.GetNamespaceMapper(cfg),
 				reg,
 			); err != nil {
