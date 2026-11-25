@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useSelector } from 'app/types/store';
 
-import { shouldUseGmaOnlyListView } from '../featureToggles';
+import { canMigrateLegacyGroups, shouldUseGmaOnlyListView } from '../featureToggles';
 import { isAdmin } from '../utils/environment';
 
 import { useAlertRulesExtensionTabs } from './extensions';
@@ -36,6 +36,18 @@ export function useAlertRulesNav() {
           },
         ]
       : [];
+    const legacyGroupsUrl = '/alerting/rules/alert/legacy-groups';
+    const legacyGroupsTabs: NavModelItem[] = canMigrateLegacyGroups()
+      ? [
+          {
+            id: 'alert-rules-legacy-groups',
+            text: t('alerting.navigation.legacy-groups', 'Legacy groups'),
+            url: legacyGroupsUrl,
+            active: location.pathname === legacyGroupsUrl,
+            parentItem: navIndex['alert-rules'],
+          },
+        ]
+      : [];
     return buildGmaRulesNav(
       navIndex,
       'alert-rules',
@@ -45,7 +57,7 @@ export function useAlertRulesNav() {
         text: t('alerting.navigation.alert-rules', 'Alert rules'),
         url: '/alerting/rules/alert',
       },
-      [...extensionTabs, ...adminTabs]
+      [...extensionTabs, ...adminTabs, ...legacyGroupsTabs]
     );
   }
 

@@ -101,8 +101,8 @@ export function useAppNotification() {
   const dispatch = useDispatch();
   return useMemo(
     () => ({
-      [AppNotificationSeverity.Success]: (title: string, text = '') => {
-        dispatch(notifyApp(createNotification(title, text, AppNotificationSeverity.Success)));
+      [AppNotificationSeverity.Success]: (title: string, text = '', component?: ReactElement) => {
+        dispatch(notifyApp(createSuccessNotification(title, text, undefined, component)));
       },
       [AppNotificationSeverity.Warning]: (title: string, text = '', traceId?: string) => {
         dispatch(notifyApp(createNotification(title, text, AppNotificationSeverity.Warning, traceId)));

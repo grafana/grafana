@@ -54,7 +54,7 @@ export function FolderListRow({ folderUid, title, parents, count, expanded, onTo
           {count}
         </Stack>
       </div>
-      {expanded && (
+      {expanded && children && (
         <Box paddingLeft={2.5}>
           <RuleRowList>{children}</RuleRowList>
         </Box>

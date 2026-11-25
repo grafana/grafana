@@ -13,8 +13,10 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { allowIf, evaluateAccess } from './routePermissions';
 import { canImportRulesToGMA } from './unified/components/import-to-gma/useCanImportToGMA';
 import {
+  canMigrateLegacyGroups,
   isImportWizardEnabled,
   isNotificationHistoryEnabled,
+  shouldShowLegacyGroupsMigration,
   shouldUseGmaOnlyListView,
 } from './unified/featureToggles';
 import { proxied } from './unified/plugin-proxy/withRouteProxy';
@@ -475,6 +477,18 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
           )
       ),
     });
+    if (shouldShowLegacyGroupsMigration()) {
+      routes.push({
+        path: '/alerting/rules/alert/legacy-groups',
+        roles: () => (canMigrateLegacyGroups() ? [] : ['Reject']),
+        component: importAlertingComponent(
+          () =>
+            import(
+              /* webpackChunkName: "GmaAlertRulesLegacyGroupsPage" */ 'app/features/alerting/unified/gma-rule-list/alert-rules/AlertRulesLegacyGroupsPage'
+            )
+        ),
+      });
+    }
     routes.push({
       path: '/alerting/rules/recording',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
