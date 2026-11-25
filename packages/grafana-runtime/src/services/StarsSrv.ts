@@ -55,7 +55,10 @@ export interface StarsSrv {
   starred(group: string, kind: string): Observable<readonly string[]>;
   /** Tells Grafana the object was saved. A starred object is searched again and listed under its saved title. */
   resourceUpdated(ref: StarredResourceRef): void;
-  /** Tells Grafana the object was deleted. A starred object leaves the Starred lists. Its star stays stored. */
+  /**
+   * Tells Grafana the object was deleted. A starred object leaves the Starred lists, and a folder takes the starred
+   * dashboards and folders deleted with it. Their stars stay stored.
+   */
   resourceDeleted(ref: StarredResourceRef): void;
 }
 

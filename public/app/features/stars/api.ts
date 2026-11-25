@@ -73,9 +73,10 @@ export const selectUserStars = (state: StoreState) =>
   collectionsAPIv1alpha1.endpoints.listStars.select({ fieldSelector: userStarsFieldSelector() })(state).data;
 
 /**
- * Stars or unstars an object for the current user, and reports a stored change to analytics as made from `origin`.
- * Rejects when the server refuses, and for a user without a stars resource. The mutation invalidates the `Stars`
- * tag, so every starred view follows the set it reads again.
+ * Stars or unstars an object for the current user, and reports the change to analytics as made from `origin` once
+ * the server accepts it. The server accepts a star the set already holds, and an unstar of one it lacks, so a report
+ * counts an accepted request, not a change to the set. Rejects when the server refuses, and for a user without a
+ * stars resource. The mutation invalidates the `Stars` tag, so every starred view follows the set it reads again.
  */
 export const setStarred =
   ({ group, kind, name }: StarredResourceRef, starred: boolean, origin: string): ThunkResult<Promise<void>> =>

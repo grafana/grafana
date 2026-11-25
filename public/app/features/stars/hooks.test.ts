@@ -1,5 +1,5 @@
-import { setupListeners } from '@reduxjs/toolkit/query';
 import { http, HttpResponse } from 'msw';
+import { sendWindowFocus } from 'test/helpers/sendWindowFocus';
 import { testWithAppKind } from 'test/helpers/testWithAppKind';
 import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
@@ -23,7 +23,6 @@ import {
 } from '@grafana/test-utils/unstable';
 import { addKinds } from 'app/core/kinds/coreKinds';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { dispatch } from 'app/store/store';
 
 import { useStarredSearch } from './hooks';
 import { starsSrv } from './service';
@@ -359,17 +358,28 @@ describe('useStarredSearch', () => {
 
       // Renamed in another tab or by someone else, which nothing reports to this window
       serve('New title');
-      act(() => {
-        // RTK listens to the window for the first store of a test file only, so the focus is sent to this store
-        setupListeners(dispatch, (send, { onFocus }) => {
-          send(onFocus());
-          return () => {};
-        });
-      });
+      act(() => sendWindowFocus());
 
       await waitFor(() => {
         expect(starred.rowNames()).toEqual(['New title']);
       });
     }
   );
+
+  it('lists a star set changed elsewhere once the window regains focus', async () => {
+    setMockStarredDashboards([DASHBOARD.name]);
+    const starred = renderStarredSearch();
+    await waitFor(() => {
+      expect(starred.rowNames()).toEqual(['Bravo dashboard']);
+    });
+
+    // Unstarred and starred in another tab, which nothing reports to this window
+    setMockStarredDashboards([]);
+    setMockStarredFolders([FOLDER.name]);
+    act(() => sendWindowFocus());
+
+    await waitFor(() => {
+      expect(starred.rowNames()).toEqual(['Delta folder']);
+    });
+  });
 });

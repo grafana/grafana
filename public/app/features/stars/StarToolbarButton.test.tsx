@@ -1,15 +1,16 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { http, HttpResponse } from 'msw';
 import { Provider } from 'react-redux';
+import { sendWindowFocus } from 'test/helpers/sendWindowFocus';
 import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
-import { render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setBackendSrv } from '@grafana/runtime';
 import { starsRoute, starUpdateRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setMockStarredDashboards } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { store } from 'app/store/store';
@@ -59,6 +60,17 @@ describe('StarToolbarButton', () => {
 
     await user.click(await findStarButton(itemToStar.title, true));
     expect(await findStarButton(itemToStar.title, false)).toBeInTheDocument();
+  });
+
+  it('shows a star made elsewhere once the window regains focus', async () => {
+    setup(itemToStar);
+    await findStarButton(itemToStar.title, false);
+
+    // Starred in another tab, which nothing reports to this window
+    setMockStarredDashboards([existingStarredItem.uid, itemToStar.uid]);
+    act(() => sendWindowFocus());
+
+    expect(await findStarButton(itemToStar.title, true)).toBeInTheDocument();
   });
 
   it('confirms the star, then the unstar, with a notification', async () => {

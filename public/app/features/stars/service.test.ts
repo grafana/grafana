@@ -1,10 +1,17 @@
 import { http, HttpResponse } from 'msw';
+import { sendWindowFocus } from 'test/helpers/sendWindowFocus';
 import { testWithAppKind } from 'test/helpers/testWithAppKind';
 import { STARS_USER_UID, testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
-import { getAppKindHandlers, getKindSearchHandler, starsRoute, starUpdateRoute } from '@grafana/test-utils/handlers';
+import {
+  getAppKindHandlers,
+  getCustomSearchHandler,
+  getKindSearchHandler,
+  starsRoute,
+  starUpdateRoute,
+} from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { MOCK_APP_KIND, setMockStarred, setMockStarredDashboards } from '@grafana/test-utils/unstable';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
@@ -107,6 +114,25 @@ describe('starsSrv.starred', () => {
 
       await waitFor(() => expect(emissions).toHaveLength(2));
       expect(emissions[1]).toEqual([...seeded, 'dash-three']);
+    } finally {
+      subscription.unsubscribe();
+    }
+  });
+
+  it('emits a set changed elsewhere once the window regains focus', async () => {
+    setMockStarredDashboards(['dash-one']);
+
+    const emissions: Array<readonly string[]> = [];
+    const subscription = starsSrv.starred(DASHBOARD_GROUP, 'Dashboard').subscribe((names) => emissions.push(names));
+
+    try {
+      await waitFor(() => expect(emissions).toEqual([['dash-one']]));
+
+      // Starred in another tab, which nothing reports to this window
+      setMockStarredDashboards(['dash-one', 'dash-two']);
+      sendWindowFocus();
+
+      await waitFor(() => expect(emissions).toEqual([['dash-one'], ['dash-one', 'dash-two']]));
     } finally {
       subscription.unsubscribe();
     }
@@ -283,6 +309,23 @@ describe('starsSrv.resourceUpdated and resourceDeleted', () => {
     // The plugin deleted the object, so its search finds nothing, and tells Grafana
     server.use(getKindSearchHandler(MOCK_APP_KIND, []));
     act(() => starsSrv.resourceDeleted(THING));
+
+    await waitFor(() => expect(result.current.rows?.map((row) => row.name)).toEqual([]));
+  });
+
+  it('drops a starred dashboard once the deletion of its folder is reported, though the folder is not starred', async () => {
+    setMockStarredDashboards([DASHBOARD.name]);
+    server.use(
+      getCustomSearchHandler([
+        { resource: 'dashboards', name: DASHBOARD.name, title: 'Capacity board', folder: 'parent', field: {} },
+      ])
+    );
+    const { result } = renderHook(() => useStarredSearch(), { wrapper: getWrapper({}) });
+    await waitFor(() => expect(result.current.rows?.map((row) => row.name)).toEqual(['Capacity board']));
+
+    // The plugin deleted the folder, which took the dashboard with it, and tells Grafana
+    server.use(getCustomSearchHandler([]));
+    act(() => starsSrv.resourceDeleted({ group: 'folder.grafana.app', kind: 'Folder', name: 'parent' }));
 
     await waitFor(() => expect(result.current.rows?.map((row) => row.name)).toEqual([]));
   });

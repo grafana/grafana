@@ -3,12 +3,13 @@ import { defer, distinctUntilChanged, filter, finalize, from, map, type Observab
 
 import { type StarredResourceRef, type StarsSrv } from '@grafana/runtime/unstable';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { dispatch, getState, store } from 'app/store/store';
 
 import { invalidateStarredSearch, selectUserStars, setStarred } from './api';
 import { refetchStarredAppKinds } from './kindSearch';
 import { findStarredKind, STARRED_INDEX_KINDS } from './kinds';
-import { canUseStars, findStarredNames, userStarsFieldSelector } from './utils';
+import { canUseStars, findStarredNames, STAR_SET_SUBSCRIPTION, userStarsFieldSelector } from './utils';
 
 function starred(group: string, kind: string): Observable<readonly string[]> {
   // A user without a stars resource has nothing starred, so the set is empty and never changes
@@ -18,8 +19,10 @@ function starred(group: string, kind: string): Observable<readonly string[]> {
 
   return defer(() => {
     const args = { fieldSelector: userStarsFieldSelector() };
-    // Keeps the listStars cache entry alive (and refetching on tag invalidation) while subscribed.
-    const query = dispatch(collectionsAPIv1alpha1.endpoints.listStars.initiate(args));
+    // Keeps the listStars cache entry alive, and refetching on tag invalidation and window focus, while subscribed.
+    const query = dispatch(
+      collectionsAPIv1alpha1.endpoints.listStars.initiate(args, { subscriptionOptions: STAR_SET_SUBSCRIPTION })
+    );
     const select = collectionsAPIv1alpha1.endpoints.listStars.select(args);
 
     return from(store).pipe(
@@ -48,6 +51,18 @@ function searchAgain({ group, kind, name }: StarredResourceRef): void {
   dispatch(STARRED_INDEX_KINDS.includes(starredKind) ? invalidateStarredSearch() : refetchStarredAppKinds());
 }
 
+/**
+ * Searches again after an object was deleted. A folder takes its descendants with it, which may be starred though
+ * the folder is not, so its deletion searches every starred dashboard and folder again.
+ */
+function searchAfterDelete(ref: StarredResourceRef): void {
+  if (findStarredKind(ref.group, ref.kind) === CORE_KINDS.folder) {
+    dispatch(invalidateStarredSearch());
+    return;
+  }
+  searchAgain(ref);
+}
+
 // What analytics names as the origin of a star a plugin makes through the service
 const SERVICE_ORIGIN = 'StarsSrv';
 
@@ -63,5 +78,5 @@ export const starsSrv: StarsSrv = {
   unstar: (ref) => dispatch(setStarred(ref, false, SERVICE_ORIGIN)),
   starred,
   resourceUpdated: searchAgain,
-  resourceDeleted: searchAgain,
+  resourceDeleted: searchAfterDelete,
 };
