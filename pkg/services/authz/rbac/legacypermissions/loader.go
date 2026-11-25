@@ -189,12 +189,14 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 }
 
 func (l *Loader) settings(ctx context.Context) loadSettings {
+	const defaultExcludeRedundantManagedPermissions = false
+
 	return loadSettings{
 		enforcementEnabled: l.enforcementEnabled(),
 		excludeRedundantManagedPermissions: l.openFeatureClient.Boolean(
 			ctx,
 			featuremgmt.FlagExcludeRedundantManagedPermissions,
-			false,
+			defaultExcludeRedundantManagedPermissions,
 			openfeature.TransactionContext(ctx),
 		),
 	}
