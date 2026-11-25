@@ -6613,6 +6613,10 @@
       "paused": "This dashboard has been paused by the administrator",
       "try-again-later": "Try again later"
     },
+    "quick-edits": {
+      "close": "Close",
+      "presets-unavailable": "No styles to show for this panel's data"
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Are you sure you want to remove this panel?"
@@ -8069,8 +8073,11 @@
       "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "No quick edits for this panel's settings",
       "panels-selected_one": "{{count}} panel selected",
       "panels-selected_other": "{{count}} panels selected",
+      "show-panel-actions": "Back to panel actions",
+      "show-quick-edits": "Quick edits",
       "tooltip-edit-panel-visualization": "Edit visualization",
       "tooltip-panel-settings": "Panel settings"
     },
@@ -10516,6 +10523,25 @@
         "otherGroup": "Others"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": "Style"
+      },
+      "range": {
+        "auto": "Auto",
+        "title": "Min / Max"
+      },
+      "thresholds": {
+        "base-only": "Base only",
+        "title": "Thresholds"
+      },
+      "unit": {
+        "none": "None",
+        "title": "Unit",
+        "with-decimals_one": "{{unit}}, {{count}} decimal",
+        "with-decimals_other": "{{unit}}, {{count}} decimals"
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -11036,6 +11062,11 @@
         "placement-options": {
           "label-bottom": "Bottom",
           "label-right": "Right"
+        },
+        "quick-edit": {
+          "hidden": "Hidden",
+          "values_one": "{{count}} value",
+          "values_other": "{{count}} values"
         }
       },
       "stacking": {
@@ -13787,6 +13818,7 @@
       "open": "Main menu",
       "pin-error": "Failed to update pinned menu items",
       "pinned-list-label": "Pinned items",
+      "section-resize": "Resize navigation",
       "undock": "Undock menu"
     },
     "megamenu-item": {
@@ -17297,6 +17329,13 @@
       "wide-list": "Wide list",
       "wide-list-desc": "Horizontal, name and value, area sparkline, single color"
     },
+    "quick-edits": {
+      "calculation": "Calculation",
+      "color": "Color",
+      "text": "Text",
+      "text-title-size": "Title size",
+      "text-value-size": "Value size"
+    },
     "suggestions": {
       "stat": "Stat",
       "stat-color-background": "Stat - color background",
@@ -17500,6 +17539,7 @@
     "description-page-size": "Number of rows per page. When empty, the page size is based on the panel height.",
     "description-show-columns-sidebar": "Open the column management sidebar with the panel, rather than from a column menu",
     "description-show-row-numbers": "Show the position of each row in the displayed table",
+    "description-sparkline-select-time-range": "Drag to select a time range. Disabled for fields with data links or actions.",
     "description-styling-from-field": "A field containing JSON objects with CSS properties",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "description-zebra-striping": "Alternate the background color of every other row",
@@ -17544,6 +17584,7 @@
     "name-show-columns-sidebar": "Show columns sidebar",
     "name-show-row-numbers": "Show row numbers",
     "name-show-table-header": "Show table header",
+    "name-sparkline-select-time-range": "Enable time range selection",
     "name-sparkline-show-tooltip": "Show hover tooltip",
     "name-styling-from-field": "Styling from field",
     "name-tooltip-from-field": "Tooltip from field",

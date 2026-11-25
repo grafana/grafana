@@ -1512,6 +1512,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "alerting.ruleQualityFixAll",
+			Description:  "Enable bulk fixes for alert rule quality issues on the alert quality page.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			// Remove this flag once Loki v4 is released and the min supported version is v3.0+,
 			// since users on v2.9 need it to disable the feature, as it doesn't work for them.
 			Name:        "lokiLabelNamesQueryApi",
@@ -3536,6 +3545,15 @@ var (
 		{
 			Name:         "grafana.dashboardSidebarExplicitOpen",
 			Description:  "In dashboard edit mode, opens the sidebar only through explicit user actions and keeps it closed until explicitly reopened",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "grafana.panelQuickEdits",
+			Description:  "Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,

@@ -6740,7 +6740,8 @@
           "title": "Colar painel"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "Adicionar linha",
@@ -9967,10 +9968,6 @@
       "of": "DE",
       "to": "PARA",
       "when": "QUANDO"
-    },
-    "expression-query-editor": {
-      "helper-text-sql": "Execute o SQL do MySQL-dialect nas tabelas devolvidas das suas fontes de dados. As consultas de origem de dados (ou seja, \"A\", \"B\") estão disponíveis como tabelas e referenciadas por nome de consulta. Os campos estão disponíveis como colunas, conforme devolvidos da fonte de dados.",
-      "label-operation": "Funcionamento"
     },
     "math": {
       "available-math-functions": "Funções matemáticas disponíveis",
@@ -13792,12 +13789,11 @@
     },
     "megamenu-item": {
       "children-error": "Ocorreu um erro ao carregar os elementos",
+      "children-partial-error": "",
       "collapse-aria-label": "Recolher secção: {{sectionName}}",
       "expand-aria-label": "Expandir secção: {{sectionName}}",
       "loading-aria-label": "A carregar {{sectionName}}",
-      "reorder-aria-label": "Reordenar {{itemName}}",
-      "starred-dashboard-icon": "Painel de controlo",
-      "starred-folder-icon": "Pasta"
+      "reorder-aria-label": "Reordenar {{itemName}}"
     },
     "org-switcher": {
       "aria-label": "Alterar organização"
@@ -17502,6 +17498,7 @@
     "description-page-size": "Número de linhas por página. Quando vazio, o tamanho da página baseia-se na altura do painel.",
     "description-show-columns-sidebar": "Abrir a barra lateral de gestão de colunas com o painel, em vez de a partir de um menu de coluna",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "Um campo que contém objetos JSON com propriedades CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Alternar a cor de fundo de uma linha sim, outra não",
@@ -17546,6 +17543,7 @@
     "name-show-columns-sidebar": "Mostrar barra lateral de colunas",
     "name-show-row-numbers": "",
     "name-show-table-header": "Mostrar o cabeçalho da tabela",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "Mostrar descrição ao passar o rato",
     "name-styling-from-field": "Estilo do campo",
     "name-tooltip-from-field": "",
