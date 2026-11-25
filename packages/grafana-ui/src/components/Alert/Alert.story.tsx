@@ -68,23 +68,94 @@ export const Examples: StoryFn<typeof Alert> = () => {
   );
 };
 
+const actionExamples: Record<AlertVariant, { title: string; body: string; actionLabel: string }> = {
+  error: {
+    title: 'Cannot copy the rule',
+    body: 'The rule you are trying to copy does not exist.',
+    actionLabel: 'Go back to alert list',
+  },
+  warning: {
+    title: 'Quota almost reached',
+    body: 'You have used 90% of your monthly quota.',
+    actionLabel: 'Request increase',
+  },
+  info: {
+    title: 'New version available',
+    body: 'A newer version of this plugin is available.',
+    actionLabel: 'View changes',
+  },
+  success: {
+    title: 'Rule copied',
+    body: 'The rule was copied to the selected folder.',
+    actionLabel: 'Open rule',
+  },
+};
+
+const ActionAlert = ({
+  severity,
+  dismissible,
+  titleOnly,
+}: {
+  severity: AlertVariant;
+  dismissible?: boolean;
+  titleOnly?: boolean;
+}) => {
+  const { title, body, actionLabel } = actionExamples[severity];
+
+  return (
+    <Alert
+      title={title}
+      severity={severity}
+      action={
+        <Button variant="secondary" onClick={action('Action button clicked')}>
+          {actionLabel}
+        </Button>
+      }
+      onRemove={dismissible ? action('Dismiss button clicked') : undefined}
+    >
+      {titleOnly ? undefined : body}
+    </Alert>
+  );
+};
+
 export const WithActionAndDismiss: StoryFn<typeof Alert> = (args) => {
-  return <Alert {...args}>You have reached your quota limit. Request an increase or dismiss this alert.</Alert>;
+  return (
+    <Stack direction="column">
+      <Alert {...args}>The rule you are trying to copy does not exist.</Alert>
+      {severities
+        .filter((severity) => severity !== 'error')
+        .map((severity) => (
+          <ActionAlert severity={severity} dismissible key={severity} />
+        ))}
+      {severities.map((severity) => (
+        <ActionAlert severity={severity} dismissible titleOnly key={`${severity}-title-only`} />
+      ))}
+    </Stack>
+  );
 };
 
 WithActionAndDismiss.args = {
-  title: 'Quota limit reached',
-  severity: 'warning',
+  title: 'Cannot copy the rule',
+  severity: 'error',
   action: (
     <Button variant="secondary" onClick={action('Action button clicked')}>
-      Request increase
+      Go back to alert list
     </Button>
   ),
   onRemove: action('Dismiss button clicked'),
 };
 
 export const WithActionOnly: StoryFn<typeof Alert> = (args) => {
-  return <Alert {...args}>The rule you are trying to copy does not exist.</Alert>;
+  return (
+    <Stack direction="column">
+      <Alert {...args}>The rule you are trying to copy does not exist.</Alert>
+      {severities
+        .filter((severity) => severity !== 'error')
+        .map((severity) => (
+          <ActionAlert severity={severity} key={severity} />
+        ))}
+    </Stack>
+  );
 };
 
 WithActionOnly.args = {
@@ -98,7 +169,18 @@ WithActionOnly.args = {
 };
 
 export const WithActionAndRemoveButton: StoryFn<typeof Alert> = (args) => {
-  return <Alert {...args}>This alert has both a custom action and a remove button with custom content.</Alert>;
+  return (
+    <Stack direction="column">
+      <Alert {...args}>This alert has both a custom action and a remove button with custom content.</Alert>
+      {severities
+        .filter((severity) => severity !== args.severity)
+        .map((severity) => (
+          <Alert {...args} severity={severity} key={severity}>
+            This alert has both a custom action and a remove button with custom content.
+          </Alert>
+        ))}
+    </Stack>
+  );
 };
 
 WithActionAndRemoveButton.args = {
