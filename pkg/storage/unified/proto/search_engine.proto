@@ -39,11 +39,13 @@ message DocumentWrite {
   resource.ResourceKey key = 1;
   oneof action {
     SearchDocument upsert = 2;
+    // Hard delete: removes the document without adding a trash entry.
     google.protobuf.Empty delete = 3;
   }
 }
 
-// Already built by Grafana. Physical index fields are added by the adapter.
+// The prototype writes only live documents, even though queries can select trash.
+// Grafana builds the document; the adapter adds physical index fields.
 message SearchDocument {
   int64 resource_version = 1;
   string title = 2;

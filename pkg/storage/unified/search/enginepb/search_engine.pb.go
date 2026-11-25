@@ -392,6 +392,7 @@ type DocumentWrite_Upsert struct {
 }
 
 type DocumentWrite_Delete struct {
+	// Hard delete: removes the document without adding a trash entry.
 	Delete *emptypb.Empty `protobuf:"bytes,3,opt,name=delete,proto3,oneof"`
 }
 
@@ -399,7 +400,8 @@ func (*DocumentWrite_Upsert) isDocumentWrite_Action() {}
 
 func (*DocumentWrite_Delete) isDocumentWrite_Action() {}
 
-// Already built by Grafana. Physical index fields are added by the adapter.
+// The prototype writes only live documents, even though queries can select trash.
+// Grafana builds the document; the adapter adds physical index fields.
 type SearchDocument struct {
 	state                 protoimpl.MessageState            `protogen:"open.v1"`
 	ResourceVersion       int64                             `protobuf:"varint,1,opt,name=resource_version,json=resourceVersion,proto3" json:"resource_version,omitempty"`
