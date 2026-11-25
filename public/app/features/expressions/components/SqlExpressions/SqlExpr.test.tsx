@@ -161,7 +161,10 @@ describe('SqlExpr', () => {
     const refIds = [{ value: 'A' }];
     const query = { refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery;
 
-    const { findByTestId } = render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
+    const host = { version: 1 as const, register: jest.fn(), invoke: jest.fn() };
+    const { findByTestId } = render(
+      <SqlExpr queryCoauthoring={host} onChange={onChange} refIds={refIds} query={query} queries={[]} />
+    );
 
     expect(await findByTestId('legacy-sql-editor')).toHaveTextContent('SELECT * FROM A');
     expect(SQLEditorMock.mock.calls[0][0]).toEqual(
@@ -172,6 +175,8 @@ describe('SqlExpr', () => {
       })
     );
     expect(SqlEditorMock).not.toHaveBeenCalled();
+    expect(host.register).not.toHaveBeenCalled();
+    expect(SQLEditorMock.mock.calls[0][0]).not.toHaveProperty('queryCoauthoring');
   });
 
   it('quotes legacy editor table completions that contain spaces', async () => {

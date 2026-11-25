@@ -5,10 +5,17 @@ import * as React from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, InlineField, InlineLabel, TextArea, Toggletip, useStyles2, Stack, TextLink } from '@grafana/ui';
+import {
+  isQueryCoauthoringEditorHost,
+  type QueryCoauthoringEditorHost,
+} from 'app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/coauthoring/queryCoauthoringContracts';
 
 import { type ExpressionQuery } from '../types';
 
+import { useTextareaCoauthoring } from './useTextareaCoauthoring';
+
 interface Props {
+  queryCoauthoring?: QueryCoauthoringEditorHost;
   labelWidth: number | 'auto';
   query: ExpressionQuery;
   onChange: (query: ExpressionQuery) => void;
@@ -19,15 +26,20 @@ const mathPlaceholder =
   'Math operations on one or more queries. You reference the query by ${refId} ie. $A, $B, $C etc\n' +
   'The sum of two scalar values: $A + $B > 10';
 
-export const Math = ({ labelWidth, onChange, query, onRunQuery }: Props) => {
+export const Math = ({ labelWidth, onChange, query, onRunQuery, queryCoauthoring }: Props) => {
+  const manualEdit = React.useRef(false);
   const onExpressionChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    manualEdit.current = true;
     onChange({ ...query, expression: event.target.value });
   };
 
+  const input = useTextareaCoauthoring(queryCoauthoring, query.expression);
   const styles = useStyles2(getStyles);
 
   const executeQuery = () => {
-    if (query.expression) {
+    const changed = manualEdit.current;
+    manualEdit.current = false;
+    if (query.expression && (!isQueryCoauthoringEditorHost(queryCoauthoring) || changed)) {
       onRunQuery();
     }
   };
@@ -169,6 +181,7 @@ export const Math = ({ labelWidth, onChange, query, onRunQuery }: Props) => {
         shrink={true}
       >
         <TextArea
+          ref={input}
           value={query.expression}
           onChange={onExpressionChange}
           rows={1}
