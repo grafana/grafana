@@ -22,7 +22,7 @@ import { getDashboardSceneFor, useDashboardState } from '../utils/utils';
 import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
 
 import { type DashboardScene } from './DashboardScene';
-import { isViewingDashboard } from './dashboardModes';
+import { isComposerMode, isViewingDashboard } from './dashboardModes';
 import { EditActionsPopover } from './edit-actions-popover/EditActionsPopover';
 import { QuestionEditActions } from './edit-actions-popover/QuestionEditActions';
 import { type RowItem } from './layout-rows/RowItem';
@@ -63,7 +63,7 @@ interface AskableQuestion {
  * can change it and run it again.
  *
  * Renders nothing when `grafana.dashboardQuestions` is off, when no saved question has text (a question just added
- * in the editor has none yet), or while the dashboard is neither viewed nor edited (see `getControlsMode`).
+ * in the editor has none yet), or while a panel is edited or a plan is previewed (see `getControlsMode`).
  *
  * Also renders nothing on a repeated row or tab after the first, or inside one. Repeat clones' panels have no stable
  * keys, so they're never passed on, and a later repeat's questions would be answered from the first repeat's panels.
@@ -161,7 +161,7 @@ function EditableQuestion({
     sidebar.runPaneRequest(async (signal) => {
       const { openEditQuestionPane } = await loadQuestionEdit();
       if (!signal.aborted) {
-        openEditQuestionPane(owner, ownerKind, index);
+        openEditQuestionPane(owner, ownerKind, index, true);
       }
     });
 
@@ -216,14 +216,15 @@ function useRerenderOnVariableChange(owner: ControlsOwner) {
 }
 
 /**
- * How the controls show: as viewers see them, or one control per question while the dashboard is edited. Undefined
- * while a panel is edited, or a plan is previewed with placeholder panels that have no queries.
+ * How the controls show: as viewers see them, or one control per question while the dashboard is edited. Composer
+ * hides the edit surfaces, so over Viewing or Editing they show as viewers see them. Undefined while a panel is
+ * edited, or a plan is previewed with placeholder panels that have no queries.
  */
 function getControlsMode(state: DashboardSceneState): 'view' | 'edit' | undefined {
   if (state.editPanel || state.planning) {
     return undefined;
   }
-  if (isViewingDashboard(state)) {
+  if (isViewingDashboard(state) || isComposerMode(state)) {
     return 'view';
   }
   return isFullDashboardEditing(state) ? 'edit' : undefined;

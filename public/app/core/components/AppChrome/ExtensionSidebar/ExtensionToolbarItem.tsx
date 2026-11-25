@@ -14,7 +14,7 @@ type Props = {
   compact?: boolean;
 };
 
-const compactAllowedComponents = ['grafana-assistant-app', 'grafana-assistant-onboarding-app'];
+const compactAllowedComponents = ['grafana-assistant-app', 'grafana-assistantonboarding-app'];
 const interactiveLearningPluginIds = ['grafana-pathfinder-app', 'grafana-grafanadocsplugin-app'];
 
 export function ExtensionToolbarItem({ compact }: Props) {
