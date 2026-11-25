@@ -57,29 +57,39 @@ type PluginClientProvider = func(ctx context.Context, id string) (plugins.Client
 // must resolve the namespace and requester from each storage operation's context.
 type LegacySettingsStoreProvider func(ctx context.Context, pluginID string) (grafanarest.Storage, error)
 
+// SettingsDependencies configure the app settings API. ST supplies only the
+// legacy store; the cloud loader supplies the rest.
+type SettingsDependencies struct {
+	ReadOnly bool
+	// LegacyStore gets the legacy store for a plugin, or nil to disable the settings API.
+	LegacyStore LegacySettingsStoreProvider
+	// AccessChecker replaces the default legacy app-access check.
+	AccessChecker pluginaccesscontrol.AppAccessChecker
+	// NamespaceAuthorizer replaces the default apiserver namespace authorizer.
+	NamespaceAuthorizer authorizer.Authorizer
+	// Middleware wraps the plugin's v2 client.
+	Middleware []backend.HandlerMiddleware
+}
+
 // The dependencies are configured at startup and used across all plugins
 type PluginDependencies struct {
-	PluginClient                plugins.Client
-	ContextProvider             appsettings.PluginContextWrapper
-	AccessControl               accesscontrol.AccessControl
-	AccessClient                types.AccessClient // runs the access checks manifest routes declare
-	DualWrite                   dualwrite.Service
-	SecureValues                secret.InlineSecureValueSupport
-	MetricsRegister             prometheus.Registerer
-	BuilderMetrics              *builder.BuilderMetrics
-	RESTConfigProvider          restcfg.RestConfigProvider
-	LegacySettingsStore         LegacySettingsStoreProvider
-	SettingsAccessChecker       pluginaccesscontrol.AppAccessChecker
-	SettingsNamespaceAuthorizer authorizer.Authorizer
-	ReadOnlySettings            bool
-	SettingsMiddleware          []backend.HandlerMiddleware
-	Unified                     resource.ResourceClient
-	Decrypter                   decrypt.DecryptService
-	TokenExchanger              authn.TokenExchanger       // used for delegation
-	PluginAuth                  *pluginauth.Config         // whether Grafana signs plugin tokens itself
-	Tracer                      tracing.Tracer             // needed for proxy (legacy)
-	Features                    featuremgmt.FeatureToggles // needed for proxy (legacy)
-	Cfg                         *setting.Cfg
+	PluginClient       plugins.Client
+	ContextProvider    appsettings.PluginContextWrapper
+	AccessControl      accesscontrol.AccessControl
+	AccessClient       types.AccessClient // runs the access checks manifest routes declare
+	DualWrite          dualwrite.Service
+	SecureValues       secret.InlineSecureValueSupport
+	MetricsRegister    prometheus.Registerer
+	BuilderMetrics     *builder.BuilderMetrics
+	RESTConfigProvider restcfg.RestConfigProvider
+	Settings           SettingsDependencies
+	Unified            resource.ResourceClient
+	Decrypter          decrypt.DecryptService
+	TokenExchanger     authn.TokenExchanger       // used for delegation
+	PluginAuth         *pluginauth.Config         // whether Grafana signs plugin tokens itself
+	Tracer             tracing.Tracer             // needed for proxy (legacy)
+	Features           featuremgmt.FeatureToggles // needed for proxy (legacy)
+	Cfg                *setting.Cfg
 }
 
 type PluginLoaderDependencies struct {
@@ -135,7 +145,7 @@ func ProvidePluginLoaderDependencies(
 		},
 	}
 	if pluginSettings != nil {
-		deps.LegacySettingsStore = func(_ context.Context, pluginID string) (grafanarest.Storage, error) {
+		deps.Settings.LegacyStore = func(_ context.Context, pluginID string) (grafanarest.Storage, error) {
 			return appsettings.NewLegacySettingsStore(pluginID, pluginID, pluginSettings), nil
 		}
 	}
@@ -563,25 +573,25 @@ func (b *PluginBackend) load(ctx context.Context) (*pluginroute.Handler, error) 
 // loadSettings serves the settings API, which calls the plugin through its
 // v2 client only.
 func (b *PluginBackend) loadSettings(ctx context.Context, cfg *setting.Cfg, opts pluginroute.Options, client plugins.Client) (*pluginroute.Handler, error) {
-	if b.deps.SettingsAccessChecker != nil {
-		opts.AccessChecker = b.deps.SettingsAccessChecker
+	if b.deps.Settings.AccessChecker != nil {
+		opts.AccessChecker = b.deps.Settings.AccessChecker
 	}
-	opts.NamespaceAuthorizer = b.deps.SettingsNamespaceAuthorizer
+	opts.NamespaceAuthorizer = b.deps.Settings.NamespaceAuthorizer
 	if client != nil {
 		opts.PluginClient = &breakerPluginClient{Client: client}
 	}
 	opts.ContextProvider = b.deps.ContextProvider
 	opts.Features = b.deps.Features
 	opts.Settings = appsettings.Options{
-		ReadOnly:                 b.deps.ReadOnlySettings,
+		ReadOnly:                 b.deps.Settings.ReadOnly,
 		RegisterProxy:            openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsHandleProxyRequests, false, openfeature.TransactionContext(ctx)),
 		AccessControl:            b.deps.AccessControl,
 		DataProxyLogging:         cfg.DataProxyLogging,
 		SendUserHeader:           cfg.SendUserHeader,
 		PluginsAppsSkipVerifyTLS: cfg.PluginsAppsSkipVerifyTLS,
 	}
-	if b.deps.LegacySettingsStore != nil {
-		store, err := b.deps.LegacySettingsStore(ctx, b.pluginID)
+	if b.deps.Settings.LegacyStore != nil {
+		store, err := b.deps.Settings.LegacyStore(ctx, b.pluginID)
 		if err != nil {
 			return nil, fmt.Errorf("plugin %q: legacy settings store: %w", b.pluginID, err)
 		}

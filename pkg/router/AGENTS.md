@@ -26,7 +26,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   request from a non-user identity (access policies, service accounts) stay on its backend. That
   group is still one backend, and its discovery and OpenAPI still come from the backend that owns it.
   Cloud app settings use the same plugin backend and settings/subresource handlers as ST.
-  The namespace identifies the tenant; storage and credential dependencies are supplied by the cloud loader.
+  The namespace identifies the tenant; storage and credential dependencies are supplied by the
+  cloud loader.
 - **Keep connection pools across a reload.** Reconcile rebuilds only groups whose `Key()` changed,
   and each source keeps its transports or gRPC connections across polls, so a rebuilt group reuses
   its pool. Never recreate unrelated backends on a route change.
@@ -89,10 +90,13 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   the same operator or first-party control. The local plugin
   loader also serves each app plugin's settings API under its plugin ID
   (`newPluginSettingsBackend`): the single `app` resource, always named `instance`. A plugin ID
-  must be a DNS label with a hyphen, so it can never name a core or manifest group. The standalone cloud loader can serve read-only settings when
-  `[cloud_router] app_settings_enabled` is enabled and a remote legacy provider and app-access
-  checker are supplied. It selects storage using the migration policy, then exposes only get/list settings storage.
-  Health/resources call the deployment's v2 client; proxy uses the shared ST handler and feature gate. The local
+  must be a DNS label with a hyphen, so it can never name a core or manifest group. The
+  standalone cloud loader serves read-only settings when `[cloud_router] app_settings_enabled`
+  is set and a remote legacy reader and app-access checker are supplied
+  (`PluginDependencies.Settings`). The legacy side is the same `settingsStorage` ST uses
+  (`appsettings.NewReadOnlyLegacySettingsStore`), so ST and MT return identical objects. Storage
+  is selected by the migration policy, and only get/list are exposed. Health and resources call
+  the deployment's v2 client; proxy uses the shared ST handler and feature gate. The local
   standalone plugin loader still serves no settings.
 - **One bad backend or plugin fails only its own group;** it must never stop the reconcile loop.
   A backend that fails to load is retried only when its own backoff passes (`loadGroup`, up to
@@ -183,7 +187,8 @@ Exactly one loader serves:
 
 1. **The cloud loader**, only in the standalone router, when any `[cloud_router]` source or
    `[router.aggregate.<name>]` target is configured (see Settings). `pkg/server` builds it through
-   the edition-specific `InitializeCloudRoutesLoader` Wire graph and `ProvideCloudRoutesLoader`. Grafana itself never polls the cloud sources.
+   the edition-specific `InitializeCloudRoutesLoader` Wire graph and `ProvideCloudRoutesLoader`.
+   Grafana itself never polls the cloud sources.
 2. **Otherwise the local plugin loader** (`ProvideRoutesLoader`), when plugin sources are
    available or any `[router.dev.<name>]` target is set. Dev targets come after the local
    plugins, so they win a shared group.

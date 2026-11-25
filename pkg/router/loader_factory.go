@@ -119,9 +119,9 @@ func ProvideCloudRoutesLoader(
 		return nil, err
 	}
 	var builderMetrics *builder.BuilderMetrics
-	if cfg.SectionWithEnvOverrides(cloudRouterSection).Key("app_settings_enabled").MustBool(false) {
+	if cloudAppSettingsEnabled(cfg) {
 		if clients.DualWrite == nil {
-			clients.DualWrite, err = dualwrite.ProvideService(cfg, dualwrite.NewFakeMigrator(), newCloudSettingsMigrationStatusReader(cfg), reg)
+			clients.DualWrite, err = dualwrite.ProvideService(cfg, dualwrite.NewFakeMigrator(), dualwrite.NewConfigBasedMigrationStatusReader(cfg), reg)
 			if err != nil {
 				return nil, err
 			}
@@ -129,28 +129,30 @@ func ProvideCloudRoutesLoader(
 		builderMetrics = builder.ProvideBuilderMetrics(reg)
 	}
 	return NewCloudRoutesLoader(cfg, PluginDependencies{
-		DualWrite:           clients.DualWrite,
-		BuilderMetrics:      builderMetrics,
-		LegacySettingsStore: settings.LegacyStore,
-		ReadOnlySettings:    true,
-		ContextProvider:     cloudPluginContext{},
-		AccessControl:       cloudSettingsAccessControl{clients.LegacyAccess},
-		SettingsMiddleware: append([]backend.HandlerMiddleware{
-			clientmiddleware.NewTracingHeaderMiddleware(),
-			clientmiddleware.NewForwardIDMiddleware(nil),
-		}, settings.Middleware...),
-		SettingsAccessChecker:       cloudSettingsAccessChecker(clients.LegacyAccess),
-		SettingsNamespaceAuthorizer: authorizer.AuthorizerFunc(cloudSettingsNamespaceAuthorizer),
-		SecureValues:                clients.SecureValues,
-		MetricsRegister:             reg,
-		RESTConfigProvider:          clients.RESTConfigProvider,
-		Unified:                     clients.Resource,
-		AccessClient:                clients.Access,
-		Decrypter:                   decrypter,
-		TokenExchanger:              newClientV3TokenExchanger(cfg),
-		Tracer:                      tracer,
-		Features:                    features,
-		Cfg:                         cfg,
+		DualWrite:       clients.DualWrite,
+		BuilderMetrics:  builderMetrics,
+		ContextProvider: cloudPluginContext{},
+		AccessControl:   cloudSettingsAccessControl{clients.LegacyAccess},
+		Settings: SettingsDependencies{
+			LegacyStore:         settings.LegacyStore,
+			ReadOnly:            true,
+			AccessChecker:       cloudSettingsAccessChecker(clients.LegacyAccess),
+			NamespaceAuthorizer: authorizer.AuthorizerFunc(cloudSettingsNamespaceAuthorizer),
+			Middleware: append([]backend.HandlerMiddleware{
+				clientmiddleware.NewTracingHeaderMiddleware(),
+				clientmiddleware.NewForwardIDMiddleware(nil),
+			}, settings.Middleware...),
+		},
+		SecureValues:       clients.SecureValues,
+		MetricsRegister:    reg,
+		RESTConfigProvider: clients.RESTConfigProvider,
+		Unified:            clients.Resource,
+		AccessClient:       clients.Access,
+		Decrypter:          decrypter,
+		TokenExchanger:     newClientV3TokenExchanger(cfg),
+		Tracer:             tracer,
+		Features:           features,
+		Cfg:                cfg,
 	})
 }
 

@@ -38,11 +38,17 @@ fail the affected group. An absent provider retains ST's existing unified-only b
 
 ### 2. Read MT settings from cloudconfig — complete
 
-The enterprise adapter reuses the authenticated cloudconfig client. It validates the requested
-namespace and returned object, preserves enabled/pinned/JSON/metadata, redacts secure values,
-and supplies decrypted values through the existing secure-context shim for backend calls.
-Getting absent settings returns NotFound; listing them returns an empty list.
-Writes, including dry runs, return MethodNotAllowed.
+The enterprise adapter reuses the authenticated cloudconfig client and implements only
+`appsettings.LegacySettingsReader`: it maps the cloudconfig object to a `pluginsettings.DTO`
+after validating the requested namespace and returned identity. The objects themselves come from
+the same `settingsStorage` ST uses (`appsettings.NewReadOnlyLegacySettingsStore`), so UID,
+resource version, secure-value names and redaction, the decrypted-values shim, and absent-settings
+behavior (a default disabled object, and a one-item list) match ST exactly. Cloudconfig's resource
+version is the legacy `updated` time in milliseconds, so it maps back to `DTO.Updated` without loss.
+Writes, including dry runs, return MethodNotSupported.
+
+Cloudconfig reads go through a 5s in-memory cache, so MT reads can trail writes made through
+the legacy `/api/plugins/:id/settings` endpoints by up to that long.
 
 The router's separate cloud Wire graph receives `CloudSettingsDependencies`: the legacy store and
 plugin credential middleware. It constructs no local SQL
@@ -61,9 +67,10 @@ and declared proxy routes; backend calls report MethodNotImplemented without a v
 Read-only mode wraps the storage selected by the shared migration policy, exposing only
 get/list. Legacy mode reads cloudconfig; dual-write mode returns legacy reads and checks
 unified storage; unified-only mode 5 reads unified storage without reading cloudconfig.
-The standalone cloud loader uses config-based migration status without local SQL. It resolves
-`app.*-app` defaults for dynamically discovered plugins without mutating shared config, and
-registers migration metrics once per loader. A supplied migration service takes precedence.
+The standalone cloud loader uses config-based migration status without local SQL.
+`dualwrite.NewConfigBasedMigrationStatusReader` resolves `app.*-app` defaults for dynamically
+discovered plugins through `setting.Cfg.UnifiedStorageConfig`, without mutating shared config,
+and migration metrics are registered once per loader. A supplied migration service takes precedence.
 Storage selection also applies to health, resource, and proxy settings reads. The shared handlers load enabled settings, resolve
 secrets, execute the plugin, and apply proxy route authorization as they do in ST. Proxy
 registration uses ST's `apppluginsHandleProxyRequests` feature gate.

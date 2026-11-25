@@ -216,13 +216,6 @@ func (b *Builder) installSettingsStorage(apiGroupInfo *genericapiserver.APIGroup
 	return nil
 }
 
-// appPluginSettingsWildcard is a config key that applies to all app plugin settings
-// resources when no plugin-specific override exists. Configure it as:
-//
-//	[unified_storage.app.*-app]
-//	dualWriterMode = 1 // or 5
-const appPluginSettingsWildcard = "app.*-app"
-
 // applyDefaultStorageConfig injects a wildcard unified storage config entry for this
 // plugin's settings resource if no plugin-specific config exists. This allows operators
 // to set a single DualWriter mode for all app plugins at once.
@@ -248,7 +241,7 @@ func applyDefaultSettingsStorageConfig(cfg map[string]setting.UnifiedStorageConf
 	if _, exists := cfg[key]; exists {
 		return
 	}
-	fallback, hasFallback := cfg[appPluginSettingsWildcard]
+	fallback, hasFallback := cfg[setting.AppPluginSettingsWildcard]
 	if !hasFallback {
 		return
 	}

@@ -2,6 +2,7 @@ package appsettings
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -17,12 +18,7 @@ import (
 )
 
 func newTestStorage(plugins map[string]*pluginsettings.DTO) *settingsStorage {
-	ri := apppluginV0.SettingsResourceInfo.WithGroupAndShortName("test-app", "test-app")
-	return &settingsStorage{
-		pluginID:       "test-app",
-		pluginSettings: &pluginsettings.FakePluginSettings{Plugins: plugins},
-		resourceInfo:   &ri,
-	}
+	return NewLegacySettingsStore("test-app", "test-app", &pluginsettings.FakePluginSettings{Plugins: plugins}).(*settingsStorage)
 }
 
 func TestSettingsGet_InvalidName(t *testing.T) {
@@ -250,7 +246,7 @@ func TestSettingsDelete_Noop(t *testing.T) {
 
 	ctx := request.WithNamespace(context.Background(), "default")
 	obj, deleted, err := storage.Delete(ctx, "instance", nil, nil)
-	require.Error(t, err)
+	require.True(t, apierrors.IsMethodNotSupported(err), err)
 	require.Nil(t, obj)
 	require.False(t, deleted)
 }
@@ -260,7 +256,7 @@ func TestSettingsDeleteCollection_Noop(t *testing.T) {
 
 	ctx := request.WithNamespace(context.Background(), "default")
 	obj, err := storage.DeleteCollection(ctx, nil, nil, nil)
-	require.Error(t, err)
+	require.True(t, apierrors.IsMethodNotSupported(err), err)
 	require.Nil(t, obj)
 }
 
@@ -280,4 +276,62 @@ func TestSettingsConvertToTable(t *testing.T) {
 	table, err := storage.ConvertToTable(ctx, obj, &metav1.TableOptions{})
 	require.NoError(t, err)
 	require.Len(t, table.Rows, 1)
+}
+
+type readOnlySettings struct {
+	plugins map[string]*pluginsettings.DTO
+}
+
+func (r readOnlySettings) GetPluginSettingByPluginID(_ context.Context, args *pluginsettings.GetByPluginIDArgs) (*pluginsettings.DTO, error) {
+	if ps, ok := r.plugins[args.PluginID]; ok {
+		return ps, nil
+	}
+	return nil, pluginsettings.ErrPluginSettingNotFound
+}
+
+func (readOnlySettings) DecryptedValues(*pluginsettings.DTO) map[string]string { return nil }
+
+func TestReadOnlyLegacySettingsStore(t *testing.T) {
+	plugins := map[string]*pluginsettings.DTO{
+		"test-app": {PluginID: "test-app", OrgID: 1, Enabled: true, SecureJSONData: map[string][]byte{"key": []byte("x")}},
+	}
+	readOnly := NewReadOnlyLegacySettingsStore("test-app", readOnlySettings{plugins})
+	// A reader with a write method stays read-only.
+	writable := NewReadOnlyLegacySettingsStore("test-app", &pluginsettings.FakePluginSettings{Plugins: plugins})
+	readWrite := newTestStorage(plugins)
+	ctx := request.WithNamespace(context.Background(), "default")
+
+	// Reads match the read-write store exactly.
+	want, err := readWrite.Get(ctx, "instance", nil)
+	require.NoError(t, err)
+	got, err := readOnly.Get(ctx, "instance", nil)
+	require.NoError(t, err)
+	require.Equal(t, want, got)
+
+	input := &apppluginV0.Settings{ObjectMeta: metav1.ObjectMeta{Name: "instance", Namespace: "default"}}
+	_, err = readOnly.Create(ctx, input, nil, &metav1.CreateOptions{DryRun: []string{metav1.DryRunAll}})
+	require.True(t, apierrors.IsMethodNotSupported(err), "dry runs are refused too: %v", err)
+	_, _, err = readOnly.Update(ctx, "instance", rest.DefaultUpdatedObjectInfo(input), nil, nil, false, nil)
+	require.True(t, apierrors.IsMethodNotSupported(err), err)
+	_, err = writable.Create(ctx, input, nil, nil)
+	require.True(t, apierrors.IsMethodNotSupported(err), err)
+}
+
+type failingSettings struct{ err error }
+
+func (f failingSettings) GetPluginSettingByPluginID(context.Context, *pluginsettings.GetByPluginIDArgs) (*pluginsettings.DTO, error) {
+	return nil, f.err
+}
+
+func (failingSettings) DecryptedValues(*pluginsettings.DTO) map[string]string { return nil }
+
+func TestLegacySettingsStoreKeepsReaderStatus(t *testing.T) {
+	ctx := request.WithNamespace(context.Background(), "default")
+	forbidden := apierrors.NewForbidden(apppluginV0.SettingsResourceInfo.GroupResource(), "instance", errors.New("no"))
+	_, err := NewReadOnlyLegacySettingsStore("test-app", failingSettings{forbidden}).Get(ctx, "instance", nil)
+	require.Same(t, forbidden, err, "status errors must stay unwrapped")
+
+	plain := errors.New("unavailable")
+	_, err = NewReadOnlyLegacySettingsStore("test-app", failingSettings{plain}).Get(ctx, "instance", nil)
+	require.ErrorIs(t, err, plain)
 }

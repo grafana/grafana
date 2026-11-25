@@ -3,11 +3,9 @@ package router
 import (
 	"context"
 	"fmt"
-	"maps"
 
 	authzlib "github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/types"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -20,30 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 )
-
-// Cloud plugins are discovered after startup, so resolve wildcard defaults at
-// lookup time without adding plugin IDs to the shared configuration map.
-type cloudSettingsMigrationStatusReader struct {
-	unifiedmigrations.MigrationStatusReader
-	config map[string]setting.UnifiedStorageConfig
-}
-
-func newCloudSettingsMigrationStatusReader(cfg *setting.Cfg) unifiedmigrations.MigrationStatusReader {
-	return cloudSettingsMigrationStatusReader{
-		MigrationStatusReader: dualwrite.NewConfigBasedMigrationStatusReader(cfg),
-		config:                maps.Clone(cfg.UnifiedStorage),
-	}
-}
-
-func (r cloudSettingsMigrationStatusReader) GetStorageMode(ctx context.Context, gr schema.GroupResource) (unifiedmigrations.StorageMode, error) {
-	if _, explicit := r.config[gr.String()]; !explicit && gr.Resource == appv0.APP_RESOURCE_NAME && isAppPluginID(gr.Group) {
-		gr.Group = "*-app"
-	}
-	return r.MigrationStatusReader.GetStorageMode(ctx, gr)
-}
 
 func cloudSettingsAccessChecker(client legacyclient.LegacyAccessClient) pluginaccesscontrol.AppAccessChecker {
 	if client == nil {
@@ -85,6 +60,10 @@ func cloudSettingsNamespaceAuthorizer(ctx context.Context, attr authorizer.Attri
 		return authorizer.DecisionDeny, "a requester is required", nil
 	}
 	if !attr.IsResourceRequest() {
+		// Discovery has no namespace for the legacy app-access check.
+		if attr.IsReadOnly() {
+			return authorizer.DecisionAllow, "settings discovery", nil
+		}
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 	ns, err := types.ParseNamespace(attr.GetNamespace())
@@ -134,6 +113,12 @@ func (cloudSettingsAccessControl) RegisterScopeAttributeResolver(string, accessc
 
 func (a cloudSettingsAccessControl) WithoutResolvers() accesscontrol.AccessControl { return a }
 func (cloudSettingsAccessControl) InvalidateResolverCache(int64, string)           {}
+
+// cloudAppSettingsEnabled reports whether the cloud loader serves app settings
+// from the plugins source.
+func cloudAppSettingsEnabled(cfg *setting.Cfg) bool {
+	return cfg != nil && cfg.SectionWithEnvOverrides(cloudRouterSection).Key("app_settings_enabled").MustBool(false)
+}
 
 func cloudSettingsClient(client plugins.Client, middleware []backend.HandlerMiddleware) (plugins.Client, error) {
 	if client == nil {

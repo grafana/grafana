@@ -44,7 +44,7 @@ func TestPluginSettingsStoreProvider(t *testing.T) {
 				deps = ProvidePluginLoaderDependencies(nil, nil, nil, nil, settings, nil, nil,
 					nil, nil, nil, nil, nil, cfg, dw, nil, nil, nil, nil, nil).PluginDependencies
 			} else {
-				deps.LegacySettingsStore = func(_ context.Context, id string) (grafanarest.Storage, error) {
+				deps.Settings.LegacyStore = func(_ context.Context, id string) (grafanarest.Storage, error) {
 					return appsettings.NewLegacySettingsStore(id, id, settings), nil
 				}
 			}
@@ -109,12 +109,12 @@ func TestPluginSettingsStoreProviderFailure(t *testing.T) {
 				JSONData: plugins.JSONData{ID: "example-app", Type: plugins.TypeApp},
 			}, func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
 				return struct{ plugins.Client }{}, nil, nil
-			}, PluginDependencies{
-				LegacySettingsStore: func(ctx context.Context, id string) (grafanarest.Storage, error) {
+			}, PluginDependencies{Settings: SettingsDependencies{
+				LegacyStore: func(ctx context.Context, id string) (grafanarest.Storage, error) {
 					require.Equal(t, "example-app", id)
 					return nil, tc.err
 				},
-			})
+			}})
 			require.NoError(t, err)
 			_, err = backend.Load(t.Context())
 			require.ErrorContains(t, err, tc.want)

@@ -106,7 +106,7 @@ func newPluginManifestsTarget(
 		client:            client,
 		patterns:          patterns,
 	}
-	t.settings = source == sourcePlugins && deps.Cfg != nil && deps.Cfg.SectionWithEnvOverrides(cloudRouterSection).Key("app_settings_enabled").MustBool(false)
+	t.settings = source == sourcePlugins && cloudAppSettingsEnabled(deps.Cfg)
 	t.polledSource = polledSource{
 		source:   source,
 		fetcher:  t,
@@ -226,7 +226,7 @@ func (t *pluginManifestsTarget) newSettingsBackend(ctx context.Context, entry de
 		if err != nil {
 			return nil, nil, err
 		}
-		client, err = cloudSettingsClient(client, t.deps.SettingsMiddleware)
+		client, err = cloudSettingsClient(client, t.deps.Settings.Middleware)
 		return client, nil, err
 	}
 	b, err := newPluginSettingsBackend(plugin, clients, t.deps)

@@ -18,20 +18,21 @@ func (b *Builder) GetAuthorizer() authorizer.Authorizer {
 // endpoints do, except writes to the settings themselves, which require the
 // permission of the legacy endpoint that updates plugin settings.
 func newSettingsAuthorizer(pluginID string, appAccess pluginaccesscontrol.AppAccessChecker, opts Options) authorizer.Authorizer {
+	var writeChecker pluginaccesscontrol.AppAccessChecker
+	if !opts.ReadOnly && opts.AccessControl != nil {
+		writeChecker = pluginaccesscontrol.NewSettingsWriteChecker(opts.AccessControl)
+	}
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 			user, err := identity.GetRequester(ctx)
 			if err != nil {
 				return authorizer.DecisionDeny, "valid user is required", err
 			}
-			if opts.ReadOnly && !attr.IsResourceRequest() && attr.IsReadOnly() {
-				return authorizer.DecisionAllow, "settings discovery", nil
-			}
 			if attr.GetResource() == apppluginV0.APP_RESOURCE_NAME && attr.GetSubresource() == "" && !attr.IsReadOnly() {
-				if opts.ReadOnly || opts.AccessControl == nil {
+				if writeChecker == nil {
 					return authorizer.DecisionDeny, "no settings write checker is configured", nil
 				}
-				return pluginaccesscontrol.NewSettingsWriteChecker(opts.AccessControl)(ctx, user, pluginID)
+				return writeChecker(ctx, user, pluginID)
 			}
 			return appAccess(ctx, user, pluginID)
 		},

@@ -325,7 +325,7 @@ func TestCloudSettingsStoreLifecycle(t *testing.T) {
 	for _, fail := range []bool{false, true} {
 		t.Run(map[bool]string{false: "retirement", true: "failed load"}[fail], func(t *testing.T) {
 			store := &settingsDestroyStore{Storage: appsettings.NewLegacySettingsStore("example-app", "example-app", &pluginsettings.FakePluginSettings{})}
-			deps := PluginDependencies{ReadOnlySettings: true, DualWrite: dualwrite.ProvideServiceForTests(nil), ContextProvider: cloudPluginContext{}, Unified: &resource.MockResourceClient{}, LegacySettingsStore: func(context.Context, string) (grafanarest.Storage, error) { return store, nil }}
+			deps := PluginDependencies{DualWrite: dualwrite.ProvideServiceForTests(nil), ContextProvider: cloudPluginContext{}, Unified: &resource.MockResourceClient{}, Settings: SettingsDependencies{ReadOnly: true, LegacyStore: func(context.Context, string) (grafanarest.Storage, error) { return store, nil }}}
 			if fail {
 				deps.ContextProvider = nil
 			}
