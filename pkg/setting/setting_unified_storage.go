@@ -350,6 +350,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.EventRetentionPeriod = section.Key("event_retention_period").MustDuration(1 * time.Hour)
 	cfg.EventPruningInterval = section.Key("event_pruning_interval").MustDuration(5 * time.Minute)
 	cfg.SearchLookback = section.Key("search_lookback").MustDuration(1 * time.Second)
+	cfg.SearchEventKeyCacheEnabled = section.Key("search_event_key_cache_enabled").MustBool(false)
 	// Unset leaves each notifier its own default: 100ms for legacy SQL watches
 	// fed from NATS, 3s otherwise.
 	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(0)

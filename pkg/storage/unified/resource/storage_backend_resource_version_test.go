@@ -8,6 +8,7 @@ import (
 	"github.com/bwmarrin/snowflake"
 	"github.com/prometheus/client_golang/prometheus"
 	promtest "github.com/prometheus/client_golang/prometheus/testutil"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -40,6 +41,27 @@ func TestKvStorageBackend_ResourceVersionForwardJump(t *testing.T) {
 		}
 	}
 	require.True(t, found, "the write after the clock jump must be visible with the one-second lookback")
+}
+
+func TestKvStorageBackend_EventCommitDelay(t *testing.T) {
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		opts.DisableStorageServices = true
+	})
+	old := time.Now().Add(-5 * time.Minute)
+	backend.resourceVersions = newResourceVersionGenerator(42, func() time.Time { return old })
+	seedResource(t, backend, t.Context(), "late", "")
+
+	var metric dto.Metric
+	require.NoError(t, backend.metrics.EventCommitDelay.Write(&metric))
+	hist := metric.GetHistogram()
+	require.EqualValues(t, 1, hist.GetSampleCount())
+	for _, bucket := range hist.Bucket {
+		if bucket.GetUpperBound() == 240 {
+			require.Zero(t, bucket.GetCumulativeCount())
+			return
+		}
+	}
+	t.Fatal("missing 240-second bucket")
 }
 
 func TestKvStorageBackend_ResourceVersionFailureDoesNotPersist(t *testing.T) {

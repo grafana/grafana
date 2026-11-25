@@ -130,6 +130,7 @@ func TestNewKVBackendOptionsValues(t *testing.T) {
 	cfg.EventRetentionPeriod = 2 * time.Minute
 	cfg.EventPruningInterval = 3 * time.Minute
 	cfg.SearchLookback = 4 * time.Minute
+	cfg.SearchEventKeyCacheEnabled = true
 	cfg.NotifierSettleDelay = 5 * time.Minute
 	cfg.DashboardVersionsToKeep = 7
 	cfg.EnableGarbageCollection = true
@@ -149,6 +150,7 @@ func TestNewKVBackendOptionsValues(t *testing.T) {
 	require.Equal(t, 2*time.Minute, opts.EventRetentionPeriod)
 	require.Equal(t, 3*time.Minute, opts.EventPruningInterval)
 	require.Equal(t, 4*time.Minute, opts.SearchLookback)
+	require.True(t, opts.SearchEventKeyCacheEnabled)
 	require.Equal(t, WatchOptions{SettleDelay: 5 * time.Minute}, opts.WatchOptions)
 	require.Equal(t, 7, opts.DashboardVersionsToKeep)
 	require.NotEmpty(t, opts.Holder)

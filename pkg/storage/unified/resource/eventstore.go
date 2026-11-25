@@ -8,8 +8,10 @@ import (
 	"iter"
 	"math"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -24,11 +26,27 @@ const (
 	eventsSection        = kv.EventsSection
 	deleteEventBatchSize = 50
 	readEventBatchSize   = 50
+	indexEventCacheSize  = 64 * 1024
+	indexEventCacheStep  = 10 * time.Second
 )
 
 // eventStore is a store for events.
 type eventStore struct {
-	kv KV
+	kv                  KV
+	reuseIndexEventKeys bool
+	indexEventKeys      atomic.Pointer[indexEventKeyRange]
+}
+
+// An immutable, complete [since, before) range in descending order. It includes
+// keys for every collection, not just the one that requested the scan.
+type indexEventKeyRange struct {
+	since, before int64
+	keys          []EventKey
+}
+
+type indexEventKey struct {
+	EventKey
+	cached bool
 }
 
 type EventKey struct {
@@ -100,9 +118,7 @@ type Event struct {
 }
 
 func newEventStore(kv KV) *eventStore {
-	return &eventStore{
-		kv: kv,
-	}
+	return &eventStore{kv: kv}
 }
 
 // ParseEventKey parses a key string back into an EventKey struct
@@ -230,6 +246,124 @@ func (n *eventStore) listKeysSince(ctx context.Context, sinceRV int64, sortOrder
 			}
 		}
 	}
+}
+
+func (n *eventStore) invalidateIndexEventKeys() {
+	// A distinct empty snapshot also prevents in-flight scans from publishing
+	// results based on the invalidated snapshot or on a previously empty cache.
+	n.indexEventKeys.Store(&indexEventKeyRange{})
+}
+
+// listIndexEventKeys reuses older history but rereads both the recent range
+// and the caller's lookback. An event that commits after the scan with an RV
+// outside both windows can be missed. A fresh retry can refill the cache without
+// reading it.
+func (n *eventStore) listIndexEventKeys(ctx context.Context, since, reuseFrom int64, recentWindow, maxAge time.Duration, reuse bool) iter.Seq2[indexEventKey, error] {
+	return func(yield func(indexEventKey, error) bool) {
+		ctx, span := tracer.Start(ctx, "resource.eventStore.ListKeysSince", trace.WithAttributes(attribute.Int64("sinceRV", since)))
+		defer span.End()
+
+		var before int64
+		var previous *indexEventKeyRange
+		if n.reuseIndexEventKeys {
+			// Round down so new events age into the cache at most once per step,
+			// rather than copying the range on each scan during steady writes.
+			before = snowflakeFromTime(time.Now().Add(-recentWindow).Truncate(indexEventCacheStep))
+			previous = n.indexEventKeys.Load()
+		}
+		var cached *indexEventKeyRange
+		var cachedSince int64
+		if reuse && previous != nil && previous.before <= before && max(reuseFrom, previous.since) < previous.before {
+			cached = previous
+			cachedSince = max(reuseFrom, cached.since)
+			span.SetAttributes(attribute.Int64("cachedSinceRV", cachedSince), attribute.Int64("cachedBeforeRV", cached.before))
+		}
+
+		var newer, older []EventKey
+		read := func(start, end, keepBefore int64, keep *[]EventKey) bool {
+			opts := ListOptions{Sort: SortOrderDesc, StartKey: strconv.FormatInt(start, 10)}
+			if end != 0 {
+				opts.EndKey = strconv.FormatInt(end, 10)
+			}
+			for raw, err := range pagedKeysWithTimeout(ctx, n.kv, eventsSection, opts, keyPageSize, listModifiedSinceReadTimeout) {
+				if err != nil {
+					yield(indexEventKey{}, err)
+					return false
+				}
+				key, err := ParseEventKey(raw)
+				if err != nil {
+					yield(indexEventKey{}, err)
+					return false
+				}
+				if key.ResourceVersion < keepBefore && len(*keep) <= indexEventCacheSize {
+					*keep = append(*keep, key)
+				}
+				if !yield(indexEventKey{EventKey: key}, nil) {
+					return false
+				}
+			}
+			return true
+		}
+
+		var keys []EventKey
+		if cached == nil {
+			if !read(since, 0, before, &keys) {
+				return
+			}
+		} else {
+			if !read(cached.before, 0, before, &newer) {
+				return
+			}
+			coveredEnd := firstIndexEventBelow(cached.keys, cachedSince)
+			covered := cached.keys[:coveredEnd]
+			for _, key := range covered {
+				if err := ctx.Err(); err != nil {
+					yield(indexEventKey{}, err)
+					return
+				}
+				if !yield(indexEventKey{EventKey: key, cached: true}, nil) {
+					return
+				}
+			}
+			if since < cachedSince && !read(since, cachedSince, before, &older) {
+				return
+			}
+			tailStart := firstIndexEventBelow(cached.keys, since)
+			// An unchanged lookback shouldn't copy the entire cached range.
+			if len(newer) == 0 && slices.Equal(older, cached.keys[coveredEnd:tailStart]) {
+				keys = cached.keys
+			} else {
+				keys = slices.Concat(newer, covered, older, cached.keys[tailStart:])
+			}
+		}
+
+		// An interrupted scan or one overtaken by pruning cannot establish coverage.
+		if ctx.Err() != nil || since >= before || time.Since(time.UnixMilli(snowflakeTimestampMillis(since))) > maxAge {
+			return
+		}
+		cacheSince := since
+		if cached != nil {
+			cacheSince = min(cacheSince, cached.since)
+		}
+		cacheSince = max(cacheSince, snowflakeFromTime(time.Now().Add(-maxAge)))
+		if len(keys) > indexEventCacheSize {
+			// Don't claim coverage for only some of the keys at the same RV.
+			cacheSince = max(cacheSince, keys[indexEventCacheSize].ResourceVersion+1)
+		}
+		if end := firstIndexEventBelow(keys, cacheSince); end < len(keys) {
+			keys = slices.Clone(keys[:end])
+		}
+		// Don't make a concurrent scan lose its update for an unchanged range.
+		if previous != nil && cacheSince == previous.since && before == previous.before &&
+			len(keys) == len(previous.keys) && (len(keys) == 0 || &keys[0] == &previous.keys[0] || slices.Equal(keys, previous.keys)) {
+			return
+		}
+		n.indexEventKeys.CompareAndSwap(previous, &indexEventKeyRange{since: cacheSince, before: before, keys: keys})
+	}
+}
+
+func firstIndexEventBelow(keys []EventKey, rv int64) int {
+	return sort.Search(len(keys), func(i int) bool { return keys[i].ResourceVersion < rv })
 }
 
 // ListSince returns events at or above sinceRV, in ascending key order.

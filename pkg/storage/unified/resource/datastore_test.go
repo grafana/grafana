@@ -28,7 +28,7 @@ import (
 
 var node, _ = snowflake.NewNode(1)
 
-func setupTestBadgerDB(t *testing.T) *badger.DB {
+func setupTestBadgerDB(t testing.TB) *badger.DB {
 	// Create a temporary directory for the test database
 	opts := badger.DefaultOptions("").WithInMemory(true).WithLogger(nil)
 	db, err := badger.Open(opts)

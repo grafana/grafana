@@ -3016,6 +3016,212 @@ func TestListModifiedSinceBoundsKVKeyReads(t *testing.T) {
 	}
 }
 
+type indexEventPageCounter struct {
+	KV
+	pages atomic.Int64
+}
+
+func (k *indexEventPageCounter) Keys(ctx context.Context, section string, opts ListOptions) iter.Seq2[string, error] {
+	if section == eventsSection && opts.Limit != 1 {
+		k.pages.Add(1)
+	}
+	return k.KV.Keys(ctx, section, opts)
+}
+
+func TestListModifiedSinceRetainsKeysForOtherIndexes(t *testing.T) {
+	store := &indexEventPageCounter{}
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		store.KV = opts.KvStore
+		opts.KvStore = store
+		opts.DisableStorageServices = true
+		opts.SearchEventKeyCacheEnabled = true
+	})
+	ctx := t.Context()
+	playlists := NamespacedResource{Namespace: "default", Group: "apps", Resource: "playlists"}
+	settings := NamespacedResource{Namespace: "default", Group: "apps", Resource: "settings"}
+	otherNamespace := settings
+	otherNamespace.Namespace = "other"
+	now := time.Now()
+	since := snowflakeFromTime(now.Add(-10 * time.Minute))
+	old := now.Add(-9 * time.Minute)
+	for i := range 2*keyPageSize + 1 {
+		require.NoError(t, backend.eventStore.Save(ctx, Event{Namespace: "default", Group: "apps", Resource: "noise", Name: "unrelated", ResourceVersion: snowflakeFromTime(old) + int64(i), Action: DataActionCreated}))
+	}
+	backend.resourceVersions = newResourceVersionGenerator(2, func() time.Time { return old })
+	addTestObject(t, backend, ctx, playlists, "playlist", "value")
+	addTestObject(t, backend, ctx, settings, "settings", "value")
+	addTestObject(t, backend, ctx, otherNamespace, "settings", "value")
+	backend.resourceVersions = newResourceVersionGenerator(2, time.Now)
+	head, _ := addTestObject(t, backend, ctx, playlists, "head", "value")
+
+	require.Equal(t, []string{"default/head", "default/playlist"}, listModifiedNames(t, backend, playlists, since, head))
+	require.EqualValues(t, 3, store.pages.Swap(0))
+	require.Equal(t, []string{"default/settings"}, listModifiedNames(t, backend, settings, since, head))
+	require.EqualValues(t, 1, store.pages.Swap(0))
+	require.Equal(t, []string{"other/settings"}, listModifiedNames(t, backend, otherNamespace, since, head))
+	require.EqualValues(t, 1, store.pages.Swap(0))
+
+	// The vector reconciler lists changes across namespaces.
+	settings.Namespace = ""
+	require.Equal(t, []string{"other/settings", "default/settings"}, listModifiedNames(t, backend, settings, since, head))
+	require.EqualValues(t, 1, store.pages.Load())
+}
+
+func TestListModifiedSinceCacheObservesOtherReplicaMutations(t *testing.T) {
+	store := &indexEventPageCounter{}
+	reader := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		store.KV = opts.KvStore
+		opts.KvStore = store
+		opts.DisableStorageServices = true
+		opts.SearchEventKeyCacheEnabled = true
+		opts.SearchLookback = time.Second
+	})
+	writer := setupTestStorageBackend(t, withKV(reader.KV()), func(opts *KVBackendOptions) {
+		opts.DisableStorageServices = true
+	})
+	ctx := t.Context()
+	now := time.Now()
+	since := snowflakeFromTime(now.Add(-10 * time.Minute))
+	writer.resourceVersions = newResourceVersionGenerator(1, func() time.Time { return now.Add(-9 * time.Minute) })
+	seedResource(t, writer, ctx, "original", "")
+	other := appsNamespace
+	other.Namespace = "other"
+	head, _ := addTestObject(t, reader, ctx, other, "head", "value")
+	require.Equal(t, []string{"default/original"}, listModifiedNames(t, reader, appsNamespace, since, head))
+	cached := reader.eventStore.indexEventKeys.Load()
+	require.NotNil(t, cached)
+
+	// Reread a late event inside an old index's lookback, even though its RV is in cached history.
+	checkpointTime := now.Add(-9*time.Minute - 2*time.Second)
+	checkpoint := snowflakeFromTime(checkpointTime)
+	writer.resourceVersions = newResourceVersionGenerator(1, func() time.Time { return checkpointTime.Add(-500 * time.Millisecond) })
+	late := seedResource(t, writer, ctx, "late-lookback", "")
+	require.GreaterOrEqual(t, late, cached.since)
+	require.Less(t, late, cached.before)
+	require.Equal(t, []string{"default/original", "default/late-lookback"}, listModifiedNames(t, reader, appsNamespace, checkpoint, head))
+
+	// A late remote write below the head but inside the recent range also stays visible.
+	writer.resourceVersions = newResourceVersionGenerator(1, func() time.Time { return now.Add(-time.Second) })
+	late = seedResource(t, writer, ctx, "late-recent", "")
+	require.Less(t, late, head)
+	require.Equal(t, []string{"default/late-recent", "default/original", "default/late-lookback"}, listModifiedNames(t, reader, appsNamespace, since, head))
+
+	// The import removes both the event keys and their data. Retry once with a fresh scan.
+	_, err := writer.clearCollectionForImport(ctx, appsKey(""))
+	require.NoError(t, err)
+	store.pages.Store(0)
+	require.Empty(t, listModifiedNames(t, reader, appsNamespace, since, head))
+	require.EqualValues(t, 2, store.pages.Load(), "the warm scan should fall back to one fresh scan")
+	require.Empty(t, reader.eventStore.indexEventKeys.Load().keys, "the retry must replace the invalid cache")
+	require.Empty(t, listModifiedNames(t, reader, appsNamespace, since, head))
+}
+
+func TestListModifiedSinceCacheDoesNotAdvanceAfterPartialScan(t *testing.T) {
+	reader := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		opts.DisableStorageServices = true
+		opts.SearchEventKeyCacheEnabled = true
+	})
+	writer := setupTestStorageBackend(t, withKV(reader.KV()), func(opts *KVBackendOptions) {
+		opts.DisableStorageServices = true
+	})
+	ctx := t.Context()
+	now := time.Now()
+	since := snowflakeFromTime(now.Add(-10 * time.Minute))
+	olderSince := snowflakeFromTime(now.Add(-11 * time.Minute))
+	writer.resourceVersions = newResourceVersionGenerator(1, func() time.Time { return now.Add(-11 * time.Minute) })
+	olderKind := appsNamespace
+	olderKind.Resource = "older"
+	olderRV, _ := addTestObject(t, writer, ctx, olderKind, "older", "value")
+	writer.resourceVersions = newResourceVersionGenerator(1, func() time.Time { return now.Add(-9 * time.Minute) })
+	seedResource(t, writer, ctx, "imported", "")
+	other := appsNamespace
+	other.Namespace = "other"
+	writer.resourceVersions = newResourceVersionGenerator(1, func() time.Time { return now.Add(-8 * time.Minute) })
+	v1, obj := addTestObject(t, writer, ctx, other, "retained", "v1")
+	unrelated := appsNamespace
+	unrelated.Resource = "unrelated"
+	head, _ := addTestObject(t, reader, ctx, unrelated, "head", "value")
+	crossNamespace := appsNamespace
+	crossNamespace.Namespace = ""
+	require.Equal(t, []string{"other/retained", "default/imported"}, listModifiedNames(t, reader, crossNamespace, since, head))
+	_, err := writer.clearCollectionForImport(ctx, appsKey(""))
+	require.NoError(t, err)
+
+	latest, seq := reader.ListModifiedSince(ctx, crossNamespace, since, nil)
+	require.Equal(t, head, latest)
+	cached := reader.eventStore.indexEventKeys.Load()
+	var v2 int64
+	var scanErr error
+	for mr, err := range seq {
+		if err != nil {
+			scanErr = err
+			break
+		}
+		require.Zero(t, v2, "the failed scan must not yield another revision")
+		require.Equal(t, v1, mr.ResourceVersion)
+		writer.resourceVersions = newResourceVersionGenerator(1, func() time.Time { return now.Add(-7 * time.Minute) })
+		v2 = updateTestObject(t, writer, ctx, obj, v1, other, "retained", "v2")
+		require.Less(t, v2, latest)
+		// An overlapping scan can publish a new snapshot that still has the
+		// deleted key. The outer scan must invalidate that snapshot too.
+		require.Equal(t, []string{"default/head"}, listModifiedNames(t, reader, unrelated, olderSince, head))
+		published := reader.eventStore.indexEventKeys.Load()
+		require.NotSame(t, cached, published)
+		require.Equal(t, olderSince, published.since)
+		require.Len(t, published.keys, len(cached.keys)+1)
+		require.Equal(t, cached.keys, published.keys[:len(cached.keys)])
+		require.Equal(t, olderRV, published.keys[len(cached.keys)].ResourceVersion)
+	}
+	require.NotZero(t, v2)
+	require.ErrorIs(t, scanErr, ErrNotFound)
+	require.Zero(t, reader.eventStore.indexEventKeys.Load().before)
+
+	// The caller can retry from the same checkpoint and get the newer revision.
+	_, seq = reader.ListModifiedSince(ctx, crossNamespace, since, nil)
+	var revisions []int64
+	for mr, err := range seq {
+		require.NoError(t, err)
+		revisions = append(revisions, mr.ResourceVersion)
+	}
+	require.Equal(t, []int64{v2}, revisions)
+}
+
+func TestListModifiedSinceDefaultSeesLateEventsOutsideLookback(t *testing.T) {
+	reader := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		opts.DisableStorageServices = true
+		opts.SearchLookback = time.Second
+	})
+	writer := setupTestStorageBackend(t, withKV(reader.KV()), func(opts *KVBackendOptions) {
+		opts.DisableStorageServices = true
+	})
+	ctx := t.Context()
+	now := time.Now()
+	since := snowflakeFromTime(now.Add(-10 * time.Minute))
+	other := appsNamespace
+	other.Namespace = "other"
+	head, _ := addTestObject(t, writer, ctx, other, "head", "value")
+	require.Empty(t, listModifiedNames(t, reader, appsNamespace, since, head))
+
+	writer.resourceVersions = newResourceVersionGenerator(1, func() time.Time { return now.Add(-8 * time.Minute) })
+	late := seedResource(t, writer, ctx, "late", "")
+	require.Greater(t, late, since)
+	require.Less(t, late, head)
+	require.Equal(t, []string{"default/late"}, listModifiedNames(t, reader, appsNamespace, since, head))
+	require.Nil(t, reader.eventStore.indexEventKeys.Load(), "reuse must be off by default")
+}
+
+func listModifiedNames(t *testing.T, backend *kvStorageBackend, key NamespacedResource, since, wantLatest int64) []string {
+	t.Helper()
+	latest, seq := backend.ListModifiedSince(t.Context(), key, since, nil)
+	require.Equal(t, wantLatest, latest)
+	var names []string
+	for res, err := range seq {
+		require.NoError(t, err)
+		names = append(names, res.Key.Namespace+"/"+res.Key.Name)
+	}
+	return names
+}
+
 func TestKvStorageBackend_ListModifiedSince(t *testing.T) {
 	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
 		opts.SearchLookback = time.Second

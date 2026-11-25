@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -840,6 +841,119 @@ func eventStoreTestEvents(count int) []Event {
 		}
 	}
 	return events
+}
+
+func TestIndexEventScanKeepsSnapshotWhenUnchanged(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		// Resource versions use a newer epoch than the simulated clock.
+		time.Sleep(time.Until(time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)))
+		store := setupTestEventStore(t)
+		store.reuseIndexEventKeys = true
+		ctx := t.Context()
+		older := snowflakeFromTime(time.Now().Add(-11 * time.Minute))
+		since := snowflakeFromTime(time.Now().Add(-10 * time.Minute))
+		for _, rv := range []int64{older, since} {
+			require.NoError(t, store.Save(ctx, Event{Namespace: "default", Group: "apps", Resource: "resource", Name: "event", ResourceVersion: rv, Action: DataActionCreated}))
+		}
+		scan := func(from int64) iter.Seq2[indexEventKey, error] {
+			return store.listIndexEventKeys(ctx, from, from, 4*time.Minute, time.Hour, true)
+		}
+		for _, err := range scan(since) {
+			require.NoError(t, err)
+		}
+		snapshot := store.indexEventKeys.Load()
+		require.NotNil(t, snapshot)
+		for key, err := range scan(older) {
+			require.NoError(t, err)
+			if key.cached {
+				for _, err := range scan(since) {
+					require.NoError(t, err)
+				}
+				require.Same(t, snapshot, store.indexEventKeys.Load())
+			}
+		}
+		require.Equal(t, older, store.indexEventKeys.Load().since)
+		require.Len(t, store.indexEventKeys.Load().keys, 2)
+	})
+}
+
+func BenchmarkSequentialIndexEventScans(b *testing.B) {
+	store := &indexEventPageCounter{KV: kv.NewBadgerKV(setupTestBadgerDB(b))}
+	events := newEventStore(store)
+	events.reuseIndexEventKeys = true
+	now := time.Now()
+	older := snowflakeFromTime(now.Add(-15 * time.Minute))
+	newer := snowflakeFromTime(now.Add(-9 * time.Minute))
+	recent := snowflakeFromTime(now.Add(-time.Minute))
+	const recentWindow = 4 * time.Minute
+	crossing := snowflakeFromTime(now.Add(-recentWindow).Truncate(indexEventCacheStep).Add(-time.Second))
+	// Approximate the two slow dev-01 scans: 89 and 71 event pages.
+	for _, part := range []struct {
+		rv    int64
+		count int
+	}{{older, 18 * keyPageSize}, {newer, 65 * keyPageSize}, {recent, 6*keyPageSize - 2}, {crossing, 1}} {
+		for start := 0; start < part.count; start += kv.MaxBatchOps {
+			batch := make([]kv.BatchOp, 0, kv.MaxBatchOps)
+			for i := start; i < min(start+kv.MaxBatchOps, part.count); i++ {
+				key := EventKey{ResourceVersion: part.rv + int64(i), Namespace: "default", Group: "apps", Resource: "noise", Name: "event", Action: DataActionCreated}
+				batch = append(batch, kv.BatchOp{Mode: kv.BatchOpCreate, Key: key.String(), Value: []byte("{}")})
+			}
+			require.NoError(b, store.Batch(b.Context(), eventsSection, batch))
+		}
+	}
+	for _, name := range []string{"full-scans", "reuse"} {
+		b.Run(name, func(b *testing.B) {
+			store.pages.Store(0)
+			for b.Loop() {
+				events.indexEventKeys.Store(nil)
+				for _, since := range []int64{newer, older} {
+					if name == "full-scans" {
+						for raw, err := range events.listKeysSince(b.Context(), since, SortOrderDesc, listModifiedSinceReadTimeout) {
+							require.NoError(b, err)
+							_, err := ParseEventKey(raw)
+							require.NoError(b, err)
+						}
+					} else {
+						for _, err := range events.listIndexEventKeys(b.Context(), since, since, recentWindow, time.Hour, true) {
+							require.NoError(b, err)
+						}
+					}
+				}
+			}
+			b.ReportMetric(float64(store.pages.Load())/float64(b.N), "event-pages/pair")
+		})
+	}
+	for _, name := range []string{"warm-lookback", "moving-cutoff"} {
+		b.Run(name, func(b *testing.B) {
+			scan := func(window time.Duration) {
+				// Reread the ten oldest keys in the cached range on each scan.
+				for _, err := range events.listIndexEventKeys(b.Context(), newer, newer+10, window, time.Hour, true) {
+					require.NoError(b, err)
+				}
+			}
+			events.indexEventKeys.Store(nil)
+			windowBeforeCrossing := time.Since(time.UnixMilli(snowflakeTimestampMillis(crossing))) + time.Millisecond
+			scan(windowBeforeCrossing)
+			beforeCrossing := events.indexEventKeys.Load()
+			require.LessOrEqual(b, beforeCrossing.before, crossing)
+			scan(recentWindow)
+			require.Greater(b, events.indexEventKeys.Load().before, crossing)
+			store.pages.Store(0)
+			b.ReportAllocs()
+			scans, advances := 0, 0
+			for b.Loop() {
+				if name == "moving-cutoff" && scans%10 == 0 {
+					// Simulate one event entering the cached range every ten scans.
+					events.indexEventKeys.Store(beforeCrossing)
+					advances++
+				}
+				scan(recentWindow)
+				scans++
+			}
+			b.ReportMetric(float64(store.pages.Load())/float64(b.N), "event-pages/scan")
+			b.ReportMetric(float64(advances)/float64(b.N), "cutoff-advances/scan")
+		})
+	}
 }
 
 func eventStoreTestKey(event Event) string {

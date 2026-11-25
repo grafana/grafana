@@ -158,6 +158,7 @@ type kvBackendMetrics struct {
 	ResourceVersionClockRegression    prometheus.Gauge
 	ResourceVersionOrderingRejections *prometheus.CounterVec
 	ResourceVersionWaitDuration       *prometheus.HistogramVec
+	EventCommitDelay                  prometheus.Histogram
 }
 
 func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
@@ -188,6 +189,11 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 		}
 	}
 	return &kvBackendMetrics{
+		EventCommitDelay: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
+			Name:    "grafana_storage_event_commit_delay_seconds",
+			Help:    "Time from the resource version timestamp to successful event save.",
+			Buckets: []float64{0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10, 30, 60, 120, 240, 480},
+		}),
 		ResourceVersionWaitDuration:       waits,
 		ResourceVersionGenerationFailures: failures,
 		ResourceVersionOrderingRejections: orderingRejections,
@@ -353,6 +359,10 @@ type KVBackendOptions struct {
 	// This guards against concurrent writes that commit slightly out-of-order. 0 means no lookback.
 	SearchLookback time.Duration
 
+	// SearchEventKeyCacheEnabled lets index updates reuse older event ranges.
+	// It can miss writes outside both the recent window and the index lookback.
+	SearchEventKeyCacheEnabled bool
+
 	DashboardVersionsToKeep int
 
 	// MigrationStatementTimeout overrides the Postgres statement_timeout for bulk import writes.
@@ -379,18 +389,19 @@ type KVBackendOptions struct {
 // rather than only the one it was added to.
 func NewKVBackendOptions(cfg *setting.Cfg) KVBackendOptions {
 	return KVBackendOptions{
-		Holder:                    newLeaseHolder(cfg.InstanceID),
-		LeaseTTL:                  cfg.KVLeaseTTL,
-		ResourceVersionMaxWait:    cfg.ResourceVersionMaxWait,
-		LastImportTimeMaxAge:      cfg.MaxFileIndexAge,
-		EventRetentionPeriod:      cfg.EventRetentionPeriod,
-		EventPruningInterval:      cfg.EventPruningInterval,
-		SearchLookback:            cfg.SearchLookback,
-		WatchOptions:              WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
-		DashboardVersionsToKeep:   cfg.DashboardVersionsToKeep,
-		MigrationStatementTimeout: cfg.MigrationStatementTimeout,
-		TenantWatcherConfig:       NewTenantWatcherConfig(cfg),
-		TenantDeleterConfig:       NewTenantDeleterConfig(cfg),
+		Holder:                     newLeaseHolder(cfg.InstanceID),
+		LeaseTTL:                   cfg.KVLeaseTTL,
+		ResourceVersionMaxWait:     cfg.ResourceVersionMaxWait,
+		LastImportTimeMaxAge:       cfg.MaxFileIndexAge,
+		EventRetentionPeriod:       cfg.EventRetentionPeriod,
+		EventPruningInterval:       cfg.EventPruningInterval,
+		SearchLookback:             cfg.SearchLookback,
+		SearchEventKeyCacheEnabled: cfg.SearchEventKeyCacheEnabled,
+		WatchOptions:               WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
+		DashboardVersionsToKeep:    cfg.DashboardVersionsToKeep,
+		MigrationStatementTimeout:  cfg.MigrationStatementTimeout,
+		TenantWatcherConfig:        NewTenantWatcherConfig(cfg),
+		TenantDeleterConfig:        NewTenantDeleterConfig(cfg),
 		// Callers that know better override this. Without a default, a wiring
 		// that forgets to set it runs garbage collection on every replica.
 		DisableStorageServices: !cfg.StorageServicesEnabled(),
@@ -430,6 +441,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	eventStore := newEventStore(kv)
+	eventStore.reuseIndexEventKeys = opts.SearchEventKeyCacheEnabled
 
 	eventRetentionPeriod := opts.EventRetentionPeriod
 	if eventRetentionPeriod <= 0 {
@@ -1373,6 +1385,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 		)
 		return 0, fmt.Errorf("failed to save event: %w", err)
 	}
+	k.metrics.EventCommitDelay.Observe(max(0, time.Since(time.UnixMilli(snowflakeTimestampMillis(rv))).Seconds()))
 
 	_ = k.historyPruner.Add(PruningKey{
 		Namespace: namespace,
@@ -2323,10 +2336,14 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 	}
 
 	k.log.Debug("ListModifiedSince using event store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge, "searchLookback", k.searchLookback)
-	lowestRead := int64(math.MaxInt64)
-	events := k.listModifiedSinceEventStore(ctx, key, effectiveRv, &lowestRead)
+	reuseFrom := effectiveRv
+	if effectiveRv < sinceRv {
+		// Reread the whole lookback even if this index's checkpoint is old.
+		reuseFrom = sinceRv + 1
+	}
 	return latestRv, func(yield func(*ModifiedResource, error) bool) {
-		for mr, err := range events {
+		lowestRead := int64(math.MaxInt64)
+		for mr, err := range k.listModifiedSinceEventStore(ctx, key, effectiveRv, reuseFrom, &lowestRead) {
 			if !yield(mr, err) || err != nil {
 				return
 			}
@@ -2461,55 +2478,67 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 }
 
 // listModifiedSinceEventStore records in lowestRead the lowest event RV it read.
-func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv int64, lowestRead *int64) iter.Seq2[*ModifiedResource, error] {
+func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv, reuseFrom int64, lowestRead *int64) iter.Seq2[*ModifiedResource, error] {
 	return func(yield func(*ModifiedResource, error) bool) {
-		// we only care about the latest revision of every resource in the list
-		seen := make(map[string]struct{})
-		for evtKeyStr, err := range k.eventStore.listKeysSince(ctx, sinceRv, SortOrderDesc, listModifiedSinceReadTimeout) {
-			if err != nil {
-				yield(&ModifiedResource{}, err)
-				return
-			}
+		recentWindow := max(k.searchLookback, maxWriteCommitDelay+eventStoreRetentionMargin)
+		scan := func(reuse bool) (retry bool) {
+			seen := make(map[string]struct{})
+			for event, err := range k.eventStore.listIndexEventKeys(ctx, sinceRv, reuseFrom, recentWindow, k.maxEventStoreAge(), reuse) {
+				if err != nil {
+					yield(&ModifiedResource{}, err)
+					return false
+				}
+				evtKey := event.EventKey
+				*lowestRead = min(*lowestRead, evtKey.ResourceVersion)
 
-			evtKey, err := ParseEventKey(evtKeyStr)
-			if err != nil {
-				yield(&ModifiedResource{}, err)
-				return
-			}
-			*lowestRead = min(*lowestRead, evtKey.ResourceVersion)
+				if evtKey.Group != key.Group || evtKey.Resource != key.Resource {
+					continue
+				}
+				// Empty key.Namespace = cross-namespace scan; otherwise filter to one namespace.
+				if key.Namespace != "" && evtKey.Namespace != key.Namespace {
+					continue
+				}
 
-			if evtKey.Group != key.Group || evtKey.Resource != key.Resource {
-				continue
-			}
-			// Empty key.Namespace = cross-namespace scan; otherwise filter to one namespace.
-			if key.Namespace != "" && evtKey.Namespace != key.Namespace {
-				continue
-			}
+				dedupKey := evtKey.Namespace + "/" + evtKey.Name
+				if _, ok := seen[dedupKey]; ok {
+					continue
+				}
+				value, err := k.getValueFromDataStore(ctx, DataKey(evtKey))
+				if err != nil {
+					if event.cached && errors.Is(err, ErrNotFound) {
+						// Another scan may already have carried this stale key forward.
+						k.eventStore.invalidateIndexEventKeys()
+						if len(seen) == 0 {
+							return true
+						}
+						// The consumer may already have used an older revision. Fail
+						// this update so it cannot advance past a newer one on retry.
+						err = fmt.Errorf("cached event data disappeared during index update: %w", err)
+					}
+					yield(&ModifiedResource{}, err)
+					return false
+				}
+				seen[dedupKey] = struct{}{}
 
-			dedupKey := evtKey.Namespace + "/" + evtKey.Name
-			if _, ok := seen[dedupKey]; ok {
-				continue
+				if !yield(&ModifiedResource{
+					Key: resourcepb.ResourceKey{
+						Group:     evtKey.Group,
+						Resource:  evtKey.Resource,
+						Namespace: evtKey.Namespace,
+						Name:      evtKey.Name,
+					},
+					Action:          convertEventType(evtKey.Action),
+					ResourceVersion: evtKey.ResourceVersion,
+					Value:           value,
+				}, nil) {
+					return false
+				}
 			}
-			seen[dedupKey] = struct{}{}
-			value, err := k.getValueFromDataStore(ctx, DataKey(evtKey))
-			if err != nil {
-				yield(&ModifiedResource{}, err)
-				return
-			}
-
-			if !yield(&ModifiedResource{
-				Key: resourcepb.ResourceKey{
-					Group:     evtKey.Group,
-					Resource:  evtKey.Resource,
-					Namespace: evtKey.Namespace,
-					Name:      evtKey.Name,
-				},
-				Action:          convertEventType(evtKey.Action),
-				ResourceVersion: evtKey.ResourceVersion,
-				Value:           value,
-			}, nil) {
-				return
-			}
+			return false
+		}
+		if scan(true) {
+			*lowestRead = math.MaxInt64
+			scan(false)
 		}
 	}
 }

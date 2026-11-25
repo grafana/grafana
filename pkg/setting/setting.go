@@ -903,9 +903,10 @@ type Cfg struct {
 	// Default: 5 seconds, 0 or negative means no expiration.
 	StorageModeCacheTTL time.Duration
 
-	EventRetentionPeriod time.Duration
-	EventPruningInterval time.Duration
-	SearchLookback       time.Duration
+	EventRetentionPeriod       time.Duration
+	EventPruningInterval       time.Duration
+	SearchLookback             time.Duration
+	SearchEventKeyCacheEnabled bool
 	// NotifierSettleDelay is how long watch notifiers hold a change for
 	// lower RVs that arrive later. 0 uses each notifier's default.
 	NotifierSettleDelay  time.Duration
