@@ -14,9 +14,17 @@ Example use cases:
 - When a filter or search query returns no results
 - When a user completes all actions, such as clearing their inbox or notifications
 
-There are different variants to handle the most common empty state use cases. These variants provide a specific default message and image.
+## Never use for
+
+No component-specific guidance documented yet.
+
+## Do's and don'ts
+
+No component-specific guidance documented yet.
 
 ## Usage
+
+There are different variants to handle the most common empty state use cases. These variants provide a specific default message and image.
 
 ### `variant="call-to-action"`
 
@@ -68,8 +76,6 @@ import { EmptyState } from '@grafana/ui';
 <EmptyState variant="not-found" message="No playlists found" />;
 ```
 
-If the empty state is rendered as you are typing in a search box, use the `role="alert"` prop to announce the empty state to screen readers. Verify that the use case makes sense, as this approach may be very disruptive if used the wrong way.
-
 ### `variant="completed"`
 
 For when a user has completed all tasks on a page, such as reading all their notifications.
@@ -80,24 +86,7 @@ import { EmptyState } from '@grafana/ui';
 <EmptyState variant="completed" message="You're all caught up" />;
 ```
 
-## Semantic headings
-
-String messages render as a `span` with the `h4` visual style. When the message labels a page section, pass a `Text` component with the correct semantic heading level. Choose the level from the surrounding page structure, not the message's visual size.
-
-```jsx
-import { EmptyState, Text } from '@grafana/ui';
-
-<EmptyState
-  variant="not-found"
-  message={
-    <Text element="h2" variant="h4" textAlignment="center">
-      No playlists found
-    </Text>
-  }
-/>;
-```
-
-## Customization
+### Customization
 
 For all variants you can:
 
@@ -120,6 +109,27 @@ import { Button, EmptyState, TextLink } from '@grafana/ui';
     documentation.
   </TextLink>
 </EmptyState>;
+```
+
+## Accessibility
+
+If the empty state is rendered as you are typing in a search box, use the `role="alert"` prop to announce the empty state to screen readers. Verify that the use case makes sense, as this approach may be very disruptive if used the wrong way.
+
+### Semantic headings
+
+String messages render as a `span` with the `h4` visual style. When the message labels a page section, pass a `Text` component with the correct semantic heading level. Choose the level from the surrounding page structure, not the message's visual size.
+
+```jsx
+import { EmptyState, Text } from '@grafana/ui';
+
+<EmptyState
+  variant="not-found"
+  message={
+    <Text element="h2" variant="h4" textAlignment="center">
+      No playlists found
+    </Text>
+  }
+/>;
 ```
 
 ## Props
