@@ -298,6 +298,56 @@ it.each(['missing', 'loading'] as const)('restores %s Original data after previe
   session.exit();
 });
 
+it('keeps missing Original data after exiting a completed preview', async () => {
+  const { session, canonical, requests, finish } = setup();
+  canonical.setState({ data: undefined });
+  const [result] = await session.stageProposal([{ changes: [{ refId: 'A', text: 'sum(up)' }] }], {
+    baseRevision: 0,
+    baseContextGeneration: session.getState().contextGeneration,
+  });
+  session.preview(stagedId(result));
+  await waitFor(() => expect(requests).toHaveLength(1));
+  finish(0, 5);
+  expect(canonical.state.data?.series[0].fields[0].values).toEqual([5]);
+
+  session.exit();
+
+  expect(canonical.state.data).toBeUndefined();
+});
+
+it('keeps missing Original data after a manual edit and ignores disposed preview results', async () => {
+  const { pane, session, canonical, requests, finish, data } = setup();
+  canonical.setState({ data: undefined });
+  const results = await session.stageProposal(
+    ['sum(up)', 'max(up)'].map((text) => ({ changes: [{ refId: 'A', text }] })),
+    { baseRevision: 0, baseContextGeneration: session.getState().contextGeneration }
+  );
+  session.preview(stagedId(results[0]));
+  await waitFor(() => expect(requests).toHaveLength(1));
+  finish(0, 5);
+  expect(canonical.state.data?.series[0].fields[0].values).toEqual([5]);
+  await waitFor(() => expect(requests).toHaveLength(2));
+
+  const edited = { ...original[0], expr: 'manual' };
+  pane.updateSelectedQuery(edited, 'A');
+
+  expect(canonical.state.data).toBeUndefined();
+  expect(canonical.state.queries).toEqual([edited, original[1]]);
+  expect(session.getState()).toMatchObject({ revision: 1, stale: true, previewedOption: 'original' });
+  expect(requests[1].cancelled).toBe(true);
+
+  const newer = data(9, { request: { ...requests[0].request, requestId: 'canonical-after-edit' } });
+  canonical.setState({ data: newer });
+  requests[1].subscriber.next(data(99, { request: requests[1].request }));
+  requests[1].subscriber.complete();
+  session.exit();
+
+  expect(canonical.state.data).toBe(newer);
+  expect(canonical.state.data?.request?.requestId).toBe('canonical-after-edit');
+  expect(canonical.state.data?.series[0].fields[0].values).toEqual([9]);
+  expect(canonical.state.queries).toEqual([edited, original[1]]);
+});
+
 it.each(['original', 'exit'] as const)(
   'keeps canonical health and restores Original after annotation updates on %s',
   async (action) => {
@@ -912,6 +962,48 @@ it('prioritizes a newly selected Option after the current run and never leaves t
   expect(canonical.state.data?.series[0].fields[0].values).toEqual([30]);
   expect(requests).toHaveLength(3);
   session.exit();
+});
+
+it.each([
+  { name: 'loading', index: 1, value: 20 },
+  { name: 'unstarted', index: 2, value: 30 },
+])('shows Original when switching from a completed Option to a $name Option', async ({ name, index, value }) => {
+  const { session, panel, canonical, requests, finish, data } = setup();
+  const results = await session.stageProposal(
+    ['sum(up)', 'max(up)', 'min(up)'].map((text) => ({ changes: [{ refId: 'A', text }] })),
+    { baseRevision: 0, baseContextGeneration: session.getState().contextGeneration }
+  );
+  session.preview(stagedId(results[0]));
+  await waitFor(() => expect(requests).toHaveLength(1));
+  finish(0, 10);
+  await waitFor(() => expect(requests).toHaveLength(2));
+  if (name === 'loading') {
+    requests[1].subscriber.next(data(0, { request: requests[1].request, state: LoadingState.Loading, series: [] }));
+    const preview = panel.state.$behaviors?.[0];
+    if (!preview || !('state' in preview)) {
+      throw new Error('Expected a stateful preview behavior');
+    }
+    expect(preview.state).toMatchObject({ data: { state: LoadingState.Loading, series: [] } });
+  }
+  expect(canonical.state.data?.series[0].fields[0].values).toEqual([10]);
+
+  const selected = stagedId(results[index]);
+  session.preview(selected);
+
+  expect(session.getState().previewedOption).toBe(selected);
+  expect(canonical.state.data?.series[0].fields[0].values).toEqual([1]);
+  if (name === 'unstarted') {
+    finish(1, 20);
+    expect(canonical.state.data?.series[0].fields[0].values).toEqual([1]);
+    await waitFor(() => expect(requests).toHaveLength(3));
+  }
+  const fallback = canonical.state.data!;
+  canonical.setState({ data: { ...fallback, annotations: data(99).series } });
+  finish(index, value);
+  expect(canonical.state.data?.series[0].fields[0].values).toEqual([value]);
+
+  session.preview('original');
+  expect(canonical.state.data?.annotations?.[0].fields[0].values).toEqual([99]);
 });
 
 it('retains cached frame values after the panel clears projected arrays', async () => {

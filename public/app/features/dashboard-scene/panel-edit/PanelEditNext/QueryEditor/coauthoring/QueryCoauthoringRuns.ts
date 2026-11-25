@@ -21,6 +21,7 @@ export class QueryCoauthoringRuns {
   private selected = 'original';
   private disposed = false;
   private projected?: PanelData;
+  private projectingOption = false;
   private original?: PanelData;
 
   public constructor(
@@ -39,11 +40,14 @@ export class QueryCoauthoringRuns {
     return (
       data !== undefined &&
       this.projected !== undefined &&
-      (data === this.projected || (this.selected !== 'original' && data.series === this.projected.series))
+      (data === this.projected || (this.projectingOption && data.series === this.projected.series))
     );
   }
 
   public canonicalData(data: PanelData | undefined): void {
+    if (this.disposed) {
+      return;
+    }
     this.original = data && copyPanelData(data);
     const selected = this.cache.get(this.selected) ?? this.runs.get(this.selected)?.runner.state.data;
     if (selected) {
@@ -61,22 +65,25 @@ export class QueryCoauthoringRuns {
       this.restoreOriginal();
     } else {
       const data = this.cache.get(id) ?? this.runs.get(id)?.runner.state.data;
-      if (data) {
-        this.project(data);
+      if (!data || !this.project(data)) {
+        this.restoreOriginal();
       }
     }
     this.pump();
   }
 
-  private project(data: PanelData): void {
+  private project(data: PanelData): boolean {
     if (data.state === LoadingState.Loading && data.series.length === 0) {
-      return;
+      return false;
     }
+    this.projectingOption = true;
     this.projected = copyPanelData(data);
     this.canonical.setState({ data: this.projected });
+    return true;
   }
 
   private restoreOriginal(): void {
+    this.projectingOption = false;
     this.projected = this.original && copyPanelData(this.original);
     this.canonical.setState({ data: this.projected });
   }
