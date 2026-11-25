@@ -4,10 +4,11 @@ import { Provider } from 'react-redux';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Icon, ToolbarButton } from '@grafana/ui';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { store } from 'app/store/store';
 import { useDispatch } from 'app/types/store';
 
-import { itemStarred } from './analytics/main';
 import { setStarred } from './api';
 import { useStarredItems } from './hooks';
 import { canUseStars } from './utils';
@@ -48,17 +49,21 @@ function StarToggle({ title, group, kind, name }: Props) {
 
   const handleStarToggle = async () => {
     try {
-      await dispatch(setStarred({ group, kind, name }, !isStarred));
+      await dispatch(setStarred({ group, kind, name }, !isStarred, 'StarToolbarButton'));
     } catch {
       // Grafana refused the change — the button keeps showing the state that persisted
       return;
     }
-    itemStarred({
-      group,
-      kind,
-      status: !isStarred ? 'starred' : 'unstarred',
-      origin: 'StarToolbarButton',
-    });
+    // The write itself confirms nothing: a plugin that stars through the service confirms in its own way
+    dispatch(
+      notifyApp(
+        createSuccessNotification(
+          isStarred
+            ? t('dashboard.toolbar.star-removed', 'Removed from starred')
+            : t('dashboard.toolbar.star-added', 'Added to starred')
+        )
+      )
+    );
   };
 
   const iconProps = useMemo(() => {

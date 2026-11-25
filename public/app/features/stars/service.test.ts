@@ -13,11 +13,16 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { dispatch, store } from 'app/store/store';
 
+import { itemStarred } from './analytics/main';
 import { invalidateStarredSearch } from './api';
 import { useStarredSearch } from './hooks';
 import { refetchStarredAppKinds } from './kindSearch';
 import { starsSrv } from './service';
 import { userStarsFieldSelector } from './utils';
+
+jest.mock('./analytics/main', () => ({
+  itemStarred: jest.fn(),
+}));
 
 const DASHBOARD_GROUP = 'dashboard.grafana.app';
 const { group: THING_GROUP, kind: THING_KIND } = MOCK_APP_KIND;
@@ -43,6 +48,7 @@ server.events.on('request:start', ({ request }) => {
 
 beforeEach(() => {
   seenRequests.length = 0;
+  jest.mocked(itemStarred).mockClear();
   // The service reads and dispatches to the app's store
   configureStore();
 });
@@ -63,6 +69,25 @@ describe('starsSrv.star and unstar', () => {
     await starsSrv.star({ group: 'gone.ext.grafana.app', kind: 'Ghost', name: 'g1' });
 
     expect(seenRequests).toContainEqual({ method: 'PUT', path: updatePath('gone.ext.grafana.app', 'Ghost', 'g1') });
+  });
+
+  it('reports the star and the unstar of an object to analytics, as made through the service', async () => {
+    const ref = { group: THING_GROUP, kind: THING_KIND, name: 't1' };
+
+    await starsSrv.star(ref);
+    await starsSrv.unstar(ref);
+
+    expect(jest.mocked(itemStarred).mock.calls).toEqual([
+      [{ group: THING_GROUP, kind: THING_KIND, status: 'starred', origin: 'StarsSrv' }],
+      [{ group: THING_GROUP, kind: THING_KIND, status: 'unstarred', origin: 'StarsSrv' }],
+    ]);
+  });
+
+  it('shows no notification for a star it stored, which the caller confirms its own way', async () => {
+    await starsSrv.star({ group: THING_GROUP, kind: THING_KIND, name: 't1' });
+
+    expect(seenRequests).toContainEqual({ method: 'PUT', path: updatePath(THING_GROUP, THING_KIND, 't1') });
+    expect(Object.values(store.getState().appNotifications.byId)).toEqual([]);
   });
 });
 
@@ -142,6 +167,18 @@ describe('starsSrv.starred', () => {
   });
 });
 
+describe('starsSrv.canStar', () => {
+  it('is true for a signed-in user with a uid', () => {
+    expect(starsSrv.canStar()).toBe(true);
+  });
+
+  it.each(USERS_WITHOUT_STARS)('is false for $desc', ({ become }) => {
+    become();
+
+    expect(starsSrv.canStar()).toBe(false);
+  });
+});
+
 describe('starsSrv.canShowStarsOf', () => {
   it.each([
     { desc: "Grafana's own dashboard kind", group: DASHBOARD_GROUP, kind: 'Dashboard', expected: true },
@@ -165,6 +202,21 @@ describe('starsSrv error handling', () => {
     await expect(
       starsSrv.star({ group: DASHBOARD_GROUP, kind: 'Dashboard', name: 'rejected-dashboard' })
     ).rejects.toMatchObject({ status: 500 });
+  });
+
+  it("shows Grafana's error notification, and reports nothing to analytics, for a star the server refuses", async () => {
+    server.use(http.put(starUpdateRoute, () => new HttpResponse(null, { status: 500 })));
+
+    await expect(
+      starsSrv.star({ group: DASHBOARD_GROUP, kind: 'Dashboard', name: 'rejected-dashboard' })
+    ).rejects.toBeDefined();
+
+    await waitFor(() =>
+      expect(Object.values(store.getState().appNotifications.byId)).toMatchObject([
+        { severity: 'error', title: 'Failed to add to starred' },
+      ])
+    );
+    expect(itemStarred).not.toHaveBeenCalled();
   });
 
   it.each(USERS_WITHOUT_STARS)('rejects, and writes nothing, for $desc', async ({ become }) => {

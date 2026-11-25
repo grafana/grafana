@@ -48,15 +48,19 @@ function searchAgain({ group, kind, name }: StarredResourceRef): void {
   dispatch(STARRED_INDEX_KINDS.includes(starredKind) ? invalidateStarredSearch() : refetchStarredAppKinds());
 }
 
+// What analytics names as the origin of a star a plugin makes through the service
+const SERVICE_ORIGIN = 'StarsSrv';
+
 /**
  * The stars service that app plugins get through `getStarsSrv()`. Every starred view reads the star set and its
  * search rows from RTK cache. A star change shows through the `Stars` tag the mutations invalidate, and a write to
  * a starred object through a new search of its row.
  */
 export const starsSrv: StarsSrv = {
+  canStar: canUseStars,
   canShowStarsOf: (group, kind) => findStarredKind(group, kind) !== undefined,
-  star: (ref) => dispatch(setStarred(ref, true)),
-  unstar: (ref) => dispatch(setStarred(ref, false)),
+  star: (ref) => dispatch(setStarred(ref, true, SERVICE_ORIGIN)),
+  unstar: (ref) => dispatch(setStarred(ref, false, SERVICE_ORIGIN)),
   starred,
   resourceUpdated: searchAgain,
   resourceDeleted: searchAgain,

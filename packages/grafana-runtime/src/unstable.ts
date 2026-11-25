@@ -15,6 +15,7 @@ export { defineFeatureEvents } from './analyticsFramework/main';
 export type { EventProperty, Event, EventVariants } from './analyticsFramework/types';
 export {
   getKindRegistry,
+  type AppKind,
   type CoreKindKey,
   type KindInfo,
   type KindLabelOptions,

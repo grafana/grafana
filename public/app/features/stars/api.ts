@@ -6,6 +6,7 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
 import { type StoreState, type ThunkResult } from 'app/types/store';
 
+import { itemStarred } from './analytics/main';
 import { STARRED_INDEX_KINDS } from './kinds';
 import {
   byTitle,
@@ -72,11 +73,12 @@ export const selectUserStars = (state: StoreState) =>
   collectionsAPIv1alpha1.endpoints.listStars.select({ fieldSelector: userStarsFieldSelector() })(state).data;
 
 /**
- * Stars or unstars an object for the current user. Rejects when the server refuses, and for a user without a stars
- * resource. The mutation invalidates the `Stars` tag, so every starred view follows the set it reads again.
+ * Stars or unstars an object for the current user, and reports a stored change to analytics as made from `origin`.
+ * Rejects when the server refuses, and for a user without a stars resource. The mutation invalidates the `Stars`
+ * tag, so every starred view follows the set it reads again.
  */
 export const setStarred =
-  ({ group, kind, name }: StarredResourceRef, starred: boolean): ThunkResult<Promise<void>> =>
+  ({ group, kind, name }: StarredResourceRef, starred: boolean, origin: string): ThunkResult<Promise<void>> =>
   async (dispatch) => {
     if (!canUseStars()) {
       throw new Error('Cannot change stars: the current user has no stars resource');
@@ -86,6 +88,7 @@ export const setStarred =
     // The route names the starred object `id`; its `name` is the user's stars resource. Untracked: nothing reads
     // this mutation's state, and a tracked entry stays in the store until it is reset
     await dispatch(endpoint.initiate({ group, kind, id: name, name: userStarsName() }, { track: false })).unwrap();
+    itemStarred({ group, kind, status: starred ? 'starred' : 'unstarred', origin });
   };
 
 /**

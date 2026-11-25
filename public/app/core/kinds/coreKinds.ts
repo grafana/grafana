@@ -5,7 +5,13 @@ import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/
 import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
 import { API_GROUP as PROVISIONING_API_GROUP } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
-import { type CoreKindKey, type KindInfo, type KindLabelOptions, type KindRegistry } from '@grafana/runtime/unstable';
+import {
+  type AppKind,
+  type CoreKindKey,
+  type KindInfo,
+  type KindLabelOptions,
+  type KindRegistry,
+} from '@grafana/runtime/unstable';
 import { NOTEBOOKS_BASE_URL } from 'app/features/notebook/urls';
 import { CONNECTIONS_URL, PROVISIONING_URL } from 'app/features/provisioning/constants';
 
@@ -137,6 +143,7 @@ export const CORE_KINDS = {
 
 const kinds: CoreKindInfo[] = Object.values(CORE_KINDS);
 const appKinds = new Map<string, KindInfo>();
+const appKindListeners = new Set<() => void>();
 
 /**
  * Whether `group` names this kind: its own group, or for a collection kind a group served inside the
@@ -157,12 +164,32 @@ export function getAppKinds(): KindInfo[] {
 }
 
 /** Adds the kinds an app plugin serves. A kind that Grafana serves itself keeps its core row. */
-export function addKinds(added: KindInfo[]) {
-  for (const kind of added) {
+export function addKinds(added: AppKind[]) {
+  let changed = false;
+  for (const { label: singular, pluralLabel: plural, ...kind } of added) {
     if (!kinds.some((row) => row.kind === kind.kind && coversGroup(row, kind.group))) {
-      appKinds.set(`${kind.group}/${kind.kind}`, kind);
+      appKinds.set(`${kind.group}/${kind.kind}`, {
+        ...kind,
+        getLabel: label(() => singular),
+        getPluralLabel: label(() => plural),
+      });
+      changed = true;
     }
   }
+  if (changed) {
+    appKindListeners.forEach((listener) => listener());
+  }
+}
+
+/**
+ * Calls `listener` each time a plugin adds kinds, and returns the function that stops it. A plugin adds its kinds
+ * when its module loads, which may be after a view that lists kinds first rendered.
+ */
+export function subscribeToAppKinds(listener: () => void): () => void {
+  appKindListeners.add(listener);
+  return () => {
+    appKindListeners.delete(listener);
+  };
 }
 
 /** The kind behind a dashboard search row's kind string; undefined for rows such as panels. */

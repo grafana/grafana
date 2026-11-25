@@ -1,3 +1,4 @@
+import { setupListeners } from '@reduxjs/toolkit/query';
 import { http, HttpResponse } from 'msw';
 import { testWithAppKind } from 'test/helpers/testWithAppKind';
 import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
@@ -22,6 +23,7 @@ import {
 } from '@grafana/test-utils/unstable';
 import { addKinds } from 'app/core/kinds/coreKinds';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { dispatch } from 'app/store/store';
 
 import { useStarredSearch } from './hooks';
 import { starsSrv } from './service';
@@ -30,6 +32,20 @@ const { group: GROUP, kind: KIND, version: VERSION, resource: RESOURCE } = MOCK_
 const DASHBOARD: DashboardHit = { resource: 'dashboards', name: 'dash-1', title: 'Bravo dashboard', field: {} };
 const FOLDER: DashboardHit = { resource: 'folders', name: 'folder-1', title: 'Delta folder', field: {} };
 
+/** One starred object of each search, with a way to serve it under a title. */
+const STARRED_OBJECTS = [
+  {
+    desc: 'a dashboard',
+    ref: { group: 'dashboard.grafana.app', kind: 'Dashboard', name: DASHBOARD.name },
+    serve: (title: string) => server.use(getCustomSearchHandler([{ ...DASHBOARD, title }])),
+  },
+  {
+    desc: 'an app object',
+    ref: { group: GROUP, kind: KIND, name: 't1' },
+    serve: (title: string) => server.use(...getAppKindHandlers(MOCK_APP_KIND, [{ name: 't1', title }])),
+  },
+];
+
 setBackendSrv(backendSrv);
 setupMockServer();
 testWithStarsUser();
@@ -37,8 +53,8 @@ testWithAppKind();
 
 /** The starred search, and the names of its rows. */
 function renderStarredSearch() {
-  const { result, rerender } = renderHook(() => useStarredSearch(), { wrapper: getWrapper({}) });
-  return { result, rerender, rowNames: () => result.current.rows?.map((row) => row.name) };
+  const { result } = renderHook(() => useStarredSearch(), { wrapper: getWrapper({}) });
+  return { result, rowNames: () => result.current.rows?.map((row) => row.name) };
 }
 
 /** Serves the test app kind, holding its search open until `answer` is called; it then finds these objects. */
@@ -123,8 +139,8 @@ describe('useStarredSearch', () => {
         kind: 'Note',
         resource: 'notes',
         folderScoped: false,
-        getLabel: () => 'Note',
-        getPluralLabel: () => 'Notes',
+        label: 'note',
+        pluralLabel: 'notes',
         icon: 'tag-alt',
       },
     ]);
@@ -153,19 +169,20 @@ describe('useStarredSearch', () => {
     expect(starred.rowNames()).toEqual([]);
 
     // A plugin adds its kinds when its module loads, which may be after a view first rendered
-    addKinds([
-      {
-        group: late.group,
-        kind: late.kind,
-        resource: late.resource,
-        folderScoped: false,
-        getLabel: () => 'Late',
-        getPluralLabel: () => 'Lates',
-        icon: 'cube',
-        getRoute: (name) => `/a/late-app/lates/${name}`,
-      },
-    ]);
-    starred.rerender();
+    act(() => {
+      addKinds([
+        {
+          group: late.group,
+          kind: late.kind,
+          resource: late.resource,
+          folderScoped: false,
+          label: 'late',
+          pluralLabel: 'lates',
+          icon: 'cube',
+          getRoute: (name) => `/a/late-app/lates/${name}`,
+        },
+      ]);
+    });
 
     await waitFor(() => {
       expect(starred.rowNames()).toEqual(['Late object']);
@@ -301,40 +318,58 @@ describe('useStarredSearch', () => {
     });
   });
 
-  it.each([
-    {
-      desc: 'a dashboard',
-      ref: { group: 'dashboard.grafana.app', kind: 'Dashboard', name: DASHBOARD.name },
-      serve: (title: string) => server.use(getCustomSearchHandler([{ ...DASHBOARD, title }])),
-    },
-    {
-      desc: 'an app object',
-      ref: { group: GROUP, kind: KIND, name: 't1' },
-      serve: (title: string) => server.use(...getAppKindHandlers(MOCK_APP_KIND, [{ name: 't1', title }])),
-    },
-  ])('searches again for $desc that is starred again, as it may have changed meanwhile', async ({ ref, serve }) => {
-    setMockStarred(ref.group, ref.kind, [ref.name]);
-    serve('Old title');
-    const starred = renderStarredSearch();
-    await waitFor(() => {
-      expect(starred.rowNames()).toEqual(['Old title']);
-    });
+  it.each(STARRED_OBJECTS)(
+    'searches again for $desc that is starred again, as it may have changed meanwhile',
+    async ({ ref, serve }) => {
+      setMockStarred(ref.group, ref.kind, [ref.name]);
+      serve('Old title');
+      const starred = renderStarredSearch();
+      await waitFor(() => {
+        expect(starred.rowNames()).toEqual(['Old title']);
+      });
 
-    await act(async () => {
-      await starsSrv.unstar(ref);
-    });
-    await waitFor(() => {
-      expect(starred.rowNames()).toEqual([]);
-    });
+      await act(async () => {
+        await starsSrv.unstar(ref);
+      });
+      await waitFor(() => {
+        expect(starred.rowNames()).toEqual([]);
+      });
 
-    // Renamed while no star set held it, so no starred row called for a new search
-    serve('New title');
-    await act(async () => {
-      await starsSrv.star(ref);
-    });
+      // Renamed while no star set held it, so no starred row called for a new search
+      serve('New title');
+      await act(async () => {
+        await starsSrv.star(ref);
+      });
 
-    await waitFor(() => {
-      expect(starred.rowNames()).toEqual(['New title']);
-    });
-  });
+      await waitFor(() => {
+        expect(starred.rowNames()).toEqual(['New title']);
+      });
+    }
+  );
+
+  it.each(STARRED_OBJECTS)(
+    'searches again for $desc when the window regains focus, as it may have changed elsewhere',
+    async ({ ref, serve }) => {
+      setMockStarred(ref.group, ref.kind, [ref.name]);
+      serve('Old title');
+      const starred = renderStarredSearch();
+      await waitFor(() => {
+        expect(starred.rowNames()).toEqual(['Old title']);
+      });
+
+      // Renamed in another tab or by someone else, which nothing reports to this window
+      serve('New title');
+      act(() => {
+        // RTK listens to the window for the first store of a test file only, so the focus is sent to this store
+        setupListeners(dispatch, (send, { onFocus }) => {
+          send(onFocus());
+          return () => {};
+        });
+      });
+
+      await waitFor(() => {
+        expect(starred.rowNames()).toEqual(['New title']);
+      });
+    }
+  );
 });
