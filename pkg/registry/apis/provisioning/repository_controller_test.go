@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 	"testing/synctest"
+	"time"
 
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
@@ -16,6 +17,7 @@ import (
 	clientrest "k8s.io/client-go/rest"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestRepositoryControllerService_IsDisabled(t *testing.T) {
@@ -30,7 +32,7 @@ func TestRepositoryControllerService_IsDisabled(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := ProvideRepositoryControllerService(tt.builder)
+			svc := newTestRepositoryControllerService(tt.builder)
 			require.Equal(t, tt.want, svc.IsDisabled())
 			// The background service manager looks up this name in its
 			// dependency map; any other name would start it after Core.
@@ -43,7 +45,7 @@ func TestRepositoryControllerService_Run(t *testing.T) {
 	t.Run("waits for the provisioning API and runs on the post-start hook's loopback config", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			builder := &APIBuilder{loopbackReady: make(chan struct{}), bootstrapDone: closedChan()}
-			svc := ProvideRepositoryControllerService(builder)
+			svc := newTestRepositoryControllerService(builder)
 			got := make(chan *clientrest.Config, 1)
 			svc.run = func(ctx context.Context, restConfig *clientrest.Config) error {
 				got <- restConfig
@@ -70,7 +72,7 @@ func TestRepositoryControllerService_Run(t *testing.T) {
 	t.Run("waits for the bootstrap repository to be reconciled after the loopback config is published", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			builder := &APIBuilder{loopbackReady: make(chan struct{}), bootstrapDone: make(chan struct{})}
-			svc := ProvideRepositoryControllerService(builder)
+			svc := newTestRepositoryControllerService(builder)
 			started := make(chan struct{})
 			svc.run = func(ctx context.Context, _ *clientrest.Config) error {
 				close(started)
@@ -97,7 +99,7 @@ func TestRepositoryControllerService_Run(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			builder := &APIBuilder{loopbackReady: make(chan struct{}), bootstrapDone: make(chan struct{})}
 			builder.publishLoopbackConfig(&clientrest.Config{})
-			svc := ProvideRepositoryControllerService(builder)
+			svc := newTestRepositoryControllerService(builder)
 			runErr := make(chan error, 1)
 			go func() { runErr <- svc.Run(t.Context()) }()
 			synctest.Wait()
@@ -110,7 +112,7 @@ func TestRepositoryControllerService_Run(t *testing.T) {
 
 	t.Run("stops cleanly when cancelled while waiting for the provisioning API", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
-			svc := ProvideRepositoryControllerService(&APIBuilder{loopbackReady: make(chan struct{})})
+			svc := newTestRepositoryControllerService(&APIBuilder{loopbackReady: make(chan struct{})})
 			runErr := make(chan error, 1)
 			go func() { runErr <- svc.Run(t.Context()) }()
 			synctest.Wait()
@@ -127,7 +129,7 @@ func TestRepositoryControllerService_Run(t *testing.T) {
 
 		builder := &APIBuilder{registry: prometheus.NewRegistry(), loopbackReady: make(chan struct{}), bootstrapDone: closedChan()}
 		builder.publishLoopbackConfig(&clientrest.Config{Host: server.URL})
-		svc := ProvideRepositoryControllerService(builder)
+		svc := newTestRepositoryControllerService(builder)
 		runErr := make(chan error, 1)
 		go func() { runErr <- svc.Run(context.Background()) }()
 		t.Cleanup(svc.StopAsync)
@@ -193,4 +195,24 @@ func isClosed(ch <-chan struct{}) bool {
 	default:
 		return false
 	}
+}
+
+func newTestRepositoryControllerService(builder *APIBuilder) *RepositoryControllerService {
+	return ProvideRepositoryControllerService(setting.NewCfg(), builder, nil, prometheus.NewRegistry(), ProvideInformerMetrics(prometheus.NewRegistry()))
+}
+
+func TestProvideRepositoryControllerService_Intervals(t *testing.T) {
+	t.Run("defaults when unset", func(t *testing.T) {
+		svc := newTestRepositoryControllerService(&APIBuilder{})
+		require.Equal(t, setting.ProvisioningControllerResyncIntervalDefault, svc.resyncInterval)
+		require.Equal(t, defaultWebhookSecretRotationInterval, svc.webhookSecretRotationInterval)
+	})
+	t.Run("reads cfg", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.ProvisioningControllerResyncInterval = 5 * time.Minute
+		cfg.ProvisioningWebhookSecretRotationInterval = 48 * time.Hour
+		svc := ProvideRepositoryControllerService(cfg, &APIBuilder{}, nil, prometheus.NewRegistry(), ProvideInformerMetrics(prometheus.NewRegistry()))
+		require.Equal(t, 5*time.Minute, svc.resyncInterval)
+		require.Equal(t, 48*time.Hour, svc.webhookSecretRotationInterval)
+	})
 }

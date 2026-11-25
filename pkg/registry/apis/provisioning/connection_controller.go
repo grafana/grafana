@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	clientrest "k8s.io/client-go/rest"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // ConnectionControllerServiceName is the background-service module name of
@@ -21,13 +24,29 @@ const ConnectionControllerServiceName = "provisioning-connection-controller"
 // process once the provisioning API is served.
 type ConnectionControllerService struct {
 	*loopbackService
+
+	subscriber      nats.Subscriber
+	registry        prometheus.Registerer
+	informerMetrics *InformerMetrics
+	resyncInterval  time.Duration
 }
 
 // ProvideConnectionControllerService is called by Wire. Depending on the
 // builder orders it after [RegisterAPIService], which registers the
 // provisioning API group with the API server.
-func ProvideConnectionControllerService(builder *APIBuilder) *ConnectionControllerService {
-	s := &ConnectionControllerService{}
+func ProvideConnectionControllerService(
+	cfg *setting.Cfg,
+	builder *APIBuilder,
+	subscriber nats.Subscriber,
+	registry prometheus.Registerer,
+	informerMetrics *InformerMetrics,
+) *ConnectionControllerService {
+	s := &ConnectionControllerService{
+		subscriber:      subscriber,
+		registry:        registry,
+		informerMetrics: informerMetrics,
+		resyncInterval:  controllerResyncInterval(cfg),
+	}
 	s.loopbackService = newLoopbackService(ConnectionControllerServiceName, builder, s.runController)
 	return s
 }
@@ -39,19 +58,19 @@ func (s *ConnectionControllerService) runController(ctx context.Context, restCon
 	}
 
 	b := s.builder
-	relistMetrics, freshnessMetrics := b.informerMetrics()
+	relistMetrics, freshnessMetrics := s.informerMetrics.get()
 
 	connController, err := controller.ProvideConnectionController(controller.ConnectionControllerDeps{
-		Subscriber:        b.natsSubscriber,
+		Subscriber:        s.subscriber,
 		Client:            client,
 		Keys:              keysapi.NewGRPCLister(b.unified, provisioning.ConnectionResourceInfo.GroupVersionResource()),
 		ConnectionFactory: b.connectionFactory,
-		HealthMetrics:     controller.NewHealthMetricsRecorder(b.registry),
+		HealthMetrics:     controller.NewHealthMetricsRecorder(s.registry),
 		RelistMetrics:     relistMetrics,
 		FreshnessMetrics:  freshnessMetrics,
-		Registry:          b.registry,
+		Registry:          s.registry,
 		Tracer:            b.tracer,
-		ResyncInterval:    b.resyncInterval(),
+		ResyncInterval:    s.resyncInterval,
 		DrainTimeout:      30 * time.Second,
 	})
 	if err != nil {

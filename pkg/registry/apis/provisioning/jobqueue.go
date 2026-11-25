@@ -10,6 +10,7 @@ import (
 
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobqueue"
@@ -30,6 +31,7 @@ var _ registry.CanBeDisabled = (*JobQueueService)(nil)
 type JobQueueService struct {
 	*loopbackService
 
+	subscriber         nats.Subscriber
 	screenshotRenderer pullrequest.ScreenshotRenderer
 	pullRequestURLs    pullrequest.URLProvider
 	cfg                jobqueue.Config
@@ -43,6 +45,7 @@ func ProvideJobQueueService(
 	builder *APIBuilder,
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
+	subscriber nats.Subscriber,
 ) *JobQueueService {
 	// The jobs informer resyncs on job_poll_interval rather than the controllers'
 	// resync_interval, preserving the job pickup cadence (and config key) of the
@@ -54,6 +57,7 @@ func ProvideJobQueueService(
 	}
 
 	s := &JobQueueService{
+		subscriber:         subscriber,
 		screenshotRenderer: pullrequest.NewScreenshotRenderer(renderer, blobstore),
 		pullRequestURLs:    pullrequest.URLsFromConfig(cfg),
 		cfg: jobqueue.Config{
@@ -96,7 +100,7 @@ func (s *JobQueueService) runQueue(ctx context.Context, restConfig *clientrest.C
 
 	queue, err := jobqueue.ProvideJobQueue(s.cfg, jobqueue.Dependencies{
 		Client:              client,
-		Subscriber:          b.natsSubscriber,
+		Subscriber:          s.subscriber,
 		Clients:             b.clients,
 		RepositoryResources: b.repositoryResources,
 		ResourceLister:      b.resourceLister,
@@ -114,6 +118,15 @@ func (s *JobQueueService) runQueue(ctx context.Context, restConfig *clientrest.C
 	if err != nil {
 		return err
 	}
+	// Expired claims are only ever left behind by drivers, so the reaper runs
+	// wherever the drivers do.
+	cleanup := jobs.NewJobCleanupController(store, historyWriter, jobs.ClaimExpiry)
+	go func() {
+		if err := cleanup.Run(ctx); err != nil && ctx.Err() == nil {
+			logging.FromContext(ctx).Error("job cleanup controller failed", "error", err)
+		}
+	}()
+
 	logging.DefaultLogger.Info("starting provisioning job queue", "drivers", s.cfg.ConcurrentDrivers)
 	return queue.Run(ctx)
 }

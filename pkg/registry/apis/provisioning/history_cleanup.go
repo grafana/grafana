@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
@@ -20,13 +21,21 @@ var _ registry.CanBeDisabled = (*HistoryJobCleanupService)(nil)
 type HistoryJobCleanupService struct {
 	builder            *APIBuilder
 	configProvider     apiserver.RestConfigProvider
+	subscriber         nats.Subscriber
+	expiration         time.Duration
 	disableControllers bool
 }
 
-func ProvideHistoryJobCleanupService(cfg *setting.Cfg, builder *APIBuilder, configProvider apiserver.RestConfigProvider) *HistoryJobCleanupService {
+func ProvideHistoryJobCleanupService(cfg *setting.Cfg, builder *APIBuilder, configProvider apiserver.RestConfigProvider, subscriber nats.Subscriber) *HistoryJobCleanupService {
+	expiration := cfg.ProvisioningHistoryExpiration
+	if expiration <= 0 {
+		expiration = setting.ProvisioningHistoryExpirationDefault
+	}
 	return &HistoryJobCleanupService{
 		builder:            builder,
 		configProvider:     configProvider,
+		subscriber:         subscriber,
+		expiration:         expiration,
 		disableControllers: cfg.DisableControllers,
 	}
 }
@@ -53,15 +62,11 @@ func (s *HistoryJobCleanupService) Run(ctx context.Context) error {
 		return fmt.Errorf("create provisioning clientset: %w", err)
 	}
 
-	expiration := s.builder.historyExpiration
-	if expiration <= 0 {
-		expiration = setting.ProvisioningHistoryExpirationDefault
-	}
-	source, err := controller.ProvideHistoryJobCleanup(ctx, nats.Enabled(s.builder.natsSubscriber), client, expiration)
+	source, err := controller.ProvideHistoryJobCleanup(ctx, nats.Enabled(s.subscriber), client, s.expiration)
 	if err != nil {
 		return err
 	}
-	logging.DefaultLogger.Info("starting historic job cleanup", "expiration", expiration.String())
+	logging.DefaultLogger.Info("starting historic job cleanup", "expiration", s.expiration.String())
 	source.Run(ctx.Done())
 	return nil
 }

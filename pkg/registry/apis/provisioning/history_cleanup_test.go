@@ -38,7 +38,7 @@ func TestHistoryJobCleanupService_IsDisabled(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := &setting.Cfg{DisableControllers: tc.disableControllers}
-			assert.Equal(t, tc.disabled, ProvideHistoryJobCleanupService(cfg, tc.builder, apiserver.WithoutRestConfig).IsDisabled())
+			assert.Equal(t, tc.disabled, ProvideHistoryJobCleanupService(cfg, tc.builder, apiserver.WithoutRestConfig, nil).IsDisabled())
 		})
 	}
 }
@@ -101,11 +101,11 @@ func TestHistoryJobCleanupService_Run(t *testing.T) {
 		})
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
-		require.NoError(t, ProvideHistoryJobCleanupService(&setting.Cfg{}, &APIBuilder{}, configProvider).Run(ctx))
+		require.NoError(t, ProvideHistoryJobCleanupService(&setting.Cfg{}, &APIBuilder{}, configProvider, nil).Run(ctx))
 	})
 
 	t.Run("returns the rest config error", func(t *testing.T) {
-		err := ProvideHistoryJobCleanupService(&setting.Cfg{}, &APIBuilder{}, apiserver.WithoutRestConfig).Run(context.Background())
+		err := ProvideHistoryJobCleanupService(&setting.Cfg{}, &APIBuilder{}, apiserver.WithoutRestConfig, nil).Run(context.Background())
 		require.Error(t, err)
 	})
 }
@@ -118,7 +118,7 @@ func runCleanupService(t *testing.T, configProvider apiserver.RestConfigProvider
 	t.Cleanup(cancel)
 	done := make(chan error, 1)
 	go func() {
-		done <- ProvideHistoryJobCleanupService(&setting.Cfg{}, &APIBuilder{historyExpiration: time.Hour}, configProvider).Run(ctx)
+		done <- ProvideHistoryJobCleanupService(&setting.Cfg{ProvisioningHistoryExpiration: time.Hour}, &APIBuilder{}, configProvider, nil).Run(ctx)
 	}()
 	return done, cancel
 }
@@ -195,4 +195,12 @@ func startFakeHistoricJobsAPI(t *testing.T, onDelete http.HandlerFunc) *httptest
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 	return server
+}
+
+func TestProvideHistoryJobCleanupService_Expiration(t *testing.T) {
+	svc := ProvideHistoryJobCleanupService(&setting.Cfg{}, &APIBuilder{}, apiserver.WithoutRestConfig, nil)
+	require.Equal(t, setting.ProvisioningHistoryExpirationDefault, svc.expiration)
+
+	svc = ProvideHistoryJobCleanupService(&setting.Cfg{ProvisioningHistoryExpiration: time.Hour}, &APIBuilder{}, apiserver.WithoutRestConfig, nil)
+	require.Equal(t, time.Hour, svc.expiration)
 }

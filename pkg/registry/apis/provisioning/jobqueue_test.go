@@ -33,7 +33,7 @@ func TestProvideJobQueueService(t *testing.T) {
 		cfg.AppURL = "https://grafana.internal/"
 		cfg.ProvisioningPublicRootURL = "https://grafana.example.com/"
 
-		s := ProvideJobQueueService(cfg, &APIBuilder{}, nil, nil)
+		s := ProvideJobQueueService(cfg, &APIBuilder{}, nil, nil, nil)
 
 		assert.Equal(t, 45*time.Second, s.cfg.JobInterval)
 		assert.Equal(t, int64(1024), s.cfg.MaxFileSize)
@@ -48,7 +48,7 @@ func TestProvideJobQueueService(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.ProvisioningJobPollInterval = 0
 
-		s := ProvideJobQueueService(cfg, &APIBuilder{}, nil, nil)
+		s := ProvideJobQueueService(cfg, &APIBuilder{}, nil, nil, nil)
 
 		assert.Equal(t, setting.ProvisioningJobPollIntervalDefault, s.cfg.JobInterval)
 	})
@@ -66,7 +66,7 @@ func TestJobQueueService_IsDisabled(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			svc := ProvideJobQueueService(setting.NewCfg(), tc.builder, nil, nil)
+			svc := ProvideJobQueueService(setting.NewCfg(), tc.builder, nil, nil, nil)
 			assert.Equal(t, tc.disabled, svc.IsDisabled())
 			// The background service manager looks up this name in its
 			// dependency map; any other name would start it after Core.
@@ -122,7 +122,7 @@ func newTestJobQueueService(t *testing.T) (*JobQueueService, *APIBuilder) {
 		// repository.
 		bootstrapDone: make(chan struct{}),
 	}
-	return ProvideJobQueueService(setting.NewCfg(), builder, nil, nil), builder
+	return ProvideJobQueueService(setting.NewCfg(), builder, nil, nil, nil), builder
 }
 
 // runJobQueueService starts Run in the background and returns its result

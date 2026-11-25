@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"slices"
 	"strings"
-	gosync "sync"
 	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -51,7 +50,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
-	informer "github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
@@ -135,36 +133,16 @@ type APIBuilder struct {
 	extras       []Extra
 	extraWorkers []jobs.Worker
 
-	restConfigGetter              func(context.Context) (*clientrest.Config, error)
-	registry                      prometheus.Registerer
-	quotaGetter                   quotas.QuotaGetter
-	maxFileSize                   int64
-	maxJobBodySize                int64
-	incrementalPolicy             repository.IncrementalSyncPolicy
-	webhookSecretRotationInterval time.Duration
-	// controllerResyncInterval is the informer re-list interval for the
-	// repository and connection controllers; historyExpiration is both the
-	// HistoricJob retention and the historic-job informer's resync. Both fall
-	// back to their defaults when <=0 (see the controller post-start hook).
-	controllerResyncInterval time.Duration
-	historyExpiration        time.Duration
-
-	// natsSubscriber feeds the controllers' event handlers when NATS is enabled.
-	// Instead of an apiserver-backed informer, each controller's handler is driven
-	// by a NATS-backed informer (see pkg/storage/unified/informer) that signals the
-	// handler on each notification; the controllers re-fetch from the API in their
-	// reconcile. Otherwise the controllers use the apiserver informer.
-	natsSubscriber nats.Subscriber
+	restConfigGetter  func(context.Context) (*clientrest.Config, error)
+	registry          prometheus.Registerer
+	quotaGetter       quotas.QuotaGetter
+	maxFileSize       int64
+	maxJobBodySize    int64
+	incrementalPolicy repository.IncrementalSyncPolicy
 
 	// bootstrapConfig is the read-only local repository registered from
 	// [provisioning] bootstrap_path, empty when none is configured.
 	bootstrapConfig bootstrap.Config
-
-	// The informer metrics register once per process and are shared by the
-	// controllers started from the post-start hook and from Wire.
-	informerMetricsOnce     gosync.Once
-	relistProjectionMetrics *informer.RelistProjectionMetrics
-	freshnessMetrics        *informer.FreshnessMetrics
 
 	// loopbackConfig is the rest config the post-start hook resolved, set
 	// before loopbackReady is closed.
@@ -286,17 +264,6 @@ func NewAPIBuilder(
 	return b, nil
 }
 
-// resyncInterval is the informer resync interval used for health check and
-// reconciliation of the repository and connection controllers (the jobs
-// informer uses job_poll_interval). Configurable via [provisioning]
-// resync_interval; <=0 falls back to the default.
-func (b *APIBuilder) resyncInterval() time.Duration {
-	if b.controllerResyncInterval <= 0 {
-		return setting.ProvisioningControllerResyncIntervalDefault
-	}
-	return b.controllerResyncInterval
-}
-
 func (b *APIBuilder) publishLoopbackConfig(config *clientrest.Config) {
 	b.loopbackConfig = config
 	close(b.loopbackReady)
@@ -323,14 +290,6 @@ func (b *APIBuilder) awaitBootstrapReconciled(ctx context.Context) error {
 	case <-ctx.Done():
 		return context.Cause(ctx)
 	}
-}
-
-func (b *APIBuilder) informerMetrics() (*informer.RelistProjectionMetrics, *informer.FreshnessMetrics) {
-	b.informerMetricsOnce.Do(func() {
-		b.relistProjectionMetrics = informer.NewRelistProjectionMetrics(b.registry)
-		b.freshnessMetrics = informer.NewFreshnessMetrics(b.registry)
-	})
-	return b.relistProjectionMetrics, b.freshnessMetrics
 }
 
 func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption) {
@@ -426,6 +385,10 @@ func RegisterAPIService(
 	manifests resource.ManifestDiscovery,
 	supportedResourceProvider resources.SupportedResourceProvider,
 ) (*APIBuilder, error) {
+	// Kept for signature compatibility: the controllers take the subscriber from
+	// their own providers.
+	_ = natsSubscriber
+
 	if !cfg.ProvisioningEnabled {
 		return nil, nil
 	}
@@ -502,11 +465,7 @@ func RegisterAPIService(
 	}
 	builder.repoValidatorOpts = repoValidatorOpts
 	builder.urlValidator = urlValidator
-	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
-	builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
-	builder.historyExpiration = cfg.ProvisioningHistoryExpiration
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
-	builder.natsSubscriber = natsSubscriber
 	// Only the preferred version registers the bootstrap repository: it is the one that runs
 	// the post-start hook's controllers, and two of them would race on the same object.
 	builder.bootstrapConfig = bootstrapConfig
@@ -550,14 +509,10 @@ func RegisterAPIService(
 	}
 	v1beta1Builder.repoValidatorOpts = repoValidatorOpts
 	v1beta1Builder.urlValidator = urlValidator
-	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
-	v1beta1Builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
-	v1beta1Builder.historyExpiration = cfg.ProvisioningHistoryExpiration
 	if err := v1beta1Builder.SetResourceListerMode(cfg.ProvisioningResourceLister); err != nil {
 		return nil, err
 	}
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
-	v1beta1Builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(v1beta1Builder)
 
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
@@ -1184,31 +1139,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return nil
 			}
 
-			if nats.Enabled(b.natsSubscriber) {
-				logging.DefaultLogger.Info("provisioning controllers using NATS-backed informer")
-			}
 			usageMetricCollector := usage.MetricCollector(b.tracer, b.usageNamespaceLister, b.repoLister.List, connection.NewStorageLister(b.connectionStore).List, b.unified)
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
-
-			var jobHistoryWriter jobs.HistoryWriter
-			if b.jobHistoryLoki != nil {
-				jobHistoryWriter = b.jobHistoryLoki
-			} else {
-				jobHistoryWriter = jobs.NewAPIClientHistoryWriter(b.GetClient())
-			}
-
-			// Create job cleanup controller
-			jobCleanupController := jobs.NewJobCleanupController(
-				b.jobs,
-				jobHistoryWriter,
-				jobs.ClaimExpiry,
-			)
-
-			go func() {
-				if err := jobCleanupController.Run(postStartHookCtx.Context); err != nil {
-					logging.FromContext(postStartHookCtx.Context).Error("job cleanup controller failed", "error", err)
-				}
-			}()
 
 			return nil
 		},

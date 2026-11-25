@@ -988,10 +988,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	connectionControllerService := provisioning3.ProvideConnectionControllerService(apiBuilder)
-	historyJobCleanupService := provisioning3.ProvideHistoryJobCleanupService(cfg, apiBuilder, eventualRestConfigProvider)
-	repositoryControllerService := provisioning3.ProvideRepositoryControllerService(apiBuilder)
-	jobQueueService := provisioning3.ProvideJobQueueService(cfg, apiBuilder, renderingService, v5)
+	informerMetrics := provisioning3.ProvideInformerMetrics(registerer)
+	connectionControllerService := provisioning3.ProvideConnectionControllerService(cfg, apiBuilder, subscriberService, registerer, informerMetrics)
+	historyJobCleanupService := provisioning3.ProvideHistoryJobCleanupService(cfg, apiBuilder, eventualRestConfigProvider, subscriberService)
+	repositoryControllerService := provisioning3.ProvideRepositoryControllerService(cfg, apiBuilder, subscriberService, registerer, informerMetrics)
+	jobQueueService := provisioning3.ProvideJobQueueService(cfg, apiBuilder, renderingService, v5, subscriberService)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
 	if err != nil {
@@ -1796,10 +1797,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	connectionControllerService := provisioning3.ProvideConnectionControllerService(apiBuilder)
-	historyJobCleanupService := provisioning3.ProvideHistoryJobCleanupService(cfg, apiBuilder, eventualRestConfigProvider)
-	repositoryControllerService := provisioning3.ProvideRepositoryControllerService(apiBuilder)
-	jobQueueService := provisioning3.ProvideJobQueueService(cfg, apiBuilder, renderingService, v5)
+	informerMetrics := provisioning3.ProvideInformerMetrics(registerer)
+	connectionControllerService := provisioning3.ProvideConnectionControllerService(cfg, apiBuilder, subscriberService, registerer, informerMetrics)
+	historyJobCleanupService := provisioning3.ProvideHistoryJobCleanupService(cfg, apiBuilder, eventualRestConfigProvider, subscriberService)
+	repositoryControllerService := provisioning3.ProvideRepositoryControllerService(cfg, apiBuilder, subscriberService, registerer, informerMetrics)
+	jobQueueService := provisioning3.ProvideJobQueueService(cfg, apiBuilder, renderingService, v5, subscriberService)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
 	if err != nil {

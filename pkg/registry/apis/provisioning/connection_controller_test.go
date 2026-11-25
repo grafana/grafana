@@ -5,10 +5,14 @@ import (
 	"errors"
 	"testing"
 	"testing/synctest"
+	"time"
 
 	"github.com/grafana/dskit/services"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	clientrest "k8s.io/client-go/rest"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestConnectionControllerService_IsDisabled(t *testing.T) {
@@ -23,7 +27,7 @@ func TestConnectionControllerService_IsDisabled(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := ProvideConnectionControllerService(tt.builder)
+			svc := ProvideConnectionControllerService(setting.NewCfg(), tt.builder, nil, prometheus.NewRegistry(), ProvideInformerMetrics(prometheus.NewRegistry()))
 			require.Equal(t, tt.want, svc.IsDisabled())
 			// The background service manager looks up this name in its
 			// dependency map; any other name would start it after Core.
@@ -38,7 +42,7 @@ func newTestConnectionControllerService(runErr error) (*ConnectionControllerServ
 	// bootstrapDone stays open: only the repository controller waits for the
 	// bootstrap repository.
 	builder := &APIBuilder{loopbackReady: make(chan struct{}), bootstrapDone: make(chan struct{})}
-	svc := ProvideConnectionControllerService(builder)
+	svc := ProvideConnectionControllerService(setting.NewCfg(), builder, nil, prometheus.NewRegistry(), ProvideInformerMetrics(prometheus.NewRegistry()))
 	got := make(chan *clientrest.Config, 1)
 	svc.run = func(ctx context.Context, restConfig *clientrest.Config) error {
 		got <- restConfig
@@ -96,4 +100,14 @@ func TestConnectionControllerService_Run(t *testing.T) {
 			require.Equal(t, services.Failed, svc.State())
 		})
 	})
+}
+
+func TestProvideConnectionControllerService_ResyncInterval(t *testing.T) {
+	cfg := setting.NewCfg()
+	svc := ProvideConnectionControllerService(cfg, &APIBuilder{}, nil, prometheus.NewRegistry(), ProvideInformerMetrics(prometheus.NewRegistry()))
+	require.Equal(t, setting.ProvisioningControllerResyncIntervalDefault, svc.resyncInterval)
+
+	cfg.ProvisioningControllerResyncInterval = 5 * time.Minute
+	svc = ProvideConnectionControllerService(cfg, &APIBuilder{}, nil, prometheus.NewRegistry(), ProvideInformerMetrics(prometheus.NewRegistry()))
+	require.Equal(t, 5*time.Minute, svc.resyncInterval)
 }
