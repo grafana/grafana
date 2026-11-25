@@ -119,7 +119,7 @@ func TestHealthCheckMetrics(t *testing.T) {
 				t.Run(tt.name, func(t *testing.T) {
 					reg := prometheus.NewPedanticRegistry()
 					recorder := registerHealthMetrics(reg)
-					existingStatus := provisioning.HealthStatus{Healthy: true, Checked: 1}
+					existingStatus := provisioning.RepositoryHealthStatus{Healthy: true, Checked: 1}
 					testErr := tt.err
 					if testErr != nil {
 						testErr = fmt.Errorf("provider test: %w", testErr)
@@ -127,7 +127,7 @@ func TestHealthCheckMetrics(t *testing.T) {
 
 					var (
 						result *provisioning.TestResults
-						status provisioning.HealthStatus
+						status provisioning.RepositoryHealthStatus
 						err    error
 					)
 					if resource == "repository" {
