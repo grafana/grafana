@@ -15,8 +15,7 @@ import { useAutoSyncConfiguration } from '../settings/useAutoSyncConfiguration';
 
 import { type NotificationsLock } from './LockNotices';
 import { type ImportPlan, getImportPlan } from './Wizard/steps';
-import { buildRulesImportJob } from './steps/utils';
-import { type ImportFormValues } from './types';
+import { type ImportFormValues, type RulesImportSpec } from './types';
 import { buildRoutingParams, useImportNotifications, useImportRules } from './useImport';
 
 type ImportStatus = 'idle' | 'importing' | 'success' | 'error' | 'partial-error';
@@ -64,6 +63,8 @@ export function getPostImportOutcome(plan: ImportPlan, targetFolder: Folder | un
 
 interface UseImportJobArgs {
   getImportValues: () => ImportFormValues;
+  /** What the rules step imports, set once its Next has validated it. */
+  rulesSpec: RulesImportSpec | undefined;
   /** The rules to send: the ones of the data source after the namespace and group filter, or the ones in the file. */
   rulesToImport: RulerCloudRulesConfigDTO | undefined;
   liveNotificationsLock: NotificationsLock | undefined;
@@ -73,6 +74,7 @@ interface UseImportJobArgs {
 
 export function useImportJob({
   getImportValues,
+  rulesSpec,
   rulesToImport,
   liveNotificationsLock,
   skipAutoSyncConfig,
@@ -105,10 +107,9 @@ export function useImportJob({
 
     const values = getImportValues();
     const plan = getImportPlan(values);
-    const rulesJob = buildRulesImportJob(values);
     const trackedNotificationsSource =
       plan.willEnableAutoSync || plan.willImportNotifications ? values.notificationsSource : undefined;
-    const trackedRulesSource = plan.willImportRules ? rulesJob?.type : undefined;
+    const trackedRulesSource = plan.willImportRules ? rulesSpec?.type : undefined;
 
     try {
       // Mutually exclusive: Auto-sync only applies to the datasource source, so at most one of
@@ -132,21 +133,21 @@ export function useImportJob({
       }
 
       // Independent of Auto-sync, which only mirrors Alertmanager config, never rules.
-      if (plan.willImportRules && rulesJob?.datasource) {
+      if (plan.willImportRules && rulesSpec) {
         const baseParams = {
-          dataSourceUID: rulesJob.datasource.uid,
-          targetFolderUID: rulesJob.targetFolder?.uid,
-          pauseAlertingRules: rulesJob.pauseAlertingRules,
-          pauseRecordingRules: rulesJob.pauseRecordingRules,
+          dataSourceUID: rulesSpec.datasource.uid,
+          targetFolderUID: rulesSpec.targetFolder?.uid,
+          pauseAlertingRules: rulesSpec.pauseAlertingRules,
+          pauseRecordingRules: rulesSpec.pauseRecordingRules,
           payload: rulesToImport ?? {},
-          targetDatasourceUID: rulesJob.targetDatasourceUID,
+          targetDatasourceUID: rulesSpec.targetDatasourceUID,
         };
 
-        const { notificationSettings } = buildRoutingParams(rulesJob.selectedRoutingTree);
+        const { notificationSettings } = buildRoutingParams(rulesSpec.selectedRoutingTree);
         await importRules({ ...baseParams, notificationSettings });
       }
 
-      setOutcome(getPostImportOutcome(plan, values.targetFolder));
+      setOutcome(getPostImportOutcome(plan, rulesSpec?.targetFolder));
       setImportStatus('success');
 
       trackImportToGMASuccess({
@@ -165,7 +166,15 @@ export function useImportJob({
       trackImportToGMAError({ notificationsSource: trackedNotificationsSource, rulesSource: trackedRulesSource });
       setImportError(stringifyErrorLike(err));
     }
-  }, [getImportValues, importNotifications, importRules, rulesToImport, saveAutoSync, liveNotificationsLock]);
+  }, [
+    getImportValues,
+    importNotifications,
+    importRules,
+    rulesSpec,
+    rulesToImport,
+    saveAutoSync,
+    liveNotificationsLock,
+  ]);
 
   // Leaving the success state, by button, Escape or the close icon, is what takes the user on to the result.
   const closeConfirm = useCallback(() => {

@@ -7,7 +7,7 @@ import { type ComboboxOption } from '@grafana/ui';
 
 import { type ValidateAlertmanagerConfigImportArgs } from '../../../api/convertToGMAApi';
 import { isAutoSyncSelected } from '../Wizard/steps';
-import { type ImportFormValues, type RulesImportJob, type Step1Values } from '../types';
+import { type ImportFormValues, type RulesImportSpec, type Step1Values } from '../types';
 
 /** RFC 1123 subdomain pattern — must match the backend's identifier validation */
 const POLICY_TREE_NAME_PATTERN = /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/;
@@ -110,8 +110,8 @@ export function canRunDryRun(params: Step1ValidationParams): boolean {
   return isStep1Valid({ ...params, autoSyncNotificationsEnabled: false });
 }
 
-/** The form fields `buildRulesImportJob` reads. */
-export const RULES_JOB_FIELDS = [
+/** The form fields `buildRulesImportSpec` reads. */
+export const RULES_SPEC_FIELDS = [
   'rulesSource',
   'rulesDatasourceUID',
   'rulesDatasourceName',
@@ -127,28 +127,26 @@ export const RULES_JOB_FIELDS = [
   'targetDatasourceUID',
 ] satisfies Array<keyof ImportFormValues>;
 
-/** The rules import described by the form, or undefined while no rules source is chosen. */
-export function buildRulesImportJob(
-  values: Pick<ImportFormValues, (typeof RULES_JOB_FIELDS)[number]>
-): RulesImportJob | undefined {
-  const settings = {
-    selectedRoutingTree: values.selectedRoutingTree,
-    targetFolder: values.targetFolder,
-    pauseAlertingRules: values.pauseAlertingRules,
-    pauseRecordingRules: values.pauseRecordingRules,
-    targetDatasourceUID: values.targetDatasourceUID,
-  };
+export type RulesSpecValues = Pick<ImportFormValues, (typeof RULES_SPEC_FIELDS)[number]>;
+
+/** The rules import described by the form, or undefined until the form is complete. */
+export function buildRulesImportSpec(values: RulesSpecValues): RulesImportSpec | undefined {
+  const { selectedRoutingTree, targetDatasourceUID, targetFolder, pauseAlertingRules, pauseRecordingRules } = values;
+  if (!selectedRoutingTree || !targetDatasourceUID) {
+    return undefined;
+  }
+  const settings = { selectedRoutingTree, targetDatasourceUID, targetFolder, pauseAlertingRules, pauseRecordingRules };
 
   if (values.rulesSource === 'yaml') {
-    if (!values.rulesYamlFile) {
+    const uid = values.yamlImportTargetDatasourceUID;
+    if (!values.rulesYamlFile || !uid) {
       return undefined;
     }
-    const uid = values.yamlImportTargetDatasourceUID;
     return {
       ...settings,
       type: 'yaml',
       file: values.rulesYamlFile,
-      datasource: uid ? { uid, name: values.yamlImportTargetDatasourceName ?? null } : undefined,
+      datasource: { uid, name: values.yamlImportTargetDatasourceName ?? null },
     };
   }
 
@@ -162,11 +160,6 @@ export function buildRulesImportJob(
     namespace: values.namespace,
     ruleGroup: values.ruleGroup,
   };
-}
-
-/** Validates that Step 2 form is complete and valid */
-export function isStep2Valid(job: RulesImportJob | undefined): boolean {
-  return Boolean(job?.datasource && job.selectedRoutingTree && job.targetDatasourceUID);
 }
 
 export function pickStep1Values(values: ImportFormValues): Step1Values {

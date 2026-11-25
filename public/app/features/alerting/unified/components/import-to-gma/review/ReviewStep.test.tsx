@@ -2,7 +2,7 @@ import { render, screen } from 'test/test-utils';
 
 import { StepperStateProvider } from '../Wizard/StepperState';
 import { StepKey } from '../Wizard/types';
-import { type ImportFormValues, type RulesImportJob } from '../types';
+import { type ImportFormValues, type RulesImportSpec } from '../types';
 
 import { ReviewStep } from './ReviewStep';
 
@@ -12,22 +12,22 @@ const yamlRulesFormData = {
   step1Skipped: true,
   step2Completed: true,
   step2Skipped: false,
-  selectedRoutingTree: 'default',
 } as unknown as ImportFormValues;
 
-const jobSettings = {
-  selectedRoutingTree: 'default',
+const specSettings = {
+  selectedRoutingTree: 'imported',
+  targetDatasourceUID: 'prom',
   pauseAlertingRules: true,
   pauseRecordingRules: true,
 };
-const yamlRulesJob: RulesImportJob = {
-  ...jobSettings,
+const yamlRulesSpec: RulesImportSpec = {
+  ...specSettings,
   type: 'yaml',
   file: new File([''], 'rules.yaml'),
   datasource: { uid: 'prom', name: 'Prometheus' },
 };
-const dataSourceRulesJob: RulesImportJob = {
-  ...jobSettings,
+const dataSourceRulesSpec: RulesImportSpec = {
+  ...specSettings,
   type: 'datasource',
   datasource: { uid: 'mimir', name: 'Mimir' },
 };
@@ -37,7 +37,7 @@ function renderReview(props: Partial<React.ComponentProps<typeof ReviewStep>>) {
     <StepperStateProvider initialStep={StepKey.Review}>
       <ReviewStep
         formData={yamlRulesFormData}
-        rulesJob={yamlRulesJob}
+        rulesSpec={yamlRulesSpec}
         onStartImport={jest.fn()}
         rulesToImport={{}}
         {...props}
@@ -62,8 +62,25 @@ describe('ReviewStep', () => {
     expect(screen.getByText('Prometheus')).toBeInTheDocument();
   });
 
+  it('shows the routing, filter, folder and pause settings of the spec', () => {
+    renderReview({
+      rulesSpec: {
+        ...dataSourceRulesSpec,
+        namespace: 'ns',
+        ruleGroup: 'group',
+        targetFolder: { uid: 'folder-uid', title: 'Imported rules' },
+        pauseAlertingRules: false,
+      },
+    });
+
+    expect(screen.getByText(/policy tree: imported/i)).toBeInTheDocument();
+    expect(screen.getByText('ns / group')).toBeInTheDocument();
+    expect(screen.getByText('Imported rules')).toBeInTheDocument();
+    expect(screen.getByText('Recording rules paused')).toBeInTheDocument();
+  });
+
   it('shows only the data source for a data source import', () => {
-    renderReview({ rulesJob: dataSourceRulesJob });
+    renderReview({ rulesSpec: dataSourceRulesSpec });
 
     expect(screen.getByText('Mimir')).toBeInTheDocument();
     expect(screen.queryByText('rules.yaml')).not.toBeInTheDocument();

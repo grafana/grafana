@@ -79,17 +79,18 @@ interface RulesDataSource {
   name: string | null;
 }
 
-/** What the rules step will import, from the one source the user chose. Built by `buildRulesImportJob`. */
-export type RulesImportJob = {
+/** What the rules step imports. Built by `buildRulesImportSpec`, only from a complete form. */
+export type RulesImportSpec = {
   selectedRoutingTree: string;
   targetFolder?: Folder;
   pauseAlertingRules: boolean;
   pauseRecordingRules: boolean;
-  targetDatasourceUID?: string;
+  /** The data source that stores the recording rules. */
+  targetDatasourceUID: string;
 } & (
   | { type: 'datasource'; datasource: RulesDataSource; namespace?: string; ruleGroup?: string }
-  // The data source is the one the rules run against, which may not be chosen yet.
-  | { type: 'yaml'; file: File; datasource?: RulesDataSource }
+  // The data source is the one the rules run against.
+  | { type: 'yaml'; file: File; datasource: RulesDataSource }
 );
 
 export type Step1Values = Pick<
