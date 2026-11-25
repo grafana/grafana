@@ -121,6 +121,7 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   const promRulesRequests = useUnifiedAlertingSelector((state) => state.promRules);
   const rulerRulesRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
+  const rulesSourceListError = useUnifiedAlertingSelector((state) => state.rulesSourceList.error);
 
   const somePromRulesDispatched = isAsyncRequestMapSlicePartiallyDispatched(promRulesRequests);
 
@@ -246,8 +247,25 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   const havePreviousResults = Object.values(promRulesRequests).some((state) => state.result);
 
+  // Only the all-sources fetch loads the rules source list, so a panel for one data source ignores its error.
+  const showRulesSourceListError = !dataSourceName && Boolean(rulesSourceListError);
+
   return (
     <ScrollContainer minHeight="100%">
+      {/* The Alert grows to fill a flex column, so it gets a wrapper. */}
+      {showRulesSourceListError && (
+        <div>
+          <Alert
+            severity="warning"
+            title={t(
+              'alertlist.unified-alert-list.title-rules-source-list-error',
+              'Failed to load data source-managed rules'
+            )}
+          >
+            {rulesSourceListError?.message}
+          </Alert>
+        </div>
+      )}
       {havePreviousResults && noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
       {havePreviousResults && (
         <section>
