@@ -1,19 +1,32 @@
-import { type DataQuery, LoadingState, type PanelData } from '@grafana/data';
+import { type DataQuery, type DataSourceRef, LoadingState, type PanelData } from '@grafana/data';
 
 import { type QueryCoauthoringHealth } from './queryCoauthoringContracts';
 import { expressionReferences } from './queryCoauthoringDependencies';
 import { classifyQueryResult, type QueryPreviewOutcome } from './queryCoauthoringPreviewOutcome';
 
+export function scopedQueryData(data: PanelData | undefined) {
+  return (
+    data && {
+      ...data,
+      error: undefined,
+      errors: [...(data.errors ?? []), ...(data.error ? [data.error] : [])].filter((error) => error.refId),
+    }
+  );
+}
+
 export function deriveQueryHealth(
   queries: DataQuery[],
   data: PanelData | undefined
 ): Record<string, QueryCoauthoringHealth> {
+  const scoped = scopedQueryData(data);
+  const panelError = [...(data?.errors ?? []), ...(data?.error ? [data.error] : [])].some((error) => !error.refId);
   return Object.fromEntries(
     queries.map((query) => {
-      const outcome = classifyQueryResult(data, query.refId);
+      const outcome = classifyQueryResult(scoped, query.refId);
       return [
         query.refId,
         query.hide ||
+        (panelError && outcome.kind === 'no-data') ||
         outcome.kind === 'loading' ||
         (data?.request && !data.request.targets.some((target) => target.refId === query.refId))
           ? 'unknown'
@@ -26,7 +39,9 @@ export function deriveQueryHealth(
 export function isQueryBroken(
   refId: string,
   queries: DataQuery[],
-  health: Record<string, QueryCoauthoringHealth>
+  health: Record<string, QueryCoauthoringHealth>,
+  inherited: DataSourceRef | undefined,
+  includeNoData = true
 ): boolean {
   const visited = new Set<string>();
   const visit = (id: string): boolean => {
@@ -34,11 +49,11 @@ export function isQueryBroken(
       return false;
     }
     visited.add(id);
-    if (health[id] === 'error' || health[id] === 'no-data') {
+    if (health[id] === 'error' || (includeNoData && health[id] === 'no-data')) {
       return true;
     }
     const query = queries.find((candidate) => candidate.refId === id);
-    return query ? expressionReferences(query).some(visit) : false;
+    return query ? expressionReferences(query, queries, inherited).some(visit) : false;
   };
   return visit(refId);
 }
@@ -46,7 +61,8 @@ export function isQueryBroken(
 export function classifyOptionOutcome(
   data: PanelData | undefined,
   queries: DataQuery[],
-  changedRefIds: string[]
+  changedRefIds: string[],
+  inherited: DataSourceRef | undefined
 ): QueryPreviewOutcome & { warnings?: string[] } {
   if (!data || data.state === LoadingState.Loading || data.state === LoadingState.Streaming) {
     return { kind: 'loading' };
@@ -56,7 +72,7 @@ export function classifyOptionOutcome(
   while (size !== scope.size) {
     size = scope.size;
     for (const query of queries) {
-      if (expressionReferences(query).some((refId) => scope.has(refId))) {
+      if (expressionReferences(query, queries, inherited).some((refId) => scope.has(refId))) {
         scope.add(query.refId);
       }
     }

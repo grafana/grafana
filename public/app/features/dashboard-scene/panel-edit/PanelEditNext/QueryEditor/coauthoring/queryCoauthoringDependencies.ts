@@ -1,11 +1,17 @@
 import { MySQL } from '@codemirror/lang-sql';
 import { type SyntaxNode } from '@lezer/common';
 
-import { type DataQuery } from '@grafana/data';
+import { type DataQuery, type DataSourceRef } from '@grafana/data';
 import { isExpressionReference } from '@grafana/runtime';
 
-export function expressionReferences(query: DataQuery): string[] {
-  if (!isExpressionReference(query.datasource)) {
+import { getQueryDatasourceRef } from '../hooks/getQueryDatasourceRef';
+
+export function expressionReferences(
+  query: DataQuery,
+  queries: DataQuery[],
+  inherited: DataSourceRef | undefined
+): string[] {
+  if (!isExpressionReference(getQueryDatasourceRef(query, inherited))) {
     return [];
   }
   if (
@@ -29,7 +35,9 @@ export function expressionReferences(query: DataQuery): string[] {
     return [];
   }
   if ('type' in query && query.type === 'sql') {
-    return sqlReferences(query.expression);
+    const names = sqlReferences(query.expression).map((name) => name.toLowerCase());
+    // SQL backend table names are case-insensitive; include all colliding refIds conservatively.
+    return queries.filter((candidate) => names.includes(candidate.refId.toLowerCase())).map((query) => query.refId);
   }
   const references = Array.from(
     query.expression.matchAll(/\$(?:\{([^}]+)\}|([A-Za-z0-9_]+))/g),
@@ -56,7 +64,7 @@ function sqlReferences(text: string): string[] {
           value(children[index + 1]).toUpperCase() === 'AS' &&
           children[index + 2].name === 'Parens'
         ) {
-          aliases.add(unquote(children[index]));
+          aliases.add(unquote(children[index]).toLowerCase());
         }
       }
     }
@@ -78,7 +86,7 @@ function sqlReferences(text: string): string[] {
         tableExpected = true;
       } else if (tableExpected && identifier(child)) {
         const name = unquote(child);
-        if (!aliases.has(name)) {
+        if (!aliases.has(name.toLowerCase())) {
           references.add(name);
         }
         tableExpected = false;

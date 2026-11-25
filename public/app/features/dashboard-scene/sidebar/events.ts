@@ -23,6 +23,8 @@ export interface DashboardEditActionEventPayload {
   meta: DashboardActionMeta;
   /** Full-scene snapshots cannot cross a later query commit outside this history. */
   replacesDashboardState?: boolean;
+  /** Stable panel IDs whose captured bodies this action can restore. */
+  replacesPanelState?: number[];
   removedObject?: SceneObject;
   addedObject?: SceneObject;
   movedObject?: SceneObject;
@@ -90,6 +92,6 @@ export class RepeatsUpdatedEvent extends BusEventWithPayload<SceneObject> {
 }
 
 /** A session accepted canonical queries without recording a dashboard undo action. */
-export class CoauthoringQueriesAcceptedEvent extends BusEventBase {
+export class CoauthoringQueriesAcceptedEvent extends BusEventWithPayload<{ panelId: number }> {
   static type = 'coauthoring-queries-accepted';
 }

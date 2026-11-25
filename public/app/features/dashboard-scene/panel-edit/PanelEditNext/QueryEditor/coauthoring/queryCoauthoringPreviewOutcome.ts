@@ -20,7 +20,10 @@ export function classifyQueryPreview(data: PanelData | undefined, refId: string)
   while (changed) {
     changed = false;
     for (const query of expressions) {
-      if (!scope.has(query.refId) && expressionReferences(query).some((reference) => scope.has(reference))) {
+      if (
+        !scope.has(query.refId) &&
+        expressionReferences(query, data.request?.targets ?? [], undefined).some((reference) => scope.has(reference))
+      ) {
         scope.add(query.refId);
         changed = true;
       }

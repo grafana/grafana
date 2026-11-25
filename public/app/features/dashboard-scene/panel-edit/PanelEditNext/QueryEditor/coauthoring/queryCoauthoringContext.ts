@@ -1,9 +1,16 @@
 import { cloneDeep, isEqual, pick } from 'lodash';
 
 import { type DataQuery, type ScopedVars } from '@grafana/data';
-import { getDataSourceInstance, getDataSourceInstanceSettings, logError } from '@grafana/runtime';
-import { sceneGraph, type SceneObject, type SceneQueryRunner, type VizPanel } from '@grafana/scenes';
+import { getDataSourceInstance, logError } from '@grafana/runtime';
+import {
+  sceneGraph,
+  SceneObjectStateChangedEvent,
+  type SceneObject,
+  type SceneQueryRunner,
+  type VizPanel,
+} from '@grafana/scenes';
 
+import { resolveQueryDatasourceRef } from '../hooks/getQueryDatasourceRef';
 import { getPanelScopedVars } from '../utils';
 
 import {
@@ -40,6 +47,27 @@ const RESOLVER_VARIABLE_STATE_FIELDS = [
   'isMulti',
   'groupByKeys',
 ];
+
+export function subscribeResolverInputs(panel: VizPanel, listener: () => void) {
+  const subscription = panel.getRoot().subscribeToEvent(SceneObjectStateChangedEvent, ({ payload }) => {
+    if (
+      Object.keys(payload.partialUpdate).some((key) =>
+        [
+          '$variables',
+          '$timeRange',
+          'variables',
+          'datasource',
+          'from',
+          'to',
+          ...RESOLVER_VARIABLE_STATE_FIELDS,
+        ].includes(key)
+      )
+    ) {
+      listener();
+    }
+  });
+  return () => subscription.unsubscribe();
+}
 
 export function resolverInputs(panel: VizPanel, runner: SceneQueryRunner) {
   const variables: unknown[] = [];
@@ -150,11 +178,12 @@ export async function resolveCoauthoringQuery(
   }
   const scopedVars: ScopedVars = getPanelScopedVars(panel);
   try {
-    const settings = await untilAborted(
-      getDataSourceInstanceSettings(query.datasource ?? fallback, scopedVars),
-      signal
-    );
-    datasource = await untilAborted(getDataSourceInstance(query.datasource ?? fallback, scopedVars), signal);
+    const resolved = await untilAborted(resolveQueryDatasourceRef(query, fallback, scopedVars), signal);
+    if (!resolved) {
+      return failed('datasource_resolution_failed');
+    }
+    const { ref, settings } = resolved;
+    datasource = await untilAborted(getDataSourceInstance(ref, scopedVars), signal);
     configuration = cloneDeep({
       settings,
       instance: 'instanceSettings' in datasource ? datasource.instanceSettings : undefined,

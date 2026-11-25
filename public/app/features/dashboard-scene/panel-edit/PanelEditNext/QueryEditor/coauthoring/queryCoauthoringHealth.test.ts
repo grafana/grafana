@@ -79,15 +79,15 @@ it('follows transitive upstream failures and does not gate on hidden errors or n
       ],
     })
   );
-  expect(isQueryBroken('D', queries, health)).toBe(true);
-  expect(isQueryBroken('I', queries, health)).toBe(false);
-  expect(isQueryBroken('B', queries, health)).toBe(false);
+  expect(isQueryBroken('D', queries, health, undefined)).toBe(true);
+  expect(isQueryBroken('I', queries, health, undefined)).toBe(false);
+  expect(isQueryBroken('B', queries, health, undefined)).toBe(false);
 });
 
 it('detects upstream no-data and terminates expression dependency cycles', () => {
   const cyclic = [expression('A', '$B'), expression('B', '$A'), { refId: 'C' }];
-  expect(isQueryBroken('A', cyclic, { A: 'ok', B: 'ok', C: 'no-data' })).toBe(false);
-  expect(isQueryBroken('A', cyclic, { A: 'ok', B: 'no-data', C: 'ok' })).toBe(true);
+  expect(isQueryBroken('A', cyclic, { A: 'ok', B: 'ok', C: 'no-data' }, undefined)).toBe(false);
+  expect(isQueryBroken('A', cyclic, { A: 'ok', B: 'no-data', C: 'ok' }, undefined)).toBe(true);
 });
 
 it.each([
@@ -97,7 +97,13 @@ it.each([
   ['WITH B AS (SELECT * FROM A) SELECT * FROM B', ['A']],
   ['SELECT * FROM (SELECT * FROM B) q', ['B']],
 ])('resolves SQL table dependencies in %s', (text, references) => {
-  expect(expressionReferences(expression('SQL', text, 'sql'))).toEqual(references);
+  expect(
+    expressionReferences(
+      expression('SQL', text, 'sql'),
+      references.map((refId) => ({ refId })),
+      undefined
+    )
+  ).toEqual(references);
 });
 
 it('reads classic condition references and exact math references', () => {
@@ -105,8 +111,8 @@ it('reads classic condition references and exact math references', () => {
     ...expression('C', '', 'classic_conditions'),
     conditions: [{ query: { params: ['A'] } }],
   };
-  expect(expressionReferences(condition)).toEqual(['A']);
-  expect(expressionReferences(expression('C', '${With spaces} + $AA'))).toEqual([
+  expect(expressionReferences(condition, queries, undefined)).toEqual(['A']);
+  expect(expressionReferences(expression('C', '${With spaces} + $AA'), queries, undefined)).toEqual([
     '${With spaces} + $AA',
     'With spaces',
     'AA',
@@ -114,9 +120,9 @@ it('reads classic condition references and exact math references', () => {
 });
 
 it('ignores missing hidden frames but still reports hidden query errors in Option outcomes', () => {
-  expect(classifyOptionOutcome(data(), queries, ['H']).kind).toBe('ok');
+  expect(classifyOptionOutcome(data(), queries, ['H'], undefined).kind).toBe('ok');
   expect(
-    classifyOptionOutcome(data({ errors: [{ refId: 'H', message: 'hidden query failed' }] }), queries, ['H'])
+    classifyOptionOutcome(data({ errors: [{ refId: 'H', message: 'hidden query failed' }] }), queries, ['H'], undefined)
   ).toMatchObject({ kind: 'error', message: 'hidden query failed' });
 });
 
@@ -125,26 +131,60 @@ it('takes the worst outcome per changed query and downstream expression, ignorin
     classifyOptionOutcome(
       data({ series: [frame('A', [2]), frame('C', [3])], errors: [{ refId: 'B', message: 'unrelated' }] }),
       queries,
-      ['A']
+      ['A'],
+      undefined
     ).kind
   ).toBe('no-data');
   expect(
-    classifyOptionOutcome(data({ errors: [{ refId: 'D', message: 'downstream' }] }), queries, ['A'])
+    classifyOptionOutcome(data({ errors: [{ refId: 'D', message: 'downstream' }] }), queries, ['A'], undefined)
   ).toMatchObject({ kind: 'error', message: 'downstream' });
-  expect(classifyOptionOutcome(data(), queries, ['A', 'B']).kind).toBe('no-signal');
+  expect(classifyOptionOutcome(data(), queries, ['A', 'B'], undefined).kind).toBe('no-signal');
 });
 
 it('retains warning notices even when a different query has no data', () => {
   const warning = frame('A', [2]);
   warning.meta = { notices: [{ severity: 'warning', text: 'partial results' }] };
   expect(
-    classifyOptionOutcome(data({ series: [warning] }), [{ refId: 'A' }, { refId: 'B' }], ['A', 'B'])
+    classifyOptionOutcome(data({ series: [warning] }), [{ refId: 'A' }, { refId: 'B' }], ['A', 'B'], undefined)
   ).toMatchObject({ kind: 'no-data', warnings: ['partial results'] });
 });
 
 it('traverses unknown hidden intermediate expressions without treating their own health as a failure', () => {
   const chain = [{ refId: 'A' }, { ...expression('B', '$A'), hide: true }, expression('C', '$B')];
-  expect(isQueryBroken('C', chain, { A: 'error', B: 'unknown', C: 'ok' })).toBe(true);
-  expect(isQueryBroken('C', chain, { A: 'no-data', B: 'unknown', C: 'ok' })).toBe(true);
-  expect(isQueryBroken('C', chain, { A: 'ok', B: 'unknown', C: 'ok' })).toBe(false);
+  expect(isQueryBroken('C', chain, { A: 'error', B: 'unknown', C: 'ok' }, undefined)).toBe(true);
+  expect(isQueryBroken('C', chain, { A: 'no-data', B: 'unknown', C: 'ok' }, undefined)).toBe(true);
+  expect(isQueryBroken('C', chain, { A: 'ok', B: 'unknown', C: 'ok' }, undefined)).toBe(false);
+});
+
+it('keeps panel-only errors out of query health without weakening preview failures', () => {
+  const panelError = data({ series: [frame('A', [2])], error: { message: 'panel failure' } });
+  expect(deriveQueryHealth([{ refId: 'A' }, { refId: 'B' }], panelError)).toEqual({ A: 'ok', B: 'unknown' });
+  expect(classifyOptionOutcome(panelError, [{ refId: 'A' }], ['A'], undefined).kind).toBe('error');
+});
+
+it('canonicalizes SQL case and punctuation while keeping math case-sensitive and CTEs scoped', () => {
+  const source = [{ refId: 'A' }, { refId: 'a' }, { refId: 'B.C' }, { refId: 'Z' }];
+  const sql = expression('S', 'WITH Temp AS (SELECT * FROM a) SELECT * FROM TEMP JOIN `b.c` ON 1=1', 'sql');
+  expect(expressionReferences(sql, source, undefined)).toEqual(['A', 'a', 'B.C']);
+  expect(expressionReferences(expression('M', '$z'), source, undefined)).toEqual(['$z', 'z']);
+});
+
+it('shares inherited expression dependencies across broken checks and Option outcomes', () => {
+  const inherited: HealthQuery[] = [
+    { refId: 'A', datasource: { uid: 'mock' } },
+    { refId: 'B', type: 'math', expression: '$A' },
+  ];
+  const fallback = { uid: '__expr__' };
+  expect(isQueryBroken('B', inherited, { A: 'error', B: 'ok' }, fallback)).toBe(true);
+  expect(isQueryBroken('B', inherited, { A: 'error', B: 'ok' }, { uid: '-- Mixed --' })).toBe(false);
+  expect(
+    classifyOptionOutcome(data({ errors: [{ refId: 'B', message: 'dependent' }] }), inherited, ['A'], fallback).kind
+  ).toBe('error');
+});
+
+it('keeps scoped-error badges distinct from no-data Debug eligibility', () => {
+  const chain = [{ refId: 'A' }, expression('B', '$A')];
+  expect(isQueryBroken('B', chain, { A: 'no-data', B: 'ok' }, undefined, false)).toBe(false);
+  expect(isQueryBroken('B', chain, { A: 'no-data', B: 'ok' }, undefined)).toBe(true);
+  expect(isQueryBroken('B', chain, { A: 'error', B: 'ok' }, undefined, false)).toBe(true);
 });

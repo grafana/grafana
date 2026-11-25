@@ -4,9 +4,11 @@ import { useCallback, useMemo, type ReactNode } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { CodeMirrorEditor, signatureHelp, type CodeMirrorSqlDialect } from '@grafana/ui/unstable';
+import { type QueryCoauthoringEditorHost } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/coauthoring/queryCoauthoringContracts';
 
 import { SQL_EXPRESSIONS_DIALECT } from '../../../utils/sqlIdentifier';
 
+import { coauthoringExtensions } from './coauthoring';
 import { getSqlSignatureHelpProvider, type SqlFunctionSignature } from './signatureHelp';
 import { getSqlCompletionSource, type SqlCompletionProvider } from './utils';
 
@@ -17,6 +19,7 @@ const DEFAULT_CODE_MIRROR_SQL_DIALECT: CodeMirrorSqlDialect =
   SQL_EXPRESSIONS_DIALECT === 'mysql' ? 'mySql' : 'standardSql';
 
 export interface SqlEditorProps {
+  queryCoauthoring?: QueryCoauthoringEditorHost;
   value: string;
   onChange: (value: string) => void;
   completionProvider?: SqlCompletionProvider;
@@ -42,6 +45,7 @@ export const SqlEditor = ({
   ariaLabel,
   dialect = DEFAULT_CODE_MIRROR_SQL_DIALECT,
   children,
+  queryCoauthoring,
 }: SqlEditorProps) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
@@ -54,12 +58,13 @@ export const SqlEditor = ({
   }, [completionProvider]);
 
   const extensions = useMemo(() => {
-    if (!functionSignatures?.length) {
-      return undefined;
-    }
-
-    return [signatureHelp(getSqlSignatureHelpProvider(functionSignatures), { theme })];
-  }, [functionSignatures, theme]);
+    return [
+      ...coauthoringExtensions(queryCoauthoring, theme.colors.success.transparent),
+      ...(functionSignatures?.length
+        ? [signatureHelp(getSqlSignatureHelpProvider(functionSignatures), { theme })]
+        : []),
+    ];
+  }, [functionSignatures, theme, queryCoauthoring]);
 
   const formatQuery = useCallback(() => {
     if (formatter) {

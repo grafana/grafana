@@ -1,12 +1,15 @@
-import { useEffect, useLayoutEffect, useRef, useSyncExternalStore } from 'react';
+import { isEqual } from 'lodash';
+import { useState, useEffect, useLayoutEffect, useRef, useSyncExternalStore } from 'react';
 
 import { type DataQuery } from '@grafana/data';
 import { getDataSourceInstance } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 
+import { getQueryRunnerFor } from '../../../../utils/getQueryRunnerFor';
 import { getDashboardSceneFor } from '../../../../utils/utils';
 import { getPanelIdForVizPanel } from '../../../../utils/utils-panels';
 import { type PanelDataPaneNext } from '../../PanelDataPaneNext';
+import { resolveQueryDatasourceRef } from '../hooks/getQueryDatasourceRef';
 import { getPanelScopedVars } from '../utils';
 
 import { QueryCoauthoringSessionEngine } from './QueryCoauthoringSessionEngine';
@@ -19,10 +22,9 @@ import {
   subscribeCoauthoringFlags,
   isQueryCoauthoringEnabled,
 } from './queryCoauthoringApi';
-import { reportCoauthoringError } from './queryCoauthoringContext';
+import { reportCoauthoringError, resolverInputs, subscribeResolverInputs } from './queryCoauthoringContext';
 import { type DataSourceWithQueryCoauthoring, isQueryCoauthoringLanguage } from './queryCoauthoringContracts';
 import { isQueryBroken } from './queryCoauthoringHealth';
-import { classifyQueryResult } from './queryCoauthoringPreviewOutcome';
 
 export function useCoauthoringSurface() {
   useSyncExternalStore(subscribeToCoauthoring, getCoauthoringGeneration);
@@ -39,8 +41,26 @@ export function useMountedCoauthoringPanel(
   useLayoutEffect(() => {
     selectRef.current = select;
   }, [select]);
-  const { datasource: defaultDatasource } = pane.useState();
   const enabled = useSyncExternalStore(subscribeCoauthoringFlags, isQueryCoauthoringEnabled);
+  const [resolverVersion, setResolverVersion] = useState(0);
+  useLayoutEffect(() => (enabled ? pane.observeCoauthoringHealth() : undefined), [pane, enabled]);
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+    const runner = getQueryRunnerFor(panel);
+    if (!runner) {
+      return;
+    }
+    let inputs = resolverInputs(panel, runner);
+    return subscribeResolverInputs(panel, () => {
+      const next = resolverInputs(panel, runner);
+      if (!isEqual(inputs, next)) {
+        inputs = next;
+        setResolverVersion((value) => value + 1);
+      }
+    });
+  }, [panel, enabled]);
   useEffect(() => {
     if (!enabled) {
       return;
@@ -57,6 +77,7 @@ export function useMountedCoauthoringPanel(
       target: { dashboardUid, panelId: getPanelIdForVizPanel(panel) },
       pane,
       supported: new Set(),
+      getEngine: () => QueryCoauthoringSessionEngine.getOrCreate(panel),
       select: (refId) => selectRef.current(refId),
     });
   }, [pane, panel, enabled]);
@@ -64,25 +85,37 @@ export function useMountedCoauthoringPanel(
   useEffect(() => {
     const controller = new AbortController();
     const surface = getCoauthoringSurface(pane);
-    if (!surface) {
+    const runner = getQueryRunnerFor(panel);
+    if (!surface || !runner) {
       return;
     }
-    pane.getCoauthoringHealth();
+    const inputs = resolverInputs(panel, runner);
+    const current = () =>
+      !controller.signal.aborted &&
+      surface.owner.isActive &&
+      getCoauthoringSurface(pane)?.owner === surface.owner &&
+      isEqual(inputs, resolverInputs(panel, runner));
     void Promise.all(
       queries.map(async (query) => {
         try {
+          const resolved = await resolveQueryDatasourceRef(query, runner.state.datasource, getPanelScopedVars(panel));
+          if (!resolved || !current()) {
+            return undefined;
+          }
           const datasource: DataSourceWithQueryCoauthoring = await getDataSourceInstance(
-            query.datasource ?? defaultDatasource?.getRef(),
+            resolved.ref,
             getPanelScopedVars(panel)
           );
           return isQueryCoauthoringLanguage(datasource.queryCoauthoring?.()) ? query.refId : undefined;
         } catch (error) {
-          reportCoauthoringError(error, controller.signal, 'support_scan');
+          if (current()) {
+            reportCoauthoringError(error, controller.signal, 'support_scan');
+          }
           return undefined;
         }
       })
     ).then((refs) => {
-      if (!controller.signal.aborted) {
+      if (current()) {
         surface.supported.clear();
         refs.forEach((refId) => {
           if (refId) {
@@ -96,24 +129,23 @@ export function useMountedCoauthoringPanel(
     return () => {
       controller.abort();
     };
-  }, [pane, panel, queries, enabled, defaultDatasource]);
+  }, [pane, panel, queries, enabled, resolverVersion]);
   return useCoauthoringSurface();
 }
 
 export function useCoauthoringCardHealth(refId: string) {
   const surface = useCoauthoringSurface();
   const health = surface?.pane.getCoauthoringHealth() ?? {};
-  const outcome = classifyQueryResult(
-    surface && QueryCoauthoringSessionEngine.get(surface.panel)?.getCanonicalData(),
-    refId
-  );
-  const errors = Object.fromEntries(
-    Object.entries(health).map(([id, value]) => [id, value === 'no-data' ? ('ok' as const) : value])
-  );
   return {
-    errorMessage: outcome.kind === 'error' ? outcome.message : undefined,
+    errorMessage: surface?.pane.getCoauthoringQueryError(refId),
     error: surface
-      ? isQueryBroken(refId, surface.state?.queries ?? surface.pane.getCoauthoringEditorQueries() ?? [], errors)
+      ? isQueryBroken(
+          refId,
+          surface.state?.queries ?? surface.pane.getCoauthoringEditorQueries() ?? [],
+          health,
+          getQueryRunnerFor(surface.panel)?.state.datasource,
+          false
+        )
       : false,
     noData: health[refId] === 'no-data',
   };

@@ -182,23 +182,21 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     );
 
     this._subs.add(
-      dashboard.subscribeToEvent(CoauthoringQueriesAcceptedEvent, () => {
+      dashboard.subscribeToEvent(CoauthoringQueriesAcceptedEvent, ({ payload: { panelId } }) => {
         // A snapshot and the older closures tied to its discarded tree cannot cross this query commit.
         const batches = [...this._outerBatches, ...(this._activeBatch ? [this._activeBatch] : [])];
         const openSnapshot = batches.some((batch) => batch.actions.some((action) => action.replacesDashboardState));
+        const replacesPanel = (action: DashboardEditActionEventPayload) => action.replacesPanelState?.includes(panelId);
+        const openPanelSnapshot = batches.some((batch) => batch.actions.some(replacesPanel));
         this.setState({
           undoStack: openSnapshot
             ? []
-            : this.state.undoStack.slice(
-                findLastIndex(this.state.undoStack, (action) => action.replacesDashboardState === true) + 1
-              ),
-          redoStack: openSnapshot
-            ? []
-            : this.state.redoStack.slice(
-                findLastIndex(this.state.redoStack, (action) => action.replacesDashboardState === true) + 1
-              ),
+            : this.state.undoStack
+                .slice(findLastIndex(this.state.undoStack, (action) => action.replacesDashboardState === true) + 1)
+                .filter((action) => !replacesPanel(action)),
+          redoStack: [],
         });
-        if (openSnapshot) {
+        if (openSnapshot || openPanelSnapshot) {
           batches.forEach((batch) => {
             batch.invalidated = true;
           });
@@ -297,8 +295,10 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       return;
     }
 
+    const panelSnapshots = [...new Set(batch.actions.flatMap((action) => action.replacesPanelState ?? []))];
     const action: DashboardEditActionEventPayload = {
       source: batch.source,
+      ...(panelSnapshots.length ? { replacesPanelState: panelSnapshots } : {}),
       ...(batch.actions.some((action) => action.replacesDashboardState) ? { replacesDashboardState: true } : {}),
       meta: batch.meta,
       description: batch.description,

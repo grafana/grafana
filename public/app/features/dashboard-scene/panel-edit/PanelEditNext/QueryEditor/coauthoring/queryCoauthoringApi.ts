@@ -1,9 +1,9 @@
 import { ProviderEvents } from '@openfeature/react-sdk';
-import { cloneDeep, isEqual } from 'lodash';
+import { cloneDeep } from 'lodash';
 
 import { generateUUID } from '@grafana/data';
 import { faro } from '@grafana/faro-web-sdk';
-import { reportInteraction } from '@grafana/runtime';
+import { reportInteraction, logError } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type VizPanel } from '@grafana/scenes';
 import { canFloatExtensionSidebar } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
@@ -12,8 +12,7 @@ import { getQueryRunnerFor } from '../../../../utils/getQueryRunnerFor';
 import { type PanelEditor } from '../../../PanelEditor';
 import { type PanelDataPaneNext } from '../../PanelDataPaneNext';
 
-import { QueryCoauthoringSessionEngine } from './QueryCoauthoringSessionEngine';
-import { resolveCoauthoringQuery, reportCoauthoringError } from './queryCoauthoringContext';
+import { type QueryCoauthoringSessionEngine } from './QueryCoauthoringSessionEngine';
 import {
   type QueryCoauthoringAPI,
   type QueryCoauthoringEntryRequest,
@@ -28,11 +27,14 @@ interface MountedPanel {
   target: Omit<QueryCoauthoringTarget, 'refId'>;
   pane: PanelDataPaneNext;
   supported: Set<string>;
+  getEngine: () => QueryCoauthoringSessionEngine;
   select: (refId: string) => void;
 }
 
 const enterListeners = new Set<(request: QueryCoauthoringEntryRequest) => void>();
-let pending: { request: QueryCoauthoringEntryRequest; panel: VizPanel; consumed: boolean } | undefined;
+let pending:
+  | { request: QueryCoauthoringEntryRequest; panel: VizPanel; owner: PanelEditor; consumed: boolean }
+  | undefined;
 let entryController: AbortController | undefined;
 
 const resumeListeners = new Set<(request: { sessionId: string }) => void>();
@@ -40,6 +42,7 @@ const subscribers = new Set<() => void>();
 let mounted: MountedPanel | undefined;
 let session: QueryCoauthoringSession | undefined;
 let sessionPanel: VizPanel | undefined;
+let sessionEngine: QueryCoauthoringSessionEngine | undefined;
 let focus: string | undefined;
 let state: QueryCoauthoringState | undefined;
 let stopSession: (() => void) | undefined;
@@ -60,7 +63,7 @@ export function subscribeCoauthoringFlags(listener: () => void) {
 export const getCoauthoringGeneration = () => generation;
 export function publishCoauthoring() {
   if (sessionPanel) {
-    QueryCoauthoringSessionEngine.get(sessionPanel)?.setSurfaceActive(isQueryCoauthoringSurfaceActive());
+    sessionEngine?.setSurfaceActive(isQueryCoauthoringSurfaceActive());
   }
   generation++;
   subscribers.forEach((listener) => listener());
@@ -203,12 +206,17 @@ export const queryCoauthoringApi: QueryCoauthoringAPI = {
       !entry ||
       entry.consumed ||
       entry.panel !== mounted.panel ||
+      entry.owner !== mounted.owner ||
       entry.request.entryId !== entryId ||
-      !isEqual(entry.request.target, target)
+      entry.request.target.panelId !== target.panelId ||
+      entry.request.target.refId !== target.refId ||
+      (target.dashboardUid !== undefined &&
+        entry.request.target.dashboardUid !== undefined &&
+        entry.request.target.dashboardUid !== target.dashboardUid)
     ) {
       throw new Error('Query coauthoring entry expired');
     }
-    const engine = QueryCoauthoringSessionEngine.getOrCreate(mounted.panel);
+    const engine = mounted.getEngine();
     if (
       entry.request.baseline.revision !== engine.getRevision() ||
       entry.request.baseline.contextGeneration !== engine.getContextGeneration()
@@ -228,7 +236,7 @@ async function requestEntry(request: Omit<QueryCoauthoringEntryRequest, 'entryId
   const controller = new AbortController();
   entryController = controller;
   pending = undefined;
-  const { panel, pane } = mounted;
+  const { panel, pane, owner } = mounted;
   const runner = getQueryRunnerFor(panel);
   const query = cloneDeep(pane.getCoauthoringEditorQueries()?.find((query) => query.refId === request.target.refId));
   if (!runner || !query) {
@@ -241,11 +249,26 @@ async function requestEntry(request: Omit<QueryCoauthoringEntryRequest, 'entryId
     requestCoauthoringResume(request.target.refId, source);
     return;
   }
-  const engine = QueryCoauthoringSessionEngine.getOrCreate(panel);
+  const engine = mounted.getEngine();
   const revision = engine.getRevision();
   const contextGeneration = engine.getContextGeneration();
   const click = cloneDeep(request);
   const entryId = generateUUID();
+  const resolver = await import('./queryCoauthoringContext').catch((error: unknown) => {
+    if (!controller.signal.aborted && mounted?.owner === owner && queryCoauthoringApi.canEnter(click.target).ok) {
+      logError(error instanceof Error ? error : new Error('Query coauthoring entry failed'), {
+        component: 'query-coauthoring',
+        phase: 'entry',
+      });
+    }
+  });
+  if (!resolver) {
+    return;
+  }
+  const { resolveCoauthoringQuery, reportCoauthoringError } = resolver;
+  if (controller.signal.aborted || mounted?.owner !== owner || !queryCoauthoringApi.canEnter(click.target).ok) {
+    return;
+  }
   const result = await resolveCoauthoringQuery(panel, query, cloneDeep(runner.state.datasource), controller.signal);
   let current = false;
   let validationFailure: { error: unknown } | undefined;
@@ -256,7 +279,10 @@ async function requestEntry(request: Omit<QueryCoauthoringEntryRequest, 'entryId
   }
   if (
     controller.signal.aborted ||
+    activeSession?.signal.aborted ||
     mounted?.panel !== panel ||
+    mounted.owner !== owner ||
+    !queryCoauthoringApi.canEnter(click.target).ok ||
     !availability().eligible ||
     !enterListeners.size ||
     revision !== engine.getRevision() ||
@@ -267,8 +293,9 @@ async function requestEntry(request: Omit<QueryCoauthoringEntryRequest, 'entryId
   if (!current) {
     if (validationFailure) {
       reportCoauthoringError(validationFailure.error, controller.signal, 'entry');
+    } else {
+      engine.invalidateContext();
     }
-    engine.invalidateContext();
     return;
   }
   const description = result.description;
@@ -283,7 +310,7 @@ async function requestEntry(request: Omit<QueryCoauthoringEntryRequest, 'entryId
       ...(description.status === 'ready' ? { status: 'ready', text: description.value.text } : description),
     },
   };
-  pending = { request: cloneDeep(next), panel, consumed: false };
+  pending = { request: cloneDeep(next), panel, owner, consumed: false };
   faro.api?.startUserAction('query_coauthoring', { sessionId: entryId });
   track('opened_popover', entryId, { source });
   enterListeners.forEach((listener) => listener(cloneDeep(next)));
@@ -307,6 +334,7 @@ function enterSession(target: QueryCoauthoringTarget, request: QueryCoauthoringE
   );
   stopSession?.();
   session = next;
+  sessionEngine = mounted.getEngine();
   sessionPanel = panel;
   focus = target.refId;
   let previous: QueryCoauthoringState | undefined;
@@ -337,8 +365,11 @@ function enterSession(target: QueryCoauthoringTarget, request: QueryCoauthoringE
     () => {
       stopSessionFlags();
       if (session === next) {
+        entryController?.abort();
+        pending = undefined;
         session = undefined;
         sessionPanel = undefined;
+        sessionEngine = undefined;
         state = undefined;
         focus = undefined;
         stopSession?.();

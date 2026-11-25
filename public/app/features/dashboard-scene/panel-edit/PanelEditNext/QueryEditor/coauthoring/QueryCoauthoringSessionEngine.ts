@@ -1,17 +1,12 @@
 import { cloneDeep, isEqual } from 'lodash';
 
 import { type DataQuery, type PanelData, generateUUID } from '@grafana/data';
-import {
-  sceneGraph,
-  SceneObjectStateChangedEvent,
-  type SceneObject,
-  type SceneQueryRunner,
-  type VizPanel,
-} from '@grafana/scenes';
+import { sceneGraph, type SceneQueryRunner, type VizPanel } from '@grafana/scenes';
 
 import { isDashboardSceneLike } from '../../../../scene/types/dashboard';
 import { CoauthoringQueriesAcceptedEvent } from '../../../../sidebar/events';
 import { getQueryRunnerFor } from '../../../../utils/getQueryRunnerFor';
+import { getPanelIdForVizPanel } from '../../../../utils/utils-panels';
 
 import { QueryCoauthoringRuns, type CoauthoringRunOption } from './QueryCoauthoringRuns';
 import { prepareCoauthoringProposal } from './prepareCoauthoringProposal';
@@ -21,6 +16,7 @@ import {
   resolveCoauthoringQuery,
   type ResolvedCoauthoringQuery,
   resolverInputs,
+  subscribeResolverInputs,
   reportCoauthoringError,
   sameResolverIdentity,
 } from './queryCoauthoringContext';
@@ -35,7 +31,7 @@ import {
   type QueryCoauthoringState,
 } from './queryCoauthoringContracts';
 import { expressionReferences } from './queryCoauthoringDependencies';
-import { classifyOptionOutcome, deriveQueryHealth } from './queryCoauthoringHealth';
+import { classifyOptionOutcome, deriveQueryHealth, scopedQueryData } from './queryCoauthoringHealth';
 import { classifyQueryResult } from './queryCoauthoringPreviewOutcome';
 import { isQueryPreviewData, setQueryPreviewBlocked, stopQueryPreview } from './queryPreview';
 
@@ -101,11 +97,7 @@ export class QueryCoauthoringSessionEngine {
         this.session?.publish();
       }
     });
-    let root: SceneObject = panel;
-    while (root.parent) {
-      root = root.parent;
-    }
-    const contextSubscription = root.subscribeToEvent(SceneObjectStateChangedEvent, () => {
+    const stopContext = subscribeResolverInputs(panel, () => {
       const previous = this.contextGeneration;
       this.getContextGeneration();
       if (previous !== this.contextGeneration) {
@@ -114,7 +106,7 @@ export class QueryCoauthoringSessionEngine {
     });
     this.unsubscribe = () => {
       subscription.unsubscribe();
-      contextSubscription.unsubscribe();
+      stopContext();
     };
   }
 
@@ -226,6 +218,7 @@ class Session implements QueryCoauthoringSession {
   private options: CoauthoringRunOption[] = [];
   private runs?: QueryCoauthoringRuns;
   private cache = new Map<string, PanelData>();
+  private preparedResolvers = new Map<string, CoauthoringResolverIdentity | undefined>();
   private beforeAccept?: DataQuery[];
   private acceptedRevision?: number;
   private staging = 0;
@@ -292,11 +285,7 @@ class Session implements QueryCoauthoringSession {
           option.warnings = [];
           delete option.error;
         }
-        if (
-          !this.state.stale &&
-          this.state.proposal &&
-          (this.state.step === 'review' || this.state.previewedOption !== 'original')
-        ) {
+        if (this.runsWanted()) {
           this.restartRuns();
         } else {
           this.publish();
@@ -342,9 +331,9 @@ class Session implements QueryCoauthoringSession {
     Object.fromEntries(
       this.runner.state.queries.map((query) => [
         query.refId,
-        [
-          ...new Set(expressionReferences({ ...query, datasource: query.datasource ?? this.runner.state.datasource })),
-        ].filter((id) => this.runner.state.queries.some((query) => query.refId === id)),
+        [...new Set(expressionReferences(query, this.runner.state.queries, this.runner.state.datasource))].filter(
+          (id) => this.runner.state.queries.some((query) => query.refId === id)
+        ),
       ])
     );
 
@@ -353,8 +342,8 @@ class Session implements QueryCoauthoringSession {
     const data = this.owner.getCanonicalData();
     const errors = [...(data?.errors ?? []), ...(data?.error ? [data.error] : [])];
     const unscoped = errors.filter((error) => !error.refId);
-    const scopedData = data && { ...data, error: undefined, errors: errors.filter((error) => error.refId) };
-    const health = deriveQueryHealth(state.queries, scopedData);
+    const scopedData = scopedQueryData(data);
+    const health = cloneDeep(this.owner.getHealth());
     const problems: QueryCoauthoringState['problems'] = unscoped.map((error) => ({
       scope: 'panel',
       kind: 'error',
@@ -513,7 +502,13 @@ class Session implements QueryCoauthoringSession {
         if (signal?.aborted) {
           return { status: 'aborted' };
         }
+        if (revision !== this.owner.getRevision() || contextGeneration !== this.owner.getContextGeneration()) {
+          return stale();
+        }
         this.owner.observeResolver(query.refId, resolved.identity);
+        if (contextGeneration !== this.owner.getContextGeneration()) {
+          return stale();
+        }
         try {
           const current = await resolved.current();
           if (this.signal.aborted) {
@@ -522,11 +517,23 @@ class Session implements QueryCoauthoringSession {
           if (signal?.aborted) {
             return { status: 'aborted' };
           }
+          if (revision !== this.owner.getRevision() || contextGeneration !== this.owner.getContextGeneration()) {
+            return stale();
+          }
           if (!current) {
             this.owner.invalidateContext();
             return stale();
           }
         } catch (error) {
+          if (this.signal.aborted) {
+            return { status: 'closed' };
+          }
+          if (signal?.aborted) {
+            return { status: 'aborted' };
+          }
+          if (revision !== this.owner.getRevision() || contextGeneration !== this.owner.getContextGeneration()) {
+            return stale();
+          }
           reportCoauthoringError(error, controller.signal, 'context_validation');
           contexts.push({
             refId: query.refId,
@@ -553,11 +560,23 @@ class Session implements QueryCoauthoringSession {
           if (signal?.aborted) {
             return { status: 'aborted' };
           }
+          if (revision !== this.owner.getRevision() || contextGeneration !== this.owner.getContextGeneration()) {
+            return stale();
+          }
           if (!current) {
             this.owner.invalidateContext();
             return stale();
           }
         } catch (error) {
+          if (this.signal.aborted) {
+            return { status: 'closed' };
+          }
+          if (signal?.aborted) {
+            return { status: 'aborted' };
+          }
+          if (revision !== this.owner.getRevision() || contextGeneration !== this.owner.getContextGeneration()) {
+            return stale();
+          }
           reportCoauthoringError(error, controller.signal, 'context_validation');
           const context = contexts.find((context) => context.refId === validator.refId)!;
           context.description = { status: 'failed', reason: 'datasource_resolution_failed' };
@@ -632,6 +651,10 @@ class Session implements QueryCoauthoringSession {
         if (controller.signal.aborted || generation !== this.staging) {
           return proposal.map((): QueryCoauthoringStageResult => fence() ?? { status: 'aborted' });
         }
+        const stopped = fence();
+        if (stopped) {
+          return proposal.map(() => stopped);
+        }
         this.owner.observeResolver(query.refId, resolved.identity);
         sources.push({ refId: query.refId, resolved });
         const obsolete = fence();
@@ -649,12 +672,12 @@ class Session implements QueryCoauthoringSession {
         signal: controller.signal,
         isCurrent: () => !controller.signal.aborted && !fence(),
         invalidateContext: () => {
-          if (!controller.signal.aborted) {
+          if (!controller.signal.aborted && generation === this.staging && !fence()) {
             this.owner.invalidateContext();
           }
         },
         observeResolver: (refId, identity) => {
-          if (!controller.signal.aborted) {
+          if (!controller.signal.aborted && generation === this.staging && !fence()) {
             this.owner.observeResolver(refId, identity);
           }
         },
@@ -673,13 +696,17 @@ class Session implements QueryCoauthoringSession {
           if (controller.signal.aborted || generation !== this.staging) {
             return proposal.map((): QueryCoauthoringStageResult => fence() ?? { status: 'aborted' });
           }
+          const stopped = fence();
+          if (stopped) {
+            return proposal.map(() => stopped);
+          }
           if (!current) {
             this.owner.invalidateContext();
             break;
           }
         } catch (error) {
           reportCoauthoringError(error, controller.signal, 'staging_validation');
-          if (!controller.signal.aborted) {
+          if (!controller.signal.aborted && generation === this.staging && !fence()) {
             this.owner.invalidateContext();
           }
           break;
@@ -696,6 +723,7 @@ class Session implements QueryCoauthoringSession {
       this.original = baseline;
       this.originalDatasource = datasource;
       this.options = options;
+      this.preparedResolvers = new Map(sources.map(({ refId, resolved }) => [refId, resolved.identity]));
       this.state.proposal = results.flatMap((result) =>
         result.status === 'staged' ? [{ id: result.id, diffs: result.diffs, previewOutcome: null, warnings: [] }] : []
       );
@@ -717,7 +745,7 @@ class Session implements QueryCoauthoringSession {
     this.surfaceActive = active;
     if (active) {
       setQueryPreviewBlocked(this.panel, true);
-      if (!this.state.stale) {
+      if (this.runsWanted()) {
         this.restartRuns();
       }
     } else {
@@ -733,12 +761,21 @@ class Session implements QueryCoauthoringSession {
     this.runs = undefined;
   }
 
+  private runsWanted(): boolean {
+    return (
+      this.surfaceActive &&
+      !this.state.stale &&
+      !!this.state.proposal &&
+      (this.state.step === 'review' || this.state.previewedOption !== 'original')
+    );
+  }
+
   private restartRuns(resetCache = false): void {
     this.stopRuns();
     if (resetCache) {
       this.cache.clear();
     }
-    if (!this.surfaceActive || !this.options.length || this.signal.aborted) {
+    if (!this.runsWanted() || !this.options.length || this.signal.aborted) {
       return;
     }
     for (const option of this.state.proposal ?? []) {
@@ -762,7 +799,8 @@ class Session implements QueryCoauthoringSession {
           const outcome = classifyOptionOutcome(
             data,
             queries,
-            option.diffs.map((diff) => diff.refId)
+            option.diffs.map((diff) => diff.refId),
+            this.runner.state.datasource
           );
           option.previewOutcome = outcome.kind;
           option.warnings = outcome.warnings ?? [];
@@ -791,7 +829,9 @@ class Session implements QueryCoauthoringSession {
       this.publish();
       return { ok: true };
     }
-    if (!this.runs && optionId !== 'original') {
+    if (!this.runsWanted()) {
+      this.stopRuns();
+    } else if (!this.runs) {
       this.restartRuns();
     } else {
       this.runs?.select(optionId);
@@ -828,23 +868,109 @@ class Session implements QueryCoauthoringSession {
     if (this.state.proposal?.find((option) => option.id === optionId)?.previewOutcome === 'error') {
       return { status: 'blocked' };
     }
-    this.staging++;
-    this.stageController?.abort();
-    this.stopRuns();
-    if (this.signal.aborted) {
-      return { status: 'closed' };
+    const generation = this.staging;
+    const contextGeneration = this.owner.getContextGeneration();
+    const selected = this.state.previewedOption;
+    const changed = new Set(this.state.proposal?.find((item) => item.id === optionId)?.diffs.map((diff) => diff.refId));
+    const fence = (): QueryCoauthoringApplyResult | undefined => {
+      if (this.signal.aborted) {
+        return { status: 'closed' };
+      }
+      if (signal?.aborted) {
+        return { status: 'aborted' };
+      }
+      if (
+        this.state.stale ||
+        generation !== this.staging ||
+        contextGeneration !== this.owner.getContextGeneration() ||
+        baseRevision !== this.owner.getRevision() ||
+        this.state.step !== 'review' ||
+        this.state.previewedOption !== selected ||
+        this.options.find((item) => item.id === optionId) !== option ||
+        !isEqual(this.runner.state.queries, this.original) ||
+        !isEqual(this.runner.state.datasource, this.originalDatasource)
+      ) {
+        return { status: 'stale' };
+      }
+      if (this.state.proposal?.find((item) => item.id === optionId)?.previewOutcome === 'error') {
+        return { status: 'blocked' };
+      }
+      return undefined;
+    };
+    const controller = new AbortController();
+    const abort = () => controller.abort();
+    signal?.addEventListener('abort', abort, { once: true });
+    this.signal.addEventListener('abort', abort, { once: true });
+    try {
+      // Compare effective datasource policy, not the staged time-range generation.
+      for (const query of this.original) {
+        let resolved: ResolvedCoauthoringQuery;
+        try {
+          resolved = await resolveCoauthoringQuery(
+            this.panel,
+            query,
+            this.originalDatasource,
+            controller.signal,
+            false
+          );
+        } catch (error) {
+          reportCoauthoringError(error, controller.signal, 'accept_validation');
+          return fence() ?? { status: 'blocked' };
+        }
+        const stopped = fence();
+        if (stopped) {
+          return stopped;
+        }
+        if (
+          !sameResolverIdentity(this.preparedResolvers.get(query.refId), resolved.identity) ||
+          (changed.has(query.refId) && resolved.editability.kind !== 'editable')
+        ) {
+          this.canonicalChanged();
+          this.cache.clear();
+          this.publish();
+          return { status: 'stale' };
+        }
+      }
+      const stopped = fence();
+      if (stopped) {
+        return stopped;
+      }
+      this.stageController?.abort();
+      this.stopRuns();
+      const afterRestore = fence();
+      if (afterRestore) {
+        if (
+          !this.signal.aborted &&
+          this.state.step === 'review' &&
+          generation === this.staging &&
+          baseRevision === this.owner.getRevision() &&
+          this.state.previewedOption === selected &&
+          this.options.find((item) => item.id === optionId) === option
+        ) {
+          this.state.previewedOption = 'original';
+          if (this.runsWanted()) {
+            this.restartRuns();
+          }
+          this.publish();
+        }
+        return afterRestore;
+      }
+      this.staging++;
+      this.beforeAccept = cloneDeep(this.runner.state.queries);
+      this.state.step = 'apply';
+      this.state.previewedOption = 'original';
+      this.owner.commit(option.queries);
+      this.panel.publishEvent(
+        new CoauthoringQueriesAcceptedEvent({ panelId: getPanelIdForVizPanel(this.panel) }),
+        true
+      );
+      this.acceptedRevision = this.owner.getRevision();
+      this.publish();
+      return { status: 'applied', revision: this.owner.getRevision() };
+    } finally {
+      signal?.removeEventListener('abort', abort);
+      this.signal.removeEventListener('abort', abort);
     }
-    if (signal?.aborted) {
-      return { status: 'aborted' };
-    }
-    this.beforeAccept = cloneDeep(this.runner.state.queries);
-    this.state.step = 'apply';
-    this.state.previewedOption = 'original';
-    this.owner.commit(option.queries);
-    this.panel.publishEvent(new CoauthoringQueriesAcceptedEvent(), true);
-    this.acceptedRevision = this.owner.getRevision();
-    this.publish();
-    return { status: 'applied', revision: this.owner.getRevision() };
   };
 
   public undo = async ({ signal }: { signal?: AbortSignal }): Promise<QueryCoauthoringApplyResult> => {

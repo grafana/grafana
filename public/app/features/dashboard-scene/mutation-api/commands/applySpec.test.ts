@@ -859,9 +859,21 @@ describe('coauthoring Accept and Assistant checkpoint history', () => {
         } else {
           Object.defineProperty(navigator, 'userActivation', { configurable: true, value: { isActive: false } });
         }
+        edit({
+          source: scene,
+          meta: { actionId: 'dashboard.changeDescription' },
+          perform: () => scene.setState({ description: 'unrelated draft' }),
+          undo: () => scene.setState({ description: 'original description' }),
+        });
+        scene.state.sidebar.undoLastAction();
+        const undoBefore = scene.state.sidebar.state.undoStack;
+        const redoBefore = scene.state.sidebar.state.redoStack;
+        expect(redoBefore.map((action) => action.meta.actionId)).toEqual(['dashboard.changeDescription']);
         expect(await session.accept(result.id, { baseRevision: session.getState().revision })).toEqual({
           status: mode === 'blocked' ? 'blocked' : 'no_user_activation',
         });
+        expect(scene.state.sidebar.state.undoStack).toBe(undoBefore);
+        expect(scene.state.sidebar.state.redoStack).toBe(redoBefore);
         expect((await getLastActionCommand.handler({}, { scene })).data).toMatchObject({ action: { batchId } });
         expect(runner.state.queries[0]).toMatchObject({ expression: '1' });
         return;

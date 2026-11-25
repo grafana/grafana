@@ -9,7 +9,14 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { faro } from '@grafana/faro-web-sdk';
 import { config, logError, reportInteraction, setRunRequest } from '@grafana/runtime';
 import { FlagKeys, setExpressionDataSourceInstance } from '@grafana/runtime/internal';
-import { SceneQueryRunner, SceneTimeRange, VizPanel, SceneGridLayout } from '@grafana/scenes';
+import {
+  SceneQueryRunner,
+  SceneTimeRange,
+  VizPanel,
+  SceneGridLayout,
+  ConstantVariable,
+  SceneVariableSet,
+} from '@grafana/scenes';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import {
   notifyExtensionSidebarClosed,
@@ -34,6 +41,8 @@ import { QueryCard } from '../Sidebar/Cards/QueryCard';
 import { ds1SettingsMock } from '../testUtils';
 
 import { QueryCoauthoringCard } from './QueryCoauthoringCard';
+import { QueryCoauthoringSessionEngine } from './QueryCoauthoringSessionEngine';
+import * as previewRunner from './previewRunner';
 import { getCoauthoringSurface, requestCoauthoringEntry } from './queryCoauthoringApi';
 import * as contextResolver from './queryCoauthoringContext';
 import {
@@ -927,7 +936,7 @@ it('keeps the first editor callback current across Surface preview and counts on
 it('retains supported rows during asynchronous refresh and atomically replaces resolved support', async () => {
   const { canonical, datasource } = setup();
   await waitFor(() => expect(api().canEnter(target)).toEqual({ ok: true }));
-  let finish!: (datasource: ReturnType<typeof getMockDataSource>) => void;
+  let finish: ((datasource: ReturnType<typeof getMockDataSource>) => void) | undefined;
   act(() => {
     selection = true;
     notifySelection();
@@ -942,10 +951,15 @@ it('retains supported rows during asynchronous refresh and atomically replaces r
     )
     .mockResolvedValue(datasource);
   act(() => canonical.setState({ queries: [{ ...original[0], expression: 'changed' }, original[1]] }));
+  await waitFor(() => expect(finish).toEqual(expect.any(Function)));
   expect(api().canEnter(target)).toEqual({ ok: true });
   expect(screen.getByRole('button', { name: 'Explain or modify query B' })).toBeInTheDocument();
+  const complete = finish;
+  if (!complete) {
+    throw new Error('Expected pending support lookup');
+  }
   await act(async () => {
-    finish(getMockDataSource());
+    complete(getMockDataSource());
   });
   await waitFor(() => expect(screen.queryByRole('button', { name: 'Explain or modify' })).not.toBeInTheDocument());
   expect(api().canEnter(target)).toEqual({ ok: true });
@@ -1249,4 +1263,205 @@ it('shows the explicitly selected proposed row after Resume while retaining the 
   await waitFor(() => expect(screen.getByRole('textbox', { name: 'Query text' })).toHaveValue('3'));
   expect(getCoauthoringSurface()?.focus).toBe('A');
   expect(session.signal.aborted).toBe(false);
+});
+
+it('reads pre-entry health without copying frames or constructing a session owner', async () => {
+  const copy = jest.spyOn(previewRunner, 'copyPanelData');
+  const { canonical, panel, pane } = setup(false);
+  await waitFor(() => expect(getCoauthoringSurface()?.supported.has('A')).toBe(true));
+  expect(pane.getCoauthoringHealth().A).toBe('ok');
+  expect(QueryCoauthoringSessionEngine.get(panel)).toBeUndefined();
+  expect(copy).not.toHaveBeenCalled();
+  const data = canonical.state.data;
+  if (!data) {
+    throw new Error('Expected canonical data');
+  }
+  act(() => canonical.setState({ data: { ...data, series: [...data.series] } }));
+  expect(pane.getCoauthoringHealth().A).toBe('ok');
+  expect(copy).not.toHaveBeenCalled();
+});
+
+it('accepts an entry target with its optional dashboard UID omitted', async () => {
+  const { entry } = setup();
+  await act(async () => fireEvent.click(screen.getByText('Shortcut')));
+  await waitFor(() => expect(entry).toHaveBeenCalledTimes(1));
+  const request = entry.mock.calls[0][0];
+  const target = { panelId: request.target.panelId, refId: request.target.refId };
+  let received: unknown;
+  await act(async () => {
+    received = await api().enter(target, { entryId: request.entryId });
+  });
+  if (!isQueryCoauthoringSession(received)) {
+    throw new Error('Expected entry session');
+  }
+  const session = received;
+  expect(session.getState().sessionId).toBe(request.entryId);
+  await expect(api().enter(target, { entryId: request.entryId })).rejects.toThrow('expired');
+});
+
+it('fences departed owners before delivering delayed entry or click telemetry', async () => {
+  const { entry, leavePanelEdit } = setup();
+  const resolve = contextResolver.resolveCoauthoringQuery;
+  let finish: ((value: boolean) => void) | undefined;
+  jest.spyOn(contextResolver, 'resolveCoauthoringQuery').mockImplementationOnce(async (...args) => ({
+    ...(await resolve(...args)),
+    current: () =>
+      new Promise((done) => {
+        finish = done;
+      }),
+  }));
+  fireEvent.click(screen.getByText('Shortcut'));
+  await waitFor(() => expect(finish).toBeDefined());
+  act(() => leavePanelEdit());
+  if (!finish) {
+    throw new Error('Expected pending entry validation');
+  }
+  await act(async () => finish?.(true));
+  expect(entry).not.toHaveBeenCalled();
+  expect(faro.api.startUserAction).not.toHaveBeenCalled();
+  expect(reportInteraction).not.toHaveBeenCalledWith('grafana_query_coauthoring_opened_popover', expect.anything());
+});
+
+it('does not invalidate a retained session over a transient entry validation failure', async () => {
+  setup();
+  const session = await enter();
+  const before = session.getState();
+  const resolve = contextResolver.resolveCoauthoringQuery;
+  jest.spyOn(contextResolver, 'resolveCoauthoringQuery').mockImplementationOnce(async (...args) => ({
+    ...(await resolve(...args)),
+    current: async () => {
+      throw new Error('Transient mock entry failure');
+    },
+  }));
+  await act(async () => {
+    fireEvent.click(screen.getByText('Shortcut'));
+  });
+  await waitFor(() => expect(logError).toHaveBeenCalled());
+  expect(session.getState()).toMatchObject({
+    sessionId: before.sessionId,
+    revision: before.revision,
+    contextGeneration: before.contextGeneration,
+    stale: false,
+  });
+});
+
+it('rescans inherited raw datasource refs after panel-scoped variables change', async () => {
+  const { panel, canonical, datasource } = setup();
+  const variable = new ConstantVariable({ name: 'source', value: 'supported' });
+  act(() => {
+    panel.setState({ $variables: new SceneVariableSet({ variables: [variable] }) });
+    canonical.setState({
+      datasource: { uid: '${source}' },
+      queries: original.map(({ datasource, ...query }) => query),
+    });
+  });
+  await waitFor(() => expect(getCoauthoringSurface()?.supported.has('B')).toBe(true));
+  mockGetDataSource.mockResolvedValue(getMockDataSource());
+  act(() => variable.setState({ value: 'unsupported' }));
+  await waitFor(() => expect(getCoauthoringSurface()?.supported.has('B')).toBe(false));
+  mockGetDataSource.mockResolvedValue(datasource);
+  act(() => variable.setState({ value: 'supported' }));
+  await waitFor(() => expect(getCoauthoringSurface()?.supported.has('B')).toBe(true));
+  expect(mockGetDataSource).toHaveBeenLastCalledWith(
+    { uid: '${source}' },
+    expect.objectContaining({ __sceneObject: expect.anything() })
+  );
+});
+
+it('keeps pre-entry canonical health while inline preview projects different results without creating an owner', async () => {
+  const { canonical, pane, panel } = setup(false);
+  await waitFor(() => expect(getCoauthoringSurface()?.supported.has('A')).toBe(true));
+  expect(pane.getCoauthoringHealth()).toMatchObject({ A: 'ok', B: 'ok' });
+  setRunRequest((_ds, request) =>
+    of({
+      state: LoadingState.Error,
+      request,
+      series: [],
+      timeRange: new SceneTimeRange().state.value,
+      errors: [{ refId: 'A', message: 'Inline-only failure' }],
+    })
+  );
+  let preview: ReturnType<typeof pane.startQueryPreview>;
+  const proposed = { ...original[0], expression: '2' };
+  act(() => {
+    preview = pane.startQueryPreview('A', proposed);
+  });
+  await waitFor(() => expect(canonical.state.data?.errors?.[0].message).toBe('Inline-only failure'));
+  expect(QueryCoauthoringSessionEngine.get(panel)).toBeUndefined();
+  expect(pane.getCoauthoringHealth()).toMatchObject({ A: 'ok', B: 'ok' });
+  expect(pane.getCoauthoringQueryError('A')).toBeUndefined();
+  act(() => preview?.dispose());
+  expect(pane.getCoauthoringHealth()).toMatchObject({ A: 'ok', B: 'ok' });
+});
+
+it('keeps a legacy SQL query row entry available without requiring an editor host', async () => {
+  const { canonical } = setupCards();
+  const entry = jest.fn();
+  act(() => {
+    unlisten.push(api().onEnterRequested(entry));
+  });
+  act(() =>
+    canonical.setState({
+      queries: [{ ...original[0], type: ExpressionQueryType.sql, expression: 'SELECT * FROM B' }, original[1]],
+    })
+  );
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Explain or modify query A' }));
+  });
+  await waitFor(() => expect(entry).toHaveBeenCalledTimes(1));
+  expect(entry.mock.calls[0][0]).toMatchObject({ target: { refId: 'A' }, baseline: { text: 'SELECT * FROM B' } });
+});
+
+it('refreshes lightweight health once a session owner has been disposed', async () => {
+  const { pane, panel, canonical } = setup();
+  await waitFor(() => expect(pane.getCoauthoringHealth().A).toBe('ok'));
+  const session = await enter();
+  act(() =>
+    canonical.setState({ data: { state: LoadingState.Done, series: [], timeRange: new SceneTimeRange().state.value } })
+  );
+  expect(pane.getCoauthoringHealth().A).toBe('no-data');
+  act(() => QueryCoauthoringSessionEngine.get(panel)?.dispose());
+  expect(session.signal.aborted).toBe(true);
+  expect(pane.getCoauthoringHealth().A).toBe('no-data');
+});
+
+it.each(['validation', 'delivered'] as const)('Exit cancels a pending replacement entry after %s', async (phase) => {
+  const { entry } = setup();
+  const session = await enter();
+  entry.mockClear();
+  jest.mocked(faro.api.startUserAction).mockClear();
+  jest.mocked(reportInteraction).mockClear();
+  let finish: ((value: boolean) => void) | undefined;
+  if (phase === 'validation') {
+    const resolve = contextResolver.resolveCoauthoringQuery;
+    jest.spyOn(contextResolver, 'resolveCoauthoringQuery').mockImplementationOnce(async (...args) => ({
+      ...(await resolve(...args)),
+      current: () =>
+        new Promise((done) => {
+          finish = done;
+        }),
+    }));
+  }
+  await act(async () => {
+    fireEvent.click(screen.getByText('Shortcut'));
+  });
+  if (phase === 'validation') {
+    await waitFor(() => expect(finish).toBeDefined());
+  } else {
+    await waitFor(() => expect(entry).toHaveBeenCalledTimes(1));
+  }
+  const request = entry.mock.calls[0]?.[0];
+  act(() => session.exit());
+  if (phase === 'validation') {
+    const complete = finish;
+    if (!complete) {
+      throw new Error('Expected pending validation');
+    }
+    await act(async () => complete(true));
+    expect(entry).not.toHaveBeenCalled();
+    expect(faro.api.startUserAction).not.toHaveBeenCalled();
+  } else {
+    await expect(api().enter(request.target, { entryId: request.entryId })).rejects.toThrow('expired');
+  }
+  expect(session.signal.aborted).toBe(true);
 });

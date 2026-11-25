@@ -176,13 +176,21 @@ describe('restricted query coauthoring API', () => {
     const { result } = renderRestrictedApis('grafana-assistant-app');
     const delivered = (result.current as RestrictedGrafanaApisWithQueryCoauthoring).queryCoauthoring;
     expect(isQueryCoauthoringAPI(delivered)).toBe(true);
-    act(() => setTestFlags({ 'queryeditor.coauthoringUi': true }));
+    act(() =>
+      setTestFlags({
+        'queryeditor.coauthoringUi': true,
+        'grafana.visualDesignRefresh': true,
+        'grafana.extensionSidebarFloating': true,
+      })
+    );
     await waitFor(() =>
       expect(
         isQueryCoauthoringAPI((result.current as RestrictedGrafanaApisWithQueryCoauthoring).queryCoauthoring)
       ).toBe(true)
     );
     const api = (result.current as RestrictedGrafanaApisWithQueryCoauthoring).queryCoauthoring!;
+    expect(api).toBe(delivered);
+    expect(api.getAvailability()).toEqual({ eligible: true });
     expect(api.canEnter({ panelId: 1, refId: 'A' })).toEqual({ ok: false, reason: 'not_in_panel_edit' });
     act(() => setTestFlags({ 'queryeditor.coauthoringUi': false }));
     expect((result.current as RestrictedGrafanaApisWithQueryCoauthoring).queryCoauthoring).toBe(delivered);
@@ -219,32 +227,35 @@ it('discovers coauthoring availability before any UI, panel, session or entry li
     .queryCoauthoring!;
   const values: boolean[] = [];
   const stop = api.subscribeAvailability(({ eligible }) => values.push(eligible));
-  expect(api.getAvailability()).toEqual({ eligible: false });
-  act(() =>
-    setTestFlags({
-      'queryeditor.coauthoringUi': true,
-      'grafana.visualDesignRefresh': true,
-      'grafana.extensionSidebarFloating': true,
-    })
-  );
-  expect(api.getAvailability()).toEqual({ eligible: true });
-  act(() =>
-    setTestFlags({
-      'queryeditor.coauthoringUi': true,
-      'grafana.visualDesignRefresh': true,
-      'grafana.extensionSidebarFloating': false,
-    })
-  );
-  act(() =>
-    setTestFlags({
-      'queryeditor.coauthoringUi': true,
-      'grafana.visualDesignRefresh': true,
-      'grafana.extensionSidebarFloating': true,
-    })
-  );
-  expect(values).toEqual([false, true, false, true]);
-  expect(api.canEnter({ panelId: 1, refId: 'A' })).toEqual({ ok: false, reason: 'not_in_panel_edit' });
-  stop();
-  setTestFlags({});
-  jest.restoreAllMocks();
+  try {
+    expect(api.getAvailability()).toEqual({ eligible: false });
+    act(() =>
+      setTestFlags({
+        'queryeditor.coauthoringUi': true,
+        'grafana.visualDesignRefresh': true,
+        'grafana.extensionSidebarFloating': true,
+      })
+    );
+    expect(api.getAvailability()).toEqual({ eligible: true });
+    act(() =>
+      setTestFlags({
+        'queryeditor.coauthoringUi': true,
+        'grafana.visualDesignRefresh': true,
+        'grafana.extensionSidebarFloating': false,
+      })
+    );
+    act(() =>
+      setTestFlags({
+        'queryeditor.coauthoringUi': true,
+        'grafana.visualDesignRefresh': true,
+        'grafana.extensionSidebarFloating': true,
+      })
+    );
+    expect(values).toEqual([false, true, false, true]);
+    expect(api.canEnter({ panelId: 1, refId: 'A' })).toEqual({ ok: false, reason: 'not_in_panel_edit' });
+  } finally {
+    stop();
+    setTestFlags({});
+    jest.restoreAllMocks();
+  }
 });

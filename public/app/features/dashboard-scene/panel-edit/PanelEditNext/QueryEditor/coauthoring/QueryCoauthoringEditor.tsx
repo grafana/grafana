@@ -5,6 +5,8 @@ import { type DataQuery } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Portal, Stack } from '@grafana/ui';
 
+import { getQueryRunnerFor } from '../../../../utils/getQueryRunnerFor';
+
 import {
   getCoauthoringSurface,
   isQueryCoauthoringSurfaceActive,
@@ -136,10 +138,19 @@ export function useCoauthoringEditor(query: DataQuery | null, queries: DataQuery
       window.removeEventListener('resize', update);
     };
   }, [anchor]);
-  const broken = refId && surface && isQueryBroken(refId, queries, surface.pane.getCoauthoringHealth());
+  const broken =
+    refId &&
+    surface &&
+    isQueryBroken(
+      refId,
+      queries,
+      surface.pane.getCoauthoringHealth(),
+      getQueryRunnerFor(surface.panel)?.state.datasource
+    );
   const supported = refId && surface?.supported.has(refId);
+  const toolbarVisible = !!(active && supported && rect && selection?.ranges.some((range) => range.to > range.from));
   const toolbar =
-    active && supported && rect && selection?.ranges.some((range) => range.to > range.from) ? (
+    toolbarVisible && rect ? (
       <Portal>
         <div
           role="toolbar"

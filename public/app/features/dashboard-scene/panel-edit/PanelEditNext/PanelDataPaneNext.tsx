@@ -4,6 +4,7 @@ import {
   CoreApp,
   type DataSourceApi,
   type DataSourceInstanceSettings,
+  type PanelData,
   type DataTransformerConfig,
   getDataSourceRef,
   getNextRefId,
@@ -47,7 +48,9 @@ import {
   type QueryCoauthoringRange,
   type QueryCoauthoringSession,
 } from './QueryEditor/coauthoring/queryCoauthoringContracts';
-import { startQueryPreview, type QueryPreview } from './QueryEditor/coauthoring/queryPreview';
+import { deriveQueryHealth, scopedQueryData } from './QueryEditor/coauthoring/queryCoauthoringHealth';
+import { classifyQueryResult } from './QueryEditor/coauthoring/queryCoauthoringPreviewOutcome';
+import { isQueryPreviewData, startQueryPreview, type QueryPreview } from './QueryEditor/coauthoring/queryPreview';
 import { filterDataTransformerConfigs, getPanelScopedVars } from './QueryEditor/utils';
 import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from './constants';
 
@@ -433,11 +436,69 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     );
   };
 
-  public getCoauthoringHealth = () => {
-    return QueryCoauthoringSessionEngine.getOrCreate(this.state.panelRef.resolve()).getHealth();
+  private hadCoauthoringOwner = false;
+  private canonicalHealth: ReturnType<typeof deriveQueryHealth> = {};
+  private canonicalErrors: Record<string, string | undefined> = {};
+
+  private captureCoauthoringHealth = () => {
+    const panel = this.state.panelRef.resolve();
+    const runner = getQueryRunnerFor(panel);
+    if (!runner || this.coauthoring || isQueryPreviewData(panel, runner.state.data)) {
+      return;
+    }
+    this.canonicalHealth = deriveQueryHealth(runner.state.queries, runner.state.data);
+    this.canonicalErrors = this.queryErrors(runner.state.queries, runner.state.data);
   };
 
-  public getCoauthoringEditorQueries = (): DataQuery[] | undefined => this.coauthoring?.getEditorQueries();
+  private queryErrors(queries: DataQuery[], data: PanelData | undefined) {
+    const scoped = scopedQueryData(data);
+    return Object.fromEntries(
+      queries.map((query) => {
+        const outcome = classifyQueryResult(scoped, query.refId);
+        return [query.refId, outcome.kind === 'error' ? outcome.message : undefined];
+      })
+    );
+  }
+
+  public observeCoauthoringHealth = () => {
+    this.captureCoauthoringHealth();
+    const runner = getQueryRunnerFor(this.state.panelRef.resolve());
+    const subscription = runner?.subscribeToState((state, previous) => {
+      if (
+        state.data !== previous.data ||
+        state.queries !== previous.queries ||
+        state.datasource !== previous.datasource
+      ) {
+        this.captureCoauthoringHealth();
+      }
+    });
+    return () => subscription?.unsubscribe();
+  };
+
+  public getCoauthoringHealth = () => {
+    const owner = this.coauthoring;
+    if (owner) {
+      this.hadCoauthoringOwner = true;
+      return owner.getHealth();
+    }
+    if (this.hadCoauthoringOwner) {
+      this.hadCoauthoringOwner = false;
+      this.captureCoauthoringHealth();
+    }
+    return this.canonicalHealth;
+  };
+
+  public getCoauthoringQueryError = (refId: string) => {
+    this.getCoauthoringHealth();
+    if (this.coauthoring) {
+      const runner = getQueryRunnerFor(this.state.panelRef.resolve());
+      return this.queryErrors(runner?.state.queries ?? [], this.coauthoring.getCanonicalData())[refId];
+    }
+    return this.canonicalErrors[refId];
+  };
+
+  public getCoauthoringEditorQueries = (): DataQuery[] | undefined =>
+    this.coauthoring?.getEditorQueries() ?? getQueryRunnerFor(this.state.panelRef.resolve())?.state.queries;
 
   public closeCoauthoringSession = (reason: QueryCoauthoringClosedReason) => this.coauthoring?.close(reason);
 
