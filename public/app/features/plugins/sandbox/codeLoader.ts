@@ -2,7 +2,7 @@ import { PluginType, patchArrayVectorProrotypeMethods } from '@grafana/data';
 import { getAppPluginMetas, getDatasourcePluginMeta, getPanelPluginMetas } from '@grafana/runtime/internal';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
-import { resolvePluginUrlWithCache } from '../loader/pluginInfoCache';
+import { resolvePluginUrlWithBuildHash } from '../loader/pluginInfoCache';
 import { isHostedOnCDN, resolveModulePath } from '../loader/utils';
 
 import { type SandboxEnvironment, type SandboxPluginMeta } from './types';
@@ -67,9 +67,10 @@ export async function getPluginCode(meta: SandboxPluginMeta): Promise<string> {
     return pluginCode;
   } else {
     let modulePath = resolveModulePath(meta.module);
-    // resolvePluginUrlWithCache will append a query parameter with its version
-    // to ensure correct cached version is served for local plugins
-    const pluginCodeUrl = resolvePluginUrlWithCache(modulePath);
+    // Pin the module to the plugin's build-addressed path, as the SystemJS loader
+    // does, so a sandboxed plugin also loads one coherent build. Without a known
+    // buildHash this falls back to the versioned ?_cache= query parameter.
+    const pluginCodeUrl = resolvePluginUrlWithBuildHash(modulePath);
     const response = await fetch(pluginCodeUrl);
 
     let pluginCode = await response.text();
