@@ -9,6 +9,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 
@@ -54,6 +55,8 @@ type PluginContextWrapper interface {
 
 type Options struct {
 	RegisterProxy bool
+	// ReadOnly disables settings writes and watches without changing storage selection.
+	ReadOnly bool
 
 	DataProxyLogging         bool // from cfg
 	SendUserHeader           bool // from cfg
@@ -76,8 +79,7 @@ type Builder struct {
 	contextProvider PluginContextWrapper
 	schemas         map[string]*pluginschema.PluginSchema
 	decrypter       decrypt.DecryptService
-	accessChecker   pluginaccesscontrol.AppAccessChecker
-	writeChecker    pluginaccesscontrol.AppAccessChecker
+	authorizer      authorizer.Authorizer
 	features        featuremgmt.FeatureToggles
 	tracer          tracing.Tracer
 
@@ -107,10 +109,6 @@ func NewBuilder(
 	if client == nil || contextProvider == nil {
 		return nil, fmt.Errorf("plugin %q: settings require a plugin client and context provider", plugin.JSONData.ID)
 	}
-	var writeChecker pluginaccesscontrol.AppAccessChecker
-	if opts.AccessControl != nil {
-		writeChecker = pluginaccesscontrol.NewSettingsWriteChecker(opts.AccessControl)
-	}
 	return &Builder{
 		group:           plugin.JSONData.ID,
 		pluginJSON:      plugin.JSONData,
@@ -119,8 +117,7 @@ func NewBuilder(
 		contextProvider: contextProvider,
 		schemas:         plugin.Schemas,
 		decrypter:       decrypter,
-		accessChecker:   accessChecker,
-		writeChecker:    writeChecker,
+		authorizer:      newSettingsAuthorizer(plugin.JSONData.ID, accessChecker, opts),
 		opts:            opts,
 		features:        features,
 		tracer:          tracer,
@@ -165,7 +162,6 @@ func (b *Builder) InstallSchema(scheme *runtime.Scheme) error {
 
 func (b *Builder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	registerSubresourceMetrics(opts.MetricsRegister)
-
 	settingsRI := apppluginV0.SettingsResourceInfo.WithGroupAndShortName(
 		b.group, b.pluginJSON.ID,
 	)
@@ -189,36 +185,32 @@ func (b *Builder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo
 	if err != nil {
 		return err
 	}
-	var settingsStorage rest.Storage = unified
+	var settingsStorage grafanarest.Storage = unified
 	if b.opts.LegacyStore != nil && opts.DualWriteBuilder != nil {
 		settingsStorage, err = opts.DualWriteBuilder(settingsRI.GroupResource(), b.opts.LegacyStore, unified)
 		if err != nil {
 			return err
 		}
 	}
-
 	// The subresources are served by SubresourceHandler.
+	served := rest.Storage(settingsStorage)
+	if b.opts.ReadOnly {
+		served = readOnlyStorage{settingsStorage}
+	}
 	apiGroupInfo.VersionedResourcesStorageMap[apppluginV0.VERSION] = map[string]rest.Storage{
-		settingsRI.StoragePath(): settingsStorage,
+		settingsRI.StoragePath(): served,
 	}
 
 	// Direct reads of this plugin's own storage, by group version resource.
 	b.getter = func(ctx context.Context, gvr schema.GroupVersionResource, name string) (runtime.Object, error) {
 		if gvr.Resource == apppluginV0.APP_RESOURCE_NAME {
-			return settingsStorage.(rest.Getter).Get(ctx, name, &v1.GetOptions{})
+			return settingsStorage.Get(ctx, name, &v1.GetOptions{})
 		}
 
 		return nil, apierrors.NewInternalError(fmt.Errorf("no storage registered for %s", gvr))
 	}
 	return nil
 }
-
-// appPluginSettingsWildcard is a config key that applies to all app plugin settings
-// resources when no plugin-specific override exists. Configure it as:
-//
-//	[unified_storage.app.*-app]
-//	dualWriterMode = 1 // or 5
-const appPluginSettingsWildcard = "app.*-app"
 
 // applyDefaultStorageConfig injects a wildcard unified storage config entry for this
 // plugin's settings resource if no plugin-specific config exists. This allows operators
@@ -245,7 +237,7 @@ func applyDefaultSettingsStorageConfig(cfg map[string]setting.UnifiedStorageConf
 	if _, exists := cfg[key]; exists {
 		return
 	}
-	fallback, hasFallback := cfg[appPluginSettingsWildcard]
+	fallback, hasFallback := cfg[setting.AppPluginSettingsWildcard]
 	if !hasFallback {
 		return
 	}

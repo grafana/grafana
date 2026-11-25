@@ -114,9 +114,6 @@ func (r *proxyHandler) forward(w http.ResponseWriter, req *http.Request, routes 
 		return
 	}
 
-	// The derive-id-token fallback is only wired for the datasource group today (see
-	// pkg/extensions/apiserver/factory.go); app plugin proxying doesn't need it in ST,
-	// where the edge still mints an id token for every requester.
 	p, err := pluginproxy.NewPluginProxy(ps, routes,
 		proxyReq, w, user,
 		proxyPath, r.DataProxyLogging, r.SendUserHeader,

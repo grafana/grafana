@@ -17,13 +17,16 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
@@ -50,6 +53,24 @@ import (
 
 type PluginClientProvider = func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error)
 
+// LegacySettingsStoreProvider binds a store to a plugin, not a tenant. The store
+// must resolve the namespace and requester from each storage operation's context.
+type LegacySettingsStoreProvider func(ctx context.Context, pluginID string) (grafanarest.Storage, error)
+
+// SettingsDependencies configure the app settings API. ST supplies only the
+// legacy store; the cloud loader supplies the rest.
+type SettingsDependencies struct {
+	ReadOnly bool
+	// LegacyStore gets the legacy store for a plugin. Without one, settings use unified storage.
+	LegacyStore LegacySettingsStoreProvider
+	// AccessChecker replaces the default legacy app-access check.
+	AccessChecker pluginaccesscontrol.AppAccessChecker
+	// NamespaceAuthorizer replaces the default apiserver namespace authorizer.
+	NamespaceAuthorizer authorizer.Authorizer
+	// Middleware wraps the plugin's v2 client.
+	Middleware []backend.HandlerMiddleware
+}
+
 // The dependencies are configured at startup and used across all plugins
 type PluginDependencies struct {
 	PluginClient       plugins.Client
@@ -61,7 +82,7 @@ type PluginDependencies struct {
 	MetricsRegister    prometheus.Registerer
 	BuilderMetrics     *builder.BuilderMetrics
 	RESTConfigProvider restcfg.RestConfigProvider
-	PluginSettings     pluginsettings.Service
+	Settings           SettingsDependencies
 	Unified            resource.ResourceClient
 	Decrypter          decrypt.DecryptService
 	TokenExchanger     authn.TokenExchanger       // used for delegation
@@ -100,7 +121,7 @@ func ProvidePluginLoaderDependencies(
 	restConfigProvider restcfg.RestConfigProvider,
 	pluginAuth *pluginauth.Config,
 ) PluginLoaderDependencies {
-	return PluginLoaderDependencies{
+	deps := PluginLoaderDependencies{
 		ClientV3Loader: clientV3Loader,
 		PluginSources:  pluginSources,
 		ACService:      acService,
@@ -114,7 +135,6 @@ func ProvidePluginLoaderDependencies(
 			MetricsRegister:    reg,
 			BuilderMetrics:     builderMetrics,
 			RESTConfigProvider: restConfigProvider,
-			PluginSettings:     pluginSettings,
 			Unified:            unified,
 			Decrypter:          decrypter,
 			Tracer:             tracer,
@@ -124,6 +144,12 @@ func ProvidePluginLoaderDependencies(
 			PluginAuth:         pluginAuth,
 		},
 	}
+	if pluginSettings != nil {
+		deps.Settings.LegacyStore = func(_ context.Context, pluginID string) (grafanarest.Storage, error) {
+			return appsettings.NewLegacySettingsStore(pluginID, pluginID, pluginSettings), nil
+		}
+	}
+	return deps
 }
 
 func newClientV3TokenExchanger(cfg *setting.Cfg) authn.TokenExchanger {
@@ -547,25 +573,41 @@ func (b *PluginBackend) load(ctx context.Context) (*pluginroute.Handler, error) 
 // loadSettings serves the settings API, which calls the plugin through its
 // v2 client only.
 func (b *PluginBackend) loadSettings(ctx context.Context, cfg *setting.Cfg, opts pluginroute.Options, client plugins.Client) (*pluginroute.Handler, error) {
+	if b.deps.Settings.AccessChecker != nil {
+		opts.AccessChecker = b.deps.Settings.AccessChecker
+	}
+	opts.NamespaceAuthorizer = b.deps.Settings.NamespaceAuthorizer
 	if client != nil {
 		opts.PluginClient = &breakerPluginClient{Client: client}
 	}
 	opts.ContextProvider = b.deps.ContextProvider
 	opts.Features = b.deps.Features
 	opts.Settings = appsettings.Options{
+		ReadOnly:                 b.deps.Settings.ReadOnly,
 		RegisterProxy:            openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsHandleProxyRequests, false, openfeature.TransactionContext(ctx)),
 		AccessControl:            b.deps.AccessControl,
 		DataProxyLogging:         cfg.DataProxyLogging,
 		SendUserHeader:           cfg.SendUserHeader,
 		PluginsAppsSkipVerifyTLS: cfg.PluginsAppsSkipVerifyTLS,
 	}
-	if b.deps.PluginSettings != nil {
-		opts.Settings.LegacyStore = appsettings.NewLegacySettingsStore(b.pluginID, b.pluginID, b.deps.PluginSettings)
+	if b.deps.Settings.LegacyStore != nil {
+		store, err := b.deps.Settings.LegacyStore(ctx, b.pluginID)
+		if err != nil {
+			return nil, fmt.Errorf("plugin %q: legacy settings store: %w", b.pluginID, err)
+		}
+		if store == nil {
+			return nil, fmt.Errorf("plugin %q: legacy settings store provider returned no store", b.pluginID)
+		}
+		opts.Settings.LegacyStore = store
 	}
 	opts.DualWrite = b.deps.DualWrite
 	opts.StorageOpts = &options.StorageOptions{UnifiedStorageConfig: cfg.UnifiedStorage}
 	opts.BuilderMetrics = b.deps.BuilderMetrics
-	return pluginroute.NewAppSettingsHandler(*b.settings, opts)
+	handler, err := pluginroute.NewAppSettingsHandler(*b.settings, opts)
+	if err != nil && opts.Settings.LegacyStore != nil {
+		opts.Settings.LegacyStore.Destroy()
+	}
+	return handler, err
 }
 
 // loadManifest serves a manifest's kinds and routes, which call the plugin
