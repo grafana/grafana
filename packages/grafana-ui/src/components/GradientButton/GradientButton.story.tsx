@@ -32,11 +32,6 @@ export default {
     disabled: {
       control: 'boolean',
     },
-    className: {
-      table: {
-        disable: true,
-      },
-    },
   },
 };
 

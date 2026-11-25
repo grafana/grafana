@@ -32,7 +32,17 @@ Use `GradientButton` for the entry point to Grafana Assistant or another AI feat
 
 ### Don't restyle the gradient
 
-Don't override the border, background or text color with `className`. Change the `theme.colors.gradients.button` token in the theme instead.
+`GradientButton` doesn't accept `className`, so its border, background and text color stay consistent. To change the gradient, change the `theme.colors.gradients.button` token in the theme.
+
+### Space it from the parent
+
+Spacing around a component is the parent's job, so wrap the button in a layout component such as [`Box`](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/Layout/Box/Box.mdx) or `Stack`:
+
+```tsx
+<Box paddingLeft={1}>
+  <GradientButton onClick={openAssistant}>Explain panel</GradientButton>
+</Box>
+```
 
 ## Usage
 

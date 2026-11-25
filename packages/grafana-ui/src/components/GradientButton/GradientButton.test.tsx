@@ -35,6 +35,12 @@ describe('GradientButton', () => {
     expect(within(loading).queryByTestId('icon-ai-sparkle')).not.toBeInTheDocument();
   });
 
+  it('does not accept className', () => {
+    // @ts-expect-error GradientButton can't be restyled, so space it with a parent such as Box
+    render(<GradientButton className="custom">Analyze</GradientButton>);
+    expect(screen.getByRole('button', { name: 'Analyze' })).not.toHaveClass('custom');
+  });
+
   it('shows the ai-sparkle icon with no children, and requires a tooltip or aria-label as the accessible name', () => {
     // @ts-expect-error an icon-only button needs a tooltip or an aria-label
     void (<GradientButton />);
