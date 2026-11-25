@@ -177,8 +177,9 @@ describe('DashboardTabs', () => {
       'href',
       '/a/test-things-app/things/t1'
     );
-    expect(screen.getByText('Starred Dashboard 1')).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /starred.*2/i })).toBeInTheDocument();
+    // The two searches answer in either order
+    expect(await screen.findByText('Starred Dashboard 1')).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: /starred.*2/i })).toBeInTheDocument();
   });
 
   it('lists the starred objects that loaded under a retryable warning when the dashboard search fails', async () => {
@@ -194,7 +195,8 @@ describe('DashboardTabs', () => {
 
     // Recent is empty, so the card lands on Starred.
     expect(await screen.findByRole('link', { name: 'Capacity review' })).toBeInTheDocument();
-    expect(screen.getByText('Could not load starred dashboards')).toBeInTheDocument();
+    // The dashboard search may fail after the app row shows
+    expect(await screen.findByText('Could not load starred dashboards')).toBeInTheDocument();
     expect(screen.queryByText('Starred Dashboard 1')).not.toBeInTheDocument();
 
     server.use(getCustomSearchHandler(starredHits));
