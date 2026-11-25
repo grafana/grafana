@@ -1,7 +1,26 @@
 import { config } from '../config';
 
+import { resolveAPIVersion } from './apiDiscovery/resolve';
+
+export const SUPPORTED_APP_PLUGIN_API_VERSIONS: readonly string[] = ['v0alpha1'];
+
 export async function getApiVersion(): Promise<string> {
   return 'v0alpha1';
+}
+
+const apiGroupLabelPattern = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/;
+
+/**
+ * Resolves the version of an app plugin's API, whose group is the plugin ID. `undefined` means the
+ * group is not served or discovery could not answer, so the caller uses the legacy endpoint.
+ */
+export async function resolveAppPluginAPIVersion(pluginId: string): Promise<string | undefined> {
+  // Plugin IDs may hold uppercase letters and underscores, which no API group can, so such a plugin is
+  // never served and asking discovery would only log a warning on every call.
+  if (!apiGroupLabelPattern.test(pluginId)) {
+    return undefined;
+  }
+  return resolveAPIVersion(pluginId, SUPPORTED_APP_PLUGIN_API_VERSIONS);
 }
 
 export function getNamespace(): string {
@@ -20,8 +39,9 @@ export function getLegacyCacheKey(pluginId: string, _showErrorAlert = false) {
   return `getLegacySettings-${pluginId}`;
 }
 
-export function getCacheKey(pluginId: string, _showErrorAlert = false) {
-  return `getAppPluginSettings-${pluginId}`;
+// Keyed by version, so settings fetched in one version are never served after discovery resolves another.
+export function getCacheKey(pluginId: string, apiVersion: string) {
+  return `getAppPluginSettings-${pluginId}-${apiVersion}`;
 }
 
 const pluginIdFormatPattern = /^[a-zA-Z0-9_-]+$/;

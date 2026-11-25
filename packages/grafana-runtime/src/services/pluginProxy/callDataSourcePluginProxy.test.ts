@@ -7,6 +7,7 @@ import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import { initializeLoggersRegistry, setLogger } from '../logging/registry';
 import { getPluginMetaFromCache } from '../pluginMeta/plugins';
 import { v0alpha1Response } from '../pluginMeta/test-fixtures/v0alpha1Response';
+import { signInViewer } from '../pluginSettings/test-fixtures/apiDiscovery';
 
 import { callDataSourcePluginProxy } from './callDataSourcePluginProxy';
 
@@ -241,6 +242,31 @@ describe('datasource plugin proxy', () => {
         ).rejects.toThrow('Invalid API version \"v1/namespaces/other/app/instance/proxy/secret?x=\"');
 
         expect(backendSrv.get).not.toHaveBeenCalled();
+      });
+
+      it('should call the legacy proxy without a discovery request', async () => {
+        const session = signInViewer();
+
+        try {
+          await callDataSourcePluginProxy({
+            pluginId: 'grafana-testdata-datasource',
+            uid: 'tempo-dev',
+            routePath: 'some/route',
+          });
+        } finally {
+          session.restore();
+        }
+
+        expect(backendSrv.get).toHaveBeenCalledTimes(1);
+        expect(backendSrv.get).toHaveBeenCalledWith(
+          '/api/datasources/proxy/uid/tempo-dev/some/route',
+          undefined,
+          undefined,
+          {
+            showErrorAlert: false,
+            validatePath: true,
+          }
+        );
       });
 
       it('should reject invalid plugin IDs without making a request', async () => {

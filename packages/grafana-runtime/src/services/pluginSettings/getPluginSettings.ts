@@ -7,11 +7,11 @@ import { getBackendSrv } from '../backendSrv';
 import { getPluginMetaFromCache } from '../pluginMeta/plugins';
 import {
   assertPluginIdFormat,
-  getApiVersion,
   getCacheKey,
   getLegacyCacheKey,
   getNamespace,
   isAuthError,
+  resolveAppPluginAPIVersion,
 } from '../pluginUtils';
 
 import { logPluginSettingsDebug, logPluginSettingsError } from './logging';
@@ -87,7 +87,15 @@ export async function getPluginSettings(pluginId: string, showErrorAlert = false
     return mapper(meta.spec);
   }
 
-  const settings = await getCachedAppSettings(pluginId, showErrorAlert, await getApiVersion());
+  const apiVersion = await resolveAppPluginAPIVersion(pluginId);
+  if (!apiVersion) {
+    logPluginSettingsDebug('PluginSettings: API not served, falling back to getting legacy plugin settings', {
+      pluginId,
+    });
+    return getCachedLegacySettings(pluginId, showErrorAlert);
+  }
+
+  const settings = await getCachedAppSettings(pluginId, showErrorAlert, apiVersion);
   const mapper = getSettingsMapper();
   return mapper(meta.spec, settings);
 }
@@ -96,6 +104,10 @@ const getCachedLegacySettings = getCachedPromiseWithArgs(getLegacySettings, {
   cacheKeyFn: getLegacyCacheKey,
 });
 
+export function getAppSettingsCacheKey(pluginId: string, _showErrorAlert: boolean | undefined, apiVersion: string) {
+  return getCacheKey(pluginId, apiVersion);
+}
+
 const getCachedAppSettings = getCachedPromiseWithArgs(getAppPluginSettings, {
-  cacheKeyFn: getCacheKey,
+  cacheKeyFn: getAppSettingsCacheKey,
 });

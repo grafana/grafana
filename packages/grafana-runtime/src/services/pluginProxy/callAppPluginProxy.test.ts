@@ -3,10 +3,12 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { FlagKeys } from '../../internal';
 import { TracedError } from '../../utils/TracedError';
 import { type MonitoringLogger } from '../../utils/logging';
+import { invalidateAPIDiscovery } from '../apiDiscovery/discovery';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import { initializeLoggersRegistry, setLogger } from '../logging/registry';
 import { getPluginMetaFromCache } from '../pluginMeta/plugins';
 import { v0alpha1Response } from '../pluginMeta/test-fixtures/v0alpha1Response';
+import { isAPIDiscoveryRequest, serveAppPluginAPIs, signInViewer } from '../pluginSettings/test-fixtures/apiDiscovery';
 
 import { callAppPluginProxy } from './callAppPluginProxy';
 
@@ -49,8 +51,19 @@ describe('plugin proxy', () => {
       logWarning: jest.fn(),
     };
     setLogger('grafana/runtime.plugins.settings', logger);
+    setLogger('grafana/runtime.apis.discovery', {
+      logDebug: jest.fn(),
+      logError: jest.fn(),
+      logInfo: jest.fn(),
+      logMeasurement: jest.fn(),
+      logWarning: jest.fn(),
+    });
     getPluginMetaFromCacheMock.mockResolvedValue(app);
     backendSrv.get = jest.fn().mockResolvedValue({});
+  });
+
+  afterEach(() => {
+    invalidateAPIDiscovery();
   });
 
   describe('when plugins.useMTPluginSettings flag is enabled', () => {
@@ -60,6 +73,10 @@ describe('plugin proxy', () => {
 
     afterAll(() => {
       setTestFlags({});
+    });
+
+    beforeEach(() => {
+      serveAppPluginAPIs('grafana-exploretraces-app');
     });
 
     describe('callAppPluginProxy', () => {
@@ -230,6 +247,68 @@ describe('plugin proxy', () => {
         expect(backendSrv.get).not.toHaveBeenCalled();
         expect(getPluginMetaFromCacheMock).not.toHaveBeenCalled();
       });
+      describe('when discovery resolves no version', () => {
+        it('should fall back to the legacy api when the plugin API group is not served', async () => {
+          serveAppPluginAPIs('other-app');
+
+          await callAppPluginProxy({ pluginId: 'grafana-exploretraces-app', routePath: 'some/route' });
+
+          expect(backendSrv.get).toHaveBeenCalledTimes(1);
+          expect(backendSrv.get).toHaveBeenCalledWith(
+            '/api/plugin-proxy/grafana-exploretraces-app/some/route',
+            undefined,
+            undefined,
+            { showErrorAlert: false, validatePath: true }
+          );
+        });
+
+        it('should fall back to the legacy api when discovery cannot answer', async () => {
+          invalidateAPIDiscovery();
+          const session = signInViewer();
+          const get = jest.mocked(backendSrv.get);
+          const respond = get.getMockImplementation();
+          get.mockImplementation((url: string, ...rest) =>
+            isAPIDiscoveryRequest(url) ? Promise.reject({ status: 500 }) : respond!(url, ...rest)
+          );
+
+          try {
+            await callAppPluginProxy({ pluginId: 'grafana-exploretraces-app', routePath: 'some/route' });
+          } finally {
+            session.restore();
+          }
+
+          expect(backendSrv.get).toHaveBeenCalledWith('/apis', undefined, undefined, expect.anything());
+          expect(backendSrv.get).toHaveBeenLastCalledWith(
+            '/api/plugin-proxy/grafana-exploretraces-app/some/route',
+            undefined,
+            undefined,
+            { showErrorAlert: false, validatePath: true }
+          );
+        });
+      });
+
+      it('should use a supplied apiVersion without a discovery request', async () => {
+        invalidateAPIDiscovery();
+        const session = signInViewer();
+
+        try {
+          await callAppPluginProxy({
+            pluginId: 'grafana-exploretraces-app',
+            routePath: 'some/route',
+            apiVersion: 'v1alpha1',
+          });
+        } finally {
+          session.restore();
+        }
+
+        expect(backendSrv.get).toHaveBeenCalledTimes(1);
+        expect(backendSrv.get).toHaveBeenCalledWith(
+          '/apis/grafana-exploretraces-app/v1alpha1/namespaces/default/app/instance/proxy/some/route',
+          undefined,
+          undefined,
+          { showErrorAlert: false, validatePath: true }
+        );
+      });
     });
   });
 
@@ -243,6 +322,24 @@ describe('plugin proxy', () => {
     });
 
     describe('callAppPluginProxy', () => {
+      it('should not send a discovery request', async () => {
+        const session = signInViewer();
+
+        try {
+          await callAppPluginProxy({ pluginId: 'grafana-exploretraces-app', routePath: 'some/route' });
+        } finally {
+          session.restore();
+        }
+
+        expect(backendSrv.get).toHaveBeenCalledTimes(1);
+        expect(backendSrv.get).toHaveBeenCalledWith(
+          '/api/plugin-proxy/grafana-exploretraces-app/some/route',
+          undefined,
+          undefined,
+          { showErrorAlert: false, validatePath: true }
+        );
+      });
+
       it('should call legacy apis with default arguments to call plugin proxy', async () => {
         const response = await callAppPluginProxy({ pluginId: 'grafana-exploretraces-app', routePath: 'some/route' });
 

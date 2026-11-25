@@ -3,7 +3,13 @@ import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getBackendSrv } from '../backendSrv';
 import { getPluginMetaFromCache } from '../pluginMeta/plugins';
 import { logPluginSettingsDebug, logPluginSettingsError } from '../pluginSettings/logging';
-import { getApiVersion, getNamespace, isAuthError, assertPluginIdFormat, assertApiVersion } from '../pluginUtils';
+import {
+  getNamespace,
+  isAuthError,
+  assertPluginIdFormat,
+  assertApiVersion,
+  resolveAppPluginAPIVersion,
+} from '../pluginUtils';
 
 interface LegacyArgs {
   pluginId: string;
@@ -64,7 +70,8 @@ interface CallArgs extends Pick<BaseArgs, 'pluginId' | 'routePath'> {
  * @param options - The proxy request options.
  * @param options.pluginId - The ID of the app plugin.
  * @param options.routePath - The route path relative to the plugin's proxy endpoint, without a leading slash.
- * @param options.apiVersion - Which api version to use for the request. Defaults to the current api version.
+ * @param options.apiVersion - Which api version to use for the request. Defaults to the version that API
+ * discovery resolves for the plugin; when none resolves, the legacy proxy is used.
  * @param options.showErrorAlert - Whether to show a UI error alert if the request fails. Defaults to `false`.
  * @returns The response data, or `undefined` if the available metadata identifies a non-app plugin.
  * @throws If the plugin ID is invalid, or the API version is invalid
@@ -91,7 +98,12 @@ export async function callAppPluginProxy<T = unknown>({
     return undefined;
   }
 
-  const resolvedApiVersion = apiVersion ?? (await getApiVersion());
+  const resolvedApiVersion = apiVersion ?? (await resolveAppPluginAPIVersion(pluginId));
+  if (resolvedApiVersion === undefined) {
+    logPluginSettingsDebug('PluginProxy: API not served, falling back to calling legacy plugin proxy', { pluginId });
+    return callLegacyPluginProxy<T>({ pluginId, routePath, showErrorAlert });
+  }
+
   assertApiVersion(resolvedApiVersion);
 
   return callPluginProxy({ pluginId, routePath, apiVersion: resolvedApiVersion, showErrorAlert });

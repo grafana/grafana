@@ -2,6 +2,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { type MonitoringLogger } from '../../utils/logging';
+import { invalidateAPIDiscovery } from '../apiDiscovery/discovery';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import { setLogger, initializeLoggersRegistry } from '../logging/registry';
 import { getPluginMetaFromCache } from '../pluginMeta/plugins';
@@ -9,6 +10,7 @@ import { myOrgTestAppMeta } from '../pluginMeta/test-fixtures/v0alpha1Response';
 
 import { getPluginSettings } from './getPluginSettings';
 import { invalidatePluginSettingsCache } from './invalidatePluginSettingsCache';
+import { serveAppPluginAPIs } from './test-fixtures/apiDiscovery';
 import { legacyMyOrgTestAppSettings } from './test-fixtures/legacy.settings';
 import { myOrgTestAppSettings } from './test-fixtures/v0alpha1Response';
 
@@ -52,6 +54,10 @@ describe('invalidatePluginSettingsCache', () => {
     setLogger('grafana/runtime.plugins.settings', logger);
   });
 
+  afterEach(() => {
+    invalidateAPIDiscovery();
+  });
+
   describe('when plugins.useMTPluginSettings flag is enabled', () => {
     beforeAll(() => {
       setTestFlags({ 'plugins.useMTPluginSettings': true });
@@ -64,6 +70,7 @@ describe('invalidatePluginSettingsCache', () => {
     beforeEach(() => {
       getPluginMetaFromCacheMock.mockResolvedValue(myOrgTestAppMeta);
       backendSrv.get = jest.fn().mockResolvedValue(myOrgTestAppSettings);
+      serveAppPluginAPIs('myorg-test-app');
     });
 
     it('should invalidate the cache so subsequent calls fetch settings again', async () => {
@@ -89,6 +96,22 @@ describe('invalidatePluginSettingsCache', () => {
           validatePath: true,
         }
       );
+    });
+
+    it('should invalidate settings that fell back to the legacy api because the API is not served', async () => {
+      serveAppPluginAPIs('other-app');
+      backendSrv.get = jest.fn().mockResolvedValue(legacyMyOrgTestAppSettings);
+
+      await getPluginSettings(legacyMyOrgTestAppSettings.id);
+      await getPluginSettings(legacyMyOrgTestAppSettings.id);
+      invalidatePluginSettingsCache(legacyMyOrgTestAppSettings.id);
+      await getPluginSettings(legacyMyOrgTestAppSettings.id);
+
+      expect(backendSrv.get).toHaveBeenCalledTimes(2);
+      expect(backendSrv.get).toHaveBeenCalledWith('/api/plugins/myorg-test-app/settings', undefined, undefined, {
+        showErrorAlert: false,
+        validatePath: true,
+      });
     });
 
     it('should silently no-op when no cache entry exists for the plugin id', async () => {
