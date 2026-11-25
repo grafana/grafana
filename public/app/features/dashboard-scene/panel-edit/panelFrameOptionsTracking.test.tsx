@@ -29,7 +29,7 @@ setPluginImportUtils({
   getPanelPluginFromCache: () => undefined,
 });
 
-function setup({ description = 'Original description' }: { description?: string } = {}) {
+function setup({ description = 'Original description', subtitle }: { description?: string; subtitle?: string } = {}) {
   const links = new VizPanelLinks({
     rawLinks: [
       { title: 'Docs', url: '/docs' },
@@ -41,6 +41,7 @@ function setup({ description = 'Original description' }: { description?: string 
     key: 'panel-2',
     title: 'Original title',
     description,
+    subtitle,
     pluginId: 'timeseries',
     titleItems: [links],
   });
@@ -118,6 +119,38 @@ describe('panel frame option tracking', () => {
       item: 'change_panel_title',
       ...fromEditPane,
       source: 'genai',
+    });
+  });
+
+  describe('a description used as a subtitle', () => {
+    // A saved v2 dashboard serializes `description: ''` next to the subtitle, so it loads that way.
+    it('shows the subtitle text when the description is an empty string', () => {
+      const { panel } = setup({ description: '', subtitle: 'My subtitle' });
+      render(<PanelDescriptionTextArea panel={panel} />);
+
+      expect(screen.getByRole('textbox')).toHaveValue('My subtitle');
+    });
+
+    it('keeps the subtitle when the field is focused and left unchanged', async () => {
+      const { panel } = setup({ description: '', subtitle: 'My subtitle' });
+      render(<PanelDescriptionTextArea panel={panel} />);
+
+      await userEvent.click(screen.getByRole('textbox'));
+      await userEvent.tab();
+
+      expect(panel.state.subtitle).toBe('My subtitle');
+      expect(panelSettingChanged).not.toHaveBeenCalled();
+    });
+
+    it('edits the subtitle, not the description', async () => {
+      const { panel } = setup({ description: '', subtitle: 'My subtitle' });
+      render(<PanelDescriptionTextArea panel={panel} />);
+
+      await userEvent.type(screen.getByRole('textbox'), ' more');
+      await userEvent.tab();
+
+      expect(panel.state.subtitle).toBe('My subtitle more');
+      expect(panel.state.description).toBe('');
     });
   });
 
