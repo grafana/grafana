@@ -27,9 +27,10 @@ On large clusters, this polling becomes a significant share of the database load
 Grafana can instead run an embedded NATS message bus inside each Grafana process.
 The instances connect to each other, and every instance announces its writes on the bus, so the others no longer poll the database to find them.
 
-Embedded NATS also works on a single instance, including one on SQLite.
-The instance then serves watches from its in-process bus instead of polling the database, and it opens no cluster port.
-Turn it on with the same `[nats] enabled = true`; the TLS and network sections of this page don't apply.
+Embedded NATS also works on a single instance, turned on with the same `[nats] enabled = true`.
+The instance then serves watches from its in-process bus instead of polling the database.
+On SQLite, it opens no cluster port, so the TLS and network sections of this page don't apply.
+On MySQL or PostgreSQL, it opens the cluster port even without peers, ready for more instances, so follow the network sections as for a cluster.
 
 This page explains how to turn on embedded NATS in an HA cluster, how to protect the traffic between instances, which network ports to open, and what changes in Grafana.
 
