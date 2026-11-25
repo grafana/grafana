@@ -9,6 +9,7 @@ import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { hardCodedPalettes } from '../../utils/storybook/hardCodedPalettes';
 import { type AlertVariant } from '../Alert/Alert';
+import { getAlertBannerColors } from '../AlertBanner/AlertBanner.styles';
 import { Stack } from '../Layout/Stack/Stack';
 
 import { BannerActionButton } from './BannerActionButton';
@@ -53,14 +54,14 @@ const OnBackground = ({ backgroundColor, children }: { backgroundColor: string; 
   return <div className={className}>{children}</div>;
 };
 
-// As AlertBanner uses it: the severity's contrast text color on its saturated background.
+// As AlertBanner uses it: the banner's text color on the banner's background.
 const SaturatedExample = ({ severity }: { severity: AlertVariant }) => {
   const theme = useTheme2();
-  const color = theme.colors[severity];
+  const { background, text } = getAlertBannerColors(theme, severity);
 
   return (
-    <OnBackground backgroundColor={theme.flags.visualDesignRefresh ? color.backgroundEmphasis : color.main}>
-      <BannerActionButton customColor={color.contrastText} onClick={action('Action button clicked')}>
+    <OnBackground backgroundColor={background}>
+      <BannerActionButton customColor={text} onClick={action('Action button clicked')}>
         Request increase
       </BannerActionButton>
     </OnBackground>
@@ -99,7 +100,7 @@ export const Examples: StoryFn<typeof BannerActionButton> = () => (
         ))}
       </Stack>
     </StoryExample>
-    <StoryExample name="Contrast text color, on saturated backgrounds">
+    <StoryExample name="AlertBanner colors, on its backgrounds">
       <Stack>
         {severities.map((severity) => (
           <SaturatedExample severity={severity} key={severity} />

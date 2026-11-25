@@ -258,6 +258,32 @@
         "background": "palette.neutral150",
         "border": "palette.neutral400"
       }
+    },
+    "alertBanner": {
+      "error": {
+        "background": "palette.red400",
+        "iconBoxBackground": "palette.red300",
+        "text": "palette.black",
+        "border": "palette.red500"
+      },
+      "warning": {
+        "background": "palette.amber400",
+        "iconBoxBackground": "palette.amber300",
+        "text": "palette.black",
+        "border": "palette.amber500"
+      },
+      "info": {
+        "background": "palette.blue400",
+        "iconBoxBackground": "palette.blue300",
+        "text": "palette.black",
+        "border": "palette.blue500"
+      },
+      "success": {
+        "background": "palette.sage400",
+        "iconBoxBackground": "palette.sage300",
+        "text": "palette.black",
+        "border": "palette.sage500"
+      }
     }
   },
   "typography": {

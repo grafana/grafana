@@ -54,6 +54,13 @@ const badgeColorTokens = z.object({
   border: z.optional(z.string()),
 });
 
+const alertBannerSeverityTokens = z.object({
+  background: z.optional(z.string()),
+  iconBoxBackground: z.optional(z.string()),
+  text: z.optional(z.string()),
+  border: z.optional(z.string()),
+});
+
 const DEFAULT_TAG_TEXT_COLOR = '#f7f8fa';
 /**
  * Default tag colours, used when a theme does not provide its own.
@@ -209,6 +216,13 @@ export const ThemeComponentsInputSchema = z.partial(
       darkgrey: z.optional(badgeColorTokens),
       brand: z.optional(badgeColorTokens),
     }),
+    // keyed by AlertVariant
+    alertBanner: z.object({
+      error: z.optional(alertBannerSeverityTokens),
+      warning: z.optional(alertBannerSeverityTokens),
+      info: z.optional(alertBannerSeverityTokens),
+      success: z.optional(alertBannerSeverityTokens),
+    }),
   })
 );
 
@@ -345,6 +359,32 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
       },
     },
     badge: getBadgeColorToken(colors),
+    alertBanner: {
+      error: {
+        background: colors.error.main,
+        iconBoxBackground: colors.error.shade,
+        text: colors.error.contrastText,
+        border: colors.error.subtleBorder,
+      },
+      warning: {
+        background: colors.warning.main,
+        iconBoxBackground: colors.warning.shade,
+        text: colors.warning.contrastText,
+        border: colors.warning.subtleBorder,
+      },
+      info: {
+        background: colors.info.main,
+        iconBoxBackground: colors.info.shade,
+        text: colors.info.contrastText,
+        border: colors.info.subtleBorder,
+      },
+      success: {
+        background: colors.success.main,
+        iconBoxBackground: colors.success.shade,
+        text: colors.success.contrastText,
+        border: colors.success.subtleBorder,
+      },
+    },
   };
 
   // deep-merge caller overrides on top of the defaults

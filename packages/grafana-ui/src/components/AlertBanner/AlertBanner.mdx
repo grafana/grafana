@@ -1,0 +1,96 @@
+import { Meta, ArgTypes, Canvas } from '@storybook/addon-docs/blocks';
+import { AlertBanner } from './AlertBanner';
+import * as AlertBannerStories from './AlertBanner.story';
+
+<Meta title="MDX|AlertBanner" component={AlertBanner} />
+
+# AlertBanner
+
+AlertBanner is the prominent, page-level counterpart of `Alert`. It shows the message on a saturated background in the colors of its severity.
+
+## When to use
+
+- To show a message about the whole page or account that the user shouldn't miss, such as an overdue invoice or a usage limit that has been reached.
+- Place it at the top of the page, above the page's content.
+- Show at most one AlertBanner on a page. If several messages apply, show the most important one.
+
+## Never use for
+
+- **A message about one part of the page or a task the user is doing.** Use `Alert`, placed next to the related element.
+- **A message that doesn't need to stand out.** Use `Alert`, whose subtle background competes less with the page.
+- **A feature announcement or other promotional message.** Use `Banner`. A promotion has no severity, and showing it as an `info` banner weakens genuine info messages, which tell the user something about their stack or task.
+- **A toast.** Publish an `appEvent` instead. See the toast example in the `Alert` docs.
+
+## Do's and don'ts
+
+### Actions
+
+- Do pass the action button's props in `action` and its label in `actionLabel`. This is the one prop that differs from `Alert`: `Alert`'s `action` takes an element, but AlertBanner's takes the props of a `BannerActionButton`, and AlertBanner renders the button in the banner's text color.
+- Do use a link, with `as: 'a'` and an `href`, for an action that navigates. A link keeps middle-click, copy link and link semantics for screen readers.
+
+```tsx
+// Don't: open a page from a click handler
+<AlertBanner
+  title="Your invoice is overdue"
+  severity="warning"
+  action={{ onClick: () => window.open(invoiceUrl) }}
+  actionLabel="View invoice"
+/>
+
+// Do: link to it
+<AlertBanner
+  title="Your invoice is overdue"
+  severity="warning"
+  action={{ as: 'a', href: invoiceUrl, target: '_blank' }}
+  actionLabel="View invoice"
+/>
+```
+
+<Canvas of={AlertBannerStories.WithActionOnly} />
+
+### Writing content
+
+- Do give every AlertBanner a short, clear title. Follow the content guidance in the `Alert` docs.
+
+### Theme colors
+
+AlertBanner takes its colors from the theme's `alertBanner` component tokens, set for each severity: `background` for the banner, `iconBoxBackground` for the tile behind its icon, `text` for its title, content, icon and action, and `border` for its border in the refresh themes. By default they are the severity's `main`, `shade`, `contrastText` and `subtleBorder` colors. The refresh themes use black text in light mode and white text in dark mode, and a border two palette steps lighter than the background in dark mode and one step darker in light mode.
+
+- Do set a `text` token that reaches 4.5:1 on `background` whenever a theme sets its own `background`.
+- Do keep `text` at 3:1 or more on `iconBoxBackground`, because the icon is drawn in it.
+
+## Usage
+
+```tsx
+import { AlertBanner } from '@grafana/ui';
+
+<AlertBanner
+  title="You have reached your usage limit"
+  severity="warning"
+  action={{ onClick: onUpgrade }}
+  actionLabel="Upgrade"
+  onRemove={onDismiss}
+>
+  New data is not being stored.
+</AlertBanner>;
+```
+
+`severity` defaults to `error`.
+
+## Accessibility
+
+`AlertBanner` handles:
+
+- **Role:** `error` and `warning` banners get `role="alert"`, and `info` and `success` banners get `role="status"`. Pass `role` to override it.
+- **Name:** the banner's accessible name is its `title`. Pass `aria-label` to override it.
+- **Close button:** the close icon button has the label "Close alert". A `buttonContent` button is named by its content.
+- **Action:** the action is a `<button>`, or a link when `action` has `as: 'a'`, and is named by `actionLabel`.
+
+You provide:
+
+- A `title` that makes sense on its own, because screen readers use it to name the banner.
+- The right `severity`. `role="alert"` is announced as soon as the banner appears, so keep `error` and `warning` for messages that need that attention.
+
+## Props
+
+<ArgTypes of={AlertBanner} />
