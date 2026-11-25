@@ -1,0 +1,84 @@
+import { Meta, ArgTypes, Canvas } from '@storybook/addon-docs/blocks';
+import { Banner } from './Banner';
+import * as BannerStories from './Banner.story';
+
+<Meta title="MDX|Banner" component={Banner} />
+
+# Banner
+
+Banner shows a message with an icon, a title, optional supporting content, an optional action and an optional dismiss control, in colors that you pass in. `Alert` and `AlertBanner` are built on it.
+
+## When to use
+
+- To show a feature announcement or other promotional message. Don't use `Alert` or `AlertBanner` for it: a promotion has no severity, and showing it as an `info` message weakens genuine info messages, which tell the user something about their stack or task. Don't reuse a severity's colors, from `theme.colors.info`, `theme.colors.success`, `theme.colors.warning` or `theme.colors.error`, because the banner then looks like an alert of that severity.
+- To build a banner component with its own fixed colors, as `Alert` and `AlertBanner` do.
+
+## Never use for
+
+- **A status message.** Use `Alert` for info, success, warning and error messages, or `AlertBanner` for a prominent page-level one. They set the colors, icon and role for the severity.
+- **A toast.** Publish an `appEvent` instead. See the toast example in the `Alert` docs.
+- **A validation error on a single form field.** Use the `invalid` and `error` props on `Field`.
+
+## Do's and don'ts
+
+### Colors
+
+- Do pass `backgroundColor`, `borderColor`, `iconColor` and `textColor` together, as a set that meets contrast in both light and dark themes.
+- Do pick colors from the theme where one fits, so that they follow the user's theme.
+- Don't restyle the banner's inner elements with `className`. Use the color props, and `isCompact` for a shorter banner.
+
+### Actions and dismissal
+
+- Do pass a `BannerActionButton` as `action`, with a `severity` or a `customColor` that matches the banner.
+- Do use `onRemove` for dismissal. On its own it shows a close icon button. With `buttonContent`, the close icon becomes a text button that shows that content.
+
+```tsx
+// Don't: a default Button on a colored banner
+<Banner {...colors} action={<Button>Try it</Button>} />
+
+// Do: an action button in the banner's colors
+<Banner {...colors} action={<BannerActionButton customColor={colors.iconColor}>Try it</BannerActionButton>} />
+```
+
+<Canvas of={BannerStories.Examples} />
+
+## Usage
+
+```tsx
+import { Banner, BannerActionButton } from '@grafana/ui';
+
+<Banner
+  icon="rocket"
+  title="Try the new query editor"
+  backgroundColor={backgroundColor}
+  borderColor={borderColor}
+  iconColor={iconColor}
+  textColor={textColor}
+  action={
+    <BannerActionButton customColor={iconColor} onClick={onTry}>
+      Try it
+    </BannerActionButton>
+  }
+  onRemove={onDismiss}
+>
+  It is faster and works with every data source.
+</Banner>;
+```
+
+## Accessibility
+
+`Banner` handles:
+
+- **Name:** the banner's accessible name is its `title`. Pass `aria-label` to override it.
+- **Close button:** the close icon button has the label "Close alert". A `buttonContent` button is named by its content.
+- **Loading:** with `isLoading`, the spinner has the label "Loading".
+
+You provide:
+
+- **Role:** without `role`, the banner is a section landmark named by its title. Screen readers list it with the page's landmarks but don't announce it when it appears, which suits a promotional banner. Pass `role="status"` for an advisory message, or `role="alert"` only for a message that needs immediate attention, because both are announced as soon as the banner appears.
+- **Contrast:** colors whose text and icons meet a 4.5:1 contrast ratio against `backgroundColor`. Automated checks can't measure contrast inside a banner, because its backdrop is drawn on a pseudo-element, so check your colors yourself.
+- A `title` that makes sense on its own.
+
+## Props
+
+<ArgTypes of={Banner} />
