@@ -116,6 +116,60 @@ func TestParseManagerKindString(t *testing.T) {
 	require.False(t, ManagerKindFileProvisioning.IsClassic())
 }
 
+func registerManagerKindForTest(t *testing.T, kind ManagerKind) {
+	t.Helper()
+	RegisterManagerKind(kind)
+	t.Cleanup(func() { delete(managerKindRegistry, kind) })
+}
+
+func TestRegisterManagerKind(t *testing.T) {
+	const kind ManagerKind = "registered-in-test"
+
+	managedBy := func(t *testing.T, identity string) GrafanaMetaAccessor {
+		t.Helper()
+		meta, err := MetaAccessor(&unstructured.Unstructured{Object: map[string]any{}})
+		require.NoError(t, err)
+		meta.SetManagerProperties(ManagerProperties{Kind: kind, Identity: identity})
+		return meta
+	}
+
+	t.Run("an unregistered kind is unknown", func(t *testing.T) {
+		require.Equal(t, ManagerKindUnknown, ParseManagerKindString(string(kind)))
+		manager, _ := managedBy(t, "the-manager").GetManagerProperties()
+		require.Equal(t, ManagerKindUnknown, manager.Kind)
+	})
+
+	t.Run("a registered kind parses as itself", func(t *testing.T) {
+		registerManagerKindForTest(t, kind)
+		require.Equal(t, kind, ParseManagerKindString(string(kind)))
+		manager, managed := managedBy(t, "the-manager").GetManagerProperties()
+		require.True(t, managed)
+		require.Equal(t, ManagerProperties{Kind: kind, Identity: "the-manager"}, manager)
+	})
+
+	t.Run("it needs a stable identity, like the built-in kinds", func(t *testing.T) {
+		registerManagerKindForTest(t, kind)
+		_, managed := managedBy(t, "").GetManagerProperties()
+		require.False(t, managed)
+		require.True(t, apierrors.IsForbidden(CheckManagerPropertiesOnUpdate(
+			ManagerProperties{Kind: kind, Identity: "a"},
+			ManagerProperties{Kind: kind, Identity: "b"},
+			true, true)))
+	})
+
+	t.Run("a second registration panics", func(t *testing.T) {
+		registerManagerKindForTest(t, kind)
+		require.Panics(t, func() { RegisterManagerKind(kind) })
+		require.Equal(t, kind, ParseManagerKindString(string(kind)))
+	})
+
+	t.Run("empty and built-in kinds cannot be registered", func(t *testing.T) {
+		require.Panics(t, func() { RegisterManagerKind(ManagerKindUnknown) })
+		require.Panics(t, func() { RegisterManagerKind(ManagerKindRepo) })
+		require.Panics(t, func() { RegisterManagerKind(ManagerKindClassicFP) }) //nolint:staticcheck
+	})
+}
+
 func TestCheckManagerPropertiesOnUpdate(t *testing.T) {
 	const userAgentID = "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0"
 	const otherUserAgentID = "Terraform/1.6.0 (+https://www.terraform.io) terraform-provider-grafana/v3.1.0"
