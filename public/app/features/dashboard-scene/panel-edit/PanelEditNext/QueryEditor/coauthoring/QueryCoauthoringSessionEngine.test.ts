@@ -26,6 +26,10 @@ import {
 } from './queryCoauthoringContracts';
 
 const mockGetDataSource = jest.fn();
+jest.mock('./queryCoauthoringContext', () => {
+  const actual = jest.requireActual<typeof coauthoringContext>('./queryCoauthoringContext');
+  return { ...actual, resolveCoauthoringQuery: jest.fn(actual.resolveCoauthoringQuery) };
+});
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   logError: jest.fn(),
@@ -141,6 +145,12 @@ function setup(ranges: Array<{ from: number; to: number }> = []): SessionFixture
 }
 
 beforeEach(() => {
+  jest
+    .mocked(coauthoringContext.resolveCoauthoringQuery)
+    .mockReset()
+    .mockImplementation(
+      jest.requireActual<typeof coauthoringContext>('./queryCoauthoringContext').resolveCoauthoringQuery
+    );
   jest.mocked(logError).mockClear();
   Object.defineProperty(navigator, 'userActivation', { configurable: true, value: { isActive: true } });
 });
@@ -1643,9 +1653,10 @@ it.each(['resolution', 'validation'])('reports stale after a manual Run during s
       return new Promise(() => {});
     });
   } else {
-    const resolve = coauthoringContext.resolveCoauthoringQuery;
+    const { resolveCoauthoringQuery: resolve } =
+      jest.requireActual<typeof coauthoringContext>('./queryCoauthoringContext');
     let first = true;
-    jest.spyOn(coauthoringContext, 'resolveCoauthoringQuery').mockImplementation(async (...args) => {
+    jest.mocked(coauthoringContext.resolveCoauthoringQuery).mockImplementation(async (...args) => {
       const resolved = await resolve(...args);
       if (!first) {
         return resolved;
