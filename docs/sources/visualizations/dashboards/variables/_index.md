@@ -84,16 +84,25 @@ For the complete list of variable settings and type-specific steps, refer to [Ad
 
 ## Variables in panel options
 
-You can use a variable in a panel option only if the option has a field that you type a number or text into.
-Options that you set with a drop-down list, radio buttons, a switch, or a slider don't accept variables.
+You can use variables in field options that have a number field, and in the text options listed in this section.
+Field options are the options in **Standard options** and the options that a visualization applies to each field, such as axis settings.
+Panel-wide options, such as legend, tooltip, and text size settings, don't accept variables, even if they have a number field.
+Options that you set with a drop-down list, radio buttons, a switch, or a slider don't accept variables either.
 
 The following panel options accept variables:
 
-- **Numeric options:** Options with a number field, such as **Min**, **Max**, and **Decimals**. Requires the `grafana.panelOptionInterpolation` feature toggle.
+- **Numeric field options:** Field options with a number field, such as **Min**, **Max**, **Decimals**, and the axis **Soft min** and **Soft max**. Requires the `grafana.panelOptionInterpolation` feature toggle.
 - **Unit:** Requires the `grafana.panelOptionInterpolation` feature toggle.
 - **Thresholds:** The value of each threshold step.
 - **Value mappings:** The display text of each mapping. The value, range, or regular expression that a mapping matches doesn't accept variables. Requires the `grafana.panelOptionInterpolation` feature toggle.
-- **Display name and axis label:** The **Display name** option and the axis **Label** option.
+- **Display name:** The name of a field or series, which appears in legends, tooltips, table headers, and stat titles.
+- **Axis label:** The text next to a chart axis.
+
+You can also use variables in these options in field overrides, so a variable can control an option for specific fields or series.
+
+{{< admonition type="note" >}}
+The variable input for numeric field options and **Unit** is only available in dashboards that use the v2 schema.
+{{< /admonition >}}
 
 ## Template variables {#templates}
 
