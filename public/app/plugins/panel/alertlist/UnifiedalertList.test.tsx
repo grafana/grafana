@@ -36,7 +36,6 @@ import {
 } from '../../../features/alerting/unified/mocks';
 import { AccessControlAction } from '../../../types/accessControl';
 
-
 import { UnifiedAlertListPanel } from './UnifiedAlertList';
 import { GroupMode, SortOrder, STAT_THRESHOLDS_DEFAULT, type UnifiedAlertListOptions, ViewMode } from './types';
 import * as utils from './util';
