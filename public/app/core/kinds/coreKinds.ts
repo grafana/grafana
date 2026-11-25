@@ -1,31 +1,15 @@
-import { upperFirst } from 'lodash';
-
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
 import { API_GROUP as PROVISIONING_API_GROUP } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
-import {
-  type AppKind,
-  type CoreKindKey,
-  type KindInfo,
-  type KindLabelOptions,
-  type KindRegistry,
-} from '@grafana/runtime/unstable';
+import { type CoreKindKey, type KindInfo, kindLabel, type KindRegistry } from '@grafana/runtime/unstable';
 import { NOTEBOOKS_BASE_URL } from 'app/features/notebook/urls';
 import { CONNECTIONS_URL, PROVISIONING_URL } from 'app/features/provisioning/constants';
 
 // Every page path is built here, so the object name is encoded in one place
 function page(base: string, suffix = '') {
   return (name: string) => `${base}/${encodeURIComponent(name)}${suffix}`;
-}
-
-// Translations hold the label as it reads mid-sentence. A title only uppercases the first letter,
-// which is safe in every language. Lowercasing a title is not: German capitalizes every noun, so
-// "Ordner" would become the misspelled "ordner". Readers ask for a form here instead of changing
-// the case themselves. The label stays a function so that it translates at render, not at module load.
-function label(translate: () => string) {
-  return ({ upperFirst: upper = true }: KindLabelOptions = {}) => (upper ? upperFirst(translate()) : translate());
 }
 
 /**
@@ -49,8 +33,8 @@ export const CORE_KINDS = {
     resource: 'folders',
     searchKind: 'folder',
     folderScoped: true,
-    getLabel: label(() => t('core-kinds.folder.label', 'folder')),
-    getPluralLabel: label(() => t('core-kinds.folder.label-plural', 'folders')),
+    getLabel: kindLabel(() => t('core-kinds.folder.label', 'folder')),
+    getPluralLabel: kindLabel(() => t('core-kinds.folder.label-plural', 'folders')),
     icon: 'folder',
     iconColor: 'semi-dark-blue',
     getRoute: page('/dashboards/f'),
@@ -61,8 +45,8 @@ export const CORE_KINDS = {
     resource: 'dashboards',
     searchKind: 'dashboard',
     folderScoped: true,
-    getLabel: label(() => t('core-kinds.dashboard.label', 'dashboard')),
-    getPluralLabel: label(() => t('core-kinds.dashboard.label-plural', 'dashboards')),
+    getLabel: kindLabel(() => t('core-kinds.dashboard.label', 'dashboard')),
+    getPluralLabel: kindLabel(() => t('core-kinds.dashboard.label-plural', 'dashboards')),
     icon: 'apps',
     iconColor: 'semi-dark-orange',
     getRoute: page('/d'),
@@ -75,8 +59,8 @@ export const CORE_KINDS = {
     // The kind manifest scopes notebooks to folders, but storage refuses the folder annotation until
     // notebooks get folder permissions. Flip this together with `notebookStorageOpts` on the backend.
     folderScoped: false,
-    getLabel: label(() => t('core-kinds.notebook.label', 'notebook')),
-    getPluralLabel: label(() => t('core-kinds.notebook.label-plural', 'notebooks')),
+    getLabel: kindLabel(() => t('core-kinds.notebook.label', 'notebook')),
+    getPluralLabel: kindLabel(() => t('core-kinds.notebook.label-plural', 'notebooks')),
     icon: 'gf-notebook',
     iconColor: 'semi-dark-purple',
     getRoute: page(NOTEBOOKS_BASE_URL),
@@ -86,8 +70,8 @@ export const CORE_KINDS = {
     kind: 'Playlist',
     resource: 'playlists',
     folderScoped: false,
-    getLabel: label(() => t('core-kinds.playlist.label', 'playlist')),
-    getPluralLabel: label(() => t('core-kinds.playlist.label-plural', 'playlists')),
+    getLabel: kindLabel(() => t('core-kinds.playlist.label', 'playlist')),
+    getPluralLabel: kindLabel(() => t('core-kinds.playlist.label-plural', 'playlists')),
     icon: 'presentation-play',
     iconColor: 'semi-dark-yellow',
     // The edit page, not /playlists/play, which starts the fullscreen slideshow at once
@@ -101,8 +85,8 @@ export const CORE_KINDS = {
     resource: 'librarypanels',
     // In folders, although the dashboard browser lists them only on each folder's own tab
     folderScoped: true,
-    getLabel: label(() => t('core-kinds.librarypanel.label', 'library panel')),
-    getPluralLabel: label(() => t('core-kinds.librarypanel.label-plural', 'library panels')),
+    getLabel: kindLabel(() => t('core-kinds.librarypanel.label', 'library panel')),
+    getPluralLabel: kindLabel(() => t('core-kinds.librarypanel.label-plural', 'library panels')),
     icon: 'library-panel',
   },
   repository: {
@@ -110,8 +94,8 @@ export const CORE_KINDS = {
     kind: 'Repository',
     resource: 'repositories',
     folderScoped: false,
-    getLabel: label(() => t('core-kinds.repository.label', 'repository')),
-    getPluralLabel: label(() => t('core-kinds.repository.label-plural', 'repositories')),
+    getLabel: kindLabel(() => t('core-kinds.repository.label', 'repository')),
+    getPluralLabel: kindLabel(() => t('core-kinds.repository.label-plural', 'repositories')),
     icon: 'code-branch',
     getRoute: page(PROVISIONING_URL),
   },
@@ -120,8 +104,8 @@ export const CORE_KINDS = {
     kind: 'Connection',
     resource: 'connections',
     folderScoped: false,
-    getLabel: label(() => t('core-kinds.connection.label', 'connection')),
-    getPluralLabel: label(() => t('core-kinds.connection.label-plural', 'connections')),
+    getLabel: kindLabel(() => t('core-kinds.connection.label', 'connection')),
+    getPluralLabel: kindLabel(() => t('core-kinds.connection.label-plural', 'connections')),
     icon: 'plug',
     getRoute: page(CONNECTIONS_URL, '/edit'),
   },
@@ -134,8 +118,8 @@ export const CORE_KINDS = {
     kind: 'DataSource',
     resource: 'datasources',
     folderScoped: false,
-    getLabel: label(() => t('core-kinds.datasource.label', 'data source')),
-    getPluralLabel: label(() => t('core-kinds.datasource.label-plural', 'data sources')),
+    getLabel: kindLabel(() => t('core-kinds.datasource.label', 'data source')),
+    getPluralLabel: kindLabel(() => t('core-kinds.datasource.label-plural', 'data sources')),
     icon: 'database',
     getRoute: page('/connections/datasources/edit'),
   },
@@ -164,15 +148,11 @@ export function getAppKinds(): KindInfo[] {
 }
 
 /** Adds the kinds an app plugin serves. A kind that Grafana serves itself keeps its core row. */
-export function addKinds(added: AppKind[]) {
+export function addKinds(added: KindInfo[]) {
   let changed = false;
-  for (const { label: singular, pluralLabel: plural, ...kind } of added) {
+  for (const kind of added) {
     if (!kinds.some((row) => row.kind === kind.kind && coversGroup(row, kind.group))) {
-      appKinds.set(`${kind.group}/${kind.kind}`, {
-        ...kind,
-        getLabel: label(() => singular),
-        getPluralLabel: label(() => plural),
-      });
+      appKinds.set(`${kind.group}/${kind.kind}`, kind);
       changed = true;
     }
   }
