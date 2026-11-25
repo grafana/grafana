@@ -243,6 +243,8 @@ export enum PluginExtensionPoints {
   AdvisorRetryCheck = 'grafana/advisor/retry-check/v1',
   NavRightButton = 'grafana/singletopbar/nav-right-button/v1',
   HomepageAssistant = 'grafana/homepage/assistant/v1',
+  AssistantOnboardingOverview = 'grafana/assistant-onboarding/plugin-overview/v1',
+  AssistantOnboardingPage = 'grafana/assistant-onboarding/page/v1',
   HomepageExtra = 'grafana/homepage/extra/v1',
   UserListTab = 'grafana/admin/user-list/tab/v1',
 }
