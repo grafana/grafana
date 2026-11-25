@@ -23,7 +23,7 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaFrontendNavigation,
 			Expression:  "false",
-			Generate:    Generate{LegacyFrontend: true, React: true},
+			Generate:    Generate{React: true},
 		},
 		{
 			Name:        "panelTitleSearch",
