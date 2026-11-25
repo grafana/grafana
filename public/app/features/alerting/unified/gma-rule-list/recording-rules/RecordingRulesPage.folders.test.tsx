@@ -8,6 +8,18 @@ import { installControllableIntersectionObserver } from '../../mocks/intersectio
 import RecordingRulesPage from './RecordingRulesPage';
 import { findFolderRow, setup } from './recordingRulesPageFixture';
 
+jest.mock('@grafana/runtime', () => {
+  const actual = jest.requireActual('@grafana/runtime');
+  return {
+    ...actual,
+    // The render helper replaces the location service for each test.
+    get locationService() {
+      return actual.locationService;
+    },
+    reportInteraction: jest.fn(),
+  };
+});
+
 setupMswServer();
 
 function folderToggles() {
@@ -22,12 +34,15 @@ describe('RecordingRulesPage folder list', () => {
 
   beforeEach(() => {
     intersection = installControllableIntersectionObserver();
-    reportInteraction = jest.spyOn(runtime, 'reportInteraction').mockImplementation(() => {});
+    reportInteraction = jest
+      .mocked(runtime.reportInteraction)
+      .mockReset()
+      .mockImplementation(() => {});
   });
 
   afterEach(() => {
     intersection.restore();
-    reportInteraction.mockRestore();
+    jest.mocked(runtime.reportInteraction).mockReset();
   });
 
   it('opens in Folders mode with collapsed folder rows, in the order the search returns them', async () => {
