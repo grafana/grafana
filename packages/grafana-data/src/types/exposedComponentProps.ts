@@ -25,3 +25,22 @@ export type PrometheusQueryResultsV1Props = {
   /** Optional post-processor for data links (used by Explore for split view) */
   dataLinkPostProcessor?: DataLinkPostProcessor;
 };
+
+export type SaveResourceDrawerV1AlphaProps = {
+  resource: {
+    apiVersion?: string;
+    kind?: string;
+    metadata?: {
+      name?: string;
+      annotations?: Record<string, string | undefined>;
+    };
+    spec?: Record<string, unknown>;
+  };
+  title: string;
+  readOnlyMessage?: string;
+  branchPrefix?: string;
+  directory?: string;
+  action: 'create' | 'update' | 'delete';
+  repositoryName?: string;
+  onDismiss?: () => void;
+};

@@ -10,6 +10,7 @@ import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibr
 import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
 import { NotebookViewLazy } from 'app/features/notebook/embed/NotebookViewLazy';
 import { AddToNotebookFormExposedComponent } from 'app/features/notebook/extensions/AddToNotebookFormExposedComponent';
+import { SaveResourceDrawerExposedComponent } from 'app/features/provisioning/components/Shared/SaveResourceDrawerExposedComponent';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
@@ -79,6 +80,12 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         title: 'Folder permissions',
         description: 'Folder permissions editor, as in the folder page "Manage permissions" drawer',
         component: FolderPermissionsExposedComponentLazy,
+      },
+      {
+        id: PluginExtensionExposedComponents.SaveResourceDrawerV1Alpha,
+        title: 'Save resource drawer',
+        description: 'Commits a resource to a Git Sync repository and reports where the commit went',
+        component: SaveResourceDrawerExposedComponent,
       },
       // Only with notebooks on: plugins treat the form's absence as notebooks being unavailable.
       ...(getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false)

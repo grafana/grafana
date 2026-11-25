@@ -6,6 +6,7 @@ import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type Playlist } from 'app/api/clients/playlist/v1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { addKinds } from 'app/core/kinds/coreKinds';
 
 import { COMMIT_OUTCOME_STORAGE_KEY } from '../../constants';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
@@ -465,14 +466,44 @@ describe('SaveProvisionedResourceDrawer', () => {
     });
   });
 
-  it('renders nothing and warns in dev when the resource is not a registered provisioning kind', () => {
+  it('names an app kind with the labels its plugin registered', async () => {
+    addKinds([
+      {
+        group: 'widgets.example.app',
+        kind: 'Widget',
+        resource: 'widgets',
+        folderScoped: false,
+        getLabel: () => 'widget',
+        getPluralLabel: () => 'widgets',
+        icon: 'apps',
+      },
+    ]);
+    server.use(
+      http.put(`${BASE}/repositories/:name/files/*`, () =>
+        HttpResponse.json({ path: 'widgets/w.json', resource: { upsert: {} } })
+      )
+    );
+
+    const { user } = render(
+      <SaveProvisionedResourceDrawer
+        resource={{ ...mockPlaylist, apiVersion: 'widgets.example.app/v1', kind: 'Widget' }}
+        title="W"
+        action="update"
+        redirectUrl="/a/widgets"
+      />
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Save provisioned widget' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /^commit/i }));
+    expect(await screen.findByRole('button', { name: 'Back to all widgets' })).toBeInTheDocument();
+  });
+
+  it('renders nothing and warns in dev when the resource has no kind', () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    // The resource's apiVersion/kind don't resolve to a registry entry, so the resolver bails out.
     setup({
       title: 'X',
       resource: {
         apiVersion: 'unknown.example.com/v1',
-        kind: 'Unknown',
         metadata: { name: 'x' },
         spec: { title: 'X' },
       },

@@ -6,6 +6,7 @@ import useMountedState from 'react-use/lib/useMountedState';
 
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { type KindInfo } from '@grafana/runtime/unstable';
 import { Button, Drawer, Stack, Text } from '@grafana/ui';
 import {
   type RepositoryView,
@@ -18,6 +19,7 @@ import {
   AnnoKeySourcePath,
   ManagerKind,
 } from 'app/features/apiserver/types';
+import { findKind } from 'app/core/kinds/coreKinds';
 import { useDispatch } from 'app/types/store';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
@@ -40,7 +42,7 @@ import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { getCanPushToConfiguredBranch, getDefaultRef } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
-import { slugifyForFilename } from '../utils/path';
+import { joinPath, slugifyForFilename } from '../utils/path';
 
 import { ProvisionedCommitSteps } from './ProvisionedCommitSteps';
 import { ProvisionedCommitSuccess } from './ProvisionedCommitSuccess';
@@ -99,6 +101,7 @@ export interface SaveProvisionedResourceDrawerProps {
   readOnlyMessage?: string;
   /** Prefix for generated branch names. Defaults to the kind's key. */
   branchPrefix?: string;
+  directory?: string;
   action: ProvisionedResourceAction;
   repositoryName?: string;
   redirectUrl?: string;
@@ -106,7 +109,8 @@ export interface SaveProvisionedResourceDrawerProps {
 }
 
 interface FormProps {
-  kindKey: ResourceKindKey;
+  kindKey?: ResourceKindKey;
+  resourceType: string;
   resourceName: string;
   title: string;
   body?: Record<string, unknown>;
@@ -121,6 +125,7 @@ interface FormProps {
 
 function FormContent({
   kindKey,
+  resourceType,
   resourceName,
   title,
   body,
@@ -135,7 +140,6 @@ function FormContent({
   const dispatch = useDispatch();
   const { setLastBranch } = useLastBranch();
   const [error, setError] = useState<string | undefined>(undefined);
-  const resourceType = kindKey;
   const isDelete = action === 'delete';
   // New resources are POSTed (create), existing ones PUT (replace). The wrapper keys off the
   // original path: passing it selects update, omitting it selects create.
@@ -204,8 +208,8 @@ function FormContent({
       if (landedOn) {
         setLastBranch(repoName, landedOn);
       }
-      const kind: ResourceKindInfo = resourceKindInfos[kindKey];
-      const invalidateAction = kind.invalidateListTags?.();
+      const kind: ResourceKindInfo | undefined = kindKey && resourceKindInfos[kindKey];
+      const invalidateAction = kind?.invalidateListTags?.();
       if (invalidateAction) {
         dispatch(invalidateAction);
       }
@@ -372,37 +376,51 @@ export function CommitOutcomeDrawer({ stored, onDismiss }: { stored: string; onD
  * Drawer for committing a repository-managed resource to git — usable directly from a resource's
  * pages with no per-kind wrapper. Pass the resource, its title and the action: the drawer resolves
  * the kind from the resource's `apiVersion`+`kind` and derives the rest — the committed file body, a
- * new resource's name/path/annotations and the commit message. `delete` commits no body. Renders nothing if the resource isn't a registered provisioning kind (pages only
- * open it for known managed resources).
+ * new resource's name/path/annotations and the commit message. `delete` commits no body. Renders nothing if the resource
+ * has no apiVersion or kind.
  */
 export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDrawerProps) {
   // The resource carries its own identity: its API group (from apiVersion) + Kubernetes kind resolve
   // the registry key, so callers don't pass the kind separately.
-  const kindKey = getKindKeyByGroupKind(props.resource.apiVersion?.split('/')[0], props.resource.kind);
-  if (!kindKey) {
-    // Pages only open this for known managed resources, so an unresolved kind means a bad fixture or a
-    // new kind wired into a page before its registry entry exists. Warn in dev so it's a visible signal
-    // rather than a silent no-op where the user clicks save/delete and nothing happens.
+  const group = props.resource.apiVersion?.split('/')[0];
+  const { kind } = props.resource;
+  if (!group || !kind) {
+    // Warn in dev so it's a visible signal rather than a silent no-op where the user clicks save/delete
+    // and nothing happens.
     if (process.env.NODE_ENV !== 'production') {
       console.warn(
-        `SaveProvisionedResourceDrawer: no registered provisioning kind for "${props.resource.apiVersion}"/"${props.resource.kind}"; the drawer will not render.`
+        `SaveProvisionedResourceDrawer: the resource has no apiVersion or kind ("${props.resource.apiVersion}"/"${kind}"); the drawer will not render.`
       );
     }
     return null;
   }
-  return <ResourceDrawerContent {...props} kindKey={kindKey} />;
+  return (
+    <ResourceDrawerContent
+      {...props}
+      kindKey={getKindKeyByGroupKind(group, kind)}
+      kindInfo={findKind(group, kind)}
+      resourceType={kind.toLowerCase()}
+    />
+  );
 }
 
-type ResourceDrawerContentProps = SaveProvisionedResourceDrawerProps & { kindKey: ResourceKindKey };
+type ResourceDrawerContentProps = SaveProvisionedResourceDrawerProps & {
+  kindKey?: ResourceKindKey;
+  kindInfo?: KindInfo;
+  resourceType: string;
+};
 
 function ResourceDrawerContent({
   kindKey,
+  kindInfo,
+  resourceType,
   resource,
   action,
   title,
   repositoryName,
   readOnlyMessage,
   branchPrefix,
+  directory = '',
   redirectUrl,
   onDismiss,
 }: ResourceDrawerContentProps) {
@@ -429,7 +447,7 @@ function ResourceDrawerContent({
           annotations: {
             [AnnoKeyManagerKind]: ManagerKind.Repo,
             [AnnoKeyManagerIdentity]: selectedRepository ?? '',
-            [AnnoKeySourcePath]: getNewResourcePath(title, kindKey),
+            [AnnoKeySourcePath]: joinPath(directory, getNewResourcePath(title, resourceType)),
           },
         },
       }
@@ -440,16 +458,16 @@ function ResourceDrawerContent({
     ? undefined
     : { apiVersion: resource.apiVersion, kind: resource.kind, metadata: { name: resourceName }, spec: resource.spec };
 
-  // Branch names can't contain spaces, so prefix from the stable kind key, not the display noun.
-  const prefix = branchPrefix ?? kindKey;
+  // Branch names can't contain spaces, so prefix from the kind name, not the display noun.
+  const prefix = branchPrefix ?? resourceType;
   const { repository, isLoading, isReadOnlyRepo, isMissingRepo } = useGetResourceRepositoryView({
     name: getManagerIdentity(managedResource),
   });
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
   const sourcePath = getSourcePath(managedResource);
 
-  const kindLabel = resourceKindInfos[kindKey].getLabel({ upperFirst: false });
-  const pluralLabel = resourceKindInfos[kindKey].getPluralLabel({ upperFirst: false });
+  const kindLabel = kindInfo?.getLabel({ upperFirst: false }) ?? resourceType;
+  const pluralLabel = kindInfo?.getPluralLabel({ upperFirst: false });
   const drawerTitle = getDrawerTitle(isDelete, kindLabel);
 
   const onCommitted = (committed: ProvisionedCommitOutcome) => {
@@ -517,6 +535,7 @@ function ResourceDrawerContent({
           {initialValues && (
             <FormContent
               kindKey={kindKey}
+              resourceType={resourceType}
               resourceName={resourceName}
               title={title}
               body={body}
