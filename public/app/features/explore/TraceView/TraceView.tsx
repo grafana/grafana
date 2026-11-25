@@ -360,7 +360,7 @@ export function TraceView(props: Props) {
             viewRange={viewRange}
             hideHeaderDetails={hideHeaderDetails}
             logsLinkModel={logsLinkModel}
-            allowLogsDatasourceFallback={!firstLogsDestination?.isOneOfMany}
+            disableLogsDatasourceFallback={firstLogsDestination?.isOneOfMany}
           />
 
           <TraceTimelineViewer

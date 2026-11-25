@@ -40,6 +40,12 @@ func zapFieldsToArgs(fields []zap.Field) []any {
 	return args
 }
 
+// Level implements logger.Logger. OpenFGA uses it to skip work that only feeds
+// Info or Debug logs; level filtering happens in the wrapped Grafana logger.
+func (l *ZanzanaLogger) Level() zapcore.Level {
+	return zapcore.InfoLevel
+}
+
 // With implements logger.Logger.
 func (l *ZanzanaLogger) With(fields ...zapcore.Field) logger.Logger {
 	return &ZanzanaLogger{

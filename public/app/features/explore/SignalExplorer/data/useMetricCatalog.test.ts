@@ -8,6 +8,8 @@ import * as client from './metricResourceClient';
 import type { Catalog } from './metricResourceClient';
 import { SEARCH_DEBOUNCE_MS, useMetricCatalog } from './useMetricCatalog';
 
+jest.mock('./metricResourceClient', () => makeSpyable('./metricResourceClient'));
+
 const range = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
 const rows: MetricInfo[] = [
   { name: 'http_requests_total', type: 'counter', help: 'h' },

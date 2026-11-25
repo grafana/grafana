@@ -74,6 +74,12 @@ Each panel needs at least one query to display a visualization.
 - Ensure that you have the proper permissions. For more information about permissions, refer to [About users and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
 - Understand the query language of the target data source.
 
+{{< admonition type="tip" >}}
+The following directions guide you through building a dashboard from the empty state.
+You can also start from templates, including custom templates created by your organization, or suggestions.
+For more information, refer to [Create dashboards from templates and suggestions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-template-dashboards/).
+{{< /admonition >}}
+
 ## Create a dashboard
 
 To create a dashboard, follow these steps:
@@ -626,6 +632,13 @@ To make a copy of a dashboard, follow these steps:
 1. Click **Save**.
 
 You're now in the copied dashboard.
+
+## Save a dashboard as a template
+
+You can save a dashboard as a custom template, which gives you and your team a consistent starting point for new dashboards.
+A custom template lets you apply your organization's preferred layout, panels, and settings.
+
+For directions on how to do this, refer to the [Create custom dashboards templates](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-template-dashboards/#create-custom-dashboard-templates) documentation.
 
 ## Frequently asked questions
 

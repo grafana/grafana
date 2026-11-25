@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/routes"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
@@ -31,7 +32,7 @@ type genericAccessTokenProvider struct {
 	datasourceType      string
 	datasourceUpdated   time.Time
 	route               *plugins.Route
-	authParams          *plugins.JWTTokenAuth
+	authParams          *routes.ProxyTokenAuth
 }
 
 type jwtToken struct {
@@ -71,7 +72,7 @@ func (token *jwtToken) UnmarshalJSON(b []byte) error {
 }
 
 func newGenericAccessTokenProvider(ds DSInfo, pluginRoute *plugins.Route,
-	authParams *plugins.JWTTokenAuth) *genericAccessTokenProvider {
+	authParams *routes.ProxyTokenAuth) *genericAccessTokenProvider {
 	return &genericAccessTokenProvider{
 		datasourceId:        ds.ID,
 		datasourceNamespace: ds.Namespace,
@@ -93,7 +94,7 @@ func (provider *genericAccessTokenProvider) GetAccessToken() (string, error) {
 		}
 	}
 
-	tokenUrl := provider.authParams.Url
+	tokenUrl := provider.authParams.URL
 
 	params := make(url.Values)
 	for key, value := range provider.authParams.Params {

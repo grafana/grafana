@@ -13,6 +13,7 @@ import { isMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 import {
   clearPendingChangePreview,
   getScenePendingChangePreview,
+  type PendingChangePreview,
   previewedDashboardUid,
   proposesNewDashboard,
 } from './pendingChangePreview';
@@ -54,7 +55,10 @@ export function openPendingChangesForEditing(scene: DashboardScene) {
   }
 }
 
-/** Whether the dashboard's Save saves pending changes to a saved dashboard, through their plugin. */
+/**
+ * Whether the dashboard's Save saves pending changes to a saved dashboard: through their plugin, or,
+ * for a dashboard a repository keeps, as a commit to it.
+ */
 export function savesPendingChanges(scene: DashboardScene): boolean {
   const preview = getScenePendingChangePreview(scene.state);
   return Boolean(preview?.previewing && preview.saved && !proposesNewDashboard(preview.pending));
@@ -206,6 +210,54 @@ export async function discardScenePendingChanges(scene: DashboardScene, { keepEd
 export async function showSavedPendingChanges(scene: DashboardScene, uid: string) {
   leaveEditMode(scene, { discarded: false });
   await closePendingChangesPage(uid);
+}
+
+export interface CommittedPendingChanges {
+  uid: string;
+  preview: PendingChangePreview;
+}
+
+/**
+ * The pending changes to a saved dashboard that committing `scene` commits, when a repository keeps
+ * it: its own save form saves them then (see SaveDashboardDrawer).
+ */
+export function getCommittedPendingChanges(scene: DashboardScene): CommittedPendingChanges | undefined {
+  const preview = getScenePendingChangePreview(scene.state);
+  const uid = previewedDashboardUid(scene.state);
+  if (!preview?.previewing || !uid || proposesNewDashboard(preview.pending)) {
+    return undefined;
+  }
+  return { uid, preview };
+}
+
+/**
+ * After the requester committed pending changes to a repository: the commit has them, so their
+ * plugin discards them, as after a copy. With `showSaved`, the commit updated the dashboard here, so
+ * the page shows it saved; otherwise the requester is on its way to the branch or the copy. A failed
+ * discard leaves them to the plugin.
+ */
+export async function finishCommittingPendingChanges(
+  scene: DashboardScene,
+  { uid, preview }: CommittedPendingChanges,
+  { showSaved }: { showSaved: boolean }
+) {
+  // An embedded view's host shows the saved dashboard itself.
+  const showSavedHere = showSaved && !scene.state.meta.isEmbedded;
+  if (showSavedHere) {
+    leaveEditMode(scene, { discarded: false });
+  }
+  // An edit still on its way, such as one leaving edit mode records, would reach the plugin after
+  // the discard and bring the pending changes back.
+  await pendingChangesRecorded(scene);
+  clearPendingChangePreview(uid, preview.id);
+  try {
+    await preview.pending.discard();
+  } catch {
+    // See above.
+  }
+  if (showSavedHere) {
+    await closePendingChangesPage(uid);
+  }
 }
 
 /** Ends the edit session of pending changes that are saved or discarded: nothing is left to save. */

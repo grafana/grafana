@@ -116,11 +116,30 @@ export function useRecordingRulesNav() {
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
 
-  return buildGmaRulesNav(navIndex, 'recording-rules', location.pathname, {
-    id: 'recording-rules-list',
-    text: t('alerting.navigation.recording-rules', 'Recording rules'),
-    url: '/alerting/rules/recording',
-  });
+  const recentlyDeletedUrl = '/alerting/rules/recording/deleted';
+  const adminTabs: NavModelItem[] = isAdmin()
+    ? [
+        {
+          id: 'recording-rules-recently-deleted',
+          text: t('alerting.navigation.recently-deleted', 'Recently deleted'),
+          url: recentlyDeletedUrl,
+          active: location.pathname === recentlyDeletedUrl,
+          parentItem: navIndex['recording-rules'],
+        },
+      ]
+    : [];
+
+  return buildGmaRulesNav(
+    navIndex,
+    'recording-rules',
+    location.pathname,
+    {
+      id: 'recording-rules-list',
+      text: t('alerting.navigation.recording-rules', 'Recording rules'),
+      url: '/alerting/rules/recording',
+    },
+    adminTabs
+  );
 }
 
 function buildGmaRulesNav(

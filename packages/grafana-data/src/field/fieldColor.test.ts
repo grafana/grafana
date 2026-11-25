@@ -6,6 +6,7 @@ import {
   fieldColorModeRegistry,
   getFieldColorMode,
   getFieldColorModeForField,
+  getFieldColorPalette,
   isReversibleFieldColorMode,
   type FieldValueColorCalculator,
 } from './fieldColor';
@@ -174,6 +175,12 @@ describe('reverse color scheme', () => {
     const reversed = getFieldColorModeForField(getReversedField(FieldColorModeId.ContinuousGrYlRd, true));
 
     expect(reversed.getColors!(theme)).toEqual(['red', 'yellow', 'green'].map(theme.visualization.getColorByName));
+  });
+
+  it('returns a reversed palette for categorical color selection', () => {
+    expect(getFieldColorPalette(getReversedField(FieldColorModeId.ContinuousGrYlRd, true), theme)).toEqual(
+      ['red', 'yellow', 'green'].map(theme.visualization.getColorByName)
+    );
   });
 
   it('mirrors the interpolator of an interpolated scheme', () => {

@@ -802,7 +802,7 @@ func TestService_mapping(t *testing.T) {
 		Login:          "test",
 		UserID:         123,
 		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        types.RoleAdmin,
 		IsGrafanaAdmin: true, // can do anything
 		Namespace:      ns,
 		OrgID:          1,

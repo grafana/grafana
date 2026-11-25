@@ -69,7 +69,7 @@ function StarToggle({ title, group, kind, id }: Props) {
       : { tooltip: tooltips.star, label: isLoading ? undefined : tooltips.starWithTitle };
   })();
 
-  const icon = <Icon {...iconProps} size="lg" key={`${isLoading}-${isStarred}`} />;
+  const icon = <Icon key={`${isLoading}-${isStarred}`} {...iconProps} size="lg" />;
   return (
     <ToolbarButton
       disabled={isLoading}

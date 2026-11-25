@@ -203,17 +203,17 @@ datasources:
     jsonData:
       tracesToLogsV2:
         datasourceUid: 'loki'
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
-        tags: ['job', 'instance', 'pod', 'namespace']
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
+        tags: [{ key: 'job' }, { key: 'instance' }, { key: 'pod' }, { key: 'namespace' }]
         filterByTraceID: false
         filterBySpanID: false
         customQuery: true
         query: 'method="$${__span.tags.method}"'
       tracesToMetrics:
         datasourceUid: 'prom'
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
         tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
         queries:
           - name: 'Sample query'
@@ -257,8 +257,8 @@ resource "grafana_data_source" "zipkin" {
   json_data_encoded = jsonencode({
     tracesToLogsV2 = {
       datasourceUid    = grafana_data_source.loki.uid
-      spanStartTimeShift = "1h"
-      spanEndTimeShift   = "-1h"
+      spanStartTimeShift = "-1h"
+      spanEndTimeShift   = "1h"
       filterByTraceID  = true
       filterBySpanID   = false
       tags = [

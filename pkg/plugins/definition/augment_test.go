@@ -9,8 +9,8 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	sdkresource "github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func TestRewriteAppInstance(t *testing.T) {
@@ -309,9 +309,9 @@ func TestAugmentOpenAPI(t *testing.T) {
 		assert.Equal(t, []string{"apiKey"}, secure.Required, "only required keys are required")
 		assert.False(t, secure.AdditionalProperties.Allows, "unknown secure keys are rejected")
 
-		example, ok := secure.Example.(common.InlineSecureValues)
+		example, ok := secure.Example.(sdkresource.InlineSecureValues)
 		require.True(t, ok)
-		assert.Equal(t, common.InlineSecureValues{"apiKey": {Create: "***"}}, example,
+		assert.Equal(t, sdkresource.InlineSecureValues{"apiKey": {Create: "***"}}, example,
 			"only required keys appear in the example")
 
 		secureProp := resource.Properties["secure"]

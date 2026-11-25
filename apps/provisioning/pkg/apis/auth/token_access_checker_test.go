@@ -91,7 +91,7 @@ func TestTokenAccessChecker_WithFallbackRole_IsNoOp(t *testing.T) {
 	}
 
 	checker := NewTokenAccessChecker(mock)
-	checkerWithFallback := checker.WithFallbackRole(identity.RoleAdmin)
+	checkerWithFallback := checker.WithFallbackRole(authlib.RoleAdmin)
 
 	// They should be the same instance
 	assert.Same(t, checker, checkerWithFallback, "WithFallbackRole should return same instance")

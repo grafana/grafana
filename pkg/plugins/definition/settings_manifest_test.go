@@ -13,6 +13,8 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	manifestroutes "github.com/grafana/grafana-app-sdk/routes"
+
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
@@ -113,7 +115,7 @@ func TestNewSettingsManifest(t *testing.T) {
 		}}, versions...)}
 	}
 	proxy := &spec3.Operation{}
-	proxy.AddExtension(ExtensionProxy, ProxyTarget{URL: "https://v2"})
+	proxy.AddExtension(manifestroutes.ExtensionProxy, manifestroutes.ProxyTarget{URL: "https://v2"})
 	resource := &spec3.Operation{OperationProps: spec3.OperationProps{Description: "list things"}}
 
 	t.Run("the manifest of the plugin ID's group is the foundation", func(t *testing.T) {
@@ -163,10 +165,10 @@ func TestNewSettingsManifest(t *testing.T) {
 		}, app.ManifestVersion{Name: "v1", Served: true})), testMatcher)
 		require.ErrorContains(t, err, "/namespaces/{namespace}/other is not served")
 		require.ErrorContains(t, err, "version v1 is not served")
-		require.ErrorContains(t, err, ExtensionProxy+" is only served below the proxy subresource")
+		require.ErrorContains(t, err, manifestroutes.ExtensionProxy+" is only served below the proxy subresource")
 		paths := settingsPaths(t, manifest)
 		require.ElementsMatch(t, []string{SettingsResourcesRoot + "/proxied", SettingsResourcesRoot + "/things"}, slices.Collect(maps.Keys(paths)))
-		require.NotContains(t, paths[SettingsResourcesRoot+"/proxied"].Get.Extensions, ExtensionProxy)
+		require.NotContains(t, paths[SettingsResourcesRoot+"/proxied"].Get.Extensions, manifestroutes.ExtensionProxy)
 	})
 
 	t.Run("a manifest's proxy routes must declare where they forward to", func(t *testing.T) {
@@ -174,15 +176,33 @@ func TestNewSettingsManifest(t *testing.T) {
 			SettingsProxyRoot + "/v2":         {Get: &spec3.Operation{}},
 			SettingsResourcesRoot + "/things": {Get: resource},
 		})), testMatcher)
-		require.ErrorContains(t, err, "must declare "+ExtensionProxy)
+		require.ErrorContains(t, err, "must declare "+manifestroutes.ExtensionProxy)
 		require.Equal(t, []string{SettingsResourcesRoot + "/things"}, slices.Collect(maps.Keys(settingsPaths(t, manifest))),
 			"the resource routes are kept")
+	})
+
+	t.Run("an invalid proxy route leaves out only that operation", func(t *testing.T) {
+		valid := &spec3.Operation{}
+		valid.AddExtension(manifestroutes.ExtensionProxy, manifestroutes.ProxyTarget{URL: "https://example"})
+		invalid := &spec3.Operation{}
+		invalid.AddExtension(manifestroutes.ExtensionProxy, manifestroutes.ProxyTarget{URL: "https://{{.JsonData.host"})
+		manifest, err := NewSettingsManifest(appWithRoutes(nil, foundation(map[string]spec3.PathProps{
+			SettingsProxyRoot + "/v2":  {Get: valid, Post: invalid},
+			SettingsProxyRoot + "/bad": {Get: invalid},
+			SettingsProxyRoot + "/ok":  {Get: valid},
+		})), testMatcher)
+		require.ErrorContains(t, err, "POST "+SettingsProxyRoot+"/v2")
+		require.ErrorContains(t, err, "GET "+SettingsProxyRoot+"/bad")
+		paths := settingsPaths(t, manifest)
+		require.ElementsMatch(t, []string{SettingsProxyRoot + "/v2", SettingsProxyRoot + "/ok"}, slices.Collect(maps.Keys(paths)))
+		require.NotNil(t, paths[SettingsProxyRoot+"/v2"].Get)
+		require.Nil(t, paths[SettingsProxyRoot+"/v2"].Post)
 	})
 }
 
 func TestWithTrailingSlashesLeavesOutConflictingCopies(t *testing.T) {
 	op := &spec3.Operation{}
-	op.AddExtension(ExtensionProxy, ProxyTarget{URL: "https://example"})
+	op.AddExtension(manifestroutes.ExtensionProxy, manifestroutes.ProxyTarget{URL: "https://example"})
 	p := appWithRoutes(nil, &app.ManifestData{Group: "example-app", Versions: []app.ManifestVersion{{
 		Name: "v0alpha1", Served: true, OpenAPI: app.ManifestVersionOpenAPI{Paths: map[string]spec3.PathProps{
 			// a/b/ is matched by both a/{x} with a trailing slash and {y}/b/,

@@ -15,7 +15,7 @@ import {
 import { t } from '@grafana/i18n';
 import { type TraceToProfilesOptions, type TraceToMetricsOptions } from '@grafana/o11y-ds-frontend';
 import { type PromQuery } from '@grafana/prometheus';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, logError } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
 
 import { type ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
@@ -157,9 +157,38 @@ function getLogsLinkTitles(destinations: TraceToLogsDestination[]): string[] {
   }
 
   const titles = destinations.map(({ options, settings }) => options.name?.trim() || settings.name);
-  return titles.map((title, index) =>
-    titles.indexOf(title) === titles.lastIndexOf(title) ? title : `${title} (${destinations[index].index + 1})`
-  );
+  const isUnique = (title: string) => titles.indexOf(title) === titles.lastIndexOf(title);
+  const taken = new Set(titles.filter(isUnique));
+  return titles.map((title, index) => {
+    if (isUnique(title)) {
+      return title;
+    }
+    // A configured label can already look like a generated one, such as "Audit (1)", so skip suffixes that are taken.
+    let position = destinations[index].index + 1;
+    while (taken.has(`${title} (${position})`)) {
+      position++;
+    }
+    const generated = `${title} (${position})`;
+    taken.add(generated);
+    return generated;
+  });
+}
+
+/**
+ * Runs the callback for each logs destination. A destination whose configuration still makes building its link throw
+ * only loses its own link, instead of stopping the links of every span.
+ */
+function forEachLogsDestination(
+  destinations: TraceToLogsDestination[],
+  callback: (destination: TraceToLogsDestination, index: number) => void
+) {
+  destinations.forEach((destination, index) => {
+    try {
+      callback(destination, index);
+    } catch (error) {
+      logError(error instanceof Error ? error : new Error(String(error)), { datasourceUid: destination.settings.uid });
+    }
+  });
 }
 
 function legacyCreateSpanLinkFactory(
@@ -184,7 +213,7 @@ function legacyCreateSpanLinkFactory(
 
     // TODO: This should eventually move into specific data sources and added to the data frame as we no longer use the
     //  deprecated blob format and we can map the link easily in data frame.
-    logsDestinations.forEach((destination, destinationIndex) => {
+    forEachLogsDestination(logsDestinations, (destination, destinationIndex) => {
       const { options: traceToLogsOptions, settings: logsDataSourceSettings } = destination;
       const { query, tags } = getTraceToLogsSpanQuery(span, logsDataSourceSettings, traceToLogsOptions);
 
@@ -283,6 +312,7 @@ function legacyCreateSpanLinkFactory(
             field,
             type: SpanLinkType.Logs,
             logsDestination: {
+              index: destination.index,
               options: traceToLogsOptions,
               isOneOfMany: destination.isOneOfMany || logsDestinations.length > 1,
             },

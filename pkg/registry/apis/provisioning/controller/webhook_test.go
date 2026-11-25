@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 var subscribedEvents = []string{"pull_request", "push"} // same order as slices.Sort()
@@ -533,7 +533,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 					},
 				},
 				Secure: provisioning.SecureValues{
-					WebhookSecret: common.InlineSecureValue{
+					WebhookSecret: resource.InlineSecureValue{
 						Name: "valid-secret",
 					},
 				},

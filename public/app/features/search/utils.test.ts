@@ -1,5 +1,6 @@
+import { SECTION_STORAGE_KEY } from './constants';
 import { type SearchQueryParams } from './types';
-import { parseRouteParams } from './utils';
+import { cleanupOldExpandedFolders, parseRouteParams } from './utils';
 
 describe('Search utils', () => {
   describe('parseRouteParams', () => {
@@ -53,6 +54,25 @@ describe('Search utils', () => {
         folder: 'current',
         query: 'folder:current test',
       });
+    });
+  });
+  describe('cleanupOldExpandedFolders', () => {
+    beforeEach(() => {
+      window.localStorage.clear();
+    });
+
+    it('should remove old folder keys and keep other keys', () => {
+      window.localStorage.setItem(`${SECTION_STORAGE_KEY}.general`, 'true');
+      window.localStorage.setItem(`${SECTION_STORAGE_KEY}.my folder`, 'true');
+      window.localStorage.setItem(SECTION_STORAGE_KEY, 'keep');
+      window.localStorage.setItem('other.key', 'keep');
+
+      cleanupOldExpandedFolders();
+
+      expect(window.localStorage.getItem(`${SECTION_STORAGE_KEY}.general`)).toBeNull();
+      expect(window.localStorage.getItem(`${SECTION_STORAGE_KEY}.my folder`)).toBeNull();
+      expect(window.localStorage.getItem(SECTION_STORAGE_KEY)).toBe('keep');
+      expect(window.localStorage.getItem('other.key')).toBe('keep');
     });
   });
 });

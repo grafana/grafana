@@ -47,6 +47,8 @@ export type TraceToLogsDestination = {
 };
 
 export type LogsDestinationLink = {
+  /** Position of the destination in the trace data source configuration. */
+  index: number;
   options: TraceToLogsOptionsV2;
   /**
    * More than one logs destination is configured. Each link then keeps its own label and stays on its configured

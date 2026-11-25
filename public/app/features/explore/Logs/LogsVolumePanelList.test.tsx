@@ -15,6 +15,8 @@ import * as logUtils from '../../logs/utils';
 
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 
+jest.mock('../../logs/utils', () => makeSpyable('../../logs/utils'));
+
 const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
 
 const setBooleanFlags = (flags: Record<string, boolean>) => {

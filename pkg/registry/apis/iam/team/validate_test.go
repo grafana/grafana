@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -15,7 +16,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 
-	"github.com/grafana/authlib/types"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -35,7 +35,7 @@ func TestValidateOnCreate(t *testing.T) {
 			name: "valid team - not provisioned",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -49,7 +49,7 @@ func TestValidateOnCreate(t *testing.T) {
 			name: "valid team - provisioned",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeServiceAccount,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -65,7 +65,7 @@ func TestValidateOnCreate(t *testing.T) {
 			name: "invalid team - no title",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -79,7 +79,7 @@ func TestValidateOnCreate(t *testing.T) {
 			name: "invalid team - it's provisioned but the requester is not a service account",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -95,7 +95,7 @@ func TestValidateOnCreate(t *testing.T) {
 			name: "invalid team - has externalUID but it's not provisioned",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -140,7 +140,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "valid update - no changes to provisioned status",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -160,7 +160,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "valid update - service account changing to provisioned",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeServiceAccount,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -182,7 +182,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "valid update - already provisioned team",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeServiceAccount,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -206,7 +206,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "invalid update - no title",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -226,7 +226,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "invalid update - user trying to change to provisioned",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -248,7 +248,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "invalid update - changing from provisioned to non-provisioned",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeServiceAccount,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -270,7 +270,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "invalid update - has externalUID but not provisioned",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -308,7 +308,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			name: "valid update - adding externalUID to provisioned team",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeServiceAccount,
-				OrgRole: identity.RoleAdmin,
+				OrgRole: types.RoleAdmin,
 			},
 			obj: &iamv0alpha1.Team{
 				Spec: iamv0alpha1.TeamSpec{
@@ -531,7 +531,7 @@ func TestValidateTitleUniqueSearchErrors(t *testing.T) {
 }
 
 func TestValidateOnCreate_TitleUniqueness(t *testing.T) {
-	requester := &identity.StaticRequester{Type: types.TypeServiceAccount, OrgRole: identity.RoleAdmin, Namespace: "stacks-1"}
+	requester := &identity.StaticRequester{Type: types.TypeServiceAccount, OrgRole: types.RoleAdmin, Namespace: "stacks-1"}
 	newTeam := &iamv0alpha1.Team{
 		ObjectMeta: metav1.ObjectMeta{Name: "new-uid"},
 		Spec:       iamv0alpha1.TeamSpec{Title: "Engineering"},
@@ -573,7 +573,7 @@ func TestValidateOnCreate_TitleUniqueness(t *testing.T) {
 	})
 
 	t.Run("unparseable requester namespace is an internal error", func(t *testing.T) {
-		badNs := &identity.StaticRequester{Type: types.TypeServiceAccount, OrgRole: identity.RoleAdmin, Namespace: "stacks-abc"}
+		badNs := &identity.StaticRequester{Type: types.TypeServiceAccount, OrgRole: types.RoleAdmin, Namespace: "stacks-abc"}
 		ctx := identity.WithRequester(t.Context(), badNs)
 		backend := &fakeSearchBackend{}
 		err := ValidateOnCreate(ctx, selectorForBackend(backend), newTeam, legacy.NoopExternalGroupReconciler{})
@@ -583,7 +583,7 @@ func TestValidateOnCreate_TitleUniqueness(t *testing.T) {
 }
 
 func TestValidateOnUpdate_TitleUniqueness(t *testing.T) {
-	requester := &identity.StaticRequester{Type: types.TypeServiceAccount, OrgRole: identity.RoleAdmin, Namespace: "stacks-1"}
+	requester := &identity.StaticRequester{Type: types.TypeServiceAccount, OrgRole: types.RoleAdmin, Namespace: "stacks-1"}
 	for _, tt := range []struct {
 		name     string
 		oldTitle string

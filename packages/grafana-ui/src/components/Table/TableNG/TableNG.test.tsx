@@ -19,7 +19,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellBackgroundDisplayMode } from '@grafana/schema';
-import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { type PanelContext, PanelContextProvider } from '../../PanelChrome';
 import { TableCellDisplayMode } from '../types';
@@ -27,12 +27,19 @@ import { TableCellDisplayMode } from '../types';
 import { TableNG } from './TableNG';
 import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_LAST_ROW_CLASS, OVERFLOW_CELL_CLASS, TABLE } from './constants';
 
+jest.mock('uwrap', () => ({
+  varPreLine: jest.fn(),
+}));
+
+beforeEach(() => {
+  jest.mocked(uwrap.varPreLine).mockReset().mockImplementation(jest.requireActual('./__mocks__/uwrap').varPreLine);
+});
+
 // react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
 // this the grid renders no rows at all.
 beforeAll(() => {
   // Keep offsetWidth consistent with clientWidth so delayed scrollbar measurement cannot go negative.
   mockBoundingClientRect({ width: 800, height: 600 });
-  mockClientSize({ width: 800, height: 600 });
   // Keep bounding and offset dimensions consistent with the client box for viewport measurement.
   mockBoundingClientRect({ width: 800, height: 600 });
 });
@@ -2770,7 +2777,7 @@ describe('TableNG', () => {
     }
 
     it.each([0, 1, 2])('repairs grid positions when oversized text occurs at row %i', (index) => {
-      jest.spyOn(uwrap, 'varPreLine').mockReturnValue({
+      jest.mocked(uwrap.varPreLine).mockReturnValue({
         count: (text) => text.split('\n').length,
         each: () => {},
         split: () => [],
@@ -2968,7 +2975,7 @@ describe('TableNG', () => {
       // its raw object value stringifies to a single-line "[object Object]". Give this test its own
       // real newline counter so the fix (measuring the field actually rendered, pretty-printed JSON
       // and all) is distinguishable from the regression (measuring an unprepared field's `.display`).
-      jest.spyOn(uwrap, 'varPreLine').mockReturnValue({
+      jest.mocked(uwrap.varPreLine).mockReturnValue({
         count: (str: string) => str.split('\n').length,
         each: () => {},
         split: () => [],

@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { usePluginContext } from '@grafana/data';
 import { type UsePluginComponentResult } from '@grafana/runtime';
 
+import { ExposedComponentOriginContext, useExposedComponentOriginPluginId } from './ExposedComponentOriginContext';
 import * as errors from './errors';
 import { isGrafanaDevMode } from './isGrafanaDevMode';
 import { log } from './logs/log';
@@ -16,10 +17,11 @@ import { isExposedComponentDependencyMissing } from './validators';
 export function usePluginComponent<Props extends object = {}>(id: string): UsePluginComponentResult<Props> {
   const registryItem = useExposedComponentRegistrySlice<Props>(id);
   const pluginContext = usePluginContext();
+  const inheritedOrigin = useExposedComponentOriginPluginId();
+  const originPluginId = pluginContext?.meta.id === 'grafana' ? inheritedOrigin : pluginContext?.meta.id;
   const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(id, getExposedComponentPluginDependencies);
 
-  // A fresh caller context must not create a new React component type and discard
-  // the exposed component's local state. Only its registry entry owns that identity.
+  // Depend on the caller ID, not its context object, so metadata refreshes preserve local edits.
   const extension = useMemo(() => {
     if (!registryItem) {
       return null;
@@ -29,16 +31,21 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
       description: registryItem.description ?? '',
       pluginId: registryItem.pluginId,
     });
+    const Component = wrapWithPluginContext({
+      pluginId: registryItem.pluginId,
+      extensionTitle: registryItem.title,
+      Component: registryItem.component,
+      log: componentLog,
+    });
     return {
       log: componentLog,
-      component: wrapWithPluginContext({
-        pluginId: registryItem.pluginId,
-        extensionTitle: registryItem.title,
-        Component: registryItem.component,
-        log: componentLog,
-      }),
+      component: (props: Props) => (
+        <ExposedComponentOriginContext.Provider value={originPluginId}>
+          <Component {...props} />
+        </ExposedComponentOriginContext.Provider>
+      ),
     };
-  }, [registryItem]);
+  }, [registryItem, originPluginId]);
 
   return useMemo(() => {
     // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.

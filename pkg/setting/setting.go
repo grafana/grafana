@@ -25,11 +25,10 @@ import (
 	"github.com/prometheus/common/model"
 	"gopkg.in/ini.v1"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -210,6 +209,7 @@ type Cfg struct {
 	// ProvisioningResourceListerPageSize is how many items the "apis" lister asks for per request
 	// when it reads a whole list. Non-positive (<=0) uses resources.DefaultListPageSize.
 	ProvisioningResourceListerPageSize int64
+	ProvisioningRouterClient           bool
 	// ProvisioningBootstrapPath is the directory Grafana registers a local repository over
 	// at startup, so the mounted files can declare the instance's own provisioning config.
 	ProvisioningBootstrapPath                 string
@@ -421,6 +421,7 @@ type Cfg struct {
 	DataProxyIdleConnTimeout       int
 	ResponseLimit                  int64
 	DataProxyRowLimit              int64
+	DataProxySeriesLimit           int64
 	DataProxyUserAgent             string
 	DataProxyForwardUserAgent      bool
 
@@ -2291,11 +2292,11 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
 	cfg.LoginDefaultOrgId = users.Key("login_default_org_id").MustInt64(-1)
 	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In(
-		string(identity.RoleViewer), []string{
-			string(identity.RoleNone),
-			string(identity.RoleViewer),
-			string(identity.RoleEditor),
-			string(identity.RoleAdmin),
+		string(authlib.RoleViewer), []string{
+			string(authlib.RoleNone),
+			string(authlib.RoleViewer),
+			string(authlib.RoleEditor),
+			string(authlib.RoleAdmin),
 		})
 	cfg.VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
@@ -2710,6 +2711,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	}
 	cfg.ProvisioningResourceLister = strings.TrimSpace(iniFile.Section("provisioning").Key("resource_lister").String())
 	cfg.ProvisioningResourceListerPageSize = iniFile.Section("provisioning").Key("resource_lister_page_size").MustInt64(0)
+	cfg.ProvisioningRouterClient = iniFile.Section("provisioning").Key("router_client").MustBool(false)
 	cfg.ProvisioningBootstrapPath = strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "bootstrap_path", ""))
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
 	cfg.ProvisioningAllowInsecure = iniFile.Section("provisioning").Key("allow_insecure").MustBool(false)

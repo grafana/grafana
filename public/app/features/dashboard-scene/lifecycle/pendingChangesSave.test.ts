@@ -26,6 +26,8 @@ import { pendingChangesRecorded, recordPendingChange } from './pendingChangesHis
 import { setPendingChangesPageClose, takeEditingOnNextLoad } from './pendingChangesPageReload';
 import {
   discardScenePendingChanges,
+  finishCommittingPendingChanges,
+  getCommittedPendingChanges,
   getPendingChangesDiff,
   openPendingChangesForEditing,
   savePendingChanges,
@@ -231,6 +233,39 @@ describe('saving pending changes', () => {
       currentGeneration: 5,
     });
     expect(getScenePendingChangePreview(scene.state)?.id).toBe('chat-1');
+  });
+});
+
+describe('committing pending changes to a repository', () => {
+  it('has their plugin discard them once committed, then shows the saved dashboard', async () => {
+    const pending = pendingChanges();
+    const scene = await openOnPage(pending);
+    const committed = getCommittedPendingChanges(scene);
+
+    await finishCommittingPendingChanges(scene, committed!, { showSaved: true });
+
+    expect(pending.discard).toHaveBeenCalledTimes(1);
+    expect(pending.apply).not.toHaveBeenCalled();
+    expect(getScenePendingChangePreview(scene.state)).toBeUndefined();
+    expect(scene.state.isEditing).toBe(false);
+    expect(closePage).toHaveBeenCalledWith('dash-1');
+  });
+
+  it('leaves the page alone when the commit went to another branch, whose preview the requester is on', async () => {
+    const pending = pendingChanges();
+    const scene = await openOnPage(pending);
+
+    await finishCommittingPendingChanges(scene, getCommittedPendingChanges(scene)!, { showSaved: false });
+
+    expect(pending.discard).toHaveBeenCalledTimes(1);
+    expect(getScenePendingChangePreview(scene.state)).toBeUndefined();
+    expect(closePage).not.toHaveBeenCalled();
+  });
+
+  it('commits no pending changes for a draft, which a repository saves as a new dashboard', async () => {
+    const scene = await openDraftOnPage(pendingChanges({ baseGeneration: 0 }), { ...defaultSpec(), title: 'New' });
+
+    expect(getCommittedPendingChanges(scene)).toBeUndefined();
   });
 });
 

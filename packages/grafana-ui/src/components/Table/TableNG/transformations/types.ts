@@ -2,6 +2,7 @@ import { type DataTransformerConfig, type MatcherConfig } from '@grafana/data';
 
 export interface ColumnContext {
   catalog: string[];
+  displayNames?: string[];
   frameFilter?: MatcherConfig;
 }
 

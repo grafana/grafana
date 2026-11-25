@@ -171,6 +171,10 @@ func (k GetRequestKey) Prefix() string {
 
 // Keys returns all keys for a given key by iterating through the KV store
 func (d *dataStore) Keys(ctx context.Context, key ListRequestKey, sort SortOrder) iter.Seq2[DataKey, error] {
+	return d.keys(ctx, key, sort, 0)
+}
+
+func (d *dataStore) keys(ctx context.Context, key ListRequestKey, sort SortOrder, pageTimeout time.Duration) iter.Seq2[DataKey, error] {
 	if err := key.Validate(); err != nil {
 		return func(yield func(DataKey, error) bool) {
 			yield(DataKey{}, err)
@@ -180,11 +184,11 @@ func (d *dataStore) Keys(ctx context.Context, key ListRequestKey, sort SortOrder
 	prefix := key.Prefix()
 	return func(yield func(DataKey, error) bool) {
 		defer span.End()
-		for k, err := range pagedKeys(ctx, d.kv, dataSection, ListOptions{
+		for k, err := range pagedKeysWithTimeout(ctx, d.kv, dataSection, ListOptions{
 			StartKey: prefix,
 			EndKey:   PrefixRangeEnd(prefix),
 			Sort:     sort,
-		}, keyPageSize) {
+		}, keyPageSize, pageTimeout) {
 			if err != nil {
 				yield(DataKey{}, err)
 				return
@@ -309,21 +313,17 @@ func (d *dataStore) ListLatestResourceKeys(ctx context.Context, key ListRequestK
 // reads. Bounds and ordering are preserved, but pages are separate reads, not
 // a transactional snapshot. Callers use an unlimited overall scan (base.Limit = 0).
 func pagedKeys(ctx context.Context, kv KV, section string, base ListOptions, pageSize int) iter.Seq2[string, error] {
+	return pagedKeysWithTimeout(ctx, kv, section, base, pageSize, 0)
+}
+
+func pagedKeysWithTimeout(ctx context.Context, kv KV, section string, base ListOptions, pageSize int, pageTimeout time.Duration) iter.Seq2[string, error] {
 	return func(yield func(string, error) bool) {
 		opts := base
 		opts.Limit = int64(pageSize)
 		resuming := false
 
 		for {
-			page := make([]string, 0, opts.Limit)
-			var scanErr error
-			for key, err := range kv.Keys(ctx, section, opts) {
-				if err != nil {
-					scanErr = err
-					break
-				}
-				page = append(page, key)
-			}
+			page, scanErr := readKeyPage(ctx, kv, section, opts, pageTimeout)
 			// The KV cursor for this page is now closed.
 			if scanErr != nil {
 				yield("", scanErr)
@@ -357,6 +357,22 @@ func pagedKeys(ctx context.Context, kv KV, section string, base ListOptions, pag
 			}
 		}
 	}
+}
+
+func readKeyPage(ctx context.Context, kv KV, section string, opts ListOptions, timeout time.Duration) ([]string, error) {
+	if timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+	page := make([]string, 0, opts.Limit)
+	for key, err := range kv.Keys(ctx, section, opts) {
+		if err != nil {
+			return nil, err
+		}
+		page = append(page, key)
+	}
+	return page, ctx.Err()
 }
 
 // ListResourceKeysAtRevision returns an iterator over data keys for resources at a specific revision.

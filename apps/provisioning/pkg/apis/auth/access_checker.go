@@ -4,7 +4,6 @@ import (
 	"context"
 
 	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 //go:generate mockery --name AccessChecker --structname MockAccessChecker --inpackage --filename access_checker_mock.go --with-expecter
@@ -18,5 +17,5 @@ type AccessChecker interface {
 
 	// WithFallbackRole returns an AccessChecker configured with the specified fallback role.
 	// Whether the fallback is actually applied depends on the implementation.
-	WithFallbackRole(role identity.RoleType) AccessChecker
+	WithFallbackRole(role authlib.RoleType) AccessChecker
 }

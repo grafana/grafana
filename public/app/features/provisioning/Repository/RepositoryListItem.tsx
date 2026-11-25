@@ -10,10 +10,10 @@ import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
-import { ManagedBadge } from '../components/ManagedBadge';
-import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
+import { ManagedResourceBadge } from '../components/ManagedResourceBadge';
+import { WorkflowBadges } from '../components/WorkflowBadges';
 import { exportResourceAsJson } from '../utils/export';
-import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
+import { formatRepoUrl, getRemoteConfig, getRepoHrefForProvider } from '../utils/git';
 import {
   getManagerIdentity,
   getManagerKind,
@@ -21,7 +21,7 @@ import {
   isManaged,
   isProvisioningResourceReadOnly,
 } from '../utils/managedResource';
-import { getIsReadOnlyWorkflows, getRepositoryEditUrl, getRepositoryResourcesUrl } from '../utils/repository';
+import { getRepositoryEditUrl, getRepositoryResourcesUrl } from '../utils/repository';
 import { getKindInfoByStat, resourceKindInfos } from '../utils/resourceKinds';
 import { getManagedReadOnlyTooltip } from '../utils/tooltip';
 
@@ -32,14 +32,13 @@ interface Props {
 }
 
 export function RepositoryListItem({ repository }: Props) {
-  const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
   const { metadata, spec, status } = repository;
   const name = metadata?.name ?? '';
   const styles = useStyles2(getStyles);
   // A provisioned repository is configured wherever it was provisioned from, so it is read-only
   // here. Being managed is the broader condition: a manager that allows edits still gets the
   // badge, without the read-only treatment.
-  const isReadOnly = isProvisioningResourceReadOnly(repository);
+  const isConfigReadOnly = isProvisioningResourceReadOnly(repository);
   const isManagedRepo = isManaged(repository);
 
   const getRepositoryMeta = (): ReactNode[] => {
@@ -84,10 +83,10 @@ export function RepositoryListItem({ repository }: Props) {
         <Stack gap={2} direction="row" alignItems="center" wrap>
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
-          {isReadOnlyRepo && <ReadOnlyBadge repoType={spec?.type} subject="repository" />}
-          {isReadOnly && <ReadOnlyBadge subject="configuration" />}
+          <WorkflowBadges workflows={spec?.workflows} type={spec?.type} branch={getRemoteConfig(spec)?.branch} />
           {isManagedRepo && (
-            <ManagedBadge
+            <ManagedResourceBadge
+              isReadOnly={isConfigReadOnly}
               managerKind={getManagerKind(repository)}
               name={getManagerIdentity(repository)}
               repositoryName={getManagerIdentity(repository)}
@@ -141,7 +140,7 @@ export function RepositoryListItem({ repository }: Props) {
           >
             <Trans i18nKey="provisioning.repository-card.export">Export</Trans>
           </Button>
-          {isReadOnly ? (
+          {isConfigReadOnly ? (
             // Not a disabled LinkButton: that keeps its href and Tooltip restores tabIndex, so the
             // link stays reachable by keyboard, while pointerEvents:none hides the explanation.
             <Button variant="secondary" icon="cog" size="md" disabled tooltip={getManagedReadOnlyTooltip()}>

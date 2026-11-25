@@ -72,10 +72,10 @@ interface Props {
   /** Options of the logs destination the link was built from. Defaults to the first configured destination. */
   traceToLogsOptions?: TraceToLogsOptionsV2;
   /**
-   * When false, logs are only looked up in the link's own data source. Used when several logs destinations are
+   * When true, logs are only looked up in the link's own data source. Used when several logs destinations are
    * configured, so a destination never silently turns into a link to another one.
    */
-  allowDatasourceFallback?: boolean;
+  disableDatasourceFallback?: boolean;
 }
 
 export const LogsLinkButton = ({
@@ -83,10 +83,10 @@ export const LogsLinkButton = ({
   traceDatasourceUid,
   forTrace,
   traceToLogsOptions,
-  allowDatasourceFallback = true,
+  disableDatasourceFallback = false,
 }: Props) => {
   const styles = useStyles2(getStyles);
-  const { presence, resolvedLinkModel } = useHasLogs(linkModel, traceDatasourceUid, allowDatasourceFallback);
+  const { presence, resolvedLinkModel } = useHasLogs(linkModel, traceDatasourceUid, disableDatasourceFallback);
 
   const { settings } = useDataSourceInstanceSettings(traceDatasourceUid);
 
@@ -98,7 +98,9 @@ export const LogsLinkButton = ({
   const isLoading = presence === 'loading';
 
   return (
-    <span className={styles}>
+    // Below the small breakpoint the button text is hidden. Several destinations keep it, or their buttons would look
+    // the same.
+    <span className={forTrace || !disableDatasourceFallback ? styles : undefined}>
       <DataLinkButton
         link={resolvedLinkModel}
         buttonProps={{
@@ -126,9 +128,9 @@ export const LogsLinkMenuItem = ({
   linkModel,
   traceDatasourceUid,
   traceToLogsOptions,
-  allowDatasourceFallback = true,
+  disableDatasourceFallback = false,
 }: Props) => {
-  const { presence, resolvedLinkModel } = useHasLogs(linkModel, traceDatasourceUid, allowDatasourceFallback);
+  const { presence, resolvedLinkModel } = useHasLogs(linkModel, traceDatasourceUid, disableDatasourceFallback);
 
   const { settings } = useDataSourceInstanceSettings(traceDatasourceUid);
 
@@ -143,7 +145,8 @@ export const LogsLinkMenuItem = ({
     <Menu.Item
       label={resolvedLinkModel.title}
       icon={isLoading ? 'spinner' : 'gf-logs'}
-      ariaLabel={tooltip}
+      // With several destinations the tooltip is the same for each, so the label tells them apart.
+      ariaLabel={disableDatasourceFallback ? `${resolvedLinkModel.title}: ${tooltip}` : tooltip}
       disabled={presence !== 'present'}
       onClick={(event: React.MouseEvent) => resolvedLinkModel.onClick?.(event)}
     />
@@ -177,13 +180,13 @@ export function isDrilldownContext(app?: CoreApp | string): boolean {
  *
  * For Loki, the link may carry an array of query variations. We probe each until one
  * returns logs and persist that match (by refId) so later spans can skip the full probe.
- * If the configured datasource has no logs, we try other Loki datasources, unless allowDatasourceFallback is false.
+ * If the configured datasource has no logs, we try other Loki datasources, unless disableDatasourceFallback is set.
  * The Explore link is only enabled after a probe resolves a working query.
  */
 function useHasLogs(
   linkModel: LinkModel,
   traceDatasourceUid: string | undefined,
-  allowDatasourceFallback: boolean
+  disableDatasourceFallback: boolean
 ): { presence: LogsPresence; resolvedLinkModel: LinkModel } {
   const dynamicTraceToLogsEnabled = useFlagGrafanaDynamicTraceToLogs();
   const { app } = usePanelContext();
@@ -218,7 +221,7 @@ function useHasLogs(
       effectiveTimeRange,
       dsList,
       traceDatasourceUid,
-      allowDatasourceFallback
+      disableDatasourceFallback
     ).subscribe({
       next: (result) => {
         if (result.hasLogs && result.match) {
@@ -246,7 +249,7 @@ function useHasLogs(
     dsList,
     traceDatasourceUid,
     dynamicTraceToLogsEnabled,
-    allowDatasourceFallback,
+    disableDatasourceFallback,
   ]);
 
   useEffect(() => {
@@ -342,17 +345,17 @@ function remapQueriesToDatasource(queries: DataQuery[], datasourceUid: string, d
 
 /**
  * Datasources to probe for Loki multi-query links:
- * 1. only the link's configured datasource when datasource fallback is not allowed
- * 2. previously successful Loki datasource alone (discovery already ran — do not rediscover)
- * 3. otherwise the link's configured datasource, then up to MAX_FALLBACK_LOKI_DATASOURCES others
+ * 1. previously successful Loki datasource alone (discovery already ran — do not rediscover)
+ * 2. otherwise the link's configured datasource, then up to MAX_FALLBACK_LOKI_DATASOURCES others
+ * With datasource fallback disabled, only the link's configured datasource is probed.
  */
 function getLokiDatasourcesToTry(
   primaryUid: string | undefined,
   dsList: DataSourceInstanceListItem[],
   traceDatasourceUid: string | undefined,
-  allowDatasourceFallback: boolean
+  disableDatasourceFallback: boolean
 ): string[] {
-  if (!allowDatasourceFallback) {
+  if (disableDatasourceFallback) {
     return primaryUid ? [primaryUid] : [];
   }
 
@@ -395,7 +398,7 @@ function checkForLogsInQueries(
   timeRange: TimeRange,
   dsList: DataSourceInstanceListItem[],
   traceDatasourceUid: string | undefined,
-  allowDatasourceFallback: boolean
+  disableDatasourceFallback: boolean
 ): Observable<LogsCheckResult> {
   if (queries.length === 0) {
     return of({ hasLogs: false });
@@ -418,7 +421,7 @@ function checkForLogsInQueries(
   }
 
   const primaryUid = queries.find((q) => q.datasource?.uid)?.datasource?.uid;
-  const datasourcesToTry = getLokiDatasourcesToTry(primaryUid, dsList, traceDatasourceUid, allowDatasourceFallback);
+  const datasourcesToTry = getLokiDatasourcesToTry(primaryUid, dsList, traceDatasourceUid, disableDatasourceFallback);
 
   return from(datasourcesToTry).pipe(
     concatMap((datasourceUid) => {
@@ -435,7 +438,7 @@ function checkForLogsInQueries(
         setStoredLokiQueryMatch(traceDatasourceUid, match.datasourceUid, match.query.refId);
       }
       // The stored datasource drives fallback discovery, so a destination bound to its own datasource must not set it.
-      if (allowDatasourceFallback) {
+      if (!disableDatasourceFallback) {
         setStoredLokiDatasourceMatch(traceDatasourceUid, match.datasourceUid);
       }
     }),

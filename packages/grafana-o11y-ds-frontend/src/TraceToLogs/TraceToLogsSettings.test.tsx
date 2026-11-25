@@ -305,6 +305,83 @@ describe('TraceToLogsSettings', () => {
         })
       );
     });
+
+    it('gives the tag inputs of each destination their own ids', async () => {
+      const user = userEvent.setup();
+      render(
+        <TraceToLogsSettings
+          options={withJsonData({
+            tracesToLogsV2: { ...first, tags: [{ key: 'app.tag' }] },
+            tracesToLogsAdditional: [{ customQuery: false, datasourceUid: 'audit_uid', tags: [{ key: 'audit.tag' }] }],
+          })}
+          onOptionsChange={jest.fn()}
+          allowMultipleDestinations
+        />
+      );
+      await act(async () => {});
+
+      await user.click(screen.getByText('app.tag'));
+      expect(screen.getByDisplayValue('app.tag')).toHaveAttribute('id', 'trace-to-logs-tags-key-0');
+
+      await user.click(screen.getByText('audit.tag'));
+      expect(screen.getByDisplayValue('audit.tag')).toHaveAttribute('id', 'trace-to-logs-tags-1-key-0');
+    });
+
+    it('preserves the surviving tag after an external removal', async () => {
+      const user = userEvent.setup();
+      const change = jest.fn();
+      const a = { customQuery: false, tags: [{ key: 'app.tag' }] };
+      const b = { customQuery: false, tags: [{ key: 'audit.tag' }] };
+      const editor = (jsonData: TraceToLogsData) => (
+        <TraceToLogsSettings options={withJsonData(jsonData)} onOptionsChange={change} allowMultipleDestinations />
+      );
+
+      const { rerender } = render(editor({ tracesToLogsV2: a, tracesToLogsAdditional: [b] }));
+      rerender(editor({ tracesToLogsV2: b }));
+
+      await user.click(screen.getByText('audit.tag'));
+      await user.tab();
+
+      expect(change.mock.lastCall![0].jsonData.tracesToLogsV2).toEqual(b);
+    });
+
+    it('displays provisioned numeric shifts on an additional destination', async () => {
+      const provisioned = {
+        ...second,
+        spanStartTimeShift: -15,
+        spanEndTimeShift: 0.25,
+      } as unknown as TraceToLogsOptionsV2;
+
+      render(
+        <TraceToLogsSettings
+          options={withJsonData({ tracesToLogsV2: first, tracesToLogsAdditional: [provisioned] })}
+          onOptionsChange={jest.fn()}
+          allowMultipleDestinations
+        />
+      );
+
+      expect(await screen.findByRole('textbox', { name: 'Span start time shift for Audit' })).toHaveValue('-15s');
+      expect(screen.getByRole('textbox', { name: 'Span end time shift for Audit' })).toHaveValue('250ms');
+    });
+
+    it('does not commit a focused draft to a surviving destination with the same tag', async () => {
+      const user = userEvent.setup();
+      const change = jest.fn();
+      const a = { name: 'Primary', customQuery: false, tags: [{ key: 'pod' }] };
+      const b = { ...a, name: 'Audit' };
+      const editor = (jsonData: TraceToLogsData) => (
+        <TraceToLogsSettings options={withJsonData(jsonData)} onOptionsChange={change} allowMultipleDestinations />
+      );
+
+      const { rerender } = render(editor({ tracesToLogsV2: a, tracesToLogsAdditional: [b] }));
+      await user.click(screen.getAllByText('pod')[0]);
+      await user.type(screen.getByDisplayValue('pod'), '.draft');
+      rerender(editor({ tracesToLogsV2: b }));
+      await user.tab();
+
+      expect(change).not.toHaveBeenCalled();
+      expect(screen.getByText('pod')).toBeInTheDocument();
+    });
   });
 });
 
@@ -332,6 +409,43 @@ describe('getTraceToLogsDestinations', () => {
       name: 'ignores additional entries that are not objects',
       data: { tracesToLogsAdditional: [null, 42, additional] },
       expected: [additional],
+    },
+    {
+      name: 'drops a label that is not a string, such as an unquoted YAML number',
+      data: { tracesToLogsV2: first, tracesToLogsAdditional: [{ ...additional, name: 404 }] },
+      expected: [first, { ...additional, name: undefined }],
+    },
+    {
+      name: 'drops tags that are not a list',
+      data: { tracesToLogsAdditional: [{ ...additional, tags: 'service.name' }] },
+      expected: [{ ...additional, tags: undefined }],
+    },
+    {
+      name: 'keeps only the tags that have a string key and an optional string value',
+      data: {
+        tracesToLogsAdditional: [
+          { ...additional, tags: [null, 'service.name', { key: 1 }, { key: 'pod', value: 2 }, { key: 'app' }] },
+        ],
+      },
+      expected: [{ ...additional, tags: [{ key: 'app' }] }],
+    },
+    {
+      name: 'keeps a numeric data source uid as a string, so it does not resolve to the default data source',
+      data: { tracesToLogsAdditional: [{ ...additional, datasourceUid: 12345 }] },
+      expected: [{ ...additional, datasourceUid: '12345' }],
+    },
+    {
+      name: 'drops a numeric data source uid beyond the safe integer range, whose digits may have changed',
+      data: { tracesToLogsAdditional: [{ ...additional, datasourceUid: Number.MAX_SAFE_INTEGER + 2 }] },
+      expected: [{ ...additional, datasourceUid: undefined }],
+    },
+    {
+      name: 'keeps a valid additional destination when legacy tags are a scalar',
+      data: {
+        tracesToLogs: { datasourceUid: first.datasourceUid, tags: 'service.name' },
+        tracesToLogsAdditional: [additional],
+      },
+      expected: [first, additional],
     },
   ])('$name', ({ data, expected }) => {
     expect(getTraceToLogsDestinations(data as unknown as TraceToLogsData)).toEqual(expected);

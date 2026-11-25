@@ -1,14 +1,31 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { type DataSourceInstanceSettings, type DataSourceJsonData } from '@grafana/data';
-import { getTraceToLogsDestinations, type TraceToLogsData } from '@grafana/o11y-ds-frontend';
+import { getTraceToLogsDestinations, type TraceToLogsData, type TraceToLogsOptionsV2 } from '@grafana/o11y-ds-frontend';
 import { getDataSourceInstanceSettings, logError } from '@grafana/runtime';
 
 import { type TraceToLogsDestination } from './components/types/links';
 
-type ResolvedSettings = Array<
+export type ResolvedSettings = Array<
   { datasourceUid: string; settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined } | undefined
 >;
+
+/**
+ * Keeps a resolved result only for a slot that pointed at the same data source before and after a configuration change.
+ * A lookup that settles just after its slot was removed can still write its result, and that result must not come back
+ * when the slot is added again.
+ */
+export function keepUnchangedSlots(
+  previous: ResolvedSettings,
+  before: TraceToLogsOptionsV2[],
+  after: TraceToLogsOptionsV2[]
+): ResolvedSettings {
+  return after.map(({ datasourceUid }, index) =>
+    before[index]?.datasourceUid === datasourceUid && previous[index]?.datasourceUid === datasourceUid
+      ? previous[index]
+      : undefined
+  );
+}
 
 /**
  * Resolves the logs data source of every configured trace to logs destination. Destinations without a data source,
@@ -19,31 +36,43 @@ export function useTraceToLogsDestinations(jsonData: TraceToLogsData | undefined
   const uidsKey = JSON.stringify(configured.map((options) => options.datasourceUid ?? null));
   const [resolvedSettings, setResolvedSettings] = useState<ResolvedSettings>([]);
 
+  // When the configured data sources change, results for slots that are gone or now point elsewhere are dropped, so a
+  // destination added back later waits for its own lookup instead of reusing settings that may be stale.
+  const [resolvedFor, setResolvedFor] = useState({ uidsKey, configured });
+  if (resolvedFor.uidsKey !== uidsKey) {
+    setResolvedFor({ uidsKey, configured });
+    setResolvedSettings((previous) => keepUnchangedSlots(previous, resolvedFor.configured, configured));
+  }
+
   useEffect(() => {
     if (configured.length === 0) {
       return;
     }
 
     let cancelled = false;
-    Promise.all(
-      configured.map(async (options) => {
-        const datasourceUid = options.datasourceUid;
-        // An undefined uid would resolve to the default data source.
-        if (!datasourceUid) {
-          return undefined;
-        }
-        const settings = await getDataSourceInstanceSettings(datasourceUid).catch((error) => {
+    // Each lookup is published as soon as it settles, so a slow data source does not hold back the other links.
+    configured.forEach((options, index) => {
+      const datasourceUid = options.datasourceUid;
+      // An undefined uid would resolve to the default data source.
+      if (!datasourceUid) {
+        return;
+      }
+      getDataSourceInstanceSettings(datasourceUid)
+        .catch((error) => {
           // A data source that no longer exists resolves to undefined, so this is a failed load. Only this
-          // destination is dropped: one broken logs link should not break the trace view.
+          // destination is dropped, so one broken logs link does not hide the others.
           logError(error instanceof Error ? error : new Error(String(error)), { datasourceUid });
           return undefined;
+        })
+        .then((settings) => {
+          if (!cancelled) {
+            setResolvedSettings((previous) => {
+              const next = [...previous];
+              next[index] = { datasourceUid, settings };
+              return next;
+            });
+          }
         });
-        return { datasourceUid, settings };
-      })
-    ).then((settings) => {
-      if (!cancelled) {
-        setResolvedSettings(settings);
-      }
     });
 
     return () => {
