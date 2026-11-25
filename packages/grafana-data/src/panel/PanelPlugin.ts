@@ -41,6 +41,7 @@ import {
 import { type FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
 
+import { type PanelQuickEdit, type PanelQuickEditsSupplier } from './quickEdits';
 import { createFieldConfigRegistry } from './registryFactories';
 import { type PanelDataSummary } from './suggestions/getPanelDataSummary';
 
@@ -225,6 +226,7 @@ export class PanelPlugin<
   private optionsSupplier?: PanelOptionsSupplier<TOptions>;
   private suggestionsSupplier?: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>;
   private presetsSupplier?: VisualizationPresetsSupplier<TOptions, TFieldConfigOptions>;
+  private quickEditsSupplier?: PanelQuickEditsSupplier<TOptions, TFieldConfigOptions>;
   private systemTransformationsSupplier?: SystemTransformationsSupplier;
   private systemTransformationsSupplierFailed = false;
 
@@ -700,6 +702,43 @@ export class PanelPlugin<
       const withDefaultsApplied = withDefaults(s);
       return Object.assign(withDefaultsApplied, { hash: getSuggestionHash(withDefaultsApplied) });
     });
+  }
+
+  /**
+   * @alpha
+   * Register the quick edits offered for this panel's options, most used first. Quick edits from `@grafana/data`
+   * and `@grafana/ui` cover the standard and shared options, e.g. {@link unitQuickEdit}; the plugin defines its own
+   * for the rest. Without quick edits, none are offered.
+   *
+   * ```ts
+   * export const plugin = new PanelPlugin<Options>(MyPanel)
+   *   .setPanelOptions(...)
+   *   .setQuickEdits(() => [
+   *     unitQuickEdit(),
+   *     commonOptionsBuilder.legendQuickEdit(),
+   *     { id: 'shape', title: 'Shape', icon: 'circle', optionIds: ['shape'] },
+   *   ]);
+   * ```
+   */
+  setQuickEdits(supplier: PanelQuickEditsSupplier<TOptions, TFieldConfigOptions>): this {
+    this.quickEditsSupplier = supplier;
+    return this;
+  }
+
+  /**
+   * @alpha
+   * Return the quick edits for a panel plugin, most used first
+   */
+  getQuickEdits(): Array<PanelQuickEdit<TOptions, TFieldConfigOptions>> {
+    return this.quickEditsSupplier?.() ?? [];
+  }
+
+  /**
+   * @alpha
+   * Whether the plugin registered a presets supplier
+   */
+  hasPresetsSupplier(): boolean {
+    return Boolean(this.presetsSupplier);
   }
 
   /**
