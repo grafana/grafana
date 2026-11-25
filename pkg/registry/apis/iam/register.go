@@ -61,6 +61,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/org"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
@@ -106,6 +107,7 @@ func RegisterAPIService(
 	restConfig apiserver.RestConfigProvider,
 	mappers *resourcepermission.MappersRegistry,
 	legacyAuthInfoStore *authinfoimpl.Store,
+	authInfoStore login.Store,
 	remoteCache remotecache.CacheStorage,
 	legacyWatch *legacywatch.Publisher,
 ) (*IdentityAccessManagementAPIBuilder, error) {
@@ -205,7 +207,7 @@ func RegisterAPIService(
 		features:        features,
 		userPreferences: dashboardpreferences.ProvideUserCleaner(restConfig),
 	}
-	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, accessClient)
+	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, accessClient, authInfoStore)
 	builder.teamSearchHandler = team.NewSearchHandler(tracing, builder.teamSearchClient, accessClient)
 
 	apiregistration.RegisterAPI(builder)
