@@ -382,9 +382,10 @@ func serverBuildInfo(t *testing.T, addr string) (version, commit string) {
 	t.Helper()
 
 	// /api/health can return 503 transiently under load; retry, and only trust a 200 body.
+	// The deadline must outlast the 5s cache of a failed database check.
 	var lastStatus int
 	var lastBody []byte
-	deadline := time.Now().Add(5 * time.Second)
+	deadline := time.Now().Add(15 * time.Second)
 	for {
 		resp, err := http.Get(fmt.Sprintf("http://%s/api/health", addr)) //nolint:gosec // test-local address
 		require.NoError(t, err)
