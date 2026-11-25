@@ -34,7 +34,7 @@ Every label has a bounded set of values, so no request can create new series:
 | `grafana_router_ready` | gauge | | 1 when the router can serve traffic, 0 when not |
 | `grafana_router_last_reconcile_timestamp_seconds` | gauge | | When the latest route reconcile finished |
 | `grafana_router_reconciles_total` | counter | | Completed reconciles |
-| `grafana_router_reconcile_errors_total` | counter | | Reconciles that completed with errors |
+| `grafana_router_reconcile_errors_total` | counter | | Reconciles that completed with errors. Waiting for a source's first poll at startup is not an error |
 | `grafana_router_reconcile_duration_seconds` | histogram | | How long reconciles took |
 | `grafana_router_discovery_fetches_overdue` | gauge | | Backend discovery fetches still running past their deadline. A backend that ignores its context keeps one running for good, and its group serves stale discovery |
 
