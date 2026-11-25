@@ -18,7 +18,56 @@ The Field component is suitable for various scenarios where you need to incorpor
 - Applying validation and error messages to form fields.
 - Indicating loading or disabled states for input fields.
 
-### Usage
+## Never use for
+
+- **Inline forms with a label beside the input.** Use `InlineField`, which renders the input inline together with an `InlineLabel`.
+- **Grouping several fields under one heading.** Wrap the fields in `FieldSet`, whose `label` becomes the group's legend.
+
+## Do's and don'ts
+
+- Do provide a meaningful label for the field to enhance accessibility.
+- Do provide a description for the field to help users understand the purpose of the input.
+- Don't use the `description` prop without also providing a label.
+- Don't use the `invalid` prop without also providing an error message.
+- Don't set `useFieldset` for anything other than a `RadioButtonGroup`. `Field` already sets it for a `RadioButtonGroup` child.
+
+### Show state through the field
+
+Set `invalid` and `error` on the `Field` to show a validation error. Don't recreate the invalid look on the input with CSS: the message, the input's invalid state and the link between them only come from the props. See [interactive states](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/guidance/patterns/interactive-states.md).
+
+```tsx
+// Don't
+<Field label="Name">
+  <Input id="name" className={css({ '& input': { borderColor: theme.colors.error.border } })} />
+</Field>
+
+// Do
+<Field label="Name" invalid={!name} error="Name is required">
+  <Input id="name" />
+</Field>
+```
+
+### Spacing and layout
+
+Use `noMargin` to remove the field's bottom margin and `horizontal` to put the label and input on one row. `noMargin` is the preferred way to drop the margin, though a margin set with `className` also works, because `className` styles the field's root element. Don't select the field's inner elements with `className`, because its markup isn't part of its API. See [styling a component's internal elements](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/guidance/patterns/styling-internals.md).
+
+To make a field narrower, size its container. `Input` fills the width it's given, and its `width` prop is meant only for inline forms.
+
+```tsx
+// Don't
+<Field label="Name" className={css({ '& > div': { width: 200 } })}>
+  <Input id="name" />
+</Field>
+
+// Do
+<Box maxWidth={50}>
+  <Field label="Name" noMargin>
+    <Input id="name" />
+  </Field>
+</Box>
+```
+
+## Usage
 
 <ExampleFrame>
   <Field label="API key" description="Your instance API key">
@@ -26,15 +75,15 @@ The Field component is suitable for various scenarios where you need to incorpor
   </Field>
 </ExampleFrame>
 
-### Do's
+```tsx
+import { Field, Input } from '@grafana/ui';
 
-- Provide a meaningful label for the field to enhance accessibility.
-- Provide a description for the field to help users understand the purpose of the input.
+<Field label="API key" description="Your instance API key">
+  <Input id="api-key" />
+</Field>;
+```
 
-### Don'ts
-
-- Use the `description` prop without also providing a label.
-- Use the `invalid` prop without also providing an error message.
+`Field` takes a single form element as its child, such as `Input` or `Switch`.
 
 ### Validation
 
@@ -44,13 +93,17 @@ Use the `invalid` prop to indicate that the input is invalid. This will add a re
 
 Use the `loading` prop to indicate that the input is loading. This will add a spinner to the input.
 
-### Props
+### Required
 
-<ArgTypes of={Field} />
+`required` adds an asterisk to a string `label`. It doesn't set `required` on the input, so also set it on the input when the browser or assistive technology should know.
+
+### Radio button groups
+
+`Field` renders a `<fieldset>` with a `<legend>` instead of a `<label>` when `useFieldset` is set. It does this automatically when the child is a `RadioButtonGroup`.
 
 ### FieldContext
 
-`Field` provides a `FieldContext` that any descendant can read using the `useFieldContext` hook. This is the recommended way to access field state from a child component.
+`Field` provides a `FieldContext` that any descendant can read using the `useFieldContext` hook. This is the recommended way to access field state from a child component. `Field` also passes `invalid`, `disabled` and `loading` to its child as props, but that is deprecated: read them from `FieldContext` instead.
 
 <table>
   <thead>
@@ -145,3 +198,21 @@ function MyCustomInput() {
   <MyCustomInput />
 </Field>;
 ```
+
+## Accessibility
+
+`Field` handles:
+
+- **Label:** a string `label` renders a `<label>` linked to the input. The input's id comes from `htmlFor`, then the child's `id` or `inputId`, then a generated id.
+- **Error message:** when both `invalid` and `error` are set, the message is linked to the input with `aria-describedby`.
+- **Radio groups:** a `RadioButtonGroup` child gets a `<fieldset>` and `<legend>`, so the label names the group.
+
+You provide:
+
+- A `label` for every field. If `label` is a custom element rather than a string, label the input yourself.
+- `required` on the input itself when the field is required.
+- For a custom control, the id and ARIA attributes from `useFieldContext`, as in the FieldContext example.
+
+## Props
+
+<ArgTypes of={Field} />

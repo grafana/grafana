@@ -93,9 +93,10 @@ func (c cascadeCollectionDeleter) DeleteCollection(ctx context.Context, deleteVa
 	if forceDeleteFromDeleteOptions(options) {
 		return nil, apierrors.NewBadRequest("forced collection delete is not supported for folders; delete folders individually")
 	}
-	// The registry drops these after the first page, so its selection can't be reproduced here.
-	if listOptions != nil && (listOptions.ResourceVersion != "" || listOptions.ResourceVersionMatch != "") {
-		return nil, apierrors.NewBadRequest("resourceVersion and resourceVersionMatch are not supported for folder collection deletes")
+	// The registry drops these after the first page, so a multi-page selection can't be reproduced
+	// here. Only a positive limit makes it stop after the first page and keep them.
+	if listOptions != nil && listOptions.Limit <= 0 && (listOptions.ResourceVersion != "" || listOptions.ResourceVersionMatch != "") {
+		return nil, apierrors.NewBadRequest("resourceVersion and resourceVersionMatch are only supported for folder collection deletes with a positive limit")
 	}
 	// Reject up front so a refused request deletes nothing.
 	if name, err := c.firstFinalizerFolder(ctx, listOptions); err != nil {
@@ -119,12 +120,21 @@ func errCollectionDeleteFinalizerFolder(name string) error {
 	return apierrors.NewBadRequest(fmt.Sprintf("folder %q has the cascade-delete finalizer; delete it individually, not as part of a collection", name))
 }
 
+// deleteCollectionPageSize is the generic registry's internal page size for collection deletes. The
+// preflight uses it too, so a selection the registry lists in one page isn't split into more
+// (costlier) pages here.
+const deleteCollectionPageSize = 10000
+
 // firstFinalizerFolder returns the first selected folder with the cascade finalizer, paging like the
 // registry (one page when the caller sets a limit).
 func (c cascadeCollectionDeleter) firstFinalizerFolder(ctx context.Context, listOptions *metainternalversion.ListOptions) (string, error) {
 	listOpts := &metainternalversion.ListOptions{}
 	if listOptions != nil {
 		listOpts = listOptions.DeepCopy()
+	}
+	singlePage := listOpts.Limit > 0
+	if !singlePage {
+		listOpts.Limit = deleteCollectionPageSize
 	}
 	for {
 		list, err := c.lister.List(ctx, listOpts)
@@ -145,7 +155,7 @@ func (c cascadeCollectionDeleter) firstFinalizerFolder(ctx context.Context, list
 			return "", err
 		}
 		next := accessor.GetContinue()
-		if listOpts.Limit > 0 || next == "" {
+		if singlePage || next == "" {
 			return "", nil
 		}
 		listOpts.Continue = next

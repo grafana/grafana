@@ -84,7 +84,10 @@ func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufS
 		subscribe:      make(chan *subscribeRequest[T], internalChanSize),
 		unsubscribe:    make(chan (<-chan T), internalChanSize),
 		subs:           make(map[<-chan T]*subscription[T]),
-		scoped:         make(map[GroupResource]map[<-chan T]*subscription[T]),
+		scoped:         make(map[GroupResource]*collectionSubscribers[T]),
+		overflowing:    make(map[<-chan T]*subscription[T]),
+		refills:        make(map[*subscription[T]]struct{}),
+		refillReady:    make(chan struct{}, 1),
 		terminated:     make(chan struct{}),
 		metrics:        metrics,
 		watchBufSize:   subBufSize,
@@ -100,11 +103,33 @@ func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufS
 	return b
 }
 
+// collectionSubscribers indexes a collection's subscribers by namespace, so
+// an event only reaches watches of its namespace and of all namespaces.
+type collectionSubscribers[T any] struct {
+	all         map[<-chan T]*subscription[T]
+	byNamespace map[string]map[<-chan T]*subscription[T]
+	// received is the highest RV delivered in the collection, published after
+	// delivery like broadcaster.received.
+	received atomic.Int64
+}
+
+func (c *collectionSubscribers[T]) bucket(namespace string) map[<-chan T]*subscription[T] {
+	if namespace == "" {
+		return c.all
+	}
+	return c.byNamespace[namespace]
+}
+
 type subscription[T any] struct {
-	name     string
-	gr       GroupResource // also the metric label for subscriber-attributed metrics
-	ch       chan T
-	overflow []T // pending items when channel is full, nil when not overflowing
+	name      string
+	gr        GroupResource // also the metric label for subscriber-attributed metrics
+	namespace string        // empty to receive every namespace
+	// collection is the index the subscriber is registered in.
+	collection   *collectionSubscribers[T]
+	ch           chan T
+	overflow     []T // pending items when channel is full, nil when not overflowing
+	hasOverflow  atomic.Bool
+	refillQueued atomic.Bool
 	// delivered counts events handed to the subscriber, through ch or overflow.
 	// Its watch reads it to tell whether it has consumed them all.
 	delivered atomic.Int64
@@ -113,6 +138,8 @@ type subscription[T any] struct {
 	// registered. Events up to it were not all replayed to the subscriber, so
 	// they cannot establish its progress.
 	startRV int64
+	// collectionStartRV is the collection's received watermark at registration.
+	collectionStartRV int64
 }
 
 type subscribeRequest[T any] struct {
@@ -145,9 +172,14 @@ type broadcaster[T any] struct {
 	unsubscribe  chan (<-chan T)
 	received     atomic.Int64 // cache.maxRV, published once delivered
 	subs         map[<-chan T]*subscription[T]
-	scoped       map[GroupResource]map[<-chan T]*subscription[T]
+	scoped       map[GroupResource]*collectionSubscribers[T]
+	overflowing  map[<-chan T]*subscription[T] // subscriptions with pending overflow
 	metrics      *BroadcasterMetrics
 	submissionMu sync.RWMutex // serializes enqueueing with shutdown's pending-subscription cleanup
+
+	refillMu    sync.Mutex
+	refills     map[*subscription[T]]struct{} // pending consumer refill requests, guarded by refillMu
+	refillReady chan struct{}
 
 	// configuration
 
@@ -191,8 +223,7 @@ const (
 	// buffer before the subscriber is disconnected.
 	defaultOverflowCap = 50_000
 
-	// drainInterval controls how often the stream loop drains overflow buffers
-	// during idle periods (no incoming events).
+	// drainInterval lets subscriptions with no matching writes drain their overflow.
 	drainInterval = 100 * time.Millisecond
 
 	// overflowLogInterval rate-limits "overflow started" log messages.
@@ -225,11 +256,11 @@ func (b *broadcaster[T]) submit(req *subscribeRequest[T]) error {
 // subscribeWatch acknowledges replay capture and live registration in the same
 // operation as floor validation. The subscriber only receives gr's events.
 // A nil resume registers for live delivery only.
-func (b *broadcaster[T]) subscribeWatch(ctx context.Context, name string, gr GroupResource, resume *watchResume) (*watchSubscription[T], error) {
+func (b *broadcaster[T]) subscribeWatch(ctx context.Context, name string, gr GroupResource, namespace string, resume *watchResume) (*watchSubscription[T], error) {
 	if err := b.ensureReady(ctx); err != nil {
 		return nil, err
 	}
-	sub := &subscription[T]{name: name, gr: gr, ch: make(chan T, b.watchBufSize)}
+	sub := &subscription[T]{name: name, gr: gr, namespace: namespace, ch: make(chan T, b.watchBufSize)}
 	req := &subscribeRequest[T]{sub: sub, ctx: ctx, resume: resume, ack: make(chan error, 1)}
 	if err := b.submit(req); err != nil {
 		return nil, err
@@ -330,6 +361,27 @@ func (s *watchSubscription[T]) events() <-chan T {
 	return s.sub.ch
 }
 
+// requestRefill batches overflow delivery once the channel is at most half full.
+// The per-watch flag coalesces requests before they contend for the shared lock.
+func (s *watchSubscription[T]) requestRefill() {
+	sub := s.sub
+	if !sub.hasOverflow.Load() || len(sub.ch) > cap(sub.ch)/2 || !sub.refillQueued.CompareAndSwap(false, true) {
+		return
+	}
+	b := s.b
+	b.refillMu.Lock()
+	if sub.hasOverflow.Load() {
+		b.refills[sub] = struct{}{}
+		select {
+		case b.refillReady <- struct{}{}:
+		default:
+		}
+	} else {
+		sub.refillQueued.Store(false)
+	}
+	b.refillMu.Unlock()
+}
+
 // rv returns the highest RV the broadcaster has received once the watch has
 // consumed every event delivered to it, or 0 while some are pending, before
 // anything newer than the watch's start arrived, or after the subscription was
@@ -337,10 +389,20 @@ func (s *watchSubscription[T]) events() <-chan T {
 // carry; replayed and live events of its own collection still advance the
 // watch directly.
 func (s *watchSubscription[T]) rv(consumed int64) int64 {
+	return s.progress(s.b.received.Load(), s.sub.startRV, consumed)
+}
+
+// collectionRV is like rv, from the events of the watch's own collection,
+// including progress from other namespaces. A late write in another namespace
+// below the registration watermark cannot advance the bookmark on its own.
+func (s *watchSubscription[T]) collectionRV(consumed int64) int64 {
+	return s.progress(s.sub.collection.received.Load(), s.sub.collectionStartRV, consumed)
+}
+
+func (s *watchSubscription[T]) progress(received, start, consumed int64) int64 {
 	// received is published after delivery, so every event it covers is
 	// already counted in delivered.
-	received := s.b.received.Load()
-	if received <= s.sub.startRV || s.sub.removed.Load() || s.sub.delivered.Load() != consumed {
+	if received <= start || s.sub.removed.Load() || s.sub.delivered.Load() != consumed {
 		return 0
 	}
 	return received
@@ -358,7 +420,7 @@ func (b *broadcaster[T]) Unsubscribe(sub <-chan T) {
 }
 
 // drainOverflow moves items from sub.overflow into sub.ch without blocking.
-// Nils the overflow slice when fully drained to release memory.
+// When the queue empties, it releases the buffer and clears the overflow index.
 func (b *broadcaster[T]) drainOverflow(sub *subscription[T]) {
 	if len(sub.overflow) == 0 {
 		return
@@ -373,7 +435,13 @@ func (b *broadcaster[T]) drainOverflow(sub *subscription[T]) {
 			return
 		}
 	}
+	b.clearOverflow(sub)
+}
+
+func (b *broadcaster[T]) clearOverflow(sub *subscription[T]) {
+	sub.hasOverflow.Store(false)
 	sub.overflow = nil
+	delete(b.overflowing, sub.ch)
 }
 
 // stream acts a message broker between the watch implementation that receives a
@@ -400,6 +468,9 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 		for recv := range b.subs {
 			b.removeSubscriber(recv, unsubscriptionReasonShutdown)
 		}
+		b.refillMu.Lock()
+		clear(b.refills)
+		b.refillMu.Unlock()
 	}()
 
 	if b.initialize != nil {
@@ -433,6 +504,7 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 	drainTicker := time.NewTicker(drainInterval)
 	defer drainTicker.Stop()
 
+	refills := make(map[*subscription[T]]struct{})
 	for {
 		select {
 		case <-b.ctx.Done(): // service context cancelled
@@ -463,10 +535,18 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 			b.metrics.EventsReceivedTotal.WithLabelValues(gr.Resource).Inc()
 
 			var slow []<-chan T
-			for _, sub := range b.scoped[gr] {
-				if !b.deliver(sub, item) {
-					slow = append(slow, sub.ch)
+			if collection := b.scoped[gr]; collection != nil {
+				deliver := func(subs map[<-chan T]*subscription[T]) {
+					for _, sub := range subs {
+						if !b.deliver(sub, item) {
+							slow = append(slow, sub.ch)
+						}
+					}
 				}
+				_, namespace, rv := b.cache.identity(item)
+				deliver(collection.all)
+				deliver(collection.byNamespace[namespace])
+				collection.received.Store(max(collection.received.Load(), rv))
 			}
 			// Instead of sending subscribers to b.unsubscribe channel, we unsubscribe directly.
 			// Sending to b.unsubscribe could lead to deadlock, if there are too many elements in the
@@ -476,8 +556,19 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 			}
 			b.received.Store(b.cache.maxRV)
 
-		case <-drainTicker.C: // periodically drain overflow for idle periods
-			for _, sub := range b.subs {
+		case <-b.refillReady:
+			b.refillMu.Lock()
+			refills, b.refills = b.refills, refills
+			b.refillMu.Unlock()
+			for sub := range refills {
+				// Let the reader request another refill while this drain makes progress.
+				sub.refillQueued.Store(false)
+				b.drainOverflow(sub)
+			}
+			clear(refills)
+
+		case <-drainTicker.C:
+			for _, sub := range b.overflowing {
 				b.drainOverflow(sub)
 			}
 		}
@@ -508,6 +599,11 @@ func (b *broadcaster[T]) deliver(sub *subscription[T], item T) bool {
 	case sub.ch <- item:
 	default:
 		sub.overflow = append(sub.overflow, item)
+		b.overflowing[sub.ch] = sub
+		sub.hasOverflow.Store(true)
+		// A consumer could have freed space between the failed send and
+		// observing hasOverflow.
+		b.drainOverflow(sub)
 		b.metrics.OverflowEventsTotal.WithLabelValues(sub.gr.Resource).Inc()
 		b.overflowCount++
 		now := time.Now()
@@ -556,10 +652,22 @@ func (b *broadcaster[T]) addSubscriber(req *subscribeRequest[T]) {
 	}
 	sub.startRV = b.cache.maxRV
 	b.subs[sub.ch] = sub
-	if b.scoped[sub.gr] == nil {
-		b.scoped[sub.gr] = make(map[<-chan T]*subscription[T])
+	collection := b.scoped[sub.gr]
+	if collection == nil {
+		collection = &collectionSubscribers[T]{
+			all:         make(map[<-chan T]*subscription[T]),
+			byNamespace: make(map[string]map[<-chan T]*subscription[T]),
+		}
+		b.scoped[sub.gr] = collection
 	}
-	b.scoped[sub.gr][sub.ch] = sub
+	bucket := collection.bucket(sub.namespace)
+	if bucket == nil {
+		bucket = make(map[<-chan T]*subscription[T])
+		collection.byNamespace[sub.namespace] = bucket
+	}
+	bucket[sub.ch] = sub
+	sub.collection = collection
+	sub.collectionStartRV = collection.received.Load()
 	b.metrics.SubscriptionsTotal.WithLabelValues(sub.gr.Resource, subscriptionResultOK).Inc()
 	b.metrics.Subscribers.WithLabelValues(sub.gr.Resource).Inc()
 	req.ack <- nil
@@ -570,11 +678,15 @@ func (b *broadcaster[T]) removeSubscriber(recv <-chan T, reason string) {
 	if !ok {
 		return
 	}
-	sub.overflow = nil
+	b.clearOverflow(sub)
 	delete(b.subs, recv)
 	sub.removed.Store(true)
-	delete(b.scoped[sub.gr], recv)
-	if len(b.scoped[sub.gr]) == 0 {
+	collection := sub.collection
+	delete(collection.bucket(sub.namespace), recv)
+	if sub.namespace != "" && len(collection.byNamespace[sub.namespace]) == 0 {
+		delete(collection.byNamespace, sub.namespace)
+	}
+	if len(collection.all) == 0 && len(collection.byNamespace) == 0 {
 		delete(b.scoped, sub.gr)
 	}
 	b.metrics.Subscribers.WithLabelValues(sub.gr.Resource).Dec()

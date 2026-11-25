@@ -80,8 +80,17 @@ func (s *Service) validateLegacyScopeNamespace(ns types.NamespaceInfo) error {
 		return nil
 	}
 
-	if s.legacyScopeNamespace == nil || s.legacyScopeNamespace(ns.OrgID) != ns.Value {
-		return errors.New("namespace does not belong to embedded scope resolvers")
+	if s.legacyScopeNamespace == nil {
+		return errors.New("legacy scope namespace is not set")
+	}
+
+	namespace := s.legacyScopeNamespace(ns.OrgID)
+	if namespace != ns.Value {
+		return fmt.Errorf(
+			"namespace %q does not belong to embedded scope resolvers: expected %q",
+			ns.Value,
+			namespace,
+		)
 	}
 
 	return nil

@@ -125,6 +125,7 @@ declare module "@openfeature/core" {
     | "pluginInsights"
     | "transformationsEmptyPlaceholder"
     | "plugins.useMTPlugins"
+    | "plugins.useMTPluginInstall"
     | "globalDashboardVariables"
     | "grafana.dashboardGlobalVariables"
     | "grafana.dashboardVariablesMigration"

@@ -6,7 +6,7 @@ import { getWrapper } from 'test/test-utils';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
-import { useIsMtFallbackConfigured, useIsUrlAllowed } from './mtFallback';
+import { isMtFallbackConfigured, useIsMtFallbackConfigured, useIsUrlAllowed } from './mtFallback';
 
 function locationFor(pathname: string): Location {
   return { pathname, search: '', hash: '', state: undefined };
@@ -96,5 +96,30 @@ describe('useIsMtFallbackConfigured', () => {
     const { result } = renderUseIsMtFallbackConfigured();
 
     expect(result.current).toBe(false);
+  });
+});
+
+describe('isMtFallbackConfigured', () => {
+  afterEach(() => {
+    setTestFlags({});
+  });
+
+  it('reports true when the flag has a non-empty allow list', () => {
+    setTestFlags({ [FlagKeys.GrafanaMtFallback]: { allowList: ['/dashboards/*'] } });
+
+    expect(isMtFallbackConfigured()).toBe(true);
+  });
+
+  it.each([
+    ['the flag is unset', undefined],
+    ['the flag value is an empty object', {}],
+    ['the allow list is empty', { allowList: [] }],
+    ['the allow list is not an array', { allowList: 'nope' }],
+  ])('reports false when %s', (_, value) => {
+    if (value !== undefined) {
+      setTestFlags({ [FlagKeys.GrafanaMtFallback]: value as JsonValue });
+    }
+
+    expect(isMtFallbackConfigured()).toBe(false);
   });
 });
