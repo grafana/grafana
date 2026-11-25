@@ -2372,15 +2372,38 @@ func TestCascadeDelete_AlignsFinalizerWithAsyncFlag(t *testing.T) {
 		require.Empty(t, store.deleted)
 	})
 
-	t.Run("a requester who may not delete the folder leaves no write", func(t *testing.T) {
-		access := &recordingAccessClient{allow: func(authlib.CheckRequest, string) bool { return false }}
-		store, _, err := run(t, true, folderWith(""), nil, &metav1.DeleteOptions{}, access)
-		require.True(t, apierrors.IsForbidden(err), "got %v", err)
+	t.Run("a requester who may not delete the folder, or its contents, leaves no write", func(t *testing.T) {
+		folderGVR := foldersv1.FolderResourceInfo.GroupVersionResource()
+		for name, deny := range map[string]func(authlib.CheckRequest) bool{
+			"the folder": func(req authlib.CheckRequest) bool {
+				return req.Verb == utils.VerbDelete && req.Resource == folderGVR.Resource
+			},
+			"its alert rules": func(req authlib.CheckRequest) bool { return req.Resource == cascadeAlertRuleResource },
+		} {
+			for optsName, opts := range map[string]*metav1.DeleteOptions{"forced": forceDelete(), "not forced": {}} {
+				t.Run(name+", "+optsName, func(t *testing.T) {
+					access := &recordingAccessClient{allow: func(req authlib.CheckRequest, _ string) bool { return !deny(req) }}
+					store, _, err := run(t, true, folderWith(""), nil, opts, access)
+					require.True(t, apierrors.IsForbidden(err), "got %v", err)
+					require.Zero(t, store.updates, "the finalizer is not stamped by a rejected delete")
+					require.Empty(t, store.existing["f"].Finalizers)
+					require.Empty(t, store.deleted)
+				})
+			}
+		}
+	})
+
+	t.Run("a non-forced delete of a non-empty folder is rejected by the real validation before anything is written", func(t *testing.T) {
+		searcher := &mockSearchClient{stats: &resourcepb.ResourceStatsResponse{Stats: []*resourcepb.ResourceStatsResponse_Stats{
+			{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 1},
+		}}}
+		validate := func(ctx context.Context, obj runtime.Object) error {
+			return validateOnDelete(ctx, obj.(*foldersv1.Folder), searcher, &metav1.DeleteOptions{}, false, nil)
+		}
+		store, _, err := run(t, true, folderWith(""), validate, &metav1.DeleteOptions{}, nil)
+		require.ErrorContains(t, err, "folder.not-empty")
 		require.Zero(t, store.updates)
-		require.Len(t, access.checks, 1)
-		require.Equal(t, utils.VerbDelete, access.checks[0].req.Verb)
-		require.Equal(t, "f", access.checks[0].req.Name)
-		require.Equal(t, folder.GeneralFolderUID, access.checks[0].folder, "a root folder is checked against General")
+		require.Empty(t, store.deleted)
 	})
 
 	t.Run("a requester who may not delete a finalizer folder cannot have it stripped with the flag off", func(t *testing.T) {
