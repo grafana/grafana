@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"slices"
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -25,7 +24,6 @@ import (
 	backendgrpcplugin "github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/baasbridge" //nolint:staticcheck // deprecated shim, used until HTTP operators move to gRPC
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 )
 
 // pluginManifestsTarget discovers remote plugin deployments and builds their API handlers.
@@ -233,10 +231,7 @@ func (t *pluginManifestsTarget) newSettingsBackend(ctx context.Context, entry de
 		if err != nil {
 			return nil, nil, err
 		}
-		// Authentication is innermost, so edition middleware cannot replace its token.
-		middleware := append(slices.Clone(t.deps.Settings.Middleware),
-			newV2AuthenticationMiddleware(plugin.JSONData.ID, withAuthFailureOutcome(pluginauth.ClientV3TokenExchanger(t.deps.Cfg, t.deps.PluginAuth, plugin.JSONData.ID, t.deps.TokenExchanger))))
-		client, err = cloudSettingsClient(client, middleware)
+		client, err = cloudSettingsClient(client, t.deps.Settings.Middleware)
 		return client, nil, err
 	}
 	b, err := newPluginSettingsBackend(plugin, clients, t.deps)

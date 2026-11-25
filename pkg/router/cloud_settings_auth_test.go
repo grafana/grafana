@@ -4,13 +4,17 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"testing/synctest"
+	"time"
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/sony/gobreaker/v2"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -104,4 +108,47 @@ func TestCloudPluginContextFromRequestInfo(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "v0alpha1", pCtx.APIVersion)
 	require.Equal(t, "stacks-1", pCtx.Namespace)
+}
+
+type unavailableHealthClient struct {
+	plugins.Client
+	calls int
+}
+
+func (c *unavailableHealthClient) CheckHealth(context.Context, *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	c.calls++
+	return nil, plugins.ErrPluginUnavailable
+}
+
+// A token exchange failure says nothing about the plugin, so it must not settle
+// the breaker's half-open trial as a success.
+func TestV2AuthenticationFailureLeavesHalfOpenBreakerAlone(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		plugin := &unavailableHealthClient{}
+		exchanger := &recordingExchanger{}
+		b := &PluginBackend{pluginID: "my-app", deps: PluginDependencies{
+			Settings:       SettingsDependencies{AuthenticateV2: true},
+			TokenExchanger: exchanger,
+		}}
+		client, err := b.settingsPluginClient(plugin)
+		require.NoError(t, err)
+
+		cb := newGroupBreaker("plugin")
+		ctx := withClientBreaker(identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "stacks-1", AccessToken: "at"}), cb)
+		req := func() error {
+			_, err := client.CheckHealth(ctx, &backend.CheckHealthRequest{PluginContext: backend.PluginContext{Namespace: "stacks-1"}})
+			return err
+		}
+		for range breakerOpenAfter {
+			require.ErrorIs(t, req(), plugins.ErrPluginUnavailable)
+		}
+		require.Equal(t, gobreaker.StateOpen, cb.State())
+
+		time.Sleep(breakerOpenFor + time.Second)
+		exchanger.err = errors.New("exchange failed")
+		calls := plugin.calls
+		require.ErrorContains(t, req(), "plugin token exchange")
+		require.Equal(t, calls, plugin.calls, "the plugin is not called without a token")
+		require.Equal(t, gobreaker.StateHalfOpen, cb.State(), "the failed exchange did not close the breaker")
+	})
 }
