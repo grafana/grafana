@@ -322,7 +322,6 @@ export function getLogLineSize(
     optionsWidth += virtualization.getGridSize() * 2 + iconsGap;
   }
   if (hasSampledLogs || hasLogsFromTimeMachine) {
-    // LogLine renders at most one of the sampled and Time Machine icons in this slot
     optionsWidth += virtualization.getGridSize() * 2 + iconsGap;
   }
   if (showTime) {

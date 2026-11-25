@@ -106,7 +106,7 @@ export class LogListModel implements LogRowModel {
     this.hasError = !!checkLogsError(log);
     this.hasUnescapedContent = log.hasUnescapedContent;
     this.isFromTimeMachine = timeMachineLogsEnabled && !!checkLogsFromTimeMachine(log);
-    this.isSampled = !!checkLogsSampled(log);
+    this.isSampled = !this.isFromTimeMachine && !!checkLogsSampled(log);
     this.labels = log.labels;
     this.logLevel = log.logLevel;
     this.otelLanguage = identifyOTelLanguage(log);

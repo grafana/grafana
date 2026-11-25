@@ -254,7 +254,7 @@ const LogLineComponent = memo(
           )}
           {(hasSampledLogs || hasLogsFromTimeMachine) && (
             <div className={`${styles.isSampled}`}>
-              {log.isSampled && !log.isFromTimeMachine && (
+              {log.isSampled && (
                 <Tooltip content={log.sampledMessage ?? ''} placement="right" theme="info">
                   <Icon
                     className={styles.logIconInfo}
