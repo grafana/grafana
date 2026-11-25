@@ -92,10 +92,10 @@ Options that you set with a drop-down list, radio buttons, a switch, or a slider
 
 The following panel options accept variables:
 
-- **Numeric field options:** Field options with a number field, such as **Min**, **Max**, **Decimals**, and the axis **Soft min** and **Soft max**. Requires the `grafana.panelOptionInterpolation` feature toggle.
-- **Unit:** Requires the `grafana.panelOptionInterpolation` feature toggle.
+- **Numeric field options:** Field options with a number field, such as **Min**, **Max**, **Decimals**, and the axis **Soft min** and **Soft max**.
+- **Unit:** The unit of a field, including custom units.
 - **Thresholds:** The value of each threshold step.
-- **Value mappings:** The display text of each mapping. The value, range, or regular expression that a mapping matches doesn't accept variables. Requires the `grafana.panelOptionInterpolation` feature toggle.
+- **Value mappings:** The display text of each mapping. The value, range, or regular expression that a mapping matches doesn't accept variables.
 - **Display name:** The name of a field or series, which appears in legends, tooltips, table headers, and stat titles.
 - **Axis label:** The text next to a chart axis.
 
