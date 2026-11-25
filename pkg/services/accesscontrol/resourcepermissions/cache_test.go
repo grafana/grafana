@@ -109,6 +109,10 @@ func (s cachePermissionStore) SetResourcePermissions(context.Context, int64, []S
 	return nil, s.err
 }
 
+func (s cachePermissionStore) SetUserResourcePermissions(context.Context, int64, []SetResourcePermissionsCommand, UsersResourceHookFunc) ([]accesscontrol.ResourcePermission, error) {
+	return nil, s.err
+}
+
 func (s cachePermissionStore) SetUserResourcePermission(context.Context, int64, accesscontrol.User, SetResourcePermissionCommand, UserResourceHookFunc) (*accesscontrol.ResourcePermission, error) {
 	return nil, s.err
 }

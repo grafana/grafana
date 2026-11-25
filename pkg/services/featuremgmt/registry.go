@@ -2348,6 +2348,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "resourcePermissionsBulkUserWrites",
+			Description:  "Writes managed permissions and team memberships for many users in bulk instead of one user at a time, such as for SCIM team membership sync",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
+		},
+		{
 			Name:         "kubernetesUsersApi",
 			Description:  "Enables user APIs in the app platform",
 			Stage:        FeatureStageExperimental,
