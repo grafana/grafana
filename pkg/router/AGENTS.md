@@ -91,8 +91,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   loader also serves each app plugin's settings API under its plugin ID
   (`newPluginSettingsBackend`): the single `app` resource, always named `instance`. A plugin ID
   must be a DNS label with a hyphen, so it can never name a core or manifest group. The
-  standalone cloud loader serves read-only settings when `[cloud_router] app_settings_enabled`
-  is set and a remote legacy reader and app-access checker are supplied
+  standalone cloud loader serves read-only settings for the plugins `[cloud_router]
+  app_settings_plugins` names, when a remote legacy reader and app-access checker are supplied
   (`PluginDependencies.Settings`). The legacy side is the same `settingsStorage` ST uses
   (`appsettings.NewReadOnlyLegacySettingsStore`), so ST and MT return identical objects. Storage
   is selected by the migration policy, and only get/list are exposed. Health and resources call
@@ -449,7 +449,7 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | --- | --- |
 | `cap_token`, `token_exchange_url` | Required when any aggregate target without `discovery_auth = none` is set. The CAP token is exchanged per request. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
-| `app_settings_enabled` | Opt in to read-only app settings from the plugins source. Requires a remote legacy settings provider and legacy AuthZ client. Defaults to false. Applies `plugins_group_patterns` to plugin-ID settings groups. |
+| `app_settings_plugins` | Comma-separated globs of the plugin IDs whose read-only app settings the plugins source serves, so settings roll out per plugin: `*` serves every plugin. Unlike group patterns, unset or empty serves none (the default). Requires a remote legacy settings provider and legacy AuthZ client. `plugins_group_patterns` still applies. |
 | `cloudconfig_url`, `cloudconfig_ca_file` | Enterprise settings client origin and optional CA file. Uses `[grpc_client_authentication]` token exchange; no local SQL connection. |
 | `plugins_group_patterns` | Globs that narrow the plugin groups, with the same semantics as `group_patterns`. The deprecated name `plugins_group_regex` is still read, with a warning; if both are set, the new name wins. |
 | `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_patterns`. Unlike other plugin sources, it is trusted to serve core groups. |
