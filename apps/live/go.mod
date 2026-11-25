@@ -11,7 +11,7 @@ require (
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674
 	github.com/grafana/authlib/types v0.0.0-20261120113603-423cd15e9545
 	github.com/grafana/grafana-app-sdk v0.63.3
-	github.com/grafana/grafana-plugin-sdk-go v0.302.0
+	github.com/grafana/grafana-plugin-sdk-go v0.303.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20261022000032-e40de7898e1c
 	github.com/grafana/grafana/pkg/infra/log v0.0.0-20261022000032-e40de7898e1c
 	github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf
@@ -63,6 +63,8 @@ require (
 	github.com/go-openapi/swag/stringutils v0.29.2 // indirect
 	github.com/go-openapi/swag/typeutils v0.29.2 // indirect
 	github.com/go-openapi/swag/yamlutils v0.29.2 // indirect
+	github.com/go-openapi/testify/enable/yaml/v2 v2.8.1 // indirect
+	github.com/go-openapi/testify/v2 v2.8.1 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/goccy/go-json v0.12.0 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
@@ -135,7 +137,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.6 // indirect
 	go.yaml.in/yaml/v4 v4.0.0 // indirect
 	golang.org/x/exp v0.0.0-20261113113407-e3970619a1a4 // indirect
-	golang.org/x/net v0.62.0 // indirect
+	golang.org/x/net v0.63.0 // indirect
 	golang.org/x/oauth2 v0.38.0 // indirect
 	golang.org/x/sync v0.25.0 // indirect
 	golang.org/x/sys v0.50.0 // indirect
@@ -145,7 +147,7 @@ require (
 	gomodules.xyz/jsonpatch/v3 v3.0.1 // indirect
 	gomodules.xyz/orderedmap v0.1.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20261110000943-09e21b237f2c // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20261104224025-d1e00e9f33ab // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20261118221215-c8830f628b3f // indirect
 	google.golang.org/grpc v1.85.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.2 // indirect
