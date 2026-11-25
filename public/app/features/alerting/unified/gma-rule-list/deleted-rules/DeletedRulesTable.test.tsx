@@ -17,6 +17,7 @@ function renderTable(rules: AlertRule[], overrides = {}) {
       hasMore={false}
       isLoadingMore={false}
       onLoadMore={jest.fn()}
+      onRetry={jest.fn()}
       {...overrides}
     />
   );

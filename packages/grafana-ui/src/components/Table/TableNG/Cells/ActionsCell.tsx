@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 
 import { ActionButton } from '../../../Actions/ActionButton';
 import { type ActionCellProps, type TableCellStyles } from '../types';

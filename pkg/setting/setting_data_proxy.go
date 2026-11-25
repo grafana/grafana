@@ -22,6 +22,7 @@ func readDataProxySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.DataProxyIdleConnTimeout = dataproxy.Key("idle_conn_timeout_seconds").MustInt(90)
 	cfg.ResponseLimit = dataproxy.Key("response_limit").MustInt64(0)
 	cfg.DataProxyRowLimit = dataproxy.Key("row_limit").MustInt64(defaultDataProxyRowLimit)
+	cfg.DataProxySeriesLimit = dataproxy.Key("series_limit").MustInt64(0)
 	cfg.DataProxyUserAgent = dataproxy.Key("user_agent").String()
 	cfg.DataProxyForwardUserAgent = dataproxy.Key("forward_user_agent").MustBool(false)
 

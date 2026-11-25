@@ -61,7 +61,7 @@ const FLOATING_EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY = 'grafana.navigation.e
 const FLOATING_EXTENSION_SIDEBAR_HEIGHT_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarFloatingHeight';
 const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
   'grafana-assistant-app',
-  'grafana-assistant-onboarding-app',
+  'grafana-assistantonboarding-app',
   'grafana-dash-app',
   // The docs plugin ID is transitioning from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
   // Support both until that migration is complete.

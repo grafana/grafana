@@ -103,6 +103,10 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 		LogLevel:   centrifuge.LogLevelError,
 		Metrics: centrifuge.MetricsConfig{
 			MetricsNamespace: "grafana_live",
+			// Expose the histograms as native histograms only (no classic buckets), and
+			// drop the legacy command duration Summary. Scrapers need the protobuf
+			// exposition format to read them; text format scrapes see only _count and _sum.
+			EnableNativeHistograms: true,
 		},
 		ClientQueueMaxSize: cfg.LiveClientQueueMaxSize,
 		// Use reasonably large expiration interval for stream meta key,

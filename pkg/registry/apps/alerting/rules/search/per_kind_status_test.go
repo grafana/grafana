@@ -197,9 +197,9 @@ func legacyStatusHandler(t *testing.T, rule *ngmodels.AlertRule) (*Handler, *log
 	rule.OrgID = 1
 	store := statusSearchStore{rule: rule}
 	logger := &logtest.Fake{}
-	service := legacy.NewLegacyRuleService(store, fakes.NewFakeProvisioningStore(), nil, nil, nil,
-		60, logger, nil, statusSearchAccessControl{}, nil)
-	client := NewLegacyClient(*service)
+	service := legacy.New(store, fakes.NewFakeProvisioningStore(), nil, nil, nil,
+		60, logger, nil, statusSearchAccessControl{}, nil, nil)
+	client := NewLegacyClient(service.Searcher())
 	client.logger = logger
 	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{OrgID: 1, UserID: 1})
 	return NewHandler(selectorForBackend(alertrule.ResourceInfo.GroupResource(), client), selectorForBackend(recordingrule.ResourceInfo.GroupResource(), client)), logger, ctx
