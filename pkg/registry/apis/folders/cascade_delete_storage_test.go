@@ -2412,6 +2412,33 @@ func TestCascadeDelete_AlignsFinalizerWithAsyncFlag(t *testing.T) {
 		require.Empty(t, store.deleted)
 	})
 
+	t.Run("a dry run validates the folder as the real delete would see it", func(t *testing.T) {
+		zero := int64(0)
+		dryForce := &metav1.DeleteOptions{GracePeriodSeconds: &zero, DryRun: []string{metav1.DryRunAll}}
+		searcher := &mockSearchClient{stats: &resourcepb.ResourceStatsResponse{Stats: []*resourcepb.ResourceStatsResponse_Stats{
+			{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 1},
+		}}}
+		// The cascade flag is off, so only the finalizer lets a forced delete of a non-empty folder pass.
+		validate := func(ctx context.Context, obj runtime.Object) error {
+			return validateOnDelete(ctx, obj.(*foldersv1.Folder), searcher, dryForce, false, nil)
+		}
+
+		t.Run("flag on: the stamp the real delete would persist is seen", func(t *testing.T) {
+			store, _, err := run(t, true, folderWith(""), validate, dryForce, nil)
+			require.NoError(t, err)
+			require.Zero(t, store.updates)
+		})
+		t.Run("flag off: a delete the strip would make invalid is rejected too", func(t *testing.T) {
+			// Only the stamp can make validation laxer than the stored folder; this guards the strip direction.
+			setCascadeToggles(t, false, false)
+			store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"f": folderWith("", cascade...)}}
+			s := &cascadeDeleteStorage{Storage: store}
+			_, _, err := s.Delete(ctxWithNamespace(), "f", validate, dryForce)
+			require.ErrorContains(t, err, "folder.not-empty")
+			require.Zero(t, store.updates)
+		})
+	})
+
 	t.Run("a requester who may not delete a finalizer folder cannot have it stripped with the flag off", func(t *testing.T) {
 		access := &recordingAccessClient{allow: func(authlib.CheckRequest, string) bool { return false }}
 		store, _, err := run(t, false, folderWith("", cascade...), nil, &metav1.DeleteOptions{}, access)

@@ -205,7 +205,7 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 		if err := s.checkFolderDeleteAccess(ctx, user, ns.Value, f.Name, parentUID); err != nil {
 			return nil, false, err
 		}
-		if f, options, err = s.setCascadeFinalizer(ctx, ns, f, user, false, deleteValidation, options); err != nil {
+		if f, options, deleteValidation, err = s.setCascadeFinalizer(ctx, ns, f, user, false, deleteValidation, options); err != nil {
 			return nil, false, err
 		}
 		obj = f
@@ -603,7 +603,7 @@ func (s *cascadeDeleteStorage) deleteAsync(ctx context.Context, ns authlib.Names
 		}
 	}
 	if !terminating && !hasCascadeDeleteFinalizer(f) {
-		if f, options, err = s.setCascadeFinalizer(ctx, ns, f, user, true, deleteValidation, options); err != nil {
+		if f, options, deleteValidation, err = s.setCascadeFinalizer(ctx, ns, f, user, true, deleteValidation, options); err != nil {
 			return nil, false, err
 		}
 	}
@@ -616,28 +616,29 @@ func (s *cascadeDeleteStorage) deleteAsync(ctx context.Context, ns authlib.Names
 	return s.Storage.Delete(ctx, f.Name, deleteValidation, options)
 }
 
-// setCascadeFinalizer stores f with the cascade finalizer stamped or removed and returns the folder and
-// options to continue with. Validation runs on the aligned folder because it treats a finalizer
-// folder's forced delete differently. The write bypasses the update admission, which would restore
-// the stored finalizer state.
-func (s *cascadeDeleteStorage) setCascadeFinalizer(ctx context.Context, ns authlib.NamespaceInfo, f *foldersv1.Folder, user identity.Requester, present bool, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (*foldersv1.Folder, *metav1.DeleteOptions, error) {
+// setCascadeFinalizer stores f with the cascade finalizer stamped or removed and returns the folder,
+// options and validation to continue with. Validation runs on the aligned folder because it treats a
+// finalizer folder's forced delete differently. The write bypasses the update admission, which would
+// restore the stored finalizer state.
+func (s *cascadeDeleteStorage) setCascadeFinalizer(ctx context.Context, ns authlib.NamespaceInfo, f *foldersv1.Folder, user identity.Requester, present bool, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (*foldersv1.Folder, *metav1.DeleteOptions, rest.ValidateObjectFunc, error) {
 	aligned := f.DeepCopy()
 	setCascadeDeleteFinalizer(aligned, present)
 	if deleteValidation != nil {
 		if err := deleteValidation(ctx, aligned); err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 	}
 	if err := checkDeletePreconditions(f, options); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	if options != nil && len(options.DryRun) > 0 {
-		return aligned, options, nil
+		// Nothing is written, so the stored folder keeps the old state: align it for the validation storage runs.
+		return aligned, options, alignedValidation(deleteValidation, present), nil
 	}
 
 	updated, err := s.writeCascadeFinalizer(identity.WithServiceIdentityContext(ctx, ns.OrgID), f, present)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	// Our write moved the resourceVersion the caller's precondition was checked against; the UID pin stays.
 	pinned := options.DeepCopy()
@@ -647,7 +648,22 @@ func (s *cascadeDeleteStorage) setCascadeFinalizer(ctx context.Context, ns authl
 	if pinned.Preconditions != nil {
 		pinned.Preconditions.ResourceVersion = nil
 	}
-	return updated, pinned, nil
+	return updated, pinned, deleteValidation, nil
+}
+
+// alignedValidation validates a folder as if its cascade finalizer were already stamped or removed.
+func alignedValidation(validate rest.ValidateObjectFunc, present bool) rest.ValidateObjectFunc {
+	if validate == nil {
+		return nil
+	}
+	return func(ctx context.Context, obj runtime.Object) error {
+		if f, ok := obj.(*foldersv1.Folder); ok {
+			f = f.DeepCopy()
+			setCascadeDeleteFinalizer(f, present)
+			obj = f
+		}
+		return validate(ctx, obj)
+	}
 }
 
 // writeCascadeFinalizer stores f with the finalizer set to present, conflicting if f changed since it was read.
