@@ -1,3 +1,5 @@
+import { upperFirst } from 'lodash';
+
 import { type IconName, type ThemeVizHue } from '@grafana/data';
 
 export interface KindLabelOptions {
@@ -6,6 +8,17 @@ export interface KindLabelOptions {
    * gives the label as it reads inside a sentence.
    */
   upperFirst?: boolean;
+}
+
+/**
+ * Builds a kind's `getLabel` or `getPluralLabel` from the label as it reads inside a sentence:
+ * `kindLabel(() => t('my-app.kinds.report', 'report'))`. A title uppercases only the first letter,
+ * which is safe in every language. Lowercasing a title is not: German capitalizes every noun, so
+ * "Ordner" would become the misspelled "ordner". `translate` runs on each read, so the label
+ * translates at render, not when the kind is declared.
+ */
+export function kindLabel(translate: () => string): (options?: KindLabelOptions) => string {
+  return ({ upperFirst: upper = true }: KindLabelOptions = {}) => (upper ? upperFirst(translate()) : translate());
 }
 
 /** How Grafana names, draws and links one kind of object. */
@@ -25,7 +38,7 @@ export interface KindInfo {
   readonly folderScoped: boolean;
   /**
    * Translated name: "Dashboard", or "dashboard" as it reads inside a sentence with `upperFirst: false`.
-   * Ask for the form you need instead of changing the case of a label.
+   * Ask for the form you need instead of changing the case of a label. {@link kindLabel} builds one.
    */
   readonly getLabel: (options?: KindLabelOptions) => string;
   /** The plural of `getLabel`: "Dashboards". */
@@ -42,19 +55,6 @@ export interface KindInfo {
    * Absent when the kind has no page for a single object.
    */
   readonly getRoute?: (name: string, title?: string) => string;
-}
-
-/**
- * A kind an app plugin serves, as the plugin describes it to {@link KindRegistry.addKinds}: a
- * {@link KindInfo} whose labels are plain text. Grafana shows the text as given and only cases its
- * first letter. It has no translations for a plugin's kinds, so a plugin that has translations
- * passes text it already translated. The text is read once, when the kind is added.
- */
-export interface AppKind extends Omit<KindInfo, 'getLabel' | 'getPluralLabel'> {
-  /** Name as it reads inside a sentence, e.g. `dashboard`. Grafana uppercases its first letter for a title. */
-  readonly label: string;
-  /** The plural of `label`, e.g. `dashboards`. */
-  readonly pluralLabel: string;
 }
 
 /** The key each of Grafana's own kinds has in {@link KindRegistry.coreKinds}. */
@@ -85,7 +85,7 @@ export interface KindRegistry {
   /** The kinds that app plugins add. A kind that Grafana serves itself is never among them. */
   readonly getAppKinds: () => KindInfo[];
   /** Adds the kinds an app plugin serves. A kind that Grafana serves itself keeps its core row. */
-  readonly addKinds: (kinds: AppKind[]) => void;
+  readonly addKinds: (kinds: KindInfo[]) => void;
 }
 
 let singletonInstance: KindRegistry | undefined;
