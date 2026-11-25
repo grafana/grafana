@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, type MouseEvent } from 'react';
 
-import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled, targetIsElement } from '../../utils';
+import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
 
 import { useLogListContext } from './LogListContext';
 import { type PopoverStateType } from './popoverMenuTypes';
@@ -15,6 +15,10 @@ export const usePopoverMenu = (containerElement: HTMLDivElement | null) => {
   const [showDisablePopoverOptions, setShowDisablePopoverOptions] = useState(false);
   const handleDeselectionRef = useRef<((e: Event) => void) | null>(null);
   const { onClickFilterOutString, onClickFilterString } = useLogListContext();
+  // The logs can render in another window than this one, such as a Document Picture-in-Picture window. The text
+  // selection, the clicks that clear it and the viewport the menu fits in are that window's.
+  const ownerDocument = containerElement?.ownerDocument ?? document;
+  const ownerWindow = ownerDocument.defaultView ?? window;
 
   const popoverMenuSupported = useCallback(() => {
     if (isPopoverMenuDisabled()) {
@@ -25,8 +29,8 @@ export const usePopoverMenu = (containerElement: HTMLDivElement | null) => {
 
   const closePopoverMenu = useCallback(() => {
     if (handleDeselectionRef.current) {
-      document.removeEventListener('click', handleDeselectionRef.current);
-      document.removeEventListener('contextmenu', handleDeselectionRef.current);
+      ownerDocument.removeEventListener('click', handleDeselectionRef.current);
+      ownerDocument.removeEventListener('contextmenu', handleDeselectionRef.current);
       handleDeselectionRef.current = null;
     }
     setPopoverState({
@@ -34,26 +38,26 @@ export const usePopoverMenu = (containerElement: HTMLDivElement | null) => {
       popoverMenuCoordinates: { x: 0, y: 0 },
       selectedRow: null,
     });
-  }, []);
+  }, [ownerDocument]);
 
   const handleDeselection = useCallback(
     (e: Event) => {
-      if (targetIsElement(e.target) && !containerElement?.contains(e.target)) {
+      if (e.target instanceof ownerWindow.Element && !containerElement?.contains(e.target)) {
         // The mouseup event comes from outside the log rows, close the menu.
         closePopoverMenu();
         return;
       }
-      if (document.getSelection()?.toString()) {
+      if (ownerDocument.getSelection()?.toString()) {
         return;
       }
       closePopoverMenu();
     },
-    [closePopoverMenu, containerElement]
+    [closePopoverMenu, containerElement, ownerDocument, ownerWindow]
   );
 
   const handleTextSelection = useCallback(
     (e: MouseEvent<HTMLElement>, row: LogListModel): boolean => {
-      const selection = document.getSelection()?.toString();
+      const selection = ownerDocument.getSelection()?.toString();
       if (!selection) {
         return false;
       }
@@ -71,8 +75,9 @@ export const usePopoverMenu = (containerElement: HTMLDivElement | null) => {
 
       const MENU_WIDTH = 270;
       const MENU_HEIGHT = 105;
-      const x = e.clientX + MENU_WIDTH > window.innerWidth ? window.innerWidth - MENU_WIDTH : e.clientX;
-      const y = e.clientY + MENU_HEIGHT > window.innerHeight ? window.innerHeight - MENU_HEIGHT : e.clientY;
+      const { innerWidth, innerHeight } = ownerWindow;
+      const x = e.clientX + MENU_WIDTH > innerWidth ? innerWidth - MENU_WIDTH : e.clientX;
+      const y = e.clientY + MENU_HEIGHT > innerHeight ? innerHeight - MENU_HEIGHT : e.clientY;
 
       setPopoverState({
         selection,
@@ -80,11 +85,11 @@ export const usePopoverMenu = (containerElement: HTMLDivElement | null) => {
         selectedRow: row,
       });
       handleDeselectionRef.current = handleDeselection;
-      document.addEventListener('click', handleDeselection);
-      document.addEventListener('contextmenu', handleDeselection);
+      ownerDocument.addEventListener('click', handleDeselection);
+      ownerDocument.addEventListener('contextmenu', handleDeselection);
       return true;
     },
-    [containerElement, handleDeselection, popoverMenuSupported]
+    [containerElement, handleDeselection, ownerDocument, ownerWindow, popoverMenuSupported]
   );
 
   const onDisablePopoverMenu = useCallback(() => {

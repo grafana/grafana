@@ -200,7 +200,8 @@ const LogLineComponent = memo(
 
     const handleClick = useCallback(
       (e: MouseEvent<HTMLElement>) => {
-        if (isLogLineClick(e.target)) {
+        // the logs can render in another window than this one, such as a Document Picture-in-Picture window
+        if (isLogLineClick(e.target, e.currentTarget.ownerDocument.defaultView ?? window)) {
           onClick(e, log);
         }
       },
@@ -822,7 +823,9 @@ export const getStyles = (
   };
 };
 
-function isLogLineClick(target: EventTarget) {
-  const targetIsButton = target instanceof HTMLButtonElement || (target instanceof Element && target.closest('button'));
+function isLogLineClick(target: EventTarget, lineWindow: typeof window) {
+  const targetIsButton =
+    target instanceof lineWindow.HTMLButtonElement ||
+    (target instanceof lineWindow.Element && target.closest('button'));
   return !targetIsButton;
 }
