@@ -46,6 +46,7 @@ import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { setupPanelNotices } from '../scene/setupPanelNotices';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
+import { CoauthoringQueriesAcceptedEvent } from '../sidebar/events';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { DashboardInteractions } from '../utils/interactions';
@@ -152,6 +153,38 @@ describe('PanelEditor', () => {
     if (deactivate) {
       deactivate();
       deactivate = undefined;
+    }
+  });
+
+  it('records stable affected-panel identity for panel edit snapshots', async () => {
+    setTestFlags({ dashboardNewLayouts: true });
+    const { dashboard, panel, gridItem } = await setup({ pluginSkipDataQuery: false });
+    const record = jest.spyOn(dashboard.state.sidebar, 'setPanelEditAction').mockImplementation(() => {});
+    try {
+      panel.setState({ title: 'changed title' });
+      deactivate?.();
+      deactivate = undefined;
+      expect(record).toHaveBeenCalledTimes(1);
+      const snapshot = record.mock.calls[0][0].payload;
+      expect(snapshot.replacesPanelState).toEqual([1]);
+      record.mockRestore();
+      const stopSidebar = dashboard.state.sidebar.activate();
+      try {
+        dashboard.state.sidebar.recordCompletedEdit(snapshot);
+        const runner = getQueryRunnerFor(panel);
+        if (!runner) {
+          throw new Error('Missing query runner');
+        }
+        runner.setState({ queries: [{ refId: 'A', expr: 'accepted' }] });
+        panel.publishEvent(new CoauthoringQueriesAcceptedEvent({ panelId: 1 }), true);
+        dashboard.state.sidebar.undoLastAction();
+        expect(getQueryRunnerFor(gridItem.state.body)?.state.queries).toEqual([{ refId: 'A', expr: 'accepted' }]);
+      } finally {
+        stopSidebar();
+      }
+    } finally {
+      record.mockRestore();
+      setTestFlags({});
     }
   });
 

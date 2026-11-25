@@ -2,6 +2,7 @@ import { t } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
 
 import { type DashboardLayoutItem } from '../../scene/types/DashboardLayoutItem';
+import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 import { edit } from '../utils/edit';
 
 interface ReplacePanelProps {
@@ -15,6 +16,7 @@ export function replacePanel({ source, oldPanel, newPanel }: ReplacePanelProps) 
 
   edit({
     meta: { actionId: 'panel.replace' },
+    replacesPanelState: [getPanelIdForVizPanel(oldPanel)],
     description: t('dashboard.edit-actions.replace-panel', 'Replace panel'),
     source,
     addedObject: newPanel,

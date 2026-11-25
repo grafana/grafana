@@ -150,6 +150,9 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
   queryCoauthoring(): QueryCoauthoringLanguage<ExpressionQuery> {
     return {
       version: 1,
+      getQuerySupport: (query) => ({
+        editable: query.type === ExpressionQueryType.math || query.type === ExpressionQueryType.sql,
+      }),
       describe: async (query) => {
         if (query.type === ExpressionQueryType.math || query.type === ExpressionQueryType.sql) {
           return {

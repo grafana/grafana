@@ -27,6 +27,26 @@ interface PreviewRun {
   unsubscribe: VoidFunction;
 }
 
+const activePreviews = new WeakMap<VizPanel, { dispose(): void; ownsData(data: PanelData | undefined): boolean }>();
+const blockedPanels = new WeakSet<VizPanel>();
+
+export function stopQueryPreview(panel: VizPanel): void {
+  activePreviews.get(panel)?.dispose();
+}
+
+export function setQueryPreviewBlocked(panel: VizPanel, blocked: boolean): void {
+  if (blocked) {
+    blockedPanels.add(panel);
+    stopQueryPreview(panel);
+  } else {
+    blockedPanels.delete(panel);
+  }
+}
+
+export function isQueryPreviewData(panel: VizPanel, data: PanelData | undefined): boolean {
+  return activePreviews.get(panel)?.ownsData(data) ?? false;
+}
+
 const KEYBOARD_PREVIEW_DELAY_MS = 150;
 
 export function startQueryPreview(
@@ -34,6 +54,10 @@ export function startQueryPreview(
   originalRefId: string,
   proposedQuery: DataQuery
 ): QueryPreview | undefined {
+  if (blockedPanels.has(panel)) {
+    return undefined;
+  }
+  stopQueryPreview(panel);
   const queryRunner = getQueryRunnerFor(panel);
   const baselineQuery = queryRunner?.state.queries.find((query) => query.refId === originalRefId);
   if (!queryRunner || !baselineQuery) {
@@ -111,6 +135,8 @@ export function startQueryPreview(
     peekRestoreRun = undefined;
     peekRestoreData = undefined;
   };
+  const ownsData = (data: PanelData | undefined): boolean =>
+    !!data && !!lastProjectedData && (data === lastProjectedData || data.series === lastProjectedData.series);
   const dispose = () => {
     if (disposed) {
       return;
@@ -121,8 +147,11 @@ export function startQueryPreview(
     dataListeners.clear();
     canonicalSubscription?.unsubscribe();
     clearRuns();
-    if (queryRunner.state.data === lastProjectedData) {
+    if (ownsData(queryRunner.state.data)) {
       queryRunner.setState({ data: baselineData });
+    }
+    if (activePreviews.get(panel)?.dispose === dispose) {
+      activePreviews.delete(panel);
     }
   };
 
@@ -275,6 +304,7 @@ export function startQueryPreview(
     }
   };
 
+  activePreviews.set(panel, { dispose, ownsData });
   canonicalSubscription = queryRunner.subscribeToState((state, previousState) => {
     if (state.queries !== previousState.queries && !isEqual(state.queries, baselineQueries)) {
       dispose();
