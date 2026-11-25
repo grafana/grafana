@@ -133,7 +133,7 @@ Enable the standalone legacy AuthZ client and `authZGRPCServer`. The service cre
 the cloudconfig audience and the plugin service audiences it will mint. Incoming callers need
 scope for the requested app operation, plus legacy app access for delegated identities.
 Use `app_settings_plugins` to choose the plugins, and namespace visibility to limit rollout. Enable
-`apppluginsHandleProxyRequests` to serve the same declared proxy routes as ST.
+`appplugins.handleProxyRequests` to serve the same declared proxy routes as ST.
 
 Disabling MT settings returns group ownership to an existing lower-priority source if one is
 configured. Such a source is not required while the shared settings backend is enabled.
