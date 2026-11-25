@@ -6,8 +6,15 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/util"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
+
+// writeOptions returns the options for writing the object. An object that opts in to group writes
+// carries its group's interval.
+func writeOptions(meta metav1.Object, dryRun bool) WriteOptions {
+	return WriteOptions{DryRun: dryRun, GroupWrites: util.GroupWritesRequested(meta.GetAnnotations())}
+}
 
 // setUpdatePreconditions copies the object's resourceVersion and UID onto the rule, so that the rule service rejects
 // an update made against a stale or replaced rule.

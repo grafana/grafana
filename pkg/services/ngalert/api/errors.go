@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -52,6 +54,11 @@ func errorToResponse(err error) response.Response {
 	}
 	if errors.Is(err, models.ErrQuotaReached) {
 		return ErrResp(http.StatusForbidden, err, "")
+	}
+	// Errors from writes through the rules API carry their status.
+	var status apierrors.APIStatus
+	if errors.As(err, &status) && status.Status().Code >= http.StatusBadRequest {
+		return ErrResp(int(status.Status().Code), err, "")
 	}
 	return ErrResp(http.StatusInternalServerError, err, "")
 }

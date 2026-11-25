@@ -73,7 +73,7 @@ func (r *RecordingRules) Create(ctx context.Context, user identity.Requester, or
 	if err != nil {
 		return nil, err
 	}
-	created, err := r.service.CreateAlertRule(ctx, user, *model, managerProps, dryRun)
+	created, err := r.service.CreateAlertRule(ctx, user, *model, managerProps, writeOptions(rule, dryRun))
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (r *RecordingRules) Update(ctx context.Context, user identity.Requester, or
 	if err := setUpdatePreconditions(rule, model); err != nil {
 		return nil, err
 	}
-	result, err := r.service.UpdateAlertRule(ctx, user, *model, managerProps, dryRun)
+	result, err := r.service.UpdateAlertRule(ctx, user, *model, managerProps, writeOptions(rule, dryRun))
 	if err != nil {
 		return nil, err
 	}

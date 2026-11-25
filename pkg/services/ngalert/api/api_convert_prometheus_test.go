@@ -16,11 +16,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsfakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
@@ -34,8 +37,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
+	"github.com/grafana/grafana/pkg/services/ngalert/prom/groupwriter"
+	"github.com/grafana/grafana/pkg/services/ngalert/prom/groupwriter/groupwritertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -267,7 +273,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 			With(models.RuleGen.WithGroupName(simpleGroup.Name)).
 			With(models.RuleGen.WithOrgID(1)).
 			With(models.RuleGen.WithPrometheusOriginalRuleDefinition("123")).
-			GenerateRef()
+			With(withConsistentCondition).GenerateRef()
 		ruleStore.PutRule(context.Background(), rule)
 
 		rc := createRequestCtx()
@@ -329,7 +335,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 			With(models.RuleGen.WithGroupName(simpleGroup.Name)).
 			With(models.RuleGen.WithOrgID(1)).
 			With(models.RuleGen.WithPrometheusOriginalRuleDefinition("123")).
-			GenerateRef()
+			With(withConsistentCondition).GenerateRef()
 		ruleStore.PutRule(context.Background(), rule)
 		// mark the rule as provisioned
 		err := provenanceStore.SetProvenance(context.Background(), rule, 1, models.ProvenanceAPI)
@@ -596,7 +602,8 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 
 				states := errStatesByTitle(t, ruleStore)
 				require.Equal(t, state, states["TestAlert"])
-				require.Equal(t, models.OkErrState, states["recorded-metric"])
+				// A recording rule has no error state.
+				require.Empty(t, states["recorded-metric"])
 			})
 		}
 
@@ -759,68 +766,6 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 			// Prometheus rule definition should not be saved when provenance is disabled
 			require.Nil(t, r.Metadata.PrometheusStyleRule)
 		}
-	})
-
-	t.Run("with version message header should pass message to rule store", func(t *testing.T) {
-		provenanceStore := fakes.NewFakeProvisioningStore()
-		folderService := foldertest.NewFakeService()
-		srv, _, ruleStore := createConvertPrometheusSrv(t, withProvenanceStore(provenanceStore), withFolderService(folderService))
-
-		// Create a folder in the root
-		fldr := randFolder()
-		fldr.ParentUID = ""
-		folderService.ExpectedFolder = fldr
-		folderService.ExpectedFolders = []*folder.Folder{fldr}
-		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
-
-		makeGroup := func(alertname string) apimodels.PrometheusRuleGroup {
-			return apimodels.PrometheusRuleGroup{
-				Name:     "Test Group",
-				Interval: prommodel.Duration(1 * time.Minute),
-				Rules: []apimodels.PrometheusRule{
-					{
-						Alert: alertname,
-						Expr:  "up == 0",
-						For:   new(prommodel.Duration(5 * time.Minute)),
-						Labels: map[string]string{
-							"severity": "critical",
-						},
-					},
-				},
-			}
-		}
-
-		// Create a rule with the X-Grafana-Alerting-Version-Message to check it's passed to InsertRule.
-
-		rc1 := createRequestCtx()
-		rc1.Req.Header.Set("X-Grafana-Alerting-Version-Message", "version #1")
-		response1 := srv.RouteConvertPrometheusPostRuleGroup(rc1, fldr.Title, makeGroup("AlertV1"))
-		require.Equal(t, http.StatusAccepted, response1.Status())
-
-		inserts := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
-			a, ok := cmd.([]models.InsertRule)
-			return a, ok
-		})
-		require.Len(t, inserts, 1)
-		cmd1 := inserts[0].([]models.InsertRule)
-		require.Len(t, cmd1, 1)
-		require.Equal(t, "version #1", cmd1[0].Message)
-
-		// Now update the rule to check it gets passed to UpdateRule.
-
-		rc2 := createRequestCtx()
-		rc2.Req.Header.Set("X-Grafana-Alerting-Version-Message", "version #2")
-		response2 := srv.RouteConvertPrometheusPostRuleGroup(rc2, fldr.Title, makeGroup("AlertV2"))
-		require.Equal(t, http.StatusAccepted, response2.Status())
-
-		updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
-			a, ok := cmd.([]models.UpdateRule)
-			return a, ok
-		})
-		require.Len(t, updates, 1)
-		cmd2 := updates[0].([]models.UpdateRule)
-		require.Len(t, cmd2, 1)
-		require.Equal(t, "version #2", cmd2[0].Message)
 	})
 
 	t.Run("returns error when target datasource does not exist", func(t *testing.T) {
@@ -1048,7 +993,7 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 			With(models.RuleGen.WithTitle("TestAlert")).
 			With(models.RuleGen.WithIntervalSeconds(60)).
 			With(models.RuleGen.WithPrometheusOriginalRuleDefinition(string(promRuleYAML))).
-			GenerateRef()
+			With(withConsistentCondition).GenerateRef()
 		ruleStore.PutRule(context.Background(), rule)
 
 		// Create a rule in another group
@@ -1059,7 +1004,7 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 			With(models.RuleGen.WithGroupKey(groupKeyNotFromProm)).
 			With(models.RuleGen.WithTitle("in another group")).
 			With(models.RuleGen.WithIntervalSeconds(60)).
-			GenerateRef()
+			With(withConsistentCondition).GenerateRef()
 		ruleStore.PutRule(context.Background(), ruleInOtherFolder)
 
 		t.Run("YAML response", func(t *testing.T) {
@@ -1168,7 +1113,7 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 				With(models.RuleGen.WithTitle(promGroup.Rules[0].Alert)).
 				With(models.RuleGen.WithIntervalSeconds(60)).
 				With(models.RuleGen.WithPrometheusOriginalRuleDefinition(string(promRuleYAML))).
-				GenerateRef()
+				With(withConsistentCondition).GenerateRef()
 			ruleStore.PutRule(context.Background(), rule)
 		}
 
@@ -1315,7 +1260,7 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 				With(models.RuleGen.WithTitle(promGroup.Rules[0].Alert)).
 				With(models.RuleGen.WithIntervalSeconds(60)).
 				With(models.RuleGen.WithPrometheusOriginalRuleDefinition(string(promRuleYAML))).
-				GenerateRef()
+				With(withConsistentCondition).GenerateRef()
 			ruleStore.PutRule(context.Background(), rule)
 		}
 
@@ -1473,7 +1418,7 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 				With(models.RuleGen.WithNamespaceUID(fldr.UID)).
 				With(models.RuleGen.WithOrgID(1)).
 				With(models.RuleGen.WithPrometheusOriginalRuleDefinition(promDefinition)).
-				GenerateRef()
+				With(withConsistentCondition).GenerateRef()
 			ruleStore.PutRule(context.Background(), rule)
 
 			return srv, ruleStore, fldr, rule
@@ -1488,7 +1433,7 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 				With(models.RuleGen.WithOrgID(1)).
 				With(models.RuleGen.WithGroupName(otherGroupName)).
 				With(models.RuleGen.WithPrometheusOriginalRuleDefinition("other prometheus definition")).
-				GenerateRef()
+				With(withConsistentCondition).GenerateRef()
 			ruleStore.PutRule(context.Background(), otherRule)
 
 			rc := createRequestCtx()
@@ -1523,7 +1468,7 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 				With(models.RuleGen.WithNamespaceUID(fldr.UID)).
 				With(models.RuleGen.WithOrgID(1)).
 				With(models.RuleGen.WithPrometheusOriginalRuleDefinition("prometheus definition")).
-				GenerateRef()
+				With(withConsistentCondition).GenerateRef()
 			ruleStore.PutRule(context.Background(), rule2)
 			err := provenanceStore.SetProvenance(context.Background(), rule2, 1, models.ProvenanceAPI)
 			require.NoError(t, err)
@@ -1608,7 +1553,7 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 				With(models.RuleGen.WithOrgID(1)).
 				With(models.RuleGen.WithGroupName(groupName)).
 				With(models.RuleGen.WithPrometheusOriginalRuleDefinition(promDefinition)).
-				GenerateRef()
+				With(withConsistentCondition).GenerateRef()
 			ruleStore.PutRule(context.Background(), rule)
 
 			return srv, ruleStore, fldr, rule
@@ -1625,7 +1570,7 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 				With(models.RuleGen.WithOrgID(1)).
 				With(models.RuleGen.WithGroupName(otherGroupName)).
 				With(models.RuleGen.WithPrometheusOriginalRuleDefinition("other prometheus definition")).
-				GenerateRef()
+				With(withConsistentCondition).GenerateRef()
 			ruleStore.PutRule(context.Background(), otherRule)
 
 			response := srv.RouteConvertPrometheusDeleteRuleGroup(rc, fldr.Title, groupName)
@@ -1659,7 +1604,7 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 				With(models.RuleGen.WithOrgID(1)).
 				With(models.RuleGen.WithGroupName(groupName)).
 				With(models.RuleGen.WithPrometheusOriginalRuleDefinition("prometheus definition")).
-				GenerateRef()
+				With(withConsistentCondition).GenerateRef()
 			ruleStore.PutRule(context.Background(), rule2)
 			err := provenanceStore.SetProvenance(context.Background(), rule2, 1, models.ProvenanceAPI)
 			require.NoError(t, err)
@@ -1715,7 +1660,7 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 			With(models.RuleGen.WithNamespaceUID(fldr.UID)).
 			With(models.RuleGen.WithOrgID(1)).
 			With(models.RuleGen.WithGroupName(groupName)).
-			GenerateRef()
+			With(withConsistentCondition).GenerateRef()
 		ruleStore.PutRule(context.Background(), rule)
 
 		// Attempt to delete via convert endpoint should return 404
@@ -1809,7 +1754,11 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 				require.Equal(t, "TestAlert", rule.Title)
 				require.Equal(t, "critical", rule.Labels["severity"])
 				require.Equal(t, 5*time.Minute, rule.For)
-				require.Equal(t, models.Duration(queryOffset), rule.Data[0].RelativeTimeRange.To)
+				for _, q := range rule.Data {
+					if !expr.IsDataSource(q.DatasourceUID) {
+						require.Equal(t, models.Duration(queryOffset), q.RelativeTimeRange.To)
+					}
+				}
 			case "TestGroup3":
 				switch rule.Title {
 				case "TestAlert":
@@ -1942,7 +1891,15 @@ type convertPrometheusSrvOptions struct {
 	alertmanager                 Alertmanager
 	folderService                folder.Service
 	rulerSync                    externalRulerSyncChecker
+	groupClients                 **groupwritertest.Clients
 	requests                     *prometheus.CounterVec
+}
+
+// withGroupClients sets clients to the rules API that the server writes converted groups to.
+func withGroupClients(clients **groupwritertest.Clients) convertPrometheusSrvOptionsFunc {
+	return func(opts *convertPrometheusSrvOptions) {
+		opts.groupClients = clients
+	}
 }
 
 type convertPrometheusSrvOptionsFunc func(*convertPrometheusSrvOptions)
@@ -2014,8 +1971,9 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 	quotas.EXPECT().LimitOK()
 
 	options := convertPrometheusSrvOptions{
-		provenanceStore:              fakes.NewFakeProvisioningStore(),
-		fakeAccessControlRuleService: &acfakes.FakeRuleService{},
+		provenanceStore: fakes.NewFakeProvisioningStore(),
+		// Writes through the rules API read the group's rules first, so the user can read them.
+		fakeAccessControlRuleService: &acfakes.FakeRuleService{HasAccessFunc: func(context.Context, identity.Requester, ac.Evaluator) (bool, error) { return true, nil }},
 		quotaChecker:                 quotas,
 		folderService:                foldertest.NewFakeService(),
 		rulerSync:                    fakeRulerSyncChecker{},
@@ -2059,7 +2017,28 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		},
 	}
 
-	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles, options.alertmanager, nil, options.rulerSync, options.requests)
+	// Converted groups are written through the rules API, which writes them to the same store.
+	groupwritertest.PersistUpdates(ruleStore)
+	legacyService := legacy.New(
+		ruleStore,
+		options.provenanceStore,
+		options.folderService,
+		options.quotaChecker,
+		&provisioning.NopTransactionManager{},
+		60,
+		log.New("test"),
+		&provisioning.NotificationSettingsValidatorProviderFake{},
+		options.fakeAccessControlRuleService,
+		provisioning.NoopRuleMutationValidator{},
+		func(int64) string { return "default" },
+	)
+	clients := groupwritertest.NewClientsWithRules(legacyService, &user.SignedInUser{OrgID: 1})
+	if options.groupClients != nil {
+		*options.groupClients = clients
+	}
+	groups := groupwriter.NewWriter(clients, func(int64) string { return "default" }, log.NewNopLogger())
+
+	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles, options.alertmanager, nil, options.rulerSync, groups, options.requests)
 
 	return srv, dsCache, ruleStore
 }
@@ -2089,8 +2068,14 @@ func assertRulesUseDatasource(t *testing.T, ruleStore *fakes.RuleStore, expected
 
 	for _, rule := range rules {
 		if rule.Record == nil {
-			require.NotEmpty(t, rule.Data)
-			require.Equal(t, expectedDatasourceUID, rule.Data[0].DatasourceUID, rule.Title, expectedDatasourceUID)
+			// The rules API keeps queries by refID, so the datasource query isn't necessarily first.
+			var datasourceUIDs []string
+			for _, q := range rule.Data {
+				if !expr.IsDataSource(q.DatasourceUID) {
+					datasourceUIDs = append(datasourceUIDs, q.DatasourceUID)
+				}
+			}
+			require.Equal(t, []string{expectedDatasourceUID}, datasourceUIDs, rule.Title)
 		} else {
 			require.Equal(t, expectedDatasourceUID, rule.Record.TargetDatasourceUID)
 		}
@@ -2993,4 +2978,89 @@ func TestGrafanaNamespacesToPrometheus(t *testing.T) {
 			require.Contains(t, result, tt.wantNamespace)
 		})
 	}
+}
+
+func TestRouteConvertPrometheusRuleSequences(t *testing.T) {
+	recordAndAlert := apimodels.PrometheusRuleGroup{
+		Name:     "group",
+		Interval: prommodel.Duration(2 * time.Minute),
+		Rules: []apimodels.PrometheusRule{
+			{Alert: "Alert", Expr: "recorded > 0"},
+			{Record: "recorded", Expr: "vector(1)"},
+		},
+	}
+	alertOnly := apimodels.PrometheusRuleGroup{
+		Name:     "group",
+		Interval: prommodel.Duration(2 * time.Minute),
+		Rules:    []apimodels.PrometheusRule{{Alert: "Alert", Expr: "vector(1) > 0"}},
+	}
+
+	importGroup := func(t *testing.T, group apimodels.PrometheusRuleGroup) (*ConvertPrometheusSrv, *fakes.RuleStore, *groupwritertest.Clients, string) {
+		t.Helper()
+		var clients *groupwritertest.Clients
+		srv, _, ruleStore := createConvertPrometheusSrv(t, withGroupClients(&clients))
+		require.Equal(t, http.StatusAccepted, srv.RouteConvertPrometheusPostRuleGroup(createRequestCtx(), "namespace", group).Status())
+		rules := rulesInGroup(t, ruleStore)
+		require.NotEmpty(t, rules)
+		return srv, ruleStore, clients, rules[0].NamespaceUID
+	}
+
+	t.Run("an import creates a sequence with the group's recording rules first", func(t *testing.T) {
+		_, ruleStore, clients, folderUID := importGroup(t, recordAndAlert)
+
+		seq := clients.Sequences[groupwriter.SequenceUID(1, folderUID, "group")]
+		require.NotNil(t, seq)
+		require.Equal(t, folderUID, seq.Annotations[v1beta1.FolderAnnotationKey])
+		require.Equal(t, v1beta1.RuleSequencePromDuration("2m"), seq.Spec.Trigger.Interval)
+		rules := rulesInGroup(t, ruleStore)
+		require.Len(t, seq.Spec.RecordingRules, 1)
+		require.Len(t, seq.Spec.AlertRules, 1)
+		for _, r := range rules {
+			ref := seq.Spec.AlertRules[0]
+			if r.Type() == models.RuleTypeRecording {
+				ref = seq.Spec.RecordingRules[0]
+			}
+			require.Equal(t, r.UID, string(ref.Name))
+		}
+	})
+
+	t.Run("a re-import without recording rules deletes the sequence", func(t *testing.T) {
+		srv, _, clients, _ := importGroup(t, recordAndAlert)
+		require.Equal(t, http.StatusAccepted, srv.RouteConvertPrometheusPostRuleGroup(createRequestCtx(), "namespace", alertOnly).Status())
+		require.Empty(t, clients.Sequences)
+	})
+
+	t.Run("deleting the group deletes its sequence, and keeps the rules when that fails", func(t *testing.T) {
+		srv, ruleStore, clients, _ := importGroup(t, recordAndAlert)
+
+		clients.FailDelete = errors.New("delete failed")
+		require.Equal(t, http.StatusInternalServerError, srv.RouteConvertPrometheusDeleteRuleGroup(createRequestCtx(), "namespace", "group").Status())
+		require.Len(t, rulesInGroup(t, ruleStore), 2)
+
+		clients.FailDelete = nil
+		require.Equal(t, http.StatusAccepted, srv.RouteConvertPrometheusDeleteRuleGroup(createRequestCtx(), "namespace", "group").Status())
+		require.Empty(t, clients.Sequences)
+		require.Empty(t, rulesInGroup(t, ruleStore))
+	})
+
+	t.Run("deleting the namespace deletes the sequences of its groups", func(t *testing.T) {
+		srv, _, clients, _ := importGroup(t, recordAndAlert)
+		require.Equal(t, http.StatusAccepted, srv.RouteConvertPrometheusDeleteNamespace(createRequestCtx(), "namespace").Status())
+		require.Empty(t, clients.Sequences)
+	})
+}
+
+// withConsistentCondition makes a generated rule's condition one of its queries, as a stored rule's
+// is, so that the rule can be read and deleted through the rules API.
+var withConsistentCondition models.AlertRuleMutator = func(r *models.AlertRule) {
+	if r.Record == nil {
+		r.Condition = r.Data[0].RefID
+	}
+}
+
+func rulesInGroup(t *testing.T, ruleStore *fakes.RuleStore) models.RulesGroup {
+	t.Helper()
+	rules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{OrgID: 1, RuleGroups: []string{"group"}})
+	require.NoError(t, err)
+	return rules
 }

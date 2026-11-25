@@ -87,7 +87,7 @@ func ValidateDelete(cfg config.RuntimeConfig) validation.ValidateFunc[*model.Rec
 				return fmt.Errorf("failed to resolve sequence membership for rule %q: %w", oldRule.Name, err)
 			}
 			if memberships[oldRule.Name].Found {
-				return fmt.Errorf("cannot delete rule %q because it belongs to rule sequence %q", oldRule.Name, memberships[oldRule.Name].SequenceUID)
+				return model.NewRuleSequenceMemberError(oldRule.Name, memberships[oldRule.Name].SequenceUID)
 			}
 		}
 		return nil

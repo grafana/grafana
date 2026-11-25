@@ -35,6 +35,7 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/prom"
+	"github.com/grafana/grafana/pkg/services/ngalert/prom/groupwriter"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	"github.com/grafana/grafana/pkg/setting"
@@ -149,6 +150,7 @@ type ConvertPrometheusSrv struct {
 	am               Alertmanager
 	importsAuthz     notifier.ExtraConfigAuthz
 	rulerSync        externalRulerSyncChecker
+	groups           *groupwriter.Writer
 	requests         *prometheus.CounterVec
 }
 
@@ -180,6 +182,7 @@ func NewConvertPrometheusSrv(
 	am Alertmanager,
 	importsAuthz notifier.ExtraConfigAuthz,
 	rulerSync externalRulerSyncChecker,
+	groups *groupwriter.Writer,
 	requests *prometheus.CounterVec,
 ) *ConvertPrometheusSrv {
 	return &ConvertPrometheusSrv{
@@ -192,6 +195,7 @@ func NewConvertPrometheusSrv(
 		am:               am,
 		importsAuthz:     importsAuthz,
 		rulerSync:        rulerSync,
+		groups:           groups,
 		requests:         requests,
 	}
 }
@@ -312,12 +316,7 @@ func (srv *ConvertPrometheusSrv) deleteNamespace(c *contextmodel.ReqContext, nam
 	}
 	logger.Info("Deleting all Prometheus-imported rule groups", "folder_uid", namespace.UID, "folder_title", namespaceTitle)
 
-	manager := getManagerProperties(c)
-	filterOpts := &provisioning.FilterOptions{
-		NamespaceUIDs:               []string{namespace.UID},
-		HasPrometheusRuleDefinition: new(true),
-	}
-	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, manager, filterOpts)
+	err = srv.groups.DeleteFolder(c.Req.Context(), c.GetOrgID(), namespace.UID, getManagerProperties(c))
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
 		return response.Empty(http.StatusNotFound)
 	}
@@ -354,13 +353,7 @@ func (srv *ConvertPrometheusSrv) deleteRuleGroup(c *contextmodel.ReqContext, nam
 	}
 	logger.Info("Deleting Prometheus-imported rule group", "folder_uid", folder.UID, "folder_title", namespaceTitle, "group", group)
 
-	manager := getManagerProperties(c)
-	filterOpts := &provisioning.FilterOptions{
-		NamespaceUIDs:               []string{folder.UID},
-		RuleGroups:                  []string{group},
-		HasPrometheusRuleDefinition: new(true),
-	}
-	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, manager, filterOpts)
+	err = srv.groups.DeleteGroups(c.Req.Context(), c.GetOrgID(), []groupwriter.GroupKey{{FolderUID: folder.UID, Title: group}}, getManagerProperties(c))
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
 		return response.Empty(http.StatusNotFound)
 	}
@@ -558,8 +551,8 @@ func (srv *ConvertPrometheusSrv) postRuleGroups(c *contextmodel.ReqContext, prom
 		return errorToResponse(err)
 	}
 
-	versionMessage, err := parseVersionMessageHeader(c)
-	if err != nil {
+	// The header is still validated, but the rules API doesn't take a version message, so it isn't stored.
+	if _, err := parseVersionMessageHeader(c); err != nil {
 		logger.Error("Failed to parse version message header", "error", err)
 		return errorToResponse(err)
 	}
@@ -619,8 +612,8 @@ func (srv *ConvertPrometheusSrv) postRuleGroups(c *contextmodel.ReqContext, prom
 		}
 	}
 
-	// 3. Update the GMA Rules in the DB
-	err = srv.alertRuleService.ReplaceRuleGroups(c.Req.Context(), c.SignedInUser, grafanaGroups, manager, versionMessage)
+	// 3. Write the GMA rules and their rule sequences
+	err = srv.groups.ReplaceGroups(c.Req.Context(), c.GetOrgID(), grafanaGroups, manager)
 	if err != nil {
 		logger.Error("Failed to replace rule groups", "error", err)
 		return errorToResponse(err)

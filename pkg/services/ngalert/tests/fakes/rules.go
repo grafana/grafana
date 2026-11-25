@@ -364,8 +364,28 @@ func (f *RuleStore) ListAlertRulesPaginated(_ context.Context, q *models.ListAle
 
 	// Filter by PluginOriginFilter if specified
 	rules = applyPluginOriginFilter(rules, q.PluginOriginFilter)
+	rules = applyRuleTypeFilter(rules, q.RuleType)
 
 	return rules, "", nil
+}
+
+func applyRuleTypeFilter(rules models.RulesGroup, filter models.RuleTypeFilter) models.RulesGroup {
+	var want models.RuleType
+	switch filter {
+	case models.RuleTypeFilterAlerting:
+		want = models.RuleTypeAlerting
+	case models.RuleTypeFilterRecording:
+		want = models.RuleTypeRecording
+	default:
+		return rules
+	}
+	result := make(models.RulesGroup, 0, len(rules))
+	for _, r := range rules {
+		if r.Type() == want {
+			result = append(result, r)
+		}
+	}
+	return result
 }
 
 func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQuery) (models.RulesGroup, error) {

@@ -425,10 +425,19 @@ func (service *legacyRuleService) GetDeletedAlertRules(ctx context.Context, user
 	return filtered, nil
 }
 
-// CreateAlertRule creates a new alert rule. For normal rule groups, this function will ignore any
-// interval that is set in the rule struct and use the already existing group interval or the default one.
-// With dryRun the rule is validated and authorized and the would-be result returned, but nothing is written.
-func (service *legacyRuleService) CreateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, manager utils.ManagerProperties, dryRun bool) (models.AlertRule, error) {
+// WriteOptions controls how CreateAlertRule and UpdateAlertRule write a rule.
+type WriteOptions struct {
+	// DryRun validates and authorizes the write and returns the would-be result, but writes nothing.
+	DryRun bool
+	// GroupWrites is set when the caller writes the rule's group itself. The rule's interval is then
+	// the group's interval and is stored as given.
+	GroupWrites bool
+}
+
+// CreateAlertRule creates a new alert rule. For normal rule groups, unless opts.GroupWrites is set,
+// this function will ignore any interval that is set in the rule struct and use the already existing
+// group interval or the default one.
+func (service *legacyRuleService) CreateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, manager utils.ManagerProperties, opts WriteOptions) (models.AlertRule, error) {
 	if models.IsNoGroupRuleGroup(rule.RuleGroup) {
 		return models.AlertRule{}, fmt.Errorf("%w: rules must have a valid group", models.ErrAlertRuleFailedValidation)
 	}
@@ -468,7 +477,7 @@ func (service *legacyRuleService) CreateAlertRule(ctx context.Context, user iden
 			interval = existingGroup[0].IntervalSeconds
 		}
 	}
-	if rule.RuleGroup != "" {
+	if rule.RuleGroup != "" && !opts.GroupWrites {
 		rule.IntervalSeconds = interval
 	}
 	err = rule.SetDashboardAndPanelFromAnnotations()
@@ -495,7 +504,7 @@ func (service *legacyRuleService) CreateAlertRule(ctx context.Context, user iden
 			return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
 		}
 	}
-	if dryRun {
+	if opts.DryRun {
 		return service.dryRunCreate(ctx, user, rule)
 	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -557,9 +566,26 @@ func (service *legacyRuleService) dryRunCreate(ctx context.Context, user identit
 	return rule, nil
 }
 
+// keepStoredFields copies onto rule the fields that a single-rule update doesn't change.
+func keepStoredFields(rule *models.AlertRule, storedRule *models.AlertRule, opts WriteOptions) {
+	rule.ID = storedRule.ID
+	// Normal rule groups share an interval, so single-rule updates can't change it, unless the caller
+	// writes the whole group. NoGroup rules each live in their own sentinel group, so per-rule
+	// interval changes are allowed.
+	if !models.IsNoGroupRuleGroup(storedRule.RuleGroup) && !opts.GroupWrites {
+		rule.IntervalSeconds = storedRule.IntervalSeconds
+	}
+
+	// Currently metadata contains only editor settings, so we can just copy it.
+	// If we add more fields to metadata, we might need to handle them separately,
+	// and/or merge or update their values.
+	if rule.Metadata == (models.AlertRuleMetadata{}) {
+		rule.Metadata = storedRule.Metadata
+	}
+}
+
 // UpdateAlertRule updates an alert rule.
-// With dryRun the update is validated and authorized and the would-be result returned, but nothing is written.
-func (service *legacyRuleService) UpdateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, manager utils.ManagerProperties, dryRun bool) (models.AlertRule, error) {
+func (service *legacyRuleService) UpdateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, manager utils.ManagerProperties, opts WriteOptions) (models.AlertRule, error) {
 	var storedRule *models.AlertRule
 	var changedNotificationSettings []models.NotificationSettings // Needs authorizing unless the user can write all rules.
 	if err := service.ensureNamespace(ctx, user, rule.OrgID, rule.NamespaceUID); err != nil {
@@ -642,19 +668,7 @@ func (service *legacyRuleService) UpdateAlertRule(ctx context.Context, user iden
 		}
 	}
 	rule.Updated = time.Now()
-	rule.ID = storedRule.ID
-	// Normal rule groups share an interval, so single-rule updates can't change it.
-	// NoGroup rules each live in their own sentinel group, so per-rule interval changes are allowed.
-	if !models.IsNoGroupRuleGroup(storedRule.RuleGroup) {
-		rule.IntervalSeconds = storedRule.IntervalSeconds
-	}
-
-	// Currently metadata contains only editor settings, so we can just copy it.
-	// If we add more fields to metadata, we might need to handle them separately,
-	// and/or merge or update their values.
-	if rule.Metadata == (models.AlertRuleMetadata{}) {
-		rule.Metadata = storedRule.Metadata
-	}
+	keepStoredFields(&rule, storedRule, opts)
 
 	err = rule.SetDashboardAndPanelFromAnnotations()
 	if err != nil {
@@ -663,7 +677,7 @@ func (service *legacyRuleService) UpdateAlertRule(ctx context.Context, user iden
 	if err := service.validateRuleMutations(ctx, []*models.AlertRule{&rule}, manager); err != nil {
 		return models.AlertRule{}, err
 	}
-	if dryRun {
+	if opts.DryRun {
 		if err := service.ruleStore.ValidateAlertRuleForWrite(rule); err != nil {
 			return models.AlertRule{}, err
 		}

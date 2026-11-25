@@ -727,6 +727,20 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, "some-group", created.Labels[v0alpha1.GroupLabelKey])
 			require.Equal(t, "0", created.Labels[v0alpha1.GroupIndexLabelKey])
+			// The opted-in object carries its group's interval, so the interval isn't replaced by the default.
+			require.Equal(t, v0alpha1.AlertRulePromDuration("10s"), created.Spec.Trigger.Interval)
+
+			// Legacy storage doesn't keep the annotation, so each write opts in again.
+			created.Spec.Trigger.Interval = "20s"
+			updated, err := client.Update(ctx, created, v1.UpdateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, v0alpha1.AlertRulePromDuration("10s"), updated.Spec.Trigger.Interval)
+
+			updated.Annotations[v0alpha1.AllowGroupWritesAnnotationKey] = "true"
+			updated.Spec.Trigger.Interval = "20s"
+			updated, err = client.Update(ctx, updated, v1.UpdateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, v0alpha1.AlertRulePromDuration("20s"), updated.Spec.Trigger.Interval)
 		})
 	})
 }
