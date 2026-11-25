@@ -1,6 +1,5 @@
 import { isObject } from '@grafana/data';
 
-import { TracedError } from '../../utils/TracedError';
 import {
   getCachedPromise,
   getFetchErrorContext,
@@ -35,15 +34,14 @@ class DiscoveryTimeoutError extends Error {
 }
 
 /**
- * A discovery request failed, so the answer is unknown and is not cached.
- *
- * `isHandled` marks the failure as already logged, so `getCachedPromise` does not log it again.
+ * Rejects the cached request after the failure is logged with its URL and reason. The rejection keeps
+ * the unknown answer out of the cache, and `isHandled` stops `getCachedPromise` from logging it again.
  */
-class DiscoveryRequestError extends TracedError {
+class DiscoveryRequestError extends Error {
   readonly isHandled = true;
 
   constructor(url: string, cause: unknown) {
-    super(`API discovery: request to ${url} failed`, cause);
+    super(`API discovery: request to ${url} failed`, { cause });
     this.name = 'DiscoveryRequestError';
   }
 }
