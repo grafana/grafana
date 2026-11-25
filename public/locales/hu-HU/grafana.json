@@ -6740,7 +6740,8 @@
           "title": "Panel beillesztése"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "Sor hozzáadása",
@@ -9967,10 +9968,6 @@
       "of": "OF",
       "to": "EDDIG",
       "when": "WHEN"
-    },
-    "expression-query-editor": {
-      "helper-text-sql": "Futtasson MySQL-dialektusú SQL-lekérdezéseket az adatforrásaiból készült táblázatokon. Az adatforrás-lekérdezések (pl. „A”, „B”) táblázatként érhetők el, és a lekérdezés nevével hivatkozhat rájuk. A mezők oszlopként jelennek meg, az adatforrás által visszaadott formában.",
-      "label-operation": "Művelet"
     },
     "math": {
       "available-math-functions": "Elérhető matematikai függvények",
@@ -13792,12 +13789,11 @@
     },
     "megamenu-item": {
       "children-error": "Az elemek betöltése nem sikerült",
+      "children-partial-error": "",
       "collapse-aria-label": "Szakasz összecsukása: {{sectionName}}",
       "expand-aria-label": "Szakasz kibontása: {{sectionName}}",
       "loading-aria-label": "{{sectionName}} betöltése",
-      "reorder-aria-label": "{{itemName}} átrendezése",
-      "starred-dashboard-icon": "Irányítópult",
-      "starred-folder-icon": "Mappa"
+      "reorder-aria-label": "{{itemName}} átrendezése"
     },
     "org-switcher": {
       "aria-label": "Szervezet módosítása"
@@ -17502,6 +17498,7 @@
     "description-page-size": "Sorok száma oldalanként. Ha üres, az oldalméret a panel magasságán alapul.",
     "description-show-columns-sidebar": "Nyissa meg az oszlopkezelő oldalsávot a panellel, ne pedig az oszlopmenüből",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "JSON-objektumokat tartalmazó mező CSS-tulajdonságokkal",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Minden második sor háttérszínének váltogatása",
@@ -17546,6 +17543,7 @@
     "name-show-columns-sidebar": "Oszlopok oldalsávjának megjelenítése",
     "name-show-row-numbers": "",
     "name-show-table-header": "Táblázatfejléc megjelenítése",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "Mutatóval történő ráhúzáskor megjelenő elemleírás megjelenítése",
     "name-styling-from-field": "Stílus a mezőből",
     "name-tooltip-from-field": "",
