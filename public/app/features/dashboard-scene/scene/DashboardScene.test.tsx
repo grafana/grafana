@@ -155,6 +155,12 @@ jest.mock('../utils/predefinedVariables', () => ({
   },
 }));
 
+const mockIsPendingChangesEnabled = jest.fn(() => false);
+jest.mock('../lifecycle/pendingChangesFlag', () => ({
+  ...jest.requireActual('../lifecycle/pendingChangesFlag'),
+  isPendingChangesEnabled: () => mockIsPendingChangesEnabled(),
+}));
+
 locationUtil.initialize({
   config: { appSubUrl: '/subUrl' } as GrafanaConfig,
   getVariablesUrlParams: jest.fn(),
@@ -270,6 +276,67 @@ describe('DashboardScene', () => {
 
         expect(sidebar.state.undoStack).toEqual([action]);
         expect(sidebar.state.redoStack).toEqual([action]);
+      });
+    });
+
+    describe('Edits since the edit session baseline', () => {
+      afterEach(() => {
+        mockIsPendingChangesEnabled.mockReset();
+        mockIsPendingChangesEnabled.mockReturnValue(false);
+      });
+
+      it('reports an unedited dashboard as unedited, and an edited one as edited until the edit is undone', () => {
+        mockIsPendingChangesEnabled.mockReturnValue(true);
+        const scene = buildTestScene();
+        scene.onEnterEditMode();
+
+        expect(scene.hasEditsSinceBaseline()).toBe(false);
+
+        scene.setState({ title: 'Updated title' });
+        expect(scene.hasEditsSinceBaseline()).toBe(true);
+
+        scene.setState({ title: 'hello' });
+        expect(scene.hasEditsSinceBaseline()).toBe(false);
+      });
+
+      it('does not count a dirty flag as an edit', () => {
+        mockIsPendingChangesEnabled.mockReturnValue(true);
+        const scene = buildTestScene();
+        scene.onEnterEditMode();
+
+        scene.setState({ isDirty: true });
+
+        expect(scene.hasEditsSinceBaseline()).toBe(false);
+      });
+
+      it('keeps the changes when no baseline was taken', () => {
+        const scene = buildTestScene();
+        scene.onEnterEditMode();
+
+        expect(scene.hasEditsSinceBaseline()).toBe(true);
+      });
+
+      it('keeps the changes when the dashboard cannot be serialized', () => {
+        mockIsPendingChangesEnabled.mockReturnValue(true);
+        const scene = buildTestScene();
+        scene.onEnterEditMode();
+        jest.spyOn(scene, 'getSaveModel').mockImplementation(() => {
+          throw new Error('detached elements');
+        });
+
+        expect(scene.hasEditsSinceBaseline()).toBe(true);
+      });
+
+      it('takes the baseline again when the edit session is rebaselined', () => {
+        mockIsPendingChangesEnabled.mockReturnValue(true);
+        const scene = buildTestScene();
+        scene.onEnterEditMode();
+        scene.setState({ title: 'Reloaded title' });
+        expect(scene.hasEditsSinceBaseline()).toBe(true);
+
+        scene.rebaselineEditSession();
+
+        expect(scene.hasEditsSinceBaseline()).toBe(false);
       });
     });
 

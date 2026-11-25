@@ -40,10 +40,11 @@ export const reloadFromServerCommand: MutationCommand<{ pendingChanges?: string 
     }
     // Pending changes whose history the plugin keeps record each edit as it is made: what's left
     // is defaults the scene filled in since, which reloading loses nothing of, unless an edit failed
-    // to record.
+    // to record. The same goes for a page nobody has edited since edit mode began: the dirty flag
+    // there only reports defaults the scene filled in after it loaded.
     if (
       scene.state.editPanel?.hasUnsavedChangesForReload() ||
-      (scene.state.isDirty && !getPendingChangesHistory(scene.state)) ||
+      (scene.state.isDirty && !getPendingChangesHistory(scene.state) && scene.hasEditsSinceBaseline()) ||
       hasUnrecordedPendingChange(scene)
     ) {
       return { success: true, data: { reloaded: false, reason: 'unsaved-changes' }, changes: [] };

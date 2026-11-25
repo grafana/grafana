@@ -24,12 +24,20 @@ jest.mock('../../lifecycle/pendingChangesHistory', () => ({
   reloadKeepingEditMode: jest.fn(),
 }));
 
-function contextFor(state: {
-  isDirty: boolean;
-  isEditing: boolean;
-  editPanel?: ReturnType<typeof buildPanelEditScene>;
-}): MutationContext {
-  return { scene: { state: { uid: 'abc', meta: {}, ...state } } as unknown as DashboardScene } as MutationContext;
+function contextFor(
+  state: {
+    isDirty: boolean;
+    isEditing: boolean;
+    editPanel?: ReturnType<typeof buildPanelEditScene>;
+  },
+  hasEditsSinceBaseline = true
+): MutationContext {
+  return {
+    scene: {
+      state: { uid: 'abc', meta: {}, ...state },
+      hasEditsSinceBaseline: () => hasEditsSinceBaseline,
+    } as unknown as DashboardScene,
+  } as MutationContext;
 }
 
 function attachAutoGrid(panel: VizPanel) {
@@ -248,6 +256,20 @@ describe('RELOAD_FROM_SERVER', () => {
 
   it('reports unsaved changes in the open scene instead of discarding them', async () => {
     const result = await reloadFromServerCommand.handler({}, contextFor({ isDirty: true, isEditing: true }));
+
+    expect(result.data).toEqual({ reloaded: false, reason: 'unsaved-changes' });
+    expect(reloadKeepingEditMode).not.toHaveBeenCalled();
+  });
+
+  it('reloads a dirty page nobody has edited since edit mode began: the flag only reports filled-in defaults', async () => {
+    const result = await reloadFromServerCommand.handler({}, contextFor({ isDirty: true, isEditing: true }, false));
+
+    expect(result.data).toEqual({ reloaded: true });
+    expect(reloadKeepingEditMode).toHaveBeenCalledTimes(1);
+  });
+
+  it('still reports unsaved changes when the dirty page was edited since edit mode began', async () => {
+    const result = await reloadFromServerCommand.handler({}, contextFor({ isDirty: true, isEditing: true }, true));
 
     expect(result.data).toEqual({ reloaded: false, reason: 'unsaved-changes' });
     expect(reloadKeepingEditMode).not.toHaveBeenCalled();

@@ -85,6 +85,7 @@ import {
   previewedDashboardUid,
   proposesNewDashboard,
 } from '../lifecycle/pendingChangePreview';
+import { isPendingChangesEnabled } from '../lifecycle/pendingChangesFlag';
 import {
   hasUnrecordedPendingChange,
   recordPendingChange,
@@ -289,6 +290,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _composer?: { session: ComposerSession; modeBefore: DashboardMode };
   private _modePickerShown = false;
   private _modePickerOpened = false;
+  /** What the dashboard serialized to when the discard baseline was last taken; see hasEditsSinceBaseline. */
+  private _baselineSerialization?: string | null;
   private _editSession?: {
     id: string;
     source: 'user' | 'assistant';
@@ -458,6 +461,21 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     } catch {
       return null;
     }
+  }
+
+  private takeBaselineSerialization() {
+    // Only reloading pending changes reads it, and serializing a large dashboard is not free.
+    this._baselineSerialization = isPendingChangesEnabled() ? this.serializeForChangeTracking() : undefined;
+  }
+
+  /**
+   * Whether the dashboard serializes differently from when the discard baseline was taken, before anyone could
+   * edit it. `isDirty` compares against the stored dashboard instead, so defaults the scene fills in on its own,
+   * such as plugin versions and option defaults, keep it set although nobody has changed anything. Answers true
+   * when it can't tell, so callers keep the changes.
+   */
+  public hasEditsSinceBaseline(): boolean {
+    return !this._baselineSerialization || this._baselineSerialization !== this.serializeForChangeTracking();
   }
 
   private reportModeChange(previous: DashboardMode, trigger: DashboardModeTrigger) {
@@ -877,6 +895,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         ...(dashboardModesEnabled() ? { mode } : {}),
       });
       this.state.body.editModeChanged?.(true);
+      this.takeBaselineSerialization();
       this._changeTracker.startTrackingChanges();
 
       DashboardInteractions.editSessionStarted({ dashboard_uid: this.state.uid, source });
@@ -1315,6 +1334,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._initialUrlState = locationService.getLocation();
     // Detect edits made during the save before its redirect can leave the dashboard.
     this.setState({ isDirty: hasActualSaveChanges(this), overlay: undefined });
+    if (this.state.isDirty) {
+      // Those edits are not part of a baseline.
+      this._baselineSerialization = undefined;
+    } else {
+      this.takeBaselineSerialization();
+    }
 
     if (wasTrackingChanges) {
       this._changeTracker.startTrackingChanges();
@@ -1536,6 +1561,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false, planning: undefined });
     this._initialAdHocTransformations = collectAdHocTransformations(this);
     this._initialUrlState = locationService.getLocation();
+    this.takeBaselineSerialization();
   }
 
   /**
