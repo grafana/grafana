@@ -35,6 +35,7 @@ import { FolderDetailsActions } from './components/FolderDetailsActions/FolderDe
 import { QuotaLimitBanner } from './components/QuotaLimitBanner';
 import { RecentlyViewedDashboards } from './components/RecentlyViewedDashboards';
 import { SearchView } from './components/SearchView';
+import { SelectAllMatchingBanner } from './components/SelectAllMatchingBanner';
 import { canEditItemType, getFolderPermissions } from './permissions';
 import { useHasSelection } from './state/hooks';
 import { setAllSelection } from './state/slice';
@@ -210,6 +211,9 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
 
         {!hasSelection && <BrowseFilters />}
         <BrowseActions folderDTO={folderDTO} />
+        {isSearching && hasSelection && searchState.result && (
+          <SelectAllMatchingBanner result={searchState.result} permissions={permissions} />
+        )}
 
         <div className={styles.subView}>
           <AutoSizer>
