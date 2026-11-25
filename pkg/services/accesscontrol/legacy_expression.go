@@ -94,7 +94,7 @@ func (e *legacyExpressionExporter) convertPermission(
 ) (*authzextv1.LegacyExpression, error) {
 	if permission.Action == "" {
 		if len(permission.Scopes) > 0 {
-			return nil, errors.New("legacy permission action is required")
+			return nil, errors.New("legacy permission with scopes requires an action")
 		}
 
 		// Callers use an unscoped empty action as a deny placeholder.

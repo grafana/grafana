@@ -207,12 +207,12 @@ func TestToLegacyExpressionRejectsInvalidEvaluators(t *testing.T) {
 		{
 			name:      "empty action with scopes",
 			evaluator: EvalPermission("", "dashboards:uid:missing"),
-			error:     "legacy permission action is required",
+			error:     "legacy permission with scopes requires an action",
 		},
 		{
 			name:      "empty action with an explicit empty scope",
 			evaluator: EvalPermission("", ""),
-			error:     "legacy permission action is required",
+			error:     "legacy permission with scopes requires an action",
 		},
 		{
 			name:      "unsupported custom evaluator",

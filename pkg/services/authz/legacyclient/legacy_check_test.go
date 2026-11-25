@@ -283,7 +283,7 @@ func TestClient_LegacyCheckRejectsInvalidEvaluator(t *testing.T) {
 		wantErr   string
 	}{
 		{name: "missing evaluator", wantErr: "legacy evaluator is required"},
-		{name: "empty action with scopes", evaluator: accesscontrol.EvalPermission("", "dashboards:uid:missing"), wantErr: "legacy permission action is required"},
+		{name: "empty action with scopes", evaluator: accesscontrol.EvalPermission("", "dashboards:uid:missing"), wantErr: "legacy permission with scopes requires an action"},
 		{name: "custom evaluator", evaluator: unsupportedLegacyCheckEvaluator{}, wantErr: "unsupported legacy evaluator type"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
