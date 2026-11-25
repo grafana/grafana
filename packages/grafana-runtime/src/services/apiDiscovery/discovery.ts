@@ -1,14 +1,17 @@
 import { isObject } from '@grafana/data';
 
-import { getFetchErrorContext } from '../../utils/getCachedPromise';
+import { TracedError } from '../../utils/TracedError';
+import {
+  getCachedPromise,
+  getFetchErrorContext,
+  invalidateCachedPromise,
+  replaceCachedPromise,
+} from '../../utils/getCachedPromise';
 import { getBackendSrv, isFetchError } from '../backendSrv';
-import { isSignedInOrAnonymous } from '../user';
+import { isSignedInOrAnonymous, NoUserSessionError } from '../user';
 
 import { logAPIDiscoveryError, logAPIDiscoveryWarning } from './logging';
 import { type K8sAPIGroup, type K8sAPIGroupList, type APIGroupInfo } from './types';
-
-/** `unknown` means discovery could not answer. It is never cached, so the next caller asks again. */
-type Outcome<T> = { kind: 'known'; value: T } | { kind: 'unknown' };
 
 type GroupsByName = ReadonlyMap<string, APIGroupInfo>;
 
@@ -16,9 +19,12 @@ type GroupsByName = ReadonlyMap<string, APIGroupInfo>;
 export const API_DISCOVERY_TIMEOUT_MS = 5_000;
 
 const ROOT_URL = '/apis';
-const UNKNOWN: Outcome<never> = { kind: 'unknown' };
+const ROOT_CACHE_KEY = 'grafana-runtime:api-discovery:root';
 // A DNS subdomain, as Kubernetes requires for group names. The name ends up in a URL path.
 const GROUP_NAME_PATTERN = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$/;
+
+// Groups with a pending or cached group-endpoint answer, so invalidation can find their cache entries.
+const groupsFromFallback = new Set<string>();
 
 class DiscoveryTimeoutError extends Error {
   constructor(url: string) {
@@ -27,42 +33,19 @@ class DiscoveryTimeoutError extends Error {
   }
 }
 
-/** Shares one in-flight request per key and keeps only known outcomes. */
-class OutcomeCache<T> {
-  private readonly entries = new Map<string, Promise<Outcome<T>>>();
+/**
+ * A discovery request failed, so the answer is unknown and is not cached.
+ *
+ * `isHandled` marks the failure as already logged, so `getCachedPromise` does not log it again.
+ */
+class DiscoveryRequestError extends TracedError {
+  readonly isHandled = true;
 
-  peek(key: string): Promise<Outcome<T>> | undefined {
-    return this.entries.get(key);
-  }
-
-  get(key: string, load: () => Promise<Outcome<T>>): Promise<Outcome<T>> {
-    const existing = this.entries.get(key);
-    if (existing) {
-      return existing;
-    }
-
-    const pending = load().then((outcome) => {
-      // The identity check keeps an entry that invalidation or a test seed put here meanwhile.
-      if (outcome.kind === 'unknown' && this.entries.get(key) === pending) {
-        this.entries.delete(key);
-      }
-      return outcome;
-    });
-    this.entries.set(key, pending);
-    return pending;
-  }
-
-  set(key: string, value: T): void {
-    this.entries.set(key, Promise.resolve({ kind: 'known', value }));
-  }
-
-  clear(): void {
-    this.entries.clear();
+  constructor(url: string, cause: unknown) {
+    super(`API discovery: request to ${url} failed`, cause);
+    this.name = 'DiscoveryRequestError';
   }
 }
-
-const rootCache = new OutcomeCache<GroupsByName>();
-const groupCache = new OutcomeCache<APIGroupInfo | undefined>();
 
 /**
  * Returns the versions the server serves for an `/apis` group, such as `dashboard.grafana.app`.
@@ -88,17 +71,16 @@ export async function getAPIGroup(group: string): Promise<APIGroupInfo | undefin
   }
 
   // A group answered by the fallback stays answered, so a broken root endpoint is not retried for it.
-  const fromFallback = groupCache.peek(group);
-  if (fromFallback) {
-    return valueOf(await fromFallback);
+  if (groupsFromFallback.has(group)) {
+    return getAPIGroupFromFallback(group);
   }
 
-  const root = await rootCache.get(ROOT_URL, fetchAPIGroupList);
-  if (root.kind === 'known') {
-    return root.value.get(group);
+  try {
+    const groups = await getCachedPromise(fetchAPIGroupList, { cacheKey: ROOT_CACHE_KEY });
+    return groups.get(group);
+  } catch {
+    return getAPIGroupFromFallback(group);
   }
-
-  return valueOf(await groupCache.get(group, () => fetchAPIGroup(group)));
 }
 
 /**
@@ -108,8 +90,11 @@ export async function getAPIGroup(group: string): Promise<APIGroupInfo | undefin
  * @alpha
  */
 export function invalidateAPIDiscovery(): void {
-  rootCache.clear();
-  groupCache.clear();
+  invalidateCachedPromise(ROOT_CACHE_KEY);
+  for (const group of groupsFromFallback) {
+    invalidateCachedPromise(groupCacheKey(group));
+  }
+  groupsFromFallback.clear();
 }
 
 /**
@@ -123,16 +108,26 @@ export function setAPIDiscoveryForTesting(groups: readonly APIGroupInfo[]): void
   }
 
   invalidateAPIDiscovery();
-  rootCache.set(ROOT_URL, new Map(groups.map((info) => [info.group, info])));
+  replaceCachedPromise(ROOT_CACHE_KEY, new Map(groups.map((info) => [info.group, info])));
 }
 
-function valueOf<T>(outcome: Outcome<T | undefined>): T | undefined {
-  return outcome.kind === 'known' ? outcome.value : undefined;
+function groupCacheKey(group: string): string {
+  return `grafana-runtime:api-discovery:group:${group}`;
 }
 
-async function fetchAPIGroupList(): Promise<Outcome<GroupsByName>> {
+async function getAPIGroupFromFallback(group: string): Promise<APIGroupInfo | undefined> {
+  groupsFromFallback.add(group);
+  try {
+    return await getCachedPromise(() => fetchAPIGroup(group), { cacheKey: groupCacheKey(group) });
+  } catch {
+    groupsFromFallback.delete(group);
+    return undefined;
+  }
+}
+
+async function fetchAPIGroupList(): Promise<GroupsByName> {
   if (!isSignedInOrAnonymous()) {
-    return UNKNOWN;
+    throw new NoUserSessionError();
   }
 
   try {
@@ -142,16 +137,15 @@ async function fetchAPIGroupList(): Promise<Outcome<GroupsByName>> {
     }
 
     const infos = response.groups.map(toAPIGroupInfo).filter((info) => info !== undefined);
-    return { kind: 'known', value: new Map(infos.map((info) => [info.group, info])) };
+    return new Map(infos.map((info) => [info.group, info]));
   } catch (error) {
-    logRequestFailure(ROOT_URL, error);
-    return UNKNOWN;
+    throw logRequestFailure(ROOT_URL, error);
   }
 }
 
-async function fetchAPIGroup(group: string): Promise<Outcome<APIGroupInfo | undefined>> {
+async function fetchAPIGroup(group: string): Promise<APIGroupInfo | undefined> {
   if (!isSignedInOrAnonymous()) {
-    return UNKNOWN;
+    throw new NoUserSessionError();
   }
 
   const url = `${ROOT_URL}/${group}/`;
@@ -160,13 +154,12 @@ async function fetchAPIGroup(group: string): Promise<Outcome<APIGroupInfo | unde
     if (!isK8sAPIGroup(response)) {
       throw new Error('API discovery: the response is not an APIGroup');
     }
-    return { kind: 'known', value: toAPIGroupInfo(response) };
+    return toAPIGroupInfo(response);
   } catch (error) {
     if (isFetchError(error) && error.status === 404) {
-      return { kind: 'known', value: undefined };
+      return undefined;
     }
-    logRequestFailure(url, error);
-    return UNKNOWN;
+    throw logRequestFailure(url, error);
   }
 }
 
@@ -192,13 +185,14 @@ async function getWithTimeout(url: string): Promise<unknown> {
   }
 }
 
-function logRequestFailure(url: string, error: unknown): void {
+function logRequestFailure(url: string, error: unknown): DiscoveryRequestError {
   const timedOut = error instanceof DiscoveryTimeoutError;
   logAPIDiscoveryError('API discovery: request failed', error, {
     ...getFetchErrorContext(error),
     url,
     reason: timedOut ? 'timeout' : 'error',
   });
+  return new DiscoveryRequestError(url, error);
 }
 
 function toAPIGroupInfo(apiGroup: K8sAPIGroup): APIGroupInfo | undefined {

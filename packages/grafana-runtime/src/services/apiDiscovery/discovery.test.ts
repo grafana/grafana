@@ -169,6 +169,24 @@ describe('getAPIGroup', () => {
       expect(requestedUrls()).toEqual(['/apis', '/apis/dashboard.grafana.app/']);
     });
 
+    it('requests the group again after invalidateAPIDiscovery()', async () => {
+      respondTo({
+        '/apis': () => Promise.reject(fetchError(500)),
+        '/apis/dashboard.grafana.app/': () => Promise.resolve(dashboardGroup),
+      });
+      await getAPIGroup('dashboard.grafana.app');
+
+      invalidateAPIDiscovery();
+      await getAPIGroup('dashboard.grafana.app');
+
+      expect(requestedUrls()).toEqual([
+        '/apis',
+        '/apis/dashboard.grafana.app/',
+        '/apis',
+        '/apis/dashboard.grafana.app/',
+      ]);
+    });
+
     it('retries the root request for a group it has not answered yet', async () => {
       respondTo({ '/apis': () => Promise.reject(fetchError(500)) });
       await getAPIGroup('annotation.grafana.app');
@@ -218,6 +236,15 @@ describe('getAPIGroup', () => {
         expect.any(Error),
         expect.objectContaining({ url: '/apis/dashboard.grafana.app/' })
       );
+    });
+
+    it('logs a failed request only to the discovery logger', async () => {
+      const cacheLogger = mockLogger('grafana/runtime.utils.getCachedPromise');
+      backendGet.mockRejectedValue(fetchError(500));
+
+      await getAPIGroup('dashboard.grafana.app');
+
+      expect(cacheLogger.logError).not.toHaveBeenCalled();
     });
 
     it('treats a request that outlasts the timeout as unknown, and retries on the next call', async () => {
