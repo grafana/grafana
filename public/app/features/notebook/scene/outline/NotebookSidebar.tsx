@@ -15,6 +15,11 @@ interface Props {
   scene: NotebookScene;
   /** Height of everything sticky above the document — the app header plus the controls row. */
   stickyTop: number;
+  /**
+   * Height of chrome above the document that scrolls away rather than sticks. The rail only meets
+   * `stickyTop` once the page has scrolled past it, so until then it has that much less viewport.
+   */
+  scrollingChromeHeight?: number;
 }
 
 /**
@@ -24,7 +29,7 @@ interface Props {
  * which the dashboard gets by scrolling inside its own container. A notebook scrolls the page itself,
  * so the parent here is a sticky rail one viewport tall, sized to the space useSidebar reserves.
  */
-export function NotebookSidebar({ scene, stickyTop }: Props) {
+export function NotebookSidebar({ scene, stickyTop, scrollingChromeHeight = 0 }: Props) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
@@ -46,7 +51,7 @@ export function NotebookSidebar({ scene, stickyTop }: Props) {
       className={styles.rail}
       style={{
         top: stickyTop,
-        height: `calc(100vh - ${stickyTop}px)`,
+        height: `calc(100vh - ${stickyTop + scrollingChromeHeight}px)`,
         width: sidebarContext.outerWrapperProps.style?.paddingRight,
       }}
     >

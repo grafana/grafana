@@ -40,6 +40,12 @@ async function openOutline(cells: NotebookCellItem[]) {
 }
 
 describe('NotebookSidebar', () => {
+  it('sizes the rail to the space left below the header and any controls that scroll away', () => {
+    const { container } = render(<NotebookSidebar scene={buildScene([])} stickyTop={100} scrollingChromeHeight={40} />);
+
+    expect(container.firstElementChild).toHaveStyle({ top: '100px', height: 'calc(100vh - 140px)' });
+  });
+
   it('opens the content outline from the toolbar, rooted at the notebook with its headings collapsed', async () => {
     const { tree } = await openOutline([
       markdown('a', '# Overview'),

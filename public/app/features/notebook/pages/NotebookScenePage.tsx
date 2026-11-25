@@ -147,7 +147,11 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
         </Box>
         {/* A display someone has put a notebook on has nobody navigating it, same as the dashboard. */}
         {kioskMode !== KioskMode.Full && (
-          <NotebookSidebar scene={scene} stickyTop={(headerHeight ?? 0) + (controlsAreSticky ? controlsHeight : 0)} />
+          <NotebookSidebar
+            scene={scene}
+            stickyTop={(headerHeight ?? 0) + (controlsAreSticky ? controlsHeight : 0)}
+            scrollingChromeHeight={controlsAreSticky ? 0 : controlsHeight}
+          />
         )}
       </Box>
       <NotebookPrompt scene={scene} />
