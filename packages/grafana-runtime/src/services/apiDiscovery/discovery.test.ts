@@ -17,11 +17,8 @@ const originalPublicDashboardAccessToken = config.publicDashboardAccessToken;
 
 const dashboardGroup: K8sAPIGroup = {
   name: 'dashboard.grafana.app',
-  versions: [
-    { groupVersion: 'dashboard.grafana.app/v1beta1', version: 'v1beta1' },
-    { groupVersion: 'dashboard.grafana.app/v0alpha1', version: 'v0alpha1' },
-  ],
-  preferredVersion: { groupVersion: 'dashboard.grafana.app/v1beta1', version: 'v1beta1' },
+  versions: [{ version: 'v1beta1' }, { version: 'v0alpha1' }],
+  preferredVersion: { version: 'v1beta1' },
 };
 
 const groupList: K8sAPIGroupList = { groups: [dashboardGroup] };
@@ -81,6 +78,19 @@ describe('getAPIGroup', () => {
     });
 
     it('returns the group in server order with its preferred version', async () => {
+      await expect(getAPIGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
+    });
+
+    it('returns a copy, so a caller changing it does not change the next answer', async () => {
+      // Untyped plugin code can change the result, whatever `readonly` says.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const first = (await getAPIGroup('dashboard.grafana.app')) as unknown as {
+        versions: string[];
+        preferredVersion: string;
+      };
+      first.versions.reverse();
+      first.preferredVersion = 'v0alpha1';
+
       await expect(getAPIGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
     });
 
@@ -357,6 +367,14 @@ describe('setAPIDiscoveryForTesting', () => {
     await expect(getAPIGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
     await expect(getAPIGroup('annotation.grafana.app')).resolves.toBeUndefined();
     expect(backendFetch).not.toHaveBeenCalled();
+  });
+
+  it('keeps its own copy, so changing the given groups afterwards does not change the answer', async () => {
+    const groups = [{ ...dashboardInfo, versions: [...dashboardInfo.versions] }];
+    setAPIDiscoveryForTesting(groups);
+    groups[0].versions.push('v2');
+
+    await expect(getAPIGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
   });
 
   it('is cleared by invalidateAPIDiscovery()', async () => {

@@ -59,6 +59,11 @@ class DiscoveryRequestError extends Error {
  * @alpha
  */
 export async function getAPIGroup(group: string): Promise<APIGroupInfo | undefined> {
+  // A copy, so a caller changing it can't change the answer for other callers, plugins included.
+  return structuredClone(await findAPIGroup(group));
+}
+
+async function findAPIGroup(group: string): Promise<APIGroupInfo | undefined> {
   if (!GROUP_NAME_PATTERN.test(group)) {
     logAPIDiscoveryWarning('API discovery: not a valid API group name, such as dashboard.grafana.app', { group });
     return undefined;
@@ -101,7 +106,8 @@ export function setAPIDiscoveryForTesting(groups: readonly APIGroupInfo[]): void
   }
 
   invalidateAPIDiscovery();
-  replaceCachedPromise(ROOT_CACHE_KEY, new Map(groups.map((info) => [info.group, info])));
+  // A copy, so changing `groups` afterwards doesn't change the answers.
+  replaceCachedPromise(ROOT_CACHE_KEY, new Map(structuredClone(groups).map((info) => [info.group, info])));
 }
 
 function groupCacheKey(group: string): string {

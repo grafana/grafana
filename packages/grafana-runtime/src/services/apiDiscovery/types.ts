@@ -9,19 +9,18 @@
  */
 export interface APIGroupInfo {
   /** The group name, such as `dashboard.grafana.app`. */
-  group: string;
+  readonly group: string;
   /** In the order the server lists them, which is its order of preference. */
-  versions: readonly string[];
+  readonly versions: readonly string[];
   /** The version the server prefers. One of `versions`. */
-  preferredVersion: string;
+  readonly preferredVersion: string;
 }
 
 interface GroupVersionForDiscovery {
-  groupVersion: string;
   version: string;
 }
 
-/** The Kubernetes `APIGroup`, served by `GET /apis/<group>/`. */
+/** The Kubernetes `APIGroup`, served by `GET /apis/<group>/`. Only the fields discovery reads. */
 export interface K8sAPIGroup {
   name: string;
   versions: GroupVersionForDiscovery[];
