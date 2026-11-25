@@ -33,10 +33,12 @@ export interface WithContextMenuProps {
  */
 function resolveTriggerPosition(trigger: OpenMenuTrigger): { x: number; y: number } {
   // narrow the WithContextMenuProps type => trigger: Element
-  if (trigger instanceof Element) {
+  if (isElement(trigger)) {
     const rect = trigger.getBoundingClientRect();
+    // the trigger's own window: it can render in another one than this, such as a Document Picture-in-Picture window
+    const { scrollX } = trigger.ownerDocument.defaultView ?? window;
     return {
-      x: rect.left + rect.width / 2 + window.scrollX,
+      x: rect.left + rect.width / 2 + scrollX,
       y: rect.top + rect.height / 2,
     };
   }
@@ -47,14 +49,24 @@ function resolveTriggerPosition(trigger: OpenMenuTrigger): { x: number; y: numbe
     // click without a pointer position (`detail` is 0 and the coordinates sit
     // at the viewport origin), so anchor to the element that fired the event
     // instead of placing the menu in the top-left corner.
-    if (trigger.detail === 0 && trigger.currentTarget instanceof Element) {
+    if (trigger.detail === 0 && isElement(trigger.currentTarget)) {
       return resolveTriggerPosition(trigger.currentTarget);
     }
-    return { x: trigger.pageX, y: trigger.pageY - window.scrollY };
+    const { scrollY } =
+      (isElement(trigger.currentTarget) ? trigger.currentTarget.ownerDocument.defaultView : null) ?? window;
+    return { x: trigger.pageX, y: trigger.pageY - scrollY };
   }
 
   // Manually defined coordinates
   return { x: trigger.x, y: trigger.y };
+}
+
+/**
+ * Whether `value` is an element of any window. `instanceof Element` is false for elements of another window, such as a
+ * Document Picture-in-Picture window.
+ */
+function isElement(value: unknown): value is Element {
+  return typeof value === 'object' && value !== null && 'nodeType' in value && value.nodeType === Node.ELEMENT_NODE;
 }
 
 export const WithContextMenu = ({ children, renderMenuItems, focusOnOpen = true }: WithContextMenuProps) => {
