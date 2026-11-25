@@ -9,6 +9,7 @@ import (
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
@@ -98,6 +99,8 @@ func newEmbeddedClient(loader *Loader, cfg *setting.Cfg, reg prometheus.Register
 		ctx := stream.Context()
 		if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
 			ctx = trace.ContextWithSpanContext(ctx, trace.SpanContextFromContext(clientCtx))
+			// Preserve request targeting so embedded and direct loads evaluate the same flags.
+			ctx = openfeature.WithTransactionContext(ctx, openfeature.TransactionContext(clientCtx))
 			if shadow.IsShadow(clientCtx) {
 				ctx = shadow.WithContext(ctx)
 			}

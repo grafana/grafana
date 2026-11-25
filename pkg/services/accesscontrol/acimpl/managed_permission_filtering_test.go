@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -42,7 +43,7 @@ func TestIntegrationManagedPermissionFiltering(t *testing.T) {
 		{name: "static on OpenFeature off", staticEnabled: true},
 	} {
 		for _, cached := range []bool{false, true} {
-			for _, route := range []string{"local", "loader"} {
+			for _, route := range []string{"local", "loader", "embedded"} {
 				t.Run(fmt.Sprintf("%s/cache=%t/%s", tc.name, cached, route), func(t *testing.T) {
 					// Each route and decision starts cold so shared cache entries cannot hide a mismatch.
 					s := setupTestEnv(t, false)
@@ -87,10 +88,14 @@ func TestIntegrationManagedPermissionFiltering(t *testing.T) {
 					ctx := openfeature.WithTransactionContext(t.Context(), openfeature.NewEvaluationContext(target, nil))
 					var got []accesscontrol.Permission
 					var err error
-					if route == "local" {
+					switch route {
+					case "local":
 						got, err = s.GetLocalUserPermissions(ctx, requester, accesscontrol.Options{})
-					} else {
+					case "loader":
 						got, err = newContractLoader(s, localcache.New(0, 0)).GetUserPermissions(ctx, requester, accesscontrol.Options{})
+					case "embedded":
+						client := legacypermissions.NewEmbeddedClient(newContractLoader(s, localcache.New(0, 0)), s.cfg)
+						got, err = GetLegacyUserPermissions(ctx, client, requester, accesscontrol.Options{}, s.cfg)
 					}
 					require.NoError(t, err)
 
