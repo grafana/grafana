@@ -478,3 +478,27 @@ describe('SidebarCard', () => {
     });
   });
 });
+
+it('keeps extra entry actions outside the select control and hides the entire action group in bulk mode', () => {
+  const query = { refId: 'A' };
+  const props = {
+    id: 'A',
+    isSelected: true,
+    item: { id: 'A', type: QueryEditorType.Query, isHidden: false },
+    onSelect: jest.fn(),
+    onDelete: jest.fn(),
+    extraActions: <button>Entry</button>,
+  };
+  const first = renderWithQueryEditorProvider(<SidebarCard {...props}>A</SidebarCard>, {
+    queries: [query],
+    selectedQuery: query,
+  });
+  expect(screen.getByRole('button', { name: 'Entry' }).closest('[role="button"]')).toBeNull();
+  first.unmount();
+  renderWithQueryEditorProvider(<SidebarCard {...props}>A</SidebarCard>, {
+    queries: [query],
+    selectedQuery: query,
+    uiStateOverrides: { multiSelectMode: true },
+  });
+  expect(screen.queryByRole('button', { name: 'Entry' })).not.toBeInTheDocument();
+});
