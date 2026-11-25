@@ -345,11 +345,12 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	}
 
 	filteredLabels := ngmodels.WithoutPrivateLabels(ev.rule.Labels)
+	writeTimestamp := recordingRuleWriteTimestamp(ev.rule, ev.scheduledAt)
 
 	// Markers go first: they are written one ms before the sample, so a marker for a series
 	// that is output again is overridden by the sample instead of conflicting with it.
 	var current writtenSeries
-	points, pointsErr := writer.PointsFromFrames(ev.rule.Record.Metric, ev.scheduledAt, frames, filteredLabels)
+	points, pointsErr := writer.PointsFromFrames(ev.rule.Record.Metric, writeTimestamp, frames, filteredLabels)
 	if pointsErr != nil {
 		logger.Warn("Failed to read series, stale markers are not tracked for this evaluation", "error", pointsErr)
 	} else {
@@ -358,7 +359,7 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	}
 
 	writeStart := r.clock.Now()
-	err = r.writer.WriteDatasource(ctx, ev.rule.Record.TargetDatasourceUID, ev.rule.Record.Metric, ev.scheduledAt, frames, ev.rule.OrgID, filteredLabels)
+	err = r.writer.WriteDatasource(ctx, ev.rule.Record.TargetDatasourceUID, ev.rule.Record.Metric, writeTimestamp, frames, ev.rule.OrgID, filteredLabels)
 	writeDur := r.clock.Now().Sub(writeStart)
 
 	if err != nil {
@@ -377,6 +378,21 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	}
 
 	return nil
+}
+
+// recordingRuleWriteTimestamp returns the time at which the source query was evaluated.
+// Expressions can combine results from different times, so they keep the scheduled time.
+func recordingRuleWriteTimestamp(rule *ngmodels.AlertRule, scheduledAt time.Time) time.Time {
+	for _, query := range rule.Data {
+		if query.RefID != rule.Record.From {
+			continue
+		}
+		if isExpression, _ := query.IsExpression(); isExpression {
+			return scheduledAt
+		}
+		return scheduledAt.Add(-time.Duration(query.RelativeTimeRange.To))
+	}
+	return scheduledAt
 }
 
 // markerBefore is the marker time for a tick, one ms before its samples so they never share a timestamp.
