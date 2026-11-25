@@ -40,6 +40,7 @@ it('keeps links and actions on one viewport-constrained surface', () => {
     maxHeight: 'calc(100vh - 32px)',
     maxWidth: 'calc(100vw - 32px)',
     overflowY: 'auto',
+    border: '1px solid ' + createTheme().colors.border.weak,
   });
   expect(surface).toContainElement(screen.getByRole('menuitem', { name: 'First link' }));
   expect(surface).toContainElement(screen.getByRole('button', { name: 'Run action' }));

@@ -82,7 +82,7 @@ const getStyles = (theme: GrafanaTheme2, maxWidth: number | undefined, scrollabl
       '*:where(&)': {
         background: theme.colors.background.elevated,
         borderRadius: theme.shape.radius[theme.components.menu.borderRadius],
-        border: theme.flags.visualDesignRefresh ? `1px solid ${theme.colors.border.weak}` : undefined,
+        border: `1px solid ${theme.colors.border.weak}`,
         boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
         maxWidth: widthLimit == null ? viewportMax : `min(${widthLimit}px, ${viewportMax})`,
         maxHeight: scrollable ? `calc(100vh - ${theme.spacing(4)})` : undefined,
