@@ -36,8 +36,9 @@ func folderPendingDeletionWritesEnabled(ctx context.Context) bool {
 	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagFolderPendingDeletionWrites, false, openfeature.TransactionContext(ctx))
 }
 
-// folderAsyncCascadeDeleteEnabled gates stamping the cascade-delete finalizer on new folders, which
-// hands their deletion to the cascade controller.
+// folderAsyncCascadeDeleteEnabled selects the delete mode: on, folders are stamped with the
+// cascade-delete finalizer on create and delete, handing their deletion to the cascade controller;
+// off, the finalizer is stripped on delete and the subtree is removed synchronously.
 func folderAsyncCascadeDeleteEnabled(ctx context.Context) bool {
 	return openfeature.NewDefaultClient().Boolean(
 		ctx,

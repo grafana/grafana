@@ -451,7 +451,9 @@ type fakeFolderStorage struct {
 	existing map[string]*foldersv1.Folder
 	deleted  []string
 	stamped  []string
-	getErr   map[string]error
+	// updates counts Update calls, finalizer alignment writes included.
+	updates int
+	getErr  map[string]error
 	// beforeDelete runs at the start of Delete, to simulate a concurrent change.
 	beforeDelete  func()
 	deleteOptions *metav1.DeleteOptions
@@ -719,6 +721,7 @@ func (f *fakeFolderStorage) Delete(ctx context.Context, name string, deleteValid
 }
 
 func (f *fakeFolderStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, _ bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	f.updates++
 	fol, ok := f.existing[name]
 	if !ok {
 		return nil, false, apierrors.NewNotFound(foldersv1.FolderResourceInfo.GroupResource(), name)
@@ -1799,8 +1802,18 @@ func TestCascadeDelete_DisabledDelegates(t *testing.T) {
 	require.Empty(t, store.stamped)
 }
 
+// setCascadeToggles sets the cascade-delete and async-cascade flags together; flag state is per
+// (sub)test and a second call would replace the first.
+func setCascadeToggles(t *testing.T, cascade, async bool) {
+	t.Helper()
+	setOpenFeatureToggles(t, map[string]bool{
+		featuremgmt.FlagKubernetesFolderCascadeDelete:             cascade,
+		featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: async,
+	})
+}
+
 func TestCascadeDelete_FinalizerFolderDelegates(t *testing.T) {
-	setKubernetesFolderCascadeDeleteToggle(t, true)
+	setCascadeToggles(t, true, true)
 
 	// A folder carrying the cascade finalizer is left to the cascade controller: the forced delete
 	// only marks it terminating, with no synchronous walk of its subtree.
@@ -1836,7 +1849,7 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 	}
 
 	t.Run("denied requester cannot mark the folder terminating", func(t *testing.T) {
-		setKubernetesFolderCascadeDeleteToggle(t, true)
+		setCascadeToggles(t, true, true)
 		store := newStore()
 		access := &recordingAccessClient{allow: func(req authlib.CheckRequest, _ string) bool { return req.Resource != cascadeAlertRuleResource }}
 		s := &cascadeDeleteStorage{Storage: store, accessClient: access}
@@ -1847,7 +1860,7 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 	})
 
 	t.Run("allowed requester delegates to the controller", func(t *testing.T) {
-		setKubernetesFolderCascadeDeleteToggle(t, true)
+		setCascadeToggles(t, true, true)
 		store := newStore()
 		access := &recordingAccessClient{}
 		s := &cascadeDeleteStorage{Storage: store, accessClient: access}
@@ -1859,7 +1872,7 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 	})
 
 	t.Run("the authorized version is pinned as a precondition", func(t *testing.T) {
-		setKubernetesFolderCascadeDeleteToggle(t, true)
+		setCascadeToggles(t, true, true)
 		store := newStore()
 		store.existing["root"].UID, store.existing["root"].ResourceVersion = "uid-1", "7"
 		s := &cascadeDeleteStorage{Storage: store, accessClient: &recordingAccessClient{}}
@@ -1873,7 +1886,7 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 	})
 
 	t.Run("a change after the check fails the delete with a conflict", func(t *testing.T) {
-		setKubernetesFolderCascadeDeleteToggle(t, true)
+		setCascadeToggles(t, true, true)
 		store := newStore()
 		store.existing["root"].UID, store.existing["root"].ResourceVersion = "uid-1", "7"
 		store.beforeDelete = func() { store.existing["root"].ResourceVersion = "8" }
@@ -1885,7 +1898,7 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 	})
 
 	t.Run("caller preconditions are kept, and a stale one is a conflict", func(t *testing.T) {
-		setKubernetesFolderCascadeDeleteToggle(t, true)
+		setCascadeToggles(t, true, true)
 		store := newStore()
 		store.existing["root"].UID, store.existing["root"].ResourceVersion = "uid-1", "7"
 		s := &cascadeDeleteStorage{Storage: store, accessClient: &recordingAccessClient{}}
@@ -1911,7 +1924,7 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 	})
 
 	t.Run("a dry run runs the check and leaves the folder alone", func(t *testing.T) {
-		setKubernetesFolderCascadeDeleteToggle(t, true)
+		setCascadeToggles(t, true, true)
 		opts := forceDelete()
 		opts.DryRun = []string{metav1.DryRunAll}
 
@@ -1929,7 +1942,7 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 	})
 
 	t.Run("without an access client the check is skipped, as in the synchronous path", func(t *testing.T) {
-		setKubernetesFolderCascadeDeleteToggle(t, true)
+		setCascadeToggles(t, true, true)
 		store := newStore()
 		s := &cascadeDeleteStorage{Storage: store}
 
@@ -1940,7 +1953,7 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 
 	t.Run("checks the requester even with the cascade flag off", func(t *testing.T) {
 		// validateOnDelete allows a forced delete of a finalizer folder whatever the flag says.
-		setKubernetesFolderCascadeDeleteToggle(t, false)
+		setCascadeToggles(t, false, true)
 		store := newStore()
 		access := &recordingAccessClient{allow: func(req authlib.CheckRequest, _ string) bool { return req.Resource != cascadeAlertRuleResource }}
 		s := &cascadeDeleteStorage{Storage: store, accessClient: access}
@@ -1971,7 +1984,7 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 
 	t.Run("a service deleting a subfolder of a terminating folder is not checked", func(t *testing.T) {
 		// The controller carries out a delete authorized at the root; a service has no permissions to check.
-		setKubernetesFolderCascadeDeleteToggle(t, false)
+		setCascadeToggles(t, false, false)
 		store := subfolderOf(true)
 		access := &recordingAccessClient{allow: func(authlib.CheckRequest, string) bool { return false }}
 		s := &cascadeDeleteStorage{Storage: store, accessClient: access}
@@ -1982,9 +1995,24 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 		require.Empty(t, access.checks)
 	})
 
+	t.Run("the exemption holds with the async flag on too, and the finalizer is kept with it off", func(t *testing.T) {
+		for _, async := range []bool{true, false} {
+			setCascadeToggles(t, false, async)
+			store := subfolderOf(true)
+			access := &recordingAccessClient{allow: func(authlib.CheckRequest, string) bool { return false }}
+			s := &cascadeDeleteStorage{Storage: store, accessClient: access}
+
+			_, _, err := s.Delete(serviceCtx(), "child", nil, forceDelete())
+			require.NoError(t, err, "async=%v", async)
+			require.Equal(t, []string{"child"}, store.deleted)
+			require.Empty(t, access.checks)
+			require.Zero(t, store.updates, "the finalizer is neither stamped nor stripped, async=%v", async)
+		}
+	})
+
 	t.Run("a user deleting a subfolder of a terminating folder is still checked", func(t *testing.T) {
 		// Only a service is exempt: the subfolder of a cascade in progress is no shortcut for a user.
-		setKubernetesFolderCascadeDeleteToggle(t, false)
+		setCascadeToggles(t, false, true)
 		store := subfolderOf(true)
 		access := &recordingAccessClient{allow: func(authlib.CheckRequest, string) bool { return false }}
 		s := &cascadeDeleteStorage{Storage: store, accessClient: access}
@@ -1996,7 +2024,7 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 	})
 
 	t.Run("a failure reading the parent is returned, not reported as a permission failure", func(t *testing.T) {
-		setKubernetesFolderCascadeDeleteToggle(t, false)
+		setCascadeToggles(t, false, false)
 		store := subfolderOf(true)
 		boom := errors.New("storage unavailable")
 		store.getErr = map[string]error{"parent": boom}
@@ -2011,7 +2039,7 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 	})
 
 	t.Run("a service deleting a subfolder whose parent is gone is checked", func(t *testing.T) {
-		setKubernetesFolderCascadeDeleteToggle(t, false)
+		setCascadeToggles(t, false, true)
 		store := subfolderOf(true)
 		delete(store.existing, "parent")
 		access := &recordingAccessClient{allow: func(authlib.CheckRequest, string) bool { return false }}
@@ -2023,7 +2051,7 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 	})
 
 	t.Run("a service deleting a root folder is checked like a user", func(t *testing.T) {
-		setKubernetesFolderCascadeDeleteToggle(t, false)
+		setCascadeToggles(t, false, true)
 		store := newStore()
 		access := &recordingAccessClient{allow: func(authlib.CheckRequest, string) bool { return false }}
 		s := &cascadeDeleteStorage{Storage: store, accessClient: access}
@@ -2034,7 +2062,7 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 	})
 
 	t.Run("a service deleting a subfolder of a folder that is not terminating is checked", func(t *testing.T) {
-		setKubernetesFolderCascadeDeleteToggle(t, false)
+		setCascadeToggles(t, false, true)
 		store := subfolderOf(false)
 		access := &recordingAccessClient{allow: func(authlib.CheckRequest, string) bool { return false }}
 		s := &cascadeDeleteStorage{Storage: store, accessClient: access}
@@ -2228,4 +2256,245 @@ func TestCascadeDelete_ForbiddenWithoutVariablesDelete(t *testing.T) {
 			})
 		}
 	}
+}
+
+// staleGetStorage serves Get from a snapshot taken before a concurrent change, to simulate the folder
+// changing between the delete's read and the finalizer write.
+type staleGetStorage struct {
+	*fakeFolderStorage
+	snapshot *foldersv1.Folder
+}
+
+func (s *staleGetStorage) Get(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
+	return s.snapshot.DeepCopy(), nil
+}
+
+// notFolderGetStorage serves Get with an object that is not a folder.
+type notFolderGetStorage struct{ *fakeFolderStorage }
+
+func (notFolderGetStorage) Get(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
+	return &unstructured.Unstructured{}, nil
+}
+
+func TestCascadeDelete_NonFolderObjectFailsClosed(t *testing.T) {
+	for _, async := range []bool{true, false} {
+		setCascadeToggles(t, true, async)
+		inner := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"f": newFolder("f")}}
+		s := &cascadeDeleteStorage{Storage: notFolderGetStorage{inner}}
+		_, _, err := s.Delete(ctxWithNamespace(), "f", nil, &metav1.DeleteOptions{})
+		require.Error(t, err, "async=%v", async)
+		require.Empty(t, inner.deleted, "no mode is guessed for an unexpected object, async=%v", async)
+	}
+}
+
+func TestCascadeDelete_AlignsFinalizerWithAsyncFlag(t *testing.T) {
+	folderWith := func(rv string, finalizers ...string) *foldersv1.Folder {
+		f := newFolder("f")
+		f.ResourceVersion = rv
+		f.Finalizers = finalizers
+		return f
+	}
+	cascade := []string{foldersv1.CascadeDeleteFinalizer}
+	// run deletes f and reports the finalizers it carried when the underlying delete ran.
+	run := func(t *testing.T, async bool, f *foldersv1.Folder, validate rest.ValidateObjectFunc, opts *metav1.DeleteOptions, access authlib.AccessClient) (store *fakeFolderStorage, atDelete []string, err error) {
+		t.Helper()
+		setCascadeToggles(t, true, async)
+		store = &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"f": f}}
+		store.beforeDelete = func() { atDelete = store.existing["f"].Finalizers }
+		s := &cascadeDeleteStorage{Storage: store, accessClient: access}
+		_, _, err = s.Delete(ctxWithNamespace(), "f", validate, opts)
+		return store, atDelete, err
+	}
+
+	t.Run("flag on stamps a plain folder", func(t *testing.T) {
+		store, atDelete, err := run(t, true, folderWith(""), nil, &metav1.DeleteOptions{}, nil)
+		require.NoError(t, err)
+		require.Equal(t, cascade, atDelete)
+		require.Equal(t, []string{"f"}, store.deleted)
+	})
+
+	t.Run("flag off strips a finalizer folder", func(t *testing.T) {
+		store, atDelete, err := run(t, false, folderWith("", cascade...), nil, &metav1.DeleteOptions{}, nil)
+		require.NoError(t, err)
+		require.Empty(t, atDelete)
+		require.Equal(t, []string{"f"}, store.deleted)
+	})
+
+	t.Run("other finalizers are kept", func(t *testing.T) {
+		_, atDelete, err := run(t, false, folderWith("", "other", foldersv1.CascadeDeleteFinalizer), nil, &metav1.DeleteOptions{}, nil)
+		require.NoError(t, err)
+		require.Equal(t, []string{"other"}, atDelete)
+	})
+
+	t.Run("an aligned folder is not written", func(t *testing.T) {
+		for name, tc := range map[string]struct {
+			async bool
+			f     *foldersv1.Folder
+		}{
+			"flag on, finalizer present": {true, folderWith("", cascade...)},
+			"flag off, finalizer absent": {false, folderWith("")},
+		} {
+			t.Run(name, func(t *testing.T) {
+				store, _, err := run(t, tc.async, tc.f, nil, &metav1.DeleteOptions{}, nil)
+				require.NoError(t, err)
+				require.Zero(t, store.updates)
+			})
+		}
+	})
+
+	t.Run("a terminating folder keeps its finalizer", func(t *testing.T) {
+		now := metav1.Now()
+		f := folderWith("", cascade...)
+		f.DeletionTimestamp = &now
+		store, atDelete, err := run(t, false, f, nil, &metav1.DeleteOptions{}, nil)
+		require.NoError(t, err)
+		require.Equal(t, cascade, atDelete)
+		require.Zero(t, store.updates)
+	})
+
+	t.Run("a dry run aligns in memory and writes nothing", func(t *testing.T) {
+		store, atDelete, err := run(t, true, folderWith(""), nil, &metav1.DeleteOptions{DryRun: []string{metav1.DryRunAll}}, nil)
+		require.NoError(t, err)
+		require.Zero(t, store.updates)
+		require.Empty(t, atDelete, "the stored folder is untouched")
+		require.Equal(t, []string{metav1.DryRunAll}, store.deleteOptions.DryRun)
+	})
+
+	t.Run("validation sees the aligned folder, and a rejection leaves no write", func(t *testing.T) {
+		var seen []string
+		reject := errors.New("not empty")
+		store, _, err := run(t, true, folderWith(""), func(_ context.Context, obj runtime.Object) error {
+			seen = obj.(*foldersv1.Folder).Finalizers
+			return reject
+		}, &metav1.DeleteOptions{}, nil)
+		require.ErrorIs(t, err, reject)
+		require.Equal(t, cascade, seen)
+		require.Zero(t, store.updates)
+		require.Empty(t, store.deleted)
+	})
+
+	t.Run("a requester who may not delete the folder leaves no write", func(t *testing.T) {
+		access := &recordingAccessClient{allow: func(authlib.CheckRequest, string) bool { return false }}
+		store, _, err := run(t, true, folderWith(""), nil, &metav1.DeleteOptions{}, access)
+		require.True(t, apierrors.IsForbidden(err), "got %v", err)
+		require.Zero(t, store.updates)
+		require.Len(t, access.checks, 1)
+		require.Equal(t, utils.VerbDelete, access.checks[0].req.Verb)
+		require.Equal(t, "f", access.checks[0].req.Name)
+		require.Equal(t, folder.GeneralFolderUID, access.checks[0].folder, "a root folder is checked against General")
+	})
+
+	t.Run("a requester who may not delete a finalizer folder cannot have it stripped with the flag off", func(t *testing.T) {
+		access := &recordingAccessClient{allow: func(authlib.CheckRequest, string) bool { return false }}
+		store, _, err := run(t, false, folderWith("", cascade...), nil, &metav1.DeleteOptions{}, access)
+		require.True(t, apierrors.IsForbidden(err), "got %v", err)
+		require.Zero(t, store.updates)
+		require.Empty(t, store.deleted)
+		require.Equal(t, utils.VerbDelete, access.checks[0].req.Verb)
+	})
+
+	t.Run("a non-forced delete of a terminating folder needs no contents check", func(t *testing.T) {
+		for _, async := range []bool{true, false} {
+			now := metav1.Now()
+			f := folderWith("", cascade...)
+			f.DeletionTimestamp = &now
+			access := &recordingAccessClient{allow: func(authlib.CheckRequest, string) bool { return false }}
+			store, atDelete, err := run(t, async, f, nil, &metav1.DeleteOptions{}, access)
+			require.NoError(t, err, "async=%v", async)
+			require.Equal(t, cascade, atDelete)
+			require.Zero(t, store.updates)
+		}
+	})
+
+	t.Run("a delete of a finalizer folder checks the contents, delete permission included, forced or not", func(t *testing.T) {
+		folderGVR := foldersv1.FolderResourceInfo.GroupVersionResource()
+		for name, opts := range map[string]*metav1.DeleteOptions{"forced": forceDelete(), "not forced": {}} {
+			t.Run(name, func(t *testing.T) {
+				access := &recordingAccessClient{}
+				store, _, err := run(t, true, folderWith("1", cascade...), nil, opts, access)
+				require.NoError(t, err)
+				require.Equal(t, []string{"f"}, store.deleted)
+				require.Zero(t, store.updates, "an existing finalizer is not rewritten")
+				require.NotNil(t, store.deleteOptions.Preconditions.ResourceVersion, "the checked version is pinned")
+
+				var deletesFolder, deletesRules bool
+				for _, c := range access.checks {
+					deletesFolder = deletesFolder || (c.req.Verb == utils.VerbDelete && c.req.Resource == folderGVR.Resource && c.req.Name == "f")
+					deletesRules = deletesRules || (c.req.Verb == utils.VerbDelete && c.req.Resource == cascadeAlertRuleResource)
+				}
+				require.True(t, deletesFolder, "folders:delete on the folder")
+				require.True(t, deletesRules, "alert rules in the folder")
+			})
+		}
+	})
+
+	t.Run("the caller's resourceVersion is checked against the original folder", func(t *testing.T) {
+		rv := "1"
+		store, _, err := run(t, true, folderWith("1"), nil, &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{ResourceVersion: &rv}}, nil)
+		require.NoError(t, err)
+		require.NotNil(t, store.deleteOptions.Preconditions.ResourceVersion, "the delete pins the version it stamped")
+
+		stale := "9"
+		store, _, err = run(t, true, folderWith("1"), nil, &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{ResourceVersion: &stale}}, nil)
+		require.True(t, apierrors.IsConflict(err), "got %v", err)
+		require.Zero(t, store.updates)
+	})
+
+	t.Run("a change between the read and the write is a conflict", func(t *testing.T) {
+		setCascadeToggles(t, true, true)
+		current := folderWith("2")
+		inner := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"f": current}}
+		s := &cascadeDeleteStorage{Storage: &staleGetStorage{fakeFolderStorage: inner, snapshot: folderWith("1")}}
+		_, _, err := s.Delete(ctxWithNamespace(), "f", nil, &metav1.DeleteOptions{})
+		require.True(t, apierrors.IsConflict(err), "got %v", err)
+		require.Empty(t, inner.deleted)
+		require.Empty(t, current.Finalizers)
+	})
+
+	t.Run("a non-forced delete of a finalizer folder needs its contents' delete permissions with the flag on", func(t *testing.T) {
+		deny := &recordingAccessClient{allow: func(req authlib.CheckRequest, _ string) bool { return req.Resource != cascadeAlertRuleResource }}
+		store, _, err := run(t, true, folderWith("", cascade...), nil, &metav1.DeleteOptions{}, deny)
+		require.True(t, apierrors.IsForbidden(err), "got %v", err)
+		require.Empty(t, store.deleted)
+
+		allow := &recordingAccessClient{}
+		store, atDelete, err := run(t, true, folderWith("", cascade...), nil, &metav1.DeleteOptions{}, allow)
+		require.NoError(t, err)
+		require.Equal(t, cascade, atDelete)
+		require.Equal(t, []string{"f"}, store.deleted)
+		require.Zero(t, store.updates)
+	})
+
+	t.Run("a plain folder is handed to the controller with the flag on even when cascade delete is off", func(t *testing.T) {
+		setCascadeToggles(t, false, true)
+		store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root"), "child": newFolder("child")}}
+		s, _ := newDashboardCascade(store, &fakeCascadeSearcher{childrenByParent: map[string][]string{"root": {"child"}}})
+		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+		require.NoError(t, err)
+		require.Equal(t, []string{"root"}, store.deleted)
+		require.Contains(t, store.existing, "child")
+	})
+
+	t.Run("a forced delete of a plain folder is handed to the controller when the flag is on", func(t *testing.T) {
+		setCascadeToggles(t, true, true)
+		store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root"), "child": newFolder("child")}}
+		searcher := &fakeCascadeSearcher{childrenByParent: map[string][]string{"root": {"child"}}}
+		s, _ := newDashboardCascade(store, searcher)
+		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+		require.NoError(t, err)
+		require.Equal(t, []string{"root"}, store.deleted, "the subtree is left to the controller")
+		require.Contains(t, store.existing, "child")
+	})
+
+	t.Run("a forced delete of a finalizer folder is walked synchronously when the flag is off", func(t *testing.T) {
+		setCascadeToggles(t, true, false)
+		root := newFolder("root")
+		root.Finalizers = cascade
+		store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": root, "child": newFolder("child")}}
+		searcher := &fakeCascadeSearcher{childrenByParent: map[string][]string{"root": {"child"}}}
+		s, _ := newDashboardCascade(store, searcher)
+		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{"child", "root"}, store.deleted)
+	})
 }
