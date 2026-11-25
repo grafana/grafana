@@ -154,7 +154,7 @@ func TestProvisioningRESTClientCarriesTheExchangedToken(t *testing.T) {
 	require.NoError(t, err)
 	operatorSec, err := raw.NewSection("operator")
 	require.NoError(t, err)
-	_, err = operatorSec.NewKey("provisioning_server_url", apiserver.URL)
+	_, err = operatorSec.NewKey("aggregated_server_url", apiserver.URL)
 	require.NoError(t, err)
 
 	cfg := &ControllerConfig{Settings: &setting.Cfg{Raw: raw}, tracer: tracing.NewNoopTracerService()}
@@ -344,7 +344,7 @@ func TestControllerConfigResourceLister(t *testing.T) {
 		c := newConfig(resources.ListerAPIs)
 		for section, keys := range map[string]map[string]string{
 			"grpc_client_authentication": {"token": "t", "token_exchange_url": "http://localhost/exchange"},
-			"operator":                   {"provisioning_server_url": "http://localhost:3000"},
+			"operator":                   {"aggregated_server_url": "http://localhost:3000"},
 		} {
 			for k, v := range keys {
 				_, err := c.Settings.Raw.Section(section).NewKey(k, v)

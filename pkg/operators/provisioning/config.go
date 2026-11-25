@@ -103,7 +103,6 @@ type ControllerConfig struct {
 // allow_insecure =
 // audiences =
 // [operator]
-// provisioning_server_url =
 // provisioning_server_public_url =
 // aggregated_server_url =
 // tls_insecure =
@@ -341,13 +340,13 @@ func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {
 	}
 
 	operatorSec := c.Settings.SectionWithEnvOverrides("operator")
-	provisioningServerURL := operatorSec.Key("provisioning_server_url").String()
-	if provisioningServerURL == "" {
-		return nil, fmt.Errorf("provisioning_server_url is required in [operator] section")
+	aggregatedServerURL := operatorSec.Key("aggregated_server_url").String()
+	if aggregatedServerURL == "" {
+		return nil, fmt.Errorf("aggregated_server_url is required in [operator] section")
 	}
 	config := &rest.Config{
 		APIPath: "/apis",
-		Host:    provisioningServerURL,
+		Host:    aggregatedServerURL,
 		WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(
 			tokenExchangeClient,
 			provisioning.GROUP,
@@ -374,7 +373,7 @@ func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {
 	return provisioningClient, nil
 }
 
-// ProvisioningRESTClient returns a REST client for the provisioning apiserver,
+// ProvisioningRESTClient returns a REST client for the provisioning API through the router,
 // for endpoints outside the typed clientset. It shares the clientset's config, so
 // building the clientset first is what supplies it.
 func (c *ControllerConfig) ProvisioningRESTClient() (rest.Interface, error) {

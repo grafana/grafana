@@ -51,7 +51,7 @@ This binary currently wires informers and emits job-create notifications. In the
 ensure_default_org_and_user = false
 skip_migrations = true
 [operator]
-provisioning_server_url = https://localhost:6446
+aggregated_server_url = https://localhost:6460
 tls_insecure = true
 
 [grpc_client_authentication]
@@ -71,7 +71,7 @@ token_exchange_url = http://localhost:6481/sign/access-token
 
 ```
 [operator]
-provisioning_server_url = https://localhost:6446
+aggregated_server_url = https://localhost:6460
 tls_insecure = false
 tls_ca_file = /path/to/ca-cert.pem
 
@@ -84,7 +84,7 @@ token_exchange_url = http://localhost:6481/sign/access-token
 
 ```
 [operator]
-provisioning_server_url = https://localhost:6446
+aggregated_server_url = https://localhost:6460
 tls_insecure = false
 tls_ca_file = /path/to/ca-cert.pem
 tls_cert_file = /path/to/client-cert.pem 
@@ -99,7 +99,7 @@ token_exchange_url = http://localhost:6481/sign/access-token
 
 ```
 [operator]
-provisioning_server_url = https://localhost:6446
+aggregated_server_url = https://localhost:6460
 tls_insecure = true
 
 [grpc_client_authentication]
