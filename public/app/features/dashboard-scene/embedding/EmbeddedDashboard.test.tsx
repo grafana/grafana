@@ -19,10 +19,11 @@ jest.mock('../pages/DashboardScenePageStateManager', () => ({
   getDashboardScenePageStateManager: () => mockStateManager,
 }));
 
-jest.mock('../utils/utils', () => ({
-  ...jest.requireActual('../utils/utils'),
-  useScenesFlickeringFix: jest.fn(),
-}));
+jest.mock('../utils/utils', () =>
+  jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(jest.requireActual('../utils/utils'), { useScenesFlickeringFix: jest.fn() })
+);
 
 function buildScene() {
   return new DashboardScene({

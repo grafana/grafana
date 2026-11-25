@@ -218,7 +218,6 @@ receivers:
         priority: '{{ if eq .Status "firing" }}2{{ else }}0{{ end }}'
         retry: 30s
         expire: 1h0m0s
-        html: false
   - name: slack
     slack_configs:
       - send_resolved: true
