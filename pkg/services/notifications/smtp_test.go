@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/textproto"
 	"sort"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	smtpmock "github.com/mocktools/go-smtp-mock/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	gomail "gopkg.in/mail.v2"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
@@ -341,4 +343,111 @@ func TestSmtpSend(t *testing.T) {
 			assert.True(t, found)
 		}
 	})
+}
+
+type fakeSender struct {
+	send func() error
+}
+
+func (f fakeSender) Send(string, []string, io.WriterTo) error { return f.send() }
+
+func TestSendWithRecover(t *testing.T) {
+	sc, err := NewSmtpClient(setting.NewCfg().Smtp)
+	require.NoError(t, err)
+	newMsg := func() *gomail.Message {
+		m := gomail.NewMessage()
+		m.SetHeader("From", "from@example.com")
+		m.SetHeader("To", "to@example.com")
+		return m
+	}
+
+	t.Run("converts a panic into an error", func(t *testing.T) {
+		sender := fakeSender{send: func() error {
+			var w io.Writer
+			_, err := w.Write(nil)
+			return err
+		}}
+
+		var err error
+		require.NotPanics(t, func() { err = sc.sendWithRecover(sender, newMsg()) })
+		require.ErrorContains(t, err, "panic while sending email")
+	})
+
+	t.Run("passes a send error through unchanged", func(t *testing.T) {
+		sendErr := errors.New("connection reset")
+
+		err := sc.sendWithRecover(fakeSender{send: func() error { return sendErr }}, newMsg())
+
+		require.ErrorContains(t, err, sendErr.Error())
+		require.NotContains(t, err.Error(), "panic")
+	})
+
+	t.Run("returns nil on success", func(t *testing.T) {
+		require.NoError(t, sc.sendWithRecover(fakeSender{send: func() error { return nil }}, newMsg()))
+	})
+}
+
+// startQuitRecordingSmtpServer accepts one connection, speaks just enough SMTP
+// to reach DATA, and signals on the returned channel when the client sends QUIT.
+func startQuitRecordingSmtpServer(t *testing.T) (port int, quit <-chan struct{}) {
+	t.Helper()
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = ln.Close() })
+
+	quitCh := make(chan struct{})
+	go func() {
+		conn, err := ln.Accept()
+		if err != nil {
+			return
+		}
+		defer func() { _ = conn.Close() }()
+
+		reply := func(s string) { _, _ = conn.Write([]byte(s + "\r\n")) }
+		reply("220 test ESMTP")
+		r := bufio.NewReader(conn)
+		for {
+			line, err := r.ReadString('\n')
+			if err != nil {
+				return
+			}
+			switch cmd := strings.ToUpper(strings.TrimSpace(line)); {
+			case strings.HasPrefix(cmd, "EHLO"), strings.HasPrefix(cmd, "HELO"), strings.HasPrefix(cmd, "MAIL"), strings.HasPrefix(cmd, "RCPT"):
+				reply("250 OK")
+			case cmd == "DATA":
+				reply("354 go ahead")
+			case cmd == "QUIT":
+				reply("221 bye")
+				close(quitCh)
+				return
+			}
+		}
+	}()
+
+	return ln.Addr().(*net.TCPAddr).Port, quitCh
+}
+
+func TestDialAndSendClosesConnectionAfterSendPanic(t *testing.T) {
+	port, quit := startQuitRecordingSmtpServer(t)
+	dialer := gomail.NewDialer("127.0.0.1", port, "", "")
+	dialer.StartTLSPolicy = gomail.NoStartTLS
+
+	msg := gomail.NewMessage()
+	msg.SetHeader("From", "from@example.com")
+	msg.SetHeader("To", "rcpt@example.com")
+	msg.SetBody("text/plain", "hello world")
+	msg.Attach("report.pdf", gomail.SetCopyFunc(func(io.Writer) error {
+		panic("boom")
+	}))
+	client, err := NewSmtpClient(setting.NewCfg().Smtp)
+	require.NoError(t, err)
+
+	require.NotPanics(t, func() { err = client.dialAndSend(dialer, msg) })
+
+	require.ErrorContains(t, err, "panic while sending email")
+	select {
+	case <-quit:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the connection was not closed after the send panicked")
+	}
 }
