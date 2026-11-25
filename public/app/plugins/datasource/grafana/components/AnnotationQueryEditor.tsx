@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { Field, FieldSet, Select, Switch, useStyles2 } from '@grafana/ui';
+import { Box, Field, FieldSet, Select, Switch, useStyles2 } from '@grafana/ui';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { type TimeRegionConfig } from 'app/core/utils/timeRegions';
 import { annotationServer } from 'app/features/annotations/api';
@@ -109,51 +109,53 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
 
   return (
     <FieldSet className={styles.container}>
-      <Field label="Query type">
-        <Select
-          inputId="grafana-annotations__query-type"
-          options={queryTypes}
-          value={grafanaQueryType}
-          onChange={onQueryTypeChange}
-        />
-      </Field>
-      {grafanaQueryType === GrafanaQueryType.Annotations && (
-        <>
-          <Field label="Filter by">
-            <Select
-              inputId="grafana-annotations__filter-by"
-              options={annotationTypes}
-              value={type}
-              onChange={onFilterByChange}
-            />
-          </Field>
-          <Field label="Max limit">
-            <Select
-              inputId="grafana-annotations__limit"
-              width={16}
-              options={limitOptions}
-              value={limit}
-              onChange={onMaxLimitChange}
-            />
-          </Field>
-          {type === GrafanaAnnotationType.Tags && (
-            <>
-              <Field label="Match any" description={matchTooltipContent}>
-                <Switch id="grafana-annotations__match-any" value={matchAny} onChange={onMatchAnyChange} />
-              </Field>
-              <Field label="Tags" description={tagsTooltipContent}>
-                <TagFilter
-                  allowCustomValue
-                  inputId="grafana-annotations__tags"
-                  onChange={onTagsChange}
-                  tagOptions={annotationServer().tags}
-                  tags={tags ?? []}
-                />
-              </Field>
-            </>
-          )}
-        </>
-      )}
+      <Box display="flex" direction="column" gap={2} paddingBottom={2}>
+        <Field noMargin label="Query type">
+          <Select
+            inputId="grafana-annotations__query-type"
+            options={queryTypes}
+            value={grafanaQueryType}
+            onChange={onQueryTypeChange}
+          />
+        </Field>
+        {grafanaQueryType === GrafanaQueryType.Annotations && (
+          <>
+            <Field noMargin label="Filter by">
+              <Select
+                inputId="grafana-annotations__filter-by"
+                options={annotationTypes}
+                value={type}
+                onChange={onFilterByChange}
+              />
+            </Field>
+            <Field noMargin label="Max limit">
+              <Select
+                inputId="grafana-annotations__limit"
+                width={16}
+                options={limitOptions}
+                value={limit}
+                onChange={onMaxLimitChange}
+              />
+            </Field>
+            {type === GrafanaAnnotationType.Tags && (
+              <>
+                <Field noMargin label="Match any" description={matchTooltipContent}>
+                  <Switch id="grafana-annotations__match-any" value={matchAny} onChange={onMatchAnyChange} />
+                </Field>
+                <Field noMargin label="Tags" description={tagsTooltipContent}>
+                  <TagFilter
+                    allowCustomValue
+                    inputId="grafana-annotations__tags"
+                    onChange={onTagsChange}
+                    tagOptions={annotationServer().tags}
+                    tags={tags ?? []}
+                  />
+                </Field>
+              </>
+            )}
+          </>
+        )}
+      </Box>
       {grafanaQueryType === GrafanaQueryType.TimeRegions && annotationQuery.timeRegion && (
         <TimeRegionEditor value={annotationQuery.timeRegion} onChange={onTimeRegionChange} />
       )}
