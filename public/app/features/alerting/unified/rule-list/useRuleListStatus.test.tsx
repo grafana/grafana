@@ -80,6 +80,20 @@ describe('useRuleListStatus', () => {
     expect(status.hasNoRules).toBe(true);
   });
 
+  it('reports no rules to a user who can only view Grafana-managed rules', () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleRead]);
+
+    const status = getRuleListStatus(
+      { items: [], isLoading: false },
+      {
+        promRules: { [GRAFANA_RULES_SOURCE_NAME]: noPromRules },
+        rulerRules: { [GRAFANA_RULES_SOURCE_NAME]: noRulerRules },
+      }
+    );
+
+    expect(status.hasNoRules).toBe(true);
+  });
+
   it('counts a failed ruler request as no rules', () => {
     const status = getRuleListStatus(loadedList, {
       promRules: { [GRAFANA_RULES_SOURCE_NAME]: noPromRules, mimir: noPromRules },
