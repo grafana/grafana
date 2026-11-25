@@ -74,7 +74,7 @@ The `Release NPM independent packages` workflow runs when a change to an indepen
 
 Merging the version pull request releases the packages.
 
-To preview a release, run the workflow from the Actions tab with `dry_run` enabled. To publish again after a failed run, re-run the failed jobs: jobs that succeeded keep their results, and tags that already exist are skipped.
+To preview a release, run the workflow from the Actions tab with `dry_run` enabled. To publish again after a failed run, re-run the failed jobs: jobs that succeeded keep their results, and tags that already exist are skipped. If the run can no longer be re-run, for example because the `publish` job failed after the version pull request was relabelled `nx-release:tagged`, add the label `nx-release:pending` to the merged version pull request again and start the workflow by hand: the existing tags are skipped, and the packages are built and published again. Do this only for the most recent release: publishing an older version moves the `latest` dist-tag back to it.
 
 If the `tag` job failed after a version pull request was merged, re-run the failed jobs or start the workflow by hand within 2 to 3 days: after that a new run no longer finds the merged version pull request. Later than that, add the label `nx-release:pending` to the merged version pull request again and start the workflow by hand.
 
