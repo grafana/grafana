@@ -45,8 +45,7 @@ var (
 
 // NewStatusStorage builds the RecordingRule /status subresource storage.
 func NewStatusStorage(
-	legacySvc legacy.LegacyRuleService,
-	namespacer request.NamespaceMapper,
+	rules *legacy.RecordingRules,
 	unified *appsdkapiserver.StatusREST,
 	writesUnified func(ctx context.Context) bool,
 ) rest.Storage {
@@ -55,7 +54,7 @@ func NewStatusStorage(
 		status:        unified,
 		writesUnified: writesUnified,
 		legacy: &legacyStorage{
-			rules:          legacy.NewRecordingRules(&legacySvc, namespacer),
+			rules:          rules,
 			tableConverter: rest.NewDefaultTableConvertor(ResourceInfo.GroupResource()),
 		},
 	}

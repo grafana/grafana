@@ -6740,7 +6740,8 @@
           "title": "Paneli yapıştır"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "Satır ekle",
@@ -9967,10 +9968,6 @@
       "of": "-",
       "to": "-",
       "when": "NE ZAMAN"
-    },
-    "expression-query-editor": {
-      "helper-text-sql": "Veri kaynaklarınızdan döndürülen tablolar üzerinde MySQL-dialect SQL çalıştırın. Veri kaynağı sorguları (yani \"A\", \"B\") tablo olarak kullanılabilir ve sorgu adı ile referans alınır. Alanlar, veri kaynağından döndürüldüğü gibi sütun olarak kullanılabilir.",
-      "label-operation": "Çalıştırma"
     },
     "math": {
       "available-math-functions": "Kullanılabilir matematiksel işlevler",
@@ -13792,12 +13789,11 @@
     },
     "megamenu-item": {
       "children-error": "Ögeler yüklenemedi",
+      "children-partial-error": "",
       "collapse-aria-label": "Bölümü daralt: {{sectionName}}",
       "expand-aria-label": "Bölümü genişlet: {{sectionName}}",
       "loading-aria-label": "{{sectionName}} yükleniyor",
-      "reorder-aria-label": "{{itemName}} ögesini yeniden sırala",
-      "starred-dashboard-icon": "Pano",
-      "starred-folder-icon": "Klasör"
+      "reorder-aria-label": "{{itemName}} ögesini yeniden sırala"
     },
     "org-switcher": {
       "aria-label": "Organizasyonu değiştir"
@@ -17502,6 +17498,7 @@
     "description-page-size": "Sayfa başına satır sayısı. Boş bırakıldığında sayfa boyutu panel yüksekliğini temel alır.",
     "description-show-columns-sidebar": "Sütun menüsünden değil, sütun yönetimi kenar çubuğunu panelle birlikte açın",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "CSS özellikleri içeren JSON nesnelerinden oluşan bir alan",
     "description-tooltip-from-field": "Araç ipucunda (gizli veya görünür) bir alandaki hücreyi göster",
     "description-zebra-striping": "Arka plan rengini birer satır atlayarak değiştirin",
@@ -17546,6 +17543,7 @@
     "name-show-columns-sidebar": "Sütun kenar çubuğunu göster",
     "name-show-row-numbers": "",
     "name-show-table-header": "Tablo başlığını göster",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "Üzerine gelince ipucunu göster",
     "name-styling-from-field": "Alan üzerinden stil uygulama",
     "name-tooltip-from-field": "Alandan araç ipucu",

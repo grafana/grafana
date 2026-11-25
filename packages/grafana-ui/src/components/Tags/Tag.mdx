@@ -7,9 +7,6 @@ import * as TagStories from './Tag.story';
 # Tag
 
 Use `Tag` to display a short metadata label, such as a category or environment in search results.
-By default, the tag name selects background and foreground colors from the active theme's tag palette.
-
-<Canvas of={TagStories.Single} />
 
 ## When to use
 
@@ -19,25 +16,33 @@ or clear the selection it represents. Removal affects the label or selection; do
 Use `onClick` when the label has a separate action, such as opening details or applying a filter.
 Provide both callbacks only when the label action and removal are independently useful.
 
+## Never use for
+
 Use `TagsInput` when users need an input to add and remove tags. A collection of removable `Tag` components
 does not provide text entry, validation, or input keyboard behavior.
 Use `TextLink` for navigation and `Button` for standalone actions.
 Use `TagList` for a group of static or clickable tags. It does not support removal; render individual `Tag`
 components with `onRemove` inside a `<ul>`, with one `<li>` per tag, for a removable group.
 
-## Usage guidelines
+## Do's and don'ts
 
 Keep names short and meaningful. The name is also included in the close button's accessible label.
-Do not rely on color alone to communicate meaning; include that meaning in the label.
+Don't rely on color alone to communicate meaning; include that meaning in the label.
 Name-based colors do not imply a status such as success or failure.
 
-Keep the shared theme styling and always visible close action. Do not hide removal until hover or replace it
-with a custom icon control. Do not wrap an interactive tag in another button or link.
+Keep the shared theme styling and always visible close action. Don't hide removal until hover or replace it
+with a custom icon control. Don't wrap an interactive tag in another button or link.
 
 The consumer owns the selected values and focus after removal. See [Removal](#removal) for an example that keeps
 focus on a remaining control, including a fallback when no tags remain.
 
-## Removal
+## Usage
+
+By default, the tag name selects background and foreground colors from the active theme's tag palette.
+
+<Canvas of={TagStories.Single} />
+
+### Removal
 
 Pass `onRemove` to add an always visible trailing close button. The optional leading `icon` stays beside the label.
 The close button has a localized accessible name, `Remove tag: NAME`, using the tag's `name`.
@@ -56,12 +61,37 @@ with refs rather than indexing all buttons in the group.
 
 <Canvas of={TagStories.Removable} />
 
-## Independent actions
+### Independent actions
 
 `onClick(name, event)` handles the label action independently of `onRemove`.
 Both callbacks receive a React mouse event. The example below logs each action without changing the tag.
 Both handlers call `preventDefault()` and `stopPropagation()` before invoking the callback, so their clicks do not
 activate a parent row or card.
+
+<Canvas of={TagStories.LabelAndRemove} />
+
+### Disabled
+
+`disabled` disables the supplied label and remove actions. Disabled buttons are skipped in the tab order.
+When only removal is disabled, the tag label keeps its normal text color. On a static tag without
+`onClick` or `onRemove`, `disabled` has no effect.
+
+<Canvas of={TagStories.Disabled} />
+
+### Leading icon
+
+<Canvas of={TagStories.WithIcon} />
+
+### States
+
+Tags use the active theme's colors and styling. On a removable tag, hovering an enabled label action underlines
+the label without changing its color. Hovering the close button leaves the label and tag background unchanged.
+Hovering a clickable tag without a remove button underlines the label without changing the text or background color.
+Keyboard focus remains visible on each action.
+
+<Canvas of={TagStories.States} />
+
+## Accessibility
 
 When both callbacks are present, the label and close controls are native sibling buttons.
 Tab reaches the label first, then the close button. Enter and Space activate the focused button.
@@ -73,29 +103,6 @@ When `onClick` is present, `aria-label` and `aria-labelledby` name the label but
 Without a label action, these attributes do not name the close button. Its accessible name comes from `name`;
 the default wrapper is a generic span and does not support an accessible name.
 
-<Canvas of={TagStories.LabelAndRemove} />
-
-## Disabled
-
-`disabled` disables the supplied label and remove actions. Disabled buttons are skipped in the tab order.
-When only removal is disabled, the tag label keeps its normal text color. On a static tag without
-`onClick` or `onRemove`, `disabled` has no effect.
-
-<Canvas of={TagStories.Disabled} />
-
-## Leading icon
-
-<Canvas of={TagStories.WithIcon} />
-
-## States
-
-Tags use the active theme's colors and styling. On a removable tag, hovering an enabled label action underlines
-the label without changing its color. Hovering the close button leaves the label and tag background unchanged.
-Hovering a clickable tag without a remove button underlines the label without changing the text or background color.
-Keyboard focus remains visible on each action.
-
-<Canvas of={TagStories.States} />
-
-### Props
+## Props
 
 <ArgTypes of={Tag} />

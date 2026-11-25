@@ -8,16 +8,22 @@ import { Box } from './Box';
 The Box Component is the most basic layout component. It can be used to build more complex components and layouts with properties
 that use our design tokens instead of using CSS.
 
-### Usage
-
-#### When to use
+## When to use
 
 Box should be used instead of class styles, so that we can take advantage of our design tokens.
 Use it for anything from adding a margin around a component to giving a border to a section.
 
-#### When not to use
+## Never use for
 
 If you need layout styles, use the Stack or Grid components instead.
+
+If you just need to create a Flex layout without any other styling to the box, please use the [Stack](/docs/layout-stack--docs) component instead.
+
+## Do's and don'ts
+
+No component-specific guidance documented yet.
+
+## Usage
 
 ### Spacing
 
@@ -45,8 +51,6 @@ There are 4 different props related to how the content is displayed:
 - `justifyContent`, with possible values: `flex-start`, `flex-end`, `center`, `space-between`, `space-around`, `space-evenly`, `start`, `end`, `left`, `right`
 - `gap`, with possible values: ThemeSpacingTokens (0 | 0.25 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3 | 4 | 5 | 6 | 8 | 10)
 
-If you just need to create a Flex layout without any other styling to the box, please use the [Stack](/docs/layout-stack--docs) component instead.
-
 ### Responsiveness
 
 All of the above props can be defined in a responsive way, meaning that different values will be set depending on the window size.
@@ -56,10 +60,6 @@ define it like `margin={{ xs: 3, md: 5 }}`.
 This means that from the `xs` breakpoint up, margin is set to `3`, while from the `md` breakpoint up, it is set to `5`.
 
 The possible breakpoints in the theme can be found [here](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/themes/breakpoints.ts#L28).
-
-### Further Reading
-
-- [Storybook docs and props table](https://developers.grafana.com/ui/canary/index.html?path=/docs/general-layout-box--docs)
 
 ### How to add a prop to Box
 
@@ -77,6 +77,12 @@ The possible breakpoints in the theme can be found [here](https://github.com/gra
    ```
 4. Add it to the `Box` story in `Box.internal.story.tsx`, by explicity adding it to `Basic.argTypes`
 
-### Props
+### Further reading
+
+- [Storybook docs and props table](https://developers.grafana.com/ui/canary/index.html?path=/docs/general-layout-box--docs)
+
+## Accessibility
+
+## Props
 
 <ArgTypes of={Box} />

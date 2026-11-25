@@ -47,7 +47,7 @@ func TestPostStartHook_PublishesLoopbackConfigBeforeAndSignalsBootstrapAfterReco
 	reconciled := false
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Only the repository controller waits for the bootstrap repository;
-		// token refresh and queued jobs start on the loopback config.
+		// the connection controller and queued jobs start on the loopback config.
 		assert.True(t, isClosed(b.loopbackReady), "loopback config must be published before the bootstrap repository is reconciled")
 		assert.False(t, isClosed(b.bootstrapDone), "bootstrap signalled before the bootstrap repository was reconciled: %s %s", r.Method, r.URL)
 		reconciled = true

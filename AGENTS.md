@@ -1,6 +1,6 @@
 # AGENTS.md
 
-<!-- version: 2.3.0 -->
+<!-- version: 2.4.0 -->
 
 This file provides guidance to AI agents when working with code in the Grafana repository.
 
@@ -43,6 +43,8 @@ Grafana is a monitoring and observability platform. Go backend, TypeScript/React
 ## Human Review Gates
 
 Before running `git push`, stop and get explicit human approval. When changes are ready, show a summary of changes and wait for instruction. "Open a PR" in a task description is intent, not permission to push without review.
+
+For guidance on opening issues and submitting pull requests, read [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Commands
 
