@@ -70,7 +70,8 @@ For more information about alerting permissions and folder access, refer to [Con
 
 ## Understand policy scope
 
-By default, a single quality policy, the _Org policy_, applies to Grafana-managed alert rules across all folders in your organization.
+The _Org policy_ is a single quality policy, configured by an organization administrator, that applies to Grafana-managed alert rules across all folders in your organization.
+Until you configure one, Alert Advisor has no requirements to check.
 You can also give a team its own policy, called a _Team policy_, which applies to the folders that team owns. Refer to [Team policies](#team-policies).
 Data source-managed alert rules, recording rules, and alert rules provided by plugins are excluded.
 
@@ -109,7 +110,7 @@ A policy follows the folder, not the person writing the rule.
 Grafana evaluates policies when an as-code write reaches a folder, whoever makes the write and whichever teams they belong to.
 
 - **Team policy:** Applies to every as-code write into a folder that the team owns.
-- **Org policy:** Applies when no owning team of the folder or any of its ancestors has a Team policy, so folders without an owning team are always covered.
+- **Org policy:** Applies when no owning team of the folder or any of its ancestors has a Team policy, so folders without an owning team are covered by the Org policy, if one is configured.
 
 A team has at most one Team policy.
 
@@ -149,7 +150,7 @@ Team policies change only which requirements are enforced. Enforcement scope sta
 Grafana evaluates policies when a write happens, using the folder's current owners.
 Changing a policy or a folder's owners doesn't re-check existing rules.
 
-If Grafana can't resolve a folder's owners or read a policy, the write isn't blocked on that account. Grafana applies the Org policy instead.
+If Grafana can't resolve a folder's owners or read a policy, the write isn't blocked on that account. Grafana applies the Org policy instead, if one is configured.
 
 ### Manage Team policies
 
