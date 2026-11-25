@@ -1198,26 +1198,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			usageMetricCollector := usage.MetricCollector(b.tracer, b.usageNamespaceLister, b.repoLister.List, connection.NewStorageLister(b.connectionStore).List, b.unified)
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
 
-			var jobHistoryWriter jobs.HistoryWriter
-			if b.jobHistoryLoki != nil {
-				jobHistoryWriter = b.jobHistoryLoki
-			} else {
-				jobHistoryWriter = jobs.NewAPIClientHistoryWriter(b.GetClient())
-			}
-
-			// Create job cleanup controller
-			jobCleanupController := jobs.NewJobCleanupController(
-				b.jobs,
-				jobHistoryWriter,
-				jobClaimExpiry,
-			)
-
-			go func() {
-				if err := jobCleanupController.Run(postStartHookCtx.Context); err != nil {
-					logging.FromContext(postStartHookCtx.Context).Error("job cleanup controller failed", "error", err)
-				}
-			}()
-
 			return nil
 		},
 	}

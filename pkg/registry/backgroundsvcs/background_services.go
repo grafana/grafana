@@ -100,6 +100,7 @@ func ProvideBackgroundServiceRegistry(
 	provisioningHistoryJobCleanup *provisioningapis.HistoryJobCleanupService,
 	provisioningRepositoryController *provisioningapis.RepositoryControllerService,
 	provisioningJobQueue *provisioningapis.JobQueueService,
+	provisioningJobCleanup *provisioningapis.JobCleanupService,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
 	_ serviceaccounts.Service,
@@ -163,6 +164,7 @@ func ProvideBackgroundServiceRegistry(
 		provisioningHistoryJobCleanup,
 		provisioningRepositoryController,
 		provisioningJobQueue,
+		provisioningJobCleanup,
 	)
 }
 
