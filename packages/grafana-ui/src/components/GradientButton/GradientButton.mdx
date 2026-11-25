@@ -24,7 +24,7 @@ Use `GradientButton` for the entry point to Grafana Assistant or another AI feat
 
 ### Use the ai-sparkle icon
 
-Pair the label with the `ai-sparkle` icon, so the button reads as an AI action even without the gradient.
+`GradientButton` shows the `ai-sparkle` icon by default, so the button reads as an AI action even without the gradient. Only override `icon` for a loading or cancel state, such as `spinner` while a response is generating.
 
 ### Keep the Assistant logic in @grafana/assistant
 
@@ -39,14 +39,13 @@ Don't override the border, background or text color with `className`. Change the
 ```tsx
 import { GradientButton } from '@grafana/ui';
 
-<GradientButton icon="ai-sparkle" onClick={openAssistant}>
-  Analyze with Assistant
-</GradientButton>;
+<GradientButton onClick={openAssistant}>Analyze with Assistant</GradientButton>;
 ```
 
 - `fill="outline"` (default) draws a 1px gradient border on the secondary button color.
 - `fill="solid"` fills the button with the gradient, with dark text in both light and dark mode.
-- `size`, `icon`, `iconPlacement`, `tooltip`, `fullWidth` and `disabled` work the same as on `Button`.
+- `icon` defaults to `ai-sparkle`.
+- `size`, `iconPlacement`, `tooltip`, `fullWidth` and `disabled` work the same as on `Button`.
 - When the button opens a menu, `aria-expanded="true"` keeps the hover background while the menu is open. `Dropdown` sets this on its trigger.
 
 ## Accessibility

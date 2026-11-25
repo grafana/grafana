@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { createTheme } from '@grafana/data';
@@ -22,18 +22,35 @@ describe('GradientButton', () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it('requires a tooltip or aria-label as the accessible name when it is icon-only', () => {
+  it('shows the ai-sparkle icon by default, and lets icon override it', () => {
+    render(
+      <>
+        <GradientButton>Analyze</GradientButton>
+        <GradientButton icon="spinner">Analyzing</GradientButton>
+      </>
+    );
+    expect(within(screen.getByRole('button', { name: 'Analyze' })).getByTestId('icon-ai-sparkle')).toBeInTheDocument();
+    const loading = screen.getByRole('button', { name: 'Analyzing' });
+    expect(within(loading).getByTestId('icon-spinner')).toBeInTheDocument();
+    expect(within(loading).queryByTestId('icon-ai-sparkle')).not.toBeInTheDocument();
+  });
+
+  it('shows the ai-sparkle icon with no children, and requires a tooltip or aria-label as the accessible name', () => {
     // @ts-expect-error an icon-only button needs a tooltip or an aria-label
-    void (<GradientButton icon="ai-sparkle" />);
+    void (<GradientButton />);
 
     render(
       <>
-        <GradientButton icon="ai-sparkle" tooltip="Analyze with Assistant" />
-        <GradientButton icon="ai-sparkle" aria-label="Open Assistant" />
+        <GradientButton tooltip="Analyze with Assistant" />
+        <GradientButton aria-label="Open Assistant" />
       </>
     );
-    expect(screen.getByRole('button', { name: 'Analyze with Assistant' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Open Assistant' })).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('button', { name: 'Analyze with Assistant' })).getByTestId('icon-ai-sparkle')
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('button', { name: 'Open Assistant' })).getByTestId('icon-ai-sparkle')
+    ).toBeInTheDocument();
   });
 
   it.each([
@@ -46,7 +63,7 @@ describe('GradientButton', () => {
     ({ fill, tooltip }) => {
       const theme = createTheme();
       render(
-        <GradientButton icon="ai-sparkle" fill={fill} tooltip={tooltip} disabled>
+        <GradientButton fill={fill} tooltip={tooltip} disabled>
           Analyze with Assistant
         </GradientButton>
       );
@@ -60,7 +77,7 @@ describe('GradientButton', () => {
   it('keeps the disabled background when an aria-disabled button with a tooltip is pressed', () => {
     const theme = createTheme();
     render(
-      <GradientButton icon="ai-sparkle" fill="solid" tooltip="Assistant is unavailable" disabled>
+      <GradientButton fill="solid" tooltip="Assistant is unavailable" disabled>
         Analyze with Assistant
       </GradientButton>
     );

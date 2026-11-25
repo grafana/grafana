@@ -45,7 +45,6 @@ export const Basic: StoryFn<typeof GradientButton> = (args: GradientButtonProps)
 );
 Basic.args = {
   children: 'Analyze with Assistant',
-  icon: 'ai-sparkle',
   fill: 'outline',
   size: 'md',
 };
@@ -57,22 +56,25 @@ export const Examples: StoryFn<typeof GradientButton> = () => {
         <Stack direction="column" gap={2} key={fill}>
           <Stack alignItems="center" gap={2}>
             {sizes.map((size) => (
-              <GradientButton fill={fill} icon="ai-sparkle" size={size} key={size}>
+              <GradientButton fill={fill} size={size} key={size}>
                 {`fill="${fill}" ${size}`}
               </GradientButton>
             ))}
             {sizes.map((size) => (
-              <GradientButton fill={fill} icon="ai-sparkle" size={size} tooltip="Analyze with Assistant" key={size} />
+              <GradientButton fill={fill} size={size} tooltip="Analyze with Assistant" key={size} />
             ))}
           </Stack>
           <Stack alignItems="center" gap={2}>
-            <GradientButton fill={fill} icon="ai-sparkle" aria-expanded="true">
+            <GradientButton fill={fill} aria-expanded="true">
               Expanded
             </GradientButton>
-            <GradientButton fill={fill} icon="ai-sparkle" disabled>
+            <GradientButton fill={fill} disabled>
               Disabled
             </GradientButton>
-            <GradientButton fill={fill} icon="ai-sparkle" tooltip="Assistant is unavailable" disabled />
+            <GradientButton fill={fill} tooltip="Assistant is unavailable" disabled />
+            <GradientButton fill={fill} icon="spinner" disabled>
+              Analyzing
+            </GradientButton>
           </Stack>
         </Stack>
       ))}
@@ -83,7 +85,7 @@ Examples.parameters = {
   docs: {
     description: {
       story:
-        'The first row of each fill shows the sizes and icon-only buttons. Hover a button to see the hover state, which has the same background as the expanded state. The expanded state is set with `aria-expanded="true"`, for example by a `Dropdown` trigger.',
+        'The first row of each fill shows the sizes and icon-only buttons. The second row shows the expanded, disabled and loading states. The loading button overrides the default `ai-sparkle` icon with `spinner`. Hover a button to see the hover state, which has the same background as the expanded state. The expanded state is set with `aria-expanded="true"`, for example by a `Dropdown` trigger.',
     },
   },
 };
@@ -97,12 +99,8 @@ export const FocusVisible: StoryFn<typeof GradientButton> = () => {
 
   return (
     <Stack alignItems="center" gap={2}>
-      <GradientButton icon="ai-sparkle" ref={ref}>
-        Analyze with Assistant
-      </GradientButton>
-      <GradientButton fill="solid" icon="ai-sparkle">
-        Analyze with Assistant
-      </GradientButton>
+      <GradientButton ref={ref}>Analyze with Assistant</GradientButton>
+      <GradientButton fill="solid">Analyze with Assistant</GradientButton>
     </Stack>
   );
 };
