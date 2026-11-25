@@ -65,7 +65,6 @@ func (s *Service) GetPluginSettings(ctx context.Context, args *pluginsettings.Ge
 			PluginID:      p.PluginID,
 			PluginVersion: p.PluginVersion,
 			Enabled:       p.Enabled,
-			Pinned:        p.Pinned,
 		})
 	}
 
@@ -91,7 +90,6 @@ func (s *Service) GetPluginSettingByPluginID(ctx context.Context, args *pluginse
 		JSONData:       query.Result.JsonData,
 		SecureJSONData: query.Result.SecureJsonData,
 		Enabled:        query.Result.Enabled,
-		Pinned:         query.Result.Pinned,
 		Updated:        query.Result.Updated,
 	}, nil
 }
@@ -108,7 +106,6 @@ func (s *Service) UpdatePluginSetting(ctx context.Context, args *pluginsettings.
 
 	return s.updatePluginSetting(ctx, &pluginsettings.UpdatePluginSettingCmd{
 		Enabled:                 args.Enabled,
-		Pinned:                  args.Pinned,
 		JsonData:                args.JSONData,
 		SecureJsonData:          args.SecureJSONData,
 		PluginVersion:           args.PluginVersion,
@@ -149,7 +146,7 @@ func (s *Service) DecryptedValues(ps *pluginsettings.DTO) map[string]string {
 }
 
 func (s *Service) getPluginSettingsInfo(ctx context.Context, orgID int64) ([]*pluginsettings.PluginSettingInfo, error) {
-	sql := `SELECT org_id, plugin_id, enabled, pinned, plugin_version FROM plugin_setting `
+	sql := `SELECT org_id, plugin_id, enabled, plugin_version FROM plugin_setting `
 	params := make([]any, 0)
 
 	if orgID != 0 {
@@ -191,13 +188,11 @@ func (s *Service) updatePluginSetting(ctx context.Context, cmd *pluginsettings.U
 			return err
 		}
 		sess.UseBool("enabled")
-		sess.UseBool("pinned")
 		if !exists {
 			pluginSetting = pluginsettings.PluginSetting{
 				PluginId:       cmd.PluginId,
 				OrgId:          cmd.OrgId,
 				Enabled:        cmd.Enabled,
-				Pinned:         cmd.Pinned,
 				JsonData:       cmd.JsonData,
 				PluginVersion:  cmd.PluginVersion,
 				SecureJsonData: cmd.EncryptedSecureJsonData,
@@ -237,7 +232,6 @@ func (s *Service) updatePluginSetting(ctx context.Context, cmd *pluginsettings.U
 		pluginSetting.Updated = time.Now()
 		pluginSetting.Enabled = cmd.Enabled
 		pluginSetting.JsonData = cmd.JsonData
-		pluginSetting.Pinned = cmd.Pinned
 		pluginSetting.PluginVersion = cmd.PluginVersion
 
 		_, err = sess.ID(pluginSetting.Id).Update(&pluginSetting)

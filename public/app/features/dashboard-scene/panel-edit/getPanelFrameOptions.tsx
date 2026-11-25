@@ -203,10 +203,10 @@ export function PanelFrameTitleInput({
 
 export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: string }) {
   const { description, subtitle } = panel.useState();
-  const value = description ?? subtitle ?? '';
-  const [prevValue, setPrevValue] = React.useState(value);
   // Default to description for now
-  let propName: 'description' | 'subtitle' = description ? 'description' : subtitle ? 'subtitle' : 'description';
+  const propName: 'description' | 'subtitle' = !description && subtitle ? 'subtitle' : 'description';
+  const value = (propName === 'subtitle' ? subtitle : description) ?? '';
+  const [prevValue, setPrevValue] = React.useState(value);
 
   const onCommitDescriptionChange = (evt: React.ChangeEvent<HTMLTextAreaElement>) => {
     edit({
@@ -285,7 +285,7 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
           id={id}
           value={value}
           onChange={(evt) => panel.setState({ [propName]: evt.currentTarget.value })}
-          onFocus={() => setPrevValue(subtitle ?? description ?? '')}
+          onFocus={() => setPrevValue(value)}
           onBlur={onCommitDescriptionChange}
         />
       </Field>

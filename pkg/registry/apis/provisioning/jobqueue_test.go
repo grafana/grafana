@@ -117,6 +117,9 @@ func newTestJobQueueService(t *testing.T) (*JobQueueService, *APIBuilder) {
 		tracer:        tracing.NewNoopTracerService(),
 		registry:      prometheus.NewPedanticRegistry(),
 		loopbackReady: make(chan struct{}),
+		// Stays open: only the repository controller waits for the bootstrap
+		// repository.
+		bootstrapDone: make(chan struct{}),
 	}
 	return ProvideJobQueueService(setting.NewCfg(), builder, nil, nil), builder
 }
