@@ -7,8 +7,8 @@ import { setupMswServer } from '../../../mockApi';
 import { getCloudRule, getGrafanaRule, grantUserPermissions, mockDataSource } from '../../../mocks';
 import { setFolderAccessControl } from '../../../mocks/server/configure';
 import { setupDataSources } from '../../../testSetup/datasources';
+import { isAdmin } from '../../../utils/environment';
 import { groupIdentifier } from '../../../utils/groupIdentifier';
-import * as misc from '../../../utils/misc';
 import { isLoading, isNotSupported, isPluginManaged, isProvisioned, isSupported } from '../abilityUtils';
 import { ExternalRuleAction, RuleAction, isInsufficientPermissions } from '../types';
 
@@ -30,6 +30,15 @@ import {
   skipToken,
 } from './ruleAbilities.utils';
 import { useRuleAdministrationAbility, useRuleExportAbility, useRuleSilenceAbility } from './rulerRuleAbilities';
+
+jest.mock('../../../utils/environment', () => ({
+  ...jest.requireActual('../../../utils/environment'),
+  isAdmin: jest.fn((...args) => jest.requireActual('../../../utils/environment').isAdmin(...args)),
+}));
+
+beforeEach(() => {
+  jest.mocked(isAdmin).mockReset().mockImplementation(jest.requireActual('../../../utils/environment').isAdmin);
+});
 
 setupMswServer();
 
@@ -241,7 +250,7 @@ describe('useRuleAdministrationAbility', () => {
   });
 
   it('returns INSUFFICIENT_PERMISSIONS for deletePermanently when user has delete permission but is not admin', async () => {
-    jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
+    jest.mocked(isAdmin).mockReturnValue(false);
     setFolderAccessControl({
       'alert.rules:read': true,
       'alert.rules:write': true,
@@ -265,7 +274,7 @@ describe('useRuleAdministrationAbility', () => {
   });
 
   it('grants deletePermanently when user has delete permission and is admin', async () => {
-    jest.spyOn(misc, 'isAdmin').mockReturnValue(true);
+    jest.mocked(isAdmin).mockReturnValue(true);
     setFolderAccessControl({
       'alert.rules:read': true,
       'alert.rules:write': true,
@@ -450,7 +459,7 @@ describe('usePromRuleAdministrationAbility', () => {
   });
 
   it('returns INSUFFICIENT_PERMISSIONS for deletePermanently when user has delete permission but is not admin', async () => {
-    jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
+    jest.mocked(isAdmin).mockReturnValue(false);
     setFolderAccessControl({ 'alert.rules:write': true, 'alert.rules:delete': true });
 
     const promRule = makePromRule();
@@ -468,7 +477,7 @@ describe('usePromRuleAdministrationAbility', () => {
   });
 
   it('grants deletePermanently when user has delete permission and is admin', async () => {
-    jest.spyOn(misc, 'isAdmin').mockReturnValue(true);
+    jest.mocked(isAdmin).mockReturnValue(true);
     setFolderAccessControl({ 'alert.rules:write': true, 'alert.rules:delete': true });
 
     const promRule = makePromRule();

@@ -6690,7 +6690,8 @@
           "title": "パネルを貼り付け"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "行を追加",
@@ -9893,10 +9894,6 @@
       "of": "の",
       "to": "へ",
       "when": "条件"
-    },
-    "expression-query-editor": {
-      "helper-text-sql": "データソースから返されたテーブルに対してMySQL形式のSQLを実行します。データソースクエリ (つまり「A」、「B」) はテーブルとして使用でき、クエリ名で参照されます。フィールドは、データソースから返される列として使用できます。",
-      "label-operation": "操作"
     },
     "math": {
       "available-math-functions": "利用可能な数学関数",
@@ -13685,12 +13682,11 @@
     },
     "megamenu-item": {
       "children-error": "項目の読み込みに失敗しました",
+      "children-partial-error": "",
       "collapse-aria-label": "セクションを折りたたむ：{{sectionName}}",
       "expand-aria-label": "セクションを展開：{{sectionName}}",
       "loading-aria-label": "{{sectionName}}を読み込み中",
-      "reorder-aria-label": "{{itemName}}の順序を変更",
-      "starred-dashboard-icon": "ダッシュボード",
-      "starred-folder-icon": "フォルダ"
+      "reorder-aria-label": "{{itemName}}の順序を変更"
     },
     "org-switcher": {
       "aria-label": "組織を変更"
@@ -17359,6 +17355,7 @@
     "description-page-size": "1ページあたりの行数。空の場合、ページサイズはパネルの高さに基づいています。",
     "description-show-columns-sidebar": "列メニューではなく、パネルから列管理サイドバーを開きます。",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "CSSプロパティを持つJSONオブジェクトを含むフィールド",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "1行おきに背景色を交互に切り替えます",
@@ -17403,6 +17400,7 @@
     "name-show-columns-sidebar": "列のサイドバーを表示",
     "name-show-row-numbers": "",
     "name-show-table-header": "テーブルヘッダーを表示",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "ホバーツールチップを表示",
     "name-styling-from-field": "フィールドからのスタイリング",
     "name-tooltip-from-field": "",

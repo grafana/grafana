@@ -74,10 +74,36 @@ const (
 	ManagerKindClassicConvertedPrometheus ManagerKind = "classic-converted-prometheus"
 )
 
-// ParseManagerKindString parses a string into a ManagerKind.
-// It returns the ManagerKind and a boolean indicating whether the string was a valid ManagerKind.
-// For unknown values, it returns ManagerKindUnknown and false.
+var managerKindRegistry = map[ManagerKind]struct{}{}
+
+// RegisterManagerKind adds a manager kind on top of the built-in ones.
+func RegisterManagerKind(kind ManagerKind) {
+	if kind == ManagerKindUnknown {
+		panic("RegisterManagerKind: the kind is empty")
+	}
+
+	if parseBuiltinManagerKind(string(kind)) != ManagerKindUnknown {
+		panic(fmt.Sprintf("RegisterManagerKind: %q is a built-in kind", kind))
+	}
+
+	if _, ok := managerKindRegistry[kind]; ok {
+		panic(fmt.Sprintf("RegisterManagerKind: %q is already registered", kind))
+	}
+
+	managerKindRegistry[kind] = struct{}{}
+}
+
+// ParseManagerKindString parses a string into a ManagerKind: a built-in kind or one
+// added with RegisterManagerKind. For any other value it returns ManagerKindUnknown.
 func ParseManagerKindString(v string) ManagerKind {
+	if _, ok := managerKindRegistry[ManagerKind(v)]; ok {
+		return ManagerKind(v)
+	}
+
+	return parseBuiltinManagerKind(v)
+}
+
+func parseBuiltinManagerKind(v string) ManagerKind {
 	switch v {
 	case string(ManagerKindRepo):
 		return ManagerKindRepo
