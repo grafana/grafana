@@ -1,6 +1,7 @@
 import { type MutableRefObject, useEffect } from 'react';
 import { useAsync } from 'react-use';
 
+import { openAssistant, type OpenAssistantProps } from '@grafana/assistant';
 import { type DataSourceInstanceListItem, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv, locationService } from '@grafana/runtime';
@@ -25,6 +26,7 @@ import { type GnetDashboard, type GnetDashboardsResponse, type Link, type Templa
 import { buildOpenTemplateContextItem } from './utils/assistantHelpers';
 import { getTemplateDashboardUrl } from './utils/templateDashboardHelpers';
 import { filterTemplates } from './utils/templateFilters';
+import { getTemplateStartFrom } from './utils/templateStartFrom';
 
 interface GrafanaTemplatesTabProps extends TemplateSelectionProps {
   /** Raw `source` search param value, mapped to a known entry point when fired. */
@@ -123,16 +125,25 @@ export const GrafanaTemplatesTab = ({
       : TemplateDashboardInteractions.itemClicked(properties);
   };
 
-  const onPreviewDashboardClick = async (dashboard: GnetDashboard, customizeWithAssistant = false) => {
-    trackItemClicked(dashboard, customizeWithAssistant ? 'assistant' : 'view_template');
+  const onPreviewDashboardClick = (dashboard: GnetDashboard) => {
+    trackItemClicked(dashboard, 'view_template');
+    locationService.push(getTemplateDashboardUrl(dashboard, testDataSource, sourceEntryPoint));
+  };
 
+  // Where the Assistant can start from the template, the template's page never opens: the Assistant opens its draft.
+  const customizeWithAssistant = async (dashboard: GnetDashboard, request: OpenAssistantProps) => {
+    trackItemClicked(dashboard, 'assistant');
     const templateUrl = getTemplateDashboardUrl(
       dashboard,
       testDataSource,
       sourceEntryPoint,
-      customizeWithAssistant ? TemplateDashboardSourceEntryPoint.ASSISTANT_BUTTON : undefined
+      TemplateDashboardSourceEntryPoint.ASSISTANT_BUTTON
     );
-    locationService.push(templateUrl);
+    const startFrom = await getTemplateStartFrom(templateUrl);
+    openAssistant({ ...request, startFrom });
+    if (!startFrom) {
+      locationService.push(templateUrl);
+    }
   };
 
   // A new tab keeps the landing, and its prompt, where the person left them.
@@ -204,7 +215,8 @@ export const GrafanaTemplatesTab = ({
             key={dashboard.id}
             title={dashboard.name}
             imageUrl={thumbnailUrl}
-            onClick={(customizeWithAssistant?: boolean) => onPreviewDashboardClick(dashboard, customizeWithAssistant)}
+            onClick={() => onPreviewDashboardClick(dashboard)}
+            onCustomizeWithAssistant={(request) => customizeWithAssistant(dashboard, request)}
             onClose={onClose}
             dashboard={dashboard}
             kind="template_dashboard"

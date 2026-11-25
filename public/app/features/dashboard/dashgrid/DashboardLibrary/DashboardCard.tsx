@@ -5,7 +5,7 @@ import { useOverlay } from '@react-aria/overlays';
 import { useRef, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
+import { createAssistantContextItem, type OpenAssistantProps, useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -68,6 +68,11 @@ interface BaseProps {
   onCompatibilityCheck?: () => void;
   /** Whether to show the "Customize with assistant" button (caller must check relevant feature flags) */
   showAssistantButton?: boolean;
+  /**
+   * Takes over "Customize with assistant": the card closes and hands over what the Assistant opens with, instead of
+   * opening it and then the dashboard (`onClick(true)`).
+   */
+  onCustomizeWithAssistant?: (request: OpenAssistantProps) => void;
   onEdit?: () => void;
   /**
    * Handler called when the user confirms deleting the template.
@@ -111,6 +116,7 @@ function DashboardCardComponent({
   compatibilityState,
   onCompatibilityCheck,
   showAssistantButton,
+  onCustomizeWithAssistant,
   onEdit,
   onDelete,
   tags,
@@ -163,13 +169,19 @@ function DashboardCardComponent({
       title: buildTemplateContextTitle(assistantDashboard, assistantKind),
       data: buildTemplateContextData(assistantDashboard, assistantKind),
     });
-    openAssistant?.({
+    const request: OpenAssistantProps = {
       origin: 'dashboard-library/use-dashboard',
       mode: 'dashboarding',
       prompt: buildAssistantPrompt(assistantKind),
       context: [templateContext],
       autoSend: true,
-    });
+    };
+    if (onCustomizeWithAssistant) {
+      onClose?.();
+      onCustomizeWithAssistant(request);
+      return;
+    }
+    openAssistant?.(request);
     // these both close the modal and redirect the user to the template dashboard url
     onClose?.();
     onClick?.(true);

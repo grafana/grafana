@@ -106,7 +106,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
           ? contextItems
           : [...contextItems, templateItem];
         // As in the template modal: the template opens as Use template opens it, and the Assistant adapts it.
-        openTemplateInAssistant({
+        await openTemplateInAssistant({
           templateUrl: template.url,
           // The prompt can be sent empty once a template is attached; the template is then the whole request.
           prompt: prompt.trim() || OPEN_TEMPLATE_PROMPT,

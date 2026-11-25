@@ -2,13 +2,19 @@ import { http, HttpResponse } from 'msw';
 import { createRef } from 'react';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { openAssistant } from '@grafana/assistant';
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { locationService, setBackendSrv } from '@grafana/runtime';
+import {
+  useFlagAssistantFrontendToolsDashboardTemplates,
+  useFlagDashboardTemplatesAssistantButton,
+} from '@grafana/runtime/internal';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { GrafanaTemplatesTab } from './GrafanaTemplatesTab';
 import { TemplateDashboardInteractions } from './interactions';
+import { getTemplateStartFrom } from './utils/templateStartFrom';
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -24,9 +30,18 @@ jest.mock('@grafana/runtime', () => {
 
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
+  openAssistant: jest.fn(),
   useAssistant: jest.fn(() => ({ isAvailable: true, openAssistant: jest.fn() })),
   createAssistantContextItem: jest.fn((type: string, data: object) => ({ type, ...data })),
 }));
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useFlagDashboardTemplatesAssistantButton: jest.fn(() => false),
+  useFlagAssistantFrontendToolsDashboardTemplates: jest.fn(() => false),
+}));
+
+jest.mock('./utils/templateStartFrom', () => ({ getTemplateStartFrom: jest.fn() }));
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -76,6 +91,63 @@ describe('GrafanaTemplatesTab', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+  });
+
+  describe('Customize with Assistant', () => {
+    beforeEach(() => {
+      jest.mocked(useFlagDashboardTemplatesAssistantButton).mockReturnValue(true);
+      jest.mocked(useFlagAssistantFrontendToolsDashboardTemplates).mockReturnValue(true);
+    });
+
+    it('has the Assistant start from the template without opening its page, where it can', async () => {
+      const startFrom = {
+        spec: { title: 'RED metrics', elements: {}, layout: { kind: 'GridLayout', spec: { items: [] } } },
+        query: { assistantSource: 'assistant_button' },
+      };
+      jest.mocked(getTemplateStartFrom).mockResolvedValue(startFrom);
+      const onClose = jest.fn();
+      const { user } = renderTab({ onClose });
+
+      await user.click(await screen.findByRole('button', { name: 'Customize with Assistant: RED metrics' }));
+
+      await waitFor(() =>
+        expect(openAssistant).toHaveBeenCalledWith(
+          expect.objectContaining({ origin: 'dashboard-library/use-dashboard', mode: 'dashboarding', startFrom })
+        )
+      );
+      expect(getTemplateStartFrom).toHaveBeenCalledWith(
+        expect.stringMatching(/^\/dashboard\/template\?.*gnetId=1&.*assistantSource=assistant_button$/)
+      );
+      expect(onClose).toHaveBeenCalled();
+      expect(locationService.push).not.toHaveBeenCalled();
+    });
+
+    it('opens the template page after the Assistant where the Assistant cannot start from it', async () => {
+      jest.mocked(getTemplateStartFrom).mockResolvedValue(undefined);
+      const { user } = renderTab();
+
+      await user.click(await screen.findByRole('button', { name: 'Customize with Assistant: RED metrics' }));
+
+      await waitFor(() =>
+        expect(locationService.push).toHaveBeenCalledWith(
+          expect.stringMatching(/^\/dashboard\/template\?.*gnetId=1&.*assistantSource=assistant_button$/)
+        )
+      );
+      expect(openAssistant).toHaveBeenCalledWith(expect.objectContaining({ startFrom: undefined }));
+      expect(jest.mocked(openAssistant).mock.invocationCallOrder[0]).toBeLessThan(
+        jest.mocked(locationService.push).mock.invocationCallOrder[0]
+      );
+    });
+
+    it('reports the click as the template modal reports Customize with Assistant', async () => {
+      jest.mocked(getTemplateStartFrom).mockResolvedValue(undefined);
+      const itemClicked = jest.spyOn(TemplateDashboardInteractions, 'itemClicked').mockResolvedValue();
+      const { user } = renderTab();
+
+      await user.click(await screen.findByRole('button', { name: 'Customize with Assistant: RED metrics' }));
+
+      expect(itemClicked).toHaveBeenCalledWith(expect.objectContaining({ libraryItemId: '1', action: 'assistant' }));
+    });
   });
 
   describe('select mode', () => {

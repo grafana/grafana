@@ -1,8 +1,13 @@
 import { type ChatContextItem, openAssistant } from '@grafana/assistant';
 import { locationService } from '@grafana/runtime';
+import { getTemplateStartFrom } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/templateStartFrom';
 
 import { buildPlanningInstructions, openTemplateInAssistant, startPlanningInAssistant } from './handoff';
 import { PROMPT_ORIGIN, MAX_LISTED_DATASOURCES } from './prompts';
+
+jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/utils/templateStartFrom', () => ({
+  getTemplateStartFrom: jest.fn(),
+}));
 
 // The repo-wide jest mapping stubs @grafana/assistant with no-op fns, so give
 // createAssistantContextItem a fake that mirrors the real factory's shape.
@@ -102,13 +107,15 @@ describe('openTemplateInAssistant', () => {
     push.mockRestore();
   });
 
-  it('opens the template page, then hands the template to the Assistant without a planning item', () => {
-    const templateItem: ChatContextItem = {
-      node: { id: 'template-red', name: 'RED metrics', navigable: false },
-      occurrences: [],
-    };
+  const templateItem: ChatContextItem = {
+    node: { id: 'template-red', name: 'RED metrics', navigable: false },
+    occurrences: [],
+  };
 
-    openTemplateInAssistant({
+  it('opens the template page, then hands the template to the Assistant without a planning item', async () => {
+    jest.mocked(getTemplateStartFrom).mockResolvedValue(undefined);
+
+    await openTemplateInAssistant({
       templateUrl: '/dashboard/template?gnetId=1',
       prompt: 'add a latency panel',
       context: [templateItem],
@@ -123,6 +130,31 @@ describe('openTemplateInAssistant', () => {
       context: [templateItem],
     });
     expect(push.mock.invocationCallOrder[0]).toBeLessThan(openAssistantMock.mock.invocationCallOrder[0]);
+  });
+
+  it('has the Assistant start from the template without opening its page, where it can', async () => {
+    const startFrom = {
+      spec: { title: 'RED metrics', elements: {}, layout: { kind: 'GridLayout', spec: { items: [] } } },
+      query: { creationOrigin: 'dashboard_library_template_dashboard' },
+    };
+    jest.mocked(getTemplateStartFrom).mockResolvedValue(startFrom);
+
+    await openTemplateInAssistant({
+      templateUrl: '/dashboard/template?gnetId=1',
+      prompt: 'add a latency panel',
+      context: [templateItem],
+    });
+
+    expect(getTemplateStartFrom).toHaveBeenCalledWith('/dashboard/template?gnetId=1');
+    expect(push).not.toHaveBeenCalled();
+    expect(openAssistantMock).toHaveBeenCalledWith({
+      origin: PROMPT_ORIGIN,
+      mode: 'dashboarding',
+      autoSend: true,
+      prompt: 'add a latency panel',
+      context: [templateItem],
+      startFrom,
+    });
   });
 });
 

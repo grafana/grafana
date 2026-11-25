@@ -22,6 +22,7 @@ export const AssistantPromptCardView = jest.fn().mockReturnValue(null);
 // Additional exports that may be used
 export const toggleAssistant = jest.fn();
 export const isAssistantAvailable = jest.fn(() => of(false));
+export const isStartFromAvailable = jest.fn(() => false);
 
 // Type exports (if needed
 export type AssistantHook = ReturnType<typeof useAssistant>;

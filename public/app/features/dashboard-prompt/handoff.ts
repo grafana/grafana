@@ -1,5 +1,6 @@
 import { createAssistantContextItem, type ChatContextItem, openAssistant } from '@grafana/assistant';
 import { locationService } from '@grafana/runtime';
+import { getTemplateStartFrom } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/templateStartFrom';
 
 import { PROMPT_ORIGIN, MAX_LISTED_DATASOURCES, formatDashboardRefs, formatDatasources } from './prompts';
 import { type PromptDashboardRef, type PromptDatasource } from './types';
@@ -60,20 +61,25 @@ interface OpenTemplateArgs {
 }
 
 /**
- * Starts from a picked template the way the template modal does: opens it as Use template does (a Grafana template
- * on TestData, a custom template on its own data sources), then has the Assistant adapt the open dashboard, as
- * Customize with Assistant does. There is no plan card: an accepted plan builds a new dashboard with
- * create_dashboard, which would replace the open template.
+ * Starts from a picked template the way the template modal does: the template as Use template opens it (a Grafana
+ * template on TestData, a custom template on its own data sources), which the Assistant adapts, as Customize with
+ * Assistant does. Where the Assistant can, it keeps the template as the conversation's draft and opens that, so the
+ * template's own page never shows; otherwise the template's page opens first. There is no plan card: an accepted
+ * plan builds a new dashboard with create_dashboard, which would replace the template.
  */
-export function openTemplateInAssistant({ templateUrl, prompt, context }: OpenTemplateArgs): void {
-  // Navigate before opening, so the Assistant is less likely to note the blank dashboard as the current page.
-  locationService.push(templateUrl);
+export async function openTemplateInAssistant({ templateUrl, prompt, context }: OpenTemplateArgs): Promise<void> {
+  const startFrom = await getTemplateStartFrom(templateUrl);
+  if (!startFrom) {
+    // Navigate before opening, so the Assistant is less likely to note the blank dashboard as the current page.
+    locationService.push(templateUrl);
+  }
   openAssistant({
     origin: PROMPT_ORIGIN,
     mode: 'dashboarding',
     autoSend: true,
     prompt,
     context,
+    startFrom,
   });
 }
 

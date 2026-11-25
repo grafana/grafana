@@ -748,6 +748,30 @@ describe('DashboardCard', () => {
       expect(mockOnClick).toHaveBeenCalledTimes(1);
     });
 
+    it('hands what the Assistant opens with to onCustomizeWithAssistant instead of opening it', async () => {
+      const onCustomizeWithAssistant = jest.fn();
+      const { user } = render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          onClose={mockOnClose}
+          onCustomizeWithAssistant={onCustomizeWithAssistant}
+          kind="template_dashboard"
+          showAssistantButton
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: /Customize with Assistant/i }));
+
+      expect(onCustomizeWithAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({ origin: 'dashboard-library/use-dashboard', mode: 'dashboarding', autoSend: true })
+      );
+      expect(mockOnClose).toHaveBeenCalledTimes(1);
+      expect(mockOpenAssistant).not.toHaveBeenCalled();
+      expect(mockOnClick).not.toHaveBeenCalled();
+    });
+
     it('should call onClose when Assistant button is clicked', async () => {
       const { user } = render(
         <DashboardCard
