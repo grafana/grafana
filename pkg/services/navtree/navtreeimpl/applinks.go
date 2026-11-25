@@ -20,7 +20,7 @@ import (
 const assertsServicesPath = "/a/grafana-asserts-app/services"
 const appObservabilityAppID = "grafana-app-observability-app"
 const assistantAppID = "grafana-assistant-app"
-const assistantOnboardingAppID = "grafana-assistantonboarding-app"
+const assistantOnboardingAppID = "grafana-assistant-onboarding-app"
 const assistantAppHomePath = "/a/" + assistantAppID
 
 var assistantOSSNavigationPaths = map[string]struct{}{
