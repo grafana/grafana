@@ -48,7 +48,7 @@ export function useMountedCoauthoringPanel(
   }, [select]);
   const enabled = useSyncExternalStore(subscribeCoauthoringFlags, isQueryCoauthoringEnabled);
   const active = useSyncExternalStore(subscribeToCoauthoring, isQueryCoauthoringSurfaceActive);
-  const supportKey = getSupportKey(queries, getQueryRunnerFor(panel)?.state.datasource);
+  const supportKey = active ? getSupportKey(queries, getQueryRunnerFor(panel)?.state.datasource) : '';
   const lastScan = useRef<
     { key: string; resolverVersion: number; supported: Set<string>; complete: boolean; failed: boolean } | undefined
   >(undefined);
