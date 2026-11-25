@@ -3189,15 +3189,15 @@
         },
         "group-name": "Evaluation group name",
         "group-text": "All rules in the selected group are evaluated every {{evaluateEvery}}.",
+        "grouped-rule-description": "This rule is in an evaluation group, which sets the interval for every rule in it. Evaluation groups are being retired: new rules get their own interval.",
         "interval-label": "Evaluation interval",
         "new-group": "New evaluation group",
         "pause": {
           "alerting": "Turn on to pause evaluation for this alert rule.",
           "recording": "Turn on to pause evaluation for this recording rule."
         },
-        "retired-group": "This rule used to belong to an evaluation group. It now belongs directly to its folder, and its evaluation interval is set on the rule.",
-        "retired-group-title": "Evaluation groups are retired",
-        "select-folder-first-tooltip": "Select a folder first"
+        "select-folder-first-tooltip": "Select a folder first",
+        "ungrouped-rule-description": "This rule has its own evaluation interval. Rules created before evaluation groups were retired may still be in a group, where the group sets the interval."
       },
       "evaluation-behaviour": {
         "description": {

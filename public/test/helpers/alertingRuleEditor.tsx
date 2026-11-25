@@ -63,9 +63,7 @@ export function renderRuleEditor(
   const newAlertRuleRoute =
     `/alerting/new/${recording ?? 'alerting'}` +
     (isManualRestore ? `?isManualRestore=true&defaults=${restoreFromEncoded}` : '');
-  // An identifier may carry a query string, e.g. `uid?kind=recording`.
-  const [id, query] = identifier?.split('?') ?? [];
-  const initialEntries = [id ? `/alerting/${id}/edit${query ? `?${query}` : ''}` : newAlertRuleRoute];
+  const initialEntries = [identifier ? `/alerting/${identifier}/edit` : newAlertRuleRoute];
   return render(
     <>
       <AppNotificationList />

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, type SubmitErrorHandler, type UseFormWatch, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { type AlertRule, type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { generatedAPI as rulesAPIv0alpha1 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -21,6 +21,7 @@ import {
   isGrafanaManagedRuleByType,
   isPausedRule,
   isRecordingRuleByType,
+  isUngroupedRuleGroup,
   rulerRuleType,
 } from 'app/features/alerting/unified/utils/rules';
 import { isExpressionQuery } from 'app/features/expressions/guards';
@@ -57,7 +58,6 @@ import {
   areQueriesTransformableToSimpleCondition,
   isExpressionQueryInAlert,
 } from '../../../rule-editor/formProcessing';
-import { belongedToGroup } from '../../../rule-editor/useK8sRuleWithLocation';
 import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { rulesNav } from '../../../utils/navigation';
@@ -84,13 +84,11 @@ import { legacyRuleCacheTagsForUid } from './formValuesToAppPlatform';
 
 type Props = {
   existing?: RuleWithLocation;
-  // The rules API resource the rule was loaded from, when it was loaded from there.
-  existingResource?: AlertRule | RecordingRule;
   prefill?: Partial<RuleFormValues>; // Existing implies we modify existing rule. Prefill only provides default form values
   isManualRestore?: boolean;
 };
 
-export const AlertRuleForm = ({ existing, existingResource, prefill, isManualRestore }: Props) => {
+export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => {
   const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();
   const dispatch = useDispatch();
@@ -181,18 +179,17 @@ export const AlertRuleForm = ({ existing, existingResource, prefill, isManualRes
 
     const errorTitle = t('alerting.alert-rule-form.error-title', 'Failed to save alert rule');
 
-    if (grafanaTypeRule && shouldUseGmaOnlyListView()) {
+    // Rules still in an evaluation group are saved through the ruler API so they stay in their group.
+    const isInEvaluationGroup = Boolean(existing && !isUngroupedRuleGroup(existing.group.name));
+
+    if (grafanaTypeRule && shouldUseGmaOnlyListView() && !isInEvaluationGroup) {
       try {
         if (!existing) {
           storeInLocalStorageValues(values);
         }
 
         const existingUid = existing ? getRuleUID(existing.rule) : undefined;
-        const savedUid = await upsertUngroupedGrafanaRule({
-          values,
-          existingUid,
-          resourceVersion: existingResource?.metadata.resourceVersion,
-        });
+        const savedUid = await upsertUngroupedGrafanaRule({ values, existingUid });
 
         dispatch(alertingApi.util.invalidateTags(legacyRuleCacheTagsForUid(savedUid)));
         notifyApp.success(
@@ -246,6 +243,9 @@ export const AlertRuleForm = ({ existing, existingResource, prefill, isManualRes
           targetRuleGroupIdentifier,
           evaluateEvery
         );
+        if (shouldUseGmaOnlyListView()) {
+          dispatch(rulesAPIv0alpha1.util.invalidateTags(['AlertRule', 'RecordingRule']));
+        }
       }
 
       redirectToDetailsPage(ruleDefinition, targetRuleGroupIdentifier, saveResult);
@@ -316,11 +316,7 @@ export const AlertRuleForm = ({ existing, existingResource, prefill, isManualRes
 
                 {/* Step 4 & 5 & 6*/}
                 {isGrafanaManagedRuleByType(type) && (
-                  <GrafanaEvaluationBehaviorStep
-                    existing={Boolean(existing)}
-                    enableProvisionedGroups={false}
-                    belongedToGroup={belongedToGroup(existingResource)}
-                  />
+                  <GrafanaEvaluationBehaviorStep existing={Boolean(existing)} enableProvisionedGroups={false} />
                 )}
                 {/* Notifications step*/}
                 <NotificationsStep alertUid={uidFromParams} />
