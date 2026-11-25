@@ -11,7 +11,10 @@ type Props = {
   onWriteSuccess?: () => void;
   /** Runs before the redirect to the pull-request banner when the change is pushed to a branch. */
   onBranchSaved?: () => void;
-} & ({ action: 'create'; repositoryName: string } | { action: 'update' | 'delete'; repositoryName?: never });
+} & (
+  | { action: 'create'; repositoryName: string; folderPath?: string }
+  | { action: 'update' | 'delete'; repositoryName?: never; folderPath?: never }
+);
 
 /** Commits a library panel to its repository through the shared provisioning drawer. */
 export function SaveProvisionedLibraryPanelDrawer({ panel, ...props }: Props) {

@@ -9,8 +9,9 @@ import { type LibraryPanel } from '@grafana/schema';
 import { Button, Field, Input, Stack } from '@grafana/ui';
 import { isK8sLibraryPanelsClientEnabled } from 'app/api/clients/dashboard/v0alpha1/libraryPanels';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { RepositorySelect } from 'app/features/provisioning/components/Shared/RepositorySelect';
+import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { useResourceRepositorySelection } from 'app/features/provisioning/hooks/useResourceRepositorySelection';
+import { getSaveTarget, useSaveRepositoryView } from 'app/features/provisioning/hooks/useSaveRepositoryView';
 import { resourceKindInfos } from 'app/features/provisioning/utils/resourceKinds';
 
 import { type PanelModel } from '../../../dashboard/state/PanelModel';
@@ -38,11 +39,16 @@ export const AddLibraryPanelContents = ({
   const [panelName, setPanelName] = useState(panel.title);
   const [debouncedPanelName, setDebouncedPanelName] = useState(panel.title);
   const [waiting, setWaiting] = useState(false);
-  const { isAvailable, repositories } = useResourceRepositorySelection(resourceKindInfos.librarypanel);
+  const { isAvailable } = useResourceRepositorySelection(resourceKindInfos.librarypanel);
   // Repository ownership is only visible through the app-platform client, which keeps the annotations.
-  const { value: k8sClientEnabled } = useAsync(isK8sLibraryPanelsClientEnabled, []);
-  // No selection = save to Grafana; a repository name routes the save through the provisioning drawer.
-  const [repositoryName, setRepositoryName] = useState('');
+  const k8sClient = useAsync(isK8sLibraryPanelsClientEnabled, []);
+  // The panel is committed to the repository that manages its folder, like a new dashboard. The
+  // root of a folderless repository could go either way, and keeps the Grafana save.
+  const folderView = useSaveRepositoryView({ folderUid, isNew: true });
+  const repositoryName =
+    isAvailable && k8sClient.value && getSaveTarget(folderView, 'database') === 'repository'
+      ? folderView.repository?.name
+      : undefined;
   const [provisionedPanel, setProvisionedPanel] = useState<Pick<LibraryPanel, 'uid' | 'name' | 'model'>>();
 
   useEffect(() => setWaiting(true), [panelName]);
@@ -81,13 +87,8 @@ export const AddLibraryPanelContents = ({
     }
   }, [debouncedPanelName, folderUid]);
 
-  // A repository create places the panel by its file path, not by the folder checked here.
   const invalidInput =
-    !repositoryName &&
-    !isValidName?.value &&
-    isValidName.value !== undefined &&
-    panelName === debouncedPanelName &&
-    !waiting;
+    !isValidName?.value && isValidName.value !== undefined && panelName === debouncedPanelName && !waiting;
 
   return (
     <Stack direction="column" gap={2}>
@@ -105,25 +106,21 @@ export const AddLibraryPanelContents = ({
           onChange={(e) => setPanelName(e.currentTarget.value)}
         />
       </Field>
-      {isAvailable && k8sClientEnabled && (
-        <RepositorySelect repositories={repositories} value={repositoryName} onChange={setRepositoryName} />
-      )}
-      {!repositoryName && (
-        <Field
-          noMargin
-          label={t('library-panel.add-modal.folder', 'Save in folder')}
-          description={t(
-            'library-panel.add-modal.folder-description',
-            'Library panel permissions are derived from the folder permissions'
-          )}
-        >
-          <FolderPicker onChange={(uid) => setFolderUid(uid)} value={folderUid} />
-        </Field>
-      )}
+      <Field
+        noMargin
+        label={t('library-panel.add-modal.folder', 'Save in folder')}
+        description={t(
+          'library-panel.add-modal.folder-description',
+          'Library panel permissions are derived from the folder permissions'
+        )}
+      >
+        <FolderPicker onChange={(uid) => setFolderUid(uid)} value={folderUid} />
+      </Field>
       <Stack gap={1} justifyContent={'start'}>
         <Button
           onClick={onCreate}
-          disabled={invalidInput}
+          // Until the folder's repository is known, the save could go to the wrong place.
+          disabled={invalidInput || Boolean(folderView.isLoading) || k8sClient.loading}
           data-testid={selectors.components.Drawer.NewLibraryPanelDrawer.createButton}
         >
           <Trans i18nKey="share-panel.new-library-panel.create-button">Create library panel</Trans>
@@ -132,10 +129,12 @@ export const AddLibraryPanelContents = ({
           <Trans i18nKey="share-panel.new-library-panel.cancel-button">Cancel</Trans>
         </Button>
       </Stack>
-      {provisionedPanel && (
+      {provisionedPanel && repositoryName && (
         <SaveProvisionedLibraryPanelDrawer
           action="create"
           repositoryName={repositoryName}
+          // The file goes in the folder's directory, so the panel stays in the folder it was created in.
+          folderPath={folderView.folder?.metadata?.annotations?.[AnnoKeySourcePath]}
           panel={provisionedPanel}
           onDismiss={() => setProvisionedPanel(undefined)}
           onWriteSuccess={() => {

@@ -295,6 +295,34 @@ describe('SaveProvisionedResourceDrawer', () => {
       expect(body.metadata?.name).toMatch(/^[a-z0-9]{12}$/);
     });
 
+    it('starts the new file inside the given folder path', async () => {
+      server.use(
+        http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          capturedRequest = { url: new URL(request.url), body: await request.json() };
+          return HttpResponse.json({ resource: { upsert: {} } });
+        })
+      );
+
+      const { user } = render(
+        <SaveProvisionedResourceDrawer
+          resource={newPlaylist}
+          title={newPlaylist.spec?.title ?? ''}
+          action="create"
+          repositoryName="test-repo"
+          folderPath="team/"
+          redirectUrl="/redirect-target"
+          onDismiss={jest.fn()}
+        />
+      );
+
+      await user.click(await screen.findByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => expect(capturedRequest).not.toBeNull());
+      expect(requireCapturedRequest(capturedRequest).url.pathname).toMatch(
+        /\/repositories\/test-repo\/files\/team\/my-new-playlist\.json$/
+      );
+    });
+
     it('commits to the path the user edits in the drawer', async () => {
       server.use(
         http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {

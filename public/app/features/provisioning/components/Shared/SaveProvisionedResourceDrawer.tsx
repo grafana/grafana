@@ -29,7 +29,7 @@ import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { getCanPushToConfiguredBranch, getDefaultRef } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
-import { slugifyForFilename } from '../utils/path';
+import { joinPath, slugifyForFilename } from '../utils/path';
 
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 
@@ -54,8 +54,8 @@ type ProvisionedResource = ManagedResource & {
 const generateResourceName = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 12);
 
 /** Builds the repository file path for a new resource from its title, falling back to the kind key. */
-function getNewResourcePath(title: string, kindKey: string): string {
-  return `${slugifyForFilename(title) || kindKey}.json`;
+function getNewResourcePath(title: string, kindKey: string, folderPath = ''): string {
+  return joinPath(folderPath, `${slugifyForFilename(title) || kindKey}.json`);
 }
 
 interface BaseDrawerProps {
@@ -100,9 +100,14 @@ interface BaseDrawerProps {
  * `action` + `repositoryName` are a discriminated union: `create` requires a `repositoryName` (a new
  * resource has no manager annotations yet, so they're synthesised for the chosen repository), while
  * `update`/`delete` resolve the repository from the existing resource's annotations and take none.
+ * A create may also take the repository directory of the folder the resource goes in, so the new
+ * file starts inside it.
  */
 export type SaveProvisionedResourceDrawerProps = BaseDrawerProps &
-  ({ action: 'create'; repositoryName: string } | { action: 'update' | 'delete'; repositoryName?: never });
+  (
+    | { action: 'create'; repositoryName: string; folderPath?: string }
+    | { action: 'update' | 'delete'; repositoryName?: never; folderPath?: never }
+  );
 
 interface FormProps {
   kind: ResourceKindInfo;
@@ -310,6 +315,7 @@ function ResourceDrawerContent({
   action,
   title,
   repositoryName,
+  folderPath,
   successMessage,
   readOnlyMessage,
   branchPrefix,
@@ -335,7 +341,7 @@ function ResourceDrawerContent({
           annotations: {
             [AnnoKeyManagerKind]: ManagerKind.Repo,
             [AnnoKeyManagerIdentity]: repositoryName ?? '',
-            [AnnoKeySourcePath]: getNewResourcePath(title, kind.key),
+            [AnnoKeySourcePath]: getNewResourcePath(title, kind.key, folderPath),
           },
         },
       }

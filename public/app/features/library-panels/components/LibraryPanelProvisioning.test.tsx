@@ -64,9 +64,26 @@ function settings({ disabled = false, workflows = ['write'] }: { disabled?: bool
   );
 }
 
-async function selectRepository(user: ReturnType<typeof render>['user']) {
-  await user.click(await screen.findByRole('combobox', { name: /Repository/ }));
-  await user.keyboard('{ArrowDown}{Enter}');
+// A folder synced from the `team` directory of the `panels` repository.
+const managedFolderUid = 'team';
+const managedFolder = {
+  apiVersion: 'folder.grafana.app/v1beta1',
+  kind: 'Folder',
+  metadata: {
+    name: managedFolderUid,
+    annotations: {
+      'grafana.app/managedBy': 'repo',
+      'grafana.app/managerId': 'panels',
+      'grafana.app/sourcePath': 'team',
+    },
+  },
+  spec: { title: 'Team' },
+};
+
+async function clickCreate(user: ReturnType<typeof render>['user']) {
+  const create = await screen.findByRole('button', { name: 'Create library panel' });
+  await waitFor(() => expect(create).toBeEnabled());
+  await user.click(create);
 }
 
 function disableK8sClient() {
@@ -88,6 +105,9 @@ beforeEach(() => {
   jest.spyOn(api, 'getConnectedDashboards').mockResolvedValue(null);
   settings();
   server.use(
+    http.get(`/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/${managedFolderUid}`, () =>
+      HttpResponse.json(managedFolder)
+    ),
     http.get('/apis', () =>
       HttpResponse.json({
         items: [
@@ -162,36 +182,39 @@ it('commits extra panel settings in status.missing when updating through Git', a
   expect(onDismiss).toHaveBeenCalledTimes(1);
 });
 
-it('keeps an unmanaged creation on the existing Grafana API path', async () => {
+it('keeps a creation in an unmanaged folder on the existing Grafana API path', async () => {
   const onCreated = jest.fn();
   const { user } = render(
     <AddLibraryPanelContents panel={new PanelModel({ title: 'CPU', type: 'text' })} onCreateLibraryPanel={onCreated} />
   );
-  const create = await screen.findByRole('button', { name: 'Create library panel' });
-  await waitFor(() => expect(create).toBeEnabled());
-  await user.click(create);
+  await clickCreate(user);
   await waitFor(() => expect(onCreated).toHaveBeenCalledWith(panel));
   expect(api.addLibraryPanel).toHaveBeenCalledTimes(1);
   expect(writes).toEqual([]);
 });
 
-it('creates in the selected repository and links the dashboard panel to the committed one', async () => {
+it("commits a creation in a managed folder to that folder's directory and links the dashboard panel", async () => {
   const onCreated = jest.fn();
   const onDismiss = jest.fn();
   const { user } = render(
     <AddLibraryPanelContents
       panel={new PanelModel({ title: 'CPU', type: 'text' })}
+      initialFolderUid={managedFolderUid}
       onCreateLibraryPanel={onCreated}
       onDismiss={onDismiss}
     />
   );
-  await selectRepository(user);
-  await user.click(screen.getByRole('button', { name: 'Create library panel' }));
+  await clickCreate(user);
   expect(await screen.findByRole('heading', { name: 'Save provisioned library panel' })).toBeInTheDocument();
   expect(onCreated).not.toHaveBeenCalled();
   await user.click(screen.getByRole('button', { name: /^save$/i }));
   await waitFor(() => expect(onCreated).toHaveBeenCalledTimes(1));
-  expect(writes.map((write) => write.method)).toEqual(['POST']);
+  expect(writes).toEqual([
+    expect.objectContaining({
+      method: 'POST',
+      path: expect.stringMatching(/\/repositories\/panels\/files\/team\/cpu\.json$/),
+    }),
+  ]);
   expect(onCreated).toHaveBeenCalledWith(
     expect.objectContaining({ uid: (writes[0].body as { metadata: { name: string } }).metadata.name, name: 'CPU' })
   );
@@ -202,9 +225,10 @@ it('creates in the selected repository and links the dashboard panel to the comm
 it('cancels repository creation without linking or changing the original panel', async () => {
   const model = new PanelModel({ title: 'CPU', type: 'text' });
   const onCreated = jest.fn();
-  const { user } = render(<AddLibraryPanelContents panel={model} onCreateLibraryPanel={onCreated} />);
-  await selectRepository(user);
-  await user.click(screen.getByRole('button', { name: 'Create library panel' }));
+  const { user } = render(
+    <AddLibraryPanelContents panel={model} initialFolderUid={managedFolderUid} onCreateLibraryPanel={onCreated} />
+  );
+  await clickCreate(user);
   const drawer = await screen.findByRole('dialog', { name: /Save provisioned library panel/ });
   await user.click(within(drawer).getByRole('button', { name: 'Cancel' }));
   await waitFor(() =>
@@ -221,22 +245,23 @@ it('omits repeated panel scoped variables from the Git create request', async ()
     type: 'text',
     scopedVars: { host: { text: 'host-a', value: 'host-a' } },
   });
-  const { user } = render(<AddLibraryPanelContents panel={model} />);
-  await selectRepository(user);
-  await user.click(screen.getByRole('button', { name: 'Create library panel' }));
+  const { user } = render(<AddLibraryPanelContents panel={model} initialFolderUid={managedFolderUid} />);
+  await clickCreate(user);
   await user.click(await screen.findByRole('button', { name: /^save$/i }));
   await waitFor(() => expect(writes).toHaveLength(1));
   expect(writes[0].body).not.toHaveProperty('status.missing.scopedVars');
 });
 
-it('does not apply the folder name check to a repository create', async () => {
-  jest.mocked(api.getLibraryPanelByName).mockResolvedValue([panel]);
-  const { user } = render(<AddLibraryPanelContents panel={new PanelModel({ title: 'CPU', type: 'text' })} />);
+it('rejects a name already used in the managed folder before opening the Git drawer', async () => {
+  jest.mocked(api.getLibraryPanelByName).mockResolvedValue([{ ...panel, folderUid: managedFolderUid }]);
+  render(
+    <AddLibraryPanelContents
+      panel={new PanelModel({ title: 'CPU', type: 'text' })}
+      initialFolderUid={managedFolderUid}
+    />
+  );
   expect(await screen.findByText('Library panel with this name already exists')).toBeInTheDocument();
-  await selectRepository(user);
-  expect(screen.queryByText('Library panel with this name already exists')).not.toBeInTheDocument();
-  expect(screen.queryByText('Save in folder')).not.toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Create library panel' })).toBeEnabled();
+  expect(screen.getByRole('button', { name: 'Create library panel' })).toBeDisabled();
 });
 
 it.each([
@@ -248,17 +273,19 @@ it.each([
   },
   { gate: 'kind disabled', setup: () => settings({ disabled: true }) },
   { gate: 'client disabled', setup: disableK8sClient },
-])('does not offer repository creation with $gate', async ({ setup }) => {
+])('saves in Grafana even in a managed folder with $gate', async ({ setup }) => {
   setup();
   const onCreated = jest.fn();
   const { user } = render(
-    <AddLibraryPanelContents panel={new PanelModel({ title: 'CPU', type: 'text' })} onCreateLibraryPanel={onCreated} />
+    <AddLibraryPanelContents
+      panel={new PanelModel({ title: 'CPU', type: 'text' })}
+      initialFolderUid={managedFolderUid}
+      onCreateLibraryPanel={onCreated}
+    />
   );
-  const create = await screen.findByRole('button', { name: 'Create library panel' });
-  await waitFor(() => expect(create).toBeEnabled());
-  await user.click(create);
+  await clickCreate(user);
   await waitFor(() => expect(onCreated).toHaveBeenCalledWith(panel));
-  expect(screen.queryByRole('combobox', { name: /Repository/ })).not.toBeInTheDocument();
+  expect(api.addLibraryPanel).toHaveBeenCalledTimes(1);
   expect(writes).toEqual([]);
 });
 
