@@ -683,6 +683,8 @@ Leave empty when using `database` and Grafana uses the primary database.
 
 ##### `redis`
 
+The `redis` type works with Redis-compatible servers that use the Redis protocol, such as Valkey and KiviDB. Grafana uses only the `GET`, `SET EX`, and `DEL` commands for the remote cache, but you should test your server and version with your Grafana deployment before using it in production.
+
 Example connection string: `network=tcp,addr=127.0.0.1:6379,pool_size=100,db=0,username=grafana,password=grafanaRocks,ssl=false`
 
 - `network` (optional) can be `tcp` or `unix`.
