@@ -1,42 +1,25 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useSyncExternalStore } from 'react';
 
-import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
-import { contextSrv } from 'app/core/services/context_srv';
-import { type DashboardQueryResult } from 'app/features/search/service/types';
+import { useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
+import { subscribeToAppKinds } from 'app/core/kinds/coreKinds';
+import { type DashboardQueryResult, type SearchRow } from 'app/features/search/service/types';
 import { useDispatch } from 'app/types/store';
 
 import { refetchStarred, useSearchStarredQuery } from './api';
 import { refetchStarredAppKinds, useSearchStarredAppKindsQuery } from './kindSearch';
 import { getStarredAppKinds, STARRED_INDEX_KINDS, type StarredKind } from './kinds';
-import { canUseStars, findStarredNames, userStarsFieldSelector } from './utils';
-
-/** Star or unstar the item with this id. Every starred view follows the `Stars` cache the mutation invalidates. */
-export const useStarItem = (group: string, kind: string) => {
-  const [addStar] = useAddStarMutation();
-  const [removeStar] = useRemoveStarMutation();
-
-  return async (id: string, newStarredState: boolean) => {
-    const name = `user-${contextSrv.user.uid}`;
-    const mutationArgs = { id, name, group, kind };
-    try {
-      if (newStarredState) {
-        await addStar(mutationArgs).unwrap();
-      } else {
-        await removeStar(mutationArgs).unwrap();
-      }
-    } catch {
-      // The mutation's own onQueryStarted reports the failure, and the star set keeps the value the server kept.
-    }
-  };
-};
+import { byTitle, canUseStars, findStarredNames, STAR_SET_SUBSCRIPTION, userStarsFieldSelector } from './utils';
 
 /**
  * Get starred items from the app platform API
  */
 export const useStarredItems = (group: string, kind: string) => {
   const canStar = canUseStars();
-  const response = useListStarsQuery(canStar ? { fieldSelector: userStarsFieldSelector() } : skipToken);
+  const response = useListStarsQuery(
+    canStar ? { fieldSelector: userStarsFieldSelector() } : skipToken,
+    STAR_SET_SUBSCRIPTION
+  );
 
   // Keyed on the response data, not the response: a refetch that returns the same stars keeps the same array.
   const { data, isLoading, isUninitialized } = response;
@@ -70,16 +53,16 @@ export const useStarredItems = (group: string, kind: string) => {
 /** The settled rows of a user without a stars resource; one array, so views keyed on the rows keep their memos */
 const NO_STARRED_ROWS: DashboardQueryResult[] = [];
 
-// Created once, not per sort
-const collator = new Intl.Collator();
-
 /**
  * The star set as the argument of a starred search: the starred names of each of `kinds` that has any, by search
  * kind. Names are sorted, so the argument is the set and not the order the API listed it in. Undefined until the
  * set is read, which `skip` and a user without a stars resource never do.
  */
 const useStarredNames = (kinds: readonly StarredKind[], skip = false) => {
-  const stars = useListStarsQuery(skip || !canUseStars() ? skipToken : { fieldSelector: userStarsFieldSelector() });
+  const stars = useListStarsQuery(
+    skip || !canUseStars() ? skipToken : { fieldSelector: userStarsFieldSelector() },
+    STAR_SET_SUBSCRIPTION
+  );
   const names = useMemo(
     () =>
       stars.data &&
@@ -97,9 +80,10 @@ const useStarredNames = (kinds: readonly StarredKind[], skip = false) => {
  * cache every star toggle invalidates and the search is keyed by it, so a toggle anywhere re-searches while the
  * previous rows stay up. Every caller shares one cache entry per star set; a view cuts the rows it shows after
  * sorting them. `skip` leaves both requests unmade for a view that does not render stars, and a user without a
- * stars resource never makes them; `refetchOnMountOrArgChange` searches again on each mount, for a view that must
- * not show rows renamed or deleted from another tab. `refetch` re-runs both requests; it is stable, so a view can
- * call it from an effect on its own refresh schedule.
+ * stars resource never makes them. The star set is read and its rows searched again when the window regains focus:
+ * a star, rename or delete made in another tab, or by someone else, is reported to no one here.
+ * `refetchOnMountOrArgChange` searches again on each mount as well. `refetch` re-runs both requests; it is stable,
+ * so a view can call it from an effect on its own refresh schedule.
  */
 export const useStarredDashboardsAndFolders = ({
   skip,
@@ -107,7 +91,7 @@ export const useStarredDashboardsAndFolders = ({
 }: { skip?: boolean; refetchOnMountOrArgChange?: boolean } = {}) => {
   const canStar = canUseStars();
   const { stars, names } = useStarredNames(STARRED_INDEX_KINDS, skip);
-  const search = useSearchStarredQuery(names ?? skipToken, { refetchOnMountOrArgChange });
+  const search = useSearchStarredQuery(names ?? skipToken, { refetchOnMountOrArgChange, refetchOnFocus: true });
   const dispatch = useDispatch();
   const refetch = useCallback(() => dispatch(refetchStarred()), [dispatch]);
 
@@ -131,16 +115,18 @@ export const useStarredDashboardsAndFolders = ({
  */
 export const useStarredSearch = ({ refetchOnMountOrArgChange }: { refetchOnMountOrArgChange?: boolean } = {}) => {
   const indexed = useStarredDashboardsAndFolders({ refetchOnMountOrArgChange });
+  // A plugin adds its kinds when its module loads, which may be after this view rendered, so they are followed
+  const appKinds = useSyncExternalStore(subscribeToAppKinds, getStarredAppKinds);
   // A set without an app object is searched too, with no request: its empty rows replace those of the set before
-  const { names } = useStarredNames(getStarredAppKinds());
-  const apps = useSearchStarredAppKindsQuery(names ?? skipToken, { refetchOnMountOrArgChange });
+  const { names } = useStarredNames(appKinds);
+  const apps = useSearchStarredAppKindsQuery(names ?? skipToken, { refetchOnMountOrArgChange, refetchOnFocus: true });
 
-  const rows = useMemo(() => {
+  const rows = useMemo((): SearchRow[] | undefined => {
     if (!apps.data?.length) {
       return indexed.rows;
     }
     // Each search answers in its own order; sorted together, every kind reads as one list
-    return [...(indexed.rows ?? []), ...apps.data].sort((a, b) => collator.compare(a.name, b.name));
+    return [...(indexed.rows ?? []), ...apps.data].sort(byTitle);
   }, [indexed.rows, apps.data]);
   const dispatch = useDispatch();
   const { refetch: refetchIndexed } = indexed;

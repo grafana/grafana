@@ -15,14 +15,14 @@ import (
 func TestBuildReadyConditionFromHealth(t *testing.T) {
 	tests := []struct {
 		name           string
-		healthStatus   provisioning.HealthStatus
+		healthStatus   provisioning.RepositoryHealthStatus
 		expectedStatus metav1.ConditionStatus
 		expectedReason string
 		expectedMsg    string
 	}{
 		{
 			name: "healthy status creates Ready=True condition",
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: true,
 				Checked: time.Now().UnixMilli(),
 			},
@@ -32,7 +32,7 @@ func TestBuildReadyConditionFromHealth(t *testing.T) {
 		},
 		{
 			name: "unhealthy status creates Ready=False condition",
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Checked: time.Now().UnixMilli(),
 				Message: []string{"connection failed"},
@@ -43,7 +43,7 @@ func TestBuildReadyConditionFromHealth(t *testing.T) {
 		},
 		{
 			name: "unhealthy with no message uses default message",
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Checked: time.Now().UnixMilli(),
 			},
@@ -53,7 +53,7 @@ func TestBuildReadyConditionFromHealth(t *testing.T) {
 		},
 		{
 			name: "unhealthy with multiple messages uses first message",
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Checked: time.Now().UnixMilli(),
 				Message: []string{"first error", "second error"},
