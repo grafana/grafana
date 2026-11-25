@@ -1,3 +1,4 @@
+import { useMergeRefs } from '@floating-ui/react';
 import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -32,10 +33,6 @@ interface TestProps extends UseSplitterOptions {
 function TestSplitter({ primaryWidth, containerWidth, showPanes = true, ...options }: TestProps) {
   const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter(options);
 
-  if (!showPanes) {
-    return null;
-  }
-
   const stubWidth = (width: number) => (el: HTMLDivElement | null) => {
     if (el) {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -53,29 +50,19 @@ function TestSplitter({ primaryWidth, containerWidth, showPanes = true, ...optio
     }
   };
 
+  const containerRef = useMergeRefs([containerProps.ref, stubWidth(containerWidth)]);
+  const primaryRef = useMergeRefs([primaryProps.ref, stubWidth(primaryWidth)]);
+  const secondaryRef = useMergeRefs([secondaryProps.ref, stubWidth(containerWidth - primaryWidth)]);
+
+  if (!showPanes) {
+    return null;
+  }
+
   return (
-    <div
-      {...containerProps}
-      ref={(el) => {
-        stubWidth(containerWidth)(el);
-        containerProps.ref.current = el;
-      }}
-    >
-      <div
-        {...primaryProps}
-        ref={(el) => {
-          stubWidth(primaryWidth)(el);
-          primaryProps.ref.current = el;
-        }}
-      />
+    <div {...containerProps} ref={containerRef}>
+      <div {...primaryProps} ref={primaryRef} />
       <div {...splitterProps} />
-      <div
-        {...secondaryProps}
-        ref={(el) => {
-          stubWidth(containerWidth - primaryWidth)(el);
-          secondaryProps.ref.current = el;
-        }}
-      />
+      <div {...secondaryProps} ref={secondaryRef} />
     </div>
   );
 }

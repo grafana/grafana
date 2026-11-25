@@ -11,20 +11,20 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 //go:generate mockery --name GithubFactory --structname MockGithubFactory --inpackage --filename factory_mock.go --with-expecter
 type GithubFactory interface {
-	New(ctx context.Context, ghToken common.RawSecureValue, opts ...ClientOption) (Client, error)
+	New(ctx context.Context, ghToken resource.RawSecureValue, opts ...ClientOption) (Client, error)
 }
 
 type ConnectionSecrets struct {
-	PrivateKey common.RawSecureValue
-	Token      common.RawSecureValue
+	PrivateKey resource.RawSecureValue
+	Token      resource.RawSecureValue
 }
 
 // ConnectionConfig exposes the GitHub parameters a connection needs. The github.com
@@ -352,7 +352,7 @@ func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisio
 	}
 
 	return &connection.ExpirableSecureValue{
-		Token:     common.RawSecureValue(installationToken.Token),
+		Token:     resource.RawSecureValue(installationToken.Token),
 		ExpiresAt: installationToken.ExpiresAt,
 	}, nil
 }
@@ -374,7 +374,7 @@ func (c *Connection) ListRepositories(ctx context.Context) ([]provisioning.Exter
 		return nil, fmt.Errorf("failed to create installation access token: %w", err)
 	}
 
-	installationGhClient, err := c.ghFactory.New(ctx, common.RawSecureValue(token.Token), WithCustomServerURL(c.cfg.CustomServerURL()))
+	installationGhClient, err := c.ghFactory.New(ctx, resource.RawSecureValue(token.Token), WithCustomServerURL(c.cfg.CustomServerURL()))
 	if err != nil {
 		return nil, err
 	}

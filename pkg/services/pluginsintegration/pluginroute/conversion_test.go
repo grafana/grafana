@@ -63,7 +63,7 @@ func conversionPlugin() definition.PluginDefinition {
 	plugin.Manifests[0].Versions[1] = app.ManifestVersion{
 		Name: "v2alpha1", Served: true,
 		Kinds: []app.ManifestVersionKind{{
-			Kind: "TestKind", Plural: "TestKinds", Scope: "Namespaced",
+			Kind: "TestKind", Plural: "TestKinds", Resource: "testkinds", Scope: "Namespaced",
 			Schema: testSchema(), Conversion: true, FolderScoped: &folderScoped,
 		}},
 	}

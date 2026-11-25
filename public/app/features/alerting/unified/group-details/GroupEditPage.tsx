@@ -296,14 +296,11 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
       setMatchingGroupPageUrl(updatedGroupIdentifier);
     } catch (error) {
       const message = stringifyErrorLike(error);
-      const loggedError = error instanceof Error ? error : new Error(message);
-      logError(loggedError, {
+      logError(new Error('Failed to update rule group'), {
         operation: 'updateRuleGroup',
-        message,
         ...(isFetchError(error) && {
           status: String(error.status),
           statusText: error.statusText ?? '',
-          url: error.config?.url ?? '',
         }),
       });
       appInfo.error(t('alerting.group-edit.form.update-error', 'Failed to update rule group'), message);
@@ -319,75 +316,84 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)}>
-        {groupIdentifier.groupOrigin === 'datasource' && (
+        <Stack direction="column" gap={2}>
+          {groupIdentifier.groupOrigin === 'datasource' && (
+            <Field
+              noMargin
+              label={t('alerting.group-edit.form.namespace-label', 'Namespace')}
+              required
+              invalid={!!errors.namespace}
+              error={errors.namespace?.message}
+              className={styles.input}
+            >
+              <Input
+                id="namespace"
+                {...register('namespace', {
+                  required: t('alerting.group-edit.form.namespace-required', 'Namespace is required'),
+                })}
+              />
+            </Field>
+          )}
+          {groupIdentifier.groupOrigin === 'grafana' && (
+            <Field noMargin label={t('alerting.group-edit.form.folder-label', 'Folder')} required>
+              <Input id="folder" value={folder?.title ?? ''} readOnly />
+            </Field>
+          )}
           <Field
-            label={t('alerting.group-edit.form.namespace-label', 'Namespace')}
+            noMargin
+            label={t('alerting.group-edit.form.group-name-label', 'Evaluation group name')}
             required
-            invalid={!!errors.namespace}
-            error={errors.namespace?.message}
+            invalid={!!errors.name}
+            error={errors.name?.message}
             className={styles.input}
           >
             <Input
-              id="namespace"
-              {...register('namespace', {
-                required: t('alerting.group-edit.form.namespace-required', 'Namespace is required'),
+              id="group-name"
+              {...register('name', {
+                required: t('alerting.group-edit.form.group-name-required', 'Group name is required'),
               })}
             />
           </Field>
-        )}
-        {groupIdentifier.groupOrigin === 'grafana' && (
-          <Field label={t('alerting.group-edit.form.folder-label', 'Folder')} required>
-            <Input id="folder" value={folder?.title ?? ''} readOnly />
+          <Field
+            noMargin
+            label={t('alerting.group-edit.form.interval-label', 'Evaluation interval')}
+            description={t('alerting.group-edit.form.interval-description', 'How often is the group evaluated')}
+            invalid={!!errors.interval}
+            error={errors.interval?.message}
+            className={styles.input}
+            htmlFor="interval"
+          >
+            <>
+              <Input
+                id="interval"
+                {...register(
+                  'interval',
+                  evaluateEveryValidationOptions<GroupEditFormData, 'interval'>(rulerGroup.rules)
+                )}
+                className={styles.intervalInput}
+              />
+              <EvaluationGroupQuickPick
+                currentInterval={getValues('interval')}
+                onSelect={(value) => setValue('interval', value, { shouldValidate: true, shouldDirty: true })}
+              />
+            </>
           </Field>
-        )}
-        <Field
-          label={t('alerting.group-edit.form.group-name-label', 'Evaluation group name')}
-          required
-          invalid={!!errors.name}
-          error={errors.name?.message}
-          className={styles.input}
-        >
-          <Input
-            id="group-name"
-            {...register('name', {
-              required: t('alerting.group-edit.form.group-name-required', 'Group name is required'),
-            })}
-          />
-        </Field>
-        <Field
-          label={t('alerting.group-edit.form.interval-label', 'Evaluation interval')}
-          description={t('alerting.group-edit.form.interval-description', 'How often is the group evaluated')}
-          invalid={!!errors.interval}
-          error={errors.interval?.message}
-          className={styles.input}
-          htmlFor="interval"
-        >
-          <>
-            <Input
-              id="interval"
-              {...register('interval', evaluateEveryValidationOptions<GroupEditFormData, 'interval'>(rulerGroup.rules))}
-              className={styles.intervalInput}
-            />
-            <EvaluationGroupQuickPick
-              currentInterval={getValues('interval')}
-              onSelect={(value) => setValue('interval', value, { shouldValidate: true, shouldDirty: true })}
-            />
-          </>
-        </Field>
-        <Field
-          label={t('alerting.group-edit.form.rules-label', 'Alerting and recording rules')}
-          description={t('alerting.group-edit.form.rules-description', 'Drag rules to reorder')}
-        >
-          <DraggableRulesTable rules={rulerGroup.rules} groupInterval={groupIntervalOrDefault} onSwap={onSwap} />
-        </Field>
+          <Field
+            noMargin
+            label={t('alerting.group-edit.form.rules-label', 'Alerting and recording rules')}
+            description={t('alerting.group-edit.form.rules-description', 'Drag rules to reorder')}
+          >
+            <DraggableRulesTable rules={rulerGroup.rules} groupInterval={groupIntervalOrDefault} onSwap={onSwap} />
+          </Field>
 
-        <Stack>
-          <Button type="submit" disabled={isSubmitting} icon={isSubmitting ? 'spinner' : undefined}>
-            <Trans i18nKey="alerting.group-edit.form.save">Save</Trans>
-          </Button>
-          <LinkButton variant="secondary" disabled={isSubmitting} href={returnTo}>
-            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
-          </LinkButton>
+          <Stack>
+            <Button type="submit" disabled={isSubmitting} icon={isSubmitting ? 'spinner' : undefined}>
+              <Trans i18nKey="alerting.group-edit.form.save">Save</Trans>
+            </Button>
+            <LinkButton variant="secondary" disabled={isSubmitting} href={returnTo}>
+              <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+            </LinkButton>
+          </Stack>
         </Stack>
       </form>
       {groupIdentifier.groupOrigin === 'datasource' && (

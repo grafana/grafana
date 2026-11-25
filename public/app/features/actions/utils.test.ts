@@ -26,6 +26,8 @@ import {
   INFINITY_DATASOURCE_TYPE,
 } from './utils';
 
+jest.mock('./analytics', () => makeSpyable('./analytics'));
+
 jest.mock('../query/state/PanelQueryRunner', () => ({
   getNextRequestId: jest.fn(() => 'test-request-id-123'),
 }));

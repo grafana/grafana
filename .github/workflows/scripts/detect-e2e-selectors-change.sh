@@ -19,6 +19,9 @@ set -euo pipefail
 PACKAGE="${PACKAGE:-@grafana/e2e-selectors}"
 NPM_TAG="${NPM_TAG:-nightly}"
 PACKAGE_DIR="${PACKAGE_DIR:-packages/grafana-e2e-selectors}"
+# Files outside the package that change its build output or published manifest.
+# Quoted so git, not the shell, expands the glob; it must also match files deleted since PREV_SHA.
+SHARED_BUILD_PATHS=('packages/*.config.parts.ts' scripts/tsconfig.base.json scripts/prepare-npm-package.js)
 GIT_COMMIT="${GRAFANA_COMMIT:-HEAD}"
 
 # gitHead (source SHA) of the version currently behind the dist-tag.
@@ -46,21 +49,21 @@ if ! git rev-parse -q --verify "${PREV_SHA}^{commit}" >/dev/null 2>&1; then
   exit 0
 fi
 
-# Compare the package directory between the two commits.
+# Compare the package directory and shared build config between the two commits.
 # git diff --quiet exits 0 (identical), 1 (differs), or >1 (error -> fail open).
 set +e
-git diff --quiet "$PREV_SHA" "$GIT_COMMIT" -- "$PACKAGE_DIR"
+git diff --quiet "$PREV_SHA" "$GIT_COMMIT" -- "$PACKAGE_DIR" "${SHARED_BUILD_PATHS[@]}"
 STATUS=$?
 set -e
 
 case "$STATUS" in
   0)
-    echo "${PACKAGE_DIR} unchanged since ${PREV_SHA}; skipping publish." >&2
+    echo "${PACKAGE_DIR} and shared build config unchanged since ${PREV_SHA}; skipping publish." >&2
     echo "false"
     ;;
   1)
     echo "${PACKAGE_DIR} changed since ${PREV_SHA}; publishing. Changed files:" >&2
-    git diff --stat "$PREV_SHA" "$GIT_COMMIT" -- "$PACKAGE_DIR" >&2 || true
+    git diff --stat "$PREV_SHA" "$GIT_COMMIT" -- "$PACKAGE_DIR" "${SHARED_BUILD_PATHS[@]}" >&2 || true
     echo "true"
     ;;
   *)

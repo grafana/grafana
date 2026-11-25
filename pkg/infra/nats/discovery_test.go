@@ -100,7 +100,7 @@ func newTestDiscovery(t *testing.T, reg peerRegistry, self peer) *discovery {
 	}
 	return newDiscovery(log.NewNopLogger(), srv, reg, self, discoveryOptions{
 		reload:  reload,
-		metrics: newServerMetrics(prometheus.NewRegistry()),
+		metrics: newServerMetrics(prometheus.NewRegistry(), func() int { return 0 }),
 	})
 }
 

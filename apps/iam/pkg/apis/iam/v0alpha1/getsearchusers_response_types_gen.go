@@ -21,6 +21,8 @@ type GetSearchUsersUserHit struct {
 	AccessControl map[string]bool `json:"accessControl,omitempty"`
 	// Auth module identifiers the user is externally synced with.
 	ExternalAuthModules []string `json:"externalAuthModules,omitempty"`
+	// Display labels of the auth provider the user last signed in with, e.g. "LDAP".
+	AuthLabels []string `json:"authLabels,omitempty"`
 }
 
 // NewGetSearchUsersUserHit creates a new GetSearchUsersUserHit object.

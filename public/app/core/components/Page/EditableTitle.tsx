@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -21,10 +21,11 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
   const [errorMessage, setErrorMessage] = useState<string>();
   const shouldSkipBlurSubmit = useRef(false);
 
-  // sync local value with prop value
-  useEffect(() => {
+  const [prevValue, setPrevValue] = useState(value);
+  if (prevValue !== value) {
+    setPrevValue(value);
     setLocalValue(value);
-  }, [value]);
+  }
 
   const onCancel = () => {
     setLocalValue(value);

@@ -36,6 +36,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/applyconfiguration/provisioning/v0alpha1"
@@ -45,7 +46,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 type mockProvisioningV0alpha1Interface struct {
@@ -818,7 +818,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 	}
 	latestRef := "456"
 
-	largePolicy := repository.NewIncrementalSyncPolicy(false, 1000)
+	largePolicy := repository.NewIncrementalSyncPolicy(1000)
 
 	t.Run("should use incremental sync", func(t *testing.T) {
 		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return([]repository.VersionedFileChange{
@@ -845,7 +845,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 	})
 
 	t.Run("should use incremental sync when diff is one under the max size", func(t *testing.T) {
-		policy := repository.NewIncrementalSyncPolicy(false, 100)
+		policy := repository.NewIncrementalSyncPolicy(100)
 		changes := make([]repository.VersionedFileChange, 99)
 		for i := range changes {
 			changes[i] = repository.VersionedFileChange{Action: repository.FileActionCreated, Path: "dashboards/d.json"}
@@ -857,7 +857,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 	})
 
 	t.Run("should use incremental sync when diff is at the max size", func(t *testing.T) {
-		policy := repository.NewIncrementalSyncPolicy(false, 100)
+		policy := repository.NewIncrementalSyncPolicy(100)
 		changes := make([]repository.VersionedFileChange, 100)
 		for i := range changes {
 			changes[i] = repository.VersionedFileChange{Action: repository.FileActionCreated, Path: "dashboards/d.json"}
@@ -869,7 +869,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 	})
 
 	t.Run("should not use incremental sync when diff exceeds max size", func(t *testing.T) {
-		policy := repository.NewIncrementalSyncPolicy(false, 100)
+		policy := repository.NewIncrementalSyncPolicy(100)
 		changes := make([]repository.VersionedFileChange, 101)
 		for i := range changes {
 			changes[i] = repository.VersionedFileChange{Action: repository.FileActionCreated, Path: "dashboards/d.json"}
@@ -881,7 +881,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 	})
 
 	t.Run("should use incremental sync when max is zero (unlimited)", func(t *testing.T) {
-		policy := repository.NewIncrementalSyncPolicy(false, 0)
+		policy := repository.NewIncrementalSyncPolicy(0)
 		changes := make([]repository.VersionedFileChange, 1000)
 		for i := range changes {
 			changes[i] = repository.VersionedFileChange{Action: repository.FileActionCreated, Path: "dashboards/d.json"}
@@ -910,7 +910,7 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 	testCases := []struct {
 		name                     string
 		repo                     *provisioning.Repository
-		healthStatus             provisioning.HealthStatus
+		healthStatus             provisioning.RepositoryHealthStatus
 		hasHealthStatusChanged   bool
 		expectedUnhealthyMessage bool
 		description              string
@@ -931,7 +931,7 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 				},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.RepositoryHealthStatus{
 						Healthy: true,
 						Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
 					},
@@ -942,7 +942,7 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 					},
 				},
 			},
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHealth,
 				Checked: time.Now().UnixMilli(),
@@ -968,7 +968,7 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 				},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.RepositoryHealthStatus{
 						Healthy: false,
 						Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
 					},
@@ -979,7 +979,7 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 					},
 				},
 			},
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHealth,
 				Checked: time.Now().UnixMilli(),
@@ -1005,7 +1005,7 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 				},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.RepositoryHealthStatus{
 						Healthy: false,
 						Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
 					},
@@ -1016,7 +1016,7 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 					},
 				},
 			},
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.RepositoryHealthStatus{
 				Healthy: true,
 				Checked: time.Now().UnixMilli(),
 				Message: []string{},
@@ -1273,7 +1273,7 @@ func newIntervalController(t *testing.T, state provisioning.JobState) (*Reposito
 		},
 		Status: provisioning.RepositoryStatus{
 			ObservedGeneration: 1,
-			Health:             provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+			Health:             provisioning.RepositoryHealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
 			Sync: provisioning.SyncStatus{
 				State: state, JobID: "previous-job", LastRef: "same-ref",
 				Started:  time.Now().Add(-11 * time.Minute).UnixMilli(),
@@ -1306,7 +1306,7 @@ func newIntervalController(t *testing.T, state provisioning.JobState) (*Reposito
 		jobs:              &mockJobsQueueStore{MockQueue: jobs.NewMockQueue(t), MockStore: jobs.NewMockStore(t)},
 		logger:            logging.DefaultLogger,
 		tracer:            tracing.InitializeTracerForTest(),
-		incrementalPolicy: repository.NewIncrementalSyncPolicy(false, 1000),
+		incrementalPolicy: repository.NewIncrementalSyncPolicy(1000),
 	}
 	return rc, obj, repo, indexer, patcher
 }
@@ -1568,7 +1568,7 @@ func TestRepositoryController_FullSyncLastChecked(t *testing.T) {
 				Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Enabled: true}},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Health:             provisioning.HealthStatus{Healthy: !tt.recovered},
+					Health:             provisioning.RepositoryHealthStatus{Healthy: !tt.recovered},
 				},
 			}
 			if tt.initial {
@@ -1582,7 +1582,7 @@ func TestRepositoryController_FullSyncLastChecked(t *testing.T) {
 				repo = &intervalRepository{repo, repository.NewMockVersioned(t)}
 			}
 			rc := &RepositoryController{tracer: tracing.InitializeTracerForTest()}
-			health := provisioning.HealthStatus{Healthy: true}
+			health := provisioning.RepositoryHealthStatus{Healthy: true}
 			before := time.Now().UnixMilli()
 
 			opts := rc.determineSyncStrategy(context.Background(), obj, repo, tt.interval, false, health)
@@ -1615,7 +1615,7 @@ func TestRepositoryController_determineSyncStrategy_SkippedInterval(t *testing.T
 				Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Enabled: tt.enabled}},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Health:             provisioning.HealthStatus{Healthy: tt.healthy},
+					Health:             provisioning.RepositoryHealthStatus{Healthy: tt.healthy},
 				},
 			}
 			repo := &intervalRepository{repository.NewMockRepository(t), repository.NewMockVersioned(t)}
@@ -1873,7 +1873,7 @@ func TestRepositoryController_process_RepoIDBackfillGuardsAgainstStaleURL(t *tes
 			},
 			Status: provisioning.RepositoryStatus{
 				ObservedGeneration: 0, // Generation != ObservedGeneration triggers reconciliation.
-				Health:             provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+				Health:             provisioning.RepositoryHealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
 			},
 		}
 	}
@@ -2030,7 +2030,7 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 				},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.RepositoryHealthStatus{
 						Healthy: true,
 						Checked: time.Now().UnixMilli(),
 					},
@@ -2171,12 +2171,11 @@ func TestRepositoryController_process_UserCausedDeleteFailure(t *testing.T) {
 		tracer:        tracing.InitializeTracerForTest(),
 	}
 
-	_, err := rc.process("default/test-repo")
-	require.NoError(t, err, "a user-caused delete failure must not surface as a controller error")
+	assertRepositoryStatusFailurePreservesPendingQueueLag(t, rc, "default/test-repo")
 
 	healthPatch, ok := patcher.findPatchOp("/status/health")
 	require.True(t, ok, "the reason deletion is stuck must be surfaced on health")
-	health, ok := healthPatch["value"].(provisioning.HealthStatus)
+	health, ok := healthPatch["value"].(provisioning.RepositoryHealthStatus)
 	require.True(t, ok)
 	assert.False(t, health.Healthy)
 	assert.Equal(t, []string{"Repository deletion error"}, health.Message)
@@ -2241,12 +2240,11 @@ func TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus
 		tracer:        tracing.InitializeTracerForTest(),
 	}
 
-	_, err := rc.process("default/test-repo")
-	require.NoError(t, err, "a non-retryable delete failure must be surfaced on status, not returned and re-logged every resync")
+	assertRepositoryStatusFailurePreservesPendingQueueLag(t, rc, "default/test-repo")
 
 	healthPatch, ok := patcher.findPatchOp("/status/health")
 	require.True(t, ok, "the reason deletion is stuck must be surfaced on health")
-	health, ok := healthPatch["value"].(provisioning.HealthStatus)
+	health, ok := healthPatch["value"].(provisioning.RepositoryHealthStatus)
 	require.True(t, ok)
 	assert.False(t, health.Healthy)
 	assert.Equal(t, []string{"Repository deletion error"}, health.Message)
@@ -2429,12 +2427,11 @@ func TestRepositoryController_process_UserCausedBuildFailure(t *testing.T) {
 		tracer:        tracing.InitializeTracerForTest(),
 	}
 
-	_, err := rc.process("default/test-repo")
-	require.NoError(t, err, "a user-caused build failure must not surface as a controller error")
+	assertRepositoryStatusFailurePreservesPendingQueueLag(t, rc, "default/test-repo")
 
 	healthPatch, ok := patcher.findPatchOp("/status/health")
 	require.True(t, ok, "the failure must still be surfaced on /status/health")
-	health, ok := healthPatch["value"].(provisioning.HealthStatus)
+	health, ok := healthPatch["value"].(provisioning.RepositoryHealthStatus)
 	require.True(t, ok)
 	assert.False(t, health.Healthy)
 	require.Len(t, health.Message, 1)
@@ -2491,7 +2488,7 @@ func TestRepositoryController_process_ServerUnavailableBuildFailure(t *testing.T
 				Spec:       provisioning.RepositorySpec{Type: provisioning.GitLabRepositoryType},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Health:             provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+					Health:             provisioning.RepositoryHealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
 					Conditions: []metav1.Condition{{
 						Type: provisioning.ConditionTypeReady, Status: metav1.ConditionTrue,
 						Reason: provisioning.ReasonAvailable, ObservedGeneration: 1,
@@ -2546,7 +2543,7 @@ func TestRepositoryController_process_ServerUnavailableBuildFailure(t *testing.T
 
 			healthOp, ok := patcher.findPatchOp("/status/health")
 			require.True(t, ok)
-			health, ok := healthOp["value"].(provisioning.HealthStatus)
+			health, ok := healthOp["value"].(provisioning.RepositoryHealthStatus)
 			require.True(t, ok)
 			assert.False(t, health.Healthy)
 			assert.Equal(t, provisioning.HealthFailureHealth, health.Error)
@@ -2598,7 +2595,7 @@ func TestRepositoryController_process_DefaultBranchFailure(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Health:             provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+					Health:             provisioning.RepositoryHealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
 					Conditions: []metav1.Condition{{
 						Type: provisioning.ConditionTypeReady, Status: metav1.ConditionTrue,
 						Reason: provisioning.ReasonAvailable, ObservedGeneration: 1,
@@ -2655,7 +2652,7 @@ func TestRepositoryController_process_DefaultBranchFailure(t *testing.T) {
 				require.ErrorContains(t, err, "failed to get default branch")
 				return
 			}
-			health, ok := healthOp["value"].(provisioning.HealthStatus)
+			health, ok := healthOp["value"].(provisioning.RepositoryHealthStatus)
 			require.True(t, ok)
 			assert.False(t, health.Healthy)
 			assert.Equal(t, provisioning.HealthFailureHealth, health.Error)
@@ -2900,7 +2897,7 @@ func TestRepositoryController_process_UnchangedHealthNotRewritten(t *testing.T) 
 		Status: provisioning.RepositoryStatus{
 			ObservedGeneration: 1,
 			// Already reporting exactly what this pass would write.
-			Health: provisioning.HealthStatus{
+			Health: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHealth,
 				Checked: time.Now().UnixMilli(),
@@ -2973,7 +2970,7 @@ func TestRepositoryController_process_QuotaTimestampOnlyDoesNotForceStatusPatch(
 				},
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.RepositoryHealthStatus{
 						Healthy: true,
 						Checked: time.Now().UnixMilli(),
 					},
@@ -3131,9 +3128,9 @@ func TestRepositoryController_shouldGenerateTokenFromConnection_ExpiredCounter(t
 			}
 			obj := &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
-					Token: provisioning.TokenStatus{LastUpdated: oldEnough.UnixMilli(), Expiration: tt.expiration},
+					Token: provisioning.RepositoryTokenStatus{LastUpdated: oldEnough.UnixMilli(), Expiration: tt.expiration},
 				},
-				Secure: provisioning.SecureValues{Token: common.InlineSecureValue{Create: "existing-token"}},
+				Secure: provisioning.SecureValues{Token: resource.InlineSecureValue{Create: "existing-token"}},
 			}
 
 			rc.shouldGenerateTokenFromConnection(obj)
@@ -3150,7 +3147,7 @@ func TestRepositoryController_shouldGenerateTokenFromConnection_RemovedToken(t *
 			resyncInterval: 5 * time.Minute,
 		}
 		repo := &provisioning.Repository{
-			Status: provisioning.RepositoryStatus{Token: provisioning.TokenStatus{
+			Status: provisioning.RepositoryStatus{Token: provisioning.RepositoryTokenStatus{
 				LastUpdated: time.Now().UnixMilli(),
 				Expiration:  time.Now().Add(time.Hour).UnixMilli(),
 			}},
@@ -3211,11 +3208,11 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 		Status: provisioning.RepositoryStatus{
 			// spec is already observed — no spec-change trigger
 			ObservedGeneration: 1,
-			Health: provisioning.HealthStatus{
+			Health: provisioning.RepositoryHealthStatus{
 				Healthy: true,
 				Checked: time.Now().UnixMilli(),
 			},
-			Token: provisioning.TokenStatus{
+			Token: provisioning.RepositoryTokenStatus{
 				LastUpdated: lastUpdated.UnixMilli(),
 				Expiration:  expiration.UnixMilli(),
 			},
@@ -3232,7 +3229,7 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 		},
 		// Existing (non-zero) token so IsZero() == false and we exercise the expiry path
 		Secure: provisioning.SecureValues{
-			Token: common.InlineSecureValue{Create: "old-expiring-token"},
+			Token: resource.InlineSecureValue{Create: "old-expiring-token"},
 		},
 	}
 
@@ -3336,7 +3333,7 @@ func TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused(t *
 		},
 		Status: provisioning.RepositoryStatus{
 			ObservedGeneration: 1,
-			Health:             provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+			Health:             provisioning.RepositoryHealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
 		},
 	}
 
@@ -3383,8 +3380,7 @@ func TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused(t *
 		tracer:            tracing.InitializeTracerForTest(),
 	}
 
-	_, err := rc.process(namespace + "/" + repoName)
-	require.NoError(t, err, "a lost-access token failure must not be returned to the workqueue")
+	assertRepositoryStatusFailurePreservesPendingQueueLag(t, rc, namespace+"/"+repoName)
 
 	assert.Equal(t, 1.0,
 		counterValueWithLabel(t, reg, "grafana_provisioning_repository_token_generation_errors_total", "cause", reconcileCauseUser),
@@ -3395,7 +3391,7 @@ func TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused(t *
 
 	healthPatch, ok := patcher.findPatchOp("/status/health")
 	require.True(t, ok, "the failure must still be surfaced on /status/health")
-	health, ok := healthPatch["value"].(provisioning.HealthStatus)
+	health, ok := healthPatch["value"].(provisioning.RepositoryHealthStatus)
 	require.True(t, ok)
 	assert.False(t, health.Healthy)
 	require.Len(t, health.Message, 1)
@@ -3445,16 +3441,16 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 				Status: provisioning.RepositoryStatus{
 					// Spec change (Generation != ObservedGeneration) triggers reconcile and reaches Build.
 					ObservedGeneration: 1,
-					Health:             provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+					Health:             provisioning.RepositoryHealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
 					// Token exists and is far from expiry, so shouldGenerateTokenFromConnection is false.
-					Token: provisioning.TokenStatus{
+					Token: provisioning.RepositoryTokenStatus{
 						LastUpdated: time.Now().Add(-1 * time.Hour).UnixMilli(),
 						Expiration:  time.Now().Add(2 * time.Hour).UnixMilli(),
 					},
 				},
 				// Orphaned reference: name is set but the secret is gone.
 				Secure: provisioning.SecureValues{
-					Token: common.InlineSecureValue{Name: "orphaned-token"},
+					Token: resource.InlineSecureValue{Name: "orphaned-token"},
 				},
 			}
 
@@ -3550,7 +3546,7 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 			if buildErr != nil {
 				healthOp, ok := patcher.findPatchOp("/status/health")
 				require.True(t, ok)
-				health, ok := healthOp["value"].(provisioning.HealthStatus)
+				health, ok := healthOp["value"].(provisioning.RepositoryHealthStatus)
 				require.True(t, ok)
 				assert.False(t, health.Healthy)
 				require.Len(t, health.Message, 1)
@@ -3711,7 +3707,7 @@ func TestProcessHooks_RotationOverdueCause(t *testing.T) {
 			}
 			if tt.cooldown {
 				// A recent hook failure puts the repository in the cooldown window.
-				obj.Status.Health = provisioning.HealthStatus{
+				obj.Status.Health = provisioning.RepositoryHealthStatus{
 					Healthy: false,
 					Error:   provisioning.HealthFailureHook,
 					Checked: time.Now().UnixMilli(),
@@ -3931,7 +3927,7 @@ func TestRepositoryController_process_HookFailureCooldownSuppressesRetry(t *test
 		},
 		Status: provisioning.RepositoryStatus{
 			ObservedGeneration: 1,
-			Health: provisioning.HealthStatus{
+			Health: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHook,
 				Checked: time.Now().UnixMilli(),
@@ -4016,7 +4012,7 @@ func TestRepositoryController_process_RotationSuppressedDuringCooldown(t *testin
 		},
 		Status: provisioning.RepositoryStatus{
 			ObservedGeneration: 1,
-			Health: provisioning.HealthStatus{
+			Health: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHook,
 				Checked: time.Now().UnixMilli(),
@@ -4197,14 +4193,13 @@ func TestRepositoryController_process_HookFailureUnauthorizedDoesNotReturnError(
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	_, err := rc.process(namespace + "/" + repoName)
-	require.NoError(t, err, "an unauthorized hook failure must not surface as a controller error")
+	assertRepositoryStatusFailurePreservesPendingQueueLag(t, rc, namespace+"/"+repoName)
 
 	assert.Equal(t, int32(1), stub.onCreateCalls.Load(), "the hook attempt should still have run")
 
 	healthOp, healthPatched := patcher.findPatchOp("/status/health")
 	require.True(t, healthPatched, "the failure must still be recorded on /status/health")
-	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	healthStatus, ok := healthOp["value"].(provisioning.RepositoryHealthStatus)
 	require.True(t, ok, "expected /status/health value to be HealthStatus")
 	assert.False(t, healthStatus.Healthy)
 	assert.Equal(t, provisioning.HealthFailureHook, healthStatus.Error)
@@ -4248,7 +4243,7 @@ func TestRepositoryController_process_HookFailureNonAuthErrorStillReturnsError(t
 
 	healthOp, healthPatched := patcher.findPatchOp("/status/health")
 	require.True(t, healthPatched, "the failure must still be recorded on /status/health")
-	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	healthStatus, ok := healthOp["value"].(provisioning.RepositoryHealthStatus)
 	require.True(t, ok, "expected /status/health value to be HealthStatus")
 	assert.False(t, healthStatus.Healthy)
 	assert.Equal(t, provisioning.HealthFailureHook, healthStatus.Error)
@@ -4346,7 +4341,7 @@ func TestRepositoryController_process_UnhealthyRepositorySkipsHooks(t *testing.T
 
 	healthOp, healthPatched := patcher.findPatchOp("/status/health")
 	require.True(t, healthPatched, "the health check failure must be recorded on /status/health")
-	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	healthStatus, ok := healthOp["value"].(provisioning.RepositoryHealthStatus)
 	require.True(t, ok, "expected /status/health value to be HealthStatus")
 	assert.False(t, healthStatus.Healthy)
 	assert.Equal(t, provisioning.HealthFailureHealth, healthStatus.Error)
@@ -4405,7 +4400,7 @@ func TestRepositoryController_process_BranchProtectionFailureStillRunsHooks(t *t
 
 	healthOp, healthPatched := patcher.findPatchOp("/status/health")
 	require.True(t, healthPatched, "the Test() failure must still be recorded on /status/health")
-	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	healthStatus, ok := healthOp["value"].(provisioning.RepositoryHealthStatus)
 	require.True(t, ok, "expected /status/health value to be HealthStatus")
 	assert.False(t, healthStatus.Healthy, "status should still report unhealthy so the user sees the branch protection error")
 
@@ -4459,7 +4454,7 @@ func TestRepositoryController_process_WritePermissionDeniedStillRunsHooks(t *tes
 
 	healthOp, healthPatched := patcher.findPatchOp("/status/health")
 	require.True(t, healthPatched, "the Test() failure must still be recorded on /status/health")
-	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	healthStatus, ok := healthOp["value"].(provisioning.RepositoryHealthStatus)
 	require.True(t, ok, "expected /status/health value to be HealthStatus")
 	assert.False(t, healthStatus.Healthy, "status should still report unhealthy so the user sees the write-permission error")
 
@@ -4510,7 +4505,7 @@ func TestRepositoryController_process_UnauthorizedTestResultSuppressesHooks(t *t
 
 	healthOp, healthPatched := patcher.findPatchOp("/status/health")
 	require.True(t, healthPatched, "the Test() failure must still be recorded on /status/health")
-	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	healthStatus, ok := healthOp["value"].(provisioning.RepositoryHealthStatus)
 	require.True(t, ok, "expected /status/health value to be HealthStatus")
 	assert.False(t, healthStatus.Healthy, "status should report unhealthy")
 
@@ -4543,7 +4538,7 @@ func blockedOverQuotaRepo(namespace, name string, checked time.Time, syncEnabled
 		Status: provisioning.RepositoryStatus{
 			ObservedGeneration: 1,
 			Quota:              provisioning.QuotaStatus{MaxRepositories: 1},
-			Health: provisioning.HealthStatus{
+			Health: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHealth,
 				Checked: checked.UnixMilli(),
@@ -4740,7 +4735,7 @@ func TestRepositoryController_process_BlockedRepositoryRecoversOnResync(t *testi
 
 	healthOp, healthPatched := patcher.findPatchOp("/status/health")
 	require.True(t, healthPatched, "health must be rewritten once the quota override no longer applies")
-	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	healthStatus, ok := healthOp["value"].(provisioning.RepositoryHealthStatus)
 	require.True(t, ok)
 	assert.True(t, healthStatus.Healthy)
 }
@@ -4818,7 +4813,7 @@ func TestRepositoryController_process_QuotaBlockedButReachableStillRunsHooks(t *
 
 	healthOp, healthPatched := patcher.findPatchOp("/status/health")
 	require.True(t, healthPatched, "the quota block must still be reported on /status/health")
-	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	healthStatus, ok := healthOp["value"].(provisioning.RepositoryHealthStatus)
 	require.True(t, ok, "expected /status/health value to be HealthStatus")
 	assert.False(t, healthStatus.Healthy, "status should report unhealthy due to quota")
 	assert.Equal(t, provisioning.HealthFailureHealth, healthStatus.Error)
@@ -4904,7 +4899,7 @@ func TestRepositoryController_process_HookFailureRecoveryAfterWorkflowsRemoved(t
 		},
 		Status: provisioning.RepositoryStatus{
 			ObservedGeneration: 1,
-			Health: provisioning.HealthStatus{
+			Health: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHook,
 				// Recent failure — cooldown is still active.
@@ -4932,7 +4927,7 @@ func TestRepositoryController_process_HookFailureRecoveryAfterWorkflowsRemoved(t
 	healthOp, healthPatched := patcher.findPatchOp("/status/health")
 	require.True(t, healthPatched,
 		"expected /status/health to be patched once the spec no longer requires a webhook")
-	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	healthStatus, ok := healthOp["value"].(provisioning.RepositoryHealthStatus)
 	require.True(t, ok, "expected /status/health value to be HealthStatus")
 	assert.True(t, healthStatus.Healthy,
 		"repository must recover to healthy now that the hook-failure cooldown no longer applies")
@@ -4955,7 +4950,7 @@ func applyCapturedPatches(t *testing.T, repo *provisioning.Repository, ops []map
 		path, _ := op["path"].(string)
 		switch {
 		case path == "/status/health":
-			repo.Status.Health = op["value"].(provisioning.HealthStatus)
+			repo.Status.Health = op["value"].(provisioning.RepositoryHealthStatus)
 		case path == "/status/fieldErrors":
 			repo.Status.FieldErrors = op["value"].([]provisioning.ErrorDetails)
 		case path == "/status/observedGeneration":
@@ -5071,7 +5066,7 @@ func TestRepositoryController_process_HookFailureRecoveryAfterCooldownExpires(t 
 			Webhook: &provisioning.WebhookStatus{
 				ID: 42, // Webhook already exists — webhookMissing is false.
 			},
-			Health: provisioning.HealthStatus{
+			Health: provisioning.RepositoryHealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHook,
 				// Older than recentUnhealthyDuration (1 minute) so the cooldown
@@ -5098,7 +5093,7 @@ func TestRepositoryController_process_HookFailureRecoveryAfterCooldownExpires(t 
 	healthOp, healthPatched := patcher.findPatchOp("/status/health")
 	require.True(t, healthPatched,
 		"expected /status/health to be patched once the cooldown expires")
-	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	healthStatus, ok := healthOp["value"].(provisioning.RepositoryHealthStatus)
 	require.True(t, ok, "expected /status/health value to be HealthStatus")
 	assert.True(t, healthStatus.Healthy,
 		"repository must recover after the hook-failure cooldown elapses")

@@ -289,6 +289,7 @@ For more information, refer to [Apply overrides to nested table fields](#apply-o
 | Option               | Description                                               |
 | -------------------- | --------------------------------------------------------- |
 | Show table header    | Show or hide column names imported from your data source. |
+| Show row numbers     | Display row numbers on the left side of the table. For more information, refer to [Show row numbers](#show-row-numbers). |
 | Frozen columns       | Freeze columns starting from the left side of the table. Enter a value to set how many columns are frozen. |
 | Cell height          | Set the height of the cell. Choose from **Small**, **Medium**, or **Large**. |
 | Zebra striping       | Alternate the background color of every other row. |
@@ -302,6 +303,16 @@ For more information, refer to [Apply overrides to nested table fields](#apply-o
 | Wrap text            | Enables text wrapping for cell content. |
 | Wrap header text     | Enables text wrapping for column headers. |
 <!-- prettier-ignore-end -->
+
+#### Show row numbers
+
+Enable **Show row numbers** to display row positions on the left side of the table.
+Numbers start at `1`, reflect the displayed order after sorting and filtering, and continue across pages.
+
+For nested tables, each nested table starts its own sequence at `1`, and footer rows aren't numbered.
+Expanding a parent row doesn't change the parent numbers.
+
+The row number isn't a data field and can't be resized or unpinned.
 
 ### Table footer options
 
@@ -461,6 +472,7 @@ You can color sparklines using thresholds by setting the field's color scheme to
 ![Table using sparkline cell type](/media/docs/grafana/panels-visualizations/screenshot-table-as-sparkline-v11.3.png)
 
 The sparkline cell type options are described in the following table.
+
 For more detailed information about all of the sparkline styling options (except **Hide value**), refer to the [time series graph styles documentation](ref:graph-styles).
 
 <!-- prettier-ignore-start -->
@@ -468,6 +480,7 @@ For more detailed information about all of the sparkline styling options (except
 | ------------------- | --------------------------------------------------------------------------------------------- |
 | Hide value          | Toggle the switch on or off to display or hide the cell value on the sparkline. |
 | Show hover tooltip  | Toggle the switch on or off to display or hide the cell value in a tooltip when you hover your cursor over the line. |
+| Enable time range selection  | Toggle the switch on and you can set the dashboard time range by dragging across a sparkline to select an interval. This option requires time-based data and is disabled for fields with data links or actions. |
 | Style               | Choose whether to display your time-series data as **Lines**, **Bars**, or **Points**. You can use overrides to combine multiple styles in the same graph. |
 | Line interpolation  | How the graph interpolates the series line. Choose from:<ul><li>**Linear** - Points are joined by straight lines.</li><li>**Smooth** - Points are joined by curved lines that smooths transitions between points.</li><li>**Step before** - The line is displayed as steps between points. Points are rendered at the end of the step.</li><li>**Step after** - The line is displayed as steps between points. Points are rendered at the beginning of the step.</li></ul> |
 | Line width          | The thickness of the series lines or the outline for bars using the **Line width** slider. |

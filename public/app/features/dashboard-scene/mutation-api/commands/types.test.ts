@@ -1,6 +1,7 @@
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setDesktopViewport, setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardMutationClient } from '../DashboardMutationClient';
@@ -24,13 +25,12 @@ afterEach(() => {
   cleanUpPreviousScene();
   cleanUpPreviousScene = () => {};
   setTestFlags({});
-  Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
 });
 
 describe('requiresEdit, blocked on mobile', () => {
   it('rejects ENTER_EDIT_MODE with a descriptive error and does not enter edit mode', async () => {
     setTestFlags({ 'grafana.mobileEditDeprecation': true });
-    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+    setMobileViewport();
     const { scene, client } = setup();
 
     const result = await client.execute({ type: 'ENTER_EDIT_MODE', payload: {} });
@@ -47,7 +47,7 @@ describe('requiresEdit, blocked on mobile', () => {
 
   it('still allows ENTER_EDIT_MODE when the toggle is on but the viewport is not mobile-sized', async () => {
     setTestFlags({ 'grafana.mobileEditDeprecation': true });
-    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1200 });
+    setDesktopViewport();
     const { scene, client } = setup();
 
     const result = await client.execute({ type: 'ENTER_EDIT_MODE', payload: {} });
@@ -57,7 +57,7 @@ describe('requiresEdit, blocked on mobile', () => {
   });
 
   it('still allows ENTER_EDIT_MODE on a mobile-sized viewport when the toggle is off', async () => {
-    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+    setMobileViewport();
     const { scene, client } = setup();
 
     const result = await client.execute({ type: 'ENTER_EDIT_MODE', payload: {} });

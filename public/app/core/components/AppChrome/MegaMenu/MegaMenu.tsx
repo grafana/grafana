@@ -6,12 +6,15 @@ import { memo, forwardRef, useId } from 'react';
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { useFlagGrafanaScopesDashboardsMegaMenu, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import {
+  useFlagGrafanaMegaMenuPeekAndDock,
+  useFlagGrafanaScopesDashboardsMegaMenu,
+  useFlagGrafanaVisualDesignRefresh,
+} from '@grafana/runtime/internal';
 import { ErrorBoundaryAlert, ScrollContainer, Text, useStyles2, Button, IconButton } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { ScopesDashboardsMegaMenuSection } from 'app/features/scopes/dashboards/ScopesDashboardsMegaMenuSection';
-import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
 
 import { MegaMenuCustomiseControls } from './MegaMenuCustomiseControls';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
@@ -34,12 +37,12 @@ export const MegaMenu = memo(
     const styles = useStyles2(getStyles, visualRefreshEnabled);
     const { chrome } = useGrafana();
     const state = chrome.useState();
-    const { isLoading: starredItemsLoading, isError: starredItemsError } = useSyncStarredItemsInNav();
-
     const {
       canCustomise,
       isLoading,
       navItems,
+      starredItemsLoading,
+      starredItemsError,
       pinnedEntries,
       activeItem,
       isPinned,
@@ -58,6 +61,9 @@ export const MegaMenu = memo(
       isSaving,
     } = useNavCustomization();
     const { DragDropContext, Draggable, Droppable } = useDragAndDrop(editMode);
+
+    const peekAndDock = useFlagGrafanaMegaMenuPeekAndDock();
+    const showFooter = editMode || (canCustomise && !isLoading) || !peekAndDock;
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
@@ -84,7 +90,7 @@ export const MegaMenu = memo(
         key={key}
         link={link}
         isPinned={isPinned}
-        onClick={state.megaMenuDocked && !state.fullscreenWorkspace ? undefined : onClose}
+        onClick={state.megaMenuDocked ? undefined : onClose}
         activeItem={activeItem}
         onPin={onPinItem}
         editMode={editMode}
@@ -145,7 +151,7 @@ export const MegaMenu = memo(
           activeItem={activeItem}
           editMode={editMode}
           onUnpin={() => onUnpin(entry.url)}
-          onClick={state.megaMenuDocked && !state.fullscreenWorkspace ? undefined : onClose}
+          onClick={state.megaMenuDocked ? undefined : onClose}
           draggableProvided={draggableProvided}
           disabled={isSaving}
         />
@@ -159,9 +165,7 @@ export const MegaMenu = memo(
     const renderScopesDashboardsSection = () =>
       scopesMegaMenuEnabled && (
         <ErrorBoundaryAlert boundaryName="scopes-dashboards-mega-menu">
-          <ScopesDashboardsMegaMenuSection
-            onNavigate={state.megaMenuDocked && !state.fullscreenWorkspace ? undefined : onClose}
-          />
+          <ScopesDashboardsMegaMenuSection onNavigate={state.megaMenuDocked ? undefined : onClose} />
         </ErrorBoundaryAlert>
       );
 
@@ -274,37 +278,39 @@ export const MegaMenu = memo(
               </>
             </ScrollContainer>
           </div>
-          <hr className={styles.dividerLine} />
-          <div className={cx(styles.footer, editMode && styles.footerEditMode)}>
-            {editMode && (
-              <MegaMenuCustomiseControls
-                canReset={canReset}
-                onResetToDefault={onResetToDefault}
-                onCancelEdit={onCancelEdit}
-                onSaveEdit={onSaveEdit}
-                saving={isSaving}
-              />
-            )}
-            {!editMode && canCustomise && !isLoading && (
-              <Button variant="secondary" onClick={onEnterEditMode} size="sm" icon="sliders-v-alt">
-                <Trans i18nKey="navigation.megamenu.customise">Customise navigation</Trans>
-              </Button>
-            )}
-            {!editMode && !state.fullscreenWorkspace && (
-              <IconButton
-                id={DOCK_MENU_BUTTON_ID}
-                className={styles.dockMenuButton}
-                tooltip={
-                  state.megaMenuDocked
-                    ? t('navigation.megamenu.undock', 'Undock menu')
-                    : t('navigation.megamenu.dock', 'Dock menu')
-                }
-                name="web-section-alt"
-                onClick={handleDockedMenu}
-                variant="secondary"
-              />
-            )}
-          </div>
+          {showFooter && <hr className={styles.dividerLine} />}
+          {showFooter && (
+            <div className={cx(styles.footer, editMode && styles.footerEditMode)}>
+              {editMode && (
+                <MegaMenuCustomiseControls
+                  canReset={canReset}
+                  onResetToDefault={onResetToDefault}
+                  onCancelEdit={onCancelEdit}
+                  onSaveEdit={onSaveEdit}
+                  saving={isSaving}
+                />
+              )}
+              {!editMode && canCustomise && !isLoading && (
+                <Button variant="secondary" onClick={onEnterEditMode} size="sm" icon="sliders-v-alt">
+                  <Trans i18nKey="navigation.megamenu.customise">Customise navigation</Trans>
+                </Button>
+              )}
+              {!editMode && !peekAndDock && (
+                <IconButton
+                  id={DOCK_MENU_BUTTON_ID}
+                  className={styles.dockMenuButton}
+                  tooltip={
+                    state.megaMenuDocked
+                      ? t('navigation.megamenu.undock', 'Undock menu')
+                      : t('navigation.megamenu.dock', 'Dock menu')
+                  }
+                  name="web-section-alt"
+                  onClick={handleDockedMenu}
+                  variant="secondary"
+                />
+              )}
+            </div>
+          )}
         </nav>
       </div>
     );

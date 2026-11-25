@@ -203,6 +203,7 @@ const injectedRtkApi = api
           url: `/search`,
           params: {
             query: queryArg.query,
+            lifecycle: queryArg.lifecycle,
             type: queryArg['type'],
             folder: queryArg.folder,
             name: queryArg.name,
@@ -510,6 +511,8 @@ export type SearchDashboardsAndFoldersApiResponse = /** status 200 undefined */ 
 export type SearchDashboardsAndFoldersApiArg = {
   /** user query string */
   query?: string;
+  /** dashboard lifecycle filter: draft returns only drafts, all returns drafts and published. When empty, drafts are hidden if the namespace hides them by default */
+  lifecycle?: 'draft' | 'all';
   /** search dashboards or folders.  When empty, this will search both */
   type?: 'folder' | 'dashboard';
   /** search/list within a folder (not recursive) */

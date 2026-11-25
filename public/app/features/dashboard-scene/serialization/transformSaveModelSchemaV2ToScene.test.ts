@@ -1,8 +1,7 @@
-import { waitFor } from '@testing-library/react';
 import { cloneDeep } from 'lodash';
 
-import { type DataSourceInstanceSettings } from '@grafana/data';
-import { config, getDataSourceInstanceSettings } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import {
   behaviors,
   ConstantVariable,
@@ -17,6 +16,7 @@ import {
   type SceneDataTransformer,
   type SceneGridItem,
   SwitchVariable,
+  ScopesVariable,
 } from '@grafana/scenes';
 import { VariableRefresh } from '@grafana/schema';
 import {
@@ -51,6 +51,7 @@ import { type TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
+import { resolveMultiValueOperatorsOnActivate } from '../utils/resolveMultiValueOperatorsOnActivate';
 import { validateVariable, validateVizPanel } from '../v2schema/test-helpers';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
@@ -309,6 +310,16 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     });
   });
 
+  it('loads the questions saved on the dashboard', () => {
+    const prompts = [{ text: 'What stands out on this dashboard?' }];
+    const scene = transformSaveModelSchemaV2ToScene({
+      ...defaultDashboard,
+      spec: { ...defaultDashboard.spec, prompts },
+    });
+
+    expect(scene.state.questions).toEqual(prompts);
+  });
+
   it('should set panel ds if it is mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
     getPanelElement(dashboard.spec, 'panel-1')?.spec.data.spec.queries.push({
@@ -458,6 +469,44 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     });
   });
 
+  describe('scopes variable', () => {
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('adds a ScopesVariable when the scopeFilters flag is on', () => {
+      setTestFlags({ [FlagKeys.ScopeFilters]: true });
+
+      const scene = transformSaveModelSchemaV2ToScene(cloneDeep(defaultDashboard));
+
+      const variables = scene.state.$variables?.state.variables ?? [];
+      expect(variables.some((v) => v instanceof ScopesVariable)).toBe(true);
+    });
+
+    it('does not add a ScopesVariable when the scopeFilters flag is off', () => {
+      setTestFlags({ [FlagKeys.ScopeFilters]: false });
+
+      const scene = transformSaveModelSchemaV2ToScene(cloneDeep(defaultDashboard));
+
+      const variables = scene.state.$variables?.state.variables ?? [];
+      expect(variables.some((v) => v instanceof ScopesVariable)).toBe(false);
+    });
+
+    it('does not add a ScopesVariable for public dashboards', () => {
+      setTestFlags({ [FlagKeys.ScopeFilters]: true });
+      const originalToken = config.publicDashboardAccessToken;
+      config.publicDashboardAccessToken = 'test-public-token';
+      try {
+        const scene = transformSaveModelSchemaV2ToScene(cloneDeep(defaultDashboard));
+
+        const variables = scene.state.$variables?.state.variables ?? [];
+        expect(variables.some((v) => v instanceof ScopesVariable)).toBe(false);
+      } finally {
+        config.publicDashboardAccessToken = originalToken;
+      }
+    });
+  });
+
   describe('query variables in public dashboard mode', () => {
     it('forces refresh to never when publicDashboardAccessToken is set, regardless of spec refresh', () => {
       const originalToken = config.publicDashboardAccessToken;
@@ -495,18 +544,11 @@ describe('transformSaveModelSchemaV2ToScene', () => {
   });
 
   describe('adhoc variables', () => {
-    it('should resolve supportsMultiValueOperators from the datasource settings', async () => {
-      jest.mocked(getDataSourceInstanceSettings).mockResolvedValueOnce({
-        meta: { multiValueFilterOperators: true },
-      } as DataSourceInstanceSettings);
-      const dashboard = cloneDeep(defaultDashboard);
-      const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
-
-      const scene = transformSaveModelSchemaV2ToScene(dashboard);
+    it('should resolve supportsMultiValueOperators when the variable activates', () => {
+      const scene = transformSaveModelSchemaV2ToScene(cloneDeep(defaultDashboard));
 
       const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
-      expect(getDataSourceInstanceSettings).toHaveBeenCalledWith({ type: adhocVar.group });
-      await waitFor(() => expect(adhocVariable.state.supportsMultiValueOperators).toBe(true));
+      expect(adhocVariable.state.$behaviors).toContain(resolveMultiValueOperatorsOnActivate);
     });
 
     it('should convert empty defaultKeys array to undefined', () => {
@@ -629,10 +671,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       expect(dataLayers.state.annotationLayers).toHaveLength(0);
     });
 
-    it('should resolve supportsMultiValueOperators for adhoc variables', async () => {
-      jest.mocked(getDataSourceInstanceSettings).mockResolvedValueOnce({
-        meta: { multiValueFilterOperators: true },
-      } as DataSourceInstanceSettings);
+    it('should resolve supportsMultiValueOperators for adhoc variables when they activate', () => {
       const snapshot: DashboardWithAccessInfo<DashboardV2Spec> = {
         ...defaultDashboard,
         metadata: {
@@ -647,7 +686,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       const scene = transformSaveModelSchemaV2ToScene(snapshot);
 
       const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
-      await waitFor(() => expect(adhocVariable.state.supportsMultiValueOperators).toBe(true));
+      expect(adhocVariable.state.$behaviors).toContain(resolveMultiValueOperatorsOnActivate);
     });
 
     it('should convert empty defaultKeys array to undefined for adhoc variables', () => {

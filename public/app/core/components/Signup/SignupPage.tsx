@@ -67,70 +67,82 @@ export const SignupPage = ({ queryParams }: Props) => {
     <LoginLayout>
       <InnerBox>
         <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
-          <Field label={t('sign-up.user-name-label', 'Your name')}>
-            <Input
-              id="user-name"
-              {...register('name')}
-              placeholder={t('sign-up.user-name-placeholder', '(optional)')}
-            />
-          </Field>
-          <Field label={t('sign-up.email-label', 'Email')} invalid={!!errors.email} error={errors.email?.message}>
-            <Input
-              id="email"
-              {...register('email', {
-                required: 'Email is required',
-                pattern: {
-                  value: w3cStandardEmailValidator,
-                  message: 'Email is invalid',
-                },
-              })}
-              type="email"
-            />
-          </Field>
-          {!getConfig().autoAssignOrg && (
-            <Field label={t('sign-up.org-name-label', 'Org. name')}>
-              <Input id="org-name" {...register('orgName')} />
+          <Stack direction="column" gap={2}>
+            <Field noMargin label={t('sign-up.user-name-label', 'Your name')}>
+              <Input
+                id="user-name"
+                {...register('name')}
+                placeholder={t('sign-up.user-name-placeholder', '(optional)')}
+              />
             </Field>
-          )}
-          {getConfig().verifyEmailEnabled && (
-            <Field label={t('sign-up.verification-code-label', 'Email verification code (sent to your email)')}>
-              <Input id="verification-code" {...register('code')} />
+            <Field
+              noMargin
+              label={t('sign-up.email-label', 'Email')}
+              invalid={!!errors.email}
+              error={errors.email?.message}
+            >
+              <Input
+                id="email"
+                {...register('email', {
+                  required: 'Email is required',
+                  pattern: {
+                    value: w3cStandardEmailValidator,
+                    message: 'Email is invalid',
+                  },
+                })}
+                type="email"
+              />
             </Field>
-          )}
-          <Field
-            label={t('sign-up.password-label', 'Password')}
-            invalid={!!errors.password}
-            error={errors?.password?.message}
-          >
-            <PasswordField
-              id="new-password"
-              autoFocus
-              autoComplete="new-password"
-              {...register('password', { required: 'Password is required' })}
-            />
-          </Field>
-          <Field
-            label={t('sign-up.confirm-password-label', 'Confirm password')}
-            invalid={!!errors.confirm}
-            error={errors?.confirm?.message}
-          >
-            <PasswordField
-              id="confirm-new-password"
-              autoComplete="new-password"
-              {...register('confirm', {
-                required: 'Confirmed password is required',
-                validate: (v) => v === getValues().password || 'Passwords must match!',
-              })}
-            />
-          </Field>
+            {!getConfig().autoAssignOrg && (
+              <Field noMargin label={t('sign-up.org-name-label', 'Org. name')}>
+                <Input id="org-name" {...register('orgName')} />
+              </Field>
+            )}
+            {getConfig().verifyEmailEnabled && (
+              <Field
+                noMargin
+                label={t('sign-up.verification-code-label', 'Email verification code (sent to your email)')}
+              >
+                <Input id="verification-code" {...register('code')} />
+              </Field>
+            )}
+            <Field
+              noMargin
+              label={t('sign-up.password-label', 'Password')}
+              invalid={!!errors.password}
+              error={errors?.password?.message}
+            >
+              <PasswordField
+                id="new-password"
+                autoFocus
+                autoComplete="new-password"
+                {...register('password', { required: 'Password is required' })}
+              />
+            </Field>
+            <Field
+              noMargin
+              label={t('sign-up.confirm-password-label', 'Confirm password')}
+              invalid={!!errors.confirm}
+              error={errors?.confirm?.message}
+            >
+              <PasswordField
+                id="confirm-new-password"
+                autoComplete="new-password"
+                {...register('confirm', {
+                  required: 'Confirmed password is required',
+                  validate: (v) => v === getValues().password || 'Passwords must match!',
+                })}
+              />
+            </Field>
 
-          <Stack>
-            <Button type="submit">
-              <Trans i18nKey="sign-up.submit-button">Submit</Trans>
-            </Button>
-            <LinkButton fill="text" href={getConfig().appSubUrl + '/login'}>
-              <Trans i18nKey="sign-up.back-button">Back to login</Trans>
-            </LinkButton>
+            <Stack>
+              <Button type="submit">
+                <Trans i18nKey="sign-up.submit-button">Submit</Trans>
+              </Button>
+              <LinkButton fill="text" href={getConfig().appSubUrl + '/login'}>
+                <Trans i18nKey="sign-up.back-button">Back to login</Trans>
+              </LinkButton>
+            </Stack>
           </Stack>
         </form>
       </InnerBox>

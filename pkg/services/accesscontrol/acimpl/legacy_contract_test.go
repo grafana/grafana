@@ -18,7 +18,7 @@ import (
 )
 
 type contractEmbeddedClient struct {
-	get func() legacyclient.Service
+	get func() legacyclient.LegacyUserPermissionsClient
 }
 
 func (c contractEmbeddedClient) LegacyGetUserPermissions(ctx context.Context, caller types.AuthInfo, req legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
@@ -28,7 +28,7 @@ func (c contractEmbeddedClient) LegacyGetUserPermissions(ctx context.Context, ca
 func wireContractEmbeddedClient(s *Service) {
 	// Tests finish configuring the service before its first public enumeration.
 	// Thereafter the actual loader, transport and client live for the whole fixture.
-	s.legacyClient = contractEmbeddedClient{get: sync.OnceValue(func() legacyclient.Service {
+	s.legacyClient = contractEmbeddedClient{get: sync.OnceValue(func() legacyclient.LegacyUserPermissionsClient {
 		var migrated legacypermissions.MigratedPermissions
 		if s.zanzanaResolver != nil {
 			migrated = s.zanzanaResolver

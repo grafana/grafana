@@ -67,7 +67,8 @@ jobs:
                   src_pr_commit_sha: PR_COMMIT_SHA,
                   patch_repo: REPO + '-security-patches',
                   patch_ref: BASE_REF,
-                  triggering_github_handle: SENDER
+                  triggering_github_handle: SENDER,
+                  smoke_build: true,
                 }
             })
 

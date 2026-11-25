@@ -1,6 +1,7 @@
 import { type FC, type SyntheticEvent } from 'react';
 
 import {
+  type AbsoluteTimeRange,
   type DataFrame,
   type Field,
   type GrafanaTheme2,
@@ -153,6 +154,8 @@ interface BaseTableProps {
   noValue?: string;
   /** used by SparklineCell when provided */
   timeRange?: TimeRange;
+  /** Lets sparkline cells set the dashboard time range; omitted when the feature is off. */
+  onTimeRangeSelected?: (range: AbsoluteTimeRange) => void;
   /** Timezone used by the field display processors and value-filter matcher. */
   timeZone?: string;
   enableSharedCrosshair?: boolean;
@@ -188,6 +191,9 @@ interface BaseTableProps {
   rangeFiltersEnabled?: boolean;
   // alternates the background color of every other row (table.refreshNewFeatures)
   zebraStriping?: boolean;
+  /** Display generated row positions in a presentation-only gutter. */
+  showRowNumbers?: boolean;
+  /** Offer a local show/hide control for row numbers in the columns sidebar (feature-gated). */
   /** Initial sidebar state. Later prop changes also update the sidebar. */
   showColumnsSidebar?: boolean;
   /** Controlled column order, by display name. */
@@ -211,6 +217,7 @@ export interface TableCellRendererProps {
   rowIdx: number;
   frame: DataFrame;
   timeRange?: TimeRange;
+  onTimeRangeSelected?: (range: AbsoluteTimeRange) => void;
   value: TableCellValue;
   height: number;
   // flags that are static per column
@@ -260,6 +267,7 @@ export interface SparklineCellProps {
   rowIdx: number;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
+  onTimeRangeSelected?: (range: AbsoluteTimeRange) => void;
   value: TableCellValue;
   width: number;
 }

@@ -30,10 +30,24 @@ describe('QueryEditorMainHeader', () => {
     jest.clearAllMocks();
   });
 
-  it('shows the total number of queries and transformations', () => {
-    renderWithQueryEditorProvider(<QueryEditorMainHeader />, { queries, transformations });
+  it('shows the total number of queries and transformations in stacked view', () => {
+    renderWithQueryEditorProvider(<QueryEditorMainHeader />, {
+      queries,
+      transformations,
+      uiStateOverrides: { stackedMode: makeStackedMode({ enabled: true }) },
+    });
 
     expect(screen.getByText('Showing 3 items')).toBeInTheDocument();
+  });
+
+  it('shows a single item outside stacked view', () => {
+    renderWithQueryEditorProvider(<QueryEditorMainHeader />, {
+      queries,
+      transformations,
+      uiStateOverrides: { stackedMode: makeStackedMode({ enabled: false }) },
+    });
+
+    expect(screen.getByText('Showing 1 item')).toBeInTheDocument();
   });
 
   it('hosts the query options bar', () => {
@@ -41,18 +55,6 @@ describe('QueryEditorMainHeader', () => {
 
     expect(screen.getByTestId('query-options-bar')).toBeInTheDocument();
   });
-
-  it.each([{ enabled: true }, { enabled: false }])(
-    'shows the experimental feedback button when stacked mode enabled is $enabled',
-    ({ enabled }) => {
-      renderWithQueryEditorProvider(<QueryEditorMainHeader />, {
-        uiStateOverrides: { stackedMode: makeStackedMode({ enabled }) },
-        actionsOverrides: { onSwitchToClassic: jest.fn() },
-      });
-
-      expect(screen.getAllByRole('button', { name: 'Experimental feature options' })).toHaveLength(1);
-    }
-  );
 
   describe('stacked view toggle', () => {
     it('is not pressed when stacked mode is disabled', () => {

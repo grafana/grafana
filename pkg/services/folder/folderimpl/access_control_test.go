@@ -49,14 +49,12 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
 	})
 	t.Run("returns 'not found' if folder does not exist", func(t *testing.T) {
-		_, resolver := folder.NewFolderIDScopeResolver(func(ctx context.Context, orgID int64, id int64) (string, error) {
-			return "", folder.ErrFolderNotFound
-		}, foldertest.NewFakeService())
+		svc := newEmptySearchService(t)
+		_, resolver := folder.NewFolderIDScopeResolver(svc.getUIDFromLegacyID, svc)
 
-		orgId := rand.Int63()
-		scope := "folders:id:10"
-		resolvedScopes, err := resolver.Resolve(context.Background(), orgId, scope)
+		resolvedScopes, err := resolver.Resolve(context.Background(), 1, "folders:id:10")
 		require.ErrorIs(t, err, folder.ErrFolderNotFound)
+		require.ErrorIs(t, err, ac.ErrScopeResourceNotFound)
 		require.Nil(t, resolvedScopes)
 	})
 }

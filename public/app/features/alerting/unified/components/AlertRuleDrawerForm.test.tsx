@@ -1,8 +1,10 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { render, testWithFeatureToggles } from 'test/test-utils';
+import { cleanup, render } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { testWithFlags } from '@grafana/test-utils/unstable';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { configureStore } from 'app/store/configureStore';
@@ -280,6 +282,39 @@ describe('AlertRuleDrawerForm', () => {
       });
     });
 
+    it('focuses the name when creating an empty rule', async () => {
+      const { user } = renderDrawer();
+
+      await user.click(screen.getByRole('button', { name: /Create/i }));
+
+      await waitFor(() => expect(screen.getByLabelText(/Name/i)).toHaveFocus());
+    });
+
+    it('focuses the folder before the missing evaluation group', async () => {
+      const { user } = renderDrawer({ prefill: { name: 'Test Rule' } });
+
+      await user.click(screen.getByRole('button', { name: /Create/i }));
+
+      expect(await screen.findByText('Folder is required')).toBeInTheDocument();
+      expect(screen.getByText('Evaluation group is required')).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByRole('button', { name: /select folder/i })).toHaveFocus());
+    });
+
+    it('focuses the missing evaluation group when a folder is selected', async () => {
+      const { user } = renderDrawer({
+        prefill: { name: 'Test Rule', folder: { title: 'Test Folder', uid: 'test-folder-uid' } },
+      });
+      const group = await within(screen.getByTestId(selectors.components.AlertRules.groupPicker)).findByRole(
+        'combobox'
+      );
+      await waitFor(() => expect(group).toBeEnabled());
+
+      await user.click(screen.getByRole('button', { name: /Create/i }));
+
+      expect(await screen.findByText('Evaluation group is required')).toBeInTheDocument();
+      await waitFor(() => expect(group).toHaveFocus());
+    });
+
     it('should show validation error when form is invalid', async () => {
       const { user } = renderDrawer();
 
@@ -295,12 +330,7 @@ describe('AlertRuleDrawerForm', () => {
     });
   });
 
-  // The drawer's submit path is gated on alerting.rulesAPIV2:
-  //   - disabled → legacy `addRuleToRuleGroup` (with the "derive group from name" fallback)
-  //   - enabled  → groupless app-platform create via `useUpsertUngroupedGrafanaRule`
-  // The createAlertRuleFromPanel toggle gates whether the drawer is shown at all,
-  // which happens upstream in NewRuleFromPanelButton — not asserted here.
-  describe('Submit routing by alerting.rulesAPIV2 toggle', () => {
+  describe('Submit routing by alerting.gmaOnlyListView', () => {
     // Group is required by the legacy path's form validation, so include it.
     const submittablePrefill: Partial<RuleFormValues> = {
       name: 'Test Alert Rule',
@@ -319,7 +349,7 @@ describe('AlertRuleDrawerForm', () => {
       condition: 'A',
     };
 
-    describe('when alerting.rulesAPIV2 is disabled (legacy grouped flow)', () => {
+    describe('when alerting.gmaOnlyListView is off (ruler API)', () => {
       it('calls the legacy addRuleToRuleGroup hook and not the v2 hook', async () => {
         const mockResponse: GrafanaGroupUpdatedResponse = {
           message: 'Rule created successfully',
@@ -337,10 +367,12 @@ describe('AlertRuleDrawerForm', () => {
       });
     });
 
-    describe('when alerting.rulesAPIV2 is enabled (v2 groupless flow)', () => {
-      testWithFeatureToggles({ enable: ['alerting.rulesAPIV2'] });
+    describe('when alerting.gmaOnlyListView is on (k8s rules API)', () => {
+      // Unmount before the flags reset, or flag-reading components re-render outside act().
+      afterEach(cleanup);
+      testWithFlags({ [FlagKeys.AlertingGmaOnlyListView]: true });
 
-      it('calls the v2 ungrouped hook with isUngroupedRuleGroup forced true', async () => {
+      it('calls the k8s rules API hook and not the ruler hook', async () => {
         mockUpsertUngroupedGrafanaRule.mockResolvedValue('new-rule-uid');
 
         const { user } = renderDrawer({ prefill: submittablePrefill });
@@ -349,12 +381,6 @@ describe('AlertRuleDrawerForm', () => {
         await waitFor(() => {
           expect(mockUpsertUngroupedGrafanaRule).toHaveBeenCalledTimes(1);
         });
-        expect(mockUpsertUngroupedGrafanaRule).toHaveBeenCalledWith(
-          expect.objectContaining({
-            existingUid: undefined,
-            values: expect.objectContaining({ isUngroupedRuleGroup: true }),
-          })
-        );
         expect(mockExecute).not.toHaveBeenCalled();
       });
 

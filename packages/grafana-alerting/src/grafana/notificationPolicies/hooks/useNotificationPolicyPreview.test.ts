@@ -15,6 +15,8 @@ import * as routeUtils from '../route.utils';
 import { type NotificationPolicyPreviewResult, useNotificationPolicyPreview } from './useNotificationPolicyPreview';
 import { useRoutingTrees } from './useRoutingTrees';
 
+jest.mock('../route.utils', () => makeSpyable('../route.utils'));
+
 const server = setupMockServer();
 
 const instances = [[['severity', 'critical']]] as Array<Array<[string, string]>>;

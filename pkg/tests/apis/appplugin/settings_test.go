@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -85,7 +86,6 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 						"metadata":   map[string]any{"name": instanceName},
 						"spec": map[string]any{
 							"enabled":  true,
-							"pinned":   true,
 							"jsonData": map[string]any{"url": "https://api.example.com"},
 						},
 						"secure": map[string]any{
@@ -112,11 +112,9 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 				require.NotEmpty(t, current.GetResourceVersion(), "PATCH test op needs a resourceVersion")
 
 				enabledValue := true
-				pinnedValue := true
 				expectedJSONData := any(nil)
 				if mode == rest.Mode5 {
 					enabledValue = false
-					pinnedValue = true
 					expectedJSONData = map[string]any{"url": "https://api.example.com"}
 				}
 
@@ -130,11 +128,6 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 						"op":    "replace",
 						"path":  "/spec/enabled",
 						"value": enabledValue,
-					},
-					{
-						"op":    "replace",
-						"path":  "/spec/pinned",
-						"value": pinnedValue,
 					},
 				})
 				require.NoError(t, err)
@@ -151,7 +144,6 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 				spec, ok := obj.Object["spec"].(map[string]any)
 				require.True(t, ok)
 				require.Equal(t, enabledValue, spec["enabled"])
-				require.Equal(t, pinnedValue, spec["pinned"])
 				require.Equal(t, expectedJSONData, spec["jsonData"])
 			})
 
@@ -170,13 +162,11 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 
 				updateSpec := map[string]any{
 					"enabled":  true,
-					"pinned":   false,
 					"jsonData": nil,
 				}
 				if mode == rest.Mode5 {
 					updateSpec = map[string]any{
 						"enabled":  false,
-						"pinned":   false,
 						"jsonData": map[string]any{"url": "https://updated.example.com"},
 					}
 				}
@@ -199,7 +189,7 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 						return true
 					}
 
-					updateSpec["pinned"] = !(updateSpec["pinned"].(bool))
+					updateSpec["enabled"] = !(updateSpec["enabled"].(bool))
 					_, err = client.Resource.Update(ctx, &unstructured.Unstructured{
 						Object: map[string]any{
 							"apiVersion": testAppID + "/v0alpha1",
@@ -220,7 +210,7 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 					},
 					{
 						"op":    "replace",
-						"path":  "/spec/pinned",
+						"path":  "/spec/enabled",
 						"value": true,
 					},
 				})
@@ -238,7 +228,6 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 				spec, ok := obj.Object["spec"].(map[string]any)
 				require.True(t, ok)
 				require.Equal(t, true, spec["enabled"])
-				require.Equal(t, true, spec["pinned"])
 				require.Equal(t, map[string]any{"url": "https://api.example.com"}, spec["jsonData"])
 
 				// Secure values are top-level and must be returned as opaque name references, never raw values.
@@ -309,7 +298,6 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 						"metadata":   map[string]any{"name": instanceName},
 						"spec": map[string]any{
 							"enabled":  true,
-							"pinned":   true,
 							"jsonData": map[string]any{"url": "https://api.example.com"},
 						},
 						"secure": map[string]any{
@@ -422,6 +410,22 @@ func setupHelperWithManifest(t *testing.T, mode rest.DualWriterMode, extraFeatur
 // with no manifest when manifestFile is empty.
 func setupHelperFull(t *testing.T, mode rest.DualWriterMode, manifestFile string, extraFeatures ...string) *apis.K8sTestHelper {
 	t.Helper()
+	return setupHelperWithPlugin(t, mode, testAppSetup{manifestFile: manifestFile}, extraFeatures...)
+}
+
+// testAppSetup changes the test app before Grafana loads it.
+type testAppSetup struct {
+	// manifestFile is a testdata manifest to install.
+	manifestFile string
+	// manifest is installed as the app's manifest, in place of manifestFile.
+	manifest []byte
+	// routes are added to the app's plugin.json.
+	routes []map[string]any
+}
+
+func setupHelperWithPlugin(t *testing.T, mode rest.DualWriterMode, setup testAppSetup, extraFeatures ...string) *apis.K8sTestHelper {
+	t.Helper()
+	manifestFile := setup.manifestFile
 	withManifest := manifestFile != ""
 
 	// The settings API alone enables the router, which serves both the settings
@@ -452,9 +456,35 @@ func setupHelperFull(t *testing.T, mode rest.DualWriterMode, manifestFile string
 
 	require.NoError(t, grafanafs.CopyRecursive(testAppSrc, testAppDst))
 
-	if withManifest {
+	// CopyFile hard links where it can, so a copied file is replaced rather than
+	// written to, or the write would change the source too.
+	replaceFile := func(path string, data []byte) {
+		t.Helper()
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			require.NoError(t, err)
+		}
+		require.NoError(t, os.WriteFile(path, data, 0o600))
+	}
+
+	manifestDst := filepath.Join(testAppDst, "app-sdk-manifest.json")
+	switch {
+	case setup.manifest != nil:
+		replaceFile(manifestDst, setup.manifest)
+	case withManifest:
 		manifestSrc := filepath.Join(filepath.Dir(thisFile), "testdata", manifestFile)
-		require.NoError(t, grafanafs.CopyFile(manifestSrc, filepath.Join(testAppDst, "app-sdk-manifest.json")))
+		require.NoError(t, grafanafs.CopyFile(manifestSrc, manifestDst))
+	}
+
+	if setup.routes != nil {
+		pluginJSON := filepath.Join(testAppDst, "plugin.json")
+		raw, err := os.ReadFile(pluginJSON) //nolint:gosec // the copy of plugin.json this test made
+		require.NoError(t, err)
+		var plugin map[string]any
+		require.NoError(t, json.Unmarshal(raw, &plugin))
+		plugin["routes"] = setup.routes
+		raw, err = json.Marshal(plugin)
+		require.NoError(t, err)
+		replaceFile(pluginJSON, raw)
 	}
 
 	helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{

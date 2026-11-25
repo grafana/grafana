@@ -9,9 +9,10 @@ import { type Alert, type CombinedRule } from 'app/types/unified-alerting';
 import { type Labels, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
-import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { alertInstanceKey, rulerRuleType } from '../../utils/rules';
+import { getRulesSourceName } from '../../utils/rulesSource';
 import { PopupCard } from '../HoverCard';
 import { MetaText } from '../MetaText';
 import { NAMED_ROOT_LABEL_NAME, resolveNamedPolicyName } from '../notification-policies/useNotificationPolicyRoute';

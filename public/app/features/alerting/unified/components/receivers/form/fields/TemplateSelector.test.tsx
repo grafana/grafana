@@ -14,7 +14,7 @@ import {
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { type NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
 import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { DEFAULT_TEMPLATES } from 'app/features/alerting/unified/utils/template-constants';
 import { AccessControlAction } from 'app/types/accessControl';
 

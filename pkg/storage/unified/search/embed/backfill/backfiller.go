@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
@@ -277,15 +278,26 @@ func (b *VectorBackfiller) runBackfillJob(ctx context.Context, job vector.Backfi
 			continue
 		}
 		pageToken := cursor.Token
+		restarted := false
 		for {
 			if ctx.Err() != nil {
 				return ctx.Err()
 			}
-			var err error
-			pageToken, err = b.runBackfillPage(ctx, job, builder, pageToken)
+			nextToken, err := b.runBackfillPage(ctx, job, builder, pageToken)
+			if err != nil && pageToken != "" && !restarted && apierrors.IsBadRequest(err) {
+				// A saved token can outlive its format, and failed jobs keep their
+				// checkpoint, so restart instead of retrying it forever. Restarting
+				// is cheap: embedded items are skipped.
+				b.log.Warn("backfill: continue token rejected; restarting collection scan",
+					"job_id", job.ID, "resource", builder.partitionKey, "err", err)
+				restarted = true
+				pageToken = ""
+				continue
+			}
 			if err != nil {
 				return err
 			}
+			pageToken = nextToken
 			if pageToken == "" {
 				break
 			}
@@ -378,8 +390,8 @@ func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.Backf
 			if ctx.Err() != nil {
 				return ctx.Err()
 			}
-			// ContinueToken peeks at the next row. Confirm that row exists
-			// before saving a token that could be used to resume the job.
+			// Save an item's token only once another row exists, so a scan that
+			// ends on a page boundary finishes instead of requesting an empty page.
 			if pendingTok != "" {
 				page[len(page)-1].nextToken = pendingTok
 				pendingTok = ""

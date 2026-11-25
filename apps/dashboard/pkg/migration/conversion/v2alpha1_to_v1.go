@@ -750,12 +750,11 @@ func extractExpandedPanels(elements map[string]dashv2alpha1.DashboardElement, la
 			}
 
 			adjustedItem := item
-			if !isHiddenHeader {
-				// For explicit rows: Y = item.Spec.Y + currentY
-				// currentY has been incremented after row panel and points to the first available position for content below the row.
+			if isHiddenHeader {
+				adjustedItem.Spec.Y = item.Spec.Y + startY
+			} else {
 				adjustedItem.Spec.Y = item.Spec.Y + currentY
 			}
-			// For hidden headers: don't adjust Y, keep item.Spec.Y as-is
 
 			panel, err := convertPanelFromElement(&element, &adjustedItem)
 			if err != nil {
@@ -1288,7 +1287,7 @@ func getDataSourceForQuery(explicitDS *dashv2alpha1.DashboardDataSourceRef, quer
 // - Mixed datasource reference if queries use different datasources
 // - Mixed datasource reference if multiple queries use Dashboard datasource (they fetch from different panels)
 // - Dashboard datasource reference if a single query uses Dashboard datasource
-// - First query's datasource if all queries use the same datasource
+// - First query's datasource if all queries use the same datasource (expression queries are ignored)
 // - nil if no queries exist
 // Compares based on V2 input without runtime resolution:
 // - If query has explicit datasource.uid → use that UID and type
@@ -1335,6 +1334,11 @@ func getPanelDatasource(queries []dashv2alpha1.DashboardPanelQueryKind) map[stri
 			// No explicit datasource - use query kind as type
 			queryUID = ""
 			queryType = query.Spec.Query.Kind
+		}
+
+		// Expressions run alongside any datasource, so they don't make a panel mixed
+		if queryUID == "__expr__" || queryType == "__expr__" {
+			continue
 		}
 
 		if !hasFirst {
@@ -2124,6 +2128,14 @@ func convertFieldConfigDefaultsToV1(defaults *dashv2alpha1.DashboardFieldConfig)
 	}
 	if defaults.Thresholds != nil {
 		result["thresholds"] = convertThresholdsToV1(defaults.Thresholds)
+	}
+	if len(defaults.VarMappings) > 0 {
+		// Same shape as decoded JSON, which is what the v1 to v2 conversion reads
+		varMappings := make(map[string]interface{}, len(defaults.VarMappings))
+		for id, expr := range defaults.VarMappings {
+			varMappings[id] = expr
+		}
+		result["varMappings"] = varMappings
 	}
 
 	if len(result) == 0 {

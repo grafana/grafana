@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 
 /**
  * Fetches the alerts of a single Grafana-managed rule that the Grafana Alertmanager is currently

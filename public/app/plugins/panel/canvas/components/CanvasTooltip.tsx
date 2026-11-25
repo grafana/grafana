@@ -105,7 +105,6 @@ export const CanvasTooltip = ({ scene }: Props) => {
   }
 
   const actions: Array<ActionModel<Field>> = [];
-  const actionLookup = new Set<string>();
 
   const elementHasActions = (element.options.actions?.length ?? 0) > 0;
   const frames = scene.data?.series;
@@ -135,13 +134,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
       'canvas'
     );
 
-    actionsModel.forEach((action) => {
-      const key = `${action.title}/${Math.random()}`;
-      if (!actionLookup.has(key)) {
-        actions.push(action);
-        actionLookup.add(key);
-      }
-    });
+    actions.push(...actionsModel);
   }
 
   return (

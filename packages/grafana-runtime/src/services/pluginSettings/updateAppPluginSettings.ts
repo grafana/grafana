@@ -7,7 +7,7 @@ import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { replaceCachedPromise } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
 import { refetchPluginMeta } from '../pluginMeta/plugins';
-import { getApiVersion, getCacheKey, getNamespace } from '../pluginUtils';
+import { assertPluginIdFormat, getApiVersion, getCacheKey, getNamespace } from '../pluginUtils';
 
 import { logPluginSettingsDebug, logPluginSettingsError } from './logging';
 import { getSettingsMapper } from './mappers/mappers';
@@ -26,22 +26,23 @@ function updateLegacySettings(pluginId: string, data: Partial<PluginMeta>): Prom
 }
 
 async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<v0alpha1Settings> {
+  const apiVersion = await getApiVersion();
   const spec = settingsSpecMapper(data);
   const secure = inlineSecureValuesMapper(data);
   const update = {
-    apiVersion: `${pluginId}/${getApiVersion()}`,
+    apiVersion: `${pluginId}/${apiVersion}`,
     kind: 'Settings',
     spec,
     secure,
   };
 
-  const { metadata, ...stored } = await refetchCachedAppSettings(pluginId, false);
+  const { metadata, ...stored } = await refetchCachedAppSettings(pluginId, false, apiVersion);
   const test: Operation = { op: 'test', path: '/metadata/resourceVersion', value: metadata.resourceVersion };
   const patch = [test, ...compare(stored, update)];
   logPluginSettingsDebug('PluginSettings: updating plugin settings', { pluginId });
 
   const updated = await getBackendSrv()
-    .patch<v0alpha1Settings>(`/apis/${pluginId}/${getApiVersion()}/namespaces/${getNamespace()}/app/instance`, patch, {
+    .patch<v0alpha1Settings>(`/apis/${pluginId}/${apiVersion}/namespaces/${getNamespace()}/app/instance`, patch, {
       validatePath: true,
       headers: {
         'Content-Type': 'application/json-patch+json',
@@ -62,6 +63,8 @@ async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<P
  * @returns The updated plugin's `PluginMeta`.
  */
 export async function updateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<PluginMeta> {
+  assertPluginIdFormat(pluginId);
+
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPluginSettings, false)) {
     await updateLegacySettings(pluginId, data);
     return refetchCachedLegacySettings(pluginId, false);

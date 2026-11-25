@@ -20,7 +20,6 @@ import {
   type DataSourceRuleGroupIdentifier,
   type FilterState,
   type RuleIdentifier,
-  type RuleWithLocation,
   type RulesSource,
   type SilenceFilterState,
 } from 'app/types/unified-alerting';
@@ -32,10 +31,8 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
-import { getRulesSourceName } from './datasource';
 import * as environment from './environment';
 import {
-  type KnownErrorCodes,
   getErrorMessageFromApiMachineryErrorResponse,
   getErrorMessageFromCode,
   isApiMachineryError,
@@ -43,6 +40,7 @@ import {
 import { getMatcherQueryParams } from './matchers';
 import { rulesNav } from './navigation';
 import * as ruleId from './rule-id';
+import { getRulesSourceName } from './rulesSource';
 import { createAbsoluteUrl, createRelativeUrl } from './url';
 
 export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo?: string): string {
@@ -61,15 +59,6 @@ export function createViewLinkV2(
   const identifier = ruleId.fromRule(ruleSourceName, groupIdentifier.namespace.name, groupIdentifier.groupName, rule);
 
   return rulesNav.detailsPageLink(ruleSourceName, identifier, returnTo ? { returnTo } : undefined);
-}
-
-export function createViewLinkFromRuleWithLocation(ruleWithLocation: RuleWithLocation) {
-  const ruleSourceName = ruleWithLocation.ruleSourceName;
-  const identifier = ruleId.fromRuleWithLocation(ruleWithLocation);
-  const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
-  const paramSource = encodeURIComponent(ruleSourceName);
-
-  return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`);
 }
 
 export function createExploreLink(datasource: DataSourceRef, query: string) {
@@ -136,13 +125,6 @@ export const getFiltersFromUrlParams = (queryParams: UrlQueryMap): FilterState =
   const groupBy = queryParams.groupBy === undefined ? undefined : String(queryParams.groupBy).split(',');
   const receivers = queryParams.receivers === undefined ? undefined : String(queryParams.receivers).split(',');
   return { queryString, alertState, dataSource, groupBy, ruleType, receivers };
-};
-
-export const getNotificationPoliciesFilters = (searchParams: URLSearchParams) => {
-  return {
-    queryString: searchParams.get('queryString') ?? undefined,
-    contactPoint: searchParams.get('contactPoint') ?? undefined,
-  };
 };
 
 export const getSilenceFiltersFromUrlParams = (queryParams: UrlQueryMap): SilenceFilterState => {
@@ -301,7 +283,7 @@ export function isLocalDevEnv() {
   return environment.isLocalDevEnv();
 }
 
-export function isErrorLike(error: unknown): error is Error {
+function isErrorLike(error: unknown): error is Error {
   return Boolean(error && typeof error === 'object' && 'message' in error);
 }
 
@@ -335,15 +317,6 @@ export function getErrorCode(error: unknown): string | undefined {
   }
 
   return;
-}
-
-/* this function will check if the error passed as the first argument contains an error code */
-export function isErrorMatchingCode(error: Error | undefined, code: KnownErrorCodes): boolean {
-  if (!error) {
-    return false;
-  }
-
-  return getErrorCode(error) === code;
 }
 
 export function stringifyErrorLike(error: unknown): string {

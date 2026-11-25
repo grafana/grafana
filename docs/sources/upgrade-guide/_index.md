@@ -46,3 +46,9 @@ Refer to any of the following upgrade guides:
 {{< section menuTitle="true">}}
 
 Upgrade guides for Grafana v10.4 and earlier are available in the documentation archive: [v10.4](https://archive.grafana.com/docs/grafana/v10.4/upgrade-guide/upgrade-v10.4/), [v10.3](https://archive.grafana.com/docs/grafana/v10.3/upgrade-guide/upgrade-v10.3/), [v10.2](https://archive.grafana.com/docs/grafana/v10.2/upgrade-guide/upgrade-v10.2/), [v10.1](https://archive.grafana.com/docs/grafana/v10.1/upgrade-guide/upgrade-v10.1/), [v10.0](https://archive.grafana.com/docs/grafana/v10.0/upgrade-guide/upgrade-v10.0/), [v9.5](https://archive.grafana.com/docs/grafana/v9.5/upgrade-guide/upgrade-v9.5/).
+
+## Search and list pagination during upgrades
+
+During rolling upgrades with multiple Grafana instances, paginated searches and some resource list requests can temporarily return HTTP `400` if successive requests reach instances running different versions. Pagination started before a rollback can also fail.
+
+If this occurs, restart the affected search or list request from the first page.

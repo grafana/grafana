@@ -6,7 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, InlineLabel, Input, Stack, useStyles2 } from '@grafana/ui';
 
-import { QueryEditorExpressionType } from '../../expressions';
+import { type QueryEditorFunctionExpression, QueryEditorExpressionType } from '../../expressions';
 import { type SQLExpression, type SQLQuery } from '../../types';
 import { getColumnValue } from '../../utils/sql.utils';
 
@@ -37,13 +37,16 @@ export function SelectCustomFunctionParameters({
         return;
       }
 
-      item.parameters = item.parameters
-        ? [...item.parameters, { type: QueryEditorExpressionType.FunctionParameter, name: '' }]
-        : [];
+      const newItem: QueryEditorFunctionExpression = {
+        ...item,
+        parameters: item.parameters
+          ? [...item.parameters, { type: QueryEditorExpressionType.FunctionParameter, name: '' }]
+          : [],
+      };
 
       const newSql: SQLExpression = {
         ...query.sql,
-        columns: query.sql?.columns?.map((c, i) => (i === index ? item : c)),
+        columns: query.sql?.columns?.map((c, i) => (i === index ? newItem : c)),
       };
 
       onSqlChange(newSql);
@@ -57,11 +60,11 @@ export function SelectCustomFunctionParameters({
       if (!item?.parameters) {
         return;
       }
-      item.parameters = item.parameters?.filter((_, i) => i !== index);
+      const newItem = { ...item, parameters: item.parameters.filter((_, i) => i !== index) };
 
       const newSql: SQLExpression = {
         ...query.sql,
-        columns: query.sql?.columns?.map((c, i) => (i === columnIndex ? item : c)),
+        columns: query.sql?.columns?.map((c, i) => (i === columnIndex ? newItem : c)),
       };
 
       onSqlChange(newSql);

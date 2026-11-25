@@ -65,14 +65,32 @@ jobs:
           persist-credentials: false
           ref: ${{ inputs.version }}
 
+      # Releases call this workflow from main but build the release tag, and tags cut before the
+      # pnpm migration still use Yarn. Remove the yarn path once no supported release uses Yarn.
+      - name: Detect package manager
+        id: pm
+        run: |
+          if [[ -f pnpm-lock.yaml ]]; then
+            echo "name=pnpm" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=yarn" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
 
-      - name: Install frontend dependencies
+      - name: Install frontend dependencies (pnpm)
+        if: steps.pm.outputs.name == 'pnpm'
         uses: ./.github/actions/install-frontend-deps
 
+      - name: Install frontend dependencies (yarn)
+        if: steps.pm.outputs.name == 'yarn'
+        uses: ./.github/actions/yarn-install
+
       - name: Build storybook
-        run: pnpm run storybook:build
+        env:
+          PM: ${{ steps.pm.outputs.name }}
+        run: '"$PM" run storybook:build'
 
       # Create the GCS folder name
       # "latest" when triggered from the latest release

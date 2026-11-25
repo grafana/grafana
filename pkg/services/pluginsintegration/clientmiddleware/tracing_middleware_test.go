@@ -400,21 +400,6 @@ func (m *alwaysErrorFuncMiddleware) RunStream(ctx context.Context, req *backend.
 	return m.f()
 }
 
-// ValidateAdmission implements backend.AdmissionHandler.
-func (m *alwaysErrorFuncMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-	return nil, m.f()
-}
-
-// MutateAdmission implements backend.AdmissionHandler.
-func (m *alwaysErrorFuncMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-	return nil, m.f()
-}
-
-// ConvertObject implements backend.AdmissionHandler.
-func (m *alwaysErrorFuncMiddleware) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	return nil, m.f()
-}
-
 // newAlwaysErrorMiddleware returns a new middleware that always returns the specified error.
 func newAlwaysErrorMiddleware(err error) backend.HandlerMiddleware {
 	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {

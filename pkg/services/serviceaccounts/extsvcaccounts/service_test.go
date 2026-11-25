@@ -4,10 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -25,6 +22,8 @@ import (
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -51,12 +50,14 @@ func setupTestEnv(t *testing.T) *TestEnv {
 		SkvStore: kvstore.NewFakeSecretsKVStore(),
 	}
 	logger := log.New("extsvcaccounts.test")
+	acSvc, initErr := acimpl.ProvideOSSService(
+		cfg, env.AcStore, &resourcepermissions.FakeActionSetSvc{},
+		localcache.New(0, 0), fmgt, tracing.InitializeTracerForTest(), nil,
+		permreg.ProvidePermissionRegistry(), nil, iam.Features{}, nil, nil)
+	require.NoError(t, initErr)
 	env.S = &ExtSvcAccountsService{
-		enabled: true,
-		acSvc: acimpl.ProvideOSSService(
-			cfg, env.AcStore, &resourcepermissions.FakeActionSetSvc{},
-			localcache.New(0, 0), fmgt, tracing.InitializeTracerForTest(), nil,
-			permreg.ProvidePermissionRegistry(), nil, iam.Features{}, nil, nil),
+		enabled:      true,
+		acSvc:        acSvc,
 		defaultOrgID: autoAssignOrgID,
 		logger:       logger,
 		metrics:      newMetrics(nil),
@@ -78,7 +79,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 		Login:      extSvcSlug,
 		OrgId:      extSvcOrgID,
 		IsDisabled: false,
-		Role:       string(identity.RoleNone),
+		Role:       string(authlib.RoleNone),
 	}
 
 	tests := []struct {
@@ -139,7 +140,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 					mock.Anything,
 					extSvcOrgID,
 					mock.MatchedBy(func(cmd *sa.CreateServiceAccountForm) bool {
-						return cmd.Name == sa.ExtSvcPrefix+extSvcSlug && *cmd.Role == identity.RoleNone
+						return cmd.Name == sa.ExtSvcPrefix+extSvcSlug && *cmd.Role == authlib.RoleNone
 					})).
 					Return(extSvcAccount, nil)
 				env.SaSvc.On("EnableServiceAccount", mock.Anything, extSvcOrgID, extSvcAccount.Id, true).Return(nil)
@@ -221,7 +222,7 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 		Login:      extSvcSlug,
 		OrgId:      autoAssignOrgID,
 		IsDisabled: false,
-		Role:       string(identity.RoleNone),
+		Role:       string(authlib.RoleNone),
 	}
 
 	tests := []struct {
@@ -303,7 +304,7 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 					mock.Anything,
 					autoAssignOrgID,
 					mock.MatchedBy(func(cmd *sa.CreateServiceAccountForm) bool {
-						return cmd.Name == sa.ExtSvcPrefix+extSvcSlug && *cmd.Role == identity.RoleNone
+						return cmd.Name == sa.ExtSvcPrefix+extSvcSlug && *cmd.Role == authlib.RoleNone
 					})).
 					Return(extSvcAccount, nil)
 				env.SaSvc.On("EnableServiceAccount", mock.Anything, autoAssignOrgID, extSvcAccID, true).Return(nil)

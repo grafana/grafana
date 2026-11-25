@@ -3,7 +3,7 @@ import userEvents from '@testing-library/user-event';
 import { act } from 'react';
 
 import { createDataFrame, FieldType } from '@grafana/data';
-import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
@@ -16,7 +16,6 @@ import FlameGraphTopTableContainer, { buildFilteredTable } from './FlameGraphTop
 // from the client box - jsdom reports 0 for both.
 function mockTableSize({ width, height }: { width: number; height: number } = { width: 500, height: 500 }) {
   mockBoundingClientRect({ width, height });
-  mockClientSize({ width, height });
 }
 
 describe('FlameGraphTopTableContainer', () => {

@@ -4,13 +4,15 @@ import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getCachedPromiseWithArgs } from '../../utils/getCachedPromise';
 import { refetchPluginMeta } from '../pluginMeta/plugins';
-import { getCacheKey, getLegacyCacheKey } from '../pluginUtils';
+import { assertPluginIdFormat, getApiVersion, getCacheKey, getLegacyCacheKey } from '../pluginUtils';
 
 import { getAppPluginSettings, getLegacySettings } from './getPluginSettings';
 import { logPluginSettingsDebug } from './logging';
 import { getSettingsMapper } from './mappers/mappers';
 
 export async function refetchPluginSettings(pluginId: string): Promise<PluginMeta> {
+  assertPluginIdFormat(pluginId);
+
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPluginSettings, false)) {
     return refetchCachedLegacySettings(pluginId, false);
   }
@@ -26,7 +28,7 @@ export async function refetchPluginSettings(pluginId: string): Promise<PluginMet
     return mapper(meta.spec);
   }
 
-  const settings = await refetchCachedAppSettings(pluginId, false);
+  const settings = await refetchCachedAppSettings(pluginId, false, await getApiVersion());
   const mapper = getSettingsMapper();
   return mapper(meta.spec, settings);
 }

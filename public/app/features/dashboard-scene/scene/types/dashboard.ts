@@ -5,11 +5,19 @@ import { type ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import { type PanelEditor } from '../../panel-edit/PanelEditor';
+import { type SceneQuestion } from '../../questions/types';
 import { type DashboardEditView } from '../../settings/utils';
 import { type DashboardSidebarLike } from '../../sidebar/types';
 import { type DashboardControls } from '../DashboardControls';
 import { type DashboardLayoutOrchestrator } from '../DashboardLayoutOrchestrator';
-import { dashboardModesEnabled, getDashboardMode, type DashboardMode } from '../dashboardModes';
+import {
+  dashboardModesEnabled,
+  dashboardPlanEditingEnabled,
+  getDashboardMode,
+  isComposerEditing,
+  type DashboardMode,
+} from '../dashboardModes';
+import { type EditablePlan } from '../dashboardPlan';
 
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './DashboardLayoutManager';
 import { type LayoutParent } from './LayoutParent';
@@ -59,6 +67,8 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
   editable?: boolean;
   /** Allows disabling grid lazy loading */
   preload?: boolean;
+  /** Questions viewers can run on the dashboard, offered by plugins in the dashboard controls */
+  questions?: SceneQuestion[];
   /** A uid when saved */
   uid?: string;
   /** @experimental */
@@ -102,6 +112,21 @@ export function isFullDashboardEditing(state: Pick<DashboardSceneState, 'mode' |
   return Boolean(state.isEditing && mode !== 'composer' && (!dashboardModesEnabled() || mode === 'edit'));
 }
 
+/** A plan preview stays in view mode, but its layout can still be arranged by hand. */
+export function isArrangingPlan(state: Pick<DashboardSceneState, 'planning'>): boolean {
+  return state.planning?.phase === 'preview' && dashboardPlanEditingEnabled();
+}
+
+/**
+ * Whether rows, tabs and panels can be dragged, and panels resized. Over Composer's Editing they can: Composer's
+ * overlay holds presses while a pick is pending, so by hand it is for when none is (the Pointer tool).
+ */
+export function canArrangeLayout(
+  state: Pick<DashboardSceneState, 'mode' | 'isEditing' | 'planning' | 'composerEditing'>
+): boolean {
+  return isFullDashboardEditing(state) || isArrangingPlan(state) || isComposerEditing(state);
+}
+
 export function isDashboardReviewing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
   const mode = getDashboardMode(state);
   return mode === 'composer' || (dashboardModesEnabled() && mode !== 'edit');
@@ -121,6 +146,11 @@ export interface DashboardPlanPreviewState extends DashboardPlanningBase {
   onBuild: () => void;
   /** Discard the plan and remove its scaffolded panels. */
   onDismiss: () => void;
+  /**
+   * With plan editing on, the preview owns the plan: arranging the layout by hand changes it here,
+   * and Build makes the dashboard from it.
+   */
+  editable?: EditablePlan;
 }
 
 /**

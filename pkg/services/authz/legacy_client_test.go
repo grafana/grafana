@@ -3,11 +3,15 @@ package authz
 import (
 	"context"
 	"testing"
+	"time"
+
+	"github.com/grafana/authlib/types"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"k8s.io/utils/ptr"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -67,11 +71,13 @@ func TestIntegrationProvideAuthZLegacyAccessClient(t *testing.T) {
 			service := &legacyCheckAccessControlService{
 				roles: map[string]*ac.RoleDTO{string(org.RoleViewer): {Permissions: []ac.Permission{grant}}},
 			}
+			accessControl := acimpl.ProvideAccessControlTest()
+			registry := prometheus.NewRegistry()
 			clients, err := ProvideAuthZClients(
-				cfg, tc.features, nil, tracing.InitializeTracerForTest(), prometheus.NewRegistry(),
+				cfg, tc.features, nil, tracing.InitializeTracerForTest(), registry,
 				sql, service, actionSets, &unusedLegacyCheckZanzanaClient{},
 				apiserver.ProvideEventualRestConfigProvider(), nil, loader, ac.NewScopeResolverRegistry(),
-				acimpl.ProvideAccessControlTest(),
+				accessControl,
 			)
 			require.NoError(t, err)
 			client := ProvideAuthZLegacyAccessClient(clients)
@@ -141,6 +147,48 @@ func TestIntegrationProvideAuthZLegacyAccessClient(t *testing.T) {
 					require.Equal(t, check.allowed, allowed)
 				})
 			}
+
+			t.Run("shadow preserves local denial with embedded RBAC grant", func(t *testing.T) {
+				featuremgmt.WithEnabledFlags(t, featuremgmt.FlagAuthzUseLegacyCheck, featuremgmt.FlagAuthzUseLegacyCheckShadow)
+				requester := &identity.StaticRequester{
+					Type:      types.TypeAnonymous,
+					UserUID:   "0",
+					OrgID:     1,
+					Namespace: "default",
+					Permissions: map[int64]map[string][]string{
+						1: {grant.Action: {"contract:uid:different"}},
+					},
+				}
+
+				allowed, err := accessControl.Evaluate(t.Context(), requester, ac.EvalPermission(grant.Action, grant.Scope))
+
+				require.NoError(t, err)
+				require.False(t, allowed)
+				require.Eventually(t, func() bool {
+					count, err := legacyCheckShadowComparisonCount(registry, "mismatch")
+					return err == nil && count == 1
+				}, 10*time.Second, time.Millisecond)
+			})
 		})
 	}
+}
+
+func legacyCheckShadowComparisonCount(registry prometheus.Gatherer, result string) (float64, error) {
+	families, err := registry.Gather()
+	if err != nil {
+		return 0, err
+	}
+	for _, family := range families {
+		if family.GetName() != "grafana_accesscontrol_legacy_check_shadow_comparisons_total" {
+			continue
+		}
+		for _, metric := range family.Metric {
+			for _, label := range metric.Label {
+				if label.GetName() == "result" && label.GetValue() == result {
+					return metric.GetCounter().GetValue(), nil
+				}
+			}
+		}
+	}
+	return 0, nil
 }

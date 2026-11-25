@@ -37,7 +37,7 @@ func subresourceAttrs(sub, name, ns string) authorizer.Attributes {
 // (repo setup), but NOT to viewers. Since the repositories resource has no Editor tier,
 // it is authorized as repositories:write (admin) OR jobs:create (editor).
 //
-// resources/history/status are admin-only and gated on repositories:write so that the
+// resources/stats/history/status are admin-only and gated on repositories:write so that the
 // repository-scoped Name is preserved (rather than proxying through an unrelated resource).
 func TestAuthorizeRepositorySubresource(t *testing.T) {
 	ctx := context.Background()
@@ -91,7 +91,7 @@ func TestAuthorizeRepositorySubresource(t *testing.T) {
 		assert.Equal(t, authorizer.DecisionDeny, decision)
 	})
 
-	for _, sub := range []string{"resources", "history", "status"} {
+	for _, sub := range []string{"resources", "stats", "history", "status"} {
 		t.Run(sub+": admin (repositories:write) is allowed", func(t *testing.T) {
 			adminChecker := auth.NewMockAccessChecker(t)
 			adminChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(repoWriteReq), "").Return(nil)

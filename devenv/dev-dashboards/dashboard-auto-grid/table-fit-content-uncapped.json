@@ -1,0 +1,354 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "table-fit-content-uncapped"
+  },
+  "spec": {
+    "title": "Table fit-content uncapped",
+    "description": "PR #137277: uncapped fit-content table shows all rows with no pagination; capped tables paginate.",
+    "editable": true,
+    "cursorSync": "Off",
+    "links": [],
+    "annotations": [],
+    "variables": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [],
+    "timeSettings": {},
+    "elements": {
+      "panel-uncapped": {
+        "kind": "Panel",
+        "spec": {
+          "id": 685,
+          "title": "Table 50 rows \u2014 uncapped",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvContent": "id,group,message\n1,group-1,A row 1\n2,group-2,A row 2\n3,group-3,A row 3\n4,group-4,A row 4\n5,group-5,A row 5\n6,group-6,A row 6\n7,group-7,A row 7\n8,group-0,A row 8\n9,group-1,A row 9\n10,group-2,A row 10\n11,group-3,A row 11\n12,group-4,A row 12\n13,group-5,A row 13\n14,group-6,A row 14\n15,group-7,A row 15\n16,group-0,A row 16\n17,group-1,A row 17\n18,group-2,A row 18\n19,group-3,A row 19\n20,group-4,A row 20\n21,group-5,A row 21\n22,group-6,A row 22\n23,group-7,A row 23\n24,group-0,A row 24\n25,group-1,A row 25\n26,group-2,A row 26\n27,group-3,A row 27\n28,group-4,A row 28\n29,group-5,A row 29\n30,group-6,A row 30\n31,group-7,A row 31\n32,group-0,A row 32\n33,group-1,A row 33\n34,group-2,A row 34\n35,group-3,A row 35\n36,group-4,A row 36\n37,group-5,A row 37\n38,group-6,A row 38\n39,group-7,A row 39\n40,group-0,A row 40\n41,group-1,A row 41\n42,group-2,A row 42\n43,group-3,A row 43\n44,group-4,A row 44\n45,group-5,A row 45\n46,group-6,A row 46\n47,group-7,A row 47\n48,group-0,A row 48\n49,group-1,A row 49\n50,group-2,A row 50",
+                        "scenarioId": "csv_content"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.4.0",
+            "spec": {
+              "options": {
+                "enablePagination": true,
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "wrapText": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-capped": {
+        "kind": "Panel",
+        "spec": {
+          "id": 950,
+          "title": "Table 50 rows \u2014 capped",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvContent": "id,group,message\n1,group-1,A row 1\n2,group-2,A row 2\n3,group-3,A row 3\n4,group-4,A row 4\n5,group-5,A row 5\n6,group-6,A row 6\n7,group-7,A row 7\n8,group-0,A row 8\n9,group-1,A row 9\n10,group-2,A row 10\n11,group-3,A row 11\n12,group-4,A row 12\n13,group-5,A row 13\n14,group-6,A row 14\n15,group-7,A row 15\n16,group-0,A row 16\n17,group-1,A row 17\n18,group-2,A row 18\n19,group-3,A row 19\n20,group-4,A row 20\n21,group-5,A row 21\n22,group-6,A row 22\n23,group-7,A row 23\n24,group-0,A row 24\n25,group-1,A row 25\n26,group-2,A row 26\n27,group-3,A row 27\n28,group-4,A row 28\n29,group-5,A row 29\n30,group-6,A row 30\n31,group-7,A row 31\n32,group-0,A row 32\n33,group-1,A row 33\n34,group-2,A row 34\n35,group-3,A row 35\n36,group-4,A row 36\n37,group-5,A row 37\n38,group-6,A row 38\n39,group-7,A row 39\n40,group-0,A row 40\n41,group-1,A row 41\n42,group-2,A row 42\n43,group-3,A row 43\n44,group-4,A row 44\n45,group-5,A row 45\n46,group-6,A row 46\n47,group-7,A row 47\n48,group-0,A row 48\n49,group-1,A row 49\n50,group-2,A row 50",
+                        "scenarioId": "csv_content"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.4.0",
+            "spec": {
+              "options": {
+                "enablePagination": true,
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "wrapText": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-wrapped": {
+        "kind": "Panel",
+        "spec": {
+          "id": 375,
+          "title": "Table 50 rows \u2014 capped wrapped",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvContent": "id,message\n1,This is a deliberately long wrapped message for row number 1 so the cell spans several lines\n2,This is a deliberately long wrapped message for row number 2 so the cell spans several lines\n3,This is a deliberately long wrapped message for row number 3 so the cell spans several lines\n4,This is a deliberately long wrapped message for row number 4 so the cell spans several lines\n5,This is a deliberately long wrapped message for row number 5 so the cell spans several lines\n6,This is a deliberately long wrapped message for row number 6 so the cell spans several lines\n7,This is a deliberately long wrapped message for row number 7 so the cell spans several lines\n8,This is a deliberately long wrapped message for row number 8 so the cell spans several lines\n9,This is a deliberately long wrapped message for row number 9 so the cell spans several lines\n10,This is a deliberately long wrapped message for row number 10 so the cell spans several lines\n11,This is a deliberately long wrapped message for row number 11 so the cell spans several lines\n12,This is a deliberately long wrapped message for row number 12 so the cell spans several lines\n13,This is a deliberately long wrapped message for row number 13 so the cell spans several lines\n14,This is a deliberately long wrapped message for row number 14 so the cell spans several lines\n15,This is a deliberately long wrapped message for row number 15 so the cell spans several lines\n16,This is a deliberately long wrapped message for row number 16 so the cell spans several lines\n17,This is a deliberately long wrapped message for row number 17 so the cell spans several lines\n18,This is a deliberately long wrapped message for row number 18 so the cell spans several lines\n19,This is a deliberately long wrapped message for row number 19 so the cell spans several lines\n20,This is a deliberately long wrapped message for row number 20 so the cell spans several lines\n21,This is a deliberately long wrapped message for row number 21 so the cell spans several lines\n22,This is a deliberately long wrapped message for row number 22 so the cell spans several lines\n23,This is a deliberately long wrapped message for row number 23 so the cell spans several lines\n24,This is a deliberately long wrapped message for row number 24 so the cell spans several lines\n25,This is a deliberately long wrapped message for row number 25 so the cell spans several lines\n26,This is a deliberately long wrapped message for row number 26 so the cell spans several lines\n27,This is a deliberately long wrapped message for row number 27 so the cell spans several lines\n28,This is a deliberately long wrapped message for row number 28 so the cell spans several lines\n29,This is a deliberately long wrapped message for row number 29 so the cell spans several lines\n30,This is a deliberately long wrapped message for row number 30 so the cell spans several lines\n31,This is a deliberately long wrapped message for row number 31 so the cell spans several lines\n32,This is a deliberately long wrapped message for row number 32 so the cell spans several lines\n33,This is a deliberately long wrapped message for row number 33 so the cell spans several lines\n34,This is a deliberately long wrapped message for row number 34 so the cell spans several lines\n35,This is a deliberately long wrapped message for row number 35 so the cell spans several lines\n36,This is a deliberately long wrapped message for row number 36 so the cell spans several lines\n37,This is a deliberately long wrapped message for row number 37 so the cell spans several lines\n38,This is a deliberately long wrapped message for row number 38 so the cell spans several lines\n39,This is a deliberately long wrapped message for row number 39 so the cell spans several lines\n40,This is a deliberately long wrapped message for row number 40 so the cell spans several lines\n41,This is a deliberately long wrapped message for row number 41 so the cell spans several lines\n42,This is a deliberately long wrapped message for row number 42 so the cell spans several lines\n43,This is a deliberately long wrapped message for row number 43 so the cell spans several lines\n44,This is a deliberately long wrapped message for row number 44 so the cell spans several lines\n45,This is a deliberately long wrapped message for row number 45 so the cell spans several lines\n46,This is a deliberately long wrapped message for row number 46 so the cell spans several lines\n47,This is a deliberately long wrapped message for row number 47 so the cell spans several lines\n48,This is a deliberately long wrapped message for row number 48 so the cell spans several lines\n49,This is a deliberately long wrapped message for row number 49 so the cell spans several lines\n50,This is a deliberately long wrapped message for row number 50 so the cell spans several lines",
+                        "scenarioId": "csv_content"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.4.0",
+            "spec": {
+              "options": {
+                "enablePagination": true,
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "wrapText": true
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-multi": {
+        "kind": "Panel",
+        "spec": {
+          "id": 813,
+          "title": "Table multi-frame \u2014 uncapped",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvContent": "id,group,message\n1,group-1,A row 1\n2,group-2,A row 2\n3,group-3,A row 3\n4,group-4,A row 4\n5,group-5,A row 5\n6,group-6,A row 6\n7,group-7,A row 7\n8,group-0,A row 8\n9,group-1,A row 9\n10,group-2,A row 10\n11,group-3,A row 11\n12,group-4,A row 12\n13,group-5,A row 13\n14,group-6,A row 14\n15,group-7,A row 15\n16,group-0,A row 16\n17,group-1,A row 17\n18,group-2,A row 18\n19,group-3,A row 19\n20,group-4,A row 20\n21,group-5,A row 21\n22,group-6,A row 22\n23,group-7,A row 23\n24,group-0,A row 24\n25,group-1,A row 25\n26,group-2,A row 26\n27,group-3,A row 27\n28,group-4,A row 28\n29,group-5,A row 29\n30,group-6,A row 30\n31,group-7,A row 31\n32,group-0,A row 32\n33,group-1,A row 33\n34,group-2,A row 34\n35,group-3,A row 35\n36,group-4,A row 36\n37,group-5,A row 37\n38,group-6,A row 38\n39,group-7,A row 39\n40,group-0,A row 40\n41,group-1,A row 41\n42,group-2,A row 42\n43,group-3,A row 43\n44,group-4,A row 44\n45,group-5,A row 45\n46,group-6,A row 46\n47,group-7,A row 47\n48,group-0,A row 48\n49,group-1,A row 49\n50,group-2,A row 50",
+                        "scenarioId": "csv_content"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvContent": "id,group,message\n1,bgroup-1,B row 1\n2,bgroup-2,B row 2\n3,bgroup-3,B row 3\n4,bgroup-4,B row 4\n5,bgroup-5,B row 5\n6,bgroup-6,B row 6\n7,bgroup-7,B row 7\n8,bgroup-0,B row 8\n9,bgroup-1,B row 9\n10,bgroup-2,B row 10\n11,bgroup-3,B row 11\n12,bgroup-4,B row 12\n13,bgroup-5,B row 13\n14,bgroup-6,B row 14\n15,bgroup-7,B row 15\n16,bgroup-0,B row 16\n17,bgroup-1,B row 17\n18,bgroup-2,B row 18\n19,bgroup-3,B row 19\n20,bgroup-4,B row 20\n21,bgroup-5,B row 21\n22,bgroup-6,B row 22\n23,bgroup-7,B row 23\n24,bgroup-0,B row 24\n25,bgroup-1,B row 25\n26,bgroup-2,B row 26\n27,bgroup-3,B row 27\n28,bgroup-4,B row 28\n29,bgroup-5,B row 29\n30,bgroup-6,B row 30\n31,bgroup-7,B row 31\n32,bgroup-0,B row 32\n33,bgroup-1,B row 33\n34,bgroup-2,B row 34\n35,bgroup-3,B row 35\n36,bgroup-4,B row 36\n37,bgroup-5,B row 37\n38,bgroup-6,B row 38\n39,bgroup-7,B row 39\n40,bgroup-0,B row 40\n41,bgroup-1,B row 41\n42,bgroup-2,B row 42\n43,bgroup-3,B row 43\n44,bgroup-4,B row 44\n45,bgroup-5,B row 45\n46,bgroup-6,B row 46\n47,bgroup-7,B row 47\n48,bgroup-0,B row 48\n49,bgroup-1,B row 49\n50,bgroup-2,B row 50",
+                        "scenarioId": "csv_content"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.4.0",
+            "spec": {
+              "options": {
+                "enablePagination": true,
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "wrapText": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "TabsLayout",
+      "spec": {
+        "tabs": [
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "title": "1. Uncapped",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fitContent": true,
+                  "minHeightMode": "none",
+                  "maxHeightMode": "unlimited",
+                  "matchRowHeights": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-uncapped"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "title": "2. Capped",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fitContent": true,
+                  "minHeightMode": "none",
+                  "maxHeightMode": "custom",
+                  "matchRowHeights": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-capped"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-wrapped"
+                        }
+                      }
+                    }
+                  ],
+                  "maxHeight": 320
+                }
+              }
+            }
+          },
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "title": "3. Multi-frame",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fitContent": true,
+                  "minHeightMode": "none",
+                  "maxHeightMode": "unlimited",
+                  "matchRowHeights": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-multi"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

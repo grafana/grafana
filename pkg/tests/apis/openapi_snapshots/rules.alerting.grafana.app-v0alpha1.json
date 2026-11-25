@@ -5084,6 +5084,10 @@
                   "api",
                   "ini"
                 ]
+              },
+              "rootFolderUid": {
+                "description": "rootFolderUid is the UID of the folder the synced rules live under. The\nworker finds the folder by it, so a rename does not stop the sync and a\ndeleted folder is recreated with the same UID. Internal bookkeeping.",
+                "type": "string"
               }
             },
             "additionalProperties": false

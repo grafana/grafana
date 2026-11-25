@@ -5,6 +5,7 @@ import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack } from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
@@ -12,7 +13,7 @@ import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useCommitTarget } from '../../hooks/useCommitTarget';
 import { useResourceJob } from '../../hooks/useResourceJob';
 import { type ProvisionedDashboardFormData } from '../../types/form';
-import { type DeleteJobSpec } from '../../types/job';
+import { type DeleteJobSpec, toResourceRef } from '../../types/job';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getRequestRef } from '../../utils/workflow';
@@ -117,11 +118,7 @@ export function DeleteProvisionedDashboardForm({
       delete: {
         ref: getRequestRef(repository, ref),
         resources: [
-          {
-            name: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
-            group: 'dashboard.grafana.app',
-            kind: 'Dashboard',
-          },
+          toResourceRef(CORE_KINDS.dashboard, dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? ''),
         ],
       },
     };

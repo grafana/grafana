@@ -30,7 +30,7 @@ import {
 
 import { type Themeable2 } from '../../types/theme';
 import { calculateFontSize, measureText } from '../../utils/measureText';
-import { clearButtonStyles } from '../Button/Button';
+import { clearButtonStyles } from '../Button/StyledButton.styles';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 const MIN_VALUE_HEIGHT = 18;
@@ -618,7 +618,7 @@ export function getBarGradient(props: Props, maxSize: number): string {
 
   let gradient = '';
   let lastpos = 0;
-  let mode = getFieldColorMode(field.color?.mode);
+  let mode = getFieldColorMode(field.color?.mode, field.color?.reverse);
 
   if (mode.id === FieldColorModeId.Thresholds) {
     const thresholds = field.thresholds!;

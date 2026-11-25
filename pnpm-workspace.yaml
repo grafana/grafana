@@ -16,6 +16,7 @@ overrides:
   "react-grid-layout": "1.4.4"
   "@grafana/plugin-e2e>@grafana/e2e-selectors": "workspace:*"
   "@grafana/scenes>@grafana/e2e-selectors": "workspace:*"
+  "@grafana/scenes>@grafana/plugin-compat": "workspace:*"
   "@grafana/scenes-react>@grafana/e2e-selectors": "workspace:*"
   "@grafana/alerting>@grafana/data": "workspace:*"
   "@grafana/alerting>@grafana/runtime": "workspace:*"
@@ -83,5 +84,9 @@ minimumReleaseAgeExclude:
   - "@grafana/plugin-ui"
   - "@grafana/llm"
   - "@grafana/lezer-logql"
+  - "@grafana/faro-core@2.15.0-alpha.0"
+  - "@grafana/faro-instrumentation-replay@2.15.0-alpha.0"
+  - "@grafana/faro-web-sdk@2.15.0-alpha.0"
+  - "@grafana/faro-web-tracing@2.15.0-alpha.0"
   # Renovate security update: node-forge@1.4.1
   - node-forge@1.4.1

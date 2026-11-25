@@ -15,7 +15,7 @@ import { type Labels } from 'app/types/unified-alerting-dto';
 
 import { type MatcherFieldValue } from '../types/silence-form';
 
-import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from './constants';
 import { objectLabelsToArray } from './labels';
 import {
   type MatcherFormatter,

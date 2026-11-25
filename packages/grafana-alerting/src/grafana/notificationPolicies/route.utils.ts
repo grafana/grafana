@@ -3,20 +3,20 @@ import { groupBy, isArray, pick, reduce, uniqueId } from 'lodash';
 import { type Label } from '../matchers/types';
 import { type IndexedLabels, type LabelMatchDetails, indexLabels, matchIndexedLabels } from '../matchers/utils';
 
-import { type Route, type RouteWithID } from './types';
+import { type InheritableRoute, type MatchableRoute, type Route, type RouteWithID } from './types';
 
 export const INHERITABLE_KEYS = ['receiver', 'group_by', 'group_wait', 'group_interval', 'repeat_interval'] as const;
 type InheritableKeys = typeof INHERITABLE_KEYS;
-export type InheritableProperties = Pick<Route, InheritableKeys[number]>;
+export type InheritableProperties = Pick<InheritableRoute, InheritableKeys[number]>;
 
 // Represents matching information for a single route in the traversal path
-export type RouteMatchInfo<T extends Route> = {
+export type RouteMatchInfo<T extends MatchableRoute> = {
   route: T;
   matchDetails: LabelMatchDetails[];
   matched: boolean;
 };
 
-export interface RouteMatchResult<T extends Route> {
+export interface RouteMatchResult<T extends MatchableRoute> {
   route: T;
   labels: Label[];
   // Track matching information for each route in the traversal path
@@ -29,7 +29,7 @@ export interface RouteMatchResult<T extends Route> {
  * If the current node is not a match, return nothing
  * Normalization should have happened earlier in the code
  */
-export function findMatchingRoutes<T extends Route>(
+export function findMatchingRoutes<T extends MatchableRoute>(
   route: T,
   labels: Label[],
   matchingJourney: Array<RouteMatchInfo<T>> = []
@@ -39,7 +39,7 @@ export function findMatchingRoutes<T extends Route>(
   return findMatchingRoutesForLabels(route, indexLabels(labels), matchingJourney);
 }
 
-function findMatchingRoutesForLabels<T extends Route>(
+function findMatchingRoutesForLabels<T extends MatchableRoute>(
   route: T,
   indexedLabels: IndexedLabels,
   matchingJourney: Array<RouteMatchInfo<T>>
@@ -93,7 +93,7 @@ function findMatchingRoutesForLabels<T extends Route>(
 /**
  * This function will compute the full tree with inherited properties – this is mostly used for search and filtering
  */
-export function computeInheritedTree<T extends Route>(parent: T): T {
+export function computeInheritedTree<T extends InheritableRoute>(parent: T): T {
   return {
     ...parent,
     routes: parent.routes?.map((child) => {
@@ -108,7 +108,7 @@ export function computeInheritedTree<T extends Route>(parent: T): T {
 }
 
 // inherited properties are config properties that exist on the parent route (or its inherited properties) but not on the child route
-export function getInheritedProperties<T extends Route>(
+export function getInheritedProperties<T extends InheritableRoute>(
   parentRoute: T,
   childRoute: T,
   propertiesParentInherited?: InheritableProperties

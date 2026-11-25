@@ -36,13 +36,15 @@ const (
 // ExternalRulerSynced condition and folds it into prev. appliedHash is stored
 // only on success (empty keeps whatever hash prev already carried), so a
 // later restart or replica can skip an unchanged re-apply — see
-// resolvedRulerSync.persistedHash.
-func computeSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, syncErr error, now time.Time, appliedHash string) alertingrulesv0alpha1.ConfigStatus {
+// resolvedRulerSync.persistedHash. rootFolderUID is the sync root folder the
+// success resolved; it is ignored on failure, where the recorded one carries
+// forward.
+func computeSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, syncErr error, now time.Time, appliedHash, rootFolderUID string) alertingrulesv0alpha1.ConfigStatus {
 	if syncErr == nil {
-		return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusTrue, conditionReasonSyncSucceeded, "", now, appliedHash)
+		return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusTrue, conditionReasonSyncSucceeded, "", now, appliedHash, rootFolderUID)
 	}
 	reason := reasonOf(syncErr)
-	st := buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusFalse, reason.ConditionReason(), syncErr.Error(), now, "")
+	st := buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusFalse, reason.ConditionReason(), syncErr.Error(), now, "", "")
 	if reason.InvalidatesDedup() && st.ExternalRulerSync != nil {
 		st.ExternalRulerSync.LastAppliedHash = nil
 	}
@@ -59,7 +61,7 @@ func computeUnchangedStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string
 	if prev != nil && prev.ExternalRulerSync != nil && prev.ExternalRulerSync.LastAppliedHash != nil && *prev.ExternalRulerSync.LastAppliedHash != "" {
 		appliedHash = ""
 	}
-	return computeSyncStatus(prev, uid, origin, nil, now, appliedHash)
+	return computeSyncStatus(prev, uid, origin, nil, now, appliedHash, "")
 }
 
 func failureClearableBySkip(st *alertingrulesv0alpha1.ConfigStatus) bool {
@@ -95,8 +97,9 @@ func computeNotConfiguredStatus(prev *alertingrulesv0alpha1.ConfigStatus, now ti
 // buildSyncStatus folds an ExternalRulerSynced condition into prev, plus the
 // externalRulerSync context (datasource UID and origin) that produced it.
 // appliedHash, when non-empty, overwrites the persisted dedup hash; when
-// empty, prev's hash (if any) carries forward unchanged.
-func buildSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, condStatus alertingrulesv0alpha1.ConfigConditionStatus, reason, message string, now time.Time, appliedHash string) alertingrulesv0alpha1.ConfigStatus {
+// empty, prev's hash (if any) carries forward unchanged. rootFolderUID does too,
+// but only for the same datasource, since the folder belongs to one.
+func buildSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, condStatus alertingrulesv0alpha1.ConfigConditionStatus, reason, message string, now time.Time, appliedHash, rootFolderUID string) alertingrulesv0alpha1.ConfigStatus {
 	uidCopy := uid
 	originCopy := origin
 	st := cloneStatus(prev)
@@ -104,12 +107,18 @@ func buildSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origi
 	if hash == "" && prev != nil && prev.ExternalRulerSync != nil && prev.ExternalRulerSync.LastAppliedHash != nil {
 		hash = *prev.ExternalRulerSync.LastAppliedHash
 	}
+	if rootFolderUID == "" {
+		rootFolderUID = externalRulerSyncRootFolderUIDFromStatus(prev, uid)
+	}
 	st.ExternalRulerSync = &alertingrulesv0alpha1.ConfigV0alpha1StatusExternalRulerSync{
 		DatasourceUid: &uidCopy,
 		Origin:        &originCopy,
 	}
 	if hash != "" {
 		st.ExternalRulerSync.LastAppliedHash = &hash
+	}
+	if rootFolderUID != "" {
+		st.ExternalRulerSync.RootFolderUid = &rootFolderUID
 	}
 
 	synced := alertingrulesv0alpha1.ConfigCondition{
@@ -179,6 +188,20 @@ func externalRulerSyncLastAppliedHashFromConfig(c *alertingrulesv0alpha1.Config)
 		return ""
 	}
 	return *c.Status.ExternalRulerSync.LastAppliedHash
+}
+
+// externalRulerSyncRootFolderUIDFromStatus returns the sync root folder UID
+// recorded in status for datasource dsUID, or "" when none is recorded or the
+// status was last written for a different datasource.
+func externalRulerSyncRootFolderUIDFromStatus(st *alertingrulesv0alpha1.ConfigStatus, dsUID string) string {
+	if st == nil ||
+		st.ExternalRulerSync == nil ||
+		st.ExternalRulerSync.RootFolderUid == nil ||
+		st.ExternalRulerSync.DatasourceUid == nil ||
+		*st.ExternalRulerSync.DatasourceUid != dsUID {
+		return ""
+	}
+	return *st.ExternalRulerSync.RootFolderUid
 }
 
 // externalRulerSyncPollIntervalFromConfig returns the configured poll interval,

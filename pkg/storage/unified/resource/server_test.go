@@ -29,7 +29,6 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"go.opentelemetry.io/otel/trace"
-	"gocloud.dev/blob/memblob"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -39,6 +38,7 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	authlib "github.com/grafana/authlib/types"
@@ -59,7 +59,7 @@ func TestSimpleServer(t *testing.T) {
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true, // can do anything
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), testUserA)
@@ -582,7 +582,7 @@ func TestListStoredResources(t *testing.T) {
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true,
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), testUser)
@@ -1373,7 +1373,7 @@ func TestGracefulShutdown(t *testing.T) {
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true,
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), testUser)
@@ -1573,7 +1573,7 @@ func newWatchTestUser() *identity.StaticRequester {
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true,
 	}
 }
@@ -1831,7 +1831,7 @@ func startBookmarkWatch(t *testing.T, req *resourcepb.WatchRequest, configure fu
 	})
 	require.NoError(t, err)
 	srv.log = log.NewNopLogger()
-	srv.broadcaster = NewBroadcaster(ctx, events, newBroadcasterMetrics(prometheus.NewRegistry()), nil)
+	srv.setWatchState(newBroadcaster(ctx, events, newBroadcasterMetrics(prometheus.NewRegistry()), writtenEventIdentity), nil)
 	if configure != nil {
 		configure(srv, stream)
 	}
@@ -2157,7 +2157,13 @@ func TestIncrementalBookmarksFilteredProgress(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
-				events, stream, _ := startBookmarkWatch(t, bookmarkWatchRequest(), func(srv *server, _ *bookmarkWatchServer) {
+				req, rv := bookmarkWatchRequest(), int64(101)
+				if tt.kv {
+					// KV resumes are snowflakes; old enough that the filtered-progress delay passes.
+					req.Since = snowflakeFromTime(advanceBookmarkClock().Add(-2 * time.Minute))
+					rv = req.Since + 1
+				}
+				events, stream, _ := startBookmarkWatch(t, req, func(srv *server, _ *bookmarkWatchServer) {
 					if tt.kv {
 						srv.backend = &kvStorageBackend{}
 					}
@@ -2165,7 +2171,7 @@ func TestIncrementalBookmarksFilteredProgress(t *testing.T) {
 						tt.configure(srv)
 					}
 				})
-				event := bookmarkWrittenEvent(101)
+				event := bookmarkWrittenEvent(rv)
 				if tt.filter != nil {
 					tt.filter(event)
 				}
@@ -2176,7 +2182,7 @@ func TestIncrementalBookmarksFilteredProgress(t *testing.T) {
 
 				require.Empty(t, stream.events, "filtered objects must not be sent")
 				time.Sleep(time.Second)
-				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, 101)
+				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, rv)
 				time.Sleep(2 * time.Second)
 
 				// Finish later bookmark ticks before checking that unchanged progress is not repeated.
@@ -2228,7 +2234,11 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				entered, release := make(chan struct{}), make(chan struct{})
 				sendErr := errors.New("send failed")
-				events, stream, done := startBookmarkWatch(t, bookmarkWatchRequest(), func(srv *server, stream *bookmarkWatchServer) {
+				req := bookmarkWatchRequest()
+				// KV resumes are snowflakes; old enough that the filtered-progress delay passes.
+				req.Since = snowflakeFromTime(advanceBookmarkClock().Add(-2 * time.Minute))
+				first, second := req.Since+1, req.Since+2
+				events, stream, done := startBookmarkWatch(t, req, func(srv *server, stream *bookmarkWatchServer) {
 					srv.backend = &kvStorageBackend{}
 					stream.beforeSend = func(event *resourcepb.WatchEvent) error {
 						if event.Type == resourcepb.WatchEvent_ADDED {
@@ -2245,7 +2255,7 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 						return nil
 					}
 				})
-				events <- bookmarkWrittenEvent(101)
+				events <- bookmarkWrittenEvent(first)
 
 				// Enter the blocked Send before supplying the next pending event.
 				synctest.Wait()
@@ -2255,7 +2265,7 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 				default:
 					t.Fatal("matching send was not reached")
 				}
-				pending := bookmarkWrittenEvent(102)
+				pending := bookmarkWrittenEvent(second)
 				pending.Key.Resource = "other"
 				events <- pending
 				time.Sleep(2 * time.Second)
@@ -2276,7 +2286,7 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 					return
 				}
 
-				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 101)
+				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, first)
 
 				// Finish the pending bookmark after the delivered object before reading it.
 				synctest.Wait()
@@ -2284,11 +2294,11 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 				require.NotEmpty(t, stream.events)
 				bookmark := <-stream.events
 				require.Equal(t, resourcepb.WatchEvent_BOOKMARK, bookmark.Type)
-				if bookmark.Resource.Version == 101 {
+				if bookmark.Resource.Version == first {
 					time.Sleep(time.Second)
-					requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, 102)
+					requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, second)
 				} else {
-					require.Equal(t, int64(102), bookmark.Resource.Version)
+					require.Equal(t, second, bookmark.Resource.Version)
 				}
 			})
 		})
@@ -2917,7 +2927,7 @@ func TestNewEventPermissionChecks(t *testing.T) {
 		Login:     "testuser",
 		UserID:    123,
 		UserUID:   "u123",
-		OrgRole:   identity.RoleEditor,
+		OrgRole:   authlib.RoleEditor,
 		Namespace: "default",
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), user)
@@ -3208,7 +3218,7 @@ func TestFolderDeletePermissionChecks(t *testing.T) {
 		Login:     "testuser",
 		UserID:    123,
 		UserUID:   "u123",
-		OrgRole:   identity.RoleEditor,
+		OrgRole:   authlib.RoleEditor,
 		Namespace: "default",
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), user)
@@ -3329,6 +3339,14 @@ func TestFolderDeletePermissionChecks(t *testing.T) {
 		require.Equal(t, parentFolderUID, capturedFolder)
 		require.NotEqual(t, folderName, capturedFolder)
 	})
+}
+
+func TestInitializeBlobStorageRejectsBucketURL(t *testing.T) {
+	_, err := initializeBlobStorage(ResourceServerOptions{Blob: BlobConfig{
+		URL:     "mem://",
+		Backend: NewKVBlobSupport(nil),
+	}})
+	require.ErrorContains(t, err, "blob_url is no longer supported")
 }
 
 // stubBlobSupport records whether PutResourceBlob was reached so tests can
@@ -3708,12 +3726,9 @@ func TestGetBlobReferenceChecks(t *testing.T) {
 		require.True(t, blob.getReached)
 	})
 
-	t.Run("reads a referenced blob from object storage using its content type", func(t *testing.T) {
+	t.Run("reads a referenced blob from KV storage using its content type", func(t *testing.T) {
 		srv, _, _ := newBlobAuthzTestServer(t, nil)
-		bucket := memblob.OpenBucket(nil)
-		t.Cleanup(func() { require.NoError(t, bucket.Close()) })
-		blob, err := NewCDKBlobSupport(ctx, CDKBlobSupportOptions{Bucket: bucket})
-		require.NoError(t, err)
+		blob := NewKVBlobSupport(setupBadgerKV(t))
 		srv.blob = blob
 
 		value := []byte(`{"title":"test"}`)
@@ -3890,7 +3905,7 @@ func newKeysOnlyTestServerWithMaxPageBytes(t *testing.T, maxPageBytes int, autho
 		UserID:         123,
 		UserUID:        "u123",
 		Namespace:      "*",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true,
 	})
 
@@ -4047,6 +4062,100 @@ func TestServerAuthorizeBeforeFetchValues(t *testing.T) {
 		names = append(names, obj.GetName())
 	}
 	require.Equal(t, []string{"aaa", "bbb"}, names)
+}
+
+// With filtered results the next stored item may not be in the response, so the
+// token must point at the last item returned and paging must resume after it.
+func TestServerListContinueTokenPointsAtLastReturnedItem(t *testing.T) {
+	for _, authorizeBeforeFetch := range []bool{false, true} {
+		for _, keysOnly := range []bool{false, true} {
+			t.Run(fmt.Sprintf("authorizeBeforeFetch=%v/keysOnly=%v", authorizeBeforeFetch, keysOnly), func(t *testing.T) {
+				backend := setupTestStorageBackend(t)
+				ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
+					Type:      authlib.TypeUser,
+					UserID:    123,
+					UserUID:   "u123",
+					Namespace: appsNamespace.Namespace,
+				})
+				for _, name := range []string{"aaa", "bbb", "ccc", "ddd"} {
+					seedResource(t, backend, ctx, name, "")
+				}
+
+				access := newNamespaceRecordingAccessClient()
+				access.denied["bbb"] = true
+				access.denied["ddd"] = true
+				srv, err := NewUninitializedResourceServer(ResourceServerOptions{
+					Backend:                     backend,
+					AccessClient:                access,
+					AuthorizeBeforeFetchEnabled: authorizeBeforeFetch,
+				})
+				require.NoError(t, err)
+				t.Cleanup(srv.cancel)
+
+				var names []string
+				token := ""
+				for range 5 {
+					req := appsCollectionRequest(keysOnly)
+					req.Limit = 1
+					req.NextPageToken = token
+					rsp, err := srv.List(ctx, req)
+					require.NoError(t, err)
+					for _, item := range rsp.Items {
+						if keysOnly {
+							names = append(names, item.Name)
+							continue
+						}
+						obj := &unstructured.Unstructured{}
+						require.NoError(t, obj.UnmarshalJSON(item.Value))
+						names = append(names, obj.GetName())
+					}
+					token = rsp.NextPageToken
+					if token == "" {
+						break
+					}
+
+					decoded, err := GetContinueToken(token)
+					require.NoError(t, err)
+					require.Equal(t, names[len(names)-1], decoded.Name, "the token must name the last returned item")
+				}
+				require.Empty(t, token)
+				require.Equal(t, []string{"aaa", "ccc"}, names)
+			})
+		}
+	}
+}
+
+// A token from a server that predates the exclusive cursor must reach clients
+// as 400, not 410: client-go pagers answer 410 with one unpaginated list, which
+// this server truncates to the default page size.
+func TestServerListRejectsPreExclusiveContinueTokenAsBadRequest(t *testing.T) {
+	for _, authorizeBeforeFetch := range []bool{false, true} {
+		t.Run(fmt.Sprintf("authorizeBeforeFetch=%v", authorizeBeforeFetch), func(t *testing.T) {
+			backend := setupTestStorageBackend(t)
+			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
+				Type:      authlib.TypeUser,
+				UserID:    123,
+				UserUID:   "u123",
+				Namespace: appsNamespace.Namespace,
+			})
+			rv := seedResource(t, backend, ctx, "aaa", "")
+
+			srv, err := NewUninitializedResourceServer(ResourceServerOptions{
+				Backend:                     backend,
+				AuthorizeBeforeFetchEnabled: authorizeBeforeFetch,
+			})
+			require.NoError(t, err)
+			t.Cleanup(srv.cancel)
+
+			req := appsCollectionRequest(false)
+			req.NextPageToken = preExclusiveContinueToken(t, "aaa", rv, false)
+			rsp, err := srv.List(ctx, req)
+			require.Nil(t, rsp)
+			res := rpcErrorResult(t, err)
+			require.Equal(t, int32(http.StatusBadRequest), res.Code)
+			require.Equal(t, string(metav1.StatusReasonBadRequest), res.Reason)
+		})
+	}
 }
 
 func TestServerListKeysOnly(t *testing.T) {
@@ -4391,7 +4500,7 @@ func newRecordingTestServer(t *testing.T, ac authlib.AccessClient, identityNames
 	authCtx := func(ns string) context.Context {
 		return authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{
 			Type: authlib.TypeAccessPolicy, Name: "svc", UserUID: "svc",
-			Namespace: ns, OrgRole: identity.RoleAdmin, IsGrafanaAdmin: true,
+			Namespace: ns, OrgRole: authlib.RoleAdmin, IsGrafanaAdmin: true,
 		})
 	}
 	return srv, authCtx(identityNamespace), authCtx("*")
@@ -4769,7 +4878,7 @@ func TestResourceServerQOSTenantIsolation(t *testing.T) {
 		}
 		ctxFor := func(namespace string) context.Context {
 			return authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
-				Type: authlib.TypeUser, UserID: 123, UserUID: "u123", OrgRole: identity.RoleEditor, Namespace: namespace,
+				Type: authlib.TypeUser, UserID: 123, UserUID: "u123", OrgRole: authlib.RoleEditor, Namespace: namespace,
 			})
 		}
 

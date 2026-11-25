@@ -87,7 +87,10 @@ runs:
         mkdir -p grafana-server/data/plugins
         cp -R e2e-playwright/test-plugins/. grafana-server/data/plugins/
 
-    # Only canvas is bundled to keep the other core plugins under test unchanged.
+    # Only canvas and prometheus are bundled to keep the other core plugins under test unchanged.
+    # Prometheus has no core build, and many specs need it. Without bundling, the server's background
+    # installer fetches it after /health is up, one plugin at a time, and one stalled download leaves
+    # it missing for the whole run.
     - name: Download bundled catalog plugins
       shell: bash
       run: |
@@ -97,7 +100,7 @@ runs:
           --os linux \
           --arch amd64 \
           --no-default-catalog-plugins \
-          --plugins canvas
+          --plugins canvas,prometheus
 
     - name: Start Grafana server
       shell: bash

@@ -9,6 +9,10 @@ export type PageIdentity = { pathname: string } & (
   | { kind: 'explore'; session: string }
   /** A Grafana Page (the Assistant app's `/pages/<id>`); its own kind so it is not just another app page. */
   | { kind: 'page' }
+  | { kind: 'folder'; uid: string }
+  | { kind: 'notebook'; uid: string }
+  /** The edit and play routes of one playlist are the same page. */
+  | { kind: 'playlist'; uid: string }
   | { kind: 'alerting' }
   | { kind: 'app' }
 );

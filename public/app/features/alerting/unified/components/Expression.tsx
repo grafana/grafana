@@ -8,7 +8,8 @@ import { promqlGrammar } from '@grafana/prometheus';
 import { useStyles2 } from '@grafana/ui';
 import { type RulesSource } from 'app/types/unified-alerting';
 
-import { DataSourceType, isCloudRulesSource } from '../utils/datasource';
+import { DataSourceType } from '../utils/datasource';
+import { isCloudRulesSource } from '../utils/rulesSource';
 
 import { Well } from './Well';
 

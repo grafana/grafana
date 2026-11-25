@@ -196,7 +196,7 @@ func TestIntegrationLegacyCheckSharedWithMeParity(t *testing.T) {
 						UserID:    ident.id,
 						UserUID:   ident.uid,
 						OrgID:     12,
-						OrgRole:   identity.RoleViewer,
+						OrgRole:   types.RoleViewer,
 						Namespace: "org-12",
 						CacheKey:  types.NewTypeID(ident.kind, ident.uid),
 					}

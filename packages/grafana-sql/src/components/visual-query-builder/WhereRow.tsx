@@ -13,16 +13,10 @@ interface SQLBuilderWhereRowProps {
 }
 
 export function WhereRow({ sql, config, onSqlChange }: SQLBuilderWhereRowProps) {
-  const [tree, setTree] = useState<ImmutableTree>();
   const configWithDefaults = useMemo(() => ({ ...raqbConfig, ...config }), [config]);
-
-  useEffect(() => {
-    // Set the initial tree
-    if (!tree) {
-      const initTree = Utils.checkTree(Utils.loadTree(sql.whereJsonTree ?? emptyInitTree), configWithDefaults);
-      setTree(initTree);
-    }
-  }, [configWithDefaults, sql.whereJsonTree, tree]);
+  const [tree, setTree] = useState<ImmutableTree>(() =>
+    Utils.checkTree(Utils.loadTree(sql.whereJsonTree ?? emptyInitTree), configWithDefaults)
+  );
 
   useEffect(() => {
     if (!sql.whereJsonTree) {
@@ -43,10 +37,6 @@ export function WhereRow({ sql, config, onSqlChange }: SQLBuilderWhereRowProps) 
     },
     [onSqlChange, sql]
   );
-
-  if (!tree) {
-    return null;
-  }
 
   return (
     <Query

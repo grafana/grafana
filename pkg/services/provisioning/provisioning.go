@@ -34,9 +34,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
+	alertingrules "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	alertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
-	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -73,7 +73,7 @@ func ProvideService(
 	sqlStore db.DB,
 	pluginStore pluginstore.Store,
 	alertingStore *alertstore.DBstore,
-	ruleStore rulestore.Store,
+	ruleService alertingrules.RuleService,
 	provenanceStore *provenance.ProvenanceStore,
 	encryptionService encryption.Internal,
 	notificatonService *notifications.NotificationService,
@@ -102,7 +102,7 @@ func ProvideService(
 		ac:                           ac,
 		pluginStore:                  pluginStore,
 		alertingStore:                alertingStore,
-		ruleStore:                    ruleStore,
+		ruleService:                  ruleService,
 		provenanceStore:              provenanceStore,
 		EncryptionService:            encryptionService,
 		NotificationService:          notificatonService,
@@ -319,7 +319,7 @@ type ProvisioningServiceImpl struct {
 	ruleMutationValidator        provisioning.RuleMutationValidator
 	pluginStore                  pluginstore.Store
 	alertingStore                *alertstore.DBstore
-	ruleStore                    rulestore.Store
+	ruleService                  alertingrules.RuleService
 	provenanceStore              *provenance.ProvenanceStore
 	EncryptionService            encryption.Internal
 	NotificationService          *notifications.NotificationService
@@ -413,7 +413,7 @@ func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) erro
 func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error {
 	alertingPath := filepath.Join(ps.Cfg.ProvisioningPath, "alerting")
 	ruleService := provisioning.NewAlertRuleService(
-		ps.ruleStore,
+		ps.ruleService,
 		ps.provenanceStore,
 		ps.folderService,
 		// ps.dashboardService,
@@ -445,7 +445,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		receiverAuthz,
 		configStore,
 		ps.provenanceStore,
-		ps.ruleStore,
+		ps.ruleService,
 		routeService,
 		ps.secretService,
 		ps.SQLStore,
@@ -459,10 +459,10 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		notifier.NoopReceiverStatusFetcher{},
 	)
 	contactPointService := provisioning.NewContactPointService(receiverAuthz, configStore, ps.secretService,
-		ps.provenanceStore, ps.SQLStore, receiverSvc, ps.log, ps.ruleStore, ps.resourcePermissions, ps.Cfg.UnifiedAlerting.AllowedIntegrations, emailValidator)
+		ps.provenanceStore, ps.SQLStore, receiverSvc, ps.log, ps.ruleService, ps.resourcePermissions, ps.Cfg.UnifiedAlerting.AllowedIntegrations, emailValidator)
 	notificationPolicyService := provisioning.NewNotificationPolicyService(configStore,
 		ps.provenanceStore, ps.SQLStore, routeService, ps.Cfg.UnifiedAlerting, ps.log, validation.ValidateProvenanceRelaxed)
-	mutetimingsService := provisioning.NewMuteTimingService(configStore, ps.provenanceStore, ps.alertingStore, ps.log, ps.ruleStore, routeService, validation.ValidateProvenanceRelaxed)
+	mutetimingsService := provisioning.NewMuteTimingService(configStore, ps.provenanceStore, ps.alertingStore, ps.log, ps.ruleService, routeService, validation.ValidateProvenanceRelaxed)
 	templateService := provisioning.NewTemplateService(configStore, ps.provenanceStore, ps.alertingStore, ps.log, validation.ValidateProvenanceRelaxed)
 	cfg := prov_alerting.ProvisionerConfig{
 		Path:                       alertingPath,

@@ -235,7 +235,7 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 
 	queryResult, err := tapi.teamService.SearchTeams(c.Req.Context(), &query)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to search Teams", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to search Teams", err)
 	}
 
 	teamIDs := map[string]bool{}

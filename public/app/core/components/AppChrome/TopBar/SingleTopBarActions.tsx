@@ -21,14 +21,25 @@ export interface Props {
 
 export function SingleTopBarActions({ actions, breadcrumbActions, scopes }: Props) {
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
-  const { isOpen: isExtensionSidebarOpen, extensionSidebarWidth } = useExtensionSidebarContext();
+  const {
+    isOpen: isExtensionSidebarOpen,
+    extensionSidebarWidth,
+    presentation,
+    dockSide,
+  } = useExtensionSidebarContext();
   const styles = useStyles2(getStyles, extensionSidebarWidth, visualRefreshEnabled);
   const isSmallScreen = !useMediaQueryMinWidth('sm');
+  // Docked on the left, the sidebar starts below the header; at the bottom, below the page. Either way it leaves this
+  // row alone.
+  const leavesRowAlone = presentation === 'docked' && (dockSide === 'left' || dockSide === 'bottom');
 
   return (
     <div
       data-testid={Components.NavToolbar.container}
-      className={cx(styles.actionsBar, isExtensionSidebarOpen && !isSmallScreen && styles.constrained)}
+      className={cx(
+        styles.actionsBar,
+        isExtensionSidebarOpen && !isSmallScreen && !leavesRowAlone && styles.constrained
+      )}
     >
       <Stack alignItems="center" justifyContent="flex-start" flex={1} wrap="nowrap" minWidth={0}>
         {scopes?.state.enabled ? <ScopesSelector /> : undefined}

@@ -7,7 +7,22 @@ import { QueryField } from './QueryField';
 > are deprecated. New code should use [`QueryInput`](?path=/docs/inputs-queryinput--docs)
 > instead. These exports may be removed in a future release.
 
-## Background
+## When to use
+
+No component-specific guidance documented yet.
+
+## Never use for
+
+Existing usages keep working — this deprecation is a signal not to build anything
+new on Slate, and to migrate existing editors when convenient.
+
+## Do's and don'ts
+
+No component-specific guidance documented yet.
+
+## Usage
+
+### Background
 
 `QueryField` is built on [Slate](https://docs.slatejs.org/), which is no longer
 maintained in `@grafana/ui`. Editing components across Grafana have consolidated
@@ -15,10 +30,7 @@ onto [CodeMirror](https://codemirror.net/) so there is a single, unified code
 editor to maintain, theme, and extend. `QueryInput` provides the supported query
 field API without exposing the editor implementation.
 
-Existing usages keep working — this deprecation is a signal not to build anything
-new on Slate, and to migrate existing editors when convenient.
-
-## What's deprecated
+### What's deprecated
 
 - `QueryField`, `QueryFieldProps`
 - Typeahead types: `TypeaheadInput`, `TypeaheadOutput`, `SuggestionsState`
@@ -27,7 +39,7 @@ new on Slate, and to migrate existing editors when convenient.
   `NewlinePlugin`, `RunnerPlugin`, `SelectionShortcutsPlugin`, `SlatePrism`,
   `SuggestionsPlugin`
 
-## Migrating to QueryInput
+### Migrating to QueryInput
 
 `QueryInput` is exported from the main `@grafana/ui` package:
 
@@ -35,7 +47,7 @@ new on Slate, and to migrate existing editors when convenient.
 import { QueryInput } from '@grafana/ui';
 ```
 
-### What's different, React-wise
+#### What's different, React-wise
 
 <table>
   <thead>
@@ -87,7 +99,7 @@ import { QueryInput } from '@grafana/ui';
   </tbody>
 </table>
 
-### Before / after
+#### Before / after
 
 ```tsx
 // Before — Slate QueryField
@@ -102,6 +114,8 @@ import { QueryInput } from '@grafana/ui';
 
 <QueryInput value={value} onChange={setValue} onRunQuery={runQuery} aria-label="Query" />;
 ```
+
+## Accessibility
 
 ## Props
 

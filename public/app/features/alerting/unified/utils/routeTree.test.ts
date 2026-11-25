@@ -7,7 +7,7 @@ import {
 
 import { type FormAmRoute } from '../types/amroutes';
 
-import { GRAFANA_DATASOURCE_NAME } from './datasource';
+import { GRAFANA_DATASOURCE_NAME } from './constants';
 import {
   addRouteToReferenceRoute,
   cleanRouteIDs,

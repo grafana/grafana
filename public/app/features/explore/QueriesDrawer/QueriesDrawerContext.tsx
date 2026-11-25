@@ -1,4 +1,4 @@
-import { type PropsWithChildren, useState, createContext, useContext, useEffect } from 'react';
+import { type PropsWithChildren, useState, createContext, useContext } from 'react';
 
 import { useSelector } from 'app/types/store';
 
@@ -34,11 +34,13 @@ export function QueriesDrawerContextProvider({ children }: PropsWithChildren) {
 
   const settings = useSelector(selectRichHistorySettings);
 
-  useEffect(() => {
+  const [prevSettings, setPrevSettings] = useState<typeof settings>();
+  if (settings !== prevSettings) {
+    setPrevSettings(settings);
     if (settings) {
       setSelectedTab(settings.starredTabAsFirstTab ? Tabs.Starred : Tabs.RichHistory);
     }
-  }, [settings, setSelectedTab]);
+  }
 
   return (
     <QueriesDrawerContext.Provider

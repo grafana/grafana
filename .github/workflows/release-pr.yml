@@ -231,8 +231,18 @@ jobs:
       - name: Remove main checkout before bump
         if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
         run: rm -rf .grafana-main
-      - name: Install dependencies (pnpm)
+      - name: Detect package manager
+        id: pm
         if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
+        run: echo "name=$(node -p "require('./package.json').packageManager.split('@')[0]")" >> "$GITHUB_OUTPUT"
+      # The release branch may still use Yarn.
+      - name: Install dependencies (Yarn)
+        if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') && steps.pm.outputs.name == 'yarn' }}
+        run: |
+          corepack enable
+          yarn install
+      - name: Install dependencies (pnpm)
+        if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') && steps.pm.outputs.name == 'pnpm' }}
         uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
         with:
           node-version-file: false
@@ -240,23 +250,38 @@ jobs:
           require-lockfile: true
       - name: Bump versions
         if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
+        env:
+          PACKAGE_MANAGER: ${{ steps.pm.outputs.name }}
         run: |
           # Target VERSION explicitly and skip if already there; a relative bump isn't safe to re-run.
           current_version=$(node -p "require('./package.json').version")
           if [ "$current_version" != "$VERSION" ]; then
-            pnpm version "$VERSION" --no-git-tag-version --no-git-checks
+            if [ "$PACKAGE_MANAGER" = 'yarn' ]; then
+              npm version "$VERSION" --no-git-tag-version
+              package_runner=(yarn run)
+            else
+              pnpm version "$VERSION" --no-git-tag-version --no-git-checks
+              package_runner=(pnpm exec)
+            fi
             # Release branches cut before lerna was replaced with nx release still have lerna.json
             if [ -f lerna.json ]; then
-              pnpm exec lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
+              "${package_runner[@]}" lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
             else
-              pnpm exec nx release version "$VERSION"
+              "${package_runner[@]}" nx release version "$VERSION"
             fi
           fi
       - name: Refresh lockfile
         if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
+        env:
+          PACKAGE_MANAGER: ${{ steps.pm.outputs.name }}
         run: |
-          pnpm install --no-frozen-lockfile
-          pnpm run prettier:write
+          if [ "$PACKAGE_MANAGER" = 'yarn' ]; then
+            YARN_ENABLE_IMMUTABLE_INSTALLS=false yarn install
+            yarn prettier:write
+          else
+            pnpm install --no-frozen-lockfile
+            pnpm run prettier:write
+          fi
       - name: make gen-cue
         if: ${{ !contains(inputs.version, '+security') }}
         shell: bash

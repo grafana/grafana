@@ -29,6 +29,14 @@ message AlertInstance {
     LastResult last_result = 15;
 }
 
+message RecordingSeries {
+    string target_datasource_uid = 1;
+    string metric = 2;
+    map<string, string> labels = 3;
+    google.protobuf.Timestamp last_update = 4;
+}
+
 message AlertInstances {
     repeated AlertInstance instances = 1;
+    repeated RecordingSeries series = 2;
 }

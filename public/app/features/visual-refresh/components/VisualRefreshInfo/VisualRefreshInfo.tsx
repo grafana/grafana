@@ -1,5 +1,4 @@
 import { t, Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import {
   FlagKeys,
   getLocalStorageProvider,
@@ -8,9 +7,7 @@ import {
 } from '@grafana/runtime/internal';
 import { Alert, Button, Stack, TextLink } from '@grafana/ui';
 
-import { appEvents } from '../../../../core/app_events';
 import { stylesToggled } from '../../analytics/main';
-import { VisualRefreshFeedbackEvent } from '../../events';
 
 const VISUAL_REFRESH_FLAG = FlagKeys.GrafanaVisualDesignRefresh;
 
@@ -34,9 +31,6 @@ export function VisualRefreshInfo() {
     // rather than explicitly set true, we instead remove the override from local storage
     // this prevents users from being stuck in the visual refresh if the rollout flag is later disabled
     getLocalStorageProvider().setFlags({ [VISUAL_REFRESH_FLAG]: force ? undefined : false });
-    if (!force) {
-      appEvents.publish(new VisualRefreshFeedbackEvent({ type: 'return', theme: config.theme2.name }));
-    }
   };
 
   const title = showVisualRefresh

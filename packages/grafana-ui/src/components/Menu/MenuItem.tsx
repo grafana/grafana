@@ -65,6 +65,8 @@ export interface MenuItemProps<T = unknown> {
   iconColor?: string;
   /* Optional component that will be shown together with other options. Does not get passed any props. */
   component?: React.ComponentType;
+  /** Custom data attributes (for example `data-analytics-id`), rendered on the menu item element */
+  [key: `data-${string}`]: string | undefined;
 }
 
 /** @internal */
@@ -90,6 +92,7 @@ export const MenuItem = React.memo(
       shortcut,
       testId,
       iconColor,
+      ...rest
     } = props;
     const styles = useStyles2(getStyles);
     // Ignore iconColor when destructive or disabled — those states own the colors.
@@ -112,6 +115,9 @@ export const MenuItem = React.memo(
       setIsSubMenuOpen(false);
       setIsActive(false);
     }, [disabled]);
+
+    // Menu items are often built by spreading item objects, so only forward data attributes to the DOM.
+    const dataAttributes = Object.fromEntries(Object.entries(rest).filter(([key]) => key.startsWith('data-')));
 
     const hasSubMenu = childItems && childItems.length > 0;
     const ItemElement = hasSubMenu ? 'div' : url === undefined ? 'button' : 'a';
@@ -202,9 +208,10 @@ export const MenuItem = React.memo(
         // position correctly (e.g. "X of Y") and the menu has proper ARIA semantics.
         // Callers can override via the role prop.
         role={role ?? 'menuitem'}
+        data-testid={testId}
+        {...dataAttributes}
         data-role="menuitem" // used to identify menuitem in Menu.tsx
         ref={localRef}
-        data-testid={testId}
         aria-label={ariaLabel}
         aria-checked={ariaChecked}
         // Announce to screen readers that this item opens a submenu, and whether it is

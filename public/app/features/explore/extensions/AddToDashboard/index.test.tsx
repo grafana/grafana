@@ -9,6 +9,7 @@ import { type DataQuery } from '@grafana/schema';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/feature-flags';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { configureStore } from 'app/store/configureStore';
 import { type ExploreState } from 'app/types/explore';
 
@@ -99,6 +100,7 @@ describe('AddToDashboardButton', () => {
 
     it('renders nothing when blocked on mobile', () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      setMobileViewport();
 
       const { container } = setup(<AddToDashboard exploreId={'left'} />);
 

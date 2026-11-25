@@ -121,14 +121,13 @@ func TestDashboardsAPIBuilderSearchAuthorizer(t *testing.T) {
 		},
 	}
 
-	// The sortable, vector and hybrid routes are GETs on the same namespace
+	// The sortable and vector routes are GETs on the same namespace
 	// search resource and carry the same exposure, so they share the rule.
 	routes := []struct{ name, verb string }{
 		{"", "list"},
 		{"", "get"},
 		{"sortable", "get"},
 		{"vector", "get"},
-		{"hybrid", "get"},
 	}
 
 	for _, route := range routes {

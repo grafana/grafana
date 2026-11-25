@@ -3,7 +3,6 @@ package legacypermissions_test
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
 	"testing"
 
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -39,8 +39,9 @@ func (m *migratedGrants) ResolveCurrentUserPermissions(_ context.Context, _ iden
 
 func TestIntegrationLoaderCacheOptionsAndFailures(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
-	for _, enterprise := range []bool{false, true} {
-		t.Run(fmt.Sprintf("enterprise=%t", enterprise), func(t *testing.T) {
+	for _, mode := range []string{"oss", "enterprise", "standalone"} {
+		t.Run(mode, func(t *testing.T) {
+			enterprise := mode != "oss"
 			sql := db.NewTestStore(t)
 			a := ac.Permission{Action: "users:read", Scope: "users:*"}
 			b := ac.Permission{Action: "users:create"}
@@ -51,6 +52,11 @@ func TestIntegrationLoaderCacheOptionsAndFailures(t *testing.T) {
 				resourcepermissions.NewActionSetService(), localcache.New(0, 0),
 				loaderConfig(true), &enforcementLicense{enabled: enterprise}, z,
 			)
+			if mode == "standalone" {
+				loader = legacypermissions.NewEnforcedLoader(legacysql.NewDatabaseProvider(sql),
+					resourcepermissions.NewActionSetService(), localcache.New(0, 0),
+					loaderConfig(true), z, nil)
+			}
 			requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleViewer}
 			check := func(options ac.Options, want ...ac.Permission) {
 				t.Helper()

@@ -1,5 +1,5 @@
 import { merge } from 'lodash';
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
 import { palette } from './palette';
@@ -10,9 +10,9 @@ const ThemeColorsModeSchema = z.enum(['light', 'dark']);
 /** @internal */
 type ThemeColorsMode = z.infer<typeof ThemeColorsModeSchema>;
 
-const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
-  z
-    .object({
+const createThemeColorsBaseSchema = <TColor extends z.ZodMiniType>(color: TColor) =>
+  z.partial(
+    z.object({
       mode: ThemeColorsModeSchema,
 
       primary: color,
@@ -25,72 +25,72 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
       warning: color,
 
       text: z.object({
-        primary: z.string().optional(),
-        secondary: z.string().optional(),
-        disabled: z.string().optional(),
-        link: z.string().optional(),
+        primary: z.optional(z.string()),
+        secondary: z.optional(z.string()),
+        disabled: z.optional(z.string()),
+        link: z.optional(z.string()),
         /** Used for auto white or dark text on colored backgrounds */
-        maxContrast: z.string().optional(),
+        maxContrast: z.optional(z.string()),
       }),
 
       background: z.object({
         /** Body background */
-        canvas: z.string().optional(),
+        canvas: z.optional(z.string()),
         /** Page container background */
-        page: z.string().optional(),
+        page: z.optional(z.string()),
         /** Primary content pane background (panels etc) */
-        primary: z.string().optional(),
+        primary: z.optional(z.string()),
         /** Cards and elements that need to stand out on the primary background */
-        secondary: z.string().optional(),
+        secondary: z.optional(z.string()),
         /**
          * For popovers and menu backgrounds. This is the same color as primary in most light themes but in dark
          * themes it has a brighter shade to help give it contrast against the primary background.
          **/
-        elevated: z.string().optional(),
+        elevated: z.optional(z.string()),
       }),
 
       border: z.object({
         /** Use for decoration */
-        weak: z.string().optional(),
+        weak: z.optional(z.string()),
         /** Use for widget borders */
-        medium: z.string().optional(),
+        medium: z.optional(z.string()),
         /** Use for active/focused widget borders */
-        strong: z.string().optional(),
+        strong: z.optional(z.string()),
       }),
 
       gradients: z.object({
-        brandVertical: z.string().optional(),
-        brandHorizontal: z.string().optional(),
+        brandVertical: z.optional(z.string()),
+        brandHorizontal: z.optional(z.string()),
       }),
 
       action: z.object({
         /** Used for selected menu item / select option */
-        selected: z.string().optional(),
+        selected: z.optional(z.string()),
         /**
          * @alpha (Do not use from plugins)
          * Used for selected items when background only change is not enough (Currently only used for FilterPill)
          **/
-        selectedBorder: z.string().optional(),
+        selectedBorder: z.optional(z.string()),
         /** Used for hovered menu item / select option */
-        hover: z.string().optional(),
+        hover: z.optional(z.string()),
         /** Used for button/colored background hover opacity */
-        hoverOpacity: z.number().optional(),
+        hoverOpacity: z.optional(z.number()),
         /** Used focused menu item / select option */
-        focus: z.string().optional(),
+        focus: z.optional(z.string()),
         /** Used for disabled buttons and inputs */
-        disabledBackground: z.string().optional(),
+        disabledBackground: z.optional(z.string()),
         /** Disabled text */
-        disabledText: z.string().optional(),
+        disabledText: z.optional(z.string()),
         /** Disablerd opacity */
-        disabledOpacity: z.number().optional(),
+        disabledOpacity: z.optional(z.number()),
       }),
 
-      scrollbar: z.string().optional(),
+      scrollbar: z.optional(z.string()),
       hoverFactor: z.number(),
       contrastThreshold: z.number(),
       tonalOffset: z.number(),
     })
-    .partial();
+  );
 
 // Need to override the zod type to include the generic properly
 /** @internal */

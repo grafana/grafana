@@ -22,6 +22,23 @@ describe('getNextPanelId', () => {
     const id = getNextPanelId(scene);
     expect(id).toBe(1);
   });
+
+  it('does not reuse the ID of a removed panel that a question still picks', () => {
+    const scene = buildTestScene();
+    scene.setState({ questions: [{ text: 'Why did latency rise?', sources: [{ panelId: 2 }] }] });
+
+    const grid = scene.state.body as DefaultGridLayoutManager;
+    grid.state.grid.setState({ children: [grid.state.grid.state.children[0]] });
+
+    expect(getNextPanelId(scene)).toBe(3);
+  });
+
+  it('ignores picked panel IDs that are not IDs', () => {
+    const scene = buildTestScene();
+    scene.setState({ questions: [{ text: 'Why did latency rise?', sources: [{ panelId: Number.NaN }] }] });
+
+    expect(getNextPanelId(scene)).toBe(3);
+  });
 });
 
 function buildTestScene() {

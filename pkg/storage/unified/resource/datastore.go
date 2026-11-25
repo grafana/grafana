@@ -33,9 +33,6 @@ const (
 type dataStore struct {
 	kv    KV
 	cache *gocache.Cache
-	// fastLatestKeyLookup resolves latest-version reads with a single-row
-	// descending lookup. Off by default while it is rolled out.
-	fastLatestKeyLookup bool
 }
 
 type dataImportBatchWriter interface {
@@ -174,6 +171,10 @@ func (k GetRequestKey) Prefix() string {
 
 // Keys returns all keys for a given key by iterating through the KV store
 func (d *dataStore) Keys(ctx context.Context, key ListRequestKey, sort SortOrder) iter.Seq2[DataKey, error] {
+	return d.keys(ctx, key, sort, 0)
+}
+
+func (d *dataStore) keys(ctx context.Context, key ListRequestKey, sort SortOrder, pageTimeout time.Duration) iter.Seq2[DataKey, error] {
 	if err := key.Validate(); err != nil {
 		return func(yield func(DataKey, error) bool) {
 			yield(DataKey{}, err)
@@ -183,11 +184,11 @@ func (d *dataStore) Keys(ctx context.Context, key ListRequestKey, sort SortOrder
 	prefix := key.Prefix()
 	return func(yield func(DataKey, error) bool) {
 		defer span.End()
-		for k, err := range pagedKeys(ctx, d.kv, dataSection, ListOptions{
+		for k, err := range pagedKeysWithTimeout(ctx, d.kv, dataSection, ListOptions{
 			StartKey: prefix,
 			EndKey:   PrefixRangeEnd(prefix),
 			Sort:     sort,
-		}, keyPageSize) {
+		}, keyPageSize, pageTimeout) {
 			if err != nil {
 				yield(DataKey{}, err)
 				return
@@ -251,7 +252,7 @@ func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequest
 
 	listKey := ListRequestKey(key)
 
-	if rv == 0 && d.fastLatestKeyLookup {
+	if rv == 0 {
 		// The newest key for a single resource is the last one in key order, so a
 		// one-row descending lookup avoids scanning the resource's whole history.
 		dataKey, err := d.LastResourceVersion(ctx, listKey)
@@ -280,7 +281,7 @@ type ListRequestOptions struct {
 	// ContinueNamespace is the namespace to continue from.
 	// Only used when Key.Namespace is empty (cross-namespace query).
 	ContinueNamespace string
-	// ContinueName is the name to continue from.
+	// ContinueName is the last name already listed; listing resumes strictly after it.
 	ContinueName    string
 	ResourceVersion int64
 	IncludeDeleted  bool
@@ -312,21 +313,17 @@ func (d *dataStore) ListLatestResourceKeys(ctx context.Context, key ListRequestK
 // reads. Bounds and ordering are preserved, but pages are separate reads, not
 // a transactional snapshot. Callers use an unlimited overall scan (base.Limit = 0).
 func pagedKeys(ctx context.Context, kv KV, section string, base ListOptions, pageSize int) iter.Seq2[string, error] {
+	return pagedKeysWithTimeout(ctx, kv, section, base, pageSize, 0)
+}
+
+func pagedKeysWithTimeout(ctx context.Context, kv KV, section string, base ListOptions, pageSize int, pageTimeout time.Duration) iter.Seq2[string, error] {
 	return func(yield func(string, error) bool) {
 		opts := base
 		opts.Limit = int64(pageSize)
 		resuming := false
 
 		for {
-			page := make([]string, 0, opts.Limit)
-			var scanErr error
-			for key, err := range kv.Keys(ctx, section, opts) {
-				if err != nil {
-					scanErr = err
-					break
-				}
-				page = append(page, key)
-			}
+			page, scanErr := readKeyPage(ctx, kv, section, opts, pageTimeout)
 			// The KV cursor for this page is now closed.
 			if scanErr != nil {
 				yield("", scanErr)
@@ -362,6 +359,22 @@ func pagedKeys(ctx context.Context, kv KV, section string, base ListOptions, pag
 	}
 }
 
+func readKeyPage(ctx context.Context, kv KV, section string, opts ListOptions, timeout time.Duration) ([]string, error) {
+	if timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+	page := make([]string, 0, opts.Limit)
+	for key, err := range kv.Keys(ctx, section, opts) {
+		if err != nil {
+			return nil, err
+		}
+		page = append(page, key)
+	}
+	return page, ctx.Err()
+}
+
 // ListResourceKeysAtRevision returns an iterator over data keys for resources at a specific revision.
 // If rv is 0, it returns the latest versions. Deleted keys are returned only when requested.
 func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, options ListRequestOptions) iter.Seq2[DataKey, error] {
@@ -387,7 +400,9 @@ func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, options List
 		if options.Key.Namespace == "" && options.ContinueNamespace != "" {
 			continueKey.Namespace = options.ContinueNamespace
 		}
-		startKey = continueKey.Prefix()
+		// continueKey.Prefix() return a trailing '/'
+		// Names cannot contain '/', so this skips exactly the continue item's keys.
+		startKey = PrefixRangeEnd(continueKey.Prefix())
 	}
 
 	listOptions := ListOptions{

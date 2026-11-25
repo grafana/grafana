@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { type DataQuery } from '@grafana/schema';
 
 import { EditableQueryName } from './EditableQueryName';
@@ -10,6 +11,16 @@ function getQuery(refId: string): DataQuery {
 }
 
 describe('EditableQueryName', () => {
+  it('exposes the e2e selector for the query name button', () => {
+    const queryA = getQuery('A');
+
+    render(<EditableQueryName query={queryA} queries={[queryA]} onQueryUpdate={jest.fn()} />);
+
+    expect(screen.getByTestId(selectors.components.QueryEditorNext.queryName)).toBe(
+      screen.getByRole('button', { name: /edit query name/i })
+    );
+  });
+
   it('saves rename on blur when focus does not move to a sidebar card', async () => {
     const onQueryUpdate = jest.fn();
     const queryA = getQuery('A');

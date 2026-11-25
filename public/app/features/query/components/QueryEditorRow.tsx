@@ -1,5 +1,5 @@
 import classNames from 'clsx';
-import { cloneDeep, filter, uniqBy, uniqueId } from 'lodash';
+import { cloneDeep, filter, isEqual, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
 import { PureComponent, type ReactNode, type JSX, createRef } from 'react';
 
@@ -40,7 +40,7 @@ import {
   type QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { QueryEditorType } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/constants';
-import { trackCardAction } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/tracking';
+import { isPanelEditorApp, trackCardAction } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/tracking';
 
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 import { type OnSelectQueriesType } from '../../explore/QueryLibrary/types';
@@ -88,6 +88,8 @@ export interface Props<TQuery extends DataQuery> {
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
   onQueryOpenChanged?: (status?: boolean | undefined) => void;
   onQueryClosed?: () => void;
+  /** Called when the data source's query editor changes the query. Header renames and hide toggles don't call it. */
+  onQueryEdited?: () => void;
   onQueryReplacedFromLibrary?: () => void;
   collapsable?: boolean;
   hideRefId?: boolean;
@@ -346,6 +348,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   // Editors may hold on to the onChange they got on mount (e.g. a Monaco listener), and the parent's
   // onChange is recreated each render over that render's queries. Stay stable and forward to the latest.
   onChange = (query: TQuery) => {
+    if (!isEqual(query, this.props.query)) {
+      this.props.onQueryEdited?.();
+    }
     this.props.onChange(query);
   };
 
@@ -366,7 +371,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       'delete',
       isExpressionQuery ? QueryEditorType.Expression : QueryEditorType.Query,
       'content_header',
-      { silent: true }
+      { editor: 'classic', silent: !isPanelEditorApp(this.props.app) }
     );
 
     onRemoveQuery(query);
@@ -395,7 +400,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       'duplicate',
       isExpressionQuery ? QueryEditorType.Expression : QueryEditorType.Query,
       'content_header',
-      { silent: true }
+      { editor: 'classic', silent: !isPanelEditorApp(this.props.app) }
     );
     const copy = cloneDeep(query);
     onAddQuery(copy);
@@ -412,7 +417,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       'toggle_hide',
       isExpressionQuery ? QueryEditorType.Expression : QueryEditorType.Query,
       'content_header',
-      { silent: true }
+      { editor: 'classic', silent: !isPanelEditorApp(this.props.app) }
     );
     onChange({ ...query, hide: !query.hide });
     onRunQuery();

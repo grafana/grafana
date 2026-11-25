@@ -6,6 +6,7 @@ SET
     {{ range $i, $row := .Rows }}
     WHEN {{ $.Ident "namespace" }} = {{ $.Arg $.Namespace }} AND {{ $.Ident "name" }} = {{ $.Arg $row.Name }} AND {{ $.Ident "version" }} = {{ $.Arg $row.Version }} THEN {{ $.Arg $row.EncryptedData }}
     {{ end }}
+    ELSE {{ .Ident "encrypted_data" }}
     END
   ),
   {{ .Ident "data_key_id" }} = (
@@ -13,6 +14,7 @@ SET
     {{ range $i, $row := .Rows }}
     WHEN {{ $.Ident "namespace" }} = {{ $.Arg $.Namespace }} AND {{ $.Ident "name" }} = {{ $.Arg $row.Name }} AND {{ $.Ident "version" }} = {{ $.Arg $row.Version }} THEN {{ $.Arg $row.DataKeyID }}
     {{ end }}
+    ELSE {{ .Ident "data_key_id" }}
     END
   ),
   {{ .Ident "updated" }} = (
@@ -20,12 +22,12 @@ SET
     {{ range $i, $row := .Rows }}
     WHEN {{ $.Ident "namespace" }} = {{ $.Arg $.Namespace }} AND {{ $.Ident "name" }} = {{ $.Arg $row.Name }} AND {{ $.Ident "version" }} = {{ $.Arg $row.Version }} THEN {{ $.Arg $row.Updated }}
     {{ end }}
+    ELSE {{ .Ident "updated" }}
     END
   )
-WHERE ({{ .Ident "namespace" }}, {{ .Ident "name" }}, {{ .Ident "version" }}) IN (
-  VALUES
+WHERE {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND (
   {{ $first := true }}
   {{ range $i, $row := .Rows }}
-  {{ if $first }}{{ $first = false }}{{ else }}, {{ end }}({{ $.Arg $.Namespace }}, {{ $.Arg $row.Name }}, {{ $.Arg $row.Version }})
+  {{ if $first }}{{ $first = false }}{{ else }}OR {{ end }}({{ $.Ident "name" }} = {{ $.Arg $row.Name }} AND {{ $.Ident "version" }} = {{ $.Arg $row.Version }})
   {{ end }}
 );

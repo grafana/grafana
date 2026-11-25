@@ -7,6 +7,7 @@ import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Alert } from '@grafana/ui';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 
+import { NOTEBOOK_LOAD_SOURCE } from '../analytics/types';
 import { NotebookPdfLayout } from '../scene/NotebookPdfLayout';
 import { type NotebookScene } from '../scene/NotebookScene';
 
@@ -30,7 +31,7 @@ export function NotebookRenderPage() {
 
   useEffect(() => {
     if (notebooksEnabled && uid) {
-      stateManager.loadNotebook(uid);
+      stateManager.loadNotebook(uid, NOTEBOOK_LOAD_SOURCE.DIRECT, { readOnly: true });
     }
 
     return () => {

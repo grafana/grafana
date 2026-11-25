@@ -3,7 +3,8 @@ import { act, render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { mockComboboxRect } from '../../test-utils/mockDom';
+import { mockComboboxRect } from '@grafana/test-utils';
+
 import { Drawer } from '../Drawer/Drawer';
 import { Field } from '../Forms/Field';
 import { Modal } from '../Modal/Modal';
@@ -78,6 +79,31 @@ describe('Combobox', () => {
     render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
     expect(screen.getByRole('combobox')).toBeInTheDocument();
   });
+
+  it.each([false, true])(
+    'exposes the input ref and preserves dropdown positioning with auto size %s',
+    async (autoSize) => {
+      const inputRef = React.createRef<HTMLInputElement>();
+      render(
+        <Combobox
+          options={options}
+          onChange={onChangeHandler}
+          inputRef={inputRef}
+          {...(autoSize ? { width: 'auto', minWidth: 10 } : { width: 30 })}
+        />
+      );
+
+      expect(inputRef.current).toBe(screen.getByRole('combobox'));
+      act(() => inputRef.current?.focus());
+      expect(screen.getByRole('combobox')).toHaveFocus();
+
+      await user.click(screen.getByRole('combobox'));
+      await user.click(await screen.findByRole('option', { name: 'Option 2' }));
+
+      expect(onChangeHandler).toHaveBeenCalledWith({ label: 'Option 2', value: '2' });
+      expect(mockAutoUpdate).toHaveBeenCalledWith(inputRef.current, expect.any(HTMLDivElement), expect.any(Function));
+    }
+  );
 
   it('does not observe floating element changes while hidden in collapsed details', () => {
     const renderCombobox = () => (

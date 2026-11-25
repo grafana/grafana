@@ -48,3 +48,11 @@ Proposals must not enter the canonical `SceneQueryRunner.state.queries` until Ac
 6. A genuine editor change or explicit query run during a proposal cancels coauthoring; an editor change then becomes normal query state.
 
 Only one transaction is owned by a given query row. Cross-row session coordination is intentionally outside this experiment.
+
+## Coauthoring v2 contract placement
+
+v2 intentionally keeps its contracts internal to Core in `queryCoauthoringContracts.ts`, next to the session and editor integration. This is an exception to the promotion-before-a-second-adapter rule above: expressions is the second adapter and lives in Core. No v2 contract is published in `@grafana/data`, `@grafana/data/unstable` or `@grafana/runtime`, or added to `DataSourceApi`.
+
+Prometheus and the Assistant keep structural copies of the declarations they use, naming that source file and their removal criteria. The v2 contracts start at `version: 1`. Every side checks the contract version at runtime. A mirrored declaration change requires a coordinated update or a version bump. v2 reuses Composer vocabulary but shares no object or code with Composer.
+
+After Prometheus and expressions implement the contracts, compare their needs and promote the smallest surviving language and editor interfaces with an owner and breaking-change policy. Remove each copy when its repository pins a release containing the promoted types. Review the session contract separately; it stays private longest.

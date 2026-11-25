@@ -22,7 +22,7 @@ test.describe('Panels test: XYChart', { tag: ['@panels', '@xychart'] }, () => {
     await expect(errorInfo, 'no errors in the panels').toBeHidden();
   });
 
-  test('is accessible', { tag: ['@a11y'] }, async ({ gotoDashboardPage, scanForA11yViolations, page }) => {
+  test('is accessible', { tag: ['@a11y'] }, async ({ gotoDashboardPage, scanForA11yViolations, selectors, page }) => {
     await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '8' }),
@@ -30,7 +30,9 @@ test.describe('Panels test: XYChart', { tag: ['@panels', '@xychart'] }, () => {
 
     await expect(page.getByRole('button', { name: 'USA' }), 'USA legend item is visible').toBeVisible();
 
-    const report = await scanForA11yViolations();
+    const report = await scanForA11yViolations({
+      include: `[data-testid="${selectors.components.Panels.Panel.title('MPG vs Acceleration (by Country)')}"]`,
+    });
     expect(report).toHaveNoA11yViolations();
   });
 

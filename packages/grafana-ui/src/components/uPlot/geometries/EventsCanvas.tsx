@@ -83,7 +83,7 @@ export function EventsCanvasView({
           continue;
         }
         markers.push(
-          <Marker {...coords} key={`${id}-marker-${i}-${j}`}>
+          <Marker key={`${id}-marker-${i}-${j}`} {...coords}>
             {renderEventMarker(frame, j)}
           </Marker>
         );

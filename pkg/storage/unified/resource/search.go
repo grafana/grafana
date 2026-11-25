@@ -249,7 +249,7 @@ var knownIndexFeatures = []IndexFeature{
 // index built before deleted documents were kept maps the trash fields but holds nothing
 // in them, and a file-based index is reused across an upgrade, so trash would stay
 // unavailable until some unrelated change triggered a rebuild.
-var requiredIndexFeatures = slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments})
+var requiredIndexFeatures = slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments, IndexFeatureStoredFacets})
 
 // CurrentIndexFeatures returns the features sorted, so declaration order cannot
 // change what an index records.
@@ -258,14 +258,8 @@ func CurrentIndexFeatures() []IndexFeature {
 }
 
 // RequiredIndexFeatures returns the features an index must have to be used.
-// postRankAuthz adds the features only that path depends on, so deployments
-// serving facets from bleve itself are not rebuilt for it.
-func RequiredIndexFeatures(postRankAuthz bool) []IndexFeature {
-	features := requiredIndexFeatures
-	if postRankAuthz {
-		features = append(slices.Clone(features), IndexFeatureStoredFacets)
-	}
-	return slices.Sorted(slices.Values(features))
+func RequiredIndexFeatures() []IndexFeature {
+	return slices.Sorted(slices.Values(requiredIndexFeatures))
 }
 
 // MissingIndexFeatures returns the required features the index does not have.
@@ -439,6 +433,10 @@ var ErrIndexBuildInProgress = errors.New("another replica is building the index"
 var ErrIndexClosedDuringRebuild = errors.New("index was closed while it was being rebuilt")
 
 type BuildIndexOptions struct {
+	// RebuildFrom is the index seen by the rebuild worker, so the backend can
+	// avoid reopening it if idle cleanup closes it before the rebuild starts.
+	RebuildFrom ResourceIndex
+
 	// Startup workers can try other indexes instead of waiting for a replica.
 	SkipIfBuilding bool
 
@@ -682,7 +680,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		searchFields:              searchFields,
 		hybridSearchConfig:        opts.HybridSearchConfig,
 		globalCoverage:            opts.GlobalSearchCoverage,
-		requiredFeatures:          RequiredIndexFeatures(opts.PostRankAuthzEnabled),
+		requiredFeatures:          RequiredIndexFeatures(),
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		globalIndexEnabled:        opts.GlobalIndexEnabled,
 		globalIndexStartupBuild:   opts.GlobalIndexStartupBuild,
@@ -910,14 +908,15 @@ func (s *searchServer) CountManagedObjects(ctx context.Context, req *resourcepb.
 		if err != nil {
 			return nil, rpcErrorFrom(err)
 		}
-		if req.Id == "" {
-			rsp.Items = append(rsp.Items, counts...)
-		} else {
-			for _, k := range counts {
-				if k.Id == req.Id {
-					rsp.Items = append(rsp.Items, k)
-				}
+		for _, k := range counts {
+			// An id is only meaningful inside a kind, so both must match when both are set.
+			if req.Kind != "" && k.Kind != req.Kind {
+				continue
 			}
+			if req.Id != "" && k.Id != req.Id {
+				continue
+			}
+			rsp.Items = append(rsp.Items, k)
 		}
 	}
 
@@ -1640,7 +1639,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 
 	buildTimes := make([]*resourcepb.RebuildIndexesResponse_IndexBuildTime, 0)
 	for _, key := range filterKeys {
-		idx := s.search.GetIndex(key)
+		idx := s.search.PeekIndex(key)
 		if idx == nil {
 			continue
 		}
@@ -2238,7 +2237,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	}
 
 	// Pass rebuild=true to force rebuild of any existing file-based index.
-	_, err = s.build(ctx, req.NamespacedResource, size, "rebuild", true, req.lastImportTime)
+	_, err = s.buildWithOptions(ctx, req.NamespacedResource, size, "rebuild", true, req.lastImportTime, BuildIndexOptions{RebuildFrom: idx})
 	if errors.Is(err, ErrIndexClosedDuringRebuild) {
 		l.Info("index was closed while it was being rebuilt, discarding the rebuilt index")
 	} else if err != nil {
@@ -2740,6 +2739,9 @@ func (s *searchServer) buildWithOptions(ctx context.Context, nsr NamespacedResou
 		if err != nil {
 			return 0, 0, err
 		}
+		if err := ctx.Err(); err != nil {
+			return 0, 0, err
+		}
 
 		// Update timestamp of calling the given `sinceRV` to be used the next
 		// time this function is called.
@@ -2847,6 +2849,9 @@ func (s *searchServer) indexResourceType(
 			phases.recordConvert(time.Since(convertStart), err == nil)
 			if err != nil {
 				span.RecordError(err)
+				if isDocumentBuildInterrupted(err) {
+					return err
+				}
 				logger.Error("error building search document", "key", SearchID(key), "err", err)
 				continue
 			}
@@ -2931,7 +2936,10 @@ func (s *searchServer) applyModifiedSince(
 
 		docs++
 
-		item := updateItem(ctx, builder, res, keepDeleted, phases, span, logger)
+		item, err := updateItem(ctx, builder, res, keepDeleted, phases, span, logger)
+		if err != nil {
+			return 0, 0, err
+		}
 		if item == nil {
 			// Logged already. Not remembered as processed, so a later update
 			// tries it again.
@@ -2984,9 +2992,21 @@ func (d modifiedDedup) add(keys []string) {
 	}
 }
 
-// updateItem turns one change storage reported into the item that brings an
-// index in line with it. It returns nil for a change that cannot be applied,
-// after logging why.
+// An interrupted read doesn't mean a document is invalid. Fail the build or
+// refresh so it can't publish a checkpoint that skips that document.
+func isDocumentBuildInterrupted(err error) bool {
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		return true
+	}
+	switch status.Code(err) {
+	case codes.DeadlineExceeded, codes.Canceled:
+		return true
+	default:
+		return false
+	}
+}
+
+// updateItem skips invalid documents but stops the refresh on interrupted reads.
 func updateItem(
 	ctx context.Context,
 	builder DocumentBuilder,
@@ -2995,7 +3015,7 @@ func updateItem(
 	phases *buildPhaseRecorder,
 	span trace.Span,
 	logger log.Logger,
-) *BulkIndexItem {
+) (*BulkIndexItem, error) {
 	key := &res.Key
 	switch res.Action {
 	case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
@@ -3006,10 +3026,13 @@ func updateItem(
 		phases.recordConvert(time.Since(convertStart), err == nil)
 		if err != nil {
 			span.RecordError(err)
+			if isDocumentBuildInterrupted(err) {
+				return nil, err
+			}
 			logger.Error("error building search document", "key", SearchID(key), "err", err)
-			return nil
+			return nil, nil
 		}
-		return &BulkIndexItem{Action: ActionIndex, Doc: doc}
+		return &BulkIndexItem{Action: ActionIndex, Doc: doc}, nil
 
 	case resourcepb.WatchEvent_DELETED:
 		// The delete event carries the object as it was, so trash searches can
@@ -3035,14 +3058,14 @@ func updateItem(
 		}
 		if doc == nil {
 			span.AddEvent("deleting document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
-			return &BulkIndexItem{Action: ActionDelete, Key: &res.Key}
+			return &BulkIndexItem{Action: ActionDelete, Key: &res.Key}, nil
 		}
 		span.AddEvent("marking document deleted", trace.WithAttributes(attribute.String("name", res.Key.Name)))
-		return &BulkIndexItem{Action: ActionIndex, Doc: doc}
+		return &BulkIndexItem{Action: ActionIndex, Doc: doc}, nil
 
 	default:
 		logger.Error("can't update index with item, unknown action", "action", res.Action, "key", key)
-		return nil
+		return nil, nil
 	}
 }
 
@@ -3410,7 +3433,7 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 			val = v.(string)
 		}
 	}
-	return &IndexableDocument{
+	doc := &IndexableDocument{
 		Key: &resourcepb.ResourceKey{
 			Namespace: key.Namespace,
 			Group:     key.Group,
@@ -3423,7 +3446,13 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 			"title": title,
 			"value": val,
 		},
-	}, nil
+	}
+	if meta, err := utils.MetaAccessor(&u); err == nil {
+		if manager, ok := meta.GetManagerProperties(); ok {
+			doc.Manager = &manager
+		}
+	}
+	return doc, nil
 }
 
 // TestDocumentBuilderSupplier implements DocumentBuilderSupplier for testing

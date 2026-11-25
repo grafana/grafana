@@ -13,14 +13,14 @@ import {
 import { FilterByValueMatch, FilterByValueType, type FilterByValueConfig } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { faro, LogLevel } from '@grafana/faro-web-sdk';
-import { mockClientSize } from '@grafana/test-utils';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { type PanelRuntimeTransformations } from '../../PanelChrome/PanelContext';
 
 import { TableFilterProvider, useTableFilters } from './TableFilterContext';
 import { TableNG } from './TableNG';
 
-beforeAll(() => mockClientSize({ width: 800, height: 600 }));
+beforeAll(() => mockBoundingClientRect({ width: 800, height: 600 }));
 
 function setup() {
   const data = applyFieldOverrides({

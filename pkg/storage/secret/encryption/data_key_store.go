@@ -46,7 +46,7 @@ func (ss *encryptionStoreImpl) GetDataKey(ctx context.Context, namespace, uid st
 
 	defer func() {
 		span.End()
-		ss.metrics.GetDataKeyDuration.Observe(float64(time.Since(start)))
+		ss.metrics.GetDataKeyDuration.Observe(time.Since(start).Seconds())
 	}()
 
 	req := readDataKey{
@@ -108,7 +108,7 @@ func (ss *encryptionStoreImpl) GetCurrentDataKey(ctx context.Context, namespace,
 	))
 	defer func() {
 		span.End()
-		ss.metrics.GetCurrentDataKeyDuration.Observe(float64(time.Since(start)))
+		ss.metrics.GetCurrentDataKeyDuration.Observe(time.Since(start).Seconds())
 	}()
 
 	req := readCurrentDataKey{
@@ -169,7 +169,7 @@ func (ss *encryptionStoreImpl) ListDataKeys(ctx context.Context, namespace strin
 	))
 	defer func() {
 		span.End()
-		ss.metrics.ListDataKeysDuration.Observe(float64(time.Since(start)))
+		ss.metrics.ListDataKeysDuration.Observe(time.Since(start).Seconds())
 	}()
 
 	req := listDataKeys{
@@ -232,7 +232,7 @@ func (ss *encryptionStoreImpl) CreateDataKey(ctx context.Context, dataKey *contr
 	))
 	defer func() {
 		span.End()
-		ss.metrics.CreateDataKeyDuration.Observe(float64(time.Since(start)))
+		ss.metrics.CreateDataKeyDuration.Observe(time.Since(start).Seconds())
 	}()
 
 	if !dataKey.Active {
@@ -276,7 +276,7 @@ func (ss *encryptionStoreImpl) DisableDataKeys(ctx context.Context, namespace st
 	))
 	defer func() {
 		span.End()
-		ss.metrics.DisableDataKeysDuration.Observe(float64(time.Since(start)))
+		ss.metrics.DisableDataKeysDuration.Observe(time.Since(start).Seconds())
 	}()
 
 	req := disableDataKeys{
@@ -315,7 +315,7 @@ func (ss *encryptionStoreImpl) DeleteDataKey(ctx context.Context, namespace, uid
 	))
 	defer func() {
 		span.End()
-		ss.metrics.DeleteDataKeyDuration.Observe(float64(time.Since(start)))
+		ss.metrics.DeleteDataKeyDuration.Observe(time.Since(start).Seconds())
 	}()
 
 	if len(uid) == 0 {
@@ -377,7 +377,7 @@ func (ss *globalEncryptionStoreImpl) DisableAllDataKeys(ctx context.Context) err
 	ctx, span := ss.tracer.Start(ctx, "GlobalDataKeyStorage.DisableAllDataKeys")
 	defer func() {
 		span.End()
-		ss.metrics.DisableAllDataKeysDuration.Observe(float64(time.Since(start)))
+		ss.metrics.DisableAllDataKeysDuration.Observe(time.Since(start).Seconds())
 	}()
 
 	req := disableAllDataKeys{

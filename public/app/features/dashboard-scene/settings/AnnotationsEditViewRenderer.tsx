@@ -39,7 +39,7 @@ export function AnnotationsEditViewRenderer({ model }: SceneComponentProps<Annot
       [CATEGORY_PARAM_NAME]: 'dashboard-annotations',
     });
     setTimeout(() => {
-      dashboard.state.sidebar.selectObject(dashboard);
+      dashboard.state.sidebar.openElementSettings(dashboard);
     }, 0);
 
     DashboardInteractions.takeMeToSidebarClicked({ item: 'annotations' });

@@ -75,6 +75,7 @@ const ADMIN_GENERAL_CHILDREN: NavEntryBuilder[] = [
       text: 'Migrate to Grafana Cloud',
       id: 'migrate-to-cloud',
       subTitle: 'Copy resources from your self-managed installation to a cloud stack',
+      icon: 'cloud-upload',
       url: '/admin/migrate-to-cloud',
     }),
   },
@@ -84,6 +85,7 @@ const ADMIN_GENERAL_CHILDREN: NavEntryBuilder[] = [
       text: 'Provisioning',
       id: 'provisioning',
       subTitle: 'View and manage your provisioning connections',
+      icon: 'code-branch',
       url: '/admin/provisioning',
       keywords: ['git sync', 'git-sync', 'repository', 'version control', 'as code'],
     }),
@@ -116,9 +118,9 @@ const ADMIN_PLUGINS_CHILDREN: NavEntryBuilder[] = [
   },
   {
     when: () =>
-      config.buildInfo.env === 'development' ||
-      (getFeatureFlagClient().getBooleanValue(FlagKeys.EnableExtensionsAdminPage, false) &&
-        hasAny(AccessControlAction.PluginsWrite, AccessControlAction.PluginsInstall)),
+      (config.buildInfo.env === 'development' ||
+        getFeatureFlagClient().getBooleanValue(FlagKeys.EnableExtensionsAdminPage, false)) &&
+      hasAny(AccessControlAction.PluginsWrite, AccessControlAction.PluginsInstall),
     build: () => ({
       text: 'Extensions',
       icon: 'plug',
@@ -228,7 +230,7 @@ const ADMIN_CONFIG_NODES: NavEntryBuilder[] = [
       text: 'Authentication',
       id: 'authentication',
       subTitle: 'Manage your auth settings and configure single sign-on',
-      icon: 'signin',
+      icon: 'key-skeleton-alt',
       isSection: true,
       url: '/admin/authentication',
     }),

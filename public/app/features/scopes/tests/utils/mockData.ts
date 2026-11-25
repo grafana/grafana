@@ -1,5 +1,3 @@
-import { type ScopeDashboardBinding } from '@grafana/data';
-
 import { type ScopeNavigation } from '../../dashboards/types';
 
 // Mock subScope navigation items (specific to these tests)
@@ -55,38 +53,37 @@ export const navigationWithSubScopeAndGroups: ScopeNavigation = {
   },
 };
 
-const generateScopeDashboardBinding = (dashboardTitle: string, groups?: string[], dashboardId?: string) => ({
-  metadata: { name: `${dashboardTitle}-name` },
+// Navigations that share a dashboardId share a name and URL, so the drawer dedupes them into one item.
+const generateScopeNavigation = (title: string, groups?: string[], dashboardId?: string): ScopeNavigation => ({
+  metadata: { name: `${dashboardId ?? title}-dashboard` },
   spec: {
-    dashboard: `${dashboardId ?? dashboardTitle}-dashboard`,
-    scope: `${dashboardTitle}-scope`,
+    url: `/d/${dashboardId ?? title}-dashboard`,
+    scope: `${title}-scope`,
   },
   status: {
-    dashboardTitle,
+    title,
     groups,
   },
 });
 
-export const dashboardWithoutFolder: ScopeDashboardBinding = generateScopeDashboardBinding('Without Folder');
-export const dashboardWithOneFolder: ScopeDashboardBinding = generateScopeDashboardBinding('With one folder', [
-  'Folder 1',
-]);
-export const dashboardWithTwoFolders: ScopeDashboardBinding = generateScopeDashboardBinding('With two folders', [
+export const dashboardWithoutFolder: ScopeNavigation = generateScopeNavigation('Without Folder');
+export const dashboardWithOneFolder: ScopeNavigation = generateScopeNavigation('With one folder', ['Folder 1']);
+export const dashboardWithTwoFolders: ScopeNavigation = generateScopeNavigation('With two folders', [
   'Folder 1',
   'Folder 2',
 ]);
-export const alternativeDashboardWithTwoFolders: ScopeDashboardBinding = generateScopeDashboardBinding(
+export const alternativeDashboardWithTwoFolders: ScopeNavigation = generateScopeNavigation(
   'Alternative with two folders',
   ['Folder 1', 'Folder 2'],
   'With two folders'
 );
-export const dashboardWithRootFolder: ScopeDashboardBinding = generateScopeDashboardBinding('With root folder', ['']);
-export const alternativeDashboardWithRootFolder: ScopeDashboardBinding = generateScopeDashboardBinding(
+export const dashboardWithRootFolder: ScopeNavigation = generateScopeNavigation('With root folder', ['']);
+export const alternativeDashboardWithRootFolder: ScopeNavigation = generateScopeNavigation(
   'Alternative With root folder',
   [''],
   'With root folder'
 );
-export const dashboardWithRootFolderAndOtherFolder: ScopeDashboardBinding = generateScopeDashboardBinding(
+export const dashboardWithRootFolderAndOtherFolder: ScopeNavigation = generateScopeNavigation(
   'With root folder and other folder',
   ['', 'Folder 3']
 );

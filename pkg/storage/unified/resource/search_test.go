@@ -534,7 +534,9 @@ func (m *mockSearchBackend) TotalDocs() int64 {
 }
 
 func (m *mockSearchBackend) GetOpenIndexes() []NamespacedResource {
-	return m.openIndexes
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return slices.Clone(m.openIndexes)
 }
 
 func (m *mockSearchBackend) Stop() {
@@ -1880,19 +1882,15 @@ func TestCombineBuildRequests(t *testing.T) {
 // features safe: requiring a feature this binary never records would rebuild
 // every index on every check, forever.
 func TestRequiredIndexFeaturesAreCurrent(t *testing.T) {
-	for _, postRankAuthz := range []bool{false, true} {
-		for _, required := range RequiredIndexFeatures(postRankAuthz) {
-			require.Contains(t, CurrentIndexFeatures(), required)
-		}
+	for _, required := range RequiredIndexFeatures() {
+		require.Contains(t, CurrentIndexFeatures(), required)
 	}
 }
 
 func TestSortableTrashResourceVersionIsRecordedButNotRequired(t *testing.T) {
 	require.Contains(t, CurrentIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
 	require.NotContains(t, TrashIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
-	for _, postRankAuthz := range []bool{false, true} {
-		require.NotContains(t, RequiredIndexFeatures(postRankAuthz), IndexFeatureSortableTrashResourceVersion)
-	}
+	require.NotContains(t, RequiredIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
 }
 
 // Every index built now keeps deleted documents, and records it, so a reader can
@@ -1925,27 +1923,19 @@ func TestUnknownIndexRequirements(t *testing.T) {
 		UnknownIndexRequirements([]IndexFeature{IndexFeatureDeletedMarker, "feature-from-the-future"}))
 }
 
-// TestRequiredIndexFeaturesStoredFacets covers the gating that keeps the stored
-// facet mapping from rebuilding indexes where post-rank authorization is off.
+// PostRank facet aggregation needs stored facet fields on every index.
 func TestRequiredIndexFeaturesStoredFacets(t *testing.T) {
-	require.NotContains(t, RequiredIndexFeatures(false), IndexFeatureStoredFacets)
-	require.Contains(t, RequiredIndexFeatures(true), IndexFeatureStoredFacets)
+	require.Contains(t, RequiredIndexFeatures(), IndexFeatureStoredFacets)
 
-	// An index built before the stored facet mapping is reused with the option
-	// off, and rebuilt once it is on.
 	buildInfo := IndexBuildInfo{Features: slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments})}
-	require.Empty(t, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(false)))
-	require.Equal(t, []IndexFeature{IndexFeatureStoredFacets}, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(true)))
+	require.Equal(t, []IndexFeature{IndexFeatureStoredFacets}, MissingIndexFeatures(buildInfo, RequiredIndexFeatures()))
 }
 
-// An index missing the trash mappings must be rebuilt rather than serve an empty
-// trash, whatever the facet option is set to.
+// An index missing the trash mappings must be rebuilt rather than serve an empty trash.
 func TestTrashIndexFeaturesAreRequired(t *testing.T) {
 	buildInfo := IndexBuildInfo{Features: []IndexFeature{IndexFeatureStoredFacets}}
 	want := slices.Sorted(slices.Values(slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments})))
-	for _, postRankAuthz := range []bool{false, true} {
-		require.Equal(t, want, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(postRankAuthz)))
-	}
+	require.Equal(t, want, MissingIndexFeatures(buildInfo, RequiredIndexFeatures()))
 }
 
 // An index that maps the trash fields but was built before deleted documents were kept
@@ -1953,8 +1943,8 @@ func TestTrashIndexFeaturesAreRequired(t *testing.T) {
 func TestHoldingDeletedDocumentsIsRequired(t *testing.T) {
 	buildInfo := IndexBuildInfo{Features: TrashIndexFeatures()}
 	require.Equal(t,
-		[]IndexFeature{IndexFeatureHoldsDeletedDocuments},
-		MissingIndexFeatures(buildInfo, RequiredIndexFeatures(false)))
+		[]IndexFeature{IndexFeatureStoredFacets, IndexFeatureHoldsDeletedDocuments},
+		MissingIndexFeatures(buildInfo, RequiredIndexFeatures()))
 }
 
 func TestShouldRebuildIndex(t *testing.T) {
@@ -2660,6 +2650,7 @@ func TestRebuildIndexes(t *testing.T) {
 		rsp, err := support.RebuildIndexes(context.Background(), rebuildReq)
 		require.NoError(t, err)
 		require.Equal(t, int64(0), rsp.RebuildCount, "no rebuilds should be triggered")
+		require.Zero(t, search.getIndexCalls, "collecting build metadata must not refresh index idle timestamps")
 
 		// Verify BuildTimes contains entries for key1 and key2, but not key3 (zero time)
 		require.Len(t, rsp.BuildTimes, 2, "should have 2 build times (key3 has zero time)")
@@ -2705,6 +2696,28 @@ func checkRebuildIndex(t *testing.T, support *searchServer, req rebuildRequest, 
 	} else {
 		require.Nil(t, idxAfter, "index should not exist after rebuildIndex")
 	}
+}
+
+func TestRebuildIndexPassesOriginalIndexToBackend(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	original := &MockResourceIndex{}
+	var rebuildFrom ResourceIndex
+	backend := &initialBuildTestBackend{
+		mockSearchBackend: mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{key: original}},
+		beforeBuild: func(_ context.Context, _ NamespacedResource, opts BuildIndexOptions) error {
+			rebuildFrom = opts.RebuildFrom
+			return ErrIndexClosedDuringRebuild
+		},
+	}
+	server, err := newSearchServer(SearchOptions{
+		Backend:   backend,
+		Resources: &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
+	}, &mockStorageBackend{}, nil, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	server.rebuildIndex(t.Context(), rebuildRequest{NamespacedResource: key, minBuildTime: time.Now()})
+
+	require.Same(t, original, rebuildFrom)
 }
 
 type failingRebuildSearchBackend struct {

@@ -1,5 +1,7 @@
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
-import { fireEvent, render, screen } from 'test/test-utils';
+import { act, fireEvent, render, screen } from 'test/test-utils';
+
+import { VizPanel } from '@grafana/scenes';
 
 import { NotebookCellItem } from '../NotebookCellItem';
 
@@ -182,10 +184,32 @@ describe('NotebookCellFrame', () => {
       }
     );
 
-    it('labels the frame with the cell element name for an assistive-technology user', () => {
+    it('labels the frame by block type, not by the element name, for an assistive-technology user', () => {
       renderFrame({ cell: buildCollapsedCell(), isEditing: true });
 
-      expect(screen.getByRole('group', { name: 'Collapsed block: hidden-panel' })).toBeInTheDocument();
+      expect(screen.getByRole('group', { name: 'Collapsed block' })).toBeInTheDocument();
+    });
+
+    it('adds the panel title to the label when the cell has one', () => {
+      const cell = new NotebookCellItem({
+        elementName: 'hidden-panel-k3x9qa',
+        source: 'user',
+        collapsed: true,
+        body: new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'p95 latency' }),
+      });
+      renderFrame({ cell, isEditing: true });
+
+      expect(screen.getByRole('group', { name: 'Collapsed block: p95 latency' })).toBeInTheDocument();
+    });
+
+    it('follows a rename of the panel', () => {
+      const body = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'p95 latency' });
+      const cell = new NotebookCellItem({ elementName: 'hidden-panel-k3x9qa', source: 'user', collapsed: true, body });
+      renderFrame({ cell, isEditing: true });
+
+      act(() => body.setState({ title: 'p99 latency' }));
+
+      expect(screen.getByRole('group', { name: 'Collapsed block: p99 latency' })).toBeInTheDocument();
     });
 
     it('takes DOM focus once a fresh grant targets it', () => {

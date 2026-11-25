@@ -21,6 +21,14 @@ const EVERY_ROW_PANEL = '6';
 const HANDLEBARS_PANEL = '5';
 const MERMAID_PANEL = '7';
 
+const REDUCER_MACROS_DASHBOARD_UID = 'text-reducer-macros';
+const LAST_VALUES_PANEL = '2';
+
+const SUGGESTIONS_DASHBOARD_UID = 'text-suggestions';
+const VALUE_PER_CATEGORY_PANEL = '8';
+const LABELS_ONLY_PANEL = '15';
+const MISSING_VALUES_PANEL = '18';
+
 test.use({ openFeature: { flags: { 'grafana.newTextPanel': true, 'text.newFeatures': true } } });
 
 test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
@@ -286,6 +294,76 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       await expect(renderedContent(preview)).toContainText('John Smith');
       await expect(renderedContent(preview)).not.toContainText('{{#each data}}');
     });
+
+    test('reads mapped text, units and colors through the display helper', async ({ gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: DATA_DASHBOARD_UID });
+
+      const header = dashboardPage.getByGrafanaSelector(
+        selectors.components.Panels.Panel.title('Handlebars display values: service health')
+      );
+      await header.scrollIntoViewIfNeeded();
+
+      const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content, { root: header });
+      const content = renderedContent(panel);
+      const status = content.locator('.health__status');
+      const cpu = content.locator('.health__cpu');
+      const latency = content.locator('.health__latency');
+
+      await expect(status).toHaveText(['Down', 'Degraded', 'Healthy', 'Degraded', 'No report']);
+      await expect(cpu).toHaveText(['94.2%', '71.0%', '38.0%', '83.4%', '17.0%']);
+      await expect(latency).toHaveText(['1.25 s', '183 ms', '12 ms', '640 ms', '3 ms']);
+      await expect(content.locator('.health__errors')).toHaveText([
+        '4.31% errors',
+        '0.42% errors',
+        '0.00% errors',
+        '1.20% errors',
+        'n/a errors',
+      ]);
+
+      const readColors = (locator: Locator) =>
+        locator.evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node).color));
+
+      const statusColors = await readColors(status);
+      const [down, degraded, healthy] = statusColors;
+      expect(new Set(statusColors).size).toBe(4);
+      expect(statusColors[3]).toBe(degraded);
+      expect(await readColors(cpu)).toEqual([down, degraded, healthy, degraded, healthy]);
+      expect(await readColors(latency.locator('b'))).toEqual([down, healthy, healthy, degraded, healthy]);
+    });
+
+    test('completes the display helper from the editor suggestions', async ({ gotoDashboardPage, page }) => {
+      await gotoDashboardPage({
+        uid: DATA_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: EVERY_ROW_PANEL }),
+      });
+
+      const preview = page.getByTestId('TextNGEditor-preview');
+      await expect(renderedContent(preview).locator('.user-card')).toHaveCount(5);
+
+      const editor = page.getByRole('textbox', { name: 'Text content' });
+      const suggestion = (name: string) =>
+        page.getByRole('listbox', { name: 'Completions' }).getByRole('option', { name });
+
+      await editor.click();
+      await page.keyboard.press('ControlOrMeta+End');
+      await editor.pressSequentially('<b class="completed">{{dis');
+      await suggestion('display').click();
+      await editor.pressSequentially(' "ro');
+      await suggestion('role').click();
+      await page.keyboard.press('ArrowRight');
+      await editor.pressSequentially(' "te');
+      await suggestion('text').click();
+      await page.keyboard.press('ArrowRight');
+      await editor.pressSequentially('}}');
+
+      await expect(renderedContent(preview).locator('.completed')).toHaveText([
+        'admin',
+        'analyst',
+        'editor',
+        'viewer',
+        'admin',
+      ]);
+    });
   });
 
   test.describe('mermaid', () => {
@@ -314,6 +392,98 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
 
       const preview = page.getByTestId('TextNGEditor-preview');
       await expect(renderedContent(preview).locator('.mermaid-diagram svg')).toHaveCount(2);
+    });
+  });
+
+  test.describe('visualization suggestions', () => {
+    test('applies a summary that stays bound to the query', async ({ gotoDashboardPage, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: REDUCER_MACROS_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: LAST_VALUES_PANEL }),
+      });
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Suggestions')).click();
+
+      const summary = dashboardPage.getByGrafanaSelector(
+        selectors.components.VisualizationPreview.card('Text - summary')
+      );
+      const statistics = dashboardPage.getByGrafanaSelector(
+        selectors.components.VisualizationPreview.card('Text - statistics')
+      );
+
+      await expect(statistics).toBeVisible();
+
+      await summary.click();
+
+      await expect(renderedContent(page.getByTestId('TextNGEditor-preview')).locator('li')).toHaveText([
+        'CPU: 75.0%',
+        'Memory usage: 120 B',
+      ]);
+      await expect(page.getByTestId('TextNGEditor').locator('.cm-content')).toContainText(
+        '${__data.fields.CPU:reduce:lastNotNull}'
+      );
+    });
+
+    test('applies a list with one item per row', async ({ gotoDashboardPage, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: SUGGESTIONS_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: VALUE_PER_CATEGORY_PANEL }),
+      });
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Suggestions')).click();
+
+      const list = dashboardPage.getByGrafanaSelector(selectors.components.VisualizationPreview.card('Text - list'));
+
+      await list.click();
+
+      await expect(renderedContent(page.getByTestId('TextNGEditor-preview')).locator('li')).toHaveText([
+        'API: 99.9',
+        'Worker: 97.5',
+        'Web: 100',
+      ]);
+      await expect(page.getByTestId('TextNGEditor').locator('.cm-content')).toContainText(
+        '<strong>${__data.fields.Service}</strong>: {{/unless}}<span>${__data.fields.Availability}</span>'
+      );
+    });
+
+    test('applies a list that leaves out what each row has no value for', async ({
+      gotoDashboardPage,
+      selectors,
+      page,
+    }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: SUGGESTIONS_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: MISSING_VALUES_PANEL }),
+      });
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Suggestions')).click();
+
+      const list = dashboardPage.getByGrafanaSelector(selectors.components.VisualizationPreview.card('Text - list'));
+      const items = ['alpha: color red, value 2', 'bravo: value 9', 'color orange, value 6', 'delta'];
+
+      await list.click();
+
+      await expect(renderedContent(page.getByTestId('TextNGEditor-preview')).locator('li')).toHaveText(items);
+    });
+
+    test('offers nothing for series told apart only by labels', async ({ gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: SUGGESTIONS_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: LABELS_ONLY_PANEL }),
+      });
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Suggestions')).click();
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.VisualizationPreview.card('Table'))
+      ).toBeVisible();
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.VisualizationPreview.card('Text - summary'))
+      ).toHaveCount(0);
     });
   });
 });

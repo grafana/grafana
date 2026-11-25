@@ -16,11 +16,13 @@ Ships both ESM and CommonJS builds, so it works with `import` and `require`.
 ## Domains
 
 - `@grafana/plugin-compat/datasources` — `getDataSourceInstance`,
-  `getDataSourceInstanceList`, `getDataSourceInstanceSettings`,
+  `getDataSourceInstanceList`, `getDataSourceInstanceListItem`,
+  `getDataSourceInstanceSettings`,
   `getDefaultDataSourceInstanceListItem` and its
   `useDefaultDataSourceInstanceListItem` hook, `useDataSourceInstanceList`,
-  `useDataSourceInstanceListItem`, and `registerRuntimeDataSourceInstance`.
-  Replacements for `getDataSourceSrv()` methods.
+  `useDataSourceInstanceListItem`, `registerRuntimeDataSourceInstance`, and
+  `callDataSourcePluginProxy`. Replacements for `getDataSourceSrv()` methods and
+  the `getBackendSrv()` datasource-proxy endpoint.
 - `@grafana/plugin-compat/apps` — `getPluginSettings`, `updateAppPluginSettings`,
   `getAppPluginHealth`, and `callAppPluginProxy`. Replacements for the
   `getBackendSrv()` plugin-settings, app-health, and plugin-proxy endpoints.
@@ -29,8 +31,10 @@ Ships both ESM and CommonJS builds, so it works with `import` and `require`.
 
 ```ts
 import {
+  callDataSourcePluginProxy,
   getDataSourceInstance,
   getDataSourceInstanceList,
+  getDataSourceInstanceListItem,
   getDefaultDataSourceInstanceListItem,
   registerRuntimeDataSourceInstance,
   useDataSourceInstanceListItem,
@@ -45,6 +49,11 @@ const proxyResponse = await callAppPluginProxy({
   pluginId: 'myorg-myplugin-app',
   routePath: 'my-route/resource',
 });
+const dataSourceProxyResponse = await callDataSourcePluginProxy({
+  pluginId: 'myorg-myplugin-datasource',
+  uid: 'my-uid',
+  routePath: 'my-route/resource',
+});
 
 // `undefined` unless the org default is one of the items.
 const items = await getDataSourceInstanceList({ type: 'prometheus' });
@@ -53,6 +62,7 @@ const defaultProm = await getDefaultDataSourceInstanceListItem(items);
 const { isLoading, error, item } = useDefaultDataSourceInstanceListItem(items);
 
 // Identity and plugin metadata only, without `jsonData`, `url` or `access`.
+const lokiListItem = await getDataSourceInstanceListItem({ uid: 'my-loki-uid' });
 const { item: lokiItem } = useDataSourceInstanceListItem({ uid: 'my-loki-uid' });
 
 // Throws if a data source with the same uid is already registered.
@@ -62,6 +72,8 @@ registerRuntimeDataSourceInstance({ dataSource: new MyRuntimeDataSource('my-plug
 `getAppPluginHealth` resolves with the health result for both healthy and unhealthy responses. Inspect `health?.status`; authentication, transport, and other non-health failures reject. The k8s path defaults an omitted message to an empty string; legacy health responses are returned unchanged. Known non-app plugins return `undefined` when k8s metadata is available.
 
 `callAppPluginProxy` sends a GET request to a configured app proxy route; `routePath` is relative, without a leading slash. It uses the host's stable `@grafana/runtime` export when available, otherwise the legacy `/api/plugin-proxy/:pluginId/*` endpoint. The optional `apiVersion` is ignored by legacy requests; `showErrorAlert` defaults to `false`.
+
+`callDataSourcePluginProxy` sends a GET request to a configured datasource proxy route. Pass the plugin's `pluginId`, the datasource instance's `uid`, and a relative `routePath` without a leading slash. It uses the host's stable `@grafana/runtime` export when available, otherwise the legacy `/api/datasources/proxy/uid/:uid/*` endpoint. The optional `apiVersion` is forwarded to the stable export and ignored by the legacy fallback; `showErrorAlert` defaults to `false`.
 
 On hosts with the async APIs, a data source registered this way is not visible
 to `getDataSourceSrv()`. Look it up with `getDataSourceInstance` instead.

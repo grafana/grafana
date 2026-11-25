@@ -8,13 +8,10 @@ import {
   type TransformerCategory,
   type SelectableValue,
   getTimeZones,
-  VariableOrigin,
-  type VariableSuggestion,
   SpecialValue,
   type TransformerUIProps,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getTemplateSrv } from '@grafana/runtime';
 import { FieldValidationMessage } from '@grafana/ui';
 
 import { variableRegex } from '../variables/utils';
@@ -168,12 +165,6 @@ export function getTimezoneOptions(includeInternal: boolean) {
   }
 
   return timeZoneOptions;
-}
-
-export function getVariableSuggestions(): VariableSuggestion[] {
-  return getTemplateSrv()
-    .getVariables()
-    .map((v) => ({ value: v.name, label: v.label || v.name, origin: VariableOrigin.Template }));
 }
 
 export function getEmptyOptions(): Array<SelectableValue<SpecialValue>> {

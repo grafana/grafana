@@ -83,12 +83,13 @@ export function BacktestPanel({ ruleDefinition, initialTimeRange }: BacktestPane
     }
   }, [ruleDefinition, timeRange, runBacktest]);
 
-  // Update time range when initialTimeRange prop changes
-  useEffect(() => {
+  const [prevInitialTimeRange, setPrevInitialTimeRange] = useState(initialTimeRange);
+  if (prevInitialTimeRange !== initialTimeRange) {
+    setPrevInitialTimeRange(initialTimeRange);
     if (initialTimeRange) {
       setTimeRange(initialTimeRange);
     }
-  }, [initialTimeRange]);
+  }
 
   // Run backtest once after initial mount when timeRange is synchronized with initialTimeRange
   useEffect(() => {

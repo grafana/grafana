@@ -45,9 +45,13 @@ export default function AccordionCategorizedKeyValues({
   const showFlatAttributes = groupedCategories.length === 1 && groupedCategories[0].category.id === OTHER_CATEGORY_ID;
   const [closedCategories, setClosedCategories] = React.useState<Set<string>>(() => new Set());
 
-  React.useEffect(() => {
+  const [prevData, setPrevData] = React.useState(data);
+  const [prevSectionType, setPrevSectionType] = React.useState(sectionType);
+  if (prevData !== data || prevSectionType !== sectionType) {
+    setPrevData(data);
+    setPrevSectionType(sectionType);
     setClosedCategories(new Set());
-  }, [data, sectionType]);
+  }
 
   const toggleCategory = React.useCallback((categoryId: string) => {
     setClosedCategories((previousClosedCategories) => {

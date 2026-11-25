@@ -17,9 +17,10 @@ import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { type Alert, type CombinedRule, type PaginationProps } from 'app/types/unified-alerting';
 import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
-import { GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
 import { prometheusRuleType, rulerRuleType } from '../../utils/rules';
+import { isGrafanaRulesSource } from '../../utils/rulesSource';
 
 import { AlertInstancesTable } from './AlertInstancesTable';
 import { getComponentsFromStats } from './RuleStats';

@@ -5,7 +5,7 @@
  * model.
  */
 
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
@@ -19,7 +19,7 @@ export type GetSpecPayload = z.infer<typeof getSpecPayloadSchema>;
 
 export const getSpecCommand: MutationCommand<GetSpecPayload> = {
   name: 'GET_SPEC',
-  description: payloads.getSpec.description ?? '',
+  description: z.globalRegistry.get(payloads.getSpec)?.description ?? '',
 
   payloadSchema: getSpecPayloadSchema,
   permission: readOnly,

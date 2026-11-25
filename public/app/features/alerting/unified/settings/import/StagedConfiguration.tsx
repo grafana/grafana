@@ -7,7 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Button, Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type AlertmanagerConfig } from 'app/plugins/datasource/alertmanager/types';
 
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { createContactPointSearchLink, makeEditContactPointLink, makeEditTimeIntervalLink } from '../../utils/misc';
 import { createRelativeUrl } from '../../utils/url';
 

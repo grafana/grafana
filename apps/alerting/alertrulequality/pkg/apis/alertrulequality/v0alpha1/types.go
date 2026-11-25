@@ -5,7 +5,8 @@ import (
 )
 
 // AlertRuleQualityPolicy declares what a compliant Grafana-managed alert rule looks
-// like for an org. It is a singleton: the only accepted name is DefaultPolicyName.
+// like. The Org policy is a singleton named DefaultPolicyName. A Team policy is named
+// by the UID of its team, with one policy per team.
 //
 // It is the single source of truth for every consumer, so the validator that rejects a
 // non-compliant rule and the views that report on rule quality cannot disagree about

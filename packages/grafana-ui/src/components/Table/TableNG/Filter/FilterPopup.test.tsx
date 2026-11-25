@@ -68,6 +68,15 @@ describe('FilterPopup', () => {
     expect(screen.getByRole('status')).toHaveTextContent('3 of 3 rows');
   });
 
+  it('tolerates a null field passed through the optional field prop', () => {
+    // A null field must behave like a missing one, not throw while hoisting
+    // the pill flag. Cast through the optional type to simulate a caller
+    // passing null at runtime.
+    renderPopup({ field: null as unknown as Field, rangeFiltersEnabled: true });
+    expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('2 of 2 rows');
+  });
+
   it('clears the search with an accessible icon button and returns focus to the input', async () => {
     const user = userEvent.setup();
     const setSearchFilter = jest.fn();

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { isNumber } from 'lodash';
-import { type ChangeEvent, memo, useEffect, useRef, useState } from 'react';
+import { isNumber, omit } from 'lodash';
+import { type ChangeEvent, memo, useContext, useEffect, useRef, useState } from 'react';
 
 import {
   type GrafanaTheme2,
@@ -13,6 +13,9 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { useFlagGrafanaThresholdsInterpolation } from '@grafana/runtime/internal';
 import { Button, ColorPicker, colors, IconButton, Input, Label, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { FieldConfigExpressionsContext } from 'app/core/components/OptionsUI/fieldConfigExpressions';
+import { SuggestionsInput } from 'app/core/components/SuggestionsInput/SuggestionsInput';
+import { getVariableSuggestions } from 'app/core/components/SuggestionsInput/getVariableSuggestions';
 
 export interface Props {
   thresholds: ThresholdsConfig;
@@ -29,8 +32,12 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
   const isMounted = useRef(false);
   const userAddedThreshold = useRef(false);
   const styles = useStyles2(getStyles);
-  const interpolationEnabled = useFlagGrafanaThresholdsInterpolation();
+  const thresholdsInterpolation = useFlagGrafanaThresholdsInterpolation();
+  const fieldConfigExpressions = useContext(FieldConfigExpressionsContext);
+  const interpolationEnabled = thresholdsInterpolation || fieldConfigExpressions;
 
+  // Text being typed into a step, which can read differently from the step's value (e.g. `5.`)
+  const [drafts, setDrafts] = useState<Record<number, string>>({});
   const stepsRef = useRef(steps);
   stepsRef.current = steps;
 
@@ -107,10 +114,8 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
     fireOnChange(newSteps);
   }
 
-  function onChangeThresholdValue(event: ChangeEvent<HTMLInputElement>, threshold: ThresholdWithKey) {
-    const rawValue = event.target.value;
-
-    const newSteps = steps.map((t) => {
+  function withThresholdValue(currentSteps: ThresholdWithKey[], threshold: ThresholdWithKey, rawValue: string) {
+    const newSteps = currentSteps.map((t) => {
       if (t.key !== threshold.key) {
         return t;
       }
@@ -131,7 +136,16 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
     }
 
     sortThresholds(newSteps);
-    setSteps(newSteps);
+    return newSteps;
+  }
+
+  function onChangeThresholdValue(threshold: ThresholdWithKey, rawValue: string) {
+    setSteps(withThresholdValue(steps, threshold, rawValue));
+  }
+
+  function onChangeThresholdText(threshold: ThresholdWithKey, rawValue: string) {
+    setDrafts((current) => ({ ...current, [threshold.key]: rawValue }));
+    onChangeThresholdValue(threshold, rawValue);
   }
 
   function onChangeThresholdColor(threshold: ThresholdWithKey, color: string) {
@@ -147,12 +161,24 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
     fireOnChange(newThresholds);
   }
 
-  function onBlur() {
+  function commitSteps(currentSteps: ThresholdWithKey[]) {
     // an input left empty holds '' as its value — settle it to 0
-    const newSteps = steps.map((t) => (isNumber(t.value) ? t : { ...t, value: 0 }));
+    const newSteps = currentSteps.map((t) => (isNumber(t.value) ? t : { ...t, value: 0 }));
     sortThresholds(newSteps);
     setSteps(newSteps);
     fireOnChange(newSteps);
+    return newSteps;
+  }
+
+  function onBlur() {
+    commitSteps(steps);
+  }
+
+  // SuggestionsInput commits on blur and when a variable is picked. It reads the latest steps from
+  // the ref because a pick reports the edit and the commit in one handler.
+  function onCommitThresholdValue(threshold: ThresholdWithKey, rawValue: string) {
+    commitSteps(withThresholdValue(stepsRef.current, threshold, rawValue));
+    setDrafts((current) => omit(current, threshold.key));
   }
 
   function onModeChanged(value?: ThresholdsMode) {
@@ -161,6 +187,8 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
       mode: value!,
     });
   }
+
+  const variableSuggestions = interpolationEnabled ? getVariableSuggestions() : [];
 
   function renderInput(threshold: ThresholdWithKey, idx: number) {
     const isPercent = thresholds.mode === ThresholdsMode.Percentage;
@@ -189,39 +217,58 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
       );
     }
 
+    const prefix = (
+      <div className={styles.inputPrefix}>
+        <div className={styles.colorPicker}>
+          <ColorPicker
+            color={threshold.color}
+            onChange={(color) => onChangeThresholdColor(threshold, color)}
+            enableNamedColors={true}
+          />
+        </div>
+        {isPercent && <div className={styles.percentIcon}>%</div>}
+      </div>
+    );
+    const suffix = (
+      <IconButton
+        className={styles.trashIcon}
+        name="trash-alt"
+        onClick={() => onRemoveThreshold(threshold)}
+        tooltip={t('dimensions.threshold-editor.tooltip-remove-threshold', 'Remove threshold {{thresholdNumber}}', {
+          thresholdNumber,
+        })}
+      />
+    );
+
+    if (interpolationEnabled) {
+      // a text input that suggests dashboard variables, so expressions (e.g. $myVar) can be typed
+      return (
+        <SuggestionsInput
+          key={isPercent.toString()}
+          value={drafts[threshold.key] ?? threshold.valueExpr ?? threshold.value}
+          suggestions={variableSuggestions}
+          onInputChange={(rawValue) => onChangeThresholdText(threshold, rawValue)}
+          onChange={(rawValue) => onCommitThresholdValue(threshold, rawValue)}
+          aria-label={ariaLabel}
+          inputRef={idx === 0 ? latestThresholdInputRef : null}
+          prefix={prefix}
+          suffix={suffix}
+        />
+      );
+    }
+
     return (
       <Input
-        // with interpolation enabled, a text input so variable expressions (e.g. $myVar) can be typed
-        type={interpolationEnabled ? 'text' : 'number'}
-        step={interpolationEnabled ? undefined : '0.0001'}
+        type="number"
+        step="0.0001"
         key={isPercent.toString()}
-        onChange={(event: ChangeEvent<HTMLInputElement>) => onChangeThresholdValue(event, threshold)}
-        value={interpolationEnabled ? (threshold.valueExpr ?? threshold.value) : threshold.value}
+        onChange={(event: ChangeEvent<HTMLInputElement>) => onChangeThresholdValue(threshold, event.target.value)}
+        value={threshold.value}
         aria-label={ariaLabel}
         ref={idx === 0 ? latestThresholdInputRef : null}
         onBlur={onBlur}
-        prefix={
-          <div className={styles.inputPrefix}>
-            <div className={styles.colorPicker}>
-              <ColorPicker
-                color={threshold.color}
-                onChange={(color) => onChangeThresholdColor(threshold, color)}
-                enableNamedColors={true}
-              />
-            </div>
-            {isPercent && <div className={styles.percentIcon}>%</div>}
-          </div>
-        }
-        suffix={
-          <IconButton
-            className={styles.trashIcon}
-            name="trash-alt"
-            onClick={() => onRemoveThreshold(threshold)}
-            tooltip={t('dimensions.threshold-editor.tooltip-remove-threshold', 'Remove threshold {{thresholdNumber}}', {
-              thresholdNumber,
-            })}
-          />
-        }
+        prefix={prefix}
+        suffix={suffix}
       />
     );
   }
