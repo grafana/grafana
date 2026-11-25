@@ -1,8 +1,9 @@
 import userEvent from '@testing-library/user-event';
 import { act, render, screen } from 'test/test-utils';
 
-import { getDefaultTimeRange, store, systemDateFormats } from '@grafana/data';
+import { AppEvents, getDefaultTimeRange, store, systemDateFormats } from '@grafana/data';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { appEvents } from 'app/core/app_events';
 
 import { TimePickerWithHistory } from './TimePickerWithHistory';
 
@@ -32,6 +33,30 @@ describe('TimePickerWithHistory', () => {
   afterEach(() => {
     act(() => setTestFlags({}));
     window.localStorage.clear();
+  });
+
+  it.each([true, false])('reports invalid pasted ranges with hideHistory=%s', async (hideHistory) => {
+    const user = userEvent.setup();
+    await navigator.clipboard.writeText('invalid range');
+    const onError = jest.spyOn(appEvents, 'emit');
+    try {
+      render(
+        <TimePickerWithHistory
+          value={getDefaultTimeRange()}
+          {...props}
+          hideHistory={hideHistory}
+          widthOverride={1200}
+        />
+      );
+      await user.click(screen.getByLabelText(/Time range selected/));
+      await user.click(screen.getByTestId('data-testid TimePicker paste button'));
+      expect(onError).toHaveBeenCalledWith(AppEvents.alertError, [
+        'Invalid time range',
+        'invalid range is not a valid time range',
+      ]);
+    } finally {
+      onError.mockRestore();
+    }
   });
 
   it.each([true, false])('uses tabbed compact design when rollout is %s', async (enabled) => {

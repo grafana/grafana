@@ -31,6 +31,11 @@ export const TimePickerWithHistory = (props: Props) => {
   const tabsEnabled = useFlagGrafanaResponsiveTimePickerTabs();
   const pickerProps = {
     ...props,
+    onError: (error?: string) =>
+      appEvents.emit(AppEvents.alertError, [
+        t('time-picker.copy-paste.default-error-title', 'Invalid time range'),
+        t('time-picker.copy-paste.default-error-message', `{{error}} is not a valid time range`, { error }),
+      ]),
     compactDesign: props.compactDesign ?? (tabsEnabled ? 'tabs' : 'legacy'),
   } satisfies Props;
   if (props.hideHistory) {
@@ -50,12 +55,6 @@ export const TimePickerWithHistory = (props: Props) => {
               onAppendToHistory(value, validHistory, onSaveToStore);
               props.onChange(value);
             }}
-            onError={(error?: string) =>
-              appEvents.emit(AppEvents.alertError, [
-                t('time-picker.copy-paste.default-error-title', 'Invalid time range'),
-                t('time-picker.copy-paste.default-error-message', `{{error}} is not a valid time range`, { error }),
-              ])
-            }
           />
         );
       }}
