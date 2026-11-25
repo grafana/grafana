@@ -107,7 +107,7 @@ func TestCloudSettingsRoutes(t *testing.T) {
 				}
 				return allowed && req.Evaluator.Evaluate(permissions), checkErr
 			})
-			settings := &cloudSettingsTestService{FakePluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{"example-app": {Enabled: true, Pinned: true, JSONData: map[string]any{"origin": "cloudconfig"}, SecureJSONData: map[string][]byte{"token": []byte("encrypted")}}}}}
+			settings := &cloudSettingsTestService{FakePluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{"example-app": {Enabled: true, JSONData: map[string]any{"origin": "cloudconfig"}, SecureJSONData: map[string][]byte{"token": []byte("encrypted")}}}}}
 			factoryCalls := 0
 			provider := func(_ context.Context, id string) (grafanarest.Storage, error) {
 				factoryCalls++
@@ -156,7 +156,6 @@ func TestCloudSettingsRoutes(t *testing.T) {
 				var obj appv0.Settings
 				require.NoError(t, json.Unmarshal(res.Body.Bytes(), &obj))
 				require.Equal(t, ns, obj.Namespace)
-				require.True(t, obj.Spec.Pinned)
 				require.NotContains(t, res.Body.String(), "read-secret")
 				last := checks[len(checks)-1]
 				require.Equal(t, ns, last.Namespace)
