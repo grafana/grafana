@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
+import { Provider } from 'react-redux';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Icon, ToolbarButton } from '@grafana/ui';
+import { store } from 'app/store/store';
 import { useDispatch } from 'app/types/store';
 
 import { itemStarred } from './analytics/main';
@@ -98,7 +100,8 @@ function StarToggle({ title, group, kind, name }: Props) {
  * Props are widened because the registry types every exposed component as `ComponentType<{}>`;
  * the contract is only checked on the consuming side, through `usePluginComponent`'s generic.
  * A plugin that names no object has nothing to star, so this renders nothing rather than
- * throwing out of someone else's React tree.
+ * throwing out of someone else's React tree. A plugin may also render it under a Redux provider
+ * of its own, so it brings Grafana's store, which holds the stars.
  */
 export function StarToolbarButtonExposed(props: Partial<Props>) {
   const { title, group, kind, name } = props;
@@ -106,5 +109,9 @@ export function StarToolbarButtonExposed(props: Partial<Props>) {
     console.error('[StarToolbarButton] Pass title, group, kind and name: the object to star.');
     return null;
   }
-  return <StarToolbarButton title={title} group={group} kind={kind} name={name} />;
+  return (
+    <Provider store={store}>
+      <StarToolbarButton title={title} group={group} kind={kind} name={name} />
+    </Provider>
+  );
 }

@@ -25,7 +25,8 @@ function starred(group: string, kind: string): Observable<readonly string[]> {
     return from(store).pipe(
       map((state) => select(state)),
       // Hold the first emission until the read settles, so subscribers never see a spurious empty set.
-      // A failed read is an empty set, not an error: an error would end the stream before a later read succeeds.
+      // A first read that fails is an empty set, not an error: an error would end the stream before a later read
+      // succeeds. A later read that fails leaves `data` as the last read left it, so the set stays as it was.
       filter(({ data, isError }) => data !== undefined || isError),
       map(({ data }) => findStarredNames(data, group, kind)),
       distinctUntilChanged(isEqual),
@@ -53,7 +54,7 @@ function searchAgain({ group, kind, name }: StarredResourceRef): void {
  * a starred object through a new search of its row.
  */
 export const starsSrv: StarsSrv = {
-  showsStarsOf: (group, kind) => findStarredKind(group, kind) !== undefined,
+  canShowStarsOf: (group, kind) => findStarredKind(group, kind) !== undefined,
   star: (ref) => dispatch(setStarred(ref, true)),
   unstar: (ref) => dispatch(setStarred(ref, false)),
   starred,

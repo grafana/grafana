@@ -87,7 +87,7 @@ describe('starsSrv.starred', () => {
     }
   });
 
-  it('emits an empty set when the stars cannot be read, then the set once a read succeeds', async () => {
+  it('emits an empty set when the first read fails, then the set once a read succeeds', async () => {
     setMockStarredDashboards(['dash-one']);
     server.use(http.get(starsRoute, () => new HttpResponse(null, { status: 500 }), { once: true }));
 
@@ -106,6 +106,30 @@ describe('starsSrv.starred', () => {
     }
   });
 
+  it('keeps the set it last read when a later read fails, then emits the set once a read succeeds', async () => {
+    setMockStarredDashboards(['dash-one']);
+
+    const emissions: Array<readonly string[]> = [];
+    const subscription = starsSrv.starred(DASHBOARD_GROUP, 'Dashboard').subscribe((names) => emissions.push(names));
+
+    try {
+      await waitFor(() => expect(emissions).toEqual([['dash-one']]));
+
+      // The read that this star change calls for fails
+      const failedRead = jest.fn(() => new HttpResponse(null, { status: 500 }));
+      server.use(http.get(starsRoute, failedRead, { once: true }));
+      await starsSrv.star({ group: DASHBOARD_GROUP, kind: 'Dashboard', name: 'dash-two' });
+      await waitFor(() => expect(failedRead).toHaveBeenCalledTimes(1));
+
+      // The read after the next change succeeds
+      await starsSrv.star({ group: DASHBOARD_GROUP, kind: 'Dashboard', name: 'dash-three' });
+
+      await waitFor(() => expect(emissions).toEqual([['dash-one'], ['dash-one', 'dash-two', 'dash-three']]));
+    } finally {
+      subscription.unsubscribe();
+    }
+  });
+
   it.each(USERS_WITHOUT_STARS)('emits a single empty set, and reads no stars, for $desc', ({ become }) => {
     become();
 
@@ -118,10 +142,10 @@ describe('starsSrv.starred', () => {
   });
 });
 
-describe('starsSrv.showsStarsOf', () => {
+describe('starsSrv.canShowStarsOf', () => {
   it.each([
     { desc: "Grafana's own dashboard kind", group: DASHBOARD_GROUP, kind: 'Dashboard', expected: true },
-    { desc: 'an app kind Grafana has a page for', group: THING_GROUP, kind: THING_KIND, expected: true },
+    { desc: 'an app kind with a page, served or not', group: THING_GROUP, kind: THING_KIND, expected: true },
     {
       desc: "a kind of Grafana's own that it shows no stars of",
       group: 'playlist.grafana.app',
@@ -130,7 +154,7 @@ describe('starsSrv.showsStarsOf', () => {
     },
     { desc: 'an app kind Grafana has no page for', group: 'unserved.grafana.app', kind: 'Nope', expected: false },
   ])('is $expected for $desc', ({ group, kind, expected }) => {
-    expect(starsSrv.showsStarsOf(group, kind)).toBe(expected);
+    expect(starsSrv.canShowStarsOf(group, kind)).toBe(expected);
   });
 });
 
