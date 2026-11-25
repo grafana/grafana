@@ -3,6 +3,7 @@ import * as React from 'react';
 import { useRef, type JSX } from 'react';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { pickDataAttributes } from '../../utils/dataAttributes';
 import { type ButtonVariant } from '../Button/Button';
 import { Modal } from '../Modal/Modal';
 
@@ -45,6 +46,8 @@ export interface ConfirmModalProps {
   onAlternative?(): void;
   /** Disable the confirm button and the confirm text input if needed */
   disabled?: boolean;
+  /** Custom data attributes (for example `data-analytics-id`), rendered on the dialog element */
+  [key: `data-${string}`]: string | undefined;
 }
 
 /**
@@ -69,6 +72,7 @@ export const ConfirmModal = ({
   onAlternative,
   confirmButtonVariant,
   disabled,
+  ...restProps
 }: ConfirmModalProps): JSX.Element => {
   const styles = useStyles2(getStyles);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
@@ -76,6 +80,7 @@ export const ConfirmModal = ({
 
   return (
     <Modal
+      {...pickDataAttributes(restProps)}
       className={cx(styles.modal, modalClass)}
       title={title}
       isOpen={isOpen}
