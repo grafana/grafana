@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { type TimeZone } from '@grafana/schema';
 import {
   floatingUtils,
+  VizTooltipWrapper,
   Portal,
   type UPlotConfigBuilder,
   type VizTooltipItem,
@@ -146,7 +147,8 @@ export const ExemplarMarker = ({
     });
 
     return (
-      <div
+      <VizTooltipWrapper
+        scrollable={false}
         className={cx(styles.tooltipWrapper, isLocked && styles.pinned)}
         ref={refs.setFloating}
         style={floatingStyles}
@@ -154,7 +156,7 @@ export const ExemplarMarker = ({
       >
         {isLocked && <CloseButton onClick={onClose} />}
         <ExemplarTooltip items={items} links={links} isPinned={isLocked} maxHeight={maxHeight} />
-      </div>
+      </VizTooltipWrapper>
     );
   }, [
     dataFrame.fields,

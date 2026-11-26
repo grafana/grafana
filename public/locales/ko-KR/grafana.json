@@ -6563,6 +6563,10 @@
       "paused": "이 대시보드는 관리자가 일시 중지했습니다",
       "try-again-later": "나중에 다시 시도하세요"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "정말 이 패널을 제거하시겠어요?"
@@ -8012,6 +8016,9 @@
       "title-delete-all-transformations": "모든 변환을 삭제하시겠어요?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_other": ""
@@ -10432,6 +10439,24 @@
         "otherGroup": "기타"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -10949,6 +10974,10 @@
         "placement-options": {
           "label-bottom": "하단",
           "label-right": "오른쪽"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11044,6 +11073,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "원 클릭"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "링크 추가",
@@ -13678,6 +13710,7 @@
       "open": "메인 메뉴",
       "pin-error": "고정된 메뉴 항목을 업데이트하지 못했습니다",
       "pinned-list-label": "고정된 항목",
+      "section-resize": "",
       "undock": "메뉴 고정 해제"
     },
     "megamenu-item": {
@@ -13871,12 +13904,32 @@
         "undo-label": "Assistant 편집"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "취소",
       "confirm-discard": "무시",
       "confirm-keep": "유지",
       "confirm-text": "이 노트북을 보는 동안 변경한 내용을 유지하시겠어요?",
       "confirm-title": "저장되지 않은 패널 변경 사항"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17153,6 +17206,13 @@
       "wide-list": "와이드 형식 목록",
       "wide-list-desc": "가로, 이름 및 값, 영역 스파크라인, 단일 색상"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "통계",
       "stat-color-background": "통계 - 배경 색상",
@@ -17698,6 +17758,10 @@
       "time-zone-option": "시간대",
       "time-zone-selection": "시간대 선택"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "시간 범위 적용",
       "default-error": "날짜({{dateExample}}) 또는 상대 시간({{relativeTimeExample1}}, {{relativeTimeExample2}})을 입력하세요.",
@@ -17715,6 +17779,12 @@
       "to": "종료",
       "zoom-out-button": "시간 범위 확대",
       "zoom-out-tooltip-new": "시간 범위 축소 <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "시간 범위 적용",
