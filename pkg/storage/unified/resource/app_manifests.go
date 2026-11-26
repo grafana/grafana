@@ -30,6 +30,7 @@ import (
 	quotas "github.com/grafana/grafana/apps/quotas/pkg/apis"
 	secret "github.com/grafana/grafana/apps/secret/pkg/apis"
 	shorturl "github.com/grafana/grafana/apps/shorturl/pkg/apis"
+	userstorage "github.com/grafana/grafana/apps/userstorage/pkg/apis/manifestdata"
 )
 
 func generatedAppManifests() []*app.ManifestData {
@@ -56,6 +57,7 @@ func generatedAppManifests() []*app.ManifestData {
 		quotas.LocalManifest().ManifestData,
 		secret.LocalManifest().ManifestData,
 		shorturl.LocalManifest().ManifestData,
+		userstorage.LocalManifest().ManifestData,
 		alerting_historian.LocalManifest().ManifestData,
 	}
 }

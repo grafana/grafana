@@ -28,6 +28,8 @@ export const FlagKeys = {
   AlertingRuleQuality: "alerting.ruleQuality",
   /** Enable fixing alert rule quality issues with Grafana Assistant on the alert quality page. */
   AlertingRuleQualityFix: "alerting.ruleQualityFix",
+  /** Enable bulk fixes for alert rule quality issues on the alert quality page. */
+  AlertingRuleQualityFixAll: "alerting.ruleQualityFixAll",
   /** Enable assistant reviews on the alert quality page. */
   AlertingRuleReviews: "alerting.ruleReviews",
   /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
@@ -264,6 +266,8 @@ export const FlagKeys = {
   GrafanaPanelOptionInterpolation: "grafana.panelOptionInterpolation",
   /** Let panel plugins register system transformations */
   GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
+  /** Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode */
+  GrafanaPanelQuickEdits: "grafana.panelQuickEdits",
   /** Pass React elements in plugin extension props by reference */
   GrafanaPluginExtensionReactElementProps: "grafana.pluginExtensionReactElementProps",
   /** Nest app plugin navigation items in the mega menu based on their URL path hierarchy */
@@ -274,6 +278,8 @@ export const FlagKeys = {
   GrafanaPreserveLoginTabTitle: "grafana.preserveLoginTabTitle",
   /** Disables creating new recorded queries while preserving access to existing queries */
   GrafanaRecordedQueriesDisableCreate: "grafana.recordedQueriesDisableCreate",
+  /** Enable tabs and an inline calendar in the compact time range picker */
+  GrafanaResponsiveTimePickerTabs: "grafana.responsiveTimePickerTabs",
   /** Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state */
   GrafanaSavedDashboardViews: "grafana.savedDashboardViews",
   /** Enables the dedicated Saved queries page and its navigation entry */
@@ -300,6 +306,8 @@ export const FlagKeys = {
   GraphiteBackendMode: "graphiteBackendMode",
   /** Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis */
   HeatmapNegativeLogBuckets: "heatmapNegativeLogBuckets",
+  /** Routes read-only user requests in the frontend from /api to the /apis endpoint. Depends on kubernetesUsersReadApi */
+  IamUseKubernetesUsersReadApi: "iam.useKubernetesUsersReadApi",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Adds support for Kubernetes correlations */
@@ -308,6 +316,8 @@ export const FlagKeys = {
   KubernetesTeamsApi: "kubernetesTeamsApi",
   /** Routes library panel requests from /api to the /apis endpoint */
   LibraryelementsKubernetesLibraryPanels: "libraryelements.kubernetesLibraryPanels",
+  /** Connects Grafana Live to the live.grafana.app websocket instead of /api/live/ws */
+  LiveUseAPIServerWebsocket: "live.useAPIServerWebsocket",
   /** Enables the logs tableNG panel to replace existing tableRT */
   LogsTablePanelNG: "logsTablePanelNG",
   /** Changes logs responses from Loki to be compliant with the dataplane specification. */
@@ -336,6 +346,8 @@ export const FlagKeys = {
   PluginsDisableMTPluginsFallback: "plugins.disableMTPluginsFallback",
   /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
   PluginsInitDataSourcesAsync: "plugins.initDataSourcesAsync",
+  /** Installs, updates and uninstalls plugins through the plugins API only, and falls back to the legacy API if that call fails */
+  PluginsUseMTPluginInstall: "plugins.useMTPluginInstall",
   /** Enables plugins setting from new apis */
   PluginsUseMTPluginSettings: "plugins.useMTPluginSettings",
   /** Enables plugins decoupling from bootdata */
@@ -378,8 +390,6 @@ export const FlagKeys = {
   ReportingHeaderSettings: "reportingHeaderSettings",
   /** Enables the new role picker drawer design */
   RolePickerDrawer: "rolePickerDrawer",
-  /** Enables Saved queries (query library) RBAC permissions */
-  SavedQueriesRBAC: "savedQueriesRBAC",
   /** Enables the use of scope filters in Grafana */
   ScopeFilters: "scopeFilters",
   /** Enable scope search to include all levels of the scope node tree */
@@ -501,6 +511,17 @@ export const useFlagAlertingRuleQuality = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagAlertingRuleQualityFix = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alerting.ruleQualityFix", false, options).value;
+};
+
+/**
+ * Enable bulk fixes for alert rule quality issues on the alert quality page.
+ *
+ * **Details:**
+ * - flag key: `alerting.ruleQualityFixAll`
+ * - default value: `false`
+ */
+export const useFlagAlertingRuleQualityFixAll = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.ruleQualityFixAll", false, options).value;
 };
 
 /**
@@ -1802,6 +1823,17 @@ export const useFlagGrafanaPanelPluginTransformations = (options?: ReactFlagEval
 };
 
 /**
+ * Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode
+ *
+ * **Details:**
+ * - flag key: `grafana.panelQuickEdits`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPanelQuickEdits = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.panelQuickEdits", false, options).value;
+};
+
+/**
  * Pass React elements in plugin extension props by reference
  *
  * **Details:**
@@ -1854,6 +1886,17 @@ export const useFlagGrafanaPreserveLoginTabTitle = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaRecordedQueriesDisableCreate = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.recordedQueriesDisableCreate", true, options).value;
+};
+
+/**
+ * Enable tabs and an inline calendar in the compact time range picker
+ *
+ * **Details:**
+ * - flag key: `grafana.responsiveTimePickerTabs`
+ * - default value: `false`
+ */
+export const useFlagGrafanaResponsiveTimePickerTabs = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.responsiveTimePickerTabs", false, options).value;
 };
 
 /**
@@ -1960,10 +2003,10 @@ export const useFlagGrafanaViewPanelPane = (options?: ReactFlagEvaluationOptions
  *
  * **Details:**
  * - flag key: `grafana.visualDesignRefresh`
- * - default value: `true`
+ * - default value: `false`
  */
 export const useFlagGrafanaVisualDesignRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.visualDesignRefresh", true, options).value;
+  return useFlag("grafana.visualDesignRefresh", false, options).value;
 };
 
 /**
@@ -1997,6 +2040,17 @@ export const useFlagGraphiteBackendMode = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagHeatmapNegativeLogBuckets = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("heatmapNegativeLogBuckets", false, options).value;
+};
+
+/**
+ * Routes read-only user requests in the frontend from /api to the /apis endpoint. Depends on kubernetesUsersReadApi
+ *
+ * **Details:**
+ * - flag key: `iam.useKubernetesUsersReadApi`
+ * - default value: `false`
+ */
+export const useFlagIamUseKubernetesUsersReadApi = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("iam.useKubernetesUsersReadApi", false, options).value;
 };
 
 /**
@@ -2041,6 +2095,17 @@ export const useFlagKubernetesTeamsApi = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagLibraryelementsKubernetesLibraryPanels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("libraryelements.kubernetesLibraryPanels", false, options).value;
+};
+
+/**
+ * Connects Grafana Live to the live.grafana.app websocket instead of /api/live/ws
+ *
+ * **Details:**
+ * - flag key: `live.useAPIServerWebsocket`
+ * - default value: `false`
+ */
+export const useFlagLiveUseAPIServerWebsocket = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("live.useAPIServerWebsocket", false, options).value;
 };
 
 /**
@@ -2198,6 +2263,17 @@ export const useFlagPluginsInitDataSourcesAsync = (options?: ReactFlagEvaluation
 };
 
 /**
+ * Installs, updates and uninstalls plugins through the plugins API only, and falls back to the legacy API if that call fails
+ *
+ * **Details:**
+ * - flag key: `plugins.useMTPluginInstall`
+ * - default value: `false`
+ */
+export const useFlagPluginsUseMTPluginInstall = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("plugins.useMTPluginInstall", false, options).value;
+};
+
+/**
  * Enables plugins setting from new apis
  *
  * **Details:**
@@ -2268,10 +2344,10 @@ export const useFlagPublicDashboardsEmailSharing = (options?: ReactFlagEvaluatio
  *
  * **Details:**
  * - flag key: `queryEditorNext`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagQueryEditorNext = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("queryEditorNext", false, options).value;
+  return useFlag("queryEditorNext", true, options).value;
 };
 
 /**
@@ -2426,17 +2502,6 @@ export const useFlagReportingHeaderSettings = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagRolePickerDrawer = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("rolePickerDrawer", false, options).value;
-};
-
-/**
- * Enables Saved queries (query library) RBAC permissions
- *
- * **Details:**
- * - flag key: `savedQueriesRBAC`
- * - default value: `true`
- */
-export const useFlagSavedQueriesRBAC = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("savedQueriesRBAC", true, options).value;
 };
 
 /**

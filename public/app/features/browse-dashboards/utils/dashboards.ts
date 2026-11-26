@@ -1,7 +1,7 @@
 import { config } from '@grafana/runtime';
 import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { contextSrv } from 'app/core/services/context_srv';
-import { type ResourceRef } from 'app/features/provisioning/types/job';
+import { type ResourceRef, toResourceRef } from 'app/features/provisioning/types/job';
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
 
 import { type DashboardTreeSelection, type DashboardViewItemWithUIItems } from '../types';
@@ -121,9 +121,5 @@ export function getSelectedItemRefs(
 
 /** Selected folders and dashboards as k8s resource refs for bulk provisioning jobs. */
 export function collectSelectedItems(selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>): ResourceRef[] {
-  return getSelectedItemRefs(selectedItems).map(({ kind, uid }) => ({
-    name: uid,
-    group: CORE_KINDS[kind].group,
-    kind: CORE_KINDS[kind].kind,
-  }));
+  return getSelectedItemRefs(selectedItems).map(({ kind, uid }) => toResourceRef(CORE_KINDS[kind], uid));
 }

@@ -88,7 +88,7 @@ export const Basic: StoryFn<StoryProps> = (args) => {
     const color = args.colorScheme === FieldColorModeId.Fixed ? colors[i % colors.length] : undefined;
 
     visualizations.push(
-      <RadialGaugeExample {...args} key={i} color={color} seriesCount={0} vizCount={args.seriesCount} />
+      <RadialGaugeExample key={i} {...args} color={color} seriesCount={0} vizCount={args.seriesCount} />
     );
   }
 

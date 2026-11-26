@@ -115,6 +115,7 @@ export const availableIconsIndex = {
   enter: true,
   envelope: true,
   'exchange-alt': true,
+  'exchange-alt-lock': true,
   'exclamation-triangle': true,
   'exclamation-circle': true,
   exclamation: true,

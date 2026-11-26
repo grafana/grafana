@@ -10,6 +10,7 @@ import {
   collapseFloatingExtensionSidebar,
   getEffectiveExtensionSidebarPresentation,
   getExtensionSidebarPlacement,
+  getFloatingExtensionSidebarHeightOptions,
   getFloatingExtensionSidebarPlacement,
   getRequestedExtensionSidebarDockSide,
   getRequestedExtensionSidebarPresentation,
@@ -26,6 +27,7 @@ import {
   setExtensionSidebarFloatingOverride,
   setExtensionSidebarPlacement,
   setExtensionSidebarPresentation,
+  setFloatingExtensionSidebarHeightOptions,
   subscribeToExtensionSidebarPopOut,
   subscribeToExtensionSidebarPresentation,
   subscribeToFloatingExtensionSidebarCollapse,
@@ -251,6 +253,42 @@ describe('extensionSidebarLayout', () => {
     expect(canCollapseFloatingExtensionSidebar()).toBe(false);
     collapseFloatingExtensionSidebar();
     expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it('tells collapse listeners how the user asked, a drag with the pointer unless told otherwise', () => {
+    const listener = jest.fn();
+    subscribeToFloatingExtensionSidebarCollapse(listener);
+
+    collapseFloatingExtensionSidebar();
+    expect(listener).toHaveBeenLastCalledWith({ method: 'drag', input: 'pointer' });
+
+    collapseFloatingExtensionSidebar({ method: 'resize', input: 'keyboard' });
+    expect(listener).toHaveBeenLastCalledWith({ method: 'resize', input: 'keyboard' });
+    expect(reportInteraction).toHaveBeenLastCalledWith('grafana_extension_sidebar_floating_collapsed', {
+      method: 'resize',
+    });
+  });
+
+  it('keeps the floating heights the extension declares, telling subscribers only when they change', () => {
+    expect(getFloatingExtensionSidebarHeightOptions()).toBeNull();
+    const listener = jest.fn();
+    subscribeToExtensionSidebarPresentation(listener);
+
+    setFloatingExtensionSidebarHeightOptions({ minHeight: 400, collapsedHeight: 100 });
+    expect(getFloatingExtensionSidebarHeightOptions()).toEqual({ minHeight: 400, collapsedHeight: 100 });
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    // The extension calls it on every resize of its surface; the same heights render nothing.
+    setFloatingExtensionSidebarHeightOptions({ minHeight: 400, collapsedHeight: 100 });
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    setFloatingExtensionSidebarHeightOptions(null);
+    expect(getFloatingExtensionSidebarHeightOptions()).toBeNull();
+    expect(listener).toHaveBeenCalledTimes(2);
+
+    setFloatingExtensionSidebarHeightOptions({ minHeight: 400 });
+    resetExtensionSidebarPresentationForTests();
+    expect(getFloatingExtensionSidebarHeightOptions()).toBeNull();
   });
 
   it('offers to open the sidebar in a new window only while someone listens', () => {

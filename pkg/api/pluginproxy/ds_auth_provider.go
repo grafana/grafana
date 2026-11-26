@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/routes"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -106,19 +107,19 @@ func getTokenProvider(ctx context.Context, settings *DataSourceProxySettings, ds
 	}
 
 	switch authType {
-	case "azure":
+	case routes.ProxyAuthTypeAzure:
 		if tokenAuth == nil {
 			return nil, fmt.Errorf("'tokenAuth' not configured for authentication type '%s'", authType)
 		}
 		return newAzureAccessTokenProvider(ctx, settings, tokenAuth)
 
-	case "gce":
+	case routes.ProxyAuthTypeGCE:
 		if jwtTokenAuth == nil {
 			return nil, fmt.Errorf("'jwtTokenAuth' not configured for authentication type '%s'", authType)
 		}
 		return newGceAccessTokenProvider(ctx, ds, pluginRoute, jwtTokenAuth), nil
 
-	case "jwt":
+	case routes.ProxyAuthTypeJWT:
 		if jwtTokenAuth == nil {
 			return nil, fmt.Errorf("'jwtTokenAuth' not configured for authentication type '%s'", authType)
 		}
@@ -144,13 +145,13 @@ func getTokenProvider(ctx context.Context, settings *DataSourceProxySettings, ds
 	}
 }
 
-func interpolateAuthParams(tokenAuth *plugins.JWTTokenAuth, data templateData) (*plugins.JWTTokenAuth, error) {
+func interpolateAuthParams(tokenAuth *routes.ProxyTokenAuth, data templateData) (*routes.ProxyTokenAuth, error) {
 	if tokenAuth == nil {
 		// Nothing to interpolate
 		return nil, nil
 	}
 
-	interpolatedUrl, err := interpolateString(tokenAuth.Url, data)
+	interpolatedUrl, err := interpolateString(tokenAuth.URL, data)
 	if err != nil {
 		return nil, err
 	}
@@ -164,8 +165,8 @@ func interpolateAuthParams(tokenAuth *plugins.JWTTokenAuth, data templateData) (
 		interpolatedParams[key] = interpolatedParam
 	}
 
-	return &plugins.JWTTokenAuth{
-		Url:    interpolatedUrl,
+	return &routes.ProxyTokenAuth{
+		URL:    interpolatedUrl,
 		Scopes: tokenAuth.Scopes,
 		Params: interpolatedParams,
 	}, nil

@@ -227,8 +227,8 @@ datasources:
     jsonData:
       tracesToLogsV2:
         datasourceUid: 'loki'
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
         tags:
           - key: 'job'
           - key: 'instance'

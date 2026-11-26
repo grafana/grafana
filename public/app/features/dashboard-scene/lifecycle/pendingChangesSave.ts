@@ -7,12 +7,14 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 
 import { type DashboardChangeInfo } from '../saving/shared';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { dashboardComposerEnabled } from '../scene/dashboardModes';
 import { jsonDiff } from '../settings/version-history/utils';
 import { isMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 
 import {
   clearPendingChangePreview,
   getScenePendingChangePreview,
+  type PendingChangePreview,
   previewedDashboardUid,
   proposesNewDashboard,
 } from './pendingChangePreview';
@@ -38,6 +40,8 @@ import { withoutEmptyValues } from './specDiff';
  */
 export function openPendingChangesForEditing(scene: DashboardScene) {
   const keepEditing = takeEditingOnNextLoad(previewedDashboardUid(scene.state));
+  // A request an earlier load left untaken is not for what this load shows.
+  takeComposerRequestOverAssistantEdit(scene.state.uid);
   if (scene.state.isEditing || !scene.canEditDashboard() || isMobileEditDeprecated()) {
     return;
   }
@@ -51,10 +55,34 @@ export function openPendingChangesForEditing(scene: DashboardScene) {
   // Without the plugin's history an edit couldn't be kept, so the preview stays read-only.
   if (proposesNewDashboard(preview.pending) || preview.pending.history) {
     scene.onEnterEditMode('assistant');
+    requestComposerOverAssistantEdit(scene);
   }
 }
 
-/** Whether the dashboard's Save saves pending changes to a saved dashboard, through their plugin. */
+/** Dashboards whose Assistant edit the page asks the Assistant to enter Composer over, once it can. */
+const composerOverAssistantEdit = new Set<string>();
+
+/**
+ * With Composer on, the Assistant's edit opens in Editing for Composer to run over. The page makes the request
+ * (see `useComposerOverAssistantEdit`): it has to open the Assistant sidebar, which it can only do once the
+ * sidebar knows the Assistant's component.
+ */
+function requestComposerOverAssistantEdit(scene: DashboardScene) {
+  const uid = scene.state.uid;
+  if (uid && dashboardComposerEnabled()) {
+    composerOverAssistantEdit.add(uid);
+  }
+}
+
+/** Whether the page should ask the Assistant to enter Composer over this dashboard's edit; asking forgets it. */
+export function takeComposerRequestOverAssistantEdit(uid: string | undefined): boolean {
+  return uid !== undefined && composerOverAssistantEdit.delete(uid);
+}
+
+/**
+ * Whether the dashboard's Save saves pending changes to a saved dashboard: through their plugin, or,
+ * for a dashboard a repository keeps, as a commit to it.
+ */
 export function savesPendingChanges(scene: DashboardScene): boolean {
   const preview = getScenePendingChangePreview(scene.state);
   return Boolean(preview?.previewing && preview.saved && !proposesNewDashboard(preview.pending));
@@ -206,6 +234,54 @@ export async function discardScenePendingChanges(scene: DashboardScene, { keepEd
 export async function showSavedPendingChanges(scene: DashboardScene, uid: string) {
   leaveEditMode(scene, { discarded: false });
   await closePendingChangesPage(uid);
+}
+
+export interface CommittedPendingChanges {
+  uid: string;
+  preview: PendingChangePreview;
+}
+
+/**
+ * The pending changes to a saved dashboard that committing `scene` commits, when a repository keeps
+ * it: its own save form saves them then (see SaveDashboardDrawer).
+ */
+export function getCommittedPendingChanges(scene: DashboardScene): CommittedPendingChanges | undefined {
+  const preview = getScenePendingChangePreview(scene.state);
+  const uid = previewedDashboardUid(scene.state);
+  if (!preview?.previewing || !uid || proposesNewDashboard(preview.pending)) {
+    return undefined;
+  }
+  return { uid, preview };
+}
+
+/**
+ * After the requester committed pending changes to a repository: the commit has them, so their
+ * plugin discards them, as after a copy. With `showSaved`, the commit updated the dashboard here, so
+ * the page shows it saved; otherwise the requester is on its way to the branch or the copy. A failed
+ * discard leaves them to the plugin.
+ */
+export async function finishCommittingPendingChanges(
+  scene: DashboardScene,
+  { uid, preview }: CommittedPendingChanges,
+  { showSaved }: { showSaved: boolean }
+) {
+  // An embedded view's host shows the saved dashboard itself.
+  const showSavedHere = showSaved && !scene.state.meta.isEmbedded;
+  if (showSavedHere) {
+    leaveEditMode(scene, { discarded: false });
+  }
+  // An edit still on its way, such as one leaving edit mode records, would reach the plugin after
+  // the discard and bring the pending changes back.
+  await pendingChangesRecorded(scene);
+  clearPendingChangePreview(uid, preview.id);
+  try {
+    await preview.pending.discard();
+  } catch {
+    // See above.
+  }
+  if (showSavedHere) {
+    await closePendingChangesPage(uid);
+  }
 }
 
 /** Ends the edit session of pending changes that are saved or discarded: nothing is left to save. */

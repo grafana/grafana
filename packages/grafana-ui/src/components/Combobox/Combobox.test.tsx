@@ -3,7 +3,8 @@ import { act, render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { mockComboboxRect } from '../../test-utils/mockDom';
+import { mockComboboxRect } from '@grafana/test-utils';
+
 import { Drawer } from '../Drawer/Drawer';
 import { Field } from '../Forms/Field';
 import { Modal } from '../Modal/Modal';
@@ -77,6 +78,43 @@ describe('Combobox', () => {
   it('renders without error', () => {
     render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
     expect(screen.getByRole('combobox')).toBeInTheDocument();
+  });
+
+  it.each([false, true])('forwards data attributes to the combobox input with auto size %s', (autoSize) => {
+    render(
+      <Combobox
+        options={options}
+        onChange={onChangeHandler}
+        data-analytics-id="datasource_picked"
+        {...(autoSize ? { width: 'auto', minWidth: 10 } : { width: 30 })}
+      />
+    );
+
+    expect(screen.getByRole('combobox')).toHaveAttribute('data-analytics-id', 'datasource_picked');
+  });
+
+  it('keeps data-testid alongside other data attributes', () => {
+    render(
+      <Combobox
+        options={options}
+        onChange={onChangeHandler}
+        data-testid="my-combobox"
+        data-analytics-id="datasource_picked"
+      />
+    );
+
+    const input = screen.getByTestId('my-combobox');
+    expect(input).toHaveAttribute('role', 'combobox');
+    expect(input).toHaveAttribute('data-analytics-id', 'datasource_picked');
+  });
+
+  it('does not forward props that are not data attributes to the input', () => {
+    const spreadProps = { title: 'Spread title', 'data-analytics-id': 'datasource_picked' };
+    render(<Combobox options={options} onChange={onChangeHandler} {...spreadProps} />);
+
+    const input = screen.getByRole('combobox');
+    expect(input).toHaveAttribute('data-analytics-id', 'datasource_picked');
+    expect(input).not.toHaveAttribute('title');
   });
 
   it.each([false, true])(

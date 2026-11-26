@@ -5,7 +5,7 @@
 package v0alpha1
 
 import (
-	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	resource "github.com/grafana/grafana-app-sdk/resource"
 )
 
 // ConnectionSecureApplyConfiguration represents a declarative configuration of the ConnectionSecure type for use
@@ -13,14 +13,14 @@ import (
 type ConnectionSecureApplyConfiguration struct {
 	// PrivateKey is the reference to the private key used for GitHub App authentication.
 	// This value is stored securely and cannot be read back
-	PrivateKey *commonv0alpha1.InlineSecureValue `json:"privateKey,omitempty"`
+	PrivateKey *resource.InlineSecureValue `json:"privateKey,omitempty"`
 	// ClientSecret is the reference to the secret used for other providers authentication,
 	// and Github on-behalf-of authentication.
 	// This value is stored securely and cannot be read back
-	ClientSecret *commonv0alpha1.InlineSecureValue `json:"clientSecret,omitempty"`
+	ClientSecret *resource.InlineSecureValue `json:"clientSecret,omitempty"`
 	// Token is the reference of the token used to act as the Connection.
 	// This value is stored securely and cannot be read back
-	Token *commonv0alpha1.InlineSecureValue `json:"token,omitempty"`
+	Token *resource.InlineSecureValue `json:"token,omitempty"`
 }
 
 // ConnectionSecureApplyConfiguration constructs a declarative configuration of the ConnectionSecure type for use with
@@ -32,7 +32,7 @@ func ConnectionSecure() *ConnectionSecureApplyConfiguration {
 // WithPrivateKey sets the PrivateKey field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the PrivateKey field is set to the value of the last call.
-func (b *ConnectionSecureApplyConfiguration) WithPrivateKey(value commonv0alpha1.InlineSecureValue) *ConnectionSecureApplyConfiguration {
+func (b *ConnectionSecureApplyConfiguration) WithPrivateKey(value resource.InlineSecureValue) *ConnectionSecureApplyConfiguration {
 	b.PrivateKey = &value
 	return b
 }
@@ -40,7 +40,7 @@ func (b *ConnectionSecureApplyConfiguration) WithPrivateKey(value commonv0alpha1
 // WithClientSecret sets the ClientSecret field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the ClientSecret field is set to the value of the last call.
-func (b *ConnectionSecureApplyConfiguration) WithClientSecret(value commonv0alpha1.InlineSecureValue) *ConnectionSecureApplyConfiguration {
+func (b *ConnectionSecureApplyConfiguration) WithClientSecret(value resource.InlineSecureValue) *ConnectionSecureApplyConfiguration {
 	b.ClientSecret = &value
 	return b
 }
@@ -48,7 +48,7 @@ func (b *ConnectionSecureApplyConfiguration) WithClientSecret(value commonv0alph
 // WithToken sets the Token field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Token field is set to the value of the last call.
-func (b *ConnectionSecureApplyConfiguration) WithToken(value commonv0alpha1.InlineSecureValue) *ConnectionSecureApplyConfiguration {
+func (b *ConnectionSecureApplyConfiguration) WithToken(value resource.InlineSecureValue) *ConnectionSecureApplyConfiguration {
 	b.Token = &value
 	return b
 }

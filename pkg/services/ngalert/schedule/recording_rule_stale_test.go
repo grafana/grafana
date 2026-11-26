@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -63,6 +64,11 @@ type staleHarness struct {
 	stale     []staleCall
 	failWrite bool
 	failStale bool
+	// staleErr is returned instead of a generic error while failStale is set.
+	staleErr      error
+	staleAttempts int
+	// peers share this harness' budget, so the budget counts their series too.
+	peers []*staleHarness
 
 	cancelParent context.CancelFunc
 }
@@ -89,7 +95,12 @@ func newStaleHarness(t *testing.T) *staleHarness {
 			return nil
 		},
 		WriteStaleFunc: func(ctx context.Context, dsUID, name string, ts time.Time, orgID int64, series []map[string]string) error {
+			h.staleAttempts++
 			if h.failStale {
+				h.events = append(h.events, "stale failed")
+				if h.staleErr != nil {
+					return h.staleErr
+				}
 				return errors.New("stale write failed")
 			}
 			h.events = append(h.events, "stale")
@@ -114,6 +125,7 @@ func newStaleHarness(t *testing.T) *staleHarness {
 		metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetSchedulerMetrics(),
 		tracing.InitializeTracerForTest(),
 		&dsAgnosticWriter{FakeWriter: fake},
+		state.NewSeriesBudget(0),
 		nil,
 		nil,
 	)
@@ -145,6 +157,7 @@ func (h *staleHarness) tick() time.Time {
 	h.t.Helper()
 	h.now = h.now.Add(time.Minute)
 	h.rule.doEvaluate(context.Background(), &Evaluation{scheduledAt: h.now, rule: h.model})
+	h.assertAccounting()
 	return h.now
 }
 
@@ -254,7 +267,7 @@ func TestRecordingRuleStaleMarkers(t *testing.T) {
 		require.Equal(t, []map[string]string{withRuleLabels(a)}, h.staleSeries(0), "a was still tracked after the failed evaluations")
 	})
 
-	t.Run("failed data write keeps the previous state, so markers are written again", func(t *testing.T) {
+	t.Run("a failed data write does not make the markers be written again", func(t *testing.T) {
 		h := newStaleHarness(t)
 		h.ev.resp = seriesResponse(a, b)
 		h.tick()
@@ -266,16 +279,12 @@ func TestRecordingRuleStaleMarkers(t *testing.T) {
 		require.Equal(t, "error", h.rule.Status().Health)
 
 		h.failWrite = false
-		ts := h.tick()
-		require.Len(t, h.stale, 2, "the state was not replaced, so b is staled again")
-		require.Equal(t, markerTime(ts), h.stale[1].t)
-		require.Equal(t, []map[string]string{withRuleLabels(b)}, h.stale[1].series)
-
 		h.tick()
-		require.Len(t, h.stale, 2)
+		h.tick()
+		require.Len(t, h.stale, 1, "b was forgotten when its marker was written")
 	})
 
-	t.Run("failed marker write does not fail the evaluation and is tried again", func(t *testing.T) {
+	t.Run("failed marker write does not fail the evaluation and is not retried", func(t *testing.T) {
 		h := newStaleHarness(t)
 		h.ev.resp = seriesResponse(a, b)
 		h.tick()
@@ -284,14 +293,16 @@ func TestRecordingRuleStaleMarkers(t *testing.T) {
 		h.failStale = true
 		h.tick()
 		require.Empty(t, h.stale)
+		require.Equal(t, 1, h.staleAttempts)
 		require.Equal(t, "ok", h.rule.Status().Health)
 		require.NoError(t, h.rule.Status().LastError)
+		require.Equal(t, []string{"data", "stale failed", "data"}, h.events, "the data of the tick is still written after the failed markers")
 
 		h.failStale = false
-		ts := h.tick()
-		require.Len(t, h.stale, 1)
-		require.Equal(t, markerTime(ts), h.stale[0].t, "the retry uses the later tick, so it is never older than the series' last sample")
-		require.Equal(t, []map[string]string{withRuleLabels(b)}, h.staleSeries(0))
+		h.tick()
+		h.tick()
+		require.Empty(t, h.stale, "b was forgotten with the failed write")
+		require.Equal(t, 1, h.staleAttempts)
 	})
 
 	t.Run("failed marker write is dropped if the series came back", func(t *testing.T) {
@@ -498,7 +509,7 @@ func TestRecordingRuleStaleMarkersOnStop(t *testing.T) {
 			require.Len(t, h.stale, 2)
 			require.Equal(t, ts.Add(time.Millisecond), h.stale[1].t, "an older marker would be rejected as out of order")
 			require.Greater(t, h.stale[1].t.UnixMilli(), h.stale[0].t.UnixMilli())
-			require.ElementsMatch(t, []map[string]string{withRuleLabels(a), withRuleLabels(b)}, h.stale[1].series)
+			require.Equal(t, []map[string]string{withRuleLabels(a)}, h.stale[1].series, "b already has its marker")
 		})
 
 		t.Run(name+" after a failed query uses the tick of that evaluation", func(t *testing.T) {
@@ -580,6 +591,6 @@ func TestRecordingRuleStaleMarkersOnStop(t *testing.T) {
 		h.stop(errRuleDeleted)
 
 		require.Empty(t, h.stale)
-		require.Equal(t, []string{"data"}, h.events)
+		require.Equal(t, []string{"data", "stale failed"}, h.events)
 	})
 }

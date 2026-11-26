@@ -58,3 +58,41 @@ it('updates one organize entry while preserving visibility, renames, and unrelat
   expect(columnOrder.read(visible, context).columnOrder).toEqual(['B', 'C', 'A', 'D']);
   expect(initial).toEqual([unrelated, { id: 'organize', options: { renameByName: { A: 'Alpha' } } }]);
 });
+
+describe('with display names', () => {
+  const rotated = { catalog: ['a', 'b', 'c'], displayNames: ['b', 'c', 'a'] };
+  const renamed = { catalog: ['customer_id', 'region_name'], displayNames: ['Customer', 'Region'] };
+
+  it('reads columns by the names the table shows and writes them by source name', () => {
+    const hidden = columnVisibility.write([], new Set(['b']), rotated);
+    const ordered = columnOrder.write(hidden, ['a', 'b', 'c'], rotated);
+
+    expect(ordered).toEqual([
+      {
+        id: 'organize',
+        options: { indexByName: { c: 0, a: 1, b: 2 }, excludeByName: { a: true }, renameByName: {} },
+      },
+    ]);
+    expect(columnVisibility.read(ordered, rotated).hiddenColumns).toEqual(new Set(['b']));
+    expect(columnOrder.read(ordered, rotated).columnOrder).toEqual(['a', 'b', 'c']);
+  });
+
+  it('keeps hidden names outside the catalog without showing them to the table', () => {
+    const configs = [{ id: 'organize', options: { excludeByName: { Customer: true, region_name: true } } }];
+
+    expect(columnVisibility.read(configs, renamed).hiddenColumns).toEqual(new Set(['Region']));
+    expect(columnVisibility.write(configs, new Set(['Customer']), renamed)).toEqual([
+      {
+        id: 'organize',
+        options: { indexByName: {}, excludeByName: { Customer: true, customer_id: true }, renameByName: {} },
+      },
+    ]);
+  });
+
+  it('drops names the table does not show', () => {
+    expect(columnOrder.write([], ['Region', 'customer_id'], renamed)).toEqual([
+      { id: 'organize', options: { indexByName: { region_name: 0 }, excludeByName: {}, renameByName: {} } },
+    ]);
+    expect(columnVisibility.write([], new Set(['region_name']), renamed)).toEqual([]);
+  });
+});

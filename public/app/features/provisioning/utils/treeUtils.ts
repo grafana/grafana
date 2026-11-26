@@ -4,7 +4,7 @@ import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 import { type FileDetails, type FlatTreeItem, type TreeItemKind, type SyncStatus, type TreeItem } from '../types';
 
 import { getFolderMetadataPath, getParentFolderResourceHash, isFolderMetadataPath } from './folderMetadata';
-import { getKindInfoByKind, getKindInfoByResource } from './resourceKinds';
+import { getKindInfoByKind, getKindInfoByResource, resourceKindInfos } from './resourceKinds';
 
 const collator = new Intl.Collator();
 
@@ -44,7 +44,7 @@ export function mergeFilesAndResources(files: unknown[], resources: ResourceList
   // Merge resources
   for (const resource of resources) {
     const path = resource.path.replace(/\/+$/, '');
-    if (!path && resource.resource !== 'folders') {
+    if (!path && resource.resource !== resourceKindInfos.folder.resource) {
       continue;
     }
     const existing = merged.get(path);

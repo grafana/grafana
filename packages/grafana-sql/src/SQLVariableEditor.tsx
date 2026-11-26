@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { type DataQueryRequest, type Field } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -33,7 +33,9 @@ const FieldMapping = (props: SQLVariableQueryEditorProps) => {
 
   // Track the actual SQL content to avoid re-querying when only meta changes
   const queryRef = useRef(query);
-  queryRef.current = query;
+  useLayoutEffect(() => {
+    queryRef.current = query;
+  });
 
   // Only re-run the query when the SQL content changes, not when meta (valueField/textField) changes
   const queryKey = useMemo(() => JSON.stringify({ rawSql: query.rawSql, sql: query.sql }), [query.rawSql, query.sql]);

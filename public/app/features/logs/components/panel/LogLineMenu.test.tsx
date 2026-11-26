@@ -14,6 +14,8 @@ import { LogListContextProvider } from './LogListContext';
 import { defaultProps, defaultValue } from './__mocks__/LogListContext';
 import { type LogListModel } from './processing';
 
+jest.mock('../../utils', () => makeSpyable('../../utils'));
+
 jest.mock('./LogListContext');
 
 jest.mock('@grafana/assistant', () => ({

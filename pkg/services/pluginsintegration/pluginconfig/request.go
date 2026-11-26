@@ -32,6 +32,9 @@ type RequestConfigProvider struct {
 	logger      log.Logger
 }
 
+// seriesLimitKey is read by the Prometheus data source, which has no SDK constant for it.
+const seriesLimitKey = "GF_SERIES_LIMIT"
+
 func NewRequestConfigProvider(cfg *PluginInstanceCfg, ssoSettings pluginsso.SettingsProvider) *RequestConfigProvider {
 	return &RequestConfigProvider{
 		cfg:         cfg,
@@ -206,6 +209,10 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 
 	if s.cfg.ResponseLimit > 0 {
 		m[backend.ResponseLimit] = strconv.FormatInt(s.cfg.ResponseLimit, 10)
+	}
+
+	if s.cfg.DataProxySeriesLimit > 0 {
+		m[seriesLimitKey] = strconv.FormatInt(s.cfg.DataProxySeriesLimit, 10)
 	}
 
 	if s.cfg.SigV4AuthEnabled {

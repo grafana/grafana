@@ -16,7 +16,7 @@ import { type NotebookBlockType } from './NotebookBlockTypeMenu';
 import { NotebookCellActions } from './NotebookCellActions';
 import { NotebookCellAddButton } from './NotebookCellAddButton';
 import { NotebookCellComments } from './NotebookCellComments';
-import { NOTEBOOK_CELL_CONTROLS_CLASS, NOTEBOOK_CELL_FRAME_CLASS } from './cellClassNames';
+import { NOTEBOOK_CELL_CONTROLS_CLASS, NOTEBOOK_CELL_FRAME_CLASS, NOTEBOOK_CELL_KEY_ATTRIBUTE } from './cellClassNames';
 
 /** Hand-written for the same reason as the class above. */
 export const NOTEBOOK_CELL_CONTENT_CLASS = 'notebook-cell-content';
@@ -213,6 +213,7 @@ export function NotebookCellFrame({
             frameRef.current = node;
           }}
           {...dragProvided.draggableProps}
+          {...{ [NOTEBOOK_CELL_KEY_ATTRIBUTE]: cell.state.key }}
           tabIndex={isEditing && !isEditorCell ? 0 : undefined}
           onKeyDown={!isEditorCell ? onFrameKeyDown : undefined}
           role={!isEditorCell ? 'group' : undefined}

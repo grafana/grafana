@@ -38,10 +38,14 @@ interface ComposerAPI {
   ): Promise<unknown>;
   /**
    * Without `options`, the listener enters Composer on dashboards only. Return `false` from the listener to
-   * decline a request; it then ends at once.
+   * decline a request; it then ends at once. `request.assistantEdit` is true when Grafana opened the Assistant's
+   * own edit in Editing for Composer to run over.
    */
   onEnterRequested(
-    listener: (target: { resource: 'dashboard' | 'notebook'; uid: string }) => boolean | void,
+    listener: (
+      target: { resource: 'dashboard' | 'notebook'; uid: string },
+      request: { assistantEdit: boolean }
+    ) => boolean | void,
     options?: { resources?: Array<'dashboard' | 'notebook'> }
   ): () => void;
 }
@@ -57,16 +61,46 @@ export interface ExtensionSidebarAPI {
   /** Sets the layout. `floating` is ignored while `canFloat()` is false. */
   setPresentation(presentation: 'docked' | 'floating'): void;
   /**
-   * Calls `listener` when the user asks to collapse the floating sidebar, by dragging it to the bottom edge of the
-   * page. The extension owns what collapsed means. Core offers the drag only while a listener is subscribed, so
+   * Calls `listener` when the user asks to collapse the floating sidebar: by dragging it to the bottom edge of the
+   * page (`method: 'drag'`), or by resizing it down to its collapsed height (`method: 'resize'`, see `setSizing`).
+   * `input` says whether the pointer or the keyboard asked, so the extension can move focus after a keyboard
+   * collapse. The extension owns what collapsed means. Core offers both only while a listener is subscribed, so
    * subscribe only while there is something to collapse. Returns the unsubscribe.
    */
-  subscribeToCollapse(listener: () => void): () => void;
+  subscribeToCollapse(
+    listener: (request?: { method: 'drag' | 'resize'; input: 'pointer' | 'keyboard' }) => void
+  ): () => void;
   /**
    * Whether dragging the extension's drag handle (`data-extension-floating-drag-handle`) out of the docked sidebar
    * onto the page floats it there. Show a handle in the docked sidebar only while this is true.
    */
   canDragToFloat(): boolean;
+  /**
+   * Tells core which sizes the extension can show, so core's resize handles keep to them. Each call replaces the
+   * previous one; a layout or axis left out, or `null`, gets core's default. Core forgets it when the sidebar closes
+   * or shows another extension. Absent on a Grafana that resizes nothing on the extension's behalf.
+   */
+  setSizing?(
+    sizing: {
+      floating?: {
+        /**
+         * Lets core resize the floating sidebar's height from its top edge and top-left corner, as it resizes the
+         * width from its left edge. Once the user resizes it, core sets `--extension-sidebar-floating-height` on the
+         * sidebar for the extension to size its surface with; until then the extension's own height applies. Left
+         * out, for example while the extension is collapsed, core shows no height handles.
+         */
+        height?: {
+          /** The least height the user can resize it to, in px. */
+          min: number;
+          /**
+           * The extension's collapsed height, in px. While `subscribeToCollapse` has a listener, a drag follows below
+           * `min` down to it, and a release nearer to it than to `min` asks the extension to collapse.
+           */
+          collapsed?: number;
+        };
+      };
+    } | null
+  ): void;
   // The five members below are absent while `grafana.extensionSidebarPlacements` is off, so an extension keeps the
   // controls it shows on a Grafana without them.
   /**

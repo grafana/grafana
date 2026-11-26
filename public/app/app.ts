@@ -57,9 +57,11 @@ import {
   setDataSourcePicker,
   setJourneyRegistry,
   setJourneyTracker,
+  setKindRegistry,
   setPanelDataErrorView,
   setPanelRenderer,
   setPluginPage,
+  setStarsSrv,
 } from '@grafana/runtime/internal';
 import { initializeLoggersRegistry } from '@grafana/runtime/unstable';
 import { loadResources as loadScenesResources, sceneUtils } from '@grafana/scenes';
@@ -85,6 +87,7 @@ import { createErrorNotification } from './core/copy/appNotification';
 import { initializeCrashDetection } from './core/crash';
 import { NAMESPACES, GRAFANA_NAMESPACE } from './core/internationalization/constants';
 import { loadTranslations } from './core/internationalization/loadTranslations';
+import { kindRegistry } from './core/kinds/coreKinds';
 import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
 import { handleRedirectTo } from './core/navigation/handleRedirectTo';
@@ -134,6 +137,7 @@ import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
 import { cleanupOldExpandedFolders } from './features/search/utils';
+import { starsSrv } from './features/stars/service';
 import { variableAdapters } from './features/variables/adapters';
 import { createAdHocVariableAdapter } from './features/variables/adhoc/adapter';
 import { createConstantVariableAdapter } from './features/variables/constant/adapter';
@@ -231,6 +235,7 @@ export class GrafanaApp {
           import('./core/journeys/panelEdit'),
           import('./core/journeys/datasourceConfigure'),
           import('./core/journeys/exploreToDashboard'),
+          import('./core/journeys/datasourcePickerSelect'),
         ]);
 
         // Warn about registry entries that have no start trigger wired up
@@ -246,6 +251,7 @@ export class GrafanaApp {
       setPanelDataErrorView(LazyPanelDataErrorView);
       setLocationSrv(locationService);
       setCorrelationsService(new CorrelationsService());
+      setKindRegistry(kindRegistry);
       setPanelScreenshotService(new PanelScreenshotServiceImpl());
       setEmbeddedDashboard(EmbeddedDashboardLazy);
       setTimeZoneResolver(() => contextSrv.user.timezone);
@@ -289,6 +295,9 @@ export class GrafanaApp {
       if (appPluginMetasError !== undefined) {
         notifyAppPluginMetasError(appPluginMetasError);
       }
+
+      // After the store exists: the service reads and dispatches to it.
+      setStarsSrv(starsSrv);
 
       initExtensions();
 

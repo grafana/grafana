@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
+import { DashboardControlsExtensionPoint } from '../DashboardControlsExtensionPoint';
 import { SectionControlsRow } from '../SectionAnnotationControls';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
@@ -111,7 +112,9 @@ export function RowContainer({
           className={cx(styles.rowLayoutWrapper, (!isHeaderHidden || isEditing) && styles.rowLayoutIndented)}
           id={contentId}
         >
-          <SectionControlsRow variableSet={rowVariablesSet} data={model.state.$data} />
+          <SectionControlsRow variableSet={rowVariablesSet} data={model.state.$data}>
+            <DashboardControlsExtensionPoint section={model} />
+          </SectionControlsRow>
           <layout.Component model={layout} />
         </div>
       )}

@@ -294,6 +294,76 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       await expect(renderedContent(preview)).toContainText('John Smith');
       await expect(renderedContent(preview)).not.toContainText('{{#each data}}');
     });
+
+    test('reads mapped text, units and colors through the display helper', async ({ gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: DATA_DASHBOARD_UID });
+
+      const header = dashboardPage.getByGrafanaSelector(
+        selectors.components.Panels.Panel.title('Handlebars display values: service health')
+      );
+      await header.scrollIntoViewIfNeeded();
+
+      const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content, { root: header });
+      const content = renderedContent(panel);
+      const status = content.locator('.health__status');
+      const cpu = content.locator('.health__cpu');
+      const latency = content.locator('.health__latency');
+
+      await expect(status).toHaveText(['Down', 'Degraded', 'Healthy', 'Degraded', 'No report']);
+      await expect(cpu).toHaveText(['94.2%', '71.0%', '38.0%', '83.4%', '17.0%']);
+      await expect(latency).toHaveText(['1.25 s', '183 ms', '12 ms', '640 ms', '3 ms']);
+      await expect(content.locator('.health__errors')).toHaveText([
+        '4.31% errors',
+        '0.42% errors',
+        '0.00% errors',
+        '1.20% errors',
+        'n/a errors',
+      ]);
+
+      const readColors = (locator: Locator) =>
+        locator.evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node).color));
+
+      const statusColors = await readColors(status);
+      const [down, degraded, healthy] = statusColors;
+      expect(new Set(statusColors).size).toBe(4);
+      expect(statusColors[3]).toBe(degraded);
+      expect(await readColors(cpu)).toEqual([down, degraded, healthy, degraded, healthy]);
+      expect(await readColors(latency.locator('b'))).toEqual([down, healthy, healthy, degraded, healthy]);
+    });
+
+    test('completes the display helper from the editor suggestions', async ({ gotoDashboardPage, page }) => {
+      await gotoDashboardPage({
+        uid: DATA_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: EVERY_ROW_PANEL }),
+      });
+
+      const preview = page.getByTestId('TextNGEditor-preview');
+      await expect(renderedContent(preview).locator('.user-card')).toHaveCount(5);
+
+      const editor = page.getByRole('textbox', { name: 'Text content' });
+      const suggestion = (name: string) =>
+        page.getByRole('listbox', { name: 'Completions' }).getByRole('option', { name });
+
+      await editor.click();
+      await page.keyboard.press('ControlOrMeta+End');
+      await editor.pressSequentially('<b class="completed">{{dis');
+      await suggestion('display').click();
+      await editor.pressSequentially(' "ro');
+      await suggestion('role').click();
+      await page.keyboard.press('ArrowRight');
+      await editor.pressSequentially(' "te');
+      await suggestion('text').click();
+      await page.keyboard.press('ArrowRight');
+      await editor.pressSequentially('}}');
+
+      await expect(renderedContent(preview).locator('.completed')).toHaveText([
+        'admin',
+        'analyst',
+        'editor',
+        'viewer',
+        'admin',
+      ]);
+    });
   });
 
   test.describe('mermaid', () => {

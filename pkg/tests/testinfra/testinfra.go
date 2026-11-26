@@ -623,6 +623,14 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = anonSect.NewKey("enabled", "false")
 		require.NoError(t, err)
 	}
+	if opts.ExtJWTJWKSURL != "" {
+		extJWTSect, err := getOrCreateSection("auth.extended_jwt")
+		require.NoError(t, err)
+		_, err = extJWTSect.NewKey("enabled", "true")
+		require.NoError(t, err)
+		_, err = extJWTSect.NewKey("jwks_url", opts.ExtJWTJWKSURL)
+		require.NoError(t, err)
+	}
 	if opts.LocalPluginAPI {
 		// The listener is only known when the server starts, which fills in the address.
 		pluginsSect, err := getOrCreateSection("plugins")
@@ -938,18 +946,6 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("max_resources_per_repository", fmt.Sprintf("%d", opts.ProvisioningMaxResourcesPerRepository))
 		require.NoError(t, err)
 	}
-	if opts.ProvisioningKeysOnlyReList {
-		provisioningSect, err := getOrCreateSection("provisioning")
-		require.NoError(t, err)
-		_, err = provisioningSect.NewKey("keys_only_relist", "true")
-		require.NoError(t, err)
-	}
-	if opts.ProvisioningResourceLister != "" {
-		provisioningSect, err := getOrCreateSection("provisioning")
-		require.NoError(t, err)
-		_, err = provisioningSect.NewKey("resource_lister", opts.ProvisioningResourceLister)
-		require.NoError(t, err)
-	}
 	// Write max_repositories if explicitly set.
 	// Write when value != 10 (the default). Tests that want default (10) should explicitly set ProvisioningMaxRepositories = 10.
 	if opts.ProvisioningMaxRepositories != 10 {
@@ -1184,6 +1180,9 @@ type GrafanaOpts struct {
 	DisableAnonymous                      bool
 	CatalogAppEnabled                     bool
 	ViewersCanEdit                        bool
+	// ExtJWTJWKSURL enables [auth.extended_jwt] with this JWKS URL, so a test can authenticate as an
+	// access policy with a token signed by its own key.
+	ExtJWTJWKSURL string
 	// LocalPluginAPI sets [plugins] local_api_url to the test server's listener,
 	// for plugins and apps that call Grafana's API from this process.
 	LocalPluginAPI                      bool
@@ -1256,14 +1255,6 @@ type GrafanaOpts struct {
 	EnableSQLKVBackend          bool
 
 	PendingDeletionResourceEnabled bool
-
-	// ProvisioningKeysOnlyReList sets [provisioning] keys_only_relist, making the
-	// connection informer's periodic re-list ask storage for keys instead of whole
-	// objects. Off by default, matching the shipped default.
-	ProvisioningKeysOnlyReList bool
-	// ProvisioningResourceLister sets [provisioning] resource_lister ("search" or "apis").
-	// Empty leaves the shipped default.
-	ProvisioningResourceLister string
 
 	// EnableKeysAPI turns on the per-resource list-keys endpoints, off by default.
 	EnableKeysAPI bool

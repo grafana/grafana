@@ -447,7 +447,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GetSearchTeamsResponse"
+                }
               }
             }
           }
@@ -552,11 +554,13 @@
           }
         ],
         "responses": {
-          "default": {
-            "description": "Default OK response",
+          "200": {
+            "description": "OK",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GetSearchUsersResponse"
+                }
               }
             }
           }
@@ -4220,7 +4224,9 @@
           },
           "hits": {
             "type": "array",
-            "items": {}
+            "items": {
+              "$ref": "#/components/schemas/GetSearchTeamsTeamHit"
+            }
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
@@ -4294,7 +4300,9 @@
         "properties": {
           "hits": {
             "type": "array",
-            "items": {}
+            "items": {
+              "$ref": "#/components/schemas/GetSearchUsersUserHit"
+            }
           },
           "maxScore": {
             "type": "number",
@@ -4339,6 +4347,13 @@
             "type": "object",
             "additionalProperties": {
               "type": "boolean"
+            }
+          },
+          "authLabels": {
+            "description": "Display labels of the auth provider the user last signed in with, e.g. \"LDAP\".",
+            "type": "array",
+            "items": {
+              "type": "string"
             }
           },
           "created": {

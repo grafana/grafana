@@ -75,7 +75,7 @@ import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
-import { applySupportsMultiValueOperators } from '../utils/applySupportsMultiValueOperators';
+import { resolveMultiValueOperatorsOnActivate } from '../utils/resolveMultiValueOperatorsOnActivate';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
@@ -83,6 +83,7 @@ import { migrateGroupByVariablesV2 } from './groupByMigration';
 import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
 import { annotationQueryKindToLayer } from './layoutSerializers/sectionAnnotations';
 import { getDataSourceForQuery, getRuntimeVariableDataSource } from './layoutSerializers/utils';
+import { deserializeQuestions } from './questionsSerializer';
 import { buildSceneTimeRange } from './shared/timeSettings';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
@@ -218,6 +219,7 @@ export function transformSaveModelSchemaV2ToScene(
       description: dashboard.description,
       editable: dashboard.editable,
       preload: dashboard.preload,
+      questions: deserializeQuestions(dashboard.prompts, dashboard.elements),
       isDirty: false,
       links: [...(options?.defaultLinks ?? []), ...dashboard.links],
       meta,
@@ -373,7 +375,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       useQueriesAsFilterForOptions: true,
       applicabilityEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.PerPanelNonApplicableDrilldowns, false),
       drilldownRecommendationsEnabled: true,
-      $behaviors: [new ReportInteractionBehavior({})],
+      $behaviors: [new ReportInteractionBehavior({}), resolveMultiValueOperatorsOnActivate],
       supportsMultiValueOperators: false,
       collapsible: true,
       enableGroupBy: variable.spec.enableGroupBy ?? false,
@@ -381,9 +383,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     if (variable.spec.allowCustomValue !== undefined) {
       adhocVariableState.allowCustomValue = variable.spec.allowCustomValue;
     }
-    const adhocVariable = new AdHocFiltersVariable(adhocVariableState);
-    applySupportsMultiValueOperators(adhocVariable, ds?.type);
-    return adhocVariable;
+    return new AdHocFiltersVariable(adhocVariableState);
   }
 
   if (variable.kind === defaultCustomVariableKind().kind) {
@@ -582,9 +582,8 @@ function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVariableSe
             ),
             supportsMultiValueOperators: false,
             enableGroupBy: v.spec.enableGroupBy ?? false,
-            $behaviors: [new ReportInteractionBehavior({})],
+            $behaviors: [new ReportInteractionBehavior({}), resolveMultiValueOperatorsOnActivate],
           });
-          applySupportsMultiValueOperators(adhocVariable, ds?.type);
           return adhocVariable;
         }
         // for other variable types we are using the SnapshotVariable

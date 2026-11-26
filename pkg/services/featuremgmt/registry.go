@@ -18,6 +18,14 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
+			Name:        "grafana.responsiveTimePickerTabs",
+			Description: "Enable tabs and an inline calendar in the compact time range picker",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "panelTitleSearch",
 			Description: "Search for dashboards using panel title",
 			Stage:       FeatureStagePublicPreview,
@@ -94,12 +102,20 @@ var (
 			Name:            "live.runAPIServer",
 			Description:     "Registers a live apiserver",
 			Stage:           FeatureStageExperimental,
-			RequiresDevMode: true,
 			HideFromDocs:    true,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
 			Expression:      "false",
 			Generate:        Generate{Go: true},
+		},
+		{
+			Name:         "live.useAPIServerWebsocket",
+			Description:  "Connects Grafana Live to the live.grafana.app websocket instead of /api/live/ws",
+			Stage:        FeatureStageExperimental,
+			HideFromDocs: true,
+			Owner:        grafanaAppPlatformSquad,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		{
 			Name:            "live.keepHAPrefixInCloud",
@@ -927,24 +943,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:            "kubernetesAggregator",
-			Description:     "Enable grafana's embedded kube-aggregator",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:            "kubernetesAggregatorCapTokenAuth",
-			Description:     "Enable CAP token based authentication in grafana's embedded kube-aggregator",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "scopeFilters",
 			Description:     "Enables the use of scope filters in Grafana",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
@@ -1038,14 +1036,6 @@ var (
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 			Expression:  "false",
-		},
-		{
-			Name:        "savedQueriesRBAC",
-			Description: "Enables Saved queries (query library) RBAC permissions",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "true",                                                      // enabled by default
 		},
 		{
 			Name:        "dashboardLibrary",
@@ -1505,6 +1495,15 @@ var (
 		{
 			Name:         "alerting.ruleQualityFix",
 			Description:  "Enable fixing alert rule quality issues with Grafana Assistant on the alert quality page.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "alerting.ruleQualityFixAll",
+			Description:  "Enable bulk fixes for alert rule quality issues on the alert quality page.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
@@ -2208,6 +2207,15 @@ var (
 			Expression:   "false",
 			HideFromDocs: true,
 		},
+		{
+			Name:         "plugins.useMTPluginInstall",
+			Description:  "Installs, updates and uninstalls plugins through the plugins API only, and falls back to the legacy API if that call fails",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaCatalogSquad,
+			Generate:     Generate{Go: true, React: true},
+			Expression:   "false",
+			HideFromDocs: true,
+		},
 		// Deprecated: prefer grafana.dashboardGlobalVariables. Kept registered so
 		// cloud enablement via the legacy wave remains valid until that flag is
 		// removed in a follow-up after all consumers read the new key.
@@ -2298,10 +2306,10 @@ var (
 		{
 			Name:        "queryEditorNext",
 			Description: "Enables next generation query editor experience",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDataProSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "queryeditor.coauthoringUi",
@@ -2330,6 +2338,24 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "resourcePermissionsBulkUserValidation",
+			Description:  "Resolves and validates users in bulk when setting permissions for many users at once, such as SCIM team membership sync",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
+		},
+		{
+			Name:         "resourcePermissionsBulkUserWrites",
+			Description:  "Writes managed permissions and team memberships for many users in bulk instead of one user at a time, such as for SCIM team membership sync",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
+		},
+		{
 			Name:         "kubernetesUsersApi",
 			Description:  "Enables user APIs in the app platform",
 			Stage:        FeatureStageExperimental,
@@ -2346,6 +2372,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "iam.useKubernetesUsersReadApi",
+			Description:  "Routes read-only user requests in the frontend from /api to the /apis endpoint. Depends on kubernetesUsersReadApi",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		{
 			Name:         "kubernetesServiceAccountsApi",
@@ -2914,7 +2949,7 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
-			Expression:   "true",
+			Expression:   "false",
 			Generate:     Generate{React: true},
 		},
 		{
@@ -3534,6 +3569,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "grafana.panelQuickEdits",
+			Description:  "Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "grafana.folderPickerFolderEditAccess",
 			Description:  "Shows folders the user cannot edit as read only in the folder picker, instead of hiding them",
 			Stage:        FeatureStageExperimental,
@@ -3558,6 +3602,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
+		},
+		{
+			Name:         "datasources.gatewayQueryUsage",
+			Description:  "Record billed query usage (Mimir samples read, Loki bytes processed) in query gateway audit events",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
 		},
 		{
 			Name:         "plugins.disableMTPluginsFallback",

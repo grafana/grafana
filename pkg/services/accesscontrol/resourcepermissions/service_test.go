@@ -3,6 +3,7 @@ package resourcepermissions
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"sync"
 	"testing"
@@ -261,6 +262,57 @@ func TestIntegrationService_SetPermissions(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Len(t, permissions, len(tt.commands))
 			}
+		})
+	}
+}
+
+func TestIntegrationService_SetPermissions_ValidatesUsersInBulk(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	options := Options{
+		Resource:             "dashboards",
+		Assignments:          Assignments{Users: true},
+		PermissionsToActions: map[string][]string{"View": {"dashboards:read"}},
+	}
+
+	seedUsers := func(t *testing.T, usrSvc user.Service, n int) []accesscontrol.SetResourcePermissionCommand {
+		commands := make([]accesscontrol.SetResourcePermissionCommand, 0, n)
+		for i := range n {
+			u, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: fmt.Sprintf("user-%d", i), OrgID: 1})
+			require.NoError(t, err)
+			commands = append(commands, accesscontrol.SetResourcePermissionCommand{UserID: u.ID, Permission: "View"})
+		}
+		return commands
+	}
+
+	for _, enabled := range []bool{false, true} {
+		t.Run(fmt.Sprintf("bulk validation enabled=%t", enabled), func(t *testing.T) {
+			setOpenFeatureFlag(t, featuremgmt.FlagResourcePermissionsBulkUserValidation, enabled)
+
+			t.Run("should set permissions for many users", func(t *testing.T) {
+				service, usrSvc, _ := setupTestEnvironment(t, options)
+				commands := seedUsers(t, usrSvc, 3)
+
+				permissions, err := service.SetPermissions(context.Background(), 1, "1", commands...)
+				require.NoError(t, err)
+				assert.Len(t, permissions, len(commands))
+			})
+
+			t.Run("should reject the batch when one user doesn't exist", func(t *testing.T) {
+				service, usrSvc, _ := setupTestEnvironment(t, options)
+				commands := seedUsers(t, usrSvc, 2)
+				commands = append(commands, accesscontrol.SetResourcePermissionCommand{UserID: 9999, Permission: "View"})
+
+				_, err := service.SetPermissions(context.Background(), 1, "1", commands...)
+				require.ErrorIs(t, err, accesscontrol.ErrAssignmentEntityNotFound)
+
+				permissions, err := service.GetPermissions(context.Background(), &user.SignedInUser{
+					OrgID:       1,
+					Permissions: map[int64]map[string][]string{1: {"dashboards.permissions:read": {"dashboards:*"}}},
+				}, "1")
+				require.NoError(t, err)
+				assert.Empty(t, permissions)
+			})
 		})
 	}
 }

@@ -9,9 +9,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
@@ -22,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
+	"github.com/stretchr/testify/require"
 )
 
 var compareOpts = []cmp.Option{cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log", "mu"), fsComparer}
@@ -183,7 +182,7 @@ func TestLoader_Load(t *testing.T) {
 								Name:   "Nginx Connections",
 								Path:   "dashboards/connections.json",
 								Type:   "dashboard",
-								Role:   identity.RoleViewer,
+								Role:   authlib.RoleViewer,
 								Action: plugins.ActionAppAccess,
 								Slug:   "nginx-connections",
 							},
@@ -191,21 +190,21 @@ func TestLoader_Load(t *testing.T) {
 								Name:   "Nginx Memory",
 								Path:   "dashboards/memory.json",
 								Type:   "dashboard",
-								Role:   identity.RoleViewer,
+								Role:   authlib.RoleViewer,
 								Action: plugins.ActionAppAccess,
 								Slug:   "nginx-memory",
 							},
 							{
 								Name:   "Nginx Panel",
 								Type:   string(plugins.TypePanel),
-								Role:   identity.RoleViewer,
+								Role:   authlib.RoleViewer,
 								Action: plugins.ActionAppAccess,
 								Slug:   "nginx-panel",
 							},
 							{
 								Name:   "Nginx Datasource",
 								Type:   string(plugins.TypeDataSource),
-								Role:   identity.RoleViewer,
+								Role:   authlib.RoleViewer,
 								Action: plugins.ActionAppAccess,
 								Slug:   "nginx-datasource",
 							},
@@ -419,8 +418,8 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 						Includes: []*plugins.Includes{
-							{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: identity.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-memory"},
-							{Name: "Root Page (react)", Type: "page", Role: identity.RoleViewer, Action: plugins.ActionAppAccess, Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
+							{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: authlib.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-memory"},
+							{Name: "Root Page (react)", Type: "page", Role: authlib.RoleViewer, Action: plugins.ActionAppAccess, Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
 						},
 						Extensions: plugins.Extensions{
 							AddedLinks:      []plugins.AddedLink{},

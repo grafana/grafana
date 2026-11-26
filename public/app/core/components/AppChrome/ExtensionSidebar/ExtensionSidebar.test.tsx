@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import { createTheme, type ExtensionInfo, PluginExtensionTypes, ThemeContext } from '@grafana/data';
 import { config, usePluginComponents } from '@grafana/runtime';
@@ -71,6 +71,9 @@ const extensionSidebarContextMock: ExtensionSidebarContextType = {
   setExtensionSidebarHeight: jest.fn(),
   floatingExtensionSidebarWidth: 480,
   setFloatingExtensionSidebarWidth: jest.fn(),
+  floatingHeightOptions: null,
+  floatingExtensionSidebarHeight: undefined,
+  setFloatingExtensionSidebarHeight: jest.fn(),
   presentation: 'docked',
   dockSide: 'right',
   floatingHidden: false,
@@ -203,6 +206,88 @@ describe('ExtensionSidebar', () => {
       mockUseExtensionSidebarContext.mockReturnValue({ ...extensionSidebarContextMock, presentation: 'docked' });
       rerender(<ExtensionSidebar />);
       expect(screen.queryByRole('separator', { name: 'Resize sidebar width' })).not.toBeInTheDocument();
+    });
+
+    it('adds the top and corner handles only while the extension lets core resize its height', () => {
+      const { container, rerender } = render(<ExtensionSidebar />);
+      expect(screen.queryByRole('separator', { name: 'Resize sidebar height' })).not.toBeInTheDocument();
+      expect(screen.queryByTestId('extension-sidebar-floating-corner-handle')).not.toBeInTheDocument();
+
+      const floatingHeightOptions = { minHeight: 400, collapsedHeight: 100 };
+      mockUseExtensionSidebarContext.mockReturnValue({
+        ...extensionSidebarContextMock,
+        presentation: 'floating',
+        floatingHeightOptions,
+      });
+      rerender(<ExtensionSidebar />);
+      const top = screen.getByRole('separator', { name: 'Resize sidebar height' });
+      expect(top.parentElement).toBe(container.firstChild);
+      expect(screen.getByTestId('extension-sidebar-floating-corner-handle').parentElement).toBe(container.firstChild);
+      // On the edge above the extension, so before its header in reading and tab order.
+      expect(
+        screen.getByTestId('working-component').compareDocumentPosition(top) & Node.DOCUMENT_POSITION_PRECEDING
+      ).toBeTruthy();
+
+      mockUseExtensionSidebarContext.mockReturnValue({
+        ...extensionSidebarContextMock,
+        presentation: 'docked',
+        floatingHeightOptions,
+      });
+      rerender(<ExtensionSidebar />);
+      expect(screen.queryByRole('separator', { name: 'Resize sidebar height' })).not.toBeInTheDocument();
+      expect(screen.queryByTestId('extension-sidebar-floating-corner-handle')).not.toBeInTheDocument();
+    });
+
+    it('hands the resized height to the extension as a CSS variable, only while floating', () => {
+      const resized = {
+        ...extensionSidebarContextMock,
+        floatingHeightOptions: { minHeight: 400 },
+        floatingExtensionSidebarHeight: 560,
+      };
+      mockUseExtensionSidebarContext.mockReturnValue({ ...resized, presentation: 'floating' });
+      const { container, rerender } = render(<ExtensionSidebar />);
+      const sidebar = container.querySelector<HTMLElement>('[data-extension-sidebar]');
+      expect(sidebar?.style.getPropertyValue('--extension-sidebar-floating-height')).toBe('560px');
+
+      mockUseExtensionSidebarContext.mockReturnValue({ ...resized, presentation: 'docked' });
+      rerender(<ExtensionSidebar />);
+      expect(sidebar?.style.getPropertyValue('--extension-sidebar-floating-height')).toBe('');
+    });
+
+    it('holds a height remembered in a taller window to the room under the top bar', () => {
+      const page = document.createElement('div');
+      page.id = 'pageContent';
+      document.body.appendChild(page);
+      const rect = jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+        this: HTMLElement
+      ) {
+        if (this.id === 'pageContent') {
+          return { top: 48, bottom: 600, height: 552, left: 0, right: 1440, width: 1440 } as DOMRect;
+        }
+        if (this.hasAttribute('data-extension-sidebar')) {
+          return { top: 32, bottom: 584, height: 552, left: 900, right: 1380, width: 480 } as DOMRect;
+        }
+        return { top: 0, bottom: 0, height: 0, left: 0, right: 0, width: 0 } as DOMRect;
+      });
+      try {
+        mockUseExtensionSidebarContext.mockReturnValue({
+          ...extensionSidebarContextMock,
+          presentation: 'floating',
+          floatingHeightOptions: { minHeight: 400 },
+          floatingExtensionSidebarHeight: 828,
+        });
+        const { container } = render(<ExtensionSidebar />);
+        const sidebar = container.querySelector<HTMLElement>('[data-extension-sidebar]');
+        // 584 at the bottom, less the content's top at 48 and the 8px gutter.
+        expect(sidebar?.style.getPropertyValue('--extension-sidebar-floating-height')).toBe('528px');
+
+        // The handle steps from the height shown, not the one remembered.
+        fireEvent.keyDown(screen.getByRole('separator', { name: 'Resize sidebar height' }), { key: 'ArrowDown' });
+        expect(extensionSidebarContextMock.setFloatingExtensionSidebarHeight).toHaveBeenCalledWith(512);
+      } finally {
+        rect.mockRestore();
+        page.remove();
+      }
     });
 
     it.each(['left', 'right', 'bottom'] as const)('docks on the %s when the drag asks it to', (side) => {

@@ -550,7 +550,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchTeamsResponse"
+                }
               }
             }
           }
@@ -667,11 +669,13 @@
           }
         ],
         "responses": {
-          "default": {
-            "description": "Default OK response",
+          "200": {
+            "description": "OK",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchUsersResponse"
+                }
               }
             }
           }
@@ -4769,7 +4773,9 @@
           },
           "hits": {
             "type": "array",
-            "items": {}
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchTeamsTeamHit"
+            }
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
@@ -4855,7 +4861,9 @@
         "properties": {
           "hits": {
             "type": "array",
-            "items": {}
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchUsersUserHit"
+            }
           },
           "maxScore": {
             "type": "number",
@@ -4900,6 +4908,13 @@
             "type": "object",
             "additionalProperties": {
               "type": "boolean"
+            }
+          },
+          "authLabels": {
+            "description": "Display labels of the auth provider the user last signed in with, e.g. \"LDAP\".",
+            "type": "array",
+            "items": {
+              "type": "string"
             }
           },
           "created": {

@@ -8,7 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { type IconName } from '../../types/icon';
-import { clearButtonStyles } from '../Button/Button';
+import { clearButtonStyles } from '../Button/StyledButton.styles';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
@@ -86,7 +86,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
       role: 'tab',
       'aria-selected': active,
       'aria-disabled': disabled,
-      tabIndex: disabled ? -1 : undefined,
+      tabIndex: disabled ? -1 : otherProps.tabIndex,
       title: !!tooltip ? undefined : otherProps.title, // If tooltip is provided, don't set the title on the link or button, it looks weird
     };
 
