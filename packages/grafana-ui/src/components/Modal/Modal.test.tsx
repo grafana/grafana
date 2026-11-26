@@ -45,6 +45,21 @@ describe('Modal', () => {
     expect(screen.getByTestId('modal-content')).toBeInTheDocument();
   });
 
+  it('forwards data attributes to the dialog element', () => {
+    render(<Modal title="Some Title" isOpen data-analytics-id="settings_modal" />);
+
+    expect(screen.getByRole('dialog', { name: 'Some Title' })).toHaveAttribute('data-analytics-id', 'settings_modal');
+  });
+
+  it('does not forward props that are not data attributes to the dialog element', () => {
+    const spreadProps = { title: 'Some Title', id: 'spread-id', 'data-analytics-id': 'settings_modal' };
+    render(<Modal isOpen {...spreadProps} />);
+
+    const dialog = screen.getByRole('dialog', { name: 'Some Title' });
+    expect(dialog).toHaveAttribute('data-analytics-id', 'settings_modal');
+    expect(dialog).not.toHaveAttribute('id', 'spread-id');
+  });
+
   it('pressing escape calls onDismiss correctly', async () => {
     const onDismiss = jest.fn();
 

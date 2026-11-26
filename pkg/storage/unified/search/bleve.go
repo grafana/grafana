@@ -738,7 +738,9 @@ const indexMetricsRefreshInterval = 60 * time.Second
 func (b *bleveBackend) updateIndexMetricsPeriodically(ctx context.Context, indexPath string) {
 	defer b.bgTasksWg.Done()
 
+	mergeSampler := bleveMergeSampler{limiter: &processBleveMergeLogLimiter}
 	for ctx.Err() == nil {
+		mergeSampler.sample(b, bleveMergeLogMinElapsed)
 		b.updateMemoryIndexSizeMetrics(ctx)
 		b.updateIndexSizeMetric(ctx, indexPath)
 		b.updateIndexedKindsMetric(ctx)
@@ -1080,6 +1082,15 @@ func (b *bleveBackend) BuildIndex(
 	// Large enough to coordinate with other replicas: download a snapshot, or build
 	// and upload one while they wait.
 	snapshotBuildEnabled := b.opts.Snapshot.Store != nil && docCount >= b.opts.Snapshot.MinDocCount
+	if rebuild {
+		span.SetAttributes(
+			attribute.Int64("snapshot.min_doc_count", b.opts.Snapshot.MinDocCount),
+			attribute.Bool("snapshot.rebuild_coordination_enabled", snapshotBuildEnabled && maxFreshSnapshotAge > 0),
+		)
+		if docCount >= 0 {
+			span.SetAttributes(attribute.Int64("snapshot.doc_count", docCount))
+		}
+	}
 	// A global index is built when it is first searched, without a size, so it
 	// may be large. Downloading its snapshot is much cheaper than building it, but
 	// it must not wait for another replica's build, as a small index would.

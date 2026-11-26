@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-const suffix = Date.now().toString(36);
+const suffix = `${Date.now().toString(36)}-${process.pid}`;
 const dashboards = [{ uid: `login-title-a-${suffix}`, title: `API Latency ${suffix}` }];
 
 test.use({

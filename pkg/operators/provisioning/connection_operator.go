@@ -5,15 +5,17 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/operators/runner"
+
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/operators/internal/supervision"
+	"github.com/grafana/grafana/pkg/operators/supervision"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/server"
 )
 
 // RunConnectionController starts the connection controller operator.
 func RunConnectionController(ctx context.Context, deps server.OperatorDependencies) (runErr error) {
-	logger := newOperatorLogger("provisioning-connection-controller")
+	logger := runner.NewLogger(deps.Config, "provisioning-connection-controller")
 	logger.Info("Starting provisioning connection controller")
 
 	controllerCfg, err := setupFromConfig(deps.Config, deps.Registerer)
