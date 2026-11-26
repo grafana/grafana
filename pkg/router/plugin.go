@@ -146,6 +146,9 @@ func ProvidePluginLoaderDependencies(
 			Cfg:                cfg,
 			TokenExchanger:     newClientV3TokenExchanger(cfg),
 			PluginAuth:         pluginAuth,
+			// The settings subresources call the plugin as the caller, as in
+			// the cloud loader and as v3 calls do.
+			Settings: SettingsDependencies{AuthenticateV2: true},
 		},
 	}
 	if pluginSettings != nil {
@@ -574,9 +577,10 @@ func (b *PluginBackend) load(ctx context.Context) (*pluginroute.Handler, error) 
 	return b.loadManifest(cfg, opts, clientV3)
 }
 
-// settingsPluginClient guards client with the circuit breaker and, in the cloud
-// loader, authenticates calls outside it. Authentication failures say nothing
-// about whether the plugin is reachable, so the breaker must not see them.
+// settingsPluginClient guards client with the circuit breaker and, when
+// Settings.AuthenticateV2 is set (in the cloud and local loaders), authenticates
+// calls outside it. Authentication failures say nothing about whether the plugin
+// is reachable, so the breaker must not see them.
 func (b *PluginBackend) settingsPluginClient(client plugins.Client) (plugins.Client, error) {
 	client = &breakerPluginClient{Client: client}
 	if !b.deps.Settings.AuthenticateV2 {
