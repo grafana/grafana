@@ -264,6 +264,10 @@ func NewAPIService(
 		legacyTeamStore:         team.NewLegacyStore(store, accessClient, tracingService, nil),
 		externalGroupReconciler: legacy.NoopExternalGroupReconciler{},
 		teamBindingLegacyStore:  teambinding.NewLegacyBindingStore(store, tracingService),
+		userSearchClient: dualwrite.NewSelector[user.SearchBackend](legacyReadMode{}, iamv0.UserResourceInfo.GroupResource(),
+			user.NewLegacyStoreSearchClient(store, tracingService), nil),
+		teamSearchClient: dualwrite.NewSelector[team.SearchBackend](legacyReadMode{}, iamv0.TeamResourceInfo.GroupResource(),
+			team.NewLegacyStoreSearchClient(store, tracingService), nil),
 		display: display.NewDisplayHandler(
 			display.NewLegacyDisplayProvider(store),
 			// TODO: include the search client here
@@ -1466,4 +1470,13 @@ func legacyTeamSearchService(svc teamservice.Service) teamservice.Service {
 		return p.LegacySearchService()
 	}
 	return svc
+}
+
+// legacyReadMode keeps standalone user and team lookups on legacy SQL: the
+// standalone server is built without a unified search client, and it serves
+// those resources from the per-tenant legacy database.
+type legacyReadMode struct{}
+
+func (legacyReadMode) ReadFromUnified(context.Context, schema.GroupResource) (bool, error) {
+	return false, nil
 }

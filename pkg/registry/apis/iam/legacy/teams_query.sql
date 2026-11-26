@@ -7,6 +7,9 @@ SELECT id, uid, name, email, external_uid, is_provisioned, created, updated
 {{ if .Query.ID }}
    AND id = {{ .Arg .Query.ID }}
 {{ end }}
+{{ if .Query.Name }}
+   AND LOWER(name) = LOWER({{ .Arg .Query.Name }})
+{{ end }}
 {{ if .Query.Pagination.Continue }}
    AND id >= {{ .Arg .Query.Pagination.Continue }}
 {{ end }}
