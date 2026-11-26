@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { Subscription } from 'rxjs';
-import { act, render, screen, userEvent, within } from 'test/test-utils';
+import { act, fireEvent, render, screen, userEvent, within } from 'test/test-utils';
 
 import { presetsQuickEdit } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
@@ -203,7 +203,7 @@ function renderWrapper(
 const getToolbar = () => screen.getByRole('toolbar', { name: 'Panel actions' });
 /** Toolbar buttons in order, with each separator shown as '|'. */
 const getToolbarLayout = () =>
-  Array.from(getToolbar().querySelectorAll('button, [role="separator"]')).map((element) =>
+  Array.from(getToolbar().querySelectorAll('button, a, [role="separator"]')).map((element) =>
     element.getAttribute('role') === 'separator' ? '|' : element.getAttribute('aria-label')
   );
 
@@ -242,7 +242,7 @@ describe('<PanelActionsWrapper />', () => {
       renderWrapper(panel);
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(await within(getToolbar()).findByRole('button', { name: 'Explore (p x)' })).toBeInTheDocument();
+      expect(await within(getToolbar()).findByRole('link', { name: 'Explore (p x)' })).toBeInTheDocument();
       expect(getToolbarLayout()).toEqual([
         'Edit visualization (e)',
         'Explore (p x)',
@@ -263,7 +263,7 @@ describe('<PanelActionsWrapper />', () => {
       renderWrapper(panel);
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(await within(getToolbar()).findByRole('button', { name: 'Explore (p x)' })).toBeInTheDocument();
+      expect(await within(getToolbar()).findByRole('link', { name: 'Explore (p x)' })).toBeInTheDocument();
       expect(getToolbarLayout()).toEqual(['Explore (p x)', '|', 'Expand (v)', 'More actions']);
     });
 
@@ -421,9 +421,27 @@ describe('<PanelActionsWrapper />', () => {
 
       renderWrapper(panel);
       await hoverAndRest(screen.getByTestId('reference-child'));
-      await user.click(await within(getToolbar()).findByRole('button', { name: 'Explore (p x)' }));
+      await user.click(await within(getToolbar()).findByRole('link', { name: 'Explore (p x)' }));
 
       expect(mockLocationServicePush).toHaveBeenCalledWith('/explore?left=panel-1');
+    });
+
+    test('Explore is a link, so it can be opened in a new tab', async () => {
+      const panel = createPanel();
+      createDashboard(panel);
+      // jsdom can't navigate, so stand in for the browser opening the link.
+      const preventNavigation = (event: Event) => event.preventDefault();
+      document.addEventListener('click', preventNavigation);
+
+      renderWrapper(panel);
+      await hoverAndRest(screen.getByTestId('reference-child'));
+      const link = await within(getToolbar()).findByRole('link', { name: 'Explore (p x)' });
+      expect(link).toHaveAttribute('href', '/explore?left=panel-1');
+
+      fireEvent.click(link, { ctrlKey: true });
+      document.removeEventListener('click', preventNavigation);
+
+      expect(mockLocationServicePush).not.toHaveBeenCalled();
     });
 
     test('when explicit sidebar opening is enabled, clicking Settings opens the panel settings', async () => {
