@@ -6,6 +6,7 @@ import (
 	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
@@ -24,13 +25,14 @@ type UsageStatsService struct {
 	*loopbackService
 	usageStats      usagestats.Service
 	namespaceLister usage.NamespaceLister
+	tracer          tracing.Tracer
 }
 
 // ProvideUsageStatsService is called by Wire. Depending on the builder orders it
 // after [RegisterAPIServer], which registers the provisioning API group with
 // the API server.
-func ProvideUsageStatsService(cfg *setting.Cfg, builder *APIBuilder, usageStats usagestats.Service, orgSvc org.Service) *UsageStatsService {
-	s := &UsageStatsService{usageStats: usageStats, namespaceLister: usage.UsageNamespaceLister(cfg, orgSvc)}
+func ProvideUsageStatsService(cfg *setting.Cfg, builder *APIBuilder, usageStats usagestats.Service, orgSvc org.Service, tracer tracing.Tracer) *UsageStatsService {
+	s := &UsageStatsService{usageStats: usageStats, namespaceLister: usage.UsageNamespaceLister(cfg, orgSvc), tracer: tracer}
 	s.loopbackService = newLoopbackService(UsageStatsServiceName, builder, cfg.DisableControllers, s.register)
 	return s
 }
@@ -42,7 +44,7 @@ func (s *UsageStatsService) IsDisabled() bool {
 
 func (s *UsageStatsService) register(ctx context.Context, _ *clientrest.Config) error {
 	b := s.builder
-	s.usageStats.RegisterMetricsFunc(usage.MetricCollector(b.tracer, s.namespaceLister, b.repoLister.List, connection.NewStorageLister(b.connectionStore).List, b.unified))
+	s.usageStats.RegisterMetricsFunc(usage.MetricCollector(s.tracer, s.namespaceLister, b.repoLister.List, connection.NewStorageLister(b.connectionStore).List, b.unified))
 	<-ctx.Done()
 	return context.Cause(ctx)
 }

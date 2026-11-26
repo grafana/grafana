@@ -90,7 +90,6 @@ type APIBuilder struct {
 	allowImageRendering       bool
 	minSyncInterval           time.Duration
 
-	tracer              tracing.Tracer
 	repoStore           grafanarest.Storage
 	repoLister          repository.RepositoryByConnectionLister
 	repoValidator       repository.Validator
@@ -138,110 +137,12 @@ type APIBuilder struct {
 	bootstrapDone <-chan struct{}
 }
 
-// NewAPIServerBuilder creates an API builder for the provisioning API. It
-// serves the API only: the controllers are separate services.
-//
-// This function supports registering multiple API versions (e.g., v0alpha1, v1beta1) by creating
-// separate API builders for each version. The same types are served under different versions using
-// OpenAPI schema transformation.
-//
-// Key parameters for multi-version support:
-//   - gv: The GroupVersion (group + version) this builder serves. This determines which API version
-//     the builder registers (e.g., "provisioning.grafana.app/v0alpha1" or "provisioning.grafana.app/v1beta1").
-//     The version is used to generate the correct API paths (/apis/{group}/{version}/...) and to
-//     transform OpenAPI schemas to match the version.
-//   - isPreferredVersion: Indicates whether this version is the preferred/default version for the API group.
-//     Only ONE version should be marked as preferred. The preferred version is used by kubectl and other
-//     clients when they query the API without specifying a version.
-//
-// It avoids anything that is core to Grafana, such that it can be used in a multi-tenant service down the line.
-// This means there are no hidden dependencies, and no use of e.g. *settings.Cfg.
-func NewAPIServerBuilder(
-	gv schema.GroupVersion,
-	isPreferredVersion bool,
-	repoFactory repository.Factory,
-	connectionFactory connection.Factory,
-	unified resource.ResourceClient,
-	configProvider apiserver.RestConfigProvider,
-	access authlib.AccessChecker,
-	tracer tracing.Tracer,
-	extraBuilders []ExtraBuilder,
-	jobHistoryConfig *JobHistoryConfig,
-	allowedTargets []provisioning.SyncTargetType,
-	supportedResourceProvider resources.SupportedResourceProvider,
-	allowImageRendering bool,
-	minSyncInterval time.Duration,
-	registry prometheus.Registerer,
-	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory,
-	useExclusivelyAccessCheckerForAuthz bool,
-	quotaGetter quotas.QuotaGetter,
-	incrementalPolicy repository.IncrementalSyncPolicy,
-	maxFileSize int64,
-	maxJobBodySize int64,
-) (*APIBuilder, error) {
-	var clients resources.ClientFactory
-	if newStandaloneClientFactoryFunc != nil {
-		clients = newStandaloneClientFactoryFunc(configProvider)
-	} else {
-		clients = resources.NewClientFactory(configProvider, supportedResourceProvider)
-	}
-	if gv.Version == "" {
-		return nil, fmt.Errorf("invalid provisioning group/version")
-	}
-
-	parsers := resources.NewParserFactory(clients)
-
-	// Create access checker based on mode
-	var accessChecker auth.AccessChecker
-	if useExclusivelyAccessCheckerForAuthz {
-		accessChecker = auth.NewTokenAccessChecker(access)
-	} else {
-		accessChecker = auth.NewSessionAccessChecker(access)
-	}
-
-	b := &APIBuilder{
-		gv:                        gv,
-		isPreferredVersion:        isPreferredVersion,
-		minSyncInterval:           minSyncInterval,
-		tracer:                    tracer,
-		repoFactory:               repoFactory,
-		connectionFactory:         connectionFactory,
-		clients:                   clients,
-		supportedResourceProvider: supportedResourceProvider,
-		parsers:                   parsers,
-		unified:                   unified,
-		access:                    accessChecker,
-		accessWithAdmin:           accessChecker.WithFallbackRole(authlib.RoleAdmin),
-		accessWithEditor:          accessChecker.WithFallbackRole(authlib.RoleEditor),
-		accessWithViewer:          accessChecker.WithFallbackRole(authlib.RoleViewer),
-		jobHistoryConfig:          jobHistoryConfig,
-		allowedTargets:            allowedTargets,
-		allowImageRendering:       allowImageRendering,
-		registry:                  registry,
-		quotaGetter:               quotaGetter,
-		incrementalPolicy:         incrementalPolicy,
-		// Per-file cap for the files API. Non-positive (<=0) disables the cap.
-		maxFileSize: maxFileSize,
-		// Request body cap for job creation. Non-positive (<=0) uses the default.
-		maxJobBodySize: maxJobBodySize,
-		loopbackReady:  make(chan struct{}),
-	}
-
-	b.setResourceLister(resources.NewResourceLister(unified, clients, supportedResourceProvider.Get()))
-
-	for _, builder := range extraBuilders {
-		b.extras = append(b.extras, builder(b))
-	}
-
-	return b, nil
-}
-
 // NewAPIBuilder creates an API builder for the provisioning API.
 //
 // Deprecated: use [NewAPIServerBuilder]. HACK: kept with its old signature
 // only so backports and security patches still apply. onlyApiServer,
-// storageStatus and extraWorkers are ignored: the controllers are separate
-// services. A non-nil restConfigGetter is rejected; the post-start hook
+// features, storageStatus, usageStats, tracer and extraWorkers are ignored:
+// the controllers and usage stats are separate services. A non-nil restConfigGetter is rejected; the post-start hook
 // always uses its loopback config.
 func NewAPIBuilder(
 	gv schema.GroupVersion,
@@ -275,10 +176,137 @@ func NewAPIBuilder(
 	if restConfigGetter != nil {
 		return nil, errors.New("provisioning: restConfigGetter is no longer supported")
 	}
-	return NewAPIServerBuilder(gv, isPreferredVersion, repoFactory, connectionFactory, unified,
-		configProvider, access, tracer, extraBuilders, jobHistoryConfig, allowedTargets,
-		supportedResourceProvider, allowImageRendering, minSyncInterval, registry, newStandaloneClientFactoryFunc,
-		useExclusivelyAccessCheckerForAuthz, quotaGetter, incrementalPolicy, maxFileSize, maxJobBodySize)
+	return NewAPIServerBuilder(APIServerDeps{
+		GroupVersion:                        gv,
+		IsPreferredVersion:                  isPreferredVersion,
+		RepoFactory:                         repoFactory,
+		ConnectionFactory:                   connectionFactory,
+		ResourceClient:                      unified,
+		ConfigProvider:                      configProvider,
+		Access:                              access,
+		ExtraBuilders:                       extraBuilders,
+		JobHistoryConfig:                    jobHistoryConfig,
+		AllowedTargets:                      allowedTargets,
+		SupportedResourceProvider:           supportedResourceProvider,
+		AllowImageRendering:                 allowImageRendering,
+		MinSyncInterval:                     minSyncInterval,
+		Registry:                            registry,
+		NewStandaloneClientFactory:          newStandaloneClientFactoryFunc,
+		UseExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
+		QuotaGetter:                         quotaGetter,
+		IncrementalPolicy:                   incrementalPolicy,
+		MaxFileSize:                         maxFileSize,
+		MaxJobBodySize:                      maxJobBodySize,
+	})
+}
+
+// APIServerDeps is everything needed to build an [APIBuilder] that serves the
+// provisioning API. It avoids anything that is core to Grafana, such as
+// *setting.Cfg, so the multi-tenant API server can use it too.
+type APIServerDeps struct {
+	// GroupVersion is the version this builder serves, such as
+	// provisioning.grafana.app/v1beta1. Each version gets its own builder;
+	// OpenAPI schemas are rewritten to match it.
+	GroupVersion schema.GroupVersion
+	// IsPreferredVersion marks the version clients get when they don't name
+	// one. Exactly one registered version must set it.
+	IsPreferredVersion bool
+
+	RepoFactory       repository.Factory
+	ConnectionFactory connection.Factory
+	// ResourceClient is the unified storage client the resource lister reads.
+	ResourceClient resource.ResourceClient
+	ConfigProvider apiserver.RestConfigProvider
+	Access         authlib.AccessChecker
+	// UseExclusivelyAccessCheckerForAuthz authorizes with the token access
+	// checker only, instead of falling back to the session's role.
+	UseExclusivelyAccessCheckerForAuthz bool
+	// NewStandaloneClientFactory replaces the default client factory; nil uses
+	// the loopback ConfigProvider.
+	NewStandaloneClientFactory func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory
+	ExtraBuilders              []ExtraBuilder
+	SupportedResourceProvider  resources.SupportedResourceProvider
+	// ResourceListerMode is a [provisioning] resource_lister value; empty
+	// selects the default.
+	ResourceListerMode   string
+	RepoValidatorOptions []repository.ValidatorOption
+	// URLValidator checks connection URLs at admission; nil skips the check.
+	URLValidator     *repository.URLValidator
+	JobHistoryConfig *JobHistoryConfig
+	QuotaGetter      quotas.QuotaGetter
+	Registry         prometheus.Registerer
+
+	AllowedTargets      []provisioning.SyncTargetType
+	AllowImageRendering bool
+	MinSyncInterval     time.Duration
+	IncrementalPolicy   repository.IncrementalSyncPolicy
+	// MaxFileSize caps files written through the files API; non-positive
+	// disables the cap.
+	MaxFileSize int64
+	// MaxJobBodySize caps job creation request bodies; non-positive uses the
+	// default.
+	MaxJobBodySize int64
+}
+
+// NewAPIServerBuilder creates an API builder for one version of the
+// provisioning API. It serves the API only: the controllers are separate
+// services.
+func NewAPIServerBuilder(deps APIServerDeps) (*APIBuilder, error) {
+	if deps.GroupVersion.Version == "" {
+		return nil, fmt.Errorf("invalid provisioning group/version")
+	}
+	if err := resources.ValidateListerMode(deps.ResourceListerMode); err != nil {
+		return nil, err
+	}
+
+	var clients resources.ClientFactory
+	if deps.NewStandaloneClientFactory != nil {
+		clients = deps.NewStandaloneClientFactory(deps.ConfigProvider)
+	} else {
+		clients = resources.NewClientFactory(deps.ConfigProvider, deps.SupportedResourceProvider)
+	}
+
+	var accessChecker auth.AccessChecker
+	if deps.UseExclusivelyAccessCheckerForAuthz {
+		accessChecker = auth.NewTokenAccessChecker(deps.Access)
+	} else {
+		accessChecker = auth.NewSessionAccessChecker(deps.Access)
+	}
+
+	b := &APIBuilder{
+		gv:                        deps.GroupVersion,
+		isPreferredVersion:        deps.IsPreferredVersion,
+		minSyncInterval:           deps.MinSyncInterval,
+		repoFactory:               deps.RepoFactory,
+		connectionFactory:         deps.ConnectionFactory,
+		clients:                   clients,
+		supportedResourceProvider: deps.SupportedResourceProvider,
+		parsers:                   resources.NewParserFactory(clients),
+		unified:                   deps.ResourceClient,
+		access:                    accessChecker,
+		accessWithAdmin:           accessChecker.WithFallbackRole(authlib.RoleAdmin),
+		accessWithEditor:          accessChecker.WithFallbackRole(authlib.RoleEditor),
+		accessWithViewer:          accessChecker.WithFallbackRole(authlib.RoleViewer),
+		repoValidatorOpts:         deps.RepoValidatorOptions,
+		urlValidator:              deps.URLValidator,
+		jobHistoryConfig:          deps.JobHistoryConfig,
+		allowedTargets:            deps.AllowedTargets,
+		allowImageRendering:       deps.AllowImageRendering,
+		registry:                  deps.Registry,
+		quotaGetter:               deps.QuotaGetter,
+		incrementalPolicy:         deps.IncrementalPolicy,
+		maxFileSize:               deps.MaxFileSize,
+		maxJobBodySize:            deps.MaxJobBodySize,
+		loopbackReady:             make(chan struct{}),
+	}
+
+	b.setResourceLister(resources.NewResourceLister(deps.ResourceClient, clients, deps.SupportedResourceProvider.Get()))
+
+	for _, builder := range deps.ExtraBuilders {
+		b.extras = append(b.extras, builder(b))
+	}
+
+	return b, nil
 }
 
 func (b *APIBuilder) publishLoopbackConfig(config *clientrest.Config) {
@@ -314,6 +342,10 @@ func (b *APIBuilder) GetReadyzChecks() []healthz.HealthChecker {
 	})}
 }
 
+// SetRepoValidatorOptions sets the repository validator options.
+//
+// Deprecated: set [APIServerDeps.RepoValidatorOptions]. HACK: kept for callers
+// of [NewAPIBuilder], which has no way to pass them.
 func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption) {
 	b.repoValidatorOpts = opts
 }
@@ -321,6 +353,9 @@ func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption)
 // SetResourceListerMode selects where the managed-resource list and the repository stats are read
 // from, naming a value of [provisioning] resource_lister. Call it before the API group is built:
 // the repository resources factory captures the lister.
+//
+// Deprecated: set [APIServerDeps.ResourceListerMode]. HACK: kept for callers
+// of [NewAPIBuilder], which has no way to pass it.
 func (b *APIBuilder) SetResourceListerMode(mode string) error {
 	// This lister is also what serves /resources, so an apis reader here would call that route to
 	// answer it. The mode applies to callers outside the apiserver, which is why only the index
@@ -383,6 +418,38 @@ func ProvideSupportedResourceProvider(cfg *setting.Cfg) (resources.SupportedReso
 	return resources.NewSupportedResourceProvider(configured), nil
 }
 
+// RegisterAPIService registers the provisioning API.
+//
+// Deprecated: use [RegisterAPIServer]. HACK: kept with its old signature only
+// so backports and security patches still apply; natsSubscriber,
+// storageStatus, usageStats, orgSvc and tracer are ignored: usage stats are
+// registered by [UsageStatsService].
+func RegisterAPIService(
+	ctx context.Context,
+	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	apiregistration builder.APIRegistrar,
+	reg prometheus.Registerer,
+	client resource.ResourceClient,
+	configProvider apiserver.RestConfigProvider,
+	access authlib.AccessClient,
+	storageStatus dualwrite.Service,
+	usageStats usagestats.Service,
+	orgSvc org.Service,
+	tracer tracing.Tracer,
+	extraBuilders []ExtraBuilder,
+	repoFactory repository.Factory,
+	connectionFactory connection.Factory,
+	quotaGetter quotas.QuotaGetter,
+	natsSubscriber nats.Subscriber,
+	manifests resource.ManifestDiscovery,
+	supportedResourceProvider resources.SupportedResourceProvider,
+) (*APIBuilder, error) {
+	return RegisterAPIServer(ctx, cfg, features, apiregistration, reg, client, configProvider, access,
+		extraBuilders, repoFactory, connectionFactory, quotaGetter,
+		manifests, supportedResourceProvider)
+}
+
 // RegisterAPIServer registers the provisioning API, both v0alpha1 and
 // v1beta1, and returns the preferred (v0alpha1) builder the controller
 // services run on. It configures the API only; whether the controllers run is
@@ -397,7 +464,6 @@ func RegisterAPIServer(
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
 	access authlib.AccessClient,
-	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
 	repoFactory repository.Factory,
 	connectionFactory connection.Factory,
@@ -439,37 +505,34 @@ func RegisterAPIServer(
 	repoValidatorOpts := []repository.ValidatorOption{repository.WithURLValidator(urlValidator)}
 
 	registerVersion := func(version string, isPreferredVersion bool) (*APIBuilder, error) {
-		b, err := NewAPIServerBuilder(
-			schema.GroupVersion{Group: provisioning.GROUP, Version: version},
-			isPreferredVersion,
-			repoFactory,
-			connectionFactory,
-			client,
-			configProvider,
-			access,
-			tracer,
-			extraBuilders,
-			jobHistoryConfig,
-			allowedTargets,
-			supportedResourceProvider,
-			cfg.ProvisioningAllowImageRendering,
-			cfg.ProvisioningMinSyncInterval,
-			reg,
-			nil,   // newStandaloneClientFactoryFunc
-			false, // useExclusivelyAccessCheckerForAuthz - TODO: first, test this on the MT side before we enable it by default in ST as well
-			quotaGetter,
-			incrementalPolicy,
-			cfg.ProvisioningMaxFileSize,
-			cfg.ProvisioningMaxJobBodySize,
-		)
+		b, err := NewAPIServerBuilder(APIServerDeps{
+			GroupVersion:              schema.GroupVersion{Group: provisioning.GROUP, Version: version},
+			IsPreferredVersion:        isPreferredVersion,
+			RepoFactory:               repoFactory,
+			ConnectionFactory:         connectionFactory,
+			ResourceClient:            client,
+			ConfigProvider:            configProvider,
+			Access:                    access,
+			ExtraBuilders:             extraBuilders,
+			SupportedResourceProvider: supportedResourceProvider,
+			ResourceListerMode:        cfg.ProvisioningResourceLister,
+			RepoValidatorOptions:      repoValidatorOpts,
+			URLValidator:              urlValidator,
+			JobHistoryConfig:          jobHistoryConfig,
+			QuotaGetter:               quotaGetter,
+			Registry:                  reg,
+			AllowedTargets:            allowedTargets,
+			AllowImageRendering:       cfg.ProvisioningAllowImageRendering,
+			MinSyncInterval:           cfg.ProvisioningMinSyncInterval,
+			IncrementalPolicy:         incrementalPolicy,
+			MaxFileSize:               cfg.ProvisioningMaxFileSize,
+			MaxJobBodySize:            cfg.ProvisioningMaxJobBodySize,
+			// TODO: test the token access checker on the MT side before enabling it in ST.
+			UseExclusivelyAccessCheckerForAuthz: false,
+		})
 		if err != nil {
 			return nil, err
 		}
-		if err := b.SetResourceListerMode(cfg.ProvisioningResourceLister); err != nil {
-			return nil, err
-		}
-		b.repoValidatorOpts = repoValidatorOpts
-		b.urlValidator = urlValidator
 		apiregistration.RegisterAPI(b)
 		return b, nil
 	}
@@ -482,38 +545,6 @@ func RegisterAPIServer(
 		return nil, err
 	}
 	return preferred, nil
-}
-
-// RegisterAPIService registers the provisioning API.
-//
-// Deprecated: use [RegisterAPIServer]. HACK: kept with its old signature only
-// so backports and security patches still apply; natsSubscriber,
-// storageStatus, usageStats and orgSvc are ignored: usage stats are registered
-// by [UsageStatsService].
-func RegisterAPIService(
-	ctx context.Context,
-	cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles,
-	apiregistration builder.APIRegistrar,
-	reg prometheus.Registerer,
-	client resource.ResourceClient,
-	configProvider apiserver.RestConfigProvider,
-	access authlib.AccessClient,
-	storageStatus dualwrite.Service,
-	usageStats usagestats.Service,
-	orgSvc org.Service,
-	tracer tracing.Tracer,
-	extraBuilders []ExtraBuilder,
-	repoFactory repository.Factory,
-	connectionFactory connection.Factory,
-	quotaGetter quotas.QuotaGetter,
-	natsSubscriber nats.Subscriber,
-	manifests resource.ManifestDiscovery,
-	supportedResourceProvider resources.SupportedResourceProvider,
-) (*APIBuilder, error) {
-	return RegisterAPIServer(ctx, cfg, features, apiregistration, reg, client, configProvider, access,
-		tracer, extraBuilders, repoFactory, connectionFactory, quotaGetter,
-		manifests, supportedResourceProvider)
 }
 
 // allowedSyncTargets drops the instance target when a bootstrap repository exists, since that

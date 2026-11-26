@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -81,6 +83,23 @@ func TestSetResourceListerMode(t *testing.T) {
 			`invalid [provisioning] resource_lister "index": expected "search" or "apis"`)
 		require.Same(t, before, b.resourceLister)
 	})
+}
+
+func TestNewAPIServerBuilder_ResourceListerMode(t *testing.T) {
+	deps := APIServerDeps{
+		GroupVersion:               schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v0alpha1"},
+		ResourceClient:             resource.NewMockResourceClient(t),
+		NewStandaloneClientFactory: func(apiserver.RestConfigProvider) resources.ClientFactory { return resources.NewMockClientFactory(t) },
+		SupportedResourceProvider:  resources.NewSupportedResourceProvider(nil),
+	}
+
+	b, err := NewAPIServerBuilder(deps)
+	require.NoError(t, err)
+	require.NotNil(t, b.resourceLister)
+
+	deps.ResourceListerMode = "index"
+	_, err = NewAPIServerBuilder(deps)
+	require.EqualError(t, err, `invalid [provisioning] resource_lister "index": expected "search" or "apis"`)
 }
 
 func subresourceAttrsWithVerb(sub, name, ns, verb string) authorizer.Attributes {

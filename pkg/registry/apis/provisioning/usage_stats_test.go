@@ -11,6 +11,7 @@ import (
 	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -46,7 +47,7 @@ func TestUsageStatsService_IsDisabled(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			svc := ProvideUsageStatsService(&setting.Cfg{DisableControllers: tc.controllersDisabled}, tc.builder, tc.usageStats, nil)
+			svc := ProvideUsageStatsService(&setting.Cfg{DisableControllers: tc.controllersDisabled}, tc.builder, tc.usageStats, nil, tracing.NewNoopTracerService())
 			assert.Equal(t, tc.disabled, svc.IsDisabled())
 			assert.Equal(t, UsageStatsServiceName, svc.ServiceName())
 		})
@@ -58,7 +59,7 @@ func TestUsageStatsService_Run(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			stats := &countingUsageStats{}
 			builder := &APIBuilder{loopbackReady: make(chan struct{}), repoLister: nopRepoLister{}}
-			svc := ProvideUsageStatsService(&setting.Cfg{}, builder, stats, nil)
+			svc := ProvideUsageStatsService(&setting.Cfg{}, builder, stats, nil, tracing.NewNoopTracerService())
 			runErr := make(chan error, 1)
 			go func() { runErr <- svc.Run(context.Background()) }()
 
