@@ -123,6 +123,12 @@ func SignLocalAccessToken(ctx context.Context, policy LocalAccessPolicy, req aut
 	return e.signForPolicy(ctx, policy, req)
 }
 
+// LocalServiceIdentity is the service identity claim on tokens signed for
+// pluginID, so APIs can tell which plugin a request came from.
+func LocalServiceIdentity(pluginID string) string {
+	return "plugin-" + pluginID
+}
+
 func (e *localExchanger) signForPolicy(ctx context.Context, policy LocalAccessPolicy, req authnlib.TokenExchangeRequest) (string, error) {
 	if policy.PluginID == "" {
 		return "", errors.New("local plugin token exchange: a plugin ID is required")
@@ -138,7 +144,10 @@ func (e *localExchanger) signForPolicy(ctx context.Context, policy LocalAccessPo
 			return "", fmt.Errorf("%w: audience %q is not allowed", ErrLocalAccessDenied, audience)
 		}
 	}
-	claims := authnlib.AccessTokenClaims{Namespace: req.Namespace}
+	claims := authnlib.AccessTokenClaims{
+		Namespace:       req.Namespace,
+		ServiceIdentity: LocalServiceIdentity(policy.PluginID),
+	}
 	if req.SubjectToken == "" {
 		claims.Permissions = policy.Permissions
 	} else {
