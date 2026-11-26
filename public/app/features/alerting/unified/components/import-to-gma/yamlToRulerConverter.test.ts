@@ -429,6 +429,42 @@ groups:
       expect(() => parse(yaml)).not.toThrow();
     });
 
+    it.each([
+      ['a date', '2024-01-01'],
+      ['a date and time', '2024-01-01 10:00:00'],
+      ['a UTC timestamp', '2024-01-01T10:00:00Z'],
+    ])('keeps %s in labels and annotations as written', (_name, value) => {
+      const yaml = withRule(`alert: A\nlabels:\n  since: ${value}\nannotations:\n  since: ${value}`);
+      expect(parse(yaml)).toEqual({
+        'default-namespace': [
+          {
+            name: 'g',
+            rules: [{ alert: 'A', expr: 'up == 0', labels: { since: value }, annotations: { since: value } }],
+          },
+        ],
+      });
+    });
+
+    it('resolves anchors and merge keys', () => {
+      const yaml = `
+x-labels: &team
+  team: ops
+groups:
+  - name: g
+    rules:
+      - alert: A
+        expr: up
+        labels:
+          <<: *team
+          severity: warning
+`;
+      expect(parse(yaml)).toEqual({
+        'default-namespace': [
+          { name: 'g', rules: [{ alert: 'A', expr: 'up', labels: { team: 'ops', severity: 'warning' } }] },
+        ],
+      });
+    });
+
     it('keeps unknown keys on groups and rules', () => {
       const yaml = `
 groups:
