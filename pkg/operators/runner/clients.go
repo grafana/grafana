@@ -1,5 +1,4 @@
-// Package operatorconfig reads the client settings every standalone operator shares.
-package operatorconfig
+package runner
 
 import (
 	"crypto/x509"
@@ -8,7 +7,9 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/util/flowcontrol"
 
+	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -87,4 +88,29 @@ func TokenExchangeClient(cfg *setting.Cfg) (*authn.TokenExchangeClient, error) {
 		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
 	}
 	return client, nil
+}
+
+// RESTConfig builds a client config for the apiserver at [operator]
+// serverURLKey, exchanging tokens for audience. Each API group can live on its
+// own apiserver, so each gets its own config.
+func RESTConfig(cfg *setting.Cfg, serverURLKey, audience string) (*rest.Config, error) {
+	serverURL := cfg.SectionWithEnvOverrides("operator").Key(serverURLKey).String()
+	if serverURL == "" {
+		return nil, fmt.Errorf("%s is required in [operator] section", serverURLKey)
+	}
+	tlsConfig, err := TLSConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	tokenExchangeClient, err := TokenExchangeClient(cfg)
+	if err != nil {
+		return nil, err
+	}
+	return &rest.Config{
+		APIPath:         "/apis",
+		Host:            serverURL,
+		WrapTransport:   clientauth.NewStaticTokenExchangeTransportWrapper(tokenExchangeClient, audience, clientauth.WildcardNamespace),
+		TLSClientConfig: tlsConfig,
+		RateLimiter:     flowcontrol.NewFakeAlwaysRateLimiter(),
+	}, nil
 }

@@ -7,64 +7,28 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/util/flowcontrol"
 
-	"github.com/grafana/grafana/pkg/clientauth"
-	"github.com/grafana/grafana/pkg/operators/operatorconfig"
+	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // buildRESTClient builds a client for one API group's server, so folders and dashboards can live on
-// different apiservers. Every client shares the authentication settings [operator] and
-// [grpc_client_authentication], and its token is exchanged for the group's audience.
+// different apiservers.
 //
 // [operator]
 // folders_server_url =
 // dashboards_server_url =
-// tls_insecure =
-// tls_cert_file =
-// tls_key_file =
-// tls_ca_file =
-// [grpc_client_authentication]
-// token =
-// token_exchange_url =
 func buildRESTClient(cfg *setting.Cfg, serverURLKey, group string) (rest.Interface, error) {
-	operatorSec := cfg.SectionWithEnvOverrides("operator")
-
-	serverURL := operatorSec.Key(serverURLKey).String()
-	if serverURL == "" {
-		return nil, fmt.Errorf("%s is required in [operator] section", serverURLKey)
-	}
-
-	tlsConfig, err := operatorconfig.TLSConfig(cfg)
+	restConfig, err := runner.RESTConfig(cfg, serverURLKey, group)
 	if err != nil {
 		return nil, err
 	}
-
-	tokenExchangeClient, err := operatorconfig.TokenExchangeClient(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	restConfig := &rest.Config{
-		APIPath: "/apis",
-		Host:    serverURL,
-		WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(
-			tokenExchangeClient,
-			group,
-			clientauth.WildcardNamespace,
-		),
-		TLSClientConfig: tlsConfig,
-		RateLimiter:     flowcontrol.NewFakeAlwaysRateLimiter(),
-	}
-
 	client, err := rest.UnversionedRESTClientFor(dynamic.ConfigFor(restConfig))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create %s REST client: %w", group, err)
 	}
-
 	return client, nil
 }
 

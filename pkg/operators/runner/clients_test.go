@@ -1,4 +1,4 @@
-package operatorconfig
+package runner
 
 import (
 	"crypto/rand"
