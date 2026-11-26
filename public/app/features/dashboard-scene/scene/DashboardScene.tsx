@@ -1299,7 +1299,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       },
     });
 
-    this.state.editPanel?.dashboardSaved();
+    const editPanel = this.state.editPanel;
+    editPanel?.dashboardSaved();
 
     // Re-apply denylist before re-baselining on in-place saves. Skip awaiting on Save As —
     // we're about to navigate away.
@@ -1307,11 +1308,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       await this.refreshPredefinedVariables();
     }
 
-    this._initialState = sceneUtils.cloneSceneObjectState(this.state, {
+    // The editor is tied to the live scene and must not be restored with the dashboard snapshot.
+    const savedState = editPanel?.getLibraryPanelBehavior() ? { ...this.state, editPanel: undefined } : this.state;
+    this._initialState = sceneUtils.cloneSceneObjectState(savedState, {
       ...saveAsFields?.savedFields,
       isDirty: false,
       overlay: undefined,
     });
+    if (editPanel) {
+      this.updateSavedLibraryPanel(editPanel);
+    }
     this._initialAdHocTransformations = collectAdHocTransformations(this);
     this._initialUrlState = locationService.getLocation();
     // Detect edits made during the save before its redirect can leave the dashboard.
@@ -1321,6 +1327,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this._changeTracker.startTrackingChanges();
     }
     this.publishEvent(new DashboardStateChangedEvent({ source: this }), true);
+  }
+
+  public updateSavedLibraryPanel(editor: NonNullable<DashboardSceneState['editPanel']>) {
+    if (this._initialState) {
+      editor.copyPublishedLibraryPanelTo(this._initialState.body);
+    }
   }
 
   public exitEditMode({ skipConfirm, restoreInitialState }: { skipConfirm: boolean; restoreInitialState?: boolean }) {

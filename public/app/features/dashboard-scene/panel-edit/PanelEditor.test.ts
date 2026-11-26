@@ -735,7 +735,7 @@ describe('PanelEditor', () => {
         });
         const { panelEditor } = await setup({ libraryPanel });
 
-        panelEditor.onConfirmSaveLibraryPanel();
+        await panelEditor.onConfirmSaveLibraryPanel();
         closeEditor();
 
         expect(saveLibPanel).toHaveBeenCalledTimes(1);
@@ -958,8 +958,7 @@ describe('PanelEditor', () => {
         libPanelBehavior.setPanelFromLibPanel(updatedPanel);
       });
 
-      editScene.onConfirmSaveLibraryPanel();
-      await new Promise(process.nextTick);
+      await editScene.onConfirmSaveLibraryPanel();
 
       // Wait for mock api to return and update the library panel
       expect(libPanelBehavior.state._loadedPanel?.version).toBe(2);
