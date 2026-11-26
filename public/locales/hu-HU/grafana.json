@@ -6613,6 +6613,10 @@
       "paused": "Ezt az irányítópultot az adminisztrátor felfüggesztette",
       "try-again-later": "Próbálkozzon újra később"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Biztosan törölni szeretné ezt a panelt?"
@@ -6740,7 +6744,8 @@
           "title": "Panel beillesztése"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "Sor hozzáadása",
@@ -8068,6 +8073,9 @@
       "title-delete-all-transformations": "Törli az összes transzformációt?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_one": "",
@@ -9968,10 +9976,6 @@
       "to": "EDDIG",
       "when": "WHEN"
     },
-    "expression-query-editor": {
-      "helper-text-sql": "Futtasson MySQL-dialektusú SQL-lekérdezéseket az adatforrásaiból készült táblázatokon. Az adatforrás-lekérdezések (pl. „A”, „B”) táblázatként érhetők el, és a lekérdezés nevével hivatkozhat rájuk. A mezők oszlopként jelennek meg, az adatforrás által visszaadott formában.",
-      "label-operation": "Művelet"
-    },
     "math": {
       "available-math-functions": "Elérhető matematikai függvények",
       "run-math-operations": "Matematikai műveletek végrehajtása egy vagy több lekérdezésen. A lekérdezésre a(z) {{refExample}} (azaz {{ref1}}, {{ref2}}, {{ref3}} stb.) segítségével hivatkozhat.<br/>Példa: <12>{{example}}</12>",
@@ -10519,6 +10523,25 @@
         "otherGroup": "Egyebek"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_one": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -11037,6 +11060,11 @@
         "placement-options": {
           "label-bottom": "Lent",
           "label-right": "Jobbra"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_one": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11132,6 +11160,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "Egy kattintás"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "Hivatkozás hozzáadása",
@@ -13788,16 +13819,16 @@
       "open": "Főmenü",
       "pin-error": "A kitűzött menüelemek frissítése nem sikerült",
       "pinned-list-label": "Kitűzött elemek",
+      "section-resize": "",
       "undock": "Menü dokkolásának feloldása"
     },
     "megamenu-item": {
       "children-error": "Az elemek betöltése nem sikerült",
+      "children-partial-error": "",
       "collapse-aria-label": "Szakasz összecsukása: {{sectionName}}",
       "expand-aria-label": "Szakasz kibontása: {{sectionName}}",
       "loading-aria-label": "{{sectionName}} betöltése",
-      "reorder-aria-label": "{{itemName}} átrendezése",
-      "starred-dashboard-icon": "Irányítópult",
-      "starred-folder-icon": "Mappa"
+      "reorder-aria-label": "{{itemName}} átrendezése"
     },
     "org-switcher": {
       "aria-label": "Szervezet módosítása"
@@ -13987,12 +14018,32 @@
         "undo-label": "Asszisztens szerkesztése"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "Mégse",
       "confirm-discard": "Elvetés",
       "confirm-keep": "Megtartás",
       "confirm-text": "Megtartja a jegyzetfüzet megtekintése során végzett módosításokat?",
       "confirm-title": "Nem mentett panelmódosítások"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17299,6 +17350,13 @@
       "wide-list": "Széles lista",
       "wide-list-desc": "Vízszintes, név és érték, területi értékgörbe, egyszínű"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "Statisztika",
       "stat-color-background": "Statisztika – színes háttér",
@@ -17502,6 +17560,7 @@
     "description-page-size": "Sorok száma oldalanként. Ha üres, az oldalméret a panel magasságán alapul.",
     "description-show-columns-sidebar": "Nyissa meg az oszlopkezelő oldalsávot a panellel, ne pedig az oszlopmenüből",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "JSON-objektumokat tartalmazó mező CSS-tulajdonságokkal",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Minden második sor háttérszínének váltogatása",
@@ -17546,6 +17605,7 @@
     "name-show-columns-sidebar": "Oszlopok oldalsávjának megjelenítése",
     "name-show-row-numbers": "",
     "name-show-table-header": "Táblázatfejléc megjelenítése",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "Mutatóval történő ráhúzáskor megjelenő elemleírás megjelenítése",
     "name-styling-from-field": "Stílus a mezőből",
     "name-tooltip-from-field": "",
@@ -17844,6 +17904,10 @@
       "time-zone-option": "Időzóna",
       "time-zone-selection": "Az időzóna kijelölése"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "Időtartomány alkalmazása",
       "default-error": "Adjon meg egy dátumot ({{dateExample}}) vagy relatív időt ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -17861,6 +17925,12 @@
       "to": "vége",
       "zoom-out-button": "Időtartomány kicsinyítése",
       "zoom-out-tooltip-new": "Időtartomány kicsinyítése <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "Időtartomány alkalmazása",

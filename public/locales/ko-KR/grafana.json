@@ -6563,6 +6563,10 @@
       "paused": "이 대시보드는 관리자가 일시 중지했습니다",
       "try-again-later": "나중에 다시 시도하세요"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "정말 이 패널을 제거하시겠어요?"
@@ -6690,7 +6694,8 @@
           "title": "패널 붙여넣기"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "행 추가",
@@ -8011,6 +8016,9 @@
       "title-delete-all-transformations": "모든 변환을 삭제하시겠어요?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_other": ""
@@ -9894,10 +9902,6 @@
       "to": "다음으로 설정",
       "when": "다음과 같은 때"
     },
-    "expression-query-editor": {
-      "helper-text-sql": "데이터 소스에서 반환된 테이블에 대해 MySQL 방언 SQL을 실행합니다. 데이터 소스 쿼리(예: \"A\", \"B\")는 테이블로 사용할 수 있으며 query-name으로 참조됩니다. 필드는 데이터 소스에서 반환된 그대로 열로 사용할 수 있습니다.",
-      "label-operation": "연산"
-    },
     "math": {
       "available-math-functions": "사용 가능한 수학 함수",
       "run-math-operations": "하나 이상의 쿼리에 대해 수학 연산을 실행합니다. {{refExample}}(예: {{ref1}}, {{ref2}}, {{ref3}} 등)으로 쿼리를 참조합니다.<br/>예: <12>{{example}}</12>",
@@ -10435,6 +10439,24 @@
         "otherGroup": "기타"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -10952,6 +10974,10 @@
         "placement-options": {
           "label-bottom": "하단",
           "label-right": "오른쪽"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11047,6 +11073,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "원 클릭"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "링크 추가",
@@ -13681,16 +13710,16 @@
       "open": "메인 메뉴",
       "pin-error": "고정된 메뉴 항목을 업데이트하지 못했습니다",
       "pinned-list-label": "고정된 항목",
+      "section-resize": "",
       "undock": "메뉴 고정 해제"
     },
     "megamenu-item": {
       "children-error": "항목 로딩 실패",
+      "children-partial-error": "",
       "collapse-aria-label": "섹션 접기: {{sectionName}}",
       "expand-aria-label": "섹션 펼치기: {{sectionName}}",
       "loading-aria-label": "{{sectionName}} 로딩 중",
-      "reorder-aria-label": "{{itemName}} 순서 변경",
-      "starred-dashboard-icon": "대시보드",
-      "starred-folder-icon": "폴더"
+      "reorder-aria-label": "{{itemName}} 순서 변경"
     },
     "org-switcher": {
       "aria-label": "조직 변경"
@@ -13875,12 +13904,32 @@
         "undo-label": "Assistant 편집"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "취소",
       "confirm-discard": "무시",
       "confirm-keep": "유지",
       "confirm-text": "이 노트북을 보는 동안 변경한 내용을 유지하시겠어요?",
       "confirm-title": "저장되지 않은 패널 변경 사항"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17157,6 +17206,13 @@
       "wide-list": "와이드 형식 목록",
       "wide-list-desc": "가로, 이름 및 값, 영역 스파크라인, 단일 색상"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "통계",
       "stat-color-background": "통계 - 배경 색상",
@@ -17359,6 +17415,7 @@
     "description-page-size": "페이지당 행 수. 비어 있는 경우 페이지 크기는 패널 높이를 기준으로 합니다.",
     "description-show-columns-sidebar": "열 메뉴가 아닌 패널을 사용하여 열 관리 사이드바를 엽니다.",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "CSS 속성이 있는 JSON 객체가 포함된 필드",
     "description-tooltip-from-field": "툴팁에서 (숨겨져 있거나 표시된) 필드의 셀을 렌더링합니다.",
     "description-zebra-striping": "한 행씩 번갈아 배경색 적용",
@@ -17403,6 +17460,7 @@
     "name-show-columns-sidebar": "열 사이드바 표시",
     "name-show-row-numbers": "",
     "name-show-table-header": "테이블 머리말 표시",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "마우스 오버 툴팁 표시",
     "name-styling-from-field": "필드에서 스타일링",
     "name-tooltip-from-field": "필드 툴팁",
@@ -17700,6 +17758,10 @@
       "time-zone-option": "시간대",
       "time-zone-selection": "시간대 선택"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "시간 범위 적용",
       "default-error": "날짜({{dateExample}}) 또는 상대 시간({{relativeTimeExample1}}, {{relativeTimeExample2}})을 입력하세요.",
@@ -17717,6 +17779,12 @@
       "to": "종료",
       "zoom-out-button": "시간 범위 확대",
       "zoom-out-tooltip-new": "시간 범위 축소 <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "시간 범위 적용",

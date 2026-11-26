@@ -1,6 +1,15 @@
 import { type KindInfo } from '@grafana/runtime/unstable';
 
-import { addKinds, CORE_KINDS, coversGroup, findKind, findKindByResource, getAppKinds, getKinds } from './coreKinds';
+import {
+  addKinds,
+  CORE_KINDS,
+  coversGroup,
+  findKind,
+  findKindByResource,
+  getAppKinds,
+  getKinds,
+  subscribeToAppKinds,
+} from './coreKinds';
 
 describe('getRoute', () => {
   it('encodes the object name', () => {
@@ -124,5 +133,19 @@ describe('app kinds', () => {
 
     expect(getAppKinds().filter((kind) => kind.kind === 'Widget')).toHaveLength(1);
     expect(findKind(group, 'Widget')?.getLabel()).toBe('New widget');
+  });
+
+  it('tells a listener each time a plugin adds a kind, until the listener unsubscribes', () => {
+    const listener = jest.fn();
+    const unsubscribe = subscribeToAppKinds(listener);
+
+    addKinds([appKind('Gadget', 'Gadget')]);
+    // Grafana serves dashboards itself, so this adds nothing
+    addKinds([{ ...appKind('Dashboard', 'Plugin dashboard'), group: 'dashboard.grafana.app' }]);
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    unsubscribe();
+    addKinds([appKind('Gizmo', 'Gizmo')]);
+    expect(listener).toHaveBeenCalledTimes(1);
   });
 });

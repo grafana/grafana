@@ -6613,6 +6613,10 @@
       "paused": "Dieses Dashboard wurde vom Administrator pausiert",
       "try-again-later": "Versuchen Sie es später erneut"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Sind Sie sicher, dass Sie dieses Panel entfernen möchten?"
@@ -6740,7 +6744,8 @@
           "title": "Panel einfügen"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "Zeile hinzufügen",
@@ -8068,6 +8073,9 @@
       "title-delete-all-transformations": "Alle Transformationen löschen?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_one": "",
@@ -9968,10 +9976,6 @@
       "to": "BIS",
       "when": "WANN"
     },
-    "expression-query-editor": {
-      "helper-text-sql": "Führen Sie MySQL-Dialekt-SQL für die von Ihren Datenquellen zurückgegebenen Tabellen aus. Datenquellenabfragen (z. B. „A“, „B“) sind als Tabellen verfügbar und werden durch den Abfragenamen referenziert. Felder sind als Spalten verfügbar, wie von der Datenquelle zurückgegeben.",
-      "label-operation": "Operation"
-    },
     "math": {
       "available-math-functions": "Verfügbare mathematische Funktionen",
       "run-math-operations": "Führen Sie mathematische Operationen für eine oder mehrere Abfragen aus. Sie verweisen auf die Abfrage durch {{refExample}} d. h.{{ref1}}, {{ref2}}, {{ref3}} usw.<br/>Beispiel: <12>{{example}}</12>",
@@ -10519,6 +10523,25 @@
         "otherGroup": "Sonstiges"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_one": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -11037,6 +11060,11 @@
         "placement-options": {
           "label-bottom": "Unten",
           "label-right": "Rechts"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_one": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11132,6 +11160,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "Ein-Klick-Modus"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "Link hinzufügen",
@@ -13788,16 +13819,16 @@
       "open": "Hauptmenü",
       "pin-error": "Die angehefteten Menüelemente konnten nicht aktualisiert werden",
       "pinned-list-label": "Fixierte Elemente",
+      "section-resize": "",
       "undock": "Menü abdocken"
     },
     "megamenu-item": {
       "children-error": "Es konnten keine Elemente geladen werden",
+      "children-partial-error": "",
       "collapse-aria-label": "Abschnitt einklappen: {{sectionName}}",
       "expand-aria-label": "Abschnitt ausklappen: {{sectionName}}",
       "loading-aria-label": "Laden {{sectionName}}",
-      "reorder-aria-label": "Neu anordnen {{itemName}}",
-      "starred-dashboard-icon": "Dashboard",
-      "starred-folder-icon": "Ordner"
+      "reorder-aria-label": "Neu anordnen {{itemName}}"
     },
     "org-switcher": {
       "aria-label": "Organisation ändern"
@@ -13987,12 +14018,32 @@
         "undo-label": "Bearbeitung in Assistant"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "Abbrechen",
       "confirm-discard": "Verwerfen",
       "confirm-keep": "Behalten",
       "confirm-text": "Möchten Sie die Änderungen beibehalten, die Sie beim Anzeigen dieses Notizbuchs vorgenommen haben?",
       "confirm-title": "Nicht gespeicherte Änderungen am Panel"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17299,6 +17350,13 @@
       "wide-list": "Breite Liste",
       "wide-list-desc": "Horizontal, Name und Wert, Bereichs-Sparkline, einfarbig"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "Stat.",
       "stat-color-background": "Stat. – Farbhintergrund",
@@ -17502,6 +17560,7 @@
     "description-page-size": "Anzahl der Zeilen pro Seite. Wenn dies leer ist, basiert die Seitengröße auf der Panel-Höhe.",
     "description-show-columns-sidebar": "Öffnen Sie die Seitenleiste der Spaltenverwaltung mit dem Panel und nicht über ein Spaltenmenü",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "Ein Feld, das JSON-Objekte mit CSS-Eigenschaften enthält",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Hintergrundfarbe jeder zweiten Zeile abwechseln",
@@ -17546,6 +17605,7 @@
     "name-show-columns-sidebar": "Seitenleiste der Spalten anzeigen",
     "name-show-row-numbers": "",
     "name-show-table-header": "Tabellenüberschirft anzeigen",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "Hover-Tooltip anzeigen",
     "name-styling-from-field": "Gestaltung über das Feld",
     "name-tooltip-from-field": "",
@@ -17844,6 +17904,10 @@
       "time-zone-option": "Zeitzone",
       "time-zone-selection": "Zeitzonenauswahl"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "Zeitbereich anwenden",
       "default-error": "Geben Sie ein Datum ({{dateExample}}) oder eine relative Zeit ein ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -17861,6 +17925,12 @@
       "to": "bis",
       "zoom-out-button": "Zeitbereich verkleinern",
       "zoom-out-tooltip-new": "Zeitbereich verkleinern <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "Zeitbereich anwenden",

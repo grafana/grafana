@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -22,6 +23,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/server/healthz"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -164,10 +166,6 @@ type APIBuilder struct {
 	// reconcile. Otherwise the controllers use the apiserver informer.
 	natsSubscriber nats.Subscriber
 
-	// bootstrapConfig is the read-only local repository registered from
-	// [provisioning] bootstrap_path, empty when none is configured.
-	bootstrapConfig bootstrap.Config
-
 	// The informer metrics register once per process and are shared by the
 	// controllers started from the post-start hook and from Wire.
 	informerMetricsOnce     gosync.Once
@@ -178,6 +176,10 @@ type APIBuilder struct {
 	// before loopbackReady is closed.
 	loopbackConfig *clientrest.Config
 	loopbackReady  chan struct{}
+
+	// bootstrapDone is [BootstrapService.Done], set before the API server is
+	// built; nil when no bootstrap service runs, as in the standalone API server.
+	bootstrapDone <-chan struct{}
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -315,6 +317,23 @@ func (b *APIBuilder) awaitLoopbackConfig(ctx context.Context) (*clientrest.Confi
 	case <-ctx.Done():
 		return nil, context.Cause(ctx)
 	}
+}
+
+// GetReadyzChecks keeps /readyz failing until the bootstrap repository has been
+// reconciled, so clients that wait for readiness see the configured repository.
+func (b *APIBuilder) GetReadyzChecks() []healthz.HealthChecker {
+	done := b.bootstrapDone
+	if done == nil {
+		return nil
+	}
+	return []healthz.HealthChecker{healthz.NamedCheck(BootstrapServiceName, func(*http.Request) error {
+		select {
+		case <-done:
+			return nil
+		default:
+			return errors.New("bootstrap repository not reconciled yet")
+		}
+	})}
 }
 
 func (b *APIBuilder) informerMetrics() (*informer.RelistProjectionMetrics, *informer.FreshnessMetrics) {
@@ -499,9 +518,6 @@ func RegisterAPIService(
 	builder.historyExpiration = cfg.ProvisioningHistoryExpiration
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	builder.natsSubscriber = natsSubscriber
-	// Only the preferred version registers the bootstrap repository: it is the one that runs
-	// the post-start hook's controllers, and two of them would race on the same object.
-	builder.bootstrapConfig = bootstrapConfig
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -1136,10 +1152,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 					return err
 				}
 			}
-			// The background services wait for this config, so they start only
-			// after the bootstrap repository is reconciled. Deferred so that every
-			// later return publishes it; otherwise they would wait forever.
-			defer b.publishLoopbackConfig(config)
+			b.publishLoopbackConfig(config)
 
 			c, err := clientset.NewForConfig(config)
 			if err != nil {
@@ -1161,15 +1174,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// but that leads to possible race conditions when the repository is created/updated and violating some rules.
 			b.healthChecker = controller.NewRepositoryHealthChecker(b.statusPatcher, repository.NewTester(b.repoValidator), healthMetricsRecorder)
 
-			// Runs with no path configured too, to remove a repository a previous run registered.
-			// Never fatal: a rejected bootstrap repository must not keep the instance down.
-			if b.bootstrapConfig.Reconcilable() {
-				if err := bootstrap.Reconcile(postStartHookCtx.Context, b.client.Repositories(b.bootstrapConfig.Namespace), b.bootstrapConfig); err != nil {
-					logging.FromContext(postStartHookCtx.Context).Error("failed to reconcile bootstrap repository",
-						"path", b.bootstrapConfig.Path, "namespace", b.bootstrapConfig.Namespace, "error", err)
-				}
-			}
-
 			// if running solely CRUD or not the preferred version, skip controllers/workers setup
 			if b.onlyApiServer || !b.isPreferredVersion {
 				return nil
@@ -1180,26 +1184,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			usageMetricCollector := usage.MetricCollector(b.tracer, b.usageNamespaceLister, b.repoLister.List, connection.NewStorageLister(b.connectionStore).List, b.unified)
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
-
-			var jobHistoryWriter jobs.HistoryWriter
-			if b.jobHistoryLoki != nil {
-				jobHistoryWriter = b.jobHistoryLoki
-			} else {
-				jobHistoryWriter = jobs.NewAPIClientHistoryWriter(b.GetClient())
-			}
-
-			// Create job cleanup controller
-			jobCleanupController := jobs.NewJobCleanupController(
-				b.jobs,
-				jobHistoryWriter,
-				jobClaimExpiry,
-			)
-
-			go func() {
-				if err := jobCleanupController.Run(postStartHookCtx.Context); err != nil {
-					logging.FromContext(postStartHookCtx.Context).Error("job cleanup controller failed", "error", err)
-				}
-			}()
 
 			return nil
 		},
