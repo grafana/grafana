@@ -1,4 +1,4 @@
-import { UNSAFE_PortalProvider } from '@react-aria/overlays';
+import { UNSAFE_PortalProvider, usePreventScroll } from '@react-aria/overlays';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -6,11 +6,30 @@ import { getPortalContainer, PortalContainer } from '../Portal/Portal';
 
 import { Modal } from './Modal';
 
+jest.mock('@react-aria/overlays', () => {
+  const actual = jest.requireActual('@react-aria/overlays');
+  return {
+    ...actual,
+    usePreventScroll: jest.fn(),
+  };
+});
+
 describe('Modal', () => {
   it('renders nothing by default or when isOpen is false', () => {
     render(<Modal title="Some Title" />);
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('locks background scrolling when open and unlocks when closed', () => {
+    const { rerender } = render(<Modal title="Some Title" isOpen={false} />);
+    expect(usePreventScroll).toHaveBeenLastCalledWith({ isDisabled: true });
+
+    rerender(<Modal title="Some Title" isOpen={true} />);
+    expect(usePreventScroll).toHaveBeenLastCalledWith({ isDisabled: false });
+
+    rerender(<Modal title="Some Title" isOpen={false} />);
+    expect(usePreventScroll).toHaveBeenLastCalledWith({ isDisabled: true });
   });
 
   it('renders correct contents', () => {
