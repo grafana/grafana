@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { LoadingState } from '@grafana/data';
 import { usePluginComponent } from '@grafana/runtime';
 import { LogsSortOrder } from '@grafana/schema';
-import { createLogRow } from 'app/features/logs/components/mocks/logRow';
+import { createLogLine } from 'app/features/logs/components/mocks/logRow';
 
 import { AdaptiveLogsIncludeDroppedLogs } from './AdaptiveLogsIncludeDroppedLogs';
 
@@ -37,15 +37,14 @@ function mockPluginComponent(result: { component: typeof PluginComponent | null;
 
 const props = {
   includeAdditionalLogs: jest.fn(),
-  logs: [createLogRow({ uid: 'log-1' })],
+  logs: [createLogLine({ uid: 'log-1' })],
   logsLoadingState: LoadingState.Streaming,
   queries: [{ refId: 'A' }],
   renderedLogsWindow: {
-    startNs: '1000000000',
-    endNs: '2000000000',
     startRowIndex: 0,
     endRowIndex: 0,
     logsSortOrder: LogsSortOrder.Descending,
+    logs: [createLogLine({ uid: 'log-1' })],
   },
 };
 
@@ -107,7 +106,10 @@ describe('AdaptiveLogsIncludeDroppedLogs', () => {
   it.each([
     { desc: 'renderedLogsWindow is missing', override: { renderedLogsWindow: undefined } },
     { desc: 'includeAdditionalLogs is missing', override: { includeAdditionalLogs: undefined } },
-    { desc: 'logs is empty', override: { logs: [] } },
+    {
+      desc: 'renderedLogsWindow.logs is empty',
+      override: { renderedLogsWindow: { ...props.renderedLogsWindow, logs: [] } },
+    },
   ])('renders the plugin component when $desc', ({ override }) => {
     mockPluginComponent({ component: PluginComponent, isLoading: false });
 

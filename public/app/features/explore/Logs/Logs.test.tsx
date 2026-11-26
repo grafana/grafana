@@ -272,9 +272,9 @@ describe('Logs', () => {
     setup();
     await screen.findByText('log message 3');
 
-    const { onRenderedIndicesChanged } = logListMock.mock.calls.at(-1)[0];
+    const { onRenderedLogsChanged } = logListMock.mock.calls.at(-1)[0];
     act(() => {
-      onRenderedIndicesChanged({
+      onRenderedLogsChanged({
         visibleStartIndex: 1,
         visibleStopIndex: 2,
         overscanStartIndex: 0,
@@ -291,20 +291,20 @@ describe('Logs', () => {
     );
   });
 
-  it('coalesces rapid onRenderedIndicesChanged calls into the last one', async () => {
+  it('coalesces rapid onRenderedLogsChanged calls into the last one', async () => {
     includeDroppedLogsMock.mockClear();
     setup();
     await screen.findByText('log message 3');
 
-    const { onRenderedIndicesChanged } = logListMock.mock.calls.at(-1)[0];
+    const { onRenderedLogsChanged } = logListMock.mock.calls.at(-1)[0];
     act(() => {
-      onRenderedIndicesChanged({
+      onRenderedLogsChanged({
         visibleStartIndex: 0,
         visibleStopIndex: 1,
         overscanStartIndex: 0,
         overscanStopIndex: 1,
       });
-      onRenderedIndicesChanged({
+      onRenderedLogsChanged({
         visibleStartIndex: 1,
         visibleStopIndex: 2,
         overscanStartIndex: 0,
@@ -331,9 +331,9 @@ describe('Logs', () => {
     setup();
     await screen.findByText('log message 3');
 
-    const { onRenderedIndicesChanged } = logListMock.mock.calls.at(-1)[0];
+    const { onRenderedLogsChanged } = logListMock.mock.calls.at(-1)[0];
     act(() => {
-      onRenderedIndicesChanged({
+      onRenderedLogsChanged({
         visibleStartIndex: 1,
         visibleStopIndex: 2,
         overscanStartIndex: 0,
@@ -359,9 +359,9 @@ describe('Logs', () => {
     setup();
     await screen.findByText('log message 3');
 
-    const staleOnRenderedIndicesChanged = logListMock.mock.calls.at(-1)[0].onRenderedIndicesChanged;
+    const staleOnRenderedLogsChanged = logListMock.mock.calls.at(-1)[0].onRenderedLogsChanged;
     act(() => {
-      staleOnRenderedIndicesChanged({
+      staleOnRenderedLogsChanged({
         visibleStartIndex: 1,
         visibleStopIndex: 2,
         overscanStartIndex: 0,
@@ -374,9 +374,9 @@ describe('Logs', () => {
       onLogOptionsChange('sortOrder', LogsSortOrder.Ascending);
     });
 
-    const freshOnRenderedIndicesChanged = logListMock.mock.calls.at(-1)[0].onRenderedIndicesChanged;
+    const freshOnRenderedLogsChanged = logListMock.mock.calls.at(-1)[0].onRenderedLogsChanged;
     act(() => {
-      freshOnRenderedIndicesChanged({
+      freshOnRenderedLogsChanged({
         visibleStartIndex: 0,
         visibleStopIndex: 1,
         overscanStartIndex: 0,
@@ -402,8 +402,8 @@ describe('Logs', () => {
     const { unmount } = setup();
     await screen.findByText('log message 3');
 
-    const { onRenderedIndicesChanged } = logListMock.mock.calls.at(-1)[0];
-    const cancelSpy = jest.spyOn(onRenderedIndicesChanged, 'cancel');
+    const { onRenderedLogsChanged } = logListMock.mock.calls.at(-1)[0];
+    const cancelSpy = jest.spyOn(onRenderedLogsChanged, 'cancel');
 
     unmount();
 
@@ -415,9 +415,9 @@ describe('Logs', () => {
     setup();
     await screen.findByText('log message 3');
 
-    const { onRenderedIndicesChanged } = logListMock.mock.calls.at(-1)[0];
+    const { onRenderedLogsChanged } = logListMock.mock.calls.at(-1)[0];
     act(() => {
-      onRenderedIndicesChanged({
+      onRenderedLogsChanged({
         visibleStartIndex: 1,
         visibleStopIndex: 2,
         overscanStartIndex: 0,

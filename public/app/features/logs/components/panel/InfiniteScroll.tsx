@@ -334,15 +334,18 @@ export const InfiniteScroll = ({
     ]
   );
 
-  const { onRenderedIndicesChanged } = useLogListContext();
+  const { onRenderedLogsChanged } = useLogListContext();
 
   const onItemsRendered = useCallback(
     (props: ListOnItemsRenderedProps) => {
-      if (onRenderedIndicesChanged) {
-        onRenderedIndicesChanged({
-          ...props,
-          visibleStopIndex: Math.min(props.visibleStopIndex, logs.length - 1),
-        });
+      if (onRenderedLogsChanged) {
+        onRenderedLogsChanged(
+          {
+            ...props,
+            visibleStopIndex: Math.min(props.visibleStopIndex, logs.length - 1),
+          },
+          logs
+        );
       }
 
       if (!scrollElement) {
@@ -372,7 +375,7 @@ export const InfiniteScroll = ({
         setInfiniteLoaderState('idle');
       }
     },
-    [infiniteLoaderState, loadDirection, logs, onRenderedIndicesChanged, scrollElement]
+    [infiniteLoaderState, loadDirection, logs, onRenderedLogsChanged, scrollElement]
   );
 
   const getItemKey = useCallback((index: number) => (logs[index] ? logs[index].uniqueKey : index.toString()), [logs]);

@@ -729,14 +729,14 @@ describe('InfiniteScroll consecutive loads (regression #129033)', () => {
   });
 });
 
-describe('InfiniteScroll onRenderedIndicesChanged', () => {
+describe('InfiniteScroll onRenderedLogsChanged', () => {
   test('calls the context callback when items render', async () => {
-    const onRenderedIndicesChanged = jest.fn();
+    const onRenderedLogsChanged = jest.fn();
     const { element } = getMockElement(0);
     const logs = createLogs(absoluteRange.from, absoluteRange.to);
 
     render(
-      <LogListContextProvider {...logListContextDefaultProps} onRenderedIndicesChanged={onRenderedIndicesChanged}>
+      <LogListContextProvider {...logListContextDefaultProps} onRenderedLogsChanged={onRenderedLogsChanged}>
         <InfiniteScroll {...defaultProps} logs={logs} scrollElement={element as unknown as HTMLDivElement}>
           {({ getItemKey, itemCount, itemData, onItemsRendered, Log }) => (
             <VariableSizeList
@@ -758,8 +758,9 @@ describe('InfiniteScroll onRenderedIndicesChanged', () => {
     );
 
     expect(await screen.findByText('log line 1')).toBeInTheDocument();
-    expect(onRenderedIndicesChanged).toHaveBeenCalledWith(
-      expect.objectContaining({ visibleStartIndex: 0, visibleStopIndex: expect.any(Number) })
+    expect(onRenderedLogsChanged).toHaveBeenCalledWith(
+      expect.objectContaining({ visibleStartIndex: 0, visibleStopIndex: expect.any(Number) }),
+      logs
     );
   });
 
@@ -791,11 +792,11 @@ describe('InfiniteScroll onRenderedIndicesChanged', () => {
   });
 
   test('calls the context callback even when scrollElement is null', async () => {
-    const onRenderedIndicesChanged = jest.fn();
+    const onRenderedLogsChanged = jest.fn();
     const logs = createLogs(absoluteRange.from, absoluteRange.to);
 
     render(
-      <LogListContextProvider {...logListContextDefaultProps} onRenderedIndicesChanged={onRenderedIndicesChanged}>
+      <LogListContextProvider {...logListContextDefaultProps} onRenderedLogsChanged={onRenderedLogsChanged}>
         <InfiniteScroll {...defaultProps} logs={logs} scrollElement={null}>
           {({ getItemKey, itemCount, itemData, onItemsRendered, Log }) => (
             <VariableSizeList
@@ -817,7 +818,7 @@ describe('InfiniteScroll onRenderedIndicesChanged', () => {
     );
 
     expect(await screen.findByText('log line 1')).toBeInTheDocument();
-    expect(onRenderedIndicesChanged).toHaveBeenCalled();
+    expect(onRenderedLogsChanged).toHaveBeenCalled();
   });
 });
 

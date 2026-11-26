@@ -188,7 +188,7 @@ export interface Props {
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
-  onRenderedIndicesChanged?: (range: ListOnItemsRenderedProps) => void;
+  onRenderedLogsChanged?: (range: ListOnItemsRenderedProps, logs: LogListModel[]) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
   onUnpinLine?: (row: LogRowModel) => void;
   permalinkedLogId?: string;
@@ -236,7 +236,7 @@ export const LogListContextProvider = ({
   onLogLineHover,
   onPermalinkClick,
   onPinLine,
-  onRenderedIndicesChanged,
+  onRenderedLogsChanged,
   onOpenContext,
   onUnpinLine,
   permalinkedLogId,
@@ -656,7 +656,7 @@ export const LogListContextProvider = ({
         onLogLineHover,
         onPermalinkClick,
         onPinLine,
-        onRenderedIndicesChanged,
+        onRenderedLogsChanged,
         onOpenContext,
         onUnpinLine,
         permalinkedLogId,

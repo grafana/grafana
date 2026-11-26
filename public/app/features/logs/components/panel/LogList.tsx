@@ -78,7 +78,7 @@ export interface Props {
   onClickHideField?: (key: string) => void;
   onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
-  onRenderedIndicesChanged?: (range: ListOnItemsRenderedProps) => void;
+  onRenderedLogsChanged?: (range: ListOnItemsRenderedProps, logs: LogListModel[]) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
@@ -163,7 +163,7 @@ export const LogList = ({
   onLogOptionsChange,
   onLogLineHover,
   onPermalinkClick,
-  onRenderedIndicesChanged,
+  onRenderedLogsChanged,
   onPinLine,
   onOpenContext,
   onUnpinLine,
@@ -213,7 +213,7 @@ export const LogList = ({
       onLogOptionsChange={onLogOptionsChange}
       onLogLineHover={onLogLineHover}
       onPermalinkClick={onPermalinkClick}
-      onRenderedIndicesChanged={onRenderedIndicesChanged}
+      onRenderedLogsChanged={onRenderedLogsChanged}
       onPinLine={onPinLine}
       onOpenContext={onOpenContext}
       onUnpinLine={onUnpinLine}

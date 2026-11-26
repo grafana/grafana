@@ -1,17 +1,26 @@
+import { debounce } from 'lodash';
+import { useEffect, useMemo, useState } from 'react';
+import { type ListOnItemsRenderedProps } from 'react-window';
+
 import { type DataFrame, type LoadingState, type LogRowModel, type TimeRange } from '@grafana/data';
 import { usePluginComponent } from '@grafana/runtime';
 import { useFlagAdaptivelogsEnableTimeMachine } from '@grafana/runtime/internal';
 import { type LogsSortOrder, type DataQuery } from '@grafana/schema';
+import { type LogListModel } from 'app/features/logs/components/panel/processing';
+
+import { type LogsVisualisationType } from './constants';
 
 const INCLUDE_DROPPED_LOGS_COMPONENT_ID = 'grafana-adaptivelogs-app/include-dropped-logs/v1';
 
 /**
  * Indicate which logs are currently visible on screen (so we can include more in that range)
  */
-export type RenderedLogsWindow = {
+type RenderedLogsWindow = {
   startRowIndex: number;
   endRowIndex: number;
   logsSortOrder: LogsSortOrder;
+  /** The (potentially filtered) array of logs the indices apply to */
+  logs: LogListModel[];
 };
 
 /**
@@ -26,6 +35,7 @@ type IncludeAdditionalLogsResult = {
 
 type Props = {
   includeAdditionalLogs?: IncludeAdditionalLogs;
+  /** All unique fetched logs */
   logs: LogRowModel[];
   logsLoadingState: LoadingState;
   queries?: DataQuery[];
@@ -42,4 +52,40 @@ export function AdaptiveLogsIncludeDroppedLogs(props: Props) {
   }
 
   return <IncludeDroppedLogs {...props} />;
+}
+
+export function useRenderedLogsWindow(visualisationType: LogsVisualisationType, logsSortOrder: LogsSortOrder) {
+  const [renderedLogsWindowDebounced, setRenderedLogsWindowDebounced] = useState<RenderedLogsWindow | undefined>();
+
+  const onRenderedLogsChanged = useMemo(
+    () =>
+      debounce((indices: ListOnItemsRenderedProps, logs: LogListModel[]) => {
+        // debounce to avoid chain reaction on each scroll tick
+        setRenderedLogsWindowDebounced({
+          startRowIndex: indices.visibleStartIndex,
+          endRowIndex: indices.visibleStopIndex,
+          logsSortOrder,
+          logs,
+        });
+      }, 250),
+    [logsSortOrder]
+  );
+
+  useEffect(() => () => onRenderedLogsChanged.cancel(), [onRenderedLogsChanged]);
+
+  // Masks the debounced value whenever it's stale (or incompatible) relative to the current display state
+  const renderedLogsWindow = useMemo(() => {
+    // The following cases disable with rendered logs window via `undefined`
+    if (
+      // Only the InfiniteScroll type is supported
+      visualisationType !== 'logs' ||
+      // If the "old" debounced value doesn't match a recent change, we disable until it does
+      renderedLogsWindowDebounced?.logsSortOrder !== logsSortOrder //
+    ) {
+      return undefined;
+    }
+    return renderedLogsWindowDebounced;
+  }, [visualisationType, logsSortOrder, renderedLogsWindowDebounced]);
+
+  return { renderedLogsWindow, onRenderedLogsChanged };
 }

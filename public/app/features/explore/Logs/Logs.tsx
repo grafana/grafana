@@ -790,28 +790,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [exploreId, loading, props.logsFrames, props.range]
   );
 
-  const [renderedLogsWindowDebounced, setRenderedLogsWindowDebounced] = useState<RenderedLogsWindow | undefined>();
-
-  const updateRenderedLogsWindow = useMemo(
-    () =>
-      debounce((indices: ListOnItemsRenderedProps) => {
-        // debounce to avoid chain reaction on each scroll tick
-        setRenderedLogsWindowDebounced({
-          startRowIndex: indices.visibleStartIndex,
-          endRowIndex: indices.visibleStopIndex,
-          logsSortOrder,
-        });
-      }, 250),
-    [logsSortOrder]
-  );
-  useEffect(() => () => updateRenderedLogsWindow.cancel(), [updateRenderedLogsWindow]);
-
-  const renderedLogsWindow = useMemo(() => {
-    if (visualisationType !== 'logs' || renderedLogsWindowDebounced?.logsSortOrder !== logsSortOrder) {
-      return undefined;
-    }
-    return renderedLogsWindowDebounced;
-  }, [visualisationType, logsSortOrder, renderedLogsWindowDebounced]);
+  const { renderedLogsWindow, onRenderedLogsChanged } = useRenderedLogsWindow(visualisationType, logsSortOrder);
 
   return (
     <>
@@ -1000,7 +979,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   onOpenContext={onOpenContext}
                   onPermalinkClick={onPermalinkClick}
                   onPinLine={onPinToContentOutlineClick}
-                  onRenderedIndicesChanged={updateRenderedLogsWindow}
+                  onRenderedLogsChanged={onRenderedLogsChanged}
                   onUnpinLine={onPinToContentOutlineClick}
                   permalinkedLogId={panelState?.logs?.id}
                   pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
