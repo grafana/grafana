@@ -126,7 +126,7 @@ func SignLocalAccessToken(ctx context.Context, policy LocalAccessPolicy, req aut
 // LocalServiceIdentity is the service identity claim on tokens signed for
 // pluginID, so APIs can tell which plugin a request came from.
 func LocalServiceIdentity(pluginID string) string {
-	return "plugin-" + pluginID
+	return "plugin:" + pluginID
 }
 
 func (e *localExchanger) signForPolicy(ctx context.Context, policy LocalAccessPolicy, req authnlib.TokenExchangeRequest) (string, error) {
