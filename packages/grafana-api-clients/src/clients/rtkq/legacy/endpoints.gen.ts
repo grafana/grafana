@@ -4186,6 +4186,18 @@ export type FieldRepresentsATypedColumnOfDataWithinAFrame = {
     of name and Labels should be unique for proper behavior in all situations. */
   name?: string;
 };
+export type ExperimentalFrameContinuationIsTheValueOfFrameMetaContinues = {
+  /** Fields has one entry for each field of the frame that continues. The entry is the index of the
+    same field in the earlier frame, or -1 for a new field. Each field of the earlier frame must have
+    exactly one entry. */
+  fields?: number[];
+  /** FillValue is the value of the new fields in the rows of the earlier frame. When it is nil, these
+    rows keep the zero value of the field type, which is null for a nullable field. LongToWide gives
+    the same values to the earlier rows of a series that starts late. */
+  fillValue?: number;
+  /** FrameID is the frame ID of the earlier frame, in the same refId. */
+  frameId?: string;
+};
 export type DataTopicIsUsedToIdentifyWhichTopicTheFrameShouldBeAssignedTo = string;
 export type InspectTypeIsATypeForTheInspectPropertyOfANotice = number;
 export type NoticeSeverityIsATypeForTheSeverityPropertyOfANotice = number;
@@ -4250,6 +4262,7 @@ export type FrameTypeIsA2NumberVersionMajorMinor = number[];
 export type FrameMetaMatches = {
   /** Channel is the path to a stream in grafana live that has real-time updates for this data. */
   channel?: string;
+  continues?: ExperimentalFrameContinuationIsTheValueOfFrameMetaContinues;
   /** Custom datasource specific values. */
   custom?: any;
   dataTopic?: DataTopicIsUsedToIdentifyWhichTopicTheFrameShouldBeAssignedTo;
