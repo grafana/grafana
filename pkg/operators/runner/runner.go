@@ -103,7 +103,7 @@ func (op Operator) Run(ctx context.Context, deps server.OperatorDependencies) (r
 	health := &readiness{notifier: deps.HealthNotifier}
 	defer func() {
 		health.stop()
-		runErr = errors.Join(runErr, stop())
+		runErr = joinStopError(runErr, stop())
 	}()
 	if err != nil {
 		return err
@@ -139,6 +139,19 @@ func (op Operator) await(ctx context.Context, logger logging.Logger, health *rea
 		logger.Warn("shutdown timeout exceeded, forcing exit", "timeout", parts.ShutdownTimeout)
 		return nil
 	}
+}
+
+// joinStopError adds a failure to stop the services to Run's error. A plain
+// cancellation is dropped first: the module server ignores errors matching
+// context.Canceled, which would hide the stop failure.
+func joinStopError(runErr, stopErr error) error {
+	if stopErr == nil {
+		return runErr
+	}
+	if errors.Is(runErr, context.Canceled) {
+		runErr = nil
+	}
+	return errors.Join(runErr, stopErr)
 }
 
 // dependencyCause replaces the cancellation Run reports when a supervised
