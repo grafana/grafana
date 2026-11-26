@@ -10,12 +10,13 @@ BannerActionButton is an outline button for actions inside a banner. It takes it
 
 ## When to use
 
-- For the action of a banner.
-- For actions placed in a banner's content, when a banner needs more than one.
+- For a button in a `Banner`'s content. `Banner` gives it the banner's colors, so you don't need to set any.
+- For the action of a banner component that isn't a `Banner`, with a `severity` or a `customColor` that matches it.
 
 ## Never use for
 
 - **An action outside a banner.** Use `Button` or `LinkButton`.
+- **The action of a `Banner`.** Pass a `Button` or `LinkButton` as `action`, and `Banner` renders it as a `BannerActionButton` in its colors.
 
 ## Do's and don'ts
 

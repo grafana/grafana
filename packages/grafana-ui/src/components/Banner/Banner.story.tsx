@@ -10,6 +10,7 @@ import { Stack } from '../Layout/Stack/Stack';
 import { LinkButton } from '../LinkButton/LinkButton';
 
 import { Banner, type BannerProps, type BannerThemeColor } from './Banner';
+import mdx from './Banner.mdx';
 import { type BannerSeverity } from './types';
 
 const severities: BannerSeverity[] = ['error', 'warning', 'info', 'success'];
@@ -19,6 +20,9 @@ const meta: Meta = {
   title: 'Information/Banner',
   component: Banner,
   parameters: {
+    docs: {
+      page: mdx,
+    },
     controls: { exclude: ['onRemove', 'action'] },
   },
   argTypes: {
