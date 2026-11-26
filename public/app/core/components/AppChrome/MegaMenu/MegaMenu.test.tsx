@@ -407,6 +407,18 @@ describe('MegaMenu', () => {
           ).toBeNull();
         });
 
+        it('divides it from the section, which scrolls', async () => {
+          renderMegaMenu();
+          const section = await screen.findByTestId('mega-menu-section');
+          await within(section).findByText('Conversations section');
+          const action = screen.getByRole('button', { name: 'Pro plan' });
+
+          const between = screen
+            .getAllByRole('separator')
+            .filter((separator) => follows(section, separator) && follows(separator, action));
+          expect(between).toHaveLength(1);
+        });
+
         it('keeps it at the end of the navigation while the section shows nothing', async () => {
           showSection(() => null);
           renderMegaMenu();
