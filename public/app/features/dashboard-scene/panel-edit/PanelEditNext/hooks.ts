@@ -126,7 +126,6 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
   // scrolls, which a flex ratio splitting a fixed height cannot express.
   const vizDataSplitter = useSnappingSplitter({
     direction: 'column',
-    dragPosition: 'start',
     handleSize: 'sm',
     initialSize: vizRatio,
     collapseBelowPixels: DATA_PANE_COLLAPSE_BELOW_PIXELS,
@@ -140,8 +139,6 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
   // anyway, so there is nothing to disable.
   const sidebarSplitter = useSnappingSplitter({
     direction: 'row',
-    // The sidebar is the primary (left) pane, so the handle indicator sits on its right border.
-    dragPosition: 'start',
     handleSize: 'sm',
     usePixels: true,
     pixelPane: 'primary',
