@@ -249,12 +249,12 @@ describe('getPanelOptionsWithDefaults', () => {
   });
 
   describe('when changing panel type with a categorical palette colored by value', () => {
-    const defaults = { color: { mode: FieldColorModeId.PaletteCategoricalNext, byValue: true } };
+    const defaults = { color: { mode: FieldColorModeId.PaletteCategoricalNext, assignment: 'value' as const } };
 
     it.each([
       { name: 'does not support by value colors', settings: { byValueSupport: false } },
       { name: 'colors by series', settings: { byValueSupport: true, bySeriesSupport: true } },
-    ])('keeps the palette but drops byValue when the panel $name', ({ settings }) => {
+    ])('keeps the palette but drops the value assignment when the panel $name', ({ settings }) => {
       const result = runScenario({
         defaults,
         standardOptions: { [FieldConfigProperty.Color]: { settings } },
@@ -264,7 +264,7 @@ describe('getPanelOptionsWithDefaults', () => {
       expect(result.fieldConfig.defaults.color).toEqual({ mode: FieldColorModeId.PaletteCategoricalNext });
     });
 
-    it('keeps byValue when the panel prefers thresholds', () => {
+    it('keeps the value assignment when the panel prefers thresholds', () => {
       const result = runScenario({
         defaults,
         standardOptions: {

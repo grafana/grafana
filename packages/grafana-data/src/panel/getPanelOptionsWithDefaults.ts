@@ -171,13 +171,13 @@ function adaptFieldColorMode(
     const colorSettings: FieldColorConfigSettings = color.settings;
     let mode = fieldColorModeRegistry.getIfExists(fieldConfig.defaults.color?.mode);
 
-    if (fieldConfig.defaults.color?.byValue && mode) {
+    if (fieldConfig.defaults.color?.assignment === 'value' && mode) {
       if (!colorSettings.byValueSupport || colorSettings.bySeriesSupport) {
-        // Keep the palette but drop coloring by value, the same panels reset the by value schemes below
-        const { byValue, ...rest } = fieldConfig.defaults.color;
+        // Keep the palette but drop assigning by value, the same panels reset the by value schemes below
+        const { assignment, ...rest } = fieldConfig.defaults.color;
         fieldConfig.defaults.color = rest;
       } else {
-        mode = getFieldColorMode(mode.id, false, true);
+        mode = getFieldColorMode(mode.id, false, 'value');
       }
     }
 

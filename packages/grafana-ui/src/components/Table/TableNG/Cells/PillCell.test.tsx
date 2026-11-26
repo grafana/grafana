@@ -577,9 +577,9 @@ describe('PillCell', () => {
 
     // TODO: handle null values?
   });
-  describe('Color by value (palette byValue)', () => {
+  describe('Color by value (palette assignment)', () => {
     it('hashes the raw token, not the formatted text', () => {
-      const color = { mode: FieldColorModeId.PaletteClassic, byValue: true };
+      const color = { mode: FieldColorModeId.PaletteClassic, assignment: 'value' as const };
       const plain: Field = { ...fieldWithValues(['alpha']), config: { color } };
       const formatted: Field = {
         ...fieldWithValues(['alpha']),
