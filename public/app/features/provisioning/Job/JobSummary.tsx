@@ -1,7 +1,8 @@
 import { t } from '@grafana/i18n';
 import { Icon, InteractiveTable, Stack } from '@grafana/ui';
 import { type JobResourceSummary } from 'app/api/clients/provisioning/v0alpha1';
-import { findKind } from 'app/core/kinds/coreKinds';
+
+import { findKindOf } from '../utils/resourceKinds';
 
 type SummaryCell = {
   row: {
@@ -20,7 +21,7 @@ const COUNTERS = ['create', 'update', 'delete', 'write', 'noop', 'error', 'warni
 function aggregateByKind(summary: JobResourceSummary[]): JobResourceSummary[] {
   const merged = new Map<string, JobResourceSummary>();
   for (const item of summary) {
-    const group = (item.group && item.kind && findKind(item.group, item.kind)?.group) || item.group;
+    const group = findKindOf(item)?.group ?? item.group;
     const key = `${group ?? ''}/${item.kind ?? ''}`;
     const existing = merged.get(key);
     if (!existing) {
@@ -44,7 +45,7 @@ const getSummaryColumns = () => [
     id: 'resource',
     header: t('provisioning.job-summary.column-resource', 'Resource'),
     cell: ({ row: { original: item } }: SummaryCell) => {
-      const info = item.group && item.kind ? findKind(item.group, item.kind) : undefined;
+      const info = findKindOf(item);
       const kind = info?.getLabel() || item.kind || t('provisioning.job-summary.unknown-kind', 'Unknown');
       return (
         <Stack direction="row" alignItems="center" gap={1}>

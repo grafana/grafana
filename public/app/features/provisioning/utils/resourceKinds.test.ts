@@ -2,13 +2,15 @@ import { HttpResponse, http } from 'msw';
 
 import server from '@grafana/test-utils/server';
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
-import { addKinds, findKind } from 'app/core/kinds/coreKinds';
+import { addKinds, CORE_KINDS, findKind } from 'app/core/kinds/coreKinds';
 
+import { pluginKind } from '../mocks/factories';
 import { setupProvisioningMswServer } from '../mocks/server';
 
 import {
   type ResourceKindInfo,
   resourceKindInfos,
+  getKindKey,
   getMigratableKinds,
   isResourceKindAvailable,
   readImmediateParent,
@@ -92,6 +94,12 @@ describe('getRoute', () => {
     expect(resourceKindInfos.dashboard.getRoute('abc')).toBe('/d/abc');
     expect(resourceKindInfos.folder.getRoute('xyz')).toBe('/dashboards/f/xyz');
     expect(resourceKindInfos.playlist.getRoute('pl1')).toBe('/playlists/edit/pl1');
+  });
+});
+
+describe('getKindKey', () => {
+  it('lower-cases a kind of several words without a separator', () => {
+    expect(getKindKey(CORE_KINDS.librarypanel)).toBe('librarypanel');
   });
 });
 
@@ -300,20 +308,10 @@ describe('listing a collection kind', () => {
 });
 
 describe('plugin kinds', () => {
-  const group = 'example.ext.grafana.app';
+  const { group } = pluginKind;
 
   beforeAll(() => {
-    addKinds([
-      {
-        group: 'example.ext.grafana.app',
-        kind: 'Thing',
-        resource: 'things',
-        folderScoped: false,
-        getLabel: ({ upperFirst = true } = {}) => (upperFirst ? 'Plugin thing' : 'plugin thing'),
-        getPluralLabel: () => 'Plugin things',
-        icon: 'tag-alt',
-      },
-    ]);
+    addKinds([pluginKind]);
   });
 
   it('reports a plugin kind as available once the backend enables it', () => {

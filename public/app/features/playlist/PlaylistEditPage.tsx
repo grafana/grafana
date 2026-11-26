@@ -6,6 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { ManagedResourceBadge } from 'app/features/provisioning/components/ManagedResourceBadge';
 import { SaveProvisionedResourceDrawer } from 'app/features/provisioning/components/Shared/SaveProvisionedResourceDrawer';
 import { useResourceRepositorySelection } from 'app/features/provisioning/hooks/useResourceRepositorySelection';
@@ -16,7 +17,6 @@ import {
   isManaged,
   isManagedByRepository,
 } from 'app/features/provisioning/utils/managedResource';
-import { resourceKindInfos } from 'app/features/provisioning/utils/resourceKinds';
 
 import { type Playlist, useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist/v1';
 
@@ -31,7 +31,7 @@ export const PlaylistEditPage = () => {
   const { uid = '' } = useParams();
   const { data, isLoading, isError, error } = useGetPlaylistQuery({ name: uid });
   const [replacePlaylist] = useReplacePlaylistMutation();
-  const { isAvailable, repositories } = useResourceRepositorySelection(resourceKindInfos.playlist);
+  const { isAvailable, repositories } = useResourceRepositorySelection(CORE_KINDS.playlist);
   // Holds the edited playlist while the provisioning save drawer is open.
   const [provisionedPlaylist, setProvisionedPlaylist] = useState<Playlist | undefined>();
 

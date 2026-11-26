@@ -3,6 +3,8 @@ import { render, screen, within } from 'test/test-utils';
 import { type JobResourceSummary } from 'app/api/clients/provisioning/v0alpha1';
 import { addKinds } from 'app/core/kinds/coreKinds';
 
+import { pluginKind } from '../mocks/factories';
+
 import { JobSummary } from './JobSummary';
 
 function setup(summary: JobResourceSummary[]) {
@@ -48,18 +50,8 @@ describe('JobSummary', () => {
   });
 
   it('shows the label that a plugin adds for its kind', async () => {
-    addKinds([
-      {
-        group: 'example.ext.grafana.app',
-        kind: 'Thing',
-        resource: 'things',
-        folderScoped: false,
-        getLabel: ({ upperFirst = true } = {}) => (upperFirst ? 'Plugin thing' : 'plugin thing'),
-        getPluralLabel: () => 'Plugin things',
-        icon: 'tag-alt',
-      },
-    ]);
-    setup([{ group: 'example.ext.grafana.app', kind: 'Thing', create: 1 }]);
+    addKinds([pluginKind]);
+    setup([{ group: pluginKind.group, kind: pluginKind.kind, create: 1 }]);
 
     const row = await rowFor('Plugin thing');
     expect(within(row).getByText('Plugin thing')).toBeInTheDocument();

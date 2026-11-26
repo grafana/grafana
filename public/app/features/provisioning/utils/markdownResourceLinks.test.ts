@@ -184,5 +184,19 @@ describe('createGrafanaLinkResolver', () => {
 
       expect(resolve('team-a/NOTES.md')).toBeUndefined();
     });
+
+    it('resolves a doc only when its directory is a folder of the folder API group', () => {
+      // Another API group can serve a `folders` resource of its own, which has no folder page.
+      const resolve = createGrafanaLinkResolver(
+        [
+          resource({ group: 'folder.grafana.app', resource: 'folders', name: 'fold1', path: 'team-a' }),
+          resource({ group: 'myapp.ext.grafana.app', resource: 'folders', name: 'pf1', path: 'team-b' }),
+        ],
+        undefined
+      );
+
+      expect(resolve('team-a/NOTES.md')).toBe('/dashboards/f/fold1?docTab=NOTES.md');
+      expect(resolve('team-b/NOTES.md')).toBeUndefined();
+    });
   });
 });

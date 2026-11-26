@@ -36,6 +36,7 @@ import {
   flattenTree,
   getIconName,
   getStatusCategory,
+  getTypeLabel,
   type StatusCategory,
   mergeFilesAndResources,
 } from '../utils/treeUtils';
@@ -81,6 +82,8 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   );
 
   const resourceFilterOptions: Array<ComboboxOption<string>> = useMemo(() => {
+    // The filter and its URL param go by the plural alone, so kinds that share a plural across
+    // groups share one option, labelled by the last of those groups.
     const resources = new Map(resourcesQuery.data?.items?.map((item) => [item.resource, item.group]));
     return Array.from(resources, ([value, group]) => ({
       label: findKindByResource(group, value)?.getPluralLabel() ?? value,
@@ -169,7 +172,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         id: 'type',
         header: t('provisioning.resource-tree.header-type', 'Type'),
         cell: ({ row: { original } }: TreeCell) => {
-          return <span>{original.item.type}</span>;
+          return <span>{getTypeLabel(original.item)}</span>;
         },
       },
       {

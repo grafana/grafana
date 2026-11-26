@@ -1,9 +1,10 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
 import { config } from '@grafana/runtime';
+import { type KindInfo } from '@grafana/runtime/unstable';
 import { type RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { isResourceKindAvailable, type ResourceKindInfo } from '../utils/resourceKinds';
+import { isResourceKindAvailable } from '../utils/resourceKinds';
 
 export interface ResourceRepositorySelection {
   /**
@@ -21,10 +22,9 @@ export interface ResourceRepositorySelection {
  * repositories available for it. Use this to gate a repository selector on a resource's
  * create/edit surface (playlists, etc.).
  *
- * Gates strictly on `availableResources` (passing `[]` rather than `undefined` so a not-yet-loaded
- * settings response doesn't fall back to "all kinds available").
+ * Gates strictly on `availableResources`: until the settings load, no kind is available.
  */
-export function useResourceRepositorySelection(info: ResourceKindInfo): ResourceRepositorySelection {
+export function useResourceRepositorySelection(info: KindInfo): ResourceRepositorySelection {
   const provisioningEnabled = Boolean(config.provisioningEnabled);
   const { data } = useGetFrontendSettingsQuery(provisioningEnabled ? undefined : skipToken);
 

@@ -44,6 +44,7 @@ import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type CommitTemplateVars, getResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl, getSavedDashboardPath } from '../../utils/redirect';
+import { getKindKey } from '../../utils/resourceKinds';
 import { getRequestRef } from '../../utils/workflow';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
@@ -171,7 +172,7 @@ export function SaveProvisionedDashboardForm({
 
   const templateVars: CommitTemplateVars = {
     action: createsFile ? 'create' : 'update',
-    resourceKind: CORE_KINDS.dashboard.kind,
+    resourceKind: getKindKey(CORE_KINDS.dashboard),
     resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
     title: title ?? '',
     ...getCurrentCommitUser(),
@@ -343,7 +344,7 @@ export function SaveProvisionedDashboardForm({
           comment: '',
           repository,
           action: 'create',
-          resourceKind: CORE_KINDS.folder.kind,
+          resourceKind: getKindKey(CORE_KINDS.folder),
           resourceID: '',
           title: folderName,
           ...getCurrentCommitUser(),

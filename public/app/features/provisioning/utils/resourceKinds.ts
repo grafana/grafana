@@ -3,9 +3,9 @@ import { type UnknownAction } from '@reduxjs/toolkit';
 import { getBackendSrv } from '@grafana/runtime';
 import { type KindInfo } from '@grafana/runtime/unstable';
 import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
-import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
+import { type ResourceCount, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
-import { CORE_KINDS, coversGroup } from 'app/core/kinds/coreKinds';
+import { CORE_KINDS, coversGroup, findKind, findKindByResource } from 'app/core/kinds/coreKinds';
 import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
@@ -150,9 +150,43 @@ export interface ResourceKindInfo extends KindInfo {
 // each call site.
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
+/**
+ * Stable key for a kind: its Kubernetes kind in lower case, such as `playlist`, which is also the
+ * kind's key in {@link CORE_KINDS}. It is the commit message noun, the branch prefix, the telemetry
+ * value and the fallback file name. Repository templates are written against the lower-case form,
+ * so it must not follow how the kind is spelled. It is not the label either: a label is translated
+ * and can hold spaces, and this word lands in git history that every user shares.
+ */
+export function getKindKey(kind: Pick<KindInfo, 'kind'>): string {
+  return kind.kind.toLowerCase();
+}
+
+/**
+ * Whether two descriptions name the same kind. The entries above are copies of their
+ * {@link CORE_KINDS} rows, so `===` tells a copy from its row. The group and the kind do not.
+ */
+export function isSameKind(a: Pick<KindInfo, 'group' | 'kind'>, b: Pick<KindInfo, 'group' | 'kind'>): boolean {
+  return a.group === b.group && a.kind === b.kind;
+}
+
 /** The Git Sync details provisioning keeps for a kind, if it keeps any. */
 export function findResourceKindInfo(kind: Pick<KindInfo, 'group' | 'kind'>): ResourceKindInfo | undefined {
-  return allKindInfos.find((info) => info.group === kind.group && info.kind === kind.kind);
+  return allKindInfos.find((info) => isSameKind(info, kind));
+}
+
+/** The kind of an object in an API response, which may leave out its group or its kind. */
+export function findKindOf(object: { group?: string; kind?: string } | undefined): KindInfo | undefined {
+  return object?.group && object.kind ? findKind(object.group, object.kind) : undefined;
+}
+
+/**
+ * The kind that a resource stat counts. Compatibility hack: older stats responses may name folders
+ * by the legacy `folders` group. Every other stat needs the real API group.
+ */
+export function findKindByStat({ group, resource }: Pick<ResourceCount, 'group' | 'resource'>): KindInfo | undefined {
+  const { folder } = CORE_KINDS;
+  const isLegacyFolder = group === folder.resource && resource === folder.resource;
+  return findKindByResource(isLegacyFolder ? folder.group : group, resource);
 }
 
 /**

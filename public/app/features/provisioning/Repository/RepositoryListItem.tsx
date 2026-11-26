@@ -7,7 +7,7 @@ import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Card, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
-import { findKindByResource } from 'app/core/kinds/coreKinds';
+import { CORE_KINDS, findKindByResource } from 'app/core/kinds/coreKinds';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
@@ -23,7 +23,6 @@ import {
   isProvisioningResourceReadOnly,
 } from '../utils/managedResource';
 import { getRepositoryEditUrl, getRepositoryResourcesUrl } from '../utils/repository';
-import { resourceKindInfos } from '../utils/resourceKinds';
 import { getManagedReadOnlyTooltip } from '../utils/tooltip';
 
 import { SyncRepository } from './SyncRepository';
@@ -128,7 +127,7 @@ export function RepositoryListItem({ repository }: Props) {
         <Stack gap={1} direction="row">
           <LinkButton
             icon="eye"
-            href={resourceKindInfos.repository.getRoute(name)}
+            href={CORE_KINDS.repository.getRoute(name)}
             variant="primary"
             size="md"
             data-testid={selectors.pages.Provisioning.RepositoryList.viewLink(name)}
@@ -140,7 +139,7 @@ export function RepositoryListItem({ repository }: Props) {
             variant="secondary"
             icon="download-alt"
             size="md"
-            onClick={() => exportResourceAsJson(repository, resourceKindInfos.repository.kind)}
+            onClick={() => exportResourceAsJson(repository, CORE_KINDS.repository.kind)}
           >
             <Trans i18nKey="provisioning.repository-card.export">Export</Trans>
           </Button>

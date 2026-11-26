@@ -18,6 +18,7 @@ import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type MoveJobSpec, toResourceRef } from '../../types/job';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
+import { getKindKey } from '../../utils/resourceKinds';
 import { getRequestRef } from '../../utils/workflow';
 import { getResourceTargetPath, getTargetFolderPathInRepo, isResourceAlreadyInTarget } from '../BulkActions/utils';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -54,7 +55,7 @@ export function MoveProvisionedDashboardForm({
 
   const templateVars: CommitTemplateVars = {
     action: 'move',
-    resourceKind: CORE_KINDS.dashboard.kind,
+    resourceKind: getKindKey(CORE_KINDS.dashboard),
     resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
     title: dashboard.state.title ?? '',
     ...getCurrentCommitUser(),

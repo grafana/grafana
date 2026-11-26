@@ -54,7 +54,7 @@ describe('useResourceStats', () => {
     mockStats({
       instance: [
         { group: 'dashboard.grafana.app', resource: 'dashboards', count: 3 },
-        { group: 'folder.grafana.app', resource: 'folders', count: 2 },
+        { group: 'folders', resource: 'folders', count: 2 },
         // Unknown kind is ignored so the total only reflects kinds the UI knows about.
         { group: 'secret.grafana.app', resource: 'secrets', count: 9 },
       ],
@@ -78,7 +78,7 @@ describe('useResourceStats', () => {
     mockStats({
       managed: [
         { kind: 'repo', stats: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 4 }] },
-        { kind: 'terraform', stats: [{ group: 'folder.grafana.app', resource: 'folders', count: 6 }] },
+        { kind: 'terraform', stats: [{ group: 'folders', resource: 'folders', count: 6 }] },
       ],
     });
 

@@ -84,6 +84,11 @@ export function getIconName({ kind }: Pick<TreeItem, 'kind'>): IconName {
   return kind?.icon ?? 'file-alt';
 }
 
+/** The text of the Type column: the item's Kubernetes kind, or `File` for a plain file. */
+export function getTypeLabel({ kind }: Pick<TreeItem, 'kind'>): string {
+  return kind?.kind ?? 'File';
+}
+
 export function getStatus(fileHash?: string, resourceHash?: string): SyncStatus {
   if (fileHash !== undefined && resourceHash !== undefined) {
     // Empty file hash means inferred folder (synced if resource exists)
@@ -130,7 +135,6 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
     nodeMap.set(item.path, {
       path: item.path,
       title: getDisplayTitle(item.path, item.resource),
-      type: kind?.kind ?? 'File',
       kind,
       level: 0,
       children: [],

@@ -11,10 +11,9 @@ import {
   useGetRepositoryFilesQuery,
   useGetResourceStatsQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
-import { findKindByResource } from 'app/core/kinds/coreKinds';
 import { ManagerKind } from 'app/features/apiserver/types';
 
-import { findResourceKindInfo } from '../../utils/resourceKinds';
+import { findKindByStat, findResourceKindInfo } from '../../utils/resourceKinds';
 
 export type UseResourceStatsOptions = {
   isHealthy?: boolean; // true only when healthy AND reconciled
@@ -22,7 +21,7 @@ export type UseResourceStatsOptions = {
 };
 
 function isProvisioningKind(stat: ResourceCount) {
-  const kind = findKindByResource(stat.group, stat.resource);
+  const kind = findKindByStat(stat);
   return kind !== undefined && findResourceKindInfo(kind) !== undefined;
 }
 
@@ -48,7 +47,7 @@ function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
   let resourceCount = 0;
 
   const addStat = (stat: ResourceCount) => {
-    // Only count kinds the UI knows about (folders, dashboards, ...).
+    // Only count kinds provisioning manages (folders, dashboards, ...).
     if (isProvisioningKind(stat)) {
       resourceCount += stat.count;
     }

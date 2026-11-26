@@ -24,6 +24,7 @@ import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
+import { getKindKey } from '../../utils/resourceKinds';
 import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -63,7 +64,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
   const title = watch('title');
   const templateVars: CommitTemplateVars = {
     action: 'create',
-    resourceKind: CORE_KINDS.folder.kind,
+    resourceKind: getKindKey(CORE_KINDS.folder),
     resourceID: '',
     title: title ?? '',
     ...getCurrentCommitUser(),

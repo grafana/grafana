@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom-v5-compat';
 
+import { type KindInfo } from '@grafana/runtime/unstable';
 import { useDispatch } from 'app/types/store';
 
 import { buildResourceBranchRedirectUrl, type ResourceBranchAction } from '../utils/redirect';
-import { type ResourceKindInfo } from '../utils/resourceKinds';
+import { findResourceKindInfo } from '../utils/resourceKinds';
 
 /** Shape {@link SaveProvisionedResourceDrawer} forwards to `onBranchSuccess`. */
 interface BranchSuccessData {
@@ -40,7 +41,7 @@ export interface ProvisionedResourceDrawerHandlers {
  * `invalidateListTags` (if any) is dispatched so the committed change shows up there.
  */
 export function useProvisionedResourceDrawerHandlers(
-  kind: ResourceKindInfo | undefined,
+  kind: KindInfo,
   redirectUrl: string,
   action: ResourceBranchAction
 ): ProvisionedResourceDrawerHandlers {
@@ -48,7 +49,7 @@ export function useProvisionedResourceDrawerHandlers(
   const navigate = useNavigate();
 
   const invalidate = () => {
-    const invalidateAction = kind?.invalidateListTags?.();
+    const invalidateAction = findResourceKindInfo(kind)?.invalidateListTags?.();
     if (invalidateAction) {
       dispatch(invalidateAction);
     }

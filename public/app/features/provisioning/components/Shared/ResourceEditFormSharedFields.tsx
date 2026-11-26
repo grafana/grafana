@@ -21,6 +21,7 @@ import { useGetRepositoryFolders } from '../../hooks/useGetRepositoryFolders';
 import { useLastBranch } from '../../hooks/useLastBranch';
 import { usePRBranch } from '../../hooks/usePRBranch';
 import { type BaseProvisionedFormData } from '../../types/form';
+import { isSameKind } from '../../utils/resourceKinds';
 import { isKnownRef } from '../../utils/workflow';
 import { joinPath, splitPath } from '../utils/path';
 
@@ -84,9 +85,9 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       [checkFile, repository?.name, watch]
     );
 
-    // New resources with an editable path (dashboards, playlists) get a path-exists check so a
-    // duplicate path is caught before submit rather than only by the API.
-    const shouldValidatePath = isNew && (kind === CORE_KINDS.dashboard || kind === CORE_KINDS.playlist);
+    // A new resource with an editable path gets a path-exists check, so a duplicate path is caught
+    // before submit rather than only by the API.
+    const shouldValidatePath = isNew && !hiddenFields?.includes('path');
 
     const canPushToNonConfiguredBranch = repository?.workflows?.includes('branch');
     const canOnlyPushToConfiguredBranch = canPushToConfiguredBranch && !canPushToNonConfiguredBranch;
@@ -114,7 +115,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       canPushToNonConfiguredBranch,
     });
 
-    const showFolderFilename = (isNew || allowPathEdit) && kind === CORE_KINDS.dashboard;
+    const showFolderFilename = (isNew || allowPathEdit) && isSameKind(kind, CORE_KINDS.dashboard);
     const configuredRepoPath = isGitProvider(repository?.type) ? stripSlashes(repository?.path ?? '') : undefined;
 
     // A new branch only exists after the save creates it; until the selected branch is a known
@@ -127,16 +128,15 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       ref: selectedBranchExists ? selectedBranch : undefined,
     });
 
-    const pathText =
-      kind === CORE_KINDS.folder
-        ? t(
-            'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder-path',
-            'Folder path inside the repository'
-          )
-        : t(
-            'provisioned-resource-form.save-or-delete-resource-shared-fields.description-file-path',
-            'File path inside the repository (.json or .yaml)'
-          );
+    const pathText = isSameKind(kind, CORE_KINDS.folder)
+      ? t(
+          'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder-path',
+          'Folder path inside the repository'
+        )
+      : t(
+          'provisioned-resource-form.save-or-delete-resource-shared-fields.description-file-path',
+          'File path inside the repository (.json or .yaml)'
+        );
 
     return (
       <>

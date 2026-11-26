@@ -4,11 +4,11 @@ import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 
 import { type Playlist, useCreatePlaylistMutation } from '../../api/clients/playlist/v1';
 import { SaveProvisionedResourceDrawer } from '../provisioning/components/Shared/SaveProvisionedResourceDrawer';
 import { useResourceRepositorySelection } from '../provisioning/hooks/useResourceRepositorySelection';
-import { resourceKindInfos } from '../provisioning/utils/resourceKinds';
 
 import { PlaylistForm } from './PlaylistForm';
 import { PLAYLISTS_URL, getDefaultPlaylist } from './utils';
@@ -16,7 +16,7 @@ import { PLAYLISTS_URL, getDefaultPlaylist } from './utils';
 export const PlaylistNewPage = () => {
   const [playlist] = useState<Playlist>(getDefaultPlaylist());
   const [createPlaylist] = useCreatePlaylistMutation();
-  const { isAvailable, repositories } = useResourceRepositorySelection(resourceKindInfos.playlist);
+  const { isAvailable, repositories } = useResourceRepositorySelection(CORE_KINDS.playlist);
   // No selection = save to Grafana; a repository name routes the save through the provisioning drawer.
   const [selectedRepository, setSelectedRepository] = useState<string | undefined>(undefined);
   // Holds the playlist while the provisioning save drawer is open.
