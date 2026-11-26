@@ -67,7 +67,6 @@ The available actions depend on the dashboard mode:
 
 | Action | View mode | Edit mode | Description |
 | ------ | --------- | --------- | ----------- |
-| Quick edits | No | Yes | Displays quick edits for the panel, so you can change the most common options without opening the panel editor. Only displayed for visualizations that support quick edits. For more information, refer to [Change common panel options with quick edits](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#change-common-panel-options-with-quick-edits). |
 | Edit visualization | Yes | Yes | Opens the panel editor. In view mode, this also switches the dashboard to edit mode. Only displayed if you can edit the dashboard. |
 | Explore | Yes | No | Opens the panel query in **Explore**. Because this is a link, you can open it in a new browser tab. |
 | Panel settings | No | Yes | Opens high-level panel options in the sidebar. |
