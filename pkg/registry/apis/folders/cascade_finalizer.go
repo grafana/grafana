@@ -1,7 +1,12 @@
 package folders
 
 import (
+	"context"
 	"slices"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 )
@@ -54,4 +59,44 @@ func setCascadeDeleteFinalizer(f *foldersv1.Folder, present bool) {
 			f.Finalizers = nil
 		}
 	}
+}
+
+type cascadeFinalizerOnDeleteKey struct{}
+
+// withCascadeFinalizerOnDelete records whether the folder being deleted must carry the finalizer, for
+// the store's delete strategy to apply in the same write that marks it terminating.
+func withCascadeFinalizerOnDelete(ctx context.Context, present bool) context.Context {
+	return context.WithValue(ctx, cascadeFinalizerOnDeleteKey{}, present)
+}
+
+func cascadeFinalizerOnDelete(ctx context.Context) (present, ok bool) {
+	present, ok = ctx.Value(cascadeFinalizerOnDeleteKey{}).(bool)
+	return present, ok
+}
+
+// hasCascadeFinalizerOnDelete reports whether f carries the finalizer once the delete is applied, so
+// validation sees the state the delete will persist rather than the stored one.
+func hasCascadeFinalizerOnDelete(ctx context.Context, f *foldersv1.Folder) bool {
+	if present, ok := cascadeFinalizerOnDelete(ctx); ok {
+		return present
+	}
+	return hasCascadeDeleteFinalizer(f)
+}
+
+// cascadeFinalizerDeleteStrategy applies the finalizer decision carried by the context. The store
+// calls CheckGracefulDelete inside the write that sets the deletion timestamp, and skips it for
+// folders already terminating, so the finalizer changes together with the delete or not at all.
+type cascadeFinalizerDeleteStrategy struct {
+	rest.RESTDeleteStrategy
+}
+
+var _ rest.RESTGracefulDeleteStrategy = cascadeFinalizerDeleteStrategy{}
+
+func (cascadeFinalizerDeleteStrategy) CheckGracefulDelete(ctx context.Context, obj runtime.Object, _ *metav1.DeleteOptions) bool {
+	if f, ok := obj.(*foldersv1.Folder); ok {
+		if present, ok := cascadeFinalizerOnDelete(ctx); ok {
+			setCascadeDeleteFinalizer(f, present)
+		}
+	}
+	return false
 }

@@ -704,7 +704,13 @@ func (f *fakeFolderStorage) Delete(ctx context.Context, name string, deleteValid
 	if f.finalizersAtDelete == nil {
 		f.finalizersAtDelete = map[string][]string{}
 	}
-	f.finalizersAtDelete[name] = fol.Finalizers
+	// Mirror the store: the delete strategy edits a folder that is not yet terminating, while delete
+	// admission still sees the stored one.
+	persisted := fol.DeepCopy()
+	if persisted.DeletionTimestamp == nil {
+		cascadeFinalizerDeleteStrategy{}.CheckGracefulDelete(ctx, persisted, options)
+	}
+	f.finalizersAtDelete[name] = persisted.Finalizers
 	// Mirror genericregistry: run delete admission against the fetched object before removing it.
 	if deleteValidation != nil {
 		if err := deleteValidation(ctx, fol); err != nil {
@@ -2015,6 +2021,20 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 		}
 	})
 
+	t.Run("a service deleting a subfolder keeps the caller's version precondition", func(t *testing.T) {
+		setCascadeToggles(t, false, true)
+		store := subfolderOf(true)
+		store.existing["child"].Finalizers = nil
+		store.existing["child"].ResourceVersion = "3"
+		s := &cascadeDeleteStorage{Storage: store}
+
+		stale := "2"
+		_, _, err := s.Delete(serviceCtx(), "child", nil, &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{ResourceVersion: &stale}})
+		require.True(t, apierrors.IsConflict(err), "got %v", err)
+		require.Empty(t, store.deleted)
+		require.Equal(t, "2", *store.deleteOptions.Preconditions.ResourceVersion)
+	})
+
 	t.Run("a user deleting a subfolder of a terminating folder is still checked", func(t *testing.T) {
 		// Only a service is exempt: the subfolder of a cascade in progress is no shortcut for a user.
 		setCascadeToggles(t, false, true)
@@ -2300,15 +2320,14 @@ func TestCascadeDelete_AlignsFinalizerWithAsyncFlag(t *testing.T) {
 		return f
 	}
 	cascade := []string{foldersv1.CascadeDeleteFinalizer}
-	// run deletes f and reports the finalizers it carried when the underlying delete ran.
+	// run deletes f and reports the finalizers the store would persist with the delete.
 	run := func(t *testing.T, async bool, f *foldersv1.Folder, validate rest.ValidateObjectFunc, opts *metav1.DeleteOptions, access authlib.AccessClient) (store *fakeFolderStorage, atDelete []string, err error) {
 		t.Helper()
 		setCascadeToggles(t, true, async)
 		store = &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"f": f}}
-		store.beforeDelete = func() { atDelete = store.existing["f"].Finalizers }
 		s := &cascadeDeleteStorage{Storage: store, accessClient: access}
 		_, _, err = s.Delete(ctxWithNamespace(), "f", validate, opts)
-		return store, atDelete, err
+		return store, store.finalizersAtDelete["f"], err
 	}
 
 	t.Run("flag on stamps a plain folder", func(t *testing.T) {
@@ -2357,23 +2376,24 @@ func TestCascadeDelete_AlignsFinalizerWithAsyncFlag(t *testing.T) {
 		require.Zero(t, store.updates)
 	})
 
-	t.Run("a dry run aligns in memory and writes nothing", func(t *testing.T) {
+	t.Run("a dry run writes nothing", func(t *testing.T) {
 		store, atDelete, err := run(t, true, folderWith(""), nil, &metav1.DeleteOptions{DryRun: []string{metav1.DryRunAll}}, nil)
 		require.NoError(t, err)
 		require.Zero(t, store.updates)
-		require.Empty(t, atDelete, "the stored folder is untouched")
+		require.Empty(t, store.existing["f"].Finalizers, "the stored folder is untouched")
+		require.Equal(t, cascade, atDelete, "the store sees the stamp in memory")
 		require.Equal(t, []string{metav1.DryRunAll}, store.deleteOptions.DryRun)
 	})
 
 	t.Run("validation sees the aligned folder, and a rejection leaves no write", func(t *testing.T) {
-		var seen []string
+		var seen bool
 		reject := errors.New("not empty")
-		store, _, err := run(t, true, folderWith(""), func(_ context.Context, obj runtime.Object) error {
-			seen = obj.(*foldersv1.Folder).Finalizers
+		store, _, err := run(t, true, folderWith(""), func(ctx context.Context, obj runtime.Object) error {
+			seen = hasCascadeFinalizerOnDelete(ctx, obj.(*foldersv1.Folder))
 			return reject
 		}, &metav1.DeleteOptions{}, nil)
 		require.ErrorIs(t, err, reject)
-		require.Equal(t, cascade, seen)
+		require.True(t, seen)
 		require.Zero(t, store.updates)
 		require.Empty(t, store.deleted)
 	})
@@ -2502,9 +2522,9 @@ func TestCascadeDelete_AlignsFinalizerWithAsyncFlag(t *testing.T) {
 	})
 
 	t.Run("flag off pins the checked version when it removes the finalizer", func(t *testing.T) {
-		store, _, err := run(t, false, folderWith("1", cascade...), nil, &metav1.DeleteOptions{}, nil)
+		store, atDelete, err := run(t, false, folderWith("1", cascade...), nil, &metav1.DeleteOptions{}, nil)
 		require.NoError(t, err)
-		require.Equal(t, 1, store.updates, "the finalizer is removed")
+		require.Empty(t, atDelete, "the finalizer is removed")
 		require.NotNil(t, store.deleteOptions.Preconditions.ResourceVersion, "the checked version is pinned")
 	})
 

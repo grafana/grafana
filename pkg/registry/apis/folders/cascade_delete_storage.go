@@ -204,6 +204,7 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 			return s.Storage.Delete(ctx, name, deleteValidation, options)
 		}
 		// The finalizer is removed as the service identity, so authorize the requester first.
+		// Check for permission to delete the folder alone.
 		check := s.checkFolderDeleteAccess
 		if walksSubtree {
 			// A delete that walks the subtree needs access to check the contents, not just the folder itself.
@@ -212,19 +213,17 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 		if err := check(ctx, user, ns.Value, f.Name, parentUID); err != nil {
 			return nil, false, err
 		}
-		if f, options, deleteValidation, err = s.setCascadeFinalizer(ctx, ns, f, false, deleteValidation, options); err != nil {
-			return nil, false, err
+		if !walksSubtree {
+			// The check used this version's parent, so a concurrent move must fail the delete.
+			if options, err = pinToCheckedVersion(options, f); err != nil {
+				return nil, false, err
+			}
 		}
-		// The check used this version's parent, so a concurrent move must fail the delete.
-		if options, err = pinToCheckedVersion(options, f); err != nil {
-			return nil, false, err
-		}
-		obj = f
 	}
 
 	// Delegate when the synchronous cascade flag is disabled or the user is not forcing the deletion.
 	if !walksSubtree {
-		return s.Storage.Delete(ctx, name, deleteValidation, options)
+		return s.Storage.Delete(withCascadeFinalizerOnDelete(ctx, false), name, deleteValidation, options)
 	}
 	if deleteValidation != nil {
 		if err := deleteValidation(ctx, obj); err != nil {
@@ -595,8 +594,8 @@ func (s *cascadeDeleteStorage) isCascadeSubfolderDelete(ctx context.Context, use
 	return ok && parent.DeletionTimestamp != nil && hasCascadeDeleteFinalizer(parent), nil
 }
 
-// deleteAsync hands f to the cascade controller: a folder without the finalizer is stamped, then
-// storage marks it terminating. The controller removes the contents as the service identity, so the
+// deleteAsync hands f to the cascade controller: the store stamps the finalizer in the write that marks
+// the folder terminating. The controller removes the contents as the service identity, so the
 // requester's access to them is checked first, forced or not, and before any write so a rejected
 // delete leaves nothing behind. A terminating folder was already authorized when it was marked, and
 // the controller deleting a subfolder of a terminating folder, as the root delete was authorized.
@@ -607,99 +606,19 @@ func (s *cascadeDeleteStorage) deleteAsync(ctx context.Context, ns authlib.Names
 		return nil, false, err
 	}
 	terminating := f.DeletionTimestamp != nil
-	needsCheck := !terminating && !isCascadeSubfolderDelete
-	if needsCheck {
+	if !terminating && !isCascadeSubfolderDelete {
 		if err := s.checkFolderContentsAccess(ctx, user, ns.Value, f.Name, parentUID); err != nil {
 			return nil, false, err
 		}
-	}
-	if !terminating && !hasCascadeDeleteFinalizer(f) {
-		if f, options, deleteValidation, err = s.setCascadeFinalizer(ctx, ns, f, true, deleteValidation, options); err != nil {
-			return nil, false, err
-		}
-	}
-	if needsCheck {
 		// The check used this version's parent, so a concurrent move must fail the delete.
 		if options, err = pinToCheckedVersion(options, f); err != nil {
 			return nil, false, err
 		}
 	}
+	if !terminating {
+		ctx = withCascadeFinalizerOnDelete(ctx, true)
+	}
 	return s.Storage.Delete(ctx, f.Name, deleteValidation, options)
-}
-
-// setCascadeFinalizer stores f with the cascade finalizer stamped or removed and returns the folder,
-// options and validation to continue with. Validation runs on the aligned folder because it treats a
-// finalizer folder's forced delete differently. The write bypasses the update admission, which would
-// restore the stored finalizer state.
-func (s *cascadeDeleteStorage) setCascadeFinalizer(ctx context.Context, ns authlib.NamespaceInfo, f *foldersv1.Folder, present bool, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (*foldersv1.Folder, *metav1.DeleteOptions, rest.ValidateObjectFunc, error) {
-	aligned := f.DeepCopy()
-	setCascadeDeleteFinalizer(aligned, present)
-	if deleteValidation != nil {
-		if err := deleteValidation(ctx, aligned); err != nil {
-			return nil, nil, nil, err
-		}
-	}
-	if err := checkDeletePreconditions(f, options); err != nil {
-		return nil, nil, nil, err
-	}
-	if options != nil && len(options.DryRun) > 0 {
-		// Nothing is written, so the stored folder keeps the old state: align it for the validation storage runs.
-		return aligned, options, alignedValidation(deleteValidation, present), nil
-	}
-
-	updated, err := s.writeCascadeFinalizer(identity.WithServiceIdentityContext(ctx, ns.OrgID), f, present)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	// Our write moved the resourceVersion the caller's precondition was checked against; the UID pin stays.
-	pinned := options.DeepCopy()
-	if pinned == nil {
-		pinned = &metav1.DeleteOptions{}
-	}
-	if pinned.Preconditions != nil {
-		pinned.Preconditions.ResourceVersion = nil
-	}
-	return updated, pinned, deleteValidation, nil
-}
-
-// alignedValidation validates a folder as if its cascade finalizer were already stamped or removed.
-func alignedValidation(validate rest.ValidateObjectFunc, present bool) rest.ValidateObjectFunc {
-	if validate == nil {
-		return nil
-	}
-	return func(ctx context.Context, obj runtime.Object) error {
-		if f, ok := obj.(*foldersv1.Folder); ok {
-			f = f.DeepCopy()
-			setCascadeDeleteFinalizer(f, present)
-			obj = f
-		}
-		return validate(ctx, obj)
-	}
-}
-
-// writeCascadeFinalizer stores f with the finalizer set to present, conflicting if f changed since it was read.
-func (s *cascadeDeleteStorage) writeCascadeFinalizer(ctx context.Context, f *foldersv1.Folder, present bool) (*foldersv1.Folder, error) {
-	objInfo := rest.DefaultUpdatedObjectInfo(nil, func(_ context.Context, _, oldObj runtime.Object) (runtime.Object, error) {
-		cur, ok := oldObj.(*foldersv1.Folder)
-		if !ok {
-			return nil, fmt.Errorf("obj is not folders.Folder")
-		}
-		if cur.ResourceVersion != f.ResourceVersion {
-			return nil, apierrors.NewConflict(foldersv1.FolderResourceInfo.GroupResource(), f.Name, fmt.Errorf("folder changed while its cascade finalizer was being updated"))
-		}
-		out := cur.DeepCopy()
-		setCascadeDeleteFinalizer(out, present)
-		return out, nil
-	})
-	obj, _, err := s.Update(ctx, f.Name, objInfo, nil, nil, false, &metav1.UpdateOptions{})
-	if err != nil {
-		return nil, err
-	}
-	updated, ok := obj.(*foldersv1.Folder)
-	if !ok {
-		return nil, fmt.Errorf("obj is not folders.Folder")
-	}
-	return updated, nil
 }
 
 // checkFolderDeleteAccess denies the request unless the requester may delete the folder. It runs before
