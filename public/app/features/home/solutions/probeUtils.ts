@@ -8,10 +8,10 @@ import {
   getBackendSrv,
   getDataSourceInstance,
   getDataSourceInstanceList,
-  getDataSourceInstanceSettings,
+  getDatasourceHealthUrl,
   getDefaultDataSourceInstanceListItem,
 } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient, getHealthCheckUrl } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 /**
  * A lazily-started, shared solution fact derived from the solution's datasource: the first read
@@ -219,15 +219,6 @@ export async function listProbeCandidates(
 const healthCache = new Map<string, TtlCachedPromise<boolean>>();
 
 /**
- * Health URL on the route the datasource API rollout selects. Built from instance settings, not the plugin
- * instance, so probing never loads plugin code; an unknown uid keeps the legacy route.
- */
-async function healthCheckUrl(uid: string): Promise<string> {
-  const settings = await getDataSourceInstanceSettings(uid);
-  return settings ? getHealthCheckUrl(settings) : `/api/datasources/uid/${encodeURIComponent(uid)}/health`;
-}
-
-/**
  * Whether /health reports OK for `uid`, shared by every scan that meets the datasource within the
  * TTL window. Rejections and the 3s cutoff read as unhealthy and are cached like any answer; each
  * health check owns its cutoff, which cancels the request.
@@ -241,15 +232,13 @@ export function isDatasourceHealthy(uid: string): Promise<boolean> {
   if (!cache) {
     cache = createTtlCachedPromise(
       () =>
-        healthCheckUrl(uid)
-          .then((url) =>
-            withDeadline(HEALTH_CHECK_TIMEOUT_MS, undefined, (signal) =>
-              getBackendSrv().get<{ status?: string }>(url, undefined, undefined, {
-                showErrorAlert: false,
-                abortSignal: signal,
-              })
-            )
-          )
+        // The URL lookup can fetch datasource settings, so it shares the health check's cutoff.
+        withDeadline(HEALTH_CHECK_TIMEOUT_MS, undefined, async (signal) =>
+          getBackendSrv().get<{ status?: string }>(await getDatasourceHealthUrl(uid), undefined, undefined, {
+            showErrorAlert: false,
+            abortSignal: signal,
+          })
+        )
           .then((res) => res?.status === 'OK')
           .catch(() => false),
       PROBE_TTL_MS

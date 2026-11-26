@@ -7,10 +7,10 @@ import {
   getBackendSrv,
   getDataSourceInstance,
   getDataSourceInstanceList,
-  getDataSourceInstanceSettings,
+  getDatasourceHealthUrl,
   getDefaultDataSourceInstanceListItem,
 } from '@grafana/runtime';
-import { FlagKeys, getHealthCheckUrl } from '@grafana/runtime/internal';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import {
@@ -34,12 +34,8 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: jest.fn(),
   getDataSourceInstance: jest.fn(),
   getDataSourceInstanceList: jest.fn(),
-  getDataSourceInstanceSettings: jest.fn(),
+  getDatasourceHealthUrl: jest.fn(),
   getDefaultDataSourceInstanceListItem: jest.fn(),
-}));
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  getHealthCheckUrl: jest.fn(),
 }));
 const getDataSourceInstanceListMock = jest.mocked(getDataSourceInstanceList);
 const healthGetMock = jest.fn();
@@ -335,9 +331,10 @@ describe('isDatasourceHealthy', () => {
     resetProbeHealth();
     healthGetMock.mockReset();
     jest.mocked(getBackendSrv).mockReturnValue({ get: healthGetMock } as unknown as BackendSrv);
-    // No instance settings: the probe keeps the legacy route.
-    jest.mocked(getDataSourceInstanceSettings).mockReset();
-    jest.mocked(getHealthCheckUrl).mockReset();
+    jest
+      .mocked(getDatasourceHealthUrl)
+      .mockReset()
+      .mockImplementation(async (uid) => `/api/datasources/uid/${uid}/health`);
   });
 
   it('reports a datasource whose health check answers OK as healthy', async () => {
@@ -351,13 +348,11 @@ describe('isDatasourceHealthy', () => {
   });
 
   it('checks health on the route the datasource API rollout selects for the datasource', async () => {
-    const settings = { uid: 'rolled-out', type: 'loki' } as Awaited<ReturnType<typeof getDataSourceInstanceSettings>>;
-    jest.mocked(getDataSourceInstanceSettings).mockResolvedValue(settings);
-    jest.mocked(getHealthCheckUrl).mockReturnValue('/apis/loki.datasource.grafana.app/rolled-out/health');
+    jest.mocked(getDatasourceHealthUrl).mockResolvedValue('/apis/loki.datasource.grafana.app/rolled-out/health');
     healthGetMock.mockResolvedValue({ status: 'OK' });
 
     await expect(isDatasourceHealthy('rolled-out')).resolves.toBe(true);
-    expect(getHealthCheckUrl).toHaveBeenCalledWith(settings);
+    expect(getDatasourceHealthUrl).toHaveBeenCalledWith('rolled-out');
     expect(healthGetMock).toHaveBeenCalledWith(
       '/apis/loki.datasource.grafana.app/rolled-out/health',
       undefined,

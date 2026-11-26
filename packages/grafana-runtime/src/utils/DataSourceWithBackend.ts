@@ -145,12 +145,33 @@ function supportsDatasourceApi(endpoint: 'resources' | 'health', settings: DataS
   );
 }
 
-/** Health check URL for the datasource, on the route `supportsDatasourceApi('health', settings)` selects. */
-export function getHealthCheckUrl(settings: DataSourceInstanceSettings): string {
-  if (supportsDatasourceApi('health', settings)) {
-    return `/apis/${settings.meta?.id ?? settings.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${settings.uid}/health`;
-  }
-  return `/api/datasources/uid/${settings.uid}/health`;
+function datasourceApiBaseUrl(settings: DataSourceInstanceSettings): string {
+  return `/apis/${settings.meta?.id ?? settings.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${settings.uid}`;
+}
+
+function buildHealthCheckUrl(settings: DataSourceInstanceSettings): string {
+  return supportsDatasourceApi('health', settings)
+    ? `${datasourceApiBaseUrl(settings)}/health`
+    : `/api/datasources/uid/${settings.uid}/health`;
+}
+
+/**
+ * A failed or empty lookup reads as no settings, so the URL getters below fall back to the legacy routes. On stacks
+ * that load datasource settings from the API server this fetches, so callers should bound it with their own deadline.
+ */
+async function lookupInstanceSettings(uid: string): Promise<DataSourceInstanceSettings | undefined> {
+  return getDataSourceInstanceSettings(uid).catch(() => undefined);
+}
+
+/**
+ * Health check URL for the datasource `uid`, on the route the datasource API rollout selects. Needs only the uid, so
+ * callers do not have to load the plugin.
+ *
+ * @alpha
+ */
+export async function getDatasourceHealthUrl(uid: string): Promise<string> {
+  const settings = await lookupInstanceSettings(uid);
+  return settings ? buildHealthCheckUrl(settings) : `/api/datasources/uid/${encodeURIComponent(uid)}/health`;
 }
 
 interface PreparedQuery {
@@ -466,7 +487,7 @@ class DataSourceWithBackend<
    */
   async callHealthCheck(): Promise<HealthCheckResult> {
     const useNewApi = supportsDatasourceApi('health', this.datasourceInstanceSettings);
-    const healthCheckURL = getHealthCheckUrl(this.datasourceInstanceSettings);
+    const healthCheckURL = buildHealthCheckUrl(this.datasourceInstanceSettings);
 
     if (useNewApi) {
       return lastValueFrom(

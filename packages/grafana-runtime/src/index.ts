@@ -29,6 +29,7 @@ export {
 export { TracedError } from './utils/TracedError';
 export {
   DataSourceWithBackend,
+  getDatasourceHealthUrl,
   HealthCheckError,
   type HealthCheckResult,
   type HealthCheckResultDetails,
