@@ -162,7 +162,7 @@ Now that you've created a basic dashboard, you can augment it with more options,
 - [The sidebar and toolbar](#the-sidebar-and-toolbar): Learn about editing without leaving the dashboard.
 - [Navigate using the content outline](#navigate-using-the-content-outline): Learn how to quickly navigate to any dashboard element with the content outline.
 - [Edit a dashboard](#edit-a-dashboard): Learn how to edit a dashboard.
-- [Undo and redo changes](#undo-and-redo-changes): Learn how to revert and reinstate changes while you edit. (Public preview)
+- [Undo and redo changes](#undo-and-redo-changes): Learn how to revert and reinstate changes while you edit.
 
 ### The sidebar and toolbar
 
@@ -296,8 +296,6 @@ If you hover over a panel that isn't part of your selection, the tooltip display
 When grouping isn't available for your selection, for example because the selected panels are in different rows, hover your cursor over one of the selected panels to display a tooltip explaining why.
 
 ### Undo and redo changes
-
-{{< docs/public-preview product="Dashboard undo and redo" featureFlag="`dashboardUndoRedo`" >}}
 
 While you're editing a dashboard, you can revert a change with the **Undo** option and reinstate it with **Redo**.
 The **Undo** and **Redo** icons are at the top of the dashboard, between the **Share** and **Save** buttons:
