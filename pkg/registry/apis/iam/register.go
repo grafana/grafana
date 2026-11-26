@@ -463,10 +463,8 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	enableResourcePermissionsApi := b.features.ResourcePermissionsAPI
 	enableAuthInfoApi := b.features.AuthInfoAPI
 
-	if b.standalone && (enableTeamsApi || enableUserApi) {
-		if err := b.configureStandaloneAdmissionSearch(opts); err != nil {
-			return err
-		}
+	if err := b.configureStandaloneAdmissionSearch(opts, enableTeamsApi, enableUserApi); err != nil {
+		return err
 	}
 
 	// teams + users must have shorter names because they are often used as part of another name

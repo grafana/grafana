@@ -17,7 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
-func (b *IdentityAccessManagementAPIBuilder) configureStandaloneAdmissionSearch(opts builder.APIGroupOptions) error {
+func (b *IdentityAccessManagementAPIBuilder) configureStandaloneAdmissionSearch(opts builder.APIGroupOptions, teamsEnabled, usersEnabled bool) error {
+	if !b.standalone || (!teamsEnabled && !usersEnabled) {
+		return nil
+	}
 	if opts.DualWriteService == nil {
 		return errors.New("standalone IAM admission requires the storage mode service")
 	}
