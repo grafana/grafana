@@ -69,6 +69,10 @@ type SettingsDependencies struct {
 	NamespaceAuthorizer authorizer.Authorizer
 	// Middleware wraps the plugin's v2 client.
 	Middleware []backend.HandlerMiddleware
+	// AuthenticateV2 sends the caller's exchanged token to the plugin, as for v3.
+	// It wraps the circuit breaker, as v3 authentication does: failures to
+	// exchange a token say nothing about whether the plugin is reachable.
+	AuthenticateV2 bool
 }
 
 // The dependencies are configured at startup and used across all plugins
@@ -570,6 +574,18 @@ func (b *PluginBackend) load(ctx context.Context) (*pluginroute.Handler, error) 
 	return b.loadManifest(cfg, opts, clientV3)
 }
 
+// settingsPluginClient guards client with the circuit breaker and, in the cloud
+// loader, authenticates calls outside it. Authentication failures say nothing
+// about whether the plugin is reachable, so the breaker must not see them.
+func (b *PluginBackend) settingsPluginClient(client plugins.Client) (plugins.Client, error) {
+	client = &breakerPluginClient{Client: client}
+	if !b.deps.Settings.AuthenticateV2 {
+		return client, nil
+	}
+	return cloudSettingsClient(client, []backend.HandlerMiddleware{newV2AuthenticationMiddleware(b.pluginID,
+		withAuthFailureOutcome(pluginauth.ClientV3TokenExchanger(b.deps.Cfg, b.deps.PluginAuth, b.pluginID, b.deps.TokenExchanger)))})
+}
+
 // loadSettings serves the settings API, which calls the plugin through its
 // v2 client only.
 func (b *PluginBackend) loadSettings(ctx context.Context, cfg *setting.Cfg, opts pluginroute.Options, client plugins.Client) (*pluginroute.Handler, error) {
@@ -578,7 +594,10 @@ func (b *PluginBackend) loadSettings(ctx context.Context, cfg *setting.Cfg, opts
 	}
 	opts.NamespaceAuthorizer = b.deps.Settings.NamespaceAuthorizer
 	if client != nil {
-		opts.PluginClient = &breakerPluginClient{Client: client}
+		var err error
+		if opts.PluginClient, err = b.settingsPluginClient(client); err != nil {
+			return nil, err
+		}
 	}
 	opts.ContextProvider = b.deps.ContextProvider
 	opts.Features = b.deps.Features

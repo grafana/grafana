@@ -2630,9 +2630,6 @@ func (s *searchServer) buildWithOptions(ctx context.Context, nsr NamespacedResou
 	var builderMu sync.Mutex
 	builders := map[NamespacedResource]DocumentBuilder{}
 	getBuilder := func(ctx context.Context, src NamespacedResource) (DocumentBuilder, error) {
-		if nsr.IsGlobal() {
-			return &globalDocumentBuilder{blob: s.builders.blob}, nil
-		}
 		builderMu.Lock()
 		defer builderMu.Unlock()
 		if b, ok := builders[src]; ok {
@@ -2667,9 +2664,20 @@ func (s *searchServer) buildWithOptions(ctx context.Context, nsr NamespacedResou
 		// A build lists everything, which is as good as comparing with storage.
 		listedAt := time.Now()
 
+		// A cold global build can leave a missing document for reconciliation.
+		// A replacement keeps the document searchable using the fields it has.
+		var globalBuilder DocumentBuilder
+		deferInterruptedDocs := false
+		if nsr.IsGlobal() {
+			replacing := rebuild || s.search.PeekIndex(nsr) != nil
+			globalBuilder = &globalDocumentBuilder{blob: s.builders.blob, allowBlobFallback: replacing}
+			deferInterruptedDocs = !replacing
+		}
+
 		// The oldest resource version of the listings, so a change made while a
 		// later listing ran is replayed by the updater rather than missed.
 		indexRV := int64(0)
+		incomplete := false
 		for _, src := range sources {
 			// Read before the listing: an import that lands during it then looks
 			// newer than what is recorded, and the type is resynced.
@@ -2681,11 +2689,16 @@ func (s *searchServer) buildWithOptions(ctx context.Context, nsr NamespacedResou
 				}
 			}
 
-			builder, err := getBuilder(ctx, src)
-			if err != nil {
-				return indexRV, err
+			builder := globalBuilder
+			if builder == nil {
+				var err error
+				builder, err = getBuilder(ctx, src)
+				if err != nil {
+					return indexRV, err
+				}
 			}
-			listRV, docs, err := s.indexResourceType(ctx, index, src, builder, phases, logger)
+			listRV, docs, partial, err := s.indexResourceType(ctx, index, src, builder, phases, logger, deferInterruptedDocs)
+			incomplete = incomplete || partial
 			indexedDocs[src.GroupResource()] += docs
 			if indexRV == 0 || (listRV > 0 && listRV < indexRV) {
 				indexRV = listRV
@@ -2694,8 +2707,8 @@ func (s *searchServer) buildWithOptions(ctx context.Context, nsr NamespacedResou
 				return indexRV, err
 			}
 
-			// Recorded even with no import, because the record also says which
-			// types the index has written in full.
+			// Record the import version the build read. Reconciliation can fill
+			// in missing documents; there are no old versions in a fresh index.
 			if nsr.IsGlobal() {
 				if err := index.RecordCompletedTypeBuild(groupResourceOf(src), TypeBuild{StorageImportTime: importedAt}); err != nil {
 					return indexRV, err
@@ -2708,6 +2721,9 @@ func (s *searchServer) buildWithOptions(ctx context.Context, nsr NamespacedResou
 		// A namespace-wide index holds only live documents, so it has no trash to
 		// restore.
 		if nsr.IsGlobal() {
+			if incomplete {
+				return indexRV, nil
+			}
 			return indexRV, index.RecordReconciledAt(listedAt)
 		}
 
@@ -2806,9 +2822,9 @@ func (s *searchServer) buildWithOptions(ctx context.Context, nsr NamespacedResou
 	return index, nil
 }
 
-// indexResourceType indexes every live object of one resource type. It returns
-// the resource version the listing was taken at, even when it fails, and how
-// many documents it handed to the index.
+// indexResourceType indexes live objects of one resource type and returns the
+// listing version even on failure. A global index can defer interrupted
+// documents to reconciliation; a per-resource index must not skip those versions.
 func (s *searchServer) indexResourceType(
 	ctx context.Context,
 	index ResourceIndex,
@@ -2816,7 +2832,8 @@ func (s *searchServer) indexResourceType(
 	builder DocumentBuilder,
 	phases *buildPhaseRecorder,
 	logger log.Logger,
-) (int64, int, error) {
+	deferInterruptedDocs bool,
+) (rv int64, docs int, incomplete bool, err error) {
 	span := trace.SpanFromContext(ctx)
 	// Storage does some of its work before handing over the iterator, so the
 	// fetch phase starts here rather than at the first document. When storage
@@ -2824,8 +2841,7 @@ func (s *searchServer) indexResourceType(
 	// so it is charged once the call returns.
 	listStart := time.Now()
 	gotIterator := false
-	docs := 0
-	listRV, err := s.storage.ListIterator(ctx, &resourcepb.ListRequest{
+	rv, err = s.storage.ListIterator(ctx, &resourcepb.ListRequest{
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
 				Group:     src.Group,
@@ -2862,15 +2878,26 @@ func (s *searchServer) indexResourceType(
 
 			span.AddEvent("building document", trace.WithAttributes(attribute.String("name", iter.Name())))
 			convertStart := time.Now()
-			doc, err := builder.BuildDocument(ctx, key, iter.ResourceVersion(), value)
+			resourceVersion := iter.ResourceVersion()
+			doc, err := builder.BuildDocument(ctx, key, resourceVersion, value)
 			phases.recordConvert(time.Since(convertStart), err == nil)
 			if err != nil {
 				span.RecordError(err)
+				if ctx.Err() != nil {
+					return ctx.Err()
+				}
 				if isDocumentBuildInterrupted(err) {
-					return err
+					if !deferInterruptedDocs {
+						return err
+					}
+					incomplete = true
 				}
 				logger.Error("error building search document", "key", SearchID(key), "err", err)
 				continue
+			}
+			if doc.RV == 0 && resourceVersion != 0 {
+				incomplete = true
+				logger.Warn("indexed document without blob fields; reconciliation will retry it", "key", SearchID(key))
 			}
 			if err := batch.add(&BulkIndexItem{Action: ActionIndex, Doc: doc}); err != nil {
 				return err
@@ -2878,6 +2905,9 @@ func (s *searchServer) indexResourceType(
 			docs++
 		}
 
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		if err := batch.flush(); err != nil {
 			return err
 		}
@@ -2886,7 +2916,7 @@ func (s *searchServer) indexResourceType(
 	if !gotIterator {
 		phases.recordFetchWithNoValue(time.Since(listStart))
 	}
-	return listRV, docs, err
+	return rv, docs, incomplete, err
 }
 
 // applyModifiedSince applies what one resource type changed since sinceRV. It

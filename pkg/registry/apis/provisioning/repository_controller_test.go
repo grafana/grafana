@@ -30,7 +30,7 @@ func TestRepositoryControllerService_IsDisabled(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := ProvideRepositoryControllerService(tt.builder)
+			svc := ProvideRepositoryControllerService(tt.builder, &BootstrapService{})
 			require.Equal(t, tt.want, svc.IsDisabled())
 			// The background service manager looks up this name in its
 			// dependency map; any other name would start it after Core.
@@ -42,8 +42,8 @@ func TestRepositoryControllerService_IsDisabled(t *testing.T) {
 func TestRepositoryControllerService_Run(t *testing.T) {
 	t.Run("waits for the provisioning API and runs on the post-start hook's loopback config", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
-			builder := &APIBuilder{loopbackReady: make(chan struct{}), bootstrapDone: closedChan()}
-			svc := ProvideRepositoryControllerService(builder)
+			builder := &APIBuilder{loopbackReady: make(chan struct{})}
+			svc := ProvideRepositoryControllerService(builder, &BootstrapService{done: closedChan()})
 			got := make(chan *clientrest.Config, 1)
 			svc.run = func(ctx context.Context, restConfig *clientrest.Config) error {
 				got <- restConfig
@@ -69,8 +69,9 @@ func TestRepositoryControllerService_Run(t *testing.T) {
 
 	t.Run("waits for the bootstrap repository to be reconciled after the loopback config is published", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
-			builder := &APIBuilder{loopbackReady: make(chan struct{}), bootstrapDone: make(chan struct{})}
-			svc := ProvideRepositoryControllerService(builder)
+			builder := &APIBuilder{loopbackReady: make(chan struct{})}
+			bootstrapSvc := &BootstrapService{done: make(chan struct{})}
+			svc := ProvideRepositoryControllerService(builder, bootstrapSvc)
 			started := make(chan struct{})
 			svc.run = func(ctx context.Context, _ *clientrest.Config) error {
 				close(started)
@@ -84,7 +85,7 @@ func TestRepositoryControllerService_Run(t *testing.T) {
 			synctest.Wait()
 			require.False(t, isClosed(started), "controller started before the bootstrap repository was reconciled")
 
-			close(builder.bootstrapDone)
+			close(bootstrapSvc.done)
 			synctest.Wait()
 			require.True(t, isClosed(started), "controller did not start after the bootstrap repository was reconciled")
 
@@ -95,9 +96,9 @@ func TestRepositoryControllerService_Run(t *testing.T) {
 
 	t.Run("stops cleanly when cancelled while waiting for the bootstrap repository", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
-			builder := &APIBuilder{loopbackReady: make(chan struct{}), bootstrapDone: make(chan struct{})}
+			builder := &APIBuilder{loopbackReady: make(chan struct{})}
 			builder.publishLoopbackConfig(&clientrest.Config{})
-			svc := ProvideRepositoryControllerService(builder)
+			svc := ProvideRepositoryControllerService(builder, &BootstrapService{done: make(chan struct{})})
 			runErr := make(chan error, 1)
 			go func() { runErr <- svc.Run(t.Context()) }()
 			synctest.Wait()
@@ -110,7 +111,7 @@ func TestRepositoryControllerService_Run(t *testing.T) {
 
 	t.Run("stops cleanly when cancelled while waiting for the provisioning API", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
-			svc := ProvideRepositoryControllerService(&APIBuilder{loopbackReady: make(chan struct{})})
+			svc := ProvideRepositoryControllerService(&APIBuilder{loopbackReady: make(chan struct{})}, &BootstrapService{done: make(chan struct{})})
 			runErr := make(chan error, 1)
 			go func() { runErr <- svc.Run(t.Context()) }()
 			synctest.Wait()
@@ -125,9 +126,9 @@ func TestRepositoryControllerService_Run(t *testing.T) {
 		listed := make(chan struct{}, 1)
 		server := startFakeRepositoriesAPI(t, listed)
 
-		builder := &APIBuilder{registry: prometheus.NewRegistry(), loopbackReady: make(chan struct{}), bootstrapDone: closedChan()}
+		builder := &APIBuilder{registry: prometheus.NewRegistry(), loopbackReady: make(chan struct{})}
 		builder.publishLoopbackConfig(&clientrest.Config{Host: server.URL})
-		svc := ProvideRepositoryControllerService(builder)
+		svc := ProvideRepositoryControllerService(builder, &BootstrapService{done: closedChan()})
 		runErr := make(chan error, 1)
 		go func() { runErr <- svc.Run(context.Background()) }()
 		t.Cleanup(svc.StopAsync)

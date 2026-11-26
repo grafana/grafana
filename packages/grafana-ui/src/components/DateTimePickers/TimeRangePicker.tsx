@@ -3,7 +3,7 @@ import { autoUpdate, offset, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { memo, useCallback, useEffect, useRef, useState, type JSX } from 'react';
+import { memo, useContext, useCallback, useEffect, useRef, useState, type JSX } from 'react';
 import { useMedia } from 'react-use';
 
 import { rangeUtil, type GrafanaTheme2, type TimeOption, type TimeRange, dateMath, isDateTime } from '@grafana/data';
@@ -21,6 +21,7 @@ import { ToolbarButton } from '../ToolbarButton/ToolbarButton';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
+import { TimeRangePickerContext } from './TimeRangePicker/TimeRangePickerContext';
 import { TimeZoneDescription } from './TimeZonePicker/TimeZoneDescription';
 import { getTimeZoneTitle } from './TimeZonePicker/TimeZoneTitle';
 import { getTimeZoneDisplayInfo } from './TimeZonePicker/timeZoneUtils';
@@ -63,6 +64,10 @@ export interface TimeRangePickerProps {
   onZoom: () => void;
   onError?: (error?: string) => void;
   history?: TimeRange[];
+  /**
+   * Replace the default quick-range presets, preserving the supplied order and labels.
+   * An empty array shows no presets. Search can still create custom relative durations.
+   */
   quickRanges?: TimeOption[];
   hideQuickRanges?: boolean;
   widthOverride?: number;
@@ -76,7 +81,20 @@ export interface TimeRangePickerProps {
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/date-time-pickers-timerangepicker--docs
  */
 export function TimeRangePicker(props: TimeRangePickerProps) {
+  return <ExperimentalTimeRangePicker {...props} />;
+}
+
+export interface ExperimentalTimeRangePickerProps extends TimeRangePickerProps {
+  /** Compact presentation. The tabbed design is opt-in. */
+  compactDesign?: 'legacy' | 'tabs';
+  /** Hide supplied history. Defaults to false; persistence remains the caller's responsibility. */
+  hideHistory?: boolean;
+  hideFiscalYear?: boolean;
+}
+
+export function ExperimentalTimeRangePicker(props: ExperimentalTimeRangePickerProps) {
   const [isOpen, setOpen] = useState(false);
+  const defaultCompactDesign = useContext(TimeRangePickerContext);
 
   const {
     value,
@@ -243,7 +261,9 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                   onChange={onChange}
                   quickOptions={quickRanges || getQuickOptions()}
                   history={history}
-                  showHistory
+                  showHistory={!props.hideHistory}
+                  compactDesign={props.compactDesign ?? defaultCompactDesign}
+                  hideFiscalYear={props.hideFiscalYear}
                   widthOverride={widthOverride}
                   onChangeTimeZone={onChangeTimeZone}
                   onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
