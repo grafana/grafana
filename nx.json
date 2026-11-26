@@ -25,7 +25,7 @@
         "projects": ["tag:release:grafana", "public/app/plugins/*/*"],
         "projectsRelationship": "fixed"
       },
-      "plugin-compat": {
+      "independent-release": {
         "projects": ["tag:release:independent"],
         "projectsRelationship": "independent",
         "version": {

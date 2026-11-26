@@ -17,7 +17,8 @@ import { setupAutoSyncConfigAbsent } from '../../mocks/server/handlers/k8s/confi
 import { ALERTING_API_SERVER_BASE_URL } from '../../mocks/server/utils';
 import { setupDataSources } from '../../testSetup/datasources';
 
-import { ImportWizardGate } from './ImportToGMA';
+import { ImportRulesPage, ImportWizardGate } from './ImportToGMA';
+import { WIZARD_STEPS } from './Wizard/steps';
 
 // The real Step 1 and Step 2 inside the real wizard. ImportToGMA.test.tsx stubs both steps, so nothing
 // else checks that what the steps put in the form is what the wizard validates and sends.
@@ -70,6 +71,11 @@ afterEach(async () => {
 
 const alertmanagerYaml = () =>
   new File(['route:\n  receiver: default\nreceivers:\n  - name: default\n'], 'am.yaml', { type: 'application/yaml' });
+
+const rulesYaml = () =>
+  new File(['groups:\n  - name: group-y\n    rules:\n      - alert: FromYaml\n        expr: up == 0\n'], 'rules.yaml', {
+    type: 'application/yaml',
+  });
 
 describe('ImportToGMA wizard — real steps', () => {
   it('imports YAML notifications and data source rules, sending what the steps collected', async () => {
@@ -143,6 +149,53 @@ describe('ImportToGMA wizard — real steps', () => {
     });
   });
 
+  it('imports the rules of a YAML file to the data source chosen for it', async () => {
+    let rulesRequest: Request | undefined;
+    let rulesBody: unknown;
+    server.use(
+      http.post(CONVERT_URL, () => HttpResponse.json(convertResponse())),
+      http.post(RULES_URL, async ({ request }) => {
+        rulesRequest = request.clone();
+        rulesBody = await request.json();
+        return HttpResponse.json(convertResponse());
+      })
+    );
+    const { user } = render(<ImportWizardGate />);
+
+    // Step 1
+    await user.upload(await screen.findByLabelText(/alertmanager config yaml/i), alertmanagerYaml());
+    await user.type(screen.getByPlaceholderText(/prometheus-prod/i), 'imported-tree');
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+
+    // Step 2: a YAML file runs against the data source picked for it, which also fills the recording target.
+    await screen.findByRole('group', { name: /import rules/i });
+    await user.click(screen.getByRole('radio', { name: /yaml file/i }));
+    await user.upload(await screen.findByLabelText(/^rules yaml file/i), rulesYaml());
+    const [yamlTargetPicker] = screen.getAllByTestId(selectors.components.DataSourcePicker.inputV2);
+    await waitFor(() => expect(yamlTargetPicker).toBeEnabled());
+    await user.click(yamlTargetPicker);
+    await user.click(await screen.findByRole('option', { name: /Prometheus/ }));
+    await waitFor(() =>
+      expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+        'aria-disabled',
+        'false'
+      )
+    );
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+
+    // Review and import
+    await screen.findByText(/review import/i);
+    expect(await screen.findByText(/will import 1 rules/i)).toBeInTheDocument();
+    expect(screen.getByText('Prometheus')).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: /start import/i }));
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: /start import/i }));
+
+    await waitFor(() => expect(rulesRequest).toBeDefined());
+    expect(rulesRequest!.headers.get('X-Grafana-Alerting-Datasource-UID')).toBe('prometheus-uid');
+    expect(rulesRequest!.headers.get('X-Grafana-Alerting-Target-Datasource-UID')).toBe('prometheus-uid');
+    expect(Object.values(rulesBody as object)).toEqual([[expect.objectContaining({ name: 'group-y' })]]);
+  });
+
   it('stays on step 1 without its own dry run when Next is clicked right after typing a taken name', async () => {
     server.use(
       http.get(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees/:name`, async ({ params }) => {
@@ -211,5 +264,127 @@ describe('ImportToGMA wizard — real steps', () => {
     await waitFor(() => expect(dryRuns).toBeGreaterThan(dryRunsBeforeNext));
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.queryByRole('group', { name: /import rules/i })).not.toBeInTheDocument();
+  });
+});
+
+describe('ImportToGMA wizard — user who can only import rules', () => {
+  const requestedUrls: string[] = [];
+  const recordRequest = ({ request }: { request: Request }) => {
+    requestedUrls.push(new URL(request.url).pathname);
+  };
+
+  afterEach(() => {
+    server.events.removeListener('request:start', recordRequest);
+    requestedUrls.length = 0;
+  });
+
+  beforeEach(() => {
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleCreate,
+      AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.AlertingProvisioningSetStatus,
+    ]);
+  });
+
+  it('starts on rules without the notifications step or the staged config request, and imports only rules', async () => {
+    server.events.on('request:start', recordRequest);
+    let notificationsImports = 0;
+    let rulesRequest: Request | undefined;
+    server.use(
+      http.post(CONVERT_URL, () => {
+        notificationsImports += 1;
+        return HttpResponse.json(convertResponse());
+      }),
+      http.post(RULES_URL, ({ request }) => {
+        rulesRequest = request.clone();
+        return HttpResponse.json(convertResponse());
+      })
+    );
+    const { user } = render(<ImportWizardGate />);
+
+    await screen.findByRole('group', { name: /import rules/i });
+    expect(screen.queryByRole('button', { name: /notification configuration/i })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('wizard-prev-button')).not.toBeInTheDocument();
+    expect(screen.queryByText(/you can skip this step/i)).not.toBeInTheDocument();
+
+    const [sourcePicker] = screen.getAllByTestId(selectors.components.DataSourcePicker.inputV2);
+    await waitFor(() => expect(sourcePicker).toBeEnabled());
+    await user.click(sourcePicker);
+    await user.click(await screen.findByRole('option', { name: /Prometheus/ }));
+    await user.click(screen.getByRole('button', { name: /select folder/i }));
+    await user.keyboard('Target');
+    await user.click(await screen.findByRole('treeitem', { name: /Target folder/ }));
+    // No step 1 to create a tree, so the rules go to an existing one.
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.policyTreeInput));
+    await user.click((await screen.findAllByRole('option'))[0]);
+    await waitFor(() =>
+      expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+        'aria-disabled',
+        'false'
+      )
+    );
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+
+    await screen.findByText(/review import/i);
+    expect(screen.queryAllByText(/notification configuration/i)).toHaveLength(0);
+    await user.click(await screen.findByRole('button', { name: /start import/i }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: /start import/i }));
+
+    await waitFor(() => expect(rulesRequest).toBeDefined());
+    expect(notificationsImports).toBe(0);
+    // The staged config is read from the Alertmanager config, which an editor can't read.
+    expect(requestedUrls.filter((url) => url.includes('/alertmanager/grafana/config'))).toEqual([]);
+  });
+
+  it('keeps the notifications step out even when asked for the full list', async () => {
+    render(<ImportWizardGate stepKeys={WIZARD_STEPS.full} />);
+
+    await screen.findByRole('button', { name: /review & import/i });
+    expect(screen.queryByRole('button', { name: /notification configuration/i })).not.toBeInTheDocument();
+  });
+
+  it('does not read the auto-sync config, even when allowed to', async () => {
+    // Editors get this permission through the Viewer role, so nothing but the wizard stops the request.
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleCreate,
+      AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.AlertingProvisioningSetStatus,
+      AccessControlAction.ActionAlertingNotificationsConfigRead,
+    ]);
+    server.events.on('request:start', recordRequest);
+    render(<ImportWizardGate />);
+
+    await screen.findByRole('group', { name: /import rules/i });
+    await waitFor(() => expect(requestedUrls.length).toBeGreaterThan(0));
+
+    expect(requestedUrls.filter((url) => url.includes('/configs/'))).toEqual([]);
+  });
+
+  it('renders in the alert rules page shell with its own title', async () => {
+    render(<ImportRulesPage />);
+
+    expect(await screen.findByRole('heading', { name: /import alert rules/i })).toBeInTheDocument();
+    expect(await screen.findByRole('group', { name: /import rules/i })).toBeInTheDocument();
+  });
+});
+
+describe('ImportRulesPage — user who can also write notifications', () => {
+  beforeEach(() => {
+    grantUserPermissions([
+      AccessControlAction.AlertingNotificationsWrite,
+      AccessControlAction.AlertingRuleCreate,
+      AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.AlertingProvisioningSetStatus,
+    ]);
+  });
+
+  // Notification imports end in Settings > Import, which only admins can open, so this page stays rules only.
+  it('shows only the rules and review steps', async () => {
+    render(<ImportRulesPage />);
+
+    expect(await screen.findByRole('group', { name: /import rules/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /notification configuration/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /review & import/i })).toBeInTheDocument();
   });
 });

@@ -1,11 +1,11 @@
 import { type UnknownAction } from '@reduxjs/toolkit';
 
 import { getBackendSrv } from '@grafana/runtime';
+import { type KindInfo } from '@grafana/runtime/unstable';
 import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { CORE_KINDS, coversGroup } from 'app/core/kinds/coreKinds';
-import { type KindInfo } from 'app/core/kinds/types';
 import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';

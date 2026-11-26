@@ -5,7 +5,7 @@ package github
 import (
 	context "context"
 
-	v0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana-app-sdk/resource"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -23,7 +23,7 @@ func (_m *MockGithubFactory) EXPECT() *MockGithubFactory_Expecter {
 }
 
 // New provides a mock function with given fields: ctx, ghToken, opts
-func (_m *MockGithubFactory) New(ctx context.Context, ghToken v0alpha1.RawSecureValue, opts ...ClientOption) (Client, error) {
+func (_m *MockGithubFactory) New(ctx context.Context, ghToken resource.RawSecureValue, opts ...ClientOption) (Client, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -39,10 +39,10 @@ func (_m *MockGithubFactory) New(ctx context.Context, ghToken v0alpha1.RawSecure
 
 	var r0 Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.RawSecureValue, ...ClientOption) (Client, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, resource.RawSecureValue, ...ClientOption) (Client, error)); ok {
 		return rf(ctx, ghToken, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.RawSecureValue, ...ClientOption) Client); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, resource.RawSecureValue, ...ClientOption) Client); ok {
 		r0 = rf(ctx, ghToken, opts...)
 	} else {
 		if ret.Get(0) != nil {
@@ -50,7 +50,7 @@ func (_m *MockGithubFactory) New(ctx context.Context, ghToken v0alpha1.RawSecure
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, v0alpha1.RawSecureValue, ...ClientOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, resource.RawSecureValue, ...ClientOption) error); ok {
 		r1 = rf(ctx, ghToken, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -66,14 +66,14 @@ type MockGithubFactory_New_Call struct {
 
 // New is a helper method to define mock.On call
 //   - ctx context.Context
-//   - ghToken v0alpha1.RawSecureValue
+//   - ghToken resource.RawSecureValue
 //   - opts ...ClientOption
 func (_e *MockGithubFactory_Expecter) New(ctx interface{}, ghToken interface{}, opts ...interface{}) *MockGithubFactory_New_Call {
 	return &MockGithubFactory_New_Call{Call: _e.mock.On("New",
 		append([]interface{}{ctx, ghToken}, opts...)...)}
 }
 
-func (_c *MockGithubFactory_New_Call) Run(run func(ctx context.Context, ghToken v0alpha1.RawSecureValue, opts ...ClientOption)) *MockGithubFactory_New_Call {
+func (_c *MockGithubFactory_New_Call) Run(run func(ctx context.Context, ghToken resource.RawSecureValue, opts ...ClientOption)) *MockGithubFactory_New_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		variadicArgs := make([]ClientOption, len(args)-2)
 		for i, a := range args[2:] {
@@ -81,7 +81,7 @@ func (_c *MockGithubFactory_New_Call) Run(run func(ctx context.Context, ghToken 
 				variadicArgs[i] = a.(ClientOption)
 			}
 		}
-		run(args[0].(context.Context), args[1].(v0alpha1.RawSecureValue), variadicArgs...)
+		run(args[0].(context.Context), args[1].(resource.RawSecureValue), variadicArgs...)
 	})
 	return _c
 }
@@ -91,7 +91,7 @@ func (_c *MockGithubFactory_New_Call) Return(_a0 Client, _a1 error) *MockGithubF
 	return _c
 }
 
-func (_c *MockGithubFactory_New_Call) RunAndReturn(run func(context.Context, v0alpha1.RawSecureValue, ...ClientOption) (Client, error)) *MockGithubFactory_New_Call {
+func (_c *MockGithubFactory_New_Call) RunAndReturn(run func(context.Context, resource.RawSecureValue, ...ClientOption) (Client, error)) *MockGithubFactory_New_Call {
 	_c.Call.Return(run)
 	return _c
 }

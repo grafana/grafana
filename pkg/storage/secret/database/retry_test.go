@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
-	"time"
+	"testing/synctest"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -93,16 +93,34 @@ func TestRetryTransientTransaction(t *testing.T) {
 	})
 
 	t.Run("honors context cancellation while waiting", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(t.Context())
-		defer cancel()
-		attempts := 0
-		err := RetryOnTransientTransactionError(ctx, func() error {
-			attempts++
-			time.AfterFunc(time.Millisecond, cancel)
-			return &mysql.MySQLError{Number: 1213}
-		})
+		// Use a fake clock so scheduler delays cannot make backoff expire before cancellation.
+		synctest.Test(t, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			done := make(chan struct{})
+			defer func() {
+				cancel()
+				<-done
+			}()
 
-		require.ErrorIs(t, err, context.Canceled)
-		require.Equal(t, 1, attempts)
+			attempts := 0
+			var err error
+			go func() {
+				defer close(done)
+				err = RetryOnTransientTransactionError(ctx, func() error {
+					attempts++
+					return &mysql.MySQLError{Number: 1213}
+				})
+			}()
+
+			// Let the first attempt reach the backoff wait before canceling.
+			synctest.Wait()
+			require.Equal(t, 1, attempts)
+			cancel()
+			// Let the retry goroutine respond to cancellation without advancing the clock.
+			synctest.Wait()
+
+			require.ErrorIs(t, err, context.Canceled, "cancellation should interrupt the retry backoff")
+			require.Equal(t, 1, attempts)
+		})
 	})
 }

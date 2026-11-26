@@ -38,8 +38,8 @@ describe('when mapRangeToTimeOption is passed a TimeRange and timezone', () => {
         'America/New_York'
       )
     ).toStrictEqual({
-      from: '2025-04-13 04:13:14',
-      to: '2025-04-13 05:14:15',
+      from: '2025-04-13T08:13:14.000Z',
+      to: '2025-04-13T09:14:15.000Z',
       display: '2025-04-13 04:13:14 to 2025-04-13 05:14:15',
     });
   });

@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/resource"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -176,7 +177,7 @@ func (s *LocalInlineSecureValueService) verifyOwnerAndAuth(ctx context.Context, 
 	return authInfo, nil
 }
 
-func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner common.ObjectReference, value common.RawSecureValue, desc *string) (string, error) {
+func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner common.ObjectReference, value resource.RawSecureValue, desc *string) (string, error) {
 	ctx, span := s.tracer.Start(ctx, "InlineSecureValueService.CreateInline", trace.WithAttributes(
 		attribute.String("owner.namespace", owner.Namespace),
 		attribute.String("owner.apiGroup", owner.APIGroup),

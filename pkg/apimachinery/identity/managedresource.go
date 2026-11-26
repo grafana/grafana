@@ -45,6 +45,35 @@ func CheckClassicFPAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 	}}
 }
 
+// ManagerKindRegistration represents a manager kind that a build adds on top of the built-in ones.
+type ManagerKindRegistration interface {
+	Kind() utils.ManagerKind
+
+	// CheckAssignment decides who may assign the kind.
+	CheckAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
+}
+
+var managerKindRegistry = map[utils.ManagerKind]ManagerKindRegistration{}
+
+// RegisterManagerKind registers a manager kind with the check that decides who may assign it.
+func RegisterManagerKind(registration ManagerKindRegistration) {
+	kind := registration.Kind()
+
+	utils.RegisterManagerKind(kind)
+
+	managerKindRegistry[kind] = registration
+}
+
+func checkRegisteredKindAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	kind := utils.ParseManagerKindString(obj.GetAnnotation(utils.AnnoKeyManagerKind))
+
+	if registration, ok := managerKindRegistry[kind]; ok {
+		return registration.CheckAssignment(auth, obj)
+	}
+
+	return nil
+}
+
 func CheckManagerWriteAuthz(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
 	kind := obj.GetAnnotation(utils.AnnoKeyManagerKind)
 	if kind == "" {
@@ -97,6 +126,11 @@ func CheckManagerOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor
 	if err := CheckClassicFPAssignment(auth, obj); err != nil {
 		return err
 	}
+
+	if err := checkRegisteredKindAssignment(auth, obj); err != nil {
+		return err
+	}
+
 	return CheckManagerWriteAuthz(auth, obj)
 }
 
@@ -120,7 +154,7 @@ func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAcc
 			// resources, so admins need the ability to detach manually.
 			if errors.Is(err, ErrResourceIsManagedInRepository) {
 				if requester, ok := auth.(Requester); ok &&
-					(requester.GetIsGrafanaAdmin() || requester.HasRole(RoleAdmin)) {
+					(requester.GetIsGrafanaAdmin() || requester.HasRole(authtypes.RoleAdmin)) {
 					return nil
 				}
 			}
@@ -139,11 +173,18 @@ func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAcc
 	}
 
 	// Adding a manager or updating flags on the same owner. Gate only a *new* classic-FP
-	// assignment: rewriting one that already carries it must keep working (allowUiUpdates).
+	// or registered-kind assignment: rewriting one that already carries it must keep working (allowUiUpdates).
 	if !hasOld || managerOld.Kind != utils.ManagerKindClassicFP { // nolint:staticcheck
 		if err := CheckClassicFPAssignment(auth, obj); err != nil {
 			return err
 		}
 	}
+
+	if !hasOld {
+		if err := checkRegisteredKindAssignment(auth, obj); err != nil {
+			return err
+		}
+	}
+
 	return CheckManagerWriteAuthz(auth, obj)
 }

@@ -63,6 +63,7 @@ func TestDeprecatedHandlers_SetHeaders(t *testing.T) {
 
 		replacement := nr.Header().Get("X-API-Replacement")
 		assert.NotEmpty(t, replacement)
+		assert.Contains(t, replacement, "/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/")
 
 		if expectByUID {
 			assert.Equal(t, replacementAlertRuleByUID, replacement)

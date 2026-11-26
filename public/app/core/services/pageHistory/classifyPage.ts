@@ -10,7 +10,7 @@ import { type PageIdentity } from './types';
  */
 export function classifyPage(pathname: string, search: string): PageIdentity | null {
   const normalized = pathname.length > 1 && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
-  const [, first, second] = normalized.split('/');
+  const [, first, second, third, fourth, fifth] = normalized.split('/');
 
   if (first === 'd' && second) {
     return { kind: 'dashboard', uid: second, pathname: normalized };
@@ -29,6 +29,21 @@ export function classifyPage(pathname: string, search: string): PageIdentity | n
     return pageId && pageId !== 'new' ? { kind: 'page', pathname: normalized } : null;
   }
 
+  // Only the folder page itself: its sub-pages (library panels, variables, ...) are not folders to come back to.
+  if (first === 'dashboards' && second === 'f' && third && !fifth && !FOLDER_SUBPAGES.includes(fourth)) {
+    return { kind: 'folder', uid: third, pathname: normalized };
+  }
+
+  // `/notebooks/<uid>[/<slug>]`: `new` is the create flow (it becomes `/notebooks/<uid>` once saved), and
+  // `/notebooks/<uid>/render` is the chromeless export route.
+  if (first === 'notebooks' && second && second !== 'new' && !fourth && third !== 'render') {
+    return { kind: 'notebook', uid: second, pathname: normalized };
+  }
+
+  if (first === 'playlists' && (second === 'edit' || second === 'play') && third && !fourth) {
+    return { kind: 'playlist', uid: third, pathname: normalized };
+  }
+
   if (first === 'a' && second) {
     return { kind: 'app', pathname: normalized };
   }
@@ -39,6 +54,9 @@ export function classifyPage(pathname: string, search: string): PageIdentity | n
 
   return null;
 }
+
+/** `/dashboards/f/<uid>/variables` has the shape of `/dashboards/f/<uid>/<slug>`. */
+const FOLDER_SUBPAGES = ['variables'];
 
 /**
  * Id of the left pane in Explore's v1 URL (`panes` is a JSON object keyed by pane id, left pane first).
@@ -86,6 +104,10 @@ export function pageKey(page: PageIdentity): string {
       return `dashboard:${page.uid}`;
     case 'explore':
       return `explore:${page.session}`;
+    case 'folder':
+    case 'notebook':
+    case 'playlist':
+      return `${page.kind}:${page.uid}`;
     case 'page':
     case 'alerting':
     case 'app':

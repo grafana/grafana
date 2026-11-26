@@ -62,6 +62,8 @@ import { TransformationEditorRenderer } from './PanelEditNext/QueryEditor/Transf
 import { PanelEditPanelWrapper } from './PanelEditPanelWrapper';
 import { buildPanelEditScene } from './PanelEditor';
 
+jest.mock('app/features/library-panels/state/api', () => makeSpyable('app/features/library-panels/state/api'));
+
 const loadingResponse = (ds: DataSourceApi, request: DataQueryRequest) => {
   return of({
     state: LoadingState.Loading,

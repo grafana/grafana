@@ -342,26 +342,32 @@ describe('RuleListActions', () => {
       });
     });
 
-    // The wizard lives on the admin-only Settings > Import tab, so the item opens its rules step there.
-    it.each([
-      ['with', IMPORT_WIZARD_FLAGS],
-      ['without', { [FlagKeys.AlertingMigrationWizardUI]: true }],
-    ])('links admins to the rules step of the wizard %s the Alertmanager import API', async (_, flags) => {
-      setTestFlags(flags);
-      grantUserRole(OrgRole.Admin);
-      grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingProvisioningSetStatus]);
+    // The route sends admins on to the Settings > Import tab, so the item has one URL for everyone.
+    it.each([OrgRole.Admin, OrgRole.Editor])(
+      'links %s users with both permissions to the import route',
+      async (role) => {
+        setTestFlags(IMPORT_WIZARD_FLAGS);
+        grantUserRole(role);
+        grantUserPermissions([
+          AccessControlAction.AlertingRuleCreate,
+          AccessControlAction.AlertingProvisioningSetStatus,
+        ]);
 
-      const { user } = render(<RuleListActions />);
-      await user.click(ui.moreButton.get());
-      const menu = await ui.moreMenu.find();
+        const { user } = render(<RuleListActions />);
+        await user.click(ui.moreButton.get());
+        const menu = await ui.moreMenu.find();
 
-      expect(ui.menuOptions.importAlertRules.get(menu)).toHaveAttribute('href', '/alerting/admin/import?step=rules');
-    });
+        expect(ui.menuOptions.importAlertRules.get(menu)).toHaveAttribute(
+          'href',
+          '/alerting/import-datasource-managed-rules'
+        );
+      }
+    );
 
-    it('does not offer rule import to non-admins, who cannot open the Import tab', async () => {
+    it('does not offer rule import with only one of the two permissions', async () => {
       setTestFlags(IMPORT_WIZARD_FLAGS);
       grantUserRole(OrgRole.Editor);
-      grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingProvisioningSetStatus]);
+      grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
 
       const { user } = render(<RuleListActions />);
       await user.click(ui.moreButton.get());

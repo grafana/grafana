@@ -196,12 +196,14 @@ export const NotebookAnalytics = {
     cellCount: number,
     addedPanel?: AddedPanel,
     lockTimeRange?: boolean,
-    hasText?: boolean
+    hasText?: boolean,
+    originPluginId?: string
   ): void {
     createCreatedEvent({
       notebookUid,
       source,
       cellCount,
+      ...(originPluginId ? { originPluginId } : {}),
       ...(lockTimeRange === undefined ? {} : { target: NOTEBOOK_ADD_TARGET.NEW, lockTimeRange, hasText }),
       // The blank notebook route sends none of these. It creates from whatever cells exist by its
       // first save, not around one panel.
@@ -244,12 +246,14 @@ export const NotebookAnalytics = {
     position: number,
     addedPanel: AddedPanel | undefined,
     lockTimeRange: boolean,
-    hasText: boolean
+    hasText: boolean,
+    originPluginId?: string
   ): void {
     createCellAddedFromAddToNotebookEvent({
       notebookUid,
       source,
       position,
+      ...(originPluginId ? { originPluginId } : {}),
       target: NOTEBOOK_ADD_TARGET.EXISTING,
       lockTimeRange,
       hasText,
@@ -264,9 +268,18 @@ export const NotebookAnalytics = {
     target: NotebookAddTarget,
     reason: NotebookAddFailedReason,
     lockTimeRange: boolean,
-    hasText: boolean
+    hasText: boolean,
+    originPluginId?: string
   ): void {
-    createAddFailedEvent({ notebookUid, source, target, reason, lockTimeRange, hasText });
+    createAddFailedEvent({
+      notebookUid,
+      source,
+      target,
+      reason,
+      lockTimeRange,
+      hasText,
+      ...(originPluginId ? { originPluginId } : {}),
+    });
   },
 
   blockInserted(notebookUid: string, blockType: NotebookBlockType, via: NotebookBlockInsertVia): void {
