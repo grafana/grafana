@@ -12,6 +12,8 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
@@ -79,7 +81,11 @@ func TestCloudSettingsStorageModes(t *testing.T) {
 				"example-app": {Enabled: true, JSONData: map[string]any{"origin": "cloudconfig"}},
 			}})}
 			unified := &cloudSettingsResourceClient{}
-			clients := RoutesLoaderClients{Resource: unified, LegacyAccess: settingsLegacyCheckFunc(func(context.Context, legacyclient.LegacyCheckRequest) (bool, error) { return true, nil })}
+			clients := RoutesLoaderClients{
+				Resource:     unified,
+				Access:       newSettingsAccessClient(func(types.AuthInfo, types.CheckRequest) (bool, error) { return true, nil }),
+				LegacyAccess: settingsLegacyCheckFunc(func(context.Context, legacyclient.LegacyCheckRequest) (bool, error) { return true, nil }),
+			}
 			if tc.injectedPolicy {
 				clients.DualWrite = dualwrite.ProvideServiceForTests(nil)
 			}

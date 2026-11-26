@@ -31,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/appsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
@@ -43,6 +42,21 @@ type settingsLegacyCheckFunc func(context.Context, legacyclient.LegacyCheckReque
 
 func (f settingsLegacyCheckFunc) LegacyCheck(ctx context.Context, req legacyclient.LegacyCheckRequest) (bool, error) {
 	return f(ctx, req)
+}
+
+// settingsAccessClient answers app-access checks with check; nothing else is called.
+type settingsAccessClient struct {
+	types.AccessClient
+	check func(types.AuthInfo, types.CheckRequest) (bool, error)
+}
+
+func newSettingsAccessClient(check func(types.AuthInfo, types.CheckRequest) (bool, error)) *settingsAccessClient {
+	return &settingsAccessClient{AccessClient: types.FixedAccessClient(false), check: check}
+}
+
+func (c *settingsAccessClient) Check(_ context.Context, info types.AuthInfo, req types.CheckRequest, _ string) (types.CheckResponse, error) {
+	allowed, err := c.check(info, req)
+	return types.CheckResponse{Allowed: allowed}, err
 }
 
 func settingsRequester(ns string) *identity.StaticRequester {
@@ -97,16 +111,19 @@ func TestCloudSettingsRoutes(t *testing.T) {
 				addAggregateSection(t, cfg, "v2", map[string]string{"url": fallbackServer.URL, "discovery_auth": "none"})
 			}
 			var checks []legacyclient.LegacyCheckRequest
+			var appChecks []types.CheckRequest
 			allowed := true
 			routeAllowed := true
 			checkErr := error(nil)
+			// App access goes through AuthZ Check; route actions through the legacy check.
+			access := newSettingsAccessClient(func(info types.AuthInfo, req types.CheckRequest) (bool, error) {
+				appChecks = append(appChecks, req)
+				require.Equal(t, "user:reader", info.GetUID())
+				return allowed && req.Group == appv0.GROUP && req.Resource == appv0.APP_RESOURCE_NAME && req.Name == "example-app" && req.Verb == "get", checkErr
+			})
 			legacy := settingsLegacyCheckFunc(func(_ context.Context, req legacyclient.LegacyCheckRequest) (bool, error) {
 				checks = append(checks, req)
-				permissions := map[string][]string{pluginaccesscontrol.ActionAppAccess: {"plugins:id:example-app"}}
-				if routeAllowed {
-					permissions["example-app.remote:read"] = []string{"plugins:id:example-app"}
-				}
-				return allowed && req.Evaluator.Evaluate(permissions), checkErr
+				return routeAllowed && req.Evaluator.Evaluate(map[string][]string{"example-app.remote:read": {"plugins:id:example-app"}}), nil
 			})
 			settings := &cloudSettingsTestService{FakePluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{"example-app": {Enabled: true, JSONData: map[string]any{"origin": "cloudconfig"}, SecureJSONData: map[string][]byte{"token": []byte("encrypted")}}}}}
 			factoryCalls := 0
@@ -114,7 +131,7 @@ func TestCloudSettingsRoutes(t *testing.T) {
 				factoryCalls++
 				return appsettings.NewLegacySettingsStore(id, id, settings), nil
 			}
-			loader, err := ProvideCloudRoutesLoader(cfg, RoutesLoaderClients{Resource: &resource.MockResourceClient{}, LegacyAccess: legacy}, CloudSettingsDependencies{LegacyStore: provider}, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), prometheus.NewRegistry())
+			loader, err := ProvideCloudRoutesLoader(cfg, RoutesLoaderClients{Resource: &resource.MockResourceClient{}, Access: access, LegacyAccess: legacy}, CloudSettingsDependencies{LegacyStore: provider}, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), prometheus.NewRegistry())
 			require.NoError(t, err)
 			cloud := loader.(*cloudLoader)
 			defer func() { require.NoError(t, cloud.stopping(nil)) }()
@@ -158,13 +175,8 @@ func TestCloudSettingsRoutes(t *testing.T) {
 				require.NoError(t, json.Unmarshal(res.Body.Bytes(), &obj))
 				require.Equal(t, ns, obj.Namespace)
 				require.NotContains(t, res.Body.String(), "read-secret")
-				last := checks[len(checks)-1]
-				require.Equal(t, ns, last.Namespace)
-				require.Equal(t, "user:reader", last.Subject)
-				require.NotNil(t, last.RequesterOrgID)
-				require.Nil(t, last.TeamIDs)
-				ok := last.Evaluator.Evaluate(map[string][]string{pluginaccesscontrol.ActionAppAccess: {"plugins:id:example-app"}})
-				require.True(t, ok)
+				last := appChecks[len(appChecks)-1]
+				require.Equal(t, types.CheckRequest{Verb: "get", Group: appv0.GROUP, Resource: appv0.APP_RESOURCE_NAME, Namespace: ns, Name: "example-app"}, last)
 			}
 			res := serve("GET", root+"/namespaces/stacks-1/app", settingsRequester("stacks-1"))
 			require.Equal(t, 200, res.Code, res.Body.String())

@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	appv0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -21,7 +22,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func cloudSettingsAccessChecker(client legacyclient.LegacyAccessClient) pluginaccesscontrol.AppAccessChecker {
+// cloudSettingsAccessChecker checks app access with AuthZ's Check, which maps
+// get on plugins.grafana.app/app/<plugin ID> to plugins.app:access on
+// plugins:id:<plugin ID>: the same check unified storage makes for app settings.
+func cloudSettingsAccessChecker(client types.AccessClient) pluginaccesscontrol.AppAccessChecker {
 	if client == nil {
 		return nil
 	}
@@ -36,8 +40,8 @@ func cloudSettingsAccessChecker(client legacyclient.LegacyAccessClient) pluginac
 			return authorizer.DecisionDeny, "a concrete namespace is required", nil
 		}
 		// An access policy is decided by its token's permissions alone. Users get
-		// the legacy app-access check only, as on the v3 manifest routes: the
-		// calling service's delegated permissions do not narrow it.
+		// the app-access check only, as on the v3 manifest routes: the calling
+		// service's delegated permissions do not narrow it.
 		if types.IsIdentityType(user.GetIdentityType(), types.TypeAccessPolicy) {
 			verb := "get"
 			if info, ok := request.RequestInfoFrom(ctx); ok {
@@ -48,9 +52,14 @@ func cloudSettingsAccessChecker(client legacyclient.LegacyAccessClient) pluginac
 			}
 			return authorizer.DecisionAllow, "", nil
 		}
-		allowed, err := (cloudSettingsAccessControl{client}).Evaluate(request.WithNamespace(ctx, ns), user,
-			accesscontrol.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginaccesscontrol.ScopeProvider.GetResourceScope(id)))
-		if err != nil || !allowed {
+		rsp, err := client.Check(ctx, user, types.CheckRequest{
+			Verb:      utils.VerbGet,
+			Group:     appv0.GROUP,
+			Resource:  appv0.APP_RESOURCE_NAME,
+			Namespace: ns,
+			Name:      id,
+		}, "")
+		if err != nil || !rsp.Allowed {
 			return authorizer.DecisionDeny, "app access denied", err
 		}
 		return authorizer.DecisionAllow, "", nil

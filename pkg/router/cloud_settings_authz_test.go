@@ -1,7 +1,6 @@
 package router
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -12,8 +11,6 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 )
 
 func TestCloudSettingsAccessChecker(t *testing.T) {
@@ -23,28 +20,29 @@ func TestCloudSettingsAccessChecker(t *testing.T) {
 	accessPolicy := &identity.StaticRequester{Type: types.TypeAccessPolicy, Namespace: "*",
 		AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{Permissions: []string{"*-app:get"}}}}
 	for _, tc := range []struct {
-		name       string
-		ns         string
-		verb       string
-		user       identity.Requester
-		allowed    bool
-		checkErr   error
-		want       authorizer.Decision
-		wantErr    error
-		wantLegacy bool
+		name      string
+		ns        string
+		verb      string
+		user      identity.Requester
+		allowed   bool
+		checkErr  error
+		want      authorizer.Decision
+		wantErr   error
+		wantCheck bool
 	}{
-		{name: "allowed user", ns: "stacks-1", verb: "get", user: settingsRequester("stacks-1"), allowed: true, want: authorizer.DecisionAllow, wantLegacy: true},
-		{name: "legacy denial", ns: "stacks-1", verb: "get", user: settingsRequester("stacks-1"), want: authorizer.DecisionDeny, wantLegacy: true},
-		{name: "legacy error", ns: "stacks-1", verb: "get", user: settingsRequester("stacks-1"), checkErr: errCheck, want: authorizer.DecisionDeny, wantErr: errCheck, wantLegacy: true},
-		{name: "user write needs no token permission", ns: "stacks-1", verb: "create", user: settingsRequester("stacks-1"), allowed: true, want: authorizer.DecisionAllow, wantLegacy: true},
-		{name: "service call skips legacy check", ns: "stacks-1", verb: "get", user: accessPolicy, want: authorizer.DecisionAllow},
+		{name: "allowed user", ns: "stacks-1", verb: "get", user: settingsRequester("stacks-1"), allowed: true, want: authorizer.DecisionAllow, wantCheck: true},
+		{name: "denied user", ns: "stacks-1", verb: "get", user: settingsRequester("stacks-1"), want: authorizer.DecisionDeny, wantCheck: true},
+		{name: "check error", ns: "stacks-1", verb: "get", user: settingsRequester("stacks-1"), checkErr: errCheck, want: authorizer.DecisionDeny, wantErr: errCheck, wantCheck: true},
+		{name: "user write needs app access only", ns: "stacks-1", verb: "create", user: settingsRequester("stacks-1"), allowed: true, want: authorizer.DecisionAllow, wantCheck: true},
+		{name: "service call skips app access check", ns: "stacks-1", verb: "get", user: accessPolicy, want: authorizer.DecisionAllow},
 		{name: "service token lacks verb", ns: "stacks-1", verb: "create", user: accessPolicy, allowed: true, want: authorizer.DecisionDeny},
 		{name: "no namespace", verb: "get", user: settingsRequester("stacks-1"), allowed: true, want: authorizer.DecisionDeny},
 		{name: "wildcard namespace", ns: "*", verb: "get", user: settingsRequester("*"), allowed: true, want: authorizer.DecisionDeny},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			var calls []legacyclient.LegacyCheckRequest
-			check := cloudSettingsAccessChecker(settingsLegacyCheckFunc(func(_ context.Context, req legacyclient.LegacyCheckRequest) (bool, error) {
+			var calls []types.CheckRequest
+			check := cloudSettingsAccessChecker(newSettingsAccessClient(func(info types.AuthInfo, req types.CheckRequest) (bool, error) {
+				require.Equal(t, tc.user.GetUID(), info.GetUID())
 				calls = append(calls, req)
 				return tc.allowed, tc.checkErr
 			}))
@@ -53,14 +51,14 @@ func TestCloudSettingsAccessChecker(t *testing.T) {
 			decision, _, err := check(ctx, tc.user, "example-app")
 			require.Equal(t, tc.want, decision)
 			require.ErrorIs(t, err, tc.wantErr)
-			if !tc.wantLegacy {
+			if !tc.wantCheck {
 				require.Empty(t, calls)
 				return
 			}
-			require.Len(t, calls, 1)
-			require.Equal(t, tc.ns, calls[0].Namespace)
-			require.True(t, calls[0].Evaluator.Evaluate(map[string][]string{pluginaccesscontrol.ActionAppAccess: {"plugins:id:example-app"}}))
-			require.False(t, calls[0].Evaluator.Evaluate(map[string][]string{pluginaccesscontrol.ActionAppAccess: {"plugins:id:other-app"}}))
+			// Every verb needs app access, which AuthZ maps from get on the settings object.
+			require.Equal(t, []types.CheckRequest{{
+				Verb: "get", Group: "plugins.grafana.app", Resource: "app", Namespace: tc.ns, Name: "example-app",
+			}}, calls)
 		})
 	}
 }
