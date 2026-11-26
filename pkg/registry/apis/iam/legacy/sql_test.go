@@ -229,6 +229,14 @@ func TestIdentityQueries(t *testing.T) {
 					}),
 				},
 				{
+					Name: "teams_name",
+					Data: listTeams(&ListTeamQuery{
+						OrgID:      42,
+						Name:       "Operations",
+						Pagination: common.Pagination{Limit: 2},
+					}),
+				},
+				{
 					Name: "teams_page_1",
 					Data: listTeams(&ListTeamQuery{
 						Pagination: common.Pagination{Limit: 5},

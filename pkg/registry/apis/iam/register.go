@@ -258,6 +258,7 @@ func NewAPIService(
 	ssoReadService := ssosettingsimpl.ProvideReadOnlyDBService(dbProvider, ssoCfgProvider)
 
 	builder := &IdentityAccessManagementAPIBuilder{
+		standalone:              true,
 		store:                   store,
 		userLegacyStore:         user.NewLegacyStore(store, accessClient, tracingService),
 		saLegacyStore:           serviceaccount.NewLegacyStore(store, accessClient, tracingService),
@@ -461,6 +462,12 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	enableSaResourcePermissions := b.features.ServiceAccountResourcePermissions
 	enableResourcePermissionsApi := b.features.ResourcePermissionsAPI
 	enableAuthInfoApi := b.features.AuthInfoAPI
+
+	if b.standalone && (enableTeamsApi || enableUserApi) {
+		if err := b.configureStandaloneAdmissionSearch(opts); err != nil {
+			return err
+		}
+	}
 
 	// teams + users must have shorter names because they are often used as part of another name
 	opts.StorageOptsRegister(iamv0.TeamResourceInfo.GroupResource(), apistore.StorageOptions{

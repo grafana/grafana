@@ -164,6 +164,7 @@ type ListTeamQuery struct {
 	OrgID int64
 	UID   string
 	ID    int64
+	Name  string
 
 	Pagination common.Pagination
 }

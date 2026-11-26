@@ -86,6 +86,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	reg    prometheus.Registerer
 	logger log.Logger
 
+	standalone                        bool
 	dual                              dualwrite.Service
 	unified                           resource.ResourceClient
 	userSearchClient                  *dualwrite.Selector[user.SearchBackend]
