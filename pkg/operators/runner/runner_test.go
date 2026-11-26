@@ -213,6 +213,39 @@ func TestJoinStopError(t *testing.T) {
 	}
 }
 
+// uncomparableErr cannot be compared with ==, and its Unwrap returns nil like
+// errutil.Error.
+type uncomparableErr struct{ details []string }
+
+func (e uncomparableErr) Error() string { return "uncomparable" }
+func (e uncomparableErr) Unwrap() error { return nil }
+
+func TestJoinStopErrorKeepsWrappersIntact(t *testing.T) {
+	t.Run("keeps a wrapper with nothing to strip", func(t *testing.T) {
+		stopErr := fmt.Errorf("stop store: %w", errors.New("flush failed"))
+		err := joinStopError(context.Canceled, stopErr)
+		require.ErrorIs(t, err, stopErr)
+		require.NotErrorIs(t, err, context.Canceled)
+		assert.Equal(t, "stop store: flush failed", err.Error())
+	})
+
+	t.Run("keeps an error whose Unwrap returns nil", func(t *testing.T) {
+		stopErr := uncomparableErr{details: []string{"a"}}
+		err := joinStopError(context.Canceled, stopErr)
+		require.ErrorAs(t, err, new(uncomparableErr))
+		require.NotErrorIs(t, err, context.Canceled)
+	})
+
+	t.Run("does not panic on uncomparable errors next to cancellation", func(t *testing.T) {
+		stopErr := fmt.Errorf("stop: %w", errors.Join(uncomparableErr{details: []string{"a"}}, context.Canceled))
+		var err error
+		require.NotPanics(t, func() { err = joinStopError(context.Canceled, stopErr) })
+		require.ErrorAs(t, err, new(uncomparableErr))
+		require.NotErrorIs(t, err, context.Canceled)
+		assert.Equal(t, stopErr.Error(), err.Error())
+	})
+}
+
 func TestReadinessIgnoresReadyAfterContextDone(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
