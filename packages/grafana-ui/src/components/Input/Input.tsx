@@ -82,8 +82,9 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
   const suffix = suffixProp || (loading && <Spinner inline={true} />);
 
   // prefix width + space between elements (12)
-  const prefixWidth = prefix ? prefixRect.width + 12 : undefined;
-  const suffixWidth = suffix ? suffixRect.width + 12 : undefined;
+  const prefixWidth = prefix ? prefixRect.width : undefined;
+  const suffixWidth = suffix ? suffixRect.width : undefined;
+
   // calc auto size width including prefix and suffix padding
   const autoSizeWidth = isInAutoSizeInput && width ? width + ((prefixWidth ?? 0) + (suffixWidth ?? 0)) / 8 : undefined;
 
