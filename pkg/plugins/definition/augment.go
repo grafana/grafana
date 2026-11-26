@@ -57,15 +57,7 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts SettingsResource) (*spec3.OpenAPI, 
 	if !settings.IsZero() {
 		resourceSpec := settings.Spec
 		if opts.IsApp {
-			resourceSpec = &spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Type: []string{"object"},
-					Properties: map[string]spec.Schema{
-						"enabled":  *spec.BooleanProperty().WithDescription("can be executed"),
-						"jsonData": *settings.Spec,
-					},
-				},
-			}
+			resourceSpec = AppSettingsSpec(settings)
 
 			example := map[string]any{
 				"metadata": map[string]any{
@@ -300,5 +292,20 @@ func copyComponents(src *spec3.Components, dst *spec3.Components) {
 			dst.RequestBodies = make(map[string]*spec3.RequestBody)
 		}
 		maps.Copy(dst.RequestBodies, src.RequestBodies)
+	}
+}
+
+// AppSettingsSpec is the spec of an app's settings object as the settings API
+// describes it, in its OpenAPI and its manifest: whether the app is enabled,
+// and its jsonData, as the settings schema's spec defines it.
+func AppSettingsSpec(settings *pluginschema.Settings) *spec.Schema {
+	return &spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Type: []string{"object"},
+			Properties: map[string]spec.Schema{
+				"enabled":  *spec.BooleanProperty().WithDescription("can be executed"),
+				"jsonData": *settings.Spec,
+			},
+		},
 	}
 }
