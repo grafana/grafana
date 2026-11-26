@@ -249,6 +249,49 @@ func init() {
 	})
 }
 
+func TestClassicFPTakeover(t *testing.T) {
+	who := identities(t)
+	classicFP := func() utils.GrafanaMetaAccessor {
+		return managedBy(t, utils.ManagerProperties{Kind: utils.ManagerKindClassicFP, Identity: "dashboards"}) //nolint:staticcheck
+	}
+	takenOver := func() utils.GrafanaMetaAccessor {
+		return managedBy(t, utils.ManagerProperties{Kind: kindAssignedByProvisioner, Identity: "the-manager"})
+	}
+	forbidden := func(t *testing.T, err error, msg string) {
+		t.Helper()
+		require.True(t, apierrors.IsForbidden(err), "%s: %v", msg, err)
+	}
+
+	t.Run("a caller a registered kind lets assign it may take over a classic-file-provisioning resource", func(t *testing.T) {
+		require.NoError(t, identity.CheckManagerOnUpdate(who.provisioner, takenOver(), classicFP()))
+	})
+
+	t.Run("the kind's check still decides who may take over", func(t *testing.T) {
+		require.ErrorIs(t, identity.CheckManagerOnUpdate(who.user, takenOver(), classicFP()), errMayNotAssign, "user")
+		require.ErrorIs(t, identity.CheckManagerOnUpdate(who.service, takenOver(), classicFP()), errMayNotAssign, "service")
+	})
+
+	t.Run("a kind nobody registered may not take over", func(t *testing.T) {
+		obj := managedBy(t, utils.ManagerProperties{Kind: "test-never-registered", Identity: "the-manager"})
+		forbidden(t, identity.CheckManagerOnUpdate(who.provisioner, obj, classicFP()), "unregistered kind")
+	})
+
+	t.Run("the kind may take over only from classic-file-provisioning", func(t *testing.T) {
+		repo := managedBy(t, utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"})
+		forbidden(t, identity.CheckManagerOnUpdate(who.provisioner, takenOver(), repo), "from repo")
+		classicAPI := managedBy(t, utils.ManagerProperties{Kind: utils.ManagerKindClassicAPI}) //nolint:staticcheck
+		forbidden(t, identity.CheckManagerOnUpdate(who.provisioner, takenOver(), classicAPI), "from classic-api-provisioning")
+		forbidden(t, identity.CheckManagerOnUpdate(who.provisioner, classicFP(), takenOver()), "back to classic-file-provisioning")
+	})
+
+	t.Run("after the takeover the kind behaves like any registered kind", func(t *testing.T) {
+		require.NoError(t, identity.CheckManagerOnUpdate(who.user, takenOver(), takenOver()), "update")
+		forbidden(t, identity.CheckManagerOnUpdate(who.provisioner,
+			managedBy(t, utils.ManagerProperties{Kind: kindAssignedByProvisioner, Identity: "another-manager"}), takenOver()),
+			"the identity may not change")
+	})
+}
+
 func TestRegisteredManagerKind(t *testing.T) {
 	who := identities(t)
 	anyone := func(authtypes.AuthInfo) bool { return true }

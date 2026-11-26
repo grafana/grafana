@@ -187,8 +187,12 @@ func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAcc
 		return nil
 	}
 
-	if err := utils.CheckManagerPropertiesOnUpdate(managerOld, managerNew, hasOld, hasNew); err != nil {
-		return err
+	// A registered kind's manager may take over a classic-FP resource in one update.
+	takeover := hasOld && managerOld.Kind == utils.ManagerKindClassicFP && IsRegisteredManagerKind(managerNew.Kind) // nolint:staticcheck
+	if !takeover {
+		if err := utils.CheckManagerPropertiesOnUpdate(managerOld, managerNew, hasOld, hasNew); err != nil {
+			return err
+		}
 	}
 
 	// Adding a manager or updating flags on the same owner. Gate only a *new* classic-FP
@@ -199,7 +203,7 @@ func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAcc
 		}
 	}
 
-	if !hasOld {
+	if !hasOld || takeover {
 		if err := CheckRegisteredKindAssignment(auth, obj); err != nil {
 			return err
 		}
