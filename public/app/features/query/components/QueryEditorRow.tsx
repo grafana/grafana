@@ -183,8 +183,7 @@ function QueryEditorRowComponent<TQuery extends DataQuery>(props: Props<TQuery>)
   const datasource = loaded?.datasource ?? null;
   const filteredData = useMemo(() => filterPanelDataToQuery(data, query.refId), [data, query.refId]);
 
-  // Read by the stable `onEditorChange`, the datasource load and the scroll pin callbacks. Synced in the
-  // layout phase (like `this.props`) so editors calling onChange from their passive effects see this render.
+  // Read by the stable `onEditorChange`, the datasource load and the scroll pin callbacks.
   const propsRef = useRef(props);
   useLayoutEffect(() => {
     propsRef.current = props;
@@ -217,7 +216,7 @@ function QueryEditorRowComponent<TQuery extends DataQuery>(props: Props<TQuery>)
     };
   }, [identifier]);
 
-  // Declaration order is load-bearing: on unmount React runs cleanups in order, so this one sees a pin
+  // Order of useLayoutEffects is important: on unmount React runs cleanups in order, so this one sees a pin
   // still in flight before the pin effect below cancels it. A cancelled pin never reaches onDone, so report
   // here or the owner's one-shot flag stays set (e.g. switching tabs mid-pin, or deleting the pinned row).
   useLayoutEffect(
