@@ -984,7 +984,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	apiBuilder, err := provisioning3.RegisterAPIService(ctx, cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, repositoryFactory, connectionFactory, quotaGetter, subscriberService, grafanaRouter, supportedResourceProvider)
+	apiBuilder, err := provisioning3.RegisterAPIServer(ctx, cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, usageStats, orgService, tracingService, v13, repositoryFactory, connectionFactory, quotaGetter, grafanaRouter, supportedResourceProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -997,7 +997,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	repositoryControllerService := provisioning3.ProvideRepositoryControllerService(cfg, apiBuilder, bootstrapService, subscriberService, registerer, tracingService, v5, informerMetrics)
 	jobQueueService := provisioning3.ProvideJobQueueService(cfg, apiBuilder, subscriberService, registerer, tracingService, renderingService, v5)
-	jobCleanupService := provisioning3.ProvideJobCleanupService(apiBuilder, registerer)
+	jobCleanupService := provisioning3.ProvideJobCleanupService(cfg, apiBuilder, registerer)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
 	if err != nil {
@@ -1798,7 +1798,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	apiBuilder, err := provisioning3.RegisterAPIService(ctx, cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, repositoryFactory, connectionFactory, quotaGetter, subscriberService, grafanaRouter, supportedResourceProvider)
+	apiBuilder, err := provisioning3.RegisterAPIServer(ctx, cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, usageStats, orgService, tracingService, v13, repositoryFactory, connectionFactory, quotaGetter, grafanaRouter, supportedResourceProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1811,7 +1811,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	repositoryControllerService := provisioning3.ProvideRepositoryControllerService(cfg, apiBuilder, bootstrapService, subscriberService, registerer, tracingService, v5, informerMetrics)
 	jobQueueService := provisioning3.ProvideJobQueueService(cfg, apiBuilder, subscriberService, registerer, tracingService, renderingService, v5)
-	jobCleanupService := provisioning3.ProvideJobCleanupService(apiBuilder, registerer)
+	jobCleanupService := provisioning3.ProvideJobCleanupService(cfg, apiBuilder, registerer)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
 	if err != nil {

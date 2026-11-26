@@ -84,10 +84,6 @@ type JobHistoryConfig struct {
 type APIBuilder struct {
 	gv schema.GroupVersion
 
-	// onlyApiServer used to disable starting controllers for the standalone API server.
-	// HACK:This will be removed once we have proper wire providers for the controllers.
-	// TODO: Set this up in the standalone API server
-	onlyApiServer                       bool
 	isPreferredVersion                  bool
 	useExclusivelyAccessCheckerForAuthz bool
 
@@ -132,7 +128,6 @@ type APIBuilder struct {
 	// Extras provides additional functionality to the API.
 	extras []Extra
 
-	restConfigGetter  func(context.Context) (*clientrest.Config, error)
 	registry          prometheus.Registerer
 	quotaGetter       quotas.QuotaGetter
 	maxFileSize       int64
@@ -149,7 +144,8 @@ type APIBuilder struct {
 	bootstrapDone <-chan struct{}
 }
 
-// NewAPIBuilder creates an API builder for the provisioning API.
+// NewAPIServerBuilder creates an API builder for the provisioning API. It
+// serves the API only: the controllers are separate services.
 //
 // This function supports registering multiple API versions (e.g., v0alpha1, v1beta1) by creating
 // separate API builders for each version. The same types are served under different versions using
@@ -162,30 +158,26 @@ type APIBuilder struct {
 //     transform OpenAPI schemas to match the version.
 //   - isPreferredVersion: Indicates whether this version is the preferred/default version for the API group.
 //     Only ONE version should be marked as preferred. The preferred version is used by kubectl and other
-//     clients when they query the API without specifying a version. It also controls which version runs
-//     the controllers and background workers (only the preferred version starts these to avoid duplicates).
+//     clients when they query the API without specifying a version. Only the preferred version
+//     registers usage stats.
 //
 // It avoids anything that is core to Grafana, such that it can be used in a multi-tenant service down the line.
 // This means there are no hidden dependencies, and no use of e.g. *settings.Cfg.
-func NewAPIBuilder(
+func NewAPIServerBuilder(
 	gv schema.GroupVersion,
 	isPreferredVersion bool,
-	onlyApiServer bool,
 	repoFactory repository.Factory,
 	connectionFactory connection.Factory,
 	features featuremgmt.FeatureToggles,
 	unified resource.ResourceClient,
 	configProvider apiserver.RestConfigProvider,
-	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
 	access authlib.AccessChecker,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
-	_ []jobs.Worker, // extraWorkers: unused, kept for signature compatibility
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
 	supportedResourceProvider resources.SupportedResourceProvider,
-	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
 	minSyncInterval time.Duration,
 	registry prometheus.Registerer,
@@ -218,7 +210,6 @@ func NewAPIBuilder(
 
 	b := &APIBuilder{
 		gv:                                  gv,
-		onlyApiServer:                       onlyApiServer,
 		isPreferredVersion:                  isPreferredVersion,
 		minSyncInterval:                     minSyncInterval,
 		tracer:                              tracer,
@@ -235,7 +226,6 @@ func NewAPIBuilder(
 		accessWithEditor:                    accessChecker.WithFallbackRole(authlib.RoleEditor),
 		accessWithViewer:                    accessChecker.WithFallbackRole(authlib.RoleViewer),
 		jobHistoryConfig:                    jobHistoryConfig,
-		restConfigGetter:                    restConfigGetter,
 		allowedTargets:                      allowedTargets,
 		allowImageRendering:                 allowImageRendering,
 		registry:                            registry,
@@ -256,6 +246,51 @@ func NewAPIBuilder(
 	}
 
 	return b, nil
+}
+
+// NewAPIBuilder creates an API builder for the provisioning API.
+//
+// Deprecated: use [NewAPIServerBuilder]. HACK: kept with its old signature
+// only so backports and security patches still apply. onlyApiServer,
+// storageStatus and extraWorkers are ignored: the controllers are separate
+// services. A non-nil restConfigGetter is rejected; the post-start hook
+// always uses its loopback config.
+func NewAPIBuilder(
+	gv schema.GroupVersion,
+	isPreferredVersion bool,
+	onlyApiServer bool,
+	repoFactory repository.Factory,
+	connectionFactory connection.Factory,
+	features featuremgmt.FeatureToggles,
+	unified resource.ResourceClient,
+	configProvider apiserver.RestConfigProvider,
+	storageStatus dualwrite.Service,
+	usageStats usagestats.Service,
+	access authlib.AccessChecker,
+	tracer tracing.Tracer,
+	extraBuilders []ExtraBuilder,
+	extraWorkers []jobs.Worker,
+	jobHistoryConfig *JobHistoryConfig,
+	allowedTargets []provisioning.SyncTargetType,
+	supportedResourceProvider resources.SupportedResourceProvider,
+	restConfigGetter func(context.Context) (*clientrest.Config, error),
+	allowImageRendering bool,
+	minSyncInterval time.Duration,
+	registry prometheus.Registerer,
+	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory,
+	useExclusivelyAccessCheckerForAuthz bool,
+	quotaGetter quotas.QuotaGetter,
+	incrementalPolicy repository.IncrementalSyncPolicy,
+	maxFileSize int64,
+	maxJobBodySize int64,
+) (*APIBuilder, error) {
+	if restConfigGetter != nil {
+		return nil, errors.New("provisioning: restConfigGetter is no longer supported")
+	}
+	return NewAPIServerBuilder(gv, isPreferredVersion, repoFactory, connectionFactory, features, unified,
+		configProvider, usageStats, access, tracer, extraBuilders, jobHistoryConfig, allowedTargets,
+		supportedResourceProvider, allowImageRendering, minSyncInterval, registry, newStandaloneClientFactoryFunc,
+		useExclusivelyAccessCheckerForAuthz, quotaGetter, incrementalPolicy, maxFileSize, maxJobBodySize)
 }
 
 func (b *APIBuilder) publishLoopbackConfig(config *clientrest.Config) {
@@ -362,7 +397,11 @@ func ProvideSupportedResourceProvider(cfg *setting.Cfg) (resources.SupportedReso
 
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
 // This function happily uses services core to Grafana, and does not need to be multi-tenancy-compatible.
-func RegisterAPIService(
+// RegisterAPIServer registers the provisioning API, both v0alpha1 and
+// v1beta1, and returns the preferred (v0alpha1) builder the controller
+// services run on. It configures the API only; whether the controllers run is
+// up to their own services.
+func RegisterAPIServer(
 	ctx context.Context,
 	// It is OK to use setting.Cfg here -- this is only used when running single tenant with a full setup
 	cfg *setting.Cfg,
@@ -372,7 +411,6 @@ func RegisterAPIService(
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
 	access authlib.AccessClient,
-	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
 	orgSvc org.Service,
 	tracer tracing.Tracer,
@@ -380,14 +418,9 @@ func RegisterAPIService(
 	repoFactory repository.Factory,
 	connectionFactory connection.Factory,
 	quotaGetter quotas.QuotaGetter,
-	natsSubscriber nats.Subscriber,
 	manifests resource.ManifestDiscovery,
 	supportedResourceProvider resources.SupportedResourceProvider,
 ) (*APIBuilder, error) {
-	// Kept for signature compatibility: the controllers take the subscriber from
-	// their own providers.
-	_ = natsSubscriber
-
 	if !cfg.ProvisioningEnabled {
 		return nil, nil
 	}
@@ -408,8 +441,6 @@ func RegisterAPIService(
 	}
 
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
-	maxFileSize := cfg.ProvisioningMaxFileSize
-	maxJobBodySize := cfg.ProvisioningMaxJobBodySize
 	incrementalPolicy := repository.NewIncrementalSyncPolicy(cfg.ProvisioningMaxIncrementalChanges)
 	provisioningSec := cfg.SectionWithEnvOverrides("provisioning")
 
@@ -422,97 +453,86 @@ func RegisterAPIService(
 	}
 	urlValidator := repository.NewURLValidator(allowlist, net.DefaultResolver.LookupIPAddr)
 	repoValidatorOpts := []repository.ValidatorOption{repository.WithURLValidator(urlValidator)}
+	usageNamespaceLister := usage.UsageNamespaceLister(cfg, orgSvc)
 
-	// Register v0alpha1 (preferred version)
-	builder, err := NewAPIBuilder(
-		schema.GroupVersion{
-			Group:   provisioning.GROUP,
-			Version: provisioning.VERSION, // v0alpha1
-		},
-		true,                   // isPreferredVersion
-		cfg.DisableControllers, // onlyApiServer
-		repoFactory,
-		connectionFactory,
-		features,
-		client,
-		configProvider,
-		storageStatus,
-		usageStats,
-		access,
-		tracer,
-		extraBuilders,
-		nil, // extraWorkers
-		jobHistoryConfig,
-		allowedTargets,
-		supportedResourceProvider,
-		nil, // restConfigGetter - will use loopback instead
-		cfg.ProvisioningAllowImageRendering,
-		cfg.ProvisioningMinSyncInterval,
-		reg,
-		nil,   // newStandaloneClientFactoryFunc
-		false, // useExclusivelyAccessCheckerForAuthz - TODO: first, test this on the MT side before we enable it by default in ST as well
-		quotaGetter,
-		incrementalPolicy,
-		maxFileSize,
-		maxJobBodySize,
-	)
+	registerVersion := func(version string, isPreferredVersion bool) (*APIBuilder, error) {
+		b, err := NewAPIServerBuilder(
+			schema.GroupVersion{Group: provisioning.GROUP, Version: version},
+			isPreferredVersion,
+			repoFactory,
+			connectionFactory,
+			features,
+			client,
+			configProvider,
+			usageStats,
+			access,
+			tracer,
+			extraBuilders,
+			jobHistoryConfig,
+			allowedTargets,
+			supportedResourceProvider,
+			cfg.ProvisioningAllowImageRendering,
+			cfg.ProvisioningMinSyncInterval,
+			reg,
+			nil,   // newStandaloneClientFactoryFunc
+			false, // useExclusivelyAccessCheckerForAuthz - TODO: first, test this on the MT side before we enable it by default in ST as well
+			quotaGetter,
+			incrementalPolicy,
+			cfg.ProvisioningMaxFileSize,
+			cfg.ProvisioningMaxJobBodySize,
+		)
+		if err != nil {
+			return nil, err
+		}
+		if err := b.SetResourceListerMode(cfg.ProvisioningResourceLister); err != nil {
+			return nil, err
+		}
+		b.repoValidatorOpts = repoValidatorOpts
+		b.urlValidator = urlValidator
+		b.usageNamespaceLister = usageNamespaceLister
+		apiregistration.RegisterAPI(b)
+		return b, nil
+	}
+
+	preferred, err := registerVersion(provisioning.VERSION, true)
 	if err != nil {
 		return nil, err
 	}
-	if err := builder.SetResourceListerMode(cfg.ProvisioningResourceLister); err != nil {
+	if _, err := registerVersion("v1beta1", false); err != nil {
 		return nil, err
 	}
-	builder.repoValidatorOpts = repoValidatorOpts
-	builder.urlValidator = urlValidator
-	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
-	apiregistration.RegisterAPI(builder)
+	return preferred, nil
+}
 
-	// Register v1beta1
-	v1beta1Builder, err := NewAPIBuilder(
-		schema.GroupVersion{
-			Group:   provisioning.GROUP,
-			Version: "v1beta1",
-		},
-		false, // isPreferredVersion
-		true,  // onlyApiServer
-		repoFactory,
-		connectionFactory,
-		features,
-		client,
-		configProvider,
-		storageStatus,
-		usageStats,
-		access,
-		tracer,
-		extraBuilders,
-		nil, // extraWorkers
-		jobHistoryConfig,
-		allowedTargets,
-		supportedResourceProvider,
-		nil, // restConfigGetter
-		cfg.ProvisioningAllowImageRendering,
-		cfg.ProvisioningMinSyncInterval,
-		reg,
-		nil,   // newStandaloneClientFactoryFunc
-		false, // useExclusivelyAccessCheckerForAuthz
-		quotaGetter,
-		incrementalPolicy,
-		maxFileSize,
-		maxJobBodySize,
-	)
-	if err != nil {
-		return nil, err
-	}
-	v1beta1Builder.repoValidatorOpts = repoValidatorOpts
-	v1beta1Builder.urlValidator = urlValidator
-	if err := v1beta1Builder.SetResourceListerMode(cfg.ProvisioningResourceLister); err != nil {
-		return nil, err
-	}
-	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
-	apiregistration.RegisterAPI(v1beta1Builder)
-
-	// Return the preferred (v0alpha1) builder since it runs controllers/workers
-	return builder, nil
+// RegisterAPIService registers the provisioning API.
+//
+// Deprecated: use [RegisterAPIServer]. HACK: kept with its old signature only
+// so backports and security patches still apply; natsSubscriber and
+// storageStatus are ignored.
+func RegisterAPIService(
+	ctx context.Context,
+	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	apiregistration builder.APIRegistrar,
+	reg prometheus.Registerer,
+	client resource.ResourceClient,
+	configProvider apiserver.RestConfigProvider,
+	access authlib.AccessClient,
+	storageStatus dualwrite.Service,
+	usageStats usagestats.Service,
+	orgSvc org.Service,
+	tracer tracing.Tracer,
+	extraBuilders []ExtraBuilder,
+	repoFactory repository.Factory,
+	connectionFactory connection.Factory,
+	quotaGetter quotas.QuotaGetter,
+	natsSubscriber nats.Subscriber,
+	manifests resource.ManifestDiscovery,
+	supportedResourceProvider resources.SupportedResourceProvider,
+) (*APIBuilder, error) {
+	return RegisterAPIServer(ctx, cfg, features, apiregistration, reg, client, configProvider, access,
+		usageStats, orgSvc, tracer, extraBuilders, repoFactory, connectionFactory, quotaGetter,
+		manifests, supportedResourceProvider)
 }
 
 // allowedSyncTargets drops the instance target when a bootstrap repository exists, since that
@@ -1085,16 +1105,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 	hookName := fmt.Sprintf("grafana-provisioning-%s", b.gv.Version)
 	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
 		hookName: func(postStartHookCtx genericapiserver.PostStartHookContext) error {
-			var config *clientrest.Config
-			var err error
-			if b.restConfigGetter == nil {
-				config = postStartHookCtx.LoopbackClientConfig
-			} else {
-				config, err = b.restConfigGetter(postStartHookCtx.Context)
-				if err != nil {
-					return err
-				}
-			}
+			config := postStartHookCtx.LoopbackClientConfig
 			b.publishLoopbackConfig(config)
 
 			c, err := clientset.NewForConfig(config)
@@ -1117,8 +1128,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// but that leads to possible race conditions when the repository is created/updated and violating some rules.
 			b.healthChecker = controller.NewRepositoryHealthChecker(b.statusPatcher, repository.NewTester(b.repoValidator), healthMetricsRecorder)
 
-			// if running solely CRUD or not the preferred version, skip controllers/workers setup
-			if b.onlyApiServer || !b.isPreferredVersion {
+			if !b.isPreferredVersion || b.usageStats == nil {
 				return nil
 			}
 

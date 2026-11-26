@@ -22,17 +22,18 @@ import (
 
 func TestBootstrapService_IsDisabled(t *testing.T) {
 	tests := []struct {
-		name    string
-		builder *APIBuilder
-		want    bool
+		name                string
+		builder             *APIBuilder
+		controllersDisabled bool
+		want                bool
 	}{
 		{name: "provisioning disabled", builder: nil, want: true},
-		{name: "controllers disabled", builder: &APIBuilder{onlyApiServer: true}, want: false},
+		{name: "controllers disabled", builder: &APIBuilder{}, controllersDisabled: true, want: false},
 		{name: "controllers enabled", builder: &APIBuilder{}, want: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc, err := ProvideBootstrapService(setting.NewCfg(), tt.builder)
+			svc, err := ProvideBootstrapService(&setting.Cfg{DisableControllers: tt.controllersDisabled}, tt.builder)
 			require.NoError(t, err)
 			require.Equal(t, tt.want, svc.IsDisabled())
 			// The background service manager looks up this name in its
@@ -154,25 +155,6 @@ func TestBootstrapService_Run(t *testing.T) {
 			svc.StopAsync()
 			require.NoError(t, <-runErr)
 			require.Equal(t, services.Terminated, svc.State())
-		})
-	})
-
-	t.Run("reconciles when controllers are disabled", func(t *testing.T) {
-		synctest.Test(t, func(t *testing.T) {
-			repos := &fakeBootstrapRepositories{}
-			svc, builder, _ := newTestBootstrapService(bootstrap.Config{Path: "/bootstrap", Namespace: "default"}, repos)
-			builder.onlyApiServer = true
-			require.False(t, svc.IsDisabled())
-			runErr := make(chan error, 1)
-			go func() { runErr <- svc.Run(t.Context()) }()
-
-			builder.publishLoopbackConfig(&clientrest.Config{})
-			synctest.Wait()
-			require.Len(t, repos.created, 1)
-			require.True(t, isClosed(svc.Done()))
-
-			svc.StopAsync()
-			require.NoError(t, <-runErr)
 		})
 	})
 

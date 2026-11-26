@@ -85,7 +85,7 @@ func ProvideJobQueueService(
 			AllowImageRendering:  cfg.ProvisioningAllowImageRendering,
 		},
 	}
-	s.loopbackService = newLoopbackService(JobQueueServiceName, builder, s.runController)
+	s.loopbackService = newLoopbackService(JobQueueServiceName, builder, cfg.DisableControllers, s.runController)
 	return s
 }
 

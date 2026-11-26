@@ -1,8 +1,6 @@
 package provisioning
 
 import (
-	"context"
-	"errors"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -16,7 +14,6 @@ import (
 func newPostStartHookTestBuilder() *APIBuilder {
 	return &APIBuilder{
 		gv:            provisioning.SchemeGroupVersion,
-		onlyApiServer: true,
 		registry:      prometheus.NewRegistry(),
 		loopbackReady: make(chan struct{}),
 	}
@@ -48,13 +45,4 @@ func TestPostStartHook_PublishesLoopbackConfig(t *testing.T) {
 	require.NotNil(t, b.jobs)
 	require.NotNil(t, b.statusPatcher)
 	require.NotNil(t, b.healthChecker)
-}
-
-func TestPostStartHook_RestConfigError(t *testing.T) {
-	b := newPostStartHookTestBuilder()
-	errConfig := errors.New("no rest config")
-	b.restConfigGetter = func(context.Context) (*clientrest.Config, error) { return nil, errConfig }
-
-	require.ErrorIs(t, runPostStartHooks(t, b, nil), errConfig)
-	require.False(t, isClosed(b.loopbackReady), "no loopback config to publish when the rest config fails")
 }

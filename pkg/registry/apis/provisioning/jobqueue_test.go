@@ -56,17 +56,18 @@ func TestProvideJobQueueService(t *testing.T) {
 
 func TestJobQueueService_IsDisabled(t *testing.T) {
 	tests := []struct {
-		name     string
-		builder  *APIBuilder
-		disabled bool
+		name                string
+		builder             *APIBuilder
+		controllersDisabled bool
+		disabled            bool
 	}{
 		{name: "provisioning disabled", builder: nil, disabled: true},
-		{name: "controllers disabled", builder: &APIBuilder{onlyApiServer: true}, disabled: true},
+		{name: "controllers disabled", builder: &APIBuilder{}, controllersDisabled: true, disabled: true},
 		{name: "controllers enabled", builder: &APIBuilder{}, disabled: false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			svc := ProvideJobQueueService(setting.NewCfg(), tc.builder, nil, nil, nil, nil, nil)
+			svc := ProvideJobQueueService(&setting.Cfg{DisableControllers: tc.controllersDisabled}, tc.builder, nil, nil, nil, nil, nil)
 			assert.Equal(t, tc.disabled, svc.IsDisabled())
 			// The background service manager looks up this name in its
 			// dependency map; any other name would start it after Core.
