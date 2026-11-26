@@ -94,4 +94,56 @@ func TestOperatorRun(t *testing.T) {
 		}}.Run(context.Background(), testDeps())
 		require.NoError(t, err)
 	})
+
+	t.Run("reports a failed service instead of the cancellation it caused", func(t *testing.T) {
+		svcErr := errors.New("subscriber lost")
+		fail := make(chan struct{})
+		failing := services.NewBasicService(nil, func(ctx context.Context) error {
+			select {
+			case <-fail:
+				return svcErr
+			case <-ctx.Done():
+				return nil
+			}
+		}, nil)
+		err := Operator{Name: "test", Build: func(*Runtime) (*Parts, error) {
+			return &Parts{
+				Services: []services.Service{failing},
+				Run: func(ctx context.Context, _ func()) error {
+					close(fail)
+					<-ctx.Done()
+					return ctx.Err()
+				},
+			}, nil
+		}}.Run(context.Background(), testDeps())
+		require.ErrorIs(t, err, svcErr)
+		require.NotErrorIs(t, err, context.Canceled)
+	})
+
+	t.Run("ignores a ready callback that arrives after shutdown began", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			deps := testDeps()
+			lateReady := make(chan struct{})
+			op := Operator{Name: "test", Build: func(*Runtime) (*Parts, error) {
+				return &Parts{
+					Run: func(ctx context.Context, ready func()) error {
+						<-ctx.Done()
+						<-lateReady
+						ready()
+						return nil
+					},
+					ShutdownTimeout: time.Minute,
+				}, nil
+			}}
+
+			done := make(chan error, 1)
+			go func() { done <- op.Run(ctx, deps) }()
+			cancel()
+			require.NoError(t, <-done)
+			close(lateReady)
+			synctest.Wait()
+			assert.False(t, deps.HealthNotifier.IsReady())
+		})
+	})
 }
