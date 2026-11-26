@@ -651,8 +651,8 @@ func (s *cascadeDeleteStorage) isCascadeSubfolderDelete(ctx context.Context, use
 // deleteAsync hands f to the cascade controller: the store stamps the finalizer in the write that marks
 // the folder terminating. The controller removes the contents as the service identity, so the
 // requester's access to them is checked first, forced or not, and before any write so a rejected
-// delete leaves nothing behind. A terminating folder was already authorized when it was marked, and
-// the controller deleting a subfolder of a terminating folder, as the root delete was authorized.
+// delete leaves nothing behind. A terminating folder was already authorized when it was marked. So was
+// a subfolder the controller deletes under a terminating folder, because the root delete was authorized.
 func (s *cascadeDeleteStorage) deleteAsync(ctx context.Context, ns authlib.NamespaceInfo, f *foldersv1.Folder, user identity.Requester, isCascadeSubfolderDelete bool, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	parentUID := f.GetAnnotations()[utils.AnnoKeyFolder]
 	terminating := f.DeletionTimestamp != nil
