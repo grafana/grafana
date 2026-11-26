@@ -77,3 +77,15 @@ func TestRunRequireExternalNATS(t *testing.T) {
 	require.ErrorIs(t, op.Run(t.Context(), server.OperatorDependencies{Config: cfg, Registerer: prometheus.NewRegistry(), HealthNotifier: server.NewHealthNotifier()}), context.Canceled)
 	require.True(t, built, "other operators only warn")
 }
+
+func TestRunFillsRuntimeDefaults(t *testing.T) {
+	var rt *Runtime
+	op := Operator{Name: "test", NoNATS: true, Build: func(r *Runtime) (*Parts, error) {
+		rt = r
+		return nil, context.Canceled
+	}}
+	require.ErrorIs(t, op.Run(t.Context(), server.OperatorDependencies{Config: setting.NewCfg(), HealthNotifier: server.NewHealthNotifier()}), context.Canceled)
+	require.NotNil(t, rt.Registerer)
+	require.NotNil(t, rt.Tracer)
+	require.NotNil(t, rt.Clients)
+}

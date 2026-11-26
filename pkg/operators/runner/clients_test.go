@@ -7,12 +7,14 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"math/big"
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -122,4 +124,17 @@ func TestClientsRetryAfterConfigError(t *testing.T) {
 	auth.Key("token_exchange_url").SetValue("https://exchange.example")
 	_, err = clients.TokenExchangeClient()
 	require.NoError(t, err, "a failed build must not be cached")
+}
+
+func TestRESTConfigPropagatesTraceContext(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.SectionWithEnvOverrides("operator").Key("folders_server_url").SetValue("https://folders.example")
+	auth := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+	auth.Key("token").SetValue("test-token")
+	auth.Key("token_exchange_url").SetValue("https://exchange.example")
+
+	restCfg, err := NewClients(cfg).RESTConfig("folders_server_url", "folder.grafana.app")
+	require.NoError(t, err)
+	_, ok := restCfg.WrapTransport(http.DefaultTransport).(*otelhttp.Transport)
+	require.True(t, ok, "otelhttp must wrap the token exchange transport")
 }

@@ -44,12 +44,12 @@ func runJobQueueController(ctx context.Context, logger logging.Logger, controlle
 	}
 
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
-	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobs.ClaimExpiry, controllerCfg.Registry())
+	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobs.ClaimExpiry, controllerCfg.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	queue, err := buildJobQueue(controllerCfg, controllerCfg.Registry(), jobStore, jobHistoryWriter)
+	queue, err := buildJobQueue(controllerCfg, controllerCfg.Registerer, jobStore, jobHistoryWriter)
 	if err != nil {
 		return fmt.Errorf("build job queue: %w", err)
 	}
@@ -72,7 +72,7 @@ func runJobQueueController(ctx context.Context, logger logging.Logger, controlle
 }
 
 type jobQueueControllerConfig struct {
-	ControllerConfig
+	ProvisioningRunner
 	maxJobTimeout        time.Duration
 	jobInterval          time.Duration
 	leaseRenewalInterval time.Duration
@@ -98,7 +98,7 @@ func setupJobQueueControllerFromConfig(rt *runner.Runtime) (*jobQueueControllerC
 	}
 
 	return &jobQueueControllerConfig{
-		ControllerConfig:     *controllerCfg,
+		ProvisioningRunner:   *controllerCfg,
 		concurrentDrivers:    operatorSec.Key("concurrent_drivers").MustInt(3),
 		maxSyncWorkers:       operatorSec.Key("max_sync_workers").MustInt(10),
 		maxJobTimeout:        operatorSec.Key("max_job_timeout").MustDuration(20 * time.Minute),

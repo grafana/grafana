@@ -25,7 +25,7 @@ var ConnectionOperator = runner.Operator{
 	},
 }
 
-func runConnectionController(ctx context.Context, controllerCfg *ControllerConfig, ready func()) error {
+func runConnectionController(ctx context.Context, controllerCfg *ProvisioningRunner, ready func()) error {
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
@@ -41,7 +41,7 @@ func runConnectionController(ctx context.Context, controllerCfg *ControllerConfi
 		return fmt.Errorf("failed to get health metrics recorder: %w", err)
 	}
 
-	tracer := controllerCfg.Tracer()
+	tracer := controllerCfg.Tracer
 
 	connKeys, err := controllerCfg.ProvisioningKeysLister(apisprovisioning.ConnectionResourceInfo.GroupVersionResource())
 	if err != nil {
@@ -49,21 +49,21 @@ func runConnectionController(ctx context.Context, controllerCfg *ControllerConfi
 	}
 
 	connController, err := controller.ProvideConnectionController(controller.ConnectionControllerDeps{
-		Subscriber:        controllerCfg.natsSubscriber,
+		Subscriber:        controllerCfg.Subscriber,
 		Client:            provisioningClient,
 		Keys:              connKeys,
 		ConnectionFactory: connectionFactory,
 		HealthMetrics:     healthMetricsRecorder,
 		RelistMetrics:     controllerCfg.RelistProjectionMetrics(),
 		FreshnessMetrics:  controllerCfg.FreshnessMetrics(),
-		Registry:          controllerCfg.Registry(),
+		Registry:          controllerCfg.Registerer,
 		Tracer:            tracer,
-		ResyncInterval:    controllerCfg.ResyncInterval(),
-		DrainTimeout:      controllerCfg.DrainTimeout(),
+		ResyncInterval:    controllerCfg.Options.Resync,
+		DrainTimeout:      controllerCfg.Options.DrainTimeout,
 	})
 	if err != nil {
 		return err
 	}
 
-	return connController.Run(ctx, controllerCfg.NumberOfWorkers(), ready)
+	return connController.Run(ctx, controllerCfg.Options.Workers, ready)
 }

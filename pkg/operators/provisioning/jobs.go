@@ -23,9 +23,9 @@ func buildJobQueue(
 	jobStore jobs.Store,
 	jobHistoryWriter jobs.HistoryWriter,
 ) (*jobqueue.Queue, error) {
-	tracer := controllerCfg.Tracer()
+	tracer := controllerCfg.Tracer
 
-	clients, err := controllerCfg.Clients()
+	clients, err := controllerCfg.ResourceClients()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get clients: %w", err)
 	}
@@ -58,12 +58,12 @@ func buildJobQueue(
 			JobInterval:          controllerCfg.jobInterval,
 			LeaseRenewalInterval: controllerCfg.leaseRenewalInterval,
 			MaxSyncWorkers:       controllerCfg.maxSyncWorkers,
-			MaxFileSize:          controllerCfg.Settings.ProvisioningMaxFileSize,
-			SyncResourceTimeout:  controllerCfg.Settings.ProvisioningSyncResourceTimeout,
+			MaxFileSize:          controllerCfg.Cfg.ProvisioningMaxFileSize,
+			SyncResourceTimeout:  controllerCfg.Cfg.ProvisioningSyncResourceTimeout,
 		},
 		jobqueue.Dependencies{
 			Client:              provisioningClient,
-			Subscriber:          controllerCfg.natsSubscriber,
+			Subscriber:          controllerCfg.Subscriber,
 			Clients:             clients,
 			RepositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
 			ResourceLister:      resourceLister,

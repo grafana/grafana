@@ -15,7 +15,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"gopkg.in/ini.v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,10 +49,9 @@ func TestConnectionFactoryUsesConfiguredTypes(t *testing.T) {
 		extras = append(extras, extra)
 	}
 
-	cfg := ControllerConfig{
-		Settings:         &setting.Cfg{ProvisioningConnectionTypes: []string{string(configuredType)}},
+	cfg := ProvisioningRunner{
+		Runtime:          testRuntime(&setting.Cfg{ProvisioningConnectionTypes: []string{string(configuredType)}}),
 		connectionExtras: extras,
-		tracer:           tracing.NewNoopTracerService(),
 	}
 	factory, err := cfg.ConnectionFactory()
 	require.NoError(t, err)
@@ -77,53 +75,13 @@ func TestConnectionFactoryEnablesAllRegisteredTypesByDefault(t *testing.T) {
 		extras = append(extras, extra)
 	}
 
-	cfg := ControllerConfig{
-		Settings:         &setting.Cfg{},
+	cfg := ProvisioningRunner{
+		Runtime:          testRuntime(&setting.Cfg{}),
 		connectionExtras: extras,
-		tracer:           tracing.NewNoopTracerService(),
 	}
 	factory, err := cfg.ConnectionFactory()
 	require.NoError(t, err)
 	require.ElementsMatch(t, registeredTypes, factory.Types())
-}
-
-// roundTripperFunc lets a plain function stand in as an http.RoundTripper.
-type roundTripperFunc func(*http.Request) (*http.Response, error)
-
-func (f roundTripperFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
-
-// TestWrapWithTracing verifies that the typed provisioning client's transport is wrapped
-// with otelhttp so Job updates and Repository/Connection status patches propagate trace
-// context, and that it composes with (rather than replaces) an existing WrapTransport such
-// as the token-exchange wrapper.
-func TestWrapWithTracing(t *testing.T) {
-	t.Run("wraps a config without an existing transport wrapper", func(t *testing.T) {
-		cfg := &rest.Config{}
-		wrapWithTracing(cfg)
-		require.NotNil(t, cfg.WrapTransport)
-
-		base := roundTripperFunc(func(*http.Request) (*http.Response, error) { return nil, nil })
-		_, ok := cfg.WrapTransport(base).(*otelhttp.Transport)
-		require.True(t, ok, "expected the outermost transport to be an otelhttp.Transport")
-	})
-
-	t.Run("composes with an existing transport wrapper", func(t *testing.T) {
-		inner := roundTripperFunc(func(*http.Request) (*http.Response, error) { return nil, nil })
-		innerCalled := false
-		cfg := &rest.Config{
-			WrapTransport: func(http.RoundTripper) http.RoundTripper {
-				innerCalled = true
-				return inner
-			},
-		}
-
-		wrapWithTracing(cfg)
-
-		got := cfg.WrapTransport(roundTripperFunc(func(*http.Request) (*http.Response, error) { return nil, nil }))
-		_, ok := got.(*otelhttp.Transport)
-		require.True(t, ok, "otelhttp must remain the outermost transport")
-		require.True(t, innerCalled, "the pre-existing transport wrapper must still be invoked")
-	})
 }
 
 // The keys-only re-list posts to a route the typed clientset has no method for, so
@@ -159,7 +117,7 @@ func TestProvisioningRESTClientCarriesTheExchangedToken(t *testing.T) {
 	_, err = operatorSec.NewKey("provisioning_server_url", apiserver.URL)
 	require.NoError(t, err)
 
-	cfg := &ControllerConfig{Settings: &setting.Cfg{Raw: raw}, tracer: tracing.NewNoopTracerService()}
+	cfg := &ProvisioningRunner{Runtime: testRuntime(&setting.Cfg{Raw: raw})}
 
 	client, err := cfg.ProvisioningRESTClient()
 	require.NoError(t, err)
@@ -183,7 +141,7 @@ func TestClientsServeManifestKindsFromTheAggregatedServer(t *testing.T) {
 	})
 	cfg := newClientsConfig(t, newStubSigner(t).URL, map[string]string{"aggregated_server_url": router.URL})
 
-	factory, err := cfg.Clients()
+	factory, err := cfg.ResourceClients()
 	require.NoError(t, err)
 	require.NoError(t, services.StartAndAwaitRunning(t.Context(), cfg.manifestWatcher))
 	t.Cleanup(cfg.manifestWatcher.StopAsync)
@@ -209,9 +167,9 @@ func TestClientsUseTheRouterForDashboardsWithTheRouterClientSetting(t *testing.T
 		dashboards:                       `{"apiVersion":"dashboard.grafana.app/v1","kind":"DashboardList","items":[]}`,
 	})
 	cfg := newClientsConfig(t, newStubSigner(t).URL, map[string]string{"aggregated_server_url": router.URL})
-	cfg.Settings.ProvisioningRouterClient = true
+	cfg.Cfg.ProvisioningRouterClient = true
 
-	factory, err := cfg.Clients()
+	factory, err := cfg.ResourceClients()
 	require.NoError(t, err)
 	clients, err := factory.Clients(t.Context(), "default")
 	require.NoError(t, err)
@@ -225,9 +183,9 @@ func TestClientsUseTheRouterForDashboardsWithTheRouterClientSetting(t *testing.T
 
 func TestClientsRequireTheAggregatedServerWithTheRouterClientSetting(t *testing.T) {
 	cfg := newClientsConfig(t, newStubSigner(t).URL, nil)
-	cfg.Settings.ProvisioningRouterClient = true
+	cfg.Cfg.ProvisioningRouterClient = true
 
-	_, err := cfg.Clients()
+	_, err := cfg.ResourceClients()
 	require.ErrorContains(t, err, "aggregated_server_url is required")
 }
 
@@ -237,21 +195,21 @@ func TestClientsWithoutAnAggregatedServer(t *testing.T) {
 	t.Run("serves the configured resources and watches no manifests", func(t *testing.T) {
 		cfg := newClientsConfig(t, newStubSigner(t).URL, nil)
 
-		factory, err := cfg.Clients()
+		factory, err := cfg.ResourceClients()
 		require.NoError(t, err)
 		require.NoError(t, services.StartAndAwaitRunning(t.Context(), cfg.manifestWatcher))
 		t.Cleanup(cfg.manifestWatcher.StopAsync)
 
 		clients, err := factory.Clients(t.Context(), "default")
 		require.NoError(t, err)
-		require.Len(t, clients.SupportedResources(), len(cfg.Settings.ProvisioningResources))
+		require.Len(t, clients.SupportedResources(), len(cfg.Cfg.ProvisioningResources))
 	})
 
 	t.Run("fails for a configured resource that has no server", func(t *testing.T) {
 		cfg := newClientsConfig(t, newStubSigner(t).URL, nil)
-		cfg.Settings.ProvisioningResources = append(cfg.Settings.ProvisioningResources, "playlist.grafana.app/Playlist")
+		cfg.Cfg.ProvisioningResources = append(cfg.Cfg.ProvisioningResources, "playlist.grafana.app/Playlist")
 
-		_, err := cfg.Clients()
+		_, err := cfg.ResourceClients()
 		require.ErrorContains(t, err, "aggregated_server_url is required")
 	})
 }
@@ -300,17 +258,17 @@ func TestControllersOwnNATSSubscriber(t *testing.T) {
 			provisioningClient, err := client.NewForConfig(restCfg)
 			require.NoError(t, err)
 			manifestWatcher := services.NewIdleService(nil, nil)
-			registeredConfigOptions = []ConfigOption{func(_ context.Context, cfg *ControllerConfig) error {
-				cfg.tracer = tracing.NewNoopTracerService()
+			registeredConfigOptions = []ConfigOption{func(_ context.Context, cfg *ProvisioningRunner) error {
+				cfg.Tracer = tracing.NewNoopTracerService()
 				cfg.provisioningClient = provisioningClient
 				cfg.provisioningRESTCfg = restCfg
 				cfg.clients = resources.NewMockClientFactory(t)
 				cfg.manifestWatcher = manifestWatcher
-				cfg.repositoryFactory, err = repository.ProvideFactory(nil, nil, cfg.tracer)
+				cfg.repositoryFactory, err = repository.ProvideFactory(nil, nil, cfg.Tracer)
 				if err != nil {
 					return err
 				}
-				cfg.connectionFactory, err = connection.ProvideFactory(nil, nil, cfg.tracer)
+				cfg.connectionFactory, err = connection.ProvideFactory(nil, nil, cfg.Tracer)
 				return err
 			}}
 			ctx, cancel := context.WithCancel(t.Context())
@@ -349,7 +307,7 @@ func TestControllersOwnNATSSubscriber(t *testing.T) {
 // The collectors register on first call, so a second call that rebuilt them
 // would panic on the duplicate.
 func TestRelistProjectionMetricsIsMemoized(t *testing.T) {
-	cfg := &ControllerConfig{}
+	cfg := &ProvisioningRunner{Runtime: testRuntime(setting.NewCfg())}
 
 	first := cfg.RelistProjectionMetrics()
 	require.NotNil(t, first)
@@ -359,20 +317,19 @@ func TestRelistProjectionMetricsIsMemoized(t *testing.T) {
 // Building the REST client fails rather than returning a nil lister, which
 // would silently fall back to the full-object re-list.
 func TestProvisioningKeysListerRequiresARESTClient(t *testing.T) {
-	cfg := &ControllerConfig{Settings: &setting.Cfg{Raw: ini.Empty()}}
+	cfg := &ProvisioningRunner{Runtime: testRuntime(&setting.Cfg{Raw: ini.Empty()})}
 
 	_, err := cfg.ProvisioningKeysLister(apisprovisioning.RepositoryResourceInfo.GroupVersionResource())
 	require.Error(t, err)
 }
 
 func TestControllerConfigResourceLister(t *testing.T) {
-	newConfig := func() *ControllerConfig {
+	newConfig := func() *ProvisioningRunner {
 		cfg := setting.NewCfg()
 		cfg.ProvisioningResources = []string{"folder.grafana.app/Folder:folder"}
-		return &ControllerConfig{
-			Settings: cfg,
-			clients:  resources.NewMockClientFactory(t),
-			tracer:   tracing.NewNoopTracerService(),
+		return &ProvisioningRunner{
+			Runtime: testRuntime(cfg),
+			clients: resources.NewMockClientFactory(t),
 		}
 	}
 
@@ -383,7 +340,7 @@ func TestControllerConfigResourceLister(t *testing.T) {
 			"operator":                   {"provisioning_server_url": "http://localhost:3000"},
 		} {
 			for k, v := range keys {
-				_, err := c.Settings.Raw.Section(section).NewKey(k, v)
+				_, err := c.Cfg.Raw.Section(section).NewKey(k, v)
 				require.NoError(t, err)
 			}
 		}
@@ -403,7 +360,7 @@ const stubRouterGroup = "example.ext.grafana.app"
 
 // newClientsConfig returns a config with the settings that Clients needs, plus the given
 // [operator] keys. Dashboards and folders have server URLs that no test calls.
-func newClientsConfig(t *testing.T, signerURL string, operator map[string]string) *ControllerConfig {
+func newClientsConfig(t *testing.T, signerURL string, operator map[string]string) *ProvisioningRunner {
 	t.Helper()
 	cfg := setting.NewCfg()
 	cfg.ProvisioningResources = []string{"folder.grafana.app/Folder:folder", "dashboard.grafana.app/Dashboard:folder"}
@@ -420,7 +377,7 @@ func newClientsConfig(t *testing.T, signerURL string, operator map[string]string
 			require.NoError(t, err)
 		}
 	}
-	return &ControllerConfig{Settings: cfg, tracer: tracing.NewNoopTracerService()}
+	return &ProvisioningRunner{Runtime: testRuntime(cfg)}
 }
 
 // newStubSigner returns a token exchange server. Each token names the audiences of its request.
@@ -446,16 +403,16 @@ func TestSetupFromConfigUsesRuntimeTracer(t *testing.T) {
 	global := otel.GetTracerProvider()
 	cfg, err := setupFromConfig(&runner.Runtime{Cfg: setting.NewCfg(), Registerer: prometheus.NewRegistry(), Tracer: tracer})
 	require.NoError(t, err)
-	require.Same(t, tracer, cfg.Tracer())
+	require.Same(t, tracer, cfg.Tracer)
 	require.Same(t, global, otel.GetTracerProvider(), "a runtime tracer must leave the global provider alone")
-
-	cfg, err = setupFromConfig(&runner.Runtime{Cfg: setting.NewCfg(), Registerer: prometheus.NewRegistry()})
-	require.NoError(t, err)
-	require.NotNil(t, cfg.Tracer(), "operators without a runtime tracer still get a usable one")
 }
 
 func TestOperatorDefaultsKeepPreviousValues(t *testing.T) {
 	for _, op := range []runner.Operator{RepoOperator, ConnectionOperator, JobsOperator, JobQueueOperator} {
 		require.Equal(t, runner.Options{Workers: 1, Resync: 60 * time.Second, DrainTimeout: 30 * time.Second}, op.Defaults, op.Name)
 	}
+}
+
+func testRuntime(cfg *setting.Cfg) *runner.Runtime {
+	return &runner.Runtime{Cfg: cfg, Registerer: prometheus.NewRegistry(), Tracer: tracing.NewNoopTracerService(), Clients: runner.NewClients(cfg)}
 }

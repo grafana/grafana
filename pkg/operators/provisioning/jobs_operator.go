@@ -47,7 +47,7 @@ func runJobController(ctx context.Context, logger logging.Logger, controllerCfg 
 	// subscriber: this operator has no NATS consumer role and holds no subscriber.
 	var historySource informer.DeltaSource
 	if controllerCfg.historyExpiration > 0 {
-		historySource, err = controller.ProvideHistoryJobCleanup(ctx, controllerCfg.Settings.NATS.Enabled, provisioningClient, controllerCfg.historyExpiration)
+		historySource, err = controller.ProvideHistoryJobCleanup(ctx, controllerCfg.Cfg.NATS.Enabled, provisioningClient, controllerCfg.historyExpiration)
 		if err != nil {
 			return err
 		}
@@ -66,7 +66,7 @@ func runJobController(ctx context.Context, logger logging.Logger, controllerCfg 
 	// }
 
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
-	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobs.ClaimExpiry, controllerCfg.Registry())
+	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobs.ClaimExpiry, controllerCfg.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
@@ -88,7 +88,7 @@ func runJobController(ctx context.Context, logger logging.Logger, controllerCfg 
 }
 
 type jobsControllerConfig struct {
-	ControllerConfig
+	ProvisioningRunner
 	historyExpiration time.Duration
 	cleanupInterval   time.Duration
 }
@@ -102,8 +102,8 @@ func setupJobsControllerFromConfig(rt *runner.Runtime) (*jobsControllerConfig, e
 	operatorSec := rt.Cfg.SectionWithEnvOverrides("operator")
 
 	return &jobsControllerConfig{
-		ControllerConfig:  *controllerCfg,
-		historyExpiration: operatorSec.Key("history_expiration").MustDuration(0),
-		cleanupInterval:   operatorSec.Key("cleanup_interval").MustDuration(time.Minute),
+		ProvisioningRunner: *controllerCfg,
+		historyExpiration:  operatorSec.Key("history_expiration").MustDuration(0),
+		cleanupInterval:    operatorSec.Key("cleanup_interval").MustDuration(time.Minute),
 	}, nil
 }

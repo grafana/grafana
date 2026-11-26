@@ -96,6 +96,14 @@ func (op Operator) Run(ctx context.Context, deps server.OperatorDependencies) (r
 		Tracer:     deps.Tracer,
 		Clients:    NewClients(deps.Config),
 	}
+	if rt.Registerer == nil {
+		rt.Registerer = prometheus.NewPedanticRegistry()
+	}
+	// The no-op tracing service replaces the global OpenTelemetry provider, so
+	// build it only when the server passed no tracer.
+	if rt.Tracer == nil {
+		rt.Tracer = tracing.NewNoopTracerService()
+	}
 	if deps.Config != nil {
 		if err := validateExternalNATS(deps.Config); err != nil && !op.NoNATS {
 			if op.RequireExternalNATS {
