@@ -1,9 +1,10 @@
 import { type AppPluginConfig, type AppPluginKind } from '@grafana/data';
-import { addResourceBundle } from '@grafana/i18n/internal';
+import { addResourceBundle, changeLanguage, getI18nInstance } from '@grafana/i18n/internal';
 import { type KindInfo } from '@grafana/runtime/unstable';
 import { addKinds, findKind } from 'app/core/kinds/coreKinds';
 
 import { genericAppPluginConfig } from './extensions/test-fixtures/config.apps';
+import { SystemJS } from './loader/systemjs';
 import { addDeclaredPluginKinds } from './pluginKinds';
 
 const GROUP = 'widgets.ext.grafana.app';
@@ -29,8 +30,8 @@ function testApp(kinds: AppPluginKind[]): AppPluginConfig {
 }
 
 describe('addDeclaredPluginKinds', () => {
-  it("adds a declared kind with its labels, icon and the plugin's page of an object", () => {
-    addDeclaredPluginKinds([testApp([declaredKind('Widget', { folderScoped: true })])]);
+  it("adds a declared kind with its labels, icon and the plugin's page of an object", async () => {
+    await addDeclaredPluginKinds([testApp([declaredKind('Widget', { folderScoped: true })])]);
 
     const kind = findKind(GROUP, 'Widget');
     expect(kind).toMatchObject({ group: GROUP, kind: 'Widget', resource: 'widgets', folderScoped: true, icon: 'cube' });
@@ -42,18 +43,39 @@ describe('addDeclaredPluginKinds', () => {
     expect(kind?.getRoute?.('a b/c')).toBe('/a/test-app/widgets/a%20b%2Fc');
   });
 
-  it("labels a kind from the plugin's translations when the declaration names their keys", () => {
-    addResourceBundle('en-US', 'test-app', { kinds: { gadget: 'gizmo', gadgets: 'gizmos' } });
+  describe('in a language other than English', () => {
+    beforeEach(async () => {
+      // Grafana's own translations are what make the language the resolved one
+      addResourceBundle('pt-BR', 'grafana', { greeting: 'olá' });
+      await changeLanguage('pt-BR');
+    });
 
-    addDeclaredPluginKinds([
-      testApp([declaredKind('Gadget', { labelKey: 'kinds.gadget', labelPluralKey: 'kinds.gadgets' })]),
-    ]);
+    afterEach(async () => {
+      jest.restoreAllMocks();
+      getI18nInstance().removeResourceBundle('pt-BR', 'grafana');
+      getI18nInstance().removeResourceBundle('pt-BR', 'test-app');
+      await changeLanguage('en-US');
+    });
 
-    const kind = findKind(GROUP, 'Gadget');
-    expect([kind?.getLabel(), kind?.getPluralLabel()]).toEqual(['Gizmo', 'Gizmos']);
+    it("adds a kind with its labels translated, once the plugin's translations have loaded", async () => {
+      jest
+        .spyOn(SystemJS, 'import')
+        .mockResolvedValue({ default: { kinds: { doohickey: 'treco', doohickeys: 'trecos' } } });
+      const app = {
+        ...testApp([declaredKind('Doohickey', { labelKey: 'kinds.doohickey', labelPluralKey: 'kinds.doohickeys' })]),
+        translations: { 'pt-BR': 'public/plugins/test-app/locales/pt-BR/test-app.json' },
+      };
+
+      const added = addDeclaredPluginKinds([app]);
+      expect(findKind(GROUP, 'Doohickey')).toBeUndefined();
+      await added;
+
+      const kind = findKind(GROUP, 'Doohickey');
+      expect([kind?.getLabel(), kind?.getPluralLabel()]).toEqual(['Treco', 'Trecos']);
+    });
   });
 
-  it("keeps the kind the plugin's module added", () => {
+  it("keeps the kind the plugin's module added", async () => {
     const moduleKind: KindInfo = {
       group: GROUP,
       kind: 'Sprocket',
@@ -66,20 +88,30 @@ describe('addDeclaredPluginKinds', () => {
     };
     addKinds([moduleKind]);
 
-    addDeclaredPluginKinds([testApp([declaredKind('Sprocket')])]);
+    await addDeclaredPluginKinds([testApp([declaredKind('Sprocket')])]);
 
     expect(findKind(GROUP, 'Sprocket')).toBe(moduleKind);
   });
 
+  it('gives the link icon to a kind declared with an icon Grafana does not have', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    await addDeclaredPluginKinds([testApp([declaredKind('Iconless', { icon: 'not-an-icon' })])]);
+
+    expect(findKind(GROUP, 'Iconless')?.icon).toBe('link');
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining(`${GROUP}/Iconless`));
+    warn.mockRestore();
+  });
+
   it.each([
+    { desc: 'no plural label', kind: 'Pluralless', overrides: { labelPlural: '' } },
     { desc: "a route outside the plugin's pages", kind: 'Outside', overrides: { route: '/admin/users/{name}' } },
     { desc: 'a route that leaves them', kind: 'Escaping', overrides: { route: '/a/test-app/../../admin/{name}' } },
     { desc: 'a route without the name', kind: 'Nameless', overrides: { route: '/a/test-app/nameless' } },
-    { desc: 'an icon Grafana does not have', kind: 'Iconless', overrides: { icon: 'not-an-icon' } },
-  ])('leaves out a kind declared with $desc', ({ kind, overrides }) => {
+  ])('leaves out a kind declared with $desc', async ({ kind, overrides }) => {
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
-    addDeclaredPluginKinds([testApp([declaredKind(kind, overrides)])]);
+    await addDeclaredPluginKinds([testApp([declaredKind(kind, overrides)])]);
 
     expect(warn).toHaveBeenCalledWith(expect.stringContaining(`${GROUP}/${kind}`));
     expect(findKind(GROUP, kind)).toBeUndefined();

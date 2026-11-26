@@ -326,7 +326,7 @@
     },
     "kinds": {
       "type": "array",
-      "description": "For app plugins. Kinds of objects the app serves, so Grafana can name, draw and link their objects, such as in the Starred section of the navigation, before the app loads. The app can still add the kind with `getKindRegistry().addKinds()`, which replaces this description once the app loads.",
+      "description": "For app plugins. Kinds of objects the app serves, so Grafana can name, draw and link its objects before the app loads.",
       "items": {
         "type": "object",
         "additionalProperties": false,

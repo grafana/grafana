@@ -425,12 +425,11 @@ func (hs *HTTPServer) newAppDTO(ctx context.Context, plugin pluginstore.Plugin, 
 		ModuleHash:      hs.pluginAssets.ModuleHash(ctx, plugin),
 		Translations:    plugin.Translations,
 		BuildMode:       plugin.BuildMode,
+		Kinds:           plugin.Kinds,
 	}
 
-	// A disabled app serves no pages, so the links of its kinds would lead nowhere
 	if settings.Enabled {
 		app.Preload = plugin.Preload
-		app.Kinds = plugin.Kinds
 	}
 
 	return app

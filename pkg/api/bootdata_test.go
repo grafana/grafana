@@ -388,6 +388,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 						Version:         "0.5.0",
 						LoadingStrategy: plugins.LoadingStrategyScript,
 						// ModuleHash:      "sha256-test",
+						Kinds: widgetKinds,
 					},
 				},
 			},
