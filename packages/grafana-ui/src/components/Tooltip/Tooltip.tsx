@@ -119,7 +119,14 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
           ref: handleRef,
           tabIndex: 0, // tooltip trigger should be keyboard focusable
           'aria-describedby': !childHasMatchingAriaLabel && isOpen ? tooltipId : undefined,
-          ...getReferenceProps({ onBlur: closeOnFocusGuardBlur }),
+          // getReferenceProps merges these with its own focus handlers, so the handlers of the child still run
+          ...getReferenceProps({
+            onFocus: children.props.onFocus,
+            onBlur: (event: FocusEvent<HTMLElement>) => {
+              children.props.onBlur?.(event);
+              closeOnFocusGuardBlur(event);
+            },
+          }),
         })}
         {isOpen && (
           <Portal>

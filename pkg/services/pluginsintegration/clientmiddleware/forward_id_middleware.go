@@ -43,6 +43,13 @@ func (m *ForwardIDMiddleware) applyToken(ctx context.Context, _ backend.PluginCo
 		return nil
 	}
 
+	// The exchanged access token is the request's only identity: a second one,
+	// which the plugin could pick instead, is dropped rather than added.
+	if hasExchangedAccessToken(ctx) {
+		req.DeleteHTTPHeader(forwardIDHeaderName)
+		return nil
+	}
+
 	// Resolved below only if a requester is present; a missing requester (or a derive failure)
 	// must still clear any stale header rather than silently forward whatever was already set,
 	// so this stays empty rather than early-returning on the "no requester" path.

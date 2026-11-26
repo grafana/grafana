@@ -2,12 +2,21 @@ package resource
 
 import (
 	"context"
+	"errors"
+	"net/http"
+	"runtime/debug"
+	"strconv"
 	"sync"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
+	"github.com/hashicorp/golang-lru/v2/simplelru"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
 // Only KV opts into seeded startup. SQL's independently polled collections do
@@ -272,4 +281,309 @@ func (s *server) initSeededWatcher(backend seededWatchBackend) {
 		capture.Wait()
 		close(startup.stopped)
 	}()
+}
+
+const (
+	// previousReadsMaxBytes bounds the previous versions kept for watches
+	// that deliver an event later than others.
+	previousReadsMaxBytes = 32 << 20 // 32 MiB
+	previousReadsMaxItems = 4096
+	previousReadsTTL      = 30 * time.Second
+)
+
+// previousReads shares raw previous revisions between watches. Each watch
+// authorizes the revision independently before sending it.
+type previousReads struct {
+	mu      sync.Mutex // protects the cache and active flights' waiter counts
+	flights map[string]*previousReadFlight
+	cache   *simplelru.LRU[string, previousRead]
+	bytes   int
+}
+
+type previousRead struct {
+	rsp   *BackendReadResponse
+	added time.Time
+}
+
+type previousReadResult struct {
+	backend  *BackendReadResponse
+	response *resourcepb.ReadResponse
+	err      error
+}
+
+type previousReadLoader func(context.Context, func(*BackendReadResponse)) previousReadResult
+
+type previousReadFlight struct {
+	waiters int
+	cancel  context.CancelFunc
+	result  previousReadResult // published by closing ready
+	ready   chan struct{}
+}
+
+func newPreviousReads() *previousReads {
+	p := &previousReads{flights: make(map[string]*previousReadFlight)}
+	// Only fails for a non-positive size.
+	p.cache, _ = simplelru.NewLRU(previousReadsMaxItems, func(_ string, read previousRead) {
+		p.bytes -= cap(read.rsp.Value)
+	})
+	return p
+}
+
+func previousReadID(key *resourcepb.ResourceKey, rv int64) string {
+	return key.Namespace + "/" + key.Group + "/" + key.Resource + "/" + key.Name + "/" + strconv.FormatInt(rv, 10)
+}
+
+func (p *previousReads) get(id string) (*BackendReadResponse, bool) {
+	read, ok := p.cache.Get(id)
+	if !ok {
+		return nil, false
+	}
+	if time.Since(read.added) > previousReadsTTL {
+		p.cache.Remove(id)
+		return nil, false
+	}
+	return read.rsp, true
+}
+
+// add keeps rsp, dropping the least recently used reads past the byte limit.
+func (p *previousReads) add(id string, rsp *BackendReadResponse) {
+	size := cap(rsp.Value)
+	if size > previousReadsMaxBytes {
+		return
+	}
+	if p.cache.Contains(id) {
+		return
+	}
+	for p.bytes+size > previousReadsMaxBytes {
+		p.cache.RemoveOldest()
+	}
+	p.cache.Add(id, previousRead{rsp: rsp, added: time.Now()})
+	p.bytes += size
+}
+
+// read shares the backend read of key at rv. Followers can retry a transient
+// queue or flight failure once within their remaining budget.
+func (p *previousReads) read(ctx context.Context, key *resourcepb.ResourceKey, rv int64, timeout time.Duration, inline bool, load previousReadLoader) previousReadResult {
+	id := previousReadID(key, rv)
+	result, follower := p.readOnce(ctx, id, rv, timeout, inline, load)
+	retryable := errors.Is(result.err, errQueueTimeout) || errors.Is(result.err, scheduler.ErrTenantQueueFull)
+	if inline {
+		retryable = retryable || errors.Is(result.err, context.Canceled) || errors.Is(result.err, context.DeadlineExceeded)
+	}
+	if !follower || !retryable || ctx.Err() != nil {
+		return result
+	}
+	deadline, hasDeadline := ctx.Deadline()
+	// Separate queue and watch timers can fire at the same instant. The
+	// watch timer may not have canceled ctx yet even if its budget is gone.
+	if hasDeadline && !time.Now().Before(deadline) {
+		return previousReadResult{err: context.DeadlineExceeded}
+	}
+	// Concurrent retries join the same replacement read.
+	result, _ = p.readOnce(ctx, id, rv, timeout, inline, load)
+	return result
+}
+
+func (p *previousReads) readOnce(ctx context.Context, id string, rv int64, timeout time.Duration, inline bool, load previousReadLoader) (result previousReadResult, follower bool) {
+	p.mu.Lock()
+	if rsp, ok := p.get(id); ok {
+		p.mu.Unlock()
+		return previousReadResult{backend: rsp}, false
+	}
+	flight := p.flights[id]
+	owner := flight == nil
+	var loadCtx context.Context
+	if owner {
+		flight = &previousReadFlight{ready: make(chan struct{})}
+		loadCtx, flight.cancel = context.WithTimeoutCause(context.WithoutCancel(ctx), timeout, errQueueTimeout)
+		p.flights[id] = flight
+	}
+	flight.waiters++
+	p.mu.Unlock()
+	leave := func() { p.leave(id, flight) }
+	if owner && inline {
+		// A blocked inline owner must release its waiter slot when it disconnects.
+		stop := context.AfterFunc(ctx, leave)
+		defer func() {
+			if stop() {
+				leave()
+			}
+		}()
+	} else {
+		defer leave()
+	}
+
+	if owner {
+		run := func() previousReadResult { return p.runFlight(loadCtx, id, rv, flight, load) }
+		if inline {
+			return run(), false
+		}
+		return runPreviousRead(ctx, run), false
+	}
+	select {
+	case <-ctx.Done():
+		return previousReadResult{err: ctx.Err()}, true
+	case <-flight.ready:
+		return flight.result, true
+	}
+}
+
+// On the QoS path, a watch can stop waiting even if a queue callback ignores
+// cancellation.
+func runPreviousRead(ctx context.Context, run func() previousReadResult) previousReadResult {
+	done := make(chan previousReadResult, 1)
+	go func() { done <- run() }()
+	select {
+	case <-ctx.Done():
+		return previousReadResult{err: ctx.Err()}
+	case result := <-done:
+		return result
+	}
+}
+
+func (p *previousReads) runFlight(ctx context.Context, id string, rv int64, flight *previousReadFlight, load previousReadLoader) previousReadResult {
+	var once sync.Once
+	finish := func(result previousReadResult) {
+		once.Do(func() {
+			p.mu.Lock()
+			defer p.mu.Unlock()
+			if cause := context.Cause(ctx); cause != nil {
+				result = previousReadResult{err: cause}
+			}
+			if p.flights[id] == flight {
+				delete(p.flights, id)
+				if result.backend != nil {
+					p.cacheResponse(id, rv, result.backend)
+				}
+			}
+			flight.result = result
+			close(flight.ready)
+		})
+	}
+	defer flight.cancel()
+	// Retire the flight even if the backend is slow to honor cancellation.
+	stop := context.AfterFunc(ctx, func() { finish(previousReadResult{err: context.Cause(ctx)}) })
+	defer stop()
+
+	result := load(ctx, func(rsp *BackendReadResponse) {
+		// Followers can authorize as soon as the backend read completes.
+		finish(previousReadResult{backend: rsp})
+	})
+	// Release followers even if the backend read never produced a result.
+	finish(previousReadResult{err: result.err})
+	return result
+}
+
+// cacheResponse requires p.mu. KV can return an older retained revision
+// while pruning history, so successful responses must match the requested RV.
+func (p *previousReads) cacheResponse(id string, rv int64, rsp *BackendReadResponse) {
+	exact := rsp.Error == nil && rsp.ResourceVersion == rv
+	missing := rsp.Error != nil && rsp.Error.Code == http.StatusNotFound
+	if exact || missing {
+		p.add(id, rsp)
+	}
+}
+
+func (p *previousReads) leave(id string, flight *previousReadFlight) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.flights[id] == flight {
+		flight.waiters--
+		if flight.waiters == 0 {
+			delete(p.flights, id)
+			flight.cancel()
+		}
+	}
+}
+
+var errPreviousReadPanic = errors.New("previous version read panicked")
+
+// readPrevious reads an event's previous version for a watch, sharing the
+// backend read with other watches of the event.
+func (s *server) readPrevious(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, rv int64) (*resourcepb.ReadResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.server.readPrevious")
+	defer span.End()
+	req := &resourcepb.ReadRequest{Key: key, ResourceVersion: rv}
+	_, inline := s.queue.(*scheduler.NoopQueue)
+
+	ctx, cancel := context.WithTimeout(ctx, s.queueConfig.Timeout)
+	defer cancel()
+	result := s.previousReads.read(ctx, key, rv, s.queueConfig.Timeout, inline, func(sharedCtx context.Context, publish func(*BackendReadResponse)) (result previousReadResult) {
+		defer s.recoverPreviousRead(sharedCtx, &result.err)
+		var ownerResult previousReadResult
+		if err := s.runInQueue(sharedCtx, key.Namespace, "read", func(queueCtx context.Context) {
+			// The queue may run this callback in its own worker goroutine.
+			defer s.recoverPreviousRead(queueCtx, &ownerResult.err)
+			if queueCtx.Err() != nil {
+				return
+			}
+			rsp := s.backend.ReadResource(queueCtx, req)
+			if queueCtx.Err() != nil {
+				return
+			}
+			publish(rsp)
+			// The owner authorizes in this slot with its own deadline and
+			// identity. If it left, only the other watches need the result.
+			if ctx.Err() == nil {
+				ownerResult.response, ownerResult.err = s.readResponse(ctx, user, key, rsp)
+			}
+		}); err != nil {
+			return previousReadResult{err: err}
+		}
+		return ownerResult
+	})
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, queueRPCError(ctxErr)
+	}
+	if result.err != nil {
+		return nil, previousReadRPCError(result.err)
+	}
+	if result.backend == nil {
+		return result.response, nil
+	}
+
+	// Followers and cache hits authorize with their own identity and QoS slot.
+	authorize := func() (authResult previousReadResult) {
+		defer s.recoverPreviousRead(ctx, &authResult.err)
+		var authorized previousReadResult
+		if err := s.runInQueue(ctx, key.Namespace, "read", func(ctx context.Context) {
+			defer s.recoverPreviousRead(ctx, &authorized.err)
+			if ctx.Err() == nil {
+				authorized.response, authorized.err = s.readResponse(ctx, user, key, result.backend)
+			}
+		}); err != nil {
+			return previousReadResult{err: err}
+		}
+		return authorized
+	}
+	var auth previousReadResult
+	if inline {
+		auth = authorize()
+	} else {
+		auth = runPreviousRead(ctx, authorize)
+	}
+	if auth.err != nil {
+		return nil, previousReadRPCError(auth.err)
+	}
+	return auth.response, nil
+}
+
+func previousReadRPCError(err error) error {
+	switch {
+	case errors.Is(err, errPreviousReadPanic):
+		return err
+	case errors.Is(err, errQueueTimeout):
+		return queueRPCError(context.DeadlineExceeded)
+	default:
+		return queueRPCError(err)
+	}
+}
+
+// recoverPreviousRead reports panics to the watch handler before they can
+// escape a queue worker or the shared read goroutine.
+func (s *server) recoverPreviousRead(ctx context.Context, err *error) {
+	if p := recover(); p != nil {
+		*err = errPreviousReadPanic
+		s.log.FromContext(ctx).Error("recovered from panic in previous version read", "panic", p, "stack", string(debug.Stack()))
+	}
 }
