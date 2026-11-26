@@ -198,6 +198,58 @@ describe('TabItemRepeater', () => {
     });
   });
 
+  describe('Given a repeat variable with a fixed multi-value default and a loading dependency', () => {
+    it('selects the first tab once the variable finishes loading with unchanged values', async () => {
+      const parentVariable = new TestVariable({
+        name: 'env',
+        query: 'env',
+        value: 'prod',
+        text: 'prod',
+        delayMs: 10,
+        optionsToReturn: [{ label: 'prod', value: 'prod' }],
+      });
+      const repeatByVariable = new TestVariable({
+        name: 'server',
+        query: '$env.*',
+        value: ['A1', 'B1'],
+        text: ['A', 'B'],
+        isMulti: true,
+        includeAll: true,
+        delayMs: 10,
+        optionsToReturn: [
+          { label: 'A', value: 'A1' },
+          { label: 'B', value: 'B1' },
+          { label: 'C', value: 'C1' },
+        ],
+      });
+      const layout = new TabsLayoutManager({
+        tabs: [
+          new TabItem({ key: 'tab-1', title: 'Plain', layout: AutoGridLayoutManager.createEmpty() }),
+          new TabItem({
+            key: 'tab-2',
+            title: 'Tab $server',
+            repeatByVariable: 'server',
+            layout: AutoGridLayoutManager.createEmpty(),
+          }),
+        ],
+      });
+      const scene = new DashboardScene({
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        $variables: new SceneVariableSet({ variables: [parentVariable, repeatByVariable] }),
+        body: layout,
+      });
+
+      render(<scene.Component model={scene} />);
+
+      await waitFor(() => {
+        expect(screen.queryByText('Tab B')).toBeInTheDocument();
+        expect(repeatByVariable.state.options).toHaveLength(3);
+      });
+
+      await waitFor(() => expect(layout.state.currentTabSlug).toBe('Plain'));
+    });
+  });
+
   describe('URL sync for delayed repeats', () => {
     it('hydrates source and clone section variable values from URL', () => {
       locationService.replace({
