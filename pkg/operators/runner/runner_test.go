@@ -3,6 +3,7 @@ package runner
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -177,4 +178,45 @@ func TestOperatorRun(t *testing.T) {
 			assert.False(t, deps.HealthNotifier.IsReady())
 		})
 	})
+}
+
+func TestJoinStopError(t *testing.T) {
+	runErr, stopErr := errors.New("run"), errors.New("stop")
+	wrappedCancel := fmt.Errorf("watch: %w", context.Canceled)
+
+	tests := []struct {
+		name          string
+		run, stop     error
+		want          []error
+		wantCancelled bool
+	}{
+		{name: "no errors"},
+		{name: "plain shutdown stays a cancellation", run: context.Canceled, wantCancelled: true},
+		{name: "stop failure hidden by Run cancellation", run: context.Canceled, stop: stopErr, want: []error{stopErr}},
+		{name: "Run failure hidden by stop cancellation", run: runErr, stop: wrappedCancel, want: []error{runErr}},
+		{name: "Run failure joined with cancellation", run: errors.Join(runErr, context.Canceled), want: []error{runErr}},
+		{name: "both failures kept", run: errors.Join(context.Canceled, runErr), stop: stopErr, want: []error{runErr, stopErr}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := joinStopError(tt.run, tt.stop)
+			for _, w := range tt.want {
+				require.ErrorIs(t, err, w)
+			}
+			assert.Equal(t, tt.wantCancelled, errors.Is(err, context.Canceled))
+			if tt.want == nil && !tt.wantCancelled {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestReadinessIgnoresReadyAfterContextDone(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	notifier := server.NewHealthNotifier()
+	r := &readiness{ctx: ctx, notifier: notifier}
+
+	assert.False(t, r.ready())
+	assert.False(t, notifier.IsReady())
 }
