@@ -1864,7 +1864,6 @@ var expNonEmailNotifications = map[string][]string{
 	},
 	"googlechat_recv/googlechat_test": {
 		`{
-		  "previewText": "[FIRING:1] GoogleChatAlert (default)",
 		  "fallbackText": "[FIRING:1] GoogleChatAlert (default)",
 		  "cards": [
 			{

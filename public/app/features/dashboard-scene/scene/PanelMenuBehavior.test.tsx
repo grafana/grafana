@@ -29,6 +29,7 @@ import { LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
+import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import * as storeModule from 'app/store/store';
@@ -64,6 +65,25 @@ jest.mock('app/core/services/context_srv');
 jest.mock('app/store/store', () => ({
   dispatch: jest.fn(),
 }));
+
+jest.mock('app/features/alerting/unified/utils/rule-form', () =>
+  jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(jest.requireActual('app/features/alerting/unified/utils/rule-form'), {
+      scenesPanelToRuleFormValues: jest.fn((...args) =>
+        jest.requireActual('app/features/alerting/unified/utils/rule-form').scenesPanelToRuleFormValues(...args)
+      ),
+    })
+);
+
+afterEach(() => {
+  jest
+    .mocked(scenesPanelToRuleFormValues)
+    .mockReset()
+    .mockImplementation(
+      jest.requireActual('app/features/alerting/unified/utils/rule-form').scenesPanelToRuleFormValues
+    );
+});
 
 const getObservablePluginLinksMock = jest.fn().mockReturnValue(of([]));
 setGetObservablePluginLinks(getObservablePluginLinksMock);
@@ -1056,7 +1076,7 @@ describe('panelMenuBehavior', () => {
 
   describe('onCreateAlert', () => {
     beforeEach(() => {
-      jest.spyOn(storeModule, 'dispatch').mockImplementation(() => {});
+      jest.mocked(storeModule.dispatch).mockImplementation(() => {});
       jest.spyOn(locationService, 'push').mockImplementation(() => {});
     });
 
@@ -1065,14 +1085,12 @@ describe('panelMenuBehavior', () => {
 
       it('should open the new alert rule drawer with prefilled values on success', async () => {
         const { menu, panel, scene } = await buildTestScene({});
-        const mockFormValues = { someKey: 'someValue' };
+        const mockFormValues: Partial<RuleFormValues> = { name: 'someValue' };
 
         config.unifiedAlertingEnabled = true;
         grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
 
-        jest
-          .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
-          .mockResolvedValue(mockFormValues);
+        jest.mocked(scenesPanelToRuleFormValues).mockResolvedValue(mockFormValues);
         const showModalSpy = jest.spyOn(scene, 'showModal');
 
         menu.activate();
@@ -1099,9 +1117,7 @@ describe('panelMenuBehavior', () => {
         config.unifiedAlertingEnabled = true;
         grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
 
-        jest
-          .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
-          .mockResolvedValue(undefined);
+        jest.mocked(scenesPanelToRuleFormValues).mockResolvedValue(undefined);
         const showModalSpy = jest.spyOn(scene, 'showModal');
 
         menu.activate();
@@ -1120,9 +1136,7 @@ describe('panelMenuBehavior', () => {
       it('should show error notification and not open the drawer on failure', async () => {
         const { menu, panel, scene } = await buildTestScene({});
         const mockError = new Error('Test error');
-        jest
-          .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
-          .mockRejectedValue(mockError);
+        jest.mocked(scenesPanelToRuleFormValues).mockRejectedValue(mockError);
         const showModalSpy = jest.spyOn(scene, 'showModal');
 
         menu.activate();
@@ -1146,14 +1160,12 @@ describe('panelMenuBehavior', () => {
 
       it('should navigate to /alerting/new and not open the drawer', async () => {
         const { menu, scene } = await buildTestScene({});
-        const mockFormValues = { someKey: 'someValue' };
+        const mockFormValues: Partial<RuleFormValues> = { name: 'someValue' };
 
         config.unifiedAlertingEnabled = true;
         grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
 
-        jest
-          .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
-          .mockResolvedValue(mockFormValues);
+        jest.mocked(scenesPanelToRuleFormValues).mockResolvedValue(mockFormValues);
         const showModalSpy = jest.spyOn(scene, 'showModal');
 
         menu.activate();

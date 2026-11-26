@@ -6713,6 +6713,10 @@
       "paused": "Tato nástěnka byla pozastavena správcem",
       "try-again-later": "Zkuste to později znovu"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Opravdu chcete odebrat tento panel?"
@@ -6840,7 +6844,8 @@
           "title": "Vložit panel"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "Přidat řádek",
@@ -8182,6 +8187,9 @@
       "title-delete-all-transformations": "Odstranit všechny transformace?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_one": "",
@@ -10116,10 +10124,6 @@
       "to": "DO",
       "when": "KDY"
     },
-    "expression-query-editor": {
-      "helper-text-sql": "Spusťte SQL v dialektu MySQL na tabulkách vrácených z vašich zdrojů dat. Dotazy na zdroje dat (tj. „A“, „B“) jsou k dispozici jako tabulky a jsou odkazovány podle názvu dotazu. Pole jsou k dispozici jako sloupce, jak jsou vráceny ze zdroje dat.",
-      "label-operation": "Činnost"
-    },
     "math": {
       "available-math-functions": "Dostupné matematické funkce",
       "run-math-operations": "Proveďte matematické operace na jednom nebo více dotazech. Odkazujete na dotaz podle {{refExample}}, např. {{ref1}}, {{ref2}}, {{ref3}} atd.<br/>Příklad: <12>{{example}}</12>",
@@ -10687,6 +10691,27 @@
         "otherGroup": "Ostatní"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_one": "",
+        "with-decimals_few": "",
+        "with-decimals_many": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -11207,6 +11232,13 @@
         "placement-options": {
           "label-bottom": "Dolní",
           "label-right": "Vpravo"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_one": "",
+          "values_few": "",
+          "values_many": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11302,6 +11334,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "Jedno kliknutí"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "Přidat odkaz",
@@ -14002,16 +14037,16 @@
       "open": "Hlavní nabídka",
       "pin-error": "Aktualizace připnutých položek nabídky se nezdařila",
       "pinned-list-label": "Připnuté položky",
+      "section-resize": "",
       "undock": "Odpojit nabídku"
     },
     "megamenu-item": {
       "children-error": "Položky se nepodařilo načíst",
+      "children-partial-error": "",
       "collapse-aria-label": "Sbalit sekci: {{sectionName}}",
       "expand-aria-label": "Rozbalit sekci: {{sectionName}}",
       "loading-aria-label": "Načítání {{sectionName}}",
-      "reorder-aria-label": "Změnit pořadí {{itemName}}",
-      "starred-dashboard-icon": "Nástěnka",
-      "starred-folder-icon": "Složka"
+      "reorder-aria-label": "Změnit pořadí {{itemName}}"
     },
     "org-switcher": {
       "aria-label": "Změnit organizaci"
@@ -14211,12 +14246,32 @@
         "undo-label": "Úprava asistenta"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "Zrušit",
       "confirm-discard": "Zahodit",
       "confirm-keep": "Ponechat",
       "confirm-text": "Chcete zachovat změny provedené při prohlížení tohoto zápisníku?",
       "confirm-title": "Neuložené změny panelu"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17583,6 +17638,13 @@
       "wide-list": "Široký seznam",
       "wide-list-desc": "Horizontální, název a hodnota, plošný minigraf, jedna barva"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "Statistika",
       "stat-color-background": "Statistika – barevné pozadí",
@@ -17788,6 +17850,7 @@
     "description-page-size": "Počet řádků na stránku. Pokud je prázdné, velikost stránky vychází z výšky panelu.",
     "description-show-columns-sidebar": "Otevřete postranní panel pro správu sloupců pomocí panelu, nikoli z nabídky sloupce",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "Pole obsahující objekty JSON s vlastnostmi CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Střídat barvu pozadí každého druhého řádku",
@@ -17832,6 +17895,7 @@
     "name-show-columns-sidebar": "Zobrazit postranní panel sloupců",
     "name-show-row-numbers": "",
     "name-show-table-header": "Zobrazit záhlaví tabulky",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "Zobrazit popisek při najetí kurzorem",
     "name-styling-from-field": "Styling z pole",
     "name-tooltip-from-field": "",
@@ -18132,6 +18196,10 @@
       "time-zone-option": "Časové pásmo",
       "time-zone-selection": "Volba časového pásma"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "Použít časový rozsah",
       "default-error": "Zadejte datum ({{dateExample}}) nebo relativní čas ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -18149,6 +18217,12 @@
       "to": "do",
       "zoom-out-button": "Oddálit časový rozsah",
       "zoom-out-tooltip-new": "Oddálení časového rozsahu <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "Použít časový rozsah",

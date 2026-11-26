@@ -22,10 +22,10 @@ type ConnectionStatusApplyConfiguration struct {
 	// Conditions represent the latest available observations of the connection's state.
 	Conditions []v1.ConditionApplyConfiguration `json:"conditions,omitempty"`
 	// The connection health status
-	Health *HealthStatusApplyConfiguration `json:"health,omitempty"`
+	Health *RepositoryHealthStatusApplyConfiguration `json:"health,omitempty"`
 	// Token holds metadata about the last generated connection token, used to avoid
 	// regenerating a token whose secret was written recently but is not yet readable.
-	Token *TokenStatusApplyConfiguration `json:"token,omitempty"`
+	Token *RepositoryTokenStatusApplyConfiguration `json:"token,omitempty"`
 }
 
 // ConnectionStatusApplyConfiguration constructs a declarative configuration of the ConnectionStatus type for use with
@@ -71,7 +71,7 @@ func (b *ConnectionStatusApplyConfiguration) WithConditions(values ...*v1.Condit
 // WithHealth sets the Health field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Health field is set to the value of the last call.
-func (b *ConnectionStatusApplyConfiguration) WithHealth(value *HealthStatusApplyConfiguration) *ConnectionStatusApplyConfiguration {
+func (b *ConnectionStatusApplyConfiguration) WithHealth(value *RepositoryHealthStatusApplyConfiguration) *ConnectionStatusApplyConfiguration {
 	b.Health = value
 	return b
 }
@@ -79,7 +79,7 @@ func (b *ConnectionStatusApplyConfiguration) WithHealth(value *HealthStatusApply
 // WithToken sets the Token field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Token field is set to the value of the last call.
-func (b *ConnectionStatusApplyConfiguration) WithToken(value *TokenStatusApplyConfiguration) *ConnectionStatusApplyConfiguration {
+func (b *ConnectionStatusApplyConfiguration) WithToken(value *RepositoryTokenStatusApplyConfiguration) *ConnectionStatusApplyConfiguration {
 	b.Token = value
 	return b
 }

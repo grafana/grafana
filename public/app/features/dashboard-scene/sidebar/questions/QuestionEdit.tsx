@@ -66,12 +66,19 @@ export class QuestionEdit extends SceneObjectBase<QuestionEditState> implements 
 
   public onDelete() {
     const owner = this.getOwner();
-    const { questionIndex } = this.state;
+    const { ownerKind, questionIndex } = this.state;
+    const { sidebar } = getDashboardSceneFor(owner).state;
+    const selectionId = getQuestionSelectionId(owner, ownerKind, questionIndex);
+    const wasOpen = sidebar.state.selectionContext.selected.some(({ id }) => id === selectionId);
 
     if (questionIndex >= 0 && questionIndex < (owner.state.questions ?? []).length) {
       questionActions.remove({ owner, index: questionIndex });
     }
-    getDashboardSceneFor(owner).state.sidebar.selectObject(owner);
+    // The options already open for the owner, where the list deletes from, stay as they are: selecting the owner
+    // again would deselect it and close them.
+    if (wasOpen) {
+      sidebar.selectObject(owner);
+    }
   }
 
   private getOwner(): QuestionsOwner {
@@ -97,19 +104,32 @@ function createQuestionEdit(owner: QuestionsOwner, ownerKind: QuestionsOwnerKind
   });
 }
 
-export function openEditQuestionPane(owner: QuestionsOwner, ownerKind: QuestionsOwnerKind, questionIndex: number) {
+/**
+ * Selects a question to edit in the sidebar. With `openSidebar`, also opens the sidebar if it is closed, as for a
+ * question edited from its control on the dashboard. The options list doesn't need to: it is inside the open sidebar.
+ */
+export function openEditQuestionPane(
+  owner: QuestionsOwner,
+  ownerKind: QuestionsOwnerKind,
+  questionIndex: number,
+  openSidebar = false
+) {
   const element = createQuestionEdit(owner, ownerKind, questionIndex);
-  getDashboardSceneFor(owner).state.sidebar.selectObject(element, { force: true, multi: false });
+  const { sidebar } = getDashboardSceneFor(owner).state;
+  if (openSidebar) {
+    sidebar.openElementSettings(element);
+  } else {
+    sidebar.selectObject(element, { force: true, multi: false });
+  }
 }
 
 /** Adds an empty question and opens it, with the question field focused. */
 export function openAddQuestionPane(owner: QuestionsOwner, ownerKind: QuestionsOwnerKind) {
   const questionIndex = (owner.state.questions ?? []).length;
-  questionActions.add({
-    owner,
-    question: { text: '' },
-    addedObject: createQuestionEdit(owner, ownerKind, questionIndex),
-  });
+  const element = createQuestionEdit(owner, ownerKind, questionIndex);
+  questionActions.add({ owner, question: { text: '' }, addedObject: element });
+  // Selecting the new question doesn't open a closed sidebar, which only explicit actions open.
+  getDashboardSceneFor(owner).state.sidebar.openElementSettings(element);
 }
 
 export function duplicateQuestion(owner: QuestionsOwner, ownerKind: QuestionsOwnerKind, questionIndex: number) {

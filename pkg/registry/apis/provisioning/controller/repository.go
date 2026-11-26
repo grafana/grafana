@@ -276,6 +276,12 @@ func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStar
 	}
 }
 
+// ShutDownQueue releases the work queue when Run is never called, such as
+// when the informer cache fails to sync. Run shuts the queue down itself.
+func (rc *RepositoryController) ShutDownQueue() {
+	rc.queue.ShutDown()
+}
+
 func (rc *RepositoryController) runWorker(ctx context.Context) {
 	for rc.processNextWorkItem(ctx) {
 	}
@@ -691,7 +697,7 @@ func (rc *RepositoryController) determineSyncStrategy(
 	repo repository.Repository,
 	shouldResync bool,
 	isBlocked bool,
-	healthStatus provisioning.HealthStatus,
+	healthStatus provisioning.RepositoryHealthStatus,
 ) *provisioning.SyncJobOptions {
 	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.determine_sync_strategy", repoSpanAttrs(obj))
 	defer span.End()
@@ -813,7 +819,7 @@ func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisionin
 	return nil
 }
 
-func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions, healthStatus provisioning.HealthStatus, shouldResync bool) []map[string]interface{} {
+func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions, healthStatus provisioning.RepositoryHealthStatus, shouldResync bool) []map[string]interface{} {
 	const unhealthyMessage = "Repository is unhealthy"
 
 	hasUnhealthyMessage := len(obj.Status.Sync.Message) > 0 && obj.Status.Sync.Message[0] == unhealthyMessage
@@ -990,7 +996,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		}
 
 		logger.Warn("unable to delete repository", "error", err)
-		deleteHealthStatus := provisioning.HealthStatus{
+		deleteHealthStatus := provisioning.RepositoryHealthStatus{
 			Healthy: false,
 			Error:   provisioning.HealthFailureHealth,
 			Checked: time.Now().UnixMilli(),
@@ -1340,7 +1346,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 
 	// If over quota, override health to unhealthy.
 	if isOverQuota {
-		healthStatus = provisioning.HealthStatus{
+		healthStatus = provisioning.RepositoryHealthStatus{
 			Healthy: false,
 			Error:   provisioning.HealthFailureHealth,
 			Checked: time.Now().UnixMilli(),
@@ -1459,7 +1465,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 // missing) that got skipped this pass due to cooldown/repo inaccessibility, as
 // opposed to there being genuinely nothing to do — the caller uses this to
 // decide whether it's safe to advance observedGeneration.
-func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository, testResults *provisioning.TestResults, repoAccessible bool, shouldRotateSecret bool) (hookOps []map[string]interface{}, failureStatus *provisioning.HealthStatus, suppressWebhooks bool, err error) {
+func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository, testResults *provisioning.TestResults, repoAccessible bool, shouldRotateSecret bool) (hookOps []map[string]interface{}, failureStatus *provisioning.RepositoryHealthStatus, suppressWebhooks bool, err error) {
 	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.process_hooks", repoSpanAttrs(obj))
 	defer span.End()
 	webhookMissing := len(obj.Spec.Workflows) > 0 &&
@@ -1552,7 +1558,7 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 // The caller applies the patches so the failure can be persisted even when
 // reconciliation returns an error to the work queue.
 func (rc *RepositoryController) repositoryFailurePatchOps(obj *provisioning.Repository, err error, reason string) []map[string]interface{} {
-	healthStatus := provisioning.HealthStatus{
+	healthStatus := provisioning.RepositoryHealthStatus{
 		Healthy: false,
 		Error:   provisioning.HealthFailureHealth,
 		Checked: time.Now().UnixMilli(),
@@ -1565,7 +1571,7 @@ func (rc *RepositoryController) repositoryFailurePatchOps(obj *provisioning.Repo
 	)...)
 }
 
-func (rc *RepositoryController) healthPatchIfChanged(obj *provisioning.Repository, status provisioning.HealthStatus) []map[string]interface{} {
+func (rc *RepositoryController) healthPatchIfChanged(obj *provisioning.Repository, status provisioning.RepositoryHealthStatus) []map[string]interface{} {
 	if !rc.healthChecker.hasHealthStatusChanged(obj.Status.Health, status) {
 		return nil
 	}
@@ -1797,7 +1803,7 @@ func (rc *RepositoryController) generateRepositoryToken(
 		return "", nil, fmt.Errorf("unable to create token for repository: %w", err)
 	}
 
-	tokenStatus := provisioning.TokenStatus{LastUpdated: time.Now().UnixMilli()}
+	tokenStatus := provisioning.RepositoryTokenStatus{LastUpdated: time.Now().UnixMilli()}
 	if !token.ExpiresAt.IsZero() {
 		tokenStatus.Expiration = token.ExpiresAt.UnixMilli()
 	}
