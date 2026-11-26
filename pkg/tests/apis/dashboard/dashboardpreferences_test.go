@@ -263,11 +263,10 @@ func TestIntegrationDashboardPreferencesV2Beta1(t *testing.T) {
 		require.GreaterOrEqual(t, pages, len(want))
 	})
 
-	// The token is the folder API's, so the folder API judges it, and it answers one it can't decode with
-	// a server error.
+	// A continue token that cannot be decoded is a client error, not a server error.
 	t.Run("an invalid continue token fails", func(t *testing.T) {
 		_, err := viewer.Resource.List(ctx, metav1.ListOptions{Continue: "x"})
-		require.True(t, apierrors.IsInternalError(err), "expected InternalError, got %v", err)
+		require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
 		require.ErrorContains(t, err, "error decoding continue token")
 	})
 

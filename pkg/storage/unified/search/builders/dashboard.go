@@ -4,11 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"slices"
 	"sort"
-	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -96,9 +94,6 @@ type DashboardStatsLookup = func(ctx context.Context, uid string) map[string]int
 
 var _ resource.DocumentBuilder = (*DashboardDocumentBuilder)(nil)
 
-// Shared index refreshes do not inherit a request deadline.
-const dashboardBlobReadTimeout = 30 * time.Second
-
 func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
 	if s.Namespace != "" && s.Namespace != key.Namespace {
 		return nil, fmt.Errorf("invalid namespace")
@@ -117,16 +112,10 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 
 	blob := obj.GetBlob()
 	if blob != nil {
-		readCtx, cancel := context.WithTimeout(ctx, dashboardBlobReadTimeout)
-		defer cancel()
-		rsp, err := s.Blob.GetResourceBlob(readCtx, key, blob, true)
-		if readErr := readCtx.Err(); readErr != nil && !errors.Is(err, readErr) {
-			err = errors.Join(err, readErr)
-		}
+		value, err = resource.ReadBlobForIndex(ctx, s.Blob, key, blob)
 		if err != nil {
-			return nil, fmt.Errorf("error reading blob: %w", err)
+			return nil, err
 		}
-		value = rsp.Value
 	}
 
 	summary, err := dashboard.ReadDashboardWithLogContext(bytes.NewReader(value), s.DatasourceLookup, map[string]any{

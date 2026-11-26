@@ -11,6 +11,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/grafana/grafana/pkg/apimachinery/internal/managerkinds"
 )
 
 func TestNewForbiddenManagerKindChangeError(t *testing.T) {
@@ -118,8 +120,8 @@ func TestParseManagerKindString(t *testing.T) {
 
 func registerManagerKindForTest(t *testing.T, kind ManagerKind) {
 	t.Helper()
-	RegisterManagerKind(kind)
-	t.Cleanup(func() { delete(managerKindRegistry, kind) })
+	managerkinds.Add(string(kind))
+	t.Cleanup(func() { managerkinds.Remove(string(kind)) })
 }
 
 func TestRegisterManagerKind(t *testing.T) {
@@ -155,18 +157,6 @@ func TestRegisterManagerKind(t *testing.T) {
 			ManagerProperties{Kind: kind, Identity: "a"},
 			ManagerProperties{Kind: kind, Identity: "b"},
 			true, true)))
-	})
-
-	t.Run("a second registration panics", func(t *testing.T) {
-		registerManagerKindForTest(t, kind)
-		require.Panics(t, func() { RegisterManagerKind(kind) })
-		require.Equal(t, kind, ParseManagerKindString(string(kind)))
-	})
-
-	t.Run("empty and built-in kinds cannot be registered", func(t *testing.T) {
-		require.Panics(t, func() { RegisterManagerKind(ManagerKindUnknown) })
-		require.Panics(t, func() { RegisterManagerKind(ManagerKindRepo) })
-		require.Panics(t, func() { RegisterManagerKind(ManagerKindClassicFP) }) //nolint:staticcheck
 	})
 }
 

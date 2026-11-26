@@ -280,6 +280,8 @@ export const FlagKeys = {
   GrafanaPreserveLoginTabTitle: "grafana.preserveLoginTabTitle",
   /** Disables creating new recorded queries while preserving access to existing queries */
   GrafanaRecordedQueriesDisableCreate: "grafana.recordedQueriesDisableCreate",
+  /** Enable tabs and an inline calendar in the compact time range picker */
+  GrafanaResponsiveTimePickerTabs: "grafana.responsiveTimePickerTabs",
   /** Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state */
   GrafanaSavedDashboardViews: "grafana.savedDashboardViews",
   /** Enables the dedicated Saved queries page and its navigation entry */
@@ -306,6 +308,8 @@ export const FlagKeys = {
   GraphiteBackendMode: "graphiteBackendMode",
   /** Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis */
   HeatmapNegativeLogBuckets: "heatmapNegativeLogBuckets",
+  /** Routes read-only user requests in the frontend from /api to the /apis endpoint. Depends on kubernetesUsersReadApi */
+  IamUseKubernetesUsersReadApi: "iam.useKubernetesUsersReadApi",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Adds support for Kubernetes correlations */
@@ -1898,6 +1902,17 @@ export const useFlagGrafanaRecordedQueriesDisableCreate = (options?: ReactFlagEv
 };
 
 /**
+ * Enable tabs and an inline calendar in the compact time range picker
+ *
+ * **Details:**
+ * - flag key: `grafana.responsiveTimePickerTabs`
+ * - default value: `false`
+ */
+export const useFlagGrafanaResponsiveTimePickerTabs = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.responsiveTimePickerTabs", false, options).value;
+};
+
+/**
  * Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state
  *
  * **Details:**
@@ -2038,6 +2053,17 @@ export const useFlagGraphiteBackendMode = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagHeatmapNegativeLogBuckets = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("heatmapNegativeLogBuckets", false, options).value;
+};
+
+/**
+ * Routes read-only user requests in the frontend from /api to the /apis endpoint. Depends on kubernetesUsersReadApi
+ *
+ * **Details:**
+ * - flag key: `iam.useKubernetesUsersReadApi`
+ * - default value: `false`
+ */
+export const useFlagIamUseKubernetesUsersReadApi = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("iam.useKubernetesUsersReadApi", false, options).value;
 };
 
 /**

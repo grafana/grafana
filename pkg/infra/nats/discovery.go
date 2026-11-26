@@ -30,6 +30,10 @@ const (
 	defaultDiscoveryInterval = 5 * time.Second
 	defaultDiscoveryTTL      = 15 * time.Second
 
+	// A silent peer's row is deleted this many TTLs after its last change,
+	// well after its route is dropped.
+	pruneAfterTTLs = 4
+
 	// A leaving peer publishes here after deregistering so the others drop its
 	// route now rather than on their next tick.
 	discoveryWakeSubject = "grafana.internal.discovery.wake"
@@ -46,11 +50,11 @@ type peer struct {
 type peerRegistry interface {
 	// upsert records or refreshes this node's row (a heartbeat).
 	upsert(ctx context.Context, p peer) error
-	// listActive returns every peer whose heartbeat is within ttl, pruning rows
-	// older than ttl as a side effect (self-healing via re-registration). Pruning
-	// is best-effort: the returned set already excludes stale peers, so a failed
-	// delete only leaves rows to be retried next tick.
-	listActive(ctx context.Context, ttl time.Duration) ([]peer, error)
+	// list returns every row of this cluster, live or not. Liveness is the
+	// caller's call, see discovery.observe.
+	list(ctx context.Context) ([]peerRecord, error)
+	// prune deletes the rows of the given peers.
+	prune(ctx context.Context, serverNames []string) error
 	// remove deletes this node's row on graceful shutdown.
 	remove(ctx context.Context, serverName string) error
 }
@@ -71,8 +75,28 @@ type discovery struct {
 	wake     chan struct{}
 	wakeConn *natsclient.Conn
 
-	// routes is the applied peer route set; only touched by the loop goroutine.
+	// now is the observer clock. It must be time.Now outside tests: liveness
+	// relies on its monotonic reading to ignore wall-clock steps.
+	now func() time.Time
+
+	// The fields below are only touched by the loop goroutine.
+
+	// routes is the applied peer route set.
 	routes map[string]struct{}
+	// observed tracks when each peer's row last changed, by server name.
+	observed map[string]observation
+	// failedAt is the last tick whose heartbeat or read failed.
+	failedAt time.Time
+}
+
+// observation is what an observer last saw of a peer's row. Peers are judged
+// by whether their row changes, timed on the observer's own clock. updatedAt
+// is only compared for equality, so the writer's clock may be skewed, but it
+// must advance at least a second between heartbeats.
+type observation struct {
+	updatedAt int64
+	changedAt time.Time
+	excluded  bool
 }
 
 // discoveryOptions bundles how routes reach the embedded server with the
@@ -94,6 +118,10 @@ func newDiscovery(logger log.Logger, server *natsserver.Server, registry peerReg
 	if ttl <= 0 {
 		ttl = defaultDiscoveryTTL
 	}
+	if minTTL := minDiscoveryTTL(interval); ttl < minTTL {
+		logger.Warn("nats discovery_ttl too short for discovery_interval, raising it", "configured", ttl, "interval", interval, "ttl", minTTL)
+		ttl = minTTL
+	}
 	d := &discovery{
 		log:      logger,
 		server:   server,
@@ -103,11 +131,21 @@ func newDiscovery(logger log.Logger, server *natsserver.Server, registry peerReg
 		interval: interval,
 		ttl:      ttl,
 		metrics:  opts.metrics,
+		now:      time.Now,
 		routes:   map[string]struct{}{},
+		observed: map[string]observation{},
 		wake:     make(chan struct{}, 1),
 	}
 	d.connectWake()
 	return d
+}
+
+// minDiscoveryTTL is the shortest TTL that keeps heartbeating peers routed.
+// UpdatedAt has one-second resolution, so a row changes at most once a second,
+// up to an interval after the second turns, and an observer may see it one
+// interval late.
+func minDiscoveryTTL(interval time.Duration) time.Duration {
+	return time.Second + 2*interval
 }
 
 func (d *discovery) connectWake() {
@@ -182,19 +220,79 @@ func (d *discovery) run(ctx context.Context) error {
 func (d *discovery) tick(ctx context.Context) {
 	if err := d.registry.upsert(ctx, d.self); err != nil {
 		d.log.Warn("nats peer heartbeat failed", "server_name", d.self.ServerName, "err", err)
+		d.failedAt = d.now()
 	}
-	// One scan per tick: listActive returns the live peers and prunes stale rows.
-	peers, err := d.registry.listActive(ctx, d.ttl)
+	records, err := d.registry.list(ctx)
 	if err != nil {
 		d.log.Warn("nats peer discovery degraded", "err", err)
-		// A read failure yields no peers; keep the current routes rather than
-		// reconciling to an empty set and tearing down the mesh. A prune failure
-		// still returns the valid peer set, so we fall through and reconcile.
-		if peers == nil {
-			return
-		}
+		d.failedAt = d.now()
+		// Keep the current routes rather than reconciling to an empty set and
+		// tearing down the mesh.
+		return
 	}
-	d.reconcile(peers)
+	alive, expired := d.observe(records)
+	d.reconcile(alive)
+	if len(expired) == 0 {
+		return
+	}
+	// Best effort: the rows are already excluded, and a failed delete is
+	// retried on the next tick.
+	if err := d.registry.prune(ctx, expired); err != nil {
+		d.log.Warn("failed to prune stale nats peers", "peers", len(expired), "err", err)
+	}
+}
+
+// observe records which rows changed since the last tick and splits the peers
+// into those to route to and those whose rows to delete. A peer is excluded
+// once its row stays unchanged for longer than the TTL, and stays excluded
+// until its row changes.
+func (d *discovery) observe(records []peerRecord) (alive []peer, expired []string) {
+	now := d.now()
+	present := make(map[string]struct{}, len(records))
+	for _, rec := range records {
+		if rec.ServerName == d.self.ServerName {
+			continue
+		}
+		present[rec.ServerName] = struct{}{}
+
+		obs, seen := d.observed[rec.ServerName]
+		if !seen || obs.updatedAt != rec.UpdatedAt {
+			if obs.excluded {
+				d.log.Info("nats peer heartbeat resumed", "server_name", rec.ServerName)
+			}
+			obs = observation{updatedAt: rec.UpdatedAt, changedAt: now}
+		}
+
+		// While our own heartbeat or reads fail, other peers' likely do too,
+		// so silence only counts from the last tick that worked. Otherwise every
+		// row would look stale the moment the database comes back.
+		since := obs.changedAt
+		if d.failedAt.After(since) {
+			since = d.failedAt
+		}
+		age := now.Sub(since)
+
+		if !obs.excluded && age > d.ttl {
+			d.log.Info("nats peer heartbeat stale, dropping its route", "server_name", rec.ServerName, "silent_for", age)
+			obs.excluded = true
+		}
+		if !obs.excluded {
+			alive = append(alive, peer{ServerName: rec.ServerName, RouteURL: rec.RouteURL})
+		}
+		if age > d.pruneAfter() {
+			expired = append(expired, rec.ServerName)
+		}
+		d.observed[rec.ServerName] = obs
+	}
+	maps.DeleteFunc(d.observed, func(name string, _ observation) bool {
+		_, ok := present[name]
+		return !ok
+	})
+	return alive, expired
+}
+
+func (d *discovery) pruneAfter() time.Duration {
+	return pruneAfterTTLs * d.ttl
 }
 
 // reconcile reloads the server's routes when the live-peer set has changed; NATS
@@ -242,7 +340,8 @@ func (d *discovery) applyRoutes(routes map[string]struct{}) error {
 }
 
 // deregister removes this node's row and wakes the peers so they stop dialing it
-// now instead of on their next tick. Best-effort: the TTL prune is the backstop.
+// now instead of on their next tick. Best-effort: the peers' liveness checks are
+// the backstop.
 func (d *discovery) deregister(ctx context.Context) {
 	if err := d.registry.remove(ctx, d.self.ServerName); err != nil {
 		d.log.Warn("failed to deregister nats peer", "server_name", d.self.ServerName, "err", err)
@@ -251,8 +350,8 @@ func (d *discovery) deregister(ctx context.Context) {
 }
 
 // peerRecord is the JSON value stored per peer under kv.NATSPeersSection.
-// updatedAt is epoch seconds; the store filters on it in memory since the KV
-// section is a plain key/value table with no queryable timestamp column.
+// UpdatedAt is the writer's epoch seconds. Observers only check whether it
+// changed, never compare it with their own clock.
 type peerRecord struct {
 	ServerName string `json:"serverName"`
 	RouteURL   string `json:"routeURL"`
@@ -296,28 +395,28 @@ func (s *kvPeerStore) upsert(ctx context.Context, p peer) error {
 	return w.Close()
 }
 
-func (s *kvPeerStore) listActive(ctx context.Context, ttl time.Duration) ([]peer, error) {
-	cutoff := s.now().Add(-ttl).Unix()
-	peers := make([]peer, 0)
-	var stale []string
+func (s *kvPeerStore) list(ctx context.Context) ([]peerRecord, error) {
+	records := make([]peerRecord, 0)
 	for rec, err := range s.records(ctx) {
 		if err != nil {
 			return nil, err
 		}
-		if rec.UpdatedAt < cutoff {
-			stale = append(stale, s.peerKey(rec.ServerName))
-			continue
-		}
-		peers = append(peers, peer{ServerName: rec.ServerName, RouteURL: rec.RouteURL})
+		records = append(records, rec)
 	}
-	// Best-effort prune; the active set above already excludes
-	// these, so a failed delete just leaves them for the next tick.
-	for chunk := range slices.Chunk(stale, maxPeerDeleteBatch) {
+	return records, nil
+}
+
+func (s *kvPeerStore) prune(ctx context.Context, serverNames []string) error {
+	keys := make([]string, 0, len(serverNames))
+	for _, name := range serverNames {
+		keys = append(keys, s.peerKey(name))
+	}
+	for chunk := range slices.Chunk(keys, maxPeerDeleteBatch) {
 		if err := s.kv.BatchDelete(ctx, kv.NATSPeersSection, chunk); err != nil {
-			return peers, err
+			return err
 		}
 	}
-	return peers, nil
+	return nil
 }
 
 func (s *kvPeerStore) remove(ctx context.Context, serverName string) error {

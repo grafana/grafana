@@ -1,4 +1,4 @@
-import memoizeOne from 'memoize-one';
+import { memoizeOne } from 'memoize-one';
 
 import { type AbsoluteTimeRange, type LogRowModel, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';

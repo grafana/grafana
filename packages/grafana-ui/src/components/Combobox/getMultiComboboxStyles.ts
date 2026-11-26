@@ -21,12 +21,14 @@ export const getMultiComboboxStyles = (
   const wrapperWidth = width && width !== 'auto' ? theme.spacing(width) : '100%';
   const wrapperMinWidth = minWidth ? theme.spacing(minWidth) : '';
   const wrapperMaxWidth = maxWidth ? theme.spacing(maxWidth) : '';
+  // An auto sized container grows with its pills, but never past its parent. useMeasureMulti uses the same limit.
+  const autoMaxWidth = maxWidth ? `min(${theme.spacing(maxWidth)}, 100%)` : '100%';
 
   return {
     container: css({
       width: width === 'auto' ? 'auto' : wrapperWidth,
       minWidth: wrapperMinWidth,
-      maxWidth: wrapperMaxWidth,
+      maxWidth: width === 'auto' ? autoMaxWidth : wrapperMaxWidth,
       display: width === 'auto' ? 'inline-block' : 'block',
     }), // wraps everything
     wrapper: cx(
