@@ -5,6 +5,7 @@ import * as React from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { pickDataAttributes } from '../../utils/dataAttributes';
 import { IconButton } from '../IconButton/IconButton';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -104,6 +105,8 @@ export interface Props {
   className?: string;
   /** @deprecated this prop is no longer used and will be removed in Grafana 13 */
   collapsible?: boolean;
+  /** Custom data attributes (for example `data-analytics-id`), rendered on the toggle button */
+  [key: `data-${string}`]: string | undefined;
 }
 
 export const ControlledCollapse = ({ isOpen, onToggle, ...otherProps }: React.PropsWithChildren<Props>) => {
@@ -127,7 +130,15 @@ export const ControlledCollapse = ({ isOpen, onToggle, ...otherProps }: React.Pr
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-collapse--docs
  */
-export const Collapse = ({ isOpen, label, loading, onToggle, className, children }: React.PropsWithChildren<Props>) => {
+export const Collapse = ({
+  isOpen,
+  label,
+  loading,
+  onToggle,
+  className,
+  children,
+  ...restProps
+}: React.PropsWithChildren<Props>) => {
   const style = useStyles2(getStyles);
   const labelId = useId();
   const contentId = useId();
@@ -146,6 +157,7 @@ export const Collapse = ({ isOpen, label, loading, onToggle, className, children
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div className={style.header} onClick={onClickToggle}>
         <IconButton
+          {...pickDataAttributes(restProps)}
           aria-describedby={labelId}
           aria-expanded={isOpen}
           aria-controls={contentId}

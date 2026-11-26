@@ -7,7 +7,7 @@ import { VizPanel, useDataTransformer, useQueryRunner } from '@grafana/scenes-re
 import { BarAlignment, GraphDrawStyle, VisibilityMode } from '@grafana/schema';
 import { StackingMode, TooltipDisplayMode } from '@grafana/ui';
 
-import { overrideToFixedColor } from '../../home/Insights';
+import { overrideToFixedColor } from '../../insights/utils';
 
 import { sortByAlertState } from './dataFrameUtils';
 import { summaryChartQuery } from './queries';

@@ -444,12 +444,20 @@ func newStubSigner(t *testing.T) *httptest.Server {
 func TestSetupFromConfigUsesRuntimeTracer(t *testing.T) {
 	tracer := tracing.NewNoopTracerService()
 	global := otel.GetTracerProvider()
+<<<<<<< HEAD
 	cfg, err := setupFromConfig(&runner.Runtime{Cfg: setting.NewCfg(), Registerer: prometheus.NewRegistry(), Tracer: tracer})
+=======
+	cfg, err := setupFromConfig(setting.NewCfg(), prometheus.NewRegistry(), tracer, nil)
+>>>>>>> origin/main
 	require.NoError(t, err)
 	require.Same(t, tracer, cfg.Tracer())
 	require.Same(t, global, otel.GetTracerProvider(), "a runtime tracer must leave the global provider alone")
 
+<<<<<<< HEAD
 	cfg, err = setupFromConfig(&runner.Runtime{Cfg: setting.NewCfg(), Registerer: prometheus.NewRegistry()})
+=======
+	cfg, err = setupFromConfig(setting.NewCfg(), prometheus.NewRegistry(), nil, nil)
+>>>>>>> origin/main
 	require.NoError(t, err)
 	require.NotNil(t, cfg.Tracer(), "operators without a runtime tracer still get a usable one")
 }
