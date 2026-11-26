@@ -373,6 +373,35 @@ describe('LogList', () => {
         document.getSelection = tabGetSelection;
       }
     });
+    it('Appears after selecting text in a list moved to another window without rendering again', () => {
+      const iframe = document.createElement('iframe');
+      document.body.appendChild(iframe);
+      const otherDocument = iframe.contentDocument!;
+      // nothing is selected in this window
+      const tabGetSelection = document.getSelection;
+      document.getSelection = () => null;
+      jest.spyOn(otherDocument, 'getSelection').mockReturnValue({
+        toString: () => 'selected log line',
+        removeAllRanges: () => {},
+        addRange: (range: Range) => {},
+      } as Selection);
+      const { container, unmount } = render(
+        <LogList {...defaultProps} onClickFilterString={jest.fn()} onClickFilterOutString={jest.fn()} />
+      );
+      // as a page moves an element into a Document Picture-in-Picture window: `pipWindow.document.body.append(element)`
+      otherDocument.body.appendChild(container);
+
+      try {
+        // user-event drives pointer input through this window's document, so fire the other window's event directly
+        fireEvent.click(within(otherDocument.body).getByText('log message 1'));
+        expect(within(otherDocument.body).getByText('Copy selection')).toBeInTheDocument();
+      } finally {
+        // Unmount before the iframe goes, or React cannot remove the list from it.
+        unmount();
+        iframe.remove();
+        document.getSelection = tabGetSelection;
+      }
+    });
     it('Does not appear when disabled', async () => {
       jest.mocked(isPopoverMenuDisabled).mockReturnValue(true);
       setup();
