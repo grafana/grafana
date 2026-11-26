@@ -21,7 +21,7 @@ interface Props {
 
   onOrgRemove: (orgId: number) => void;
   onOrgRoleChange: (orgId: number, newRole: OrgRole) => void | Promise<unknown>;
-  onOrgAdd: (orgId: number, role: OrgRole) => void;
+  onOrgAdd: (orgId: number, role: OrgRole) => void | Promise<unknown>;
 }
 
 export const UserOrgs = memo(({ user, orgs, isExternalUser, onOrgRoleChange, onOrgRemove, onOrgAdd }: Props) => {
@@ -246,7 +246,7 @@ interface AddToOrgModalProps {
   isOpen: boolean;
   user?: UserDTO;
   userOrgs: UserOrg[];
-  onOrgAdd(orgId: number, role: string): void;
+  onOrgAdd(orgId: number, role: string): void | Promise<unknown>;
 
   onDismiss?(): void;
 }
@@ -256,6 +256,7 @@ const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss }: Add
   const [role, setRole] = useState<OrgRole>(OrgRole.Viewer);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
   const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
   const styles = useStyles2(getAddToOrgModalStyles);
 
   const onOrgSelect = (org: OrgSelectItem) => {
@@ -276,16 +277,22 @@ const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss }: Add
   };
 
   const onAddUserToOrg = async () => {
-    onOrgAdd(selectedOrg!.id, role);
-    // add the stored userRoles also
-    if (contextSrv.licensedAccessControlEnabled()) {
-      if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd)) {
-        if (user && pendingRoles.length) {
-          // The roles go to the organization selected now, which can differ from the one they were picked in.
-          await updateUserRoles(pendingRoles, user.id, selectedOrg!.id);
-          setPendingRoles([]);
+    setIsAdding(true);
+    try {
+      await onOrgAdd(selectedOrg!.id, role);
+      if (contextSrv.licensedAccessControlEnabled()) {
+        if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd)) {
+          if (user && pendingRoles.length) {
+            // The roles go to the organization selected now, which can differ from the one they were picked in.
+            await updateUserRoles(pendingRoles, user.id, selectedOrg!.id);
+          }
         }
       }
+      onCancel();
+    } catch {
+      // The mutation handler reports the error; keep the dialog open for correction.
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -328,7 +335,7 @@ const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss }: Add
             <Button variant="secondary" fill="outline" onClick={onCancel}>
               <Trans i18nKey="admin.user-orgs-modal.cancel-button">Cancel</Trans>
             </Button>
-            <Button variant="primary" disabled={selectedOrg === null} onClick={onAddUserToOrg}>
+            <Button variant="primary" disabled={selectedOrg === null || isAdding} onClick={onAddUserToOrg}>
               <Trans i18nKey="admin.user-orgs-modal.add-button">Add to organization</Trans>
             </Button>
           </Stack>

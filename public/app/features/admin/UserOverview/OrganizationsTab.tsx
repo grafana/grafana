@@ -31,7 +31,9 @@ export function OrganizationsTab({ user }: { user: UserDTO }) {
         orgs={orgs}
         isExternalUser={user.isExternallySynced}
         onOrgAdd={(orgId, role) => {
-          run(addOrgUser({ orgId, addOrgUserCommand: { loginOrEmail: user.login, role } }).unwrap());
+          const add = addOrgUser({ orgId, addOrgUserCommand: { loginOrEmail: user.login, role } }).unwrap();
+          run(add);
+          return add;
         }}
         onOrgRemove={(orgId) => {
           run(removeOrgUser({ orgId, userId: user.uid }).unwrap());

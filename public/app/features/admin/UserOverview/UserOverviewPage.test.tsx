@@ -960,44 +960,65 @@ describe('organizations', () => {
     expect(screen.queryByRole('button', { name: 'Remove from organization' })).not.toBeInTheDocument();
   });
 
-  it('assigns the picked roles in the organization that the user is added to', async () => {
-    const writes = jest.fn();
-    server.use(
-      http.get('/api/orgs', () =>
-        HttpResponse.json([
-          { id: 1, name: 'Main Org.' },
-          { id: 2, name: 'Org A' },
-          { id: 3, name: 'Org B' },
-        ])
-      ),
-      http.get('/api/access-control/roles', () =>
-        HttpResponse.json([{ ...role, group: 'Dashboards', delegatable: true }])
-      ),
-      http.post('/api/orgs/:orgId/users', ({ params }) => {
-        writes('add to org', params.orgId);
-        return HttpResponse.json({ message: 'User added to organization' });
-      }),
-      http.put('/api/access-control/users/12/roles', async ({ request }) => {
-        writes('set roles in org', new URL(request.url).searchParams.get('targetOrgId'), await request.json());
-        return HttpResponse.json({ message: 'Roles updated' });
-      })
-    );
-    const { user } = setup('organizations');
-    await user.click(await screen.findByRole('button', { name: 'Add user to organization' }));
-    const dialog = screen.getByRole('dialog');
-    // The roles are picked while one organization is selected, and the user is added to another.
-    await selectOptionInTest(within(dialog).getByRole('combobox'), 'Org A');
-    await user.click(within(within(dialog).getByTestId('role-picker')).getByText('Viewer'));
-    await user.click(within(screen.getByLabelText('Role picker menu')).getAllByRole('checkbox')[0]);
-    await user.click(screen.getByRole('button', { name: 'Apply' }));
-    await selectOptionInTest(within(dialog).getByRole('combobox'), 'Org B');
-    await user.click(within(dialog).getByRole('button', { name: 'Add to organization' }));
-    await waitFor(() => expect(writes).toHaveBeenCalledTimes(2));
-    expect(writes.mock.calls).toEqual([
-      ['add to org', '3'],
-      ['set roles in org', '3', { orgId: 3, roleUids: ['reader'] }],
-    ]);
-  });
+  it.each([false, true])(
+    'waits for organization membership before assigning roles (add fails: %s)',
+    async (addFails) => {
+      const writes = jest.fn();
+      const membership = Promise.withResolvers<void>();
+      server.use(
+        http.get('/api/orgs', () =>
+          HttpResponse.json([
+            { id: 1, name: 'Main Org.' },
+            { id: 2, name: 'Org A' },
+            { id: 3, name: 'Org B' },
+          ])
+        ),
+        http.get('/api/access-control/roles', () =>
+          HttpResponse.json([{ ...role, group: 'Dashboards', delegatable: true }])
+        ),
+        http.post('/api/orgs/:orgId/users', async ({ params }) => {
+          writes('add to org', params.orgId);
+          await membership.promise;
+          if (addFails) {
+            return HttpResponse.json({ message: 'Cannot add membership' }, { status: 403 });
+          }
+          return HttpResponse.json({ message: 'User added to organization' });
+        }),
+        http.put('/api/access-control/users/12/roles', async ({ request }) => {
+          writes('set roles in org', new URL(request.url).searchParams.get('targetOrgId'), await request.json());
+          return HttpResponse.json({ message: 'Roles updated' });
+        })
+      );
+      const { user } = setup('organizations');
+      await user.click(await screen.findByRole('button', { name: 'Add user to organization' }));
+      const dialog = screen.getByRole('dialog');
+      // The roles are picked while one organization is selected, and the user is added to another.
+      await selectOptionInTest(within(dialog).getByRole('combobox'), 'Org A');
+      await user.click(within(within(dialog).getByTestId('role-picker')).getByText('Viewer'));
+      await user.click(within(screen.getByLabelText('Role picker menu')).getAllByRole('checkbox')[0]);
+      await user.click(screen.getByRole('button', { name: 'Apply' }));
+      await selectOptionInTest(within(dialog).getByRole('combobox'), 'Org B');
+      await user.click(within(dialog).getByRole('button', { name: 'Add to organization' }));
+      await waitFor(() => expect(writes).toHaveBeenCalledWith('add to org', '3'));
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(writes).toHaveBeenCalledTimes(1);
+      membership.resolve();
+      if (addFails) {
+        expect(await screen.findByRole('alert')).toHaveTextContent('Cannot add membership');
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+        expect(writes).toHaveBeenCalledTimes(1);
+        return;
+      }
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(2));
+      expect(writes.mock.calls).toEqual([
+        ['add to org', '3'],
+        ['set roles in org', '3', { orgId: 3, roleUids: ['reader'] }],
+      ]);
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      await user.click(screen.getByRole('button', { name: 'Add user to organization' }));
+      expect(within(screen.getByRole('dialog')).getByRole('button', { name: 'Add to organization' })).toBeDisabled();
+    }
+  );
 });
 
 describe('sessions', () => {
