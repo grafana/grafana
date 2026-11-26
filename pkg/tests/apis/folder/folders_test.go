@@ -15,6 +15,8 @@ import (
 	"time"
 	"uuid"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -457,6 +459,77 @@ func TestIntegrationFolderCascadeDeleteFinalizer(t *testing.T) {
 			require.NoError(t, err)
 
 			_, err = client.Resource.Get(ctx, "flag-on", metav1.GetOptions{})
+			require.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
+		})
+	})
+
+	// The flag is read when the folder is deleted, so these flip it on the running server.
+	t.Run("the flag is read at delete time, not when the folder was created", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			EnableFeatureToggles: []string{},
+		})
+		client := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Admin, GVR: gvr})
+		setAsync := func(enabled bool) {
+			t.Helper()
+			provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+				featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: {
+					Key:            featuremgmt.FlagFolderAsyncCascadeDeleteThroughController,
+					DefaultVariant: "default",
+					Variants:       map[string]any{"default": enabled},
+				},
+			})
+			require.NoError(t, err)
+			require.NoError(t, openfeature.SetProviderAndWait(provider))
+		}
+		t.Cleanup(func() { setAsync(false) })
+		dryRunDelete := func(name string) apis.K8sResponse[unstructured.Unstructured] {
+			return apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodDelete,
+				Path:   fmt.Sprintf("/apis/%s/namespaces/%s/folders/%s?dryRun=All", gvr.GroupVersion().String(), helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()), name),
+			}, &unstructured.Unstructured{})
+		}
+
+		created, err := client.Resource.Create(ctx, newFolderObject(gvr.GroupVersion().String(), "stamp-at-delete"), metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.Empty(t, created.GetFinalizers(), "created while the flag was off")
+
+		setAsync(true)
+
+		t.Run("a dry-run delete returns the folder terminating with the finalizer, and writes nothing", func(t *testing.T) {
+			rsp := dryRunDelete("stamp-at-delete")
+			require.Equal(t, http.StatusOK, rsp.Response.StatusCode, string(rsp.Body))
+			require.NotNil(t, rsp.Result.GetDeletionTimestamp())
+			require.Equal(t, []string{folders.CascadeDeleteFinalizer}, rsp.Result.GetFinalizers())
+
+			current, err := client.Resource.Get(ctx, "stamp-at-delete", metav1.GetOptions{})
+			require.NoError(t, err)
+			require.Nil(t, current.GetDeletionTimestamp())
+			require.Empty(t, current.GetFinalizers())
+		})
+
+		t.Run("a delete stamps the finalizer and leaves the folder terminating", func(t *testing.T) {
+			require.NoError(t, client.Resource.Delete(ctx, "stamp-at-delete", metav1.DeleteOptions{}))
+
+			got, err := client.Resource.Get(ctx, "stamp-at-delete", metav1.GetOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, got.GetDeletionTimestamp())
+			require.Equal(t, []string{folders.CascadeDeleteFinalizer}, got.GetFinalizers())
+		})
+
+		t.Run("turning the flag off strips the finalizer, and the delete is immediate", func(t *testing.T) {
+			setAsync(true)
+			stamped, err := client.Resource.Create(ctx, newFolderObject(gvr.GroupVersion().String(), "strip-at-delete"), metav1.CreateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, []string{folders.CascadeDeleteFinalizer}, stamped.GetFinalizers())
+
+			setAsync(false)
+			require.NoError(t, client.Resource.Delete(ctx, "strip-at-delete", metav1.DeleteOptions{}))
+
+			_, err = client.Resource.Get(ctx, "strip-at-delete", metav1.GetOptions{})
 			require.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
 		})
 	})
