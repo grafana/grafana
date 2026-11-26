@@ -69,6 +69,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     actions: css({
       display: 'flex',
       flexDirection: 'row',
+      flexWrap: 'wrap',
       alignSelf: 'flex-start',
       alignItems: 'center',
       gap: theme.spacing(1),

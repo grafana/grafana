@@ -661,6 +661,7 @@ type contentsAccessCheck struct {
 
 // checkFolderContentsAccess denies the delete unless the requester has:
 //   - alert.rules:delete and dashboards:delete on folderUID
+//   - folders:delete on folderUID, since the folder itself is deleted under the service identity
 //   - folders:write on parentUID, which covers the library elements (General for a root folder)
 //   - variables:delete on folderUID, only when global variables are enabled
 //
@@ -685,6 +686,7 @@ func (s *cascadeDeleteStorage) checkFolderContentsAccess(ctx context.Context, us
 		{authlib.CheckRequest{Namespace: namespace, Verb: utils.VerbDelete, Group: cascadeAlertRuleGroup, Resource: cascadeAlertRuleResource}, folderUID},
 		{authlib.CheckRequest{Namespace: namespace, Verb: utils.VerbUpdate, Group: folderGVR.Group, Resource: folderGVR.Resource, Name: folderUID}, writeParent},
 		{authlib.CheckRequest{Namespace: namespace, Verb: utils.VerbDelete, Group: dashGVR.Group, Resource: dashGVR.Resource}, folderUID},
+		{authlib.CheckRequest{Namespace: namespace, Verb: utils.VerbDelete, Group: folderGVR.Group, Resource: folderGVR.Resource, Name: folderUID}, writeParent},
 	}
 	if grafanaDashboardGlobalVariablesEnabled(ctx) {
 		varGVR := dashboardV2beta1.VariableResourceInfo.GroupVersionResource()
