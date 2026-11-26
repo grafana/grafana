@@ -293,6 +293,15 @@ describe('ExemplarsPlugin', () => {
     expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
   });
 
+  it('keeps the exemplar close button and content on one surface', async () => {
+    setUp();
+    await userEvent.click(getMarker());
+    const close = await screen.findByLabelText('Close');
+    const surface = screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper);
+    expect(surface).toContainElement(close);
+    expect(surface).toHaveStyle({ border: '1px solid ' + createTheme().colors.border.weak });
+  });
+
   it('clears a hovered tooltip when another exemplar is pinned programmatically and keeps it closed after dismissal', async () => {
     const sample = createDataFrame({
       fields: [
@@ -751,7 +760,7 @@ describe('ExemplarsPlugin', () => {
       setUp();
       //@ts-expect-error
       await userEvent[userAction](getMarker());
-      const links = screen.getAllByRole('link');
+      const links = screen.getAllByRole('menuitem');
       expect(links[0]).toBeVisible();
       expect(links[1]).toBeVisible();
       expect(screen.getByText('Trace Link 1')).toBeVisible();
@@ -764,7 +773,7 @@ describe('ExemplarsPlugin', () => {
       setUp();
       //@ts-expect-error
       await userEvent[userAction](getMarker(1));
-      const links = screen.getAllByRole('link');
+      const links = screen.getAllByRole('menuitem');
       expect(links[0]).toBeVisible();
 
       expect(screen.getByText('2203801e0171aa8e')).toBeVisible();

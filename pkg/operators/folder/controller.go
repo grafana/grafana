@@ -3,7 +3,6 @@ package folder
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"os"
 
@@ -79,21 +78,21 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 
 	subscriber := nats.ProvideSubscriber(nats.ProvideNATSConfig(deps.Config, nil), deps.Registerer)
 
+	var supervised []services.Service
+	if nats.Enabled(subscriber) {
+		supervised = append(supervised, subscriber)
+	}
+	ctx, stopServices, err := supervision.Start(ctx, supervised...)
+	defer func() {
+		deps.HealthNotifier.SetNotReady()
+		runErr = errors.Join(runErr, stopServices())
+	}()
+	if err != nil {
+		return err
+	}
+
 	var reg cache.ResourceEventHandlerRegistration
 	if nats.Enabled(subscriber) {
-		var stopSubscriber func() error
-		ctx, stopSubscriber = supervision.Watch(ctx, subscriber)
-		defer func() {
-			deps.HealthNotifier.SetNotReady()
-			runErr = errors.Join(runErr, stopSubscriber())
-		}()
-		if err := services.StartAndAwaitRunning(ctx, subscriber); err != nil {
-			if errors.Is(err, context.Canceled) && ctx.Err() != nil {
-				err = context.Cause(ctx)
-			}
-			return fmt.Errorf("failed to start NATS subscriber: %w", err)
-		}
-
 		inf := newFolderInformer(subscriber, keysapi.NewHTTPLister(restClient, folderGVR))
 
 		reg, err = inf.AddEventHandler(handler)

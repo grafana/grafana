@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import memoizeOne from 'memoize-one';
+import { memoizeOne } from 'memoize-one';
 import { Fragment } from 'react';
 import Skeleton from 'react-loading-skeleton';
 

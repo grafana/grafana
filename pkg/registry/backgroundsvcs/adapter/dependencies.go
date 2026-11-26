@@ -74,9 +74,17 @@ const (
 	// job queue.
 	ProvisioningJobQueue = provisioningapis.JobQueueServiceName
 
+	// ProvisioningBootstrap is the module name of the in-process provisioning
+	// bootstrap repository reconciler.
+	ProvisioningBootstrap = provisioningapis.BootstrapServiceName
+
 	// ProvisioningJobCleanup is the module name of the in-process provisioning
 	// expired-job cleanup controller.
 	ProvisioningJobCleanup = provisioningapis.JobCleanupServiceName
+
+	// ProvisioningUsageStats is the module name of the in-process provisioning
+	// usage stats registration.
+	ProvisioningUsageStats = provisioningapis.UsageStatsServiceName
 
 	// SQLStore is the module name for the SQLStore background service.
 	// It is the root of the dependency graph so that the database engine is
@@ -112,7 +120,9 @@ func dependencyMap() map[string][]string {
 		ProvisioningConnectionController: {GrafanaAPIServer},
 		ProvisioningRepositoryController: {GrafanaAPIServer},
 		ProvisioningJobQueue:             {GrafanaAPIServer},
+		ProvisioningBootstrap:            {GrafanaAPIServer},
 		ProvisioningJobCleanup:           {GrafanaAPIServer},
-		BackgroundServices:               {Core, Router, ProvisioningConnectionController, ProvisioningRepositoryController, ProvisioningJobQueue, ProvisioningJobCleanup},
+		ProvisioningUsageStats:           {GrafanaAPIServer},
+		BackgroundServices:               {Core, Router, ProvisioningConnectionController, ProvisioningRepositoryController, ProvisioningJobQueue, ProvisioningBootstrap, ProvisioningJobCleanup, ProvisioningUsageStats},
 	}
 }

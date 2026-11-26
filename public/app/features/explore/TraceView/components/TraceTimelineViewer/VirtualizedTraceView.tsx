@@ -14,7 +14,7 @@
 
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
-import memoizeOne from 'memoize-one';
+import { memoizeOne } from 'memoize-one';
 import * as React from 'react';
 import { memo, type RefObject, useLayoutEffect, useMemo, useRef } from 'react';
 

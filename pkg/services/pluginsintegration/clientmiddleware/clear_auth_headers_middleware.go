@@ -2,6 +2,7 @@ package clientmiddleware
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -35,8 +36,15 @@ func (m *ClearAuthHeadersMiddleware) clearHeaders(ctx context.Context, h backend
 		return
 	}
 
+	// The exchanged access token was set for the plugin, not sent by the caller,
+	// so it is kept even when a configured auth header (such as a JWT header)
+	// has the same name.
+	keep := hasExchangedAccessToken(ctx)
 	items := contexthandler.GetAuthHTTPHeaders(m.cfgJWTAuth, m.cfgAuthProxy)
 	for _, k := range items {
+		if keep && http.CanonicalHeaderKey(k) == AccessTokenHeaderName {
+			continue
+		}
 		h.DeleteHTTPHeader(k)
 	}
 }
