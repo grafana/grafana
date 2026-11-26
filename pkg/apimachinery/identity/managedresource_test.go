@@ -262,7 +262,7 @@ func TestClassicFPTakeover(t *testing.T) {
 		require.True(t, apierrors.IsForbidden(err), "%s: %v", msg, err)
 	}
 
-	t.Run("a caller a registered kind lets assign it may take over a classic-file-provisioning resource", func(t *testing.T) {
+	t.Run("a caller that the registered kind lets assign may take over a classic-file-provisioning resource", func(t *testing.T) {
 		require.NoError(t, identity.CheckManagerOnUpdate(who.provisioner, takenOver(), classicFP()))
 	})
 
