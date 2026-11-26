@@ -123,16 +123,15 @@ func setupFromConfig(rt *runner.Runtime) (*ControllerConfig, error) {
 		return nil, fmt.Errorf("no configuration available")
 	}
 
-	operatorSec := cfg.SectionWithEnvOverrides("operator")
 	controllerCfg := &ControllerConfig{
 		registry:       rt.Registerer,
 		tracer:         rt.Tracer,
 		runnerClients:  rt.Clients,
 		Settings:       cfg,
 		natsSubscriber: rt.Subscriber,
-		resyncInterval: operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
-		workerCount:    operatorSec.Key("worker_count").MustInt(1),
-		drainTimeout:   operatorSec.Key("drain_timeout").MustDuration(30 * time.Second),
+		resyncInterval: rt.Options.Resync,
+		workerCount:    rt.Options.Workers,
+		drainTimeout:   rt.Options.DrainTimeout,
 	}
 
 	for _, opt := range registeredConfigOptions {
@@ -753,3 +752,5 @@ func defaultConnectionTypes(extras []connection.Extra) []string {
 	}
 	return types
 }
+
+var operatorDefaults = runner.Options{Workers: 1, Resync: 60 * time.Second, DrainTimeout: 30 * time.Second}
