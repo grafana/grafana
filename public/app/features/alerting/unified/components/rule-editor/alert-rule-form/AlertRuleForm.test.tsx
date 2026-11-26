@@ -67,6 +67,7 @@ const ALERTING_PERMISSIONS = [
   AccessControlAction.DataSourcesRead,
   AccessControlAction.DataSourcesWrite,
   AccessControlAction.DataSourcesCreate,
+  AccessControlAction.FoldersCreate,
   AccessControlAction.FoldersWrite,
   AccessControlAction.FoldersRead,
   AccessControlAction.AlertingRuleExternalRead,
@@ -76,7 +77,6 @@ const ALERTING_PERMISSIONS = [
 const grantAlertingPermissions = () => {
   jest.clearAllMocks();
   contextSrv.isEditor = true;
-  contextSrv.hasEditPermissionInFolders = true;
   grantUserPermissions(ALERTING_PERMISSIONS);
 };
 
