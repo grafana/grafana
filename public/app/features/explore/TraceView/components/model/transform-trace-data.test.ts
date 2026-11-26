@@ -25,6 +25,7 @@ import {
   summaryWithConditionalAttrs,
   summaryWithPreservedOutliers,
 } from './pruned-spans.fixture';
+import { getRootSpan } from './trace-viewer';
 import transformTraceData, { orderTags, deduplicateTags } from './transform-trace-data';
 
 function spanById(trace: Trace, spanID: string) {
@@ -285,6 +286,15 @@ describe('transformTraceData() cyclic span references', () => {
     trace.spans.forEach((span) => {
       expect(spanAncestorIds(span)).toHaveLength(span.depth);
     });
+  });
+
+  it('picks the top level span as root span when every span references another span', () => {
+    const trace = transform([
+      makeSpan('root', 0, [ref('FOLLOWS_FROM', 'child')]),
+      makeSpan('child', 100, [ref('CHILD_OF', 'root')]),
+    ]);
+
+    expect(getRootSpan(trace.spans)?.spanID).toBe('root');
   });
 
   it('keeps every span when a cycle sits below a reachable root', () => {

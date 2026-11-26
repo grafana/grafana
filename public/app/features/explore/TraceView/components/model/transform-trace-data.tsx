@@ -207,8 +207,6 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
   const tree = getTraceSpanIdsAsTree(data, spanMap);
   const spans: TraceSpan[] = [];
   const svcCounts: Record<string, number> = {};
-  // The walk is depth first, so the latest span seen at each depth is an ancestor of the current one.
-  const spanIdsByDepth: string[] = [];
 
   tree.walk((spanID: string, node: TreeNode<string>, depth = 0) => {
     if (spanID === '__root__') {
@@ -217,7 +215,6 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     if (typeof spanID !== 'string') {
       return;
     }
-    spanIdsByDepth[depth] = spanID;
     const span = spanMap.get(spanID);
     if (!span) {
       return;
@@ -226,7 +223,6 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     svcCounts[svcKey] = (svcCounts[svcKey] || 0) + 1;
     span.relativeStartTime = span.startTime - traceStartTime;
     span.depth = depth - 1;
-    span.ancestorSpanIds = spanIdsByDepth.slice(1, depth).reverse();
     span.hasChildren = node.children.length > 0;
     span.childSpanCount = node.children.length;
     span.warnings = span.warnings || [];

@@ -95,8 +95,6 @@ export type SpanAggregation = {
 
 export type TraceSpan = TraceSpanData & {
   depth: number;
-  // Ids of the spans above this one in the span tree, nearest first.
-  ancestorSpanIds?: string[];
   hasChildren: boolean;
   childSpanCount: number;
   process: TraceProcess;
