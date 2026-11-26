@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
@@ -20,7 +21,7 @@ var JobsOperator = runner.Operator{
 	Logger:      "provisioning-job-controller",
 	NoNATS:      true,
 	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
-		controllerCfg, err := setupJobsControllerFromConfig(rt.Cfg, rt.Registerer)
+		controllerCfg, err := setupJobsControllerFromConfig(rt.Cfg, rt.Registerer, rt.Tracer)
 		if err != nil {
 			return nil, err
 		}
@@ -94,8 +95,8 @@ type jobsControllerConfig struct {
 	cleanupInterval   time.Duration
 }
 
-func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*jobsControllerConfig, error) {
-	controllerCfg, err := setupFromConfig(cfg, registry, nil, nil)
+func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer, tracer tracing.Tracer) (*jobsControllerConfig, error) {
+	controllerCfg, err := setupFromConfig(cfg, registry, tracer, nil)
 	if err != nil {
 		return nil, err
 	}
