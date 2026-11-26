@@ -198,7 +198,7 @@ func TestDashboardDocumentBuilderBlobReadDeadline(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				ctx := t.Context()
-				want := dashboardBlobReadTimeout
+				want := 30 * time.Second
 				if tc.parentTimeout > 0 {
 					var cancel context.CancelFunc
 					ctx, cancel = context.WithTimeout(ctx, tc.parentTimeout)

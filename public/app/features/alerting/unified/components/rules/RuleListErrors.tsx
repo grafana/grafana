@@ -3,25 +3,32 @@ import { type SerializedError } from '@reduxjs/toolkit';
 import { type FC, type JSX, type ReactElement, useMemo, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
-import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { type RulesSourceDataSource } from '@grafana/alerting/internal';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Tooltip, useStyles2 } from '@grafana/ui';
 
+import { type DataSourcesForRulesResult } from '../../hooks/useDataSourcesForRules';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSources } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeDataSourceLink } from '../../utils/misc';
 import { isRulerNotSupportedResponse } from '../../utils/rules';
 
-export function RuleListErrors(): ReactElement {
+interface Props {
+  rulesSources: DataSourcesForRulesResult;
+}
+
+export function RuleListErrors({ rulesSources }: Props): ReactElement {
   const [expanded, setExpanded] = useState(false);
   const [closed, setClosed] = useLocalStorage('grafana.unifiedalerting.hideErrors', false);
   const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
   const styles = useStyles2(getStyles);
+  const { items: rulesDataSources, error: rulesSourcesError } = rulesSources;
 
   const errors = useMemo((): JSX.Element[] => {
     const [promRequestErrors, rulerRequestErrors] = [promRuleRequests, rulerRuleRequests].map((requests) =>
-      getRulesDataSources().reduce<Array<{ error: SerializedError; dataSource: DataSourceInstanceSettings }>>(
+      rulesDataSources.reduce<Array<{ error: SerializedError; dataSource: RulesSourceDataSource }>>(
         (result, dataSource) => {
           const error = requests[dataSource.name]?.error;
           if (requests[dataSource.name] && error && !isRulerNotSupportedResponse(requests[dataSource.name])) {
@@ -56,6 +63,15 @@ export function RuleListErrors(): ReactElement {
             Failed to load Grafana rules config:
           </Trans>{' '}
           {grafanaRulerError?.message || unknownError}
+        </>
+      );
+    }
+
+    if (rulesSourcesError) {
+      result.push(
+        <>
+          <Trans i18nKey="alerting.rule-list-errors.failed-to-load-data-sources">Failed to load data sources:</Trans>{' '}
+          {rulesSourcesError.message || unknownError}
         </>
       );
     }
@@ -95,7 +111,7 @@ export function RuleListErrors(): ReactElement {
     );
 
     return result;
-  }, [promRuleRequests, rulerRuleRequests, styles.dsLink]);
+  }, [promRuleRequests, rulerRuleRequests, rulesDataSources, rulesSourcesError, styles.dsLink]);
 
   return (
     <>

@@ -95,7 +95,9 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   app_settings_plugins` names, when a remote legacy reader and app-access checker are supplied
   (`PluginDependencies.Settings`). The legacy side is the same `settingsStorage` ST uses
   (`appsettings.NewReadOnlyLegacySettingsStore`), so ST and MT return identical objects. Storage
-  is selected by the migration policy, and only get/list are exposed. Health and resources call
+  is selected by the migration policy, and only get/list are exposed. The OpenAPI matches ST's,
+  plugin schema and custom routes included, with only the settings kind's writes left out
+  (`TestReadOnlySettingsOpenAPI`). Health and resources call
   the deployment's v2 client; proxy uses the shared ST handler and feature gate. The local
   standalone plugin loader still serves no settings.
 - **One bad backend or plugin fails only its own group;** it must never stop the reconcile loop.

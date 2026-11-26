@@ -5,6 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { pickDataAttributes } from '../../utils/dataAttributes';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
 
@@ -26,6 +27,9 @@ interface BaseProps {
 
   /** If not set will call onDismiss if that is set. */
   onClickBackdrop?: () => void;
+
+  /** Custom data attributes (for example `data-analytics-id`), rendered on the dialog element */
+  [key: `data-${string}`]: string | undefined;
 }
 
 interface WithStringTitleProps extends BaseProps {
@@ -60,6 +64,7 @@ export function Modal(props: PropsWithChildren<Props>) {
     onClickBackdrop,
     trapFocus = true,
     initialFocus,
+    ...restProps
   } = props;
   const styles = useStyles2(getModalStyles);
   const titleId = useId();
@@ -68,6 +73,7 @@ export function Modal(props: PropsWithChildren<Props>) {
 
   return (
     <ModalBase
+      {...pickDataAttributes(restProps)}
       isOpen={isOpen}
       onDismiss={onDismiss}
       closeOnEscape={closeOnEscape}

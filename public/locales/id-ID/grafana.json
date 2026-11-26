@@ -6563,6 +6563,10 @@
       "paused": "Dasbor ini telah dijeda oleh administrator",
       "try-again-later": "Coba lagi nanti"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Anda yakin ingin menghapus panel ini?"
@@ -8012,6 +8016,9 @@
       "title-delete-all-transformations": "Hapus semua transformasi?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_other": ""
@@ -10432,6 +10439,24 @@
         "otherGroup": "Lainnya"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -10949,6 +10974,10 @@
         "placement-options": {
           "label-bottom": "Bawah",
           "label-right": "Kanan"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11044,6 +11073,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "Satu klik"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "Tambahkan tautan",
@@ -13678,6 +13710,7 @@
       "open": "Menu utama",
       "pin-error": "Gagal memperbarui item menu yang disematkan",
       "pinned-list-label": "Item yang disematkan",
+      "section-resize": "",
       "undock": "Lepas gandengan menu"
     },
     "megamenu-item": {
@@ -13871,12 +13904,32 @@
         "undo-label": "Pengeditan Assistant"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "Batalkan",
       "confirm-discard": "Buang",
       "confirm-keep": "Simpan",
       "confirm-text": "Ingin menyimpan perubahan yang Anda buat saat melihat notebook ini?",
       "confirm-title": "Perubahan panel belum disimpan"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17153,6 +17206,13 @@
       "wide-list": "Daftar format lebar",
       "wide-list-desc": "Horizontal, nama dan nilai, sparkline area, satu warna"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "Stat",
       "stat-color-background": "Stat - warna latar belakang",
@@ -17698,6 +17758,10 @@
       "time-zone-option": "Zona waktu",
       "time-zone-selection": "Pemilihan zona waktu"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "Gunakan rentang waktu",
       "default-error": "Masukkan tanggal ({{dateExample}}) atau waktu relatif ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -17715,6 +17779,12 @@
       "to": "ke",
       "zoom-out-button": "Perkecil rentang waktu",
       "zoom-out-tooltip-new": "Perkecil rentang waktu <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "Gunakan rentang waktu",

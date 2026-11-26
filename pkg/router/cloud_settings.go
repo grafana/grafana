@@ -79,8 +79,11 @@ func cloudSettingsNamespaceAuthorizer(ctx context.Context, attr authorizer.Attri
 type cloudPluginContext struct{}
 
 func (cloudPluginContext) PluginContextForApp(ctx context.Context, id string, settings *backend.AppInstanceSettings) (context.Context, backend.PluginContext, error) {
-	ns := request.NamespaceValue(ctx)
-	if ns == "" || ns == "*" {
+	info, ok := request.RequestInfoFrom(ctx)
+	if !ok {
+		return ctx, backend.PluginContext{}, fmt.Errorf("missing request info")
+	}
+	if info.Namespace == "" {
 		return ctx, backend.PluginContext{}, fmt.Errorf("a concrete namespace is required")
 	}
 	user, err := identity.GetRequester(ctx)
@@ -88,7 +91,9 @@ func (cloudPluginContext) PluginContextForApp(ctx context.Context, id string, se
 		return ctx, backend.PluginContext{}, err
 	}
 	return ctx, backend.PluginContext{
-		Namespace: ns, PluginID: id, AppInstanceSettings: settings,
+		Namespace:  info.Namespace, // the tenant identity
+		APIVersion: info.APIVersion,
+		PluginID:   id, AppInstanceSettings: settings,
 		User: adapters.BackendUserFromSignedInUser(user),
 	}, nil
 }
