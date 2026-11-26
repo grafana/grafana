@@ -861,9 +861,30 @@ describe('roles', () => {
     expect(screen.queryByRole('button', { name: 'Edit roles' })).not.toBeInTheDocument();
   });
 
-  it('does not offer basic-role editing for a provisioned user', async () => {
+  it('allows basic-role editing for a provisioned user', async () => {
     jest.spyOn(contextSrv, 'licensedAccessControlEnabled').mockReturnValue(false);
-    server.use(http.get('/api/org/users', () => HttpResponse.json([{ ...editableMember, isProvisioned: true }])));
+    const writes = jest.fn();
+    server.use(
+      http.get('/api/org/users', () => HttpResponse.json([{ ...editableMember, isProvisioned: true }])),
+      http.patch('/api/org/users/12', async ({ request }) => {
+        writes(await request.json());
+        return HttpResponse.json({ message: 'Role updated' });
+      })
+    );
+    const { user } = setup('roles');
+    await user.click(await screen.findByRole('button', { name: 'Edit roles' }));
+    await user.click(screen.getByRole('combobox', { name: 'Basic role' }));
+    await user.click(screen.getByText('Editor'));
+    await waitFor(() => expect(writes).toHaveBeenCalledWith({ role: 'Editor' }));
+  });
+
+  it('keeps basic-role editing locked for a provisioned user whose role is externally synced', async () => {
+    jest.spyOn(contextSrv, 'licensedAccessControlEnabled').mockReturnValue(false);
+    server.use(
+      http.get('/api/org/users', () =>
+        HttpResponse.json([{ ...editableMember, isProvisioned: true, isExternallySynced: true }])
+      )
+    );
     setup('roles');
     expect(await screen.findByText('Viewer')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Edit roles' })).not.toBeInTheDocument();
@@ -884,38 +905,59 @@ describe('organizations', () => {
     server.use(http.get('/api/access-control/roles', () => HttpResponse.json([])));
   });
 
-  it('restores the saved organization role when a role update fails', async () => {
-    jest
-      .spyOn(contextSrv, 'hasPermission')
-      .mockImplementation((action) => action !== AccessControlAction.ActionUserRolesAdd);
+  it.each([false, true])(
+    'restores the saved organization role when a role update fails (provisioned: %s)',
+    async (isProvisioned) => {
+      jest
+        .spyOn(contextSrv, 'hasPermission')
+        .mockImplementation((action) => action !== AccessControlAction.ActionUserRolesAdd);
+      server.use(
+        http.get('/api/users/alice', () => HttpResponse.json({ ...profile, isProvisioned })),
+        http.patch('/api/orgs/1/users/alice', () =>
+          HttpResponse.json({ message: 'Cannot remove last organization admin' }, { status: 400 })
+        )
+      );
+      const { user } = setup('organizations');
+      const picker = await screen.findByTestId('role-picker');
+      await user.click(within(picker).getByText('Viewer'));
+      await user.click(screen.getByText('Editor'));
+      await user.click(screen.getByRole('button', { name: 'Update' }));
+      expect(await screen.findByRole('alert')).toHaveTextContent('Cannot remove last organization admin');
+      await waitFor(() => expect(within(screen.getByTestId('role-picker')).getByText('Viewer')).toBeInTheDocument());
+      expect(within(screen.getByTestId('role-picker')).queryByText('Editor')).not.toBeInTheDocument();
+    }
+  );
+
+  it.each([false, true])(
+    'removes the user from an organization after confirmation (provisioned: %s)',
+    async (isProvisioned) => {
+      const removals = jest.fn();
+      server.use(
+        http.get('/api/users/alice', () => HttpResponse.json({ ...profile, isProvisioned })),
+        http.delete('/api/orgs/1/users/alice', () => {
+          removals();
+          return HttpResponse.json({ message: 'User removed from organization' });
+        })
+      );
+      const { user } = setup('organizations');
+      expect(await screen.findByRole('button', { name: 'Add user to organization' })).toBeEnabled();
+      await user.click(await screen.findByRole('button', { name: 'Remove from organization' }));
+      expect(removals).not.toHaveBeenCalled();
+      await user.click(screen.getByRole('button', { name: 'Confirm removal' }));
+      await waitFor(() => expect(removals).toHaveBeenCalledTimes(1));
+    }
+  );
+
+  it('keeps organization membership controls hidden for externally synced provisioned users', async () => {
     server.use(
-      http.patch('/api/orgs/1/users/alice', () =>
-        HttpResponse.json({ message: 'Cannot remove last organization admin' }, { status: 400 })
+      http.get('/api/users/alice', () =>
+        HttpResponse.json({ ...profile, isProvisioned: true, isExternallySynced: true })
       )
     );
-    const { user } = setup('organizations');
-    const picker = await screen.findByTestId('role-picker');
-    await user.click(within(picker).getByText('Viewer'));
-    await user.click(screen.getByText('Editor'));
-    await user.click(screen.getByRole('button', { name: 'Update' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Cannot remove last organization admin');
-    await waitFor(() => expect(within(screen.getByTestId('role-picker')).getByText('Viewer')).toBeInTheDocument());
-    expect(within(screen.getByTestId('role-picker')).queryByText('Editor')).not.toBeInTheDocument();
-  });
-
-  it('removes the user from an organization after confirmation', async () => {
-    const removals = jest.fn();
-    server.use(
-      http.delete('/api/orgs/1/users/alice', () => {
-        removals();
-        return HttpResponse.json({ message: 'User removed from organization' });
-      })
-    );
-    const { user } = setup('organizations');
-    await user.click(await screen.findByRole('button', { name: 'Remove from organization' }));
-    expect(removals).not.toHaveBeenCalled();
-    await user.click(screen.getByRole('button', { name: 'Confirm removal' }));
-    await waitFor(() => expect(removals).toHaveBeenCalledTimes(1));
+    setup('organizations');
+    expect(await screen.findByText('Main Org.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add user to organization' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Remove from organization' })).not.toBeInTheDocument();
   });
 
   it('assigns the picked roles in the organization that the user is added to', async () => {

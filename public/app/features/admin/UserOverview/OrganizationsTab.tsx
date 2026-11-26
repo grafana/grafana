@@ -29,7 +29,7 @@ export function OrganizationsTab({ user }: { user: UserDTO }) {
       <UserOrgs
         user={user}
         orgs={orgs}
-        isExternalUser={user.isExternallySynced || user.isProvisioned}
+        isExternalUser={user.isExternallySynced}
         onOrgAdd={(orgId, role) => {
           run(addOrgUser({ orgId, addOrgUserCommand: { loginOrEmail: user.login, role } }).unwrap());
         }}
