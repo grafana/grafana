@@ -86,6 +86,10 @@ func readOpenIndexList(reader io.Reader, now time.Time, maxAge time.Duration) ([
 		if !ok {
 			return nil, fmt.Errorf("invalid index entry at position %d", i)
 		}
+		// Older servers could save cluster-scoped indexes that Search cannot query.
+		if stat.Namespace == "" {
+			continue
+		}
 		if seen[stat.NamespacedResource] {
 			return nil, fmt.Errorf("duplicate index entry for %s", stat.String())
 		}
@@ -113,7 +117,7 @@ func validateOpenIndexListTimestamp(writtenAtValue string, now time.Time, maxAge
 }
 
 func openIndexListStat(entry openIndexListEntry) (resource.ResourceStats, bool) {
-	if entry.Namespace == "" || entry.Group == "" || entry.Resource == "" || entry.DocCount <= 0 || entry.LastSearchedAt < 0 {
+	if entry.Group == "" || entry.Resource == "" || entry.DocCount <= 0 || entry.LastSearchedAt < 0 {
 		return resource.ResourceStats{}, false
 	}
 	var lastSearchedAt time.Time
@@ -141,6 +145,9 @@ func (b *bleveBackend) WriteOpenIndexStats(now time.Time) error {
 
 	indexes := make([]openIndexListEntry, 0, len(keys))
 	for _, key := range keys {
+		if key.Namespace == "" {
+			continue
+		}
 		idx := b.peekCachedIndex(key)
 		if idx == nil {
 			continue

@@ -8,6 +8,7 @@ import (
 	"maps"
 	"net/http"
 	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -445,6 +446,58 @@ func TestStartupIndexStatsCountLimit(t *testing.T) {
 			require.Equal(t, tc.wantLimit, storage.lastCountLimit.Load())
 		})
 	}
+}
+
+func TestStartupPrebuildsTrashHeavyIndexes(t *testing.T) {
+	storage := setupTestStorageBackend(t)
+	search := &mockSearchBackend{snapshotThreshold: 4, reusesFromDisk: true}
+	server, err := newSearchServer(SearchOptions{
+		Backend:           search,
+		Resources:         &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"dashboard.grafana.app": "dashboards"}},
+		InitMinCount:      2,
+		InitWorkerThreads: 1,
+	}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	for _, fixture := range []struct {
+		namespace     string
+		live, deleted int
+	}{
+		{"mixed", 1, 6},
+		{"trash-only", 0, 3},
+		{"at-threshold", 1, 1},
+	} {
+		for i := range fixture.live + fixture.deleted {
+			action := DataActionCreated
+			if i >= fixture.live {
+				action = DataActionDeleted
+			}
+			key := dashboardType(fixture.namespace)
+			require.NoError(t, storage.dataStore.Save(t.Context(), DataKey{
+				Group: key.Group, Resource: key.Resource, Namespace: key.Namespace,
+				Name: fmt.Sprintf("dashboard-%d", i), Action: action, ResourceVersion: node.Generate().Int64(),
+			}, strings.NewReader("{}")))
+		}
+	}
+
+	for i := range 3 {
+		require.NoError(t, storage.dataStore.Save(t.Context(), DataKey{
+			Group: "iam.grafana.app", Resource: "globalroles", Name: fmt.Sprintf("role-%d", i),
+			Action: DataActionDeleted, ResourceVersion: node.Generate().Int64(),
+		}, strings.NewReader("{}")))
+	}
+
+	liveOnly, err := storage.GetResourceStatsWithLimit(t.Context(), NamespacedResource{}, 2, 5)
+	require.NoError(t, err)
+	require.Empty(t, liveOnly, "existing callers still filter by live count")
+
+	built, err := server.buildIndexes(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, 2, built)
+	require.ElementsMatch(t, []buildIndexCall{
+		{key: dashboardType("mixed"), size: 5},
+		{key: dashboardType("trash-only"), size: 3},
+	}, search.buildIndexCalls)
 }
 
 // Saved indexes are used as they are: nothing asks storage which namespaces
@@ -3510,9 +3563,9 @@ func TestRebuildIndexNoFollowUpWhenNotInFlight(t *testing.T) {
 	require.False(t, inFlight, "in-flight tracker should be cleared")
 	require.Equal(t, 0, support.rebuildQueue.Len(), "no follow-up should be re-enqueued")
 	require.Len(t, search.buildIndexCalls, 1)
-	require.Equal(t, int64(50), search.buildIndexCalls[0].size)
+	require.Equal(t, unknownBuildSize, search.buildIndexCalls[0].size, "the backend sizes the rebuild from the original index")
 	require.Equal(t, lastImportTime, search.buildIndexCalls[0].lastImportTime)
-	require.Zero(t, storage.statsCalls.Load(), "rebuild should use the current index doc count instead of GetResourceStats")
+	require.Zero(t, storage.statsCalls.Load(), "rebuild should not count documents in storage")
 }
 
 // TestSearchServer_VectorSearch_ObservesDuration verifies the RPC histogram
