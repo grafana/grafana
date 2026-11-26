@@ -1,0 +1,35 @@
+{
+  "apiVersion": "dashboard.grafana.app/v1",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "gdev-provisioning-random-walk"
+  },
+  "spec": {
+    "title": "Random walk",
+    "description": "Provisioned from devenv/provisioning-bootstrap by the bootstrap repository.",
+    "tags": ["gdev", "provisioning"],
+    "schemaVersion": 41,
+    "editable": true,
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "type": "timeseries",
+        "title": "Random walk",
+        "gridPos": { "h": 9, "w": 24, "x": 0, "y": 0 },
+        "datasource": {
+          "type": "grafana-testdata-datasource",
+          "uid": "PD8C576611E62080A"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "scenarioId": "random_walk"
+          }
+        ]
+      }
+    ]
+  }
+}

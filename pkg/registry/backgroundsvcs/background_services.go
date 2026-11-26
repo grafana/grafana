@@ -98,9 +98,11 @@ func ProvideBackgroundServiceRegistry(
 	ssoSettingsBackfill *iamsso.SSOSettingsBackfill,
 	provisioningConnectionController *provisioningapis.ConnectionControllerService,
 	provisioningHistoryJobCleanup *provisioningapis.HistoryJobCleanupService,
+	provisioningBootstrap *provisioningapis.BootstrapService,
 	provisioningRepositoryController *provisioningapis.RepositoryControllerService,
 	provisioningJobQueue *provisioningapis.JobQueueService,
 	provisioningJobCleanup *provisioningapis.JobCleanupService,
+	provisioningUsageStats *provisioningapis.UsageStatsService,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
 	_ serviceaccounts.Service,
@@ -162,9 +164,11 @@ func ProvideBackgroundServiceRegistry(
 		ssoSettingsBackfill,
 		provisioningConnectionController,
 		provisioningHistoryJobCleanup,
+		provisioningBootstrap,
 		provisioningRepositoryController,
 		provisioningJobQueue,
 		provisioningJobCleanup,
+		provisioningUsageStats,
 	)
 }
 

@@ -1,10 +1,12 @@
 import { cx } from '@emotion/css';
+import { useMergeRefs } from '@floating-ui/react';
 import { useCombobox, useMultipleSelection } from 'downshift';
 import { useCallback, useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { pickDataAttributes } from '../../utils/dataAttributes';
 import { useFieldContext } from '../Forms/FieldContext';
 import { Icon } from '../Icon/Icon';
 import { Portal } from '../Portal/Portal';
@@ -61,7 +63,9 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     prefixIcon,
     id: idProp,
     options: optionsProp,
+    ...restProps
   } = props;
+  const dataAttributes = pickDataAttributes(restProps);
 
   const styles = useStyles2(getComboboxStyles);
   const [inputValue, setInputValue] = useState('');
@@ -118,10 +122,11 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     return addAllOption ? [allOptionItem, ...baseOptions] : baseOptions;
   }, [baseOptions, enableAllOption, allOptionItem]);
 
-  const { measureRef, counterMeasureRef, suffixMeasureRef, shownItems } = useMeasureMulti(
+  const { containerMeasureRef, measureRef, counterMeasureRef, suffixMeasureRef, shownItems } = useMeasureMulti(
     selectedItems,
     width,
-    disabled
+    disabled,
+    maxWidth
   );
 
   const isOptionSelected = useCallback(
@@ -282,6 +287,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   });
 
   const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(options, isOpen);
+  const mergedContainerRef = useMergeRefs([containerRef, containerMeasureRef]);
   const multiStyles = useStyles2(
     getMultiComboboxStyles,
     isOpen,
@@ -298,7 +304,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   const { inputRef, inputWidth } = useMultiInputAutoSize(inputValue);
   return (
-    <div className={multiStyles.container} ref={containerRef}>
+    <div className={multiStyles.container} ref={mergedContainerRef}>
       <div className={cx(multiStyles.wrapper, { [multiStyles.disabled]: disabled })} ref={measureRef}>
         {prefixIcon && (
           <div className={multiStyles.prefixIcon}>
@@ -338,6 +344,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           <input
             className={multiStyles.input}
             {...getInputProps({
+              ...dataAttributes,
               ...getDropdownProps({
                 disabled,
                 preventKeyAction: isOpen,
