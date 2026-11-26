@@ -26,6 +26,8 @@ jest.mock('../api/buildInfo', () =>
   })
 );
 
+jest.mock('./useDataSourcesForRules', () => makeSpyable('./useDataSourcesForRules'));
+
 const server = setupMswServer();
 
 function getProviderWrapper() {
