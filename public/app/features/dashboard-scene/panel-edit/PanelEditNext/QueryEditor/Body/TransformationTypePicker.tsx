@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type ChangeEvent, useCallback, useMemo, useState } from 'react';
+import { type ChangeEvent, useCallback, useId, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -27,6 +27,7 @@ export function TransformationTypePicker() {
   const { dsSettings } = useDatasourceContext();
 
   const [showIllustrations, setShowIllustrations] = useState(true);
+  const showImagesId = useId();
 
   const {
     search,
@@ -88,10 +89,10 @@ export function TransformationTypePicker() {
           suffix={searchBoxSuffix}
         />
         <Stack direction="row" alignItems="center" gap={0.5}>
-          <div className={styles.switchLabel}>
+          <label htmlFor={showImagesId} className={styles.switchLabel}>
             <Trans i18nKey="dashboard.transformation-picker-ng.show-images">Show images</Trans>
-          </div>
-          <Switch value={showIllustrations} onChange={() => setShowIllustrations((prev) => !prev)} />
+          </label>
+          <Switch id={showImagesId} value={showIllustrations} onChange={() => setShowIllustrations((prev) => !prev)} />
         </Stack>
       </div>
 

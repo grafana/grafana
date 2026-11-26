@@ -21,6 +21,17 @@ describe('TransformationTypePicker', () => {
     expect(screen.getByText('Reduce')).toBeInTheDocument();
   });
 
+  it('names the show images switch after its visible label', async () => {
+    const { user } = renderWithQueryEditorProvider(<TransformationTypePicker />);
+
+    const showImages = screen.getByRole('switch', { name: 'Show images' });
+    expect(showImages).toBeChecked();
+
+    await user.click(screen.getByText('Show images'));
+
+    expect(showImages).not.toBeChecked();
+  });
+
   it('announces search results to screen readers via a live region', async () => {
     const { user } = renderWithQueryEditorProvider(<TransformationTypePicker />);
 
