@@ -84,13 +84,13 @@ MT supplies only the context and credentials needed for these requests:
   maps to `plugins.app:access` on `plugins:id:<plugin-id>`, the check unified storage makes for
   app settings. Access policies are decided by their token permissions alone; a user's delegated
   token permissions do not narrow app access. The app-access lookup supplies a local
-  `plugins.grafana.app/app:get` delegated grant to authlib, which otherwise rejects the
-  call before reaching AuthZ. It preserves the caller's subject, groups, and namespace,
-  and does not change the requester's credentials for storage or plugin calls.
-  Proxy `reqAction` checks still use the remote
-  legacy check, since `Check` has no mapping for plugin-defined actions. Namespace restrictions
-  are checked before execution, including for Grafana admins; cross-namespace access requires a
-  matching wildcard namespace on the requester. Proxy roles use the shared handler.
+  `plugins.grafana.app/app:get` delegated grant to authlib, which otherwise rejects the call
+  before reaching AuthZ. It preserves the caller's subject, groups, and namespace, and does not
+  change the requester's credentials for storage or plugin calls. Proxy `reqAction` checks
+  still use the remote legacy check, since `Check` has no mapping for plugin-defined actions.
+  Namespace restrictions are checked before execution, including for Grafana admins;
+  cross-namespace access requires a matching wildcard namespace on the requester. Proxy roles
+  use the shared handler.
 
 No stack-settings lookup, tenant-context middleware, installed-version lookup, or Grafana
 version is introduced into the new path. Existing `pkg/apppluginext` remains available for
@@ -103,11 +103,11 @@ settings resource requests. The cloud loader supplies `AccessClient` directly; i
 installs a cloud-specific settings checker and never falls back to LegacyCheck on denial or error.
 The stack-only namespace authorizer stays in the cloud loader.
 
-ST retains a small compatibility wrapper for requests without a concrete namespace, unsupported identity types (including
-legacy API keys), global-permission callers, and cross-namespace admin/anonymous requests.
-These cases still use the existing local access-control implementation. Ordinary users,
-service accounts, and anonymous users in their own namespace use Check. Discovery checks app
-access in the caller's namespace. This wrapper is
+ST retains a small compatibility wrapper for requests without a concrete namespace,
+unsupported identity types (including legacy API keys), global-permission callers, and
+cross-namespace admin/anonymous requests. These cases still use the existing local
+access-control implementation. Ordinary users, service accounts, and anonymous users in their
+own namespace use Check. Discovery checks app access in the caller's namespace. This wrapper is
 installed only by the local loader; it is not a cloud compatibility path.
 
 Remaining legacy authorization work:
@@ -138,15 +138,17 @@ Separate PR from the settings switch.
 
 - MT v3 manifest routes do not check app access: the plugins source gives them
   `pluginManifestAccessControl`, which grants `plugins.app:access` to every requester
-  (`plugin_manifests.go`). Give the cloud loader one app-access checker in
-  `PluginDependencies`, built on `NewAppAccessCheckerWithClient`, and use it for both settings and
-  manifest routes. ST keeps `NewAppAccessChecker`. This starts denying users without app
-  access on manifest routes, as ST does; check that no MT caller relies on the open check first.
+  (`plugin_manifests.go`). Use `NewAppAccessCheckerWithClient(AccessClient)` there too, as
+  settings already do. ST manifest routes keep `NewAppAccessChecker`. This starts denying users
+  without app access on manifest routes, as ST does; check that no MT caller relies on the open
+  check first.
 - Decide the proxy `reqAction` path: a `Check` mapping for plugin-defined actions on
   `plugins:id:<plugin-id>`, or keep the legacy RPC for that alone. Once nothing else uses it,
   the cloud loader can drop `LegacyAccess`.
 - Zanzana has no `plugins.grafana.app` model. `Check` works while RBAC answers that group,
-  which holds with RBAC primary or a rollout that does not list it.
+  which holds with RBAC primary or a rollout that does not list it. This also applies to ST
+  settings, which now use `Check`: with `zanzanaNoLegacyClient`, Zanzana answers every group and
+  app settings would deny every user.
 
 ### 4. Add writes and dual write — next
 

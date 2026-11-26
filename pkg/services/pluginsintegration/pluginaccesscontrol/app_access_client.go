@@ -43,7 +43,7 @@ func NewAppAccessCheckerWithClient(client types.AccessClient) AppAccessChecker {
 			}
 			return authorizer.DecisionAllow, "", nil
 		}
-		rsp, err := client.Check(ctx, settingsAppAccessAuthInfo{AuthInfo: user}, types.CheckRequest{
+		rsp, err := client.Check(ctx, appAccessAuthInfo{AuthInfo: user}, types.CheckRequest{
 			Verb:      utils.VerbGet,
 			Group:     appv0.GROUP,
 			Resource:  appv0.APP_RESOURCE_NAME,
@@ -57,14 +57,16 @@ func NewAppAccessCheckerWithClient(client types.AccessClient) AppAccessChecker {
 	}
 }
 
-// Authlib also checks delegated permissions before contacting AuthZ. This
-// lookup asks for the user's app access, independent of the caller's delegated
-// grants, so supply only the grant needed for that lookup. Keep this adapter
-// local to Check: storage and plugin calls must retain the original credentials.
-type settingsAppAccessAuthInfo struct {
+// Authlib's client denies a user's Check, without contacting AuthZ, unless the
+// calling service's delegated permissions grant the checked group, resource and
+// verb. App access is the user's permission alone, as in ST, so this lookup
+// supplies only the grant it needs; the caller's delegated permissions do not
+// narrow it. Keep this adapter local to Check: storage and plugin calls must
+// retain the original credentials.
+type appAccessAuthInfo struct {
 	types.AuthInfo
 }
 
-func (settingsAppAccessAuthInfo) GetTokenDelegatedPermissions() []string {
+func (appAccessAuthInfo) GetTokenDelegatedPermissions() []string {
 	return []string{appv0.GROUP + "/" + appv0.APP_RESOURCE_NAME + ":" + utils.VerbGet}
 }

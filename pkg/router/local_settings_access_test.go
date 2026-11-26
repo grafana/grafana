@@ -17,6 +17,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
+type settingsAuthzServer struct {
+	authzv1.UnimplementedAuthzServiceServer
+	requests []*authzv1.CheckRequest
+	allowed  bool
+}
+
+func (s *settingsAuthzServer) Check(_ context.Context, req *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
+	s.requests = append(s.requests, req)
+	return &authzv1.CheckResponse{Allowed: s.allowed}, nil
+}
+
 func TestLocalSettingsAccessCheckerWithAuthlib(t *testing.T) {
 	for _, namespace := range []string{"default", "org-2", "stacks-1"} {
 		for _, kind := range []types.IdentityType{types.TypeUser, types.TypeServiceAccount, types.TypeAnonymous} {
