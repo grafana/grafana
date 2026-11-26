@@ -382,9 +382,9 @@ func TestNewAPIService_AuthorizesAuthInfo(t *testing.T) {
 	)
 
 	readPermission := []string{"iam.grafana.app/authinfos:get"}
-	serviceToken := func(permissions []string) authlib.AuthInfo {
+	serviceToken := func(namespace string, permissions []string) authlib.AuthInfo {
 		return authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-			Rest: authn.AccessTokenClaims{Namespace: "stacks-11", Permissions: permissions},
+			Rest: authn.AccessTokenClaims{Namespace: namespace, Permissions: permissions},
 		})
 	}
 	userToken := authn.NewIDTokenAuthInfo(
@@ -405,17 +405,20 @@ func TestNewAPIService_AuthorizesAuthInfo(t *testing.T) {
 		noIdentity bool
 		want       authorizer.Decision
 	}{
-		{name: "service get", verb: "get", namespace: "stacks-11", identity: serviceToken(readPermission), want: authorizer.DecisionAllow},
-		{name: "service list", verb: "list", namespace: "stacks-11", identity: serviceToken(readPermission), want: authorizer.DecisionAllow},
-		{name: "service watch", verb: "watch", namespace: "stacks-11", identity: serviceToken(readPermission), want: authorizer.DecisionAllow},
-		{name: "service wildcard permission", verb: "list", namespace: "stacks-11", identity: serviceToken([]string{"iam.grafana.app:*"}), want: authorizer.DecisionAllow},
-		{name: "service without read permission", verb: "list", namespace: "stacks-11", identity: serviceToken([]string{"iam.grafana.app/teams:get"}), want: authorizer.DecisionDeny},
-		{name: "service cross namespace", verb: "list", namespace: "stacks-1", identity: serviceToken(readPermission), want: authorizer.DecisionDeny},
-		{name: "service create", verb: "create", namespace: "stacks-11", identity: serviceToken(readPermission), want: authorizer.DecisionDeny},
-		{name: "service update", verb: "update", namespace: "stacks-11", identity: serviceToken(readPermission), want: authorizer.DecisionDeny},
-		{name: "service patch", verb: "patch", namespace: "stacks-11", identity: serviceToken(readPermission), want: authorizer.DecisionDeny},
-		{name: "service delete", verb: "delete", namespace: "stacks-11", identity: serviceToken(readPermission), want: authorizer.DecisionDeny},
-		{name: "service deletecollection", verb: "deletecollection", namespace: "stacks-11", identity: serviceToken(readPermission), want: authorizer.DecisionDeny},
+		{name: "service get", verb: "get", namespace: "stacks-11", identity: serviceToken("stacks-11", readPermission), want: authorizer.DecisionAllow},
+		{name: "service list", verb: "list", namespace: "stacks-11", identity: serviceToken("stacks-11", readPermission), want: authorizer.DecisionAllow},
+		{name: "service watch", verb: "watch", namespace: "stacks-11", identity: serviceToken("stacks-11", readPermission), want: authorizer.DecisionAllow},
+		{name: "service wildcard permission", verb: "list", namespace: "stacks-11", identity: serviceToken("stacks-11", []string{"iam.grafana.app:*"}), want: authorizer.DecisionAllow},
+		{name: "service without read permission", verb: "list", namespace: "stacks-11", identity: serviceToken("stacks-11", []string{"iam.grafana.app/teams:get"}), want: authorizer.DecisionDeny},
+		{name: "service cross namespace", verb: "list", namespace: "stacks-1", identity: serviceToken("stacks-11", readPermission), want: authorizer.DecisionDeny},
+		{name: "service cluster-wide list", verb: "list", namespace: "", identity: serviceToken("stacks-11", readPermission), want: authorizer.DecisionDeny},
+		{name: "platform cluster-wide list", verb: "list", namespace: "", identity: serviceToken("*", readPermission), want: authorizer.DecisionAllow},
+		{name: "platform cross namespace list", verb: "list", namespace: "stacks-1", identity: serviceToken("*", readPermission), want: authorizer.DecisionAllow},
+		{name: "service create", verb: "create", namespace: "stacks-11", identity: serviceToken("stacks-11", readPermission), want: authorizer.DecisionDeny},
+		{name: "service update", verb: "update", namespace: "stacks-11", identity: serviceToken("stacks-11", readPermission), want: authorizer.DecisionDeny},
+		{name: "service patch", verb: "patch", namespace: "stacks-11", identity: serviceToken("stacks-11", readPermission), want: authorizer.DecisionDeny},
+		{name: "service delete", verb: "delete", namespace: "stacks-11", identity: serviceToken("stacks-11", readPermission), want: authorizer.DecisionDeny},
+		{name: "service deletecollection", verb: "deletecollection", namespace: "stacks-11", identity: serviceToken("stacks-11", readPermission), want: authorizer.DecisionDeny},
 		{name: "user with delegated permission", verb: "list", namespace: "stacks-11", identity: userToken, want: authorizer.DecisionDeny},
 		{name: "anonymous", verb: "list", namespace: "stacks-11", anonymous: true, want: authorizer.DecisionDeny},
 		{name: "missing identity", verb: "list", namespace: "stacks-11", noIdentity: true, want: authorizer.DecisionDeny},
@@ -440,6 +443,20 @@ func TestNewAPIService_AuthorizesAuthInfo(t *testing.T) {
 			require.Equal(t, tc.want, decision)
 		})
 	}
+
+	// The cluster-wide list (namespace "") skips the upstream namespace authorizer,
+	// so the branch's own namespace check is the only thing that stops a
+	// tenant-scoped token from listing every tenant's AuthInfo.
+	t.Run("tenant token is denied the cluster-wide list by this branch", func(t *testing.T) {
+		ctx := authlib.WithAuthInfo(context.Background(), serviceToken("stacks-11", readPermission))
+		decision, reason, err := b.GetAuthorizer().Authorize(ctx, authorizer.AttributesRecord{
+			ResourceRequest: true, APIGroup: "iam.grafana.app", Resource: "authinfos",
+			Verb: "list", Namespace: "",
+		})
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Equal(t, "authinfos can only be read from the caller's namespace", reason)
+	})
 }
 
 func TestNewAPIService_LoginConfigGate(t *testing.T) {

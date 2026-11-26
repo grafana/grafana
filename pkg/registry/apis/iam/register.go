@@ -336,21 +336,23 @@ func NewAPIService(
 
 				if a.GetResource() == iamv0.AuthInfoResourceInfo.GetName() {
 					// AuthInfo exposes credentials metadata, so only direct access-policy
-					// service calls with the authinfos read permission may list or get it,
-					// and only within their own namespace. Writes stay denied.
+					// service calls with the authinfos read permission may get, list or
+					// watch it, and only within their own namespace. Writes stay denied.
 					if a.GetVerb() != utils.VerbGet && a.GetVerb() != utils.VerbList && a.GetVerb() != utils.VerbWatch {
 						return authorizer.DecisionDeny, "authinfos is read-only", nil
 					}
 					if user.GetIdentityType() != types.TypeAccessPolicy {
 						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
 					}
+					// Wildcard-namespace (platform) tokens keep access to every tenant,
+					// as in the namespace authorizer's treatment of "*".
 					if !types.NamespaceMatches(user.GetNamespace(), a.GetNamespace()) {
 						return authorizer.DecisionDeny, "authinfos can only be read from the caller's namespace", nil
 					}
-					// list is mapped to get by the permission check, so a single read
-					// permission covers get/list/watch.
-					permission := authzlib.CheckServicePermissions(user, a.GetAPIGroup(), a.GetResource(), utils.VerbGet)
-					if !permission.ServiceCall || !permission.Allowed {
+					// get, list and watch all require the authinfos get permission; list is
+					// mapped to get in the check, and a list-only or watch-only grant is
+					// denied.
+					if !authzlib.CheckServicePermissions(user, a.GetAPIGroup(), a.GetResource(), utils.VerbGet).Allowed {
 						return authorizer.DecisionDeny, "calling service lacks authinfos read permission", nil
 					}
 					return authorizer.DecisionAllow, "", nil
