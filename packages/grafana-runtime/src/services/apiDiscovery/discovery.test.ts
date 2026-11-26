@@ -146,6 +146,17 @@ describe('getAPIGroup', () => {
 
       await expect(getAPIGroup('dashboard.grafana.app')).resolves.toBeUndefined();
     });
+
+    it('treats a listed group with null versions as not served, keeping the rest of the list', async () => {
+      respondTo({
+        '/apis': () => Promise.resolve({ groups: [{ name: 'quotas.grafana.app', versions: null }, dashboardGroup] }),
+      });
+
+      await expect(getAPIGroup('quotas.grafana.app')).resolves.toBeUndefined();
+      await expect(getAPIGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
+      expect(requestedUrls()).toEqual(['/apis']);
+      expect(logger.logError).not.toHaveBeenCalled();
+    });
   });
 
   describe('when the root request fails', () => {
@@ -169,6 +180,18 @@ describe('getAPIGroup', () => {
       await expect(getAPIGroup('annotation.grafana.app')).resolves.toBeUndefined();
 
       expect(requestedUrls()).toEqual(['/apis', '/apis/annotation.grafana.app/']);
+    });
+
+    it('treats a group endpoint answer with null versions as not served, and caches it', async () => {
+      respondTo({
+        '/apis': () => Promise.reject(fetchError(500)),
+        '/apis/quotas.grafana.app/': () => Promise.resolve({ name: 'quotas.grafana.app', versions: null }),
+      });
+
+      await expect(getAPIGroup('quotas.grafana.app')).resolves.toBeUndefined();
+      await expect(getAPIGroup('quotas.grafana.app')).resolves.toBeUndefined();
+
+      expect(requestedUrls()).toEqual(['/apis', '/apis/quotas.grafana.app/']);
     });
 
     it('treats a malformed group endpoint answer as unknown', async () => {

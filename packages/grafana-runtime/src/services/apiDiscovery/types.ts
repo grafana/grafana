@@ -23,7 +23,8 @@ interface GroupVersionForDiscovery {
 /** The Kubernetes `APIGroup`, served by `GET /apis/<group>/`. Only the fields discovery reads. */
 export interface K8sAPIGroup {
   name: string;
-  versions: GroupVersionForDiscovery[];
+  /** `null` when empty, because Go writes an empty list that way. */
+  versions: GroupVersionForDiscovery[] | null;
   preferredVersion?: GroupVersionForDiscovery;
 }
 

@@ -189,7 +189,7 @@ function logRequestFailure(url: string, error: unknown): DiscoveryRequestError {
 }
 
 function toAPIGroupInfo(apiGroup: K8sAPIGroup): APIGroupInfo | undefined {
-  const versions = apiGroup.versions.map(({ version }) => version);
+  const versions = (apiGroup.versions ?? []).map(({ version }) => version);
   if (versions.length === 0) {
     return undefined;
   }
@@ -204,5 +204,5 @@ function isK8sAPIGroupList(value: unknown): value is K8sAPIGroupList {
 }
 
 function isK8sAPIGroup(value: unknown): value is K8sAPIGroup {
-  return isObject(value) && 'versions' in value && Array.isArray(value.versions);
+  return isObject(value) && 'versions' in value && (value.versions === null || Array.isArray(value.versions));
 }
