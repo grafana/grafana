@@ -175,7 +175,7 @@ func TestDatasourceStorageDelegatesOptionalOperations(t *testing.T) {
 		readinessErr:      readinessErr,
 		corruptObjDeleter: corruptDeleter,
 	}
-	wrapped := newDatasourceStorage(inner, nil, nil)
+	wrapped := newPermissionWrapper(inner, nil, nil)
 
 	gotWatch, err := wrapped.(rest.Watcher).Watch(t.Context(), &internalversion.ListOptions{})
 	require.NoError(t, err)
@@ -190,7 +190,7 @@ func TestDatasourceStorageDelegatesOptionalOperations(t *testing.T) {
 }
 
 func TestDatasourceStorageOptionalOperationsReturnUnsupportedErrors(t *testing.T) {
-	wrapped := newDatasourceStorage(&commonOnlyDatasourceStorage{}, nil, nil)
+	wrapped := newPermissionWrapper(&commonOnlyDatasourceStorage{}, nil, nil)
 	gotWatch, err := wrapped.(rest.Watcher).Watch(t.Context(), &internalversion.ListOptions{})
 	require.Nil(t, gotWatch)
 	require.ErrorIs(t, err, errWatchUnsupported)
@@ -367,7 +367,7 @@ func newDatasourceLifecycleStorage(t *testing.T, mode grafanarest.DualWriterMode
 	cfg.UnifiedStorage[info.GroupResource().String()] = setting.UnifiedStorageConfig{DualWriterMode: mode}
 	store, err := dualwrite.ProvideServiceForTests(cfg).NewStorage(info.GroupResource(), legacy, unified)
 	require.NoError(t, err)
-	return newDatasourceStorage(store, permissions, provider.PermissionsOnCreation), provider, storage, store
+	return newPermissionWrapper(store, permissions, provider.PermissionsOnCreation), provider, storage, store
 }
 
 type lifecycleDatasourceProvider struct {

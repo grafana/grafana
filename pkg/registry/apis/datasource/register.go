@@ -337,7 +337,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			return err
 		}
 		if b.permissionClient != nil {
-			b.store = newDatasourceStorage(b.store, b.permissionClient, b.datasources.PermissionsOnCreation)
+			b.store = newPermissionWrapper(b.store, b.permissionClient, b.datasources.PermissionsOnCreation)
 		}
 		storage[ds.StoragePath()] = b.store
 		storage[ds.StoragePath("access")] = &subAccessREST{

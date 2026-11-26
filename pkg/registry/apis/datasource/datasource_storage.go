@@ -30,7 +30,7 @@ type permissionWrapper struct {
 	permissionsOnCreation func(context.Context, string) (bool, error)
 }
 
-func newDatasourceStorage(store grafanarest.Storage, permissions *rpclient.Client, policy func(context.Context, string) (bool, error)) grafanarest.Storage {
+func newPermissionWrapper(store grafanarest.Storage, permissions *rpclient.Client, policy func(context.Context, string) (bool, error)) grafanarest.Storage {
 	return &permissionWrapper{Storage: store, permissionClient: permissions, permissionsOnCreation: policy}
 }
 
