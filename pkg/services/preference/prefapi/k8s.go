@@ -69,6 +69,13 @@ func (h *K8sHandler) GetPreferencesWithDefaults(c *contextmodel.ReqContext) (*pr
 
 	spec, err := h.client.GetMerged(c.Req.Context())
 	if err != nil {
+		// Public dashboards render as the anonymous identity, whose namespace
+		// is not the dashboard org. preferences/merged answers 403
+		// "namespace mismatch", and the index page turns that into HTTP 500.
+		// The public page does not need those preferences. See grafana#138872.
+		if c.PublicDashboardAccessToken != "" {
+			return specToPreference(&h.defaults), nil
+		}
 		return nil, err
 	}
 	return specToPreference(spec), nil
