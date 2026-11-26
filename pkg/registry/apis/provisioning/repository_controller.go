@@ -76,7 +76,7 @@ func ProvideRepositoryControllerService(
 		resyncInterval:                controllerResyncInterval(cfg),
 		webhookSecretRotationInterval: webhookSecretRotationInterval,
 	}
-	s.loopbackService = newLoopbackService(RepositoryControllerServiceName, builder, cfg.DisableControllers, s.runController)
+	s.loopbackService = newLoopbackService(RepositoryControllerServiceName, builder, s.runController)
 	// A changed or cleared bootstrap_path must be applied before the
 	// controller syncs the repository it replaces.
 	s.waitFor = bootstrap.Done()

@@ -24,19 +24,17 @@ const testTimeout = 10 * time.Second
 
 func TestHistoryJobCleanupService_IsDisabled(t *testing.T) {
 	tests := []struct {
-		name                string
-		builder             *APIBuilder
-		controllersDisabled bool
-		disabled            bool
+		name     string
+		builder  *APIBuilder
+		disabled bool
 	}{
 		{name: "provisioning disabled", builder: nil, disabled: true},
-		{name: "controllers disabled", builder: &APIBuilder{}, controllersDisabled: true, disabled: true},
 		{name: "Loki history", builder: &APIBuilder{jobHistoryConfig: &JobHistoryConfig{Loki: &loki.Config{}}}, disabled: true},
 		{name: "unified storage history", builder: &APIBuilder{jobHistoryConfig: &JobHistoryConfig{}}, disabled: false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			svc := ProvideHistoryJobCleanupService(&setting.Cfg{DisableControllers: tc.controllersDisabled}, tc.builder, nil)
+			svc := ProvideHistoryJobCleanupService(&setting.Cfg{}, tc.builder, nil)
 			assert.Equal(t, tc.disabled, svc.IsDisabled())
 			assert.Equal(t, HistoryJobCleanupServiceName, svc.ServiceName())
 		})

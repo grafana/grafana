@@ -22,18 +22,16 @@ import (
 
 func TestBootstrapService_IsDisabled(t *testing.T) {
 	tests := []struct {
-		name                string
-		builder             *APIBuilder
-		controllersDisabled bool
-		want                bool
+		name    string
+		builder *APIBuilder
+		want    bool
 	}{
 		{name: "provisioning disabled", builder: nil, want: true},
-		{name: "controllers disabled", builder: &APIBuilder{}, controllersDisabled: true, want: false},
 		{name: "controllers enabled", builder: &APIBuilder{}, want: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc, err := ProvideBootstrapService(&setting.Cfg{DisableControllers: tt.controllersDisabled}, tt.builder)
+			svc, err := ProvideBootstrapService(&setting.Cfg{}, tt.builder)
 			require.NoError(t, err)
 			require.Equal(t, tt.want, svc.IsDisabled())
 			// The background service manager looks up this name in its

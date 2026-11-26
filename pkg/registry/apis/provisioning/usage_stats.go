@@ -33,7 +33,7 @@ type UsageStatsService struct {
 // the API server.
 func ProvideUsageStatsService(cfg *setting.Cfg, builder *APIBuilder, usageStats usagestats.Service, orgSvc org.Service, tracer tracing.Tracer) *UsageStatsService {
 	s := &UsageStatsService{usageStats: usageStats, namespaceLister: usage.UsageNamespaceLister(cfg, orgSvc), tracer: tracer}
-	s.loopbackService = newLoopbackService(UsageStatsServiceName, builder, cfg.DisableControllers, s.register)
+	s.loopbackService = newLoopbackService(UsageStatsServiceName, builder, s.register)
 	return s
 }
 

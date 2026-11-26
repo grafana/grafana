@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -1003,11 +1004,8 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		require.NoError(t, err)
 	}
 
-	if opts.DisableControllers {
-		apiserverSection, err := getOrCreateSection("grafana-apiserver")
-		require.NoError(t, err)
-		_, err = apiserverSection.NewKey("disable_controllers", "true")
-		require.NoError(t, err)
+	if opts.DisableProvisioningJobQueue {
+		provisioning.DisableJobQueueForTests()
 	}
 
 	if opts.EnableKeysAPI {
@@ -1254,7 +1252,9 @@ type GrafanaOpts struct {
 	RBACSingleOrganization      bool
 	GlobalRoleSeedingEnabled    bool
 	APIServerRuntimeConfig      string
-	DisableControllers          bool
+	// DisableProvisioningJobQueue keeps the in-process provisioning job queue
+	// off for the whole test binary, so tests can drive jobs by hand.
+	DisableProvisioningJobQueue bool
 	DisableDBCleanup            bool
 	MigrationParquetBuffer      bool
 	MigrationChunkMaxBytes      int64

@@ -34,20 +34,18 @@ type nopRepoLister struct {
 func TestUsageStatsService_IsDisabled(t *testing.T) {
 	stats := &countingUsageStats{}
 	tests := []struct {
-		name                string
-		builder             *APIBuilder
-		usageStats          usagestats.Service
-		controllersDisabled bool
-		disabled            bool
+		name       string
+		builder    *APIBuilder
+		usageStats usagestats.Service
+		disabled   bool
 	}{
 		{name: "provisioning disabled", usageStats: stats, disabled: true},
-		{name: "controllers disabled", builder: &APIBuilder{}, usageStats: stats, controllersDisabled: true, disabled: true},
 		{name: "no usage stats service", builder: &APIBuilder{}, disabled: true},
 		{name: "enabled", builder: &APIBuilder{}, usageStats: stats, disabled: false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			svc := ProvideUsageStatsService(&setting.Cfg{DisableControllers: tc.controllersDisabled}, tc.builder, tc.usageStats, nil, tracing.NewNoopTracerService())
+			svc := ProvideUsageStatsService(&setting.Cfg{}, tc.builder, tc.usageStats, nil, tracing.NewNoopTracerService())
 			assert.Equal(t, tc.disabled, svc.IsDisabled())
 			assert.Equal(t, UsageStatsServiceName, svc.ServiceName())
 		})
