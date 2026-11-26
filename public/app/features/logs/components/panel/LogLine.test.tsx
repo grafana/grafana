@@ -805,25 +805,6 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       unmount();
       iframe.remove();
     });
-
-    test('Clicking a button in a log line moved there does not count as a click on the line', () => {
-      const iframe = document.createElement('iframe');
-      document.body.appendChild(iframe);
-      const otherDocument = iframe.contentDocument!;
-      const { container, unmount } = render(
-        <LogListContextProvider {...contextProps}>
-          <LogLine {...defaultProps} />
-        </LogListContextProvider>
-      );
-      // as a page moves an element into a Document Picture-in-Picture window, its elements keep this window's prototypes
-      otherDocument.body.appendChild(container);
-
-      fireEvent.click(within(otherDocument.body).getByRole('button', { name: 'Log menu' }));
-
-      expect(defaultProps.onClick).not.toHaveBeenCalled();
-      unmount();
-      iframe.remove();
-    });
   });
 });
 

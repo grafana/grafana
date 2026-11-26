@@ -14,9 +14,9 @@ export const usePopoverMenu = (containerElement: HTMLDivElement | null) => {
   });
   const [showDisablePopoverOptions, setShowDisablePopoverOptions] = useState(false);
   const handleDeselectionRef = useRef<((e: Event) => void) | null>(null);
-  // The logs can render in another window than this one, such as a Document Picture-in-Picture window, and can move
-  // there without rendering again. The text selection, the clicks that clear it and the viewport the menu fits in are
-  // the window of the line the user selected in, so they're read from that line when the user selects.
+  // The logs can render in another window than this one, such as a Document Picture-in-Picture window. The text
+  // selection, the clicks that clear it and the viewport the menu fits in are that window's, so they're read from the
+  // line the user selected in.
   const selectionDocumentRef = useRef<Document>(document);
   const { onClickFilterOutString, onClickFilterString } = useLogListContext();
 

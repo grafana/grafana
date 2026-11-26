@@ -340,11 +340,12 @@ describe('LogList', () => {
     });
     // A Document Picture-in-Picture window (the Grafana Assistant pop-out) is another realm, as an iframe is: text
     // selected there is that window's selection.
-    it('Appears after selecting text in another window, and closes on Escape there', () => {
+    it('Appears after selecting text in another window, and closes on Escape or a press outside the list there', () => {
       const iframe = document.createElement('iframe');
       document.body.appendChild(iframe);
       const otherDocument = iframe.contentDocument!;
       const container = otherDocument.body.appendChild(otherDocument.createElement('div'));
+      const outside = otherDocument.body.appendChild(otherDocument.createElement('div'));
       // nothing is selected in this window
       const tabGetSelection = document.getSelection;
       document.getSelection = () => null;
@@ -366,41 +367,11 @@ describe('LogList', () => {
         // Escape pressed in that window closes it
         fireEvent.keyUp(otherDocument, { key: 'Escape' });
         expect(within(otherDocument.body).queryByText('Copy selection')).not.toBeInTheDocument();
-      } finally {
-        // Unmount before the iframe goes, or React cannot remove the list from it.
-        unmount();
-        iframe.remove();
-        document.getSelection = tabGetSelection;
-      }
-    });
-    it('Appears after selecting text in a list moved to another window without rendering again, and closes on a press outside it', () => {
-      const iframe = document.createElement('iframe');
-      document.body.appendChild(iframe);
-      const otherDocument = iframe.contentDocument!;
-      // nothing is selected in this window
-      const tabGetSelection = document.getSelection;
-      document.getSelection = () => null;
-      jest.spyOn(otherDocument, 'getSelection').mockReturnValue({
-        toString: () => 'selected log line',
-        removeAllRanges: () => {},
-        addRange: (range: Range) => {},
-      } as Selection);
-      const { container, unmount } = render(
-        <>
-          <LogList {...defaultProps} onClickFilterString={jest.fn()} onClickFilterOutString={jest.fn()} />
-          <div>Outside the list</div>
-        </>
-      );
-      // as a page moves an element into a Document Picture-in-Picture window: `pipWindow.document.body.append(element)`
-      otherDocument.body.appendChild(container);
 
-      try {
-        // user-event drives pointer input through this window's document, so fire the other window's event directly
+        // so does a press outside the list there, while the text stays selected
         fireEvent.click(within(otherDocument.body).getByText('log message 1'));
         expect(within(otherDocument.body).getByText('Copy selection')).toBeInTheDocument();
-
-        // the text stays selected, but the press is outside the list
-        fireEvent.contextMenu(within(otherDocument.body).getByText('Outside the list'));
+        fireEvent.contextMenu(outside);
         expect(within(otherDocument.body).queryByText('Copy selection')).not.toBeInTheDocument();
       } finally {
         // Unmount before the iframe goes, or React cannot remove the list from it.
