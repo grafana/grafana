@@ -18,6 +18,47 @@ description: Learn about the features of the panel
 weight: 15
 aliases:
   - ../../panels-visualizations/panel-overview/ # /docs/grafana/next/panels-visualizations/panel-overview/
+image_maps:
+  - key: panel-overview
+    src: /media/docs/grafana/panels-visualizations/screenshot-panel-overview-ann-v13.4.png
+    alt: Annotated panel with time series visualization
+    points:
+      - x_coord: 6.9
+        y_coord: 23
+        content: |
+          **Panel title**
+
+          You can create your own panel titles or have Grafana create them for you using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
+      - x_coord: 14
+        y_coord: 23
+        content: |
+          **Panel description**
+
+          You can create your own panel descriptions or have Grafana create them for you using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
+      - x_coord: 18
+        y_coord: 23
+        content: |
+          **Links**
+
+          Add [panel links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/manage-dashboard-links/#panel-links) to other dashboards, panels, or external sites.
+      - x_coord: 82
+        y_coord: 7.2
+        content: |
+          **Panel actions tooltip**
+
+          Hover over the panel to display the [actions tooltip](#actions-tooltip), where you can access actions such as **Edit visualization**, **Explore**, **Expand**, and the panel menu.
+      - x_coord: 13
+        y_coord: 93.4
+        content: |
+          **Legend**
+
+          Change series colors, y-axis, and series visibility directly from the [legend](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-legend/).
+      - x_coord: 74.5
+        y_coord: 56.8
+        content: |
+          **Tooltips**
+
+          View [tooltips](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-tooltips/) to get more information about data points.
 ---
 
 # Panel overview
@@ -39,16 +80,10 @@ To get started adding panels, ensure that you have configured a data source:
 
 ## Panel feature overview
 
-The following image and descriptions highlight the panel features:
+The following image and descriptions highlight the panel features.
+Hover your cursor over a number to display information about the panel element.
 
-![Annotated panel with time series visualization](/media/docs/grafana/panels-visualizations/screenshot-panel-overview-ann-v11.0.png)
-
-1. **Panel title** - You can create your own panel titles or have Grafana create them for you using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
-1. **Panel description** - You can create your own panel descriptions or have Grafana create them for you using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards)
-1. **Links** - Add [panel links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/manage-dashboard-links/#panel-links) to other dashboards, panels, or external sites.
-1. **Actions tooltip** - Hover over the panel to display the [actions tooltip](#actions-tooltip), where you can access actions such as **Edit visualization**, **Explore**, **Expand**, and the panel menu.
-1. **Legend** - Change series colors, y-axis, and series visibility directly from the [legend](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-legend/).
-1. **Tooltips** - View [tooltips](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-tooltips/) to get more information about data points.
+{{< image-map key="panel-overview" >}}
 
 ## Actions tooltip
 
