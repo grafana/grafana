@@ -186,6 +186,20 @@ const preview: Preview = {
         showName: true,
       },
     },
+    visualRefresh: {
+      name: 'Visual refresh',
+      description:
+        'Sets theme.flags.visualDesignRefresh, as the grafana.visualDesignRefresh feature flag does. Auto turns it on only for the Visual Refresh themes.',
+      defaultValue: 'auto',
+      toolbar: {
+        icon: 'lightning',
+        items: [
+          { value: 'auto', title: 'Visual refresh: auto' },
+          { value: 'on', title: 'Visual refresh: on' },
+          { value: 'off', title: 'Visual refresh: off' },
+        ],
+      },
+    },
     timeZone: {
       description: 'Set the timezone for the storybook preview',
       defaultValue: getTimeZone(),
@@ -204,6 +218,7 @@ const preview: Preview = {
   loaders: [mswLoader],
   initialGlobals: {
     theme: process.env.STORYBOOK_THEME || 'system',
+    visualRefresh: 'auto',
   },
 };
 
