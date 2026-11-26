@@ -117,25 +117,16 @@ type ControllerConfig struct {
 // token =
 // subscriber_credentials_file =
 // tls_enabled =
-<<<<<<< HEAD
 func setupFromConfig(rt *runner.Runtime) (*ControllerConfig, error) {
 	cfg := rt.Cfg
-=======
-func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer, tracer tracing.Tracer, subscriber *nats.SubscriberService) (*ControllerConfig, error) {
->>>>>>> origin/main
 	if cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
 	}
 
 	controllerCfg := &ControllerConfig{
-<<<<<<< HEAD
 		registry:       rt.Registerer,
 		tracer:         rt.Tracer,
 		runnerClients:  rt.Clients,
-=======
-		registry:       registry,
-		tracer:         tracer,
->>>>>>> origin/main
 		Settings:       cfg,
 		natsSubscriber: rt.Subscriber,
 		resyncInterval: rt.Options.Resync,
@@ -493,7 +484,6 @@ func (c *ControllerConfig) ProvisioningKeysLister(gvr schema.GroupVersionResourc
 
 func (c *ControllerConfig) Tracer() tracing.Tracer {
 	return c.tracer
-<<<<<<< HEAD
 }
 
 func (c *ControllerConfig) runtimeClients() *runner.Clients {
@@ -501,8 +491,6 @@ func (c *ControllerConfig) runtimeClients() *runner.Clients {
 		c.runnerClients = runner.NewClients(c.Settings)
 	}
 	return c.runnerClients
-=======
->>>>>>> origin/main
 }
 
 func (c *ControllerConfig) TokenExchangeClient() (*authn.TokenExchangeClient, error) {
