@@ -1,8 +1,17 @@
+import { usePreventScroll } from '@react-aria/overlays';
 import { render, screen, waitFor } from '@testing-library/react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
 import { DRAWER_INSIDE_ATTRIBUTE, Drawer } from './Drawer';
+
+jest.mock('@react-aria/overlays', () => {
+  const actual = jest.requireActual('@react-aria/overlays');
+  return {
+    ...actual,
+    usePreventScroll: jest.fn(),
+  };
+});
 
 describe('Drawer', () => {
   // Drawer.tsx passes getContainer={'.main-view'} to RcDrawer, which tells it
@@ -31,6 +40,17 @@ describe('Drawer', () => {
 
     expect(screen.getByText('Test Title')).toBeInTheDocument();
     expect(screen.getByText('Drawer content')).toBeInTheDocument();
+  });
+
+  it('locks background scrolling while drawer is mounted', () => {
+    const { unmount } = render(
+      <Drawer title="Scroll Test" onClose={() => {}}>
+        <div>Content</div>
+      </Drawer>
+    );
+
+    expect(usePreventScroll).toHaveBeenCalled();
+    unmount();
   });
 
   it('has an accessible name from the visible heading when title is a string', () => {
