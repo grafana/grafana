@@ -313,6 +313,35 @@ func TestBuildNotebooksNavLink(t *testing.T) {
 	}
 }
 
+func TestBuildStarredNavLink(t *testing.T) {
+	newService := func() *ServiceImpl {
+		cfg := setting.NewCfg()
+		cfg.AppSubURL = "/grafana"
+		return &ServiceImpl{cfg: cfg}
+	}
+
+	newReqCtx := func(isSignedIn bool) *contextmodel.ReqContext {
+		httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+		return &contextmodel.ReqContext{
+			IsSignedIn: isSignedIn,
+			Context:    &web.Context{Req: httpReq},
+		}
+	}
+
+	t.Run("Should show Starred for a signed-in user without dashboard read access", func(t *testing.T) {
+		link := newService().buildStarredNavLink(newReqCtx(true))
+
+		require.NotNil(t, link)
+		require.Equal(t, "starred", link.Id)
+		require.Equal(t, "/grafana/dashboards?starred", link.Url)
+		require.Equal(t, "starred-empty", link.EmptyMessageId)
+	})
+
+	t.Run("Should not show Starred for an anonymous user", func(t *testing.T) {
+		require.Nil(t, newService().buildStarredNavLink(newReqCtx(false)))
+	})
+}
+
 func TestBuildAlertNavLinks(t *testing.T) {
 	ruleReadPermission := []ac.Permission{{Action: ac.ActionAlertingRuleRead, Scope: "*"}}
 

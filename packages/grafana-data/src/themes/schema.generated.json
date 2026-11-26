@@ -571,6 +571,9 @@
             },
             "brandHorizontal": {
               "type": "string"
+            },
+            "ai": {
+              "type": "string"
             }
           },
           "additionalProperties": false

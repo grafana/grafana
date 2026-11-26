@@ -266,6 +266,8 @@ export const FlagKeys = {
   GrafanaPanelOptionInterpolation: "grafana.panelOptionInterpolation",
   /** Let panel plugins register system transformations */
   GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
+  /** Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode */
+  GrafanaPanelQuickEdits: "grafana.panelQuickEdits",
   /** Pass React elements in plugin extension props by reference */
   GrafanaPluginExtensionReactElementProps: "grafana.pluginExtensionReactElementProps",
   /** Nest app plugin navigation items in the mega menu based on their URL path hierarchy */
@@ -276,6 +278,8 @@ export const FlagKeys = {
   GrafanaPreserveLoginTabTitle: "grafana.preserveLoginTabTitle",
   /** Disables creating new recorded queries while preserving access to existing queries */
   GrafanaRecordedQueriesDisableCreate: "grafana.recordedQueriesDisableCreate",
+  /** Enable tabs and an inline calendar in the compact time range picker */
+  GrafanaResponsiveTimePickerTabs: "grafana.responsiveTimePickerTabs",
   /** Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state */
   GrafanaSavedDashboardViews: "grafana.savedDashboardViews",
   /** Enables the dedicated Saved queries page and its navigation entry */
@@ -1817,6 +1821,17 @@ export const useFlagGrafanaPanelPluginTransformations = (options?: ReactFlagEval
 };
 
 /**
+ * Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode
+ *
+ * **Details:**
+ * - flag key: `grafana.panelQuickEdits`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPanelQuickEdits = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.panelQuickEdits", false, options).value;
+};
+
+/**
  * Pass React elements in plugin extension props by reference
  *
  * **Details:**
@@ -1869,6 +1884,17 @@ export const useFlagGrafanaPreserveLoginTabTitle = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaRecordedQueriesDisableCreate = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.recordedQueriesDisableCreate", true, options).value;
+};
+
+/**
+ * Enable tabs and an inline calendar in the compact time range picker
+ *
+ * **Details:**
+ * - flag key: `grafana.responsiveTimePickerTabs`
+ * - default value: `false`
+ */
+export const useFlagGrafanaResponsiveTimePickerTabs = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.responsiveTimePickerTabs", false, options).value;
 };
 
 /**

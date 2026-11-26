@@ -6563,6 +6563,10 @@
       "paused": "管理員已暫停此儀表板",
       "try-again-later": "稍後再試"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "確定要刪除這個面板嗎？"
@@ -6690,7 +6694,8 @@
           "title": "貼上面板"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "新增列",
@@ -8011,6 +8016,9 @@
       "title-delete-all-transformations": "是否要刪除所有轉換？"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_other": ""
@@ -9894,10 +9902,6 @@
       "to": "至",
       "when": "當"
     },
-    "expression-query-editor": {
-      "helper-text-sql": "針對從資料來源返回的表格執行 MySQL 特定語法 SQL。資料來源查詢（即「A」、「B」）可作為表格使用，並由查詢名稱引用。欄位可作為從資料來源返回的欄使用。",
-      "label-operation": "操作"
-    },
     "math": {
       "available-math-functions": "可用的數學函數",
       "run-math-operations": "對一個或多個查詢項目執行數學運算。您可以透過 {{refExample}}（即 {{ref1}}、{{ref2}}、{{ref3}} 等）參照查詢。<br/>範例：<12>{{example}}</12>",
@@ -10435,6 +10439,24 @@
         "otherGroup": "其他"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -10952,6 +10974,10 @@
         "placement-options": {
           "label-bottom": "底部",
           "label-right": "靠右"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11047,6 +11073,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "一鍵"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "新增連結",
@@ -13681,16 +13710,16 @@
       "open": "主選單",
       "pin-error": "無法更新已釘選的選單項目",
       "pinned-list-label": "釘選項目",
+      "section-resize": "",
       "undock": "取消快速存取功能表"
     },
     "megamenu-item": {
       "children-error": "無法載入項目",
+      "children-partial-error": "",
       "collapse-aria-label": "收闔工作階段：{{sectionName}}",
       "expand-aria-label": "展開工作階段：{{sectionName}}",
       "loading-aria-label": "正在載入{{sectionName}}",
-      "reorder-aria-label": "重新排序{{itemName}}",
-      "starred-dashboard-icon": "儀表板",
-      "starred-folder-icon": "資料夾"
+      "reorder-aria-label": "重新排序{{itemName}}"
     },
     "org-switcher": {
       "aria-label": "變更組織"
@@ -13875,12 +13904,32 @@
         "undo-label": "助理編輯"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "取消",
       "confirm-discard": "捨棄",
       "confirm-keep": "保留",
       "confirm-text": "要保留您在檢視此筆記本時所做的變更嗎？",
       "confirm-title": "未儲存的面板變更"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17157,6 +17206,13 @@
       "wide-list": "寬版清單",
       "wide-list-desc": "水平，名稱和數值，區域迷你圖，單色"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "統計資料",
       "stat-color-background": "統計資料 - 顏色背景",
@@ -17359,6 +17415,7 @@
     "description-page-size": "每頁的列數。留空時，頁面大小會依面板高度決定。",
     "description-show-columns-sidebar": "使用面板開啟欄管理側邊欄，而非從欄選單開啟",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "包含 JSON 物件與 CSS 屬性的欄位",
     "description-tooltip-from-field": "在工具提示中從欄位（無論隱藏或顯示）轉譯儲存格",
     "description-zebra-striping": "每隔一列變更背景色彩",
@@ -17403,6 +17460,7 @@
     "name-show-columns-sidebar": "顯示欄側邊欄",
     "name-show-row-numbers": "",
     "name-show-table-header": "顯示表格頁首",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "顯示滑鼠懸停工具提示",
     "name-styling-from-field": "欄位的樣式",
     "name-tooltip-from-field": "",
@@ -17700,6 +17758,10 @@
       "time-zone-option": "時區",
       "time-zone-selection": "時區選擇"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "套用時間範圍",
       "default-error": "輸入日期 ({{dateExample}}) 或相對時間（{{relativeTimeExample1}}，{{relativeTimeExample2}}）",
@@ -17717,6 +17779,12 @@
       "to": "至",
       "zoom-out-button": "縮小時間範圍",
       "zoom-out-tooltip-new": "時間範圍縮小 <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "套用時間範圍",
