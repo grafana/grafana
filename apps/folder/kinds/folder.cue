@@ -34,6 +34,16 @@ foldersV1: {
 			started?: int64
 			// When the cascade reached a terminal state, in Unix milliseconds.
 			finished?: int64
+			// Who requested the delete; set by the server, not by clients.
+			requester?: #CascadeDeleteRequester
+		}
+		#CascadeDeleteRequester: {
+			// The identity's subject, e.g. "user:1".
+			sub: string
+			// The identity's unique identifier.
+			identifier: string
+			// The identity type.
+			type: "user" | "service-account"
 		}
 	}
 

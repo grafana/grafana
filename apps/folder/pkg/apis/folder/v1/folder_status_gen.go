@@ -16,6 +16,8 @@ type FolderCascadeDeleteStatus struct {
 	Started *int64 `json:"started,omitempty"`
 	// When the cascade reached a terminal state, in Unix milliseconds.
 	Finished *int64 `json:"finished,omitempty"`
+	// Who requested the delete; set by the server, not by clients.
+	Requester *FolderCascadeDeleteRequester `json:"requester,omitempty"`
 }
 
 // NewFolderCascadeDeleteStatus creates a new FolderCascadeDeleteStatus object.
@@ -26,6 +28,26 @@ func NewFolderCascadeDeleteStatus() *FolderCascadeDeleteStatus {
 // OpenAPIModelName returns the OpenAPI model name for FolderCascadeDeleteStatus.
 func (FolderCascadeDeleteStatus) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderCascadeDeleteStatus"
+}
+
+// +k8s:openapi-gen=true
+type FolderCascadeDeleteRequester struct {
+	// The identity's subject, e.g. "user:1".
+	Sub string `json:"sub"`
+	// The identity's unique identifier.
+	Identifier string `json:"identifier"`
+	// The identity type.
+	Type FolderCascadeDeleteRequesterType `json:"type"`
+}
+
+// NewFolderCascadeDeleteRequester creates a new FolderCascadeDeleteRequester object.
+func NewFolderCascadeDeleteRequester() *FolderCascadeDeleteRequester {
+	return &FolderCascadeDeleteRequester{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for FolderCascadeDeleteRequester.
+func (FolderCascadeDeleteRequester) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderCascadeDeleteRequester"
 }
 
 // +k8s:openapi-gen=true
@@ -58,4 +80,17 @@ const (
 // OpenAPIModelName returns the OpenAPI model name for FolderCascadeDeleteStatusState.
 func (FolderCascadeDeleteStatusState) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderCascadeDeleteStatusState"
+}
+
+// +k8s:openapi-gen=true
+type FolderCascadeDeleteRequesterType string
+
+const (
+	FolderCascadeDeleteRequesterTypeUser           FolderCascadeDeleteRequesterType = "user"
+	FolderCascadeDeleteRequesterTypeServiceAccount FolderCascadeDeleteRequesterType = "service-account"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for FolderCascadeDeleteRequesterType.
+func (FolderCascadeDeleteRequesterType) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderCascadeDeleteRequesterType"
 }
