@@ -2,18 +2,14 @@ package folder
 
 import (
 	"context"
-	"errors"
 
-	"github.com/grafana/grafana/pkg/operators/runner"
-
-	"github.com/grafana/dskit/services"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/infra/nats"
-	"github.com/grafana/grafana/pkg/operators/supervision"
+	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/server"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/services/folder/cascadedelete"
@@ -32,99 +28,83 @@ var dashboardGVR = schema.GroupVersionResource{
 	Resource: "dashboards",
 }
 
-// RunFolderController runs the folder cascade-delete controller: it watches Folder objects and, for
-// each terminating folder carrying the cascade finalizer, deletes its contents and releases it.
+// Operator runs the folder cascade-delete controller: it watches Folder objects and, for each
+// terminating folder carrying the cascade finalizer, deletes its contents and releases it.
 //
 // The delta source is NATS-backed when [nats] is enabled — falling back to
 // re-list-only if the live subscription can't open, rather than blocking
 // readiness on it — otherwise a plain apiserver watch, matching the pattern
 // in pkg/registry/apis/provisioning/informer's delta sources.
-func RunFolderController(ctx context.Context, deps server.OperatorDependencies) (runErr error) {
-	logger := runner.NewLogger(deps.Config, "folder-controller")
-	logger.Info("starting folder controller")
+var Operator = runner.Operator{
+	Name:        "folder-controller",
+	Description: "Delete the contents of folders being cascade-deleted",
+	Build:       build,
+}
 
-	restClient, err := buildRESTClient(deps.Config, "folders_server_url", folderGVR.Group)
+// RunFolderController runs [Operator].
+//
+// Deprecated: register [Operator] with runner.Register instead.
+func RunFolderController(ctx context.Context, deps server.OperatorDependencies) error {
+	return Operator.Run(ctx, deps)
+}
+
+func build(rt *runner.Runtime) (*runner.Parts, error) {
+	restClient, err := buildRESTClient(rt.Cfg, "folders_server_url", folderGVR.Group)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	dashboardClient, err := buildRESTClient(deps.Config, "dashboards_server_url", dashboardGVR.Group)
+	dashboardClient, err := buildRESTClient(rt.Cfg, "dashboards_server_url", dashboardGVR.Group)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	searchClient, closeSearchClient, err := buildSearchClient(deps.Config, deps.Tracer, deps.Registerer)
-	if err != nil {
-		return err
-	}
-	defer closeSearchClient()
 	folders := dynamic.New(restClient)
 	var controllerOptions []cascadedelete.ControllerOption
-	if deps.Config.SectionWithEnvOverrides("operator").Key("pending_deletion_recovery").MustBool(false) {
+	if rt.Cfg.SectionWithEnvOverrides("operator").Key("pending_deletion_recovery").MustBool(false) {
 		controllerOptions = append(controllerOptions,
 			cascadedelete.WithPendingRecovery(cascadedelete.NewPendingClient(folders)),
-			cascadedelete.WithPendingMetrics(deps.Registerer),
+			cascadedelete.WithPendingMetrics(rt.Registerer),
 		)
 	}
-	controller := cascadedelete.NewDefaultControllerWithOptions(groupRouter{
-		byGroup:  map[string]dynamic.Interface{dashboardGVR.Group: dynamic.New(dashboardClient)},
-		fallback: folders,
-	}, searchClient, controllerOptions)
-	// Run shuts the queue down itself, but only once the workers start; every earlier return needs it too.
-	defer controller.ShutDown()
-	handler := controller.Handler()
 
-	subscriber := runner.NewSubscriber(deps.Config, deps.Registerer)
-
-	var supervised []services.Service
-	if nats.Enabled(subscriber) {
-		supervised = append(supervised, subscriber)
-	}
-	ctx, stopServices, err := supervision.Start(ctx, supervised...)
-	defer func() {
-		deps.HealthNotifier.SetNotReady()
-		runErr = errors.Join(runErr, stopServices())
-	}()
-	if err != nil {
-		return err
-	}
-
-	var reg cache.ResourceEventHandlerRegistration
-	if nats.Enabled(subscriber) {
-		inf := newFolderInformer(subscriber, keysapi.NewHTTPLister(restClient, folderGVR))
-
-		reg, err = inf.AddEventHandler(handler)
+	return &runner.Parts{Run: func(ctx context.Context, ready func()) error {
+		searchClient, closeSearchClient, err := buildSearchClient(rt.Cfg, rt.Tracer, rt.Registerer)
 		if err != nil {
 			return err
 		}
-		go inf.Run(ctx.Done())
-	} else {
-		factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(folders, cascadedelete.ResyncPeriod, "", nil)
-		informer := factory.ForResource(folderGVR).Informer()
+		defer closeSearchClient()
+		controller := cascadedelete.NewDefaultControllerWithOptions(groupRouter{
+			byGroup:  map[string]dynamic.Interface{dashboardGVR.Group: dynamic.New(dashboardClient)},
+			fallback: folders,
+		}, searchClient, controllerOptions)
+		// Run shuts the queue down itself, but only once the workers start; every earlier return needs it too.
+		defer controller.ShutDown()
+		handler := controller.Handler()
 
-		reg, err = informer.AddEventHandler(handler)
-		if err != nil {
-			return err
+		var reg cache.ResourceEventHandlerRegistration
+		if nats.Enabled(rt.Subscriber) {
+			inf := newFolderInformer(rt.Subscriber, keysapi.NewHTTPLister(restClient, folderGVR))
+			reg, err = inf.AddEventHandler(handler)
+			if err != nil {
+				return err
+			}
+			go inf.Run(ctx.Done())
+		} else {
+			factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(folders, cascadedelete.ResyncPeriod, "", nil)
+			reg, err = factory.ForResource(folderGVR).Informer().AddEventHandler(handler)
+			if err != nil {
+				return err
+			}
+			factory.Start(ctx.Done())
 		}
-		factory.Start(ctx.Done())
-	}
 
-	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
-		logger.Error("failed to sync folder informer cache")
-		return context.Cause(ctx)
-	}
+		if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
+			rt.Logger.Error("failed to sync folder informer cache")
+			return context.Cause(ctx)
+		}
 
-	workersDone := make(chan struct{})
-	go func() {
-		defer close(workersDone)
+		ready()
 		controller.Run(ctx, cascadedelete.DefaultWorkers)
-	}()
-
-	logger.Info("folder controller is ready")
-	deps.HealthNotifier.SetReady()
-
-	<-ctx.Done()
-	deps.HealthNotifier.SetNotReady()
-	logger.Info("folder controller shutting down")
-	<-workersDone
-	return nil
+		return nil
+	}}, nil
 }
