@@ -80,20 +80,75 @@ MT supplies only the context and credentials needed for these requests:
 - Namespace, requester, and app instance settings in the plugin context.
 - Existing plugin service-token middleware; the router and enterprise apiserver share its
   audience policy. The new settings path does not derive ID tokens.
-- Remote legacy RBAC for app access and proxy `reqAction` checks. Incoming token scopes and
-  namespace restrictions are checked before execution, including for Grafana admins;
-  cross-namespace access requires a matching wildcard namespace on the requester.
-  Proxy roles use the shared handler.
+- App access through AuthZ `Check`: get on `plugins.grafana.app/app/<plugin-id>`, which AuthZ
+  maps to `plugins.app:access` on `plugins:id:<plugin-id>`, the check unified storage makes for
+  app settings. Access policies are decided by their token permissions alone; a user's delegated
+  token permissions do not narrow app access. The app-access lookup supplies a local
+  `plugins.grafana.app/app:get` delegated grant to authlib, which otherwise rejects the call
+  before reaching AuthZ. It preserves the caller's subject, groups, and namespace, and does not
+  change the requester's credentials for storage or plugin calls. Proxy `reqAction` checks
+  still use the remote legacy check, since `Check` has no mapping for plugin-defined actions.
+  Namespace restrictions are checked before execution, including for Grafana admins;
+  cross-namespace access requires a matching wildcard namespace on the requester. Proxy roles
+  use the shared handler.
 
 No stack-settings lookup, tenant-context middleware, installed-version lookup, or Grafana
 version is introduced into the new path. Existing `pkg/apppluginext` remains available for
 separate deployments; removing its compatibility machinery is separate work.
 
-### Follow-up: caller token exchange
+### Shared settings authorization — implemented
 
-Handle OBO credentials in the plugin client alongside token exchange. Decide the audience and
-scope for backend calls, and cover health, resources, and proxy behavior there. This PR does
-not add access-token forwarding or header manipulation to the settings handlers or proxy.
+Both router loaders use `pluginaccesscontrol.NewAppAccessCheckerWithClient` for ordinary
+settings resource requests. The cloud loader supplies `AccessClient` directly; it no longer
+installs a cloud-specific settings checker and never falls back to LegacyCheck on denial or error.
+The stack-only namespace authorizer stays in the cloud loader.
+
+ST retains a small compatibility wrapper for requests without a concrete namespace,
+unsupported identity types (including legacy API keys), global-permission callers, and
+cross-namespace admin/anonymous requests. These cases still use the existing local
+access-control implementation. Ordinary users, service accounts, and anonymous users in their
+own namespace use Check. Discovery checks app access in the caller's namespace. This wrapper is
+installed only by the local loader; it is not a cloud compatibility path.
+
+Remaining legacy authorization work:
+
+- Replace ST compatibility cases after proving identity, namespace, anonymous-role, and
+  global-permission parity with Check. Then remove `SettingsDependencies.AccessChecker`.
+- Migrate settings writes from `NewSettingsWriteChecker` to Check's existing app-settings
+  write mappings, with coverage for update, patch, delete and secure-value changes. MT remains
+  read-only until its write storage is implemented.
+- Proxy `reqAction` still needs plugin-defined action evaluation, which Check cannot map.
+  Cloud LegacyCheck is experimental and must not be assumed operational. These routes fail
+  closed when it is missing or denies; ordinary settings, health and resources do not need it.
+  Add a supported action-check API or mappings before enabling such routes in cloud.
+- Legacy HTTP endpoints and non-router handler callers still use the existing app checker;
+  migrate them separately with their authentication and namespace compatibility tests.
+
+### Caller token exchange — implemented
+
+The plugin client exchanges the caller's access or ID token for the plugin audience on v2
+health and resources calls. The app-access adapter never changes those credentials.
+HTTP proxy credential behavior remains separate from this v2 exchange.
+
+### Follow-up: AuthZ Check for app access everywhere in MT — open
+
+Do this once user calls to MT settings subresources pass with `Check`, for example
+`/apis/example-appsdktest-app/v0alpha1/namespaces/<stack>/app/instance/resources/clients`.
+Separate PR from the settings switch.
+
+- MT v3 manifest routes do not check app access: the plugins source gives them
+  `pluginManifestAccessControl`, which grants `plugins.app:access` to every requester
+  (`plugin_manifests.go`). Use `NewAppAccessCheckerWithClient(AccessClient)` there too, as
+  settings already do. ST manifest routes keep `NewAppAccessChecker`. This starts denying users
+  without app access on manifest routes, as ST does; check that no MT caller relies on the open
+  check first.
+- Decide the proxy `reqAction` path: a `Check` mapping for plugin-defined actions on
+  `plugins:id:<plugin-id>`, or keep the legacy RPC for that alone. Once nothing else uses it,
+  the cloud loader can drop `LegacyAccess`.
+- Zanzana has no `plugins.grafana.app` model. `Check` works while RBAC answers that group,
+  which holds with RBAC primary or a rollout that does not list it. This also applies to ST
+  settings, which now use `Check`: with `zanzanaNoLegacyClient`, Zanzana answers every group and
+  app settings would deny every user.
 
 ### 4. Add writes and dual write — next
 
@@ -129,9 +184,10 @@ token = <service credential>
 token_exchange_url = https://auth.example/token
 ```
 
-Enable the standalone legacy AuthZ client and `authZGRPCServer`. The service credential needs
-the cloudconfig audience and the plugin service audiences it will mint. Incoming callers need
-scope for the requested app operation, plus legacy app access for delegated identities.
+Enable the standalone AuthZ client and `authZGRPCServer`; proxy `reqAction` checks also need
+the legacy AuthZ client. The service credential needs the cloudconfig audience and the plugin
+service audiences it will mint. Access-policy callers need token permissions for the requested
+app operation; users need `plugins.app:access`, which Viewers have by default.
 Use `app_settings_plugins` to choose the plugins, and namespace visibility to limit rollout. Enable
 `appplugins.handleProxyRequests` to serve the same declared proxy routes as ST.
 

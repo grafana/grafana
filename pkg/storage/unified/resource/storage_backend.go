@@ -2536,7 +2536,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 	if req.NextPageToken != "" {
 		token, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
-			return 0, fmt.Errorf("invalid continue token: %w", err)
+			return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid continue token: %v", err))
 		}
 		lastSeenRV = ToSnowflakeRV(token.ResourceVersion)
 		tokenSortAscending = token.SortAscending
@@ -2951,18 +2951,26 @@ func (k *kvStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedR
 	return k.dataStore.GetResourceStats(ctx, nsr, minCount)
 }
 
-// GetResourceStatsWithLimit is like GetResourceStats but stops counting each
-// namespace at countLimit. See dataStore.GetResourceStatsWithLimit.
+// GetResourceStatsWithLimit counts only live objects, up to countLimit per namespace.
 func (k *kvStorageBackend) GetResourceStatsWithLimit(ctx context.Context, nsr NamespacedResource, minCount, countLimit int) ([]ResourceStats, error) {
+	return k.resourceStatsWithLimit(ctx, nsr, minCount, countLimit, false)
+}
+
+func (k *kvStorageBackend) getResourceStatsWithDeleted(ctx context.Context, nsr NamespacedResource, minCount, countLimit int) ([]ResourceStats, error) {
+	return k.resourceStatsWithLimit(ctx, nsr, minCount, countLimit, true)
+}
+
+func (k *kvStorageBackend) resourceStatsWithLimit(ctx context.Context, nsr NamespacedResource, minCount, countLimit int, includeDeleted bool) ([]ResourceStats, error) {
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.GetResourceStatsWithLimit", trace.WithAttributes(
 		attribute.String("namespace", nsr.Namespace),
 		attribute.String("group", nsr.Group),
 		attribute.String("resource", nsr.Resource),
 		attribute.Int("countLimit", countLimit),
+		attribute.Bool("includeDeleted", includeDeleted),
 	))
 	defer span.End()
 
-	return k.dataStore.GetResourceStatsWithLimit(ctx, nsr, minCount, countLimit)
+	return k.dataStore.resourceStatsWithLimit(ctx, nsr, minCount, countLimit, includeDeleted)
 }
 
 // ListStoredResources discovers resource identities in the storage backend.

@@ -2,16 +2,13 @@ package provisioning
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"log/slog"
-	"os"
-	"sync"
 	"time"
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/operators/internal/supervision"
+	"github.com/grafana/grafana/pkg/infra/nats"
+	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
@@ -19,90 +16,68 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-// jobClaimExpiry is how long a job claim is considered valid before the cleanup
-// controller treats it as abandoned. The lease renewal interval must stay well
-// below this so a worker renews several times before its claim goes stale;
-// otherwise a single delayed renewal can let a running job be reaped and
-// re-run by another worker.
-const jobClaimExpiry = 60 * time.Second
-
-func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies) (runErr error) {
-	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})).With("logger", "provisioning-jobqueue-controller")
-	logger.Info("Starting provisioning job queue controller")
-
-	controllerCfg, err := setupJobQueueControllerFromConfig(deps.Config, deps.Registerer)
-	if err != nil {
-		return fmt.Errorf("failed to setup operator: %w", err)
-	}
-
-	ctx, stopSubscriber := supervision.Watch(ctx, controllerCfg.natsSubscriber)
-	defer func() {
-		deps.HealthNotifier.SetNotReady()
-		runErr = errors.Join(runErr, stopSubscriber())
-	}()
-	if err := services.StartAndAwaitRunning(ctx, controllerCfg.natsSubscriber); err != nil {
-		if errors.Is(err, context.Canceled) && ctx.Err() != nil {
-			err = context.Cause(ctx)
+var JobQueueOperator = runner.Operator{
+	Name:        "provisioning-jobqueue",
+	Description: "Pick and execute provisioning jobs using lease-based claiming",
+	Logger:      "provisioning-jobqueue-controller",
+	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
+		controllerCfg, err := setupJobQueueControllerFromConfig(rt.Cfg, rt.Registerer, rt.Subscriber)
+		if err != nil {
+			return nil, err
 		}
-		return fmt.Errorf("failed to start NATS subscriber: %w", err)
-	}
+		manifestWatcher, err := controllerCfg.ManifestWatcher()
+		if err != nil {
+			return nil, err
+		}
+		return &runner.Parts{
+			Services: []services.Service{manifestWatcher},
+			Run: func(ctx context.Context, ready func()) error {
+				return runJobQueueController(ctx, rt.Logger, controllerCfg, ready)
+			},
+			// Running jobs get their full timeout to finish before the process exits.
+			ShutdownTimeout: controllerCfg.maxJobTimeout + 30*time.Second,
+		}, nil
+	},
+}
 
+// RunJobQueueController runs [JobQueueOperator].
+//
+// Deprecated: register [JobQueueOperator] with runner.Register instead.
+func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies) error {
+	return JobQueueOperator.Run(ctx, deps)
+}
+
+func runJobQueueController(ctx context.Context, logger logging.Logger, controllerCfg *jobQueueControllerConfig, ready func()) error {
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
-	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobClaimExpiry, deps.Registerer)
+	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobs.ClaimExpiry, controllerCfg.Registry())
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	queue, err := buildJobQueue(controllerCfg, deps.Registerer, jobStore, jobHistoryWriter)
+	queue, err := buildJobQueue(controllerCfg, controllerCfg.Registry(), jobStore, jobHistoryWriter)
 	if err != nil {
 		return fmt.Errorf("build job queue: %w", err)
 	}
-	if err := services.StartAndAwaitRunning(ctx, controllerCfg.manifestWatcher); err != nil {
-		return fmt.Errorf("failed to start manifest watcher: %w", err)
-	}
 
-	var wg sync.WaitGroup
-
-	wg.Go(func() {
-		logger.Info("job queue controller started")
+	queueDone := make(chan struct{})
+	go func() {
+		defer close(queueDone)
 		if err := queue.Run(ctx); err != nil {
 			logger.Error("job driver failed", "error", err)
 		}
 		logger.Info("job driver stopped")
-	})
+	}()
 
 	if !cache.WaitForCacheSync(ctx.Done(), queue.HasSynced) {
 		return fmt.Errorf("failed to sync job informer cache")
 	}
-
-	logger.Info("job queue operator is ready")
-	deps.HealthNotifier.SetReady()
-
-	<-ctx.Done()
-	deps.HealthNotifier.SetNotReady()
-	logger.Info("shutdown signal received, waiting for goroutines to finish")
-
-	shutdownTimeout := controllerCfg.maxJobTimeout + 30*time.Second
-	done := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-		logger.Info("job queue operator shutdown complete")
-	case <-time.After(shutdownTimeout):
-		logger.Warn("shutdown timeout exceeded, forcing exit", "timeout", shutdownTimeout)
-	}
-
+	ready()
+	<-queueDone
 	return nil
 }
 
@@ -115,8 +90,8 @@ type jobQueueControllerConfig struct {
 	maxSyncWorkers       int
 }
 
-func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*jobQueueControllerConfig, error) {
-	controllerCfg, err := setupFromConfig(cfg, registry)
+func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer, subscriber *nats.SubscriberService) (*jobQueueControllerConfig, error) {
+	controllerCfg, err := setupFromConfig(cfg, registry, subscriber)
 	if err != nil {
 		return nil, err
 	}
@@ -138,6 +113,6 @@ func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Reg
 		maxSyncWorkers:       operatorSec.Key("max_sync_workers").MustInt(10),
 		maxJobTimeout:        operatorSec.Key("max_job_timeout").MustDuration(20 * time.Minute),
 		jobInterval:          jobInterval,
-		leaseRenewalInterval: operatorSec.Key("lease_renewal_interval").MustDuration(jobClaimExpiry / 3),
+		leaseRenewalInterval: operatorSec.Key("lease_renewal_interval").MustDuration(jobs.ClaimExpiry / 3),
 	}, nil
 }

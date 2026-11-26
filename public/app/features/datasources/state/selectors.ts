@@ -1,4 +1,4 @@
-import memoizeOne from 'memoize-one';
+import { memoizeOne } from 'memoize-one';
 
 import { type DataSourcePluginMeta, type DataSourceSettings, type UrlQueryValue } from '@grafana/data';
 import { type DataSourcesState } from 'app/types/datasources';

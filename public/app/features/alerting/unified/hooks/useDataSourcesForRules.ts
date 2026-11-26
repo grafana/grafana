@@ -16,19 +16,26 @@ export interface DataSourcesForRulesResult {
 
 /**
  * The data sources that the user can view or create data source-managed rules in: the supported rules source
- * types that manage alerts, sorted by name. Empty while loading.
+ * types that manage alerts, sorted by name. Empty while loading. Empty, not loading and without an error for a
+ * user who cannot view or create data source-managed rules.
  */
 export function useDataSourcesForRules(): DataSourcesForRulesResult {
   const canView = useExternalGlobalRuleAbility(ExternalRuleAction.ViewAlertRule).granted;
   const canCreate = useExternalGlobalRuleAbility(ExternalRuleAction.CreateAlertRule).granted;
+  const hasAccess = canView || canCreate;
   const { items, isLoading, error } = useRulesSourceDataSources();
 
   const dataSources = useMemo(() => {
-    if (!canView && !canCreate) {
+    if (!hasAccess) {
       return noDataSources;
     }
     return items.filter((ds) => ds.managesAlerts).sort((a, b) => collator.compare(a.name, b.name));
-  }, [items, canView, canCreate]);
+  }, [items, hasAccess]);
+
+  // A user who cannot use data source-managed rules does not need the list, so its loading state and error do not apply.
+  if (!hasAccess) {
+    return { items: noDataSources, isLoading: false };
+  }
 
   return { items: dataSources, isLoading, error };
 }

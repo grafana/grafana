@@ -2,48 +2,48 @@ package provisioning
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"log/slog"
-	"os"
 	"time"
 
-	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana-app-sdk/logging"
-	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"k8s.io/client-go/tools/cache"
 
+	"github.com/grafana/dskit/services"
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/operators/internal/supervision"
+	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
 )
 
-func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (runErr error) {
-	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})).With("logger", "provisioning-repo-controller")
-	logger.Info("Starting provisioning repo controller")
-
-	controllerCfg, err := setupFromConfig(deps.Config, deps.Registerer)
-	if err != nil {
-		return fmt.Errorf("failed to setup provisioning controller: %w", err)
-	}
-
-	ctx, stopSubscriber := supervision.Watch(ctx, controllerCfg.natsSubscriber)
-	defer func() {
-		deps.HealthNotifier.SetNotReady()
-		runErr = errors.Join(runErr, stopSubscriber())
-	}()
-	if err := services.StartAndAwaitRunning(ctx, controllerCfg.natsSubscriber); err != nil {
-		if errors.Is(err, context.Canceled) && ctx.Err() != nil {
-			err = context.Cause(ctx)
+var RepoOperator = runner.Operator{
+	Name:        "provisioning-repo",
+	Description: "Watch provisioning repositories",
+	Logger:      "provisioning-repo-controller",
+	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
+		controllerCfg, err := setupFromConfig(rt.Cfg, rt.Registerer, rt.Subscriber)
+		if err != nil {
+			return nil, err
 		}
-		return fmt.Errorf("failed to start NATS subscriber: %w", err)
-	}
+		manifestWatcher, err := controllerCfg.ManifestWatcher()
+		if err != nil {
+			return nil, err
+		}
+		return &runner.Parts{
+			Services: []services.Service{manifestWatcher},
+			Run: func(ctx context.Context, ready func()) error {
+				return runRepoController(ctx, controllerCfg, ready)
+			},
+		}, nil
+	},
+}
 
+// RunRepoController runs [RepoOperator].
+//
+// Deprecated: register [RepoOperator] with runner.Register instead.
+func RunRepoController(ctx context.Context, deps server.OperatorDependencies) error {
+	return RepoOperator.Run(ctx, deps)
+}
+
+func runRepoController(ctx context.Context, controllerCfg *ControllerConfig, ready func()) error {
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
@@ -53,18 +53,10 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 	if err != nil {
 		return fmt.Errorf("failed to get clients: %w", err)
 	}
-	if err := services.StartAndAwaitRunning(ctx, controllerCfg.manifestWatcher); err != nil {
-		return fmt.Errorf("failed to start manifest watcher: %w", err)
-	}
 
 	resourceLister, err := controllerCfg.ResourceLister()
 	if err != nil {
 		return err
-	}
-
-	jobs, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobClaimExpiry, deps.Registerer)
-	if err != nil {
-		return fmt.Errorf("create API client job store: %w", err)
 	}
 
 	repoFactory, err := controllerCfg.RepositoryFactory()
@@ -74,18 +66,10 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 
 	provisioningSec := controllerCfg.Settings.SectionWithEnvOverrides("provisioning")
 	allowImageRendering := provisioningSec.Key("allow_image_rendering").MustBool(false)
-	validator := repository.NewValidator(allowImageRendering, repoFactory)
-	statusPatcher := appcontroller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
-	// Health checker uses basic validation only - no need to validate against existing repositories
-	// since the repository already passed admission validation when it was created/updated.
-	// TODO: Consider adding ExistingRepositoriesValidator for reconciliation to detect conflicts
-	// that may arise from manual edits or migrations (e.g., duplicate paths, instance sync conflicts).
 	healthMetricsRecorder, err := controllerCfg.HealthMetricsRecorder()
 	if err != nil {
 		return fmt.Errorf("failed to get health metrics recorder: %w", err)
 	}
-
-	healthChecker := controller.NewRepositoryHealthChecker(statusPatcher, repository.NewTester(validator), healthMetricsRecorder)
 
 	connectionFactory, err := controllerCfg.ConnectionFactory()
 	if err != nil {
@@ -107,22 +91,23 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		return err
 	}
 
-	repoController, repoSource, hasSynced, err := controller.ProvideRepositoryController(controller.RepositoryControllerDeps{
-		ProvisioningClient:            provisioningClient,
-		NATSSubscriber:                controllerCfg.natsSubscriber,
-		KeysLister:                    repoKeys,
-		RelistProjectionMetrics:       controllerCfg.RelistProjectionMetrics(),
-		FreshnessMetrics:              controllerCfg.FreshnessMetrics(),
-		RepoFactory:                   repoFactory,
-		ConnectionFactory:             connectionFactory,
-		ResourceLister:                resourceLister,
-		Clients:                       clients,
-		Jobs:                          jobs,
-		HealthChecker:                 healthChecker,
-		StatusPatcher:                 statusPatcher,
+	repoController, err := controller.ProvideRepositoryController(controller.RepositoryControllerDeps{
+		ProvisioningClient:      provisioningClient,
+		NATSSubscriber:          controllerCfg.natsSubscriber,
+		KeysLister:              repoKeys,
+		RelistProjectionMetrics: controllerCfg.RelistProjectionMetrics(),
+		FreshnessMetrics:        controllerCfg.FreshnessMetrics(),
+		HealthMetrics:           healthMetricsRecorder,
+		RepoFactory:             repoFactory,
+		ConnectionFactory:       connectionFactory,
+		ResourceLister:          resourceLister,
+		Clients:                 clients,
+		// TODO: Consider adding ExistingRepositoriesValidator for reconciliation to detect conflicts
+		// that may arise from manual edits or migrations (e.g., duplicate paths, instance sync conflicts).
+		Validator:                     repository.NewValidator(allowImageRendering, repoFactory),
 		QuotaGetter:                   quotaGetter,
 		IncrementalPolicy:             repository.NewIncrementalSyncPolicy(provisioningSec.Key("max_incremental_changes").MustInt(100)),
-		Registry:                      deps.Registerer,
+		Registry:                      controllerCfg.Registry(),
 		Tracer:                        tracer,
 		ParallelOperations:            controllerCfg.Settings.SectionWithEnvOverrides("operator").Key("parallel_operations").MustInt(10),
 		ResyncInterval:                controllerCfg.ResyncInterval(),
@@ -133,19 +118,6 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 	if err != nil {
 		return err
 	}
-	go repoSource.Run(ctx.Done())
 
-	if !cache.WaitForCacheSync(ctx.Done(), hasSynced) {
-		repoController.ShutDownQueue()
-		return fmt.Errorf("failed to sync repository informer cache")
-	}
-
-	repoController.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
-		logger.Info("repository operator is ready")
-		deps.HealthNotifier.SetReady()
-	}, func() {
-		logger.Info("repository operator shutting down")
-		deps.HealthNotifier.SetNotReady()
-	})
-	return nil
+	return repoController.Run(ctx, controllerCfg.NumberOfWorkers(), ready, func() {})
 }

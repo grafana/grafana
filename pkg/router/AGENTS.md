@@ -95,7 +95,9 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   app_settings_plugins` names, when a remote legacy reader and app-access checker are supplied
   (`PluginDependencies.Settings`). The legacy side is the same `settingsStorage` ST uses
   (`appsettings.NewReadOnlyLegacySettingsStore`), so ST and MT return identical objects. Storage
-  is selected by the migration policy, and only get/list are exposed. Health and resources call
+  is selected by the migration policy, and only get/list are exposed. The OpenAPI matches ST's,
+  plugin schema and custom routes included, with only the settings kind's writes left out
+  (`TestReadOnlySettingsOpenAPI`). Health and resources call
   the deployment's v2 client; proxy uses the shared ST handler and feature gate. The local
   standalone plugin loader still serves no settings.
 - **One bad backend or plugin fails only its own group;** it must never stop the reconcile loop.
@@ -449,7 +451,7 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | --- | --- |
 | `cap_token`, `token_exchange_url` | Required when any aggregate target without `discovery_auth = none` is set. The CAP token is exchanged per request. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
-| `app_settings_plugins` | Comma-separated globs of the plugin IDs whose read-only app settings the plugins source serves, so settings roll out per plugin: `*` serves every plugin. Unlike group patterns, unset or empty serves none (the default). Requires a remote legacy settings provider and legacy AuthZ client. `plugins_group_patterns` still applies. |
+| `app_settings_plugins` | Comma-separated globs of the plugin IDs whose read-only app settings the plugins source serves, so settings roll out per plugin: `*` serves every plugin. Unlike group patterns, unset or empty serves none (the default). Requires a remote legacy settings provider and the AuthZ client, which checks app access; declared proxy routes also need the legacy AuthZ client. `plugins_group_patterns` still applies. |
 | `cloudconfig_url`, `cloudconfig_ca_file` | Enterprise settings client origin and optional CA file. Uses `[grpc_client_authentication]` token exchange; no local SQL connection. |
 | `plugins_group_patterns` | Globs that narrow the plugin groups, with the same semantics as `group_patterns`. The deprecated name `plugins_group_regex` is still read, with a warning; if both are set, the new name wins. |
 | `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_patterns`. Unlike other plugin sources, it is trusted to serve core groups. |
