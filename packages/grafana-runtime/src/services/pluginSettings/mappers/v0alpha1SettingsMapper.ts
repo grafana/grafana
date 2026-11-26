@@ -25,28 +25,48 @@ import {
   type InlineSecureValues as v0alpha1InlineSecureValues,
 } from '../types';
 
-export function settingsSpecMapper(data: Partial<PluginMeta>): Partial<v0alpha1SettingsSpec> {
-  const result: Partial<v0alpha1SettingsSpec> = {};
+/**
+ * Returns the spec to store when `data` is applied to `stored`, with the semantics of the legacy
+ * `POST /api/plugins/:id/settings` endpoint: an empty or omitted `jsonData` keeps the stored one,
+ * and `pinned` is never stored. An omitted `enabled` keeps the stored value (legacy set `false`).
+ */
+export function settingsSpecMapper(
+  stored: Partial<v0alpha1SettingsSpec> | undefined,
+  data: Partial<PluginMeta>
+): Partial<v0alpha1SettingsSpec> {
+  const result: Partial<v0alpha1SettingsSpec> = { ...stored };
 
   if (data.enabled !== undefined) {
     result.enabled = data.enabled;
   }
 
-  if (data.pinned !== undefined) {
-    result.pinned = data.pinned;
-  }
-
-  if (data.jsonData !== undefined) {
+  if (data.jsonData && Object.keys(data.jsonData).length > 0) {
     result.jsonData = data.jsonData;
   }
 
   return result;
 }
 
-export function inlineSecureValuesMapper(data: Partial<PluginMeta>): v0alpha1InlineSecureValues {
+/**
+ * Returns the secure values to store when `data` is applied to `stored`. Keys the caller omits keep
+ * their stored value, as with the legacy endpoint. An empty string in `secureJsonData` (how legacy
+ * callers reset a secret) and `secureJsonFields[key] === false` both remove a stored key.
+ */
+export function inlineSecureValuesMapper(
+  stored: v0alpha1InlineSecureValues | undefined,
+  data: Partial<PluginMeta>
+): v0alpha1InlineSecureValues {
   const { secureJsonData = {}, secureJsonFields = {} } = data;
+  const result: v0alpha1InlineSecureValues = { ...stored };
 
-  const result: v0alpha1InlineSecureValues = {};
+  const remove = (key: string) => {
+    // Removing a key the server doesn't have is a no-op, so leave it out of the update.
+    if (stored?.[key]) {
+      result[key] = { remove: true };
+    } else {
+      delete result[key];
+    }
+  };
 
   for (const key of Object.keys(secureJsonData)) {
     const secureValue = secureJsonData[key];
@@ -55,9 +75,8 @@ export function inlineSecureValuesMapper(data: Partial<PluginMeta>): v0alpha1Inl
       continue;
     }
 
-    // Key exists on the server but is marked for deletion, so we delete it in-place by sending `remove: true`.
-    if (secureJsonFields?.[key] === false) {
-      result[key] = { remove: true };
+    if (secureValue === '' || secureJsonFields[key] === false) {
+      remove(key);
       continue;
     }
 
@@ -67,11 +86,8 @@ export function inlineSecureValuesMapper(data: Partial<PluginMeta>): v0alpha1Inl
   }
 
   for (const key of Object.keys(secureJsonFields)) {
-    const secureValue = secureJsonFields[key];
-
-    // Key exists on the server but is marked for deletion, so we delete it in-place by sending `remove: true`.
-    if (secureValue === false) {
-      result[key] = { remove: true };
+    if (secureJsonFields[key] === false) {
+      remove(key);
     }
   }
 

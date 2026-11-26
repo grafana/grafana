@@ -6,6 +6,7 @@ import {
   PluginSignatureStatus,
   PluginSignatureType,
   PluginState,
+  type PluginMeta,
   PluginType,
 } from '@grafana/data';
 
@@ -14,7 +15,7 @@ import { signatureStatusMapper, stateMapper, pluginTypeMapper } from '../../plug
 import { myOrgTestAppMeta } from '../../pluginMeta/test-fixtures/v0alpha1Response';
 import type { Include as v0alpha1Include, Spec as v0alpha1Spec } from '../../pluginMeta/types/meta/types.spec.gen';
 import { myOrgTestAppSettings } from '../test-fixtures/v0alpha1Response';
-import { type InlineSecureValue } from '../types';
+import { type InlineSecureValue, type InlineSecureValues, type SettingsSpec } from '../types';
 
 import {
   includesMapper,
@@ -466,115 +467,92 @@ describe('secureJsonFieldsMapper', () => {
 });
 
 describe('settingsSpecMapper', () => {
-  it('should return empty object when no relevant fields are provided', () => {
-    expect(settingsSpecMapper({})).toStrictEqual({});
+  const stored = { enabled: true, pinned: true, jsonData: { a: 1, b: 2 } };
+
+  it.each<{ desc: string; data: Partial<PluginMeta>; expected: Partial<SettingsSpec> }>([
+    { desc: 'keeps the stored spec when nothing is passed', data: {}, expected: stored },
+    {
+      desc: 'keeps the stored enabled when enabled is omitted',
+      data: { jsonData: { a: 2 } },
+      expected: { enabled: true, pinned: true, jsonData: { a: 2 } },
+    },
+    {
+      desc: 'sets enabled false when passed',
+      data: { enabled: false },
+      expected: { enabled: false, pinned: true, jsonData: { a: 1, b: 2 } },
+    },
+    {
+      desc: 'replaces jsonData as a whole',
+      data: { jsonData: { c: 3 } },
+      expected: { enabled: true, pinned: true, jsonData: { c: 3 } },
+    },
+    { desc: 'keeps the stored jsonData when jsonData is empty', data: { jsonData: {} }, expected: stored },
+    { desc: 'ignores pinned', data: { pinned: false }, expected: stored },
+    { desc: 'ignores unrelated fields', data: { id: 'some-plugin', name: 'Some Plugin' }, expected: stored },
+  ])('$desc', ({ data, expected }) => {
+    expect(settingsSpecMapper(stored, data)).toStrictEqual(expected);
   });
 
-  it('should map enabled when provided', () => {
-    expect(settingsSpecMapper({ enabled: true })).toStrictEqual({ enabled: true });
-  });
-
-  it('should map enabled false', () => {
-    expect(settingsSpecMapper({ enabled: false })).toStrictEqual({ enabled: false });
-  });
-
-  it('should map pinned when provided', () => {
-    expect(settingsSpecMapper({ pinned: true })).toStrictEqual({ pinned: true });
-  });
-
-  it('should map jsonData when provided', () => {
-    const jsonData = { apiUrl: 'http://example.com', timeout: '30' };
-
-    expect(settingsSpecMapper({ jsonData })).toStrictEqual({ jsonData });
-  });
-
-  it('should map all fields when all are provided', () => {
-    const data = { enabled: true, pinned: false, jsonData: { key: 'value' } };
-
-    expect(settingsSpecMapper(data)).toStrictEqual({
+  it('returns only the passed fields when nothing is stored', () => {
+    expect(settingsSpecMapper(undefined, { enabled: true, pinned: true, jsonData: { a: 1 } })).toStrictEqual({
       enabled: true,
-      pinned: false,
-      jsonData: { key: 'value' },
+      jsonData: { a: 1 },
     });
-  });
-
-  it('should ignore unrelated fields', () => {
-    const data = { enabled: true, id: 'some-plugin', name: 'Some Plugin' };
-
-    expect(settingsSpecMapper(data)).toStrictEqual({ enabled: true });
   });
 });
 
 describe('inlineSecureValuesMapper', () => {
-  it('should return empty object when secureJsonData is undefined', () => {
-    expect(inlineSecureValuesMapper({})).toStrictEqual({});
+  const stored = { apiKey: { name: 'sv-apiKey' }, password: { name: 'sv-password' } };
+
+  it.each<{ desc: string; data: Partial<PluginMeta>; expected: InlineSecureValues }>([
+    { desc: 'keeps stored values when nothing is passed', data: {}, expected: stored },
+    {
+      desc: 'keeps stored values when secureJsonFields marks them as set',
+      data: { secureJsonFields: { apiKey: true, password: true } },
+      expected: stored,
+    },
+    {
+      desc: 'sends new plaintext as create and keeps the other stored values',
+      data: { secureJsonData: { apiKey: 'new' } },
+      expected: { apiKey: { create: 'new' }, password: { name: 'sv-password' } },
+    },
+    {
+      desc: 'sends a value for a new key as create',
+      data: { secureJsonData: { token: 'new' } },
+      expected: { ...stored, token: { create: 'new' } },
+    },
+    {
+      desc: 'removes a stored key when its value is an empty string',
+      data: { secureJsonData: { apiKey: '' } },
+      expected: { apiKey: { remove: true }, password: { name: 'sv-password' } },
+    },
+    {
+      desc: 'removes a stored key when secureJsonFields is false',
+      data: { secureJsonFields: { apiKey: false } },
+      expected: { apiKey: { remove: true }, password: { name: 'sv-password' } },
+    },
+    {
+      desc: 'removes a stored key when secureJsonFields is false even if a new value is passed',
+      data: { secureJsonData: { apiKey: 'new' }, secureJsonFields: { apiKey: false } },
+      expected: { apiKey: { remove: true }, password: { name: 'sv-password' } },
+    },
+    {
+      desc: 'skips removing a key that is not stored',
+      data: { secureJsonData: { token: '' }, secureJsonFields: { other: false } },
+      expected: stored,
+    },
+    {
+      desc: 'skips keys with undefined values',
+      data: { secureJsonData: { apiKey: undefined as unknown as string } },
+      expected: stored,
+    },
+  ])('$desc', ({ data, expected }) => {
+    expect(inlineSecureValuesMapper(stored, data)).toStrictEqual(expected);
   });
 
-  it('should return empty object when secureJsonData is empty', () => {
-    expect(inlineSecureValuesMapper({ secureJsonData: {} })).toStrictEqual({});
-  });
-
-  it('should create new values when secureJsonFields is undefined', () => {
-    expect(inlineSecureValuesMapper({ secureJsonData: { apiKey: 'secret123' } })).toStrictEqual({
-      apiKey: { create: 'secret123' },
-    });
-  });
-
-  it('should create new values when key does not exist in secureJsonFields', () => {
+  it('returns only new values when nothing is stored', () => {
     expect(
-      inlineSecureValuesMapper({
-        secureJsonData: { apiKey: 'secret123' },
-        secureJsonFields: { password: true },
-      })
-    ).toStrictEqual({
-      apiKey: { create: 'secret123' },
-    });
-  });
-
-  it('should remove values when key is set to false in secureJsonFields', () => {
-    expect(
-      inlineSecureValuesMapper({ secureJsonData: { password: '' }, secureJsonFields: { password: false } })
-    ).toStrictEqual({
-      password: { remove: true },
-    });
-  });
-
-  it('should remove values when key is set to false in secureJsonFields even if the key does not exist in secureJsonData', () => {
-    expect(inlineSecureValuesMapper({ secureJsonData: {}, secureJsonFields: { password: false } })).toStrictEqual({
-      password: { remove: true },
-    });
-  });
-
-  it('should send new plaintext as create when key exists in secureJsonFields', () => {
-    expect(
-      inlineSecureValuesMapper({
-        secureJsonData: { apiKey: 'newSecret' },
-        secureJsonFields: { apiKey: true },
-      })
-    ).toStrictEqual({
-      apiKey: { create: 'newSecret' },
-    });
-  });
-
-  it('should skip keys with undefined values in secureJsonData', () => {
-    expect(
-      inlineSecureValuesMapper({
-        secureJsonData: { apiKey: 'secret', empty: undefined as unknown as string },
-      })
-    ).toStrictEqual({
-      apiKey: { create: 'secret' },
-    });
-  });
-
-  it('should handle a mix of new and existing values', () => {
-    expect(
-      inlineSecureValuesMapper({
-        secureJsonData: { apiKey: 'newKey', password: 'newPass' },
-        secureJsonFields: { apiKey: true },
-      })
-    ).toStrictEqual({
-      apiKey: { create: 'newKey' },
-      password: { create: 'newPass' },
-    });
+      inlineSecureValuesMapper(undefined, { secureJsonData: { apiKey: 'new', password: '' }, secureJsonFields: {} })
+    ).toStrictEqual({ apiKey: { create: 'new' } });
   });
 });

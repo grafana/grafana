@@ -27,16 +27,17 @@ function updateLegacySettings(pluginId: string, data: Partial<PluginMeta>): Prom
 
 async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<v0alpha1Settings> {
   const apiVersion = await getApiVersion();
-  const spec = settingsSpecMapper(data);
-  const secure = inlineSecureValuesMapper(data);
+  const { metadata, ...stored } = await refetchCachedAppSettings(pluginId, false, apiVersion);
+
+  // compare() emits a remove op for every stored field missing from the update, so the update
+  // must be the full next state, not only the fields the caller passed.
+  const secure = inlineSecureValuesMapper(stored.secure, data);
   const update = {
-    apiVersion: `${pluginId}/${apiVersion}`,
-    kind: 'Settings',
-    spec,
-    secure,
+    ...stored,
+    spec: settingsSpecMapper(stored.spec, data),
+    ...(stored.secure || Object.keys(secure).length > 0 ? { secure } : {}),
   };
 
-  const { metadata, ...stored } = await refetchCachedAppSettings(pluginId, false, apiVersion);
   const test: Operation = { op: 'test', path: '/metadata/resourceVersion', value: metadata.resourceVersion };
   const patch = [test, ...compare(stored, update)];
   logPluginSettingsDebug('PluginSettings: updating plugin settings', { pluginId });
@@ -58,6 +59,13 @@ async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<P
 
 /**
  * Update the settings for an app plugin.
+ *
+ * Follows the legacy `POST /api/plugins/:id/settings` semantics:
+ * - `jsonData` replaces the stored value; an omitted or empty `jsonData` keeps it.
+ * - `secureJsonData` is merged per key; an omitted key keeps its value and an empty string removes it.
+ * - `secureJsonFields[key] === false` removes the key.
+ * - An omitted `enabled` keeps the stored value.
+ * - `pinned` is not stored.
  * @param pluginId - The id of the plugin.
  * @param data - The partial `PluginMeta` to apply to the stored settings.
  * @returns The updated plugin's `PluginMeta`.

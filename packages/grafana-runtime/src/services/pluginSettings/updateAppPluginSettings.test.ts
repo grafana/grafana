@@ -1,3 +1,6 @@
+import { type Operation } from 'fast-json-patch';
+
+import { type PluginMeta } from '@grafana/data';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
@@ -141,11 +144,6 @@ describe('settings', () => {
             },
             {
               op: 'replace',
-              path: '/spec/pinned',
-              value: false,
-            },
-            {
-              op: 'replace',
               path: '/spec/enabled',
               value: false,
             },
@@ -159,6 +157,77 @@ describe('settings', () => {
           undefined,
           { showErrorAlert: false, validatePath: true }
         );
+      });
+
+      describe('when the caller passes a partial update', () => {
+        // Shaped like the server's response: the MT spec has no pinned field.
+        const stored = {
+          ...myOrgTestAppSettings,
+          metadata: { ...myOrgTestAppSettings.metadata, resourceVersion: '42' },
+          spec: { enabled: true, jsonData: { a: 1, b: 2 } },
+          secure: { k1: { name: 'sv-k1' }, k2: { name: 'sv-k2' } },
+        };
+
+        beforeEach(() => {
+          backendSrv.get = jest.fn().mockResolvedValue(stored);
+          backendSrv.patch = jest.fn().mockResolvedValue(stored);
+        });
+
+        it.each<{ desc: string; data: Partial<PluginMeta>; ops: Operation[] }>([
+          {
+            desc: 'replaces jsonData and keeps enabled and secure values when only jsonData is passed',
+            data: { jsonData: { a: 2 } },
+            ops: [
+              { op: 'remove', path: '/spec/jsonData/b' },
+              { op: 'replace', path: '/spec/jsonData/a', value: 2 },
+            ],
+          },
+          {
+            desc: 'keeps jsonData when only enabled is passed',
+            data: { enabled: false },
+            ops: [{ op: 'replace', path: '/spec/enabled', value: false }],
+          },
+          { desc: 'sends no changes when only pinned is passed', data: { pinned: true }, ops: [] },
+          { desc: 'keeps the stored jsonData when jsonData is empty', data: { jsonData: {} }, ops: [] },
+          {
+            desc: 'creates only the passed secret and keeps the others',
+            data: { secureJsonData: { k1: 'new' } },
+            ops: [
+              { op: 'remove', path: '/secure/k1/name' },
+              { op: 'add', path: '/secure/k1/create', value: 'new' },
+            ],
+          },
+          {
+            desc: 'removes a secret reset to an empty string',
+            data: { secureJsonData: { k1: '' } },
+            ops: [
+              { op: 'remove', path: '/secure/k1/name' },
+              { op: 'add', path: '/secure/k1/remove', value: true },
+            ],
+          },
+          {
+            desc: 'removes a secret marked false in secureJsonFields',
+            data: { secureJsonFields: { k1: false } },
+            ops: [
+              { op: 'remove', path: '/secure/k1/name' },
+              { op: 'add', path: '/secure/k1/remove', value: true },
+            ],
+          },
+          {
+            desc: 'sends no secure changes for a config page save without secureJsonData',
+            data: { enabled: true, pinned: true, jsonData: { a: 3, b: 2 }, secureJsonFields: { k1: true, k2: true } },
+            ops: [{ op: 'replace', path: '/spec/jsonData/a', value: 3 }],
+          },
+        ])('$desc', async ({ data, ops }) => {
+          await updateAppPluginSettings(myOrgTestAppSettings.metadata.name, data);
+
+          expect(backendSrv.patch).toHaveBeenCalledTimes(1);
+          expect(backendSrv.patch).toHaveBeenCalledWith(
+            '/apis/myorg-test-app/v0alpha1/namespaces/default/app/instance',
+            [{ op: 'test', path: '/metadata/resourceVersion', value: '42' }, ...ops],
+            { validatePath: true, headers: { 'Content-Type': 'application/json-patch+json' } }
+          );
+        });
       });
 
       it('should cache updated settings from new apis', async () => {
