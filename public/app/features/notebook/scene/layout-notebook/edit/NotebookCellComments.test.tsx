@@ -1,93 +1,92 @@
 import { cleanup, render, screen } from 'test/test-utils';
 
-import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
-
 import {
-  type NotebookCellCommentsProps,
-  registerNotebookCellComments,
-} from '../../../enterprise-components/NotebookCellCommentsExtension';
-import { NotebookScene } from '../../NotebookScene';
+  type CommentsProviderProps,
+  type CommentsTriggerProps,
+  CommentsProvider,
+  registerComments,
+} from '../../../../comments/CommentsExtension';
 import { NotebookCellItem } from '../NotebookCellItem';
-import { NotebookLayoutManager } from '../NotebookLayoutManager';
 
 import { NotebookCellComments } from './NotebookCellComments';
 
-const COMMENTS_FLAG = 'dashboard.notebookComments';
-
-function Comments({ notebookUid, cellId }: NotebookCellCommentsProps) {
-  return <div>{`comments for ${notebookUid} / ${cellId}`}</div>;
+function Provider({ target, children }: CommentsProviderProps) {
+  return (
+    <div>
+      {`provider for ${target.kind} ${target.name}`}
+      {children}
+    </div>
+  );
 }
 
-function buildCell({ id, uid }: { id?: string; uid?: string }) {
-  const cell = new NotebookCellItem({
+function Trigger({ anchorId }: CommentsTriggerProps) {
+  return <div>{`comments for ${anchorId}`}</div>;
+}
+
+function buildCell(id?: string) {
+  return new NotebookCellItem({
     elementName: 'md1',
     source: 'user',
     id,
     content: { kind: 'Markdown', spec: { text: 'Hello' } },
   });
-  new NotebookScene({
-    title: 'Test notebook',
-    uid,
-    body: new NotebookLayoutManager({ cells: [cell] }),
-    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
-    timePicker: new SceneTimePicker({}),
-    refreshPicker: new SceneRefreshPicker({}),
-  });
-  return cell;
 }
 
 describe('NotebookCellComments', () => {
   beforeEach(() => {
-    setTestFlags({ [COMMENTS_FLAG]: true });
-    registerNotebookCellComments(Comments);
+    registerComments({ Provider, Trigger });
   });
 
   afterEach(() => {
-    // Unmount first: clearing the flags re-renders anything still mounted outside act().
     cleanup();
-    setTestFlags({});
   });
 
-  it('renders the registered component with the notebook uid and the cell id', async () => {
-    render(<NotebookCellComments cell={buildCell({ id: 'cell-1', uid: 'nb1' })} />);
+  it('places the shared comment button on the cell, anchored to its id', async () => {
+    render(<NotebookCellComments cell={buildCell('cell-1')} />);
 
-    expect(await screen.findByText('comments for nb1 / cell-1')).toBeInTheDocument();
-  });
-
-  it('renders nothing with the flag off', () => {
-    setTestFlags({ [COMMENTS_FLAG]: false });
-
-    render(<NotebookCellComments cell={buildCell({ id: 'cell-1', uid: 'nb1' })} />);
-
-    expect(screen.queryByText(/comments for/)).not.toBeInTheDocument();
+    expect(await screen.findByText('comments for cell-1')).toBeInTheDocument();
   });
 
   it('renders nothing for a cell that has no id yet', () => {
-    render(<NotebookCellComments cell={buildCell({ uid: 'nb1' })} />);
-
-    expect(screen.queryByText(/comments for/)).not.toBeInTheDocument();
-  });
-
-  it('renders nothing for a notebook that has not been saved', () => {
-    render(<NotebookCellComments cell={buildCell({ id: 'cell-1' })} />);
+    render(<NotebookCellComments cell={buildCell()} />);
 
     expect(screen.queryByText(/comments for/)).not.toBeInTheDocument();
   });
 
   it('renders nothing on the PDF render route', () => {
-    render(<NotebookCellComments cell={buildCell({ id: 'cell-1', uid: 'nb1' })} />, {
+    render(<NotebookCellComments cell={buildCell('cell-1')} />, {
       historyOptions: { initialEntries: ['/notebooks/nb1/render'] },
     });
 
     expect(screen.queryByText(/comments for/)).not.toBeInTheDocument();
   });
+});
 
-  it('renders nothing for a cell outside a notebook', () => {
-    const cell = new NotebookCellItem({ elementName: 'md1', source: 'user', id: 'cell-1' });
+describe('CommentsProvider slot', () => {
+  it('renders its children as they are on the PDF render route', () => {
+    registerComments({ Provider, Trigger });
 
-    render(<NotebookCellComments cell={cell} />);
+    render(
+      <CommentsProvider target={{ kind: 'Notebook', name: 'nb1' }}>
+        <span>document</span>
+      </CommentsProvider>,
+      { historyOptions: { initialEntries: ['/notebooks/nb1/render'] } }
+    );
 
-    expect(screen.queryByText(/comments for/)).not.toBeInTheDocument();
+    expect(screen.getByText('document')).toBeInTheDocument();
+    expect(screen.queryByText(/provider for/)).not.toBeInTheDocument();
+  });
+
+  it('hands the target to the registered provider', () => {
+    registerComments({ Provider, Trigger });
+
+    render(
+      <CommentsProvider target={{ kind: 'Notebook', name: 'nb1' }}>
+        <span>document</span>
+      </CommentsProvider>
+    );
+
+    expect(screen.getByText('provider for Notebook nb1')).toBeInTheDocument();
+    expect(screen.getByText('document')).toBeInTheDocument();
   });
 });

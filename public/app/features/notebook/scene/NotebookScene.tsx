@@ -28,6 +28,7 @@ import { getClosestVizPanel } from 'app/features/dashboard-scene/utils/utils';
 import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils-panels';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { CommentsProvider } from '../../comments/CommentsExtension';
 import { NotebookEditSession } from '../analytics/editSession';
 import { NotebookAnalytics } from '../analytics/main';
 import {
@@ -37,6 +38,7 @@ import {
   type NotebookEditSessionEndReason,
   type NotebookEditSessionSource,
 } from '../analytics/types';
+import { NOTEBOOK_KIND } from '../constants';
 import { canEditNotebooks } from '../permissions';
 import { NOTEBOOK_EDIT_PARAM } from '../urls';
 
@@ -535,14 +537,19 @@ function buildNotebookVariables(): SceneVariableSet | undefined {
  */
 function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
   const styles = useStyles2(getStyles);
-  const { body, overlay } = model.useState();
+  const { body, overlay, uid } = model.useState();
 
+  // The cells' comment buttons (see NotebookCellComments) all belong to this notebook. One that has not
+  // been saved has no uid to comment on yet; the provider stays mounted regardless, so the first save does
+  // not remount the document.
   return (
-    <div className={styles.container}>
-      <NotebookHiddenVariables model={model} />
-      <body.Component model={body} />
-      {overlay && <overlay.Component model={overlay} />}
-    </div>
+    <CommentsProvider target={{ kind: NOTEBOOK_KIND, name: uid ?? '' }}>
+      <div className={styles.container}>
+        <NotebookHiddenVariables model={model} />
+        <body.Component model={body} />
+        {overlay && <overlay.Component model={overlay} />}
+      </div>
+    </CommentsProvider>
   );
 }
 
