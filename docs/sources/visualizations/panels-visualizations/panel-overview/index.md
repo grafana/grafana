@@ -52,13 +52,12 @@ The following image and descriptions highlight the panel features:
 
 ## Actions tooltip
 
-The actions tooltip puts the most common panel actions one click away, in both view and edit mode.
+The actions tooltip provides access to the most common panel actions with one click, in both view and edit mode.
 
 To display the actions tooltip, do one of the following:
 
 - Hover your cursor over any part of a panel.
 - Use the `Tab` key to move keyboard focus into a panel.
-- On a touch device, tap the panel. Tap outside the panel to close the tooltip.
 
 The tooltip is displayed above the top-right corner of the panel.
 Hover your cursor over an icon to display its name and keyboard shortcut.
@@ -68,11 +67,11 @@ The available actions depend on the dashboard mode:
 
 | Action | View mode | Edit mode | Description |
 | ------ | --------- | --------- | ----------- |
-| Quick edits | No | Yes | Displays the quick edits for the panel, so you can change its most common options without opening the panel editor. Only displayed for visualizations that support quick edits. For more information, refer to [Change common panel options with quick edits](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#change-common-panel-options-with-quick-edits). |
+| Quick edits | No | Yes | Displays quick edits for the panel, so you can change the most common options without opening the panel editor. Only displayed for visualizations that support quick edits. For more information, refer to [Change common panel options with quick edits](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#change-common-panel-options-with-quick-edits). |
 | Edit visualization | Yes | Yes | Opens the panel editor. In view mode, this also switches the dashboard to edit mode. Only displayed if you can edit the dashboard. |
 | Explore | Yes | No | Opens the panel query in **Explore**. Because this is a link, you can open it in a new browser tab. |
 | Panel settings | No | Yes | Opens high-level panel options in the sidebar. |
-| Duplicate | No | Yes | Adds a copy of the panel next to the original one. Duplicated panels query data separately from the original panel. You can use the special `Dashboard` data source to [share the same query results across panels](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/share-query/) instead. |
+| Duplicate | No | Yes | Adds a copy of the panel next to the original one. Duplicated panels query data separately from the original panel. |
 | Remove | No | Yes | Removes the panel from the dashboard, after you confirm. |
 | Expand or Restore size | Yes | Yes | Expands the panel to fill the window and opens the [View panel sidebar](#view-mode-panel-controls) for supported visualizations, or returns an expanded panel to its original size. |
 | More actions | Yes | Yes | Opens the [panel menu](#panel-menu). |
@@ -81,8 +80,8 @@ The available actions depend on the dashboard mode:
 
 Keep the following actions tooltip behavior in mind:
 
-- **Untitled panels**: The tooltip also displays the panel description, links, and alert state, which untitled panels don't have a header to show. In edit mode, it also displays the drag handle that you use to move the panel.
-- **Repeated panels**: **Edit visualization**, **Duplicate**, and **Remove** are disabled. Hover your cursor over them to see why.
+- **Untitled panels**: In untitled panels, because there's no header in which to display panel information, the tooltip also displays the panel description, links, and alert state. In edit mode, it also displays the drag handle that you use to move the panel.
+- **Repeated panels**: **Edit visualization**, **Duplicate**, and **Remove** are disabled.
 - **Multiple selected panels**: In edit mode, when you hover your cursor over one of several selected panels, the tooltip displays the [bulk actions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#group-and-delete-multiple-panels-with-bulk-actions) instead.
 - **Keyboard navigation**: Press `Escape` to close the tooltip and return focus to the panel.
 - **Public and embedded dashboards**: Public dashboards and embedded dashboards don't display the actions tooltip.
