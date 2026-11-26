@@ -176,7 +176,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
             if (binaryOptions.left?.matcher?.id && binaryOptions.left?.matcher.id === FieldMatcherID.byType) {
               const fieldType = binaryOptions.left.matcher.options;
               const operator = binaryOperators.getIfExists(binaryOptions.operator);
-              const outFrames = data.map((frame) => {
+              return data.map((frame) => {
                 const { timeField } = getTimeField(frame);
                 const newFields: Field[] = [];
                 let didAddNewFields = false;
@@ -217,13 +217,11 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
                 });
 
                 if (options.replaceFields && !didAddNewFields) {
-                  return undefined;
+                  return frame;
                 }
 
                 return { ...frame, fields: newFields };
               });
-
-              return outFrames.filter((frame) => frame != null);
             } else {
               creator = getBinaryCreator(defaults(binaryOptions, defaultBinaryOptions), data, ctx);
             }
@@ -256,14 +254,10 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
           return data;
         }
 
-        const outFrames = data.map((frame) => {
+        return data.map((frame) => {
           // delegate field creation to the specific function
           const values = creator!(frame);
           if (!values) {
-            // if nothing was done to frame, omit it when replacing fields
-            if (options.replaceFields) {
-              return undefined;
-            }
             return frame;
           }
 
@@ -297,7 +291,6 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
             fields,
           };
         });
-        return outFrames.filter((frame) => frame != null);
       })
     );
   },
