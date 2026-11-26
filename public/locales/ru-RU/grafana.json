@@ -6713,6 +6713,10 @@
       "paused": "Дашборд приостановлен администратором",
       "try-again-later": "Повторите попытку позже"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Действительно удалить панель?"
@@ -8183,6 +8187,9 @@
       "title-delete-all-transformations": "Удалить все преобразования?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_one": "",
@@ -10684,6 +10691,27 @@
         "otherGroup": "Прочее"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_one": "",
+        "with-decimals_few": "",
+        "with-decimals_many": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -11204,6 +11232,13 @@
         "placement-options": {
           "label-bottom": "Снизу",
           "label-right": "Справа"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_one": "",
+          "values_few": "",
+          "values_many": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11299,6 +11334,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "Одно нажатие"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "Добавить ссылку",
@@ -13999,6 +14037,7 @@
       "open": "Главное меню",
       "pin-error": "Не удалось обновить закрепленные элементы меню",
       "pinned-list-label": "Закрепленные элементы",
+      "section-resize": "",
       "undock": "Открепить меню"
     },
     "megamenu-item": {
@@ -14207,12 +14246,32 @@
         "undo-label": "Редактирование с помощью Assistant"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "Отменить",
       "confirm-discard": "Отменить",
       "confirm-keep": "Сохранить",
       "confirm-text": "Сохранить изменения, внесенные при просмотре блокнота?",
       "confirm-title": "Несохраненные изменения на панели"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17579,6 +17638,13 @@
       "wide-list": "Широкий список",
       "wide-list-desc": "Горизонтальная ориентация, имя и значение, область со спарклайном, один цвет"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "Статистика",
       "stat-color-background": "Статистика: цветной фон",
@@ -18130,6 +18196,10 @@
       "time-zone-option": "Часовой пояс",
       "time-zone-selection": "Выбор часового пояса"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "Применить временной диапазон",
       "default-error": "Введите дату ({{dateExample}}) или относительное время ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -18147,6 +18217,12 @@
       "to": "на",
       "zoom-out-button": "Уменьшение масштаба временного диапазона",
       "zoom-out-tooltip-new": "Уменьшение временного диапазона <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "Применить временной диапазон",
