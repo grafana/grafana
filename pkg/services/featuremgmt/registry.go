@@ -2338,6 +2338,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "resourcePermissionsBulkUserValidation",
+			Description:  "Resolves and validates users in bulk when setting permissions for many users at once, such as SCIM team membership sync",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
+		},
+		{
 			Name:         "resourcePermissionsBulkUserWrites",
 			Description:  "Writes managed permissions and team memberships for many users in bulk instead of one user at a time, such as for SCIM team membership sync",
 			Stage:        FeatureStageExperimental,
