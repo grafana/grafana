@@ -265,7 +265,7 @@ importers:
         version: 0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@formatjs/intl-durationformat':
         specifier: ^0.13.0
-        version: 0.13.0
+        version: 0.13.1
       '@grafana/alerting':
         specifier: workspace:*
         version: link:packages/grafana-alerting
@@ -1808,7 +1808,7 @@ importers:
     dependencies:
       '@formatjs/intl-durationformat':
         specifier: ^0.13.0
-        version: 0.13.0
+        version: 0.13.1
       '@typescript-eslint/utils':
         specifier: ^8.33.1
         version: 8.58.0(@typescript/typescript6@6.0.2)(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)
@@ -3760,17 +3760,17 @@ packages:
   '@floating-ui/utils@0.2.12':
     resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
 
-  '@formatjs/bigdecimal@0.2.10':
-    resolution: {integrity: sha512-npIs6UARNOg5amJY5UOVsd6HUQQfzYjet0sa0SWIqzsnVhxLSpaIx2DjoIVrr/vqmjURjvroeW6dItjfy3Uf8A==}
+  '@formatjs/bigdecimal@0.2.11':
+    resolution: {integrity: sha512-HPfzK4SCEU4K++s2GI8h3FaSqdR+F2UbFZ6X9655ZwQj6Enca41ddYyZwDu2nkDeLiBKY5pdXYHjcoAs00/vUQ==}
 
-  '@formatjs/fast-memoize@3.1.7':
-    resolution: {integrity: sha512-zXfhLpvA6T7+efdt9JLbBwZ00tT7NsBMDVnDu8rpHeNNv8KfRZAMo2gkG0k9lK/Nzc//3kJ9pImsfuJxk3KhUA==}
+  '@formatjs/fast-memoize@3.1.8':
+    resolution: {integrity: sha512-Y9YFFfeBDkAWmLWD3LVNHbHlyELsP2lYRNoY6+QhtPh1/ujCiX5QYBzAqe0cWdkCxKVezHLt0qjWz1veEUV7UA==}
 
-  '@formatjs/intl-durationformat@0.13.0':
-    resolution: {integrity: sha512-hZMyYyxZOb41/WuBaA3F3AQtIR0z3H8kGephf5yaqwiVmEamPh6b7ElWEUEl1xlQsg4Z6/AIHEX0SaWfw2SHAg==}
+  '@formatjs/intl-durationformat@0.13.1':
+    resolution: {integrity: sha512-CfXwADR6E1PYoK6WsBGE+b9/qGMeYgj2Roj7/zJJN2C5tf8PVq2qIGJLhonCk+UzZVdkl836LbPj0qMJ4rwb3w==}
 
-  '@formatjs/intl-localematcher@0.10.1':
-    resolution: {integrity: sha512-gBqglQK9rXuHsLmM8wzTMBy4Xo4d0jamirIVKuEL8F1rwbskWdpMA1kZarSkny+uvr5q/K6GSzE0Rcq1wZLl3g==}
+  '@formatjs/intl-localematcher@0.10.2':
+    resolution: {integrity: sha512-KvXcVOPLYRQ5s6O0MrHePLIIhkSUm5bZbsEHGmKI3xXoy7hvGxUoagaobAIi8/hc9YabgHvLDFeeqbrjPNIKwg==}
 
   '@grafana/assistant@0.1.35':
     resolution: {integrity: sha512-CUN036hs5L8zgZVU4d9SRl/Qr81dHzlMcE0OBRULFW+BBqquXws3SARVg3NgmK4HapPLQvQn6iVL9HpowR+/xw==}
@@ -16460,18 +16460,18 @@ snapshots:
 
   '@floating-ui/utils@0.2.12': {}
 
-  '@formatjs/bigdecimal@0.2.10': {}
+  '@formatjs/bigdecimal@0.2.11': {}
 
-  '@formatjs/fast-memoize@3.1.7': {}
+  '@formatjs/fast-memoize@3.1.8': {}
 
-  '@formatjs/intl-durationformat@0.13.0':
+  '@formatjs/intl-durationformat@0.13.1':
     dependencies:
-      '@formatjs/bigdecimal': 0.2.10
-      '@formatjs/intl-localematcher': 0.10.1
+      '@formatjs/bigdecimal': 0.2.11
+      '@formatjs/intl-localematcher': 0.10.2
 
-  '@formatjs/intl-localematcher@0.10.1':
+  '@formatjs/intl-localematcher@0.10.2':
     dependencies:
-      '@formatjs/fast-memoize': 3.1.7
+      '@formatjs/fast-memoize': 3.1.8
 
   '@grafana/assistant@0.1.35(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)':
     dependencies:
