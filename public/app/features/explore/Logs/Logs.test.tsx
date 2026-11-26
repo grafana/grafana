@@ -43,6 +43,10 @@ jest.mock('@grafana/runtime', () => ({
     links: [],
     isLoading: false,
   }),
+  usePluginComponent: jest.fn().mockReturnValue({
+    component: null,
+    isLoading: false,
+  }),
 }));
 
 // Mock TableNG to disable virtualization, otherwise the lack of viewport in our testing env will cause the table to only render a single column
