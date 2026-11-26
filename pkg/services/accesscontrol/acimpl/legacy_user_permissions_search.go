@@ -23,9 +23,10 @@ func LegacyUserPermissionsSearchEnabled(ctx context.Context) bool {
 }
 
 func GetLegacySearchUsersPermissions(ctx context.Context, client legacyclient.LegacyUserPermissionsClient, caller identity.Requester, options ac.SearchOptions, cfg *setting.Cfg) (map[int64][]ac.Permission, error) {
-	if client == nil {
-		return nil, fmt.Errorf("embedded legacy AuthZ search client is not configured")
-	}
+	return loadLegacySearchUsersPermissions(ctx, client, legacySearchUsersPermissionsRequest(ctx, caller, options, cfg))
+}
+
+func legacySearchUsersPermissionsRequest(ctx context.Context, caller identity.Requester, options ac.SearchOptions, cfg *setting.Cfg) legacyclient.LegacySearchUsersPermissionsRequest {
 	originalNamespace := caller.GetNamespace()
 	namespace := legacyscopes.PermissionNamespace(ctx, caller)
 	if originalNamespace == "" && cfg != nil && cfg.StackID != "" {
@@ -37,7 +38,7 @@ func GetLegacySearchUsersPermissions(ctx context.Context, client legacyclient.Le
 	}
 	cacheKey := caller.GetCacheKey()
 	directoryContext, _ := ctxkey.Get(ctx).(*contextmodel.ReqContext)
-	response, err := client.LegacySearchUsersPermissions(ctx, legacypermissions.LegacySearchPermissionCaller(namespace), legacyclient.LegacySearchUsersPermissionsRequest{
+	return legacyclient.LegacySearchUsersPermissionsRequest{
 		Namespace: namespace,
 		Options:   options,
 		Requester: legacyclient.LegacySearchRequester{
@@ -57,6 +58,13 @@ func GetLegacySearchUsersPermissions(ctx context.Context, client legacyclient.Le
 			Username:             caller.GetUsername(),
 			Name:                 caller.GetName(),
 		},
-	})
+	}
+}
+
+func loadLegacySearchUsersPermissions(ctx context.Context, client legacyclient.LegacyUserPermissionsClient, req legacyclient.LegacySearchUsersPermissionsRequest) (map[int64][]ac.Permission, error) {
+	if client == nil {
+		return nil, fmt.Errorf("embedded legacy AuthZ search client is not configured")
+	}
+	response, err := client.LegacySearchUsersPermissions(ctx, legacypermissions.LegacySearchPermissionCaller(req.Namespace), req)
 	return response.Permissions, err
 }

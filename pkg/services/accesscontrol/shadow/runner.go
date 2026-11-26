@@ -164,6 +164,8 @@ func (r *Runner) Run(ctx context.Context, observer Observer, primary func(), pre
 	if !safely(background, observer, work.Snapshot) {
 		return
 	}
+	// The snapshot callback can close over caller-owned results.
+	work.Snapshot = nil
 
 	launched = true
 	go func() {

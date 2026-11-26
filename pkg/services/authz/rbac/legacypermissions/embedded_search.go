@@ -9,6 +9,7 @@ import (
 	authzlib "github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
+	otelcodes "go.opentelemetry.io/otel/codes"
 	"google.golang.org/protobuf/proto"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -24,6 +25,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
@@ -38,6 +40,7 @@ type embeddedSearchCall struct {
 	permissions       map[int64][]accesscontrol.Permission
 	err               error
 	evaluationContext openfeature.EvaluationContext
+	fallbackScope     *string
 }
 
 func (c *embeddedClient) LegacySearchUsersPermissions(ctx context.Context, caller types.AuthInfo, req legacyclient.LegacySearchUsersPermissionsRequest) (response legacyclient.LegacySearchUsersPermissionsResponse, err error) {
@@ -47,6 +50,7 @@ func (c *embeddedClient) LegacySearchUsersPermissions(ctx context.Context, calle
 	call := &embeddedSearchCall{
 		embeddedTransactionCall: embeddedTransactionCall{done: make(chan struct{})},
 		evaluationContext:       openfeature.TransactionContext(ctx),
+		fallbackScope:           req.FallbackScope,
 	}
 	ctx = context.WithValue(ctx, embeddedTransactionCallKey{}, &call.embeddedTransactionCall)
 	ctx = context.WithValue(ctx, embeddedSearchCallKey{}, call)
@@ -67,7 +71,16 @@ func (c *embeddedClient) LegacySearchUsersPermissions(ctx context.Context, calle
 
 func (s *embeddedServer) LegacySearchUsersPermissions(req *authzv1.LegacySearchUsersPermissionsRequest, stream authzv1.LegacyAuthzService_LegacySearchUsersPermissionsServer) (err error) {
 	ctx, span := tracer.Start(stream.Context(), "authz.legacypermissions.LegacySearchUsersPermissions")
-	defer func() { endPermissionSpan(span, err) }()
+	defer func() {
+		if shadow.IsShadow(ctx) {
+			if err != nil {
+				span.SetStatus(otelcodes.Error, "permission search failed")
+			}
+			span.End()
+			return
+		}
+		endPermissionSpan(span, err)
+	}()
 	if s.guard == nil || ctx.Value(embeddedCallKey{}) != s.guard {
 		return status.Error(codes.PermissionDenied, "legacy search is embedded-only")
 	}
@@ -105,7 +118,9 @@ func (s *embeddedServer) LegacySearchUsersPermissions(req *authzv1.LegacySearchU
 	}
 	defer func() {
 		if recover() != nil {
-			embeddedSearchLogger.FromContext(ctx).Error("Recovered from embedded permission search panic", "stack", string(debug.Stack()))
+			if !shadow.IsShadow(ctx) {
+				embeddedSearchLogger.FromContext(ctx).Error("Recovered from embedded permission search panic", "stack", string(debug.Stack()))
+			}
 			err = status.Error(codes.Internal, "legacy permission search failed")
 			// Preserve the failure if cancellation has already unblocked the client.
 			call.err = err
@@ -116,12 +131,17 @@ func (s *embeddedServer) LegacySearchUsersPermissions(req *authzv1.LegacySearchU
 	}
 
 	ctx = openfeature.WithTransactionContext(request.WithNamespace(ctx, ns.Value), call.evaluationContext)
+	if shadow.IsShadow(ctx) {
+		ctx = legacyscopes.WithSearchShadow(ctx)
+	}
 	ctx = withSearchDirectoryContext(ctx, caller, req.GetRequester().GetHasDirectoryContext())
 	enforced := s.loader.enforcementEnabled()
 	search := *s.loader.search
-	if !enforced && s.loader.license.Edition() != licensing.OpenSourceEdition {
+	fallback := !enforced && s.loader.license.Edition() != licensing.OpenSourceEdition
+	if fallback {
 		// Enterprise's unlicensed fallback uses an OSS service without these dependencies.
-		// Enterprise applies its outer scope normalization when the fallback returns.
+		// The caller performs the outer normalization for authoritative reads.
+		// Shadow comparisons need the same normalization before streaming.
 		search.scopeResolver = nil
 		search.zanzana = nil
 	}
@@ -129,7 +149,15 @@ func (s *embeddedServer) LegacySearchUsersPermissions(req *authzv1.LegacySearchU
 		UserID: req.UserId, Action: req.Action, ActionPrefix: req.ActionPrefix, Scope: req.Scope,
 		ActionSets: req.ActionSets, RolePrefixes: req.RolePrefixes,
 	}, enforced)
+	if err == nil && fallback && shadow.IsShadow(ctx) && call.fallbackScope != nil {
+		results, err = legacyscopes.ResolveSearchScopes(ctx, caller, *call.fallbackScope, s.loader.search.scopeResolver, results)
+	}
 	if err != nil {
+		if shadow.IsShadow(ctx) {
+			// The comparison only needs failure status. Backend errors may
+			// contain request details, including data from the IAM transport.
+			return status.Error(codes.Internal, "legacy permission search failed")
+		}
 		// gRPC cancellation can win the stream race. Carry the original backend
 		// result and wrapped cause through the private call outcome.
 		call.permissions, call.err = results, err

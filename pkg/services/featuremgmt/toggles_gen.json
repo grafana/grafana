@@ -1230,6 +1230,20 @@
     },
     {
       "metadata": {
+        "name": "authz.legacyUserPermissionsSearchShadow",
+        "resourceVersion": "1795696551353",
+        "creationTimestamp": "2026-11-26T12:35:51Z"
+      },
+      "spec": {
+        "description": "Compare local user permission searches with embedded AuthZ when authz.legacyUserPermissionsSearch is enabled.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "authz.legacyUserPermissionsShadow",
         "resourceVersion": "1793097096771",
         "creationTimestamp": "2026-10-27T09:31:45Z",

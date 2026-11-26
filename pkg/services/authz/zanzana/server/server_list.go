@@ -20,9 +20,12 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
+
+type skipListCacheKey struct{}
 
 func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.ListResponse, error) {
 	release, err := s.acquireSlot("List", r.GetNamespace())
@@ -33,6 +36,19 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 
 	ctx, span := s.tracer.Start(ctx, "server.List")
 	defer span.End()
+	start := time.Now()
+	defer func() {
+		s.metrics.requestDurationSeconds.WithLabelValues("List").Observe(time.Since(start).Seconds())
+	}()
+
+	if shadow.IsShadow(ctx) {
+		res, err := s.list(ctx, r)
+		if err != nil {
+			span.SetStatus(codes.Error, "shadow Zanzana list failed")
+			return nil, errors.New("shadow Zanzana list failed")
+		}
+		return res, nil
+	}
 	span.SetAttributes(attribute.String("namespace", r.GetNamespace()))
 
 	ctxLogger := s.logger.FromContext(ctx).New(
@@ -43,10 +59,7 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 		"subresource", r.GetSubresource(),
 		"verb", r.GetVerb(),
 	)
-	defer func(t time.Time) {
-		s.metrics.requestDurationSeconds.WithLabelValues("List").Observe(time.Since(t).Seconds())
-		ctxLogger.Debug("List execution time", "duration", time.Since(t).Milliseconds())
-	}(time.Now())
+	defer func() { ctxLogger.Debug("List execution time", "duration", time.Since(start).Milliseconds()) }()
 
 	res, err := s.list(ctx, r)
 	if err != nil {
@@ -64,7 +77,16 @@ func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 		return nil, err
 	}
 
-	store, err := s.getStoreInfo(ctx, r.GetNamespace())
+	var store *zanzana.StoreInfo
+	var err error
+	if shadow.IsShadow(ctx) {
+		store, err = s.readyStoreForShadow(r.GetNamespace())
+	} else {
+		store, err = s.getStoreInfo(ctx, r.GetNamespace())
+	}
+	if r.GetOptions().GetSkipcache() {
+		ctx = context.WithValue(ctx, skipListCacheKey{}, true)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get openfga store: %w", err)
 	}
@@ -275,13 +297,15 @@ func cloneListObjectsRequestWithContextualTuples(req *openfgav1.ListObjectsReque
 func (s *Server) doOpenFGAListObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
 	fn := s.streamedListObjects
 
-	if s.cfg.CacheSettings.CheckQueryCacheEnabled {
+	if s.cfg.CacheSettings.CheckQueryCacheEnabled && !shadow.IsShadow(ctx) && ctx.Value(skipListCacheKey{}) == nil {
 		return s.listObjectCached(ctx, req, fn)
 	}
 
 	res, err := fn(ctx, req)
 	if err != nil {
-		s.logger.Error("failed to perform openfga ListObjects request", "error", errors.Unwrap(err), "user", req.GetUser(), "type", req.GetType(), "relation", req.GetRelation())
+		if !shadow.IsShadow(ctx) {
+			s.logger.Error("failed to perform openfga ListObjects request", "error", errors.Unwrap(err), "user", req.GetUser(), "type", req.GetType(), "relation", req.GetRelation())
+		}
 		return nil, err
 	}
 

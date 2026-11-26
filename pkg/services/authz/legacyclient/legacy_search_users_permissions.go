@@ -9,11 +9,13 @@ import (
 
 	authzlib "github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/types"
+	otelcodes "go.opentelemetry.io/otel/codes"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
@@ -23,6 +25,9 @@ type LegacySearchUsersPermissionsRequest struct {
 	Namespace string
 	Options   accesscontrol.SearchOptions
 	Requester LegacySearchRequester
+	// FallbackScope is the original scope before unlicensed Enterprise's outer
+	// normalization. The private embedded client uses it only for shadow results.
+	FallbackScope *string
 }
 
 // LegacySearchRequester carries trusted assertions from the authenticated in-process caller.
@@ -47,7 +52,11 @@ func (c *LegacyClient) LegacySearchUsersPermissions(ctx context.Context, caller 
 	ctx, span := c.tracer.Start(ctx, "LegacyClient.LegacySearchUsersPermissions")
 	defer func() {
 		if err != nil {
-			_ = tracing.Error(span, err)
+			if shadow.IsShadow(ctx) {
+				span.SetStatus(otelcodes.Error, "permission search failed")
+			} else {
+				_ = tracing.Error(span, err)
+			}
 		}
 		span.End()
 	}()

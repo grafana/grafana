@@ -56,6 +56,18 @@ func (s *Server) getStoreInfo(ctx context.Context, namespace string) (*zanzana.S
 	return info, nil
 }
 
+// The authoritative search can provision a store or change its model. Shadow
+// list calls only use a store whose model is already initialized.
+func (s *Server) readyStoreForShadow(namespace string) (*zanzana.StoreInfo, error) {
+	s.storesMU.RLock()
+	info := s.stores[namespace]
+	s.storesMU.RUnlock()
+	if info.ModelID == "" {
+		return nil, errors.New("zanzana store is not initialized")
+	}
+	return &info, nil
+}
+
 func (s *Server) GetStore(ctx context.Context, namespace string) (*zanzana.StoreInfo, error) {
 	s.storesMU.RLock()
 	info, ok := s.stores[namespace]

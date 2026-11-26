@@ -16,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -645,4 +647,40 @@ func TestIntegrationListDoesNotPoisonBatchCheckCache(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.True(t, res.GetResults()["c"].GetAllowed(), "directly-granted dashboard must stay authorized after a prior List")
+}
+
+func TestIntegrationShadowListDoesNotProvisionStoreOrCacheResults(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	server := setupOpenFGAServer(t)
+	server.cfg.CacheSettings.CheckQueryCacheEnabled = true
+	ctx := newContextWithNamespace()
+	req := &authzv1.ListRequest{
+		Namespace: namespace, Verb: utils.VerbList, Subject: "user:1",
+		Group: dashboardGroup, Resource: dashboardResource,
+	}
+	_, err := server.List(shadow.WithContext(ctx), req)
+	require.Error(t, err)
+	require.Empty(t, server.stores)
+	_, err = server.GetStore(ctx, namespace)
+	require.ErrorIs(t, err, zanzana.ErrStoreNotFound)
+
+	setup(t, server)
+	require.Empty(t, server.cache.Items())
+	shadowResult, err := server.List(shadow.WithContext(ctx), req)
+	require.NoError(t, err)
+	require.Equal(t, []string{"1"}, shadowResult.GetItems())
+	require.Empty(t, server.cache.Items())
+
+	req.Options = &authzv1.ListRequestOptions{Skipcache: true}
+	uncached, err := server.List(ctx, req)
+	require.NoError(t, err)
+	require.Equal(t, shadowResult.GetItems(), uncached.GetItems())
+	require.Empty(t, server.cache.Items())
+
+	req.Options = nil
+	ordinary, err := server.List(ctx, req)
+	require.NoError(t, err)
+	require.Equal(t, shadowResult.GetItems(), ordinary.GetItems())
+	require.NotEmpty(t, server.cache.Items())
 }
