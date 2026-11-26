@@ -128,7 +128,7 @@ jobs:
           message: |
             ### Frontend preview
 
-            ⏳ The preview build for commit ${{ needs.check.outputs.head-sha }} (${{ needs.check.outputs.head-title }}) is in progress.
+            ⏳ The preview build for ${{ needs.check.outputs.head-title }} (${{ needs.check.outputs.head-sha }}) is in progress.
 
             ${{ needs.check.outputs.has-backend-changes == 'true' && '⚠️ **Warning:** this PR contains backend changes. The preview only swaps the frontend assets of an existing instance, so it may not work correctly.' || '' }}
 
@@ -254,7 +254,7 @@ jobs:
           {
             echo "## Frontend preview deployed 🚀"
             echo ""
-            echo "- Deploy name: \`${DEPLOY_NAME}\` (commit ${HEAD_SHA}: ${HEAD_TITLE})"
+            echo "- Deploy name: \`${DEPLOY_NAME}\` (${HEAD_TITLE} (${HEAD_SHA}))"
             echo "- Load it at: ${PREVIEW_URL}"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -267,7 +267,7 @@ jobs:
           message: |
             ### Frontend preview
 
-            ✅ The preview for commit ${{ needs.check.outputs.head-sha }} (${{ needs.check.outputs.head-title }}) is live: **[open the preview](${{ steps.preview-url.outputs.url }})**.
+            ✅ The preview for ${{ needs.check.outputs.head-title }} (${{ needs.check.outputs.head-sha }}) is live: **[open the preview](${{ steps.preview-url.outputs.url }})**.
 
             - Each new push to this PR builds and deploys the preview again automatically.
             - Share the above link for others to preview it in their browsers too.
@@ -325,7 +325,7 @@ jobs:
           message: |
             ### Frontend preview
 
-            ❌ The preview deploy for commit ${{ needs.check.outputs.head-sha }} (${{ needs.check.outputs.head-title }}) failed. See the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+            ❌ The preview deploy for ${{ needs.check.outputs.head-title }} (${{ needs.check.outputs.head-sha }}) failed. See the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
 
   comment-cancelled:
     name: Comment that the deploy was cancelled
@@ -349,4 +349,4 @@ jobs:
           message: |
             ### Frontend preview
 
-            ⚠️ The preview deploy for commit ${{ needs.check.outputs.head-sha }} (${{ needs.check.outputs.head-title }}) was cancelled ([workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})). If a newer push superseded it, that run will update this comment when it finishes. Any previously deployed preview is still live.
+            ⚠️ The preview deploy for ${{ needs.check.outputs.head-title }} (${{ needs.check.outputs.head-sha }}) was cancelled ([workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})). If a newer push superseded it, that run will update this comment when it finishes. Any previously deployed preview is still live.
