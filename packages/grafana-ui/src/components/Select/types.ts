@@ -26,6 +26,8 @@ export interface SelectCommonProps<T> {
   /** Aria label applied to the input field */
   ['aria-label']?: string;
   ['data-testid']?: string;
+  /** Custom data attributes (for example `data-analytics-id`), rendered on the combobox input */
+  [key: `data-${string}`]: string | undefined;
   allowCreateWhileLoading?: boolean;
   allowCustomValue?: boolean;
   /** Focus is set to the Select when rendered*/
