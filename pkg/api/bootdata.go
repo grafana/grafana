@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"hash"
 	"net/http"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	dashboardkind "github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
@@ -626,6 +628,10 @@ func (hs *HTTPServer) getEnabledOAuthProviders(ctx context.Context) map[string]a
 func (hs *HTTPServer) publicDashFilterUsedDataSources(c *contextmodel.ReqContext, allDataSources []*datasources.DataSource) ([]*datasources.DataSource, error) {
 	_, dash, err := hs.publicDashboardsService.FindPublicDashboardAndDashboardByAccessToken(c.Req.Context(), c.PublicDashboardAccessToken)
 	if err != nil {
+		if errors.Is(err, publicdashboards.ErrPublicDashboardNotFound) {
+			// Let the public dashboard page load and display its unavailable state.
+			return nil, nil
+		}
 		return nil, err
 	}
 

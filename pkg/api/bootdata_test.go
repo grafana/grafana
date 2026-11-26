@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -921,6 +922,41 @@ func newPluginAssetsWithConfig(pCfg *config.PluginManagementCfg) func() *plugina
 		cdn := pluginscdn.ProvideService(pCfg)
 		calc := modulehash.NewCalculator(pCfg, registry.NewInMemory(), cdn, signature.ProvideService(pCfg, statickey.New()))
 		return pluginassets.ProvideService(calc)
+	}
+}
+
+func TestPublicDashFilterUsedDataSources_LookupError(t *testing.T) {
+	const accessToken = "0123456789abcdef0123456789abcdef"
+	lookupFailure := errors.New("dashboard lookup failed")
+	for _, tt := range []struct {
+		name      string
+		lookupErr error
+		wantErr   error
+	}{
+		{
+			name:      "unknown token",
+			lookupErr: publicdashboards.ErrPublicDashboardNotFound.Errorf("public dashboard not found"),
+		},
+		{
+			name:      "lookup failure",
+			lookupErr: lookupFailure,
+			wantErr:   lookupFailure,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			service := publicdashboards.NewFakePublicDashboardService(t)
+			service.On("FindPublicDashboardAndDashboardByAccessToken", mock.Anything, accessToken).
+				Return(nil, nil, tt.lookupErr).Once()
+			hs := &HTTPServer{publicDashboardsService: service}
+			c := &contextmodel.ReqContext{
+				Context:                    &web.Context{Req: httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/public-dashboards/"+accessToken, nil)},
+				PublicDashboardAccessToken: accessToken,
+			}
+
+			got, err := hs.publicDashFilterUsedDataSources(c, []*datasources.DataSource{{UID: "org-datasource"}})
+			require.ErrorIs(t, err, tt.wantErr)
+			assert.Empty(t, got)
+		})
 	}
 }
 
