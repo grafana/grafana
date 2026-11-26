@@ -42,7 +42,7 @@ func TestConnectionHealthChecker_ShouldCheckHealth(t *testing.T) {
 				},
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.ConnectionHealthStatus{
 						Checked: 0,
 					},
 				},
@@ -57,7 +57,7 @@ func TestConnectionHealthChecker_ShouldCheckHealth(t *testing.T) {
 				},
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.ConnectionHealthStatus{
 						Healthy: true,
 						Checked: time.Now().Add(-6 * time.Minute).UnixMilli(),
 					},
@@ -73,7 +73,7 @@ func TestConnectionHealthChecker_ShouldCheckHealth(t *testing.T) {
 				},
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.ConnectionHealthStatus{
 						Healthy: false,
 						Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
 					},
@@ -89,7 +89,7 @@ func TestConnectionHealthChecker_ShouldCheckHealth(t *testing.T) {
 				},
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.ConnectionHealthStatus{
 						Healthy: true,
 						Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
 					},
@@ -105,7 +105,7 @@ func TestConnectionHealthChecker_ShouldCheckHealth(t *testing.T) {
 				},
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
+					Health: provisioning.ConnectionHealthStatus{
 						Healthy: false,
 						Checked: time.Now().Add(-30 * time.Second).UnixMilli(),
 					},
@@ -127,19 +127,19 @@ func TestConnectionHealthChecker_ShouldCheckHealth(t *testing.T) {
 func TestConnectionHealthChecker_hasRecentHealthCheck(t *testing.T) {
 	testCases := []struct {
 		name         string
-		healthStatus provisioning.HealthStatus
+		healthStatus provisioning.ConnectionHealthStatus
 		expected     bool
 	}{
 		{
 			name: "never checked",
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.ConnectionHealthStatus{
 				Checked: 0,
 			},
 			expected: false,
 		},
 		{
 			name: "healthy and recent",
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.ConnectionHealthStatus{
 				Healthy: true,
 				Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
 			},
@@ -147,7 +147,7 @@ func TestConnectionHealthChecker_hasRecentHealthCheck(t *testing.T) {
 		},
 		{
 			name: "healthy and stale",
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.ConnectionHealthStatus{
 				Healthy: true,
 				Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
 			},
@@ -155,7 +155,7 @@ func TestConnectionHealthChecker_hasRecentHealthCheck(t *testing.T) {
 		},
 		{
 			name: "unhealthy and recent",
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.ConnectionHealthStatus{
 				Healthy: false,
 				Checked: time.Now().Add(-30 * time.Second).UnixMilli(),
 			},
@@ -163,7 +163,7 @@ func TestConnectionHealthChecker_hasRecentHealthCheck(t *testing.T) {
 		},
 		{
 			name: "unhealthy and stale",
-			healthStatus: provisioning.HealthStatus{
+			healthStatus: provisioning.ConnectionHealthStatus{
 				Healthy: false,
 				Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
 			},
@@ -185,17 +185,17 @@ func TestConnectionHealthChecker_hasHealthStatusChanged(t *testing.T) {
 
 	testCases := []struct {
 		name     string
-		old      provisioning.HealthStatus
-		new      provisioning.HealthStatus
+		old      provisioning.ConnectionHealthStatus
+		new      provisioning.ConnectionHealthStatus
 		expected bool
 	}{
 		{
 			name: "healthy status changed",
-			old: provisioning.HealthStatus{
+			old: provisioning.ConnectionHealthStatus{
 				Healthy: true,
 				Checked: baseTime.UnixMilli(),
 			},
-			new: provisioning.HealthStatus{
+			new: provisioning.ConnectionHealthStatus{
 				Healthy: false,
 				Checked: baseTime.UnixMilli(),
 			},
@@ -203,12 +203,12 @@ func TestConnectionHealthChecker_hasHealthStatusChanged(t *testing.T) {
 		},
 		{
 			name: "message count changed",
-			old: provisioning.HealthStatus{
+			old: provisioning.ConnectionHealthStatus{
 				Healthy: false,
 				Message: []string{"error1"},
 				Checked: baseTime.UnixMilli(),
 			},
-			new: provisioning.HealthStatus{
+			new: provisioning.ConnectionHealthStatus{
 				Healthy: false,
 				Message: []string{"error1", "error2"},
 				Checked: baseTime.UnixMilli(),
@@ -217,12 +217,12 @@ func TestConnectionHealthChecker_hasHealthStatusChanged(t *testing.T) {
 		},
 		{
 			name: "message content changed",
-			old: provisioning.HealthStatus{
+			old: provisioning.ConnectionHealthStatus{
 				Healthy: false,
 				Message: []string{"error1"},
 				Checked: baseTime.UnixMilli(),
 			},
-			new: provisioning.HealthStatus{
+			new: provisioning.ConnectionHealthStatus{
 				Healthy: false,
 				Message: []string{"error2"},
 				Checked: baseTime.UnixMilli(),
@@ -231,11 +231,11 @@ func TestConnectionHealthChecker_hasHealthStatusChanged(t *testing.T) {
 		},
 		{
 			name: "timestamp changed beyond threshold (healthy)",
-			old: provisioning.HealthStatus{
+			old: provisioning.ConnectionHealthStatus{
 				Healthy: true,
 				Checked: baseTime.Add(-6 * time.Minute).UnixMilli(),
 			},
-			new: provisioning.HealthStatus{
+			new: provisioning.ConnectionHealthStatus{
 				Healthy: true,
 				Checked: baseTime.UnixMilli(),
 			},
@@ -243,11 +243,11 @@ func TestConnectionHealthChecker_hasHealthStatusChanged(t *testing.T) {
 		},
 		{
 			name: "timestamp changed beyond threshold (unhealthy)",
-			old: provisioning.HealthStatus{
+			old: provisioning.ConnectionHealthStatus{
 				Healthy: false,
 				Checked: baseTime.Add(-2 * time.Minute).UnixMilli(),
 			},
-			new: provisioning.HealthStatus{
+			new: provisioning.ConnectionHealthStatus{
 				Healthy: false,
 				Checked: baseTime.UnixMilli(),
 			},
@@ -255,11 +255,11 @@ func TestConnectionHealthChecker_hasHealthStatusChanged(t *testing.T) {
 		},
 		{
 			name: "no meaningful change",
-			old: provisioning.HealthStatus{
+			old: provisioning.ConnectionHealthStatus{
 				Healthy: true,
 				Checked: baseTime.UnixMilli(),
 			},
-			new: provisioning.HealthStatus{
+			new: provisioning.ConnectionHealthStatus{
 				Healthy: true,
 				Checked: baseTime.Add(10 * time.Second).UnixMilli(),
 			},
@@ -267,12 +267,12 @@ func TestConnectionHealthChecker_hasHealthStatusChanged(t *testing.T) {
 		},
 		{
 			name: "same unhealthy status within threshold",
-			old: provisioning.HealthStatus{
+			old: provisioning.ConnectionHealthStatus{
 				Healthy: false,
 				Message: []string{"error"},
 				Checked: baseTime.Add(-30 * time.Second).UnixMilli(),
 			},
-			new: provisioning.HealthStatus{
+			new: provisioning.ConnectionHealthStatus{
 				Healthy: false,
 				Message: []string{"error"},
 				Checked: baseTime.UnixMilli(),
@@ -446,7 +446,7 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 					Namespace: "default",
 				},
 				Status: provisioning.ConnectionStatus{
-					Health: provisioning.HealthStatus{
+					Health: provisioning.ConnectionHealthStatus{
 						Healthy: false,
 						Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
 					},
@@ -468,7 +468,7 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 					Namespace: "default",
 				},
 				Status: provisioning.ConnectionStatus{
-					Health: provisioning.HealthStatus{
+					Health: provisioning.ConnectionHealthStatus{
 						Healthy: true,
 						Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
 					},
@@ -493,7 +493,7 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 					Namespace: "default",
 				},
 				Status: provisioning.ConnectionStatus{
-					Health: provisioning.HealthStatus{
+					Health: provisioning.ConnectionHealthStatus{
 						Healthy: true,
 						Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
 					},
@@ -519,7 +519,7 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 					Generation: 1,
 				},
 				Status: provisioning.ConnectionStatus{
-					Health: provisioning.HealthStatus{
+					Health: provisioning.ConnectionHealthStatus{
 						Healthy: true,
 						Checked: time.Now().Add(-20 * time.Second).UnixMilli(),
 					},

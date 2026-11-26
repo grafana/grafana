@@ -3,7 +3,7 @@ import { type VizPanel } from '@grafana/scenes';
 
 import { edit } from '../actions/utils/edit';
 
-import { createPresetApplyHandler } from './getPanelFrameOptions';
+import { createPresetApplyHandler } from './createPresetApplyHandler';
 
 jest.mock('../actions/utils/edit', () => ({
   edit: jest.fn(),

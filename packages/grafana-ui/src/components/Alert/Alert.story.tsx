@@ -114,7 +114,11 @@ WithActionAndRemoveButton.args = {
 };
 
 export const Toast: StoryFn<typeof Alert> = (args) => {
-  return <Alert {...args}>To use as a toast, set the elevated and onRemove props.</Alert>;
+  return (
+    <Alert {...args}>
+      Grafana renders toasts like this when you publish an appEvent, so do not render Alert yourself for a toast.
+    </Alert>
+  );
 };
 
 Toast.args = {

@@ -345,13 +345,17 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		if group == resources.AnyGroup {
 			audiences = []string{provisioning.GROUP}
 		}
+		var audienceProvider clientauth.AudienceProvider = clientauth.NewStaticAudienceProvider(audiences...)
+		if group == resources.AnyGroup && c.Settings.ProvisioningRouterClient {
+			audienceProvider = clientauth.NewRequestGroupAudienceProvider(setting.ExtJWTAccessTokenExpectAudience)
+		}
 
 		config := &rest.Config{
 			APIPath: "/apis",
 			Host:    url,
 			WrapTransport: clientauth.NewTokenExchangeTransportWrapper(
 				tokenExchangeClient,
-				clientauth.NewStaticAudienceProvider(audiences...),
+				audienceProvider,
 				clientauth.NewStaticNamespaceProvider(clientauth.WildcardNamespace),
 			),
 			Transport: &http.Transport{
@@ -367,7 +371,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 
 	c.manifestWatcher, err = resources.NewRemoteManifestWatcher(supportedResourceProvider, c.Registry(), resource.ManifestWatcherConfig{
 		DiscoveryURL:      aggregatedServerURL,
-		DiscoveryAudience: provisioning.GROUP,
+		DiscoveryAudience: setting.ExtJWTAccessTokenExpectAudience,
 		Exchanger:         tokenExchangeClient,
 		TLS:               &tlsConfig,
 		PollInterval:      time.Minute,
@@ -377,6 +381,12 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		return nil, fmt.Errorf("failed to create manifest watcher: %w", err)
 	}
 	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, supportedResourceProvider)
+	if c.Settings.ProvisioningRouterClient {
+		if aggregatedServerURL == "" {
+			return nil, fmt.Errorf("aggregated_server_url is required in [operator] section when [provisioning] router_client is enabled")
+		}
+		clients = resources.NewClientFactory(configProviders[resources.AnyGroup], supportedResourceProvider)
+	}
 	c.clients = clients
 	return clients, nil
 }

@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { getSceneCreationOptions } from '../pages/DashboardScenePageStateManager';
 
@@ -199,6 +200,60 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
       'Backend resolves annotation datasource group differently than frontend',
   };
 
+  // The layout of a v1 scene, built without the v2 layout creator, still differs from the backend for these inputs.
+  const SKIPPED_V1_SCENE_LAYOUTS: Record<string, string> = {
+    'v27.repeated_panels_and_constant_variable.v42.json':
+      'Expanded row with nested panels: the v1 scene drops them, the backend keeps them',
+    'v31.labels_to_fields_merge.v42.json':
+      'Expanded row with nested panels: the v1 scene drops them, the backend keeps them',
+    'v32.no_op_migration.v42.json': 'Expanded row with nested panels: the v1 scene drops them, the backend keeps them',
+    'v37.legend_normalization.v42.json':
+      'Expanded row with nested panels: the v1 scene drops them, the backend keeps them',
+    'v38.table_displaymode_comprehensive.v42.json':
+      'Expanded row with nested panels: the v1 scene drops them, the backend keeps them',
+    'v38.timeseries_table_display_mode.v42.json':
+      'Expanded row with nested panels: the v1 scene drops them, the backend keeps them',
+    'v39.transform_timeseries_table.v42.json':
+      'Expanded row with nested panels: the v1 scene drops them, the backend keeps them',
+    'v30.value_mappings_and_tooltip_options.v42.json':
+      'Panels after a collapsed row: the v1 scene shows them, the backend moves them into the collapsed row',
+    'v34.multiple_stats_cloudwatch.v42.json':
+      'Panels after a collapsed row: the v1 scene shows them, the backend moves them into the collapsed row',
+    'v42.hidefrom_tooltip.v42.json':
+      'Panels after a collapsed row: the v1 scene shows them, the backend moves them into the collapsed row',
+  };
+
+  // Dashboard templates load without the v2 layout creator, so their rows stay SceneGridRow children of the
+  // grid. Serializing that v1 scene to v2 must still give the layout of the backend conversion.
+  function expectV1SceneLayoutToMatchBackend(
+    dashboard: DashboardDataDTO & { snapshot?: unknown },
+    backendOutputFilePath: string,
+    inputPanels: Parameters<typeof normalizeBackendOutputForFrontendComparison>[1]
+  ) {
+    const backendOutput = JSON.parse(readFileSync(backendOutputFilePath, 'utf8'));
+    const sceneBackend = transformSaveModelSchemaV2ToScene({
+      spec: backendOutput.spec,
+      metadata: backendOutput.metadata,
+      apiVersion: backendOutput.apiVersion,
+      access: {},
+      kind: 'DashboardWithAccessInfo',
+    });
+    const backendSpec = normalizeBackendOutputForFrontendComparison(
+      transformSceneToSaveModelSchemaV2(sceneBackend, false),
+      inputPanels
+    );
+
+    const dashboardSpec = { ...dashboard };
+    delete dashboardSpec.snapshot;
+    const scene = transformSaveModelToScene({
+      dashboard: dashboardSpec,
+      meta: { isNew: false, canSave: true, canEdit: true, isSnapshot: false, version: 1 },
+    });
+    const frontendSpec = transformSceneToSaveModelSchemaV2(scene, false);
+
+    expect(removeEmptyArrays(backendSpec.layout)).toEqual(removeEmptyArrays(frontendSpec.layout));
+  }
+
   beforeAll(() => {
     const missing = [!existsSync(outputDir) && outputDir, !existsSync(migratedOutput) && migratedOutput].filter(
       Boolean
@@ -304,6 +359,16 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
       // Compare only the spec structures - this is the core transformation
       expect(normalizedBackendOutput).toEqual(normalizedFrontendOutput);
     });
+
+    it(`compare v1 scene layout ${relativePath} → ${outputRelativePath}`, () => {
+      if (!existsSync(outputFilePath)) {
+        return;
+      }
+
+      const jsonInput = JSON.parse(readFileSync(inputFilePath, 'utf8'));
+      const dashboard = jsonInput.apiVersion !== undefined ? jsonInput.spec : jsonInput;
+      expectV1SceneLayoutToMatchBackend(dashboard, outputFilePath, dashboard.panels || []);
+    });
   });
 
   // Test migrated dashboards (from migration pipeline output)
@@ -392,6 +457,15 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
 
       // Compare only the spec structures - this is the core transformation
       expect(normalizedBackendOutput).toEqual(normalizedFrontendOutput);
+    });
+
+    it(`compare migrated v1 scene layout ${relativePath} → ${outputFileName}`, () => {
+      if (SKIPPED_V1_SCENE_LAYOUTS[relativePath]) {
+        return;
+      }
+
+      const jsonInput = JSON.parse(readFileSync(inputFilePath, 'utf8'));
+      expectV1SceneLayoutToMatchBackend(jsonInput, outputFilePath, jsonInput.panels || jsonInput.spec?.panels || []);
     });
   });
 });

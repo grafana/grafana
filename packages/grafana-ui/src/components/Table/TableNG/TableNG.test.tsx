@@ -27,6 +27,14 @@ import { TableCellDisplayMode } from '../types';
 import { TableNG } from './TableNG';
 import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_LAST_ROW_CLASS, OVERFLOW_CELL_CLASS, TABLE } from './constants';
 
+jest.mock('uwrap', () => ({
+  varPreLine: jest.fn(),
+}));
+
+beforeEach(() => {
+  jest.mocked(uwrap.varPreLine).mockReset().mockImplementation(jest.requireActual('./__mocks__/uwrap').varPreLine);
+});
+
 // react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
 // this the grid renders no rows at all.
 beforeAll(() => {
@@ -2769,7 +2777,7 @@ describe('TableNG', () => {
     }
 
     it.each([0, 1, 2])('repairs grid positions when oversized text occurs at row %i', (index) => {
-      jest.spyOn(uwrap, 'varPreLine').mockReturnValue({
+      jest.mocked(uwrap.varPreLine).mockReturnValue({
         count: (text) => text.split('\n').length,
         each: () => {},
         split: () => [],
@@ -2967,7 +2975,7 @@ describe('TableNG', () => {
       // its raw object value stringifies to a single-line "[object Object]". Give this test its own
       // real newline counter so the fix (measuring the field actually rendered, pretty-printed JSON
       // and all) is distinguishable from the regression (measuring an unprepared field's `.display`).
-      jest.spyOn(uwrap, 'varPreLine').mockReturnValue({
+      jest.mocked(uwrap.varPreLine).mockReturnValue({
         count: (str: string) => str.split('\n').length,
         each: () => {},
         split: () => [],
@@ -3634,44 +3642,27 @@ describe('TableNG', () => {
       };
     }
 
-    it('shows multiple datalinks in the tooltip', async () => {
-      const dataFrame = createBasicDataFrame();
-      const links: DataLink[] = [
-        { url: 'http://asdasd.com', title: 'Test Title' },
-        { url: 'http://asdasd2.com', title: 'Test Title2' },
-      ];
+    it.each([undefined, true, false])(
+      'renders data links as menu items and focuses the first with tableRefreshEnabled=%s',
+      async (tableRefreshEnabled) => {
+        const dataFrame = createBasicDataFrame();
+        const links: DataLink[] = [
+          { url: 'http://asdasd.com', title: 'Test Title' },
+          { url: 'http://asdasd2.com', title: 'Test Title2' },
+        ];
 
-      dataFrame.fields[0].config.links = links;
-      dataFrame.fields[0].getLinks = () => links.map(toLinkModel);
+        dataFrame.fields[0].config.links = links;
+        dataFrame.fields[0].getLinks = () => links.map(toLinkModel);
 
-      render(<TableNG data={dataFrame} width={800} height={600} />);
+        render(<TableNG data={dataFrame} width={800} height={600} tableRefreshEnabled={tableRefreshEnabled} />);
 
-      const cell = screen.getByText('A1');
-      await userEvent.click(cell);
+        await userEvent.click(screen.getByText('A1'));
 
-      const tooltip = screen.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper);
-      expect(tooltip).toBeInTheDocument();
-
-      expect(screen.getByText('Test Title')).toBeInTheDocument();
-      expect(screen.getByText('Test Title2')).toBeInTheDocument();
-    });
-
-    it('shows data links as menu items with the table refresh enabled', async () => {
-      const dataFrame = createBasicDataFrame();
-      const links: DataLink[] = [
-        { url: 'http://asdasd.com', title: 'Test Title' },
-        { url: 'http://asdasd2.com', title: 'Test Title2' },
-      ];
-
-      dataFrame.fields[0].config.links = links;
-      dataFrame.fields[0].getLinks = () => links.map(toLinkModel);
-
-      render(<TableNG data={dataFrame} width={800} height={600} tableRefreshEnabled />);
-
-      await userEvent.click(screen.getByText('A1'));
-
-      expect(screen.getByRole('menuitem', { name: 'Test Title' })).toHaveAttribute('href', 'http://asdasd.com');
-    });
+        expect(screen.getByRole('menuitem', { name: 'Test Title' })).toHaveAttribute('href', 'http://asdasd.com');
+        expect(screen.getByRole('menuitem', { name: 'Test Title2' })).toHaveAttribute('href', 'http://asdasd2.com');
+        expect(screen.getByRole('menuitem', { name: 'Test Title' })).toHaveFocus();
+      }
+    );
 
     it('does not show tooltip for a single link', async () => {
       const dataFrame = createBasicDataFrame();

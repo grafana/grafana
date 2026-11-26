@@ -12,7 +12,7 @@ import {
   getFieldDisplayItems,
   isTooltipScrollable,
 } from '@grafana/ui';
-import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineChart/utils';
+import { findNextStateIndex, fmtDuration, ZERO_DURATION_END_OFFSET } from 'app/core/components/TimelineChart/utils';
 
 import { getFieldActions } from '../status-history/utils';
 import { type TimeSeriesTooltipProps } from '../timeseries/TimeSeriesTooltip';
@@ -61,7 +61,10 @@ export const StateTimelineTooltip = ({
     const stateTs = xField.values[dataIdx!];
     let duration: string;
 
-    if (nextStateTs) {
+    if (nextStateTs != null && nextStateTs - stateTs === ZERO_DURATION_END_OFFSET) {
+      duration = fmtDuration(0);
+      endTime = stateTs;
+    } else if (nextStateTs) {
       duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
       endTime = nextStateTs;
     } else {

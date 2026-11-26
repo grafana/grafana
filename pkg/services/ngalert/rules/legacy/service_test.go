@@ -90,7 +90,7 @@ func TestUpdateAlertRulePersistencePreconditions(t *testing.T) {
 			}
 			return work(ctx)
 		})
-		service := &LegacyRuleService{
+		service := &legacyRuleService{
 			ruleStore: store, provenanceStore: fakes.NewFakeProvisioningStore(),
 			xact: xact, authz: fakeUpdateAuthz{},
 		}
@@ -115,7 +115,7 @@ func TestUpdateAlertRulePersistencePreconditions(t *testing.T) {
 			t.Fatal("failed rule persistence must not change manager properties")
 			return nil
 		}
-		service := &LegacyRuleService{ruleStore: store, provenanceStore: provenance, xact: store, authz: fakeUpdateAuthz{}}
+		service := &legacyRuleService{ruleStore: store, provenanceStore: provenance, xact: store, authz: fakeUpdateAuthz{}}
 		_, err := service.UpdateAlertRule(context.Background(), requester, *updated, utils.ManagerProperties{}, false)
 		require.ErrorIs(t, err, rulestore.ErrOptimisticLock)
 	})
@@ -137,7 +137,7 @@ func TestListAlertRules(t *testing.T) {
 	fs.AddFolder(&folder.Folder{OrgID: orgID, UID: groupKey1.NamespaceUID, Title: "folder1"})
 	fs.AddFolder(&folder.Folder{OrgID: orgID, UID: groupKey2.NamespaceUID, Title: "folder2"})
 
-	initServiceWithData := func(t *testing.T) (*LegacyRuleService, *fakes.RuleStore, *fakeListAuthz) {
+	initServiceWithData := func(t *testing.T) (*legacyRuleService, *fakes.RuleStore, *fakeListAuthz) {
 		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Rules = map[int64][]*models.AlertRule{orgID: allRules}
 		ac := &fakeListAuthz{
@@ -145,7 +145,7 @@ func TestListAlertRules(t *testing.T) {
 				return true, nil
 			},
 		}
-		service := &LegacyRuleService{
+		service := &legacyRuleService{
 			folderService:   fs,
 			ruleStore:       ruleStore,
 			provenanceStore: fakes.NewFakeProvisioningStore(),
@@ -258,7 +258,7 @@ func TestDeleteAlertRules(t *testing.T) {
 	gen := models.RuleGen
 
 	type env struct {
-		service    *LegacyRuleService
+		service    *legacyRuleService
 		ruleStore  *fakes.RuleStore
 		provenance *fakes.FakeProvisioningStore
 		authz      *fakeDeleteAuthz
@@ -275,7 +275,7 @@ func TestDeleteAlertRules(t *testing.T) {
 			rules:      gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(3),
 		}
 		e.ruleStore.Rules = map[int64][]*models.AlertRule{orgID: slices.Clone(e.rules)}
-		e.service = &LegacyRuleService{
+		e.service = &legacyRuleService{
 			ruleStore:       e.ruleStore,
 			provenanceStore: e.provenance,
 			log:             log.New("testing"),
@@ -395,7 +395,7 @@ func TestDeleteAlertRule_SingleTransaction(t *testing.T) {
 	ruleStore := fakes.NewRuleStore(t)
 	ruleStore.Rules = map[int64][]*models.AlertRule{orgID: {rule}}
 	xact := &countingTransactionManager{}
-	service := &LegacyRuleService{
+	service := &legacyRuleService{
 		ruleStore:       ruleStore,
 		provenanceStore: fakes.NewFakeProvisioningStore(),
 		log:             log.New("testing"),

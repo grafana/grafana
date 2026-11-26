@@ -7,12 +7,21 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 )
 
-// GetAuthorizer requires app access for every request, as the legacy app
+func (b *Builder) GetAuthorizer() authorizer.Authorizer {
+	return b.authorizer
+}
+
+// Settings require app access for every request, as the legacy app
 // endpoints do, except writes to the settings themselves, which require the
 // permission of the legacy endpoint that updates plugin settings.
-func (b *Builder) GetAuthorizer() authorizer.Authorizer {
+func newSettingsAuthorizer(pluginID string, appAccess pluginaccesscontrol.AppAccessChecker, opts Options) authorizer.Authorizer {
+	var writeChecker pluginaccesscontrol.AppAccessChecker
+	if !opts.ReadOnly && opts.AccessControl != nil {
+		writeChecker = pluginaccesscontrol.NewSettingsWriteChecker(opts.AccessControl)
+	}
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 			user, err := identity.GetRequester(ctx)
@@ -20,12 +29,12 @@ func (b *Builder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionDeny, "valid user is required", err
 			}
 			if attr.GetResource() == apppluginV0.APP_RESOURCE_NAME && attr.GetSubresource() == "" && !attr.IsReadOnly() {
-				if b.writeChecker == nil {
+				if writeChecker == nil {
 					return authorizer.DecisionDeny, "no settings write checker is configured", nil
 				}
-				return b.writeChecker(ctx, user, b.pluginJSON.ID)
+				return writeChecker(ctx, user, pluginID)
 			}
-			return b.accessChecker(ctx, user, b.pluginJSON.ID)
+			return appAccess(ctx, user, pluginID)
 		},
 	)
 }
