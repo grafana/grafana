@@ -96,7 +96,7 @@ If an option is only available in view mode or edit mode, that's indicated:
 
 - **Share**: Share the panel as a link, embed, or snapshot.
 - **Group by…**: Group the panel data by a key. This option is only available if the dashboard has a [Filter and Group by](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/) control with grouping enabled.
-- **Explore**: Edit mode only. Open the panel in **Explore**, where you can focus on your query. In view mode, click **Explore** in the actions tooltip instead.
+- **Explore**: Edit mode only. Open the panel in **Explore**, where you can focus on your query. In view mode, click the **Explore** icon in the actions tooltip instead.
 - **Inspect**: Open the **Inspect** drawer, where you can review the panel data, stats, metadata, JSON, and query.
   - **Data**: Open the **Inspect** drawer in the **Data** tab.
   - **Query**: Open the **Inspect** drawer in the **Query** tab.

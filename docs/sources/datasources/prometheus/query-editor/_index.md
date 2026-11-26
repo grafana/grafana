@@ -23,7 +23,7 @@ review_date: 2026-08-04
 
 The Prometheus query editor lets you write PromQL queries against your Prometheus-compatible data sources. It includes a visual query builder for constructing queries without writing PromQL, a code editor with autocomplete and syntax highlighting, and configurable output formats for different visualization types.
 
-You can access the query editor from the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) or from any dashboard panel by hovering over the panel and clicking **Edit visualization** in the actions tooltip. For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/). For more information about PromQL, refer to [Querying Prometheus](https://prometheus.io/docs/prometheus/latest/querying/basics/).
+You can access the query editor from the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) or from any dashboard panel by hovering over the panel and clicking the **Edit visualization** icon in the actions tooltip. For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/). For more information about PromQL, refer to [Querying Prometheus](https://prometheus.io/docs/prometheus/latest/querying/basics/).
 
 The query editor has two modes:
 

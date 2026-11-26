@@ -204,7 +204,7 @@ ERROR[\s\S]*
 
 1. Navigate to the panel you want to update.
 1. Hover over any part of the panel you want to work on to display the actions tooltip.
-1. Click **Edit visualization**.
+1. Click the **Edit visualization** icon.
 1. Scroll to the **Value mappings** section and expand it.
 1. Click **Add value mappings**.
 1. Click **Add a new mapping** and then select one of the following:

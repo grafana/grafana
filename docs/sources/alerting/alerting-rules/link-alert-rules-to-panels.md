@@ -73,7 +73,7 @@ Changes to panel and alert rule queries aren't synchronized. If you change a que
 This option is available only in [time series panels](/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/time-series/). To access alert rules associated to a time series panel, complete the following steps.
 
 1. Hover over any part of the panel to display the actions tooltip.
-1. Click **Edit visualization**.
+1. Click the **Edit visualization** icon.
 1. Click the **Alert** tab to view existing alert rules or create a new one.
 
 {{< admonition type="tip" >}}

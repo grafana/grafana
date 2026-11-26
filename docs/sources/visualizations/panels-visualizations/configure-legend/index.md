@@ -196,7 +196,7 @@ When you format a legend as a table and add values to it, you can sort series in
 
 1. Navigate to the panel you want to update.
 1. Hover over any part of the panel you want to work on to display the actions tooltip.
-1. Click **Edit visualization**.
+1. Click the **Edit visualization** icon.
 1. Scroll to the **Legend** section of the panel edit pane.
 1. Under **Mode**, select **Table**.
 1. Under **Values**, select the value or calculation that you want to show.

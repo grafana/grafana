@@ -173,7 +173,7 @@ Click the icon next to the panel title to see available panel links.
 ### Add a panel link
 
 1. Hover over any part of the panel to which you want to add the link to display the actions tooltip.
-1. Click **Edit visualization**.
+1. Click the **Edit visualization** icon.
 
    To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
 
@@ -195,7 +195,7 @@ Click the icon next to the panel title to see available panel links.
 ### Update a panel link
 
 1. Hover over any part of the panel to display the actions tooltip.
-1. Click **Edit visualization**.
+1. Click the **Edit visualization** icon.
 
    To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
 
@@ -212,7 +212,7 @@ Click the icon next to the panel title to see available panel links.
 ### Delete a panel link
 
 1. Hover over any part of the panel to display the actions tooltip.
-1. Click **Edit visualization**.
+1. Click the **Edit visualization** icon.
 
    To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
 

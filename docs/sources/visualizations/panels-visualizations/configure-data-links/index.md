@@ -316,7 +316,7 @@ To add a data link, follow these steps:
 
 1. Navigate to the panel to which you want to add the data link.
 1. Hover over any part of the panel to display the actions tooltip.
-1. Click **Edit visualization** to open the panel editor.
+1. Click the **Edit visualization** icon to open the panel editor.
 1. Scroll down to the **Data links and actions** section and expand it.
 1. Click **+ Add link**.
 1. In the dialog box that opens, enter a **Title**.
@@ -347,7 +347,7 @@ To add a data link, follow these steps:
 
 1. Navigate to the panel to which you want to add the action.
 1. Hover over any part of the panel to display the actions tooltip.
-1. Click **Edit visualization** to open the panel editor.
+1. Click the **Edit visualization** icon to open the panel editor.
 1. Scroll down to the **Data links and actions** section and expand it.
 1. Click **+ Add action**.
 1. In the dialog box that opens, define the API call settings:

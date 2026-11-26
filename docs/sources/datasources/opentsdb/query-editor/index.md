@@ -26,7 +26,7 @@ The query editor allows you to build OpenTSDB queries visually. The available op
 
 ## Access the query editor
 
-The OpenTSDB query editor is located on the [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) page. You can also access the OpenTSDB query editor from a dashboard panel. Hover over the panel and click **Edit visualization** in the actions tooltip.
+The OpenTSDB query editor is located on the [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) page. You can also access the OpenTSDB query editor from a dashboard panel. Hover over the panel and click the **Edit visualization** icon in the actions tooltip.
 
 ## Create a query
 
