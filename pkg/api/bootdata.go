@@ -427,8 +427,10 @@ func (hs *HTTPServer) newAppDTO(ctx context.Context, plugin pluginstore.Plugin, 
 		BuildMode:       plugin.BuildMode,
 	}
 
+	// A disabled app serves no pages, so the links of its kinds would lead nowhere
 	if settings.Enabled {
 		app.Preload = plugin.Preload
+		app.Kinds = plugin.Kinds
 	}
 
 	return app

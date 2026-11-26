@@ -324,6 +324,58 @@
         }
       }
     },
+    "kinds": {
+      "type": "array",
+      "description": "For app plugins. Kinds of objects the app serves, so Grafana can name, draw and link their objects, such as in the Starred section of the navigation, before the app loads. The app can still add the kind with `getKindRegistry().addKinds()`, which replaces this description once the app loads.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["group", "kind", "resource", "folderScoped", "icon", "route", "label", "labelPlural"],
+        "properties": {
+          "group": {
+            "type": "string",
+            "description": "API group of the kind, for example `example.ext.grafana.app`."
+          },
+          "kind": {
+            "type": "string",
+            "description": "Kubernetes kind, for example `Widget`."
+          },
+          "resource": {
+            "type": "string",
+            "description": "Plural resource name in API paths, for example `widgets`."
+          },
+          "folderScoped": {
+            "type": "boolean",
+            "description": "Whether objects of the kind live in folders."
+          },
+          "icon": {
+            "type": "string",
+            "description": "Icon of the kind. For information on available icon, refer to [Icons Overview](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview)."
+          },
+          "route": {
+            "type": "string",
+            "description": "Path of the page of one object, under the app's own path. `{name}` stands for the object's name, for example `/a/example-app/widgets/{name}`.",
+            "pattern": "^/a/[^/]+/.*\\{name\\}"
+          },
+          "label": {
+            "type": "string",
+            "description": "English name of the kind as it reads inside a sentence, for example `widget`."
+          },
+          "labelPlural": {
+            "type": "string",
+            "description": "Plural of `label`, for example `widgets`."
+          },
+          "labelKey": {
+            "type": "string",
+            "description": "Key of `label` in the plugin's translations, for languages other than English."
+          },
+          "labelPluralKey": {
+            "type": "string",
+            "description": "Key of `labelPlural` in the plugin's translations, for languages other than English."
+          }
+        }
+      }
+    },
     "logs": {
       "type": "boolean",
       "description": "For data source plugins, if the plugin supports logs. It may be used to filter logs only features."

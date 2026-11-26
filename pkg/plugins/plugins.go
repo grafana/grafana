@@ -108,6 +108,7 @@ type JSONData struct {
 	// App settings
 	AutoEnabled bool       `json:"autoEnabled"`
 	Extensions  Extensions `json:"extensions"`
+	Kinds       []AppKind  `json:"kinds,omitempty"`
 
 	// Datasource settings
 	Annotations               bool            `json:"annotations"`

@@ -494,6 +494,62 @@ func Test_ReadPluginJSON(t *testing.T) {
 			},
 		},
 		{
+			name: "can read kinds declared by an app",
+			pluginJSON: func(t *testing.T) io.ReadCloser {
+				pJSON := `{
+					"id": "myorg-kinds-app",
+					"name": "Kinds App",
+					"type": "app",
+					"kinds": [{
+						"group": "widgets.ext.grafana.app",
+						"kind": "Widget",
+						"resource": "widgets",
+						"folderScoped": true,
+						"icon": "cube",
+						"route": "/a/myorg-kinds-app/widgets/{name}",
+						"label": "widget",
+						"labelPlural": "widgets",
+						"labelKey": "kinds.widget",
+						"labelPluralKey": "kinds.widgets"
+					}]
+				}`
+				return io.NopCloser(strings.NewReader(pJSON))
+			},
+			expected: JSONData{
+				ID:   "myorg-kinds-app",
+				Name: "Kinds App",
+				Type: TypeApp,
+				Kinds: []AppKind{{
+					Group:          "widgets.ext.grafana.app",
+					Kind:           "Widget",
+					Resource:       "widgets",
+					FolderScoped:   true,
+					Icon:           "cube",
+					Route:          "/a/myorg-kinds-app/widgets/{name}",
+					Label:          "widget",
+					LabelPlural:    "widgets",
+					LabelKey:       "kinds.widget",
+					LabelPluralKey: "kinds.widgets",
+				}},
+
+				Extensions: Extensions{
+					AddedLinks:        []AddedLink{},
+					AddedComponents:   []AddedComponent{},
+					AddedFunctions:    []AddedFunction{},
+					ExposedComponents: []ExposedComponent{},
+					ExtensionPoints:   []ExtensionPoint{},
+				},
+
+				Dependencies: Dependencies{
+					GrafanaVersion: "*",
+					Plugins:        []Dependency{},
+					Extensions: ExtensionsDependencies{
+						ExposedComponents: []string{},
+					},
+				},
+			},
+		},
+		{
 			name: "can read languages in a panel plugin",
 			pluginJSON: func(t *testing.T) io.ReadCloser {
 				pJSON := `{

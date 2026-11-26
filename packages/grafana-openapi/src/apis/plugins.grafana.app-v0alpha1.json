@@ -1453,6 +1453,47 @@
           }
         ]
       },
+      "MetaAppKind": {
+        "description": "A kind of object the app serves, so Grafana can name, draw and link its objects before the app's module loads",
+        "type": "object",
+        "required": ["group", "kind", "resource", "folderScoped", "icon", "route", "label", "labelPlural"],
+        "properties": {
+          "folderScoped": {
+            "type": "boolean"
+          },
+          "group": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "label": {
+            "description": "English labels, as the name reads inside a sentence",
+            "type": "string"
+          },
+          "labelKey": {
+            "description": "Keys of the labels in the plugin's own translations",
+            "type": "string"
+          },
+          "labelPlural": {
+            "type": "string"
+          },
+          "labelPluralKey": {
+            "type": "string"
+          },
+          "resource": {
+            "type": "string"
+          },
+          "route": {
+            "description": "Path of the page of one object, in which {name} stands for the object's name",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "MetaDependencies": {
         "type": "object",
         "required": ["grafanaDependency"],
@@ -1879,6 +1920,13 @@
           },
           "info": {
             "$ref": "#/components/schemas/MetaInfo"
+          },
+          "kinds": {
+            "description": "+listType=atomic",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetaAppKind"
+            }
           },
           "languages": {
             "description": "+listType=atomic",

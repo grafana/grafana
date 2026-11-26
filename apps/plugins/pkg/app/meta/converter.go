@@ -531,6 +531,30 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 		meta.Languages = jsonData.Languages
 	}
 
+	// Map Kinds
+	if len(jsonData.Kinds) > 0 {
+		meta.Kinds = make([]pluginsv0alpha1.MetaAppKind, 0, len(jsonData.Kinds))
+		for _, kind := range jsonData.Kinds {
+			v0Kind := pluginsv0alpha1.MetaAppKind{
+				Group:        kind.Group,
+				Kind:         kind.Kind,
+				Resource:     kind.Resource,
+				FolderScoped: kind.FolderScoped,
+				Icon:         kind.Icon,
+				Route:        kind.Route,
+				Label:        kind.Label,
+				LabelPlural:  kind.LabelPlural,
+			}
+			if kind.LabelKey != "" {
+				v0Kind.LabelKey = &kind.LabelKey
+			}
+			if kind.LabelPluralKey != "" {
+				v0Kind.LabelPluralKey = &kind.LabelPluralKey
+			}
+			meta.Kinds = append(meta.Kinds, v0Kind)
+		}
+	}
+
 	return meta
 }
 
