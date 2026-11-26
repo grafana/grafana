@@ -96,6 +96,7 @@ func TestRedirection(t *testing.T) {
 		url    string
 		expect string
 	}{
+		// for /apis/query.grafana.app
 		{
 			name:   "query connections",
 			url:    "/apis/query.grafana.app/v0alpha1/namespaces/default/connections",
@@ -116,10 +117,21 @@ func TestRedirection(t *testing.T) {
 			name:   "name hack in datasource service",
 			url:    "/apis/query.grafana.app/v0alpha1/namespaces/default/query",
 			expect: "/apis/query.grafana.app/v0alpha1/namespaces/default/query",
-		}, {
+		},
+
+		// for /apis/datasource.grafana.app
+		{
 			name:   "datasource connections",
 			url:    "/apis/datasource.grafana.app/v0alpha1/namespaces/default/connections",
 			expect: "/apis/query.grafana.app/v0alpha1/namespaces/default/connections",
+		}, {
+			name:   "datasource sqlschemas at root",
+			url:    "/apis/datasource.grafana.app/v0alpha1/namespaces/default/sqlschemas",
+			expect: "/apis/query.grafana.app/v0alpha1/namespaces/default/query/sqlschemas",
+		}, {
+			name:   "datasource sqlschemas as subresource",
+			url:    "/apis/datasource.grafana.app/v0alpha1/namespaces/default/query/sqlschemas",
+			expect: "/apis/query.grafana.app/v0alpha1/namespaces/default/query/sqlschemas",
 		}, {
 			name:   "datasource query",
 			url:    "/apis/datasource.grafana.app/v0alpha1/namespaces/default/query",
