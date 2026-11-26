@@ -55,7 +55,8 @@ export function MarkersLegend({ layerName, styleConfig }: MarkersLegendProps) {
 
   if (colorMode.isContinuous && colorMode.getColors) {
     const colors = colorMode.getColors(theme);
-    const colorRange = getMinMaxAndDelta(colorField);
+    // The color dimension sets the range for fields that getMinMaxAndDelta does not handle (e.g. time)
+    const colorRange = colorField.state?.range ?? getMinMaxAndDelta(colorField);
     // TODO: explore showing mean on the gradient scale
     // const stats = reduceField({
     //   field: color.field!,

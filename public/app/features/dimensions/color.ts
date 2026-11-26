@@ -1,10 +1,14 @@
 import {
   type DataFrame,
   type Field,
+  FieldType,
   getDisplayProcessor,
   getFieldColorModeForField,
   type GrafanaTheme2,
   getFieldConfigWithMinMax,
+  type NumericRange,
+  reduceField,
+  ReducerID,
 } from '@grafana/data';
 import { type ColorDimensionConfig } from '@grafana/schema';
 
@@ -42,10 +46,22 @@ function getColorDimensionForField(
   const mode = getFieldColorModeForField(field);
   if (mode.isByValue || field.config.mappings?.length) {
     // Force this to use local min/max for range
-    const config = getFieldConfigWithMinMax(field, true);
-    if (config !== field.config) {
-      field = { ...field, config };
-      field.state = undefined;
+    if (field.type === FieldType.time) {
+      // The local min/max is only calculated for number fields, so time fields need their own range
+      const range = getTimeFieldRange(field);
+      if (range) {
+        field = {
+          ...field,
+          config: { ...field.config, min: range.min, max: range.max },
+          state: { ...field.state, range },
+        };
+      }
+    } else {
+      const config = getFieldConfigWithMinMax(field, true);
+      if (config !== field.config) {
+        field = { ...field, config };
+        field.state = undefined;
+      }
     }
 
     const disp = getDisplayProcessor({ field, theme });
@@ -68,4 +84,16 @@ function getColorDimensionForField(
     get: (i) => fixed,
     field,
   };
+}
+
+function getTimeFieldRange(field: Field): NumericRange | undefined {
+  const stats = reduceField({ field, reducers: [ReducerID.min, ReducerID.max] });
+  const min = field.config.min ?? stats[ReducerID.min];
+  const max = field.config.max ?? stats[ReducerID.max];
+
+  if (typeof min !== 'number' || typeof max !== 'number') {
+    return undefined;
+  }
+
+  return { min, max, delta: max - min };
 }
