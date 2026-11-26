@@ -162,6 +162,9 @@ func joinStopError(runErr, stopErr error) error {
 // withoutCancellation returns err without its context.Canceled branches, or
 // nil if nothing else is left.
 func withoutCancellation(err error) error {
+	if !errors.Is(err, context.Canceled) {
+		return err
+	}
 	switch e := err.(type) {
 	case interface{ Unwrap() []error }:
 		var kept []error
@@ -172,17 +175,13 @@ func withoutCancellation(err error) error {
 		}
 		return errors.Join(kept...)
 	case interface{ Unwrap() error }:
-		inner := e.Unwrap()
-		stripped := withoutCancellation(inner)
-		if stripped == nil || stripped == inner {
-			return stripped
+		if inner := e.Unwrap(); inner != nil {
+			if stripped := withoutCancellation(inner); stripped != nil {
+				return &strippedError{msg: err.Error(), err: stripped}
+			}
 		}
-		return &strippedError{msg: err.Error(), err: stripped}
 	}
-	if errors.Is(err, context.Canceled) {
-		return nil
-	}
-	return err
+	return nil
 }
 
 // strippedError keeps a wrapper's message while unwrapping only to the causes
