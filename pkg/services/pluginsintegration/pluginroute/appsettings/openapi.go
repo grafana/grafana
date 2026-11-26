@@ -269,12 +269,7 @@ func undeclaredPathParameters(path string, props *spec3.PathProps) []*spec3.Para
 func defaultSchema() *pluginschema.PluginSchema {
 	return &pluginschema.PluginSchema{
 		SettingsSchema: &pluginschema.Settings{
-			Spec: &spec.Schema{
-				SchemaProps: spec.SchemaProps{ // The jsonSchema object
-					Type:                 []string{"object"},
-					AdditionalProperties: &spec.SchemaOrBool{Allows: true},
-				},
-			},
+			Spec: definition.AnyJSONData(), // the jsonData object
 		},
 		SettingsExamples: &pluginschema.SettingsExamples{
 			Examples: map[string]*spec3.Example{

@@ -21,22 +21,25 @@ const settingsSpecSchemaName = "spec"
 // withPluginSchema adds to the settings manifest's Settings kind and version
 // what the plugin's schema for the settings API version describes, so the
 // manifest publishes it as the settings API does: the settings spec, with
-// jsonData as the schema defines it, its secure values, and the routes below
-// the resources subresource with the components they refer to. What the
-// settings manifest's foundation declares is kept: a route, or a component,
-// it declares under the same name is not replaced.
+// enabled next to jsonData as the schema defines it (any object when it does
+// not), its secure values, and the routes below the resources subresource
+// with the components they refer to. What the settings manifest's foundation
+// declares is kept: a route, or a component, it declares under the same name
+// is not replaced.
 //
 // Only resource routes are taken from the schema. A proxy route must say
 // where it forwards to, which the schema does not.
 func withPluginSchema(kind *app.ManifestVersionKind, version *app.ManifestVersion, resources map[string]spec3.PathProps, schema *pluginschema.PluginSchema) error {
-	if schema.IsZero() {
-		return nil
-	}
 	var errs []error
-	if settings := schema.SettingsSchema; !settings.IsZero() {
-		if err := withSettingsSchema(kind, settings); err != nil {
-			errs = append(errs, fmt.Errorf("the settings schema is left out: %w", err))
-		}
+	var settings *pluginschema.Settings
+	if schema != nil {
+		settings = schema.SettingsSchema
+	}
+	if err := withSettingsSchema(kind, settings); err != nil {
+		errs = append(errs, fmt.Errorf("the settings schema is left out: %w", err))
+	}
+	if schema.IsZero() {
+		return errors.Join(errs...)
 	}
 	routes := schema.Routes
 	if routes.IsZero() {
@@ -78,17 +81,16 @@ func withPluginSchema(kind *app.ManifestVersionKind, version *app.ManifestVersio
 	return errors.Join(errs...)
 }
 
-// withSettingsSchema sets kind's schema to the settings object: its spec, with
-// enabled and jsonData as the settings API describes them, and its secure
-// values. A kind schema the foundation declares is kept.
+// withSettingsSchema sets kind's schema to the settings object, whose spec is
+// enabled next to jsonData as the settings API describes them (AppSettingsSpec),
+// and its secure values. settings may be nil: jsonData is then any object.
 func withSettingsSchema(kind *app.ManifestVersionKind, settings *pluginschema.Settings) error {
-	for _, v := range settings.SecureValues {
-		if !slices.ContainsFunc(kind.SecureValues, func(s app.ManifestVersionKindSecureValue) bool { return s.Key == v.Key }) {
-			kind.SecureValues = append(kind.SecureValues, app.ManifestVersionKindSecureValue{Key: v.Key, Description: v.Description})
+	if settings != nil {
+		for _, v := range settings.SecureValues {
+			if !slices.ContainsFunc(kind.SecureValues, func(s app.ManifestVersionKindSecureValue) bool { return s.Key == v.Key }) {
+				kind.SecureValues = append(kind.SecureValues, app.ManifestVersionKindSecureValue{Key: v.Key, Description: v.Description})
+			}
 		}
-	}
-	if kind.Schema != nil || settings.Spec == nil {
-		return nil
 	}
 	settingsSpec, err := toMap(AppSettingsSpec(settings))
 	if err != nil {

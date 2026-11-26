@@ -297,15 +297,29 @@ func copyComponents(src *spec3.Components, dst *spec3.Components) {
 
 // AppSettingsSpec is the spec of an app's settings object as the settings API
 // describes it, in its OpenAPI and its manifest: whether the app is enabled,
-// and its jsonData, as the settings schema's spec defines it.
+// next to its jsonData. The settings schema's spec is the contents of
+// jsonData; without one, jsonData is any object (AnyJSONData).
 func AppSettingsSpec(settings *pluginschema.Settings) *spec.Schema {
+	jsonData := AnyJSONData()
+	if !settings.IsZero() && settings.Spec != nil {
+		jsonData = settings.Spec
+	}
 	return &spec.Schema{
 		SchemaProps: spec.SchemaProps{
 			Type: []string{"object"},
 			Properties: map[string]spec.Schema{
 				"enabled":  *spec.BooleanProperty().WithDescription("can be executed"),
-				"jsonData": *settings.Spec,
+				"jsonData": *jsonData,
 			},
 		},
 	}
+}
+
+// AnyJSONData is the jsonData of an app whose settings schema does not define
+// it: any object.
+func AnyJSONData() *spec.Schema {
+	return &spec.Schema{SchemaProps: spec.SchemaProps{
+		Type:                 []string{"object"},
+		AdditionalProperties: &spec.SchemaOrBool{Allows: true},
+	}}
 }

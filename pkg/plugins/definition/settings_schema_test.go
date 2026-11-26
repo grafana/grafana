@@ -106,8 +106,24 @@ func TestNewSettingsManifestKeepsWhatItsFoundationDeclares(t *testing.T) {
 }
 
 func TestNewSettingsManifestWithoutAPluginSchema(t *testing.T) {
-	manifest, err := NewSettingsManifest(appWithRoutes(nil), testMatcher)
-	require.NoError(t, err)
-	require.Nil(t, manifest.Versions[0].Kinds[0].Schema)
-	require.Empty(t, manifest.Versions[0].OpenAPI.Paths)
+	for name, schemas := range map[string]map[string]*pluginschema.PluginSchema{
+		"no schema":                 nil,
+		"a schema without settings": {SettingsAPIVersion: {Routes: testPluginSchema().Routes}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			p := appWithRoutes(nil)
+			p.Schemas = schemas
+			manifest, err := NewSettingsManifest(p, testMatcher)
+			require.NoError(t, err)
+			kind := manifest.Versions[0].Kinds[0]
+			require.NotNil(t, kind.Schema, "the settings kind is always described")
+			raw, err := json.Marshal(kind.Schema.AsOpenAPI3SchemasMap()[settingsSpecSchemaName])
+			require.NoError(t, err)
+			require.JSONEq(t, `{"type":"object","properties":{
+				"enabled":{"type":"boolean","description":"can be executed"},
+				"jsonData":{"type":"object","additionalProperties":true}
+			}}`, string(raw), "jsonData is any object")
+			require.Empty(t, kind.SecureValues)
+		})
+	}
 }
