@@ -120,6 +120,37 @@ func TestOperatorRun(t *testing.T) {
 		require.NotErrorIs(t, err, context.Canceled)
 	})
 
+	t.Run("reports a failed service stop on shutdown instead of the cancellation", func(t *testing.T) {
+		stopErr := errors.New("flush failed")
+		ctx, cancel := context.WithCancel(context.Background())
+		failingStop := services.NewIdleService(nil, func(error) error { return stopErr })
+		err := Operator{Name: "test", Build: func(*Runtime) (*Parts, error) {
+			return &Parts{
+				Services: []services.Service{failingStop},
+				Run: func(ctx context.Context, _ func()) error {
+					cancel()
+					<-ctx.Done()
+					return ctx.Err()
+				},
+			}, nil
+		}}.Run(ctx, testDeps())
+		require.ErrorIs(t, err, stopErr)
+		require.NotErrorIs(t, err, context.Canceled)
+	})
+
+	t.Run("keeps a Run error alongside a failed service stop", func(t *testing.T) {
+		runErr, stopErr := errors.New("run"), errors.New("flush failed")
+		failingStop := services.NewIdleService(nil, func(error) error { return stopErr })
+		err := Operator{Name: "test", Build: func(*Runtime) (*Parts, error) {
+			return &Parts{
+				Services: []services.Service{failingStop},
+				Run:      func(context.Context, func()) error { return runErr },
+			}, nil
+		}}.Run(context.Background(), testDeps())
+		require.ErrorIs(t, err, runErr)
+		require.ErrorIs(t, err, stopErr)
+	})
+
 	t.Run("ignores a ready callback that arrives after shutdown began", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
