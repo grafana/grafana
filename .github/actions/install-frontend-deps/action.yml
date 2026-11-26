@@ -48,7 +48,7 @@ runs:
     # It also caches pnpm's lockfile verification result, so an unchanged lockfile is not
     # re-checked against the registry. Node.js comes from setup-node, not from pnpm.
     - name: Install pnpm and dependencies
-      uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+      uses: pnpm/setup@731dfb6463bbd11c11fd0ee11fe00ed0e36d48a1 # v3.2.0
       env:
         PUPPETEER_SKIP_DOWNLOAD: true
         CYPRESS_INSTALL_BINARY: 0

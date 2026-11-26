@@ -6,6 +6,7 @@ import React, { type ComponentProps, useCallback, useEffect, useId, useMemo, use
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { pickDataAttributes } from '../../utils/dataAttributes';
 import { useFieldContext } from '../Forms/FieldContext';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
@@ -66,6 +67,9 @@ interface ComboboxStaticProps<T extends string | number>
   inputRef?: React.Ref<HTMLInputElement>;
 
   ['data-testid']?: string;
+
+  /** Custom data attributes (for example `data-analytics-id`), rendered on the combobox input */
+  [key: `data-${string}`]: string | undefined;
 
   /**
    * Called when the input loses focus.
@@ -178,7 +182,9 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     isOpen: isOpenProp,
     onIsOpenChange: onIsOpenChangeProp,
     loading: loadingProp,
+    ...restProps
   } = props;
+  const dataAttributes = pickDataAttributes(restProps);
   const fieldContext = useFieldContext();
   const id = idProp ?? fieldContext.id;
   const disabled = disabledProp ?? fieldContext.disabled;
@@ -419,6 +425,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         className={styles.input}
         suffix={inputSuffix}
         {...getInputProps({
+          ...dataAttributes,
           ref: mergedInputRef,
           onChange: noop, // Empty onCall to avoid TS error https://github.com/downshift-js/downshift/issues/718
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component

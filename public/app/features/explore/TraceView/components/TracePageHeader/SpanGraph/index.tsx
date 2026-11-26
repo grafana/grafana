@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import memoizeOne from 'memoize-one';
+import { memoizeOne } from 'memoize-one';
 import { memo } from 'react';
 
 import {

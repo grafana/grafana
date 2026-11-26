@@ -1,4 +1,4 @@
-import memoizeOne from 'memoize-one';
+import { memoizeOne } from 'memoize-one';
 import { useEffect, useState } from 'react';
 
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
