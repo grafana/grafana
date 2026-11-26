@@ -11,6 +11,8 @@ import * as actions from '../actions';
 import { REMOVE_FILTER_KEY } from './AdHocFilterKey';
 import { AdHocPicker } from './AdHocPicker';
 
+jest.mock('../actions', () => makeSpyable('../actions'));
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: jest.fn(),

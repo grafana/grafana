@@ -6,6 +6,7 @@ import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { type EditableDashboardElement } from '../../scene/types/EditableDashboardElement';
 import { isSceneVariable } from '../../settings/variables/utils';
 import { type DashboardActionMeta } from '../../sidebar/events';
+import { trackPanelSettingChange } from '../../utils/trackPanelSettingChange';
 import { edit } from '../utils/edit';
 import { changeVariableName } from '../variable/changeVariableName';
 
@@ -34,6 +35,10 @@ export function renameElement({ source, element, oldName, newName }: RenameEleme
     perform: () => element.onChangeName?.(newName),
     undo: () => element.onChangeName?.(oldName),
   });
+
+  if (source instanceof VizPanel) {
+    trackPanelSettingChange(source, 'change_panel_title', 'outline');
+  }
 }
 
 function getRenameActionId(source: SceneObject): DashboardActionMeta['actionId'] {

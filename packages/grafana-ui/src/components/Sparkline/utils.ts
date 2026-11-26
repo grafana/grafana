@@ -4,17 +4,22 @@ import {
   applyNullInsertThreshold,
   // colorManipulator,
   type DataFrame,
+  type Field,
   type FieldConfig,
+  type AbsoluteTimeRange,
   type FieldSparkline,
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
   getFieldColorModeForField,
   getFieldSeriesColor,
+  getScaleCalculator,
   type GrafanaTheme2,
   guessDecimals,
   isLikelyAscendingVector,
   nullToValue,
+  reduceField,
+  ReducerID,
   roundDecimals,
   sortDataFrame,
 } from '@grafana/data';
@@ -127,12 +132,29 @@ export function getYRange(alignedFrame: DataFrame): Range.MinMax {
 
 const HIGHLIGHT_IDX_POINT_SIZE = 6;
 
+// Minimum pointer travel before uPlot starts a drag. Without a threshold, a
+// click that moves a pixel or two selects a range and changes the dashboard's
+// time range.
+const MIN_DRAG_DISTANCE = 5;
+
 const defaultConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
   showPoints: VisibilityMode.Auto,
   axisPlacement: AxisPlacement.Hidden,
   pointSize: 0,
 };
+
+// getFieldSeriesColor's default `last` reducer returns a trailing null, which it scores as 0,
+// so a series ending in a gap would get the bottom scheme color. Use the last real value instead.
+function getSeriesColor(field: Field, theme: GrafanaTheme2): string {
+  const seriesBy = field.config.color?.seriesBy ?? ReducerID.last;
+  if (!getFieldColorModeForField(field).isByValue || seriesBy !== ReducerID.last) {
+    return getFieldSeriesColor(field, theme).color;
+  }
+
+  const { lastNotNull } = reduceField({ field, reducers: [ReducerID.lastNotNull] });
+  return getScaleCalculator(field, theme)(lastNotNull ?? 0).color;
+}
 
 export const prepareSeries = (
   sparkline: FieldSparkline,
@@ -183,7 +205,8 @@ export const prepareConfig = (
   theme: GrafanaTheme2,
   showHighlights?: boolean,
   enableHover?: boolean,
-  onHover?: (hover: SparklineHoverInfo | null) => void
+  onHover?: (hover: SparklineHoverInfo | null) => void,
+  onRangeSelected?: (range: AbsoluteTimeRange) => void
 ): UPlotConfigBuilder => {
   const builder = new UPlotConfigBuilder();
   const rangePad = HIGHLIGHT_IDX_POINT_SIZE / 2;
@@ -193,19 +216,21 @@ export const prepareConfig = (
   // X is the first field in the aligned frame
   const xField = dataFrame.fields[0];
 
-  if (enableHover) {
-    // Crosshair + focused point at the hovered index, no drag/zoom. focus.prox Infinity keeps
-    // the single series focused so hover works across the full width.
+  const selectTimeRange = onRangeSelected && sparkline.x?.type === FieldType.time;
+  if (enableHover || selectTimeRange) {
+    // Crosshair plus a focused point at the hovered index. Dragging only
+    // selects a range; it never zooms. focus.prox Infinity keeps the single
+    // series focused so hover works across the full width.
     const yField = dataFrame.fields.find((f) => f !== xField && f.type === FieldType.number);
     // Paint the cursor point a solid series color. uPlot's default cursor-point color fn reads
     // the builder's `frames`, which Sparkline never populates, so it would throw on gradient
     // series (e.g. TableNG's default hue). A solid color sidesteps that.
-    const pointColor = yField ? getFieldSeriesColor(yField, theme).color : theme.colors.text.primary;
+    const pointColor = yField ? getSeriesColor(yField, theme) : theme.colors.text.primary;
     builder.setCursor({
       show: true,
       x: true,
       y: false,
-      drag: { x: false, y: false, setScale: false },
+      drag: { x: Boolean(selectTimeRange), y: false, setScale: false, dist: MIN_DRAG_DISTANCE },
       focus: { prox: Infinity },
       points: { size: HIGHLIGHT_IDX_POINT_SIZE, stroke: pointColor, fill: pointColor },
     });
@@ -214,6 +239,26 @@ export const prepareConfig = (
       show: false,
       x: false,
       y: false,
+      drag: { x: false, y: false, setScale: false },
+    });
+  }
+
+  if (selectTimeRange) {
+    builder.setSelect({ show: true, left: 0, top: 0, width: 0, height: 0 });
+    builder.addHook('setSelect', (plot) => {
+      const { left, width } = plot.select;
+      if (width <= 0) {
+        return;
+      }
+      const start = Math.round(plot.posToVal(left, 'x'));
+      const end = Math.round(plot.posToVal(left + width, 'x'));
+      const from = Math.min(start, end);
+      const to = Math.max(start, end);
+      // Clear the rectangle: the caller changes the dashboard time range instead.
+      plot.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
+      if (Number.isFinite(from) && Number.isFinite(to) && to > from) {
+        onRangeSelected({ from, to });
+      }
     });
   }
 
@@ -270,7 +315,6 @@ export const prepareConfig = (
     });
 
     const colorMode = getFieldColorModeForField(field);
-    const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
 
     const hasHighlightIndex = showHighlights && typeof sparkline.highlightIndex === 'number';
     if (hasHighlightIndex) {
@@ -289,7 +333,9 @@ export const prepareConfig = (
       colorMode,
       thresholds: config.thresholds,
       drawStyle: customConfig.drawStyle!,
-      lineColor: customConfig.lineColor ?? seriesColor,
+      // By-value schemes need a representative value; calculating at (0, 0) always yields the
+      // first scheme color, e.g. red for Red-Yellow-Green or the panel background for Reds.
+      lineColor: customConfig.lineColor ?? getSeriesColor(field, theme),
       lineWidth: customConfig.lineWidth,
       lineInterpolation: customConfig.lineInterpolation,
       showPoints: pointsMode,

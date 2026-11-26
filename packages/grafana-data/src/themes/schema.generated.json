@@ -571,6 +571,9 @@
             },
             "brandHorizontal": {
               "type": "string"
+            },
+            "ai": {
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -1615,6 +1618,18 @@
           "properties": {
             "width": {
               "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "navmenu": {
+          "type": "object",
+          "properties": {
+            "activeItemBackground": {
+              "type": "string"
+            },
+            "activeItemText": {
+              "type": "string"
             }
           },
           "additionalProperties": false

@@ -59,12 +59,31 @@ The parent and the frame talk over `postMessage` with the `grafana-text-frame-v1
 - `event.source` is this iframe's `contentWindow`.
 - `event.origin` is `'null'`, the opaque origin.
 - The message has this frame's random `channel` id and passes `isFrameNotification`.
+- After the `ready` handshake, the message carries the current render revision. Older revisions cannot complete, resize, fail, or report resources for the current render.
 
 The parent treats every report from the frame as untrusted:
 
 - It drops reported URLs whose origin doesn't match the origin they're reported under.
 - It caps blocked URLs at `MAX_BLOCKED_URL_CHARS` per directive and origin, and URL counts at `MAX_BLOCKED_URL_COUNT`. A source over the cap is marked `truncated`, never listed in part.
 - It ignores resize values outside a fixed range.
+
+## Content updates
+
+Initial render commands include the shared stylesheet. Content-only updates omit unchanged CSS to avoid repeatedly transporting inlined font data. A fresh document always receives the full stylesheet; omission is only accepted after a stylesheet has been installed, and an explicit empty string clears shared styles.
+
+Protected frames reuse their document for HTML changes while their policy and diagram configuration remain unchanged. Each update replaces the content container, disconnects its observer, cancels pending completion and violation timers, resets resource reports, and advances the render revision. The shared stylesheet, loaded fonts, and the evaluated Mermaid bundle remain in the document, so later diagrams don't request or evaluate the bundle again. A document that failed or reported blocked resources is replaced on the next HTML change instead; the controller makes that decision synchronously, so a failure batched into the same render as new HTML can't be overwritten by it. Mermaid work is serialized because the library uses document-global state; cancelled work cannot update the new content or complete its render.
+
+Policy and diagram configuration changes still create a new document. A document that reported blocked resources or failed also starts fresh on its next content update, so unchanged stylesheet violations are reported again. Legacy frames without a policy always recreate on content changes: removing their DOM cannot dispose scripts, timers, or listeners they may have installed.
+
+Browser CSP events do not carry render revisions. A delayed violation from a removed resource can therefore still appear in the current report; it remains a blocked request and does not grant permission. The revision guard rejects already-posted notifications from earlier renders.
+
+## Styling
+
+Text documents receive shared typography, element, code, Markdown, accessibility, form, legacy utility, card (`.card-*`) and filter table (`.filter-table`) styles, compiled once per theme. They do not copy feature-specific global styles such as dashboard layout or query editor styles. HTML that depends on those feature-specific classes should supply its own styles.
+
+Font faces are still collected from the application's global styles so configured fonts remain available, and their existing network policy and inlining rules are unchanged. The Text stylesheet is compiled into a detached CSSStyleSheet through Emotion and serialized from CSSOM, matching the browser's handling of unsupported selectors and invalid declarations without applying styles in the parent document.
+
+Content renders with fallback fonts while shared font preparation runs; an already-prepared cache entry is used immediately. Prepared CSS is applied through an authenticated `styles` command without replacing the document or content, including for legacy panels. Style commands retain the content revision and carry a monotonically increasing style revision, so stale font completions cannot measure newer content or styles. They preserve blocked-resource reports, pending Mermaid work, and script/input state. New policies still require new documents; a style command cannot change CSP or sandbox flags.
 
 ## Consent
 

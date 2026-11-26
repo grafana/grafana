@@ -2,8 +2,6 @@ package datasource
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -11,15 +9,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/config"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 type pluginClientConversion interface {
-	backend.ConversionHandler
+	// TODO, use v3 client
 }
 
 type queryConvertREST struct {
@@ -72,7 +70,7 @@ func (r *queryConvertREST) convertQueryDataRequest(ctx context.Context, req *htt
 	}
 
 	ds := dqr.Queries[0].Datasource
-	pluginCtx, err := r.contextProvider.PluginContextForDataSource(ctx, &backend.DataSourceInstanceSettings{
+	_, err = r.contextProvider.PluginContextForDataSource(ctx, &backend.DataSourceInstanceSettings{
 		Type:       ds.Type,
 		UID:        ds.UID,
 		APIVersion: ds.APIVersion,
@@ -81,43 +79,11 @@ func (r *queryConvertREST) convertQueryDataRequest(ctx context.Context, req *htt
 		return nil, err
 	}
 
-	ctx = config.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
-	raw, err := json.Marshal(dqr)
-	if err != nil {
-		return nil, fmt.Errorf("marshal: %w", err)
-	}
-	convertRequest := &backend.ConversionRequest{
-		PluginContext: pluginCtx,
-		Objects: []backend.RawObject{
-			{
-				Raw:         raw,
-				ContentType: "application/json",
-			},
-		},
-	}
+	logging.FromContext(ctx).Error("query convert is not yet implemented")
 
-	convertResponse, err := r.client.ConvertObjects(ctx, convertRequest)
-	if err != nil {
-		if convertResponse != nil && convertResponse.Result != nil {
-			return nil, fmt.Errorf("conversion failed. Err: %w. Result: %s", err, convertResponse.Result.Message)
-		}
-		return nil, err
-	}
-
-	qr := &dsV0.QueryDataRequest{}
-	for _, obj := range convertResponse.Objects {
-		if obj.ContentType != "application/json" {
-			return nil, fmt.Errorf("unexpected content type: %s", obj.ContentType)
-		}
-		q := &data.DataQuery{}
-		err = json.Unmarshal(obj.Raw, q)
-		if err != nil {
-			return nil, fmt.Errorf("unmarshal: %w", err)
-		}
-		qr.Queries = append(qr.Queries, *q)
-	}
-
-	return qr, nil
+	// NOOP passthrough for now: the plugin client no longer exposes conversion.
+	// TODO: call the v3 conversion client and unmarshal each converted object.
+	return &dsV0.QueryDataRequest{Queries: dqr.Queries}, nil
 }
 
 func (r *queryConvertREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {

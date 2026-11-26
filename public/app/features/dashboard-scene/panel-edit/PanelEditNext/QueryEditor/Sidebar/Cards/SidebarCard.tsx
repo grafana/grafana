@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from 'react';
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Checkbox, Icon, useStyles2, useTheme2 } from '@grafana/ui';
+import { getFocusStyles } from '@grafana/ui/internal';
 
 import { Actions } from '../../../Actions';
 import { type ActionItem } from '../../../actionItem';
@@ -95,7 +96,7 @@ export const SidebarCard = ({
     }
     // @hello-pangea/dnd's capture-phase mousedown listener calls preventDefault, so browser focus
     // transfer never fires and Monaco never sees a natural blur. Force it imperatively.
-    if (document.activeElement instanceof HTMLElement && document.activeElement !== e.currentTarget) {
+    if (document.activeElement instanceof HTMLElement && !e.currentTarget.contains(document.activeElement)) {
       document.activeElement.blur();
     }
   };
@@ -105,10 +106,6 @@ export const SidebarCard = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.target !== e.currentTarget) {
-      return;
-    }
-
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onSelect();
@@ -172,36 +169,43 @@ export const SidebarCard = ({
           className={styles.card}
           onClick={handleCardClick}
           onMouseDown={handleCardMouseDown}
-          onKeyDown={handleKeyDown}
           onFocus={handleFocus}
           onBlur={handleBlur}
-          role="button"
-          tabIndex={0}
+          role="presentation"
           {...{ [SIDEBAR_CARD_DATA_ATTR]: id }}
-          aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
-          aria-pressed={isSelected}
         >
-          <div className={styles.cardContent}>{children}</div>
-          {hasActions && !multiSelectMode && (
-            <div>
+          {/* Kept a div rather than a native <button>: @hello-pangea/dnd won't start a drag from a <button>. */}
+          <div
+            className={styles.cardSelect}
+            onKeyDown={handleKeyDown}
+            role="button"
+            tabIndex={0}
+            aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
+            aria-pressed={isSelected}
+          >
+            <div className={styles.cardContent}>{children}</div>
+            {hasActions && !multiSelectMode && (
               <div className={styles.cardContentIcons}>
                 {item.isHidden && <Icon name="eye-slash" size="sm" />}
                 {!!item.error && <Icon name="exclamation-triangle" size="sm" color={theme.colors.error.text} />}
               </div>
-              <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
-                <Actions
-                  handleResetFocus={handleResetFocus}
-                  item={item}
-                  onDelete={onDelete}
-                  onDuplicate={onDuplicate}
-                  onToggleHide={onToggleHide}
-                  order={{
-                    delete: 1,
-                    duplicate: 0,
-                    hide: 2,
-                  }}
-                />
-              </div>
+            )}
+          </div>
+          {/* Siblings of the select control, not children, so buttons never nest inside role="button". */}
+          {hasActions && !multiSelectMode && (
+            <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
+              <Actions
+                handleResetFocus={handleResetFocus}
+                item={item}
+                onDelete={onDelete}
+                onDuplicate={onDuplicate}
+                onToggleHide={onToggleHide}
+                order={{
+                  delete: 1,
+                  duplicate: 0,
+                  hide: 2,
+                }}
+              />
             </div>
           )}
         </div>
@@ -259,11 +263,23 @@ function getStyles(
     background: `linear-gradient(270deg, ${hoverSolidBg} 80%, transparent 100%)`,
     opacity: 0,
     transform: 'translateX(8px)',
+    // Only the buttons take pointer events, so clicks on the gradient still reach the select control below.
     pointerEvents: 'none',
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create(['opacity', 'transform'], {
         duration: theme.transitions.duration.standard,
       }),
+    },
+  });
+
+  const cardSelect = css({
+    display: 'flex',
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    flex: 1,
+    minWidth: 0,
+    '&:focus-visible': {
+      outline: 'none',
     },
   });
 
@@ -365,20 +381,27 @@ function getStyles(
       '&:hover': {
         background: hoverBackgroundColor,
       },
+      // The card's overflow would clip a focus ring drawn on the select control itself.
+      [`&:has(.${cardSelect}:focus-visible)`]: getFocusStyles(theme),
       [`&:hover .${hoverActions}`]: {
         opacity: 1,
         transform: 'translateX(0)',
+      },
+      [`&:hover .${hoverActions} > *`]: {
         pointerEvents: 'auto',
       },
       '[data-is-dragging] &': {
         background: hoverBackgroundColor,
       },
     }),
+    cardSelect,
     hoverActions,
     hoverActionsVisible: css({
       opacity: 1,
       transform: 'translateX(0)',
-      pointerEvents: 'auto',
+      '& > *': {
+        pointerEvents: 'auto',
+      },
     }),
 
     cardContent: css({

@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"slices"
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -37,6 +36,9 @@ type pluginManifestsTarget struct {
 	client    *http.Client
 	patterns  []*regexp.Regexp
 	deps      PluginDependencies
+	// settingsPlugins selects the app plugins whose settings are served. None
+	// are served when it is empty.
+	settingsPlugins []*regexp.Regexp
 }
 
 // pluginConnections holds the connections to the plugin deployments of one
@@ -98,9 +100,6 @@ func newPluginManifestsTarget(
 		return nil, fmt.Errorf("router: %s must be absolute (scheme and host required): url=%q", source, rawURL)
 	}
 
-	// Managed plugins have no local plugin settings for the legacy app-access
-	// check, so it always grants access (pluginManifestAccessControl).
-	deps.AccessControl = pluginManifestAccessControl{}
 	t := &pluginManifestsTarget{
 		pluginConnections: newPluginConnections(source, grpcConfig, deps.MetricsRegister),
 		keyPrefix:         source,
@@ -108,6 +107,9 @@ func newPluginManifestsTarget(
 		url:               rawURL,
 		client:            client,
 		patterns:          patterns,
+	}
+	if source == sourcePlugins {
+		t.settingsPlugins = cloudAppSettingsPlugins(deps.Cfg)
 	}
 	t.polledSource = polledSource{
 		source:   source,
@@ -152,6 +154,16 @@ func (t *pluginManifestsTarget) fetch(ctx context.Context) ([]Backend, int, erro
 			}
 			continue
 		}
+		if id := entry.Definition.JSONData.ID; len(t.settingsPlugins) > 0 && entry.Definition.JSONData.Type == plugins.TypeApp &&
+			matchesAnyPattern(id, t.settingsPlugins) && matchesAnyPattern(id, t.patterns) {
+			backend, err := t.newSettingsBackend(ctx, entry)
+			if err != nil {
+				logging.FromContext(ctx).Warn("router: skipping app plugin settings", "pluginId", entry.Definition.JSONData.ID, "err", err)
+				skipped++
+			} else {
+				backends = append(backends, backend)
+			}
+		}
 		for _, manifest := range entry.Definition.Manifests {
 			if manifest == nil || !matchesAnyPattern(manifest.Group, t.patterns) {
 				continue
@@ -169,8 +181,18 @@ func (t *pluginManifestsTarget) fetch(ctx context.Context) ([]Backend, int, erro
 				return t.pluginClients(entry.Host, connectionID, manifest)
 			}
 
-			backend, err := newPluginBackend(entry.Definition.JSONData.ID, manifest, clients, t.deps, nil)
+			// Manifest APIs use their declared access checks; settings use legacy app access.
+			manifestDeps := t.deps
+			manifestDeps.AccessControl = pluginManifestAccessControl{}
+			// Only the operator-configured core source may serve core groups.
+			backend, err := buildPluginBackend(entry.Definition.JSONData.ID, manifest, clients, manifestDeps, nil, t.source == sourceCore)
 
+			if entry.Definition.JSONData.ID == "" && errors.Is(err, errNoServedVersions) {
+				// A core or bridge entry has no plugin ID, and one with no served
+				// version has nothing to route. Logging it on every poll is noise,
+				// and a named plugin that serves nothing still warns.
+				continue
+			}
 			if err != nil {
 				logging.FromContext(ctx).Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
 				skipped++
@@ -199,6 +221,34 @@ func (t *pluginManifestsTarget) fetch(ctx context.Context) ([]Backend, int, erro
 		}
 	}
 	return backends, skipped, nil
+}
+
+func (t *pluginManifestsTarget) newSettingsBackend(ctx context.Context, entry definition.PluginDeployment) (*PluginBackend, error) {
+	plugin := entry.Definition
+	loadSettingsManifest(ctx, &plugin)
+	clients := func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
+		client, _, err := t.pluginClients(entry.Host, plugin.JSONData.ID, plugin.Settings)
+		if err != nil {
+			return nil, nil, err
+		}
+		client, err = cloudSettingsClient(client, t.deps.Settings.Middleware)
+		return client, nil, err
+	}
+	b, err := newPluginSettingsBackend(plugin, clients, t.deps)
+	if err != nil {
+		return nil, err
+	}
+	b.key, err = pluginDeploymentKey(sourcePlugins+":settings", entry, nil)
+	if err != nil {
+		return nil, err
+	}
+	b.source = sourcePlugins
+	// Settings call the plugin over v2 only, which a BaaS HTTP host does not serve.
+	if host := entry.Host; host != "" && !baasbridge.IsHTTPHost(host) { //nolint:staticcheck
+		b.hasBackend = true
+		b.acquire = func() (func(), error) { return t.acquireConnection(host, plugin.JSONData.ID) }
+	}
+	return b, nil
 }
 
 // close implements [sourceCloser].
@@ -242,14 +292,12 @@ func (p *pluginConnections) pluginClients(host, pluginID string, manifest *app.M
 	if err != nil {
 		return nil, nil, err
 	}
-	// NOTE: ClientV2 is missing ALL the middleware...
+	// The settings backend wraps this raw client with its configured middleware.
 	return &backendgrpcplugin.ClientV2{
 		DiagnosticsClient: pluginv2.NewDiagnosticsClient(conn),
 		ResourceClient:    pluginv2.NewResourceClient(conn),
 		DataClient:        pluginv2.NewDataClient(conn),
 		StreamClient:      pluginv2.NewStreamClient(conn),
-		AdmissionClient:   pluginv2.NewAdmissionControlClient(conn),
-		ConversionClient:  pluginv2.NewResourceConversionClient(conn),
 	}, clientV3, nil
 }
 
@@ -268,7 +316,7 @@ func forwardRouteCredentials(ctx context.Context, header http.Header) error {
 	}
 	if !baasbridge.DeclaredAccessChecked(ctx) { //nolint:staticcheck
 		if token := requester.GetAccessToken(); token != "" {
-			header.Set("X-Access-Token", token)
+			header.Set(accessTokenHeader, token)
 		}
 	}
 	return nil
@@ -361,25 +409,13 @@ func fetchPluginManifests(ctx context.Context, client *http.Client, rawURL strin
 		return nil, fmt.Errorf("router: decoding plugin manifests from %s: %w", rawURL, err)
 	}
 
-	// Move any deprecated singular manifest properties to the multiple flavor
-	// nolint:staticcheck
 	for i := range deployment.Plugins {
-		plugin := &deployment.Plugins[i]
-		if plugin.Definition.Manifest == nil {
-			continue // OK
-		}
-		// The plural entry is authoritative when both formats contain the same group.
-		if !slices.ContainsFunc(plugin.Definition.Manifests, func(manifest *app.ManifestData) bool {
-			return manifest != nil && manifest.Group == plugin.Definition.Manifest.Group
-		}) {
-			plugin.Definition.Manifests = append(plugin.Definition.Manifests, plugin.Definition.Manifest)
-		}
-		plugin.Definition.Manifest = nil
-	}
-	for _, plugin := range deployment.Plugins {
-		for _, manifest := range plugin.Definition.Manifests {
+		plugin := &deployment.Plugins[i].Definition
+		for _, manifest := range plugin.Manifests {
 			definition.MigrateDeprecatedRoutes(manifest)
 		}
+		definition.MigrateDeprecatedRoutes(plugin.Settings)
+		loadSettingsManifest(ctx, plugin)
 	}
 
 	return deployment, nil

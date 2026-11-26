@@ -24,9 +24,9 @@ const QUERYLESS_APPS = [
 // Map data source types to compatible queryless apps
 const DATASOURCE_TO_QUERYLESS_APP: Record<string, string[]> = {
   prometheus: ['grafana-metricsdrilldown-app'],
+  loki: ['grafana-lokiexplore-app'],
   // todo: add more data source types here
   // 'pyroscope': ['grafana-pyroscope-app'],
-  // 'loki': ['grafana-lokiexplore-app'],
   // 'tempo': ['grafana-exploretraces-app'],
 };
 

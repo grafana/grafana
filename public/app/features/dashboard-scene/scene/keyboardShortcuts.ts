@@ -78,7 +78,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     key: 'v',
     onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
       const panelId = getPanelIdForVizPanel(vizPanel);
-      DashboardInteractions.panelActionClicked('view', panelId, 'keyboard');
+      DashboardInteractions.panelActionClicked('view', panelId, 'keyboard', vizPanel.state.pluginId);
       if (scene.state.viewPanel) {
         locationService.partial({ viewPanel: undefined });
       } else {
@@ -167,7 +167,12 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
         notifyMobileEditNotAvailable();
         return;
       }
-      DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(vizPanel), 'keyboard');
+      DashboardInteractions.panelActionClicked(
+        'copy',
+        getPanelIdForVizPanel(vizPanel),
+        'keyboard',
+        vizPanel.state.pluginId
+      );
       scene.copyPanel(vizPanel);
       const panelName = vizPanel.state.title || '';
       dispatch(
@@ -321,7 +326,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
 
         if (isFullDashboardEditing(scene.state) && !isRepeatCloneOrChildOf(vizPanel)) {
           const panelId = getPanelIdForVizPanel(vizPanel);
-          DashboardInteractions.panelActionClicked('delete', panelId, 'keyboard');
+          DashboardInteractions.panelActionClicked('delete', panelId, 'keyboard', vizPanel.state.pluginId);
           onRemovePanel(scene, vizPanel);
         }
       }),
@@ -335,7 +340,12 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
           notifyMobileEditNotAvailable();
           return;
         }
-        DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(vizPanel), 'keyboard');
+        DashboardInteractions.panelActionClicked(
+          'duplicate',
+          getPanelIdForVizPanel(vizPanel),
+          'keyboard',
+          vizPanel.state.pluginId
+        );
         if (isFullDashboardEditing(scene.state)) {
           duplicatePanel(vizPanel);
         }

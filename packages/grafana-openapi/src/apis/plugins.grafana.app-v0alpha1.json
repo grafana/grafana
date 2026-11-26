@@ -1627,6 +1627,20 @@
               },
               "additionalProperties": false
             }
+          },
+          "skills": {
+            "description": "Bundled Markdown skills keyed by plugin-local slug.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "required": ["path"],
+              "properties": {
+                "path": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false

@@ -1,5 +1,5 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import userEvent, { type UserEvent } from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 
 import { getLocalStorageProvider } from '@grafana/runtime/internal';
@@ -45,30 +45,31 @@ jest.mock('@grafana/ui/unstable', () => ({
 
 type Flag = NonNullable<FeatureControlFlagProps['flag']>;
 
-const renderComponent = (flag?: Flag) => render(<FeatureControlFlag flag={flag} />);
+const renderComponent = (flag?: Flag, props?: Partial<FeatureControlFlagProps>) =>
+  render(<FeatureControlFlag flag={flag} {...props} />);
 
 const getStorageKey = (flagName: string) => `grafana.openfeature.${flagName}`;
 
-const expandFlag = async (flagName: string) => {
-  await userEvent.click(screen.getByText(flagName));
+const expandFlag = async (user: UserEvent, flagName: string) => {
+  await user.click(screen.getByText(flagName));
 
   await waitFor(() => {
     expect(screen.getByRole('button', { name: 'Save' })).toBeVisible();
   });
 };
 
-const changeType = async (type: string) => {
-  await userEvent.click(screen.getByRole('combobox', { name: 'Flag type' }));
-  await userEvent.click(screen.getByRole('option', { name: type }));
+const changeType = async (user: UserEvent, type: string) => {
+  await user.click(screen.getByRole('combobox', { name: 'Flag type' }));
+  await user.click(screen.getByRole('option', { name: type }));
 };
 
-const changeValue = async (input: string, type: string) => {
+const changeValue = async (user: UserEvent, input: string, type: string) => {
   if (type === 'boolean') {
-    await userEvent.click(screen.getByRole('radio', { name: input }));
+    await user.click(screen.getByRole('radio', { name: input }));
   } else {
     const elm = screen.getByRole(type === 'number' ? 'spinbutton' : 'textbox', { name: 'Flag value' });
-    await userEvent.clear(elm);
-    await userEvent.type(elm, input);
+    await user.clear(elm);
+    await user.type(elm, input);
   }
 };
 
@@ -89,8 +90,9 @@ describe('FeatureControlFlag', () => {
     { type: 'string', value: 'hello' },
     { type: 'object', value: '{"enabled":true}' },
   ])('labels the $type value control with a screen-reader-only label', async ({ value }) => {
+    const user = userEvent.setup();
     renderComponent({ key: 'alpha', value });
-    await expandFlag('alpha');
+    await expandFlag(user, 'alpha');
 
     expect(screen.getByLabelText('Flag value')).toHaveAccessibleName('Flag value');
   });
@@ -111,26 +113,27 @@ describe('FeatureControlFlag', () => {
   ].map(({ type, before, after }) => {
     describe(`${type} flags`, () => {
       it('adds a new flag', async () => {
+        const user = userEvent.setup();
         expect(window.localStorage.getItem(getStorageKey('alpha'))).toBeNull();
 
-        renderComponent();
-        await expandFlag('new-flag-override');
+        renderComponent(undefined);
 
-        await userEvent.type(screen.getByRole('combobox', { name: 'Flag key' }), 'alpha[Enter]');
-        await changeType(type);
-        await changeValue(after.input, type);
+        await user.type(screen.getByRole('combobox', { name: 'Flag key' }), 'alpha[Enter]');
+        await changeType(user, type);
+        await changeValue(user, after.input, type);
 
-        await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await user.click(screen.getByRole('button', { name: 'Save' }));
         await waitFor(() => {
           expect(window.localStorage.getItem(getStorageKey('alpha'))).toBe(after.expected);
         });
       });
 
       it('updates an existing flag', async () => {
+        const user = userEvent.setup();
         getLocalStorageProvider().setFlags({ alpha: before.storage });
 
         renderComponent({ key: 'alpha', value: before.storage });
-        await expandFlag('alpha');
+        await expandFlag(user, 'alpha');
 
         expect(screen.getByRole('combobox', { name: 'Flag type' })).toHaveValue(type);
 
@@ -143,9 +146,9 @@ describe('FeatureControlFlag', () => {
           );
         }
 
-        await changeValue(after.input, type);
+        await changeValue(user, after.input, type);
 
-        await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await user.click(screen.getByRole('button', { name: 'Save' }));
         await waitFor(() => {
           expect(window.localStorage.getItem(getStorageKey('alpha'))).toBe(after.expected);
         });
@@ -189,65 +192,132 @@ describe('FeatureControlFlag', () => {
   });
 
   it('removes an existing flag', async () => {
+    const user = userEvent.setup();
     getLocalStorageProvider().setFlags({ alpha: true });
 
     renderComponent({ key: 'alpha', value: 'true' });
-    await expandFlag('alpha');
+    await expandFlag(user, 'alpha');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
     await waitFor(() => {
       expect(window.localStorage.getItem(getStorageKey('alpha'))).toBeNull();
     });
   });
 
-  it('shows known flag names in the flag key combobox', async () => {
-    renderComponent();
-    await expandFlag('new-flag-override');
+  it('autofocuses the flag key input when rendered as the new-flag form', async () => {
+    renderComponent(undefined, { autoFocus: true });
 
-    await userEvent.click(screen.getByRole('combobox', { name: 'Flag key' }));
+    await waitFor(() => {
+      expect(screen.getByRole('combobox', { name: 'Flag key' })).toHaveFocus();
+    });
+  });
+
+  it('calls onDone after saving a new flag', async () => {
+    const user = userEvent.setup();
+    const onDone = jest.fn();
+    renderComponent(undefined, { onDone });
+
+    await user.type(screen.getByRole('combobox', { name: 'Flag key' }), 'alpha[Enter]');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(onDone).toHaveBeenCalled();
+    });
+  });
+
+  it('cancels the new-flag form via onDone without saving', async () => {
+    const user = userEvent.setup();
+    const onDone = jest.fn();
+    renderComponent(undefined, { onDone });
+
+    await user.type(screen.getByRole('combobox', { name: 'Flag key' }), 'alpha[Enter]');
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(onDone).toHaveBeenCalled();
+    expect(window.localStorage.getItem(getStorageKey('alpha'))).toBeNull();
+  });
+
+  it('shows known flag names in the flag key combobox', async () => {
+    const user = userEvent.setup();
+    renderComponent(undefined);
+
+    await user.click(screen.getByRole('combobox', { name: 'Flag key' }));
     expect(screen.getByRole('option', { name: 'feature-alpha' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'feature-beta' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'feature-gamma' })).toBeInTheDocument();
   });
 
   it('shows the OFREP evaluation when selecting a new flag key', async () => {
-    renderComponent();
-    await expandFlag('new-flag-override');
+    const user = userEvent.setup();
+    renderComponent(undefined);
 
-    await userEvent.type(screen.getByRole('combobox', { name: 'Flag key' }), 'feature-alpha[Enter]');
+    await user.type(screen.getByRole('combobox', { name: 'Flag key' }), 'feature-alpha[Enter]');
 
     expect(screen.getByText('OFREP evaluation')).toBeInTheDocument();
     expect(screen.getAllByText('true')).toHaveLength(2);
   });
 
   it('shows the OFREP evaluation value, variant and reason for an existing flag', async () => {
+    const user = userEvent.setup();
     renderComponent({ key: 'feature-alpha', value: 'false' });
-    await expandFlag('feature-alpha');
+    await expandFlag(user, 'feature-alpha');
 
     expect(screen.getByText('OFREP evaluation')).toBeInTheDocument();
     expect(screen.getAllByText('true')).toHaveLength(2);
 
-    await userEvent.hover(screen.getByTestId('icon-info-circle'));
+    // The summary row also shows a blue info-circle for a differing override, so
+    // hover the one in the expanded body (outside the <summary>).
+    const bodyInfoIcon = screen.getAllByTestId('icon-info-circle').find((el) => !el.closest('summary'));
+    await user.hover(bodyInfoIcon!);
     const tooltip = await screen.findByRole('tooltip');
     expect(within(tooltip).getByText('enabled')).toBeInTheDocument();
     expect(within(tooltip).getByText('DEFAULT')).toBeInTheDocument();
   });
 
-  it('shows the full OFREP object value in the badge tooltip', async () => {
-    renderComponent({ key: 'feature-object', value: 'false' });
-    await expandFlag('feature-object');
+  it('marks an override that matches the evaluated value', async () => {
+    renderComponent({ key: 'feature-alpha', value: 'true' });
 
-    await userEvent.hover(screen.getByText('{...}'));
+    expect(await screen.findByTestId('icon-check-circle')).toBeInTheDocument();
+  });
+
+  it('marks an override that differs from the evaluated value', async () => {
+    renderComponent({ key: 'feature-alpha', value: 'false' });
+
+    const summary = screen.getByText('feature-alpha').closest('summary')!;
+    expect(await within(summary).findByTestId('icon-info-circle')).toBeInTheDocument();
+  });
+
+  it('marks an override for a flag that is not evaluated by the provider', async () => {
+    renderComponent({ key: 'not-evaluated', value: 'true' });
+
+    expect(await screen.findByTestId('icon-exclamation-triangle')).toBeInTheDocument();
+  });
+
+  it('shows the full object override value on hover of the summary badge', async () => {
+    const user = userEvent.setup();
+    renderComponent({ key: 'my-object-flag', value: '{"enabled":true}' });
+
+    await user.hover(screen.getByText('{...}'));
+    expect(await screen.findByText('{"enabled":true}')).toBeInTheDocument();
+  });
+
+  it('shows the full OFREP object value in the badge tooltip', async () => {
+    const user = userEvent.setup();
+    renderComponent({ key: 'feature-object', value: 'false' });
+    await expandFlag(user, 'feature-object');
+
+    await user.hover(screen.getByText('{...}'));
     expect(await screen.findByText('{"enabled":true,"cohort":"staff"}')).toBeInTheDocument();
   });
 
   it('shows OFREP error details separately from the error badge', async () => {
+    const user = userEvent.setup();
     renderComponent({ key: 'feature-error', value: 'true' });
-    await expandFlag('feature-error');
+    await expandFlag(user, 'feature-error');
 
     expect(screen.getByText('FLAG_NOT_FOUND')).toBeInTheDocument();
 
-    await userEvent.hover(screen.getByTestId('icon-info-circle'));
+    await user.hover(screen.getByTestId('icon-info-circle'));
     expect(await screen.findByText('No provider result found for this flag.')).toBeInTheDocument();
   });
 });

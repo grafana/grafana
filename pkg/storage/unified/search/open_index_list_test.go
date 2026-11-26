@@ -1,7 +1,6 @@
 package search
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -23,20 +22,30 @@ func TestOpenIndexListWriteAndLoad(t *testing.T) {
 
 	first := resource.NamespacedResource{Namespace: "ns-a", Group: "group-a", Resource: "resource-a"}
 	second := resource.NamespacedResource{Namespace: "ns-b", Group: "group-b", Resource: "resource-b"}
+	clusterScoped := resource.NamespacedResource{Group: "iam.grafana.app", Resource: "globalroles"}
 
-	_, err = backend.BuildIndex(context.Background(), second, 2, "test", indexTestDocs(second, 2, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	_, err = backend.BuildIndex(t.Context(), clusterScoped, 1, "test", indexTestDocs(clusterScoped, 1, 50), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
-	_, err = backend.BuildIndex(context.Background(), first, 3, "test", indexTestDocs(first, 3, 200), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	_, err = backend.BuildIndex(t.Context(), second, 10, "test", indexTestDocs(second, 10, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+	_, err = backend.BuildIndex(t.Context(), first, 3, "test", indexTestDocs(first, 3, 200), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	now := time.Now().UTC()
+	firstSearch := time.UnixMilli(now.Add(-time.Hour).UnixMilli())
+	secondSearch := firstSearch.Add(time.Minute)
+	require.Equal(t, indexStorageMemory, backend.getIndexForSearch(first, firstSearch).indexStorage)
+	require.Equal(t, indexStorageFile, backend.getIndexForSearch(second, secondSearch).indexStorage)
 	require.NoError(t, backend.WriteOpenIndexStats(now))
+	contents, err := os.ReadFile(filepath.Join(backend.opts.Root, openIndexListFileName))
+	require.NoError(t, err)
+	require.NotContains(t, string(contents), clusterScoped.Resource)
 
 	stats, err := backend.LoadOpenIndexStats(now.Add(time.Minute), time.Hour)
 	require.NoError(t, err)
 	require.Equal(t, []resource.ResourceStats{
-		{NamespacedResource: first, Count: 3},
-		{NamespacedResource: second, Count: 2},
+		{NamespacedResource: first, Count: 3, LastSearchedAt: firstSearch},
+		{NamespacedResource: second, Count: 10, LastSearchedAt: secondSearch},
 	}, stats)
 }
 
@@ -71,6 +80,36 @@ func TestOpenIndexListKeepsWhenAGlobalIndexWasLastSearched(t *testing.T) {
 	require.Nil(t, after.PeekIndex(global))
 }
 
+func TestOpenIndexListPreservesMemoryIdleDeadlineWhenEnabledAfterRestart(t *testing.T) {
+	const ttl = 4 * time.Hour
+	root := t.TempDir()
+	key := resource.NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	searched := time.Now().Add(-3 * time.Hour).Truncate(time.Millisecond)
+
+	func() {
+		before, err := NewBleveBackend(BleveOptions{Root: root, FileThreshold: 10, IndexCacheTTL: ttl}, nil)
+		require.NoError(t, err)
+		defer before.Stop()
+		_, err = before.BuildIndex(t.Context(), key, 2, "test", indexTestDocs(key, 2, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, before.getIndexForSearch(key, searched))
+	}()
+
+	after, _ := setupBleveBackend(t, withRootDir(root), withIndexCacheTTL(ttl), withIndexCacheTTLIdleOnly(true))
+	stats, err := after.LoadOpenIndexStats(time.Now(), time.Hour)
+	require.NoError(t, err)
+	require.Len(t, stats, 1)
+	require.True(t, searched.Equal(stats[0].LastSearchedAt))
+
+	_, err = after.BuildIndex(t.Context(), key, stats[0].Count, "init", indexTestDocs(key, 2, 100), nil, false, time.Time{}, 0,
+		resource.BuildIndexOptions{LastSearchedAt: stats[0].LastSearchedAt})
+	require.NoError(t, err)
+	after.runEvictExpiredOrUnownedIndexes(searched.Add(ttl))
+	require.NotNil(t, after.PeekIndex(key))
+	after.runEvictExpiredOrUnownedIndexes(searched.Add(ttl + time.Millisecond))
+	require.Nil(t, after.PeekIndex(key))
+}
+
 func TestOpenIndexListWriteRemovesOpenIndexListWhenNoIndexes(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{Root: t.TempDir()}, nil)
 	require.NoError(t, err)
@@ -81,6 +120,32 @@ func TestOpenIndexListWriteRemovesOpenIndexListWhenNoIndexes(t *testing.T) {
 
 	_, err = os.Stat(filepath.Join(backend.opts.Root, openIndexListFileName))
 	require.ErrorIs(t, err, os.ErrNotExist)
+}
+
+func TestOpenIndexListLoadSkipsLegacyClusterScopedEntries(t *testing.T) {
+	backend, err := NewBleveBackend(BleveOptions{Root: t.TempDir()}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	now := time.Now().UTC()
+	global := resource.GlobalSearchKey("ns")
+	list := openIndexListFile{
+		WrittenAt: now.Format(time.RFC3339Nano),
+		Indexes: []openIndexListEntry{
+			{Group: "iam.grafana.app", Resource: "globalroles", DocCount: 157},
+			{Namespace: global.Namespace, Group: global.Group, Resource: global.Resource, DocCount: 3},
+		},
+	}
+	writeOpenIndexList(t, backend, list)
+	stats, err := backend.LoadOpenIndexStats(now, time.Hour)
+	require.NoError(t, err)
+	require.Equal(t, []resource.ResourceStats{{NamespacedResource: global, Count: 3}}, stats)
+
+	list.Indexes = list.Indexes[:1]
+	writeOpenIndexList(t, backend, list)
+	stats, err = backend.LoadOpenIndexStats(now, time.Hour)
+	require.NoError(t, err)
+	require.Empty(t, stats, "startup falls back to discovery when there are no usable saved indexes")
 }
 
 func TestOpenIndexListLoadRejectsStaleOpenIndexList(t *testing.T) {

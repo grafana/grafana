@@ -271,13 +271,11 @@ func TestWithBlobConfigUsesBlobBackend(t *testing.T) {
 		require.Same(t, blob, opts.Blob.Backend)
 	})
 
-	t.Run("prefers the blob url over the blob backend", func(t *testing.T) {
+	t.Run("rejects a configured bucket instead of silently switching storage", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.Raw.Section("grafana-apiserver").Key("blob_url").SetValue("mem://")
-		opts, err := buildResourceServerOptions(&ServerOptions{Cfg: cfg, BlobBackend: blob}, withBlobConfig)
-		require.NoError(t, err)
-		require.Nil(t, opts.Blob.Backend)
-		require.Equal(t, "mem://", opts.Blob.URL)
+		_, err := buildResourceServerOptions(&ServerOptions{Cfg: cfg, BlobBackend: blob}, withBlobConfig)
+		require.ErrorContains(t, err, "blob_url is no longer supported")
 	})
 }
 

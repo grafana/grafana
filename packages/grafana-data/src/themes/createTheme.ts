@@ -1,4 +1,4 @@
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { createBreakpoints } from './breakpoints';
 import { createColors, ThemeColorsInputSchema } from './createColors';
@@ -16,13 +16,13 @@ import { zIndex } from './zIndex';
 export const NewThemeOptionsSchema = z.object({
   name: z.string(),
   id: z.string(),
-  colors: ThemeColorsInputSchema.optional(),
-  spacing: ThemeSpacingOptionsSchema.optional(),
-  shadows: ThemeShadowsInputSchema.optional(),
-  shape: ThemeShapeInputSchema.optional(),
-  typography: ThemeTypographyInputSchema.optional(),
-  visualization: ThemeVisualizationColorsInputSchema.optional(),
-  components: ThemeComponentsInputSchema.optional(),
+  colors: z.optional(ThemeColorsInputSchema),
+  spacing: z.optional(ThemeSpacingOptionsSchema),
+  shadows: z.optional(ThemeShadowsInputSchema),
+  shape: z.optional(ThemeShapeInputSchema),
+  typography: z.optional(ThemeTypographyInputSchema),
+  visualization: z.optional(ThemeVisualizationColorsInputSchema),
+  components: z.optional(ThemeComponentsInputSchema),
 });
 
 /** @internal */

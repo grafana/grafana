@@ -16,7 +16,7 @@ import (
 // fast path (coreplugin type-asserts the writer to chunked.RawChunkReceiver) is preserved
 // through instrumentation. Without this the assertion fails, the raw writer is bypassed,
 // and frames are silently dropped.
-var _ chunked.RawChunkReceiver = (*errorRecordingChunkedWriter)(nil)
+var _ chunked.RawChunkReceiver = rawErrorRecordingChunkedWriter{}
 
 // errorRecordingChunkedWriter wraps a backend.ChunkedDataWriter to record per-refID
 // errors streamed via WriteError. A chunked plugin can report partial failures
@@ -35,15 +35,40 @@ type chunkedRefError struct {
 	refID  string
 	status backend.Status
 	err    error
+	source backend.ErrorSource
 }
 
 func (w *errorRecordingChunkedWriter) WriteError(ctx context.Context, refID string, status backend.Status, err error) error {
-	if err != nil {
-		w.mu.Lock()
-		w.errs = append(w.errs, chunkedRefError{refID: refID, status: status, err: err})
-		w.mu.Unlock()
+	source := backend.ErrorResponseWithErrorSource(err).ErrorSource
+	if source == "" && backend.IsDownstreamError(err) {
+		source = backend.ErrorSourceDownstream
 	}
+	w.recordError(refID, status, err, source)
 	return w.ChunkedDataWriter.WriteError(ctx, refID, status, err)
+}
+
+func (w *errorRecordingChunkedWriter) recordError(refID string, status backend.Status, err error, source backend.ErrorSource) {
+	if err == nil {
+		return
+	}
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.errs = append(w.errs, chunkedRefError{refID: refID, status: status, err: err, source: source})
+}
+
+// writer returns the writer for the next handler. It implements chunked.RawChunkReceiver
+// only when the wrapped writer does, because a client sends raw chunks to each writer
+// that implements it, and only decodes the chunks for a writer that does not.
+func (w *errorRecordingChunkedWriter) writer() backend.ChunkedDataWriter {
+	if raw, ok := w.ChunkedDataWriter.(chunked.RawChunkReceiver); ok {
+		return rawErrorRecordingChunkedWriter{errorRecordingChunkedWriter: w, raw: raw}
+	}
+	return w
+}
+
+type rawErrorRecordingChunkedWriter struct {
+	*errorRecordingChunkedWriter
+	raw chunked.RawChunkReceiver
 }
 
 // OnChunk keeps the wrapper transparent to the raw HTTP streaming path: coreplugin
@@ -51,21 +76,11 @@ func (w *errorRecordingChunkedWriter) WriteError(ctx context.Context, refID stri
 // bytes straight to the HTTP response. In that path per-refID failures arrive as
 // chunks carrying an Error rather than via WriteError, so record those here too
 // before forwarding, mirroring WriteError.
-func (w *errorRecordingChunkedWriter) OnChunk(chunk *pluginv2.QueryChunkedDataResponse) error {
-	raw, ok := w.ChunkedDataWriter.(chunked.RawChunkReceiver)
-	if !ok {
-		return errors.New("chunked writer does not support raw chunks")
-	}
+func (w rawErrorRecordingChunkedWriter) OnChunk(chunk *pluginv2.QueryChunkedDataResponse) error {
 	if chunk != nil && chunk.Error != "" {
-		w.mu.Lock()
-		w.errs = append(w.errs, chunkedRefError{
-			refID:  chunk.RefId,
-			status: backend.Status(chunk.Status),
-			err:    errors.New(chunk.Error),
-		})
-		w.mu.Unlock()
+		w.recordError(chunk.RefId, backend.Status(chunk.Status), errors.New(chunk.Error), backend.ErrorSource(chunk.ErrorSource))
 	}
-	return raw.OnChunk(chunk)
+	return w.raw.OnChunk(chunk)
 }
 
 // requestStatus derives the overall request status, mirroring

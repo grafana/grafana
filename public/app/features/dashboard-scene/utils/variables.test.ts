@@ -31,6 +31,7 @@ import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 import { NEW_LINK } from '../settings/links/utils';
 
+import { resolveMultiValueOperatorsOnActivate } from './resolveMultiValueOperatorsOnActivate';
 import { createSceneVariableFromVariableModel, createVariablesForSnapshot, getUserDefinedVariables } from './variables';
 
 // mock getDataSourceInstanceSettings()
@@ -445,7 +446,11 @@ describe('when creating variables objects', () => {
       description: 'Adhoc Description',
       allowCustomValue: false,
       applicabilityEnabled: false,
-      $behaviors: [expect.any(ReportInteractionBehavior), migrated.getRecommendations()],
+      $behaviors: [
+        expect.any(ReportInteractionBehavior),
+        resolveMultiValueOperatorsOnActivate,
+        migrated.getRecommendations(),
+      ],
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
@@ -529,7 +534,11 @@ describe('when creating variables objects', () => {
       key: expect.any(String),
       description: 'Adhoc Description',
       applicabilityEnabled: false,
-      $behaviors: [expect.any(ReportInteractionBehavior), migrated.getRecommendations()],
+      $behaviors: [
+        expect.any(ReportInteractionBehavior),
+        resolveMultiValueOperatorsOnActivate,
+        migrated.getRecommendations(),
+      ],
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
@@ -958,6 +967,7 @@ describe('when creating snapshot variables from dashboard model', () => {
     // // adhoc snapshot
     const adhocSnapshot = variables?.getByName('CoolFilters') as AdHocFiltersVariable;
     expect(adhocSnapshot.state.filters).toEqual(adHocVariable.filters);
+    expect(adhocSnapshot.state.$behaviors).toContain(resolveMultiValueOperatorsOnActivate);
     expect(adhocSnapshot.state.readOnly).toBe(true);
     //
     // // interval snapshot

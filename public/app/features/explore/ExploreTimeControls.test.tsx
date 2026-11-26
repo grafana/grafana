@@ -1,5 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { render } from 'test/test-utils';
 
 import { getDefaultTimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';

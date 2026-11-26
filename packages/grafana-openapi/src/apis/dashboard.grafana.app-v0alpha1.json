@@ -1286,6 +1286,15 @@
             }
           },
           {
+            "name": "lifecycle",
+            "in": "query",
+            "description": "dashboard lifecycle filter: draft returns only drafts, all returns drafts and published. When empty, drafts are hidden if the namespace hides them by default",
+            "schema": {
+              "type": "string",
+              "enum": ["draft", "all"]
+            }
+          },
+          {
             "name": "type",
             "in": "query",
             "description": "search dashboards or folders.  When empty, this will search both",

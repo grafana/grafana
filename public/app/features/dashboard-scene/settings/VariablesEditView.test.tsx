@@ -1,6 +1,6 @@
-import { act } from '@testing-library/react';
+import { act, cleanup } from '@testing-library/react';
 import { of } from 'rxjs';
-import { render } from 'test/test-utils';
+import { render, userEvent, waitFor } from 'test/test-utils';
 
 import {
   FieldType,
@@ -11,10 +11,10 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
+import { locationService, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneVariableSet, CustomVariable, VizPanel, AdHocFiltersVariable, SceneTimeRange } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
 import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
@@ -23,6 +23,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { VariablesEditView } from './VariablesEditView';
+import { VariablesEditViewRenderer } from './VariablesEditViewRenderer';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -365,3 +366,54 @@ async function buildTestScene() {
 
   return { dashboard, variableView };
 }
+
+function renderSidebarRedirect() {
+  const view = new VariablesEditView({});
+  const dashboard = new DashboardScene({
+    isEditing: true,
+    editview: view,
+    $variables: new SceneVariableSet({ variables: [] }),
+  });
+  const user = userEvent.setup();
+  const result = render(<VariablesEditViewRenderer model={view} />);
+  const elements = {
+    takeMeThere: () => result.getByRole('button', { name: 'Take me there' }),
+  };
+
+  return {
+    ...result,
+    dashboard,
+    user,
+    elements,
+    actions: {
+      async goToSidebar() {
+        await user.click(elements.takeMeThere());
+      },
+    },
+  };
+}
+
+describe.each([true, false])('VariablesEditView with explicit sidebar opening %s', (explicitOpen) => {
+  afterEach(cleanup);
+
+  testWithFlags({
+    dashboardNewLayouts: true,
+    [FlagKeys.GrafanaDashboardSettingsRedesign]: true,
+    [FlagKeys.GrafanaDashboardSidebarExplicitOpen]: explicitOpen,
+  });
+
+  it('when clicking Take me there with the sidebar closed, opens dashboard settings at variables', async () => {
+    const { dashboard, actions } = renderSidebarRedirect();
+    const sidebar = dashboard.state.sidebar;
+    expect(sidebar.state.openPane).toBeUndefined();
+
+    await actions.goToSidebar();
+
+    await waitFor(() => expect(sidebar.state.openPane?.getId()).toBe('element'));
+    expect(sidebar.getSelectedObject()).toBe(dashboard);
+    expect(locationService.getSearchObject()).toMatchObject({
+      showCategory: 'dashboard-variables',
+      highlightCategory: 'dashboard-variables',
+    });
+  });
+});

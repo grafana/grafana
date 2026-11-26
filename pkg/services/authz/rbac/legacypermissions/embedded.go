@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -15,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -54,7 +57,9 @@ func (c *embeddedTransactionCall) wait() {
 	}
 }
 
-type embeddedClient struct{ legacyclient.Service }
+type embeddedClient struct {
+	legacyclient.LegacyUserPermissionsClient
+}
 
 func (c *embeddedClient) LegacyGetUserPermissions(ctx context.Context, caller types.AuthInfo, req legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
 	if sess, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
@@ -62,7 +67,7 @@ func (c *embeddedClient) LegacyGetUserPermissions(ctx context.Context, caller ty
 		ctx = context.WithValue(ctx, embeddedTransactionCallKey{}, call)
 		defer call.wait()
 	}
-	return c.Service.LegacyGetUserPermissions(ctx, caller, req)
+	return c.LegacyUserPermissionsClient.LegacyGetUserPermissions(ctx, caller, req)
 }
 
 type embeddedStream struct {
@@ -74,22 +79,27 @@ func (s embeddedStream) Context() context.Context { return s.ctx }
 
 type embeddedServer struct {
 	authzv1.UnimplementedLegacyAuthzServiceServer
-	loader *Loader
-	cfg    *setting.Cfg
-	guard  *int
+	loader  *Loader
+	cfg     *setting.Cfg
+	guard   *int
+	metrics *serverMetrics
 }
 
 // NewEmbeddedClient owns a private in-process channel. The legacy handler is
 // deliberately never registered on a network server or the Check/List channel.
-func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.Service {
+func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.LegacyUserPermissionsClient {
+	return newEmbeddedClient(loader, cfg, nil)
+}
+
+func newEmbeddedClient(loader *Loader, cfg *setting.Cfg, reg prometheus.Registerer) legacyclient.LegacyUserPermissionsClient {
 	guard := new(int)
-	server := &embeddedServer{loader: loader, cfg: cfg, guard: guard}
+	server := &embeddedServer{loader: loader, cfg: cfg, guard: guard, metrics: newMetrics(reg, "embedded")}
 	channel := (&inprocgrpc.Channel{}).WithServerStreamInterceptor(func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		ctx := stream.Context()
 		if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
 			ctx = trace.ContextWithSpanContext(ctx, trace.SpanContextFromContext(clientCtx))
-			if isPermissionShadow(clientCtx) {
-				ctx = WithPermissionShadow(ctx)
+			if shadow.IsShadow(clientCtx) {
+				ctx = shadow.WithContext(ctx)
 			}
 			// Legacy callers can refresh before committing permission mutations.
 			// Preserve their SQL session without forwarding unrelated context values.
@@ -109,10 +119,13 @@ func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.Service {
 		return handler(srv, embeddedStream{ServerStream: stream, ctx: ctx})
 	})
 	authzv1.RegisterLegacyAuthzServiceServer(channel, server)
-	return &embeddedClient{Service: legacyclient.NewLegacyClient(channel)}
+	return &embeddedClient{LegacyUserPermissionsClient: legacyclient.NewLegacyClient(channel)}
 }
 
 func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
+	started := time.Now()
+	result := "error"
+	defer func() { s.metrics.observe(started, result) }()
 	ctx := stream.Context()
 	if s.guard == nil || ctx.Value(embeddedCallKey{}) != s.guard {
 		return status.Error(codes.PermissionDenied, "legacy enumeration is embedded-only")
@@ -151,7 +164,7 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 		orgID = -1
 	}
 	requester := &legacyRequester{
-		SignedInUser: &user.SignedInUser{OrgID: orgID, OrgRole: identity.RoleType(req.Identity.OrgRole), IsGrafanaAdmin: req.Identity.IsGrafanaAdmin, TeamIDs: req.Identity.TeamIds}, //nolint:staticcheck // The compatibility contract carries numeric RBAC memberships separately from contextual groups.
+		SignedInUser: &user.SignedInUser{OrgID: orgID, OrgRole: types.RoleType(req.Identity.OrgRole), IsGrafanaAdmin: req.Identity.IsGrafanaAdmin, TeamIDs: req.Identity.TeamIds}, //nolint:staticcheck // The compatibility contract carries numeric RBAC memberships separately from contextual groups.
 		identity:     req.Identity, namespace: namespace,
 	}
 	permissions, err := s.loader.GetUserPermissions(ctx, requester, ac.Options{ReloadCache: req.ReloadCache, SkipZanzanaCache: req.SkipZanzanaCache})
@@ -162,14 +175,18 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 	const chunkSize = 1000
 	for start := 0; start < len(permissions); start += chunkSize {
 		end := min(start+chunkSize, len(permissions))
-		chunk := &authzv1.LegacyGetUserPermissionsResponse{Permissions: make([]*authzv1.LegacyUserPermission, 0, end-start)}
-		for _, p := range permissions[start:end] {
-			chunk.Permissions = append(chunk.Permissions, &authzv1.LegacyUserPermission{Action: p.Action, Scope: p.Scope})
+		// Allocate message values together instead of allocating one object per permission.
+		values := make([]authzv1.LegacyUserPermission, end-start)
+		chunk := &authzv1.LegacyGetUserPermissionsResponse{Permissions: make([]*authzv1.LegacyUserPermission, end-start)}
+		for i, p := range permissions[start:end] {
+			values[i].Action, values[i].Scope = p.Action, p.Scope
+			chunk.Permissions[i] = &values[i]
 		}
 		if err := stream.Send(chunk); err != nil {
 			return err
 		}
 	}
+	result = "ok"
 	return nil
 }
 
@@ -212,7 +229,7 @@ func (r *legacyRequester) GetCacheKey() string {
 	if !r.HasUniqueId() {
 		id = string(r.GetOrgRole())
 		if id == "" {
-			id = string(identity.RoleNone)
+			id = string(types.RoleNone)
 		}
 	}
 	return fmt.Sprintf("%d-%s-%s", r.GetOrgID(), r.GetIdentityType(), id)

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { major, compare, lte, valid } from 'semver';
 
 import { dateTimeFormatTimeAgo, type GrafanaTheme2 } from '@grafana/data';
@@ -42,9 +42,11 @@ export const VersionList = ({ plugin }: Props) => {
 
   const [isInstalling, setIsInstalling] = useState(false);
 
-  useEffect(() => {
+  const [prevInstalledVersion, setPrevInstalledVersion] = useState(plugin.installedVersion);
+  if (plugin.installedVersion !== prevInstalledVersion) {
+    setPrevInstalledVersion(plugin.installedVersion);
     setIsInstalling(false);
-  }, [plugin.installedVersion]);
+  }
 
   // Check if installed version is in the versions list
   const isInstalledVersionMissing = useMemo(() => {

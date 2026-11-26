@@ -1,4 +1,4 @@
-import { getConvertAlertmanagerHeaders, getConvertRulesHeaders } from './headers';
+import { getConvertAlertmanagerHeaders, getConvertRulesHeaders, getConvertSourceHeaders } from './headers';
 
 describe('getConvertRulesHeaders', () => {
   it('sends no headers when no options are set', () => {
@@ -52,5 +52,23 @@ describe('getConvertAlertmanagerHeaders', () => {
       'X-Grafana-Alerting-Dry-Run': 'true',
       'X-Grafana-Alerting-Promote': 'true',
     });
+  });
+});
+
+describe('import source header', () => {
+  it('is sent with the rule, Alertmanager and source-only headers', () => {
+    expect(getConvertRulesHeaders({ source: 'wizard' })).toEqual({ 'X-Grafana-Alerting-Import-Source': 'wizard' });
+    expect(getConvertAlertmanagerHeaders({ identifier: 'prod', source: 'import_settings' })).toMatchObject({
+      'X-Grafana-Alerting-Import-Source': 'import_settings',
+    });
+    expect(getConvertSourceHeaders({ source: 'wizard' })).toEqual({ 'X-Grafana-Alerting-Import-Source': 'wizard' });
+  });
+
+  it('is left out when no source is given', () => {
+    expect(getConvertRulesHeaders({})).not.toHaveProperty('X-Grafana-Alerting-Import-Source');
+    expect(getConvertAlertmanagerHeaders({ identifier: 'prod' })).not.toHaveProperty(
+      'X-Grafana-Alerting-Import-Source'
+    );
+    expect(getConvertSourceHeaders({})).toEqual({});
   });
 });

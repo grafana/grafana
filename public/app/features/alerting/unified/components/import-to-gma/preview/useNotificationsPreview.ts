@@ -4,7 +4,7 @@ import { t } from '@grafana/i18n';
 
 import { fetchAlertManagerConfig } from '../../../api/alertmanager';
 import { useIntegrationTypeSchemas } from '../../../api/integrationSchemasApi';
-import { type ImportFormValues } from '../ImportToGMA';
+import { type ImportFormValues } from '../types';
 
 import {
   PreviewRedactionError,

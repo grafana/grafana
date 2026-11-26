@@ -1,4 +1,4 @@
-import { type DataFrame, type PanelOptionsEditorBuilder } from '@grafana/data';
+import { type DataFrame, type PanelOptionsEditorBuilder, type PanelQuickEdit } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type OptionsWithTooltip, TooltipDisplayMode, SortOrder } from '@grafana/schema';
 
@@ -84,6 +84,7 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
     .addNumberInput({
       path: 'tooltip.maxWidth',
       name: t('grafana-ui.builder.tooltip.name-max-width', 'Max width'),
+      description: t('grafana-ui.builder.tooltip.description-max-width', 'Maximum width of the tooltip, in pixels'),
       category,
       settings: {
         integer: true,
@@ -93,6 +94,7 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
     .addNumberInput({
       path: 'tooltip.maxHeight',
       name: t('grafana-ui.builder.tooltip.name-max-height', 'Max height'),
+      description: t('grafana-ui.builder.tooltip.description-max-height', 'Maximum height of the tooltip, in pixels'),
       category,
       defaultValue: undefined,
       settings: {
@@ -107,4 +109,28 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
         );
       },
     });
+}
+
+/**
+ * The tooltip options most often changed, as a quick edit for panels that use {@link addTooltipOptions}.
+ *
+ * @alpha
+ */
+export function tooltipQuickEdit(): PanelQuickEdit<OptionsWithTooltip> {
+  return {
+    id: 'tooltip',
+    title: t('grafana-ui.builder.tooltip.category', 'Tooltip'),
+    icon: 'comment-alt',
+    optionIds: ['tooltip.mode', 'tooltip.sort'],
+    summary: ({ options }) => {
+      switch (options.tooltip?.mode) {
+        case TooltipDisplayMode.Multi:
+          return { text: t('grafana-ui.builder.tooltip.modeOptions.label-all', 'All') };
+        case TooltipDisplayMode.None:
+          return { text: t('grafana-ui.builder.tooltip.modeOptions.label-hidden', 'Hidden') };
+        default:
+          return { text: t('grafana-ui.builder.tooltip.modeOptions.label-single', 'Single') };
+      }
+    },
+  };
 }

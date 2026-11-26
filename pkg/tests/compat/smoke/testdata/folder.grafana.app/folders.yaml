@@ -1,0 +1,5 @@
+apiVersion: folder.grafana.app/v1
+kind: Folder
+spec:
+  title: Compat smoke folder
+  description: Created by the compatibility smoke test

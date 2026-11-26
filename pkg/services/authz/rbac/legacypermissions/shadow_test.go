@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -64,7 +65,7 @@ func TestIntegrationShadowDoesNotWritePermissionCache(t *testing.T) {
 						},
 					}
 					client := legacypermissions.NewEmbeddedClient(loader, cfg)
-					res, err := client.LegacyGetUserPermissions(legacypermissions.WithPermissionShadow(t.Context()), legacypermissions.LegacyPermissionCaller(req.Namespace), req)
+					res, err := client.LegacyGetUserPermissions(shadow.WithContext(t.Context()), legacypermissions.LegacyPermissionCaller(req.Namespace), req)
 					require.NoError(t, err)
 					require.NotEmpty(t, res.Permissions)
 					for _, key := range keys {

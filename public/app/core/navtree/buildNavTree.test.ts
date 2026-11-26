@@ -271,6 +271,45 @@ describe('buildNavTree', () => {
       ]);
     });
 
+    describe('GMA-only rule list', () => {
+      const alertingChildren = () => findById(buildNavTree(), NavID.alerting)?.children ?? [];
+      const urlsById = () => Object.fromEntries(alertingChildren().map((item) => [item.id, item.url]));
+
+      it('replaces the rule list with alert and recording rule pages when the flag is on', () => {
+        setup({ permissions: ALERT_RULES_READER, openFeatureFlags: { 'alerting.gmaOnlyListView': true } });
+
+        expect(urlsById()).toEqual({
+          'alert-rules': '/alerting/rules/alert',
+          'recording-rules': '/alerting/rules/recording',
+        });
+      });
+
+      it('keeps the legacy rule list when the flag is off', () => {
+        setup({ permissions: ALERT_RULES_READER });
+
+        expect(urlsById()).toEqual({ 'alert-rules': '/alerting/list' });
+      });
+
+      it('hides the rule pages without Grafana-managed rule read', () => {
+        setup({
+          permissions: [AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingInstanceRead],
+          openFeatureFlags: { 'alerting.gmaOnlyListView': true },
+        });
+
+        expect(ids(alertingChildren())).toEqual(['silences', 'groups']);
+      });
+
+      it('hides recently deleted in legacy navigation when the flag is on', () => {
+        const recentlyDeleted = (openFeatureFlags: Record<string, boolean>) => {
+          setup({ orgRole: 'Admin', openFeatureFlags: { alertingNavigationV2: false, ...openFeatureFlags } });
+          return findById(alertingChildren(), 'alerts/recently-deleted');
+        };
+
+        expect(recentlyDeleted({})).toBeDefined();
+        expect(recentlyDeleted({ 'alerting.gmaOnlyListView': true })).toBeUndefined();
+      });
+    });
+
     it('moves alert groups into alert activity under V2 when state history writes to Prometheus', () => {
       const alertingChildren = (openFeatureFlags: Record<string, boolean>) => {
         setup({
@@ -415,12 +454,20 @@ describe('buildNavTree', () => {
       expect(ids(plugins?.children ?? [])).toContain('plugins');
     });
 
-    it('shows the extensions page in dev environments', () => {
-      setup();
+    it('shows the extensions page in dev environments with plugin write access', () => {
+      setup({ permissions: [AccessControlAction.PluginsWrite] });
       config.buildInfo.env = 'development';
 
       const plugins = findById(findById(buildNavTree(), NavID.cfg)?.children ?? [], NavID.cfgPlugins);
       expect(ids(plugins?.children ?? [])).toContain('extensions');
+    });
+
+    it('hides the extensions page in dev environments without plugin permissions', () => {
+      setup();
+      config.buildInfo.env = 'development';
+
+      const plugins = findById(findById(buildNavTree(), NavID.cfg)?.children ?? [], NavID.cfgPlugins);
+      expect(ids(plugins?.children ?? [])).not.toContain('extensions');
     });
 
     it('shows the extensions page outside dev only with the toggle and plugin write access', () => {
@@ -717,6 +764,184 @@ describe('getInitialNavTree', () => {
     };
 
     expect(findById(getInitialNavTree(), NavID.apps)?.url).toBe('/grafana/apps');
+  });
+
+  describe('administration section nav regrouping', () => {
+    const administration = (): NavModelItem[] => [
+      {
+        id: NavID.cfg,
+        text: 'Administration',
+        url: '/admin',
+        children: [
+          { id: 'plugin-page-grafana-advisor-app', text: 'Advisor', url: '/a/grafana-advisor-app/home' },
+          { id: 'secrets-management', text: 'Secrets Management', url: '/admin/secrets' },
+          {
+            id: NavID.cfgGeneral,
+            text: 'General',
+            url: '/admin/general',
+            children: [
+              { id: 'upgrading', text: 'Stats and license', url: '/admin/upgrading', sortWeight: -1 },
+              { id: 'org-settings', text: 'Default preferences', url: '/org' },
+              { id: 'server-settings', text: 'Settings', url: '/admin/settings' },
+              { id: 'migrate-to-cloud', text: 'Migrate to Grafana Cloud', url: '/admin/migrate-to-cloud' },
+              { id: 'provisioning', text: 'Provisioning', url: '/admin/provisioning' },
+            ],
+          },
+          { id: 'authentication', text: 'Authentication', url: '/admin/authentication' },
+          {
+            id: NavID.cfgAccess,
+            text: 'Users and access',
+            url: '/admin/access',
+            children: [{ id: 'serviceaccounts', text: 'Service accounts', url: '/org/serviceaccounts' }],
+          },
+        ],
+      },
+    ];
+
+    const withBootdata = (navTree: NavModelItem[], flagOn = true) => {
+      setup({ openFeatureFlags: { 'grafana.navigationAdminSubNav': flagOn } });
+      config.bootData = { ...config.bootData, navTree };
+    };
+
+    it('puts Authentication, Advisor and Secrets Management at the end of General, in that order', () => {
+      withBootdata(administration());
+
+      const cfg = findById(getInitialNavTree(), NavID.cfg);
+
+      expect(ids(cfg?.children ?? [])).toEqual([NavID.cfgGeneral, NavID.cfgAccess]);
+      expect(ids(findById(getInitialNavTree(), NavID.cfgAccess)?.children ?? [])).toEqual(['serviceaccounts']);
+      expect(ids(findById(getInitialNavTree(), NavID.cfgGeneral)?.children ?? [])).toEqual([
+        'org-settings',
+        'migrate-to-cloud',
+        'provisioning',
+        'upgrading',
+        'server-settings',
+        'authentication',
+        'plugin-page-grafana-advisor-app',
+        'secrets-management',
+      ]);
+    });
+
+    it('sends Administration and General to Default preferences, as the landing', () => {
+      withBootdata(administration());
+
+      const tree = getInitialNavTree();
+
+      expect(findById(tree, NavID.cfg)?.url).toBe('/org');
+      expect(findById(tree, NavID.cfgGeneral)?.url).toBe('/org');
+    });
+
+    it('leaves General out of the breadcrumbs, and nothing else', () => {
+      withBootdata(administration());
+
+      const tree = getInitialNavTree();
+
+      expect(findById(tree, NavID.cfgGeneral)?.hideFromBreadcrumbs).toBe(true);
+      expect(findById(tree, NavID.cfg)?.hideFromBreadcrumbs).toBeUndefined();
+      expect(findById(tree, NavID.cfgAccess)?.hideFromBreadcrumbs).toBeUndefined();
+    });
+
+    it('lands on the first destination the section nav lists when there is no Default preferences', () => {
+      const tree = administration();
+      const general = tree[0].children?.find((child) => child.id === NavID.cfgGeneral);
+      general!.children = general!.children?.filter((child) => child.id !== 'org-settings');
+      withBootdata(tree);
+
+      const landed = getInitialNavTree();
+
+      expect(findById(landed, NavID.cfg)?.url).toBe('/admin/migrate-to-cloud');
+      expect(findById(landed, NavID.cfgGeneral)?.url).toBe('/admin/migrate-to-cloud');
+    });
+
+    it('lands on the first destination of another group when General has none', () => {
+      const tree = administration();
+      tree[0].children = tree[0].children?.filter(
+        (child) => child.id !== NavID.cfgGeneral && child.id !== 'authentication'
+      );
+      tree[0].children = tree[0].children?.filter(
+        (child) => !child.id?.startsWith('plugin-page') && child.id !== 'secrets-management'
+      );
+      withBootdata(tree);
+
+      expect(findById(getInitialNavTree(), NavID.cfg)?.url).toBe('/org/serviceaccounts');
+    });
+
+    it('keeps the Administration landing when there are no destinations', () => {
+      withBootdata([{ id: NavID.cfg, text: 'Administration', url: '/admin', children: [] }]);
+
+      expect(findById(getInitialNavTree(), NavID.cfg)?.url).toBe('/admin');
+    });
+
+    it('keeps them at the end even when they arrive with a weight of their own', () => {
+      const tree = administration();
+      tree[0].children = tree[0].children?.map((child) =>
+        child.id === 'secrets-management' ? { ...child, sortWeight: -900 } : child
+      );
+      withBootdata(tree);
+
+      expect(ids(findById(getInitialNavTree(), NavID.cfgGeneral)?.children ?? []).slice(-2)).toEqual([
+        'plugin-page-grafana-advisor-app',
+        'secrets-management',
+      ]);
+    });
+
+    it('puts any other ungrouped destination into General, and leaves create actions where they are', () => {
+      const tree = administration();
+      tree[0].children = [
+        ...(tree[0].children ?? []),
+        { id: 'plugin-page-some-app', text: 'Some app', url: '/a/some-app' },
+        { id: 'create-thing', text: 'New thing', url: '/admin/new', isCreateAction: true },
+      ];
+      withBootdata(tree);
+
+      const cfg = findById(getInitialNavTree(), NavID.cfg);
+
+      expect(ids(cfg?.children ?? [])).toEqual([NavID.cfgGeneral, NavID.cfgAccess, 'create-thing']);
+      expect(ids(findById(getInitialNavTree(), NavID.cfgGeneral)?.children ?? [])).toContain('plugin-page-some-app');
+    });
+
+    it('leaves the tree as it was when the flag is off', () => {
+      withBootdata(administration(), false);
+
+      expect(getInitialNavTree()).toEqual(administration());
+    });
+
+    it('moves the one that is there when the other is missing', () => {
+      const tree = administration();
+      tree[0].children = tree[0].children?.filter((child) => child.id !== 'secrets-management');
+      withBootdata(tree);
+
+      expect(ids(findById(getInitialNavTree(), NavID.cfgGeneral)?.children ?? []).slice(-1)).toEqual([
+        'plugin-page-grafana-advisor-app',
+      ]);
+    });
+
+    it('leaves the tree as it was when the groups are missing', () => {
+      const tree = administration();
+      tree[0].children = tree[0].children?.filter(
+        (child) => child.id !== NavID.cfgGeneral && child.id !== NavID.cfgAccess
+      );
+      const expected = structuredClone(tree);
+      withBootdata(tree);
+
+      expect(getInitialNavTree()).toEqual(expected);
+    });
+
+    it('applies to the client-built tree too', () => {
+      setup({
+        permissions: [AccessControlAction.SettingsRead],
+        openFeatureFlags: { 'grafana.multiTenantNavTree': true, 'grafana.navigationAdminSubNav': true },
+      });
+      addNavEntries({
+        parentId: NavID.cfg,
+        entry: { build: () => ({ id: 'secrets-management', text: 'Secrets Management', url: '/admin/secrets' }) },
+      });
+
+      const tree = getInitialNavTree();
+
+      expect(findById(findById(tree, NavID.cfgGeneral)?.children ?? [], 'secrets-management')).toBeDefined();
+      expect(ids(findById(tree, NavID.cfg)?.children ?? [])).not.toContain('secrets-management');
+    });
   });
 
   // The apps section reads the app metas synchronously: app.ts fills the cache

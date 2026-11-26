@@ -52,7 +52,7 @@ export function LogsSamplePanel(props: Props) {
     });
   };
 
-  const OpenInSplitViewButton = () => {
+  const renderOpenInSplitViewButton = () => {
     if (!datasourceInstance) {
       return null;
     }
@@ -144,7 +144,7 @@ export function LogsSamplePanel(props: Props) {
       isOpen={enabled}
       onToggle={onToggleLogsSampleCollapse}
     >
-      <OpenInSplitViewButton />
+      {renderOpenInSplitViewButton()}
       <div className={styles.logContainer} ref={logsContainerRef}>
         <div ref={setLogListContainerElement}>{LogsSamplePanelContent}</div>
       </div>

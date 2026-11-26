@@ -704,6 +704,12 @@ func TestSharedDatasourceRolePermissions(t *testing.T) {
 		{"datasources:query", "create", "query"},
 		{"datasources.caching:read", "get", "caching"},
 		{"datasources.caching:write", "update", "caching"},
+		{"alert.instances.external:read", "get", "alertinstances"},
+		{"alert.instances.external:write", "update", "alertinstances"},
+		{"alert.rules.external:read", "get", "alertrules"},
+		{"alert.rules.external:write", "update", "alertrules"},
+		{"alert.notifications.external:read", "get", "alertnotifications"},
+		{"alert.notifications.external:write", "update", "alertnotifications"},
 	} {
 		for _, uid := range []string{"ds1", "*"} {
 			tuples, err := ConvertRolePermissionsToTuples("role1", []RolePermission{{Action: tc.action, Kind: "datasources", Identifier: uid}})

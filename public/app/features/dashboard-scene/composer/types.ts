@@ -26,6 +26,15 @@ export interface ComposerTarget {
 /** The document types Composer edits. */
 export type ComposerResource = 'dashboard' | 'notebook';
 
+/** What asked for a Composer entry. */
+export interface ComposerEnterRequest {
+  /**
+   * Grafana opened the Assistant's own edit (a chat's pending changes) in Editing, for Composer to run over,
+   * rather than the user asking from Grafana's UI.
+   */
+  assistantEdit: boolean;
+}
+
 export interface ComposerEnterRequestOptions {
   /**
    * The document types this listener enters Composer on. Grafana offers Composer only for types some live
@@ -69,10 +78,11 @@ export interface ComposerAPI {
    * Core does not enter Composer itself: the listener calls `enter` as usual. A listener that will not take
    * a request returns `false`: the request then ends at once (the sidebar goes back to its layout, the
    * picker or switch stops showing it pending) and goes to no other listener. Any other return leaves it
-   * outstanding until `enter` settles it or 10 seconds pass. Returns an unsubscribe.
+   * outstanding until `enter` settles it or 10 seconds pass. `request` says what asked for it. Returns an
+   * unsubscribe.
    */
   onEnterRequested(
-    listener: (target: ComposerTarget) => boolean | void,
+    listener: (target: ComposerTarget, request: ComposerEnterRequest) => boolean | void,
     options?: ComposerEnterRequestOptions
   ): () => void;
 }
@@ -256,6 +266,19 @@ interface ComposerSaveOutcome {
   message?: string;
 }
 
+/**
+ * Why a session ended, as `signal.reason` reports it once the signal has aborted. A path that names no
+ * reason leaves the signal's default reason, which is not one of these.
+ */
+export type ComposerExitReason =
+  | 'sidebar_closed'
+  | 'toolbar_button'
+  | 'mode_change'
+  | 'manual_edit'
+  | 'navigation'
+  | 'flag_off'
+  | 'plugin_exit';
+
 /** What a session reports once it has ended. Dashboards never save, so theirs carries no `save`. */
 export interface ComposerExitResult {
   save?: ComposerSaveOutcome;
@@ -263,7 +286,7 @@ export interface ComposerExitResult {
 
 export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
   readonly target: ComposerTarget;
-  /** Aborted on exit, navigation away, scene deactivation or flag-off. */
+  /** Aborted on exit, navigation away, scene deactivation or flag-off. Its `reason` is a `ComposerExitReason`. */
   readonly signal: AbortSignal;
 
   /** The tools this session offers, in display order. */
@@ -372,7 +395,7 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
    * autosave paused for the session, so leaving makes the one save of everything applied, and this
    * resolves with its outcome (the same result as `closed`).
    */
-  exit(): void | Promise<ComposerExitResult>;
+  exit(reason?: ComposerExitReason): void | Promise<ComposerExitResult>;
   /**
    * Resolves once, after the session has ended by any path (exit, navigation away, disposal or flag-off)
    * and a notebook's exit save has settled.

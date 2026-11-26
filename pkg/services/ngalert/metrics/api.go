@@ -7,6 +7,7 @@ import (
 
 type API struct {
 	RequestDuration *prometheus.HistogramVec
+	ConvertRequests *prometheus.CounterVec
 }
 
 func NewAPIMetrics(r prometheus.Registerer) *API {
@@ -20,6 +21,15 @@ func NewAPIMetrics(r prometheus.Registerer) *API {
 				Buckets:   prometheus.DefBuckets,
 			},
 			[]string{"method", "route", "status_code", "backend"},
+		),
+		ConvertRequests: promauto.With(r).NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "convert_api_requests_total",
+				Help:      "Number of import calls to the convert API, by operation, caller and result. Alertmanager dry runs are not counted.",
+			},
+			[]string{"operation", "source", "result"},
 		),
 	}
 }

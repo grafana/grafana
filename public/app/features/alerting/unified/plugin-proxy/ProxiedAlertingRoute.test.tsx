@@ -14,6 +14,8 @@ import { withRouteProxy } from './ProxiedAlertingRoute';
 import { routeProxies } from './proxies';
 import { type RouteProxy } from './types';
 
+jest.mock('app/core/copy/appNotification', () => makeSpyable('app/core/copy/appNotification'));
+
 jest.mock('react-router-dom-v5-compat', () => ({
   ...jest.requireActual('react-router-dom-v5-compat'),
   Navigate: jest.fn(({ to }: { to: string }) => `Redirected to ${to}`),

@@ -1,11 +1,10 @@
-import { css } from '@emotion/css';
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { useMemo, type ReactNode } from 'react';
 
-import { type ActionModel, type GrafanaTheme2, type LinkModel } from '@grafana/data';
+import { type ActionModel, type LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { getPositioningMiddleware } from '../../utils/floating';
 import { Portal } from '../Portal/Portal';
 import { VizTooltipFooter } from '../VizTooltip/VizTooltipFooter';
@@ -27,7 +26,6 @@ interface Props {
  */
 export const DataLinksActionsTooltip = ({ links, actions, value, coords, onTooltipClose }: Props) => {
   const theme = useTheme2();
-  const styles = useStyles2(getStyles);
   const placement = 'right-start';
 
   // the order of middleware is important!
@@ -79,18 +77,16 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
       {/* TODO: we can remove `value` from this component when TableRT is fully deprecated */}
       {value}
       <Portal zIndex={theme.zIndex.tooltip}>
-        <div
+        <VizTooltipWrapper
           ref={refCallback}
           {...getReferenceProps()}
           {...getFloatingProps()}
           style={floatingStyles}
-          className={styles.tooltipWrapper}
+          menuProps={{ autoFocus: true }}
           data-testid={selectors.components.DataLinksActionsTooltip.tooltipWrapper}
         >
-          <VizTooltipWrapper>
-            <VizTooltipFooter dataLinks={links} actions={actions} />
-          </VizTooltipWrapper>
-        </div>
+          <VizTooltipFooter dataLinks={links} actions={actions} />
+        </VizTooltipWrapper>
       </Portal>
     </>
   );
@@ -109,20 +105,4 @@ export const renderSingleLink = (link: LinkModel, children: ReactNode, className
       {children}
     </a>
   );
-};
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    tooltipWrapper: css({
-      whiteSpace: 'pre',
-      borderRadius: theme.shape.radius.default,
-      background: theme.colors.background.primary,
-      border: `1px solid ${theme.colors.border.weak}`,
-      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
-      maxHeight: `calc(100vh - ${theme.spacing(4)})`,
-      overflowX: 'hidden',
-      userSelect: 'text',
-      fontSize: theme.typography.bodySmall.fontSize,
-    }),
-  };
 };

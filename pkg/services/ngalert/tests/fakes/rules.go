@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -189,6 +190,18 @@ func (f *RuleStore) Count(_ context.Context, orgID int64) (int64, error) {
 		total += int64(len(rules))
 	}
 	return total, nil
+}
+
+func (f *RuleStore) CountByOrg(_ context.Context) (map[int64]int64, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	counts := make(map[int64]int64, len(f.Rules))
+	for orgID, rules := range f.Rules {
+		if len(rules) > 0 {
+			counts[orgID] = int64(len(rules))
+		}
+	}
+	return counts, nil
 }
 
 func (f *RuleStore) CountRuleGroups(_ context.Context, orgID int64) (int64, error) {
@@ -652,6 +665,15 @@ func (f *RuleStore) InsertAlertRules(_ context.Context, _ *models.UserUID, q []m
 	return ids, nil
 }
 
+// ValidateAlertRuleForWrite accepts every rule. Use Hook to make it fail.
+func (f *RuleStore) ValidateAlertRuleForWrite(rule models.AlertRule) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	q := GenericRecordedQuery{Name: "ValidateAlertRuleForWrite", Params: []any{rule}}
+	f.RecordedOps = append(f.RecordedOps, q)
+	return f.Hook(q)
+}
+
 func (f *RuleStore) InTransaction(ctx context.Context, fn func(c context.Context) error) error {
 	return fn(ctx)
 }
@@ -841,4 +863,24 @@ func (f *RuleStore) SaveAlertRuleStatus(ctx context.Context, orgID int64, ruleUI
 	}
 
 	return nil
+}
+
+func (f *RuleStore) CalculateChanges(ctx context.Context, groupKey models.AlertRuleGroupKey, submittedRules []*models.AlertRuleWithOptionals) (*ngrulesvc.GroupDelta, error) {
+	return ngrulesvc.CalculateChanges(ctx, f, groupKey, submittedRules)
+}
+
+func (f *RuleStore) CalculateRuleCreate(ctx context.Context, rule *models.AlertRule) (*ngrulesvc.GroupDelta, error) {
+	return ngrulesvc.CalculateRuleCreate(ctx, f, rule)
+}
+
+func (f *RuleStore) CalculateRuleUpdate(ctx context.Context, rule *models.AlertRuleWithOptionals) (*ngrulesvc.GroupDelta, error) {
+	return ngrulesvc.CalculateRuleUpdate(ctx, f, rule)
+}
+
+func (f *RuleStore) CalculateRuleDelete(ctx context.Context, ruleKey models.AlertRuleKey) (*ngrulesvc.GroupDelta, error) {
+	return ngrulesvc.CalculateRuleDelete(ctx, f, ruleKey)
+}
+
+func (f *RuleStore) CalculateRuleGroupsDelete(ctx context.Context, orgID int64, query *models.ListAlertRulesQuery) ([]*ngrulesvc.GroupDelta, error) {
+	return ngrulesvc.CalculateRuleGroupsDelete(ctx, f, orgID, query)
 }

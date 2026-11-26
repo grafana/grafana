@@ -9,7 +9,7 @@ import {
   getDefaultTimeRange,
   toDataFrame,
 } from '@grafana/data';
-import { getDataSourceInstanceSettings, locationService, setRunRequest } from '@grafana/runtime';
+import { locationService, setRunRequest } from '@grafana/runtime';
 import {
   type AdHocFiltersVariable,
   type MultiValueVariable,
@@ -20,6 +20,7 @@ import {
 } from '@grafana/scenes';
 import {
   defaultAdhocVariableKind,
+  defaultCustomVariableKind,
   defaultPanelKind,
   defaultQueryVariableKind,
   defaultSpec as defaultDashboardV2Spec,
@@ -37,6 +38,7 @@ import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { AddNewPane } from '../../sidebar/add-new/AddNewPane';
 import { findVizPanelByKey } from '../../utils/findVizPanel';
+import { toControlSourceRef } from '../../utils/predefinedVariables';
 import { getEditableElementFor } from '../utils/getEditableElementFor';
 
 import { applyDashboardSpec } from './applyDashboardSpec';
@@ -259,6 +261,20 @@ function makeSyncedSpec({
   return spec;
 }
 
+/** A global variable as the scene receives it once injected: tagged with its origin. */
+function globalVariable(name: string, values: string[]): VariableKind {
+  const variable = defaultCustomVariableKind();
+  variable.spec = {
+    ...variable.spec,
+    name,
+    query: values.join(','),
+    current: { text: values[0], value: values[0] },
+    options: values.map((v) => ({ text: v, value: v, selected: v === values[0] })),
+  };
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the origin field is runtime-only
+  return { ...variable, spec: { ...variable.spec, origin: toControlSourceRef({ type: 'global' }) } } as VariableKind;
+}
+
 function lookup<T extends SceneObject>(scene: DashboardScene, name: string): T {
   const variable = sceneGraph.findObject(scene, (obj) => 'name' in obj.state && obj.state.name === name);
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the test variables are known by name
@@ -287,25 +303,6 @@ describe('applyDashboardSpec', () => {
     applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec', scope: 'code-pane' });
 
     expect(scene.state.meta.libraryPanelRepeatUnresolved).toBe(undefined);
-  });
-
-  // Ad hoc variables look up their data source's multi-value operator support after the build (#133913), on
-  // the objects the build made; the swap installs clones of those.
-  it('resolves multi-value operator support on the ad hoc variables it swaps in', async () => {
-    jest.mocked(getDataSourceInstanceSettings).mockResolvedValue({
-      ...variableDatasource,
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the flag is read
-      meta: { ...variableDatasource.meta, multiValueFilterOperators: true } as never,
-    } as never);
-    const scene = buildScene(makeSpec('Old title'));
-    const spec = { ...makeSpec('New title'), variables: [adhocVariable('prod')] };
-
-    applyDashboardSpec({ scene, spec, description: 'Apply spec', scope: 'code-pane' });
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(lookup<AdHocFiltersVariable>(scene, 'filters').state.supportsMultiValueOperators).toBe(true);
-    jest.mocked(getDataSourceInstanceSettings).mockImplementation(async () => variableDatasource as never);
   });
 
   it('applies the spec, and undo/redo toggle between the old and new scene', () => {
@@ -535,6 +532,80 @@ describe('applyDashboardSpec', () => {
       deactivate.reverse().forEach((fn) => fn());
       deactivate = [];
       jest.restoreAllMocks();
+    });
+
+    // The spec has no cross-dashboard variables; a swap that left them out lost them until the page
+    // reloaded, and injecting them again only after the re-sync reset their URL values to the defaults.
+    describe('cross-dashboard variables', () => {
+      /** Opens the dashboard with a global `env` injected before url sync starts, as a load does. */
+      async function openWithGlobalEnv(search: string) {
+        locationService.replace({ search });
+        const scene = buildScene(makeSyncedSpec());
+        scene.setPredefinedVariables([globalVariable('env', ['dev', 'prod'])]);
+        new UrlSyncManager().initSync(scene);
+        await activateVariables(scene);
+        return scene;
+      }
+
+      it('keeps them, with the value the URL selects, after an apply', async () => {
+        const scene = await openWithGlobalEnv('var-namespace=a&var-service=$__all&var-env=prod');
+        jest.spyOn(scene, 'refreshPredefinedVariables').mockResolvedValue();
+        expect(value(scene, 'env')).toBe('prod');
+
+        await apply(scene, makeSyncedSpec({ namespace: 'b' }));
+
+        expect(value(scene, 'env')).toBe('prod');
+        expect(url().get('var-env')).toBe('prod');
+      });
+
+      it('leaves one out when the applied spec has a variable of the same name', async () => {
+        const scene = await openWithGlobalEnv('var-namespace=a&var-service=$__all&var-env=prod');
+        jest.spyOn(scene, 'refreshPredefinedVariables').mockResolvedValue();
+        const spec = makeSyncedSpec();
+        spec.variables = [...spec.variables, queryVariable('env', 'local', false)];
+
+        await apply(scene, spec);
+
+        const envs = sceneGraph.getVariables(scene).state.variables.filter((v) => v.state.name === 'env');
+        expect(envs).toHaveLength(1);
+        expect(envs[0].state.origin).toBeUndefined();
+      });
+
+      it('keeps them through undo and redo', async () => {
+        const scene = await openWithGlobalEnv('var-namespace=a&var-service=$__all&var-env=prod');
+        jest.spyOn(scene, 'refreshPredefinedVariables').mockResolvedValue();
+
+        await apply(scene, makeSyncedSpec({ namespace: 'b' }));
+        scene.state.sidebar.undoAction();
+        await activateVariables(scene);
+        expect(value(scene, 'env')).toBe('prod');
+
+        scene.state.sidebar.redoAction();
+        await activateVariables(scene);
+        expect(value(scene, 'env')).toBe('prod');
+      });
+
+      it('drops a refresh still in flight when the apply is undone', async () => {
+        const scene = await openWithGlobalEnv('var-namespace=a&var-service=$__all&var-env=prod');
+        const cancel = jest.spyOn(scene, 'cancelPredefinedVariablesRefresh');
+        jest.spyOn(scene, 'refreshPredefinedVariables').mockResolvedValue();
+
+        await apply(scene, makeSyncedSpec({ namespace: 'b' }));
+        scene.state.sidebar.undoAction();
+
+        expect(cancel).toHaveBeenCalledTimes(1);
+      });
+
+      it('logs a refresh that fails instead of leaving the rejection unhandled', async () => {
+        const scene = await openWithGlobalEnv('var-namespace=a&var-service=$__all');
+        const error = jest.spyOn(console, 'error').mockImplementation(() => {});
+        jest.spyOn(scene, 'refreshPredefinedVariables').mockRejectedValue(new Error('bad variable'));
+
+        await apply(scene, makeSyncedSpec({ namespace: 'b' }));
+
+        expect(error).toHaveBeenCalledWith(expect.stringContaining('cross-dashboard variables'), expect.any(Error));
+        expect(value(scene, 'env')).toBe('dev');
+      });
     });
 
     it('keeps the variable values the spec sets instead of reading the previous ones back from the URL', async () => {

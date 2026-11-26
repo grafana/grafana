@@ -58,6 +58,33 @@ var gvr = schema.GroupVersionResource{
 	Resource: "folders",
 }
 
+func TestIntegrationPendingDeletionResource(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:              true,
+		PendingDeletionResourceEnabled: true,
+	})
+	disco := helper.NewDiscoveryClient()
+	resources, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/v1alpha1")
+	require.NoError(t, err)
+	require.Len(t, resources.APIResources, 1)
+	require.Equal(t, "pendingfolderdeletions", resources.APIResources[0].Name)
+	require.Equal(t, "PendingFolderDeletion", resources.APIResources[0].Kind)
+	for _, version := range []string{"v1", "v1beta1"} {
+		resources, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/" + version)
+		require.NoError(t, err)
+		require.Len(t, resources.APIResources, 6)
+		for _, resource := range resources.APIResources {
+			require.NotEqual(t, "pendingfolderdeletions", resource.Name)
+		}
+	}
+	client, err := dynamic.NewForConfig(helper.NewAdminRestConfig())
+	require.NoError(t, err)
+	_, err = client.Resource(schema.GroupVersionResource{Group: folders.GROUP, Version: "v1alpha1", Resource: "pendingfolderdeletions"}).Namespace("default").List(context.Background(), metav1.ListOptions{})
+	require.True(t, apierrors.IsForbidden(err), "admin user must not access internal intents: %v", err)
+	apis.VerifyOpenAPISnapshots(t, "../openapi_snapshots", schema.GroupVersion{Group: folders.GROUP, Version: "v1alpha1"}, helper)
+}
+
 func TestIntegrationFoldersApp(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -71,6 +98,8 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			EnableFeatureToggles: []string{},
 		})
 		disco := helper.NewDiscoveryClient()
+		_, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/v1alpha1")
+		require.True(t, apierrors.IsNotFound(err), "default-off alpha discovery: %v", err)
 		resources, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/v1")
 		require.NoError(t, err)
 
@@ -411,6 +440,39 @@ func TestIntegrationFolderCascadeDeleteFinalizer(t *testing.T) {
 			_, err = client.Resource.Get(ctx, "flag-on", metav1.GetOptions{})
 			require.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
 		})
+	})
+
+	// folderStorage hides deletecollection, so it is only served once the legacy permissions service
+	// is left unwired, which this toggle does.
+	t.Run("a collection delete is not supported and deletes nothing", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			EnableFeatureToggles: []string{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController, featuremgmt.FlagKubernetesAuthzResourcePermissionApis},
+		})
+		client := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Admin, GVR: gvr})
+
+		const label = "collection-delete"
+		before := map[string]string{}
+		for _, name := range []string{"coll-a", "coll-b"} {
+			obj := newFolderObject(gvr.GroupVersion().String(), name)
+			obj.SetLabels(map[string]string{label: "true"})
+			created, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, []string{folders.CascadeDeleteFinalizer}, created.GetFinalizers(), name)
+			before[name] = created.GetResourceVersion()
+		}
+
+		err := client.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: label + "=true"})
+		require.True(t, apierrors.IsMethodNotSupported(err), "expected 405, got %v", err)
+
+		for name, rv := range before {
+			got, err := client.Resource.Get(ctx, name, metav1.GetOptions{})
+			require.NoError(t, err, name)
+			require.Nil(t, got.GetDeletionTimestamp(), name)
+			require.Equal(t, rv, got.GetResourceVersion(), name)
+		}
 	})
 }
 
@@ -2854,6 +2916,30 @@ func TestIntegrationFolderValidationReturns400(t *testing.T) {
 			require.Equal(t, uc.expectedMessageID, string(statusErr.ErrStatus.Details.UID))
 		})
 	}
+
+	t.Run("nested title General is allowed but cannot be moved to root", func(t *testing.T) {
+		parent, err := client.Resource.Create(context.Background(),
+			makeFolder("nested-general-parent", "Nested General Parent", ""), metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		nested, err := client.Resource.Create(context.Background(),
+			makeFolder("nested-general", "General", parent.GetName()), metav1.CreateOptions{})
+		require.NoError(t, err, "a nested folder may be titled General")
+
+		annotations := nested.GetAnnotations()
+		delete(annotations, utils.AnnoKeyFolder)
+		nested.SetAnnotations(annotations)
+
+		_, err = client.Resource.Update(context.Background(), nested, metav1.UpdateOptions{})
+		require.Error(t, err)
+		require.Truef(t, apierrors.IsBadRequest(err),
+			"expected HTTP 400 BadRequest; got: %v (%T)", err, err)
+
+		var statusErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusErr), "expected *apierrors.StatusError; got %T", err)
+		require.NotNil(t, statusErr.ErrStatus.Details, "expected Status.Details to carry the errutil messageID")
+		require.Equal(t, "folder.name-exists", string(statusErr.ErrStatus.Details.UID))
+	})
 }
 
 // The k6 app provisions its own subfolders through a service account, so that

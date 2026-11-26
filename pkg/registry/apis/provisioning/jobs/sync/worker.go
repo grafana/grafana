@@ -9,7 +9,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -218,26 +217,16 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 
 	finalCtx, finalSpan := r.tracer.Start(ctx, "provisioning.sync.update_final_status")
 
-	// Only add stats patch if stats are not nil
-	stats, err := repositoryResources.Stats(finalCtx)
-	var repoStats []provisioning.ResourceCount
-	switch managed, found := managedStats(stats, cfg.Name); {
-	case err != nil:
+	repoStats, err := repositoryResources.Stats(finalCtx)
+	if err != nil {
 		logger.Error("unable to read stats", "error", err)
 		finalSpan.SetAttributes(attribute.String("stats.error", err.Error()))
-	case stats == nil:
-		logger.Error("stats are nil")
-		finalSpan.SetAttributes(attribute.Bool("stats.nil", true))
-	case found:
-		repoStats = managed
+	} else {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/stats",
 			"value": repoStats,
 		})
-	default:
-		logger.Warn("no managed stats for this repository", "managers", len(stats.Managed))
-		finalSpan.SetAttributes(attribute.Int("stats.manager_count", len(stats.Managed)))
 	}
 
 	// Update conditions based on sync outcome and quota evaluation.
@@ -265,20 +254,6 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	finalSpan.End()
 
 	return syncError
-}
-
-// managedStats returns what the repository itself manages. The count request filters on the id
-// alone, which the bootstrap repository shares with its file-provisioning manager.
-func managedStats(stats *provisioning.ResourceStats, name string) ([]provisioning.ResourceCount, bool) {
-	if stats == nil {
-		return nil, false
-	}
-	for _, manager := range stats.Managed {
-		if manager.Kind == apiutils.ManagerKindRepo && manager.Identity == name {
-			return manager.Stats, true
-		}
-	}
-	return nil, false
 }
 
 // completeFailedSync writes the terminal state back after a failure past the 'working' mark.

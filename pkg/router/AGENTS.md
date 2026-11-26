@@ -19,12 +19,15 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   `cloud_router.go`, `aggregate_*.go`, `plugin_manifests*.go` and `st_*.go`.
 - **One backend owns every version of a group.** Dispatch is keyed by group (segment 2 of
   `/apis/<group>/...`). Don't reintroduce a path mux that flattens routes into prefixes. A duplicate
-  group in one `Load` makes the last one win, with a warning, and must never panic. The one
-  exception lives in the cloud loader: with the ST fallback, `dashboard.grafana.app` is split per
+  group in one `Load` makes the last one win, with a warning, and must never panic. A split lives
+  in the cloud loader: with the ST fallback, `dashboard.grafana.app` is split per
   request between its backend and the single-tenant stacks (`st_resources.go`). Library panels and
   snapshots always go to the stacks; otherwise users' writes go to the stacks, and reads and every
   request from a non-user identity (access policies, service accounts) stay on its backend. That
   group is still one backend, and its discovery and OpenAPI still come from the backend that owns it.
+  Cloud app settings use the same plugin backend and settings/subresource handlers as ST.
+  The namespace identifies the tenant; storage and credential dependencies are supplied by the
+  cloud loader.
 - **Keep connection pools across a reload.** Reconcile rebuilds only groups whose `Key()` changed,
   and each source keeps its transports or gRPC connections across polls, so a rebuilt group reuses
   its pool. Never recreate unrelated backends on a route change.
@@ -79,16 +82,24 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   the embedded server: its requests, discovery and OpenAPI. This is expected, and must keep working.
   Don't reintroduce a filter on which groups the router may serve. Which groups are routed is decided
   by the configured sources.
-- **A plugin backend serves only plugin groups and the routable core groups.** `newPluginBackend`
-  accepts a `*.ext.grafana.app` group or one of the hardcoded `routableCoreGroups`, from any source.
-  Every other core group is refused, so no plugin can claim it. Any plugin may shadow the
-  `routableCoreGroups` on purpose: they are low risk, and nothing serious happens if a plugin
-  misbehaves in them. Don't flag that as a vulnerability. Add a group only if the same holds for
-  it, never one whose data or permissions matter (dashboards, folders, IAM). The local plugin
+- **A plugin backend serves only plugin groups, except from trusted sources.** `newPluginBackend`
+  accepts only a `*.ext.grafana.app` group, so no local plugin, dev target or plugin deployment can
+  claim a core group. `buildPluginBackend(..., trusted=true)` serves any group, and only two callers
+  pass it: the operator-configured `core_url` source (`sourceCore`) and the in-process core apps built
+  from Grafana's own installers (`router.registerCoreAPIs`). Never make another source trusted without
+  the same operator or first-party control. The local plugin
   loader also serves each app plugin's settings API under its plugin ID
   (`newPluginSettingsBackend`): the single `app` resource, always named `instance`. A plugin ID
-  must be a DNS label with a hyphen, so it can never name a core or manifest group. The standalone
-  router never serves settings (`standaloneRouter`): it has no SQL settings store or dual writer.
+  must be a DNS label with a hyphen, so it can never name a core or manifest group. The
+  standalone cloud loader serves read-only settings for the plugins `[cloud_router]
+  app_settings_plugins` names, when a remote legacy reader and app-access checker are supplied
+  (`PluginDependencies.Settings`). The legacy side is the same `settingsStorage` ST uses
+  (`appsettings.NewReadOnlyLegacySettingsStore`), so ST and MT return identical objects. Storage
+  is selected by the migration policy, and only get/list are exposed. The OpenAPI matches ST's,
+  plugin schema and custom routes included, with only the settings kind's writes left out
+  (`TestReadOnlySettingsOpenAPI`). Health and resources call
+  the deployment's v2 client; proxy uses the shared ST handler and feature gate. The local
+  standalone plugin loader still serves no settings.
 - **One bad backend or plugin fails only its own group;** it must never stop the reconcile loop.
   A backend that fails to load is retried only when its own backoff passes (`loadGroup`, up to
   `groupLoadRetryMax`), not on every reconcile retry, since a plugin's load builds an API server.
@@ -164,7 +175,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Metrics, access logs, tracing | `metrics.go`, `logging.go`, `tracing.go`, `plugin_tracing.go` |
 | Source names, loader status, the shared poll loop (`polledSource`) and backend wrapper (`wrappedBackend`) | `sources.go` |
 | Loader selection | `loader_factory.go` |
-| Cloud loader: settings, source priority | `cloud_router.go` |
+| Cloud loader: settings, source priority | `cloud_router.go`, `cloud_settings.go` |
 | Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
 | Dev targets (`router.dev.<name>`), served by the local plugin loader | `dev_targets.go` |
 | Managed plugins (`plugins_url`), core APIs (`core_url`) and bridge (`bridge_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
@@ -177,8 +188,9 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 Exactly one loader serves:
 
 1. **The cloud loader**, only in the standalone router, when any `[cloud_router]` source or
-   `[router.aggregate.<name>]` target is configured (see Settings). `pkg/server` builds it with
-   `ProvideCloudRoutesLoader`. Grafana itself never polls the cloud sources.
+   `[router.aggregate.<name>]` target is configured (see Settings). `pkg/server` builds it through
+   the edition-specific `InitializeCloudRoutesLoader` Wire graph and `ProvideCloudRoutesLoader`.
+   Grafana itself never polls the cloud sources.
 2. **Otherwise the local plugin loader** (`ProvideRoutesLoader`), when plugin sources are
    available or any `[router.dev.<name>]` target is set. Dev targets come after the local
    plugins, so they win a shared group.
@@ -439,8 +451,10 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | --- | --- |
 | `cap_token`, `token_exchange_url` | Required when any aggregate target without `discovery_auth = none` is set. The CAP token is exchanged per request. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
+| `app_settings_plugins` | Comma-separated globs of the plugin IDs whose read-only app settings the plugins source serves, so settings roll out per plugin: `*` serves every plugin. Unlike group patterns, unset or empty serves none (the default). Requires a remote legacy settings provider and legacy AuthZ client. `plugins_group_patterns` still applies. |
+| `cloudconfig_url`, `cloudconfig_ca_file` | Enterprise settings client origin and optional CA file. Uses `[grpc_client_authentication]` token exchange; no local SQL connection. |
 | `plugins_group_patterns` | Globs that narrow the plugin groups, with the same semantics as `group_patterns`. The deprecated name `plugins_group_regex` is still read, with a warning; if both are set, the new name wins. |
-| `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_patterns`. Like any plugin source, it may serve the core groups in `routableCoreGroups`. |
+| `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_patterns`. Unlike other plugin sources, it is trusted to serve core groups. |
 | `bridge_url` | Same format as `plugins_url`, for bridge deployments. Needs no CAP token. Backend keys are prefixed `bridge:`. |
 | `bridge_group_patterns` | Globs that narrow the bridge groups, with the same semantics as `group_patterns`. |
 | `plugins_ca_file`, `plugins_insecure`, `core_ca_file`, `core_insecure`, `bridge_ca_file`, `bridge_insecure` | TLS settings for polling an `https` `plugins_url`, `core_url` or `bridge_url`, with the same semantics as an aggregate target's `ca_file` and `insecure`. Unset trusts the system CAs. They don't apply to the gRPC connections to the plugin backends; see `[router.backend_grpc]`. |

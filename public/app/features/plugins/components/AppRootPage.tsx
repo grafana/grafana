@@ -178,7 +178,7 @@ function AppRootPage({ pluginId, pluginNavSection }: Props) {
     return contextSrv.hasRole(pathRole);
   };
 
-  const AccessDenied = () => {
+  if (!userHasPermissionsToPluginPage()) {
     return (
       <Alert severity="warning" title={t('plugins.app-root-page.access-denied.title-access-denied', 'Access denied')}>
         <Trans i18nKey="plugins.app-root-page.access-denied.permission">
@@ -186,10 +186,6 @@ function AppRootPage({ pluginId, pluginNavSection }: Props) {
         </Trans>
       </Alert>
     );
-  };
-
-  if (!userHasPermissionsToPluginPage()) {
-    return <AccessDenied />;
   }
 
   if (!pluginNav) {

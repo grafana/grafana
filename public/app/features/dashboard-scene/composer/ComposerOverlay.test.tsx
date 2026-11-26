@@ -197,30 +197,38 @@ describe('picking', () => {
     });
   });
 
-  it('leaves Composer on Escape', async () => {
+  it('keeps Composer open on Escape', async () => {
     const { scene, session, startPick } = setup();
-    const pick = startPick();
+    const modeBefore = scene.state.mode;
+    const resolved = jest.fn();
+    startPick().then(resolved);
 
-    fireEvent.keyDown(window, { key: 'Escape' });
+    const escape = fireEvent.keyDown(window, { key: 'Escape' });
+    await act(async () => {});
 
-    await expect(pick).resolves.toBeNull();
-    expect(session.isClosed).toBe(true);
-    expect(scene.state.mode).toBe('view');
+    expect(escape).toBe(false); // swallowed, so exit edit and close view panel do not see it either
+    expect(resolved).not.toHaveBeenCalled();
+    expect(session.isClosed).toBe(false);
+    expect(session.getOverlayState().picking).toBe(true);
+    expect(scene.state.mode).toBe(modeBefore);
   });
 
-  it('cancels a drag on the first Escape and leaves Composer on the next', async () => {
+  it('cancels a drag on Escape and keeps Composer open', async () => {
     const { session, startPick } = setup();
-    const pick = startPick();
+    const resolved = jest.fn();
+    startPick().then(resolved);
     const overlay = screen.getByTestId('dashboard-composer-overlay');
     fireEvent.pointerDown(overlay, { clientX: 150, clientY: 250, button: 0, shiftKey: true });
     fireEvent.pointerMove(overlay, { clientX: 350, clientY: 450 });
+    expect(screen.getByTestId('composer-region-draft')).toBeInTheDocument();
 
     fireEvent.keyDown(window, { key: 'Escape' });
+    fireEvent.keyDown(window, { key: 'Escape' });
+    await act(async () => {});
+
+    expect(screen.queryByTestId('composer-region-draft')).not.toBeInTheDocument();
+    expect(resolved).not.toHaveBeenCalled();
     expect(session.isClosed).toBe(false);
-
-    fireEvent.keyDown(window, { key: 'Escape' });
-    await expect(pick).resolves.toBeNull();
-    expect(session.isClosed).toBe(true);
   });
 
   it('leaves Escape and pointer events inside an annotation anchor to the plugin', async () => {
@@ -242,9 +250,17 @@ describe('picking', () => {
     expect(resolved).not.toHaveBeenCalled();
     expect(session.getOverlayState().picking).toBe(true);
 
-    fireEvent.keyDown(document.body, { key: 'Escape' });
+    const outside = fireEvent.keyDown(document.body, { key: 'Escape' });
+    await act(async () => {});
+
+    expect(outside).toBe(false); // outside the anchor the overlay still swallows it, and stays open
+    expect(resolved).not.toHaveBeenCalled();
+    expect(session.isClosed).toBe(false);
+
+    act(() => {
+      session.exit();
+    });
     await expect(pick).resolves.toBeNull();
-    expect(session.isClosed).toBe(true);
   });
 });
 
@@ -1187,7 +1203,7 @@ describe('drag selection', () => {
     await nextFrame();
 
     expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent(
-      'Click to comment on a panel, or drag to select panels'
+      'Click to ask about a panel, or drag to select panels'
     );
   });
 });
@@ -1872,17 +1888,32 @@ describe('hover pass-through', () => {
     expect(seen.mousedown).not.toHaveBeenCalled();
   });
 
-  it('keeps blocking presses and clicks while Select is off, and still passes moves', () => {
+  it('passes presses and clicks to the document while no pick is pending, so it works as outside Composer', () => {
     setup();
+    const { plot, seen } = panelInContainer();
+
+    const pressed = fireEvent.pointerDown(plot, { clientX: 200, clientY: 350, button: 0 });
+    fireEvent.mouseDown(plot, { clientX: 200, clientY: 350, button: 0 });
+    fireEvent.click(plot, { clientX: 200, clientY: 350 });
+    fireEvent.pointerMove(plot, { clientX: 210, clientY: 360 });
+
+    expect(pressed).toBe(true);
+    expect(seen.pointerdown).toHaveBeenCalledTimes(1);
+    expect(seen.mousedown).toHaveBeenCalledTimes(1);
+    expect(seen.click).toHaveBeenCalledTimes(1);
+    expect(seen.pointermove).toHaveBeenCalledTimes(1);
+  });
+
+  it('holds presses again while paused, even with no pick pending', () => {
+    const { session } = setup();
+    act(() => session.setPaused(true));
     const { plot, seen } = panelInContainer();
 
     fireEvent.pointerDown(plot, { clientX: 200, clientY: 350, button: 0 });
     fireEvent.click(plot, { clientX: 200, clientY: 350 });
-    fireEvent.pointerMove(plot, { clientX: 210, clientY: 360 });
 
     expect(seen.pointerdown).not.toHaveBeenCalled();
     expect(seen.click).not.toHaveBeenCalled();
-    expect(seen.pointermove).toHaveBeenCalledTimes(1);
   });
 
   it('lets the wheel scroll', () => {
@@ -1988,7 +2019,7 @@ describe('annotations and data layers', () => {
     await nextFrame();
 
     expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent(
-      'Click to comment on an annotation, or drag to select'
+      'Click to ask about an annotation, or drag to select'
     );
     // The control measures as the whole content in these tests.
     expect(screen.getByTestId('composer-hover')).toHaveStyle({
@@ -2379,7 +2410,7 @@ describe('variables', () => {
       height: '40px',
     });
     expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent(
-      'Click to comment on a variable, or drag to draw a region'
+      'Click to ask about a variable, or drag to draw a region'
     );
   });
 
@@ -2448,7 +2479,7 @@ describe('pick hint', () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
 
-  const PANEL_HINT = 'Click to comment on a panel, or drag to draw a region';
+  const PANEL_HINT = 'Click to ask about a panel, or drag to draw a region';
   const EMPTY_HINT = 'Drag to draw a region';
   const hint = () => screen.queryByRole('tooltip', { hidden: true });
   const frame = () =>
@@ -2523,6 +2554,18 @@ describe('pick hint', () => {
     move(210, 360);
     frame();
     expect(hint()).toBeInTheDocument();
+  });
+
+  it('hides when a turn starts, though the pointer has not moved', () => {
+    const { session, startPick } = setup();
+    startPick();
+    move(200, 350);
+    frame();
+    expect(hint()).toBeInTheDocument();
+
+    act(() => session.setWorking(true));
+
+    expect(hint()).not.toBeInTheDocument();
   });
 
   it('does not show without a pending pick or during a capture', () => {

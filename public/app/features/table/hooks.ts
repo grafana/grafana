@@ -148,7 +148,8 @@ export function useAdHocColumnState(
   frames: DataFrame[],
   frameIndex: number,
   enabled: boolean,
-  configuredSourceSeries?: readonly DataFrame[]
+  configuredSourceSeries?: readonly DataFrame[],
+  displaySeries?: readonly DataFrame[]
 ) {
   const api = usePanelContext().adHocTransformations;
   const sourceSeries = configuredSourceSeries ?? api?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER);
@@ -160,7 +161,8 @@ export function useAdHocColumnState(
     TABLE_TRANSFORMATIONS_OWNER,
     enabled,
     sourceSeries,
-    reportTableColumnInteraction
+    reportTableColumnInteraction,
+    displaySeries
   );
 }
 

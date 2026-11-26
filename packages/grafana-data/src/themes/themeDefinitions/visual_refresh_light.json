@@ -194,19 +194,23 @@
       "link": "palette.blue700",
       "invalid": "palette.red700"
     },
+    "navmenu": {
+      "activeItemBackground": "palette.orange50",
+      "activeItemText": "palette.orange700"
+    },
     "tag": {
       "colors": [
-        { "background": "palette.red50", "text": "palette.red800" },
-        { "background": "palette.orange50", "text": "palette.orange800" },
-        { "background": "palette.amber50", "text": "palette.amber800" },
-        { "background": "palette.lime50", "text": "palette.lime800" },
-        { "background": "palette.sage50", "text": "palette.sage800" },
-        { "background": "palette.teal50", "text": "palette.teal800" },
-        { "background": "palette.sky50", "text": "palette.sky800" },
-        { "background": "palette.blue50", "text": "palette.blue800" },
-        { "background": "palette.violet50", "text": "palette.violet800" },
-        { "background": "palette.lavender50", "text": "palette.lavender800" },
-        { "background": "palette.rose50", "text": "palette.rose800" }
+        { "background": "palette.red50", "text": "palette.red900" },
+        { "background": "palette.orange50", "text": "palette.orange900" },
+        { "background": "palette.amber50", "text": "palette.amber900" },
+        { "background": "palette.lime50", "text": "palette.lime900" },
+        { "background": "palette.sage50", "text": "palette.sage900" },
+        { "background": "palette.teal50", "text": "palette.teal900" },
+        { "background": "palette.sky50", "text": "palette.sky900" },
+        { "background": "palette.blue50", "text": "palette.blue900" },
+        { "background": "palette.violet50", "text": "palette.violet900" },
+        { "background": "palette.lavender50", "text": "palette.lavender900" },
+        { "background": "palette.rose50", "text": "palette.rose900" }
       ]
     },
     "textHighlight": {

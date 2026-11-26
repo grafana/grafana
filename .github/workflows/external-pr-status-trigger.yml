@@ -5,7 +5,7 @@ name: External PR Status Trigger
 
 on:
   pull_request_target:  # zizmor: ignore[dangerous-triggers]
-    types: [assigned, unassigned, closed]
+    types: [assigned, unassigned, closed, reopened]
   pull_request_review:
     types: [submitted, dismissed]
 
@@ -29,13 +29,17 @@ jobs:
       - name: Save PR number for handler workflow
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          EVENT_ACTION: ${{ github.event.action }}
         run: |
           printf '%s\n' "$PR_NUMBER" > pr-number.txt
+          printf '%s\n' "$EVENT_ACTION" > event-action.txt
           echo "PR number: $(cat pr-number.txt)"
 
       - name: Upload PR number
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
         with:
           name: pr-number
-          path: pr-number.txt
+          path: |
+            pr-number.txt
+            event-action.txt
           retention-days: 1

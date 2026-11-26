@@ -8,6 +8,7 @@
 package v0alpha1
 
 import (
+	resource "github.com/grafana/grafana-app-sdk/resource"
 	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
@@ -48,7 +49,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		GitLabRepositoryConfig{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_GitLabRepositoryConfig(ref),
 		GitOAuthConnectionConfig{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_GitOAuthConnectionConfig(ref),
 		GitRepositoryConfig{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref),
-		HealthStatus{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref),
 		HistoricJob{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_HistoricJob(ref),
 		HistoricJobList{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_HistoricJobList(ref),
 		HistoryItem{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_HistoryItem(ref),
@@ -68,13 +68,16 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		RefItem{}.OpenAPIModelName():                               schema_pkg_apis_provisioning_v0alpha1_RefItem(ref),
 		RefList{}.OpenAPIModelName():                               schema_pkg_apis_provisioning_v0alpha1_RefList(ref),
 		Repository{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_Repository(ref),
+		RepositoryHealthStatus{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_RepositoryHealthStatus(ref),
 		RepositoryList{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref),
 		RepositorySpec{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref),
 		RepositoryStatus{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref),
+		RepositoryTokenStatus{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_RepositoryTokenStatus(ref),
 		RepositoryURLs{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_RepositoryURLs(ref),
 		RepositoryView{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref),
 		RepositoryViewList{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref),
 		ResourceCount{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_ResourceCount(ref),
+		ResourceCountList{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_ResourceCountList(ref),
 		ResourceList{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_ResourceList(ref),
 		ResourceListItem{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_ResourceListItem(ref),
 		ResourceObjects{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_ResourceObjects(ref),
@@ -90,7 +93,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		SyncStatus{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref),
 		TestJobOptions{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_TestJobOptions(ref),
 		TestResults{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_TestResults(ref),
-		TokenStatus{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_TokenStatus(ref),
 		WebhookConfig{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_WebhookConfig(ref),
 		WebhookResponse{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_WebhookResponse(ref),
 		WebhookStatus{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref),
@@ -555,28 +557,28 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSecure(ref common.Reference
 						SchemaProps: spec.SchemaProps{
 							Description: "PrivateKey is the reference to the private key used for GitHub App authentication. This value is stored securely and cannot be read back",
 							Default:     map[string]interface{}{},
-							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+							Ref:         ref(resource.InlineSecureValue{}.OpenAPIModelName()),
 						},
 					},
 					"clientSecret": {
 						SchemaProps: spec.SchemaProps{
 							Description: "ClientSecret is the reference to the secret used for other providers authentication, and Github on-behalf-of authentication. This value is stored securely and cannot be read back",
 							Default:     map[string]interface{}{},
-							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+							Ref:         ref(resource.InlineSecureValue{}.OpenAPIModelName()),
 						},
 					},
 					"token": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Token is the reference of the token used to act as the Connection. This value is stored securely and cannot be read back",
 							Default:     map[string]interface{}{},
-							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+							Ref:         ref(resource.InlineSecureValue{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()},
+			resource.InlineSecureValue{}.OpenAPIModelName()},
 	}
 }
 
@@ -728,14 +730,14 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 						SchemaProps: spec.SchemaProps{
 							Description: "The connection health status",
 							Default:     map[string]interface{}{},
-							Ref:         ref(HealthStatus{}.OpenAPIModelName()),
+							Ref:         ref(RepositoryHealthStatus{}.OpenAPIModelName()),
 						},
 					},
 					"token": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Token holds metadata about the last generated connection token, used to avoid regenerating a token whose secret was written recently but is not yet readable.",
 							Default:     map[string]interface{}{},
-							Ref:         ref(TokenStatus{}.OpenAPIModelName()),
+							Ref:         ref(RepositoryTokenStatus{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -743,7 +745,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			ErrorDetails{}.OpenAPIModelName(), HealthStatus{}.OpenAPIModelName(), TokenStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
+			ErrorDetails{}.OpenAPIModelName(), RepositoryHealthStatus{}.OpenAPIModelName(), RepositoryTokenStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
 	}
 }
 
@@ -1420,61 +1422,6 @@ func schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref common.Refere
 					},
 				},
 				Required: []string{"branch"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"healthy": {
-						SchemaProps: spec.SchemaProps{
-							Description: "When not healthy, requests will not be executed",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"error": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The type of the error\n\nPossible enum values:\n - `\"health\"`\n - `\"hook\"`",
-							Type:        []string{"string"},
-							Format:      "",
-							Enum:        []interface{}{"health", "hook"},
-						},
-					},
-					"checked": {
-						SchemaProps: spec.SchemaProps{
-							Description: "When the health was checked last time",
-							Type:        []string{"integer"},
-							Format:      "int64",
-						},
-					},
-					"message": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "atomic",
-							},
-						},
-						SchemaProps: spec.SchemaProps{
-							Description: "Summary messages (can be shown to users) Will only be populated when not healthy",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"healthy"},
 			},
 		},
 	}
@@ -2506,6 +2453,61 @@ func schema_pkg_apis_provisioning_v0alpha1_Repository(ref common.ReferenceCallba
 	}
 }
 
+func schema_pkg_apis_provisioning_v0alpha1_RepositoryHealthStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"healthy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When not healthy, requests will not be executed",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"error": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The type of the error\n\nPossible enum values:\n - `\"health\"`\n - `\"hook\"`",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"health", "hook"},
+						},
+					},
+					"checked": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When the health was checked last time",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"message": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Summary messages (can be shown to users) Will only be populated when not healthy",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"healthy"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -2745,7 +2747,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 						SchemaProps: spec.SchemaProps{
 							Description: "This will get updated with the current health status (and updated periodically)",
 							Default:     map[string]interface{}{},
-							Ref:         ref(HealthStatus{}.OpenAPIModelName()),
+							Ref:         ref(RepositoryHealthStatus{}.OpenAPIModelName()),
 						},
 					},
 					"sync": {
@@ -2783,7 +2785,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 						SchemaProps: spec.SchemaProps{
 							Description: "Token will get updated with current token information",
 							Default:     map[string]interface{}{},
-							Ref:         ref(TokenStatus{}.OpenAPIModelName()),
+							Ref:         ref(RepositoryTokenStatus{}.OpenAPIModelName()),
 						},
 					},
 					"deleteError": {
@@ -2811,7 +2813,31 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			DeletionStatus{}.OpenAPIModelName(), ErrorDetails{}.OpenAPIModelName(), HealthStatus{}.OpenAPIModelName(), QuotaStatus{}.OpenAPIModelName(), ResourceCount{}.OpenAPIModelName(), SyncStatus{}.OpenAPIModelName(), TokenStatus{}.OpenAPIModelName(), WebhookStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
+			DeletionStatus{}.OpenAPIModelName(), ErrorDetails{}.OpenAPIModelName(), QuotaStatus{}.OpenAPIModelName(), RepositoryHealthStatus{}.OpenAPIModelName(), RepositoryTokenStatus{}.OpenAPIModelName(), ResourceCount{}.OpenAPIModelName(), SyncStatus{}.OpenAPIModelName(), WebhookStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_RepositoryTokenStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"lastUpdated": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"expiration": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -3110,6 +3136,59 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceCount(ref common.ReferenceCal
 				Required: []string{"group", "resource", "count"},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ResourceCountList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "What a single manager manages.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+						},
+					},
+					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(ResourceCount{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			ResourceCount{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -3605,28 +3684,28 @@ func schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref common.ReferenceCall
 						SchemaProps: spec.SchemaProps{
 							Description: "Token used to connect the configured repository",
 							Default:     map[string]interface{}{},
-							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+							Ref:         ref(resource.InlineSecureValue{}.OpenAPIModelName()),
 						},
 					},
 					"webhookSecret": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Some webhooks (including github) require a secret key value",
 							Default:     map[string]interface{}{},
-							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+							Ref:         ref(resource.InlineSecureValue{}.OpenAPIModelName()),
 						},
 					},
 					"commitSigningKey": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Private key used to sign commits the repository writes back. The format is selected by spec.commit.signingMethod. When unset, commits are unsigned.",
 							Default:     map[string]interface{}{},
-							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+							Ref:         ref(resource.InlineSecureValue{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()},
+			resource.InlineSecureValue{}.OpenAPIModelName()},
 	}
 }
 
@@ -3899,30 +3978,6 @@ func schema_pkg_apis_provisioning_v0alpha1_TestResults(ref common.ReferenceCallb
 		},
 		Dependencies: []string{
 			ErrorDetails{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_TokenStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"lastUpdated": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
-						},
-					},
-					"expiration": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
-						},
-					},
-				},
-			},
-		},
 	}
 }
 

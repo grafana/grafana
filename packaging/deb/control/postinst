@@ -89,16 +89,18 @@ if [ "$1" = configure ]; then
 	find /etc/grafana -type f -exec chmod 640 {} ';'
 	find /etc/grafana -type d -exec chmod 755 {} ';'
 
-  if [ "$IS_UPGRADE" != "true" ]; then
-    echo "### NOT starting on installation, please execute the following statements to configure grafana to start automatically using systemd"
-    echo " sudo /bin/systemctl daemon-reload"
-    echo " sudo /bin/systemctl enable grafana-server"
-    echo "### You can start grafana-server by executing"
-    echo " sudo /bin/systemctl start grafana-server"
-  elif [ "$RESTART_ON_UPGRADE" = "true" ]; then
-    printf 'Restarting grafana-server service...'
-    systemctl daemon-reload || true
-    systemctl restart grafana-server || true
-    echo " OK"
+  if command -v systemctl >/dev/null; then
+    if [ "$IS_UPGRADE" != "true" ]; then
+      echo "### NOT starting on installation, please execute the following statements to configure grafana to start automatically using systemd"
+      echo " sudo /bin/systemctl daemon-reload"
+      echo " sudo /bin/systemctl enable grafana-server"
+      echo "### You can start grafana-server by executing"
+      echo " sudo /bin/systemctl start grafana-server"
+    elif [ "$RESTART_ON_UPGRADE" = "true" ]; then
+      printf 'Restarting grafana-server service...'
+      systemctl daemon-reload || true
+      systemctl restart grafana-server || true
+      echo " OK"
+    fi
   fi
 fi

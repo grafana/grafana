@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { FloatingFocusManager, useFloating } from '@floating-ui/react';
 import RcDrawer from '@rc-component/drawer';
+import { usePreventScroll } from '@react-aria/overlays';
 import { type ReactNode, useCallback, useEffect, useId, useState } from 'react';
 import * as React from 'react';
 
@@ -105,6 +106,7 @@ export function Drawer({
 
   // Adds body class while open so the toolbar nav can hide some actions while drawer is open
   useBodyClassWhileOpen();
+  usePreventScroll();
 
   const content = <div className={styles.content}>{children}</div>;
   const overrideWidth = drawerWidth ?? width ?? drawerSizes[size].width;
@@ -219,7 +221,6 @@ function useResizebleDrawer(): [
   const onMouseUp = useCallback(
     (e: MouseEvent) => {
       document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
     },
     [onMouseMove]
   );
@@ -227,7 +228,6 @@ function useResizebleDrawer(): [
   const onTouchEnd = useCallback(
     (e: TouchEvent) => {
       document.removeEventListener('touchmove', onTouchMove);
-      document.removeEventListener('touchend', onTouchEnd);
     },
     [onTouchMove]
   );
@@ -237,7 +237,7 @@ function useResizebleDrawer(): [
     e.preventDefault();
     // we will only add listeners when needed, and remove them afterward
     document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('mouseup', onMouseUp, { once: true });
   }
 
   function onTouchStart(e: React.TouchEvent<HTMLDivElement>) {
@@ -245,7 +245,7 @@ function useResizebleDrawer(): [
     e.preventDefault();
     // we will only add listeners when needed, and remove them afterward
     document.addEventListener('touchmove', onTouchMove);
-    document.addEventListener('touchend', onTouchEnd);
+    document.addEventListener('touchend', onTouchEnd, { once: true });
   }
 
   return [drawerWidth, onMouseDown, onTouchStart];

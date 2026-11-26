@@ -33,6 +33,7 @@ import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { type TableColumnResizeActionCallback } from '../types';
 
 import { useTableFilters, useHeaderFilterState } from './TableFilterContext';
+import { buildCellHeightMeasurers } from './cellHeightMeasurers';
 import {
   CELL_HORIZONTAL_CHROME,
   FIRST_COLUMN_EXTRA_PADDING,
@@ -65,7 +66,6 @@ import {
   computeContentAwareColWidths,
   buildNestedColumnWidthsMap,
   buildHeaderHeightMeasurers,
-  buildCellHeightMeasurers,
   compileFrameToRecords,
   createTypographyContext,
   extractPixelValue,
@@ -966,12 +966,14 @@ export function useScrollShadows(
 ) {
   const [visibility, setVisibility] = useState({ top: false, bottom: false, scrollbarHeight: 0, width: 0 });
   const visibilityRef = useRef(visibility);
-  const styles = useStyles2(getScrollShadowStyles, visibility.top, visibility.bottom);
+  const styles = useStyles2(getScrollShadowStyles);
   // Keep changing geometry out of Emotion's stylesheet cache during resizing.
   const style: CSSProperties & Record<`--${string}`, string> = {
     '--table-scroll-shadow-width': `${visibility.width}px`,
     '--table-scroll-shadow-top': `${topOffset}px`,
     '--table-scroll-shadow-bottom': `${bottomOffset + visibility.scrollbarHeight}px`,
+    '--table-scroll-shadow-top-opacity': visibility.top ? '1' : '0',
+    '--table-scroll-shadow-bottom-opacity': visibility.bottom ? '1' : '0',
   };
 
   const sync = useCallback(() => {

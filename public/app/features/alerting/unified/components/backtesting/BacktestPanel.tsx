@@ -5,17 +5,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertLabels } from '@grafana/alerting/unstable';
 import { type DataFrameJSON, type GrafanaTheme2, type TimeRange, rangeUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Alert,
-  Icon,
-  LoadingPlaceholder,
-  RefreshPicker,
-  Stack,
-  Text,
-  TimeRangePicker,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { useFlagGrafanaResponsiveTimePickerTabs } from '@grafana/runtime/internal';
+import { Alert, Icon, LoadingPlaceholder, RefreshPicker, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { ExperimentalTimeRangePicker as TimeRangePicker } from '@grafana/ui/internal';
 
 import { useRunBacktestMutation } from '../../api/backtestApi';
 import { type RuleFormValues } from '../../types/rule-form';
@@ -34,6 +26,7 @@ interface BacktestPanelProps {
 
 export function BacktestPanel({ ruleDefinition, initialTimeRange }: BacktestPanelProps) {
   const styles = useStyles2(getStyles);
+  const tabsEnabled = useFlagGrafanaResponsiveTimePickerTabs();
   const [timeRange, setTimeRange] = useState<TimeRange>(
     initialTimeRange || rangeUtil.convertRawToRange({ from: 'now-15m', to: 'now' })
   );
@@ -83,12 +76,13 @@ export function BacktestPanel({ ruleDefinition, initialTimeRange }: BacktestPane
     }
   }, [ruleDefinition, timeRange, runBacktest]);
 
-  // Update time range when initialTimeRange prop changes
-  useEffect(() => {
+  const [prevInitialTimeRange, setPrevInitialTimeRange] = useState(initialTimeRange);
+  if (prevInitialTimeRange !== initialTimeRange) {
+    setPrevInitialTimeRange(initialTimeRange);
     if (initialTimeRange) {
       setTimeRange(initialTimeRange);
     }
-  }, [initialTimeRange]);
+  }
 
   // Run backtest once after initial mount when timeRange is synchronized with initialTimeRange
   useEffect(() => {
@@ -119,6 +113,7 @@ export function BacktestPanel({ ruleDefinition, initialTimeRange }: BacktestPane
     <div>
       <Stack direction="row" alignItems="flex-end" justifyContent="flex-end">
         <TimeRangePicker
+          compactDesign={tabsEnabled ? 'tabs' : 'legacy'}
           value={timeRange}
           onChange={setTimeRange}
           onChangeTimeZone={() => {}}

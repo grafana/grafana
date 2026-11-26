@@ -392,14 +392,14 @@ type PerfTestingEnabledFunc func(ctx context.Context) bool
 type AdmissionValidator struct {
 	// supportedResources is the configured set of resource types provisioning can manage,
 	// used to validate export-style (push and migrate) job options.
-	supportedResources []provisioning.SupportedResource
+	supportedResources func() []provisioning.SupportedResource
 	perfTestingEnabled PerfTestingEnabledFunc
 }
 
 // NewAdmissionValidator creates a new job admission validator. supportedResources is the
 // configured set of resource types provisioning can manage. perfTestingEnabled gates
 // whether synthetic "test" jobs are allowed.
-func NewAdmissionValidator(supportedResources []provisioning.SupportedResource, perfTestingEnabled PerfTestingEnabledFunc) *AdmissionValidator {
+func NewAdmissionValidator(supportedResources func() []provisioning.SupportedResource, perfTestingEnabled PerfTestingEnabledFunc) *AdmissionValidator {
 	return &AdmissionValidator{supportedResources: supportedResources, perfTestingEnabled: perfTestingEnabled}
 }
 
@@ -433,7 +433,7 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		)
 	}
 
-	return ValidateJob(job, v.supportedResources)
+	return ValidateJob(job, v.supportedResources())
 }
 
 func validateAuthor(ctx context.Context, a admission.Attributes, job *provisioning.Job) error {

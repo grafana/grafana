@@ -116,6 +116,16 @@ export type NavId = (typeof NavID)[keyof typeof NavID];
 /** Id prefix of the Starred section's children, `starred/<kind>/<uid>`; the menu derives them from the stars query. */
 export const STARRED_ID_PREFIX = `${NavID.starred}/`;
 
+/** A child of the Starred section: the link to one starred object. */
+export interface StarredNavItem extends NavModelItem {
+  /** The object's kind, as the stars registry names it: `dashboard`, `folder`, or an app kind's `group/Kind`. */
+  starredKind: string;
+}
+
+export function isStarredNavItem(item: NavModelItem): item is StarredNavItem {
+  return 'starredKind' in item;
+}
+
 /**
  * A nav section that exists only to group app plugins, built on demand by the
  * first plugin that targets it rather than declared as a static entry.

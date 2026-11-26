@@ -71,8 +71,8 @@ export class DashboardComposerDocument implements ComposerDocument<ComposerDashb
 
   public elementHint(drag: 'region' | 'elements'): string {
     return drag === 'elements'
-      ? t('dashboard.composer.overlay.hint-panel-select', 'Click to comment on a panel, or drag to select panels')
-      : t('dashboard.composer.overlay.hint-panel', 'Click to comment on a panel, or drag to draw a region');
+      ? t('dashboard.composer.overlay.hint-panel-select', 'Click to ask about a panel, or drag to select panels')
+      : t('dashboard.composer.overlay.hint-panel', 'Click to ask about a panel, or drag to draw a region');
   }
 
   public attach(session: ComposerSession): boolean {

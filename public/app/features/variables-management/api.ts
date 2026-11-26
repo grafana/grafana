@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { BASE_URL } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
 import { t } from '@grafana/i18n';
@@ -108,7 +108,9 @@ export function useFolderCanEdit(folderUids: string[]): Record<string, boolean> 
   // Read latest map inside the effect without listing it as a dep (avoids re-init
   // loops while still skipping UIDs already resolved).
   const canEditByUidRef = useRef(canEditByUid);
-  canEditByUidRef.current = canEditByUid;
+  useLayoutEffect(() => {
+    canEditByUidRef.current = canEditByUid;
+  });
   // Sort so [a,b] and [b,a] share one effect key.
   const key = [...folderUids].sort().join(',');
 

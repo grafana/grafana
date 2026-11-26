@@ -265,7 +265,13 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
             label={t('dashboard-scene.annotation-settings-edit.label-data-source', 'Data source')}
             htmlFor="data-source-picker"
           >
-            <DataSourcePicker annotations variables current={annotation.datasource} onChange={onDataSourceChange} />
+            <DataSourcePicker
+              annotations
+              variables
+              journeySurface="annotation_editor"
+              current={annotation.datasource}
+              onChange={onDataSourceChange}
+            />
           </Field>
           {!isDsLoading && !ds?.meta.annotations && (
             <Alert

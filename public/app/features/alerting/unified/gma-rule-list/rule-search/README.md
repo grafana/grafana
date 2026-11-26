@@ -9,14 +9,18 @@ files without adding anything.
 - **Free text** searches rule titles: `cpu high`. A word is a filter only when it starts with one of
   the page's keys. Any other `key:value` word is title text, so `foo:bar` searches titles, and so does
   `metric:cpu` on the Alert rules page. `rule:cpu` is title text too, as in the old list.
-- **`key:value`** filters: `folder:` and `datasource:` take UIDs and match them exactly. `folder:`
-  replaces the old list's `namespace:`.
+- **`key:value`** filters: `folder:` takes a folder name, or part of it, and matches every folder whose
+  title contains each of its words, ignoring case, like the old list's `namespace:`. The rule search
+  then searches the matching folders by UID. `folderUid:` and `datasource:` take UIDs and match them
+  exactly; the sidebar's folder picker writes `folderUid:`. With both folder filters, a folder must
+  match the name and be one of the UIDs.
 - **Quotes** keep spaces in a value and can start anywhere in it: `contactPoint:"on call"`,
   `"cpu high"`, `label:team="a b"`. Quoting text that would read as a filter keeps it title text:
   `"state:firing"`. Empty quotes are no text. There are no escapes, as in the old list: a backslash
   is an ordinary character, so a value can't contain a quote.
 - **Repeats**: a single-value filter keeps its last value, so `state:firing state:normal` is
-  `state:normal`. Folders, data sources, labels and title words add up.
+  `state:normal`. `folder:` is single-value too, since the folder search takes one text query.
+  Folder UIDs, data sources, labels and title words add up.
 - **Case**: `state:`, `health:` and `paused:` values ignore case. Keys don't: `State:firing` is title
   text.
 
@@ -42,10 +46,10 @@ An empty value matches any value, so `label:team=` is `label:team`. As in Promet
    `paused:maybe`), a label matcher with no key, or an unclosed quote anywhere in the query.
 2. **Feedback** judges the result: the rejected tokens, values the filter can hold but the rule search
    refuses (`*` or `%` in text, `*` in exact values, data source UIDs it can't index), `contactPoint:`
-   next to `policy:`, `panelId:` without `dashboard:`, and the filters the rule search can't serve
-   yet, `policy:default` and `paused:false`.
+   next to `policy:`, `panelId:` without `dashboard:`, and the filter the rule search can't serve
+   yet, `policy:default`.
 
-So `state:bogus` is a parse rejection and `folder:f*` is feedback. The page sends no request while
+So `state:bogus` is a parse rejection and `datasource:__expr__` is feedback. The page sends no request while
 there are issues.
 
 The rule search validates the rest itself, such as label regexes. When it refuses a search (422), each
@@ -73,6 +77,12 @@ parser applies a token when one of the page's definitions accepts it.
 - `useRuleListSearchState.ts`: the applied query, kept in the `search` URL parameter exactly as typed, and the
   page's filter.
 - `RuleSearchInput.tsx`: the input and its help, built from the filter definitions.
+- `setFilterValues.ts`: the sidebar's one edit, which replaces a single filter's tokens in the query and writes the
+  other tokens back in their typed order. The new tokens go where the filter's first token was, or at the end.
+  Spacing and quote placement can change, never the meaning.
+- `FilterSidebar.tsx` and `LabelMatchersFilter.tsx`: the sidebar shell and the controls both pages' sidebars
+  compose, such as `alert-rules/AlertRulesFilterSidebar.tsx`. A label row is sent only once it has a key and a
+  value, or a key with exists or absent.
 - `searchRejection.ts`: a refused search (422) as issues, each naming the filter of the rejected leaf.
 - `searchQueryLeaves.ts`: the request leaves both kinds share. `alert-rules/alertRuleSearchQuery.ts` and
   `recording-rules/recordingRuleSearchQuery.ts` build each page's request from them. The builder tests
@@ -83,12 +93,12 @@ parser applies a token when one of the page's definitions accepts it.
 
 Filters the old list doesn't have:
 
-| Token                           | Page      | Search field          |
-| ------------------------------- | --------- | --------------------- |
-| `paused:true` \| `paused:false` | Alert     | `paused`              |
-| `panelId:<id>`                  | Alert     | `panelID`             |
-| `metric:<name>`                 | Recording | `metric`              |
-| `targetDatasource:<uid>`        | Recording | `targetDatasourceUID` |
+| Token                    | Page      | Search field          |
+| ------------------------ | --------- | --------------------- |
+| `paused:true`            | Both      | `paused`              |
+| `panelId:<id>`           | Alert     | `panelID`             |
+| `metric:<name>`          | Recording | `metric`              |
+| `targetDatasource:<uid>` | Recording | `targetDatasourceUID` |
 
 `panelId:` needs `dashboard:`, because panel IDs are dashboard-local.
 

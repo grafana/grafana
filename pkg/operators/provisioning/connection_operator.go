@@ -4,28 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
-	"os"
-
-	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana-app-sdk/logging"
-	"k8s.io/client-go/tools/cache"
 
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
-	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/server"
 )
 
 // RunConnectionController starts the connection controller operator.
 func RunConnectionController(ctx context.Context, deps server.OperatorDependencies) (runErr error) {
-	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})).With("logger", "provisioning-connection-controller")
+	logger := newOperatorLogger("provisioning-connection-controller")
 	logger.Info("Starting provisioning connection controller")
 
 	controllerCfg, err := setupFromConfig(deps.Config, deps.Registerer)
@@ -33,16 +21,13 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		return fmt.Errorf("failed to setup config: %w", err)
 	}
 
-	ctx, stopSubscriber := supervision.Watch(ctx, controllerCfg.natsSubscriber)
+	ctx, stopSubscriber, err := supervision.Start(ctx, controllerCfg.natsSubscriber)
 	defer func() {
 		deps.HealthNotifier.SetNotReady()
 		runErr = errors.Join(runErr, stopSubscriber())
 	}()
-	if err := services.StartAndAwaitRunning(ctx, controllerCfg.natsSubscriber); err != nil {
-		if errors.Is(err, context.Canceled) && ctx.Err() != nil {
-			err = context.Cause(ctx)
-		}
-		return fmt.Errorf("failed to start NATS subscriber: %w", err)
+	if err != nil {
+		return err
 	}
 
 	provisioningClient, err := controllerCfg.ProvisioningClient()
@@ -50,9 +35,6 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	statusPatcher := appcontroller.NewConnectionStatusPatcher(provisioningClient.ProvisioningV0alpha1())
-
-	// Setup connection factory and tester
 	connectionFactory, err := controllerCfg.ConnectionFactory()
 	if err != nil {
 		return fmt.Errorf("failed to setup connection factory: %w", err)
@@ -68,42 +50,30 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		return fmt.Errorf("failed to get tracer: %w", err)
 	}
 
-	// nil unless keys_only_relist is on, which keeps the full-object re-list.
-	connKeys, err := controllerCfg.ProvisioningKeysLister(logger, apisprovisioning.ConnectionResourceInfo.GroupVersionResource())
+	connKeys, err := controllerCfg.ProvisioningKeysLister(apisprovisioning.ConnectionResourceInfo.GroupVersionResource())
 	if err != nil {
 		return err
 	}
 
-	// The connection delta source and the getter it backs.
-	connSource, connGetter := informer.NewConnectionDeltaSource(controllerCfg.natsSubscriber, provisioningClient, connKeys, controllerCfg.ResyncInterval(), controllerCfg.RelistProjectionMetrics(), controllerCfg.FreshnessMetrics())
-	connController := controller.NewConnectionController(
-		connGetter,
-		statusPatcher,
-		controller.NewConnectionHealthChecker(
-			connection.NewSimpleConnectionTester(connectionFactory),
-			healthMetricsRecorder,
-		),
-		connectionFactory,
-		controllerCfg.ResyncInterval(),
-		controllerCfg.DrainTimeout(),
-		controllerCfg.Registry(),
-		tracer,
-		nats.Enabled(controllerCfg.natsSubscriber),
-	)
-
-	reg, err := connSource.AddEventHandler(connController.EventHandler())
+	connController, err := controller.ProvideConnectionController(controller.ConnectionControllerDeps{
+		Subscriber:        controllerCfg.natsSubscriber,
+		Client:            provisioningClient,
+		Keys:              connKeys,
+		ConnectionFactory: connectionFactory,
+		HealthMetrics:     healthMetricsRecorder,
+		RelistMetrics:     controllerCfg.RelistProjectionMetrics(),
+		FreshnessMetrics:  controllerCfg.FreshnessMetrics(),
+		Registry:          controllerCfg.Registry(),
+		Tracer:            tracer,
+		ResyncInterval:    controllerCfg.ResyncInterval(),
+		DrainTimeout:      controllerCfg.DrainTimeout(),
+	})
 	if err != nil {
-		return fmt.Errorf("failed to add connection event handler: %w", err)
-	}
-	go connSource.Run(ctx.Done())
-
-	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
-		return fmt.Errorf("connection controller informer cache sync failed")
+		return err
 	}
 
-	connController.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
+	return connController.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
 		logger.Info("connection operator is ready")
 		deps.HealthNotifier.SetReady()
-	}, func() {})
-	return nil
+	})
 }

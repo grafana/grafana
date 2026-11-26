@@ -82,6 +82,8 @@ export function getNavTitle(navId: string | undefined) {
     case 'alert-list':
     case 'alert-rules':
       return t('nav.alerting-list.title', 'Alert rules');
+    case 'recording-rules':
+      return t('nav.alerting-recording-rules.title', 'Recording rules');
     case 'alert-list-legacy':
       return t('nav.alert-list-legacy.title', 'Alert rules');
     case 'receivers':
@@ -277,6 +279,8 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'alert-list':
     case 'alert-rules':
       return t('nav.alerting-list.subtitle', 'Rules that determine whether an alert will fire');
+    case 'recording-rules':
+      return t('nav.alerting-recording-rules.subtitle', 'Rules that pre-compute and record values as new time series');
     case 'receivers':
       return t(
         'nav.alerting-receivers.subtitle',

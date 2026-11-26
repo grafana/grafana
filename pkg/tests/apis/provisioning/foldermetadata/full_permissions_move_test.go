@@ -105,7 +105,6 @@ func TestIntegrationProvisioning_FullSync_FolderMoveDoesNotPreservePermissionsFo
 	require.NotEmpty(t, plainUID)
 
 	// Set a Viewer permission on the legacy (no-metadata) folder.
-	// With the FlagProvisioningFolderMetadata feature enabled, this is allowed.
 	common.SetFolderPermissions(t, helper, plainUID, common.RolePermission{Role: "Viewer", Permission: common.FolderPermissionView})
 
 	plainPermsBefore := common.FolderPermissions(t, helper, plainUID)

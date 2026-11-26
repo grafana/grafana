@@ -24,6 +24,7 @@ jest.mock('./analytics/main', () => ({
   tabChanged: jest.fn(),
   clearHistoryClicked: jest.fn(),
   homepageViewed: jest.fn(),
+  recentActivityShown: jest.fn(),
 }));
 
 // Call through by default so MSW-backed tests keep working; override only for the

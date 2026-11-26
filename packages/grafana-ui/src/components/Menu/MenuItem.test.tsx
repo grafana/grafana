@@ -1,6 +1,8 @@
+import { css } from '@emotion/css';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { createTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { MenuItem, type MenuItemProps } from './MenuItem';
@@ -120,10 +122,97 @@ describe('MenuItem', () => {
     expect(screen.getByRole('menuitem', { name: 'URL Item' })).toBeInTheDocument();
   });
 
+  it('keeps menu semantics while underlining only the link label', async () => {
+    render(
+      <MenuItem
+        label="External link"
+        description="Link description"
+        shortcut="Ctrl+K"
+        component={() => <span>Custom content</span>}
+        url="https://example.com"
+        variant="link"
+        childItems={[<MenuItem key="nested" label="Nested action" />]}
+      />
+    );
+
+    const menuTextColor = createTheme().colors.text.primary;
+    const label = screen.getByText('External link');
+    const item = label.closest('[role="menuitem"]')!;
+    const itemClasses = item.className.split(' ');
+    const underlineRules = Array.from(document.styleSheets)
+      .flatMap((sheet) => Array.from(sheet.cssRules))
+      .map((rule) => rule.cssText)
+      .filter(
+        (rule) =>
+          itemClasses.some((className) => rule.includes(`.${className}`)) && rule.includes('text-decoration: underline')
+      );
+    expect(item).toHaveStyle({
+      background: 'none',
+      color: menuTextColor,
+    });
+    expect(label).toHaveAttribute('data-role', 'menuitem-label');
+    for (const text of ['Link description', 'Ctrl+K', 'Custom content']) {
+      expect(screen.getByText(text)).not.toHaveAttribute('data-role', 'menuitem-label');
+    }
+    await user.hover(item);
+    const nestedLabel = await screen.findByText('Nested action');
+    expect(underlineRules).toHaveLength(1);
+    const selector = underlineRules[0]
+      .split('{')[0]
+      .replace(/\.[\w-]+/g, ':scope')
+      .replaceAll(':hover', '')
+      .replaceAll(':focus-visible', '');
+    const underlinedLabels = Array.from(item.querySelectorAll(selector));
+    expect(underlinedLabels).toContain(label);
+    expect(underlinedLabels).not.toContain(nestedLabel);
+    expect(underlineRules[0]).toContain(':hover>*>[data-role="menuitem-label"]');
+    expect(underlineRules[0]).toContain(':focus-visible>*>[data-role="menuitem-label"]');
+  });
+
   it('renders extra component if provided', async () => {
     render(<MenuItem label="main label" component={() => <p>extra content</p>} />);
     expect(screen.getByText('main label')).toBeInTheDocument();
     expect(screen.getByText('extra content')).toBeInTheDocument();
+  });
+
+  it('forwards data attributes to the menuitem element', () => {
+    render(<MenuItem label="Item" data-analytics-id="menu_item_clicked" />);
+
+    expect(screen.getByRole('menuitem', { name: 'Item' })).toHaveAttribute('data-analytics-id', 'menu_item_clicked');
+  });
+
+  it('keeps rendering testId as data-testid alongside other data attributes', () => {
+    render(<MenuItem label="Item" testId="menu-item" data-analytics-id="menu_item_clicked" />);
+
+    const item = screen.getByTestId('menu-item');
+    expect(item).toHaveAttribute('role', 'menuitem');
+    expect(item).toHaveAttribute('data-analytics-id', 'menu_item_clicked');
+  });
+
+  it('does not forward props that are not data attributes to the DOM', () => {
+    const itemWithExtraFields = { label: 'Item', value: 'some-value', 'data-analytics-id': 'menu_item_clicked' };
+    render(<MenuItem {...itemWithExtraFields} />);
+
+    const item = screen.getByRole('menuitem', { name: 'Item' });
+    expect(item).toHaveAttribute('data-analytics-id', 'menu_item_clicked');
+    expect(item).not.toHaveAttribute('value');
+  });
+
+  it('does not let data attributes override the internal data-role used by Menu', () => {
+    render(<MenuItem label="Item" data-role="custom" />);
+
+    expect(screen.getByRole('menuitem', { name: 'Item' })).toHaveAttribute('data-role', 'menuitem');
+  });
+
+  it('allows custom styles to override the default item styles', () => {
+    render(<MenuItem label="Item" className={css({ padding: '12px 40px 12px 12px' })} />);
+
+    expect(screen.getByRole('menuitem', { name: 'Item' })).toHaveStyle({
+      paddingTop: '12px',
+      paddingRight: '40px',
+      paddingBottom: '12px',
+      paddingLeft: '12px',
+    });
   });
 
   it('activates link MenuItem with Space key', async () => {

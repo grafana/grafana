@@ -187,7 +187,7 @@ func TestReconcile_StaleHitForAMovedChildIsNotDeleted(t *testing.T) {
 	m.userDelete("a")
 	r := newTestReconciler(m, 10)
 	// The index still lists d1 and a subfolder under a after both moved to b.
-	r.Children = staleLister{memStore: m, extra: map[string][]Child{"a": {{ChildDashboard, "moved-dash"}, {ChildFolder, "moved-folder"}}}}
+	setLister(r, staleLister{memStore: m, extra: map[string][]Child{"a": {{ChildDashboard, "moved-dash"}, {ChildFolder, "moved-folder"}}}})
 	m.addDashboards("b", "moved-dash")
 	m.addFolder("moved-folder", "b", foldersv1.CascadeDeleteFinalizer)
 
@@ -463,7 +463,7 @@ func TestReconcile_ListErrorIsReported(t *testing.T) {
 	m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
 	m.userDelete("a")
 	r := newTestReconciler(m, 10)
-	r.Children = failingLister{err: errors.New("search unavailable")}
+	setLister(r, failingLister{err: errors.New("search unavailable")})
 
 	res, err := reconcileOnce(t, r, m, "a")
 	require.ErrorContains(t, err, "search unavailable")
@@ -518,7 +518,7 @@ func TestReconcile_GoneOnlyPassReportsChildrenStillListed(t *testing.T) {
 	m.userDelete("a")
 	r := newTestReconciler(m, 10)
 	// The index still lists dashboards that are already deleted.
-	r.Children = staleLister{memStore: m, extra: map[string][]Child{"a": {{ChildDashboard, "d1"}, {ChildDashboard, "d2"}}}}
+	setLister(r, staleLister{memStore: m, extra: map[string][]Child{"a": {{ChildDashboard, "d1"}, {ChildDashboard, "d2"}}}})
 
 	res, err := reconcileOnce(t, r, m, "a")
 	require.ErrorIs(t, err, ErrChildrenStillListed)
@@ -529,7 +529,7 @@ func TestReconcile_GoneOnlyPassReportsChildrenStillListed(t *testing.T) {
 	require.Equal(t, int64(0), *st.Remaining)
 
 	// Once the index catches up, the folder is released.
-	r.Children = m
+	setLister(r, m)
 	res, err = reconcileOnce(t, r, m, "a")
 	require.NoError(t, err)
 	require.Equal(t, Result{Released: true}, res)
@@ -541,7 +541,7 @@ func TestReconcile_GoneAndDeletedRequeues(t *testing.T) {
 	m.addDashboards("a", "real")
 	m.userDelete("a")
 	r := newTestReconciler(m, 10)
-	r.Children = staleLister{memStore: m, extra: map[string][]Child{"a": {{ChildDashboard, "ghost"}}}}
+	setLister(r, staleLister{memStore: m, extra: map[string][]Child{"a": {{ChildDashboard, "ghost"}}}})
 
 	res, err := reconcileOnce(t, r, m, "a")
 	require.NoError(t, err)
@@ -555,7 +555,7 @@ func TestReconcile_FailureWinsOverGoneOnly(t *testing.T) {
 	m.failDelete["stuck"] = errors.New("boom")
 	m.userDelete("a")
 	r := newTestReconciler(m, 10)
-	r.Children = staleLister{memStore: m, extra: map[string][]Child{"a": {{ChildDashboard, "ghost"}}}}
+	setLister(r, staleLister{memStore: m, extra: map[string][]Child{"a": {{ChildDashboard, "ghost"}}}})
 
 	_, err := reconcileOnce(t, r, m, "a")
 	require.ErrorContains(t, err, "boom")
@@ -569,7 +569,7 @@ func TestReconcile_LaterPageListFailureWinsOverGoneOnly(t *testing.T) {
 	m.userDelete("a")
 	r := newTestReconciler(m, 1)
 	// The first page holds a stale hit, so the batch still has room and the next page is read.
-	r.Children = &pageFailLister{stale: staleLister{memStore: m, extra: map[string][]Child{"a": {{ChildDashboard, "ghost1"}, {ChildDashboard, "ghost2"}}}}}
+	setLister(r, &pageFailLister{stale: staleLister{memStore: m, extra: map[string][]Child{"a": {{ChildDashboard, "ghost1"}, {ChildDashboard, "ghost2"}}}}})
 
 	res, err := reconcileOnce(t, r, m, "a")
 	require.ErrorContains(t, err, "page down")
@@ -606,7 +606,7 @@ func TestReconcile_StatusErrorsDoNotDependOnListOrder(t *testing.T) {
 	writes := m.statusWrites
 	first := slices.Clone(m.folders["a"].status.Errors)
 
-	r.Children = reversedLister{m}
+	setLister(r, reversedLister{m})
 	_, err = reconcileOnce(t, r, m, "a")
 	require.Error(t, err)
 	require.Equal(t, first, m.folders["a"].status.Errors)
@@ -627,7 +627,7 @@ func TestReconcile_GoneOnlyPassReportsStatusWriteFailure(t *testing.T) {
 	m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
 	m.userDelete("a")
 	r := newTestReconciler(m, 10)
-	r.Children = staleLister{memStore: m, extra: map[string][]Child{"a": {{ChildDashboard, "ghost"}}}}
+	setLister(r, staleLister{memStore: m, extra: map[string][]Child{"a": {{ChildDashboard, "ghost"}}}})
 	r.Folders = failingStatus{m}
 
 	_, err := reconcileOnce(t, r, m, "a")

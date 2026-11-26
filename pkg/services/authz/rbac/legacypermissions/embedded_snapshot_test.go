@@ -2,6 +2,7 @@ package legacypermissions_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/grafana/authlib/types"
@@ -26,7 +27,7 @@ func TestIntegrationEmbeddedLegacySnapshotMultipleChunks(t *testing.T) {
 	catalog := legacypermissions.NewRoleCatalog()
 	grants := make([]ac.Permission, 2501)
 	for i := range grants {
-		grants[i] = ac.Permission{Action: "users:create"}
+		grants[i] = ac.Permission{Action: "users:create", Scope: fmt.Sprintf("users:uid:user-%d", i)}
 	}
 	catalog.Replace(map[string][]ac.Permission{"Viewer": grants})
 	client := legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(sql, catalog, resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &licensing.OSSLicensingService{}, nil), cfg)
@@ -35,8 +36,8 @@ func TestIntegrationEmbeddedLegacySnapshotMultipleChunks(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Len(t, result.Permissions, len(grants)+1)
-	for _, permission := range result.Permissions[:len(grants)] {
-		require.Equal(t, types.Permission{Action: "users:create"}, permission)
+	for i, permission := range result.Permissions[:len(grants)] {
+		require.Equal(t, types.Permission{Action: grants[i].Action, Scope: grants[i].Scope}, permission)
 	}
 	require.Equal(t, types.Permission{Action: "folders:read", Scope: "folders:uid:sharedwithme"}, result.Permissions[len(grants)])
 }

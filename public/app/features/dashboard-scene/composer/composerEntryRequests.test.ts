@@ -86,8 +86,16 @@ it('delivers to the first listener that supports the resource, immediately and o
 
   expect(requestComposerEnter(TARGET)).toBe(true);
 
-  expect(first.listener).toHaveBeenCalledWith(TARGET);
+  expect(first.listener).toHaveBeenCalledWith(TARGET, { assistantEdit: false });
   expect(second.listener).not.toHaveBeenCalled();
+});
+
+it("tells the listener when the request is for the Assistant's own edit", () => {
+  const { listener } = listen();
+
+  expect(requestComposerEnter(TARGET, { assistantEdit: true })).toBe(true);
+
+  expect(listener).toHaveBeenCalledWith(TARGET, { assistantEdit: true });
 });
 
 it('passes a notebook request over a listener that only knows dashboards', () => {
@@ -97,7 +105,7 @@ it('passes a notebook request over a listener that only knows dashboards', () =>
   requestComposerEnter(NOTEBOOK);
 
   expect(dashboards.listener).not.toHaveBeenCalled();
-  expect(notebooks.listener).toHaveBeenCalledWith(NOTEBOOK);
+  expect(notebooks.listener).toHaveBeenCalledWith(NOTEBOOK, { assistantEdit: false });
 });
 
 it('never makes a request no listener supports', () => {
@@ -133,7 +141,7 @@ describe('a request that floats the sidebar', () => {
 
   it('floats the sidebar while it waits for the entry attempt', () => {
     requestComposerEnter(TARGET, { float: true });
-    expect(assistant).toHaveBeenCalledWith(TARGET);
+    expect(assistant).toHaveBeenCalledWith(TARGET, { assistantEdit: false });
     expect(sidebarPresentation()).toBe('floating');
   });
 
@@ -219,7 +227,7 @@ describe('a listener that declines', () => {
 
     expect(requestComposerEnter(TARGET, { float: true })).toBe(false);
 
-    expect(decline).toHaveBeenCalledWith(TARGET);
+    expect(decline).toHaveBeenCalledWith(TARGET, { assistantEdit: false });
     expect(getPendingComposerEnterTarget()).toBeUndefined();
     expect(sidebarPresentation()).toBe('docked');
   });
@@ -319,11 +327,19 @@ describe('before Assistant first registers', () => {
     const second = listen();
 
     expect(first.listener).toHaveBeenCalledTimes(1);
-    expect(first.listener).toHaveBeenCalledWith(TARGET);
+    expect(first.listener).toHaveBeenCalledWith(TARGET, { assistantEdit: false });
     expect(second.listener).not.toHaveBeenCalled();
     // Outstanding, and floating, until the entry attempt settles.
     expect(getPendingComposerEnterTarget()).toEqual(TARGET);
     expect(sidebarPresentation()).toBe('floating');
+  });
+
+  it("tells the first listener that a held request is for the Assistant's own edit", () => {
+    requestComposerEnter(TARGET, { float: true, assistantEdit: true });
+
+    const { listener } = listen();
+
+    expect(listener).toHaveBeenCalledWith(TARGET, { assistantEdit: true });
   });
 
   it('releases a held request after 10 seconds, and delivers nothing later', () => {
@@ -348,7 +364,7 @@ describe('before Assistant first registers', () => {
     ).listener;
     const second = listen().listener;
 
-    expect(decline).toHaveBeenCalledWith(TARGET);
+    expect(decline).toHaveBeenCalledWith(TARGET, { assistantEdit: false });
     expect(second).not.toHaveBeenCalled();
     expect(getPendingComposerEnterTarget()).toBeUndefined();
     expect(sidebarPresentation()).toBe('docked');

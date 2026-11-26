@@ -56,6 +56,14 @@
       addLabels: ["claude-gate"],
     },
     {
+      groupName: "scenes",
+      matchPackageNames: ["@grafana/scenes", "@grafana/scenes-react"],
+    },
+    {
+      groupName: "locker",
+      matchPackageNames: ["@locker/{/,}**"],
+    },
+    {
       description: "Run Meticulous for production dependencies used by the Grafana UI",
       matchManagers: ["npm"],
       matchDepTypes: ["dependencies"],

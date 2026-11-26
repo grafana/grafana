@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
@@ -26,7 +26,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterUserCreate(obj runtime.Object,
 	}
 
 	// Skip if user has no role assigned or role is None
-	if user.Spec.Role == "" || user.Spec.Role == string(identity.RoleNone) {
+	if user.Spec.Role == "" || user.Spec.Role == string(authlib.RoleNone) {
 		b.logger.Debug("user has no role assigned, skipping basic role sync",
 			"namespace", user.Namespace,
 			"name", user.Name,
@@ -142,7 +142,7 @@ func (b *IdentityAccessManagementAPIBuilder) BeginUserUpdate(ctx context.Context
 			defer cancel()
 
 			var operations []*v1.MutateOperation
-			if newRole == "" || newRole == string(identity.RoleNone) {
+			if newRole == "" || newRole == string(authlib.RoleNone) {
 				operations = []*v1.MutateOperation{
 					{
 						Operation: &v1.MutateOperation_DeleteUserOrgRole{
@@ -198,7 +198,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterUserDelete(obj runtime.Object,
 	operation := "delete"
 
 	// Skip if user had no role assigned or role is None
-	if user.Spec.Role == "" || user.Spec.Role == string(identity.RoleNone) {
+	if user.Spec.Role == "" || user.Spec.Role == string(authlib.RoleNone) {
 		b.logger.Debug("user had no role assigned, skipping basic role sync",
 			"namespace", user.Namespace,
 			"name", user.Name,

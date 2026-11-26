@@ -505,7 +505,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v3.0.0
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
@@ -628,7 +628,7 @@ jobs:
           - name: windows-arm64
             arch: arm64
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v3.0.0
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
@@ -961,7 +961,7 @@ jobs:
           name: artifacts-packages-linux-amd64
           path: dist
 
-      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.4
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v3.0.0
 
       - name: Set up Docker Buildx
         run: docker buildx create --use

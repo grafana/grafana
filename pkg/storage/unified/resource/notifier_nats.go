@@ -83,7 +83,9 @@ func watchNotificationTypeToAction(t resourcepb.WatchNotification_Type) (DataAct
 // drops a notification, so consumers re-list.
 // Core NATS also delivers in arrival order, not RV order, so Watch runs
 // arrivals through the same settle buffer as the channel notifier (held for
-// SettleDelay, emitted sorted by RV) to keep downstream RVs monotonic.
+// SettleDelay, emitted sorted by RV) to keep downstream RVs monotonic. One that
+// arrives after a later RV of its collection was emitted goes to
+// WatchOptions.OnLate.
 //
 // A failed subscription (e.g. the bus is not reachable yet at startup) is
 // retried in the background with exponential backoff bounded by the watch's

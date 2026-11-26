@@ -4,8 +4,6 @@ package auth
 
 import (
 	context "context"
-
-	identity "github.com/grafana/grafana/pkg/apimachinery/identity"
 	mock "github.com/stretchr/testify/mock"
 
 	types "github.com/grafana/authlib/types"
@@ -73,7 +71,7 @@ func (_c *MockAccessChecker_Check_Call) RunAndReturn(run func(context.Context, t
 }
 
 // WithFallbackRole provides a mock function with given fields: role
-func (_m *MockAccessChecker) WithFallbackRole(role identity.RoleType) AccessChecker {
+func (_m *MockAccessChecker) WithFallbackRole(role types.RoleType) AccessChecker {
 	ret := _m.Called(role)
 
 	if len(ret) == 0 {
@@ -81,7 +79,7 @@ func (_m *MockAccessChecker) WithFallbackRole(role identity.RoleType) AccessChec
 	}
 
 	var r0 AccessChecker
-	if rf, ok := ret.Get(0).(func(identity.RoleType) AccessChecker); ok {
+	if rf, ok := ret.Get(0).(func(types.RoleType) AccessChecker); ok {
 		r0 = rf(role)
 	} else {
 		if ret.Get(0) != nil {
@@ -98,14 +96,14 @@ type MockAccessChecker_WithFallbackRole_Call struct {
 }
 
 // WithFallbackRole is a helper method to define mock.On call
-//   - role identity.RoleType
+//   - role types.RoleType
 func (_e *MockAccessChecker_Expecter) WithFallbackRole(role interface{}) *MockAccessChecker_WithFallbackRole_Call {
 	return &MockAccessChecker_WithFallbackRole_Call{Call: _e.mock.On("WithFallbackRole", role)}
 }
 
-func (_c *MockAccessChecker_WithFallbackRole_Call) Run(run func(role identity.RoleType)) *MockAccessChecker_WithFallbackRole_Call {
+func (_c *MockAccessChecker_WithFallbackRole_Call) Run(run func(role types.RoleType)) *MockAccessChecker_WithFallbackRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(identity.RoleType))
+		run(args[0].(types.RoleType))
 	})
 	return _c
 }
@@ -115,7 +113,7 @@ func (_c *MockAccessChecker_WithFallbackRole_Call) Return(_a0 AccessChecker) *Mo
 	return _c
 }
 
-func (_c *MockAccessChecker_WithFallbackRole_Call) RunAndReturn(run func(identity.RoleType) AccessChecker) *MockAccessChecker_WithFallbackRole_Call {
+func (_c *MockAccessChecker_WithFallbackRole_Call) RunAndReturn(run func(types.RoleType) AccessChecker) *MockAccessChecker_WithFallbackRole_Call {
 	_c.Call.Return(run)
 	return _c
 }

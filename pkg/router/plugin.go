@@ -6,9 +6,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
-	"slices"
 	"strings"
 
 	"github.com/grafana/authlib/authn"
@@ -17,12 +17,16 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
+	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
@@ -49,6 +53,28 @@ import (
 
 type PluginClientProvider = func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error)
 
+// LegacySettingsStoreProvider binds a store to a plugin, not a tenant. The store
+// must resolve the namespace and requester from each storage operation's context.
+type LegacySettingsStoreProvider func(ctx context.Context, pluginID string) (grafanarest.Storage, error)
+
+// SettingsDependencies configure the app settings API. ST supplies only the
+// legacy store; the cloud loader supplies the rest.
+type SettingsDependencies struct {
+	ReadOnly bool
+	// LegacyStore gets the legacy store for a plugin. Without one, settings use unified storage.
+	LegacyStore LegacySettingsStoreProvider
+	// AccessChecker replaces the default legacy app-access check.
+	AccessChecker pluginaccesscontrol.AppAccessChecker
+	// NamespaceAuthorizer replaces the default apiserver namespace authorizer.
+	NamespaceAuthorizer authorizer.Authorizer
+	// Middleware wraps the plugin's v2 client.
+	Middleware []backend.HandlerMiddleware
+	// AuthenticateV2 sends the caller's exchanged token to the plugin, as for v3.
+	// It wraps the circuit breaker, as v3 authentication does: failures to
+	// exchange a token say nothing about whether the plugin is reachable.
+	AuthenticateV2 bool
+}
+
 // The dependencies are configured at startup and used across all plugins
 type PluginDependencies struct {
 	PluginClient       plugins.Client
@@ -60,7 +86,7 @@ type PluginDependencies struct {
 	MetricsRegister    prometheus.Registerer
 	BuilderMetrics     *builder.BuilderMetrics
 	RESTConfigProvider restcfg.RestConfigProvider
-	PluginSettings     pluginsettings.Service
+	Settings           SettingsDependencies
 	Unified            resource.ResourceClient
 	Decrypter          decrypt.DecryptService
 	TokenExchanger     authn.TokenExchanger       // used for delegation
@@ -99,7 +125,7 @@ func ProvidePluginLoaderDependencies(
 	restConfigProvider restcfg.RestConfigProvider,
 	pluginAuth *pluginauth.Config,
 ) PluginLoaderDependencies {
-	return PluginLoaderDependencies{
+	deps := PluginLoaderDependencies{
 		ClientV3Loader: clientV3Loader,
 		PluginSources:  pluginSources,
 		ACService:      acService,
@@ -113,7 +139,6 @@ func ProvidePluginLoaderDependencies(
 			MetricsRegister:    reg,
 			BuilderMetrics:     builderMetrics,
 			RESTConfigProvider: restConfigProvider,
-			PluginSettings:     pluginSettings,
 			Unified:            unified,
 			Decrypter:          decrypter,
 			Tracer:             tracer,
@@ -121,8 +146,17 @@ func ProvidePluginLoaderDependencies(
 			Cfg:                cfg,
 			TokenExchanger:     newClientV3TokenExchanger(cfg),
 			PluginAuth:         pluginAuth,
+			// The settings subresources call the plugin as the caller, as in
+			// the cloud loader and as v3 calls do.
+			Settings: SettingsDependencies{AuthenticateV2: true},
 		},
 	}
+	if pluginSettings != nil {
+		deps.Settings.LegacyStore = func(_ context.Context, pluginID string) (grafanarest.Storage, error) {
+			return appsettings.NewLegacySettingsStore(pluginID, pluginID, pluginSettings), nil
+		}
+	}
+	return deps
 }
 
 func newClientV3TokenExchanger(cfg *setting.Cfg) authn.TokenExchanger {
@@ -202,16 +236,12 @@ func initLocalPlugins(ctx context.Context, deps PluginLoaderDependencies) error 
 }
 
 // declareLocalManifestRoles declares the roles of a manifest served by the
-// local plugin loader. A routable core group keeps the roles its own app
-// declares, and an invalid group gets none.
+// local plugin loader. An invalid group gets none.
 func declareLocalManifestRoles(ctx context.Context, service accesscontrol.Service, pluginID, pluginName string, manifest *app.ManifestData) error {
 	if manifest == nil {
 		return nil
 	}
 	group := manifest.Group
-	if slices.Contains(routableCoreGroups, group) {
-		return nil
-	}
 	if !isPluginManifestGroup(group) || len(validation.IsDNS1123Subdomain(group)) > 0 {
 		logging.FromContext(ctx).Warn("router: skipping roles for invalid manifest group", "pluginId", pluginID, "group", group)
 		return nil
@@ -251,6 +281,9 @@ func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry, 
 
 	if err != nil {
 		return nil, fmt.Errorf("error getting list of app plugins: %w", err)
+	}
+	for i := range pluginDefs {
+		loadSettingsManifest(ctx, &pluginDefs[i])
 	}
 	return pluginDefs, nil
 }
@@ -311,13 +344,20 @@ func (pl PluginLoader) prepareBackends(ctx context.Context, pluginDefs []definit
 // invalidate each other's handlers and active watches.
 func pluginManifestKeyData(plugin definition.PluginDefinition, manifest *app.ManifestData, host string) ([]byte, error) {
 	plugin.Manifests = nil
-	plugin.Manifest = nil //nolint:staticcheck
+	if manifest != nil {
+		// Only the settings backend serves the settings manifest.
+		plugin.Settings = nil
+	}
 	return json.Marshal(struct {
 		Definition definition.PluginDefinition
 		Manifest   *app.ManifestData
 		Host       string
 	}{plugin, manifest, host})
 }
+
+// errNoServedVersions is returned for a manifest that declares no served
+// version, which leaves nothing to route.
+var errNoServedVersions = errors.New("no served versions")
 
 // pluginManifestGroupSuffix is required on manifest groups: unified storage
 // always enforces RBAC on it, and no core Grafana group uses it.
@@ -347,18 +387,18 @@ func (pl PluginLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
 // BACKEND
 //-----------------------
 
-// routableCoreGroups are the core groups a plugin backend may serve in place of
-// the embedded API server, from any source, local and remote plugins included.
-// This is deliberate: these groups are low risk, so any plugin may shadow them.
-// A misbehaving or malicious plugin serving one of them can do no serious harm,
-// which is why the router may route them before their authorization moves too.
-// Before adding a group, confirm the same holds for it: never add a group
-// whose data or permissions matter, such as dashboards, folders or IAM.
-var routableCoreGroups = []string{"playlist.grafana.app", "example.grafana.app"}
-
 // newPluginBackend builds the backend for one plugin manifest. Its group must be
-// a plugin group (*.ext.grafana.app) or one of routableCoreGroups.
-func newPluginBackend(pluginID string, manifest *app.ManifestData, client PluginClientProvider, deps PluginDependencies, key []byte) (_ *PluginBackend, err error) {
+// a plugin group (*.ext.grafana.app): plugins may not claim core groups.
+func newPluginBackend(pluginID string, manifest *app.ManifestData, client PluginClientProvider, deps PluginDependencies, key []byte) (*PluginBackend, error) {
+	return buildPluginBackend(pluginID, manifest, client, deps, key, false)
+}
+
+// buildPluginBackend is newPluginBackend, where trusted lets the backend serve
+// any group. Only sources the operator or Grafana itself controls are trusted:
+// the core_url source and the core apps built from Grafana's own installers.
+// Local plugins, dev targets and plugin deployments are not, or they could
+// claim groups such as dashboards or IAM.
+func buildPluginBackend(pluginID string, manifest *app.ManifestData, client PluginClientProvider, deps PluginDependencies, key []byte, trusted bool) (_ *PluginBackend, err error) {
 	// The plugin API builder panics on an invalid manifest. Plugins are loaded
 	// inside the reconcile loop, so a panic here would stop it for every group.
 	defer func() {
@@ -370,15 +410,15 @@ func newPluginBackend(pluginID string, manifest *app.ManifestData, client Plugin
 	if manifest == nil {
 		return nil, fmt.Errorf("plugin %q: missing manifest", pluginID)
 	}
-	if !isPluginManifestGroup(manifest.Group) && !slices.Contains(routableCoreGroups, manifest.Group) {
-		return nil, fmt.Errorf("plugin %q: API group %q must end in %s, or be a routable core group", pluginID, manifest.Group, pluginManifestGroupSuffix)
+	if !trusted && !isPluginManifestGroup(manifest.Group) {
+		return nil, fmt.Errorf("plugin %q: API group %q must end in %s", pluginID, manifest.Group, pluginManifestGroupSuffix)
 	}
 	if err := pluginroute.ValidateManifest(pluginID, manifest); err != nil {
 		return nil, err
 	}
 	group := pluginroute.APIGroup(manifest)
 	if len(group.Versions) == 0 {
-		return nil, fmt.Errorf("plugin %q has no served versions", pluginID)
+		return nil, fmt.Errorf("plugin %q has %w", pluginID, errNoServedVersions)
 	}
 	h := sha256.New()
 	_, _ = h.Write(key)
@@ -416,6 +456,7 @@ func newPluginSettingsBackend(plugin definition.PluginDefinition, client PluginC
 		pluginID:   id,
 		info:       plugin.JSONData.Info,
 		group:      metav1.APIGroup{Name: id, Versions: []metav1.GroupVersionForDiscovery{version}, PreferredVersion: version},
+		manifest:   plugin.Settings,
 		settings:   &plugin,
 		client:     client,
 		deps:       deps,
@@ -439,8 +480,11 @@ type PluginBackend struct {
 	client    PluginClientProvider
 	deps      PluginDependencies
 
-	// settings is set instead of manifest for the backend that serves the
-	// plugin's settings API under its plugin ID.
+	// settings is set for the backend that serves the plugin's settings API
+	// under its plugin ID. Its manifest, the settings manifest, is only
+	// published: what it serves is built from settings. It is published as
+	// served, with its x-grafana-proxy routes, so a plugin can declare it in
+	// place of its plugin.json routes.
 	settings *definition.PluginDefinition
 
 	// hasBackend is whether the plugin runs a backend process, for the
@@ -533,28 +577,60 @@ func (b *PluginBackend) load(ctx context.Context) (*pluginroute.Handler, error) 
 	return b.loadManifest(cfg, opts, clientV3)
 }
 
+// settingsPluginClient guards client with the circuit breaker and, when
+// Settings.AuthenticateV2 is set (in the cloud and local loaders), authenticates
+// calls outside it. Authentication failures say nothing about whether the plugin
+// is reachable, so the breaker must not see them.
+func (b *PluginBackend) settingsPluginClient(client plugins.Client) (plugins.Client, error) {
+	client = &breakerPluginClient{Client: client}
+	if !b.deps.Settings.AuthenticateV2 {
+		return client, nil
+	}
+	return cloudSettingsClient(client, []backend.HandlerMiddleware{newV2AuthenticationMiddleware(b.pluginID,
+		withAuthFailureOutcome(pluginauth.ClientV3TokenExchanger(b.deps.Cfg, b.deps.PluginAuth, b.pluginID, b.deps.TokenExchanger)))})
+}
+
 // loadSettings serves the settings API, which calls the plugin through its
 // v2 client only.
 func (b *PluginBackend) loadSettings(ctx context.Context, cfg *setting.Cfg, opts pluginroute.Options, client plugins.Client) (*pluginroute.Handler, error) {
+	if b.deps.Settings.AccessChecker != nil {
+		opts.AccessChecker = b.deps.Settings.AccessChecker
+	}
+	opts.NamespaceAuthorizer = b.deps.Settings.NamespaceAuthorizer
 	if client != nil {
-		opts.PluginClient = &breakerPluginClient{Client: client}
+		var err error
+		if opts.PluginClient, err = b.settingsPluginClient(client); err != nil {
+			return nil, err
+		}
 	}
 	opts.ContextProvider = b.deps.ContextProvider
 	opts.Features = b.deps.Features
 	opts.Settings = appsettings.Options{
+		ReadOnly:                 b.deps.Settings.ReadOnly,
 		RegisterProxy:            openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsHandleProxyRequests, false, openfeature.TransactionContext(ctx)),
 		AccessControl:            b.deps.AccessControl,
 		DataProxyLogging:         cfg.DataProxyLogging,
 		SendUserHeader:           cfg.SendUserHeader,
 		PluginsAppsSkipVerifyTLS: cfg.PluginsAppsSkipVerifyTLS,
 	}
-	if b.deps.PluginSettings != nil {
-		opts.Settings.LegacyStore = appsettings.NewLegacySettingsStore(b.pluginID, b.pluginID, b.deps.PluginSettings)
+	if b.deps.Settings.LegacyStore != nil {
+		store, err := b.deps.Settings.LegacyStore(ctx, b.pluginID)
+		if err != nil {
+			return nil, fmt.Errorf("plugin %q: legacy settings store: %w", b.pluginID, err)
+		}
+		if store == nil {
+			return nil, fmt.Errorf("plugin %q: legacy settings store provider returned no store", b.pluginID)
+		}
+		opts.Settings.LegacyStore = store
 	}
 	opts.DualWrite = b.deps.DualWrite
 	opts.StorageOpts = &options.StorageOptions{UnifiedStorageConfig: cfg.UnifiedStorage}
 	opts.BuilderMetrics = b.deps.BuilderMetrics
-	return pluginroute.NewAppSettingsHandler(*b.settings, opts)
+	handler, err := pluginroute.NewAppSettingsHandler(*b.settings, opts)
+	if err != nil && opts.Settings.LegacyStore != nil {
+		opts.Settings.LegacyStore.Destroy()
+	}
+	return handler, err
 }
 
 // loadManifest serves a manifest's kinds and routes, which call the plugin
@@ -604,4 +680,12 @@ func (e *authOutcomeExchanger) Exchange(ctx context.Context, r authn.TokenExchan
 		setContextFailure(ctx, failureAuth)
 	}
 	return res, err
+}
+
+// loadSettingsManifest describes the plugin's settings API, with the proxy
+// routes it serves, once its manifests are loaded.
+func loadSettingsManifest(ctx context.Context, plugin *definition.PluginDefinition) {
+	if err := plugin.LoadSettings(pluginproxy.MatchRoute); err != nil {
+		logging.FromContext(ctx).Warn("router: parts of the plugin settings manifest are not served", "pluginId", plugin.JSONData.ID, "reason", err)
+	}
 }

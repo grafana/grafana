@@ -15,6 +15,7 @@ import (
 	"k8s.io/klog/v2"
 	openapi "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/util"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -101,6 +102,47 @@ func addRouteSchemas(openAPISpec *spec3.OpenAPI, route APIRouteHandler) {
 		}
 		openAPISpec.Components.Schemas[name] = &schema
 	}
+}
+
+// RouteSchemas returns the components a route whose spec references roots must
+// publish in Schemas, keyed by component name. Each root is named the way
+// definitions keys it. Dependencies are followed rather than listed, so a new
+// field cannot reference a component nobody publishes.
+func RouteSchemas(definitions openapi.GetOpenAPIDefinitions, roots ...string) map[string]spec.Schema {
+	defs := definitions(RouteSchemaRef)
+
+	out := map[string]spec.Schema{}
+	queue := slices.Clone(roots)
+	for len(queue) > 0 {
+		name := queue[0]
+		queue = queue[1:]
+
+		if _, seen := out[routeSchemaName(name)]; seen {
+			continue
+		}
+		def, ok := defs[name]
+		if !ok {
+			continue
+		}
+		out[routeSchemaName(name)] = def.Schema
+		queue = append(queue, def.Dependencies...)
+	}
+
+	return out
+}
+
+// RouteSchemaRef is the $ref to a component RouteSchemas publishes.
+func RouteSchemaRef(name string) spec.Ref {
+	return spec.MustCreateRef("#/components/schemas/" + routeSchemaName(name))
+}
+
+// Generated dependencies come as either Go import paths or names OpenAPIModelName
+// already converted, and converting a converted name again changes it.
+func routeSchemaName(name string) string {
+	if strings.Contains(name, "/") {
+		return util.ToRESTFriendlyName(name)
+	}
+	return name
 }
 
 func addBuilderRoutes(

@@ -34,7 +34,7 @@ describe('registered expression query editor', () => {
 
     const input = await screen.findByRole('textbox');
     expect(input).toHaveValue('$A + 1');
-    expect(screen.getByRole('button', { name: 'Math' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Math' })).not.toBeInTheDocument();
 
     await user.type(input, '0');
     expect(props.onChange).toHaveBeenLastCalledWith({
@@ -53,29 +53,5 @@ describe('registered expression query editor', () => {
 
     await user.tab();
     expect(props.onRunQuery).toHaveBeenCalledTimes(1);
-  });
-
-  it('applies reduce defaults and retains the cached math expression across prop updates', async () => {
-    const props = getProps();
-    const { user, rerender } = render(<QueryEditor {...props} />);
-
-    await user.click(await screen.findByRole('button', { name: 'Math' }));
-    await user.click(await screen.findByTestId('expression-type-reduce'));
-    expect(props.onChange).toHaveBeenLastCalledWith({
-      ...props.query,
-      type: ExpressionQueryType.reduce,
-      reducer: 'mean',
-    });
-
-    const reduceQuery = { ...props.query, type: ExpressionQueryType.reduce, reducer: 'mean', expression: 'A' };
-    rerender(<QueryEditor {...props} query={reduceQuery} />);
-
-    await user.click(screen.getByRole('button', { name: 'Reduce' }));
-    await user.click(await screen.findByTestId('expression-type-math'));
-    expect(props.onChange).toHaveBeenLastCalledWith({
-      ...reduceQuery,
-      type: ExpressionQueryType.math,
-      expression: '$A + 1',
-    });
   });
 });

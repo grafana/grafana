@@ -116,50 +116,54 @@ func TestControllerQueueLagRetries(t *testing.T) {
 			{name: "retry after informer update", results: []error{unavailable, nil}, reenqueue: true},
 		} {
 			t.Run(component+"/"+tt.name, func(t *testing.T) {
-				var completedAt time.Time
-				var pendingAt time.Time
-				attempt := 0
-				var c *queueLagControllerTest
-				c = newQueueLagControllerTest(t, component, nil, func() error {
-					require.Less(t, attempt, len(tt.results))
-					if attempt == 0 && tt.reenqueue {
-						updated := make(chan struct{})
-						go func() {
-							c.enqueue()
-							close(updated)
-						}()
-						<-updated
-						pendingAt = c.tracker.waiting[queueLagTestKey].Value.(time.Time)
-					}
-					err := tt.results[attempt]
-					attempt++
-					completedAt = time.Now()
-					return err
-				})
-				c.enqueue()
-				for i := range tt.results {
-					require.True(t, c.processNext())
-					assert.Empty(t, c.tracker.inflight)
-					if i < len(tt.results)-1 {
-						if i == 0 && tt.reenqueue {
-							require.Contains(t, c.tracker.waiting, queueLagTestKey)
-							enqueuedAt := c.tracker.waiting[queueLagTestKey].Value.(time.Time)
-							assert.Equal(t, pendingAt, enqueuedAt, "retry must preserve the pending informer's enqueue time")
-						} else {
-							assert.Empty(t, c.tracker.waiting, "scheduled retry must not count as queued work")
-							assert.Zero(t, c.gauge())
-							c.clock.Step(time.Second)
-							require.Eventually(t, func() bool { return c.queue.Len() > 0 }, time.Second, time.Millisecond)
-							require.Contains(t, c.tracker.waiting, queueLagTestKey)
-							enqueuedAt := c.tracker.waiting[queueLagTestKey].Value.(time.Time)
-							assert.False(t, enqueuedAt.Before(completedAt), "retry must be timed from its own enqueue")
-							assert.LessOrEqual(t, c.gauge(), time.Since(completedAt).Seconds())
+				synctest.Test(t, func(t *testing.T) {
+					var completedAt time.Time
+					var pendingAt time.Time
+					attempt := 0
+					var c *queueLagControllerTest
+					c = newQueueLagControllerTest(t, component, nil, func() error {
+						require.Less(t, attempt, len(tt.results))
+						if attempt == 0 && tt.reenqueue {
+							updated := make(chan struct{})
+							go func() {
+								c.enqueue()
+								close(updated)
+							}()
+							<-updated
+							pendingAt = c.tracker.waiting[queueLagTestKey].Value.(time.Time)
+						}
+						err := tt.results[attempt]
+						attempt++
+						completedAt = time.Now()
+						return err
+					})
+					c.enqueue()
+					for i := range tt.results {
+						require.True(t, c.processNext())
+						assert.Empty(t, c.tracker.inflight)
+						if i < len(tt.results)-1 {
+							if i == 0 && tt.reenqueue {
+								require.Contains(t, c.tracker.waiting, queueLagTestKey)
+								enqueuedAt := c.tracker.waiting[queueLagTestKey].Value.(time.Time)
+								assert.Equal(t, pendingAt, enqueuedAt, "retry must preserve the pending informer's enqueue time")
+							} else {
+								assert.Empty(t, c.tracker.waiting, "scheduled retry must not count as queued work")
+								assert.Zero(t, c.gauge())
+								// Let the delay scheduler register its timer before advancing the fake clock.
+								synctest.Wait()
+								c.advance(time.Second)
+								require.Positive(t, c.queue.Len())
+								require.Contains(t, c.tracker.waiting, queueLagTestKey)
+								enqueuedAt := c.tracker.waiting[queueLagTestKey].Value.(time.Time)
+								assert.False(t, enqueuedAt.Before(completedAt), "retry must be timed from its own enqueue")
+								assert.LessOrEqual(t, c.gauge(), time.Since(completedAt).Seconds())
+							}
 						}
 					}
-				}
-				assert.Equal(t, len(tt.results), attempt)
-				assert.Empty(t, c.tracker.waiting)
-				assert.Zero(t, c.gauge())
+					assert.Equal(t, len(tt.results), attempt)
+					assert.Empty(t, c.tracker.waiting)
+					assert.Zero(t, c.gauge())
+				})
 			})
 		}
 	}

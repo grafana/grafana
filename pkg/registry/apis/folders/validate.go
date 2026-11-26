@@ -100,6 +100,12 @@ func hasK6Ancestor(info *folders.FolderInfoList, self string) bool {
 	return false
 }
 
+// isReservedRootTitle reports whether the title collides with the root folder's
+// display name; nested folders may reuse it.
+func isReservedRootTitle(title, parentName string) bool {
+	return folder.IsRootFolderUID(parentName) && strings.EqualFold(title, dashboards.RootFolderName)
+}
+
 func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGetter, maxDepth int, dryRun bool) error {
 	id := f.Name
 
@@ -132,11 +138,11 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return folder.ErrAPITitleEmpty
 	}
 
-	if strings.EqualFold(f.Spec.Title, dashboards.RootFolderName) {
+	parentName := meta.GetFolder()
+
+	if isReservedRootTitle(f.Spec.Title, parentName) {
 		return folder.ErrNameExists.Errorf("a folder with that name already exists")
 	}
-
-	parentName := meta.GetFolder()
 
 	// checked before resolving the tree so it also rejects a k6 parent we cannot read
 	if parentName == accesscontrol.K6FolderUID && !isServiceAccount(ctx) {
@@ -204,7 +210,7 @@ func validateOnUpdate(ctx context.Context,
 		return folder.ErrAPITitleEmpty
 	}
 
-	if strings.EqualFold(obj.Spec.Title, dashboards.RootFolderName) {
+	if isReservedRootTitle(obj.Spec.Title, folderObj.GetFolder()) {
 		return folder.ErrNameExists.Errorf("a folder with that name already exists")
 	}
 
@@ -636,7 +642,15 @@ func validateOnDelete(ctx context.Context,
 	slices.SortFunc(stats, func(a, b *resourcepb.ResourceStatsResponse_Stats) int {
 		return cmp.Or(cmp.Compare(a.Resource, b.Resource), cmp.Compare(a.Group, b.Group))
 	})
+	// A sql-fallback entry means legacy is authoritative for that resource; unified then only holds
+	// a dual-write copy that can outlive its legacy row.
+	legacyLibraryPanels := slices.ContainsFunc(stats, func(s *resourcepb.ResourceStatsResponse_Stats) bool {
+		return s.Group == "sql-fallback" && s.Resource == "library_elements"
+	})
 	for _, v := range stats {
+		if legacyLibraryPanels && v.Resource == "librarypanels" {
+			continue
+		}
 		if slices.Contains(allowedResourceTypes, v.Resource) && v.Count > 0 {
 			metrics.record(deleteCheckRefusedNotEmpty, v.Resource)
 			return folder.ErrFolderNotEmpty.Errorf("folder is not empty, contains %d %s", v.Count, v.Resource)
