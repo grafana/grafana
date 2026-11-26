@@ -18,7 +18,7 @@ import { findHighlightChunksInText, type GrafanaTheme2, LogsDedupStrategy, type 
 import { t } from '@grafana/i18n';
 import { Button, Icon, Tooltip } from '@grafana/ui';
 
-import { isElement } from '../../utils';
+import { targetIsElement } from '../../utils';
 import { LogLabels } from '../LogLabels';
 import { LogMessageAnsi } from '../LogMessageAnsi';
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
@@ -824,6 +824,6 @@ export const getStyles = (
 };
 
 function isLogLineClick(target: EventTarget) {
-  const targetIsButton = isElement(target) && target.closest('button');
+  const targetIsButton = targetIsElement(target) && target.closest('button');
   return !targetIsButton;
 }

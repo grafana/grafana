@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, type MouseEvent } from 'react';
 
-import { disablePopoverMenu, enablePopoverMenu, isElement, isPopoverMenuDisabled } from '../../utils';
+import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled, targetIsElement } from '../../utils';
 
 import { useLogListContext } from './LogListContext';
 import { type PopoverStateType } from './popoverMenuTypes';
@@ -42,7 +42,7 @@ export const usePopoverMenu = (containerElement: HTMLDivElement | null) => {
 
   const handleDeselection = useCallback(
     (e: Event) => {
-      if (isElement(e.target) && !containerElement?.contains(e.target)) {
+      if (targetIsElement(e.target) && !containerElement?.contains(e.target)) {
         // The mouseup event comes from outside the log rows, close the menu.
         closePopoverMenu();
         return;
