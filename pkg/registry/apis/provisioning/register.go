@@ -295,20 +295,6 @@ func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption)
 	b.repoValidatorOpts = opts
 }
 
-// SetResourceListerMode selects where the managed-resource list and the repository stats are read
-// from, naming a value of [provisioning] resource_lister. Call it before the API group is built:
-// the repository resources factory captures the lister.
-func (b *APIBuilder) SetResourceListerMode(mode string) error {
-	// This lister is also what serves /resources, so an apis reader here would call that route to
-	// answer it. The mode applies to callers outside the apiserver, which is why only the index
-	// reader is built here.
-	if err := resources.ValidateListerMode(mode); err != nil {
-		return err
-	}
-	b.setResourceLister(resources.NewResourceLister(b.unified, b.clients, b.supportedResourceProvider.Get()))
-	return nil
-}
-
 // setResourceLister points the lister, the namespace-wide stats route and the factory that captures
 // the lister at the same reader.
 func (b *APIBuilder) setResourceLister(lister *resources.ResourceListerFromSearch) {
@@ -459,9 +445,6 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, err
 	}
-	if err := builder.SetResourceListerMode(cfg.ProvisioningResourceLister); err != nil {
-		return nil, err
-	}
 	builder.repoValidatorOpts = repoValidatorOpts
 	builder.urlValidator = urlValidator
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
@@ -505,9 +488,6 @@ func RegisterAPIService(
 	}
 	v1beta1Builder.repoValidatorOpts = repoValidatorOpts
 	v1beta1Builder.urlValidator = urlValidator
-	if err := v1beta1Builder.SetResourceListerMode(cfg.ProvisioningResourceLister); err != nil {
-		return nil, err
-	}
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	apiregistration.RegisterAPI(v1beta1Builder)
 
@@ -1116,14 +1096,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// since the repository already passed admission validation when it was created/updated.
 			// but that leads to possible race conditions when the repository is created/updated and violating some rules.
 			b.healthChecker = controller.NewRepositoryHealthChecker(b.statusPatcher, repository.NewTester(b.repoValidator), healthMetricsRecorder)
-
-			// if running solely CRUD or not the preferred version, skip controllers/workers setup
-			if b.onlyApiServer || !b.isPreferredVersion {
-				return nil
-			}
-
-			usageMetricCollector := usage.MetricCollector(b.tracer, b.usageNamespaceLister, b.repoLister.List, connection.NewStorageLister(b.connectionStore).List, b.unified)
-			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
 
 			return nil
 		},

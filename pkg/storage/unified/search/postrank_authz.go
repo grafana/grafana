@@ -113,10 +113,6 @@ func authzLoadFields(trash bool) []string {
 	return []string{resource.SEARCH_FIELD_FOLDER}
 }
 
-type authzMetadata struct {
-	folder, deletedBy string
-}
-
 type docInfo struct {
 	doc          *queryHit
 	namespace    string
@@ -137,7 +133,7 @@ func windowDocInfo(hit *queryHit, resources map[string]string, metadata map[stri
 		return docInfo{}, false
 	}
 	info, ok := parseHitDocInfo(hit, resources)
-	info.folder, info.deletedBy = authzMeta.folder, authzMeta.deletedBy
+	info.folder, info.deletedBy = authzMeta.Folder, authzMeta.DeletedBy
 	return info, ok
 }
 
@@ -526,6 +522,7 @@ windows:
 		// (already reversed once for SearchBefore), and fields are identical.
 		// Page-fill windows grow geometrically (capped at MaxWindow).
 		windowReq.SearchAfter = cursor
+		windowReq.DeletedResourceVersionLowerBound = nil
 		windowReq.Size = cfg.growWindow(baseWindow, window+1)
 	}
 
@@ -669,6 +666,7 @@ func (s *postRankSearch) aggregateFacetsFromTop(
 
 	windowReq := firstReq
 	windowReq.SearchAfter = nil
+	windowReq.DeletedResourceVersionLowerBound = nil
 	windowReq.Reverse = false
 	windowReq.Size = cfg.facetWindowSize()
 	windowReq.Fields = s.facetScanFields(facets, trashAuthz != nil)

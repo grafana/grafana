@@ -2536,7 +2536,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 	if req.NextPageToken != "" {
 		token, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
-			return 0, fmt.Errorf("invalid continue token: %w", err)
+			return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid continue token: %v", err))
 		}
 		lastSeenRV = ToSnowflakeRV(token.ResourceVersion)
 		tokenSortAscending = token.SortAscending

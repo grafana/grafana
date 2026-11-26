@@ -35,29 +35,15 @@ resources = dashboard.grafana.app/Dashboard:folder, playlist.grafana.app/Playlis
 	})
 }
 
-func TestReadProvisioningResourceLister(t *testing.T) {
-	t.Run("absent reads as empty, which the construction point maps to search", func(t *testing.T) {
-		cfg, err := NewCfgFromBytes([]byte(``))
-		require.NoError(t, err)
-
-		assert.Empty(t, cfg.ProvisioningResourceLister)
-	})
-
-	t.Run("reads the key", func(t *testing.T) {
-		cfg, err := NewCfgFromBytes([]byte("[provisioning]\nresource_lister = apis\n"))
-		require.NoError(t, err)
-
-		assert.Equal(t, "apis", cfg.ProvisioningResourceLister)
-	})
-
-	t.Run("absent page size reads as zero, which the reader maps to its default", func(t *testing.T) {
+func TestReadProvisioningResourceListerPageSize(t *testing.T) {
+	t.Run("absent reads as zero, which the reader maps to its default", func(t *testing.T) {
 		cfg, err := NewCfgFromBytes([]byte(``))
 		require.NoError(t, err)
 
 		assert.Zero(t, cfg.ProvisioningResourceListerPageSize)
 	})
 
-	t.Run("reads the page size", func(t *testing.T) {
+	t.Run("reads the key", func(t *testing.T) {
 		cfg, err := NewCfgFromBytes([]byte("[provisioning]\nresource_lister_page_size = 50\n"))
 		require.NoError(t, err)
 

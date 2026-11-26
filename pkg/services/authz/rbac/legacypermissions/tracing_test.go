@@ -18,7 +18,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -230,7 +229,7 @@ func TestIntegrationPermissionTracingColdAndWarmCache(t *testing.T) {
 		ac.Permission{Action: "dashboards:read", Scope: "dashboards:uid:two"})
 	cfg := setting.NewCfg()
 	cfg.RBAC.PermissionCache = true
-	loader := NewLoader(database, NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &tracingLicense{}, nil)
+	loader := NewLoader(database, NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, &tracingLicense{}, nil)
 	requester := &user.SignedInUser{UserID: 7, UserUID: "seven", OrgID: 1, OrgRole: org.RoleViewer}
 	recorder := recordPermissionSpans(t)
 	cold, err := loader.GetUserPermissions(t.Context(), requester, ac.Options{})
@@ -289,4 +288,44 @@ func TestPermissionSQLTracingEmptyQuery(t *testing.T) {
 		require.Equal(t, attribute.IntValue(0), spanAttributes(permissionSpan(t, recorder, name))["query.count"])
 	}
 	require.Len(t, recorder.Ended(), 2)
+}
+
+func TestIntegrationRemoteTeamCacheTracing(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	for _, tc := range []struct {
+		name         string
+		ttl          time.Duration
+		remote       bool
+		hits, misses int
+		bypassed     bool
+	}{
+		{name: "remote", ttl: time.Minute, remote: true, hits: 1, misses: 1},
+		{name: "bypassed", ttl: 0, hits: 0, misses: 2, bypassed: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			loader := &Loader{
+				cache:   localcache.New(time.Hour, 0),
+				store:   permissionStore{database: legacysql.NewDatabaseProvider(db.NewTestStore(t))},
+				actions: resourcepermissions.NewActionSetService(),
+			}
+			WithPermissionCacheTTL(tc.ttl)(loader)
+			ctx := t.Context()
+			if tc.remote {
+				ctx = context.WithValue(ctx, remoteNamespaceKey{}, "stacks-1")
+			}
+			loader.cache.Set(tenantCacheKey(ctx, ac.GetTeamPermissionCacheKey(10, 1)), []ac.Permission{{Action: "users:read"}}, time.Hour)
+			requester := &user.SignedInUser{OrgID: 1}
+			requester.TeamIDs = []int64{10, 11, 10} //nolint:staticcheck // The legacy team permission cache uses numeric team IDs.
+			recorder := recordPermissionSpans(t)
+
+			permissions, err := loader.cachedTeams(ctx, requester, ac.Options{}, loadSettings{})
+			require.NoError(t, err)
+			require.Len(t, permissions, 2)
+			attrs := spanAttributes(permissionSpan(t, recorder, "cache.teams"))
+			require.Equal(t, attribute.IntValue(2), attrs["team.count"])
+			require.Equal(t, attribute.IntValue(tc.hits), attrs["cache.hits"])
+			require.Equal(t, attribute.IntValue(tc.misses), attrs["cache.misses"])
+			require.Equal(t, attribute.BoolValue(tc.bypassed), attrs["cache.bypassed"])
+		})
+	}
 }
