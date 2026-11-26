@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import memoizeOne from 'memoize-one';
+import { memoizeOne } from 'memoize-one';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { styleMixins } from '@grafana/ui';
