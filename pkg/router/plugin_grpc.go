@@ -23,7 +23,7 @@ import (
 )
 
 // backendGRPCSection configures the router's gRPC connections to the plugin
-// deployments listed by plugins_url, core_url and bridge_url.
+// deployments listed by plugins_url, core_url, core_alerting_url and bridge_url.
 const backendGRPCSection = "router.backend_grpc"
 
 // pluginGRPCConfig configures the router's gRPC connections to plugin

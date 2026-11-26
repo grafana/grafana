@@ -125,7 +125,7 @@ func newPluginManifestsTarget(
 // have no ID, and so may bridge entries; their tokens name their API group instead.
 func (t *pluginManifestsTarget) validatePluginID(id string) error {
 	if id == "" {
-		if t.source == sourceCore || t.source == sourceBridge {
+		if isCoreSource(t.source) || t.source == sourceBridge {
 			return nil
 		}
 		return errors.New("missing plugin ID")
@@ -185,7 +185,7 @@ func (t *pluginManifestsTarget) fetch(ctx context.Context) ([]Backend, int, erro
 			manifestDeps := t.deps
 			manifestDeps.AccessControl = pluginManifestAccessControl{}
 			// Only the operator-configured core source may serve core groups.
-			backend, err := buildPluginBackend(entry.Definition.JSONData.ID, manifest, clients, manifestDeps, nil, t.source == sourceCore)
+			backend, err := buildPluginBackend(entry.Definition.JSONData.ID, manifest, clients, manifestDeps, nil, isCoreSource(t.source))
 
 			if entry.Definition.JSONData.ID == "" && errors.Is(err, errNoServedVersions) {
 				// A core or bridge entry has no plugin ID, and one with no served

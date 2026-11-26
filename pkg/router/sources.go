@@ -17,11 +17,18 @@ const (
 	sourceSingleTenant  = "single-tenant"
 	sourcePlugins       = "plugins"
 	sourceCore          = "core"
+	sourceCoreAlerting  = "core_alerting"
 	sourceBridge        = "bridge"
 	sourceLocalPlugin   = "local-plugin"
 	sourceDev           = "dev"
 	aggregateSourceName = "aggregate:"
 )
+
+// isCoreSource reports whether source is an operator-configured core source,
+// which is trusted to serve core groups.
+func isCoreSource(source string) bool {
+	return source == sourceCore || source == sourceCoreAlerting
+}
 
 func aggregateSource(target string) string { return aggregateSourceName + target }
 

@@ -14,6 +14,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -342,6 +343,40 @@ func TestNewCloudRoutesLoader_CoreURLAloneActivatesWithoutCapToken(t *testing.T)
 	require.Nil(t, pluginManifestsTargetOf(loader, sourcePlugins))
 	require.Equal(t, sourceCore, pluginManifestsTargetOf(loader, sourceCore).source)
 	require.Equal(t, sourceCore, pluginManifestsTargetOf(loader, sourceCore).keyPrefix)
+}
+
+func TestNewCloudRoutesLoader_CoreAlertingURLIsItsOwnSource(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{
+		"core_url":                    "https://core.invalid/apps",
+		"core_alerting_url":           "https://alerting.invalid/apps",
+		"core_alerting_poll_interval": "5s",
+	})
+	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
+	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
+
+	loaderIface, err := NewCloudRoutesLoader(cfg, PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.NoError(t, err)
+	loader, ok := loaderIface.(*cloudLoader)
+	require.True(t, ok)
+
+	core := pluginManifestsTargetOf(loader, sourceCore)
+	alerting := pluginManifestsTargetOf(loader, sourceCoreAlerting)
+	require.NotNil(t, core)
+	require.NotNil(t, alerting)
+	require.Equal(t, "https://alerting.invalid/apps", alerting.url)
+	require.Equal(t, sourceCoreAlerting, alerting.keyPrefix)
+	require.True(t, isCoreSource(alerting.source))
+	// core_url outranks core_alerting_url when both serve a group.
+	require.Less(t, slices.Index(loader.sources, &core.polledSource), slices.Index(loader.sources, &alerting.polledSource))
+}
+
+func TestNewCloudRoutesLoader_CoreAlertingURLAloneActivates(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{"core_alerting_url": "/just/a/path"})
+	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
+	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
+
+	_, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
+	require.ErrorContains(t, err, "must be absolute")
 }
 
 func TestNewCloudRoutesLoader_CoreAndPluginsURLShareRegisterer(t *testing.T) {
