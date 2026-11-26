@@ -836,7 +836,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           queries: logsQueries,
           logs: dedupedRows,
           logsLoadingState: loadingState,
-          logsSortOrder,
           queryTimeRange: props.range,
         }}
       />
