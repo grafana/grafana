@@ -16,8 +16,9 @@ import { isDataSourceMatch } from './utils';
 
 const VIRTUAL_OVERSCAN_ITEMS = 4;
 const ESTIMATED_ITEM_HEIGHT = 48;
-// Space left between a scrolled item and the list edge, so the focus ring is not cut off
-const FOCUS_RING_SCROLL_PADDING = 4;
+// Space left below a scrolled item, so the focus ring is not cut off.
+// It is 8 and not 4 because the list container has 4px of padding that the virtualizer does not count.
+const SCROLL_PADDING_END = 8;
 
 export type VirtualizedListProps = {
   sortedDataSources: DataSourceInstanceSettings[];
@@ -58,8 +59,7 @@ export function VirtualizedList({
     getScrollElement: () => scrollRef.current,
     estimateSize: () => ESTIMATED_ITEM_HEIGHT,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
-    scrollPaddingStart: FOCUS_RING_SCROLL_PADDING,
-    scrollPaddingEnd: FOCUS_RING_SCROLL_PADDING,
+    scrollPaddingEnd: SCROLL_PADDING_END,
   });
 
   const virtualizerRef = useRef(rowVirtualizer);
