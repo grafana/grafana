@@ -1,0 +1,56 @@
+import { Meta, ArgTypes, Canvas } from '@storybook/addon-docs/blocks';
+import { BannerActionButton } from './BannerActionButton';
+import * as BannerActionButtonStories from './BannerActionButton.story';
+
+<Meta title="MDX|BannerActionButton" component={BannerActionButton} />
+
+# BannerActionButton
+
+BannerActionButton is an outline button for actions inside a banner. It takes its colors from a severity, or from a custom color that matches the banner behind it.
+
+## When to use
+
+- For the action of a banner.
+- For actions placed in a banner's content, when a banner needs more than one.
+
+## Never use for
+
+- **An action outside a banner.** Use `Button` or `LinkButton`.
+
+## Do's and don'ts
+
+- Do set `severity` for a banner in a severity's colors, or `customColor` for any other banner. They can't be used together. With neither, the button is black in light themes and white in dark themes, for a saturated background.
+- Do use a color for `customColor` that meets a 4.5:1 contrast ratio against the banner's background. Its hover colors are derived from it.
+- Do render a link, with `as="a"` and an `href`, for an action that navigates.
+
+<Canvas of={BannerActionButtonStories.Examples} />
+
+## Usage
+
+```tsx
+import { BannerActionButton } from '@grafana/ui';
+
+<BannerActionButton severity="warning" onClick={onRequest}>
+  Request increase
+</BannerActionButton>;
+
+<BannerActionButton customColor={iconColor} as="a" href={docsUrl}>
+  Read the docs
+</BannerActionButton>;
+```
+
+## Accessibility
+
+`BannerActionButton` handles:
+
+- **Element:** it renders a `<button>`, or an `<a>` with `as="a"`.
+- **Disabled state:** a disabled button can't be clicked, and a disabled link is removed from the tab order.
+
+You provide:
+
+- A label, as its content or with `aria-label`.
+- A color with enough contrast against the banner behind it.
+
+## Props
+
+<ArgTypes of={BannerActionButton} />
