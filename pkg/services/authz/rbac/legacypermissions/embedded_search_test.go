@@ -95,6 +95,26 @@ func TestEmbeddedSearchRejectsInvalidCaller(t *testing.T) {
 	require.Equal(t, codes.InvalidArgument, status.Code(err))
 }
 
+func TestEmbeddedSearchRejectsInvalidNamespace(t *testing.T) {
+	client := NewEmbeddedClient(nil, setting.NewCfg())
+	for _, tc := range []struct {
+		name      string
+		namespace string
+		message   string
+	}{
+		{"malformed organization", "org-abc", "invalid namespace: invalid org id"},
+		{"wildcard", "*", "concrete namespace required"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req := embeddedSearchTestRequest()
+			req.Namespace = tc.namespace
+			_, err := client.LegacySearchUsersPermissions(t.Context(), LegacySearchPermissionCaller("*"), req)
+			require.Equal(t, codes.InvalidArgument, status.Code(err))
+			require.Equal(t, tc.message, status.Convert(err).Message())
+		})
+	}
+}
+
 func TestEmbeddedSearchWithDoneContext(t *testing.T) {
 	client := NewEmbeddedClient(nil, setting.NewCfg())
 	req := embeddedSearchTestRequest()

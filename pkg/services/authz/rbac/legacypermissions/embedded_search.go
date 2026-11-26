@@ -82,7 +82,10 @@ func (s *embeddedServer) LegacySearchUsersPermissions(req *authzv1.LegacySearchU
 		return status.Error(codes.PermissionDenied, "namespace mismatch")
 	}
 	ns, err := types.ParseNamespace(req.GetNamespace())
-	if err != nil || ns.OrgID < 1 {
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "invalid namespace: %v", err)
+	}
+	if ns.OrgID < 1 {
 		return status.Error(codes.InvalidArgument, "concrete namespace required")
 	}
 	if s.cfg.StackID != "" && ns.Value != "stacks-"+s.cfg.StackID {
