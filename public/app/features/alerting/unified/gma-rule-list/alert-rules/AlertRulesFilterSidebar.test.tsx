@@ -107,7 +107,7 @@ describe('AlertRulesFilterSidebar', () => {
       ])
     );
     mockComboboxRect();
-    const { user } = renderPage('cpu folder:folder-1');
+    const { user } = renderPage('cpu folderUid:folder-1');
     const folders = await screen.findByRole('combobox', { name: 'Folder' });
 
     await waitFor(() => expect(folders.closest('div')?.parentElement).toHaveTextContent('Team Alerts'));
@@ -115,7 +115,7 @@ describe('AlertRulesFilterSidebar', () => {
     await user.click(folders);
     await user.click(await screen.findByRole('option', { name: 'Payments' }));
 
-    await waitFor(() => expect(searchParam()).toBe('cpu folder:folder-1 folder:folder-2'));
+    await waitFor(() => expect(searchParam()).toBe('cpu folderUid:folder-1 folderUid:folder-2'));
   });
 
   it('rewrites only the changed filter, keeping the rest of the query in order', async () => {

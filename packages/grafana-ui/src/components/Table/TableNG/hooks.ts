@@ -33,6 +33,7 @@ import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { type TableColumnResizeActionCallback } from '../types';
 
 import { useTableFilters, useHeaderFilterState } from './TableFilterContext';
+import { buildCellHeightMeasurers } from './cellHeightMeasurers';
 import {
   CELL_HORIZONTAL_CHROME,
   FIRST_COLUMN_EXTRA_PADDING,
@@ -65,7 +66,6 @@ import {
   computeContentAwareColWidths,
   buildNestedColumnWidthsMap,
   buildHeaderHeightMeasurers,
-  buildCellHeightMeasurers,
   compileFrameToRecords,
   createTypographyContext,
   extractPixelValue,

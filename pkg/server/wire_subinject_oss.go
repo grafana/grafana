@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/tracingsetting"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/server/reconciler"
 	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
@@ -30,6 +31,12 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
+
+// InitializeCloudRoutesLoader has no remote legacy settings adapter in OSS builds.
+func InitializeCloudRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg promclient.Registerer) (router.RoutesLoader, error) {
+	wire.Build(router.ProvideCloudRoutesLoader, wire.Value(router.CloudSettingsDependencies{}))
+	return nil, nil
+}
 
 var ossBaseCLISet = wire.NewSet(
 	NewModuleRunner,

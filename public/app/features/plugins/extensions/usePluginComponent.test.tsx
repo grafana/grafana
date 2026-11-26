@@ -4,6 +4,7 @@ import { type JSX, useState } from 'react';
 
 import { type AppPluginConfig, PluginContextProvider, type PluginMeta, PluginType } from '@grafana/data';
 
+import { ExposedComponentOriginContext, useExposedComponentOriginPluginId } from './ExposedComponentOriginContext';
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import * as errors from './errors';
 import { isGrafanaDevMode } from './isGrafanaDevMode';
@@ -173,6 +174,64 @@ describe('usePluginComponent()', () => {
     });
 
     expect(await screen.findByText('Hello World')).toBeVisible();
+  });
+
+  it.each([
+    ['logs-app', undefined, 'logs-app'],
+    ['assistant-app', undefined, 'assistant-app'],
+    ['grafana', 'logs-app', 'logs-app'],
+    [undefined, undefined, 'unknown'],
+  ])('preserves the caller %s separately from the component owner', (callerId, inheritedOrigin, expected) => {
+    function Origin() {
+      return <div>Origin: {useExposedComponentOriginPluginId() ?? 'unknown'}</div>;
+    }
+    registries.exposedComponentsRegistry.register({
+      pluginId,
+      configs: [{ ...exposedComponentConfig, component: Origin }],
+    });
+    function Consumer() {
+      const { component: Component } = usePluginComponent(exposedComponentId);
+      return Component && <Component />;
+    }
+    const consumer = (
+      <ExposedComponentOriginContext.Provider value={inheritedOrigin}>
+        <ExtensionRegistriesProvider registries={registries}>
+          <Consumer />
+        </ExtensionRegistriesProvider>
+      </ExposedComponentOriginContext.Provider>
+    );
+    render(
+      callerId ? (
+        <PluginContextProvider meta={{ ...pluginMeta, id: callerId }}>{consumer}</PluginContextProvider>
+      ) : (
+        consumer
+      )
+    );
+    expect(screen.getByText(`Origin: ${expected}`)).toBeVisible();
+  });
+
+  it('keeps the hook caller when the returned component renders under another app', () => {
+    function Origin() {
+      return <div>Origin: {useExposedComponentOriginPluginId()}</div>;
+    }
+    registries.exposedComponentsRegistry.register({
+      pluginId,
+      configs: [{ ...exposedComponentConfig, component: Origin }],
+    });
+    const { result } = renderHook(() => usePluginComponent(exposedComponentId), {
+      wrapper: ({ children }) => (
+        <PluginContextProvider meta={{ ...pluginMeta, id: 'caller-app' }}>
+          <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+        </PluginContextProvider>
+      ),
+    });
+    const Component = result.current.component!;
+    render(
+      <PluginContextProvider meta={{ ...pluginMeta, id: 'other-app' }}>
+        <Component />
+      </PluginContextProvider>
+    );
+    expect(screen.getByText('Origin: caller-app')).toBeVisible();
   });
 
   it('preserves local edits when the consuming plugin context rerenders', async () => {

@@ -479,6 +479,16 @@ export {
   isStandardFieldProp,
   type OptionDefaults,
 } from './panel/getPanelOptionsWithDefaults';
+export {
+  type PanelQuickEdit,
+  type PanelQuickEditContext,
+  type PanelQuickEditSummary,
+  type PanelQuickEditsSupplier,
+  unitQuickEdit,
+  rangeQuickEdit,
+  thresholdsQuickEdit,
+  presetsQuickEdit,
+} from './panel/quickEdits';
 export { type PanelDataSummary, getPanelDataSummary } from './panel/suggestions/getPanelDataSummary';
 export { createFieldConfigRegistry } from './panel/registryFactories';
 export { type QueryRunner, type QueryRunnerOptions } from './types/queryRunner';
@@ -636,6 +646,8 @@ export {
   type PluginExtensionEventHelpers,
   type DataSourceConfigErrorStatusContext,
   type PluginExtensionPanelContext,
+  type PluginExtensionDashboardControlsContext,
+  type PluginExtensionDashboardControlsPanel,
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   type PluginExtensionQueryEditorRowActionsV1Context,
   type PluginExtensionDataSourceConfigContext,

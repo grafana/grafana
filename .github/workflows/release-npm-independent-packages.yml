@@ -10,10 +10,6 @@ on:
       - 'packages/grafana-plugin-compat/**'
   workflow_dispatch:
     inputs:
-      tags:
-        description: 'Publish these tags and skip the version pull request, for example to retry a failed publish. Separate several tags with commas: @grafana/plugin-compat@0.12.0 or @grafana/plugin-compat@0.12.0,@grafana/other@1.0.0'
-        type: string
-        default: ''
       dry_run:
         description: Show what would change without tagging, opening a pull request or publishing
         type: boolean
@@ -40,8 +36,6 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-    env:
-      TAGS: ${{ inputs.tags }}
     outputs:
       pr: ${{ steps.plan.outputs.pr }}
       release_created: ${{ steps.plan.outputs.release_created }}
@@ -49,10 +43,9 @@ jobs:
       matrix: ${{ steps.plan.outputs.matrix }}
       sha: ${{ steps.plan.outputs.sha }}
     steps:
-      - name: Checkout main
+      - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          ref: main
           persist-credentials: false
           # The planned tags come from the version of each package at the merge commit of the version pull request
           # and at its parent, so the history and the tags are needed, but not the file contents.
@@ -62,7 +55,7 @@ jobs:
       - name: Setup Node
         uses: ./.github/actions/setup-node
 
-      # The script asks Nx which projects have the release:independent tag.
+      # Nx is needed here: the plan script asks it which projects have the release:independent tag.
       - name: Install dependencies
         uses: ./.github/actions/install-frontend-deps
 
@@ -70,10 +63,16 @@ jobs:
         id: plan
         env:
           GH_TOKEN: ${{ github.token }}
-        run: node scripts/release/plan-release-tags.mts >> "$GITHUB_OUTPUT"
+        run: |
+          set -euo pipefail
+          node scripts/release/plan-release-tags.mts "$RUNNER_TEMP/plan.json"
+          echo "::group::Plan"
+          cat "$RUNNER_TEMP/plan.json"
+          echo "::endgroup::"
+          jq -r 'to_entries[] | "\(.key)=\(.value)"' "$RUNNER_TEMP/plan.json" >> "$GITHUB_OUTPUT"
 
   # One call of the shared workflow for each tag. It creates an annotated tag and does nothing when the same tag is
-  # already there, so a retry is safe. A manual run with tags and a dry run do not create tags.
+  # already there, so a retry is safe. A dry run does not create tags.
   tag:
     name: Tag ${{ matrix.tag }}
     needs: plan
@@ -94,8 +93,7 @@ jobs:
     needs: [plan, tag]
     # The tag job is skipped when there is nothing to tag. When it failed, the label stays pending: re-run the failed
     # jobs or start the workflow by hand within 2 to 3 days, before the merged version pull request is no longer found.
-    # When starting it by hand, leave the tags input empty: a run with tags only publishes them and skips this job.
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.tag.result != 'failure' && inputs.tags == '' }}
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.tag.result != 'failure' }}
     runs-on: ubuntu-x64
     permissions:
       contents: read
@@ -137,7 +135,13 @@ jobs:
 
       - name: Version and generate changelogs
         id: prepare
-        run: node scripts/release/prepare-release-pr.mts >> "$GITHUB_OUTPUT"
+        run: |
+          set -euo pipefail
+          node scripts/release/prepare-release-pr.mts "$RUNNER_TEMP/prepare.json"
+          echo "::group::Prepare"
+          cat "$RUNNER_TEMP/prepare.json"
+          echo "::endgroup::"
+          jq -r 'to_entries[] | "\(.key)=\(.value)"' "$RUNNER_TEMP/prepare.json" >> "$GITHUB_OUTPUT"
 
       - name: Describe the dry run
         if: env.DRY_RUN == 'true' && steps.prepare.outputs.changed == 'true'

@@ -61,6 +61,7 @@ import {
   type TableCellStyleOptions,
   type TableFilterActionCallback,
   type TableRow,
+  type TableNGProps,
   type TableSummaryRow,
   type TypographyCtx,
   type TextWrapFallback,
@@ -183,6 +184,7 @@ export interface ColumnBuildConfig {
   showTypeIcons?: boolean;
   tableRefreshEnabled?: boolean;
   jsonSyntaxHighlightingEnabled?: boolean;
+  onTimeRangeSelected?: TableNGProps['onTimeRangeSelected'];
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
   timeZone?: string;
@@ -265,6 +267,7 @@ function buildColumnsFromFields(
     showTypeIcons,
     tableRefreshEnabled,
     jsonSyntaxHighlightingEnabled,
+    onTimeRangeSelected,
     timeRange,
     timeZone,
     firstColumnExtraPadding = 0,
@@ -518,6 +521,7 @@ function buildColumnsFromFields(
             value={value}
             width={contentWidth}
             timeRange={timeRange}
+            onTimeRangeSelected={onTimeRangeSelected}
             cellInspect={inspect}
             showFilters={showFilters}
             getActions={getCellActions}

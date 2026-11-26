@@ -50,13 +50,7 @@ const Options = ({ options, value, onChange, title }: Props) => {
 
   return (
     <>
-      <ul
-        role="presentation"
-        onKeyDown={handleKeys}
-        ref={localRef}
-        aria-roledescription={t('time-picker.time-range.aria-role', 'Time range selection')}
-        className={styles.list}
-      >
+      <ul role="presentation" onKeyDown={handleKeys} ref={localRef} className={styles.list}>
         {options.map((option, index) => (
           <TimeRangeOption
             key={keyForOption(option, index)}

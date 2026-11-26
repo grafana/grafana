@@ -23,7 +23,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Button, ButtonGroup, Icon, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { ColorSchemeButton } from '../ColorSchemeButton';
-import { alignOptions } from '../FlameGraphHeader';
+import { alignOptions, symbolLabelOptions } from '../FlameGraphHeader';
 import { PIXELS_PER_LEVEL } from '../constants';
 import {
   type ClickedItemData,
@@ -31,6 +31,7 @@ import {
   type ColorSchemeDiff,
   type PaneView,
   type ViewMode,
+  type SymbolLabel,
   type TextAlign,
 } from '../types';
 
@@ -49,6 +50,7 @@ type Props = {
   onItemFocused: (data: ClickedItemData) => void;
   focusedItemData?: ClickedItemData;
   textAlign: TextAlign;
+  symbolLabel: SymbolLabel;
   sandwichItem?: string;
   onSandwich: (label: string) => void;
   onFocusPillClick: () => void;
@@ -64,6 +66,7 @@ type Props = {
   viewMode: ViewMode;
   paneView: PaneView;
   onTextAlignChange: (align: TextAlign) => void;
+  onSymbolLabelChange: (label: SymbolLabel) => void;
   onColorSchemeChange: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
   isDiffMode: boolean;
 };
@@ -78,6 +81,7 @@ const FlameGraph = ({
   onItemFocused,
   focusedItemData,
   textAlign,
+  symbolLabel,
   onSandwich,
   sandwichItem,
   onFocusPillClick,
@@ -92,6 +96,7 @@ const FlameGraph = ({
   viewMode,
   paneView,
   onTextAlignChange,
+  onSymbolLabelChange,
   onColorSchemeChange,
   isDiffMode,
 }: Props) => {
@@ -128,6 +133,7 @@ const FlameGraph = ({
     onItemFocused,
     focusedItemData,
     textAlign,
+    symbolLabel,
     onSandwich,
     sandwichItem,
     colorScheme,
@@ -224,9 +230,17 @@ const FlameGraph = ({
           </ButtonGroup>
           <RadioButtonGroup<TextAlign>
             size="sm"
+            aria-label="Text alignment"
             options={alignOptions}
             value={textAlign}
             onChange={onTextAlignChange}
+          />
+          <RadioButtonGroup<SymbolLabel>
+            size="sm"
+            aria-label="Symbol label"
+            options={symbolLabelOptions}
+            value={symbolLabel}
+            onChange={onSymbolLabelChange}
           />
         </div>
       </div>

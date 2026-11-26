@@ -9,9 +9,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 )
 
@@ -20,7 +20,7 @@ func TestGetSettingsDecryptsFromSharedGroup(t *testing.T) {
 		TypeMeta:   metav1.TypeMeta{APIVersion: "example-app/v0alpha1", Kind: "Settings"},
 		ObjectMeta: metav1.ObjectMeta{Name: apppluginV0.INSTANCE_NAME, Namespace: "default"},
 		Spec:       apppluginV0.SettingsSpec{Enabled: true},
-		Secure:     common.InlineSecureValues{"token": {Name: "secret-token"}},
+		Secure:     resource.InlineSecureValues{"token": {Name: "secret-token"}},
 	}
 	b := &Builder{
 		group: "example-app",

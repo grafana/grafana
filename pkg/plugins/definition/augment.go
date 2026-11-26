@@ -12,8 +12,8 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 const app_INSTANCE_NAME = "instance"
@@ -61,7 +61,6 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts SettingsResource) (*spec3.OpenAPI, 
 				SchemaProps: spec.SchemaProps{
 					Type: []string{"object"},
 					Properties: map[string]spec.Schema{
-						"pinned":   *spec.BooleanProperty().WithDescription("shows up in the sidebar"),
 						"enabled":  *spec.BooleanProperty().WithDescription("can be executed"),
 						"jsonData": *settings.Spec,
 					},
@@ -74,7 +73,6 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts SettingsResource) (*spec3.OpenAPI, 
 				},
 				"spec": map[string]any{
 					"enabled": true,
-					"pinned":  true,
 					// JSONData (from examples)
 				},
 			}
@@ -89,8 +87,8 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts SettingsResource) (*spec3.OpenAPI, 
 		}
 
 		if len(settings.SecureValues) > 0 {
-			example := common.InlineSecureValues{}
-			ref := spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue")
+			example := resource.InlineSecureValues{}
+			ref := spec.MustCreateRef("#/components/schemas/" + resource.InlineSecureValue{}.OpenAPIModelName())
 			secure := &spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Properties:           make(map[string]spec.Schema),
@@ -106,7 +104,7 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts SettingsResource) (*spec3.OpenAPI, 
 				}
 				if v.Required {
 					secure.Required = append(secure.Required, v.Key)
-					example[v.Key] = common.InlineSecureValue{Create: "***"}
+					example[v.Key] = resource.InlineSecureValue{Create: "***"}
 				}
 			}
 

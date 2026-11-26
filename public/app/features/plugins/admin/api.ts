@@ -1,10 +1,11 @@
 import { type PluginError, renderMarkdown } from '@grafana/data';
-import { getBackendSrv, isFetchError } from '@grafana/runtime';
+import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
 import {
   assertPluginIdFormat,
   FlagKeys,
   getFeatureFlagClient,
   installPluginMeta,
+  logPluginMetaError,
   uninstallPluginMeta,
 } from '@grafana/runtime/internal';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
@@ -233,8 +234,24 @@ export async function getProvisionedPlugins(): Promise<ProvisionedPlugin[]> {
 export async function installPlugin(id: string, version?: string) {
   assertPluginIdFormat(id);
 
-  if (getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
-    return await installPluginMeta(id, version ?? '');
+  if (isMTPluginInstallEnabled()) {
+    try {
+      return await installPluginMeta(id, version ?? '', { updateExisting: true });
+    } catch (error: unknown) {
+      logPluginMetaError(`installPluginMeta: Failed to install plugin, falling back to the legacy API`, error, {
+        pluginId: id,
+        pluginVersion: version ?? '',
+      });
+    }
+  } else if (isMTPluginsEnabled()) {
+    try {
+      await installPluginMeta(id, version ?? '');
+    } catch (error: unknown) {
+      logPluginMetaError(`installPluginMeta: Failed to install plugin`, error, {
+        pluginId: id,
+        pluginVersion: version ?? '',
+      });
+    }
   }
 
   return await getBackendSrv().post(
@@ -250,11 +267,38 @@ export async function installPlugin(id: string, version?: string) {
 export async function uninstallPlugin(id: string) {
   assertPluginIdFormat(id);
 
-  if (getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
-    return await uninstallPluginMeta(id);
+  if (isMTPluginInstallEnabled()) {
+    try {
+      return await uninstallPluginMeta(id);
+    } catch (error: unknown) {
+      logPluginMetaError(`uninstallPluginMeta: Failed to uninstall plugin, falling back to the legacy API`, error, {
+        pluginId: id,
+      });
+    }
+  } else if (isMTPluginsEnabled()) {
+    try {
+      await uninstallPluginMeta(id);
+    } catch (error: unknown) {
+      logPluginMetaError(`uninstallPluginMeta: Failed to uninstall plugin`, error, {
+        pluginId: id,
+      });
+    }
   }
 
   return await getBackendSrv().post(`${API_ROOT}/${id}/uninstall`);
+}
+
+// Only externally managed instances record installs in grafana.com from the plugins API write, through a
+// background hook that can still fail after the call succeeds.
+function isMTPluginInstallEnabled(): boolean {
+  return (
+    config.pluginAdminExternalManageEnabled &&
+    getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPluginInstall, false)
+  );
+}
+
+function isMTPluginsEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false);
 }
 
 export async function getPluginEntitlement(id: string): Promise<boolean> {

@@ -2,7 +2,6 @@ package recordingrule
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -22,11 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 )
 
-// ruleStatusWriter persists the serialized status subresource for a single rule.
-type ruleStatusWriter interface {
-	SaveAlertRuleStatus(ctx context.Context, orgID int64, ruleUID string, data []byte) error
-}
-
 // statusDualWriter serves the RecordingRule /status subresource. The legacy SQL row
 // (alert_rule.k8s_status) is the source of truth: writes persist there and reads
 // come from there. Status is also mirrored to unified storage best-effort, because
@@ -35,10 +29,9 @@ type ruleStatusWriter interface {
 // the resource advances past Mode0 for parity metrics and the eventual read-from-
 // unified cutover). The mirror is skipped in Mode0, see writesUnified.
 type statusDualWriter struct {
-	gv           schema.GroupVersion
-	status       *appsdkapiserver.StatusREST
-	legacy       *legacyStorage
-	statusWriter ruleStatusWriter
+	gv     schema.GroupVersion
+	status *appsdkapiserver.StatusREST
+	legacy *legacyStorage
 	// writesUnified reports whether the resource writes to unified storage (modes 1-5).
 	// It is evaluated per request because the storage mode can change at runtime.
 	writesUnified func(ctx context.Context) bool
@@ -52,20 +45,16 @@ var (
 
 // NewStatusStorage builds the RecordingRule /status subresource storage.
 func NewStatusStorage(
-	legacySvc legacy.LegacyRuleService,
-	namespacer request.NamespaceMapper,
-	statusWriter ruleStatusWriter,
+	rules *legacy.RecordingRules,
 	unified *appsdkapiserver.StatusREST,
 	writesUnified func(ctx context.Context) bool,
 ) rest.Storage {
 	return &statusDualWriter{
 		gv:            ResourceInfo.GroupVersionResource().GroupVersion(),
 		status:        unified,
-		statusWriter:  statusWriter,
 		writesUnified: writesUnified,
 		legacy: &legacyStorage{
-			service:        legacySvc,
-			namespacer:     namespacer,
+			rules:          rules,
 			tableConverter: rest.NewDefaultTableConvertor(ResourceInfo.GroupResource()),
 		},
 	}
@@ -104,10 +93,6 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 		}
 	}
 
-	data, err := json.Marshal(newRule.Status)
-	if err != nil {
-		return nil, false, fmt.Errorf("failed to marshal status: %w", err)
-	}
 	if options != nil && dryrun.IsDryRun(options.DryRun) {
 		// What the re-read below would return: the stored rule with the new status.
 		stored, ok := old.(*v1beta1.RecordingRule)
@@ -118,7 +103,7 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 		out.Status = newRule.Status
 		return out, false, nil
 	}
-	if err := s.statusWriter.SaveAlertRuleStatus(ctx, info.OrgID, name, data); err != nil {
+	if err := s.legacy.rules.SaveStatus(ctx, info.OrgID, name, newRule.Status); err != nil {
 		return nil, false, err
 	}
 

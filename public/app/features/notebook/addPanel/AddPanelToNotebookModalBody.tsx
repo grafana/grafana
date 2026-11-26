@@ -62,6 +62,7 @@ interface BaseProps {
   onDismiss: () => void;
   /** Which surface opened this modal, for the notebook_created analytics event when it creates one. */
   entryPoint: NotebookEntryPoint;
+  originPluginId?: string;
   /** Prefills the new-notebook title. */
   defaultTitle?: string;
   /** Called once the write succeeds, after the toast. */
@@ -145,7 +146,7 @@ function lockOptions(values: AddPanelFormValues): LockOptions {
 }
 
 export function AddPanelToNotebookModalBody(props: Props) {
-  const { onDismiss, entryPoint, defaultTitle, onAdded } = props;
+  const { onDismiss, entryPoint, defaultTitle, onAdded, originPluginId } = props;
   // With several cells the checkbox offers only what it can lock; a single panel can be locked either way.
   const capturedTimeRanges = props.cells
     ? props.cells.flatMap((cell) =>
@@ -240,8 +241,24 @@ export function AddPanelToNotebookModalBody(props: Props) {
         const cells: AppendedElement[] = note ? [{ kind: 'markdown', text: note }, ...built] : built;
         panelWasBuilt = true;
         added = existingUid
-          ? await addToExistingNotebook(existingUid, cells, entryPoint, source, values.lockTimeRange, hasText)
-          : await createNotebookWithContent({ title }, cells, entryPoint, source, values.lockTimeRange, hasText);
+          ? await addToExistingNotebook(
+              existingUid,
+              cells,
+              entryPoint,
+              source,
+              values.lockTimeRange,
+              hasText,
+              originPluginId
+            )
+          : await createNotebookWithContent(
+              { title },
+              cells,
+              entryPoint,
+              source,
+              values.lockTimeRange,
+              hasText,
+              originPluginId
+            );
 
         dispatch(
           notifyApp(
@@ -273,7 +290,8 @@ export function AddPanelToNotebookModalBody(props: Props) {
           existingUid ? NOTEBOOK_ADD_TARGET.EXISTING : NOTEBOOK_ADD_TARGET.NEW,
           addPanelFailureReason(error, panelWasBuilt),
           values.lockTimeRange,
-          hasText
+          hasText,
+          originPluginId
         );
 
         dispatch(notifyApp(createErrorNotification(addPanelErrorMessage(error))));

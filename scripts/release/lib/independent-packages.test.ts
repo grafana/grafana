@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { selectIndependentPackages } from './independent-packages.mjs';
+import { selectIndependentPackages, tagFor } from './independent-packages.mjs';
 
 describe('selectIndependentPackages', () => {
   const nodes = {
@@ -19,7 +19,6 @@ describe('selectIndependentPackages', () => {
     expect(selectIndependentPackages(nodes)).toEqual([
       {
         name: '@grafana/plugin-compat',
-        root: 'packages/grafana-plugin-compat',
         manifestPath: 'packages/grafana-plugin-compat/package.json',
       },
     ]);
@@ -28,12 +27,10 @@ describe('selectIndependentPackages', () => {
   it('returns nothing when no project has the tag, and does not fail for projects without tags', () => {
     expect(selectIndependentPackages({ 'e2e-playwright': nodes['e2e-playwright'] })).toEqual([]);
   });
+});
 
-  it('orders the packages by name, whatever order Nx lists them in', () => {
-    const second = { name: '@grafana/other', data: { root: 'packages/grafana-other', tags: ['release:independent'] } };
-
-    const names = selectIndependentPackages({ ...nodes, '@grafana/other': second }).map(({ name }) => name);
-
-    expect(names).toEqual(['@grafana/other', '@grafana/plugin-compat']);
+describe('tagFor', () => {
+  it('joins the package name and version the way nx names tags of independent projects', () => {
+    expect(tagFor('@grafana/plugin-compat', '0.11.0')).toBe('@grafana/plugin-compat@0.11.0');
   });
 });

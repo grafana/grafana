@@ -10,10 +10,11 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
 }));
 
-jest.mock('app/core/utils/richHistory', () => ({
-  ...jest.requireActual('app/core/utils/richHistory'),
-  getRichHistorySettings: jest.fn().mockResolvedValue({ retentionPeriod: 14 }),
-}));
+jest.mock('app/core/utils/richHistory', () =>
+  jest.requireActual('test/helpers/partialMock').partialMock(jest.requireActual('app/core/utils/richHistory'), {
+    getRichHistorySettings: jest.fn().mockResolvedValue({ retentionPeriod: 14 }),
+  })
+);
 
 // The modal fetches retention settings asynchronously; flush that state update inside act.
 const renderModal = async (props: Parameters<typeof RecentQueriesModal>[0]) => {

@@ -4,7 +4,6 @@ export const INDEPENDENT_TAG = 'release:independent';
 
 export interface IndependentPackage {
   name: string;
-  root: string;
   manifestPath: string;
 }
 
@@ -16,8 +15,7 @@ interface ProjectNode {
 export function selectIndependentPackages(nodes: Record<string, ProjectNode>): IndependentPackage[] {
   return Object.values(nodes)
     .filter(({ data }) => data.tags?.includes(INDEPENDENT_TAG))
-    .map(({ name, data }) => ({ name, root: data.root, manifestPath: `${data.root}/package.json` }))
-    .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+    .map(({ name, data }) => ({ name, manifestPath: `${data.root}/package.json` }));
 }
 
 // The packages that are released on their own are the projects Nx knows with the release:independent tag. A project
@@ -25,4 +23,8 @@ export function selectIndependentPackages(nodes: Record<string, ProjectNode>): I
 export async function getIndependentPackages(): Promise<IndependentPackage[]> {
   const graph = await createProjectGraphAsync({ exitOnError: true });
   return selectIndependentPackages(graph.nodes);
+}
+
+export function tagFor(name: string, version: string): string {
+  return `${name}@${version}`;
 }

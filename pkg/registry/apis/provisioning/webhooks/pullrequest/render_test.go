@@ -295,7 +295,7 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 						// UserID 0 selects the synthetic render-service identity
 						// rather than a real user, so OrgRedirect never fires.
 						require.Equal(t, int64(0), opts.UserID)
-						require.Equal(t, identity.RoleAdmin, opts.OrgRole)
+						require.Equal(t, authlib.RoleAdmin, opts.OrgRole)
 						return &rendering.RenderResult{
 							FilePath: tmpFile,
 						}, nil
@@ -327,7 +327,7 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 					DoAndReturn(func(_ context.Context, _ rendering.RenderType, opts rendering.Opts) (*rendering.RenderResult, error) {
 						require.Equal(t, int64(1), opts.OrgID)
 						require.Equal(t, int64(0), opts.UserID)
-						require.Equal(t, identity.RoleAdmin, opts.OrgRole)
+						require.Equal(t, authlib.RoleAdmin, opts.OrgRole)
 						return &rendering.RenderResult{
 							FilePath: tmpFile,
 						}, nil

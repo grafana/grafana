@@ -1,6 +1,6 @@
 import { firstValueFrom, map } from 'rxjs';
 
-import { isAssistantAvailable } from '@grafana/assistant';
+import { type ChatContextItem, createAssistantContextItem, isAssistantAvailable } from '@grafana/assistant';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type PluginDashboard } from 'app/types/plugins';
 
@@ -125,6 +125,35 @@ export function buildAssistantPrompt(
     return `Adapt this dashboard to my environment by connecting it to my available data sources and adjusting queries as needed.`;
   }
   return `Create a new dashboard based on this dashboard template.`;
+}
+
+/** The request when a template open in the editor goes to the Assistant without a prompt of its own. */
+export const OPEN_TEMPLATE_PROMPT = 'Adapt this template to my data sources and adjust its queries as needed.';
+
+/**
+ * Builds the context item for a template already open in the dashboard editor as a new, unsaved dashboard, as the
+ * template modal opens it: the Assistant adapts that dashboard in place instead of building one from a description. Uses
+ * `name` rather than `templateName`, as suggested dashboards do, so the Assistant does not create the template again.
+ */
+export function buildOpenTemplateContextItem(template: {
+  name: string;
+  description?: string;
+  author?: string;
+}): ChatContextItem {
+  const data: TemplateContextData = {
+    name: template.name,
+    description: template.description,
+    author: template.author,
+    instructions:
+      'This template is open in the dashboard editor as a new, unsaved dashboard. Adapt that dashboard in place: ' +
+      'read it with your dashboard tools, keep its layout, panels and variables unless the user asks for changes, ' +
+      'and point every query that uses TestData, or a data source or metric the user does not have, at ' +
+      "the user's own data sources after checking which metrics they actually expose. Do the same for its " +
+      'variables and annotations. Do not create a new dashboard or load the template again, and do not save the ' +
+      'dashboard: the user reviews and saves it.',
+  };
+  // The prompt pill is narrow: a "Dashboard Template:" prefix leaves no room for the name.
+  return createAssistantContextItem('structured', { hidden: false, title: template.name, data });
 }
 
 /**
