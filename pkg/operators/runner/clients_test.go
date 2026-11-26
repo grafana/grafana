@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func generateTestCAPEM(t *testing.T) []byte {
@@ -82,4 +84,42 @@ func TestBuildTLSConfig(t *testing.T) {
 		_, err := buildTLSConfig(false, "", "", caFile)
 		require.ErrorContains(t, err, "failed to parse CA certificate")
 	})
+}
+
+func TestClientsShareOneTokenExchangeClient(t *testing.T) {
+	cfg := setting.NewCfg()
+	operator := cfg.SectionWithEnvOverrides("operator")
+	operator.Key("folders_server_url").SetValue("https://folders.example")
+	operator.Key("dashboards_server_url").SetValue("https://dashboards.example")
+	auth := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+	auth.Key("token").SetValue("test-token")
+	auth.Key("token_exchange_url").SetValue("https://exchange.example")
+
+	clients := NewClients(cfg)
+	first, err := clients.TokenExchangeClient()
+	require.NoError(t, err)
+	second, err := clients.TokenExchangeClient()
+	require.NoError(t, err)
+	require.Same(t, first, second)
+
+	folders, err := clients.RESTConfig("folders_server_url", "folder.grafana.app")
+	require.NoError(t, err)
+	dashboards, err := clients.RESTConfig("dashboards_server_url", "dashboard.grafana.app")
+	require.NoError(t, err)
+	require.Equal(t, "https://folders.example", folders.Host)
+	require.Equal(t, "https://dashboards.example", dashboards.Host)
+	require.NotNil(t, folders.WrapTransport)
+}
+
+func TestClientsRetryAfterConfigError(t *testing.T) {
+	cfg := setting.NewCfg()
+	clients := NewClients(cfg)
+	_, err := clients.TokenExchangeClient()
+	require.ErrorContains(t, err, "token is required")
+
+	auth := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+	auth.Key("token").SetValue("test-token")
+	auth.Key("token_exchange_url").SetValue("https://exchange.example")
+	_, err = clients.TokenExchangeClient()
+	require.NoError(t, err, "a failed build must not be cached")
 }

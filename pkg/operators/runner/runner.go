@@ -58,6 +58,9 @@ type Runtime struct {
 	Logger     logging.Logger
 	Registerer prometheus.Registerer
 	Tracer     tracing.Tracer
+	// Clients builds apiserver clients that share one TLS config and token
+	// exchange client.
+	Clients *Clients
 	// Subscriber is the operator's NATS subscriber. The runner supervises it
 	// when [nats] is enabled; use nats.Enabled to choose a delta source.
 	Subscriber *nats.SubscriberService
@@ -84,6 +87,7 @@ func (op Operator) Run(ctx context.Context, deps server.OperatorDependencies) (r
 		Logger:     NewLogger(deps.Config, name),
 		Registerer: deps.Registerer,
 		Tracer:     deps.Tracer,
+		Clients:    NewClients(deps.Config),
 	}
 	if !op.NoNATS {
 		rt.Subscriber = NewSubscriber(deps.Config, deps.Registerer)

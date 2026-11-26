@@ -41,11 +41,11 @@ var Operator = runner.Operator{
 }
 
 func build(rt *runner.Runtime) (*runner.Parts, error) {
-	restClient, err := buildRESTClient(rt.Cfg, "folders_server_url", folderGVR.Group)
+	restClient, err := buildRESTClient(rt.Clients, "folders_server_url", folderGVR.Group)
 	if err != nil {
 		return nil, err
 	}
-	dashboardClient, err := buildRESTClient(rt.Cfg, "dashboards_server_url", dashboardGVR.Group)
+	dashboardClient, err := buildRESTClient(rt.Clients, "dashboards_server_url", dashboardGVR.Group)
 	if err != nil {
 		return nil, err
 	}
