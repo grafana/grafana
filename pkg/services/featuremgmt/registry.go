@@ -18,6 +18,14 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
+			Name:        "grafana.responsiveTimePickerTabs",
+			Description: "Enable tabs and an inline calendar in the compact time range picker",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "panelTitleSearch",
 			Description: "Search for dashboards using panel title",
 			Stage:       FeatureStagePublicPreview,
@@ -933,24 +941,6 @@ var (
 			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
-		},
-		{
-			Name:            "kubernetesAggregator",
-			Description:     "Enable grafana's embedded kube-aggregator",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:            "kubernetesAggregatorCapTokenAuth",
-			Description:     "Enable CAP token based authentication in grafana's embedded kube-aggregator",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:            "scopeFilters",
@@ -2346,6 +2336,24 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "resourcePermissionsBulkUserValidation",
+			Description:  "Resolves and validates users in bulk when setting permissions for many users at once, such as SCIM team membership sync",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
+		},
+		{
+			Name:         "resourcePermissionsBulkUserWrites",
+			Description:  "Writes managed permissions and team memberships for many users in bulk instead of one user at a time, such as for SCIM team membership sync",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
 		},
 		{
 			Name:         "kubernetesUsersApi",

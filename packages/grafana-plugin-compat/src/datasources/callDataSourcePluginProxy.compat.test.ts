@@ -1,4 +1,6 @@
-import { setBackendSrv, type BackendSrv } from '@grafana/runtime';
+import { of, throwError } from 'rxjs';
+
+import { setBackendSrv, type BackendSrv, type FetchResponse } from '@grafana/runtime';
 
 import { getMockedBackendSrv } from '../utils/mocks';
 
@@ -10,30 +12,43 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 const mockBackendSrv = getMockedBackendSrv();
+const proxyResponse: FetchResponse = {
+  data: {},
+  status: 200,
+  statusText: 'OK',
+  ok: true,
+  headers: new Headers(),
+  redirected: false,
+  type: 'basic',
+  url: '/api/datasources/proxy/uid/tempo-dev/some/route',
+  config: { url: '/api/datasources/proxy/uid/tempo-dev/some/route' },
+};
 
 describe('callDataSourcePluginProxy', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     setBackendSrv(mockBackendSrv);
-    mockBackendSrv.get = jest.fn().mockResolvedValue({});
+    mockBackendSrv.fetch.mockReturnValue(of(proxyResponse));
   });
 
-  it('should call correct function when callDataSourcePluginProxy does not exist', async () => {
-    await callDataSourcePluginProxy({
+  it('should fetch GET and return the full response when the stable export is absent', async () => {
+    const response = await callDataSourcePluginProxy({
       pluginId: 'grafana-testdata-datasource',
       uid: 'tempo-dev',
       routePath: 'some/route',
     });
 
-    expect(mockBackendSrv.get).toHaveBeenCalled();
-    expect(mockBackendSrv.get).toHaveBeenCalledWith(
-      `/api/datasources/proxy/uid/tempo-dev/some/route`,
-      undefined,
-      undefined,
-      {
+    expect(response?.data).toStrictEqual({});
+    expect(response?.status).toBe(200);
+
+    expect(mockBackendSrv.fetch).toHaveBeenCalledTimes(1);
+    expect(mockBackendSrv.fetch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: '/api/datasources/proxy/uid/tempo-dev/some/route',
+        method: 'GET',
         showErrorAlert: false,
         validatePath: true,
-      }
+      })
     );
   });
 
@@ -45,23 +60,19 @@ describe('callDataSourcePluginProxy', () => {
       showErrorAlert: true,
     });
 
-    expect(mockBackendSrv.get).toHaveBeenCalled();
-    expect(mockBackendSrv.get).toHaveBeenCalledWith(
-      `/api/datasources/proxy/uid/tempo-dev/some/route`,
-      undefined,
-      undefined,
-      {
+    expect(mockBackendSrv.fetch).toHaveBeenCalledTimes(1);
+    expect(mockBackendSrv.fetch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: '/api/datasources/proxy/uid/tempo-dev/some/route',
+        method: 'GET',
         showErrorAlert: true,
         validatePath: true,
-      }
+      })
     );
   });
 
   it('should reject unauthorized requests and mark them handled', async () => {
-    mockBackendSrv.get = jest.fn().mockRejectedValue({
-      status: 401,
-      data: { message: 'Unauthorized' },
-    });
+    mockBackendSrv.fetch.mockReturnValue(throwError(() => ({ status: 401, data: { message: 'Unauthorized' } })));
 
     await expect(
       callDataSourcePluginProxy({ pluginId: 'grafana-testdata-datasource', uid: 'tempo-dev', routePath: 'some/route' })
@@ -73,10 +84,7 @@ describe('callDataSourcePluginProxy', () => {
   });
 
   it('should reject forbidden requests and mark them handled', async () => {
-    mockBackendSrv.get = jest.fn().mockRejectedValue({
-      status: 403,
-      data: { message: 'Forbidden' },
-    });
+    mockBackendSrv.fetch.mockReturnValue(throwError(() => ({ status: 403, data: { message: 'Forbidden' } })));
 
     await expect(
       callDataSourcePluginProxy({ pluginId: 'grafana-testdata-datasource', uid: 'tempo-dev', routePath: 'some/route' })
@@ -89,7 +97,7 @@ describe('callDataSourcePluginProxy', () => {
 
   it('should reject thrown error if error status is not 403 or 401', async () => {
     const error = { status: 404, message: 'Not found' };
-    mockBackendSrv.get = jest.fn().mockRejectedValue(error);
+    mockBackendSrv.fetch.mockReturnValue(throwError(() => error));
 
     await expect(
       callDataSourcePluginProxy({ pluginId: 'grafana-testdata-datasource', uid: 'tempo-dev', routePath: 'some/route' })

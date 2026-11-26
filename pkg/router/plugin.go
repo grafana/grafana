@@ -57,18 +57,21 @@ type PluginClientProvider = func(ctx context.Context, id string) (plugins.Client
 // must resolve the namespace and requester from each storage operation's context.
 type LegacySettingsStoreProvider func(ctx context.Context, pluginID string) (grafanarest.Storage, error)
 
-// SettingsDependencies configure the app settings API. ST supplies only the
-// legacy store; the cloud loader supplies the rest.
+// SettingsDependencies configure storage, credentials, and compatibility for app settings.
 type SettingsDependencies struct {
 	ReadOnly bool
 	// LegacyStore gets the legacy store for a plugin. Without one, settings use unified storage.
 	LegacyStore LegacySettingsStoreProvider
-	// AccessChecker replaces the default legacy app-access check.
+	// AccessChecker overrides the shared AuthZ check for ST compatibility.
 	AccessChecker pluginaccesscontrol.AppAccessChecker
 	// NamespaceAuthorizer replaces the default apiserver namespace authorizer.
 	NamespaceAuthorizer authorizer.Authorizer
 	// Middleware wraps the plugin's v2 client.
 	Middleware []backend.HandlerMiddleware
+	// AuthenticateV2 sends the caller's exchanged token to the plugin, as for v3.
+	// It wraps the circuit breaker, as v3 authentication does: failures to
+	// exchange a token say nothing about whether the plugin is reachable.
+	AuthenticateV2 bool
 }
 
 // The dependencies are configured at startup and used across all plugins
@@ -76,7 +79,7 @@ type PluginDependencies struct {
 	PluginClient       plugins.Client
 	ContextProvider    appsettings.PluginContextWrapper
 	AccessControl      accesscontrol.AccessControl
-	AccessClient       types.AccessClient // runs the access checks manifest routes declare
+	AccessClient       types.AccessClient // runs app-access and manifest route checks
 	DualWrite          dualwrite.Service
 	SecureValues       secret.InlineSecureValueSupport
 	MetricsRegister    prometheus.Registerer
@@ -142,6 +145,12 @@ func ProvidePluginLoaderDependencies(
 			Cfg:                cfg,
 			TokenExchanger:     newClientV3TokenExchanger(cfg),
 			PluginAuth:         pluginAuth,
+			// The settings subresources call the plugin as the caller, as in
+			// the cloud loader and as v3 calls do.
+			Settings: SettingsDependencies{
+				AuthenticateV2: true,
+				AccessChecker:  localSettingsAccessChecker(accessClient, accessControl),
+			},
 		},
 	}
 	if pluginSettings != nil {
@@ -560,25 +569,41 @@ func (b *PluginBackend) load(ctx context.Context) (*pluginroute.Handler, error) 
 		BuildVersion:    cfg.BuildVersion,
 		MetricsRegister: b.deps.MetricsRegister,
 	}
-	if b.deps.AccessControl != nil {
-		opts.AccessChecker = pluginaccesscontrol.NewAppAccessChecker(b.deps.AccessControl)
-	}
-
 	if b.settings != nil {
 		return b.loadSettings(ctx, cfg, opts, clientV2)
 	}
+	if b.deps.AccessControl != nil {
+		opts.AccessChecker = pluginaccesscontrol.NewAppAccessChecker(b.deps.AccessControl)
+	}
 	return b.loadManifest(cfg, opts, clientV3)
+}
+
+// settingsPluginClient guards client with the circuit breaker and, when
+// Settings.AuthenticateV2 is set (in the cloud and local loaders), authenticates
+// calls outside it. Authentication failures say nothing about whether the plugin
+// is reachable, so the breaker must not see them.
+func (b *PluginBackend) settingsPluginClient(client plugins.Client) (plugins.Client, error) {
+	client = &breakerPluginClient{Client: client}
+	if !b.deps.Settings.AuthenticateV2 {
+		return client, nil
+	}
+	return cloudSettingsClient(client, []backend.HandlerMiddleware{newV2AuthenticationMiddleware(b.pluginID,
+		withAuthFailureOutcome(pluginauth.ClientV3TokenExchanger(b.deps.Cfg, b.deps.PluginAuth, b.pluginID, b.deps.TokenExchanger)))})
 }
 
 // loadSettings serves the settings API, which calls the plugin through its
 // v2 client only.
 func (b *PluginBackend) loadSettings(ctx context.Context, cfg *setting.Cfg, opts pluginroute.Options, client plugins.Client) (*pluginroute.Handler, error) {
+	opts.AccessChecker = pluginaccesscontrol.NewAppAccessCheckerWithClient(b.deps.AccessClient)
 	if b.deps.Settings.AccessChecker != nil {
 		opts.AccessChecker = b.deps.Settings.AccessChecker
 	}
 	opts.NamespaceAuthorizer = b.deps.Settings.NamespaceAuthorizer
 	if client != nil {
-		opts.PluginClient = &breakerPluginClient{Client: client}
+		var err error
+		if opts.PluginClient, err = b.settingsPluginClient(client); err != nil {
+			return nil, err
+		}
 	}
 	opts.ContextProvider = b.deps.ContextProvider
 	opts.Features = b.deps.Features

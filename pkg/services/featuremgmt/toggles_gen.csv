@@ -1,4 +1,5 @@
 Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
+2026-11-19,grafana.responsiveTimePickerTabs,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2022-02-15,panelTitleSearch,preview,@grafana/grafana-search-and-storage,false,false,false
 2023-01-03,publicDashboardsEmailSharing,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2023-06-19,lokiExperimentalStreaming,experimental,@grafana/data-sources-plugins,false,false,false
@@ -107,8 +108,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-02-27,sqlExpressions,GA,@grafana/grafana-datasources-core-services,false,false,false
 2025-07-23,sqlExpressionsColumnAutoComplete,experimental,@grafana/datapro,false,false,true
 2026-05-14,sqlExpressionsCodeMirror,experimental,@grafana/datapro,false,false,true
-2024-02-12,kubernetesAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
-2025-05-15,kubernetesAggregatorCapTokenAuth,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2024-03-05,scopeFilters,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2024-03-25,oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,false
 2025-11-19,refreshTokenRequired,experimental,@grafana/identity-access-team,false,false,false
@@ -272,6 +271,8 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-08-27,queryeditor.coauthoringUi,experimental,@grafana/datapro,false,false,true
 2026-03-10,kubernetesTeamsApi,experimental,@grafana/identity-access-team,false,false,false
 2026-03-17,kubernetesTeamsRedirect,experimental,@grafana/identity-access-team,false,false,false
+2026-11-26,resourcePermissionsBulkUserValidation,experimental,@grafana/identity-access-team,false,false,false
+2026-11-25,resourcePermissionsBulkUserWrites,experimental,@grafana/identity-access-team,false,false,false
 2026-02-26,kubernetesUsersApi,experimental,@grafana/identity-access-team,false,false,false
 2026-10-08,kubernetesUsersReadApi,experimental,@grafana/identity-access-team,false,false,false
 2026-03-09,kubernetesServiceAccountsApi,experimental,@grafana/identity-access-team,false,false,false

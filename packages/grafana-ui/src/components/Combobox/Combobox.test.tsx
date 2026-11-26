@@ -80,6 +80,43 @@ describe('Combobox', () => {
     expect(screen.getByRole('combobox')).toBeInTheDocument();
   });
 
+  it.each([false, true])('forwards data attributes to the combobox input with auto size %s', (autoSize) => {
+    render(
+      <Combobox
+        options={options}
+        onChange={onChangeHandler}
+        data-analytics-id="datasource_picked"
+        {...(autoSize ? { width: 'auto', minWidth: 10 } : { width: 30 })}
+      />
+    );
+
+    expect(screen.getByRole('combobox')).toHaveAttribute('data-analytics-id', 'datasource_picked');
+  });
+
+  it('keeps data-testid alongside other data attributes', () => {
+    render(
+      <Combobox
+        options={options}
+        onChange={onChangeHandler}
+        data-testid="my-combobox"
+        data-analytics-id="datasource_picked"
+      />
+    );
+
+    const input = screen.getByTestId('my-combobox');
+    expect(input).toHaveAttribute('role', 'combobox');
+    expect(input).toHaveAttribute('data-analytics-id', 'datasource_picked');
+  });
+
+  it('does not forward props that are not data attributes to the input', () => {
+    const spreadProps = { title: 'Spread title', 'data-analytics-id': 'datasource_picked' };
+    render(<Combobox options={options} onChange={onChangeHandler} {...spreadProps} />);
+
+    const input = screen.getByRole('combobox');
+    expect(input).toHaveAttribute('data-analytics-id', 'datasource_picked');
+    expect(input).not.toHaveAttribute('title');
+  });
+
   it.each([false, true])(
     'exposes the input ref and preserves dropdown positioning with auto size %s',
     async (autoSize) => {
