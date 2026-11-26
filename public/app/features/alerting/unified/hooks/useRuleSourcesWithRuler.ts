@@ -14,7 +14,7 @@ const CONCURRENCY_LIMIT = 10;
 const noRulesSources: RulesSourceDataSource[] = [];
 
 interface DiscoveryState {
-  forList?: RulesSourceDataSource[];
+  rulesSourcesToDiscover?: RulesSourceDataSource[];
   withRuler: RulesSourceDataSource[];
   isDone: boolean;
 }
@@ -33,7 +33,7 @@ export function useRulesSourcesWithRuler(): {
     if (dataSources.length === 0) {
       return;
     }
-    setDiscovery({ forList: dataSources, withRuler: noRulesSources, isDone: false });
+    setDiscovery({ rulesSourcesToDiscover: dataSources, withRuler: noRulesSources, isDone: false });
 
     // per-effect-run flag that prevents stale state updates after the component unmounts
     // or the effect re-runs with new dependencies
@@ -52,7 +52,7 @@ export function useRulesSourcesWithRuler(): {
               const { data: dsFeatures } = await discoverDsFeatures({ uid: ds.uid }, true);
               if (!cancelled && dsFeatures?.rulerConfig) {
                 setDiscovery((prev) =>
-                  prev.forList === dataSources ? { ...prev, withRuler: [...prev.withRuler, ds] } : prev
+                  prev.rulesSourcesToDiscover === dataSources ? { ...prev, withRuler: [...prev.withRuler, ds] } : prev
                 );
               }
             } catch (err) {
@@ -63,7 +63,7 @@ export function useRulesSourcesWithRuler(): {
       }
 
       if (!cancelled) {
-        setDiscovery((prev) => (prev.forList === dataSources ? { ...prev, isDone: true } : prev));
+        setDiscovery((prev) => (prev.rulesSourcesToDiscover === dataSources ? { ...prev, isDone: true } : prev));
       }
     }
 
@@ -80,7 +80,7 @@ export function useRulesSourcesWithRuler(): {
 
   // Derived during render so that a list the effect has not processed yet never reads as ready,
   // and results from an earlier list are never returned.
-  const isCurrentList = discovery.forList === dataSources;
+  const isCurrentList = discovery.rulesSourcesToDiscover === dataSources;
 
   return {
     rulesSourcesWithRuler: isCurrentList ? discovery.withRuler : noRulesSources,
