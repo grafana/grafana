@@ -29,7 +29,7 @@ func GetLegacySearchUsersPermissions(ctx context.Context, client legacyclient.Le
 	originalNamespace := caller.GetNamespace()
 	namespace := legacyscopes.PermissionNamespace(ctx, caller)
 	if originalNamespace == "" && cfg != nil && cfg.StackID != "" {
-		namespace = "stacks-" + cfg.StackID
+		namespace = legacyscopes.StackNamespace(cfg.StackID)
 	}
 	var internalID *int64
 	if id, err := caller.GetInternalID(); err == nil {

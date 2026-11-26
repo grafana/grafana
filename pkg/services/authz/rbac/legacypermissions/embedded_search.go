@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
 )
 
 var embeddedSearchLogger = log.New("authz.legacypermissions.search")
@@ -88,7 +89,7 @@ func (s *embeddedServer) LegacySearchUsersPermissions(req *authzv1.LegacySearchU
 	if ns.OrgID < 1 {
 		return status.Error(codes.InvalidArgument, "concrete namespace required")
 	}
-	if s.cfg.StackID != "" && ns.Value != "stacks-"+s.cfg.StackID {
+	if s.cfg.StackID != "" && ns.Value != legacyscopes.StackNamespace(s.cfg.StackID) {
 		return status.Error(codes.PermissionDenied, "namespace does not match this instance")
 	}
 	if s.cfg.StackID == "" && ns.StackID != 0 {
