@@ -1058,6 +1058,25 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 		},
 	}
 	oas.Components.Schemas[compBase+"UserPermissions"].Properties["permissions"] = schema
+
+	// The search hit refs are lost when the definitions are built without a ref resolver.
+	for _, p := range []struct{ response, hit string }{
+		{iamv0.GetSearchUsersResponse{}.OpenAPIModelName(), iamv0.GetSearchUsersUserHit{}.OpenAPIModelName()},
+		{iamv0.GetSearchTeamsResponse{}.OpenAPIModelName(), iamv0.GetSearchTeamsTeamHit{}.OpenAPIModelName()},
+	} {
+		resp := oas.Components.Schemas[p.response]
+		if resp == nil {
+			continue
+		}
+		hits := resp.Properties["hits"]
+		hits.Items = &spec.SchemaOrArray{
+			Schema: &spec.Schema{
+				SchemaProps: spec.SchemaProps{Ref: spec.MustCreateRef("#/components/schemas/" + p.hit)},
+			},
+		}
+		resp.Properties["hits"] = hits
+	}
+
 	oas.Components.Schemas[compBase+"DisplayList"].Properties["metadata"] = spec.Schema{
 		SchemaProps: spec.SchemaProps{
 			AllOf: []spec.Schema{
