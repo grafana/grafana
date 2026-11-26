@@ -338,10 +338,11 @@ export const InfiniteScroll = ({
 
   const onItemsRendered = useCallback(
     (props: ListOnItemsRenderedProps) => {
-      cachedVisibleStartIndexRef.current = props.visibleStartIndex;
-
       if (onRenderedIndicesChanged) {
-onRenderedIndicesChanged({ ...props, visibleStopIndex: Math.min(props.visibleStopIndex, logs.length - 1) });
+        onRenderedIndicesChanged({
+          ...props,
+          visibleStopIndex: Math.min(props.visibleStopIndex, logs.length - 1),
+        });
       }
 
       if (!scrollElement) {
