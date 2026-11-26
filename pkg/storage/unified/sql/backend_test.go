@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -136,6 +137,42 @@ func TestContinueTokenMatchesListRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, tt.want, continueTokenMatchesListRequest(tt.token, tt.req))
+		})
+	}
+}
+
+func TestBackend_malformedContinueToken(t *testing.T) {
+	t.Parallel()
+
+	be, ctx := setupBackendTest(t)
+	req := func() *resourcepb.ListRequest {
+		return &resourcepb.ListRequest{
+			Options:       &resourcepb.ListOptions{Key: resKey},
+			Limit:         10,
+			NextPageToken: "bm90LWEtdG9rZW4=", // base64 of "not-a-token"
+		}
+	}
+	noIteration := func(resource.ListIterator) error {
+		t.Fatal("malformed continuation must fail before iteration")
+		return nil
+	}
+
+	for _, tc := range []struct {
+		name string
+		list func(*resourcepb.ListRequest) (int64, error)
+	}{
+		{name: "listAtRevision", list: func(r *resourcepb.ListRequest) (int64, error) {
+			return be.listAtRevision(ctx, r, noIteration)
+		}},
+		{name: "getHistory", list: func(r *resourcepb.ListRequest) (int64, error) {
+			return be.getHistory(ctx, r, noIteration)
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := tc.list(req())
+			require.Error(t, err)
+			require.True(t, apierrors.IsBadRequest(err), "got %v", err)
+			require.Contains(t, err.Error(), "invalid continue token")
 		})
 	}
 }
