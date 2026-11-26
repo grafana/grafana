@@ -99,7 +99,10 @@ test.describe('Section titles after session expiry', { tag: ['@dashboards'] }, (
     // Removing the session cookie makes the next request follow the expired-session path.
     await context.clearCookies({ name: 'grafana_session' });
     await page.getByTestId(selectors.components.NavToolbar.markAsFavorite).click();
-    await secondTab.reload();
+    // The explore tab can redirect itself to login on a background 401, which aborts an in-flight reload.
+    await expect(async () => {
+      await secondTab.reload();
+    }).toPass();
     for (const [index, tab] of tabs.entries()) {
       await expect(tab.getByTestId(selectors.pages.Login.username)).toBeVisible();
       await expect(tab).toHaveTitle(`${index === 0 ? 'Dashboards' : 'Explore'} - Sign in - Grafana`);
