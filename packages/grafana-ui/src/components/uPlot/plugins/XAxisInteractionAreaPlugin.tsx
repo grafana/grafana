@@ -46,13 +46,10 @@ export const setupXAxisPan = (
   }
 
   const xAxisEl = xAxis;
-  // The chart can render in another window than this one, such as a Document Picture-in-Picture window. Its mouse
-  // events, and the moves and release of a drag, happen in that window.
-  const plotDocument = xAxisEl.ownerDocument;
-  const plotWindow = plotDocument.defaultView ?? window;
 
   let activeMoveListener: ((e: MouseEvent) => void) | null = null;
   let activeUpListener: ((e: MouseEvent) => void) | null = null;
+  let activeDocument = xAxisEl.ownerDocument;
 
   const handleMouseEnter = () => {
     xAxisEl.style.cursor = 'grab';
@@ -63,6 +60,10 @@ export const setupXAxisPan = (
   };
 
   const handleMouseDown = (e: Event) => {
+    // The chart can render in another window than this one, such as a Document Picture-in-Picture window, and can move
+    // there after it's set up. Its mouse events, and the moves and release of a drag, happen in that window.
+    const plotDocument = xAxisEl.ownerDocument;
+    const plotWindow = plotDocument.defaultView ?? window;
     if (!(e instanceof plotWindow.MouseEvent)) {
       return;
     }
@@ -117,6 +118,7 @@ export const setupXAxisPan = (
 
     activeMoveListener = onMove;
     activeUpListener = onUp;
+    activeDocument = plotDocument;
 
     plotDocument.addEventListener('mousemove', onMove);
     plotDocument.addEventListener('mouseup', onUp);
@@ -132,10 +134,10 @@ export const setupXAxisPan = (
     xAxisEl.removeEventListener('mousedown', handleMouseDown);
 
     if (activeMoveListener) {
-      plotDocument.removeEventListener('mousemove', activeMoveListener);
+      activeDocument.removeEventListener('mousemove', activeMoveListener);
     }
     if (activeUpListener) {
-      plotDocument.removeEventListener('mouseup', activeUpListener);
+      activeDocument.removeEventListener('mouseup', activeUpListener);
     }
   };
 };

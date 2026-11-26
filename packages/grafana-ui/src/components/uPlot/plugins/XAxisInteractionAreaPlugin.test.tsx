@@ -205,6 +205,30 @@ describe('XAxisInteractionAreaPlugin', () => {
 
       iframe.remove();
     });
+
+    it('pans with a drag in that window after the chart moves there', () => {
+      const iframe = document.createElement('iframe');
+      document.body.appendChild(iframe);
+      const otherWindow = iframe.contentDocument?.defaultView;
+      if (otherWindow == null) {
+        throw new Error('jsdom gave the iframe no window');
+      }
+      const mockQueryZoom = jest.fn();
+      const xAxisElement = createMockXAxis();
+      const mockUPlot = createMockUPlot(xAxisElement);
+      document.body.appendChild(mockUPlot.root);
+      setupXAxisPan(asUPlot(mockUPlot), asConfigBuilder(createMockConfigBuilder()), mockQueryZoom);
+
+      // as a page moves an element into a Document Picture-in-Picture window: `pipWindow.document.body.append(element)`
+      otherWindow.document.body.appendChild(mockUPlot.root);
+      xAxisElement.dispatchEvent(new otherWindow.MouseEvent('mousedown', { clientX: 400, bubbles: true }));
+      otherWindow.document.dispatchEvent(new otherWindow.MouseEvent('mousemove', { clientX: 350, bubbles: true }));
+      otherWindow.document.dispatchEvent(new otherWindow.MouseEvent('mouseup', { clientX: 350, bubbles: true }));
+
+      expect(mockQueryZoom).toHaveBeenCalledWith({ from: 1062.5, to: 2062.5 });
+
+      iframe.remove();
+    });
   });
 
   describe('event listeners', () => {
