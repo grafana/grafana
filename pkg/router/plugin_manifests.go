@@ -36,7 +36,9 @@ type pluginManifestsTarget struct {
 	client    *http.Client
 	patterns  []*regexp.Regexp
 	deps      PluginDependencies
-	settings  bool
+	// settingsPlugins selects the app plugins whose settings are served. None
+	// are served when it is empty.
+	settingsPlugins []*regexp.Regexp
 }
 
 // pluginConnections holds the connections to the plugin deployments of one
@@ -106,7 +108,9 @@ func newPluginManifestsTarget(
 		client:            client,
 		patterns:          patterns,
 	}
-	t.settings = source == sourcePlugins && cloudAppSettingsEnabled(deps.Cfg)
+	if source == sourcePlugins {
+		t.settingsPlugins = cloudAppSettingsPlugins(deps.Cfg)
+	}
 	t.polledSource = polledSource{
 		source:   source,
 		fetcher:  t,
@@ -150,7 +154,8 @@ func (t *pluginManifestsTarget) fetch(ctx context.Context) ([]Backend, int, erro
 			}
 			continue
 		}
-		if t.settings && entry.Definition.JSONData.Type == plugins.TypeApp && matchesAnyPattern(entry.Definition.JSONData.ID, t.patterns) {
+		if id := entry.Definition.JSONData.ID; len(t.settingsPlugins) > 0 && entry.Definition.JSONData.Type == plugins.TypeApp &&
+			matchesAnyPattern(id, t.settingsPlugins) && matchesAnyPattern(id, t.patterns) {
 			backend, err := t.newSettingsBackend(ctx, entry)
 			if err != nil {
 				logging.FromContext(ctx).Warn("router: skipping app plugin settings", "pluginId", entry.Definition.JSONData.ID, "err", err)
@@ -311,7 +316,7 @@ func forwardRouteCredentials(ctx context.Context, header http.Header) error {
 	}
 	if !baasbridge.DeclaredAccessChecked(ctx) { //nolint:staticcheck
 		if token := requester.GetAccessToken(); token != "" {
-			header.Set("X-Access-Token", token)
+			header.Set(accessTokenHeader, token)
 		}
 	}
 	return nil

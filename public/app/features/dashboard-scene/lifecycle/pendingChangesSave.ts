@@ -7,6 +7,7 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 
 import { type DashboardChangeInfo } from '../saving/shared';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { dashboardComposerEnabled } from '../scene/dashboardModes';
 import { jsonDiff } from '../settings/version-history/utils';
 import { isMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 
@@ -39,6 +40,8 @@ import { withoutEmptyValues } from './specDiff';
  */
 export function openPendingChangesForEditing(scene: DashboardScene) {
   const keepEditing = takeEditingOnNextLoad(previewedDashboardUid(scene.state));
+  // A request an earlier load left untaken is not for what this load shows.
+  takeComposerRequestOverAssistantEdit(scene.state.uid);
   if (scene.state.isEditing || !scene.canEditDashboard() || isMobileEditDeprecated()) {
     return;
   }
@@ -52,7 +55,28 @@ export function openPendingChangesForEditing(scene: DashboardScene) {
   // Without the plugin's history an edit couldn't be kept, so the preview stays read-only.
   if (proposesNewDashboard(preview.pending) || preview.pending.history) {
     scene.onEnterEditMode('assistant');
+    requestComposerOverAssistantEdit(scene);
   }
+}
+
+/** Dashboards whose Assistant edit the page asks the Assistant to enter Composer over, once it can. */
+const composerOverAssistantEdit = new Set<string>();
+
+/**
+ * With Composer on, the Assistant's edit opens in Editing for Composer to run over. The page makes the request
+ * (see `useComposerOverAssistantEdit`): it has to open the Assistant sidebar, which it can only do once the
+ * sidebar knows the Assistant's component.
+ */
+function requestComposerOverAssistantEdit(scene: DashboardScene) {
+  const uid = scene.state.uid;
+  if (uid && dashboardComposerEnabled()) {
+    composerOverAssistantEdit.add(uid);
+  }
+}
+
+/** Whether the page should ask the Assistant to enter Composer over this dashboard's edit; asking forgets it. */
+export function takeComposerRequestOverAssistantEdit(uid: string | undefined): boolean {
+  return uid !== undefined && composerOverAssistantEdit.delete(uid);
 }
 
 /**
