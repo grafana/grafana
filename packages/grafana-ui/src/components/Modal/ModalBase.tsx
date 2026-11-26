@@ -110,9 +110,6 @@ export function ModalBase({
 
   return (
     <>
-      {/* Next to the modal's OverlayContainer, not in it: react-aria throws when a modal inside this one puts its own
-       * OverlayContainer in another. */}
-      {otherWindowPortal && createPortal(<div ref={setNestedPortals} />, otherWindowPortal)}
       <OverlayContainer portalContainer={otherWindowPortal}>
         {(!otherWindowPortal || nestedPortals) && (
           <>
@@ -155,6 +152,10 @@ export function ModalBase({
           </>
         )}
       </OverlayContainer>
+      {/* Next to the modal's OverlayContainer, not in it: react-aria throws when a modal inside this one puts its own
+       * OverlayContainer in another. And after it: modals share one z-index, so a modal opened from this one shows on
+       * top by coming later, as it does in this window's portal container. */}
+      {otherWindowPortal && createPortal(<div ref={setNestedPortals} />, otherWindowPortal)}
     </>
   );
 }

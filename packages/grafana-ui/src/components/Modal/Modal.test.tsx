@@ -303,7 +303,11 @@ describe('Modal', () => {
       const { openModal, unmount } = setup(jest.fn(), inner);
       openModal();
 
-      expect(within(otherDocument.body).getByRole('dialog', { name: 'Inner' })).toHaveTextContent('Inner content');
+      const innerDialog = within(otherDocument.body).getByRole('dialog', { name: 'Inner' });
+      expect(innerDialog).toHaveTextContent('Inner content');
+      // Modals share one z-index, so the one later in the document shows on top.
+      const outerDialog = within(otherDocument.body).getByText('Content').closest('[role="dialog"]');
+      expect(outerDialog?.compareDocumentPosition(innerDialog)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
       unmount();
     });
 
