@@ -298,11 +298,16 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 
 	// Check existence before authorization so stale search hits remain idempotent,
 	// but authorize all contained resources before recording or stamping this folder.
-	if _, err := s.Get(ctx, name, &metav1.GetOptions{}); err != nil {
+	walkedObj, err := s.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
 		if apierrors.IsNotFound(err) && !requested {
 			return nil, false, nil
 		}
 		return nil, false, err
+	}
+	walked, ok := walkedObj.(*foldersv1.Folder)
+	if !ok {
+		return nil, false, fmt.Errorf("obj is not folders.Folder")
 	}
 	if err := s.checkFolderContentsAccess(ctx, user, namespace, name, parentUID); err != nil {
 		return nil, false, err
@@ -384,7 +389,7 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 	// one goes, which would be before its contents were removed. They are gone now, so release it. The
 	// release deletes it, so a delete by name afterwards could only reach a folder created in between.
 	if len(options.DryRun) == 0 {
-		released, err := s.releaseTerminating(ctx, name)
+		released, err := s.releaseTerminating(ctx, walked)
 		if err != nil {
 			return nil, false, err
 		}
@@ -405,11 +410,12 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 	return obj, async, err
 }
 
-// releaseTerminating removes the cascade finalizer from a terminating folder, which the store then
-// deletes, and returns the deleted folder. It returns nil for a folder that is gone, not terminating
-// or without the finalizer, which are left as they are.
-func (s *cascadeDeleteStorage) releaseTerminating(ctx context.Context, name string) (runtime.Object, error) {
-	obj, err := s.Get(ctx, name, &metav1.GetOptions{})
+// releaseTerminating removes the cascade finalizer from the terminating folder the walk started with,
+// which the store then deletes, and returns the deleted folder. It returns nil for a folder that is
+// gone, not terminating or without the finalizer, which are left as they are. A folder with another UID
+// replaced the one that was walked, which is already gone, so it is left alone and walked is returned.
+func (s *cascadeDeleteStorage) releaseTerminating(ctx context.Context, walked *foldersv1.Folder) (runtime.Object, error) {
+	obj, err := s.Get(ctx, walked.Name, &metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		return nil, nil
 	}
@@ -417,7 +423,13 @@ func (s *cascadeDeleteStorage) releaseTerminating(ctx context.Context, name stri
 		return nil, err
 	}
 	cur, ok := obj.(*foldersv1.Folder)
-	if !ok || cur.DeletionTimestamp == nil || !hasCascadeDeleteFinalizer(cur) {
+	if !ok {
+		return nil, nil
+	}
+	if cur.UID != walked.UID {
+		return walked, nil
+	}
+	if cur.DeletionTimestamp == nil || !hasCascadeDeleteFinalizer(cur) {
 		return nil, nil
 	}
 	objInfo := rest.DefaultUpdatedObjectInfo(nil, func(_ context.Context, _, oldObj runtime.Object) (runtime.Object, error) {
@@ -425,14 +437,18 @@ func (s *cascadeDeleteStorage) releaseTerminating(ctx context.Context, name stri
 		if !ok {
 			return nil, fmt.Errorf("obj is not folders.Folder")
 		}
+		// Recreated since the read above: the walked folder is gone, and this one is not ours to release.
+		if f.UID != walked.UID {
+			return nil, apierrors.NewNotFound(foldersv1.FolderResourceInfo.GroupResource(), f.Name)
+		}
 		f = f.DeepCopy()
 		setCascadeDeleteFinalizer(f, false)
 		return f, nil
 	})
-	released, _, err := s.Update(ctx, name, objInfo, nil, nil, false, &metav1.UpdateOptions{})
-	// Released by the controller meanwhile counts as released.
+	released, _, err := s.Update(ctx, walked.Name, objInfo, nil, nil, false, &metav1.UpdateOptions{})
+	// Released by the controller meanwhile, or replaced, counts as released.
 	if apierrors.IsNotFound(err) {
-		return cur, nil
+		return walked, nil
 	}
 	if err != nil {
 		return nil, err

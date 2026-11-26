@@ -462,6 +462,8 @@ type fakeFolderStorage struct {
 	deletedOnUpdate []string
 	// finalizersAtDelete records each folder's finalizers when it was deleted.
 	finalizersAtDelete map[string][]string
+	// beforeUpdate runs at the start of Update, to simulate a concurrent change.
+	beforeUpdate func(name string)
 	// beforeDelete runs at the start of Delete, to simulate a concurrent change.
 	beforeDelete  func()
 	deleteOptions *metav1.DeleteOptions
@@ -744,6 +746,9 @@ func (f *fakeFolderStorage) Delete(ctx context.Context, name string, deleteValid
 }
 
 func (f *fakeFolderStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, _ bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	if f.beforeUpdate != nil {
+		f.beforeUpdate(name)
+	}
 	f.updates++
 	fol, ok := f.existing[name]
 	if !ok {
@@ -2672,6 +2677,7 @@ func TestCascadeDelete_AlignsFinalizerWithAsyncFlag(t *testing.T) {
 		setCascadeToggles(t, true, false)
 		root, child := newFolder("root"), newFolder("child")
 		root.Finalizers, child.Finalizers = cascade, cascade
+		child.UID = "child-uid"
 		now := metav1.Now()
 		child.DeletionTimestamp = &now
 		store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": root, "child": child}}
@@ -2708,6 +2714,60 @@ func TestCascadeDelete_AlignsFinalizerWithAsyncFlag(t *testing.T) {
 		require.Empty(t, store.deletedOnUpdate)
 		require.Equal(t, cascade, store.existing["child"].Finalizers, "the controller still owns it")
 		require.Empty(t, store.deleted)
+	})
+
+	// recreated is a folder with the same name as the descendant, created after the walk started, with a
+	// new UID, and optionally already being deleted.
+	recreated := func(terminating bool) *foldersv1.Folder {
+		f := newFolder("child")
+		f.UID = "recreated-uid"
+		if terminating {
+			f.Finalizers = cascade
+			now := metav1.Now()
+			f.DeletionTimestamp = &now
+		}
+		return f
+	}
+
+	t.Run("a synchronous walk leaves a folder recreated under a descendant's name alone", func(t *testing.T) {
+		for name, tc := range map[string]struct {
+			terminating bool
+			swap        func(store *fakeFolderStorage, dyn *dynamicfake.FakeDynamicClient, replacement *foldersv1.Folder)
+		}{
+			// Without the UID check at the read, the walk would go on to delete it by name.
+			"a new folder before the release reads it": {swap: func(store *fakeFolderStorage, dyn *dynamicfake.FakeDynamicClient, replacement *foldersv1.Folder) {
+				dyn.PrependReactor("delete", "dashboards", func(k8stesting.Action) (bool, runtime.Object, error) {
+					store.existing["child"] = replacement
+					return false, nil, nil
+				})
+			}},
+			"a terminating folder between the read and the update": {terminating: true, swap: func(store *fakeFolderStorage, _ *dynamicfake.FakeDynamicClient, replacement *foldersv1.Folder) {
+				// The second update of the descendant is the release; the first marks it terminating.
+				var childUpdates int
+				store.beforeUpdate = func(name string) {
+					if name == "child" {
+						childUpdates++
+						if childUpdates == 2 {
+							store.existing["child"] = replacement
+						}
+					}
+				}
+			}},
+		} {
+			t.Run(name, func(t *testing.T) {
+				store, searcher := terminatingChild()
+				s, dyn := newDashboardCascade(store, searcher, unstructuredDashboard("default", "dash-1"))
+				replacement := recreated(tc.terminating)
+				tc.swap(store, dyn, replacement)
+
+				_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+				require.NoError(t, err)
+				require.Empty(t, store.deletedOnUpdate)
+				require.NotContains(t, store.deleteCalls, "child", "the new folder is not deleted by name either")
+				require.Same(t, replacement, store.existing["child"])
+				require.Equal(t, replacement.Finalizers, store.existing["child"].Finalizers, "its finalizer is not stripped")
+			})
+		}
 	})
 
 	t.Run("a dry run releases nothing", func(t *testing.T) {
