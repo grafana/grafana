@@ -63,9 +63,15 @@ async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<P
  * Follows the legacy `POST /api/plugins/:id/settings` semantics:
  * - `jsonData` replaces the stored value; an omitted or empty `jsonData` keeps it.
  * - `secureJsonData` is merged per key; an omitted key keeps its value and an empty string removes it.
- * - `secureJsonFields[key] === false` removes the key.
- * - An omitted `enabled` keeps the stored value.
  * - `pinned` is not stored.
+ *
+ * With `plugins.useMTPluginSettings` enabled, two rules differ from the legacy endpoint:
+ * - An omitted `enabled` keeps the stored value.
+ * - `secureJsonFields[key] === false` removes the key when `secureJsonData` has no new value for it.
+ *
+ * When the flag is disabled, or the plugin metadata is not found, the update goes to the legacy
+ * endpoint. Then an omitted `enabled` disables the app and `secureJsonFields` is ignored, so pass
+ * `enabled` explicitly.
  * @param pluginId - The id of the plugin.
  * @param data - The partial `PluginMeta` to apply to the stored settings.
  * @returns The updated plugin's `PluginMeta`.

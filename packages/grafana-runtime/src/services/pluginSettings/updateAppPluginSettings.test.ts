@@ -190,6 +190,11 @@ describe('settings', () => {
           { desc: 'sends no changes when only pinned is passed', data: { pinned: true }, ops: [] },
           { desc: 'keeps the stored jsonData when jsonData is empty', data: { jsonData: {} }, ops: [] },
           {
+            desc: 'keeps the stored jsonData when jsonData only has undefined values',
+            data: { jsonData: { optional: undefined } },
+            ops: [],
+          },
+          {
             desc: 'creates only the passed secret and keeps the others',
             data: { secureJsonData: { k1: 'new' } },
             ops: [
@@ -211,6 +216,14 @@ describe('settings', () => {
             ops: [
               { op: 'remove', path: '/secure/k1/name' },
               { op: 'add', path: '/secure/k1/remove', value: true },
+            ],
+          },
+          {
+            desc: 'creates a secret entered after a reset that is still marked false in secureJsonFields',
+            data: { secureJsonData: { k1: 'new' }, secureJsonFields: { k1: false } },
+            ops: [
+              { op: 'remove', path: '/secure/k1/name' },
+              { op: 'add', path: '/secure/k1/create', value: 'new' },
             ],
           },
           {

@@ -40,17 +40,25 @@ export function settingsSpecMapper(
     result.enabled = data.enabled;
   }
 
-  if (data.jsonData && Object.keys(data.jsonData).length > 0) {
-    result.jsonData = data.jsonData;
+  // Compare what the legacy endpoint receives: the JSON body drops undefined values, so
+  // `{ key: undefined }` is sent as `{}` and keeps the stored jsonData.
+  const jsonData: unknown = data.jsonData === undefined ? undefined : JSON.parse(JSON.stringify(data.jsonData));
+  if (isNonEmptyObject(jsonData)) {
+    result.jsonData = jsonData;
   }
 
   return result;
 }
 
+function isNonEmptyObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value) && Object.keys(value).length > 0;
+}
+
 /**
  * Returns the secure values to store when `data` is applied to `stored`. Keys the caller omits keep
- * their stored value, as with the legacy endpoint. An empty string in `secureJsonData` (how legacy
- * callers reset a secret) and `secureJsonFields[key] === false` both remove a stored key.
+ * their stored value, as with the legacy endpoint. A non-empty value in `secureJsonData` replaces the
+ * stored one. An empty string (how legacy callers reset a secret) removes a stored key, and so does
+ * `secureJsonFields[key] === false` when no new value is passed.
  */
 export function inlineSecureValuesMapper(
   stored: v0alpha1InlineSecureValues | undefined,
@@ -75,7 +83,7 @@ export function inlineSecureValuesMapper(
       continue;
     }
 
-    if (secureValue === '' || secureJsonFields[key] === false) {
+    if (secureValue === '') {
       remove(key);
       continue;
     }
@@ -86,7 +94,8 @@ export function inlineSecureValuesMapper(
   }
 
   for (const key of Object.keys(secureJsonFields)) {
-    if (secureJsonFields[key] === false) {
+    // A form that resets a secret and then gets a new value still has `false` here.
+    if (secureJsonFields[key] === false && !secureJsonData[key]) {
       remove(key);
     }
   }

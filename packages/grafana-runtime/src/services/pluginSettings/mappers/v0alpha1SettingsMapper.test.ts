@@ -487,6 +487,16 @@ describe('settingsSpecMapper', () => {
       expected: { enabled: true, pinned: true, jsonData: { c: 3 } },
     },
     { desc: 'keeps the stored jsonData when jsonData is empty', data: { jsonData: {} }, expected: stored },
+    {
+      desc: 'keeps the stored jsonData when jsonData only has undefined values',
+      data: { jsonData: { optional: undefined } },
+      expected: stored,
+    },
+    {
+      desc: 'drops undefined values from a replaced jsonData',
+      data: { jsonData: { c: 3, optional: undefined } },
+      expected: { enabled: true, pinned: true, jsonData: { c: 3 } },
+    },
     { desc: 'ignores pinned', data: { pinned: false }, expected: stored },
     { desc: 'ignores unrelated fields', data: { id: 'some-plugin', name: 'Some Plugin' }, expected: stored },
   ])('$desc', ({ data, expected }) => {
@@ -532,8 +542,13 @@ describe('inlineSecureValuesMapper', () => {
       expected: { apiKey: { remove: true }, password: { name: 'sv-password' } },
     },
     {
-      desc: 'removes a stored key when secureJsonFields is false even if a new value is passed',
+      desc: 'creates a new value entered after a reset even when secureJsonFields is false',
       data: { secureJsonData: { apiKey: 'new' }, secureJsonFields: { apiKey: false } },
+      expected: { apiKey: { create: 'new' }, password: { name: 'sv-password' } },
+    },
+    {
+      desc: 'removes a stored key when secureJsonFields is false and the value is an empty string',
+      data: { secureJsonData: { apiKey: '' }, secureJsonFields: { apiKey: false } },
       expected: { apiKey: { remove: true }, password: { name: 'sv-password' } },
     },
     {
