@@ -91,6 +91,10 @@ const (
 	// Enable export functionality for provisioned resources
 	FlagProvisioningExport = "provisioningExport"
 
+	// FlagProvisioningMigrateFolderTakeover
+	// Keep the folder UID during migration when everything in the folder subtree is migrated, instead of generating a new folder UID
+	FlagProvisioningMigrateFolderTakeover = "provisioningMigrateFolderTakeover"
+
 	// FlagGrafanaFrontendLegacyFeatureToggleHandling
 	// Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (warn in the console once per toggle), "alert" (also raise a warning alert) or "block" (console only, and resolve every toggle to undefined).
 	FlagGrafanaFrontendLegacyFeatureToggleHandling = "grafana.frontendLegacyFeatureToggleHandling"
