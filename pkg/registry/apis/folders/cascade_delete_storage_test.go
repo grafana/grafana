@@ -454,6 +454,8 @@ type fakeFolderStorage struct {
 	stamped  []string
 	updates  int
 	getErr   map[string]error
+	// deleteCalls lists every Delete call, whether or not it found the folder.
+	deleteCalls []string
 	// finalizersChangedOnUpdate lists folders whose finalizers an update changed.
 	finalizersChangedOnUpdate []string
 	// deletedOnUpdate lists folders the store deleted because an update emptied a terminating folder's finalizers.
@@ -702,6 +704,7 @@ func (f *fakeFolderStorage) Delete(ctx context.Context, name string, deleteValid
 		f.beforeDelete()
 	}
 	f.deleteOptions = options
+	f.deleteCalls = append(f.deleteCalls, name)
 	fol, ok := f.existing[name]
 	if !ok {
 		return nil, false, apierrors.NewNotFound(foldersv1.FolderResourceInfo.GroupResource(), name)
@@ -2691,6 +2694,7 @@ func TestCascadeDelete_AlignsFinalizerWithAsyncFlag(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, heldWhenDashboardDeleted, "the folder is held until its contents are removed")
 		require.Equal(t, []string{"child"}, store.deletedOnUpdate, "the release lets the store delete it")
+		require.NotContains(t, store.deleteCalls, "child", "no delete by name follows, which could reach a folder created in between")
 		require.Equal(t, []string{"root"}, store.deleted)
 	})
 

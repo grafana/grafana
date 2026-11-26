@@ -382,10 +382,15 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 	}
 
 	// A terminating folder kept its finalizer through the walk, as the store deletes it once the last
-	// one goes, which would be before its contents were removed. They are gone now, so release it.
+	// one goes, which would be before its contents were removed. They are gone now, so release it. The
+	// release deletes it, so a delete by name afterwards could only reach a folder created in between.
 	if len(options.DryRun) == 0 {
-		if err := s.releaseTerminating(ctx, name); err != nil {
+		released, err := s.releaseTerminating(ctx, name)
+		if err != nil {
 			return nil, false, err
+		}
+		if released != nil {
+			return released, false, nil
 		}
 	}
 
@@ -402,17 +407,19 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 }
 
 // releaseTerminating removes the cascade finalizer from a terminating folder, which the store then
-// deletes. A folder that is gone, not terminating or without the finalizer is left as it is.
-func (s *cascadeDeleteStorage) releaseTerminating(ctx context.Context, name string) error {
+// deletes, and returns the deleted folder. It returns nil for a folder that is gone, not terminating
+// or without the finalizer, which are left as they are.
+func (s *cascadeDeleteStorage) releaseTerminating(ctx context.Context, name string) (runtime.Object, error) {
 	obj, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
-		return nil
+		return nil, nil
 	}
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if f, ok := obj.(*foldersv1.Folder); !ok || f.DeletionTimestamp == nil || !hasCascadeDeleteFinalizer(f) {
-		return nil
+	cur, ok := obj.(*foldersv1.Folder)
+	if !ok || cur.DeletionTimestamp == nil || !hasCascadeDeleteFinalizer(cur) {
+		return nil, nil
 	}
 	objInfo := rest.DefaultUpdatedObjectInfo(nil, func(_ context.Context, _, oldObj runtime.Object) (runtime.Object, error) {
 		f, ok := oldObj.(*foldersv1.Folder)
@@ -423,11 +430,18 @@ func (s *cascadeDeleteStorage) releaseTerminating(ctx context.Context, name stri
 		setCascadeDeleteFinalizer(f, false)
 		return f, nil
 	})
+	released, _, err := s.Update(ctx, name, objInfo, nil, nil, false, &metav1.UpdateOptions{})
 	// Released by the controller meanwhile counts as released.
-	if _, _, err := s.Update(ctx, name, objInfo, nil, nil, false, &metav1.UpdateOptions{}); err != nil && !apierrors.IsNotFound(err) {
-		return err
+	if apierrors.IsNotFound(err) {
+		return cur, nil
 	}
-	return nil
+	if err != nil {
+		return nil, err
+	}
+	if released == nil {
+		return cur, nil
+	}
+	return released, nil
 }
 
 // deleteDashboardsInFolder deletes every dashboard in folderUID via the dashboard apiserver (so its
