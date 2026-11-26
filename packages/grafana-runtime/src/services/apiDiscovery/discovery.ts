@@ -24,9 +24,10 @@ const ROOT_CACHE_KEY = 'grafana-runtime:api-discovery:root';
 // A DNS subdomain, as Kubernetes requires for group names. The name ends up in a URL path.
 const GROUP_NAME_PATTERN = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$/;
 
-// Groups with a pending or cached group-endpoint answer. Lookups for them skip `/apis`, so a broken root
-// endpoint isn't retried on every call, and invalidation uses them to find their cache entries.
-const groupsFromFallback = new Set<string>();
+// Groups with a pending or cached group-endpoint answer, and the request that answers them. Lookups for
+// them skip `/apis`, so a broken root endpoint isn't retried on every call, and invalidation uses them
+// to find their cache entries.
+const groupsFromFallback = new Map<string, Promise<APIGroupInfo | undefined>>();
 
 /**
  * Rejects the cached request after the failure is logged with its URL and reason. The rejection keeps
@@ -89,7 +90,7 @@ async function findAPIGroup(group: string): Promise<APIGroupInfo | undefined> {
  */
 export function invalidateAPIDiscovery(): void {
   invalidateCachedPromise(ROOT_CACHE_KEY);
-  for (const group of groupsFromFallback) {
+  for (const group of groupsFromFallback.keys()) {
     invalidateCachedPromise(groupCacheKey(group));
   }
   groupsFromFallback.clear();
@@ -115,11 +116,16 @@ function groupCacheKey(group: string): string {
 }
 
 async function getAPIGroupFromFallback(group: string): Promise<APIGroupInfo | undefined> {
-  groupsFromFallback.add(group);
+  const request = getCachedPromise(() => fetchAPIGroup(group), { cacheKey: groupCacheKey(group) });
+  groupsFromFallback.set(group, request);
   try {
-    return await getCachedPromise(() => fetchAPIGroup(group), { cacheKey: groupCacheKey(group) });
+    return await request;
   } catch {
-    groupsFromFallback.delete(group);
+    // A newer request may answer the group by now, after an invalidation. Removing the group would
+    // hide that request's cache entry from the next invalidation.
+    if (groupsFromFallback.get(group) === request) {
+      groupsFromFallback.delete(group);
+    }
     return undefined;
   }
 }

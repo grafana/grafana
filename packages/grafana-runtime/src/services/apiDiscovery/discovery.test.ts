@@ -214,6 +214,32 @@ describe('getAPIGroup', () => {
       ]);
     });
 
+    it('still invalidates a group answer when an older request for it fails afterwards', async () => {
+      let failFirstRequest = (_: unknown) => {};
+      const groupAnswers = [
+        () => new Promise((_, reject) => (failFirstRequest = reject)),
+        () => Promise.resolve(dashboardGroup),
+        () => Promise.reject(fetchError(404)),
+      ];
+      respondTo({
+        '/apis': () => Promise.reject(fetchError(500)),
+        '/apis/dashboard.grafana.app/': () => groupAnswers.shift()!(),
+      });
+
+      const first = getAPIGroup('dashboard.grafana.app');
+      // Lets the first call get past the failed root request and start its group request.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      invalidateAPIDiscovery();
+      await expect(getAPIGroup('dashboard.grafana.app')).resolves.toEqual(dashboardInfo);
+      failFirstRequest(fetchError(500));
+      await first;
+
+      invalidateAPIDiscovery();
+
+      await expect(getAPIGroup('dashboard.grafana.app')).resolves.toBeUndefined();
+      expect(groupAnswers).toHaveLength(0);
+    });
+
     it('retries the root request for a group it has not answered yet', async () => {
       respondTo({ '/apis': () => Promise.reject(fetchError(500)) });
       await getAPIGroup('annotation.grafana.app');
