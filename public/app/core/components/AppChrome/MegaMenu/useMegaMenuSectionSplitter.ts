@@ -1,5 +1,15 @@
 import { css, cx } from '@emotion/css';
-import { type CSSProperties, type MouseEvent, type PointerEvent, useCallback, useRef, useState } from 'react';
+import {
+  type CSSProperties,
+  type KeyboardEvent,
+  type MouseEvent,
+  type PointerEvent,
+  useCallback,
+  useSyncExternalStore,
+  useRef,
+  useState,
+} from 'react';
+import { flushSync } from 'react-dom';
 
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -15,6 +25,15 @@ export const MEGA_MENU_NAV_HEIGHT_STORAGE_KEY = 'grafana.navigation.megaMenuNavH
  * ways, so the limits match and are the same on every screen; the section folds to its heading for less.
  */
 const PANE_MIN_SPACING = 20;
+
+/**
+ * The share of the menu, in percent, that the section opens to at least while the user has not resized the navigation.
+ * A long navigation otherwise takes all but the section's minimum.
+ */
+const SECTION_OPEN_SHARE = 30;
+
+/** The keys the splitter resizes with, in a column. */
+const RESIZE_KEYS = new Set(['ArrowUp', 'ArrowDown']);
 
 /** On the plugin section's region, so the layout can tell whether the section shows anything. */
 const SECTION_ATTRIBUTE = 'data-mega-menu-section';
@@ -73,12 +92,12 @@ export function useMegaMenuSectionCollapsed(): [boolean, (collapsed: boolean) =>
 
 /**
  * Splits the mega menu between its navigation and the plugin section below it, with a resize handle between the two.
- * Until the user drags the handle, the navigation keeps its own height and the section takes the rest; dragging it,
- * or moving it with the arrow keys, sets the navigation's height, remembered across page loads, and a double-click
- * gives the navigation its own height back. The section keeps at least a quarter of the menu, so the navigation can
- * grow past its content to make room for its sections as they expand. Without a section, or while it renders nothing,
- * the navigation takes the whole menu and there is no handle. A collapsed section keeps only its heading, at the
- * bottom of the menu, and the navigation takes the rest; the menu shows a divider in place of the handle.
+ * Until the user drags the handle, the navigation keeps its own height, up to what leaves the section 30% of the menu,
+ * and the section takes the rest; dragging it, or moving it with the arrow keys, sets the navigation's height,
+ * remembered across page loads, and a double-click gives the navigation its own height back. Either pane keeps at
+ * least 160px while dragged. Without a section, or while it renders nothing, the navigation takes the whole menu and
+ * there is no handle. A collapsed section keeps only its heading, at the bottom of the menu, and the navigation takes
+ * the rest; the menu shows a divider in place of the handle.
  */
 export function useMegaMenuSectionSplitter(hasSection: boolean, collapsed: boolean) {
   const theme = useTheme2();
@@ -87,8 +106,15 @@ export function useMegaMenuSectionSplitter(hasSection: boolean, collapsed: boole
   const [navHeight, setNavHeight] = useState(readStoredNavHeight);
   // The splitter also reports a size when the handle is only clicked; only a resize sets one.
   const resized = useRef(false);
+  // While the handle is pressed, so the splitter measures the navigation's whole range rather than its opening limit.
+  const [resizing, setResizing] = useState(false);
 
-  const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
+  const {
+    containerProps,
+    primaryProps,
+    secondaryProps: { ref: sectionRef, ...secondaryProps },
+    splitterProps,
+  } = useSplitter({
     direction: 'column',
     usePixels: true,
     pixelPane: 'primary',
@@ -108,6 +134,23 @@ export function useMegaMenuSectionSplitter(hasSection: boolean, collapsed: boole
     },
   });
 
+  // Whether the section shows anything: a plugin can render nothing, for example for a user who cannot use it.
+  const subscribeToSection = useCallback(
+    (onChange: () => void) => {
+      const section = sectionRef.current;
+      if (!hasSection || !section) {
+        return () => {};
+      }
+      const observer = new MutationObserver(onChange);
+      observer.observe(section, { childList: true });
+      return () => observer.disconnect();
+    },
+    [hasSection, sectionRef]
+  );
+  const sectionFilled = useSyncExternalStore(subscribeToSection, () => sectionRef.current?.firstChild != null);
+
+  const openingLimit = navHeight === undefined && !resizing;
+
   // Longhands throughout, as the style switches between these as the section loads and folds.
   const navStyle: CSSProperties =
     hasSection && !collapsed
@@ -115,8 +158,20 @@ export function useMegaMenuSectionSplitter(hasSection: boolean, collapsed: boole
           ...primaryProps.style,
           flexBasis: navHeight === undefined ? 'auto' : `${navHeight}px`,
           minHeight: theme.spacing(PANE_MIN_SPACING),
+          ...(openingLimit && {
+            maxHeight: `calc(${100 - SECTION_OPEN_SHARE}% - ${splitterProps.style.height})`,
+          }),
         }
       : { ...primaryProps.style, flexGrow: 1, flexShrink: 1, flexBasis: 0, minHeight: 0, maxHeight: 'none' };
+
+  // Lifted before the splitter measures the navigation, which it does as the handle is pressed. Rendered at once, as
+  // the measurement runs in the same event.
+  const liftOpeningLimit = () => {
+    if (openingLimit) {
+      flushSync(() => setResizing(true));
+    }
+  };
+  const endResize = () => setResizing(false);
 
   const resetNavHeight = (event: MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -131,6 +186,7 @@ export function useMegaMenuSectionSplitter(hasSection: boolean, collapsed: boole
   // browser cancel the pointer mid-drag: the splitter never hears the release, and the height is not kept.
   const startResize = (event: PointerEvent<HTMLDivElement>) => {
     event.preventDefault();
+    liftOpeningLimit();
     splitterProps.onPointerDown(event);
   };
 
@@ -140,12 +196,31 @@ export function useMegaMenuSectionSplitter(hasSection: boolean, collapsed: boole
     separatorProps: {
       ...splitterProps,
       onPointerDown: startResize,
+      onPointerUp: (event: PointerEvent<HTMLDivElement>) => {
+        splitterProps.onPointerUp(event);
+        endResize();
+      },
+      onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => {
+        if (RESIZE_KEYS.has(event.key)) {
+          liftOpeningLimit();
+        }
+        splitterProps.onKeyDown(event);
+      },
+      onKeyUp: (event: KeyboardEvent<HTMLDivElement>) => {
+        splitterProps.onKeyUp(event);
+        endResize();
+      },
+      onBlur: () => {
+        splitterProps.onBlur();
+        endResize();
+      },
       onDoubleClick: resetNavHeight,
       'aria-label': t('navigation.megamenu.section-resize', 'Resize navigation'),
       className: cx(dragStyles.dragHandleBaseHorizontal, styles.separator),
     },
     sectionProps: {
       ...secondaryProps,
+      ref: sectionRef,
       className: cx(secondaryProps.className, styles.section),
       // The splitter's minimum is the content's height; the section scrolls its own content instead. It also sets how
       // far the navigation can grow. Collapsed, the section is as tall as its heading.
@@ -154,6 +229,8 @@ export function useMegaMenuSectionSplitter(hasSection: boolean, collapsed: boole
         : { ...secondaryProps.style, minHeight: theme.spacing(PANE_MIN_SPACING) },
       [SECTION_ATTRIBUTE]: '',
     },
+    /** Whether the section is in the menu and shows something. */
+    sectionShown: hasSection && sectionFilled,
   };
 }
 
@@ -184,6 +261,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   section: css({
     flexDirection: 'column',
     overflow: 'hidden',
+    // Room below its last row, so its hover band does not run into the menu's edge.
+    paddingBottom: theme.spacing(1),
     '&:empty': {
       display: 'none',
     },

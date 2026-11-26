@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Menu } from '../Menu/Menu';
+import { Menu, type MenuProps } from '../Menu/Menu';
 import { Portal } from '../Portal/Portal';
 
 export interface ContextMenuProps {
@@ -15,6 +15,8 @@ export interface ContextMenuProps {
   onClose?: () => void;
   /** On menu open focus the first element */
   focusOnOpen?: boolean;
+  /** Controls density for every item in the menu. */
+  size?: MenuProps['size'];
   /** RenderProp function that returns menu items to display */
   renderMenuItems?: () => React.ReactNode;
   /** A function that returns header element */
@@ -27,7 +29,7 @@ export interface ContextMenuProps {
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-contextmenu--docs
  */
 export const ContextMenu = React.memo(
-  ({ x, y, onClose, focusOnOpen = true, renderMenuItems, renderHeader }: ContextMenuProps) => {
+  ({ x, y, onClose, focusOnOpen = true, size, renderMenuItems, renderHeader }: ContextMenuProps) => {
     const menuRef = useRef<HTMLDivElement>(null);
     const [positionStyles, setPositionStyles] = useState({});
 
@@ -79,19 +81,20 @@ export const ContextMenu = React.memo(
       if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
-        onClose?.();
       }
     };
 
     return (
       <Portal>
         <Menu
+          size={size}
           header={header}
           ref={menuRef}
           style={positionStyles}
           ariaLabel={selectors.components.Menu.MenuComponent('Context')}
           onOpen={onOpen}
           onClick={onClose}
+          onClose={onClose}
           onKeyDown={onKeyDown}
         >
           {menuItems}

@@ -1,5 +1,5 @@
 import { HttpResponse } from 'msw';
-import { type JSX } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 import { testWithAppKind } from 'test/helpers/testWithAppKind';
 import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test/test-utils';
@@ -7,7 +7,7 @@ import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test
 import { type NavModelItem, PluginExtensionPoints } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
-import { getAPIGroupHandler, getKindSearchHandler } from '@grafana/test-utils/handlers';
+import { getAppKindHandlers } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   customGetUserPreferencesHandler,
@@ -15,7 +15,7 @@ import {
   getFolderFixtures,
   MOCK_APP_KIND,
   mockUserPreferences,
-  setMockStarredAppKind,
+  setMockStarred,
   setMockStarredDashboards,
   setMockStarredFolders,
   setMockUserPreferences,
@@ -39,6 +39,13 @@ import { HIDDEN_NAV_ITEMS } from './utils';
 // The org switcher fetches user orgs on mount when signed in, which is irrelevant here.
 jest.mock('../OrganizationSwitcher/OrganizationSwitcher', () => ({
   OrganizationSwitcher: () => null,
+}));
+
+// The menu's own action comes from the Cloud setup guide; a stand-in shows where the menu puts it.
+let mockMenuAction = false;
+jest.mock('./MegaMenuExtensionPoint', () => ({
+  MegaMenuExtensionPoint: () =>
+    mockMenuAction ? jest.requireActual('react').createElement('button', { type: 'button' }, 'Pro plan') : null,
 }));
 
 // The searcher resolves starred UIDs to nav rows but has no MSW path, so stub it.
@@ -365,6 +372,76 @@ describe('MegaMenu', () => {
         expect(screen.queryByRole('separator', { name: 'Resize navigation' })).not.toBeInTheDocument();
       });
 
+      describe('with the menu action', () => {
+        const follows = (first: HTMLElement, second: HTMLElement) =>
+          Boolean(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING);
+        const showSection = (component: () => JSX.Element | null) => {
+          const plugged = createComponentWithMeta<Partial<MegaMenuSectionProps> & JSX.IntrinsicAttributes>(
+            { pluginId: 'grafana-assistant-app', title: 'Conversations', component },
+            PluginExtensionPoints.MegaMenuSection
+          );
+          setPluginComponentsHook(({ extensionPointId }) => ({
+            isLoading: false,
+            components: extensionPointId === PluginExtensionPoints.MegaMenuSection ? [plugged] : [],
+          }));
+        };
+
+        beforeEach(() => {
+          mockMenuAction = true;
+        });
+
+        afterEach(() => {
+          mockMenuAction = false;
+        });
+
+        it('puts it below the section, which would otherwise hide the end of the navigation', async () => {
+          renderMegaMenu();
+          const section = await screen.findByTestId('mega-menu-section');
+          await within(section).findByText('Conversations section');
+
+          const [action] = await screen.findAllByRole('button', { name: 'Pro plan' });
+          expect(screen.getAllByRole('button', { name: 'Pro plan' })).toHaveLength(1);
+          expect(follows(section, action)).toBe(true);
+          expect(
+            within(screen.getByRole('list', { name: 'Navigation' }).parentElement!).queryByText('Pro plan')
+          ).toBeNull();
+        });
+
+        it('divides it from the section, which scrolls', async () => {
+          renderMegaMenu();
+          const section = await screen.findByTestId('mega-menu-section');
+          await within(section).findByText('Conversations section');
+          const action = screen.getByRole('button', { name: 'Pro plan' });
+
+          const between = screen
+            .getAllByRole('separator')
+            .filter((separator) => follows(section, separator) && follows(separator, action));
+          expect(between).toHaveLength(1);
+        });
+
+        it('keeps it at the end of the navigation while the section shows nothing', async () => {
+          showSection(() => null);
+          renderMegaMenu();
+
+          const action = await screen.findByRole('button', { name: 'Pro plan' });
+          expect(follows(action, screen.getByTestId('mega-menu-section'))).toBe(true);
+        });
+
+        it('moves it below the section once the section shows something', async () => {
+          // As the Assistant does: nothing until its flags load.
+          showSection(function LateSection() {
+            const [shown, setShown] = useState(false);
+            useEffect(() => setShown(true), []);
+            return shown ? <div>Conversations section</div> : null;
+          });
+          renderMegaMenu();
+          const section = await screen.findByTestId('mega-menu-section');
+          await within(section).findByText('Conversations section');
+
+          await waitFor(() => expect(follows(section, screen.getByRole('button', { name: 'Pro plan' }))).toBe(true));
+        });
+      });
+
       describe('resizing the navigation above it', () => {
         let rectSpy: jest.SpyInstance;
 
@@ -457,6 +534,60 @@ describe('MegaMenu', () => {
 
           expect(navigationPane(handle)).toHaveStyle({ flexBasis: 'auto' });
           expect(storedHeight()).toBeNull();
+        });
+
+        // 30% for the section, less the 32px handle.
+        const openingLimit = { maxHeight: 'calc(70% - 32px)' };
+
+        it('opens the section to at least 30% of the menu until the navigation is resized', async () => {
+          const { user } = renderMegaMenu();
+          const handle = await findHandle();
+          expect(navigationPane(handle)).toHaveStyle(openingLimit);
+
+          await user.pointer([
+            { keys: '[MouseLeft>]', target: handle, coords: { clientX: 0, clientY: 500 } },
+            { target: handle, coords: { clientX: 0, clientY: 600 } },
+            { keys: '[/MouseLeft]', target: handle, coords: { clientX: 0, clientY: 600 } },
+          ]);
+
+          expect(navigationPane(handle)).toHaveStyle({ flexBasis: '500px' });
+          expect(navigationPane(handle)).not.toHaveStyle(openingLimit);
+        });
+
+        it('lifts that limit while the handle is pressed, so a drag can still leave the section 160px', async () => {
+          const { user } = renderMegaMenu();
+          const handle = await findHandle();
+
+          await user.pointer({ keys: '[MouseLeft>]', target: handle, coords: { clientX: 0, clientY: 500 } });
+          expect(navigationPane(handle)).not.toHaveStyle(openingLimit);
+
+          // Only clicked: the navigation keeps its own height, and the limit is back.
+          await user.pointer({ keys: '[/MouseLeft]', target: handle, coords: { clientX: 0, clientY: 500 } });
+          expect(navigationPane(handle)).toHaveStyle(openingLimit);
+        });
+
+        it('lifts it for the arrow keys that move the handle, and for no other key', async () => {
+          const { user } = renderMegaMenu();
+          const handle = await findHandle();
+          handle.focus();
+
+          await user.keyboard('{Home}');
+          expect(navigationPane(handle)).toHaveStyle(openingLimit);
+
+          await user.keyboard('{ArrowDown>}');
+          expect(navigationPane(handle)).not.toHaveStyle(openingLimit);
+          await user.keyboard('{/ArrowDown}');
+        });
+
+        it('gives the limit back when a double-click gives the navigation its own height', async () => {
+          window.localStorage.setItem(MEGA_MENU_NAV_HEIGHT_STORAGE_KEY, '300');
+          const { user } = renderMegaMenu();
+          const handle = await findHandle();
+          expect(navigationPane(handle)).not.toHaveStyle(openingLimit);
+
+          await user.dblClick(handle);
+
+          expect(navigationPane(handle)).toHaveStyle(openingLimit);
         });
 
         it('keeps the navigation and the section at least 160px tall, whichever way the handle is dragged', async () => {
@@ -1029,11 +1160,8 @@ describe('MegaMenu', () => {
 
   it('renders a starred app object with its kind icon titled for screen readers, linking into the plugin', async () => {
     setMockStarredDashboards([]);
-    setMockStarredAppKind(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
-    server.use(
-      getAPIGroupHandler(MOCK_APP_KIND.group, MOCK_APP_KIND.version),
-      getKindSearchHandler(MOCK_APP_KIND, [{ name: 't1', title: 'Capacity review' }])
-    );
+    setMockStarred(MOCK_APP_KIND.group, MOCK_APP_KIND.kind, ['t1']);
+    server.use(...getAppKindHandlers(MOCK_APP_KIND, [{ name: 't1', title: 'Capacity review' }]));
     setupSearcher([]);
 
     const { user } = renderMegaMenu();

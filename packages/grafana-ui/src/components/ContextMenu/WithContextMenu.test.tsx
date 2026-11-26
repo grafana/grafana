@@ -1,6 +1,7 @@
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { Menu } from '../Menu/Menu';
 import { Portal } from '../Portal/Portal';
 
 import { WithContextMenu } from './WithContextMenu';
@@ -39,6 +40,21 @@ describe('WithContextMenu', () => {
 
     await user.click(screen.getByTestId('trigger'));
     expect(screen.getByTestId('menu-item')).toBeInTheDocument();
+  });
+
+  it('applies one density to every menu item', async () => {
+    const user = userEvent.setup();
+    render(
+      <WithContextMenu size="sm" renderMenuItems={() => <Menu.Item label="Compact item" />}>
+        {({ openMenu }) => <button onClick={() => openMenu({ x: 100, y: 200 })}>open compact menu</button>}
+      </WithContextMenu>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'open compact menu' }));
+    expect(screen.getByRole('menuitem', { name: 'Compact item' })).toHaveStyle({
+      padding: '4px 4px',
+      minHeight: '24px',
+    });
   });
 
   it('opens the menu anchored to a DOM element (keyboard activation path)', async () => {

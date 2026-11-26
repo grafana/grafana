@@ -57,6 +57,30 @@ describe('Tooltip', () => {
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
 
+  it('calls the onFocus and onBlur of its child and still shows the tooltip on focus', async () => {
+    const onFocus = jest.fn();
+    const onBlur = jest.fn();
+    render(
+      <>
+        <Tooltip content="Cooltip content">
+          <button onFocus={onFocus} onBlur={onBlur}>
+            Trigger
+          </button>
+        </Tooltip>
+        <button>Next</button>
+      </>
+    );
+
+    await userEvent.tab();
+    expect(onFocus).toHaveBeenCalledTimes(1);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Cooltip content');
+
+    await userEvent.tab();
+    expect(onBlur).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveFocus();
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
   it('forwards the function ref', () => {
     const refFn = jest.fn();
 

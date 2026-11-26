@@ -8,6 +8,8 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana/pkg/apimachinery/internal/managerkinds"
 )
 
 // ManagerProperties is used to identify the manager of the resource.
@@ -74,29 +76,10 @@ const (
 	ManagerKindClassicConvertedPrometheus ManagerKind = "classic-converted-prometheus"
 )
 
-var managerKindRegistry = map[ManagerKind]struct{}{}
-
-// RegisterManagerKind adds a manager kind on top of the built-in ones.
-func RegisterManagerKind(kind ManagerKind) {
-	if kind == ManagerKindUnknown {
-		panic("RegisterManagerKind: the kind is empty")
-	}
-
-	if parseBuiltinManagerKind(string(kind)) != ManagerKindUnknown {
-		panic(fmt.Sprintf("RegisterManagerKind: %q is a built-in kind", kind))
-	}
-
-	if _, ok := managerKindRegistry[kind]; ok {
-		panic(fmt.Sprintf("RegisterManagerKind: %q is already registered", kind))
-	}
-
-	managerKindRegistry[kind] = struct{}{}
-}
-
 // ParseManagerKindString parses a string into a ManagerKind: a built-in kind or one
-// added with RegisterManagerKind. For any other value it returns ManagerKindUnknown.
+// added with identity.RegisterManagerKind. For any other value it returns ManagerKindUnknown.
 func ParseManagerKindString(v string) ManagerKind {
-	if _, ok := managerKindRegistry[ManagerKind(v)]; ok {
+	if managerkinds.Has(v) {
 		return ManagerKind(v)
 	}
 

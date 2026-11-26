@@ -320,4 +320,10 @@ func TestRegisteredManagerKind(t *testing.T) {
 		})
 		require.ErrorIs(t, identity.CheckManagerOnCreate(who.user, repo), identity.ErrResourceIsManagedInRepository)
 	})
+
+	t.Run("an empty kind is refused", func(t *testing.T) {
+		require.Panics(t, func() {
+			identity.RegisterManagerKind(testManagerKind{mayAssign: anyone})
+		})
+	})
 }
