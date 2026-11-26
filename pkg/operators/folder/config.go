@@ -3,23 +3,32 @@ package folder
 import (
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/operators/runner"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
-	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // buildRESTClient builds a client for one API group's server, so folders and dashboards can live on
-// different apiservers.
+// different apiservers. Every client shares the authentication settings [operator] and
+// [grpc_client_authentication], and its token is exchanged for the group's audience.
 //
 // [operator]
 // folders_server_url =
 // dashboards_server_url =
+// tls_insecure =
+// tls_cert_file =
+// tls_key_file =
+// tls_ca_file =
+// [grpc_client_authentication]
+// token =
+// token_exchange_url =
 func buildRESTClient(cfg *setting.Cfg, serverURLKey, group string) (rest.Interface, error) {
 	restConfig, err := runner.RESTConfig(cfg, serverURLKey, group)
 	if err != nil {

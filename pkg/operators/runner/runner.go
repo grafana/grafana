@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/dskit/services"
@@ -85,9 +86,7 @@ func (op Operator) Run(ctx context.Context, deps server.OperatorDependencies) (r
 		Tracer:     deps.Tracer,
 	}
 	if !op.NoNATS {
-		// Operators run against an external NATS, so a nil server yields a
-		// config that dials the configured client URLs.
-		rt.Subscriber = nats.ProvideSubscriber(nats.ProvideNATSConfig(deps.Config, nil), deps.Registerer)
+		rt.Subscriber = NewSubscriber(deps.Config, deps.Registerer)
 	}
 	rt.Logger.Info("starting operator", "operator", op.Name)
 
@@ -147,4 +146,28 @@ func NewLogger(cfg *setting.Cfg, name string) logging.Logger {
 		}
 	}
 	return logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level})).With("logger", name)
+}
+
+// NewSubscriber returns the operator's NATS subscriber. Operators run against an
+// external NATS, so a nil server yields a config that dials the configured
+// client URLs. Create it once per process: it registers metrics on reg.
+func NewSubscriber(cfg *setting.Cfg, reg prometheus.Registerer) *nats.SubscriberService {
+	return nats.ProvideSubscriber(nats.ProvideNATSConfig(cfg, nil), reg)
+}
+
+// AwaitShutdown waits for the operator's goroutines to finish, giving up after
+// timeout so a stuck goroutine cannot block the process from exiting.
+func AwaitShutdown(logger logging.Logger, wg *sync.WaitGroup, timeout time.Duration) {
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		logger.Info("operator shutdown complete")
+	case <-time.After(timeout):
+		logger.Warn("shutdown timeout exceeded, forcing exit", "timeout", timeout)
+	}
 }
