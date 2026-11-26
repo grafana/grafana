@@ -2644,6 +2644,26 @@ func TestCascadeDelete_AlignsFinalizerWithAsyncFlag(t *testing.T) {
 		require.Empty(t, store.finalizersChangedOnUpdate, "the finalizer goes with the delete, not the label update")
 	})
 
+	t.Run("a dry run of a synchronous walk ends with the same delete as a live one", func(t *testing.T) {
+		for name, dryRun := range map[string][]string{"live": nil, "dry run": {metav1.DryRunAll}} {
+			t.Run(name, func(t *testing.T) {
+				setCascadeToggles(t, true, false)
+				root := newFolder("root")
+				root.Finalizers = cascade
+				store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": root}}
+				s, _ := newDashboardCascade(store, &fakeCascadeSearcher{})
+				opts := forceDelete()
+				opts.DryRun = dryRun
+
+				_, _, err := s.Delete(ctxWithNamespace(), "root", nil, opts)
+				require.NoError(t, err)
+				require.Empty(t, store.finalizersAtDelete["root"], "the delete is issued without the finalizer, not as a handoff to the controller")
+				require.Equal(t, dryRun, store.deleteOptions.DryRun)
+				require.Equal(t, dryRun == nil, len(store.deleted) == 1)
+			})
+		}
+	})
+
 	// terminatingChild is a descendant the controller already started deleting, holding a dashboard.
 	terminatingChild := func() (*fakeFolderStorage, *fakeCascadeSearcher) {
 		setCascadeToggles(t, true, false)
