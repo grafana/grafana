@@ -33,6 +33,26 @@ export interface AzureCloudInfo {
   displayName: string;
 }
 
+/**
+ * A kind of object an app plugin declares in its plugin.json, so Grafana can name, draw and link its objects before
+ * the plugin's module loads.
+ */
+export type AppPluginKind = {
+  group: string;
+  kind: string;
+  resource: string;
+  folderScoped: boolean;
+  icon: string;
+  /** Path of the page of one object, in which `{name}` stands for the object's name */
+  route: string;
+  /** English labels, as the name reads inside a sentence */
+  label: string;
+  labelPlural: string;
+  /** Keys of the labels in the plugin's own translations */
+  labelKey?: string;
+  labelPluralKey?: string;
+};
+
 export type AppPluginConfig = {
   id: string;
   path: string;
@@ -45,6 +65,9 @@ export type AppPluginConfig = {
   extensions: PluginExtensions;
   moduleHash?: string;
   buildMode?: string;
+  kinds?: AppPluginKind[];
+  /** Paths of the plugin's translation files, by language */
+  translations?: Record<string, string>;
   // Display and navigation fields, absent from the bootdata-sourced configs and
   // populated only when these come from the plugins.grafana.app metas API
   name?: string;

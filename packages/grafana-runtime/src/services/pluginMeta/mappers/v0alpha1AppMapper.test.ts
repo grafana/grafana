@@ -29,6 +29,47 @@ describe('v0alpha1AppMapper', () => {
     });
   });
 
+  it("keeps the kinds an app declares and the paths of the app's translations", () => {
+    const kind = {
+      group: 'widgets.ext.grafana.app',
+      kind: 'Widget',
+      resource: 'widgets',
+      folderScoped: true,
+      icon: 'cube',
+      route: '/a/myorg-someplugin-app/widgets/{name}',
+      label: 'widget',
+      labelPlural: 'widgets',
+      labelKey: 'kinds.widget',
+    };
+    const meta = {
+      ...myOrgTestAppMeta,
+      spec: {
+        ...myOrgTestAppMeta.spec,
+        pluginJson: { ...myOrgTestAppMeta.spec.pluginJson, kinds: [kind] },
+        translations: { 'pt-BR': 'public/plugins/myorg-someplugin-app/locales/pt-BR/myorg-someplugin-app.json' },
+      },
+    };
+
+    const result = v0alpha1AppMapper({ ...v0alpha1Response, items: [meta] });
+
+    expect(result[meta.spec.pluginJson.id].kinds).toEqual([
+      {
+        group: 'widgets.ext.grafana.app',
+        kind: 'Widget',
+        resource: 'widgets',
+        folderScoped: true,
+        icon: 'cube',
+        route: '/a/myorg-someplugin-app/widgets/{name}',
+        label: 'widget',
+        labelPlural: 'widgets',
+        labelKey: 'kinds.widget',
+      },
+    ]);
+    expect(result[meta.spec.pluginJson.id].translations).toEqual({
+      'pt-BR': 'public/plugins/myorg-someplugin-app/locales/pt-BR/myorg-someplugin-app.json',
+    });
+  });
+
   describe.each(PLUGIN_IDS)('when called for pluginId:$pluginId', ({ pluginId }) => {
     it('should map id property correctly', () => {
       const result = v0alpha1AppMapper(v0alpha1Response);

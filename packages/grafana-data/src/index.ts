@@ -525,6 +525,7 @@ export type {
   CurrentUserDTO,
   AnalyticsSettings,
   AppPluginConfig,
+  AppPluginKind,
   BootData,
   OAuth,
   OAuthSettings,

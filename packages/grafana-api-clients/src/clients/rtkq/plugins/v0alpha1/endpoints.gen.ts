@@ -781,6 +781,21 @@ export type MetaInfo = {
   updated: string;
   version: string;
 };
+export type MetaAppKind = {
+  folderScoped: boolean;
+  group: string;
+  icon: string;
+  kind: string;
+  /** English labels, as the name reads inside a sentence */
+  label: string;
+  /** Keys of the labels in the plugin's own translations */
+  labelKey?: string;
+  labelPlural: string;
+  labelPluralKey?: string;
+  resource: string;
+  /** Path of the page of one object, in which {name} stands for the object's name */
+  route: string;
+};
 export type MetaQueryOptions = {
   cacheTimeout?: boolean;
   maxDataPoints?: boolean;
@@ -868,6 +883,8 @@ export type MetaJsonData = {
   /** +listType=atomic */
   includes?: MetaInclude[];
   info: MetaInfo;
+  /** +listType=atomic */
+  kinds?: MetaAppKind[];
   /** +listType=atomic */
   languages?: string[];
   logs?: boolean;

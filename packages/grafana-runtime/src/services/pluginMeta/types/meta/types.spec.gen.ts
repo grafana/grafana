@@ -49,6 +49,8 @@ export interface JSONData {
 	extensions?: Extensions;
 	// +listType=atomic
 	languages?: string[];
+	// +listType=atomic
+	kinds?: AppKind[];
 }
 
 export const defaultJSONData = (): JSONData => ({
@@ -287,6 +289,36 @@ export interface Extensions {
 }
 
 export const defaultExtensions = (): Extensions => ({
+});
+
+/**
+ * A kind of object the app serves, so Grafana can name, draw and link its objects before the app's module loads
+ */
+export interface AppKind {
+	group: string;
+	kind: string;
+	resource: string;
+	folderScoped: boolean;
+	icon: string;
+	// Path of the page of one object, in which {name} stands for the object's name
+	route: string;
+	// English labels, as the name reads inside a sentence
+	label: string;
+	labelPlural: string;
+	// Keys of the labels in the plugin's own translations
+	labelKey?: string;
+	labelPluralKey?: string;
+}
+
+export const defaultAppKind = (): AppKind => ({
+	group: "",
+	kind: "",
+	resource: "",
+	folderScoped: false,
+	icon: "",
+	route: "",
+	label: "",
+	labelPlural: "",
 });
 
 export interface Spec {
