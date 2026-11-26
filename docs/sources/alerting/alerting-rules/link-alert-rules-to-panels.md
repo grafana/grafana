@@ -54,7 +54,7 @@ To streamline alert creation, you can create an alert rule directly from a panel
 1. Hover over the top-right corner of a panel and click the panel menu icon.
 1. From the dropdown menu, select **More...** > **New alert rule**.
 
-   If the [panel actions popover](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-popover) is enabled, click **More actions** in the popover to open the menu.
+   If the [panel actions tooltip](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-tooltip) is enabled, click **More actions** in the tooltip to open the menu.
 
 1. This opens the **Edit rule** form and pre-fills some values:
    - Sets the annotations to the corresponding dashboard and panel.
@@ -78,7 +78,7 @@ This option is available only in [time series panels](/docs/grafana/<GRAFANA_VER
 1. Hover over the top-right corner of the panel and click the panel menu icon.
 1. Click **Edit**.
 
-   If the [panel actions popover](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-popover) is enabled, click **Edit visualization** in the popover instead.
+   If the [panel actions tooltip](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-tooltip) is enabled, click **Edit visualization** in the tooltip instead.
 
 1. Click the **Alert** tab to view existing alert rules or create a new one.
 

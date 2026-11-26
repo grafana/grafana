@@ -81,13 +81,13 @@ If an option is only available in view mode or edit mode, that's indicated:
 - **Add to notebook**: Add a copy of the panel to a new or existing notebook. This option is only available when notebooks are enabled and you have permission to edit or create notebooks. For more information, refer to [Add a panel from a dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/notebooks/#add-a-panel-from-a-dashboard).
 - **Remove**: Edit mode only. Remove the panel from the dashboard.
 
-If the panel actions popover is enabled, the panel menu is in the popover under **More actions**.
-For more information, refer to [Panel actions popover](#panel-actions-popover).
+If the panel actions tooltip is enabled, the panel menu is in the tooltip under **More actions**.
+For more information, refer to [Panel actions tooltip](#panel-actions-tooltip).
 
-## Panel actions popover
+## Panel actions tooltip
 
 {{< admonition type="caution" >}}
-The panel actions popover is an [experimental feature](https://grafana.com/docs/release-life-cycle/).
+The panel actions tooltip is an [experimental feature](https://grafana.com/docs/release-life-cycle/).
 Engineering and on-call support is not available.
 Documentation is either limited or not provided outside of code comments.
 No SLA is provided.
@@ -95,16 +95,17 @@ No SLA is provided.
 To try it, enable the `grafana.panelActionsPopover` feature toggle in your Grafana configuration file.
 {{< /admonition >}}
 
-The panel actions popover puts the most common panel actions one click away, in both view and edit mode.
-It replaces the panel menu icon in the panel header, the icons that untitled panels display on hover, and the panel actions tooltip in edit mode.
+The panel actions tooltip puts the most common panel actions one click away, in both view and edit mode.
+It replaces the panel menu icon in the panel header and the icons that untitled panels display on hover.
+In edit mode, it also replaces the panel [actions tooltip](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#edit-a-dashboard).
 
-To display the popover, do one of the following:
+To display the tooltip, do one of the following:
 
 - Hover your cursor over any part of a panel.
 - Use the `Tab` key to move keyboard focus into a panel.
-- On a touch device, tap the panel. Tap outside the panel to close the popover.
+- On a touch device, tap the panel. Tap outside the panel to close the tooltip.
 
-The popover is displayed above the top-right corner of the panel.
+The tooltip is displayed above the top-right corner of the panel.
 Hover your cursor over an icon to display its name and keyboard shortcut.
 The available actions depend on the dashboard mode:
 
@@ -118,19 +119,19 @@ The available actions depend on the dashboard mode:
 | **Duplicate** | No | Yes | Adds a copy of the panel next to the original one. |
 | **Remove** | No | Yes | Removes the panel from the dashboard, after you confirm. |
 | **Expand** or **Restore size** | Yes | Yes | Expands the panel to fill the window, or returns an expanded panel to its original size. |
-| **More actions** | Yes | Yes | Opens the [panel menu](#panel-menu), without the actions that the popover already displays. |
+| **More actions** | Yes | Yes | Opens the [panel menu](#panel-menu), without the actions that the tooltip already displays. |
 
 <!-- prettier-ignore-end -->
 
-When the popover is enabled, panels work in the following ways:
+When the tooltip is enabled, panels work in the following ways:
 
-- **Untitled panels**: The popover also displays the panel description, links, and alert state, which untitled panels don't have a header to show. In edit mode, it also displays the drag handle that you use to move the panel.
+- **Untitled panels**: The tooltip also displays the panel description, links, and alert state, which untitled panels don't have a header to show. In edit mode, it also displays the drag handle that you use to move the panel.
 - **Group by**: If the dashboard has a **Filter and Group by** control with grouping enabled, the panel-level **Group by** option is in the **More actions** menu instead of the panel header.
-- **Repeated panels**: **Edit visualization**, **Duplicate**, and **Remove** are disabled. Hover your cursor over them to display a tooltip explaining why. In the **More actions** menu, **Copy** is labeled **Copy repeated panel**, because it copies the original panel with its repeat options.
-- **Multiple selected panels**: In edit mode, when you hover your cursor over one of several selected panels, the popover displays the [bulk actions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#group-and-delete-multiple-panels-with-bulk-actions) instead.
-- **Keyboard navigation**: Press `Escape` to close the popover and return focus to the panel.
+- **Repeated panels**: **Edit visualization**, **Duplicate**, and **Remove** are disabled. Hover your cursor over them to see why. In the **More actions** menu, **Copy** is labeled **Copy repeated panel**, because it copies the original panel with its repeat options.
+- **Multiple selected panels**: In edit mode, when you hover your cursor over one of several selected panels, the tooltip displays the [bulk actions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#group-and-delete-multiple-panels-with-bulk-actions) instead.
+- **Keyboard navigation**: Press `Escape` to close the tooltip and return focus to the panel.
 
-Public dashboards and embedded dashboards don't display the popover.
+Public dashboards and embedded dashboards don't display the tooltip.
 
 ## View mode panel controls
 

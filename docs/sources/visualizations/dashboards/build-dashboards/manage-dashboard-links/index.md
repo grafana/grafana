@@ -175,7 +175,7 @@ Click the icon next to the panel title to see available panel links.
 1. Hover over any part of the panel to which you want to add the link to display the actions menu on the top right corner.
 1. Click the menu and select **Edit**.
 
-   If the [panel actions popover](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-popover) is enabled, click **Edit visualization** in the popover instead.
+   If the [panel actions tooltip](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-tooltip) is enabled, click **Edit visualization** in the tooltip instead.
 
    To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
 
@@ -199,7 +199,7 @@ Click the icon next to the panel title to see available panel links.
 1. Hover over any part of the panel to display the actions menu on the top right corner.
 1. Click the menu and select **Edit**.
 
-   If the [panel actions popover](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-popover) is enabled, click **Edit visualization** in the popover instead.
+   If the [panel actions tooltip](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-tooltip) is enabled, click **Edit visualization** in the tooltip instead.
 
    To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
 
@@ -218,7 +218,7 @@ Click the icon next to the panel title to see available panel links.
 1. Hover over any part of the panel to display the actions menu on the top right corner.
 1. Click the menu and select **Edit**.
 
-   If the [panel actions popover](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-popover) is enabled, click **Edit visualization** in the popover instead.
+   If the [panel actions tooltip](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-tooltip) is enabled, click **Edit visualization** in the tooltip instead.
 
    To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
 

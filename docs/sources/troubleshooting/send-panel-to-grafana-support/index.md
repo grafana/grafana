@@ -27,7 +27,7 @@ The panel that you send includes all query response data and all visualizations 
 
 1. Click the menu and select **More > Get help**.
 
-   If the [panel actions popover](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-popover) is enabled, click **More actions** in the popover to open the menu.
+   If the [panel actions tooltip](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-tooltip) is enabled, click **More actions** in the tooltip to open the menu.
 
    Grafana opens a standalone support dashboard that contains the data you are sending to Grafana Labs Technical Support.
 

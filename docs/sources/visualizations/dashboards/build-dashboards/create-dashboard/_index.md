@@ -306,7 +306,7 @@ No SLA is provided.
 To try it, enable the `grafana.panelQuickEdits` feature toggle in your Grafana configuration file.
 {{< /admonition >}}
 
-Quick edits let you change the panel options that people update most often, such as the unit, legend, or thresholds, directly from the panel actions tooltip.
+Quick edits let you change the panel options that people update most often, such as the unit, legend, or thresholds, directly from the actions tooltip.
 You don't need to open the panel editor or the sidebar.
 
 The following visualizations support quick edits:
@@ -349,7 +349,7 @@ Keep the following quick edits behavior in mind:
 - **Undo and redo**: Changes you make with quick edits are regular dashboard changes, so you can [undo and redo](#undo-and-redo-changes) them.
 - **Unsupported panels**: Repeated panels and library panels don't offer quick edits. Update the original repeated panel instead, or update the library panel in the panel editor.
 
-If the [panel actions popover](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-popover) is also enabled, the **Quick edits** icon is the first action in the popover in edit mode.
+If the [panel actions tooltip](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-tooltip) is also enabled, it replaces the actions tooltip, and in edit mode, the **Quick edits** icon is its first action.
 
 ### Undo and redo changes
 

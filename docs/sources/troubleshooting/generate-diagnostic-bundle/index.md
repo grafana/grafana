@@ -61,7 +61,7 @@ To set a feature toggle in other ways, such as environment variables, refer to t
 
 1. Click the menu and select **More** > **Download diagnostics**.
 
-   If the [panel actions popover](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-popover) is enabled, click **More actions** in the popover to open the menu.
+   If the [panel actions tooltip](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-tooltip) is enabled, click **More actions** in the tooltip to open the menu.
 
    Grafana opens a drawer describing what the bundle contains, including a **May contain sensitive data** warning.
 
