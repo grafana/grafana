@@ -669,7 +669,9 @@ func (s *cascadeDeleteStorage) markTerminating(ctx context.Context, name string,
 		}
 		labels[utils.LabelKeyFolderTerminating] = utils.LabelValueFolderTerminating
 		meta.SetLabels(labels)
-		if f, ok := obj.(*foldersv1.Folder); ok {
+		// A terminating folder keeps its finalizer: the store deletes it as soon as the last one goes,
+		// before its contents are removed.
+		if f, ok := obj.(*foldersv1.Folder); ok && f.DeletionTimestamp == nil {
 			setCascadeDeleteFinalizer(f, false)
 		}
 		return obj, nil

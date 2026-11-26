@@ -453,6 +453,8 @@ type fakeFolderStorage struct {
 	stamped  []string
 	updates  int
 	getErr   map[string]error
+	// deletedOnUpdate lists folders the store deleted because an update emptied a terminating folder's finalizers.
+	deletedOnUpdate []string
 	// finalizersAtDelete records each folder's finalizers when it was deleted.
 	finalizersAtDelete map[string][]string
 	// beforeDelete runs at the start of Delete, to simulate a concurrent change.
@@ -743,6 +745,12 @@ func (f *fakeFolderStorage) Update(ctx context.Context, name string, objInfo res
 	}
 	updated := obj.(*foldersv1.Folder)
 	if isDryRun(options.DryRun) {
+		return updated, false, nil
+	}
+	// Mirror the store, which deletes a terminating folder once an update leaves it no finalizers.
+	if fol.DeletionTimestamp != nil && len(updated.Finalizers) == 0 {
+		delete(f.existing, name)
+		f.deletedOnUpdate = append(f.deletedOnUpdate, name)
 		return updated, false, nil
 	}
 	f.existing[name] = updated
@@ -2604,6 +2612,21 @@ func TestCascadeDelete_AlignsFinalizerWithAsyncFlag(t *testing.T) {
 		for name, finalizers := range store.finalizersAtDelete {
 			require.Empty(t, finalizers, "%s must not be left terminating for the controller", name)
 		}
+	})
+
+	t.Run("a synchronous walk leaves a terminating descendant's finalizer for the store to release", func(t *testing.T) {
+		setCascadeToggles(t, true, false)
+		root, child := newFolder("root"), newFolder("child")
+		root.Finalizers, child.Finalizers = cascade, cascade
+		now := metav1.Now()
+		child.DeletionTimestamp = &now
+		store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": root, "child": child}}
+		searcher := &fakeCascadeSearcher{childrenByParent: map[string][]string{"root": {"child"}}}
+		s, _ := newDashboardCascade(store, searcher)
+		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+		require.NoError(t, err)
+		require.Empty(t, store.deletedOnUpdate, "the descendant is not deleted before its contents are cleaned")
+		require.Equal(t, cascade, store.finalizersAtDelete["child"])
 	})
 
 	t.Run("a forced delete of a finalizer folder is walked synchronously when the flag is off", func(t *testing.T) {
