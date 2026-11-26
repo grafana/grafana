@@ -50,7 +50,7 @@ describe('getTemplateStartFrom', () => {
     jest.mocked(loadLibraryDashboard).mockResolvedValue(template);
   });
 
-  it('gives the template page’s dashboard as a v2 spec, rows kept, with the page’s attribution', async () => {
+  it('gives the template page’s dashboard as a v2 spec, rows kept, with the page’s attribution and URL', async () => {
     const startFrom = await getTemplateStartFrom(templateUrl);
 
     expect(loadLibraryDashboard).toHaveBeenCalledWith(new URLSearchParams(templateUrl.split('?')[1]));
@@ -66,6 +66,7 @@ describe('getTemplateStartFrom', () => {
       creationOrigin: 'dashboard_library_template_dashboard',
       assistantSource: 'assistant_button',
     });
+    expect(startFrom?.fallbackUrl).toBe(templateUrl);
   });
 
   it('gives nothing for a template on an older schema, which only its page migrates', async () => {
@@ -84,7 +85,7 @@ describe('getTemplateStartFrom', () => {
     const startFrom = await getTemplateStartFrom('/dashboard/template?dashboardTemplateUid=tpl-1');
 
     expect(loadTemplate).toHaveBeenCalledWith('tpl-1');
-    expect(startFrom).toEqual({ spec, query: {} });
+    expect(startFrom).toEqual({ spec, query: {}, fallbackUrl: '/dashboard/template?dashboardTemplateUid=tpl-1' });
     expect(CustomDashboardTemplateInteractions.loaded).toHaveBeenCalledWith({ templateUid: 'tpl-1', mode: 'use' });
     expect(loadLibraryDashboard).not.toHaveBeenCalled();
   });

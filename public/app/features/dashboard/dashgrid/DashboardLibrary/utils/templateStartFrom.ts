@@ -13,10 +13,10 @@ const ATTRIBUTION_PARAMS = ['sourceEntryPoint', 'libraryItemId', 'creationOrigin
 /**
  * What the Assistant can start a conversation from instead of the template page at `templateUrl`: the
  * dashboard that page opens, as a v2 spec, and the attribution its URL carries. The Assistant keeps the
- * dashboard as the conversation's draft and opens the draft, so the template page never shows. Undefined
- * where it can't (no dashboards as artifacts, or an Assistant that predates it), when the template doesn't
- * load, and for a template on an older schema, which only the template page migrates: open the template
- * page then.
+ * dashboard as the conversation's draft and opens the draft, so the template page never shows, or opens
+ * the template page itself when it can't keep the draft. Undefined where it can't start from it (no
+ * dashboards as artifacts, or an Assistant that predates it), when the template doesn't load, and for a
+ * template on an older schema, which only the template page migrates: open the template page then.
  */
 export async function getTemplateStartFrom(templateUrl: string): Promise<StartFromDashboard | undefined> {
   if (!isPendingChangesEnabled() || !isStartFromAvailable()) {
@@ -35,7 +35,7 @@ export async function getTemplateStartFrom(templateUrl: string): Promise<StartFr
         query[key] = value;
       }
     }
-    return { spec, query };
+    return { spec, query, fallbackUrl: templateUrl };
   } catch (error) {
     console.warn('Could not load the template for the Assistant to start from:', error);
     return undefined;
