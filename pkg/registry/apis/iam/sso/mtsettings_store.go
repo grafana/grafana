@@ -96,7 +96,7 @@ func (s *MTSettingsStore) get(ctx context.Context, name string) (*iamv0.SSOSetti
 	}
 	rows, err := s.reader.List(ctx, sectionSelector(name))
 	if err != nil {
-		return nil, apierrors.NewInternalError(err)
+		return nil, backendError(ctx, err)
 	}
 	if len(rows) == 0 {
 		return nil, resource.NewNotFound(name)
@@ -140,7 +140,7 @@ func (s *MTSettingsStore) Create(ctx context.Context, obj runtime.Object, create
 	desired = s.withProviderDefaults(ssoSetting.Name, desired)
 	for key, val := range desired {
 		if err := s.writer.Upsert(ctx, &settingsvc.Setting{Section: section, Key: key, Value: valueToString(val)}); err != nil {
-			return nil, apierrors.NewInternalError(err)
+			return nil, backendError(ctx, err)
 		}
 	}
 
@@ -160,7 +160,7 @@ func (s *MTSettingsStore) List(ctx context.Context, _ *internalversion.ListOptio
 
 	rows, err := s.reader.List(ctx, ssoSectionsSelector())
 	if err != nil {
-		return nil, apierrors.NewInternalError(err)
+		return nil, backendError(ctx, err)
 	}
 
 	byProvider := make(map[string][]*settingsvc.Setting)
@@ -262,12 +262,12 @@ func (s *MTSettingsStore) Update(ctx context.Context, name string, objInfo rest.
 	// its replacement is durable.
 	for key, val := range desired {
 		if err := s.writer.Upsert(ctx, &settingsvc.Setting{Section: section, Key: key, Value: valueToString(val)}); err != nil {
-			return nil, false, apierrors.NewInternalError(err)
+			return nil, false, backendError(ctx, err)
 		}
 	}
 
 	if _, err := pruneStaleRows(ctx, s.reader, s.writer, name, desired); err != nil {
-		return nil, false, apierrors.NewInternalError(err)
+		return nil, false, backendError(ctx, err)
 	}
 
 	updated, err := s.Get(ctx, name, &metav1.GetOptions{})
@@ -292,7 +292,7 @@ func (s *MTSettingsStore) Delete(ctx context.Context, name string, deleteValidat
 	}
 
 	if _, err := pruneStaleRows(ctx, s.reader, s.writer, name, nil); err != nil {
-		return nil, false, apierrors.NewInternalError(err)
+		return nil, false, backendError(ctx, err)
 	}
 	// NOTE: returns the pre-delete object. Removing the us override leaves any
 	// defaults/hgapi rows, so the provider does not truly vanish; the accurate

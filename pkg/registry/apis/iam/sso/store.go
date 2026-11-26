@@ -81,7 +81,7 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 
 	settings, err := s.service.List(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list sso settings: %w", err)
+		return nil, backendError(ctx, err)
 	}
 
 	list := &iamv0.SSOSettingList{}
@@ -104,7 +104,7 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 		if errors.Is(err, ssosettings.ErrNotFound) {
 			return nil, resource.NewNotFound(name)
 		}
-		return nil, err
+		return nil, backendError(ctx, err)
 	}
 
 	object := mapToObject(ns.Value, setting)
@@ -132,7 +132,7 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 		}
 	}
 	if err := s.service.Upsert(ctx, mapToModel(setting), ident); err != nil {
-		return nil, err
+		return nil, backendError(ctx, err)
 	}
 	// Return the input as written so the dual-writer forwards the raw secret to
 	// MT-Settings; the store decorator redacts the response.
@@ -176,7 +176,7 @@ func (s *LegacyStore) Update(
 	}
 
 	if err := s.service.Upsert(ctx, mapToModel(setting), ident); err != nil {
-		return old, created, err
+		return old, created, backendError(ctx, err)
 	}
 
 	updated, err := s.Get(ctx, name, nil)
@@ -219,7 +219,7 @@ func (s *LegacyStore) Delete(
 	}
 
 	if err := s.service.Delete(ctx, name); err != nil {
-		return old, false, err
+		return old, false, backendError(ctx, err)
 	}
 
 	// If settings for a provider is deleted from db they will fallback to settings from config file, env or arguments.
