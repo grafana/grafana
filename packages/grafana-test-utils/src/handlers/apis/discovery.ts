@@ -41,7 +41,7 @@ export function getAPIDiscoveryHandlers(served: Readonly<Record<string, readonly
 
     http.get('/apis/:group/', ({ params }) => {
       const group = String(params.group);
-      const versions = served[group];
+      const versions = Object.hasOwn(served, group) ? served[group] : undefined;
       if (!versions) {
         return HttpResponse.json(getErrorResponse(`the server could not find the requested resource`, 404), {
           status: 404,

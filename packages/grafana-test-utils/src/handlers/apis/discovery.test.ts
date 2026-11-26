@@ -66,6 +66,12 @@ describe('API discovery handlers', () => {
     expect(response?.status).toBe(404);
   });
 
+  it.each(['constructor', '__proto__', 'toString'])('answer 404 for the object prototype key %s', async (key) => {
+    const response = await request(`/apis/${key}/`);
+
+    expect(response?.status).toBe(404);
+  });
+
   it('leave aggregated discovery requests to other handlers', async () => {
     await expect(request('/apis', { headers: { Accept: AGGREGATED_ACCEPT } })).resolves.toBeUndefined();
   });
