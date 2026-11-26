@@ -195,14 +195,15 @@ func (e *strippedError) Error() string { return e.msg }
 func (e *strippedError) Unwrap() error { return e.err }
 
 // dependencyCause replaces the cancellation Run reports when a supervised
-// service failed with that failure. The module server ignores
-// context.Canceled, so returning it as is would hide the failure.
+// service failed with that failure, keeping any other errors Run returned.
+// The module server ignores context.Canceled, so returning it as is would
+// hide the failure.
 func dependencyCause(ctx context.Context, err error) error {
 	if !errors.Is(err, context.Canceled) {
 		return err
 	}
 	if cause := context.Cause(ctx); cause != nil && !errors.Is(cause, context.Canceled) {
-		return cause
+		return joinStopError(err, cause)
 	}
 	return err
 }
