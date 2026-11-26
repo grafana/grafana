@@ -20,17 +20,16 @@ export function compareAPIVersions(a: string, b: string): number {
   const parsedA = parseVersion(a);
   const parsedB = parseVersion(b);
 
-  if (!parsedA || !parsedB) {
-    if (parsedA) {
-      return -1;
-    }
-    if (parsedB) {
-      return 1;
-    }
-    return a < b ? -1 : a > b ? 1 : 0;
+  if (parsedA && parsedB) {
+    return parsedB.stability - parsedA.stability || parsedB.major - parsedA.major || parsedB.minor - parsedA.minor;
   }
-
-  return parsedB.stability - parsedA.stability || parsedB.major - parsedA.major || parsedB.minor - parsedA.minor;
+  if (parsedA) {
+    return -1;
+  }
+  if (parsedB) {
+    return 1;
+  }
+  return a < b ? -1 : a > b ? 1 : 0;
 }
 
 /**
