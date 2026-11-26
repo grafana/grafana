@@ -1,10 +1,11 @@
 import { cx } from '@emotion/css';
 import { FloatingFocusManager, useDismiss, useFloating, useInteractions, useRole } from '@floating-ui/react';
-import { OverlayContainer } from '@react-aria/overlays';
+import { OverlayContainer, usePreventScroll } from '@react-aria/overlays';
 import { type ComponentProps, type PropsWithChildren, useRef, useState } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { pickDataAttributes } from '../../utils/dataAttributes';
 import { getPortalContainer, ParentPortalProvider, useParentPortal } from '../Portal/Portal';
 
 import { getModalStyles } from './getModalStyles';
@@ -27,6 +28,8 @@ export interface ModalBaseProps {
   onClickBackdrop?: () => void;
   'aria-label'?: string;
   'aria-labelledby'?: string;
+  /** Custom data attributes (for example `data-analytics-id`), rendered on the dialog element */
+  [key: `data-${string}`]: string | undefined;
 }
 
 export function ModalBase({
@@ -41,7 +44,9 @@ export function ModalBase({
   onClickBackdrop,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
+  ...restProps
 }: PropsWithChildren<ModalBaseProps>) {
+  const dataAttributes = pickDataAttributes(restProps);
   const styles = useStyles2(getModalStyles);
   const theme = useTheme2();
   const backdropRef = useRef<HTMLDivElement>(null);
@@ -55,6 +60,8 @@ export function ModalBase({
   // The modal treats that container as inside while it hides the rest of the Portal, the app's own content, from
   // assistive tech. The dialog waits for the container, so those portals mount there once.
   const [nestedPortals, setNestedPortals] = useState<HTMLDivElement | null>(null);
+
+  usePreventScroll({ isDisabled: !isOpen });
 
   const { context, refs } = useFloating({
     open: isOpen,
@@ -128,6 +135,7 @@ export function ModalBase({
               classNames={{ appear: styles.modalAppear, appearActive: styles.modalAppearActive }}
             >
               <div
+                {...dataAttributes}
                 className={cx(styles.modal, className)}
                 ref={refs.setFloating}
                 aria-label={ariaLabel}

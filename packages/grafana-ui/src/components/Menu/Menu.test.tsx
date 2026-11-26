@@ -1,5 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
+import { createTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { Menu } from './Menu';
@@ -43,4 +45,146 @@ describe('Menu', () => {
     expect(screen.getByLabelText(selectors.components.Menu.MenuGroup('Test'))).toBeInTheDocument();
     expect(screen.getAllByLabelText(selectors.components.Menu.MenuItem('Test'))).toHaveLength(2);
   });
+});
+
+it.each([
+  {
+    name: 'compact',
+    size: 'sm' as const,
+    fontSize: createTheme().typography.bodySmall.fontSize,
+    padding: '4px 4px',
+    minHeight: '24px',
+  },
+  {
+    name: 'regular',
+    size: 'md' as const,
+    fontSize: createTheme().typography.body.fontSize,
+    padding: '4px 12px',
+    minHeight: '32px',
+  },
+])('applies $name density to every grouped menu item', ({ size, fontSize, padding, minHeight }) => {
+  render(
+    <Menu size={size}>
+      <MenuGroup label="Actions">
+        <MenuItem label="First" />
+        <MenuItem label="Second" />
+      </MenuGroup>
+    </Menu>
+  );
+
+  for (const item of screen.getAllByRole('menuitem')) {
+    expect(item).toHaveStyle({ fontSize, padding, minHeight });
+  }
+});
+
+it('keeps replacement items reachable by Tab without stealing focus', async () => {
+  const user = userEvent.setup();
+  const renderMenu = (key: string) => (
+    <>
+      <button>Before menu</button>
+      <Menu autoFocus={false}>
+        <MenuItem key={key} label="Open dashboard" url="#dashboard" onClick={() => {}} />
+      </Menu>
+    </>
+  );
+  const { rerender } = render(renderMenu('initial'));
+  await user.tab();
+  expect(screen.getByRole('button', { name: 'Before menu' })).toHaveFocus();
+
+  rerender(renderMenu('replacement'));
+  expect(screen.getByRole('button', { name: 'Before menu' })).toHaveFocus();
+  await user.tab();
+  expect(screen.getByRole('menuitem', { name: 'Open dashboard' })).toHaveFocus();
+});
+
+it('allows Tab to leave a non-autofocus menu without an onClose handler', async () => {
+  const user = userEvent.setup();
+  render(
+    <>
+      <Menu autoFocus={false}>
+        <MenuItem label="Open dashboard" />
+      </Menu>
+      <button>After menu</button>
+    </>
+  );
+
+  await user.tab();
+  expect(screen.getByRole('menuitem', { name: 'Open dashboard' })).toHaveFocus();
+  await user.tab();
+  expect(screen.getByRole('button', { name: 'After menu' })).toHaveFocus();
+});
+
+it('keeps a tab stop when the focused item is removed', async () => {
+  const user = userEvent.setup();
+  const renderMenu = (labels: string[]) => (
+    <Menu autoFocus={false}>
+      {labels.map((label) => (
+        <MenuItem key={label} label={label} />
+      ))}
+    </Menu>
+  );
+  const { rerender } = render(renderMenu(['First', 'Second', 'Third']));
+
+  await user.tab();
+  await user.keyboard('{End}');
+  expect(screen.getByRole('menuitem', { name: 'Third' })).toHaveFocus();
+
+  rerender(renderMenu(['First']));
+
+  expect(screen.getByRole('menuitem', { name: 'First' })).toHaveAttribute('tabindex', '0');
+});
+
+it('keeps the current item tabbable when ArrowLeft has no submenu to close', async () => {
+  const user = userEvent.setup();
+  render(
+    <Menu autoFocus={false}>
+      <MenuItem label="First" />
+    </Menu>
+  );
+
+  await user.tab();
+  const item = screen.getByRole('menuitem', { name: 'First' });
+  expect(item).toHaveFocus();
+
+  await user.keyboard('{ArrowLeft}');
+
+  expect(item).toHaveAttribute('tabindex', '0');
+});
+
+it('does not overwrite submenu tab stops when the parent menu rerenders', async () => {
+  const user = userEvent.setup();
+  const renderMenu = (siblingLabel: string) => (
+    <Menu>
+      <MenuItem label="Parent" childItems={[<MenuItem key="nested" label="Nested" />]} />
+      <MenuItem label={siblingLabel} />
+    </Menu>
+  );
+  const { rerender } = render(renderMenu('Sibling'));
+
+  await waitFor(() => expect(screen.getByRole('menuitem', { name: 'Parent' })).toHaveFocus());
+  await user.keyboard('{ArrowRight}');
+  await waitFor(() => expect(screen.getByRole('menuitem', { name: 'Nested' })).toHaveFocus());
+
+  rerender(renderMenu('Updated sibling'));
+
+  expect(screen.getByRole('menuitem', { name: 'Nested' })).toHaveAttribute('tabindex', '0');
+});
+
+it.each([true, false])('restores access after an empty menu gains items (autoFocus=%s)', async (autoFocus) => {
+  const user = userEvent.setup();
+  const view = (populated: boolean) => (
+    <Menu autoFocus={autoFocus}>{populated && <MenuItem label="Loaded item" />}</Menu>
+  );
+  const { rerender } = render(view(false));
+  rerender(view(true));
+  const item = screen.getByRole('menuitem', { name: 'Loaded item' });
+  expect(item).toHaveAttribute('tabindex', '0');
+  if (!autoFocus) {
+    expect(item).not.toHaveFocus();
+    await user.tab();
+  }
+  expect(item).toHaveFocus();
+  rerender(view(false));
+  rerender(view(true));
+  expect(screen.getByRole('menuitem', { name: 'Loaded item' })).toHaveAttribute('tabindex', '0');
 });

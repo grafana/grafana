@@ -1,4 +1,4 @@
-import { UNSAFE_PortalProvider } from '@react-aria/overlays';
+import { UNSAFE_PortalProvider, usePreventScroll } from '@react-aria/overlays';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode, useEffect, useState } from 'react';
@@ -7,11 +7,30 @@ import { getPortalContainer, Portal, PortalContainer } from '../Portal/Portal';
 
 import { Modal } from './Modal';
 
+jest.mock('@react-aria/overlays', () => {
+  const actual = jest.requireActual('@react-aria/overlays');
+  return {
+    ...actual,
+    usePreventScroll: jest.fn(),
+  };
+});
+
 describe('Modal', () => {
   it('renders nothing by default or when isOpen is false', () => {
     render(<Modal title="Some Title" />);
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('locks background scrolling when open and unlocks when closed', () => {
+    const { rerender } = render(<Modal title="Some Title" isOpen={false} />);
+    expect(usePreventScroll).toHaveBeenLastCalledWith({ isDisabled: true });
+
+    rerender(<Modal title="Some Title" isOpen={true} />);
+    expect(usePreventScroll).toHaveBeenLastCalledWith({ isDisabled: false });
+
+    rerender(<Modal title="Some Title" isOpen={false} />);
+    expect(usePreventScroll).toHaveBeenLastCalledWith({ isDisabled: true });
   });
 
   it('renders correct contents', () => {
@@ -25,6 +44,21 @@ describe('Modal', () => {
     expect(screen.getByLabelText('Some Title')).toBeInTheDocument();
 
     expect(screen.getByTestId('modal-content')).toBeInTheDocument();
+  });
+
+  it('forwards data attributes to the dialog element', () => {
+    render(<Modal title="Some Title" isOpen data-analytics-id="settings_modal" />);
+
+    expect(screen.getByRole('dialog', { name: 'Some Title' })).toHaveAttribute('data-analytics-id', 'settings_modal');
+  });
+
+  it('does not forward props that are not data attributes to the dialog element', () => {
+    const spreadProps = { title: 'Some Title', id: 'spread-id', 'data-analytics-id': 'settings_modal' };
+    render(<Modal isOpen {...spreadProps} />);
+
+    const dialog = screen.getByRole('dialog', { name: 'Some Title' });
+    expect(dialog).toHaveAttribute('data-analytics-id', 'settings_modal');
+    expect(dialog).not.toHaveAttribute('id', 'spread-id');
   });
 
   it('pressing escape calls onDismiss correctly', async () => {
