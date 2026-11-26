@@ -77,6 +77,10 @@ export const OutsideRangePlugin = memo(({ config, onChangeTimeRange, holdLastVal
     return null;
   }
 
+  if (Number.isFinite(end)) {
+    last = end;
+  }
+
   // if only one point is outside the range, we will use a timerange which
   // is of the same width as the current timerange around the point.
   if (first === last) {
