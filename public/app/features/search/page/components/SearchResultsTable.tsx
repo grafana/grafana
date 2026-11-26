@@ -12,7 +12,7 @@ import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
 import { TableCellHeight } from '@grafana/schema';
-import { useStyles2, useTheme2 } from '@grafana/ui';
+import { useForceUpdate, useStyles2, useTheme2 } from '@grafana/ui';
 import { useTableStyles, TableCell } from '@grafana/ui/internal';
 import { useCustomFlexLayout } from 'app/features/browse-dashboards/components/customFlexTableLayout';
 
@@ -64,6 +64,8 @@ export const SearchResultsTable = React.memo(
     const [listEl, setListEl] = useState<FixedSizeList | null>(null);
     const highlightIndex = useSearchKeyboardNavigation(keyboardEvents, 0, response);
     const { value: panelPluginMetas = EMPTY_PANEL_PLUGIN_METAS } = usePanelPluginMetasMap();
+    const refreshTable = useForceUpdate();
+    const totalRows = response.totalRows;
 
     const memoizedData = useMemo(() => {
       if (!response?.view?.dataFrame.fields.length) {
@@ -73,8 +75,8 @@ export const SearchResultsTable = React.memo(
       // as we only use this to fake the length of our data set for react-table we need to make sure we always return an array
       // filled with values at each index otherwise we'll end up trying to call accessRow for null|undefined value in
       // https://github.com/tannerlinsley/react-table/blob/7be2fc9d8b5e223fc998af88865ae86a88792fdb/src/hooks/useTable.js#L585
-      return Array(response.totalRows).fill(0);
-    }, [response]);
+      return Array(totalRows).fill(0);
+    }, [response, totalRows]);
 
     // Scroll to the top and clear loader cache when the query results change
     useEffect(() => {
@@ -84,7 +86,7 @@ export const SearchResultsTable = React.memo(
       if (listEl) {
         listEl.scrollTo(0);
       }
-    }, [memoizedData, listEl]);
+    }, [response, listEl]);
 
     // React-table column definitions
     const memoizedColumns = useMemo(() => {
@@ -97,7 +99,7 @@ export const SearchResultsTable = React.memo(
         columnStyles,
         onTagSelected,
         onDatasourceChange,
-        response.view?.length >= response.totalRows,
+        response.view?.length >= totalRows,
         panelPluginMetas
       );
     }, [
@@ -110,6 +112,7 @@ export const SearchResultsTable = React.memo(
       onTagSelected,
       onDatasourceChange,
       panelPluginMetas,
+      totalRows,
     ]);
 
     const options: TableOptions<{}> = useMemo(
@@ -125,6 +128,9 @@ export const SearchResultsTable = React.memo(
     const handleLoadMore = useCallback(
       async (startIndex: number, endIndex: number) => {
         await response.loadMoreItems(endIndex);
+        if (response.totalRows !== totalRows) {
+          refreshTable();
+        }
 
         // After we load more items, select them if the "select all" checkbox
         // is selected
@@ -141,7 +147,7 @@ export const SearchResultsTable = React.memo(
           }
         }
       },
-      [response, selection, selectionToggle]
+      [response, totalRows, refreshTable, selection, selectionToggle]
     );
 
     const RenderRow = useCallback(
