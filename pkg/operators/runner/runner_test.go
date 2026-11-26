@@ -195,6 +195,8 @@ func TestJoinStopError(t *testing.T) {
 		{name: "stop failure hidden by Run cancellation", run: context.Canceled, stop: stopErr, want: []error{stopErr}},
 		{name: "Run failure hidden by stop cancellation", run: runErr, stop: wrappedCancel, want: []error{runErr}},
 		{name: "Run failure joined with cancellation", run: errors.Join(runErr, context.Canceled), want: []error{runErr}},
+		{name: "Run failure inside a wrapped join", run: fmt.Errorf("controller: %w", errors.Join(context.Canceled, runErr)), want: []error{runErr}},
+		{name: "stop failure inside a wrapped join", run: context.Canceled, stop: fmt.Errorf("watch: %w", errors.Join(stopErr, context.Canceled)), want: []error{stopErr}},
 		{name: "both failures kept", run: errors.Join(context.Canceled, runErr), stop: stopErr, want: []error{runErr, stopErr}},
 	}
 	for _, tt := range tests {

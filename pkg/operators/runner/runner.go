@@ -162,21 +162,38 @@ func joinStopError(runErr, stopErr error) error {
 // withoutCancellation returns err without its context.Canceled branches, or
 // nil if nothing else is left.
 func withoutCancellation(err error) error {
-	joined, ok := err.(interface{ Unwrap() []error })
-	if !ok {
-		if errors.Is(err, context.Canceled) {
-			return nil
+	switch e := err.(type) {
+	case interface{ Unwrap() []error }:
+		var kept []error
+		for _, child := range e.Unwrap() {
+			if child = withoutCancellation(child); child != nil {
+				kept = append(kept, child)
+			}
 		}
-		return err
-	}
-	var kept []error
-	for _, e := range joined.Unwrap() {
-		if e = withoutCancellation(e); e != nil {
-			kept = append(kept, e)
+		return errors.Join(kept...)
+	case interface{ Unwrap() error }:
+		inner := e.Unwrap()
+		stripped := withoutCancellation(inner)
+		if stripped == nil || stripped == inner {
+			return stripped
 		}
+		return &strippedError{msg: err.Error(), err: stripped}
 	}
-	return errors.Join(kept...)
+	if errors.Is(err, context.Canceled) {
+		return nil
+	}
+	return err
 }
+
+// strippedError keeps a wrapper's message while unwrapping only to the causes
+// left after dropping cancellation.
+type strippedError struct {
+	msg string
+	err error
+}
+
+func (e *strippedError) Error() string { return e.msg }
+func (e *strippedError) Unwrap() error { return e.err }
 
 // dependencyCause replaces the cancellation Run reports when a supervised
 // service failed with that failure. The module server ignores
