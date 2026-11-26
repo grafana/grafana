@@ -37,9 +37,14 @@ var RepoOperator = runner.Operator{
 }
 
 func runRepoController(ctx context.Context, r *ProvisioningRunner, ready func()) error {
-	provisioningClient, err := r.ProvisioningClient()
+	common, err := r.ControllerCommon()
 	if err != nil {
-		return fmt.Errorf("failed to create provisioning client: %w", err)
+		return err
+	}
+
+	repoInformer, err := r.ControllerInformer(apisprovisioning.RepositoryResourceInfo.GroupVersionResource())
+	if err != nil {
+		return err
 	}
 
 	clients, err := r.ResourceClients()
@@ -69,40 +74,26 @@ func runRepoController(ctx context.Context, r *ProvisioningRunner, ready func())
 		return fmt.Errorf("failed to get connection factory: %w", err)
 	}
 
-	tracer := r.Tracer
-
 	quotaGetter, err := r.QuotaGetter()
 	if err != nil {
 		return fmt.Errorf("failed to get quota getter: %w", err)
 	}
 
-	repoKeys, err := r.ProvisioningKeysLister(apisprovisioning.RepositoryResourceInfo.GroupVersionResource())
-	if err != nil {
-		return err
-	}
-
 	repoController, err := controller.ProvideRepositoryController(controller.RepositoryControllerDeps{
-		ProvisioningClient:      provisioningClient,
-		NATSSubscriber:          r.Subscriber,
-		KeysLister:              repoKeys,
-		RelistProjectionMetrics: r.RelistProjectionMetrics(),
-		FreshnessMetrics:        r.FreshnessMetrics(),
-		HealthMetrics:           healthMetricsRecorder,
-		RepoFactory:             repoFactory,
-		ConnectionFactory:       connectionFactory,
-		ResourceLister:          resourceLister,
-		Clients:                 clients,
+		Common:            common,
+		Informer:          repoInformer,
+		HealthMetrics:     healthMetricsRecorder,
+		RepoFactory:       repoFactory,
+		ConnectionFactory: connectionFactory,
+		ResourceLister:    resourceLister,
+		Clients:           clients,
 		// TODO: Consider adding ExistingRepositoriesValidator for reconciliation to detect conflicts
 		// that may arise from manual edits or migrations (e.g., duplicate paths, instance sync conflicts).
 		Validator:                     repository.NewValidator(allowImageRendering, repoFactory),
 		QuotaGetter:                   quotaGetter,
 		IncrementalPolicy:             repository.NewIncrementalSyncPolicy(provisioningSec.Key("max_incremental_changes").MustInt(100)),
-		Registry:                      r.Registerer,
-		Tracer:                        tracer,
 		ParallelOperations:            r.Cfg.SectionWithEnvOverrides("operator").Key("parallel_operations").MustInt(10),
-		ResyncInterval:                r.Options.Resync,
 		MinSyncInterval:               provisioningSec.Key("min_sync_interval").MustDuration(1 * time.Minute),
-		DrainTimeout:                  r.Options.DrainTimeout,
 		WebhookSecretRotationInterval: provisioningSec.Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour),
 	})
 	if err != nil {

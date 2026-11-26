@@ -104,9 +104,9 @@ func TestConnectionControllerService_Run(t *testing.T) {
 func TestProvideConnectionControllerService_ResyncInterval(t *testing.T) {
 	cfg := setting.NewCfg()
 	svc := ProvideConnectionControllerService(cfg, &APIBuilder{}, nil, prometheus.NewRegistry(), tracing.NewNoopTracerService(), nil, ProvideInformerMetrics(prometheus.NewRegistry()))
-	require.Equal(t, setting.ProvisioningControllerResyncIntervalDefault, svc.resyncInterval)
+	require.Equal(t, setting.ProvisioningControllerResyncIntervalDefault, svc.informer.resync)
 
 	cfg.ProvisioningControllerResyncInterval = 5 * time.Minute
 	svc = ProvideConnectionControllerService(cfg, &APIBuilder{}, nil, prometheus.NewRegistry(), tracing.NewNoopTracerService(), nil, ProvideInformerMetrics(prometheus.NewRegistry()))
-	require.Equal(t, 5*time.Minute, svc.resyncInterval)
+	require.Equal(t, 5*time.Minute, svc.informer.resync)
 }

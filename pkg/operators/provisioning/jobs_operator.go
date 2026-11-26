@@ -2,14 +2,12 @@ package provisioning
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
 var JobsOperator = runner.Operator{
@@ -33,9 +31,9 @@ var JobsOperator = runner.Operator{
 }
 
 func runJobController(ctx context.Context, logger logging.Logger, r *jobsRunner, ready func()) error {
-	provisioningClient, err := r.ProvisioningClient()
+	common, err := r.ControllerCommon()
 	if err != nil {
-		return fmt.Errorf("failed to create provisioning client: %w", err)
+		return err
 	}
 
 	// Historic-job cleanup is age-based and needs no live events: when NATS is off
@@ -47,7 +45,7 @@ func runJobController(ctx context.Context, logger logging.Logger, r *jobsRunner,
 	// subscriber: this operator has no NATS consumer role and holds no subscriber.
 	var historySource informer.DeltaSource
 	if r.historyExpiration > 0 {
-		historySource, err = controller.ProvideHistoryJobCleanup(ctx, r.Cfg.NATS.Enabled, provisioningClient, r.historyExpiration)
+		historySource, err = controller.ProvideHistoryJobCleanup(ctx, r.Cfg.NATS.Enabled, common.Client, r.historyExpiration)
 		if err != nil {
 			return err
 		}
@@ -58,17 +56,9 @@ func runJobController(ctx context.Context, logger logging.Logger, r *jobsRunner,
 	// HistoryWriter can be either Loki or the API server
 	// TODO: Loki configuration and setup in the same way we do for the API server
 	// https://github.com/grafana/git-ui-sync-project/issues/508
-	// var jobHistoryWriter jobs.HistoryWriter
-	// if b.jobHistoryLoki != nil {
-	// 	jobHistoryWriter = b.jobHistoryLoki
-	// } else {
-	// 	jobHistoryWriter = jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
-	// }
-
-	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
-	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobs.ClaimExpiry, r.Registerer)
+	cleanup, err := controller.ProvideJobCleanup(common, nil, r.cleanupInterval)
 	if err != nil {
-		return fmt.Errorf("create API client job store: %w", err)
+		return err
 	}
 
 	// Start the historic-job source when history cleanup is enabled; cleanup runs
@@ -78,7 +68,7 @@ func runJobController(ctx context.Context, logger logging.Logger, r *jobsRunner,
 	}
 
 	ready()
-	if err := jobs.NewJobCleanupController(jobStore, jobHistoryWriter, r.cleanupInterval).Run(ctx); err != nil {
+	if err := cleanup.Run(ctx); err != nil {
 		logger.Error("job cleanup controller failed", "error", err)
 	}
 	logger.Info("job cleanup controller stopped")

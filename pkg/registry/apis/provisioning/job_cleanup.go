@@ -2,13 +2,11 @@ package provisioning
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
-	clientrest "k8s.io/client-go/rest"
 
-	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
@@ -22,34 +20,30 @@ var _ registry.CanBeDisabled = (*JobCleanupService)(nil)
 // claim has expired, until shutdown.
 type JobCleanupService struct {
 	*loopbackService
-
-	registry prometheus.Registerer
 }
 
 // ProvideJobCleanupService is called by Wire. Depending on the builder orders it
 // after [RegisterAPIService], which registers the provisioning API group with
 // the API server.
 func ProvideJobCleanupService(builder *APIBuilder, registry prometheus.Registerer) *JobCleanupService {
-	s := &JobCleanupService{registry: registry}
-	s.loopbackService = newLoopbackService(JobCleanupServiceName, builder, s.runController)
+	s := &JobCleanupService{}
+	s.loopbackService = newControllerService(JobCleanupServiceName, builder, controller.Common{Registry: registry}, s.runController)
 	return s
 }
 
-func (s *JobCleanupService) runController(ctx context.Context, restConfig *clientrest.Config) error {
-	client, err := clientset.NewForConfig(restConfig)
+func (s *JobCleanupService) runController(ctx context.Context, common controller.Common) error {
+	cleanup, err := controller.ProvideJobCleanup(common, s.builder.historyWriter(), jobs.ClaimExpiry)
 	if err != nil {
-		return fmt.Errorf("create provisioning clientset: %w", err)
+		return err
 	}
+	return cleanup.Run(ctx)
+}
 
-	b := s.builder
-	store, err := jobs.NewJobStore(client.ProvisioningV0alpha1(), jobs.ClaimExpiry, s.registry)
-	if err != nil {
-		return fmt.Errorf("create API client job store: %w", err)
+// historyWriter is where background job processing records finished jobs, or
+// nil to record them through the provisioning API.
+func (b *APIBuilder) historyWriter() jobs.HistoryWriter {
+	if b.jobHistoryLoki == nil {
+		return nil
 	}
-	historyWriter := jobs.NewAPIClientHistoryWriter(client.ProvisioningV0alpha1())
-	if b.jobHistoryLoki != nil {
-		historyWriter = b.jobHistoryLoki
-	}
-
-	return jobs.NewJobCleanupController(store, historyWriter, jobs.ClaimExpiry).Run(ctx)
+	return b.jobHistoryLoki
 }

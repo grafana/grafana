@@ -21,13 +21,10 @@ import (
 func testRepositoryControllerDeps(objects ...runtime.Object) RepositoryControllerDeps {
 	reg := prometheus.NewRegistry()
 	return RepositoryControllerDeps{
-		ProvisioningClient: fake.NewClientset(objects...),
+		Common:             Common{Client: fake.NewClientset(objects...), Registry: reg, Tracer: tracing.NewNoopTracerService()},
+		Informer:           Informer{ResyncInterval: time.Minute, DrainTimeout: time.Second},
 		HealthMetrics:      NewHealthMetricsRecorder(reg),
-		Registry:           reg,
-		Tracer:             tracing.NewNoopTracerService(),
 		ParallelOperations: 1,
-		ResyncInterval:     time.Minute,
-		DrainTimeout:       time.Second,
 	}
 }
 

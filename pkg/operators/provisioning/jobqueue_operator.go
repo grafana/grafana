@@ -38,18 +38,7 @@ var JobQueueOperator = runner.Operator{
 }
 
 func runJobQueueController(ctx context.Context, logger logging.Logger, r *jobQueueRunner, ready func()) error {
-	provisioningClient, err := r.ProvisioningClient()
-	if err != nil {
-		return fmt.Errorf("failed to create provisioning client: %w", err)
-	}
-
-	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
-	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobs.ClaimExpiry, r.Registerer)
-	if err != nil {
-		return fmt.Errorf("create API client job store: %w", err)
-	}
-
-	queue, err := buildJobQueue(r, r.Registerer, jobStore, jobHistoryWriter)
+	queue, err := buildJobQueue(r)
 	if err != nil {
 		return fmt.Errorf("build job queue: %w", err)
 	}

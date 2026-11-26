@@ -206,7 +206,7 @@ func newTestRepositoryControllerService(builder *APIBuilder, bootstrap *Bootstra
 func TestProvideRepositoryControllerService_Intervals(t *testing.T) {
 	t.Run("defaults when unset", func(t *testing.T) {
 		svc := newTestRepositoryControllerService(&APIBuilder{}, &BootstrapService{})
-		require.Equal(t, setting.ProvisioningControllerResyncIntervalDefault, svc.resyncInterval)
+		require.Equal(t, setting.ProvisioningControllerResyncIntervalDefault, svc.informer.resync)
 		require.Equal(t, defaultWebhookSecretRotationInterval, svc.webhookSecretRotationInterval)
 	})
 	t.Run("reads cfg", func(t *testing.T) {
@@ -214,7 +214,7 @@ func TestProvideRepositoryControllerService_Intervals(t *testing.T) {
 		cfg.ProvisioningControllerResyncInterval = 5 * time.Minute
 		cfg.ProvisioningWebhookSecretRotationInterval = 48 * time.Hour
 		svc := ProvideRepositoryControllerService(cfg, &APIBuilder{}, &BootstrapService{done: closedChan()}, nil, prometheus.NewRegistry(), tracing.NewNoopTracerService(), nil, ProvideInformerMetrics(prometheus.NewRegistry()))
-		require.Equal(t, 5*time.Minute, svc.resyncInterval)
+		require.Equal(t, 5*time.Minute, svc.informer.resync)
 		require.Equal(t, 48*time.Hour, svc.webhookSecretRotationInterval)
 	})
 }

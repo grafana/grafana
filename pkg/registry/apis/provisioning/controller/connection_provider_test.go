@@ -48,14 +48,14 @@ func (s *gatedSource) Done() <-chan struct{}               { return s.synced }
 func testConnectionControllerDeps() ConnectionControllerDeps {
 	reg := prometheus.NewRegistry()
 	return ConnectionControllerDeps{
-		Client:           fake.NewClientset(),
-		HealthMetrics:    NewHealthMetricsRecorder(reg),
-		RelistMetrics:    informer.NewRelistProjectionMetrics(reg),
-		FreshnessMetrics: informer.NewFreshnessMetrics(reg),
-		Registry:         reg,
-		Tracer:           tracing.NewNoopTracerService(),
-		ResyncInterval:   time.Minute,
-		DrainTimeout:     time.Second,
+		Common: Common{Client: fake.NewClientset(), Registry: reg, Tracer: tracing.NewNoopTracerService()},
+		Informer: Informer{
+			RelistMetrics:    informer.NewRelistProjectionMetrics(reg),
+			FreshnessMetrics: informer.NewFreshnessMetrics(reg),
+			ResyncInterval:   time.Minute,
+			DrainTimeout:     time.Second,
+		},
+		HealthMetrics: NewHealthMetricsRecorder(reg),
 	}
 }
 

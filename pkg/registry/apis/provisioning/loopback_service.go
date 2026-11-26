@@ -3,10 +3,14 @@ package provisioning
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
 	clientrest "k8s.io/client-go/rest"
+
+	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 )
 
 // loopbackService is the background-service lifecycle shared by the
@@ -35,6 +39,19 @@ func newLoopbackService(name string, builder *APIBuilder, run func(ctx context.C
 }
 
 // IsDisabled implements registry.CanBeDisabled.
+// newControllerService is a loopbackService for a provisioning controller: it
+// runs with common completed by a client for the provisioning API.
+func newControllerService(name string, builder *APIBuilder, common controller.Common, run func(ctx context.Context, common controller.Common) error) *loopbackService {
+	return newLoopbackService(name, builder, func(ctx context.Context, restConfig *clientrest.Config) error {
+		client, err := clientset.NewForConfig(restConfig)
+		if err != nil {
+			return fmt.Errorf("create provisioning clientset: %w", err)
+		}
+		common.Client = client
+		return run(ctx, common)
+	})
+}
+
 func (s *loopbackService) IsDisabled() bool {
 	return s.builder == nil || s.builder.onlyApiServer
 }

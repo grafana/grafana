@@ -2,12 +2,8 @@ package provisioning
 
 import (
 	"context"
-	"fmt"
 	"time"
 
-	clientrest "k8s.io/client-go/rest"
-
-	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
@@ -25,7 +21,6 @@ var _ registry.CanBeDisabled = (*HistoryJobCleanupService)(nil)
 type HistoryJobCleanupService struct {
 	*loopbackService
 
-	subscriber nats.Subscriber
 	expiration time.Duration
 }
 
@@ -37,8 +32,8 @@ func ProvideHistoryJobCleanupService(cfg *setting.Cfg, builder *APIBuilder, subs
 	if expiration <= 0 {
 		expiration = setting.ProvisioningHistoryExpirationDefault
 	}
-	s := &HistoryJobCleanupService{subscriber: subscriber, expiration: expiration}
-	s.loopbackService = newLoopbackService(HistoryJobCleanupServiceName, builder, s.runController)
+	s := &HistoryJobCleanupService{expiration: expiration}
+	s.loopbackService = newControllerService(HistoryJobCleanupServiceName, builder, controller.Common{Subscriber: subscriber}, s.runController)
 	return s
 }
 
@@ -48,13 +43,8 @@ func (s *HistoryJobCleanupService) IsDisabled() bool {
 	return s.loopbackService.IsDisabled() || (s.builder.jobHistoryConfig != nil && s.builder.jobHistoryConfig.Loki != nil)
 }
 
-func (s *HistoryJobCleanupService) runController(ctx context.Context, restConfig *clientrest.Config) error {
-	client, err := clientset.NewForConfig(restConfig)
-	if err != nil {
-		return fmt.Errorf("create provisioning clientset: %w", err)
-	}
-
-	source, err := controller.ProvideHistoryJobCleanup(ctx, nats.Enabled(s.subscriber), client, s.expiration)
+func (s *HistoryJobCleanupService) runController(ctx context.Context, common controller.Common) error {
+	source, err := controller.ProvideHistoryJobCleanup(ctx, nats.Enabled(common.Subscriber), common.Client, s.expiration)
 	if err != nil {
 		return err
 	}

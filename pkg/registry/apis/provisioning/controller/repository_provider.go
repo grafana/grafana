@@ -5,20 +5,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/nats"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 )
 
 // RepositoryControllerDeps is everything needed to build a RepositoryController
@@ -26,17 +22,9 @@ import (
 // standalone operator and the in-process apiserver so both wire the
 // controller identically.
 type RepositoryControllerDeps struct {
-	ProvisioningClient versioned.Interface
-	// NATSSubscriber selects the NATS-backed informer when enabled; nil falls
-	// back to the apiserver watch informer.
-	NATSSubscriber nats.Subscriber
-	// KeysLister makes the periodic re-list keys-only; nil re-lists full objects.
-	KeysLister keysapi.Lister
-	// The relist, freshness and health metrics are registered once per process
-	// and shared with the other provisioning controllers.
-	RelistProjectionMetrics *informer.RelistProjectionMetrics
-	FreshnessMetrics        *informer.FreshnessMetrics
-	HealthMetrics           HealthMetricsRecorder
+	Common
+	Informer
+	HealthMetrics HealthMetricsRecorder
 
 	RepoFactory       repository.Factory
 	ConnectionFactory connection.Factory
@@ -47,13 +35,9 @@ type RepositoryControllerDeps struct {
 	Validator         repository.Validator
 	QuotaGetter       quotas.QuotaGetter
 	IncrementalPolicy repository.IncrementalSyncPolicy
-	Registry          prometheus.Registerer
-	Tracer            tracing.Tracer
 
 	ParallelOperations            int
-	ResyncInterval                time.Duration
 	MinSyncInterval               time.Duration
-	DrainTimeout                  time.Duration
 	WebhookSecretRotationInterval time.Duration
 }
 
@@ -67,9 +51,9 @@ type RepositoryControllerRunner struct {
 // ProvideRepositoryController builds the repository controller shared by the
 // provisioning API server and the standalone repository operator: a
 // RepositoryController, with its job store, status patcher and health checker,
-// registered on the repository DeltaSource selected by deps.NATSSubscriber.
+// registered on the repository DeltaSource selected by deps.Subscriber.
 func ProvideRepositoryController(deps RepositoryControllerDeps) (*RepositoryControllerRunner, error) {
-	provisioningClient := deps.ProvisioningClient.ProvisioningV0alpha1()
+	provisioningClient := deps.Client.ProvisioningV0alpha1()
 	jobStore, err := jobs.NewJobStore(provisioningClient, jobs.ClaimExpiry, deps.Registry)
 	if err != nil {
 		return nil, fmt.Errorf("create API client job store: %w", err)
@@ -82,11 +66,11 @@ func ProvideRepositoryController(deps RepositoryControllerDeps) (*RepositoryCont
 	healthChecker := NewRepositoryHealthChecker(statusPatcher, repository.NewTester(validators...), deps.HealthMetrics)
 
 	source, repoGetter := informer.NewRepositoryDeltaSource(
-		deps.NATSSubscriber,
-		deps.ProvisioningClient,
-		deps.KeysLister,
+		deps.Subscriber,
+		deps.Client,
+		deps.Keys,
 		deps.ResyncInterval,
-		deps.RelistProjectionMetrics,
+		deps.RelistMetrics,
 		deps.FreshnessMetrics,
 	)
 
@@ -110,7 +94,7 @@ func ProvideRepositoryController(deps RepositoryControllerDeps) (*RepositoryCont
 		NewRepositoryQuotaChecker(repoGetter),
 		deps.IncrementalPolicy,
 		deps.WebhookSecretRotationInterval,
-		nats.Enabled(deps.NATSSubscriber),
+		nats.Enabled(deps.Subscriber),
 	)
 
 	// The handler must be registered before the source runs: the NATS-backed
