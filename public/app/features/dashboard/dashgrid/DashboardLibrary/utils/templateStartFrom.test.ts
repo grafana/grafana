@@ -1,4 +1,5 @@
 import { isStartFromAvailable } from '@grafana/assistant';
+import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/dashboard-templates/main';
 import { isPendingChangesEnabled } from 'app/features/dashboard-scene/lifecycle/pendingChangesFlag';
 import { loadLibraryDashboard } from 'app/features/dashboard-scene/pages/templateDashboardLoader';
@@ -25,13 +26,13 @@ const templateUrl =
   '&sourceEntryPoint=empty_dashboard_prompt&libraryItemId=1&creationOrigin=dashboard_library_template_dashboard' +
   '&contentKind=template_dashboard&assistantSource=assistant_button';
 
-/** A Grafana template as the template page loads it: a v1 dashboard with a row. */
+/** A Grafana template as the template page loads it: a v1 dashboard with a row, on the current schema. */
 const template: DashboardDTO = {
   dashboard: {
     title: 'RED metrics',
     uid: '',
     version: 0,
-    schemaVersion: 41,
+    schemaVersion: DASHBOARD_SCHEMA_VERSION,
     panels: [
       { id: 1, type: 'stat', title: 'Requests', gridPos: { x: 0, y: 0, w: 12, h: 4 }, targets: [] },
       { id: 2, type: 'row', title: 'Latency', collapsed: false, gridPos: { x: 0, y: 4, w: 24, h: 1 }, panels: [] },
@@ -65,6 +66,14 @@ describe('getTemplateStartFrom', () => {
       creationOrigin: 'dashboard_library_template_dashboard',
       assistantSource: 'assistant_button',
     });
+  });
+
+  it('gives nothing for a template on an older schema, which only its page migrates', async () => {
+    jest
+      .mocked(loadLibraryDashboard)
+      .mockResolvedValue({ ...template, dashboard: { ...template.dashboard, schemaVersion: 36 } });
+
+    await expect(getTemplateStartFrom(templateUrl)).resolves.toBeUndefined();
   });
 
   it('gives a custom template as it is stored, reporting it loaded as its page does', async () => {
