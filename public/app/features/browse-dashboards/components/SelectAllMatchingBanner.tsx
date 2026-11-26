@@ -18,14 +18,13 @@ interface Props {
 }
 
 /**
- * Like Gmail's "Select all conversations": once every loaded search result is selected, offers to
- * select the results that haven't been loaded yet, up to MAX_SELECT_ALL_ITEMS.
+ * Once every loaded search result is selected, offers to select the results that haven't been
+ * loaded yet, up to MAX_SELECT_ALL_ITEMS.
  */
 export function SelectAllMatchingBanner({ result, permissions }: Props) {
   const dispatch = useDispatch();
   const selectedItems = useSelector((state) => state.browseDashboards.selectedItems);
   const [isLoading, setIsLoading] = useState(false);
-  const [extendedResult, setExtendedResult] = useState<QueryResponse>();
 
   const latestResult = useRef(result);
   const isMounted = useRef(true);
@@ -67,14 +66,15 @@ export function SelectAllMatchingBanner({ result, permissions }: Props) {
         dispatch(setItemSelectionState({ item, isSelected: true }));
       }
     }
-    setExtendedResult(result);
     setIsLoading(false);
   };
 
   const selectedCount = countSelected(selectedItems);
   const loadedItems = getSelectableItems(view, permissions);
-  const hasExtended = extendedResult === result;
-  const canOfferSelectAll = !hasExtended && view.length < totalRows && areAllSelected(loadedItems, selectedItems);
+  // Derived from the selection rather than local state, so it survives deselecting and reselecting
+  const coversTarget =
+    view.length >= target && areAllSelected(getSelectableItems(view, permissions, target), selectedItems);
+  const canOfferSelectAll = !coversTarget && view.length < totalRows && areAllSelected(loadedItems, selectedItems);
 
   return (
     <>
@@ -99,11 +99,11 @@ export function SelectAllMatchingBanner({ result, permissions }: Props) {
               })}
         </Button>
       )}
-      {hasExtended && isCapped && !canOfferSelectAll && (
+      {isCapped && coversTarget && (
         <Text color="secondary">
           {t(
             'browse-dashboards.select-all-matching.capped',
-            'Only the first {{max}} of {{total}} items are selected. Delete or move them and repeat for the rest.',
+            'Only the first {{max}} of {{total}} items are selected.',
             { max: MAX_SELECT_ALL_ITEMS, total: totalRows }
           )}
         </Text>

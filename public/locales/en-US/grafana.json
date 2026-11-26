@@ -5045,7 +5045,7 @@
       "view-folder": "View folder"
     },
     "select-all-matching": {
-      "capped": "Only the first {{max}} of {{total}} items are selected. Delete or move them and repeat for the rest.",
+      "capped": "Only the first {{max}} of {{total}} items are selected.",
       "load-error": "Failed to load all matching items",
       "select-all_one": "Select the {{count}} item matching this search",
       "select-all_other": "Select all {{count}} items matching this search",

@@ -17,14 +17,14 @@ const permissions: BrowseDashboardsPermissions = {
 
 const PAGE_SIZE = 50;
 
-function makeResult(totalRows: number) {
+function makeResult(totalRows: number, initiallyLoaded = PAGE_SIZE) {
   const uids: string[] = [];
   const addUpTo = (count: number) => {
     while (uids.length < Math.min(count, totalRows)) {
       uids.push(`dash-${uids.length}`);
     }
   };
-  addUpTo(PAGE_SIZE);
+  addUpTo(initiallyLoaded);
 
   const loadMoreItems = jest.fn(async (stopIndex: number) => {
     addUpTo(Math.ceil((stopIndex + 1) / PAGE_SIZE) * PAGE_SIZE);
@@ -107,6 +107,15 @@ describe('SelectAllMatchingBanner', () => {
     expect(Object.values(store.getState().browseDashboards.selectedItems.dashboard).filter(Boolean)).toHaveLength(
       MAX_SELECT_ALL_ITEMS
     );
+  });
+
+  it('does not offer to select again once the capped selection is already in place', () => {
+    const { result } = makeResult(MAX_SELECT_ALL_ITEMS + 1, MAX_SELECT_ALL_ITEMS);
+    setup(result, MAX_SELECT_ALL_ITEMS);
+
+    expect(screen.getByText('500 items selected')).toBeInTheDocument();
+    expect(screen.getByText('Only the first 500 of 501 items are selected.')).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('does not select anything if the results change while loading', async () => {
