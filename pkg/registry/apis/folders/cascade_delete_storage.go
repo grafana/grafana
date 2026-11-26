@@ -653,6 +653,9 @@ func (s *cascadeDeleteStorage) deleteAsync(ctx context.Context, ns authlib.Names
 		}
 	}
 	if !terminating {
+		// TODO: stamping makes the store add the finalizer in the write that starts the delete, which
+		// apistore rejects for an orphaned repository-managed folder without it. A follow-up will make
+		// apistore accept that write.
 		ctx = withCascadeFinalizerOnDelete(ctx, true)
 	}
 	return s.Storage.Delete(ctx, f.Name, deleteValidation, options)
