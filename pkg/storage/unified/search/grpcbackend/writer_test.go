@@ -34,10 +34,10 @@ func TestIndexWriterRejectsAmbiguousOrMismatchedScope(t *testing.T) {
 			scope := grpcTestScope(resource.NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource})
 			target := proto.CloneOf(key)
 			tc.change(scope, target)
-			// Invalid requests must not reach the client.
 			writer := IndexWriter{Scope: scope}
-			err := writer.Write(t.Context(), []*resource.BulkIndexItem{{Action: resource.ActionDelete, Key: target}})
+			req, err := writer.PrepareWrite([]*resource.BulkIndexItem{{Action: resource.ActionDelete, Key: target}})
 			require.Equal(t, codes.InvalidArgument, status.Code(err))
+			require.Nil(t, req)
 		})
 	}
 }

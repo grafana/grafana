@@ -105,7 +105,16 @@ func TestGRPCSearchBackendRoutesBuildUpdateAndSearch(t *testing.T) {
 	require.Equal(t, "allowed", resp.Rows[0].Key.Name)
 
 	next = document("allowed", "Renamed dashboard", "team", 11)
+	next.Doc.Fields = map[string]any{"undeclared": "invalid"}
 	rv, err := remote.UpdateIndex(ctx)
+	require.ErrorContains(t, err, "undeclared app field")
+	require.EqualValues(t, 10, rv)
+	service.mu.Lock()
+	batches := len(service.batchSizes)
+	service.mu.Unlock()
+	require.Equal(t, 1, batches, "the invalid update must not reach the adapter")
+	next.Doc.Fields = nil
+	rv, err = remote.UpdateIndex(ctx)
 	require.NoError(t, err)
 	require.EqualValues(t, 10, fromRV)
 	require.EqualValues(t, 11, rv)
@@ -152,7 +161,8 @@ func TestGRPCSearchIndexBatchesWrites(t *testing.T) {
 	scope := grpcTestScope(key)
 	scope.Indexes[0].SchemaRevision = revision
 	service := &grpcTestEngine{scope: scope}
-	backend, err := newGRPCSearchBackend(newQueryTestClient(t, service), key, scope.Indexes[0].Generation, registry, PostRankAuthzConfig{}, nil)
+	client := &writeDeadlineClient{SearchEngineClient: newQueryTestClient(t, service), t: t}
+	backend, err := newGRPCSearchBackend(client, key, scope.Indexes[0].Generation, registry, PostRankAuthzConfig{}, nil)
 	require.NoError(t, err)
 	items := make([]*resource.BulkIndexItem, 1001)
 	for n := range items {
@@ -170,6 +180,24 @@ func TestGRPCSearchIndexBatchesWrites(t *testing.T) {
 	defer service.mu.Unlock()
 	require.Equal(t, []int{2, 998, 1}, service.batchSizes)
 	require.Empty(t, service.docs)
+}
+
+type writeDeadlineClient struct {
+	enginepb.SearchEngineClient
+	t        *testing.T
+	previous context.Context
+}
+
+func (c *writeDeadlineClient) WriteDocuments(ctx context.Context, req *enginepb.WriteDocumentsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	c.t.Helper()
+	_, hasDeadline := ctx.Deadline()
+	require.True(c.t, hasDeadline)
+	require.NoError(c.t, ctx.Err())
+	if c.previous != nil {
+		require.ErrorIs(c.t, c.previous.Err(), context.Canceled)
+	}
+	c.previous = ctx
+	return c.SearchEngineClient.WriteDocuments(ctx, req, opts...)
 }
 
 // A small engine fixture exercises the wire contract without sharing Grafana's query or auth code.

@@ -121,10 +121,14 @@ func (i *grpcSearchIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 	if i.writeFailed {
 		return errWriteOutcomeUnknown
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
 	write := func(items []*resource.BulkIndexItem) error {
-		err := i.writer.Write(ctx, items)
+		req, err := i.writer.PrepareWrite(items)
+		if err != nil {
+			return err
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
+		_, err = i.writer.Client.WriteDocuments(ctx, req)
 		if err != nil {
 			// The previous RPC may still complete and overwrite a newer write.
 			i.writeFailed = true

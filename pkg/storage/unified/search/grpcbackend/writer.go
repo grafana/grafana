@@ -1,7 +1,6 @@
 package grpcbackend
 
 import (
-	"context"
 	"fmt"
 	"maps"
 	"slices"
@@ -16,38 +15,38 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/enginequery"
 )
 
-// IndexWriter sends already-built documents. The local prototype has one
-// ordered writer and no shared checkpoint or automatic retries.
+// IndexWriter holds the client and field declarations for document writes.
 type IndexWriter struct {
 	Client      enginepb.SearchEngineClient
 	Scope       *enginepb.IndexScope
 	Definitions resource.SearchableDocumentFields
 }
 
-func (w IndexWriter) Write(ctx context.Context, items []*resource.BulkIndexItem) error {
+// PrepareWrite validates and encodes a batch before the caller attempts the RPC.
+func (w IndexWriter) PrepareWrite(items []*resource.BulkIndexItem) (*enginepb.WriteDocumentsRequest, error) {
 	index, err := writeIndex(w.Scope)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	req := &enginepb.WriteDocumentsRequest{IndexScope: w.Scope}
 	fieldIndex := make(map[string]uint32)
 	keys := make(map[string]bool, len(items))
 	for _, item := range items {
 		if item == nil {
-			return status.Error(codes.InvalidArgument, "missing index item")
+			return nil, status.Error(codes.InvalidArgument, "missing index item")
 		}
 		key := item.Key
 		if item.Action == resource.ActionIndex {
 			if item.Doc == nil {
-				return status.Error(codes.InvalidArgument, "missing document for upsert")
+				return nil, status.Error(codes.InvalidArgument, "missing document for upsert")
 			}
 			key = item.Doc.Key
 		}
 		if key.GetNamespace() != w.Scope.Namespace || key.GetGroup() != index.Group || key.GetResource() != index.Resource || key.GetName() == "" {
-			return status.Error(codes.InvalidArgument, "write key does not match index scope")
+			return nil, status.Error(codes.InvalidArgument, "write key does not match index scope")
 		}
 		if keys[key.Name] {
-			return status.Error(codes.InvalidArgument, "duplicate key in write batch")
+			return nil, status.Error(codes.InvalidArgument, "duplicate key in write batch")
 		}
 		keys[key.Name] = true
 		switch item.Action {
@@ -79,14 +78,14 @@ func (w IndexWriter) Write(ctx context.Context, items []*resource.BulkIndexItem)
 					continue
 				}
 				if w.Definitions == nil || w.Definitions.Field(name) == nil {
-					return fmt.Errorf("undeclared app field %q", name)
+					return nil, fmt.Errorf("undeclared app field %q", name)
 				}
 				def := w.Definitions.Field(name)
 				i, ok := fieldIndex[name]
 				if !ok {
 					typ, err := enginequery.FieldValueType(def.Type)
 					if err != nil {
-						return err
+						return nil, err
 					}
 					i = uint32(len(req.Fields))
 					fieldIndex[name] = i
@@ -94,20 +93,16 @@ func (w IndexWriter) Write(ctx context.Context, items []*resource.BulkIndexItem)
 				}
 				value, err := enginequery.NewSearchResultValue(i, *def, doc.Fields[name])
 				if err != nil {
-					return fmt.Errorf("app field %q: %w", name, err)
+					return nil, fmt.Errorf("app field %q: %w", name, err)
 				}
 				wire.Values = append(wire.Values, value)
 			}
 			req.Writes = append(req.Writes, &enginepb.DocumentWrite{Key: doc.Key, Action: &enginepb.DocumentWrite_Upsert{Upsert: wire}})
 		default:
-			return fmt.Errorf("unsupported index action %d", item.Action)
+			return nil, fmt.Errorf("unsupported index action %d", item.Action)
 		}
 	}
-	if len(req.Writes) == 0 {
-		return nil
-	}
-	_, err = w.Client.WriteDocuments(ctx, req)
-	return err
+	return req, nil
 }
 
 func writeIndex(scope *enginepb.IndexScope) (*enginepb.IndexReference, error) {
