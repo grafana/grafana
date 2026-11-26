@@ -1550,6 +1550,35 @@ describe('calculateField transformer template mode', () => {
     expect(result.fields[2].values).toEqual(['web-1']);
   });
 
+  it('does not fall back to a raw-name match in another frame for a picked display name', async () => {
+    const frameA = toDataFrame({
+      fields: [{ name: 'hostname', type: FieldType.string, values: ['web-1'], config: { displayName: 'Host' } }],
+    });
+    const frameB = toDataFrame({
+      fields: [{ name: 'Host', type: FieldType.string, values: ['legacy-1'], config: { displayName: 'Legacy host' } }],
+    });
+
+    const [resultA, resultB] = await runTemplate(getFieldTemplateReference('Host'), [frameA, frameB]);
+
+    expect(resultA.fields[1].values).toEqual(['web-1']);
+    expect(resultB.fields.map((f) => f.name)).toEqual(['Host']);
+  });
+
+  it('formats time values in the dashboard timezone from $__timezone', async () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'Time', type: FieldType.time, values: [1700000000000] }],
+    });
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: { mode: CalculateFieldMode.Template, template: { template: '${__data.fields.Time}' } },
+    };
+    const ctx = { interpolate: (value: string) => (value === '$__timezone' ? 'Asia/Tokyo' : value) };
+
+    await expect(transformDataFrame([cfg], [frame], ctx)).toEmitValuesWith((received) => {
+      expect(received[0][0].fields[1].values).toEqual(['2023-11-15 07:13:20']);
+    });
+  });
+
   it('resolves a generated reference to a name containing both quote types and a backslash', async () => {
     const name = `say "it's" C:\\temp`;
     const frame = toDataFrame({ fields: [{ name, type: FieldType.string, values: ['ok'] }] });

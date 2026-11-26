@@ -174,7 +174,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
             break;
           case CalculateFieldMode.Template:
             if (options.template?.template) {
-              creator = getTemplateCreator(options.template, data);
+              creator = getTemplateCreator(options.template, data, ctx);
             }
             break;
           case CalculateFieldMode.BinaryOperation:
@@ -719,10 +719,21 @@ export function getFieldTemplateReference(name: string): string {
   return `\${__data.fields["${name.replace(/[\\"]/g, '\\$&')}"]}`;
 }
 
-function getTemplateCreator(options: TemplateOptions, allFrames: DataFrame[]): ValuesCreator {
+function getTemplateCreator(
+  options: TemplateOptions,
+  allFrames: DataFrame[],
+  ctx: DataTransformContext
+): ValuesCreator {
   const parts = parseFieldTemplate(options.template);
   const theme = createTheme();
   const hasReferences = parts.some((part) => 'field' in part);
+  // Transformations run before field config, so the dashboard timezone is only reachable through interpolation.
+  const interpolatedTimeZone = ctx.interpolate('$__timezone');
+  const timeZone = interpolatedTimeZone && interpolatedTimeZone !== '$__timezone' ? interpolatedTimeZone : undefined;
+  // Decided across frames so a picked display name never falls back to another frame's raw-name match.
+  const displayNames = new Set(
+    allFrames.flatMap((frame) => frame.fields.map((f) => getFieldDisplayName(f, frame, allFrames)))
+  );
 
   return (frame: DataFrame) => {
     let resolvedAny = !hasReferences;
@@ -730,17 +741,16 @@ function getTemplateCreator(options: TemplateOptions, allFrames: DataFrame[]): V
       if ('text' in part) {
         return part.text;
       }
-      // Display names first: Insert field inserts them, and computed ones are deduplicated per frame.
-      const field =
-        frame.fields.find((f) => getFieldDisplayName(f, frame, allFrames) === part.field) ??
-        frame.fields.find((f) => f.name === part.field);
+      const field = displayNames.has(part.field)
+        ? frame.fields.find((f) => getFieldDisplayName(f, frame, allFrames) === part.field)
+        : frame.fields.find((f) => f.name === part.field);
       if (!field) {
         return '';
       }
       resolvedAny = true;
       const formatField =
         options.decimals == null ? field : { ...field, config: { ...field.config, decimals: options.decimals } };
-      return { values: field.values, display: getDisplayProcessor({ field: formatField, theme }) };
+      return { values: field.values, display: getDisplayProcessor({ field: formatField, theme, timeZone }) };
     });
 
     if (!resolvedAny) {
