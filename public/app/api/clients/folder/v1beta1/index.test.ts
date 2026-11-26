@@ -1,7 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { http, HttpResponse } from 'msw';
 
-import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -20,10 +19,6 @@ describe('folderAPIv1beta1 getAffectedItems', () => {
       middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({ serializableCheck: false, immutableCheck: false }).concat(folderAPIv1beta1.middleware),
     });
-
-  beforeEach(() => {
-    folderAPIVersionResolver.set('v1beta1');
-  });
 
   it('aggregates variable counts', async () => {
     const store = createTestStore();

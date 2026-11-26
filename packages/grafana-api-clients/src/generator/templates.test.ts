@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+
 import {
   formatEndpoints,
   renderConfigEntry,
@@ -56,10 +59,42 @@ describe('renderBaseAPI', () => {
 
   it('uses the variant-specific imports', () => {
     const oss = renderBaseAPI(input, variantFor(false));
-    expect(oss).toContain('../../../../utils/utils');
+    expect(oss).toContain(`import { getAPIBaseURL, resolveAPIBaseURLWithFallback } from '../../../../utils/utils';`);
 
     const ent = renderBaseAPI(input, variantFor(true));
-    expect(ent).toContain('@grafana/api-clients');
+    expect(ent).toContain(`import { getAPIBaseURL, resolveAPIBaseURLWithFallback } from '@grafana/api-clients';`);
+  });
+
+  it('resolves the base URL through discovery and falls back to BASE_URL', () => {
+    const result = renderBaseAPI(input, variantFor(false));
+    expect(result).toContain(
+      'getBaseURL: () => resolveAPIBaseURLWithFallback(API_GROUP, COMPATIBLE_VERSIONS, BASE_URL),'
+    );
+    expect(result).not.toContain('baseURL: BASE_URL');
+  });
+
+  it('lists only the generated version as compatible by default', () => {
+    const result = renderBaseAPI(input, variantFor(false));
+    expect(result).toContain('export const COMPATIBLE_VERSIONS = [API_VERSION] as const;');
+  });
+
+  it('lists the other compatible versions after the generated version without repeating it', () => {
+    const result = renderBaseAPI({ ...input, compatibleVersions: ['v1beta1', 'v0alpha1', 'v1'] }, variantFor(false));
+    expect(result).toContain(`export const COMPATIBLE_VERSIONS = [API_VERSION, 'v1beta1', 'v1'] as const;`);
+  });
+
+  it('renders the committed folder client', () => {
+    const folderInput: TemplateInput = {
+      group: 'folder.grafana.app',
+      groupName: 'folder',
+      version: 'v1beta1',
+      reducerPath: 'folderAPIv1beta1',
+      endpoints: '',
+      compatibleVersions: ['v1'],
+    };
+    const committed = fs.readFileSync(path.join(__dirname, '../clients/rtkq/folder/v1beta1/baseAPI.ts'), 'utf8');
+
+    expect(renderBaseAPI(folderInput, variantFor(false))).toBe(committed);
   });
 });
 

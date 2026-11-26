@@ -25,7 +25,7 @@ const OSS: Variant = {
   codegenScript: `${PACKAGE_ROOT}/src/scripts/generate-rtk-apis.ts`,
   openapiSnapshots: 'pkg/tests/apis/openapi_snapshots',
   generateCommand: 'pnpm run generate-apis',
-  baseAPIImports: `import { getAPIBaseURL } from '../../../../utils/utils';
+  baseAPIImports: `import { getAPIBaseURL, resolveAPIBaseURLWithFallback } from '../../../../utils/utils';
 import { createBaseQuery } from '../../createBaseQuery';`,
 };
 
@@ -35,7 +35,7 @@ const ENTERPRISE: Variant = {
   openapiSnapshots: 'pkg/extensions/apiserver/tests/openapi_snapshots',
   generateCommand:
     'pnpm --filter @grafana/openapi --fail-if-no-match run process-specs && pnpm --filter @grafana/api-clients --fail-if-no-match exec rtk-query-codegen-openapi ../../local/generate-enterprise-apis.ts',
-  baseAPIImports: `import { getAPIBaseURL } from '@grafana/api-clients';
+  baseAPIImports: `import { getAPIBaseURL, resolveAPIBaseURLWithFallback } from '@grafana/api-clients';
 import { createBaseQuery } from '@grafana/api-clients/rtkq';`,
 };
 
