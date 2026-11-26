@@ -156,7 +156,7 @@ All shared test infrastructure lives in `common/testing.go`:
 | `repository/` | none |
 | `quota/` | none |
 | `jobs/` | GitHub mock in helper |
-| `jobs/conflict/` | `DisableProvisioningJobQueue` — the job queue races with manual job updates |
+| `jobs/conflict/` | `DisableControllers` — controllers race with manual job updates |
 | `jobs/instanceauth/` | none — requires isolated server for instance-scoped RBAC checks |
 | `enterprise/` | enterprise repo types (skipped in OSS) |
 

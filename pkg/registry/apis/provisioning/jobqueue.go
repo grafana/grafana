@@ -3,7 +3,6 @@ package provisioning
 import (
 	"context"
 	"fmt"
-	"sync/atomic"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -27,15 +26,6 @@ import (
 const JobQueueServiceName = "provisioning-job-queue"
 
 var _ registry.CanBeDisabled = (*JobQueueService)(nil)
-
-var jobQueueDisabledForTests atomic.Bool
-
-// DisableJobQueueForTests keeps every [JobQueueService] in this process from
-// running, so integration tests can drive jobs by hand. It is a test hook,
-// not a setting: call it before the server starts.
-func DisableJobQueueForTests() {
-	jobQueueDisabledForTests.Store(true)
-}
 
 // JobQueueService runs the provisioning job driver in the Grafana process once
 // the provisioning API is served, and processes jobs until shutdown.
@@ -95,7 +85,7 @@ func ProvideJobQueueService(
 			AllowImageRendering:  cfg.ProvisioningAllowImageRendering,
 		},
 	}
-	s.loopbackService = newLoopbackService(JobQueueServiceName, builder, s.runController)
+	s.loopbackService = newLoopbackService(JobQueueServiceName, builder, cfg.DisableControllers, s.runController)
 	return s
 }
 
@@ -135,9 +125,4 @@ func (s *JobQueueService) runController(ctx context.Context, restConfig *clientr
 		return err
 	}
 	return queue.Run(ctx)
-}
-
-// IsDisabled implements registry.CanBeDisabled.
-func (s *JobQueueService) IsDisabled() bool {
-	return s.loopbackService.IsDisabled() || jobQueueDisabledForTests.Load()
 }

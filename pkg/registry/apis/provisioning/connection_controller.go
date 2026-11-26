@@ -55,7 +55,7 @@ func ProvideConnectionControllerService(
 		informerMetrics: informerMetrics,
 		resyncInterval:  controllerResyncInterval(cfg),
 	}
-	s.loopbackService = newLoopbackService(ConnectionControllerServiceName, builder, s.runController)
+	s.loopbackService = newLoopbackService(ConnectionControllerServiceName, builder, cfg.DisableControllers, s.runController)
 	return s
 }
 

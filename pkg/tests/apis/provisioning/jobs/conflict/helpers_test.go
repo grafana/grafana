@@ -8,7 +8,7 @@ import (
 )
 
 var env = common.NewSharedEnv(func(opts *testinfra.GrafanaOpts) {
-	opts.DisableProvisioningJobQueue = true
+	opts.DisableControllers = true
 })
 
 func sharedHelper(t *testing.T) *common.ProvisioningTestHelper {

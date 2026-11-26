@@ -50,14 +50,15 @@ func ProvideBootstrapService(cfg *setting.Cfg, builder *APIBuilder) (*BootstrapS
 		s.config = config
 		builder.bootstrapDone = done
 	}
-	s.loopbackService = newLoopbackService(BootstrapServiceName, builder, s.runController)
+	s.loopbackService = newLoopbackService(BootstrapServiceName, builder, false, s.runController)
 	// Closed on every path, including shutdown before the API is served, so
 	// nothing waits on Done forever.
 	s.onStop = s.closeDone
 	return s, nil
 }
 
-// IsDisabled implements registry.CanBeDisabled.
+// IsDisabled implements registry.CanBeDisabled. disable_controllers does not
+// disable it: the bootstrap repository is configuration, not a controller.
 func (s *BootstrapService) IsDisabled() bool {
 	return s.builder == nil
 }

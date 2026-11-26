@@ -17,20 +17,23 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestJobCleanupService_IsDisabled(t *testing.T) {
 	tests := []struct {
-		name     string
-		builder  *APIBuilder
-		disabled bool
+		name                string
+		builder             *APIBuilder
+		controllersDisabled bool
+		disabled            bool
 	}{
 		{name: "provisioning disabled", builder: nil, disabled: true},
+		{name: "controllers disabled", builder: &APIBuilder{}, controllersDisabled: true, disabled: true},
 		{name: "controllers enabled", builder: &APIBuilder{}, disabled: false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			svc := ProvideJobCleanupService(tc.builder, nil)
+			svc := ProvideJobCleanupService(&setting.Cfg{DisableControllers: tc.controllersDisabled}, tc.builder, nil)
 			assert.Equal(t, tc.disabled, svc.IsDisabled())
 			// The background service manager looks up this name in its
 			// dependency map; any other name would start it after Core.
@@ -91,7 +94,7 @@ func TestJobCleanupService_Run(t *testing.T) {
 
 func newTestJobCleanupService() (*JobCleanupService, *APIBuilder) {
 	builder := &APIBuilder{loopbackReady: make(chan struct{})}
-	return ProvideJobCleanupService(builder, prometheus.NewPedanticRegistry()), builder
+	return ProvideJobCleanupService(&setting.Cfg{}, builder, prometheus.NewPedanticRegistry()), builder
 }
 
 // runJobCleanupService starts Run in the background and returns its result

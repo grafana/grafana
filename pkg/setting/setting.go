@@ -192,6 +192,8 @@ type Cfg struct {
 	HomePath                   string
 	ProvisioningPath           string
 	PermittedProvisioningPaths []string
+	// Grafana API Server
+	DisableControllers bool
 	// Provisioning config
 	// ProvisioningEnabled: enable or disable Git Sync / as-code provisioning
 	// for Grafana resources. See [provisioning] enabled in defaults.ini.
@@ -2692,6 +2694,12 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 		}
 	}
 
+	cfg.DisableControllers = iniFile.Section("provisioning").Key("disable_controllers").MustBool(false)
+	// if disable_controllers is not set, check if grafana-apiserver.disable_controllers is set
+	// TODO: consolidate to just [grafana-apiserver]disable_controllers
+	if !cfg.DisableControllers {
+		cfg.DisableControllers = iniFile.Section("grafana-apiserver").Key("disable_controllers").MustBool(false)
+	}
 	cfg.ProvisioningEnabled = iniFile.Section("provisioning").Key("enabled").MustBool(true)
 	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
 	if len(cfg.ProvisioningAllowedTargets) == 0 {
