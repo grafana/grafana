@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"slices"
 	"strings"
-	gosync "sync"
 	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -53,7 +52,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
-	informer "github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
@@ -67,16 +65,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
-
-const repoControllerWorkers = 1
-
-// jobClaimExpiry is how long a job claim is considered valid before it is
-// treated as abandoned. It governs both claim staleness in the job store and
-// the cleanup controller that reaps expired jobs, so the two must use the same
-// value. The lease renewal interval is derived as a fraction of this so a
-// worker renews several times before its claim goes stale; otherwise a single
-// delayed renewal can let a running job be reaped and re-run by another worker.
-const jobClaimExpiry = 60 * time.Second
 
 var (
 	_ builder.APIGroupBuilder               = (*APIBuilder)(nil)
@@ -142,35 +130,14 @@ type APIBuilder struct {
 	healthChecker     *controller.RepositoryHealthChecker
 	admissionHandler  *appadmission.Handler
 	// Extras provides additional functionality to the API.
-	extras       []Extra
-	extraWorkers []jobs.Worker
+	extras []Extra
 
-	restConfigGetter              func(context.Context) (*clientrest.Config, error)
-	registry                      prometheus.Registerer
-	quotaGetter                   quotas.QuotaGetter
-	maxFileSize                   int64
-	maxJobBodySize                int64
-	incrementalPolicy             repository.IncrementalSyncPolicy
-	webhookSecretRotationInterval time.Duration
-	// controllerResyncInterval is the informer re-list interval for the
-	// repository and connection controllers; historyExpiration is both the
-	// HistoricJob retention and the historic-job informer's resync. Both fall
-	// back to their defaults when <=0 (see the controller post-start hook).
-	controllerResyncInterval time.Duration
-	historyExpiration        time.Duration
-
-	// natsSubscriber feeds the controllers' event handlers when NATS is enabled.
-	// Instead of an apiserver-backed informer, each controller's handler is driven
-	// by a NATS-backed informer (see pkg/storage/unified/informer) that signals the
-	// handler on each notification; the controllers re-fetch from the API in their
-	// reconcile. Otherwise the controllers use the apiserver informer.
-	natsSubscriber nats.Subscriber
-
-	// The informer metrics register once per process and are shared by the
-	// controllers started from the post-start hook and from Wire.
-	informerMetricsOnce     gosync.Once
-	relistProjectionMetrics *informer.RelistProjectionMetrics
-	freshnessMetrics        *informer.FreshnessMetrics
+	restConfigGetter  func(context.Context) (*clientrest.Config, error)
+	registry          prometheus.Registerer
+	quotaGetter       quotas.QuotaGetter
+	maxFileSize       int64
+	maxJobBodySize    int64
+	incrementalPolicy repository.IncrementalSyncPolicy
 
 	// loopbackConfig is the rest config the post-start hook resolved, set
 	// before loopbackReady is closed.
@@ -214,7 +181,7 @@ func NewAPIBuilder(
 	access authlib.AccessChecker,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
-	extraWorkers []jobs.Worker,
+	_ []jobs.Worker, // extraWorkers: unused, kept for signature compatibility
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
 	supportedResourceProvider resources.SupportedResourceProvider,
@@ -268,7 +235,6 @@ func NewAPIBuilder(
 		accessWithEditor:                    accessChecker.WithFallbackRole(authlib.RoleEditor),
 		accessWithViewer:                    accessChecker.WithFallbackRole(authlib.RoleViewer),
 		jobHistoryConfig:                    jobHistoryConfig,
-		extraWorkers:                        extraWorkers,
 		restConfigGetter:                    restConfigGetter,
 		allowedTargets:                      allowedTargets,
 		allowImageRendering:                 allowImageRendering,
@@ -290,17 +256,6 @@ func NewAPIBuilder(
 	}
 
 	return b, nil
-}
-
-// resyncInterval is the informer resync interval used for health check and
-// reconciliation of the repository and connection controllers (the jobs
-// informer uses job_poll_interval). Configurable via [provisioning]
-// resync_interval; <=0 falls back to the default.
-func (b *APIBuilder) resyncInterval() time.Duration {
-	if b.controllerResyncInterval <= 0 {
-		return setting.ProvisioningControllerResyncIntervalDefault
-	}
-	return b.controllerResyncInterval
 }
 
 func (b *APIBuilder) publishLoopbackConfig(config *clientrest.Config) {
@@ -334,14 +289,6 @@ func (b *APIBuilder) GetReadyzChecks() []healthz.HealthChecker {
 			return errors.New("bootstrap repository not reconciled yet")
 		}
 	})}
-}
-
-func (b *APIBuilder) informerMetrics() (*informer.RelistProjectionMetrics, *informer.FreshnessMetrics) {
-	b.informerMetricsOnce.Do(func() {
-		b.relistProjectionMetrics = informer.NewRelistProjectionMetrics(b.registry)
-		b.freshnessMetrics = informer.NewFreshnessMetrics(b.registry)
-	})
-	return b.relistProjectionMetrics, b.freshnessMetrics
 }
 
 func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption) {
@@ -437,6 +384,10 @@ func RegisterAPIService(
 	manifests resource.ManifestDiscovery,
 	supportedResourceProvider resources.SupportedResourceProvider,
 ) (*APIBuilder, error) {
+	// Kept for signature compatibility: the controllers take the subscriber from
+	// their own providers.
+	_ = natsSubscriber
+
 	if !cfg.ProvisioningEnabled {
 		return nil, nil
 	}
@@ -490,7 +441,7 @@ func RegisterAPIService(
 		access,
 		tracer,
 		extraBuilders,
-		nil, // extraWorkers: JobQueueService builds every worker
+		nil, // extraWorkers
 		jobHistoryConfig,
 		allowedTargets,
 		supportedResourceProvider,
@@ -513,11 +464,7 @@ func RegisterAPIService(
 	}
 	builder.repoValidatorOpts = repoValidatorOpts
 	builder.urlValidator = urlValidator
-	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
-	builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
-	builder.historyExpiration = cfg.ProvisioningHistoryExpiration
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
-	builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -538,7 +485,7 @@ func RegisterAPIService(
 		access,
 		tracer,
 		extraBuilders,
-		nil, // extraWorkers: JobQueueService builds every worker
+		nil, // extraWorkers
 		jobHistoryConfig,
 		allowedTargets,
 		supportedResourceProvider,
@@ -558,14 +505,10 @@ func RegisterAPIService(
 	}
 	v1beta1Builder.repoValidatorOpts = repoValidatorOpts
 	v1beta1Builder.urlValidator = urlValidator
-	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
-	v1beta1Builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
-	v1beta1Builder.historyExpiration = cfg.ProvisioningHistoryExpiration
 	if err := v1beta1Builder.SetResourceListerMode(cfg.ProvisioningResourceLister); err != nil {
 		return nil, err
 	}
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
-	v1beta1Builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(v1beta1Builder)
 
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
@@ -1162,7 +1105,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.client = c.ProvisioningV0alpha1()
 
 			// Initialize the API client-based job store
-			b.jobs, err = jobs.NewJobStore(b.client, jobClaimExpiry, b.registry)
+			b.jobs, err = jobs.NewJobStore(b.client, jobs.ClaimExpiry, b.registry)
 			if err != nil {
 				return fmt.Errorf("create API client job store: %w", err)
 			}
@@ -1173,17 +1116,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// since the repository already passed admission validation when it was created/updated.
 			// but that leads to possible race conditions when the repository is created/updated and violating some rules.
 			b.healthChecker = controller.NewRepositoryHealthChecker(b.statusPatcher, repository.NewTester(b.repoValidator), healthMetricsRecorder)
-
-			// if running solely CRUD or not the preferred version, skip controllers/workers setup
-			if b.onlyApiServer || !b.isPreferredVersion {
-				return nil
-			}
-
-			if nats.Enabled(b.natsSubscriber) {
-				logging.DefaultLogger.Info("provisioning controllers using NATS-backed informer")
-			}
-			usageMetricCollector := usage.MetricCollector(b.tracer, b.usageNamespaceLister, b.repoLister.List, connection.NewStorageLister(b.connectionStore).List, b.unified)
-			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
 
 			return nil
 		},

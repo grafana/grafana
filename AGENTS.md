@@ -1,6 +1,6 @@
 # AGENTS.md
 
-<!-- version: 2.4.0 -->
+<!-- version: 2.4.1 -->
 
 This file provides guidance to AI agents when working with code in the Grafana repository.
 
@@ -27,7 +27,7 @@ Grafana is a monitoring and observability platform. Go backend, TypeScript/React
 - Separate PRs for frontend and backend changes (deployed at different cadences)
 - Security: prevent XSS, SQL injection, command injection
 - Security issues should be reported via [Grafana's security issue reporting page](https://grafana.com/legal/report-a-security-issue/) and not directly in this repository.
-- Before changing an existing branch or running tests, merge the latest `grafana/grafana` `main` into it; don't rebase pushed branches
+- When updating a PR that targets main in response to review feedback, pull in the latest changes from grafana/grafana main once, before making the requested changes. Skip this for release and backport branches and stacked PRs.
 
 ## Code Review Rules
 
