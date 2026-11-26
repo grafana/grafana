@@ -1,9 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { debounce, groupBy } from 'lodash';
+import { groupBy } from 'lodash';
 import * as React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePrevious, useUnmount } from 'react-use';
-import { type ListOnItemsRenderedProps } from 'react-window';
 
 import {
   type AbsoluteTimeRange,
@@ -79,7 +78,7 @@ import { getUrlStateFromPaneState } from '../hooks/useStateSync/external.utils';
 import { changePanelState } from '../state/explorePane';
 import { changeQueries, runQueries } from '../state/query';
 
-import { AdaptiveLogsIncludeDroppedLogs, type RenderedLogsWindow } from './AdaptiveLogsIncludeDroppedLogs';
+import { AdaptiveLogsIncludeDroppedLogs, useRenderedLogsWindow } from './AdaptiveLogsIncludeDroppedLogs';
 import { ExploreLogsTable } from './ExploreLogsTable';
 import { LogsFeedback } from './LogsFeedback';
 import { LogsMetaRow } from './LogsMetaRow';
