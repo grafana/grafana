@@ -52,7 +52,7 @@ func cloudSettingsAccessChecker(client types.AccessClient) pluginaccesscontrol.A
 			}
 			return authorizer.DecisionAllow, "", nil
 		}
-		rsp, err := client.Check(ctx, user, types.CheckRequest{
+		rsp, err := client.Check(ctx, settingsAppAccessAuthInfo{AuthInfo: user}, types.CheckRequest{
 			Verb:      utils.VerbGet,
 			Group:     appv0.GROUP,
 			Resource:  appv0.APP_RESOURCE_NAME,
@@ -64,6 +64,18 @@ func cloudSettingsAccessChecker(client types.AccessClient) pluginaccesscontrol.A
 		}
 		return authorizer.DecisionAllow, "", nil
 	}
+}
+
+// Authlib also checks delegated permissions before contacting AuthZ. This
+// lookup asks for the user's app access, independent of the caller's delegated
+// grants, so supply only the grant needed for that lookup. Keep this adapter
+// local to Check: storage and plugin calls must retain the original credentials.
+type settingsAppAccessAuthInfo struct {
+	types.AuthInfo
+}
+
+func (settingsAppAccessAuthInfo) GetTokenDelegatedPermissions() []string {
+	return []string{appv0.GROUP + "/" + appv0.APP_RESOURCE_NAME + ":" + utils.VerbGet}
 }
 
 func cloudSettingsNamespaceAuthorizer(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {

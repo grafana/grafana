@@ -83,7 +83,11 @@ MT supplies only the context and credentials needed for these requests:
 - App access through AuthZ `Check`: get on `plugins.grafana.app/app/<plugin-id>`, which AuthZ
   maps to `plugins.app:access` on `plugins:id:<plugin-id>`, the check unified storage makes for
   app settings. Access policies are decided by their token permissions alone; a user's delegated
-  token permissions do not narrow app access. Proxy `reqAction` checks still use the remote
+  token permissions do not narrow app access. The app-access lookup supplies a local
+  `plugins.grafana.app/app:get` delegated grant to authlib, which otherwise rejects the
+  call before reaching AuthZ. It preserves the caller's subject, groups, and namespace,
+  and does not change the requester's credentials for storage or plugin calls.
+  Proxy `reqAction` checks still use the remote
   legacy check, since `Check` has no mapping for plugin-defined actions. Namespace restrictions
   are checked before execution, including for Grafana admins; cross-namespace access requires a
   matching wildcard namespace on the requester. Proxy roles use the shared handler.

@@ -1,10 +1,14 @@
 package router
 
 import (
+	"context"
 	"errors"
 	"testing"
 
+	"github.com/fullstorydev/grpchan/inprocgrpc"
 	authnlib "github.com/grafana/authlib/authn"
+	authzlib "github.com/grafana/authlib/authz"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -12,6 +16,82 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
+
+type settingsAuthzServer struct {
+	authzv1.UnimplementedAuthzServiceServer
+	requests []*authzv1.CheckRequest
+	allowed  bool
+	err      error
+}
+
+func (s *settingsAuthzServer) Check(_ context.Context, req *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
+	s.requests = append(s.requests, req)
+	return &authzv1.CheckResponse{Allowed: s.allowed}, s.err
+}
+
+func TestCloudSettingsAccessCheckerWithAuthlib(t *testing.T) {
+	errCheck := errors.New("authz unavailable")
+	for _, tc := range []struct {
+		name        string
+		identity    types.IdentityType
+		verb        string
+		namespace   string
+		permissions []string
+		allowed     bool
+		checkErr    error
+		want        authorizer.Decision
+		wantCheck   bool
+	}{
+		{name: "user without delegated permissions", identity: types.TypeUser, verb: "get", namespace: "stacks-1", allowed: true, want: authorizer.DecisionAllow, wantCheck: true},
+		{name: "user resource write checks app access", identity: types.TypeUser, verb: "create", namespace: "stacks-1", allowed: true, want: authorizer.DecisionAllow, wantCheck: true},
+		{name: "service account", identity: types.TypeServiceAccount, verb: "get", namespace: "stacks-1", allowed: true, want: authorizer.DecisionAllow, wantCheck: true},
+		{name: "app access denied", identity: types.TypeUser, verb: "get", namespace: "stacks-1", want: authorizer.DecisionDeny, wantCheck: true},
+		{name: "authz unavailable", identity: types.TypeUser, verb: "get", namespace: "stacks-1", checkErr: errCheck, want: authorizer.DecisionDeny, wantCheck: true},
+		{name: "namespace mismatch", identity: types.TypeUser, verb: "get", namespace: "stacks-2", allowed: true, want: authorizer.DecisionDeny},
+		{name: "access policy allowed by token", identity: types.TypeAccessPolicy, verb: "get", namespace: "stacks-1", permissions: []string{"example-app/app:get"}, want: authorizer.DecisionAllow},
+		{name: "access policy lacks verb", identity: types.TypeAccessPolicy, verb: "create", namespace: "stacks-1", permissions: []string{"example-app/app:get"}, allowed: true, want: authorizer.DecisionDeny},
+		{name: "access policy lacks app", identity: types.TypeAccessPolicy, verb: "get", namespace: "stacks-1", permissions: []string{"other-app/app:get"}, allowed: true, want: authorizer.DecisionDeny},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server := &settingsAuthzServer{allowed: tc.allowed, err: tc.checkErr}
+			channel := &inprocgrpc.Channel{}
+			authzv1.RegisterAuthzServiceServer(channel, server)
+			check := cloudSettingsAccessChecker(authzlib.NewClient(channel))
+			user := settingsRequester("stacks-1")
+			user.Type = tc.identity
+			user.Groups = []string{"team-1"}
+			user.AccessTokenClaims.Rest.Permissions = tc.permissions
+			ctx := request.WithRequestInfo(t.Context(), &request.RequestInfo{Namespace: tc.namespace, Verb: tc.verb})
+			ctx = identity.WithRequester(ctx, user)
+
+			decision, _, err := check(ctx, user, "example-app")
+
+			require.Equal(t, tc.want, decision)
+			if tc.checkErr != nil {
+				require.ErrorContains(t, err, tc.checkErr.Error())
+			} else if tc.namespace != user.Namespace {
+				require.ErrorIs(t, err, authzlib.ErrNamespaceMismatch)
+			} else {
+				require.NoError(t, err)
+			}
+			require.Empty(t, user.GetTokenDelegatedPermissions(), "the requester's credentials must not change")
+			if !tc.wantCheck {
+				require.Empty(t, server.requests)
+				return
+			}
+			require.Len(t, server.requests, 1)
+			got := server.requests[0]
+			require.Equal(t, user.GetUID(), got.Subject)
+			require.Equal(t, user.Groups, got.Teams)
+			require.Equal(t, tc.namespace, got.Namespace)
+			require.Equal(t, "plugins.grafana.app", got.Group)
+			require.Equal(t, "app", got.Resource)
+			require.Equal(t, "example-app", got.Name)
+			require.Equal(t, "get", got.Verb)
+			require.Empty(t, got.Subresource)
+		})
+	}
+}
 
 func TestCloudSettingsAccessChecker(t *testing.T) {
 	require.Nil(t, cloudSettingsAccessChecker(nil))
