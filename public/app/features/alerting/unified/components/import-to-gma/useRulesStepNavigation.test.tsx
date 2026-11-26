@@ -74,6 +74,34 @@ describe('useRulesStepNavigation', () => {
     });
   });
 
+  it('does not proceed when another file is chosen while the check of the first one runs', async () => {
+    let finishCheck: (result: true) => void = () => {};
+    const validate = jest.fn(() => new Promise<true>((resolve) => (finishCheck = resolve)));
+    const { result } = renderHook(
+      () => {
+        const form = useForm<ImportFormValues>({ defaultValues: mockImportFormValues(completeYamlValues) });
+        form.register('rulesYamlFile', { validate });
+        return { form, navigation: useRulesStepNavigation(form) };
+      },
+      { wrapper: Wrapper }
+    );
+
+    let proceed: boolean | undefined;
+    let pendingNext: Promise<boolean> | undefined;
+    act(() => {
+      pendingNext = result.current.navigation.onNext();
+    });
+    act(() => result.current.form.setValue('rulesYamlFile', new File([''], 'other.yaml')));
+    await act(async () => {
+      finishCheck(true);
+      proceed = await pendingNext;
+    });
+
+    expect(proceed).toBe(false);
+    expect(result.current.navigation.rulesSpec).toBeUndefined();
+    expect(result.current.form.getValues('step2Completed')).toBe(false);
+  });
+
   it('does not check a YAML file when the rules come from a data source', async () => {
     const { result, validate } = setup({ formValues: completeDataSourceValues });
 

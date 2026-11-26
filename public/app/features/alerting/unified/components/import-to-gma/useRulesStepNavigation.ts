@@ -18,8 +18,13 @@ export function useRulesStepNavigation({ control, trigger, getValues, setValue }
   const [validated, setValidated] = useState<{ values: RulesSpecValues; spec: RulesImportSpec }>();
 
   const onNext = useCallback(async (): Promise<boolean> => {
+    const checkedFile = getValues('rulesYamlFile');
     // The file is checked when it is chosen, but that check is async and Next doesn't wait for it.
     if (getValues('rulesSource') === 'yaml' && !(await trigger('rulesYamlFile'))) {
+      return false;
+    }
+    // A file chosen while the check ran hasn't been checked. Next has to be pressed again.
+    if (getValues('rulesYamlFile') !== checkedFile) {
       return false;
     }
     const values = pick(getValues(), RULES_SPEC_FIELDS);
