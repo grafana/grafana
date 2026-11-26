@@ -15,8 +15,8 @@ import (
 	historianAppConfig "github.com/grafana/alerting/apps/historian/pkg/app/config"
 	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apps/appconfig"
 	"github.com/grafana/grafana/pkg/services/ngalert"
-	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -41,33 +41,9 @@ func RegisterAppInstaller(
 	ng *ngalert.AlertNG,
 	accessClient authtypes.AccessClient,
 ) (*AppInstaller, error) {
-	appSpecificConfig := historianAppConfig.RuntimeConfig{}
-
-	// If we're provided some config, then we can enable some things.
-	if cfg != nil {
-		nhCfg := cfg.UnifiedAlerting.NotificationHistory
-
-		// Only parse config if enabled.
-		if nhCfg.Enabled {
-			lokiConfig, err := lokiconfig.NewLokiConfig(cfg.UnifiedAlerting.NotificationHistory.LokiSettings)
-			if err != nil {
-				return nil, err
-			}
-
-			appSpecificConfig.Notification = historianAppConfig.NotificationConfig{
-				Enabled: nhCfg.Enabled,
-				Loki: historianAppConfig.LokiConfig{
-					LokiConfig: lokiConfig,
-					InjectUser: nhCfg.LokiInjectUser,
-				},
-				// Restrict notification history to the folders whose alert rules the
-				// caller can read. RBAC resolves accessible folders via the folder API
-				// and the multi-tenant authz service, so it works in the standalone
-				// (multi-tenant) historian deployment.
-				RBACEnabled:  true,
-				AccessClient: accessClient,
-			}
-		}
+	appSpecificConfig, err := appconfig.Historian(cfg, appconfig.Deps{AccessClient: accessClient})
+	if err != nil {
+		return nil, err
 	}
 
 	// If we're provided an AlertNG, then call back into that for things we need.

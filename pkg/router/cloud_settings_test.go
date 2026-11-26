@@ -198,10 +198,11 @@ func TestCloudSettingsRoutes(t *testing.T) {
 			require.Equal(t, 200, res.Code, res.Body.String())
 			var doc spec3.OpenAPI
 			require.NoError(t, json.Unmarshal(res.Body.Bytes(), &doc))
-			path := root + "/namespaces/{namespace}/app/{name}"
+			path := root + "/namespaces/{namespace}/app/instance"
 			require.NotNil(t, doc.Paths.Paths[path])
 			require.NotNil(t, doc.Paths.Paths[path].Get)
 			require.Nil(t, doc.Paths.Paths[path].Put)
+			require.Nil(t, doc.Paths.Paths[path].Patch)
 			require.Nil(t, doc.Paths.Paths[path].Delete)
 			for _, ns := range []string{"stacks-1", "stacks-2"} {
 				for _, sub := range []string{"health", "resources"} {

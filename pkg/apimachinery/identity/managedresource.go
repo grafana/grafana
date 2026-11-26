@@ -13,12 +13,14 @@ package identity
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	authtypes "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/pkg/apimachinery/internal/managerkinds"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -56,11 +58,20 @@ type ManagerKindRegistration interface {
 var managerKindRegistry = map[utils.ManagerKind]ManagerKindRegistration{}
 
 // RegisterManagerKind registers a manager kind with the check that decides who may assign it.
+// Call it from init: the registry is not safe for concurrent use. It panics if the kind is
+// empty, built-in or already registered.
 func RegisterManagerKind(registration ManagerKindRegistration) {
 	kind := registration.Kind()
 
-	utils.RegisterManagerKind(kind)
+	if kind == utils.ManagerKindUnknown {
+		panic("RegisterManagerKind: the kind is empty")
+	}
 
+	if utils.ParseManagerKindString(string(kind)) != utils.ManagerKindUnknown {
+		panic(fmt.Sprintf("RegisterManagerKind: %q is already a known kind", kind))
+	}
+
+	managerkinds.Add(string(kind))
 	managerKindRegistry[kind] = registration
 }
 
