@@ -343,13 +343,14 @@ func (b *FolderAPIBuilder) storageForVersion(
 
 	// Cascade delete wrapper -- always wired (both ST and MT). Recursively deletes a folder's
 	// subtree on delete; a no-op delegate unless kubernetesFolderCascadeDelete is enabled.
-	b.storage = newCascadeDeleteStorage(b.storage, b.searcher, b.dashboardClient, b.variableClient, b.contentsDeleter, b.accessClient)
+	statusREST := grafanaregistry.NewStatusREST(unified, newFolderStatusStrategy(opts.Scheme, folders.GroupVersion()))
+	b.storage = newCascadeDeleteStorage(b.storage, b.searcher, b.dashboardClient, b.variableClient, b.contentsDeleter, b.accessClient, statusREST)
 
 	storage := map[string]rest.Storage{}
 	storage[folders.StoragePath()] = b.storage
 	// Status writes go straight to the unified store: the ST and cascade wrappers only override
 	// Create/Delete, and the status strategy keeps spec and metadata intact.
-	storage[folders.StoragePath("status")] = grafanaregistry.NewStatusREST(unified, newFolderStatusStrategy(opts.Scheme, folders.GroupVersion()))
+	storage[folders.StoragePath("status")] = statusREST
 
 	b.parents = newParentsGetter(b.storage) // used for validation
 	storage[folders.StoragePath("parents")] = &subParentsREST{

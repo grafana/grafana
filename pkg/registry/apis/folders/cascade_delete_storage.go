@@ -57,13 +57,15 @@ type cascadeDeleteStorage struct {
 	// accessClient authorizes the requester against contained resources before the cascade; nil skips
 	// the pre-flight (e.g. tests).
 	accessClient authlib.AccessClient
+	// status writes status.cascadeDelete, which the main resource ignores; nil skips recording the requester.
+	status rest.Updater
 }
 
 // newCascadeDeleteStorage wraps store, re-exposing the watch/deletecollection interfaces the wrapper
 // would otherwise hide. The wrapped store implements both (MT generic store) or neither
 // (folderStorage), so one check keeps the advertised verbs unchanged.
-func newCascadeDeleteStorage(store grafanarest.Storage, searcher resourcepb.ResourceIndexClient, dashboardClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error), variableClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error), contentsDeleter FolderContentsDeleter, accessClient authlib.AccessClient) grafanarest.Storage {
-	base := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: dashboardClient, variableClient: variableClient, contentsDeleter: contentsDeleter, accessClient: accessClient}
+func newCascadeDeleteStorage(store grafanarest.Storage, searcher resourcepb.ResourceIndexClient, dashboardClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error), variableClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error), contentsDeleter FolderContentsDeleter, accessClient authlib.AccessClient, status rest.Updater) grafanarest.Storage {
+	base := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: dashboardClient, variableClient: variableClient, contentsDeleter: contentsDeleter, accessClient: accessClient, status: status}
 	watcher, hasWatch := store.(rest.Watcher)
 	collectionDeleter, hasCollectionDelete := store.(rest.CollectionDeleter)
 	if hasWatch && hasCollectionDelete {
@@ -724,13 +726,56 @@ func (s *cascadeDeleteStorage) deleteAsync(ctx context.Context, ns authlib.Names
 			return nil, false, err
 		}
 	}
+	base := ctx
 	if !terminating {
 		// TODO: stamping makes the store add the finalizer in the write that starts the delete, which
 		// apistore rejects for an orphaned repository-managed folder without it. A follow-up will make
 		// apistore accept that write.
 		ctx = withCascadeFinalizerOnDelete(ctx, true)
 	}
-	return s.Storage.Delete(ctx, f.Name, deleteValidation, options)
+	// The requester is stamped before the delete, so a folder that this delete marks terminating has
+	// one. Other callers (e.g. an access policy), folders that were already terminating and dry runs
+	// have none, and whatever reads the requester must handle that. The first delete owns it, so a
+	// terminating folder keeps its requester. A requester left on a live folder by an earlier failed
+	// delete is cleared, so it isn't taken for this delete's.
+	requester := cascadeDeleteRequesterOf(user)
+	leftover := f.Status.CascadeDelete != nil && f.Status.CascadeDelete.Requester != nil
+	if s.status == nil || !folderAsyncCascadeDeleteEnabled(ctx) || len(options.DryRun) > 0 || terminating || (requester == nil && !leftover) {
+		return s.Storage.Delete(ctx, f.Name, deleteValidation, options)
+	}
+	// The caller's own preconditions are checked before the stamped version replaces them, which also
+	// covers a controller subfolder delete that was not pinned above.
+	if err := checkDeletePreconditions(f, options); err != nil {
+		return nil, false, err
+	}
+	// Validate first, so a rejected delete doesn't leave a stamp behind. Storage.Delete validates
+	// again, against the stamped version.
+	if deleteValidation != nil {
+		if err := deleteValidation(ctx, f); err != nil {
+			return nil, false, err
+		}
+	}
+	svcCtx := identity.WithServiceIdentityContext(base, ns.OrgID)
+	stamped, err := s.recordCascadeDeleteRequester(svcCtx, f, requester)
+	if err != nil {
+		return nil, false, err
+	}
+	// Delete the stamped version, so an edit in between is a conflict rather than a stale requester.
+	options = options.DeepCopy()
+	if options.Preconditions == nil {
+		options.Preconditions = &metav1.Preconditions{}
+	}
+	uid, rv := stamped.GetUID(), stamped.GetResourceVersion()
+	options.Preconditions.UID, options.Preconditions.ResourceVersion = &uid, &rv
+	res, async, err := s.Storage.Delete(ctx, f.Name, deleteValidation, options)
+	// Rollback is best effort: a leftover stamp is cleared by the next delete, which keeps the
+	// failure path simple while the requester has no reader.
+	if err != nil && requester != nil {
+		if cErr := s.clearCascadeDeleteRequester(context.WithoutCancel(svcCtx), stamped, requester); cErr != nil {
+			logging.FromContext(ctx).Debug("Failed to clear the cascade-delete requester after a failed delete", "folder", f.Name, "error", cErr)
+		}
+	}
+	return res, async, err
 }
 
 // checkFolderDeleteAccess denies the request unless the requester may delete the folder. No-op without
