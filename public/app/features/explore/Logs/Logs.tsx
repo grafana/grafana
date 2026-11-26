@@ -790,13 +790,13 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [exploreId, loading, props.logsFrames, props.range]
   );
 
-  const [renderedLogsWindow, setRenderedLogsWindow] = useState<RenderedLogsWindow | undefined>();
+  const [renderedLogsWindowDebounced, setRenderedLogsWindowDebounced] = useState<RenderedLogsWindow | undefined>();
 
   const updateRenderedLogsWindow = useMemo(
     () =>
       debounce((indices: ListOnItemsRenderedProps) => {
         // debounce to avoid chain reaction on each scroll tick
-        setRenderedLogsWindow({
+        setRenderedLogsWindowDebounced({
           startRowIndex: indices.visibleStartIndex,
           endRowIndex: indices.visibleStopIndex,
           logsSortOrder,
@@ -805,6 +805,13 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [logsSortOrder]
   );
   useEffect(() => () => updateRenderedLogsWindow.cancel(), [updateRenderedLogsWindow]);
+
+  const renderedLogsWindow = useMemo(() => {
+    if (visualisationType !== 'logs' || renderedLogsWindowDebounced?.logsSortOrder !== logsSortOrder) {
+      return undefined;
+    }
+    return renderedLogsWindowDebounced;
+  }, [visualisationType, logsSortOrder, renderedLogsWindowDebounced]);
 
   return (
     <>
@@ -854,7 +861,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           logs: dedupedRows,
           logsLoadingState: loadingState,
           queryTimeRange: props.range,
-          ...(visualisationType === 'logs' && { renderedLogsWindow }),
+          renderedLogsWindow,
         }}
       />
       <PanelChrome
