@@ -205,8 +205,7 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 			// Already in the controller's hands: the delete only (re)marks the folder terminating.
 			return s.Storage.Delete(ctx, name, deleteValidation, options)
 		}
-		// The finalizer is removed as the service identity, so authorize the requester first.
-		// Check for permission to delete the folder alone.
+		// The requester is authorized up front, as the walk deletes the contents as the service identity.
 		check := s.checkFolderDeleteAccess
 		if walksSubtree {
 			// A delete that walks the subtree needs access to check the contents, not just the folder itself.
@@ -675,8 +674,8 @@ func (s *cascadeDeleteStorage) deleteAsync(ctx context.Context, ns authlib.Names
 	return s.Storage.Delete(ctx, f.Name, deleteValidation, options)
 }
 
-// checkFolderDeleteAccess denies the request unless the requester may delete the folder. It runs before
-// service-identity writes, which would otherwise check update permission only. No-op without an access client.
+// checkFolderDeleteAccess denies the request unless the requester may delete the folder. No-op without
+// an access client.
 func (s *cascadeDeleteStorage) checkFolderDeleteAccess(ctx context.Context, user identity.Requester, namespace, name, parentUID string) error {
 	if s.accessClient == nil {
 		return nil

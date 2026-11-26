@@ -11,9 +11,10 @@ import (
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 )
 
-// The cascade-delete finalizer is server-owned: the cascade controller relies on it being present
-// exactly on folders created while the flag was on. A client that adds it would get a folder stuck
-// terminating; one that drops it would skip the cascade and orphan the folder's contents.
+// The cascade-delete finalizer is server-owned: the cascade controller relies on it being present on
+// a folder whose delete starts while the flag is on. It is stamped on create and again when the delete
+// starts, and stripped when the delete starts with the flag off. A client that adds it would get a
+// folder stuck terminating; one that drops it would skip the cascade and orphan the folder's contents.
 
 // applyCascadeDeleteFinalizerOnCreate stamps the finalizer when enabled and otherwise strips any
 // client-sent copy, so a flag-off create is identical to one without this feature.
@@ -27,8 +28,8 @@ func applyCascadeDeleteFinalizerOnCreate(f *foldersv1.Folder, enabled bool) {
 //     wholesale, so clients that replay whole objects (Terraform, export/import, provisioning) or
 //     send "finalizers": null would otherwise drop it and the folder would later be deleted
 //     without its cascade.
-//   - stored folder lacks it: it is stripped if the client added it. Only a flag-on create may
-//     stamp it; adding it later would backfill folders and leave them stuck terminating.
+//   - stored folder lacks it: it is stripped if the client added it. Only a flag-on create or delete
+//     may stamp it; adding it in an update would backfill folders that are not being deleted.
 //   - stored folder has it and is terminating: the client's finalizers are left as sent, so the
 //     finalizer may be removed. This is the only way it goes away, and how the cascade controller
 //     releases the folder once its descendants are gone.
