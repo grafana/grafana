@@ -35,6 +35,44 @@ describe('Card', () => {
     expect(callback).toHaveBeenCalledTimes(1);
   });
 
+  it.each([
+    { role: 'button', props: { onClick: jest.fn() } },
+    { role: 'link', props: { href: '/somewhere' } },
+  ])('describes the heading $role with the card description', ({ role, props }) => {
+    render(
+      <Card noMargin {...props}>
+        <Card.Heading>Test Heading</Card.Heading>
+        <Card.Description>Test description</Card.Description>
+      </Card>
+    );
+
+    expect(screen.getByRole(role, { name: 'Test Heading' })).toHaveAccessibleDescription('Test description');
+  });
+
+  it('does not set aria-describedby on the heading when the card has no description', () => {
+    render(
+      <Card noMargin onClick={jest.fn()}>
+        <Card.Heading>Test Heading</Card.Heading>
+      </Card>
+    );
+
+    expect(screen.getByRole('button', { name: 'Test Heading' })).not.toHaveAttribute('aria-describedby');
+  });
+
+  it('prefers an aria-describedby passed to the heading over the card description', () => {
+    render(
+      <>
+        <span id="custom-description">Custom description</span>
+        <Card noMargin onClick={jest.fn()}>
+          <Card.Heading aria-describedby="custom-description">Test Heading</Card.Heading>
+          <Card.Description>Test description</Card.Description>
+        </Card>
+      </>
+    );
+
+    expect(screen.getByRole('button', { name: 'Test Heading' })).toHaveAccessibleDescription('Custom description');
+  });
+
   describe('Card Actions', () => {
     it('Children should be disabled or enabled according to Card disabled prop', () => {
       const { rerender } = render(
