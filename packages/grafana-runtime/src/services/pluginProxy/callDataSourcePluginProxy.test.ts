@@ -1,9 +1,11 @@
+import { of, throwError } from 'rxjs';
+
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { FlagKeys } from '../../internal';
 import { TracedError } from '../../utils/TracedError';
 import { type MonitoringLogger } from '../../utils/logging';
-import { type BackendSrv, setBackendSrv } from '../backendSrv';
+import { type BackendSrv, type FetchResponse, setBackendSrv } from '../backendSrv';
 import { initializeLoggersRegistry, setLogger } from '../logging/registry';
 import { getPluginMetaFromCache } from '../pluginMeta/plugins';
 import { v0alpha1Response } from '../pluginMeta/test-fixtures/v0alpha1Response';
@@ -15,6 +17,18 @@ jest.mock('../pluginMeta/plugins', () => ({
 }));
 
 const getPluginMetaFromCacheMock = jest.mocked(getPluginMetaFromCache);
+
+const proxyResponse: FetchResponse = {
+  data: {},
+  status: 200,
+  statusText: 'OK',
+  ok: true,
+  headers: new Headers(),
+  redirected: false,
+  type: 'basic',
+  url: '/api/datasources/proxy/uid/tempo-dev/some/route',
+  config: { url: '/api/datasources/proxy/uid/tempo-dev/some/route' },
+};
 
 describe('datasource plugin proxy', () => {
   let backendSrv: BackendSrv;
@@ -50,7 +64,7 @@ describe('datasource plugin proxy', () => {
     };
     setLogger('grafana/runtime.plugins.settings', logger);
     getPluginMetaFromCacheMock.mockResolvedValue(ds);
-    backendSrv.get = jest.fn().mockResolvedValue({});
+    jest.mocked(backendSrv.fetch).mockReturnValue(of(proxyResponse));
   });
 
   describe('when plugins.useMTPluginSettings flag is enabled', () => {
@@ -63,23 +77,23 @@ describe('datasource plugin proxy', () => {
     });
 
     describe('callDatasourcePluginProxy', () => {
-      it('should call new apis with default arguments to call plugin proxy', async () => {
+      it('should keep the existing URL and return the full response for GET', async () => {
         const response = await callDataSourcePluginProxy({
           pluginId: 'grafana-testdata-datasource',
           uid: 'tempo-dev',
-          routePath: 'some/route',
+          routePath: 'some/route?limit=1',
         });
 
-        expect(response).toStrictEqual({});
-        expect(backendSrv.get).toHaveBeenCalledTimes(1);
-        expect(backendSrv.get).toHaveBeenCalledWith(
-          '/api/datasources/proxy/uid/tempo-dev/some/route',
-          undefined,
-          undefined,
-          {
+        expect(response?.data).toStrictEqual({});
+        expect(response?.status).toBe(200);
+        expect(backendSrv.fetch).toHaveBeenCalledTimes(1);
+        expect(backendSrv.fetch).toHaveBeenCalledWith(
+          expect.objectContaining({
+            url: '/api/datasources/proxy/uid/tempo-dev/some/route?limit=1',
+            method: 'GET',
             showErrorAlert: false,
             validatePath: true,
-          }
+          })
         );
       });
 
@@ -91,23 +105,77 @@ describe('datasource plugin proxy', () => {
           showErrorAlert: true,
         });
 
-        expect(backendSrv.get).toHaveBeenCalledTimes(1);
-        expect(backendSrv.get).toHaveBeenCalledWith(
-          '/api/datasources/proxy/uid/tempo-dev/some/route',
-          undefined,
-          undefined,
-          {
+        expect(backendSrv.fetch).toHaveBeenCalledTimes(1);
+        expect(backendSrv.fetch).toHaveBeenCalledWith(
+          expect.objectContaining({
+            url: '/api/datasources/proxy/uid/tempo-dev/some/route',
+            method: 'GET',
             showErrorAlert: true,
             validatePath: true,
-          }
+          })
         );
       });
 
-      it('should reject a bad request without a result', async () => {
-        backendSrv.get = jest.fn().mockRejectedValue({
-          status: 400,
-          data: { message: 'Bad request' },
+      it('should forward POST options and return the full response', async () => {
+        const abortSignal = new AbortController().signal;
+        const profile = new Blob(['profile']);
+        jest.mocked(backendSrv.fetch).mockReturnValue(of({ ...proxyResponse, data: profile }));
+
+        const response = await callDataSourcePluginProxy<Blob>({
+          pluginId: 'grafana-testdata-datasource',
+          uid: 'tempo-dev',
+          routePath: 'render?format=pprof',
+          request: {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            data: { query: 'cpu' },
+            abortSignal,
+            credentials: 'same-origin',
+            responseType: 'blob',
+          },
         });
+
+        expect(response?.status).toBe(200);
+        expect(response?.data === profile).toBe(true);
+        expect(backendSrv.fetch).toHaveBeenCalledTimes(1);
+        expect(backendSrv.fetch).toHaveBeenCalledWith(
+          expect.objectContaining({
+            url: '/api/datasources/proxy/uid/tempo-dev/render?format=pprof',
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            data: { query: 'cpu' },
+            credentials: 'same-origin',
+            responseType: 'blob',
+            showErrorAlert: false,
+            validatePath: true,
+          })
+        );
+        expect(jest.mocked(backendSrv.fetch).mock.calls[0][0].abortSignal === abortSignal).toBe(true);
+      });
+
+      it('should preserve the POST error body and make only one request', async () => {
+        jest
+          .mocked(backendSrv.fetch)
+          .mockReturnValue(throwError(() => ({ status: 404, data: { message: 'Profile not found' } })));
+
+        await expect(
+          callDataSourcePluginProxy({
+            pluginId: 'grafana-testdata-datasource',
+            uid: 'tempo-dev',
+            routePath: 'render',
+            request: { method: 'POST', data: { query: 'cpu' } },
+          })
+        ).rejects.toEqual({
+          status: 404,
+          data: { message: 'Profile not found' },
+        });
+        expect(backendSrv.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it('should reject a bad request without a result', async () => {
+        jest
+          .mocked(backendSrv.fetch)
+          .mockReturnValue(throwError(() => ({ status: 400, data: { message: 'Bad request' } })));
 
         await expect(
           callDataSourcePluginProxy({
@@ -131,7 +199,7 @@ describe('datasource plugin proxy', () => {
         });
 
         expect(response).toBeUndefined();
-        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(backendSrv.fetch).not.toHaveBeenCalled();
       });
 
       it('should return undefined for panel plugins', async () => {
@@ -144,7 +212,7 @@ describe('datasource plugin proxy', () => {
         });
 
         expect(response).toBeUndefined();
-        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(backendSrv.fetch).not.toHaveBeenCalled();
       });
 
       it('should fallback to legacy api when meta is null', async () => {
@@ -156,13 +224,16 @@ describe('datasource plugin proxy', () => {
           routePath: 'some/route',
         });
 
-        expect(response).toStrictEqual({});
-        expect(backendSrv.get).toHaveBeenCalledTimes(1);
-        expect(backendSrv.get).toHaveBeenCalledWith(
-          '/api/datasources/proxy/uid/tempo-dev/some/route',
-          undefined,
-          undefined,
-          { showErrorAlert: false, validatePath: true }
+        expect(response?.data).toStrictEqual({});
+        expect(response?.status).toBe(200);
+        expect(backendSrv.fetch).toHaveBeenCalledTimes(1);
+        expect(backendSrv.fetch).toHaveBeenCalledWith(
+          expect.objectContaining({
+            url: '/api/datasources/proxy/uid/tempo-dev/some/route',
+            method: 'GET',
+            showErrorAlert: false,
+            validatePath: true,
+          })
         );
         expect(logger.logDebug).toHaveBeenCalledTimes(1);
         expect(logger.logDebug).toHaveBeenCalledWith(
@@ -175,7 +246,7 @@ describe('datasource plugin proxy', () => {
 
       it('should reject thrown error if error status is not 403 or 401', async () => {
         const error = { status: 404, message: 'Not found' };
-        backendSrv.get = jest.fn().mockRejectedValue(error);
+        jest.mocked(backendSrv.fetch).mockReturnValue(throwError(() => error));
 
         await expect(
           callDataSourcePluginProxy({
@@ -198,7 +269,7 @@ describe('datasource plugin proxy', () => {
 
       it('should reject thrown error if error status is 403', async () => {
         const error = { status: 403, message: 'Forbidden' };
-        backendSrv.get = jest.fn().mockRejectedValue(error);
+        jest.mocked(backendSrv.fetch).mockReturnValue(throwError(() => error));
 
         await expect(
           callDataSourcePluginProxy({
@@ -215,7 +286,7 @@ describe('datasource plugin proxy', () => {
 
       it('should reject thrown error if error status is 401', async () => {
         const error = { status: 401, message: 'Unauthorized' };
-        backendSrv.get = jest.fn().mockRejectedValue(error);
+        jest.mocked(backendSrv.fetch).mockReturnValue(throwError(() => error));
 
         await expect(
           callDataSourcePluginProxy({
@@ -240,7 +311,7 @@ describe('datasource plugin proxy', () => {
           })
         ).rejects.toThrow('Invalid API version \"v1/namespaces/other/app/instance/proxy/secret?x=\"');
 
-        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(backendSrv.fetch).not.toHaveBeenCalled();
       });
 
       it('should reject invalid plugin IDs without making a request', async () => {
@@ -248,7 +319,7 @@ describe('datasource plugin proxy', () => {
           callDataSourcePluginProxy({ pluginId: 'text/secret?x=', uid: 'tempo-dev', routePath: 'some/route' })
         ).rejects.toThrow('Invalid plugin ID \"text/secret?x=\"');
 
-        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(backendSrv.fetch).not.toHaveBeenCalled();
         expect(getPluginMetaFromCacheMock).not.toHaveBeenCalled();
       });
 
@@ -257,7 +328,7 @@ describe('datasource plugin proxy', () => {
           callDataSourcePluginProxy({ pluginId: 'text', uid: 'tempo-dev/secret?x=', routePath: 'some/route' })
         ).rejects.toThrow('Invalid UID \"tempo-dev/secret?x=\"');
 
-        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(backendSrv.fetch).not.toHaveBeenCalled();
         expect(getPluginMetaFromCacheMock).not.toHaveBeenCalled();
       });
     });
@@ -273,23 +344,23 @@ describe('datasource plugin proxy', () => {
     });
 
     describe('callDatasourcePluginProxy', () => {
-      it('should call legacy apis with default arguments to call plugin proxy', async () => {
+      it('should keep the existing URL and return the full response for GET', async () => {
         const response = await callDataSourcePluginProxy({
           pluginId: 'grafana-testdata-datasource',
           uid: 'tempo-dev',
-          routePath: 'some/route',
+          routePath: 'some/route?limit=1',
         });
 
-        expect(response).toStrictEqual({});
-        expect(backendSrv.get).toHaveBeenCalledTimes(1);
-        expect(backendSrv.get).toHaveBeenCalledWith(
-          '/api/datasources/proxy/uid/tempo-dev/some/route',
-          undefined,
-          undefined,
-          {
+        expect(response?.data).toStrictEqual({});
+        expect(response?.status).toBe(200);
+        expect(backendSrv.fetch).toHaveBeenCalledTimes(1);
+        expect(backendSrv.fetch).toHaveBeenCalledWith(
+          expect.objectContaining({
+            url: '/api/datasources/proxy/uid/tempo-dev/some/route?limit=1',
+            method: 'GET',
             showErrorAlert: false,
             validatePath: true,
-          }
+          })
         );
       });
 
@@ -301,20 +372,19 @@ describe('datasource plugin proxy', () => {
           showErrorAlert: true,
         });
 
-        expect(backendSrv.get).toHaveBeenCalledWith(
-          '/api/datasources/proxy/uid/tempo-dev/some/route',
-          undefined,
-          undefined,
-          {
+        expect(backendSrv.fetch).toHaveBeenCalledWith(
+          expect.objectContaining({
+            url: '/api/datasources/proxy/uid/tempo-dev/some/route',
+            method: 'GET',
             showErrorAlert: true,
             validatePath: true,
-          }
+          })
         );
       });
 
       it('should reject thrown error if error status is not 403 or 401', async () => {
         const error = { status: 404, message: 'Not found' };
-        backendSrv.get = jest.fn().mockRejectedValue(error);
+        jest.mocked(backendSrv.fetch).mockReturnValue(throwError(() => error));
 
         await expect(
           callDataSourcePluginProxy({
@@ -337,7 +407,7 @@ describe('datasource plugin proxy', () => {
 
       it('should reject thrown error if error status is 403', async () => {
         const error = { status: 403, message: 'Forbidden' };
-        backendSrv.get = jest.fn().mockRejectedValue(error);
+        jest.mocked(backendSrv.fetch).mockReturnValue(throwError(() => error));
 
         await expect(
           callDataSourcePluginProxy({
@@ -354,7 +424,7 @@ describe('datasource plugin proxy', () => {
 
       it('should reject thrown error if error status is 401', async () => {
         const error = { status: 401, message: 'Unauthorized' };
-        backendSrv.get = jest.fn().mockRejectedValue(error);
+        jest.mocked(backendSrv.fetch).mockReturnValue(throwError(() => error));
 
         await expect(
           callDataSourcePluginProxy({
@@ -377,15 +447,14 @@ describe('datasource plugin proxy', () => {
           apiVersion: 'v1/namespaces/other/app/instance/proxy/secret?x=',
         });
 
-        expect(backendSrv.get).toHaveBeenCalledTimes(1);
-        expect(backendSrv.get).toHaveBeenCalledWith(
-          '/api/datasources/proxy/uid/tempo-dev/some/route',
-          undefined,
-          undefined,
-          {
+        expect(backendSrv.fetch).toHaveBeenCalledTimes(1);
+        expect(backendSrv.fetch).toHaveBeenCalledWith(
+          expect.objectContaining({
+            url: '/api/datasources/proxy/uid/tempo-dev/some/route',
+            method: 'GET',
             showErrorAlert: false,
             validatePath: true,
-          }
+          })
         );
       });
 
@@ -394,7 +463,7 @@ describe('datasource plugin proxy', () => {
           callDataSourcePluginProxy({ pluginId: 'text/secret?x=', uid: 'tempo-dev', routePath: 'some/route' })
         ).rejects.toThrow('Invalid plugin ID \"text/secret?x=\"');
 
-        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(backendSrv.fetch).not.toHaveBeenCalled();
         expect(getPluginMetaFromCacheMock).not.toHaveBeenCalled();
       });
 
@@ -403,7 +472,7 @@ describe('datasource plugin proxy', () => {
           callDataSourcePluginProxy({ pluginId: 'text', uid: 'tempo-dev/secret?x=', routePath: 'some/route' })
         ).rejects.toThrow('Invalid UID \"tempo-dev/secret?x=\"');
 
-        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(backendSrv.fetch).not.toHaveBeenCalled();
         expect(getPluginMetaFromCacheMock).not.toHaveBeenCalled();
       });
     });

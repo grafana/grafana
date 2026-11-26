@@ -213,7 +213,6 @@ func ProvideAuthZClients(
 		if configurable, ok := accessControl.(legacyclient.LegacyCheckClientSetter); ok {
 			if err := configurable.SetLegacyCheckClient(
 				legacyAccessClient,
-				cfg.IDUseExternalGroupsForGroupsClaim,
 				apirequest.GetNamespaceMapper(cfg),
 				reg,
 			); err != nil {
@@ -257,9 +256,21 @@ func inProcessContextWithClientSpan(ctx context.Context) context.Context {
 func ProvideStandaloneAuthZClient(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer, reg prometheus.Registerer,
 ) (authlib.AccessClient, error) {
+	clients, err := ProvideStandaloneAuthZClients(cfg, features, tracer, reg)
+	if err != nil {
+		return nil, err
+	}
+	return clients.accessClient, nil
+}
+
+// ProvideStandaloneAuthZClients shares the remote connection across modern and
+// legacy permission checks without constructing the local SQL services.
+func ProvideStandaloneAuthZClients(
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer, reg prometheus.Registerer,
+) (*AuthZClients, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
-		return nil, nil
+		return &AuthZClients{}, nil
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -272,7 +283,7 @@ func ProvideStandaloneAuthZClient(
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if zanzanaEnabled && features.IsEnabledGlobally(featuremgmt.FlagZanzanaNoLegacyClient) {
-		return zanzanaClient, nil
+		return newAuthZClients(zanzanaClient, nil, nil), nil
 	}
 
 	authCfg, err := readAuthzClientSettings(cfg)
@@ -286,10 +297,14 @@ func ProvideStandaloneAuthZClient(
 	}
 
 	if zanzanaEnabled {
-		return newShadowClient(cfg.ZanzanaClient.PrimaryEngine, remoteRBACClient, zanzanaClient, reg)
+		client, err := newShadowClient(cfg.ZanzanaClient.PrimaryEngine, remoteRBACClient, zanzanaClient, reg)
+		if err != nil {
+			return nil, err
+		}
+		return newAuthZClients(client, remoteRBACClient.LegacyAccessClient, remoteRBACClient.UserPermissionsClient), nil
 	}
 
-	return remoteRBACClient, nil
+	return newAuthZClients(remoteRBACClient, remoteRBACClient.LegacyAccessClient, remoteRBACClient.UserPermissionsClient), nil
 }
 
 // newZanzanaAwareClient returns the appropriate access client when Zanzana is
@@ -413,6 +428,7 @@ func RegisterRBACAuthZService(
 	userPermissionsResolver rbac.UserPermissionsResolver,
 	exchangeClient authnlib.TokenExchanger,
 	cfg RBACServerSettings,
+	legacyEnumeration ...*legacypermissions.RemoteServer,
 ) {
 	var folderStore store.FolderStore
 	// FIXME: for now we default to using database read proxy for folders if the api url is not configured.
@@ -458,7 +474,20 @@ func RegisterRBACAuthZService(
 
 	srv := handler.GetServer()
 	authzv1.RegisterAuthzServiceServer(srv, server)
-	authzextv1.RegisterLegacyAuthzServiceServer(srv, server)
+	if len(legacyEnumeration) > 0 && legacyEnumeration[0] != nil {
+		authzextv1.RegisterLegacyAuthzServiceServer(srv, &remoteLegacyServer{Service: server, enumeration: legacyEnumeration[0]})
+	} else {
+		authzextv1.RegisterLegacyAuthzServiceServer(srv, server)
+	}
+}
+
+type remoteLegacyServer struct {
+	*rbac.Service
+	enumeration *legacypermissions.RemoteServer
+}
+
+func (s *remoteLegacyServer) LegacyGetUserPermissions(req *authzextv1.LegacyGetUserPermissionsRequest, stream authzextv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
+	return s.enumeration.LegacyGetUserPermissions(req, stream)
 }
 
 type NoopCache struct{}

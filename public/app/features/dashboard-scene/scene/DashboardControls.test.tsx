@@ -162,6 +162,26 @@ describe('DashboardControls', () => {
   });
 
   describe('Component', () => {
+    it.each([true, false])('renders compact tabs through Scenes when rollout is %s', async (enabled) => {
+      setTestFlags({ 'grafana.responsiveTimePickerTabs': enabled });
+      const previousWidth = window.innerWidth;
+      window.innerWidth = 375;
+      try {
+        const scene = buildTestScene();
+        renderInGrafanaContext(<scene.Component model={scene} />);
+        const user = userEvent.setup();
+        await user.click(screen.getByTestId(selectors.components.TimePicker.openButton));
+        if (enabled) {
+          expect(screen.getByRole('tab', { name: 'Relative' })).toHaveAttribute('aria-selected', 'true');
+        } else {
+          expect(screen.getByRole('button', { name: 'Absolute time range' })).toHaveAttribute('aria-expanded', 'false');
+        }
+      } finally {
+        cleanup();
+        window.innerWidth = previousWidth;
+      }
+    });
+
     it('should render', () => {
       const scene = buildTestScene();
       expect(() => {

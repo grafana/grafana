@@ -21,6 +21,7 @@ import { getTimeZoneDisplayInfo } from '../TimeZonePicker/timeZoneUtils';
 import { getMonthOptions } from '../options';
 
 interface Props {
+  hideFiscalYear?: boolean;
   timeZone?: TimeZone;
   fiscalYearStartMonth?: number;
   timestamp?: number;
@@ -100,17 +101,19 @@ export const TimePickerFooter = (props: Props) => {
               }}
               aria-controls={timeZoneSettingsId}
             />
-            <Tab
-              label={t('time-picker.footer.fiscal-year-option', 'Fiscal year')}
-              active={editMode === 'fy'}
-              onChangeTab={() => {
-                setEditMode('fy');
-              }}
-              aria-controls={fiscalYearSettingsId}
-            />
+            {!props.hideFiscalYear && (
+              <Tab
+                label={t('time-picker.footer.fiscal-year-option', 'Fiscal year')}
+                active={editMode === 'fy'}
+                onChangeTab={() => {
+                  setEditMode('fy');
+                }}
+                aria-controls={fiscalYearSettingsId}
+              />
+            )}
           </TabsBar>
           <TabContent className={style.noBackground}>
-            {editMode === 'tz' ? (
+            {editMode === 'tz' || props.hideFiscalYear ? (
               <section
                 role="tabpanel"
                 data-testid={selectors.components.TimeZonePicker.containerV2}
