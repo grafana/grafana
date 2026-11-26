@@ -463,7 +463,7 @@ func TestService_SearchUsersPermissions_MergesLegacyAndZanzana(t *testing.T) {
 
 	siu := &user.SignedInUser{
 		OrgID:       1,
-		Permissions: map[int64]map[string][]string{},
+		Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionUsersPermissionsRead: {"users:id:2"}}},
 	}
 
 	options := accesscontrol.SearchOptions{
@@ -501,7 +501,7 @@ func TestService_SearchUsersPermissions_UsesLegacyWhenZanzanaFails(t *testing.T)
 
 	siu := &user.SignedInUser{
 		OrgID:       1,
-		Permissions: map[int64]map[string][]string{},
+		Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionUsersPermissionsRead: {"users:id:2"}}},
 	}
 
 	options := accesscontrol.SearchOptions{
