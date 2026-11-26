@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"sort"
 	"strconv"
 	"testing"
@@ -453,6 +454,8 @@ type fakeFolderStorage struct {
 	stamped  []string
 	updates  int
 	getErr   map[string]error
+	// finalizersChangedOnUpdate lists folders whose finalizers an update changed.
+	finalizersChangedOnUpdate []string
 	// deletedOnUpdate lists folders the store deleted because an update emptied a terminating folder's finalizers.
 	deletedOnUpdate []string
 	// finalizersAtDelete records each folder's finalizers when it was deleted.
@@ -752,6 +755,9 @@ func (f *fakeFolderStorage) Update(ctx context.Context, name string, objInfo res
 		delete(f.existing, name)
 		f.deletedOnUpdate = append(f.deletedOnUpdate, name)
 		return updated, false, nil
+	}
+	if !slices.Equal(fol.Finalizers, updated.Finalizers) {
+		f.finalizersChangedOnUpdate = append(f.finalizersChangedOnUpdate, name)
 	}
 	f.existing[name] = updated
 	if updated.Labels[utils.LabelKeyFolderTerminating] == utils.LabelValueFolderTerminating {
@@ -2631,6 +2637,7 @@ func TestCascadeDelete_AlignsFinalizerWithAsyncFlag(t *testing.T) {
 		for name, finalizers := range store.finalizersAtDelete {
 			require.Empty(t, finalizers, "%s must not be left terminating for the controller", name)
 		}
+		require.Empty(t, store.finalizersChangedOnUpdate, "the finalizer goes with the delete, not the label update")
 	})
 
 	t.Run("a synchronous walk leaves a terminating descendant's finalizer for the store to release", func(t *testing.T) {

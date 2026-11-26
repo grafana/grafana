@@ -385,7 +385,8 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 	// folder keeps its missing-resource error.
 	// TODO: Defer caller-identity execution to a follow-up; retain system execution for
 	// compatibility after the original caller's preflight authorization above.
-	obj, async, err := s.Storage.Delete(ctx, name, rest.ValidateAllObjectFunc, deleteOptions)
+	// The finalizer goes with the delete itself, not the label update, which managed folders restrict.
+	obj, async, err := s.Storage.Delete(withCascadeFinalizerOnDelete(ctx, false), name, rest.ValidateAllObjectFunc, deleteOptions)
 	if apierrors.IsNotFound(err) && !requested {
 		return obj, async, nil
 	}
@@ -668,11 +669,6 @@ func (s *cascadeDeleteStorage) markTerminating(ctx context.Context, name string,
 		}
 		labels[utils.LabelKeyFolderTerminating] = utils.LabelValueFolderTerminating
 		meta.SetLabels(labels)
-		// A terminating folder keeps its finalizer: the store deletes it as soon as the last one goes,
-		// before its contents are removed.
-		if f, ok := obj.(*foldersv1.Folder); ok && f.DeletionTimestamp == nil {
-			setCascadeDeleteFinalizer(f, false)
-		}
 		return obj, nil
 	})
 
