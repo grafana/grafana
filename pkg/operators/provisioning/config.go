@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/grafana/grafana/pkg/operators/runner"
-
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
@@ -23,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/tracingsetting"
+	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
@@ -128,19 +127,16 @@ type ControllerConfig struct {
 // token =
 // subscriber_credentials_file =
 // tls_enabled =
-func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*ControllerConfig, error) {
+func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer, subscriber *nats.SubscriberService) (*ControllerConfig, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
 	}
 
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
 	controllerCfg := &ControllerConfig{
-		registry: registry,
-		Settings: cfg,
-		// Operators run against an external NATS (no embedded server), so a nil
-		// server yields a config that dials the configured client URLs. Each
-		// consuming controller owns the subscriber service lifecycle.
-		natsSubscriber: runner.NewSubscriber(cfg, registry),
+		registry:       registry,
+		Settings:       cfg,
+		natsSubscriber: subscriber,
 		resyncInterval: operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
 		workerCount:    operatorSec.Key("worker_count").MustInt(1),
 		drainTimeout:   operatorSec.Key("drain_timeout").MustDuration(30 * time.Second),
@@ -588,7 +584,6 @@ func (c *ControllerConfig) TLSConfig() (rest.TLSClientConfig, error) {
 	if err != nil {
 		return rest.TLSClientConfig{}, err
 	}
-
 	c.tlsConfig = &tlsConfig
 
 	return tlsConfig, nil
