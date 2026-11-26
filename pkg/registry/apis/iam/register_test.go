@@ -362,6 +362,86 @@ func TestNewAPIService_AuthorizesSSOSettings(t *testing.T) {
 	})
 }
 
+func TestNewAPIService_AuthorizesAuthInfo(t *testing.T) {
+	b := NewAPIService(
+		nil,
+		nil,
+		legacysql.NewDatabaseProvider(nil),
+		&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+		&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+		&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+		&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+		nil,
+		prometheus.NewRegistry(),
+		nil,
+		nil,
+		tracing.InitializeTracerForTest(),
+		resourcepermission.NewMappersRegistry(),
+		nil,
+		Features{},
+	)
+
+	readPermission := []string{"iam.grafana.app/authinfos:get"}
+	serviceToken := func(permissions []string) authlib.AuthInfo {
+		return authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{Namespace: "stacks-11", Permissions: permissions},
+		})
+	}
+	userToken := authn.NewIDTokenAuthInfo(
+		authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{Namespace: "stacks-11", DelegatedPermissions: readPermission},
+		},
+		&authn.Claims[authn.IDTokenClaims]{
+			Rest: authn.IDTokenClaims{Type: authlib.TypeUser, Namespace: "stacks-11"},
+		},
+	)
+
+	for _, tc := range []struct {
+		name       string
+		verb       string
+		namespace  string
+		identity   authlib.AuthInfo
+		anonymous  bool
+		noIdentity bool
+		want       authorizer.Decision
+	}{
+		{name: "service get", verb: "get", namespace: "stacks-11", identity: serviceToken(readPermission), want: authorizer.DecisionAllow},
+		{name: "service list", verb: "list", namespace: "stacks-11", identity: serviceToken(readPermission), want: authorizer.DecisionAllow},
+		{name: "service watch", verb: "watch", namespace: "stacks-11", identity: serviceToken(readPermission), want: authorizer.DecisionAllow},
+		{name: "service wildcard permission", verb: "list", namespace: "stacks-11", identity: serviceToken([]string{"iam.grafana.app:*"}), want: authorizer.DecisionAllow},
+		{name: "service without read permission", verb: "list", namespace: "stacks-11", identity: serviceToken([]string{"iam.grafana.app/teams:get"}), want: authorizer.DecisionDeny},
+		{name: "service cross namespace", verb: "list", namespace: "stacks-1", identity: serviceToken(readPermission), want: authorizer.DecisionDeny},
+		{name: "service create", verb: "create", namespace: "stacks-11", identity: serviceToken(readPermission), want: authorizer.DecisionDeny},
+		{name: "service update", verb: "update", namespace: "stacks-11", identity: serviceToken(readPermission), want: authorizer.DecisionDeny},
+		{name: "service patch", verb: "patch", namespace: "stacks-11", identity: serviceToken(readPermission), want: authorizer.DecisionDeny},
+		{name: "service delete", verb: "delete", namespace: "stacks-11", identity: serviceToken(readPermission), want: authorizer.DecisionDeny},
+		{name: "service deletecollection", verb: "deletecollection", namespace: "stacks-11", identity: serviceToken(readPermission), want: authorizer.DecisionDeny},
+		{name: "user with delegated permission", verb: "list", namespace: "stacks-11", identity: userToken, want: authorizer.DecisionDeny},
+		{name: "anonymous", verb: "list", namespace: "stacks-11", anonymous: true, want: authorizer.DecisionDeny},
+		{name: "missing identity", verb: "list", namespace: "stacks-11", noIdentity: true, want: authorizer.DecisionDeny},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			switch {
+			case tc.anonymous:
+				ctx = identity.WithRequester(ctx, &identity.StaticRequester{Type: authlib.TypeAnonymous, Namespace: "stacks-11"})
+			case !tc.noIdentity:
+				ctx = authlib.WithAuthInfo(ctx, tc.identity)
+			}
+			decision, _, err := b.GetAuthorizer().Authorize(ctx, authorizer.AttributesRecord{
+				ResourceRequest: true, APIGroup: "iam.grafana.app", Resource: "authinfos",
+				Verb: tc.verb, Namespace: tc.namespace,
+			})
+			if tc.noIdentity {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			require.Equal(t, tc.want, decision)
+		})
+	}
+}
+
 func TestNewAPIService_LoginConfigGate(t *testing.T) {
 	for _, tt := range []struct {
 		name     string

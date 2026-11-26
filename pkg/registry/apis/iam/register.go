@@ -23,6 +23,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/authlib/authn"
+	authzlib "github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/types"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -331,6 +332,28 @@ func NewAPIService(
 				}
 				if a.GetResource() == "teamlbacusage" {
 					return teamLBACUsageAuthorizer.Authorize(ctx, a)
+				}
+
+				if a.GetResource() == iamv0.AuthInfoResourceInfo.GetName() {
+					// AuthInfo exposes credentials metadata, so only direct access-policy
+					// service calls with the authinfos read permission may list or get it,
+					// and only within their own namespace. Writes stay denied.
+					if a.GetVerb() != utils.VerbGet && a.GetVerb() != utils.VerbList && a.GetVerb() != utils.VerbWatch {
+						return authorizer.DecisionDeny, "authinfos is read-only", nil
+					}
+					if user.GetIdentityType() != types.TypeAccessPolicy {
+						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
+					}
+					if !types.NamespaceMatches(user.GetNamespace(), a.GetNamespace()) {
+						return authorizer.DecisionDeny, "authinfos can only be read from the caller's namespace", nil
+					}
+					// list is mapped to get by the permission check, so a single read
+					// permission covers get/list/watch.
+					permission := authzlib.CheckServicePermissions(user, a.GetAPIGroup(), a.GetResource(), utils.VerbGet)
+					if !permission.ServiceCall || !permission.Allowed {
+						return authorizer.DecisionDeny, "calling service lacks authinfos read permission", nil
+					}
+					return authorizer.DecisionAllow, "", nil
 				}
 
 				if a.GetResource() == "roles" {
