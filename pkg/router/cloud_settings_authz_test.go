@@ -15,6 +15,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 )
 
 type settingsAuthzServer struct {
@@ -56,7 +57,7 @@ func TestCloudSettingsAccessCheckerWithAuthlib(t *testing.T) {
 			server := &settingsAuthzServer{allowed: tc.allowed, err: tc.checkErr}
 			channel := &inprocgrpc.Channel{}
 			authzv1.RegisterAuthzServiceServer(channel, server)
-			check := cloudSettingsAccessChecker(authzlib.NewClient(channel))
+			check := pluginaccesscontrol.NewAppAccessCheckerWithClient(authzlib.NewClient(channel))
 			user := settingsRequester("stacks-1")
 			user.Type = tc.identity
 			user.Groups = []string{"team-1"}
@@ -94,7 +95,7 @@ func TestCloudSettingsAccessCheckerWithAuthlib(t *testing.T) {
 }
 
 func TestCloudSettingsAccessChecker(t *testing.T) {
-	require.Nil(t, cloudSettingsAccessChecker(nil))
+	require.Nil(t, pluginaccesscontrol.NewAppAccessCheckerWithClient(nil))
 
 	errCheck := errors.New("authz unavailable")
 	accessPolicy := &identity.StaticRequester{Type: types.TypeAccessPolicy, Namespace: "*",
@@ -121,7 +122,7 @@ func TestCloudSettingsAccessChecker(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var calls []types.CheckRequest
-			check := cloudSettingsAccessChecker(newSettingsAccessClient(func(info types.AuthInfo, req types.CheckRequest) (bool, error) {
+			check := pluginaccesscontrol.NewAppAccessCheckerWithClient(newSettingsAccessClient(func(info types.AuthInfo, req types.CheckRequest) (bool, error) {
 				require.Equal(t, tc.user.GetUID(), info.GetUID())
 				calls = append(calls, req)
 				return tc.allowed, tc.checkErr

@@ -96,11 +96,39 @@ No stack-settings lookup, tenant-context middleware, installed-version lookup, o
 version is introduced into the new path. Existing `pkg/apppluginext` remains available for
 separate deployments; removing its compatibility machinery is separate work.
 
-### Follow-up: caller token exchange
+### Shared settings authorization — implemented
 
-Handle OBO credentials in the plugin client alongside token exchange. Decide the audience and
-scope for backend calls, and cover health, resources, and proxy behavior there. This PR does
-not add access-token forwarding or header manipulation to the settings handlers or proxy.
+Both router loaders use `pluginaccesscontrol.NewAppAccessCheckerWithClient` for ordinary
+settings resource requests. The cloud loader supplies `AccessClient` directly; it no longer
+installs a cloud-specific settings checker and never falls back to LegacyCheck on denial or error.
+The stack-only namespace authorizer stays in the cloud loader.
+
+ST retains a small compatibility wrapper for requests without a concrete namespace, unsupported identity types (including
+legacy API keys), global-permission callers, and cross-namespace admin/anonymous requests.
+These cases still use the existing local access-control implementation. Ordinary users,
+service accounts, and anonymous users in their own namespace use Check. Discovery checks app
+access in the caller's namespace. This wrapper is
+installed only by the local loader; it is not a cloud compatibility path.
+
+Remaining legacy authorization work:
+
+- Replace ST compatibility cases after proving identity, namespace, anonymous-role, and
+  global-permission parity with Check. Then remove `SettingsDependencies.AccessChecker`.
+- Migrate settings writes from `NewSettingsWriteChecker` to Check's existing app-settings
+  write mappings, with coverage for update, patch, delete and secure-value changes. MT remains
+  read-only until its write storage is implemented.
+- Proxy `reqAction` still needs plugin-defined action evaluation, which Check cannot map.
+  Cloud LegacyCheck is experimental and must not be assumed operational. These routes fail
+  closed when it is missing or denies; ordinary settings, health and resources do not need it.
+  Add a supported action-check API or mappings before enabling such routes in cloud.
+- Legacy HTTP endpoints and non-router handler callers still use the existing app checker;
+  migrate them separately with their authentication and namespace compatibility tests.
+
+### Caller token exchange — implemented
+
+The plugin client exchanges the caller's access or ID token for the plugin audience on v2
+health and resources calls. The app-access adapter never changes those credentials.
+HTTP proxy credential behavior remains separate from this v2 exchange.
 
 ### Follow-up: AuthZ Check for app access everywhere in MT — open
 
@@ -111,7 +139,7 @@ Separate PR from the settings switch.
 - MT v3 manifest routes do not check app access: the plugins source gives them
   `pluginManifestAccessControl`, which grants `plugins.app:access` to every requester
   (`plugin_manifests.go`). Give the cloud loader one app-access checker in
-  `PluginDependencies`, built on `cloudSettingsAccessChecker`, and use it for both settings and
+  `PluginDependencies`, built on `NewAppAccessCheckerWithClient`, and use it for both settings and
   manifest routes. ST keeps `NewAppAccessChecker`. This starts denying users without app
   access on manifest routes, as ST does; check that no MT caller relies on the open check first.
 - Decide the proxy `reqAction` path: a `Check` mapping for plugin-defined actions on

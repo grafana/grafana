@@ -122,7 +122,7 @@ func newPluginManifestsClient(section *setting.DynamicSection, prefix string) (*
 func NewCloudRoutesLoader(cfg *setting.Cfg, deps PluginDependencies) (RoutesLoader, error) {
 	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
 	if cloudAppSettingsEnabled(cfg) {
-		if section.Key("plugins_url").MustString("") == "" || deps.Settings.LegacyStore == nil || deps.Settings.AccessChecker == nil {
+		if section.Key("plugins_url").MustString("") == "" || deps.Settings.LegacyStore == nil || deps.AccessClient == nil {
 			return nil, fmt.Errorf("cloud_router: app_settings_plugins requires plugins_url, a legacy settings provider, and an AuthZ client for app access")
 		}
 	}

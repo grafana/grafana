@@ -183,7 +183,7 @@ func (t *pluginManifestsTarget) fetch(ctx context.Context) ([]Backend, int, erro
 
 			// Manifest APIs use their declared access checks; settings check app access.
 			// TODO: this grants every requester app access. Once MT settings calls pass
-			// with cloudSettingsAccessChecker (AuthZ Check), use it here too; see the
+			// with NewAppAccessCheckerWithClient (AuthZ Check), use it here too; see the
 			// follow-up in specs/2026-11-25-mt-app-settings-plan.md.
 			manifestDeps := t.deps
 			manifestDeps.AccessControl = pluginManifestAccessControl{}
