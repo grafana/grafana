@@ -18,6 +18,7 @@ import { findHighlightChunksInText, type GrafanaTheme2, LogsDedupStrategy, type 
 import { t } from '@grafana/i18n';
 import { Button, Icon, Tooltip } from '@grafana/ui';
 
+import { isElement } from '../../utils';
 import { LogLabels } from '../LogLabels';
 import { LogMessageAnsi } from '../LogMessageAnsi';
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
@@ -200,8 +201,7 @@ const LogLineComponent = memo(
 
     const handleClick = useCallback(
       (e: MouseEvent<HTMLElement>) => {
-        // the logs can render in another window than this one, such as a Document Picture-in-Picture window
-        if (isLogLineClick(e.target, e.currentTarget.ownerDocument.defaultView ?? window)) {
+        if (isLogLineClick(e.target)) {
           onClick(e, log);
         }
       },
@@ -823,9 +823,7 @@ export const getStyles = (
   };
 };
 
-function isLogLineClick(target: EventTarget, lineWindow: typeof window) {
-  const targetIsButton =
-    target instanceof lineWindow.HTMLButtonElement ||
-    (target instanceof lineWindow.Element && target.closest('button'));
+function isLogLineClick(target: EventTarget) {
+  const targetIsButton = isElement(target) && target.closest('button');
   return !targetIsButton;
 }

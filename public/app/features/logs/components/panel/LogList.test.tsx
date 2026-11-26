@@ -373,7 +373,7 @@ describe('LogList', () => {
         document.getSelection = tabGetSelection;
       }
     });
-    it('Appears after selecting text in a list moved to another window without rendering again', () => {
+    it('Appears after selecting text in a list moved to another window without rendering again, and closes on a press outside it', () => {
       const iframe = document.createElement('iframe');
       document.body.appendChild(iframe);
       const otherDocument = iframe.contentDocument!;
@@ -386,7 +386,10 @@ describe('LogList', () => {
         addRange: (range: Range) => {},
       } as Selection);
       const { container, unmount } = render(
-        <LogList {...defaultProps} onClickFilterString={jest.fn()} onClickFilterOutString={jest.fn()} />
+        <>
+          <LogList {...defaultProps} onClickFilterString={jest.fn()} onClickFilterOutString={jest.fn()} />
+          <div>Outside the list</div>
+        </>
       );
       // as a page moves an element into a Document Picture-in-Picture window: `pipWindow.document.body.append(element)`
       otherDocument.body.appendChild(container);
@@ -395,6 +398,10 @@ describe('LogList', () => {
         // user-event drives pointer input through this window's document, so fire the other window's event directly
         fireEvent.click(within(otherDocument.body).getByText('log message 1'));
         expect(within(otherDocument.body).getByText('Copy selection')).toBeInTheDocument();
+
+        // the text stays selected, but the press is outside the list
+        fireEvent.contextMenu(within(otherDocument.body).getByText('Outside the list'));
+        expect(within(otherDocument.body).queryByText('Copy selection')).not.toBeInTheDocument();
       } finally {
         // Unmount before the iframe goes, or React cannot remove the list from it.
         unmount();

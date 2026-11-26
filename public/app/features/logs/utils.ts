@@ -614,3 +614,12 @@ export function getLogsVisibleRange(logs: LogRowModel[]) {
   }
   return { end, start };
 }
+
+/**
+ * Whether `target` is an element of any window. The logs can render in another window than this one, such as a
+ * Document Picture-in-Picture window, where an element can be that window's or this one's moved there, and each fails
+ * the other window's `instanceof Element`.
+ */
+export function isElement(target: EventTarget | null): target is Element {
+  return target !== null && 'nodeType' in target && target.nodeType === Node.ELEMENT_NODE;
+}
