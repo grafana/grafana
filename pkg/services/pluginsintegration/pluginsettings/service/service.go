@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -43,8 +44,9 @@ type Service struct {
 }
 
 type cachedDecryptedJSON struct {
-	updated time.Time
-	json    map[string]string
+	updated   time.Time
+	encrypted map[string][]byte
+	json      map[string]string
 }
 
 type secureJSONDecryptionCache struct {
@@ -127,7 +129,11 @@ func (s *Service) DecryptedValues(ps *pluginsettings.DTO) map[string]string {
 	s.decryptionCache.Lock()
 	defer s.decryptionCache.Unlock()
 
-	if item, present := s.decryptionCache.cache[ps.ID]; present && ps.Updated.Equal(item.updated) {
+	// Updated has second precision in the database, so two writes in the same second
+	// have the same Updated. Encryption is not deterministic, so compare the
+	// ciphertext too.
+	if item, present := s.decryptionCache.cache[ps.ID]; present && ps.Updated.Equal(item.updated) &&
+		maps.EqualFunc(item.encrypted, ps.SecureJSONData, bytes.Equal) {
 		return item.json
 	}
 
@@ -138,8 +144,9 @@ func (s *Service) DecryptedValues(ps *pluginsettings.DTO) map[string]string {
 	}
 
 	s.decryptionCache.cache[ps.ID] = cachedDecryptedJSON{
-		updated: ps.Updated,
-		json:    json,
+		updated:   ps.Updated,
+		encrypted: maps.Clone(ps.SecureJSONData),
+		json:      json,
 	}
 
 	return json

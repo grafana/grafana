@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -23,7 +24,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestService_DecryptedValuesCache(t *testing.T) {
-	t.Run("When plugin settings hasn't been updated, encrypted JSON should be fetched from cache", func(t *testing.T) {
+	t.Run("When plugin settings hasn't been updated, decrypted JSON should be fetched from cache", func(t *testing.T) {
 		ctx := context.Background()
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -43,22 +44,50 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 		}
 
 		// Populate cache
-		password, ok := psService.DecryptedValues(&ps)["password"]
-		require.Equal(t, "password", password)
-		require.True(t, ok)
+		first := psService.DecryptedValues(&ps)
+		require.Equal(t, map[string]string{"password": "password"}, first)
 
+		// The same map is returned, so the values were not decrypted again.
+		second := psService.DecryptedValues(&ps)
+		require.Equal(t, reflect.ValueOf(first).Pointer(), reflect.ValueOf(second).Pointer())
+	})
+
+	t.Run("When secure JSON changes within the same updated time, encrypted JSON should not be fetched from cache", func(t *testing.T) {
+		ctx := context.Background()
+
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		psService := ProvideService(nil, secretsService)
+
+		encryptedJsonData, err := secretsService.EncryptJsonData(
+			ctx,
+			map[string]string{
+				"password": "password",
+			}, secrets.WithoutScope())
+		require.NoError(t, err)
+
+		updated := time.Unix(100, 0)
+		ps := pluginsettings.DTO{
+			ID:             1,
+			JSONData:       map[string]any{},
+			SecureJSONData: encryptedJsonData,
+			Updated:        updated,
+		}
+
+		// Populate cache
+		require.Equal(t, map[string]string{"password": "password"}, psService.DecryptedValues(&ps))
+
+		// The database stores updated with second precision, so a second write in the
+		// same second keeps the same updated time.
 		encryptedJsonData, err = secretsService.EncryptJsonData(
 			ctx,
 			map[string]string{
 				"password": "",
+				"apiKey":   "new",
 			}, secrets.WithoutScope())
 		require.NoError(t, err)
-
 		ps.SecureJSONData = encryptedJsonData
 
-		password, ok = psService.DecryptedValues(&ps)["password"]
-		require.Equal(t, "password", password)
-		require.True(t, ok)
+		require.Equal(t, map[string]string{"password": "", "apiKey": "new"}, psService.DecryptedValues(&ps))
 	})
 
 	t.Run("When plugin settings is updated, encrypted JSON should not be fetched from cache", func(t *testing.T) {
