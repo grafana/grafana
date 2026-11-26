@@ -1293,11 +1293,42 @@ func TestFolderAPIBuilder_Mutate_CascadeDeleteFinalizer(t *testing.T) {
 		require.NoError(t, newBuilder(t).Mutate(context.Background(), attrs(f, nil, admission.Create), nil))
 		require.Equal(t, []string{folders.CascadeDeleteFinalizer}, f.Finalizers)
 	})
+	t.Run("create drops the requester annotation unless the caller is a service identity", func(t *testing.T) {
+		for name, tc := range map[string]struct {
+			ctx  context.Context
+			want bool
+		}{
+			"user":    {context.Background(), false},
+			"service": {identity.WithServiceIdentityContext(context.Background(), 1), true},
+		} {
+			t.Run(name, func(t *testing.T) {
+				setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: true})
+				f := folderWithFinalizers()
+				f.Annotations = map[string]string{annoKeyCascadeDeleteRequester: "x"}
+				require.NoError(t, newBuilder(t).Mutate(tc.ctx, attrs(f, nil, admission.Create), nil))
+				require.Equal(t, tc.want, f.Annotations[annoKeyCascadeDeleteRequester] != "")
+			})
+		}
+	})
 	t.Run("create with flag off strips", func(t *testing.T) {
 		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: false})
 		f := folderWithFinalizers(folders.CascadeDeleteFinalizer)
 		require.NoError(t, newBuilder(t).Mutate(context.Background(), attrs(f, nil, admission.Create), nil))
 		require.Nil(t, f.Finalizers)
+	})
+	t.Run("update restores a dropped requester annotation", func(t *testing.T) {
+		f := folderWithFinalizers()
+		old := folderWithFinalizers()
+		old.Annotations = map[string]string{annoKeyCascadeDeleteRequester: "x"}
+		require.NoError(t, newBuilder(t).Mutate(context.Background(), attrs(f, old, admission.Update), nil))
+		require.Equal(t, "x", f.Annotations[annoKeyCascadeDeleteRequester])
+	})
+	t.Run("update rejects a changed requester annotation", func(t *testing.T) {
+		f, old := folderWithFinalizers(), folderWithFinalizers()
+		f.Spec.Title, old.Spec.Title = "t", "t"
+		f.Annotations = map[string]string{annoKeyCascadeDeleteRequester: "y"}
+		old.Annotations = map[string]string{annoKeyCascadeDeleteRequester: "x"}
+		require.Error(t, newBuilder(t).Validate(context.Background(), attrs(f, old, admission.Update), nil))
 	})
 	t.Run("update restores a dropped finalizer", func(t *testing.T) {
 		f := folderWithFinalizers()
