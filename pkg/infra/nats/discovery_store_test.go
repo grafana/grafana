@@ -22,8 +22,8 @@ func (s *batchDeleteSpyKV) BatchDelete(ctx context.Context, section string, keys
 	return s.KV.BatchDelete(ctx, section, keys)
 }
 
-// newTestKVStore builds a kvPeerStore over an in-memory KV with a settable clock
-// so TTL behaviour is deterministic.
+// newTestKVStore builds a kvPeerStore over an in-memory KV with a settable
+// clock for the UpdatedAt it writes.
 func newTestKVStore(t *testing.T, clusterName string, now *time.Time) *kvPeerStore {
 	t.Helper()
 	db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
@@ -37,24 +37,21 @@ func newTestKVStore(t *testing.T, clusterName string, now *time.Time) *kvPeerSto
 
 func TestKVPeerStore(t *testing.T) {
 	ctx := context.Background()
-	ttl := 30 * time.Second
 
-	t.Run("upsert then listActive round-trips the route url", func(t *testing.T) {
+	t.Run("upsert then list round-trips the row", func(t *testing.T) {
 		now := time.Unix(1_000, 0)
 		s := newTestKVStore(t, "grafana", &now)
 
 		require.NoError(t, s.upsert(ctx, peer{ServerName: "a", RouteURL: "nats://10.0.0.1:6222"}))
-		require.NoError(t, s.upsert(ctx, peer{ServerName: "b", RouteURL: "nats://10.0.0.2:6222"}))
+		now = now.Add(time.Second)
+		require.NoError(t, s.upsert(ctx, peer{ServerName: "a", RouteURL: "nats://10.0.0.1:6222"}))
 
-		peers, err := s.listActive(ctx, ttl)
+		records, err := s.list(ctx)
 		require.NoError(t, err)
-		require.ElementsMatch(t, []peer{
-			{ServerName: "a", RouteURL: "nats://10.0.0.1:6222"},
-			{ServerName: "b", RouteURL: "nats://10.0.0.2:6222"},
-		}, peers)
+		require.Equal(t, []peerRecord{{ServerName: "a", RouteURL: "nats://10.0.0.1:6222", UpdatedAt: 1_001}}, records)
 	})
 
-	t.Run("only returns peers of the same cluster", func(t *testing.T) {
+	t.Run("only lists rows of the same cluster", func(t *testing.T) {
 		now := time.Unix(1_000, 0)
 		db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
 		require.NoError(t, err)
@@ -68,37 +65,36 @@ func TestKVPeerStore(t *testing.T) {
 		require.NoError(t, a.upsert(ctx, peer{ServerName: "a1", RouteURL: "nats://10.0.0.1:6222"}))
 		require.NoError(t, b.upsert(ctx, peer{ServerName: "b1", RouteURL: "nats://10.0.0.2:6222"}))
 
-		peersA, err := a.listActive(ctx, ttl)
-		require.NoError(t, err)
-		require.Equal(t, []peer{{ServerName: "a1", RouteURL: "nats://10.0.0.1:6222"}}, peersA)
-
-		peersB, err := b.listActive(ctx, ttl)
-		require.NoError(t, err)
-		require.Equal(t, []peer{{ServerName: "b1", RouteURL: "nats://10.0.0.2:6222"}}, peersB)
+		require.Equal(t, []string{"a1"}, listedNames(t, a))
+		require.Equal(t, []string{"b1"}, listedNames(t, b))
 	})
 
-	t.Run("excludes and prunes peers older than the ttl", func(t *testing.T) {
+	t.Run("list neither filters nor prunes old rows", func(t *testing.T) {
 		now := time.Unix(1_000, 0)
 		s := newTestKVStore(t, "grafana", &now)
 
-		require.NoError(t, s.upsert(ctx, peer{ServerName: "stale", RouteURL: "nats://10.0.0.1:6222"}))
-		now = now.Add(ttl + time.Second)
-		require.NoError(t, s.upsert(ctx, peer{ServerName: "fresh", RouteURL: "nats://10.0.0.2:6222"}))
+		require.NoError(t, s.upsert(ctx, peer{ServerName: "old", RouteURL: "nats://10.0.0.1:6222"}))
+		now = now.Add(24 * time.Hour)
+		require.NoError(t, s.upsert(ctx, peer{ServerName: "new", RouteURL: "nats://10.0.0.2:6222"}))
 
-		// stale's heartbeat is now older than the ttl; only fresh is active, and
-		// listActive prunes the stale row as a side effect.
-		peers, err := s.listActive(ctx, ttl)
-		require.NoError(t, err)
-		require.Equal(t, []peer{{ServerName: "fresh", RouteURL: "nats://10.0.0.2:6222"}}, peers)
-
-		_, err = s.kv.Get(ctx, kv.NATSPeersSection, s.peerKey("stale"))
-		require.ErrorIs(t, err, kv.ErrNotFound)
-		r, err := s.kv.Get(ctx, kv.NATSPeersSection, s.peerKey("fresh"))
-		require.NoError(t, err)
-		require.NoError(t, r.Close())
+		require.ElementsMatch(t, []string{"old", "new"}, listedNames(t, s))
+		// The first list deleted nothing.
+		require.ElementsMatch(t, []string{"old", "new"}, listedNames(t, s))
 	})
 
-	t.Run("prunes stale peers in chunks under the batch limit", func(t *testing.T) {
+	t.Run("prune deletes only the named rows", func(t *testing.T) {
+		now := time.Unix(1_000, 0)
+		s := newTestKVStore(t, "grafana", &now)
+
+		for _, name := range []string{"a", "b", "c"} {
+			require.NoError(t, s.upsert(ctx, peer{ServerName: name, RouteURL: "nats://10.0.0.1:6222"}))
+		}
+		require.NoError(t, s.prune(ctx, []string{"a", "c", "missing"}))
+
+		require.Equal(t, []string{"b"}, listedNames(t, s))
+	})
+
+	t.Run("prunes in chunks under the batch limit", func(t *testing.T) {
 		now := time.Unix(1_000, 0)
 		db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
 		require.NoError(t, err)
@@ -109,14 +105,15 @@ func TestKVPeerStore(t *testing.T) {
 		s.now = func() time.Time { return now }
 
 		const staleCount = 2*maxPeerDeleteBatch + 1
+		names := make([]string, 0, staleCount)
 		for i := range staleCount {
-			require.NoError(t, s.upsert(ctx, peer{ServerName: fmt.Sprintf("stale-%d", i), RouteURL: "nats://10.0.0.1:6222"}))
+			name := fmt.Sprintf("stale-%d", i)
+			names = append(names, name)
+			require.NoError(t, s.upsert(ctx, peer{ServerName: name, RouteURL: "nats://10.0.0.1:6222"}))
 		}
-		now = now.Add(ttl + time.Second)
 
-		peers, err := s.listActive(ctx, ttl)
-		require.NoError(t, err)
-		require.Empty(t, peers)
+		require.NoError(t, s.prune(ctx, names))
+		require.Empty(t, listedNames(t, s))
 
 		total := 0
 		for _, n := range spy.sizes {
@@ -134,8 +131,17 @@ func TestKVPeerStore(t *testing.T) {
 		require.NoError(t, s.upsert(ctx, peer{ServerName: "a", RouteURL: "nats://10.0.0.1:6222"}))
 		require.NoError(t, s.remove(ctx, "a"))
 
-		peers, err := s.listActive(ctx, ttl)
-		require.NoError(t, err)
-		require.Empty(t, peers)
+		require.Empty(t, listedNames(t, s))
 	})
+}
+
+func listedNames(t *testing.T, s *kvPeerStore) []string {
+	t.Helper()
+	records, err := s.list(t.Context())
+	require.NoError(t, err)
+	names := make([]string, 0, len(records))
+	for _, rec := range records {
+		names = append(names, rec.ServerName)
+	}
+	return names
 }

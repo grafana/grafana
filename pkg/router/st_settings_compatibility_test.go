@@ -71,9 +71,13 @@ func TestSTAppSettingsFeatureFlags(t *testing.T) {
 			}
 			cfg := setting.NewCfg()
 			ac := &actest.FakeAccessControl{ExpectedEvaluate: true}
+			appAllowed := true
+			access := newSettingsAccessClient(func(_ types.AuthInfo, req types.CheckRequest) (bool, error) {
+				return appAllowed, nil
+			})
 			features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware)
 			deps := ProvidePluginLoaderDependencies(client, stCompatibilityContext{}, nil, sources, settings, nil, ac,
-				&resource.MockResourceClient{}, nil, nil, nil, features, cfg, dualwrite.ProvideServiceForTests(cfg), nil, nil, nil, nil, nil)
+				&resource.MockResourceClient{}, access, nil, nil, features, cfg, dualwrite.ProvideServiceForTests(cfg), nil, nil, nil, nil, nil)
 			loader, err := ProvideRoutesLoader(cfg, deps, nil)
 			require.NoError(t, err)
 			backends, err := loader.Load(t.Context())
@@ -135,10 +139,14 @@ func TestSTAppSettingsFeatureFlags(t *testing.T) {
 			require.Len(t, discovery.APIResources, 1)
 			require.Contains(t, discovery.APIResources[0].Verbs, "update", "MT read-only discovery must not affect ST")
 			ac.ExpectedEvaluate = false
-			for _, method := range []string{"GET", "PUT"} {
-				res = serve(method, item, string(body))
-				require.Equal(t, http.StatusForbidden, res.Code, res.Body.String())
-			}
+			res = serve("GET", item, "")
+			require.Equal(t, http.StatusOK, res.Code, "reads do not use legacy RBAC: %s", res.Body.String())
+			res = serve("PUT", item, string(body))
+			require.Equal(t, http.StatusForbidden, res.Code, res.Body.String())
+			appAllowed = false
+			res = serve("GET", item, "")
+			require.Equal(t, http.StatusForbidden, res.Code, res.Body.String())
+			appAllowed = true
 			ac.ExpectedEvaluate = true
 			settings.Plugins["example-app"].Enabled = false
 			res = serve("GET", item+"/health", "")
