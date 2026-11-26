@@ -31,7 +31,7 @@ func TestJobCleanupService_IsDisabled(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			svc := ProvideJobCleanupService(tc.builder)
+			svc := ProvideJobCleanupService(tc.builder, nil)
 			assert.Equal(t, tc.disabled, svc.IsDisabled())
 			// The background service manager looks up this name in its
 			// dependency map; any other name would start it after Core.
@@ -91,11 +91,8 @@ func TestJobCleanupService_Run(t *testing.T) {
 }
 
 func newTestJobCleanupService() (*JobCleanupService, *APIBuilder) {
-	builder := &APIBuilder{
-		registry:      prometheus.NewPedanticRegistry(),
-		loopbackReady: make(chan struct{}),
-	}
-	return ProvideJobCleanupService(builder), builder
+	builder := &APIBuilder{loopbackReady: make(chan struct{})}
+	return ProvideJobCleanupService(builder, prometheus.NewPedanticRegistry()), builder
 }
 
 // runJobCleanupService starts Run in the background and returns its result
