@@ -186,7 +186,7 @@ func searchRequester(ns types.NamespaceInfo, caller *authzv1.LegacySearchRequest
 	}
 	kind := types.IdentityType(assertion.Type)
 	if !types.IsIdentityType(kind, types.TypeUser, types.TypeServiceAccount, types.TypeAnonymous, types.TypeRenderService, types.TypeAPIKey, types.TypeAccessPolicy) {
-		return nil, status.Error(codes.InvalidArgument, "unsupported legacy caller identity type")
+		return nil, status.Errorf(codes.InvalidArgument, "unsupported legacy caller identity type %q", kind)
 	}
 	orgID := caller.GetOrgId()
 	if orgID != ns.OrgID && orgID != 0 && orgID != -1 {

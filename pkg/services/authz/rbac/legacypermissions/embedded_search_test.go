@@ -93,6 +93,7 @@ func TestEmbeddedSearchRejectsInvalidCaller(t *testing.T) {
 	req.Requester.Identity.Type = "invalid"
 	_, err = client.LegacySearchUsersPermissions(t.Context(), LegacySearchPermissionCaller("default"), req)
 	require.Equal(t, codes.InvalidArgument, status.Code(err))
+	require.Equal(t, `unsupported legacy caller identity type "invalid"`, status.Convert(err).Message())
 }
 
 func TestEmbeddedSearchRejectsInvalidNamespace(t *testing.T) {
