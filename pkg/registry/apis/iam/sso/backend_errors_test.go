@@ -3,6 +3,7 @@ package sso
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -81,4 +82,32 @@ func TestMTSettingsStore_GetBackendErrorIsSanitized(t *testing.T) {
 	f.listErr = errors.New(backendDiagnostic)
 	_, err := NewMTSettingsStore(f, f, nil).Get(nsCtx(), "github", &metav1.GetOptions{})
 	requireSanitizedResponse(t, err, http.StatusInternalServerError)
+}
+
+// The MT-Settings client wraps every failure with fmt.Errorf("request failed: %w"),
+// so the leaking error is never the outer one. The sanitizer must classify the
+// outer error the way the apiserver does, not unwrap the chain.
+func TestMTSettingsStore_WrappedStatusErrorIsSanitized(t *testing.T) {
+	f := newFakeSettings()
+	f.listErr = fmt.Errorf("request failed: %w", apierrors.NewInternalError(errors.New(backendDiagnostic)))
+	_, err := NewMTSettingsStore(f, f, nil).List(nsCtx(), nil)
+	requireSanitizedResponse(t, err, http.StatusInternalServerError)
+}
+
+func TestBackendError_PreservesTypedErrors(t *testing.T) {
+	gr := schema.GroupResource{Group: "iam.grafana.app", Resource: "ssosettings"}
+	for _, tc := range []struct {
+		name string
+		err  error
+	}{
+		{"not found", apierrors.NewNotFound(gr, "github")},
+		{"bad request", apierrors.NewBadRequest("bad")},
+		{"conflict", apierrors.NewConflict(gr, "github", errors.New("conflict"))},
+		{"not implemented", apierrors.NewGenericServerResponse(http.StatusNotImplemented, "get", gr, "github", "nope", 0, false)},
+		{"errutil not found", ssosettings.ErrNotFound},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.err, backendError(context.Background(), tc.err))
+		})
+	}
 }
