@@ -2,20 +2,27 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -245,6 +252,43 @@ func TestAPIEndpoint_DeleteOrgs(t *testing.T) {
 			require.NoError(t, res.Body.Close())
 		})
 	}
+}
+
+func TestAPIEndpoint_DeleteOrgWithInvalidID(t *testing.T) {
+	admin := authedUserWithPermissions(1, 1, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsDelete}})
+	admin.Permissions[accesscontrol.GlobalOrgID] = admin.GetPermissions()
+	dashboardService := dashboards.NewFakeDashboardService(t)
+	dashboardService.On("DeleteAllDashboards", mock.Anything, int64(-9999)).Return(nil).Maybe()
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = setting.NewCfg()
+		hs.AccessControl = acimpl.ProvideAccessControl(hs.Features)
+		hs.authnService = &authntest.FakeService{
+			ExpectedIdentities: []*authn.Identity{
+				{OrgID: accesscontrol.NoOrgID},
+				{OrgID: accesscontrol.GlobalOrgID, Permissions: admin.Permissions},
+			},
+			ExpectedErrs: []error{nil, nil},
+		}
+		deletionService, err := orgimpl.ProvideDeletionService(nil, hs.Cfg, dashboardService, hs.AccessControl, apiserver.WithoutRestConfig)
+		require.NoError(t, err)
+		hs.orgDeletionService = deletionService
+	})
+	server.Mux.UseMiddleware(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			next.ServeHTTP(w, r.WithContext(identity.WithRequester(r.Context(), admin)))
+		})
+	})
+
+	req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodDelete, "/api/orgs/-9999", nil), admin)
+	res, err := server.Send(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, res.Body.Close()) })
+
+	var body map[string]string
+	require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
+	assert.Equal(t, http.StatusNotFound, res.StatusCode, body["message"])
+	assert.Equal(t, "Failed to delete organization. ID not found", body["message"])
+	dashboardService.AssertNotCalled(t, "DeleteAllDashboards", mock.Anything, mock.Anything)
 }
 
 func TestAPIEndpoint_GetOrg(t *testing.T) {
