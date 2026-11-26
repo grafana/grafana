@@ -39,10 +39,10 @@ func TestPluginSettingsStoreProvider(t *testing.T) {
 			}}
 			cfg := setting.NewCfg()
 			dw := dualwrite.ProvideServiceForTests(cfg)
-			deps := PluginDependencies{Cfg: cfg, DualWrite: dw}
+			deps := PluginDependencies{Cfg: cfg, DualWrite: dw, AccessClient: claims.FixedAccessClient(true)}
 			if local {
 				deps = ProvidePluginLoaderDependencies(nil, nil, nil, nil, settings, nil, nil,
-					nil, nil, nil, nil, nil, cfg, dw, nil, nil, nil, nil, nil).PluginDependencies
+					nil, claims.FixedAccessClient(true), nil, nil, nil, cfg, dw, nil, nil, nil, nil, nil).PluginDependencies
 			} else {
 				deps.Settings.LegacyStore = func(_ context.Context, id string) (grafanarest.Storage, error) {
 					return appsettings.NewLegacySettingsStore(id, id, settings), nil

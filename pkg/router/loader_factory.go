@@ -137,7 +137,6 @@ func ProvideCloudRoutesLoader(
 			LegacyStore:         settings.LegacyStore,
 			ReadOnly:            true,
 			AuthenticateV2:      true,
-			AccessChecker:       cloudSettingsAccessChecker(clients.LegacyAccess),
 			NamespaceAuthorizer: authorizer.AuthorizerFunc(cloudSettingsNamespaceAuthorizer),
 			Middleware: append([]backend.HandlerMiddleware{
 				clientmiddleware.NewTracingHeaderMiddleware(),
