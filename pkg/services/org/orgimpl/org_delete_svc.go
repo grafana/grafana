@@ -70,6 +70,9 @@ func (s *DeletionService) Delete(ctx context.Context, cmd *org.DeleteOrgCommand)
 	if !hasAccess {
 		return errors.New("access denied to delete org")
 	}
+	if cmd.ID < 1 {
+		return org.ErrOrgNotFound.Errorf("invalid organization ID: %d", cmd.ID)
+	}
 
 	ctx, _ = identity.WithServiceIdentity(ctx, cmd.ID)
 	err = s.dashSvc.DeleteAllDashboards(ctx, cmd.ID)

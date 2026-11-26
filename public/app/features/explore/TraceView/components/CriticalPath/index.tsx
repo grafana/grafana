@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import memoizeOne from 'memoize-one';
+import { memoizeOne } from 'memoize-one';
 
 import { type TraceSpan, type CriticalPathSection, type Trace } from '../types/trace';
 

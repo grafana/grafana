@@ -2878,11 +2878,6 @@
       "count": 1
     }
   },
-  "public/app/features/org/NewOrgPage.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
   "public/app/features/org/OrgProfile.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
@@ -2891,11 +2886,6 @@
   "public/app/features/org/SelectOrgPage.tsx": {
     "react-hooks/immutability": {
       "count": 1
-    }
-  },
-  "public/app/features/org/UserInviteForm.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 4
     }
   },
   "public/app/features/org/state/reducers.ts": {
