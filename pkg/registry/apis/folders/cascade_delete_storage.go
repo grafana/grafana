@@ -212,7 +212,7 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 		if err := check(ctx, user, ns.Value, f.Name, parentUID); err != nil {
 			return nil, false, err
 		}
-		if f, options, deleteValidation, err = s.setCascadeFinalizer(ctx, ns, f, user, false, deleteValidation, options); err != nil {
+		if f, options, deleteValidation, err = s.setCascadeFinalizer(ctx, ns, f, false, deleteValidation, options); err != nil {
 			return nil, false, err
 		}
 		obj = f
@@ -610,7 +610,7 @@ func (s *cascadeDeleteStorage) deleteAsync(ctx context.Context, ns authlib.Names
 		}
 	}
 	if !terminating && !hasCascadeDeleteFinalizer(f) {
-		if f, options, deleteValidation, err = s.setCascadeFinalizer(ctx, ns, f, user, true, deleteValidation, options); err != nil {
+		if f, options, deleteValidation, err = s.setCascadeFinalizer(ctx, ns, f, true, deleteValidation, options); err != nil {
 			return nil, false, err
 		}
 	}
@@ -627,7 +627,7 @@ func (s *cascadeDeleteStorage) deleteAsync(ctx context.Context, ns authlib.Names
 // options and validation to continue with. Validation runs on the aligned folder because it treats a
 // finalizer folder's forced delete differently. The write bypasses the update admission, which would
 // restore the stored finalizer state.
-func (s *cascadeDeleteStorage) setCascadeFinalizer(ctx context.Context, ns authlib.NamespaceInfo, f *foldersv1.Folder, user identity.Requester, present bool, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (*foldersv1.Folder, *metav1.DeleteOptions, rest.ValidateObjectFunc, error) {
+func (s *cascadeDeleteStorage) setCascadeFinalizer(ctx context.Context, ns authlib.NamespaceInfo, f *foldersv1.Folder, present bool, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (*foldersv1.Folder, *metav1.DeleteOptions, rest.ValidateObjectFunc, error) {
 	aligned := f.DeepCopy()
 	setCascadeDeleteFinalizer(aligned, present)
 	if deleteValidation != nil {
