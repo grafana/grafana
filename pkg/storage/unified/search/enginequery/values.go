@@ -36,6 +36,8 @@ func DecodeValues(columns []*resourcepb.ResourceSearchField, values []*resourcep
 			value, n = engineValue(v.DoubleValues, col.IsArray)
 		case resourcepb.ResourceSearchField_BOOLEAN:
 			value, n = engineValue(v.BooleanValues, col.IsArray)
+		case resourcepb.ResourceSearchField_UNSPECIFIED:
+			return nil, fmt.Errorf("missing type for field %q", col.Name)
 		}
 		if value == nil || n != len(v.StringValues)+len(v.Int64Values)+len(v.DoubleValues)+len(v.BooleanValues) {
 			return nil, fmt.Errorf("wrong value type or cardinality for field %q", col.Name)
