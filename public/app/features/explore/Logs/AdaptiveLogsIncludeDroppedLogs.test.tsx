@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { LoadingState } from '@grafana/data';
 import { usePluginComponent } from '@grafana/runtime';
 import { LogsSortOrder } from '@grafana/schema';
-import { createLogLine } from 'app/features/logs/components/mocks/logRow';
+import { createLogLine, createLogRow } from 'app/features/logs/components/mocks/logRow';
 
 import { AdaptiveLogsIncludeDroppedLogs } from './AdaptiveLogsIncludeDroppedLogs';
 
@@ -37,7 +37,7 @@ function mockPluginComponent(result: { component: typeof PluginComponent | null;
 
 const props = {
   includeAdditionalLogs: jest.fn(),
-  logs: [createLogLine({ uid: 'log-1' })],
+  logs: [createLogRow({ uid: 'log-1' })],
   logsLoadingState: LoadingState.Streaming,
   queries: [{ refId: 'A' }],
   renderedLogsWindow: {
