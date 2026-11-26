@@ -68,11 +68,10 @@ describe('Collapse', () => {
 
   it('does not forward props that are not data attributes to the toggle button', () => {
     const spreadProps = { title: 'Spread title', 'data-analytics-id': 'query_options_toggle' };
-    render(<Collapse label={TEST_LABEL} {...spreadProps} />);
+    const { container } = render(<Collapse label={TEST_LABEL} {...spreadProps} />);
 
-    const toggle = screen.getByRole('button');
-    expect(toggle).toHaveAttribute('data-analytics-id', 'query_options_toggle');
-    expect(toggle).not.toHaveAttribute('title');
+    expect(screen.getByRole('button')).toHaveAttribute('data-analytics-id', 'query_options_toggle');
+    expect(container.querySelector('[title="Spread title"]')).not.toBeInTheDocument();
   });
 });
 
@@ -87,8 +86,11 @@ describe('ControlledCollapse', () => {
     const toggle = screen.getByRole('button');
     expect(toggle).toHaveAttribute('data-analytics-id', 'query_options_toggle');
     expect(container.querySelectorAll('[data-analytics-id]')).toHaveLength(1);
+    expect(screen.queryByText('Toggleable content')).not.toBeInTheDocument();
 
     await user.click(toggle);
     expect(screen.getByText('Toggleable content')).toBeInTheDocument();
+    expect(screen.getByRole('button')).toHaveAttribute('data-analytics-id', 'query_options_toggle');
+    expect(container.querySelectorAll('[data-analytics-id]')).toHaveLength(1);
   });
 });
