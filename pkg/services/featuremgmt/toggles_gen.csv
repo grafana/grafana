@@ -271,6 +271,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-08-27,queryeditor.coauthoringUi,experimental,@grafana/datapro,false,false,true
 2026-03-10,kubernetesTeamsApi,experimental,@grafana/identity-access-team,false,false,false
 2026-03-17,kubernetesTeamsRedirect,experimental,@grafana/identity-access-team,false,false,false
+2026-11-25,resourcePermissionsBulkUserWrites,experimental,@grafana/identity-access-team,false,false,false
 2026-02-26,kubernetesUsersApi,experimental,@grafana/identity-access-team,false,false,false
 2026-10-08,kubernetesUsersReadApi,experimental,@grafana/identity-access-team,false,false,false
 2026-03-09,kubernetesServiceAccountsApi,experimental,@grafana/identity-access-team,false,false,false
