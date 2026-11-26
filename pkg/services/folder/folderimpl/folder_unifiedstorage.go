@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strconv"
@@ -18,8 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	apirequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -556,6 +559,23 @@ func (s *Service) deleteVariablesInFolders(ctx context.Context, orgID int64, fol
 	return nil
 }
 
+func (s *Service) deleteDashboardPreferencesOfFolders(ctx context.Context, orgID int64, folderUIDs []string) error {
+	ctx, span := s.tracer.Start(ctx, "folder.deleteDashboardPreferencesOfFolders")
+	defer span.End()
+
+	client, err := s.dashboardPreferencesClient(ctx)
+	if err != nil {
+		return fmt.Errorf("get dashboard preferences client: %w", err)
+	}
+	namespace := apirequest.GetNamespaceMapper(s.cfg)(orgID)
+	for _, folderUID := range folderUIDs {
+		if err := dashboardpreferences.DeleteFolderPreferences(ctx, client, namespace, folderUID, metav1.DeleteOptions{}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
 	ctx, span := s.tracer.Start(ctx, "folder.Delete")
 	defer span.End()
@@ -657,6 +677,14 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 
 	if err := s.deleteVariablesInFolders(ctx, cmd.OrgID, folders); err != nil {
 		return err
+	}
+
+	// Each folder's delete also removes its preferences, so a failure here doesn't block the folder delete.
+	switch err := s.deleteDashboardPreferencesOfFolders(ctx, cmd.OrgID, folders); {
+	case errors.Is(err, dashboardpreferences.ErrNotServed):
+		s.log.WarnContext(ctx, "failed to delete folder dashboard preferences", "org_id", cmd.OrgID, "error", err)
+	case err != nil:
+		s.log.ErrorContext(ctx, "failed to delete folder dashboard preferences", "org_id", cmd.OrgID, "error", err)
 	}
 
 	err = s.unifiedStore.Delete(ctx, folders, cmd.OrgID)

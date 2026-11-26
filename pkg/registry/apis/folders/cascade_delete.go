@@ -9,8 +9,8 @@ import (
 
 // kubernetesFolderCascadeDeleteEnabled is the master switch for folder.grafana.app cascade
 // deletion: opt-in non-empty delete via DeleteOptions.gracePeriodSeconds=0, which removes the
-// folder's subtree — child folders, dashboards, variables, and (in the monolith) alert rules and
-// library elements.
+// folder's subtree — child folders, dashboards, variables, folder dashboard preferences, and (in
+// the monolith) alert rules and library elements.
 func kubernetesFolderCascadeDeleteEnabled(ctx context.Context) bool {
 	return openfeature.NewDefaultClient().Boolean(
 		ctx,

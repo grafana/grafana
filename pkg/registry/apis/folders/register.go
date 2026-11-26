@@ -88,49 +88,41 @@ type FolderAPIBuilder struct {
 	dashboardSvcMu        sync.Mutex
 	variableSvc           *dynamic.NamespaceableResourceInterface
 	variableSvcMu         sync.Mutex
+	// Used by every folder delete, not only cascade delete; access via dashboardPreferencesClient(ctx).
+	dashboardPreferencesSvc   *dynamic.NamespaceableResourceInterface
+	dashboardPreferencesSvcMu sync.Mutex
 	// contentsDeleter removes alert rules and library elements contained in a folder during cascade
 	// delete. Always set by RegisterAPIService (embedded); set by NewAPIService (standalone) only
 	// when the deployment opts into that cleanup.
 	contentsDeleter FolderContentsDeleter
 }
 
-// dashboardClient builds the dashboard dynamic client lazily. Returns nil when no config provider is
-// set, in which case cascade delete skips dashboard cleanup.
+// dashboardClient returns the dashboard client through lazyDashboardAppClient. A nil client makes
+// cascade delete skip dashboard cleanup.
 func (b *FolderAPIBuilder) dashboardClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
-	if b.cascadeConfigProvider == nil {
-		return b.dashboardSvc, nil
-	}
-
-	b.dashboardSvcMu.Lock()
-	defer b.dashboardSvcMu.Unlock()
-
-	if b.dashboardSvc != nil {
-		return b.dashboardSvc, nil
-	}
-
-	cfg, err := b.cascadeConfigProvider.GetRestConfig(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("get rest config: %w", err)
-	}
-	dyn, err := dynamic.NewForConfig(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("create dynamic client: %w", err)
-	}
-	client := dyn.Resource(dashv1.DashboardResourceInfo.GroupVersionResource())
-	b.dashboardSvc = &client
-	return b.dashboardSvc, nil
+	return b.lazyDashboardAppClient(ctx, &b.dashboardSvcMu, &b.dashboardSvc, dashv1.DashboardResourceInfo.GroupVersionResource())
 }
 
 func (b *FolderAPIBuilder) variableClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
+	return b.lazyDashboardAppClient(ctx, &b.variableSvcMu, &b.variableSvc, dashV2beta1.VariableResourceInfo.GroupVersionResource())
+}
+
+func (b *FolderAPIBuilder) dashboardPreferencesClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
+	return b.lazyDashboardAppClient(ctx, &b.dashboardPreferencesSvcMu, &b.dashboardPreferencesSvc, dashV2beta1.DashboardPreferencesResourceInfo.GroupVersionResource())
+}
+
+// lazyDashboardAppClient returns *slot, building it for gvr from cascadeConfigProvider on first use; a
+// failed build is not cached. Without a config provider it returns *slot as injected, which may be nil.
+func (b *FolderAPIBuilder) lazyDashboardAppClient(ctx context.Context, mu *sync.Mutex, slot **dynamic.NamespaceableResourceInterface, gvr schema.GroupVersionResource) (*dynamic.NamespaceableResourceInterface, error) {
 	if b.cascadeConfigProvider == nil {
-		return b.variableSvc, nil
+		return *slot, nil
 	}
 
-	b.variableSvcMu.Lock()
-	defer b.variableSvcMu.Unlock()
+	mu.Lock()
+	defer mu.Unlock()
 
-	if b.variableSvc != nil {
-		return b.variableSvc, nil
+	if *slot != nil {
+		return *slot, nil
 	}
 
 	cfg, err := b.cascadeConfigProvider.GetRestConfig(ctx)
@@ -141,9 +133,9 @@ func (b *FolderAPIBuilder) variableClient(ctx context.Context) (*dynamic.Namespa
 	if err != nil {
 		return nil, fmt.Errorf("create dynamic client: %w", err)
 	}
-	client := dyn.Resource(dashV2beta1.VariableResourceInfo.GroupVersionResource())
-	b.variableSvc = &client
-	return b.variableSvc, nil
+	client := dyn.Resource(gvr)
+	*slot = &client
+	return *slot, nil
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
@@ -221,6 +213,11 @@ func WithDeleteCheckMetrics(reg prometheus.Registerer, legacyJoinEnabled bool) A
 // WithCountMetrics exports the folder count counter on reg.
 func WithCountMetrics(reg prometheus.Registerer, legacyJoinEnabled bool) APIServiceOption {
 	return func(b *FolderAPIBuilder) { b.countMetrics = newCountMetrics(reg, legacyJoinEnabled) }
+}
+
+// WithDashboardPreferencesClient sets the client folder deletes use to delete the folder's dashboard preferences.
+func WithDashboardPreferencesClient(client *dynamic.NamespaceableResourceInterface) APIServiceOption {
+	return func(b *FolderAPIBuilder) { b.dashboardPreferencesSvc = client }
 }
 
 // WithPendingDeletionResourceEnabled sets the process-startup resource gate in standalone deployments.
@@ -342,7 +339,7 @@ func (b *FolderAPIBuilder) storageForVersion(
 
 	// Cascade delete wrapper -- always wired (both ST and MT). Recursively deletes a folder's
 	// subtree on delete; a no-op delegate unless kubernetesFolderCascadeDelete is enabled.
-	b.storage = newCascadeDeleteStorage(b.storage, b.searcher, b.dashboardClient, b.variableClient, b.contentsDeleter, b.accessClient)
+	b.storage = newCascadeDeleteStorage(b.storage, b.searcher, b.dashboardClient, b.variableClient, b.dashboardPreferencesClient, b.contentsDeleter, b.accessClient)
 
 	storage := map[string]rest.Storage{}
 	storage[folders.StoragePath()] = b.storage

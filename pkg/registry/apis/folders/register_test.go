@@ -2,10 +2,12 @@ package folders
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -31,10 +33,13 @@ import (
 	"k8s.io/client-go/dynamic"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	clientrest "k8s.io/client-go/rest"
+	k8stesting "k8s.io/client-go/testing"
 	basecompatibility "k8s.io/component-base/compatibility"
 
 	"github.com/grafana/authlib/authn"
 	authtypes "github.com/grafana/authlib/types"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	pending "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1alpha1"
 	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -45,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission/rpclient"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
 	"github.com/grafana/grafana/pkg/services/apiserver/restoptions"
@@ -493,6 +499,145 @@ func TestFolderDefaultResourcePermissionsUseRPClient(t *testing.T) {
 		_, err = resourceClient.Namespace("org-7").Get(context.Background(), rpName, metav1.GetOptions{})
 		require.True(t, apierrors.IsNotFound(err))
 	})
+}
+
+func TestFolderAPIBuilder_DashboardAppClients(t *testing.T) {
+	getters := []struct {
+		name string
+		get  func(*FolderAPIBuilder, context.Context) (*dynamic.NamespaceableResourceInterface, error)
+		gvr  schema.GroupVersionResource
+	}{
+		{"dashboards", (*FolderAPIBuilder).dashboardClient, dashv1.DashboardResourceInfo.GroupVersionResource()},
+		{"variables", (*FolderAPIBuilder).variableClient, dashv2beta1.VariableResourceInfo.GroupVersionResource()},
+		{"dashboard preferences", (*FolderAPIBuilder).dashboardPreferencesClient, prefsGVR},
+	}
+
+	t.Run("builds each client once from the rest config, for its own resource", func(t *testing.T) {
+		var (
+			mu    sync.Mutex
+			paths []string
+		)
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			mu.Lock()
+			paths = append(paths, r.URL.Path)
+			mu.Unlock()
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"kind":"Status","apiVersion":"v1","status":"Success"}`))
+		}))
+		t.Cleanup(srv.Close)
+		calls := 0
+		b := &FolderAPIBuilder{cascadeConfigProvider: apiserver.RestConfigProviderFunc(func(context.Context) (*clientrest.Config, error) {
+			calls++
+			return &clientrest.Config{Host: srv.URL}, nil
+		})}
+
+		want := make([]string, 0, len(getters))
+		for _, g := range getters {
+			client, err := g.get(b, context.Background())
+			require.NoError(t, err, g.name)
+			again, err := g.get(b, context.Background())
+			require.NoError(t, err, g.name)
+			require.Same(t, client, again, g.name)
+			require.NoError(t, (*client).Namespace("org-7").Delete(context.Background(), "x", metav1.DeleteOptions{}), g.name)
+			want = append(want, fmt.Sprintf("/apis/%s/%s/namespaces/org-7/%s/x", g.gvr.Group, g.gvr.Version, g.gvr.Resource))
+		}
+		require.Equal(t, len(getters), calls)
+		mu.Lock()
+		defer mu.Unlock()
+		require.Equal(t, want, paths)
+	})
+
+	t.Run("returns the injected client without a rest config provider", func(t *testing.T) {
+		dyn := newDashboardPreferencesFake()
+		injected := make([]dynamic.NamespaceableResourceInterface, len(getters))
+		for i, g := range getters {
+			injected[i] = dyn.Resource(g.gvr)
+		}
+		b := &FolderAPIBuilder{dashboardSvc: &injected[0], variableSvc: &injected[1], dashboardPreferencesSvc: &injected[2]}
+		for i, g := range getters {
+			client, err := g.get(b, context.Background())
+			require.NoError(t, err, g.name)
+			require.Same(t, &injected[i], client, g.name)
+
+			client, err = g.get(&FolderAPIBuilder{}, context.Background())
+			require.NoError(t, err, g.name)
+			require.Nil(t, client, g.name)
+		}
+	})
+
+	t.Run("a rest config error is returned and the next call builds the client", func(t *testing.T) {
+		fail := true
+		b := &FolderAPIBuilder{cascadeConfigProvider: apiserver.RestConfigProviderFunc(func(context.Context) (*clientrest.Config, error) {
+			if fail {
+				return nil, errors.New("not ready")
+			}
+			return &clientrest.Config{Host: "http://localhost"}, nil
+		})}
+		for _, g := range getters {
+			fail = true
+			_, err := g.get(b, context.Background())
+			require.ErrorContains(t, err, "get rest config: not ready", g.name)
+
+			fail = false
+			client, err := g.get(b, context.Background())
+			require.NoError(t, err, g.name)
+			require.NotNil(t, client, g.name)
+		}
+	})
+}
+
+// The three dashboard app clients have one type, so a mixed-up or missing client where the cascade
+// storage is built only shows up as a delete sent to the wrong resource, or not sent.
+func TestUpdateAPIGroupInfo_CascadeSweepsUseTheirOwnClients(t *testing.T) {
+	dashboardsGVR := dashv1.DashboardResourceInfo.GroupVersionResource()
+	variablesGVR := dashv2beta1.VariableResourceInfo.GroupVersionResource()
+	dyn := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), map[schema.GroupVersionResource]string{
+		dashboardsGVR: "DashboardList", variablesGVR: "VariableList", prefsGVR: "DashboardPreferencesList",
+	})
+	dashboards, variables, preferences := dyn.Resource(dashboardsGVR), dyn.Resource(variablesGVR), dyn.Resource(prefsGVR)
+	b := &FolderAPIBuilder{
+		searcher: &fakeCascadeSearcher{
+			dashboardsByFolder: map[string][]string{"f1": {"d1"}},
+			variablesByFolder:  map[string][]string{"f1": {"v1"}},
+		},
+		dashboardSvc:            &dashboards,
+		variableSvc:             &variables,
+		dashboardPreferencesSvc: &preferences,
+	}
+	scheme := runtime.NewScheme()
+	require.NoError(t, b.InstallSchema(scheme))
+	optsGetter, err := restoptions.NewRESTOptionsGetterMemory(storagebackend.Config{
+		Codec: serializer.NewCodecFactory(scheme).LegacyCodec(folders.FolderResourceInfo.GroupVersion()),
+	}, nil)
+	require.NoError(t, err)
+	info := genericapiserver.NewDefaultAPIGroupInfo(folders.GROUP, scheme, metav1.ParameterCodec, serializer.NewCodecFactory(scheme))
+
+	require.NoError(t, b.UpdateAPIGroupInfo(&info, apiserverbuilder.APIGroupOptions{Scheme: scheme, OptsGetter: optsGetter}))
+
+	type cascadeSweeps interface {
+		deleteDashboardsInFolder(ctx context.Context, namespace, folderUID string, options *metav1.DeleteOptions) error
+		deleteVariablesInFolder(ctx context.Context, namespace, folderUID string, options *metav1.DeleteOptions) error
+		deleteDashboardPreferencesOfFolder(ctx context.Context, namespace, folderUID string, options *metav1.DeleteOptions) error
+	}
+	require.NotEmpty(t, info.VersionedResourcesStorageMap)
+	for version, storage := range info.VersionedResourcesStorageMap {
+		sweeps, ok := storage["folders"].(cascadeSweeps)
+		require.True(t, ok, "version %s: the folder storage must be the cascade storage, got %T", version, storage["folders"])
+		dyn.ClearActions()
+		ctx := context.Background()
+
+		require.NoError(t, sweeps.deleteDashboardsInFolder(ctx, "default", "f1", &metav1.DeleteOptions{}), version)
+		require.NoError(t, sweeps.deleteVariablesInFolder(ctx, "default", "f1", &metav1.DeleteOptions{}), version)
+		require.NoError(t, sweeps.deleteDashboardPreferencesOfFolder(ctx, "default", "f1", &metav1.DeleteOptions{}), version)
+
+		var deletes []string
+		for _, a := range dyn.Actions() {
+			if d, ok := a.(k8stesting.DeleteAction); ok {
+				deletes = append(deletes, d.GetResource().Resource+"/"+d.GetName())
+			}
+		}
+		require.Equal(t, []string{"dashboards/d1", "variables/v1", "dashboardpreferences/folder-f1"}, deletes, "version %s", version)
+	}
 }
 
 func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
