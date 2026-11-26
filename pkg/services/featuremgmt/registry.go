@@ -2374,6 +2374,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "iam.useKubernetesUsersReadApi",
+			Description:  "Routes read-only user requests in the frontend from /api to the /apis endpoint. Depends on kubernetesUsersReadApi",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "kubernetesServiceAccountsApi",
 			Description:  "Enables service account APIs in the app platform",
 			Stage:        FeatureStageExperimental,
