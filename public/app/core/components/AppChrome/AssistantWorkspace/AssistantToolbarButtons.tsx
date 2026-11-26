@@ -1,12 +1,15 @@
 import { css, cx } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useRef } from 'react';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { useFlagAssistantFullscreenWorkspace } from '@grafana/runtime/internal';
+import {
+  useFlagAssistantFrontendPages,
+  useFlagAssistantFrontendPagesStandaloneView,
+  useFlagAssistantFullscreenWorkspace,
+} from '@grafana/runtime/internal';
 import { Icon, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { getAssistantChatIdToContinue } from 'app/core/assistant/assistantSidebarState';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -203,12 +206,12 @@ function useRememberPageBeforeWorkspace(
 }
 
 /**
- * Whether the plugin opens New page in its Pages standalone view rather than in the workspace, by the plugin's own
- * flags.
+ * Whether the plugin opens New page in its Pages standalone view rather than in the workspace. Both flags are the
+ * plugin's; `pagesStandaloneView` mirrors its `pages-standalone-view`, which core's flag names cannot spell.
  */
 function usePagesOpenStandalone(): boolean {
-  const pages = useBooleanFlagValue('assistant.frontend.pages', false);
-  const standaloneView = useBooleanFlagValue('assistant.frontend.pages-standalone-view', false);
+  const pages = useFlagAssistantFrontendPages();
+  const standaloneView = useFlagAssistantFrontendPagesStandaloneView();
   return pages && standaloneView;
 }
 

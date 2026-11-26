@@ -3630,6 +3630,24 @@ var (
 			Expression:   "false",
 			Generate:     Generate{React: true},
 		},
+		{
+			Name:         "assistant.frontend.pages",
+			Description:  "The Grafana Assistant's Pages flag, which the plugin owns. The top bar reads it to tell a Pages view from the Assistant Workspace",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "assistant.frontend.pagesStandaloneView",
+			Description:  "Mirrors the Grafana Assistant's assistant.frontend.pages-standalone-view, which opens Pages in their own view. With it and Pages on, New page is a Pages view, not the Assistant Workspace",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

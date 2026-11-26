@@ -1128,6 +1128,36 @@
     },
     {
       "metadata": {
+        "name": "assistant.frontend.pages",
+        "resourceVersion": "1795684193347",
+        "creationTimestamp": "2026-11-26T09:09:53Z"
+      },
+      "spec": {
+        "description": "The Grafana Assistant's Pages flag, which the plugin owns. The top bar reads it to tell a Pages view from the Assistant Workspace",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "assistant.frontend.pagesStandaloneView",
+        "resourceVersion": "1795684193347",
+        "creationTimestamp": "2026-11-26T09:09:53Z"
+      },
+      "spec": {
+        "description": "Mirrors the Grafana Assistant's assistant.frontend.pages-standalone-view, which opens Pages in their own view. With it and Pages on, New page is a Pages view, not the Assistant Workspace",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "assistant.frontend.tools.dashboardTemplates",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-04-27T12:46:38Z"

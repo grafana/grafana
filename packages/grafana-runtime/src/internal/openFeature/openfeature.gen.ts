@@ -80,6 +80,10 @@ export const FlagKeys = {
   AssistantDashboardPlanEditing: "assistant.dashboardPlanEditing",
   /** Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built */
   AssistantDashboardPlanning: "assistant.dashboardPlanning",
+  /** The Grafana Assistant's Pages flag, which the plugin owns. The top bar reads it to tell a Pages view from the Assistant Workspace */
+  AssistantFrontendPages: "assistant.frontend.pages",
+  /** Mirrors the Grafana Assistant's assistant.frontend.pages-standalone-view, which opens Pages in their own view. With it and Pages on, New page is a Pages view, not the Assistant Workspace */
+  AssistantFrontendPagesStandaloneView: "assistant.frontend.pagesStandaloneView",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
   /** Shows the Grafana Assistant Chat and Workspace buttons in the top bar, and Exit Workspace on the Assistant Workspace page */
@@ -795,6 +799,28 @@ export const useFlagAssistantDashboardPlanEditing = (options?: ReactFlagEvaluati
  */
 export const useFlagAssistantDashboardPlanning = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("assistant.dashboardPlanning", false, options).value;
+};
+
+/**
+ * The Grafana Assistant's Pages flag, which the plugin owns. The top bar reads it to tell a Pages view from the Assistant Workspace
+ *
+ * **Details:**
+ * - flag key: `assistant.frontend.pages`
+ * - default value: `false`
+ */
+export const useFlagAssistantFrontendPages = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("assistant.frontend.pages", false, options).value;
+};
+
+/**
+ * Mirrors the Grafana Assistant's assistant.frontend.pages-standalone-view, which opens Pages in their own view. With it and Pages on, New page is a Pages view, not the Assistant Workspace
+ *
+ * **Details:**
+ * - flag key: `assistant.frontend.pagesStandaloneView`
+ * - default value: `false`
+ */
+export const useFlagAssistantFrontendPagesStandaloneView = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("assistant.frontend.pagesStandaloneView", false, options).value;
 };
 
 /**

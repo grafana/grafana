@@ -253,7 +253,7 @@ describe('AssistantToolbarButtons', () => {
         setTestFlags({
           [FULLSCREEN_WORKSPACE_FLAG]: true,
           'assistant.frontend.pages': true,
-          'assistant.frontend.pages-standalone-view': true,
+          'assistant.frontend.pagesStandaloneView': true,
         });
       });
     });
