@@ -29,6 +29,8 @@ export {
 export { TracedError } from './utils/TracedError';
 export {
   DataSourceWithBackend,
+  getDatasourceHealthUrl,
+  getDatasourceProxyUrl,
   HealthCheckError,
   type HealthCheckResult,
   type HealthCheckResultDetails,

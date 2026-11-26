@@ -17,11 +17,7 @@ export { type PageInfoItem, setPluginPage } from '../components/PluginPage';
 
 export { type LegacyFeatureToggleMode } from '../utils/legacyFeatureToggles';
 export { ExpressionDatasourceRef } from '../utils/expressionRef';
-export {
-  getDatasourceProxyUrl,
-  standardStreamOptionsProvider,
-  toStreamingDataResponse,
-} from '../utils/DataSourceWithBackend';
+export { standardStreamOptionsProvider, toStreamingDataResponse } from '../utils/DataSourceWithBackend';
 
 export {
   setGetObservablePluginComponents,
@@ -83,6 +79,7 @@ export {
 } from '../utils/getCachedPromise';
 export { type JourneyStartOptions, setJourneyTracker, setJourneyRegistry } from '../services/JourneyTracker';
 export { setKindRegistry } from '../services/KindRegistry';
+export { setStarsSrv } from '../services/StarsSrv';
 export {
   getListedPanelPluginMetas,
   getPanelPluginMeta,

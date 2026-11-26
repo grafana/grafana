@@ -7,10 +7,11 @@ import {
   getBackendSrv,
   getDataSourceInstance,
   getDataSourceInstanceList,
-  getDataSourceInstanceSettings,
+  getDatasourceHealthUrl,
+  getDatasourceProxyUrl,
   getDefaultDataSourceInstanceListItem,
 } from '@grafana/runtime';
-import { FlagKeys, getDatasourceProxyUrl } from '@grafana/runtime/internal';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import {
@@ -34,12 +35,9 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: jest.fn(),
   getDataSourceInstance: jest.fn(),
   getDataSourceInstanceList: jest.fn(),
-  getDataSourceInstanceSettings: jest.fn(),
-  getDefaultDataSourceInstanceListItem: jest.fn(),
-}));
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
+  getDatasourceHealthUrl: jest.fn(),
   getDatasourceProxyUrl: jest.fn(),
+  getDefaultDataSourceInstanceListItem: jest.fn(),
 }));
 const getDataSourceInstanceListMock = jest.mocked(getDataSourceInstanceList);
 const healthGetMock = jest.fn();
@@ -161,31 +159,20 @@ describe('probeProxyGet', () => {
   beforeEach(() => {
     mockFetch.mockReset();
     jest.mocked(getBackendSrv).mockReturnValue({ fetch: mockFetch } as unknown as BackendSrv);
-    // No instance settings: the probe keeps the legacy proxy route.
-    jest.mocked(getDataSourceInstanceSettings).mockReset().mockResolvedValue(undefined);
-    jest.mocked(getDatasourceProxyUrl).mockReset();
+    jest
+      .mocked(getDatasourceProxyUrl)
+      .mockReset()
+      .mockImplementation(async (uid, path) => `/api/datasources/proxy/uid/${uid}/${path}`);
   });
 
   it('proxies on the route the datasource API rollout selects for the datasource', async () => {
-    const settings = { uid: 'tempo', type: 'tempo' } as Awaited<ReturnType<typeof getDataSourceInstanceSettings>>;
-    jest.mocked(getDataSourceInstanceSettings).mockResolvedValue(settings);
-    jest.mocked(getDatasourceProxyUrl).mockReturnValue('/apis/tempo.datasource.grafana.app/tempo/proxy/api/search');
+    jest.mocked(getDatasourceProxyUrl).mockResolvedValue('/apis/tempo.datasource.grafana.app/tempo/proxy/api/search');
     mockFetch.mockReturnValue(of({ data: { traces: [] } }));
 
     await expect(probeProxyGet('tempo', 'api/search', params)).resolves.toEqual({ traces: [] });
-    expect(getDatasourceProxyUrl).toHaveBeenCalledWith(settings, 'api/search');
+    expect(getDatasourceProxyUrl).toHaveBeenCalledWith('tempo', 'api/search');
     expect(mockFetch).toHaveBeenCalledWith(
       expect.objectContaining({ url: '/apis/tempo.datasource.grafana.app/tempo/proxy/api/search' })
-    );
-  });
-
-  it('keeps the legacy proxy route when the settings lookup fails', async () => {
-    jest.mocked(getDataSourceInstanceSettings).mockRejectedValue(new Error('settings unavailable'));
-    mockFetch.mockReturnValue(of({ data: { traces: [] } }));
-
-    await expect(probeProxyGet('tempo', 'api/search', params)).resolves.toEqual({ traces: [] });
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.objectContaining({ url: '/api/datasources/proxy/uid/tempo/api/search' })
     );
   });
 
@@ -376,6 +363,10 @@ describe('isDatasourceHealthy', () => {
     resetProbeHealth();
     healthGetMock.mockReset();
     jest.mocked(getBackendSrv).mockReturnValue({ get: healthGetMock } as unknown as BackendSrv);
+    jest
+      .mocked(getDatasourceHealthUrl)
+      .mockReset()
+      .mockImplementation(async (uid) => `/api/datasources/uid/${uid}/health`);
   });
 
   it('reports a datasource whose health check answers OK as healthy', async () => {
@@ -386,6 +377,23 @@ describe('isDatasourceHealthy', () => {
       showErrorAlert: false,
       abortSignal: expect.any(AbortSignal),
     });
+  });
+
+  it('checks health on the route the datasource API rollout selects for the datasource', async () => {
+    jest.mocked(getDatasourceHealthUrl).mockResolvedValue('/apis/loki.datasource.grafana.app/rolled-out/health');
+    healthGetMock.mockResolvedValue({ status: 'OK' });
+
+    await expect(isDatasourceHealthy('rolled-out')).resolves.toBe(true);
+    expect(getDatasourceHealthUrl).toHaveBeenCalledWith('rolled-out');
+    expect(healthGetMock).toHaveBeenCalledWith(
+      '/apis/loki.datasource.grafana.app/rolled-out/health',
+      undefined,
+      undefined,
+      {
+        showErrorAlert: false,
+        abortSignal: expect.any(AbortSignal),
+      }
+    );
   });
 
   it('reports a non-OK status as unhealthy', async () => {

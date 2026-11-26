@@ -19,9 +19,9 @@ type RuleMutationValidator interface {
 	ValidateRuleMutations(ctx context.Context, rules []*models.AlertRule, manager utils.ManagerProperties) error
 }
 
-// A nil validator is tolerated so a LegacyRuleService built without one, as some
+// A nil validator is tolerated so a legacyRuleService built without one, as some
 // tests do, does not panic.
-func (service *LegacyRuleService) validateRuleMutations(ctx context.Context, rules []*models.AlertRule, manager utils.ManagerProperties) error {
+func (service *legacyRuleService) validateRuleMutations(ctx context.Context, rules []*models.AlertRule, manager utils.ManagerProperties) error {
 	if service.ruleValidator == nil {
 		return nil
 	}

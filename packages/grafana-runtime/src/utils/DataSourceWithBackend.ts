@@ -148,16 +148,56 @@ function supportsDatasourceApi(
   );
 }
 
+function datasourceApiBaseUrl(settings: DataSourceInstanceSettings): string {
+  return `/apis/${settings.meta?.id ?? settings.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${settings.uid}`;
+}
+
+function buildHealthCheckUrl(settings: DataSourceInstanceSettings): string {
+  return supportsDatasourceApi('health', settings)
+    ? `${datasourceApiBaseUrl(settings)}/health`
+    : `/api/datasources/uid/${settings.uid}/health`;
+}
+
 /**
- * Datasource HTTP proxy URL for `path`, on the route `supportsDatasourceApi('proxy', settings)` selects: the
- * datasource API server's proxy subresource, or the legacy `/api/datasources/proxy/uid/...` route.
+ * A failed or empty lookup reads as no settings, so the URL getters below fall back to the legacy routes. On stacks
+ * that load datasource settings from the API server this fetches, so callers should bound it with their own deadline.
  */
-export function getDatasourceProxyUrl(settings: DataSourceInstanceSettings, path: string): string {
-  const subPath = path.replace(/^\/+/, '');
-  if (supportsDatasourceApi('proxy', settings)) {
-    return `/apis/${settings.meta?.id ?? settings.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${settings.uid}/proxy/${subPath}`;
-  }
-  return `/api/datasources/proxy/uid/${settings.uid}/${subPath}`;
+async function lookupInstanceSettings(uid: string): Promise<DataSourceInstanceSettings | undefined> {
+  return getDataSourceInstanceSettings(uid).catch(() => undefined);
+}
+
+/**
+ * Health check URL for the datasource `uid`, on the route the datasource API rollout selects. Needs only the uid, so
+ * callers do not have to load the plugin.
+ *
+ * @alpha
+ */
+export async function getDatasourceHealthUrl(uid: string): Promise<string> {
+  const settings = await lookupInstanceSettings(uid);
+  return settings ? buildHealthCheckUrl(settings) : `/api/datasources/uid/${encodeURIComponent(uid)}/health`;
+}
+
+function stripLeadingSlashes(path: string): string {
+  return path.replace(/^\/+/, '');
+}
+
+function buildProxyUrl(settings: DataSourceInstanceSettings, path: string): string {
+  return supportsDatasourceApi('proxy', settings)
+    ? `${datasourceApiBaseUrl(settings)}/proxy/${stripLeadingSlashes(path)}`
+    : `/api/datasources/proxy/uid/${settings.uid}/${stripLeadingSlashes(path)}`;
+}
+
+/**
+ * Datasource HTTP proxy URL for `path` on the datasource `uid`, on the route the datasource API rollout selects.
+ * Needs only the uid, so callers do not have to load the plugin.
+ *
+ * @alpha
+ */
+export async function getDatasourceProxyUrl(uid: string, path: string): Promise<string> {
+  const settings = await lookupInstanceSettings(uid);
+  return settings
+    ? buildProxyUrl(settings, path)
+    : `/api/datasources/proxy/uid/${encodeURIComponent(uid)}/${stripLeadingSlashes(path)}`;
 }
 
 interface PreparedQuery {
@@ -455,6 +495,48 @@ class DataSourceWithBackend<
   }
 
   /**
+   * Make a GET request through the datasource HTTP proxy
+   */
+  async getProxy<T = unknown>(
+    path: string,
+    params?: BackendSrvRequest['params'],
+    options?: Partial<BackendSrvRequest>
+  ): Promise<T> {
+    const headers = this.getRequestHeaders();
+    const result = await lastValueFrom(
+      getBackendSrv().fetch<T>({
+        ...options,
+        method: 'GET',
+        headers: options?.headers ? { ...options.headers, ...headers } : headers,
+        params: params ?? options?.params,
+        url: buildProxyUrl(this.datasourceInstanceSettings, path),
+      })
+    );
+    return result.data;
+  }
+
+  /**
+   * Send a POST request through the datasource HTTP proxy
+   */
+  async postProxy<T = unknown>(
+    path: string,
+    data?: BackendSrvRequest['data'],
+    options?: Partial<BackendSrvRequest>
+  ): Promise<T> {
+    const headers = this.getRequestHeaders();
+    const result = await lastValueFrom(
+      getBackendSrv().fetch<T>({
+        ...options,
+        method: 'POST',
+        headers: options?.headers ? { ...options.headers, ...headers } : headers,
+        data,
+        url: buildProxyUrl(this.datasourceInstanceSettings, path),
+      })
+    );
+    return result.data;
+  }
+
+  /**
    * Internal function to build the datasource URL based on the feature toggle
    */
   buildResourcesDatasourceUrl(rawPath: string): string {
@@ -473,9 +555,7 @@ class DataSourceWithBackend<
    */
   async callHealthCheck(): Promise<HealthCheckResult> {
     const useNewApi = supportsDatasourceApi('health', this.datasourceInstanceSettings);
-    const healthCheckURL = useNewApi
-      ? `/apis/${this.meta?.id ?? this.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${this.uid}/health`
-      : `/api/datasources/uid/${this.uid}/health`;
+    const healthCheckURL = buildHealthCheckUrl(this.datasourceInstanceSettings);
 
     if (useNewApi) {
       return lastValueFrom(

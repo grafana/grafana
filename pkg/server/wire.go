@@ -71,6 +71,12 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	return nil, nil
 }
 
+// InitializeCloudRoutesLoader supplies remote clients without the local loader's SQL graph.
+func InitializeCloudRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg promclient.Registerer) (router.RoutesLoader, error) {
+	wire.Build(wireExtsCloudRoutesLoaderSet)
+	return nil, nil
+}
+
 func provideRoutesLoaderContext() context.Context {
 	return context.Background()
 }

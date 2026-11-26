@@ -11,6 +11,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/grafana/grafana/pkg/apimachinery/internal/managerkinds"
 )
 
 func TestNewForbiddenManagerKindChangeError(t *testing.T) {
@@ -114,6 +116,48 @@ func TestParseManagerKindString(t *testing.T) {
 	// File provisioning owns its resources for as long as they are configured, so unlike
 	// the classic shims its identity is a stable one.
 	require.False(t, ManagerKindFileProvisioning.IsClassic())
+}
+
+func registerManagerKindForTest(t *testing.T, kind ManagerKind) {
+	t.Helper()
+	managerkinds.Add(string(kind))
+	t.Cleanup(func() { managerkinds.Remove(string(kind)) })
+}
+
+func TestRegisterManagerKind(t *testing.T) {
+	const kind ManagerKind = "registered-in-test"
+
+	managedBy := func(t *testing.T, identity string) GrafanaMetaAccessor {
+		t.Helper()
+		meta, err := MetaAccessor(&unstructured.Unstructured{Object: map[string]any{}})
+		require.NoError(t, err)
+		meta.SetManagerProperties(ManagerProperties{Kind: kind, Identity: identity})
+		return meta
+	}
+
+	t.Run("an unregistered kind is unknown", func(t *testing.T) {
+		require.Equal(t, ManagerKindUnknown, ParseManagerKindString(string(kind)))
+		manager, _ := managedBy(t, "the-manager").GetManagerProperties()
+		require.Equal(t, ManagerKindUnknown, manager.Kind)
+	})
+
+	t.Run("a registered kind parses as itself", func(t *testing.T) {
+		registerManagerKindForTest(t, kind)
+		require.Equal(t, kind, ParseManagerKindString(string(kind)))
+		manager, managed := managedBy(t, "the-manager").GetManagerProperties()
+		require.True(t, managed)
+		require.Equal(t, ManagerProperties{Kind: kind, Identity: "the-manager"}, manager)
+	})
+
+	t.Run("it needs a stable identity, like the built-in kinds", func(t *testing.T) {
+		registerManagerKindForTest(t, kind)
+		_, managed := managedBy(t, "").GetManagerProperties()
+		require.False(t, managed)
+		require.True(t, apierrors.IsForbidden(CheckManagerPropertiesOnUpdate(
+			ManagerProperties{Kind: kind, Identity: "a"},
+			ManagerProperties{Kind: kind, Identity: "b"},
+			true, true)))
+	})
 }
 
 func TestCheckManagerPropertiesOnUpdate(t *testing.T) {

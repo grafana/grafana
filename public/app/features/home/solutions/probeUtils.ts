@@ -1,4 +1,4 @@
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 import { fromEvent, lastValueFrom, type Observable, throwError } from 'rxjs';
 import { map, mergeMap, takeUntil } from 'rxjs/operators';
 
@@ -8,10 +8,11 @@ import {
   getBackendSrv,
   getDataSourceInstance,
   getDataSourceInstanceList,
-  getDataSourceInstanceSettings,
+  getDatasourceHealthUrl,
+  getDatasourceProxyUrl,
   getDefaultDataSourceInstanceListItem,
 } from '@grafana/runtime';
-import { FlagKeys, getDatasourceProxyUrl, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 /**
  * A lazily-started, shared solution fact derived from the solution's datasource: the first read
@@ -33,7 +34,7 @@ export function datasourceFact<T>(
       const ds = await datasource();
       return ds ? fetch(ds) : null;
     },
-    { isPromise: retryOnError }
+    { async: retryOnError }
   );
 }
 
@@ -88,7 +89,7 @@ export async function probeProxyGet<T>(
   signal?: AbortSignal
 ): Promise<T> {
   return withDeadline(timeoutMs, signal, async (s) => {
-    const url = await datasourceProxyUrl(uid, path);
+    const url = await getDatasourceProxyUrl(uid, path);
     // An abort during the lookup is caught by takeUntil, which errors before the request starts.
     return lastValueFrom(
       getBackendSrv()
@@ -99,14 +100,6 @@ export async function probeProxyGet<T>(
         )
     );
   });
-}
-
-/** Proxy URL from the datasource's instance settings; a failed or empty lookup keeps the legacy route. */
-async function datasourceProxyUrl(uid: string, path: string): Promise<string> {
-  const settings = await getDataSourceInstanceSettings(uid).catch(() => undefined);
-  return settings
-    ? getDatasourceProxyUrl(settings, path)
-    : `/api/datasources/proxy/uid/${encodeURIComponent(uid)}/${path}`;
 }
 
 /**
@@ -235,8 +228,7 @@ const healthCache = new Map<string, TtlCachedPromise<boolean>>();
  * health check owns its cutoff, which cancels the request.
  */
 export function isDatasourceHealthy(uid: string): Promise<boolean> {
-  // /api/datasources/.../health is legacy-only; on a multi-tenant stack the probe query (which has its own
-  // deadline) decides on its own. The gate goes once this uses DataSourceWithBackend.callHealthCheck().
+  // The multi-tenant homepage skips the health probe: the probe query (which has its own deadline) decides on its own.
   if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantHomepage, false)) {
     return Promise.resolve(true);
   }
@@ -244,13 +236,12 @@ export function isDatasourceHealthy(uid: string): Promise<boolean> {
   if (!cache) {
     cache = createTtlCachedPromise(
       () =>
-        withDeadline(HEALTH_CHECK_TIMEOUT_MS, undefined, (signal) =>
-          getBackendSrv().get<{ status?: string }>(
-            `/api/datasources/uid/${encodeURIComponent(uid)}/health`,
-            undefined,
-            undefined,
-            { showErrorAlert: false, abortSignal: signal }
-          )
+        // The URL lookup can fetch datasource settings, so it shares the health check's cutoff.
+        withDeadline(HEALTH_CHECK_TIMEOUT_MS, undefined, async (signal) =>
+          getBackendSrv().get<{ status?: string }>(await getDatasourceHealthUrl(uid), undefined, undefined, {
+            showErrorAlert: false,
+            abortSignal: signal,
+          })
         )
           .then((res) => res?.status === 'OK')
           .catch(() => false),
