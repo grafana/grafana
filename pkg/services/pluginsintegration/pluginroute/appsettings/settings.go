@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"maps"
 	"strconv"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -205,7 +206,8 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error
 	if ps != nil {
 		decrypted := s.pluginSettings.DecryptedValues(ps)
 		pluginsettings.WithDecryptedValues(ctx, func(ctx context.Context) (map[string]string, error) {
-			return decrypted, nil
+			// Each caller gets its own copy, so one caller's changes don't reach the next.
+			return maps.Clone(decrypted), nil
 		})
 
 		obj.SetCreationTimestamp(metav1.NewTime(ps.Updated))

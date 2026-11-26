@@ -17,6 +17,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -117,6 +118,29 @@ func TestSettingsGet_OmitsRemovedSecureValues(t *testing.T) {
 	require.Equal(t, resource.InlineSecureValues{
 		"kept": {Name: getLegacySecureValueName("test-app", "kept")},
 	}, settings.Secure)
+}
+
+func TestSettingsGet_DecryptedValuesAreCopiedPerCall(t *testing.T) {
+	storage := newTestStorage(map[string]*pluginsettings.DTO{
+		"test-app": {PluginID: "test-app", OrgID: 1, SecureJSONData: map[string][]byte{"key": []byte("secret")}},
+	})
+
+	ctx := pluginsettings.WithSecureContextShim(request.WithNamespace(context.Background(), "default"))
+	obj, err := storage.Get(ctx, "instance", nil)
+	require.NoError(t, err)
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	decrypt, err := pluginsettings.GetDecryptedSecureJSONLoader(ctx, meta, nil)
+	require.NoError(t, err)
+
+	values, err := decrypt(ctx)
+	require.NoError(t, err)
+	require.Equal(t, map[string]string{"key": "secret"}, values)
+	values["key"] = "changed"
+
+	values, err = decrypt(ctx)
+	require.NoError(t, err)
+	require.Equal(t, map[string]string{"key": "secret"}, values)
 }
 
 func TestSettingsList(t *testing.T) {
