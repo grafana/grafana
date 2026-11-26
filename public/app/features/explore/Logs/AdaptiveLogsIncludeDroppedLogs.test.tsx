@@ -7,6 +7,17 @@ import { createLogRow } from 'app/features/logs/components/mocks/logRow';
 
 import { AdaptiveLogsIncludeDroppedLogs } from './AdaptiveLogsIncludeDroppedLogs';
 
+const useFlagMock = jest.fn((_: string, defaultValue: boolean) => ({ value: defaultValue }));
+
+const setTimeMachineEnabled = (enabled: boolean) => {
+  useFlagMock.mockImplementation(() => ({ value: enabled }));
+};
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useFlag: (flag: string, defaultValue: boolean) => useFlagMock(flag, defaultValue),
+}));
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   usePluginComponent: jest.fn(),
@@ -41,6 +52,17 @@ const props = {
 describe('AdaptiveLogsIncludeDroppedLogs', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    setTimeMachineEnabled(true);
+  });
+
+  it('renders nothing when the adaptivelogs.enableTimeMachine flag is disabled', () => {
+    setTimeMachineEnabled(false);
+    mockPluginComponent({ component: PluginComponent, isLoading: false });
+
+    const { container } = render(<AdaptiveLogsIncludeDroppedLogs {...props} />);
+
+    expect(container).toBeEmptyDOMElement();
+    expect(receivedProps).not.toHaveBeenCalled();
   });
 
   it('renders the plugin component with all props passed through when everything is present', () => {

@@ -1,5 +1,6 @@
 import { type DataFrame, type LoadingState, type LogRowModel, type TimeRange } from '@grafana/data';
 import { usePluginComponent } from '@grafana/runtime';
+import { useFlagAdaptivelogsEnableTimeMachine } from '@grafana/runtime/internal';
 import { type LogsSortOrder, type DataQuery } from '@grafana/schema';
 
 const INCLUDE_DROPPED_LOGS_COMPONENT_ID = 'grafana-adaptivelogs-app/include-dropped-logs/v1';
@@ -33,9 +34,10 @@ type Props = {
 };
 
 export function AdaptiveLogsIncludeDroppedLogs(props: Props) {
+  const timeMachineEnabled = useFlagAdaptivelogsEnableTimeMachine();
   const { component: IncludeDroppedLogs, isLoading } = usePluginComponent<Props>(INCLUDE_DROPPED_LOGS_COMPONENT_ID);
 
-  if (isLoading || !IncludeDroppedLogs || !props.queries?.length) {
+  if (!timeMachineEnabled || isLoading || !IncludeDroppedLogs || !props.queries?.length) {
     return null;
   }
 
