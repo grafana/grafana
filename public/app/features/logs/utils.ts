@@ -414,8 +414,12 @@ export function getLogLevelInfo(dataFrame: DataFrame, allDataFrames: DataFrame[]
   return { level, valueField, timeField };
 }
 
+/**
+ * Whether `target` is an element of any window. The logs can render in another window than this one, such as a
+ * Document Picture-in-Picture window, whose elements fail this window's `instanceof Element`.
+ */
 export function targetIsElement(target: EventTarget | null): target is Element {
-  return target instanceof Element;
+  return target !== null && 'nodeType' in target && target.nodeType === Node.ELEMENT_NODE;
 }
 
 export function createLogRowsMap() {
