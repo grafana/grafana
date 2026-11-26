@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/server/healthz"
 	"k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
@@ -172,4 +173,27 @@ func (m *mockAPIGroupPostStartHookProvider) GetOpenAPIDefinitions() common.GetOp
 
 func (m *mockAPIGroupPostStartHookProvider) GetAuthorizer() authorizer.Authorizer {
 	return nil
+}
+
+func TestAddPostStartHooks_ReadyzChecks(t *testing.T) {
+	config := server.NewRecommendedConfig(builder.ProvideCodecFactory(builder.ProvideScheme()))
+	before := len(config.ReadyzChecks)
+	check := healthz.NamedCheck("test-readyz", func(*http.Request) error { return nil })
+
+	err := builder.AddPostStartHooks(config, []builder.APIGroupBuilder{
+		&mockAPIGroupPostStartHookProvider{},
+		&mockAPIGroupReadyzCheckProvider{checks: []healthz.HealthChecker{check}},
+	})
+	require.NoError(t, err)
+	require.Len(t, config.ReadyzChecks, before+1)
+	require.Equal(t, "test-readyz", config.ReadyzChecks[before].Name())
+}
+
+type mockAPIGroupReadyzCheckProvider struct {
+	mockAPIGroupPostStartHookProvider
+	checks []healthz.HealthChecker
+}
+
+func (m *mockAPIGroupReadyzCheckProvider) GetReadyzChecks() []healthz.HealthChecker {
+	return m.checks
 }

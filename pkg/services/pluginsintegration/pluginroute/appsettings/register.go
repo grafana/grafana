@@ -55,7 +55,10 @@ type PluginContextWrapper interface {
 
 type Options struct {
 	RegisterProxy bool
-	// ReadOnly disables settings writes and watches without changing storage selection.
+	// ReadOnly disables settings writes and watches without changing storage
+	// selection. The settings are otherwise described as when they are writable,
+	// and their subresources, including the plugin's custom routes, are served
+	// unchanged.
 	ReadOnly bool
 
 	DataProxyLogging         bool // from cfg
