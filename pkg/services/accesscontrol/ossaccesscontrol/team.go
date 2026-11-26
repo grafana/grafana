@@ -135,6 +135,32 @@ func ProvideTeamPermissions(
 			_ = teamimpl.QueueTeamMembershipChanged(dbHelper, session, orgID, teamId)
 			return nil
 		},
+		OnSetUsers: func(session *db.Session, orgID int64, users []accesscontrol.User, resourceID, permission string) error {
+			teamId, err := strconv.ParseInt(resourceID, 10, 64)
+			if err != nil {
+				return err
+			}
+			switch permission {
+			case "Member":
+				err = teamimpl.AddOrUpdateTeamMembersHook(dbHelper, session, orgID, teamId, users, team.PermissionTypeMember)
+			case "Admin":
+				err = teamimpl.AddOrUpdateTeamMembersHook(dbHelper, session, orgID, teamId, users, team.PermissionTypeAdmin)
+			case "":
+				userIDs := make([]int64, 0, len(users))
+				for _, u := range users {
+					userIDs = append(userIDs, u.ID)
+				}
+				err = teamimpl.RemoveTeamMembersHook(dbHelper, session, orgID, teamId, userIDs)
+			default:
+				return fmt.Errorf("invalid team permission type %s", permission)
+			}
+			if err != nil || !legacyWatch.Enabled() {
+				return err
+			}
+			// One announcement covers the whole batch: consumers re-fetch the team.
+			_ = teamimpl.QueueTeamMembershipChanged(dbHelper, session, orgID, teamId)
+			return nil
+		},
 		RestConfigProvider: directRestConfigProvider,
 	}
 

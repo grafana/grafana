@@ -4250,6 +4250,21 @@
     },
     {
       "metadata": {
+        "name": "iam.useKubernetesUsersReadApi",
+        "resourceVersion": "1795683567766",
+        "creationTimestamp": "2026-11-26T08:59:27Z"
+      },
+      "spec": {
+        "description": "Routes read-only user requests in the frontend from /api to the /apis endpoint. Depends on kubernetesUsersReadApi",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "idTokenCacheDisabled",
         "resourceVersion": "1793696077735",
         "creationTimestamp": "2026-11-03T08:54:37Z"
@@ -6271,6 +6286,34 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "resourcePermissionsBulkUserValidation",
+        "resourceVersion": "1795700063501",
+        "creationTimestamp": "2026-11-26T13:34:23Z"
+      },
+      "spec": {
+        "description": "Resolves and validates users in bulk when setting permissions for many users at once, such as SCIM team membership sync",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "resourcePermissionsBulkUserWrites",
+        "resourceVersion": "1795601562350",
+        "creationTimestamp": "2026-11-25T10:12:42Z"
+      },
+      "spec": {
+        "description": "Writes managed permissions and team memberships for many users in bulk instead of one user at a time, such as for SCIM team membership sync",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
