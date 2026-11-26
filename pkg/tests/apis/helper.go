@@ -770,7 +770,12 @@ func (c *K8sTestHelper) List(user User, namespace string, gvr schema.GroupVersio
 }
 
 func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResponse[T] {
-	t := c.t
+	c.t.Helper()
+	return DoRequestForTest(c.t, c, params, result)
+}
+
+// DoRequestForTest reports request failures on t when a subtest shares its parent's helper.
+func DoRequestForTest[T any](t *testing.T, c *K8sTestHelper, params RequestParams, result *T) K8sResponse[T] {
 	t.Helper()
 
 	if params.Method == "" {
