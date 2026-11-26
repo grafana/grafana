@@ -4,6 +4,7 @@ go 1.27.4
 
 require (
 	github.com/bwmarrin/snowflake v0.3.0
+	github.com/grafana/authlib v0.0.0-20261120113603-423cd15e9545
 	github.com/grafana/authlib/types v0.0.0-20261120113603-423cd15e9545
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600
 	github.com/grafana/grafana-app-sdk v0.63.3
@@ -72,8 +73,8 @@ require (
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/authlib v0.0.0-20261120113603-423cd15e9545 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.302.0 // indirect
+	github.com/grafana/grafana/apps/secret v0.0.0-20260118065639-60cb766a97d6 // indirect
 	github.com/grafana/otel-profiling-go v0.7.0 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.12 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.1 // indirect
@@ -86,7 +87,7 @@ require (
 	github.com/jaegertracing/jaeger-idl v0.14.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/jszwedko/go-datemath v0.1.1-0.20260113213115-7f666eef0523 // indirect
-	github.com/klauspost/compress v1.20.3 // indirect
+	github.com/klauspost/compress v1.20.5 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.2 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect

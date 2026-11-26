@@ -3355,6 +3355,7 @@
       "button-errors_one": "{{count}} errors",
       "button-errors_other": "{{count}} errors",
       "cloud-rulessource-errors-title-errors-loading-rules": "Errors loading rules",
+      "failed-to-load-data-sources": "Failed to load data sources:",
       "failed-to-load-grafana-rules-config": "Failed to load Grafana rules config:",
       "failed-to-load-grafana-rules-state": "Failed to load Grafana rules state:",
       "failed-to-load-rules-config": "Failed to load rules config from <2>{{dataSource}}</2>",
@@ -6613,6 +6614,10 @@
       "paused": "This dashboard has been paused by the administrator",
       "try-again-later": "Try again later"
     },
+    "quick-edits": {
+      "close": "Close",
+      "presets-unavailable": "No styles to show for this panel's data"
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Are you sure you want to remove this panel?"
@@ -6740,7 +6745,8 @@
           "title": "Paste panel"
         },
         "question": {
-          "label": "Question"
+          "label": "Question",
+          "tooltip": "Add a question viewers can ask about the panels"
         },
         "row": {
           "add-label": "Add row",
@@ -8068,8 +8074,11 @@
       "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "No quick edits for this panel's settings",
       "panels-selected_one": "{{count}} panel selected",
       "panels-selected_other": "{{count}} panels selected",
+      "show-panel-actions": "Back to panel actions",
+      "show-quick-edits": "Quick edits",
       "tooltip-edit-panel-visualization": "Edit visualization",
       "tooltip-panel-settings": "Panel settings"
     },
@@ -9968,10 +9977,6 @@
       "to": "TO",
       "when": "WHEN"
     },
-    "expression-query-editor": {
-      "helper-text-sql": "Run MySQL-dialect SQL against the tables returned from your data sources. Data source queries (ie \"A\", \"B\") are available as tables and referenced by query-name. Fields are available as columns, as returned from the data source.",
-      "label-operation": "Operation"
-    },
     "math": {
       "available-math-functions": "Available math functions",
       "run-math-operations": "Run math operations on one or more queries. You reference the query by {{refExample}} ie. {{ref1}}, {{ref2}}, {{ref3}}etc.<br/>Example: <12>{{example}}</12>",
@@ -10519,6 +10524,25 @@
         "otherGroup": "Others"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": "Style"
+      },
+      "range": {
+        "auto": "Auto",
+        "title": "Min / Max"
+      },
+      "thresholds": {
+        "base-only": "Base only",
+        "title": "Thresholds"
+      },
+      "unit": {
+        "none": "None",
+        "title": "Unit",
+        "with-decimals_one": "{{unit}}, {{count}} decimal",
+        "with-decimals_other": "{{unit}}, {{count}} decimals"
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -11039,6 +11063,11 @@
         "placement-options": {
           "label-bottom": "Bottom",
           "label-right": "Right"
+        },
+        "quick-edit": {
+          "hidden": "Hidden",
+          "values_one": "{{count}} value",
+          "values_other": "{{count}} values"
         }
       },
       "stacking": {
@@ -11134,6 +11163,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "One click"
+    },
+    "data-link-menu-items": {
+      "link": "Link"
     },
     "data-links-inline-editor": {
       "add-link": "Add link",
@@ -13790,16 +13822,16 @@
       "open": "Main menu",
       "pin-error": "Failed to update pinned menu items",
       "pinned-list-label": "Pinned items",
+      "section-resize": "Resize navigation",
       "undock": "Undock menu"
     },
     "megamenu-item": {
       "children-error": "Failed to load items",
+      "children-partial-error": "Failed to load some items",
       "collapse-aria-label": "Collapse section: {{sectionName}}",
       "expand-aria-label": "Expand section: {{sectionName}}",
       "loading-aria-label": "Loading {{sectionName}}",
-      "reorder-aria-label": "Reorder {{itemName}}",
-      "starred-dashboard-icon": "Dashboard",
-      "starred-folder-icon": "Folder"
+      "reorder-aria-label": "Reorder {{itemName}}"
     },
     "org-switcher": {
       "aria-label": "Change organization"
@@ -13989,12 +14021,32 @@
         "undo-label": "Assistant edit"
       }
     },
+    "outline": {
+      "aria-label": "Notebook outline",
+      "pane-header": "Content outline",
+      "search": {
+        "no-results": "No results found for your query"
+      },
+      "tree-item": {
+        "collapse": "Collapse {{label}}",
+        "empty": "(empty)",
+        "expand": "Expand {{label}}",
+        "no-title": "<no title>"
+      },
+      "untitled-panel": "Untitled panel"
+    },
     "panel-changes": {
       "confirm-cancel": "Cancel",
       "confirm-discard": "Discard",
       "confirm-keep": "Keep",
       "confirm-text": "Do you want to keep the changes you made while viewing this notebook?",
       "confirm-title": "Unsaved panel changes"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "Outline",
+        "tooltip": "Content outline"
+      }
     }
   },
   "notebooks": {
@@ -17301,6 +17353,13 @@
       "wide-list": "Wide list",
       "wide-list-desc": "Horizontal, name and value, area sparkline, single color"
     },
+    "quick-edits": {
+      "calculation": "Calculation",
+      "color": "Color",
+      "text": "Text",
+      "text-title-size": "Title size",
+      "text-value-size": "Value size"
+    },
     "suggestions": {
       "stat": "Stat",
       "stat-color-background": "Stat - color background",
@@ -17504,6 +17563,7 @@
     "description-page-size": "Number of rows per page. When empty, the page size is based on the panel height.",
     "description-show-columns-sidebar": "Open the column management sidebar with the panel, rather than from a column menu",
     "description-show-row-numbers": "Show the position of each row in the displayed table",
+    "description-sparkline-select-time-range": "Drag to select a time range. Disabled for fields with data links or actions.",
     "description-styling-from-field": "A field containing JSON objects with CSS properties",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "description-zebra-striping": "Alternate the background color of every other row",
@@ -17548,6 +17608,7 @@
     "name-show-columns-sidebar": "Show columns sidebar",
     "name-show-row-numbers": "Show row numbers",
     "name-show-table-header": "Show table header",
+    "name-sparkline-select-time-range": "Enable time range selection",
     "name-sparkline-show-tooltip": "Show hover tooltip",
     "name-styling-from-field": "Styling from field",
     "name-tooltip-from-field": "Tooltip from field",
@@ -17846,6 +17907,10 @@
       "time-zone-option": "Time zone",
       "time-zone-selection": "Time zone selection"
     },
+    "inline-calendar": {
+      "label": "Calendar",
+      "update-inputs": "Update inputs"
+    },
     "range-content": {
       "apply-button": "Apply time range",
       "default-error": "Enter a date ({{dateExample}}) or relative time ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -17863,6 +17928,12 @@
       "to": "to",
       "zoom-out-button": "Zoom out time range",
       "zoom-out-tooltip-new": "Time range zoom out <br/> t -"
+    },
+    "tabs": {
+      "absolute": "Absolute",
+      "relative": "Relative",
+      "search-label": "Search quick ranges",
+      "search-placeholder": "Type quick ranges e.g. 3h"
     },
     "time-range": {
       "apply": "Apply time range",

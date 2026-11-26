@@ -1,9 +1,10 @@
 import { createAction, createAsyncThunk, type Update } from '@reduxjs/toolkit';
 import { from, forkJoin, timeout, lastValueFrom, catchError, of } from 'rxjs';
 
-import { type PanelPlugin, type PluginError } from '@grafana/data';
+import { AppEvents, type PanelPlugin, type PluginError } from '@grafana/data';
 import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
 import { refetchPluginMetasAfterPluginChange } from '@grafana/runtime/internal';
+import { appEvents } from 'app/core/app_events';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import { type PluginDashboard } from 'app/types/plugins';
 import { type StoreState, type ThunkResult } from 'app/types/store';
@@ -242,6 +243,12 @@ export const install = createAsyncThunk<
       return thunkApi.rejectWithValue(e.data);
     }
 
+    // The MT plugins API call uses fetch, so its failures are plain errors with the status in the message.
+    // Same shape as the FetchError payload above, which the catalog UI reads `message` and `id` from.
+    if (e instanceof Error) {
+      return thunkApi.rejectWithValue({ id, message: e.message });
+    }
+
     return thunkApi.rejectWithValue('Unknown error.');
   }
 });
@@ -263,6 +270,11 @@ export const uninstall = createAsyncThunk<Update<CatalogPlugin, string>, string>
       };
     } catch (e) {
       console.error(e);
+
+      // A FetchError from backendSrv has already shown its own alert, a plain error from the MT plugins API has not.
+      if (!isFetchError(e) && e instanceof Error) {
+        appEvents.emit(AppEvents.alertError, [e.message]);
+      }
 
       return thunkApi.rejectWithValue('Unknown error.');
     }

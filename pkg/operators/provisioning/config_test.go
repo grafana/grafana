@@ -196,9 +196,37 @@ func TestClientsServeManifestKindsFromTheAggregatedServer(t *testing.T) {
 	_, err = client.List(t.Context(), metav1.ListOptions{})
 	require.NoError(t, err)
 
-	token := "Bearer token-for-" + apisprovisioning.GROUP
-	require.Equal(t, token, router.AccessToken("/apis/discovery/v1alpha2/manifests"))
-	require.Equal(t, token, router.AccessToken("/apis/"+stubRouterGroup+"/v1/namespaces/default/widgets"))
+	require.Equal(t, "Bearer token-for-grafana", router.AccessToken("/apis/discovery/v1alpha2/manifests"))
+	require.Equal(t, "Bearer token-for-"+apisprovisioning.GROUP, router.AccessToken("/apis/"+stubRouterGroup+"/v1/namespaces/default/widgets"))
+}
+
+func TestClientsUseTheRouterForDashboardsWithTheRouterClientSetting(t *testing.T) {
+	dashboards := "/apis/dashboard.grafana.app/v1/namespaces/default/dashboards"
+	router := routertest.NewServer(t, map[string]string{
+		"/apis/dashboard.grafana.app/v1": `{"kind":"APIResourceList","apiVersion":"v1","groupVersion":"dashboard.grafana.app/v1","resources":[{"name":"dashboards","namespaced":true,"kind":"Dashboard","verbs":["list"]}]}`,
+		dashboards:                       `{"apiVersion":"dashboard.grafana.app/v1","kind":"DashboardList","items":[]}`,
+	})
+	cfg := newClientsConfig(t, newStubSigner(t).URL, map[string]string{"aggregated_server_url": router.URL})
+	cfg.Settings.ProvisioningRouterClient = true
+
+	factory, err := cfg.Clients()
+	require.NoError(t, err)
+	clients, err := factory.Clients(t.Context(), "default")
+	require.NoError(t, err)
+	client, _, err := clients.ForKind(t.Context(), resources.DashboardResource.GroupVersion().WithKind("Dashboard"))
+	require.NoError(t, err)
+	_, err = client.List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err)
+
+	require.Equal(t, "Bearer token-for-dashboard.grafana.app", router.AccessToken(dashboards))
+}
+
+func TestClientsRequireTheAggregatedServerWithTheRouterClientSetting(t *testing.T) {
+	cfg := newClientsConfig(t, newStubSigner(t).URL, nil)
+	cfg.Settings.ProvisioningRouterClient = true
+
+	_, err := cfg.Clients()
+	require.ErrorContains(t, err, "aggregated_server_url is required")
 }
 
 // Production has no aggregated server yet, so the operators must run with the configured
@@ -233,10 +261,12 @@ func TestControllersOwnNATSSubscriber(t *testing.T) {
 	for _, controller := range []struct {
 		name string
 		run  func(context.Context, server.OperatorDependencies) error
+		// Controllers that read managed resources keep their kinds current.
+		watchesManifests bool
 	}{
-		{"repository", RunRepoController},
-		{"connection", RunConnectionController},
-		{"job queue", RunJobQueueController},
+		{"repository", RunRepoController, true},
+		{"connection", RunConnectionController, false},
+		{"job queue", RunJobQueueController, true},
 	} {
 		t.Run(controller.name, func(t *testing.T) {
 			srv, err := natsserver.NewServer(&natsserver.Options{Host: "127.0.0.1", Port: natsserver.RANDOM_PORT, NoLog: true, NoSigs: true})
@@ -267,12 +297,13 @@ func TestControllersOwnNATSSubscriber(t *testing.T) {
 			restCfg := &rest.Config{Host: api.URL, APIPath: "/apis"}
 			provisioningClient, err := client.NewForConfig(restCfg)
 			require.NoError(t, err)
+			manifestWatcher := services.NewIdleService(nil, nil)
 			registeredConfigOptions = []ConfigOption{func(_ context.Context, cfg *ControllerConfig) error {
 				cfg.tracer = tracing.NewNoopTracerService()
 				cfg.provisioningClient = provisioningClient
 				cfg.provisioningRESTCfg = restCfg
 				cfg.clients = resources.NewMockClientFactory(t)
-				cfg.manifestWatcher = services.NewIdleService(nil, nil)
+				cfg.manifestWatcher = manifestWatcher
 				// Empty resource lists must not access unified storage.
 				cfg.unified = &struct{ resources.ResourceStore }{}
 				cfg.repositoryFactory, err = repository.ProvideFactory(nil, nil, cfg.tracer)
@@ -306,6 +337,11 @@ func TestControllersOwnNATSSubscriber(t *testing.T) {
 				t.Fatal("controller did not stop")
 			}
 			require.Eventually(t, func() bool { return srv.NumClients() == 0 }, time.Second, time.Millisecond, "controller must close its subscriber on shutdown")
+			if controller.watchesManifests {
+				require.Equal(t, services.Terminated, manifestWatcher.State(), "controller must stop its manifest watcher on shutdown")
+			} else {
+				require.Equal(t, services.New, manifestWatcher.State())
+			}
 		})
 	}
 }

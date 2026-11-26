@@ -295,14 +295,6 @@ const (
 	// Enables SQL Expressions, which can execute SQL queries against data source results.
 	FlagSqlExpressions = "sqlExpressions"
 
-	// FlagKubernetesAggregator
-	// Enable grafana's embedded kube-aggregator
-	FlagKubernetesAggregator = "kubernetesAggregator"
-
-	// FlagKubernetesAggregatorCapTokenAuth
-	// Enable CAP token based authentication in grafana's embedded kube-aggregator
-	FlagKubernetesAggregatorCapTokenAuth = "kubernetesAggregatorCapTokenAuth"
-
 	// FlagScopeFilters
 	// Enables the use of scope filters in Grafana
 	FlagScopeFilters = "scopeFilters"
@@ -342,10 +334,6 @@ const (
 	// FlagPlaylistsRBAC
 	// Enables RBAC for playlists
 	FlagPlaylistsRBAC = "playlistsRBAC"
-
-	// FlagSavedQueriesRBAC
-	// Enables Saved queries (query library) RBAC permissions
-	FlagSavedQueriesRBAC = "savedQueriesRBAC"
 
 	// FlagDashboardLibrary
 	// Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
@@ -730,6 +718,10 @@ const (
 	// Enables plugins decoupling from bootdata
 	FlagPluginsUseMTPlugins = "plugins.useMTPlugins"
 
+	// FlagPluginsUseMTPluginInstall
+	// Installs, updates and uninstalls plugins through the plugins API only, and falls back to the legacy API if that call fails
+	FlagPluginsUseMTPluginInstall = "plugins.useMTPluginInstall"
+
 	// FlagGlobalDashboardVariables
 	// Enables global and folder-scoped dashboard variables via dashboard.grafana.app
 	FlagGlobalDashboardVariables = "globalDashboardVariables"
@@ -769,6 +761,10 @@ const (
 	// FlagKubernetesTeamsRedirect
 	// Redirects the request of the team endpoints to the app platform APIs
 	FlagKubernetesTeamsRedirect = "kubernetesTeamsRedirect"
+
+	// FlagResourcePermissionsBulkUserWrites
+	// Writes managed permissions and team memberships for many users in bulk instead of one user at a time, such as for SCIM team membership sync
+	FlagResourcePermissionsBulkUserWrites = "resourcePermissionsBulkUserWrites"
 
 	// FlagKubernetesUsersApi
 	// Enables user APIs in the app platform

@@ -2,13 +2,13 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"net/url"
 	"slices"
 	"strings"
-	gosync "sync"
 	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -22,8 +22,8 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/server/healthz"
 	clientrest "k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/cache"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -52,40 +52,19 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
-	informer "github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
-	deleteresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/deleteresources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
-	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/perftest"
-	releaseresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/releaseresources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
 	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
-
-const repoControllerWorkers = 1
-
-// jobClaimExpiry is how long a job claim is considered valid before it is
-// treated as abandoned. It governs both claim staleness in the job store and
-// the cleanup controller that reaps expired jobs, so the two must use the same
-// value. The lease renewal interval is derived as a fraction of this so a
-// worker renews several times before its claim goes stale; otherwise a single
-// delayed renewal can let a running job be reaped and re-run by another worker.
-const jobClaimExpiry = 60 * time.Second
 
 var (
 	_ builder.APIGroupBuilder               = (*APIBuilder)(nil)
@@ -151,48 +130,23 @@ type APIBuilder struct {
 	healthChecker     *controller.RepositoryHealthChecker
 	admissionHandler  *appadmission.Handler
 	// Extras provides additional functionality to the API.
-	extras       []Extra
-	extraWorkers []jobs.Worker
+	extras []Extra
 
-	restConfigGetter              func(context.Context) (*clientrest.Config, error)
-	registry                      prometheus.Registerer
-	quotaGetter                   quotas.QuotaGetter
-	maxFileSize                   int64
-	maxJobBodySize                int64
-	syncResourceTimeout           time.Duration
-	incrementalPolicy             repository.IncrementalSyncPolicy
-	webhookSecretRotationInterval time.Duration
-	// controllerResyncInterval is the informer re-list interval for the
-	// repository and connection controllers; historyExpiration is both the
-	// HistoricJob retention and the historic-job informer's resync;
-	// jobPollInterval is the jobs informer's resync — the job driver's recovery
-	// cadence for unclaimed jobs missed by live events. All fall back to their
-	// defaults when <=0 (see the controller post-start hook).
-	controllerResyncInterval time.Duration
-	historyExpiration        time.Duration
-	jobPollInterval          time.Duration
-
-	// natsSubscriber feeds the controllers' event handlers when NATS is enabled.
-	// Instead of an apiserver-backed informer, each controller's handler is driven
-	// by a NATS-backed informer (see pkg/storage/unified/informer) that signals the
-	// handler on each notification; the controllers re-fetch from the API in their
-	// reconcile. Otherwise the controllers use the apiserver informer.
-	natsSubscriber nats.Subscriber
-
-	// bootstrapConfig is the read-only local repository registered from
-	// [provisioning] bootstrap_path, empty when none is configured.
-	bootstrapConfig bootstrap.Config
-
-	// The informer metrics register once per process and are shared by the
-	// controllers started from the post-start hook and from Wire.
-	informerMetricsOnce     gosync.Once
-	relistProjectionMetrics *informer.RelistProjectionMetrics
-	freshnessMetrics        *informer.FreshnessMetrics
+	restConfigGetter  func(context.Context) (*clientrest.Config, error)
+	registry          prometheus.Registerer
+	quotaGetter       quotas.QuotaGetter
+	maxFileSize       int64
+	maxJobBodySize    int64
+	incrementalPolicy repository.IncrementalSyncPolicy
 
 	// loopbackConfig is the rest config the post-start hook resolved, set
 	// before loopbackReady is closed.
 	loopbackConfig *clientrest.Config
 	loopbackReady  chan struct{}
+
+	// bootstrapDone is [BootstrapService.Done], set before the API server is
+	// built; nil when no bootstrap service runs, as in the standalone API server.
+	bootstrapDone <-chan struct{}
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -227,7 +181,7 @@ func NewAPIBuilder(
 	access authlib.AccessChecker,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
-	extraWorkers []jobs.Worker,
+	_ []jobs.Worker, // extraWorkers: unused, kept for signature compatibility
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
 	supportedResourceProvider resources.SupportedResourceProvider,
@@ -281,7 +235,6 @@ func NewAPIBuilder(
 		accessWithEditor:                    accessChecker.WithFallbackRole(authlib.RoleEditor),
 		accessWithViewer:                    accessChecker.WithFallbackRole(authlib.RoleViewer),
 		jobHistoryConfig:                    jobHistoryConfig,
-		extraWorkers:                        extraWorkers,
 		restConfigGetter:                    restConfigGetter,
 		allowedTargets:                      allowedTargets,
 		allowImageRendering:                 allowImageRendering,
@@ -305,17 +258,6 @@ func NewAPIBuilder(
 	return b, nil
 }
 
-// resyncInterval is the informer resync interval used for health check and
-// reconciliation of the repository and connection controllers (the jobs
-// informer uses job_poll_interval). Configurable via [provisioning]
-// resync_interval; <=0 falls back to the default.
-func (b *APIBuilder) resyncInterval() time.Duration {
-	if b.controllerResyncInterval <= 0 {
-		return setting.ProvisioningControllerResyncIntervalDefault
-	}
-	return b.controllerResyncInterval
-}
-
 func (b *APIBuilder) publishLoopbackConfig(config *clientrest.Config) {
 	b.loopbackConfig = config
 	close(b.loopbackReady)
@@ -332,12 +274,21 @@ func (b *APIBuilder) awaitLoopbackConfig(ctx context.Context) (*clientrest.Confi
 	}
 }
 
-func (b *APIBuilder) informerMetrics() (*informer.RelistProjectionMetrics, *informer.FreshnessMetrics) {
-	b.informerMetricsOnce.Do(func() {
-		b.relistProjectionMetrics = informer.NewRelistProjectionMetrics(b.registry)
-		b.freshnessMetrics = informer.NewFreshnessMetrics(b.registry)
-	})
-	return b.relistProjectionMetrics, b.freshnessMetrics
+// GetReadyzChecks keeps /readyz failing until the bootstrap repository has been
+// reconciled, so clients that wait for readiness see the configured repository.
+func (b *APIBuilder) GetReadyzChecks() []healthz.HealthChecker {
+	done := b.bootstrapDone
+	if done == nil {
+		return nil
+	}
+	return []healthz.HealthChecker{healthz.NamedCheck(BootstrapServiceName, func(*http.Request) error {
+		select {
+		case <-done:
+			return nil
+		default:
+			return errors.New("bootstrap repository not reconciled yet")
+		}
+	})}
 }
 
 func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption) {
@@ -426,7 +377,6 @@ func RegisterAPIService(
 	orgSvc org.Service,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
-	extraWorkers []jobs.Worker,
 	repoFactory repository.Factory,
 	connectionFactory connection.Factory,
 	quotaGetter quotas.QuotaGetter,
@@ -434,6 +384,10 @@ func RegisterAPIService(
 	manifests resource.ManifestDiscovery,
 	supportedResourceProvider resources.SupportedResourceProvider,
 ) (*APIBuilder, error) {
+	// Kept for signature compatibility: the controllers take the subscriber from
+	// their own providers.
+	_ = natsSubscriber
+
 	if !cfg.ProvisioningEnabled {
 		return nil, nil
 	}
@@ -487,7 +441,7 @@ func RegisterAPIService(
 		access,
 		tracer,
 		extraBuilders,
-		extraWorkers,
+		nil, // extraWorkers
 		jobHistoryConfig,
 		allowedTargets,
 		supportedResourceProvider,
@@ -510,16 +464,7 @@ func RegisterAPIService(
 	}
 	builder.repoValidatorOpts = repoValidatorOpts
 	builder.urlValidator = urlValidator
-	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
-	builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
-	builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
-	builder.historyExpiration = cfg.ProvisioningHistoryExpiration
-	builder.jobPollInterval = cfg.ProvisioningJobPollInterval
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
-	builder.natsSubscriber = natsSubscriber
-	// Only the preferred version registers the bootstrap repository: it is the one that runs
-	// the post-start hook's controllers, and two of them would race on the same object.
-	builder.bootstrapConfig = bootstrapConfig
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -540,7 +485,7 @@ func RegisterAPIService(
 		access,
 		tracer,
 		extraBuilders,
-		extraWorkers,
+		nil, // extraWorkers
 		jobHistoryConfig,
 		allowedTargets,
 		supportedResourceProvider,
@@ -560,16 +505,10 @@ func RegisterAPIService(
 	}
 	v1beta1Builder.repoValidatorOpts = repoValidatorOpts
 	v1beta1Builder.urlValidator = urlValidator
-	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
-	v1beta1Builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
-	v1beta1Builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
-	v1beta1Builder.historyExpiration = cfg.ProvisioningHistoryExpiration
-	v1beta1Builder.jobPollInterval = cfg.ProvisioningJobPollInterval
 	if err := v1beta1Builder.SetResourceListerMode(cfg.ProvisioningResourceLister); err != nil {
 		return nil, err
 	}
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
-	v1beta1Builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(v1beta1Builder)
 
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
@@ -1156,16 +1095,17 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 					return err
 				}
 			}
+			b.publishLoopbackConfig(config)
+
 			c, err := clientset.NewForConfig(config)
 			if err != nil {
 				return err
 			}
 
 			b.client = c.ProvisioningV0alpha1()
-			b.publishLoopbackConfig(config)
 
 			// Initialize the API client-based job store
-			b.jobs, err = jobs.NewJobStore(b.client, jobClaimExpiry, b.registry)
+			b.jobs, err = jobs.NewJobStore(b.client, jobs.ClaimExpiry, b.registry)
 			if err != nil {
 				return fmt.Errorf("create API client job store: %w", err)
 			}
@@ -1176,222 +1116,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// since the repository already passed admission validation when it was created/updated.
 			// but that leads to possible race conditions when the repository is created/updated and violating some rules.
 			b.healthChecker = controller.NewRepositoryHealthChecker(b.statusPatcher, repository.NewTester(b.repoValidator), healthMetricsRecorder)
-
-			// Runs with no path configured too, to remove a repository a previous run registered.
-			// Never fatal: a rejected bootstrap repository must not keep the instance down.
-			if b.bootstrapConfig.Reconcilable() {
-				if err := bootstrap.Reconcile(postStartHookCtx.Context, b.client.Repositories(b.bootstrapConfig.Namespace), b.bootstrapConfig); err != nil {
-					logging.FromContext(postStartHookCtx.Context).Error("failed to reconcile bootstrap repository",
-						"path", b.bootstrapConfig.Path, "namespace", b.bootstrapConfig.Namespace, "error", err)
-				}
-			}
-
-			// if running solely CRUD or not the preferred version, skip controllers/workers setup
-			if b.onlyApiServer || !b.isPreferredVersion {
-				return nil
-			}
-
-			informerFactoryResyncInterval := b.resyncInterval()
-			if nats.Enabled(b.natsSubscriber) {
-				logging.DefaultLogger.Info("provisioning controllers using NATS-backed informer")
-			}
-			usageMetricCollector := usage.MetricCollector(b.tracer, b.usageNamespaceLister, b.repoLister.List, connection.NewStorageLister(b.connectionStore).List, b.unified)
-			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
-
-			metrics := jobs.RegisterJobMetrics(b.registry)
-
-			stageIfPossible := repository.WrapWithStageAndPushIfPossible
-
-			// Standalone export generates new UIDs so exported files don't
-			// reference existing resource identifiers.
-			exportWorker := export.NewExportWorker(
-				b.clients,
-				b.repositoryResources,
-				export.ExportAllWithNewUIDs,
-				stageIfPossible,
-				metrics,
-			)
-
-			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.syncResourceTimeout) //nolint:staticcheck
-			syncWorker := sync.NewSyncWorker(
-				b.clients,
-				b.repositoryResources,
-				b.statusPatcher.Patch,
-				syncer,
-				metrics,
-				b.tracer,
-				10,
-				b.maxFileSize,
-			)
-
-			// Migration export preserves original names so the takeover
-			// allowlist can correlate resources during the sync phase.
-			migrateExportWorker := export.NewExportWorker(
-				b.clients,
-				b.repositoryResources,
-				export.ExportAll,
-				stageIfPossible,
-				metrics,
-			)
-			cleaner := migrate.NewNamespaceCleaner(b.clients)
-			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
-				cleaner,
-				migrateExportWorker,
-				syncWorker,
-			)
-			migrationWorker := migrate.NewMigrationWorker(
-				unifiedStorageMigrator,
-			)
-
-			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
-			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
-			fixMetadataWorker := fixfoldermetadata.NewWorker(b.clients)
-			releaseResourcesWorker := releaseresourcespkg.NewWorker(b.resourceLister, b.clients, 10)
-			deleteResourcesWorker := deleteresourcespkg.NewWorker(b.resourceLister, b.clients, 10)
-
-			// Synthetic load-testing worker; a no-op unless provisioning.performance is enabled.
-			perfTestWorker := perftest.NewWorker(performanceEnabled)
-
-			// All workers registered - export/migrate/perftest check their feature flag at runtime
-			workers := make([]jobs.Worker, 0, 9+len(b.extraWorkers))
-			workers = append(workers,
-				deleteResourcesWorker,
-				deleteWorker,
-				exportWorker,
-				fixMetadataWorker,
-				migrationWorker,
-				moveWorker,
-				perfTestWorker,
-				releaseResourcesWorker,
-				syncWorker,
-			)
-
-			// Add any extra workers
-			workers = append(workers, b.extraWorkers...)
-
-			var jobHistoryWriter jobs.HistoryWriter
-			if b.jobHistoryLoki != nil {
-				jobHistoryWriter = b.jobHistoryLoki
-			} else {
-				jobHistoryWriter = jobs.NewAPIClientHistoryWriter(b.GetClient())
-			}
-
-			repoGetter := resources.NewRepositoryGetter(b.repoFactory, b.client)
-
-			// Create job cleanup controller
-			jobCleanupController := jobs.NewJobCleanupController(
-				b.jobs,
-				jobHistoryWriter,
-				jobClaimExpiry,
-			)
-
-			// Renew the lease well before it expires. Using jobClaimExpiry as
-			// the renewal interval would schedule the single renewal at the
-			// exact moment the claim goes stale, so any delay (GC pause,
-			// apiserver blip) lets the cleanup controller reap a job that is
-			// still running and risks duplicate execution. A third of the
-			// expiry gives three renewal attempts before the claim is
-			// considered abandoned.
-			leaseRenewalInterval := jobClaimExpiry / 3
-
-			// The jobs informer resyncs on job_poll_interval (default 30s) rather
-			// than the controllers' resync_interval, preserving the job pickup
-			// cadence (and config key) of the polling design this replaced. The
-			// driver gets the same value so its post-claim cooldown tracks the
-			// configured recovery cadence.
-			jobPollInterval := b.jobPollInterval
-			if jobPollInterval <= 0 {
-				jobPollInterval = setting.ProvisioningJobPollIntervalDefault
-			}
-
-			// This is basically our own JobQueue system
-			driver, err := jobs.NewConcurrentJobDriver(
-				3,                    // 3 drivers for now
-				20*time.Minute,       // Max time for each job
-				jobPollInterval,      // Jobs informer resync = post-claim cooldown
-				leaseRenewalInterval, // Lease renewal interval
-				b.jobs, repoGetter, jobHistoryWriter,
-				b.registry,
-				&metrics,
-				nats.Enabled(b.natsSubscriber),
-				workers...,
-			)
-			if err != nil {
-				return err
-			}
-			driver.SetTracer(b.tracer)
-
-			// Feed the driver's work queue from the jobs informer: live create
-			// events plus the periodic resync/re-list, which re-delivers unclaimed
-			// jobs and is the driver's only recovery path. The handler must be
-			// registered before the informer runs: the NATS-backed source has no
-			// cache to replay for late handlers.
-			jobSource := informer.NewJobDeltaSource(b.natsSubscriber, c, jobPollInterval, b.registry)
-			if _, err := jobSource.AddEventHandler(driver.EventHandler()); err != nil {
-				return fmt.Errorf("add job event handler: %w", err)
-			}
-			go jobSource.Run(postStartHookCtx.Done())
-
-			go func() {
-				if err := driver.Run(postStartHookCtx.Context); err != nil {
-					logging.FromContext(postStartHookCtx.Context).Error("job driver failed", "error", err)
-				}
-			}()
-
-			go func() {
-				if err := jobCleanupController.Run(postStartHookCtx.Context); err != nil {
-					logging.FromContext(postStartHookCtx.Context).Error("job cleanup controller failed", "error", err)
-				}
-			}()
-
-			webhookSecretRotationInterval := b.webhookSecretRotationInterval
-			if webhookSecretRotationInterval <= 0 {
-				// If webhookSecretRotationInterval is not set, use the default value
-				webhookSecretRotationInterval = 30 * 24 * time.Hour
-			}
-
-			relistProjectionMetrics, freshnessMetrics := b.informerMetrics()
-
-			// The repository delta source and the getter it backs.
-			repoKeys := keysapi.NewGRPCLister(b.unified, provisioning.RepositoryResourceInfo.GroupVersionResource())
-			repoSource, reconcileRepoGetter := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, repoKeys, informerFactoryResyncInterval, relistProjectionMetrics, freshnessMetrics)
-			repoController := controller.NewRepositoryController(
-				b.GetClient(),
-				reconcileRepoGetter,
-				b.repoFactory,
-				b.connectionFactory,
-				b.resourceLister,
-				b.clients,
-				b.jobs,
-				b.GetHealthChecker(),
-				b.statusPatcher,
-				b.registry,
-				b.tracer,
-				10,
-				informerFactoryResyncInterval,
-				b.minSyncInterval,
-				30*time.Second,
-				b.quotaGetter,
-				controller.NewRepositoryQuotaChecker(reconcileRepoGetter),
-				b.incrementalPolicy,
-				webhookSecretRotationInterval,
-				nats.Enabled(b.natsSubscriber),
-			)
-			repoReg, err := repoSource.AddEventHandler(repoController.EventHandler())
-			if err != nil {
-				return fmt.Errorf("add repository controller event handler: %w", err)
-			}
-			go repoSource.Run(postStartHookCtx.Done())
-
-			// Wait for the cache to sync off the hot path so we don't block
-			// apiserver startup; the controller only starts its workers once
-			// its handler has processed the initial list.
-			go func() {
-				if !cache.WaitForCacheSync(postStartHookCtx.Done(), repoReg.HasSynced) {
-					return
-				}
-				repoController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {}, func() {})
-			}()
 
 			return nil
 		},

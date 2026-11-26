@@ -380,16 +380,6 @@ export interface FeatureToggles {
   */
   sqlExpressionsCodeMirror?: boolean;
   /**
-  * Enable grafana's embedded kube-aggregator
-  * @default false
-  */
-  kubernetesAggregator?: boolean;
-  /**
-  * Enable CAP token based authentication in grafana's embedded kube-aggregator
-  * @default false
-  */
-  kubernetesAggregatorCapTokenAuth?: boolean;
-  /**
   * Enables the use of scope filters in Grafana
   * @default false
   */
@@ -429,11 +419,6 @@ export interface FeatureToggles {
   * @default false
   */
   playlistsRBAC?: boolean;
-  /**
-  * Enables Saved queries (query library) RBAC permissions
-  * @default true
-  */
-  savedQueriesRBAC?: boolean;
   /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false

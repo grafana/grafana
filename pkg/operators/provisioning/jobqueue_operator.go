@@ -4,15 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
-	"os"
 	"sync"
 	"time"
 
-	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
@@ -20,17 +15,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-// jobClaimExpiry is how long a job claim is considered valid before the cleanup
-// controller treats it as abandoned. The lease renewal interval must stay well
-// below this so a worker renews several times before its claim goes stale;
-// otherwise a single delayed renewal can let a running job be reaped and
-// re-run by another worker.
-const jobClaimExpiry = 60 * time.Second
-
 func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies) (runErr error) {
-	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})).With("logger", "provisioning-jobqueue-controller")
+	logger := newOperatorLogger("provisioning-jobqueue-controller")
 	logger.Info("Starting provisioning job queue controller")
 
 	controllerCfg, err := setupJobQueueControllerFromConfig(deps.Config, deps.Registerer)
@@ -38,21 +24,17 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		return fmt.Errorf("failed to setup operator: %w", err)
 	}
 
-	ctx, stopSubscriber := supervision.Watch(ctx, controllerCfg.natsSubscriber)
+	manifestWatcher, err := controllerCfg.ManifestWatcher()
+	if err != nil {
+		return err
+	}
+	ctx, stopServices, err := supervision.Start(ctx, controllerCfg.natsSubscriber, manifestWatcher)
 	defer func() {
 		deps.HealthNotifier.SetNotReady()
-		runErr = errors.Join(runErr, stopSubscriber())
+		runErr = errors.Join(runErr, stopServices())
 	}()
-	if err := services.StartAndAwaitRunning(ctx, controllerCfg.natsSubscriber); err != nil {
-		if errors.Is(err, context.Canceled) && ctx.Err() != nil {
-			err = context.Cause(ctx)
-		}
-		return fmt.Errorf("failed to start NATS subscriber: %w", err)
-	}
-
-	tracer, err := controllerCfg.Tracer()
 	if err != nil {
-		return fmt.Errorf("failed to provide tracing service: %w", err)
+		return err
 	}
 
 	provisioningClient, err := controllerCfg.ProvisioningClient()
@@ -61,64 +43,27 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	}
 
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
-	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobClaimExpiry, deps.Registerer)
+	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobs.ClaimExpiry, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	driver, err := buildDriver(
-		deps.Config,
-		&controllerCfg.ControllerConfig,
-		deps.Registerer,
-		tracer,
-		driverConfig{
-			concurrentDrivers:    controllerCfg.concurrentDrivers,
-			maxJobTimeout:        controllerCfg.maxJobTimeout,
-			jobInterval:          controllerCfg.jobInterval,
-			leaseRenewalInterval: controllerCfg.leaseRenewalInterval,
-			maxSyncWorkers:       controllerCfg.maxSyncWorkers,
-		},
-		jobStore,
-		jobHistoryWriter,
-	)
+	queue, err := buildJobQueue(controllerCfg, deps.Registerer, jobStore, jobHistoryWriter)
 	if err != nil {
-		return fmt.Errorf("build driver: %w", err)
-	}
-	if err := services.StartAndAwaitRunning(ctx, controllerCfg.manifestWatcher); err != nil {
-		return fmt.Errorf("failed to start manifest watcher: %w", err)
-	}
-
-	// Jobs informer feeding the driver's work queue with job keys. Under the NATS
-	// watch the source is a NATS-backed informer; otherwise an apiserver-backed
-	// one. Both satisfy DeltaSource, so the rest of the wiring is identical. The
-	// informer's periodic resync/re-list is the driver's only recovery path for
-	// unclaimed jobs (rolled-back claims, dropped keys, missed notifications), so
-	// the handler must be registered before the informer runs: the NATS-backed
-	// source has no cache to replay for late handlers.
-	//
-	// The jobs informer resyncs on job_interval (default 30s) rather than the
-	// controllers' resync_interval, preserving the job pickup cadence (and config
-	// key) of the polling design this replaced.
-	jobInformer := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.jobInterval, deps.Registerer)
-	reg, err := jobInformer.AddEventHandler(driver.EventHandler())
-	if err != nil {
-		return fmt.Errorf("failed to add job event handler: %w", err)
+		return fmt.Errorf("build job queue: %w", err)
 	}
 
 	var wg sync.WaitGroup
 
 	wg.Go(func() {
 		logger.Info("job queue controller started")
-		if err := driver.Run(ctx); err != nil {
+		if err := queue.Run(ctx); err != nil {
 			logger.Error("job driver failed", "error", err)
 		}
 		logger.Info("job driver stopped")
 	})
 
-	// Start the informer and wait for its cache to sync.
-	go jobInformer.Run(ctx.Done())
-
-	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
+	if !cache.WaitForCacheSync(ctx.Done(), queue.HasSynced) {
 		return fmt.Errorf("failed to sync job informer cache")
 	}
 
@@ -129,20 +74,7 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	deps.HealthNotifier.SetNotReady()
 	logger.Info("shutdown signal received, waiting for goroutines to finish")
 
-	shutdownTimeout := controllerCfg.maxJobTimeout + 30*time.Second
-	done := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-		logger.Info("job queue operator shutdown complete")
-	case <-time.After(shutdownTimeout):
-		logger.Warn("shutdown timeout exceeded, forcing exit", "timeout", shutdownTimeout)
-	}
-
+	awaitShutdown(logger, &wg, controllerCfg.maxJobTimeout+30*time.Second)
 	return nil
 }
 
@@ -178,6 +110,6 @@ func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Reg
 		maxSyncWorkers:       operatorSec.Key("max_sync_workers").MustInt(10),
 		maxJobTimeout:        operatorSec.Key("max_job_timeout").MustDuration(20 * time.Minute),
 		jobInterval:          jobInterval,
-		leaseRenewalInterval: operatorSec.Key("lease_renewal_interval").MustDuration(jobClaimExpiry / 3),
+		leaseRenewalInterval: operatorSec.Key("lease_renewal_interval").MustDuration(jobs.ClaimExpiry / 3),
 	}, nil
 }

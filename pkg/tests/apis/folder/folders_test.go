@@ -441,6 +441,39 @@ func TestIntegrationFolderCascadeDeleteFinalizer(t *testing.T) {
 			require.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
 		})
 	})
+
+	// folderStorage hides deletecollection, so it is only served once the legacy permissions service
+	// is left unwired, which this toggle does.
+	t.Run("a collection delete is not supported and deletes nothing", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			EnableFeatureToggles: []string{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController, featuremgmt.FlagKubernetesAuthzResourcePermissionApis},
+		})
+		client := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Admin, GVR: gvr})
+
+		const label = "collection-delete"
+		before := map[string]string{}
+		for _, name := range []string{"coll-a", "coll-b"} {
+			obj := newFolderObject(gvr.GroupVersion().String(), name)
+			obj.SetLabels(map[string]string{label: "true"})
+			created, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, []string{folders.CascadeDeleteFinalizer}, created.GetFinalizers(), name)
+			before[name] = created.GetResourceVersion()
+		}
+
+		err := client.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: label + "=true"})
+		require.True(t, apierrors.IsMethodNotSupported(err), "expected 405, got %v", err)
+
+		for name, rv := range before {
+			got, err := client.Resource.Get(ctx, name, metav1.GetOptions{})
+			require.NoError(t, err, name)
+			require.Nil(t, got.GetDeletionTimestamp(), name)
+			require.Equal(t, rv, got.GetResourceVersion(), name)
+		}
+	})
 }
 
 // Validates that folder delete checks alert_rule stats and blocks deletion
@@ -2883,6 +2916,30 @@ func TestIntegrationFolderValidationReturns400(t *testing.T) {
 			require.Equal(t, uc.expectedMessageID, string(statusErr.ErrStatus.Details.UID))
 		})
 	}
+
+	t.Run("nested title General is allowed but cannot be moved to root", func(t *testing.T) {
+		parent, err := client.Resource.Create(context.Background(),
+			makeFolder("nested-general-parent", "Nested General Parent", ""), metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		nested, err := client.Resource.Create(context.Background(),
+			makeFolder("nested-general", "General", parent.GetName()), metav1.CreateOptions{})
+		require.NoError(t, err, "a nested folder may be titled General")
+
+		annotations := nested.GetAnnotations()
+		delete(annotations, utils.AnnoKeyFolder)
+		nested.SetAnnotations(annotations)
+
+		_, err = client.Resource.Update(context.Background(), nested, metav1.UpdateOptions{})
+		require.Error(t, err)
+		require.Truef(t, apierrors.IsBadRequest(err),
+			"expected HTTP 400 BadRequest; got: %v (%T)", err, err)
+
+		var statusErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusErr), "expected *apierrors.StatusError; got %T", err)
+		require.NotNil(t, statusErr.ErrStatus.Details, "expected Status.Details to carry the errutil messageID")
+		require.Equal(t, "folder.name-exists", string(statusErr.ErrStatus.Details.UID))
+	})
 }
 
 // The k6 app provisions its own subfolders through a service account, so that
