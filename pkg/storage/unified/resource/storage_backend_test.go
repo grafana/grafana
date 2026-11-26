@@ -46,6 +46,12 @@ func withChannelNotifier(opts *KVBackendOptions) {
 	opts.UseChannelNotifier = true
 }
 
+func withWriteCoordination(c WriteCoordination) func(*KVBackendOptions) {
+	return func(opts *KVBackendOptions) {
+		opts.WriteCoordination = c
+	}
+}
+
 func withKV(kv KV) func(*KVBackendOptions) {
 	return func(opts *KVBackendOptions) {
 		opts.KvStore = kv
@@ -476,13 +482,29 @@ func (c *cancelOnCloseWriteCloser) Close() error {
 	return err
 }
 
+func (w *cancelOnDataSaveKV) Batch(ctx context.Context, section string, ops []BatchOp) error {
+	err := w.KV.Batch(ctx, section, ops)
+	if err == nil && slices.ContainsFunc(ops, func(op BatchOp) bool { return op.Section == kv.DataSection }) {
+		w.once.Do(w.cancel)
+	}
+	return err
+}
+
 // TestKvStorageBackend_WriteEvent_ClientCancelAfterDataSave_PersistsEvent
 // verifies that once the data has been durably written, cancelling the client's
 // context does not abort the event write. Otherwise the data store and event
 // store diverge and consumers miss the event through watch and search.
 func TestKvStorageBackend_WriteEvent_ClientCancelAfterDataSave_PersistsEvent(t *testing.T) {
+	for _, coordination := range []WriteCoordination{WriteCoordinationLease, WriteCoordinationLatest} {
+		t.Run(string(coordination), func(t *testing.T) {
+			testClientCancelAfterDataSavePersistsEvent(t, coordination)
+		})
+	}
+}
+
+func testClientCancelAfterDataSavePersistsEvent(t *testing.T, coordination WriteCoordination) {
 	wrapper := &cancelOnDataSaveKV{KV: setupBadgerKV(t)}
-	backend := setupTestStorageBackend(t, withKV(wrapper))
+	backend := setupTestStorageBackend(t, withKV(wrapper), withWriteCoordination(coordination))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

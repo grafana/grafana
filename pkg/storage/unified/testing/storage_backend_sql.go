@@ -16,14 +16,19 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 )
 
-func NewTestSqlKvBackend(t *testing.T, ctx context.Context) (resource.KVBackend, sqldb.DB) {
+func NewTestSqlKvBackend(t *testing.T, ctx context.Context, configs ...func(*resource.KVBackendOptions)) (resource.KVBackend, sqldb.DB) {
 	t.Helper()
-	return NewTestSqlKvBackendWithKV(t, ctx, nil)
+	return NewTestSqlKvBackendWithKV(t, ctx, nil, configs...)
+}
+
+// WithLatestWriteCoordination makes a test backend use WriteCoordinationLatest.
+func WithLatestWriteCoordination(opts *resource.KVBackendOptions) {
+	opts.WriteCoordination = resource.WriteCoordinationLatest
 }
 
 // NewTestSqlKvBackendWithKV is NewTestSqlKvBackend with its KV passed through
 // wrap, when set, so a test can observe or alter what storage asks the KV for.
-func NewTestSqlKvBackendWithKV(t *testing.T, ctx context.Context, wrap func(resource.KV) resource.KV) (resource.KVBackend, sqldb.DB) {
+func NewTestSqlKvBackendWithKV(t *testing.T, ctx context.Context, wrap func(resource.KV) resource.KV, configs ...func(*resource.KVBackendOptions)) (resource.KVBackend, sqldb.DB) {
 	t.Helper()
 
 	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
@@ -37,7 +42,7 @@ func NewTestSqlKvBackendWithKV(t *testing.T, ctx context.Context, wrap func(reso
 		store = wrap(store)
 	}
 
-	backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
+	opts := resource.KVBackendOptions{
 		KvStore:            store,
 		DBKeepAlive:        eDB,
 		Holder:             "test-holder-" + uuid.NewV4().String(),
@@ -45,7 +50,11 @@ func NewTestSqlKvBackendWithKV(t *testing.T, ctx context.Context, wrap func(reso
 		UseChannelNotifier: dbConn.DriverName() == "sqlite3",
 		// keep it low in tests as most of them don't exercise concurrent writes
 		WatchOptions: resource.WatchOptions{SettleDelay: time.Millisecond},
-	})
+	}
+	for _, configure := range configs {
+		configure(&opts)
+	}
+	backend, err := resource.NewKVStorageBackend(opts)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, backend.Stop(context.Background()))

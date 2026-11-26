@@ -89,6 +89,13 @@ const (
 	QueryCacheConfigResource = "querycacheconfigs.querycaching.grafana.app"
 	minimumKVLeaseTTL        = 10 * time.Second
 	maximumKVLeaseTTL        = 10 * time.Minute
+
+	// KVWriteCoordinationLease serializes writes to a resource with a lease.
+	KVWriteCoordinationLease = "lease"
+	// KVWriteCoordinationLatest makes writes compare and swap the resource's
+	// latest version. The KV store must support compare and swap and batches
+	// spanning sections.
+	KVWriteCoordinationLatest = "latest"
 )
 
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
@@ -378,6 +385,11 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	} else if cfg.KVLeaseTTL > maximumKVLeaseTTL {
 		cfg.Logger.Warn("kv_lease_ttl is above the maximum, overriding", "configured", cfg.KVLeaseTTL, "maximum", maximumKVLeaseTTL)
 		cfg.KVLeaseTTL = maximumKVLeaseTTL
+	}
+	cfg.KVWriteCoordination = section.Key("kv_write_coordination").MustString(KVWriteCoordinationLease)
+	if cfg.KVWriteCoordination != KVWriteCoordinationLease && cfg.KVWriteCoordination != KVWriteCoordinationLatest {
+		cfg.Logger.Warn("kv_write_coordination is invalid, using lease", "configured", cfg.KVWriteCoordination)
+		cfg.KVWriteCoordination = KVWriteCoordinationLease
 	}
 
 	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)

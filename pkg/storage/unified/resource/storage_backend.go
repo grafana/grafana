@@ -122,8 +122,11 @@ type kvStorageBackend struct {
 	// a write.
 	watchInvalidator Invalidator
 
-	// leaseManager serializes writes per resource and bulk imports per collection.
+	// leaseManager serializes bulk imports per collection, and writes per
+	// resource with WriteCoordinationLease.
 	leaseManager *lease.Manager
+
+	writeCoordination WriteCoordination
 
 	// leaseTTL is the TTL applied when acquiring a write lease. Zero uses the
 	// lease package default.
@@ -367,6 +370,10 @@ type KVBackendOptions struct {
 	// package default (10s).
 	LeaseTTL time.Duration
 
+	// WriteCoordination selects how concurrent writes to a resource exclude
+	// each other. Empty uses WriteCoordinationLease.
+	WriteCoordination WriteCoordination
+
 	// ResourceVersionMaxWait bounds write latency from recoverable RV drift.
 	// Zero uses the default (1s); a negative value disables waiting.
 	ResourceVersionMaxWait time.Duration
@@ -381,6 +388,7 @@ func NewKVBackendOptions(cfg *setting.Cfg) KVBackendOptions {
 	return KVBackendOptions{
 		Holder:                    newLeaseHolder(cfg.InstanceID),
 		LeaseTTL:                  cfg.KVLeaseTTL,
+		WriteCoordination:         WriteCoordination(cfg.KVWriteCoordination),
 		ResourceVersionMaxWait:    cfg.ResourceVersionMaxWait,
 		LastImportTimeMaxAge:      cfg.MaxFileIndexAge,
 		EventRetentionPeriod:      cfg.EventRetentionPeriod,
@@ -420,6 +428,15 @@ func newLeaseHolder(instanceID string) string {
 }
 
 func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
+	writeCoordination := opts.WriteCoordination
+	switch writeCoordination {
+	case "":
+		writeCoordination = WriteCoordinationLease
+	case WriteCoordinationLease, WriteCoordinationLatest:
+	default:
+		return nil, fmt.Errorf("invalid write coordination %q", writeCoordination)
+	}
+
 	kv := opts.KvStore
 	pds := newPendingDeleteStore(kv)
 
@@ -465,6 +482,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	leaseManager := lease.NewManager(kv, holder, "storage", opts.Reg)
 
 	dataStore := newDataStore(kv)
+	dataStore.maintainsLatest = writeCoordination == WriteCoordinationLatest
 
 	backend := &kvStorageBackend{
 		kv:         kv,
@@ -491,6 +509,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		eventPruningInterval:      eventPruningInterval,
 		leaseManager:              leaseManager,
 		leaseTTL:                  opts.LeaseTTL,
+		writeCoordination:         writeCoordination,
 		dbKeepAlive:               opts.DBKeepAlive,
 		lastImportStore:           newLastImportStore(kv),
 		lastImportTimeMaxAge:      opts.LastImportTimeMaxAge,
@@ -937,6 +956,13 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			if err := b.dataStore.BatchDelete(ctx, buffer); err != nil {
 				return fmt.Errorf("failed to batch delete keys: %s", err)
 			}
+			// The buffer ends with the expired deletion marker. Unless the
+			// object was recreated since, it is still its latest version.
+			if b.dataStore.maintainsLatest {
+				if err := b.dataStore.deleteLatestVersionIf(ctx, buffer[len(buffer)-1]); err != nil {
+					return err
+				}
+			}
 		}
 		totalDeleted += int64(len(buffer))
 		deletedPerNamespace[currentObject.Namespace] += int64(len(buffer))
@@ -1111,6 +1137,22 @@ func (k *kvStorageBackend) acquireStorageLeases(ctx context.Context, kind string
 	return leaseCtx, release, nil
 }
 
+// WriteCoordination selects how concurrent writes to the same resource exclude
+// each other.
+type WriteCoordination string
+
+const (
+	// WriteCoordinationLease holds a per-resource lease for the duration of a
+	// write. It works with any KV store, but a writer that stalls past the
+	// lease TTL can still commit over a later write.
+	WriteCoordinationLease WriteCoordination = setting.KVWriteCoordinationLease
+	// WriteCoordinationLatest compares and swaps the resource's row in
+	// latestSection in the same batch as its data. The KV store must support
+	// BatchOpCompareAndSwap and batches spanning sections, and latestSection
+	// must name every resource's latest version.
+	WriteCoordinationLatest WriteCoordination = setting.KVWriteCoordinationLatest
+)
+
 func (k *kvStorageBackend) acquireWriteLease(ctx context.Context, event WriteEvent) (context.Context, func(), error) {
 	key := event.Key
 	name := "write/" + key.Group + "/" + key.Resource + "/" + key.Namespace + "/" + key.Name
@@ -1223,8 +1265,6 @@ func (k *kvStorageBackend) latestResourceVersion(ctx context.Context) (int64, er
 }
 
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
-//
-//nolint:gocyclo
 func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64, err error) {
 	if err := event.Validate(); err != nil {
 		return 0, apierrors.NewBadRequest(err.Error())
@@ -1237,106 +1277,192 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 		attribute.String("group", event.Key.Group),
 		attribute.String("resource", event.Key.Resource),
 		attribute.String("namespace", event.Key.Namespace),
+		attribute.String("write_coordination", string(k.writeCoordination)),
 	))
 	defer span.End()
 	defer func() { recordSpanError(span, err) }()
 
-	ctx, releaseLease, err := k.acquireWriteLease(ctx, event)
+	var write committedWrite
+	if k.writeCoordination == WriteCoordinationLatest {
+		write, err = k.commitLatestWrite(ctx, event)
+	} else {
+		var releaseLease func()
+		ctx, releaseLease, err = k.acquireWriteLease(ctx, event)
+		if err != nil {
+			return 0, err
+		}
+		// The lease also covers emitting the event below.
+		defer releaseLease()
+		write, err = k.commitLeasedWrite(ctx, event)
+	}
 	if err != nil {
 		return 0, err
 	}
-	defer releaseLease()
 
-	namespace := event.Key.Namespace
+	if err := k.emitWriteEvent(ctx, event, write); err != nil {
+		return 0, err
+	}
+	return write.key.ResourceVersion, nil
+}
+
+// committedWrite is a write whose data is committed and whose event is not yet
+// emitted.
+type committedWrite struct {
+	key DataKey
+	// previous is the version the write replaced, set only when the event
+	// names it with PreviousRV.
+	previous DataKey
+	obj      utils.GrafanaMetaAccessor
+}
+
+// commitLeasedWrite commits the event's data. The caller holds the resource's
+// write lease, which excludes other writers while it lasts.
+func (k *kvStorageBackend) commitLeasedWrite(ctx context.Context, event WriteEvent) (committedWrite, error) {
+	getKey := getRequestKey(event.Key)
 
 	var previousKey DataKey
 	// When PreviousRV is not 0, fetch the latest resource and verify that the RV matches the PreviousRV
 	if event.PreviousRV != 0 {
-		latestKey, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
-			Group:     event.Key.Group,
-			Resource:  event.Key.Resource,
-			Namespace: namespace,
-			Name:      event.Key.Name,
-		})
+		latestKey, err := k.dataStore.GetLatestResourceKey(ctx, getKey)
 
 		if err != nil {
 			if errors.Is(err, ErrNotFound) {
 				// Resource doesn't exist, but PreviousRV was provided
 				k.metrics.recordConflict(event)
-				return 0, conflictError(event, "resource not found")
+				return committedWrite{}, conflictError(event, "resource not found")
 			}
-			return 0, fmt.Errorf("failed to fetch latest resource: %w", err)
+			return committedWrite{}, fmt.Errorf("failed to fetch latest resource: %w", err)
 		}
 
 		// Verify the current RV matches the PreviousRV
 		if latestKey.ResourceVersion != event.PreviousRV {
 			k.metrics.recordConflict(event)
-			return 0, conflictError(event, "requested RV does not match current RV")
+			return committedWrite{}, conflictError(event, "requested RV does not match current RV")
 		}
 		previousKey = latestKey
 	}
 
 	minimumRV := previousKey.ResourceVersion
+	if event.Type == resourcepb.WatchEvent_ADDED {
+		latestKey, err := k.dataStore.GetResourceKeyAtRevision(ctx, getKey, 0, true)
+		if err == nil {
+			if latestKey.Action != DataActionDeleted {
+				return committedWrite{}, ErrResourceAlreadyExists
+			}
+			// A recreated resource must sort after its tombstone to be visible.
+			minimumRV = latestKey.ResourceVersion
+		} else if !errors.Is(err, ErrNotFound) {
+			return committedWrite{}, fmt.Errorf("failed to check if resource exists: %w", err)
+		}
+	}
+
+	dataKey, obj, err := k.newWriteDataKey(ctx, event, minimumRV)
+	if err != nil {
+		return committedWrite{}, err
+	}
+	if err := k.dataStore.Save(ctx, dataKey, bytes.NewReader(event.Value)); err != nil {
+		return committedWrite{}, fmt.Errorf("failed to write data: %w", err)
+	}
+	return committedWrite{key: dataKey, previous: previousKey, obj: obj}, nil
+}
+
+// commitLatestWrite commits the event's data if the resource's latest version
+// is still the one its checks read, by compare and swap.
+func (k *kvStorageBackend) commitLatestWrite(ctx context.Context, event WriteEvent) (committedWrite, error) {
+	latest, err := k.dataStore.getLatestVersion(ctx, getRequestKey(event.Key))
+	if err != nil {
+		return committedWrite{}, err
+	}
+
+	var previousKey DataKey
+	if event.PreviousRV != 0 {
+		if !latest.live() {
+			k.metrics.recordConflict(event)
+			return committedWrite{}, conflictError(event, "resource not found")
+		}
+		if latest.key.ResourceVersion != event.PreviousRV {
+			k.metrics.recordConflict(event)
+			return committedWrite{}, conflictError(event, "requested RV does not match current RV")
+		}
+		previousKey = latest.key
+	}
+	if event.Type == resourcepb.WatchEvent_ADDED && latest.live() {
+		return committedWrite{}, ErrResourceAlreadyExists
+	}
+
+	// Versions keep increasing past the latest one, so a recreated resource
+	// sorts after its tombstone.
+	dataKey, obj, err := k.newWriteDataKey(ctx, event, latest.key.ResourceVersion)
+	if err != nil {
+		return committedWrite{}, err
+	}
+	ops, err := k.dataStore.latestWriteOps(dataKey, latest, event.Value)
+	if err != nil {
+		return committedWrite{}, err
+	}
+	if err := k.kv.Batch(ctx, dataSection, ops); err != nil {
+		if !isLatestConflict(err) {
+			return committedWrite{}, fmt.Errorf("failed to write data: %w", err)
+		}
+		k.metrics.recordConflict(event)
+		if event.Type == resourcepb.WatchEvent_ADDED {
+			return committedWrite{}, ErrResourceAlreadyExists
+		}
+		return committedWrite{}, conflictError(event, "concurrent modification on the same resource, please retry")
+	}
+	return committedWrite{key: dataKey, previous: previousKey, obj: obj}, nil
+}
+
+func getRequestKey(key *resourcepb.ResourceKey) GetRequestKey {
+	return GetRequestKey{Group: key.Group, Resource: key.Resource, Namespace: key.Namespace, Name: key.Name}
+}
+
+// newWriteDataKey returns the data key the event writes, with a resource
+// version above minimumRV.
+func (k *kvStorageBackend) newWriteDataKey(ctx context.Context, event WriteEvent, minimumRV int64) (DataKey, utils.GrafanaMetaAccessor, error) {
 	obj := event.Object
 	var action DataAction
 	switch event.Type {
 	case resourcepb.WatchEvent_ADDED:
 		action = DataActionCreated
-		latestKey, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
-			Group:     event.Key.Group,
-			Resource:  event.Key.Resource,
-			Namespace: namespace,
-			Name:      event.Key.Name,
-		}, 0, true)
-		if err == nil {
-			if latestKey.Action != DataActionDeleted {
-				return 0, ErrResourceAlreadyExists
-			}
-			// A recreated resource must sort after its tombstone to be visible.
-			minimumRV = latestKey.ResourceVersion
-		} else if !errors.Is(err, ErrNotFound) {
-			return 0, fmt.Errorf("failed to check if resource exists: %w", err)
-		}
 	case resourcepb.WatchEvent_MODIFIED:
 		action = DataActionUpdated
 	case resourcepb.WatchEvent_DELETED:
 		action = DataActionDeleted
 		obj = event.ObjectOld
 	default:
-		return 0, fmt.Errorf("invalid event type: %d", event.Type)
+		return DataKey{}, nil, fmt.Errorf("invalid event type: %d", event.Type)
 	}
 
 	if obj == nil {
-		return 0, fmt.Errorf("object is nil")
+		return DataKey{}, nil, fmt.Errorf("object is nil")
 	}
 
-	rv, err = k.generateResourceVersionWithRetry(ctx, minimumRV)
+	rv, err := k.generateResourceVersionWithRetry(ctx, minimumRV)
 	if err != nil {
 		var ordering *resourceVersionOrderingError
 		if errors.As(err, &ordering) {
 			k.metrics.recordResourceVersionOrderingRejection(event, ordering.rv)
 		}
 		if ctx.Err() != nil {
-			return 0, ctx.Err()
+			return DataKey{}, nil, ctx.Err()
 		}
-		return 0, apierrors.NewServiceUnavailable(err.Error())
+		return DataKey{}, nil, apierrors.NewServiceUnavailable(err.Error())
 	}
 
-	// Write the data
-	dataKey := DataKey{
+	return DataKey{
 		Group:           event.Key.Group,
 		Resource:        event.Key.Resource,
-		Namespace:       namespace,
+		Namespace:       event.Key.Namespace,
 		Name:            event.Key.Name,
 		ResourceVersion: rv,
 		Action:          action,
 		Folder:          obj.GetFolder(),
-	}
+	}, obj, nil
+}
 
-	if err := k.dataStore.Save(ctx, dataKey, bytes.NewReader(event.Value)); err != nil {
-		return 0, fmt.Errorf("failed to write data: %w", err)
-	}
-
+// emitWriteEvent saves and publishes the event of a committed write.
+func (k *kvStorageBackend) emitWriteEvent(ctx context.Context, event WriteEvent, write committedWrite) error {
 	// The data is now durably committed. From here on the data store and event
 	// store must not diverge: detach from client/lease cancellation so the event
 	// is still emitted, but keep a bounded deadline so a stuck datastore cannot
@@ -1345,21 +1471,20 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	defer cancelPersist()
 	ctx = persistCtx
 
-	// Write event
 	eventData := Event{
-		Namespace:       namespace,
-		Group:           event.Key.Group,
-		Resource:        event.Key.Resource,
-		Name:            event.Key.Name,
-		ResourceVersion: dataKey.ResourceVersion,
-		Action:          action,
-		Folder:          obj.GetFolder(),
+		Namespace:       write.key.Namespace,
+		Group:           write.key.Group,
+		Resource:        write.key.Resource,
+		Name:            write.key.Name,
+		ResourceVersion: write.key.ResourceVersion,
+		Action:          write.key.Action,
+		Folder:          write.key.Folder,
 		PreviousRV:      event.PreviousRV,
-		PreviousAction:  previousKey.Action,
-		PreviousFolder:  previousKey.Folder,
+		PreviousAction:  write.previous.Action,
+		PreviousFolder:  write.previous.Folder,
 	}
 	if k.watchNotificationMetadata {
-		eventData.Metadata = NewWatchMetadata(schema.GroupResource{Group: event.Key.Group, Resource: event.Key.Resource}, obj)
+		eventData.Metadata = NewWatchMetadata(schema.GroupResource{Group: write.key.Group, Resource: write.key.Resource}, write.obj)
 	}
 	if err := k.eventStore.Save(ctx, eventData); err != nil {
 		k.metrics.recordEventEmitFailure(event)
@@ -1368,22 +1493,21 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 			"group", event.Key.Group,
 			"resource", event.Key.Resource,
 			"name", event.Key.Name,
-			"action", action,
+			"action", write.key.Action,
 			"error", err,
 		)
-		return 0, fmt.Errorf("failed to save event: %w", err)
+		return fmt.Errorf("failed to save event: %w", err)
 	}
 
 	_ = k.historyPruner.Add(PruningKey{
-		Namespace: namespace,
-		Group:     event.Key.Group,
-		Resource:  event.Key.Resource,
-		Name:      event.Key.Name,
+		Namespace: write.key.Namespace,
+		Group:     write.key.Group,
+		Resource:  write.key.Resource,
+		Name:      write.key.Name,
 	})
 	k.notifier.Publish(eventData)
 	k.publishWatchNotification(ctx, eventData)
-
-	return rv, nil
+	return nil
 }
 
 func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) (rsp *BackendReadResponse) {
@@ -3049,7 +3173,45 @@ func (b *kvStorageBackend) clearCollectionForImport(ctx context.Context, key *re
 		previous, err = b.deleteCollectionHistory(ctx, key)
 		return err
 	})
+	if err != nil || !b.dataStore.maintainsLatest {
+		return previous, err
+	}
+	err = b.inBulkStep(ctx, func(ctx context.Context) error {
+		_, err := b.dataStore.deleteLatestVersions(ctx, collectionListKey(key))
+		return err
+	})
 	return previous, err
+}
+
+func collectionListKey(key *resourcepb.ResourceKey) ListRequestKey {
+	return ListRequestKey{Group: key.Group, Resource: key.Resource, Namespace: key.Namespace}
+}
+
+// bulkLatestChunk bounds how many latest versions a bulk import step sets.
+const bulkLatestChunk = 1000
+
+// setImportedLatestVersions makes the newest imported version of each resource
+// its latest version. The import cleared the collections' rows beforehand.
+func (b *kvStorageBackend) setImportedLatestVersions(ctx context.Context, saved []DataKey) error {
+	newest := make(map[string]DataKey, len(saved))
+	for _, key := range saved {
+		id := latestKeyOf(key)
+		if current, ok := newest[id]; !ok || key.ResourceVersion > current.ResourceVersion {
+			newest[id] = key
+		}
+	}
+	keys := make([]DataKey, 0, len(newest))
+	for _, key := range newest {
+		keys = append(keys, key)
+	}
+	for chunk := range slices.Chunk(keys, bulkLatestChunk) {
+		if err := b.inBulkStep(ctx, func(ctx context.Context) error {
+			return b.dataStore.setLatestVersions(ctx, chunk)
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (b *kvStorageBackend) deleteCollectionEvents(ctx context.Context, key *resourcepb.ResourceKey) error {
@@ -3179,6 +3341,14 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		err = b.dataStore.BatchDelete(rollbackCtx, saved)
 		if err != nil {
 			b.log.Error("failed to delete during rollback", "error", err)
+		}
+		saved = nil
+		if b.dataStore.maintainsLatest {
+			for _, key := range setting.Collection {
+				if _, err := b.dataStore.deleteLatestVersions(rollbackCtx, collectionListKey(key)); err != nil {
+					b.log.Error("failed to delete latest versions during rollback", "error", err)
+				}
+			}
 		}
 	}
 
@@ -3338,6 +3508,13 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	if err := ctx.Err(); err != nil {
 		rollback()
 		return nil, err
+	}
+
+	if b.dataStore.maintainsLatest {
+		if err := b.setImportedLatestVersions(ctx, saved); err != nil {
+			rollback()
+			return nil, reportError(err, "failed to save latest versions")
+		}
 	}
 
 	var lastImportErr error

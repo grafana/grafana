@@ -41,7 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func setupBadgerKV(t *testing.T) resource.StorageBackend {
+func setupBadgerKV(t *testing.T, configs ...func(*resource.KVBackendOptions)) resource.StorageBackend {
 	opts := badger.DefaultOptions("").WithInMemory(true).WithLogger(nil)
 	db, err := badger.Open(opts)
 	require.NoError(t, err)
@@ -54,6 +54,9 @@ func setupBadgerKV(t *testing.T) resource.StorageBackend {
 		WatchOptions: resource.WatchOptions{SettleDelay: time.Millisecond},
 		Holder:       fmt.Sprintf("badger-holder-%s", uuid.NewV4().String()),
 	}
+	for _, configure := range configs {
+		configure(&kvOpts)
+	}
 	backend, err := resource.NewKVStorageBackend(kvOpts)
 	require.NoError(t, err)
 	return backend
@@ -64,6 +67,18 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 		return setupBadgerKV(t)
 	}, &TestOptions{
 		NSPrefix: "badgerkvstorage-test",
+		SkipTests: map[string]bool{
+			// TODO: fix these tests and remove this skip
+			TestBlobSupport: true,
+		},
+	})
+}
+
+func TestBadgerKVStorageBackendLatestWrites(t *testing.T) {
+	RunStorageBackendTest(t, func(_ context.Context) resource.StorageBackend {
+		return setupBadgerKV(t, WithLatestWriteCoordination)
+	}, &TestOptions{
+		NSPrefix: "badgerkvstorage-latest-test",
 		SkipTests: map[string]bool{
 			// TODO: fix these tests and remove this skip
 			TestBlobSupport: true,
@@ -161,17 +176,31 @@ func TestPerResourceFolderTreeSearchAndStorage(t *testing.T) {
 }
 
 func TestBadgerKVConcurrentCreateNoAlreadyExists(t *testing.T) {
-	runConcurrentCreateNoAlreadyExists(t, setupBadgerKV(t), "badgerkv-no-already-exists")
+	t.Run("lease", func(t *testing.T) {
+		runConcurrentCreateNoAlreadyExists(t, setupBadgerKV(t), "badgerkv-no-already-exists", false)
+	})
+	t.Run("latest", func(t *testing.T) {
+		runConcurrentCreateNoAlreadyExists(t, setupBadgerKV(t, WithLatestWriteCoordination), "badgerkv-no-already-exists", true)
+	})
 }
 
 func TestIntegrationSQLKVConcurrentCreateNoAlreadyExists(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	backend, _ := NewTestSqlKvBackend(t, t.Context())
-	runConcurrentCreateNoAlreadyExists(t, backend, "sqlkv-no-already-exists")
+	t.Run("lease", func(t *testing.T) {
+		backend, _ := NewTestSqlKvBackend(t, t.Context())
+		runConcurrentCreateNoAlreadyExists(t, backend, "sqlkv-no-already-exists", false)
+	})
+	t.Run("latest", func(t *testing.T) {
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), WithLatestWriteCoordination)
+		runConcurrentCreateNoAlreadyExists(t, backend, "sqlkv-no-already-exists", true)
+	})
 }
 
-func runConcurrentCreateNoAlreadyExists(t *testing.T, backend resource.StorageBackend, ns string) {
+// runConcurrentCreateNoAlreadyExists checks that creates only report AlreadyExists
+// once the resource exists. With alreadyExistsOnly, a create that loses to
+// another write must report AlreadyExists rather than a conflict.
+func runConcurrentCreateNoAlreadyExists(t *testing.T, backend resource.StorageBackend, ns string, alreadyExistsOnly bool) {
 	ctx := t.Context()
 
 	// Launch 10 concurrent creates for the same resource name.
@@ -239,10 +268,12 @@ func runConcurrentCreateNoAlreadyExists(t *testing.T, backend resource.StorageBa
 	for _, e := range createErrors {
 		require.Error(t, e, "all creates should have failed")
 
-		// TODO: once leases graduates from being optional (i.e., it should
-		// eventually be always enabled), then we can acquire the lease only
-		// after doing validations, and that should allow us to enforce that
-		// all clients get an "already exists" error here.
+		if alreadyExistsOnly {
+			require.ErrorIs(t, e, resource.ErrResourceAlreadyExists)
+			continue
+		}
+		// A lease is acquired before the existence check, so a create that
+		// finds it held reports a conflict.
 		validError := errors.Is(e, resource.ErrResourceAlreadyExists) || apierrors.IsConflict(e)
 		require.True(t, validError, "should receive ErrResourceAlreadyExists after resource is created")
 	}
@@ -258,13 +289,31 @@ func TestIntegrationSQLKVConcurrentCreateClientConflicts(t *testing.T) {
 	t.Run("Local", func(t *testing.T) {
 		backend, _ := NewTestSqlKvBackend(t, t.Context())
 		client := newLocalClient(t, backend)
-		runConcurrentCreateClientConflicts(t, client, "sqlkv-conflicts-local")
+		runConcurrentCreateClientConflicts(t, client, "sqlkv-conflicts-local", false)
 	})
 
 	t.Run("Remote", func(t *testing.T) {
 		backend, _ := NewTestSqlKvBackend(t, t.Context())
 		client := newRemoteClient(t, backend)
-		runConcurrentCreateClientConflicts(t, client, "sqlkv-conflicts-remote")
+		runConcurrentCreateClientConflicts(t, client, "sqlkv-conflicts-remote", false)
+	})
+}
+
+// With latest write coordination a losing create only fails once the winner's
+// data is committed, so both local and remote clients report AlreadyExists.
+func TestIntegrationSQLKVConcurrentCreateClientConflictsLatestWrites(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("Local", func(t *testing.T) {
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), WithLatestWriteCoordination)
+		client := newLocalClient(t, backend)
+		runConcurrentCreateClientConflicts(t, client, "sqlkv-latest-conflicts-local", true)
+	})
+
+	t.Run("Remote", func(t *testing.T) {
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), WithLatestWriteCoordination)
+		client := newRemoteClient(t, backend)
+		runConcurrentCreateClientConflicts(t, client, "sqlkv-latest-conflicts-remote", true)
 	})
 }
 
@@ -361,7 +410,7 @@ func newRemoteClient(t *testing.T, backend resource.KVBackend) resource.Resource
 	return resource.NewLegacyResourceClient(conn, conn)
 }
 
-func runConcurrentCreateClientConflicts(t *testing.T, client resource.ResourceClient, ns string) {
+func runConcurrentCreateClientConflicts(t *testing.T, client resource.ResourceClient, ns string, alreadyExistsOnly bool) {
 	const concurrency = 10
 	name := "concurrent-create-conflicts-item"
 
@@ -411,6 +460,11 @@ func runConcurrentCreateClientConflicts(t *testing.T, client resource.ResourceCl
 			successes++
 			continue
 		}
+		if alreadyExistsOnly {
+			require.Equal(t, string(metav1.StatusReasonAlreadyExists), resource.AsErrorResult(err).Reason,
+				"losing creates should get AlreadyExists: %v", err)
+			continue
+		}
 		// Scheduling determines which error a losing create sees: contention while the lease
 		// is held produces Conflict, whereas observing the completed create produces AlreadyExists.
 		// Do not require a fixed count of either error. Some lease conflicts arrive as a bare
@@ -439,6 +493,21 @@ func TestIntegrationConcurrentWritesWithLeasesSqlKV(t *testing.T) {
 			return backend
 		}, "sqlkv-leases")
 	})
+}
+
+func TestConcurrentWritesLatestBadger(t *testing.T) {
+	runConcurrentWritesWithLeases(t, func() resource.StorageBackend {
+		return setupBadgerKV(t, WithLatestWriteCoordination)
+	}, "badgerkv-latest")
+}
+
+func TestIntegrationConcurrentWritesLatestSqlKV(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	runConcurrentWritesWithLeases(t, func() resource.StorageBackend {
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), WithLatestWriteCoordination)
+		return backend
+	}, "sqlkv-latest")
 }
 
 // runConcurrentWritesWithLeases verifies that concurrent writes to the same resource serialize cleanly:
@@ -478,8 +547,8 @@ func runConcurrentCreatesWithLeases(t *testing.T, backend resource.StorageBacken
 		case err == nil:
 			successes++
 		case apierrors.IsAlreadyExists(err), apierrors.IsConflict(err):
-			// Expected: lost the lease race, or acquired the lease after
-			// the winner committed and saw the resource.
+			// Expected: lost the race to the winner's lease or commit, or
+			// saw the committed resource.
 		default:
 			unexpected = append(unexpected, err)
 		}
@@ -516,7 +585,7 @@ func runConcurrentUpdatesWithLeases(t *testing.T, backend resource.StorageBacken
 		case err == nil:
 			successes++
 		case apierrors.IsConflict(err):
-			// Expected: lost the lease race, or PreviousRV no longer matches.
+			// Expected: lost the race, or PreviousRV no longer matches.
 		default:
 			unexpected = append(unexpected, err)
 		}
@@ -553,7 +622,7 @@ func runConcurrentDeletesWithLeases(t *testing.T, backend resource.StorageBacken
 		case err == nil:
 			successes++
 		case apierrors.IsConflict(err), errors.Is(err, resource.ErrNotFound):
-			// Expected: lost the lease race, or the resource is already gone.
+			// Expected: lost the race, or the resource is already gone.
 		default:
 			unexpected = append(unexpected, err)
 		}
@@ -616,5 +685,17 @@ func TestIntegrationSQLKVStorageBackend(t *testing.T) {
 	}, &TestOptions{
 		NSPrefix:  "sqlkvstoragetest",
 		SkipTests: skipTests,
+	})
+}
+
+func TestIntegrationSQLKVStorageBackendLatestWrites(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
+		backend, _ := NewTestSqlKvBackend(t, ctx, WithLatestWriteCoordination)
+		return backend
+	}, &TestOptions{
+		NSPrefix:  "sqlkvstorage-latest-test",
+		SkipTests: map[string]bool{TestBlobSupport: true},
 	})
 }
