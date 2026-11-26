@@ -3,8 +3,8 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"sync"
 
-	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
 	clientrest "k8s.io/client-go/rest"
 
@@ -23,11 +23,11 @@ var _ registry.CanBeDisabled = (*BootstrapService)(nil)
 // [provisioning] bootstrap_path once the provisioning API is served, then
 // closes [BootstrapService.Done].
 type BootstrapService struct {
-	services.NamedService
+	*loopbackService
 
-	builder *APIBuilder
-	config  bootstrap.Config
-	done    chan struct{}
+	config    bootstrap.Config
+	done      chan struct{}
+	closeDone func()
 
 	repositories func(restConfig *clientrest.Config, namespace string) (bootstrap.Repositories, error)
 }
@@ -36,16 +36,24 @@ type BootstrapService struct {
 // after [RegisterAPIService], which registers the provisioning API group with
 // the API server.
 func ProvideBootstrapService(cfg *setting.Cfg, builder *APIBuilder) (*BootstrapService, error) {
-	s := &BootstrapService{builder: builder, done: make(chan struct{}), repositories: newBootstrapRepositories}
+	done := make(chan struct{})
+	s := &BootstrapService{
+		done:         done,
+		closeDone:    sync.OnceFunc(func() { close(done) }),
+		repositories: newBootstrapRepositories,
+	}
 	if builder != nil {
 		config, err := bootstrapConfigFromSettings(cfg)
 		if err != nil {
 			return nil, err
 		}
 		s.config = config
-		builder.bootstrapDone = s.done
+		builder.bootstrapDone = done
 	}
-	s.NamedService = services.NewBasicService(nil, s.running, nil).WithName(BootstrapServiceName)
+	s.loopbackService = newLoopbackService(BootstrapServiceName, builder, s.runController)
+	// Closed on every path, including shutdown before the API is served, so
+	// nothing waits on Done forever.
+	s.onStop = s.closeDone
 	return s, nil
 }
 
@@ -55,14 +63,6 @@ func (s *BootstrapService) IsDisabled() bool {
 	return s.builder == nil
 }
 
-// Run implements registry.BackgroundService.
-func (s *BootstrapService) Run(ctx context.Context) error {
-	if err := s.StartAsync(ctx); err != nil {
-		return err
-	}
-	return s.AwaitTerminated(context.Background())
-}
-
 // Done is closed once the bootstrap repository has been reconciled, whether or
 // not that succeeded, so a changed or cleared bootstrap_path is applied before
 // the repository controller syncs the repository it replaces.
@@ -70,11 +70,9 @@ func (s *BootstrapService) Done() <-chan struct{} {
 	return s.done
 }
 
-func (s *BootstrapService) running(ctx context.Context) error {
-	func() {
-		defer close(s.done)
-		s.reconcile(ctx)
-	}()
+func (s *BootstrapService) runController(ctx context.Context, restConfig *clientrest.Config) error {
+	s.reconcile(ctx, restConfig)
+	s.closeDone()
 
 	// Returning would leave this module Terminated, and dskit fails the
 	// background-services module that depends on it if it is not Running when
@@ -83,11 +81,7 @@ func (s *BootstrapService) running(ctx context.Context) error {
 	return nil
 }
 
-func (s *BootstrapService) reconcile(ctx context.Context) {
-	restConfig, err := s.builder.awaitLoopbackConfig(ctx)
-	if err != nil {
-		return
-	}
+func (s *BootstrapService) reconcile(ctx context.Context, restConfig *clientrest.Config) {
 	// Runs with no path configured too, to remove a repository a previous run registered.
 	if !s.config.Reconcilable() {
 		return

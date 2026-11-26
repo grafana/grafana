@@ -1,0 +1,36 @@
+{
+  "apiVersion": "dashboard.grafana.app/v1",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "gdev-provisioning-slow-queries"
+  },
+  "spec": {
+    "title": "Slow queries",
+    "description": "Lives in a nested folder, so the sync has to create the whole folder tree.",
+    "tags": ["gdev", "provisioning"],
+    "schemaVersion": 41,
+    "editable": true,
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "type": "timeseries",
+        "title": "Slow query simulation",
+        "gridPos": { "h": 9, "w": 24, "x": 0, "y": 0 },
+        "datasource": {
+          "type": "grafana-testdata-datasource",
+          "uid": "PD8C576611E62080A"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "scenarioId": "slow_query",
+            "stringInput": "5s"
+          }
+        ]
+      }
+    ]
+  }
+}

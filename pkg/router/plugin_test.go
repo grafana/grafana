@@ -694,6 +694,8 @@ func TestPluginSettingsBackendLoad(t *testing.T) {
 		}{},
 		Unified:       &resource.MockResourceClient{},
 		AccessControl: &actest.FakeAccessControl{ExpectedEvaluate: true},
+		AccessClient:  claims.FixedAccessClient(true),
+		Settings:      SettingsDependencies{AccessChecker: localSettingsAccessChecker(claims.FixedAccessClient(true), &actest.FakeAccessControl{ExpectedEvaluate: true})},
 	}
 	client := func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
 		return struct{ plugins.Client }{}, nil, nil

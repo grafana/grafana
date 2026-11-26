@@ -480,6 +480,13 @@ func TestStartupPrebuildsTrashHeavyIndexes(t *testing.T) {
 		}
 	}
 
+	for i := range 3 {
+		require.NoError(t, storage.dataStore.Save(t.Context(), DataKey{
+			Group: "iam.grafana.app", Resource: "globalroles", Name: fmt.Sprintf("role-%d", i),
+			Action: DataActionDeleted, ResourceVersion: node.Generate().Int64(),
+		}, strings.NewReader("{}")))
+	}
+
 	liveOnly, err := storage.GetResourceStatsWithLimit(t.Context(), NamespacedResource{}, 2, 5)
 	require.NoError(t, err)
 	require.Empty(t, liveOnly, "existing callers still filter by live count")
@@ -3556,9 +3563,9 @@ func TestRebuildIndexNoFollowUpWhenNotInFlight(t *testing.T) {
 	require.False(t, inFlight, "in-flight tracker should be cleared")
 	require.Equal(t, 0, support.rebuildQueue.Len(), "no follow-up should be re-enqueued")
 	require.Len(t, search.buildIndexCalls, 1)
-	require.Equal(t, int64(50), search.buildIndexCalls[0].size)
+	require.Equal(t, unknownBuildSize, search.buildIndexCalls[0].size, "the backend sizes the rebuild from the original index")
 	require.Equal(t, lastImportTime, search.buildIndexCalls[0].lastImportTime)
-	require.Zero(t, storage.statsCalls.Load(), "rebuild should use the current index doc count instead of GetResourceStats")
+	require.Zero(t, storage.statsCalls.Load(), "rebuild should not count documents in storage")
 }
 
 // TestSearchServer_VectorSearch_ObservesDuration verifies the RPC histogram
