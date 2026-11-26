@@ -2,8 +2,8 @@ import { ThresholdsMode } from '@grafana/data';
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../../home/Insights';
 import { InsightsMenuButton } from '../../InsightsMenuButton';
+import { PANEL_STYLES } from '../../utils';
 
 export function getFiringCloudAlertsScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
