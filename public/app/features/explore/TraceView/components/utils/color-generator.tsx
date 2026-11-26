@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import memoizeOne from 'memoize-one';
+import { memoizeOne } from 'memoize-one';
 import tinycolor from 'tinycolor2';
 
 import { type GrafanaTheme2 } from '@grafana/data';
