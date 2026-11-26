@@ -113,7 +113,7 @@
     "@rsdoctor/rspack-plugin": "^1.6.3",
     "@rspack/cli": "^2",
     "@rspack/core": "^2.1.7",
-    "@rspack/dev-server": "2.2.1",
+    "@rspack/dev-server": "2.2.2",
     "@rspack/plugin-react-refresh": "2.0.3",
     "@stylistic/eslint-plugin": "5.10.0",
     "@swc/core": "1.13.3",
