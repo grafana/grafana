@@ -248,7 +248,7 @@ Editing a dashboard, including building one with Grafana Assistant, isn't availa
    | Add more panels        | <p>Click the **Add new element** icon and select **Panel**.</p><p>You can also hover your cursor on the dashboard to display the **Add panel** button. This is helpful if you want to ensure that you add a new panel within a grouping.</p>   |
    | Add dashboard controls | Click **Add new element** and select one of the following: <ul><li>[Filter and Group by](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-filters-and-group-by-controls)</li><li>[Variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables)</li><li>[Annotation query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-annotation-queries)</li><li>[Link](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-links)</li></ul> |
    | Group panels           | Group panels in any of the following ways depending on your needs:<ul><li>Click the **Add new element** icon and select **Add row/Group into rows** or **Add tab/Group into tabs**.</li><li>Hover your cursor on the dashboard to display the **Group panels** button and select a grouping option.</li><li>Hold `Shift` and click the panels you want to group, and then select a grouping option from the sidebar or [the bulk actions tooltip](#group-or-delete-multiple-panels-with-bulk-actions).</li></ul><p>For more information on groupings, refer to [Panel groupings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/).</p>   |
-   | Edit panels | <p>Hover your cursor over any part of a panel to display the actions tooltip, which has the following options: **Settings**, **Edit visualization**, **Copy**, **Duplicate**, **Delete**.</p><p>Click **Settings** to access high-level panel options in the sidebar, or **Edit visualization** to open the panel editor.</p>  |
+   | Edit panels | <p>Hover your cursor over any part of a panel to display the actions tooltip, which has the following options: **Edit visualization**, **Panel settings**, **Copy**, **Duplicate**, **Delete**.</p><p>Click **Edit visualization** to open the panel editor, or **Panel settings** to access high-level panel options in the sidebar.</p><p>For some visualizations, you can also change common options directly from the tooltip with [quick edits](#change-common-panel-options-with-quick-edits). (Experimental)</p>  |
    | Delete multiple panels | Hold `Shift` and click the panels you want to update, hover your cursor over one of them to display the [bulk actions tooltip](#group-or-delete-multiple-panels-with-bulk-actions), and then click **Delete**. |
    | Edit dashboard controls | <p>Hover your cursor over any part of a dashboard control to display the actions tooltip, which has the following options: **Settings**, **Duplicate**, and **Delete**. Click **Settings** to access options in the sidebar. For some controls, the tooltip also includes an **Edit query** or **Edit values** option. |
    | Edit rows and tabs | Click a row or tab to access grouping settings in the sidebar. |
@@ -294,6 +294,62 @@ To group or delete multiple panels, follow these steps:
 If you hover over a panel that isn't part of your selection, the tooltip displays single-panel options instead.
 
 When grouping isn't available for your selection, for example because the selected panels are in different rows, hover your cursor over one of the selected panels to display a tooltip explaining why.
+
+### Change common panel options with quick edits
+
+{{< admonition type="caution" >}}
+Quick edits is an [experimental feature](https://grafana.com/docs/release-life-cycle/).
+Engineering and on-call support is not available.
+Documentation is either limited or not provided outside of code comments.
+No SLA is provided.
+
+To try it, enable the `grafana.panelQuickEdits` feature toggle in your Grafana configuration file.
+{{< /admonition >}}
+
+Quick edits let you change the panel options that people update most often, such as the unit, legend, or thresholds, directly from the panel actions tooltip.
+You don't need to open the panel editor or the sidebar.
+
+The following visualizations support quick edits:
+
+| Visualization                                                                                                                      | Quick edits                                                                 |
+| ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| [Time series](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/time-series/) | **Unit**, **Style**, **Legend**, **Min / Max**, **Thresholds**, **Tooltip** |
+| [Stat](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/stat/)               | **Thresholds**, **Style**, **Unit**, **Calculation**, **Color**, **Text**   |
+
+Each quick edit contains the same options as the panel editor, grouped together.
+The **Style** quick edit contains the [panel styles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-editor-overview/#panel-styles) for the visualization.
+
+To change panel options with quick edits, follow these steps:
+
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
+1. Hover your cursor over the panel you want to update to display the actions tooltip.
+1. Click the **Quick edits** icon (lightning bolt).
+
+   The panel actions are replaced by one icon for each quick edit.
+   Hover your cursor over an icon to display the quick edit name and its current value, for example, **Unit: Percent (0-100)**.
+
+1. Click the quick edit you want to use.
+
+   A card with the options for that quick edit opens next to the panel, and the panel is outlined while the card is open.
+
+1. Update the options.
+
+   The panel updates as you make changes.
+
+1. Press `Escape`, click the **Close** icon, or click anywhere outside the card to close it.
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Select **Viewing** in the dashboard mode drop-down list.
+
+Keep the following quick edits behavior in mind:
+
+- **Return to panel actions**: Click the **Back to panel actions** icon to display the panel actions again. If you move your cursor away from the panel, its quick edits stay displayed for five seconds, and then the panel actions are displayed again.
+- **Undo and redo**: Changes you make with quick edits are regular dashboard changes, so you can [undo and redo](#undo-and-redo-changes) them.
+- **Unsupported panels**: Repeated panels and library panels don't offer quick edits. Update the original repeated panel instead, or update the library panel in the panel editor.
+
+If the [panel actions popover](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-popover) is also enabled, the **Quick edits** icon is the first action in the popover in edit mode.
 
 ### Undo and redo changes
 
