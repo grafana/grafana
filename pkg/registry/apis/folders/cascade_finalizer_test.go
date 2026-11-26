@@ -1,12 +1,16 @@
 package folders
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 )
 
 const otherFinalizer = "example.com/other"
@@ -68,6 +72,33 @@ func TestPreserveCascadeDeleteFinalizerOnUpdate(t *testing.T) {
 			f := folderWithFinalizers(tt.sent...)
 			preserveCascadeDeleteFinalizerOnUpdate(f, tt.old)
 			require.Equal(t, tt.expected, f.Finalizers)
+		})
+	}
+}
+
+func TestCascadeFinalizerDeleteStrategy(t *testing.T) {
+	gv := folders.FolderResourceInfo.GroupVersion()
+	scheme := runtime.NewScheme()
+	scheme.AddKnownTypes(gv, &folders.Folder{})
+	strategy := cascadeFinalizerDeleteStrategy{grafanaregistry.NewStrategy(scheme, gv)}
+
+	tests := []struct {
+		name     string
+		ctx      context.Context
+		folder   *folders.Folder
+		expected []string
+	}{
+		{name: "stamps", ctx: withCascadeFinalizerOnDelete(context.Background(), true), folder: folderWithFinalizers(), expected: []string{folders.CascadeDeleteFinalizer}},
+		{name: "strips, keeping others", ctx: withCascadeFinalizerOnDelete(context.Background(), false), folder: folderWithFinalizers(otherFinalizer, folders.CascadeDeleteFinalizer), expected: []string{otherFinalizer}},
+		{name: "no decision leaves it as stored", ctx: context.Background(), folder: folderWithFinalizers(folders.CascadeDeleteFinalizer), expected: []string{folders.CascadeDeleteFinalizer}},
+		{name: "a terminating folder is not touched", ctx: withCascadeFinalizerOnDelete(context.Background(), false), folder: terminating(folderWithFinalizers(folders.CascadeDeleteFinalizer)), expected: []string{folders.CascadeDeleteFinalizer}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			graceful, _, err := rest.BeforeDelete(strategy, tt.ctx, tt.folder, &metav1.DeleteOptions{})
+			require.NoError(t, err)
+			require.False(t, graceful, "the folder is deleted at once, or held by its finalizers")
+			require.Equal(t, tt.expected, tt.folder.Finalizers)
 		})
 	}
 }

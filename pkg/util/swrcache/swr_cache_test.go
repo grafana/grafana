@@ -13,6 +13,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/require"
 )
 
@@ -943,6 +944,85 @@ func TestCache_Get(t *testing.T) {
 	})
 }
 
+func TestEvictions(t *testing.T) {
+	runInBubble(t, "should count one eviction when MaxEntries plus one distinct keys are loaded", func(t *testing.T) {
+		opts := validOptions()
+		opts.MaxEntries = 2
+		cache := newTestCache(t, opts, &scriptedLoader{})
+
+		for _, key := range []string{"a", "b", "c"} {
+			mustGet(t, cache, key)
+		}
+
+		require.Equal(t, float64(1), testutil.ToFloat64(cache.metrics.evictions))
+	})
+
+	runInBubble(t, "should not count an eviction when a failed first load removes its entry", func(t *testing.T) {
+		cache := newTestCache(t, validOptions(), &scriptedLoader{fn: failCalls(1)})
+
+		_, err := cache.Get(t.Context(), "a")
+		require.ErrorIs(t, err, errBoom)
+
+		require.Equal(t, float64(0), testutil.ToFloat64(cache.metrics.evictions))
+	})
+}
+
+func TestHitMissClassification(t *testing.T) {
+	allResults := []string{
+		resultFresh, resultRefreshed, resultStaleTimeout, resultStaleError,
+		resultStaleThrottled, resultStaleCancelled, resultMiss, resultCancelled,
+	}
+	hitResults := []string{resultFresh, resultStaleThrottled, resultStaleTimeout, resultStaleError, resultStaleCancelled}
+
+	t.Run("should count each result in exactly one of hit_total or miss_total", func(t *testing.T) {
+		require.Len(t, resultIsHit, len(allResults))
+		for _, result := range allResults {
+			cache := newTestCache(t, validOptions(), &scriptedLoader{})
+			cache.record(result)
+
+			hits := testutil.ToFloat64(cache.metrics.hits.WithLabelValues(result))
+			misses := testutil.ToFloat64(cache.metrics.misses.WithLabelValues(result))
+			if slices.Contains(hitResults, result) {
+				require.Equal(t, []float64{1, 0}, []float64{hits, misses}, result)
+			} else {
+				require.Equal(t, []float64{0, 1}, []float64{hits, misses}, result)
+			}
+		}
+	})
+
+	t.Run("should count Get calls by the path each took", func(t *testing.T) {
+		runInBubble(t, "", func(t *testing.T) {
+			opts := validOptions()
+			release := make(chan struct{})
+			cache := newTestCache(t, opts, &scriptedLoader{fn: blockCalls(release, 2)})
+
+			mustGet(t, cache, "a") // miss
+			mustGet(t, cache, "a") // fresh
+			synctest.Sleep(opts.RefreshInterval)
+			mustGet(t, cache, "a") // stale_timeout, the refresh is blocked
+			mustGet(t, cache, "a") // stale_throttled
+			close(release)
+			synctest.Wait()
+			synctest.Sleep(opts.RefreshInterval)
+			mustGet(t, cache, "a") // refreshed
+
+			require.Equal(t, 1.0, testutil.ToFloat64(cache.metrics.misses.WithLabelValues(resultMiss)))
+			require.Equal(t, 1.0, testutil.ToFloat64(cache.metrics.misses.WithLabelValues(resultRefreshed)))
+			require.Equal(t, 1.0, testutil.ToFloat64(cache.metrics.hits.WithLabelValues(resultFresh)))
+			require.Equal(t, 1.0, testutil.ToFloat64(cache.metrics.hits.WithLabelValues(resultStaleTimeout)))
+			require.Equal(t, 1.0, testutil.ToFloat64(cache.metrics.hits.WithLabelValues(resultStaleThrottled)))
+		})
+	})
+
+	t.Run("should count a result without a classification as an unknown miss", func(t *testing.T) {
+		cache := newTestCache(t, validOptions(), &scriptedLoader{})
+		cache.record("unclassified")
+
+		require.Equal(t, 1.0, testutil.ToFloat64(cache.metrics.misses.WithLabelValues(resultUnknown)))
+		require.Equal(t, 0.0, testutil.ToFloat64(cache.metrics.misses.WithLabelValues("unclassified")))
+	})
+}
+
 func TestMetrics(t *testing.T) {
 	t.Run("should expose every series with the MetricsPrefix and lint-clean names right after New", func(t *testing.T) {
 		cache := newTestCache(t, validOptions(), &scriptedLoader{})
@@ -964,17 +1044,57 @@ func TestMetrics(t *testing.T) {
 		}
 		require.Equal(t, map[string][]string{
 			"test_cache_entries":               {},
+			"test_cache_eviction_total":        {},
 			"test_cache_load_duration_seconds": {"result=error", "result=success"},
-			"test_cache_requests_total": {
-				"result=cancelled", "result=fresh", "result=miss", "result=refreshed",
-				"result=stale_cancelled", "result=stale_error", "result=stale_throttled", "result=stale_timeout",
+			"test_cache_hit_total": {
+				"result=fresh", "result=stale_cancelled", "result=stale_error",
+				"result=stale_throttled", "result=stale_timeout",
 			},
+			"test_cache_miss_total": {"result=cancelled", "result=miss", "result=refreshed"},
 		}, labelsByName)
 
 		problems, err := testutil.CollectAndLint(cache)
 		require.NoError(t, err)
 		require.Empty(t, problems)
 	})
+
+	t.Run("should add ConstLabels to every series", func(t *testing.T) {
+		opts := validOptions()
+		opts.ConstLabels = prometheus.Labels{"service": "a"}
+		cache := newTestCache(t, opts, &scriptedLoader{})
+		_, err := cache.Get(context.Background(), "key")
+		require.NoError(t, err)
+
+		registry := prometheus.NewPedanticRegistry()
+		require.NoError(t, registry.Register(cache))
+		families, err := registry.Gather()
+		require.NoError(t, err)
+
+		require.Len(t, families, 5)
+		for _, family := range families {
+			require.NotEmpty(t, family.GetMetric(), family.GetName())
+			for _, metric := range family.GetMetric() {
+				require.Contains(t, labelPairs(metric.GetLabel()), "service=a", family.GetName())
+			}
+		}
+	})
+
+	t.Run("should register two caches with one MetricsPrefix when their ConstLabels differ", func(t *testing.T) {
+		registry := prometheus.NewPedanticRegistry()
+		for _, service := range []string{"a", "b"} {
+			opts := validOptions()
+			opts.ConstLabels = prometheus.Labels{"service": service}
+			require.NoError(t, registry.Register(newTestCache(t, opts, &scriptedLoader{})))
+		}
+	})
+}
+
+func labelPairs(labels []*dto.LabelPair) []string {
+	pairs := make([]string, 0, len(labels))
+	for _, label := range labels {
+		pairs = append(pairs, label.GetName()+"="+label.GetValue())
+	}
+	return pairs
 }
 
 // BenchmarkCache_Get reads 2000 keys whose entries go stale every few milliseconds, so the

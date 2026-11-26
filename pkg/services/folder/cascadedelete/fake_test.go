@@ -2,7 +2,6 @@ package cascadedelete
 
 import (
 	"context"
-	"errors"
 	"maps"
 	"slices"
 	"sort"
@@ -241,17 +240,12 @@ func (m *memStore) Delete(ctx context.Context, _, parentUID string, c Child) (De
 		if f.terminating {
 			return DeleteOutcomeTerminating, nil
 		}
-		if len(f.finalizers) == 0 {
-			// Mirrors validateOnDelete: without the finalizer a forced delete gets no bypass.
-			if len(m.childrenOf(c.Name, ChildFolder))+len(m.childrenOf(c.Name, ChildDashboard)) > 0 {
-				return 0, errors.New("folder is not empty")
-			}
-			m.deleteCalls = append(m.deleteCalls, c.Name)
-			delete(m.folders, c.Name)
-			m.notify(c.Name, true)
-			return DeleteOutcomeDeleted, nil
-		}
 		m.deleteCalls = append(m.deleteCalls, c.Name)
+		// Mirrors the folders API: the delete stamps the cascade finalizer on a subfolder that lacks it, and
+		// the forced delete then only marks it terminating, whatever it holds.
+		if !slices.Contains(f.finalizers, foldersv1.CascadeDeleteFinalizer) {
+			f.finalizers = append(f.finalizers, foldersv1.CascadeDeleteFinalizer)
+		}
 		f.terminating = true
 		m.notify(c.Name, false)
 		return DeleteOutcomePending, nil

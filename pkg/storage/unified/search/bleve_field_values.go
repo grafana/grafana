@@ -2,8 +2,6 @@ package search
 
 import (
 	"fmt"
-	"math"
-	"reflect"
 	"slices"
 	"strconv"
 	"strings"
@@ -11,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/enginequery"
 )
 
 // fieldValueResultSchema keeps the public field declarations aligned with the
@@ -83,15 +82,19 @@ func setSearchResults(
 // resolveFieldValueSchema validates the response fields before running the
 // query, so an expensive search cannot finish with an unusable result shape.
 func (b *bleveIndex) resolveFieldValueSchema(selectFields []string) (*fieldValueResultSchema, error) {
+	return b.searchFields.resolveFieldValueSchema(selectFields)
+}
+
+func (k kindSearchFields) resolveFieldValueSchema(selectFields []string) (*fieldValueResultSchema, error) {
 	definitions := make([]resource.SearchFieldDefinition, 0, len(selectFields))
 	if slices.Contains(selectFields, resource.SEARCH_FIELD_ALL_FIELDS) {
-		definitions = append(definitions, b.searchFields.allResultFields...)
+		definitions = append(definitions, k.allResultFields...)
 	}
 	for _, name := range selectFields {
 		if name == resource.SEARCH_FIELD_ALL_FIELDS {
 			continue
 		}
-		definition, ok := b.searchFields.resultFields[name]
+		definition, ok := k.resultFields[name]
 		if !ok && strings.HasPrefix(name, resource.SEARCH_FIELD_LABELS+".") {
 			definition = resource.SearchFieldDefinition{Name: name, Type: resource.SearchFieldTypeString}
 			ok = true
@@ -131,7 +134,7 @@ func (b *bleveIndex) resolveFieldValueSchema(selectFields []string) (*fieldValue
 			continue
 		}
 
-		fieldType, err := fieldValueType(definition.Type)
+		fieldType, err := enginequery.FieldValueType(definition.Type)
 		if err != nil {
 			return nil, fmt.Errorf("field %q: %w", definition.Name, err)
 		}
@@ -189,23 +192,6 @@ func hitsToFieldValues(
 	return schema.fields, rows, nil
 }
 
-func fieldValueType(fieldType resource.SearchFieldType) (resourcepb.ResourceSearchField_Type, error) {
-	switch fieldType {
-	case resource.SearchFieldTypeString:
-		return resourcepb.ResourceSearchField_STRING, nil
-	case resource.SearchFieldTypeBoolean:
-		return resourcepb.ResourceSearchField_BOOLEAN, nil
-	case resource.SearchFieldTypeInt64:
-		return resourcepb.ResourceSearchField_INT64, nil
-	case resource.SearchFieldTypeDouble:
-		return resourcepb.ResourceSearchField_DOUBLE, nil
-	case resource.SearchFieldTypeDate:
-		return resourcepb.ResourceSearchField_DATE, nil
-	default:
-		return resourcepb.ResourceSearchField_UNSPECIFIED, fmt.Errorf("unsupported field type %q", fieldType)
-	}
-}
-
 // hitResourceVersion reads the resource version a hit was indexed with. The index
 // stores it as a string because a number would come back rounded (see
 // SEARCH_FIELD_RV_STRING), so it is parsed here rather than converted.
@@ -260,79 +246,6 @@ func searchHitLegacyID(match *queryHit) (any, bool, error) {
 	return id, true, nil
 }
 
-func newSearchResultValue(
-	fieldIndex uint32,
-	definition resource.SearchFieldDefinition,
-	value any,
-) (*resourcepb.ResourceSearchValue, error) {
-	values := flattenSearchResultValue(value)
-	if !definition.Array && len(values) != 1 {
-		return nil, fmt.Errorf("scalar field has %d values", len(values))
-	}
-
-	result := &resourcepb.ResourceSearchValue{FieldIndex: fieldIndex}
-	for _, value := range values {
-		switch definition.Type {
-		case resource.SearchFieldTypeString:
-			v, ok := value.(string)
-			if !ok {
-				return nil, fmt.Errorf("expected string, got %T", value)
-			}
-			result.StringValues = append(result.StringValues, v)
-		case resource.SearchFieldTypeBoolean:
-			v, ok := value.(bool)
-			if !ok {
-				return nil, fmt.Errorf("expected boolean, got %T", value)
-			}
-			result.BooleanValues = append(result.BooleanValues, v)
-		case resource.SearchFieldTypeInt64, resource.SearchFieldTypeDate:
-			v, err := searchResultInt64(value)
-			if err != nil {
-				return nil, err
-			}
-			result.Int64Values = append(result.Int64Values, v)
-		case resource.SearchFieldTypeDouble:
-			v, err := searchResultFloat64(value)
-			if err != nil {
-				return nil, err
-			}
-			result.DoubleValues = append(result.DoubleValues, v)
-		default:
-			return nil, fmt.Errorf("unsupported field type %q", definition.Type)
-		}
-	}
-	return result, nil
-}
-
-func flattenSearchResultValue(value any) []any {
-	rv := reflect.ValueOf(value)
-	if !rv.IsValid() || (rv.Kind() != reflect.Slice && rv.Kind() != reflect.Array) {
-		return []any{value}
-	}
-	values := make([]any, rv.Len())
-	for i := range rv.Len() {
-		values[i] = rv.Index(i).Interface()
-	}
-	return values
-}
-
-// Bleve returns stored numeric fields as float64. The int64 case is the parsed
-// dashboard legacy ID above, before it reaches this conversion.
-func searchResultInt64(value any) (int64, error) {
-	if v, ok := value.(int64); ok {
-		return v, nil
-	}
-	v, ok := value.(float64)
-	if ok && !math.IsNaN(v) && !math.IsInf(v, 0) && math.Trunc(v) == v && v >= math.MinInt64 && v < math.MaxInt64 {
-		return int64(v), nil
-	}
-	return 0, fmt.Errorf("expected int64-compatible number, got %T (%v)", value, value)
-}
-
-func searchResultFloat64(value any) (float64, error) {
-	v, ok := value.(float64)
-	if !ok {
-		return 0, fmt.Errorf("expected float64, got %T", value)
-	}
-	return v, nil
+func newSearchResultValue(index uint32, def resource.SearchFieldDefinition, value any) (*resourcepb.ResourceSearchValue, error) {
+	return enginequery.NewSearchResultValue(index, def, value)
 }
