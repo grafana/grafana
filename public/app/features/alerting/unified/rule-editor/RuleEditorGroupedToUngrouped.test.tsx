@@ -49,7 +49,6 @@ describe('RuleEditor - editing a grouped Grafana rule to ungrouped', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     contextSrv.isEditor = true;
-    contextSrv.hasEditPermissionInFolders = true;
 
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,
@@ -57,6 +56,7 @@ describe('RuleEditor - editing a grouped Grafana rule to ungrouped', () => {
       AccessControlAction.AlertingRuleDelete,
       AccessControlAction.AlertingRuleCreate,
       AccessControlAction.DataSourcesRead,
+      AccessControlAction.FoldersCreate,
       AccessControlAction.FoldersWrite,
       AccessControlAction.FoldersRead,
     ]);

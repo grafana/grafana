@@ -58,6 +58,26 @@ func TestToLegacyExpression(t *testing.T) {
 			expected:  `{"any": {}}`,
 		},
 		{
+			name:      "empty action is a never-true any",
+			evaluator: EvalPermission(""),
+			expected:  `{"any": {}}`,
+		},
+		{
+			name:      "empty action with an empty scope list",
+			evaluator: EvalPermission("", []string{}...),
+			expected:  `{"any": {}}`,
+		},
+		{
+			name:      "empty action inside any",
+			evaluator: EvalAny(EvalPermission(""), EvalPermission("x:y")),
+			expected:  `{"any": {"expressions": [{"any": {}}, {"permission": {"action": "x:y"}}]}}`,
+		},
+		{
+			name:      "empty action inside all",
+			evaluator: EvalAll(EvalPermission(""), EvalPermission("x:y")),
+			expected:  `{"all": {"expressions": [{"any": {}}, {"permission": {"action": "x:y"}}]}}`,
+		},
+		{
 			name: "nesting order and separate checks for the same action",
 			evaluator: EvalAll(
 				EvalPermission("dashboards:read", "dashboards:uid:dash-1"),
@@ -185,9 +205,14 @@ func TestToLegacyExpressionRejectsInvalidEvaluators(t *testing.T) {
 			error:     "legacy any evaluator is required",
 		},
 		{
-			name:      "missing action",
-			evaluator: EvalPermission("", "dashboards:*"),
-			error:     "legacy permission action is required",
+			name:      "empty action with scopes",
+			evaluator: EvalPermission("", "dashboards:uid:missing"),
+			error:     "legacy permission with scopes requires an action",
+		},
+		{
+			name:      "empty action with an explicit empty scope",
+			evaluator: EvalPermission("", ""),
+			error:     "legacy permission with scopes requires an action",
 		},
 		{
 			name:      "unsupported custom evaluator",
@@ -294,6 +319,14 @@ func TestToLegacyExpressionLimits(t *testing.T) {
 			name:      "maximum distinct actions",
 			evaluator: EvalAny(distinctLegacyPermissionEvaluators(maxLegacyExpressionActions)...),
 			error:     "",
+		},
+		{
+			name: "empty actions do not count toward action limits",
+			evaluator: EvalAny(append(
+				distinctLegacyPermissionEvaluators(maxLegacyExpressionActions),
+				EvalPermission(""),
+			)...),
+			error: "",
 		},
 		{
 			name:      "too many distinct actions",

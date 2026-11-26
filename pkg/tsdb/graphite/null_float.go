@@ -64,6 +64,19 @@ func FloatFromString(f string, nullString string) (Float, error) {
 // 0 will not be considered a null Float.
 // It also supports unmarshaling a sql.NullFloat64.
 func (f *Float) UnmarshalJSON(data []byte) error {
+	if string(data) == nullString {
+		f.Valid = false
+		return nil
+	}
+	// json.Unmarshaler input is valid JSON, so a leading '-' or digit means a number.
+	if len(data) > 0 && (data[0] == '-' || ('0' <= data[0] && data[0] <= '9')) {
+		if x, err := strconv.ParseFloat(string(data), 64); err == nil {
+			f.Float64 = x
+			f.Valid = true
+			return nil
+		}
+	}
+
 	var err error
 	var v any
 	if err = json.Unmarshal(data, &v); err != nil {

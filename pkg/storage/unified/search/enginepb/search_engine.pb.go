@@ -198,8 +198,9 @@ func (DocumentState) EnumDescriptor() ([]byte, []int) {
 }
 
 type EnsureIndexRequest struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	IndexScope *IndexScope            `protobuf:"bytes,1,opt,name=index_scope,json=indexScope,proto3" json:"index_scope,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Must identify exactly one index generation.
+	IndexScope *IndexScope `protobuf:"bytes,1,opt,name=index_scope,json=indexScope,proto3" json:"index_scope,omitempty"`
 	// Do not reuse an index from a previous build without a saved checkpoint.
 	RequireNew    bool `protobuf:"varint,2,opt,name=require_new,json=requireNew,proto3" json:"require_new,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -251,8 +252,10 @@ func (x *EnsureIndexRequest) GetRequireNew() bool {
 }
 
 type WriteDocumentsRequest struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	IndexScope *IndexScope            `protobuf:"bytes,1,opt,name=index_scope,json=indexScope,proto3" json:"index_scope,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Must identify exactly one index generation. Every key must match the
+	// namespace, group, and resource in this scope.
+	IndexScope *IndexScope `protobuf:"bytes,1,opt,name=index_scope,json=indexScope,proto3" json:"index_scope,omitempty"`
 	// Describes how to decode app-defined values in this batch, not how to index them.
 	Fields        []*resourcepb.ResourceSearchField `protobuf:"bytes,2,rep,name=fields,proto3" json:"fields,omitempty"`
 	Writes        []*DocumentWrite                  `protobuf:"bytes,3,rep,name=writes,proto3" json:"writes,omitempty"`
@@ -390,11 +393,12 @@ type isDocumentWrite_Action interface {
 }
 
 type DocumentWrite_Upsert struct {
+	// Replaces the document at this key.
 	Upsert *SearchDocument `protobuf:"bytes,2,opt,name=upsert,proto3,oneof"`
 }
 
 type DocumentWrite_Delete struct {
-	// Hard delete: removes the document without adding a trash entry.
+	// Hard delete: does not add a trash entry and succeeds for a missing key.
 	Delete *emptypb.Empty `protobuf:"bytes,3,opt,name=delete,proto3,oneof"`
 }
 
