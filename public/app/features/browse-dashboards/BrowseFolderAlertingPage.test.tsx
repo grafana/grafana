@@ -11,6 +11,8 @@ import { DEFAULT_FOLDERS } from '../alerting/unified/mocks/server/handlers/folde
 import BrowseFolderAlertingPage from './BrowseFolderAlertingPage';
 import * as permissions from './permissions';
 
+jest.mock('./permissions', () => makeSpyable('./permissions'));
+
 // Use the folder and rules from the mocks
 const folder = DEFAULT_FOLDERS[0];
 const { uid: folderUid, title: folderTitle } = folder;

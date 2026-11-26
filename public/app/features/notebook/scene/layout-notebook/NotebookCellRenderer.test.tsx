@@ -30,6 +30,8 @@ import { isEditableQueryPanel, NotebookCellRenderer } from './NotebookCellRender
 import { NotebookLayoutManager } from './NotebookLayoutManager';
 import { NOTEBOOK_CELL_CONTROLS_PINNED_CLASS } from './edit/cellClassNames';
 
+jest.mock('app/features/library-panels/state/api', () => makeSpyable('app/features/library-panels/state/api'));
+
 setAppEvents(new EventBusSrv());
 setRunRequest(runRequest);
 setPluginImportUtils({

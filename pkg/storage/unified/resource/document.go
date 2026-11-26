@@ -2,10 +2,12 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -22,6 +24,21 @@ import (
 type DocumentBuilder interface {
 	// Convert raw bytes into an document that can be written
 	BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*IndexableDocument, error)
+}
+
+// ReadBlobForIndex bounds a read even when shared indexing work has no caller deadline.
+func ReadBlobForIndex(ctx context.Context, blob BlobSupport, key *resourcepb.ResourceKey, info *utils.BlobInfo) ([]byte, error) {
+	readCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	rsp, err := blob.GetResourceBlob(readCtx, key, info, true)
+	if readErr := readCtx.Err(); readErr != nil && !errors.Is(err, readErr) {
+		err = errors.Join(err, readErr)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("error reading blob: %w", err)
+	}
+	return rsp.GetValue(), nil
 }
 
 // Registry of the searchable document fields

@@ -447,12 +447,15 @@ func installAPIGroupsForBuilder(g *genericapiserver.APIGroupInfo, group string, 
 	return nil
 }
 
-// AddPostStartHooks adds post start hooks to a generic API server config
+// AddPostStartHooks adds post start hooks and readyz checks to a generic API server config
 func AddPostStartHooks(
 	config *genericapiserver.RecommendedConfig,
 	builders []APIGroupBuilder,
 ) error {
 	for _, b := range builders {
+		if checkProvider, ok := b.(APIGroupReadyzCheckProvider); ok {
+			config.AddReadyzChecks(checkProvider.GetReadyzChecks()...)
+		}
 		hookProvider, ok := b.(APIGroupPostStartHookProvider)
 		if !ok {
 			continue

@@ -3,13 +3,13 @@ package dualwrite
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
-
 	"github.com/grafana/grafana/pkg/setting"
+	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 )
 
 // fakeMigrator is a no-op implementation of UnifiedStorageMigrationService
@@ -58,16 +58,28 @@ func NewFakeMigrationStatusReader(resourceModes ...interface{}) unifiedmigration
 }
 
 // NewConfigBasedMigrationStatusReader creates a MigrationStatusReader that derives
-// storage modes from the config's UnifiedStorage map. This is used in standalone
-// APIServer paths where there is no legacy database for migration log checks.
+// storage modes from a snapshot of the config's UnifiedStorage map, resolved like
+// [setting.Cfg.UnifiedStorageConfig] (including the app plugin settings wildcard).
+// This is used in standalone APIServer paths where there is no legacy database for
+// migration log checks.
 func NewConfigBasedMigrationStatusReader(cfg *setting.Cfg) unifiedmigrations.MigrationStatusReader {
-	m := make(map[string]unifiedmigrations.StorageMode)
+	snapshot := &setting.Cfg{}
 	if cfg != nil {
-		for key, config := range cfg.UnifiedStorage {
-			m[key] = storageModeFromConfigMode(config.DualWriterMode)
-		}
+		snapshot.UnifiedStorage = maps.Clone(cfg.UnifiedStorage)
 	}
-	return &fakeMigrationStatusReader{modes: m}
+	return configMigrationStatusReader{cfg: snapshot}
+}
+
+type configMigrationStatusReader struct {
+	cfg *setting.Cfg
+}
+
+func (r configMigrationStatusReader) GetStorageMode(_ context.Context, gr schema.GroupResource) (unifiedmigrations.StorageMode, error) {
+	return storageModeFromConfigMode(r.cfg.UnifiedStorageConfig(gr.String()).DualWriterMode), nil
+}
+
+func (configMigrationStatusReader) GetFloorVersion(schema.GroupResource) (string, bool) {
+	return "", false
 }
 
 func NewFakeConfig() *setting.Cfg {

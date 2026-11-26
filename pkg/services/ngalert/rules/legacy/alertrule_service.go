@@ -19,11 +19,11 @@ import (
 // orgID is the org of the request's namespace. It is not always the user's org: Grafana server admins can call any
 // org's namespace, so it is passed in rather than taken from the user.
 type AlertRules struct {
-	service    *LegacyRuleService
+	service    *legacyRuleService
 	namespacer request.NamespaceMapper
 }
 
-func NewAlertRules(service *LegacyRuleService, namespacer request.NamespaceMapper) *AlertRules {
+func newAlertRules(service *legacyRuleService, namespacer request.NamespaceMapper) *AlertRules {
 	return &AlertRules{service: service, namespacer: namespacer}
 }
 

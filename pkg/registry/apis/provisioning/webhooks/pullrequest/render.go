@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models"
@@ -67,7 +69,7 @@ func (r *screenshotRenderer) RenderScreenshot(ctx context.Context, repo provisio
 	// client maps to a synthetic render-service identity pinned to that org. A
 	// real user id would instead make OrgRedirect try to switch that user's
 	// active org while rendering.
-	orgID, userID, orgRole := int64(1), int64(0), identity.RoleAdmin
+	orgID, userID, orgRole := int64(1), int64(0), authlib.RoleAdmin
 	if requester, err := identity.GetRequester(ctx); err == nil {
 		if id := requester.GetOrgID(); id > 0 {
 			orgID = id

@@ -115,6 +115,12 @@ describe('getVisualizationOptions', () => {
           origin: 'built-in',
           value: '__to',
         },
+        {
+          documentation: 'Adds selected dashboard tabs as URL parameters',
+          label: 'Current dashboard tabs',
+          origin: 'built-in',
+          value: '__url_tab_state',
+        },
       ]);
     });
 
@@ -216,6 +222,12 @@ describe('getVisualizationOptions', () => {
           label: 'Time range: to',
           origin: 'built-in',
           value: '__to',
+        },
+        {
+          documentation: 'Adds selected dashboard tabs as URL parameters',
+          label: 'Current dashboard tabs',
+          origin: 'built-in',
+          value: '__url_tab_state',
         },
       ]);
     });

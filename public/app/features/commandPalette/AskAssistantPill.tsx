@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useKBar } from 'kbar';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -38,9 +38,11 @@ export function AskAssistantPill() {
   // first. State is read through refs so the listener registers once — onAskAssistant depends on searchQuery and
   // would re-register the listener on every input change.
   const onAskAssistantRef = useRef(onAskAssistant);
-  onAskAssistantRef.current = onAskAssistant;
   const canAskAssistantRef = useRef(canAskAssistant);
-  canAskAssistantRef.current = canAskAssistant;
+  useLayoutEffect(() => {
+    onAskAssistantRef.current = onAskAssistant;
+    canAskAssistantRef.current = canAskAssistant;
+  });
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       if (event.key !== 'Enter' || !event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {

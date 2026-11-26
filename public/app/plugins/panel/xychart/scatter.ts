@@ -517,8 +517,6 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
   return { builder, prepData, warn: null };
 };
 
-export type PrepData = (xySeries: XYSeries[]) => FacetedData;
-
 const getGlobalRanges = (xySeries: XYSeries[]) => {
   const ranges = {
     size: {

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
 	sdkk8s "github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/open-feature/go-sdk/openfeature"
@@ -1016,7 +1017,7 @@ func toSignedInUser(u *iamv0alpha1.User, orgID int64) *user.SignedInUser {
 		LastSeenAt:     time.Unix(u.Status.LastSeenAt, 0),
 	}
 
-	role := identity.RoleType(u.Spec.Role)
+	role := authlib.RoleType(u.Spec.Role)
 	if role.IsValid() {
 		signedInUser.OrgRole = role
 	} else {

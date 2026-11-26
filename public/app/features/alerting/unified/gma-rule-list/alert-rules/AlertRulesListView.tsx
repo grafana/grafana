@@ -33,7 +33,7 @@ export function AlertRulesListView({ filter }: ListViewProps) {
 
   if (isLoading) {
     return (
-      <Stack direction="column" gap={0.5}>
+      <Stack direction="column" gap={1}>
         <ResultCount kind="alert" isLoading />
         <RuleListSkeleton />
       </Stack>
@@ -51,7 +51,7 @@ export function AlertRulesListView({ filter }: ListViewProps) {
   }
 
   return (
-    <Stack direction="column" gap={0.5}>
+    <Stack direction="column" gap={1}>
       {folderLimitReached && <FolderSearchLimitNotice />}
       {items.length === 0 && !failure ? (
         <EmptyState

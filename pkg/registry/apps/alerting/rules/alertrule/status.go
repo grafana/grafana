@@ -45,8 +45,7 @@ var (
 
 // NewStatusStorage builds the AlertRule /status subresource storage.
 func NewStatusStorage(
-	legacySvc legacy.LegacyRuleService,
-	namespacer request.NamespaceMapper,
+	rules *legacy.AlertRules,
 	unified *appsdkapiserver.StatusREST,
 	writesUnified func(ctx context.Context) bool,
 ) rest.Storage {
@@ -55,7 +54,7 @@ func NewStatusStorage(
 		status:        unified,
 		writesUnified: writesUnified,
 		legacy: &legacyStorage{
-			rules:          legacy.NewAlertRules(&legacySvc, namespacer),
+			rules:          rules,
 			tableConverter: rest.NewDefaultTableConvertor(ResourceInfo.GroupResource()),
 		},
 	}

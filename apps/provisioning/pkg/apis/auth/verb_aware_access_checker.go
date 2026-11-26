@@ -4,7 +4,7 @@ import (
 	"context"
 
 	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -29,7 +29,7 @@ func NewVerbAwareAccessChecker(read, write AccessChecker) AccessChecker {
 // WithFallbackRole is intentionally a no-op. Per-verb fallbacks are decided at
 // construction by the caller; applying a single role across both inner checkers
 // would defeat the purpose of the split.
-func (c *verbAwareAccessChecker) WithFallbackRole(_ identity.RoleType) AccessChecker {
+func (c *verbAwareAccessChecker) WithFallbackRole(_ authlib.RoleType) AccessChecker {
 	return c
 }
 

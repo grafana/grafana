@@ -22,12 +22,12 @@ const VALID_LANGUAGES = [
 function initTFuncAndTransComponent({ id, ns }: { id?: string; ns?: string[] } = {}) {
   if (id) {
     tFunc = getI18nInstance().getFixedT(null, id);
-    transComponent = (props: TransProps) => <I18NextTrans shouldUnescape ns={id} {...props} />;
+    transComponent = (props: TransProps) => <I18NextTrans ns={id} {...props} />;
     return;
   }
 
   tFunc = getI18nInstance().getFixedT(null, ns ?? null);
-  transComponent = (props: TransProps) => <I18NextTrans shouldUnescape ns={ns} {...props} />;
+  transComponent = (props: TransProps) => <I18NextTrans ns={ns} {...props} />;
 }
 
 export async function loadNamespacedResources(namespace: string, language: string, loaders?: ResourceLoader[]) {
@@ -214,11 +214,11 @@ export const t: TFunction = (id: string, defaultMessage: string, values?: Record
     tFunc = getI18nInstance().t;
   }
 
-  return tFunc(id, defaultMessage, values);
+  return tFunc(id, defaultMessage, values ?? {});
 };
 
 export function Trans(props: TransProps): React.ReactElement {
   initDefaultI18nInstance();
   const Component = transComponent ?? I18NextTrans;
-  return <Component shouldUnescape {...props} />;
+  return <Component {...props} />;
 }
