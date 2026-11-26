@@ -388,7 +388,9 @@ func TestPrepareForCreateClearsClientResourceVersion(t *testing.T) {
 		wantCleared bool
 	}{
 		{name: "create request", ctx: withVerb("create"), wantCleared: true},
-		{name: "no request info", ctx: t.Context(), wantCleared: true},
+		// In-process create-on-update has no request info; it must keep the version for
+		// optimistic concurrency (e.g. the GlobalRole reconciler).
+		{name: "in-process create-on-update (no request info)", ctx: t.Context(), wantCleared: false},
 		{name: "create-on-update (PUT)", ctx: withVerb("update"), wantCleared: false},
 		{name: "create-on-apply (PATCH)", ctx: withVerb("patch"), wantCleared: false},
 	}

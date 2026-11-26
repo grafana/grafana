@@ -227,12 +227,14 @@ func (g *genericCompleteStrategy) PrepareForCreate(ctx context.Context, obj runt
 	clearClientResourceVersion(ctx, meta)
 }
 
-// clearClientResourceVersion drops a client-supplied resourceVersion on create. The server
-// owns the field, so a create must not persist the value the client sent, and dry-run must not
-// reflect it either. Create-on-update (a PUT or PATCH that creates a missing object) keeps the
-// version so a lost race against a concurrent delete still surfaces as a conflict.
+// clearClientResourceVersion drops a client-supplied resourceVersion on a create request. The
+// server owns the field, so a create must not persist the value the client sent, and dry-run
+// must not reflect it either. Any other context keeps the version: an in-flight PUT or PATCH
+// that creates a missing object, and an in-process caller that has no request info, both rely
+// on it so a lost race against a concurrent delete still surfaces as a conflict.
 func clearClientResourceVersion(ctx context.Context, meta utils.GrafanaMetaAccessor) {
-	if info, ok := genericapirequest.RequestInfoFrom(ctx); ok && (info.Verb == "update" || info.Verb == "patch") {
+	info, ok := genericapirequest.RequestInfoFrom(ctx)
+	if !ok || info.Verb != "create" {
 		return
 	}
 	meta.SetResourceVersion("")
