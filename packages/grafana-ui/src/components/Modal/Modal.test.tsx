@@ -287,8 +287,23 @@ describe('Modal', () => {
 
       expect(within(otherDocument.body).getByRole('dialog')).toHaveTextContent('Content');
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      // the scroll lock can only lock this window's page, which isn't behind the modal
+      expect(usePreventScroll).toHaveBeenLastCalledWith({ isDisabled: true });
 
       // Unmount before the iframe goes, or React cannot remove the portalled modal from it.
+      unmount();
+    });
+
+    it('opens a modal inside it in that window', () => {
+      const inner = (
+        <Modal title="Inner" isOpen>
+          <div>Inner content</div>
+        </Modal>
+      );
+      const { openModal, unmount } = setup(jest.fn(), inner);
+      openModal();
+
+      expect(within(otherDocument.body).getByRole('dialog', { name: 'Inner' })).toHaveTextContent('Inner content');
       unmount();
     });
 

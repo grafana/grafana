@@ -2,6 +2,7 @@ import { cx } from '@emotion/css';
 import { FloatingFocusManager, useDismiss, useFloating, useInteractions, useRole } from '@floating-ui/react';
 import { OverlayContainer, usePreventScroll } from '@react-aria/overlays';
 import { type ComponentProps, type PropsWithChildren, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { CSSTransition } from 'react-transition-group';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
@@ -56,12 +57,13 @@ export function ModalBase({
   const parentPortal = useParentPortal();
   const otherWindowPortal = parentPortal != null && parentPortal.ownerDocument !== document ? parentPortal : undefined;
   const getOverlayContainer = () => otherWindowPortal ?? getPortalContainer();
-  // There, the portals inside the modal (menus, combobox options) render into a container of their own next to it.
-  // The modal treats that container as inside while it hides the rest of the Portal, the app's own content, from
-  // assistive tech. The dialog waits for the container, so those portals mount there once.
+  // There, the portals inside the modal (menus, combobox options, a modal it opens) render into a container of their own
+  // next to it. The modal treats that container as inside while it hides the rest of the Portal, the app's own content,
+  // from assistive tech. The dialog waits for the container, so those portals mount there once.
   const [nestedPortals, setNestedPortals] = useState<HTMLDivElement | null>(null);
 
-  usePreventScroll({ isDisabled: !isOpen });
+  // It locks this window's page, which isn't the one behind a modal in another window.
+  usePreventScroll({ isDisabled: !isOpen || otherWindowPortal != null });
 
   const { context, refs } = useFloating({
     open: isOpen,
@@ -107,49 +109,52 @@ export function ModalBase({
   }
 
   return (
-    <OverlayContainer portalContainer={otherWindowPortal}>
-      {/* first, so it keeps its place when the dialog appears next to it */}
-      {otherWindowPortal && <div ref={setNestedPortals} />}
-      {(!otherWindowPortal || nestedPortals) && (
-        <>
-          <CSSTransition
-            nodeRef={backdropRef}
-            in={true}
-            appear={true}
-            timeout={theme.transitions.duration.standard}
-            classNames={{ appear: styles.modalBackdropAppear, appearActive: styles.modalBackdropActive }}
-          >
-            <div role="presentation" ref={backdropRef} className={styles.modalBackdrop} />
-          </CSSTransition>
-          <FloatingFocusManager
-            context={context}
-            modal={trapFocus}
-            initialFocus={initialFocus}
-            getInsideElements={() => (otherWindowPortal && nestedPortals ? [nestedPortals] : [getPortalContainer()])}
-          >
+    <>
+      {/* Next to the modal's OverlayContainer, not in it: react-aria throws when a modal inside this one puts its own
+       * OverlayContainer in another. */}
+      {otherWindowPortal && createPortal(<div ref={setNestedPortals} />, otherWindowPortal)}
+      <OverlayContainer portalContainer={otherWindowPortal}>
+        {(!otherWindowPortal || nestedPortals) && (
+          <>
             <CSSTransition
-              nodeRef={refs.floating}
+              nodeRef={backdropRef}
               in={true}
               appear={true}
-              timeout={theme.transitions.duration.shortest}
-              classNames={{ appear: styles.modalAppear, appearActive: styles.modalAppearActive }}
+              timeout={theme.transitions.duration.standard}
+              classNames={{ appear: styles.modalBackdropAppear, appearActive: styles.modalBackdropActive }}
             >
-              <div
-                {...dataAttributes}
-                className={cx(styles.modal, className)}
-                ref={refs.setFloating}
-                aria-label={ariaLabel}
-                aria-labelledby={ariaLabelledBy}
-                {...getFloatingProps()}
-              >
-                <ParentPortalProvider value={otherWindowPortal ? nestedPortals : parentPortal}>
-                  {children}
-                </ParentPortalProvider>
-              </div>
+              <div role="presentation" ref={backdropRef} className={styles.modalBackdrop} />
             </CSSTransition>
-          </FloatingFocusManager>
-        </>
-      )}
-    </OverlayContainer>
+            <FloatingFocusManager
+              context={context}
+              modal={trapFocus}
+              initialFocus={initialFocus}
+              getInsideElements={() => (otherWindowPortal && nestedPortals ? [nestedPortals] : [getPortalContainer()])}
+            >
+              <CSSTransition
+                nodeRef={refs.floating}
+                in={true}
+                appear={true}
+                timeout={theme.transitions.duration.shortest}
+                classNames={{ appear: styles.modalAppear, appearActive: styles.modalAppearActive }}
+              >
+                <div
+                  {...dataAttributes}
+                  className={cx(styles.modal, className)}
+                  ref={refs.setFloating}
+                  aria-label={ariaLabel}
+                  aria-labelledby={ariaLabelledBy}
+                  {...getFloatingProps()}
+                >
+                  <ParentPortalProvider value={otherWindowPortal ? nestedPortals : parentPortal}>
+                    {children}
+                  </ParentPortalProvider>
+                </div>
+              </CSSTransition>
+            </FloatingFocusManager>
+          </>
+        )}
+      </OverlayContainer>
+    </>
   );
 }
