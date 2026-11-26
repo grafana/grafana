@@ -27,6 +27,19 @@ describe('WorkflowBadges', () => {
     hidden.forEach((text) => expect(screen.queryByText(text)).not.toBeInTheDocument());
   });
 
+  it.each([[null], [undefined], [[]]])('shows a source with workflows %p as read only', (workflows) => {
+    // The API sends a null list for a source without workflows.
+    render(<WorkflowBadges workflows={workflows as Array<'write' | 'branch'> | undefined} type="source" />);
+
+    expect(screen.getByText('Read only')).toBeInTheDocument();
+  });
+
+  it('does not show a source that allows edits as read only', () => {
+    render(<WorkflowBadges workflows={['write']} type="source" />);
+
+    expect(screen.queryByText('Read only')).not.toBeInTheDocument();
+  });
+
   it('calls the branch workflow a merge request on GitLab', () => {
     render(<WorkflowBadges workflows={['branch']} type="gitlab" />);
 

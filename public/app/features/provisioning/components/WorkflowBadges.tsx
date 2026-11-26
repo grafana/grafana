@@ -17,7 +17,7 @@ interface WorkflowBadgesProps {
 
 /** Shows how people can save changes to a repository: read-only, direct push, pull request. */
 export function WorkflowBadges({ workflows, type, branch }: WorkflowBadgesProps) {
-  if (getIsReadOnlyWorkflows(workflows)) {
+  if (getIsReadOnlyWorkflows(workflows, type)) {
     return <ReadOnlyBadge tooltip={getReadOnlyRepositoryTooltip()} />;
   }
 

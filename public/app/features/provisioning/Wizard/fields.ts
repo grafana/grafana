@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+import { type SourceAuth, type SourceRepositoryConfig } from 'app/api/clients/provisioning/v0alpha1';
 import { w3cStandardEmailValidator } from 'app/features/admin/utils';
 
 import { type RepositoryFormData } from '../types';
@@ -350,6 +351,34 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
       },
       ...commitFields,
     },
+    source: {
+      url: {
+        label: t('provisioning.source.url-label', 'Source URL'),
+        description: t(
+          'provisioning.source.url-description',
+          'The Source API base URL, including the source ID. It must not contain credentials, a query or a fragment.'
+        ),
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        placeholder: 'https://sources.example.com/v1/sources/my-source',
+        required: true,
+        validation: {
+          required: t('provisioning.source.url-required', 'Source URL is required'),
+          pattern: {
+            value: /^https?:\/\/[^\/]+/,
+            message: t('provisioning.source.url-pattern', 'Must be a valid URL (https://hostname/path)'),
+          },
+          validate: validateNoUserInfoInUrl,
+        },
+      },
+      token: {
+        label: t('provisioning.source.token-label', 'Bearer token'),
+        description: t('provisioning.source.token-description', 'Token sent to the source as a bearer token'),
+        required: true,
+        validation: {
+          required: t('provisioning.source.token-required', 'Bearer token is required'),
+        },
+      },
+    },
     local: {
       path: {
         label: t('provisioning.local.path-label', 'Repository Path'),
@@ -483,3 +512,66 @@ export const getLocalProviderFields = (
     pathConfig,
   };
 };
+
+/**
+ * Get source provider field configurations
+ * This should only be called for source providers
+ */
+export const getSourceProviderFields = () => {
+  const { url, token } = getProviderConfigs().source;
+  return { urlConfig: url, tokenConfig: token };
+};
+
+export const getSourceAuthTypeOptions = (includeTokenExchange: boolean) => {
+  const options: Array<{ label: string; value: SourceAuth['type']; description: string }> = [
+    {
+      label: t('provisioning.source.auth-type-bearer', 'Bearer token'),
+      value: 'bearer',
+      description: t('provisioning.source.auth-type-bearer-description', 'Send a long-lived token you provide'),
+    },
+    {
+      label: t('provisioning.source.auth-type-client-credentials', 'Client credentials'),
+      value: 'clientCredentials',
+      description: t(
+        'provisioning.source.auth-type-client-credentials-description',
+        'Use an OAuth client-credentials token kept fresh by a connection'
+      ),
+    },
+  ];
+
+  if (includeTokenExchange) {
+    options.push({
+      label: t('provisioning.source.auth-type-token-exchange', 'Token exchange'),
+      value: 'tokenExchange',
+      description: t(
+        'provisioning.source.auth-type-token-exchange-description',
+        'Exchange a short-lived token for each request. Needs no token or connection.'
+      ),
+    });
+  }
+
+  return options;
+};
+
+export const getEmptyTreePolicyOptions = (): Array<{
+  label: string;
+  value: NonNullable<SourceRepositoryConfig['emptyTreePolicy']>;
+  description: string;
+}> => [
+  {
+    label: t('provisioning.source.empty-tree-policy-refuse', 'Refuse'),
+    value: 'refuse',
+    description: t(
+      'provisioning.source.empty-tree-policy-refuse-description',
+      'Fail the sync instead of deleting everything the repository manages'
+    ),
+  },
+  {
+    label: t('provisioning.source.empty-tree-policy-allow', 'Allow'),
+    value: 'allow',
+    description: t(
+      'provisioning.source.empty-tree-policy-allow-description',
+      'Treat an empty tree as a request to delete everything the repository manages'
+    ),
+  },
+];

@@ -51,13 +51,13 @@ export function isOAuthConnectionType(type?: string): type is OAuthConnectionTyp
 }
 
 export function canListRepositories(type?: ConnectionSpec['type']): boolean {
-  return type !== 'gitOAuth';
+  return type !== 'gitOAuth' && type !== 'source';
 }
 
 // OAuth app connections talk to the same provider as their app-based counterparts
 export function connectionProviderType(
   type?: ConnectionSpec['type']
-): 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' | 'git' | undefined {
+): 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' | 'git' | 'source' | undefined {
   return isOAuthConnectionType(type) ? OAUTH_TO_PROVIDER[type] : type;
 }
 

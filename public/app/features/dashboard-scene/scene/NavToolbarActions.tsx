@@ -347,7 +347,7 @@ export function ToolbarActions({ dashboard }: Props) {
         }}
         tooltip={
           isReadOnlyRepo
-            ? getReadOnlyTooltipText({ isLocal: repoType === 'local' })
+            ? getReadOnlyTooltipText({ isLocal: repoType === 'local', isSource: repoType === 'source' })
             : t('dashboard.toolbar.edit.tooltip', 'Enter edit mode')
         }
         key="edit"

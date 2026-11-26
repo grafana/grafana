@@ -1,0 +1,223 @@
+syntax = "proto3";
+
+package grafana.source.v1;
+
+import "google/api/annotations.proto";
+import "google/api/httpbody.proto";
+
+option go_package = "github.com/grafana/grafana/apps/provisioning/pkg/source/v1;sourcev1";
+
+// SourceService is the Source API: a small, provider-neutral contract that
+// Provisioning pulls a namespace's desired state from, instead of Git.
+//
+// The HTTP/JSON binding below is the wire contract. gRPC is generated from the
+// same definition but is not part of v1: the API crosses trust boundaries where
+// REST is the norm. Sizes are int32 because protobuf JSON encodes int64 as a
+// string; files are capped well below 2 GiB.
+//
+// Only GetTree and GetFile are required. Everything else is advertised in the
+// Descriptor, and a source that lacks a capability answers 501. A source that
+// advertises the write capability can also be edited: PutFile, DeleteFile and
+// Move each produce one new revision.
+service SourceService {
+  // GetDescriptor describes what the source implements. Cacheable (max-age=300).
+  rpc GetDescriptor(GetDescriptorRequest) returns (Descriptor) {
+    option (google.api.http) = {get: "/v1/sources/{id}"};
+  }
+
+  // GetRevision returns the current revision in O(1). Capability: revision.
+  // Sends ETag and honours If-None-Match: 304 means unchanged.
+  rpc GetRevision(GetRevisionRequest) returns (GetRevisionResponse) {
+    option (google.api.http) = {get: "/v1/sources/{id}/revision"};
+  }
+
+  // GetTree lists the files of a revision, one page at a time. Without a
+  // revision the response is pinned to the current one and returns it; later
+  // pages must send it and the source must serve that snapshot or answer 410.
+  rpc GetTree(GetTreeRequest) returns (GetTreeResponse) {
+    option (google.api.http) = {get: "/v1/sources/{id}/tree"};
+  }
+
+  // GetFile returns the raw bytes of a file. ETag equals the tree entry's hash.
+  // Files carry secrets, so responses send Cache-Control: no-store.
+  rpc GetFile(GetFileRequest) returns (google.api.HttpBody) {
+    option (google.api.http) = {get: "/v1/sources/{id}/files/{path=**}"};
+  }
+
+  // PutFile creates or replaces a file. Capability: write. The request body is the
+  // raw file, sent with Content-Type: application/octet-stream. If-None-Match: * only creates (409 if it exists), If-Match: * only
+  // replaces (404 if it is missing) and If-Match: "<hash>" only replaces that
+  // version (412 otherwise). Without a condition the file is simply written.
+  rpc PutFile(PutFileRequest) returns (Mutation) {
+    option (google.api.http) = {
+      put: "/v1/sources/{id}/files/{path=**}"
+      body: "body"
+    };
+  }
+
+  // DeleteFile deletes a file, or with recursive every file under a directory.
+  // Capability: write.
+  rpc DeleteFile(DeleteFileRequest) returns (Mutation) {
+    option (google.api.http) = {delete: "/v1/sources/{id}/files/{path=**}"};
+  }
+
+  // Move renames a file, or with a trailing slash on both paths a directory, in one
+  // revision. The destination must not exist. Capability: write.
+  rpc Move(MoveRequest) returns (Mutation) {
+    option (google.api.http) = {
+      post: "/v1/sources/{id}/move"
+      body: "*"
+    };
+  }
+
+  // Compare returns the changes that turn the tree at base into the tree at
+  // head. Capability: compare, which requires history. Paths are readable at
+  // head; deleted paths and previous_path are readable at base.
+  rpc Compare(CompareRequest) returns (CompareResponse) {
+    option (google.api.http) = {get: "/v1/sources/{id}/compare"};
+  }
+}
+
+message GetDescriptorRequest {
+  // Opaque, URL-safe source id.
+  string id = 1;
+}
+
+message Descriptor {
+  // Always "source.grafana.app/v1".
+  string api_version = 1;
+  string id = 2;
+  Capabilities capabilities = 3;
+  Limits limits = 4;
+}
+
+message Capabilities {
+  // GetRevision is served.
+  bool revision = 1;
+  // Files and tree can be read at past revisions.
+  History history = 2;
+  // Compare is served.
+  bool compare = 3;
+  // The source sends change hints.
+  bool notify = 4;
+  // PutFile, DeleteFile and Move are served, so the source can be edited.
+  bool write = 6;
+  // How secret values are carried in files: "inline", optionally "ref".
+  repeated string secrets = 5;
+}
+
+message History {
+  // Number of past revisions that stay readable.
+  int32 retained = 1;
+}
+
+message Limits {
+  int32 max_files = 1;
+  int32 max_file_bytes = 2;
+  int32 max_page_size = 3;
+}
+
+message GetRevisionRequest {
+  string id = 1;
+}
+
+message GetRevisionResponse {
+  // Opaque, compared for equality only. Matches ^[A-Za-z0-9_-]{7,128}$.
+  string revision = 1;
+}
+
+message GetTreeRequest {
+  string id = 1;
+  string revision = 2;
+  string cursor = 3;
+  int32 limit = 4;
+}
+
+message TreeEntry {
+  // Relative, "/" separated, at most 1024 chars and 8 segments, extension
+  // .yaml, .yml or .json, no dot-prefixed segment except .keep.
+  string path = 1;
+  // Opaque, at most 128 chars, identical to the ETag of the file.
+  string hash = 2;
+  int32 size = 3;
+}
+
+message GetTreeResponse {
+  string revision = 1;
+  // True only on the last page. A client must refuse an incomplete tree.
+  bool complete = 2;
+  repeated TreeEntry entries = 3;
+  string next_cursor = 4;
+}
+
+message GetFileRequest {
+  string id = 1;
+  string path = 2;
+  // Defaults to the current revision.
+  string revision = 3;
+}
+
+message PutFileRequest {
+  string id = 1;
+  string path = 2;
+  // The raw file; its content type is ignored.
+  google.api.HttpBody body = 3;
+  // An optional description of the change, for sources that keep one.
+  string message = 4;
+}
+
+message DeleteFileRequest {
+  string id = 1;
+  string path = 2;
+  string message = 3;
+  // Required to delete a directory, which removes every file under it.
+  bool recursive = 4;
+}
+
+message MoveRequest {
+  string id = 1;
+  string from = 2;
+  string to = 3;
+  string message = 4;
+}
+
+// Mutation is the result of an edit.
+message Mutation {
+  // The revision the edit produced.
+  string revision = 1;
+}
+
+message CompareRequest {
+  string id = 1;
+  string base = 2;
+  string head = 3;
+  string cursor = 4;
+  int32 limit = 5;
+}
+
+message Change {
+  // One of created, updated, deleted, renamed. Renamed is optional: a delete
+  // plus a create is fine.
+  string action = 1;
+  string path = 2;
+  string previous_path = 3;
+}
+
+message CompareResponse {
+  string base = 1;
+  string head = 2;
+  bool complete = 3;
+  repeated Change changes = 4;
+  string next_cursor = 5;
+}
+
+// Error is the body of every non-2xx response. gRPC carries the same code in an
+// ErrorInfo detail reason.
+message Error {
+  // bad_request, unauthorized, forbidden, source_not_found, file_not_found,
+  // revision_not_found, revision_gone, already_exists, precondition_failed,
+  // rate_limited, not_supported, unavailable.
+  string code = 1;
+  string message = 2;
+  bool retryable = 3;
+}

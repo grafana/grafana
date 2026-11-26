@@ -15,7 +15,7 @@ import { useConnectionList } from './useConnectionList';
 
 export function useConnectionOptions(
   enabled: boolean,
-  connectionTypes: Array<GitHubBasedConnectionType | OAuthConnectionType>
+  connectionTypes: Array<GitHubBasedConnectionType | OAuthConnectionType | 'source'>
 ) {
   const [connections, connectionsLoading, error, refetch] = useConnectionList(enabled ? {} : skipToken);
   // Key on contents, not array identity: an unstable array would re-run the memo

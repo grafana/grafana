@@ -33,7 +33,7 @@ jest.mock('../../hooks/useGetRepositoryFolders', () => ({
   useGetRepositoryFolders: jest.fn().mockReturnValue({ options: [], loading: false, error: null }),
 }));
 
-const mockRepo: { github: RepositoryView; local: RepositoryView } = {
+const mockRepo: { github: RepositoryView; local: RepositoryView; source: RepositoryView } = {
   github: {
     type: 'github',
     name: 'test-repo',
@@ -47,6 +47,13 @@ const mockRepo: { github: RepositoryView; local: RepositoryView } = {
     title: 'Local Repo',
     workflows: [],
     target: 'folder',
+  },
+  source: {
+    type: 'source',
+    name: 'source-repo',
+    title: 'Source Repo',
+    workflows: ['write'],
+    target: 'instance',
   },
 };
 
@@ -118,6 +125,13 @@ describe('ResourceEditFormSharedFields', () => {
       setup({ repository: mockRepo.local });
 
       expect(screen.queryByLabelText(/branch/i)).not.toBeInTheDocument();
+    });
+
+    it('should not render the branch field for a source repository that allows edits', () => {
+      setup({ repository: mockRepo.source });
+
+      expect(screen.queryByLabelText(/branch/i)).not.toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'Comment' })).toBeInTheDocument();
     });
 
     it('should render the branch field when the repository is git-backed', () => {

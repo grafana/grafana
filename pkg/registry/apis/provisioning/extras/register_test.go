@@ -22,7 +22,10 @@ func TestProvideConnectionFactoryFromConfig(t *testing.T) {
 	extras := ProvideProvisioningOSSConnectionExtras(&setting.Cfg{}, nil, nil, nil, prometheus.NewRegistry())
 	ossTypes := make([]provisioning.ConnectionType, 0, len(extras))
 	for _, extra := range extras {
-		ossTypes = append(ossTypes, extra.Type())
+		// The source type is opt-in, so it is not part of the defaults.
+		if extra.Type() != provisioning.SourceConnectionType {
+			ossTypes = append(ossTypes, extra.Type())
+		}
 	}
 	extras = append(extras, configuredExtra)
 
@@ -39,6 +42,11 @@ func TestProvideConnectionFactoryFromConfig(t *testing.T) {
 			name:     "uses configured connection types",
 			types:    []string{string(configuredType)},
 			expected: []provisioning.ConnectionType{configuredType},
+		},
+		{
+			name:     "enables the source type only when configured",
+			types:    []string{string(provisioning.SourceConnectionType)},
+			expected: []provisioning.ConnectionType{provisioning.SourceConnectionType},
 		},
 	}
 

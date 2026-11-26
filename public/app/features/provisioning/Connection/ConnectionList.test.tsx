@@ -89,6 +89,24 @@ describe('ConnectionList', () => {
       ).toBeInTheDocument();
     });
 
+    it('should label a source connection as Source API client credentials', () => {
+      setup([
+        createMockConnection({
+          metadata: { name: 'source-conn' },
+          spec: {
+            title: 'Team source',
+            type: 'source',
+            oauth: { clientID: 'grafana-client' },
+            source: { tokenURL: 'https://idp.example.com/oauth/token' },
+          },
+        }),
+      ]);
+
+      expect(screen.getByText('Team source')).toBeInTheDocument();
+      expect(screen.getByText('Source API client credentials')).toBeInTheDocument();
+      expect(screen.queryByText('GitHub App')).not.toBeInTheDocument();
+    });
+
     it('should render EmptyState when items array is empty', () => {
       setup([]);
 

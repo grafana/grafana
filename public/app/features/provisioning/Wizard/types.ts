@@ -48,6 +48,7 @@ export const RepoTypeDisplay: { [key in RepoType]: string } = {
   bitbucket: 'Bitbucket',
   git: 'Git',
   local: 'Local',
+  source: 'Source API',
 };
 
 export type StepStatusInfo =

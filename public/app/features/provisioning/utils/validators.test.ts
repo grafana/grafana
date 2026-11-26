@@ -1,4 +1,5 @@
 import {
+  validateAllowedKinds,
   validateHttpUrl,
   validateNoHiddenCharacters,
   validateNoUserInfoInUrl,
@@ -211,5 +212,25 @@ describe('validateSmimeCertificate', () => {
   it('returns an error when the method is smime and the value is empty or whitespace', () => {
     expect(validateSmimeCertificate('smime')('')).toEqual(expect.stringContaining('Certificate is required'));
     expect(validateSmimeCertificate('smime')('   ')).toEqual(expect.stringContaining('Certificate is required'));
+  });
+});
+
+describe('validateAllowedKinds', () => {
+  it('accepts an empty list', () => {
+    expect(validateAllowedKinds([])).toBe(true);
+  });
+
+  it('accepts rows that have both a group and a kind', () => {
+    expect(validateAllowedKinds([{ group: 'dashboard.grafana.app', kind: 'Dashboard' }])).toBe(true);
+  });
+
+  it.each([
+    { name: 'a missing kind', row: { group: 'dashboard.grafana.app', kind: '' } },
+    { name: 'a missing group', row: { group: '', kind: 'Dashboard' } },
+    { name: 'a whitespace-only kind', row: { group: 'dashboard.grafana.app', kind: '   ' } },
+  ])('rejects $name', ({ row }) => {
+    expect(validateAllowedKinds([{ group: 'dashboard.grafana.app', kind: 'Dashboard' }, row])).toBe(
+      'Every allowed kind needs a group and a kind.'
+    );
   });
 });

@@ -30,6 +30,13 @@ export function getDefaultValues({
       readOnly: false,
       prWorkflow: true,
       path: '',
+      source: {
+        url: '',
+        auth: { type: 'bearer' },
+        allow: [],
+        emptyTreePolicy: 'refuse',
+        tls: { caBundle: '', serverName: '' },
+      },
       sync: {
         enabled: false,
         target: defaultTarget,

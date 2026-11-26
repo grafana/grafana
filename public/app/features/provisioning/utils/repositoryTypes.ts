@@ -82,6 +82,16 @@ const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     ),
     icon: 'file-alt' as const,
   },
+  {
+    type: 'source',
+    label: t('provisioning.repository-types.source', 'Source API'),
+    description: t('provisioning.repository-types.source-description', 'Pull resources from a Source API endpoint'),
+    tooltip: t(
+      'provisioning.repository-types.source-tooltip',
+      'Provisioning from an HTTP endpoint that serves the desired state of this instance as a flat tree of manifests. Read only by default; when the source supports edits, changes saved in Grafana can be written back to it.'
+    ),
+    icon: 'cloud-download' as const,
+  },
 ];
 
 export const getRepositoryTypeConfig = (type: RepoType): RepositoryTypeConfig | undefined => {

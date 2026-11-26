@@ -69,7 +69,11 @@ export function useWizardSubmission({
       try {
         const connectionName = formData.githubAuthType !== 'pat' ? formData.githubApp?.connectionName : undefined;
         const spec = dataToSpec(formData.repository, connectionName);
-        const token = formData.githubAuthType === 'pat' ? formData.repository.token : undefined;
+        const usesToken =
+          formData.repository.type === 'source'
+            ? formData.repository.source?.auth?.type === 'bearer'
+            : formData.githubAuthType === 'pat';
+        const token = usesToken ? formData.repository.token : undefined;
         // Wizard only creates repositories, so there is never an existing key to remove.
         const signingKeySecret = deriveSigningKeySecret(formData.repository, false);
 

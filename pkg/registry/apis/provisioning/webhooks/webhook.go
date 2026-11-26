@@ -159,7 +159,9 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			return
 		}
 
-		if !s.webhooksEnabled {
+		// A source pushes to Grafana, so it does not need a publicly reachable Grafana.
+		_, receivesUnregistered := repo.(repository.UnregisteredWebhookRepository)
+		if !s.webhooksEnabled && !receivesUnregistered {
 			responder.Error(errors.NewBadRequest("webhooks are not enabled"))
 			return
 		}
@@ -243,7 +245,7 @@ type webhookResult struct {
 // repository supplies the normalized event via ProcessRequest; this dispatches
 // it against the configured repository and branch.
 func (s *webhookConnector) webhook(ctx context.Context, req *http.Request, repo repository.WebhookRepository) (*webhookResult, error) {
-	if repo.Config().Status.Webhook == nil {
+	if _, unregistered := repo.(repository.UnregisteredWebhookRepository); repo.Config().Status.Webhook == nil && !unregistered {
 		return nil, fmt.Errorf("unexpected webhook request")
 	}
 

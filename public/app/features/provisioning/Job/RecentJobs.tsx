@@ -185,7 +185,7 @@ function ExpandedRow({ row }: ExpandedRowProps) {
   );
 }
 
-const REPO_TYPES: RepoType[] = ['local', 'git', 'github', 'githubEnterprise', 'gitlab', 'bitbucket'];
+const REPO_TYPES: RepoType[] = ['local', 'git', 'github', 'githubEnterprise', 'gitlab', 'bitbucket', 'source'];
 
 function originLabel(origin: string): string {
   const repoType = REPO_TYPES.find((type) => type === origin);

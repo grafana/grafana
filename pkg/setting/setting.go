@@ -215,6 +215,7 @@ type Cfg struct {
 	ProvisioningBootstrapPath                 string
 	ProvisioningAllowImageRendering           bool
 	ProvisioningAllowInsecure                 bool // allow http:// repository URLs together with a token (cleartext credentials); local/dev only
+	ProvisioningAllowedGitURLs                []string
 	ProvisioningMinSyncInterval               time.Duration
 	ProvisioningRepositoryTypes               []string
 	ProvisioningConnectionTypes               []string
@@ -2715,6 +2716,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningBootstrapPath = strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "bootstrap_path", ""))
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
 	cfg.ProvisioningAllowInsecure = iniFile.Section("provisioning").Key("allow_insecure").MustBool(false)
+	cfg.ProvisioningAllowedGitURLs = iniFile.Section("provisioning").Key("allowed_git_urls").Strings(",")
 	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)
 	cfg.ProvisioningMaxResourcesPerRepository = iniFile.Section("provisioning").Key("max_resources_per_repository").MustInt64(0)
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)

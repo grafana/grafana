@@ -51,6 +51,10 @@ var RepositoryResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 				target = m.Spec.Bitbucket.URL
 			case GitLabRepositoryType:
 				target = m.Spec.GitLab.URL
+			case SourceRepositoryType:
+				if m.Spec.Source != nil {
+					target = m.Spec.Source.URL
+				}
 			}
 
 			return []interface{}{

@@ -59,6 +59,93 @@ func (LocalRepositoryConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "LocalRepositoryConfig"
 }
 
+// SourceRepositoryConfig describes a Source API endpoint that serves the desired state of a namespace.
+type SourceRepositoryConfig struct {
+	// The Source API base URL, including the source id (e.g. `https://source.example.com/v1/sources/my-source`).
+	URL string `json:"url,omitempty"`
+
+	// How requests to the source are authenticated. Defaults to bearer.
+	Auth *SourceAuth `json:"auth,omitempty"`
+
+	// The kinds this source may write. Enforced by Provisioning; the source's own descriptor never grants authority.
+	// Folders are always allowed, since directories become folders. When empty, only dashboards are allowed.
+	// +listType=atomic
+	Allow []SourceAllowedKind `json:"allow,omitempty"`
+
+	// What to do when the source returns an empty tree for a repository that manages resources.
+	// Defaults to refuse, so a faulty source cannot prune everything.
+	EmptyTreePolicy SourceEmptyTreePolicy `json:"emptyTreePolicy,omitempty"`
+
+	// TLS settings for reaching the source.
+	TLS *SourceTLS `json:"tls,omitempty"`
+}
+
+func (SourceRepositoryConfig) OpenAPIModelName() string {
+	return OpenAPIPrefix + "SourceRepositoryConfig"
+}
+
+// SourceAuthType selects how Provisioning authenticates to a source.
+// +enum
+type SourceAuthType string
+
+const (
+	// SourceAuthBearer sends the long-lived secure.token as a bearer token.
+	SourceAuthBearer SourceAuthType = "bearer"
+	// SourceAuthTokenExchange exchanges a short-lived token per request. Only available where a token exchange service is configured.
+	SourceAuthTokenExchange SourceAuthType = "tokenExchange"
+	// SourceAuthClientCredentials uses an OAuth client-credentials token kept fresh by a source Connection.
+	SourceAuthClientCredentials SourceAuthType = "clientCredentials"
+)
+
+func (SourceAuthType) OpenAPIModelName() string {
+	return OpenAPIPrefix + "SourceAuthType"
+}
+
+type SourceAuth struct {
+	Type SourceAuthType `json:"type"`
+}
+
+func (SourceAuth) OpenAPIModelName() string {
+	return OpenAPIPrefix + "SourceAuth"
+}
+
+type SourceAllowedKind struct {
+	// The API group, e.g. `dashboard.grafana.app`. A leading `*.` matches any subdomain.
+	Group string `json:"group"`
+	// The kind, e.g. `Dashboard`. `*` matches every kind of the group.
+	Kind string `json:"kind"`
+}
+
+func (SourceAllowedKind) OpenAPIModelName() string {
+	return OpenAPIPrefix + "SourceAllowedKind"
+}
+
+// SourceEmptyTreePolicy decides what an empty tree from a source means.
+// +enum
+type SourceEmptyTreePolicy string
+
+const (
+	// SourceEmptyTreeRefuse fails the sync instead of pruning everything the repository manages.
+	SourceEmptyTreeRefuse SourceEmptyTreePolicy = "refuse"
+	// SourceEmptyTreeAllow treats an empty tree as a request to delete everything.
+	SourceEmptyTreeAllow SourceEmptyTreePolicy = "allow"
+)
+
+func (SourceEmptyTreePolicy) OpenAPIModelName() string {
+	return OpenAPIPrefix + "SourceEmptyTreePolicy"
+}
+
+type SourceTLS struct {
+	// PEM-encoded CA certificates that sign the source's server certificate, in addition to the system roots.
+	CABundle string `json:"caBundle,omitempty"`
+	// Overrides the server name used to verify the certificate.
+	ServerName string `json:"serverName,omitempty"`
+}
+
+func (SourceTLS) OpenAPIModelName() string {
+	return OpenAPIPrefix + "SourceTLS"
+}
+
 // Workflow used for changes in the repository.
 // +enum
 type Workflow string
@@ -197,6 +284,7 @@ const (
 	GitRepositoryType              RepositoryType = "git"
 	BitbucketRepositoryType        RepositoryType = "bitbucket"
 	GitLabRepositoryType           RepositoryType = "gitlab"
+	SourceRepositoryType           RepositoryType = "source"
 )
 
 // IsGit returns true if the repository type is git or github
@@ -531,6 +619,10 @@ type RepositorySpec struct {
 	// The repository on GitLab.
 	// Mutually exclusive with local | github | git.
 	GitLab *GitLabRepositoryConfig `json:"gitlab,omitempty"`
+
+	// The repository served by a Source API endpoint.
+	// Mutually exclusive with local | github | git.
+	Source *SourceRepositoryConfig `json:"source,omitempty"`
 
 	// The connection the repository references.
 	// This means the Repository is interacting with git via a Connection.

@@ -52,6 +52,9 @@ type RepositorySpecApplyConfiguration struct {
 	// The repository on GitLab.
 	// Mutually exclusive with local | github | git.
 	GitLab *GitLabRepositoryConfigApplyConfiguration `json:"gitlab,omitempty"`
+	// The repository served by a Source API endpoint.
+	// Mutually exclusive with local | github | git.
+	Source *SourceRepositoryConfigApplyConfiguration `json:"source,omitempty"`
 	// The connection the repository references.
 	// This means the Repository is interacting with git via a Connection.
 	Connection *ConnectionInfoApplyConfiguration `json:"connection,omitempty"`
@@ -182,6 +185,14 @@ func (b *RepositorySpecApplyConfiguration) WithBitbucket(value *BitbucketReposit
 // If called multiple times, the GitLab field is set to the value of the last call.
 func (b *RepositorySpecApplyConfiguration) WithGitLab(value *GitLabRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
 	b.GitLab = value
+	return b
+}
+
+// WithSource sets the Source field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Source field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithSource(value *SourceRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
+	b.Source = value
 	return b
 }
 

@@ -4,5 +4,9 @@ import { type RepoType } from '../Wizard/types';
 import { getReadOnlyTooltipText } from '../utils/tooltip';
 
 export function ReadOnlyBadge({ repoType }: { repoType?: RepoType }) {
-  return <BaseReadOnlyBadge tooltip={getReadOnlyTooltipText({ isLocal: repoType === 'local' })} />;
+  return (
+    <BaseReadOnlyBadge
+      tooltip={getReadOnlyTooltipText({ isLocal: repoType === 'local', isSource: repoType === 'source' })}
+    />
+  );
 }

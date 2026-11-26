@@ -34,6 +34,9 @@ type ConnectionSpecApplyConfiguration struct {
 	// Generic git OAuth app connection configuration
 	// Only applicable when provider is "gitOAuth"
 	GitOAuth *GitOAuthConnectionConfigApplyConfiguration `json:"gitOAuth,omitempty"`
+	// Source API client-credentials configuration
+	// Only applicable when provider is "source"
+	Source *SourceConnectionConfigApplyConfiguration `json:"source,omitempty"`
 	// OAuth app configuration shared by all OAuth app providers
 	OAuth *ConnectionOAuthConfigApplyConfiguration `json:"oauth,omitempty"`
 	// Webhook configuration for this connection
@@ -115,6 +118,14 @@ func (b *ConnectionSpecApplyConfiguration) WithBitbucket(value *BitbucketConnect
 // If called multiple times, the GitOAuth field is set to the value of the last call.
 func (b *ConnectionSpecApplyConfiguration) WithGitOAuth(value *GitOAuthConnectionConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
 	b.GitOAuth = value
+	return b
+}
+
+// WithSource sets the Source field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Source field is set to the value of the last call.
+func (b *ConnectionSpecApplyConfiguration) WithSource(value *SourceConnectionConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
+	b.Source = value
 	return b
 }
 
