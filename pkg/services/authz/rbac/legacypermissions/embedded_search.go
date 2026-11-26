@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"runtime/debug"
 
 	authzlib "github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/types"
@@ -12,6 +13,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -26,13 +28,14 @@ import (
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
+var embeddedSearchLogger = log.New("authz.legacypermissions.search")
+
 type embeddedSearchCallKey struct{}
 
 type embeddedSearchCall struct {
 	embeddedTransactionCall
 	permissions       map[int64][]accesscontrol.Permission
 	err               error
-	panicValue        any
 	evaluationContext openfeature.EvaluationContext
 }
 
@@ -50,9 +53,6 @@ func (c *embeddedClient) LegacySearchUsersPermissions(ctx context.Context, calle
 		// Wait for the handler to publish its outcome even if cancellation
 		// unblocks Recv first.
 		call.wait()
-		if call.panicValue != nil {
-			panic(call.panicValue)
-		}
 		if call.err != nil {
 			response, err = legacyclient.LegacySearchUsersPermissionsResponse{Permissions: call.permissions}, call.err
 			return
@@ -100,10 +100,11 @@ func (s *embeddedServer) LegacySearchUsersPermissions(req *authzv1.LegacySearchU
 		return status.Error(codes.PermissionDenied, "legacy search requires an embedded call")
 	}
 	defer func() {
-		// A backend panic must surface on the original request goroutine.
-		if value := recover(); value != nil {
-			call.panicValue = value
-			err = status.Error(codes.Internal, "embedded legacy search panicked")
+		if recover() != nil {
+			embeddedSearchLogger.FromContext(ctx).Error("Recovered from embedded permission search panic", "stack", string(debug.Stack()))
+			err = status.Error(codes.Internal, "legacy permission search failed")
+			// Preserve the failure if cancellation has already unblocked the client.
+			call.err = err
 		}
 	}()
 	if s.loader == nil || s.loader.search == nil {

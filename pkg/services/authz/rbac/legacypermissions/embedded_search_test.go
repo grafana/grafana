@@ -111,37 +111,67 @@ func TestEmbeddedSearchWithDoneContext(t *testing.T) {
 }
 
 func TestEmbeddedSearchPreservesBackendFailureDuringCancellation(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		ctx, cancel := context.WithCancel(t.Context())
-		defer cancel()
-		started, canceled, release := make(chan struct{}), make(chan struct{}), make(chan struct{})
-		cause := errors.New("backend failed")
-		store := searchTestStore{search: func(ctx context.Context, _ int64, _ ac.SearchOptions) (map[int64][]ac.Permission, error) {
-			close(started)
-			<-ctx.Done()
-			close(canceled)
-			<-release
-			return nil, fmt.Errorf("%w: %w", status.Error(codes.Unavailable, "SQL unavailable"), cause)
-		}}
-		client := NewEmbeddedClient(&Loader{license: &licensing.OSSLicensingService{}, search: newSearchTestEngine(store, nil)}, setting.NewCfg())
-		result := make(chan error, 1)
-		go func() {
-			_, err := client.LegacySearchUsersPermissions(ctx, LegacySearchPermissionCaller("default"), embeddedSearchTestRequest())
-			result <- err
-		}()
-		<-started
-		cancel()
-		<-canceled
-		synctest.Wait()
-		select {
-		case err := <-result:
-			close(release)
-			t.Fatalf("client returned before the backend failure: %v", err)
-		default:
-		}
-		close(release)
-		err := <-result
-		require.ErrorIs(t, err, cause)
-		require.Equal(t, codes.Unavailable, status.Code(err))
-	})
+	cause := errors.New("backend failed")
+	for _, tc := range []struct {
+		name    string
+		fail    func() error
+		code    codes.Code
+		message string
+		cause   error
+	}{
+		{
+			name: "backend error",
+			fail: func() error {
+				return fmt.Errorf("%w: %w", status.Error(codes.Unavailable, "SQL unavailable"), cause)
+			},
+			code:  codes.Unavailable,
+			cause: cause,
+		},
+		{
+			name:    "backend panic",
+			fail:    func() error { panic("private backend panic details") },
+			code:    codes.Internal,
+			message: "legacy permission search failed",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				ctx, cancel := context.WithCancel(t.Context())
+				defer cancel()
+				started, canceled, release := make(chan struct{}), make(chan struct{}), make(chan struct{})
+				store := searchTestStore{search: func(ctx context.Context, _ int64, _ ac.SearchOptions) (map[int64][]ac.Permission, error) {
+					close(started)
+					<-ctx.Done()
+					close(canceled)
+					<-release
+					return nil, tc.fail()
+				}}
+				client := NewEmbeddedClient(&Loader{license: &licensing.OSSLicensingService{}, search: newSearchTestEngine(store, nil)}, setting.NewCfg())
+				result := make(chan error, 1)
+				go func() {
+					_, err := client.LegacySearchUsersPermissions(ctx, LegacySearchPermissionCaller("default"), embeddedSearchTestRequest())
+					result <- err
+				}()
+				<-started
+				cancel()
+				<-canceled
+				synctest.Wait()
+				select {
+				case err := <-result:
+					close(release)
+					t.Fatalf("client returned before the backend failure: %v", err)
+				default:
+				}
+				close(release)
+				err := <-result
+				require.Equal(t, tc.code, status.Code(err))
+				if tc.cause != nil {
+					require.ErrorIs(t, err, tc.cause)
+				}
+				if tc.message != "" {
+					require.Equal(t, tc.message, status.Convert(err).Message())
+				}
+			})
+		})
+	}
 }
