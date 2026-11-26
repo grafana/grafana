@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
 	"gopkg.in/ini.v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -442,9 +443,11 @@ func newStubSigner(t *testing.T) *httptest.Server {
 
 func TestSetupFromConfigUsesRuntimeTracer(t *testing.T) {
 	tracer := tracing.NewNoopTracerService()
+	global := otel.GetTracerProvider()
 	cfg, err := setupFromConfig(&runner.Runtime{Cfg: setting.NewCfg(), Registerer: prometheus.NewRegistry(), Tracer: tracer})
 	require.NoError(t, err)
 	require.Same(t, tracer, cfg.Tracer())
+	require.Same(t, global, otel.GetTracerProvider(), "a runtime tracer must leave the global provider alone")
 
 	cfg, err = setupFromConfig(&runner.Runtime{Cfg: setting.NewCfg(), Registerer: prometheus.NewRegistry()})
 	require.NoError(t, err)
