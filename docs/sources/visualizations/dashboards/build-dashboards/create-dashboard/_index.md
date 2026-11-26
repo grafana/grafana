@@ -177,6 +177,11 @@ Hover your cursor over the numbers to display descriptions of the toolbar option
 
 The toolbar is displayed in both edit and view mode, but the **Dashboard options**, **Feedback**, and **Edit as code**, **Undo**, and **Redo** icons aren't available in view mode (Undo and redo are in public preview).
 
+In edit mode, hover your cursor over a panel, row header, or tab to display its actions tooltip, and then click **Settings** to open the sidebar with that element's options.
+For dashboard controls, use the **Settings** option in the control's actions tooltip, and for dashboard-level options, click the **Dashboard options** icon.
+Clicking a dashboard element selects it, but doesn't open the sidebar.
+If the sidebar is already open, it updates to display the options for the element you select.
+
 The available configuration options in the sidebar differ depending on the selected dashboard element:
 
 - **Dashboards**: High-level options are in the sidebar and further configuration options are in the **Settings** page.
@@ -251,8 +256,8 @@ Editing a dashboard, including building one with Grafana Assistant, isn't availa
    | Edit panels | <p>Hover your cursor over any part of a panel to display the actions tooltip, which has the following options: **Settings**, **Edit visualization**, **Copy**, **Duplicate**, **Delete**.</p><p>Click **Settings** to access high-level panel options in the sidebar, or **Edit visualization** to open the panel editor.</p>  |
    | Delete multiple panels | Hold `Shift` and click the panels you want to update, hover your cursor over one of them to display the [bulk actions tooltip](#group-or-delete-multiple-panels-with-bulk-actions), and then click **Delete**. |
    | Edit dashboard controls | <p>Hover your cursor over any part of a dashboard control to display the actions tooltip, which has the following options: **Settings**, **Duplicate**, and **Delete**. Click **Settings** to access options in the sidebar. For some controls, the tooltip also includes an **Edit query** or **Edit values** option. |
-   | Edit rows and tabs | Click a row or tab to access grouping settings in the sidebar. |
-   | Change layouts         | Click a row, tab, or the **Dashboard options** icon to open the sidebar and access layout options. For more information, refer to [panel layout options](#panel-layouts).   |
+   | Edit rows and tabs | <p>Hover your cursor over a row header or a tab to display the actions tooltip, which has the following options: **Settings**, **Copy**, **Duplicate**, **Delete**.</p><p>Click **Settings** to access grouping settings in the sidebar.</p> |
+   | Change layouts         | Click the **Dashboard options** icon, or click **Settings** in the actions tooltip of a row or tab, to open the sidebar and access layout options. For more information, refer to [panel layout options](#panel-layouts).   |
    | Undo or redo changes   | Click the **Undo** or **Redo** icon in the toolbar. For more information, refer to [Undo and redo changes](#undo-and-redo-changes). (Public preview) |
 
 1. When you've finished making changes, click **Save**.
@@ -394,8 +399,10 @@ To update the panel layout, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Select **Editing** in the dashboard mode drop-down list.
-1. Click the dashboard or the grouping that contains the panel layout you want to update.
-1. Click the **Dashboard options** icon to open the sidebar, if needed.
+1. Do one of the following:
+   - For the dashboard-level layout, click the **Dashboard options** icon to open the sidebar.
+   - For a grouping, hover your cursor over the row header or tab that contains the panel layout you want to update, and click **Settings** in the actions tooltip to open the sidebar.
+
 1. Under **Layout**, select **Custom** or **Auto**.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
@@ -415,7 +422,7 @@ To configure repeats, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Select **Editing** in the dashboard mode drop-down list.
-1. Click the panel, row, or tab you want to update to open the sidebar, or click the **Dashboard options** icon to open it.
+1. Hover your cursor over the panel, row header, or tab you want to update, and click **Settings** in the actions tooltip to open the sidebar.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
 
@@ -531,7 +538,7 @@ To configure a show/hide rule, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Select **Editing** in the dashboard mode drop-down list.
-1. Click the panel, row, or tab you want to update to open the sidebar, or click the **Dashboard options** icon to open it.
+1. Hover your cursor over the panel, row header, or tab you want to update, and click **Settings** in the actions tooltip to open the sidebar.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
 
@@ -596,15 +603,16 @@ To resize a panel, follow these steps:
 ## Copy, duplicate, or delete dashboard elements
 
 You can copy and paste, duplicate, or delete any dashboard elements using the sidebar.
+You can also use the options in the actions tooltip that displays when you hover your cursor over a dashboard element: **Copy**, **Duplicate**, and **Delete** for panels, rows, and tabs, and **Duplicate** and **Delete** for dashboard controls.
 To delete several panels at once, you can also use the actions tooltip; refer to [Edit multiple panels](#group-or-delete-multiple-panels-with-bulk-actions).
 
-To manage dashboard elements, follow these steps:
+To manage dashboard elements using the sidebar, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Select **Editing** in the dashboard mode drop-down list.
-1. Do one of the following:
-   - For panels, rows, or tabs, click the element you want to update to open the sidebar. If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
-   - For dashboard controls&mdash;filters, variables, annotations, or links&mdash; click the control at the top of the dashboard to display the edit and delete options, and then click the edit icon for the control. This opens the sidebar.
+1. Hover your cursor over the panel, row header, tab, or dashboard control you want to update, and click **Settings** in the actions tooltip to open the sidebar.
+
+   If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
 
 1. At the top of the sidebar, do one of the following:
    - Click **Copy**.

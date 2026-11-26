@@ -122,7 +122,9 @@ You can nest up to four levels deep, which means a dashboard can have a maximum 
 - **Grouping 4 (inner)**: Layout options allow you to choose between custom and auto grid (refer to [Panel layouts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-layouts)).
 - **Panels**: No layout options
 
-You can switch between rows and tabs or update the panel layout by clicking the parent container and changing the layout selection.
+You can switch between rows and tabs or update the panel layout by opening the settings of the parent container and changing the layout selection.
+For a row or tab, hover your cursor over the row header or tab and click **Settings** in the actions tooltip.
+For the dashboard, click the **Dashboard options** icon.
 
 ## Group panels
 
@@ -139,7 +141,8 @@ To group all the panels on a dashboard, follow these steps:
    - Under a panel or group of panels, hover your mouse to reveal the **Group panels** button, click it and select **Group into row** or **Group into tab**.
 
    All the panels are moved into the grouping, and a dotted blue line surrounds the row or tab.
-   The sidebar opens, displaying the relevant options.
+   If the sidebar is open, it displays the relevant options.
+   Otherwise, hover your cursor over the row header or tab and click **Settings** in the actions tooltip to open the sidebar.
 
    {{< admonition type="tip" >}}
    While grouping is typically used for multiple panels, you can start a grouping with just one panel.
@@ -171,6 +174,7 @@ To group select panels on a dashboard:
    - Hover your cursor over one of the selected panels and, in the bulk actions tooltip, click **Group into row** or **Group into tab**.
 
    The panels you've selected are grouped and any remaining panels are added to another grouping of the same type.
+   If the sidebar isn't open, hover your cursor over the row header or tab of the new grouping and click **Settings** in the actions tooltip to open it.
 
 1. Set the [grouping configuration options](#grouping-configuration-options) in the sidebar.
 1. (Optional) Add one or both of the following:
@@ -204,7 +208,8 @@ To add a nested grouping, follow these steps:
    {{< figure src="/media/docs/grafana/dashboards/screenshot-nest-group-v13.0.png" alt="Adding a nested grouping" max-width="500px" >}}
 
    The new grouping is added inside the first grouping, and the panels are moved into the nested grouping.
-   The sidebar opens displaying the relevant configuration options.
+   If the sidebar is open, it displays the relevant configuration options.
+   Otherwise, hover your cursor over the row header or tab of the nested grouping and click **Settings** in the actions tooltip to open the sidebar.
 
 1. Set the configuration options for the nested grouping.
 1. Click **Save**.
