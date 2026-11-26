@@ -173,8 +173,9 @@ function QueryEditorRowComponent<TQuery extends DataQuery>(props: Props<TQuery>)
     queryEditorInsertion,
   } = props;
 
-  // A non-empty Draggable id from the first paint, before the datasource instance loads.
-  const rowId = useMemo(() => uniqueId(id + '_'), [id]);
+  // A non-empty Draggable id from the first paint, before the datasource instance loads. Fixed for the
+  // row's lifetime: callers key rows by the same refId they pass as `id`, so a rename remounts the row.
+  const [rowId] = useState(() => uniqueId(id + '_'));
   const editorRef = useRef<HTMLDivElement>(null);
   const cancelScrollPinRef = useRef<(() => void) | undefined>(undefined);
   const [showingHelp, setShowingHelp] = useState(false);
@@ -183,7 +184,7 @@ function QueryEditorRowComponent<TQuery extends DataQuery>(props: Props<TQuery>)
   const datasource = loaded?.datasource ?? null;
   const filteredData = useMemo(() => filterPanelDataToQuery(data, query.refId), [data, query.refId]);
 
-  // Read by the stable `onEditorChange`, the datasource load and the scroll pin callbacks.
+  // Read by the stable `onEditorChange`, the datasource load and the scroll pin callbacks
   const propsRef = useRef(props);
   useLayoutEffect(() => {
     propsRef.current = props;
@@ -281,14 +282,12 @@ function QueryEditorRowComponent<TQuery extends DataQuery>(props: Props<TQuery>)
     onQueryRemoved?.();
   };
 
-  const onExitQueryLibraryEditingMode = () => onExitQueryLibraryEdit?.();
-
   const onSavedQueryModeSuccess = () => {
     if (addingSavedQuery) {
       onCancelAddSavedQuery?.();
       return;
     }
-    onExitQueryLibraryEditingMode();
+    onExitQueryLibraryEdit?.();
   };
 
   const onCopyQuery = () => {
@@ -464,7 +463,7 @@ function QueryEditorRowComponent<TQuery extends DataQuery>(props: Props<TQuery>)
         <SavedQueryButtons
           query={{ ...query, datasource: { uid: datasource.uid, type: datasource.type } }}
           app={app}
-          onUpdateSuccess={onExitQueryLibraryEditingMode}
+          onUpdateSuccess={onExitQueryLibraryEdit}
           onSelectQuery={onSelectQueryFromLibrary}
           onSelectQueries={onSelectQueriesFromLibrary}
           datasourceFilters={datasource.name ? [datasource.name] : []}
@@ -581,7 +580,7 @@ function QueryEditorRowComponent<TQuery extends DataQuery>(props: Props<TQuery>)
           app={app}
           editSavedQueryRef={editSavedQueryRef}
           mode={addingSavedQuery ? 'add' : 'edit'}
-          onCancelEdit={addingSavedQuery ? onCancelAddSavedQuery : onExitQueryLibraryEditingMode}
+          onCancelEdit={addingSavedQuery ? onCancelAddSavedQuery : onExitQueryLibraryEdit}
           onUpdateSuccess={onSavedQueryModeSuccess}
           onSelectQuery={onSelectQueryFromLibrary}
         />
