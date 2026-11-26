@@ -2,14 +2,14 @@ import { css, cx } from '@emotion/css';
 import { type JSX, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useAsync } from 'react-use';
 
-import { type GrafanaTheme2, locationUtil } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaPanelActionsPopover } from '@grafana/runtime/internal';
 import { type VizPanel, type VizPanelMenu } from '@grafana/scenes';
-import { Dropdown, ElementSelectionContext, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
-import { PanelChromeHeaderControlsContext } from '@grafana/ui/internal';
+import { Dropdown, ElementSelectionContext, Icon, IconButton, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import { getFocusStyles, PanelChromeHeaderControlsContext } from '@grafana/ui/internal';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
@@ -232,13 +232,6 @@ function PanelActions({
     locationService.partial({ editPanel: panelId, viewPanel: undefined });
   };
 
-  const onExplore = () => {
-    if (exploreUrl) {
-      report('explore');
-      locationService.push(locationUtil.stripBaseFromUrl(exploreUrl));
-    }
-  };
-
   const onSettings = () => {
     report('settings');
     dashboard.state.sidebar.openElementSettings(panel);
@@ -298,14 +291,11 @@ function PanelActions({
         />
       )}
 
-      {canExplore && (
-        <IconButton
-          name="compass"
-          size="md"
-          className={actionStyles.action}
-          tooltip={t('dashboard-scene.panel-actions-popover.explore', 'Explore (p x)')}
-          tooltipPlacement="top"
-          onClick={onExplore}
+      {canExplore && exploreUrl && (
+        <ExploreLink
+          href={exploreUrl}
+          label={t('dashboard-scene.panel-actions-popover.explore', 'Explore (p x)')}
+          onClick={() => report('explore')}
         />
       )}
 
@@ -405,6 +395,23 @@ function PanelActions({
   );
 }
 
+/**
+ * A link rather than a button, like the panel menu's Explore item, so it can be opened in a new tab with a middle click
+ * or from the browser's link menu. Grafana's app-wide link handling turns plain clicks into in-app navigation.
+ */
+function ExploreLink({ href, label, onClick }: { href: string; label: string; onClick: () => void }) {
+  const styles = useStyles2(getStyles);
+  const actionStyles = useStyles2(getActionStyles);
+
+  return (
+    <Tooltip content={label} placement="top">
+      <a href={href} aria-label={label} className={cx(actionStyles.action, styles.link)} onClick={onClick}>
+        <Icon name="compass" size="md" />
+      </a>
+    </Tooltip>
+  );
+}
+
 function ActionsSeparator({ className }: { className?: string }) {
   const styles = useStyles2(getStyles);
   const actionStyles = useStyles2(getActionStyles);
@@ -467,6 +474,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   moreActions: css({
     display: 'inline-flex',
+  }),
+  // Matches the icon buttons next to it.
+  link: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: theme.shape.radius.default,
+    '&:focus-visible': getFocusStyles(theme),
   }),
   // The drag handle is hidden on small screens, where panels can't be dragged, so its separator is hidden with it.
   dragHandleSeparator: css({
