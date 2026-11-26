@@ -138,7 +138,7 @@ func TestReconcile_NestedFoldersResolveBottomUp(t *testing.T) {
 	require.Equal(t, map[string]string{"keep": "unrelated"}, m.dashboards)
 }
 
-func TestReconcile_LegacySubfolderWithoutFinalizerIsDeletedOutright(t *testing.T) {
+func TestReconcile_LegacySubfolderWithoutFinalizerIsStampedAndReleasedByItsOwnCascade(t *testing.T) {
 	m := newMemStore()
 	m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
 	m.addFolder("legacy", "a")
@@ -148,7 +148,7 @@ func TestReconcile_LegacySubfolderWithoutFinalizerIsDeletedOutright(t *testing.T
 	require.Empty(t, m.folders)
 }
 
-func TestReconcile_LegacyNonEmptySubfolderFailsTheParent(t *testing.T) {
+func TestReconcile_LegacyNonEmptySubfolderIsHandedToItsOwnCascade(t *testing.T) {
 	m := newMemStore()
 	m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
 	m.addFolder("legacy", "a")
@@ -157,18 +157,18 @@ func TestReconcile_LegacyNonEmptySubfolderFailsTheParent(t *testing.T) {
 	m.userDelete("a")
 
 	res, err := reconcileOnce(t, newTestReconciler(m, 10), m, "a")
-	require.ErrorContains(t, err, "not empty")
+	require.NoError(t, err, "the forced delete of a stamped subfolder is not refused as not empty")
 	require.True(t, res.Requeue)
-	require.Equal(t, []string{"d1"}, m.deleteCalls)
-	st := m.folders["a"].status
-	require.Equal(t, foldersv1.FolderCascadeDeleteStatusStateFailed, st.State)
-	require.Equal(t, []string{"folders/legacy: folder is not empty"}, st.Errors)
-	require.Equal(t, int64(1), *st.Remaining)
-	require.Contains(t, m.folders, "legacy")
-	require.Equal(t, "legacy", m.dashboards["inside"])
+	require.True(t, m.folders["legacy"].terminating)
+	require.Equal(t, []string{foldersv1.CascadeDeleteFinalizer}, m.folders["legacy"].finalizers)
+	require.Equal(t, "legacy", m.dashboards["inside"], "its contents are left to its own cascade")
+
+	drain(t, newTestReconciler(m, 10), m)
+	require.Empty(t, m.folders)
+	require.Empty(t, m.dashboards)
 }
 
-func TestReconcile_LegacyEmptySubfolderCountsAsGoneImmediately(t *testing.T) {
+func TestReconcile_LegacyEmptySubfolderStaysAChildUntilItsCascadeReleasesIt(t *testing.T) {
 	m := newMemStore()
 	m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
 	m.addFolder("legacy", "a")
@@ -176,7 +176,10 @@ func TestReconcile_LegacyEmptySubfolderCountsAsGoneImmediately(t *testing.T) {
 
 	_, err := reconcileOnce(t, newTestReconciler(m, 10), m, "a")
 	require.NoError(t, err)
-	require.Equal(t, int64(0), *m.folders["a"].status.Remaining)
+	require.Equal(t, int64(1), *m.folders["a"].status.Remaining, "it only went terminating, so it is still counted")
+
+	drain(t, newTestReconciler(m, 10), m)
+	require.Empty(t, m.folders)
 }
 
 func TestReconcile_StaleHitForAMovedChildIsNotDeleted(t *testing.T) {
