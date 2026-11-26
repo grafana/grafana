@@ -15,10 +15,32 @@ describe('ActionVariablesEditor', () => {
   it('renders empty state correctly', () => {
     render(<ActionVariablesEditor value={[]} onChange={mockOnChange} />);
 
-    expect(screen.getByPlaceholderText('Key')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Name')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Type')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Key' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Name' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Type' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled();
+  });
+
+  it('associates visible column labels with disabled variable inputs', () => {
+    const existingVariables = [{ key: 'key1', name: 'name1', type: ActionVariableType.String }];
+
+    render(<ActionVariablesEditor value={existingVariables} onChange={mockOnChange} />);
+
+    const keyInputs = screen.getAllByRole('textbox', { name: 'Key' });
+    const nameInputs = screen.getAllByRole('textbox', { name: 'Name' });
+    const typeInputs = screen.getAllByRole('textbox', { name: 'Type' });
+
+    expect(keyInputs).toHaveLength(2);
+    expect(keyInputs[1]).toHaveValue('key1');
+    expect(keyInputs[1]).toBeDisabled();
+
+    expect(nameInputs).toHaveLength(2);
+    expect(nameInputs[1]).toHaveValue('name1');
+    expect(nameInputs[1]).toBeDisabled();
+
+    expect(typeInputs).toHaveLength(1);
+    expect(typeInputs[0]).toHaveValue(ActionVariableType.String);
+    expect(typeInputs[0]).toBeDisabled();
   });
 
   it('enables add button when both key and name are filled', async () => {

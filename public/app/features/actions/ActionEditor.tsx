@@ -269,6 +269,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
       <Field
         label={t('grafana-ui.action-editor.modal.action-variables', 'Variables')}
         className={styles.fieldGap}
+        useFieldset
         noMargin
       >
         <ActionVariablesEditor onChange={onVariablesChange} value={value.variables ?? []} />
@@ -277,12 +278,13 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
       <Field
         label={t('grafana-ui.action-editor.modal.action-query-params', 'Query parameters')}
         className={styles.fieldGap}
+        useFieldset
         noMargin
       >
         <ParamsEditor value={actionConfig.queryParams ?? []} onChange={onQueryParamsChange} suggestions={suggestions} />
       </Field>
 
-      <Field label={t('actions.action-editor.label-headers', 'Headers')} noMargin>
+      <Field label={t('actions.action-editor.label-headers', 'Headers')} useFieldset noMargin>
         <ParamsEditor
           value={actionConfig.headers ?? []}
           onChange={onHeadersChange}

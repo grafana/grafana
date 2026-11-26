@@ -55,11 +55,17 @@
     "params-editor": {
       "aria-label-add": "Add",
       "aria-label-delete": "Delete",
+      "label-content-type": "Content-Type",
+      "label-key": "Key",
+      "label-value": "Value",
       "placeholder-key": "Key",
       "placeholder-name": "Name",
       "placeholder-value": "Value"
     },
     "variables-editor": {
+      "label-key": "Key",
+      "label-name": "Name",
+      "label-type": "Type",
       "placeholder-type": "Type"
     }
   },
