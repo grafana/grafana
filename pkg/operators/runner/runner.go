@@ -100,8 +100,9 @@ func (op Operator) Run(ctx context.Context, deps server.OperatorDependencies) (r
 		supervised = append([]services.Service{rt.Subscriber}, supervised...)
 	}
 	ctx, stop, err := supervision.Start(ctx, supervised...)
+	health := &readiness{notifier: deps.HealthNotifier}
 	defer func() {
-		deps.HealthNotifier.SetNotReady()
+		health.stop()
 		runErr = errors.Join(runErr, stop())
 	}()
 	if err != nil {
@@ -111,18 +112,23 @@ func (op Operator) Run(ctx context.Context, deps server.OperatorDependencies) (r
 	done := make(chan error, 1)
 	go func() {
 		done <- parts.Run(ctx, func() {
-			rt.Logger.Info("operator is ready", "operator", op.Name)
-			deps.HealthNotifier.SetReady()
+			if health.ready() {
+				rt.Logger.Info("operator is ready", "operator", op.Name)
+			}
 		})
 	}()
 
+	return dependencyCause(ctx, op.await(ctx, rt.Logger, health, parts, done))
+}
+
+func (op Operator) await(ctx context.Context, logger logging.Logger, health *readiness, parts *Parts, done <-chan error) error {
 	select {
 	case err := <-done:
 		return err
 	case <-ctx.Done():
 	}
-	deps.HealthNotifier.SetNotReady()
-	rt.Logger.Info("operator shutting down", "operator", op.Name)
+	health.stop()
+	logger.Info("operator shutting down", "operator", op.Name)
 	if parts.ShutdownTimeout <= 0 {
 		return <-done
 	}
@@ -130,9 +136,47 @@ func (op Operator) Run(ctx context.Context, deps server.OperatorDependencies) (r
 	case err := <-done:
 		return err
 	case <-time.After(parts.ShutdownTimeout):
-		rt.Logger.Warn("shutdown timeout exceeded, forcing exit", "timeout", parts.ShutdownTimeout)
+		logger.Warn("shutdown timeout exceeded, forcing exit", "timeout", parts.ShutdownTimeout)
 		return nil
 	}
+}
+
+// dependencyCause replaces the cancellation Run reports when a supervised
+// service failed with that failure. The module server ignores
+// context.Canceled, so returning it as is would hide the failure.
+func dependencyCause(ctx context.Context, err error) error {
+	if !errors.Is(err, context.Canceled) {
+		return err
+	}
+	if cause := context.Cause(ctx); cause != nil && !errors.Is(cause, context.Canceled) {
+		return cause
+	}
+	return err
+}
+
+// readiness drops ready callbacks that arrive once shutdown has begun, so a
+// controller finishing its setup late cannot mark a stopping operator ready.
+type readiness struct {
+	mu       sync.Mutex
+	stopped  bool
+	notifier *server.HealthNotifier
+}
+
+func (r *readiness) ready() bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.stopped {
+		return false
+	}
+	r.notifier.SetReady()
+	return true
+}
+
+func (r *readiness) stop() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.stopped = true
+	r.notifier.SetNotReady()
 }
 
 // NewLogger returns the JSON logger the operators write to stdout, at the
