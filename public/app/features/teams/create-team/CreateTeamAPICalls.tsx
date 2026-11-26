@@ -1,4 +1,4 @@
-import memoizeOne from 'memoize-one';
+import { memoizeOne } from 'memoize-one';
 import { useState } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
 

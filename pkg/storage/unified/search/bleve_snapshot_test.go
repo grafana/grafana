@@ -23,6 +23,7 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -769,6 +770,7 @@ func TestBuildIndex_RebuildUsesFreshSnapshot(t *testing.T) {
 func TestBuildIndex_RebuildCountsTrashForSnapshotEligibility(t *testing.T) {
 	for _, includeTrash := range []bool{false, true} {
 		t.Run(fmt.Sprintf("trash=%t", includeTrash), func(t *testing.T) {
+			recorder := setupSnapshotSpanRecorder(t)
 			ctx := t.Context()
 			store := newHookableStore(t)
 			key := newTestNsResource()
@@ -789,6 +791,7 @@ func TestBuildIndex_RebuildCountsTrashForSnapshotEligibility(t *testing.T) {
 			require.Equal(t, int64(1), live, "search stats still exclude trash")
 			seedDownloadableSnapshot(t, ctx, store.inner, key, makeULID(t, time.Now()), freshSnapshot(time.Minute))
 
+			recorder.Reset()
 			built := false
 			_, err = be.BuildIndex(ctx, key, -1, "rebuild", func(idx resource.ResourceIndex) (int64, error) {
 				built = true
@@ -796,6 +799,22 @@ func TestBuildIndex_RebuildCountsTrashForSnapshotEligibility(t *testing.T) {
 			}, nil, true, time.Time{}, time.Hour, resource.BuildIndexOptions{RebuildFrom: original})
 			require.NoError(t, err)
 			require.Equal(t, !includeTrash, built)
+			var attrs []attribute.KeyValue
+			for _, span := range recorder.Ended() {
+				if span.Name() == "search.bleveBackend.BuildIndex" {
+					attrs = span.Attributes()
+					break
+				}
+			}
+			wantCount := int64(1)
+			if includeTrash {
+				wantCount++
+			}
+			require.Subset(t, attrs, []attribute.KeyValue{
+				attribute.Int64("snapshot.min_doc_count", 2),
+				attribute.Bool("snapshot.rebuild_coordination_enabled", includeTrash),
+				attribute.Int64("snapshot.doc_count", wantCount),
+			})
 			downloads := testutil.ToFloat64(metrics.IndexSnapshotDownloadAttempts.WithLabelValues(snapshotPolicySameVersion, snapshotStatusSuccess))
 			if includeTrash {
 				require.Equal(t, 1.0, downloads)
