@@ -152,6 +152,32 @@ func TestOperatorRun(t *testing.T) {
 		require.ErrorIs(t, err, stopErr)
 	})
 
+	t.Run("keeps Run's cleanup error alongside a failed service", func(t *testing.T) {
+		svcErr, cleanupErr := errors.New("subscriber lost"), errors.New("cleanup failed")
+		fail := make(chan struct{})
+		failing := services.NewBasicService(nil, func(ctx context.Context) error {
+			select {
+			case <-fail:
+				return svcErr
+			case <-ctx.Done():
+				return nil
+			}
+		}, nil)
+		err := Operator{Name: "test", Build: func(*Runtime) (*Parts, error) {
+			return &Parts{
+				Services: []services.Service{failing},
+				Run: func(ctx context.Context, _ func()) error {
+					close(fail)
+					<-ctx.Done()
+					return errors.Join(ctx.Err(), cleanupErr)
+				},
+			}, nil
+		}}.Run(context.Background(), testDeps())
+		require.ErrorIs(t, err, svcErr)
+		require.ErrorIs(t, err, cleanupErr)
+		require.NotErrorIs(t, err, context.Canceled)
+	})
+
 	t.Run("ignores a ready callback that arrives after shutdown began", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
