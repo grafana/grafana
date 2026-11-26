@@ -165,7 +165,7 @@ func withoutCancellation(err error) error {
 	if !errors.Is(err, context.Canceled) {
 		return err
 	}
-	switch e := err.(type) {
+	switch e := err.(type) { //nolint:errorlint // walks this error's own unwrap tree one level at a time
 	case interface{ Unwrap() []error }:
 		var kept []error
 		for _, child := range e.Unwrap() {
