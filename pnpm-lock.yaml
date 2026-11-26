@@ -285,17 +285,17 @@ importers:
         specifier: workspace:*
         version: link:packages/grafana-e2e-selectors
       '@grafana/faro-core':
-        specifier: 2.15.0-alpha.0
-        version: 2.15.0-alpha.0
+        specifier: 2.15.0
+        version: 2.15.0
       '@grafana/faro-instrumentation-replay':
-        specifier: 2.15.0-alpha.0
-        version: 2.15.0-alpha.0
+        specifier: 2.15.0
+        version: 2.15.0
       '@grafana/faro-web-sdk':
-        specifier: 2.15.0-alpha.0
-        version: 2.15.0-alpha.0
+        specifier: 2.15.0
+        version: 2.15.0
       '@grafana/faro-web-tracing':
-        specifier: 2.15.0-alpha.0
-        version: 2.15.0-alpha.0(supports-color@7.2.0)
+        specifier: 2.15.0
+        version: 2.15.0(supports-color@7.2.0)
       '@grafana/flamegraph':
         specifier: workspace:*
         version: link:packages/grafana-flamegraph
@@ -2063,8 +2063,8 @@ importers:
         specifier: workspace:*
         version: link:../grafana-data
       '@grafana/faro-web-sdk':
-        specifier: 2.15.0-alpha.0
-        version: 2.15.0-alpha.0
+        specifier: 2.15.0
+        version: 2.15.0
       '@grafana/schema':
         specifier: workspace:*
         version: link:../grafana-schema
@@ -2393,8 +2393,8 @@ importers:
         specifier: workspace:*
         version: link:../grafana-e2e-selectors
       '@grafana/faro-web-sdk':
-        specifier: 2.15.0-alpha.0
-        version: 2.15.0-alpha.0
+        specifier: 2.15.0
+        version: 2.15.0
       '@grafana/i18n':
         specifier: workspace:*
         version: link:../grafana-i18n
@@ -3806,17 +3806,17 @@ packages:
       eslint-plugin-react-hooks: '>=7.1.0'
       typescript: '>=5.5.0'
 
-  '@grafana/faro-core@2.15.0-alpha.0':
-    resolution: {integrity: sha512-ftUC2hfHPwT2wsEUOCdrghb2RcvnwInQHXp7OqUT8swQ8K2lPvvqfP2M22KJQn0tLP3j6b6CNZqQLWscOplU3Q==}
+  '@grafana/faro-core@2.15.0':
+    resolution: {integrity: sha512-kya8i2FHCKT7oVoh42KY5zUYZmeyPpmAJ5dfAwbv0YYzgakTytPkXD+zYCx17A8LHysQZzl5mz81zsgtDjufUw==}
 
-  '@grafana/faro-instrumentation-replay@2.15.0-alpha.0':
-    resolution: {integrity: sha512-2nE/lVnrEN6dFjWS88z426L4+Vhhi+pxmiWd63042zGmNbkjlw+JMltRGNTSaXr6jWxJwyGrom5nwpSvYDKblQ==}
+  '@grafana/faro-instrumentation-replay@2.15.0':
+    resolution: {integrity: sha512-F2ijkhUZUExZxRA8YnPMrDSseCC6HvfvJlIuU0tSmXxBdHEIR72vHaVMjzNW5MyH/1fJGBvMSxNco6mLOXh2lw==}
 
-  '@grafana/faro-web-sdk@2.15.0-alpha.0':
-    resolution: {integrity: sha512-G5YdRtflyBpWbgIvV7DAXhUfeF+zbQG31qW7uTD1BnCPFxKICwX4RhwCog12f+XBIf8tBWz3oHRk90Lj9ShAwg==}
+  '@grafana/faro-web-sdk@2.15.0':
+    resolution: {integrity: sha512-d9xMaHUCoqZ2rwFd6emFxmz7Vdw1fJPhdbEoz4pke2m2eGG8dd6acqQBCA+rPAtVfOI39/GlwGXNR1fhgE1+6w==}
 
-  '@grafana/faro-web-tracing@2.15.0-alpha.0':
-    resolution: {integrity: sha512-RI2n6bx2MNT/CMcfwWtWSA+DPOo0dwgruQR1dHASVodeDQR0vmcbtYIeJSUyWOcGp017tQEzhLMfveFafgDMVw==}
+  '@grafana/faro-web-tracing@2.15.0':
+    resolution: {integrity: sha512-b2h/6H45Q6+u+BeM6HemA9P5keYYDeS6/Aum3rxXDuVGf/fc1HTKeub0FpR37bKpOEcElF5NHniSmT8zuD9V0Q==}
 
   '@grafana/levitate@0.17.2':
     resolution: {integrity: sha512-huJVnbOZUeh1huR3Qpr3h8cP06vsbZHeAR9nZbpbgP1KhSeigdsWbHma20kdeWVVFkjogKMewqLy+SbHB3pBzg==}
@@ -16513,26 +16513,26 @@ snapshots:
       eslint-plugin-react-hooks: 7.1.1(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)
       typescript: '@typescript/typescript6@6.0.2'
 
-  '@grafana/faro-core@2.15.0-alpha.0':
+  '@grafana/faro-core@2.15.0':
     dependencies:
       '@opentelemetry/api': 1.10.0
       '@opentelemetry/otlp-transformer': 0.223.2(@opentelemetry/api@1.10.0)
 
-  '@grafana/faro-instrumentation-replay@2.15.0-alpha.0':
+  '@grafana/faro-instrumentation-replay@2.15.0':
     dependencies:
-      '@grafana/faro-core': 2.15.0-alpha.0
+      '@grafana/faro-core': 2.15.0
       '@grafana/rrweb': 2.0.0-grafana.3
       '@grafana/rrweb-types': 2.0.0-grafana.3
 
-  '@grafana/faro-web-sdk@2.15.0-alpha.0':
+  '@grafana/faro-web-sdk@2.15.0':
     dependencies:
-      '@grafana/faro-core': 2.15.0-alpha.0
+      '@grafana/faro-core': 2.15.0
       ua-parser-js: 1.0.41
       web-vitals: 6.2.1
 
-  '@grafana/faro-web-tracing@2.15.0-alpha.0(supports-color@7.2.0)':
+  '@grafana/faro-web-tracing@2.15.0(supports-color@7.2.0)':
     dependencies:
-      '@grafana/faro-web-sdk': 2.15.0-alpha.0
+      '@grafana/faro-web-sdk': 2.15.0
       '@opentelemetry/api': 1.10.0
       '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.10.0)
       '@opentelemetry/exporter-trace-otlp-http': 0.223.2(@opentelemetry/api@1.10.0)
