@@ -316,7 +316,7 @@ func forwardRouteCredentials(ctx context.Context, header http.Header) error {
 	}
 	if !baasbridge.DeclaredAccessChecked(ctx) { //nolint:staticcheck
 		if token := requester.GetAccessToken(); token != "" {
-			header.Set("X-Access-Token", token)
+			header.Set(accessTokenHeader, token)
 		}
 	}
 	return nil

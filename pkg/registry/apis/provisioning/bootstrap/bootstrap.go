@@ -21,7 +21,7 @@ const Name = "bootstrap"
 const SyncTarget = provisioning.SyncTargetTypeFolderless
 
 // updateAttempts bounds the re-read when another replica writes between our read and update.
-// The hook runs once per boot, so a dropped conflict stays stale until the next restart.
+// Reconcile runs once per boot, so a dropped conflict stays stale until the next restart.
 const updateAttempts = 3
 
 const (

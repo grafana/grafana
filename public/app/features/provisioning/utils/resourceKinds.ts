@@ -468,7 +468,7 @@ async function listCollectionMembers(
           return [];
         }
         // Versions are listed preferred-first.
-        const version = api.versions.find((v) => v.resources.some((r) => r.resource === resource));
+        const version = api.versions.find((v) => v.resources?.some((r) => r.resource === resource));
         return version ? [{ group: api.metadata.name, version: version.version }] : [];
       })
       .map(async ({ group, version }) => {
