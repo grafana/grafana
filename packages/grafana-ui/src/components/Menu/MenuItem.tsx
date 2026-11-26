@@ -17,6 +17,7 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getInternalRadius } from '../../themes/mixins';
 import { type IconName } from '../../types/icon';
+import { pickDataAttributes } from '../../utils/dataAttributes';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
 
@@ -123,7 +124,7 @@ export const MenuItem = React.memo(
     }, [disabled]);
 
     // Menu items are often built by spreading item objects, so only forward data attributes to the DOM.
-    const dataAttributes = Object.fromEntries(Object.entries(rest).filter(([key]) => key.startsWith('data-')));
+    const dataAttributes = pickDataAttributes(rest);
 
     const hasSubMenu = childItems && childItems.length > 0;
     const ItemElement = hasSubMenu ? 'div' : url === undefined ? 'button' : 'a';

@@ -7,6 +7,7 @@ import { Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { type ComponentSize } from '../../types/size';
+import { pickDataAttributes } from '../../utils/dataAttributes';
 import { Button, type ButtonVariant } from '../Button/Button';
 
 export interface Props {
@@ -31,11 +32,6 @@ export interface Props {
   onCancel?(): void;
   /** Custom data attributes (for example `data-analytics-id`), rendered on the button that opens the confirmation */
   [key: `data-${string}`]: string | undefined;
-}
-
-// The `data-*` index signature does not stop other props from arriving through an object spread, so keep only `data-*`.
-function pickDataAttributes(props: Record<string, string | undefined>): Record<`data-${string}`, string | undefined> {
-  return Object.fromEntries(Object.entries(props).filter(([key]) => key.startsWith('data-')));
 }
 
 /**
