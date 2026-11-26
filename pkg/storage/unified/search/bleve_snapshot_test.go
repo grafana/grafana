@@ -766,6 +766,46 @@ func TestBuildIndex_RebuildUsesFreshSnapshot(t *testing.T) {
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDownloadAttempts.WithLabelValues(snapshotPolicySameVersion, snapshotStatusSuccess)))
 }
 
+func TestBuildIndex_RebuildCountsTrashForSnapshotEligibility(t *testing.T) {
+	for _, includeTrash := range []bool{false, true} {
+		t.Run(fmt.Sprintf("trash=%t", includeTrash), func(t *testing.T) {
+			ctx := t.Context()
+			store := newHookableStore(t)
+			key := newTestNsResource()
+			be, metrics := newTestBleveBackend(t, SnapshotOptions{Store: store, MinDocCount: 2, MaxIndexAge: 24 * time.Hour})
+			original, err := be.BuildIndex(ctx, key, 1, "test", indexTestDocs(key, 1, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+			require.NoError(t, err)
+			if includeTrash {
+				require.NoError(t, original.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
+					Action: resource.ActionIndex,
+					Doc: &resource.IndexableDocument{
+						Key:       &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "deleted-doc"},
+						IsDeleted: new(true),
+					},
+				}}}))
+			}
+			live, err := original.DocCount(ctx, "", nil)
+			require.NoError(t, err)
+			require.Equal(t, int64(1), live, "search stats still exclude trash")
+			seedDownloadableSnapshot(t, ctx, store.inner, key, makeULID(t, time.Now()), freshSnapshot(time.Minute))
+
+			built := false
+			_, err = be.BuildIndex(ctx, key, -1, "rebuild", func(idx resource.ResourceIndex) (int64, error) {
+				built = true
+				return indexTestDocs(key, 1, 101)(idx)
+			}, nil, true, time.Time{}, time.Hour, resource.BuildIndexOptions{RebuildFrom: original})
+			require.NoError(t, err)
+			require.Equal(t, !includeTrash, built)
+			downloads := testutil.ToFloat64(metrics.IndexSnapshotDownloadAttempts.WithLabelValues(snapshotPolicySameVersion, snapshotStatusSuccess))
+			if includeTrash {
+				require.Equal(t, 1.0, downloads)
+			} else {
+				require.Zero(t, downloads)
+			}
+		})
+	}
+}
+
 // TestBuildIndex_RebuildFallsBackToBuilder verifies that on the rebuild path
 // when no fresh same-version snapshot is available, BuildIndex runs the
 // builder rather than falling back to the tiered selection.

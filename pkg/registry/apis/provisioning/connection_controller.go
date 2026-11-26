@@ -11,9 +11,11 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/pkg/infra/nats"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // ConnectionControllerServiceName is the background-service module name of
@@ -27,6 +29,8 @@ type ConnectionControllerService struct {
 
 	subscriber      nats.Subscriber
 	registry        prometheus.Registerer
+	tracer          tracing.Tracer
+	unified         resource.ResourceClient
 	informerMetrics *InformerMetrics
 	resyncInterval  time.Duration
 }
@@ -39,11 +43,15 @@ func ProvideConnectionControllerService(
 	builder *APIBuilder,
 	subscriber nats.Subscriber,
 	registry prometheus.Registerer,
+	tracer tracing.Tracer,
+	unified resource.ResourceClient,
 	informerMetrics *InformerMetrics,
 ) *ConnectionControllerService {
 	s := &ConnectionControllerService{
 		subscriber:      subscriber,
 		registry:        registry,
+		tracer:          tracer,
+		unified:         unified,
 		informerMetrics: informerMetrics,
 		resyncInterval:  controllerResyncInterval(cfg),
 	}
@@ -54,7 +62,7 @@ func ProvideConnectionControllerService(
 func (s *ConnectionControllerService) runController(ctx context.Context, restConfig *clientrest.Config) error {
 	client, err := clientset.NewForConfig(restConfig)
 	if err != nil {
-		return fmt.Errorf("create provisioning client for connection controller: %w", err)
+		return fmt.Errorf("create provisioning clientset: %w", err)
 	}
 
 	b := s.builder
@@ -63,13 +71,13 @@ func (s *ConnectionControllerService) runController(ctx context.Context, restCon
 	connController, err := controller.ProvideConnectionController(controller.ConnectionControllerDeps{
 		Subscriber:        s.subscriber,
 		Client:            client,
-		Keys:              keysapi.NewGRPCLister(b.unified, provisioning.ConnectionResourceInfo.GroupVersionResource()),
+		Keys:              keysapi.NewGRPCLister(s.unified, provisioning.ConnectionResourceInfo.GroupVersionResource()),
 		ConnectionFactory: b.connectionFactory,
 		HealthMetrics:     controller.NewHealthMetricsRecorder(s.registry),
 		RelistMetrics:     relistMetrics,
 		FreshnessMetrics:  freshnessMetrics,
 		Registry:          s.registry,
-		Tracer:            b.tracer,
+		Tracer:            s.tracer,
 		ResyncInterval:    s.resyncInterval,
 		DrainTimeout:      30 * time.Second,
 	})

@@ -16,7 +16,6 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -25,20 +24,20 @@ const testTimeout = 10 * time.Second
 
 func TestHistoryJobCleanupService_IsDisabled(t *testing.T) {
 	tests := []struct {
-		name               string
-		builder            *APIBuilder
-		disableControllers bool
-		disabled           bool
+		name     string
+		builder  *APIBuilder
+		disabled bool
 	}{
 		{name: "provisioning disabled", builder: nil, disabled: true},
-		{name: "controllers disabled", builder: &APIBuilder{}, disableControllers: true, disabled: true},
+		{name: "controllers disabled", builder: &APIBuilder{onlyApiServer: true}, disabled: true},
 		{name: "Loki history", builder: &APIBuilder{jobHistoryConfig: &JobHistoryConfig{Loki: &loki.Config{}}}, disabled: true},
 		{name: "unified storage history", builder: &APIBuilder{jobHistoryConfig: &JobHistoryConfig{}}, disabled: false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg := &setting.Cfg{DisableControllers: tc.disableControllers}
-			assert.Equal(t, tc.disabled, ProvideHistoryJobCleanupService(cfg, tc.builder, apiserver.WithoutRestConfig, nil).IsDisabled())
+			svc := ProvideHistoryJobCleanupService(&setting.Cfg{}, tc.builder, nil)
+			assert.Equal(t, tc.disabled, svc.IsDisabled())
+			assert.Equal(t, HistoryJobCleanupServiceName, svc.ServiceName())
 		})
 	}
 }
@@ -52,17 +51,10 @@ func TestHistoryJobCleanupService_Run(t *testing.T) {
 			assert.NoError(t, json.NewEncoder(w).Encode(metav1.Status{Status: metav1.StatusSuccess}))
 		})
 
-		ready := make(chan struct{})
-		done, cancel := runCleanupService(t, apiserver.RestConfigProviderFunc(func(ctx context.Context) (*clientrest.Config, error) {
-			select {
-			case <-ready:
-				return &clientrest.Config{Host: server.URL}, nil
-			case <-ctx.Done():
-				return nil, ctx.Err()
-			}
-		}))
+		builder := &APIBuilder{loopbackReady: make(chan struct{})}
+		done, cancel := runCleanupService(t, builder)
 
-		close(ready)
+		builder.publishLoopbackConfig(&clientrest.Config{Host: server.URL})
 		assert.Equal(t, "expired", receive(t, deleted, done))
 
 		cancel()
@@ -84,9 +76,9 @@ func TestHistoryJobCleanupService_Run(t *testing.T) {
 			}
 		})
 
-		done, cancel := runCleanupService(t, apiserver.RestConfigProviderFunc(func(context.Context) (*clientrest.Config, error) {
-			return &clientrest.Config{Host: server.URL}, nil
-		}))
+		builder := &APIBuilder{loopbackReady: make(chan struct{})}
+		builder.publishLoopbackConfig(&clientrest.Config{Host: server.URL})
+		done, cancel := runCleanupService(t, builder)
 
 		receive(t, inFlight, done)
 		cancel()
@@ -95,30 +87,21 @@ func TestHistoryJobCleanupService_Run(t *testing.T) {
 	})
 
 	t.Run("returns nil when shut down before the API server is ready", func(t *testing.T) {
-		configProvider := apiserver.RestConfigProviderFunc(func(ctx context.Context) (*clientrest.Config, error) {
-			<-ctx.Done()
-			return nil, ctx.Err()
-		})
-		ctx, cancel := context.WithCancel(context.Background())
+		done, cancel := runCleanupService(t, &APIBuilder{loopbackReady: make(chan struct{})})
 		cancel()
-		require.NoError(t, ProvideHistoryJobCleanupService(&setting.Cfg{}, &APIBuilder{}, configProvider, nil).Run(ctx))
-	})
-
-	t.Run("returns the rest config error", func(t *testing.T) {
-		err := ProvideHistoryJobCleanupService(&setting.Cfg{}, &APIBuilder{}, apiserver.WithoutRestConfig, nil).Run(context.Background())
-		require.Error(t, err)
+		require.NoError(t, waitForRun(t, done))
 	})
 }
 
 // runCleanupService starts Run in the background and returns its result channel
 // and a cancel func. Cancel is also registered as a cleanup, so a failing test
 // still stops the service before the fake API server is closed.
-func runCleanupService(t *testing.T, configProvider apiserver.RestConfigProvider) (<-chan error, context.CancelFunc) {
+func runCleanupService(t *testing.T, builder *APIBuilder) (<-chan error, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 	done := make(chan error, 1)
 	go func() {
-		done <- ProvideHistoryJobCleanupService(&setting.Cfg{ProvisioningHistoryExpiration: time.Hour}, &APIBuilder{}, configProvider, nil).Run(ctx)
+		done <- ProvideHistoryJobCleanupService(&setting.Cfg{ProvisioningHistoryExpiration: time.Hour}, builder, nil).Run(ctx)
 	}()
 	return done, cancel
 }
@@ -198,9 +181,9 @@ func startFakeHistoricJobsAPI(t *testing.T, onDelete http.HandlerFunc) *httptest
 }
 
 func TestProvideHistoryJobCleanupService_Expiration(t *testing.T) {
-	svc := ProvideHistoryJobCleanupService(&setting.Cfg{}, &APIBuilder{}, apiserver.WithoutRestConfig, nil)
+	svc := ProvideHistoryJobCleanupService(&setting.Cfg{}, &APIBuilder{}, nil)
 	require.Equal(t, setting.ProvisioningHistoryExpirationDefault, svc.expiration)
 
-	svc = ProvideHistoryJobCleanupService(&setting.Cfg{ProvisioningHistoryExpiration: time.Hour}, &APIBuilder{}, apiserver.WithoutRestConfig, nil)
+	svc = ProvideHistoryJobCleanupService(&setting.Cfg{ProvisioningHistoryExpiration: time.Hour}, &APIBuilder{}, nil)
 	require.Equal(t, time.Hour, svc.expiration)
 }

@@ -28,7 +28,8 @@ func watch(ctx context.Context, svc services.Service) (context.Context, func() e
 // Start watches svcs and starts them in order; the returned context is
 // cancelled when any of them fails. The caller must defer stop even when Start
 // returns an error, and include its error in the operator's return value. stop
-// stops the services in reverse order. A start interrupted by a service
+// stops the services in reverse order, and only stop stops them: cancelling ctx
+// cancels the returned context but leaves the services running. A start interrupted by a service
 // failing reports that failure, not the cancellation it caused.
 func Start(ctx context.Context, svcs ...services.Service) (_ context.Context, stop func() error, _ error) {
 	stops := make([]func() error, 0, len(svcs))
@@ -46,7 +47,13 @@ func Start(ctx context.Context, svcs ...services.Service) (_ context.Context, st
 	}
 
 	for _, svc := range svcs {
-		if err := services.StartAndAwaitRunning(ctx, svc); err != nil {
+		// A service's lifetime follows the context it is started with, so
+		// starting it on a cancellable one would let cancellation stop every
+		// service at once instead of in reverse order through stop.
+		if err := svc.StartAsync(context.WithoutCancel(ctx)); err != nil {
+			return ctx, stop, fmt.Errorf("start %s: %w", services.DescribeService(svc), err)
+		}
+		if err := svc.AwaitRunning(ctx); err != nil {
 			if errors.Is(err, context.Canceled) && ctx.Err() != nil {
 				err = context.Cause(ctx)
 			}

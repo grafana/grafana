@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana-app-sdk/logging"
 	clientrest "k8s.io/client-go/rest"
 )
 
@@ -21,14 +22,15 @@ type loopbackService struct {
 
 	builder *APIBuilder
 	run     func(ctx context.Context, restConfig *clientrest.Config) error
-	// awaitBootstrap also delays run until the bootstrap repository is
-	// reconciled.
-	awaitBootstrap bool
+	// waitFor, when set, also delays run until it is closed.
+	waitFor <-chan struct{}
+	// onStop, when set, is called once the service stops, however it stopped.
+	onStop func()
 }
 
 func newLoopbackService(name string, builder *APIBuilder, run func(ctx context.Context, restConfig *clientrest.Config) error) *loopbackService {
 	s := &loopbackService{builder: builder, run: run}
-	s.NamedService = services.NewBasicService(nil, s.running, nil).WithName(name)
+	s.NamedService = services.NewBasicService(nil, s.running, s.stopping).WithName(name)
 	return s
 }
 
@@ -46,15 +48,33 @@ func (s *loopbackService) Run(ctx context.Context) error {
 }
 
 func (s *loopbackService) running(ctx context.Context) error {
-	restConfig, err := s.builder.awaitLoopbackConfig(ctx)
-	if err == nil && s.awaitBootstrap {
-		err = s.builder.awaitBootstrapReconciled(ctx)
-	}
+	restConfig, err := s.awaitStart(ctx)
 	if err == nil {
+		logging.FromContext(ctx).Info("starting provisioning service", "service", s.ServiceName())
 		err = s.run(ctx, restConfig)
 	}
 	if errors.Is(err, context.Canceled) && ctx.Err() != nil {
 		return nil
 	}
 	return err
+}
+
+func (s *loopbackService) awaitStart(ctx context.Context) (*clientrest.Config, error) {
+	restConfig, err := s.builder.awaitLoopbackConfig(ctx)
+	if err != nil || s.waitFor == nil {
+		return restConfig, err
+	}
+	select {
+	case <-s.waitFor:
+		return restConfig, nil
+	case <-ctx.Done():
+		return nil, context.Cause(ctx)
+	}
+}
+
+func (s *loopbackService) stopping(error) error {
+	if s.onStop != nil {
+		s.onStop()
+	}
+	return nil
 }

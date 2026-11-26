@@ -989,10 +989,15 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	informerMetrics := provisioning3.ProvideInformerMetrics(registerer)
-	connectionControllerService := provisioning3.ProvideConnectionControllerService(cfg, apiBuilder, subscriberService, registerer, informerMetrics)
-	historyJobCleanupService := provisioning3.ProvideHistoryJobCleanupService(cfg, apiBuilder, eventualRestConfigProvider, subscriberService)
-	repositoryControllerService := provisioning3.ProvideRepositoryControllerService(cfg, apiBuilder, subscriberService, registerer, informerMetrics)
-	jobQueueService := provisioning3.ProvideJobQueueService(cfg, apiBuilder, renderingService, v5, subscriberService)
+	connectionControllerService := provisioning3.ProvideConnectionControllerService(cfg, apiBuilder, subscriberService, registerer, tracingService, v5, informerMetrics)
+	historyJobCleanupService := provisioning3.ProvideHistoryJobCleanupService(cfg, apiBuilder, subscriberService)
+	bootstrapService, err := provisioning3.ProvideBootstrapService(cfg, apiBuilder)
+	if err != nil {
+		return nil, err
+	}
+	repositoryControllerService := provisioning3.ProvideRepositoryControllerService(cfg, apiBuilder, bootstrapService, subscriberService, registerer, tracingService, v5, informerMetrics)
+	jobQueueService := provisioning3.ProvideJobQueueService(cfg, apiBuilder, subscriberService, registerer, tracingService, renderingService, v5)
+	jobCleanupService := provisioning3.ProvideJobCleanupService(apiBuilder, registerer)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
 	if err != nil {
@@ -1065,7 +1070,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	tokenexchangeService := tokenexchange.ProvideService(cfg, pluginauthConfig, routeRegisterImpl)
-	backgroundServiceRegistry := backgroundsvcs.ProvideBackgroundServiceRegistry(httpServer, alertNG, cleanUpService, grafanaLive, gateway, notificationService, pluginstoreService, renderingService, userAuthTokenService, tracingService, provisioningServiceImpl, usageStats, statscollectorService, grafanaService, pluginsService, internalMetricsService, secretsService, remoteCache, storageService, serviceAccountsService, grpcserverProvider, secretMigrationProviderImpl, loginattemptimplService, supportbundlesimplService, v9, keyRetriever, angulardetectorsproviderDynamic, apiserverService, routerService, anonDeviceService, ssosettingsimplService, pluginexternalService, plugininstallerService, zanzanaReconciler, appregistryService, dashboardUpdater, dashboardServiceImpl, worker, fixedRolesLoader, noopIAMRolesSyncer, noopGlobalRoleSeeder, syncer, embeddedZanzanaService, natsServer, publisherService, subscriberService, sqlStore, reconciler, folderUIDRepairService, ssoSettingsBackfill, connectionControllerService, historyJobCleanupService, repositoryControllerService, jobQueueService, serviceImpl, serviceAccountsProxy, healthService, reflectionService, apiService, apiregistryService, idimplService, teamAPI, ssosettingsimplService, cloudmigrationService, registration, ofrepAPIBuilder, tokenexchangeService)
+	backgroundServiceRegistry := backgroundsvcs.ProvideBackgroundServiceRegistry(httpServer, alertNG, cleanUpService, grafanaLive, gateway, notificationService, pluginstoreService, renderingService, userAuthTokenService, tracingService, provisioningServiceImpl, usageStats, statscollectorService, grafanaService, pluginsService, internalMetricsService, secretsService, remoteCache, storageService, serviceAccountsService, grpcserverProvider, secretMigrationProviderImpl, loginattemptimplService, supportbundlesimplService, v9, keyRetriever, angulardetectorsproviderDynamic, apiserverService, routerService, anonDeviceService, ssosettingsimplService, pluginexternalService, plugininstallerService, zanzanaReconciler, appregistryService, dashboardUpdater, dashboardServiceImpl, worker, fixedRolesLoader, noopIAMRolesSyncer, noopGlobalRoleSeeder, syncer, embeddedZanzanaService, natsServer, publisherService, subscriberService, sqlStore, reconciler, folderUIDRepairService, ssoSettingsBackfill, connectionControllerService, historyJobCleanupService, bootstrapService, repositoryControllerService, jobQueueService, jobCleanupService, serviceImpl, serviceAccountsProxy, healthService, reflectionService, apiService, apiregistryService, idimplService, teamAPI, ssosettingsimplService, cloudmigrationService, registration, ofrepAPIBuilder, tokenexchangeService)
 	usageStatsProvidersRegistry := usagestatssvcs.ProvideUsageStatsProvidersRegistry(acimplService, userimplService)
 	serverServer, err := server.New(opts, cfg, httpServer, acimplService, provisioningServiceImpl, backgroundServiceRegistry, usageStatsProvidersRegistry, statscollectorService, tracingService, featureToggles, registerer)
 	if err != nil {
@@ -1798,10 +1803,15 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	informerMetrics := provisioning3.ProvideInformerMetrics(registerer)
-	connectionControllerService := provisioning3.ProvideConnectionControllerService(cfg, apiBuilder, subscriberService, registerer, informerMetrics)
-	historyJobCleanupService := provisioning3.ProvideHistoryJobCleanupService(cfg, apiBuilder, eventualRestConfigProvider, subscriberService)
-	repositoryControllerService := provisioning3.ProvideRepositoryControllerService(cfg, apiBuilder, subscriberService, registerer, informerMetrics)
-	jobQueueService := provisioning3.ProvideJobQueueService(cfg, apiBuilder, renderingService, v5, subscriberService)
+	connectionControllerService := provisioning3.ProvideConnectionControllerService(cfg, apiBuilder, subscriberService, registerer, tracingService, v5, informerMetrics)
+	historyJobCleanupService := provisioning3.ProvideHistoryJobCleanupService(cfg, apiBuilder, subscriberService)
+	bootstrapService, err := provisioning3.ProvideBootstrapService(cfg, apiBuilder)
+	if err != nil {
+		return nil, err
+	}
+	repositoryControllerService := provisioning3.ProvideRepositoryControllerService(cfg, apiBuilder, bootstrapService, subscriberService, registerer, tracingService, v5, informerMetrics)
+	jobQueueService := provisioning3.ProvideJobQueueService(cfg, apiBuilder, subscriberService, registerer, tracingService, renderingService, v5)
+	jobCleanupService := provisioning3.ProvideJobCleanupService(apiBuilder, registerer)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
 	if err != nil {
@@ -1874,7 +1884,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	tokenexchangeService := tokenexchange.ProvideService(cfg, pluginauthConfig, routeRegisterImpl)
-	backgroundServiceRegistry := backgroundsvcs.ProvideBackgroundServiceRegistry(httpServer, alertNG, cleanUpService, grafanaLive, gateway, notificationService, pluginstoreService, renderingService, userAuthTokenService, tracingService, provisioningServiceImpl, usageStats, statscollectorService, grafanaService, pluginsService, internalMetricsService, secretsService, remoteCache, storageService, serviceAccountsService, grpcserverProvider, secretMigrationProviderImpl, loginattemptimplService, supportbundlesimplService, v9, keyRetriever, angulardetectorsproviderDynamic, apiserverService, routerService, anonDeviceService, ssosettingsimplService, pluginexternalService, plugininstallerService, zanzanaReconciler, appregistryService, dashboardUpdater, dashboardServiceImpl, worker, fixedRolesLoader, noopIAMRolesSyncer, noopGlobalRoleSeeder, syncer, embeddedZanzanaService, natsServer, publisherService, subscriberService, sqlStore, reconciler, folderUIDRepairService, ssoSettingsBackfill, connectionControllerService, historyJobCleanupService, repositoryControllerService, jobQueueService, serviceImpl, serviceAccountsProxy, healthService, reflectionService, apiService, apiregistryService, idimplService, teamAPI, ssosettingsimplService, cloudmigrationService, registration, ofrepAPIBuilder, tokenexchangeService)
+	backgroundServiceRegistry := backgroundsvcs.ProvideBackgroundServiceRegistry(httpServer, alertNG, cleanUpService, grafanaLive, gateway, notificationService, pluginstoreService, renderingService, userAuthTokenService, tracingService, provisioningServiceImpl, usageStats, statscollectorService, grafanaService, pluginsService, internalMetricsService, secretsService, remoteCache, storageService, serviceAccountsService, grpcserverProvider, secretMigrationProviderImpl, loginattemptimplService, supportbundlesimplService, v9, keyRetriever, angulardetectorsproviderDynamic, apiserverService, routerService, anonDeviceService, ssosettingsimplService, pluginexternalService, plugininstallerService, zanzanaReconciler, appregistryService, dashboardUpdater, dashboardServiceImpl, worker, fixedRolesLoader, noopIAMRolesSyncer, noopGlobalRoleSeeder, syncer, embeddedZanzanaService, natsServer, publisherService, subscriberService, sqlStore, reconciler, folderUIDRepairService, ssoSettingsBackfill, connectionControllerService, historyJobCleanupService, bootstrapService, repositoryControllerService, jobQueueService, jobCleanupService, serviceImpl, serviceAccountsProxy, healthService, reflectionService, apiService, apiregistryService, idimplService, teamAPI, ssosettingsimplService, cloudmigrationService, registration, ofrepAPIBuilder, tokenexchangeService)
 	usageStatsProvidersRegistry := usagestatssvcs.ProvideUsageStatsProvidersRegistry(acimplService, userimplService)
 	serverServer, err := server.New(opts, cfg, httpServer, acimplService, provisioningServiceImpl, backgroundServiceRegistry, usageStatsProvidersRegistry, statscollectorService, tracingService, featureToggles, registerer)
 	if err != nil {
