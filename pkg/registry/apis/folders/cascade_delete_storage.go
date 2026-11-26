@@ -190,6 +190,8 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 	if folderAsyncCascadeDeleteEnabled(ctx) {
 		return s.deleteAsync(ctx, ns, f, user, deleteValidation, options)
 	}
+	// Whether this delete walks the subtree itself; otherwise only the folder is deleted.
+	walksSubtree := kubernetesFolderCascadeDeleteEnabled(ctx) && forceDeleteFromDeleteOptions(options)
 	// A leftover finalizer is removed so the delete runs synchronously.
 	if hasCascadeDeleteFinalizer(f) {
 		parentUID := f.GetAnnotations()[utils.AnnoKeyFolder]
@@ -201,8 +203,13 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 			// Already in the controller's hands: the delete only (re)marks the folder terminating.
 			return s.Storage.Delete(ctx, name, deleteValidation, options)
 		}
-		// The finalizer is removed as the service identity, so the requester's delete permission is checked first.
-		if err := s.checkFolderDeleteAccess(ctx, user, ns.Value, f.Name, parentUID); err != nil {
+		// The finalizer is removed as the service identity, so authorize the requester first.
+		check := s.checkFolderDeleteAccess
+		if walksSubtree {
+			// A delete that walks the subtree needs access to check the contents, not just the folder itself.
+			check = s.checkFolderContentsAccess
+		}
+		if err := check(ctx, user, ns.Value, f.Name, parentUID); err != nil {
 			return nil, false, err
 		}
 		if f, options, deleteValidation, err = s.setCascadeFinalizer(ctx, ns, f, user, false, deleteValidation, options); err != nil {
@@ -212,7 +219,7 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 	}
 
 	// Delegate when the synchronous cascade flag is disabled or the user is not forcing the deletion.
-	if !kubernetesFolderCascadeDeleteEnabled(ctx) || !forceDeleteFromDeleteOptions(options) {
+	if !walksSubtree {
 		return s.Storage.Delete(ctx, name, deleteValidation, options)
 	}
 	if deleteValidation != nil {

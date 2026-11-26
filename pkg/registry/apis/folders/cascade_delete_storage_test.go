@@ -2448,6 +2448,24 @@ func TestCascadeDelete_AlignsFinalizerWithAsyncFlag(t *testing.T) {
 		require.Equal(t, utils.VerbDelete, access.checks[0].req.Verb)
 	})
 
+	t.Run("a forced delete rejected for its contents leaves the finalizer in place with the flag off", func(t *testing.T) {
+		access := &recordingAccessClient{allow: func(req authlib.CheckRequest, _ string) bool { return req.Resource != cascadeAlertRuleResource }}
+		store, _, err := run(t, false, folderWith("", cascade...), nil, forceDelete(), access)
+		require.True(t, apierrors.IsForbidden(err), "got %v", err)
+		require.Zero(t, store.updates, "a rejected delete does not strip the finalizer")
+		require.Equal(t, cascade, store.existing["f"].Finalizers)
+		require.Empty(t, store.deleted)
+	})
+
+	t.Run("a non-forced delete with the flag off needs only the folder's delete permission", func(t *testing.T) {
+		access := &recordingAccessClient{allow: func(req authlib.CheckRequest, _ string) bool { return req.Resource != cascadeAlertRuleResource }}
+		store, atDelete, err := run(t, false, folderWith("", cascade...), nil, &metav1.DeleteOptions{}, access)
+		require.NoError(t, err)
+		require.Empty(t, atDelete)
+		require.Equal(t, []string{"f"}, store.deleted)
+		require.Len(t, access.checks, 1)
+	})
+
 	t.Run("a non-forced delete of a terminating folder needs no contents check", func(t *testing.T) {
 		for _, async := range []bool{true, false} {
 			now := metav1.Now()
