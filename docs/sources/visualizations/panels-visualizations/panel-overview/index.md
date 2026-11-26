@@ -89,7 +89,7 @@ Keep the following actions tooltip behavior in mind:
 
 ## Panel menu
 
-To open the panel menu, hover your cursor over any part of a panel to display the actions tooltip, and then click **More actions**.
+To open the panel menu, hover your cursor over any part of a panel to display the actions tooltip, and then click the **More actions** menu icon.
 
 The panel menu gives you access to more panel actions.
 If an option is only available in view mode or edit mode, that's indicated:

@@ -25,7 +25,7 @@ The panel that you send includes all query response data and all visualizations 
 
 1. Hover over any part of the panel to display the actions tooltip.
 
-1. Click **More actions** and select **More > Get help**.
+1. Click the **More actions** menu icon and select **More > Get help**.
 
    Grafana opens a standalone support dashboard that contains the data you are sending to Grafana Labs Technical Support.
 

@@ -52,7 +52,7 @@ To streamline alert creation, you can create an alert rule directly from a panel
 
 1. Navigate to a dashboard in the **Dashboards** section.
 1. Hover over any part of a panel to display the actions tooltip.
-1. Click **More actions** and select **More...** > **New alert rule**.
+1. Click the **More actions** menu icon and select **More...** > **New alert rule**.
 1. This opens the **Edit rule** form and pre-fills some values:
    - Sets the annotations to the corresponding dashboard and panel.
    - Sets the alert rule query using the panel query.

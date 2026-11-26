@@ -272,7 +272,7 @@ If you change a panel, ensure that you save the changes before sharing.
 To share a personalized, direct link to your panel within your organization, follow these steps:
 
 1. Hover over any part of the panel you want to share to display the actions tooltip.
-1. Click **More actions** and select **Share link**.
+1. Click the **More actions** menu icon and select **Share link**.
 1. (Optional) In the **Link settings** drawer that opens, set the following options:
    - **Lock time range** - Change the current relative time range to an absolute time range. This option is enabled by default.
    - **Shorten link** - Shorten the panel link. This option is disabled by default.
@@ -326,7 +326,7 @@ Panel embedding and anonymous access permissions are not available in Grafana Cl
 To create a panel that can be embedded, follow these steps:
 
 1. Hover over any part of the panel you want to share to display the actions tooltip.
-1. Click **More actions** and select **Share embed**.
+1. Click the **More actions** menu icon and select **Share embed**.
 
    The **Share embed** drawer opens.
 
@@ -365,7 +365,7 @@ To see the other snapshots shared from your organization, navigate to **Dashboar
 To share your panel with anyone as a snapshot, follow these steps:
 
 1. Hover over any part of the panel you want to share to display the actions tooltip.
-1. Click **More actions** and select **Share snapshot**.
+1. Click the **More actions** menu icon and select **Share snapshot**.
 1. In the **Share snapshot** drawer that opens, enter a descriptive title for the snapshot in the **Snapshot name** field.
 1. Select one of the following expiration options for the snapshot:
    - **1 Hour**

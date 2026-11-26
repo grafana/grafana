@@ -59,7 +59,7 @@ To set a feature toggle in other ways, such as environment variables, refer to t
 
 1. Hover over any part of the panel to display the actions tooltip.
 
-1. Click **More actions** and select **More** > **Download diagnostics**.
+1. Click the **More actions** menu icon and select **More** > **Download diagnostics**.
 
    Grafana opens a drawer describing what the bundle contains, including a **May contain sensitive data** warning.
 
