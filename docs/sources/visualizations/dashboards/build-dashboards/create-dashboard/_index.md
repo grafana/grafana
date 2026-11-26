@@ -94,7 +94,7 @@ To create a dashboard, follow these steps:
    - Create a dashboard with Grafana Assistant by describing what you want to build. Make sure to save your dashboard.
    - Click **+ Add visualization**. Then proceed to the next step.
 
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.3.png" max-width="750px" alt="Empty dashboard" >}}
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.4.png" max-width="750px" alt="Empty dashboard" >}}
 
 {{< /shared >}}
 
