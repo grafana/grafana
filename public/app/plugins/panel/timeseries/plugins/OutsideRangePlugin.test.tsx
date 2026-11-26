@@ -217,7 +217,7 @@ describe('OutsideRangePlugin', () => {
       expect(getByText('Data outside time range')).toBeInTheDocument();
 
       await userEvent.click(getByText('Zoom to data'));
-      expect(onChangeTimeRange).toHaveBeenCalledWith({ from: 500, to: 1000 });
+      expect(onChangeTimeRange).toHaveBeenCalledWith({ from: 500, to: 1500 });
     });
 
     it('renders when a null after trailing undefined values ends the last value before the time range', () => {
@@ -264,8 +264,9 @@ describe('OutsideRangePlugin', () => {
       expect(container).toBeEmptyDOMElement();
     });
 
-    it('renders when all values start after the time range', () => {
-      const { getByText } = renderPlugin(jest.fn(), true);
+    it('renders when all values start after the time range', async () => {
+      const onChangeTimeRange = jest.fn();
+      const { getByText } = renderPlugin(onChangeTimeRange, true);
 
       applyScale(
         [
@@ -276,6 +277,9 @@ describe('OutsideRangePlugin', () => {
       );
 
       expect(getByText('Data outside time range')).toBeInTheDocument();
+
+      await userEvent.click(getByText('Zoom to data'));
+      expect(onChangeTimeRange).toHaveBeenCalledWith({ from: 4000, to: 4500 });
     });
   });
 
