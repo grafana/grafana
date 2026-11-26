@@ -63,11 +63,10 @@ func (b *Builder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error)
 	}
 	ps.Properties["apiVersion"] = *spec.StringProperty().WithEnum(fmt.Sprintf("%s/%s", b.group, version))
 	ps.Properties["kind"] = *spec.StringProperty().WithEnum("Settings")
-	if b.opts.ReadOnly {
-		return oas, nil
-	}
 
-	// Always transform results
+	// Always transform results. Read-only settings are described the same way:
+	// the API server leaves out the write operations, and so the examples,
+	// which only document writes.
 	switch {
 	case schema.IsZero():
 		schema = defaultSchema()
@@ -270,12 +269,7 @@ func undeclaredPathParameters(path string, props *spec3.PathProps) []*spec3.Para
 func defaultSchema() *pluginschema.PluginSchema {
 	return &pluginschema.PluginSchema{
 		SettingsSchema: &pluginschema.Settings{
-			Spec: &spec.Schema{
-				SchemaProps: spec.SchemaProps{ // The jsonSchema object
-					Type:                 []string{"object"},
-					AdditionalProperties: &spec.SchemaOrBool{Allows: true},
-				},
-			},
+			Spec: definition.AnyJSONData(), // the jsonData object
 		},
 		SettingsExamples: &pluginschema.SettingsExamples{
 			Examples: map[string]*spec3.Example{
@@ -288,7 +282,6 @@ func defaultSchema() *pluginschema.PluginSchema {
 							},
 							Spec: apppluginV0.SettingsSpec{
 								Enabled:  true,
-								Pinned:   true,
 								JsonData: kcommon.Unstructured{},
 							},
 						},

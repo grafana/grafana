@@ -1,51 +1,60 @@
 package provisioning
 
 import (
-	"net/http"
-	"net/http/httptest"
+	"context"
+	"errors"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	clientrest "k8s.io/client-go/rest"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
 )
 
-func TestPostStartHook_PublishesLoopbackConfigAfterBootstrapReconcile(t *testing.T) {
-	b := &APIBuilder{
-		gv:              provisioning.SchemeGroupVersion,
-		bootstrapConfig: bootstrap.Config{Namespace: "default"},
-		onlyApiServer:   true,
-		registry:        prometheus.NewRegistry(),
-		loopbackReady:   make(chan struct{}),
+func newPostStartHookTestBuilder() *APIBuilder {
+	return &APIBuilder{
+		gv:            provisioning.SchemeGroupVersion,
+		onlyApiServer: true,
+		registry:      prometheus.NewRegistry(),
+		loopbackReady: make(chan struct{}),
 	}
+}
 
-	reconciled := false
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		select {
-		case <-b.loopbackReady:
-			assert.Fail(t, "loopback config published before the bootstrap repository was reconciled", "%s %s", r.Method, r.URL)
-		default:
-		}
-		reconciled = true
-		http.NotFound(w, r)
-	}))
-	t.Cleanup(server.Close)
-
+func runPostStartHooks(t *testing.T, b *APIBuilder, loopback *clientrest.Config) error {
+	t.Helper()
 	hooks, err := b.GetPostStartHooks()
 	require.NoError(t, err)
 	require.Len(t, hooks, 1)
-	loopback := &clientrest.Config{Host: server.URL}
 	for _, hook := range hooks {
-		require.NoError(t, hook(genericapiserver.PostStartHookContext{LoopbackClientConfig: loopback, Context: t.Context()}))
+		if err := hook(genericapiserver.PostStartHookContext{LoopbackClientConfig: loopback, Context: t.Context()}); err != nil {
+			return err
+		}
 	}
+	return nil
+}
 
-	require.True(t, reconciled, "the hook should reconcile the bootstrap repository")
+func TestPostStartHook_PublishesLoopbackConfig(t *testing.T) {
+	b := newPostStartHookTestBuilder()
+
+	loopback := &clientrest.Config{Host: "http://127.0.0.1:0"}
+	require.NoError(t, runPostStartHooks(t, b, loopback))
+
 	got, err := b.awaitLoopbackConfig(t.Context())
 	require.NoError(t, err)
 	require.Same(t, loopback, got)
+	require.NotNil(t, b.client, "API endpoints use the client built on the loopback config")
+	require.NotNil(t, b.jobs)
+	require.NotNil(t, b.statusPatcher)
+	require.NotNil(t, b.healthChecker)
+}
+
+func TestPostStartHook_RestConfigError(t *testing.T) {
+	b := newPostStartHookTestBuilder()
+	errConfig := errors.New("no rest config")
+	b.restConfigGetter = func(context.Context) (*clientrest.Config, error) { return nil, errConfig }
+
+	require.ErrorIs(t, runPostStartHooks(t, b, nil), errConfig)
+	require.False(t, isClosed(b.loopbackReady), "no loopback config to publish when the rest config fails")
 }

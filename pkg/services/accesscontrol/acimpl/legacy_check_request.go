@@ -9,7 +9,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const legacyGlobalNamespaceAnchorOrgID int64 = 1
@@ -17,7 +19,6 @@ const legacyGlobalNamespaceAnchorOrgID int64 = 1
 func (a *AccessControl) buildLegacyCheckRequest(
 	user identity.Requester,
 	evaluator accesscontrol.Evaluator,
-	useExternalGroups bool,
 	namespaceMapper types.NamespaceFormatter,
 ) (legacyclient.LegacyCheckRequest, error) {
 	if user == nil || user.IsNil() {
@@ -78,19 +79,29 @@ func (a *AccessControl) buildLegacyCheckRequest(
 		namespace = namespaceMapper(user.GetOrgID())
 	}
 
-	groups := user.GetGroups()
-	if useExternalGroups {
-		groups = user.GetExternalGroups()
-	}
-
 	return legacyclient.LegacyCheckRequest{
 		Namespace:           namespace,
 		RequesterOrgID:      &requesterOrgID,
 		Subject:             user.GetUID(),
 		Evaluator:           evaluator,
-		Teams:               slices.Clone(groups),
+		TeamIDs:             legacyCheckTeamIDs(user),
 		SkipScopeResolution: a.skipScopeResolution,
 		// Preserve authentication filtering when AuthZ reloads grants and resolver dependencies.
 		Restriction: &legacyclient.LegacyActionRestriction{Actions: slices.Sorted(maps.Keys(permissions))},
 	}, nil
+}
+
+func legacyCheckTeamIDs(requester identity.Requester) []int64 {
+	if requester.GetOrgID() < 1 || !requester.IsIdentityType(types.TypeUser, types.TypeServiceAccount) {
+		return nil
+	}
+
+	// These requesters carry legacy memberships. Other implementations, including
+	// StaticRequester, may return an empty slice without knowing their memberships.
+	switch requester.(type) {
+	case *user.SignedInUser, *authn.Identity:
+		return slices.Clone(requester.GetTeams())
+	default:
+		return nil
+	}
 }

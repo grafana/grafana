@@ -39,7 +39,7 @@ export function Examples() {
           <Menu.Item label="Google" />
           <Menu.Item label="Filter" />
           <Menu.Item label="Active" active />
-          <Menu.Item label="I am a link" url="http://google.com" target="_blank" role="menuitem" />
+          <Menu.Item label="I am a link" url="http://google.com" target="_blank" role="menuitem" variant="link" />
           <Menu.Item label="With destructive prop set" destructive />
         </Menu>
       </StoryExample>
@@ -257,6 +257,15 @@ export function Examples() {
         </Menu>
       </StoryExample>
     </Stack>
+  );
+}
+
+export function CompactLinks() {
+  return (
+    <Menu size="sm" autoFocus={false}>
+      <Menu.Item label="Grafana documentation" url="https://grafana.com/docs/" variant="link" />
+      <Menu.Item label="Grafana community" url="https://community.grafana.com/" variant="link" />
+    </Menu>
   );
 }
 

@@ -77,13 +77,18 @@ func newCascadeDeleteStorage(store grafanarest.Storage, searcher resourcepb.Reso
 }
 
 // cascadeCollectionDeleter rejects collection deletes, which the registry runs item by item without
-// cascadeDeleteStorage.Delete: forced ones, and any selecting a folder the cascade controller finishes.
+// cascadeDeleteStorage.Delete: all of them while async cascade delete is on, otherwise forced ones and
+// any selecting a folder the cascade controller finishes.
 type cascadeCollectionDeleter struct {
 	lister rest.Lister
 	inner  rest.CollectionDeleter
 }
 
 func (c cascadeCollectionDeleter) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	// With async cascade delete on, every folder delete must go through Delete to reach the controller.
+	if folderAsyncCascadeDeleteEnabled(ctx) {
+		return nil, apierrors.NewMethodNotSupported(foldersv1.FolderResourceInfo.GroupResource(), "deletecollection")
+	}
 	if forceDeleteFromDeleteOptions(options) {
 		return nil, apierrors.NewBadRequest("forced collection delete is not supported for folders; delete folders individually")
 	}
@@ -656,6 +661,7 @@ type contentsAccessCheck struct {
 
 // checkFolderContentsAccess denies the delete unless the requester has:
 //   - alert.rules:delete and dashboards:delete on folderUID
+//   - folders:delete on folderUID, since the folder itself is deleted under the service identity
 //   - folders:write on parentUID, which covers the library elements (General for a root folder)
 //   - variables:delete on folderUID, only when global variables are enabled
 //
@@ -680,6 +686,7 @@ func (s *cascadeDeleteStorage) checkFolderContentsAccess(ctx context.Context, us
 		{authlib.CheckRequest{Namespace: namespace, Verb: utils.VerbDelete, Group: cascadeAlertRuleGroup, Resource: cascadeAlertRuleResource}, folderUID},
 		{authlib.CheckRequest{Namespace: namespace, Verb: utils.VerbUpdate, Group: folderGVR.Group, Resource: folderGVR.Resource, Name: folderUID}, writeParent},
 		{authlib.CheckRequest{Namespace: namespace, Verb: utils.VerbDelete, Group: dashGVR.Group, Resource: dashGVR.Resource}, folderUID},
+		{authlib.CheckRequest{Namespace: namespace, Verb: utils.VerbDelete, Group: folderGVR.Group, Resource: folderGVR.Resource, Name: folderUID}, writeParent},
 	}
 	if grafanaDashboardGlobalVariablesEnabled(ctx) {
 		varGVR := dashboardV2beta1.VariableResourceInfo.GroupVersionResource()

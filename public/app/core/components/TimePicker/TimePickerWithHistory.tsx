@@ -9,7 +9,11 @@ import {
   rangeUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { type TimeRangePickerProps, TimeRangePicker } from '@grafana/ui';
+import { useFlagGrafanaResponsiveTimePickerTabs } from '@grafana/runtime/internal';
+import {
+  type ExperimentalTimeRangePickerProps as TimeRangePickerProps,
+  ExperimentalTimeRangePicker as TimeRangePicker,
+} from '@grafana/ui/internal';
 import { appEvents } from 'app/core/app_events';
 
 const LOCAL_STORAGE_KEY = 'grafana.dashboard.timepicker.history';
@@ -24,6 +28,19 @@ interface TimePickerHistoryItem {
 }
 
 export const TimePickerWithHistory = (props: Props) => {
+  const tabsEnabled = useFlagGrafanaResponsiveTimePickerTabs();
+  const pickerProps = {
+    ...props,
+    onError: (error?: string) =>
+      appEvents.emit(AppEvents.alertError, [
+        t('time-picker.copy-paste.default-error-title', 'Invalid time range'),
+        t('time-picker.copy-paste.default-error-message', `{{error}} is not a valid time range`, { error }),
+      ]),
+    compactDesign: props.compactDesign ?? (tabsEnabled ? 'tabs' : 'legacy'),
+  } satisfies Props;
+  if (props.hideHistory) {
+    return <TimeRangePicker {...pickerProps} />;
+  }
   return (
     <LocalStorageValueProvider<unknown> storageKey={LOCAL_STORAGE_KEY} defaultValue={[]}>
       {(values, onSaveToStore) => {
@@ -32,18 +49,12 @@ export const TimePickerWithHistory = (props: Props) => {
 
         return (
           <TimeRangePicker
-            {...props}
+            {...pickerProps}
             history={history}
             onChange={(value) => {
               onAppendToHistory(value, validHistory, onSaveToStore);
               props.onChange(value);
             }}
-            onError={(error?: string) =>
-              appEvents.emit(AppEvents.alertError, [
-                t('time-picker.copy-paste.default-error-title', 'Invalid time range'),
-                t('time-picker.copy-paste.default-error-message', `{{error}} is not a valid time range`, { error }),
-              ])
-            }
           />
         );
       }}

@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	authzlib "github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/types"
@@ -78,8 +79,11 @@ func cloudSettingsNamespaceAuthorizer(ctx context.Context, attr authorizer.Attri
 type cloudPluginContext struct{}
 
 func (cloudPluginContext) PluginContextForApp(ctx context.Context, id string, settings *backend.AppInstanceSettings) (context.Context, backend.PluginContext, error) {
-	ns := request.NamespaceValue(ctx)
-	if ns == "" || ns == "*" {
+	info, ok := request.RequestInfoFrom(ctx)
+	if !ok {
+		return ctx, backend.PluginContext{}, fmt.Errorf("missing request info")
+	}
+	if info.Namespace == "" {
 		return ctx, backend.PluginContext{}, fmt.Errorf("a concrete namespace is required")
 	}
 	user, err := identity.GetRequester(ctx)
@@ -87,7 +91,9 @@ func (cloudPluginContext) PluginContextForApp(ctx context.Context, id string, se
 		return ctx, backend.PluginContext{}, err
 	}
 	return ctx, backend.PluginContext{
-		Namespace: ns, PluginID: id, AppInstanceSettings: settings,
+		Namespace:  info.Namespace, // the tenant identity
+		APIVersion: info.APIVersion,
+		PluginID:   id, AppInstanceSettings: settings,
 		User: adapters.BackendUserFromSignedInUser(user),
 	}, nil
 }
@@ -102,9 +108,14 @@ func (a cloudSettingsAccessControl) Evaluate(ctx context.Context, user identity.
 		return false, nil
 	}
 	orgID := user.GetOrgID()
+
+	// NOTE! this is an experimental client that may not always be accurate
+	// This should not yet be deployed in production.
 	return a.client.LegacyCheck(ctx, legacyclient.LegacyCheckRequest{
-		Namespace: ns, Subject: user.GetUID(), RequesterOrgID: &orgID,
-		Teams: user.GetGroups(), Evaluator: evaluator,
+		Namespace:      ns,
+		Subject:        user.GetUID(),
+		RequesterOrgID: &orgID,
+		Evaluator:      evaluator,
 	})
 }
 
@@ -117,7 +128,24 @@ func (cloudSettingsAccessControl) InvalidateResolverCache(int64, string)        
 // cloudAppSettingsEnabled reports whether the cloud loader serves app settings
 // from the plugins source.
 func cloudAppSettingsEnabled(cfg *setting.Cfg) bool {
-	return cfg != nil && cfg.SectionWithEnvOverrides(cloudRouterSection).Key("app_settings_enabled").MustBool(false)
+	return len(cloudAppSettingsPlugins(cfg)) > 0
+}
+
+// cloudAppSettingsPlugins returns the plugin ID patterns whose settings the
+// cloud loader serves, from app_settings_plugins. Settings roll out per plugin,
+// so an empty list serves none, unlike group patterns, where it matches every
+// group; "*" serves every plugin.
+func cloudAppSettingsPlugins(cfg *setting.Cfg) []*regexp.Regexp {
+	if cfg == nil {
+		return nil
+	}
+	var patterns []string
+	for _, p := range splitGroupPatterns(cfg.SectionWithEnvOverrides(cloudRouterSection).Key("app_settings_plugins").MustString("")) {
+		if p != "" {
+			patterns = append(patterns, p)
+		}
+	}
+	return compileGroupPatterns(patterns)
 }
 
 func cloudSettingsClient(client plugins.Client, middleware []backend.HandlerMiddleware) (plugins.Client, error) {
