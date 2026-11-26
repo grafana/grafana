@@ -341,7 +341,7 @@ export const InfiniteScroll = ({
       cachedVisibleStartIndexRef.current = props.visibleStartIndex;
 
       if (onRenderedIndicesChanged) {
-        onRenderedIndicesChanged(props);
+onRenderedIndicesChanged({ ...props, visibleStopIndex: Math.min(props.visibleStopIndex, logs.length - 1) });
       }
 
       if (!scrollElement) {
