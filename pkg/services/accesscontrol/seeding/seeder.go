@@ -3,6 +3,7 @@ package seeding
 import (
 	"context"
 	"fmt"
+	"maps"
 	"regexp"
 	"slices"
 	"strings"
@@ -123,13 +124,13 @@ func (s *Seeder) SeedRoles(ctx context.Context, registrationList []accesscontrol
 			continue
 		}
 
-		if needsRoleUpdate(role, registration.Role) {
+		if NeedsRoleUpdate(role, registration.Role) {
 			if err := s.roleStore.SetRole(ctx, role, registration.Role); err != nil {
 				return err
 			}
 		}
 
-		if needsPermissionsUpdate(role, registration.Role) {
+		if NeedsPermissionsUpdate(role, registration.Role) {
 			if err := s.roleStore.SetPermissions(ctx, role, registration.Role); err != nil {
 				return err
 			}
@@ -145,32 +146,33 @@ func (s *Seeder) SeedRoles(ctx context.Context, registrationList []accesscontrol
 	return nil
 }
 
-func needsPermissionsUpdate(existingRole *accesscontrol.RoleDTO, wantedRole accesscontrol.RoleDTO) bool {
+// NeedsPermissionsUpdate reports whether the distinct action/scope permissions differ.
+// Permission order, duplicate rows, and database metadata do not affect the result.
+func NeedsPermissionsUpdate(existingRole *accesscontrol.RoleDTO, wantedRole accesscontrol.RoleDTO) bool {
 	if existingRole == nil {
 		return true
 	}
 
-	if len(existingRole.Permissions) != len(wantedRole.Permissions) {
-		return true
+	existingPermissions := make(map[permissionKey]struct{}, len(existingRole.Permissions))
+	for _, permission := range existingRole.Permissions {
+		existingPermissions[permissionKey{action: permission.Action, scope: permission.Scope}] = struct{}{}
 	}
 
-	for _, p := range wantedRole.Permissions {
-		found := false
-		for _, ep := range existingRole.Permissions {
-			if ep.Action == p.Action && ep.Scope == p.Scope {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return true
-		}
+	wantedPermissions := make(map[permissionKey]struct{}, len(wantedRole.Permissions))
+	for _, permission := range wantedRole.Permissions {
+		wantedPermissions[permissionKey{action: permission.Action, scope: permission.Scope}] = struct{}{}
 	}
-
-	return false
+	return !maps.Equal(existingPermissions, wantedPermissions)
 }
 
-func needsRoleUpdate(existingRole *accesscontrol.RoleDTO, wantedRole accesscontrol.RoleDTO) bool {
+type permissionKey struct {
+	action string
+	scope  string
+}
+
+// NeedsRoleUpdate reports whether same-name roles differ in display metadata.
+// A nil existing role needs creation, while a role with a different name is not updated.
+func NeedsRoleUpdate(existingRole *accesscontrol.RoleDTO, wantedRole accesscontrol.RoleDTO) bool {
 	if existingRole == nil {
 		return true
 	}
@@ -233,12 +235,12 @@ func (s *Seeder) SeedRole(ctx context.Context, role accesscontrol.RoleDTO, built
 			return err
 		}
 	} else {
-		if needsRoleUpdate(existingRole, wantedRole) {
+		if NeedsRoleUpdate(existingRole, wantedRole) {
 			if err := s.roleStore.SetRole(ctx, existingRole, wantedRole); err != nil {
 				return err
 			}
 		}
-		if needsPermissionsUpdate(existingRole, wantedRole) {
+		if NeedsPermissionsUpdate(existingRole, wantedRole) {
 			if err := s.roleStore.SetPermissions(ctx, existingRole, wantedRole); err != nil {
 				return err
 			}
