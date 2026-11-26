@@ -26,7 +26,15 @@ describe('buildNavTree', () => {
       // Connections and cfg are attachment-parent shells here; pruneEmptyNavSections removes them
       const tree = buildNavTree();
 
-      expect(ids(tree)).toEqual([NavID.home, NavID.bookmarks, NavID.connections, NavID.cfg, NavID.profile, NavID.help]);
+      expect(ids(tree)).toEqual([
+        NavID.home,
+        NavID.bookmarks,
+        NavID.starred,
+        NavID.connections,
+        NavID.cfg,
+        NavID.profile,
+        NavID.help,
+      ]);
     });
 
     it('orders sections by sort weight', () => {
@@ -93,6 +101,7 @@ describe('buildNavTree', () => {
 
       expect(findById(tree, NavID.profile)).toBeUndefined();
       expect(findById(tree, NavID.bookmarks)).toBeUndefined();
+      expect(findById(tree, NavID.starred)).toBeUndefined();
     });
 
     it('points home at the login page when signed out and anonymous access is disabled', () => {
@@ -502,7 +511,7 @@ describe('pruneEmptyNavSections', () => {
     setup();
     const tree = pruneEmptyNavSections(buildNavTree());
 
-    expect(ids(tree)).toEqual([NavID.home, NavID.bookmarks, NavID.profile, NavID.help]);
+    expect(ids(tree)).toEqual([NavID.home, NavID.bookmarks, NavID.starred, NavID.profile, NavID.help]);
   });
 
   // Drilldown's children are the drilldown apps, so with none attached the
