@@ -18,6 +18,14 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
+			Name:        "grafana.responsiveTimePickerTabs",
+			Description: "Enable tabs and an inline calendar in the compact time range picker",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "panelTitleSearch",
 			Description: "Search for dashboards using panel title",
 			Stage:       FeatureStagePublicPreview,
@@ -935,24 +943,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:            "kubernetesAggregator",
-			Description:     "Enable grafana's embedded kube-aggregator",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:            "kubernetesAggregatorCapTokenAuth",
-			Description:     "Enable CAP token based authentication in grafana's embedded kube-aggregator",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "scopeFilters",
 			Description:     "Enables the use of scope filters in Grafana",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
@@ -1505,6 +1495,15 @@ var (
 		{
 			Name:         "alerting.ruleQualityFix",
 			Description:  "Enable fixing alert rule quality issues with Grafana Assistant on the alert quality page.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "alerting.ruleQualityFixAll",
+			Description:  "Enable bulk fixes for alert rule quality issues on the alert quality page.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
@@ -2337,6 +2336,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "resourcePermissionsBulkUserWrites",
+			Description:  "Writes managed permissions and team memberships for many users in bulk instead of one user at a time, such as for SCIM team membership sync",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
 		},
 		{
 			Name:         "kubernetesUsersApi",
@@ -3536,6 +3544,15 @@ var (
 		{
 			Name:         "grafana.dashboardSidebarExplicitOpen",
 			Description:  "In dashboard edit mode, opens the sidebar only through explicit user actions and keeps it closed until explicitly reopened",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "grafana.panelQuickEdits",
+			Description:  "Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,

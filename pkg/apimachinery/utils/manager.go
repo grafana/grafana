@@ -8,6 +8,8 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana/pkg/apimachinery/internal/managerkinds"
 )
 
 // ManagerProperties is used to identify the manager of the resource.
@@ -74,10 +76,17 @@ const (
 	ManagerKindClassicConvertedPrometheus ManagerKind = "classic-converted-prometheus"
 )
 
-// ParseManagerKindString parses a string into a ManagerKind.
-// It returns the ManagerKind and a boolean indicating whether the string was a valid ManagerKind.
-// For unknown values, it returns ManagerKindUnknown and false.
+// ParseManagerKindString parses a string into a ManagerKind: a built-in kind or one
+// added with identity.RegisterManagerKind. For any other value it returns ManagerKindUnknown.
 func ParseManagerKindString(v string) ManagerKind {
+	if managerkinds.Has(v) {
+		return ManagerKind(v)
+	}
+
+	return parseBuiltinManagerKind(v)
+}
+
+func parseBuiltinManagerKind(v string) ManagerKind {
 	switch v {
 	case string(ManagerKindRepo):
 		return ManagerKindRepo

@@ -21,8 +21,10 @@ import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { DOCK_MENU_BUTTON_ID, MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
 import { MegaMenuPinnedItem } from './MegaMenuPinnedItem';
+import { useMegaMenuSectionExtension } from './MegaMenuSectionExtensionPoint';
 import { MegaMenuSkeleton } from './MegaMenuSkeleton';
 import { useNavCustomization } from './hooks';
+import { useMegaMenuSectionCollapsed, useMegaMenuSectionSplitter } from './useMegaMenuSectionSplitter';
 
 export const MENU_WIDTH = '320px';
 
@@ -61,6 +63,18 @@ export const MegaMenu = memo(
       isSaving,
     } = useNavCustomization();
     const { DragDropContext, Draggable, Droppable } = useDragAndDrop(editMode);
+    const [sectionCollapsed, setSectionCollapsed] = useMegaMenuSectionCollapsed();
+    const pluginSection = useMegaMenuSectionExtension({
+      onNavigate: state.megaMenuDocked ? undefined : onClose,
+      collapsed: sectionCollapsed,
+      onCollapsedChange: setSectionCollapsed,
+    });
+    // Customising the navigation gives it the whole menu.
+    const section = editMode ? null : pluginSection;
+    const { containerProps, navProps, separatorProps, sectionProps, sectionShown } = useMegaMenuSectionSplitter(
+      section !== null,
+      sectionCollapsed
+    );
 
     const peekAndDock = useFlagGrafanaMegaMenuPeekAndDock();
     const showFooter = editMode || (canCustomise && !isLoading) || !peekAndDock;
@@ -253,31 +267,57 @@ export const MegaMenu = memo(
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
         <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
         <nav className={cx(styles.content, state.megaMenuDocked && styles.contentDocked)} aria-label={navLabel}>
-          <div className={styles.scrollArea}>
-            <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators={!visualRefreshEnabled}>
+          <div {...containerProps}>
+            <div {...navProps}>
+              <div className={styles.scrollArea}>
+                <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators={!visualRefreshEnabled}>
+                  <>
+                    {isLoading ? (
+                      <ul className={styles.itemList} aria-label={navLabel} aria-busy>
+                        <MegaMenuSkeleton />
+                      </ul>
+                    ) : canCustomise ? (
+                      <>
+                        {renderPinnedBox()}
+                        {renderScopesDashboardsSection()}
+                        {renderSectionList()}
+                      </>
+                    ) : (
+                      <>
+                        {renderScopesDashboardsSection()}
+                        <ul className={styles.itemList} aria-label={navLabel}>
+                          {navItems.map((link) => renderNavItem(link))}
+                        </ul>
+                      </>
+                    )}
+                    {!sectionShown && <MegaMenuExtensionPoint />}
+                  </>
+                </ScrollContainer>
+              </div>
+            </div>
+            {section && (
               <>
-                {isLoading ? (
-                  <ul className={styles.itemList} aria-label={navLabel} aria-busy>
-                    <MegaMenuSkeleton />
-                  </ul>
-                ) : canCustomise ? (
-                  <>
-                    {renderPinnedBox()}
-                    {renderScopesDashboardsSection()}
-                    {renderSectionList()}
-                  </>
+                {sectionCollapsed ? (
+                  <hr className={styles.dividerLine} />
                 ) : (
-                  <>
-                    {renderScopesDashboardsSection()}
-                    <ul className={styles.itemList} aria-label={navLabel}>
-                      {navItems.map((link) => renderNavItem(link))}
-                    </ul>
-                  </>
+                  <div {...separatorProps} className={cx(separatorProps.className, styles.sectionSeparator)} />
                 )}
-                <MegaMenuExtensionPoint />
+                <div {...sectionProps} data-testid="mega-menu-section">
+                  {section}
+                </div>
               </>
-            </ScrollContainer>
+            )}
           </div>
+          {/* Below a plugin section, as the navigation's end then sits above the section, out of sight. The divider
+              marks where the section, which scrolls, ends. */}
+          {sectionShown && (
+            <div className={styles.menuAction}>
+              <hr className={cx(styles.dividerLine, styles.menuActionDivider)} />
+              <div>
+                <MegaMenuExtensionPoint />
+              </div>
+            </div>
+          )}
           {showFooter && <hr className={styles.dividerLine} />}
           {showFooter && (
             <div className={cx(styles.footer, editMode && styles.footerEditMode)}>
@@ -332,9 +372,27 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
     contentDocked: css({
       paddingTop: theme.spacing(0),
     }),
+    menuAction: css({
+      flexShrink: 0,
+      // Hidden with its divider while the plugin renders nothing, for example for a user it has nothing to offer.
+      '&:has(> div:empty)': {
+        display: 'none',
+      },
+    }),
+    // The section above already leaves room below its last row.
+    menuActionDivider: css({
+      marginTop: 0,
+    }),
     scrollArea: css({
       flex: 1,
       minHeight: 0,
+    }),
+    // The divider between the navigation and the plugin section, drawn under the resize handle's hover band. Its
+    // height gives it a wider gap than the footer divider's: this one separates two sections, not a footer.
+    sectionSeparator: css({
+      margin: theme.spacing(0, 1),
+      // A 1px line across the middle of the taller drag target.
+      background: `linear-gradient(${theme.colors.border.weak}, ${theme.colors.border.weak}) center / 100% 1px no-repeat`,
     }),
     itemList: css({
       boxSizing: 'border-box',

@@ -33,8 +33,8 @@ let registered: readonly KindInfo[] = [];
 let appKinds: readonly StarredAppKind[] = [];
 let allKinds: readonly StarredKind[] = STARRED_INDEX_KINDS;
 
-// The kind registry has no change event, so its app kinds are compared on each read. The lists are rebuilt when
-// they changed and are the same arrays until then, for a view to memoize on
+// Rebuilt when the registry's app kinds changed since the last read, and the same arrays until then: a view
+// memoizes on them, and reads them as the snapshot of the registry it follows
 function readAppKinds() {
   const kinds = getAppKinds();
   if (kinds.length === registered.length && kinds.every((kind, index) => kind === registered[index])) {
@@ -60,6 +60,11 @@ export function getStarredAppKinds(): readonly StarredAppKind[] {
 export function getStarredKinds(): readonly StarredKind[] {
   readAppKinds();
   return allKinds;
+}
+
+/** The kind with this API group and kind name, when it is one Grafana shows stars of. */
+export function findStarredKind(group: string, kind: string): StarredKind | undefined {
+  return getStarredKinds().find((candidate) => candidate.group === group && candidate.kind === kind);
 }
 
 /** The kind behind a search row's or nav leaf's kind string; undefined for kinds nobody can star, such as panels. */

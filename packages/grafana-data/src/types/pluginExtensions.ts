@@ -237,12 +237,15 @@ export enum PluginExtensionPoints {
   AppChrome = 'grafana/app/chrome/v1',
   ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
   MegaMenuAction = 'grafana/megamenu/action',
+  MegaMenuSection = 'grafana/megamenu/section/v0-alpha',
   SingleTopBarAction = 'grafana/singletopbar/action',
   AdvisorCompletedChecks = 'grafana/advisor/completed-checks/v1',
   AdvisorCreateChecks = 'grafana/advisor/create-checks/v1',
   AdvisorRetryCheck = 'grafana/advisor/retry-check/v1',
   NavRightButton = 'grafana/singletopbar/nav-right-button/v1',
   HomepageAssistant = 'grafana/homepage/assistant/v1',
+  AssistantOnboardingOverview = 'grafana/assistant-onboarding/plugin-overview/v1',
+  AssistantOnboardingPage = 'grafana/assistant-onboarding/page/v1',
   HomepageExtra = 'grafana/homepage/extra/v1',
   UserListTab = 'grafana/admin/user-list/tab/v1',
 }
@@ -270,6 +273,7 @@ export enum PluginExtensionExposedComponents {
   OpenQueryLibraryV1 = 'grafana/query-library-context/v1',
   NotebookViewV1 = 'grafana/notebook-view/v1',
   FolderPermissionsV1 = 'grafana/folder-permissions/v1',
+  StarToolbarButtonV1 = 'grafana/star-toolbar-button/v1',
   DashboardViewV1 = 'grafana/dashboard-view/v1',
 }
 

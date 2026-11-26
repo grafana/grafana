@@ -10,6 +10,7 @@ import "@openfeature/core";
 
 declare module "@openfeature/core" {
   export type BooleanFlagKey =
+    | "grafana.responsiveTimePickerTabs"
     | "panelTitleSearch"
     | "publicDashboardsEmailSharing"
     | "canvasPanelNesting"
@@ -95,6 +96,7 @@ declare module "@openfeature/core" {
     | "alerting.ruleReviews"
     | "alerting.ruleQuality"
     | "alerting.ruleQualityFix"
+    | "alerting.ruleQualityFixAll"
     | "datasourceConnectionsTab"
     | "connectionsFilterSidebar"
     | "alertingJiraIntegration"
@@ -209,6 +211,7 @@ declare module "@openfeature/core" {
     | "dashboards.disablePublicDashboards"
     | "grafana.panelActionsPopover"
     | "grafana.dashboardSidebarExplicitOpen"
+    | "grafana.panelQuickEdits"
     | "grafana.folderPickerFolderEditAccess"
     | "grafana.panelOptionInterpolation"
     | "datasources.gatewayRateLimits"

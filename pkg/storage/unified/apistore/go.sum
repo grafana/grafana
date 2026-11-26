@@ -151,6 +151,8 @@ github.com/grafana/grafana/apps/folder v0.0.0-20260930143952-2d0116f02123 h1:ofT
 github.com/grafana/grafana/apps/folder v0.0.0-20260930143952-2d0116f02123/go.mod h1:J7dHzel/I2athG+UKmSJF+m0n7n01aUnTkJ/hOIgWO4=
 github.com/grafana/grafana/apps/provisioning v0.0.0-20260930143952-2d0116f02123 h1:QL7lEdSv9hGEBRX8NT84cf62+insnymPKKDHI5DPiZs=
 github.com/grafana/grafana/apps/provisioning v0.0.0-20260930143952-2d0116f02123/go.mod h1:wiYQaE2o9p0aY+/6POvfy7XT3yg/Bh2SlswsQBeSz+I=
+github.com/grafana/grafana/apps/secret v0.0.0-20260118065639-60cb766a97d6 h1:TJdvWzgR/2oTWUV2qw0OGTJiw4qlnxKDCTUt8khbc2M=
+github.com/grafana/grafana/apps/secret v0.0.0-20260118065639-60cb766a97d6/go.mod h1:6ZLwJmNc+7dWXQ+NRBV09HZbg/XZ6yN7kWFf7w301Lo=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260930143952-2d0116f02123 h1:KxBHO/6r6J0QF10PdP9b/mKsN0wDy4EFovyknU4CcRQ=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260930143952-2d0116f02123/go.mod h1:2L3E8xEvJSJNKGQGWaJb3Dgd6QPRdjTZLQqKPlEgTQ0=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20260930143952-2d0116f02123 h1:zFNOhRDKMAughtwtMDpDLCwib39vxIoHyS/cQfh6VZU=
@@ -191,8 +193,8 @@ github.com/jszwedko/go-datemath v0.1.1-0.20260113213115-7f666eef0523 h1:yho2Mr8E
 github.com/jszwedko/go-datemath v0.1.1-0.20260113213115-7f666eef0523/go.mod h1:WrYiIuiXUMIvTDAQw97C+9l0CnBmCcvosPjN3XDqS/o=
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
-github.com/klauspost/compress v1.20.3 h1:zWNoFqq/lSuYQRim3dUXlXeA0IqwuZGicdG5ZTfY5j4=
-github.com/klauspost/compress v1.20.3/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
+github.com/klauspost/compress v1.20.5 h1:rJj5VjH4xQxbnLphg6eqUcDxRFCw1jpMdDY9qXlrwSs=
+github.com/klauspost/compress v1.20.5/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
 github.com/klauspost/cpuid/v2 v2.4.2 h1:xRw7IZEsAgVCp6trS/DgWbTAqpixhmywgVgBjYGg1bQ=
 github.com/klauspost/cpuid/v2 v2.4.2/go.mod h1:19jmZ9mjzoF//ddRSUsv0zfBTJWh3QJh9FNxZTMrGxU=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=

@@ -1,4 +1,5 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
+import clsx from 'clsx';
 import { useState, type HTMLAttributes, useMemo, useRef, useLayoutEffect } from 'react';
 import * as React from 'react';
 import { useWindowSize } from 'react-use';
@@ -6,8 +7,8 @@ import { useWindowSize } from 'react-use';
 import { type Dimensions2D, type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { getTooltipContainerStyles } from '../../themes/mixins';
 
+import { VizTooltipWrapper } from './VizTooltipWrapper';
 import { calculateTooltipPosition } from './utils';
 
 /**
@@ -89,7 +90,9 @@ export const VizTooltipContainer = ({
   const styles = useStyles2(getStyles);
 
   return (
-    <div
+    <VizTooltipWrapper
+      maxWidth={800}
+      scrollable={false}
       ref={tooltipRef}
       style={{
         position: 'fixed',
@@ -104,15 +107,20 @@ export const VizTooltipContainer = ({
       aria-live="polite"
       aria-atomic="true"
       {...otherProps}
-      className={cx(styles.wrapper, className)}
+      className={clsx(styles.wrapper, className)}
     >
       {children}
-    </div>
+    </VizTooltipWrapper>
   );
 };
 
 VizTooltipContainer.displayName = 'VizTooltipContainer';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css(getTooltipContainerStyles(theme)),
+  wrapper: css({
+    '*:where(&)': {
+      padding: theme.spacing(1),
+      zIndex: theme.zIndex.tooltip,
+    },
+  }),
 });

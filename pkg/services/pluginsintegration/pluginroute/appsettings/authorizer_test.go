@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -57,7 +58,7 @@ func TestGetAuthorizer(t *testing.T) {
 				pluginJSON: plugins.JSONData{
 					ID: "test-app",
 				},
-				accessChecker: pluginaccesscontrol.NewAppAccessChecker(&tt.fakeAC),
+				authorizer: newSettingsAuthorizer("test-app", pluginaccesscontrol.NewAppAccessChecker(&tt.fakeAC), Options{}),
 			}
 
 			auth := builder.GetAuthorizer()
@@ -74,35 +75,57 @@ func TestGetAuthorizer(t *testing.T) {
 	}
 }
 
-func TestGetAuthorizerSettingsWrites(t *testing.T) {
-	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: 1})
-	allow := func(context.Context, identity.Requester, string) (authorizer.Decision, string, error) {
-		return authorizer.DecisionAllow, "", nil
-	}
-	deny := func(context.Context, identity.Requester, string) (authorizer.Decision, string, error) {
-		return authorizer.DecisionDeny, "no", nil
-	}
-	settings := func(verb, subresource string) authorizer.AttributesRecord {
-		return authorizer.AttributesRecord{Verb: verb, Resource: "app", Subresource: subresource, Name: "instance", ResourceRequest: true}
-	}
+type settingsPermissionAccessControl struct {
+	accesscontrol.AccessControl
+	permissions map[string][]string
+}
 
-	b := &Builder{pluginJSON: plugins.JSONData{ID: "test-app"}, accessChecker: allow, writeChecker: deny}
-	for _, verb := range []string{"create", "update", "patch", "delete"} {
-		decision, _, _ := b.GetAuthorizer().Authorize(ctx, settings(verb, ""))
-		require.Equal(t, authorizer.DecisionDeny, decision, "%s needs the settings write permission", verb)
-	}
-	for _, attr := range []authorizer.AttributesRecord{settings("get", ""), settings("list", ""), settings("create", "resources"), settings("create", "proxy")} {
-		decision, _, _ := b.GetAuthorizer().Authorize(ctx, attr)
-		require.Equal(t, authorizer.DecisionAllow, decision, "%s %s needs app access only", attr.Verb, attr.Subresource)
-	}
+func (a settingsPermissionAccessControl) Evaluate(_ context.Context, _ identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
+	return evaluator.Evaluate(a.permissions), nil
+}
 
-	b.writeChecker = allow
-	decision, _, _ := b.GetAuthorizer().Authorize(ctx, settings("update", ""))
-	require.Equal(t, authorizer.DecisionAllow, decision)
-
-	b.writeChecker = nil
-	decision, _, _ = b.GetAuthorizer().Authorize(ctx, settings("update", ""))
-	require.Equal(t, authorizer.DecisionDeny, decision, "writes are refused without a write checker")
+func TestGetAuthorizerPermissions(t *testing.T) {
+	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{UserID: 1, OrgID: 1})
+	for _, tc := range []struct {
+		name                         string
+		permissions                  map[string][]string
+		readOnly, missingWriteAccess bool
+		appDecision, writeDecision   authorizer.Decision
+	}{
+		{name: "app access", permissions: map[string][]string{pluginaccesscontrol.ActionAppAccess: {"plugins:id:test-app"}}, appDecision: authorizer.DecisionAllow, writeDecision: authorizer.DecisionDeny},
+		{name: "settings write access", permissions: map[string][]string{pluginaccesscontrol.ActionWrite: {"plugins:id:test-app"}}, appDecision: authorizer.DecisionDeny, writeDecision: authorizer.DecisionAllow},
+		{name: "another plugin", permissions: map[string][]string{pluginaccesscontrol.ActionAppAccess: {"plugins:id:other-app"}, pluginaccesscontrol.ActionWrite: {"plugins:id:other-app"}}, appDecision: authorizer.DecisionDeny, writeDecision: authorizer.DecisionDeny},
+		{name: "read-only with write permission", permissions: map[string][]string{pluginaccesscontrol.ActionAppAccess: {"plugins:id:test-app"}, pluginaccesscontrol.ActionWrite: {"plugins:id:test-app"}}, readOnly: true, appDecision: authorizer.DecisionAllow, writeDecision: authorizer.DecisionDeny},
+		{name: "missing write access control", permissions: map[string][]string{pluginaccesscontrol.ActionAppAccess: {"plugins:id:test-app"}, pluginaccesscontrol.ActionWrite: {"plugins:id:test-app"}}, missingWriteAccess: true, appDecision: authorizer.DecisionAllow, writeDecision: authorizer.DecisionDeny},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ac := settingsPermissionAccessControl{permissions: tc.permissions}
+			opts := Options{AccessControl: ac, ReadOnly: tc.readOnly}
+			if tc.missingWriteAccess {
+				opts.AccessControl = nil
+			}
+			auth := newSettingsAuthorizer("test-app", pluginaccesscontrol.NewAppAccessChecker(ac), opts)
+			for _, verb := range []string{"create", "update", "patch", "delete", "deletecollection"} {
+				decision, _, err := auth.Authorize(ctx, authorizer.AttributesRecord{Verb: verb, Resource: "app", Name: "instance", ResourceRequest: true})
+				require.NoError(t, err)
+				require.Equal(t, tc.writeDecision, decision, "%s settings", verb)
+			}
+			for _, attr := range []authorizer.AttributesRecord{
+				{Verb: "get", Resource: "app", Name: "instance", ResourceRequest: true},
+				{Verb: "list", Resource: "app", ResourceRequest: true},
+				{Verb: "get", Resource: "app", Subresource: "health", Name: "instance", ResourceRequest: true},
+				{Verb: "create", Resource: "app", Subresource: "resources", Name: "instance", ResourceRequest: true},
+				{Verb: "create", Resource: "app", Subresource: "proxy", Name: "instance", ResourceRequest: true},
+			} {
+				decision, _, err := auth.Authorize(ctx, attr)
+				require.NoError(t, err)
+				require.Equal(t, tc.appDecision, decision, "%s %s", attr.Verb, attr.Subresource)
+			}
+			decision, _, err := auth.Authorize(t.Context(), authorizer.AttributesRecord{Verb: "get"})
+			require.Error(t, err)
+			require.Equal(t, authorizer.DecisionDeny, decision, "discovery still requires a requester")
+		})
+	}
 }
 
 func TestNewBuilderChecksSettingsWritesWithAccessControl(t *testing.T) {

@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/server/healthz"
 	"k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
@@ -95,6 +96,7 @@ func TestRedirection(t *testing.T) {
 		url    string
 		expect string
 	}{
+		// for /apis/query.grafana.app
 		{
 			name:   "query connections",
 			url:    "/apis/query.grafana.app/v0alpha1/namespaces/default/connections",
@@ -115,10 +117,21 @@ func TestRedirection(t *testing.T) {
 			name:   "name hack in datasource service",
 			url:    "/apis/query.grafana.app/v0alpha1/namespaces/default/query",
 			expect: "/apis/query.grafana.app/v0alpha1/namespaces/default/query",
-		}, {
+		},
+
+		// for /apis/datasource.grafana.app
+		{
 			name:   "datasource connections",
 			url:    "/apis/datasource.grafana.app/v0alpha1/namespaces/default/connections",
 			expect: "/apis/query.grafana.app/v0alpha1/namespaces/default/connections",
+		}, {
+			name:   "datasource sqlschemas at root",
+			url:    "/apis/datasource.grafana.app/v0alpha1/namespaces/default/sqlschemas",
+			expect: "/apis/query.grafana.app/v0alpha1/namespaces/default/query/sqlschemas",
+		}, {
+			name:   "datasource sqlschemas as subresource",
+			url:    "/apis/datasource.grafana.app/v0alpha1/namespaces/default/query/sqlschemas",
+			expect: "/apis/query.grafana.app/v0alpha1/namespaces/default/query/sqlschemas",
 		}, {
 			name:   "datasource query",
 			url:    "/apis/datasource.grafana.app/v0alpha1/namespaces/default/query",
@@ -172,4 +185,27 @@ func (m *mockAPIGroupPostStartHookProvider) GetOpenAPIDefinitions() common.GetOp
 
 func (m *mockAPIGroupPostStartHookProvider) GetAuthorizer() authorizer.Authorizer {
 	return nil
+}
+
+func TestAddPostStartHooks_ReadyzChecks(t *testing.T) {
+	config := server.NewRecommendedConfig(builder.ProvideCodecFactory(builder.ProvideScheme()))
+	before := len(config.ReadyzChecks)
+	check := healthz.NamedCheck("test-readyz", func(*http.Request) error { return nil })
+
+	err := builder.AddPostStartHooks(config, []builder.APIGroupBuilder{
+		&mockAPIGroupPostStartHookProvider{},
+		&mockAPIGroupReadyzCheckProvider{checks: []healthz.HealthChecker{check}},
+	})
+	require.NoError(t, err)
+	require.Len(t, config.ReadyzChecks, before+1)
+	require.Equal(t, "test-readyz", config.ReadyzChecks[before].Name())
+}
+
+type mockAPIGroupReadyzCheckProvider struct {
+	mockAPIGroupPostStartHookProvider
+	checks []healthz.HealthChecker
+}
+
+func (m *mockAPIGroupReadyzCheckProvider) GetReadyzChecks() []healthz.HealthChecker {
+	return m.checks
 }
