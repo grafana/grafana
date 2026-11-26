@@ -14,6 +14,7 @@ import (
 	datasourceV0alpha1 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 type datasourceAccessTestClient struct {
@@ -35,7 +36,10 @@ func TestDatasourceAccessReportsIndependentDecisions(t *testing.T) {
 			const uid = "shared-id"
 
 			probed := map[string]int{}
+			seenSubresources := map[string]bool{}
+			calls := 0
 			client := datasourceAccessTestClient{batchCheck: func(_ context.Context, user authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+				calls++
 				require.Same(t, requester, user)
 				require.Equal(t, "stacks-1", req.Namespace)
 				require.NotEmpty(t, req.Checks)
@@ -43,7 +47,7 @@ func TestDatasourceAccessReportsIndependentDecisions(t *testing.T) {
 				for _, check := range req.Checks {
 					require.Equal(t, group, check.Group)
 					require.Equal(t, "datasources", check.Resource)
-					require.Equal(t, req.Checks[0].Subresource, check.Subresource)
+					seenSubresources[check.Subresource] = true
 					require.Equal(t, uid, check.Name)
 					mapping, ok := mapper.Get(check.Group, check.Resource, check.Subresource)
 					require.True(t, ok)
@@ -67,8 +71,11 @@ func TestDatasourceAccessReportsIndependentDecisions(t *testing.T) {
 
 			access, err := endpoint.getAccessInfo(ctx, uid)
 			require.NoError(t, err)
+			require.Equal(t, 1, calls, "all datasource access checks should use one batch")
+			require.Equal(t, map[string]bool{"": true, "query": true, "caching": true, "alertrules": true, "alertinstances": true, "alertnotifications": true}, seenSubresources)
 			require.Equal(t, accesscontrol.Metadata{
 				"datasources:read":              true,
+				datasources.ActionIDRead:        true,
 				"datasources.permissions:write": true,
 				"datasources.caching:read":      true,
 				"alert.rules.external:write":    true,
@@ -87,6 +94,8 @@ func TestDatasourceAccessReportsIndependentDecisions(t *testing.T) {
 				}
 			}
 			require.Equal(t, expected, probed)
+			require.Equal(t, 1, probed[datasources.ActionRead], "read and ID-read should share one authorization check")
+			require.NotContains(t, probed, datasources.ActionIDRead, "ID-read is reported from the read decision")
 		})
 	}
 }

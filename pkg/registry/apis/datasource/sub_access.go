@@ -60,8 +60,8 @@ type datasourceAccessAction struct {
 	name string
 }
 
-// Keep each batch on a single subresource so the authorization client can
-// route it to the same backend as an individual check.
+// Group the actions by subresource for readability; getAccessInfo sends them
+// together so routing clients can partition each check as needed.
 var datasourceAccessChecks = []struct {
 	subresource string
 	actions     []datasourceAccessAction
@@ -106,8 +106,8 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*dataso
 
 	resource := r.builder.datasourceResourceInfo.GroupResource()
 	result := &datasourceV0alpha1.DatasourceAccessInfo{}
+	checks := make([]authlib.BatchCheckItem, 0)
 	for _, batch := range datasourceAccessChecks {
-		checks := make([]authlib.BatchCheckItem, 0, len(batch.actions))
 		for _, action := range batch.actions {
 			checks = append(checks, authlib.BatchCheckItem{
 				CorrelationID: action.name,
@@ -118,26 +118,31 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*dataso
 				Name:          name,
 			})
 		}
-		resp, err := r.builder.accessClient.BatchCheck(ctx, user, authlib.BatchCheckRequest{
-			Namespace: namespace,
-			Checks:    checks,
-		})
-		if err != nil {
-			return nil, err
+	}
+	resp, err := r.builder.accessClient.BatchCheck(ctx, user, authlib.BatchCheckRequest{
+		Namespace: namespace,
+		Checks:    checks,
+	})
+	if err != nil {
+		return nil, err
+	}
+	for _, check := range checks {
+		decision, ok := resp.Results[check.CorrelationID]
+		if !ok {
+			return nil, fmt.Errorf("missing authorization result for %s", check.CorrelationID)
 		}
-		for _, check := range checks {
-			decision, ok := resp.Results[check.CorrelationID]
-			if !ok {
-				return nil, fmt.Errorf("missing authorization result for %s", check.CorrelationID)
+		if decision.Error != nil {
+			return nil, decision.Error
+		}
+		if decision.Allowed {
+			if result.Permissions == nil {
+				result.Permissions = accesscontrol.Metadata{}
 			}
-			if decision.Error != nil {
-				return nil, decision.Error
-			}
-			if decision.Allowed {
-				if result.Permissions == nil {
-					result.Permissions = accesscontrol.Metadata{}
-				}
-				result.Permissions[check.CorrelationID] = true
+			result.Permissions[check.CorrelationID] = true
+			// Preserve the legacy ID-read metadata key using the datasource
+			// resource API's GET decision, without issuing the same check twice.
+			if check.CorrelationID == datasources.ActionRead {
+				result.Permissions[datasources.ActionIDRead] = true
 			}
 		}
 	}
