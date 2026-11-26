@@ -60,14 +60,12 @@ func (h alertRules) Delete(ctx context.Context, namespace, parentUID string, _ C
 	return DeleteOutcomeDeleted, h.contents.DeleteInFolder(ctx, namespace, parentUID, user)
 }
 
-// tenantContext targets the stack's database and acts as the service identity of its org. The
-// identity is named so a cascade-driven rule delete can be told apart from the stack's own.
+// tenantContext targets the stack's database and acts as the service identity of its org.
 func tenantContext(ctx context.Context, namespace string) (context.Context, identity.Requester, int64, error) {
 	ns, err := claims.ParseNamespace(namespace)
 	if err != nil {
 		return ctx, nil, 0, err
 	}
-	ctx, user := identity.WithServiceIdentity(request.WithNamespace(ctx, namespace), ns.OrgID,
-		identity.WithServiceIdentityName("folder-cascade-delete"))
+	ctx, user := identity.WithServiceIdentity(request.WithNamespace(ctx, namespace), ns.OrgID)
 	return ctx, user, ns.OrgID, nil
 }
