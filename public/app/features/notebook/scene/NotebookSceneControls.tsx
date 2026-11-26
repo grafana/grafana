@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useLayoutEffect, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -23,6 +24,8 @@ interface Props {
    * at the same time; a prop is per-mount by construction.
    */
   stickyOffset: number;
+  /** Reports the row's rendered height, for anything else sticky that has to sit below it. */
+  onHeightChange?: (height: number) => void;
 }
 
 /**
@@ -30,7 +33,8 @@ interface Props {
  * simply leave it out. Kiosk mode stays here: it is a property of the display, not of the
  * surface.
  */
-export function NotebookSceneControls({ model, stickyOffset }: Props) {
+export function NotebookSceneControls({ model, stickyOffset, onHeightChange }: Props) {
+  const controlsRef = useRef<HTMLDivElement>(null);
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const styles = useStyles2(getStyles);
   const { timePicker, refreshPicker, isEditing, uid } = model.useState();
@@ -44,8 +48,20 @@ export function NotebookSceneControls({ model, stickyOffset }: Props) {
   const hostConfig = useNotebookEmbedHostConfig();
   const usesCanvasBackground = hostConfig.embedded || !visualRefreshEnabled;
 
+  // offsetHeight rather than the observer's contentRect, which leaves out the row's own padding.
+  useLayoutEffect(() => {
+    const node = controlsRef.current;
+    if (!node || !onHeightChange) {
+      return;
+    }
+    const observer = new ResizeObserver(() => onHeightChange(node.offsetHeight));
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [onHeightChange]);
+
   return (
     <div
+      ref={controlsRef}
       className={cx(
         styles.controls,
         usesCanvasBackground ? styles.controlsCanvasBackground : styles.controlsPageBackground,

@@ -1057,18 +1057,10 @@ func (b *bleveBackend) BuildIndex(
 
 	logWithDetails := b.log.FromContext(ctx).New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "reason", indexBuildReason)
 	resourceDir := b.getResourceDir(key)
-	// Large enough to coordinate with other replicas: download a snapshot, or build
-	// and upload one while they wait.
-	snapshotBuildEnabled := b.opts.Snapshot.Store != nil && docCount >= b.opts.Snapshot.MinDocCount
-	// A global index is built when it is first searched, without a size, so it
-	// may be large. Downloading its snapshot is much cheaper than building it, but
-	// it must not wait for another replica's build, as a small index would.
-	downloadOnly := b.opts.Snapshot.Store != nil && docCount < 0 && key.IsGlobal()
-	skipIfBuilding := options.SkipIfBuilding
-
 	cachedIndex := b.getCachedIndex(key, time.Now())
 	original := cachedIndex
-	if rebuildFrom, ok := options.RebuildFrom.(*bleveIndex); ok && rebuildFrom != nil {
+	rebuildFrom, _ := options.RebuildFrom.(*bleveIndex)
+	if rebuildFrom != nil {
 		original = rebuildFrom
 	}
 	originalHasMemoryIdleTimeout := rebuild && b.opts.IndexCacheTTLIdleOnly && b.opts.IndexCacheTTL > 0 &&
@@ -1076,7 +1068,32 @@ func (b *bleveBackend) BuildIndex(
 	if originalHasMemoryIdleTimeout && cachedIndex != original {
 		return nil, resource.ErrIndexClosedDuringRebuild
 	}
-	prepared, err := b.prepareIndex(ctx, key, snapshotBuildEnabled, downloadOnly, mapper, selectableFields, searchFieldsHash, rebuild, cachedIndex != nil, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails, skipIfBuilding)
+	if rebuild && rebuildFrom != nil && b.opts.Snapshot.Store != nil && maxFreshSnapshotAge > 0 {
+		// Rebuilding writes trash too, so use the raw count, not the live-only search count.
+		count, err := rebuildFrom.index.DocCount()
+		if err != nil {
+			logWithDetails.Warn("failed to count documents for snapshot coordination", "error", err)
+		} else if count <= math.MaxInt64 {
+			docCount = int64(count)
+		}
+	}
+	// Large enough to coordinate with other replicas: download a snapshot, or build
+	// and upload one while they wait.
+	snapshotBuildEnabled := b.opts.Snapshot.Store != nil && docCount >= b.opts.Snapshot.MinDocCount
+	if rebuild {
+		span.SetAttributes(
+			attribute.Int64("snapshot.min_doc_count", b.opts.Snapshot.MinDocCount),
+			attribute.Bool("snapshot.rebuild_coordination_enabled", snapshotBuildEnabled && maxFreshSnapshotAge > 0),
+		)
+		if docCount >= 0 {
+			span.SetAttributes(attribute.Int64("snapshot.doc_count", docCount))
+		}
+	}
+	// A global index is built when it is first searched, without a size, so it
+	// may be large. Downloading its snapshot is much cheaper than building it, but
+	// it must not wait for another replica's build, as a small index would.
+	downloadOnly := b.opts.Snapshot.Store != nil && docCount < 0 && key.IsGlobal()
+	prepared, err := b.prepareIndex(ctx, key, snapshotBuildEnabled, downloadOnly, mapper, selectableFields, searchFieldsHash, rebuild, cachedIndex != nil, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails, options.SkipIfBuilding)
 	if err != nil {
 		return nil, err
 	}
