@@ -125,7 +125,7 @@ interface FetchPromRulesRulesActionProps {
 }
 
 /** Loads the names of the external rules sources that the user can see. The error stays in `state.rulesSourceList`. */
-export const fetchRulesSourceListAction = createAsyncThunk(
+const fetchRulesSourceListAction = createAsyncThunk(
   alertingActionTypePrefix.fetchRulesSourceList,
   async (): Promise<string[]> => {
     const dataSources = await withSerializedError(getDataSourcesForRules());

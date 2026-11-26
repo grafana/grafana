@@ -11,6 +11,8 @@ import { getAllRulesSourceNames } from '../utils/datasource';
 
 import { fetchAllPromRulesAction } from './actions';
 
+jest.mock('../hooks/useDataSourcesForRules', () => makeSpyable('../hooks/useDataSourcesForRules'));
+
 setupMswServer();
 
 describe('fetchAllPromRulesAction', () => {

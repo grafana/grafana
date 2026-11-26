@@ -14,6 +14,8 @@ import { alertingFactory } from '../../../mocks/server/db';
 
 import { useAlertingDataSourceOptions, useNamespaceAndGroupOptions } from './useRuleFilterAutocomplete';
 
+jest.mock('../../../hooks/useDataSourcesForRules', () => makeSpyable('../../../hooks/useDataSourcesForRules'));
+
 const server = setupMswServer();
 
 const GRAFANA_RULES_URL = '/api/prometheus/grafana/api/v1/rules';

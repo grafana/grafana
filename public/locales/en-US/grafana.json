@@ -3361,7 +3361,6 @@
       "failed-to-load-grafana-rules-config": "Failed to load Grafana rules config:",
       "failed-to-load-grafana-rules-state": "Failed to load Grafana rules state:",
       "failed-to-load-rules-config": "Failed to load rules config from <2>{{dataSource}}</2>",
-      "failed-to-load-rules-sources": "Failed to load the list of rules sources:",
       "failed-to-load-rules-state": "Failed to load rules state from <2>{{dataSource}}</2>",
       "more-errors_one": "{{count}} more errors",
       "more-errors_other": "{{count}} more errors",
