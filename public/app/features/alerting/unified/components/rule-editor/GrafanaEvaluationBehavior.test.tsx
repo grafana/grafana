@@ -182,7 +182,8 @@ function EvaluationBehaviorWrapper({
   );
 }
 
-const ungroupWarning = /This will remove the alert rule from its group/i;
+const groupedRuleDescription = /This rule is in an evaluation group/i;
+const ungroupedRuleDescription = /This rule has its own evaluation interval/i;
 
 describe('GrafanaEvaluationBehaviorStep — alerting.gmaOnlyListView on', () => {
   testWithFlags({ [FlagKeys.AlertingGmaOnlyListView]: true });
@@ -191,23 +192,25 @@ describe('GrafanaEvaluationBehaviorStep — alerting.gmaOnlyListView on', () => 
     render(<EvaluationBehaviorWrapper existing={false} group="" isUngroupedRuleGroup />);
 
     expect(screen.getByRole('textbox', { name: /evaluation interval/i })).toBeInTheDocument();
+    expect(screen.getByText(ungroupedRuleDescription)).toBeInTheDocument();
     expect(screen.queryByText('Select an evaluation group...')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /new evaluation group/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
   });
 
-  it('shows only the evaluation interval and warns when editing a grouped rule', () => {
+  it('keeps the group picker when editing a grouped rule', () => {
     render(<EvaluationBehaviorWrapper existing group="my-group" isUngroupedRuleGroup={false} />);
 
-    expect(screen.getByRole('textbox', { name: /evaluation interval/i })).toBeInTheDocument();
-    expect(screen.queryByText('Select an evaluation group...')).not.toBeInTheDocument();
-    expect(screen.getByText(ungroupWarning)).toBeInTheDocument();
+    expect(screen.getByText(groupedRuleDescription)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /new evaluation group/i })).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: /evaluation interval/i })).not.toBeInTheDocument();
   });
 
-  it('does not warn for a rule that was already ungrouped', () => {
+  it('shows only the evaluation interval when editing an ungrouped rule', () => {
     render(<EvaluationBehaviorWrapper existing group={`no_group_for_rule_${'a'.repeat(36)}`} isUngroupedRuleGroup />);
 
-    expect(screen.queryByText(ungroupWarning)).not.toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /evaluation interval/i })).toBeInTheDocument();
+    expect(screen.getByText(ungroupedRuleDescription)).toBeInTheDocument();
+    expect(screen.queryByText(groupedRuleDescription)).not.toBeInTheDocument();
   });
 });
 
@@ -220,10 +223,10 @@ describe('GrafanaEvaluationBehaviorStep — alerting.gmaOnlyListView off', () =>
     expect(screen.queryByRole('radio')).not.toBeInTheDocument();
   });
 
-  it('does not warn when editing a grouped rule', () => {
+  it('does not explain evaluation groups when editing a grouped rule', () => {
     render(<EvaluationBehaviorWrapper existing group="my-group" isUngroupedRuleGroup={false} />);
 
-    expect(screen.queryByText(ungroupWarning)).not.toBeInTheDocument();
+    expect(screen.queryByText(groupedRuleDescription)).not.toBeInTheDocument();
   });
 });
 

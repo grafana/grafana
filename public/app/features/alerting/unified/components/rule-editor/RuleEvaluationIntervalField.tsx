@@ -16,6 +16,7 @@ interface RuleEvaluationIntervalFieldProps {
   // directly. Defaults to a generated id so the field can be rendered multiple
   // times on the same page without collisions.
   inputId?: string;
+  description?: string;
 }
 
 /**
@@ -25,7 +26,7 @@ interface RuleEvaluationIntervalFieldProps {
  * Used by both the main alert rule editor (Set interval mode) and the
  * create-from-panel drawer when the rule will be saved without a group.
  */
-export function RuleEvaluationIntervalField({ inputId }: RuleEvaluationIntervalFieldProps = {}) {
+export function RuleEvaluationIntervalField({ inputId, description }: RuleEvaluationIntervalFieldProps = {}) {
   const generatedId = useId();
   const id = inputId ?? generatedId;
 
@@ -43,6 +44,7 @@ export function RuleEvaluationIntervalField({ inputId }: RuleEvaluationIntervalF
         noMargin
         data-testid={EVALUATION_INTERVAL_FIELD_TEST_ID}
         label={t('alerting.rule-form.evaluation.interval-label', 'Evaluation interval')}
+        description={description}
         error={errors.evaluateEvery?.message}
         invalid={Boolean(errors.evaluateEvery?.message)}
         htmlFor={id}

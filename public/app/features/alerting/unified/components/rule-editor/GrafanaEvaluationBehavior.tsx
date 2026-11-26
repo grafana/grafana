@@ -7,7 +7,6 @@ import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
-  Alert,
   Button,
   Divider,
   Field,
@@ -155,8 +154,8 @@ export function GrafanaEvaluationBehaviorStep({
   const isGrafanaRecordingRule = isGrafanaRecordingRuleByType(type);
 
   const gmaOnlyListView = shouldUseGmaOnlyListView();
-  const wasGroupedRule = Boolean(existing && defaultValues?.group && !isUngroupedRuleGroup(defaultValues.group));
-  const showGroupSelection = !gmaOnlyListView && !isUngroupedRule;
+  const isInEvaluationGroup = Boolean(existing && defaultValues?.group && !isUngroupedRuleGroup(defaultValues.group));
+  const showGroupSelection = !isUngroupedRule && (!gmaOnlyListView || isInEvaluationGroup);
 
   const pauseContentText = isGrafanaRecordingRule
     ? t('alerting.rule-form.evaluation.pause.recording', 'Turn on to pause evaluation for this recording rule.')
@@ -172,23 +171,28 @@ export function GrafanaEvaluationBehaviorStep({
       description={getDescription(isGrafanaRecordingRule)}
     >
       <Stack direction="column" justify-content="flex-start" align-items="flex-start">
-        {gmaOnlyListView && wasGroupedRule && (
-          <Alert
-            severity="warning"
-            title={t(
-              'alerting.rule-form.evaluation.ungroup-warning-title',
-              'This will remove the alert rule from its group'
-            )}
-          >
-            <Trans i18nKey="alerting.rule-form.evaluation.ungroup-warning">
-              This action is irreversible. After you save, you will not be able to add it back to a group.
+        {gmaOnlyListView && showGroupSelection && (
+          <Text variant="bodySmall" color="secondary">
+            <Trans i18nKey="alerting.rule-form.evaluation.grouped-rule-description">
+              This rule is in an evaluation group, which sets the interval for every rule in it. Evaluation groups are
+              being retired: new rules get their own interval.
             </Trans>
-          </Alert>
+          </Text>
         )}
         {showGroupSelection ? (
           <EvaluationGroupPicker enableProvisionedGroups={enableProvisionedGroups} />
         ) : (
-          <RuleEvaluationIntervalField inputId="evaluate-every-no-group" />
+          <RuleEvaluationIntervalField
+            inputId="evaluate-every-no-group"
+            description={
+              gmaOnlyListView
+                ? t(
+                    'alerting.rule-form.evaluation.ungrouped-rule-description',
+                    'This rule has its own evaluation interval. Older rules may still be in an evaluation group, where the group sets the interval.'
+                  )
+                : undefined
+            }
+          />
         )}
         {isGrafanaAlertingRule && (
           <>

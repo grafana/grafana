@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, type SubmitErrorHandler, type UseFormWatch, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { generatedAPI as rulesAPIv0alpha1 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -20,6 +21,7 @@ import {
   isGrafanaManagedRuleByType,
   isPausedRule,
   isRecordingRuleByType,
+  isUngroupedRuleGroup,
   rulerRuleType,
 } from 'app/features/alerting/unified/utils/rules';
 import { isExpressionQuery } from 'app/features/expressions/guards';
@@ -177,7 +179,10 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
     const errorTitle = t('alerting.alert-rule-form.error-title', 'Failed to save alert rule');
 
-    if (grafanaTypeRule && shouldUseGmaOnlyListView()) {
+    // Rules still in an evaluation group are saved through the ruler API so they stay in their group.
+    const isInEvaluationGroup = Boolean(existing && !isUngroupedRuleGroup(existing.group.name));
+
+    if (grafanaTypeRule && shouldUseGmaOnlyListView() && !isInEvaluationGroup) {
       try {
         if (!existing) {
           storeInLocalStorageValues(values);
@@ -238,6 +243,9 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
           targetRuleGroupIdentifier,
           evaluateEvery
         );
+        if (shouldUseGmaOnlyListView()) {
+          dispatch(rulesAPIv0alpha1.util.invalidateTags(['AlertRule', 'RecordingRule']));
+        }
       }
 
       redirectToDetailsPage(ruleDefinition, targetRuleGroupIdentifier, saveResult);

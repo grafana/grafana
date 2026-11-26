@@ -1,10 +1,12 @@
 import { HttpResponse, http } from 'msw';
 import * as React from 'react';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { cleanup, screen, waitFor, within } from 'test/test-utils';
+import { cleanup, render, screen, waitFor, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
+import { useGetAlertRuleQuery } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { locationService, setPluginLinksHook } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { testWithFlags } from '@grafana/test-utils/unstable';
@@ -33,6 +35,8 @@ import {
   setRulesAPIGroupVersions,
   setUpdateGrafanaRulerRuleNamespaceResolver,
 } from '../../../mocks/server/configure';
+import { getAlertRuleHandler, mockK8sAlertRule } from '../../../mocks/server/handlers/k8s/alertRules.k8s';
+import RuleEditor from '../../../rule-editor/RuleEditor';
 import { setupDataSources } from '../../../testSetup/datasources';
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
@@ -154,48 +158,63 @@ describe('AlertRuleForm — alerting.gmaOnlyListView on (k8s rules API)', () => 
     expect(replaceSpy).not.toHaveBeenCalled();
   });
 
-  it('saves an existing grouped alert rule through the k8s rules API and redirects', async () => {
-    setReplaceGrafanaRuleResolver(echoBodyResolver);
+  it('saves an existing grouped alert rule through the ruler API, in its group', async () => {
+    setReplaceGrafanaRuleResolver(failWith('k8s rules API was used'));
+    setUpdateGrafanaRulerRuleNamespaceResolver(() => HttpResponse.json({ message: 'updated', updated: [] }));
 
     const { user } = renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
     const replaceSpy = jest.spyOn(locationService, 'replace');
     expect(await ui.inputs.name.find()).toHaveValue(grafanaRulerRule.grafana_alert.title);
-    expect(screen.getByRole('textbox', { name: /evaluation interval/i })).toHaveValue(grafanaRulerGroup.interval);
+    expect(ui.inputs.group.get()).toHaveTextContent(grafanaRulerGroup.name);
+    expect(screen.getByText(/This rule is in an evaluation group/i)).toBeInTheDocument();
 
     await user.click(ui.buttons.save.get());
 
     expect(await screen.findByText(/Rule updated successfully/i)).toBeInTheDocument();
+    expect(screen.queryByText(/k8s rules API was used/i)).not.toBeInTheDocument();
     expect(replaceSpy).toHaveBeenCalled();
   });
 
-  it("keeps a grouped rule's interval when its old group has a different one", async () => {
-    setReplaceGrafanaRuleResolver(echoBodyResolver);
-    server.use(
-      http.get('/api/ruler/grafana/api/v1/rules/:folderUid', () =>
-        HttpResponse.json({ [folderA.title]: [{ ...grafanaRulerGroup, interval: '2m' }] })
-      )
-    );
+  it('refreshes the rules list after saving a grouped rule through the ruler API', async () => {
+    const uid = grafanaRulerRule.grafana_alert.uid;
+    setUpdateGrafanaRulerRuleNamespaceResolver(() => HttpResponse.json({ message: 'updated', updated: [] }));
+    server.use(getAlertRuleHandler([mockK8sAlertRule({ uid, title: 'old title' })]));
 
-    const { user } = renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
+    function ListTitle() {
+      const { data } = useGetAlertRuleQuery({ name: uid });
+      return <span>{data?.spec.title}</span>;
+    }
+
+    const { user } = render(
+      <>
+        <ListTitle />
+        <Routes>
+          <Route path="/alerting/:id/edit" element={<RuleEditor />} />
+        </Routes>
+      </>,
+      { historyOptions: { initialEntries: [`/alerting/${uid}/edit`] } }
+    );
+    expect(await screen.findByText('old title')).toBeInTheDocument();
     expect(await ui.inputs.name.find()).toHaveValue(grafanaRulerRule.grafana_alert.title);
-    const interval = screen.getByRole('textbox', { name: /evaluation interval/i });
+
+    server.use(getAlertRuleHandler([mockK8sAlertRule({ uid, title: 'new title' })]));
     await user.click(ui.buttons.save.get());
 
-    expect(await screen.findByText(/Rule updated successfully/i)).toBeInTheDocument();
-    expect(interval).toHaveValue(grafanaRulerGroup.interval);
+    expect(await screen.findByText('new title')).toBeInTheDocument();
   });
 
-  it('saves an existing grouped recording rule through the k8s recording rules API', async () => {
+  it('saves an existing grouped recording rule through the ruler API', async () => {
     setGrafanaRulerRuleResolver(() => HttpResponse.json(grafanaRulerRecordingRule));
     setGrafanaRulerRuleGroupResolver(() => HttpResponse.json(grafanaRulerRecordingGroup));
-    setReplaceGrafanaRuleResolver(failWith('alert rules API was used'));
-    setReplaceGrafanaRuleResolver(echoBodyResolver, 'recordingrules');
+    setReplaceGrafanaRuleResolver(failWith('k8s rules API was used'), 'recordingrules');
+    setUpdateGrafanaRulerRuleNamespaceResolver(() => HttpResponse.json({ message: 'updated', updated: [] }));
 
     const { user } = renderRuleEditor(grafanaRulerRecordingRule.grafana_alert.uid, 'grafana-recording');
     expect(await ui.inputs.name.find()).toHaveValue(grafanaRulerRecordingRule.grafana_alert.title);
     await user.click(ui.buttons.save.get());
 
     expect(await screen.findByText(/Rule updated successfully/i)).toBeInTheDocument();
+    expect(screen.queryByText(/k8s rules API was used/i)).not.toBeInTheDocument();
   });
 
   it('saves an existing ungrouped rule through the k8s rules API', async () => {
@@ -211,11 +230,13 @@ describe('AlertRuleForm — alerting.gmaOnlyListView on (k8s rules API)', () => 
   });
 
   it('surfaces an error and does not redirect when the update fails', async () => {
+    setGrafanaRulerRuleResolver(() => HttpResponse.json(ungroupedGrafanaRulerRule));
+    setGrafanaRulerRuleGroupResolver(() => HttpResponse.json(ungroupedGrafanaRulerGroup));
     setReplaceGrafanaRuleResolver(failWith('boom from the api'));
     const replaceSpy = jest.spyOn(locationService, 'replace');
 
-    const { user } = renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
-    expect(await ui.inputs.name.find()).toHaveValue(grafanaRulerRule.grafana_alert.title);
+    const { user } = renderRuleEditor(ungroupedGrafanaRulerRule.grafana_alert.uid);
+    expect(await ui.inputs.name.find()).toHaveValue(ungroupedGrafanaRulerRule.grafana_alert.title);
     await user.click(ui.buttons.save.get());
 
     expect(await screen.findByText(/Failed to save alert rule/i)).toBeInTheDocument();

@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { generatedAPI as rulesAPIv0alpha1 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { generatedAPI as rulesAPIv1beta1 } from '@grafana/api-clients/rtkq/rules.alerting/v1beta1';
+import { useDispatch } from 'app/types/store';
 
 import { resolveRulesAPIVersion } from '../api/rulesApiVersion';
 import {
@@ -17,6 +18,7 @@ type SaveArgs = {
 };
 
 export function useUpsertUngroupedGrafanaRule() {
+  const dispatch = useDispatch();
   // The served version is only known after discovery and hooks can't be called conditionally,
   // so both versions' mutations are set up. The rule types are identical across the versions.
   const [createAlertRule] = rulesAPIv1beta1.useCreateAlertRuleMutation();
@@ -33,6 +35,12 @@ export function useUpsertUngroupedGrafanaRule() {
       const version = await resolveRulesAPIVersion();
       const isV1beta1 = version === 'v1beta1';
       const isRecordingRule = isGrafanaRecordingRuleByType(values.type);
+      // The GMA list reads rules through v0alpha1, which a v1beta1 save doesn't invalidate.
+      const invalidateV0alpha1Cache = () => {
+        if (isV1beta1) {
+          dispatch(rulesAPIv0alpha1.util.invalidateTags([isRecordingRule ? 'RecordingRule' : 'AlertRule']));
+        }
+      };
 
       if (existingUid) {
         if (isRecordingRule) {
@@ -48,6 +56,7 @@ export function useUpsertUngroupedGrafanaRule() {
             alertRule: buildAlertRuleResource(values, existingUid, version),
           }).unwrap();
         }
+        invalidateV0alpha1Cache();
         return existingUid;
       }
 
@@ -58,6 +67,7 @@ export function useUpsertUngroupedGrafanaRule() {
         : await (isV1beta1 ? createAlertRule : createAlertRuleV0alpha1)({
             alertRule: buildAlertRuleResource(values, undefined, version),
           }).unwrap();
+      invalidateV0alpha1Cache();
 
       // Codegen reuses K8s ObjectMeta for both request bodies and responses, so `name` is
       // typed as optional. The server always sets it on a successful create — this guard
@@ -68,6 +78,7 @@ export function useUpsertUngroupedGrafanaRule() {
       return created.metadata.name;
     },
     [
+      dispatch,
       createAlertRule,
       replaceAlertRule,
       createRecordingRule,
