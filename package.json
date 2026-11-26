@@ -354,7 +354,7 @@
     "logfmt": "^1.3.2",
     "lossless-json": "^4.1.1",
     "marked": "18.2.1",
-    "memoize-one": "6.0.0",
+    "memoize-one": "7.0.0",
     "mermaid": "12.3.0",
     "micro-memoize": "^5.0.0",
     "ml-regression-polynomial": "^4.0.0",
