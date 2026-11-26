@@ -101,7 +101,7 @@ func (op Operator) Run(ctx context.Context, deps server.OperatorDependencies) (r
 			if op.RequireExternalNATS {
 				return fmt.Errorf("setup %s: %w", op.Name, err)
 			}
-			rt.Logger.Warn("NATS deltas may be unavailable; falling back to re-lists", "operator", op.Name, "error", err)
+			rt.Logger.Warn("external NATS config is incomplete; NATS subscriber startup may fail", "operator", op.Name, "error", err)
 		}
 		rt.Options = parseOptions(deps.Config, op.Defaults)
 	}
