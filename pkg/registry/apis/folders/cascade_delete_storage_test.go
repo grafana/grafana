@@ -2501,6 +2501,13 @@ func TestCascadeDelete_AlignsFinalizerWithAsyncFlag(t *testing.T) {
 		}
 	})
 
+	t.Run("flag off pins the checked version when it removes the finalizer", func(t *testing.T) {
+		store, _, err := run(t, false, folderWith("1", cascade...), nil, &metav1.DeleteOptions{}, nil)
+		require.NoError(t, err)
+		require.Equal(t, 1, store.updates, "the finalizer is removed")
+		require.NotNil(t, store.deleteOptions.Preconditions.ResourceVersion, "the checked version is pinned")
+	})
+
 	t.Run("the caller's resourceVersion is checked against the original folder", func(t *testing.T) {
 		rv := "1"
 		store, _, err := run(t, true, folderWith("1"), nil, &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{ResourceVersion: &rv}}, nil)

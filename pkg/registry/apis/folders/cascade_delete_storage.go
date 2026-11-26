@@ -215,6 +215,10 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 		if f, options, deleteValidation, err = s.setCascadeFinalizer(ctx, ns, f, false, deleteValidation, options); err != nil {
 			return nil, false, err
 		}
+		// The check used this version's parent, so a concurrent move must fail the delete.
+		if options, err = pinToCheckedVersion(options, f); err != nil {
+			return nil, false, err
+		}
 		obj = f
 	}
 
