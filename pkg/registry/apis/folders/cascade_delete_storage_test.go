@@ -731,6 +731,10 @@ func (f *fakeFolderStorage) Delete(ctx context.Context, name string, deleteValid
 	if isDryRun(options.DryRun) {
 		return fol, false, nil
 	}
+	// Mirror the store: a folder already terminating is held by its finalizers until they are released.
+	if fol.DeletionTimestamp != nil && len(persisted.Finalizers) > 0 {
+		return fol, false, nil
+	}
 	delete(f.existing, name)
 	f.deleted = append(f.deleted, name)
 	return fol, false, nil
@@ -2640,19 +2644,58 @@ func TestCascadeDelete_AlignsFinalizerWithAsyncFlag(t *testing.T) {
 		require.Empty(t, store.finalizersChangedOnUpdate, "the finalizer goes with the delete, not the label update")
 	})
 
-	t.Run("a synchronous walk leaves a terminating descendant's finalizer for the store to release", func(t *testing.T) {
+	// terminatingChild is a descendant the controller already started deleting, holding a dashboard.
+	terminatingChild := func() (*fakeFolderStorage, *fakeCascadeSearcher) {
 		setCascadeToggles(t, true, false)
 		root, child := newFolder("root"), newFolder("child")
 		root.Finalizers, child.Finalizers = cascade, cascade
 		now := metav1.Now()
 		child.DeletionTimestamp = &now
 		store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": root, "child": child}}
-		searcher := &fakeCascadeSearcher{childrenByParent: map[string][]string{"root": {"child"}}}
-		s, _ := newDashboardCascade(store, searcher)
+		return store, &fakeCascadeSearcher{
+			childrenByParent:   map[string][]string{"root": {"child"}},
+			dashboardsByFolder: map[string][]string{"child": {"dash-1"}},
+		}
+	}
+
+	t.Run("a synchronous walk releases a terminating descendant once its contents are gone", func(t *testing.T) {
+		store, searcher := terminatingChild()
+		s, dyn := newDashboardCascade(store, searcher, unstructuredDashboard("default", "dash-1"))
+		var heldWhenDashboardDeleted bool
+		dyn.PrependReactor("delete", "dashboards", func(k8stesting.Action) (bool, runtime.Object, error) {
+			_, heldWhenDashboardDeleted = store.existing["child"]
+			return false, nil, nil
+		})
+
 		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 		require.NoError(t, err)
-		require.Empty(t, store.deletedOnUpdate, "the descendant is not deleted before its contents are cleaned")
-		require.Equal(t, cascade, store.finalizersAtDelete["child"])
+		require.True(t, heldWhenDashboardDeleted, "the folder is held until its contents are removed")
+		require.Equal(t, []string{"child"}, store.deletedOnUpdate, "the release lets the store delete it")
+		require.Equal(t, []string{"root"}, store.deleted)
+	})
+
+	t.Run("a synchronous walk keeps a terminating descendant's finalizer when its contents are not removed", func(t *testing.T) {
+		store, searcher := terminatingChild()
+		searcher.errByResource = map[string]error{dashv1.DashboardResourceInfo.GroupVersionResource().Resource: errors.New("search failed")}
+		s, _ := newDashboardCascade(store, searcher, unstructuredDashboard("default", "dash-1"))
+
+		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+		require.Error(t, err)
+		require.Empty(t, store.deletedOnUpdate)
+		require.Equal(t, cascade, store.existing["child"].Finalizers, "the controller still owns it")
+		require.Empty(t, store.deleted)
+	})
+
+	t.Run("a dry run releases nothing", func(t *testing.T) {
+		store, searcher := terminatingChild()
+		s, _ := newDashboardCascade(store, searcher, unstructuredDashboard("default", "dash-1"))
+		opts := forceDelete()
+		opts.DryRun = []string{metav1.DryRunAll}
+
+		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, opts)
+		require.NoError(t, err)
+		require.Empty(t, store.deletedOnUpdate)
+		require.Equal(t, cascade, store.existing["child"].Finalizers)
 	})
 
 	t.Run("a forced delete of a finalizer folder is walked synchronously when the flag is off", func(t *testing.T) {

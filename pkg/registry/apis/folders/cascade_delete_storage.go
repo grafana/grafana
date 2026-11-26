@@ -385,12 +385,49 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 	// folder keeps its missing-resource error.
 	// TODO: Defer caller-identity execution to a follow-up; retain system execution for
 	// compatibility after the original caller's preflight authorization above.
+	// A terminating folder kept its finalizer through the walk, as the store deletes it once the last
+	// one goes, which would be before its contents were removed. They are gone now, so release it.
+	if len(options.DryRun) == 0 {
+		if err := s.releaseTerminating(ctx, name); err != nil {
+			return nil, false, err
+		}
+	}
+
 	// The finalizer goes with the delete itself, not the label update, which managed folders restrict.
 	obj, async, err := s.Storage.Delete(withCascadeFinalizerOnDelete(ctx, false), name, rest.ValidateAllObjectFunc, deleteOptions)
 	if apierrors.IsNotFound(err) && !requested {
 		return obj, async, nil
 	}
 	return obj, async, err
+}
+
+// releaseTerminating removes the cascade finalizer from a terminating folder, which the store then
+// deletes. A folder that is gone, not terminating or without the finalizer is left as it is.
+func (s *cascadeDeleteStorage) releaseTerminating(ctx context.Context, name string) error {
+	obj, err := s.Get(ctx, name, &metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if f, ok := obj.(*foldersv1.Folder); !ok || f.DeletionTimestamp == nil || !hasCascadeDeleteFinalizer(f) {
+		return nil
+	}
+	objInfo := rest.DefaultUpdatedObjectInfo(nil, func(_ context.Context, _, oldObj runtime.Object) (runtime.Object, error) {
+		f, ok := oldObj.(*foldersv1.Folder)
+		if !ok {
+			return nil, fmt.Errorf("obj is not folders.Folder")
+		}
+		f = f.DeepCopy()
+		setCascadeDeleteFinalizer(f, false)
+		return f, nil
+	})
+	// Released by the controller meanwhile counts as released.
+	if _, _, err := s.Update(ctx, name, objInfo, nil, nil, false, &metav1.UpdateOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+	return nil
 }
 
 // deleteDashboardsInFolder deletes every dashboard in folderUID via the dashboard apiserver (so its
