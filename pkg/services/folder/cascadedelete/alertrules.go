@@ -48,7 +48,9 @@ func (h alertRules) ListChildren(ctx context.Context, namespace, folderUID strin
 	return []Child{{Kind: ChildAlertRule, Name: folderUID}}, 1, nil
 }
 
-// Delete does not check alert.rules:delete; that authorization is added in a follow-up PR.
+// Delete runs as the service identity and does not check alert.rules:delete itself: the folders API
+// verifies the requester holds it on the folder before marking the folder terminating, so a folder
+// that reaches the controller is already authorized.
 func (h alertRules) Delete(ctx context.Context, namespace, parentUID string, _ Child) (DeleteOutcome, error) {
 	ctx, user, orgID, err := tenantContext(ctx, namespace)
 	if err != nil {
