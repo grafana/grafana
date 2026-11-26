@@ -145,11 +145,11 @@ func TestBackend_malformedContinueToken(t *testing.T) {
 	t.Parallel()
 
 	be, ctx := setupBackendTest(t)
-	req := func() *resourcepb.ListRequest {
+	req := func(token string) *resourcepb.ListRequest {
 		return &resourcepb.ListRequest{
 			Options:       &resourcepb.ListOptions{Key: resKey},
 			Limit:         10,
-			NextPageToken: "bm90LWEtdG9rZW4=", // base64 of "not-a-token"
+			NextPageToken: token,
 		}
 	}
 	noIteration := func(resource.ListIterator) error {
@@ -157,23 +157,15 @@ func TestBackend_malformedContinueToken(t *testing.T) {
 		return nil
 	}
 
-	for _, tc := range []struct {
-		name string
-		list func(*resourcepb.ListRequest) (int64, error)
-	}{
-		{name: "listAtRevision", list: func(r *resourcepb.ListRequest) (int64, error) {
-			return be.listAtRevision(ctx, r, noIteration)
-		}},
-		{name: "getHistory", list: func(r *resourcepb.ListRequest) (int64, error) {
-			return be.getHistory(ctx, r, noIteration)
-		}},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			_, err := tc.list(req())
-			require.Error(t, err)
-			require.True(t, apierrors.IsBadRequest(err), "got %v", err)
-			require.Contains(t, err.Error(), "invalid continue token")
-		})
+	// "bogus" fails base64 decoding, the other decodes but is not a JSON token.
+	for _, token := range []string{"bogus", "bm90LWEtdG9rZW4="} {
+		_, err := be.listAtRevision(ctx, req(token), noIteration)
+		require.True(t, apierrors.IsBadRequest(err), "listAtRevision %q: got %v", token, err)
+		require.Contains(t, err.Error(), "invalid continue token")
+
+		_, err = be.getHistory(ctx, req(token), noIteration)
+		require.True(t, apierrors.IsBadRequest(err), "getHistory %q: got %v", token, err)
+		require.Contains(t, err.Error(), "invalid continue token")
 	}
 }
 
