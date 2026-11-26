@@ -18,7 +18,7 @@ var JobQueueOperator = runner.Operator{
 	Logger:      "provisioning-jobqueue-controller",
 	Defaults:    operatorDefaults,
 	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
-		controllerCfg, err := setupJobQueueControllerFromConfig(rt)
+		controllerCfg, err := newJobQueueRunner(rt)
 		if err != nil {
 			return nil, err
 		}
@@ -37,7 +37,7 @@ var JobQueueOperator = runner.Operator{
 	},
 }
 
-func runJobQueueController(ctx context.Context, logger logging.Logger, controllerCfg *jobQueueControllerConfig, ready func()) error {
+func runJobQueueController(ctx context.Context, logger logging.Logger, controllerCfg *jobQueueRunner, ready func()) error {
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
@@ -71,8 +71,8 @@ func runJobQueueController(ctx context.Context, logger logging.Logger, controlle
 	return nil
 }
 
-type jobQueueControllerConfig struct {
-	ProvisioningRunner
+type jobQueueRunner struct {
+	*ProvisioningRunner
 	maxJobTimeout        time.Duration
 	jobInterval          time.Duration
 	leaseRenewalInterval time.Duration
@@ -80,8 +80,8 @@ type jobQueueControllerConfig struct {
 	maxSyncWorkers       int
 }
 
-func setupJobQueueControllerFromConfig(rt *runner.Runtime) (*jobQueueControllerConfig, error) {
-	controllerCfg, err := setupFromConfig(rt)
+func newJobQueueRunner(rt *runner.Runtime) (*jobQueueRunner, error) {
+	controllerCfg, err := newProvisioningRunner(rt)
 	if err != nil {
 		return nil, err
 	}
@@ -97,8 +97,8 @@ func setupJobQueueControllerFromConfig(rt *runner.Runtime) (*jobQueueControllerC
 		jobInterval = 30 * time.Second
 	}
 
-	return &jobQueueControllerConfig{
-		ProvisioningRunner:   *controllerCfg,
+	return &jobQueueRunner{
+		ProvisioningRunner:   controllerCfg,
 		concurrentDrivers:    operatorSec.Key("concurrent_drivers").MustInt(3),
 		maxSyncWorkers:       operatorSec.Key("max_sync_workers").MustInt(10),
 		maxJobTimeout:        operatorSec.Key("max_job_timeout").MustDuration(20 * time.Minute),

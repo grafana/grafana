@@ -398,10 +398,10 @@ func newStubSigner(t *testing.T) *httptest.Server {
 	return signer
 }
 
-func TestSetupFromConfigUsesRuntimeTracer(t *testing.T) {
+func TestNewProvisioningRunnerUsesRuntimeTracer(t *testing.T) {
 	tracer := tracing.NewNoopTracerService()
 	global := otel.GetTracerProvider()
-	cfg, err := setupFromConfig(&runner.Runtime{Cfg: setting.NewCfg(), Registerer: prometheus.NewRegistry(), Tracer: tracer})
+	cfg, err := newProvisioningRunner(&runner.Runtime{Cfg: setting.NewCfg(), Registerer: prometheus.NewRegistry(), Tracer: tracer})
 	require.NoError(t, err)
 	require.Same(t, tracer, cfg.Tracer)
 	require.Same(t, global, otel.GetTracerProvider(), "a runtime tracer must leave the global provider alone")

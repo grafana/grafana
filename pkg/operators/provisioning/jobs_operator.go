@@ -19,7 +19,7 @@ var JobsOperator = runner.Operator{
 	Defaults:    operatorDefaults,
 	NoNATS:      true,
 	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
-		controllerCfg, err := setupJobsControllerFromConfig(rt)
+		controllerCfg, err := newJobsRunner(rt)
 		if err != nil {
 			return nil, err
 		}
@@ -32,7 +32,7 @@ var JobsOperator = runner.Operator{
 	},
 }
 
-func runJobController(ctx context.Context, logger logging.Logger, controllerCfg *jobsControllerConfig, ready func()) error {
+func runJobController(ctx context.Context, logger logging.Logger, controllerCfg *jobsRunner, ready func()) error {
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
@@ -87,22 +87,22 @@ func runJobController(ctx context.Context, logger logging.Logger, controllerCfg 
 	return nil
 }
 
-type jobsControllerConfig struct {
-	ProvisioningRunner
+type jobsRunner struct {
+	*ProvisioningRunner
 	historyExpiration time.Duration
 	cleanupInterval   time.Duration
 }
 
-func setupJobsControllerFromConfig(rt *runner.Runtime) (*jobsControllerConfig, error) {
-	controllerCfg, err := setupFromConfig(rt)
+func newJobsRunner(rt *runner.Runtime) (*jobsRunner, error) {
+	controllerCfg, err := newProvisioningRunner(rt)
 	if err != nil {
 		return nil, err
 	}
 
 	operatorSec := rt.Cfg.SectionWithEnvOverrides("operator")
 
-	return &jobsControllerConfig{
-		ProvisioningRunner: *controllerCfg,
+	return &jobsRunner{
+		ProvisioningRunner: controllerCfg,
 		historyExpiration:  operatorSec.Key("history_expiration").MustDuration(0),
 		cleanupInterval:    operatorSec.Key("cleanup_interval").MustDuration(time.Minute),
 	}, nil

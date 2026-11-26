@@ -108,7 +108,7 @@ type ProvisioningRunner struct {
 // token =
 // subscriber_credentials_file =
 // tls_enabled =
-func setupFromConfig(rt *runner.Runtime) (*ProvisioningRunner, error) {
+func newProvisioningRunner(rt *runner.Runtime) (*ProvisioningRunner, error) {
 	if rt.Cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
 	}

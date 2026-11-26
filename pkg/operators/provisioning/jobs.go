@@ -18,7 +18,7 @@ import (
 // buildJobQueue resolves the job queue dependencies from the operator config and
 // hands them to jobqueue.ProvideJobQueue, which the API server uses as well.
 func buildJobQueue(
-	controllerCfg *jobQueueControllerConfig,
+	controllerCfg *jobQueueRunner,
 	registry prometheus.Registerer,
 	jobStore jobs.Store,
 	jobHistoryWriter jobs.HistoryWriter,
