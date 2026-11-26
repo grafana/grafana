@@ -16,7 +16,11 @@ function viewParam() {
 describe('RecordingRulesPage Folders and List modes', () => {
   it('switches to List for free text, keeps the folder filter, and disables Folders until it is cleared', async () => {
     setup();
-    const { user } = render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?search=folder%3Ateam'] } });
+    const { user } = render(<RecordingRulesPage />, {
+      historyOptions: {
+        initialEntries: ['/?search=folder%3A%22Team%20Metrics%22'],
+      },
+    });
     await screen.findByRole('link', { name: 'Team Metrics' });
 
     await user.type(screen.getByRole('textbox', { name: 'Search' }), ' cpu{Enter}');
@@ -25,7 +29,7 @@ describe('RecordingRulesPage Folders and List modes', () => {
     expect(screen.queryByRole('link', { name: 'disk:usage:rate5m' })).not.toBeInTheDocument();
     // A non-folder filter forces List on its own; `view` keeps only a mode the user chose.
     expect(viewParam()).toBeNull();
-    expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue('folder:team cpu');
+    expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue('folder:"Team Metrics" cpu');
     expect(screen.getByRole('radio', { name: 'List' })).toBeChecked();
     expect(screen.getByRole('radio', { name: 'Folders' })).toBeDisabled();
     expect(screen.getByRole('radio', { name: 'Folders' })).toHaveAccessibleDescription(

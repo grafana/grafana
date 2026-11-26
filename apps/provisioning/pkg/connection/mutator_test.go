@@ -13,8 +13,8 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/user"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func newMutatorTestAttributes(obj, old runtime.Object, op admission.Operation) admission.Attributes {
@@ -140,21 +140,21 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 		newOAuth     *provisioning.ConnectionOAuthConfig
 		newSecure    provisioning.ConnectionSecure
 		oldOAuth     *provisioning.ConnectionOAuthConfig
-		wantToken    common.InlineSecureValue
+		wantToken    resource.InlineSecureValue
 	}{
 		{
 			name:      "removes token when connection type is changed",
 			newType:   provisioning.GitlabOAuthConnectionType,
 			newOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
-			wantToken: common.InlineSecureValue{Remove: true},
+			wantToken: resource.InlineSecureValue{Remove: true},
 		},
 		{
 			name:      "removes token when connection URL is changed",
 			newURL:    "https://gitlab.example.com",
 			newOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
-			wantToken: common.InlineSecureValue{Remove: true},
+			wantToken: resource.InlineSecureValue{Remove: true},
 		},
 		{
 			name:         "removes token when github enterprise server URL is changed",
@@ -162,7 +162,7 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 			oldServerURL: "https://old-ghes.example.com",
 			newOAuth:     &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			oldOAuth:     &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
-			wantToken:    common.InlineSecureValue{Remove: true},
+			wantToken:    resource.InlineSecureValue{Remove: true},
 		},
 		{
 			name:         "keeps token when github enterprise server URL is unchanged",
@@ -170,7 +170,7 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 			oldServerURL: "https://ghes.example.com",
 			newOAuth:     &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			oldOAuth:     &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
-			wantToken:    common.InlineSecureValue{},
+			wantToken:    resource.InlineSecureValue{},
 		},
 		{
 			name:        "removes token when git oauth token URL is changed",
@@ -178,7 +178,7 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 			oldGitOAuth: &provisioning.GitOAuthConnectionConfig{TokenURL: "https://old.example.com/oauth/token"},
 			newOAuth:    &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			oldOAuth:    &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
-			wantToken:   common.InlineSecureValue{Remove: true},
+			wantToken:   resource.InlineSecureValue{Remove: true},
 		},
 		{
 			name:        "removes token when git oauth scopes are changed",
@@ -186,7 +186,7 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 			oldGitOAuth: &provisioning.GitOAuthConnectionConfig{Scopes: []string{"read_repository"}},
 			newOAuth:    &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			oldOAuth:    &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
-			wantToken:   common.InlineSecureValue{Remove: true},
+			wantToken:   resource.InlineSecureValue{Remove: true},
 		},
 		{
 			name:        "keeps token when git oauth settings are unchanged",
@@ -194,60 +194,60 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 			oldGitOAuth: &provisioning.GitOAuthConnectionConfig{TokenURL: "https://git.example.com/oauth/token", Scopes: []string{"read_repository"}},
 			newOAuth:    &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			oldOAuth:    &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
-			wantToken:   common.InlineSecureValue{},
+			wantToken:   resource.InlineSecureValue{},
 		},
 		{
 			name:      "keeps token when oauth credentials are unchanged",
 			newOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
-			wantToken: common.InlineSecureValue{},
+			wantToken: resource.InlineSecureValue{},
 		},
 		{
 			name:      "removes token when oauth client ID is changed",
 			newOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "new-client"},
 			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "old-client"},
-			wantToken: common.InlineSecureValue{Remove: true},
+			wantToken: resource.InlineSecureValue{Remove: true},
 		},
 		{
 			name:     "removes token when oauth client secret is changed",
 			newOAuth: &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			newSecure: provisioning.ConnectionSecure{
-				ClientSecret: common.InlineSecureValue{Create: "new-secret-value"},
+				ClientSecret: resource.InlineSecureValue{Create: "new-secret-value"},
 			},
 			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
-			wantToken: common.InlineSecureValue{Remove: true},
+			wantToken: resource.InlineSecureValue{Remove: true},
 		},
 		{
 			name:     "removes token when oauth client secret reference is changed",
 			newOAuth: &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			newSecure: provisioning.ConnectionSecure{
-				ClientSecret: common.InlineSecureValue{Name: "new-secret"},
+				ClientSecret: resource.InlineSecureValue{Name: "new-secret"},
 			},
 			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
-			wantToken: common.InlineSecureValue{Remove: true},
+			wantToken: resource.InlineSecureValue{Remove: true},
 		},
 		{
 			name:     "keeps token when oauth client secret reference is unchanged",
 			newOAuth: &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			newSecure: provisioning.ConnectionSecure{
-				ClientSecret: common.InlineSecureValue{Name: "old-secret"},
+				ClientSecret: resource.InlineSecureValue{Name: "old-secret"},
 			},
 			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
-			wantToken: common.InlineSecureValue{},
+			wantToken: resource.InlineSecureValue{},
 		},
 		{
 			name:      "keeps token when connection is not oauth",
-			wantToken: common.InlineSecureValue{},
+			wantToken: resource.InlineSecureValue{},
 		},
 		{
 			name:      "removes token when connection switches away from oauth",
 			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "old-client"},
-			wantToken: common.InlineSecureValue{Remove: true},
+			wantToken: resource.InlineSecureValue{Remove: true},
 		},
 		{
 			name:      "removes token when connection switches to oauth",
 			newOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "new-client"},
-			wantToken: common.InlineSecureValue{Remove: true},
+			wantToken: resource.InlineSecureValue{Remove: true},
 		},
 	}
 
@@ -276,8 +276,8 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 					GitOAuth:              tt.oldGitOAuth,
 				},
 				Secure: provisioning.ConnectionSecure{
-					Token:        common.InlineSecureValue{Name: "old-token"},
-					ClientSecret: common.InlineSecureValue{Name: "old-secret"},
+					Token:        resource.InlineSecureValue{Name: "old-token"},
+					ClientSecret: resource.InlineSecureValue{Name: "old-secret"},
 				},
 			}
 
@@ -309,7 +309,7 @@ func TestAdmissionMutator_Mutate_RunsForBundledSpecChange(t *testing.T) {
 	old := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
 		Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType, URL: "https://old.example.com"},
-		Secure:     provisioning.ConnectionSecure{Token: common.InlineSecureValue{Name: "old-token"}},
+		Secure:     provisioning.ConnectionSecure{Token: resource.InlineSecureValue{Name: "old-token"}},
 	}
 	// Bundled onto a /status request: URL change without a new token must
 	// still trigger the OAuth token removal in Mutate.
@@ -340,85 +340,85 @@ func TestCopySecureValues(t *testing.T) {
 		name             string
 		new              *provisioning.Connection
 		old              *provisioning.Connection
-		wantPrivateKey   common.InlineSecureValue
-		wantToken        common.InlineSecureValue
-		wantClientSecret common.InlineSecureValue
+		wantPrivateKey   resource.InlineSecureValue
+		wantToken        resource.InlineSecureValue
+		wantClientSecret resource.InlineSecureValue
 	}{
 		{
 			name: "copies private key from old to new when new is zero",
 			new:  &provisioning.Connection{},
 			old: &provisioning.Connection{
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{Name: "old-key"},
+					PrivateKey: resource.InlineSecureValue{Name: "old-key"},
 				},
 			},
-			wantPrivateKey: common.InlineSecureValue{Name: "old-key"},
+			wantPrivateKey: resource.InlineSecureValue{Name: "old-key"},
 		},
 		{
 			name: "copies token from old to new when new is zero",
 			new:  &provisioning.Connection{},
 			old: &provisioning.Connection{
 				Secure: provisioning.ConnectionSecure{
-					Token: common.InlineSecureValue{Name: "old-token"},
+					Token: resource.InlineSecureValue{Name: "old-token"},
 				},
 			},
-			wantToken: common.InlineSecureValue{Name: "old-token"},
+			wantToken: resource.InlineSecureValue{Name: "old-token"},
 		},
 		{
 			name: "copies client secret from old to new when new is zero",
 			new:  &provisioning.Connection{},
 			old: &provisioning.Connection{
 				Secure: provisioning.ConnectionSecure{
-					ClientSecret: common.InlineSecureValue{Name: "old-secret"},
+					ClientSecret: resource.InlineSecureValue{Name: "old-secret"},
 				},
 			},
-			wantClientSecret: common.InlineSecureValue{Name: "old-secret"},
+			wantClientSecret: resource.InlineSecureValue{Name: "old-secret"},
 		},
 		{
 			name: "does not overwrite existing values in new",
 			new: &provisioning.Connection{
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey:   common.InlineSecureValue{Name: "new-key"},
-					Token:        common.InlineSecureValue{Name: "new-token"},
-					ClientSecret: common.InlineSecureValue{Name: "new-secret"},
+					PrivateKey:   resource.InlineSecureValue{Name: "new-key"},
+					Token:        resource.InlineSecureValue{Name: "new-token"},
+					ClientSecret: resource.InlineSecureValue{Name: "new-secret"},
 				},
 			},
 			old: &provisioning.Connection{
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey:   common.InlineSecureValue{Name: "old-key"},
-					Token:        common.InlineSecureValue{Name: "old-token"},
-					ClientSecret: common.InlineSecureValue{Name: "old-secret"},
+					PrivateKey:   resource.InlineSecureValue{Name: "old-key"},
+					Token:        resource.InlineSecureValue{Name: "old-token"},
+					ClientSecret: resource.InlineSecureValue{Name: "old-secret"},
 				},
 			},
-			wantPrivateKey:   common.InlineSecureValue{Name: "new-key"},
-			wantToken:        common.InlineSecureValue{Name: "new-token"},
-			wantClientSecret: common.InlineSecureValue{Name: "new-secret"},
+			wantPrivateKey:   resource.InlineSecureValue{Name: "new-key"},
+			wantToken:        resource.InlineSecureValue{Name: "new-token"},
+			wantClientSecret: resource.InlineSecureValue{Name: "new-secret"},
 		},
 		{
 			name:           "handles nil old connection",
 			new:            &provisioning.Connection{},
 			old:            nil,
-			wantPrivateKey: common.InlineSecureValue{},
+			wantPrivateKey: resource.InlineSecureValue{},
 		},
 		{
 			name:           "handles old connection with zero secure values",
 			new:            &provisioning.Connection{},
 			old:            &provisioning.Connection{},
-			wantPrivateKey: common.InlineSecureValue{},
+			wantPrivateKey: resource.InlineSecureValue{},
 		},
 		{
 			name: "copies all values when all are zero in new",
 			new:  &provisioning.Connection{},
 			old: &provisioning.Connection{
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey:   common.InlineSecureValue{Name: "old-key"},
-					Token:        common.InlineSecureValue{Name: "old-token"},
-					ClientSecret: common.InlineSecureValue{Name: "old-secret"},
+					PrivateKey:   resource.InlineSecureValue{Name: "old-key"},
+					Token:        resource.InlineSecureValue{Name: "old-token"},
+					ClientSecret: resource.InlineSecureValue{Name: "old-secret"},
 				},
 			},
-			wantPrivateKey:   common.InlineSecureValue{Name: "old-key"},
-			wantToken:        common.InlineSecureValue{Name: "old-token"},
-			wantClientSecret: common.InlineSecureValue{Name: "old-secret"},
+			wantPrivateKey:   resource.InlineSecureValue{Name: "old-key"},
+			wantToken:        resource.InlineSecureValue{Name: "old-token"},
+			wantClientSecret: resource.InlineSecureValue{Name: "old-secret"},
 		},
 	}
 

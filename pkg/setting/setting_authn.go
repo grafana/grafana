@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"gopkg.in/ini.v1"
 )
 
@@ -68,11 +68,11 @@ func readAdminSettings(iniFile *ini.File, cfg *Cfg) {
 	cfg.AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
 	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
 	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In(
-		string(identity.RoleViewer), []string{
-			string(identity.RoleNone),
-			string(identity.RoleViewer),
-			string(identity.RoleEditor),
-			string(identity.RoleAdmin),
+		string(authlib.RoleViewer), []string{
+			string(authlib.RoleNone),
+			string(authlib.RoleViewer),
+			string(authlib.RoleEditor),
+			string(authlib.RoleAdmin),
 		})
 }
 

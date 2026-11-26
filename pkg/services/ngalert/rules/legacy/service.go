@@ -63,6 +63,7 @@ type RuleStore interface {
 	rulestore.RulePageReader
 	rulestore.RuleWriter
 	rulestore.RuleVersionReader
+	rulestore.StatusWriter
 	// ValidateAlertRuleForWrite runs the store's own write-time checks without writing.
 	ValidateAlertRuleForWrite(rule models.AlertRule) error
 }
@@ -73,7 +74,7 @@ type ProvenanceStore interface {
 	provenancestore.ManagerPropertiesStore
 }
 
-type LegacyRuleService struct {
+type legacyRuleService struct {
 	defaultIntervalSeconds int64
 	ruleStore              RuleStore
 	provenanceStore        ProvenanceStore
@@ -86,7 +87,7 @@ type LegacyRuleService struct {
 	ruleValidator          RuleMutationValidator
 }
 
-func NewLegacyRuleService(ruleStore RuleStore,
+func newLegacyRuleService(ruleStore RuleStore,
 	provenanceStore ProvenanceStore,
 	folderService folder.Service,
 	quotas QuotaChecker,
@@ -96,8 +97,8 @@ func NewLegacyRuleService(ruleStore RuleStore,
 	ns NotificationSettingsValidatorProvider,
 	authz RuleAccessControlService,
 	ruleValidator RuleMutationValidator,
-) *LegacyRuleService {
-	return &LegacyRuleService{
+) *legacyRuleService {
+	return &legacyRuleService{
 		defaultIntervalSeconds: defaultIntervalSeconds,
 		ruleStore:              ruleStore,
 		provenanceStore:        provenanceStore,
@@ -240,7 +241,7 @@ func resolveFieldSelectorFilters(opts ListAlertRulesOptions) (scalarFieldSelecto
 	return f, nil
 }
 
-func (service *LegacyRuleService) ListAlertRules(ctx context.Context, user identity.Requester, opts ListAlertRulesOptions) (rules []*models.AlertRule, managerPropsMap map[string]utils.ManagerProperties, nextToken string, err error) {
+func (service *legacyRuleService) ListAlertRules(ctx context.Context, user identity.Requester, opts ListAlertRulesOptions) (rules []*models.AlertRule, managerPropsMap map[string]utils.ManagerProperties, nextToken string, err error) {
 	f, err := resolveFieldSelectorFilters(opts)
 	if err != nil {
 		return nil, nil, "", err
@@ -348,7 +349,7 @@ func (service *LegacyRuleService) ListAlertRules(ctx context.Context, user ident
 	return rules, managerPropsMap, nextToken, nil
 }
 
-func (service *LegacyRuleService) getAlertRuleAuthorized(ctx context.Context, user identity.Requester, ruleUID string) (models.AlertRule, error) {
+func (service *legacyRuleService) getAlertRuleAuthorized(ctx context.Context, user identity.Requester, ruleUID string) (models.AlertRule, error) {
 	q := models.GetAlertRuleByUIDQuery{
 		UID:   ruleUID,
 		OrgID: user.GetOrgID(),
@@ -364,7 +365,7 @@ func (service *LegacyRuleService) getAlertRuleAuthorized(ctx context.Context, us
 	return *rule, nil
 }
 
-func (service *LegacyRuleService) GetAlertRule(ctx context.Context, user identity.Requester, ruleUID string) (models.AlertRule, utils.ManagerProperties, error) {
+func (service *legacyRuleService) GetAlertRule(ctx context.Context, user identity.Requester, ruleUID string) (models.AlertRule, utils.ManagerProperties, error) {
 	rule, err := service.getAlertRuleAuthorized(ctx, user, ruleUID)
 	if err != nil {
 		return models.AlertRule{}, utils.ManagerProperties{}, err
@@ -379,7 +380,7 @@ func (service *LegacyRuleService) GetAlertRule(ctx context.Context, user identit
 // GetAlertRuleVersions returns the version history of a single alert rule identified by UID.
 // The caller must already have read access to the rule; this is verified via getAlertRuleAuthorized.
 // Versions are returned in the order provided by the underlying store (newest first).
-func (service *LegacyRuleService) GetAlertRuleVersions(ctx context.Context, user identity.Requester, ruleUID string) ([]*models.AlertRuleVersion, error) {
+func (service *legacyRuleService) GetAlertRuleVersions(ctx context.Context, user identity.Requester, ruleUID string) ([]*models.AlertRuleVersion, error) {
 	rule, err := service.getAlertRuleAuthorized(ctx, user, ruleUID)
 	if err != nil {
 		return nil, err
@@ -389,7 +390,7 @@ func (service *LegacyRuleService) GetAlertRuleVersions(ctx context.Context, user
 
 // GetDeletedAlertRules returns rules that have been soft-deleted in the user's organization.
 // The result is filtered to namespaces the user can access when they don't have blanket read access.
-func (service *LegacyRuleService) GetDeletedAlertRules(ctx context.Context, user identity.Requester) ([]*models.AlertRule, error) {
+func (service *legacyRuleService) GetDeletedAlertRules(ctx context.Context, user identity.Requester) ([]*models.AlertRule, error) {
 	rules, err := service.ruleStore.ListDeletedRules(ctx, user.GetOrgID())
 	if err != nil {
 		return nil, err
@@ -427,7 +428,7 @@ func (service *LegacyRuleService) GetDeletedAlertRules(ctx context.Context, user
 // CreateAlertRule creates a new alert rule. For normal rule groups, this function will ignore any
 // interval that is set in the rule struct and use the already existing group interval or the default one.
 // With dryRun the rule is validated and authorized and the would-be result returned, but nothing is written.
-func (service *LegacyRuleService) CreateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, manager utils.ManagerProperties, dryRun bool) (models.AlertRule, error) {
+func (service *legacyRuleService) CreateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, manager utils.ManagerProperties, dryRun bool) (models.AlertRule, error) {
 	if models.IsNoGroupRuleGroup(rule.RuleGroup) {
 		return models.AlertRule{}, fmt.Errorf("%w: rules must have a valid group", models.ErrAlertRuleFailedValidation)
 	}
@@ -533,7 +534,7 @@ func (service *LegacyRuleService) CreateAlertRule(ctx context.Context, user iden
 }
 
 // dryRunCreate makes the checks a create makes while writing, without writing, and returns the would-be rule.
-func (service *LegacyRuleService) dryRunCreate(ctx context.Context, user identity.Requester, rule models.AlertRule) (models.AlertRule, error) {
+func (service *legacyRuleService) dryRunCreate(ctx context.Context, user identity.Requester, rule models.AlertRule) (models.AlertRule, error) {
 	// A real create checks the quota after inserting, inside the transaction. Rolling back a
 	// trial insert is not safe: when the rule store routes to another database it does not
 	// join this transaction. So check the quota against the rules that exist now.
@@ -558,7 +559,7 @@ func (service *LegacyRuleService) dryRunCreate(ctx context.Context, user identit
 
 // UpdateAlertRule updates an alert rule.
 // With dryRun the update is validated and authorized and the would-be result returned, but nothing is written.
-func (service *LegacyRuleService) UpdateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, manager utils.ManagerProperties, dryRun bool) (models.AlertRule, error) {
+func (service *legacyRuleService) UpdateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, manager utils.ManagerProperties, dryRun bool) (models.AlertRule, error) {
 	var storedRule *models.AlertRule
 	var changedNotificationSettings []models.NotificationSettings // Needs authorizing unless the user can write all rules.
 	if err := service.ensureNamespace(ctx, user, rule.OrgID, rule.NamespaceUID); err != nil {
@@ -713,7 +714,7 @@ func checkUpdatePreconditions(rule models.AlertRule, stored *models.AlertRule) e
 }
 
 // DeleteAlertRule deletes an alert rule. With dryRun the delete is authorized but nothing is written.
-func (service *LegacyRuleService) DeleteAlertRule(ctx context.Context, user identity.Requester, ruleUID string, manager utils.ManagerProperties, dryRun bool) error {
+func (service *legacyRuleService) DeleteAlertRule(ctx context.Context, user identity.Requester, ruleUID string, manager utils.ManagerProperties, dryRun bool) error {
 	rule := &models.AlertRule{
 		OrgID: user.GetOrgID(),
 		UID:   ruleUID,
@@ -745,7 +746,7 @@ func (service *LegacyRuleService) DeleteAlertRule(ctx context.Context, user iden
 // managers maps a rule UID to the manager the caller is acting as. Every UID goes into the store's IN (...) clauses,
 // so callers must keep batches small enough for the database's bound-variable limit (32766 for SQLite).
 // With dryRun every rule is checked but nothing is deleted.
-func (service *LegacyRuleService) DeleteAlertRules(ctx context.Context, user identity.Requester, rules []*models.AlertRule, managers map[string]utils.ManagerProperties, dryRun bool) error {
+func (service *legacyRuleService) DeleteAlertRules(ctx context.Context, user identity.Requester, rules []*models.AlertRule, managers map[string]utils.ManagerProperties, dryRun bool) error {
 	if len(rules) == 0 {
 		return nil
 	}
@@ -773,7 +774,7 @@ func (service *LegacyRuleService) DeleteAlertRules(ctx context.Context, user ide
 }
 
 // checkDeleteProvenance returns an error if the stored manager of the rule does not allow the given manager to delete it.
-func (service *LegacyRuleService) checkDeleteProvenance(ctx context.Context, rule *models.AlertRule, manager utils.ManagerProperties) error {
+func (service *legacyRuleService) checkDeleteProvenance(ctx context.Context, rule *models.AlertRule, manager utils.ManagerProperties) error {
 	storedManager, err := service.provenanceStore.GetManagerProperties(ctx, rule, rule.OrgID)
 	if err != nil {
 		return err
@@ -792,7 +793,7 @@ func (service *LegacyRuleService) checkDeleteProvenance(ctx context.Context, rul
 
 // authorizeDelete checks that the user may delete the rule. canWriteAll is the result of authz.CanWriteAllRules.
 // It returns false if the rule no longer exists, so that non-admin users get the same idempotent behaviour as admins.
-func (service *LegacyRuleService) authorizeDelete(ctx context.Context, user identity.Requester, rule *models.AlertRule, canWriteAll bool) (bool, error) {
+func (service *legacyRuleService) authorizeDelete(ctx context.Context, user identity.Requester, rule *models.AlertRule, canWriteAll bool) (bool, error) {
 	if canWriteAll {
 		return true, nil
 	}
@@ -810,7 +811,7 @@ func (service *LegacyRuleService) authorizeDelete(ctx context.Context, user iden
 }
 
 // checkLimitsTransactionCtx checks whether the current transaction (as identified by the ctx) breaches configured alert rule limits.
-func (service *LegacyRuleService) checkLimitsTransactionCtx(ctx context.Context, user identity.Requester) error {
+func (service *legacyRuleService) checkLimitsTransactionCtx(ctx context.Context, user identity.Requester) error {
 	// default to 0 if there is no user
 	var userID int64
 	if id, err := identity.UserIdentifier(user.GetID()); err == nil {
@@ -831,7 +832,7 @@ func (service *LegacyRuleService) checkLimitsTransactionCtx(ctx context.Context,
 }
 
 // deleteRules deletes a set of target rules and associated data in a single transaction, while checking for database consistency.
-func (service *LegacyRuleService) deleteRules(ctx context.Context, user identity.Requester, targets ...*models.AlertRule) error {
+func (service *legacyRuleService) deleteRules(ctx context.Context, user identity.Requester, targets ...*models.AlertRule) error {
 	uids := make([]string, 0, len(targets))
 	for _, tgt := range targets {
 		if tgt != nil {
@@ -858,7 +859,7 @@ func (service *LegacyRuleService) deleteRules(ctx context.Context, user identity
 // ensureNamespace ensures that the rule has a valid namespace UID.
 // If the rule does not have a namespace UID or the namespace (folder) does not exist it will return an error.
 // If the folder is managed by a manager, it will also return an error.
-func (service *LegacyRuleService) ensureNamespace(ctx context.Context, user identity.Requester, orgID int64, namespaceUID string) error {
+func (service *legacyRuleService) ensureNamespace(ctx context.Context, user identity.Requester, orgID int64, namespaceUID string) error {
 	if namespaceUID == "" {
 		return fmt.Errorf("%w: folderUID must be set", models.ErrAlertRuleFailedValidation)
 	}
@@ -899,4 +900,8 @@ func userUidOrFallback(user identity.Requester) *models.UserUID {
 		return &models.FileProvisioningUserUID
 	}
 	return userUID
+}
+
+func (s *legacyRuleService) saveAlertRuleStatus(ctx context.Context, orgID int64, ruleUID string, data []byte) error {
+	return s.ruleStore.SaveAlertRuleStatus(ctx, orgID, ruleUID, data)
 }

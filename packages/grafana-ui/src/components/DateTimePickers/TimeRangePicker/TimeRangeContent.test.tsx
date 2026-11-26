@@ -129,6 +129,56 @@ describe('TimeRangeForm', () => {
     expect(within(target.container).getByLabelText('To')).toHaveValue('2021-06-19 19:59:00');
   });
 
+  describe('milliseconds', () => {
+    it('shows milliseconds only for values that have them in a sub-minute range', async () => {
+      const from = dateTimeParse('2021-06-17T00:00:00.123Z');
+      const to = dateTimeParse('2021-06-17T00:00:30.000Z');
+      const { findByLabelText } = setup({ from, to, raw: { from: from.toISOString(), to } }, 'America/New_York');
+
+      expect(await findByLabelText('From')).toHaveValue('2021-06-16 20:00:00.123');
+      expect(await findByLabelText('To')).toHaveValue('2021-06-16 20:00:30');
+    });
+
+    it('shows milliseconds in the inputs for ranges of a minute or longer', async () => {
+      const from = dateTimeParse('2021-06-17T00:00:00.123Z');
+      const to = dateTimeParse('2021-06-17T00:01:00.000Z');
+      const { findByLabelText } = setup({ from, to, raw: { from, to } });
+
+      expect(await findByLabelText('From')).toHaveValue('2021-06-17 00:00:00.123');
+      expect(await findByLabelText('To')).toHaveValue('2021-06-17 00:01:00');
+    });
+
+    it('applies a typed millisecond value', async () => {
+      const onApply = jest.fn();
+      render(<TimeRangeContent isFullscreen={true} value={defaultTimeRange} onApply={onApply} timeZone="utc" />);
+
+      const fromInput = screen.getByLabelText('From');
+      await user.clear(fromInput);
+      await user.type(fromInput, '2021-06-17 00:00:00.5');
+      await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+
+      expect(onApply).toHaveBeenCalledTimes(1);
+      const applied: TimeRange = onApply.mock.calls[0][0];
+      expect(applied.from.toISOString()).toBe('2021-06-17T00:00:00.500Z');
+      expect(applied.to.toISOString()).toBe('2021-06-19T23:59:00.000Z');
+    });
+
+    it('rejects a millisecond range where from is after to', async () => {
+      const onApply = jest.fn();
+      render(<TimeRangeContent isFullscreen={true} value={defaultTimeRange} onApply={onApply} timeZone="utc" />);
+
+      const fromInput = screen.getByLabelText('From');
+      const toInput = screen.getByLabelText('To');
+      await user.clear(fromInput);
+      await user.type(fromInput, '2021-06-17 00:00:00.900');
+      await user.clear(toInput);
+      await user.type(toInput, '2021-06-17 00:00:00.100');
+      await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+
+      expect(onApply).not.toHaveBeenCalled();
+    });
+  });
+
   describe('Given custom system date format', () => {
     const originalFullDate = systemDateFormats.fullDate;
     beforeEach(() => {
@@ -154,6 +204,29 @@ describe('TimeRangeForm', () => {
 
       expect(await findByLabelText('From')).toHaveValue('16.06.2021 20:00:00');
       expect(await findByLabelText('To')).toHaveValue('19.06.2021 19:59:00');
+    });
+
+    it('round-trips milliseconds in the custom format', async () => {
+      const onApply = jest.fn();
+      const from = dateTimeParse('2021-06-17T00:00:00.123Z');
+      const to = dateTimeParse('2021-06-17T00:00:05.000Z');
+      render(
+        <TimeRangeContent
+          isFullscreen={true}
+          value={{ from, to, raw: { from, to } }}
+          onApply={onApply}
+          timeZone="America/New_York"
+        />
+      );
+
+      expect(screen.getByLabelText('From')).toHaveValue('16.06.2021 20:00:00.123');
+      expect(screen.getByLabelText('To')).toHaveValue('16.06.2021 20:00:05');
+
+      await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+
+      const applied: TimeRange = onApply.mock.calls[0][0];
+      expect(applied.from.valueOf()).toBe(from.valueOf());
+      expect(applied.to.valueOf()).toBe(to.valueOf());
     });
   });
 

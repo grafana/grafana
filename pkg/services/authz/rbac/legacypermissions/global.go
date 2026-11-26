@@ -26,7 +26,7 @@ func (l *Loader) GetGlobalUserPermissions(
 
 	defaultValue := false
 	settings := loadSettings{
-		enforcementEnabled: l.license.FeatureEnabled("accesscontrol.enforcement"),
+		enforcementEnabled: l.enforcementEnabled(),
 		excludeRedundantManagedPermissions: l.openFeatureClient.Boolean(
 			ctx,
 			featuremgmt.FlagExcludeRedundantManagedPermissions,

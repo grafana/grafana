@@ -45,7 +45,7 @@ func (t *tokenExchangeRoundTripper) RoundTrip(req *http.Request) (*http.Response
 	ctx := req.Context()
 
 	tokenResponse, err := t.exchanger.Exchange(ctx, authnlib.TokenExchangeRequest{
-		Audiences: t.audienceProvider.GetAudiences(ctx),
+		Audiences: t.audienceProvider.GetAudiences(req),
 		Namespace: t.namespaceProvider.GetNamespace(ctx),
 	})
 	if err != nil {

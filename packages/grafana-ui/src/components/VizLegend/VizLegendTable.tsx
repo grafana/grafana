@@ -119,9 +119,9 @@ export const VizLegendTable = <T extends unknown>({
             </th>
             {Object.keys(header).map((columnTitle, i) => (
               <th
+                key={columnTitle}
                 {...(sortKey === columnTitle ? { 'aria-sort': sortDesc ? 'descending' : 'ascending' } : null)}
                 title={header[columnTitle]}
-                key={columnTitle}
                 className={cx({
                   [styles.headerSortable]: Boolean(onToggleSort),
                   [styles.nameHeader]: isSortable,

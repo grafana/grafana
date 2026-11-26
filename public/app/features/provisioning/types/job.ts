@@ -1,5 +1,5 @@
+import { type KindInfo } from '@grafana/runtime/unstable';
 import { type ProvisioningResourceRef as GeneratedResourceRef } from 'app/api/clients/provisioning/v0alpha1';
-import { type KindInfo } from 'app/core/kinds/types';
 
 // Reuse the generated ResourceRef but require every field: a delete/move job needs a
 // fully-specified ref, whereas the generated fields are all optional.

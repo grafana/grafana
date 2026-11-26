@@ -55,12 +55,13 @@ export interface UseAutoSyncConfigurationResult {
   notReadyMessage?: string;
 }
 
-export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
+export function useAutoSyncConfiguration({ skip = false }: { skip?: boolean } = {}): UseAutoSyncConfigurationResult {
   const {
     currentData: configResource,
     isLoading: isLoadingConfig,
     error: configError,
   } = useAutoSyncConfigQuery({
+    skip,
     // The sync worker owns seeding the singleton, and nothing here invalidates the Config — without
     // polling, a pre-seed 404 stays cached as a rejection and "try again in a moment" never comes true.
     pollingInterval: AUTO_SYNC_CONFIG_POLL_INTERVAL_MS,
@@ -75,7 +76,7 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
   const { currentData: allDatasources, isLoading: isLoadingDatasources } =
     dataSourcesApi.endpoints.getAllDataSourceSettings.useQuery(undefined, {
       refetchOnMountOrArgChange: true,
-      skip: !canReadConfig,
+      skip: skip || !canReadConfig,
     });
   const [updateConfig, updateConfigState] = configApi.useUpdateConfigMutation();
 

@@ -31,7 +31,7 @@ func InternalIdentityProfileFor(requester Requester) (InternalIdentityProfile, b
 	// the predefined profile grants.
 	if r.Type != types.TypeAccessPolicy ||
 		r.UserUID != r.internalIdentityProfile.String() ||
-		r.OrgRole != RoleAdmin ||
+		r.OrgRole != types.RoleAdmin ||
 		!r.IsGrafanaAdmin {
 		return "", false
 	}

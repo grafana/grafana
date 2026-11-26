@@ -9,6 +9,7 @@ import {
   DataSourceFilter,
   FolderFilter,
   HealthFilter,
+  PausedFilter,
   PluginRulesFilter,
   TextFilter,
 } from '../rule-search/FilterSidebar';
@@ -44,7 +45,7 @@ export function RecordingRulesFilterSidebar({ query, filter, onApply }: Recordin
       </SidebarSection>
       <Divider spacing={0} />
       <SidebarSection>
-        <FolderFilter folderUids={filter.folders} onChange={(uids) => apply({ folder: uids })} />
+        <FolderFilter folderUids={filter.folderUids} onChange={(uids) => apply({ folderUid: uids })} />
         <DataSourceFilter dataSourceUids={filter.dataSourceUids} onChange={(uids) => apply({ datasource: uids })} />
       </SidebarSection>
       <Divider spacing={0} />
@@ -61,7 +62,10 @@ export function RecordingRulesFilterSidebar({ query, filter, onApply }: Recordin
         />
       </SidebarSection>
       <Divider spacing={0} />
-      <HealthFilter health={filter.health} onChange={(health) => apply({ health: [health] })} />
+      <SidebarSection>
+        <HealthFilter health={filter.health} onChange={(health) => apply({ health: [health] })} />
+        <PausedFilter paused={filter.paused} onChange={(paused) => apply({ paused: [paused] })} />
+      </SidebarSection>
       <Divider spacing={0} />
       <PluginRulesFilter
         hide={filter.hidePluginRules}

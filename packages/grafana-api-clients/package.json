@@ -308,6 +308,17 @@
         "types": "./dist/cjs/clients/rtkq/rules.alerting/v1beta1/index.d.cts",
         "default": "./dist/cjs/clients/rtkq/rules.alerting/v1beta1/index.cjs"
       }
+    },
+    "./rtkq/search/v0alpha1": {
+      "@grafana-app/source": "./src/clients/rtkq/search/v0alpha1/index.ts",
+      "import": {
+        "types": "./dist/esm/clients/rtkq/search/v0alpha1/index.d.mts",
+        "default": "./dist/esm/clients/rtkq/search/v0alpha1/index.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/clients/rtkq/search/v0alpha1/index.d.cts",
+        "default": "./dist/cjs/clients/rtkq/search/v0alpha1/index.cjs"
+      }
     }
   },
   "publishConfig": {

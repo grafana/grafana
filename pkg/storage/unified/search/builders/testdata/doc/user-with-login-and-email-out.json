@@ -17,6 +17,7 @@
     "email": "user.one@test.com",
     "lastSeenAt": 0,
     "login": "user.one",
+    "provisioned": false,
     "role": "Viewer"
   },
   "selectableFields": {

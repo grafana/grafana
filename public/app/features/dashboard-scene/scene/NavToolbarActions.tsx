@@ -568,7 +568,7 @@ function addDynamicActions(
         toolbarActions.push({
           group: group,
           condition: true,
-          render: () => <Component {...props} key={toolbarActions.length} />,
+          render: () => <Component key={toolbarActions.length} {...props} />,
         });
       }
     }

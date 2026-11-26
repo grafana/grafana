@@ -61,6 +61,16 @@ jest.mock('app/features/dashboard-prompt/DashboardLandingPrompt', () => ({
   DashboardLandingPrompt: () => <div data-testid="dashboard-landing-prompt" />,
 }));
 
+// The landing's template list looks up data sources asynchronously; these tests are about which empty state shows.
+jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability', () => ({
+  useTemplateDashboardsAvailability: () => ({
+    testDataSource: undefined,
+    showGrafanaTemplates: false,
+    showCustomTemplates: false,
+    isAvailable: false,
+  }),
+}));
+
 const mockUseGetResourceRepositoryView = jest.mocked(
   require('app/features/provisioning/hooks/useGetResourceRepositoryView').useGetResourceRepositoryView
 );

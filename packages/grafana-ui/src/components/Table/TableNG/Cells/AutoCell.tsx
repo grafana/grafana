@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { clsx } from 'clsx';
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 
 import { formattedValueToString } from '@grafana/data';
 
@@ -96,7 +96,7 @@ function buildAutoCellStyles(
 }
 
 export const getStyles: TableCellStyles = memoize((_theme, options) => buildAutoCellStyles(options, 'pre-line'), {
-  isMatchingKey: isTableCellStylesKeyEqual,
+  isKeyEqual: isTableCellStylesKeyEqual,
 });
 
 // Nothing here overlaps the shared body, so composing the two classes is order-independent.
@@ -104,5 +104,5 @@ const jsonCellFont = css({ fontFamily: 'monospace' });
 
 export const getJsonCellStyles: TableCellStyles = memoize(
   (_theme, options) => clsx(jsonCellFont, buildAutoCellStyles(options, 'pre-wrap', true)),
-  { isMatchingKey: isTableCellStylesKeyEqual }
+  { isKeyEqual: isTableCellStylesKeyEqual }
 );

@@ -16,12 +16,14 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var dryRunAll = []string{metav1.DryRunAll}
@@ -31,13 +33,6 @@ type switchableValidator struct{ err error }
 
 func (v *switchableValidator) ValidateRuleMutations(context.Context, []*ngmodels.AlertRule, utils.ManagerProperties) error {
 	return v.err
-}
-
-type recordingStatusWriter struct{ calls int }
-
-func (w *recordingStatusWriter) SaveAlertRuleStatus(context.Context, int64, string, []byte) error {
-	w.calls++
-	return nil
 }
 
 type dryRunFixture struct {
@@ -59,14 +54,15 @@ func newDryRunFixture(t *testing.T, quotaReached bool) *dryRunFixture {
 	folderService := foldertest.NewFakeService()
 	folderService.ExpectedFolder = &folder.Folder{UID: "test-folder-uid", Title: "Test Folder"}
 	validator := &switchableValidator{}
-	svc := legacy.NewLegacyRuleService(
+	svc := legacy.New(
 		ruleStore, fakes.NewFakeProvisioningStore(), folderService, &quotas, ruleStore,
 		60, log.NewNopLogger(), nil, fakeRuleAccessControl{}, validator,
+		request.GetNamespaceMapper(&setting.Cfg{}),
 	)
 	ctx := genericapirequest.WithNamespace(context.Background(), "default")
 	ctx = identity.WithRequester(ctx, &user.SignedInUser{OrgID: 1, UserUID: "test-user"})
 	return &dryRunFixture{
-		storage:   &legacyStorage{service: *svc, namespacer: nsMapperForTest()},
+		storage:   &legacyStorage{rules: svc.AlertRules()},
 		ruleStore: ruleStore,
 		validator: validator,
 		ctx:       ctx,
@@ -247,11 +243,9 @@ func TestLegacyStorage_DryRun(t *testing.T) {
 	t.Run("status update returns the new status and writes nothing", func(t *testing.T) {
 		f := newDryRunFixture(t, false)
 		stored := f.seed(t, "dry-status")
-		statusWriter := &recordingStatusWriter{}
 		mirrored := false
 		status := &statusDualWriter{
 			legacy:        f.storage,
-			statusWriter:  statusWriter,
 			writesUnified: func(context.Context) bool { mirrored = true; return true },
 		}
 		changed := stored.DeepCopy()
@@ -262,7 +256,11 @@ func TestLegacyStorage_DryRun(t *testing.T) {
 		rule := out.(*v1beta1.AlertRule)
 		require.Equal(t, "set by dry run", *rule.Status.LastError)
 		require.Equal(t, "original", rule.Spec.Title)
-		require.Zero(t, statusWriter.calls)
+		saved := f.ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+			c, ok := cmd.(fakes.GenericRecordedQuery)
+			return c, ok && c.Name == "SaveAlertRuleStatus"
+		})
+		require.Empty(t, saved, "a dry run must not persist the status")
 		require.False(t, mirrored, "a dry run must not mirror the status to unified storage")
 	})
 }

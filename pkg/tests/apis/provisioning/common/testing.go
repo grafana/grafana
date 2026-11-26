@@ -1013,6 +1013,14 @@ func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
 	require.NoError(t, err)
 	h.WaitForHealthyRepository(t, repo.Name)
 
+	if !repo.SkipSync {
+		// The controller queues its own "<repo>-sync" as the repo turns healthy,
+		// and our sync below reuses that name. On SQLite the two jobs' watch
+		// events can arrive out of order, which loses our job in the job
+		// driver's informer, so let the controller's job finish and go first.
+		h.waitForControllerSync(t, repo.Name)
+	}
+
 	for from, to := range repo.Copies {
 		if repo.LocalPath != "" {
 			fullPath := path.Join(localPath, to)
@@ -1033,6 +1041,36 @@ func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
 	} else {
 		h.DebugState(t, repo.Name, "AFTER REPO CREATION")
 	}
+}
+
+// waitForControllerSync waits until the repository's sync is no longer pending
+// or working and no active job for it remains. Unlike AwaitJobs it never
+// queues a job itself.
+func (h *ProvisioningTestHelper) waitForControllerSync(t *testing.T, repo string) {
+	t.Helper()
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		obj, err := h.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository %s", repo) {
+			return
+		}
+		state := MustNestedString(obj.Object, "status", "sync", "state")
+		assert.NotContains(collect,
+			[]string{string(provisioning.JobStatePending), string(provisioning.JobStateWorking)},
+			state, "controller sync for repository %s is still %q", repo, state)
+
+		list, err := h.Jobs.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(collect, err, "failed to list active jobs") {
+			return
+		}
+		var active []string
+		for _, item := range list.Items {
+			if item.GetLabels()[jobs.LabelRepository] == repo {
+				active = append(active, item.GetName())
+			}
+		}
+		assert.Empty(collect, active, "repository %s still has active jobs", repo)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "controller sync for repository %s should finish", repo)
 }
 
 // filterManagedResources returns the resources managed by repoName.
@@ -1707,16 +1745,6 @@ func WithNATSReListOnly(resync time.Duration) GrafanaOption {
 func WithResourceLister(mode string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningResourceLister = mode
-	}
-}
-
-// WithKeysOnlyReList sets [provisioning] keys_only_relist, so the connection
-// informer's periodic re-list asks storage for keys instead of whole objects.
-// Off by default in Grafana, so a test that wants the keys path must say so, and
-// the tests that do not keep covering the full-object path.
-func WithKeysOnlyReList() GrafanaOption {
-	return func(opts *testinfra.GrafanaOpts) {
-		opts.ProvisioningKeysOnlyReList = true
 	}
 }
 

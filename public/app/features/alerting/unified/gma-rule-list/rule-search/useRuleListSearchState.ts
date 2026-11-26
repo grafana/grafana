@@ -16,7 +16,7 @@ export interface UseRuleListSearchStateResult<Filter extends SharedRuleFilter> {
   /** The page's filters as the search help shows them. */
   filterHelp: FilterHelp[];
   mode: RuleListMode;
-  /** Folders mode supports only the folder filter; any other filter or free text forces List. */
+  /** Folders mode supports only the folder filters; any other filter or free text forces List. */
   hasNonFolderFilters: boolean;
   applyQuery: (query: string) => void;
   setMode: (mode: RuleListMode) => void;
@@ -76,12 +76,14 @@ export function useRuleListSearchState<Filter extends SharedRuleFilter>(
 }
 
 /**
- * Checks every filter field but `folders`, so a field added to a page's filter later is not missed here.
+ * Checks every filter field but the folder ones, so a field added to a page's filter later is not missed here.
  * A token that failed to parse counts too unless it is a folder token: the user typed a non-folder filter.
  */
 function hasNonFolderCriteria({ filter, issues }: ParsedSearch<SharedRuleFilter>): boolean {
-  const hasFilter = Object.entries(filter).some(([key, value]) => key !== 'folders' && isApplied(value));
-  return hasFilter || issues.some((issue) => issue.key !== 'folder');
+  const hasFilter = Object.entries(filter).some(
+    ([field, value]) => field !== 'folder' && field !== 'folderUids' && isApplied(value)
+  );
+  return hasFilter || issues.some((issue) => issue.key !== 'folder' && issue.key !== 'folderUid');
 }
 
 function isApplied(value: unknown): boolean {

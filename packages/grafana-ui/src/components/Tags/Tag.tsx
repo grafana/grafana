@@ -203,7 +203,7 @@ const getTagStyles = (theme: GrafanaTheme2) => {
         // needed for the icon/text gap below to take effect
         display: 'inline-flex',
         alignItems: 'center',
-        fontSize: theme.typography.size.xs,
+        fontSize: theme.typography.size.sm,
         fontWeight: theme.typography.fontWeightRegular,
       }
     ),

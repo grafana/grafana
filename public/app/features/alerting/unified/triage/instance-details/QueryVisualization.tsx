@@ -41,13 +41,14 @@ export function QueryVisualization({ query, instanceLabels, thresholds, annotati
   const { data } = baseDataProvider.useState();
 
   // Filter frames to only include those matching the instance labels
+  const series = data?.series;
   const filteredSeries = useMemo(() => {
-    if (!data?.series || Object.keys(instanceLabels).length === 0) {
-      return data?.series || [];
+    if (!series || Object.keys(instanceLabels).length === 0) {
+      return series || [];
     }
 
-    return data.series.filter((frame) => frameMatchesInstanceLabels(frame, instanceLabels));
-  }, [data?.series, instanceLabels]);
+    return series.filter((frame) => frameMatchesInstanceLabels(frame, instanceLabels));
+  }, [series, instanceLabels]);
 
   // Create a data provider with filtered series
   const dataProvider = new SceneDataNode({

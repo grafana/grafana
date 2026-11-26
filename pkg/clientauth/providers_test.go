@@ -2,6 +2,7 @@ package clientauth
 
 import (
 	"context"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -65,9 +66,22 @@ func TestStaticAudienceProvider(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			provider := NewStaticAudienceProvider(tt.audiences...)
-			result := provider.GetAudiences(context.Background())
+			result := provider.GetAudiences(httptest.NewRequest("GET", "/apis", nil))
 			require.Equal(t, tt.expectedAudiences, result)
 		})
+	}
+}
+
+func TestRequestGroupAudienceProvider(t *testing.T) {
+	provider := NewRequestGroupAudienceProvider("grafana")
+	for path, want := range map[string][]string{
+		"/apis/dashboard.grafana.app/v1/namespaces/default/dashboards": {"dashboard.grafana.app"},
+		"/apis/provisioning.grafana.app/v0alpha1":                      {"provisioning.grafana.app"},
+		"/apis/loki.datasource.grafana.app/v0alpha1":                   {"*.datasource.grafana.app"},
+		"/apis":       {"grafana"},
+		"/openapi/v3": {"grafana"},
+	} {
+		require.Equal(t, want, provider.GetAudiences(httptest.NewRequest("GET", path, nil)), path)
 	}
 }
 
@@ -75,4 +89,5 @@ func TestProviderInterfaces(t *testing.T) {
 	// Verify that all providers implement their interfaces
 	var _ NamespaceProvider = (*StaticNamespaceProvider)(nil)
 	var _ AudienceProvider = (*StaticAudienceProvider)(nil)
+	var _ AudienceProvider = (*RequestGroupAudienceProvider)(nil)
 }
