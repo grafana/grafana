@@ -29,6 +29,7 @@ import {
 
 import { getStyles, LogLine } from './LogLine';
 import { LogLineMessage } from './LogLineMessage';
+import { useLogListContext } from './LogListContext';
 import { type LogListModel } from './processing';
 import { type LogLineVirtualization } from './virtualization';
 
@@ -333,11 +334,20 @@ export const InfiniteScroll = ({
     ]
   );
 
+  const { onRenderedIndicesChanged } = useLogListContext();
+
   const onItemsRendered = useCallback(
     (props: ListOnItemsRenderedProps) => {
+      cachedVisibleStartIndexRef.current = props.visibleStartIndex;
+
+      if (onRenderedIndicesChanged) {
+        onRenderedIndicesChanged(props);
+      }
+
       if (!scrollElement) {
         return;
       }
+
       if (props.visibleStartIndex === 0) {
         noScrollRef.current = scrollElement.scrollHeight <= scrollElement.clientHeight;
       }
@@ -361,7 +371,7 @@ export const InfiniteScroll = ({
         setInfiniteLoaderState('idle');
       }
     },
-    [infiniteLoaderState, loadDirection, logs, scrollElement]
+    [infiniteLoaderState, loadDirection, logs, onRenderedIndicesChanged, scrollElement]
   );
 
   const getItemKey = useCallback((index: number) => (logs[index] ? logs[index].uniqueKey : index.toString()), [logs]);

@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { groupBy } from 'lodash';
+import { debounce, groupBy } from 'lodash';
 import * as React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePrevious, useUnmount } from 'react-use';
+import { type ListOnItemsRenderedProps } from 'react-window';
 
 import {
   type AbsoluteTimeRange,
@@ -78,7 +79,7 @@ import { getUrlStateFromPaneState } from '../hooks/useStateSync/external.utils';
 import { changePanelState } from '../state/explorePane';
 import { changeQueries, runQueries } from '../state/query';
 
-import { AdaptiveLogsIncludeDroppedLogs } from './AdaptiveLogsIncludeDroppedLogs';
+import { AdaptiveLogsIncludeDroppedLogs, type RenderedLogsWindow } from './AdaptiveLogsIncludeDroppedLogs';
 import { ExploreLogsTable } from './ExploreLogsTable';
 import { LogsFeedback } from './LogsFeedback';
 import { LogsMetaRow } from './LogsMetaRow';
@@ -789,6 +790,22 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [exploreId, loading, props.logsFrames, props.range]
   );
 
+  const [renderedLogsWindow, setRenderedLogsWindow] = useState<RenderedLogsWindow | undefined>();
+
+  const updateRenderedLogsWindow = useMemo(
+    () =>
+      debounce((indices: ListOnItemsRenderedProps) => {
+        // debounce to avoid chain reaction on each scroll tick
+        setRenderedLogsWindow({
+          startRowIndex: indices.visibleStartIndex,
+          endRowIndex: indices.visibleStopIndex,
+          logsSortOrder,
+        });
+      }, 250),
+    [logsSortOrder]
+  );
+  useEffect(() => () => updateRenderedLogsWindow.cancel(), [updateRenderedLogsWindow]);
+
   return (
     <>
       {getRowContext && contextRow && (
@@ -837,6 +854,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           logs: dedupedRows,
           logsLoadingState: loadingState,
           queryTimeRange: props.range,
+          ...(visualisationType === 'logs' && { renderedLogsWindow }),
         }}
       />
       <PanelChrome
@@ -975,6 +993,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   onOpenContext={onOpenContext}
                   onPermalinkClick={onPermalinkClick}
                   onPinLine={onPinToContentOutlineClick}
+                  onRenderedIndicesChanged={updateRenderedLogsWindow}
                   onUnpinLine={onPinToContentOutlineClick}
                   permalinkedLogId={panelState?.logs?.id}
                   pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}

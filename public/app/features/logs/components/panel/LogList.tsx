@@ -3,7 +3,7 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { debounce } from 'lodash';
 import { type Grammar } from 'prismjs';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
-import { type Align, VariableSizeList } from 'react-window';
+import { type Align, type ListOnItemsRenderedProps, VariableSizeList } from 'react-window';
 
 import {
   CoreApp,
@@ -78,6 +78,7 @@ export interface Props {
   onClickHideField?: (key: string) => void;
   onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
+  onRenderedIndicesChanged?: (range: ListOnItemsRenderedProps) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
@@ -162,6 +163,7 @@ export const LogList = ({
   onLogOptionsChange,
   onLogLineHover,
   onPermalinkClick,
+  onRenderedIndicesChanged,
   onPinLine,
   onOpenContext,
   onUnpinLine,
@@ -211,6 +213,7 @@ export const LogList = ({
       onLogOptionsChange={onLogOptionsChange}
       onLogLineHover={onLogLineHover}
       onPermalinkClick={onPermalinkClick}
+      onRenderedIndicesChanged={onRenderedIndicesChanged}
       onPinLine={onPinLine}
       onOpenContext={onOpenContext}
       onUnpinLine={onUnpinLine}

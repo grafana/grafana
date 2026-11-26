@@ -8,7 +8,7 @@ const INCLUDE_DROPPED_LOGS_COMPONENT_ID = 'grafana-adaptivelogs-app/include-drop
 /**
  * Indicate which logs are currently visible on screen (so we can include more in that range)
  */
-type RenderedLogsWindow = {
+export type RenderedLogsWindow = {
   startRowIndex: number;
   endRowIndex: number;
   logsSortOrder: LogsSortOrder;

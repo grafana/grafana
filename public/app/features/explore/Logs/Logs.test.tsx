@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 import { Provider } from 'react-redux';
@@ -17,6 +17,7 @@ import {
   type DataQuery,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
+import { LogsSortOrder } from '@grafana/schema';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { configureStore } from 'app/store/configureStore';
 
@@ -93,6 +94,19 @@ jest.mock('app/features/logs/components/panel/LogList', () => {
     LogList: (props: ComponentProps<typeof actual.LogList>) => {
       logListMock(props);
       return createElement(actual.LogList, props);
+    },
+  };
+});
+
+const includeDroppedLogsMock = jest.fn();
+jest.mock('./AdaptiveLogsIncludeDroppedLogs', () => {
+  const actual = jest.requireActual('./AdaptiveLogsIncludeDroppedLogs');
+  const { createElement } = jest.requireActual('react');
+  return {
+    ...actual,
+    AdaptiveLogsIncludeDroppedLogs: (props: ComponentProps<typeof actual.AdaptiveLogsIncludeDroppedLogs>) => {
+      includeDroppedLogsMock(props);
+      return createElement(actual.AdaptiveLogsIncludeDroppedLogs, props);
     },
   };
 });
@@ -251,6 +265,176 @@ describe('Logs', () => {
     expect(await screen.findByText('log message 3')).toBeInTheDocument();
     expect(screen.getByText('log message 2')).toBeInTheDocument();
     expect(screen.getByText('log message 1')).toBeInTheDocument();
+  });
+
+  it('passes a debounced renderedLogsWindow to AdaptiveLogsIncludeDroppedLogs', async () => {
+    includeDroppedLogsMock.mockClear();
+    setup();
+    await screen.findByText('log message 3');
+
+    const { onRenderedIndicesChanged } = logListMock.mock.calls.at(-1)[0];
+    act(() => {
+      onRenderedIndicesChanged({
+        visibleStartIndex: 1,
+        visibleStopIndex: 2,
+        overscanStartIndex: 0,
+        overscanStopIndex: 2,
+      });
+    });
+
+    await waitFor(() =>
+      expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          renderedLogsWindow: { startRowIndex: 1, endRowIndex: 2, logsSortOrder: LogsSortOrder.Descending },
+        })
+      )
+    );
+  });
+
+  it('coalesces rapid onRenderedIndicesChanged calls into the last one', async () => {
+    includeDroppedLogsMock.mockClear();
+    setup();
+    await screen.findByText('log message 3');
+
+    const { onRenderedIndicesChanged } = logListMock.mock.calls.at(-1)[0];
+    act(() => {
+      onRenderedIndicesChanged({
+        visibleStartIndex: 0,
+        visibleStopIndex: 1,
+        overscanStartIndex: 0,
+        overscanStopIndex: 1,
+      });
+      onRenderedIndicesChanged({
+        visibleStartIndex: 1,
+        visibleStopIndex: 2,
+        overscanStartIndex: 0,
+        overscanStopIndex: 2,
+      });
+    });
+
+    await waitFor(() =>
+      expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          renderedLogsWindow: { startRowIndex: 1, endRowIndex: 2, logsSortOrder: LogsSortOrder.Descending },
+        })
+      )
+    );
+    expect(includeDroppedLogsMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        renderedLogsWindow: expect.objectContaining({ startRowIndex: 0, endRowIndex: 1 }),
+      })
+    );
+  });
+
+  it('does not update renderedLogsWindow before the debounce window elapses', async () => {
+    includeDroppedLogsMock.mockClear();
+    setup();
+    await screen.findByText('log message 3');
+
+    const { onRenderedIndicesChanged } = logListMock.mock.calls.at(-1)[0];
+    act(() => {
+      onRenderedIndicesChanged({
+        visibleStartIndex: 1,
+        visibleStopIndex: 2,
+        overscanStartIndex: 0,
+        overscanStopIndex: 2,
+      });
+    });
+
+    expect(includeDroppedLogsMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({ renderedLogsWindow: expect.objectContaining({ startRowIndex: 1 }) })
+    );
+
+    await waitFor(() =>
+      expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          renderedLogsWindow: { startRowIndex: 1, endRowIndex: 2, logsSortOrder: LogsSortOrder.Descending },
+        })
+      )
+    );
+  });
+
+  it('cancels a pending debounced update when logsSortOrder changes', async () => {
+    includeDroppedLogsMock.mockClear();
+    setup();
+    await screen.findByText('log message 3');
+
+    const staleOnRenderedIndicesChanged = logListMock.mock.calls.at(-1)[0].onRenderedIndicesChanged;
+    act(() => {
+      staleOnRenderedIndicesChanged({
+        visibleStartIndex: 1,
+        visibleStopIndex: 2,
+        overscanStartIndex: 0,
+        overscanStopIndex: 2,
+      });
+    });
+
+    const { onLogOptionsChange } = logListMock.mock.calls.at(-1)[0];
+    act(() => {
+      onLogOptionsChange('sortOrder', LogsSortOrder.Ascending);
+    });
+
+    const freshOnRenderedIndicesChanged = logListMock.mock.calls.at(-1)[0].onRenderedIndicesChanged;
+    act(() => {
+      freshOnRenderedIndicesChanged({
+        visibleStartIndex: 0,
+        visibleStopIndex: 1,
+        overscanStartIndex: 0,
+        overscanStopIndex: 1,
+      });
+    });
+
+    await waitFor(() =>
+      expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          renderedLogsWindow: { startRowIndex: 0, endRowIndex: 1, logsSortOrder: LogsSortOrder.Ascending },
+        })
+      )
+    );
+    expect(includeDroppedLogsMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        renderedLogsWindow: expect.objectContaining({ startRowIndex: 1, endRowIndex: 2 }),
+      })
+    );
+  });
+
+  it('cancels the pending debounced update on unmount', async () => {
+    const { unmount } = setup();
+    await screen.findByText('log message 3');
+
+    const { onRenderedIndicesChanged } = logListMock.mock.calls.at(-1)[0];
+    const cancelSpy = jest.spyOn(onRenderedIndicesChanged, 'cancel');
+
+    unmount();
+
+    expect(cancelSpy).toHaveBeenCalled();
+  });
+
+  it('clears renderedLogsWindow when switching away from the logs visualisation', async () => {
+    includeDroppedLogsMock.mockClear();
+    setup();
+    await screen.findByText('log message 3');
+
+    const { onRenderedIndicesChanged } = logListMock.mock.calls.at(-1)[0];
+    act(() => {
+      onRenderedIndicesChanged({
+        visibleStartIndex: 1,
+        visibleStopIndex: 2,
+        overscanStartIndex: 0,
+        overscanStopIndex: 2,
+      });
+    });
+    await waitFor(() =>
+      expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          renderedLogsWindow: expect.objectContaining({ startRowIndex: 1, endRowIndex: 2 }),
+        })
+      )
+    );
+
+    await userEvent.click(screen.getByRole('radio', { name: 'Table' }));
+
+    await waitFor(() => expect(includeDroppedLogsMock.mock.calls.at(-1)[0].renderedLogsWindow).toBeUndefined());
   });
 
   it('should render no logs found', () => {

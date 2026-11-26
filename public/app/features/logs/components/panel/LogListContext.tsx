@@ -11,6 +11,7 @@ import {
   useState,
 } from 'react';
 import { usePrevious } from 'react-use';
+import { type ListOnItemsRenderedProps } from 'react-window';
 
 import { createAssistantContextItem, type OpenAssistantProps, useAssistant } from '@grafana/assistant';
 import {
@@ -187,6 +188,7 @@ export interface Props {
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
+  onRenderedIndicesChanged?: (range: ListOnItemsRenderedProps) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
   onUnpinLine?: (row: LogRowModel) => void;
   permalinkedLogId?: string;
@@ -234,6 +236,7 @@ export const LogListContextProvider = ({
   onLogLineHover,
   onPermalinkClick,
   onPinLine,
+  onRenderedIndicesChanged,
   onOpenContext,
   onUnpinLine,
   permalinkedLogId,
@@ -653,6 +656,7 @@ export const LogListContextProvider = ({
         onLogLineHover,
         onPermalinkClick,
         onPinLine,
+        onRenderedIndicesChanged,
         onOpenContext,
         onUnpinLine,
         permalinkedLogId,
