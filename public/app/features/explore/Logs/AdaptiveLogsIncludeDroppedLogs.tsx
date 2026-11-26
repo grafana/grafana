@@ -47,14 +47,27 @@ export function AdaptiveLogsIncludeDroppedLogs(props: Props) {
   const timeMachineEnabled = useFlagAdaptivelogsEnableTimeMachine();
   const { component: IncludeDroppedLogs, isLoading } = usePluginComponent<Props>(INCLUDE_DROPPED_LOGS_COMPONENT_ID);
 
-  if (!timeMachineEnabled || isLoading || !IncludeDroppedLogs || !props.queries?.length) {
+  // This should not occur. The renderedLogsWindow.logs should only get smaller than the total fetched logs (due to filtering)
+  const renderedLogsExceedFetchedLogs = (props.renderedLogsWindow?.logs?.length ?? 0) > props.logs.length;
+
+  if (
+    !timeMachineEnabled ||
+    isLoading ||
+    !IncludeDroppedLogs ||
+    !props.queries?.length ||
+    renderedLogsExceedFetchedLogs
+  ) {
     return null;
   }
 
   return <IncludeDroppedLogs {...props} />;
 }
 
-export function useRenderedLogsWindow(visualisationType: LogsVisualisationType, logsSortOrder: LogsSortOrder) {
+export function useRenderedLogsWindow(
+  visualisationType: LogsVisualisationType,
+  logsSortOrder: LogsSortOrder,
+  allFetchedLogs: LogRowModel[]
+) {
   const timeMachineEnabled = useFlagAdaptivelogsEnableTimeMachine();
   const [renderedLogsWindowDebounced, setRenderedLogsWindowDebounced] = useState<RenderedLogsWindow | undefined>();
 
@@ -75,6 +88,18 @@ export function useRenderedLogsWindow(visualisationType: LogsVisualisationType, 
   );
 
   useEffect(() => () => onRenderedLogsChanged?.cancel(), [onRenderedLogsChanged]);
+
+  // Track if the query has reset
+  const [previousFetchedLogs, setPreviousFetchedLogs] = useState(allFetchedLogs);
+  if (allFetchedLogs !== previousFetchedLogs) {
+    setPreviousFetchedLogs(allFetchedLogs);
+    // Check if we suddenly have fewer fetched logs
+    if (previousFetchedLogs.length > allFetchedLogs.length) {
+      // If we have fewer fetched logs, the query has reset, immediately clear the invalid debounced "window"
+      onRenderedLogsChanged?.cancel();
+      setRenderedLogsWindowDebounced(undefined);
+    }
+  }
 
   // Masks the debounced value whenever it's stale (or incompatible) relative to the current display state
   const renderedLogsWindow = useMemo(() => {

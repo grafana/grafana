@@ -437,6 +437,65 @@ describe('Logs', () => {
     await waitFor(() => expect(includeDroppedLogsMock.mock.calls.at(-1)[0].renderedLogsWindow).toBeUndefined());
   });
 
+  it('clears renderedLogsWindow when logs shrinks (e.g. a query re-run or time range change)', async () => {
+    includeDroppedLogsMock.mockClear();
+    const dataFrame = getMockLokiFrame();
+    const logs = [
+      makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1 }),
+      makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 2 }),
+      makeLog({ uid: '3', rowId: 'id3', timeEpochMs: 3 }),
+    ];
+    const { rerender, store } = setup(undefined, dataFrame, logs);
+    await screen.findByText('log message 3');
+
+    const { onRenderedLogsChanged } = logListMock.mock.calls.at(-1)[0];
+    act(() => {
+      onRenderedLogsChanged(
+        { visibleStartIndex: 1, visibleStopIndex: 2, overscanStartIndex: 0, overscanStopIndex: 2 },
+        logs
+      );
+    });
+    await waitFor(() =>
+      expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          renderedLogsWindow: expect.objectContaining({ startRowIndex: 1, endRowIndex: 2 }),
+        })
+      )
+    );
+
+    rerender(<Provider store={store}>{getComponent(undefined, dataFrame, [logs[0]])}</Provider>);
+
+    await waitFor(() => expect(includeDroppedLogsMock.mock.calls.at(-1)[0].renderedLogsWindow).toBeUndefined());
+  });
+
+  it('cancels a pending debounced update when logs shrinks before it fires', async () => {
+    includeDroppedLogsMock.mockClear();
+    const dataFrame = getMockLokiFrame();
+    const logs = [
+      makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1 }),
+      makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 2 }),
+      makeLog({ uid: '3', rowId: 'id3', timeEpochMs: 3 }),
+    ];
+    const { rerender, store } = setup(undefined, dataFrame, logs);
+    await screen.findByText('log message 3');
+
+    const { onRenderedLogsChanged } = logListMock.mock.calls.at(-1)[0];
+    const cancelSpy = jest.spyOn(onRenderedLogsChanged, 'cancel');
+    act(() => {
+      onRenderedLogsChanged(
+        { visibleStartIndex: 1, visibleStopIndex: 2, overscanStartIndex: 0, overscanStopIndex: 2 },
+        logs
+      );
+    });
+
+    // Shrink logs before the 250ms debounce has a chance to fire - without cancelling the
+    // pending call, it would later fire and resurrect a window captured against the old, larger
+    // logs array.
+    rerender(<Provider store={store}>{getComponent(undefined, dataFrame, [logs[0]])}</Provider>);
+
+    expect(cancelSpy).toHaveBeenCalled();
+  });
+
   it('never sets up rendered-window tracking when the adaptivelogs.enableTimeMachine flag is disabled', async () => {
     setBooleanFlags({ logsPanelControls: false, 'adaptivelogs.enableTimeMachine': false });
     includeDroppedLogsMock.mockClear();

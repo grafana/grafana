@@ -91,6 +91,15 @@ describe('AdaptiveLogsIncludeDroppedLogs', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it('renders nothing when renderedLogsWindow.logs is longer than logs (stale window backstop)', () => {
+    mockPluginComponent({ component: PluginComponent, isLoading: false });
+
+    const { container } = render(<AdaptiveLogsIncludeDroppedLogs {...props} logs={[]} />);
+
+    expect(container).toBeEmptyDOMElement();
+    expect(receivedProps).not.toHaveBeenCalled();
+  });
+
   it.each([
     { desc: 'missing', queries: undefined },
     { desc: 'empty', queries: [] },
@@ -107,8 +116,12 @@ describe('AdaptiveLogsIncludeDroppedLogs', () => {
     { desc: 'renderedLogsWindow is missing', override: { renderedLogsWindow: undefined } },
     { desc: 'includeAdditionalLogs is missing', override: { includeAdditionalLogs: undefined } },
     {
-      desc: 'renderedLogsWindow.logs is empty',
-      override: { renderedLogsWindow: { ...props.renderedLogsWindow, logs: [] } },
+      desc: 'logs is empty',
+      override: { logs: [], renderedLogsWindow: { ...props.renderedLogsWindow, logs: [] } },
+    },
+    {
+      desc: 'logs is non-empty but renderedLogsWindow.logs is empty',
+      override: { logs: props.logs, renderedLogsWindow: { ...props.renderedLogsWindow, logs: [] } },
     },
   ])('renders the plugin component when $desc', ({ override }) => {
     mockPluginComponent({ component: PluginComponent, isLoading: false });
