@@ -9,6 +9,7 @@ import {
   getDataSourceInstance,
   getDataSourceInstanceList,
   getDatasourceHealthUrl,
+  getDatasourceProxyUrl,
   getDefaultDataSourceInstanceListItem,
 } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
@@ -74,9 +75,11 @@ export async function resolveBackendInstance(uid: string): Promise<DataSourceWit
 }
 
 /**
- * GET through the classic datasource proxy, deadline-bounded, never toasts. Some datasource
- * backends (e.g. Tempo) serve their HTTP API only here, not on the resource router. An abort
- * also unsubscribes, so a request still queued in BackendSrv leaves the queue unsent.
+ * GET through the datasource HTTP proxy, deadline-bounded, never toasts. Some datasource
+ * backends (e.g. Tempo) serve their HTTP API only here, not on the resource router. The proxy
+ * route follows the datasource API rollout; the settings lookup shares the deadline, since it
+ * fetches on stacks that load datasource settings from the API server. An abort also
+ * unsubscribes, so a request still queued in BackendSrv leaves the queue unsent.
  */
 export async function probeProxyGet<T>(
   uid: string,
@@ -85,17 +88,18 @@ export async function probeProxyGet<T>(
   timeoutMs = PROBE_TIMEOUT_MS,
   signal?: AbortSignal
 ): Promise<T> {
-  const url = `/api/datasources/proxy/uid/${encodeURIComponent(uid)}/${path}`;
-  return withDeadline(timeoutMs, signal, (s) =>
-    lastValueFrom(
+  return withDeadline(timeoutMs, signal, async (s) => {
+    const url = await getDatasourceProxyUrl(uid, path);
+    // An abort during the lookup is caught by takeUntil, which errors before the request starts.
+    return lastValueFrom(
       getBackendSrv()
         .fetch<T>({ url, params, method: 'GET', showErrorAlert: false, abortSignal: s })
         .pipe(
           map((res) => res.data),
           takeUntil(abortNotifier(s))
         )
-    )
-  );
+    );
+  });
 }
 
 /**

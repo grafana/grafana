@@ -8,6 +8,7 @@ import {
   getDataSourceInstance,
   getDataSourceInstanceList,
   getDatasourceHealthUrl,
+  getDatasourceProxyUrl,
   getDefaultDataSourceInstanceListItem,
 } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
@@ -35,6 +36,7 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceInstance: jest.fn(),
   getDataSourceInstanceList: jest.fn(),
   getDatasourceHealthUrl: jest.fn(),
+  getDatasourceProxyUrl: jest.fn(),
   getDefaultDataSourceInstanceListItem: jest.fn(),
 }));
 const getDataSourceInstanceListMock = jest.mocked(getDataSourceInstanceList);
@@ -157,6 +159,21 @@ describe('probeProxyGet', () => {
   beforeEach(() => {
     mockFetch.mockReset();
     jest.mocked(getBackendSrv).mockReturnValue({ fetch: mockFetch } as unknown as BackendSrv);
+    jest
+      .mocked(getDatasourceProxyUrl)
+      .mockReset()
+      .mockImplementation(async (uid, path) => `/api/datasources/proxy/uid/${uid}/${path}`);
+  });
+
+  it('proxies on the route the datasource API rollout selects for the datasource', async () => {
+    jest.mocked(getDatasourceProxyUrl).mockResolvedValue('/apis/tempo.datasource.grafana.app/tempo/proxy/api/search');
+    mockFetch.mockReturnValue(of({ data: { traces: [] } }));
+
+    await expect(probeProxyGet('tempo', 'api/search', params)).resolves.toEqual({ traces: [] });
+    expect(getDatasourceProxyUrl).toHaveBeenCalledWith('tempo', 'api/search');
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.objectContaining({ url: '/apis/tempo.datasource.grafana.app/tempo/proxy/api/search' })
+    );
   });
 
   it('resolves with the response body of a proxied GET', async () => {
@@ -177,11 +194,26 @@ describe('probeProxyGet', () => {
     mockFetch.mockReturnValue(new Observable(() => teardown));
     const controller = new AbortController();
     const promise = probeProxyGet('tempo', 'api/search', params, PROBE_TIMEOUT_MS, controller.signal);
+    // Let the proxy URL lookup settle so the request is in flight.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(mockFetch).toHaveBeenCalled();
 
     controller.abort();
 
     await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
     expect(teardown).toHaveBeenCalled();
+  });
+
+  it('never sends the request when the parent aborts during the proxy URL lookup', async () => {
+    const subscribe = jest.fn();
+    mockFetch.mockReturnValue(new Observable(subscribe));
+    const controller = new AbortController();
+    const promise = probeProxyGet('tempo', 'api/search', params, PROBE_TIMEOUT_MS, controller.signal);
+
+    controller.abort();
+
+    await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
+    expect(subscribe).not.toHaveBeenCalled();
   });
 
   it('unsubscribes a request still pending at the deadline', async () => {

@@ -20,6 +20,7 @@ import { type BackendSrv, type BackendSrvRequest, type FetchResponse } from '../
 import {
   DataSourceWithBackend,
   getDatasourceHealthUrl,
+  getDatasourceProxyUrl,
   type HealthCheckResult,
   HealthStatus,
   standardStreamOptionsProvider,
@@ -1173,5 +1174,129 @@ describe('getDatasourceHealthUrl', () => {
     arrange();
 
     await expect(getDatasourceHealthUrl('a/b')).resolves.toBe('/api/datasources/uid/a%2Fb/health');
+  });
+});
+
+describe('datasource proxy', () => {
+  const settings = {
+    uid: 'abc',
+    type: 'alias',
+    meta: { id: 'canonical-id' } as DataSourcePluginMeta,
+    jsonData: {},
+  } as DataSourceInstanceSettings;
+  const newProxyUrl = `/apis/canonical-id.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/abc/proxy/api/search`;
+  const legacyProxyUrl = '/api/datasources/proxy/uid/abc/api/search';
+
+  function allowProxy(proxy: string[]) {
+    mockGetObjectValue.mockImplementation((key, defaultValue) =>
+      key === 'datasources.apiserver.fe-allowed-types' ? { health: [], resources: [], proxy } : defaultValue
+    );
+  }
+
+  beforeEach(() => {
+    mockGetDataSourceInstanceSettings.mockReset().mockResolvedValue(settings);
+  });
+
+  afterEach(() => {
+    mockGetObjectValue.mockReturnValue({ types: ['prometheus'] });
+    mockGetDataSourceInstanceSettings.mockReset().mockImplementation(defaultInstanceSettings);
+  });
+
+  describe('getDatasourceProxyUrl', () => {
+    test('uses the legacy URL when the plugin is not in the proxy list', async () => {
+      allowProxy([]);
+
+      await expect(getDatasourceProxyUrl('abc', 'api/search')).resolves.toBe(legacyProxyUrl);
+      expect(mockGetDataSourceInstanceSettings).toHaveBeenCalledWith('abc');
+    });
+
+    test('uses the legacy URL when the flag has no proxy list', async () => {
+      mockGetObjectValue.mockImplementation((key, defaultValue) =>
+        key === 'datasources.apiserver.fe-allowed-types'
+          ? { health: ['canonical-id'], resources: ['canonical-id'] }
+          : defaultValue
+      );
+
+      await expect(getDatasourceProxyUrl('abc', 'api/search')).resolves.toBe(legacyProxyUrl);
+    });
+
+    test('uses the datasource API server proxy subresource, by plugin id, when the plugin is in the proxy list', async () => {
+      allowProxy(['canonical-id']);
+
+      await expect(getDatasourceProxyUrl('abc', 'api/search')).resolves.toBe(newProxyUrl);
+    });
+
+    test.each([true, false])('strips leading slashes from the path (proxy list enabled: %s)', async (enabled) => {
+      allowProxy(enabled ? ['canonical-id'] : []);
+
+      await expect(getDatasourceProxyUrl('abc', '//api/search')).resolves.toBe(enabled ? newProxyUrl : legacyProxyUrl);
+    });
+
+    test('keeps OAuth pass-through datasources on the legacy URL', async () => {
+      allowProxy(['canonical-id']);
+      mockGetDataSourceInstanceSettings.mockResolvedValue({
+        ...settings,
+        jsonData: { oauthPassThru: true },
+      } as DataSourceInstanceSettings);
+
+      await expect(getDatasourceProxyUrl('abc', 'api/search')).resolves.toBe(legacyProxyUrl);
+    });
+
+    test.each([
+      ['fails', () => mockGetDataSourceInstanceSettings.mockRejectedValue(new Error('unavailable'))],
+      ['finds nothing', () => mockGetDataSourceInstanceSettings.mockResolvedValue(undefined)],
+    ])('falls back to the legacy URL when the settings lookup %s', async (_, arrange) => {
+      allowProxy(['canonical-id']);
+      arrange();
+
+      await expect(getDatasourceProxyUrl('a/b', '/api/search')).resolves.toBe(
+        '/api/datasources/proxy/uid/a%2Fb/api/search'
+      );
+    });
+  });
+
+  describe('getProxy and postProxy', () => {
+    const ds = new MyDataSource(settings as DataSourceInstanceSettings<DataSourceJsonData>);
+
+    beforeEach(() => {
+      mockDatasourceRequest.mockReset();
+      mockDatasourceRequest.mockResolvedValue({ data: { ok: true } } as FetchResponse);
+    });
+
+    test('getProxy sends a GET with params and plugin headers on the selected route', async () => {
+      allowProxy(['canonical-id']);
+
+      const data = await ds.getProxy('api/search', { limit: 1 }, { headers: { 'X-Extra': 'yes' } });
+
+      expect(mockDatasourceRequest.mock.calls[0][0]).toMatchObject({
+        url: newProxyUrl,
+        method: 'GET',
+        params: { limit: 1 },
+        headers: { 'X-Extra': 'yes', 'X-Plugin-Id': 'alias', 'X-Datasource-Uid': 'abc' },
+      });
+      expect(data).toEqual({ ok: true });
+    });
+
+    test('postProxy sends a POST with the body and plugin headers on the selected route', async () => {
+      allowProxy([]);
+
+      const data = await ds.postProxy('api/search', { q: 1 });
+
+      expect(mockDatasourceRequest.mock.calls[0][0]).toMatchObject({
+        url: legacyProxyUrl,
+        method: 'POST',
+        data: { q: 1 },
+        headers: { 'X-Plugin-Id': 'alias', 'X-Datasource-Uid': 'abc' },
+      });
+      expect(data).toEqual({ ok: true });
+    });
+
+    test('does not look up settings again, since the instance already has them', async () => {
+      allowProxy([]);
+
+      await ds.getProxy('api/search');
+
+      expect(mockGetDataSourceInstanceSettings).not.toHaveBeenCalled();
+    });
   });
 });

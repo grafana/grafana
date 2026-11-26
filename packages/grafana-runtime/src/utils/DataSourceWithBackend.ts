@@ -125,10 +125,13 @@ function toHealthCheckResult(v: DatasourcesV0HealthCheckResult): HealthCheckResu
 
 /**
  * Whether `endpoint` calls for this datasource go to the datasource API server (`/apis/...`) instead of the
- * legacy `/api/datasources/uid/...` routes. Reads only instance settings, so callers can decide without loading
+ * legacy `/api/datasources/...` routes. Reads only instance settings, so callers can decide without loading
  * the plugin.
  */
-function supportsDatasourceApi(endpoint: 'resources' | 'health', settings: DataSourceInstanceSettings): boolean {
+function supportsDatasourceApi(
+  endpoint: 'resources' | 'health' | 'proxy',
+  settings: DataSourceInstanceSettings
+): boolean {
   // @ts-expect-error featuremgmt/registry.go does not support object feature flags yet
   const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.apiserver.fe-allowed-types', {
     resources: [],
@@ -172,6 +175,29 @@ async function lookupInstanceSettings(uid: string): Promise<DataSourceInstanceSe
 export async function getDatasourceHealthUrl(uid: string): Promise<string> {
   const settings = await lookupInstanceSettings(uid);
   return settings ? buildHealthCheckUrl(settings) : `/api/datasources/uid/${encodeURIComponent(uid)}/health`;
+}
+
+function stripLeadingSlashes(path: string): string {
+  return path.replace(/^\/+/, '');
+}
+
+function buildProxyUrl(settings: DataSourceInstanceSettings, path: string): string {
+  return supportsDatasourceApi('proxy', settings)
+    ? `${datasourceApiBaseUrl(settings)}/proxy/${stripLeadingSlashes(path)}`
+    : `/api/datasources/proxy/uid/${settings.uid}/${stripLeadingSlashes(path)}`;
+}
+
+/**
+ * Datasource HTTP proxy URL for `path` on the datasource `uid`, on the route the datasource API rollout selects.
+ * Needs only the uid, so callers do not have to load the plugin.
+ *
+ * @alpha
+ */
+export async function getDatasourceProxyUrl(uid: string, path: string): Promise<string> {
+  const settings = await lookupInstanceSettings(uid);
+  return settings
+    ? buildProxyUrl(settings, path)
+    : `/api/datasources/proxy/uid/${encodeURIComponent(uid)}/${stripLeadingSlashes(path)}`;
 }
 
 interface PreparedQuery {
@@ -463,6 +489,48 @@ class DataSourceWithBackend<
         headers: options?.headers ? { ...options.headers, ...headers } : headers,
         data: data ?? { ...data },
         url: this.buildResourcesDatasourceUrl(path),
+      })
+    );
+    return result.data;
+  }
+
+  /**
+   * Make a GET request through the datasource HTTP proxy
+   */
+  async getProxy<T = unknown>(
+    path: string,
+    params?: BackendSrvRequest['params'],
+    options?: Partial<BackendSrvRequest>
+  ): Promise<T> {
+    const headers = this.getRequestHeaders();
+    const result = await lastValueFrom(
+      getBackendSrv().fetch<T>({
+        ...options,
+        method: 'GET',
+        headers: options?.headers ? { ...options.headers, ...headers } : headers,
+        params: params ?? options?.params,
+        url: buildProxyUrl(this.datasourceInstanceSettings, path),
+      })
+    );
+    return result.data;
+  }
+
+  /**
+   * Send a POST request through the datasource HTTP proxy
+   */
+  async postProxy<T = unknown>(
+    path: string,
+    data?: BackendSrvRequest['data'],
+    options?: Partial<BackendSrvRequest>
+  ): Promise<T> {
+    const headers = this.getRequestHeaders();
+    const result = await lastValueFrom(
+      getBackendSrv().fetch<T>({
+        ...options,
+        method: 'POST',
+        headers: options?.headers ? { ...options.headers, ...headers } : headers,
+        data,
+        url: buildProxyUrl(this.datasourceInstanceSettings, path),
       })
     );
     return result.data;
