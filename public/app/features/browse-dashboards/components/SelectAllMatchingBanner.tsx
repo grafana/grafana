@@ -2,14 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Stack, Text } from '@grafana/ui';
+import { Button, Text } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { type QueryResponse } from 'app/features/search/service/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { MAX_SELECT_ALL_ITEMS } from '../constants';
-import { setAllSelection, setItemSelectionState } from '../state/slice';
-import { type BrowseDashboardsPermissions } from '../types';
+import { setItemSelectionState } from '../state/slice';
+import { type BrowseDashboardsPermissions, type DashboardTreeSelection } from '../types';
 import { areAllSelected, getSelectableItems } from '../utils/selectAll';
 
 interface Props {
@@ -43,8 +43,6 @@ export function SelectAllMatchingBanner({ result, permissions }: Props) {
   const target = Math.min(totalRows, MAX_SELECT_ALL_ITEMS);
   const isCapped = totalRows > MAX_SELECT_ALL_ITEMS;
 
-  const clearSelection = () => dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
-
   const onSelectAll = async () => {
     setIsLoading(true);
     try {
@@ -73,74 +71,50 @@ export function SelectAllMatchingBanner({ result, permissions }: Props) {
     setIsLoading(false);
   };
 
-  if (extendedResult === result && !(isCapped && view.length > target)) {
-    if (!areAllSelected(getSelectableItems(view, permissions, target), selectedItems)) {
-      return null;
-    }
-
-    return (
-      <BannerRow>
-        <Text>
-          {isCapped
-            ? t(
-                'browse-dashboards.select-all-matching.capped',
-                'The first {{max}} of {{total}} items are selected. Delete or move them and repeat for the rest, or scroll to load everything before selecting.',
-                { max: MAX_SELECT_ALL_ITEMS, total: totalRows }
-              )
-            : t('browse-dashboards.select-all-matching.all-selected', '', {
-                count: totalRows,
-                defaultValue_one: 'The {{count}} item matching this search is selected.',
-                defaultValue_other: 'All {{count}} items matching this search are selected.',
-              })}
-        </Text>
-        <Button variant="primary" fill="text" size="sm" onClick={clearSelection}>
-          {t('browse-dashboards.select-all-matching.clear', 'Clear selection')}
-        </Button>
-      </BannerRow>
-    );
-  }
-
+  const selectedCount = countSelected(selectedItems);
   const loadedItems = getSelectableItems(view, permissions);
-  if (view.length >= totalRows || !areAllSelected(loadedItems, selectedItems)) {
-    return null;
-  }
+  const hasExtended = extendedResult === result;
+  const canOfferSelectAll = !hasExtended && view.length < totalRows && areAllSelected(loadedItems, selectedItems);
 
   return (
-    <BannerRow>
-      <Text>
-        {t('browse-dashboards.select-all-matching.page-selected', '', {
-          count: loadedItems.length,
-          defaultValue_one: '{{count}} item on this page is selected.',
-          defaultValue_other: '{{count}} items on this page are selected.',
+    <>
+      <Text weight="medium">
+        {t('browse-dashboards.select-all-matching.selected-count', '', {
+          count: selectedCount,
+          defaultValue_one: '{{count}} item selected',
+          defaultValue_other: '{{count}} items selected',
         })}
       </Text>
-      <Button
-        variant="primary"
-        fill="text"
-        size="sm"
-        disabled={isLoading}
-        icon={isLoading ? 'spinner' : undefined}
-        onClick={onSelectAll}
-      >
-        {isCapped
-          ? t('browse-dashboards.select-all-matching.select-first', 'Select the first {{max}} of {{total}} items', {
-              max: MAX_SELECT_ALL_ITEMS,
-              total: totalRows,
-            })
-          : t('browse-dashboards.select-all-matching.select-all', '', {
-              count: totalRows,
-              defaultValue_one: 'Select the {{count}} item matching this search',
-              defaultValue_other: 'Select all {{count}} items matching this search',
-            })}
-      </Button>
-    </BannerRow>
+      {canOfferSelectAll && (
+        <Button variant="secondary" disabled={isLoading} icon={isLoading ? 'spinner' : undefined} onClick={onSelectAll}>
+          {isCapped
+            ? t('browse-dashboards.select-all-matching.select-first', 'Select the first {{max}} of {{total}} items', {
+                max: MAX_SELECT_ALL_ITEMS,
+                total: totalRows,
+              })
+            : t('browse-dashboards.select-all-matching.select-all', '', {
+                count: totalRows,
+                defaultValue_one: 'Select the {{count}} item matching this search',
+                defaultValue_other: 'Select all {{count}} items matching this search',
+              })}
+        </Button>
+      )}
+      {hasExtended && isCapped && !canOfferSelectAll && (
+        <Text color="secondary">
+          {t(
+            'browse-dashboards.select-all-matching.capped',
+            'Only the first {{max}} of {{total}} items are selected. Delete or move them and repeat for the rest.',
+            { max: MAX_SELECT_ALL_ITEMS, total: totalRows }
+          )}
+        </Text>
+      )}
+    </>
   );
 }
 
-function BannerRow({ children }: { children: React.ReactNode }) {
+function countSelected(selectedItems: DashboardTreeSelection) {
   return (
-    <Stack justifyContent="center" alignItems="center" gap={1} wrap="wrap">
-      {children}
-    </Stack>
+    Object.values(selectedItems.dashboard).filter(Boolean).length +
+    Object.values(selectedItems.folder).filter(Boolean).length
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -31,6 +31,8 @@ import { SelectedMixResourcesMsgModal } from './SelectedMixResourcesMsgModal';
 
 export interface Props {
   folderDTO?: FolderDTO;
+  /** Extra content shown inline after the action buttons while items are selected */
+  children?: ReactNode;
 }
 
 type BulkSelection = Omit<DashboardTreeSelection, 'panel' | '$all'>;
@@ -46,7 +48,7 @@ interface BulkAction {
   folderUid: string | undefined;
 }
 
-export function BrowseActions({ folderDTO }: Props) {
+export function BrowseActions({ folderDTO, children }: Props) {
   const [bulkAction, setBulkAction] = useState<BulkAction>();
 
   const dispatch = useDispatch();
@@ -169,7 +171,7 @@ export function BrowseActions({ folderDTO }: Props) {
   return (
     <>
       {hasSelection && (
-        <Stack gap={1} data-testid="manage-actions">
+        <Stack gap={1} alignItems="center" data-testid="manage-actions">
           {moveButton}
 
           <Button
@@ -179,6 +181,7 @@ export function BrowseActions({ folderDTO }: Props) {
           >
             <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
           </Button>
+          {children}
         </Stack>
       )}
       {/* The drawer outlives the selection: the job spends it, and the drawer stays open to show

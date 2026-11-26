@@ -64,29 +64,31 @@ function setup(result: QueryResponse, selectedCount = PAGE_SIZE) {
 }
 
 describe('SelectAllMatchingBanner', () => {
-  it('renders nothing when every result is already loaded', () => {
+  it('shows only the selected count when every result is already loaded', () => {
     const { result } = makeResult(PAGE_SIZE);
-    const { container } = setup(result);
+    setup(result);
 
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.getByText('50 items selected')).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('renders nothing when a loaded row is not selected', () => {
+  it('shows only the selected count when a loaded row is not selected', () => {
     const { result } = makeResult(120);
-    const { container } = setup(result, PAGE_SIZE - 1);
+    setup(result, PAGE_SIZE - 1);
 
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.getByText('49 items selected')).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('loads and selects every match when under the cap', async () => {
     const { result, loadMoreItems } = makeResult(120);
     const { user, store } = setup(result);
 
-    expect(screen.getByText('50 items on this page are selected.')).toBeInTheDocument();
+    expect(screen.getByText('50 items selected')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Select all 120 items matching this search' }));
 
     expect(loadMoreItems).toHaveBeenCalledWith(119);
-    expect(await screen.findByText('All 120 items matching this search are selected.')).toBeInTheDocument();
+    expect(await screen.findByText('120 items selected')).toBeInTheDocument();
     expect(Object.values(store.getState().browseDashboards.selectedItems.dashboard).filter(Boolean)).toHaveLength(120);
   });
 
@@ -101,7 +103,7 @@ describe('SelectAllMatchingBanner', () => {
     );
 
     expect(loadMoreItems).toHaveBeenCalledWith(MAX_SELECT_ALL_ITEMS - 1);
-    expect(await screen.findByText(/^The first 500 of 580 items are selected/)).toBeInTheDocument();
+    expect(await screen.findByText(/^Only the first 500 of 580 items are selected/)).toBeInTheDocument();
     expect(Object.values(store.getState().browseDashboards.selectedItems.dashboard).filter(Boolean)).toHaveLength(
       MAX_SELECT_ALL_ITEMS
     );

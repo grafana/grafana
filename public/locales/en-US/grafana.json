@@ -5045,16 +5045,13 @@
       "view-folder": "View folder"
     },
     "select-all-matching": {
-      "all-selected_one": "The {{count}} item matching this search is selected.",
-      "all-selected_other": "All {{count}} items matching this search are selected.",
-      "capped": "The first {{max}} of {{total}} items are selected. Delete or move them and repeat for the rest, or scroll to load everything before selecting.",
-      "clear": "Clear selection",
+      "capped": "Only the first {{max}} of {{total}} items are selected. Delete or move them and repeat for the rest.",
       "load-error": "Failed to load all matching items",
-      "page-selected_one": "{{count}} item on this page is selected.",
-      "page-selected_other": "{{count}} items on this page are selected.",
       "select-all_one": "Select the {{count}} item matching this search",
       "select-all_other": "Select all {{count}} items matching this search",
-      "select-first": "Select the first {{max}} of {{total}} items"
+      "select-first": "Select the first {{max}} of {{total}} items",
+      "selected-count_one": "{{count}} item selected",
+      "selected-count_other": "{{count}} items selected"
     },
     "shared-with-me": "Shared with me",
     "starred-folders": "Starred folders",
