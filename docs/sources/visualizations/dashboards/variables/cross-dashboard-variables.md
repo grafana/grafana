@@ -15,8 +15,6 @@ weight: 150
 
 # Cross-dashboard variables
 
-{{< docs/public-preview product="Cross-dashboard variables" featureFlag="`grafana.dashboardGlobalVariables`" >}}
-
 Unlike variables that are specific to the dashboard in which you build them, you can create _cross-dashboard variables_ for use across multiple dashboards.
 These variables help ensure consistent naming across your organization and eliminate the need to re-create the same variables every time you add a new dashboard.
 
