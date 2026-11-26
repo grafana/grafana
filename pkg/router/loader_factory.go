@@ -141,6 +141,7 @@ func ProvideCloudRoutesLoader(
 			Middleware: append([]backend.HandlerMiddleware{
 				clientmiddleware.NewTracingHeaderMiddleware(),
 				clientmiddleware.NewForwardIDMiddleware(nil),
+				newStackIDMiddleware(),
 			}, settings.Middleware...),
 		},
 		SecureValues:       clients.SecureValues,

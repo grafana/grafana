@@ -20,6 +20,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/spec3"
 
@@ -76,7 +77,7 @@ func TestCloudSettingsRoutes(t *testing.T) {
 			listener, err := net.Listen("tcp", "127.0.0.1:0")
 			require.NoError(t, err)
 			server := grpc.NewServer()
-			v2 := &cloudSettingsPluginServer{calls: make(chan *pluginv2.PluginContext, 10), headers: make(chan string, 10)}
+			v2 := &cloudSettingsPluginServer{calls: make(chan *pluginv2.PluginContext, 10), headers: make(chan string, 10), stackIDs: make(chan []string, 10)}
 			pluginv2.RegisterDiagnosticsServer(server, v2)
 			pluginv2.RegisterResourceServer(server, v2)
 			go func() { _ = server.Serve(listener) }()
@@ -218,6 +219,7 @@ func TestCloudSettingsRoutes(t *testing.T) {
 				for _, sub := range []string{"health", "resources"} {
 					res = serve("GET", root+"/namespaces/"+ns+"/app/instance/"+sub, settingsRequester(ns))
 					require.Equal(t, 200, res.Code, res.Body.String())
+					require.Equal(t, []string{strings.TrimPrefix(ns, "stacks-"), "slug-for-" + ns}, <-v2.stackIDs, "the runner needs the request's stack")
 					call := <-v2.calls
 					require.Equal(t, ns, call.Namespace)
 					require.Equal(t, "example-app", call.PluginId)
@@ -284,14 +286,24 @@ type cloudSettingsPluginServer struct {
 	pluginv2.UnimplementedResourceServer
 	calls   chan *pluginv2.PluginContext
 	headers chan string
+	// stackIDs, when set, receives the stackID and slug metadata as the MT plugin runner reads them.
+	stackIDs chan []string
 }
 
-func (s *cloudSettingsPluginServer) CheckHealth(_ context.Context, req *pluginv2.CheckHealthRequest) (*pluginv2.CheckHealthResponse, error) {
+func (s *cloudSettingsPluginServer) recordStackID(ctx context.Context) {
+	if s.stackIDs != nil {
+		s.stackIDs <- append(metadata.ValueFromIncomingContext(ctx, stackIDMetadataKey), metadata.ValueFromIncomingContext(ctx, slugMetadataKey)...)
+	}
+}
+
+func (s *cloudSettingsPluginServer) CheckHealth(ctx context.Context, req *pluginv2.CheckHealthRequest) (*pluginv2.CheckHealthResponse, error) {
+	s.recordStackID(ctx)
 	s.calls <- req.PluginContext
 	s.headers <- backend.FromProto().CheckHealthRequest(req).GetHTTPHeader("X-Grafana-Id")
 	return &pluginv2.CheckHealthResponse{Status: pluginv2.CheckHealthResponse_OK}, nil
 }
 func (s *cloudSettingsPluginServer) CallResource(req *pluginv2.CallResourceRequest, stream pluginv2.Resource_CallResourceServer) error {
+	s.recordStackID(stream.Context())
 	s.calls <- req.PluginContext
 	s.headers <- backend.FromProto().CallResourceRequest(req).GetHTTPHeader("X-Grafana-Id")
 	return stream.Send(&pluginv2.CallResourceResponse{Code: 200, Body: []byte(req.Path)})

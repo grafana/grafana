@@ -78,6 +78,10 @@ registration uses ST's `apppluginsHandleProxyRequests` feature gate.
 MT supplies only the context and credentials needed for these requests:
 
 - Namespace, requester, and app instance settings in the plugin context.
+- The tenant for the MT plugin runner, as `stackID` gRPC metadata taken from the request's
+  namespace. The runner rejects v2 calls without it ("no tenant ID found"). The per-tenant
+  runner also requires `slug`; the router sends `slug-for-<namespace>` rather than looking
+  up the stack's slug. Non-stack namespaces are rejected before the plugin is called.
 - Existing plugin service-token middleware; the router and enterprise apiserver share its
   audience policy. The new settings path does not derive ID tokens.
 - App access through AuthZ `Check`: get on `plugins.grafana.app/app/<plugin-id>`, which AuthZ
@@ -92,8 +96,8 @@ MT supplies only the context and credentials needed for these requests:
   cross-namespace access requires a matching wildcard namespace on the requester. Proxy roles
   use the shared handler.
 
-No stack-settings lookup, tenant-context middleware, installed-version lookup, or Grafana
-version is introduced into the new path. Existing `pkg/apppluginext` remains available for
+No stack-settings or slug lookup, installed-version lookup, or Grafana version is introduced
+into the new path. Existing `pkg/apppluginext` remains available for
 separate deployments; removing its compatibility machinery is separate work.
 
 ### Shared settings authorization — implemented
