@@ -766,6 +766,10 @@ const (
 	// Resolves and validates users in bulk when setting permissions for many users at once, such as SCIM team membership sync
 	FlagResourcePermissionsBulkUserValidation = "resourcePermissionsBulkUserValidation"
 
+	// FlagResourcePermissionsBulkUserWrites
+	// Writes managed permissions and team memberships for many users in bulk instead of one user at a time, such as for SCIM team membership sync
+	FlagResourcePermissionsBulkUserWrites = "resourcePermissionsBulkUserWrites"
+
 	// FlagKubernetesUsersApi
 	// Enables user APIs in the app platform
 	FlagKubernetesUsersApi = "kubernetesUsersApi"
