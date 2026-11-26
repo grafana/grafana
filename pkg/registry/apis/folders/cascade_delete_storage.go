@@ -381,10 +381,6 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 			"folder", name, "has_contents_deleter", s.contentsDeleter != nil, "dry_run", len(options.DryRun) > 0)
 	}
 
-	// Delete this folder last. NotFound is success for children (idempotent), but the requested
-	// folder keeps its missing-resource error.
-	// TODO: Defer caller-identity execution to a follow-up; retain system execution for
-	// compatibility after the original caller's preflight authorization above.
 	// A terminating folder kept its finalizer through the walk, as the store deletes it once the last
 	// one goes, which would be before its contents were removed. They are gone now, so release it.
 	if len(options.DryRun) == 0 {
@@ -393,7 +389,11 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 		}
 	}
 
-	// The finalizer goes with the delete itself, not the label update, which managed folders restrict.
+	// Delete this folder last. NotFound is success for children (idempotent), but the requested
+	// folder keeps its missing-resource error. The finalizer goes with the delete itself, not the
+	// label update, which managed folders restrict.
+	// TODO: Defer caller-identity execution to a follow-up; retain system execution for
+	// compatibility after the original caller's preflight authorization above.
 	obj, async, err := s.Storage.Delete(withCascadeFinalizerOnDelete(ctx, false), name, rest.ValidateAllObjectFunc, deleteOptions)
 	if apierrors.IsNotFound(err) && !requested {
 		return obj, async, nil
@@ -680,9 +680,7 @@ func (s *cascadeDeleteStorage) checkFolderDeleteAccess(ctx context.Context, user
 
 // markTerminating stamps the terminating label on the folder so the in-progress subtree deletion is
 // observable before its leaves are removed. It honors the delete dry-run so a dry-run folder delete
-// does not actually mutate folders. It also drops the cascade finalizer: this walk deletes the
-// contents itself, and a descendant keeping the finalizer would outlive its parent waiting for the
-// controller.
+// does not actually mutate folders.
 func (s *cascadeDeleteStorage) markTerminating(ctx context.Context, name string, options *metav1.DeleteOptions) error {
 	objInfo := rest.DefaultUpdatedObjectInfo(nil, func(_ context.Context, newObj, oldObj runtime.Object) (runtime.Object, error) {
 		// Updates may retry against a replacement; check the current stored object
