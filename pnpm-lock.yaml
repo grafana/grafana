@@ -1859,7 +1859,7 @@ importers:
         specifier: workspace:*
         version: link:../grafana-e2e-selectors
       '@grafana/plugin-compat':
-        specifier: ^0.12.0
+        specifier: ^0.13.0
         version: link:../grafana-plugin-compat
       '@grafana/plugin-ui':
         specifier: ^0.18.0
@@ -1927,6 +1927,10 @@ importers:
         version: 3.6.2
 
   packages/grafana-plugin-compat:
+    dependencies:
+      rxjs:
+        specifier: ^7.8.2
+        version: 7.8.2
     devDependencies:
       '@grafana/data':
         specifier: workspace:*
