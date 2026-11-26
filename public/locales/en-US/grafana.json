@@ -3355,6 +3355,7 @@
       "button-errors_one": "{{count}} errors",
       "button-errors_other": "{{count}} errors",
       "cloud-rulessource-errors-title-errors-loading-rules": "Errors loading rules",
+      "failed-to-load-data-sources": "Failed to load data sources:",
       "failed-to-load-grafana-rules-config": "Failed to load Grafana rules config:",
       "failed-to-load-grafana-rules-state": "Failed to load Grafana rules state:",
       "failed-to-load-rules-config": "Failed to load rules config from <2>{{dataSource}}</2>",
@@ -6613,6 +6614,10 @@
       "paused": "This dashboard has been paused by the administrator",
       "try-again-later": "Try again later"
     },
+    "quick-edits": {
+      "close": "Close",
+      "presets-unavailable": "No styles to show for this panel's data"
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Are you sure you want to remove this panel?"
@@ -8069,8 +8074,11 @@
       "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "No quick edits for this panel's settings",
       "panels-selected_one": "{{count}} panel selected",
       "panels-selected_other": "{{count}} panels selected",
+      "show-panel-actions": "Back to panel actions",
+      "show-quick-edits": "Quick edits",
       "tooltip-edit-panel-visualization": "Edit visualization",
       "tooltip-panel-settings": "Panel settings"
     },
@@ -11156,6 +11164,9 @@
     "data-link-inline-editor": {
       "one-click": "One click"
     },
+    "data-link-menu-items": {
+      "link": "Link"
+    },
     "data-links-inline-editor": {
       "add-link": "Add link",
       "drag-handle-label": "Reorder data link {{title}}",
@@ -13811,6 +13822,7 @@
       "open": "Main menu",
       "pin-error": "Failed to update pinned menu items",
       "pinned-list-label": "Pinned items",
+      "section-resize": "Resize navigation",
       "undock": "Undock menu"
     },
     "megamenu-item": {
@@ -14009,12 +14021,32 @@
         "undo-label": "Assistant edit"
       }
     },
+    "outline": {
+      "aria-label": "Notebook outline",
+      "pane-header": "Content outline",
+      "search": {
+        "no-results": "No results found for your query"
+      },
+      "tree-item": {
+        "collapse": "Collapse {{label}}",
+        "empty": "(empty)",
+        "expand": "Expand {{label}}",
+        "no-title": "<no title>"
+      },
+      "untitled-panel": "Untitled panel"
+    },
     "panel-changes": {
       "confirm-cancel": "Cancel",
       "confirm-discard": "Discard",
       "confirm-keep": "Keep",
       "confirm-text": "Do you want to keep the changes you made while viewing this notebook?",
       "confirm-title": "Unsaved panel changes"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "Outline",
+        "tooltip": "Content outline"
+      }
     }
   },
   "notebooks": {
@@ -17321,6 +17353,13 @@
       "wide-list": "Wide list",
       "wide-list-desc": "Horizontal, name and value, area sparkline, single color"
     },
+    "quick-edits": {
+      "calculation": "Calculation",
+      "color": "Color",
+      "text": "Text",
+      "text-title-size": "Title size",
+      "text-value-size": "Value size"
+    },
     "suggestions": {
       "stat": "Stat",
       "stat-color-background": "Stat - color background",
@@ -17868,6 +17907,10 @@
       "time-zone-option": "Time zone",
       "time-zone-selection": "Time zone selection"
     },
+    "inline-calendar": {
+      "label": "Calendar",
+      "update-inputs": "Update inputs"
+    },
     "range-content": {
       "apply-button": "Apply time range",
       "default-error": "Enter a date ({{dateExample}}) or relative time ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -17885,6 +17928,12 @@
       "to": "to",
       "zoom-out-button": "Zoom out time range",
       "zoom-out-tooltip-new": "Time range zoom out <br/> t -"
+    },
+    "tabs": {
+      "absolute": "Absolute",
+      "relative": "Relative",
+      "search-label": "Search quick ranges",
+      "search-placeholder": "Type quick ranges e.g. 3h"
     },
     "time-range": {
       "apply": "Apply time range",

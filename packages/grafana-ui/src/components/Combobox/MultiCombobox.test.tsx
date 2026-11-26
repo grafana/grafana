@@ -78,6 +78,33 @@ describe('MultiCombobox', () => {
     expect(screen.getByPlaceholderText('Select')).toBeInTheDocument();
   });
 
+  it('forwards data attributes to the combobox input alongside data-testid', () => {
+    const options = [{ label: 'A', value: 'a' }];
+    render(
+      <MultiCombobox
+        options={options}
+        value={[]}
+        onChange={jest.fn()}
+        data-testid="my-multi-combobox"
+        data-analytics-id="labels_picked"
+      />
+    );
+
+    const input = screen.getByTestId('my-multi-combobox');
+    expect(input).toHaveAttribute('role', 'combobox');
+    expect(input).toHaveAttribute('data-analytics-id', 'labels_picked');
+  });
+
+  it('does not forward props that are not data attributes to the input', () => {
+    const options = [{ label: 'A', value: 'a' }];
+    const spreadProps = { title: 'Spread title', 'data-analytics-id': 'labels_picked' };
+    render(<MultiCombobox options={options} value={[]} onChange={jest.fn()} {...spreadProps} />);
+
+    const input = screen.getByRole('combobox');
+    expect(input).toHaveAttribute('data-analytics-id', 'labels_picked');
+    expect(input).not.toHaveAttribute('title');
+  });
+
   it('should not render with placeholder when options selected', async () => {
     const options = [
       { label: 'A', value: 'a' },

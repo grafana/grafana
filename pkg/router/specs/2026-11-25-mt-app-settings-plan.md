@@ -119,7 +119,8 @@ A successful primary write alone does not prove the secondary write committed.
 ```ini
 [cloud_router]
 plugins_url = https://plugin-manifests.example/plugins
-app_settings_enabled = true
+; Settings roll out per plugin: unset serves none, `*` serves every plugin.
+app_settings_plugins = example-appsdktest-app
 cloudconfig_url = https://cloudconfig.example
 ; cloudconfig_ca_file = /etc/grafana/cloudconfig-ca.pem
 
@@ -131,8 +132,8 @@ token_exchange_url = https://auth.example/token
 Enable the standalone legacy AuthZ client and `authZGRPCServer`. The service credential needs
 the cloudconfig audience and the plugin service audiences it will mint. Incoming callers need
 scope for the requested app operation, plus legacy app access for delegated identities.
-Use `plugins_group_patterns` and namespace visibility to limit rollout. Enable
-`apppluginsHandleProxyRequests` to serve the same declared proxy routes as ST.
+Use `app_settings_plugins` to choose the plugins, and namespace visibility to limit rollout. Enable
+`appplugins.handleProxyRequests` to serve the same declared proxy routes as ST.
 
 Disabling MT settings returns group ownership to an existing lower-priority source if one is
 configured. Such a source is not required while the shared settings backend is enabled.

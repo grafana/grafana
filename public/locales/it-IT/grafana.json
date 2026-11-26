@@ -6613,6 +6613,10 @@
       "paused": "Questa dashboard è stata sospesa dall'amministratore",
       "try-again-later": "Riprova più tardi"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Vuoi davvero rimuovere questo pannello?"
@@ -6740,7 +6744,8 @@
           "title": "Incolla pannello"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "Aggiungi riga",
@@ -8068,6 +8073,9 @@
       "title-delete-all-transformations": "Eliminare tutte le trasformazioni?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_one": "",
@@ -9968,10 +9976,6 @@
       "to": "A",
       "when": "QUANDO"
     },
-    "expression-query-editor": {
-      "helper-text-sql": "Esegui SQL con dialetto MySQL sulle tabelle restituite dalle origini dati. Le query dell'origine dati (ad esempio \"A\", \"B\") sono disponibili come tabelle e sono referenziate tramite il nome della query. I campi sono disponibili come colonne, così come restituiti dall'origine dati.",
-      "label-operation": "Operazione"
-    },
     "math": {
       "available-math-functions": "Funzioni matematiche disponibili",
       "run-math-operations": "Esegui operazioni matematiche su una o più query. Fai riferimento alla query per {{refExample}} ad es. {{ref1}}, {{ref2}}, {{ref3}} ecc.<br/>Esempio: <12>{{example}}</12>",
@@ -10519,6 +10523,25 @@
         "otherGroup": "Altri"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_one": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -11037,6 +11060,11 @@
         "placement-options": {
           "label-bottom": "In basso",
           "label-right": "A destra"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_one": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11132,6 +11160,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "In un click"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "Aggiungi link",
@@ -13788,16 +13819,16 @@
       "open": "Menu principale",
       "pin-error": "Impossibile aggiornare le voci di menu fissate",
       "pinned-list-label": "Elementi fissati",
+      "section-resize": "",
       "undock": "Disancora menu"
     },
     "megamenu-item": {
       "children-error": "Impossibile caricare gli elementi",
+      "children-partial-error": "",
       "collapse-aria-label": "Riduci sezione: {{sectionName}}",
       "expand-aria-label": "Ingrandisci sezione: {{sectionName}}",
       "loading-aria-label": "Caricamento {{sectionName}}",
-      "reorder-aria-label": "Riordina {{itemName}}",
-      "starred-dashboard-icon": "Dashboard",
-      "starred-folder-icon": "Cartella"
+      "reorder-aria-label": "Riordina {{itemName}}"
     },
     "org-switcher": {
       "aria-label": "Cambia organizzazione"
@@ -13987,12 +14018,32 @@
         "undo-label": ""
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "Annulla",
       "confirm-discard": "Ignora",
       "confirm-keep": "Mantieni",
       "confirm-text": "Desideri mantenere le modifiche apportate durante la visualizzazione di questo blocco appunti?",
       "confirm-title": "Modifiche del pannello non salvate"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17299,6 +17350,13 @@
       "wide-list": "Elenco ampio",
       "wide-list-desc": "Orizzontale, nome e valore, grafico sparkline ad area, colore singolo"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "Stat.",
       "stat-color-background": "Stat. – colore sfondo",
@@ -17502,6 +17560,7 @@
     "description-page-size": "Numero di righe per pagina. Quando è vuoto, il formato della pagina si basa sull'altezza del pannello.",
     "description-show-columns-sidebar": "",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "Un campo contenente oggetti JSON con proprietà CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Alterna il colore di sfondo di ogni seconda riga",
@@ -17546,6 +17605,7 @@
     "name-show-columns-sidebar": "",
     "name-show-row-numbers": "",
     "name-show-table-header": "Mostra intestazione tabella",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "Stile dal campo",
     "name-tooltip-from-field": "",
@@ -17844,6 +17904,10 @@
       "time-zone-option": "Fuso orario",
       "time-zone-selection": "Selezione del fuso orario"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "Applica intervallo di tempo",
       "default-error": "Inserisci una data ({{dateExample}}) o un'ora relativa ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -17861,6 +17925,12 @@
       "to": "a",
       "zoom-out-button": "Riduci l'intervallo di tempo",
       "zoom-out-tooltip-new": "Riduci l'intervallo di tempo <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "Applica intervallo di tempo",

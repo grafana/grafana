@@ -21,10 +21,15 @@ import { ASSISTANT_PLUGIN_ID } from 'app/core/constants';
 
 import { dashboardComposerEnabled } from '../scene/dashboardModes';
 
-import { type ComposerEnterRequestOptions, type ComposerResource, type ComposerTarget } from './types';
+import {
+  type ComposerEnterRequest,
+  type ComposerEnterRequestOptions,
+  type ComposerResource,
+  type ComposerTarget,
+} from './types';
 
 /** Returns `false` to decline the request: it then ends at once, and goes to no other listener. */
-type EnterRequestListener = (target: ComposerTarget) => boolean | void;
+type EnterRequestListener = (target: ComposerTarget, request: ComposerEnterRequest) => boolean | void;
 
 const COMPOSER_RESOURCES: readonly ComposerResource[] = ['dashboard', 'notebook'];
 /** What a listener registered without options supports: the plugin then only knows dashboards. */
@@ -47,7 +52,7 @@ let supported: readonly ComposerResource[] = NONE;
  */
 let registered = false;
 /** A dashboard request made before Assistant first registered, held for the first listener (see above). */
-let held: { target: ComposerTarget; at: number } | undefined;
+let held: { target: ComposerTarget; request: ComposerEnterRequest; at: number } | undefined;
 /**
  * The request Composer has not settled yet: from the moment it is made until an entry attempt on it ends,
  * it is cleared, or `PENDING_REQUEST_TTL_MS` passes. What the UI that made it shows as pending.
@@ -102,9 +107,11 @@ export function getSupportedComposerResources(): readonly ComposerResource[] {
 /**
  * Asks Assistant to enter Composer on `target`, if a listener supports its resource; returns whether the
  * request stands (false when nobody supports it, or the listener declined it at once). With `float`, the
- * extension sidebar floats from now until the session takes over or the request ends.
+ * extension sidebar floats from now until the session takes over or the request ends. With `assistantEdit`, it is
+ * for the Assistant's own edit, which Grafana opened in Editing.
  */
-export function requestComposerEnter(target: ComposerTarget, { float = false } = {}): boolean {
+export function requestComposerEnter(target: ComposerTarget, { float = false, assistantEdit = false } = {}): boolean {
+  const request: ComposerEnterRequest = { assistantEdit };
   const listener = [...listeners].find(([, resources]) => resources.has(target.resource))?.[0];
   const hold = !listener && !registered && getSupportedComposerResources().includes(target.resource);
   if (!listener && !hold) {
@@ -118,10 +125,10 @@ export function requestComposerEnter(target: ComposerTarget, { float = false } =
   }
   notifyChange();
   if (!listener) {
-    held = { target, at: Date.now() };
+    held = { target, request, at: Date.now() };
     return true;
   }
-  return offer(listener, target);
+  return offer(listener, target, request);
 }
 
 /**
@@ -218,7 +225,7 @@ function deliverHeldRequest(listener: EnterRequestListener, resources: ReadonlyS
     clearPendingComposerEnterRequest();
     return;
   }
-  offer(listener, request.target);
+  offer(listener, request.target, request.request);
 }
 
 /**
@@ -227,8 +234,8 @@ function deliverHeldRequest(listener: EnterRequestListener, resources: ReadonlyS
  * Anything else leaves it outstanding until an entry attempt settles it or it expires. Returns whether the
  * request stands.
  */
-function offer(listener: EnterRequestListener, target: ComposerTarget): boolean {
-  if (listener(target) !== false) {
+function offer(listener: EnterRequestListener, target: ComposerTarget, request: ComposerEnterRequest): boolean {
+  if (listener(target, request) !== false) {
     return true;
   }
   if (outstanding?.target === target) {
