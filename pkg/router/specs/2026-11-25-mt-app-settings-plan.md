@@ -80,10 +80,13 @@ MT supplies only the context and credentials needed for these requests:
 - Namespace, requester, and app instance settings in the plugin context.
 - Existing plugin service-token middleware; the router and enterprise apiserver share its
   audience policy. The new settings path does not derive ID tokens.
-- Remote legacy RBAC for app access and proxy `reqAction` checks. Incoming token scopes and
-  namespace restrictions are checked before execution, including for Grafana admins;
-  cross-namespace access requires a matching wildcard namespace on the requester.
-  Proxy roles use the shared handler.
+- App access through AuthZ `Check`: get on `plugins.grafana.app/app/<plugin-id>`, which AuthZ
+  maps to `plugins.app:access` on `plugins:id:<plugin-id>`, the check unified storage makes for
+  app settings. Access policies are decided by their token permissions alone; a user's delegated
+  token permissions do not narrow app access. Proxy `reqAction` checks still use the remote
+  legacy check, since `Check` has no mapping for plugin-defined actions. Namespace restrictions
+  are checked before execution, including for Grafana admins; cross-namespace access requires a
+  matching wildcard namespace on the requester. Proxy roles use the shared handler.
 
 No stack-settings lookup, tenant-context middleware, installed-version lookup, or Grafana
 version is introduced into the new path. Existing `pkg/apppluginext` remains available for
@@ -94,6 +97,22 @@ separate deployments; removing its compatibility machinery is separate work.
 Handle OBO credentials in the plugin client alongside token exchange. Decide the audience and
 scope for backend calls, and cover health, resources, and proxy behavior there. This PR does
 not add access-token forwarding or header manipulation to the settings handlers or proxy.
+
+### Follow-up: AuthZ Check for app access everywhere in MT — open
+
+Do this once user calls to MT settings subresources pass with `Check`, for example
+`/apis/example-appsdktest-app/v0alpha1/namespaces/<stack>/app/instance/resources/clients`.
+Separate PR from the settings switch.
+
+- MT v3 manifest routes still check app access with `NewAppAccessChecker` over the remote
+  legacy check (`PluginBackend.Load` in `plugin.go`). Give the cloud loader one app-access
+  checker in `PluginDependencies`, used by both settings and manifest routes, built on
+  `cloudSettingsAccessChecker`. ST keeps `NewAppAccessChecker`.
+- Decide the proxy `reqAction` path: a `Check` mapping for plugin-defined actions on
+  `plugins:id:<plugin-id>`, or keep the legacy RPC for that alone. Once nothing else uses it,
+  the cloud loader can drop `LegacyAccess`.
+- Zanzana has no `plugins.grafana.app` model. `Check` works while RBAC answers that group,
+  which holds with RBAC primary or a rollout that does not list it.
 
 ### 4. Add writes and dual write — next
 
@@ -129,9 +148,10 @@ token = <service credential>
 token_exchange_url = https://auth.example/token
 ```
 
-Enable the standalone legacy AuthZ client and `authZGRPCServer`. The service credential needs
-the cloudconfig audience and the plugin service audiences it will mint. Incoming callers need
-scope for the requested app operation, plus legacy app access for delegated identities.
+Enable the standalone AuthZ client and `authZGRPCServer`; proxy `reqAction` checks also need
+the legacy AuthZ client. The service credential needs the cloudconfig audience and the plugin
+service audiences it will mint. Access-policy callers need token permissions for the requested
+app operation; users need `plugins.app:access`, which Viewers have by default.
 Use `app_settings_plugins` to choose the plugins, and namespace visibility to limit rollout. Enable
 `appplugins.handleProxyRequests` to serve the same declared proxy routes as ST.
 
