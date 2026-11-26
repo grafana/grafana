@@ -168,6 +168,45 @@ describe('Unified Storage Searcher', () => {
     expect(offsets).toEqual(['0', '1']);
   });
 
+  it('stops fetching when a later page reports the loaded row count as the total', async () => {
+    const offsets: string[] = [];
+    server.use(
+      http.get(searchRoute, ({ request }) => {
+        const params = new URL(request.url).searchParams;
+        if (params.get('query') !== 'dashboard') {
+          return HttpResponse.json({ totalHits: 0, hits: [] });
+        }
+
+        const offset = params.get('offset') ?? '0';
+        offsets.push(offset);
+        switch (offset) {
+          case '0':
+            return HttpResponse.json({
+              totalHits: 3,
+              hits: [{ name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboards' }],
+            });
+          case '1':
+            return HttpResponse.json({
+              totalHits: 2,
+              hits: [{ name: 'dashboard2', title: 'Dashboard 2', resource: 'dashboards' }],
+            });
+          default:
+            return HttpResponse.json({ totalHits: 2, hits: [] });
+        }
+      })
+    );
+
+    const response = await new UnifiedSearcher().search({ query: 'dashboard', limit: 1 });
+    expect(response.totalRows).toBe(3);
+
+    await response.loadMoreItems(2);
+    await response.loadMoreItems(2);
+
+    expect(response.totalRows).toBe(2);
+    expect(response.view.get(1).title).toBe('Dashboard 2');
+    expect(offsets).toEqual(['0', '1']);
+  });
+
   it('should filter search results by ownerReference', async () => {
     server.use(
       getCustomSearchHandler([

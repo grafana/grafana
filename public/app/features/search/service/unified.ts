@@ -206,6 +206,11 @@ export class UnifiedSearcher implements GrafanaSearcher {
         // and won't be accessible by doing `view.get(0).newField` for example
         appendFrame(view.dataFrame, frame);
 
+        // When the loaded rows reach the latest total, there is no need to probe for an empty page.
+        if (resp.totalHits === view.dataFrame.length) {
+          meta.count = view.dataFrame.length;
+        }
+
         // Add all the location lookup info
         const submeta = frame.meta?.custom;
         if (submeta?.locationInfo && meta) {
