@@ -6613,6 +6613,10 @@
       "paused": "Ezt az irányítópultot az adminisztrátor felfüggesztette",
       "try-again-later": "Próbálkozzon újra később"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Biztosan törölni szeretné ezt a panelt?"
@@ -8069,6 +8073,9 @@
       "title-delete-all-transformations": "Törli az összes transzformációt?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_one": "",
@@ -10516,6 +10523,25 @@
         "otherGroup": "Egyebek"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_one": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -11034,6 +11060,11 @@
         "placement-options": {
           "label-bottom": "Lent",
           "label-right": "Jobbra"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_one": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11129,6 +11160,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "Egy kattintás"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "Hivatkozás hozzáadása",
@@ -13785,6 +13819,7 @@
       "open": "Főmenü",
       "pin-error": "A kitűzött menüelemek frissítése nem sikerült",
       "pinned-list-label": "Kitűzött elemek",
+      "section-resize": "",
       "undock": "Menü dokkolásának feloldása"
     },
     "megamenu-item": {
@@ -13983,12 +14018,32 @@
         "undo-label": "Asszisztens szerkesztése"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "Mégse",
       "confirm-discard": "Elvetés",
       "confirm-keep": "Megtartás",
       "confirm-text": "Megtartja a jegyzetfüzet megtekintése során végzett módosításokat?",
       "confirm-title": "Nem mentett panelmódosítások"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17295,6 +17350,13 @@
       "wide-list": "Széles lista",
       "wide-list-desc": "Vízszintes, név és érték, területi értékgörbe, egyszínű"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "Statisztika",
       "stat-color-background": "Statisztika – színes háttér",
@@ -17842,6 +17904,10 @@
       "time-zone-option": "Időzóna",
       "time-zone-selection": "Az időzóna kijelölése"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "Időtartomány alkalmazása",
       "default-error": "Adjon meg egy dátumot ({{dateExample}}) vagy relatív időt ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -17859,6 +17925,12 @@
       "to": "vége",
       "zoom-out-button": "Időtartomány kicsinyítése",
       "zoom-out-tooltip-new": "Időtartomány kicsinyítése <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "Időtartomány alkalmazása",

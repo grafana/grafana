@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
+import { useRulesSourceDataSources } from '@grafana/alerting/internal';
 import { config } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -9,7 +10,19 @@ import { getRulesDataSources } from '../utils/datasource';
 
 import { useDataSourcesForRules } from './useDataSourcesForRules';
 
+jest.mock('@grafana/alerting/internal', () =>
+  jest.requireActual('test/helpers/partialMock').partialMock(jest.requireActual('@grafana/alerting/internal'), {
+    useRulesSourceDataSources: jest.fn(),
+  })
+);
+
 const originalToggle = config.defaultDatasourceManageAlertsUiToggle;
+
+beforeEach(() => {
+  jest
+    .mocked(useRulesSourceDataSources)
+    .mockImplementation(jest.requireActual('@grafana/alerting/internal').useRulesSourceDataSources);
+});
 
 afterEach(() => {
   config.defaultDatasourceManageAlertsUiToggle = originalToggle;
@@ -69,5 +82,38 @@ describe('useDataSourcesForRules', () => {
 
     expect(result.current).toEqual({ items: [], isLoading: true, error: undefined });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
+  });
+
+  describe('when the list fails to load', () => {
+    const listError = new Error('Failed to fetch');
+
+    beforeEach(() => {
+      jest.mocked(useRulesSourceDataSources).mockReturnValue({ items: [], isLoading: false, error: listError });
+    });
+
+    it('returns the error to a user who can view data source-managed rules', () => {
+      grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
+
+      const { result } = renderHook(() => useDataSourcesForRules());
+
+      expect(result.current).toEqual({ items: [], isLoading: false, error: listError });
+    });
+
+    it('returns no error to a user who cannot view or create data source-managed rules', () => {
+      grantUserPermissions([AccessControlAction.AlertingRuleRead]);
+
+      const { result } = renderHook(() => useDataSourcesForRules());
+
+      expect(result.current).toEqual({ items: [], isLoading: false });
+    });
+  });
+
+  it('returns no loading state to a user who cannot view or create data source-managed rules', () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleRead]);
+    jest.mocked(useRulesSourceDataSources).mockReturnValue({ items: [], isLoading: true });
+
+    const { result } = renderHook(() => useDataSourcesForRules());
+
+    expect(result.current).toEqual({ items: [], isLoading: false });
   });
 });

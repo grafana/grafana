@@ -14,6 +14,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/server/healthz"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -102,6 +103,11 @@ type APIGroupManifestProvider interface {
 type APIGroupPostStartHookProvider interface {
 	// GetPostStartHooks returns a list of functions that will be called after the server has started
 	GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error)
+}
+
+type APIGroupReadyzCheckProvider interface {
+	// GetReadyzChecks returns checks that must pass before the server reports ready on /readyz
+	GetReadyzChecks() []healthz.HealthChecker
 }
 
 type APIGroupOptions struct {
