@@ -2,16 +2,16 @@ package provisioning
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
-	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/prometheus/client_golang/prometheus"
 	clientrest "k8s.io/client-go/rest"
 
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
+	"github.com/grafana/grafana/pkg/infra/nats"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobqueue"
@@ -30,9 +30,11 @@ var _ registry.CanBeDisabled = (*JobQueueService)(nil)
 // JobQueueService runs the provisioning job driver in the Grafana process once
 // the provisioning API is served, and processes jobs until shutdown.
 type JobQueueService struct {
-	services.NamedService
+	*loopbackService
 
-	builder            *APIBuilder
+	subscriber         nats.Subscriber
+	registry           prometheus.Registerer
+	tracer             tracing.Tracer
 	screenshotRenderer pullrequest.ScreenshotRenderer
 	pullRequestURLs    pullrequest.URLProvider
 	cfg                jobqueue.Config
@@ -44,6 +46,9 @@ type JobQueueService struct {
 func ProvideJobQueueService(
 	cfg *setting.Cfg,
 	builder *APIBuilder,
+	subscriber nats.Subscriber,
+	registry prometheus.Registerer,
+	tracer tracing.Tracer,
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
 ) *JobQueueService {
@@ -57,66 +62,41 @@ func ProvideJobQueueService(
 	}
 
 	s := &JobQueueService{
-		builder:            builder,
+		subscriber:         subscriber,
+		registry:           registry,
+		tracer:             tracer,
 		screenshotRenderer: pullrequest.NewScreenshotRenderer(renderer, blobstore),
 		pullRequestURLs:    pullrequest.URLsFromConfig(cfg),
 		cfg: jobqueue.Config{
 			ConcurrentDrivers: 3,
 			MaxJobTimeout:     20 * time.Minute,
 			JobInterval:       jobPollInterval,
-			// Renew the lease well before it expires. Using jobClaimExpiry as
+			// Renew the lease well before it expires. Using jobs.ClaimExpiry as
 			// the renewal interval would schedule the single renewal at the
 			// exact moment the claim goes stale, so any delay (GC pause,
 			// apiserver blip) lets the cleanup controller reap a job that is
 			// still running and risks duplicate execution. A third of the
 			// expiry gives three renewal attempts before the claim is
 			// considered abandoned.
-			LeaseRenewalInterval: jobClaimExpiry / 3,
+			LeaseRenewalInterval: jobs.ClaimExpiry / 3,
 			MaxSyncWorkers:       10,
 			MaxFileSize:          cfg.ProvisioningMaxFileSize,
 			SyncResourceTimeout:  cfg.ProvisioningSyncResourceTimeout,
 			AllowImageRendering:  cfg.ProvisioningAllowImageRendering,
 		},
 	}
-	s.NamedService = services.NewBasicService(nil, s.running, nil).WithName(JobQueueServiceName)
+	s.loopbackService = newLoopbackService(JobQueueServiceName, builder, s.runController)
 	return s
 }
 
-// IsDisabled implements registry.CanBeDisabled.
-func (s *JobQueueService) IsDisabled() bool {
-	return s.builder == nil || s.builder.onlyApiServer
-}
-
-// Run implements registry.BackgroundService.
-func (s *JobQueueService) Run(ctx context.Context) error {
-	if err := s.StartAsync(ctx); err != nil {
-		return err
-	}
-	return s.AwaitTerminated(context.Background())
-}
-
-func (s *JobQueueService) running(ctx context.Context) error {
-	// Job claims, status patches and repository status patches carry the
-	// provisioning requester. A routed config would send them through the
-	// router, which strips the loopback credentials before a remote backend.
-	restConfig, err := s.builder.awaitLoopbackConfig(ctx)
-	if err == nil {
-		err = s.runQueue(ctx, restConfig)
-	}
-	if errors.Is(err, context.Canceled) && ctx.Err() != nil {
-		return nil
-	}
-	return err
-}
-
-func (s *JobQueueService) runQueue(ctx context.Context, restConfig *clientrest.Config) error {
+func (s *JobQueueService) runController(ctx context.Context, restConfig *clientrest.Config) error {
 	client, err := clientset.NewForConfig(restConfig)
 	if err != nil {
 		return fmt.Errorf("create provisioning clientset: %w", err)
 	}
 
 	b := s.builder
-	store, err := jobs.NewJobStore(client.ProvisioningV0alpha1(), jobClaimExpiry, b.registry)
+	store, err := jobs.NewJobStore(client.ProvisioningV0alpha1(), jobs.ClaimExpiry, s.registry)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
@@ -127,7 +107,7 @@ func (s *JobQueueService) runQueue(ctx context.Context, restConfig *clientrest.C
 
 	queue, err := jobqueue.ProvideJobQueue(s.cfg, jobqueue.Dependencies{
 		Client:              client,
-		Subscriber:          b.natsSubscriber,
+		Subscriber:          s.subscriber,
 		Clients:             b.clients,
 		RepositoryResources: b.repositoryResources,
 		ResourceLister:      b.resourceLister,
@@ -135,16 +115,14 @@ func (s *JobQueueService) runQueue(ctx context.Context, restConfig *clientrest.C
 		Store:               store,
 		RepoGetter:          resources.NewRepositoryGetter(b.repoFactory, client.ProvisioningV0alpha1()),
 		HistoryWriter:       historyWriter,
-		Tracer:              b.tracer,
-		Registry:            b.registry,
+		Tracer:              s.tracer,
+		Registry:            s.registry,
 		PerformanceEnabled:  performanceEnabled,
 		ScreenshotRenderer:  s.screenshotRenderer,
 		PullRequestURLs:     s.pullRequestURLs,
-		ExtraWorkers:        b.extraWorkers,
 	})
 	if err != nil {
 		return err
 	}
-	logging.DefaultLogger.Info("starting provisioning job queue", "drivers", s.cfg.ConcurrentDrivers)
 	return queue.Run(ctx)
 }

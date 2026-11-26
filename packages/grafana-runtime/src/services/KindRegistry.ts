@@ -1,3 +1,5 @@
+import { upperFirst } from 'lodash';
+
 import { type IconName, type ThemeVizHue } from '@grafana/data';
 
 export interface KindLabelOptions {
@@ -6,6 +8,17 @@ export interface KindLabelOptions {
    * gives the label as it reads inside a sentence.
    */
   upperFirst?: boolean;
+}
+
+/**
+ * Builds a kind's `getLabel` or `getPluralLabel` from the label as it reads inside a sentence:
+ * `kindLabel(() => t('my-app.kinds.report', 'report'))`. A title uppercases only the first letter,
+ * which is safe in every language. Lowercasing a title is not: German capitalizes every noun, so
+ * "Ordner" would become the misspelled "ordner". `translate` runs on each read, so the label
+ * translates at render, not when the kind is declared.
+ */
+export function kindLabel(translate: () => string): (options?: KindLabelOptions) => string {
+  return ({ upperFirst: upper = true }: KindLabelOptions = {}) => (upper ? upperFirst(translate()) : translate());
 }
 
 /** How Grafana names, draws and links one kind of object. */
@@ -25,7 +38,7 @@ export interface KindInfo {
   readonly folderScoped: boolean;
   /**
    * Translated name: "Dashboard", or "dashboard" as it reads inside a sentence with `upperFirst: false`.
-   * Ask for the form you need instead of changing the case of a label.
+   * Ask for the form you need instead of changing the case of a label. {@link kindLabel} builds one.
    */
   readonly getLabel: (options?: KindLabelOptions) => string;
   /** The plural of `getLabel`: "Dashboards". */
@@ -38,9 +51,10 @@ export interface KindInfo {
   readonly iconColor?: ThemeVizHue['shades'][number]['name'];
   /**
    * Builds the path of the page for one object from its `metadata.name`, without the app sub path.
+   * `title` is the object's title where the caller knows it, for a kind whose paths carry one.
    * Absent when the kind has no page for a single object.
    */
-  readonly getRoute?: (name: string) => string;
+  readonly getRoute?: (name: string, title?: string) => string;
 }
 
 /** The key each of Grafana's own kinds has in {@link KindRegistry.coreKinds}. */

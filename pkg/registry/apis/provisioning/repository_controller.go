@@ -2,24 +2,35 @@ package provisioning
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
-	"github.com/grafana/dskit/services"
+	"github.com/prometheus/client_golang/prometheus"
 	clientrest "k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/cache"
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/nats"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
+// repoControllerWorkers is the worker count of the repository and connection controllers.
+const repoControllerWorkers = 1
+
 const defaultWebhookSecretRotationInterval = 30 * 24 * time.Hour
+
+// controllerResyncInterval is the informer re-list interval of the repository
+// and connection controllers, from [provisioning] resync_interval.
+func controllerResyncInterval(cfg *setting.Cfg) time.Duration {
+	if cfg.ProvisioningControllerResyncInterval <= 0 {
+		return setting.ProvisioningControllerResyncIntervalDefault
+	}
+	return cfg.ProvisioningControllerResyncInterval
+}
 
 // RepositoryControllerServiceName is the background-service module name of
 // [RepositoryControllerService].
@@ -28,52 +39,48 @@ const RepositoryControllerServiceName = "provisioning-repository-controller"
 // RepositoryControllerService runs the repository controller in the Grafana
 // process once the provisioning API is served.
 type RepositoryControllerService struct {
-	services.NamedService
+	*loopbackService
 
-	builder *APIBuilder
-	run     func(ctx context.Context, restConfig *clientrest.Config) error
+	subscriber                    nats.Subscriber
+	registry                      prometheus.Registerer
+	tracer                        tracing.Tracer
+	unified                       resource.ResourceClient
+	informerMetrics               *InformerMetrics
+	resyncInterval                time.Duration
+	webhookSecretRotationInterval time.Duration
 }
 
 // ProvideRepositoryControllerService is called by Wire. Depending on the
 // builder orders it after [RegisterAPIService], which registers the
 // provisioning API group with the API server.
-func ProvideRepositoryControllerService(builder *APIBuilder) *RepositoryControllerService {
-	s := &RepositoryControllerService{builder: builder}
-	s.run = s.runController
-	s.NamedService = services.NewBasicService(nil, s.running, nil).WithName(RepositoryControllerServiceName)
+func ProvideRepositoryControllerService(
+	cfg *setting.Cfg,
+	builder *APIBuilder,
+	bootstrap *BootstrapService,
+	subscriber nats.Subscriber,
+	registry prometheus.Registerer,
+	tracer tracing.Tracer,
+	unified resource.ResourceClient,
+	informerMetrics *InformerMetrics,
+) *RepositoryControllerService {
+	webhookSecretRotationInterval := cfg.ProvisioningWebhookSecretRotationInterval
+	if webhookSecretRotationInterval <= 0 {
+		webhookSecretRotationInterval = defaultWebhookSecretRotationInterval
+	}
+	s := &RepositoryControllerService{
+		subscriber:                    subscriber,
+		registry:                      registry,
+		tracer:                        tracer,
+		unified:                       unified,
+		informerMetrics:               informerMetrics,
+		resyncInterval:                controllerResyncInterval(cfg),
+		webhookSecretRotationInterval: webhookSecretRotationInterval,
+	}
+	s.loopbackService = newLoopbackService(RepositoryControllerServiceName, builder, s.runController)
+	// A changed or cleared bootstrap_path must be applied before the
+	// controller syncs the repository it replaces.
+	s.waitFor = bootstrap.Done()
 	return s
-}
-
-// IsDisabled implements registry.CanBeDisabled.
-func (s *RepositoryControllerService) IsDisabled() bool {
-	return s.builder == nil || s.builder.onlyApiServer
-}
-
-// Run implements registry.BackgroundService.
-func (s *RepositoryControllerService) Run(ctx context.Context) error {
-	if err := s.StartAsync(ctx); err != nil {
-		return err
-	}
-	return s.AwaitTerminated(context.Background())
-}
-
-func (s *RepositoryControllerService) running(ctx context.Context) error {
-	// Status patches and job writes carry the provisioning requester, so a
-	// routed config would send them through the router, which strips the
-	// loopback credentials before a remote backend.
-	restConfig, err := s.builder.awaitLoopbackConfig(ctx)
-	if err == nil {
-		// A changed or cleared bootstrap_path must be applied before the
-		// controller syncs the repository it replaces.
-		err = s.builder.awaitBootstrapReconciled(ctx)
-	}
-	if err == nil {
-		err = s.run(ctx, restConfig)
-	}
-	if errors.Is(err, context.Canceled) && ctx.Err() != nil {
-		return nil
-	}
-	return err
 }
 
 func (s *RepositoryControllerService) runController(ctx context.Context, restConfig *clientrest.Config) error {
@@ -83,52 +90,31 @@ func (s *RepositoryControllerService) runController(ctx context.Context, restCon
 	}
 
 	b := s.builder
-	jobStore, err := jobs.NewJobStore(client.ProvisioningV0alpha1(), jobClaimExpiry, b.registry)
-	if err != nil {
-		return fmt.Errorf("create API client job store: %w", err)
-	}
-	statusPatcher := appcontroller.NewRepositoryStatusPatcher(client.ProvisioningV0alpha1())
-	healthChecker := controller.NewRepositoryHealthChecker(statusPatcher, repository.NewTester(b.repoValidator), controller.NewHealthMetricsRecorder(b.registry))
-
-	webhookSecretRotationInterval := b.webhookSecretRotationInterval
-	if webhookSecretRotationInterval <= 0 {
-		webhookSecretRotationInterval = defaultWebhookSecretRotationInterval
-	}
-
-	repoKeys := keysapi.NewGRPCLister(b.unified, provisioningapis.RepositoryResourceInfo.GroupVersionResource())
-	relistProjectionMetrics, freshnessMetrics := b.informerMetrics()
-	repoController, source, hasSynced, err := controller.ProvideRepositoryController(controller.RepositoryControllerDeps{
+	relistProjectionMetrics, freshnessMetrics := s.informerMetrics.get()
+	repoController, err := controller.ProvideRepositoryController(controller.RepositoryControllerDeps{
 		ProvisioningClient:            client,
-		NATSSubscriber:                b.natsSubscriber,
-		KeysLister:                    repoKeys,
+		NATSSubscriber:                s.subscriber,
+		KeysLister:                    keysapi.NewGRPCLister(s.unified, provisioningapis.RepositoryResourceInfo.GroupVersionResource()),
 		RelistProjectionMetrics:       relistProjectionMetrics,
 		FreshnessMetrics:              freshnessMetrics,
+		HealthMetrics:                 controller.NewHealthMetricsRecorder(s.registry),
 		RepoFactory:                   b.repoFactory,
 		ConnectionFactory:             b.connectionFactory,
 		ResourceLister:                b.resourceLister,
 		Clients:                       b.clients,
-		Jobs:                          jobStore,
-		HealthChecker:                 healthChecker,
-		StatusPatcher:                 statusPatcher,
+		Validator:                     b.repoValidator,
 		QuotaGetter:                   b.quotaGetter,
 		IncrementalPolicy:             b.incrementalPolicy,
-		Registry:                      b.registry,
-		Tracer:                        b.tracer,
+		Registry:                      s.registry,
+		Tracer:                        s.tracer,
 		ParallelOperations:            10,
-		ResyncInterval:                b.resyncInterval(),
+		ResyncInterval:                s.resyncInterval,
 		MinSyncInterval:               b.minSyncInterval,
 		DrainTimeout:                  30 * time.Second,
-		WebhookSecretRotationInterval: webhookSecretRotationInterval,
+		WebhookSecretRotationInterval: s.webhookSecretRotationInterval,
 	})
 	if err != nil {
 		return err
 	}
-	go source.Run(ctx.Done())
-
-	if !cache.WaitForCacheSync(ctx.Done(), hasSynced) {
-		repoController.ShutDownQueue()
-		return fmt.Errorf("repository controller informer cache sync failed: %w", context.Cause(ctx))
-	}
-	repoController.Run(ctx, repoControllerWorkers, func() {}, func() {})
-	return nil
+	return repoController.Run(ctx, repoControllerWorkers, func() {}, func() {})
 }

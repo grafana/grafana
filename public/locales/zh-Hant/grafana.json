@@ -6563,6 +6563,10 @@
       "paused": "管理員已暫停此儀表板",
       "try-again-later": "稍後再試"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "確定要刪除這個面板嗎？"
@@ -8012,6 +8016,9 @@
       "title-delete-all-transformations": "是否要刪除所有轉換？"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_other": ""
@@ -10432,6 +10439,24 @@
         "otherGroup": "其他"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -10949,6 +10974,10 @@
         "placement-options": {
           "label-bottom": "底部",
           "label-right": "靠右"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11044,6 +11073,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "一鍵"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "新增連結",
@@ -13678,6 +13710,7 @@
       "open": "主選單",
       "pin-error": "無法更新已釘選的選單項目",
       "pinned-list-label": "釘選項目",
+      "section-resize": "",
       "undock": "取消快速存取功能表"
     },
     "megamenu-item": {
@@ -13871,12 +13904,32 @@
         "undo-label": "助理編輯"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "取消",
       "confirm-discard": "捨棄",
       "confirm-keep": "保留",
       "confirm-text": "要保留您在檢視此筆記本時所做的變更嗎？",
       "confirm-title": "未儲存的面板變更"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17153,6 +17206,13 @@
       "wide-list": "寬版清單",
       "wide-list-desc": "水平，名稱和數值，區域迷你圖，單色"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "統計資料",
       "stat-color-background": "統計資料 - 顏色背景",
@@ -17698,6 +17758,10 @@
       "time-zone-option": "時區",
       "time-zone-selection": "時區選擇"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "套用時間範圍",
       "default-error": "輸入日期 ({{dateExample}}) 或相對時間（{{relativeTimeExample1}}，{{relativeTimeExample2}}）",
@@ -17715,6 +17779,12 @@
       "to": "至",
       "zoom-out-button": "縮小時間範圍",
       "zoom-out-tooltip-new": "時間範圍縮小 <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "套用時間範圍",
