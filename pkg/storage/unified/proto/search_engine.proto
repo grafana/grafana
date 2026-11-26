@@ -19,17 +19,24 @@ service SearchEngine {
   // or verifies that it was created for this scope.
   rpc EnsureIndex(EnsureIndexRequest) returns (google.protobuf.Empty);
   // Applies one batch of distinct document keys. Success means its effects are visible to search.
-  // Submit batches sequentially. On failure some items may already have been applied.
+  // An error, including a deadline, can leave some or all writes applied.
+  // Replay of an identical batch is safe once earlier attempts have finished,
+  // provided no later batch has been sent. Do not send later batches or advance
+  // the write checkpoint until the batch succeeds. If the outcome cannot be
+  // resolved, rebuild into a fresh generation.
   rpc WriteDocuments(WriteDocumentsRequest) returns (google.protobuf.Empty);
 }
 
 message EnsureIndexRequest {
+  // Must identify exactly one index generation.
   IndexScope index_scope = 1;
   // Do not reuse an index from a previous build without a saved checkpoint.
   bool require_new = 2;
 }
 
 message WriteDocumentsRequest {
+  // Must identify exactly one index generation. Every key must match the
+  // namespace, group, and resource in this scope.
   IndexScope index_scope = 1;
   // Describes how to decode app-defined values in this batch, not how to index them.
   repeated resource.ResourceSearchField fields = 2;
@@ -39,8 +46,9 @@ message WriteDocumentsRequest {
 message DocumentWrite {
   resource.ResourceKey key = 1;
   oneof action {
+    // Replaces the document at this key.
     SearchDocument upsert = 2;
-    // Hard delete: removes the document without adding a trash entry.
+    // Hard delete: does not add a trash entry and succeeds for a missing key.
     google.protobuf.Empty delete = 3;
   }
 }

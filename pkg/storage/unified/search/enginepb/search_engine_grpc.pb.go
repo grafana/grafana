@@ -39,7 +39,11 @@ type SearchEngineClient interface {
 	// or verifies that it was created for this scope.
 	EnsureIndex(ctx context.Context, in *EnsureIndexRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Applies one batch of distinct document keys. Success means its effects are visible to search.
-	// Submit batches sequentially. On failure some items may already have been applied.
+	// An error, including a deadline, can leave some or all writes applied.
+	// Replay of an identical batch is safe once earlier attempts have finished,
+	// provided no later batch has been sent. Do not send later batches or advance
+	// the write checkpoint until the batch succeeds. If the outcome cannot be
+	// resolved, rebuild into a fresh generation.
 	WriteDocuments(ctx context.Context, in *WriteDocumentsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
@@ -104,7 +108,11 @@ type SearchEngineServer interface {
 	// or verifies that it was created for this scope.
 	EnsureIndex(context.Context, *EnsureIndexRequest) (*emptypb.Empty, error)
 	// Applies one batch of distinct document keys. Success means its effects are visible to search.
-	// Submit batches sequentially. On failure some items may already have been applied.
+	// An error, including a deadline, can leave some or all writes applied.
+	// Replay of an identical batch is safe once earlier attempts have finished,
+	// provided no later batch has been sent. Do not send later batches or advance
+	// the write checkpoint until the batch succeeds. If the outcome cannot be
+	// resolved, rebuild into a fresh generation.
 	WriteDocuments(context.Context, *WriteDocumentsRequest) (*emptypb.Empty, error)
 }
 
