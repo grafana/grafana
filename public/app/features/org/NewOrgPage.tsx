@@ -2,7 +2,7 @@ import { connect, type ConnectedProps } from 'react-redux';
 
 import { type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Input, Field, FieldSet } from '@grafana/ui';
+import { Box, Button, Input, Field, FieldSet } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
@@ -49,18 +49,21 @@ export const NewOrgPage = ({ createOrganization }: Props) => {
             return (
               <>
                 <FieldSet>
-                  <Field
-                    label={t('org.new-org-page.label-organization-name', 'Organization name')}
-                    invalid={!!errors.name}
-                    error={errors.name && errors.name.message}
-                  >
-                    <Input
-                      placeholder={t('org.new-org-page.placeholder-org-name', 'Org name')}
-                      {...register('name', {
-                        required: 'Organization name is required',
-                      })}
-                    />
-                  </Field>
+                  <Box paddingBottom={2}>
+                    <Field
+                      noMargin
+                      label={t('org.new-org-page.label-organization-name', 'Organization name')}
+                      invalid={!!errors.name}
+                      error={errors.name && errors.name.message}
+                    >
+                      <Input
+                        placeholder={t('org.new-org-page.placeholder-org-name', 'Org name')}
+                        {...register('name', {
+                          required: 'Organization name is required',
+                        })}
+                      />
+                    </Field>
+                  </Box>
                 </FieldSet>
                 <Button type="submit">
                   <Trans i18nKey="org.new-org-page.create">Create</Trans>

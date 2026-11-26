@@ -243,7 +243,7 @@ jobs:
           yarn install
       - name: Install dependencies (pnpm)
         if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') && steps.pm.outputs.name == 'pnpm' }}
-        uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        uses: pnpm/setup@731dfb6463bbd11c11fd0ee11fe00ed0e36d48a1 # v3.2.0
         with:
           node-version-file: false
           cache: false
@@ -267,7 +267,7 @@ jobs:
             if [ -f lerna.json ]; then
               "${package_runner[@]}" lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
             else
-              "${package_runner[@]}" nx release version "$VERSION"
+              "${package_runner[@]}" nx release version --groups=grafana "$VERSION"
             fi
           fi
       - name: Refresh lockfile

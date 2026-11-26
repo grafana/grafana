@@ -1,8 +1,8 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { type DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { PANEL_STYLES, overrideToFixedColor } from '../../../home/Insights';
 import { InsightsMenuButton } from '../../InsightsMenuButton';
+import { PANEL_STYLES, overrideToFixedColor } from '../../utils';
 
 export function getInstancesPercentageByStateScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
