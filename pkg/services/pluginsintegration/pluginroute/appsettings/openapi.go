@@ -63,11 +63,10 @@ func (b *Builder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error)
 	}
 	ps.Properties["apiVersion"] = *spec.StringProperty().WithEnum(fmt.Sprintf("%s/%s", b.group, version))
 	ps.Properties["kind"] = *spec.StringProperty().WithEnum("Settings")
-	if b.opts.ReadOnly {
-		return oas, nil
-	}
 
-	// Always transform results
+	// Always transform results. Read-only settings are described the same way:
+	// the API server leaves out the write operations, and so the examples,
+	// which only document writes.
 	switch {
 	case schema.IsZero():
 		schema = defaultSchema()

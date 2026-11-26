@@ -48,9 +48,9 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts SettingsResource) (*spec3.OpenAPI, 
 	if cfg == nil {
 		return nil, fmt.Errorf("no route registered: %s", opts.Path)
 	}
-	if cfg.Post == nil {
-		return nil, fmt.Errorf("expecting POST under: %s", opts.Path)
-	}
+	// Read-only settings have no POST, and so nowhere to show the examples;
+	// everything else is described as for writable settings.
+	create := cfg.Post
 
 	// Replace the generic DataSourceSpec with the explicit one
 	settings := opts.Schema.SettingsSchema
@@ -122,8 +122,8 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts SettingsResource) (*spec3.OpenAPI, 
 		}
 
 		examples := opts.Schema.SettingsExamples
-		if !examples.IsZero() {
-			for _, c := range cfg.Post.RequestBody.Content {
+		if !examples.IsZero() && create != nil && create.RequestBody != nil {
+			for _, c := range create.RequestBody.Content {
 				c.Examples = examples.Examples
 			}
 		}
