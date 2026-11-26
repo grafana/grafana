@@ -22,10 +22,18 @@ function listDirectories(path: string): string[] {
     .sort();
 }
 
+// Folders next to the group folders can hold shared helpers (e.g. `kindSearch`). API group names
+// always contain a dot, which tells the two apart.
+function isAPIGroupFolder(name: string): boolean {
+  return name.includes('.');
+}
+
 describe('API discovery handlers', () => {
   it('serve every group and version that has a handler folder', () => {
     const fromFolders = Object.fromEntries(
-      listDirectories(__dirname).map((group) => [group, listDirectories(join(__dirname, group))])
+      listDirectories(__dirname)
+        .filter(isAPIGroupFolder)
+        .map((group) => [group, listDirectories(join(__dirname, group))])
     );
     const served = Object.fromEntries(
       Object.entries(SERVED_API_VERSIONS).map(([group, versions]) => [group, [...versions].sort()])
