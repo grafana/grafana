@@ -100,7 +100,7 @@ func (op Operator) Run(ctx context.Context, deps server.OperatorDependencies) (r
 		supervised = append([]services.Service{rt.Subscriber}, supervised...)
 	}
 	ctx, stop, err := supervision.Start(ctx, supervised...)
-	health := &readiness{notifier: deps.HealthNotifier}
+	health := &readiness{ctx: ctx, notifier: deps.HealthNotifier}
 	defer func() {
 		health.stop()
 		runErr = joinStopError(runErr, stop())
@@ -141,17 +141,41 @@ func (op Operator) await(ctx context.Context, logger logging.Logger, health *rea
 	}
 }
 
-// joinStopError adds a failure to stop the services to Run's error. A plain
-// cancellation is dropped first: the module server ignores errors matching
-// context.Canceled, which would hide the stop failure.
+// joinStopError adds a failure to stop the services to Run's error. The
+// module server ignores errors matching context.Canceled, so when the result
+// also holds a real failure, the cancellation branches are dropped to keep
+// that failure visible.
 func joinStopError(runErr, stopErr error) error {
-	if stopErr == nil {
-		return runErr
+	err := runErr
+	if stopErr != nil {
+		err = errors.Join(runErr, stopErr)
 	}
-	if errors.Is(runErr, context.Canceled) {
-		runErr = nil
+	if !errors.Is(err, context.Canceled) {
+		return err
 	}
-	return errors.Join(runErr, stopErr)
+	if failures := withoutCancellation(err); failures != nil {
+		return failures
+	}
+	return err
+}
+
+// withoutCancellation returns err without its context.Canceled branches, or
+// nil if nothing else is left.
+func withoutCancellation(err error) error {
+	joined, ok := err.(interface{ Unwrap() []error })
+	if !ok {
+		if errors.Is(err, context.Canceled) {
+			return nil
+		}
+		return err
+	}
+	var kept []error
+	for _, e := range joined.Unwrap() {
+		if e = withoutCancellation(e); e != nil {
+			kept = append(kept, e)
+		}
+	}
+	return errors.Join(kept...)
 }
 
 // dependencyCause replaces the cancellation Run reports when a supervised
@@ -167,9 +191,11 @@ func dependencyCause(ctx context.Context, err error) error {
 	return err
 }
 
-// readiness drops ready callbacks that arrive once shutdown has begun, so a
-// controller finishing its setup late cannot mark a stopping operator ready.
+// readiness drops ready callbacks that arrive once shutdown has begun or the
+// supervised context is done, so a controller finishing its setup late cannot
+// mark a stopping operator ready.
 type readiness struct {
+	ctx      context.Context
 	mu       sync.Mutex
 	stopped  bool
 	notifier *server.HealthNotifier
@@ -178,7 +204,7 @@ type readiness struct {
 func (r *readiness) ready() bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	if r.stopped {
+	if r.stopped || r.ctx.Err() != nil {
 		return false
 	}
 	r.notifier.SetReady()
