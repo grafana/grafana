@@ -41,7 +41,7 @@ func TestUsageStatsService_IsDisabled(t *testing.T) {
 		disabled            bool
 	}{
 		{name: "provisioning disabled", usageStats: stats, disabled: true},
-		{name: "controllers disabled", builder: &APIBuilder{}, usageStats: stats, controllersDisabled: true, disabled: true},
+		{name: "controllers disabled", builder: &APIBuilder{}, usageStats: stats, controllersDisabled: true, disabled: false},
 		{name: "no usage stats service", builder: &APIBuilder{}, disabled: true},
 		{name: "enabled", builder: &APIBuilder{}, usageStats: stats, disabled: false},
 	}

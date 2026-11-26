@@ -46,3 +46,17 @@ func TestPostStartHook_PublishesLoopbackConfig(t *testing.T) {
 	require.NotNil(t, b.statusPatcher)
 	require.NotNil(t, b.healthChecker)
 }
+
+func TestPostStartHook_DoesNotPublishLoopbackConfigOnClientError(t *testing.T) {
+	b := newPostStartHookTestBuilder()
+
+	// clientset.NewForConfig rejects a positive QPS without a burst.
+	loopback := &clientrest.Config{Host: "http://127.0.0.1:0", QPS: 1, Burst: 0}
+	require.Error(t, runPostStartHooks(t, b, loopback))
+
+	select {
+	case <-b.loopbackReady:
+		t.Fatal("controller services must not receive the loopback config when the clients fail to build")
+	default:
+	}
+}
