@@ -2234,6 +2234,80 @@ func TestService_Check(t *testing.T) {
 			expected: false,
 		},
 		{
+			name: "should allow named templategroups get with unscoped alert.notifications.templates:read",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "notifications.alerting.grafana.app",
+				Resource:  "templategroups",
+				Verb:      "get",
+				Name:      "tpl1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "alert.notifications.templates:read", Scope: ""},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny templategroups delete with only alert.notifications.templates:write",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "notifications.alerting.grafana.app",
+				Resource:  "templategroups",
+				Verb:      "delete",
+				Name:      "tpl1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "alert.notifications.templates:write", Scope: ""},
+			},
+			expected: false,
+		},
+		{
+			name: "should allow queries create with unscoped queries:write",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "queries.grafana.app",
+				Resource:  "queries",
+				Verb:      "create",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "queries:write", Scope: ""},
+			},
+			expected: true,
+		},
+		{
+			name: "should allow inhibitionrules get with inhibition-rules:read scoped to its uid",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "notifications.alerting.grafana.app",
+				Resource:  "inhibitionrules",
+				Verb:      "get",
+				Name:      "rule1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "alert.notifications.inhibition-rules:read", Scope: "inhibition-rules:uid:rule1"},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny inhibitionrules get with inhibition-rules:read scoped to another uid",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "notifications.alerting.grafana.app",
+				Resource:  "inhibitionrules",
+				Verb:      "get",
+				Name:      "rule1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "alert.notifications.inhibition-rules:read", Scope: "inhibition-rules:uid:rule2"},
+			},
+			expected: false,
+		},
+		{
 			name: "should allow datasources update via datasources:edit action set scoped to uid",
 			req: &authzv1.CheckRequest{
 				Namespace: "org-12",
