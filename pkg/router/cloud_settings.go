@@ -40,8 +40,8 @@ func cloudSettingsAccessChecker(client types.AccessClient) pluginaccesscontrol.A
 			return authorizer.DecisionDeny, "a concrete namespace is required", nil
 		}
 		// An access policy is decided by its token's permissions alone. Users get
-		// the app-access check only, as on the v3 manifest routes: the calling
-		// service's delegated permissions do not narrow it.
+		// the app-access check only, as in ST: the calling service's delegated
+		// permissions do not narrow it.
 		if types.IsIdentityType(user.GetIdentityType(), types.TypeAccessPolicy) {
 			verb := "get"
 			if info, ok := request.RequestInfoFrom(ctx); ok {
@@ -72,7 +72,7 @@ func cloudSettingsNamespaceAuthorizer(ctx context.Context, attr authorizer.Attri
 		return authorizer.DecisionDeny, "a requester is required", nil
 	}
 	if !attr.IsResourceRequest() {
-		// Discovery has no namespace for the legacy app-access check.
+		// Discovery has no namespace for the app-access check.
 		if attr.IsReadOnly() {
 			return authorizer.DecisionAllow, "settings discovery", nil
 		}

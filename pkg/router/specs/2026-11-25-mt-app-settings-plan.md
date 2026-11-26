@@ -104,10 +104,12 @@ Do this once user calls to MT settings subresources pass with `Check`, for examp
 `/apis/example-appsdktest-app/v0alpha1/namespaces/<stack>/app/instance/resources/clients`.
 Separate PR from the settings switch.
 
-- MT v3 manifest routes still check app access with `NewAppAccessChecker` over the remote
-  legacy check (`PluginBackend.Load` in `plugin.go`). Give the cloud loader one app-access
-  checker in `PluginDependencies`, used by both settings and manifest routes, built on
-  `cloudSettingsAccessChecker`. ST keeps `NewAppAccessChecker`.
+- MT v3 manifest routes do not check app access: the plugins source gives them
+  `pluginManifestAccessControl`, which grants `plugins.app:access` to every requester
+  (`plugin_manifests.go`). Give the cloud loader one app-access checker in
+  `PluginDependencies`, built on `cloudSettingsAccessChecker`, and use it for both settings and
+  manifest routes. ST keeps `NewAppAccessChecker`. This starts denying users without app
+  access on manifest routes, as ST does; check that no MT caller relies on the open check first.
 - Decide the proxy `reqAction` path: a `Check` mapping for plugin-defined actions on
   `plugins:id:<plugin-id>`, or keep the legacy RPC for that alone. Once nothing else uses it,
   the cloud loader can drop `LegacyAccess`.

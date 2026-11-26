@@ -568,10 +568,6 @@ func (b *PluginBackend) load(ctx context.Context) (*pluginroute.Handler, error) 
 		MetricsRegister: b.deps.MetricsRegister,
 	}
 	if b.deps.AccessControl != nil {
-		// TODO: in MT this checks app access through the remote legacy check, which is
-		// not yet ready there. Once settings calls pass in MT with cloudSettingsAccessChecker
-		// (AuthZ Check), use that checker for manifest routes too; see the follow-up in
-		// specs/2026-11-25-mt-app-settings-plan.md.
 		opts.AccessChecker = pluginaccesscontrol.NewAppAccessChecker(b.deps.AccessControl)
 	}
 

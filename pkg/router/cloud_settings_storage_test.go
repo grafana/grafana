@@ -13,7 +13,6 @@ import (
 	"testing"
 
 	"github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
