@@ -68,14 +68,14 @@ The available actions depend on the dashboard mode:
 
 | Action | View mode | Edit mode | Description |
 | ------ | --------- | --------- | ----------- |
-| **Quick edits** | No | Yes | Displays the quick edits for the panel, so you can change its most common options without opening the panel editor. Only displayed for visualizations that support quick edits. For more information, refer to [Change common panel options with quick edits](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#change-common-panel-options-with-quick-edits). |
-| **Edit visualization** | Yes | Yes | Opens the panel editor. In view mode, this also switches the dashboard to edit mode. Only displayed if you can edit the dashboard. |
-| **Explore** | Yes | No | Opens the panel query in **Explore**. Because this is a link, you can open it in a new browser tab. |
-| **Panel settings** | No | Yes | Opens high-level panel options in the sidebar. |
-| **Duplicate** | No | Yes | Adds a copy of the panel next to the original one. Duplicated panels query data separately from the original panel. You can use the special `Dashboard` data source to [share the same query results across panels](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/share-query/) instead. |
-| **Remove** | No | Yes | Removes the panel from the dashboard, after you confirm. |
-| **Expand** or **Restore size** | Yes | Yes | Expands the panel to fill the window and opens the [View panel sidebar](#view-mode-panel-controls) for supported visualizations, or returns an expanded panel to its original size. |
-| **More actions** | Yes | Yes | Opens the [panel menu](#panel-menu). |
+| Quick edits | No | Yes | Displays the quick edits for the panel, so you can change its most common options without opening the panel editor. Only displayed for visualizations that support quick edits. For more information, refer to [Change common panel options with quick edits](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#change-common-panel-options-with-quick-edits). |
+| Edit visualization | Yes | Yes | Opens the panel editor. In view mode, this also switches the dashboard to edit mode. Only displayed if you can edit the dashboard. |
+| Explore | Yes | No | Opens the panel query in **Explore**. Because this is a link, you can open it in a new browser tab. |
+| Panel settings | No | Yes | Opens high-level panel options in the sidebar. |
+| Duplicate | No | Yes | Adds a copy of the panel next to the original one. Duplicated panels query data separately from the original panel. You can use the special `Dashboard` data source to [share the same query results across panels](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/share-query/) instead. |
+| Remove | No | Yes | Removes the panel from the dashboard, after you confirm. |
+| Expand or Restore size | Yes | Yes | Expands the panel to fill the window and opens the [View panel sidebar](#view-mode-panel-controls) for supported visualizations, or returns an expanded panel to its original size. |
+| More actions | Yes | Yes | Opens the [panel menu](#panel-menu). |
 
 <!-- prettier-ignore-end -->
 
