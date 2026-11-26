@@ -103,8 +103,8 @@ func TestReadAuthzMetadata(t *testing.T) {
 	metadata, err := page.readAuthzMetadata(t.Context(), hits)
 	require.NoError(t, err)
 	require.Equal(t, map[string]authzMetadata{
-		"a":    {folder: "folder-1"},
-		"f":    {folder: "folder-2"},
+		"a":    {Folder: "folder-1"},
+		"f":    {Folder: "folder-2"},
 		"root": {},
 	}, metadata)
 	require.NotZero(t, page.cost, "the lookup's reads count towards the search's cost")

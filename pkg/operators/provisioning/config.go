@@ -2,10 +2,8 @@ package provisioning
 
 import (
 	"context"
-	"crypto/x509"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/grafana/authlib/authn"
@@ -19,13 +17,11 @@ import (
 	"k8s.io/client-go/util/flowcontrol"
 
 	"github.com/grafana/grafana/pkg/clientauth"
-	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/infra/tracingsetting"
+	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -65,7 +61,6 @@ type ControllerConfig struct {
 	provisioningClient    *client.Clientset
 	provisioningRESTCfg   *rest.Config
 	natsSubscriber        *nats.SubscriberService
-	unified               resources.ResourceStore
 	clients               resources.ClientFactory
 	manifestWatcher       services.Service
 	tokenExchangeClient   *authn.TokenExchangeClient
@@ -98,11 +93,6 @@ type ControllerConfig struct {
 // grpc_server_use_tls =
 // grpc_server_tls_ca_file =
 // grpc_server_tls_skip_verify =
-// [unified_storage]
-// grpc_address =
-// grpc_index_address =
-// allow_insecure =
-// audiences =
 // [operator]
 // provisioning_server_url =
 // provisioning_server_public_url =
@@ -128,22 +118,26 @@ type ControllerConfig struct {
 // token =
 // subscriber_credentials_file =
 // tls_enabled =
-func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*ControllerConfig, error) {
+func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer, tracer tracing.Tracer, subscriber *nats.SubscriberService) (*ControllerConfig, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
 	}
 
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
 	controllerCfg := &ControllerConfig{
-		registry: registry,
-		Settings: cfg,
-		// Operators run against an external NATS (no embedded server), so a nil
-		// server yields a config that dials the configured client URLs. Each
-		// consuming controller owns the subscriber service lifecycle.
-		natsSubscriber: nats.ProvideSubscriber(nats.ProvideNATSConfig(cfg, nil), registry),
+		registry:       registry,
+		tracer:         tracer,
+		Settings:       cfg,
+		natsSubscriber: subscriber,
 		resyncInterval: operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
 		workerCount:    operatorSec.Key("worker_count").MustInt(1),
 		drainTimeout:   operatorSec.Key("drain_timeout").MustDuration(30 * time.Second),
+	}
+
+	// The no-op tracing service replaces the global OpenTelemetry provider, so
+	// build it only when the server passed no tracer.
+	if controllerCfg.tracer == nil {
+		controllerCfg.tracer = tracing.NewNoopTracerService()
 	}
 
 	for _, opt := range registeredConfigOptions {
@@ -155,95 +149,13 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*Control
 	return controllerCfg, nil
 }
 
-func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSClientConfig, error) {
-	tlsConfig := rest.TLSClientConfig{
-		Insecure: insecure,
-	}
-
-	if certFile != "" && keyFile != "" {
-		tlsConfig.CertFile = certFile
-		tlsConfig.KeyFile = keyFile
-	}
-
-	if caFile != "" {
-		// caFile is set in operator.ini file
-		// nolint:gosec
-		caCert, err := os.ReadFile(caFile)
-		if err != nil {
-			return tlsConfig, fmt.Errorf("failed to read CA certificate file: %w", err)
-		}
-
-		caCertPool := x509.NewCertPool()
-		if !caCertPool.AppendCertsFromPEM(caCert) {
-			return tlsConfig, fmt.Errorf("failed to parse CA certificate")
-		}
-
-		tlsConfig.CAData = caCert
-	}
-
-	return tlsConfig, nil
-}
-
-// Unified Storage Client
-// HACK: This logic directly connects to unified storage. We are doing this for now as there is no global
-// search endpoint. But controllers, in general, should not connect directly to unified storage and instead
-// go through the api server. Once there is a global search endpoint, we will switch to that here as well.
-func (c *ControllerConfig) UnifiedStorageClient() (resources.ResourceStore, error) {
-	if c.unified != nil {
-		return c.unified, nil
-	}
-
-	tracer, err := c.Tracer()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get tracer: %w", err)
-	}
-
-	gRPCAuth := c.Settings.SectionWithEnvOverrides("grpc_client_authentication")
-	resourceClientCfg := resource.RemoteResourceClientConfig{
-		Token:            gRPCAuth.Key("token").String(),
-		TokenExchangeURL: gRPCAuth.Key("token_exchange_url").String(),
-		Namespace:        gRPCAuth.Key("token_namespace").String(),
-	}
-	unified, err := setupUnifiedStorageClient(c.Settings, tracer, c.Registry(), resourceClientCfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup unified storage: %w", err)
-	}
-
-	c.unified = unified
-	return unified, nil
-}
-
-// ResourceLister builds the lister named by [provisioning] resource_lister. Unified storage is
-// only dialled for the mode that reads its managed-object index, and the provisioning API server is
-// only called for the mode that reads its repository subresources.
+// ResourceLister reads what a repository manages from the provisioning API server.
 func (c *ControllerConfig) ResourceLister() (resources.ResourceLister, error) {
-	mode := c.Settings.ProvisioningResourceLister
-
-	clients, err := c.Clients()
+	provisioningAPI, err := c.ProvisioningRESTClient()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get clients: %w", err)
+		return nil, fmt.Errorf("failed to create provisioning REST client: %w", err)
 	}
-	supportedResources, err := c.SupportedResources()
-	if err != nil {
-		return nil, err
-	}
-
-	var store resources.ResourceStore
-	if resources.NeedsResourceStore(mode) {
-		store, err = c.UnifiedStorageClient()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get unified storage client: %w", err)
-		}
-	}
-
-	var provisioningAPI rest.Interface
-	if mode == resources.ListerAPIs {
-		provisioningAPI, err = c.ProvisioningRESTClient()
-		if err != nil {
-			return nil, fmt.Errorf("failed to create provisioning REST client: %w", err)
-		}
-	}
-	return resources.NewResourceListerForMode(mode, store, clients, supportedResources, provisioningAPI, c.Settings.ProvisioningResourceListerPageSize)
+	return resources.NewResourceListerFromProvisioningAPI(provisioningAPI, c.Settings.ProvisioningResourceListerPageSize), nil
 }
 
 // SupportedResources is the configured provisionable set, which may name collections as wildcards.
@@ -494,7 +406,7 @@ func (c *ControllerConfig) DecryptService() (decrypt.DecryptService, error) {
 		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
 	}
 
-	decryptSvc, err := setupDecryptService(c.Settings, tracing.NewNoopTracerService(), tokenExchangeClient)
+	decryptSvc, err := setupDecryptService(c.Settings, c.Tracer(), tokenExchangeClient)
 	if err != nil {
 		return nil, fmt.Errorf("setup decrypt service: %w", err)
 	}
@@ -570,28 +482,8 @@ func (c *ControllerConfig) ProvisioningKeysLister(gvr schema.GroupVersionResourc
 	return keysapi.NewHTTPLister(restClient, gvr), nil
 }
 
-func (c *ControllerConfig) Tracer() (tracing.Tracer, error) {
-	if c.tracer != nil {
-		return c.tracer, nil
-	}
-
-	cfgProvider, err := configprovider.ProvideService(c.Settings)
-	if err != nil {
-		return nil, fmt.Errorf("failed to provide config: %w", err)
-	}
-	tracingConfig, err := tracingsetting.ProvideTracingConfig(cfgProvider)
-	if err != nil {
-		return nil, fmt.Errorf("failed to provide tracing config: %w", err)
-	}
-
-	tracer, err := tracing.ProvideService(tracingConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to provide tracing service: %w", err)
-	}
-
-	c.tracer = tracer
-
-	return c.tracer, nil
+func (c *ControllerConfig) Tracer() tracing.Tracer {
+	return c.tracer
 }
 
 func (c *ControllerConfig) TokenExchangeClient() (*authn.TokenExchangeClient, error) {
@@ -599,23 +491,9 @@ func (c *ControllerConfig) TokenExchangeClient() (*authn.TokenExchangeClient, er
 		return c.tokenExchangeClient, nil
 	}
 
-	gRPCAuth := c.Settings.SectionWithEnvOverrides("grpc_client_authentication")
-	token := gRPCAuth.Key("token").String()
-	if token == "" {
-		return nil, fmt.Errorf("token is required in [grpc_client_authentication] section")
-	}
-	tokenExchangeURL := gRPCAuth.Key("token_exchange_url").String()
-	if tokenExchangeURL == "" {
-		return nil, fmt.Errorf("token_exchange_url is required in [grpc_client_authentication] section")
-	}
-
-	tokenExchangeClient, err := authn.NewTokenExchangeClient(authn.TokenExchangeConfig{
-		TokenExchangeURL: tokenExchangeURL,
-		Token:            token,
-	})
-
+	tokenExchangeClient, err := runner.TokenExchangeClient(c.Settings)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
+		return nil, err
 	}
 	c.tokenExchangeClient = tokenExchangeClient
 
@@ -627,17 +505,10 @@ func (c *ControllerConfig) TLSConfig() (rest.TLSClientConfig, error) {
 		return *c.tlsConfig, nil
 	}
 
-	tlsConfig, err := buildTLSConfig(
-		c.Settings.SectionWithEnvOverrides("operator").Key("tls_insecure").MustBool(false),
-		c.Settings.SectionWithEnvOverrides("operator").Key("tls_cert_file").String(),
-		c.Settings.SectionWithEnvOverrides("operator").Key("tls_key_file").String(),
-		c.Settings.SectionWithEnvOverrides("operator").Key("tls_ca_file").String(),
-	)
-
+	tlsConfig, err := runner.TLSConfig(c.Settings)
 	if err != nil {
-		return rest.TLSClientConfig{}, fmt.Errorf("failed to build TLS configuration: %w", err)
+		return rest.TLSClientConfig{}, err
 	}
-
 	c.tlsConfig = &tlsConfig
 
 	return tlsConfig, nil
@@ -659,10 +530,7 @@ func (c *ControllerConfig) RepositoryFactory() (repository.Factory, error) {
 		enabledTypes[extra.Type()] = struct{}{}
 	}
 
-	tracer, err := c.Tracer()
-	if err != nil {
-		return nil, err
-	}
+	tracer := c.Tracer()
 
 	repositoryFactory, err := repository.ProvideFactory(enabledTypes, extras, tracer)
 	if err != nil {
@@ -689,10 +557,7 @@ func (c *ControllerConfig) ConnectionFactory() (connection.Factory, error) {
 		types = defaultConnectionTypes(extras)
 	}
 
-	tracer, err := c.Tracer()
-	if err != nil {
-		return nil, err
-	}
+	tracer := c.Tracer()
 
 	connectionFactory, err := connection.ProvideFactory(connection.ToConnectionTypes(types), extras, tracer)
 	if err != nil {
@@ -880,45 +745,6 @@ func setupDecryptService(cfg *setting.Cfg, tracer tracing.Tracer, tokenExchangeC
 	}
 
 	return decryptSvc, nil
-}
-
-// HACK: This logic directly connects to unified storage. We are doing this for now as there is no global
-// search endpoint. But controllers, in general, should not connect directly to unified storage and instead
-// go through the api server. Once there is a global search endpoint, we will switch to that here as well.
-func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, registry prometheus.Registerer, resourceClientCfg resource.RemoteResourceClientConfig) (resources.ResourceStore, error) {
-	unifiedStorageSec := cfg.SectionWithEnvOverrides("unified_storage")
-	// Connect to Server
-	address := unifiedStorageSec.Key("grpc_address").String()
-	if address == "" {
-		return nil, fmt.Errorf("grpc_address is required in [unified_storage] section")
-	}
-	conn, err := unified.GrpcConn(address, registry)
-	if err != nil {
-		return nil, fmt.Errorf("create unified storage gRPC connection: %w", err)
-	}
-
-	// Connect to Index
-	indexConn := conn
-	indexAddress := unifiedStorageSec.Key("grpc_index_address").String()
-	if indexAddress != "" {
-		// The index connection registers the same client metrics as the storage connection, so
-		// prefix them to avoid a duplicate-registration collision on the shared registry.
-		indexConn, err = unified.GrpcConn(indexAddress, prometheus.WrapRegistererWithPrefix("index_", registry))
-		if err != nil {
-			return nil, fmt.Errorf("create unified storage index gRPC connection: %w", err)
-		}
-	}
-
-	// Create client
-	resourceClientCfg.AllowInsecure = unifiedStorageSec.Key("allow_insecure").MustBool(false)
-	resourceClientCfg.Audiences = unifiedStorageSec.Key("audiences").Strings("|")
-
-	client, err := resource.NewStandaloneRemoteResourceClient(tracer, conn, indexConn, resourceClientCfg)
-	if err != nil {
-		return nil, fmt.Errorf("create unified storage client: %w", err)
-	}
-
-	return client, nil
 }
 
 // directConfigProvider is a simple RestConfigProvider that always returns the same rest.Config

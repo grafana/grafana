@@ -75,7 +75,7 @@ func (b *memoryQueryBackend) ReadAuthzMetadata(ctx context.Context, ids []string
 	for _, hit := range b.hits {
 		if slices.Contains(ids, hit.ID) {
 			folder, _ := hit.Fields[resource.SEARCH_FIELD_FOLDER].(string)
-			result.Values[hit.ID] = authzMetadata{folder: folder}
+			result.Values[hit.ID] = authzMetadata{Folder: folder}
 		}
 	}
 	return result, nil

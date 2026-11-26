@@ -1739,15 +1739,6 @@ func WithNATSReListOnly(resync time.Duration) GrafanaOption {
 	}
 }
 
-// WithResourceLister sets [provisioning] resource_lister, selecting where the managed-resource
-// list and the repository stats are read from. Off by default, so a test keeps the shipped
-// "search" reader unless it says otherwise.
-func WithResourceLister(mode string) GrafanaOption {
-	return func(opts *testinfra.GrafanaOpts) {
-		opts.ProvisioningResourceLister = mode
-	}
-}
-
 // WithProvisioningHistoryExpiration overrides [provisioning] history_expiration,
 // which is both the HistoricJob retention and the historic-job informer's
 // resync. A short value lets tests exercise the re-list-driven cleanup quickly.

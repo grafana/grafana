@@ -11,9 +11,9 @@ import {
 import { type DataSourceRef, TableCellDisplayMode } from '@grafana/schema';
 import { type CustomCellRendererProps, TextLink } from '@grafana/ui';
 
-import { PANEL_STYLES } from '../../home/Insights';
 import { createRelativeUrl } from '../../utils/url';
 import { InsightsMenuButton } from '../InsightsMenuButton';
+import { PANEL_STYLES } from '../utils';
 
 const RULE_UID_FIELD_NAME = 'ruleUID';
 const ALERT_NAME_FIELD_NAME = 'labels_alertname';

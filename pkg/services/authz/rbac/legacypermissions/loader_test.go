@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -69,11 +68,11 @@ func TestIntegrationGetUserPermissionsSources(t *testing.T) {
 				resolver := resourcepermissions.NewActionSetService()
 				resolver.StoreActionSet("folders:view", []string{"folders:read", "dashboards:read"})
 				loader := legacypermissions.NewLoader(sql, catalog, resolver, localcache.New(0, 0),
-					loaderConfig(cached), featuremgmt.WithFeatures(), &enforcementLicense{enabled: enterprise}, nil,
+					loaderConfig(cached), &enforcementLicense{enabled: enterprise}, nil,
 				)
 				if mode == "standalone" {
 					loader = legacypermissions.NewEnforcedLoader(legacysql.NewDatabaseProvider(sql), resolver,
-						localcache.New(0, 0), loaderConfig(cached), featuremgmt.WithFeatures(), nil, nil)
+						localcache.New(0, 0), loaderConfig(cached), nil, nil)
 				}
 				seedGrant(t, sql, "managed:direct", 1, 7, accesscontrol.Permission{Action: "folders:view", Scope: "folders:uid:one"})
 				seedGrant(t, sql, "custom:direct", 1, 7, accesscontrol.Permission{Action: "users:create"})

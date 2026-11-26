@@ -18,6 +18,25 @@ import (
 // same freshness bound.
 const PermissionCacheTTL = 60 * time.Second
 
+// ManagedPermissionCacheKey separates filtered grants from the unfiltered
+// entries shared with readers whose policy does not apply this filter.
+func ManagedPermissionCacheKey(key string, excludeRedundant bool) string {
+	if !excludeRedundant {
+		return key
+	}
+
+	return fmt.Sprintf("%s-exclude-redundant", key)
+}
+
+// ClearManagedPermissionCache invalidates both policies after assignment changes.
+// Use the caller's deletion method to preserve its existing locking behavior.
+func ClearManagedPermissionCache(deleteEntry func(string), key string) {
+	const excludeRedundantManagedPermissions = true
+
+	deleteEntry(key)
+	deleteEntry(ManagedPermissionCacheKey(key, excludeRedundantManagedPermissions))
+}
+
 func (s *SearchOptions) HashString() (string, error) {
 	if s == nil {
 		return "", nil
