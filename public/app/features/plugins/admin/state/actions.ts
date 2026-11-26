@@ -2,7 +2,7 @@ import { createAction, createAsyncThunk, type Update } from '@reduxjs/toolkit';
 import { from, forkJoin, timeout, lastValueFrom, catchError, of } from 'rxjs';
 
 import { type PanelPlugin, type PluginError } from '@grafana/data';
-import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { config, getBackendSrv, invalidateAPIDiscovery, isFetchError } from '@grafana/runtime';
 import { refetchPluginMetasAfterPluginChange } from '@grafana/runtime/internal';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import { type PluginDashboard } from 'app/types/plugins';
@@ -198,6 +198,8 @@ export const addPlugins = createAction<CatalogPlugin[]>(`${STATE_PREFIX}/addPlug
 // first, because the reload joins the data sources with them. The plugin change has succeeded, so
 // a failed refresh must not fail it.
 async function refreshAfterPluginChange() {
+  // The plugin's API groups may have changed too. Outside the try, so a failed refresh doesn't skip it.
+  invalidateAPIDiscovery();
   try {
     const settings = await getBackendSrv().get('/api/frontend/settings');
     await refetchPluginMetasAfterPluginChange(settings);
