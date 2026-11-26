@@ -30,6 +30,15 @@ describe('ColorPicker', () => {
     expect(screen.getByRole('button', { name: 'Background #EAB839 color' })).toBeInTheDocument();
   });
 
+  it('leaves the field description out of its name', () => {
+    render(
+      <Field label="Background" description="Used behind the text">
+        <ColorPicker color="#EAB839" onChange={() => {}} />
+      </Field>
+    );
+    expect(screen.getByRole('button', { name: 'Background #EAB839 color' })).toBeInTheDocument();
+  });
+
   it('should not have buttons with default submit type', async () => {
     render(<ColorPicker color="blue" enableNamedColors onChange={() => {}} />);
     const mainButton = screen.getAllByRole('button');

@@ -99,8 +99,9 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
       }
     } else if (typeof label === 'string') {
       labelElement = (
-        <Label htmlFor={inputId} id={labelId} description={description}>
-          {label}
+        <Label htmlFor={inputId} description={description}>
+          {/* The id is on the label text only, so the description is not read as part of the label */}
+          <span id={labelId}>{label}</span>
         </Label>
       );
     }
