@@ -256,6 +256,9 @@
 /devenv/docker/blocks/self-instrumentation* @grafana/data-sources-plugins
 
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
+/devenv/provisioning-bootstrap/ @grafana/grafana-app-platform-squad
+/devenv/provisioning-bootstrap.ini @grafana/grafana-app-platform-squad
+/devenv/provisioning-bootstrap-cleanup.ini @grafana/grafana-app-platform-squad
 /devenv/bulk-folders/ @grafana/grafana-frontend-platform
 /devenv/create_docker_compose.sh @grafana/grafana-backend-services-squad
 /devenv/alert_rules.yaml @grafana/alerting-squad
@@ -538,6 +541,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/inspect-drawer.spec.ts @grafana/dashboards-squad
 /e2e-playwright/various-suite/keybinds.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/migrate-to-cloud.spec.ts @grafana/grafana-operator-experience-squad
+/e2e-playwright/various-suite/nav-landing-page-narrow.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/various-suite/navigation.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/various-suite/pie-chart.spec.ts @grafana/dataviz-squad
 /e2e-playwright/various-suite/prometheus-annotations.spec.ts @grafana/data-sources-plugins

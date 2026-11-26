@@ -69,6 +69,13 @@ type Store interface {
 		hooks ResourceHooks,
 	) ([]accesscontrol.ResourcePermission, error)
 
+	// SetUserResourcePermissions sets permissions on one resource for many distinct users in bulk
+	SetUserResourcePermissions(
+		ctx context.Context, orgID int64,
+		commands []SetResourcePermissionsCommand,
+		hook UsersResourceHookFunc,
+	) ([]accesscontrol.ResourcePermission, error)
+
 	// GetResourcePermissions will return all permission for supplied resource id
 	GetResourcePermissions(ctx context.Context, orgID int64, query GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error)
 
@@ -408,17 +415,20 @@ func (s *Service) SetPermissions(
 		}
 	}
 
+	if err := s.validateUsers(ctx, orgID, commands); err != nil {
+		return nil, err
+	}
+
 	dbCommands := make([]SetResourcePermissionsCommand, 0, len(commands))
 	for _, cmd := range commands {
-		if cmd.UserID != 0 {
-			if err := s.validateUser(ctx, orgID, cmd.UserID); err != nil {
-				return nil, err
-			}
-		} else if cmd.TeamID != 0 {
+		switch {
+		case cmd.UserID != 0:
+			// Users are validated in bulk by validateUsers.
+		case cmd.TeamID != 0:
 			if err := s.validateTeam(ctx, orgID, cmd.TeamID); err != nil {
 				return nil, err
 			}
-		} else {
+		default:
 			if err := s.validateBuiltinRole(ctx, cmd.BuiltinRole); err != nil {
 				return nil, err
 			}
@@ -479,15 +489,23 @@ func (s *Service) SetPermissions(
 	// RBAC permission writes. The batch is all-or-nothing, so this covers the whole
 	// batch; the adds in it already have their team_member row from the dual-write.
 	userHook := s.options.OnSetUser
+	usersHook := s.options.OnSetUsers
 	if redirectRemovedMember {
 		userHook = nil
+		usersHook = nil
 	}
 
-	result, err := s.store.SetResourcePermissions(ctx, orgID, dbCommands, ResourceHooks{
-		User:        userHook,
-		Team:        s.options.OnSetTeam,
-		BuiltInRole: s.options.OnSetBuiltInRole,
-	})
+	var result []accesscontrol.ResourcePermission
+	var err error
+	if s.useBulkUserWrites(ctx, dbCommands) {
+		result, err = s.store.SetUserResourcePermissions(ctx, orgID, dbCommands, usersHook)
+	} else {
+		result, err = s.store.SetResourcePermissions(ctx, orgID, dbCommands, ResourceHooks{
+			User:        userHook,
+			Team:        s.options.OnSetTeam,
+			BuiltInRole: s.options.OnSetBuiltInRole,
+		})
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -500,6 +518,79 @@ func (s *Service) SetPermissions(
 	s.invalidatePermissionCachesAfterCommit(ctx, orgID, userIDs)
 
 	return result, nil
+}
+
+// getUserUIDs returns the UID of each user the commands assign, keyed by user ID.
+// It looks the users up in bulk when the resourcePermissionsBulkUserWrites feature
+// flag is enabled, and one at a time otherwise.
+func (s *Service) getUserUIDs(ctx context.Context, commands []accesscontrol.SetResourcePermissionCommand) (map[int64]string, error) {
+	userIDs := make([]int64, 0, len(commands))
+	seen := make(map[int64]struct{}, len(commands))
+	for _, cmd := range commands {
+		if cmd.UserID == 0 {
+			continue
+		}
+		if _, ok := seen[cmd.UserID]; ok {
+			continue
+		}
+		seen[cmd.UserID] = struct{}{}
+		userIDs = append(userIDs, cmd.UserID)
+	}
+
+	uids := make(map[int64]string, len(userIDs))
+
+	if len(userIDs) < 2 || !ofClient.Boolean(ctx, featuremgmt.FlagResourcePermissionsBulkUserWrites, false, openfeature.TransactionContext(ctx)) {
+		for _, id := range userIDs {
+			u, err := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: id})
+			if err != nil {
+				return nil, err
+			}
+			uids[id] = u.UID
+		}
+		return uids, nil
+	}
+
+	for chunk := range slices.Chunk(userIDs, bulkLookupChunkSize) {
+		users, err := s.userService.ListByIdOrUID(ctx, nil, chunk)
+		if err != nil {
+			return nil, err
+		}
+		for _, u := range users {
+			uids[u.ID] = u.UID
+		}
+	}
+	if len(uids) != len(userIDs) {
+		return nil, user.ErrUserNotFound
+	}
+
+	return uids, nil
+}
+
+// useBulkUserWrites reports whether commands can be written with
+// SetUserResourcePermissions instead of one user at a time. That needs every
+// command to target a distinct user, so that applying them together gives the
+// same result as applying them in order, and a bulk hook wherever the
+// resource has a per-user hook.
+func (s *Service) useBulkUserWrites(ctx context.Context, commands []SetResourcePermissionsCommand) bool {
+	if len(commands) < 2 {
+		return false
+	}
+	if s.options.OnSetUser != nil && s.options.OnSetUsers == nil {
+		return false
+	}
+
+	seen := make(map[int64]struct{}, len(commands))
+	for _, cmd := range commands {
+		if cmd.User.ID == 0 {
+			return false
+		}
+		if _, ok := seen[cmd.User.ID]; ok {
+			return false
+		}
+		seen[cmd.User.ID] = struct{}{}
+	}
+
+	return ofClient.Boolean(ctx, featuremgmt.FlagResourcePermissionsBulkUserWrites, false, openfeature.TransactionContext(ctx))
 }
 
 // Each resource provider registers a listener on the same bus. The owner limits
@@ -716,6 +807,71 @@ func (s *Service) validateUser(ctx context.Context, orgID, userID int64) error {
 	default:
 		return err
 	}
+}
+
+// userValidationChunkSize bounds the number of user IDs per lookup, keeping it
+// under the bind parameter limits of the supported databases.
+const userValidationChunkSize = 500
+
+// validateUsers validates the users assigned by commands. Large batches, such as
+// a team membership sync, would otherwise cost a query per user, so the users are
+// looked up in bulk first. Users the bulk lookup doesn't return go through
+// validateUser, which keeps its fallback behaviour and error.
+func (s *Service) validateUsers(ctx context.Context, orgID int64, commands []accesscontrol.SetResourcePermissionCommand) error {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.validateUsers")
+	defer span.End()
+
+	userIDs := make([]int64, 0, len(commands))
+	seen := make(map[int64]struct{}, len(commands))
+	for _, cmd := range commands {
+		if cmd.UserID == 0 {
+			continue
+		}
+		if _, ok := seen[cmd.UserID]; ok {
+			continue
+		}
+		seen[cmd.UserID] = struct{}{}
+		userIDs = append(userIDs, cmd.UserID)
+	}
+
+	if len(userIDs) == 1 || !ofClient.Boolean(ctx, featuremgmt.FlagResourcePermissionsBulkUserValidation, false, openfeature.TransactionContext(ctx)) {
+		for _, id := range userIDs {
+			if err := s.validateUser(ctx, orgID, id); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	if !s.options.Assignments.Users {
+		return ErrInvalidAssignment.Build(ErrInvalidAssignmentData("users"))
+	}
+
+	// Validation resolves identities for the system rather than serving a
+	// user-facing read, so look users up as the service identity, as
+	// GetSignedInUser does.
+	svcCtx := identity.WithServiceIdentityContext(ctx, orgID)
+	found := make(map[int64]struct{}, len(userIDs))
+	for chunk := range slices.Chunk(userIDs, userValidationChunkSize) {
+		users, err := s.userService.ListByIdOrUID(svcCtx, nil, chunk)
+		if err != nil {
+			return err
+		}
+		for _, u := range users {
+			found[u.ID] = struct{}{}
+		}
+	}
+
+	for _, id := range userIDs {
+		if _, ok := found[id]; ok {
+			continue
+		}
+		if err := s.validateUser(ctx, orgID, id); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *Service) validateTeam(ctx context.Context, orgID, teamID int64) error {
