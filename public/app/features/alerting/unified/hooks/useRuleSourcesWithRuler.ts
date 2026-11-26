@@ -51,9 +51,7 @@ export function useRulesSourcesWithRuler(): {
             try {
               const { data: dsFeatures } = await discoverDsFeatures({ uid: ds.uid }, true);
               if (!cancelled && dsFeatures?.rulerConfig) {
-                setDiscovery((prev) =>
-                  prev.rulesSourcesToDiscover === dataSources ? { ...prev, withRuler: [...prev.withRuler, ds] } : prev
-                );
+                setDiscovery((prev) => ({ ...prev, withRuler: [...prev.withRuler, ds] }));
               }
             } catch (err) {
               logWarning('Failed to discover datasource features', { error: String(err) });
@@ -63,7 +61,7 @@ export function useRulesSourcesWithRuler(): {
       }
 
       if (!cancelled) {
-        setDiscovery((prev) => (prev.rulesSourcesToDiscover === dataSources ? { ...prev, isDone: true } : prev));
+        setDiscovery((prev) => ({ ...prev, isDone: true }));
       }
     }
 
