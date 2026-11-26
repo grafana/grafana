@@ -85,6 +85,26 @@ func TestSecureLifecycle(t *testing.T) {
 		secureStore.AssertExpectations(t)
 	})
 
+	t.Run("update of the same object keeps secure values", func(t *testing.T) {
+		// Graceful deletion passes the existing object as both the update and the previous object.
+		obj := resourceWithSecureValues(resource.InlineSecureValues{
+			"a": resource.InlineSecureValue{Name: "NameForA"},
+			"b": resource.InlineSecureValue{Name: "NameForB"},
+		})
+
+		info := &objectForStorage{}
+		secureStore := secret.NewMockInlineSecureValueSupport(t) // nothing may be created or deleted
+		err := prepareSecureValues(context.Background(), secureStore, obj, obj, utils.ToObjectReference(obj), info)
+		require.NoError(t, err)
+		require.Empty(t, info.deleteSecureValues)
+		secure, err := obj.GetSecureValues()
+		require.NoError(t, err)
+		require.JSONEq(t, `{
+			"a": {"name": "NameForA"},
+			"b": {"name": "NameForB"}
+		}`, asJSON(secure, true))
+	})
+
 	t.Run("create secure values with errors", func(t *testing.T) {
 		obj := resourceWithSecureValues(resource.InlineSecureValues{
 			"a": resource.InlineSecureValue{Create: "SecretAAA"},
