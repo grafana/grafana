@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -92,7 +93,7 @@ func TestIntegrationRemoteLegacyPermissionsGRPC(t *testing.T) {
 			return nil, status.Error(codes.Internal, "unexpected tenant")
 		}
 		return provider(ctx)
-	}, resourcepermissions.NewActionSetService(), localcache.New(0, 0), loaderConfig(true), nil, nil)
+	}, resourcepermissions.NewActionSetService(), localcache.New(0, 0), loaderConfig(true), featuremgmt.WithFeatures(), nil, nil)
 	listener := bufconn.Listen(1024 * 1024)
 	// The fixture authenticates a fixed test credential through the production interceptor adapter.
 	authenticate := func(ctx context.Context) (context.Context, error) {

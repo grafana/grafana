@@ -3,7 +3,6 @@ package acimpl
 import (
 	"testing"
 
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -44,11 +43,10 @@ func TestLegacyCheckReference_PermissionAssembly(t *testing.T) {
 				RolePrefixes: OSSRolesPrefixes,
 			}).Return(tc.permissions, nil).Once()
 			s := &Service{
-				openFeatureClient: openfeature.NewDefaultClient(),
-				cfg:               setting.NewCfg(),
-				features:          featuremgmt.WithFeatures(),
-				store:             permissionStore,
-				actionResolver:    resourcepermissions.NewActionSetService(),
+				cfg:            setting.NewCfg(),
+				features:       featuremgmt.WithFeatures(),
+				store:          permissionStore,
+				actionResolver: resourcepermissions.NewActionSetService(),
 			}
 			ident := &user.SignedInUser{
 				UserID:  1,

@@ -175,8 +175,7 @@ func TestPermissionShadowRouting(t *testing.T) {
 				})))
 				t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 				s := &Service{
-					openFeatureClient: openfeature.NewDefaultClient(),
-					cfg:               setting.NewCfg(), features: featuremgmt.WithFeatures(),
+					cfg: setting.NewCfg(), features: featuremgmt.WithFeatures(),
 					store:          actest.FakeStore{},
 					actionResolver: resourcepermissions.NewActionSetService(),
 					legacyShadow:   newPermissionShadow(t, nil, 32),

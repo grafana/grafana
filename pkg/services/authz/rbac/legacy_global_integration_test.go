@@ -7,8 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/open-feature/go-sdk/openfeature"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
@@ -77,7 +75,7 @@ func TestIntegrationLegacyCheckGlobalParity(t *testing.T) {
 				license.On("FeatureEnabled", "accesscontrol.enforcement").Return(enterprise)
 				cfg := setting.NewCfg()
 				cfg.RBAC.PermissionCache = cached
-				loader := legacypermissions.NewLoader(database, catalog, actions, localcache.New(0, 0), cfg, license, nil)
+				loader := legacypermissions.NewLoader(database, catalog, actions, localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), license, nil)
 				s := setupService().WithLegacyScopeResolvers(accesscontrol.NewScopeResolverRegistry(), types.OrgNamespaceFormatter)
 				s.store = store.NewStore(legacysql.NewDatabaseProvider(database), tracing.NewNoopTracerService())
 				s.userPermissionsEvaluator = loader
@@ -287,14 +285,7 @@ func seedLegacyGlobalGrant(
 
 func TestIntegrationLegacyCheckGlobalManagedPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
-	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagExcludeRedundantManagedPermissions: {
-			State:          memprovider.Enabled,
-			Variants:       map[string]any{"value": true},
-			DefaultVariant: "value",
-		},
-	})))
-	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
+	features := featuremgmt.WithFeatures(featuremgmt.FlagExcludeRedundantManagedPermissions)
 	const userID int64 = 7
 	const userUID = "managed-user"
 	database := db.NewTestStore(t)
@@ -318,7 +309,7 @@ func TestIntegrationLegacyCheckGlobalManagedPermissions(t *testing.T) {
 			license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true)
 			cfg := setting.NewCfg()
 			cfg.RBAC.PermissionCache = cached
-			loader := legacypermissions.NewLoader(database, legacypermissions.NewRoleCatalog(), actions, localcache.New(0, 0), cfg, license, nil)
+			loader := legacypermissions.NewLoader(database, legacypermissions.NewRoleCatalog(), actions, localcache.New(0, 0), cfg, features, license, nil)
 			service := setupService().WithLegacyScopeResolvers(accesscontrol.NewScopeResolverRegistry(), types.OrgNamespaceFormatter)
 			service.store = store.NewStore(legacysql.NewDatabaseProvider(database), tracing.NewNoopTracerService())
 			service.userPermissionsEvaluator = loader

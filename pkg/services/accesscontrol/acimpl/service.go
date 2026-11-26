@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/singleflight"
@@ -134,7 +133,6 @@ func ProvideOSSService(
 		cache:                     cache,
 		cfg:                       cfg,
 		features:                  features,
-		openFeatureClient:         openfeature.NewDefaultClient(),
 		userPermissionsAPIEnabled: iamFeatures.UserPermissionsAPIEnabled(),
 		log:                       log.New("accesscontrol.service"),
 		roles:                     accesscontrol.BuildBasicRoleDefinitions(),
@@ -161,7 +159,6 @@ type Service struct {
 	cache                     *localcache.CacheService
 	cfg                       *setting.Cfg
 	features                  featuremgmt.FeatureToggles
-	openFeatureClient         *openfeature.Client
 	userPermissionsAPIEnabled bool
 	log                       log.Logger
 	registrations             accesscontrol.RegistrationList
@@ -301,8 +298,8 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 	// permission assigned to user will be returned, only for org role.
 	userID, _ := identity.UserIdentifier(user.GetID())
 
-	const defaultExcludeRedundantManagedPermissions = false
-	excludeRedundant := s.openFeatureClient.Boolean(ctx, featuremgmt.FlagExcludeRedundantManagedPermissions, defaultExcludeRedundantManagedPermissions, openfeature.TransactionContext(ctx))
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions)
 
 	dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
 		OrgID:                              user.GetOrgID(),
@@ -334,8 +331,8 @@ func (s *Service) getBasicRolePermissions(ctx context.Context, role string, orgI
 	}
 	s.rolesMu.RUnlock()
 
-	const defaultExcludeRedundantManagedPermissions = false
-	excludeRedundant := s.openFeatureClient.Boolean(ctx, featuremgmt.FlagExcludeRedundantManagedPermissions, defaultExcludeRedundantManagedPermissions, openfeature.TransactionContext(ctx))
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions)
 
 	// Fetch managed role permissions assigned to basic roles
 	dbPermissions, err := s.store.GetBasicRolesPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
@@ -353,8 +350,8 @@ func (s *Service) getTeamsPermissions(ctx context.Context, teamIDs []int64, orgI
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getTeamsPermissions")
 	defer span.End()
 
-	const defaultExcludeRedundantManagedPermissions = false
-	excludeRedundant := s.openFeatureClient.Boolean(ctx, featuremgmt.FlagExcludeRedundantManagedPermissions, defaultExcludeRedundantManagedPermissions, openfeature.TransactionContext(ctx))
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions)
 
 	teamPermissions, err := s.store.GetTeamsPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
 		TeamIDs:                            teamIDs,
@@ -384,8 +381,8 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 		}
 	}
 
-	const defaultExcludeRedundantManagedPermissions = false
-	excludeRedundant := s.openFeatureClient.Boolean(ctx, featuremgmt.FlagExcludeRedundantManagedPermissions, defaultExcludeRedundantManagedPermissions, openfeature.TransactionContext(ctx))
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions)
 
 	permissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
 		OrgID:                              user.GetOrgID(),

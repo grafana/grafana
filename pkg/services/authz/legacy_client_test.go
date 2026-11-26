@@ -67,7 +67,7 @@ func TestIntegrationProvideAuthZLegacyAccessClient(t *testing.T) {
 			catalog.Replace(map[string][]ac.Permission{string(org.RoleViewer): {grant}})
 			actionSets := resourcepermissions.NewActionSetService()
 			loader := legacypermissions.NewLoader(sql, catalog, actionSets, localcache.New(0, 0),
-				cfg, &licensing.OSSLicensingService{}, nil)
+				cfg, tc.features, &licensing.OSSLicensingService{}, nil)
 			service := &legacyCheckAccessControlService{
 				roles: map[string]*ac.RoleDTO{string(org.RoleViewer): {Permissions: []ac.Permission{grant}}},
 			}

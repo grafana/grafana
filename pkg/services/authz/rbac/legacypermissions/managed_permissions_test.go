@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -14,6 +13,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -21,8 +21,6 @@ import (
 
 func TestIntegrationGlobalManagedPermissionsParity(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
-	require.NoError(t, openfeature.SetProviderAndWait(globalPermissionsFeatureProvider{}))
-	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 	const userID int64 = 7
 	sql := db.NewTestStore(t)
 	for _, grant := range []struct {
@@ -48,12 +46,9 @@ func TestIntegrationGlobalManagedPermissionsParity(t *testing.T) {
 				t.Run(fmt.Sprintf("flag=%t/enforcement=%t/cache=%t", enabled, enforcement, cached), func(t *testing.T) {
 					actions := resourcepermissions.NewActionSetService()
 					actions.StoreActionSet("dashboards:view", []string{"dashboards:read"})
-					target := "disabled"
-					if enabled {
-						target = "enabled"
-					}
-					ctx := openfeature.WithTransactionContext(t.Context(), openfeature.NewEvaluationContext(target, nil))
-					loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), actions, localcache.New(0, 0), loaderConfig(cached), &enforcementLicense{enabled: enforcement}, nil)
+					ctx := t.Context()
+					features := featuremgmt.WithFeatures(featuremgmt.FlagExcludeRedundantManagedPermissions, enabled)
+					loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), actions, localcache.New(0, 0), loaderConfig(cached), features, &enforcementLicense{enabled: enforcement}, nil)
 					requester := &user.SignedInUser{UserID: userID, UserUID: "checked-user", OrgID: ac.GlobalOrgID, OrgRole: org.RoleViewer}
 					for _, phase := range []struct {
 						name    string

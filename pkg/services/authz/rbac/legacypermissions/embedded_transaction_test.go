@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -49,7 +50,7 @@ func TestIntegrationEmbeddedLegacyTransactionCancellation(t *testing.T) {
 	blocked := &cancelingTransactionDB{DB: sql, started: make(chan struct{}), canceled: make(chan struct{}), release: make(chan struct{}), finished: make(chan struct{})}
 	cfg := loaderConfig(false)
 	loader := legacypermissions.NewLoader(blocked, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(),
-		localcache.New(0, 0), cfg, &enforcementLicense{}, nil)
+		localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &enforcementLicense{}, nil)
 	client := legacypermissions.NewEmbeddedClient(loader, cfg)
 	requester := &user.SignedInUser{UserID: 7, UserUID: "seven", OrgID: 1}
 	require.NoError(t, sql.InTransaction(t.Context(), func(ctx context.Context) error {
@@ -86,7 +87,7 @@ func TestIntegrationEmbeddedLegacyTransactionRejectedCalls(t *testing.T) {
 	sql := db.NewTestStore(t)
 	cfg := loaderConfig(false)
 	loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(),
-		localcache.New(0, 0), cfg, &enforcementLicense{}, nil)
+		localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &enforcementLicense{}, nil)
 	client := legacypermissions.NewEmbeddedClient(loader, cfg)
 	requester := &user.SignedInUser{UserID: 7, UserUID: "seven", OrgID: 1}
 	require.NoError(t, sql.InTransaction(t.Context(), func(ctx context.Context) error {
@@ -136,7 +137,7 @@ func TestIntegrationEmbeddedLegacyTransactionContextIsolation(t *testing.T) {
 		checked <- struct{}{}
 	}}
 	loader := legacypermissions.NewLoader(store, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(),
-		localcache.New(0, 0), cfg, &enforcementLicense{}, nil)
+		localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &enforcementLicense{}, nil)
 	client := legacypermissions.NewEmbeddedClient(loader, cfg)
 	ctx := types.WithAuthInfo(context.WithValue(t.Context(), callerContextKey{}, "private"), legacypermissions.LegacyPermissionCaller("org-2"))
 	require.NoError(t, sql.InTransaction(ctx, func(ctx context.Context) error {
@@ -155,7 +156,7 @@ func TestIntegrationEmbeddedLegacyTransactionRollback(t *testing.T) {
 	sql := db.NewTestStore(t)
 	cfg := loaderConfig(false)
 	loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(),
-		localcache.New(0, 0), cfg, &enforcementLicense{}, nil)
+		localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &enforcementLicense{}, nil)
 	client := legacypermissions.NewEmbeddedClient(loader, cfg)
 	requester := &user.SignedInUser{UserID: 7, UserUID: "seven", OrgID: 1}
 	grant := ac.Permission{Action: "users:read", Scope: "users:uid:seven"}
@@ -187,7 +188,7 @@ func TestIntegrationEmbeddedLegacyTransactionRefresh(t *testing.T) {
 				sql := db.NewTestStore(t)
 				cfg := loaderConfig(cached)
 				loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(),
-					localcache.New(0, 0), cfg, &enforcementLicense{enabled: enterprise}, nil)
+					localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &enforcementLicense{enabled: enterprise}, nil)
 				client := legacypermissions.NewEmbeddedClient(loader, cfg)
 				requester := &user.SignedInUser{UserID: 7, UserUID: "seven", OrgID: 1}
 				oldGrant := ac.Permission{Action: "alert.notifications.receivers:read", Scope: "receivers:uid:old"}

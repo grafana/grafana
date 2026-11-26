@@ -20,7 +20,7 @@ import (
 
 func newContractLoader(s *Service, cache *localcache.CacheService) *legacypermissions.Loader {
 	return legacypermissions.NewLoader(s.sql, s.RoleCatalog(), s.actionResolver, cache,
-		s.cfg, &licensing.OSSLicensingService{}, nil,
+		s.cfg, s.features, &licensing.OSSLicensingService{}, nil,
 	)
 }
 

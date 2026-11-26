@@ -1,12 +1,10 @@
 package acimpl
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
 
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -20,38 +18,17 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-type managedPermissionFeatureProvider struct{ openfeature.NoopProvider }
-
-func (managedPermissionFeatureProvider) BooleanEvaluation(_ context.Context, flag string, fallback bool, ctx openfeature.FlattenedContext) openfeature.BoolResolutionDetail {
-	if flag == featuremgmt.FlagExcludeRedundantManagedPermissions {
-		return openfeature.BoolResolutionDetail{Value: ctx[openfeature.TargetingKey] == "enabled"}
-	}
-	return openfeature.BoolResolutionDetail{Value: fallback}
-}
-
 func TestIntegrationManagedPermissionFiltering(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
-	require.NoError(t, openfeature.SetProviderAndWait(managedPermissionFeatureProvider{}))
-	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 
-	for _, tc := range []struct {
-		name               string
-		staticEnabled      bool
-		openFeatureEnabled bool
-	}{
-		{name: "static off OpenFeature on", openFeatureEnabled: true},
-		{name: "static on OpenFeature off", staticEnabled: true},
-	} {
+	for _, enabled := range []bool{false, true} {
 		for _, cached := range []bool{false, true} {
 			for _, route := range []string{"local", "loader", "embedded"} {
-				t.Run(fmt.Sprintf("%s/cache=%t/%s", tc.name, cached, route), func(t *testing.T) {
+				t.Run(fmt.Sprintf("flag=%t/cache=%t/%s", enabled, cached, route), func(t *testing.T) {
 					// Each route and decision starts cold so shared cache entries cannot hide a mismatch.
 					s := setupTestEnv(t, false)
 					s.cfg.RBAC.PermissionCache = cached
-					s.features = featuremgmt.WithFeatures()
-					if tc.staticEnabled {
-						s.features = featuremgmt.WithFeatures(featuremgmt.FlagExcludeRedundantManagedPermissions)
-					}
+					s.features = featuremgmt.WithFeatures(featuremgmt.FlagExcludeRedundantManagedPermissions, enabled)
 					s.actionResolver.(resourcepermissions.ActionSetService).StoreActionSet("dashboards:view", []string{"dashboards:read"})
 
 					const userID = 7
@@ -81,11 +58,7 @@ func TestIntegrationManagedPermissionFiltering(t *testing.T) {
 						return err
 					}))
 
-					target := "disabled"
-					if tc.openFeatureEnabled {
-						target = "enabled"
-					}
-					ctx := openfeature.WithTransactionContext(t.Context(), openfeature.NewEvaluationContext(target, nil))
+					ctx := t.Context()
 					var got []accesscontrol.Permission
 					var err error
 					switch route {
@@ -100,7 +73,7 @@ func TestIntegrationManagedPermissionFiltering(t *testing.T) {
 					require.NoError(t, err)
 
 					want := []accesscontrol.Permission{SharedWithMeFolderPermission, {Action: "dashboards:read", Scope: "dashboards:uid:action-set"}}
-					if !tc.openFeatureEnabled {
+					if !enabled {
 						want = append(want, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:individual"}, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:team"})
 					}
 					require.ElementsMatch(t, want, rawPermissions(got))

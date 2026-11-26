@@ -21,7 +21,7 @@ func (l *Loader) GetGlobalUserPermissions(
 		return nil, errors.New("global permission loading requires org zero")
 	}
 
-	settings := l.settings(ctx)
+	settings := l.settings()
 
 	query := queryFor(ac.GlobalOrgID, settings)
 	userID, err := internalID(user)

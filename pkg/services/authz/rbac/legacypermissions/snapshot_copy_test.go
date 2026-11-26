@@ -9,6 +9,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -31,7 +32,7 @@ func TestSnapshotDoesNotMutateCachedSources(t *testing.T) {
 		cache.Set(key, grants, ac.PermissionCacheTTL)
 		want = append(want, grants...)
 	}
-	loader := legacypermissions.NewLoader(nil, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), cache, loaderConfig(true), &enforcementLicense{enabled: true}, nil)
+	loader := legacypermissions.NewLoader(nil, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), cache, loaderConfig(true), featuremgmt.WithFeatures(), &enforcementLicense{enabled: true}, nil)
 	first, err := loader.GetUserPermissions(t.Context(), requester, ac.Options{})
 	require.NoError(t, err)
 	require.Equal(t, want, first)

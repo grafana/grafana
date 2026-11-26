@@ -7,7 +7,6 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/singleflight"
@@ -44,26 +43,26 @@ type MigratedPermissions interface {
 }
 
 type Loader struct {
-	store             permissionStore
-	catalog           *RoleCatalog
-	actions           ac.ActionResolver
-	cache             *localcache.CacheService
-	cacheTTLOverride  *time.Duration
-	cfg               *setting.Cfg
-	openFeatureClient *openfeature.Client
-	license           licensing.Licensing
-	enforced          bool // Standalone loading always uses SQL-backed permissions without a license service.
-	zanzana           MigratedPermissions
-	scopeResolver     legacyscopes.ScopeResolver
-	flight            singleflight.Group
-	log               log.Logger
+	store            permissionStore
+	catalog          *RoleCatalog
+	actions          ac.ActionResolver
+	cache            *localcache.CacheService
+	cacheTTLOverride *time.Duration
+	cfg              *setting.Cfg
+	features         featuremgmt.FeatureToggles
+	license          licensing.Licensing
+	enforced         bool // Standalone loading always uses SQL-backed permissions without a license service.
+	zanzana          MigratedPermissions
+	scopeResolver    legacyscopes.ScopeResolver
+	flight           singleflight.Group
+	log              log.Logger
 }
 
 func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver,
-	cache *localcache.CacheService, cfg *setting.Cfg,
+	cache *localcache.CacheService, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	license licensing.Licensing, zanzana MigratedPermissions,
 ) *Loader {
-	return newLoader(legacysql.NewDatabaseProvider(sql), actionResolver, cache, cfg, zanzana,
+	return newLoader(legacysql.NewDatabaseProvider(sql), actionResolver, cache, cfg, features, zanzana,
 		WithLicensing(license), WithRoleCatalog(catalog))
 }
 
@@ -72,11 +71,11 @@ func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver
 // RemoteServer scopes cache keys to the validated transport tenant. Direct callers
 // must not share a cached loader across tenants. This constructor registers no handler.
 func NewEnforcedLoader(database legacysql.LegacyDatabaseProvider, actions ac.ActionResolver,
-	cache *localcache.CacheService, cfg *setting.Cfg,
+	cache *localcache.CacheService, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	zanzana MigratedPermissions, scopeResolver legacyscopes.ScopeResolver,
 	options ...LoaderOption,
 ) *Loader {
-	loader := newLoader(database, actions, cache, cfg, zanzana, options...)
+	loader := newLoader(database, actions, cache, cfg, features, zanzana, options...)
 	loader.enforced = true
 	loader.scopeResolver = scopeResolver
 	return loader
@@ -110,17 +109,17 @@ func WithRoleCatalog(catalog *RoleCatalog) LoaderOption {
 }
 
 func newLoader(database legacysql.LegacyDatabaseProvider, actionResolver ac.ActionResolver,
-	cache *localcache.CacheService, cfg *setting.Cfg,
+	cache *localcache.CacheService, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	zanzana MigratedPermissions, options ...LoaderOption,
 ) *Loader {
 	loader := &Loader{
-		store:             permissionStore{database: database},
-		actions:           actionResolver,
-		cache:             cache,
-		cfg:               cfg,
-		openFeatureClient: openfeature.NewDefaultClient(),
-		zanzana:           zanzana,
-		log:               log.New("authz.legacypermissions"),
+		store:    permissionStore{database: database},
+		actions:  actionResolver,
+		cache:    cache,
+		cfg:      cfg,
+		features: features,
+		zanzana:  zanzana,
+		log:      log.New("authz.legacypermissions"),
 	}
 	for _, option := range options {
 		option(loader)
@@ -146,7 +145,7 @@ func (l *Loader) GetLocalUserPermissions(ctx context.Context, user identity.Requ
 func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester, options ac.Options) ([]ac.Permission, error) {
 	ctx, span := tracer.Start(ctx, "authz.legacypermissions.GetUserPermissions")
 	defer span.End()
-	settings := l.settings(ctx)
+	settings := l.settings()
 	started := time.Now()
 	// OSS timing includes Zanzana merging; licensed Enterprise measures only RBAC loading.
 	if !settings.enforcementEnabled {
@@ -203,17 +202,11 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 	return legacyscopes.ResolveUserScopes(ctx, user, l.scopeResolver, MergeUserPermissions(permissions, migrated))
 }
 
-func (l *Loader) settings(ctx context.Context) loadSettings {
-	const defaultExcludeRedundantManagedPermissions = false
-
+func (l *Loader) settings() loadSettings {
 	return loadSettings{
 		enforcementEnabled: l.enforcementEnabled(),
-		excludeRedundantManagedPermissions: l.openFeatureClient.Boolean(
-			ctx,
-			featuremgmt.FlagExcludeRedundantManagedPermissions,
-			defaultExcludeRedundantManagedPermissions,
-			openfeature.TransactionContext(ctx),
-		),
+		//nolint:staticcheck // Keep global checks and local enumeration on the same flag source.
+		excludeRedundantManagedPermissions: l.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions),
 	}
 }
 
