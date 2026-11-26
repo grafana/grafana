@@ -26,6 +26,8 @@ setReturnToPreviousHook(() => returnToPrevious);
 
 grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 
+jest.mock('../hooks/useExternalRulesSources', () => makeSpyable('../hooks/useExternalRulesSources'));
+
 setupMswServer();
 
 const mimirGroups = alertingFactory.prometheus.group.buildList(5000, {

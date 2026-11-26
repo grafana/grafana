@@ -26,6 +26,8 @@ setReturnToPreviousHook(() => () => {});
 
 grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 
+jest.mock('../hooks/useExternalRulesSources', () => makeSpyable('../hooks/useExternalRulesSources'));
+
 setupMswServer();
 
 // increase timeout for this test file, it's a rather slow one since we're testing with a _lot_ of DOM data
