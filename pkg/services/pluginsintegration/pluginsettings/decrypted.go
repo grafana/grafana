@@ -43,12 +43,21 @@ func WithDecryptedValues(ctx context.Context, loader DecryptedSecureJSONLoader) 
 	}
 }
 
+// StashedDecryptedSecureJSONLoader returns the loader that WithDecryptedValues
+// stashed on the context, if any.
+func StashedDecryptedSecureJSONLoader(ctx context.Context) (DecryptedSecureJSONLoader, bool) {
+	if shim, ok := ctx.Value(ctxKey{}).(*secureContextShim); ok && shim.loader != nil {
+		return shim.loader, true
+	}
+	return nil, false
+}
+
 // GetDecryptedSecureJSONLoader returns a loader for the decrypted secure values
 // of obj. If WithDecryptedValues populated the same context, those values are
 // reused; otherwise the loader calls decrypter on demand.
 func GetDecryptedSecureJSONLoader(ctx context.Context, obj utils.GrafanaMetaAccessor, decrypter decrypt.DecryptService) (DecryptedSecureJSONLoader, error) {
-	if shim, ok := ctx.Value(ctxKey{}).(*secureContextShim); ok && shim.loader != nil {
-		return shim.loader, nil
+	if loader, ok := StashedDecryptedSecureJSONLoader(ctx); ok {
+		return loader, nil
 	}
 
 	secure, err := obj.GetSecureValues()

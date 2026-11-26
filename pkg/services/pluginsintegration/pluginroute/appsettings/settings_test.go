@@ -110,7 +110,7 @@ func TestSettingsGet_OmitsRemovedSecureValues(t *testing.T) {
 		decrypted: map[string]string{"kept": "secret", "removed": ""},
 	})
 
-	ctx := request.WithNamespace(context.Background(), "default")
+	ctx := pluginsettings.WithSecureContextShim(request.WithNamespace(context.Background(), "default"))
 	obj, err := storage.Get(ctx, "instance", nil)
 	require.NoError(t, err)
 
@@ -118,6 +118,13 @@ func TestSettingsGet_OmitsRemovedSecureValues(t *testing.T) {
 	require.Equal(t, resource.InlineSecureValues{
 		"kept": {Name: getLegacySecureValueName("test-app", "kept")},
 	}, settings.Secure)
+
+	// Plugins get the same keys, so a removed key is not passed as an empty string.
+	decrypt, ok := pluginsettings.StashedDecryptedSecureJSONLoader(ctx)
+	require.True(t, ok)
+	values, err := decrypt(ctx)
+	require.NoError(t, err)
+	require.Equal(t, map[string]string{"kept": "secret"}, values)
 }
 
 func TestSettingsGet_DecryptedValuesAreCopiedPerCall(t *testing.T) {
