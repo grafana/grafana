@@ -203,11 +203,8 @@ ERROR[\s\S]*
 ## Add a value mapping
 
 1. Navigate to the panel you want to update.
-1. Hover over any part of the panel you want to work on to display the menu on the top right corner.
-1. Click the menu and select **Edit**.
-
-   If the [panel actions tooltip](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-tooltip) is enabled, click **Edit visualization** in the tooltip instead.
-
+1. Hover over any part of the panel you want to work on to display the actions tooltip.
+1. Click **Edit visualization**.
 1. Scroll to the **Value mappings** section and expand it.
 1. Click **Add value mappings**.
 1. Click **Add a new mapping** and then select one of the following:

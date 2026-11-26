@@ -57,11 +57,9 @@ To set a feature toggle in other ways, such as environment variables, refer to t
 
 1. Open the dashboard that contains the panel you want to diagnose.
 
-1. Hover over any part of the panel to display the panel menu in the top right corner.
+1. Hover over any part of the panel to display the actions tooltip.
 
-1. Click the menu and select **More** > **Download diagnostics**.
-
-   If the [panel actions tooltip](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-tooltip) is enabled, click **More actions** in the tooltip to open the menu.
+1. Click **More actions** and select **More** > **Download diagnostics**.
 
    Grafana opens a drawer describing what the bundle contains, including a **May contain sensitive data** warning.
 

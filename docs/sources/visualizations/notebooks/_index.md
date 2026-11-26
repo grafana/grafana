@@ -216,10 +216,7 @@ However, you don't need to be in edit mode or have permission to edit the dashbo
 To add a panel from a dashboard to a notebook, follow these steps:
 
 1. Navigate to the dashboard that contains the panel you want to add.
-1. Hover your cursor over the panel and click the panel menu icon that appears in the top-right corner.
-
-   If the [panel actions tooltip](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-tooltip) is enabled, click **More actions** in the tooltip instead.
-
+1. Hover your cursor over the panel to display the actions tooltip, and click **More actions**.
 1. Select **Add to notebook**.
 1. In the **Add panel to notebook** dialog box, configure the options described in [Add panel to notebook options](#add-panel-to-notebook-options).
 1. Click **Add to notebook**.

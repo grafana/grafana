@@ -19,7 +19,7 @@ review_date: 2026-08-10
 
 The PostgreSQL query editor lets you build and run queries against your data source. For general query editor and data transformation concepts, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
-You can open the PostgreSQL query editor from the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) or from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
+You can open the PostgreSQL query editor from the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) or from a dashboard panel. Hover over the panel and click **Edit visualization** in the actions tooltip.
 
 {{< admonition type="note" >}}
 A default database must be configured in the data source settings. If none is set, or it is removed, the data source doesn't run queries until a database is configured again.
