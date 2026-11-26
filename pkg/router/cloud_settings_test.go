@@ -46,8 +46,9 @@ func (f settingsLegacyCheckFunc) LegacyCheck(ctx context.Context, req legacyclie
 }
 
 func settingsRequester(ns string) *identity.StaticRequester {
+	// No delegated permissions: users are authorized by the legacy check alone.
 	return &identity.StaticRequester{Type: types.TypeUser, UserUID: "reader", Namespace: ns, OrgID: 1, IDToken: "id-" + ns,
-		AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{DelegatedPermissions: []string{"*-app:get"}}},
+		AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{},
 	}
 }
 
@@ -181,10 +182,7 @@ func TestCloudSettingsRoutes(t *testing.T) {
 			checkErr = nil
 			require.Equal(t, 403, serve("GET", item, settingsRequester("stacks-2")).Code)
 			require.Equal(t, 401, serve("GET", item, nil).Code)
-			user := settingsRequester("stacks-1")
-			user.AccessTokenClaims = nil
-			require.Equal(t, 403, serve("GET", item, user).Code)
-			user = &identity.StaticRequester{Type: types.TypeAccessPolicy, Namespace: "*", AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{Permissions: []string{"*-app:get"}}}}
+			user := &identity.StaticRequester{Type: types.TypeAccessPolicy, Namespace: "*", AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{Permissions: []string{"*-app:get"}}}}
 			require.Equal(t, 200, serve("GET", item, user).Code)
 			user.AccessTokenClaims.Rest.Permissions = nil
 			require.Equal(t, 403, serve("GET", item, user).Code)
@@ -219,10 +217,7 @@ func TestCloudSettingsRoutes(t *testing.T) {
 					require.JSONEq(t, `{"origin":"cloudconfig"}`, string(call.AppInstanceSettings.JsonData))
 				}
 			}
-			require.Equal(t, 403, serve("POST", item+"/resources", settingsRequester("stacks-1")).Code)
-			writer := settingsRequester("stacks-1")
-			writer.AccessTokenClaims.Rest.DelegatedPermissions = append(writer.AccessTokenClaims.Rest.DelegatedPermissions, "example-app:create")
-			res = serve("POST", item+"/resources", writer)
+			res = serve("POST", item+"/resources", settingsRequester("stacks-1"))
 			require.Equal(t, 200, res.Code, res.Body.String())
 			require.Equal(t, "stacks-1", (<-v2.calls).Namespace)
 			require.Equal(t, "id-stacks-1", <-v2.headers)

@@ -105,9 +105,7 @@ func TestCloudSettingsStorageModes(t *testing.T) {
 				return w
 			}
 			serve := func(method, path string) *httptest.ResponseRecorder {
-				user := settingsRequester("stacks-1")
-				user.AccessTokenClaims.Rest.DelegatedPermissions = []string{"*-app:*"}
-				return serveAs(method, path, user)
+				return serveAs(method, path, settingsRequester("stacks-1"))
 			}
 			root := "/apis/example-app/v0alpha1"
 			list := root + "/namespaces/stacks-1/app"

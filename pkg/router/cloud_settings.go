@@ -35,15 +35,17 @@ func cloudSettingsAccessChecker(client legacyclient.LegacyAccessClient) pluginac
 		if ns == "" || ns == "*" {
 			return authorizer.DecisionDeny, "a concrete namespace is required", nil
 		}
-		verb := "get"
-		if info, ok := request.RequestInfoFrom(ctx); ok {
-			verb = info.Verb
-		}
-		service := authzlib.CheckServicePermissions(user, id, appv0.APP_RESOURCE_NAME, verb)
-		if !service.Allowed {
-			return authorizer.DecisionDeny, "token does not allow this app operation", nil
-		}
-		if service.ServiceCall {
+		// An access policy is decided by its token's permissions alone. Users get
+		// the legacy app-access check only, as on the v3 manifest routes: the
+		// calling service's delegated permissions do not narrow it.
+		if types.IsIdentityType(user.GetIdentityType(), types.TypeAccessPolicy) {
+			verb := "get"
+			if info, ok := request.RequestInfoFrom(ctx); ok {
+				verb = info.Verb
+			}
+			if !authzlib.CheckServicePermissions(user, id, appv0.APP_RESOURCE_NAME, verb).Allowed {
+				return authorizer.DecisionDeny, "token does not allow this app operation", nil
+			}
 			return authorizer.DecisionAllow, "", nil
 		}
 		allowed, err := (cloudSettingsAccessControl{client}).Evaluate(request.WithNamespace(ctx, ns), user,

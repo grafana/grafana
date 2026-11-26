@@ -36,8 +36,9 @@ func TestCloudSettingsAccessChecker(t *testing.T) {
 		{name: "allowed user", ns: "stacks-1", verb: "get", user: settingsRequester("stacks-1"), allowed: true, want: authorizer.DecisionAllow, wantLegacy: true},
 		{name: "legacy denial", ns: "stacks-1", verb: "get", user: settingsRequester("stacks-1"), want: authorizer.DecisionDeny, wantLegacy: true},
 		{name: "legacy error", ns: "stacks-1", verb: "get", user: settingsRequester("stacks-1"), checkErr: errCheck, want: authorizer.DecisionDeny, wantErr: errCheck, wantLegacy: true},
-		{name: "token lacks verb", ns: "stacks-1", verb: "create", user: settingsRequester("stacks-1"), allowed: true, want: authorizer.DecisionDeny},
+		{name: "user write needs no token permission", ns: "stacks-1", verb: "create", user: settingsRequester("stacks-1"), allowed: true, want: authorizer.DecisionAllow, wantLegacy: true},
 		{name: "service call skips legacy check", ns: "stacks-1", verb: "get", user: accessPolicy, want: authorizer.DecisionAllow},
+		{name: "service token lacks verb", ns: "stacks-1", verb: "create", user: accessPolicy, allowed: true, want: authorizer.DecisionDeny},
 		{name: "no namespace", verb: "get", user: settingsRequester("stacks-1"), allowed: true, want: authorizer.DecisionDeny},
 		{name: "wildcard namespace", ns: "*", verb: "get", user: settingsRequester("*"), allowed: true, want: authorizer.DecisionDeny},
 	} {
