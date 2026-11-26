@@ -304,8 +304,6 @@ func TestControllersOwnNATSSubscriber(t *testing.T) {
 				cfg.provisioningRESTCfg = restCfg
 				cfg.clients = resources.NewMockClientFactory(t)
 				cfg.manifestWatcher = manifestWatcher
-				// Empty resource lists must not access unified storage.
-				cfg.unified = &struct{ resources.ResourceStore }{}
 				cfg.repositoryFactory, err = repository.ProvideFactory(nil, nil, cfg.tracer)
 				if err != nil {
 					return err
@@ -366,11 +364,9 @@ func TestProvisioningKeysListerRequiresARESTClient(t *testing.T) {
 }
 
 func TestControllerConfigResourceLister(t *testing.T) {
-	newConfig := func(mode string) *ControllerConfig {
+	newConfig := func() *ControllerConfig {
 		cfg := setting.NewCfg()
 		cfg.ProvisioningResources = []string{"folder.grafana.app/Folder:folder"}
-		cfg.ProvisioningResourceLister = mode
-		// Injected so the only dependency left to resolve is the unified storage client.
 		return &ControllerConfig{
 			Settings: cfg,
 			clients:  resources.NewMockClientFactory(t),
@@ -378,8 +374,8 @@ func TestControllerConfigResourceLister(t *testing.T) {
 		}
 	}
 
-	t.Run("apis mode reads the provisioning API and does not dial unified storage", func(t *testing.T) {
-		c := newConfig(resources.ListerAPIs)
+	t.Run("reads the provisioning API server", func(t *testing.T) {
+		c := newConfig()
 		for section, keys := range map[string]map[string]string{
 			"grpc_client_authentication": {"token": "t", "token_exchange_url": "http://localhost/exchange"},
 			"operator":                   {"provisioning_server_url": "http://localhost:3000"},
@@ -391,24 +387,13 @@ func TestControllerConfigResourceLister(t *testing.T) {
 		}
 
 		lister, err := c.ResourceLister()
-		require.NoError(t, err, "no [unified_storage] grpc_address is configured, so a dial would fail")
+		require.NoError(t, err, "no [unified_storage] section is configured, so a dial would fail")
 		require.IsType(t, &resources.ResourceListerFromProvisioningAPI{}, lister)
-		require.Nil(t, c.unified)
 	})
 
-	t.Run("apis mode fails without a provisioning server to read from", func(t *testing.T) {
-		_, err := newConfig(resources.ListerAPIs).ResourceLister()
+	t.Run("fails without a provisioning server to read from", func(t *testing.T) {
+		_, err := newConfig().ResourceLister()
 		require.ErrorContains(t, err, "failed to create provisioning REST client")
-	})
-
-	t.Run("search mode still requires unified storage", func(t *testing.T) {
-		_, err := newConfig(resources.ListerSearch).ResourceLister()
-		require.ErrorContains(t, err, "grpc_address is required")
-	})
-
-	t.Run("an unknown mode fails at startup", func(t *testing.T) {
-		_, err := newConfig("index").ResourceLister()
-		require.ErrorContains(t, err, `invalid [provisioning] resource_lister "index": expected "search" or "apis"`)
 	})
 }
 
