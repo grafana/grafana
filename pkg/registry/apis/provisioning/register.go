@@ -226,10 +226,7 @@ type APIServerDeps struct {
 	NewStandaloneClientFactory func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory
 	ExtraBuilders              []ExtraBuilder
 	SupportedResourceProvider  resources.SupportedResourceProvider
-	// ResourceListerMode is a [provisioning] resource_lister value; empty
-	// selects the default.
-	ResourceListerMode   string
-	RepoValidatorOptions []repository.ValidatorOption
+	RepoValidatorOptions       []repository.ValidatorOption
 	// URLValidator checks connection URLs at admission; nil skips the check.
 	URLValidator     *repository.URLValidator
 	JobHistoryConfig *JobHistoryConfig
@@ -254,9 +251,6 @@ type APIServerDeps struct {
 func NewAPIServerBuilder(deps APIServerDeps) (*APIBuilder, error) {
 	if deps.GroupVersion.Version == "" {
 		return nil, fmt.Errorf("invalid provisioning group/version")
-	}
-	if err := resources.ValidateListerMode(deps.ResourceListerMode); err != nil {
-		return nil, err
 	}
 
 	var clients resources.ClientFactory
@@ -348,23 +342,6 @@ func (b *APIBuilder) GetReadyzChecks() []healthz.HealthChecker {
 // of [NewAPIBuilder], which has no way to pass them.
 func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption) {
 	b.repoValidatorOpts = opts
-}
-
-// SetResourceListerMode selects where the managed-resource list and the repository stats are read
-// from, naming a value of [provisioning] resource_lister. Call it before the API group is built:
-// the repository resources factory captures the lister.
-//
-// Deprecated: set [APIServerDeps.ResourceListerMode]. HACK: kept for callers
-// of [NewAPIBuilder], which has no way to pass it.
-func (b *APIBuilder) SetResourceListerMode(mode string) error {
-	// This lister is also what serves /resources, so an apis reader here would call that route to
-	// answer it. The mode applies to callers outside the apiserver, which is why only the index
-	// reader is built here.
-	if err := resources.ValidateListerMode(mode); err != nil {
-		return err
-	}
-	b.setResourceLister(resources.NewResourceLister(b.unified, b.clients, b.supportedResourceProvider.Get()))
-	return nil
 }
 
 // setResourceLister points the lister, the namespace-wide stats route and the factory that captures
@@ -515,7 +492,6 @@ func RegisterAPIServer(
 			Access:                    access,
 			ExtraBuilders:             extraBuilders,
 			SupportedResourceProvider: supportedResourceProvider,
-			ResourceListerMode:        cfg.ProvisioningResourceLister,
 			RepoValidatorOptions:      repoValidatorOpts,
 			URLValidator:              urlValidator,
 			JobHistoryConfig:          jobHistoryConfig,

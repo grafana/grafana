@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
@@ -19,9 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 func TestProvideSupportedResourceProvider(t *testing.T) {
@@ -47,59 +44,6 @@ func TestProvideSupportedResourceProvider(t *testing.T) {
 		_, err := ProvideSupportedResourceProvider(&setting.Cfg{ProvisioningEnabled: true, ProvisioningResources: []string{"invalid"}})
 		require.ErrorContains(t, err, "invalid [provisioning] resources configuration")
 	})
-}
-
-func TestSetResourceListerMode(t *testing.T) {
-	newBuilder := func() *APIBuilder {
-		return &APIBuilder{
-			unified:                   resource.NewMockResourceClient(t),
-			clients:                   resources.NewMockClientFactory(t),
-			supportedResourceProvider: resources.NewSupportedResourceProvider(nil),
-		}
-	}
-
-	for _, mode := range []string{"", resources.ListerSearch, resources.ListerAPIs} {
-		t.Run(fmt.Sprintf("mode %q", mode), func(t *testing.T) {
-			b := newBuilder()
-			require.NoError(t, b.SetResourceListerMode(mode))
-			require.NotNil(t, b.resourceLister)
-			// The factory captures the lister, so it has to be re-pointed with it.
-			require.NotNil(t, b.repositoryResources)
-		})
-	}
-
-	t.Run("apis reads the index in here, not a client pointed at ourselves", func(t *testing.T) {
-		b := newBuilder()
-		require.NoError(t, b.SetResourceListerMode(resources.ListerAPIs))
-		require.IsType(t, &resources.ResourceListerFromSearch{}, b.resourceLister)
-	})
-
-	t.Run("an unknown mode is rejected and leaves the lister alone", func(t *testing.T) {
-		b := newBuilder()
-		require.NoError(t, b.SetResourceListerMode(resources.ListerSearch))
-		before := b.resourceLister
-
-		require.EqualError(t, b.SetResourceListerMode("index"),
-			`invalid [provisioning] resource_lister "index": expected "search" or "apis"`)
-		require.Same(t, before, b.resourceLister)
-	})
-}
-
-func TestNewAPIServerBuilder_ResourceListerMode(t *testing.T) {
-	deps := APIServerDeps{
-		GroupVersion:               schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v0alpha1"},
-		ResourceClient:             resource.NewMockResourceClient(t),
-		NewStandaloneClientFactory: func(apiserver.RestConfigProvider) resources.ClientFactory { return resources.NewMockClientFactory(t) },
-		SupportedResourceProvider:  resources.NewSupportedResourceProvider(nil),
-	}
-
-	b, err := NewAPIServerBuilder(deps)
-	require.NoError(t, err)
-	require.NotNil(t, b.resourceLister)
-
-	deps.ResourceListerMode = "index"
-	_, err = NewAPIServerBuilder(deps)
-	require.EqualError(t, err, `invalid [provisioning] resource_lister "index": expected "search" or "apis"`)
 }
 
 func subresourceAttrsWithVerb(sub, name, ns, verb string) authorizer.Attributes {

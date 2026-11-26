@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/client-go/rest"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
@@ -40,45 +39,6 @@ type ResourceStore interface {
 	resourcepb.ManagedObjectIndexClient
 	resourcepb.ResourceIndexClient
 }
-
-// Values of [provisioning] resource_lister, selecting where the managed-resource list and the
-// repository stats are read from.
-const (
-	// ListerSearch reads the unified-storage managed-object index.
-	ListerSearch = "search"
-	// ListerAPIs reads the provisioning API server's own repository subresources.
-	ListerAPIs = "apis"
-)
-
-// NewResourceListerForMode returns the lister named by [provisioning] resource_lister. Each reader
-// takes one dependency and ignores the other: store in search mode, provisioningAPI and pageSize in
-// apis mode.
-func NewResourceListerForMode(mode string, store ResourceStore, clients ClientFactory, configured []SupportedResource, provisioningAPI rest.Interface, pageSize int64) (ResourceLister, error) {
-	if err := ValidateListerMode(mode); err != nil {
-		return nil, err
-	}
-	if mode == ListerAPIs {
-		if provisioningAPI == nil {
-			return nil, fmt.Errorf("[provisioning] resource_lister %q needs a provisioning API client", ListerAPIs)
-		}
-		return NewResourceListerFromProvisioningAPI(provisioningAPI, pageSize), nil
-	}
-	return NewResourceLister(store, clients, configured), nil
-}
-
-// ValidateListerMode rejects a [provisioning] resource_lister value that names no reader.
-func ValidateListerMode(mode string) error {
-	switch mode {
-	case "", ListerSearch, ListerAPIs:
-		return nil
-	default:
-		return fmt.Errorf("invalid [provisioning] resource_lister %q: expected %q or %q", mode, ListerSearch, ListerAPIs)
-	}
-}
-
-// NeedsResourceStore reports whether a lister mode reads unified storage directly. An unrecognised
-// mode needs nothing: it has to fail validation rather than a store lookup.
-func NeedsResourceStore(mode string) bool { return mode == "" || mode == ListerSearch }
 
 type ResourceListerFromSearch struct {
 	store ResourceStore

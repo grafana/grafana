@@ -2,42 +2,48 @@ package provisioning
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/operators/runner"
-
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 
+	"github.com/grafana/dskit/services"
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/operators/supervision"
+	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/server"
 )
 
-func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (runErr error) {
-	logger := runner.NewLogger(deps.Config, "provisioning-repo-controller")
-	logger.Info("Starting provisioning repo controller")
+var RepoOperator = runner.Operator{
+	Name:        "provisioning-repo",
+	Description: "Watch provisioning repositories",
+	Logger:      "provisioning-repo-controller",
+	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
+		controllerCfg, err := setupFromConfig(rt.Cfg, rt.Registerer, rt.Subscriber)
+		if err != nil {
+			return nil, err
+		}
+		manifestWatcher, err := controllerCfg.ManifestWatcher()
+		if err != nil {
+			return nil, err
+		}
+		return &runner.Parts{
+			Services: []services.Service{manifestWatcher},
+			Run: func(ctx context.Context, ready func()) error {
+				return runRepoController(ctx, controllerCfg, ready)
+			},
+		}, nil
+	},
+}
 
-	controllerCfg, err := setupFromConfig(deps.Config, deps.Registerer)
-	if err != nil {
-		return fmt.Errorf("failed to setup provisioning controller: %w", err)
-	}
+// RunRepoController runs [RepoOperator].
+//
+// Deprecated: register [RepoOperator] with runner.Register instead.
+func RunRepoController(ctx context.Context, deps server.OperatorDependencies) error {
+	return RepoOperator.Run(ctx, deps)
+}
 
-	manifestWatcher, err := controllerCfg.ManifestWatcher()
-	if err != nil {
-		return err
-	}
-	ctx, stopServices, err := supervision.Start(ctx, controllerCfg.natsSubscriber, manifestWatcher)
-	defer func() {
-		deps.HealthNotifier.SetNotReady()
-		runErr = errors.Join(runErr, stopServices())
-	}()
-	if err != nil {
-		return err
-	}
-
+func runRepoController(ctx context.Context, controllerCfg *ControllerConfig, ready func()) error {
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
@@ -101,7 +107,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		Validator:                     repository.NewValidator(allowImageRendering, repoFactory),
 		QuotaGetter:                   quotaGetter,
 		IncrementalPolicy:             repository.NewIncrementalSyncPolicy(provisioningSec.Key("max_incremental_changes").MustInt(100)),
-		Registry:                      deps.Registerer,
+		Registry:                      controllerCfg.Registry(),
 		Tracer:                        tracer,
 		ParallelOperations:            controllerCfg.Settings.SectionWithEnvOverrides("operator").Key("parallel_operations").MustInt(10),
 		ResyncInterval:                controllerCfg.ResyncInterval(),
@@ -113,11 +119,5 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		return err
 	}
 
-	return repoController.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
-		logger.Info("repository operator is ready")
-		deps.HealthNotifier.SetReady()
-	}, func() {
-		logger.Info("repository operator shutting down")
-		deps.HealthNotifier.SetNotReady()
-	})
+	return repoController.Run(ctx, controllerCfg.NumberOfWorkers(), ready, func() {})
 }
