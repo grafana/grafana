@@ -134,6 +134,12 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer, tracer tr
 		drainTimeout:   operatorSec.Key("drain_timeout").MustDuration(30 * time.Second),
 	}
 
+	// The no-op tracing service replaces the global OpenTelemetry provider, so
+	// build it only when the server passed no tracer.
+	if controllerCfg.tracer == nil {
+		controllerCfg.tracer = tracing.NewNoopTracerService()
+	}
+
 	for _, opt := range registeredConfigOptions {
 		if err := opt(context.Background(), controllerCfg); err != nil {
 			return nil, fmt.Errorf("failed to apply config option: %w", err)
@@ -400,7 +406,7 @@ func (c *ControllerConfig) DecryptService() (decrypt.DecryptService, error) {
 		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
 	}
 
-	decryptSvc, err := setupDecryptService(c.Settings, tracing.NewNoopTracerService(), tokenExchangeClient)
+	decryptSvc, err := setupDecryptService(c.Settings, c.Tracer(), tokenExchangeClient)
 	if err != nil {
 		return nil, fmt.Errorf("setup decrypt service: %w", err)
 	}
@@ -477,9 +483,6 @@ func (c *ControllerConfig) ProvisioningKeysLister(gvr schema.GroupVersionResourc
 }
 
 func (c *ControllerConfig) Tracer() tracing.Tracer {
-	if c.tracer == nil {
-		return tracing.NewNoopTracerService()
-	}
 	return c.tracer
 }
 
