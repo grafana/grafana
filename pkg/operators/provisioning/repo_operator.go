@@ -11,7 +11,6 @@ import (
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
-	"github.com/grafana/grafana/pkg/server"
 )
 
 var RepoOperator = runner.Operator{
@@ -19,7 +18,7 @@ var RepoOperator = runner.Operator{
 	Description: "Watch provisioning repositories",
 	Logger:      "provisioning-repo-controller",
 	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
-		controllerCfg, err := setupFromConfig(rt.Cfg, rt.Registerer, rt.Subscriber)
+		controllerCfg, err := setupFromConfig(rt.Cfg, rt.Registerer, rt.Tracer, rt.Subscriber)
 		if err != nil {
 			return nil, err
 		}
@@ -34,13 +33,6 @@ var RepoOperator = runner.Operator{
 			},
 		}, nil
 	},
-}
-
-// RunRepoController runs [RepoOperator].
-//
-// Deprecated: register [RepoOperator] with runner.Register instead.
-func RunRepoController(ctx context.Context, deps server.OperatorDependencies) error {
-	return RepoOperator.Run(ctx, deps)
 }
 
 func runRepoController(ctx context.Context, controllerCfg *ControllerConfig, ready func()) error {
@@ -76,10 +68,7 @@ func runRepoController(ctx context.Context, controllerCfg *ControllerConfig, rea
 		return fmt.Errorf("failed to get connection factory: %w", err)
 	}
 
-	tracer, err := controllerCfg.Tracer()
-	if err != nil {
-		return fmt.Errorf("failed to get tracer: %w", err)
-	}
+	tracer := controllerCfg.Tracer()
 
 	quotaGetter, err := controllerCfg.QuotaGetter()
 	if err != nil {
