@@ -388,14 +388,8 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 	// A terminating folder kept its finalizer through the walk, as the store deletes it once the last
 	// one goes, which would be before its contents were removed. They are gone now, so release it. The
 	// release deletes it, so a delete by name afterwards could only reach a folder created in between.
-	if len(options.DryRun) == 0 {
-		released, err := s.releaseTerminating(ctx, walked)
-		if err != nil {
-			return nil, false, err
-		}
-		if released != nil {
-			return released, false, nil
-		}
+	if released, err := s.releaseTerminating(ctx, walked, options); err != nil || released != nil {
+		return released, false, err
 	}
 
 	// Delete this folder last. NotFound is success for children (idempotent), but the requested
@@ -414,7 +408,11 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 // which the store then deletes, and returns the deleted folder. It returns nil for a folder that is
 // gone, not terminating or without the finalizer, which are left as they are. A folder with another UID
 // replaced the one that was walked, which is already gone, so it is left alone and walked is returned.
-func (s *cascadeDeleteStorage) releaseTerminating(ctx context.Context, walked *foldersv1.Folder) (runtime.Object, error) {
+// A dry run releases nothing.
+func (s *cascadeDeleteStorage) releaseTerminating(ctx context.Context, walked *foldersv1.Folder, options *metav1.DeleteOptions) (runtime.Object, error) {
+	if len(options.DryRun) > 0 {
+		return nil, nil
+	}
 	obj, err := s.Get(ctx, walked.Name, &metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		return nil, nil
