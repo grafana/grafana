@@ -2029,6 +2029,25 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 		}
 	})
 
+	t.Run("a cascade already handed to the controller finishes after the async flag is turned off", func(t *testing.T) {
+		setCascadeToggles(t, false, false)
+		store := subfolderOf(true)
+		store.existing["child"].Finalizers = nil
+		searcher := &mockSearchClient{stats: &resourcepb.ResourceStatsResponse{Stats: []*resourcepb.ResourceStatsResponse_Stats{
+			{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 1},
+		}}}
+		validate := func(ctx context.Context, obj runtime.Object) error {
+			return validateOnDelete(ctx, obj.(*foldersv1.Folder), searcher, forceDelete(), false, nil)
+		}
+		access := &recordingAccessClient{allow: func(authlib.CheckRequest, string) bool { return false }}
+		s := &cascadeDeleteStorage{Storage: store, accessClient: access}
+
+		_, _, err := s.Delete(serviceCtx(), "child", validate, forceDelete())
+		require.NoError(t, err, "a non-empty subfolder is not refused")
+		require.Equal(t, []string{foldersv1.CascadeDeleteFinalizer}, store.finalizersAtDelete["child"], "it is handed to the controller")
+		require.Empty(t, access.checks)
+	})
+
 	t.Run("a service deleting a subfolder keeps the caller's version precondition", func(t *testing.T) {
 		setCascadeToggles(t, false, true)
 		store := subfolderOf(true)
