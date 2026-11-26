@@ -10,7 +10,7 @@ import (
 )
 
 // Headers that carry the caller's own credentials to the host that authenticated them.
-var callerCredentialHeaders = []string{"Cookie", "Authorization", "X-Access-Token", "X-Grafana-Id"}
+var callerCredentialHeaders = []string{"Cookie", "Authorization", accessTokenHeader, "X-Grafana-Id"}
 
 // Headers, or header prefixes (ending in "-"), that a trusted proxy uses to
 // assert a user's identity: the Kubernetes request-header authenticator's
@@ -64,7 +64,7 @@ func deleteHeaders(header http.Header, names []string) {
 // backends authenticate.
 func setRequesterCredentials(header http.Header, requester identity.Requester) {
 	if token := requester.GetAccessToken(); token != "" {
-		header.Set("X-Access-Token", "Bearer "+token)
+		header.Set(accessTokenHeader, "Bearer "+token)
 		header.Set("Authorization", "Bearer "+token)
 	}
 	if token := requester.GetIDToken(); token != "" {

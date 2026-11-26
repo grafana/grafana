@@ -3642,27 +3642,27 @@ describe('TableNG', () => {
       };
     }
 
-    it('shows multiple datalinks in the tooltip', async () => {
-      const dataFrame = createBasicDataFrame();
-      const links: DataLink[] = [
-        { url: 'http://asdasd.com', title: 'Test Title' },
-        { url: 'http://asdasd2.com', title: 'Test Title2' },
-      ];
+    it.each([undefined, true, false])(
+      'renders data links as menu items and focuses the first with tableRefreshEnabled=%s',
+      async (tableRefreshEnabled) => {
+        const dataFrame = createBasicDataFrame();
+        const links: DataLink[] = [
+          { url: 'http://asdasd.com', title: 'Test Title' },
+          { url: 'http://asdasd2.com', title: 'Test Title2' },
+        ];
 
-      dataFrame.fields[0].config.links = links;
-      dataFrame.fields[0].getLinks = () => links.map(toLinkModel);
+        dataFrame.fields[0].config.links = links;
+        dataFrame.fields[0].getLinks = () => links.map(toLinkModel);
 
-      render(<TableNG data={dataFrame} width={800} height={600} />);
+        render(<TableNG data={dataFrame} width={800} height={600} tableRefreshEnabled={tableRefreshEnabled} />);
 
-      const cell = screen.getByText('A1');
-      await userEvent.click(cell);
+        await userEvent.click(screen.getByText('A1'));
 
-      const tooltip = screen.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper);
-      expect(tooltip).toBeInTheDocument();
-
-      expect(screen.getByText('Test Title')).toBeInTheDocument();
-      expect(screen.getByText('Test Title2')).toBeInTheDocument();
-    });
+        expect(screen.getByRole('menuitem', { name: 'Test Title' })).toHaveAttribute('href', 'http://asdasd.com');
+        expect(screen.getByRole('menuitem', { name: 'Test Title2' })).toHaveAttribute('href', 'http://asdasd2.com');
+        expect(screen.getByRole('menuitem', { name: 'Test Title' })).toHaveFocus();
+      }
+    );
 
     // A Document Picture-in-Picture window (the Grafana Assistant pop-out) is another realm, as an iframe is: the
     // clicked link fails this window's `instanceof HTMLElement`.
@@ -3689,23 +3689,6 @@ describe('TableNG', () => {
       // Unmount before the iframe goes, or React cannot remove the table from it.
       unmount();
       iframe.remove();
-    });
-
-    it('shows data links as menu items with the table refresh enabled', async () => {
-      const dataFrame = createBasicDataFrame();
-      const links: DataLink[] = [
-        { url: 'http://asdasd.com', title: 'Test Title' },
-        { url: 'http://asdasd2.com', title: 'Test Title2' },
-      ];
-
-      dataFrame.fields[0].config.links = links;
-      dataFrame.fields[0].getLinks = () => links.map(toLinkModel);
-
-      render(<TableNG data={dataFrame} width={800} height={600} tableRefreshEnabled />);
-
-      await userEvent.click(screen.getByText('A1'));
-
-      expect(screen.getByRole('menuitem', { name: 'Test Title' })).toHaveAttribute('href', 'http://asdasd.com');
     });
 
     it('does not show tooltip for a single link', async () => {
