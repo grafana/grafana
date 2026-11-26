@@ -2341,15 +2341,16 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 		// Reread the whole lookback even if this index's checkpoint is old.
 		reuseFrom = sinceRv + 1
 	}
+	retentionDeadline := effectiveRvTime.Add(k.eventRetentionPeriod - eventStoreRetentionMargin)
 	return latestRv, func(yield func(*ModifiedResource, error) bool) {
 		lowestRead := int64(math.MaxInt64)
-		for mr, err := range k.listModifiedSinceEventStore(ctx, key, effectiveRv, reuseFrom, &lowestRead) {
+		for mr, err := range k.listModifiedSinceEventStore(ctx, key, effectiveRv, reuseFrom, retentionDeadline, &lowestRead) {
 			if !yield(mr, err) || err != nil {
 				return
 			}
 		}
 		// The scan reads the oldest events last, so pruning may have overtaken a long one.
-		if time.Since(effectiveRvTime) > k.eventRetentionPeriod-eventStoreRetentionMargin {
+		if time.Now().After(retentionDeadline) {
 			k.log.Info("ListModifiedSince event store scan outlived the retention period, rescanning the data store", "sinceRv", sinceRv, "group", key.Group, "resource", key.Resource)
 			// The descending scan read every event from lowestRead up, and pruning
 			// removes the oldest first, so only resources last changed below it can be missing.
@@ -2478,12 +2479,12 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 }
 
 // listModifiedSinceEventStore records in lowestRead the lowest event RV it read.
-func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv, reuseFrom int64, lowestRead *int64) iter.Seq2[*ModifiedResource, error] {
+func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv, reuseFrom int64, retentionDeadline time.Time, lowestRead *int64) iter.Seq2[*ModifiedResource, error] {
 	return func(yield func(*ModifiedResource, error) bool) {
 		recentWindow := max(k.searchLookback, maxWriteCommitDelay+eventStoreRetentionMargin)
 		scan := func(reuse bool) (retry bool) {
 			seen := make(map[string]struct{})
-			for event, err := range k.eventStore.listIndexEventKeys(ctx, sinceRv, reuseFrom, recentWindow, k.maxEventStoreAge(), reuse) {
+			for event, err := range k.eventStore.listIndexEventKeys(ctx, sinceRv, reuseFrom, recentWindow, k.maxEventStoreAge(), retentionDeadline, reuse) {
 				if err != nil {
 					yield(&ModifiedResource{}, err)
 					return false

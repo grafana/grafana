@@ -3695,6 +3695,55 @@ func TestKvStorageBackend_ListModifiedSince_PastEventRetention(t *testing.T) {
 		})
 	})
 
+	t.Run("recovers events pruned between pages before replaying cached keys", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			time.Sleep(time.Until(time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)))
+			store := setupBadgerKV(t)
+			backend := &kvStorageBackend{
+				dataStore:            &dataStore{kv: store},
+				eventStore:           newEventStore(store),
+				log:                  &logging.NoOpLogger{},
+				eventRetentionPeriod: 8 * time.Minute,
+			}
+			backend.eventStore.reuseIndexEventKeys = true
+			ctx := t.Context()
+			now := time.Now()
+			save := func(name string, ts time.Time) int64 {
+				event := EventKey{Namespace: ns.Namespace, Group: ns.Group, Resource: ns.Resource, Name: name, ResourceVersion: snowflakeFromTime(ts), Action: DataActionCreated}
+				require.NoError(t, backend.dataStore.Save(ctx, DataKey(event), strings.NewReader(name)))
+				require.NoError(t, backend.eventStore.Save(ctx, Event{Namespace: event.Namespace, Group: event.Group, Resource: event.Resource, Name: event.Name, ResourceVersion: event.ResourceVersion, Action: event.Action}))
+				return event.ResourceVersion
+			}
+			since := snowflakeFromTime(now.Add(-5*time.Minute - 30*time.Second))
+			save("cached", now.Add(-5*time.Minute))
+			save("pruned", now.Add(-3*time.Minute))
+			for i := range keyPageSize - 1 {
+				require.NoError(t, backend.eventStore.Save(ctx, Event{
+					Namespace: ns.Namespace, Group: ns.Group, Resource: "unrelated", Name: "noise",
+					ResourceVersion: snowflakeFromTime(now.Add(-time.Minute)) + int64(i), Action: DataActionCreated,
+				}))
+			}
+			latest := save("newest", now)
+			require.Equal(t, []string{ns.Namespace + "/newest", ns.Namespace + "/pruned", ns.Namespace + "/cached"}, listModifiedNames(t, backend, ns, since, latest))
+			require.Len(t, backend.eventStore.indexEventKeys.Load().keys, 1)
+
+			_, seq := backend.ListModifiedSince(ctx, ns, since, nil)
+			var names []string
+			for mr, err := range seq {
+				require.NoError(t, err)
+				names = append(names, mr.Key.Name)
+				if len(names) == 1 {
+					// The first page is already buffered. The next page loses "pruned".
+					time.Sleep(6 * time.Minute)
+					deleted, err := backend.eventStore.CleanupOldEvents(ctx, time.Now().Add(-backend.eventRetentionPeriod))
+					require.NoError(t, err)
+					require.Equal(t, 2, deleted)
+				}
+			}
+			require.Equal(t, []string{"newest", "cached", "pruned"}, names)
+		})
+	})
+
 	t.Run("reads the data store past an hour even with a longer retention period", func(t *testing.T) {
 		backend, rv := setup(t, 24*time.Hour)
 		sinceRV := SubtractDurationFromSnowflake(rv, 2*time.Hour)

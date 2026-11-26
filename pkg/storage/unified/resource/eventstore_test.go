@@ -856,7 +856,7 @@ func TestIndexEventScanKeepsSnapshotWhenUnchanged(t *testing.T) {
 			require.NoError(t, store.Save(ctx, Event{Namespace: "default", Group: "apps", Resource: "resource", Name: "event", ResourceVersion: rv, Action: DataActionCreated}))
 		}
 		scan := func(from int64) iter.Seq2[indexEventKey, error] {
-			return store.listIndexEventKeys(ctx, from, from, 4*time.Minute, time.Hour, true)
+			return store.listIndexEventKeys(ctx, from, from, 4*time.Minute, time.Hour, time.Now().Add(time.Hour), true)
 		}
 		for _, err := range scan(since) {
 			require.NoError(t, err)
@@ -914,7 +914,7 @@ func BenchmarkSequentialIndexEventScans(b *testing.B) {
 							require.NoError(b, err)
 						}
 					} else {
-						for _, err := range events.listIndexEventKeys(b.Context(), since, since, recentWindow, time.Hour, true) {
+						for _, err := range events.listIndexEventKeys(b.Context(), since, since, recentWindow, time.Hour, now.Add(time.Hour), true) {
 							require.NoError(b, err)
 						}
 					}
@@ -927,7 +927,7 @@ func BenchmarkSequentialIndexEventScans(b *testing.B) {
 		b.Run(name, func(b *testing.B) {
 			scan := func(window time.Duration) {
 				// Reread the ten oldest keys in the cached range on each scan.
-				for _, err := range events.listIndexEventKeys(b.Context(), newer, newer+10, window, time.Hour, true) {
+				for _, err := range events.listIndexEventKeys(b.Context(), newer, newer+10, window, time.Hour, now.Add(time.Hour), true) {
 					require.NoError(b, err)
 				}
 			}

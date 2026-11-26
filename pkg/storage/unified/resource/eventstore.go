@@ -258,7 +258,7 @@ func (n *eventStore) invalidateIndexEventKeys() {
 // and the caller's lookback. An event that commits after the scan with an RV
 // outside both windows can be missed. A fresh retry can refill the cache without
 // reading it.
-func (n *eventStore) listIndexEventKeys(ctx context.Context, since, reuseFrom int64, recentWindow, maxAge time.Duration, reuse bool) iter.Seq2[indexEventKey, error] {
+func (n *eventStore) listIndexEventKeys(ctx context.Context, since, reuseFrom int64, recentWindow, maxAge time.Duration, retentionDeadline time.Time, reuse bool) iter.Seq2[indexEventKey, error] {
 	return func(yield func(indexEventKey, error) bool) {
 		ctx, span := tracer.Start(ctx, "resource.eventStore.ListKeysSince", trace.WithAttributes(attribute.Int64("sinceRV", since)))
 		defer span.End()
@@ -312,6 +312,11 @@ func (n *eventStore) listIndexEventKeys(ctx context.Context, since, reuseFrom in
 			}
 		} else {
 			if !read(cached.before, 0, before, &newer) {
+				return
+			}
+			// Pruning may have left a gap in the recent pages. Let the data
+			// store recover it before yielding any older keys past that gap.
+			if time.Now().After(retentionDeadline) {
 				return
 			}
 			coveredEnd := firstIndexEventBelow(cached.keys, cachedSince)
