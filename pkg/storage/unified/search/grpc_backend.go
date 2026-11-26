@@ -17,9 +17,10 @@ import (
 // grpcSearchBackend manages one remote index generation for the prototype.
 // Its caller owns the gRPC connection.
 type grpcSearchBackend struct {
-	index   *grpcSearchIndex
-	buildMu sync.Mutex
-	ready   atomic.Bool
+	index        *grpcSearchIndex
+	buildMu      sync.Mutex
+	buildStarted bool
+	ready        atomic.Bool
 }
 
 var _ resource.SearchBackend = (*grpcSearchBackend)(nil)
@@ -81,10 +82,15 @@ func (b *grpcSearchBackend) BuildIndex(ctx context.Context, key resource.Namespa
 		}
 		return b.index, nil
 	}
+	// Without a saved checkpoint we cannot resume or adopt a partial build.
+	if b.buildStarted {
+		return nil, status.Error(codes.FailedPrecondition, "the initial build did not finish; configure a fresh index generation")
+	}
 	idx := b.index
 	if _, err := idx.writer.Client.EnsureIndex(ctx, &enginepb.EnsureIndexRequest{IndexScope: idx.writer.Scope, RequireNew: true}); err != nil {
 		return nil, err
 	}
+	b.buildStarted = true
 	rv, err := build(idx)
 	if err != nil {
 		return nil, err

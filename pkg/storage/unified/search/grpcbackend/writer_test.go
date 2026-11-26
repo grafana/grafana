@@ -1,6 +1,7 @@
 package grpcbackend
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -35,9 +36,33 @@ func TestIndexWriterRejectsAmbiguousOrMismatchedScope(t *testing.T) {
 			target := proto.CloneOf(key)
 			tc.change(scope, target)
 			writer := IndexWriter{Scope: scope}
-			req, err := writer.PrepareWrite([]*resource.BulkIndexItem{{Action: resource.ActionDelete, Key: target}})
+			req, err := writer.PrepareBatches([]*resource.BulkIndexItem{{Action: resource.ActionDelete, Key: target}})
 			require.Equal(t, codes.InvalidArgument, status.Code(err))
 			require.Nil(t, req)
 		})
 	}
+}
+
+func TestIndexWriterLimitsSerializedBatchSize(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	writer := IndexWriter{Scope: grpcTestScope(key)}
+	item := func(name, body string) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
+			Key: &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name}, Description: body,
+		}}
+	}
+	body := strings.Repeat("x", 2<<20)
+	items := []*resource.BulkIndexItem{item("one", body), item("two", body)}
+	batches, err := writer.PrepareBatches(items)
+	require.NoError(t, err)
+	require.Len(t, batches, 2)
+	for n, batch := range batches {
+		require.LessOrEqual(t, proto.Size(batch), 4<<20)
+		require.Len(t, batch.Writes, 1)
+		require.Equal(t, items[n].Doc.Key.Name, batch.Writes[0].Key.Name)
+	}
+
+	batches, err = writer.PrepareBatches(append(items, item("oversized", strings.Repeat("x", 4<<20))))
+	require.Equal(t, codes.ResourceExhausted, status.Code(err))
+	require.Nil(t, batches)
 }

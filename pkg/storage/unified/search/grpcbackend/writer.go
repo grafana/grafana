@@ -7,6 +7,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -22,36 +23,86 @@ type IndexWriter struct {
 	Definitions resource.SearchableDocumentFields
 }
 
-// PrepareWrite validates and encodes a batch before the caller attempts the RPC.
-func (w IndexWriter) PrepareWrite(items []*resource.BulkIndexItem) (*enginepb.WriteDocumentsRequest, error) {
+const (
+	maxWriteDocuments = 1000
+	// Match gRPC's default server receive limit for the serialized message.
+	maxWriteRequestBytes = 4 << 20
+)
+
+// PrepareBatches validates the entire bulk request before sending any RPC.
+func (w IndexWriter) PrepareBatches(items []*resource.BulkIndexItem) ([]*enginepb.WriteDocumentsRequest, error) {
 	index, err := writeIndex(w.Scope)
 	if err != nil {
 		return nil, err
 	}
+	var requests []*enginepb.WriteDocumentsRequest
+	for chunk := range slices.Chunk(items, maxWriteDocuments) {
+		// Repeated keys must be sent in separate requests without changing their order.
+		start := 0
+		seen := make(map[string]bool, len(chunk))
+		for n, item := range chunk {
+			key := writeKey(item)
+			if key.GetNamespace() != w.Scope.Namespace || key.GetGroup() != index.Group || key.GetResource() != index.Resource || key.GetName() == "" {
+				return nil, status.Error(codes.InvalidArgument, "write key does not match index scope")
+			}
+			if seen[key.Name] {
+				requests, err = w.appendBatches(requests, chunk[start:n])
+				if err != nil {
+					return nil, err
+				}
+				start = n
+				clear(seen)
+			}
+			seen[key.Name] = true
+		}
+		requests, err = w.appendBatches(requests, chunk[start:])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return requests, nil
+}
+
+func writeKey(item *resource.BulkIndexItem) *resourcepb.ResourceKey {
+	if item == nil {
+		return nil
+	}
+	if item.Action == resource.ActionIndex {
+		if item.Doc == nil {
+			return nil
+		}
+		return item.Doc.Key
+	}
+	return item.Key
+}
+
+func (w IndexWriter) appendBatches(requests []*enginepb.WriteDocumentsRequest, items []*resource.BulkIndexItem) ([]*enginepb.WriteDocumentsRequest, error) {
+	req, err := w.prepareWrite(items)
+	if err != nil {
+		return nil, err
+	}
+	if proto.Size(req) <= maxWriteRequestBytes {
+		return append(requests, req), nil
+	}
+	if len(items) == 1 {
+		return nil, status.Error(codes.ResourceExhausted, "one document exceeds the gRPC write request size limit")
+	}
+	// Re-encode each half so field declarations and indexes match its documents.
+	mid := len(items) / 2
+	requests, err = w.appendBatches(requests, items[:mid])
+	if err != nil {
+		return nil, err
+	}
+	return w.appendBatches(requests, items[mid:])
+}
+
+func (w IndexWriter) prepareWrite(items []*resource.BulkIndexItem) (*enginepb.WriteDocumentsRequest, error) {
 	req := &enginepb.WriteDocumentsRequest{IndexScope: w.Scope}
 	fieldIndex := make(map[string]uint32)
-	keys := make(map[string]bool, len(items))
 	for _, item := range items {
-		if item == nil {
-			return nil, status.Error(codes.InvalidArgument, "missing index item")
-		}
-		key := item.Key
-		if item.Action == resource.ActionIndex {
-			if item.Doc == nil {
-				return nil, status.Error(codes.InvalidArgument, "missing document for upsert")
-			}
-			key = item.Doc.Key
-		}
-		if key.GetNamespace() != w.Scope.Namespace || key.GetGroup() != index.Group || key.GetResource() != index.Resource || key.GetName() == "" {
-			return nil, status.Error(codes.InvalidArgument, "write key does not match index scope")
-		}
-		if keys[key.Name] {
-			return nil, status.Error(codes.InvalidArgument, "duplicate key in write batch")
-		}
-		keys[key.Name] = true
 		switch item.Action {
 		case resource.ActionDelete:
-			req.Writes = append(req.Writes, deleteDocument(key))
+			req.Writes = append(req.Writes, deleteDocument(item.Key))
 		case resource.ActionIndex:
 			doc := item.Doc
 			if doc.IsDeleted != nil && *doc.IsDeleted {
@@ -77,10 +128,13 @@ func (w IndexWriter) PrepareWrite(items []*resource.BulkIndexItem) (*enginepb.Wr
 				if doc.Fields[name] == nil {
 					continue
 				}
-				if w.Definitions == nil || w.Definitions.Field(name) == nil {
+				var def *resource.SearchFieldDefinition
+				if w.Definitions != nil {
+					def = w.Definitions.Field(name)
+				}
+				if def == nil {
 					return nil, fmt.Errorf("undeclared app field %q", name)
 				}
-				def := w.Definitions.Field(name)
 				i, ok := fieldIndex[name]
 				if !ok {
 					typ, err := enginequery.FieldValueType(def.Type)

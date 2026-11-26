@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -46,7 +48,8 @@ func TestGRPCSearchBackendRoutesBuildUpdateAndSearch(t *testing.T) {
 	conn, err := grpc.NewClient(listener.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, conn.Close()) })
-	grpcBackend, err := newGRPCSearchBackend(enginepb.NewSearchEngineClient(conn), key, scope.Indexes[0].Generation, registry, PostRankAuthzConfig{MaxWindow: 2}, nil)
+	metrics := resource.ProvideIndexMetrics(nil)
+	grpcBackend, err := newGRPCSearchBackend(enginepb.NewSearchEngineClient(conn), key, scope.Indexes[0].Generation, registry, PostRankAuthzConfig{MaxWindow: 2}, metrics)
 	require.NoError(t, err)
 	var enabled atomic.Bool
 	backend := &routedSearchBackend{SearchBackend: bleve, remote: grpcBackend, key: key, enabled: func(string) bool { return enabled.Load() }}
@@ -103,6 +106,14 @@ func TestGRPCSearchBackendRoutesBuildUpdateAndSearch(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, resp.Rows, 1)
 	require.Equal(t, "allowed", resp.Rows[0].Key.Name)
+	histogram := func(vec *prometheus.HistogramVec, labels ...string) *dto.Histogram {
+		m := &dto.Metric{}
+		require.NoError(t, vec.WithLabelValues(labels...).(prometheus.Metric).Write(m))
+		return m.GetHistogram()
+	}
+	require.EqualValues(t, 1, histogram(metrics.SearchAuthDuration, "post_rank", "page", "success").GetSampleCount())
+	require.Positive(t, histogram(metrics.SearchAuthChecks, "post_rank", "page").GetSampleSum())
+	require.EqualValues(t, 1, histogram(metrics.SearchAuthReturned, "post_rank", "page").GetSampleSum())
 
 	next = document("allowed", "Renamed dashboard", "team", 11)
 	next.Doc.Fields = map[string]any{"undeclared": "invalid"}
@@ -173,6 +184,15 @@ func TestGRPCSearchIndexBatchesWrites(t *testing.T) {
 	repeated := items[2].Key
 	items[0] = &resource.BulkIndexItem{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{Key: repeated, Title: "first"}}
 	_, err = backend.BuildIndex(t.Context(), key, 0, "test", func(idx resource.ResourceIndex) (int64, error) {
+		invalid := slices.Clone(items)
+		invalid[len(invalid)-1] = &resource.BulkIndexItem{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
+			Key: items[len(items)-1].Key, Fields: map[string]any{"undeclared": "invalid"},
+		}}
+		require.ErrorContains(t, idx.BulkIndex(&resource.BulkIndexRequest{Items: invalid}), "undeclared app field")
+		service.mu.Lock()
+		writes := len(service.batchSizes)
+		service.mu.Unlock()
+		require.Zero(t, writes, "invalid later chunks must prevent all writes")
 		return 1, idx.BulkIndex(&resource.BulkIndexRequest{Items: items})
 	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
@@ -180,6 +200,29 @@ func TestGRPCSearchIndexBatchesWrites(t *testing.T) {
 	defer service.mu.Unlock()
 	require.Equal(t, []int{2, 998, 1}, service.batchSizes)
 	require.Empty(t, service.docs)
+}
+
+func TestGRPCSearchBackendRequiresFreshGenerationAfterFailedBuild(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "default", Group: dashboardGroup, Resource: dashboardResource}
+	registry := resource.NewSearchFieldsRegistry(nil, nil, nil)
+	_, revision, _ := registry.ForKey(key)
+	scope := grpcTestScope(key)
+	scope.Indexes[0].SchemaRevision = revision
+	service := &grpcTestEngine{scope: scope}
+	backend, err := newGRPCSearchBackend(newQueryTestClient(t, service), key, scope.Indexes[0].Generation, registry, PostRankAuthzConfig{}, nil)
+	require.NoError(t, err)
+	build := func(resource.ResourceIndex) (int64, error) { return 10, nil }
+	catchUp := func(context.Context, resource.ResourceIndex, int64) (int64, int, error) {
+		return 0, 0, status.Error(codes.Unavailable, "catch-up failed")
+	}
+	result, err := backend.BuildIndex(t.Context(), key, 0, "test", build, catchUp, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.Equal(t, codes.Unavailable, status.Code(err))
+	require.Nil(t, result)
+	require.Nil(t, backend.GetIndex(key))
+	result, err = backend.BuildIndex(t.Context(), key, 0, "test", build, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.Equal(t, codes.FailedPrecondition, status.Code(err))
+	require.ErrorContains(t, err, "fresh index generation")
+	require.Nil(t, result)
 }
 
 type writeDeadlineClient struct {

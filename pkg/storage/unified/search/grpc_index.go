@@ -4,7 +4,6 @@ import (
 	"context"
 	"iter"
 	"math"
-	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -36,7 +35,7 @@ type grpcSearchIndex struct {
 	writeFailed bool
 }
 
-func (i *grpcSearchIndex) Search(ctx context.Context, access authlib.AccessClient, req *resourcepb.ResourceSearchRequest, _ *resource.SearchIndexes, stats *resource.SearchStats) (*resourcepb.ResourceSearchResponse, error) {
+func (i *grpcSearchIndex) Search(ctx context.Context, access authlib.AccessClient, req *resourcepb.ResourceSearchRequest, _ *resource.SearchIndexes, stats *resource.SearchStats) (response *resourcepb.ResourceSearchResponse, resultErr error) {
 	key := req.GetOptions().GetKey()
 	if key.GetNamespace() != i.key.Namespace || key.GetGroup() != i.key.Group || key.GetResource() != i.key.Resource {
 		return nil, status.Error(codes.InvalidArgument, "search key is outside the configured index")
@@ -88,7 +87,11 @@ func (i *grpcSearchIndex) Search(ctx context.Context, access authlib.AccessClien
 	cfg := i.config
 	cfg.MaxWindow = min(cfg.MaxWindow, 10000)
 	runner := postRankSearch{key: i.key, backend: backend, config: cfg, indexMetrics: i.metrics}
-	response := &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, ResourceVersion: i.rv.Load()}
+	rowAccess := access
+	access, authMetrics := withSearchAuthObservation(access, i.metrics)
+	observeAuth := authMetrics.start(req, access)
+	defer func() { observeAuth(response, resultErr) }()
+	response = &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, ResourceVersion: i.rv.Load()}
 	hits, err := runner.run(ctx, access, req, window, stats, response, nil)
 	if err != nil {
 		return nil, err
@@ -97,7 +100,7 @@ func (i *grpcSearchIndex) Search(ctx context.Context, access authlib.AccessClien
 	if err := setSearchResults(logger, response, columns, hits); err != nil {
 		return nil, err
 	}
-	addRowAccess(ctx, logger, access, req.AccessVerbs, response, hits)
+	addRowAccess(ctx, logger, rowAccess, req.AccessVerbs, response, hits)
 	return response, nil
 }
 
@@ -121,47 +124,17 @@ func (i *grpcSearchIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 	if i.writeFailed {
 		return errWriteOutcomeUnknown
 	}
-	write := func(items []*resource.BulkIndexItem) error {
-		req, err := i.writer.PrepareWrite(items)
-		if err != nil {
-			return err
-		}
+	batches, err := i.writer.PrepareBatches(req.Items)
+	if err != nil {
+		return err
+	}
+	for _, batch := range batches {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-		defer cancel()
-		_, err = i.writer.Client.WriteDocuments(ctx, req)
+		_, err := i.writer.Client.WriteDocuments(ctx, batch)
+		cancel()
 		if err != nil {
 			// The previous RPC may still complete and overwrite a newer write.
 			i.writeFailed = true
-		}
-		return err
-	}
-	for batch := range slices.Chunk(req.Items, 1000) {
-		// The protocol allows each key only once per batch. Split on repeats
-		// without reordering the updates Grafana supplied.
-		start := 0
-		seen := make(map[string]bool, len(batch))
-		for n, item := range batch {
-			if item == nil {
-				return status.Error(codes.InvalidArgument, "index item is missing")
-			}
-			key := item.Key
-			if item.Action == resource.ActionIndex && item.Doc != nil {
-				key = item.Doc.Key
-			}
-			if key == nil {
-				return status.Error(codes.InvalidArgument, "index item has no key")
-			}
-			id := resource.SearchID(key)
-			if seen[id] {
-				if err := write(batch[start:n]); err != nil {
-					return err
-				}
-				start = n
-				clear(seen)
-			}
-			seen[id] = true
-		}
-		if err := write(batch[start:]); err != nil {
 			return err
 		}
 	}

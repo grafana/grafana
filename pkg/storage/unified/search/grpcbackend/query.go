@@ -68,10 +68,7 @@ func (b *QueryBackend) ReadAuthzMetadata(ctx context.Context, ids []string) (eng
 	}
 	values := make(map[string]enginequery.AuthzMetadata, len(res.Hits))
 	for _, hit := range res.Hits {
-		folder, err := metadataString(hit, resource.SEARCH_FIELD_FOLDER)
-		if err != nil {
-			return enginequery.Metadata{}, err
-		}
+		folder, _ := hit.Fields[resource.SEARCH_FIELD_FOLDER].(string) // validated by readDocuments
 		deleter, err := metadataString(hit, resource.SEARCH_FIELD_DELETED_BY)
 		if err != nil {
 			return enginequery.Metadata{}, err
@@ -151,7 +148,17 @@ func (b *QueryBackend) readDocuments(ctx context.Context, ids []string, fields [
 	if res == nil {
 		return enginequery.Result{}, invalidEngineResponse("missing document response")
 	}
-	return b.decodeResult(res.Hits, res.Fields, res.Took, enginequery.Result{Cost: res.GetIndexBytesRead()}, fields, requested, false, query != nil)
+	result, err := b.decodeResult(res.Hits, res.Fields, res.Took, enginequery.Result{Cost: res.GetIndexBytesRead()}, fields, requested, false, query != nil)
+	if err != nil {
+		return enginequery.Result{}, err
+	}
+	for _, hit := range result.Hits {
+		// Missing authorization data must not turn a document into a root document.
+		if _, ok := hit.Fields[resource.SEARCH_FIELD_FOLDER].(string); !ok {
+			return enginequery.Result{}, invalidEngineResponse("expected an explicit folder string in document read")
+		}
+	}
+	return result, nil
 }
 
 func (b *QueryBackend) containsKey(key *resourcepb.ResourceKey) bool {

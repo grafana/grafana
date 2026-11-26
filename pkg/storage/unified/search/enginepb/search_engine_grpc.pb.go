@@ -34,6 +34,8 @@ type SearchEngineClient interface {
 	SearchCandidates(ctx context.Context, in *SearchCandidatesRequest, opts ...grpc.CallOption) (*SearchCandidatesResponse, error)
 	// Reads known IDs, omitting documents that disappeared.
 	// With query set, also omits documents that no longer match it.
+	// When folder is requested for authorization, each hit must include a string.
+	// Use an empty string for a document known to be at the root.
 	ReadDocuments(ctx context.Context, in *ReadDocumentsRequest, opts ...grpc.CallOption) (*ReadDocumentsResponse, error)
 	// Creates the configured index from the schema identified by IndexReference,
 	// or verifies that it was created for this scope.
@@ -103,6 +105,8 @@ type SearchEngineServer interface {
 	SearchCandidates(context.Context, *SearchCandidatesRequest) (*SearchCandidatesResponse, error)
 	// Reads known IDs, omitting documents that disappeared.
 	// With query set, also omits documents that no longer match it.
+	// When folder is requested for authorization, each hit must include a string.
+	// Use an empty string for a document known to be at the root.
 	ReadDocuments(context.Context, *ReadDocumentsRequest) (*ReadDocumentsResponse, error)
 	// Creates the configured index from the schema identified by IndexReference,
 	// or verifies that it was created for this scope.

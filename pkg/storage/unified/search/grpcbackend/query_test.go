@@ -55,6 +55,51 @@ func grpcTestScope(key resource.NamespacedResource) *enginepb.IndexScope {
 	return &enginepb.IndexScope{Namespace: key.Namespace, Indexes: []*enginepb.IndexReference{{Group: key.Group, Resource: key.Resource, Generation: "test-generation", SchemaRevision: "test-schema"}}}
 }
 
+func TestGRPCQueryBackendRequiresExplicitFolder(t *testing.T) {
+	key := &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "doc"}
+	id := resource.SearchID(key)
+	scope := grpcTestScope(resource.NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource})
+	for _, tc := range []struct {
+		name   string
+		values []*resourcepb.ResourceSearchValue
+		code   codes.Code
+	}{
+		{"missing folder", nil, codes.Internal},
+		{"explicit root", []*resourcepb.ResourceSearchValue{{StringValues: []string{""}}}, codes.OK},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server := queryTestServer{read: func(*enginepb.ReadDocumentsRequest) (*enginepb.ReadDocumentsResponse, error) {
+				return &enginepb.ReadDocumentsResponse{
+					Fields: []*resourcepb.ResourceSearchField{{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING}},
+					Hits:   []*enginepb.Hit{{Key: key, StableSortKey: &enginepb.StableSortKey{Value: []byte("doc")}, Values: tc.values}},
+				}, nil
+			}}
+			backend := &QueryBackend{Client: newQueryTestClient(t, server), Scope: scope, Query: &enginepb.QuerySpec{}}
+			metadata, err := backend.ReadAuthzMetadata(t.Context(), []string{id})
+			require.Equal(t, tc.code, status.Code(err))
+			hits, err := backend.Lookup(t.Context(), enginequery.LookupRequest{IDs: []string{id}})
+			require.Equal(t, tc.code, status.Code(err))
+			if tc.code == codes.OK {
+				require.Contains(t, metadata.Values, id)
+				require.Equal(t, "", metadata.Values[id].Folder)
+				require.Len(t, hits.Hits, 1)
+				require.Equal(t, "", hits.Hits[0].Fields[resource.SEARCH_FIELD_FOLDER])
+			} else {
+				require.Empty(t, metadata.Values)
+				require.Empty(t, hits.Hits)
+			}
+		})
+	}
+}
+
+func TestQuerySpecRejectsFolderTree(t *testing.T) {
+	query, err := QuerySpec(&resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
+		Fields: []*resourcepb.Requirement{{Key: resource.SEARCH_FIELD_FOLDER_TREE, Operator: "=", Values: []string{"team"}}},
+	}}, 0)
+	require.Equal(t, codes.Unimplemented, status.Code(err))
+	require.Nil(t, query)
+}
+
 func TestGRPCQueryBackendRejectsInvalidResults(t *testing.T) {
 	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
 	for _, tc := range []struct {
