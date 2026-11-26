@@ -23,6 +23,26 @@ func (qb *queryBuilder) buildGetQuery(keyPath string) (string, []interface{}) {
 	return query, []interface{}{keyPath}
 }
 
+// buildGetForUpdateQuery reads a value and locks its row until the transaction
+// ends. SQLite does not support it.
+func (qb *queryBuilder) buildGetForUpdateQuery(keyPath string) (string, []interface{}) {
+	query, args := qb.buildGetQuery(keyPath)
+	return query + " FOR UPDATE", args
+}
+
+// buildCompareAndSwapQuery updates a value if it still holds expected. Only
+// for SQLite, where casting both sides to BLOB compares their bytes exactly.
+func (qb *queryBuilder) buildCompareAndSwapQuery(keyPath string, expected, value []byte) (string, []interface{}) {
+	query := fmt.Sprintf(
+		"UPDATE %s SET %s = %s WHERE %s = %s AND CAST(%s AS BLOB) = CAST(%s AS BLOB)",
+		qb.dialect.QuoteIdent(qb.tableName),
+		qb.dialect.QuoteIdent("value"), qb.dialect.Placeholder(1),
+		qb.dialect.QuoteIdent("key_path"), qb.dialect.Placeholder(2),
+		qb.dialect.QuoteIdent("value"), qb.dialect.Placeholder(3),
+	)
+	return query, []interface{}{value, keyPath, expected}
+}
+
 func (qb *queryBuilder) buildExistsQuery(keyPath string) (string, []interface{}) {
 	query := fmt.Sprintf(
 		"SELECT 1 FROM %s WHERE %s = %s",

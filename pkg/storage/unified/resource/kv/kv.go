@@ -16,7 +16,15 @@ import (
 var ErrNotFound = errors.New("key not found")
 var ErrEmptyValue = errors.New("key must have a value")
 var ErrKeyAlreadyExists = errors.New("key already exists")
-var ErrBatchNotSupportedOnDataSection = errors.New("batch operations are not supported on the data section")
+var ErrBatchNotSupportedOnDataSection = errors.New("only put operations are supported on the data section in a batch")
+
+// ErrBatchNotSupportedOnSection reports a batch operation on a section that
+// SupportsBatch rejects.
+var ErrBatchNotSupportedOnSection = errors.New("batch operations are not supported on this section")
+
+// ErrCompareAndSwapFailed reports that a BatchOpCompareAndSwap found a value
+// other than the expected one.
+var ErrCompareAndSwapFailed = errors.New("compare and swap failed: value does not match")
 
 // ErrRetryable marks a transient error that a caller iterating a KV stream
 // (Keys, Get, BatchGet) may retry by re-opening the call from a known
@@ -87,13 +95,39 @@ const (
 	BatchOpUpdate
 	// BatchOpDelete removes a key, idempotent (never fails on key state)
 	BatchOpDelete
+	// BatchOpCompareAndSwap replaces the value of an existing key only if it
+	// currently holds Expected. It fails with ErrNotFound if the key doesn't
+	// exist and with ErrCompareAndSwapFailed if it holds another value.
+	BatchOpCompareAndSwap
 )
 
 // BatchOp represents a single operation in an atomic batch
 type BatchOp struct {
-	Mode  BatchOpMode
-	Key   string
-	Value []byte // For Put/Create/Update operations, nil for Delete
+	// Section the operation applies to. Empty uses the section passed to Batch,
+	// so one batch can write several sections atomically.
+	Section  string
+	Mode     BatchOpMode
+	Key      string
+	Value    []byte // For Put/Create/Update/CompareAndSwap operations, nil for Delete
+	Expected []byte // For CompareAndSwap operations
+}
+
+func (op BatchOp) section(defaultSection string) string {
+	if op.Section != "" {
+		return op.Section
+	}
+	return defaultSection
+}
+
+// validateBatchSections fails the first operation whose section can't be
+// batched, before the batch touches the store.
+func validateBatchSections(defaultSection string, ops []BatchOp) error {
+	for i, op := range ops {
+		if section := op.section(defaultSection); !SupportsBatch(section) {
+			return &BatchError{Err: fmt.Errorf("%w: %s", ErrBatchNotSupportedOnSection, section), Index: i, Op: op}
+		}
+	}
+	return nil
 }
 
 // Maximum limit for batch operations
@@ -107,6 +141,10 @@ type BatchError struct {
 }
 
 func (e *BatchError) Error() string {
+	if e.Op.Section != "" {
+		return fmt.Sprintf("batch operation %d (mode: %d, section: %s, key: %s) failed: %v",
+			e.Index, e.Op.Mode, e.Op.Section, e.Op.Key, e.Err)
+	}
 	return fmt.Sprintf("batch operation %d (mode: %d, key: %s) failed: %v",
 		e.Index, e.Op.Mode, e.Op.Key, e.Err)
 }
@@ -147,16 +185,23 @@ type KV interface {
 	// Batch executes all operations atomically within a single transaction.
 	// If any operation fails, all operations are rolled back.
 	// Operations are executed in order; the batch stops on first failure.
-	// Put/Create/Update without a value will return an error.
+	// Put/Create/Update/CompareAndSwap without a value, and CompareAndSwap
+	// without Expected, will return an error.
+	// Each operation applies to its own Section, or to section when it has none,
+	// so a batch can span sections.
 	//
 	// Operation semantics:
 	//   - BatchOpPut: Upsert (create or update), never fails on key state
 	//   - BatchOpCreate: Fail with ErrKeyAlreadyExists if key exists
 	//   - BatchOpUpdate: Fail with ErrNotFound if key doesn't exist
 	//   - BatchOpDelete: Idempotent, never fails on key state
+	//   - BatchOpCompareAndSwap: Fail with ErrNotFound if key doesn't exist,
+	//     or with ErrCompareAndSwapFailed if its value is not Expected
 	//
-	// Implementations MAY refuse specific sections (e.g. SqlKV rejects
-	// DataSection with ErrBatchNotSupportedOnDataSection).
+	// Operations on sections SupportsBatch rejects fail with
+	// ErrBatchNotSupportedOnSection. Implementations MAY restrict operations on
+	// other sections too (e.g. SqlKV only accepts BatchOpPut on DataSection,
+	// failing others with ErrBatchNotSupportedOnDataSection).
 	Batch(ctx context.Context, section string, ops []BatchOp) error
 }
 
@@ -527,6 +572,9 @@ func (k *badgerKV) Batch(ctx context.Context, section string, ops []BatchOp) err
 	if len(ops) > MaxBatchOps {
 		return fmt.Errorf("too many operations: %d > %d", len(ops), MaxBatchOps)
 	}
+	if err := validateBatchSections(section, ops); err != nil {
+		return err
+	}
 
 	// Retry the batch operation up to `maxAttempts` times in case of conflict, with a
 	// random delay between retries to increase the chances of success. Badger will
@@ -563,9 +611,20 @@ func (k *badgerKV) batchOnce(ctx context.Context, section string, ops []BatchOp)
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		keyWithSection := section + "/" + op.Key
+		keyWithSection := op.section(section) + "/" + op.Key
 
 		switch op.Mode {
+		case BatchOpCompareAndSwap:
+			if len(op.Value) == 0 || len(op.Expected) == 0 {
+				return &BatchError{Err: ErrEmptyValue, Index: i, Op: op}
+			}
+			if err := badgerCompare(txn, keyWithSection, op.Expected); err != nil {
+				return &BatchError{Err: err, Index: i, Op: op}
+			}
+			if err := txn.Set([]byte(keyWithSection), op.Value); err != nil {
+				return &BatchError{Err: err, Index: i, Op: op}
+			}
+
 		case BatchOpCreate:
 			if len(op.Value) == 0 {
 				return &BatchError{Err: ErrEmptyValue, Index: i, Op: op}
@@ -619,6 +678,25 @@ func (k *badgerKV) batchOnce(ctx context.Context, section string, ops []BatchOp)
 	}
 
 	return txn.Commit()
+}
+
+// badgerCompare fails unless key holds expected.
+func badgerCompare(txn *badger.Txn, key string, expected []byte) error {
+	item, err := txn.Get([]byte(key))
+	if errors.Is(err, badger.ErrKeyNotFound) {
+		return ErrNotFound
+	}
+	if err != nil {
+		return err
+	}
+	current, err := item.ValueCopy(nil)
+	if err != nil {
+		return err
+	}
+	if !bytes.Equal(current, expected) {
+		return ErrCompareAndSwapFailed
+	}
+	return nil
 }
 
 func sleepWithJitter(ctx context.Context, max time.Duration) error {

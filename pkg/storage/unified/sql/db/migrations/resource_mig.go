@@ -323,6 +323,19 @@ func initResourceTables(mg *migrator.Migrator) string {
 		Cols: []string{"created"}, Type: migrator.IndexType,
 	}))
 
+	// Table backing the unified/latest KV section: one row per object naming its
+	// latest version in resource_history. Writes compare and swap it in the same
+	// transaction as the history row, so concurrent writers exclude each other.
+	resource_latest_table := migrator.Table{
+		Name: "resource_latest",
+		Columns: []*migrator.Column{
+			{Name: "key_path", Type: migrator.DB_NVarchar, Length: 2048, Nullable: false, IsPrimaryKey: true, IsLatin: true},
+			{Name: "value", Type: migrator.DB_Text, Nullable: false},
+		},
+	}
+	mg.AddMigration("create table "+resource_latest_table.Name, migrator.NewAddTableMigration(resource_latest_table))
+	mg.AddMigration("Change key_path collation of resource_latest in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE resource_latest ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
+
 	return marker
 }
 

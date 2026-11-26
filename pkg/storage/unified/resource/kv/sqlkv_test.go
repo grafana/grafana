@@ -415,13 +415,29 @@ func anyArgs(n int) []driver.Value {
 	return args
 }
 
-func TestSQLKV_Batch_RejectsDataSection(t *testing.T) {
-	sqlKV, _, mock := setupSQLKVMock(t, "sqlite")
+func TestSQLKV_Batch_RejectsUnbatchedSections(t *testing.T) {
+	for _, section := range []string{BlobDataSection, LastImportTimeSection, SearchSnapshotDataSection, SearchSnapshotManifestSection} {
+		sqlKV, _, mock := setupSQLKVMock(t, "sqlite")
 
-	err := sqlKV.Batch(context.Background(), DataSection, []BatchOp{
-		{Mode: BatchOpPut, Key: "k", Value: []byte("v")},
-	})
-	require.ErrorIs(t, err, ErrBatchNotSupportedOnDataSection)
-	// Reject must short-circuit before touching the DB.
-	require.NoError(t, mock.ExpectationsWereMet())
+		err := sqlKV.Batch(context.Background(), EventsSection, []BatchOp{
+			{Section: section, Mode: BatchOpPut, Key: "k", Value: []byte("v")},
+		})
+		require.ErrorIs(t, err, ErrBatchNotSupportedOnSection, section)
+		// Reject must short-circuit before touching the DB.
+		require.NoError(t, mock.ExpectationsWereMet())
+	}
+}
+
+func TestSQLKV_Batch_RejectsConditionalOpsOnDataSection(t *testing.T) {
+	for _, mode := range []BatchOpMode{BatchOpCreate, BatchOpUpdate, BatchOpDelete, BatchOpCompareAndSwap} {
+		sqlKV, _, mock := setupSQLKVMock(t, "sqlite")
+
+		err := sqlKV.Batch(context.Background(), EventsSection, []BatchOp{
+			{Section: LeasesSection, Mode: BatchOpPut, Key: "lease", Value: []byte("v")},
+			{Section: DataSection, Mode: mode, Key: "k", Value: []byte("v"), Expected: []byte("e")},
+		})
+		require.ErrorIs(t, err, ErrBatchNotSupportedOnDataSection, "mode %d", mode)
+		// Reject must short-circuit before touching the DB.
+		require.NoError(t, mock.ExpectationsWereMet())
+	}
 }
