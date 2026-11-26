@@ -426,6 +426,25 @@ func TestIntegrationFolderCascadeDeleteFinalizer(t *testing.T) {
 			require.Equal(t, expected, patched.GetFinalizers())
 		})
 
+		t.Run("a dry-run delete returns the terminating folder and writes nothing", func(t *testing.T) {
+			before, err := client.Resource.Get(ctx, "flag-on", metav1.GetOptions{})
+			require.NoError(t, err)
+
+			rsp := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodDelete,
+				Path:   fmt.Sprintf("/apis/%s/namespaces/%s/folders/flag-on?dryRun=All", gvr.GroupVersion().String(), helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())),
+			}, &unstructured.Unstructured{})
+			require.Equal(t, http.StatusOK, rsp.Response.StatusCode, string(rsp.Body))
+			require.NotNil(t, rsp.Result.GetDeletionTimestamp(), "the response is the folder a live delete would leave terminating")
+			require.Equal(t, expected, rsp.Result.GetFinalizers())
+
+			current, err := client.Resource.Get(ctx, "flag-on", metav1.GetOptions{})
+			require.NoError(t, err)
+			require.Nil(t, current.GetDeletionTimestamp())
+			require.Equal(t, before.GetResourceVersion(), current.GetResourceVersion())
+		})
+
 		t.Run("delete leaves it terminating until the finalizer is removed", func(t *testing.T) {
 			require.NoError(t, client.Resource.Delete(ctx, "flag-on", metav1.DeleteOptions{}))
 
