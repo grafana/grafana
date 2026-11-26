@@ -91,6 +91,8 @@ func classifyWarning(err error) (string, bool) {
 		return provisioning.ReasonResourceManagedByOther, true
 	case errors.As(err, &missingMetaErr):
 		return provisioning.ReasonMissingFolderMetadata, true
+	case errors.Is(err, resources.ErrInvalidAnnotations):
+		return provisioning.ReasonInvalidAnnotations, true
 	case errors.As(err, &metaConflictErr):
 		return provisioning.ReasonFolderMetadataConflict, true
 	case errors.As(err, &invalidMetaErr):
@@ -116,15 +118,17 @@ func isWarningError(err error) bool {
 
 // isNonFailingWarning reports whether the warning represents an informational
 // issue where the underlying resource operation still succeeded (e.g. missing
-// or invalid folder metadata, or a skipped delete of an old resource now owned
-// by another file — the new resource was written successfully, or a removal
-// whose file moved onto an unsupported path — the resource is gone).
+// or invalid folder metadata, dropped non-string annotations, or a skipped
+// delete of an old resource now owned by another file — the new resource was
+// written successfully, or a removal whose file moved onto an unsupported path
+// — the resource is gone).
 func isNonFailingWarning(err error) bool {
 	if err == nil {
 		return false
 	}
 	return errors.Is(err, resources.ErrMissingFolderMetadata) ||
 		errors.Is(err, resources.ErrInvalidFolderMetadata) ||
+		errors.Is(err, resources.ErrInvalidAnnotations) ||
 		errors.Is(err, resources.ErrResourceManagedByOtherFile) ||
 		errors.Is(err, resources.ErrUnsupportedPath)
 }

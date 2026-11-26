@@ -1025,7 +1025,7 @@ func TestRenameResourceFile(t *testing.T) {
 	fakeGVK := schema.GroupVersionKind{Group: "fake.grafana.app", Version: "v1", Kind: "Fake"}
 	fakeGVR := schema.GroupVersionResource{Group: "fake.grafana.app", Version: "v1", Resource: "fakes"}
 
-	makeRenameMocks := func(t *testing.T, oldHash, newHash string) (*repository.MockReaderWriter, *MockParser, *MockDynamicResourceInterface, *unstructured.Unstructured) {
+	makeRenameMocks := func(t *testing.T, oldHash, newHash string, invalidAnnotations ...string) (*repository.MockReaderWriter, *MockParser, *MockDynamicResourceInterface, *unstructured.Unstructured) {
 		t.Helper()
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
@@ -1055,18 +1055,32 @@ func TestRenameResourceFile(t *testing.T) {
 		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new/x.json", Hash: newHash}
 		repo.On("Read", mock.Anything, "new/x.json", "new-ref").Return(newFileInfo, nil)
 		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
-			Obj:    newObj,
-			Meta:   newMeta,
-			GVK:    fakeGVK,
-			GVR:    fakeGVR,
-			Client: mockClient,
-			Repo:   testRepoInfo(),
+			Obj:                newObj,
+			Meta:               newMeta,
+			GVK:                fakeGVK,
+			GVR:                fakeGVR,
+			Client:             mockClient,
+			Repo:               testRepoInfo(),
+			InvalidAnnotations: invalidAnnotations,
 		}, nil)
 
 		grafanaObj := managedGrafanaObj("same-name", "default", nil)
 		mockClient.On("Get", mock.Anything, "same-name", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 		return repo, mockParser, mockClient, newObj
 	}
+
+	t.Run("rename that drops non-string annotations writes the resource and warns", func(t *testing.T) {
+		repo, mockParser, mockClient, newObj := makeRenameMocks(t, "blob-1", "blob-2", "example.com/enabled")
+		mockClient.On("Update", mock.Anything, newObj, mock.Anything, mock.Anything).Return(newObj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		name, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old/x.json", "old-ref", "new/x.json", "new-ref", nil)
+
+		require.ErrorIs(t, err, ErrInvalidAnnotations)
+		require.EqualError(t, err, "Git Sync ignores annotations whose values are not strings: example.com/enabled")
+		require.Equal(t, "same-name", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, newObj, mock.Anything, mock.Anything)
+	})
 
 	t.Run("same identity rename with unchanged hash sends FieldValidation Ignore", func(t *testing.T) {
 		repo, mockParser, mockClient, newObj := makeRenameMocks(t, "blob-1", "blob-1")

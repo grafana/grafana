@@ -130,7 +130,7 @@ type ParsedResource struct {
 	// Parsed contents
 	Obj *unstructured.Unstructured
 	// InvalidAnnotations lists the annotations dropped from the source file because
-	// their values are not strings, so previews can report them.
+	// their values are not strings, so previews and syncs can report them.
 	InvalidAnnotations []string
 	// Metadata accessor for the file object
 	Meta utils.GrafanaMetaAccessor

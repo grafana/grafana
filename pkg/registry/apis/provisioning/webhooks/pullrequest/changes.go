@@ -304,7 +304,7 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 	if err != nil {
 		info.Error = err.Error()
 	} else if keys := info.Parsed.InvalidAnnotations; len(keys) > 0 {
-		info.Error = "Git Sync ignores annotations whose values are not strings: " + strings.Join(keys, ", ")
+		info.Error = (&resources.InvalidAnnotationsError{Keys: keys}).Error()
 	}
 
 	// Link back to the resource in Grafana when it already exists there.

@@ -635,6 +635,16 @@ func TestIsNonFailingWarning(t *testing.T) {
 		assert.True(t, isNonFailingWarning(wrapped))
 	})
 
+	t.Run("wrapped InvalidAnnotationsError is a non-failing warning", func(t *testing.T) {
+		err := fmt.Errorf("writing resource from file dash.json: %w", &resources.InvalidAnnotationsError{Keys: []string{"example.com/enabled"}})
+		assert.True(t, isNonFailingWarning(err))
+
+		result := NewResourceResult().WithError(err).Build()
+		assert.NoError(t, result.Error())
+		assert.Equal(t, err, result.Warning())
+		assert.Equal(t, provisioning.ReasonInvalidAnnotations, result.WarningReason())
+	})
+
 	t.Run("generic error is not a non-failing warning", func(t *testing.T) {
 		assert.False(t, isNonFailingWarning(errors.New("something went wrong")))
 	})

@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"errors"
 	"slices"
 	"strings"
 
@@ -8,6 +9,32 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
+
+// ErrInvalidAnnotations marks a resource written without the annotations whose
+// values are not strings.
+var ErrInvalidAnnotations = errors.New("annotations with non-string values")
+
+// InvalidAnnotationsError lists the annotations dropped from a file because
+// their values are not strings. The resource itself is still written.
+type InvalidAnnotationsError struct {
+	Keys []string
+}
+
+func (e *InvalidAnnotationsError) Error() string {
+	return "Git Sync ignores annotations whose values are not strings: " + strings.Join(e.Keys, ", ")
+}
+
+func (e *InvalidAnnotationsError) Unwrap() error {
+	return ErrInvalidAnnotations
+}
+
+// invalidAnnotationsWarning returns the warning for a resource written from parsed, if any.
+func invalidAnnotationsWarning(parsed *ParsedResource) error {
+	if len(parsed.InvalidAnnotations) == 0 {
+		return nil
+	}
+	return &InvalidAnnotationsError{Keys: parsed.InvalidAnnotations}
+}
 
 // AnnoKeyUseCrossDashboardVariables holds the dashboard's selection of global and folder variables.
 const AnnoKeyUseCrossDashboardVariables = "grafana.app/useCrossDashboardVariables"

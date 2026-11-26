@@ -318,7 +318,12 @@ func TestIntegrationProvisioning_FileWritesKeepUserAnnotations(t *testing.T) {
 		}, "", "  ")
 		require.NoError(t, err)
 		helper.WriteToProvisioningPath(t, mixedPath, mixed)
+		// Local repositories never set lastRef, which common.SyncAndWait waits for.
 		helper.SyncAndWait(t, repo, nil)
+		job := helper.AwaitLatestHistoricJob(t, repo)
+		common.RequireJobWarning(t, job)
+		warnings := strings.Join(common.MustNestedStringSlice(job.Object, "status", "warnings"), "\n")
+		require.Contains(t, warnings, "Git Sync ignores annotations whose values are not strings: "+flagKey+" (file: "+mixedPath)
 
 		live := liveDashboard(t, mixedName)
 		annotations := live.GetAnnotations()
