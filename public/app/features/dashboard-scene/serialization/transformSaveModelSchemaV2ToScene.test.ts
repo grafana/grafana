@@ -817,7 +817,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       });
     });
 
-    describe('Editable false dashboard', () => {
+    describe.each([false, undefined])('Read-only dashboard with editable=%s', (editable) => {
       let dashboard: DashboardWithAccessInfo<DashboardV2Spec>;
 
       beforeEach(() => {
@@ -825,7 +825,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
           ...cloneDeep(defaultDashboard),
           spec: {
             ...defaultDashboard.spec,
-            editable: false,
+            editable,
           },
         };
       });
