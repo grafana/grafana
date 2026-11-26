@@ -23,7 +23,8 @@ func panelColor(dash *dashv2alpha1.Dashboard) *dashv2alpha1.DashboardFieldColor 
 func TestFieldColorOptionalPropertiesV2RoundTrip(t *testing.T) {
 	scheme := setupTestConversionScheme(t)
 	tests := map[string]string{
-		"by value":  `{ "mode": "palette-categorical-next", "byValue": true }`,
+		"by value":  `{ "mode": "palette-categorical-next", "assignment": "value" }`,
+		"by name":   `{ "mode": "palette-classic", "assignment": "seriesName" }`,
 		"reverse":   `{ "mode": "continuous-GrYlRd", "reverse": true, "seriesBy": "max" }`,
 		"gradient":  `{ "mode": "gradient", "fixedColor": "#73BF69", "gradientColorTo": "#F2495C" }`,
 		"mode only": `{ "mode": "palette-classic" }`,
@@ -47,7 +48,7 @@ func TestFieldColorOptionalPropertiesV2RoundTrip(t *testing.T) {
 func TestFieldColorOptionalPropertiesV1RoundTrip(t *testing.T) {
 	scheme := setupTestConversionScheme(t)
 	original := newV2alpha1DashboardWithColor(t,
-		`{ "mode": "palette-categorical-next", "byValue": true, "reverse": false, "fixedColor": "#73BF69", "gradientColorTo": "#F2495C", "seriesBy": "last" }`)
+		`{ "mode": "palette-categorical-next", "assignment": "value", "reverse": false, "fixedColor": "#73BF69", "gradientColorTo": "#F2495C", "seriesBy": "last" }`)
 
 	var v1Dash dashv1.Dashboard
 	require.NoError(t, scheme.Convert(original.DeepCopy(), &v1Dash, nil))
@@ -62,7 +63,7 @@ func TestFieldColorOptionalPropertiesV1RoundTrip(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, map[string]interface{}{
 		"mode":            "palette-categorical-next",
-		"byValue":         true,
+		"assignment":      "value",
 		"reverse":         false,
 		"fixedColor":      "#73BF69",
 		"gradientColorTo": "#F2495C",

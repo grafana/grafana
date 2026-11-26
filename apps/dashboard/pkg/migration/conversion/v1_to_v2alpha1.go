@@ -2722,9 +2722,10 @@ func buildFieldColor(colorMap map[string]interface{}) *dashv2alpha1.DashboardFie
 		fieldColor.Reverse = &reverse
 	}
 
-	// byValue (optional)
-	if byValue, ok := colorMap["byValue"].(bool); ok {
-		fieldColor.ByValue = &byValue
+	// assignment (optional)
+	if assignment, ok := colorMap["assignment"].(string); ok {
+		a := dashv2alpha1.DashboardFieldColorAssignment(assignment)
+		fieldColor.Assignment = &a
 	}
 
 	return &fieldColor

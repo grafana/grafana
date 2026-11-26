@@ -793,8 +793,8 @@ type DashboardFieldColor struct {
 	SeriesBy *DashboardFieldColorSeriesByMode `json:"seriesBy,omitempty"`
 	// Reverse the order of the colors in a by value color scheme.
 	Reverse *bool `json:"reverse,omitempty"`
-	// Color each value of a categorical palette by hashing it, so the same value gets the same color everywhere.
-	ByValue *bool `json:"byValue,omitempty"`
+	// How a categorical palette assigns its colors. Defaults to the palette's own assignment.
+	Assignment *DashboardFieldColorAssignment `json:"assignment,omitempty"`
 }
 
 // NewDashboardFieldColor creates a new DashboardFieldColor object.
@@ -884,6 +884,22 @@ const (
 // OpenAPIModelName returns the OpenAPI model name for DashboardFieldColorSeriesByMode.
 func (DashboardFieldColorSeriesByMode) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardFieldColorSeriesByMode"
+}
+
+// How a categorical palette picks a color: by the position of the series (seriesIndex),
+// by hashing the series name (seriesName), or by hashing each value (value).
+// +k8s:openapi-gen=true
+type DashboardFieldColorAssignment string
+
+const (
+	DashboardFieldColorAssignmentSeriesIndex DashboardFieldColorAssignment = "seriesIndex"
+	DashboardFieldColorAssignmentSeriesName  DashboardFieldColorAssignment = "seriesName"
+	DashboardFieldColorAssignmentValue       DashboardFieldColorAssignment = "value"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardFieldColorAssignment.
+func (DashboardFieldColorAssignment) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardFieldColorAssignment"
 }
 
 // +k8s:openapi-gen=true

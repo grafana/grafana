@@ -386,7 +386,7 @@ func convertFieldConfig_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardFieldConfig
 			GradientColorTo: in.Color.GradientColorTo,
 			SeriesBy:        (*dashv2alpha1.DashboardFieldColorSeriesByMode)(in.Color.SeriesBy),
 			Reverse:         in.Color.Reverse,
-			ByValue:         in.Color.ByValue,
+			Assignment:      (*dashv2alpha1.DashboardFieldColorAssignment)(in.Color.Assignment),
 		}
 	}
 

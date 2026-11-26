@@ -2294,10 +2294,10 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardFieldColor(ref common.ReferenceC
 							Format:      "",
 						},
 					},
-					"byValue": {
+					"assignment": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Color each value of a categorical palette by hashing it, so the same value gets the same color everywhere.",
-							Type:        []string{"boolean"},
+							Description: "How a categorical palette assigns its colors. Defaults to the palette's own assignment.",
+							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
@@ -6901,10 +6901,10 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookFieldColor(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
-					"byValue": {
+					"assignment": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Color each value of a categorical palette by hashing it, so the same value gets the same color everywhere.",
-							Type:        []string{"boolean"},
+							Description: "How a categorical palette assigns its colors. Defaults to the palette's own assignment.",
+							Type:        []string{"string"},
 							Format:      "",
 						},
 					},

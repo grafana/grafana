@@ -2208,8 +2208,8 @@ func convertFieldColorToV1(color *dashv2alpha1.DashboardFieldColor) map[string]i
 	if color.Reverse != nil {
 		colorMap["reverse"] = *color.Reverse
 	}
-	if color.ByValue != nil {
-		colorMap["byValue"] = *color.ByValue
+	if color.Assignment != nil {
+		colorMap["assignment"] = string(*color.Assignment)
 	}
 
 	return colorMap

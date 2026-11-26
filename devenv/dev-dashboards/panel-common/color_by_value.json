@@ -52,7 +52,7 @@
             "version": "",
             "spec": {
               "options": {
-                "content": "These panels use `color: { mode: \u003ccategorical palette\u003e, byValue: true }`. Each value is hashed to a palette color, so the same value gets the same color in every row, panel and time range.\n\nThe **Color by value** switch in the editor is behind the `dataviz.colorByValue` feature toggle, and the Categorical Next palettes are behind `dataviz.experimentalColorSchemes`. The saved option renders without either toggle.",
+                "content": "These panels use `color: { mode: \u003ccategorical palette\u003e, assignment: \"value\" }`. Each value is hashed to a palette color, so the same value gets the same color in every row, panel and time range.\n\nThe **Assign colors by** option in the editor is behind the `dataviz.colorByValue` feature toggle, and the Categorical Next palettes are behind `dataviz.experimentalColorSchemes`. The saved option renders without either toggle.",
                 "mode": "markdown"
               },
               "fieldConfig": {
@@ -132,7 +132,7 @@
                   },
                   "color": {
                     "mode": "palette-categorical-next",
-                    "byValue": true
+                    "assignment": "value"
                   },
                   "custom": {
                     "fillOpacity": 80,
@@ -221,7 +221,7 @@
                   },
                   "color": {
                     "mode": "palette-classic",
-                    "byValue": true
+                    "assignment": "value"
                   },
                   "custom": {
                     "fillOpacity": 80,
@@ -246,7 +246,7 @@
         "spec": {
           "id": 4,
           "title": "Classic palette, without by value",
-          "description": "For comparison: without byValue, each row takes one color from the palette by series.",
+          "description": "For comparison: without assigning by value, each row takes one color from the palette by series.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -396,7 +396,7 @@
                   },
                   "color": {
                     "mode": "palette-categorical-next",
-                    "byValue": true
+                    "assignment": "value"
                   }
                 },
                 "overrides": []
@@ -462,7 +462,7 @@
                   },
                   "color": {
                     "mode": "palette-categorical-next",
-                    "byValue": true
+                    "assignment": "value"
                   },
                   "custom": {
                     "align": "auto",
@@ -589,7 +589,7 @@
                   },
                   "color": {
                     "mode": "palette-categorical-next-3",
-                    "byValue": true
+                    "assignment": "value"
                   },
                   "custom": {
                     "fillOpacity": 80,
@@ -664,7 +664,7 @@
                   },
                   "color": {
                     "mode": "palette-colorblind",
-                    "byValue": true
+                    "assignment": "value"
                   },
                   "custom": {
                     "align": "auto",

@@ -4336,9 +4336,9 @@
           "mode"
         ],
         "properties": {
-          "byValue": {
-            "description": "Color each value of a categorical palette by hashing it, so the same value gets the same color everywhere.",
-            "type": "boolean"
+          "assignment": {
+            "description": "How a categorical palette assigns its colors. Defaults to the palette's own assignment.",
+            "type": "string"
           },
           "fixedColor": {
             "description": "The fixed color value for fixed or shades color modes.",
@@ -7257,9 +7257,9 @@
           "mode"
         ],
         "properties": {
-          "byValue": {
-            "description": "Color each value of a categorical palette by hashing it, so the same value gets the same color everywhere.",
-            "type": "boolean"
+          "assignment": {
+            "description": "How a categorical palette assigns its colors. Defaults to the palette's own assignment.",
+            "type": "string"
           },
           "fixedColor": {
             "description": "The fixed color value for fixed or shades color modes.",

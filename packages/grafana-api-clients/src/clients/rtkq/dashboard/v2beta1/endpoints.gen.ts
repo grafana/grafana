@@ -1423,8 +1423,8 @@ export type DashboardAction = {
   variables?: DashboardActionVariable[];
 };
 export type DashboardFieldColor = {
-  /** Color each value of a categorical palette by hashing it, so the same value gets the same color everywhere. */
-  byValue?: boolean;
+  /** How a categorical palette assigns its colors. Defaults to the palette's own assignment. */
+  assignment?: string;
   /** The fixed color value for fixed or shades color modes. */
   fixedColor?: string;
   /** The end color for the gradient color mode (smallest value). Only used when mode is gradient. */
@@ -2311,8 +2311,8 @@ export type NotebookAction = {
   variables?: NotebookActionVariable[];
 };
 export type NotebookFieldColor = {
-  /** Color each value of a categorical palette by hashing it, so the same value gets the same color everywhere. */
-  byValue?: boolean;
+  /** How a categorical palette assigns its colors. Defaults to the palette's own assignment. */
+  assignment?: string;
   /** The fixed color value for fixed or shades color modes. */
   fixedColor?: string;
   /** The end color for the gradient color mode (smallest value). Only used when mode is gradient. */
