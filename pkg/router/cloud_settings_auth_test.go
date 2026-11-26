@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"errors"
+	"net/http"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -15,7 +16,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 type recordingExchanger struct {
@@ -151,4 +157,35 @@ func TestV2AuthenticationFailureLeavesHalfOpenBreakerAlone(t *testing.T) {
 		require.Equal(t, calls, plugin.calls, "the plugin is not called without a token")
 		require.Equal(t, gobreaker.StateHalfOpen, cb.State(), "the failed exchange did not close the breaker")
 	})
+}
+
+// TestV2AuthenticationWithCoreMiddleware checks the single-tenant composition:
+// the plugin client's core middleware runs below v2 authentication, and must
+// neither drop the exchanged token nor add the caller's ID token beside it.
+func TestV2AuthenticationWithCoreMiddleware(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.JWTAuth.Enabled = true
+	cfg.JWTAuth.HeaderName = accessTokenHeader
+	var got *backend.CallResourceRequest
+	core, err := backend.HandlerFromMiddlewares(&backend.Handlers{
+		CallResourceHandler: backend.CallResourceHandlerFunc(func(_ context.Context, req *backend.CallResourceRequest, _ backend.CallResourceResponseSender) error {
+			got = req
+			return nil
+		}),
+	}, clientmiddleware.NewClearAuthHeadersMiddleware(&cfg.JWTAuth, &cfg.AuthProxy), clientmiddleware.NewForwardIDMiddleware(nil))
+	require.NoError(t, err)
+	h, err := backend.HandlerFromMiddlewares(core, newV2AuthenticationMiddleware("my-app", &recordingExchanger{}))
+	require.NoError(t, err)
+
+	signedIn := &user.SignedInUser{Namespace: "default", IDToken: "id"}
+	httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
+	require.NoError(t, err)
+	ctx := context.WithValue(identity.WithRequester(context.Background(), signedIn), ctxkey.Key{}, &contextmodel.ReqContext{
+		Context: &web.Context{Req: httpReq}, SignedInUser: signedIn,
+	})
+	req := &backend.CallResourceRequest{PluginContext: backend.PluginContext{Namespace: "default"}}
+	req.SetHTTPHeader(accessTokenHeader, "caller-supplied")
+	require.NoError(t, h.CallResource(ctx, req, backend.CallResourceResponseSenderFunc(func(*backend.CallResourceResponse) error { return nil })))
+	require.Equal(t, "exchanged", got.GetHTTPHeader(accessTokenHeader))
+	require.Empty(t, got.GetHTTPHeader("X-Grafana-Id"))
 }
