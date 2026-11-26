@@ -98,7 +98,7 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 				v.hasChanged = true
 				continue
 			}
-			return newSecureValueError("invalid secure value state: %s", k)
+			return newSecureValueError("invalid secure value state", k)
 		}
 
 		if !val.Create.IsZero() || val.Remove {

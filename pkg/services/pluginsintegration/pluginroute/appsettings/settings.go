@@ -203,8 +203,9 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error
 		return nil, fmt.Errorf("failed to get plugin settings: %w", err)
 	}
 	if ps != nil {
+		decrypted := s.pluginSettings.DecryptedValues(ps)
 		pluginsettings.WithDecryptedValues(ctx, func(ctx context.Context) (map[string]string, error) {
-			return s.pluginSettings.DecryptedValues(ps), nil
+			return decrypted, nil
 		})
 
 		obj.SetCreationTimestamp(metav1.NewTime(ps.Updated))
@@ -213,9 +214,11 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error
 		obj.Spec.Enabled = ps.Enabled
 		obj.Spec.JsonData = common.Unstructured{Object: ps.JSONData}
 
-		secureValues := make(resource.InlineSecureValues, len(ps.SecureJSONData))
-		for k, v := range ps.SecureJSONData {
-			if len(v) > 0 {
+		// A removed secure value is stored as an encrypted empty string, so check the
+		// decrypted value, as the legacy plugin settings API does.
+		secureValues := make(resource.InlineSecureValues, len(decrypted))
+		for k, v := range decrypted {
+			if v != "" {
 				secureValues[k] = resource.InlineSecureValue{Name: getLegacySecureValueName(s.pluginID, k)}
 			}
 		}

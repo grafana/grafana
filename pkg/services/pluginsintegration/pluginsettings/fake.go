@@ -70,9 +70,12 @@ func (ps *FakePluginSettings) UpdatePluginSettingPluginVersion(ctx context.Conte
 	return ErrPluginSettingNotFound
 }
 
-// DecryptedValues decrypts the encrypted secureJSONData of the provided plugin setting and
-// returns the decrypted values.
+// DecryptedValues returns the secureJSONData of the provided plugin setting. The fake
+// does not encrypt, so the stored bytes are the plaintext.
 func (ps *FakePluginSettings) DecryptedValues(dto *DTO) map[string]string {
-	// TODO: Implement
-	return nil
+	values := make(map[string]string, len(dto.SecureJSONData))
+	for k, v := range dto.SecureJSONData {
+		values[k] = string(v)
+	}
+	return values
 }

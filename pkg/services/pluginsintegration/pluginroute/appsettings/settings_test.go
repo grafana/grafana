@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -79,6 +80,43 @@ func TestSettingsGet_WithPersistedSettings(t *testing.T) {
 	}), settings.ResourceVersion)
 	require.True(t, settings.Spec.Enabled)
 	require.Equal(t, map[string]any{"apiUrl": "https://api.example.com", "timeout": float64(30)}, settings.Spec.JsonData.Object)
+}
+
+// decryptingSettings stores ciphertext and decrypts it through a fixed map, as the
+// SQL service does.
+type decryptingSettings struct {
+	ps        *pluginsettings.DTO
+	decrypted map[string]string
+}
+
+func (d decryptingSettings) GetPluginSettingByPluginID(context.Context, *pluginsettings.GetByPluginIDArgs) (*pluginsettings.DTO, error) {
+	return d.ps, nil
+}
+
+func (d decryptingSettings) DecryptedValues(*pluginsettings.DTO) map[string]string {
+	return d.decrypted
+}
+
+func TestSettingsGet_OmitsRemovedSecureValues(t *testing.T) {
+	// Removing a secure value through the legacy API stores an encrypted empty
+	// string, so the ciphertext is not empty.
+	storage := NewReadOnlyLegacySettingsStore("test-app", decryptingSettings{
+		ps: &pluginsettings.DTO{
+			PluginID:       "test-app",
+			OrgID:          1,
+			SecureJSONData: map[string][]byte{"kept": []byte("cipher-1"), "removed": []byte("cipher-2")},
+		},
+		decrypted: map[string]string{"kept": "secret", "removed": ""},
+	})
+
+	ctx := request.WithNamespace(context.Background(), "default")
+	obj, err := storage.Get(ctx, "instance", nil)
+	require.NoError(t, err)
+
+	settings := obj.(*apppluginV0.Settings)
+	require.Equal(t, resource.InlineSecureValues{
+		"kept": {Name: getLegacySecureValueName("test-app", "kept")},
+	}, settings.Secure)
 }
 
 func TestSettingsList(t *testing.T) {
@@ -339,7 +377,9 @@ func (r readOnlySettings) GetPluginSettingByPluginID(_ context.Context, args *pl
 	return nil, pluginsettings.ErrPluginSettingNotFound
 }
 
-func (readOnlySettings) DecryptedValues(*pluginsettings.DTO) map[string]string { return nil }
+func (readOnlySettings) DecryptedValues(ps *pluginsettings.DTO) map[string]string {
+	return (&pluginsettings.FakePluginSettings{}).DecryptedValues(ps)
+}
 
 func TestReadOnlyLegacySettingsStore(t *testing.T) {
 	plugins := map[string]*pluginsettings.DTO{
