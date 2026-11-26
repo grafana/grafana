@@ -268,7 +268,7 @@ func (c client) restore(t *testing.T, name string) {
 	require.NoError(t, unstructured.SetNestedField(metadata, "default", "annotations", utils.AnnoKeyGrantPermissions))
 	body, err := json.Marshal(map[string]any{"metadata": metadata, "spec": obj.Object["spec"]})
 	require.NoError(t, err, "restore payload for %s", c.fixture(name))
-	rsp := apis.DoRequestForTest(t, c.h, apis.RequestParams{
+	rsp := apis.DoRequest(c.h, apis.RequestParams{
 		User:   c.h.Org1.Admin,
 		Method: http.MethodPost,
 		Path:   c.dashboardsPath(),
