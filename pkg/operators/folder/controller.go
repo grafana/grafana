@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/operators/runner"
-	"github.com/grafana/grafana/pkg/server"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/services/folder/cascadedelete"
 )
@@ -39,13 +38,6 @@ var Operator = runner.Operator{
 	Name:        "folder-controller",
 	Description: "Delete the contents of folders being cascade-deleted",
 	Build:       build,
-}
-
-// RunFolderController runs [Operator].
-//
-// Deprecated: register [Operator] with runner.Register instead.
-func RunFolderController(ctx context.Context, deps server.OperatorDependencies) error {
-	return Operator.Run(ctx, deps)
 }
 
 func build(rt *runner.Runtime) (*runner.Parts, error) {

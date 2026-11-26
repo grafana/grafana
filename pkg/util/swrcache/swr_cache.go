@@ -40,9 +40,11 @@ var metricNamePattern = regexp.MustCompile("^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 type Options struct {
 	// MetricsPrefix starts every metric name and span name, e.g. "settings_store_cache" gives
-	// "settings_store_cache_requests_total". It must be unique among caches registered with one
-	// registry.
+	// "settings_store_cache_hit_total". Caches can share a prefix in one registry only when their
+	// ConstLabels have the same label names with different values.
 	MetricsPrefix string
+	// ConstLabels is optional. The cache adds these labels to every metric.
+	ConstLabels prometheus.Labels
 	// TTL is the maximum age of an entry since its last successful load. The cache checks the age
 	// when a read starts, so a read that then waits for a refresh can return a value up to
 	// StaleWait older than TTL.
@@ -172,7 +174,7 @@ func New[K comparable, V any](load Loader[K, V], opts Options) (*Cache[K, V], er
 	if cache.tracer == nil {
 		cache.tracer = noop.NewTracerProvider().Tracer("")
 	}
-	cache.metrics = newMetrics(opts.MetricsPrefix, cache.Len)
+	cache.metrics = newMetrics(opts.MetricsPrefix, opts.ConstLabels, cache.Len)
 	return cache, nil
 }
 
@@ -197,46 +199,60 @@ const (
 )
 
 type metrics struct {
-	requests     *prometheus.CounterVec
+	hits         *prometheus.CounterVec
+	misses       *prometheus.CounterVec
 	loadDuration *prometheus.HistogramVec
 	entries      prometheus.GaugeFunc
+	evictions    prometheus.Counter
 }
 
-func newMetrics(prefix string, entries func() int) metrics {
+func newMetrics(prefix string, constLabels prometheus.Labels, entries func() int) metrics {
 	created := metrics{
-		requests: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: prefix + "_requests_total",
-			Help: "Cache reads, by the path they took.",
+		hits: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name:        prefix + "_hit_total",
+			Help:        "Number of Get calls served from the cache, by result.",
+			ConstLabels: constLabels,
+		}, []string{"result"}),
+		misses: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name:        prefix + "_miss_total",
+			Help:        "Number of Get calls that returned a newly loaded value or no value, by result.",
+			ConstLabels: constLabels,
 		}, []string{"result"}),
 		loadDuration: metricutil.NewHistogramVec(prometheus.HistogramOpts{
-			Name:    prefix + "_load_duration_seconds",
-			Help:    "Duration of loader calls, by result.",
-			Buckets: prometheus.DefBuckets,
+			Name:        prefix + "_load_duration_seconds",
+			Help:        "Duration of loader calls, by result.",
+			Buckets:     prometheus.DefBuckets,
+			ConstLabels: constLabels,
 		}, []string{"result"}),
 		entries: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-			Name: prefix + "_entries",
-			Help: "Number of entries in the cache.",
+			Name:        prefix + "_entries",
+			Help:        "Number of entries in the cache.",
+			ConstLabels: constLabels,
 		}, func() float64 { return float64(entries()) }),
+		evictions: prometheus.NewCounter(prometheus.CounterOpts{
+			Name:        prefix + "_eviction_total",
+			Help:        "Entries evicted because the cache reached MaxEntries.",
+			ConstLabels: constLabels,
+		}),
 	}
-	for _, result := range []string{resultFresh, resultRefreshed, resultStaleTimeout, resultStaleError, resultStaleThrottled, resultStaleCancelled, resultMiss, resultCancelled} {
-		created.requests.WithLabelValues(result)
-	}
-	for _, result := range []string{loadSuccess, loadError} {
-		created.loadDuration.WithLabelValues(result)
-	}
+	created.initSeries()
 	return created
 }
 
 func (c *Cache[K, V]) Describe(descs chan<- *prometheus.Desc) {
-	c.metrics.requests.Describe(descs)
+	c.metrics.hits.Describe(descs)
+	c.metrics.misses.Describe(descs)
 	c.metrics.loadDuration.Describe(descs)
 	c.metrics.entries.Describe(descs)
+	c.metrics.evictions.Describe(descs)
 }
 
 func (c *Cache[K, V]) Collect(metrics chan<- prometheus.Metric) {
-	c.metrics.requests.Collect(metrics)
+	c.metrics.hits.Collect(metrics)
+	c.metrics.misses.Collect(metrics)
 	c.metrics.loadDuration.Collect(metrics)
 	c.metrics.entries.Collect(metrics)
+	c.metrics.evictions.Collect(metrics)
 }
 
 const (
@@ -248,6 +264,7 @@ const (
 	resultMiss           = "miss"
 	resultCancelled      = "cancelled"
 	resultStaleCancelled = "stale_cancelled"
+	resultUnknown        = "unknown"
 )
 
 type entryState int
@@ -264,7 +281,7 @@ const (
 // ctx ends while it waits for a refresh gets the old value.
 func (c *Cache[K, V]) Get(ctx context.Context, key K) (V, error) {
 	value, result, err := c.get(ctx, key)
-	c.metrics.requests.WithLabelValues(result).Inc()
+	c.record(result)
 	return value, err
 }
 
@@ -337,7 +354,9 @@ func (c *Cache[K, V]) joinOrStartFlight(ctx context.Context, key K, e *entry[V])
 	}
 	if e == nil {
 		e = &entry[V]{}
-		c.entries.Add(key, e)
+		if c.entries.Add(key, e) {
+			c.metrics.evictions.Inc()
+		}
 	}
 	flt := &flight[V]{done: make(chan struct{})}
 	c.flights[key] = flt
@@ -491,4 +510,47 @@ func (c *Cache[K, V]) Len() int {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return c.entries.Len()
+}
+
+// resultIsHit classifies every result: true when the caller got the cached value, false when the
+// caller got a newly loaded value or no value.
+var resultIsHit = map[string]bool{
+	resultFresh:          true,
+	resultStaleThrottled: true,
+	resultStaleTimeout:   true,
+	resultStaleError:     true,
+	resultStaleCancelled: true,
+	resultMiss:           false,
+	resultCancelled:      false,
+	resultRefreshed:      false,
+}
+
+// record counts one Get under its result. A result missing from resultIsHit counts as a miss with
+// result "unknown" and logs a warning, so a new result that was not classified shows up in metrics
+// and logs.
+func (c *Cache[K, V]) record(result string) {
+	hit, known := resultIsHit[result]
+	switch {
+	case !known:
+		c.logger.Warn("swrcache result has no hit or miss classification", "cache", c.opts.MetricsPrefix, "result", result)
+		c.metrics.misses.WithLabelValues(resultUnknown).Inc()
+	case hit:
+		c.metrics.hits.WithLabelValues(result).Inc()
+	default:
+		c.metrics.misses.WithLabelValues(result).Inc()
+	}
+}
+
+// initSeries creates every series at zero, so the first scrape has them.
+func (m metrics) initSeries() {
+	m.hits.WithLabelValues(resultFresh)
+	m.hits.WithLabelValues(resultStaleThrottled)
+	m.hits.WithLabelValues(resultStaleTimeout)
+	m.hits.WithLabelValues(resultStaleError)
+	m.hits.WithLabelValues(resultStaleCancelled)
+	m.misses.WithLabelValues(resultMiss)
+	m.misses.WithLabelValues(resultCancelled)
+	m.misses.WithLabelValues(resultRefreshed)
+	m.loadDuration.WithLabelValues(loadSuccess)
+	m.loadDuration.WithLabelValues(loadError)
 }
