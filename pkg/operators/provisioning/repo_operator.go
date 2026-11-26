@@ -19,74 +19,74 @@ var RepoOperator = runner.Operator{
 	Logger:      "provisioning-repo-controller",
 	Defaults:    operatorDefaults,
 	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
-		controllerCfg, err := newProvisioningRunner(rt)
+		r, err := newProvisioningRunner(rt)
 		if err != nil {
 			return nil, err
 		}
-		manifestWatcher, err := controllerCfg.ManifestWatcher()
+		manifestWatcher, err := r.ManifestWatcher()
 		if err != nil {
 			return nil, err
 		}
 		return &runner.Parts{
 			Services: []services.Service{manifestWatcher},
 			Run: func(ctx context.Context, ready func()) error {
-				return runRepoController(ctx, controllerCfg, ready)
+				return runRepoController(ctx, r, ready)
 			},
 		}, nil
 	},
 }
 
-func runRepoController(ctx context.Context, controllerCfg *ProvisioningRunner, ready func()) error {
-	provisioningClient, err := controllerCfg.ProvisioningClient()
+func runRepoController(ctx context.Context, r *ProvisioningRunner, ready func()) error {
+	provisioningClient, err := r.ProvisioningClient()
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	clients, err := controllerCfg.ResourceClients()
+	clients, err := r.ResourceClients()
 	if err != nil {
 		return fmt.Errorf("failed to get clients: %w", err)
 	}
 
-	resourceLister, err := controllerCfg.ResourceLister()
+	resourceLister, err := r.ResourceLister()
 	if err != nil {
 		return err
 	}
 
-	repoFactory, err := controllerCfg.RepositoryFactory()
+	repoFactory, err := r.RepositoryFactory()
 	if err != nil {
 		return fmt.Errorf("failed to get repository factory: %w", err)
 	}
 
-	provisioningSec := controllerCfg.Cfg.SectionWithEnvOverrides("provisioning")
+	provisioningSec := r.Cfg.SectionWithEnvOverrides("provisioning")
 	allowImageRendering := provisioningSec.Key("allow_image_rendering").MustBool(false)
-	healthMetricsRecorder, err := controllerCfg.HealthMetricsRecorder()
+	healthMetricsRecorder, err := r.HealthMetricsRecorder()
 	if err != nil {
 		return fmt.Errorf("failed to get health metrics recorder: %w", err)
 	}
 
-	connectionFactory, err := controllerCfg.ConnectionFactory()
+	connectionFactory, err := r.ConnectionFactory()
 	if err != nil {
 		return fmt.Errorf("failed to get connection factory: %w", err)
 	}
 
-	tracer := controllerCfg.Tracer
+	tracer := r.Tracer
 
-	quotaGetter, err := controllerCfg.QuotaGetter()
+	quotaGetter, err := r.QuotaGetter()
 	if err != nil {
 		return fmt.Errorf("failed to get quota getter: %w", err)
 	}
 
-	repoKeys, err := controllerCfg.ProvisioningKeysLister(apisprovisioning.RepositoryResourceInfo.GroupVersionResource())
+	repoKeys, err := r.ProvisioningKeysLister(apisprovisioning.RepositoryResourceInfo.GroupVersionResource())
 	if err != nil {
 		return err
 	}
 
 	repoController, err := controller.ProvideRepositoryController(controller.RepositoryControllerDeps{
 		ProvisioningClient:      provisioningClient,
-		NATSSubscriber:          controllerCfg.Subscriber,
+		NATSSubscriber:          r.Subscriber,
 		KeysLister:              repoKeys,
-		RelistProjectionMetrics: controllerCfg.RelistProjectionMetrics(),
-		FreshnessMetrics:        controllerCfg.FreshnessMetrics(),
+		RelistProjectionMetrics: r.RelistProjectionMetrics(),
+		FreshnessMetrics:        r.FreshnessMetrics(),
 		HealthMetrics:           healthMetricsRecorder,
 		RepoFactory:             repoFactory,
 		ConnectionFactory:       connectionFactory,
@@ -97,17 +97,17 @@ func runRepoController(ctx context.Context, controllerCfg *ProvisioningRunner, r
 		Validator:                     repository.NewValidator(allowImageRendering, repoFactory),
 		QuotaGetter:                   quotaGetter,
 		IncrementalPolicy:             repository.NewIncrementalSyncPolicy(provisioningSec.Key("max_incremental_changes").MustInt(100)),
-		Registry:                      controllerCfg.Registerer,
+		Registry:                      r.Registerer,
 		Tracer:                        tracer,
-		ParallelOperations:            controllerCfg.Cfg.SectionWithEnvOverrides("operator").Key("parallel_operations").MustInt(10),
-		ResyncInterval:                controllerCfg.Options.Resync,
+		ParallelOperations:            r.Cfg.SectionWithEnvOverrides("operator").Key("parallel_operations").MustInt(10),
+		ResyncInterval:                r.Options.Resync,
 		MinSyncInterval:               provisioningSec.Key("min_sync_interval").MustDuration(1 * time.Minute),
-		DrainTimeout:                  controllerCfg.Options.DrainTimeout,
+		DrainTimeout:                  r.Options.DrainTimeout,
 		WebhookSecretRotationInterval: provisioningSec.Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour),
 	})
 	if err != nil {
 		return err
 	}
 
-	return repoController.Run(ctx, controllerCfg.Options.Workers, ready, func() {})
+	return repoController.Run(ctx, r.Options.Workers, ready, func() {})
 }

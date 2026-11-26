@@ -215,8 +215,8 @@ func TestClientsWithoutAnAggregatedServer(t *testing.T) {
 }
 
 func TestControllersOwnNATSSubscriber(t *testing.T) {
-	originalOptions := registeredConfigOptions
-	t.Cleanup(func() { registeredConfigOptions = originalOptions })
+	originalOptions := registeredRunnerOptions
+	t.Cleanup(func() { registeredRunnerOptions = originalOptions })
 
 	for _, controller := range []struct {
 		name string
@@ -258,17 +258,17 @@ func TestControllersOwnNATSSubscriber(t *testing.T) {
 			provisioningClient, err := client.NewForConfig(restCfg)
 			require.NoError(t, err)
 			manifestWatcher := services.NewIdleService(nil, nil)
-			registeredConfigOptions = []ConfigOption{func(_ context.Context, cfg *ProvisioningRunner) error {
-				cfg.Tracer = tracing.NewNoopTracerService()
-				cfg.provisioningClient = provisioningClient
-				cfg.provisioningRESTCfg = restCfg
-				cfg.clients = resources.NewMockClientFactory(t)
-				cfg.manifestWatcher = manifestWatcher
-				cfg.repositoryFactory, err = repository.ProvideFactory(nil, nil, cfg.Tracer)
+			registeredRunnerOptions = []RunnerOption{func(_ context.Context, r *ProvisioningRunner) error {
+				r.Tracer = tracing.NewNoopTracerService()
+				r.provisioningClient = provisioningClient
+				r.provisioningRESTCfg = restCfg
+				r.clients = resources.NewMockClientFactory(t)
+				r.manifestWatcher = manifestWatcher
+				r.repositoryFactory, err = repository.ProvideFactory(nil, nil, r.Tracer)
 				if err != nil {
 					return err
 				}
-				cfg.connectionFactory, err = connection.ProvideFactory(nil, nil, cfg.Tracer)
+				r.connectionFactory, err = connection.ProvideFactory(nil, nil, r.Tracer)
 				return err
 			}}
 			ctx, cancel := context.WithCancel(t.Context())
@@ -323,7 +323,7 @@ func TestProvisioningKeysListerRequiresARESTClient(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestControllerConfigResourceLister(t *testing.T) {
+func TestProvisioningRunnerResourceLister(t *testing.T) {
 	newConfig := func() *ProvisioningRunner {
 		cfg := setting.NewCfg()
 		cfg.ProvisioningResources = []string{"folder.grafana.app/Folder:folder"}

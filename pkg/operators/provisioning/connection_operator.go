@@ -15,55 +15,55 @@ var ConnectionOperator = runner.Operator{
 	Logger:      "provisioning-connection-controller",
 	Defaults:    operatorDefaults,
 	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
-		controllerCfg, err := newProvisioningRunner(rt)
+		r, err := newProvisioningRunner(rt)
 		if err != nil {
 			return nil, err
 		}
 		return &runner.Parts{Run: func(ctx context.Context, ready func()) error {
-			return runConnectionController(ctx, controllerCfg, ready)
+			return runConnectionController(ctx, r, ready)
 		}}, nil
 	},
 }
 
-func runConnectionController(ctx context.Context, controllerCfg *ProvisioningRunner, ready func()) error {
-	provisioningClient, err := controllerCfg.ProvisioningClient()
+func runConnectionController(ctx context.Context, r *ProvisioningRunner, ready func()) error {
+	provisioningClient, err := r.ProvisioningClient()
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	connectionFactory, err := controllerCfg.ConnectionFactory()
+	connectionFactory, err := r.ConnectionFactory()
 	if err != nil {
 		return fmt.Errorf("failed to setup connection factory: %w", err)
 	}
 
-	healthMetricsRecorder, err := controllerCfg.HealthMetricsRecorder()
+	healthMetricsRecorder, err := r.HealthMetricsRecorder()
 	if err != nil {
 		return fmt.Errorf("failed to get health metrics recorder: %w", err)
 	}
 
-	tracer := controllerCfg.Tracer
+	tracer := r.Tracer
 
-	connKeys, err := controllerCfg.ProvisioningKeysLister(apisprovisioning.ConnectionResourceInfo.GroupVersionResource())
+	connKeys, err := r.ProvisioningKeysLister(apisprovisioning.ConnectionResourceInfo.GroupVersionResource())
 	if err != nil {
 		return err
 	}
 
 	connController, err := controller.ProvideConnectionController(controller.ConnectionControllerDeps{
-		Subscriber:        controllerCfg.Subscriber,
+		Subscriber:        r.Subscriber,
 		Client:            provisioningClient,
 		Keys:              connKeys,
 		ConnectionFactory: connectionFactory,
 		HealthMetrics:     healthMetricsRecorder,
-		RelistMetrics:     controllerCfg.RelistProjectionMetrics(),
-		FreshnessMetrics:  controllerCfg.FreshnessMetrics(),
-		Registry:          controllerCfg.Registerer,
+		RelistMetrics:     r.RelistProjectionMetrics(),
+		FreshnessMetrics:  r.FreshnessMetrics(),
+		Registry:          r.Registerer,
 		Tracer:            tracer,
-		ResyncInterval:    controllerCfg.Options.Resync,
-		DrainTimeout:      controllerCfg.Options.DrainTimeout,
+		ResyncInterval:    r.Options.Resync,
+		DrainTimeout:      r.Options.DrainTimeout,
 	})
 	if err != nil {
 		return err
 	}
 
-	return connController.Run(ctx, controllerCfg.Options.Workers, ready)
+	return connController.Run(ctx, r.Options.Workers, ready)
 }

@@ -41,13 +41,13 @@ import (
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 )
 
-var registeredConfigOptions = []ConfigOption{}
+var registeredRunnerOptions = []RunnerOption{}
 
-func RegisterConfigOptions(opts ...ConfigOption) {
-	registeredConfigOptions = append(registeredConfigOptions, opts...)
+func RegisterRunnerOptions(opts ...RunnerOption) {
+	registeredRunnerOptions = append(registeredRunnerOptions, opts...)
 }
 
-type ConfigOption func(ctx context.Context, cfg *ProvisioningRunner) error
+type RunnerOption func(ctx context.Context, r *ProvisioningRunner) error
 
 // ProvisioningRunner extends the shared operator runtime with what only the
 // provisioning operators need: their apiserver clients, factories and extras.
@@ -113,15 +113,15 @@ func newProvisioningRunner(rt *runner.Runtime) (*ProvisioningRunner, error) {
 		return nil, fmt.Errorf("no configuration available")
 	}
 
-	controllerCfg := &ProvisioningRunner{Runtime: rt}
+	r := &ProvisioningRunner{Runtime: rt}
 
-	for _, opt := range registeredConfigOptions {
-		if err := opt(context.Background(), controllerCfg); err != nil {
-			return nil, fmt.Errorf("failed to apply config option: %w", err)
+	for _, opt := range registeredRunnerOptions {
+		if err := opt(context.Background(), r); err != nil {
+			return nil, fmt.Errorf("failed to apply runner option: %w", err)
 		}
 	}
 
-	return controllerCfg, nil
+	return r, nil
 }
 
 // ResourceLister reads what a repository manages from the provisioning API server.
