@@ -7,17 +7,8 @@ import (
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
-<<<<<<< HEAD
 	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-=======
-	"github.com/grafana/grafana/pkg/infra/nats"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/operators/runner"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
->>>>>>> origin/main
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -26,11 +17,7 @@ var JobQueueOperator = runner.Operator{
 	Description: "Pick and execute provisioning jobs using lease-based claiming",
 	Logger:      "provisioning-jobqueue-controller",
 	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
-<<<<<<< HEAD
 		controllerCfg, err := setupJobQueueControllerFromConfig(rt)
-=======
-		controllerCfg, err := setupJobQueueControllerFromConfig(rt.Cfg, rt.Registerer, rt.Tracer, rt.Subscriber)
->>>>>>> origin/main
 		if err != nil {
 			return nil, err
 		}
@@ -92,13 +79,8 @@ type jobQueueControllerConfig struct {
 	maxSyncWorkers       int
 }
 
-<<<<<<< HEAD
 func setupJobQueueControllerFromConfig(rt *runner.Runtime) (*jobQueueControllerConfig, error) {
 	controllerCfg, err := setupFromConfig(rt)
-=======
-func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer, tracer tracing.Tracer, subscriber *nats.SubscriberService) (*jobQueueControllerConfig, error) {
-	controllerCfg, err := setupFromConfig(cfg, registry, tracer, subscriber)
->>>>>>> origin/main
 	if err != nil {
 		return nil, err
 	}

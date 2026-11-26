@@ -14,11 +14,7 @@ var ConnectionOperator = runner.Operator{
 	Description: "Watch provisioning connections",
 	Logger:      "provisioning-connection-controller",
 	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
-<<<<<<< HEAD
 		controllerCfg, err := setupFromConfig(rt)
-=======
-		controllerCfg, err := setupFromConfig(rt.Cfg, rt.Registerer, rt.Tracer, rt.Subscriber)
->>>>>>> origin/main
 		if err != nil {
 			return nil, err
 		}

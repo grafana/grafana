@@ -6,16 +6,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-<<<<<<< HEAD
-=======
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
->>>>>>> origin/main
 )
 
 var JobsOperator = runner.Operator{
@@ -24,11 +18,7 @@ var JobsOperator = runner.Operator{
 	Logger:      "provisioning-job-controller",
 	NoNATS:      true,
 	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
-<<<<<<< HEAD
 		controllerCfg, err := setupJobsControllerFromConfig(rt)
-=======
-		controllerCfg, err := setupJobsControllerFromConfig(rt.Cfg, rt.Registerer, rt.Tracer)
->>>>>>> origin/main
 		if err != nil {
 			return nil, err
 		}
@@ -102,13 +92,8 @@ type jobsControllerConfig struct {
 	cleanupInterval   time.Duration
 }
 
-<<<<<<< HEAD
 func setupJobsControllerFromConfig(rt *runner.Runtime) (*jobsControllerConfig, error) {
 	controllerCfg, err := setupFromConfig(rt)
-=======
-func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer, tracer tracing.Tracer) (*jobsControllerConfig, error) {
-	controllerCfg, err := setupFromConfig(cfg, registry, tracer, nil)
->>>>>>> origin/main
 	if err != nil {
 		return nil, err
 	}
