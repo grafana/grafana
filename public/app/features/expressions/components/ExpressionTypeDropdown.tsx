@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { memo, type ReactElement, useCallback, useMemo } from 'react';
+import { memo, type ReactElement, useCallback, useId, useMemo } from 'react';
 
 import { FeatureState, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Dropdown, FeatureBadge, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
@@ -29,6 +29,7 @@ interface ExpressionMenuItemProps {
 const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect, disabled }) => {
   const { value, label, description } = item;
   const styles = useStyles2(getStyles);
+  const descriptionId = useId();
 
   const handleClick = useCallback(() => {
     onSelect(value!);
@@ -38,6 +39,7 @@ const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect, disa
 
   return (
     <Menu.Item
+      ariaDescribedBy={tooltipContent ? descriptionId : undefined}
       component={() => (
         <div className={styles.expressionTypeItem}>
           <div
@@ -51,6 +53,9 @@ const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect, disa
           <Tooltip placement="right" content={tooltipContent!}>
             <Icon className={styles.infoIcon} name="info-circle" />
           </Tooltip>
+          <span id={descriptionId} hidden>
+            {tooltipContent}
+          </span>
         </div>
       )}
       key={value}
