@@ -1117,14 +1117,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// but that leads to possible race conditions when the repository is created/updated and violating some rules.
 			b.healthChecker = controller.NewRepositoryHealthChecker(b.statusPatcher, repository.NewTester(b.repoValidator), healthMetricsRecorder)
 
-			// if running solely CRUD or not the preferred version, skip controllers/workers setup
-			if b.onlyApiServer || !b.isPreferredVersion {
-				return nil
-			}
-
-			usageMetricCollector := usage.MetricCollector(b.tracer, b.usageNamespaceLister, b.repoLister.List, connection.NewStorageLister(b.connectionStore).List, b.unified)
-			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
-
 			return nil
 		},
 	}

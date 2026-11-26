@@ -98,11 +98,17 @@ func TestIntegrationDashboardTrashDeletionMetadata(t *testing.T) {
 	adminClient := getResourceClient(t, helper, admin, gvr)
 	editorClient := getResourceClient(t, helper, editor, gvr)
 
-	const title = "Dashboard deleted by another user"
+	const (
+		title = "Dashboard deleted by another user"
+		tag   = "trash-metadata"
+	)
 	f, err := createFolder(t, helper, admin, "Trash metadata test")
 	require.NoError(t, err)
-	dashboard, err := createDashboard(t, adminClient, title, &f.UID, nil, helper)
+	dashboardSpec := createDashboardObject(t, title, f.UID, 0)
+	require.NoError(t, unstructured.SetNestedStringSlice(dashboardSpec.Object, []string{tag}, "spec", "tags"))
+	dashboard, err := adminClient.Resource.Create(t.Context(), dashboardSpec, v1.CreateOptions{})
 	require.NoError(t, err)
+	apis.AwaitZanzanaReconcileNext(t, helper)
 	require.Equal(t, admin.Identity.GetUID(), dashboard.GetAnnotations()[utils.AnnoKeyUpdatedBy])
 	deleter := editor.Identity.GetUID()
 	require.NotEqual(t, admin.Identity.GetUID(), deleter)
@@ -130,7 +136,7 @@ func TestIntegrationDashboardTrashDeletionMetadata(t *testing.T) {
 		Limit:    100,
 	})
 	require.NoError(t, err)
-	rsp := apis.DoRequestForTest(t, helper, apis.RequestParams{
+	rsp := apis.DoRequest(helper, apis.RequestParams{
 		User: admin, Method: http.MethodPost, Path: path, Body: body,
 	}, (*searchv0.TrashResults)(nil))
 	require.Equal(t, http.StatusOK, rsp.Response.StatusCode, "%s", rsp.Body)
@@ -142,6 +148,9 @@ func TestIntegrationDashboardTrashDeletionMetadata(t *testing.T) {
 	require.NotNil(t, fields)
 	require.Equal(t, title, fields.Object["title"])
 	require.Equal(t, f.UID, fields.Object["folder"])
+	tags, _, err := unstructured.NestedStringSlice(fields.Object, "tags")
+	require.NoError(t, err)
+	require.Equal(t, []string{tag}, tags)
 	require.Equal(t, deleter, fields.Object["deleted_by"])
 	require.Equal(t, float64(deletedAt.UnixMilli()), fields.Object["deletion_time"])
 }

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
-import memoizeOne from 'memoize-one';
+import { memoizeOne } from 'memoize-one';
 import type OpenLayersMap from 'ol/Map';
 import type MapBrowserEvent from 'ol/MapBrowserEvent';
 import View, { type ViewOptions } from 'ol/View';
