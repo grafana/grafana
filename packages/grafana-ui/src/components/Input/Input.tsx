@@ -78,15 +78,13 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
   // This behaviour is not controlled via a prop so we can limit API surface, and remove this as a 'breaking change' later
   // if a better solution is found.
   const isInAutoSizeInput = useContext(AutoSizeInputContext);
+
   const theme = useTheme2();
   const suffix = suffixProp || (loading && <Spinner inline={true} />);
 
-  // prefix width
-  const prefixWidth = prefix ? prefixRect.width : undefined;
-  const suffixWidth = suffix ? suffixRect.width : undefined;
-
   // calc auto size width including prefix and suffix width
-  const autoSizeWidth = isInAutoSizeInput && width ? width + ((prefixWidth ?? 0) + (suffixWidth ?? 0)) / 8 : undefined;
+  const accessoriesWidth = (prefixRect.width || 0) + (suffixRect.width || 0);
+  const autoSizeWidth = isInAutoSizeInput && width ? width + accessoriesWidth / 8 : undefined;
 
   // Don't pass the width prop, as this causes an unnecessary amount of Emotion calls when auto sizing
   const styles = getInputStyles({ theme, invalid: !!invalid, width: autoSizeWidth ? undefined : width });
@@ -125,8 +123,8 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
               : restProps.onWheel
           }
           style={{
-            paddingLeft: prefixWidth,
-            paddingRight: suffixWidth,
+            paddingLeft: prefix ? prefixRect.width + 12 : undefined,
+            paddingRight: suffix || loading ? suffixRect.width + 12 : undefined,
           }}
         />
 
