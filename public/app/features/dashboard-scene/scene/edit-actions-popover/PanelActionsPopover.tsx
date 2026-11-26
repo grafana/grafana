@@ -1,17 +1,8 @@
 import { css, cx } from '@emotion/css';
-import {
-  type JSX,
-  type MouseEvent,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  useSyncExternalStore,
-} from 'react';
+import { type JSX, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useAsync } from 'react-use';
 
-import { type GrafanaTheme2, locationUtil } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
@@ -241,19 +232,6 @@ function PanelActions({
     locationService.partial({ editPanel: panelId, viewPanel: undefined });
   };
 
-  const onExplore = (event: MouseEvent<HTMLAnchorElement>) => {
-    if (!exploreUrl) {
-      return;
-    }
-    report('explore');
-    // Modified clicks are left to the browser, so Explore can still open in a new tab or window. Middle clicks never
-    // reach onClick.
-    if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
-      event.preventDefault();
-      locationService.push(locationUtil.stripBaseFromUrl(exploreUrl));
-    }
-  };
-
   const onSettings = () => {
     report('settings');
     dashboard.state.sidebar.openElementSettings(panel);
@@ -317,7 +295,7 @@ function PanelActions({
         <ExploreLink
           href={exploreUrl}
           label={t('dashboard-scene.panel-actions-popover.explore', 'Explore (p x)')}
-          onClick={onExplore}
+          onClick={() => report('explore')}
         />
       )}
 
@@ -419,17 +397,9 @@ function PanelActions({
 
 /**
  * A link rather than a button, like the panel menu's Explore item, so it can be opened in a new tab with a middle click
- * or from the browser's link menu.
+ * or from the browser's link menu. Grafana's app-wide link handling turns plain clicks into in-app navigation.
  */
-function ExploreLink({
-  href,
-  label,
-  onClick,
-}: {
-  href: string;
-  label: string;
-  onClick: (event: MouseEvent<HTMLAnchorElement>) => void;
-}) {
+function ExploreLink({ href, label, onClick }: { href: string; label: string; onClick: () => void }) {
   const styles = useStyles2(getStyles);
   const actionStyles = useStyles2(getActionStyles);
 

@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { Subscription } from 'rxjs';
-import { act, fireEvent, render, screen, userEvent, within } from 'test/test-utils';
+import { act, render, screen, userEvent, within } from 'test/test-utils';
 
 import { presetsQuickEdit } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
@@ -44,11 +44,9 @@ jest.mock('@grafana/runtime', () => ({
   locationService: {
     ...jest.requireActual('@grafana/runtime').locationService,
     partial: jest.fn(),
-    push: jest.fn(),
   },
 }));
 const mockLocationServicePartial = jest.mocked(locationService.partial);
-const mockLocationServicePush = jest.mocked(locationService.push);
 
 // jsdom has no hover media features, which would turn off the edit actions used when the flag is off.
 jest.mock('./EditActionsPopover', () => ({
@@ -414,22 +412,12 @@ describe('<PanelActionsWrapper />', () => {
       expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('edit', 1, 'actions_popover', 'timeseries');
     });
 
-    test('clicking Explore opens the panel queries in Explore', async () => {
+    test('Explore links to the panel queries in Explore, and clicking it is reported', async () => {
       const panel = createPanel();
       createDashboard(panel);
       const user = userEvent.setup();
-
-      renderWrapper(panel);
-      await hoverAndRest(screen.getByTestId('reference-child'));
-      await user.click(await within(getToolbar()).findByRole('link', { name: 'Explore (p x)' }));
-
-      expect(mockLocationServicePush).toHaveBeenCalledWith('/explore?left=panel-1');
-    });
-
-    test('Explore is a link, so it can be opened in a new tab', async () => {
-      const panel = createPanel();
-      createDashboard(panel);
-      // jsdom can't navigate, so stand in for the browser opening the link.
+      jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+      // jsdom can't navigate, so stand in for Grafana's app-wide link handling.
       const preventNavigation = (event: Event) => event.preventDefault();
       document.addEventListener('click', preventNavigation);
 
@@ -438,10 +426,15 @@ describe('<PanelActionsWrapper />', () => {
       const link = await within(getToolbar()).findByRole('link', { name: 'Explore (p x)' });
       expect(link).toHaveAttribute('href', '/explore?left=panel-1');
 
-      fireEvent.click(link, { ctrlKey: true });
+      await user.click(link);
       document.removeEventListener('click', preventNavigation);
 
-      expect(mockLocationServicePush).not.toHaveBeenCalled();
+      expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith(
+        'explore',
+        1,
+        'actions_popover',
+        'timeseries'
+      );
     });
 
     test('when explicit sidebar opening is enabled, clicking Settings opens the panel settings', async () => {
