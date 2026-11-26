@@ -54,7 +54,6 @@ describe('RuleEditor grafana managed rules', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     contextSrv.isEditor = true;
-    contextSrv.hasEditPermissionInFolders = true;
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,
       AccessControlAction.AlertingRuleUpdate,
@@ -63,6 +62,7 @@ describe('RuleEditor grafana managed rules', () => {
       AccessControlAction.DataSourcesRead,
       AccessControlAction.DataSourcesWrite,
       AccessControlAction.DataSourcesCreate,
+      AccessControlAction.FoldersCreate,
       AccessControlAction.FoldersWrite,
       AccessControlAction.FoldersRead,
       AccessControlAction.AlertingRuleExternalRead,
@@ -254,11 +254,11 @@ describe('RuleEditor with the Prometheus Alerting plugin', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     contextSrv.isEditor = true;
-    contextSrv.hasEditPermissionInFolders = true;
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,
       AccessControlAction.AlertingRuleCreate,
       AccessControlAction.DataSourcesRead,
+      AccessControlAction.FoldersCreate,
       AccessControlAction.FoldersRead,
       AccessControlAction.AlertingRuleExternalRead,
       AccessControlAction.AlertingRuleExternalWrite,

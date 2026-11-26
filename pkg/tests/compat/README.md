@@ -50,6 +50,8 @@ Each version follows its own `skip.yaml`, and stale entries fail the test, so th
 The smoke test cannot check field values or behavior across several objects.
 For that, add a package next to `folders/` and give it a CODEOWNERS entry.
 `folders/` builds a small tree, has the other version move folders through both the k8s and the legacy API, and checks nesting in every served version, the `parents`, `children` (with paging), `counts`, `access`, and `status` subresources, folder permissions, list pagination and label selectors, and deleting a non-empty subtree.
+`dashboards/` runs the dashboard history, rollback, trash, and restore round trip with classic v1 dashboard fixtures.
+Keep deep-test assertions focused on data and operations that must survive a handoff between builds. Use single-version integration and unit tests for detailed API responses, conversion rules, and editor behavior.
 Copy it as a starting point.
 The package needs:
 
