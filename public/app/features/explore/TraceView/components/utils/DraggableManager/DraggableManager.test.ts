@@ -327,5 +327,34 @@ describe('DraggableManager', () => {
       expect(instance.isDragging()).toBe(false);
       iframe.remove();
     });
+
+    it('measures again when the window the element is in resizes', () => {
+      const iframe = document.createElement('iframe');
+      document.body.appendChild(iframe);
+      const otherWindow = iframe.contentDocument!.defaultView!;
+      instance = new DraggableManager({ ...ctorOpts, resetBoundsOnResize: true });
+      const mouseenter = new otherWindow.MouseEvent('mouseenter', {
+        button: 0,
+        clientX: baseClientX,
+        view: otherWindow,
+      });
+      instance.handleMouseEnter({
+        ...baseMouseEvt,
+        type: 'mouseenter',
+        nativeEvent: mouseenter,
+      } as unknown as React.MouseEvent);
+      getBounds.mockClear();
+
+      otherWindow.dispatchEvent(new otherWindow.Event('resize'));
+      instance.handleMouseMove({
+        ...baseMouseEvt,
+        type: 'mousemove',
+        nativeEvent: mouseenter,
+      } as unknown as React.MouseEvent);
+
+      expect(getBounds).toHaveBeenCalledTimes(1);
+      instance.dispose();
+      iframe.remove();
+    });
   });
 });

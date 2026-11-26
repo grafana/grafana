@@ -40,6 +40,8 @@ export default class DraggableManager {
   // The window the current drag happens in. The element can render in another window than this one, such as a
   // Document Picture-in-Picture window, and only that window sees the drag's mouse moves and release.
   _dragWindow: Window = window;
+  // The window whose resizes invalidate the bounds: the one the element's mouse events come from.
+  _resizeWindow: Window = window;
   // optional callbacks for various dragging events
   _onMouseEnter: ((update: DraggingUpdate) => void) | TNil;
   _onMouseLeave: ((update: DraggingUpdate) => void) | TNil;
@@ -88,9 +90,9 @@ export default class DraggableManager {
     this.getBounds = getBounds;
     this.tag = tag;
     if (resetBoundsOnResize && !this._resetBoundsOnResize) {
-      window.addEventListener('resize', this.resetBounds);
+      this._resizeWindow.addEventListener('resize', this.resetBounds);
     } else if (!resetBoundsOnResize && this._resetBoundsOnResize) {
-      window.removeEventListener('resize', this.resetBounds);
+      this._resizeWindow.removeEventListener('resize', this.resetBounds);
     }
     this._resetBoundsOnResize = Boolean(resetBoundsOnResize);
     this._onMouseEnter = rest.onMouseEnter;
@@ -141,7 +143,7 @@ export default class DraggableManager {
       this._stopDragging();
     }
     if (this._resetBoundsOnResize) {
-      window.removeEventListener('resize', this.resetBounds);
+      this._resizeWindow.removeEventListener('resize', this.resetBounds);
     }
     this._bounds = undefined;
     this._onMouseEnter = undefined;
@@ -156,11 +158,28 @@ export default class DraggableManager {
     this._bounds = undefined;
   };
 
+  /**
+   * Follows resizes of the window the element's mouse events come from, which can be another window than this one,
+   * such as a Document Picture-in-Picture window. Bounds measured in the window before are dropped.
+   */
+  _resetBoundsOnResizeOf(eventWindow: Window) {
+    if (eventWindow === this._resizeWindow) {
+      return;
+    }
+    if (this._resetBoundsOnResize) {
+      this._resizeWindow.removeEventListener('resize', this.resetBounds);
+      eventWindow.addEventListener('resize', this.resetBounds);
+    }
+    this._resizeWindow = eventWindow;
+    this._bounds = undefined;
+  }
+
   _handleMinorMouseEvent = (event: React.MouseEvent) => {
     const { button, clientX, type: eventType } = event;
     if (this._isDragging || button !== LEFT_MOUSE_BUTTON) {
       return;
     }
+    this._resetBoundsOnResizeOf(getEventWindow(event));
     let type: EUpdateTypes | null = null;
     let handler: ((update: DraggingUpdate) => void) | TNil;
     if (eventType === 'mouseenter') {
@@ -197,7 +216,8 @@ export default class DraggableManager {
       if (this._isDragging || button !== LEFT_MOUSE_BUTTON) {
         return;
       }
-      this._dragWindow = ('nativeEvent' in event ? event.nativeEvent.view : event.view) ?? window;
+      this._dragWindow = getEventWindow(event);
+      this._resetBoundsOnResizeOf(this._dragWindow);
       this._dragWindow.addEventListener('mousemove', this._handleDragEvent);
       this._dragWindow.addEventListener('mouseup', this._handleDragEvent);
       const style = _get(this._dragWindow.document, 'body.style');
@@ -237,4 +257,9 @@ export default class DraggableManager {
       tag: this.tag,
     });
   };
+}
+
+/** The window a mouse event happened in. */
+function getEventWindow(event: MouseEvent | React.MouseEvent): Window {
+  return ('nativeEvent' in event ? event.nativeEvent.view : event.view) ?? window;
 }
