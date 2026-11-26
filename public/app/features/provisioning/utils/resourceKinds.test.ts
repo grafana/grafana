@@ -2,7 +2,6 @@ import { HttpResponse, http } from 'msw';
 
 import server from '@grafana/test-utils/server';
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
-import { getIconForKind } from 'app/features/search/service/icons';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 
@@ -16,7 +15,6 @@ import {
   getKindInfoByStatGroup,
   getMigratableKinds,
   getReportedGroup,
-  coversGroup,
   isResourceKindAvailable,
   readImmediateParent,
 } from './resourceKinds';
@@ -79,30 +77,17 @@ describe('resourceKinds registry', () => {
     expect(await resourceKindInfos.connection.list()).toEqual([]);
   });
 
-  it('sources icons from the search package', () => {
-    expect(resourceKindInfos.dashboard.icon).toBe(getIconForKind('dashboard'));
-    expect(resourceKindInfos.folder.icon).toBe(getIconForKind('folder'));
-  });
-  it('gives each entry a `key` equal to its registry key', () => {
-    // The type only requires `key` to be some ResourceKindKey; this guards against an entry pointing
-    // at the wrong key (e.g. the playlist entry carrying `key: 'dashboard'`), which would silently
-    // mislabel commit messages and telemetry.
-    for (const [key, info] of Object.entries(resourceKindInfos)) {
-      expect(info.key).toBe(key);
-    }
-  });
-
-  it('returns a localized singular label for each kind', () => {
-    expect(resourceKindInfos.folder.getLabel()).toBe('folder');
-    expect(resourceKindInfos.dashboard.getLabel()).toBe('dashboard');
-    expect(resourceKindInfos.playlist.getLabel()).toBe('playlist');
-    expect(resourceKindInfos.librarypanel.getLabel()).toBe('library panel');
-    expect(resourceKindInfos.datasource.getLabel()).toBe('data source');
+  it('names each kind as it reads mid-sentence', () => {
+    expect(resourceKindInfos.folder.getLabel({ upperFirst: false })).toBe('folder');
+    expect(resourceKindInfos.dashboard.getLabel({ upperFirst: false })).toBe('dashboard');
+    expect(resourceKindInfos.playlist.getLabel({ upperFirst: false })).toBe('playlist');
+    expect(resourceKindInfos.librarypanel.getLabel({ upperFirst: false })).toBe('library panel');
+    expect(resourceKindInfos.datasource.getLabel({ upperFirst: false })).toBe('data source');
   });
 
   it('every kind exposes a translated plural label and a list function', () => {
     for (const info of Object.values(resourceKindInfos)) {
-      expect(info.pluralLabel()).toBeTruthy();
+      expect(info.getPluralLabel()).toBeTruthy();
       expect(typeof info.list).toBe('function');
     }
   });
@@ -320,21 +305,6 @@ describe('getMigratableKinds', () => {
 // reports for an individual resource, in availableResources and on a job result row.
 describe('collection groups', () => {
   const testdata = 'grafana-testdata-datasource.datasource.grafana.app';
-
-  it('matches a served group inside the collection as well as the collection itself', () => {
-    expect(coversGroup(resourceKindInfos.datasource, testdata)).toBe(true);
-    expect(coversGroup(resourceKindInfos.datasource, 'datasource.grafana.app')).toBe(true);
-  });
-
-  it('does not match a group that merely looks similar', () => {
-    expect(coversGroup(resourceKindInfos.datasource, 'notdatasource.grafana.app')).toBe(false);
-    expect(coversGroup(resourceKindInfos.datasource, 'datasource.grafana.app.evil')).toBe(false);
-  });
-
-  it('leaves a kind served under its own group matching exactly', () => {
-    expect(coversGroup(resourceKindInfos.dashboard, 'dashboard.grafana.app')).toBe(true);
-    expect(coversGroup(resourceKindInfos.dashboard, 'v2.dashboard.grafana.app')).toBe(false);
-  });
 
   it('resolves a resource reported under a served group back to the kind', () => {
     expect(getKindInfoByGroupKind(testdata, 'DataSource')).toBe(resourceKindInfos.datasource);

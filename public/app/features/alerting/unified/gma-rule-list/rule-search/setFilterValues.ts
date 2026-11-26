@@ -28,6 +28,25 @@ export function setFilterValues<Filter extends SharedRuleFilter, Key extends str
     .join(' ');
 }
 
+/** `setFilterValues` for each changed filter. An undefined value is dropped, so `[undefined]` removes the filter. */
+export function setFilters<Filter extends SharedRuleFilter, Key extends string>(
+  searchQuery: string,
+  searchSchema: RuleSearchSchema<Filter, Key>,
+  changes: Partial<Record<Key, Array<string | undefined>>>
+): string {
+  return searchSchema.filters.reduce((query, { key }) => {
+    const values = changes[key];
+    return values
+      ? setFilterValues(
+          query,
+          searchSchema,
+          key,
+          values.filter((value) => value !== undefined)
+        )
+      : query;
+  }, searchQuery);
+}
+
 /** The rule name is all the title text: free text, `rule:` and keys the page has no filter for. */
 function belongsToFilter(token: RawToken, filterKey: string, pageKeys: Set<string>): boolean {
   if (filterKey !== 'rule') {

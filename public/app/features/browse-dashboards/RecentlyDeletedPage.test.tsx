@@ -19,7 +19,9 @@ setupMockServer();
 
 jest.mock('./api/useRecentlyDeletedStateManager');
 jest.mock('../search/service/deletedDashboardsCache', () => ({
-  DELETED_DASHBOARDS_LIMIT: jest.requireActual('../search/service/deletedDashboardsCache').DELETED_DASHBOARDS_LIMIT,
+  get DELETED_DASHBOARDS_LIMIT() {
+    return jest.requireActual('../search/service/deletedDashboardsCache').DELETED_DASHBOARDS_LIMIT;
+  },
   deletedDashboardsCache: {
     isTrashUnavailable: jest.fn().mockReturnValue(false),
     isTrashTruncated: jest.fn().mockReturnValue(false),

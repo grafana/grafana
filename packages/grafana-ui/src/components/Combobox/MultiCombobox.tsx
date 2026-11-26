@@ -5,6 +5,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { pickDataAttributes } from '../../utils/dataAttributes';
 import { useFieldContext } from '../Forms/FieldContext';
 import { Icon } from '../Icon/Icon';
 import { Portal } from '../Portal/Portal';
@@ -61,7 +62,9 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     prefixIcon,
     id: idProp,
     options: optionsProp,
+    ...restProps
   } = props;
+  const dataAttributes = pickDataAttributes(restProps);
 
   const styles = useStyles2(getComboboxStyles);
   const [inputValue, setInputValue] = useState('');
@@ -138,6 +141,9 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   const { getSelectedItemProps, getDropdownProps, setSelectedItems, addSelectedItem, removeSelectedItem, reset } =
     useMultipleSelection({
       selectedItems, // initially selected items,
+      // Starting at -1 would let downshift's focus effect focus this input whenever the effect re-runs
+      // (StrictMode does this for a component that moved), so start at the value the stateReducer forces
+      initialActiveIndex: -999,
       onStateChange: ({ type, selectedItems: newSelectedItems }) => {
         switch (type) {
           case useMultipleSelection.stateChangeTypes.SelectedItemKeyDownBackspace:
@@ -335,6 +341,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           <input
             className={multiStyles.input}
             {...getInputProps({
+              ...dataAttributes,
               ...getDropdownProps({
                 disabled,
                 preventKeyAction: isOpen,

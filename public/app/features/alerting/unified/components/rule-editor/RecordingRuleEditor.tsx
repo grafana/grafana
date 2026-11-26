@@ -1,14 +1,13 @@
 import { css } from '@emotion/css';
-import { type FC, useCallback, useEffect, useState } from 'react';
+import { type FC, useCallback } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { CoreApp, type GrafanaTheme2, LoadingState, type PanelData } from '@grafana/data';
+import { CoreApp, type GrafanaTheme2, type PanelData } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useDataSourceInstance } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -36,17 +35,9 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
   panelData,
   dataSourceUid,
 }) => {
-  const [data, setData] = useState<PanelData>({
-    series: [],
-    state: LoadingState.NotStarted,
-    timeRange: getTimeSrv().timeRange(),
-  });
+  const data: PanelData | undefined = panelData?.[queries[0]?.refId];
 
   const styles = useStyles2(getStyles);
-
-  useEffect(() => {
-    setData(panelData?.[queries[0]?.refId]);
-  }, [panelData, queries]);
 
   const { dataSource, isLoading, error } = useDataSourceInstance(dataSourceUid);
   // The hook keeps the previous instance for one render after dataSourceUid changes

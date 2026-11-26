@@ -852,6 +852,8 @@ export interface RowsLayoutRowSpec {
 	layout: GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind;
 	variables?: VariableKind[];
 	annotations?: AnnotationQueryKind[];
+	// Prompts viewers can run on the panels in this row, offered by plugins in the row's controls.
+	prompts?: Prompt[];
 }
 
 export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
@@ -1050,6 +1052,8 @@ export interface TabsLayoutTabSpec {
 	repeat?: TabRepeatOptions;
 	variables?: VariableKind[];
 	annotations?: AnnotationQueryKind[];
+	// Prompts viewers can run on the panels in this tab, offered by plugins in the tab's controls.
+	prompts?: Prompt[];
 }
 
 export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({
@@ -1581,6 +1585,34 @@ export const defaultSwitchVariableSpec = (): SwitchVariableSpec => ({
 });
 
 /**
+ * A prompt viewers can run on a dashboard, row, or tab, offered by plugins in its controls.
+ */
+export interface Prompt {
+	// The prompt that is run. Viewers see it on the dashboard unless it has a title.
+	text: string;
+	// A short title viewers see on the dashboard instead of the prompt. Unset to show the prompt.
+	title?: string;
+	// The panels to answer it from. Unset for every panel in the dashboard, row, or tab the prompt is saved on.
+	sources?: PromptSource[];
+}
+
+export const defaultPrompt = (): Prompt => ({
+	text: "",
+});
+
+/**
+ * A panel that a prompt is answered from.
+ */
+export interface PromptSource {
+	// The panel, by its name in dashboard.spec.elements.
+	element: ElementReference;
+}
+
+export const defaultPromptSource = (): PromptSource => ({
+	element: defaultElementReference(),
+});
+
+/**
  * Links with references to other dashboards or external resources
  */
 export interface DashboardLink {
@@ -1746,6 +1778,8 @@ export interface Spec {
 	title: string;
 	// Configured template variables.
 	variables: VariableKind[];
+	// Prompts viewers can run on the dashboard, offered by plugins in the dashboard controls.
+	prompts?: Prompt[];
 	preferences?: Preferences;
 }
 

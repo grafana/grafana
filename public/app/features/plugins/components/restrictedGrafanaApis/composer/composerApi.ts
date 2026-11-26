@@ -74,7 +74,7 @@ export const composerApi: ComposerAPI = {
       if (floating) {
         setExtensionSidebarFloatingOverride(true);
       }
-      const stopOnClose = onExtensionSidebarClosed(() => enteredSession.exit());
+      const stopOnClose = onExtensionSidebarClosed(() => enteredSession.exit('sidebar_closed'));
       session.signal.addEventListener(
         'abort',
         () => {

@@ -61,7 +61,6 @@ Header/
 ├── PluginActions.tsx                # Plugin-provided icon buttons
 ├── QueryActionsMenu.tsx             # Dropdown menu for queries and expressions
 ├── TransformationActionButtons.tsx  # Help, filter, and debug buttons
-├── ExperimentalFeedbackButton.tsx   # Feedback and back-to-classic menu
 └── DatasourceHelpPanel.tsx          # Data source help panel component
 ```
 

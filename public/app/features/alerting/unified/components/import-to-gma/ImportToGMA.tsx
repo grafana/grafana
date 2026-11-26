@@ -5,11 +5,13 @@ import { t } from '@grafana/i18n';
 import { useFlagAlertingImportAlertmanagerAPI } from '@grafana/runtime/internal';
 import { LoadingPlaceholder } from '@grafana/ui';
 
-import { trackImportToGMAWizardStarted, trackImportToGMAWizardStepSkipped } from '../../Analytics';
+import { trackImportToGMAWizardStarted } from '../../Analytics';
 import { useIsAutoSyncActive } from '../../hooks/useIsAutoSyncActive';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
+import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { useStagedConfig } from '../../settings/import/useStagedConfig';
-import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
+import { withPageErrorBoundary } from '../../withPageErrorBoundary';
+import { AlertingPageWrapper } from '../AlertingPageWrapper';
 
 import { ConfirmImportModal } from './ConfirmImportModal';
 import { type NotificationsLock } from './LockNotices';
@@ -17,35 +19,49 @@ import { Step1Wrapper } from './Step1Wrapper';
 import { Step2Wrapper } from './Step2Wrapper';
 import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
-import { getImportPlan } from './Wizard/steps';
+import { WIZARD_STEPS, getImportPlan } from './Wizard/steps';
 import { StepKey } from './Wizard/types';
+import { useRulesToImport } from './hooks';
 import { ReviewStep } from './review/ReviewStep';
 import { type ImportFormValues } from './types';
 import { useCanImportToGMA } from './useCanImportToGMA';
-import { filterRulerRulesConfig } from './useImport';
 import { useImportJob } from './useImportJob';
 import { useNotificationsDryRun } from './useNotificationsDryRun';
 import { useNotificationsStepNavigation } from './useNotificationsStepNavigation';
+import { useRulesStepNavigation } from './useRulesStepNavigation';
 
-function Wizard({ notificationsLock }: { notificationsLock?: NotificationsLock }) {
+function Wizard({ notificationsLock, stepKeys }: { notificationsLock?: NotificationsLock; stepKeys: StepKey[] }) {
   const [searchParams] = useURLSearchParams();
   // Settings > Import > Alert rules links here with ?step=rules, so rule-only imports start on the rules step.
   const initialStep = searchParams.get('step') === StepKey.Rules ? StepKey.Rules : undefined;
 
   return (
-    <StepperStateProvider initialStep={initialStep}>
+    <StepperStateProvider initialStep={initialStep} stepKeys={stepKeys}>
       <ImportWizardContent notificationsLock={notificationsLock} />
     </StepperStateProvider>
   );
 }
 
-export function ImportWizardGate() {
+export function ImportWizardGate({ stepKeys: forcedStepKeys }: { stepKeys?: StepKey[] }) {
   const importAlertmanagerAPIEnabled = useFlagAlertingImportAlertmanagerAPI();
-  const { isActive, isLoading } = useIsAutoSyncActive();
-  const { stagedConfig, isLoading: isStagedConfigLoading } = useStagedConfig({ skip: !importAlertmanagerAPIEnabled });
+  // Without notifications permission there is no notifications step, so nothing to lock and nothing to read.
+  const { canImportNotifications } = useCanImportToGMA();
+  const stepKeys = useMemo(
+    () =>
+      (forcedStepKeys ?? WIZARD_STEPS.full).filter((key) => key !== StepKey.Notifications || canImportNotifications),
+    [forcedStepKeys, canImportNotifications]
+  );
+  const hasNotificationsStep = stepKeys.includes(StepKey.Notifications);
+  const { isActive, isLoading } = useIsAutoSyncActive({ skip: !hasNotificationsStep });
+  const { stagedConfig, isLoading: isStagedConfigLoading } = useStagedConfig({
+    skip: !importAlertmanagerAPIEnabled || !hasNotificationsStep,
+  });
 
+  if (!hasNotificationsStep) {
+    return <Wizard stepKeys={stepKeys} />;
+  }
   if (!importAlertmanagerAPIEnabled) {
-    return <Wizard notificationsLock="import-api-disabled" />;
+    return <Wizard stepKeys={stepKeys} notificationsLock="import-api-disabled" />;
   }
   if (isLoading || isStagedConfigLoading) {
     return <LoadingPlaceholder text={t('alerting.import-to-gma.loading', 'Loading…')} />;
@@ -60,14 +76,29 @@ export function ImportWizardGate() {
   } else if (stagedConfig) {
     notificationsLock = 'staged';
   }
-  return <Wizard notificationsLock={notificationsLock} />;
+  return <Wizard stepKeys={stepKeys} notificationsLock={notificationsLock} />;
 }
+
+/**
+ * Rule import for users who can't open Settings > Import, in the regular alert rules shell. Always rules only,
+ * because a notifications import ends in Settings, where these users can't go.
+ */
+export const ImportRulesPage = withPageErrorBoundary(function ImportRulesPage() {
+  return (
+    <AlertingPageWrapper
+      navId={getAlertRulesNavId()}
+      pageNav={{ text: t('alerting.import-to-gma.pageTitle', 'Import alert rules') }}
+    >
+      <ImportWizardGate stepKeys={WIZARD_STEPS.rulesOnly} />
+    </AlertingPageWrapper>
+  );
+});
 
 /**
  * Inner content component that uses the stepper state
  */
 function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { notificationsLock?: NotificationsLock }) {
-  const { activeStep, setStepCompleted } = useStepperState();
+  const { steps, activeStep, setStepCompleted } = useStepperState();
 
   useEffect(() => {
     trackImportToGMAWizardStarted();
@@ -99,10 +130,12 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
       pauseAlertingRules: true,
       pauseRecordingRules: true,
       targetDatasourceUID: undefined,
+      yamlImportTargetDatasourceUID: undefined,
+      yamlImportTargetDatasourceName: undefined,
     },
   });
 
-  const { watch, setValue, getValues } = formAPI;
+  const { watch, getValues } = formAPI;
   const step1Completed = watch('step1Completed');
 
   // Permission checks aligned with backend authorization.go
@@ -111,42 +144,37 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
   const dryRun = useNotificationsDryRun(formAPI);
   const step1 = useNotificationsStepNavigation(formAPI, dryRun);
 
-  const handleStep2Next = useCallback((): boolean => {
-    setValue('step2Completed', true);
-    setValue('step2Skipped', false);
-    return true;
-  }, [setValue]);
-
-  const handleStep2Skip = useCallback(() => {
-    setValue('step2Completed', false);
-    setValue('step2Skipped', true);
-    trackImportToGMAWizardStepSkipped({ step: 'rules' });
-  }, [setValue]);
+  const step2 = useRulesStepNavigation(formAPI);
 
   // Step 1 values come from the snapshot validated on Next; the rest is read live.
   const { step1Snapshot } = step1;
   const getImportValues = useCallback(() => ({ ...getValues(), ...step1Snapshot }), [getValues, step1Snapshot]);
 
-  // Get ruler rules for rules import (needed when importing from datasource)
   const formValues = getImportValues();
   const plan = getImportPlan(formValues);
-  const shouldFetchRules = plan.willImportRules && formValues.rulesSource === 'datasource';
-  const { rulerRules: rulesFromDatasource } = useGetRulerRules(
-    shouldFetchRules ? (formValues.rulesDatasourceName ?? undefined) : undefined
-  );
 
-  // What the review shows and the import sends, so the two can't disagree.
-  const { rulesSource, namespace, ruleGroup } = formValues;
-  const rulesToImport = useMemo(
-    () =>
-      rulesSource === 'datasource'
-        ? filterRulerRulesConfig(rulesFromDatasource, namespace, ruleGroup).filteredConfig
-        : undefined,
-    [rulesSource, rulesFromDatasource, namespace, ruleGroup]
-  );
+  // What the review shows and the import sends, so the two can't disagree. Nothing is read until the rules
+  // step is completed. The rules step shows the overwrite warning, so no target folder is passed here.
+  const {
+    rulesToBeImported: rulesToImport,
+    isLoadingRules,
+    rulesError,
+  } = useRulesToImport({
+    rulesSource: formValues.rulesSource,
+    rulesDatasourceName: plan.willImportRules ? formValues.rulesDatasourceName : undefined,
+    rulesYamlFile: plan.willImportRules ? formValues.rulesYamlFile : null,
+    namespace: formValues.namespace,
+    ruleGroup: formValues.ruleGroup,
+    targetFolder: undefined,
+  });
 
   const { notificationsLock, showConfirmModal, importStatus, importError, startImport, confirmImport, closeConfirm } =
-    useImportJob({ getImportValues, rulesToImport, liveNotificationsLock });
+    useImportJob({
+      getImportValues,
+      rulesToImport,
+      liveNotificationsLock,
+      skipAutoSyncConfig: !steps.some(({ id }) => id === StepKey.Notifications),
+    });
 
   // A locked notifications step has nothing to fill in, so the sidebar shouldn't hold back the steps after
   // it. This only touches the sidebar's own state; the form never marks the step completed, so nothing
@@ -177,8 +205,8 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
             <Step2Wrapper
               step1Completed={step1Completed}
               canImport={canImportRules}
-              onNext={handleStep2Next}
-              onSkip={handleStep2Skip}
+              onNext={step2.onNext}
+              onSkip={step2.onSkip}
             />
           )}
 
@@ -189,6 +217,8 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
               onStartImport={startImport}
               dryRunResult={dryRun.dryRunResult}
               rulesToImport={rulesToImport}
+              isLoadingRules={isLoadingRules}
+              rulesError={rulesError}
             />
           )}
         </WizardLayout>

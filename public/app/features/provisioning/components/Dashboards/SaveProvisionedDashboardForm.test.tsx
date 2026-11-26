@@ -12,6 +12,11 @@ import {
   AnnoKeySourcePath,
   ManagerKind,
 } from 'app/features/apiserver/types';
+import {
+  type CommittedPendingChanges,
+  finishCommittingPendingChanges,
+  getCommittedPendingChanges,
+} from 'app/features/dashboard-scene/lifecycle/pendingChangesSave';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -82,6 +87,11 @@ jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => {
     },
   };
 });
+
+jest.mock('app/features/dashboard-scene/lifecycle/pendingChangesSave', () => ({
+  getCommittedPendingChanges: jest.fn(() => undefined),
+  finishCommittingPendingChanges: jest.fn(async () => undefined),
+}));
 
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom-v5-compat', () => {
@@ -1211,6 +1221,88 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await waitFor(() => expect(dashboard.saveCompleted).toHaveBeenCalled());
     expect(mockNavigate).toHaveBeenCalledWith('/d/test-dashboard');
+  });
+
+  describe('pending changes', () => {
+    const committed = {
+      uid: 'test-dashboard',
+      preview: { id: 'chat-1', pending: { baseGeneration: 3 }, saved: { generation: 3 } },
+    } as unknown as CommittedPendingChanges;
+    const fullSaveModel = { title: 'Test Dashboard', annotations: [{ spec: { query: { spec: {} } } }] };
+
+    beforeEach(() => {
+      jest.mocked(getCommittedPendingChanges).mockReturnValue(committed);
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          capturedRequest = { url: new URL(request.url), body: await request.json() };
+          return saveSuccessResponse(request, 'test-dashboard', 'Test Dashboard');
+        })
+      );
+    });
+
+    afterEach(() => {
+      jest.mocked(getCommittedPendingChanges).mockReturnValue(undefined);
+    });
+
+    function setupPendingChanges(ref: string) {
+      // Loaded as the dashboard, pending changes leave the scene clean.
+      const dashboard = makeNotDirtyDashboard();
+      dashboard.getSaveModel = jest.fn().mockReturnValue(fullSaveModel);
+      dashboard.getSaveResourceFromSpec = jest.fn((spec) => ({ metadata: { name: 'test-dashboard' }, spec }));
+      return setup({
+        dashboard,
+        isNew: false,
+        defaultValues: {
+          ref,
+          path: 'test-dashboard.json',
+          repo: 'test-repo',
+          comment: '',
+          folder: { uid: 'folder-uid', title: '' },
+          title: 'Test Dashboard',
+          description: 'Test Description',
+        },
+      });
+    }
+
+    it('commits them whole to the configured branch, then has their plugin discard them', async () => {
+      const { user, props } = setupPendingChanges('main');
+
+      await user.click(screen.getByRole('button', { name: /save/i }));
+
+      await waitFor(() => expect(finishCommittingPendingChanges).toHaveBeenCalled());
+      // Not the diff's model, which leaves out the empty values the dashboard needs.
+      expect(props.dashboard.getSaveResourceFromSpec).toHaveBeenCalledWith(fullSaveModel);
+      expect(requireCapturedRequest(capturedRequest).url.searchParams.has('ref')).toBe(false);
+      expect(finishCommittingPendingChanges).toHaveBeenCalledWith(props.dashboard, committed, { showSaved: true });
+    });
+
+    it('commits them to a new branch, then has their plugin discard them without showing the saved dashboard', async () => {
+      const { user, props } = setupPendingChanges('dashboard/2023-01-01-abcde');
+
+      await user.click(screen.getByRole('button', { name: /save/i }));
+
+      await waitFor(() => expect(finishCommittingPendingChanges).toHaveBeenCalled());
+      expect(requireCapturedRequest(capturedRequest).url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
+      expect(finishCommittingPendingChanges).toHaveBeenCalledWith(props.dashboard, committed, { showSaved: false });
+    });
+
+    it('asks before committing them over a version someone saved since they started', async () => {
+      const update = jest.fn();
+      jest.mocked(getCommittedPendingChanges).mockReturnValue({
+        uid: 'test-dashboard',
+        preview: { id: 'chat-1', pending: { baseGeneration: 3, update }, saved: { generation: 5 } },
+      } as unknown as CommittedPendingChanges);
+      const { user, props } = setupPendingChanges('main');
+
+      expect(screen.getByText('Someone else has updated this dashboard')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Save and overwrite' })).toBeEnabled();
+
+      await user.click(screen.getByRole('button', { name: 'Ask Assistant to update' }));
+
+      expect(update).toHaveBeenCalledTimes(1);
+      expect(props.drawer.onClose).toHaveBeenCalled();
+      expect(capturedRequest).toBeNull();
+    });
   });
 
   it('sends the ref and lands on the preview when saving to an existing non-configured branch', async () => {

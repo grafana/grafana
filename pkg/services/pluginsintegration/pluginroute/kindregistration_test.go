@@ -62,7 +62,7 @@ func testAPIGroupOptions(t *testing.T, b *manifestBuilder) (*genericapiserver.AP
 }
 
 // InstallSchema has to leave every served version usable by the scheme: the
-// settings kind in all of them, and each manifest kind (plus its list, plus the
+// metav1 types in all of them, and each manifest kind (plus its list, plus the
 // internal version server-side apply tracks managed fields against).
 func TestInstallSchema(t *testing.T) {
 	b := testBuilder(t, testManifest(t))
@@ -71,8 +71,10 @@ func TestInstallSchema(t *testing.T) {
 
 	for _, version := range []string{"v0alpha1", "v1alpha1", "v2alpha1"} {
 		gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: version}
-		_, err := scheme.New(gv.WithKind("Settings"))
-		require.NoError(t, err, "settings are served in every version")
+		_, err := scheme.New(gv.WithKind("Status"))
+		require.NoError(t, err, "metav1 types are registered in every version")
+		require.False(t, scheme.Recognizes(gv.WithKind("Settings")),
+			"settings are served by their own handler, not this scheme")
 	}
 
 	// v2alpha1 declares no kinds, so only the two versions that do are registered.
@@ -185,11 +187,11 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 	})
 }
 
-// The settings kind and the metav1 types are registered in every served
-// version, and the scheme panics on a double registration -- so a kind that
-// collides with one of them must be reported, not crash the whole server.
+// The metav1 types are registered in every served version, and the scheme
+// panics on a double registration -- so a kind that collides with one of them
+// must be reported, not crash the whole server.
 func TestInstallSchemaRejectsReservedKindNames(t *testing.T) {
-	for _, kind := range []string{"Settings", "Status", "WatchEvent", "ListOptions", "HealthCheckResult"} {
+	for _, kind := range []string{"Status", "WatchEvent", "ListOptions", "HealthCheckResult"} {
 		t.Run(kind, func(t *testing.T) {
 			manifest := &app.ManifestData{
 				AppName:          "example",
@@ -213,8 +215,8 @@ func TestInstallSchemaRejectsReservedKindNames(t *testing.T) {
 	}
 }
 
-// The list types are registered too, so a kind named after one is refused on
-// the same grounds.
+// Every kind registers its list type too, so a kind named after another kind's
+// list is refused on the same grounds.
 func TestInstallSchemaRejectsReservedListName(t *testing.T) {
 	manifest := &app.ManifestData{
 		AppName:          "example",
@@ -223,7 +225,10 @@ func TestInstallSchemaRejectsReservedListName(t *testing.T) {
 		Versions: []app.ManifestVersion{{
 			Name:   "v1alpha1",
 			Served: true,
-			Kinds:  []app.ManifestVersionKind{{Kind: "SettingsList", Plural: "SettingsLists", Resource: "settingslists", Scope: "Namespaced"}},
+			Kinds: []app.ManifestVersionKind{
+				{Kind: "Thing", Plural: "Things", Resource: "things", Scope: "Namespaced"},
+				{Kind: "ThingList", Plural: "ThingLists", Resource: "thinglists", Scope: "Namespaced"},
+			},
 		}},
 	}
 	b := testBuilder(t, manifest)
@@ -232,6 +237,57 @@ func TestInstallSchemaRejectsReservedListName(t *testing.T) {
 		err := b.InstallSchema(runtime.NewScheme())
 		require.ErrorContains(t, err, "reserved kind name")
 	})
+}
+
+// A manifest may declare a kind named Settings: the settings types live in the
+// settings handler's own scheme, and the settings resource is "app".
+func TestSettingsKindIsAllowed(t *testing.T) {
+	manifest := &app.ManifestData{
+		AppName:          "example",
+		Group:            "example.ext.grafana.app",
+		PreferredVersion: "v1alpha1",
+		Versions: []app.ManifestVersion{{
+			Name:   "v1alpha1",
+			Served: true,
+			Kinds:  []app.ManifestVersionKind{{Kind: "Settings", Plural: "Settings", Resource: "settings", Scope: "Namespaced"}},
+		}},
+	}
+	b := testBuilder(t, manifest)
+
+	scheme := runtime.NewScheme()
+	require.NoError(t, b.InstallSchema(scheme))
+	gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}
+	obj, err := scheme.New(gv.WithKind("Settings"))
+	require.NoError(t, err)
+	require.IsType(t, &unstructured.Unstructured{}, obj)
+
+	info, opts := testAPIGroupOptions(t, b)
+	require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
+	require.Contains(t, info.VersionedResourcesStorageMap["v1alpha1"], "settings")
+	require.NotContains(t, info.VersionedResourcesStorageMap["v1alpha1"], "app")
+}
+
+// The app resource is the settings URL, so no manifest kind may be served there,
+// whatever the kind is called.
+func TestInstallSchemaRejectsReservedResourceName(t *testing.T) {
+	for _, kind := range []string{"Settings", "App", "Thing"} {
+		t.Run(kind, func(t *testing.T) {
+			manifest := &app.ManifestData{
+				AppName:          "example",
+				Group:            "example.ext.grafana.app",
+				PreferredVersion: "v1alpha1",
+				Versions: []app.ManifestVersion{{
+					Name:   "v1alpha1",
+					Served: true,
+					Kinds:  []app.ManifestVersionKind{{Kind: kind, Plural: "Apps", Resource: "app", Scope: "Namespaced"}},
+				}},
+			}
+			b := testBuilder(t, manifest)
+
+			err := b.InstallSchema(runtime.NewScheme())
+			require.ErrorContains(t, err, "reserved resource name")
+		})
+	}
 }
 
 // Storage options are scoped to the group+version+resource being installed, not

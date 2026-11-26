@@ -111,10 +111,11 @@ func NewSearchOptions(
 			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,
 			DiskCleanupUnopenedGracePeriod: cfg.DiskIndexCleanupUnopenedGracePeriod,
 			PostRankAuthz: PostRankAuthzConfig{
-				OverFetchFactor: cfg.SearchPostRankAuthzOverFetchFactor,
-				MaxWindow:       cfg.SearchPostRankAuthzMaxWindow,
-				MaxCandidates:   cfg.SearchPostRankAuthzMaxCandidates,
-				FacetSampleSize: cfg.SearchPostRankAuthzFacetSampleSize,
+				OverFetchFactor:     cfg.SearchPostRankAuthzOverFetchFactor,
+				MaxWindow:           cfg.SearchPostRankAuthzMaxWindow,
+				MaxCandidates:       cfg.SearchPostRankAuthzMaxCandidates,
+				FacetSampleSize:     cfg.SearchPostRankAuthzFacetSampleSize,
+				ExactCountThreshold: cfg.SearchPostRankAuthzExactCountThreshold,
 			},
 			// From the garbage collection settings, so trash and storage cannot
 			// disagree about what is expired.

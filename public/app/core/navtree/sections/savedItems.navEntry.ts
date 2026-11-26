@@ -1,6 +1,3 @@
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
-
 import { NavID, NavWeight } from '../constants';
 import { isSignedIn, type NavEntryBuilder } from '../utils';
 
@@ -8,7 +5,8 @@ import { isSignedIn, type NavEntryBuilder } from '../utils';
 // tree: useNavTree derives them from the stars query. Bookmarks are filled from preferences.
 
 export const starredNavEntry: NavEntryBuilder = {
-  when: () => contextSrv.hasPermission(AccessControlAction.DashboardsRead),
+  // Stars are of any kind, so a user who can read no dashboard can still have stars to list
+  when: isSignedIn,
   build: () => ({
     text: 'Starred',
     id: NavID.starred,

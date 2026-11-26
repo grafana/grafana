@@ -13,8 +13,10 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -23,7 +25,6 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -67,6 +68,7 @@ func newRuleFactory(
 	tracer tracing.Tracer,
 	featureToggles featuremgmt.FeatureToggles,
 	recordingWriter RecordingWriter,
+	seriesBudget SeriesBudget,
 	evalAppliedHook evalAppliedFunc,
 	stopAppliedHook stopAppliedFunc,
 ) ruleFactoryFunc {
@@ -83,6 +85,7 @@ func newRuleFactory(
 				met,
 				tracer,
 				recordingWriter,
+				seriesBudget,
 				evalAppliedHook,
 				stopAppliedHook,
 			)
@@ -547,22 +550,13 @@ func (a *alertRule) stopApplied() {
 	a.stopAppliedHook(a.key.AlertRuleKey)
 }
 
-func SchedulerUserFor(orgID int64) *user.SignedInUser {
-	return &user.SignedInUser{
-		UserID:           -1,
-		IsServiceAccount: true,
-		Login:            "grafana_scheduler",
-		OrgID:            orgID,
-		OrgRole:          org.RoleAdmin,
-		Permissions: map[int64]map[string][]string{
-			orgID: {
-				datasources.ActionQuery: []string{
-					datasources.ScopeAll,
-				},
-				datasources.ActionRead: []string{
-					datasources.ScopeAll,
-				},
-			},
+func SchedulerUserFor(orgID int64) identity.Requester {
+	return accesscontrol.BackgroundUser(
+		"scheduler",
+		orgID,
+		org.RoleAdmin, []accesscontrol.Permission{
+			{Action: datasources.ActionQuery, Scope: datasources.ScopeAll},
+			{Action: datasources.ActionRead, Scope: datasources.ScopeAll},
 		},
-	}
+	)
 }

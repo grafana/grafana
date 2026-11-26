@@ -8,4 +8,8 @@ export interface AddPanelFormValues {
   title: string;
   /** Whether the visualization keeps the window it was captured in instead of following the notebook's. */
   lockTimeRange: boolean;
+  /** Text added as a markdown cell above what is being added. Blank adds nothing. */
+  note: string;
+  /** Whether a relative window is locked as the instants it covers now, instead of as "last 6 hours". */
+  convertToAbsolute: boolean;
 }

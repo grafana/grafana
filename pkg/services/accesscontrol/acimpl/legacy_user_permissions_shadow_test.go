@@ -129,7 +129,8 @@ func TestPermissionShadowDoesNotBlockAndSnapshotsInput(t *testing.T) {
 			require.Len(t, family.Metric, 2)
 			for _, metric := range family.Metric {
 				require.Equal(t, uint64(1), metric.GetHistogram().GetSampleCount())
-				require.Greater(t, metric.GetHistogram().GetSampleSum(), float64(0))
+				// The primary callback can complete before the clock advances.
+				require.GreaterOrEqual(t, metric.GetHistogram().GetSampleSum(), float64(0))
 			}
 		}
 	}

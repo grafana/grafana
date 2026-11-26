@@ -9,8 +9,8 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	sdkresource "github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func TestRewriteAppInstance(t *testing.T) {
@@ -204,11 +204,6 @@ func TestAugmentOpenAPI(t *testing.T) {
 				expects: "no route registered",
 			},
 			{
-				name:    "no POST on the collection path",
-				mutate:  func(oas *spec3.OpenAPI) { oas.Paths.Paths[augmentPath].Post = nil },
-				expects: "expecting POST under",
-			},
-			{
 				name:    "no {name} path",
 				mutate:  func(oas *spec3.OpenAPI) { delete(oas.Paths.Paths, augmentPath+"/{name}") },
 				expects: "expecting route registered",
@@ -232,6 +227,35 @@ func TestAugmentOpenAPI(t *testing.T) {
 				require.ErrorContains(t, err, tc.expects)
 			})
 		}
+	})
+
+	t.Run("read-only settings are described without the examples", func(t *testing.T) {
+		oas := newAugmentOAS(augmentPath)
+		oas.Paths.Paths[augmentPath].Post = nil
+		oas.Paths.Paths[augmentPath].Get = &spec3.Operation{}
+		resource := newResourceSchema()
+		schema := settingsOnly()
+		schema.SettingsExamples = &pluginschema.SettingsExamples{Examples: map[string]*spec3.Example{"default": {}}}
+		schema.Routes = &pluginschema.Routes{Paths: map[string]*spec3.Path{
+			"/resources/things": {PathProps: spec3.PathProps{Get: &spec3.Operation{}, Post: &spec3.Operation{}}},
+		}}
+
+		_, err := AugmentOpenAPI(oas, SettingsResource{
+			Schema:   schema,
+			Resource: resource,
+			SpecName: "SettingsSpec",
+			Path:     augmentPath,
+			IsApp:    true,
+		})
+		require.NoError(t, err)
+		assert.Contains(t, oas.Components.Schemas, "SettingsSpec")
+		specProp := resource.Properties["spec"]
+		assert.Equal(t, "#/components/schemas/SettingsSpec", specProp.Ref.String())
+		assert.NotContains(t, oas.Paths.Paths, augmentPath, "the collection is rewritten to the instance")
+		assert.Contains(t, oas.Paths.Paths, augmentPath+"/instance")
+		things := oas.Paths.Paths[augmentPath+"/instance/resources/things"]
+		require.NotNil(t, things, "the plugin's routes are published")
+		assert.NotNil(t, things.Post, "custom routes keep their write methods")
 	})
 
 	t.Run("registers the settings spec and links it from the resource", func(t *testing.T) {
@@ -270,7 +294,6 @@ func TestAugmentOpenAPI(t *testing.T) {
 		registered := oas.Components.Schemas["SettingsSpec"]
 		require.NotNil(t, registered)
 		assert.Contains(t, registered.Properties, "enabled")
-		assert.Contains(t, registered.Properties, "pinned")
 		jsonData := registered.Properties["jsonData"]
 		assert.Contains(t, jsonData.Properties, "path", "the plugin spec becomes jsonData")
 
@@ -309,9 +332,9 @@ func TestAugmentOpenAPI(t *testing.T) {
 		assert.Equal(t, []string{"apiKey"}, secure.Required, "only required keys are required")
 		assert.False(t, secure.AdditionalProperties.Allows, "unknown secure keys are rejected")
 
-		example, ok := secure.Example.(common.InlineSecureValues)
+		example, ok := secure.Example.(sdkresource.InlineSecureValues)
 		require.True(t, ok)
-		assert.Equal(t, common.InlineSecureValues{"apiKey": {Create: "***"}}, example,
+		assert.Equal(t, sdkresource.InlineSecureValues{"apiKey": {Create: "***"}}, example,
 			"only required keys appear in the example")
 
 		secureProp := resource.Properties["secure"]

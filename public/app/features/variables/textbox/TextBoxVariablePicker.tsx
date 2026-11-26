@@ -1,12 +1,4 @@
-import {
-  type ChangeEvent,
-  type FocusEvent,
-  type KeyboardEvent,
-  type ReactElement,
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
+import { type ChangeEvent, type FocusEvent, type KeyboardEvent, type ReactElement, useCallback, useState } from 'react';
 
 import { type TextBoxVariableModel, isEmptyObject } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -25,9 +17,11 @@ export interface Props extends VariablePickerProps<TextBoxVariableModel> {}
 export function TextBoxVariablePicker({ variable, onVariableChange, readOnly }: Props): ReactElement {
   const dispatch = useDispatch();
   const [updatedValue, setUpdatedValue] = useState(variable.current.value);
-  useEffect(() => {
+  const [prevVariable, setPrevVariable] = useState(variable);
+  if (variable !== prevVariable) {
+    setPrevVariable(variable);
     setUpdatedValue(variable.current.value);
-  }, [variable]);
+  }
 
   const updateVariable = useCallback(() => {
     if (!variable.rootStateKey) {

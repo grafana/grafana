@@ -32,13 +32,9 @@ import { getEditorType, getTransformId } from './utils';
  */
 export function QueryEditorContextWrapper({
   dataPane,
-  onSwitchToClassic,
-  showVersionBanner,
   children,
 }: {
   dataPane: PanelDataPaneNext;
-  onSwitchToClassic?: () => void;
-  showVersionBanner?: boolean;
   children: ReactNode;
 }) {
   const theme = useTheme2();
@@ -239,7 +235,9 @@ export function QueryEditorContextWrapper({
 
   // Update the ref every render so the stable callback inside useSelectionState
   // always delegates to the latest clearSideEffects.
-  clearSideEffectsRef.current = clearSideEffects;
+  useLayoutEffect(() => {
+    clearSideEffectsRef.current = clearSideEffects;
+  });
 
   // Hoisted out of `uiState` so they stay referentially stable across selection changes —
   // consumers that put these in a useEffect/useMemo dep array only re-fire when multi-select
@@ -396,7 +394,6 @@ export function QueryEditorContextWrapper({
       setPendingTransformation,
       finalizePendingTransformation,
       stackedMode,
-      showVersionBanner: Boolean(showVersionBanner),
       confirmingDeleteActionKey,
       setConfirmingDeleteActionKey,
     }),
@@ -435,14 +432,12 @@ export function QueryEditorContextWrapper({
       pendingTransformation,
       setPendingTransformation,
       finalizePendingTransformation,
-      showVersionBanner,
       confirmingDeleteActionKey,
     ]
   );
 
   const actions = useMemo(
     () => ({
-      onSwitchToClassic,
       updateQueries: dataPane.updateQueries,
       updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => {
         dataPane.updateSelectedQuery(updatedQuery, originalRefId);
@@ -503,7 +498,6 @@ export function QueryEditorContextWrapper({
       addTransformationAction,
       dataPane,
       findTransformationIndex,
-      onSwitchToClassic,
       removeQueryFromSelection,
       removeTransformationFromSelection,
       setMultiSelectModeState,

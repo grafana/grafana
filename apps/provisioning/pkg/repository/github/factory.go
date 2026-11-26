@@ -9,7 +9,7 @@ import (
 	"github.com/google/go-github/v82/github"
 	"golang.org/x/oauth2"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana-app-sdk/resource"
 )
 
 // Factory creates new GitHub clients.
@@ -63,7 +63,7 @@ func WithCustomServerURL(serverURL string) ClientOption {
 	}
 }
 
-func (r *Factory) New(owner, repo string, ghToken common.RawSecureValue, opts ...ClientOption) (Client, error) {
+func (r *Factory) New(owner, repo string, ghToken resource.RawSecureValue, opts ...ClientOption) (Client, error) {
 	var options ClientOptions
 	for _, opt := range opts {
 		opt(&options)

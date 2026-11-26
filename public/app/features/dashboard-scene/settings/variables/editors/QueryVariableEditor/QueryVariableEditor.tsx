@@ -193,6 +193,7 @@ export function Editor({ variable }: EditorProps) {
         noMargin
       >
         <DataSourcePicker
+          journeySurface="variable_editor"
           current={datasourceRef}
           onChange={onDataSourceChange}
           variables={true}

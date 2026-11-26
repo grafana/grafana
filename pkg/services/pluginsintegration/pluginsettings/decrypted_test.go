@@ -9,9 +9,9 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -53,7 +53,7 @@ func TestSecureContextShim(t *testing.T) {
 
 		// Even with a decrypter and secure values present, the stashed loader wins.
 		dec := &stubDecrypter{}
-		obj := newTestObject(t, "ns", testAPIVersion, "DataSource", common.InlineSecureValues{
+		obj := newTestObject(t, "ns", testAPIVersion, "DataSource", resource.InlineSecureValues{
 			"token": {Name: "secret-token"},
 		})
 		loader, err := GetDecryptedSecureJSONLoader(ctx, obj, dec)
@@ -78,7 +78,7 @@ func TestSecureContextShim(t *testing.T) {
 
 func TestGetDecryptedSecureJSONLoader(t *testing.T) {
 	t.Run("no secure values returns empty loader", func(t *testing.T) {
-		obj := newTestObject(t, "ns", testAPIVersion, "DataSource", common.InlineSecureValues{})
+		obj := newTestObject(t, "ns", testAPIVersion, "DataSource", resource.InlineSecureValues{})
 		loader, err := GetDecryptedSecureJSONLoader(context.Background(), obj, nil)
 		require.NoError(t, err)
 		out, err := loader(context.Background())
@@ -100,7 +100,7 @@ func TestGetDecryptedSecureJSONLoader(t *testing.T) {
 	})
 
 	t.Run("secure values present but no decrypter errors", func(t *testing.T) {
-		obj := newTestObject(t, "ns", testAPIVersion, "DataSource", common.InlineSecureValues{
+		obj := newTestObject(t, "ns", testAPIVersion, "DataSource", resource.InlineSecureValues{
 			"token": {Name: "secret-token"},
 		})
 		_, err := GetDecryptedSecureJSONLoader(context.Background(), obj, nil)
@@ -108,7 +108,7 @@ func TestGetDecryptedSecureJSONLoader(t *testing.T) {
 	})
 
 	t.Run("missing secure value name surfaces during construction", func(t *testing.T) {
-		obj := newTestObject(t, "ns", testAPIVersion, "DataSource", common.InlineSecureValues{
+		obj := newTestObject(t, "ns", testAPIVersion, "DataSource", resource.InlineSecureValues{
 			"token": {Name: ""},
 		})
 		_, err := GetDecryptedSecureJSONLoader(context.Background(), obj, &stubDecrypter{})
@@ -125,7 +125,7 @@ func TestDecryptLoader_Success(t *testing.T) {
 		},
 	}
 
-	obj := newTestObject(t, "myns", testAPIVersion, "DataSource", common.InlineSecureValues{
+	obj := newTestObject(t, "myns", testAPIVersion, "DataSource", resource.InlineSecureValues{
 		"token": {Name: "secret-token"},
 	})
 
@@ -152,7 +152,7 @@ func TestDecryptLoader_MultipleValues(t *testing.T) {
 		},
 	}
 
-	obj := newTestObject(t, "ns", testAPIVersion, "DataSource", common.InlineSecureValues{
+	obj := newTestObject(t, "ns", testAPIVersion, "DataSource", resource.InlineSecureValues{
 		"token":    {Name: "name-token"},
 		"password": {Name: "name-password"},
 	})
@@ -175,7 +175,7 @@ func TestDecryptLoader_MultipleValues(t *testing.T) {
 func TestDecryptLoader_DecrypterErrorPropagated(t *testing.T) {
 	dec := &stubDecrypter{err: errors.New("boom")}
 
-	obj := newTestObject(t, "ns", testAPIVersion, "DataSource", common.InlineSecureValues{
+	obj := newTestObject(t, "ns", testAPIVersion, "DataSource", resource.InlineSecureValues{
 		"token": {Name: "secret-token"},
 	})
 	loader, err := GetDecryptedSecureJSONLoader(context.Background(), obj, dec)
@@ -192,7 +192,7 @@ func TestDecryptLoader_MissingResultForName(t *testing.T) {
 		results: map[string]decrypt.DecryptResult{},
 	}
 
-	obj := newTestObject(t, "ns", testAPIVersion, "DataSource", common.InlineSecureValues{
+	obj := newTestObject(t, "ns", testAPIVersion, "DataSource", resource.InlineSecureValues{
 		"token": {Name: "secret-token"},
 	})
 	loader, err := GetDecryptedSecureJSONLoader(context.Background(), obj, dec)
@@ -211,7 +211,7 @@ func TestDecryptLoader_PerValueErrorPropagated(t *testing.T) {
 		},
 	}
 
-	obj := newTestObject(t, "ns", testAPIVersion, "DataSource", common.InlineSecureValues{
+	obj := newTestObject(t, "ns", testAPIVersion, "DataSource", resource.InlineSecureValues{
 		"token": {Name: "secret-token"},
 	})
 	loader, err := GetDecryptedSecureJSONLoader(context.Background(), obj, dec)
@@ -232,7 +232,7 @@ func TestDecryptLoader_NilValueIsSkipped(t *testing.T) {
 		},
 	}
 
-	obj := newTestObject(t, "ns", testAPIVersion, "DataSource", common.InlineSecureValues{
+	obj := newTestObject(t, "ns", testAPIVersion, "DataSource", resource.InlineSecureValues{
 		"token": {Name: "secret-token"},
 	})
 	loader, err := GetDecryptedSecureJSONLoader(context.Background(), obj, dec)
@@ -255,7 +255,7 @@ func TestDecryptLoader_GroupAndNamespaceFromTypedObject(t *testing.T) {
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(schema.GroupVersionKind{Group: "g.example.com", Version: "v1", Kind: "Thing"})
 	u.SetNamespace("ns-1")
-	u.Object["secure"] = common.InlineSecureValues{"k": {Name: "n"}}
+	u.Object["secure"] = resource.InlineSecureValues{"k": {Name: "n"}}
 
 	meta, err := utils.MetaAccessor(u)
 	require.NoError(t, err)
@@ -290,7 +290,7 @@ func (s *stubDecrypter) Decrypt(_ context.Context, group, namespace string, name
 	return s.results, nil
 }
 
-func newTestObject(t *testing.T, namespace string, apiVersion string, kind string, secure common.InlineSecureValues) utils.GrafanaMetaAccessor {
+func newTestObject(t *testing.T, namespace string, apiVersion string, kind string, secure resource.InlineSecureValues) utils.GrafanaMetaAccessor {
 	t.Helper()
 	obj := map[string]any{
 		"apiVersion": apiVersion,

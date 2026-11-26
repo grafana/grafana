@@ -13,9 +13,9 @@ import (
 	"github.com/bwmarrin/snowflake"
 	"k8s.io/apiserver/pkg/admission"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // AdmissionMutator handles mutation for Connection resources
@@ -53,7 +53,7 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 
 	if a.GetOperation() == admission.Update {
 		if old, ok := a.GetOldObject().(*provisioning.Connection); ok && oauthAppChanged(c, old) {
-			c.Secure.Token = common.InlineSecureValue{Remove: true}
+			c.Secure.Token = resource.InlineSecureValue{Remove: true}
 		}
 	}
 

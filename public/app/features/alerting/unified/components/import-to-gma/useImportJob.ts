@@ -63,15 +63,22 @@ export function getPostImportOutcome(plan: ImportPlan, targetFolder: Folder | un
 
 interface UseImportJobArgs {
   getImportValues: () => ImportFormValues;
-  /** The rules to send, already filtered by namespace and group. Only set for a data source. */
+  /** The rules to send: the ones of the data source after the namespace and group filter, or the ones in the file. */
   rulesToImport: RulerCloudRulesConfigDTO | undefined;
   liveNotificationsLock: NotificationsLock | undefined;
+  /** For a wizard without the notifications step, which is the only one that saves the auto-sync config. */
+  skipAutoSyncConfig?: boolean;
 }
 
-export function useImportJob({ getImportValues, rulesToImport, liveNotificationsLock }: UseImportJobArgs) {
+export function useImportJob({
+  getImportValues,
+  rulesToImport,
+  liveNotificationsLock,
+  skipAutoSyncConfig,
+}: UseImportJobArgs) {
   const importNotifications = useImportNotifications();
   const importRules = useImportRules();
-  const { save: saveAutoSync } = useAutoSyncConfiguration();
+  const { save: saveAutoSync } = useAutoSyncConfiguration({ skip: skipAutoSyncConfig });
   const notifyApp = useAppNotification();
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -123,9 +130,12 @@ export function useImportJob({ getImportValues, rulesToImport, liveNotifications
       }
 
       // Independent of Auto-sync, which only mirrors Alertmanager config, never rules.
-      if (plan.willImportRules && values.rulesDatasourceUID) {
+      // A YAML file has no data source of its own, so its rules run against the one picked for them.
+      const rulesDataSourceUID =
+        values.rulesSource === 'yaml' ? values.yamlImportTargetDatasourceUID : values.rulesDatasourceUID;
+      if (plan.willImportRules && rulesDataSourceUID) {
         const baseParams = {
-          dataSourceUID: values.rulesDatasourceUID,
+          dataSourceUID: rulesDataSourceUID,
           targetFolderUID: values.targetFolder?.uid,
           pauseAlertingRules: values.pauseAlertingRules,
           pauseRecordingRules: values.pauseRecordingRules,

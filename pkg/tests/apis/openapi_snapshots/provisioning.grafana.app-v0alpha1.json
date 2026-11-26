@@ -4301,6 +4301,59 @@
   },
   "components": {
     "schemas": {
+      "com.github.grafana.grafana-app-sdk.resource.InlineSecureValue": {
+        "type": "object",
+        "oneOf": [
+          {
+            "required": [
+              "create"
+            ]
+          },
+          {
+            "required": [
+              "name"
+            ]
+          },
+          {
+            "required": [
+              "remove"
+            ]
+          }
+        ],
+        "not": {
+          "required": [
+            "description"
+          ],
+          "not": {
+            "required": [
+              "create"
+            ]
+          }
+        },
+        "properties": {
+          "create": {
+            "description": "Plaintext value to create in the secret service. Used only in create or update requests.",
+            "type": "string",
+            "maxLength": 24576,
+            "minLength": 1
+          },
+          "description": {
+            "description": "Optional description for a newly created secret. Only valid when create is set.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Reference to an existing value in the secret service.",
+            "type": "string",
+            "maxLength": 253,
+            "minLength": 1
+          },
+          "remove": {
+            "description": "Remove this entry from the secure value map, deleting the secret if it is owned by this resource.",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Author": {
         "type": "object",
         "required": [
@@ -4624,7 +4677,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
+                "$ref": "#/components/schemas/com.github.grafana.grafana-app-sdk.resource.InlineSecureValue"
               }
             ]
           },
@@ -4633,7 +4686,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
+                "$ref": "#/components/schemas/com.github.grafana.grafana-app-sdk.resource.InlineSecureValue"
               }
             ]
           },
@@ -4642,7 +4695,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
+                "$ref": "#/components/schemas/com.github.grafana.grafana-app-sdk.resource.InlineSecureValue"
               }
             ]
           }
@@ -6894,7 +6947,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
+                "$ref": "#/components/schemas/com.github.grafana.grafana-app-sdk.resource.InlineSecureValue"
               }
             ]
           },
@@ -6903,7 +6956,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
+                "$ref": "#/components/schemas/com.github.grafana.grafana-app-sdk.resource.InlineSecureValue"
               }
             ]
           },
@@ -6912,7 +6965,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
+                "$ref": "#/components/schemas/com.github.grafana.grafana-app-sdk.resource.InlineSecureValue"
               }
             ]
           }
@@ -7198,49 +7251,6 @@
             "type": "string"
           }
         }
-      },
-      "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue": {
-        "description": "Allow access to a secure value inside",
-        "oneOf": [
-          {
-            "required": [
-              "name"
-            ]
-          },
-          {
-            "required": [
-              "create"
-            ]
-          },
-          {
-            "required": [
-              "remove"
-            ]
-          }
-        ],
-        "properties": {
-          "create": {
-            "description": "Create a secure value -- this is only used for POST/PUT",
-            "type": "string",
-            "maxLength": 24576,
-            "minLength": 1
-          },
-          "description": {
-            "description": "Optionally when creating a secure value, you can pass a custom description.",
-            "type": "string"
-          },
-          "name": {
-            "description": "Name in the secret service (reference)",
-            "type": "string",
-            "maxLength": 253,
-            "minLength": 1
-          },
-          "remove": {
-            "description": "Remove this value from the secure value map Values owned by this resource will be deleted if necessary",
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false
       },
       "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured": {
         "type": "object",

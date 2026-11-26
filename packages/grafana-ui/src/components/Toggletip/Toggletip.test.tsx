@@ -1,7 +1,8 @@
 ﻿import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { Button, LinkButton } from '../Button/Button';
+import { Button } from '../Button/Button';
+import { LinkButton } from '../LinkButton/LinkButton';
 
 import { Toggletip } from './Toggletip';
 

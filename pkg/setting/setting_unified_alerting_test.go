@@ -30,6 +30,15 @@ func TestCfg_ReadUnifiedAlertingSettings(t *testing.T) {
 		require.Equal(t, alertingDefaultInitializationTimeout, cfg.UnifiedAlerting.InitializationTimeout)
 	}
 
+	t.Run("notification history loki_inject_user", func(t *testing.T) {
+		require.False(t, cfg.UnifiedAlerting.NotificationHistory.LokiInjectUser)
+		cfg.Raw.Section("unified_alerting.notification_history").Key("loki_inject_user").SetValue("true")
+		require.NoError(t, cfg.ReadUnifiedAlertingSettings(cfg.Raw))
+		require.True(t, cfg.UnifiedAlerting.NotificationHistory.LokiInjectUser)
+		cfg.Raw.Section("unified_alerting.notification_history").Key("loki_inject_user").SetValue("false")
+		require.NoError(t, cfg.ReadUnifiedAlertingSettings(cfg.Raw))
+	})
+
 	t.Run("screenshot include_alert_history", func(t *testing.T) {
 		require.True(t, cfg.UnifiedAlerting.Screenshots.IncludeAlertHistory)
 		for _, value := range []bool{false, true} {
@@ -627,6 +636,41 @@ func TestHasAlertStateMetrics(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			require.Equal(t, tc.want, tc.stateHistory.HasAlertStateMetrics())
+		})
+	}
+}
+
+func TestReadMaxTrackedSeries(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		value       string
+		expected    int64
+		expectedErr string
+	}{
+		{desc: "defaults to one million", expected: 1_000_000},
+		{desc: "accepts a limit", value: "5000", expected: 5000},
+		{desc: "zero turns the limit off", value: "0", expected: 0},
+		{desc: "rejects a negative value", value: "-1", expectedErr: "max_tracked_series"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			f := ini.Empty()
+			section, err := f.NewSection("recording_rules")
+			require.NoError(t, err)
+			if tc.value != "" {
+				_, err = section.NewKey("max_tracked_series", tc.value)
+				require.NoError(t, err)
+			}
+
+			cfg := NewCfg()
+			err = cfg.ReadUnifiedAlertingSettings(f)
+			if tc.expectedErr != "" {
+				require.ErrorContains(t, err, tc.expectedErr)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, cfg.UnifiedAlerting.RecordingRules.MaxTrackedSeries)
 		})
 	}
 }

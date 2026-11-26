@@ -26,7 +26,15 @@ describe('buildNavTree', () => {
       // Connections and cfg are attachment-parent shells here; pruneEmptyNavSections removes them
       const tree = buildNavTree();
 
-      expect(ids(tree)).toEqual([NavID.home, NavID.bookmarks, NavID.connections, NavID.cfg, NavID.profile, NavID.help]);
+      expect(ids(tree)).toEqual([
+        NavID.home,
+        NavID.bookmarks,
+        NavID.starred,
+        NavID.connections,
+        NavID.cfg,
+        NavID.profile,
+        NavID.help,
+      ]);
     });
 
     it('orders sections by sort weight', () => {
@@ -93,6 +101,7 @@ describe('buildNavTree', () => {
 
       expect(findById(tree, NavID.profile)).toBeUndefined();
       expect(findById(tree, NavID.bookmarks)).toBeUndefined();
+      expect(findById(tree, NavID.starred)).toBeUndefined();
     });
 
     it('points home at the login page when signed out and anonymous access is disabled', () => {
@@ -454,12 +463,20 @@ describe('buildNavTree', () => {
       expect(ids(plugins?.children ?? [])).toContain('plugins');
     });
 
-    it('shows the extensions page in dev environments', () => {
-      setup();
+    it('shows the extensions page in dev environments with plugin write access', () => {
+      setup({ permissions: [AccessControlAction.PluginsWrite] });
       config.buildInfo.env = 'development';
 
       const plugins = findById(findById(buildNavTree(), NavID.cfg)?.children ?? [], NavID.cfgPlugins);
       expect(ids(plugins?.children ?? [])).toContain('extensions');
+    });
+
+    it('hides the extensions page in dev environments without plugin permissions', () => {
+      setup();
+      config.buildInfo.env = 'development';
+
+      const plugins = findById(findById(buildNavTree(), NavID.cfg)?.children ?? [], NavID.cfgPlugins);
+      expect(ids(plugins?.children ?? [])).not.toContain('extensions');
     });
 
     it('shows the extensions page outside dev only with the toggle and plugin write access', () => {
@@ -494,7 +511,7 @@ describe('pruneEmptyNavSections', () => {
     setup();
     const tree = pruneEmptyNavSections(buildNavTree());
 
-    expect(ids(tree)).toEqual([NavID.home, NavID.bookmarks, NavID.profile, NavID.help]);
+    expect(ids(tree)).toEqual([NavID.home, NavID.bookmarks, NavID.starred, NavID.profile, NavID.help]);
   });
 
   // Drilldown's children are the drilldown apps, so with none attached the
@@ -833,11 +850,33 @@ describe('getInitialNavTree', () => {
       expect(findById(tree, NavID.cfgAccess)?.hideFromBreadcrumbs).toBeUndefined();
     });
 
-    it('keeps the Administration landing when there is no Default preferences', () => {
+    it('lands on the first destination the section nav lists when there is no Default preferences', () => {
       const tree = administration();
       const general = tree[0].children?.find((child) => child.id === NavID.cfgGeneral);
       general!.children = general!.children?.filter((child) => child.id !== 'org-settings');
       withBootdata(tree);
+
+      const landed = getInitialNavTree();
+
+      expect(findById(landed, NavID.cfg)?.url).toBe('/admin/migrate-to-cloud');
+      expect(findById(landed, NavID.cfgGeneral)?.url).toBe('/admin/migrate-to-cloud');
+    });
+
+    it('lands on the first destination of another group when General has none', () => {
+      const tree = administration();
+      tree[0].children = tree[0].children?.filter(
+        (child) => child.id !== NavID.cfgGeneral && child.id !== 'authentication'
+      );
+      tree[0].children = tree[0].children?.filter(
+        (child) => !child.id?.startsWith('plugin-page') && child.id !== 'secrets-management'
+      );
+      withBootdata(tree);
+
+      expect(findById(getInitialNavTree(), NavID.cfg)?.url).toBe('/org/serviceaccounts');
+    });
+
+    it('keeps the Administration landing when there are no destinations', () => {
+      withBootdata([{ id: NavID.cfg, text: 'Administration', url: '/admin', children: [] }]);
 
       expect(findById(getInitialNavTree(), NavID.cfg)?.url).toBe('/admin');
     });

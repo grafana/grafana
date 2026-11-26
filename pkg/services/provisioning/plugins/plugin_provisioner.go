@@ -79,7 +79,6 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 			OrgID:          app.OrgID,
 			PluginID:       app.PluginID,
 			Enabled:        app.Enabled,
-			Pinned:         app.Pinned,
 			JSONData:       app.JSONData,
 			SecureJSONData: app.SecureJSONData,
 			PluginVersion:  app.PluginVersion,

@@ -495,7 +495,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        claims.RoleAdmin,
 		IsGrafanaAdmin: true, // can do anything
 	}
 	ctx := claims.WithAuthInfo(context.Background(), testUserA)

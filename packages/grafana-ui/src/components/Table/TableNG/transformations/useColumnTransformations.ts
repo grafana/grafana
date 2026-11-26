@@ -32,7 +32,8 @@ export function useColumnTransformations(
   owner: string,
   enabled = sourceIndex >= 0,
   sourceSeries: readonly DataFrame[] | undefined = api?.getSourceSeries(owner),
-  onInteraction?: (action: 'visibility' | 'reorder') => void
+  onInteraction?: (action: 'visibility' | 'reorder') => void,
+  displaySeries?: readonly DataFrame[]
 ) {
   const { transformations, update } = useTableTransformations(api, owner);
   useEffect(() => {
@@ -43,8 +44,10 @@ export function useColumnTransformations(
   const sourceFrame = enabled && sourceIndex >= 0 ? sourceSeries?.[sourceIndex] : undefined;
   const context = useMemo(
     () =>
-      sourceFrame && sourceSeries && sourceIndex >= 0 ? prepareColumnContext(sourceSeries, sourceIndex) : undefined,
-    [sourceFrame, sourceSeries, sourceIndex]
+      sourceFrame && sourceSeries && sourceIndex >= 0
+        ? prepareColumnContext(sourceSeries, sourceIndex, displaySeries)
+        : undefined,
+    [sourceFrame, sourceSeries, sourceIndex, displaySeries]
   );
   // Keep the last non-empty source catalog per frame as the comparison baseline.
   // The baseline belongs to one panel, so it is cleared when the table stays mounted
@@ -89,12 +92,13 @@ export function useColumnTransformations(
   const onColumnOrderChange = useCallback(
     (order: string[]) => {
       if (context) {
+        const displayCatalog = context.displayNames ?? context.catalog;
         let orderChanged = false;
         update(
           (current) => {
-            const before = columnTransformations.columnOrder.read(current, context).columnOrder ?? context.catalog;
+            const before = columnTransformations.columnOrder.read(current, context).columnOrder ?? displayCatalog;
             const next = columnTransformations.columnOrder.write(current, order, context);
-            const after = columnTransformations.columnOrder.read(next, context).columnOrder ?? context.catalog;
+            const after = columnTransformations.columnOrder.read(next, context).columnOrder ?? displayCatalog;
             orderChanged = !isEqual(before, after);
             return orderChanged ? next : current;
           },
@@ -120,7 +124,7 @@ export function useColumnTransformations(
 
     return {
       ...columnProps,
-      columnCatalog: columnProps.columnOrder ?? context.catalog,
+      columnCatalog: columnProps.columnOrder ?? context.displayNames ?? context.catalog,
       onColumnOrderChange,
       onHiddenColumnsChange,
     };

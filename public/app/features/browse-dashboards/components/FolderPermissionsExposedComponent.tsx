@@ -1,10 +1,10 @@
 import { t } from '@grafana/i18n';
-import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { Alert } from '@grafana/ui';
 import { useGetCombinedFolderQuery } from 'app/api/clients/folder/v1beta1/hooks';
-import { FolderPermissions } from 'app/features/provisioning/components/Folders/FolderPermissions';
-import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
+import { getVirtualFolder } from 'app/api/clients/folder/v1beta1/virtualFolders';
+import { PermissionsLoading } from 'app/core/components/AccessControl/PermissionsLoading';
 
-import { getFolderPermissions } from '../permissions';
+import { FolderPermissions } from './FolderPermissions';
 
 export interface FolderPermissionsExposedComponentProps {
   folderUid: string;
@@ -15,10 +15,12 @@ export interface FolderPermissionsExposedComponentProps {
  * names by uid. access comes from the folder itself, as on the folder page.
  */
 export function FolderPermissionsExposedComponent({ folderUid }: FolderPermissionsExposedComponentProps) {
-  const { data: folder, isLoading } = useGetCombinedFolderQuery(folderUid);
+  // The root and "shared with me" folders are not stored folders, and the folder page never offers
+  // their permissions. Look up nothing for them, so they report as a folder that cannot be loaded.
+  const { data: folder, isLoading } = useGetCombinedFolderQuery(getVirtualFolder(folderUid) ? undefined : folderUid);
 
   if (isLoading) {
-    return <LoadingPlaceholder text={t('browse-dashboards.folder-permissions-exposed.loading', 'Loading...')} />;
+    return <PermissionsLoading />;
   }
 
   if (!folder) {
@@ -30,24 +32,5 @@ export function FolderPermissionsExposedComponent({ folderUid }: FolderPermissio
     );
   }
 
-  const { canViewPermissions, canSetPermissions } = getFolderPermissions(folder);
-  if (!canViewPermissions) {
-    return (
-      <Alert
-        severity="info"
-        title={t(
-          'browse-dashboards.folder-permissions-exposed.no-access',
-          'You do not have permission to view the permissions of this folder.'
-        )}
-      />
-    );
-  }
-
-  return (
-    <FolderPermissions
-      folderUID={folder.uid}
-      canSetPermissions={canSetPermissions}
-      isProvisionedFolder={isItemManagedByRepository(folder)}
-    />
-  );
+  return <FolderPermissions folder={folder} />;
 }

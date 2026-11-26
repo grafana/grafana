@@ -13,6 +13,11 @@ import { matchers } from '@grafana/test-utils';
 import { setPluginComponentsHook } from '../../packages/grafana-runtime/src/services/pluginExtensions/usePluginComponents';
 import { getEnvConfig } from '../../scripts/cli/env-util';
 
+import { makeSpyable } from './helpers/makeSpyable';
+
+// Global so jest.mock factories can use it: they run before the test file's imports are initialized.
+Object.assign(globalThis, { makeSpyable });
+
 const config = getEnvConfig(path.resolve(__dirname, '../..'));
 
 if (config.frontend_dev_fail_tests_on_console || process.env.CI) {

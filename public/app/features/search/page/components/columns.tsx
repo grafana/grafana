@@ -14,6 +14,7 @@ import { config, useDataSourceInstanceSettings } from '@grafana/runtime';
 import { type PanelPluginMetas } from '@grafana/runtime/internal';
 import { Checkbox, Icon, type IconName, TagList, Text, Tooltip } from '@grafana/ui';
 import { formatDate } from 'app/core/internationalization/dates';
+import { findKindBySearchKind } from 'app/core/kinds/coreKinds';
 import { PluginIconName } from 'app/features/plugins/admin/types';
 
 import { DescriptionTooltip } from '../../components/DescriptionTooltip';
@@ -449,42 +450,34 @@ function makeTypeColumn(
       const i = p.row.index;
       const kind = kindField?.values[i] ?? 'dashboard';
       let icon: IconName = 'apps';
-      let txt = 'Dashboard';
-      if (kind) {
-        txt = kind;
-        switch (txt) {
-          case 'dashboard':
-            txt = t('search.results-table.type-dashboard', 'Dashboard');
-            break;
-
-          case 'folder':
-            icon = 'folder';
-            txt = t('search.results-table.type-folder', 'Folder');
-            break;
-
-          case 'panel':
-            icon = `${PluginIconName.panel}`;
-            const type = typeField.values[i];
-            if (type) {
-              txt = type;
-              const info = panelPluginMetas[txt];
-              if (info?.name) {
-                txt = info.name;
-              } else {
-                switch (type) {
-                  case 'row':
-                    txt = 'Row';
-                    icon = `bars`;
-                    break;
-                  case 'singlestat': // auto-migration
-                    txt = 'Singlestat';
-                    break;
-                  default:
-                    icon = `question-circle`; // plugin not found
-                }
-              }
+      let txt = kind;
+      // The kind table names the kinds in the search index; a panel's name comes from its plugin, and
+      // anything else shows its kind
+      const coreKind = findKindBySearchKind(kind);
+      if (coreKind) {
+        txt = coreKind.getLabel();
+        icon = coreKind.icon;
+      } else if (kind === 'panel') {
+        icon = `${PluginIconName.panel}`;
+        const type = typeField.values[i];
+        if (type) {
+          txt = type;
+          const info = panelPluginMetas[txt];
+          if (info?.name) {
+            txt = info.name;
+          } else {
+            switch (type) {
+              case 'row':
+                txt = 'Row';
+                icon = `bars`;
+                break;
+              case 'singlestat': // auto-migration
+                txt = 'Singlestat';
+                break;
+              default:
+                icon = `question-circle`; // plugin not found
             }
-            break;
+          }
         }
       }
       const { key, ...cellProps } = p.cellProps;

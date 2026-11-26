@@ -3,7 +3,7 @@ import { action } from 'storybook/actions';
 import { useArgs } from 'storybook/preview-api';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { clearButtonStyles } from '../Button/Button';
+import { clearButtonStyles } from '../Button/StyledButton.styles';
 
 import { ColorPicker } from './ColorPicker';
 import mdx from './ColorPicker.mdx';

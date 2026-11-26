@@ -36,9 +36,11 @@ export function QueryEditorWithMigration<
       }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    useEffect(() => {
+    const [prevPropsQuery, setPrevPropsQuery] = useState(props.query);
+    if (prevPropsQuery !== props.query) {
+      setPrevPropsQuery(props.query);
       setQuery(props.query);
-    }, [props.query]);
+    }
 
     if (!migrated) {
       return <Skeleton containerTestId="react-loading-skeleton-testid" height={75} />;

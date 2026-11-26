@@ -545,7 +545,8 @@ const LogListComponent = ({
         {popoverState.selection && popoverState.selectedRow && (
           <PopoverMenu
             close={closePopoverMenu}
-            row={popoverState.selectedRow}
+            refId={popoverState.selectedRow.dataFrame.refId}
+            datasourceType={popoverState.selectedRow.datasourceType}
             selection={popoverState.selection}
             {...popoverState.popoverMenuCoordinates}
             onClickFilterString={onClickFilterString}

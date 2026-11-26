@@ -1,7 +1,6 @@
 import { Suspense, lazy } from 'react';
 
-import { t } from '@grafana/i18n';
-import { LoadingPlaceholder } from '@grafana/ui';
+import { PermissionsLoading } from 'app/core/components/AccessControl/PermissionsLoading';
 
 import { type FolderPermissionsExposedComponentProps } from './FolderPermissionsExposedComponent';
 
@@ -27,10 +26,9 @@ export function FolderPermissionsExposedComponentLazy(props: Partial<FolderPermi
   }
 
   return (
-    <Suspense
-      fallback={<LoadingPlaceholder text={t('browse-dashboards.folder-permissions-exposed.loading', 'Loading...')} />}
-    >
-      {/* start over for a new folder, or the previous folder's permissions stay on screen while it loads. */}
+    <Suspense fallback={<PermissionsLoading />}>
+      {/* Remount for a new folder. The folder hook keeps returning the previous folder while the new one loads,
+          which would leave the previous folder's permissions on screen. */}
       <FolderPermissionsExposedComponent key={props.folderUid} folderUid={props.folderUid} />
     </Suspense>
   );

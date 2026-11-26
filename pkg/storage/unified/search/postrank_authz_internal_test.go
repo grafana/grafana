@@ -7,6 +7,7 @@ import (
 	"slices"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -157,6 +158,69 @@ func TestPostRankSearchWithQueryBackend(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, []string{"doc-04", "doc-08", "doc-12"}, queryHitNames(hits))
 	})
+}
+
+func TestPostRankExactCounting(t *testing.T) {
+	for _, global := range []bool{false, true} {
+		t.Run(fmt.Sprintf("global=%t", global), func(t *testing.T) {
+			ctx, runner, _, req := newMemoryPostRankSearch(t)
+			if global {
+				runner.key = resource.GlobalSearchKey("default")
+			}
+			runner.config.ExactCountThreshold = 13
+			response := &resourcepb.ResourceSearchResponse{}
+			_, err := runner.run(ctx, verbAccessClient{}, req, queryRequest{}, nil, response, nil)
+			require.NoError(t, err)
+			require.Equal(t, global, response.TotalHitsExact)
+			if global {
+				require.Equal(t, int64(4), response.TotalHits)
+			} else {
+				require.Equal(t, int64(13), response.TotalHits)
+			}
+		})
+	}
+	// Size 1 reaches the cap at a window boundary; size 2 leaves an unread hit.
+	for _, window := range []int{1, 2} {
+		t.Run(fmt.Sprintf("insert before last visible hit/window=%d", window), func(t *testing.T) {
+			ctx, runner, backend, req := newMemoryPostRankSearch(t)
+			runner.key = resource.GlobalSearchKey("default")
+			runner.config.ExactCountThreshold = 13
+			runner.config.MaxWindow = window
+			backend.onLookup = func() {
+				inserted := *backend.hits[11]
+				inserted.ID += "-inserted"
+				inserted.Cursor = queryCursor{"doc-11-inserted"}
+				backend.hits = slices.Insert(backend.hits, 12, &inserted)
+			}
+			response := &resourcepb.ResourceSearchResponse{}
+			_, err := runner.run(ctx, verbAccessClient{}, req, queryRequest{}, nil, response, nil)
+			require.NoError(t, err)
+			require.False(t, response.TotalHitsExact)
+		})
+	}
+	t.Run("individual authorization error", func(t *testing.T) {
+		ctx, runner, _, req := newMemoryPostRankSearch(t)
+		runner.key = resource.GlobalSearchKey("default")
+		runner.config.ExactCountThreshold = 13
+		checkErr := errors.New("authorization unavailable")
+		_, err := runner.run(ctx, itemErrorAccessClient{err: checkErr}, req, queryRequest{}, nil, &resourcepb.ResourceSearchResponse{}, nil)
+		require.ErrorIs(t, err, checkErr)
+	})
+}
+
+type itemErrorAccessClient struct {
+	verbAccessClient
+	err error
+}
+
+func (c itemErrorAccessClient) BatchCheck(ctx context.Context, user authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	response, err := c.verbAccessClient.BatchCheck(ctx, user, req)
+	for _, check := range req.Checks {
+		if check.Name == "doc-12" {
+			response.Results[check.CorrelationID] = authlib.BatchCheckResult{Error: c.err}
+		}
+	}
+	return response, err
 }
 
 func TestPostRankSearchBackendErrors(t *testing.T) {

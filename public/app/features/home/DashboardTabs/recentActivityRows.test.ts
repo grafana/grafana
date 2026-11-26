@@ -110,6 +110,45 @@ describe('toRow', () => {
     });
   });
 
+  describe('folders, notebooks and playlists', () => {
+    it('title the row with the title the page set', () => {
+      expect(
+        toRow({ kind: 'folder', uid: 'abc', pathname: '/dashboards/f/abc/ops', search: '', title: 'Ops' }, [], {})
+      ).toEqual({
+        title: 'Ops',
+        subtitle: undefined,
+      });
+      expect(
+        toRow(
+          { kind: 'notebook', uid: 'abc', pathname: '/notebooks/abc', search: '?edit=true', title: 'Runbook' },
+          [],
+          {}
+        )
+      ).toEqual({
+        title: 'Runbook',
+        subtitle: 'edit=true',
+      });
+    });
+
+    it('titles a playlist with its name', () => {
+      const item = {
+        kind: 'playlist',
+        uid: 'abc',
+        pathname: '/playlists/edit/abc',
+        search: '',
+        playlistName: 'NOC wall',
+      } as const;
+      expect(toRow(item, [], {})).toEqual({ title: 'NOC wall', subtitle: undefined });
+    });
+
+    it('fall back to the last path segment when the page never set a title', () => {
+      expect(toRow({ kind: 'notebook', uid: 'abc', pathname: '/notebooks/abc', search: '' }, [], {})).toEqual({
+        title: 'abc',
+        subtitle: undefined,
+      });
+    });
+  });
+
   describe('alerting and app pages', () => {
     const navTree: NavModelItem[] = [
       { text: 'Alerting', url: '/alerting', children: [{ text: 'Alert rules', url: '/alerting/list' }] },

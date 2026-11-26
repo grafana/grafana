@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { type FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import { ColorScheme, ColorSchemeDiff } from './types';
@@ -11,9 +11,11 @@ export function useColorScheme(dataContainer: FlameGraphDataContainer | undefine
   const defaultColorScheme = dataContainer?.isDiffFlamegraph() ? ColorSchemeDiff.Default : ColorScheme.PackageBased;
   const [colorScheme, setColorScheme] = useState<ColorScheme | ColorSchemeDiff>(defaultColorScheme);
 
-  useEffect(() => {
+  const [prevDefaultColorScheme, setPrevDefaultColorScheme] = useState(defaultColorScheme);
+  if (prevDefaultColorScheme !== defaultColorScheme) {
+    setPrevDefaultColorScheme(defaultColorScheme);
     setColorScheme(defaultColorScheme);
-  }, [defaultColorScheme]);
+  }
 
   return [colorScheme, setColorScheme] as const;
 }

@@ -242,19 +242,22 @@ func TestIntegrationKVWatchSeedConcurrentCleanup(t *testing.T) {
 					require.Nil(t, stream)
 					stream, err = checkedWatch(t, b, gr, seed.initialCacheFloor)
 					require.NoError(t, err)
-					require.Len(t, stream, len(seed.events))
 					for _, event := range seed.events {
-						require.Equal(t, event, <-stream)
+						if event.ResourceVersion > seed.initialCacheFloor {
+							require.Equal(t, event, <-stream)
+						}
 					}
+					require.Empty(t, stream)
 					b.Unsubscribe(stream)
 
 					listRV, err := backend.ListIterator(t.Context(), &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
 						Key: &resourcepb.ResourceKey{Namespace: watchTestNamespace, Group: watchTestGroup, Resource: watchTestResource},
 					}}, func(ListIterator) error { return nil })
 					require.NoError(t, err)
-					require.GreaterOrEqual(t, listRV, seed.initialCacheFloor)
+					require.GreaterOrEqual(t, listRV, seed.highestRV)
 					stream, err = checkedWatch(t, b, gr, listRV)
 					require.NoError(t, err, "fresh LIST must not repeatedly expire")
+					require.Empty(t, stream, "the list RV already covers the seeded events")
 					b.Unsubscribe(stream)
 				})
 			}

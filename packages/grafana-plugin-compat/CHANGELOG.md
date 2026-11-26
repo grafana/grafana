@@ -1,3 +1,13 @@
+# 0.13.0 (2026-11-25)
+
+Add optional request options to `callDataSourcePluginProxy` for HTTP methods, headers, bodies, cancellation, credentials, and response decoding. Use `BackendSrv.fetch` for all datasource proxy requests.
+
+**Breaking change:** all successful calls now return the full `FetchResponse`, including GET calls without request options. Read the payload from `response.data`.
+
+# 0.12.0 (2026-11-16)
+
+Add `callDataSourcePluginProxy` to `@grafana/plugin-compat/datasources`. It uses the host's stable `@grafana/runtime` export when available and falls back to the legacy datasource-proxy endpoint on older hosts.
+
 # 0.11.0 (2026-11-10)
 
 Add `getDataSourceInstanceListItem` to `@grafana/plugin-compat/datasources`. It uses the host's stable `@grafana/runtime` export when available and otherwise resolves through `getDataSourceSrv().getInstanceSettings`, returning only the list item fields (`uid`, `name`, `type`, `meta`).

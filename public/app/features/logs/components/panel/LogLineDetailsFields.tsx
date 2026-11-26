@@ -62,8 +62,8 @@ interface LogLineDetailsFieldsProps {
 }
 
 export const LogLineDetailsFields = memo(({ disableActions, fields, log, logs, search }: LogLineDetailsFieldsProps) => {
-  const { onClickShowField, fontSize } = useLogListContext();
-  const styles = useStyles2(getFieldsStyles, fontSize, onClickShowField);
+  const { fontSize } = useLogListContext();
+  const styles = useStyles2(getFieldsStyles, fontSize);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterFields(fields, search) : fields), [fields, search]);
   const { pagedItems, currentPage, numberOfPages, onNavigate } = usePagedItems(filteredFields);
@@ -133,8 +133,8 @@ interface LogLineDetailsLabelFieldsProps {
 }
 
 export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLineDetailsLabelFieldsProps) => {
-  const { fontSize, onClickShowField } = useLogListContext();
-  const styles = useStyles2(getFieldsStyles, fontSize, onClickShowField);
+  const { fontSize } = useLogListContext();
+  const styles = useStyles2(getFieldsStyles, fontSize);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterLabels(fields, search) : fields), [fields, search]);
   const { pagedItems, currentPage, numberOfPages, onNavigate } = usePagedItems(filteredFields);
@@ -184,16 +184,12 @@ export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLine
   );
 };
 
-const getFieldsStyles = (
-  theme: GrafanaTheme2,
-  fontSize: LogListFontSize,
-  onClickShowField?: (key: string) => void
-) => ({
+const getFieldsStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
   fieldsTable: css({
     display: 'grid',
     gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
-    // Icon buttons are 24px (sm) or 26px (md). Fit 3, or 4 when the show-field toggle is available.
-    gridTemplateColumns: `${fontSize === 'small' ? (onClickShowField ? theme.spacing(12) : theme.spacing(9)) : onClickShowField ? theme.spacing(13) : theme.spacing(9.75)} fit-content(30%) 1fr`,
+    // Missing actions should not leave reserved space before the field name.
+    gridTemplateColumns: 'max-content fit-content(30%) 1fr',
   }),
   fieldsTableNoActions: css({
     display: 'grid',
@@ -346,14 +342,15 @@ const LogLineDetailsField = ({
     [onClickFilterOutLabel, reportInteractionWrapper, log, keys]
   );
 
+  const refId = log.dataFrame?.refId;
   const labelFilterActive = useCallback(
     async (value?: string) => {
       if (isLabelFilterActive) {
-        return await isLabelFilterActive(keys[0], value ?? values[0], log.dataFrame?.refId);
+        return await isLabelFilterActive(keys[0], value ?? values[0], refId);
       }
       return false;
     },
-    [isLabelFilterActive, keys, values, log.dataFrame?.refId]
+    [isLabelFilterActive, keys, values, refId]
   );
 
   const showStats = useCallback(() => {
@@ -511,7 +508,7 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
   }),
   actionIcons: css({
     display: 'flex',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
   }),
   statsIcon: css({
     margin: 0,

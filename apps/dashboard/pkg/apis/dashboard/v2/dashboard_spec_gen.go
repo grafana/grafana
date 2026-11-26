@@ -1281,6 +1281,8 @@ type DashboardRowsLayoutRowSpec struct {
 	Layout               DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind `json:"layout"`
 	Variables            []DashboardVariableKind                                                     `json:"variables,omitempty"`
 	Annotations          []DashboardAnnotationQueryKind                                              `json:"annotations,omitempty"`
+	// Prompts viewers can run on the panels in this row, offered by plugins in the row's controls.
+	Prompts []DashboardPrompt `json:"prompts,omitempty"`
 }
 
 // NewDashboardRowsLayoutRowSpec creates a new DashboardRowsLayoutRowSpec object.
@@ -1629,6 +1631,8 @@ type DashboardTabsLayoutTabSpec struct {
 	Repeat               *DashboardTabRepeatOptions                                                  `json:"repeat,omitempty"`
 	Variables            []DashboardVariableKind                                                     `json:"variables,omitempty"`
 	Annotations          []DashboardAnnotationQueryKind                                              `json:"annotations,omitempty"`
+	// Prompts viewers can run on the panels in this tab, offered by plugins in the tab's controls.
+	Prompts []DashboardPrompt `json:"prompts,omitempty"`
 }
 
 // NewDashboardTabsLayoutTabSpec creates a new DashboardTabsLayoutTabSpec object.
@@ -2408,6 +2412,46 @@ func (DashboardSwitchVariableSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardSwitchVariableSpec"
 }
 
+// A prompt viewers can run on a dashboard, row, or tab, offered by plugins in its controls.
+// +k8s:openapi-gen=true
+type DashboardPrompt struct {
+	// The prompt that is run. Viewers see it on the dashboard unless it has a title.
+	Text string `json:"text"`
+	// A short title viewers see on the dashboard instead of the prompt. Unset to show the prompt.
+	Title *string `json:"title,omitempty"`
+	// The panels to answer it from. Unset for every panel in the dashboard, row, or tab the prompt is saved on.
+	Sources []DashboardPromptSource `json:"sources,omitempty"`
+}
+
+// NewDashboardPrompt creates a new DashboardPrompt object.
+func NewDashboardPrompt() *DashboardPrompt {
+	return &DashboardPrompt{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardPrompt.
+func (DashboardPrompt) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardPrompt"
+}
+
+// A panel that a prompt is answered from.
+// +k8s:openapi-gen=true
+type DashboardPromptSource struct {
+	// The panel, by its name in dashboard.spec.elements.
+	Element DashboardElementReference `json:"element"`
+}
+
+// NewDashboardPromptSource creates a new DashboardPromptSource object.
+func NewDashboardPromptSource() *DashboardPromptSource {
+	return &DashboardPromptSource{
+		Element: *NewDashboardElementReference(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardPromptSource.
+func (DashboardPromptSource) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardPromptSource"
+}
+
 // Links with references to other dashboards or external resources
 // +k8s:openapi-gen=true
 type DashboardDashboardLink struct {
@@ -2594,8 +2638,10 @@ type DashboardSpec struct {
 	// Title of dashboard.
 	Title string `json:"title"`
 	// Configured template variables.
-	Variables   []DashboardVariableKind `json:"variables"`
-	Preferences *DashboardPreferences   `json:"preferences,omitempty"`
+	Variables []DashboardVariableKind `json:"variables"`
+	// Prompts viewers can run on the dashboard, offered by plugins in the dashboard controls.
+	Prompts     []DashboardPrompt     `json:"prompts,omitempty"`
+	Preferences *DashboardPreferences `json:"preferences,omitempty"`
 }
 
 // NewDashboardSpec creates a new DashboardSpec object.

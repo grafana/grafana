@@ -8,6 +8,7 @@ import { FolderListRow } from '../folder-browsing/FolderListRow';
 import { FolderRuleCount } from '../folder-browsing/FolderRuleCount';
 import { useFolderPath } from '../folder-browsing/folderLookups';
 import { useSearchRuleFoldersInfiniteQuery } from '../folder-browsing/folderSearch';
+import { type FolderScope } from '../folder-browsing/folderSearchQuery';
 import { RuleListSkeleton } from '../rule-row/RuleListSkeleton';
 import { RuleRowList } from '../rule-row/RuleRowList';
 import { createRulesApiFilter } from '../rule-search/sharedRuleFilter';
@@ -19,14 +20,13 @@ import { AlertRuleListEntry } from './AlertRuleListEntry';
 import { useAlertRuleSearch } from './alertRuleSearch';
 
 interface FoldersViewProps {
-  /** The only filter Folders mode supports; scopes the folder listing itself. */
-  folderUids: string[];
+  scope: FolderScope;
 }
 
-export function AlertRulesFoldersView({ folderUids }: FoldersViewProps) {
+export function AlertRulesFoldersView({ scope }: FoldersViewProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const { data, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } =
-    useSearchRuleFoldersInfiniteQuery({ kind: 'alert', folderUids });
+    useSearchRuleFoldersInfiniteQuery({ kind: 'alert', ...scope });
   const folders = data?.pages.flatMap((page) => page.folders);
 
   const toggle = (uid: string) => {
@@ -58,7 +58,7 @@ export function AlertRulesFoldersView({ folderUids }: FoldersViewProps) {
       <EmptyState
         variant="not-found"
         message={
-          folderUids.length > 0
+          scope.folder !== undefined || scope.folderUids.length > 0
             ? t('alerting.gma-rule-list.alert-rules.no-rules-match-folder', 'No alert rules match this folder')
             : t('alerting.gma-rule-list.alert-rules.no-rules', 'No alert rules found')
         }
@@ -67,7 +67,7 @@ export function AlertRulesFoldersView({ folderUids }: FoldersViewProps) {
   }
 
   return (
-    <Stack direction="column" gap={2}>
+    <Stack direction="column" gap={1}>
       <RuleRowList>
         {folders.map((folder) => (
           <AlertFolderListEntry
@@ -115,7 +115,7 @@ function AlertFolderListEntry({ folderUid, title, expanded, onToggle }: AlertFol
 
 function ExpandedFolderRules({ folderUid, title }: { folderUid: string; title: string }) {
   const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry } = useAlertRuleSearch(
-    createRulesApiFilter({ folders: [folderUid] })
+    createRulesApiFilter({ folderUids: [folderUid] })
   );
 
   const retryLabel = t('alerting.gma-rule-list.alert-rules.retry-rules-in-folder', 'Retry loading rules in {{title}}', {

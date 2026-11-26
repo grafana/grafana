@@ -21,6 +21,7 @@ const (
 	fieldLastSeenAt          = builders.USER_LAST_SEEN_AT
 	fieldRole                = builders.USER_ROLE
 	fieldDisabled            = builders.USER_DISABLED
+	fieldProvisioned         = builders.USER_PROVISIONED
 	fieldExternalAuthModules = builders.USER_EXTERNAL_AUTH_MODULES
 	legacyIDField            = resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID
 )
@@ -46,7 +47,7 @@ func (c *unifiedSearchClient) Search(ctx context.Context, query SearchQuery) (*i
 				Namespace: query.Namespace,
 			},
 		},
-		Fields:       []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole, fieldDisabled, fieldExternalAuthModules, resource.SEARCH_FIELD_CREATED, legacyIDField},
+		Fields:       []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole, fieldDisabled, fieldProvisioned, fieldExternalAuthModules, resource.SEARCH_FIELD_CREATED, legacyIDField},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Limit:        query.Limit,
 		Page:         query.Page,

@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { type DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
@@ -111,7 +112,9 @@ function DashboardPreviewBannerContent({ queryParams, slug, path, dashboard }: D
   // assureBaseUrl so the href still resolves under a configured appSubUrl, since opening the link
   // in a new tab bypasses the router and hits the URL directly.
   const originalUrl =
-    typeof existingUid === 'string' && existingUid ? locationUtil.assureBaseUrl(`/d/${existingUid}`) : undefined;
+    typeof existingUid === 'string' && existingUid
+      ? locationUtil.assureBaseUrl(CORE_KINDS.dashboard.getRoute(existingUid))
+      : undefined;
 
   return (
     <PreviewBannerViewPR

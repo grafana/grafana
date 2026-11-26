@@ -7,6 +7,9 @@ import (
 globalVariableV2beta1: {
 	kind:       "Variable"
 	pluralName: "Variables"
+	search: {
+		global: true
+	}
 	// API contract:
 	// - spec.spec.name is the logical variable name input.
 	// - metadata.annotations["grafana.app/folder"] carries optional folder scope.

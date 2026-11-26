@@ -34,6 +34,8 @@ interface Props {
   onChangeTimeRange: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel: ((key: string, value: string, frame?: DataFrame) => void) | undefined;
   onClickFilterOutLabel: ((key: string, value: string, frame?: DataFrame) => void) | undefined;
+  onClickFilterString?: (value: string, refId?: string) => void;
+  onClickFilterOutString?: (value: string, refId?: string) => void;
   externalOptions: Pick<
     Options,
     'sortBy' | 'sortOrder' | 'displayedFields' | 'permalinkedLogId' | 'frameIndex' | 'fieldSelectorWidth'
@@ -44,7 +46,7 @@ interface Props {
  * New Logs Table panel
  */
 export function ExploreLogsTable(props: Props) {
-  const { onClickFilterLabel, onClickFilterOutLabel } = props;
+  const { onClickFilterLabel, onClickFilterOutLabel, onClickFilterString, onClickFilterOutString } = props;
   const frames = useMemo(() => props?.data.series ?? [], [props.data.series]);
   const frame = useMemo(() => frames[props.externalOptions.frameIndex], [frames, props.externalOptions.frameIndex]);
   const [wrapText, setWrapText] = useState(store.getBool(`${SETTING_KEY_ROOT}.wrapText`, false));
@@ -105,11 +107,21 @@ export function ExploreLogsTable(props: Props) {
       showCopyLogLink: true,
       ...props.externalOptions,
       isLabelFilterActive: props.isLabelFilterActive,
+      onClickFilterString,
+      onClickFilterOutString,
       permalinkedLogId: props.externalOptions.permalinkedLogId ?? selectedLogInfo?.id,
       logDetailsWidth: parseInt(store.get(`${SETTING_KEY_ROOT}.logDetailsWidth`) ?? getDefaultLogDetailsWidth(), 10),
       wrapText,
     }),
-    [props.buildLinkToLogLine, props.externalOptions, props.isLabelFilterActive, selectedLogInfo?.id, wrapText]
+    [
+      onClickFilterOutString,
+      onClickFilterString,
+      props.buildLinkToLogLine,
+      props.externalOptions,
+      props.isLabelFilterActive,
+      selectedLogInfo?.id,
+      wrapText,
+    ]
   );
 
   const handleFieldConfigChange = useCallback((config: FieldConfigSource) => {

@@ -322,7 +322,7 @@ func TestNewHandlerInvalidConfiguration(t *testing.T) {
 			}
 		}, "storage provider returned no REST options getter"},
 		{"invalid kind", func(p *definition.PluginDefinition, _ *Options) {
-			p.Manifests[0].Versions[0].Kinds[0].Kind = "Settings"
+			p.Manifests[0].Versions[0].Kinds[0].Kind = "Status"
 		}, "reserved kind name"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -594,5 +594,24 @@ func TestHandlerOpenAPIPluginMetadata(t *testing.T) {
 				require.Equal(t, float64(1234567890), info["build"])
 			}
 		})
+	}
+}
+
+func TestStrategicMergeAsMergePatch(t *testing.T) {
+	for _, tc := range []struct{ method, in, want string }{
+		{http.MethodPatch, "application/strategic-merge-patch+json", "application/merge-patch+json"},
+		{http.MethodPatch, "application/strategic-merge-patch+json; charset=utf-8", "application/merge-patch+json; charset=utf-8"},
+		{http.MethodPatch, "application/json-patch+json", "application/json-patch+json"},
+		{http.MethodPatch, "application/merge-patch+json", "application/merge-patch+json"},
+		{http.MethodPost, "application/strategic-merge-patch+json", "application/strategic-merge-patch+json"},
+	} {
+		var got string
+		h := strategicMergeAsMergePatch(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+			got = r.Header.Get("Content-Type")
+		}))
+		req := httptest.NewRequest(tc.method, "/", nil)
+		req.Header.Set("Content-Type", tc.in)
+		h.ServeHTTP(httptest.NewRecorder(), req)
+		require.Equal(t, tc.want, got, "%s %s", tc.method, tc.in)
 	}
 }

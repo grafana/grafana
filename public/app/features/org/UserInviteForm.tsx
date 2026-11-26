@@ -17,6 +17,7 @@ import {
   Label,
   Stack,
   Alert,
+  Box,
 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { useDispatch } from 'app/types/store';
@@ -87,51 +88,61 @@ const UserInviteForm = () => {
           return (
             <>
               <FieldSet>
-                <Field
-                  invalid={!!errors.loginOrEmail}
-                  error={!!errors.loginOrEmail ? 'Email or username is required' : undefined}
-                  label={t('org.user-invite-form.label-email-or-username', 'Email or username')}
-                  disabled={disabled}
-                >
-                  {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-                  <Input {...register('loginOrEmail', { required: true })} placeholder="email@example.com" />
-                </Field>
-                <Field invalid={!!errors.name} label={t('org.user-invite-form.label-name', 'Name')} disabled={disabled}>
-                  <Input
-                    {...register('name')}
-                    placeholder={t('org.user-invite-form.placeholder-optional', '(optional)')}
-                  />
-                </Field>
-                <Field
-                  invalid={!!errors.role}
-                  label={
-                    <Label>
-                      <Stack gap={0.5}>
-                        <span>
-                          <Trans i18nKey="org.user-invite-form.role">Role</Trans>
-                        </span>
-                        {tooltipMessage && (
-                          <Tooltip placement="right-end" interactive={true} content={tooltipMessage}>
-                            <Icon name="info-circle" size="xs" />
-                          </Tooltip>
-                        )}
-                      </Stack>
-                    </Label>
-                  }
-                  disabled={disabled}
-                >
-                  <Controller
-                    render={({ field: { ref, ...field } }) => <RadioButtonGroup {...field} options={roles} />}
-                    control={control}
-                    name="role"
-                  />
-                </Field>
-                <Field
-                  label={t('org.user-invite-form.label-send-invite-email', 'Send invite email')}
-                  disabled={disabled}
-                >
-                  <Switch id="send-email-switch" {...register('sendEmail')} />
-                </Field>
+                <Box display="flex" direction="column" gap={2} paddingBottom={2}>
+                  <Field
+                    noMargin
+                    invalid={!!errors.loginOrEmail}
+                    error={!!errors.loginOrEmail ? 'Email or username is required' : undefined}
+                    label={t('org.user-invite-form.label-email-or-username', 'Email or username')}
+                    disabled={disabled}
+                  >
+                    {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+                    <Input {...register('loginOrEmail', { required: true })} placeholder="email@example.com" />
+                  </Field>
+                  <Field
+                    noMargin
+                    invalid={!!errors.name}
+                    label={t('org.user-invite-form.label-name', 'Name')}
+                    disabled={disabled}
+                  >
+                    <Input
+                      {...register('name')}
+                      placeholder={t('org.user-invite-form.placeholder-optional', '(optional)')}
+                    />
+                  </Field>
+                  <Field
+                    noMargin
+                    invalid={!!errors.role}
+                    label={
+                      <Label>
+                        <Stack gap={0.5}>
+                          <span>
+                            <Trans i18nKey="org.user-invite-form.role">Role</Trans>
+                          </span>
+                          {tooltipMessage && (
+                            <Tooltip placement="right-end" interactive={true} content={tooltipMessage}>
+                              <Icon name="info-circle" size="xs" />
+                            </Tooltip>
+                          )}
+                        </Stack>
+                      </Label>
+                    }
+                    disabled={disabled}
+                  >
+                    <Controller
+                      render={({ field: { ref, ...field } }) => <RadioButtonGroup {...field} options={roles} />}
+                      control={control}
+                      name="role"
+                    />
+                  </Field>
+                  <Field
+                    noMargin
+                    label={t('org.user-invite-form.label-send-invite-email', 'Send invite email')}
+                    disabled={disabled}
+                  >
+                    <Switch id="send-email-switch" {...register('sendEmail')} />
+                  </Field>
+                </Box>
               </FieldSet>
               <Stack>
                 <Button type="submit" disabled={disabled}>

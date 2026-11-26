@@ -1,7 +1,7 @@
 import { createDataFrame, FieldType } from '@grafana/data';
 
 import { FlameGraphDataContainer, type LevelItem } from './dataTransform';
-import { walkTree } from './rendering';
+import { functionName, walkTree } from './rendering';
 import { textToDataContainer } from './testHelpers';
 
 function makeDataFrame(fields: Record<string, Array<number | string>>) {
@@ -325,5 +325,31 @@ describe('walkTree with browser zoom (devicePixelRatio=1.5)', () => {
     // height = 22 * 1.5 = 33, y values are multiples of 33
     expect(renderData[0]).toMatchObject({ y: 0, height: 33 });
     expect(renderData[1]).toMatchObject({ y: 33, height: 33 });
+  });
+});
+
+const symbol = 'github.com/grafana/mimir/pkg/storegateway.(*BucketStore).Series';
+
+describe('Name labels', () => {
+  it('drops the import path', () => {
+    expect(functionName(symbol)).toBe('storegateway.(*BucketStore).Series');
+  });
+
+  it('keeps a slash that belongs to the function', () => {
+    expect(functionName('encoding/json.(*structEncoder).(encoding/json.encode)-fm')).toBe(
+      'json.(*structEncoder).(encoding/json.encode)-fm'
+    );
+  });
+
+  it('keeps type parameters in the name', () => {
+    expect(functionName('github.com/foo/bar.Map[k8s.io/api.Pod].Get')).toBe('bar.Map[k8s.io/api.Pod].Get');
+  });
+
+  it('keeps a collapsed-frame count on the Name label', () => {
+    expect(functionName(`(4) ${symbol}`)).toBe('(4) storegateway.(*BucketStore).Series');
+  });
+
+  it('does not treat a method receiver as a collapsed-frame count', () => {
+    expect(functionName('(*conn).serve')).toBe('(*conn).serve');
   });
 });

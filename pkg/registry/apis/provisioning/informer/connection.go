@@ -29,8 +29,7 @@ type ConnectionGetter interface {
 // otherwise it reads the informer's cache lister.
 //
 // A non-nil keys makes the NATS re-list keys-only (identity, no bodies); nil
-// keeps the full-object list. Both callers follow [provisioning]
-// keys_only_relist, in process over storage and in the operator over HTTP.
+// keeps the full-object list.
 //
 // freshness instruments how the getter's reads compare to the notifications
 // that triggered them (see freshness.go); nil disables the observation, and it
