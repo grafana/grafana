@@ -61,7 +61,7 @@ func TestApplyDefaultStorageConfig(t *testing.T) {
 		b := newBuilder("my-app")
 		storageOpts := &options.StorageOptions{
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				appPluginSettingsWildcard: {DualWriterMode: rest.Mode2},
+				setting.AppPluginSettingsWildcard: {DualWriterMode: rest.Mode2},
 			},
 		}
 		opts := builder.APIGroupOptions{StorageOpts: storageOpts}
@@ -78,8 +78,8 @@ func TestApplyDefaultStorageConfig(t *testing.T) {
 		b := newBuilder("my-app")
 		storageOpts := &options.StorageOptions{
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				appPluginSettingsWildcard: {DualWriterMode: rest.Mode2},
-				"app.my-app":              {DualWriterMode: rest.Mode4},
+				setting.AppPluginSettingsWildcard: {DualWriterMode: rest.Mode2},
+				"app.my-app":                      {DualWriterMode: rest.Mode4},
 			},
 		}
 		opts := builder.APIGroupOptions{StorageOpts: storageOpts}
@@ -94,7 +94,7 @@ func TestApplyDefaultStorageConfig(t *testing.T) {
 	t.Run("wildcard applies independently per plugin", func(t *testing.T) {
 		storageOpts := &options.StorageOptions{
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				appPluginSettingsWildcard: {DualWriterMode: rest.Mode1},
+				setting.AppPluginSettingsWildcard: {DualWriterMode: rest.Mode1},
 			},
 		}
 		opts := builder.APIGroupOptions{StorageOpts: storageOpts}

@@ -7,6 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Box, Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type RulerCloudRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
+import { stringifyErrorLike } from '../../../utils/misc';
 import { RenamedResourcesList } from '../CollapsibleRenameList';
 import { PolicyTreeNameHelp } from '../PolicyTreeNameHelp';
 import { useStepperState } from '../Wizard/StepperState';
@@ -170,6 +171,12 @@ function RulesCardContent({ formData, willImportRules, styles }: RulesCardConten
             : formData.rulesDatasourceName || 'Data source'}
         </Text>
       </div>
+      {formData.rulesSource === 'yaml' && (
+        <div className={styles.row}>
+          <Text color="secondary">{t('alerting.import-to-gma.review.yaml-datasource', 'Data source')}</Text>
+          <Text>{formData.yamlImportTargetDatasourceName ?? formData.yamlImportTargetDatasourceUID ?? ''}</Text>
+        </div>
+      )}
       <div className={styles.row}>
         <Text color="secondary">{t('alerting.import-to-gma.review.routing', 'Notification routing')}</Text>
         <Text>
@@ -215,6 +222,9 @@ interface ReviewStepProps {
   dryRunResult?: DryRunValidationResult;
   /** The rules the import will send, already filtered. Only set for a data source. */
   rulesToImport?: RulerCloudRulesConfigDTO;
+  /** The rules file is still being read, so the rules to send are not known yet. */
+  isLoadingRules?: boolean;
+  rulesError?: Error;
 }
 
 // True when a source is 'yaml' and its file has actually been uploaded (not just selected as the source type).
@@ -223,9 +233,17 @@ function hasYamlUpload(source: string, file: File | null): file is File {
   return source === 'yaml' && file !== null;
 }
 
-export function ReviewStep({ formData, onStartImport, dryRunResult, rulesToImport }: ReviewStepProps) {
+export function ReviewStep({
+  formData,
+  onStartImport,
+  dryRunResult,
+  rulesToImport,
+  isLoadingRules,
+  rulesError,
+}: ReviewStepProps) {
   const styles = useStyles2(getStyles);
-  const { setActiveStep } = useStepperState();
+  const { steps, setActiveStep } = useStepperState();
+  const hasNotificationsStep = steps.some(({ id }) => id === StepKey.Notifications);
 
   const { willImportNotifications, willImportRules, willEnableAutoSync } = getImportPlan(formData);
   const notificationsPreview = useNotificationsPreview(formData, { enabled: willImportNotifications });
@@ -287,49 +305,51 @@ export function ReviewStep({ formData, onStartImport, dryRunResult, rulesToImpor
       ) : (
         <Stack direction="column" gap={2}>
           {/* Notifications Summary Card */}
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <Text variant="h5" element="h3">
-                {t('alerting.import-to-gma.review.notifications-title', 'Notification Configuration')}
-              </Text>
-              {willEnableAutoSync && (
-                <Badge
-                  color="green"
-                  icon="sync"
-                  text={t('alerting.import-to-gma.review.autosync-badge', 'Will sync continuously')}
+          {hasNotificationsStep && (
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <Text variant="h5" element="h3">
+                  {t('alerting.import-to-gma.review.notifications-title', 'Notification Configuration')}
+                </Text>
+                {willEnableAutoSync && (
+                  <Badge
+                    color="green"
+                    icon="sync"
+                    text={t('alerting.import-to-gma.review.autosync-badge', 'Will sync continuously')}
+                  />
+                )}
+                {!willEnableAutoSync && willImportNotifications && (
+                  <Stack direction="row" gap={1} alignItems="center">
+                    <Text variant="bodySmall" color="secondary">
+                      {t('alerting.import-to-gma.review.will-import-config', 'Will import this configuration')}
+                    </Text>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon="eye"
+                      onClick={notificationsPreview.open}
+                      disabled={notificationsPreview.schemasLoading}
+                      aria-label={t('alerting.import-to-gma.review.preview-config-aria', 'Preview configuration')}
+                    >
+                      {t('alerting.import-to-gma.review.preview', 'Preview')}
+                    </Button>
+                  </Stack>
+                )}
+                {formData.step1Skipped && (
+                  <span className={styles.badgeSkipped}>{t('alerting.import-to-gma.review.skipped', 'Skipped')}</span>
+                )}
+              </div>
+              <div className={styles.cardContent}>
+                <NotificationsCardContent
+                  formData={formData}
+                  autoSyncActive={willEnableAutoSync}
+                  willImportNotifications={willImportNotifications}
+                  dryRunResult={dryRunResult}
+                  styles={styles}
                 />
-              )}
-              {!willEnableAutoSync && willImportNotifications && (
-                <Stack direction="row" gap={1} alignItems="center">
-                  <Text variant="bodySmall" color="secondary">
-                    {t('alerting.import-to-gma.review.will-import-config', 'Will import this configuration')}
-                  </Text>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    icon="eye"
-                    onClick={notificationsPreview.open}
-                    disabled={notificationsPreview.schemasLoading}
-                    aria-label={t('alerting.import-to-gma.review.preview-config-aria', 'Preview configuration')}
-                  >
-                    {t('alerting.import-to-gma.review.preview', 'Preview')}
-                  </Button>
-                </Stack>
-              )}
-              {formData.step1Skipped && (
-                <span className={styles.badgeSkipped}>{t('alerting.import-to-gma.review.skipped', 'Skipped')}</span>
-              )}
+              </div>
             </div>
-            <div className={styles.cardContent}>
-              <NotificationsCardContent
-                formData={formData}
-                autoSyncActive={willEnableAutoSync}
-                willImportNotifications={willImportNotifications}
-                dryRunResult={dryRunResult}
-                styles={styles}
-              />
-            </div>
-          </div>
+          )}
 
           {/* Rules Summary Card */}
           <div className={styles.card}>
@@ -370,6 +390,12 @@ export function ReviewStep({ formData, onStartImport, dryRunResult, rulesToImpor
         </Stack>
       )}
 
+      {rulesError && (
+        <Alert severity="error" title={t('alerting.import-to-gma.review.rules-error', 'Could not read the rules file')}>
+          {stringifyErrorLike(rulesError)}
+        </Alert>
+      )}
+
       {/* Action buttons */}
       <Stack direction="row" justifyContent="space-between" alignItems="center">
         <Stack direction="row" gap={1}>
@@ -380,7 +406,7 @@ export function ReviewStep({ formData, onStartImport, dryRunResult, rulesToImpor
             variant="primary"
             icon={willEnableAutoSync ? 'sync' : 'upload'}
             onClick={onStartImport}
-            disabled={nothingToImport}
+            disabled={nothingToImport || isLoadingRules || Boolean(rulesError)}
           >
             {willEnableAutoSync
               ? t('alerting.import-to-gma.review.enable-autosync', 'Enable auto-sync')

@@ -297,9 +297,40 @@ func TestNewConfigBasedMigrationStatusReader(t *testing.T) {
 
 	// nil cfg → all Legacy
 	nilReader := NewConfigBasedMigrationStatusReader(nil)
+	mode, err = nilReader.GetStorageMode(ctx, schema.GroupResource{Group: "example-app", Resource: "app"})
+	require.NoError(t, err)
+	require.Equal(t, unifiedmigrations.StorageModeLegacy, mode)
 	mode, err = nilReader.GetStorageMode(ctx, schema.GroupResource{Group: "iam.grafana.app", Resource: "globalroles"})
 	require.NoError(t, err)
 	require.Equal(t, unifiedmigrations.StorageModeLegacy, mode)
+}
+
+func TestNewConfigBasedMigrationStatusReaderAppSettingsWildcard(t *testing.T) {
+	ctx := context.Background()
+	cfg := &setting.Cfg{
+		UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+			setting.AppPluginSettingsWildcard: {DualWriterMode: rest.Mode5},
+			"app.pinned-app":                  {DualWriterMode: rest.Mode1},
+		},
+	}
+	reader := NewConfigBasedMigrationStatusReader(cfg)
+	// Later config changes do not affect the reader.
+	cfg.UnifiedStorage["app.late-app"] = setting.UnifiedStorageConfig{DualWriterMode: rest.Mode0}
+
+	for _, tc := range []struct {
+		gr   schema.GroupResource
+		want unifiedmigrations.StorageMode
+	}{
+		{schema.GroupResource{Group: "example-app", Resource: "app"}, unifiedmigrations.StorageModeUnified},
+		{schema.GroupResource{Group: "late-app", Resource: "app"}, unifiedmigrations.StorageModeUnified},
+		{schema.GroupResource{Group: "pinned-app", Resource: "app"}, unifiedmigrations.StorageModeDualWrite},
+		{schema.GroupResource{Group: "example-app", Resource: "other"}, unifiedmigrations.StorageModeLegacy},
+		{schema.GroupResource{Group: "example-datasource", Resource: "app"}, unifiedmigrations.StorageModeLegacy},
+	} {
+		mode, err := reader.GetStorageMode(ctx, tc.gr)
+		require.NoError(t, err)
+		require.Equal(t, tc.want, mode, tc.gr.String())
+	}
 }
 
 func TestServiceMetrics_NullStatusReader(t *testing.T) {

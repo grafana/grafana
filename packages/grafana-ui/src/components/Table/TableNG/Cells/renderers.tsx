@@ -1,6 +1,6 @@
 import { memo, type MemoExoticComponent, type NamedExoticComponent } from 'react';
 
-import { type Field, FieldType, type GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
+import { type Field, FieldType, type GrafanaTheme2 } from '@grafana/data';
 
 import { TableCellDisplayMode, type TableCellOptions, type TableCustomCellOptions } from '../../types';
 import {
@@ -9,7 +9,7 @@ import {
   type TableCellStyleOptions,
   type TableCellStyles,
 } from '../types';
-import { getCellOptions } from '../utils';
+import { getAutoRendererDisplayMode, getCellOptions } from '../utils';
 
 import { ActionsCell, getStyles as getActionsCellStyles } from './ActionsCell';
 import { AutoCell, getStyles as getAutoCellStyles, getJsonCellStyles } from './AutoCell';
@@ -106,6 +106,7 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
           value={props.value}
           field={props.field}
           timeRange={props.timeRange}
+          onTimeRangeSelected={props.onTimeRangeSelected}
           rowIdx={props.rowIdx}
           theme={props.theme}
           width={props.width}
@@ -210,22 +211,4 @@ function getAutoRendererStyles(theme: GrafanaTheme2, options: TableCellStyleOpti
     return CELL_REGISTRY[impliedDisplayMode]?.getStyles?.(theme, options);
   }
   return getAutoCellStyles(theme, options);
-}
-
-/** @internal */
-export function getAutoRendererDisplayMode(field: Field): TableCellOptions['type'] {
-  if (field.type === FieldType.geo) {
-    return TableCellDisplayMode.Geo;
-  }
-  if (field.type === FieldType.frame) {
-    const firstValue = field.values[0];
-    if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
-      return TableCellDisplayMode.Sparkline;
-    }
-  }
-  // `other` values have no scalar form, so Auto pretty-prints them as JSON.
-  if (field.type === FieldType.other) {
-    return TableCellDisplayMode.JSONView;
-  }
-  return TableCellDisplayMode.Auto;
 }

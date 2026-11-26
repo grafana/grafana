@@ -14,6 +14,10 @@ import (
 	"strconv"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/tests/compat"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,11 +25,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
-
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/tests/apis"
-	"github.com/grafana/grafana/pkg/tests/compat"
 )
 
 func TestMain(m *testing.M) {
@@ -566,7 +565,7 @@ func client(h *apis.K8sTestHelper, user apis.User, version string) dynamic.Resou
 // viewerOfParentA returns the viewer with Edit on parent-a, creating it in the first phase
 // and finding it again in the later ones.
 func viewerOfParentA(h *apis.K8sTestHelper) apis.User {
-	return h.CreateUser(otherViewer, apis.Org1, identity.RoleViewer, nil)
+	return h.CreateUser(otherViewer, apis.Org1, authlib.RoleViewer, nil)
 }
 
 func dashboards(h *apis.K8sTestHelper) dynamic.ResourceInterface {

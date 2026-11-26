@@ -32,6 +32,8 @@ import {
 
 import * as utils from './scatter';
 
+jest.mock('./scatter', () => makeSpyable('./scatter'));
+
 let uPlotInstance: InstanceType<typeof uPlot> | undefined;
 jest.mock('@grafana/ui/src/utils/measureText', () =>
   require('@grafana/test-utils/canvas').createGrafanaUiMeasureTextJestMock(() => uPlotInstance)

@@ -4,33 +4,36 @@ const [_, { folderA_dashbdD, dashbdD }] = wellFormedTree();
 
 const initialStarredDashboards = [dashbdD.item.uid, folderA_dashbdD.item.uid];
 
-export const setupMockStarredDashboards = () => {
-  mockStarredDashboardsMap.clear();
-  initialStarredDashboards.forEach((uid) => {
-    mockStarredDashboardsMap.set(uid, true);
-  });
+/** Every star set the mock server holds, by `${group}/${kind}`. The stars endpoints read from it. */
+export const mockStarSets = new Map<string, Set<string>>();
+
+/** The star set of a kind. The Stars API accepts any group/kind, so a kind that has no set yet starts one. */
+export const getMockStarSet = (group: string, kind: string) => {
+  const key = `${group}/${kind}`;
+  let names = mockStarSets.get(key);
+  if (!names) {
+    names = new Set();
+    mockStarSets.set(key, names);
+  }
+  return names;
 };
 
-/**
- * Seed the starred dashboards for a test (replaces the current set) — use this instead of mutating
- * `mockStarredDashboardsMap` directly. The stars endpoints read from it.
- */
-export const setMockStarredDashboards = (uids: string[]) => {
-  mockStarredDashboardsMap.clear();
-  uids.forEach((uid) => mockStarredDashboardsMap.set(uid, true));
+/** Seed the starred objects of a kind for a test (replaces that kind's set). The stars endpoints read from it. */
+export const setMockStarred = (group: string, kind: string, names: string[]) => {
+  mockStarSets.set(`${group}/${kind}`, new Set(names));
 };
 
-export const mockStarredDashboardsMap = new Map<string, boolean>(initialStarredDashboards.map((uid) => [uid, true]));
+/** Seed the starred dashboards for a test (replaces the current set). */
+export const setMockStarredDashboards = (uids: string[]) => setMockStarred('dashboard.grafana.app', 'Dashboard', uids);
 
-// No folders are starred by default
-export const setupMockStarredFolders = () => {
-  mockStarredFoldersMap.clear();
+/** Seed the starred folders for a test (replaces the current set). */
+export const setMockStarredFolders = (uids: string[]) => setMockStarred('folder.grafana.app', 'Folder', uids);
+
+/** The stars a test starts from: two dashboards, and no object of any other kind. */
+export const setupMockStars = () => {
+  mockStarSets.clear();
+  setMockStarredDashboards(initialStarredDashboards);
 };
 
-export const mockStarredFoldersMap = new Map<string, boolean>();
-
-/** Seed the starred folders for a test (replaces the current set). The stars endpoints read from it. */
-export const setMockStarredFolders = (uids: string[]) => {
-  mockStarredFoldersMap.clear();
-  uids.forEach((uid) => mockStarredFoldersMap.set(uid, true));
-};
+// A mock server that never resets its fixtures, such as the browser worker, starts from the same stars
+setupMockStars();

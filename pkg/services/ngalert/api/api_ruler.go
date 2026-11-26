@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/api/apierrors"
@@ -82,7 +83,7 @@ var ignoreFieldsForValidate = [...]string{"RuleGroupIndex", "FolderFullpath"}
 func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceUID string, group string) response.Response {
 	var permanently bool
 	if c.QueryBool("deletePermanently") {
-		if !c.HasRole(identity.RoleAdmin) {
+		if !c.HasRole(authlib.RoleAdmin) {
 			return ErrResp(http.StatusForbidden, errors.New("only administrators can delete rules permanently"), "")
 		}
 		permanently = true
@@ -276,7 +277,7 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 // RouteGetRulesConfig returns all alert rules that are available to the current user
 func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Response {
 	if strings.ToLower(c.Query("deleted")) == "true" {
-		if !c.HasRole(identity.RoleAdmin) {
+		if !c.HasRole(authlib.RoleAdmin) {
 			return ErrResp(http.StatusForbidden, errors.New("only admins can get deleted rules"), "")
 		}
 		rules, err := srv.store.ListDeletedRules(c.Req.Context(), c.GetOrgID())
@@ -418,7 +419,7 @@ func alertRuleVersionsToAlertRules(vs []*ngmodels.AlertRuleVersion) []*ngmodels.
 func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig, namespaceUID string) response.Response {
 	var deletePermanently bool
 	if c.QueryBool("deletePermanently") {
-		if !c.HasRole(identity.RoleAdmin) {
+		if !c.HasRole(authlib.RoleAdmin) {
 			return ErrResp(http.StatusForbidden, errors.New("only administrators can delete rules permanently"), "")
 		}
 		deletePermanently = true

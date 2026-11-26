@@ -6,13 +6,12 @@ import (
 	"fmt"
 	"testing"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -89,7 +88,7 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 					Login:          "test",
 					Name:           "test",
 					Email:          "test",
-					OrgRoles:       map[int64]identity.RoleType{1: org.RoleAdmin, 2: org.RoleEditor},
+					OrgRoles:       map[int64]claims.RoleType{1: org.RoleAdmin, 2: org.RoleEditor},
 					IsGrafanaAdmin: new(false),
 					ClientParams: authn.ClientParams{
 						SyncOrgRoles: true,
@@ -106,7 +105,7 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
-				OrgRoles:       map[int64]identity.RoleType{1: org.RoleAdmin, 2: org.RoleEditor},
+				OrgRoles:       map[int64]claims.RoleType{1: org.RoleAdmin, 2: org.RoleEditor},
 				OrgID:          1, // set using org
 				IsGrafanaAdmin: new(false),
 				ClientParams: authn.ClientParams{
@@ -195,7 +194,7 @@ func TestOrgSync_SyncOrgRolesHook_SkipsWhenSingleOrgAndKubernetesUsersRedirect(t
 				ID:       "1",
 				Type:     claims.TypeUser,
 				Login:    "test",
-				OrgRoles: map[int64]identity.RoleType{1: org.RoleEditor},
+				OrgRoles: map[int64]claims.RoleType{1: org.RoleEditor},
 				ClientParams: authn.ClientParams{
 					SyncOrgRoles: true,
 				},

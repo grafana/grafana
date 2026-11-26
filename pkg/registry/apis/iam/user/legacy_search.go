@@ -101,6 +101,7 @@ func (c *legacySearchClient) Search(ctx context.Context, req SearchQuery) (*iamv
 			LastSeenAt:    u.LastSeenAt.Unix(),
 			LastSeenAtAge: util.GetAgeString(u.LastSeenAt),
 			Disabled:      u.IsDisabled,
+			Provisioned:   u.IsProvisioned,
 			InternalId:    u.UserID,
 			Created:       u.Created.UnixMilli(),
 		})

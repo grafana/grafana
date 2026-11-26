@@ -17,6 +17,7 @@
     "email": "user.three@test.com",
     "lastSeenAt": 1698321600,
     "login": "user.three",
+    "provisioned": false,
     "role": "Editor"
   },
   "selectableFields": {

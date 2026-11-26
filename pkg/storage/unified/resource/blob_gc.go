@@ -38,7 +38,6 @@ type blobGCAgeStore interface {
 }
 
 var (
-	_ blobGCAgeStore = (*CDKBlobGCStore)(nil)
 	_ blobGCAgeStore = (*kv.SqlKV)(nil)
 )
 
@@ -60,7 +59,7 @@ func (g *BlobGarbageCollector) Collect(ctx context.Context, now time.Time, grace
 	if grace <= 0 {
 		return 0, fmt.Errorf("blob GC grace period must be positive")
 	}
-	// SQL and bucket stores use upload time; any other KV (e.g. remote) uses the
+	// SQL stores use upload time; any other KV (e.g. remote) uses the
 	// UUIDv7 embedded in the blob UID.
 	var ages blobGCAges = blobUIDAges{}
 	if store, ok := g.store.(blobGCAgeStore); ok {

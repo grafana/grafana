@@ -55,7 +55,7 @@ export function FolderListRow({ folderUid, title, parents, count, expanded, onTo
         </Stack>
       </div>
       {expanded && (
-        <Box paddingLeft={4}>
+        <Box paddingLeft={2.5}>
           <RuleRowList>{children}</RuleRowList>
         </Box>
       )}
@@ -66,7 +66,7 @@ export function FolderListRow({ folderUid, title, parents, count, expanded, onTo
 const getStyles = (theme: GrafanaTheme2) => ({
   // Not action.hover: it drops secondary text below 4.5:1 contrast in the dark theme.
   header: css({
-    padding: theme.spacing(1, 1.5),
+    padding: theme.spacing(1),
 
     '&:hover': {
       background: theme.colors.background.secondary,

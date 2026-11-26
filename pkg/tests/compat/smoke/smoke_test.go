@@ -78,6 +78,7 @@ func TestCompatSetup(t *testing.T) {
 
 	for gr, flag := range stale {
 		t.Run("stale-skip/"+gr.String(), func(t *testing.T) {
+			reportOwners(t, gr)
 			t.Fatalf("the %s feature flag is on in this build, so remove %s from feature_flags in skip.yaml to test it", flag, gr)
 		})
 	}
@@ -89,6 +90,7 @@ func TestCompatSetup(t *testing.T) {
 			continue
 		}
 		t.Run(gr.String(), func(t *testing.T) {
+			reportOwners(t, gr)
 			obj := newObject(t, h, gr, served[gr])
 			gv, err := schema.ParseGroupVersion(obj.GetAPIVersion())
 			require.NoError(t, err)
@@ -121,6 +123,7 @@ func TestCompatUpdate(t *testing.T) {
 	for i, e := range entries {
 		gr := e.gr()
 		t.Run(gr.String(), func(t *testing.T) {
+			reportOwners(t, gr)
 			res := servedOrSkip(t, served, skips, e)
 			vc := newVersionCheck(t, gr, f)
 			readEverywhere(t, h, e, res, vc)
@@ -193,6 +196,7 @@ func TestCompatVerify(t *testing.T) {
 	for _, e := range entries {
 		gr := e.gr()
 		t.Run(gr.String(), func(t *testing.T) {
+			reportOwners(t, gr)
 			res := servedOrSkip(t, served, skips, e)
 			vc := newVersionCheck(t, gr, f)
 			readEverywhere(t, h, e, res, vc)
@@ -220,6 +224,7 @@ func TestCompatVerify(t *testing.T) {
 	for _, e := range slices.Backward(entries) {
 		gr := e.gr()
 		t.Run("delete/"+gr.String(), func(t *testing.T) {
+			reportOwners(t, gr)
 			res := servedOrSkip(t, served, skips, e)
 			client := resourceClient(h, gr, res.Versions[0])
 			require.NoError(t, client.Delete(ctx, e.Name, metav1.DeleteOptions{}), "delete%s", hint(e, res))
@@ -515,6 +520,17 @@ func newObject(t *testing.T, h *apis.K8sTestHelper, gr schema.GroupResource, res
 	obj.SetKind(res.Kind)
 	obj.SetName(name)
 	return obj
+}
+
+// reportOwners sends a failure to the owners of the group's fixtures when they have a
+// CODEOWNERS entry, else to the owners of the app (apps/<app> for <x>.<app>.grafana.app),
+// else to the owners of this package.
+func reportOwners(t *testing.T, gr schema.GroupResource) {
+	t.Helper()
+	pkg := compat.PackagePath()
+	group := strings.TrimSuffix(gr.Group, ".grafana.app")
+	app := group[strings.LastIndex(group, ".")+1:]
+	compat.ReportOwners(t, pkg+"/testdata/"+gr.Group, "apps/"+app, pkg)
 }
 
 // skipFile is skip.yaml. Every map is keyed by "<resource>.<group>"; the values are

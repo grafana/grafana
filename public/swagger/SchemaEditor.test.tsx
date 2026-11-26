@@ -5,6 +5,8 @@ import type { InternalCodeMirrorEditorProps } from '@grafana/ui/internal';
 import SchemaEditor from './SchemaEditor';
 import * as annotations from './schemaAnnotations';
 
+jest.mock('./schemaAnnotations', () => makeSpyable('./schemaAnnotations'));
+
 // The schema package pulls ESM-only syntax highlighting into Jest; schema validation
 // is outside the draft/commit contract exercised here.
 jest.mock('codemirror-json-schema', () => ({

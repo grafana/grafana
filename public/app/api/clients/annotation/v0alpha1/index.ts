@@ -170,9 +170,10 @@ export const annotationK8sClient = {
   },
 
   // JSON Merge Patch (RFC 7396) lets the server perform the read-modify-write
-  // atomically — no need to fetch the existing resourceVersion first. Optional
-  // fields (timeEnd, tags, scopes) are sent as explicit `null` when absent so
-  // stale values are cleared; an omitted field would be a no-op under merge-patch.
+  // atomically — no need to fetch the existing resourceVersion first. Only text,
+  // tags, and scopes are mutable. Optional fields (tags, scopes) are sent as
+  // explicit `null` when absent so stale values are cleared; an omitted field
+  // would be a no-op under merge-patch.
   update(event: AnnotationEvent, scopes?: string[]): Promise<Annotation> {
     if (!event.id) {
       return Promise.reject(new Error('Annotation id (metadata.name) is required for update'));
@@ -181,17 +182,9 @@ export const annotationK8sClient = {
     const nextSpec = annotationEventToSpec(event, scopes);
     const patchSpec: Record<string, unknown> = {
       text: nextSpec.text,
-      time: nextSpec.time,
-      timeEnd: nextSpec.timeEnd ?? null,
       tags: nextSpec.tags ?? null,
       scopes: nextSpec.scopes ?? null,
     };
-    if (nextSpec.dashboardUID !== undefined) {
-      patchSpec.dashboardUID = nextSpec.dashboardUID;
-    }
-    if (nextSpec.panelID !== undefined) {
-      patchSpec.panelID = nextSpec.panelID;
-    }
 
     const url = `/apis/${ANNOTATION_API_GROUP}/${ANNOTATION_API_VERSION}/namespaces/${getAPINamespace()}/${ANNOTATIONS_RESOURCE}/${toK8sName(event.id)}`;
     return getBackendSrv().patch<Annotation>(

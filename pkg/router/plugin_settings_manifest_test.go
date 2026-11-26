@@ -7,14 +7,14 @@ import (
 	"strings"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
-	manifestroutes "github.com/grafana/grafana-app-sdk/routes"
+	"github.com/grafana/grafana-app-sdk/routes"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 )
@@ -25,15 +25,15 @@ import (
 func TestPublishedSettingsManifestReplacesPluginJSONRoutes(t *testing.T) {
 	client := func(context.Context, string) (plugins.Client, appclientv3.Client, error) { return nil, nil, nil }
 	legacy := definition.PluginDefinition{JSONData: plugins.JSONData{ID: "example-app", Type: plugins.TypeApp, Routes: []*plugins.Route{
-		{Path: "/api/items", Method: http.MethodGet, URL: "https://{{.JsonData.host}}/items", ReqRole: identity.RoleEditor},
+		{Path: "/api/items", Method: http.MethodGet, URL: "https://{{.JsonData.host}}/items", ReqRole: authlib.RoleEditor},
 		{Path: "/api/items/*", Method: http.MethodDelete, URL: "https://{{.JsonData.host}}/items", ReqAction: "example-app.items:write"},
 		{
 			Path:      "token",
 			Method:    http.MethodPost,
 			URL:       "https://login.example.com",
-			Headers:   []plugins.Header{{Name: "Authorization", Content: "Bearer {{.SecureJsonData.token}}"}},
-			URLParams: []plugins.URLParam{{Name: "key", Content: "{{.SecureJsonData.key}}"}},
-			TokenAuth: &plugins.JWTTokenAuth{Url: "https://login.example.com/{{.JsonData.tenant}}", Scopes: []string{"a"}},
+			Headers:   []routes.ProxyHeader{{Name: "Authorization", Content: "Bearer {{.SecureJsonData.token}}"}},
+			URLParams: []routes.ProxyURLParam{{Name: "key", Content: "{{.SecureJsonData.key}}"}},
+			TokenAuth: &routes.ProxyTokenAuth{URL: "https://login.example.com/{{.JsonData.tenant}}", Scopes: []string{"a"}},
 			Body:      json.RawMessage(`{"grant_type": "client_credentials"}`),
 		},
 	}}}
@@ -45,7 +45,7 @@ func TestPublishedSettingsManifestReplacesPluginJSONRoutes(t *testing.T) {
 	require.True(t, ok)
 	body, err := appManifestJSON(published)
 	require.NoError(t, err)
-	require.Contains(t, string(body), definition.ExtensionProxy, "the proxy routes are published with where they forward to")
+	require.Contains(t, string(body), routes.ExtensionProxy, "the proxy routes are published with where they forward to")
 
 	var decoded appmanifestv1alpha2.AppManifest
 	require.NoError(t, json.Unmarshal(body, &decoded))
@@ -68,7 +68,7 @@ func proxyRoutesOf(t *testing.T, manifest *app.ManifestData) map[string]*plugins
 		if !ok {
 			continue
 		}
-		for method, op := range manifestroutes.Operations(&props) {
+		for method, op := range routes.Operations(&props) {
 			route, ok, err := definition.ProxyRouteFromOperation(specPath, method, op)
 			require.NoError(t, err)
 			require.True(t, ok, "%s %s", method, path)

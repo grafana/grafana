@@ -207,7 +207,7 @@ func TestClient_LegacyCheckRequest(t *testing.T) {
 		{
 			name: "nested expression and request options",
 			req: LegacyCheckRequest{
-				Namespace: "stacks-123", Subject: "user:checked-user", Teams: []string{"team-one"},
+				Namespace: "stacks-123", Subject: "user:checked-user",
 				SkipCache: true, SkipScopeResolution: true,
 				Evaluator: accesscontrol.EvalAll(
 					accesscontrol.EvalPermission("dashboards:read", "dashboards:uid:one", "dashboards:uid:two"),
@@ -218,7 +218,7 @@ func TestClient_LegacyCheckRequest(t *testing.T) {
 				),
 			},
 			want: &authzextv1.LegacyCheckRequest{
-				Namespace: "stacks-123", Subject: "user:checked-user", Teams: []string{"team-one"},
+				Namespace: "stacks-123", Subject: "user:checked-user",
 				SkipCache: true, SkipScopeResolution: true,
 				Expression: &authzextv1.LegacyExpression{
 					Node: &authzextv1.LegacyExpression_All{All: &authzextv1.LegacyExpressionList{
@@ -362,8 +362,8 @@ func TestPrepareLegacyCheckSnapshotsCallerData(t *testing.T) {
 		Subject:        "user:checked-user",
 		RequesterOrgID: &orgID,
 		Evaluator:      accesscontrol.EvalAll(children...),
-		Teams:          []string{"team-one"},
 		Restriction:    &LegacyActionRestriction{Actions: []string{"folders:read"}},
+		TeamIDs:        []int64{42},
 	}
 
 	call, err := client.PrepareLegacyCheck(req)
@@ -372,7 +372,7 @@ func TestPrepareLegacyCheckSnapshotsCallerData(t *testing.T) {
 
 	scopes[0] = "changed"
 	children[0] = accesscontrol.EvalPermission("changed")
-	req.Teams[0] = "changed"
+	req.TeamIDs[0] = 99
 	req.Restriction.Actions[0] = "changed"
 	orgID = 99
 
@@ -389,10 +389,39 @@ func TestPrepareLegacyCheckSnapshotsCallerData(t *testing.T) {
 		Subject:        "user:checked-user",
 		RequesterOrgId: proto.Int64(12),
 		Expression:     expression,
-		Teams:          []string{"team-one"},
 		Restriction:    &authzextv1.LegacyActionRestriction{Actions: []string{"folders:read"}},
+		TeamIds:        &authzextv1.LegacyTeamIDs{Ids: []int64{42}},
 	}
 	require.True(t, proto.Equal(want, server.request), "want %v, got %v", want, server.request)
+}
+
+func TestLegacyCheckTeamIDsPresence(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		ids  []int64
+		want *authzextv1.LegacyTeamIDs
+	}{
+		{name: "unavailable"},
+		{name: "empty", ids: []int64{}, want: &authzextv1.LegacyTeamIDs{}},
+		{name: "populated", ids: []int64{42}, want: &authzextv1.LegacyTeamIDs{Ids: []int64{42}}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server := &legacyCheckServer{}
+			client := newLegacyTransportClient(t, server)
+			allowed, err := client.LegacyCheck(t.Context(), LegacyCheckRequest{
+				Namespace: "org-12", Subject: "user:checked-user", TeamIDs: tc.ids,
+				Evaluator: accesscontrol.EvalPermission("dashboards:read"),
+			})
+			require.NoError(t, err)
+			require.True(t, allowed)
+
+			data, err := proto.Marshal(server.request)
+			require.NoError(t, err)
+			var decoded authzextv1.LegacyCheckRequest
+			require.NoError(t, proto.Unmarshal(data, &decoded))
+			require.True(t, proto.Equal(tc.want, decoded.TeamIds), "want %v, got %v", tc.want, decoded.TeamIds)
+		})
+	}
 }
 
 func TestPrepareLegacyCheckSnapshotsBackgroundPermissions(t *testing.T) {
