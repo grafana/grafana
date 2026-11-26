@@ -45,6 +45,9 @@ To create a library panel, follow these steps:
 1. Select **Editing** in the dashboard mode drop-down list.
 1. Hover over any part of the panel you want to share to display the actions menu on the top right corner.
 1. Click **More > New library panel**.
+
+   If the [panel actions popover](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-popover) is enabled, click **More actions** in the popover to open the menu.
+
 1. In the **Library panel name** field, enter the name.
 1. In the **Save in folder** drop-down list, select the folder in which to save the library panel. By default, the root level is selected.
 1. Click **Create library panel** to save your changes.
@@ -89,6 +92,9 @@ To unlink a library panel, follow these steps:
 1. Select **Editing** in the dashboard mode drop-down list.
 1. Hover over any part of the panel you want to unlink to display the menu icon on the top-right corner.
 1. Click the menu icon and select **More > Unlink library panel**.
+
+   If the [panel actions popover](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-popover) is enabled, click **More actions** in the popover to open the menu.
+
 1. Click **Yes, unlink**.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
@@ -109,6 +115,9 @@ To replace a library panel with a different one, follow these steps:
 1. Select **Editing** in the dashboard mode drop-down list.
 1. Hover over any part of the panel you want to unlink to display the menu icon on the top-right corner.
 1. Click the menu icon and select **More > Replace library panel**.
+
+   If the [panel actions popover](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-popover) is enabled, click **More actions** in the popover to open the menu.
+
 1. Select the replacement library panel.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.

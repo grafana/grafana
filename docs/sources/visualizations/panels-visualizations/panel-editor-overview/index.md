@@ -130,6 +130,9 @@ To copy and paste a panel style, follow these steps:
 1. Navigate to the panel with the style you want to copy.
 1. Hover over any part of the panel you want to work on to display the menu on the top right corner.
 1. Click the menu and select **Styles > Copy styles**.
+
+   If the [panel actions popover](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-popover) is enabled, click **More actions** in the popover to open the menu.
+
 1. Navigate to the panel on which you want to copy the style.
 1. Click the panel menu and select **Styles > Paste styles**.
 1. Save your changes.

@@ -132,6 +132,7 @@ To access Explore:
 1. Click on **Explore** in the left side menu.
 
    To start with an existing query from a dashboard panel, select the Explore option from the Panel menu in the upper right. This opens an Explore page with the panel's query, enabling you to tweak or iterate the query outside your dashboard.
+   If the [panel actions popover](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-popover) is enabled, hover over the panel and click **Explore** in the popover instead.
 
    {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-panel-menu-10.1.png" class="docs-image--no-shadow" caption="Panel menu with Explore option" >}}
 

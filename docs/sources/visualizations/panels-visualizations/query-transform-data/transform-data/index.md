@@ -128,6 +128,9 @@ The following steps guide you in adding a transformation to data. This documenta
 1. Navigate to the panel where you want to add one or more transformations.
 1. Hover over any part of the panel to display the actions menu on the top right corner.
 1. Click the menu and select **Edit**.
+
+   If the [panel actions popover](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-popover) is enabled, click **Edit visualization** in the popover instead.
+
 1. In the query editor sidebar, click the plus icon next to **Transformations**.
 1. In the editor pane, search for or browse to a transformation and click it.
    The transformation appears as a card in the sidebar, and its options open in the editor pane. For more information about how to configure a transformation, refer to [Transformation functions](#transformation-functions).

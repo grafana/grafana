@@ -246,6 +246,9 @@ To add a field override, follow these steps:
 1. Navigate to the panel to which you want to add the data link.
 1. Hover over any part of the panel to display the menu icon in the upper-right corner.
 1. Click the menu icon and select **Edit** to open the panel editor.
+
+   If the [panel actions popover](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-popover) is enabled, click **Edit visualization** in the popover instead.
+
 1. At the bottom of the panel editor pane, click **Add field override**.
 1. Select the fields to which the override will be applied:
    - **Fields with name**
@@ -269,6 +272,9 @@ To edit a field override, follow these steps:
 1. Navigate to the panel to which you want to add the data link.
 1. Hover over any part of the panel to display the menu icon in the upper-right corner.
 1. Click the menu icon and select **Edit** to open the panel editor.
+
+   If the [panel actions popover](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-popover) is enabled, click **Edit visualization** in the popover instead.
+
 1. In the panel editor pane, click the **Overrides** tab.
 1. Locate the override you want to change.
 1. Perform any of the following tasks:

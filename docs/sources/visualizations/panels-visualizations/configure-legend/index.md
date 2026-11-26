@@ -197,6 +197,9 @@ When you format a legend as a table and add values to it, you can sort series in
 1. Navigate to the panel you want to update.
 1. Hover over any part of the panel you want to work on to display the menu on the top right corner.
 1. Click the menu and select **Edit**.
+
+   If the [panel actions popover](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-popover) is enabled, click **Edit visualization** in the popover instead.
+
 1. Scroll to the **Legend** section of the panel edit pane.
 1. Under **Mode**, select **Table**.
 1. Under **Values**, select the value or calculation that you want to show.

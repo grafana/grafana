@@ -273,6 +273,9 @@ To share a personalized, direct link to your panel within your organization, fol
 
 1. Hover over any part of the panel you want to share to display the actions menu on the top right corner.
 1. Click the menu and select **Share link**.
+
+   If the [panel actions popover](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-popover) is enabled, click **More actions** in the popover to open the menu.
+
 1. (Optional) In the **Link settings** drawer that opens, set the following options:
    - **Lock time range** - Change the current relative time range to an absolute time range. This option is enabled by default.
    - **Shorten link** - Shorten the panel link. This option is disabled by default.
@@ -328,6 +331,8 @@ To create a panel that can be embedded, follow these steps:
 1. Hover over any part of the panel you want to share to display the actions menu on the top-right corner.
 1. Click the menu and select **Share embed**.
 
+   If the [panel actions popover](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-popover) is enabled, click **More actions** in the popover to open the menu.
+
    The **Share embed** drawer opens.
 
 1. (Optional) Toggle the **Lock time range** switch to set whether the panel uses the current relative time range or an absolute time range. This option is enabled by default.
@@ -366,6 +371,9 @@ To share your panel with anyone as a snapshot, follow these steps:
 
 1. Hover over any part of the panel you want to share to display the actions menu on the top-right corner.
 1. Click the menu and select **Share snapshot**.
+
+   If the [panel actions popover](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#panel-actions-popover) is enabled, click **More actions** in the popover to open the menu.
+
 1. In the **Share snapshot** drawer that opens, enter a descriptive title for the snapshot in the **Snapshot name** field.
 1. Select one of the following expiration options for the snapshot:
    - **1 Hour**
