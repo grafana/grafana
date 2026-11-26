@@ -54,6 +54,20 @@ const badgeColorTokens = z.object({
   border: z.optional(z.string()),
 });
 
+const bannerProminentTokens = z.object({
+  background: z.optional(z.string()),
+  iconBoxBackground: z.optional(z.string()),
+  text: z.optional(z.string()),
+  border: z.optional(z.string()),
+});
+
+const bannerNeutralTokens = z.object({
+  background: z.optional(z.string()),
+  border: z.optional(z.string()),
+  icon: z.optional(z.string()),
+  text: z.optional(z.string()),
+});
+
 const DEFAULT_TAG_TEXT_COLOR = '#f7f8fa';
 /**
  * Default tag colours, used when a theme does not provide its own.
@@ -209,6 +223,26 @@ export const ThemeComponentsInputSchema = z.partial(
       darkgrey: z.optional(badgeColorTokens),
       brand: z.optional(badgeColorTokens),
     }),
+    banner: z.object({
+      // Colors of a prominent banner, keyed by severity
+      prominent: z.optional(
+        z.object({
+          error: z.optional(bannerProminentTokens),
+          warning: z.optional(bannerProminentTokens),
+          info: z.optional(bannerProminentTokens),
+          success: z.optional(bannerProminentTokens),
+        })
+      ),
+      // Colors of a neutral banner, keyed by theme color
+      neutral: z.optional(
+        z.object({
+          primary: z.optional(bannerNeutralTokens),
+          secondary: z.optional(bannerNeutralTokens),
+          tertiary: z.optional(bannerNeutralTokens),
+          accent: z.optional(bannerNeutralTokens),
+        })
+      ),
+    }),
   })
 );
 
@@ -223,6 +257,24 @@ export type ThemeComponents = Omit<InferredThemeComponents, 'menu' | 'table'> & 
   menu: MenuComponentTokens;
   table: ThemeTableColors;
 };
+
+// A prominent banner's defaults: the severity's main color as the background, its shade behind the icon, and its
+// contrast text color, which suits the main color.
+const getProminentBannerTokens = (color: ThemeColors['error']) => ({
+  background: color.main,
+  iconBoxBackground: color.shade,
+  text: color.contrastText,
+  border: color.subtleBorder,
+});
+
+// A neutral banner's defaults, for the visual refresh: the theme color's subtle background and border, with its text
+// color for the icon and its emphasis text color for the text.
+const getNeutralBannerTokens = (color: ThemeColors['primary']) => ({
+  background: color.subtleBackground,
+  border: color.subtleBorder,
+  icon: color.text,
+  text: color.textEmphasis,
+});
 
 export function createComponents(colors: ThemeColors, componentsInput: ThemeComponentsInput = {}): ThemeComponents {
   const resolvedInputs = resolvePaletteRefs(componentsInput);
@@ -345,6 +397,20 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
       },
     },
     badge: getBadgeColorToken(colors),
+    banner: {
+      prominent: {
+        error: getProminentBannerTokens(colors.error),
+        warning: getProminentBannerTokens(colors.warning),
+        info: getProminentBannerTokens(colors.info),
+        success: getProminentBannerTokens(colors.success),
+      },
+      neutral: {
+        primary: getNeutralBannerTokens(colors.primary),
+        secondary: getNeutralBannerTokens(colors.secondary),
+        tertiary: getNeutralBannerTokens(colors.tertiary),
+        accent: getNeutralBannerTokens(colors.accent),
+      },
+    },
   };
 
   // deep-merge caller overrides on top of the defaults
