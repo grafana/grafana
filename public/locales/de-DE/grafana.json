@@ -6613,6 +6613,10 @@
       "paused": "Dieses Dashboard wurde vom Administrator pausiert",
       "try-again-later": "Versuchen Sie es später erneut"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Sind Sie sicher, dass Sie dieses Panel entfernen möchten?"
@@ -8069,6 +8073,9 @@
       "title-delete-all-transformations": "Alle Transformationen löschen?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_one": "",
@@ -10516,6 +10523,25 @@
         "otherGroup": "Sonstiges"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_one": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -11034,6 +11060,11 @@
         "placement-options": {
           "label-bottom": "Unten",
           "label-right": "Rechts"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_one": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11129,6 +11160,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "Ein-Klick-Modus"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "Link hinzufügen",
@@ -13785,6 +13819,7 @@
       "open": "Hauptmenü",
       "pin-error": "Die angehefteten Menüelemente konnten nicht aktualisiert werden",
       "pinned-list-label": "Fixierte Elemente",
+      "section-resize": "",
       "undock": "Menü abdocken"
     },
     "megamenu-item": {
@@ -13983,12 +14018,32 @@
         "undo-label": "Bearbeitung in Assistant"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "Abbrechen",
       "confirm-discard": "Verwerfen",
       "confirm-keep": "Behalten",
       "confirm-text": "Möchten Sie die Änderungen beibehalten, die Sie beim Anzeigen dieses Notizbuchs vorgenommen haben?",
       "confirm-title": "Nicht gespeicherte Änderungen am Panel"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17295,6 +17350,13 @@
       "wide-list": "Breite Liste",
       "wide-list-desc": "Horizontal, Name und Wert, Bereichs-Sparkline, einfarbig"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "Stat.",
       "stat-color-background": "Stat. – Farbhintergrund",
@@ -17842,6 +17904,10 @@
       "time-zone-option": "Zeitzone",
       "time-zone-selection": "Zeitzonenauswahl"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "Zeitbereich anwenden",
       "default-error": "Geben Sie ein Datum ({{dateExample}}) oder eine relative Zeit ein ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -17859,6 +17925,12 @@
       "to": "bis",
       "zoom-out-button": "Zeitbereich verkleinern",
       "zoom-out-tooltip-new": "Zeitbereich verkleinern <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "Zeitbereich anwenden",

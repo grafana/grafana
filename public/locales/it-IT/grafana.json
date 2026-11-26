@@ -6613,6 +6613,10 @@
       "paused": "Questa dashboard è stata sospesa dall'amministratore",
       "try-again-later": "Riprova più tardi"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Vuoi davvero rimuovere questo pannello?"
@@ -8069,6 +8073,9 @@
       "title-delete-all-transformations": "Eliminare tutte le trasformazioni?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_one": "",
@@ -10516,6 +10523,25 @@
         "otherGroup": "Altri"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_one": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -11034,6 +11060,11 @@
         "placement-options": {
           "label-bottom": "In basso",
           "label-right": "A destra"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_one": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11129,6 +11160,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "In un click"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "Aggiungi link",
@@ -13785,6 +13819,7 @@
       "open": "Menu principale",
       "pin-error": "Impossibile aggiornare le voci di menu fissate",
       "pinned-list-label": "Elementi fissati",
+      "section-resize": "",
       "undock": "Disancora menu"
     },
     "megamenu-item": {
@@ -13983,12 +14018,32 @@
         "undo-label": ""
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "Annulla",
       "confirm-discard": "Ignora",
       "confirm-keep": "Mantieni",
       "confirm-text": "Desideri mantenere le modifiche apportate durante la visualizzazione di questo blocco appunti?",
       "confirm-title": "Modifiche del pannello non salvate"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17295,6 +17350,13 @@
       "wide-list": "Elenco ampio",
       "wide-list-desc": "Orizzontale, nome e valore, grafico sparkline ad area, colore singolo"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "Stat.",
       "stat-color-background": "Stat. – colore sfondo",
@@ -17842,6 +17904,10 @@
       "time-zone-option": "Fuso orario",
       "time-zone-selection": "Selezione del fuso orario"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "Applica intervallo di tempo",
       "default-error": "Inserisci una data ({{dateExample}}) o un'ora relativa ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -17859,6 +17925,12 @@
       "to": "a",
       "zoom-out-button": "Riduci l'intervallo di tempo",
       "zoom-out-tooltip-new": "Riduci l'intervallo di tempo <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "Applica intervallo di tempo",

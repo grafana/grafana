@@ -19,11 +19,6 @@
  */
 export interface FeatureToggles {
   /**
-  * Enable tabs and an inline calendar in the compact time range picker
-  * @default false
-  */
-  ['grafana.responsiveTimePickerTabs']?: boolean;
-  /**
   * Search for dashboards using panel title
   * @default false
   */
