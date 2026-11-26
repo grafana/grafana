@@ -1,13 +1,18 @@
-import { API_VERSION_PATTERN } from '../pluginUtils';
-
 import { type APIGroupInfo } from './types';
 
+// A Kubernetes API version, such as v1, v2beta1 or v0alpha1.
+const API_VERSION_PATTERN = /^v(?<major>\d+)(?:(?<level>alpha|beta)(?<minor>\d+))?$/;
+
+export function isAPIVersion(version: string): boolean {
+  return API_VERSION_PATTERN.test(version);
+}
+
 function parseVersion(version: string) {
-  const match = API_VERSION_PATTERN.exec(version);
-  if (!match) {
+  const groups = API_VERSION_PATTERN.exec(version)?.groups;
+  if (!groups) {
     return undefined;
   }
-  const [, major, level, minor] = match;
+  const { major, level, minor } = groups;
   const stability = level === 'alpha' ? 0 : level === 'beta' ? 1 : 2;
   return { stability, major: Number(major), minor: Number(minor ?? 0) };
 }

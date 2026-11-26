@@ -1,5 +1,7 @@
 import { config } from '../config';
 
+import { isAPIVersion } from './apiDiscovery/versions';
+
 export async function getApiVersion(): Promise<string> {
   return 'v0alpha1';
 }
@@ -31,10 +33,8 @@ export function assertPluginIdFormat(pluginId = ''): void {
   }
 }
 
-// A Kubernetes API version, such as v1, v2beta1 or v0alpha1. Captures the major version, the level and its number.
-export const API_VERSION_PATTERN = /^v(\d+)(?:(alpha|beta)(\d+))?$/;
 export function assertApiVersion(apiVersion = ''): void {
-  if (typeof apiVersion !== 'string' || !API_VERSION_PATTERN.test(apiVersion)) {
+  if (typeof apiVersion !== 'string' || !isAPIVersion(apiVersion)) {
     throw new Error(`Invalid API version "${apiVersion}"`);
   }
 }
