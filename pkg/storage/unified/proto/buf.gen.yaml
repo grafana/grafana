@@ -1,10 +1,10 @@
 version: v1
 plugins:
   - plugin: go
-    out: pkg/storage/unified/resourcepb
-    opt: paths=source_relative
+    out: .
+    opt: module=github.com/grafana/grafana
   - plugin: go-grpc
-    out: pkg/storage/unified/resourcepb
+    out: .
     opt:
-      - paths=source_relative
+      - module=github.com/grafana/grafana
       - require_unimplemented_servers=false
