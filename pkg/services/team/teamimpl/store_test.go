@@ -475,19 +475,37 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				})
 				require.NoError(t, err)
 
+				caller := &user.SignedInUser{
+					OrgID:       testOrgID,
+					Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}, ac.ActionTeamsRead: {ac.ScopeTeamsAll}}},
+				}
 				query := &team.GetTeamsByUserQuery{
-					OrgID:  testOrgID,
-					UserID: userIds[0],
-					SignedInUser: &user.SignedInUser{
-						OrgID:       testOrgID,
-						Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}, ac.ActionTeamsRead: {ac.ScopeTeamsAll}}},
-					},
+					OrgID:        testOrgID,
+					UserID:       userIds[0],
+					SignedInUser: caller,
 				}
 				queryResult, err := teamSvc.GetTeamsByUser(context.Background(), query)
 				require.NoError(t, err)
 				require.Equal(t, len(queryResult), 1)
 				require.Equal(t, queryResult[0].Name, "group2 name")
 				require.Equal(t, queryResult[0].Email, "test2@test.com")
+
+				query.OrgID = testOrgID + 1
+				queryResult, err = teamSvc.GetTeamsByUser(context.Background(), query)
+				require.NoError(t, err)
+				require.Empty(t, queryResult)
+
+				query.OrgID = testOrgID
+				caller.Permissions[testOrgID][ac.ActionTeamsRead] = []string{fmt.Sprintf("teams:id:%d", team1.ID)}
+				queryResult, err = teamSvc.GetTeamsByUser(context.Background(), query)
+				require.NoError(t, err)
+				require.Empty(t, queryResult)
+
+				caller.Permissions[testOrgID][ac.ActionTeamsRead] = []string{fmt.Sprintf("teams:id:%d", team2.ID)}
+				queryResult, err = teamSvc.GetTeamsByUser(context.Background(), query)
+				require.NoError(t, err)
+				require.Len(t, queryResult, 1)
+				require.Equal(t, team2.ID, queryResult[0].ID)
 			})
 
 			t.Run("Should be able to remove users from a group", func(t *testing.T) {

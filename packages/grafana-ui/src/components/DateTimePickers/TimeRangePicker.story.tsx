@@ -4,7 +4,8 @@ import { useArgs } from 'storybook/preview-api';
 
 import { dateTime, DefaultTimeZone } from '@grafana/data';
 
-import { TimeRangePicker } from './TimeRangePicker';
+import { ExperimentalTimeRangePicker as TimeRangePicker } from './TimeRangePicker';
+import mdx from './TimeRangePicker.mdx';
 
 const to = dateTime();
 const from = to.subtract(6, 'h');
@@ -25,6 +26,9 @@ const meta: Meta<typeof TimeRangePicker> = {
     history: [],
   },
   parameters: {
+    docs: {
+      page: mdx,
+    },
     controls: {
       exclude: [
         'onChange',
@@ -63,5 +67,41 @@ export const Basic: StoryFn<typeof TimeRangePicker> = (args) => {
     />
   );
 };
+
+export const Compact = Basic.bind({});
+Compact.args = { compactDesign: 'tabs', widthOverride: 600 };
+
+export const Embedded = Basic.bind({});
+Embedded.args = {
+  compactDesign: 'tabs',
+  widthOverride: 600,
+  hideHistory: true,
+  hideTimeZone: true,
+  hideFiscalYear: true,
+};
+
+export const CustomRelativeRanges = Basic.bind({});
+CustomRelativeRanges.args = {
+  ...Embedded.args,
+  quickRanges: [
+    { from: 'now-15m', to: 'now', display: 'Last 15 minutes' },
+    { from: 'now-1h', to: 'now', display: 'Last hour' },
+    { from: 'now-24h', to: 'now', display: 'Last 24 hours' },
+  ],
+};
+CustomRelativeRanges.parameters = {
+  docs: {
+    description: {
+      story:
+        'quickRanges replaces the default presets. hideHistory=true omits recently used ranges. Custom-duration search remains available.',
+    },
+  },
+};
+
+export const Responsive = Basic.bind({});
+Responsive.args = { compactDesign: 'tabs' };
+
+export const Wide = Basic.bind({});
+Wide.args = { compactDesign: 'tabs', widthOverride: 1200 };
 
 export default meta;

@@ -204,11 +204,6 @@ func TestAugmentOpenAPI(t *testing.T) {
 				expects: "no route registered",
 			},
 			{
-				name:    "no POST on the collection path",
-				mutate:  func(oas *spec3.OpenAPI) { oas.Paths.Paths[augmentPath].Post = nil },
-				expects: "expecting POST under",
-			},
-			{
 				name:    "no {name} path",
 				mutate:  func(oas *spec3.OpenAPI) { delete(oas.Paths.Paths, augmentPath+"/{name}") },
 				expects: "expecting route registered",
@@ -232,6 +227,35 @@ func TestAugmentOpenAPI(t *testing.T) {
 				require.ErrorContains(t, err, tc.expects)
 			})
 		}
+	})
+
+	t.Run("read-only settings are described without the examples", func(t *testing.T) {
+		oas := newAugmentOAS(augmentPath)
+		oas.Paths.Paths[augmentPath].Post = nil
+		oas.Paths.Paths[augmentPath].Get = &spec3.Operation{}
+		resource := newResourceSchema()
+		schema := settingsOnly()
+		schema.SettingsExamples = &pluginschema.SettingsExamples{Examples: map[string]*spec3.Example{"default": {}}}
+		schema.Routes = &pluginschema.Routes{Paths: map[string]*spec3.Path{
+			"/resources/things": {PathProps: spec3.PathProps{Get: &spec3.Operation{}, Post: &spec3.Operation{}}},
+		}}
+
+		_, err := AugmentOpenAPI(oas, SettingsResource{
+			Schema:   schema,
+			Resource: resource,
+			SpecName: "SettingsSpec",
+			Path:     augmentPath,
+			IsApp:    true,
+		})
+		require.NoError(t, err)
+		assert.Contains(t, oas.Components.Schemas, "SettingsSpec")
+		specProp := resource.Properties["spec"]
+		assert.Equal(t, "#/components/schemas/SettingsSpec", specProp.Ref.String())
+		assert.NotContains(t, oas.Paths.Paths, augmentPath, "the collection is rewritten to the instance")
+		assert.Contains(t, oas.Paths.Paths, augmentPath+"/instance")
+		things := oas.Paths.Paths[augmentPath+"/instance/resources/things"]
+		require.NotNil(t, things, "the plugin's routes are published")
+		assert.NotNil(t, things.Post, "custom routes keep their write methods")
 	})
 
 	t.Run("registers the settings spec and links it from the resource", func(t *testing.T) {
