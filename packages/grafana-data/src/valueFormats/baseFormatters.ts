@@ -155,11 +155,12 @@ export function simpleCountUnit(symbol: string): ValueFormatter {
   const units = ['', 'K', 'M', 'B', 'T'];
   const scaler = scaledUnits(1000, units);
   return (size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) => {
-    if (size === null) {
+    if (size === null || size === undefined) {
       return { text: '' };
     }
     const v = scaler(size, decimals, scaledDecimals);
-    v.suffix += ' ' + symbol;
+    // scaledUnits returns no suffix for NaN and infinite values
+    v.suffix = (v.suffix ?? '') + ' ' + symbol;
     return v;
   };
 }

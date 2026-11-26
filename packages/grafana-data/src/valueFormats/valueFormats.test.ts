@@ -173,6 +173,16 @@ describe('valueFormats', () => {
       expect(disp(Number.NEGATIVE_INFINITY).text).toBe(negInf);
       expect(disp(Number.POSITIVE_INFINITY).text).toBe(posInf);
     });
+
+    it.each(['cps', 'reqps', 'opm'])('%s should not show undefined for non number input', (unit) => {
+      const format = getValueFormat(unit);
+      const symbol = format(1).suffix;
+
+      expect(formattedValueToString(format(NaN))).toBe(`NaN${symbol}`);
+      expect(formattedValueToString(format(Number.NEGATIVE_INFINITY))).toBe(`${negInf}${symbol}`);
+      expect(formattedValueToString(format(Number.POSITIVE_INFINITY))).toBe(`${posInf}${symbol}`);
+      expect(formattedValueToString(format(undefined as unknown as number))).toBe('');
+    });
   });
 
   describe('toFixed and negative decimals', () => {
