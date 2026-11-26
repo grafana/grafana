@@ -3,13 +3,15 @@ package authz
 import (
 	"context"
 	"hash/fnv"
-	"maps"
 
 	claims "github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/datasourcek8s"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
+
+var rolloutLog = log.New("authz.rollout")
 
 // rolloutBucket returns a deterministic value in [0.0, 1.0) for a given namespace and
 // groupResource key. The key is included in the hash so that each resource produces an
@@ -47,23 +49,19 @@ func newRolloutAccessClient(rbac, zanzana claims.AccessClient, rollout map[strin
 // because Zanzana only holds tuples for the actions its reconciler translates, so routing
 // a subresource it does not know about would silently deny access the user really has.
 func (c *rolloutAccessClient) clientFor(namespace, group, resource, subresource string) claims.AccessClient {
-	if c.routesToZanzana(namespace, group, resource, subresource) {
-		return c.zanzana
-	}
-	return c.rbac
-}
-
-func (c *rolloutAccessClient) routesToZanzana(namespace, group, resource, subresource string) bool {
 	group, resource, subresource = datasourcek8s.AuthorizationResource(group, resource, subresource)
 	groupResource := common.FormatGroupResource(group, resource, subresource)
 	pct, ok := c.rollout[groupResource]
 	if !ok || pct <= 0 {
-		return false
+		return c.rbac
 	}
 	if pct >= 1 {
-		return true
+		return c.zanzana
 	}
-	return rolloutBucket(namespace, groupResource) < pct
+	if rolloutBucket(namespace, groupResource) < pct {
+		return c.zanzana
+	}
+	return c.rbac
 }
 
 func (c *rolloutAccessClient) Check(ctx context.Context, id claims.AuthInfo, req claims.CheckRequest, folder string) (claims.CheckResponse, error) {
@@ -75,42 +73,30 @@ func (c *rolloutAccessClient) Compile(ctx context.Context, id claims.AuthInfo, r
 	return c.clientFor(req.Namespace, req.Group, req.Resource, req.Subresource).Compile(ctx, id, req) //nolint:staticcheck
 }
 
-// BatchCheck partitions mixed batches by rollout destination so each check follows the
-// same route it would take individually.
+// BatchCheck routes the entire batch to a single client based on the group, resource and
+// subresource of the first item. All items in a batch are expected to share those three —
+// this matches how batches are constructed in practice (one List call, one resource type,
+// one namespace). If items with different combinations are detected, the batch falls back
+// to the RBAC client rather than misrouting, and a warning is logged.
 func (c *rolloutAccessClient) BatchCheck(ctx context.Context, id claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
-	if err := req.Validate(); err != nil {
-		return claims.BatchCheckResponse{}, err
-	}
 	if len(req.Checks) == 0 {
 		return c.rbac.BatchCheck(ctx, id, req)
 	}
 
-	rbacRequest := claims.BatchCheckRequest{Namespace: req.Namespace, SkipCache: req.SkipCache}
-	zanzanaRequest := claims.BatchCheckRequest{Namespace: req.Namespace, SkipCache: req.SkipCache}
-	for _, check := range req.Checks {
-		if c.routesToZanzana(req.Namespace, check.Group, check.Resource, check.Subresource) {
-			zanzanaRequest.Checks = append(zanzanaRequest.Checks, check)
-		} else {
-			rbacRequest.Checks = append(rbacRequest.Checks, check)
+	check := req.Checks[0]
+	group, resource, subresource := datasourcek8s.AuthorizationResource(check.Group, check.Resource, check.Subresource)
+	for _, check := range req.Checks[1:] {
+		checkGroup, checkResource, checkSubresource := datasourcek8s.AuthorizationResource(check.Group, check.Resource, check.Subresource)
+		if checkGroup != group || checkResource != resource || checkSubresource != subresource {
+			rolloutLog.Warn("batch contains mixed group/resource combinations, falling back to RBAC",
+				"namespace", req.Namespace,
+				"first_group", group, "first_resource", resource, "first_subresource", subresource,
+				"conflict_group", check.Group, "conflict_resource", check.Resource, "conflict_subresource", check.Subresource,
+			)
+			return c.rbac.BatchCheck(ctx, id, req)
 		}
 	}
-
-	results := make(map[string]claims.BatchCheckResult, len(req.Checks))
-	if len(rbacRequest.Checks) > 0 {
-		response, err := c.rbac.BatchCheck(ctx, id, rbacRequest)
-		if err != nil {
-			return claims.BatchCheckResponse{}, err
-		}
-		maps.Copy(results, response.Results)
-	}
-	if len(zanzanaRequest.Checks) > 0 {
-		response, err := c.zanzana.BatchCheck(ctx, id, zanzanaRequest)
-		if err != nil {
-			return claims.BatchCheckResponse{}, err
-		}
-		maps.Copy(results, response.Results)
-	}
-	return claims.BatchCheckResponse{Results: results}, nil
+	return c.clientFor(req.Namespace, group, resource, subresource).BatchCheck(ctx, id, req)
 }
 
 var _ claims.AccessClient = (*rolloutAccessClient)(nil)

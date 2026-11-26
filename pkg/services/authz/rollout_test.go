@@ -2,7 +2,6 @@ package authz
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	authlib "github.com/grafana/authlib/types"
@@ -12,30 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
-
-type recordingBatchAccessClient struct {
-	authlib.AccessClient
-	allowed bool
-	calls   []authlib.BatchCheckRequest
-	err     error
-	results map[string]authlib.BatchCheckResult
-}
-
-func (c *recordingBatchAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
-	c.calls = append(c.calls, req)
-	if c.err != nil {
-		return authlib.BatchCheckResponse{}, c.err
-	}
-	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
-	for _, check := range req.Checks {
-		if result, ok := c.results[check.CorrelationID]; ok {
-			results[check.CorrelationID] = result
-			continue
-		}
-		results[check.CorrelationID] = authlib.BatchCheckResult{Allowed: c.allowed}
-	}
-	return authlib.BatchCheckResponse{Results: results}, nil
-}
 
 func TestRolloutBucket_Determinism(t *testing.T) {
 	namespaces := []string{"stacks-1", "stacks-100", "stacks-999", "org-42", "default"}
@@ -228,7 +203,7 @@ func TestRolloutAccessClient_Subresource(t *testing.T) {
 		assert.True(t, resp.Results["2"].Allowed, "subresource batch should route to RBAC")
 	})
 
-	t.Run("BatchCheck routes mixed subresources individually", func(t *testing.T) {
+	t.Run("BatchCheck mixing subresources falls back to rbac", func(t *testing.T) {
 		client := newRolloutAccessClient(rbacClient, zanzanaClient, map[string]float64{
 			"dashboard.grafana.app/dashboards": 1.0,
 		})
@@ -241,8 +216,8 @@ func TestRolloutAccessClient_Subresource(t *testing.T) {
 		}
 		resp, err := client.BatchCheck(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
 		require.NoError(t, err)
-		assert.False(t, resp.Results["1"].Allowed, "rolled out parent resource should use Zanzana")
-		assert.True(t, resp.Results["2"].Allowed, "subresource without a rollout entry should use RBAC")
+		assert.True(t, resp.Results["1"].Allowed, "mixed-subresource batch should fall back to RBAC")
+		assert.True(t, resp.Results["2"].Allowed, "mixed-subresource batch should fall back to RBAC")
 	})
 }
 
@@ -329,7 +304,7 @@ func TestRolloutAccessClient_BatchCheck(t *testing.T) {
 		assert.Empty(t, resp.Results)
 	})
 
-	t.Run("mixed group/resource routes each check", func(t *testing.T) {
+	t.Run("mixed group/resource falls back to rbac", func(t *testing.T) {
 		client := newRolloutAccessClient(rbacClient, zanzanaClient, map[string]float64{
 			"dashboard.grafana.app/dashboards": 1.0,
 		})
@@ -342,103 +317,9 @@ func TestRolloutAccessClient_BatchCheck(t *testing.T) {
 		}
 		resp, err := client.BatchCheck(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
 		require.NoError(t, err)
-		assert.False(t, resp.Results["1"].Allowed, "rolled out datasource should use Zanzana")
+		assert.True(t, resp.Results["1"].Allowed, "mixed-resource batch should fall back to RBAC (allowed)")
 		assert.True(t, resp.Results["2"].Allowed, "mixed-resource batch should fall back to RBAC (allowed)")
 	})
-}
-
-func TestRolloutAccessClient_BatchCheckPartitionsByRolloutRoute(t *testing.T) {
-	rbacFailure := errors.New("RBAC unavailable")
-
-	t.Run("mixed routes preserve results and request options", func(t *testing.T) {
-		rbacClient := &recordingBatchAccessClient{allowed: true}
-		zanzanaClient := &recordingBatchAccessClient{allowed: false, results: map[string]authlib.BatchCheckResult{
-			"item-error": {Error: errors.New("per-item failure")},
-		}}
-		client := newRolloutAccessClient(rbacClient, zanzanaClient, map[string]float64{
-			"dashboard.grafana.app/dashboards": 1,
-		})
-		req := authlib.BatchCheckRequest{
-			Namespace: "stacks-1",
-			SkipCache: true,
-			Checks: []authlib.BatchCheckItem{
-				{CorrelationID: "zanzana", Group: "dashboard.grafana.app", Resource: "dashboards", Verb: utils.VerbGet},
-				{CorrelationID: "rbac", Group: "dashboard.grafana.app", Resource: "dashboards", Subresource: "annotations", Verb: utils.VerbGet},
-				{CorrelationID: "item-error", Group: "dashboard.grafana.app", Resource: "dashboards", Verb: utils.VerbUpdate},
-			},
-		}
-
-		resp, err := client.BatchCheck(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
-		require.NoError(t, err)
-		require.Len(t, rbacClient.calls, 1)
-		require.Len(t, zanzanaClient.calls, 1)
-		assert.Equal(t, "stacks-1", rbacClient.calls[0].Namespace)
-		assert.True(t, rbacClient.calls[0].SkipCache)
-		assert.Equal(t, []string{"rbac"}, correlationIDs(rbacClient.calls[0].Checks))
-		assert.Equal(t, []string{"zanzana", "item-error"}, correlationIDs(zanzanaClient.calls[0].Checks))
-		assert.False(t, resp.Results["zanzana"].Allowed)
-		assert.True(t, resp.Results["rbac"].Allowed)
-		assert.Error(t, resp.Results["item-error"].Error)
-	})
-
-	t.Run("one selected backend receives one batch", func(t *testing.T) {
-		rbacClient := &recordingBatchAccessClient{allowed: true}
-		zanzanaClient := &recordingBatchAccessClient{allowed: false}
-		client := newRolloutAccessClient(rbacClient, zanzanaClient, nil)
-		req := authlib.BatchCheckRequest{Namespace: "stacks-1", Checks: []authlib.BatchCheckItem{
-			{CorrelationID: "one", Group: "dashboard.grafana.app", Resource: "dashboards", Verb: utils.VerbGet},
-			{CorrelationID: "two", Group: "folder.grafana.app", Resource: "folders", Verb: utils.VerbGet},
-		}}
-
-		resp, err := client.BatchCheck(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
-		require.NoError(t, err)
-		require.Len(t, rbacClient.calls, 1)
-		assert.Empty(t, zanzanaClient.calls)
-		assert.True(t, resp.Results["one"].Allowed)
-		assert.True(t, resp.Results["two"].Allowed)
-	})
-
-	t.Run("validates duplicate correlation IDs before partitioning", func(t *testing.T) {
-		rbacClient := &recordingBatchAccessClient{allowed: true}
-		zanzanaClient := &recordingBatchAccessClient{allowed: false}
-		client := newRolloutAccessClient(rbacClient, zanzanaClient, map[string]float64{
-			"dashboard.grafana.app/dashboards": 1,
-		})
-		req := authlib.BatchCheckRequest{Namespace: "stacks-1", Checks: []authlib.BatchCheckItem{
-			{CorrelationID: "same", Group: "dashboard.grafana.app", Resource: "dashboards", Verb: utils.VerbGet},
-			{CorrelationID: "same", Group: "dashboard.grafana.app", Resource: "dashboards", Subresource: "annotations", Verb: utils.VerbGet},
-		}}
-
-		_, err := client.BatchCheck(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
-		require.Error(t, err)
-		assert.Empty(t, rbacClient.calls)
-		assert.Empty(t, zanzanaClient.calls)
-	})
-
-	t.Run("returns backend errors", func(t *testing.T) {
-		rbacClient := &recordingBatchAccessClient{allowed: true, err: rbacFailure}
-		zanzanaClient := &recordingBatchAccessClient{allowed: false}
-		client := newRolloutAccessClient(rbacClient, zanzanaClient, map[string]float64{
-			"dashboard.grafana.app/dashboards": 1,
-		})
-		req := authlib.BatchCheckRequest{Namespace: "stacks-1", Checks: []authlib.BatchCheckItem{
-			{CorrelationID: "z", Group: "dashboard.grafana.app", Resource: "dashboards", Verb: utils.VerbGet},
-			{CorrelationID: "r", Group: "folder.grafana.app", Resource: "folders", Verb: utils.VerbGet},
-		}}
-
-		_, err := client.BatchCheck(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
-		require.ErrorIs(t, err, rbacFailure)
-		assert.Len(t, rbacClient.calls, 1)
-		assert.Empty(t, zanzanaClient.calls)
-	})
-}
-
-func correlationIDs(checks []authlib.BatchCheckItem) []string {
-	ids := make([]string, len(checks))
-	for i, check := range checks {
-		ids[i] = check.CorrelationID
-	}
-	return ids
 }
 
 func TestRolloutDatasourceAliasesShareBatchRoute(t *testing.T) {
