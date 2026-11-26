@@ -55,28 +55,33 @@ export function AdaptiveLogsIncludeDroppedLogs(props: Props) {
 }
 
 export function useRenderedLogsWindow(visualisationType: LogsVisualisationType, logsSortOrder: LogsSortOrder) {
+  const timeMachineEnabled = useFlagAdaptivelogsEnableTimeMachine();
   const [renderedLogsWindowDebounced, setRenderedLogsWindowDebounced] = useState<RenderedLogsWindow | undefined>();
 
   const onRenderedLogsChanged = useMemo(
     () =>
-      debounce((indices: ListOnItemsRenderedProps, logs: LogListModel[]) => {
-        // debounce to avoid chain reaction on each scroll tick
-        setRenderedLogsWindowDebounced({
-          startRowIndex: indices.visibleStartIndex,
-          endRowIndex: indices.visibleStopIndex,
-          logsSortOrder,
-          logs,
-        });
-      }, 250),
-    [logsSortOrder]
+      !timeMachineEnabled
+        ? undefined
+        : debounce((indices: ListOnItemsRenderedProps, logs: LogListModel[]) => {
+            // debounce to avoid chain reaction on each scroll tick
+            setRenderedLogsWindowDebounced({
+              startRowIndex: indices.visibleStartIndex,
+              endRowIndex: indices.visibleStopIndex,
+              logsSortOrder,
+              logs,
+            });
+          }, 250),
+    [logsSortOrder, timeMachineEnabled]
   );
 
-  useEffect(() => () => onRenderedLogsChanged.cancel(), [onRenderedLogsChanged]);
+  useEffect(() => () => onRenderedLogsChanged?.cancel(), [onRenderedLogsChanged]);
 
   // Masks the debounced value whenever it's stale (or incompatible) relative to the current display state
   const renderedLogsWindow = useMemo(() => {
     // The following cases disable with rendered logs window via `undefined`
     if (
+      // Time machine flag is off
+      !timeMachineEnabled ||
       // Only the InfiniteScroll type is supported
       visualisationType !== 'logs' ||
       // If the "old" debounced value doesn't match a recent change, we disable until it does
@@ -85,7 +90,7 @@ export function useRenderedLogsWindow(visualisationType: LogsVisualisationType, 
       return undefined;
     }
     return renderedLogsWindowDebounced;
-  }, [visualisationType, logsSortOrder, renderedLogsWindowDebounced]);
+  }, [visualisationType, logsSortOrder, renderedLogsWindowDebounced, timeMachineEnabled]);
 
   return { renderedLogsWindow, onRenderedLogsChanged };
 }

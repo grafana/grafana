@@ -137,7 +137,7 @@ describe('Logs', () => {
   let originalHref = window.location.href;
 
   beforeEach(() => {
-    setBooleanFlags({ logsPanelControls: false });
+    setBooleanFlags({ logsPanelControls: false, 'adaptivelogs.enableTimeMachine': true });
     window.HTMLElement.prototype.scrollIntoView = jest.fn();
     window.HTMLElement.prototype.scroll = jest.fn();
     localStorage.clear();
@@ -435,6 +435,16 @@ describe('Logs', () => {
     await userEvent.click(screen.getByRole('radio', { name: 'Table' }));
 
     await waitFor(() => expect(includeDroppedLogsMock.mock.calls.at(-1)[0].renderedLogsWindow).toBeUndefined());
+  });
+
+  it('never sets up rendered-window tracking when the adaptivelogs.enableTimeMachine flag is disabled', async () => {
+    setBooleanFlags({ logsPanelControls: false, 'adaptivelogs.enableTimeMachine': false });
+    includeDroppedLogsMock.mockClear();
+    setup();
+    await screen.findByText('log message 3');
+
+    expect(logListMock).toHaveBeenLastCalledWith(expect.objectContaining({ onRenderedLogsChanged: undefined }));
+    expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(expect.objectContaining({ renderedLogsWindow: undefined }));
   });
 
   it('should render no logs found', () => {
