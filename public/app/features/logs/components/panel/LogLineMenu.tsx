@@ -60,7 +60,10 @@ export const LogLineMenu = ({ active, log, styles }: Props) => {
   }, [log.entry]);
 
   const copyLogLineAsJson = useCallback(async () => {
-    copyText(await getLogAsJSON(log), menuRef);
+    // The menu closes while the JSON is prepared. Keep the element it was opened in: copyText writes through the
+    // clipboard of that element's window, which can be another window than this one.
+    const menu = menuRef.current;
+    copyText(await getLogAsJSON(log), { current: menu });
     reportInteraction('logs_log_line_menu_header_copy_json_clicked');
   }, [log]);
 
