@@ -303,6 +303,8 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 	err = info.Parsed.DryRun(ctx)
 	if err != nil {
 		info.Error = err.Error()
+	} else if keys := info.Parsed.InvalidAnnotations; len(keys) > 0 {
+		info.Error = "Git Sync ignores annotations whose values are not strings: " + strings.Join(keys, ", ")
 	}
 
 	// Link back to the resource in Grafana when it already exists there.
@@ -489,18 +491,7 @@ func hasRemovedMetadata(path string, original, updated *unstructured.Unstructure
 	if len(original.GetLabels()) > 0 && hasMissingKeys(original.GetLabels(), updated.GetLabels()) {
 		return true
 	}
-	if resources.IsFolderMetadataFile(path) {
-		return hasMissingKeys(original.GetAnnotations(), updated.GetAnnotations())
-	}
-	// User annotations can be deleted intentionally in the PR. Report only keys Git Sync strips.
-	originalKeys, _, _ := unstructured.NestedMap(original.Object, "metadata", "annotations")
-	updatedKeys, _, _ := unstructured.NestedMap(updated.Object, "metadata", "annotations")
-	for k := range originalKeys {
-		if _, exists := updatedKeys[k]; !exists && resources.OmitAnnotationFromFile(k) {
-			return true
-		}
-	}
-	return false
+	return resources.HasRemovedAnnotations(path, original, updated)
 }
 
 // hasMissingKeys returns true if any key in original is absent from parsed.

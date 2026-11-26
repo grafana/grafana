@@ -21,32 +21,30 @@ const unsupportedForkMessage = "Grafana doesn't currently support previews for p
 const maxDisplayedChanges = 10
 
 type commenter struct {
-	templateDashboard          *template.Template
-	templateTable              *template.Template
-	templateRenderInfo         *template.Template
-	templateFooter             *template.Template
-	templateAnnotationWarnings *template.Template
-	templateValidationErrors   *template.Template
-	templateMetadataNotice     *template.Template
-	templateUnprocessedFiles   *template.Template
-	templateUnsupportedFork    *template.Template
-	showImageRendererNote      bool
-	urls                       URLProvider
+	templateDashboard        *template.Template
+	templateTable            *template.Template
+	templateRenderInfo       *template.Template
+	templateFooter           *template.Template
+	templateValidationErrors *template.Template
+	templateMetadataNotice   *template.Template
+	templateUnprocessedFiles *template.Template
+	templateUnsupportedFork  *template.Template
+	showImageRendererNote    bool
+	urls                     URLProvider
 }
 
 func NewCommenter(showImageRendererNote bool, urls URLProvider) Commenter {
 	return &commenter{
-		templateDashboard:          template.Must(template.New("dashboard").Parse(commentTemplateSingleDashboard)),
-		templateTable:              template.Must(template.New("table").Parse(commentTemplateTable)),
-		templateRenderInfo:         template.Must(template.New("setup").Parse(commentTemplateMissingImageRenderer)),
-		templateFooter:             template.Must(template.New("footer").Parse(commentTemplateFooter)),
-		templateAnnotationWarnings: template.Must(template.New("annotationWarnings").Parse(commentTemplateAnnotationWarnings)),
-		templateValidationErrors:   template.Must(template.New("errors").Parse(commentTemplateValidationErrors)),
-		templateMetadataNotice:     template.Must(template.New("metadata").Parse(commentTemplateMetadataNotice)),
-		templateUnprocessedFiles:   template.Must(template.New("unprocessed").Parse(commentTemplateUnprocessedFiles)),
-		templateUnsupportedFork:    template.Must(template.New("unsupported-fork").Parse(commentTemplateUnsupportedFork)),
-		showImageRendererNote:      showImageRendererNote,
-		urls:                       urls,
+		templateDashboard:        template.Must(template.New("dashboard").Parse(commentTemplateSingleDashboard)),
+		templateTable:            template.Must(template.New("table").Parse(commentTemplateTable)),
+		templateRenderInfo:       template.Must(template.New("setup").Parse(commentTemplateMissingImageRenderer)),
+		templateFooter:           template.Must(template.New("footer").Parse(commentTemplateFooter)),
+		templateValidationErrors: template.Must(template.New("errors").Parse(commentTemplateValidationErrors)),
+		templateMetadataNotice:   template.Must(template.New("metadata").Parse(commentTemplateMetadataNotice)),
+		templateUnprocessedFiles: template.Must(template.New("unprocessed").Parse(commentTemplateUnprocessedFiles)),
+		templateUnsupportedFork:  template.Must(template.New("unsupported-fork").Parse(commentTemplateUnsupportedFork)),
+		showImageRendererNote:    showImageRendererNote,
+		urls:                     urls,
 	}
 }
 
@@ -106,12 +104,6 @@ func (c *commenter) generateComment(_ context.Context, info changeInfo) (string,
 	if len(info.Changes) > 0 && info.UnprocessedFiles > 0 {
 		if err := c.templateUnprocessedFiles.Execute(&buf, &info); err != nil {
 			return "", fmt.Errorf("unable to execute unprocessed files template: %w", err)
-		}
-	}
-
-	if warnings := info.annotationWarnings(); len(warnings.Files) > 0 {
-		if err := c.templateAnnotationWarnings.Execute(&buf, warnings); err != nil {
-			return "", fmt.Errorf("unable to execute annotation warnings template: %w", err)
 		}
 	}
 
@@ -206,18 +198,6 @@ const commentTemplateValidationErrors = `
 {{- end}}
 `
 
-// Indent and quote each row to render paths and keys literally, including
-// backticks and embedded newlines.
-const commentTemplateAnnotationWarnings = `
-
-### ⚠️ Ignored annotations
-
-Git Sync ignores these annotations because their values must be strings.
-
-{{range .Files}}    {{printf "%q" .Path}}:{{range .Keys}} {{printf "%q" .}}{{end}}{{if .HiddenKeys}} … ({{.HiddenKeys}} more){{end}}
-{{end}}{{if .HiddenFiles}}
-{{.HiddenFiles}} more files with ignored annotations.{{end}}`
-
 // TODO(ferruvich): let's discuss this text with the team
 const commentTemplateMetadataNotice = `
 
@@ -308,8 +288,9 @@ func (f *fileChangeInfo) SafeFilePath() string {
 }
 
 // escapeMarkdown neutralizes characters that would break a Markdown table cell
-// or link text (pipes and brackets) and flattens newlines, so titles coming
-// from resource files render verbatim in the PR comment.
+// or link text (pipes and brackets), flattens newlines and keeps @ from
+// mentioning anyone, so text coming from resource files renders verbatim in the
+// PR comment.
 func escapeMarkdown(s string) string {
 	return markdownEscaper.Replace(s)
 }
@@ -320,6 +301,7 @@ var markdownEscaper = strings.NewReplacer(
 	"|", "\\|",
 	"[", "\\[",
 	"]", "\\]",
+	"@", "@\u200b", // a zero-width space after @ stops GitHub from creating a mention
 )
 
 func (f *fileChangeInfo) StatusIcon() string {
@@ -332,9 +314,7 @@ func (f *fileChangeInfo) StatusIcon() string {
 // TruncatedError returns a sanitized, length-limited error suitable for a
 // pullrequest comment.
 func (f *fileChangeInfo) TruncatedError() string {
-	msg := strings.ReplaceAll(f.Error, "\n", " ")
-	msg = strings.ReplaceAll(msg, "\r", "")
-	msg = strings.ReplaceAll(msg, "|", "\\|")
+	msg := escapeMarkdown(f.Error)
 	if len(msg) > maxErrorLength {
 		return msg[:maxErrorLength] + "…"
 	}
@@ -412,43 +392,6 @@ func (c *changeInfo) ValidationIssues() []fileChangeInfo {
 // ValidationIssues because the table is capped at maxDisplayedChanges.
 func (c *changeInfo) HiddenErrorCount() int {
 	return len(c.ErrorIndexes()) - len(c.ValidationIssues())
-}
-
-type fileAnnotationWarning struct {
-	Path       string
-	Keys       []string
-	HiddenKeys int
-}
-
-type annotationWarnings struct {
-	Files       []fileAnnotationWarning
-	HiddenFiles int
-}
-
-func (c *changeInfo) annotationWarnings() annotationWarnings {
-	const maxKeysPerFile = 5
-	var warnings annotationWarnings
-	for _, change := range c.Changes {
-		if change.Parsed == nil || change.Parsed.DryRunResponse == nil || len(change.Parsed.InvalidAnnotations) == 0 {
-			continue
-		}
-		if len(warnings.Files) == maxDisplayedChanges {
-			warnings.HiddenFiles++
-			continue
-		}
-
-		keys := change.Parsed.InvalidAnnotations
-		visible := min(len(keys), maxKeysPerFile)
-		row := fileAnnotationWarning{Path: change.Change.Path, Keys: make([]string, visible), HiddenKeys: len(keys) - visible}
-		for i, key := range keys[:visible] {
-			if len(key) > maxErrorLength {
-				key = strings.ToValidUTF8(key[:maxErrorLength], "") + "…"
-			}
-			row.Keys[i] = key
-		}
-		warnings.Files = append(warnings.Files, row)
-	}
-	return warnings
 }
 
 type countEntry struct {

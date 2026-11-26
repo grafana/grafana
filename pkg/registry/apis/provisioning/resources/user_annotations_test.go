@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -82,4 +83,27 @@ func TestFilterFileAnnotations(t *testing.T) {
 		"example.com/empty": nil,
 	}}}, obj)
 	require.Nil(t, filterFileAnnotations(map[string]any{"metadata": map[string]any{"name": "dash"}}))
+}
+
+func TestHasRemovedAnnotations(t *testing.T) {
+	withAnnotations := func(annotations map[string]any) *unstructured.Unstructured {
+		return &unstructured.Unstructured{Object: map[string]any{"metadata": map[string]any{"name": "x", "annotations": annotations}}}
+	}
+	kept := withAnnotations(map[string]any{"example.com/kept": "v"})
+	for _, tt := range []struct {
+		name     string
+		path     string
+		original map[string]any
+		want     bool
+	}{
+		{name: "user annotation removed from a dashboard", path: "dash.json", original: map[string]any{"example.com/owner": "team-a"}},
+		{name: "Grafana-owned annotation removed from a dashboard", path: "dash.json", original: map[string]any{"grafana.app/createdBy": "user:1"}, want: true},
+		{name: "user annotation removed from a folder manifest", path: "team/_folder.json", original: map[string]any{"example.com/owner": "team-a"}, want: true},
+		{name: "folder manifest with a non-string annotation", path: "team/_folder.json", original: map[string]any{"example.com/enabled": true, "example.com/owner": "team-a"}},
+		{name: "nothing removed", path: "team/_folder.json", original: map[string]any{"example.com/kept": "v"}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, HasRemovedAnnotations(tt.path, withAnnotations(tt.original), kept))
+		})
+	}
 }

@@ -2101,22 +2101,24 @@ func TestEvaluateFile_UserAnnotations(t *testing.T) {
 	const selection = "  annotations:\n    grafana.app/useCrossDashboardVariables: '{\"global\":\"all\"}'\n"
 	const reserved = "    grafana.app/alsoThisOne: ok\n"
 	const mixedAnnotations = selection + "    example.com/enabled: true\n"
+	const invalidAnnotationsError = "Git Sync ignores annotations whose values are not strings: example.com/enabled"
 	for _, tt := range []struct {
 		name          string
 		action        repository.FileAction
 		annotations   string
 		baseExtra     string
 		wantRemoved   bool
-		wantWarning   bool
+		nonString     bool
 		renderFailure bool
+		wantError     string
 	}{
-		{name: "screenshot fails after dropping an annotation", action: repository.FileActionCreated, annotations: mixedAnnotations, wantWarning: true, renderFailure: true},
-		{name: "ignored key still present in Git", action: repository.FileActionUpdated, annotations: mixedAnnotations + reserved, baseExtra: reserved, wantWarning: true},
+		{name: "screenshot error replaces the annotation error", action: repository.FileActionCreated, annotations: mixedAnnotations, nonString: true, renderFailure: true, wantError: "error rendering screenshot: renderer unavailable"},
+		{name: "ignored key still present in Git", action: repository.FileActionUpdated, annotations: mixedAnnotations + reserved, baseExtra: reserved, nonString: true, wantError: invalidAnnotationsError},
 		{name: "ignored key removed from Git", action: repository.FileActionUpdated, annotations: selection, baseExtra: reserved, wantRemoved: true},
 		{name: "intentional deletion", action: repository.FileActionUpdated},
 		{name: "valid selection", action: repository.FileActionCreated, annotations: selection},
-		{name: "selection retained alongside an unquoted boolean", action: repository.FileActionUpdated, annotations: mixedAnnotations, wantWarning: true},
-		{name: "new file with an unquoted boolean", action: repository.FileActionCreated, annotations: mixedAnnotations, wantWarning: true},
+		{name: "selection retained alongside an unquoted boolean", action: repository.FileActionUpdated, annotations: mixedAnnotations, nonString: true, wantError: invalidAnnotationsError},
+		{name: "new file with an unquoted boolean", action: repository.FileActionCreated, annotations: mixedAnnotations, nonString: true, wantError: invalidAnnotationsError},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			change := repository.VersionedFileChange{Action: tt.action, Path: "dashboard.yaml", Ref: "pr"}
@@ -2134,7 +2136,7 @@ func TestEvaluateFile_UserAnnotations(t *testing.T) {
 			require.NoError(t, err)
 			unstructured.RemoveNestedField(obj.Object, "metadata", "annotations", "grafana.app/alsoThisOne")
 			var invalid []string
-			if tt.wantWarning {
+			if tt.nonString {
 				unstructured.RemoveNestedField(obj.Object, "metadata", "annotations", "example.com/enabled")
 				invalid = []string{"example.com/enabled"}
 			}
@@ -2159,13 +2161,9 @@ func TestEvaluateFile_UserAnnotations(t *testing.T) {
 			commenter := NewCommenter(false, URLProvider{}).(*commenter)
 			body, err := commenter.generateComment(t.Context(), changeInfo{Changes: []fileChangeInfo{info}})
 			require.NoError(t, err)
-			if tt.wantWarning {
-				require.Contains(t, body, `    "dashboard.yaml": "example.com/enabled"`)
-			} else {
-				require.NotContains(t, body, "Ignored annotations")
-			}
-			if tt.renderFailure {
-				require.Contains(t, body, "renderer unavailable")
+			require.Equal(t, tt.wantError, info.Error)
+			if tt.wantError != "" {
+				require.Contains(t, body, "> ⚠️ **Validation failed:** "+tt.wantError)
 			} else {
 				require.NotContains(t, body, "Validation failed")
 			}
@@ -2176,30 +2174,41 @@ func TestEvaluateFile_UserAnnotations(t *testing.T) {
 func TestEvaluateFile_FolderManifestAnnotations(t *testing.T) {
 	const path = "team/_folder.json"
 	const manifest = `{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"team","annotations":%s},"spec":{"title":%q}}`
-	change := repository.VersionedFileChange{Action: repository.FileActionUpdated, Path: path, Ref: "pr"}
-	base := &repository.FileInfo{Path: path, Data: []byte(fmt.Sprintf(manifest, `{"example.com/owner":"team-a"}`, "Team"))}
-	head := &repository.FileInfo{Path: path, Ref: change.Ref, Data: []byte(fmt.Sprintf(manifest, `{"example.com/enabled":true}`, "Renamed team"))}
+	for _, tt := range []struct {
+		name        string
+		base, head  string
+		wantRemoved bool
+	}{
+		{name: "user annotation removed", base: `{"example.com/owner":"team-a"}`, head: `{"example.com/enabled":true}`, wantRemoved: true},
+		{name: "title-only edit with a non-string annotation", base: `{"example.com/enabled":true}`, head: `{"example.com/enabled":true}`},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			change := repository.VersionedFileChange{Action: repository.FileActionUpdated, Path: path, Ref: "pr"}
+			base := &repository.FileInfo{Path: path, Data: []byte(fmt.Sprintf(manifest, tt.base, "Team"))}
+			head := &repository.FileInfo{Path: path, Ref: change.Ref, Data: []byte(fmt.Sprintf(manifest, tt.head, "Renamed team"))}
 
-	reader := repository.NewMockReader(t)
-	reader.EXPECT().Read(mock.Anything, path, "").Return(base, nil)
-	reader.EXPECT().Read(mock.Anything, path, change.Ref).Return(head, nil)
-	reader.EXPECT().Config().Return(&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "repo", Namespace: "default"}})
+			reader := repository.NewMockReader(t)
+			reader.EXPECT().Read(mock.Anything, path, "").Return(base, nil)
+			reader.EXPECT().Read(mock.Anything, path, change.Ref).Return(head, nil)
+			reader.EXPECT().Config().Return(&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "repo", Namespace: "default"}})
 
-	client := dynamicfake.NewSimpleDynamicClient(runtime.NewScheme()).Resource(resources.FolderResource).Namespace("default")
-	clients := resources.NewMockResourceClients(t)
-	clients.EXPECT().ForKind(mock.Anything, resources.FolderKind).Return(client, resources.FolderResource, nil)
-	clients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources)
-	factory := resources.NewMockClientFactory(t)
-	factory.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
-	parser, err := resources.NewParserFactory(factory).GetParser(t.Context(), reader)
-	require.NoError(t, err)
+			client := dynamicfake.NewSimpleDynamicClient(runtime.NewScheme()).Resource(resources.FolderResource).Namespace("default")
+			clients := resources.NewMockResourceClients(t)
+			clients.EXPECT().ForKind(mock.Anything, resources.FolderKind).Return(client, resources.FolderResource, nil)
+			clients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources)
+			factory := resources.NewMockClientFactory(t)
+			factory.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
+			parser, err := resources.NewParserFactory(factory).GetParser(t.Context(), reader)
+			require.NoError(t, err)
 
-	info := (&evaluator{}).evaluateFile(t.Context(), reader, "http://host", "", 0, change, provisioning.PullRequestJobOptions{}, parser, false)
-	require.Empty(t, info.Error)
-	require.Equal(t, "Renamed team", info.Title)
-	require.NotNil(t, info.Parsed.DryRunResponse)
-	require.Empty(t, info.Parsed.InvalidAnnotations)
-	require.True(t, info.HasRemovedMetadata, "removing a user annotation from a folder still triggers the preview warning")
+			info := (&evaluator{}).evaluateFile(t.Context(), reader, "http://host", "", 0, change, provisioning.PullRequestJobOptions{}, parser, false)
+			require.Empty(t, info.Error)
+			require.Equal(t, "Renamed team", info.Title)
+			require.NotNil(t, info.Parsed.DryRunResponse)
+			require.Empty(t, info.Parsed.InvalidAnnotations)
+			require.Equal(t, tt.wantRemoved, info.HasRemovedMetadata)
+		})
+	}
 }
 
 func TestHasStrippedMetadata(t *testing.T) {
