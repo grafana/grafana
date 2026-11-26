@@ -47,7 +47,15 @@ const editorLoads: Array<() => Promise<unknown>> = [];
 function lazyEditor<P extends object>(load: () => Promise<ComponentType<P>>): ComponentType<P> {
   let loaded: ComponentType<P> | undefined;
   let loading: Promise<ComponentType<P>> | undefined;
-  const loadOnce = () => (loading ??= load().then((component) => (loaded = component)));
+  const loadOnce = () =>
+    (loading ??= load().then(
+      (component) => (loaded = component),
+      (error) => {
+        // Forgotten, so a load that failed, e.g. while preloading, is tried again by the next preload or render.
+        loading = undefined;
+        throw error;
+      }
+    ));
   editorLoads.push(loadOnce);
 
   const LazyComponent = lazy(() => loadOnce().then((component) => ({ default: component })));
