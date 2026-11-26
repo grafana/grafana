@@ -253,7 +253,7 @@ Editing a dashboard, including building one with Grafana Assistant, isn't availa
    | Edit dashboard controls | <p>Hover your cursor over any part of a dashboard control to display the actions tooltip, which has the following options: **Settings**, **Duplicate**, and **Delete**. Click **Settings** to access options in the sidebar. For some controls, the tooltip also includes an **Edit query** or **Edit values** option. |
    | Edit rows and tabs | Click a row or tab to access grouping settings in the sidebar. |
    | Change layouts         | Click a row, tab, or the **Dashboard options** icon to open the sidebar and access layout options. For more information, refer to [panel layout options](#panel-layouts).   |
-   | Undo or redo changes   | Click the **Undo** or **Redo** icon at the top of the dashboard, between the **Share** and **Save** buttons. For more information, refer to [Undo and redo changes](#undo-and-redo-changes). (Public preview) |
+   | Undo or redo changes   | Click the **Undo** or **Redo** icon at the top of the dashboard, next to the **Save** button. For more information, refer to [Undo and redo changes](#undo-and-redo-changes). |
 
 1. When you've finished making changes, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
@@ -298,7 +298,7 @@ When grouping isn't available for your selection, for example because the select
 ### Undo and redo changes
 
 While you're editing a dashboard, you can revert a change with the **Undo** option and reinstate it with **Redo**.
-The **Undo** and **Redo** icons are at the top of the dashboard, between the **Share** and **Save** buttons:
+The **Undo** and **Redo** icons are at the top of the dashboard, next to the **Save** button:
 
 - Click the **Undo** icon to revert the most recent change.
 - Click the **Redo** icon to reinstate the change you most recently reverted.
