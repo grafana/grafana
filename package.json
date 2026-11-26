@@ -178,7 +178,7 @@
     "crashme": "0.0.15",
     "css-loader": "7.1.5",
     "enquirer": "^2.4.1",
-    "esbuild": "0.28.1",
+    "esbuild": "0.28.2",
     "eslint": "9.32.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-import": "^2.31.0",
