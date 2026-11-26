@@ -312,6 +312,10 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 	if err := s.checkFolderContentsAccess(ctx, user, namespace, name, parentUID); err != nil {
 		return nil, false, err
 	}
+	// Every write below must reach the folder that was authorized, not one recreated under its name.
+	if options, err = pinUID(options, walked); err != nil {
+		return nil, false, err
+	}
 
 	deleteOptions := options
 	if writer, ok := s.Storage.(interface {
@@ -320,16 +324,16 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 		// Establish intent as the original caller before any cascade mutation, not
 		// just before the final folder delete. Keep the captured UID pinned below.
 		deleteOptions, err = writer.preparePendingDelete(identity.WithRequester(ctx, user), name, nil, options)
-		if apierrors.IsNotFound(err) && !requested {
-			return nil, false, nil
-		}
 		if err != nil {
+			if s.walkedGone(ctx, walked, err, requested) {
+				return nil, false, nil
+			}
 			return nil, false, err
 		}
 	}
 
 	if err := s.markTerminating(ctx, name, deleteOptions); err != nil {
-		if apierrors.IsNotFound(err) && !requested {
+		if s.walkedGone(ctx, walked, err, requested) {
 			return nil, false, nil
 		}
 		return nil, false, err
@@ -398,7 +402,7 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 	// TODO: Defer caller-identity execution to a follow-up; retain system execution for
 	// compatibility after the original caller's preflight authorization above.
 	obj, async, err := s.Storage.Delete(withCascadeFinalizerOnDelete(ctx, false), name, rest.ValidateAllObjectFunc, deleteOptions)
-	if apierrors.IsNotFound(err) && !requested {
+	if s.walkedGone(ctx, walked, err, requested) {
 		return obj, async, nil
 	}
 	return obj, async, err
@@ -638,6 +642,47 @@ func pinToCheckedVersion(options *metav1.DeleteOptions, f *foldersv1.Folder) (*m
 	uid, rv := f.GetUID(), f.GetResourceVersion()
 	pinned.Preconditions.UID, pinned.Preconditions.ResourceVersion = &uid, &rv
 	return pinned, nil
+}
+
+// pinUID returns options with the UID of f as a precondition, so a write fails with a conflict if
+// another folder took its name. A UID the caller set must already be f's, or it is a conflict as well.
+func pinUID(options *metav1.DeleteOptions, f *foldersv1.Folder) (*metav1.DeleteOptions, error) {
+	if options != nil && options.Preconditions != nil && options.Preconditions.UID != nil {
+		if err := checkDeletePreconditions(f, &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: options.Preconditions.UID}}); err != nil {
+			return nil, err
+		}
+	}
+	pinned := options.DeepCopy()
+	if pinned == nil {
+		pinned = &metav1.DeleteOptions{}
+	}
+	if pinned.Preconditions == nil {
+		pinned.Preconditions = &metav1.Preconditions{}
+	}
+	uid := f.GetUID()
+	pinned.Preconditions.UID = &uid
+	return pinned, nil
+}
+
+// walkedGone reports whether err means a descendant the walk started with is gone: it was not found, or
+// a UID conflict says another folder took its name. The requested folder keeps its error, and so does a
+// conflict that is not about the UID, which is told apart by reading the folder again.
+func (s *cascadeDeleteStorage) walkedGone(ctx context.Context, walked *foldersv1.Folder, err error, requested bool) bool {
+	if requested || err == nil {
+		return false
+	}
+	if apierrors.IsNotFound(err) {
+		return true
+	}
+	if !apierrors.IsConflict(err) {
+		return false
+	}
+	obj, getErr := s.Get(ctx, walked.Name, &metav1.GetOptions{})
+	if apierrors.IsNotFound(getErr) {
+		return true
+	}
+	cur, ok := obj.(*foldersv1.Folder)
+	return getErr == nil && ok && cur.UID != walked.UID
 }
 
 // isCascadeSubfolderDelete reports whether a service is deleting a subfolder of a terminating

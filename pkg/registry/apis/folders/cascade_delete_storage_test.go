@@ -1050,21 +1050,97 @@ func TestCascadeDelete_StampChecksPreparedIdentity(t *testing.T) {
 				cascade, _ := newDashboardCascade(wrapped, searcher)
 				cascade.contentsDeleter = contents
 				_, _, err := cascade.Delete(ctxWithNamespace(), "root", nil, forceDelete())
-				require.True(t, apierrors.IsConflict(err), "%v", err)
 				require.Equal(t, replacement, base.existing[target])
 				require.NotContains(t, base.stamped, target)
-				require.Empty(t, base.deleted)
-				require.Empty(t, contents.folders)
 				require.Contains(t, recorded, string(original.UID), "old intent may remain")
 				require.NotContains(t, recorded, "replacement-uid")
 				if target == "root" {
+					require.True(t, apierrors.IsConflict(err), "%v", err)
+					require.Empty(t, base.deleted)
+					require.Empty(t, contents.folders)
 					require.Empty(t, searcher.requests)
 				} else {
-					require.Len(t, searcher.requests, 1, "only the authorized root may enumerate children")
+					// The replaced descendant is gone as far as the walk goes: it is left alone and the root finishes.
+					require.NoError(t, err)
+					require.Equal(t, []string{"root"}, base.deleted)
+					require.Equal(t, []string{"root"}, contents.folders)
+					for _, req := range searcher.requests {
+						require.Equal(t, []string{"root"}, folderFilterValues(req), "only the authorized root may enumerate children")
+					}
 				}
 			})
 		}
 	}
+}
+
+// conflictOnUpdateStorage fails the update of one folder with a conflict that is not about its UID.
+type conflictOnUpdateStorage struct {
+	*fakeFolderStorage
+	name string
+}
+
+func (s *conflictOnUpdateStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, validate rest.ValidateObjectFunc, validateUpdate rest.ValidateObjectUpdateFunc, force bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	if name == s.name {
+		return nil, false, apierrors.NewConflict(foldersv1.FolderResourceInfo.GroupResource(), name, errors.New("a concurrent write"))
+	}
+	return s.fakeFolderStorage.Update(ctx, name, objInfo, validate, validateUpdate, force, options)
+}
+
+func TestCascadeDelete_DescendantReplacedDuringTheWalk(t *testing.T) {
+	// walk is a root with a descendant, deleted synchronously, and the folder that takes the descendant's name.
+	walk := func(t *testing.T) (*fakeFolderStorage, *cascadeDeleteStorage, *foldersv1.Folder) {
+		t.Helper()
+		setCascadeToggles(t, true, false)
+		root, child := newFolder("root"), newFolder("child")
+		root.UID, child.UID = "root-uid", "child-uid"
+		store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": root, "child": child}}
+		s, _ := newDashboardCascade(store, &fakeCascadeSearcher{childrenByParent: map[string][]string{"root": {"child"}}})
+		replacement := newFolder("child")
+		replacement.UID = "recreated-uid"
+		return store, s, replacement
+	}
+	// leftAlone checks that the walk finished the root without touching the folder that took the name.
+	leftAlone := func(t *testing.T, store *fakeFolderStorage, replacement *foldersv1.Folder, err error) {
+		t.Helper()
+		require.NoError(t, err, "a replaced descendant is gone as far as the walk goes")
+		require.Same(t, replacement, store.existing["child"], "the new folder is neither labelled terminating nor deleted")
+		require.Equal(t, []string{"root"}, store.deleted)
+	}
+
+	t.Run("before it is marked terminating", func(t *testing.T) {
+		store, s, replacement := walk(t)
+		store.beforeUpdate = func(name string) {
+			if name == "child" {
+				store.existing["child"] = replacement
+			}
+		}
+
+		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+		leftAlone(t, store, replacement, err)
+	})
+
+	t.Run("before the final delete", func(t *testing.T) {
+		store, s, replacement := walk(t)
+		var swapped bool
+		store.beforeDelete = func() {
+			if !swapped {
+				swapped = true
+				store.existing["child"] = replacement
+			}
+		}
+
+		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+		leftAlone(t, store, replacement, err)
+	})
+
+	t.Run("a conflict that is not about the UID is returned", func(t *testing.T) {
+		store, s, _ := walk(t)
+		s.Storage = &conflictOnUpdateStorage{fakeFolderStorage: store, name: "child"}
+
+		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+		require.True(t, apierrors.IsConflict(err), "got %v", err)
+		require.Empty(t, store.deleted, "the descendant is still there, so the root is not deleted")
+	})
 }
 
 func TestCascadeDelete_RootResourceVersionAllowsOwnStamp(t *testing.T) {
