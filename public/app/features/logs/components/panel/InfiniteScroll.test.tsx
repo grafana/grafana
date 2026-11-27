@@ -7,7 +7,7 @@ import { LogsSortOrder } from '@grafana/schema';
 import { ScrollDirection, SCROLLING_THRESHOLD } from '../infiniteScrollUtils';
 import { createLogLine } from '../mocks/logRow';
 
-import { InfiniteScroll, type InfiniteScrollMode, type Props } from './InfiniteScroll';
+import { clampIndicesToLogs, InfiniteScroll, type InfiniteScrollMode, type Props } from './InfiniteScroll';
 import { LogListContextProvider } from './LogListContext';
 import { defaultProps as logListContextDefaultProps } from './__mocks__/LogListContext';
 import { type LogListModel } from './processing';
@@ -726,6 +726,54 @@ describe('InfiniteScroll consecutive loads (regression #129033)', () => {
       rerender(ui(makeLogs(3), element, loadMoreMock, LoadingState.Done));
     });
     expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
+  });
+});
+
+describe('clampIndicesToLogs', () => {
+  const makeLogs = (count: number) => Array.from({ length: count }, (_, i) => createLogLine({ uid: `${i}` }));
+
+  test('leaves in-bounds indices untouched', () => {
+    expect(
+      clampIndicesToLogs(
+        { visibleStartIndex: 1, visibleStopIndex: 2, overscanStartIndex: 0, overscanStopIndex: 2 },
+        makeLogs(5)
+      )
+    ).toEqual({ visibleStartIndex: 1, visibleStopIndex: 2, overscanStartIndex: 0, overscanStopIndex: 2 });
+  });
+
+  test('clamps visibleStopIndex to the last real log when it lands on the loader row', () => {
+    const clamped = clampIndicesToLogs(
+      { visibleStartIndex: 1, visibleStopIndex: 3, overscanStartIndex: 0, overscanStopIndex: 3 },
+      makeLogs(3)
+    );
+    expect(clamped?.visibleStopIndex).toBe(2);
+  });
+
+  test('returns undefined when the loader row is the only item in view', () => {
+    // Previously this landed on an inverted range (startRowIndex > endRowIndex) because only
+    // visibleStopIndex was clamped - now neither end finds a real row, so there's nothing to report.
+    const clamped = clampIndicesToLogs(
+      { visibleStartIndex: 3, visibleStopIndex: 3, overscanStartIndex: 3, overscanStopIndex: 3 },
+      makeLogs(3)
+    );
+    expect(clamped).toBeUndefined();
+  });
+
+  test('walks inward across multiple out-of-bounds indices, not just one', () => {
+    const clamped = clampIndicesToLogs(
+      { visibleStartIndex: 1, visibleStopIndex: 4, overscanStartIndex: 0, overscanStopIndex: 4 },
+      makeLogs(2)
+    );
+    expect(clamped?.visibleStartIndex).toBe(1);
+    expect(clamped?.visibleStopIndex).toBe(1);
+  });
+
+  test('returns undefined when no real log row is in the reported range at all', () => {
+    const clamped = clampIndicesToLogs(
+      { visibleStartIndex: 3, visibleStopIndex: 3, overscanStartIndex: 3, overscanStopIndex: 3 },
+      makeLogs(0)
+    );
+    expect(clamped).toBeUndefined();
   });
 });
 

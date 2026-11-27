@@ -342,13 +342,10 @@ export const InfiniteScroll = ({
       // This only triggers if the indices are different, so we cache them for separate calls to onRenderedLogsChanged
       cachedIndicesRef.current = props;
       if (onRenderedLogsChanged) {
-        onRenderedLogsChanged(
-          {
-            ...props,
-            visibleStopIndex: Math.min(props.visibleStopIndex, logs.length - 1),
-          },
-          logs
-        );
+        const clamped = clampIndicesToLogs(props, logs);
+        if (clamped) {
+          onRenderedLogsChanged(clamped, logs);
+        }
       }
 
       if (!scrollElement) {
@@ -384,13 +381,10 @@ export const InfiniteScroll = ({
   useEffect(() => {
     if (cachedIndicesRef.current && onRenderedLogsChanged) {
       // Cached indices are needed when the indices don't change but the logs do
-      onRenderedLogsChanged(
-        {
-          ...cachedIndicesRef.current,
-          visibleStopIndex: Math.min(cachedIndicesRef.current.visibleStopIndex, logs.length - 1),
-        },
-        logs
-      );
+      const clamped = clampIndicesToLogs(cachedIndicesRef.current, logs);
+      if (clamped) {
+        onRenderedLogsChanged(clamped, logs);
+      }
     }
   }, [logs, onRenderedLogsChanged]);
 
@@ -425,6 +419,27 @@ export const InfiniteScroll = ({
     </>
   );
 };
+
+/**
+ * Narrows reported indices down to the first and last actual log indices
+ * (some post-logs indices are components appended to the window, like the loading message).
+ */
+export function clampIndicesToLogs(
+  indices: ListOnItemsRenderedProps,
+  logs: LogListModel[]
+): ListOnItemsRenderedProps | undefined {
+  if (indices.visibleStartIndex >= logs.length) {
+    return undefined;
+  }
+  let visibleStopIndex = indices.visibleStopIndex;
+  while (visibleStopIndex > indices.visibleStartIndex && !logs[visibleStopIndex]) {
+    visibleStopIndex--;
+  }
+  return {
+    ...indices,
+    visibleStopIndex,
+  };
+}
 
 function getMessageFromInfiniteLoaderState(
   state: InfiniteLoaderState,
