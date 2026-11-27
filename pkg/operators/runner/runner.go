@@ -96,16 +96,20 @@ func (op Operator) Run(ctx context.Context, deps server.OperatorDependencies) (r
 		Tracer:     deps.Tracer,
 		Clients:    NewClients(deps.Config),
 	}
+	natsUsable := !op.NoNATS
 	if deps.Config != nil {
 		if err := validateExternalNATS(deps.Config); err != nil && !op.NoNATS {
 			if op.RequireExternalNATS {
 				return fmt.Errorf("setup %s: %w", op.Name, err)
 			}
-			rt.Logger.Warn("external NATS config is incomplete; NATS subscriber startup may fail", "operator", op.Name, "error", err)
+			// A subscriber that cannot connect would fail startup, so run without
+			// one and rely on periodic re-lists instead.
+			natsUsable = false
+			rt.Logger.Warn("NATS deltas unavailable; falling back to periodic re-lists", "operator", op.Name, "error", err)
 		}
-		rt.Options = parseOptions(deps.Config, op.Defaults)
+		rt.Options = parseOptions(deps.Config, op.Defaults, natsUsable)
 	}
-	if !op.NoNATS {
+	if natsUsable {
 		rt.Subscriber = NewSubscriber(deps.Config, deps.Registerer)
 	}
 	rt.Logger.Info("starting operator", "operator", op.Name)

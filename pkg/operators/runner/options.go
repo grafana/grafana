@@ -24,9 +24,9 @@ type Options struct {
 	DrainTimeout time.Duration
 }
 
-func parseOptions(cfg *setting.Cfg, defaults Options) Options {
+func parseOptions(cfg *setting.Cfg, defaults Options, natsUsable bool) Options {
 	resync := defaults.Resync
-	if cfg.NATS.Enabled && defaults.NATSResync > 0 {
+	if natsUsable && cfg.NATS.Enabled && defaults.NATSResync > 0 {
 		resync = defaults.NATSResync
 	}
 	sec := cfg.SectionWithEnvOverrides("operator")
