@@ -22,7 +22,8 @@ type GroupDiscoverySubresource = {
 type GroupDiscoveryVersion = {
   version: string;
   freshness: 'Current' | string;
-  resources: GroupDiscoveryResource[];
+  // The apiserver omits empty lists (json `omitempty`), so versions without resources have no field
+  resources?: GroupDiscoveryResource[];
 };
 
 type GroupDiscoveryItem = {
@@ -53,7 +54,7 @@ export async function getAPIGroupDiscoveryList(): Promise<APIGroupDiscoveryList>
           // Fill in the group+version before returning
           for (let api of response.data.items) {
             for (let version of api.versions) {
-              for (let resource of version.resources) {
+              for (let resource of version.resources ?? []) {
                 resource.responseKind.group = api.metadata.name;
                 resource.responseKind.version = version.version;
                 if (resource.subresources) {
@@ -103,7 +104,7 @@ export function discoveryResources(apis: APIGroupDiscoveryList): GroupDiscoveryR
   const resources: GroupDiscoveryResource[] = [];
   for (let api of apis.items) {
     for (let version of api.versions) {
-      for (let resource of version.resources) {
+      for (let resource of version.resources ?? []) {
         resources.push(resource);
       }
     }

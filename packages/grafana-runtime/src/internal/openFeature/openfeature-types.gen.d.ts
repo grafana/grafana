@@ -114,6 +114,7 @@ declare module "@openfeature/core" {
     | "alertingImportAlertmanagerAPI"
     | "preferLibraryPanelTitle"
     | "otelLogsFormatting"
+    | "adaptivelogs.enableTimeMachine"
     | "dashboardLevelTimeMacros"
     | "favoriteDatasources"
     | "grafana.newTextPanel"
@@ -138,6 +139,7 @@ declare module "@openfeature/core" {
     | "queryEditorNext"
     | "queryeditor.coauthoringUi"
     | "kubernetesTeamsApi"
+    | "iam.useKubernetesUsersReadApi"
     | "managedPluginsV2"
     | "analyticsFramework"
     | "grafana.scenesFlickeringFix"
@@ -218,7 +220,8 @@ declare module "@openfeature/core" {
     | "datasources.gatewayRateLimits"
     | "plugins.disableMTPluginsFallback"
     | "grafana.logsInfiniteScrollTop"
-    | "grafana.dashboardQuestions";
+    | "grafana.dashboardQuestions"
+    | "grafana.bootdataAnalytics";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

@@ -3353,6 +3353,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Errores al cargar las reglas",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Error al cargar la configuración de las reglas de Grafana:",
       "failed-to-load-grafana-rules-state": "Error al cargar el estado de las reglas de Grafana:",
       "failed-to-load-rules-config": "Error al cargar la configuración de las reglas desde <2>{{dataSource}}</2>",
@@ -6613,6 +6614,10 @@
       "paused": "El administrador ha pausado este dashboard",
       "try-again-later": "Inténtalo de nuevo más tarde"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "¿Seguro que quieres eliminar este panel?"
@@ -8069,6 +8074,9 @@
       "title-delete-all-transformations": "¿Eliminar todas las transformaciones?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_one": "",
@@ -10516,6 +10524,25 @@
         "otherGroup": "Otros"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_one": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -11034,6 +11061,11 @@
         "placement-options": {
           "label-bottom": "Abajo",
           "label-right": "Derecha"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_one": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11129,6 +11161,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "Un clic"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "Añadir enlace",
@@ -13785,6 +13820,7 @@
       "open": "Menú principal",
       "pin-error": "Error al actualizar los elementos del menú anclados",
       "pinned-list-label": "Elementos anclados",
+      "section-resize": "",
       "undock": "Desanclar el menú"
     },
     "megamenu-item": {
@@ -13983,12 +14019,32 @@
         "undo-label": "Edición del asistente"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "Cancelar",
       "confirm-discard": "Descartar",
       "confirm-keep": "Mantener",
       "confirm-text": "¿Quieres conservar los cambios que has realizado mientras veías este bloc de notas?",
       "confirm-title": "Cambios del panel sin guardar"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17295,6 +17351,13 @@
       "wide-list": "Lista ancha",
       "wide-list-desc": "Horizontal, nombre y valor, minigráfico de área, un solo color"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "Estadística",
       "stat-color-background": "Estadística: color de fondo",
@@ -17842,6 +17905,10 @@
       "time-zone-option": "Huso horario",
       "time-zone-selection": "Selección del huso horario"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "Aplicar intervalo de tiempo",
       "default-error": "Introduce una fecha ({{dateExample}}) o una hora relativa ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -17859,6 +17926,12 @@
       "to": "hasta",
       "zoom-out-button": "Reducir el intervalo de tiempo",
       "zoom-out-tooltip-new": "Alejar rango de tiempo <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "Aplicar intervalo de tiempo",

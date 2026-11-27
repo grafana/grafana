@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import yaml from 'js-yaml';
+import { dump } from 'js-yaml';
 import { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -34,7 +34,7 @@ export function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode
   }, [refreshDashboardJson, isSharingExternally, exportFormat]);
 
   const stringifiedDashboardJson = JSON.stringify(dashboardJson.value?.json, null, 2);
-  const stringifiedDashboardYAML = yaml.dump(dashboardJson.value?.json, {
+  const stringifiedDashboardYAML = dump(dashboardJson.value?.json, {
     skipInvalid: true,
   });
   const stringifiedDashboard = isViewingYAML ? stringifiedDashboardYAML : stringifiedDashboardJson;

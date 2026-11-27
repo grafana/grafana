@@ -19,6 +19,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -32,12 +33,12 @@ func TestProvideJobQueueService(t *testing.T) {
 		cfg.AppURL = "https://grafana.internal/"
 		cfg.ProvisioningPublicRootURL = "https://grafana.example.com/"
 
-		s := ProvideJobQueueService(cfg, &APIBuilder{}, nil, nil)
+		s := ProvideJobQueueService(cfg, &APIBuilder{}, nil, nil, nil, nil, nil)
 
 		assert.Equal(t, 45*time.Second, s.cfg.JobInterval)
 		assert.Equal(t, int64(1024), s.cfg.MaxFileSize)
 		assert.Equal(t, 5*time.Second, s.cfg.SyncResourceTimeout)
-		assert.Equal(t, jobClaimExpiry/3, s.cfg.LeaseRenewalInterval)
+		assert.Equal(t, jobs.ClaimExpiry/3, s.cfg.LeaseRenewalInterval)
 		assert.True(t, s.cfg.AllowImageRendering)
 		assert.Equal(t, "https://grafana.internal/", s.pullRequestURLs.Internal(t.Context(), "ns"))
 		assert.Equal(t, "https://grafana.example.com/", s.pullRequestURLs.Public(t.Context(), "ns"))
@@ -47,7 +48,7 @@ func TestProvideJobQueueService(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.ProvisioningJobPollInterval = 0
 
-		s := ProvideJobQueueService(cfg, &APIBuilder{}, nil, nil)
+		s := ProvideJobQueueService(cfg, &APIBuilder{}, nil, nil, nil, nil, nil)
 
 		assert.Equal(t, setting.ProvisioningJobPollIntervalDefault, s.cfg.JobInterval)
 	})
@@ -55,17 +56,18 @@ func TestProvideJobQueueService(t *testing.T) {
 
 func TestJobQueueService_IsDisabled(t *testing.T) {
 	tests := []struct {
-		name     string
-		builder  *APIBuilder
-		disabled bool
+		name                string
+		builder             *APIBuilder
+		controllersDisabled bool
+		disabled            bool
 	}{
 		{name: "provisioning disabled", builder: nil, disabled: true},
-		{name: "controllers disabled", builder: &APIBuilder{onlyApiServer: true}, disabled: true},
+		{name: "controllers disabled", builder: &APIBuilder{}, controllersDisabled: true, disabled: true},
 		{name: "controllers enabled", builder: &APIBuilder{}, disabled: false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			svc := ProvideJobQueueService(setting.NewCfg(), tc.builder, nil, nil)
+			svc := ProvideJobQueueService(&setting.Cfg{DisableControllers: tc.controllersDisabled}, tc.builder, nil, nil, nil, nil, nil)
 			assert.Equal(t, tc.disabled, svc.IsDisabled())
 			// The background service manager looks up this name in its
 			// dependency map; any other name would start it after Core.
@@ -113,12 +115,8 @@ func TestJobQueueService_Run(t *testing.T) {
 
 func newTestJobQueueService(t *testing.T) (*JobQueueService, *APIBuilder) {
 	t.Helper()
-	builder := &APIBuilder{
-		tracer:        tracing.NewNoopTracerService(),
-		registry:      prometheus.NewPedanticRegistry(),
-		loopbackReady: make(chan struct{}),
-	}
-	return ProvideJobQueueService(setting.NewCfg(), builder, nil, nil), builder
+	builder := &APIBuilder{loopbackReady: make(chan struct{})}
+	return ProvideJobQueueService(setting.NewCfg(), builder, nil, prometheus.NewPedanticRegistry(), tracing.NewNoopTracerService(), nil, nil), builder
 }
 
 // runJobQueueService starts Run in the background and returns its result

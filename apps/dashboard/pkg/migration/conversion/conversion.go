@@ -229,7 +229,7 @@ func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSo
 		return err
 	}
 
-	return nil
+	return registerVariableConversions(s)
 }
 
 func NewDashboardObject(version string) (runtime.Object, error) {

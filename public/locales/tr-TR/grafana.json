@@ -3353,6 +3353,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Kurallar yüklenirken hata oluştu",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Grafana kural yapılandırması yüklenemedi:",
       "failed-to-load-grafana-rules-state": "Grafana kural durumu yüklenemedi:",
       "failed-to-load-rules-config": "<2>{{dataSource}}</2> kaynağından kural yapılandırması yüklenemedi",
@@ -6613,6 +6614,10 @@
       "paused": "Bu pano yönetici tarafından duraklatıldı",
       "try-again-later": "Daha sonra tekrar deneyin"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Bu paneli kaldırmak istediğinizden emin misiniz?"
@@ -8069,6 +8074,9 @@
       "title-delete-all-transformations": "Tüm dönüşümler silinsin mi?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_one": "",
@@ -10516,6 +10524,25 @@
         "otherGroup": "Diğerleri"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_one": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -11034,6 +11061,11 @@
         "placement-options": {
           "label-bottom": "Alt",
           "label-right": "Sağ"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_one": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11129,6 +11161,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "Tek tıklama"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "Bağlantı ekle",
@@ -13785,6 +13820,7 @@
       "open": "Ana menü",
       "pin-error": "Sabitlenmiş menü ögeleri güncellenemedi",
       "pinned-list-label": "Sabitlenmiş ögeler",
+      "section-resize": "",
       "undock": "Menünün sabitlemesini kaldır"
     },
     "megamenu-item": {
@@ -13983,12 +14019,32 @@
         "undo-label": "Asistan düzenlemesi"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "İptal et",
       "confirm-discard": "Vazgeç",
       "confirm-keep": "Koru",
       "confirm-text": "Bu not defterini görüntülerken yaptığınız değişiklikleri korumak istiyor musunuz?",
       "confirm-title": "Kaydedilmemiş panel değişiklikleri"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17295,6 +17351,13 @@
       "wide-list": "Geniş liste",
       "wide-list-desc": "Yatay, ad ve değer, alan mini grafiği, tek renk"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "İstatistik",
       "stat-color-background": "İstatistik - renkli arka plan",
@@ -17842,6 +17905,10 @@
       "time-zone-option": "Zaman dilimi",
       "time-zone-selection": "Zaman dilimi seçimi"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "Zaman aralığını uygula",
       "default-error": "Bir tarih ({{dateExample}}) veya göreli zaman ({{relativeTimeExample1}}, {{relativeTimeExample2}}) girin",
@@ -17859,6 +17926,12 @@
       "to": "bitiş",
       "zoom-out-button": "Zaman aralığını büyüt",
       "zoom-out-tooltip-new": "Zaman aralığını küçült <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "Zaman aralığını uygula",

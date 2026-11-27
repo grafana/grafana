@@ -266,6 +266,11 @@ export { InputControl } from './components/InputControl';
 export { Button, type ButtonVariant, type ButtonProps } from './components/Button/Button';
 export { clearButtonStyles } from './components/Button/StyledButton.styles';
 export { LinkButton } from './components/LinkButton/LinkButton';
+export {
+  GradientButton,
+  type GradientButtonProps,
+  type GradientButtonFill,
+} from './components/GradientButton/GradientButton';
 export { ButtonGroup } from './components/Button/ButtonGroup';
 export { InlineButton, type InlineButtonProps } from './components/Button/InlineButton';
 export { ToolbarButton } from './components/ToolbarButton/ToolbarButton';

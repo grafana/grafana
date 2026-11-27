@@ -1383,7 +1383,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListReques
 	if req.NextPageToken != "" {
 		continueToken, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
-			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
+			return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid continue token: %v", err))
 		}
 		if !continueTokenMatchesListRequest(continueToken, req) {
 			return 0, apierrors.NewBadRequest("continue token scope does not match request")
@@ -1556,7 +1556,7 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 	if req.NextPageToken != "" {
 		continueToken, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
-			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
+			return 0, apierrors.NewBadRequest(fmt.Sprintf("invalid continue token: %v", err))
 		}
 		listReq.StartRV = continueToken.ResourceVersion
 		listReq.SortAscending = continueToken.SortAscending

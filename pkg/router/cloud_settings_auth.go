@@ -11,9 +11,10 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
 )
 
-const accessTokenHeader = "X-Access-Token"
+const accessTokenHeader = clientmiddleware.AccessTokenHeaderName
 
 // newV2AuthenticationMiddleware authenticates v2 calls to a plugin the way
 // v3 calls are (see v3.WithAuthentication): each request carries an access
@@ -21,6 +22,11 @@ const accessTokenHeader = "X-Access-Token"
 // the request's namespace. Missing caller credentials fail the request, except
 // for Grafana's own service identity, which uses the service token. A nil
 // exchanger leaves requests unauthenticated, as for v3.
+//
+// Both the cloud loader and the local (single-tenant) loader use it. In the
+// local loader it wraps Grafana's plugin client, whose core middleware then
+// keeps the token as the request's only identity (see
+// clientmiddleware.WithExchangedAccessToken).
 func newV2AuthenticationMiddleware(pluginID string, exchanger authnlib.TokenExchanger) backend.HandlerMiddleware {
 	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		if exchanger == nil {
@@ -42,7 +48,8 @@ type v2AuthenticationHandler struct {
 
 func (h *v2AuthenticationHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if req != nil {
-		if err := h.authenticate(ctx, req.PluginContext.Namespace, req); err != nil {
+		var err error
+		if ctx, err = h.authenticate(ctx, req.PluginContext.Namespace, req); err != nil {
 			return nil, err
 		}
 	}
@@ -51,7 +58,8 @@ func (h *v2AuthenticationHandler) CheckHealth(ctx context.Context, req *backend.
 
 func (h *v2AuthenticationHandler) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if req != nil {
-		if err := h.authenticate(ctx, req.PluginContext.Namespace, req); err != nil {
+		var err error
+		if ctx, err = h.authenticate(ctx, req.PluginContext.Namespace, req); err != nil {
 			return err
 		}
 	}
@@ -68,11 +76,15 @@ func audiences(ctx context.Context, pluginID string) []string {
 }
 
 // authenticate sets the exchanged token on the request's headers, replacing any
-// the caller sent.
-func (h *v2AuthenticationHandler) authenticate(ctx context.Context, namespace string, req backend.ForwardHTTPHeaders) error {
+// the caller sent. The returned context is marked (see
+// clientmiddleware.WithExchangedAccessToken), so the plugin client middleware
+// below keeps the token as the request's only identity: in single-tenant
+// Grafana, the client's ForwardID middleware would otherwise also send the
+// caller's ID token.
+func (h *v2AuthenticationHandler) authenticate(ctx context.Context, namespace string, req backend.ForwardHTTPHeaders) (context.Context, error) {
 	caller, ok := authlib.AuthInfoFrom(ctx)
 	if !ok || caller == nil {
-		return errors.New("plugin token exchange: caller auth info is required")
+		return ctx, errors.New("plugin token exchange: caller auth info is required")
 	}
 	// An empty subject token requests Grafana's own service token.
 	subjectToken := ""
@@ -83,16 +95,16 @@ func (h *v2AuthenticationHandler) authenticate(ctx context.Context, namespace st
 			subjectToken = caller.GetIDToken()
 		}
 		if subjectToken == "" {
-			return errors.New("plugin token exchange: caller access or ID token is required")
+			return ctx, errors.New("plugin token exchange: caller access or ID token is required")
 		}
 	}
 	if caller.GetNamespace() == "" {
-		return errors.New("plugin token exchange: caller namespace is required")
+		return ctx, errors.New("plugin token exchange: caller namespace is required")
 	}
 	if namespace == "" {
 		namespace = caller.GetNamespace()
 	} else if !authlib.NamespaceMatches(caller.GetNamespace(), namespace) {
-		return errors.New("plugin token exchange: caller namespace does not cover the requested namespace")
+		return ctx, errors.New("plugin token exchange: caller namespace does not cover the requested namespace")
 	}
 	rsp, err := h.exchanger.Exchange(ctx, authnlib.TokenExchangeRequest{
 		Namespace:    namespace,
@@ -100,12 +112,12 @@ func (h *v2AuthenticationHandler) authenticate(ctx context.Context, namespace st
 		SubjectToken: subjectToken,
 	})
 	if err != nil {
-		return fmt.Errorf("cloud plugin token exchange: %w", err)
+		return ctx, fmt.Errorf("plugin token exchange: %w", err)
 	}
 	if rsp == nil || rsp.Token == "" {
-		return errors.New("cloud plugin token exchange: empty access token")
+		return ctx, errors.New("plugin token exchange: empty access token")
 	}
 	req.SetHTTPHeader(accessTokenHeader, rsp.Token)
 
-	return nil
+	return clientmiddleware.WithExchangedAccessToken(ctx), nil
 }

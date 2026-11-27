@@ -80,9 +80,24 @@ type FilterPredicate struct {
 	// Operator is "In", "NotIn" or "All" in v1. "In" matches any of the values,
 	// "NotIn" excludes all of them, and "All" requires the field to hold every
 	// value, which only a field holding a list of values can do.
-	Operator string   `json:"operator"`
-	Values   []string `json:"values"`
+	Operator FilterOperator `json:"operator"`
+	Values   []string       `json:"values"`
 }
+
+// FilterOperator is how a FilterPredicate compares a field with its values.
+//
+// +enum
+type FilterOperator string
+
+const (
+	// FilterOperatorIn keeps the resources whose field matches any of the values.
+	FilterOperatorIn FilterOperator = "In"
+	// FilterOperatorNotIn keeps the resources whose field matches none of them.
+	FilterOperatorNotIn FilterOperator = "NotIn"
+	// FilterOperatorAll requires the resources whose field holds every one of
+	// the values, which only a field holding a list of values can do.
+	FilterOperatorAll FilterOperator = "All"
+)
 
 // RangePredicate compares a numeric field against one or two bounds. At least
 // one bound is required, gt cannot be combined with gte, and lt cannot be

@@ -2,6 +2,7 @@ package migrate
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,7 +43,7 @@ func TestMigrationWorker_IsSupported(t *testing.T) {
 	}
 	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
 
-	worker := NewMigrationWorker(nil)
+	worker := NewMigrationWorker(nil, nil, nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -55,7 +56,7 @@ func TestMigrationWorker_IsSupported(t *testing.T) {
 func TestMigrationWorker_ProcessNotReaderWriter(t *testing.T) {
 	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
 
-	worker := NewMigrationWorker(NewMockMigrator(t))
+	worker := NewMigrationWorker(nil, nil, nil)
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
@@ -74,7 +75,7 @@ func TestMigrationWorker_ProcessNotReaderWriter(t *testing.T) {
 func TestMigrationWorker_Process(t *testing.T) {
 	tests := []struct {
 		name          string
-		setupMocks    func(*MockMigrator, *jobs.MockJobProgressRecorder)
+		setupMocks    func(*jobs.MockWorker, *jobs.MockJobProgressRecorder)
 		setupRepo     func(*repository.MockRepository)
 		job           provisioning.Job
 		expectedError string
@@ -87,7 +88,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 					Migrate: nil,
 				},
 			},
-			setupMocks: func(um *MockMigrator, pr *jobs.MockJobProgressRecorder) {
+			setupMocks: func(ew *jobs.MockWorker, pr *jobs.MockJobProgressRecorder) {
 			},
 			setupRepo: func(repo *repository.MockRepository) {
 				// No Config() call expected since we fail before that
@@ -95,50 +96,36 @@ func TestMigrationWorker_Process(t *testing.T) {
 			expectedError: "missing migrate settings",
 		},
 		{
-			name: "should use unified storage migrator for instance-type repositories",
+			name: "should run the migration, starting with the export",
 			job: provisioning.Job{
 				Spec: provisioning.JobSpec{
 					Action:  provisioning.JobActionMigrate,
 					Migrate: &provisioning.MigrateJobOptions{},
 				},
 			},
-			setupMocks: func(um *MockMigrator, pr *jobs.MockJobProgressRecorder) {
+			setupMocks: func(ew *jobs.MockWorker, pr *jobs.MockJobProgressRecorder) {
 				pr.On("SetTotal", mock.Anything, 10).Return()
-				um.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				pr.On("SetMessage", mock.Anything, "export resources").Return()
+				pr.On("StrictMaxErrors", 1).Return()
+				ew.On("Process", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("export failed"))
 			},
 			setupRepo: func(repo *repository.MockRepository) {
 				repo.On("Config").Return(&provisioning.Repository{})
 			},
-		},
-		{
-			name: "should allow migration for folder-type repositories",
-			job: provisioning.Job{
-				Spec: provisioning.JobSpec{
-					Action:  provisioning.JobActionMigrate,
-					Migrate: &provisioning.MigrateJobOptions{},
-				},
-			},
-			setupMocks: func(um *MockMigrator, pr *jobs.MockJobProgressRecorder) {
-				pr.On("SetTotal", mock.Anything, 10).Return()
-				um.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			},
-			setupRepo: func(repo *repository.MockRepository) {
-				repo.On("Config").Return(&provisioning.Repository{})
-			},
-			expectedError: "",
+			expectedError: "export resources: export failed",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			unifiedMigrator := NewMockMigrator(t)
+			exportWorker := jobs.NewMockWorker(t)
 			progressRecorder := jobs.NewMockJobProgressRecorder(t)
 			featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
 
-			worker := NewMigrationWorker(unifiedMigrator)
+			worker := NewMigrationWorker(NewMockNamespaceCleaner(t), exportWorker, jobs.NewMockWorker(t))
 
 			if tt.setupMocks != nil {
-				tt.setupMocks(unifiedMigrator, progressRecorder)
+				tt.setupMocks(exportWorker, progressRecorder)
 			}
 
 			rw := repository.NewMockRepository(t)
@@ -154,7 +141,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			mock.AssertExpectationsForObjects(t, unifiedMigrator, progressRecorder, rw)
+			mock.AssertExpectationsForObjects(t, exportWorker, progressRecorder, rw)
 		})
 	}
 }
@@ -182,17 +169,16 @@ func TestMigrationWorker_ConfigurationDisabled(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create mock migrator
-			mockMigrator := NewMockMigrator(t)
+			exportWorker := jobs.NewMockWorker(t)
 
 			// Set up mock expectations for when enabled
 			if tt.enabled {
-				mockMigrator.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				exportWorker.On("Process", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("export failed"))
 				featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
 			}
 
 			// Create migration worker
-			worker := NewMigrationWorker(mockMigrator)
+			worker := NewMigrationWorker(NewMockNamespaceCleaner(t), exportWorker, jobs.NewMockWorker(t))
 
 			// Create a mock repository (ReaderWriter interface required)
 			mockRepo := repository.NewMockReaderWriter(t)
@@ -216,6 +202,8 @@ func TestMigrationWorker_ConfigurationDisabled(t *testing.T) {
 			// Create mock progress recorder
 			progress := jobs.NewMockJobProgressRecorder(t)
 			progress.On("SetTotal", mock.Anything, 10).Maybe()
+			progress.On("SetMessage", mock.Anything, mock.Anything).Maybe()
+			progress.On("StrictMaxErrors", 1).Maybe()
 
 			// Process the job
 			err := worker.Process(context.Background(), mockRepo, job, progress)

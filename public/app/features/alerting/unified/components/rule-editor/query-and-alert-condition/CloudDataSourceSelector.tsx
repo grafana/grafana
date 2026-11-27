@@ -5,6 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Field, useStyles2 } from '@grafana/ui';
 
+import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
 import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
 import { CloudRulesSourcePicker } from '../CloudRulesSourcePicker';
 
@@ -21,6 +22,7 @@ export const CloudDataSourceSelector = ({ disabled, onChangeCloudDatasource }: C
   } = useFormContext<RuleFormValues>();
 
   const styles = useStyles2(getStyles);
+  const rulesSources = useRulesSourcesWithRuler();
 
   const ruleFormType = watch('type');
 
@@ -34,13 +36,21 @@ export const CloudDataSourceSelector = ({ disabled, onChangeCloudDatasource }: C
               ? t('alerting.cloud-data-source-selector.label-disabled', 'Data source')
               : t('alerting.cloud-data-source-selector.label', 'Select data source')
           }
-          error={errors.dataSourceName?.message}
-          invalid={!!errors.dataSourceName?.message}
+          error={
+            errors.dataSourceName?.message ??
+            (rulesSources.error &&
+              t(
+                'alerting.cloud-data-source-selector.rules-sources-error',
+                'Failed to load the list of data sources with a ruler'
+              ))
+          }
+          invalid={Boolean(errors.dataSourceName?.message || rulesSources.error)}
         >
           <Controller
             render={({ field: { onChange, ref, ...field } }) => (
               <CloudRulesSourcePicker
                 {...field}
+                rulesSources={rulesSources}
                 disabled={disabled}
                 onChange={(ds) => {
                   // reset expression as they don't need to persist after changing datasources

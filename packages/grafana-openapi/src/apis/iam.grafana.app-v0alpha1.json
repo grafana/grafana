@@ -447,7 +447,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GetSearchTeamsResponse"
+                }
               }
             }
           }
@@ -552,11 +554,13 @@
           }
         ],
         "responses": {
-          "default": {
-            "description": "Default OK response",
+          "200": {
+            "description": "OK",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GetSearchUsersResponse"
+                }
               }
             }
           }
@@ -4220,7 +4224,9 @@
           },
           "hits": {
             "type": "array",
-            "items": {}
+            "items": {
+              "$ref": "#/components/schemas/GetSearchTeamsTeamHit"
+            }
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
@@ -4294,7 +4300,9 @@
         "properties": {
           "hits": {
             "type": "array",
-            "items": {}
+            "items": {
+              "$ref": "#/components/schemas/GetSearchUsersUserHit"
+            }
           },
           "maxScore": {
             "type": "number",
@@ -4347,6 +4355,10 @@
             "items": {
               "type": "string"
             }
+          },
+          "avatarUrl": {
+            "description": "Avatar URL of the user, derived from the email. Omitted when the user has no email.",
+            "type": "string"
           },
           "created": {
             "description": "Creation timestamp, in epoch milliseconds.",
@@ -6240,9 +6252,9 @@
             "default": ""
           },
           "operator": {
-            "description": "Operator is \"In\", \"NotIn\" or \"All\" in v1. \"In\" matches any of the values, \"NotIn\" excludes all of them, and \"All\" requires the field to hold every value, which only a field holding a list of values can do.",
+            "description": "Operator is \"In\", \"NotIn\" or \"All\" in v1. \"In\" matches any of the values, \"NotIn\" excludes all of them, and \"All\" requires the field to hold every value, which only a field holding a list of values can do.\n\nPossible enum values:\n - `\"All\"` requires the resources whose field holds every one of the values, which only a field holding a list of values can do.\n - `\"In\"` keeps the resources whose field matches any of the values.\n - `\"NotIn\"` keeps the resources whose field matches none of them.",
             "type": "string",
-            "default": ""
+            "enum": ["All", "In", "NotIn"]
           },
           "values": {
             "type": "array",

@@ -5,7 +5,9 @@ import {
   getFieldColorModeForField,
   type GrafanaTheme2,
   getFieldConfigWithMinMax,
+  type PanelData,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { type ColorDimensionConfig } from '@grafana/schema';
 
 import { type DimensionSupplier } from './types';
@@ -68,4 +70,19 @@ function getColorDimensionForField(
     get: (i) => fixed,
     field,
   };
+}
+
+export function getColorDimensionFromData(
+  data: PanelData | undefined,
+  cfg: ColorDimensionConfig
+): DimensionSupplier<string> {
+  if (data?.series && cfg.field) {
+    for (const frame of data.series) {
+      const d = getColorDimension(frame, cfg, config.theme2);
+      if (!d.isAssumed || data.series.length === 1) {
+        return d;
+      }
+    }
+  }
+  return getColorDimension(undefined, cfg, config.theme2);
 }

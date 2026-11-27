@@ -122,8 +122,8 @@ func newPluginManifestsClient(section *setting.DynamicSection, prefix string) (*
 func NewCloudRoutesLoader(cfg *setting.Cfg, deps PluginDependencies) (RoutesLoader, error) {
 	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
 	if cloudAppSettingsEnabled(cfg) {
-		if section.Key("plugins_url").MustString("") == "" || deps.Settings.LegacyStore == nil || deps.Settings.AccessChecker == nil {
-			return nil, fmt.Errorf("cloud_router: app_settings_plugins requires plugins_url, a legacy settings provider, and legacy app authorization")
+		if section.Key("plugins_url").MustString("") == "" || deps.Settings.LegacyStore == nil || deps.AccessClient == nil {
+			return nil, fmt.Errorf("cloud_router: app_settings_plugins requires plugins_url, a legacy settings provider, and an AuthZ client for app access")
 		}
 	}
 	deps.Cfg = cfg
@@ -219,9 +219,13 @@ func buildAggregateTargets(configs []aggregateTargetConfig, tokenExchanger authn
 		if err != nil {
 			return nil, fmt.Errorf("%s: %s: %w", cloudRouterSection, targetCfg.Name, err)
 		}
-		// proxyTransport forwards the caller's own credentials unchanged. The CAP
-		// token is only for the router's own discovery poll (restCfg below).
-		proxyTransport := newAggregateBaseTransport(tlsCfg)
+		// proxyTransport forwards the caller's own credentials unchanged, unless
+		// wrapProxy signs them. The CAP token is only for the router's own
+		// discovery poll (restCfg below).
+		var proxyTransport http.RoundTripper = newAggregateBaseTransport(tlsCfg)
+		if targetCfg.wrapProxy != nil {
+			proxyTransport = targetCfg.wrapProxy(proxyTransport)
+		}
 		restCfg := &rest.Config{
 			Host: targetCfg.URL,
 			// A per-target clone, so this discovery client owns its pool;
