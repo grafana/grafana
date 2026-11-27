@@ -165,6 +165,34 @@ describe('SilenceViewPage', () => {
       await waitFor(() => expect(expired).toHaveBeenCalledWith(MOCK_SILENCE_ID_EXISTING));
     });
 
+    it('should refresh the affected alerts after expiring the silence', async () => {
+      grantUserPermissions([
+        AccessControlAction.AlertingInstanceRead,
+        AccessControlAction.AlertingSilenceRead,
+        AccessControlAction.AlertingSilenceUpdate,
+      ]);
+      setAlertmanagerAlertsHandler([
+        mockAlertmanagerAlert({
+          fingerprint: 'unique-fingerprint-1',
+          status: { state: AlertState.Suppressed, silencedBy: [MOCK_SILENCE_ID_EXISTING], inhibitedBy: [] },
+          labels: { alertname: 'TestAlert', severity: 'warning' },
+        }),
+      ]);
+      server.use(
+        http.delete('/api/alertmanager/:datasourceUid/api/v2/silence/:uuid', () => {
+          setAlertmanagerAlertsHandler([]);
+          return HttpResponse.json({ message: 'silence deleted' });
+        })
+      );
+
+      const { user } = renderSilenceViewPage(MOCK_SILENCE_ID_EXISTING);
+
+      expect(await screen.findByText('TestAlert')).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Unsilence' }));
+
+      await waitFor(() => expect(screen.queryByText('TestAlert')).not.toBeInTheDocument());
+    });
+
     it('should not show Unsilence when the silence is not writable', async () => {
       const silenceId = 'read-only-silence';
       const readOnlySilence = mockSilence({
