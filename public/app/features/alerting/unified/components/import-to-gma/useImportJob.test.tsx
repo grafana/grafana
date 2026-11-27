@@ -11,6 +11,7 @@ import { createListFilterLink } from '../../utils/navigation';
 
 import { type ImportPlan } from './Wizard/steps';
 import { useRulesToImport } from './hooks';
+import { buildRulesImportSpec } from './steps/utils';
 import { mockImportFormValues } from './testUtils';
 import { type ImportFormValues } from './types';
 import { getPostImportOutcome, useImportJob } from './useImportJob';
@@ -34,6 +35,7 @@ const wrapper = getWrapper({ renderWithRouter: true });
 const baseValues = mockImportFormValues({
   step2Completed: true,
   selectedRoutingTree: 'imported',
+  targetDatasourceUID: 'prometheus-uid',
   rulesDatasourceUID: 'prometheus-uid',
   rulesDatasourceName: 'Prometheus',
 });
@@ -43,10 +45,12 @@ const rulesToImport: RulerCloudRulesConfigDTO = {
 };
 
 function setup(values: Partial<ImportFormValues> = {}, liveLock?: 'auto-sync' | 'staged' | 'import-api-disabled') {
-  const getImportValues = () => ({ ...baseValues, ...values });
+  const importValues = { ...baseValues, ...values };
+  const getImportValues = () => importValues;
+  const rulesSpec = buildRulesImportSpec(importValues);
   return renderHook(
     ({ lock }: { lock?: 'auto-sync' | 'staged' | 'import-api-disabled' }) =>
-      useImportJob({ getImportValues, rulesToImport, liveNotificationsLock: lock }),
+      useImportJob({ getImportValues, rulesSpec, rulesToImport, liveNotificationsLock: lock }),
     { wrapper, initialProps: { lock: liveLock } }
   );
 }
@@ -266,6 +270,83 @@ describe('useImportJob — rules from a YAML file', () => {
 
     expect(requests.rules).toHaveLength(1);
     expect(requests.rules[0].headers.get('X-Grafana-Alerting-Datasource-UID')).toBe('prometheus-uid');
+  });
+
+  it('imports what the spec describes, whatever the form values say', async () => {
+    const requests = captureRequests();
+    const rulesSpec = buildRulesImportSpec({
+      ...baseValues,
+      rulesDatasourceUID: 'spec-uid',
+      targetFolder: { uid: 'spec-folder', title: 'Spec folder' },
+      pauseAlertingRules: false,
+    });
+    const getImportValues = () => ({
+      ...baseValues,
+      rulesDatasourceUID: 'form-uid',
+      targetFolder: { uid: 'form-folder', title: 'Form folder' },
+      pauseAlertingRules: true,
+    });
+    const { result } = renderHook(
+      () => useImportJob({ getImportValues, rulesSpec, rulesToImport, liveNotificationsLock: undefined }),
+      { wrapper }
+    );
+
+    await act(async () => {
+      await result.current.confirmImport();
+    });
+
+    const headers = requests.rules[0].headers;
+    expect(headers.get('X-Grafana-Alerting-Datasource-UID')).toBe('spec-uid');
+    expect(headers.get('X-Grafana-Alerting-Folder-UID')).toBe('spec-folder');
+    expect(headers.get('X-Grafana-Alerting-Alert-Rules-Paused')).toBe('false');
+  });
+
+  it('reports the rule settings of the form even when no rules are imported', async () => {
+    const getImportValues = () => ({
+      ...baseValues,
+      step2Completed: false,
+      namespace: 'ns',
+      ruleGroup: 'group',
+      targetFolder: { uid: 'folder-uid', title: 'Folder' },
+      pauseAlertingRules: false,
+      pauseRecordingRules: true,
+    });
+    const { result } = renderHook(
+      () => useImportJob({ getImportValues, rulesSpec: undefined, rulesToImport, liveNotificationsLock: undefined }),
+      { wrapper }
+    );
+
+    await act(async () => {
+      await result.current.confirmImport();
+    });
+
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_alerting_import_to_gma_success', {
+      isRootFolder: false,
+      namespace: 'ns',
+      ruleGroup: 'group',
+      pauseAlertingRules: false,
+      pauseRecordingRules: true,
+    });
+  });
+
+  it('does not import rules when there is no spec for them', async () => {
+    const requests = captureRequests();
+    const { result } = renderHook(
+      () =>
+        useImportJob({
+          getImportValues: () => baseValues,
+          rulesSpec: undefined,
+          rulesToImport,
+          liveNotificationsLock: undefined,
+        }),
+      { wrapper }
+    );
+
+    await act(async () => {
+      await result.current.confirmImport();
+    });
+
+    expect(requests.rules).toHaveLength(0);
   });
 
   it('ignores a data source left over from before the source was switched to YAML', async () => {

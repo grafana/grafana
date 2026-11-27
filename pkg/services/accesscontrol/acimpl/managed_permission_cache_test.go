@@ -119,7 +119,7 @@ func TestIntegrationManagedPermissionCacheTransitions(t *testing.T) {
 					}))
 					// Clear through the other reader to verify that shared invalidation still works.
 					if route == "local" {
-						loader.ClearUserPermissionCache(requester)
+						require.NoError(t, loader.ClearUserPermissionCache(t.Context(), requester))
 					} else {
 						s.ClearUserPermissionCache(requester)
 					}

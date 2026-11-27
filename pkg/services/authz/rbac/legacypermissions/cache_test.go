@@ -6,6 +6,7 @@ import (
 	"sync"
 	"testing"
 
+	authcache "github.com/grafana/authlib/cache"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -54,7 +55,7 @@ func TestIntegrationLoaderCacheOptionsAndFailures(t *testing.T) {
 			)
 			if mode == "standalone" {
 				loader = legacypermissions.NewEnforcedLoader(legacysql.NewDatabaseProvider(sql),
-					resourcepermissions.NewActionSetService(), localcache.New(0, 0),
+					resourcepermissions.NewActionSetService(), authcache.NewLocalCache(authcache.Config{}),
 					loaderConfig(true), z, nil)
 			}
 			requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleViewer}
@@ -80,7 +81,7 @@ func TestIntegrationLoaderCacheOptionsAndFailures(t *testing.T) {
 			check(ac.Options{ReloadCache: true}, a, a) // Best effort, not a partial SQL success.
 			z.err, z.permissions = nil, []ac.Permission{b}
 			check(ac.Options{}, a, a, c) // Failed reload retains the last successful cache entry.
-			loader.ClearUserPermissionCache(requester)
+			require.NoError(t, loader.ClearUserPermissionCache(context.Background(), requester))
 			check(ac.Options{}, a, a, b)
 			check(ac.Options{ReloadCache: true, SkipZanzanaCache: true}, a, a, b)
 		})

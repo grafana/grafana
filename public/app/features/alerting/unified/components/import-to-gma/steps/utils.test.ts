@@ -5,10 +5,10 @@ import { type Step1Values } from '../types';
 
 import {
   buildDryRunArgs,
+  buildRulesImportSpec,
   canRunDryRun,
   getRoutingTreeOptions,
   isStep1Valid,
-  isStep2Valid,
   pickStep1Values,
   validatePolicyTreeName,
 } from './utils';
@@ -365,48 +365,60 @@ describe('getRoutingTreeOptions', () => {
   });
 });
 
-describe('isStep2Valid', () => {
-  const dataSourceRules = {
-    rulesSource: 'datasource' as const,
-    rulesYamlFile: null,
-    rulesDatasourceUID: 'prometheus-uid',
+describe('buildRulesImportSpec', () => {
+  const file = new File(['groups: []'], 'rules.yaml');
+  const settings = mockImportFormValues({
     selectedRoutingTree: 'imported',
     targetDatasourceUID: 'prometheus-uid',
-    yamlImportTargetDatasourceUID: undefined,
-  };
-  const yamlRules = {
-    ...dataSourceRules,
+    pauseAlertingRules: false,
+    pauseRecordingRules: true,
+    targetFolder: { uid: 'folder-uid', title: 'Folder' },
+  });
+  const dataSourceValues = { ...settings, rulesDatasourceUID: 'prometheus-uid', rulesDatasourceName: 'Prometheus' };
+  const yamlValues = {
+    ...settings,
     rulesSource: 'yaml' as const,
-    rulesYamlFile: new File(['groups: []'], 'rules.yaml'),
-    rulesDatasourceUID: undefined,
+    rulesYamlFile: file,
     yamlImportTargetDatasourceUID: 'yaml-target-uid',
+    yamlImportTargetDatasourceName: 'Target',
   };
 
-  it('accepts a data source with a policy tree and a recording rules target', () => {
-    expect(isStep2Valid(dataSourceRules)).toBe(true);
+  it('describes a data source import with its filters and settings', () => {
+    expect(buildRulesImportSpec({ ...dataSourceValues, namespace: 'ns', ruleGroup: 'group' })).toEqual({
+      type: 'datasource',
+      datasource: { uid: 'prometheus-uid', name: 'Prometheus' },
+      namespace: 'ns',
+      ruleGroup: 'group',
+      selectedRoutingTree: 'imported',
+      targetDatasourceUID: 'prometheus-uid',
+      targetFolder: { uid: 'folder-uid', title: 'Folder' },
+      pauseAlertingRules: false,
+      pauseRecordingRules: true,
+    });
+  });
+
+  it('uses the data source chosen for a YAML file, not one left over from before the source was switched', () => {
+    const spec = buildRulesImportSpec({
+      ...yamlValues,
+      rulesDatasourceUID: 'left-over-uid',
+      rulesDatasourceName: 'Left over',
+    });
+
+    expect(spec?.type === 'yaml' && spec.file).toBe(file);
+    expect(spec?.datasource).toEqual({ uid: 'yaml-target-uid', name: 'Target' });
+  });
+
+  it('does not ask a data source import for a YAML target', () => {
+    expect(buildRulesImportSpec({ ...dataSourceValues, yamlImportTargetDatasourceUID: undefined })).toBeDefined();
   });
 
   it.each([
-    ['a data source', { rulesDatasourceUID: undefined }],
-    ['a policy tree', { selectedRoutingTree: '' }],
-    ['a recording rules target', { targetDatasourceUID: undefined }],
-  ])('needs %s', (_, missing) => {
-    expect(isStep2Valid({ ...dataSourceRules, ...missing })).toBe(false);
-  });
-
-  it('does not ask a data source rules source for a YAML target', () => {
-    expect(isStep2Valid({ ...dataSourceRules, yamlImportTargetDatasourceUID: undefined })).toBe(true);
-  });
-
-  it('accepts a YAML file with a data source to run against', () => {
-    expect(isStep2Valid(yamlRules)).toBe(true);
-  });
-
-  it('needs a data source to run the rules of a YAML file against', () => {
-    expect(isStep2Valid({ ...yamlRules, yamlImportTargetDatasourceUID: undefined })).toBe(false);
-  });
-
-  it('needs the YAML file itself', () => {
-    expect(isStep2Valid({ ...yamlRules, rulesYamlFile: null })).toBe(false);
+    ['no data source is chosen', { ...dataSourceValues, rulesDatasourceUID: undefined }],
+    ['no YAML file is chosen', { ...yamlValues, rulesYamlFile: null }],
+    ['a YAML file has no data source to run against', { ...yamlValues, yamlImportTargetDatasourceUID: undefined }],
+    ['there is no policy tree', { ...dataSourceValues, selectedRoutingTree: '' }],
+    ['there is no recording rules target', { ...dataSourceValues, targetDatasourceUID: undefined }],
+  ])('is undefined while %s', (_, values) => {
+    expect(buildRulesImportSpec(values)).toBeUndefined();
   });
 });
