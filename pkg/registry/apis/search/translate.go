@@ -756,6 +756,8 @@ func applyText(req *resourcepb.ResourceSearchRequest, t *searchv0.TextPredicate)
 func filterRequirement(f *searchv0.FilterPredicate) *resourcepb.Requirement {
 	op := "in"
 	switch f.Operator {
+	case searchv0.FilterOperatorIn:
+		// In is what the requirement defaults to, so only the others change it.
 	case searchv0.FilterOperatorNotIn:
 		op = "notin"
 	case searchv0.FilterOperatorAll:
