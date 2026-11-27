@@ -28,7 +28,7 @@ Generic Modal component. It opens a dialog over the page, with a backdrop behind
 For buttons at the bottom of the modal you should always use:
 
 - `Modal.ButtonRow`. This makes sure the buttons are right aligned. Pass `leftItems` for anything that belongs on the left.
-- If you have a Cancel button, use `fill="outline"` and `variant="secondary"` and place it on the left side of any other button.
+- Use a solid secondary button for Cancel. Set `variant="secondary"` and place it to the left of the other buttons.
 
 ```tsx
 // Don't
@@ -39,7 +39,7 @@ For buttons at the bottom of the modal you should always use:
 
 // Do
 <Modal.ButtonRow>
-  <Button variant="secondary" fill="outline" onClick={onDismiss}>
+  <Button variant="secondary" onClick={onDismiss}>
     Cancel
   </Button>
   <Button onClick={onSave}>Save</Button>
@@ -79,7 +79,7 @@ import { Button, Modal } from '@grafana/ui';
 <Modal title="title" isOpen={isOpen} onDismiss={() => setIsOpen(false)}>
   <div>Some body</div>
   <Modal.ButtonRow>
-    <Button variant="secondary" fill="outline" onClick={() => setIsOpen(false)}>
+    <Button variant="secondary" onClick={() => setIsOpen(false)}>
       Cancel
     </Button>
     <Button>Save</Button>

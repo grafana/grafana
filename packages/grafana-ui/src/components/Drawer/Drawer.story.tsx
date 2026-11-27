@@ -229,7 +229,7 @@ export const WithTabs: StoryFn<typeof Drawer> = (args) => {
   const [activeTab, setActiveTab] = useState('options');
 
   const tabs = (
-    <TabsBar>
+    <TabsBar hideBorder>
       <Tab
         label="Options"
         active={activeTab === 'options'}

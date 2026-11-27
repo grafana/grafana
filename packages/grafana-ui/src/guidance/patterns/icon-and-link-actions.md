@@ -2,13 +2,13 @@
 
 Don't strip a `Button`'s styling to make it look like a link or a bare icon. Pick the component built for that job.
 
-| You need                                          | Use                                                                      |
-| ------------------------------------------------- | ------------------------------------------------------------------------ |
-| Navigation inside text                            | `TextLink` with `href`                                                   |
-| Navigation that looks like a button               | `LinkButton` with `href`, and `fill="text"` for low emphasis             |
-| An action shown as an icon only                   | `IconButton` with `name` and `tooltip` (or `aria-label`)                 |
-| An action inside a sentence or a line of data     | `InlineButton`, see [inline actions](./inline-actions.md)                |
-| A low-emphasis action with standard button sizing | `Button` with `fill="text"`, without padding, border or height overrides |
+| You need                                          | Use                                                                                          |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Navigation inside text                            | `TextLink` with `href`                                                                       |
+| Navigation that looks like a button               | `LinkButton` with `href`, and `variant="secondary" fill="text"` for low emphasis             |
+| An action shown as an icon only                   | `IconButton` with `name` and `tooltip` (or `aria-label`)                                     |
+| An action inside a sentence or a line of data     | `InlineButton`, see [inline actions](./inline-actions.md)                                    |
+| A low-emphasis action with standard button sizing | `Button` with `variant="secondary" fill="text"`, without padding, border or height overrides |
 
 ## Icon-only actions
 
@@ -16,6 +16,7 @@ Don't reset a text button to get a bare icon:
 
 ```tsx
 <Button
+  variant="secondary"
   fill="text"
   icon="times"
   aria-label="Remove"
@@ -39,7 +40,12 @@ A string `tooltip` is also the accessible name. If the icon is unambiguous and a
 Don't navigate from a restyled button:
 
 ```tsx
-<Button fill="text" className={css({ padding: 0 })} onClick={() => locationService.push('/dashboards')}>
+<Button
+  variant="secondary"
+  fill="text"
+  className={css({ padding: 0 })}
+  onClick={() => locationService.push('/dashboards')}
+>
   Dashboards
 </Button>
 ```
@@ -51,7 +57,7 @@ Use a link component:
 ```tsx
 <TextLink href="/dashboards">Dashboards</TextLink>
 
-<LinkButton href="/dashboards" fill="text">
+<LinkButton href="/dashboards" variant="secondary" fill="text">
   Dashboards
 </LinkButton>
 ```
@@ -66,4 +72,4 @@ Use a link component:
 
 - Do use `IconButton` for an icon-only action. Don't reset `Button` padding, height and border to fake one.
 - Do use `TextLink` or `LinkButton` with `href` for navigation. Don't navigate from a button's `onClick` when the target is a URL.
-- Do use `Button fill="text"` as is for a low-emphasis action. Don't add overrides that strip its padding or border.
+- Do use `Button variant="secondary" fill="text"` as is for a low-emphasis action. Don't add overrides that strip its padding or border.

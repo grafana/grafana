@@ -19,7 +19,8 @@ No component-specific guidance documented yet.
 
 ## Do's and don'ts
 
-No component-specific guidance documented yet.
+- In a long menu, use `header` for context, `Menu.Group` with a `label` for related items, and `Menu.Divider` to separate groups.
+- Place destructive actions last and set `destructive` on their `Menu.Item` elements.
 
 ## Usage
 
@@ -31,14 +32,17 @@ Set `size` on `Menu` to apply one consistent density to every item, including ne
 import { Dropdown, Menu, Button } from '@grafana/ui';
 const menu = (
   <Menu>
-    <Menu.Item label="Google" />
+    <Menu.Group label="Dashboard">
+      <Menu.Item label="Edit" onClick={onEdit} />
+      <Menu.Item label="Duplicate" onClick={onDuplicate} />
+    </Menu.Group>
     <Menu.Divider />
-    <Menu.Item label="Delete" icon="trash-alt" destructive />
+    <Menu.Item label="Delete" icon="trash-alt" destructive onClick={onDelete} />
   </Menu>
 );
 return (
   <Dropdown overlay={menu}>
-    <Button icon="bars" />
+    <Button icon="bars" aria-label="More dashboard actions" />
   </Dropdown>
 );
 ```

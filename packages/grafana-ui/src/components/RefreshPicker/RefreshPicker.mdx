@@ -8,7 +8,7 @@ import * as RefreshPickerStories from './RefreshPicker.story';
 
 ## When to use
 
-This component is used on dashboards to refresh visualizations. Grafana does not do this automatically, queries run on their own schedule according to the panel settings. Grafana cancels any pending requests when a new refresh is triggered.
+Use `RefreshPicker` to offer manual refresh and an optional automatic refresh interval.
 
 ## Never use for
 
@@ -16,13 +16,15 @@ No component-specific guidance documented yet.
 
 ## Do's and don'ts
 
-No component-specific guidance documented yet.
+Place `RefreshPicker` next to [TimeRangePicker](?path=/docs/date-time-pickers-timerangepicker--docs) in the toolbar. Omit `text` and `loadingText` for an icon-only refresh button when space is tight.
 
 ## Usage
 
-**The refresh icon:** will immediately run the query and refresh the visualizations.
+The refresh button calls `onRefresh`. Set `text` to give the button a visible label.
 
-**The down arrow:** will display a list of refresh intervals. If one of them is selected the dashboard will regularly refresh according to that schedule.
+The interval dropdown calls `onIntervalChanged` when users choose an interval. Set `noIntervalPicker` to show only the manual refresh button. The caller handles the refresh and scheduling.
+
+`isOnCanvas` defaults to `true`. Set it to `false` to use the default toolbar style outside the canvas. `primary` and `isLive` take precedence over this setting.
 
 <Canvas of={RefreshPickerStories.Examples} />
 
