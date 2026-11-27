@@ -28,6 +28,7 @@ import {
   setEmbeddedDashboard,
   setAppEvents,
   setReturnToPreviousHook,
+  setComponentDescriptorHooks,
   setPluginComponentHook,
   setPluginComponentsHook,
   setCurrentUser,
@@ -124,8 +125,10 @@ import {
   getObservablePluginFunctions,
   getObservablePluginLinks,
 } from './features/plugins/extensions/getPluginExtensions';
+import { useComponentDescriptors } from './features/plugins/extensions/useComponentDescriptors';
 import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
+import { useRegisterComponentHostAdapter } from './features/plugins/extensions/useRegisterComponentHostAdapter';
 import { usePluginFunctions } from './features/plugins/extensions/usePluginFunctions';
 import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
 import { getAppPluginsToPreload } from './features/plugins/extensions/utils';
@@ -380,6 +383,7 @@ export class GrafanaApp {
 
       setHelpNavItemHook(useHelpNode);
       setPluginLinksHook(usePluginLinks);
+      setComponentDescriptorHooks({ list: useComponentDescriptors, register: useRegisterComponentHostAdapter });
       setPluginComponentHook(usePluginComponent);
       setPluginComponentsHook(usePluginComponents);
       setPluginFunctionsHook(usePluginFunctions);

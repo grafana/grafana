@@ -269,6 +269,7 @@ metaV0Alpha1: {
 		id:           string
 		title?:       string
 		description?: string
+		discovery?:   #ExposedComponentDiscovery
 	}]
 	// +listType=set
 	// +listMapKey=id
@@ -277,4 +278,22 @@ metaV0Alpha1: {
 		title?:       string
 		description?: string
 	}]
+}
+
+#ExposedComponentDiscovery: {
+	version:    string
+	datasource: string
+	prompt:     string
+	props?:     #ComponentDiscoverySchema
+	// +listType=atomic
+	events?: [...#ExposedComponentDiscoveryEvent]
+}
+
+#ExposedComponentDiscoveryEvent: {
+	name:     string
+	payload?: #ComponentDiscoverySchema
+}
+
+#ComponentDiscoverySchema: {
+	[string]: _
 }

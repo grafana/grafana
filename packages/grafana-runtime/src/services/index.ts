@@ -27,6 +27,11 @@ export {
   type UsePluginComponentResult,
 } from './pluginExtensions/usePluginComponent';
 export {
+  setComponentDescriptorHooks,
+  useComponentDescriptors,
+  useRegisterComponentHostAdapter,
+} from './pluginExtensions/componentDescriptors';
+export {
   setPluginComponentsHook,
   usePluginComponents,
   type UsePluginComponentsResult,

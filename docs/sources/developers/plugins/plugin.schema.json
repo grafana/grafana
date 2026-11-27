@@ -704,6 +704,30 @@
               "description": {
                 "type": "string",
                 "description": "Additional information about your exposed component."
+              },
+              "discovery": {
+                "type": "object",
+                "required": ["version", "datasource", "prompt"],
+                "properties": {
+                  "version": {
+                    "type": "string",
+                    "description": "The discovery metadata schema version. Grafana currently supports `v1`."
+                  },
+                  "datasource": { "type": "string", "minLength": 1 },
+                  "prompt": { "type": "string", "minLength": 1 },
+                  "props": { "type": "object", "allOf": [{ "$ref": "http://json-schema.org/draft-07/schema#" }] },
+                  "events": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["name"],
+                      "properties": {
+                        "name": { "type": "string", "minLength": 1 },
+                        "payload": { "type": "object", "allOf": [{ "$ref": "http://json-schema.org/draft-07/schema#" }] }
+                      }
+                    }
+                  }
+                }
               }
             },
             "required": ["id"]

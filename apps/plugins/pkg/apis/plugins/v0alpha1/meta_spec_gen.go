@@ -266,6 +266,50 @@ func (MetaExtensions) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
+type MetaExposedComponentDiscovery struct {
+	Version    string                        `json:"version"`
+	Datasource string                        `json:"datasource"`
+	Prompt     string                        `json:"prompt"`
+	Props      *MetaComponentDiscoverySchema `json:"props,omitempty"`
+	// +listType=atomic
+	Events []MetaExposedComponentDiscoveryEvent `json:"events,omitempty"`
+}
+
+// NewMetaExposedComponentDiscovery creates a new MetaExposedComponentDiscovery object.
+func NewMetaExposedComponentDiscovery() *MetaExposedComponentDiscovery {
+	return &MetaExposedComponentDiscovery{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaExposedComponentDiscovery.
+func (MetaExposedComponentDiscovery) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaExposedComponentDiscovery"
+}
+
+// +k8s:openapi-gen=true
+type MetaComponentDiscoverySchema map[string]interface{}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaComponentDiscoverySchema.
+func (MetaComponentDiscoverySchema) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaComponentDiscoverySchema"
+}
+
+// +k8s:openapi-gen=true
+type MetaExposedComponentDiscoveryEvent struct {
+	Name    string                        `json:"name"`
+	Payload *MetaComponentDiscoverySchema `json:"payload,omitempty"`
+}
+
+// NewMetaExposedComponentDiscoveryEvent creates a new MetaExposedComponentDiscoveryEvent object.
+func NewMetaExposedComponentDiscoveryEvent() *MetaExposedComponentDiscoveryEvent {
+	return &MetaExposedComponentDiscoveryEvent{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaExposedComponentDiscoveryEvent.
+func (MetaExposedComponentDiscoveryEvent) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaExposedComponentDiscoveryEvent"
+}
+
+// +k8s:openapi-gen=true
 type MetaSpec struct {
 	PluginJson   MetaJSONData              `json:"pluginJson"`
 	Class        MetaSpecClass             `json:"class"`
@@ -651,9 +695,10 @@ func (MetaV0alpha1ExtensionsAddedFunctions) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type MetaV0alpha1ExtensionsExposedComponents struct {
-	Id          string  `json:"id"`
-	Title       *string `json:"title,omitempty"`
-	Description *string `json:"description,omitempty"`
+	Id          string                         `json:"id"`
+	Title       *string                        `json:"title,omitempty"`
+	Description *string                        `json:"description,omitempty"`
+	Discovery   *MetaExposedComponentDiscovery `json:"discovery,omitempty"`
 }
 
 // NewMetaV0alpha1ExtensionsExposedComponents creates a new MetaV0alpha1ExtensionsExposedComponents object.

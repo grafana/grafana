@@ -246,7 +246,8 @@ func Test_ReadPluginJSON(t *testing.T) {
 							{
 								"title": "Exposed component 1",
 								"description": "Exposed component 1 description",
-								"id": "myorg-extensions-app/component-1/v1"
+								"id": "myorg-extensions-app/component-1/v1",
+								"discovery": {"version": "v1", "datasource": "loki", "prompt": "Show logs"}
 							}
 						],
 						"addedFunctions": [
@@ -277,7 +278,10 @@ func Test_ReadPluginJSON(t *testing.T) {
 						{Title: "Added component 1", Description: "Added component 1 description", Targets: []string{"grafana/user/profile/tab"}},
 					},
 					ExposedComponents: []ExposedComponent{
-						{Id: "myorg-extensions-app/component-1/v1", Title: "Exposed component 1", Description: "Exposed component 1 description"},
+						{
+							Id: "myorg-extensions-app/component-1/v1", Title: "Exposed component 1", Description: "Exposed component 1 description",
+							Discovery: &ExposedComponentDiscovery{Version: "v1", Datasource: "loki", Prompt: "Show logs"},
+						},
 					},
 					ExtensionPoints: []ExtensionPoint{
 						{Id: "myorg-extensions-app/extensions-point-1/v1", Title: "Extension point 1", Description: "Extension points 1 description"},
@@ -589,6 +593,25 @@ func Test_ReadPluginJSON(t *testing.T) {
 			require.NoError(t, p.Close())
 		})
 	}
+}
+
+func TestReadPluginJSONDiscovery(t *testing.T) {
+	t.Run("should keep exposed components with invalid or unsupported discovery", func(t *testing.T) {
+		plugin, err := ReadPluginJSON(strings.NewReader(`{
+			"id": "test-app", "type": "app",
+			"extensions": {"exposedComponents": [
+				{"id": "test-app/invalid/v1", "discovery": {"version": "v1", "datasource": "loki", "prompt": false}},
+				{"id": "test-app/future/v1", "discovery": {"version": "v2", "datasource": "loki", "prompt": "Show logs"}},
+				{"id": "test-app/null-schema/v1", "discovery": {"version": "v1", "datasource": "loki", "prompt": "Show logs", "props": null}}
+			]}
+		}`))
+		require.NoError(t, err)
+		require.Equal(t, []ExposedComponent{
+			{Id: "test-app/invalid/v1"},
+			{Id: "test-app/future/v1"},
+			{Id: "test-app/null-schema/v1"},
+		}, plugin.Extensions.ExposedComponents)
+	})
 }
 
 func Test_validatePluginJSON(t *testing.T) {

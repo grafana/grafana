@@ -17,6 +17,24 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
+func TestGrafanaComPluginVersionMetaJSON(t *testing.T) {
+	t.Run("should keep catalog plugin metadata when discovery is malformed", func(t *testing.T) {
+		var meta grafanaComPluginVersionMetaJSON
+		err := json.Unmarshal([]byte(`{
+			"id": "test-app", "aliasIDs": ["old-test-app"],
+			"extensions": {"exposedComponents": [
+				{"id": "test-app/logs/v1", "discovery": {"version": "v1", "prompt": false}}
+			]}
+		}`), &meta)
+		require.NoError(t, err)
+		require.Equal(t, []string{"old-test-app"}, meta.AliasIDs)
+		require.NotNil(t, meta.Extensions)
+		require.Len(t, meta.Extensions.ExposedComponents, 1)
+		assert.Equal(t, "test-app/logs/v1", meta.Extensions.ExposedComponents[0].Id)
+		assert.Nil(t, meta.Extensions.ExposedComponents[0].Discovery)
+	})
+}
+
 func TestJsonDataToMetaJSONData(t *testing.T) {
 	t.Run("converts plugin types", func(t *testing.T) {
 		testCases := []struct {
@@ -342,17 +360,29 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 		assert.NotNil(t, meta.Routes[0].JwtTokenAuth)
 	})
 
-	t.Run("converts extensions", func(t *testing.T) {
+	t.Run("should preserve discovery metadata when converting extensions", func(t *testing.T) {
 		jsonData := plugins.JSONData{
 			ID:   "test-plugin",
 			Name: "Test Plugin",
 			Type: plugins.TypeApp,
 			Extensions: plugins.Extensions{
-				AddedLinks:        []plugins.AddedLink{{Targets: []string{"target1"}, Title: "Link 1", Description: "Description 1"}},
-				AddedComponents:   []plugins.AddedComponent{{Targets: []string{"target2"}, Title: "Component 1", Description: "Description 2"}},
-				AddedFunctions:    []plugins.AddedFunction{{Targets: []string{"target3"}, Title: "Function 1", Description: "Description 3"}},
-				ExposedComponents: []plugins.ExposedComponent{{Id: "comp1", Title: "Component 1", Description: "Description 4"}},
-				ExtensionPoints:   []plugins.ExtensionPoint{{Id: "point1", Title: "Point 1", Description: "Description 5"}},
+				AddedLinks:      []plugins.AddedLink{{Targets: []string{"target1"}, Title: "Link 1", Description: "Description 1"}},
+				AddedComponents: []plugins.AddedComponent{{Targets: []string{"target2"}, Title: "Component 1", Description: "Description 2"}},
+				AddedFunctions:  []plugins.AddedFunction{{Targets: []string{"target3"}, Title: "Function 1", Description: "Description 3"}},
+				ExposedComponents: []plugins.ExposedComponent{{
+					Id: "comp1", Title: "Component 1", Description: "Description 4",
+					Discovery: &plugins.ExposedComponentDiscovery{
+						Version:    "v1",
+						Datasource: "loki",
+						Prompt:     "Show logs",
+						Props:      plugins.ComponentDiscoverySchema{},
+						Events: []plugins.ExposedComponentDiscoveryEvent{{
+							Name:    "streamSelected",
+							Payload: plugins.ComponentDiscoverySchema{"type": "string"},
+						}},
+					},
+				}},
+				ExtensionPoints: []plugins.ExtensionPoint{{Id: "point1", Title: "Point 1", Description: "Description 5"}},
 			},
 		}
 
@@ -360,8 +390,22 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 		assert.Len(t, meta.Extensions.AddedLinks, 1)
 		assert.Len(t, meta.Extensions.AddedComponents, 1)
 		assert.Len(t, meta.Extensions.AddedFunctions, 1)
-		assert.Len(t, meta.Extensions.ExposedComponents, 1)
+		require.Len(t, meta.Extensions.ExposedComponents, 1)
+		discovery, err := json.Marshal(meta.Extensions.ExposedComponents[0].Discovery)
+		require.NoError(t, err)
+		assert.JSONEq(t, `{
+			"version": "v1", "datasource": "loki", "prompt": "Show logs", "props": {},
+			"events": [{"name": "streamSelected", "payload": {"type": "string"}}]
+		}`, string(discovery))
 		assert.Len(t, meta.Extensions.ExtensionPoints, 1)
+	})
+
+	t.Run("should omit discovery with an unsupported version", func(t *testing.T) {
+		assert.Nil(t, discoveryToMeta(&plugins.ExposedComponentDiscovery{
+			Version:    "v2",
+			Datasource: "loki",
+			Prompt:     "Show logs",
+		}))
 	})
 
 	t.Run("converts roles and IAM", func(t *testing.T) {
