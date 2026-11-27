@@ -335,9 +335,12 @@ export const InfiniteScroll = ({
   );
 
   const { onRenderedLogsChanged } = useLogListContext();
+  const cachedIndicesRef = useRef<ListOnItemsRenderedProps | undefined>(undefined);
 
   const onItemsRendered = useCallback(
     (props: ListOnItemsRenderedProps) => {
+      // This only triggers if the indices are different, so we cache them for separate calls to onRenderedLogsChanged
+      cachedIndicesRef.current = props;
       if (onRenderedLogsChanged) {
         onRenderedLogsChanged(
           {
@@ -377,6 +380,19 @@ export const InfiniteScroll = ({
     },
     [infiniteLoaderState, loadDirection, logs, onRenderedLogsChanged, scrollElement]
   );
+
+  useEffect(() => {
+    if (cachedIndicesRef.current && onRenderedLogsChanged) {
+      // Cached indices are needed when the indices don't change but the logs do
+      onRenderedLogsChanged(
+        {
+          ...cachedIndicesRef.current,
+          visibleStopIndex: Math.min(cachedIndicesRef.current.visibleStopIndex, logs.length - 1),
+        },
+        logs
+      );
+    }
+  }, [logs, onRenderedLogsChanged]);
 
   const getItemKey = useCallback((index: number) => (logs[index] ? logs[index].uniqueKey : index.toString()), [logs]);
 

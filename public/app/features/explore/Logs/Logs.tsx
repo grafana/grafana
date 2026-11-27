@@ -789,11 +789,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [exploreId, loading, props.logsFrames, props.range]
   );
 
-  const { renderedLogsWindow, onRenderedLogsChanged } = useRenderedLogsWindow(
-    visualisationType,
-    logsSortOrder,
-    dedupedRows
-  );
+  const { renderedLogsWindow, onRenderedLogsChanged } = useRenderedLogsWindow(visualisationType, logsSortOrder);
 
   return (
     <>

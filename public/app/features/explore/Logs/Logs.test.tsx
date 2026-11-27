@@ -437,7 +437,7 @@ describe('Logs', () => {
     await waitFor(() => expect(includeDroppedLogsMock.mock.calls.at(-1)[0].renderedLogsWindow).toBeUndefined());
   });
 
-  it('clears renderedLogsWindow when logs shrinks (e.g. a query re-run or time range change)', async () => {
+  it('updates renderedLogsWindow when logs changes even at the same indices (e.g. a query re-run)', async () => {
     includeDroppedLogsMock.mockClear();
     const dataFrame = getMockLokiFrame();
     const logs = [
@@ -463,12 +463,24 @@ describe('Logs', () => {
       )
     );
 
-    rerender(<Provider store={store}>{getComponent(undefined, dataFrame, [logs[0]])}</Provider>);
+    // A query re-run that produces the same number of rows (so react-window's own onItemsRendered
+    // won't naturally re-fire - its memoization is keyed only on the index numbers, not content).
+    const newLogs = [
+      makeLog({ uid: '4', rowId: 'id4', timeEpochMs: 10 }),
+      makeLog({ uid: '5', rowId: 'id5', timeEpochMs: 11 }),
+      makeLog({ uid: '6', rowId: 'id6', timeEpochMs: 12 }),
+    ];
+    rerender(<Provider store={store}>{getComponent(undefined, dataFrame, newLogs)}</Provider>);
 
-    await waitFor(() => expect(includeDroppedLogsMock.mock.calls.at(-1)[0].renderedLogsWindow).toBeUndefined());
+    await waitFor(() => {
+      const window = includeDroppedLogsMock.mock.calls.at(-1)[0].renderedLogsWindow;
+      expect(window).toBeDefined();
+      expect(window.logs.some((log: LogRowModel) => log.uid === '1')).toBe(false);
+      expect(window.logs.some((log: LogRowModel) => ['4', '5', '6'].includes(log.uid))).toBe(true);
+    });
   });
 
-  it('cancels a pending debounced update when logs shrinks before it fires', async () => {
+  it('does not clear renderedLogsWindow when logs grows (e.g. loading more or live tailing)', async () => {
     includeDroppedLogsMock.mockClear();
     const dataFrame = getMockLokiFrame();
     const logs = [
@@ -480,20 +492,29 @@ describe('Logs', () => {
     await screen.findByText('log message 3');
 
     const { onRenderedLogsChanged } = logListMock.mock.calls.at(-1)[0];
-    const cancelSpy = jest.spyOn(onRenderedLogsChanged, 'cancel');
     act(() => {
       onRenderedLogsChanged(
         { visibleStartIndex: 1, visibleStopIndex: 2, overscanStartIndex: 0, overscanStopIndex: 2 },
         logs
       );
     });
+    await waitFor(() =>
+      expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          renderedLogsWindow: expect.objectContaining({ startRowIndex: 1, endRowIndex: 2 }),
+        })
+      )
+    );
 
-    // Shrink logs before the 250ms debounce has a chance to fire - without cancelling the
-    // pending call, it would later fire and resurrect a window captured against the old, larger
-    // logs array.
-    rerender(<Provider store={store}>{getComponent(undefined, dataFrame, [logs[0]])}</Provider>);
+    // Same time range and queries, just more rows (e.g. "load more" or live tailing) - should not
+    // be treated as a query reset.
+    rerender(
+      <Provider store={store}>
+        {getComponent(undefined, dataFrame, [...logs, makeLog({ uid: '4', rowId: 'id4', timeEpochMs: 4 })])}
+      </Provider>
+    );
 
-    expect(cancelSpy).toHaveBeenCalled();
+    expect(includeDroppedLogsMock.mock.calls.at(-1)[0].renderedLogsWindow).not.toBeUndefined();
   });
 
   it('never sets up rendered-window tracking when the adaptivelogs.enableTimeMachine flag is disabled', async () => {

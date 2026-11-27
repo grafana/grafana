@@ -63,11 +63,7 @@ export function AdaptiveLogsIncludeDroppedLogs(props: Props) {
   return <IncludeDroppedLogs {...props} />;
 }
 
-export function useRenderedLogsWindow(
-  visualisationType: LogsVisualisationType,
-  logsSortOrder: LogsSortOrder,
-  allFetchedLogs: LogRowModel[]
-) {
+export function useRenderedLogsWindow(visualisationType: LogsVisualisationType, logsSortOrder: LogsSortOrder) {
   const timeMachineEnabled = useFlagAdaptivelogsEnableTimeMachine();
   const [renderedLogsWindowDebounced, setRenderedLogsWindowDebounced] = useState<RenderedLogsWindow | undefined>();
 
@@ -88,18 +84,6 @@ export function useRenderedLogsWindow(
   );
 
   useEffect(() => () => onRenderedLogsChanged?.cancel(), [onRenderedLogsChanged]);
-
-  // Track if the query has reset
-  const [previousFetchedLogs, setPreviousFetchedLogs] = useState(allFetchedLogs);
-  if (allFetchedLogs !== previousFetchedLogs) {
-    setPreviousFetchedLogs(allFetchedLogs);
-    // Check if we suddenly have fewer fetched logs
-    if (previousFetchedLogs.length > allFetchedLogs.length) {
-      // If we have fewer fetched logs, the query has reset, immediately clear the invalid debounced "window"
-      onRenderedLogsChanged?.cancel();
-      setRenderedLogsWindowDebounced(undefined);
-    }
-  }
 
   // Masks the debounced value whenever it's stale (or incompatible) relative to the current display state
   const renderedLogsWindow = useMemo(() => {
