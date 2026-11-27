@@ -14,10 +14,11 @@ const INCLUDE_DROPPED_LOGS_COMPONENT_ID = 'grafana-adaptivelogs-app/include-drop
 
 /**
  * Indicate which logs are currently visible on screen (so we can include more in that range)
+ * If indices are undefined, they are not visible (successfully fetched empty or filtered to zero)
  */
 type RenderedLogsWindow = {
-  startRowIndex: number;
-  endRowIndex: number;
+  startRowIndex: number | undefined;
+  endRowIndex: number | undefined;
   logsSortOrder: LogsSortOrder;
   /** The (potentially filtered) array of logs the indices apply to */
   logs: LogListModel[];
@@ -63,7 +64,12 @@ export function AdaptiveLogsIncludeDroppedLogs(props: Props) {
   return <IncludeDroppedLogs {...props} />;
 }
 
-export function useRenderedLogsWindow(visualisationType: LogsVisualisationType, logsSortOrder: LogsSortOrder) {
+export function useRenderedLogsWindow(
+  visualisationType: LogsVisualisationType,
+  logsSortOrder: LogsSortOrder,
+  hasData: boolean,
+  loading: boolean
+) {
   const timeMachineEnabled = useFlagAdaptivelogsEnableTimeMachine();
   const [renderedLogsWindowDebounced, setRenderedLogsWindowDebounced] = useState<RenderedLogsWindow | undefined>();
 
@@ -71,14 +77,24 @@ export function useRenderedLogsWindow(visualisationType: LogsVisualisationType, 
     () =>
       !timeMachineEnabled
         ? undefined
-        : debounce((indices: ListOnItemsRenderedProps, logs: LogListModel[]) => {
-            // debounce to avoid chain reaction on each scroll tick
-            setRenderedLogsWindowDebounced({
-              startRowIndex: indices.visibleStartIndex,
-              endRowIndex: indices.visibleStopIndex,
-              logsSortOrder,
-              logs,
-            });
+        : debounce((indices: ListOnItemsRenderedProps | undefined, logs: LogListModel[]) => {
+            // debounce to avoid chain reaction on each scroll tick.
+            setRenderedLogsWindowDebounced(
+              indices
+                ? {
+                    startRowIndex: indices.visibleStartIndex,
+                    endRowIndex: indices.visibleStopIndex,
+                    logsSortOrder,
+                    logs,
+                  }
+                : // `indices` are undefined when loading is done but no logs are currently visible (there were none, or they were filtered to zero) -
+                  {
+                    startRowIndex: undefined,
+                    endRowIndex: undefined,
+                    logsSortOrder,
+                    logs: [],
+                  }
+            );
           }, 250),
     [logsSortOrder, timeMachineEnabled]
   );
@@ -87,19 +103,26 @@ export function useRenderedLogsWindow(visualisationType: LogsVisualisationType, 
 
   // Masks the debounced value whenever it's stale (or incompatible) relative to the current display state
   const renderedLogsWindow = useMemo(() => {
-    // The following cases disable with rendered logs window via `undefined`
+    // The following cases disable via `undefined`
     if (
       // Time machine flag is off
       !timeMachineEnabled ||
       // Only the InfiniteScroll type is supported
       visualisationType !== 'logs' ||
-      // If the "old" debounced value doesn't match a recent change, we disable until it does
-      renderedLogsWindowDebounced?.logsSortOrder !== logsSortOrder //
+      // If the "old" debounced value doesn't match a recent change, we disable until it catches up
+      renderedLogsWindowDebounced?.logsSortOrder !== logsSortOrder ||
+      // Still fetching - we don't know yet whether there's anything to show
+      (loading && !hasData)
     ) {
       return undefined;
     }
+
+    if (!hasData) {
+      // Done loading, but no data
+      return { startRowIndex: undefined, endRowIndex: undefined, logsSortOrder, logs: [] };
+    }
     return renderedLogsWindowDebounced;
-  }, [visualisationType, logsSortOrder, renderedLogsWindowDebounced, timeMachineEnabled]);
+  }, [visualisationType, logsSortOrder, renderedLogsWindowDebounced, timeMachineEnabled, hasData, loading]);
 
   return { renderedLogsWindow, onRenderedLogsChanged };
 }

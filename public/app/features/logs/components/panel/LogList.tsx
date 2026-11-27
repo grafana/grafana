@@ -3,7 +3,7 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { debounce } from 'lodash';
 import { type Grammar } from 'prismjs';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
-import { type Align, type ListOnItemsRenderedProps, VariableSizeList } from 'react-window';
+import { type Align, VariableSizeList } from 'react-window';
 
 import {
   CoreApp,
@@ -33,7 +33,12 @@ import { LogDetailsContextProvider, useLogDetailsContext } from './LogDetailsCon
 import { getGridTemplateColumns, type LogLineTimestampResolution } from './LogLine';
 import { LogLineDetails, type LogLineDetailsMode } from './LogLineDetails';
 import { type GetRowContextQueryFn, type LogLineMenuCustomItem } from './LogLineMenu';
-import { LogListContextProvider, type LogListState, useLogListContext } from './LogListContext';
+import {
+  LogListContextProvider,
+  type LogListState,
+  type OnRenderedLogsChanged,
+  useLogListContext,
+} from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { LOG_LIST_SEARCH_HEIGHT, LogListSearch } from './LogListSearch';
 import { LogListSearchContextProvider, useLogListSearchContext } from './LogListSearchContext';
@@ -78,7 +83,7 @@ export interface Props {
   onClickHideField?: (key: string) => void;
   onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
-  onRenderedLogsChanged?: (range: ListOnItemsRenderedProps, logs: LogListModel[]) => void;
+  onRenderedLogsChanged?: OnRenderedLogsChanged;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;

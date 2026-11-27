@@ -517,6 +517,48 @@ describe('Logs', () => {
     expect(includeDroppedLogsMock.mock.calls.at(-1)[0].renderedLogsWindow).not.toBeUndefined();
   });
 
+  it('reports a defined-but-empty window when nothing is visible, instead of leaving a stale one', async () => {
+    includeDroppedLogsMock.mockClear();
+    const dataFrame = getMockLokiFrame();
+    const logs = [
+      makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1 }),
+      makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 2 }),
+      makeLog({ uid: '3', rowId: 'id3', timeEpochMs: 3 }),
+    ];
+    setup(undefined, dataFrame, logs);
+    await screen.findByText('log message 3');
+
+    const { onRenderedLogsChanged } = logListMock.mock.calls.at(-1)[0];
+    act(() => {
+      onRenderedLogsChanged(
+        { visibleStartIndex: 1, visibleStopIndex: 2, overscanStartIndex: 0, overscanStopIndex: 2 },
+        logs
+      );
+    });
+    await waitFor(() =>
+      expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          renderedLogsWindow: expect.objectContaining({ startRowIndex: 1, endRowIndex: 2 }),
+        })
+      )
+    );
+
+    // Simulates InfiniteScroll reporting "nothing real visible" (e.g. an in-panel filter left
+    // zero rows) - the window should become a defined-but-empty shape, not stay stuck at the
+    // previous non-empty value.
+    act(() => {
+      onRenderedLogsChanged(undefined, []);
+    });
+
+    await waitFor(() =>
+      expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          renderedLogsWindow: expect.objectContaining({ startRowIndex: undefined, endRowIndex: undefined, logs: [] }),
+        })
+      )
+    );
+  });
+
   it('never sets up rendered-window tracking when the adaptivelogs.enableTimeMachine flag is disabled', async () => {
     setBooleanFlags({ logsPanelControls: false, 'adaptivelogs.enableTimeMachine': false });
     includeDroppedLogsMock.mockClear();
@@ -536,6 +578,43 @@ describe('Logs', () => {
         name: /scan for older logs/i,
       })
     ).toBeInTheDocument();
+  });
+
+  it('reports a defined-but-empty window when there is no data at all, not a stale one', async () => {
+    includeDroppedLogsMock.mockClear();
+    const dataFrame = getMockLokiFrame();
+    const logs = [
+      makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1 }),
+      makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 2 }),
+      makeLog({ uid: '3', rowId: 'id3', timeEpochMs: 3 }),
+    ];
+    const { rerender, store } = setup(undefined, dataFrame, logs);
+    await screen.findByText('log message 3');
+
+    const { onRenderedLogsChanged } = logListMock.mock.calls.at(-1)[0];
+    act(() => {
+      onRenderedLogsChanged(
+        { visibleStartIndex: 1, visibleStopIndex: 2, overscanStartIndex: 0, overscanStopIndex: 2 },
+        logs
+      );
+    });
+    await waitFor(() =>
+      expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          renderedLogsWindow: expect.objectContaining({ startRowIndex: 1, endRowIndex: 2 }),
+        })
+      )
+    );
+
+    // The query now returns zero rows - LogList unmounts entirely (hasData is false), so nothing
+    // inside it could ever clear the stale window on its own.
+    rerender(<Provider store={store}>{getComponent(undefined, dataFrame, [])}</Provider>);
+
+    expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        renderedLogsWindow: expect.objectContaining({ startRowIndex: undefined, endRowIndex: undefined, logs: [] }),
+      })
+    );
   });
 
   it('should render an actionable message when frames have rows but no time field', () => {

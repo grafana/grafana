@@ -342,10 +342,9 @@ export const InfiniteScroll = ({
       // This only triggers if the indices are different, so we cache them for separate calls to onRenderedLogsChanged
       cachedIndicesRef.current = props;
       if (onRenderedLogsChanged) {
-        const clamped = clampIndicesToLogs(props, logs);
-        if (clamped) {
-          onRenderedLogsChanged(clamped, logs);
-        }
+        // undefined means nothing real is visible (e.g. only the loading row) - still notify, so a
+        // previous non-empty window doesn't linger once nothing is actually shown.
+        onRenderedLogsChanged(clampIndicesToLogs(props, logs), logs);
       }
 
       if (!scrollElement) {
@@ -381,10 +380,7 @@ export const InfiniteScroll = ({
   useEffect(() => {
     if (cachedIndicesRef.current && onRenderedLogsChanged) {
       // Cached indices are needed when the indices don't change but the logs do
-      const clamped = clampIndicesToLogs(cachedIndicesRef.current, logs);
-      if (clamped) {
-        onRenderedLogsChanged(clamped, logs);
-      }
+      onRenderedLogsChanged(clampIndicesToLogs(cachedIndicesRef.current, logs), logs);
     }
   }, [logs, onRenderedLogsChanged]);
 

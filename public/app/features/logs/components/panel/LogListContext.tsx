@@ -159,6 +159,9 @@ export type LogListState = Pick<
   | 'timestampResolution'
 >;
 
+/** Undefined range means nothing real is currently visible (e.g. filtered to zero). */
+export type OnRenderedLogsChanged = (range: ListOnItemsRenderedProps | undefined, logs: LogListModel[]) => void;
+
 export interface Props {
   app: CoreApp;
   allowDownload?: boolean;
@@ -188,7 +191,7 @@ export interface Props {
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
-  onRenderedLogsChanged?: (range: ListOnItemsRenderedProps, logs: LogListModel[]) => void;
+  onRenderedLogsChanged?: OnRenderedLogsChanged;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
   onUnpinLine?: (row: LogRowModel) => void;
   permalinkedLogId?: string;

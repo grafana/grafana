@@ -879,6 +879,61 @@ describe('InfiniteScroll onRenderedLogsChanged', () => {
     );
   });
 
+  test('notifies with undefined indices when logs changes to nothing visible (e.g. filtered to zero)', async () => {
+    const onRenderedLogsChanged = jest.fn();
+    const { element } = getMockElement(0);
+    const logs = createLogs(absoluteRange.from, absoluteRange.to);
+
+    const { rerender } = render(
+      <LogListContextProvider {...logListContextDefaultProps} onRenderedLogsChanged={onRenderedLogsChanged}>
+        <InfiniteScroll {...defaultProps} logs={logs} scrollElement={element as unknown as HTMLDivElement}>
+          {({ getItemKey, itemCount, itemData, onItemsRendered, Log }) => (
+            <VariableSizeList
+              height={100}
+              itemCount={itemCount}
+              itemData={itemData}
+              itemSize={() => virtualization.getLineHeight()}
+              itemKey={getItemKey}
+              layout="vertical"
+              onItemsRendered={onItemsRendered}
+              style={{ overflow: 'scroll' }}
+              width="100%"
+            >
+              {Log}
+            </VariableSizeList>
+          )}
+        </InfiniteScroll>
+      </LogListContextProvider>
+    );
+
+    expect(await screen.findByText('log line 1')).toBeInTheDocument();
+    onRenderedLogsChanged.mockClear();
+
+    rerender(
+      <LogListContextProvider {...logListContextDefaultProps} onRenderedLogsChanged={onRenderedLogsChanged}>
+        <InfiniteScroll {...defaultProps} logs={[]} scrollElement={element as unknown as HTMLDivElement}>
+          {({ getItemKey, itemCount, itemData, onItemsRendered, Log }) => (
+            <VariableSizeList
+              height={100}
+              itemCount={itemCount}
+              itemData={itemData}
+              itemSize={() => virtualization.getLineHeight()}
+              itemKey={getItemKey}
+              layout="vertical"
+              onItemsRendered={onItemsRendered}
+              style={{ overflow: 'scroll' }}
+              width="100%"
+            >
+              {Log}
+            </VariableSizeList>
+          )}
+        </InfiniteScroll>
+      </LogListContextProvider>
+    );
+
+    await waitFor(() => expect(onRenderedLogsChanged).toHaveBeenCalledWith(undefined, []));
+  });
+
   test('does not throw when no context callback is provided', async () => {
     const { element } = getMockElement(0);
     const logs = createLogs(absoluteRange.from, absoluteRange.to);
