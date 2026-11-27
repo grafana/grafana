@@ -289,6 +289,9 @@ func (td *TenantDeleter) deleteTenant(ctx context.Context, tenantName string, gr
 				span.SetStatus(codes.Error, "parsing resource key failed")
 				return err
 			}
+			if !listKey.contains(dk) {
+				continue
+			}
 			keys = append(keys, dk)
 		}
 

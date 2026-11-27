@@ -1983,6 +1983,164 @@ func TestDataStore_GetLatestResourceKey_ReadsOnlyNewestKey(t *testing.T) {
 	require.Equal(t, int64(1), recorder.calls[0].Limit)
 }
 
+// A cluster-scoped object's key prefix ("group/resource/name/") also prefixes the
+// keys of namespaced objects in a namespace with that name. The fixed RVs make the
+// order deterministic: namespaced "200" sorts between the cluster rows, "9" above
+// them but within the RV digit range, and "widget" past it.
+const (
+	collisionGroup    = "apps"
+	collisionResource = "resources"
+	collisionName     = "database"
+)
+
+func saveCollisionKey(t *testing.T, ds *dataStore, namespace, name string, rv int64, action DataAction) DataKey {
+	t.Helper()
+	key := DataKey{
+		Group: collisionGroup, Resource: collisionResource, Namespace: namespace, Name: name,
+		ResourceVersion: rv, Action: action,
+	}
+	require.NoError(t, ds.Save(t.Context(), key, bytes.NewReader([]byte(name))))
+	return key
+}
+
+func saveNamespacedCollisionKeys(t *testing.T, ds *dataStore) []DataKey {
+	return []DataKey{
+		saveCollisionKey(t, ds, collisionName, "200", 250, DataActionCreated),
+		saveCollisionKey(t, ds, collisionName, "9", 500, DataActionCreated),
+		saveCollisionKey(t, ds, collisionName, "widget", 400, DataActionCreated),
+	}
+}
+
+func collectDataKeys(t *testing.T, seq iter.Seq2[DataKey, error]) []DataKey {
+	t.Helper()
+	var keys []DataKey
+	for key, err := range seq {
+		require.NoError(t, err)
+		keys = append(keys, key)
+	}
+	return keys
+}
+
+func TestDataStore_ClusterAndNamespacedKeysSharingPrefix(t *testing.T) {
+	clusterGet := GetRequestKey{Group: collisionGroup, Resource: collisionResource, Name: collisionName}
+	clusterList := ListRequestKey(clusterGet)
+
+	t.Run("both exist", func(t *testing.T) {
+		ds := setupTestDataStore(t)
+		ctx := t.Context()
+		created := saveCollisionKey(t, ds, "", collisionName, 100, DataActionCreated)
+		updated := saveCollisionKey(t, ds, "", collisionName, 300, DataActionUpdated)
+		namespaced := saveNamespacedCollisionKeys(t, ds)
+
+		got, err := ds.LastResourceVersion(ctx, clusterList)
+		require.NoError(t, err)
+		require.Equal(t, updated, got)
+
+		got, err = ds.GetLatestResourceKey(ctx, clusterGet)
+		require.NoError(t, err)
+		require.Equal(t, updated, got)
+
+		for rv, want := range map[int64]DataKey{100: created, 250: created, 300: updated, 1000: updated} {
+			got, err = ds.GetResourceKeyAtRevision(ctx, clusterGet, rv, false)
+			require.NoError(t, err, "rv %d", rv)
+			require.Equal(t, want, got, "rv %d", rv)
+		}
+
+		got, err = ds.GetLatestResourceKey(ctx, GetRequestKey{
+			Group: collisionGroup, Resource: collisionResource, Namespace: collisionName, Name: "widget",
+		})
+		require.NoError(t, err)
+		require.Equal(t, namespaced[2], got)
+
+		require.Equal(t, []DataKey{created, updated}, collectDataKeys(t, ds.Keys(ctx, clusterList, SortOrderAsc)))
+		require.Equal(t, []DataKey{updated, created}, collectDataKeys(t, ds.Keys(ctx, clusterList, SortOrderDesc)))
+
+		namespaceList := ListRequestKey{Group: collisionGroup, Resource: collisionResource, Namespace: collisionName}
+		require.ElementsMatch(t, namespaced, collectDataKeys(t, ds.Keys(ctx, namespaceList, SortOrderAsc)))
+		require.ElementsMatch(t, namespaced, collectDataKeys(t, ds.ListLatestResourceKeys(ctx, namespaceList)))
+
+		allList := ListRequestKey{Group: collisionGroup, Resource: collisionResource}
+		require.ElementsMatch(t, append([]DataKey{created, updated}, namespaced...), collectDataKeys(t, ds.Keys(ctx, allList, SortOrderAsc)))
+	})
+
+	t.Run("only namespaced objects exist", func(t *testing.T) {
+		ds := setupTestDataStore(t)
+		ctx := t.Context()
+		saveNamespacedCollisionKeys(t, ds)
+
+		_, err := ds.LastResourceVersion(ctx, clusterList)
+		require.ErrorIs(t, err, ErrNotFound)
+		for _, rv := range []int64{0, 300, 1000} {
+			for _, includeDeleted := range []bool{false, true} {
+				_, err = ds.GetResourceKeyAtRevision(ctx, clusterGet, rv, includeDeleted)
+				require.ErrorIs(t, err, ErrNotFound, "rv %d includeDeleted %v", rv, includeDeleted)
+			}
+		}
+		require.Empty(t, collectDataKeys(t, ds.Keys(ctx, clusterList, SortOrderDesc)))
+	})
+
+	t.Run("cluster tombstone", func(t *testing.T) {
+		ds := setupTestDataStore(t)
+		ctx := t.Context()
+		created := saveCollisionKey(t, ds, "", collisionName, 100, DataActionCreated)
+		deleted := saveCollisionKey(t, ds, "", collisionName, 300, DataActionDeleted)
+		saveNamespacedCollisionKeys(t, ds)
+
+		_, err := ds.GetLatestResourceKey(ctx, clusterGet)
+		require.ErrorIs(t, err, ErrNotFound)
+		_, err = ds.GetResourceKeyAtRevision(ctx, clusterGet, 350, false)
+		require.ErrorIs(t, err, ErrNotFound)
+
+		got, err := ds.GetResourceKeyAtRevision(ctx, clusterGet, 0, true)
+		require.NoError(t, err)
+		require.Equal(t, deleted, got)
+
+		got, err = ds.LastResourceVersion(ctx, clusterList)
+		require.NoError(t, err)
+		require.Equal(t, deleted, got)
+
+		got, err = ds.GetResourceKeyAtRevision(ctx, clusterGet, 250, false)
+		require.NoError(t, err)
+		require.Equal(t, created, got)
+	})
+
+	t.Run("latest read stays a single-row lookup", func(t *testing.T) {
+		recorder := &keysRecordingKV{KV: setupBadgerKV(t)}
+		ds := newDataStore(recorder)
+		saveCollisionKey(t, ds, "", collisionName, 100, DataActionCreated)
+		latest := saveCollisionKey(t, ds, "", collisionName, 300, DataActionUpdated)
+		saveCollisionKey(t, ds, collisionName, "widget", 400, DataActionCreated)
+
+		recorder.calls = nil
+		got, err := ds.GetLatestResourceKey(t.Context(), clusterGet)
+		require.NoError(t, err)
+		require.Equal(t, latest, got)
+		require.Len(t, recorder.calls, 1)
+		require.Equal(t, SortOrderDesc, recorder.calls[0].Sort)
+		require.Equal(t, int64(1), recorder.calls[0].Limit)
+	})
+}
+
+// The fallback scan for a cluster-scoped latest read must not need a second
+// connection while the first lookup still holds one.
+func TestDataStore_LastResourceVersionFallbackSingleConnection(t *testing.T) {
+	store, pool := setupSqlKVWithDB(t)
+	ds := newDataStore(store)
+	saveCollisionKey(t, ds, "", collisionName, 100, DataActionCreated)
+	latest := saveCollisionKey(t, ds, "", collisionName, 300, DataActionUpdated)
+	saveCollisionKey(t, ds, collisionName, "9", 500, DataActionCreated)
+
+	maxOpenConns := pool.Stats().MaxOpenConnections
+	t.Cleanup(func() { pool.SetMaxOpenConns(maxOpenConns) })
+	pool.SetMaxOpenConns(1)
+
+	ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
+	defer cancel()
+	got, err := ds.GetLatestResourceKey(ctx, GetRequestKey{Group: collisionGroup, Resource: collisionResource, Name: collisionName})
+	require.NoError(t, err)
+	require.Equal(t, latest, got)
+}
+
 func TestIntegrationDataStore_ListLatestResourceKeys(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListLatestResourceKeys)
 	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListLatestResourceKeys)

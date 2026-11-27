@@ -551,6 +551,23 @@ func TestDeleteTenant_MultipleGroupResources(t *testing.T) {
 	assert.NotEmpty(t, record.DeletedAt, "DeletedAt should be set after successful deletion")
 }
 
+// The tenant's namespace prefix also prefixes the keys of a cluster-scoped
+// object named like the tenant; deleting the tenant must keep that object.
+func TestDeleteTenant_KeepsClusterObjectNamedLikeTenant(t *testing.T) {
+	td, ds, pds := newTestTenantDeleter(t, false)
+
+	saveCollisionKey(t, ds, testStacksNS1, "widget", 100, DataActionCreated)
+	cluster := saveCollisionKey(t, ds, "", testStacksNS1, 101, DataActionCreated)
+	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{DeleteAfter: pastTime()}))
+
+	groupResources, err := ds.getGroupResources(t.Context())
+	require.NoError(t, err)
+	require.NoError(t, td.deleteTenant(t.Context(), testStacksNS1, groupResources))
+
+	allList := ListRequestKey{Group: collisionGroup, Resource: collisionResource}
+	require.Equal(t, []DataKey{cluster}, collectDataKeys(t, ds.Keys(t.Context(), allList, SortOrderAsc)))
+}
+
 // TestDeleteTenant_DeletesEmbeddings verifies deleteTenant wipes the tenant's
 // embeddings via the vector backend on a real (non-dry) run.
 func TestDeleteTenant_DeletesEmbeddings(t *testing.T) {
