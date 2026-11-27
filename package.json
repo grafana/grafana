@@ -95,7 +95,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
-    "@axe-core/playwright": "^4.11.1",
+    "@axe-core/playwright": "^4.14.0",
     "@bsull/augurs": "^0.10.2",
     "@codemirror/autocomplete": "6.20.4",
     "@codemirror/commands": "6.11.1",
