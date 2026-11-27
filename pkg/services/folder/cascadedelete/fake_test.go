@@ -43,6 +43,7 @@ type memStore struct {
 
 	folders    map[string]*memFolder
 	dashboards map[string]string // name -> parent folder
+	rules      map[string]string // name -> parent folder; listed as one child per folder, like a bulk-deleted kind
 	// failDelete makes Delete of the named child return the error.
 	failDelete map[string]error
 
@@ -58,7 +59,7 @@ type memStore struct {
 }
 
 func newMemStore() *memStore {
-	return &memStore{folders: map[string]*memFolder{}, dashboards: map[string]string{}, failDelete: map[string]error{}, gets: map[string]int{}, rvs: map[string]int{}}
+	return &memStore{folders: map[string]*memFolder{}, dashboards: map[string]string{}, rules: map[string]string{}, failDelete: map[string]error{}, gets: map[string]int{}, rvs: map[string]int{}}
 }
 
 // notify delivers a folder change to the handler. The caller holds m.mu.
@@ -119,6 +120,12 @@ func (m *memStore) addFolder(name, parent string, finalizers ...string) {
 func (m *memStore) addDashboards(parent string, names ...string) {
 	for _, n := range names {
 		m.dashboards[n] = parent
+	}
+}
+
+func (m *memStore) addRules(parent string, names ...string) {
+	for _, n := range names {
+		m.rules[n] = parent
 	}
 }
 
@@ -196,6 +203,13 @@ func (m *memStore) childrenOf(folderUID string, kind ChildKind) []Child {
 				out = append(out, Child{Kind: ChildDashboard, Name: name})
 			}
 		}
+	case ChildAlertRule:
+		for _, parent := range m.rules {
+			if parent == folderUID {
+				out = append(out, Child{Kind: ChildAlertRule, Name: folderUID})
+				break
+			}
+		}
 	}
 	return out
 }
@@ -231,6 +245,17 @@ func (m *memStore) Delete(ctx context.Context, _, parentUID string, c Child) (De
 		}
 		m.deleteCalls = append(m.deleteCalls, c.Name)
 		delete(m.dashboards, c.Name)
+		return DeleteOutcomeDeleted, nil
+	case ChildAlertRule:
+		if len(m.childrenOf(c.Name, ChildAlertRule)) == 0 || c.Name != parentUID {
+			return DeleteOutcomeGone, nil
+		}
+		m.deleteCalls = append(m.deleteCalls, "rules/"+c.Name)
+		for name, parent := range m.rules {
+			if parent == c.Name {
+				delete(m.rules, name)
+			}
+		}
 		return DeleteOutcomeDeleted, nil
 	default:
 		f, ok := m.folders[c.Name]
