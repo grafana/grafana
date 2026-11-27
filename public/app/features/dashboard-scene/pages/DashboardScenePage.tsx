@@ -33,7 +33,14 @@ import { ScriptedDashboardDeprecationBanner } from '../components/ScriptedDashbo
 import { ScriptedDashboardsDisabledPage } from '../components/ScriptedDashboardsDisabledPage';
 import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
 import { DashboardLifecycleBanner } from '../lifecycle/DashboardLifecycleBanner';
+import {
+  coversDashboard,
+  endTemplateAdoption,
+  type TemplateAdoption,
+  useTemplateAdoption,
+} from '../lifecycle/templateAdoption';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
+import { PlanBuildingOverlay } from '../scene/PlanBuildingOverlay';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { useScenesFlickeringFix } from '../utils/utils';
 
@@ -75,8 +82,16 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   // Selects which pending changes the same dashboard previews (see pendingChangePreview.ts).
   const pendingChanges = queryParams.pendingChanges;
   const prevParams = useRef<Params<string>>(params);
+  const adoption = useTemplateAdoption();
 
   useScenesFlickeringFix();
+
+  useEffect(() => {
+    // A template or draft that fails to load leaves nothing for the building screen to stand in for.
+    if (adoption && loadError) {
+      endTemplateAdoption(adoption);
+    }
+  }, [adoption, loadError]);
 
   useEffect(() => {
     if (route.routeName === DashboardRoutes.Normal && type === 'snapshot') {
@@ -146,6 +161,10 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       return <ScriptedDashboardsDisabledPage />;
     }
 
+    if (adoption && !loadError) {
+      return <TemplateAdoptionPage adoption={adoption} />;
+    }
+
     return loadError ? (
       <DashboardPageError
         error={loadError}
@@ -166,7 +185,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   // if prevMatch is undefined we are going from normal route to home route or vice versa
   if (type !== 'snapshot' && (!prevMatch || uid !== prevMatch?.params.uid)) {
     console.log('skipping rendering');
-    return null;
+    return adoption ? <TemplateAdoptionPage adoption={adoption} /> : null;
   }
 
   // `locationSearchToObject()` parses `?kiosk` as `true` (boolean param). Some clients can emit `?kiosk=`, which parses as ''.
@@ -175,20 +194,25 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
   return (
     <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
-      <DashboardPreviewBanner
-        queryParams={queryParams}
-        route={route.routeName}
-        slug={slug}
-        path={path}
-        dashboard={dashboard}
-      />
-      <DashboardConversionWarningBanner dashboard={dashboard} />
-      <ScriptedDashboardDeprecationBanner isScripted={type === 'script'} />
-      <OrphanedDashboardBanner dashboard={dashboard} />
-      <SuggestedDashboardsBanner route={route.routeName} dashboard={dashboard} />
-      <DashboardTemplateSavedBanner />
-      <DashboardTemplateUseBanner dashboard={dashboard} />
-      <DashboardTemplateEditBanner dashboard={dashboard} />
+      {/* Banners about the template wait until the building screen over it gives way. */}
+      {!coversDashboard(dashboard.state) && (
+        <>
+          <DashboardPreviewBanner
+            queryParams={queryParams}
+            route={route.routeName}
+            slug={slug}
+            path={path}
+            dashboard={dashboard}
+          />
+          <DashboardConversionWarningBanner dashboard={dashboard} />
+          <ScriptedDashboardDeprecationBanner isScripted={type === 'script'} />
+          <OrphanedDashboardBanner dashboard={dashboard} />
+          <SuggestedDashboardsBanner route={route.routeName} dashboard={dashboard} />
+          <DashboardTemplateSavedBanner />
+          <DashboardTemplateUseBanner dashboard={dashboard} />
+          <DashboardTemplateEditBanner dashboard={dashboard} />
+        </>
+      )}
       <DashboardLifecycleBanner dashboard={dashboard} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
@@ -204,3 +228,15 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 }
 
 export default DashboardScenePage;
+
+/**
+ * The building screen while a template the Assistant is turning into a draft, or the draft it moves to,
+ * loads: one screen from the click until the draft shows (see templateAdoption.ts).
+ */
+function TemplateAdoptionPage({ adoption }: { adoption: TemplateAdoption }) {
+  return (
+    <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} data-testid={'dashboard-scene-page'}>
+      <PlanBuildingOverlay startedAt={adoption.startedAt} />
+    </Page>
+  );
+}

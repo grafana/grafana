@@ -17,6 +17,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
+import { coversDashboard } from '../lifecycle/templateAdoption';
 import { buildShareUrl } from '../sharing/ShareButton/utils';
 import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
@@ -307,8 +308,9 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       keybindings.addBinding({
         key: 'mod+s',
         onTrigger: () => {
-          // Viewing keeps the edit session open (isEditing stays true), so gate on the mode as well
-          if (getDashboardMode(scene.state) !== 'view') {
+          // Viewing keeps the edit session open (isEditing stays true), so gate on the mode as well. A
+          // template under the building screen isn't the user's to save yet.
+          if (getDashboardMode(scene.state) !== 'view' && !coversDashboard(scene.state)) {
             scene.openSaveDrawer({});
           }
         },

@@ -35,15 +35,17 @@ const BAR_HEIGHTS = [18, 28, 14, 32, 22];
  * their contents fill in together. Decorative: the text beside it carries the meaning, so it is
  * hidden from assistive technology. With reduced motion it shows the finished dashboard, still.
  */
-export function PlanBuildingAnimation() {
+export function PlanBuildingAnimation({ elapsedMs = 0 }: { elapsedMs?: number }) {
   const styles = useStyles2(getStyles);
+  // Picks the loop up where an earlier copy of it was, so a screen shown again on the next page doesn't restart.
+  const resume = elapsedMs > 0 ? { animationDelay: `-${elapsedMs}ms` } : undefined;
 
   return (
     <svg className={styles.svg} viewBox="0 0 240 160" aria-hidden="true" focusable="false">
       <rect className={styles.frame} x="1" y="1" width="238" height="158" rx="6" />
       <rect className={styles.skeleton} x="12" y="10" width="64" height="6" rx="3" />
 
-      <g className={styles.contents}>
+      <g className={styles.contents} style={resume}>
         {PANELS.map((panel, index) => (
           <rect key={index} className={styles.panelBox} {...panel} rx="3" />
         ))}
@@ -76,7 +78,7 @@ export function PlanBuildingAnimation() {
       </g>
 
       {PANELS.map((panel, index) => (
-        <rect key={index} className={styles.outline[index]} {...panel} rx="3" pathLength={1} />
+        <rect key={index} className={styles.outline[index]} style={resume} {...panel} rx="3" pathLength={1} />
       ))}
     </svg>
   );

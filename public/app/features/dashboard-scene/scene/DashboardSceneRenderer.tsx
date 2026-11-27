@@ -19,6 +19,7 @@ import { useScopeActions } from 'app/features/scopes/selector/useScopeActions';
 import { useSelector } from 'app/types/store';
 
 import { ComposerOverlay } from '../composer/ComposerOverlay';
+import { coversDashboard, endTemplateAdoption, useTemplateAdoption } from '../lifecycle/templateAdoption';
 import { ComposerOverAssistantEdit } from '../lifecycle/useComposerOverAssistantEdit';
 import { DashboardSidebarSplitter } from '../sidebar/DashboardSidebarSplitter';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../solo/SoloPanelContext';
@@ -27,6 +28,7 @@ import { DashboardOverlay } from './DashboardOverlay';
 import { type DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
 import { PlanBuildingOverlay } from './PlanBuildingOverlay';
+import { TemplateAdoptionCover } from './TemplateAdoptionCover';
 import { dashboardComposerEnabled } from './dashboardModes';
 import { PlanningControls } from './new-toolbar/PlanningControls';
 import { SandboxConsentBanner } from './sandbox-consent/SandboxConsentBanner';
@@ -47,8 +49,18 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     mode,
     uid,
     title,
+    meta,
   } = model.useState();
   const composerSession = mode === 'composer' ? model.getComposerSession() : undefined;
+  const adoption = useTemplateAdoption();
+  const coveringAdoption = adoption && coversDashboard({ meta }) ? adoption : undefined;
+
+  useEffect(() => {
+    // The draft the template became is on screen: the building screen has nothing left to cover.
+    if (adoption && meta.newDashboardUid && !meta.isEmbedded) {
+      endTemplateAdoption(adoption);
+    }
+  }, [adoption, meta.newDashboardUid, meta.isEmbedded]);
 
   const scopesServices = useScopesServices();
   const { setRedirectEnabled } = useScopeActions();
@@ -187,7 +199,13 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
             isPlanning={planning?.phase === 'preview'}
             controls={renderControls()}
             body={renderBody()}
-            overlay={composerSession && <ComposerOverlay session={composerSession} />}
+            overlay={
+              coveringAdoption ? (
+                <TemplateAdoptionCover startedAt={coveringAdoption.startedAt} />
+              ) : (
+                composerSession && <ComposerOverlay session={composerSession} />
+              )
+            }
           />
         )}
         <DashboardOverlay dashboard={model} />

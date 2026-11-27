@@ -22,24 +22,44 @@ function getQuips(): string[] {
   ];
 }
 
+interface Props {
+  /**
+   * When the wait began, for a screen that each page of it shows again (a template the Assistant turns
+   * into a draft): the animation and the quips carry on from there instead of starting over.
+   */
+  startedAt?: number;
+}
+
 /**
  * Fills the empty dashboard between the user choosing Build on a plan and the builder's first
  * write, while the assistant prepares the build, so the wait reads as work in progress rather
  * than a blank page.
  */
-export function PlanBuildingOverlay() {
+export function PlanBuildingOverlay({ startedAt }: Props) {
   const styles = useStyles2(getStyles);
   const quips = getQuips();
-  const [quipIndex, setQuipIndex] = useState(0);
+  const [elapsedMs] = useState(() => (startedAt ? Math.max(0, Date.now() - startedAt) : 0));
+  const [quipIndex, setQuipIndex] = useState(() => Math.floor(elapsedMs / QUIP_INTERVAL_MS));
 
   useEffect(() => {
-    const interval = setInterval(() => setQuipIndex((index) => index + 1), QUIP_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, []);
+    const next = () => setQuipIndex((index) => index + 1);
+    let interval: ReturnType<typeof setInterval> | undefined;
+    const first = setTimeout(
+      () => {
+        next();
+        interval = setInterval(next, QUIP_INTERVAL_MS);
+      },
+      QUIP_INTERVAL_MS - (elapsedMs % QUIP_INTERVAL_MS)
+    );
+    return () => {
+      clearTimeout(first);
+      clearInterval(interval);
+    };
+  }, [elapsedMs]);
 
   return (
     <div className={styles.container} data-testid="dashboard-plan-building-overlay">
-      <PlanBuildingAnimation />
+      <PlanBuildingAnimation elapsedMs={elapsedMs} />
       <div role="status">
         <Text element="h2" variant="h4">
           <Trans i18nKey="dashboard.plan-building-overlay.title">Preparing to build your dashboard</Trans>

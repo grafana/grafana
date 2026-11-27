@@ -25,4 +25,16 @@ describe('PlanBuildingOverlay', () => {
     expect(screen.queryByText('Lining up the gridlines…')).not.toBeInTheDocument();
     expect(screen.getByText('Picking a nice shade of green…')).toBeInTheDocument();
   });
+
+  it('carries on from when the wait began, for a screen shown again on the next page', () => {
+    render(<PlanBuildingOverlay startedAt={Date.now() - 2800 - 1000} />);
+
+    expect(screen.getByText('Picking a nice shade of green…')).toBeInTheDocument();
+
+    act(() => {
+      jest.advanceTimersByTime(1800);
+    });
+
+    expect(screen.getByText('Asking the metrics nicely…')).toBeInTheDocument();
+  });
 });
