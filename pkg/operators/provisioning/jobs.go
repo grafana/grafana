@@ -23,10 +23,7 @@ func buildJobQueue(
 	jobStore jobs.Store,
 	jobHistoryWriter jobs.HistoryWriter,
 ) (*jobqueue.Queue, error) {
-	tracer, err := controllerCfg.Tracer()
-	if err != nil {
-		return nil, fmt.Errorf("failed to provide tracing service: %w", err)
-	}
+	tracer := controllerCfg.Tracer()
 
 	clients, err := controllerCfg.Clients()
 	if err != nil {

@@ -14,7 +14,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -51,12 +50,12 @@ func TestIntegrationLoaderCacheOptionsAndFailures(t *testing.T) {
 			z := &migratedGrants{permissions: []ac.Permission{a, b, b}}
 			loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(),
 				resourcepermissions.NewActionSetService(), localcache.New(0, 0),
-				loaderConfig(true), featuremgmt.WithFeatures(), &enforcementLicense{enabled: enterprise}, z,
+				loaderConfig(true), &enforcementLicense{enabled: enterprise}, z,
 			)
 			if mode == "standalone" {
 				loader = legacypermissions.NewEnforcedLoader(legacysql.NewDatabaseProvider(sql),
 					resourcepermissions.NewActionSetService(), localcache.New(0, 0),
-					loaderConfig(true), featuremgmt.WithFeatures(), z, nil)
+					loaderConfig(true), z, nil)
 			}
 			requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleViewer}
 			check := func(options ac.Options, want ...ac.Permission) {
@@ -95,7 +94,7 @@ func TestIntegrationLoaderConcurrentSnapshots(t *testing.T) {
 	seedGrant(t, sql, "managed:one", 1, 7, permission)
 	loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(),
 		resourcepermissions.NewActionSetService(), localcache.New(0, 0),
-		loaderConfig(true), featuremgmt.WithFeatures(), &licensing.OSSLicensingService{},
+		loaderConfig(true), &licensing.OSSLicensingService{},
 		&migratedGrants{permissions: []ac.Permission{{Action: "users:create"}}},
 	)
 	requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleViewer}
@@ -152,7 +151,7 @@ func TestIntegrationLoaderComposesCurrentExternalGroups(t *testing.T) {
 	grants := &contextualGrants{}
 	loader := legacypermissions.NewLoader(db.NewTestStore(t), legacypermissions.NewRoleCatalog(),
 		resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg,
-		featuremgmt.WithFeatures(), &enforcementLicense{enabled: true}, grants)
+		&enforcementLicense{enabled: true}, grants)
 	requester := &user.SignedInUser{UserID: 7, UserUID: "alice", OrgID: 1}
 	for i, teams := range [][]string{{"team-a"}, {"team-b"}, nil, {"team-a"}} {
 		requester.ExternalGroups = teams

@@ -2207,3 +2207,21 @@ func (m *mockSearchClient) VectorSearch(ctx context.Context, in *resourcepb.Vect
 func (m *mockSearchClient) HybridSearch(ctx context.Context, in *resourcepb.HybridSearchRequest, opts ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
+
+func TestValidateOnDeleteUsesTheFinalizerDecision(t *testing.T) {
+	zero := int64(0)
+	notEmpty := &mockSearchClient{stats: &resourcepb.ResourceStatsResponse{Stats: []*resourcepb.ResourceStatsResponse_Stats{
+		{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 1},
+	}}}
+	folder := func(finalizers ...string) *folders.Folder {
+		return &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "f", Finalizers: finalizers}}
+	}
+	force := &metav1.DeleteOptions{GracePeriodSeconds: &zero}
+	cascade := folders.CascadeDeleteFinalizer
+
+	// Delete admission sees the stored folder, while the delete persists the decision: a forced delete
+	// bypasses the empty check only for a folder that ends up with the finalizer.
+	require.NoError(t, validateOnDelete(withCascadeFinalizerOnDelete(context.Background(), true), folder(), notEmpty, force, false, nil))
+	require.ErrorContains(t, validateOnDelete(withCascadeFinalizerOnDelete(context.Background(), false), folder(cascade), notEmpty, force, false, nil), "folder.not-empty")
+	require.NoError(t, validateOnDelete(context.Background(), folder(cascade), notEmpty, force, false, nil), "without a decision the stored folder decides")
+}

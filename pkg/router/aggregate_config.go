@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -23,11 +24,17 @@ type aggregateTargetConfig struct {
 	// DiscoveryAuth is how the router authenticates its own discovery polls:
 	// discoveryAuthCAPToken (also the empty default), discoveryAuthBearer or
 	// discoveryAuthNone.
-	// Proxied requests always carry the caller's credentials regardless.
+	// Proxied requests carry the caller's credentials regardless, unless
+	// wrapProxy replaces them.
 	DiscoveryAuth      string
 	GroupPatterns      []string
 	CAFile             string
 	InsecureSkipVerify bool
+
+	// wrapProxy, when set, wraps the transport of the target's proxied
+	// requests. Only the remote services set it, to sign each request
+	// (remote_services_auth.go); [router.aggregate.<name>] sections never do.
+	wrapProxy func(http.RoundTripper) http.RoundTripper
 }
 
 const aggregateSectionPrefix = "router.aggregate."

@@ -50,7 +50,6 @@ type Loader struct {
 	cache             *localcache.CacheService
 	cacheTTLOverride  *time.Duration
 	cfg               *setting.Cfg
-	features          featuremgmt.FeatureToggles
 	openFeatureClient *openfeature.Client
 	license           licensing.Licensing
 	enforced          bool // Standalone loading always uses SQL-backed permissions without a license service.
@@ -61,10 +60,10 @@ type Loader struct {
 }
 
 func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver,
-	cache *localcache.CacheService, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
+	cache *localcache.CacheService, cfg *setting.Cfg,
 	license licensing.Licensing, zanzana MigratedPermissions,
 ) *Loader {
-	return newLoader(legacysql.NewDatabaseProvider(sql), actionResolver, cache, cfg, features, zanzana,
+	return newLoader(legacysql.NewDatabaseProvider(sql), actionResolver, cache, cfg, zanzana,
 		WithLicensing(license), WithRoleCatalog(catalog))
 }
 
@@ -73,11 +72,11 @@ func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver
 // RemoteServer scopes cache keys to the validated transport tenant. Direct callers
 // must not share a cached loader across tenants. This constructor registers no handler.
 func NewEnforcedLoader(database legacysql.LegacyDatabaseProvider, actions ac.ActionResolver,
-	cache *localcache.CacheService, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
+	cache *localcache.CacheService, cfg *setting.Cfg,
 	zanzana MigratedPermissions, scopeResolver legacyscopes.ScopeResolver,
 	options ...LoaderOption,
 ) *Loader {
-	loader := newLoader(database, actions, cache, cfg, features, zanzana, options...)
+	loader := newLoader(database, actions, cache, cfg, zanzana, options...)
 	loader.enforced = true
 	loader.scopeResolver = scopeResolver
 	return loader
@@ -111,7 +110,7 @@ func WithRoleCatalog(catalog *RoleCatalog) LoaderOption {
 }
 
 func newLoader(database legacysql.LegacyDatabaseProvider, actionResolver ac.ActionResolver,
-	cache *localcache.CacheService, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
+	cache *localcache.CacheService, cfg *setting.Cfg,
 	zanzana MigratedPermissions, options ...LoaderOption,
 ) *Loader {
 	loader := &Loader{
@@ -119,7 +118,6 @@ func newLoader(database legacysql.LegacyDatabaseProvider, actionResolver ac.Acti
 		actions:           actionResolver,
 		cache:             cache,
 		cfg:               cfg,
-		features:          features,
 		openFeatureClient: openfeature.NewDefaultClient(),
 		zanzana:           zanzana,
 		log:               log.New("authz.legacypermissions"),
@@ -148,11 +146,7 @@ func (l *Loader) GetLocalUserPermissions(ctx context.Context, user identity.Requ
 func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester, options ac.Options) ([]ac.Permission, error) {
 	ctx, span := tracer.Start(ctx, "authz.legacypermissions.GetUserPermissions")
 	defer span.End()
-	settings := loadSettings{
-		enforcementEnabled: l.enforcementEnabled(),
-		//nolint:staticcheck // Preserve the current global feature-toggle behavior.
-		excludeRedundantManagedPermissions: l.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions),
-	}
+	settings := l.settings(ctx)
 	started := time.Now()
 	// OSS timing includes Zanzana merging; licensed Enterprise measures only RBAC loading.
 	if !settings.enforcementEnabled {
@@ -167,7 +161,7 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 	} else if settings.enforcementEnabled || options.ReloadCache || shadow.IsShadow(ctx) {
 		permissions, err = l.assemble(ctx, user, options, settings)
 	} else {
-		value, loadErr, _ := l.flight.Do(tenantCacheKey(ctx, user.GetCacheKey()), func() (any, error) {
+		value, loadErr, _ := l.flight.Do(tenantCacheKey(ctx, ac.ManagedPermissionCacheKey(user.GetCacheKey(), settings.excludeRedundantManagedPermissions)), func() (any, error) {
 			return l.assemble(ctx, user, options, settings)
 		})
 		err = loadErr
@@ -209,10 +203,39 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 	return legacyscopes.ResolveUserScopes(ctx, user, l.scopeResolver, MergeUserPermissions(permissions, migrated))
 }
 
+func (l *Loader) settings(ctx context.Context) loadSettings {
+	const defaultExcludeRedundantManagedPermissions = false
+
+	return loadSettings{
+		enforcementEnabled: l.enforcementEnabled(),
+		excludeRedundantManagedPermissions: l.openFeatureClient.Boolean(
+			ctx,
+			featuremgmt.FlagExcludeRedundantManagedPermissions,
+			defaultExcludeRedundantManagedPermissions,
+			openfeature.TransactionContext(ctx),
+		),
+	}
+}
+
 func queryFor(orgID int64, p loadSettings) ac.GetUserPermissionsQuery {
 	q := ac.GetUserPermissionsQuery{OrgID: orgID, ExcludeRedundantManagedPermissions: p.excludeRedundantManagedPermissions}
 	if !p.enforcementEnabled {
 		q.RolePrefixes = []string{ac.ManagedRolePrefix, ac.ExternalServiceRolePrefix}
+	}
+	return q
+}
+
+func basicRoleQueryFor(orgID int64, p loadSettings) ac.GetUserPermissionsQuery {
+	q := queryFor(orgID, p)
+	// Both old basic-role stores drop this flag; preserve that asymmetry.
+	q.ExcludeRedundantManagedPermissions = false
+	return q
+}
+
+func cachedAssignmentQueryFor(orgID int64, p loadSettings) ac.GetUserPermissionsQuery {
+	q := queryFor(orgID, p)
+	if p.enforcementEnabled {
+		q.ExcludeRedundantManagedPermissions = false
 	}
 	return q
 }
@@ -258,10 +281,8 @@ func (l *Loader) assemble(ctx context.Context, user identity.Requester, options 
 	var chunks [][]ac.Permission
 	for _, role := range ac.GetOrgRoles(user) {
 		load := func(ctx context.Context) ([]ac.Permission, error) {
-			q := queryFor(user.GetOrgID(), p)
+			q := basicRoleQueryFor(user.GetOrgID(), p)
 			q.Roles = []string{role}
-			// Both old basic-role stores drop this flag; preserve that asymmetry.
-			q.ExcludeRedundantManagedPermissions = false
 			stored, err := l.store.permissions(ctx, q)
 			if err != nil {
 				return nil, err
@@ -288,11 +309,12 @@ func (l *Loader) assemble(ctx context.Context, user identity.Requester, options 
 	if err != nil {
 		return nil, err
 	}
-	direct, err := l.cached(ctx, "direct", ac.GetUserDirectPermissionCacheKey(user), options, func(ctx context.Context) ([]ac.Permission, error) {
-		q := queryFor(user.GetOrgID(), p)
-		if p.enforcementEnabled {
-			q.ExcludeRedundantManagedPermissions = false
-		}
+	q := cachedAssignmentQueryFor(user.GetOrgID(), p)
+	baseKey := ac.GetUserDirectPermissionCacheKey(user)
+	if options.ReloadCache && !shadow.IsShadow(ctx) {
+		l.cache.ExclusiveDelete(tenantCacheKey(ctx, ac.ManagedPermissionCacheKey(baseKey, !q.ExcludeRedundantManagedPermissions)))
+	}
+	direct, err := l.cached(ctx, "direct", ac.ManagedPermissionCacheKey(baseKey, q.ExcludeRedundantManagedPermissions), options, func(ctx context.Context) ([]ac.Permission, error) {
 		var err error
 		q.UserID, err = internalID(user)
 		if err != nil {
@@ -337,8 +359,13 @@ func (l *Loader) cachedTeams(ctx context.Context, user identity.Requester, optio
 	}
 	var permissions [][]ac.Permission
 	var missing []int64
+	q := cachedAssignmentQueryFor(user.GetOrgID(), p)
 	for _, teamID := range user.GetTeams() {
-		if value, ok := l.cache.Get(tenantCacheKey(ctx, ac.GetTeamPermissionCacheKey(teamID, user.GetOrgID()))); ok && !options.ReloadCache {
+		baseKey := ac.GetTeamPermissionCacheKey(teamID, user.GetOrgID())
+		if options.ReloadCache && !shadow.IsShadow(ctx) {
+			l.cache.Delete(tenantCacheKey(ctx, ac.ManagedPermissionCacheKey(baseKey, !q.ExcludeRedundantManagedPermissions)))
+		}
+		if value, ok := l.cache.Get(tenantCacheKey(ctx, ac.ManagedPermissionCacheKey(baseKey, q.ExcludeRedundantManagedPermissions))); ok && !options.ReloadCache {
 			metrics.MAccessPermissionsCacheUsage.WithLabelValues(ac.CacheHit).Inc()
 			permissions = append(permissions, value.([]ac.Permission))
 		} else {
@@ -350,11 +377,7 @@ func (l *Loader) cachedTeams(ctx context.Context, user identity.Requester, optio
 		return permissions, nil
 	}
 	metrics.MAccessPermissionsCacheUsage.WithLabelValues(ac.CacheMiss).Inc()
-	q := queryFor(user.GetOrgID(), p)
 	q.TeamIDs = missing
-	if p.enforcementEnabled {
-		q.ExcludeRedundantManagedPermissions = false
-	}
 	teams, err := l.store.teams(ctx, q)
 	if err != nil {
 		return nil, err
@@ -362,7 +385,7 @@ func (l *Loader) cachedTeams(ctx context.Context, user identity.Requester, optio
 	for teamID, grants := range teams {
 		grants = l.actions.ExpandActionSets(grants)
 		if !shadow.IsShadow(ctx) {
-			l.cache.Set(tenantCacheKey(ctx, ac.GetTeamPermissionCacheKey(teamID, user.GetOrgID())), grants, l.permissionCacheTTL())
+			l.cache.Set(tenantCacheKey(ctx, ac.ManagedPermissionCacheKey(ac.GetTeamPermissionCacheKey(teamID, user.GetOrgID()), q.ExcludeRedundantManagedPermissions)), grants, l.permissionCacheTTL())
 		}
 		permissions = append(permissions, grants)
 	}
@@ -413,6 +436,6 @@ func (l *Loader) cached(ctx context.Context, source, key string, options ac.Opti
 }
 
 func (l *Loader) ClearUserPermissionCache(user identity.Requester) {
-	l.cache.ExclusiveDelete(ac.GetUserDirectPermissionCacheKey(user))
+	ac.ClearManagedPermissionCache(l.cache.ExclusiveDelete, ac.GetUserDirectPermissionCacheKey(user))
 	l.cache.ExclusiveDelete(ac.GetZanzanaUserPermissionCacheKey(user))
 }
