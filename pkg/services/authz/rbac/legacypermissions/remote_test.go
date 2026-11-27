@@ -97,3 +97,15 @@ func testIdentityCacheKey(t *testing.T, id *authzv1.LegacyPermissionIdentity, na
 	require.NoError(t, err)
 	return key
 }
+
+func TestTeamSetCacheKey(t *testing.T) {
+	require.Equal(t, teamSetCacheKey(1, []int64{1, 2}), teamSetCacheKey(1, []int64{1, 2}))
+	require.NotEqual(t, teamSetCacheKey(1, []int64{1, 2}), teamSetCacheKey(2, []int64{1, 2}), "org")
+	require.NotEqual(t, teamSetCacheKey(1, []int64{1, 2}), teamSetCacheKey(1, []int64{12}), "separator")
+	many := make([]int64, 1000)
+	for i := range many {
+		many[i] = int64(1_000_000 + i)
+	}
+	ctx := context.WithValue(context.Background(), remoteNamespaceKey{}, "stacks-1234567890")
+	require.Less(t, len(tenantCacheKey(ctx, teamSetCacheKey(1234567890, many))), 250)
+}

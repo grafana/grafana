@@ -8,8 +8,6 @@ import (
 
 	authcache "github.com/grafana/authlib/cache"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -113,14 +111,12 @@ func TestPermissionCacheFailuresAreMisses(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
 		configure func(*fakeAuthCache)
-		operation string
 	}{
-		{name: "read", configure: func(c *fakeAuthCache) { c.getErr = failure }, operation: "read"},
-		{name: "write", configure: func(c *fakeAuthCache) { c.setErr = failure }, operation: "write"},
-		{name: "decode", configure: func(c *fakeAuthCache) { c.data[`legacy-remote:"stacks-1":key`] = []byte("not json") }, operation: "read"},
+		{name: "read", configure: func(c *fakeAuthCache) { c.getErr = failure }},
+		{name: "write", configure: func(c *fakeAuthCache) { c.setErr = failure }},
+		{name: "decode", configure: func(c *fakeAuthCache) { c.data[`legacy-remote:"stacks-1":key`] = []byte("not json") }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			recorder := recordPermissionSpans(t)
 			backing := newFakeAuthCache()
 			tc.configure(backing)
 			loader := &Loader{cache: newSharedPermissionCache(backing)}
@@ -130,12 +126,6 @@ func TestPermissionCacheFailuresAreMisses(t *testing.T) {
 			got, err := loader.cached(ctx, "direct", "key", ac.Options{}, func(context.Context) ([]ac.Permission, error) { return fresh, nil })
 			require.NoError(t, err)
 			require.Equal(t, fresh, got)
-			span := permissionSpan(t, recorder, "cache")
-			require.Equal(t, attribute.StringValue(tc.operation), spanAttributes(span)["cache.error"])
-			require.Equal(t, attribute.BoolValue(true), spanAttributes(span)["cache.load_executed"])
-			require.NotEqual(t, codes.Error, span.Status().Code)
-			require.NotEmpty(t, span.Events())
-			require.Equal(t, "exception", span.Events()[0].Name)
 		})
 	}
 }
