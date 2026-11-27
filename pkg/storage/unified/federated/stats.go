@@ -10,14 +10,15 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 // folderBatchSize caps how many folder UIDs are bound into a single IN (...)
@@ -30,8 +31,6 @@ const (
 	alertRuleResource     = "alertrules.rules.alerting.grafana.app"
 	recordingRuleResource = "recordingrules.rules.alerting.grafana.app"
 	libraryPanelResource  = "librarypanels.dashboard.grafana.app"
-	libraryPanelMigration = "librarypanels migration"
-	migrationLogTable     = "unifiedstorage_migration_log"
 )
 
 // LegacyCountedResources is guarded by a test: once one of these gets a migration
@@ -65,8 +64,8 @@ var ErrLegacyStatsUnavailable = errors.New("legacy stats source is unavailable")
 // unifiedstorage_migration_log ID that marks the migration as done. Resources absent here
 // (alert and recording rules) are not migrated yet, so their legacy table is never stale
 // because of a migration.
-var migrationLogIDs = map[string]string{
-	libraryPanelResource: libraryPanelMigration,
+var migrationLogIDs = map[schema.GroupResource]string{
+	schema.ParseGroupResource(libraryPanelResource): "librarypanels migration",
 }
 
 // From mode 4 on nothing writes the legacy table, so its rows are leftovers and counting
@@ -74,49 +73,9 @@ var migrationLogIDs = map[string]string{
 // marks a table stale and takes precedence over config, as it does for the dual-writer's
 // storage mode resolution. That holds for callers without config too, since they have no
 // other way to know a resource lives only in unified storage.
-func (s *LegacyStatsGetter) legacyTableIsStale(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper, resource string) (bool, error) {
-	if id, ok := migrationLogIDs[resource]; ok {
-		exists, err := tableExists(sess, helper, helper.Table(migrationLogTable))
-		if err != nil {
-			return false, err
-		}
-		if exists {
-			count, err := sess.Table(helper.Table(migrationLogTable)).
-				Where("migration_id = ? AND success = ?", id, true).
-				Count()
-			if err != nil {
-				return false, err
-			}
-			if count > 0 {
-				return true, nil
-			}
-		}
-	}
-	if s.Cfg != nil {
-		return s.Cfg.UnifiedStorage[resource].DualWriterMode >= grafanarest.Mode4, nil
-	}
-	return false, nil
-}
-
-// tableExists reports whether table exists. A helper can name its tables with a schema, as
-// when one connection serves several databases, and IsTableExist would then look for a table
-// literally named "schema.table" in the connection's default schema, which never exists.
-func tableExists(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper, table string) (bool, error) {
-	schema, name, qualified := strings.Cut(table, ".")
-	if !qualified {
-		return sess.IsTableExist(table)
-	}
-	query := "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = ? AND table_name = ?"
-	args := []any{schema, name}
-	if helper.DB.GetDBType() == core.SQLITE {
-		query = "SELECT COUNT(*) FROM " + helper.DB.Quote(schema) + ".sqlite_master WHERE type = 'table' AND name = ?"
-		args = []any{name}
-	}
-	var count int64
-	if _, err := sess.SQL(query, args...).Get(&count); err != nil {
-		return false, err
-	}
-	return count > 0, nil
+func legacyTableIsStale(ctx context.Context, reader contract.MigrationStatusReader, resource string) (bool, error) {
+	mode, err := reader.GetStorageMode(ctx, schema.ParseGroupResource(resource))
+	return mode == contract.StorageModeUnified, err
 }
 
 func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
@@ -154,6 +113,8 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 
 	rsp := &resourcepb.ResourceStatsResponse{}
 	err = helper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		reader := migrations.NewSessionStatusReader(sess, helper, s.Cfg, migrationLogIDs)
+
 		// extraWhere, when non-empty, is ANDed onto the org+folder filter. It must be a
 		// literal fragment with no bound parameters.
 		fn := func(table, folderCol, g, r string, extraWhere string) error {
@@ -199,7 +160,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		// A failed staleness check is a legacy database failure too, so it is recorded as an error.
 		isStale := func(configKey, name string) (bool, error) {
 			start := time.Now()
-			stale, err := s.legacyTableIsStale(sess, helper, configKey)
+			stale, err := legacyTableIsStale(ctx, reader, configKey)
 			if err != nil {
 				s.accessed(ctx, in, helper.Server, name, start, err)
 				return false, &CountError{Resources: []string{name}, Err: err}
@@ -261,6 +222,9 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 
 	return rsp, err
 }
+
+// CallerCountsEndpoint identifies the /counts request path, not folder deletion checks.
+const CallerCountsEndpoint = "counts_endpoint"
 
 type callerKey struct{}
 

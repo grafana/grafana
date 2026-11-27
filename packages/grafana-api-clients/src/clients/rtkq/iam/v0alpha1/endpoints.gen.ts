@@ -1235,6 +1235,8 @@ export type GetSearchUsersUserHit = {
   };
   /** Display labels of the auth provider the user last signed in with, e.g. "LDAP". */
   authLabels?: string[];
+  /** Avatar URL of the user, derived from the email. Omitted when the user has no email. */
+  avatarUrl?: string;
   /** Creation timestamp, in epoch milliseconds. */
   created: number;
   disabled: boolean;

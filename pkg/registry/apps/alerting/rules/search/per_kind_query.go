@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	perKindFilterOperatorIn    = "In"
-	perKindFilterOperatorNotIn = "NotIn"
+	perKindFilterOperatorIn    = searchv0.FilterOperatorIn
+	perKindFilterOperatorNotIn = searchv0.FilterOperatorNotIn
 
 	sortAscending  = "asc"
 	sortDescending = "desc"

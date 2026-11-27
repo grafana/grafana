@@ -88,6 +88,9 @@ type IndexViewData struct {
 	// Feature flag for controlling how the frontend handles reads of the legacy feature toggle map
 	LegacyFeatureToggleMode string
 
+	// Feature flag for counting reads of bootdata settings and reporting them as analytics
+	BootdataAnalytics bool
+
 	// ESModuleAssetsEnabled mirrors Assets.ESModule — the template uses it to pick the
 	// matching <script type>.
 	ESModuleAssetsEnabled bool
@@ -169,6 +172,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	reduceBootdataAPI := requestConfig.FullFrontendSettings != nil
 	legacyAPIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyAPIHandling, "off", openfeature.TransactionContext(ctx))
 	legacyFeatureToggleMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyFeatureToggleHandling, "off", openfeature.TransactionContext(ctx))
+	bootdataAnalytics, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaBootdataAnalytics, false, openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
 		AppTitle:                              "Grafana",
@@ -192,6 +196,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		BootScript:                            p.bootScript,
 		LegacyAPIMode:                         legacyAPIMode,
 		LegacyFeatureToggleMode:               legacyFeatureToggleMode,
+		BootdataAnalytics:                     bootdataAnalytics,
 		ESModuleAssetsEnabled:                 assetsManifest.ESModule,
 	}
 
