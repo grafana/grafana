@@ -25,7 +25,7 @@
     "fork-ts-checker-webpack-plugin": "9.1.0",
     "identity-obj-proxy": "^3.0.0",
     "imports-loader": "^5.0.0",
-    "jest-canvas-mock": "2.5.2",
+    "jest-canvas-mock": "2.5.8",
     "jest-environment-jsdom": "29.7.0",
     "replace-in-file-webpack-plugin": "1.0.6",
     "style-loader": "4.0.0",

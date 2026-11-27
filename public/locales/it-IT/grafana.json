@@ -3353,6 +3353,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Errori durante il caricamento delle regole",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Impossibile caricare la configurazione delle regole di Grafana:",
       "failed-to-load-grafana-rules-state": "Impossibile caricare lo stato delle regole di Grafana:",
       "failed-to-load-rules-config": "Impossibile caricare la configurazione delle regole da <2>{{dataSource}}</2>",
