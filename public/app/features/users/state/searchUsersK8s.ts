@@ -1,11 +1,8 @@
 import { OrgRole } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { iamAPIv0alpha1, type GetSearchUsersUserHit } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type ThunkDispatch } from 'app/types/store';
 import { type OrgUser } from 'app/types/user';
-
-import { sha256Hex } from './sha256';
 
 export type SearchUserHit = GetSearchUsersUserHit;
 
@@ -34,12 +31,6 @@ export function toK8sSort(sort?: string): string | undefined {
   return match[2] === 'desc' ? `-${field}` : field;
 }
 
-// Mirrors dtos.GetGravatarUrl on the backend (avatars are not part of the k8s hit).
-export function getAvatarUrl(email: string): string {
-  const normalized = email.trim().toLowerCase();
-  return normalized ? `${config.appSubUrl}/avatar/${sha256Hex(normalized)}` : '';
-}
-
 function toOrgRole(role: string): OrgRole {
   return Object.values(OrgRole).find((r) => r === role) ?? OrgRole.None;
 }
@@ -53,7 +44,7 @@ export function hitToOrgUser(hit: SearchUserHit): OrgUser {
     email: hit.email,
     role: toOrgRole(hit.role),
     orgId: contextSrv.user.orgId,
-    avatarUrl: getAvatarUrl(hit.email),
+    avatarUrl: hit.avatarUrl ?? '',
     // k8s: lastSeenAt is epoch seconds, created is epoch milliseconds. Legacy returns ISO strings.
     lastSeenAt: new Date(hit.lastSeenAt * 1000).toISOString(),
     created: hit.created ? new Date(hit.created).toISOString() : undefined,

@@ -1,5 +1,4 @@
-import { toK8sSort, hitToOrgUser, getAvatarUrl, type SearchUserHit } from './searchUsersK8s';
-import { sha256Hex } from './sha256';
+import { toK8sSort, hitToOrgUser, type SearchUserHit } from './searchUsersK8s';
 
 jest.mock('app/core/services/context_srv', () => ({ contextSrv: { user: { orgId: 1 } } }));
 
@@ -37,11 +36,11 @@ describe('searchUsersK8s', () => {
     expect(user).toMatchObject({ userId: 7, uid: 'uid-7', name: 'Jane Doe', isProvisioned: true, orgId: 1 });
   });
 
-  it('computes a gravatar-style avatar url from a normalised email', () => {
-    expect(getAvatarUrl('')).toBe('');
-    expect(sha256Hex('abc')).toBe('ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
-    expect(sha256Hex('a'.repeat(100))).toMatch(/^[0-9a-f]{64}$/);
-    expect(getAvatarUrl(' A@B.com ')).toBe(getAvatarUrl('a@b.com'));
-    expect(getAvatarUrl('a@b.com')).toMatch(/\/avatar\/[0-9a-f]{64}$/);
+  it('uses the avatar url returned by the backend', () => {
+    expect(hitToOrgUser({ ...hit, avatarUrl: '/avatar/abc123' }).avatarUrl).toBe('/avatar/abc123');
+  });
+
+  it('falls back to an empty avatar url when the backend omits it', () => {
+    expect(hitToOrgUser(hit).avatarUrl).toBe('');
   });
 });
