@@ -108,7 +108,7 @@ You can find the provisioned dashboards organized in folders under **Dashboards*
 Grafana marks every resource that Git Sync creates with `grafana.app/managedBy` set to `repo`, the repository name in `grafana.app/managerId`, and the file it came from in `grafana.app/sourcePath`.
 These annotations are what show a resource as provisioned in the UI and send a change you make there back to the repository as a commit. If you remove them, Git Sync stops updating the resource.
 
-Refer to [Managed resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/managed-resources/) for the other as-code tools, and to [Manager and source annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#manager-and-source-annotations) for the annotations themselves.
+Refer to [Manage resources in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/resources/manage-resources/) for the other as-code tools, and to [Manager and source annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#manager-and-source-annotations) for the annotations themselves.
 
 ### Sync targets
 

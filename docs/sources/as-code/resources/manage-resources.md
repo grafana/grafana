@@ -13,13 +13,13 @@ labels:
     - enterprise
     - oss
     - cloud
-title: Managed resources
-menuTitle: Managed resources
-weight: 50
-canonical: https://grafana.com/docs/grafana/latest/as-code/managed-resources/
+title: Manage resources in Grafana
+menuTitle: Manage resources in Grafana
+weight: 100
+canonical: https://grafana.com/docs/grafana/latest/as-code/resources/manage-resources/
 ---
 
-# Managed resources
+# Manage resources in Grafana
 
 When an as-code tool creates a resource, Grafana records which tool manages it in the `grafana.app/managedBy` and `grafana.app/managerId` annotations.
 A resource that carries both is a _managed resource_, and Grafana uses the record to decide whether you can change the resource in the UI and whether to reconcile it with an external source.

@@ -215,7 +215,7 @@ Common annotations include:
 
 Resources that an external tool manages, such as Git Sync, Terraform, or `kubectl`, carry additional annotations that record which tool owns the resource, where its definition comes from, and whether you can edit it outside that tool.
 Grafana derives most of them, so don't set them by hand.
-For what each tool records and allows, refer to [Managed resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/managed-resources/).
+For what each tool records and allows, refer to [Manage resources in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/resources/manage-resources/).
 
 Use the following annotations to identify the manager:
 
