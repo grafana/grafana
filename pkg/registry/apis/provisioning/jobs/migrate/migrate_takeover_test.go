@@ -15,6 +15,21 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+type markCall struct {
+	namespace string
+	repoName  string
+	folders   []string
+}
+
+type fakeTakeoverMarker struct {
+	calls []markCall
+}
+
+func (f *fakeTakeoverMarker) MarkPendingTakeover(_ context.Context, namespace, repoName string, folderUIDs []string) error {
+	f.calls = append(f.calls, markCall{namespace: namespace, repoName: repoName, folders: folderUIDs})
+	return nil
+}
+
 // fakeMigrationExporter records how the migration called it. When the
 // migration asks for the folder UID check, it returns results that keep
 // "kept-folder" and skip the folders in skipped.
@@ -55,19 +70,20 @@ func TestMigrationWorker_FolderTakeover(t *testing.T) {
 		return pr
 	}
 
-	newMigrator := func(nc NamespaceCleaner, syncWorker jobs.Worker, exporter *fakeMigrationExporter, enabled bool) *MigrationWorker {
-		m := NewMigrationWorker(nc, exporter, syncWorker)
+	newMigrator := func(nc NamespaceCleaner, syncWorker jobs.Worker, exporter *fakeMigrationExporter, marker FolderTakeoverMarker, enabled bool) *MigrationWorker {
+		m := NewMigrationWorker(nc, exporter, syncWorker, WithFolderTakeoverMarker(marker))
 		m.takeoverEnabled = func(context.Context, string) bool { return enabled }
 		return m
 	}
 
 	for _, generateNewIDs := range []bool{true, false} {
-		t.Run(fmt.Sprintf("the export runs the check with generateNewFolderIDs=%t", generateNewIDs), func(t *testing.T) {
+		t.Run(fmt.Sprintf("branch migration marks the kept folders for takeover after merge (generateNewFolderIDs=%t)", generateNewIDs), func(t *testing.T) {
 			repo := repository.NewMockRepository(t)
 			repo.On("Config").Return(newRepoConfig(provisioning.SyncTargetTypeFolder))
 			exporter := &fakeMigrationExporter{}
+			marker := &fakeTakeoverMarker{}
 
-			m := newMigrator(NewMockNamespaceCleaner(t), jobs.NewMockWorker(t), exporter, true)
+			m := newMigrator(NewMockNamespaceCleaner(t), jobs.NewMockWorker(t), exporter, marker, true)
 			err := m.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 				Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x", GenerateNewFolderIDs: generateNewIDs, SkipResourceDeletion: true},
 			}}, newProgress(t))
@@ -76,25 +92,28 @@ func TestMigrationWorker_FolderTakeover(t *testing.T) {
 			require.True(t, exporter.called)
 			require.Equal(t, &resources.FolderCheckOptions{GenerateNewIDs: generateNewIDs}, exporter.folderCheck, "generateNewFolderIDs decides what happens to folders that cannot keep their UID")
 			require.False(t, exporter.generateNewFolderIDs, "the folder UID check decides the UID of each folder")
+			require.Equal(t, []markCall{{namespace: "test-ns", repoName: "test-repo", folders: []string{"kept-folder"}}}, marker.calls)
 		})
 	}
 
-	t.Run("direct write runs the check and pulls the resources", func(t *testing.T) {
+	t.Run("direct write runs the check but does not mark folders", func(t *testing.T) {
 		repo := repository.NewMockRepository(t)
 		repo.On("Config").Return(newRepoConfig(provisioning.SyncTargetTypeFolder))
 		exporter := &fakeMigrationExporter{}
+		marker := &fakeTakeoverMarker{}
 		syncWorker := jobs.NewMockWorker(t)
 		syncWorker.On("Process", mock.Anything, repo, mock.Anything, mock.Anything).Return(nil)
 		pr := newProgress(t)
 		pr.On("ResetResults", false).Return()
 
-		m := newMigrator(NewMockNamespaceCleaner(t), syncWorker, exporter, true)
+		m := newMigrator(NewMockNamespaceCleaner(t), syncWorker, exporter, marker, true)
 		err := m.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{GenerateNewFolderIDs: true},
 		}}, pr)
 
 		require.NoError(t, err)
 		require.True(t, exporter.called)
+		require.Empty(t, marker.calls)
 	})
 
 	t.Run("direct write keeps the warnings about folders that are not migrated", func(t *testing.T) {
@@ -106,7 +125,7 @@ func TestMigrationWorker_FolderTakeover(t *testing.T) {
 		pr := newProgress(t)
 		pr.On("ResetResults", true).Return()
 
-		m := newMigrator(NewMockNamespaceCleaner(t), syncWorker, exporter, true)
+		m := newMigrator(NewMockNamespaceCleaner(t), syncWorker, exporter, &fakeTakeoverMarker{}, true)
 		err := m.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{},
 		}}, pr)
@@ -118,8 +137,9 @@ func TestMigrationWorker_FolderTakeover(t *testing.T) {
 		repo := repository.NewMockRepository(t)
 		repo.On("Config").Return(newRepoConfig(provisioning.SyncTargetTypeFolder))
 		exporter := &fakeMigrationExporter{}
+		marker := &fakeTakeoverMarker{}
 
-		m := newMigrator(NewMockNamespaceCleaner(t), jobs.NewMockWorker(t), exporter, false)
+		m := newMigrator(NewMockNamespaceCleaner(t), jobs.NewMockWorker(t), exporter, marker, false)
 		err := m.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x", GenerateNewFolderIDs: true, SkipResourceDeletion: true},
 		}}, newProgress(t))
@@ -128,6 +148,7 @@ func TestMigrationWorker_FolderTakeover(t *testing.T) {
 		require.True(t, exporter.called)
 		require.Nil(t, exporter.folderCheck)
 		require.True(t, exporter.generateNewFolderIDs, "without the check, generateNewFolderIDs gives every folder a new UID")
+		require.Empty(t, marker.calls)
 	})
 
 	t.Run("an instance repository also runs the check", func(t *testing.T) {
@@ -141,7 +162,7 @@ func TestMigrationWorker_FolderTakeover(t *testing.T) {
 		pr := newProgress(t)
 		pr.On("ResetResults", false).Return()
 
-		m := newMigrator(nc, syncWorker, exporter, true)
+		m := newMigrator(nc, syncWorker, exporter, &fakeTakeoverMarker{}, true)
 		err := m.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{},
 		}}, pr)

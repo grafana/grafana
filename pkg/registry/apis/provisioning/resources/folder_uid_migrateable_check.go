@@ -9,6 +9,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
+// AnnoKeyPendingTakeover marks an unmanaged folder that a branch migration
+// exported with its original UID. The value is the name of the repository. The
+// first sync of that repository that reads the folder metadata takes the folder
+// over and removes the annotation.
+const AnnoKeyPendingTakeover = "provisioning.grafana.app/pendingTakeover"
+
 // FolderTakeoverEnabled reports whether migrate may keep folder UIDs for
 // folders whose whole subtree is migrated.
 func FolderTakeoverEnabled(ctx context.Context, namespace string) bool {

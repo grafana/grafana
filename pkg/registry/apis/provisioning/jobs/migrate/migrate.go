@@ -77,6 +77,18 @@ func (w *MigrationWorker) migrate(ctx context.Context, repo repository.ReaderWri
 		return fmt.Errorf("export resources: %w", err)
 	}
 
+	// A branch migration leaves the folders on the instance. Mark the folders
+	// that kept their UID, so that the first sync after the merge takes them
+	// over instead of failing on an unmanaged folder with the same UID.
+	if branchMigration && folderCheckResults != nil && w.takeoverMarker != nil {
+		if kept := folderCheckResults.Kept; len(kept) > 0 {
+			progress.SetMessage(ctx, "mark folders to take over after merge")
+			if err := w.takeoverMarker.MarkPendingTakeover(ctx, namespace, repo.Config().GetName(), kept); err != nil {
+				return fmt.Errorf("mark folders to take over after merge: %w", err)
+			}
+		}
+	}
+
 	// On a branch migration we skip the takeover/pull phase entirely: the
 	// exported resources live on a branch that is not yet merged, so there is
 	// nothing to claim from the configured branch.

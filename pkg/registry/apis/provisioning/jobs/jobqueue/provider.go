@@ -168,6 +168,7 @@ func newWorkers(cfg Config, deps Dependencies, metrics jobs.JobMetrics) []jobs.W
 		migrate.NewNamespaceCleaner(deps.Clients),
 		migrateExportWorker,
 		syncWorker,
+		migrate.WithFolderTakeoverMarker(migrate.NewFolderTakeoverMarker(deps.Clients)),
 	)
 	pullRequestWorker := pullrequest.NewPullRequestWorker(
 		pullrequest.NewEvaluator(deps.ScreenshotRenderer, resources.NewParserFactory(deps.Clients), deps.PullRequestURLs, deps.Registry),

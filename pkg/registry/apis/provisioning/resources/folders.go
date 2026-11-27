@@ -10,8 +10,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -104,6 +106,10 @@ type FolderManager struct {
 	client       dynamic.ResourceInterface
 	beforeCreate FolderCreationInterceptor
 	folderGVK    schema.GroupVersionKind
+	// takeoverClients resolves the resource kinds that provisioning supports.
+	// It is only used when a folder with a pending takeover is claimed.
+	takeoverClients ResourceClients
+	takeoverEnabled func(ctx context.Context, namespace string) bool
 }
 
 func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, folderGVK schema.GroupVersionKind, opts ...FolderManagerOption) *FolderManager {
@@ -115,6 +121,7 @@ func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInter
 		beforeCreate: func(context.Context, Folder) error {
 			return nil
 		},
+		takeoverEnabled: FolderTakeoverEnabled,
 	}
 	for _, opt := range opts {
 		opt(fm)
@@ -129,6 +136,14 @@ func (fm *FolderManager) FolderGVK() schema.GroupVersionKind {
 func WithBeforeCreate(beforeCreate FolderCreationInterceptor) FolderManagerOption {
 	return func(fm *FolderManager) {
 		fm.beforeCreate = beforeCreate
+	}
+}
+
+// WithResourceClients sets the clients used to find the resource kinds that
+// provisioning supports.
+func WithResourceClients(clients ResourceClients) FolderManagerOption {
+	return func(fm *FolderManager) {
+		fm.takeoverClients = clients
 	}
 }
 
@@ -319,7 +334,7 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			// for other resources. Without this, a selective migrate of a
 			// resource living under a pre-existing unmanaged folder can never
 			// create its parent.
-			if !folderTakeoverAllowed(ctx, folder.ID) {
+			if !fm.takeoverAllowed(ctx, obj) {
 				return NewResourceUnmanagedConflictError(folder.ID, utils.ManagerProperties{
 					Kind:     utils.ManagerKindRepo,
 					Identity: cfg.Name,
@@ -358,6 +373,7 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 					Kind:     utils.ManagerKindRepo,
 					Identity: cfg.GetName(),
 				})
+				removePendingTakeoverAnnotation(obj)
 			}
 			ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
 			if err != nil {
@@ -433,7 +449,7 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 				// unmanaged. Honour the migration allowlist here too, mirroring
 				// the primary path above, otherwise a concurrent migrate could
 				// still reject a folder we are allowed to take over.
-				if !folderTakeoverAllowed(ctx, folder.ID) {
+				if !fm.takeoverAllowed(ctx, obj) {
 					return NewResourceUnmanagedConflictError(folder.ID, utils.ManagerProperties{
 						Kind:     utils.ManagerKindRepo,
 						Identity: cfg.Name,
@@ -473,9 +489,7 @@ func mapFolderWriteError(folder Folder, err error, wrap string) error {
 }
 
 // folderTakeoverAllowed reports whether the migration takeover allowlist stored
-// in ctx permits claiming the given unmanaged folder. It mirrors the allowlist
-// gate in CheckResourceOwnership so folders and other resources share the same
-// takeover semantics during migration.
+// in ctx permits claiming the given unmanaged folder.
 func folderTakeoverAllowed(ctx context.Context, folderID string) bool {
 	allowlist := TakeoverAllowlistFromContext(ctx)
 	if allowlist == nil {
@@ -510,6 +524,7 @@ func (fm *FolderManager) claimUnmanagedFolder(ctx context.Context, obj *unstruct
 		Kind:     utils.ManagerKindRepo,
 		Identity: cfg.GetName(),
 	})
+	removePendingTakeoverAnnotation(obj)
 
 	ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
 	if err != nil {
@@ -519,6 +534,68 @@ func (fm *FolderManager) claimUnmanagedFolder(ctx context.Context, obj *unstruct
 		return mapFolderWriteError(folder, err, fmt.Sprintf("claim unmanaged folder %s", folder.ID))
 	}
 	return nil
+}
+
+// takeoverAllowed reports whether this repository may claim existingFolder, an
+// unmanaged folder that is already on the instance. A migration that writes to
+// the configured branch allows the takeover through the allowlist. A branch
+// migration marks the folder with AnnoKeyPendingTakeover, and the first sync
+// after the merge claims it.
+func (fm *FolderManager) takeoverAllowed(ctx context.Context, existingFolder *unstructured.Unstructured) bool {
+	if folderTakeoverAllowed(ctx, existingFolder.GetName()) {
+		return true
+	}
+	return fm.pendingTakeoverAllowed(ctx, existingFolder)
+}
+
+func (fm *FolderManager) pendingTakeoverAllowed(ctx context.Context, existingFolder *unstructured.Unstructured) bool {
+	cfg := fm.repo.Config()
+	if existingFolder.GetAnnotations()[AnnoKeyPendingTakeover] != cfg.GetName() {
+		return false
+	}
+	if !fm.takeoverEnabled(ctx, cfg.GetNamespace()) {
+		return false
+	}
+
+	logger := logging.FromContext(ctx).With("folder", existingFolder.GetName(), "repository", cfg.GetName())
+	// Check the folder again because users can add resources to it while the
+	// pull request is in review.
+	supported, err := fm.takeoverSupportedResources(ctx)
+	if err != nil {
+		logger.Warn("not taking over folder: unable to resolve supported resources", "error", err)
+		return false
+	}
+	countCtx, _, err := identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
+	if err != nil {
+		logger.Warn("not taking over folder: unable to use provisioning identity", "error", err)
+		return false
+	}
+	counts, err := GetFolderCounts(countCtx, fm.client, existingFolder.GetName())
+	if err != nil {
+		logger.Warn("not taking over folder: unable to count folder contents", "error", err)
+		return false
+	}
+	if HasUnsupportedResources(counts, supported) {
+		logger.Info("not taking over folder: it contains resources that provisioning cannot manage")
+		return false
+	}
+	return true
+}
+
+func (fm *FolderManager) takeoverSupportedResources(ctx context.Context) (sets.Set[schema.GroupResource], error) {
+	if fm.takeoverClients == nil {
+		return sets.New(DashboardResource.GroupResource()), nil
+	}
+	return SupportedFolderScopedResources(ctx, fm.takeoverClients)
+}
+
+func removePendingTakeoverAnnotation(existingFolder *unstructured.Unstructured) {
+	annotations := existingFolder.GetAnnotations()
+	if _, ok := annotations[AnnoKeyPendingTakeover]; !ok {
+		return
+	}
+	delete(annotations, AnnoKeyPendingTakeover)
+	existingFolder.SetAnnotations(annotations)
 }
 
 func (fm *FolderManager) GetFolder(ctx context.Context, name string) (*unstructured.Unstructured, error) {

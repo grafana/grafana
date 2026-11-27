@@ -180,7 +180,8 @@ func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository
 		opt(cfg)
 	}
 
-	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree(), folderGVK, cfg.folderManagerOptions...)
+	folderOpts := append([]FolderManagerOption{WithResourceClients(clients)}, cfg.folderManagerOptions...)
+	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree(), folderGVK, folderOpts...)
 	resources := NewResourcesManager(repo, folders, parser, clients)
 
 	return &repositoryResources{
