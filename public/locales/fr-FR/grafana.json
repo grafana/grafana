@@ -3353,6 +3353,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Erreurs lors du chargement des règles",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Échec du chargement de la configuration des règles Grafana :",
       "failed-to-load-grafana-rules-state": "Échec du chargement de l’état des règles Grafana :",
       "failed-to-load-rules-config": "Échec du chargement de la configuration des règles depuis <2>{{dataSource}}</2>",
@@ -6613,6 +6614,10 @@
       "paused": "Ce tableau de bord a été suspendu par l’administrateur",
       "try-again-later": "Veuillez réessayer plus tard"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Voulez-vous vraiment supprimer ce panneau ?"
@@ -8069,6 +8074,9 @@
       "title-delete-all-transformations": "Supprimer toutes les transformations ?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_one": "",
@@ -10516,6 +10524,25 @@
         "otherGroup": "Autres"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_one": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -11034,6 +11061,11 @@
         "placement-options": {
           "label-bottom": "Bas",
           "label-right": "Aligné à droite"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_one": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11129,6 +11161,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "Un clic"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "Ajouter un lien",
@@ -13785,6 +13820,7 @@
       "open": "Menu principal",
       "pin-error": "Échec de la mise à jour des éléments de menu épinglés",
       "pinned-list-label": "Éléments épinglés",
+      "section-resize": "",
       "undock": "Ancrer le menu"
     },
     "megamenu-item": {
@@ -13983,12 +14019,32 @@
         "undo-label": "Modification via l’Assistant"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "Annuler",
       "confirm-discard": "Ignorer",
       "confirm-keep": "Conserver",
       "confirm-text": "Voulez-vous conserver les modifications que vous avez apportées en consultant ce notebook ?",
       "confirm-title": "Modifications du panneau non enregistrées"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17295,6 +17351,13 @@
       "wide-list": "Liste large",
       "wide-list-desc": "Horizontal, nom et valeur, graphique sparkline en aires, couleur unique"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "Stat",
       "stat-color-background": "Stat – arrière-plan coloré",
@@ -17842,6 +17905,10 @@
       "time-zone-option": "Fuseau horaire",
       "time-zone-selection": "Sélection du fuseau horaire"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "Appliquer la plage temporelle",
       "default-error": "Saisissez une date ({{dateExample}}) ou une heure relative ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -17859,6 +17926,12 @@
       "to": "à",
       "zoom-out-button": "Dézoomer la plage de temps",
       "zoom-out-tooltip-new": "Zoom arrière sur la plage de temps <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "Appliquer la plage temporelle",

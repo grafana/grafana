@@ -17,7 +17,11 @@ import (
 )
 
 func TestIntegrationSearchUsersPermissions_TargetAuthorization(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	runSearchTransports(t, testPermissionSearchTargetAuthorization)
+}
+
+func testPermissionSearchTargetAuthorization(t *testing.T, enabled bool) {
+	f := newSearchPermissionsFixture(t, enabled)
 	usr := f.createUser(t, user.CreateUserCommand{UID: "target", OrgID: f.orgID, DefaultOrgRole: "None"})
 	role := f.createRole(t, f.orgID, "managed:target", []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:one"}})
 	f.assignUser(t, f.orgID, usr.ID, role)
@@ -43,7 +47,11 @@ func TestIntegrationSearchUsersPermissions_TargetAuthorization(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_NonPositiveTargetsWithFilters(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	runSearchTransports(t, testPermissionSearchNonPositiveTargetsWithFilters)
+}
+
+func testPermissionSearchNonPositiveTargetsWithFilters(t *testing.T, enabled bool) {
+	f := newSearchPermissionsFixture(t, enabled)
 	want := searchPermissionsResponse{}
 	for _, uid := range []string{"alice", "bob"} {
 		usr := f.createUser(t, user.CreateUserCommand{UID: uid, OrgID: f.orgID, DefaultOrgRole: "None"})
@@ -64,7 +72,11 @@ func TestIntegrationSearchUsersPermissions_NonPositiveTargetsWithFilters(t *test
 }
 
 func TestIntegrationSearchUsersPermissions_UnfilteredActionSets(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	runSearchTransports(t, testPermissionSearchUnfilteredActionSets)
+}
+
+func testPermissionSearchUnfilteredActionSets(t *testing.T, enabled bool) {
+	f := newSearchPermissionsFixture(t, enabled)
 	usr := f.createUser(t, user.CreateUserCommand{UID: "target", OrgID: f.orgID, DefaultOrgRole: "None"})
 	f.actions.StoreActionSet("dashboards:edit", []string{"dashboards:read", "dashboards:write"})
 	role := f.createRole(t, f.orgID, "managed:sets", []accesscontrol.Permission{
@@ -91,7 +103,11 @@ func TestIntegrationSearchUsersPermissions_UnfilteredActionSets(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_ActionPrefixCharacters(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	runSearchTransports(t, testPermissionSearchActionPrefixCharacters)
+}
+
+func testPermissionSearchActionPrefixCharacters(t *testing.T, enabled bool) {
+	f := newSearchPermissionsFixture(t, enabled)
 	usr := f.createUser(t, user.CreateUserCommand{UID: "viewer", OrgID: f.orgID, DefaultOrgRole: "Viewer"})
 	require.NoError(t, f.service.DeclareFixedRoles(accesscontrol.RoleRegistration{
 		Role:   accesscontrol.RoleDTO{Name: "fixed:test:prefix", Permissions: []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:static"}}},
@@ -132,6 +148,10 @@ func TestIntegrationSearchUsersPermissions_ActionPrefixCharacters(t *testing.T) 
 }
 
 func TestIntegrationSearchUsersPermissions_CacheHitsAndExpiry(t *testing.T) {
+	runSearchTransports(t, testPermissionSearchCacheHitsAndExpiry)
+}
+
+func testPermissionSearchCacheHitsAndExpiry(t *testing.T, enabled bool) {
 	const (
 		grantChange                = "grant"
 		revokeChange               = "revoke"
@@ -143,7 +163,7 @@ func TestIntegrationSearchUsersPermissions_CacheHitsAndExpiry(t *testing.T) {
 
 	for _, change := range []string{grantChange, revokeChange, teamMembershipChange, removeTeamMembershipChange, basicRoleChange, downgradeBasicRoleChange} {
 		t.Run(change, func(t *testing.T) {
-			f := newSearchPermissionsFixture(t)
+			f := newSearchPermissionsFixture(t, enabled)
 			usr := f.createUser(t, user.CreateUserCommand{UID: "target", OrgID: f.orgID, DefaultOrgRole: "None"})
 			role := f.createRole(t, f.orgID, "managed:read", []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:one"}})
 
@@ -171,7 +191,11 @@ func TestIntegrationSearchUsersPermissions_CacheHitsAndExpiry(t *testing.T) {
 			caller := f.caller(f.orgID, "users:*")
 			f.assertSearch(t, caller, query, searchPermissionsResponse{usr.ID: before})
 			calls := f.store.searches.Load()
-			require.Positive(t, calls)
+			if enabled {
+				require.Zero(t, calls, "gRPC search must use AuthZ's store")
+			} else {
+				require.Positive(t, calls)
+			}
 			f.assertSearch(t, caller, query, searchPermissionsResponse{usr.ID: before})
 			require.Equal(t, calls, f.store.searches.Load(), "warm request must avoid a store search")
 
@@ -203,7 +227,9 @@ func TestIntegrationSearchUsersPermissions_CacheHitsAndExpiry(t *testing.T) {
 				t.Fatalf("unsupported change case: %s", change)
 			}
 
-			// Raw store changes bypass mutation hooks; expiry must still refresh cached results.
+			// Raw store changes bypass mutation hooks, so the cached result remains until expiry.
+			f.assertSearch(t, caller, query, searchPermissionsResponse{usr.ID: before})
+
 			items := f.cache.Items()
 			require.NotEmpty(t, items)
 			for key, item := range items {
@@ -212,7 +238,11 @@ func TestIntegrationSearchUsersPermissions_CacheHitsAndExpiry(t *testing.T) {
 			}
 
 			f.assertSearch(t, caller, query, searchPermissionsResponse{usr.ID: after})
-			require.Greater(t, f.store.searches.Load(), calls, "expired results must be reloaded")
+			if enabled {
+				require.Zero(t, f.store.searches.Load(), "expiry must reload through AuthZ")
+			} else {
+				require.Greater(t, f.store.searches.Load(), calls, "expired results must be reloaded")
+			}
 		})
 	}
 }

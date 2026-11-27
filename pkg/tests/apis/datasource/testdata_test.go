@@ -471,6 +471,6 @@ func TestIntegrationTestDatasource(t *testing.T) {
 				"datasources:write":                  true,
 			},
 		}
-		require.Equal(t, datasourceAccessInfo, expectedDatasourceAccessInfo)
+		require.Equal(t, expectedDatasourceAccessInfo, datasourceAccessInfo)
 	})
 }

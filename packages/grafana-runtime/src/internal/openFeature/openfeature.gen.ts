@@ -308,6 +308,8 @@ export const FlagKeys = {
   GraphiteBackendMode: "graphiteBackendMode",
   /** Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis */
   HeatmapNegativeLogBuckets: "heatmapNegativeLogBuckets",
+  /** Routes read-only user requests in the frontend from /api to the /apis endpoint. Depends on kubernetesUsersReadApi */
+  IamUseKubernetesUsersReadApi: "iam.useKubernetesUsersReadApi",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Adds support for Kubernetes correlations */
@@ -2051,6 +2053,17 @@ export const useFlagGraphiteBackendMode = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagHeatmapNegativeLogBuckets = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("heatmapNegativeLogBuckets", false, options).value;
+};
+
+/**
+ * Routes read-only user requests in the frontend from /api to the /apis endpoint. Depends on kubernetesUsersReadApi
+ *
+ * **Details:**
+ * - flag key: `iam.useKubernetesUsersReadApi`
+ * - default value: `false`
+ */
+export const useFlagIamUseKubernetesUsersReadApi = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("iam.useKubernetesUsersReadApi", false, options).value;
 };
 
 /**

@@ -3325,6 +3325,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "加载规则时出错",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "加载 Grafana 规则配置失败：",
       "failed-to-load-grafana-rules-state": "加载 Grafana 规则状态失败",
       "failed-to-load-rules-config": "加载来自 <2>{{dataSource}}</2> 的规则配置失败",
@@ -6563,6 +6564,10 @@
       "paused": "此数据面板已被管理员暂停",
       "try-again-later": "请稍后再试"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "您确定要移除此面板吗？"
@@ -8012,6 +8017,9 @@
       "title-delete-all-transformations": "删除所有转换？"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_other": ""
@@ -10432,6 +10440,24 @@
         "otherGroup": "其他"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -10949,6 +10975,10 @@
         "placement-options": {
           "label-bottom": "底部",
           "label-right": "右侧"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11044,6 +11074,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "一次点击"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "添加链接",
@@ -13678,6 +13711,7 @@
       "open": "主菜单",
       "pin-error": "更新固定菜单项失败",
       "pinned-list-label": "已固定的项目",
+      "section-resize": "",
       "undock": "取消停靠菜单"
     },
     "megamenu-item": {
@@ -13871,12 +13905,32 @@
         "undo-label": "助手编辑"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "取消",
       "confirm-discard": "丢弃",
       "confirm-keep": "保留",
       "confirm-text": "您想保留在查看此笔记本时所做的更改吗？",
       "confirm-title": "未保存的面板更改"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17153,6 +17207,13 @@
       "wide-list": "宽列表",
       "wide-list-desc": "水平，名称和值，区域迷你图，单色"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "统计",
       "stat-color-background": "统计 - 颜色背景",
@@ -17698,6 +17759,10 @@
       "time-zone-option": "时区",
       "time-zone-selection": "时区选择"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "应用时间范围",
       "default-error": "输入日期 ({{dateExample}}) 或相对时间 ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -17715,6 +17780,12 @@
       "to": "至",
       "zoom-out-button": "缩放时间范围",
       "zoom-out-tooltip-new": "时间范围拉宽 <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "应用时间范围",

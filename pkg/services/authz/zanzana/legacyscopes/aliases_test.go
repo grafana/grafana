@@ -130,3 +130,7 @@ func TestAliasLookupUsesTransportTenantForLegacyNamespaceSentinels(t *testing.T)
 		require.Contains(t, got, ac.Permission{Action: "users:read", Scope: "global.users:id:7"})
 	}
 }
+
+func TestStackNamespacePreservesConfiguredID(t *testing.T) {
+	require.Equal(t, "stacks-0012", StackNamespace("0012"))
+}

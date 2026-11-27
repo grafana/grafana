@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -23,8 +24,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -48,7 +51,11 @@ func TestMain(m *testing.M) {
 type searchPermissionsResponse map[int64]map[string][]string
 
 func TestIntegrationSearchUsersPermissions_Assignments(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	runSearchTransports(t, testPermissionSearchAssignments)
+}
+
+func testPermissionSearchAssignments(t *testing.T, enabled bool) {
+	f := newSearchPermissionsFixture(t, enabled)
 	alice := f.createUser(t, user.CreateUserCommand{UID: "alice", OrgID: f.orgID, DefaultOrgRole: "Viewer"})
 	bob := f.createUser(t, user.CreateUserCommand{UID: "bob", OrgID: f.orgID, DefaultOrgRole: "Editor"})
 	noRole := f.createUser(t, user.CreateUserCommand{UID: "no-role", OrgID: f.orgID, DefaultOrgRole: "None"})
@@ -114,7 +121,11 @@ func TestIntegrationSearchUsersPermissions_Assignments(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_BasicRoles(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	runSearchTransports(t, testPermissionSearchBasicRoles)
+}
+
+func testPermissionSearchBasicRoles(t *testing.T, enabled bool) {
+	f := newSearchPermissionsFixture(t, enabled)
 	viewer := f.createUser(t, user.CreateUserCommand{UID: "viewer", OrgID: f.orgID, DefaultOrgRole: "Viewer"})
 	editor := f.createUser(t, user.CreateUserCommand{UID: "editor", OrgID: f.orgID, DefaultOrgRole: "Editor"})
 	admin := f.createUser(t, user.CreateUserCommand{UID: "admin", OrgID: f.orgID, DefaultOrgRole: "Admin"})
@@ -174,7 +185,11 @@ func TestIntegrationSearchUsersPermissions_BasicRoles(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_Scopes(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	runSearchTransports(t, testPermissionSearchScopes)
+}
+
+func testPermissionSearchScopes(t *testing.T, enabled bool) {
+	f := newSearchPermissionsFixture(t, enabled)
 	users := map[string]int64{}
 	for i, scope := range []string{"*", "tests:*", "tests:id:*", "tests:id:one", "tests:id:two", "tests:uid:one", "other:id:one", ""} {
 		usr := f.createUser(t, user.CreateUserCommand{UID: fmt.Sprintf("scope-%d", i), OrgID: f.orgID, DefaultOrgRole: "None"})
@@ -225,7 +240,11 @@ func TestIntegrationSearchUsersPermissions_Scopes(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_StaticScopes(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	runSearchTransports(t, testPermissionSearchStaticScopes)
+}
+
+func testPermissionSearchStaticScopes(t *testing.T, enabled bool) {
+	f := newSearchPermissionsFixture(t, enabled)
 	viewer := f.createUser(t, user.CreateUserCommand{UID: "viewer", OrgID: f.orgID, DefaultOrgRole: "Viewer"})
 	require.NoError(t, f.service.DeclareFixedRoles(accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{Name: "fixed:test:scopes", Permissions: []accesscontrol.Permission{
@@ -261,7 +280,11 @@ func TestIntegrationSearchUsersPermissions_StaticScopes(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_RolePrefixes(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	runSearchTransports(t, testPermissionSearchRolePrefixes)
+}
+
+func testPermissionSearchRolePrefixes(t *testing.T, enabled bool) {
+	f := newSearchPermissionsFixture(t, enabled)
 	usr := f.createUser(t, user.CreateUserCommand{UID: "member", OrgID: f.orgID, DefaultOrgRole: "None"})
 	for _, kind := range []string{"managed", "extsvc", "custom", "fixed", "basic"} {
 		role := f.createRole(t, f.orgID, kind+":test", []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:" + kind}})
@@ -277,7 +300,11 @@ func TestIntegrationSearchUsersPermissions_RolePrefixes(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_ActionSets(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	runSearchTransports(t, testPermissionSearchActionSets)
+}
+
+func testPermissionSearchActionSets(t *testing.T, enabled bool) {
+	f := newSearchPermissionsFixture(t, enabled)
 	alice := f.createUser(t, user.CreateUserCommand{UID: "alice", OrgID: f.orgID, DefaultOrgRole: "None"})
 	require.NoError(t, f.orgs.AddOrgUser(context.Background(), &org.AddOrgUserCommand{OrgID: f.otherOrgID, UserID: alice.ID, Role: org.RoleNone}))
 	f.actions.StoreActionSet("dashboards:edit", []string{"dashboards:read", "dashboards:write", "dashboards.permissions:read"})
@@ -319,7 +346,11 @@ func TestIntegrationSearchUsersPermissions_ActionSets(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_Identities(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	runSearchTransports(t, testPermissionSearchIdentities)
+}
+
+func testPermissionSearchIdentities(t *testing.T, enabled bool) {
+	f := newSearchPermissionsFixture(t, enabled)
 	all := searchPermissionsResponse{}
 	for _, typ := range []string{"user", "service-account"} {
 		t.Run(typ, func(t *testing.T) {
@@ -343,7 +374,11 @@ func TestIntegrationSearchUsersPermissions_Identities(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_Visibility(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	runSearchTransports(t, testPermissionSearchVisibility)
+}
+
+func testPermissionSearchVisibility(t *testing.T, enabled bool) {
+	f := newSearchPermissionsFixture(t, enabled)
 	alice := f.createUser(t, user.CreateUserCommand{UID: "alice", OrgID: f.orgID, DefaultOrgRole: "None"})
 	bob := f.createUser(t, user.CreateUserCommand{UID: "bob", OrgID: f.orgID, DefaultOrgRole: "None"})
 	role := f.createRole(t, f.orgID, "managed:read", []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:one"}})
@@ -358,6 +393,8 @@ func TestIntegrationSearchUsersPermissions_Visibility(t *testing.T) {
 		{"resource wildcard", []string{"users:*"}, all},
 		{"attribute wildcard", []string{"users:id:*"}, all},
 		{"global wildcard", []string{"*"}, all},
+		{"global user wildcard", []string{"global.users:*"}, searchPermissionsResponse{}},
+		{"global user ID", []string{fmt.Sprintf("global.users:id:%d", alice.ID)}, searchPermissionsResponse{}},
 		{"one visible user", []string{fmt.Sprintf("users:id:%d", alice.ID)}, searchPermissionsResponse{alice.ID: all[alice.ID]}},
 		{"multiple visible users", []string{fmt.Sprintf("users:id:%d", alice.ID), fmt.Sprintf("users:id:%d", bob.ID)}, all},
 		{"duplicate visibility scopes", []string{fmt.Sprintf("users:id:%d", alice.ID), fmt.Sprintf("users:id:%d", alice.ID)}, searchPermissionsResponse{alice.ID: all[alice.ID]}},
@@ -382,7 +419,11 @@ func TestIntegrationSearchUsersPermissions_Visibility(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_Validation(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	runSearchTransports(t, testPermissionSearchValidation)
+}
+
+func testPermissionSearchValidation(t *testing.T, enabled bool) {
+	f := newSearchPermissionsFixture(t, enabled)
 	usr := f.createUser(t, user.CreateUserCommand{UID: "member", OrgID: f.orgID, DefaultOrgRole: "None"})
 	outsider := f.createUser(t, user.CreateUserCommand{UID: "outsider", OrgID: f.otherOrgID, DefaultOrgRole: "None"})
 	tests := []struct {
@@ -415,7 +456,11 @@ func TestIntegrationSearchUsersPermissions_Validation(t *testing.T) {
 }
 
 func TestIntegrationSearchUsersPermissions_CacheIsolation(t *testing.T) {
-	f := newSearchPermissionsFixture(t)
+	runSearchTransports(t, testPermissionSearchCacheIsolation)
+}
+
+func testPermissionSearchCacheIsolation(t *testing.T, enabled bool) {
+	f := newSearchPermissionsFixture(t, enabled)
 	alice := f.createUser(t, user.CreateUserCommand{UID: "alice", OrgID: f.orgID, DefaultOrgRole: "None"})
 	bob := f.createUser(t, user.CreateUserCommand{UID: "bob", OrgID: f.orgID, DefaultOrgRole: "None"})
 	require.NoError(t, f.orgs.AddOrgUser(context.Background(), &org.AddOrgUserCommand{OrgID: f.otherOrgID, UserID: alice.ID, Role: org.RoleNone}))
@@ -455,7 +500,36 @@ func TestIntegrationSearchUsersPermissions_CacheIsolation(t *testing.T) {
 	}
 }
 
+func runSearchTransports(t *testing.T, test func(*testing.T, bool)) {
+	t.Helper()
+	for _, enabled := range []bool{false, true} {
+		t.Run(fmt.Sprintf("grpc=%t", enabled), func(t *testing.T) {
+			featuremgmt.WithFlagValues(t, map[string]any{featuremgmt.FlagAuthzLegacyUserPermissionsSearch: enabled})
+			test(t, enabled)
+		})
+	}
+}
+
+type searchClient struct {
+	legacyclient.LegacyUserPermissionsClient
+	calls       atomic.Int64
+	legacyCalls atomic.Int64
+}
+
+func (c *searchClient) LegacySearchUsersPermissions(ctx context.Context, caller authlib.AuthInfo, req legacyclient.LegacySearchUsersPermissionsRequest) (legacyclient.LegacySearchUsersPermissionsResponse, error) {
+	c.calls.Add(1)
+	return c.LegacyUserPermissionsClient.LegacySearchUsersPermissions(ctx, caller, req)
+}
+
+func (c *searchClient) LegacyGetUserPermissions(ctx context.Context, caller authlib.AuthInfo, req legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
+	c.legacyCalls.Add(1)
+	return c.LegacyUserPermissionsClient.LegacyGetUserPermissions(ctx, caller, req)
+}
+
 type searchPermissionsFixture struct {
+	grpcEnabled       bool
+	cfg               *setting.Cfg
+	client            *searchClient
 	sql               *sqlstore.SQLStore
 	service           *acimpl.Service
 	users             user.Service
@@ -467,7 +541,7 @@ type searchPermissionsFixture struct {
 	orgID, otherOrgID int64
 }
 
-func newSearchPermissionsFixture(t *testing.T) *searchPermissionsFixture {
+func newSearchPermissionsFixture(t *testing.T, enabled bool) *searchPermissionsFixture {
 	t.Helper()
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -499,14 +573,18 @@ func newSearchPermissionsFixture(t *testing.T) *searchPermissionsFixture {
 	registry.RegisterPluginScope("tests:id:")
 	cache := localcache.ProvideService()
 	store := &searchPermissionsStore{Store: database.ProvideService(sql)}
+	catalog := legacypermissions.NewRoleCatalog()
+	loader := legacypermissions.NewLoader(sql, catalog, actions, cache, cfg, &licensing.OSSLicensingService{}, nil)
+	client := &searchClient{LegacyUserPermissionsClient: legacypermissions.NewEmbeddedClient(loader, cfg)}
 	service, initErr := acimpl.ProvideOSSService(cfg, store, actions, cache,
-		features, tracer, sql, registry, nil, iam.Features{}, nil, legacypermissions.NewRoleCatalog())
+		features, tracer, sql, registry, nil, iam.Features{}, client, catalog)
 	require.NoError(t, initErr)
 
 	routes := routing.NewRouteRegister()
 	api.NewAccessControlAPI(routes, acimpl.ProvideAccessControl(features), service, users).RegisterAPIEndpoints()
 
 	return &searchPermissionsFixture{
+		grpcEnabled: enabled, client: client, cfg: cfg,
 		sql: sql, service: service, users: users, orgs: orgs, actions: actions, cache: cache, store: store,
 		server: webtest.NewServer(t, routes), orgID: orgID, otherOrgID: otherOrgID,
 	}
@@ -583,8 +661,14 @@ func (f *searchPermissionsFixture) request(t *testing.T, caller *user.SignedInUs
 
 func (f *searchPermissionsFixture) assertSearch(t *testing.T, caller *user.SignedInUser, query string, want searchPermissionsResponse) {
 	t.Helper()
+	before := f.client.calls.Load()
 	status, body := f.request(t, caller, query)
 	require.Equal(t, http.StatusOK, status, string(body))
+	if f.grpcEnabled {
+		require.Equal(t, before+1, f.client.calls.Load())
+	} else {
+		require.Equal(t, before, f.client.calls.Load())
+	}
 	var got searchPermissionsResponse
 	require.NoError(t, json.Unmarshal(body, &got))
 	require.NotNil(t, got, "empty searches must serialize as an object, not null")

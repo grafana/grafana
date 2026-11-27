@@ -25,6 +25,7 @@ import {
   setRulerRuleGroupResolver,
 } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
+import { RuleActionsButtons } from '../rule-list/components/RuleActionsButtons.V2';
 import { KnownProvenance } from '../types/knownProvenance';
 
 import GroupDetailsPage from './GroupDetailsPage';
@@ -32,6 +33,12 @@ import GroupDetailsPage from './GroupDetailsPage';
 jest.mock('@grafana/assistant', () => ({
   useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
 }));
+
+jest.mock('../rule-list/components/RuleActionsButtons.V2', () => {
+  const actual = jest.requireActual('../rule-list/components/RuleActionsButtons.V2');
+  return { ...actual, RuleActionsButtons: jest.fn(actual.RuleActionsButtons) };
+});
+const mockRuleActionsButtons = jest.mocked(RuleActionsButtons);
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return ({ children }: Props) =>
@@ -189,6 +196,37 @@ describe('GroupDetailsPage', () => {
         `/alerting/grafana/${rule2.grafana_alert.uid}/view`
       );
       expect(alertRuleItems[1]).toHaveTextContent(rule2.grafana_alert.title);
+    });
+
+    describe('rule row re-renders', () => {
+      const actualRuleActionsButtons = jest.requireActual(
+        '../rule-list/components/RuleActionsButtons.V2'
+      ).RuleActionsButtons;
+
+      beforeEach(() => {
+        mockRuleActionsButtons.mockClear();
+        // The real actions re-render themselves as their ability queries resolve, which would hide whether a row did
+        mockRuleActionsButtons.mockImplementation(() => null);
+      });
+
+      afterEach(() => {
+        mockRuleActionsButtons.mockImplementation(actualRuleActionsButtons);
+      });
+
+      it('does not re-render the rows when the page re-renders', async () => {
+        const { rerender } = renderGroupDetailsPage('grafana', folder.uid, group.name);
+
+        expect(await screen.findByRole('treeitem', { name: rule1.grafana_alert.title })).toBeInTheDocument();
+        expect(ui.ruleItem.getAll()).toHaveLength(2);
+        // The folder title replaces its uid as namespaceName, which legitimately re-renders the rows
+        expect(await screen.findByRole('link', { name: /test-folder-title/ })).toBeInTheDocument();
+        const rendersAfterLoad = mockRuleActionsButtons.mock.calls.length;
+        expect(rendersAfterLoad).toBeGreaterThan(0);
+
+        rerender(groupDetailsPageRoutes());
+
+        expect(mockRuleActionsButtons).toHaveBeenCalledTimes(rendersAfterLoad);
+      });
     });
 
     it('should render error alert when API returns an error', async () => {
@@ -411,16 +449,17 @@ describe('GroupDetailsPage', () => {
   });
 });
 
+const groupDetailsPageRoutes = () => (
+  <Routes>
+    <Route
+      path="/alerting/:dataSourceUid/namespaces/:namespaceId/groups/:groupName/view"
+      element={<GroupDetailsPage />}
+    />
+  </Routes>
+);
+
 function renderGroupDetailsPage(dsUid: string, namespaceId: string, groupName: string) {
-  return render(
-    <Routes>
-      <Route
-        path="/alerting/:dataSourceUid/namespaces/:namespaceId/groups/:groupName/view"
-        element={<GroupDetailsPage />}
-      />
-    </Routes>,
-    {
-      historyOptions: { initialEntries: [`/alerting/${dsUid}/namespaces/${namespaceId}/groups/${groupName}/view`] },
-    }
-  );
+  return render(groupDetailsPageRoutes(), {
+    historyOptions: { initialEntries: [`/alerting/${dsUid}/namespaces/${namespaceId}/groups/${groupName}/view`] },
+  });
 }

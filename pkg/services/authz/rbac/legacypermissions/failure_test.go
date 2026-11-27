@@ -13,7 +13,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -44,7 +43,7 @@ func TestIntegrationLoaderDiscardsPartialSQLResults(t *testing.T) {
 			})
 			loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(),
 				resourcepermissions.NewActionSetService(), localcache.New(0, 0),
-				loaderConfig(team), featuremgmt.WithFeatures(), &licensing.OSSLicensingService{}, nil,
+				loaderConfig(team), &licensing.OSSLicensingService{}, nil,
 			)
 			requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleViewer}
 			boom := errors.New("driver lost connection after first row")

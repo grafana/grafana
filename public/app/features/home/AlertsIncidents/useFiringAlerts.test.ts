@@ -201,6 +201,28 @@ describe('useFiringAlerts', () => {
       expect(requests).toEqual([[]]);
     });
 
+    it('filters own teams in the browser when their matcher would overflow the request URL', async () => {
+      // 50 four-word team names encode to about 10 KB of filter, past what proxies accept in a request line.
+      mockTeams(Array.from({ length: 50 }, (_, i) => ({ name: `Team ${i} Platform Ops` })));
+      const requests = mockAlerts([
+        makeAlert({ labels: { alertname: 'Slugged own team', team: 'team-3-platform-ops' } }),
+        makeAlert({ labels: { alertname: 'Upper-cased own team', team: 'TEAM_49_PLATFORM_OPS' } }),
+        // Anchored like Alertmanager's regex matchers, so a longer name is another team.
+        makeAlert({ labels: { alertname: 'Other team', team: 'team-3-platform-ops-eu' } }),
+        makeAlert({ labels: { alertname: 'No team' } }),
+      ]);
+
+      const { result } = renderHook(() => useFiringAlerts(), { wrapper: getWrapper({}) });
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      expect(requests).toEqual([[]]);
+      expect(result.current.visibleAlerts.map(({ alert }) => alert.labels.alertname).sort()).toEqual([
+        'Slugged own team',
+        'Upper-cased own team',
+      ]);
+      expect(result.current.count).toBe(2);
+    });
+
     it('matches a picked label exactly, in place of the own-teams default', async () => {
       mockTeams([{ name: 'Platform Monitoring' }]);
       const requests = mockAlerts([]);

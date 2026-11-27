@@ -82,7 +82,6 @@ describe('Can create a new grafana managed alert using simplified routing', () =
   beforeEach(() => {
     window.localStorage.clear();
     contextSrv.isEditor = true;
-    contextSrv.hasEditPermissionInFolders = true;
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,
       AccessControlAction.AlertingRuleUpdate,
@@ -91,6 +90,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
       AccessControlAction.DataSourcesRead,
       AccessControlAction.DataSourcesWrite,
       AccessControlAction.DataSourcesCreate,
+      AccessControlAction.FoldersCreate,
       AccessControlAction.FoldersWrite,
       AccessControlAction.FoldersRead,
       AccessControlAction.AlertingRuleExternalRead,

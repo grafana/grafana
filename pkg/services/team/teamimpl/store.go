@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"text/template"
 	"time"
 
@@ -694,6 +695,119 @@ func updateTeamMember(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session
 	member.Permission = permission
 	_, err = sess.Table(dbHelper.Table("team_member")).Cols("permission").Where("org_id=? and team_id=? and user_id=?", orgID, teamID, userID).Update(member)
 	return err
+}
+
+// teamMemberBulkChunkSize bounds the number of users per IN clause or multi-row
+// insert, keeping the bound parameters under the limits of the supported databases.
+const teamMemberBulkChunkSize = 100
+
+// AddOrUpdateTeamMembersHook is the bulk form of AddOrUpdateTeamMemberHook, called from
+// the team resource permission service when it writes many members at once. It adds the
+// users that aren't members of the team yet and updates the permission of those that are,
+// within the given transaction session. The users must be distinct.
+func AddOrUpdateTeamMembersHook(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID, teamID int64, users []ac.User, permission team.PermissionType) error {
+	if len(users) == 0 {
+		return nil
+	}
+
+	if _, err := teamExists(dbHelper, sess, orgID, teamID); err != nil {
+		return err
+	}
+
+	userIDs := make([]int64, 0, len(users))
+	for _, u := range users {
+		userIDs = append(userIDs, u.ID)
+	}
+
+	existing := make(map[int64]struct{}, len(users))
+	for chunk := range slices.Chunk(userIDs, teamMemberBulkChunkSize) {
+		var found []int64
+		if err := sess.Table(dbHelper.Table("team_member")).
+			Where("org_id = ? AND team_id = ?", orgID, teamID).
+			In("user_id", chunk).
+			Cols("user_id").
+			Find(&found); err != nil {
+			return err
+		}
+		for _, id := range found {
+			existing[id] = struct{}{}
+		}
+	}
+
+	now := time.Now()
+	toUpdate := make([]int64, 0, len(existing))
+	toInsert := make([]team.TeamMember, 0, len(users)-len(existing))
+	for _, u := range users {
+		if _, ok := existing[u.ID]; ok {
+			toUpdate = append(toUpdate, u.ID)
+			continue
+		}
+		toInsert = append(toInsert, team.TeamMember{
+			UID:        util.GenerateShortUID(),
+			OrgID:      orgID,
+			TeamID:     teamID,
+			UserID:     u.ID,
+			External:   u.IsExternal,
+			Created:    now,
+			Updated:    now,
+			Permission: permission,
+		})
+	}
+
+	for chunk := range slices.Chunk(toInsert, teamMemberBulkChunkSize) {
+		if _, err := sess.Table(dbHelper.Table("team_member")).InsertMulti(&chunk); err != nil {
+			return err
+		}
+	}
+
+	// Matches updateTeamMember, which stores anything but Admin as Member.
+	updatePermission := permission
+	if updatePermission != team.PermissionTypeAdmin {
+		updatePermission = team.PermissionTypeMember
+	}
+	for chunk := range slices.Chunk(toUpdate, teamMemberBulkChunkSize) {
+		if _, err := sess.Table(dbHelper.Table("team_member")).
+			Where("org_id = ? AND team_id = ?", orgID, teamID).
+			In("user_id", chunk).
+			Cols("permission").
+			Update(&team.TeamMember{Permission: updatePermission}); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// RemoveTeamMembersHook is the bulk form of RemoveTeamMemberHook, called from the team
+// resource permission service when it removes many members at once. Like the single
+// form, it fails with team.ErrTeamMemberNotFound if any of the users isn't a member.
+// The user IDs must be distinct.
+func RemoveTeamMembersHook(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID, teamID int64, userIDs []int64) error {
+	if len(userIDs) == 0 {
+		return nil
+	}
+
+	if _, err := teamExists(dbHelper, sess, orgID, teamID); err != nil {
+		return err
+	}
+
+	var removed int64
+	for chunk := range slices.Chunk(userIDs, teamMemberBulkChunkSize) {
+		n, err := sess.Table(dbHelper.Table("team_member")).
+			Where("org_id = ? AND team_id = ?", orgID, teamID).
+			In("user_id", chunk).
+			Delete(&team.TeamMember{})
+		if err != nil {
+			return err
+		}
+		removed += n
+	}
+
+	if removed < int64(len(userIDs)) {
+		return team.ErrTeamMemberNotFound
+	}
+
+	return nil
 }
 
 // RemoveTeamMemberHook is called from team resource permission service
