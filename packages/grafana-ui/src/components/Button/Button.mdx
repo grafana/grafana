@@ -13,7 +13,7 @@ Clickable elements that are used to trigger actions. Buttons communicate what ac
 
 ## When to use
 
-Use `Button` to trigger an action, such as saving a form, running a query or opening a dialog.
+Use `Button` to trigger an action, such as saving a form, running a query or opening a dialog. Each press performs one discrete action. For a control that switches something on and off, see [Toggle, selected and expanded states](#toggle-selected-and-expanded-states).
 
 ## Never use for
 
@@ -418,6 +418,7 @@ To add an anchor that looks like a button use the `<LinkButton>` component and p
 </table>
 
 - For a labeled section that expands, use [CollapsableSection](?path=/docs/layout-collapsablesection--docs) or [ControlledCollapse](?path=/docs/layout-collapse--docs). A hand-built `Button` with `aria-expanded` is for triggers that aren't section headers.
+- A `Button` press performs a discrete action. `aria-pressed` is different: it marks a toggle, a control that switches the same thing between two states, such as showing and hiding a legend. Don't add it to a button that only performs an action.
 - A toggle keeps the same label in both states, and `aria-pressed` tells assistive technology whether it's on. If the label changes between states, don't add `aria-pressed`, because the label already describes the state. See the [ARIA APG button pattern](https://www.w3.org/WAI/ARIA/apg/patterns/button/).
 - To choose between `RadioButtonGroup` and other controls, see [Never use for](?path=/docs/inputs-radiobuttongroup--docs#never-use-for) in the `RadioButtonGroup` docs.
 
