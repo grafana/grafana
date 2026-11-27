@@ -42,10 +42,7 @@ export function useRecentlyUsedDataSources(): [string[], (ds: DataSourceInstance
   return [value, pushRecentlyUsedDataSource];
 }
 
-export function useDatasources(filters: GetDataSourceListFilters, datasources?: DataSourceInstanceSettings[]) {
-  if (datasources) {
-    return datasources;
-  }
+export function useDatasources(filters: GetDataSourceListFilters) {
   const dataSourceSrv = getDataSourceSrv();
   const dataSources = dataSourceSrv.getList(filters);
 

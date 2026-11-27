@@ -623,16 +623,13 @@ describe('PanelDataQueriesTab', () => {
           throw new Error('Expected datasource settings');
         }
 
-        await queriesTab.onChangeDataSource(
-          {
-            ...settings,
-            uid: instance2SettingsMock.uid,
-            type: instance2SettingsMock.type,
-          },
-          [{ refId: 'A' }]
-        );
+        await queriesTab.onChangeDataSource({
+          ...settings,
+          uid: instance2SettingsMock.uid,
+          type: instance2SettingsMock.type,
+        });
 
-        expect(queriesTab.queryRunner.state.queries).toEqual([{ refId: 'A' }]);
+        expect(queriesTab.queryRunner.state.queries).toEqual([expect.objectContaining({ refId: 'A' })]);
         expect(queriesTab.queryRunner.isDataReadyToDisplay()).toBe(false);
       });
 
@@ -640,10 +637,10 @@ describe('PanelDataQueriesTab', () => {
         const { queriesTab, panel } = await setupScene('panel-1');
         panel.state.$data?.activate();
 
-        await queriesTab.onChangeDataSource(
-          { type: 'grafana-prometheus-datasource', uid: 'gdev-prometheus' } as DataSourceInstanceSettings,
-          []
-        );
+        await queriesTab.onChangeDataSource({
+          type: 'grafana-prometheus-datasource',
+          uid: 'gdev-prometheus',
+        } as DataSourceInstanceSettings);
 
         expect(data.store.setObject).toHaveBeenCalledTimes(2);
         expect(data.store.setObject).toHaveBeenLastCalledWith('grafana.dashboards.panelEdit.lastUsedDatasource', {
