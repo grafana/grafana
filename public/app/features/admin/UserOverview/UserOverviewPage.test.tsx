@@ -964,7 +964,10 @@ describe('organizations', () => {
     'waits for organization membership before assigning roles (add fails: %s)',
     async (addFails) => {
       const writes = jest.fn();
-      const membership = Promise.withResolvers<void>();
+      let resolveMembership!: () => void;
+      const membership = new Promise<void>((resolve) => {
+        resolveMembership = resolve;
+      });
       server.use(
         http.get('/api/orgs', () =>
           HttpResponse.json([
@@ -978,7 +981,7 @@ describe('organizations', () => {
         ),
         http.post('/api/orgs/:orgId/users', async ({ params }) => {
           writes('add to org', params.orgId);
-          await membership.promise;
+          await membership;
           if (addFails) {
             return HttpResponse.json({ message: 'Cannot add membership' }, { status: 403 });
           }
@@ -1002,7 +1005,7 @@ describe('organizations', () => {
       await waitFor(() => expect(writes).toHaveBeenCalledWith('add to org', '3'));
       expect(screen.getByRole('dialog')).toBeInTheDocument();
       expect(writes).toHaveBeenCalledTimes(1);
-      membership.resolve();
+      resolveMembership();
       if (addFails) {
         expect(await screen.findByRole('alert')).toHaveTextContent('Cannot add membership');
         expect(screen.getByRole('dialog')).toBeInTheDocument();
