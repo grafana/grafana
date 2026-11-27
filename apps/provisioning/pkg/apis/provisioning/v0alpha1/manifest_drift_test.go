@@ -77,9 +77,14 @@ func TestManifestMatchesGoTypes(t *testing.T) {
 		{HistoricJobResourceInfo.GroupVersionKind().Kind, HistoricJobResourceInfo.GetName()},
 	}
 
+	// v1beta2 has its own generated Go types, so only the versions served from these types are compared.
+	frozenVersions := []string{"v0alpha1", "v1beta1"}
 	versionNames := make([]string, 0, len(manifest.Versions))
 	for _, version := range manifest.Versions {
 		versionNames = append(versionNames, version.Name)
+		if !slices.Contains(frozenVersions, version.Name) {
+			continue
+		}
 
 		manifestKinds := map[string]app.ManifestVersionKind{}
 		for _, kind := range version.Kinds {
@@ -129,7 +134,7 @@ func TestManifestMatchesGoTypes(t *testing.T) {
 			})
 		}
 	}
-	require.ElementsMatch(t, []string{"v0alpha1", "v1beta1"}, versionNames)
+	require.ElementsMatch(t, []string{"v0alpha1", "v1beta1", "v1beta2"}, versionNames)
 }
 
 func loadManifest(t *testing.T) app.ManifestData {
