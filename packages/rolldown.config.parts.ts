@@ -96,6 +96,7 @@ export function createPackageConfig(options: InputOptions = {}): RolldownOptions
         dir: 'dist/cjs',
         entryFileNames: '[name].cjs',
         esModule: true,
+        exports: 'named',
         strict: true,
       },
     },
