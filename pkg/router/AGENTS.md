@@ -557,18 +557,4 @@ Dispatch by group has no injection sinks, since the group is only ever used as a
 
 ## Further reading
 
-The router specs, in deployment_tools under `ksonnet/environments/grafana-router/specs/`:
-
-- `2026-08-17-router-discovery-openapi-design.md`: the original discovery and OpenAPI design
-  (historical; its key decisions still hold).
-- `2026-08-19-router-circuit-breaker-design.md`: why health checks are passive, and why gobreaker
-  (the mechanics have since changed).
-- `2026-09-11-router-aggregate-discovery-design.md`: aggregate targets and the cooldown.
-- `2026-09-25-router-design-notes.md`: why there's no mux, readiness, notify semantics, config
-  history.
-- `2026-09-26-router-metrics.md`: every metric, and dashboard queries.
-- `2026-10-23-router-review-plan.md`: open work.
-- `2026-10-28-router-group-visibility-design.md`: group visibility.
-- `2026-11-25-mt-app-settings-plan.md`: serving app plugin settings in MT.
-- `2026-11-27-remove-kube-aggregator-apiextensions-plan.md`: replacing the enterprise
-  kube-aggregator and apiextensions.
+The router specs are in deployment_tools under `ksonnet/environments/grafana-router/specs/`.
