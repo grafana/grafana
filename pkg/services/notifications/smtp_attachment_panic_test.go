@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	gomail "gopkg.in/mail.v2"
 
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -55,6 +56,45 @@ func TestWriteAttachmentPropagatesWriteError(t *testing.T) {
 	err := writeAttachment("err.png", []byte("payload"))(errWriter{})
 	require.ErrorIs(t, err, errBoom)
 	require.NotContains(t, err.Error(), "panic")
+}
+
+type recordingSender struct {
+	closed bool
+	panic  bool
+}
+
+func (s *recordingSender) Send(string, []string, io.WriterTo) error {
+	if s.panic {
+		panic("encode")
+	}
+	return nil
+}
+
+func (s *recordingSender) Close() error {
+	s.closed = true
+	return nil
+}
+
+func mailWithRecipient() *gomail.Message {
+	m := gomail.NewMessage()
+	m.SetHeader("From", "grafana@example.com")
+	m.SetHeader("To", "to@example.com")
+	m.SetBody("text/plain", "alert")
+	return m
+}
+
+func TestSendAndCloseClosesWhenSendPanics(t *testing.T) {
+	sender := &recordingSender{panic: true}
+	require.Panics(t, func() {
+		_ = sendAndClose(sender, mailWithRecipient())
+	})
+	require.True(t, sender.closed)
+}
+
+func TestSendAndCloseClosesAfterSend(t *testing.T) {
+	sender := &recordingSender{}
+	require.NoError(t, sendAndClose(sender, mailWithRecipient()))
+	require.True(t, sender.closed)
 }
 
 func TestBuildMailWithScreenshotDoesNotPanic(t *testing.T) {

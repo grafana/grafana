@@ -155,9 +155,7 @@ func (sc *SmtpClient) dialAndSend(dialers []*gomail.Dialer, m *gomail.Message) e
 		var sender gomail.SendCloser
 		sender, err = dialer.Dial()
 		if err == nil {
-			err = gomail.Send(sender, m)
-			_ = sender.Close()
-			return err
+			return sendAndClose(sender, m)
 		}
 		if !isConnectError(err) || i == len(dialers)-1 {
 			return err
@@ -165,6 +163,13 @@ func (sc *SmtpClient) dialAndSend(dialers []*gomail.Dialer, m *gomail.Message) e
 		sc.log.Debug("SMTP address unreachable, trying the next one", "address", dialer.Host, "error", err)
 	}
 	return err
+}
+
+// sendAndClose always closes the SMTP connection. gomail.Send can panic while
+// an attachment is encoded, and that used to skip the Close on the way out.
+func sendAndClose(sender gomail.SendCloser, m *gomail.Message) error {
+	defer func() { _ = sender.Close() }()
+	return gomail.Send(sender, m)
 }
 
 // redactConnectError replaces a failed TCP connect with a generic error when
