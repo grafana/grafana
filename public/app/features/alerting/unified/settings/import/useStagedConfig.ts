@@ -27,7 +27,7 @@ export function useStagedConfig({ skip = false }: { skip?: boolean } = {}) {
     ? rawStagedConfig
     : undefined;
 
-  return { ...rest, stagedConfig, liveConfig: data?.alertmanager_config };
+  return { ...rest, isLoading: rest.isLoading && !rest.error, stagedConfig, liveConfig: data?.alertmanager_config };
 }
 
 /**

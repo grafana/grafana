@@ -95,7 +95,11 @@ function GroupDetailsPageContent({ dataSourceUid, namespaceId, groupName }: Grou
   );
 
   const ruleSourceName = isGrafanaRuleGroup ? GRAFANA_RULES_SOURCE_NAME : getDataSourceByUid(dataSourceUid)?.name;
-  const isLoading = isFolderLoading || isDsFeaturesLoading || isRuleNamespacesLoading || isRuleGroupLoading;
+  const isLoading =
+    isFolderLoading ||
+    (isDsFeaturesLoading && !dsFeaturesError) ||
+    (isRuleNamespacesLoading && !ruleNamespacesError) ||
+    (isRuleGroupLoading && !ruleGroupError);
 
   const groupInterval = promGroup?.interval
     ? formatPrometheusDuration(promGroup.interval * 1000)
