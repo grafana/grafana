@@ -369,10 +369,7 @@ func (r *ResourcesManager) ReplaceResourceFromFile(ctx context.Context, path, re
 		return newName, gvk, size, err
 	}
 
-	if deleteErr := r.deleteOldResource(ctx, path, oldName, oldGVR, newName); deleteErr != nil {
-		return newName, gvk, size, deleteErr
-	}
-	return newName, gvk, size, err
+	return newName, gvk, size, replaceResult(err, r.deleteOldResource(ctx, path, oldName, oldGVR, newName))
 }
 
 // ReplaceResourceFromFileByRef writes a resource from the file at path/ref and,
@@ -405,10 +402,22 @@ func (r *ResourcesManager) ReplaceResourceFromFileByRef(ctx context.Context, pat
 		return newName, gvk, size, writeErr
 	}
 
-	if deleteErr := r.deleteOldResource(ctx, path, oldName, oldParsed.GVR, newName); deleteErr != nil {
-		return newName, gvk, size, deleteErr
+	return newName, gvk, size, replaceResult(writeErr, r.deleteOldResource(ctx, path, oldName, oldParsed.GVR, newName))
+}
+
+// replaceResult combines the outcome of a successful write, nil or a warning,
+// with the delete of the old resource. A failed delete is the result; a delete
+// skipped because another file owns the old resource is a warning too, so both
+// are reported.
+func replaceResult(writeErr, deleteErr error) error {
+	switch {
+	case deleteErr == nil:
+		return writeErr
+	case writeErr != nil && errors.Is(deleteErr, ErrResourceManagedByOtherFile):
+		return fmt.Errorf("%w; %w", deleteErr, writeErr)
+	default:
+		return deleteErr
 	}
-	return newName, gvk, size, writeErr
 }
 
 // deleteOldResource deletes the previous resource when a name change is

@@ -103,6 +103,8 @@ metadata:
     grafana.app/alsoThisOne: "ok"
     grafana.app/invalid: true
     grafana.app/managerId: "foreign-repo"
+    grafana.com/updatedBy: "user:1"
+    kubectl.kubernetes.io/last-applied-configuration: "{}"
     example.com/enabled: true
     example.com/owner: team-a
 `),
@@ -116,6 +118,8 @@ metadata:
 		require.NotContains(t, annotations, "grafana.app.thisShouldBeIgnored")
 		require.NotContains(t, annotations, "grafana.app/alsoThisOne")
 		require.NotContains(t, annotations, "grafana.app/invalid")
+		require.NotContains(t, annotations, "grafana.com/updatedBy")
+		require.NotContains(t, annotations, utils.AnnoKeyKubectlLastAppliedConfig)
 		require.Equal(t, "repo", annotations[utils.AnnoKeyManagerIdentity])
 		require.Equal(t, string(utils.ManagerKindRepo), annotations[utils.AnnoKeyManagerKind], "Grafana still stamps its own annotations")
 	})
@@ -1358,6 +1362,24 @@ func TestParsedResource_ToSaveBytes(t *testing.T) {
 		}, "", "  ")
 		require.NoError(t, err)
 		require.Equal(t, string(want), string(data), "existing files must stay byte-identical")
+	})
+
+	t.Run("a non-string annotation does not drop the others", func(t *testing.T) {
+		metadata := serverMetadata()
+		annotations := metadata["annotations"].(map[string]any)
+		annotations["example.com/owner"] = "team-a"
+		annotations["example.com/enabled"] = true
+		parsed := &ParsedResource{Info: &repository.FileInfo{Path: "dash.json"}, Obj: newObj(metadata)}
+
+		data, err := parsed.ToSaveBytes()
+		require.NoError(t, err)
+
+		var file map[string]any
+		require.NoError(t, json.Unmarshal(data, &file))
+		require.Equal(t, map[string]any{
+			"name":        "dash",
+			"annotations": map[string]any{"example.com/owner": "team-a"},
+		}, file["metadata"])
 	})
 
 	t.Run("keeps user annotations and drops labels and everything else", func(t *testing.T) {

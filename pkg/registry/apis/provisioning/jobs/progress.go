@@ -340,37 +340,46 @@ func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 		warningMsg := fmt.Sprintf("%s %s", result.Warning().Error(), fileInfo)
 		summary.Warnings = append(summary.Warnings, warningMsg)
 		summary.Warning++
+		// The resource was written without those annotations, so it is a change too.
+		if errors.Is(result.Warning(), resources.ErrInvalidAnnotations) {
+			r.countChange(summary, result.Action())
+		}
 	} else {
-		switch result.Action() {
-		case repository.FileActionDeleted:
-			summary.Delete++
-		case repository.FileActionUpdated:
-			summary.Update++
-		case repository.FileActionCreated:
-			summary.Create++
-		case repository.FileActionIgnored:
-			summary.Noop++
-		case repository.FileActionRenamed:
-			summary.Delete++
-			summary.Create++
-		}
-		summary.Write = summary.Create + summary.Update
+		r.countChange(summary, result.Action())
+	}
+}
 
-		// Action-aware total, kept in sync with the counters above so the driver can
-		// sum it without re-deriving per action. Each single-purpose worker records
-		// one FileAction type: push writes, delete deletes, move renames (recorded as
-		// create+delete, so count creates only to avoid double-counting). Everything
-		// else (pull, migrate) sums create+update+delete.
-		switch r.action {
-		case provisioning.JobActionPush:
-			summary.TotalChanges = summary.Write
-		case provisioning.JobActionDelete:
-			summary.TotalChanges = summary.Delete
-		case provisioning.JobActionMove:
-			summary.TotalChanges = summary.Create
-		default:
-			summary.TotalChanges = summary.Create + summary.Update + summary.Delete
-		}
+// countChange adds a completed action to the summary counters.
+func (r *jobProgressRecorder) countChange(summary *provisioning.JobResourceSummary, action repository.FileAction) {
+	switch action {
+	case repository.FileActionDeleted:
+		summary.Delete++
+	case repository.FileActionUpdated:
+		summary.Update++
+	case repository.FileActionCreated:
+		summary.Create++
+	case repository.FileActionIgnored:
+		summary.Noop++
+	case repository.FileActionRenamed:
+		summary.Delete++
+		summary.Create++
+	}
+	summary.Write = summary.Create + summary.Update
+
+	// Action-aware total, kept in sync with the counters above so the driver can
+	// sum it without re-deriving per action. Each single-purpose worker records
+	// one FileAction type: push writes, delete deletes, move renames (recorded as
+	// create+delete, so count creates only to avoid double-counting). Everything
+	// else (pull, migrate) sums create+update+delete.
+	switch r.action {
+	case provisioning.JobActionPush:
+		summary.TotalChanges = summary.Write
+	case provisioning.JobActionDelete:
+		summary.TotalChanges = summary.Delete
+	case provisioning.JobActionMove:
+		summary.TotalChanges = summary.Create
+	default:
+		summary.TotalChanges = summary.Create + summary.Update + summary.Delete
 	}
 }
 

@@ -474,6 +474,28 @@ func TestUpdateSummary_TotalChanges(t *testing.T) {
 	}
 }
 
+func TestUpdateSummary_CountsWritesWithAnnotationWarnings(t *testing.T) {
+	ctx := context.Background()
+	noop := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
+	recorder := NewJobProgressRecorder(noop, nil, provisioning.JobActionPull).(*jobProgressRecorder)
+
+	recorder.Record(ctx, NewPathOnlyResult("dash.json").
+		WithAction(repository.FileActionCreated).
+		WithError(fmt.Errorf("writing resource from file dash.json: %w", &resources.InvalidAnnotationsError{Keys: []string{"example.com/enabled"}})).
+		Build())
+	recorder.Record(ctx, NewPathOnlyResult("bad path.json").
+		WithAction(repository.FileActionCreated).
+		WithWarning(&resources.UnsupportedPathError{Path: "bad path.json", Err: errors.New("invalid characters")}).
+		Build())
+
+	summaries := recorder.summary()
+	require.Len(t, summaries, 1)
+	require.Equal(t, int64(2), summaries[0].Warning)
+	require.Equal(t, int64(1), summaries[0].Create, "only the written resource is a create")
+	require.Equal(t, int64(1), summaries[0].Write)
+	require.Equal(t, int64(1), summaries[0].TotalChanges)
+}
+
 func TestJobProgressRecorderFolderFailureTrackingFromWarning(t *testing.T) {
 	ctx := context.Background()
 

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"maps"
 	"path"
 	"strings"
 
@@ -237,7 +236,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	obj.SetNamespace(r.repo.Namespace)
 
 	if !IsFolderMetadataFile(info.Path) {
-		parsed.InvalidAnnotations = filterFileAnnotations(obj.Object)
+		parsed.InvalidAnnotations = omitNotUserAnnotations(obj.Object)
 	}
 	parsed.Meta.SetManagerProperties(utils.ManagerProperties{
 		Kind:     utils.ManagerKindRepo,
@@ -650,9 +649,8 @@ func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
 	} else {
 		metadata := map[string]any{"name": name}
 		if !IsFolderMetadataFile(f.Info.Path) {
-			annotations := f.Obj.GetAnnotations()
-			maps.DeleteFunc(annotations, func(key, _ string) bool { return OmitAnnotationFromFile(key) })
-			if len(annotations) > 0 {
+			omitNotUserAnnotations(obj)
+			if annotations := (&unstructured.Unstructured{Object: obj}).GetAnnotations(); len(annotations) > 0 {
 				metadata["annotations"] = annotations
 			}
 		}

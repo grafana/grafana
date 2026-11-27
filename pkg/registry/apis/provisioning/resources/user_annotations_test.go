@@ -64,25 +64,31 @@ func TestOmitAnnotationFromFile(t *testing.T) {
 	}
 }
 
-func TestFilterFileAnnotations(t *testing.T) {
+func TestOmitNotUserAnnotations(t *testing.T) {
 	obj := map[string]any{"metadata": map[string]any{"annotations": map[string]any{
-		"example.com/owner": "team-a",
-		"example.com/empty": nil,
-		"example.com/flag":  true,
-		"example.com/count": int64(3),
-		"example.com/ratio": 1.5,
-		"example.com/map":   map[string]any{"global": "all"},
-		"example.com/list":  []any{"a"},
+		"example.com/owner":                   "team-a",
+		"example.com/empty":                   nil,
+		AnnoKeyUseCrossDashboardVariables:     `{"global":"all"}`,
+		"example.com/flag":                    true,
+		"example.com/count":                   int64(3),
+		"example.com/ratio":                   1.5,
+		"example.com/map":                     map[string]any{"global": "all"},
+		"example.com/list":                    []any{"a"},
+		utils.AnnoKeyManagerKind:              "plugin",
+		"grafana.app/enabled":                 true, // ignored for its key, so not reported
+		"grafana.com/updatedBy":               "x",
+		utils.AnnoKeyKubectlLastAppliedConfig: "{}",
 	}}}
 
-	dropped := filterFileAnnotations(obj)
+	dropped := omitNotUserAnnotations(obj)
 
 	require.Equal(t, []string{"example.com/count", "example.com/flag", "example.com/list", "example.com/map", "example.com/ratio"}, dropped)
 	require.Equal(t, map[string]any{"metadata": map[string]any{"annotations": map[string]any{
-		"example.com/owner": "team-a",
-		"example.com/empty": nil,
+		"example.com/owner":               "team-a",
+		"example.com/empty":               nil,
+		AnnoKeyUseCrossDashboardVariables: `{"global":"all"}`,
 	}}}, obj)
-	require.Nil(t, filterFileAnnotations(map[string]any{"metadata": map[string]any{"name": "dash"}}))
+	require.Nil(t, omitNotUserAnnotations(map[string]any{"metadata": map[string]any{"name": "dash"}}))
 }
 
 func TestHasRemovedAnnotations(t *testing.T) {

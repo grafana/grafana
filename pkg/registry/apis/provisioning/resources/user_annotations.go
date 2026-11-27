@@ -39,14 +39,14 @@ func invalidAnnotationsWarning(parsed *ParsedResource) error {
 // AnnoKeyUseCrossDashboardVariables holds the dashboard's selection of global and folder variables.
 const AnnoKeyUseCrossDashboardVariables = "grafana.app/useCrossDashboardVariables"
 
-func ignoreGrafanaAppAnnotation(key string) bool {
-	return key != AnnoKeyUseCrossDashboardVariables && strings.Contains(strings.ToLower(key), "grafana.app")
-}
-
-// OmitAnnotationFromFile reports whether Git Sync strips the annotation on write.
+// OmitAnnotationFromFile reports whether Git Sync ignores the annotation in
+// repository files, both when reading and when writing them.
 func OmitAnnotationFromFile(key string) bool {
 	// The previous manifest can contain plaintext values that storage has since redacted.
-	if key == utils.AnnoKeyKubectlLastAppliedConfig || ignoreGrafanaAppAnnotation(key) {
+	if key == utils.AnnoKeyKubectlLastAppliedConfig {
+		return true
+	}
+	if key != AnnoKeyUseCrossDashboardVariables && strings.Contains(strings.ToLower(key), "grafana.app") {
 		return true
 	}
 	domain, _, ok := strings.Cut(strings.ToLower(key), "/")
@@ -78,10 +78,11 @@ func HasRemovedAnnotations(path string, original, updated *unstructured.Unstruct
 	return false
 }
 
-// filterFileAnnotations removes ignored keys before Grafana stamps its own metadata.
-// Work on the raw map because a non-string value makes GetAnnotations lose every key.
-// Only invalid values on otherwise accepted keys are reported to PR previews.
-func filterFileAnnotations(obj map[string]any) []string {
+// omitNotUserAnnotations removes from obj the annotations that are not user
+// content: the keys OmitAnnotationFromFile ignores and values that are not
+// strings. It returns the keys dropped for their values, which are reported.
+// It works on the raw map because a non-string value makes GetAnnotations lose every key.
+func omitNotUserAnnotations(obj map[string]any) []string {
 	value, _, _ := unstructured.NestedFieldNoCopy(obj, "metadata", "annotations")
 	annotations, ok := value.(map[string]any)
 	if !ok {
@@ -89,7 +90,7 @@ func filterFileAnnotations(obj map[string]any) []string {
 	}
 	var dropped []string
 	for key, v := range annotations {
-		if ignoreGrafanaAppAnnotation(key) {
+		if OmitAnnotationFromFile(key) {
 			delete(annotations, key)
 			continue
 		}
