@@ -18,9 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 func TestProvideSupportedResourceProvider(t *testing.T) {
@@ -45,43 +43,6 @@ func TestProvideSupportedResourceProvider(t *testing.T) {
 	t.Run("rejects an invalid configuration", func(t *testing.T) {
 		_, err := ProvideSupportedResourceProvider(&setting.Cfg{ProvisioningEnabled: true, ProvisioningResources: []string{"invalid"}})
 		require.ErrorContains(t, err, "invalid [provisioning] resources configuration")
-	})
-}
-
-func TestSetResourceListerMode(t *testing.T) {
-	newBuilder := func() *APIBuilder {
-		return &APIBuilder{
-			unified:                   resource.NewMockResourceClient(t),
-			clients:                   resources.NewMockClientFactory(t),
-			features:                  featuremgmt.WithFeatures(),
-			supportedResourceProvider: resources.NewSupportedResourceProvider(nil),
-		}
-	}
-
-	for _, mode := range []string{"", resources.ListerSearch, resources.ListerAPIs} {
-		t.Run(fmt.Sprintf("mode %q", mode), func(t *testing.T) {
-			b := newBuilder()
-			require.NoError(t, b.SetResourceListerMode(mode))
-			require.NotNil(t, b.resourceLister)
-			// The factory captures the lister, so it has to be re-pointed with it.
-			require.NotNil(t, b.repositoryResources)
-		})
-	}
-
-	t.Run("apis reads the index in here, not a client pointed at ourselves", func(t *testing.T) {
-		b := newBuilder()
-		require.NoError(t, b.SetResourceListerMode(resources.ListerAPIs))
-		require.IsType(t, &resources.ResourceListerFromSearch{}, b.resourceLister)
-	})
-
-	t.Run("an unknown mode is rejected and leaves the lister alone", func(t *testing.T) {
-		b := newBuilder()
-		require.NoError(t, b.SetResourceListerMode(resources.ListerSearch))
-		before := b.resourceLister
-
-		require.EqualError(t, b.SetResourceListerMode("index"),
-			`invalid [provisioning] resource_lister "index": expected "search" or "apis"`)
-		require.Same(t, before, b.resourceLister)
 	})
 }
 

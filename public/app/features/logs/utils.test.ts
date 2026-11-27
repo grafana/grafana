@@ -31,6 +31,7 @@ import {
   calculateLogsLabelStats,
   calculateStats,
   checkLogsError,
+  copyText,
   escapeUnescapedString,
   createLogRowsMap,
   getLogLevel,
@@ -907,5 +908,36 @@ describe('isMissingStringField', () => {
       fields: [{ name: 'timestamp', type: FieldType.time, values: [1, 2] }],
     });
     expect(isMissingStringField([frame])).toBe(true);
+  });
+});
+
+// A Document Picture-in-Picture window (the Grafana Assistant pop-out) is another window: while the user works there,
+// only that window has focus, and the browser refuses clipboard writes from this one ("Document is not focused").
+describe('copyText in another window', () => {
+  function defineClipboard(target: Window) {
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    Object.defineProperty(target.navigator, 'clipboard', { value: { writeText }, configurable: true });
+    Object.defineProperty(target, 'isSecureContext', { value: true, configurable: true });
+    return writeText;
+  }
+
+  it("writes through the clipboard of the button's window", async () => {
+    const iframe = document.createElement('iframe');
+    document.body.appendChild(iframe);
+    const otherWindow = iframe.contentDocument!.defaultView!;
+    const tabWriteText = defineClipboard(window);
+    const otherWriteText = defineClipboard(otherWindow);
+    const button = otherWindow.document.body.appendChild(otherWindow.document.createElement('button'));
+
+    try {
+      await copyText('log line', { current: button });
+
+      expect(otherWriteText).toHaveBeenCalledWith('log line');
+      expect(tabWriteText).not.toHaveBeenCalled();
+    } finally {
+      Reflect.deleteProperty(window.navigator, 'clipboard');
+      Reflect.deleteProperty(window, 'isSecureContext');
+      iframe.remove();
+    }
   });
 });

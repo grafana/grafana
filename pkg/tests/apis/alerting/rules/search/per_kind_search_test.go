@@ -86,7 +86,7 @@ func (q *perKindQuery) text(v string) *perKindQuery {
 	return q
 }
 
-func (q *perKindQuery) filter(field, op string, values ...string) *perKindQuery {
+func (q *perKindQuery) filter(field string, op searchv0.FilterOperator, values ...string) *perKindQuery {
 	q.and(searchv0.WhereNode{
 		Filter: &searchv0.FilterPredicate{Field: field, Operator: op, Values: values},
 	})

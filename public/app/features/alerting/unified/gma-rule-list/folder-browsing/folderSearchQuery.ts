@@ -1,4 +1,4 @@
-import { type SearchQuery } from '@grafana/api-clients/rtkq/folder/v1beta1';
+import { type SearchQuery, type WhereNode } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import { type SharedRuleFilter } from '../rule-search/sharedRuleFilter';
@@ -19,9 +19,13 @@ export function buildFolderListSearchQuery(
   continueToken: string | undefined,
   { folder, folderUids }: FolderScope
 ): SearchQuery {
-  const leaves = [
-    ...(folder ? [{ text: { value: folder } }] : []),
-    ...(folderUids.length > 0 ? [{ filter: { field: 'name', operator: 'In', values: folderUids } }] : []),
+  // Each leaf is `satisfies`-checked because a bare spread widens `operator` to string, which the
+  // generated WhereNode no longer accepts.
+  const leaves: WhereNode[] = [
+    ...(folder ? [{ text: { value: folder } } satisfies WhereNode] : []),
+    ...(folderUids.length > 0
+      ? [{ filter: { field: 'name', operator: 'In', values: folderUids } } satisfies WhereNode]
+      : []),
   ];
   return {
     apiVersion: 'search.grafana.app/v0alpha1',

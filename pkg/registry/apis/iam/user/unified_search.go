@@ -104,5 +104,10 @@ func (c *unifiedSearchClient) Search(ctx context.Context, query SearchQuery) (*i
 	if err != nil {
 		return nil, resource.StatusErrorFromGRPC(err)
 	}
-	return parseResults(resp)
+	sr, err := parseResults(resp)
+	if err != nil {
+		return nil, err
+	}
+	setAvatarURLs(c.cfg, sr.Hits)
+	return sr, nil
 }

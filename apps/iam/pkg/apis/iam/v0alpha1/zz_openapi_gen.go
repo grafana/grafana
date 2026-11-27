@@ -1173,6 +1173,13 @@ func schema_pkg_apis_iam_v0alpha1_GetSearchUsersUserHit(ref common.ReferenceCall
 							},
 						},
 					},
+					"avatarUrl": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Avatar URL of the user, derived from the email. Omitted when the user has no email.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"name", "title", "login", "email", "role", "lastSeenAt", "lastSeenAtAge", "provisioned", "disabled", "internalId", "created", "score"},
 			},

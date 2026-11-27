@@ -9,7 +9,7 @@ import { allReducers as allApiClientReducers } from '@grafana/api-clients/rtkq';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
 import sharedReducers from 'app/core/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
-import alertingReducers from 'app/features/alerting/state/reducers';
+import unifiedAlertingReducer from 'app/features/alerting/unified/state/reducers';
 import authConfigReducers from 'app/features/auth-config/state/reducers';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import browseDashboardsReducers from 'app/features/browse-dashboards/state/slice';
@@ -33,7 +33,7 @@ import { cleanUpAction } from '../actions/cleanUp';
 
 const rootReducers = {
   ...sharedReducers,
-  ...alertingReducers,
+  unifiedAlerting: unifiedAlertingReducer,
   ...dashboardReducers,
   ...exploreReducers,
   ...dataSourcesReducers,

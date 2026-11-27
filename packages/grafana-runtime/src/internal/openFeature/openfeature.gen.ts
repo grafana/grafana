@@ -178,6 +178,8 @@ export const FlagKeys = {
   GlobalDashboardVariables: "globalDashboardVariables",
   /** Allow admins to make announcement banners dismissible by users */
   GrafanaAnnouncementBannerDismissible: "grafana.announcementBannerDismissible",
+  /** Enable tracking of bootdata property access */
+  GrafanaBootdataAnalytics: "grafana.bootdataAnalytics",
   /** Shows dashboard tags in the command palette */
   GrafanaCmdkDashboardTags: "grafana.cmdkDashboardTags",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
@@ -306,6 +308,8 @@ export const FlagKeys = {
   GraphiteBackendMode: "graphiteBackendMode",
   /** Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis */
   HeatmapNegativeLogBuckets: "heatmapNegativeLogBuckets",
+  /** Routes read-only user requests in the frontend from /api to the /apis endpoint. Depends on kubernetesUsersReadApi */
+  IamUseKubernetesUsersReadApi: "iam.useKubernetesUsersReadApi",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Adds support for Kubernetes correlations */
@@ -1337,6 +1341,17 @@ export const useFlagGrafanaAnnouncementBannerDismissible = (options?: ReactFlagE
 };
 
 /**
+ * Enable tracking of bootdata property access
+ *
+ * **Details:**
+ * - flag key: `grafana.bootdataAnalytics`
+ * - default value: `false`
+ */
+export const useFlagGrafanaBootdataAnalytics = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.bootdataAnalytics", false, options).value;
+};
+
+/**
  * Shows dashboard tags in the command palette
  *
  * **Details:**
@@ -2038,6 +2053,17 @@ export const useFlagGraphiteBackendMode = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagHeatmapNegativeLogBuckets = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("heatmapNegativeLogBuckets", false, options).value;
+};
+
+/**
+ * Routes read-only user requests in the frontend from /api to the /apis endpoint. Depends on kubernetesUsersReadApi
+ *
+ * **Details:**
+ * - flag key: `iam.useKubernetesUsersReadApi`
+ * - default value: `false`
+ */
+export const useFlagIamUseKubernetesUsersReadApi = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("iam.useKubernetesUsersReadApi", false, options).value;
 };
 
 /**

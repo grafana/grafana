@@ -113,6 +113,7 @@ func NewHelper(t *testing.T) *apis.K8sTestHelper {
 			DisableDBCleanup:   true,
 		},
 		ReuseExistingUsers: true,
+		CustomHTTPClient:   apis.NewIsolatedHTTPClient(t),
 	})
 	t.Cleanup(h.Shutdown)
 	return h

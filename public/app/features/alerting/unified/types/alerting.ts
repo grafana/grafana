@@ -1,42 +1,6 @@
 import { type ValidationRule } from 'react-hook-form';
 
 import { type SelectableValue } from '@grafana/data';
-import { type IconName } from '@grafana/ui';
-
-export interface AlertRuleDTO {
-  id: number;
-  dashboardId: number;
-  dashboardUid: string;
-  dashboardSlug: string;
-  panelId: number;
-  name: string;
-  state: string;
-  newStateDate: string;
-  evalDate: string;
-  evalData?: { noData?: boolean; evalMatches?: any };
-  executionError: string;
-  url: string;
-}
-
-export interface AlertRule {
-  id: number;
-  dashboardId: number;
-  dashboardUid?: string;
-  dashboardSlug?: string;
-  panelId: number;
-  name: string;
-  state: string;
-  newStateDate?: string;
-  stateText: string;
-  stateIcon: IconName;
-  stateClass: string;
-  stateAge: string;
-  url: string;
-  info?: string;
-  executionError?: string;
-  evalDate?: string;
-  evalData?: { noData?: boolean; evalMatches?: any };
-}
 
 export type GrafanaNotifierType =
   | 'discord'
@@ -125,16 +89,6 @@ export interface NotifierDTO<T = NotifierType> {
   deprecated?: boolean;
 }
 
-interface NotificationChannelType {
-  value: string;
-  label: string;
-  description: string;
-  type: NotifierType;
-  heading: string;
-  options: NotificationChannelOption[];
-  info?: string;
-}
-
 export type NotificationChannelSecureFields = Record<string, boolean | ''>;
 
 export interface OptionMeta {
@@ -176,12 +130,6 @@ export interface NotificationChannelOption {
   setValueAs?: (value: string | boolean) => string | number | boolean | null;
 }
 
-export interface NotificationChannelState {
-  notificationChannelTypes: NotificationChannelType[];
-  notifiers: NotifierDTO[];
-  notificationChannel: any;
-}
-
 export interface NotifierStatus {
   lastNotifyAttemptError?: null | string;
   lastNotifyAttempt: string;
@@ -213,9 +161,4 @@ export interface ReceiversStateDTO {
   active: boolean;
   integrations: NotifierStatus[];
   name: string;
-}
-export interface AlertRulesState {
-  items: AlertRule[];
-  searchQuery: string;
-  isLoading: boolean;
 }

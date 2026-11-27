@@ -379,6 +379,10 @@ const (
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
 
+	// FlagAuthzLegacyUserPermissionsSearch
+	// Route user permission searches through embedded AuthZ.
+	FlagAuthzLegacyUserPermissionsSearch = "authz.legacyUserPermissionsSearch"
+
 	// FlagAuthzLegacyUserPermissionsShadow
 	// Compare local permissions with embedded AuthZ in the background when authz.legacyUserPermissions is enabled.
 	FlagAuthzLegacyUserPermissionsShadow = "authz.legacyUserPermissionsShadow"
@@ -762,6 +766,10 @@ const (
 	// Redirects the request of the team endpoints to the app platform APIs
 	FlagKubernetesTeamsRedirect = "kubernetesTeamsRedirect"
 
+	// FlagResourcePermissionsBulkUserValidation
+	// Resolves and validates users in bulk when setting permissions for many users at once, such as SCIM team membership sync
+	FlagResourcePermissionsBulkUserValidation = "resourcePermissionsBulkUserValidation"
+
 	// FlagResourcePermissionsBulkUserWrites
 	// Writes managed permissions and team memberships for many users in bulk instead of one user at a time, such as for SCIM team membership sync
 	FlagResourcePermissionsBulkUserWrites = "resourcePermissionsBulkUserWrites"
@@ -1069,4 +1077,8 @@ const (
 	// FlagDatasourcesGatewayQueryUsage
 	// Record billed query usage (Mimir samples read, Loki bytes processed) in query gateway audit events
 	FlagDatasourcesGatewayQueryUsage = "datasources.gatewayQueryUsage"
+
+	// FlagGrafanaBootdataAnalytics
+	// Enable tracking of bootdata property access
+	FlagGrafanaBootdataAnalytics = "grafana.bootdataAnalytics"
 )

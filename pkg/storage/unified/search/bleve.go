@@ -738,7 +738,9 @@ const indexMetricsRefreshInterval = 60 * time.Second
 func (b *bleveBackend) updateIndexMetricsPeriodically(ctx context.Context, indexPath string) {
 	defer b.bgTasksWg.Done()
 
+	mergeSampler := bleveMergeSampler{limiter: &processBleveMergeLogLimiter}
 	for ctx.Err() == nil {
+		mergeSampler.sample(b, bleveMergeLogMinElapsed)
 		b.updateMemoryIndexSizeMetrics(ctx)
 		b.updateIndexSizeMetric(ctx, indexPath)
 		b.updateIndexedKindsMetric(ctx)
@@ -1936,11 +1938,6 @@ func (b *bleveBackend) closeAllIndexes() {
 	}
 }
 
-type updateRequest struct {
-	requestTime time.Time
-	callback    chan updateResult
-}
-
 type updateResult struct {
 	rv  int64
 	err error
@@ -1997,10 +1994,10 @@ type bleveIndex struct {
 	rvPersistedAt     time.Time
 
 	updaterMu       sync.Mutex
-	updaterCond     *sync.Cond         // Used to signal the updater goroutine that there is work to do, or updater is no longer enabled and should stop. Also used by updater itself to stop early if there's no work to be done.
-	updaterShutdown bool               // When set to true, index is getting closed and updater is no longer going to update index.
-	updaterQueue    []updateRequest    // Queue of requests for next updater iteration.
-	updaterCancel   context.CancelFunc // If not nil, the updater goroutine is running with context associated with this cancel function.
+	updaterCond     *sync.Cond                      // Used to signal the updater goroutine that there is work to do, or updater is no longer enabled and should stop. Also used by updater itself to stop early if there's no work to be done.
+	updaterShutdown bool                            // When set to true, index is getting closed and updater is no longer going to update index.
+	updaterQueue    map[chan updateResult]time.Time // Pending callers keyed by their result channel for cancellation.
+	updaterCancel   context.CancelFunc              // If not nil, the updater goroutine is running with context associated with this cancel function.
 	updaterWg       sync.WaitGroup
 
 	indexMetrics     *resource.BleveIndexMetrics
@@ -3992,7 +3989,6 @@ func (b *bleveIndex) stopUpdaterAndCloseIndex() error {
 	b.updaterMu.Lock()
 	b.updaterShutdown = true
 	b.updaterCond.Broadcast()
-	// if updater is running, cancel it. (Setting to nil is only done from updater itself in defer.)
 	if b.updaterCancel != nil {
 		b.updaterCancel()
 	}
@@ -4009,8 +4005,7 @@ func (b *bleveIndex) UpdateIndex(ctx context.Context) (int64, error) {
 		return 0, nil
 	}
 
-	// Use chan with buffer size 1 to ensure that we can always send the result back, even if there's no reader anymore.
-	req := updateRequest{requestTime: time.Now(), callback: make(chan updateResult, 1)}
+	requestedAt := time.Now()
 
 	// Make sure that the updater goroutine is running.
 	b.updaterMu.Lock()
@@ -4019,7 +4014,17 @@ func (b *bleveIndex) UpdateIndex(ctx context.Context) (int64, error) {
 		return 0, fmt.Errorf("cannot update index: %w", bleve.ErrorIndexClosed)
 	}
 
-	b.updaterQueue = append(b.updaterQueue, req)
+	if err := ctx.Err(); err != nil {
+		b.updaterMu.Unlock()
+		return 0, err
+	}
+
+	// The updater may already have taken this batch when the caller cancels.
+	result := make(chan updateResult, 1)
+	if b.updaterQueue == nil {
+		b.updaterQueue = make(map[chan updateResult]time.Time)
+	}
+	b.updaterQueue[result] = requestedAt
 
 	// If updater is not running, start it.
 	if b.updaterCancel == nil {
@@ -4031,8 +4036,14 @@ func (b *bleveIndex) UpdateIndex(ctx context.Context) (int64, error) {
 	// wait for the update to finish
 	select {
 	case <-ctx.Done():
+		b.updaterMu.Lock()
+		delete(b.updaterQueue, result)
+		if len(b.updaterQueue) == 0 {
+			b.updaterQueue = nil
+		}
+		b.updaterMu.Unlock()
 		return 0, ctx.Err()
-	case ur := <-req.callback:
+	case ur := <-result:
 		return ur.rv, ur.err
 	}
 }
@@ -4041,21 +4052,10 @@ func (b *bleveIndex) UpdateIndex(ctx context.Context) (int64, error) {
 func (b *bleveIndex) startUpdater() {
 	c, cancel := context.WithCancel(context.Background())
 	b.updaterCancel = cancel
-	b.updaterWg.Add(1)
-
-	go func() {
-		defer func() {
-			cancel() // Make sure to call this to release resources.
-
-			b.updaterMu.Lock()
-			b.updaterCancel = nil
-			b.updaterMu.Unlock()
-
-			b.updaterWg.Done()
-		}()
-
+	b.updaterWg.Go(func() {
+		defer cancel()
 		b.runUpdater(c)
-	}()
+	})
 }
 
 const maxWait = 5 * time.Second
@@ -4073,7 +4073,11 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 
 		shutdown := b.updaterShutdown
 		batch := b.updaterQueue
-		b.updaterQueue = nil // empty the queue for the next batch
+		b.updaterQueue = nil
+		if shutdown || len(batch) == 0 {
+			// A caller queuing after we decide to exit must start a new updater.
+			b.updaterCancel = nil
+		}
 		b.updaterMu.Unlock()
 
 		t.Stop()
@@ -4084,25 +4088,21 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 		}
 
 		if shutdown {
-			for _, req := range batch {
-				req.callback <- updateResult{err: fmt.Errorf("cannot update index: %w", bleve.ErrorIndexClosed)}
+			for result := range batch {
+				result <- updateResult{err: fmt.Errorf("cannot update index: %w", bleve.ErrorIndexClosed)}
 			}
 			return
 		}
 
-		// Check if requests arrived before minUpdateInterval since the last update has elapsed, and remove such requests.
-		for ix := 0; ix < len(batch); {
-			req := batch[ix]
-			if req.requestTime.Before(b.nextUpdateTime) {
+		// Reuse the last result, including errors, for requests that arrived within minUpdateInterval of the last update's start.
+		for result, requestedAt := range batch {
+			if requestedAt.Before(b.nextUpdateTime) {
 				if b.lastUpdateErr != nil {
-					req.callback <- updateResult{err: b.lastUpdateErr}
+					result <- updateResult{err: b.lastUpdateErr}
 				} else {
-					req.callback <- updateResult{rv: b.resourceVersion.Load()}
+					result <- updateResult{rv: b.resourceVersion.Load()}
 				}
-				batch = append(batch[:ix], batch[ix+1:]...)
-			} else {
-				// Keep in the batch
-				ix++
+				delete(batch, result)
 			}
 		}
 
@@ -4119,8 +4119,8 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 			b.nextUpdateTime = started.Add(b.minUpdateInterval)
 			b.lastUpdateErr = err
 		}
-		for _, req := range batch {
-			req.callback <- updateResult{rv: rv, err: err}
+		for result := range batch {
+			result <- updateResult{rv: rv, err: err}
 		}
 	}
 }

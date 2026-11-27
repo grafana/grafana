@@ -93,12 +93,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardPreferencesMergedSpec{}.OpenAPIModelName():                                                                                 schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesMergedSpec(ref),
 		DashboardPreferencesPanelDefaults{}.OpenAPIModelName():                                                                              schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesPanelDefaults(ref),
 		DashboardPreferencesSpec{}.OpenAPIModelName():                                                                                       schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesSpec(ref),
-		DashboardPreferencesV2beta1DashboardDefaultsAutoGrid{}.OpenAPIModelName():                                                           schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1DashboardDefaultsAutoGrid(ref),
 		DashboardPreferencesV2beta1DashboardDefaultsTimeRange{}.OpenAPIModelName():                                                          schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1DashboardDefaultsTimeRange(ref),
-		DashboardPreferencesV2beta1PanelDefaultsAxis{}.OpenAPIModelName():                                                                   schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1PanelDefaultsAxis(ref),
 		DashboardPreferencesV2beta1PanelDefaultsField{}.OpenAPIModelName():                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1PanelDefaultsField(ref),
-		DashboardPreferencesV2beta1PanelDefaultsFrame{}.OpenAPIModelName():                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1PanelDefaultsFrame(ref),
-		DashboardPreferencesV2beta1PanelDefaultsGraph{}.OpenAPIModelName():                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1PanelDefaultsGraph(ref),
 		DashboardPreferencesV2beta1PanelDefaultsLegend{}.OpenAPIModelName():                                                                 schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1PanelDefaultsLegend(ref),
 		DashboardPreferencesV2beta1PanelDefaultsTooltip{}.OpenAPIModelName():                                                                schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1PanelDefaultsTooltip(ref),
 		DashboardPrompt{}.OpenAPIModelName():                                                                                                schema_pkg_apis_dashboard_v2beta1_DashboardPrompt(ref),
@@ -3597,25 +3593,6 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesDashboardDefaults(ref
 							Ref: ref(DashboardPreferencesV2beta1DashboardDefaultsTimeRange{}.OpenAPIModelName()),
 						},
 					},
-					"fiscalYearStartMonth": {
-						SchemaProps: spec.SchemaProps{
-							Description: "0 is January.",
-							Type:        []string{"integer"},
-							Format:      "int64",
-						},
-					},
-					"nowDelay": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"hideTimepicker": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
 					"cursorSync": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Same values as the dashboard's cursorSync.",
@@ -3623,23 +3600,11 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesDashboardDefaults(ref
 							Format:      "",
 						},
 					},
-					"layout": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"autoGrid": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Applies only when the merged layout is AutoGridLayout.",
-							Ref:         ref(DashboardPreferencesV2beta1DashboardDefaultsAutoGrid{}.OpenAPIModelName()),
-						},
-					},
 				},
 			},
 		},
 		Dependencies: []string{
-			DashboardPreferencesV2beta1DashboardDefaultsAutoGrid{}.OpenAPIModelName(), DashboardPreferencesV2beta1DashboardDefaultsTimeRange{}.OpenAPIModelName()},
+			DashboardPreferencesV2beta1DashboardDefaultsTimeRange{}.OpenAPIModelName()},
 	}
 }
 
@@ -3731,7 +3696,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesMerged(ref common.Ref
 					},
 					"sources": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Where each field came from, keyed by its path as in spec.reset, such as \"dashboard.autoGrid.columnWidth\". A field with no entry uses Grafana's built-in default.",
+							Description: "Where each field came from, keyed by its path as in spec.reset, such as \"panels.legend.placement\". A field with no entry uses Grafana's built-in default.",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
@@ -3830,32 +3795,16 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesPanelDefaults(ref com
 							Ref: ref(DashboardPreferencesV2beta1PanelDefaultsTooltip{}.OpenAPIModelName()),
 						},
 					},
-					"axis": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(DashboardPreferencesV2beta1PanelDefaultsAxis{}.OpenAPIModelName()),
-						},
-					},
-					"graph": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Time series, trend and candlestick only.",
-							Ref:         ref(DashboardPreferencesV2beta1PanelDefaultsGraph{}.OpenAPIModelName()),
-						},
-					},
 					"field": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref(DashboardPreferencesV2beta1PanelDefaultsField{}.OpenAPIModelName()),
-						},
-					},
-					"frame": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(DashboardPreferencesV2beta1PanelDefaultsFrame{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			DashboardPreferencesV2beta1PanelDefaultsAxis{}.OpenAPIModelName(), DashboardPreferencesV2beta1PanelDefaultsField{}.OpenAPIModelName(), DashboardPreferencesV2beta1PanelDefaultsFrame{}.OpenAPIModelName(), DashboardPreferencesV2beta1PanelDefaultsGraph{}.OpenAPIModelName(), DashboardPreferencesV2beta1PanelDefaultsLegend{}.OpenAPIModelName(), DashboardPreferencesV2beta1PanelDefaultsTooltip{}.OpenAPIModelName()},
+			DashboardPreferencesV2beta1PanelDefaultsField{}.OpenAPIModelName(), DashboardPreferencesV2beta1PanelDefaultsLegend{}.OpenAPIModelName(), DashboardPreferencesV2beta1PanelDefaultsTooltip{}.OpenAPIModelName()},
 	}
 }
 
@@ -3897,56 +3846,6 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesSpec(ref common.Refer
 	}
 }
 
-func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1DashboardDefaultsAutoGrid(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"maxColumnCount": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
-						},
-					},
-					"columnWidthMode": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"columnWidth": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Pixels; used when columnWidthMode is custom.",
-							Type:        []string{"integer"},
-							Format:      "int64",
-						},
-					},
-					"rowHeightMode": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"rowHeight": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Pixels; used when rowHeightMode is custom.",
-							Type:        []string{"integer"},
-							Format:      "int64",
-						},
-					},
-					"fillScreen": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1DashboardDefaultsTimeRange(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -3974,48 +3873,6 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1DashboardDefau
 	}
 }
 
-func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1PanelDefaultsAxis(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"axisPlacement": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"axisGridShow": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-					"axisBorderShow": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-					"axisCenteredZero": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-					"scale": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1PanelDefaultsField(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -4027,72 +3884,6 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1PanelDefaultsF
 							Description: "Number of decimal places, 0 to 15.",
 							Type:        []string{"integer"},
 							Format:      "int64",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1PanelDefaultsFrame(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"transparent": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1PanelDefaultsGraph(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"lineInterpolation": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"lineWidth": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
-						},
-					},
-					"fillOpacity": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
-						},
-					},
-					"gradientMode": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"showPoints": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"pointSize": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
 						},
 					},
 				},
