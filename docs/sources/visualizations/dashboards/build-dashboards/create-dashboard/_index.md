@@ -23,43 +23,43 @@ description: Create and edit a dashboard
 weight: 1
 image_maps:
   - key: sidebar-toolbar
-    src: /media/docs/grafana/dashboards/screenshot-edit-mode-imagemap-v13.3.png
+    src: /media/docs/grafana/dashboards/screenshot-edit-mode-imagemap-v13.3.2.png
     alt: An annotated image of the sidebar and toolbar
     points:
       - x_coord: 101
-        y_coord: 17
+        y_coord: 18
         content: |
           **Add new element**: Click to open the sidebar with add options. Click again to close. Edit mode only.
       - x_coord: 101
-        y_coord: 23
+        y_coord: 24
         content: |
           **Dashboard options**: Click the icon to open the sidebar and access dashboard options. Click again to close. Edit mode only.
       - x_coord: 101
-        y_coord: 29.5
+        y_coord: 30.5
         content: |
           **Feedback**: Submit feedback on the new editing experience. Edit mode only.
       - x_coord: 101
-        y_coord: 35.5
+        y_coord: 36.5
         content: |
           **Edit as code**: Edit the dashboard JSON. Click again to close. Edit mode only.
       - x_coord: 101
-        y_coord: 43.5
+        y_coord: 44.5
         content: |
           **Export**: Click to display [export](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/#export-dashboards) options.
       - x_coord: 101
-        y_coord: 50
+        y_coord: 51
         content: |
           **Content outline**: Navigate a dashboard using the [Content outline](#navigate-using-the-content-outline).
       - x_coord: 101
-        y_coord: 56
+        y_coord: 57
         content: |
           **Filters overview**: Open the filters overview drawer.
       - x_coord: 101
-        y_coord: 62
+        y_coord: 63.5
         content: |
           **Dashboard insights**: View [dashboard analytics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/assess-dashboard-usage/) including information about users, activity, and query counts.
       - x_coord: 101
-        y_coord: 70
+        y_coord: 73
         content: |
           **Hide**: Click to hide the sidebar and toolbar.
 ---
@@ -216,7 +216,7 @@ Your resizing changes persist until you change them.
 The **Content outline** provides a tree-like structure that shows you all the parts of the dashboard and their relationships to each other, including panels, rows, tabs, and variables.
 The outline also lets you quickly navigate the dashboard and is available in both view and edit modes (note that variables are only included in edit mode).
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-content-outline-v13.3.png" max-width="750px" alt="Dashboard with outline open" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-content-outline-v13.3.2.png" max-width="750px" alt="Dashboard with outline open" >}}
 
 To navigate the dashboard using the outline, follow these steps:
 
@@ -352,7 +352,7 @@ If you try to resize a panel in auto grid layout, a dialog box opens with the fo
 
 If you're working in a tab, the layout type indicator is automatically displayed. To see which layout type is active for a row, hover your cursor over that row to display the indicator.
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-auto-layout-indicators-v13.3.png" max-width="750px" alt="Dashboard showing auto layout indicators" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-auto-layout-indicators-v13.3.2.png" max-width="750px" alt="Dashboard showing auto layout indicators" >}}
 
 For repeated panels, this interaction is available on the last panel in the group.
 
