@@ -283,6 +283,8 @@ type UpdateSecretFn func() error
 type GetDataSourcesQuery struct {
 	OrgID           int64
 	DataSourceLimit int
+	// Offset skips rows; only applied together with DataSourceLimit
+	Offset int
 }
 
 type GetAllDataSourcesQuery struct{}

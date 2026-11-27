@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"runtime"
 	"strconv"
 
@@ -30,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -59,6 +61,26 @@ type QueryAPIBuilder struct {
 	legacyDatasourceLookup service.LegacyDataSourceLookup
 	connections            datasourceV0.DataSourceConnectionProvider
 	reportStatus           func(context.Context, int)
+	datasources            *dataSourcesOptions
+}
+
+// QueryAPIBuilderOption configures an optional part of the builder, so a host that builds it
+// directly keeps compiling when one is added.
+type QueryAPIBuilderOption func(*QueryAPIBuilder)
+
+// dataSourcesOptions are what the datasources listing reads from.
+type dataSourcesOptions struct {
+	legacy        legacyDataSources
+	accessControl accesscontrol.AccessControl
+	mapper        request.NamespaceMapper
+}
+
+// WithDataSourceListing serves the datasources resource, which lists every datasource type, and
+// answers the connections route from the same lister when its provider supports it.
+func WithDataSourceListing(legacy datasources.DataSourceService, ac accesscontrol.AccessControl, mapper request.NamespaceMapper) QueryAPIBuilderOption {
+	return func(b *QueryAPIBuilder) {
+		b.datasources = &dataSourcesOptions{legacy: legacy, accessControl: ac, mapper: mapper}
+	}
 }
 
 func NewQueryAPIBuilder(
@@ -72,6 +94,7 @@ func NewQueryAPIBuilder(
 	connections datasourceV0.DataSourceConnectionProvider,
 	concurrentQueryLimit int,
 	reportStatus func(context.Context, int),
+	opts ...QueryAPIBuilderOption,
 ) (*QueryAPIBuilder, error) {
 	// Include well typed query definitions
 	var queryTypes *datasourceV0.QueryTypeDefinitionList
@@ -89,7 +112,7 @@ func NewQueryAPIBuilder(
 		}
 	}
 
-	return &QueryAPIBuilder{
+	b := &QueryAPIBuilder{
 		concurrentQueryLimit: concurrentQueryLimit,
 		log:                  log.New("query_apiserver"),
 		instanceProvider:     instanceProvider,
@@ -106,7 +129,11 @@ func NewQueryAPIBuilder(
 		},
 		legacyDatasourceLookup: legacyDatasourceLookup,
 		reportStatus:           reportStatus,
-	}, nil
+	}
+	for _, opt := range opts {
+		opt(b)
+	}
+	return b, nil
 }
 
 func RegisterAPIService(
@@ -155,6 +182,7 @@ func RegisterAPIService(
 		}).Inc()
 	}
 
+	connections := &listedConnections{fallback: dataSourcesService}
 	builder, err := NewQueryAPIBuilder(
 		features,
 		client.NewSingleTenantInstanceProvider(cfg, features, pluginClient, pCtxProvider, accessControl),
@@ -163,9 +191,10 @@ func RegisterAPIService(
 		registerer,
 		tracer,
 		legacyDatasourceLookup,
-		dataSourcesService, // datasourceV0.DataSourceConnectionProvider
+		connections,
 		cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
 		reportStatus,
+		WithDataSourceListing(dataSourcesService, accessControl, request.GetNamespaceMapper(cfg)),
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, err
@@ -189,9 +218,24 @@ func addKnownTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
 	)
 }
 
+// addDataSourceTypes registers the stored datasource, which the collection is decoded into, and
+// the metadata-only form the datasources resource serves.
+func addDataSourceTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
+	scheme.AddKnownTypes(gv,
+		&datasourceV0.DataSource{},
+		&datasourceV0.DataSourceList{},
+	)
+	scheme.AddKnownTypeWithName(gv.WithKind(dataSourceMetadataKind), &dataSourceMetadata{})
+	scheme.AddKnownTypeWithName(gv.WithKind(dataSourceMetadataListKind), &dataSourceMetadataList{})
+}
+
 func (b *QueryAPIBuilder) InstallSchema(scheme *apiruntime.Scheme) error {
 	gv := b.GetGroupVersion()
 	addKnownTypes(scheme, gv)
+
+	// The datasources listing, with the internal version its registry store needs
+	addDataSourceTypes(scheme, gv)
+	addDataSourceTypes(scheme, schema.GroupVersion{Group: gv.Group, Version: apiruntime.APIVersionInternal})
 	metav1.AddToGroupVersion(scheme, gv)
 	return scheme.SetVersionPriority(gv)
 }
@@ -200,7 +244,7 @@ func (b *QueryAPIBuilder) AllowedV0Alpha1Resources() []string {
 	return []string{builder.AllResourcesAllowed}
 }
 
-func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ builder.APIGroupOptions) error {
+func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	gv := datasourceV0.SchemeGroupVersion
 
 	storage := map[string]rest.Storage{}
@@ -208,6 +252,14 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 	// k8s needs a real storage registered -- we add this, but hide it for now
 	// because connections and queries are handled directly
 	storage["noop"] = &noopREST{}
+
+	if b.datasources != nil && opts.StorageStatus != nil {
+		store, err := b.newDataSourcesStore(opts)
+		if err != nil {
+			return err
+		}
+		storage[store.resourceInfo.StoragePath()] = store
+	}
 
 	// Register the expressions query schemas
 	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)
@@ -217,7 +269,11 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 }
 
 func (b *QueryAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return datasourceV0.GetOpenAPIDefinitions
+	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+		defs := datasourceV0.GetOpenAPIDefinitions(ref)
+		maps.Copy(defs, dataSourceMetadataDefinitions(ref))
+		return defs
+	}
 }
 
 func (b *QueryAPIBuilder) GetAuthorizer() authorizer.Authorizer {

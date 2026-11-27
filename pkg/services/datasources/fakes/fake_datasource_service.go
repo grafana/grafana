@@ -61,6 +61,15 @@ func (s *FakeDataSourceService) GetDataSources(ctx context.Context, query *datas
 			dataSources = append(dataSources, datasource)
 		}
 	}
+	if query.DataSourceLimit > 0 {
+		if query.Offset >= len(dataSources) {
+			return nil, nil
+		}
+		dataSources = dataSources[query.Offset:]
+		if len(dataSources) > query.DataSourceLimit {
+			dataSources = dataSources[:query.DataSourceLimit]
+		}
+	}
 	return dataSources, nil
 }
 

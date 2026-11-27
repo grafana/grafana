@@ -38,6 +38,10 @@ type SharedStorage struct {
 	// another name, for example each app plugin's "instance" settings are
 	// stored under the plugin ID.
 	Name *SharedName
+
+	// Unfiltered serves every object in the collection and keeps the label that tells the
+	// groups apart, so it is meant for reads. Exclusive with LabelKey and Name.
+	Unfiltered bool
 }
 
 // SharedName maps the only name a served group accepts onto its name in the shared collection
@@ -56,7 +60,10 @@ func (s *SharedStorage) validate() error {
 	if s.Name != nil && (s.Name.Served == "" || s.Name.Stored == "") {
 		return fmt.Errorf("served and stored names are required")
 	}
-	if s.LabelKey == "" && s.Name == nil {
+	if s.Unfiltered && (s.LabelKey != "" || s.Name != nil) {
+		return fmt.Errorf("unfiltered cannot be combined with a label or a name")
+	}
+	if s.LabelKey == "" && s.Name == nil && !s.Unfiltered {
 		return fmt.Errorf("a label or a name is required to separate groups")
 	}
 	return nil

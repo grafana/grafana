@@ -23,6 +23,7 @@ import (
 	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
@@ -117,6 +118,10 @@ type APIGroupOptions struct {
 	MetricsRegister     prometheus.Registerer
 	StorageOptsRegister apistore.StorageOptionsRegister
 	StorageOpts         *options.StorageOptions
+
+	// StorageStatus reports where each resource currently reads from. A builder that serves a
+	// view across API groups uses it to follow the mode every group runs in.
+	StorageStatus dualwrite.Service
 }
 
 // StorageOptsGetter returns a RESTOptionsGetter that builds the next store with

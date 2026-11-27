@@ -12,6 +12,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -56,6 +57,9 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"datasources.grafana-testdata-datasource.datasource.grafana.app": {
+				DualWriterMode: grafanarest.Mode3,
+			},
+			setting.DataSourceResources: {
 				DualWriterMode: grafanarest.Mode3,
 			},
 		},
@@ -219,6 +223,111 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Len(t, list.Items, 1)
+	})
+
+	// One resource lists every datasource type, with the metadata only the collection can hold
+	t.Run("common listing across types", func(t *testing.T) {
+		storage := helper.GetEnv().ResourceClient
+		svcCtx, _ := identity.WithServiceIdentity(ctx, helper.Org1.OrgID)
+		key := &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     datasourceV0alpha1.GROUP,
+			Resource:  "datasources",
+			Name:      "test",
+		}
+
+		// Record a manager on the stored copy, the way Git Sync does
+		rsp, err := storage.Read(svcCtx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		stored := &unstructured.Unstructured{}
+		require.NoError(t, stored.UnmarshalJSON(rsp.Value))
+		stored.SetAnnotations(map[string]string{
+			utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+			utils.AnnoKeyManagerIdentity: "my-repo",
+		})
+		value, err := stored.MarshalJSON()
+		require.NoError(t, err)
+		_, err = storage.Update(svcCtx, &resourcepb.UpdateRequest{Key: key, ResourceVersion: rsp.ResourceVersion, Value: value})
+		require.NoError(t, err)
+
+		all := helper.Org1.Admin.ResourceClient(t, schema.GroupVersionResource{
+			Group:    datasourceV0alpha1.GROUP,
+			Version:  datasourceV0alpha1.VERSION,
+			Resource: "datasources",
+		}).Namespace("default")
+
+		list, err := all.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		item := list.Items[0]
+		require.Equal(t, "test", item.GetName())
+		require.Equal(t, "grafana-testdata-datasource", item.GetLabels()[datasourceV0alpha1.LabelKeyGroup])
+		require.Equal(t, "my-repo", item.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+
+		t.Run("points at the serving group and leaves out the spec and secure values", func(t *testing.T) {
+			require.Equal(t, expectedAPIVersion, item.GetAPIVersion())
+			require.Equal(t, "DataSource", item.GetKind())
+
+			rsp := apis.DoRequest(helper, apis.RequestParams{
+				User: helper.Org1.Admin,
+				Path: "/apis/datasource.grafana.app/v0alpha1/namespaces/default/datasources",
+			}, &json.RawMessage{})
+			require.Equal(t, http.StatusOK, rsp.Response.StatusCode, string(rsp.Body))
+			require.NotContains(t, string(rsp.Body), `"spec"`)
+			require.NotContains(t, string(rsp.Body), `"secure"`)
+		})
+
+		t.Run("selects by group label", func(t *testing.T) {
+			list, err := all.List(ctx, metav1.ListOptions{LabelSelector: datasourceV0alpha1.LabelKeyGroup + "=grafana-testdata-datasource"})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 1)
+
+			list, err = all.List(ctx, metav1.ListOptions{LabelSelector: datasourceV0alpha1.LabelKeyGroup + "=prometheus"})
+			require.NoError(t, err)
+			require.Empty(t, list.Items)
+		})
+
+		t.Run("a single datasource is read through its own group", func(t *testing.T) {
+			_, err := all.Get(ctx, "test", metav1.GetOptions{})
+			require.True(t, apierrors.IsNotFound(err), "got %v", err)
+		})
+
+		t.Run("returns only the metadata when asked", func(t *testing.T) {
+			rsp := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Path:   "/apis/datasource.grafana.app/v0alpha1/namespaces/default/datasources",
+				Accept: "application/json;as=PartialObjectMetadataList;g=meta.k8s.io;v=v1",
+			}, &metav1.PartialObjectMetadataList{})
+			require.Equal(t, http.StatusOK, rsp.Response.StatusCode, string(rsp.Body))
+			require.Equal(t, "PartialObjectMetadataList", rsp.Result.Kind, string(rsp.Body))
+			require.Len(t, rsp.Result.Items, 1)
+			require.Equal(t, "my-repo", rsp.Result.Items[0].Annotations[utils.AnnoKeyManagerIdentity])
+			require.NotContains(t, string(rsp.Body), `"spec"`)
+		})
+
+		t.Run("is read only", func(t *testing.T) {
+			_, err := all.Create(ctx, &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "datasource.grafana.app/v0alpha1",
+				"kind":       "DataSourceMetadata",
+				"metadata":   map[string]any{"name": "new"},
+			}}, metav1.CreateOptions{})
+			require.True(t, apierrors.IsMethodNotSupported(err), "got %v", err)
+
+			// Without a single-object endpoint there is nothing to delete or update by name
+			err = all.Delete(ctx, "test", metav1.DeleteOptions{})
+			require.True(t, apierrors.IsNotFound(err), "got %v", err)
+		})
+
+		t.Run("hides what the user cannot read", func(t *testing.T) {
+			nobody := helper.CreateUser("no-datasources", apis.Org1, org.RoleNone, nil)
+			list, err := nobody.ResourceClient(t, schema.GroupVersionResource{
+				Group:    datasourceV0alpha1.GROUP,
+				Version:  datasourceV0alpha1.VERSION,
+				Resource: "datasources",
+			}).Namespace("default").List(ctx, metav1.ListOptions{})
+			require.NoError(t, err)
+			require.Empty(t, list.Items)
+		})
 	})
 
 	t.Run("list", func(t *testing.T) {
