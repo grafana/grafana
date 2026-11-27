@@ -2129,6 +2129,10 @@
           "mode"
         ],
         "properties": {
+          "assignment": {
+            "description": "How a categorical palette assigns its colors. Defaults to the palette's own assignment.",
+            "type": "string"
+          },
           "fixedColor": {
             "description": "The fixed color value for fixed or shades color modes.",
             "type": "string"
@@ -2141,6 +2145,10 @@
             "description": "The main color scheme mode.",
             "type": "string",
             "default": ""
+          },
+          "reverse": {
+            "description": "Reverse the order of the colors in a by value color scheme.",
+            "type": "boolean"
           },
           "seriesBy": {
             "description": "Some visualizations need to know how to assign a series color from by value color schemes.",

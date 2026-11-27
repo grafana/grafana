@@ -2706,10 +2706,26 @@ func buildFieldColor(colorMap map[string]interface{}) *dashv2alpha1.DashboardFie
 		fieldColor.FixedColor = &fixedColor
 	}
 
+	// gradientColorTo (optional)
+	if gradientColorTo, ok := colorMap["gradientColorTo"].(string); ok {
+		fieldColor.GradientColorTo = &gradientColorTo
+	}
+
 	// seriesBy (optional)
 	if seriesBy, ok := colorMap["seriesBy"].(string); ok {
 		sb := dashv2alpha1.DashboardFieldColorSeriesByMode(seriesBy)
 		fieldColor.SeriesBy = &sb
+	}
+
+	// reverse (optional)
+	if reverse, ok := colorMap["reverse"].(bool); ok {
+		fieldColor.Reverse = &reverse
+	}
+
+	// assignment (optional)
+	if assignment, ok := colorMap["assignment"].(string); ok {
+		a := dashv2alpha1.DashboardFieldColorAssignment(assignment)
+		fieldColor.Assignment = &a
 	}
 
 	return &fieldColor

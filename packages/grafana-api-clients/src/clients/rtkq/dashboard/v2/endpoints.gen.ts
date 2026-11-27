@@ -482,12 +482,16 @@ export type DashboardAction = {
   variables?: DashboardActionVariable[];
 };
 export type DashboardFieldColor = {
+  /** How a categorical palette assigns its colors. Defaults to the palette's own assignment. */
+  assignment?: string;
   /** The fixed color value for fixed or shades color modes. */
   fixedColor?: string;
   /** The end color for the gradient color mode (smallest value). Only used when mode is gradient. */
   gradientColorTo?: string;
   /** The main color scheme mode. */
   mode: string;
+  /** Reverse the order of the colors in a by value color scheme. */
+  reverse?: boolean;
   /** Some visualizations need to know how to assign a series color from by value color schemes. */
   seriesBy?: string;
 };

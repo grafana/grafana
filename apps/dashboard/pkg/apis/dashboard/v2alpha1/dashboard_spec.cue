@@ -416,6 +416,10 @@ FieldColorModeId: "thresholds" | "palette-classic" | "palette-classic-by-name" |
 // Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
 FieldColorSeriesByMode: "min" | "max" | "last"
 
+// How a categorical palette picks a color: by the position of the series (seriesIndex),
+// by hashing the series name (seriesName), or by hashing each value (value).
+FieldColorAssignment: "seriesIndex" | "seriesName" | "value"
+
 // Map a field to a color.
 FieldColor: {
 	// The main color scheme mode.
@@ -426,6 +430,10 @@ FieldColor: {
 	gradientColorTo?: string
 	// Some visualizations need to know how to assign a series color from by value color schemes.
 	seriesBy?: FieldColorSeriesByMode
+	// Reverse the order of the colors in a by value color scheme.
+	reverse?: bool
+	// How a categorical palette assigns its colors. Defaults to the palette's own assignment.
+	assignment?: FieldColorAssignment
 }
 
 // Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)

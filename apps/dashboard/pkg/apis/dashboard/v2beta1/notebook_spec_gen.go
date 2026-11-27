@@ -870,6 +870,10 @@ type NotebookFieldColor struct {
 	GradientColorTo *string `json:"gradientColorTo,omitempty"`
 	// Some visualizations need to know how to assign a series color from by value color schemes.
 	SeriesBy *NotebookFieldColorSeriesByMode `json:"seriesBy,omitempty"`
+	// Reverse the order of the colors in a by value color scheme.
+	Reverse *bool `json:"reverse,omitempty"`
+	// How a categorical palette assigns its colors. Defaults to the palette's own assignment.
+	Assignment *NotebookFieldColorAssignment `json:"assignment,omitempty"`
 }
 
 // NewNotebookFieldColor creates a new NotebookFieldColor object.
@@ -959,6 +963,22 @@ const (
 // OpenAPIModelName returns the OpenAPI model name for NotebookFieldColorSeriesByMode.
 func (NotebookFieldColorSeriesByMode) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookFieldColorSeriesByMode"
+}
+
+// How a categorical palette picks a color: by the position of the series (seriesIndex),
+// by hashing the series name (seriesName), or by hashing each value (value).
+// +k8s:openapi-gen=true
+type NotebookFieldColorAssignment string
+
+const (
+	NotebookFieldColorAssignmentSeriesIndex NotebookFieldColorAssignment = "seriesIndex"
+	NotebookFieldColorAssignmentSeriesName  NotebookFieldColorAssignment = "seriesName"
+	NotebookFieldColorAssignmentValue       NotebookFieldColorAssignment = "value"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for NotebookFieldColorAssignment.
+func (NotebookFieldColorAssignment) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookFieldColorAssignment"
 }
 
 // +k8s:openapi-gen=true

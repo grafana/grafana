@@ -561,6 +561,10 @@ export interface FieldColor {
 	gradientColorTo?: string;
 	// Some visualizations need to know how to assign a series color from by value color schemes.
 	seriesBy?: FieldColorSeriesByMode;
+	// Reverse the order of the colors in a by value color scheme.
+	reverse?: boolean;
+	// How a categorical palette assigns its colors. Defaults to the palette's own assignment.
+	assignment?: FieldColorAssignment;
 }
 
 export const defaultFieldColor = (): FieldColor => ({
@@ -607,6 +611,14 @@ export const defaultFieldColorModeId = (): FieldColorModeId => ("thresholds");
 export type FieldColorSeriesByMode = "min" | "max" | "last";
 
 export const defaultFieldColorSeriesByMode = (): FieldColorSeriesByMode => ("min");
+
+/**
+ * How a categorical palette picks a color: by the position of the series (seriesIndex),
+ * by hashing the series name (seriesName), or by hashing each value (value).
+ */
+export type FieldColorAssignment = "seriesIndex" | "seriesName" | "value";
+
+export const defaultFieldColorAssignment = (): FieldColorAssignment => ("seriesIndex");
 
 export interface Action {
 	type: ActionType;
