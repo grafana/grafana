@@ -112,6 +112,16 @@ describe('ActionRow drafts filter', () => {
       expect(screen.queryByRole('checkbox', { name: 'Drafts' })).not.toBeInTheDocument();
     });
 
+    it('leaves the drafts filter alone when the control turns draft mode off with no filter active', async () => {
+      registerToggleableDraftMode(true);
+      const { onDraftsOnlyChange } = renderActionRow({ draftsOnly: false });
+
+      await userEvent.click(screen.getByRole('button', { name: 'Draft settings' }));
+
+      expect(onDraftsOnlyChange).not.toHaveBeenCalled();
+      expect(screen.queryByRole('checkbox', { name: 'Drafts' })).not.toBeInTheDocument();
+    });
+
     it('clears a drafts filter turned on after the first render', async () => {
       registerToggleableDraftMode(true);
       const { onDraftsOnlyChange, setDraftsOnly } = renderActionRow({ draftsOnly: false });
