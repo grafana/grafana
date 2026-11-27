@@ -1559,9 +1559,7 @@
           "resource",
           "folderScoped",
           "icon",
-          "route",
-          "label",
-          "labelPlural"
+          "route"
         ],
         "properties": {
           "folderScoped": {
@@ -1577,17 +1575,11 @@
             "type": "string"
           },
           "label": {
-            "description": "English labels, as the name reads inside a sentence",
-            "type": "string"
-          },
-          "labelKey": {
-            "description": "Keys of the labels in the plugin's own translations",
+            "description": "English name as it reads inside a sentence. Without one, Grafana uses the kind in lower case",
             "type": "string"
           },
           "labelPlural": {
-            "type": "string"
-          },
-          "labelPluralKey": {
+            "description": "Plural of the label. Without one, Grafana uses the resource",
             "type": "string"
           },
           "resource": {

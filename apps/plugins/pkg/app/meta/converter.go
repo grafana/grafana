@@ -551,14 +551,12 @@ func kindsToMeta(kinds []plugins.AppKind) []pluginsv0alpha1.MetaAppKind {
 			FolderScoped: kind.FolderScoped,
 			Icon:         kind.Icon,
 			Route:        kind.Route,
-			Label:        kind.Label,
-			LabelPlural:  kind.LabelPlural,
 		}
-		if kind.LabelKey != "" {
-			v0Kind.LabelKey = &kind.LabelKey
+		if kind.Label != "" {
+			v0Kind.Label = &kind.Label
 		}
-		if kind.LabelPluralKey != "" {
-			v0Kind.LabelPluralKey = &kind.LabelPluralKey
+		if kind.LabelPlural != "" {
+			v0Kind.LabelPlural = &kind.LabelPlural
 		}
 		metaKinds = append(metaKinds, v0Kind)
 	}

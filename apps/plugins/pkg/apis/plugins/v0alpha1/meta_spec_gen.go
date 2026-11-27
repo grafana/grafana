@@ -277,12 +277,10 @@ type MetaAppKind struct {
 	Icon         string `json:"icon"`
 	// Path of the page of one object, in which {name} stands for the object's name
 	Route string `json:"route"`
-	// English labels, as the name reads inside a sentence
-	Label       string `json:"label"`
-	LabelPlural string `json:"labelPlural"`
-	// Keys of the labels in the plugin's own translations
-	LabelKey       *string `json:"labelKey,omitempty"`
-	LabelPluralKey *string `json:"labelPluralKey,omitempty"`
+	// English name as it reads inside a sentence. Without one, Grafana uses the kind in lower case
+	Label *string `json:"label,omitempty"`
+	// Plural of the label. Without one, Grafana uses the resource
+	LabelPlural *string `json:"labelPlural,omitempty"`
 }
 
 // NewMetaAppKind creates a new MetaAppKind object.

@@ -29,7 +29,7 @@ describe('v0alpha1AppMapper', () => {
     });
   });
 
-  it("keeps the kinds an app declares and the paths of the app's translations", () => {
+  it('keeps the kinds an app declares', () => {
     const kind = {
       group: 'widgets.ext.grafana.app',
       kind: 'Widget',
@@ -39,14 +39,12 @@ describe('v0alpha1AppMapper', () => {
       route: '/a/myorg-someplugin-app/widgets/{name}',
       label: 'widget',
       labelPlural: 'widgets',
-      labelKey: 'kinds.widget',
     };
     const meta = {
       ...myOrgTestAppMeta,
       spec: {
         ...myOrgTestAppMeta.spec,
         pluginJson: { ...myOrgTestAppMeta.spec.pluginJson, kinds: [kind] },
-        translations: { 'pt-BR': 'public/plugins/myorg-someplugin-app/locales/pt-BR/myorg-someplugin-app.json' },
       },
     };
 
@@ -62,12 +60,8 @@ describe('v0alpha1AppMapper', () => {
         route: '/a/myorg-someplugin-app/widgets/{name}',
         label: 'widget',
         labelPlural: 'widgets',
-        labelKey: 'kinds.widget',
       },
     ]);
-    expect(result[meta.spec.pluginJson.id].translations).toEqual({
-      'pt-BR': 'public/plugins/myorg-someplugin-app/locales/pt-BR/myorg-someplugin-app.json',
-    });
   });
 
   describe.each(PLUGIN_IDS)('when called for pluginId:$pluginId', ({ pluginId }) => {

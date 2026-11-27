@@ -302,12 +302,10 @@ export interface AppKind {
 	icon: string;
 	// Path of the page of one object, in which {name} stands for the object's name
 	route: string;
-	// English labels, as the name reads inside a sentence
-	label: string;
-	labelPlural: string;
-	// Keys of the labels in the plugin's own translations
-	labelKey?: string;
-	labelPluralKey?: string;
+	// English name as it reads inside a sentence. Without one, Grafana uses the kind in lower case
+	label?: string;
+	// Plural of the label. Without one, Grafana uses the resource
+	labelPlural?: string;
 }
 
 export const defaultAppKind = (): AppKind => ({
@@ -317,8 +315,6 @@ export const defaultAppKind = (): AppKind => ({
 	folderScoped: false,
 	icon: "",
 	route: "",
-	label: "",
-	labelPlural: "",
 });
 
 export interface Spec {

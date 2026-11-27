@@ -330,7 +330,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["group", "kind", "resource", "folderScoped", "icon", "route", "label", "labelPlural"],
+        "required": ["group", "kind", "resource", "folderScoped", "icon", "route"],
         "properties": {
           "group": {
             "type": "string",
@@ -359,19 +359,11 @@
           },
           "label": {
             "type": "string",
-            "description": "English name of the kind as it reads inside a sentence, for example `widget`."
+            "description": "English name of the kind as it reads inside a sentence, for example `widget`. Without it, Grafana uses `kind` in lower case."
           },
           "labelPlural": {
             "type": "string",
-            "description": "Plural of `label`, for example `widgets`."
-          },
-          "labelKey": {
-            "type": "string",
-            "description": "Key of `label` in the plugin's translations, for languages other than English."
-          },
-          "labelPluralKey": {
-            "type": "string",
-            "description": "Key of `labelPlural` in the plugin's translations, for languages other than English."
+            "description": "Plural of `label`, for example `widgets`. Without it, Grafana uses `resource`."
           }
         }
       }

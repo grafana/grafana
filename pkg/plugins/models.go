@@ -184,12 +184,10 @@ type AppKind struct {
 	Icon         string `json:"icon"`
 	// Route is the path of the page of one object, in which {name} stands for the object's name.
 	Route string `json:"route"`
-	// Label and LabelPlural are English, as the name reads inside a sentence.
-	Label       string `json:"label"`
-	LabelPlural string `json:"labelPlural"`
-	// LabelKey and LabelPluralKey name the labels in the plugin's own translations, for other languages.
-	LabelKey       string `json:"labelKey,omitempty"`
-	LabelPluralKey string `json:"labelPluralKey,omitempty"`
+	// Label is the English name as it reads inside a sentence. Without one, Grafana uses the kind in lower case.
+	Label string `json:"label,omitempty"`
+	// LabelPlural is the plural of Label. Without one, Grafana uses the resource.
+	LabelPlural string `json:"labelPlural,omitempty"`
 }
 
 type Dependency struct {

@@ -45,12 +45,10 @@ export type AppPluginKind = {
   icon: string;
   /** Path of the page of one object, in which `{name}` stands for the object's name */
   route: string;
-  /** English labels, as the name reads inside a sentence */
-  label: string;
-  labelPlural: string;
-  /** Keys of the labels in the plugin's own translations */
-  labelKey?: string;
-  labelPluralKey?: string;
+  /** English name as it reads inside a sentence. Without one, Grafana uses the kind in lower case */
+  label?: string;
+  /** Plural of `label`. Without one, Grafana uses the resource */
+  labelPlural?: string;
 };
 
 export type AppPluginConfig = {
@@ -66,8 +64,6 @@ export type AppPluginConfig = {
   moduleHash?: string;
   buildMode?: string;
   kinds?: AppPluginKind[];
-  /** Paths of the plugin's translation files, by language */
-  translations?: Record<string, string>;
   // Display and navigation fields, absent from the bootdata-sourced configs and
   // populated only when these come from the plugins.grafana.app metas API
   name?: string;

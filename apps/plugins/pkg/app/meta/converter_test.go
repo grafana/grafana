@@ -278,26 +278,24 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 				{
 					Group: "widgets.ext.grafana.app", Kind: "Widget", Resource: "widgets", FolderScoped: true, Icon: "cube",
 					Route: "/a/test-app/widgets/{name}", Label: "widget", LabelPlural: "widgets",
-					LabelKey: "kinds.widget", LabelPluralKey: "kinds.widgets",
 				},
 				{
 					Group: "widgets.ext.grafana.app", Kind: "Gadget", Resource: "gadgets", Icon: "apps",
-					Route: "/a/test-app/gadgets/{name}", Label: "gadget", LabelPlural: "gadgets",
+					Route: "/a/test-app/gadgets/{name}",
 				},
 			},
 		}
 
 		meta := jsonDataToMetaJSONData(jsonData)
-		labelKey, labelPluralKey := "kinds.widget", "kinds.widgets"
+		label, labelPlural := "widget", "widgets"
 		assert.Equal(t, []pluginsv0alpha1.MetaAppKind{
 			{
 				Group: "widgets.ext.grafana.app", Kind: "Widget", Resource: "widgets", FolderScoped: true, Icon: "cube",
-				Route: "/a/test-app/widgets/{name}", Label: "widget", LabelPlural: "widgets",
-				LabelKey: &labelKey, LabelPluralKey: &labelPluralKey,
+				Route: "/a/test-app/widgets/{name}", Label: &label, LabelPlural: &labelPlural,
 			},
 			{
 				Group: "widgets.ext.grafana.app", Kind: "Gadget", Resource: "gadgets", Icon: "apps",
-				Route: "/a/test-app/gadgets/{name}", Label: "gadget", LabelPlural: "gadgets",
+				Route: "/a/test-app/gadgets/{name}",
 			},
 		}, meta.Kinds)
 	})
