@@ -123,7 +123,8 @@ func TestIntegrationV1beta2Discovery(t *testing.T) {
 	for _, expected := range []string{
 		"repositories", "repositories/status", "connections", "connections/status", "jobs", "historicjobs",
 		"repositories/refs", "repositories/resources", "repositories/stats", "repositories/history", "repositories/files",
-		"connections/repositories",
+		"repositories/test", "repositories/jobs", "repositories/webhook", "repositories/render",
+		"connections/repositories", "connections/authorize",
 	} {
 		assert.Contains(t, names, expected)
 	}

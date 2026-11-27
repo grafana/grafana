@@ -116,6 +116,7 @@ type APIBuilder struct {
 	}
 	jobHistoryConfig  *JobHistoryConfig
 	jobHistoryLoki    *jobs.LokiJobHistory
+	jobHistory        jobs.HistoryReader
 	resourceLister    resources.ResourceLister
 	namespaceStats    resources.NamespaceStatsReader
 	unified           resource.ResourceClient
@@ -967,6 +968,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		}
 		storage[provisioning.HistoricJobResourceInfo.StoragePath()] = &historicJobStorage{Store: historicJobStore}
 	}
+	b.jobHistory = jobHistory
 
 	connectionsStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.ConnectionResourceInfo, opts.OptsGetter)
 	if err != nil {
@@ -997,19 +999,15 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.ConnectionResourceInfo.StoragePath("authorize")] = WithTimeout(NewConnectionAuthorizeConnector(b), 30*time.Second)
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
-	testTester := repository.NewTester(b.repoValidator, existingReposValidator)
-
 	// TODO: Remove this connector when we deprecate the test endpoint
 	// We should use fieldErrors from status instead.
-	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = WithTimeout(NewTestConnector(b, testTester), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = WithTimeout(b.newTestConnector(), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = WithTimeout(b.newFilesConnector(), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = WithTimeout(NewRefsConnector(b), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b, b.resourceLister), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("stats")] = WithTimeout(NewStatsConnector(b.resourceLister), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = WithTimeout(NewHistorySubresource(b), 30*time.Second)
-	jobsConnector := NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, performanceEnabled)
-	jobsConnector.SetMaxBodySize(b.maxJobBodySize)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(jobsConnector, 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(b.newJobsConnector(), 30*time.Second)
 
 	// Add any extra storage
 	for _, extra := range b.extras {
@@ -1032,6 +1030,17 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 func (b *APIBuilder) newFilesConnector() *filesConnector {
 	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
 	return NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.accessWithAdmin, b.maxFileSize)
+}
+
+func (b *APIBuilder) newTestConnector() *testConnector {
+	existingReposValidator := repository.NewVerifyAgainstExistingRepositoriesValidator(b.repoLister, b.quotaGetter)
+	return NewTestConnector(b, repository.NewTester(b.repoValidator, existingReposValidator))
+}
+
+func (b *APIBuilder) newJobsConnector() *jobsConnector {
+	c := NewJobsConnector(b, b, b, b.jobHistory, b.access, b.clients, performanceEnabled)
+	c.SetMaxBodySize(b.maxJobBodySize)
+	return c
 }
 
 // performanceEnabled reports whether the synthetic "test" job type is enabled.
@@ -1230,106 +1239,11 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 		sub.Get.Description = "Read value from upstream repository"
 		sub.Get.Parameters = []*spec3.Parameter{ref}
 
-		// Add message to the OpenAPI spec
-		comment := []*spec3.Parameter{
-			ref,
-			{
-				ParameterProps: spec3.ParameterProps{
-					Name:        "message",
-					In:          "query",
-					Description: "optional message sent with any changes",
-					Schema:      spec.StringProperty(),
-					Required:    false,
-				},
-			},
-			{
-				ParameterProps: spec3.ParameterProps{
-					Name:        "skipDryRun",
-					In:          "query",
-					Description: "do not pro-actively verify the payload",
-					Schema:      spec.BooleanProperty(),
-					Required:    false,
-				},
-			},
-			{
-				ParameterProps: spec3.ParameterProps{
-					Name:        "originalPath",
-					In:          "query",
-					Description: "path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/')",
-					Schema:      spec.StringProperty(),
-					Required:    false,
-				},
-			},
-		}
-		sub.Delete.Parameters = comment
-		sub.Post.Parameters = comment
-		sub.Put.Parameters = comment
-		sub.Post.RequestBody = &spec3.RequestBody{
-			RequestBodyProps: spec3.RequestBodyProps{
-				Content: map[string]*spec3.MediaType{
-					"application/json": {
-						MediaTypeProps: spec3.MediaTypeProps{
-							Schema:  spec.MapProperty(nil),
-							Example: &unstructured.Unstructured{},
-							Examples: map[string]*spec3.Example{
-								"dashboard": {
-									ExampleProps: spec3.ExampleProps{
-										Value: &unstructured.Unstructured{
-											Object: map[string]interface{}{
-												"spec": map[string]interface{}{
-													"hello": "dashboard",
-												},
-											},
-										},
-									},
-								},
-								"playlist": {
-									ExampleProps: spec3.ExampleProps{
-										Value: &unstructured.Unstructured{
-											Object: map[string]interface{}{
-												"spec": map[string]interface{}{
-													"hello": "playlist",
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-					"application/x-yaml": {
-						MediaTypeProps: spec3.MediaTypeProps{
-							Schema:  spec.MapProperty(nil),
-							Example: &unstructured.Unstructured{},
-							Examples: map[string]*spec3.Example{
-								"dashboard": {
-									ExampleProps: spec3.ExampleProps{
-										Value: `apiVersion: dashboard.grafana.app/v0alpha1
-kind: Dashboard
-spec:
-  title: Sample dashboard
-`,
-									},
-								},
-								"playlist": {
-									ExampleProps: spec3.ExampleProps{
-										Value: `apiVersion: playlist.grafana.app/v0alpha1
-kind: Playlist
-spec:
-  title: Playlist from provisioning
-  interval: 5m
-  items:
-  - type: dashboard_by_tag
-    value: panel-tests
-`,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		}
+		writeParams := filesWriteParameters(ref)
+		sub.Delete.Parameters = writeParams
+		sub.Post.Parameters = writeParams
+		sub.Put.Parameters = writeParams
+		sub.Post.RequestBody = filesRequestBody()
 		// POST and put have the same request
 		sub.Put.RequestBody = sub.Post.RequestBody
 	}
@@ -1581,6 +1495,109 @@ spec:
 	}
 
 	return oas, nil
+}
+
+// filesWriteParameters are the query parameters of the files subresource writes.
+func filesWriteParameters(ref *spec3.Parameter) []*spec3.Parameter {
+	return []*spec3.Parameter{
+		ref,
+		{
+			ParameterProps: spec3.ParameterProps{
+				Name:        "message",
+				In:          "query",
+				Description: "optional message sent with any changes",
+				Schema:      spec.StringProperty(),
+				Required:    false,
+			},
+		},
+		{
+			ParameterProps: spec3.ParameterProps{
+				Name:        "skipDryRun",
+				In:          "query",
+				Description: "do not pro-actively verify the payload",
+				Schema:      spec.BooleanProperty(),
+				Required:    false,
+			},
+		},
+		{
+			ParameterProps: spec3.ParameterProps{
+				Name:        "originalPath",
+				In:          "query",
+				Description: "path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/')",
+				Schema:      spec.StringProperty(),
+				Required:    false,
+			},
+		},
+	}
+}
+
+func filesRequestBody() *spec3.RequestBody {
+	return &spec3.RequestBody{
+		RequestBodyProps: spec3.RequestBodyProps{
+			Content: map[string]*spec3.MediaType{
+				"application/json": {
+					MediaTypeProps: spec3.MediaTypeProps{
+						Schema:  spec.MapProperty(nil),
+						Example: &unstructured.Unstructured{},
+						Examples: map[string]*spec3.Example{
+							"dashboard": {
+								ExampleProps: spec3.ExampleProps{
+									Value: &unstructured.Unstructured{
+										Object: map[string]interface{}{
+											"spec": map[string]interface{}{
+												"hello": "dashboard",
+											},
+										},
+									},
+								},
+							},
+							"playlist": {
+								ExampleProps: spec3.ExampleProps{
+									Value: &unstructured.Unstructured{
+										Object: map[string]interface{}{
+											"spec": map[string]interface{}{
+												"hello": "playlist",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				"application/x-yaml": {
+					MediaTypeProps: spec3.MediaTypeProps{
+						Schema:  spec.MapProperty(nil),
+						Example: &unstructured.Unstructured{},
+						Examples: map[string]*spec3.Example{
+							"dashboard": {
+								ExampleProps: spec3.ExampleProps{
+									Value: `apiVersion: dashboard.grafana.app/v0alpha1
+kind: Dashboard
+spec:
+  title: Sample dashboard
+`,
+								},
+							},
+							"playlist": {
+								ExampleProps: spec3.ExampleProps{
+									Value: `apiVersion: playlist.grafana.app/v0alpha1
+kind: Playlist
+spec:
+  title: Playlist from provisioning
+  interval: 5m
+  items:
+  - type: dashboard_by_tag
+    value: panel-tests
+`,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 }
 
 func refQueryParameter() *spec3.Parameter {

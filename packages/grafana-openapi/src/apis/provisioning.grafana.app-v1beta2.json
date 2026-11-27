@@ -769,6 +769,53 @@
         }
       ]
     },
+    "/connections/{name}/authorize": {
+      "post": {
+        "tags": ["Connection"],
+        "description": "Complete the OAuth authorization of this connection by exchanging an authorization code",
+        "operationId": "createConnectionAuthorize",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectionAuthorizeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionAuthorizeRequest"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta2",
+          "kind": "ConnectionAuthorizeRequest"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the ConnectionAuthorizeRequest",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/connections/{name}/repositories": {
       "get": {
         "tags": ["Connection"],
@@ -2639,6 +2686,296 @@
           "kind": "ResourceWrapper"
         }
       },
+      "put": {
+        "tags": ["Repository"],
+        "description": "connect PUT requests to files of Repository",
+        "operationId": "replaceRepositoryFilesWithPath",
+        "parameters": [
+          {
+            "name": "ref",
+            "in": "query",
+            "description": "branch or commit hash",
+            "schema": {
+              "type": "string"
+            },
+            "examples": {
+              "": {
+                "summary": "The default"
+              },
+              "branch": {
+                "summary": "Select branch",
+                "value": "my-branch"
+              },
+              "commit": {
+                "summary": "Commit hash (or prefix)",
+                "value": "7f7cc2153"
+              }
+            }
+          },
+          {
+            "name": "message",
+            "in": "query",
+            "description": "optional message sent with any changes",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "skipDryRun",
+            "in": "query",
+            "description": "do not pro-actively verify the payload",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "originalPath",
+            "in": "query",
+            "description": "path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/')",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "dashboard": {
+                  "value": {
+                    "spec": {
+                      "hello": "dashboard"
+                    }
+                  }
+                },
+                "playlist": {
+                  "value": {
+                    "spec": {
+                      "hello": "playlist"
+                    }
+                  }
+                }
+              }
+            },
+            "application/x-yaml": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "dashboard": {
+                  "value": "apiVersion: dashboard.grafana.app/v0alpha1\nkind: Dashboard\nspec:\n  title: Sample dashboard\n"
+                },
+                "playlist": {
+                  "value": "apiVersion: playlist.grafana.app/v0alpha1\nkind: Playlist\nspec:\n  title: Playlist from provisioning\n  interval: 5m\n  items:\n  - type: dashboard_by_tag\n    value: panel-tests\n"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceWrapper"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta2",
+          "kind": "ResourceWrapper"
+        }
+      },
+      "post": {
+        "tags": ["Repository"],
+        "description": "connect POST requests to files of Repository",
+        "operationId": "createRepositoryFilesWithPath",
+        "parameters": [
+          {
+            "name": "ref",
+            "in": "query",
+            "description": "branch or commit hash",
+            "schema": {
+              "type": "string"
+            },
+            "examples": {
+              "": {
+                "summary": "The default"
+              },
+              "branch": {
+                "summary": "Select branch",
+                "value": "my-branch"
+              },
+              "commit": {
+                "summary": "Commit hash (or prefix)",
+                "value": "7f7cc2153"
+              }
+            }
+          },
+          {
+            "name": "message",
+            "in": "query",
+            "description": "optional message sent with any changes",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "skipDryRun",
+            "in": "query",
+            "description": "do not pro-actively verify the payload",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "originalPath",
+            "in": "query",
+            "description": "path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/')",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "dashboard": {
+                  "value": {
+                    "spec": {
+                      "hello": "dashboard"
+                    }
+                  }
+                },
+                "playlist": {
+                  "value": {
+                    "spec": {
+                      "hello": "playlist"
+                    }
+                  }
+                }
+              }
+            },
+            "application/x-yaml": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "dashboard": {
+                  "value": "apiVersion: dashboard.grafana.app/v0alpha1\nkind: Dashboard\nspec:\n  title: Sample dashboard\n"
+                },
+                "playlist": {
+                  "value": "apiVersion: playlist.grafana.app/v0alpha1\nkind: Playlist\nspec:\n  title: Playlist from provisioning\n  interval: 5m\n  items:\n  - type: dashboard_by_tag\n    value: panel-tests\n"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceWrapper"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta2",
+          "kind": "ResourceWrapper"
+        }
+      },
+      "delete": {
+        "tags": ["Repository"],
+        "description": "connect DELETE requests to files of Repository",
+        "operationId": "deleteRepositoryFilesWithPath",
+        "parameters": [
+          {
+            "name": "ref",
+            "in": "query",
+            "description": "branch or commit hash",
+            "schema": {
+              "type": "string"
+            },
+            "examples": {
+              "": {
+                "summary": "The default"
+              },
+              "branch": {
+                "summary": "Select branch",
+                "value": "my-branch"
+              },
+              "commit": {
+                "summary": "Commit hash (or prefix)",
+                "value": "7f7cc2153"
+              }
+            }
+          },
+          {
+            "name": "message",
+            "in": "query",
+            "description": "optional message sent with any changes",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "skipDryRun",
+            "in": "query",
+            "description": "do not pro-actively verify the payload",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "originalPath",
+            "in": "query",
+            "description": "path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/')",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceWrapper"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta2",
+          "kind": "ResourceWrapper"
+        }
+      },
       "parameters": [
         {
           "name": "name",
@@ -2792,6 +3129,144 @@
         }
       ]
     },
+    "/repositories/{name}/jobs": {
+      "get": {
+        "tags": ["Repository"],
+        "description": "List recent jobs",
+        "operationId": "getRepositoryJobs",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta2",
+          "kind": "Repository"
+        }
+      },
+      "post": {
+        "tags": ["Repository"],
+        "description": "Register a job for this repository",
+        "operationId": "createRepositoryJobs",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobSpec"
+              },
+              "examples": {
+                "incremental": {
+                  "summary": "Pull (incremental)",
+                  "description": "look for changes since the last sync",
+                  "value": {
+                    "action": "pull",
+                    "pull": {
+                      "incremental": true
+                    }
+                  }
+                },
+                "pull": {
+                  "summary": "Pull from repository",
+                  "description": "pull all files",
+                  "value": {
+                    "action": "pull",
+                    "pull": {
+                      "incremental": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta2",
+          "kind": "Repository"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Repository",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/repositories/{name}/jobs/{uid}": {
+      "get": {
+        "tags": ["Repository"],
+        "description": "Get job by UID",
+        "operationId": "getRepositoryJobsWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta2",
+          "kind": "Repository"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Repository",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "uid",
+          "in": "path",
+          "description": "Original Job UID",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/repositories/{name}/refs": {
       "get": {
         "tags": ["Repository"],
@@ -2822,6 +3297,49 @@
           "name": "name",
           "in": "path",
           "description": "name of the RefList",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/repositories/{name}/render/{guid}": {
+      "get": {
+        "tags": ["Repository"],
+        "description": "get a rendered preview image",
+        "operationId": "getRepositoryRenderWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "image/png": {}
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta2",
+          "kind": "Repository"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Repository",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "guid",
+          "in": "path",
+          "description": "Image GUID",
           "required": true,
           "schema": {
             "type": "string",
@@ -3168,6 +3686,90 @@
         }
       ]
     },
+    "/repositories/{name}/test": {
+      "post": {
+        "tags": ["Repository"],
+        "description": "Check if the configuration is valid. Deprecated: this will go away in favour of fieldErrors from status",
+        "operationId": "createRepositoryTest",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Repository"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestResults"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true,
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta2",
+          "kind": "TestResults"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the TestResults",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/repositories/{name}/webhook": {
+      "post": {
+        "tags": ["Repository"],
+        "description": "Currently only supports github webhooks",
+        "operationId": "createRepositoryWebhook",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta2",
+          "kind": "WebhookResponse"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the WebhookResponse",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/settings": {
       "get": {
         "tags": ["Provisioning", "Repository"],
@@ -3321,6 +3923,78 @@
             "version": "v1beta2"
           }
         ]
+      },
+      "ConnectionAuthorizeRequest": {
+        "description": "ConnectionAuthorizeRequest completes the OAuth authorization of a connection by exchanging an authorization code for tokens. It is the request and response body of the connection authorize subresource.",
+        "type": "object",
+        "required": ["spec"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ObjectMeta"
+              }
+            ]
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConnectionAuthorizeRequestSpec"
+              }
+            ]
+          },
+          "status": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConnectionAuthorizeRequestStatus"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ConnectionAuthorizeRequest",
+            "version": "v1beta2"
+          }
+        ]
+      },
+      "ConnectionAuthorizeRequestSpec": {
+        "type": "object",
+        "required": ["code"],
+        "properties": {
+          "code": {
+            "description": "The authorization code returned by the provider",
+            "type": "string",
+            "default": ""
+          },
+          "redirectURI": {
+            "description": "The redirect URI used in the authorization request",
+            "type": "string"
+          }
+        }
+      },
+      "ConnectionAuthorizeRequestStatus": {
+        "type": "object",
+        "required": ["authorized"],
+        "properties": {
+          "authorized": {
+            "description": "Whether the connection has been authorized",
+            "type": "boolean",
+            "default": false
+          }
+        }
       },
       "ConnectionBitbucketConfig": {
         "type": "object",
@@ -6290,6 +6964,85 @@
             "default": ""
           }
         }
+      },
+      "TestResults": {
+        "description": "TestResults is the response of the repository test subresource. RepositoryErrorDetails has no generated DeepCopyInto, so TestResults is copied by hand.",
+        "type": "object",
+        "required": ["code", "success"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "code": {
+            "description": "HTTP status code",
+            "type": "integer",
+            "format": "int32",
+            "default": 0
+          },
+          "errors": {
+            "description": "Field related errors",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RepositoryErrorDetails"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "success": {
+            "description": "Is the connection healthy",
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "TestResults",
+            "version": "v1beta2"
+          }
+        ]
+      },
+      "WebhookResponse": {
+        "description": "WebhookResponse is the response of the repository webhook subresource.",
+        "type": "object",
+        "properties": {
+          "added": {
+            "description": "Optional message",
+            "type": "string"
+          },
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "code": {
+            "description": "HTTP Status code 200 implies that the payload was understood but nothing is required 202 implies that an async job has been scheduled to handle the request",
+            "type": "integer",
+            "format": "int32"
+          },
+          "job": {
+            "description": "Jobs to be processed When the response is 202 (Accepted) the queued jobs will be returned",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JobSpec"
+              }
+            ]
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "WebhookResponse",
+            "version": "v1beta2"
+          }
+        ]
       },
       "Unstructured": {
         "type": "object",

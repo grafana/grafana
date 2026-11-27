@@ -40,7 +40,8 @@ var (
 // v1beta2APIBuilder serves the v1beta2 kinds. Objects are stored, admitted and reconciled as
 // v1beta2StorageVersion: the stores convert through v1beta2StorageSerializer, and admission and
 // authorization delegate to the v0alpha1 builder, and so do the connectors and namespace routes,
-// through converting adapters. Enterprise extras don't apply to v1beta2 yet.
+// through converting adapters. Only the extras that implement V1beta2Extra apply to v1beta2, so
+// enterprise extras don't yet.
 type v1beta2APIBuilder struct {
 	inner     *APIBuilder
 	scheme    *runtime.Scheme
@@ -169,15 +170,30 @@ func v1beta2RepositoryGetAttrs(obj runtime.Object) (labels.Set, fields.Set, erro
 	), nil
 }
 
-// GetAuthorizer authorizes the same resources, subresources and verbs as v0alpha1, without the
-// enterprise extras.
+// GetAuthorizer authorizes the same resources, subresources and verbs as v0alpha1, with only the
+// extras v1beta2 serves.
 func (b *v1beta2APIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 		if identity.IsServiceIdentity(ctx) {
 			return authorizer.DecisionAllow, "", nil
 		}
+		for _, extra := range b.extras() {
+			if decision, reason, err := extra.Authorize(ctx, a); decision != authorizer.DecisionNoOpinion {
+				return decision, reason, err
+			}
+		}
 		return b.inner.authorizeResource(ctx, a)
 	})
+}
+
+func (b *v1beta2APIBuilder) extras() []V1beta2Extra {
+	var extras []V1beta2Extra
+	for _, extra := range b.inner.extras {
+		if extra, ok := extra.(V1beta2Extra); ok {
+			extras = append(extras, extra)
+		}
+	}
+	return extras
 }
 
 func (b *v1beta2APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
