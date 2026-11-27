@@ -84,10 +84,11 @@ func TestSettingsGet_WithPersistedSettings(t *testing.T) {
 }
 
 // decryptingSettings stores ciphertext and decrypts it through a fixed map, as the
-// SQL service does.
+// SQL service does. calls, when set, counts the decryptions.
 type decryptingSettings struct {
 	ps        *pluginsettings.DTO
 	decrypted map[string]string
+	calls     *int
 }
 
 func (d decryptingSettings) GetPluginSettingByPluginID(context.Context, *pluginsettings.GetByPluginIDArgs) (*pluginsettings.DTO, error) {
@@ -95,12 +96,45 @@ func (d decryptingSettings) GetPluginSettingByPluginID(context.Context, *plugins
 }
 
 func (d decryptingSettings) DecryptedValues(*pluginsettings.DTO) map[string]string {
+	if d.calls != nil {
+		*d.calls++
+	}
 	return d.decrypted
 }
 
-func TestSettingsGet_OmitsRemovedSecureValues(t *testing.T) {
-	// Removing a secure value through the legacy API stores an encrypted empty
-	// string, so the ciphertext is not empty.
+func TestSettingsGet_ListsSecureKeysWithoutDecrypting(t *testing.T) {
+	calls := 0
+	storage := NewReadOnlyLegacySettingsStore("test-app", decryptingSettings{
+		ps: &pluginsettings.DTO{
+			PluginID:       "test-app",
+			OrgID:          1,
+			SecureJSONData: map[string][]byte{"apiKey": []byte("cipher-1"), "empty": nil},
+		},
+		decrypted: map[string]string{"apiKey": "secret"},
+		calls:     &calls,
+	})
+
+	ctx := pluginsettings.WithSecureContextShim(request.WithNamespace(context.Background(), "default"))
+	obj, err := storage.Get(ctx, "instance", nil)
+	require.NoError(t, err)
+
+	settings := obj.(*apppluginV0.Settings)
+	require.Equal(t, resource.InlineSecureValues{
+		"apiKey": {Name: getLegacySecureValueName("test-app", "apiKey")},
+	}, settings.Secure)
+	require.Equal(t, 0, calls, "a read must not decrypt until a subresource asks for the values")
+
+	decrypt, ok := pluginsettings.StashedDecryptedSecureJSONLoader(ctx)
+	require.True(t, ok)
+	values, err := decrypt(ctx)
+	require.NoError(t, err)
+	require.Equal(t, map[string]string{"apiKey": "secret"}, values)
+	require.Equal(t, 1, calls)
+}
+
+func TestSettingsGet_DecryptedValuesOmitEmptyValues(t *testing.T) {
+	// Secrets removed before removals deleted the key are stored as an encrypted
+	// empty string, so the ciphertext is not empty.
 	storage := NewReadOnlyLegacySettingsStore("test-app", decryptingSettings{
 		ps: &pluginsettings.DTO{
 			PluginID:       "test-app",
@@ -111,15 +145,9 @@ func TestSettingsGet_OmitsRemovedSecureValues(t *testing.T) {
 	})
 
 	ctx := pluginsettings.WithSecureContextShim(request.WithNamespace(context.Background(), "default"))
-	obj, err := storage.Get(ctx, "instance", nil)
+	_, err := storage.Get(ctx, "instance", nil)
 	require.NoError(t, err)
 
-	settings := obj.(*apppluginV0.Settings)
-	require.Equal(t, resource.InlineSecureValues{
-		"kept": {Name: getLegacySecureValueName("test-app", "kept")},
-	}, settings.Secure)
-
-	// Plugins get the same keys, so a removed key is not passed as an empty string.
 	decrypt, ok := pluginsettings.StashedDecryptedSecureJSONLoader(ctx)
 	require.True(t, ok)
 	values, err := decrypt(ctx)

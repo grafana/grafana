@@ -102,6 +102,8 @@ type UpdatePluginSettingCmd struct {
 	PluginId                string            `json:"-"`
 	OrgId                   int64             `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
+	// RemovedSecureJsonKeys are the secureJsonData keys set to an empty value.
+	RemovedSecureJsonKeys []string `json:"-"`
 }
 
 // specific command, will only update version

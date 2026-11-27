@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"maps"
 	"strconv"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -204,20 +203,25 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error
 		return nil, fmt.Errorf("failed to get plugin settings: %w", err)
 	}
 	if ps != nil {
-		// A removed secure value is stored as an encrypted empty string, so keep only
-		// keys with a decrypted value, as the legacy plugin settings API does.
-		decrypted := map[string]string{}
+		// Only the settings subresources need the values, so decrypt when they ask.
+		pluginsettings.WithDecryptedValues(ctx, func(ctx context.Context) (map[string]string, error) {
+			values := map[string]string{}
+			for k, v := range s.pluginSettings.DecryptedValues(ps) {
+				// Secrets removed before removals deleted the key are stored as an
+				// encrypted empty string.
+				if v != "" {
+					values[k] = v
+				}
+			}
+			return values, nil
+		})
+
 		secureValues := resource.InlineSecureValues{}
-		for k, v := range s.pluginSettings.DecryptedValues(ps) {
-			if v != "" {
-				decrypted[k] = v
+		for k, v := range ps.SecureJSONData {
+			if len(v) > 0 {
 				secureValues[k] = resource.InlineSecureValue{Name: getLegacySecureValueName(s.pluginID, k)}
 			}
 		}
-		pluginsettings.WithDecryptedValues(ctx, func(ctx context.Context) (map[string]string, error) {
-			// Each caller gets its own copy, so one caller's changes don't reach the next.
-			return maps.Clone(decrypted), nil
-		})
 
 		obj.SetCreationTimestamp(metav1.NewTime(ps.Updated))
 		obj.SetResourceVersion(getLegacySettingsResourceVersion(ps))
