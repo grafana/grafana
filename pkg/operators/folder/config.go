@@ -29,8 +29,8 @@ import (
 // [grpc_client_authentication]
 // token =
 // token_exchange_url =
-func buildRESTClient(cfg *setting.Cfg, serverURLKey, group string) (rest.Interface, error) {
-	restConfig, err := runner.RESTConfig(cfg, serverURLKey, group)
+func buildRESTClient(clients *runner.Clients, serverURLKey, group string) (rest.Interface, error) {
+	restConfig, err := clients.RESTConfig(serverURLKey, group)
 	if err != nil {
 		return nil, err
 	}

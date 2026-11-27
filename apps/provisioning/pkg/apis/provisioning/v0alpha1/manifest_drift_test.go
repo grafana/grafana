@@ -20,8 +20,10 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
-// Generated from apps/provisioning/kinds by `make gen-apps app=provisioning`.
-const manifestPath = "../../../../definitions/provisioning-manifest.json"
+// The app manifest generated from frozenManifest in apps/provisioning/kinds before codegen moved
+// to v1beta2. The CUE cannot be evaluated here: the workspace replaces cuelang.org/go with a fork
+// the App SDK loader does not run on.
+const manifestPath = "testdata/frozen-manifest.json"
 
 // External definitions referenced by the Go types but not part of GetOpenAPIDefinitions.
 // They are spelled out here so the CUE mirrors in kinds/common.cue are checked too.
@@ -77,14 +79,9 @@ func TestManifestMatchesGoTypes(t *testing.T) {
 		{HistoricJobResourceInfo.GroupVersionKind().Kind, HistoricJobResourceInfo.GetName()},
 	}
 
-	// v1beta2 has its own generated Go types, so only the versions served from these types are compared.
-	frozenVersions := []string{"v0alpha1", "v1beta1"}
 	versionNames := make([]string, 0, len(manifest.Versions))
 	for _, version := range manifest.Versions {
 		versionNames = append(versionNames, version.Name)
-		if !slices.Contains(frozenVersions, version.Name) {
-			continue
-		}
 
 		manifestKinds := map[string]app.ManifestVersionKind{}
 		for _, kind := range version.Kinds {
@@ -129,18 +126,18 @@ func TestManifestMatchesGoTypes(t *testing.T) {
 					}
 					diffs = append(diffs, "  "+d.path+": "+d.message)
 				}
-				require.Empty(t, diffs, "CUE manifest (apps/provisioning/kinds) and Go types (pkg/apis/provisioning/v0alpha1) differ for %s; "+
-					"update the CUE and run `make gen-apps app=provisioning`:\n%s", info.kind, strings.Join(diffs, "\n"))
+				require.Empty(t, diffs, "Go types (pkg/apis/provisioning/v0alpha1) differ from the frozen schema for %s; "+
+					"v0alpha1 and v1beta1 must not change:\n%s", info.kind, strings.Join(diffs, "\n"))
 			})
 		}
 	}
-	require.ElementsMatch(t, []string{"v0alpha1", "v1beta1", "v1beta2"}, versionNames)
+	require.ElementsMatch(t, []string{"v0alpha1", "v1beta1"}, versionNames)
 }
 
 func loadManifest(t *testing.T) app.ManifestData {
 	t.Helper()
 	raw, err := os.ReadFile(manifestPath)
-	require.NoError(t, err, "run `make gen-apps app=provisioning`")
+	require.NoError(t, err)
 	var document v1alpha2.AppManifest
 	require.NoError(t, json.Unmarshal(raw, &document))
 	data, err := document.Spec.ToManifestData()

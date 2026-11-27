@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 
@@ -13,24 +14,42 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 
+	grafanarequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// Remote services exist only for Grafana Cloud's single-tenant (ST) stack pods:
+// they let an ST pod serve multi-tenant (MT) APIs by proxying them to MT. They
+// are a stopgap until every request starts at the MT router, which falls back
+// to the ST pods, and nothing else should configure them. The loader enforces
+// that it runs only as middleware in a Grafana server (never the standalone
+// router) with a stack ID, and remote_services_cycle.go keeps a request from
+// cycling between an ST pod and the MT router.
+//
 // The settings below replace what the embedded kube-aggregator reads to mount
-// multi-tenant (MT) APIs into a single-tenant Grafana's API server. They keep
-// the aggregator's names, so a deployment moves to the router by dropping the
-// kubernetesAggregator toggle, not by rewriting its config:
+// MT APIs into an ST Grafana's API server. They keep the aggregator's names,
+// so a deployment moves to the router by dropping the
+// kubernetes_aggregator_enabled setting, not by rewriting its config:
 //
 //	[grafana-apiserver] remote_services_file        the MT services to mount
-//	[grpc_client_authentication] token              CAP token for discovery
+//	[grpc_client_authentication] token              CAP token that signs requests
 //	[grpc_client_authentication] token_exchange_url
-//	[grpc_client_authentication] token_namespace    namespace of the CAP token
+//	[grpc_client_authentication] token_namespace    namespace of the discovery
+//	                                                token; defaults to the stack's
 //
-// TLS verifies against apiservice_ca_bundle_file, which cloud already sets for
-// the aggregator's remotes. The router adds remote_services_audience (the CAP
-// token audience, defaulting to the aggregator's hardcoded discovery audience)
-// and remote_services_insecure, since the aggregator always skips TLS
-// verification.
+// Every proxied request is signed, as the aggregator signed it
+// (remote_services_auth.go), and carries Grafana-Upstream-Traceparent and
+// Grafana-Remote-Services-Origin (remote_services_cycle.go).
+//
+// The aggregator always skipped TLS verification; the router verifies. It adds:
+//
+//	remote_services_ca_file   CA bundle for the remote services; defaults to
+//	                          apiservice_ca_bundle_file, which other MT clients
+//	                          also read, so the remotes' CA can be trusted
+//	                          without widening theirs
+//	remote_services_insecure  skip TLS verification, as the aggregator did
+//	remote_services_audience  CAP token audience for discovery; defaults to the
+//	                          aggregator's hardcoded one
 const (
 	remoteServicesSection = "grafana-apiserver"
 	remoteServicesAuth    = "grpc_client_authentication"
@@ -84,12 +103,22 @@ type remoteServiceOptions struct {
 	insecure                         bool
 }
 
+func newRemoteServiceOptions(cfg *setting.Cfg, stackNamespace string) remoteServiceOptions {
+	section := cfg.SectionWithEnvOverrides(remoteServicesSection)
+	return remoteServiceOptions{
+		audience:       section.Key("remote_services_audience").MustString(defaultRemoteServicesAudience),
+		tokenNamespace: cfg.SectionWithEnvOverrides(remoteServicesAuth).Key("token_namespace").MustString(stackNamespace),
+		caFile:         section.Key("remote_services_ca_file").MustString(section.Key("apiservice_ca_bundle_file").MustString("")),
+		insecure:       section.Key("remote_services_insecure").MustBool(false),
+	}
+}
+
 // remoteServiceTargets turns the services into one aggregate target per
 // host:port, in file order, serving that host's opted-in groups. Cloud lists
 // every group at one MT aggregator, so this is one poller, not one per group.
 // The first entry for a group wins, as it does for the aggregator's version
-// priority. Discovery polls carry a CAP token; proxied requests carry the
-// caller's own credentials.
+// priority. Discovery polls carry a CAP token in Authorization, as the
+// aggregator's did.
 func remoteServiceTargets(ctx context.Context, svcs []remoteService, optedIn func(context.Context, string) bool, o remoteServiceOptions) []aggregateTargetConfig {
 	var targets []aggregateTargetConfig
 	byAddr := map[string]int{}
@@ -108,9 +137,11 @@ func remoteServiceTargets(ctx context.Context, svcs []remoteService, optedIn fun
 			i = len(targets)
 			byAddr[addr] = i
 			targets = append(targets, aggregateTargetConfig{
-				Name:               "remote_" + addr,
-				URL:                "https://" + addr,
-				PollInterval:       defaultAggregatePollInterval,
+				Name:         "remote_" + addr,
+				URL:          "https://" + addr,
+				PollInterval: defaultAggregatePollInterval,
+				// The aggregator sent its discovery token in Authorization.
+				DiscoveryAuth:      discoveryAuthBearer,
 				Audience:           o.audience,
 				TokenNamespace:     o.tokenNamespace,
 				CAFile:             o.caFile,
@@ -133,28 +164,34 @@ func hostPort(host string, port int32) string {
 // over base, replacing the embedded aggregator for them. A group it serves
 // takes over that group from base and from the embedded API server. It returns
 // base unchanged when no file is configured, or none of its groups is opted in.
+//
+// It is for cloud ST stack pods only. It refuses the standalone router, which
+// MiddlewareEnabled already keeps from calling it, and a server with no stack
+// ID: without one there is no namespace to sign for.
 func newRemoteServicesLoader(ctx context.Context, cfg *setting.Cfg, base RoutesLoader) (RoutesLoader, error) {
 	section := cfg.SectionWithEnvOverrides(remoteServicesSection)
 	path := section.Key("remote_services_file").MustString("")
 	if path == "" {
 		return base, nil
 	}
+	if standaloneRouter(cfg) {
+		return nil, fmt.Errorf("router: remote_services_file is only for single-tenant cloud stack pods, not the standalone router")
+	}
+	if cfg.StackID == "" {
+		return nil, fmt.Errorf("router: remote_services_file is only for single-tenant cloud stack pods, but [environment] stack_id is not set")
+	}
 	svcs, err := readRemoteServicesFile(path)
 	if err != nil {
 		return nil, err
 	}
-	auth := cfg.SectionWithEnvOverrides(remoteServicesAuth)
-	opts := remoteServiceOptions{
-		audience:       section.Key("remote_services_audience").MustString(defaultRemoteServicesAudience),
-		tokenNamespace: auth.Key("token_namespace").MustString(""),
-		// The CA cloud already sets for the aggregator's remotes.
-		caFile:   section.Key("apiservice_ca_bundle_file").MustString(""),
-		insecure: section.Key("remote_services_insecure").MustBool(false),
-	}
+	// The aggregator signed every token for the stack's namespace.
+	stackNamespace := grafanarequest.GetNamespaceMapper(cfg)(1)
+	opts := newRemoteServiceOptions(cfg, stackNamespace)
 	configs := remoteServiceTargets(ctx, svcs, remoteServiceOptedIn, opts)
 	if len(configs) == 0 {
 		return base, nil
 	}
+	auth := cfg.SectionWithEnvOverrides(remoteServicesAuth)
 	token, exchangeURL := auth.Key("token").MustString(""), auth.Key("token_exchange_url").MustString("")
 	if token == "" || exchangeURL == "" {
 		return nil, fmt.Errorf("router: [%s] token and token_exchange_url are required to mount remote services", remoteServicesAuth)
@@ -162,6 +199,14 @@ func newRemoteServicesLoader(ctx context.Context, cfg *setting.Cfg, base RoutesL
 	exchanger, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{TokenExchangeURL: exchangeURL, Token: token})
 	if err != nil {
 		return nil, fmt.Errorf("router: token exchange client: %w", err)
+	}
+	sign := newRemoteServiceSigner(exchanger, stackNamespace, opts.audience)
+	headers := newRemoteServiceHeaders(stackNamespace)
+	for i := range configs {
+		// The cycle check runs first, so a refused request costs no exchange.
+		configs[i].wrapProxy = func(next http.RoundTripper) http.RoundTripper {
+			return headers(sign(next))
+		}
 	}
 	targets, err := buildAggregateTargets(configs, exchanger)
 	if err != nil {

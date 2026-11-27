@@ -4317,9 +4317,7 @@
               "$ref": "#/components/schemas/ConnectionCondition"
             },
             "x-kubernetes-list-map-keys": ["type"],
-            "x-kubernetes-list-type": "map",
-            "x-kubernetes-patch-merge-key": "type",
-            "x-kubernetes-patch-strategy": "merge"
+            "x-kubernetes-list-type": "map"
           },
           "fieldErrors": {
             "description": "FieldErrors are errors that occurred during validation of the connection spec. These errors are intended to help users identify and fix issues in the spec.",
@@ -6229,9 +6227,7 @@
               "$ref": "#/components/schemas/RepositoryCondition"
             },
             "x-kubernetes-list-map-keys": ["type"],
-            "x-kubernetes-list-type": "map",
-            "x-kubernetes-patch-merge-key": "type",
-            "x-kubernetes-patch-strategy": "merge"
+            "x-kubernetes-list-type": "map"
           },
           "deleteError": {
             "description": "Error information during repository deletion (if any). Deprecated: prefer the structured Deletion field. Retained for backwards compatibility with clients that read the concise string.",
