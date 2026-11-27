@@ -152,6 +152,9 @@ func (s *elasticsearchAdapter) SearchCandidates(ctx context.Context, req *engine
 	if err != nil {
 		return nil, err
 	}
+	if err := s.requireIndex(ctx); err != nil {
+		return nil, err
+	}
 	result, err := backend.Search(ctx, enginequery.Request{Size: int(req.WindowSize), Fields: fields.names, SearchAfter: prepared.cursor, Reverse: prepared.reverse})
 	if err != nil {
 		return nil, elasticsearchRPCError(err)
@@ -180,6 +183,9 @@ func (s *elasticsearchAdapter) ReadDocuments(ctx context.Context, req *enginepb.
 	}
 	fields, err := s.resolveFields(req.Fields)
 	if err != nil {
+		return nil, err
+	}
+	if err := s.requireIndex(ctx); err != nil {
 		return nil, err
 	}
 	backend := *s.backend

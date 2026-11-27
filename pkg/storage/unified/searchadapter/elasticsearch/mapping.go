@@ -52,7 +52,9 @@ func indexMapping(provider resource.SearchFieldsProvider, key resource.Namespace
 	for _, field := range []string{resource.SEARCH_FIELD_IS_DELETED, resource.SEARCH_FIELD_IS_PROVISIONED} {
 		put(field, elasticsearchObject{"type": "boolean"})
 	}
-	for _, field := range []string{"labels", "reference", "selectableFields"} {
+	// Label keys such as team and team.name can coexist on the same document.
+	properties["labels"] = elasticsearchObject{"type": "object", "dynamic": true, "subobjects": false}
+	for _, field := range []string{"reference", "selectableFields"} {
 		properties[field] = elasticsearchObject{"type": "object", "dynamic": true}
 	}
 	var stopwords []string
@@ -74,7 +76,7 @@ func indexMapping(provider resource.SearchFieldsProvider, key resource.Namespace
 				},
 			},
 		},
-		"mappings": elasticsearchObject{"dynamic": false, "properties": properties, "dynamic_templates": []elasticsearchObject{
+		"mappings": elasticsearchObject{"dynamic": false, "date_detection": false, "properties": properties, "dynamic_templates": []elasticsearchObject{
 			{"keyword_data": elasticsearchObject{"match_mapping_type": "string", "mapping": elasticsearchObject{"type": "keyword"}}},
 		}},
 	}

@@ -55,6 +55,17 @@ func (s *elasticsearchAdapter) indexExists(ctx context.Context) (bool, error) {
 	return true, nil
 }
 
+func (s *elasticsearchAdapter) requireIndex(ctx context.Context) error {
+	exists, err := s.indexExists(ctx)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return status.Error(codes.FailedPrecondition, "create the configured Elasticsearch index first")
+	}
+	return nil
+}
+
 func (s *elasticsearchAdapter) EnsureIndex(ctx context.Context, req *enginepb.EnsureIndexRequest) (*emptypb.Empty, error) {
 	if err := s.checkScope(req.GetIndexScope()); err != nil {
 		return nil, err
@@ -96,10 +107,8 @@ func (s *elasticsearchAdapter) WriteDocuments(ctx context.Context, req *enginepb
 	if len(deleted) == 0 {
 		return &emptypb.Empty{}, nil
 	}
-	if exists, err := s.indexExists(ctx); err != nil {
+	if err := s.requireIndex(ctx); err != nil {
 		return nil, err
-	} else if !exists {
-		return nil, status.Error(codes.FailedPrecondition, "create the configured index before writing")
 	}
 	var result struct {
 		Items []map[string]struct {
