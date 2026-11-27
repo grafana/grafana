@@ -398,13 +398,26 @@ func newStubSigner(t *testing.T) *httptest.Server {
 	return signer
 }
 
-func TestNewProvisioningRunnerUsesRuntimeTracer(t *testing.T) {
+func TestRunPassesSuppliedDependenciesToProvisioningRunner(t *testing.T) {
 	tracer := tracing.NewNoopTracerService()
-	global := otel.GetTracerProvider()
-	cfg, err := newProvisioningRunner(&runner.Runtime{Cfg: setting.NewCfg(), Registerer: prometheus.NewRegistry(), Tracer: tracer})
-	require.NoError(t, err)
-	require.Same(t, tracer, cfg.Tracer)
-	require.Same(t, global, otel.GetTracerProvider(), "a runtime tracer must leave the global provider alone")
+	registerer := prometheus.NewRegistry()
+	globalProvider := otel.GetTracerProvider()
+	globalPropagator := otel.GetTextMapPropagator()
+
+	var r *ProvisioningRunner
+	op := runner.Operator{Name: "test", NoNATS: true, Build: func(rt *runner.Runtime) (*runner.Parts, error) {
+		var err error
+		r, err = newProvisioningRunner(rt)
+		require.NoError(t, err)
+		return nil, context.Canceled
+	}}
+	err := op.Run(t.Context(), server.OperatorDependencies{Config: setting.NewCfg(), Tracer: tracer, Registerer: registerer, HealthNotifier: server.NewHealthNotifier()})
+	require.ErrorIs(t, err, context.Canceled)
+
+	require.Same(t, tracer, r.Tracer)
+	require.Same(t, registerer, r.Registerer)
+	require.Same(t, globalProvider, otel.GetTracerProvider(), "a supplied tracer must leave the global provider alone")
+	require.Equal(t, globalPropagator, otel.GetTextMapPropagator(), "a supplied tracer must leave the global propagator alone")
 }
 
 func TestOperatorDefaultsKeepPreviousValues(t *testing.T) {
