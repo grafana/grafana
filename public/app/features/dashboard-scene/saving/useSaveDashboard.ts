@@ -22,6 +22,7 @@ import {
   proposesNewDashboard,
   withoutPendingChangesPreview,
 } from '../lifecycle/pendingChangePreview';
+import { getChangesFromStart } from '../lifecycle/pendingChangesSave';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { DashboardInteractions } from '../utils/interactions';
 import { trackDashboardSceneCreatedOrSaved } from '../utils/tracking';
@@ -89,8 +90,10 @@ export function useSaveDashboard(isCopy = false) {
           resultData.url = `${result.data.url}/${slug}`;
         }
 
-        // Capture before saveCompleted re-snapshots the baseline (which would make this report ~0).
-        const diffCount = scene.getDashboardChanges().diffCount;
+        // Capture before saveCompleted re-snapshots the baseline (which would make this report ~0). A draft
+        // started from a template counts from the template, as a save from the template's page does.
+        const diffCount =
+          (newDashboardUid ? getChangesFromStart(scene) : undefined) ?? scene.getDashboardChanges().diffCount;
 
         await scene.saveCompleted(saveModel, resultData, options.folderUid, saveAsSource);
 

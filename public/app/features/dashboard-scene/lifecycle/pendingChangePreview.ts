@@ -84,6 +84,11 @@ export interface DashboardPendingChanges {
   apply(options: { force: boolean; message?: string }): Promise<ApplyPendingChangesResult>;
   /** Without it, the preview is read-only. */
   history?: PendingChangesHistory;
+  /**
+   * For a new dashboard, the one the requester started it from, such as a template they opened to build
+   * from: saving it counts its changes from there, as saving from the template's own page does.
+   */
+  startedFrom?: DashboardV2Spec;
   /** Forgets the changes; the dashboard isn't affected. Also called once a new dashboard was saved. */
   discard(): Promise<void>;
   /** Opens where the changes were made, to bring them up to date with the dashboard. */

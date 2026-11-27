@@ -9,6 +9,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
 import { getAppPluginConfigs, getExtensionPointPluginDependencies } from 'app/features/plugins/extensions/utils';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -33,6 +34,7 @@ import {
   openPendingChangesForEditing,
   savePendingChanges,
   takeComposerRequestOverAssistantEdit,
+  getChangesFromStart,
   withNewDashboardBaseline,
 } from './pendingChangesSave';
 
@@ -398,6 +400,24 @@ describe('discarding pending changes', () => {
     expect(shown.initialSaveModel).toEqual(newDashboard);
     expect(Object.keys(shown.diffs)).toContain('title');
     expect(shown.changedSaveModel).toBe(changes.changedSaveModel);
+  });
+
+  it('counts the changes a draft started from a template made to it, as a save from the template page does', async () => {
+    const pending = pendingChanges({ baseGeneration: 0 });
+    const scene = await openDraftOnPage(pending, { ...defaultSpec(), title: 'New dashboard' });
+    const saveModel = scene.getSaveModel();
+    if (!isDashboardV2Spec(saveModel)) {
+      throw new Error('expected a v2 draft');
+    }
+    pending.startedFrom = { ...saveModel, title: 'Template' };
+
+    expect(getChangesFromStart(scene)).toBe(1);
+  });
+
+  it('counts nothing from a start for a draft started from nothing', async () => {
+    const scene = await openDraftOnPage(pendingChanges({ baseGeneration: 0 }), { ...defaultSpec(), title: 'New' });
+
+    expect(getChangesFromStart(scene)).toBeUndefined();
   });
 
   it('opens the saved dashboard for editing after Discard changes, which keeps editing', async () => {
