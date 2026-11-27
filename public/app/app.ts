@@ -119,6 +119,7 @@ import { LazyPanelDataErrorView } from './features/panel/components/LazyPanelDat
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { PanelScreenshotServiceImpl } from './features/panel-screenshot/PanelScreenshotServiceImpl';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
+import { getAppPluginsToPreloadSync } from './features/plugins/extensions/appUtils';
 import {
   getObservablePluginComponents,
   getObservablePluginFunctions,
@@ -128,10 +129,10 @@ import { usePluginComponent } from './features/plugins/extensions/usePluginCompo
 import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
 import { usePluginFunctions } from './features/plugins/extensions/usePluginFunctions';
 import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
-import { getAppPluginsToPreload } from './features/plugins/extensions/utils';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { pluginImporter } from './features/plugins/importer/pluginImporter';
 import { initSystemJSHooks } from './features/plugins/loader/systemjsHooks';
+import { addDeclaredPluginKinds } from './features/plugins/pluginKinds';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
@@ -372,7 +373,10 @@ export class GrafanaApp {
 
       if (isSignedInOrAnonymous()) {
         try {
-          preloadPlugins(await getAppPluginsToPreload());
+          const apps = await getAppPluginMetas();
+          // Not awaited: the kinds wait for API discovery, which startup must not
+          void addDeclaredPluginKinds(apps);
+          preloadPlugins(getAppPluginsToPreloadSync(apps));
         } catch (err) {
           notifyAppPluginMetasError(err);
         }

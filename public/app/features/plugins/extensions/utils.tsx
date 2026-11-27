@@ -33,7 +33,6 @@ import { RestrictedGrafanaApisProvider } from '../components/restrictedGrafanaAp
 import { ExtensionErrorBoundary } from './ExtensionErrorBoundary';
 import {
   getAppPluginConfigsSync,
-  getAppPluginsToPreloadSync,
   getExposedComponentPluginDependenciesSync,
   getExtensionPointPluginDependenciesSync,
   getExtensionPointPluginMetaSync,
@@ -619,13 +618,4 @@ export async function getExtensionPointPluginMeta(extensionPointId: string): Pro
 export async function getExposedComponentPluginDependencies(exposedComponentId: string): Promise<string[]> {
   const apps = await getAppPluginMetas();
   return getExposedComponentPluginDependenciesSync(exposedComponentId, apps);
-}
-
-/**
- * Returns a list of app plugins that has to be preloaded in parallel with the core Grafana initialization.
- * @returns An array of app plugin configs that has to be preloaded in parallel with the core Grafana initialization.
- */
-export async function getAppPluginsToPreload(): Promise<AppPluginConfig[]> {
-  const apps = await getAppPluginMetas();
-  return getAppPluginsToPreloadSync(apps);
 }
