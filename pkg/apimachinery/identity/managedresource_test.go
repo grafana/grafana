@@ -244,6 +244,7 @@ const (
 	kindAssignedByNobody      utils.ManagerKind = "test-assigned-by-nobody"
 	kindWithoutTakeover       utils.ManagerKind = "test-without-takeover"
 	kindTakingOverItself      utils.ManagerKind = "test-taking-over-itself"
+	kindTakingOverRegistered  utils.ManagerKind = "test-taking-over-registered"
 )
 
 // A registration lasts for the whole test binary and a second one panics, so the
@@ -255,6 +256,7 @@ func init() {
 		transitions: []transition{
 			{utils.ManagerKindClassicFP, kindAssignedByProvisioner}, //nolint:staticcheck
 			{kindAssignedByProvisioner, utils.ManagerKindClassicFP}, //nolint:staticcheck
+			{kindAssignedByProvisioner, kindTakingOverRegistered},
 		},
 	})
 	identity.RegisterManagerKind(testManagerKind{
@@ -269,6 +271,11 @@ func init() {
 		kind:        kindTakingOverItself,
 		mayAssign:   identity.IsProvisioningServiceIdentity,
 		transitions: []transition{{kindTakingOverItself, kindTakingOverItself}},
+	})
+	identity.RegisterManagerKind(testManagerKind{
+		kind:        kindTakingOverRegistered,
+		mayAssign:   identity.IsProvisioningServiceIdentity,
+		transitions: []transition{{kindAssignedByProvisioner, kindTakingOverRegistered}},
 	})
 }
 
@@ -324,6 +331,11 @@ func TestRegisteredKindTakeover(t *testing.T) {
 	t.Run("the old kind may not take back over from a registered kind whose MayTransition does not allow it", func(t *testing.T) {
 		obj := managedBy(t, utils.ManagerProperties{Kind: kindWithoutTakeover, Identity: "the-manager"})
 		forbidden(t, identity.CheckManagerOnUpdate(who.service, classicFP(), obj), "kind without takeover")
+	})
+
+	t.Run("a registered kind may not take over another registered kind, even when both MayTransition allow it", func(t *testing.T) {
+		obj := managedBy(t, utils.ManagerProperties{Kind: kindTakingOverRegistered, Identity: "the-manager"})
+		forbidden(t, identity.CheckManagerOnUpdate(who.provisioner, obj, takenOver()), "registered to registered")
 	})
 
 	t.Run("a registered kind whose MayTransition allows its own kind still may not change the manager identity", func(t *testing.T) {

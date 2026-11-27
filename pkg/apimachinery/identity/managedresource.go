@@ -97,15 +97,17 @@ func CheckRegisteredKindAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMet
 	return nil
 }
 
+// mayTransition asks the registration when exactly one of the kinds is registered.
+// A move between two registered or two non-registered kinds is refused.
 func mayTransition(from, to utils.ManagerKind) bool {
-	if from == to {
-		return false
-	}
+	fromRegistration, fromRegistered := managerKindRegistry[from]
+	toRegistration, toRegistered := managerKindRegistry[to]
 
-	for _, kind := range []utils.ManagerKind{from, to} {
-		if registration, ok := managerKindRegistry[kind]; ok && registration.MayTransition(from, to) {
-			return true
-		}
+	switch {
+	case fromRegistered && !toRegistered:
+		return fromRegistration.MayTransition(from, to)
+	case toRegistered && !fromRegistered:
+		return toRegistration.MayTransition(from, to)
 	}
 
 	return false
