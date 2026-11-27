@@ -158,7 +158,7 @@ export function useOptions<T extends string | number>(
       asyncOptionsStale &&
       !!option &&
       option !== customValueOption &&
-      !(createCustomValue && option.value === userTypedSearch),
+      !(createCustomValue && userTypedSearch !== '' && option.value === userTypedSearch),
     [asyncOptionsStale, customValueOption, createCustomValue, userTypedSearch]
   );
 

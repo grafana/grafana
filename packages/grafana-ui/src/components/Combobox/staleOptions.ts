@@ -73,7 +73,8 @@ export function useHighlightFreshOptions<T extends string | number>({
       return;
     }
     const firstPickable = options.findIndex(isPickable);
-    if (firstPickable !== highlightedIndex && (stale || firstPickable >= 0)) {
+    // -1 when nothing can be picked, such as fresh results that are all info rows.
+    if (firstPickable !== highlightedIndex) {
       setHighlightedIndex(firstPickable);
     }
     // Only when the options or their staleness change, so a highlight the user moved isn't overridden.

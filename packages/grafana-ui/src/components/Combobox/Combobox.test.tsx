@@ -1033,6 +1033,7 @@ describe('Combobox', () => {
       await user.type(input, 'Alice', { skipClick: true });
       await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
       // The stale 'Alice' row, second in the list, holds the highlight while the search loads.
+      expect(screen.getByRole('option', { name: 'Alice' })).toHaveAttribute('aria-selected', 'true');
       await act(async () => resolveSearch([{ value: 'Alice' }, { value: 'Alicia' }]));
       await user.keyboard('{Enter}');
       expect(onChangeHandler).toHaveBeenCalledWith({ value: 'Alice' });
