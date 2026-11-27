@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type FormEvent, useReducer } from 'react';
+import { type FormEvent, useCallback, useEffect, useReducer, useRef } from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -89,13 +89,18 @@ export const ActionRow = ({
   const DraftModeControl = onDraftsOnlyChange ? draftExtension?.DraftModeControl : undefined;
   // isEnabled() is not reactive, so re-render when the control changes draft mode
   const [, rerender] = useReducer((n: number) => n + 1, 0);
-  const onDraftModeChange = () => {
+  // Stable, so a control can call it from an effect. Reads the filter when called, not at render.
+  const latest = useRef({ draftsOnly: state.draftsOnly, onDraftsOnlyChange });
+  useEffect(() => {
+    latest.current = { draftsOnly: state.draftsOnly, onDraftsOnlyChange };
+  });
+  const onDraftModeChange = useCallback(() => {
     // Without draft mode the Drafts checkbox is hidden, so an active drafts filter could not be cleared
-    if (!draftExtension?.isEnabled() && state.draftsOnly) {
-      onDraftsOnlyChange?.(false);
+    if (!getDraftDashboardExtension()?.isEnabled() && latest.current.draftsOnly) {
+      latest.current.onDraftsOnlyChange?.(false);
     }
     rerender();
-  };
+  }, []);
 
   return (
     <Stack justifyContent="space-between" alignItems="center" wrap={true}>

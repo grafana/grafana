@@ -11,9 +11,9 @@ import { initialState } from '../../state/SearchStateManager';
 import { ActionRow } from './ActionRow';
 
 function renderActionRow({ draftsOnly = false, onDraftsOnlyChange = jest.fn() } = {}) {
-  render(
+  const actionRow = (draftsOnlyValue: boolean) => (
     <ActionRow
-      state={{ ...initialState, draftsOnly }}
+      state={{ ...initialState, draftsOnly: draftsOnlyValue }}
       showStarredFilter
       onLayoutChange={jest.fn()}
       onSortChange={jest.fn()}
@@ -27,7 +27,8 @@ function renderActionRow({ draftsOnly = false, onDraftsOnlyChange = jest.fn() } 
       onDraftsOnlyChange={onDraftsOnlyChange}
     />
   );
-  return { onDraftsOnlyChange };
+  const { rerender } = render(actionRow(draftsOnly));
+  return { onDraftsOnlyChange, setDraftsOnly: (value: boolean) => rerender(actionRow(value)) };
 }
 
 function registerDraftMode(enabled: boolean, extra: Partial<DraftDashboardExtension> = {}) {
@@ -109,6 +110,31 @@ describe('ActionRow drafts filter', () => {
 
       expect(onDraftsOnlyChange).toHaveBeenCalledWith(false);
       expect(screen.queryByRole('checkbox', { name: 'Drafts' })).not.toBeInTheDocument();
+    });
+
+    it('clears a drafts filter turned on after the first render', async () => {
+      registerToggleableDraftMode(true);
+      const { onDraftsOnlyChange, setDraftsOnly } = renderActionRow({ draftsOnly: false });
+      setDraftsOnly(true);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Draft settings' }));
+
+      expect(onDraftsOnlyChange).toHaveBeenCalledWith(false);
+    });
+
+    it('passes the control the same onChange on every render', async () => {
+      const onChanges = new Set<() => void>();
+      registerDraftMode(true, {
+        DraftModeControl: ({ onChange }) => {
+          onChanges.add(onChange);
+          return null;
+        },
+      });
+      const { setDraftsOnly } = renderActionRow();
+      setDraftsOnly(true);
+
+      expect(await screen.findByRole('checkbox', { name: 'Drafts' })).toBeChecked();
+      expect(onChanges.size).toBe(1);
     });
 
     it('is not shown where the list has no drafts filter', async () => {
