@@ -26,7 +26,7 @@ func ProvideLoader(sql db.DB, catalog *RoleCatalog, actions ac.ActionResolver,
 		migrated = NewZanzanaPermissionResolver(zanzanaClient, users, restConfig, cfg.IDUseExternalGroupsForGroupsClaim)
 	}
 	scopeResolver := NewPermissionScopeResolver(features, restConfig)
-	return newEmbeddedLoader(sql, catalog, actions, cache, cfg, features, license, migrated, scopeResolver)
+	return newEmbeddedLoader(sql, catalog, actions, cache, cfg, license, migrated, scopeResolver)
 }
 
 func ProvideClient(loader *Loader, cfg *setting.Cfg, reg prometheus.Registerer) legacyclient.LegacyUserPermissionsClient {

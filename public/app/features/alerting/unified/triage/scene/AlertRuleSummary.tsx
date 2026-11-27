@@ -12,7 +12,7 @@ import {
 } from '@grafana/schema';
 import { Box } from '@grafana/ui';
 
-import { overrideToFixedColor } from '../../home/Insights';
+import { overrideToFixedColor } from '../../insights/utils';
 import { useWorkbenchContext } from '../WorkbenchContext';
 
 import { sortByAlertState } from './dataFrameUtils';

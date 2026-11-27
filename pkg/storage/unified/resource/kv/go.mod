@@ -11,6 +11,7 @@ require (
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/lib/pq v1.12.3
 	github.com/stretchr/testify v1.12.1
+	pgregory.net/rapid v1.3.0
 )
 
 replace github.com/grafana/grafana/pkg/util/sqlite => ../../../../util/sqlite

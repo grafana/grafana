@@ -6,6 +6,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -79,15 +80,16 @@ func setupBasicRoleService(t *testing.T) *Service {
 	)
 
 	s := &Service{
-		cfg:            setting.NewCfg(),
-		features:       featuremgmt.WithFeatures(),
-		log:            log.New("accesscontrol-test"),
-		registrations:  accesscontrol.RegistrationList{},
-		roles:          accesscontrol.BuildBasicRoleDefinitions(),
-		store:          store,
-		cache:          localcache.ProvideService(),
-		permRegistry:   permreg.ProvidePermissionRegistry(),
-		actionResolver: resourcepermissions.NewActionSetService(),
+		openFeatureClient: openfeature.NewDefaultClient(),
+		cfg:               setting.NewCfg(),
+		features:          featuremgmt.WithFeatures(),
+		log:               log.New("accesscontrol-test"),
+		registrations:     accesscontrol.RegistrationList{},
+		roles:             accesscontrol.BuildBasicRoleDefinitions(),
+		store:             store,
+		cache:             localcache.ProvideService(),
+		permRegistry:      permreg.ProvidePermissionRegistry(),
+		actionResolver:    resourcepermissions.NewActionSetService(),
 	}
 
 	// Fixed-role registration builds the process-wide basic role by repeated

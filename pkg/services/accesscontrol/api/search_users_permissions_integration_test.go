@@ -574,7 +574,7 @@ func newSearchPermissionsFixture(t *testing.T, enabled bool) *searchPermissionsF
 	cache := localcache.ProvideService()
 	store := &searchPermissionsStore{Store: database.ProvideService(sql)}
 	catalog := legacypermissions.NewRoleCatalog()
-	loader := legacypermissions.NewLoader(sql, catalog, actions, cache, cfg, features, &licensing.OSSLicensingService{}, nil)
+	loader := legacypermissions.NewLoader(sql, catalog, actions, cache, cfg, &licensing.OSSLicensingService{}, nil)
 	client := &searchClient{LegacyUserPermissionsClient: legacypermissions.NewEmbeddedClient(loader, cfg)}
 	service, initErr := acimpl.ProvideOSSService(cfg, store, actions, cache,
 		features, tracer, sql, registry, nil, iam.Features{}, client, catalog)

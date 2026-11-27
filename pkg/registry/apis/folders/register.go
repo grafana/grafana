@@ -318,6 +318,7 @@ func (b *FolderAPIBuilder) storageForVersion(
 	if err != nil {
 		return err
 	}
+	unified.DeleteStrategy = cascadeFinalizerDeleteStrategy{unified.DeleteStrategy}
 	b.registerPermissionHooks(unified)
 	b.storage = unified
 

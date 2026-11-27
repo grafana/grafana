@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/singleflight"
@@ -132,6 +133,7 @@ func ProvideOSSService(
 		cache:                     cache,
 		cfg:                       cfg,
 		features:                  features,
+		openFeatureClient:         openfeature.NewDefaultClient(),
 		userPermissionsAPIEnabled: iamFeatures.UserPermissionsAPIEnabled(),
 		log:                       log.New("accesscontrol.service"),
 		roles:                     accesscontrol.BuildBasicRoleDefinitions(),
@@ -158,6 +160,7 @@ type Service struct {
 	cache                     *localcache.CacheService
 	cfg                       *setting.Cfg
 	features                  featuremgmt.FeatureToggles
+	openFeatureClient         *openfeature.Client
 	userPermissionsAPIEnabled bool
 	log                       log.Logger
 	registrations             accesscontrol.RegistrationList
@@ -297,8 +300,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 	// permission assigned to user will be returned, only for org role.
 	userID, _ := identity.UserIdentifier(user.GetID())
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions)
+	excludeRedundant := s.excludeRedundantManagedPermissions(ctx)
 
 	dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
 		OrgID:                              user.GetOrgID(),
@@ -330,8 +332,7 @@ func (s *Service) getBasicRolePermissions(ctx context.Context, role string, orgI
 	}
 	s.rolesMu.RUnlock()
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions)
+	excludeRedundant := s.excludeRedundantManagedPermissions(ctx)
 
 	// Fetch managed role permissions assigned to basic roles
 	dbPermissions, err := s.store.GetBasicRolesPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
@@ -349,8 +350,7 @@ func (s *Service) getTeamsPermissions(ctx context.Context, teamIDs []int64, orgI
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getTeamsPermissions")
 	defer span.End()
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions)
+	excludeRedundant := s.excludeRedundantManagedPermissions(ctx)
 
 	teamPermissions, err := s.store.GetTeamsPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
 		TeamIDs:                            teamIDs,
@@ -380,8 +380,7 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 		}
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions)
+	excludeRedundant := s.excludeRedundantManagedPermissions(ctx)
 
 	permissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
 		OrgID:                              user.GetOrgID(),
@@ -400,6 +399,7 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 }
 
 func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+	ctx = s.withManagedPermissionFiltering(ctx)
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getCachedUserPermissions")
 	defer span.End()
 
@@ -438,7 +438,7 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	// Deduplicate concurrent permission assemblies for the same user.
 	// Without this, concurrent requests for the same user each independently
 	// re-assemble from sub-caches on cache expiry, amplifying DB load.
-	res, err, _ := s.singleFlight.Do(user.GetCacheKey(), func() (any, error) {
+	res, err, _ := s.singleFlight.Do(accesscontrol.ManagedPermissionCacheKey(user.GetCacheKey(), s.excludeRedundantManagedPermissions(ctx)), func() (any, error) {
 		return assemble()
 	})
 	if err != nil {
@@ -484,10 +484,16 @@ func (s *Service) getCachedBasicRolePermissions(ctx context.Context, role string
 }
 
 func (s *Service) getCachedUserDirectPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+	ctx = s.withManagedPermissionFiltering(ctx)
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getCachedUserDirectPermissions")
 	defer span.End()
 
-	key := accesscontrol.GetUserDirectPermissionCacheKey(user)
+	excludeRedundant := s.excludeRedundantManagedPermissions(ctx)
+	baseKey := accesscontrol.GetUserDirectPermissionCacheKey(user)
+	key := accesscontrol.ManagedPermissionCacheKey(baseKey, excludeRedundant)
+	if options.ReloadCache {
+		s.cache.ExclusiveDelete(accesscontrol.ManagedPermissionCacheKey(baseKey, !excludeRedundant))
+	}
 	getUserPermissionsFn := func(ctx context.Context) ([]accesscontrol.Permission, error) {
 		return s.getUserDirectPermissions(ctx, user)
 	}
@@ -545,6 +551,7 @@ func (s *Service) getCachedPermissions(ctx context.Context, key string, getPermi
 }
 
 func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+	ctx = s.withManagedPermissionFiltering(ctx)
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getCachedTeamsPermissions")
 	defer span.End()
 
@@ -559,7 +566,7 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 
 	if !options.ReloadCache {
 		for _, teamID := range teams {
-			key := accesscontrol.GetTeamPermissionCacheKey(teamID, orgID)
+			key := accesscontrol.ManagedPermissionCacheKey(accesscontrol.GetTeamPermissionCacheKey(teamID, orgID), s.excludeRedundantManagedPermissions(ctx))
 			teamPermissions, ok := s.cache.Get(key)
 			if ok {
 				metrics.MAccessPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheHit).Inc()
@@ -570,7 +577,10 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 			}
 		}
 	} else {
-		// reload cache and fetch all teams permissions
+		// Reloading one policy must not leave stale grants under the other.
+		for _, teamID := range teams {
+			s.cache.Delete(accesscontrol.ManagedPermissionCacheKey(accesscontrol.GetTeamPermissionCacheKey(teamID, orgID), !s.excludeRedundantManagedPermissions(ctx)))
+		}
 		miss = teams
 	}
 
@@ -584,7 +594,7 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 		}
 
 		for teamID, teamPermissions := range teamsPermissions {
-			key := accesscontrol.GetTeamPermissionCacheKey(teamID, orgID)
+			key := accesscontrol.ManagedPermissionCacheKey(accesscontrol.GetTeamPermissionCacheKey(teamID, orgID), s.excludeRedundantManagedPermissions(ctx))
 			s.cache.Set(key, teamPermissions, cacheTTL)
 			permissions = append(permissions, teamPermissions...)
 		}
@@ -594,7 +604,7 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 }
 
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {
-	s.cache.ExclusiveDelete(accesscontrol.GetUserDirectPermissionCacheKey(user))
+	accesscontrol.ClearManagedPermissionCache(s.cache.ExclusiveDelete, accesscontrol.GetUserDirectPermissionCacheKey(user))
 	s.cache.ExclusiveDelete(accesscontrol.GetZanzanaUserPermissionCacheKey(user))
 }
 
