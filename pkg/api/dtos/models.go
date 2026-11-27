@@ -25,28 +25,27 @@ type LoginCommand struct {
 }
 
 type CurrentUser struct {
-	IsSignedIn                 bool               `json:"isSignedIn"`
-	Id                         int64              `json:"id"`
-	UID                        string             `json:"uid"`
-	Login                      string             `json:"login"`
-	Email                      string             `json:"email"`
-	Name                       string             `json:"name"`
-	Theme                      string             `json:"theme"`
-	LightTheme                 bool               `json:"lightTheme"` // deprecated, use theme instead
-	OrgCount                   int                `json:"orgCount"`
-	OrgId                      int64              `json:"orgId"`
-	OrgName                    string             `json:"orgName"`
-	OrgRole                    org.RoleType       `json:"orgRole"`
-	IsGrafanaAdmin             bool               `json:"isGrafanaAdmin"`
-	GravatarUrl                string             `json:"gravatarUrl"`
-	Timezone                   string             `json:"timezone"`
-	WeekStart                  string             `json:"weekStart"`
-	Locale                     string             `json:"locale"`
-	Language                   string             `json:"language"`
-	HasEditPermissionInFolders bool               `json:"hasEditPermissionInFolders"`
-	AuthenticatedBy            string             `json:"authenticatedBy"`
-	Permissions                UserPermissionsMap `json:"permissions,omitempty"`
-	Analytics                  AnalyticsSettings  `json:"analytics"`
+	IsSignedIn      bool               `json:"isSignedIn"`
+	Id              int64              `json:"id"`
+	UID             string             `json:"uid"`
+	Login           string             `json:"login"`
+	Email           string             `json:"email"`
+	Name            string             `json:"name"`
+	Theme           string             `json:"theme"`
+	LightTheme      bool               `json:"lightTheme"` // deprecated, use theme instead
+	OrgCount        int                `json:"orgCount"`
+	OrgId           int64              `json:"orgId"`
+	OrgName         string             `json:"orgName"`
+	OrgRole         org.RoleType       `json:"orgRole"`
+	IsGrafanaAdmin  bool               `json:"isGrafanaAdmin"`
+	GravatarUrl     string             `json:"gravatarUrl"`
+	Timezone        string             `json:"timezone"`
+	WeekStart       string             `json:"weekStart"`
+	Locale          string             `json:"locale"`
+	Language        string             `json:"language"`
+	AuthenticatedBy string             `json:"authenticatedBy"`
+	Permissions     UserPermissionsMap `json:"permissions,omitempty"`
+	Analytics       AnalyticsSettings  `json:"analytics"`
 }
 
 type AnalyticsSettings struct {

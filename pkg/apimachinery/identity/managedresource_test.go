@@ -295,6 +295,13 @@ func TestRegisteredManagerKind(t *testing.T) {
 		require.NoError(t, identity.CheckManagerOnCreate(who.user, unmanaged(t)))
 	})
 
+	t.Run("only a registered kind counts as registered", func(t *testing.T) {
+		require.True(t, identity.IsRegisteredManagerKind(kindAssignedByProvisioner))
+		require.False(t, identity.IsRegisteredManagerKind(utils.ManagerKindRepo))
+		require.False(t, identity.IsRegisteredManagerKind(utils.ManagerKindClassicFP)) //nolint:staticcheck
+		require.False(t, identity.IsRegisteredManagerKind("test-never-registered"))
+	})
+
 	t.Run("a kind nobody registered is not managed", func(t *testing.T) {
 		obj := managedBy(t, utils.ManagerProperties{Kind: "test-never-registered", Identity: "the-manager"})
 		require.NoError(t, identity.CheckManagerOnCreate(who.user, obj))

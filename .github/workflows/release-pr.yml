@@ -267,7 +267,7 @@ jobs:
             if [ -f lerna.json ]; then
               "${package_runner[@]}" lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
             else
-              "${package_runner[@]}" nx release version "$VERSION"
+              "${package_runner[@]}" nx release version --groups=grafana "$VERSION"
             fi
           fi
       - name: Refresh lockfile
