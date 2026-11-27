@@ -28,7 +28,7 @@ interface FrozenEventsQuery extends DataQuery {
 }
 
 /** What a frozen annotation keeps from the layer its events came from. */
-export type FrozenAnnotationSource = Pick<AnnotationQuery, 'name' | 'iconColor' | 'hide'>;
+type FrozenAnnotationSource = Pick<AnnotationQuery, 'name' | 'iconColor' | 'hide'>;
 
 /**
  * An annotation layer that replays the events a panel showed on its dashboard when it was added.
@@ -38,7 +38,7 @@ export type FrozenAnnotationSource = Pick<AnnotationQuery, 'name' | 'iconColor' 
  * The stored events still go through everything a live layer does to them (colours, alert states,
  * regions, dedup), because the layer is handed a datasource that answers with them.
  */
-export class FrozenAnnotationsDataLayer extends dataLayers.AnnotationsDataLayer {
+class FrozenAnnotationsDataLayer extends dataLayers.AnnotationsDataLayer {
   protected async resolveDataSource(query: AnnotationQuery) {
     return new FrozenEventsDataSource(isFrozenEventsQuery(query.target) ? query.target.snapshot : []);
   }
