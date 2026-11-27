@@ -27,4 +27,5 @@ const (
 	grafanaPathfinderSquad                      codeowner = "@grafana/pathfinder"
 	grafanaDataSources                          codeowner = "@grafana/data-sources"
 	grafanaDataSourcesPlugins                   codeowner = "@grafana/data-sources-plugins"
+	grafanaAdaptiveTelemetrySquad               codeowner = "@grafana/adaptive-telemetry"
 )

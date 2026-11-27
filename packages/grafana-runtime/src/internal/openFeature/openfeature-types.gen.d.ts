@@ -113,6 +113,7 @@ declare module "@openfeature/core" {
     | "alertingImportAlertmanagerAPI"
     | "preferLibraryPanelTitle"
     | "otelLogsFormatting"
+    | "adaptivelogs.enableTimeMachine"
     | "dashboardLevelTimeMacros"
     | "favoriteDatasources"
     | "grafana.newTextPanel"
