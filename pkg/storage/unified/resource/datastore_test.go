@@ -2119,6 +2119,20 @@ func TestDataStore_ClusterAndNamespacedKeysSharingPrefix(t *testing.T) {
 		require.Equal(t, SortOrderDesc, recorder.calls[0].Sort)
 		require.Equal(t, int64(1), recorder.calls[0].Limit)
 	})
+
+	t.Run("fallback scan starts below the rejected row", func(t *testing.T) {
+		recorder := &keysRecordingKV{KV: setupBadgerKV(t)}
+		ds := newDataStore(recorder)
+		latest := saveCollisionKey(t, ds, "", collisionName, 300, DataActionUpdated)
+		rejected := saveCollisionKey(t, ds, collisionName, "9", 500, DataActionCreated)
+
+		recorder.calls = nil
+		got, err := ds.GetLatestResourceKey(t.Context(), clusterGet)
+		require.NoError(t, err)
+		require.Equal(t, latest, got)
+		require.Len(t, recorder.calls, 2)
+		require.Equal(t, rejected.String(), recorder.calls[1].EndKey)
+	})
 }
 
 // The fallback scan for a cluster-scoped latest read must not need a second

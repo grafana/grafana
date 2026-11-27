@@ -263,10 +263,20 @@ func (d *dataStore) LastResourceVersion(ctx context.Context, key ListRequestKey)
 		return dataKey, err
 	}
 	// A namespaced object whose name starts with a digit sorts above this
-	// cluster-scoped object's rows, so scan past it. This runs after the lookup
+	// cluster-scoped object's rows, so scan below it. This runs after the lookup
 	// above has released its cursor, so it never needs a second connection.
-	for dataKey, err := range d.keys(ctx, key, SortOrderDesc, 0) {
-		return dataKey, err
+	for k, err := range pagedKeys(ctx, d.kv, dataSection, ListOptions{
+		StartKey: key.Prefix(),
+		EndKey:   newest,
+		Sort:     SortOrderDesc,
+	}, keyPageSize) {
+		if err != nil {
+			return DataKey{}, err
+		}
+		dataKey, err := ParseKey(k)
+		if err != nil || key.contains(dataKey) {
+			return dataKey, err
+		}
 	}
 	return DataKey{}, ErrNotFound
 }
