@@ -61,7 +61,7 @@ To go back to the Grafana Cloud defaults, click **Reset to default values**. Thi
 | Enable SMTP  | Turns email sending on or off for Grafana-managed alerts. When enabled, **Host** and **From address** are required.                                                                                       |
 | Host         | The address of your SMTP server in the format `hostname:port`, or `[ipv6]:port` for IPv6 addresses, with a port between 1 and 65535. For example, `smtp.example.com:587`. Private addresses are rejected. |
 | User         | The username used to authenticate with your SMTP server.                                                                                                                                                  |
-| Password     | The password used to authenticate with your SMTP server. Once saved, the password is hidden. Click **Reset** to replace it.                                                                               |
+| Password     | The password used to authenticate with your SMTP server. After you save it, the password is hidden. Click **Reset** to replace it.                                                                        |
 | From address | The email address that appears as the sender of the notifications.                                                                                                                                        |
 | From name    | The name that appears as the sender of the notifications.                                                                                                                                                 |
 
