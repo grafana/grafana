@@ -356,7 +356,7 @@ func (s *elasticsearchAdapter) encodeHits(f elasticsearchRequestedFields, hits [
 			wire.ResourceVersion = new(rv)
 		}
 		for i, name := range f.names {
-			if value, ok := hit.Fields[name]; ok && value != nil {
+			if value, ok := sourceField(hit.Fields, name); ok && value != nil {
 				def := f.definitions[i]
 				if def.Type == resource.SearchFieldTypeInt64 || def.Type == resource.SearchFieldTypeDate || def.Type == resource.SearchFieldTypeDouble {
 					values := enginequery.FlattenSearchResultValue(value)
@@ -387,4 +387,20 @@ func (s *elasticsearchAdapter) encodeHits(f elasticsearchRequestedFields, hits [
 		result = append(result, wire)
 	}
 	return result, nil
+}
+
+func sourceField(source map[string]any, path string) (any, bool) {
+	for source != nil {
+		// A field written flat, or a label containing a dot, is a literal key.
+		if value, ok := source[path]; ok {
+			return value, true
+		}
+		name, rest, ok := strings.Cut(path, ".")
+		if !ok {
+			break
+		}
+		source, _ = source[name].(map[string]any)
+		path = rest
+	}
+	return nil, false
 }

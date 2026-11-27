@@ -54,7 +54,7 @@ func TestElasticsearchIndexThroughAdapter(t *testing.T) {
 	id := resource.SearchID(key)
 	build := func(title string, rv int64) *resource.BulkIndexItem {
 		t.Helper()
-		payload := fmt.Appendf(nil, `{"apiVersion":"dashboard.grafana.app/v1","kind":"Dashboard","metadata":{"name":"built","namespace":"default"},"spec":{"title":%q,"views":%d}}`, title, rv)
+		payload := fmt.Appendf(nil, `{"apiVersion":"dashboard.grafana.app/v1","kind":"Dashboard","metadata":{"name":"built","namespace":"default","labels":{"team":"search","grafana.app/team":"storage"}},"spec":{"title":%q,"views":%d}}`, title, rv)
 		doc, err := builder.BuildDocument(ctx, key, rv, payload)
 		require.NoError(t, err)
 		return &resource.BulkIndexItem{Action: resource.ActionIndex, Doc: doc}
@@ -74,7 +74,7 @@ func TestElasticsearchIndexThroughAdapter(t *testing.T) {
 	}
 	find := func(text string) []*enginequery.Hit {
 		t.Helper()
-		result, err := query(text).Search(ctx, enginequery.Request{Size: 2, Fields: []string{"title", "views"}})
+		result, err := query(text).Search(ctx, enginequery.Request{Size: 2, Fields: []string{"title", "views", "labels.team", "labels.grafana.app/team", "labels.missing"}})
 		require.NoError(t, err)
 		return result.Hits
 	}
@@ -101,15 +101,21 @@ func TestElasticsearchIndexThroughAdapter(t *testing.T) {
 	require.Equal(t, id, hits[0].ID)
 	require.Equal(t, "Initial dashboard", hits[0].Fields["title"])
 	require.Equal(t, rv, hits[0].Fields["views"])
+	require.Equal(t, "search", hits[0].Fields["labels.team"])
+	require.Equal(t, "storage", hits[0].Fields["labels.grafana.app/team"])
+	require.NotContains(t, hits[0].Fields, "labels.missing")
 	metadata, err := query("Initial").ReadAuthzMetadata(ctx, []string{id})
 	require.NoError(t, err)
 	require.Contains(t, metadata.Values, id)
 	require.Empty(t, metadata.Values[id].Folder)
-	lookup := enginequery.LookupRequest{IDs: []string{id}, Fields: []string{"views"}}
+	lookup := enginequery.LookupRequest{IDs: []string{id}, Fields: []string{"views", "labels.team", "labels.grafana.app/team", "labels.missing"}}
 	loaded, err := query("Initial").Lookup(ctx, lookup)
 	require.NoError(t, err)
 	require.Len(t, loaded.Hits, 1)
 	require.Equal(t, "", loaded.Hits[0].Fields[resource.SEARCH_FIELD_FOLDER])
+	require.Equal(t, "search", loaded.Hits[0].Fields["labels.team"])
+	require.Equal(t, "storage", loaded.Hits[0].Fields["labels.grafana.app/team"])
+	require.NotContains(t, loaded.Hits[0].Fields, "labels.missing")
 	require.Equal(t, hits[0].StableSortKey, loaded.Hits[0].StableSortKey)
 	_, err = query("Renamed").Search(ctx, enginequery.Request{Size: 1, SearchAfter: hits[0].Cursor})
 	require.Equal(t, codes.InvalidArgument, status.Code(err), "cursor must not be reused with a different query")
