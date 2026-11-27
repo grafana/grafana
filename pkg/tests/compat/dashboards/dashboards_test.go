@@ -19,6 +19,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/client-go/dynamic"
@@ -628,6 +629,95 @@ func v1Spec(_ *testing.T, c content) map[string]any {
 			}},
 		}},
 	}
+}
+
+func parseV1(spec map[string]any, tabs bool) (content, error) {
+	if err := checkV1Wire(spec, tabs); err != nil {
+		return content{}, err
+	}
+
+	type binding struct {
+		Type string `json:"type"`
+		UID  string `json:"uid"`
+	}
+	var dashboard struct {
+		Title  string `json:"title"`
+		Panels []struct {
+			Title   string `json:"title"`
+			Type    string `json:"type"`
+			Targets []struct {
+				Expr       string  `json:"expr"`
+				Datasource binding `json:"datasource"`
+				Hide       bool    `json:"hide"`
+			} `json:"targets"`
+		} `json:"panels"`
+	}
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(spec, &dashboard); err != nil {
+		return content{}, err
+	}
+	panel := dashboard.Panels[len(dashboard.Panels)-1]
+	target := panel.Targets[0]
+	if target.Hide {
+		return content{}, fmt.Errorf("classic panel's only query is hidden")
+	}
+	return content{
+		Title: dashboard.Title, Panel: panel.Title, Query: target.Expr, Viz: panel.Type,
+		DatasourceType: target.Datasource.Type, DatasourceUID: target.Datasource.UID,
+	}, nil
+}
+
+func checkV1Wire(spec map[string]any, tabs bool) error {
+	panel := map[string]any{
+		"id":      1,
+		"targets": []any{map[string]any{"refId": "A", "datasource": map[string]any{}}},
+	}
+	panel["gridPos"] = classicGridPosition(0, panelWidth, panelHeight)
+	return checkWireProjection([]any{panel}, spec["panels"], "spec.panels")
+}
+
+func classicGridPosition(y, width, height int) map[string]any {
+	return map[string]any{"x": int64(0), "y": int64(y), "w": int64(width), "h": int64(height)}
+}
+
+// A projection checks every listed field, including empty objects and arrays. Maps
+// may have additional fields, while array order and membership are part of the fixture.
+func checkWireProjection(want, got any, path string) error {
+	switch w := want.(type) {
+	case map[string]any:
+		g, ok := got.(map[string]any)
+		if !ok || g == nil {
+			return fmt.Errorf("%s: expected an object, got %v", path, got)
+		}
+		for _, key := range slices.Sorted(maps.Keys(w)) {
+			if err := checkWireProjection(w[key], g[key], path+"."+key); err != nil {
+				return err
+			}
+		}
+	case []any:
+		g, ok := got.([]any)
+		if !ok || g == nil || len(w) != len(g) {
+			return fmt.Errorf("%s: expected an array of %d items, got %v", path, len(w), got)
+		}
+		for i := range w {
+			if err := checkWireProjection(w[i], g[i], fmt.Sprintf("%s[%d]", path, i)); err != nil {
+				return err
+			}
+		}
+	default:
+		// The client may represent the same wire integer as an int64 or float64.
+		wJSON, err := json.Marshal(want)
+		if err != nil {
+			return err
+		}
+		gJSON, err := json.Marshal(got)
+		if err != nil {
+			return err
+		}
+		if string(wJSON) != string(gJSON) {
+			return fmt.Errorf("%s: expected %s, got %s", path, wJSON, gJSON)
+		}
+	}
+	return nil
 }
 
 func resource(h *apis.K8sTestHelper, gvr schema.GroupVersionResource) dynamic.ResourceInterface {
