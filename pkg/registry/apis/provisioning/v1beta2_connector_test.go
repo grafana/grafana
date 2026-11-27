@@ -364,6 +364,20 @@ func TestV1beta2RequestConversions(t *testing.T) {
 		require.ErrorContains(t, err, "unknown field")
 	})
 
+	t.Run("authorize requests convert strictly to v0alpha1", func(t *testing.T) {
+		convert := v1beta2StrictObjectRequest(scheme, func() runtime.Object { return &v1beta2.ConnectionAuthorizeRequest{} })
+		out, err := convert([]byte(`{"spec":{"code":"abc","redirectURI":"https://example.com/callback"}}`))
+		require.NoError(t, err)
+		var req provisioning.ConnectionAuthorizeRequest
+		require.NoError(t, json.Unmarshal(out, &req))
+		assert.Equal(t, provisioning.APIVERSION, req.APIVersion)
+		assert.Equal(t, "abc", req.Spec.Code)
+		assert.Equal(t, "https://example.com/callback", req.Spec.RedirectURI)
+
+		_, err = convert([]byte(`{"spec":{"code":"abc","bogus":true}}`))
+		require.ErrorContains(t, err, "unknown field")
+	})
+
 	t.Run("empty test repositories stay empty", func(t *testing.T) {
 		convert := v1beta2TestRequest(scheme)
 		out, err := convert([]byte(`{}`))
