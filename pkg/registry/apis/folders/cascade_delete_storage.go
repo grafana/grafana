@@ -161,17 +161,11 @@ func (c cascadeCollectionDeleter) firstFinalizerFolder(ctx context.Context, list
 	}
 }
 
-// Delete removes a folder and, when cascade delete is enabled, its entire subtree. A forced delete of
-// a folder with the cascade finalizer is handed to the cascade controller, whether or not the flag is
-// on, once the requester's access to its contents is checked (see checkFolderContentsAccess for the
-// permissions required besides deleting the folder itself). For other folders the subtree is walked
-// depth-first: each folder is stamped with a terminating label on the way down, and folders are
+// Delete removes a folder and, when cascade delete is enabled, its entire subtree. With the async flag
+// on, the delete is handed to the cascade controller through the finalizer. Otherwise the subtree is
+// walked depth-first: each folder is stamped with a terminating label on the way down, and folders are
 // deleted on the way back up once they have no remaining child folders (i.e. leaves first).
 func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	if !forceDeleteFromDeleteOptions(options) {
-		return s.Storage.Delete(ctx, name, deleteValidation, options)
-	}
-
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, false, err
@@ -183,35 +177,54 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 	if err != nil {
 		return nil, false, err
 	}
-	// The cascade controller owns deletion of a finalizer folder's subtree, so the delete only has to
-	// mark it terminating; walking the subtree here would bypass the controller's batching and status.
-	// The controller deletes the contents as the service identity, so the requester's access to them
-	// must be verified here, before the folder is marked terminating.
-	if f, ok := obj.(*foldersv1.Folder); ok && hasCascadeDeleteFinalizer(f) {
-		user, err := identity.GetRequester(ctx)
-		if err != nil {
+	f, ok := obj.(*foldersv1.Folder)
+	if !ok {
+		return nil, false, fmt.Errorf("obj is not folders.Folder")
+	}
+	// Capture the requester before switching to the service identity, so the access checks run as the
+	// user rather than the service.
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+	parentUID := f.GetAnnotations()[utils.AnnoKeyFolder]
+	isCascadeSubfolder, err := s.isCascadeSubfolderDelete(ctx, user, parentUID)
+	if err != nil {
+		return nil, false, err
+	}
+	// The controller's subfolder deletes stay async whatever the flag says, so a cascade already handed
+	// over still finishes after the flag is turned off.
+	if folderAsyncCascadeDeleteEnabled(ctx) || isCascadeSubfolder {
+		return s.deleteAsync(ctx, ns, f, user, isCascadeSubfolder, deleteValidation, options)
+	}
+	// Whether this delete walks the subtree itself; otherwise only the folder is deleted.
+	walksSubtree := kubernetesFolderCascadeDeleteEnabled(ctx) && forceDeleteFromDeleteOptions(options)
+	// A leftover finalizer is removed so the delete runs synchronously.
+	if hasCascadeDeleteFinalizer(f) {
+		if f.DeletionTimestamp != nil {
+			// Already in the controller's hands: the delete only (re)marks the folder terminating.
+			return s.Storage.Delete(ctx, name, deleteValidation, options)
+		}
+		// The requester is authorized up front, as the walk deletes the contents as the service identity.
+		check := s.checkFolderDeleteAccess
+		if walksSubtree {
+			// A delete that walks the subtree needs access to check the contents, not just the folder itself.
+			check = s.checkFolderContentsAccess
+		}
+		if err := check(ctx, user, ns.Value, f.Name, parentUID); err != nil {
 			return nil, false, err
 		}
-		parentUID := f.GetAnnotations()[utils.AnnoKeyFolder]
-		exempt, err := s.isCascadeSubfolderDelete(ctx, user, parentUID)
-		if err != nil {
-			return nil, false, err
-		}
-		if !exempt {
-			if err := s.checkFolderContentsAccess(ctx, user, ns.Value, name, parentUID); err != nil {
-				return nil, false, err
-			}
+		if !walksSubtree {
 			// The check used this version's parent, so a concurrent move must fail the delete.
 			if options, err = pinToCheckedVersion(options, f); err != nil {
 				return nil, false, err
 			}
 		}
-		return s.Storage.Delete(ctx, name, deleteValidation, options)
 	}
-	// The folder is force-deleted but has no cascade finalizer (that case returned above), so with
-	// cascade delete disabled there is no subtree to walk: delegate to the regular delete.
-	if !kubernetesFolderCascadeDeleteEnabled(ctx) {
-		return s.Storage.Delete(ctx, name, deleteValidation, options)
+
+	// Delegate when the synchronous cascade flag is disabled or the user is not forcing the deletion.
+	if !walksSubtree {
+		return s.Storage.Delete(withCascadeFinalizerOnDelete(ctx, false), name, deleteValidation, options)
 	}
 	if deleteValidation != nil {
 		if err := deleteValidation(ctx, obj); err != nil {
@@ -222,12 +235,6 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 		return nil, false, err
 	}
 
-	// Capture the requester before switching to the service identity, so the per-folder access checks
-	// in the cascade run as the user rather than the service.
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, false, err
-	}
 	rootParent := ""
 	if meta, mErr := utils.MetaAccessor(obj); mErr == nil {
 		rootParent = meta.GetFolder()
@@ -291,13 +298,22 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 
 	// Check existence before authorization so stale search hits remain idempotent,
 	// but authorize all contained resources before recording or stamping this folder.
-	if _, err := s.Get(ctx, name, &metav1.GetOptions{}); err != nil {
+	walkedObj, err := s.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
 		if apierrors.IsNotFound(err) && !requested {
 			return nil, false, nil
 		}
 		return nil, false, err
 	}
+	walked, ok := walkedObj.(*foldersv1.Folder)
+	if !ok {
+		return nil, false, fmt.Errorf("obj is not folders.Folder")
+	}
 	if err := s.checkFolderContentsAccess(ctx, user, namespace, name, parentUID); err != nil {
+		return nil, false, err
+	}
+	// Every write below must reach the folder that was authorized, not one recreated under its name.
+	if options, err = pinUID(options, walked); err != nil {
 		return nil, false, err
 	}
 
@@ -308,16 +324,16 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 		// Establish intent as the original caller before any cascade mutation, not
 		// just before the final folder delete. Keep the captured UID pinned below.
 		deleteOptions, err = writer.preparePendingDelete(identity.WithRequester(ctx, user), name, nil, options)
-		if apierrors.IsNotFound(err) && !requested {
-			return nil, false, nil
-		}
 		if err != nil {
+			if s.walkedGone(ctx, walked, err, requested) {
+				return nil, false, nil
+			}
 			return nil, false, err
 		}
 	}
 
 	if err := s.markTerminating(ctx, name, deleteOptions); err != nil {
-		if apierrors.IsNotFound(err) && !requested {
+		if s.walkedGone(ctx, walked, err, requested) {
 			return nil, false, nil
 		}
 		return nil, false, err
@@ -373,15 +389,76 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 			"folder", name, "has_contents_deleter", s.contentsDeleter != nil, "dry_run", len(options.DryRun) > 0)
 	}
 
+	// A terminating folder kept its finalizer through the walk, as the store deletes it once the last
+	// one goes, which would be before its contents were removed. They are gone now, so release it. The
+	// release deletes it, so a delete by name afterwards could only reach a folder created in between.
+	if released, err := s.releaseTerminating(ctx, walked, options); err != nil || released != nil {
+		return released, false, err
+	}
+
 	// Delete this folder last. NotFound is success for children (idempotent), but the requested
-	// folder keeps its missing-resource error.
+	// folder keeps its missing-resource error. The finalizer goes with the delete itself, not the
+	// label update, which managed folders restrict.
 	// TODO: Defer caller-identity execution to a follow-up; retain system execution for
 	// compatibility after the original caller's preflight authorization above.
-	obj, async, err := s.Storage.Delete(ctx, name, rest.ValidateAllObjectFunc, deleteOptions)
-	if apierrors.IsNotFound(err) && !requested {
+	obj, async, err := s.Storage.Delete(withCascadeFinalizerOnDelete(ctx, false), name, rest.ValidateAllObjectFunc, deleteOptions)
+	if s.walkedGone(ctx, walked, err, requested) {
 		return obj, async, nil
 	}
 	return obj, async, err
+}
+
+// releaseTerminating removes the cascade finalizer from the terminating folder the walk started with,
+// which the store then deletes, and returns the deleted folder. It returns nil for a folder that is
+// gone, not terminating or without the finalizer, which are left as they are. A folder with another UID
+// replaced the one that was walked, which is already gone, so it is left alone and walked is returned.
+// A dry run releases nothing.
+func (s *cascadeDeleteStorage) releaseTerminating(ctx context.Context, walked *foldersv1.Folder, options *metav1.DeleteOptions) (runtime.Object, error) {
+	if len(options.DryRun) > 0 {
+		return nil, nil
+	}
+	obj, err := s.Get(ctx, walked.Name, &metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	cur, ok := obj.(*foldersv1.Folder)
+	if !ok {
+		return nil, nil
+	}
+	if cur.UID != walked.UID {
+		return walked, nil
+	}
+	if cur.DeletionTimestamp == nil || !hasCascadeDeleteFinalizer(cur) {
+		return nil, nil
+	}
+	objInfo := rest.DefaultUpdatedObjectInfo(nil, func(_ context.Context, _, oldObj runtime.Object) (runtime.Object, error) {
+		f, ok := oldObj.(*foldersv1.Folder)
+		if !ok {
+			return nil, fmt.Errorf("obj is not folders.Folder")
+		}
+		// Recreated since the read above: the walked folder is gone, and this one is not ours to release.
+		if f.UID != walked.UID {
+			return nil, apierrors.NewNotFound(foldersv1.FolderResourceInfo.GroupResource(), f.Name)
+		}
+		f = f.DeepCopy()
+		setCascadeDeleteFinalizer(f, false)
+		return f, nil
+	})
+	released, _, err := s.Update(ctx, walked.Name, objInfo, nil, nil, false, &metav1.UpdateOptions{})
+	// Released by the controller meanwhile, or replaced, counts as released.
+	if apierrors.IsNotFound(err) {
+		return walked, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if released == nil {
+		return cur, nil
+	}
+	return released, nil
 }
 
 // deleteDashboardsInFolder deletes every dashboard in folderUID via the dashboard apiserver (so its
@@ -556,12 +633,56 @@ func pinToCheckedVersion(options *metav1.DeleteOptions, f *foldersv1.Folder) (*m
 		return nil, err
 	}
 	pinned := options.DeepCopy()
+	if pinned == nil {
+		pinned = &metav1.DeleteOptions{}
+	}
 	if pinned.Preconditions == nil {
 		pinned.Preconditions = &metav1.Preconditions{}
 	}
 	uid, rv := f.GetUID(), f.GetResourceVersion()
 	pinned.Preconditions.UID, pinned.Preconditions.ResourceVersion = &uid, &rv
 	return pinned, nil
+}
+
+// pinUID returns options with the UID of f as a precondition, so a write fails with a conflict if
+// another folder took its name. A UID the caller set must already be f's, or it is a conflict as well.
+func pinUID(options *metav1.DeleteOptions, f *foldersv1.Folder) (*metav1.DeleteOptions, error) {
+	if options != nil && options.Preconditions != nil && options.Preconditions.UID != nil {
+		if err := checkDeletePreconditions(f, &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: options.Preconditions.UID}}); err != nil {
+			return nil, err
+		}
+	}
+	pinned := options.DeepCopy()
+	if pinned == nil {
+		pinned = &metav1.DeleteOptions{}
+	}
+	if pinned.Preconditions == nil {
+		pinned.Preconditions = &metav1.Preconditions{}
+	}
+	uid := f.GetUID()
+	pinned.Preconditions.UID = &uid
+	return pinned, nil
+}
+
+// walkedGone reports whether err means a descendant the walk started with is gone: it was not found, or
+// a UID conflict says another folder took its name. The requested folder keeps its error, and so does a
+// conflict that is not about the UID, which is told apart by reading the folder again.
+func (s *cascadeDeleteStorage) walkedGone(ctx context.Context, walked *foldersv1.Folder, err error, requested bool) bool {
+	if requested || err == nil {
+		return false
+	}
+	if apierrors.IsNotFound(err) {
+		return true
+	}
+	if !apierrors.IsConflict(err) {
+		return false
+	}
+	obj, getErr := s.Get(ctx, walked.Name, &metav1.GetOptions{})
+	if apierrors.IsNotFound(getErr) {
+		return true
+	}
+	cur, ok := obj.(*foldersv1.Folder)
+	return getErr == nil && ok && cur.UID != walked.UID
 }
 
 // isCascadeSubfolderDelete reports whether a service is deleting a subfolder of a terminating
@@ -583,6 +704,53 @@ func (s *cascadeDeleteStorage) isCascadeSubfolderDelete(ctx context.Context, use
 	}
 	parent, ok := obj.(*foldersv1.Folder)
 	return ok && parent.DeletionTimestamp != nil && hasCascadeDeleteFinalizer(parent), nil
+}
+
+// deleteAsync hands f to the cascade controller: the store stamps the finalizer in the write that marks
+// the folder terminating. The controller removes the contents as the service identity, so the
+// requester's access to them is checked first, forced or not, and before any write so a rejected
+// delete leaves nothing behind. A terminating folder was already authorized when it was marked. So was
+// a subfolder the controller deletes under a terminating folder, because the root delete was authorized.
+func (s *cascadeDeleteStorage) deleteAsync(ctx context.Context, ns authlib.NamespaceInfo, f *foldersv1.Folder, user identity.Requester, isCascadeSubfolderDelete bool, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	parentUID := f.GetAnnotations()[utils.AnnoKeyFolder]
+	terminating := f.DeletionTimestamp != nil
+	if !terminating && !isCascadeSubfolderDelete {
+		if err := s.checkFolderContentsAccess(ctx, user, ns.Value, f.Name, parentUID); err != nil {
+			return nil, false, err
+		}
+		// The check used this version's parent, so a concurrent move must fail the delete.
+		var err error
+		if options, err = pinToCheckedVersion(options, f); err != nil {
+			return nil, false, err
+		}
+	}
+	if !terminating {
+		// TODO: stamping makes the store add the finalizer in the write that starts the delete, which
+		// apistore rejects for an orphaned repository-managed folder without it. A follow-up will make
+		// apistore accept that write.
+		ctx = withCascadeFinalizerOnDelete(ctx, true)
+	}
+	return s.Storage.Delete(ctx, f.Name, deleteValidation, options)
+}
+
+// checkFolderDeleteAccess denies the request unless the requester may delete the folder. No-op without
+// an access client.
+func (s *cascadeDeleteStorage) checkFolderDeleteAccess(ctx context.Context, user identity.Requester, namespace, name, parentUID string) error {
+	if s.accessClient == nil {
+		return nil
+	}
+	if parentUID == "" {
+		parentUID = folder.GeneralFolderUID
+	}
+	gvr := foldersv1.FolderResourceInfo.GroupVersionResource()
+	resp, err := s.accessClient.Check(ctx, user, authlib.CheckRequest{Namespace: namespace, Verb: utils.VerbDelete, Group: gvr.Group, Resource: gvr.Resource, Name: name}, parentUID)
+	if err != nil {
+		return err
+	}
+	if !resp.Allowed {
+		return apierrors.NewForbidden(foldersv1.FolderResourceInfo.GroupResource(), name, folder.ErrAccessDenied)
+	}
+	return nil
 }
 
 // markTerminating stamps the terminating label on the folder so the in-progress subtree deletion is

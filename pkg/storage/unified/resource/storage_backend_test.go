@@ -2816,6 +2816,33 @@ func TestKvStorageBackend_ListIterator_InvalidContinueToken(t *testing.T) {
 	}
 }
 
+func TestKvStorageBackend_ListHistory_InvalidContinueToken(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	listReq := &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resources",
+				Name:      "resource-name",
+			},
+		},
+		Limit: 10,
+	}
+
+	for _, token := range []string{"invalid-token", "bm90LWpzb24="} {
+		listReq.NextPageToken = token
+		_, err := backend.ListHistory(ctx, listReq, func(iter ListIterator) error {
+			t.Fatal("malformed continuation must fail before iteration")
+			return nil
+		})
+		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
+		require.Contains(t, err.Error(), "invalid continue token")
+	}
+}
+
 func TestKvStorageBackend_ListIterator_KeysOnlyRejectsContinueTokenScopeChanges(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := t.Context()

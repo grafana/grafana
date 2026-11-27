@@ -1,4 +1,4 @@
-import { getMinMaxAndDelta, type DataFrame, type Field } from '@grafana/data';
+import { getMinMaxAndDelta, type DataFrame, type Field, type PanelData } from '@grafana/data';
 import { type ScaleDimensionConfig, ScaleDimensionMode } from '@grafana/schema';
 
 import { type DimensionSupplier, type ScaleDimensionOptions } from './types';
@@ -129,4 +129,19 @@ export function validateScaleConfig(copy: ScaleDimensionConfig, options: ScaleDi
     }
   }
   return copy;
+}
+
+export function getScaleDimensionFromData(
+  data: PanelData | undefined,
+  cfg: ScaleDimensionConfig
+): DimensionSupplier<number> {
+  if (data?.series && cfg.field) {
+    for (const frame of data.series) {
+      const d = getScaledDimension(frame, cfg);
+      if (!d.isAssumed || data.series.length === 1) {
+        return d;
+      }
+    }
+  }
+  return getScaledDimension(undefined, cfg);
 }

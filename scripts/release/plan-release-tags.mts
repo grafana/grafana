@@ -122,6 +122,13 @@ export function selectPendingPrs(prs: ClosedPr[]): PendingPr[] {
     .map(({ number, mergeCommit }) => ({ number, mergeCommit }));
 }
 
+// The pending PRs come from the live GitHub API, but the release job checks out the commit that started the run.
+// GitHub's compare endpoint says whether that commit contains a PR's merge commit: a PR that merged later is left for
+// the run its own push starts.
+export function isReachableStatus(status: string): boolean {
+  return status === 'ahead' || status === 'identical';
+}
+
 function run(command: string, args: string[]): string {
   return execFileSync(command, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 }
@@ -188,13 +195,30 @@ if (import.meta.main) {
     }
 
     const packages = await getIndependentPackages();
-    const prs = listMergedPendingPrs(requireEnv('GITHUB_REPOSITORY')).map((pr) => ({
-      ...pr,
-      before: versionsAt(run('git', ['rev-parse', `${pr.mergeCommit}^1`]).trim(), packages),
-      after: versionsAt(pr.mergeCommit, packages),
+    const repo = requireEnv('GITHUB_REPOSITORY');
+    const sha = requireEnv('GITHUB_SHA');
+    const pending = listMergedPendingPrs(repo).map((pr) => ({
+      pr,
+      inRun: isReachableStatus(
+        run('gh', ['api', `repos/${repo}/compare/${pr.mergeCommit}...${sha}`, '--jq', '.status']).trim()
+      ),
     }));
+    const prs = pending
+      .filter(({ inRun }) => inRun)
+      .map(({ pr }) => ({
+        ...pr,
+        before: versionsAt(run('git', ['rev-parse', `${pr.mergeCommit}^1`]).trim(), packages),
+        after: versionsAt(pr.mergeCommit, packages),
+      }));
 
-    const { plan, warnings } = planReleaseTags(packages, requireEnv('GITHUB_SHA'), prs);
+    const { plan, warnings } = planReleaseTags(packages, sha, prs);
+    pending
+      .filter(({ inRun }) => !inRun)
+      .forEach(({ pr }) =>
+        warnings.push(
+          `PR #${pr.number} merged after the commit of this run. The run that its own push starts finishes it.`
+        )
+      );
     warnings.forEach((warning) => console.error(`::warning::${warning}`));
 
     writeFileSync(outputPath, JSON.stringify(formatOutputs(plan), null, 2));

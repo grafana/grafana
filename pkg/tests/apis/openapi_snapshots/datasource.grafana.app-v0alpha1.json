@@ -2,10 +2,10 @@
   "openapi": "3.0.0",
   "info": {
     "description": "Query service",
-    "title": "query.grafana.app/v0alpha1"
+    "title": "datasource.grafana.app/v0alpha1"
   },
   "paths": {
-    "/apis/query.grafana.app/v0alpha1/": {
+    "/apis/datasource.grafana.app/v0alpha1/": {
       "get": {
         "tags": [
           "API Discovery"
@@ -31,7 +31,7 @@
         }
       }
     },
-    "/apis/query.grafana.app/v0alpha1/namespaces/{namespace}/connections": {
+    "/apis/datasource.grafana.app/v0alpha1/namespaces/{namespace}/connections": {
       "get": {
         "tags": [
           "Connections"
@@ -109,7 +109,7 @@
         }
       }
     },
-    "/apis/query.grafana.app/v0alpha1/namespaces/{namespace}/query": {
+    "/apis/datasource.grafana.app/v0alpha1/namespaces/{namespace}/query": {
       "post": {
         "tags": [
           "Query"
@@ -162,7 +162,7 @@
         }
       }
     },
-    "/apis/query.grafana.app/v0alpha1/namespaces/{namespace}/query/sqlschemas": {
+    "/apis/datasource.grafana.app/v0alpha1/namespaces/{namespace}/query/sqlschemas": {
       "post": {
         "tags": [
           "Query"

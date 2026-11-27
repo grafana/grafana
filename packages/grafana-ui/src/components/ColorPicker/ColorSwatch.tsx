@@ -44,6 +44,8 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
     const styles = getStyles(theme, variant, color, isFocusVisible, isSelected);
     const hasLabel = !!label;
     const colorLabel = ariaLabel || label;
+    // When aria-labelledby includes the swatch itself, the aria-label is still needed
+    const isNamedByItself = !!id && !!ariaLabelledBy?.split(' ').includes(id);
     return (
       <div ref={ref} className={styles.wrapper} data-testid={selectors.components.ColorSwatch.name} {...otherProps}>
         {hasLabel && <span className={styles.label}>{label}</span>}
@@ -52,7 +54,7 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
           className={styles.swatch}
           {...focusProps}
           aria-label={
-            ariaLabelledBy
+            ariaLabelledBy && !isNamedByItself
               ? undefined
               : colorLabel
                 ? t('grafana-ui.color-swatch.aria-label-selected-color', '{{colorLabel}} color', { colorLabel })

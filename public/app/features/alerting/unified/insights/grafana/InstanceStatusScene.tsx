@@ -1,8 +1,8 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 
-import { INSTANCE_ID, overrideToFixedColor } from '../../home/Insights';
 import { InsightsMenuButton } from '../InsightsMenuButton';
+import { INSTANCE_ID, overrideToFixedColor } from '../utils';
 export function getInstanceStatByStatusScene(
   datasource: DataSourceRef,
   panelTitle: string,
