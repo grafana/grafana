@@ -1,9 +1,8 @@
-import { useContext, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { usePluginContext, type PluginExtensionFunction, PluginExtensionTypes } from '@grafana/data';
 import { type UsePluginFunctionsOptions, type UsePluginFunctionsResult } from '@grafana/runtime';
 
-import { FunctionExtensionTransformsContext } from './ExtensionRegistriesContext';
 import { useAddedFunctionsRegistrySlice } from './registry/useRegistrySlice';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { generateExtensionId, getExtensionPointPluginDependencies } from './utils';
@@ -15,16 +14,11 @@ export function usePluginFunctions<Signature>({
   extensionPointId,
 }: UsePluginFunctionsOptions): UsePluginFunctionsResult<Signature> {
   const registryItems = useAddedFunctionsRegistrySlice<Signature>(extensionPointId);
-  const transform = useContext(FunctionExtensionTransformsContext).get(extensionPointId);
   const pluginContext = usePluginContext();
   const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(extensionPointId, getExtensionPointPluginDependencies);
 
   return useMemo(() => {
-    const { result } = validateExtensionPoint({
-      extensionPointId,
-      pluginContext,
-      isLoadingAppPlugins: isLoadingAppPlugins || Boolean(transform?.isLoading),
-    });
+    const { result } = validateExtensionPoint({ extensionPointId, pluginContext, isLoadingAppPlugins });
 
     if (result) {
       return {
@@ -36,9 +30,7 @@ export function usePluginFunctions<Signature>({
     const results: Array<PluginExtensionFunction<Signature>> = [];
     const extensionsByPlugin: Record<string, number> = {};
 
-    const items = registryItems ?? [];
-    const resolvedItems = transform?.apply(items) ?? items;
-    for (const registryItem of resolvedItems) {
+    for (const registryItem of registryItems ?? []) {
       const { pluginId } = registryItem;
 
       // Only limit if the `limitPerPlugin` is set
@@ -65,5 +57,5 @@ export function usePluginFunctions<Signature>({
       isLoading: false,
       functions: results,
     };
-  }, [extensionPointId, limitPerPlugin, pluginContext, registryItems, isLoadingAppPlugins, transform]);
+  }, [extensionPointId, limitPerPlugin, pluginContext, registryItems, isLoadingAppPlugins]);
 }

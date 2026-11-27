@@ -19,11 +19,6 @@ export interface ComponentDescriptor extends ExposedComponentDiscovery {
   description?: string;
 }
 
-export interface ComponentHostAdapter {
-  supports(entry: ComponentDescriptor): boolean;
-  register(entry: ComponentDescriptor): () => void;
-}
-
 export enum PluginExtensionTypes {
   link = 'link',
   component = 'component',

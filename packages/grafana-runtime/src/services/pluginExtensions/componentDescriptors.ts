@@ -1,34 +1,23 @@
-import { type ComponentDescriptor, type ComponentHostAdapter } from '@grafana/data';
+import { type ComponentDescriptor } from '@grafana/data';
 
-interface ComponentDescriptorHooks {
-  list: (datasource?: string) => {
-    entries: ComponentDescriptor[];
-    loading: boolean;
-    error?: Error;
-    retry: () => void;
-  };
-  register: (adapter: ComponentHostAdapter) => void;
-}
+type UseComponentDescriptors = (datasource?: string) => {
+  entries: ComponentDescriptor[];
+  loading: boolean;
+  error?: Error;
+  retry: () => void;
+};
 
-let hooks: ComponentDescriptorHooks | undefined;
+let useDescriptors: UseComponentDescriptors | undefined;
 
 /** @internal */
-export function setComponentDescriptorHooks(implementation: ComponentDescriptorHooks) {
-  hooks = implementation;
+export function setComponentDescriptorsHook(implementation: UseComponentDescriptors) {
+  useDescriptors = implementation;
 }
 
 /** @alpha */
 export function useComponentDescriptors(datasource?: string) {
-  if (!hooks) {
-    throw new Error('Component descriptor hooks must be initialized at startup.');
+  if (!useDescriptors) {
+    throw new Error('The component descriptors hook must be initialized at startup.');
   }
-  return hooks.list(datasource);
-}
-
-/** @alpha */
-export function useRegisterComponentHostAdapter(adapter: ComponentHostAdapter) {
-  if (!hooks) {
-    throw new Error('Component descriptor hooks must be initialized at startup.');
-  }
-  hooks.register(adapter);
+  return useDescriptors(datasource);
 }
