@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { IndependentPackage } from './lib/independent-packages.mjs';
 import {
   formatOutputs,
+  isReachableStatus,
   planReleaseTags,
   selectPendingPrs,
   type ClosedPr,
@@ -161,6 +162,18 @@ describe('selectPendingPrs', () => {
     ];
 
     expect(selectPendingPrs(prs).map(({ number }) => number)).toEqual([1, 2, 3]);
+  });
+});
+
+// The status GitHub's compare endpoint returns for compare/{merge commit}...{commit that started the run}.
+describe('isReachableStatus', () => {
+  it.each([
+    ['ahead', true],
+    ['identical', true],
+    ['behind', false],
+    ['diverged', false],
+  ])('treats %s as reachable: %s', (status, expected) => {
+    expect(isReachableStatus(status)).toBe(expected);
   });
 });
 
