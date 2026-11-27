@@ -1,12 +1,7 @@
-import { DEFAULT_SCHEMA, Type, load } from 'js-yaml';
 import * as z from 'zod/mini';
 
+import { loadYaml } from 'app/core/utils/yaml';
 import { type RulerCloudRuleDTO, type RulerCloudRulesConfigDTO } from 'app/types/unified-alerting-dto';
-
-// An unquoted date would load as a Date and be sent as a full ISO timestamp.
-// A type with the same tag replaces the default one, so the value stays the text the user wrote.
-const timestampAsString = new Type('tag:yaml.org,2002:timestamp', { kind: 'scalar', resolve: () => false });
-const YAML_SCHEMA = DEFAULT_SCHEMA.extend({ implicit: [timestampAsString] });
 
 // The fields below are typed the way the backend decodes them (PrometheusRuleGroup, PrometheusRule),
 // so a file the backend would reject fails in the file step and not when the import is submitted.
@@ -92,7 +87,7 @@ export function parseYamlToRulerRulesConfigDTO(
   yamlAsString: string,
   defaultNamespace: string
 ): RulerCloudRulesConfigDTO {
-  const result = prometheusYamlFileSchema.safeParse(load(yamlAsString, { schema: YAML_SCHEMA }));
+  const result = prometheusYamlFileSchema.safeParse(loadYaml(yamlAsString));
 
   if (!result.success) {
     throw new Error(toErrorMessage(result.error));

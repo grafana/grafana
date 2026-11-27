@@ -1046,6 +1046,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/url.test.ts @grafana/grafana-frontend-navigation
 /public/app/core/utils/urlToken.ts @grafana/identity-access-team
 /public/app/core/utils/version.ts @grafana/data-sources-plugins
+/public/app/core/utils/yaml* @grafana/grafana-frontend-platform
 /public/app/core/utils/roles.ts @grafana/identity-access-team
 /public/app/core/utils/previewAssets* @grafana/grafana-frontend-platform
 /public/app/dev-utils.ts @grafana/grafana-frontend-platform

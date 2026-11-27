@@ -251,6 +251,7 @@ ${indent(group, 4)}
       ['the document is a scalar', 'just a string'],
       ['the document is null', 'null'],
       ['the document is empty', ''],
+      ['the document is only a comment', '# TODO rules'],
     ])('rejects a file where %s', (_name, yaml) => {
       expect(() => parse(yaml)).toThrow();
     });
