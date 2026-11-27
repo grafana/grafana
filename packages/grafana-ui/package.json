@@ -161,7 +161,7 @@
   "devDependencies": {
     "@faker-js/faker": "^10.6.0",
     "@grafana/test-utils": "workspace:*",
-    "@rsbuild/core": "^2.1.9",
+    "@rsbuild/core": "^2.3.4",
     "@rsbuild/plugin-react": "^2.1.0",
     "@storybook/addon-a11y": "10.6.2",
     "@storybook/addon-docs": "10.6.2",

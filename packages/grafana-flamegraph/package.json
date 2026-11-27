@@ -66,7 +66,7 @@
   },
   "devDependencies": {
     "@grafana/test-utils": "workspace:*",
-    "@rsbuild/core": "^2.1.9",
+    "@rsbuild/core": "^2.3.4",
     "@rsbuild/plugin-react": "^2.1.0",
     "@storybook/react": "10.6.2",
     "@testing-library/dom": "10.4.1",
