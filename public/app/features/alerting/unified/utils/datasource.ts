@@ -17,7 +17,6 @@ import {
   type RuleIdentifier,
   type RulesSource,
   type RulesSourceIdentifier,
-  type RulesSourceUid,
 } from 'app/types/unified-alerting';
 import grafanaIconSvg from 'img/grafana_icon.svg';
 
@@ -77,7 +76,8 @@ export interface AlertManagerDataSource {
 }
 
 /**
- * @deprecated Reads `config.datasources` synchronously. In React code, use `useDataSourcesForRules`.
+ * @deprecated Reads `config.datasources` synchronously. In React code, use `useDataSourcesForRules`. Elsewhere, use
+ * `getDataSourcesForRules`.
  */
 export function getRulesDataSources() {
   const canView = getExternalGlobalRuleAbility(ExternalRuleAction.ViewAlertRule).granted;
@@ -90,14 +90,6 @@ export function getRulesDataSources() {
     .filter((ds) => isSupportedExternalRulesSourceType(ds.type))
     .filter((ds) => isDataSourceManagingAlerts(ds))
     .sort((a, b) => collator.compare(a.name, b.name));
-}
-
-function getRulesDataSource(rulesSourceName: string) {
-  return getRulesDataSources().find((x) => x.name === rulesSourceName);
-}
-
-export function getRulesDataSourceByUID(uid: string) {
-  return getRulesDataSources().find((x) => x.uid === uid);
 }
 
 export function getAlertManagerDataSources() {
@@ -206,6 +198,10 @@ export function getAlertManagerDataSourcesByPermission(permission: 'instance' | 
   return { availableInternalDataSources, availableExternalDataSources };
 }
 
+/**
+ * @deprecated Reads `config.datasources` synchronously. Use `useDataSourcesForRules` or `getDataSourcesForRules`, and add
+ * the Grafana rules source when the user can view Grafana-managed rules.
+ */
 export function getAllRulesSourceNames(): string[] {
   const availableRulesSources: string[] = getRulesDataSources().map((r) => r.name);
 
@@ -282,22 +278,6 @@ export function getDatasourceAPIUid(dataSourceName: string) {
   const ds = getDataSourceByName(dataSourceName);
   if (!ds) {
     throw new Error(`Datasource "${dataSourceName}" not found`);
-  }
-  return ds.uid;
-}
-
-export function getDataSourceUID(rulesSourceIdentifier: { rulesSourceName: string } | { uid: RulesSourceUid }) {
-  if ('uid' in rulesSourceIdentifier) {
-    return rulesSourceIdentifier.uid;
-  }
-
-  if (rulesSourceIdentifier.rulesSourceName === GRAFANA_RULES_SOURCE_NAME) {
-    return GrafanaRulesSourceSymbol;
-  }
-
-  const ds = getRulesDataSource(rulesSourceIdentifier.rulesSourceName);
-  if (!ds) {
-    return undefined;
   }
   return ds.uid;
 }

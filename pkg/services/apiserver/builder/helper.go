@@ -43,7 +43,7 @@ func ProvideDefaultBuildHandlerChainFuncFromBuilders() BuildHandlerChainFuncFrom
 	return GetDefaultBuildHandlerChainFunc
 }
 
-// PathRewriters is a temporary hack to make rest.Connecter work with resource level routes (TODO)
+// PathRewriters keeps legacy API paths working with the currently registered routes.
 var PathRewriters = []filters.PathRewriter{
 	{
 		Pattern: regexp.MustCompile(`(/apis/scope.grafana.app/v0alpha1/namespaces/.*/)find/(.*)$`),
@@ -51,29 +51,21 @@ var PathRewriters = []filters.PathRewriter{
 			return matches[1] + matches[2] + "/name" // connector requires a name
 		},
 	},
-	{ // Migrate datasource.grafana.app to query.grafana.app
-		Pattern: regexp.MustCompile(`/apis/datasource.grafana.app/v0alpha1(.*$)`),
+	// Normalize legacy endpoint names in the same pass as the group alias:
+	// WithPathRewriters stops after the first match.
+	{
+		Pattern: regexp.MustCompile(`^/apis/(?:query|datasource)\.grafana\.app/v0alpha1(/namespaces/[^/]+)/(query/name|sqlschemas)$`),
 		ReplaceFunc: func(matches []string) string {
-			result := "/apis/query.grafana.app/v0alpha1" + matches[1]
-			if strings.HasSuffix(matches[1], "/sqlschemas") && !strings.Contains(matches[1], "/query/") {
-				result = strings.Replace(result, "/sqlschemas", "/query/sqlschemas", 1)
+			if matches[2] == "sqlschemas" {
+				return "/apis/datasource.grafana.app/v0alpha1" + matches[1] + "/query/sqlschemas"
 			}
-			return result
+			return "/apis/datasource.grafana.app/v0alpha1" + matches[1] + "/query"
 		},
 	},
 	{
-		Pattern: regexp.MustCompile(`(/apis/query.grafana.app/v0alpha1/namespaces/.*/)query/name$`),
+		Pattern: regexp.MustCompile(`^(/apis|/openapi/v3/apis)/query\.grafana\.app(/v0alpha1(?:/.*)?|/?)$`),
 		ReplaceFunc: func(matches []string) string {
-			return matches[1] + "query" // redirect from with-name to without-name
-		},
-	},
-	{
-		Pattern: regexp.MustCompile(`(/apis/query.grafana.app/v0alpha1/namespaces/.*/)sqlschemas$`),
-		ReplaceFunc: func(matches []string) string {
-			if strings.HasSuffix(matches[0], "query/sqlschemas") {
-				return matches[0] // already rewritten
-			}
-			return matches[1] + "query/sqlschemas"
+			return matches[1] + "/datasource.grafana.app" + matches[2]
 		},
 	},
 	{

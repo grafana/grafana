@@ -6,15 +6,18 @@ import (
 	"github.com/grafana/authlib/types"
 )
 
-// LegacyUserPermissionsClient enumerates permissions for trusted legacy Grafana callers.
-// Implementations must return a complete snapshot or an error, never a partial
-// snapshot. Duplicate action/scope pairs are significant and must be preserved.
+// LegacyUserPermissionsClient enumerates and searches permissions for trusted legacy Grafana callers.
+// Enumeration returns a complete snapshot or an error. Duplicate action/scope
+// pairs are significant and must be preserved.
 //
 // This is Grafana's legacy compatibility seam, not a general authorization
 // interface. New consumers should check access instead of enumerating it.
 type LegacyUserPermissionsClient interface {
 	// caller is the authenticated service identity, distinct from req.Identity.
 	LegacyGetUserPermissions(ctx context.Context, caller types.AuthInfo, req LegacyGetUserPermissionsRequest) (LegacyGetUserPermissionsResponse, error)
+	// Search accepts typed assertions from Grafana authentication and is available only in process.
+	// It preserves the backend's result even when the backend also returns an error.
+	LegacySearchUsersPermissions(ctx context.Context, caller types.AuthInfo, req LegacySearchUsersPermissionsRequest) (LegacySearchUsersPermissionsResponse, error)
 }
 
 // LegacyPermissionIdentity contains assertions from trusted Grafana

@@ -63,3 +63,26 @@ describe('<ListView />', () => {
     expect(screen.getAllByTestId('item').length).toBe(DATA_LENGTH);
   });
 });
+
+// A Document Picture-in-Picture window (the Grafana Assistant pop-out) is another realm, as an iframe is: its
+// elements fail this window's `instanceof HTMLElement`.
+describe('<ListView /> in another window', () => {
+  it('measures the rendered rows', () => {
+    const iframe = document.createElement('iframe');
+    document.body.appendChild(iframe);
+    const otherWindow = iframe.contentDocument!.defaultView!;
+    const container = otherWindow.document.body.appendChild(otherWindow.document.createElement('div'));
+    // every rendered row is 50px tall
+    const clientHeight = jest.spyOn(otherWindow.HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(50);
+    const listView = React.createRef<ListView>();
+
+    const { unmount } = render(<ListView {...props} ref={listView} />, { container });
+
+    // measured: rows 0 to 2 are 50px each, rather than the estimated 2, 4 and 6px
+    expect(listView.current?.getRowPosition(3).y).toBe(150);
+    // Unmount before the iframe goes, or React cannot remove the list from it.
+    unmount();
+    clientHeight.mockRestore();
+    iframe.remove();
+  });
+});

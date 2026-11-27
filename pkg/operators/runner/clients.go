@@ -4,6 +4,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/grafana/authlib/authn"
 	"k8s.io/client-go/rest"
@@ -91,18 +92,65 @@ func TokenExchangeClient(cfg *setting.Cfg) (*authn.TokenExchangeClient, error) {
 }
 
 // RESTConfig builds a client config for the apiserver at [operator]
+// serverURLKey, exchanging tokens for audience. It builds its own TLS settings
+// and token exchange client; operators should use [Clients.RESTConfig].
+func RESTConfig(cfg *setting.Cfg, serverURLKey, audience string) (*rest.Config, error) {
+	return NewClients(cfg).RESTConfig(serverURLKey, audience)
+}
+
+// Clients builds the TLS settings and token exchange client once, so every
+// apiserver client of an operator shares them and one token cache.
+type Clients struct {
+	cfg      *setting.Cfg
+	mu       sync.Mutex
+	tls      *rest.TLSClientConfig
+	exchange *authn.TokenExchangeClient
+}
+
+func NewClients(cfg *setting.Cfg) *Clients {
+	return &Clients{cfg: cfg}
+}
+
+func (c *Clients) TLSConfig() (rest.TLSClientConfig, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.tls == nil {
+		tlsConfig, err := TLSConfig(c.cfg)
+		if err != nil {
+			return rest.TLSClientConfig{}, err
+		}
+		c.tls = &tlsConfig
+	}
+	return *c.tls, nil
+}
+
+func (c *Clients) TokenExchangeClient() (*authn.TokenExchangeClient, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.exchange == nil {
+		exchange, err := TokenExchangeClient(c.cfg)
+		if err != nil {
+			return nil, err
+		}
+		c.exchange = exchange
+	}
+	return c.exchange, nil
+}
+
+// RESTConfig builds a client config for the apiserver at [operator]
 // serverURLKey, exchanging tokens for audience. Each API group can live on its
 // own apiserver, so each gets its own config.
-func RESTConfig(cfg *setting.Cfg, serverURLKey, audience string) (*rest.Config, error) {
+func (c *Clients) RESTConfig(serverURLKey, audience string) (*rest.Config, error) {
+	cfg := c.cfg
 	serverURL := cfg.SectionWithEnvOverrides("operator").Key(serverURLKey).String()
 	if serverURL == "" {
 		return nil, fmt.Errorf("%s is required in [operator] section", serverURLKey)
 	}
-	tlsConfig, err := TLSConfig(cfg)
+	tlsConfig, err := c.TLSConfig()
 	if err != nil {
 		return nil, err
 	}
-	tokenExchangeClient, err := TokenExchangeClient(cfg)
+	tokenExchangeClient, err := c.TokenExchangeClient()
 	if err != nil {
 		return nil, err
 	}

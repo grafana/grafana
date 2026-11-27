@@ -883,7 +883,8 @@
       "label-disabled": "Data source",
       "message": {
         "please-select-a-data-source": "Please select a data source"
-      }
+      },
+      "rules-sources-error": "Failed to load the list of data sources with a ruler"
     },
     "cloud-evaluation-behavior": {
       "description-pending-period": "Period during which the threshold condition must be met to trigger an alert. Selecting \"None\" triggers the alert immediately once the condition is met.",
@@ -1937,7 +1938,8 @@
           "title": "Data source"
         },
         "label": "Data source",
-        "required-message": "Please select a data source"
+        "required-message": "Please select a data source",
+        "rules-sources-error": "Failed to load the list of data sources with a ruler"
       },
       "error": "Failed to import alert rules: {{error}}",
       "group": {
@@ -4347,7 +4349,8 @@
     },
     "unified-alert-list": {
       "clear": "Clear",
-      "text-loading": "Loading..."
+      "text-loading": "Loading...",
+      "title-rules-source-list-error": "Failed to load data source-managed rules"
     },
     "unified-alert-list-panel": {
       "body-permission-required": "Sorry, you do not have the required permissions to read alert rules.",
