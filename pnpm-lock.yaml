@@ -534,8 +534,8 @@ importers:
         specifier: ^4.1.1
         version: 4.3.4
       marked:
-        specifier: 18.2.1
-        version: 18.2.1
+        specifier: 18.3.0
+        version: 18.3.0
       memoize-one:
         specifier: 7.0.0
         version: 7.0.0
@@ -1024,8 +1024,8 @@ importers:
         specifier: ^1.48.0
         version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.6)(@typescript/typescript6@6.0.2)(i18next@27.2.6(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
       ignore:
-        specifier: 7.0.12
-        version: 7.0.12
+        specifier: 7.0.16
+        version: 7.0.16
       ini:
         specifier: ^5.0.0
         version: 5.0.0
@@ -1033,8 +1033,8 @@ importers:
         specifier: 29.7.0
         version: 29.7.0(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.6)(@typescript/typescript6@6.0.2))
       jest-canvas-mock:
-        specifier: 2.5.2
-        version: 2.5.2
+        specifier: 2.5.8
+        version: 2.5.8
       jest-date-mock:
         specifier: 1.0.10
         version: 1.0.10
@@ -1045,8 +1045,8 @@ importers:
         specifier: 29.7.0
         version: 29.7.0(supports-color@7.2.0)
       jest-fail-on-console:
-        specifier: 3.3.1
-        version: 3.3.1
+        specifier: 3.3.4
+        version: 3.3.4(@jest/globals@30.3.0(supports-color@7.2.0))
       jest-junit:
         specifier: 16.0.0
         version: 16.0.0
@@ -1549,10 +1549,10 @@ importers:
         version: 4.18.1
       marked:
         specifier: ^18.0.0
-        version: 18.2.1
+        version: 18.3.0
       marked-mangle:
         specifier: ^1.1.12
-        version: 1.1.14(marked@18.2.1)
+        version: 1.1.14(marked@18.3.0)
       ol:
         specifier: ^10.10.0
         version: 10.11.0
@@ -1789,8 +1789,8 @@ importers:
         specifier: ^29.6.4
         version: 29.7.0(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.6)(@typescript/typescript6@6.0.2))
       jest-canvas-mock:
-        specifier: 2.5.2
-        version: 2.5.2
+        specifier: 2.5.8
+        version: 2.5.8
       rolldown:
         specifier: 1.3.1
         version: 1.3.1
@@ -2027,8 +2027,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0(webpack@5.105.0)
       jest-canvas-mock:
-        specifier: 2.5.2
-        version: 2.5.2
+        specifier: 2.5.8
+        version: 2.5.8
       jest-environment-jsdom:
         specifier: 29.7.0
         version: 29.7.0(supports-color@7.2.0)
@@ -2318,11 +2318,11 @@ importers:
         specifier: 29.7.0
         version: 29.7.0(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.6)(@typescript/typescript6@6.0.2))
       jest-canvas-mock:
-        specifier: 2.5.2
-        version: 2.5.2
+        specifier: 2.5.8
+        version: 2.5.8
       jest-canvas-mock-compare:
         specifier: 0.1.1
-        version: 0.1.1(jest-canvas-mock@2.5.2)(jest-snapshot@30.4.1(supports-color@7.2.0))(jest@29.7.0(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.6)(@typescript/typescript6@6.0.2)))
+        version: 0.1.1(jest-canvas-mock@2.5.8)(jest-snapshot@30.4.1(supports-color@7.2.0))(jest@29.7.0(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.6)(@typescript/typescript6@6.0.2)))
       jest-snapshot:
         specifier: ^30.3.0
         version: 30.4.1(supports-color@7.2.0)
@@ -10834,6 +10834,10 @@ packages:
     resolution: {integrity: sha512-/8UvqAPU9DGTI9k4mxtf49U37Isfwr8Uts96+SBHIkFxPJnHS0Ew4f00sM4Scd8V8EjM0jUNtVDdv1kPdt35lg==}
     engines: {node: '>= 4'}
 
+  ignore@7.0.16:
+    resolution: {integrity: sha512-52N+Y4HRMOJmbLmr+DqO4iSRyyB7N52gm7PWCT6h0p978+oKbqHCB7gIJIwZvBUsjlSdWbrBFqUSmIFNZMpn0A==}
+    engines: {node: '>= 4'}
+
   image-q@4.0.0:
     resolution: {integrity: sha512-PfJGVgIfKQJuq3s0tTDOKtztksibuUEbJQIYT3by6wctQo+Rdlh7ef4evJ5NCdxY4CfMbvFkocEwbl4BF8RlJw==}
 
@@ -11265,8 +11269,8 @@ packages:
       jest-canvas-mock: '>=2.5'
       jest-snapshot: '>=29'
 
-  jest-canvas-mock@2.5.2:
-    resolution: {integrity: sha512-vgnpPupjOL6+L5oJXzxTxFrlGEIbHdZqFU+LFNdtLxZ3lRDCl17FlTMM7IatoRQkrcyOTMlDinjUguqmQ6bR2A==}
+  jest-canvas-mock@2.5.8:
+    resolution: {integrity: sha512-RUZRaFHCnLjg0/UAodCai5PTsa7kQI1rUXE5wsQu9f2315dh2YSN7/i3fObTycs7PO09DLSiGXiJTALYIw2yuw==}
 
   jest-changed-files@29.7.0:
     resolution: {integrity: sha512-fEArFiwf1BpQ+4bXSprcDc3/x4HSzL4al2tozwVpDFpsxALjLYdyiIK4e5Vz66GQJIbXJ82+35PtysofptNX2w==}
@@ -11382,8 +11386,11 @@ packages:
     resolution: {integrity: sha512-4i6HItw/JSiJVsC5q0hnKIe/hbYfZLVG9YJ/0pU9Hz2n/9qZe3Rhn5s5CUZA5ORZlcdT/vmAXRMyONXJwPrmYQ==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
 
-  jest-fail-on-console@3.3.1:
-    resolution: {integrity: sha512-dmq/dmh5OBgJlD1MJdpznzwFQP8S7msf3ghTGWQLGhagWwHKzGtqXza76nuJUKOK7BdwqcTK6CCE49Xxv4ckUQ==}
+  jest-fail-on-console@3.3.4:
+    resolution: {integrity: sha512-ckcABlg7ZLy83RRVOE1YvJMF1thgVPozVp+DjnE36Z1CaIbTrSeSR2AU4de/SEpfFgp2qK62EHXfm47N74zMuw==}
+    engines: {yarn: 1.x}
+    peerDependencies:
+      '@jest/globals': '>=27.5.1'
 
   jest-get-type@29.6.3:
     resolution: {integrity: sha512-zrteXnqYxfQh7l5FHyL38jL39di8H8rHoecLH3JNxH3BwOrBsNeabdap5e0I23lD4HHI8W5VFBZqG4Eaq5LNcw==}
@@ -12042,8 +12049,8 @@ packages:
     engines: {node: '>= 20'}
     hasBin: true
 
-  marked@18.2.1:
-    resolution: {integrity: sha512-ii4bxCTCqqwpT86XZWgJNs+ZnAIZksmLGYMViWA7PDIXYIeNo1x6cDdX3JOip9NM/cI6p8z57FxliACboTruMA==}
+  marked@18.3.0:
+    resolution: {integrity: sha512-ed8zmPXlBb3UfGXN5iHMQyMhFpdqLgoV5umUXx/Q1R+FW3q8VpqpyoKUwlENL9appo2UMvNLURDVaT3AMOryGA==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -20943,7 +20950,7 @@ snapshots:
       '@typescript-eslint/utils': 8.56.0(@typescript/typescript6@6.0.2)(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)
       '@typescript-eslint/visitor-keys': 8.56.0
       eslint: 9.32.0(jiti@2.7.0)(supports-color@7.2.0)
-      ignore: 7.0.12
+      ignore: 7.0.16
       natural-compare: 1.4.0
       ts-api-utils: 2.5.0(@typescript/typescript6@6.0.2)
       typescript: '@typescript/typescript6@6.0.2'
@@ -24737,6 +24744,8 @@ snapshots:
 
   ignore@7.0.12: {}
 
+  ignore@7.0.16: {}
+
   image-q@4.0.0:
     dependencies:
       '@types/node': 16.9.1
@@ -25156,13 +25165,13 @@ snapshots:
     dependencies:
       '@isaacs/cliui': 8.0.2
 
-  jest-canvas-mock-compare@0.1.1(jest-canvas-mock@2.5.2)(jest-snapshot@30.4.1(supports-color@7.2.0))(jest@29.7.0(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.6)(@typescript/typescript6@6.0.2))):
+  jest-canvas-mock-compare@0.1.1(jest-canvas-mock@2.5.8)(jest-snapshot@30.4.1(supports-color@7.2.0))(jest@29.7.0(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.6)(@typescript/typescript6@6.0.2))):
     dependencies:
       jest: 29.7.0(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.6)(@typescript/typescript6@6.0.2))
-      jest-canvas-mock: 2.5.2
+      jest-canvas-mock: 2.5.8
       jest-snapshot: 30.4.1(supports-color@7.2.0)
 
-  jest-canvas-mock@2.5.2:
+  jest-canvas-mock@2.5.8:
     dependencies:
       cssfontparser: 1.2.1
       moo-color: 1.0.2
@@ -25429,7 +25438,9 @@ snapshots:
       jest-util: 30.3.0
       jest-validate: 30.3.0
 
-  jest-fail-on-console@3.3.1: {}
+  jest-fail-on-console@3.3.4(@jest/globals@30.3.0(supports-color@7.2.0)):
+    dependencies:
+      '@jest/globals': 30.3.0(supports-color@7.2.0)
 
   jest-get-type@29.6.3: {}
 
@@ -26437,9 +26448,9 @@ snapshots:
       punycode.js: 2.3.1
       uc.micro: 2.1.0
 
-  marked-mangle@1.1.14(marked@18.2.1):
+  marked-mangle@1.1.14(marked@18.3.0):
     dependencies:
-      marked: 18.2.1
+      marked: 18.3.0
 
   marked-terminal@7.3.0(marked@9.1.6):
     dependencies:
@@ -26454,7 +26465,7 @@ snapshots:
 
   marked@16.3.0: {}
 
-  marked@18.2.1: {}
+  marked@18.3.0: {}
 
   marked@9.1.6: {}
 
