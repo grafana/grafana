@@ -80,4 +80,3 @@ When a tool creates a resource, Grafana records which tool manages it, and uses 
 Give each resource a single manager, so that one tool doesn't overwrite changes made by another.
 
 For what each tool records and allows, refer to [Manage resources in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/resources/manage-resources/).
-
