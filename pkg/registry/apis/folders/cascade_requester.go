@@ -28,9 +28,8 @@ func cascadeDeleteRequesterOf(user identity.Requester) *foldersv1.FolderCascadeD
 	}
 }
 
-// recordCascadeDeleteRequester (a nil requester clears it) writes the requester to status.cascadeDelete through the status
-// subresource, which the main resource ignores. It only applies to the given version of the folder, so
-// a concurrent change is a conflict, and returns the stamped folder. ctx must carry the service identity.
+// recordCascadeDeleteRequester writes the requester (nil clears it) through the status subresource,
+// pinned to f's version. ctx must carry the service identity.
 func (s *cascadeDeleteStorage) recordCascadeDeleteRequester(ctx context.Context, f *foldersv1.Folder, requester *foldersv1.FolderCascadeDeleteRequester) (*foldersv1.Folder, error) {
 	res, err := s.updateCascadeDeleteRequester(ctx, f, func(obj *foldersv1.Folder) {
 		if obj.Status.CascadeDelete == nil {
@@ -48,8 +47,7 @@ func (s *cascadeDeleteStorage) recordCascadeDeleteRequester(ctx context.Context,
 	return stamped, nil
 }
 
-// clearCascadeDeleteRequester undoes a stamp after the delete failed. It is best effort: a leftover
-// requester on a live folder is harmless, since the next delete replaces it.
+// clearCascadeDeleteRequester undoes a stamp after a failed delete.
 func (s *cascadeDeleteStorage) clearCascadeDeleteRequester(ctx context.Context, stamped *foldersv1.Folder, requester *foldersv1.FolderCascadeDeleteRequester) error {
 	_, err := s.updateCascadeDeleteRequester(ctx, stamped, func(obj *foldersv1.Folder) {
 		if obj.Status.CascadeDelete != nil && obj.Status.CascadeDelete.Requester != nil && *obj.Status.CascadeDelete.Requester == *requester {

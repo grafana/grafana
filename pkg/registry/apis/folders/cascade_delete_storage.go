@@ -733,24 +733,19 @@ func (s *cascadeDeleteStorage) deleteAsync(ctx context.Context, ns authlib.Names
 		// apistore accept that write.
 		ctx = withCascadeFinalizerOnDelete(ctx, true)
 	}
-	// The requester is stamped before the delete, so a folder that this delete marks terminating has
-	// one. Other callers (e.g. an access policy), folders that were already terminating and dry runs
-	// have none, and whatever reads the requester must handle that. The first delete owns it, so a
-	// terminating folder keeps its requester. A requester left on a live folder by an earlier failed
-	// delete is cleared, so it isn't taken for this delete's.
-	// A failed stamp does not stop the delete.
+	// The requester is stamped first, so a folder this delete marks terminating has one. The first
+	// delete owns it, a leftover from an earlier failed delete is cleared, and callers that record
+	// none (e.g. an access policy) leave it empty.
 	requester := cascadeDeleteRequesterOf(user)
 	leftover := f.Status.CascadeDelete != nil && f.Status.CascadeDelete.Requester != nil
 	if s.status == nil || !folderAsyncCascadeDeleteEnabled(ctx) || len(options.DryRun) > 0 || terminating || (requester == nil && !leftover) {
 		return s.Storage.Delete(ctx, f.Name, deleteValidation, options)
 	}
-	// The caller's own preconditions are checked before the stamped version replaces them, which also
-	// covers a controller subfolder delete that was not pinned above.
+	// Check the caller's preconditions before the stamped version replaces them.
 	if err := checkDeletePreconditions(f, options); err != nil {
 		return nil, false, err
 	}
-	// Validate once, up front, so a rejected delete doesn't leave a stamp behind. The stamp only changes
-	// the status, so the result holds for the stamped version and Storage.Delete need not repeat it.
+	// Validate once, before stamping, so a rejected delete leaves no stamp; the stamp only changes status.
 	if deleteValidation != nil {
 		if err := deleteValidation(ctx, f); err != nil {
 			return nil, false, err
@@ -760,16 +755,16 @@ func (s *cascadeDeleteStorage) deleteAsync(ctx context.Context, ns authlib.Names
 	svcCtx := identity.WithServiceIdentityContext(base, ns.OrgID)
 	stamped, err := s.recordCascadeDeleteRequester(svcCtx, f, requester)
 	if err != nil {
-		// A leftover requester would be taken for this delete's, and a wrong one is worse than none.
+		// A leftover would pass for this delete's requester, and a wrong one is worse than none.
 		if leftover {
 			return nil, false, err
 		}
-		// The requester only feeds attribution and the access check already ran, so a failed stamp must
-		// not stop the delete, e.g. for a folder stored above the version cap, which can only be drained.
+		// The requester only feeds attribution, so a failed stamp (e.g. an orphaned folder or one above
+		// the version cap) must not block the delete.
 		logging.FromContext(ctx).Warn("Failed to record the cascade-delete requester, deleting without it", "folder", f.Name, "error", err)
 		return s.Storage.Delete(ctx, f.Name, deleteValidation, options)
 	}
-	// Delete the stamped version, so an edit in between is a conflict rather than a stale requester.
+	// Pin the delete to the stamped version, so an edit in between is a conflict.
 	options = options.DeepCopy()
 	if options.Preconditions == nil {
 		options.Preconditions = &metav1.Preconditions{}
@@ -777,8 +772,7 @@ func (s *cascadeDeleteStorage) deleteAsync(ctx context.Context, ns authlib.Names
 	uid, rv := stamped.GetUID(), stamped.GetResourceVersion()
 	options.Preconditions.UID, options.Preconditions.ResourceVersion = &uid, &rv
 	res, async, err := s.Storage.Delete(ctx, f.Name, deleteValidation, options)
-	// Rollback is best effort: a leftover stamp is cleared by the next delete, which keeps the
-	// failure path simple while the requester has no reader.
+	// Best effort: the next delete replaces a leftover stamp.
 	if err != nil && requester != nil {
 		if cErr := s.clearCascadeDeleteRequester(context.WithoutCancel(svcCtx), stamped, requester); cErr != nil {
 			logging.FromContext(ctx).Debug("Failed to clear the cascade-delete requester after a failed delete", "folder", f.Name, "error", cErr)

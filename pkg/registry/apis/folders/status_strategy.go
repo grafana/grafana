@@ -39,9 +39,8 @@ func (s *folderStatusStrategy) PrepareForUpdate(ctx context.Context, obj, old ru
 	keepCascadeDeleteRequester(ctx, newFolder, oldFolder)
 }
 
-// keepCascadeDeleteRequester makes the requester server-owned: only a Grafana service identity (the
-// in-process one and the provisioning one, both trusted) may record, replace or clear it, and every
-// other writer gets the stored value back.
+// keepCascadeDeleteRequester makes the requester server-owned: only a service identity may change it,
+// and every other writer gets the stored value back.
 func keepCascadeDeleteRequester(ctx context.Context, newFolder, oldFolder *foldersv1.Folder) {
 	if identity.IsServiceIdentity(ctx) {
 		return
