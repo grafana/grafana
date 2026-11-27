@@ -3,13 +3,13 @@ import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import { KBarAnimator, KBarPortal, KBarPositioner, VisualState, useKBar, ActionImpl } from 'kbar';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useFlagGrafanaCmdkHybridSearch } from '@grafana/runtime/internal';
+import { useFlagGrafanaCmdkExtensionSearch, useFlagGrafanaCmdkHybridSearch } from '@grafana/runtime/internal';
 import { EmptyState, Icon, LoadingBar, getPortalContainer, useStyles2 } from '@grafana/ui';
 
 import { AskAssistantPill } from './AskAssistantPill';
@@ -17,11 +17,17 @@ import { KBarResults } from './KBarResults';
 import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
 import { useSearchResults } from './actions/dashboardActions';
+import { type ExtensionSearchSection } from './actions/extensionSearch';
 import {
   useRegisterExtensionActions,
   useRegisterRecentDashboardsActions,
   useRegisterStaticActions,
 } from './actions/useActions';
+import {
+  type ExtensionSearchState,
+  NO_EXTENSION_SEARCH,
+  useExtensionSearchResults,
+} from './actions/useExtensionSearchResults';
 import { bucketQueryLength } from './bucketQueryLength';
 import { resetCommandPaletteInputMode, setCommandPaletteInputMode } from './inputMode';
 import { useRegisterRecentScopesActions, useRegisterScopesActions } from './scopes/scopeActions';
@@ -69,6 +75,13 @@ function CommandPaletteContents() {
   // the currentRootActionId. Because these search results are manually added to the list later, they would show every
   // time.
   const { searchResults, isFetchingSearchResults } = useSearchResults({ searchQuery, show: !currentRootActionId });
+
+  const extensionSearchEnabled = useFlagGrafanaCmdkExtensionSearch();
+  const [reportedExtensionSearch, setReportedExtensionSearch] = useState(NO_EXTENSION_SEARCH);
+  const { extensionSearchSections, isFetchingExtensionSearch } = extensionSearchEnabled
+    ? reportedExtensionSearch
+    : NO_EXTENSION_SEARCH;
+  const isFetching = isFetchingSearchResults || isFetchingExtensionSearch;
 
   const hybridSearchEnabled = useFlagGrafanaCmdkHybridSearch();
   const ref = useRef<HTMLDivElement>(null);
@@ -122,6 +135,13 @@ function CommandPaletteContents() {
 
   return (
     <KBarPositioner className={styles.positioner}>
+      {extensionSearchEnabled && (
+        <ExtensionSearchSource
+          searchQuery={searchQuery}
+          show={!currentRootActionId}
+          onChange={setReportedExtensionSearch}
+        />
+      )}
       <KBarAnimator className={styles.animator}>
         <FocusScope contain autoFocus restoreFocus>
           <div
@@ -138,14 +158,13 @@ function CommandPaletteContents() {
                 className={styles.search}
               />
               {hybridSearchEnabled && <AskAssistantPill />}
-              <div className={styles.loadingBarContainer}>
-                {isFetchingSearchResults && <LoadingBar width={500} delay={0} />}
-              </div>
+              <div className={styles.loadingBarContainer}>{isFetching && <LoadingBar width={500} delay={0} />}</div>
             </div>
             {scopesRow ? <div className={styles.searchContainer}>{scopesRow}</div> : null}
             <RenderResults
-              isFetchingSearchResults={isFetchingSearchResults}
+              isFetchingSearchResults={isFetching}
               searchResults={searchResults}
+              extensionSearchSections={extensionSearchSections}
               searchQuery={searchQuery}
               hybridSearchEnabled={hybridSearchEnabled}
             />
@@ -154,6 +173,24 @@ function CommandPaletteContents() {
       </KBarAnimator>
     </KBarPositioner>
   );
+}
+
+/**
+ * Runs the plugin search providers and reports their state up. A component rather than a hook call in the
+ * palette, so that nothing subscribes to the extension point, which loads plugins, while the feature is off.
+ */
+function ExtensionSearchSource({
+  searchQuery,
+  show,
+  onChange,
+}: {
+  searchQuery: string;
+  show: boolean;
+  onChange: (state: ExtensionSearchState) => void;
+}) {
+  const state = useExtensionSearchResults({ searchQuery, show });
+  useEffect(() => onChange(state), [state, onChange]);
+  return null;
 }
 
 /**
@@ -189,6 +226,7 @@ function AncestorBreadcrumbs() {
 interface RenderResultsProps {
   isFetchingSearchResults: boolean;
   searchResults: CommandPaletteAction[];
+  extensionSearchSections: ExtensionSearchSection[];
   searchQuery: string;
   // For event reporting
   hybridSearchEnabled: boolean;
@@ -197,6 +235,7 @@ interface RenderResultsProps {
 const RenderResults = ({
   isFetchingSearchResults,
   searchResults,
+  extensionSearchSections,
   searchQuery,
   hybridSearchEnabled,
 }: RenderResultsProps) => {
@@ -232,6 +271,17 @@ const RenderResults = ({
     [searchResults]
   );
 
+  const extensionSearchItems = useMemo(
+    () =>
+      extensionSearchSections
+        .filter((section) => section.actions.length > 0)
+        .flatMap((section) => [
+          section.title,
+          ...section.actions.map((action) => new ActionImpl(action, { store: {} })),
+        ]),
+    [extensionSearchSections]
+  );
+
   const items = useMemo(() => {
     const results = [...kbarResults];
     if (folderResultItems.length > 0) {
@@ -246,6 +296,7 @@ const RenderResults = ({
       results.push(notebooksSectionTitle);
       results.push(...notebookResultItems);
     }
+    results.push(...extensionSearchItems);
     return results;
   }, [
     kbarResults,
@@ -255,6 +306,7 @@ const RenderResults = ({
     folderResultItems,
     notebooksSectionTitle,
     notebookResultItems,
+    extensionSearchItems,
   ]);
 
   const reportActionSelected = useCallback(
