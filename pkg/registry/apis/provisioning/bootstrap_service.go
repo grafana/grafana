@@ -50,7 +50,7 @@ func ProvideBootstrapService(cfg *setting.Cfg, builder *APIBuilder) (*BootstrapS
 		s.config = config
 		builder.bootstrapDone = done
 	}
-	s.loopbackService = newLoopbackService(BootstrapServiceName, builder, s.runController)
+	s.loopbackService = newLoopbackService(BootstrapServiceName, builder, false, s.runController)
 	// Closed on every path, including shutdown before the API is served, so
 	// nothing waits on Done forever.
 	s.onStop = s.closeDone
