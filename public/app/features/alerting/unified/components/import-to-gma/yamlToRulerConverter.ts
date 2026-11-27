@@ -1,114 +1,85 @@
+import * as z from 'zod/mini';
+
 import { loadYaml } from 'app/core/utils/yaml';
-import {
-  type RulerCloudRuleDTO,
-  type RulerCloudRulesConfigDTO,
-  type RulerRuleGroupDTO,
-} from 'app/types/unified-alerting-dto';
+import { type RulerCloudRuleDTO, type RulerCloudRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-interface PrometheusYamlFile {
-  namespace?: string;
-  groups: Array<RulerRuleGroupDTO<RulerCloudRuleDTO>>;
+// The fields below are typed the way the backend decodes them (PrometheusRuleGroup, PrometheusRule),
+// so a file the backend would reject fails in the file step and not when the import is submitted.
+const nonEmptyString = z.string().check(z.minLength(1));
+// Same grammar as the backend's model.ParseDuration: descending units, each at most once.
+const DURATION_UNITS = /^(\d+y)?(\d+w)?(\d+d)?(\d+h)?(\d+m)?(\d+s)?(\d+ms)?$/;
+const prometheusDuration = z
+  .string()
+  .check(
+    z.refine(
+      (value) => value === '0' || (value !== '' && DURATION_UNITS.test(value)),
+      'must be a Prometheus duration, for example 5m or 1h30m'
+    )
+  );
+// The backend decodes a null value as an empty string, so a null is not an error.
+const stringMap = z.record(z.string(), z.nullable(z.string()));
+
+function nullValuesToEmptyStrings(map: z.infer<typeof stringMap> | null | undefined) {
+  return map ? Object.fromEntries(Object.entries(map).map(([key, value]) => [key, value ?? ''])) : undefined;
 }
 
-function isValidObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && Boolean(value);
-}
-
-function isRule(yamlRule: unknown): yamlRule is RulerCloudRuleDTO {
-  if (!isValidObject(yamlRule)) {
-    return false;
-  }
-
-  const alert = 'alert' in yamlRule && typeof yamlRule.alert === 'string' ? yamlRule.alert : undefined;
-  const record = 'record' in yamlRule && typeof yamlRule.record === 'string' ? yamlRule.record : undefined;
-  const expr = 'expr' in yamlRule && typeof yamlRule.expr === 'string' ? yamlRule.expr : undefined;
-
-  if (!expr) {
-    return false;
-  }
-
-  if (!alert && !record) {
-    return false;
-  }
-
-  // If both are specified we don't know which one to use
-  if (alert && record) {
-    return false;
-  }
-
-  // Check optional properties if they exist
-  if ('for' in yamlRule && typeof yamlRule.for !== 'string') {
-    return false;
-  }
-
-  if ('labels' in yamlRule && !isValidObject(yamlRule.labels)) {
-    return false;
-  }
-
-  if ('annotations' in yamlRule && !isValidObject(yamlRule.annotations)) {
-    return false;
-  }
-
-  return true;
-}
-
-function isGroup(obj: unknown): obj is RulerRuleGroupDTO<RulerCloudRuleDTO> {
-  if (!isValidObject(obj)) {
-    return false;
-  }
-
-  const name = 'name' in obj && typeof obj.name === 'string' ? obj.name : undefined;
-  const rules = 'rules' in obj && Array.isArray(obj.rules) ? obj.rules : undefined;
-
-  if (!name || !rules) {
-    return false;
-  }
-
-  return rules.every(isRule);
-}
-
-type ValidationResult = { isValid: true; data: PrometheusYamlFile } | { isValid: false; error: string };
-
-function validatePrometheusYamlFile(obj: unknown): ValidationResult {
-  if (!isValidObject(obj)) {
-    return { isValid: false, error: 'Invalid YAML format: missing or invalid groups array' };
-  }
-
-  if (!('groups' in obj) || ('groups' in obj && !Array.isArray(obj.groups))) {
-    return { isValid: false, error: 'Invalid YAML format: missing or invalid groups array' };
-  }
-
-  // Check if groups is an array
-  if (!Array.isArray(obj.groups)) {
-    return { isValid: false, error: 'Invalid YAML format: missing or invalid groups array' };
-  }
-
-  // Check optional namespace property if it exists
-  if ('namespace' in obj && typeof obj.namespace !== 'string') {
-    return { isValid: false, error: 'Invalid YAML format: namespace must be a string' };
-  }
-
-  // If we get here, the object is valid - we can safely use it
-  // Since we validated the entire structure above, we know obj conforms to PrometheusYamlFile
-  const validatedGroups = obj.groups.map((group, index) => {
-    if (isGroup(group)) {
-      return group;
+// Loose objects keep keys the backend ignores instead of stripping them.
+const ruleSchema = z.pipe(
+  z.looseObject({
+    alert: z.nullish(z.string()),
+    record: z.nullish(z.string()),
+    expr: nonEmptyString,
+    for: z.nullish(prometheusDuration),
+    keep_firing_for: z.nullish(prometheusDuration),
+    labels: z.nullish(stringMap),
+    annotations: z.nullish(stringMap),
+  }),
+  z.transform(
+    ({ alert, record, for: pendingPeriod, keep_firing_for, labels, annotations, ...rest }, ctx): RulerCloudRuleDTO => {
+      const rule = {
+        ...rest,
+        for: pendingPeriod ?? undefined,
+        keep_firing_for: keep_firing_for ?? undefined,
+        labels: nullValuesToEmptyStrings(labels),
+        annotations: nullValuesToEmptyStrings(annotations),
+      };
+      if (alert && !record) {
+        return { ...rule, alert };
+      }
+      if (record && !alert) {
+        return { ...rule, record };
+      }
+      ctx.issues.push({
+        code: 'custom',
+        message: 'a rule needs either an alert or a record name, not both',
+        input: rest,
+      });
+      return z.NEVER;
     }
-    throw new Error(`Invalid YAML format: missing or invalid groups array at index ${index}`);
-  });
+  )
+);
 
-  const prometheusFile: PrometheusYamlFile = {
-    groups: validatedGroups,
-  };
+const groupSchema = z.looseObject({
+  name: nonEmptyString,
+  // The backend rejects a null interval, so it stays optional only.
+  interval: z.optional(prometheusDuration),
+  query_offset: z.nullish(prometheusDuration),
+  limit: z.nullish(z.literal(0, 'limit is not supported')),
+  labels: z.nullish(stringMap),
+  rules: z.array(ruleSchema),
+});
 
-  if ('namespace' in obj && typeof obj.namespace === 'string') {
-    prometheusFile.namespace = obj.namespace;
-  }
+const prometheusYamlFileSchema = z.object({
+  namespace: z.optional(z.string()),
+  groups: z.array(groupSchema),
+});
 
-  return {
-    isValid: true,
-    data: prometheusFile,
-  };
+const MAX_REPORTED_ISSUES = 10;
+
+function toErrorMessage({ issues }: z.core.$ZodError): string {
+  const message = z.prettifyError({ issues: issues.slice(0, MAX_REPORTED_ISSUES) });
+  const hidden = issues.length - MAX_REPORTED_ISSUES;
+  return hidden > 0 ? `${message}\n…and ${hidden} more` : message;
 }
 
 // only use this function directly for testing purposes, use parseYamlFileToRulerRulesConfigDTO instead
@@ -116,20 +87,15 @@ export function parseYamlToRulerRulesConfigDTO(
   yamlAsString: string,
   defaultNamespace: string
 ): RulerCloudRulesConfigDTO {
-  const obj = loadYaml(yamlAsString);
-  const validation = validatePrometheusYamlFile(obj);
+  const result = prometheusYamlFileSchema.safeParse(loadYaml(yamlAsString));
 
-  if (!validation.isValid) {
-    throw new Error(validation.error);
+  if (!result.success) {
+    throw new Error(toErrorMessage(result.error));
   }
 
-  // TypeScript now knows validation.data exists and is PrometheusYamlFile
-  const prometheusFile = validation.data;
-  const namespace = prometheusFile.namespace ?? defaultNamespace;
+  const { namespace = defaultNamespace, groups } = result.data;
 
-  return {
-    [namespace]: prometheusFile.groups,
-  };
+  return { [namespace]: groups };
 }
 
 export async function parseYamlFileToRulerRulesConfigDTO(

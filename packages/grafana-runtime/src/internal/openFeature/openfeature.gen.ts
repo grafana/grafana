@@ -178,6 +178,8 @@ export const FlagKeys = {
   GlobalDashboardVariables: "globalDashboardVariables",
   /** Allow admins to make announcement banners dismissible by users */
   GrafanaAnnouncementBannerDismissible: "grafana.announcementBannerDismissible",
+  /** Enable tracking of bootdata property access */
+  GrafanaBootdataAnalytics: "grafana.bootdataAnalytics",
   /** Shows dashboard tags in the command palette */
   GrafanaCmdkDashboardTags: "grafana.cmdkDashboardTags",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
@@ -266,6 +268,8 @@ export const FlagKeys = {
   GrafanaPanelOptionInterpolation: "grafana.panelOptionInterpolation",
   /** Let panel plugins register system transformations */
   GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
+  /** Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode */
+  GrafanaPanelQuickEdits: "grafana.panelQuickEdits",
   /** Pass React elements in plugin extension props by reference */
   GrafanaPluginExtensionReactElementProps: "grafana.pluginExtensionReactElementProps",
   /** Nest app plugin navigation items in the mega menu based on their URL path hierarchy */
@@ -276,6 +280,8 @@ export const FlagKeys = {
   GrafanaPreserveLoginTabTitle: "grafana.preserveLoginTabTitle",
   /** Disables creating new recorded queries while preserving access to existing queries */
   GrafanaRecordedQueriesDisableCreate: "grafana.recordedQueriesDisableCreate",
+  /** Enable tabs and an inline calendar in the compact time range picker */
+  GrafanaResponsiveTimePickerTabs: "grafana.responsiveTimePickerTabs",
   /** Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state */
   GrafanaSavedDashboardViews: "grafana.savedDashboardViews",
   /** Enables the dedicated Saved queries page and its navigation entry */
@@ -302,6 +308,8 @@ export const FlagKeys = {
   GraphiteBackendMode: "graphiteBackendMode",
   /** Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis */
   HeatmapNegativeLogBuckets: "heatmapNegativeLogBuckets",
+  /** Routes read-only user requests in the frontend from /api to the /apis endpoint. Depends on kubernetesUsersReadApi */
+  IamUseKubernetesUsersReadApi: "iam.useKubernetesUsersReadApi",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Adds support for Kubernetes correlations */
@@ -1333,6 +1341,17 @@ export const useFlagGrafanaAnnouncementBannerDismissible = (options?: ReactFlagE
 };
 
 /**
+ * Enable tracking of bootdata property access
+ *
+ * **Details:**
+ * - flag key: `grafana.bootdataAnalytics`
+ * - default value: `false`
+ */
+export const useFlagGrafanaBootdataAnalytics = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.bootdataAnalytics", false, options).value;
+};
+
+/**
  * Shows dashboard tags in the command palette
  *
  * **Details:**
@@ -1817,6 +1836,17 @@ export const useFlagGrafanaPanelPluginTransformations = (options?: ReactFlagEval
 };
 
 /**
+ * Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode
+ *
+ * **Details:**
+ * - flag key: `grafana.panelQuickEdits`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPanelQuickEdits = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.panelQuickEdits", false, options).value;
+};
+
+/**
  * Pass React elements in plugin extension props by reference
  *
  * **Details:**
@@ -1869,6 +1899,17 @@ export const useFlagGrafanaPreserveLoginTabTitle = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaRecordedQueriesDisableCreate = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.recordedQueriesDisableCreate", true, options).value;
+};
+
+/**
+ * Enable tabs and an inline calendar in the compact time range picker
+ *
+ * **Details:**
+ * - flag key: `grafana.responsiveTimePickerTabs`
+ * - default value: `false`
+ */
+export const useFlagGrafanaResponsiveTimePickerTabs = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.responsiveTimePickerTabs", false, options).value;
 };
 
 /**
@@ -2012,6 +2053,17 @@ export const useFlagGraphiteBackendMode = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagHeatmapNegativeLogBuckets = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("heatmapNegativeLogBuckets", false, options).value;
+};
+
+/**
+ * Routes read-only user requests in the frontend from /api to the /apis endpoint. Depends on kubernetesUsersReadApi
+ *
+ * **Details:**
+ * - flag key: `iam.useKubernetesUsersReadApi`
+ * - default value: `false`
+ */
+export const useFlagIamUseKubernetesUsersReadApi = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("iam.useKubernetesUsersReadApi", false, options).value;
 };
 
 /**

@@ -1,7 +1,7 @@
-import { CORE_SCHEMA, type LoadOptions, YAMLException, loadAll, mergeTag, timestampTag } from 'js-yaml';
+import { CORE_SCHEMA, type LoadOptions, YAMLException, loadAll, mergeTag } from 'js-yaml';
 
 // Prometheus/Alertmanager configs rely on merge keys
-const YAML_LOAD_OPTIONS: LoadOptions = { schema: CORE_SCHEMA.withTags(mergeTag, timestampTag) };
+const YAML_LOAD_OPTIONS: LoadOptions = { schema: CORE_SCHEMA.withTags(mergeTag) };
 
 // Use `loadAll` to parse the YAML and return undefined on a stream with no documents (empty or comment-only input);
 export function loadYaml(text: string, options: LoadOptions = YAML_LOAD_OPTIONS): unknown {

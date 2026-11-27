@@ -213,7 +213,8 @@ func TestBuildDoesNotSkipInterruptedDocument(t *testing.T) {
 	builder := &interruptibleDocumentBuilder{err: context.DeadlineExceeded}
 	server := &searchServer{storage: &docStorageBackend{values: [][]byte{testObjectJSON("one", "One")}}}
 	index := &MockResourceIndex{}
-	_, _, err := server.indexResourceType(t.Context(), index, key, builder, newBuildPhaseRecorder(nil, IndexPathBuild, key), log.NewNopLogger())
+	_, _, skipped, err := server.indexResourceType(t.Context(), index, key, builder, newBuildPhaseRecorder(nil, IndexPathBuild, key), log.NewNopLogger(), false)
+	require.False(t, skipped)
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 	require.Empty(t, index.indexedItems())
 }

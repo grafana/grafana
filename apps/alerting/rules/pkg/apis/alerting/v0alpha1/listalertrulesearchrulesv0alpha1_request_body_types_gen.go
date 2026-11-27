@@ -45,7 +45,9 @@ func (ListAlertRuleSearchRulesV0alpha1RequestSearchTextLeaf) OpenAPIModelName() 
 }
 
 type ListAlertRuleSearchRulesV0alpha1RequestSearchFilterLeaf struct {
-	Field    string                                                          `json:"field"`
+	Field string `json:"field"`
+	// "In" on every filterable field. "NotIn" on labels, state and health only;
+	// the other fields reject it. "All" is rejected.
 	Operator ListAlertRuleSearchRulesV0alpha1RequestSearchFilterLeafOperator `json:"operator"`
 	Values   []string                                                        `json:"values"`
 }

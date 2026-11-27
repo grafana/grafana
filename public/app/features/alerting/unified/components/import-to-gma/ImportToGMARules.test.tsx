@@ -110,6 +110,13 @@ describe('ImportToGMARules', () => {
   });
 
   describe('existing datasource', () => {
+    it('shows an error on the data source field when the rules sources cannot be loaded', async () => {
+      failRecordingTargetDiscovery(hookMock);
+      render(<ImportToGMARules />);
+
+      expect(await screen.findByText('Failed to load the list of data sources with a ruler')).toBeInTheDocument();
+    });
+
     it('should render datasource options', async () => {
       const { user } = render(<ImportToGMARules />);
 

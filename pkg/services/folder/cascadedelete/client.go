@@ -49,7 +49,13 @@ func (d *DynamicClients) Delete(ctx context.Context, namespace, parentUID string
 	case ChildDashboard:
 		return d.deleteChild(ctx, d.client.Resource(dashboardGVR).Namespace(namespace), parentUID, child.Name)
 	case ChildFolder:
-		return d.deleteChild(ctx, d.client.Resource(folderGVR).Namespace(namespace), parentUID, child.Name)
+		outcome, err := d.deleteChild(ctx, d.client.Resource(folderGVR).Namespace(namespace), parentUID, child.Name)
+		// The folders API stamps the cascade finalizer on a subfolder that lacks it, so a deleted subfolder
+		// only goes terminating and stays a child until its own cascade releases it.
+		if err == nil && outcome == DeleteOutcomeDeleted {
+			outcome = DeleteOutcomePending
+		}
+		return outcome, err
 	default:
 		return 0, fmt.Errorf("unsupported child kind %q", child.Kind)
 	}
@@ -62,9 +68,9 @@ func (d *DynamicClients) Delete(ctx context.Context, namespace, parentUID string
 // skipped, since re-deleting them would only spend a batch slot.
 //
 // Deletes are forced (gracePeriodSeconds=0), as the synchronous cascade does: it gets a non-empty
-// subfolder past the emptiness check (with the cascade finalizer it only goes terminating and runs
-// its own cascade), and a file-provisioned dashboard past the check that otherwise rejects deleting
-// it, which would leave the folder stuck.
+// subfolder past the emptiness check (it only goes terminating and runs its own cascade), and a
+// file-provisioned dashboard past the check that otherwise rejects deleting it, which would leave
+// the folder stuck.
 func (d *DynamicClients) deleteChild(ctx context.Context, client dynamic.ResourceInterface, parentUID, name string) (DeleteOutcome, error) {
 	existing, err := client.Get(ctx, name, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {

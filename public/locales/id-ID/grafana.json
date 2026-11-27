@@ -3325,6 +3325,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Kesalahan saat memuat aturan",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Gagal memuat konfigurasi aturan Grafana:",
       "failed-to-load-grafana-rules-state": "Gagal memuat status aturan Grafana:",
       "failed-to-load-rules-config": "Gagal memuat konfigurasi aturan dari <2>{{dataSource}}</2>",
@@ -6563,6 +6564,10 @@
       "paused": "Dasbor ini telah dijeda oleh administrator",
       "try-again-later": "Coba lagi nanti"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Anda yakin ingin menghapus panel ini?"
@@ -6690,7 +6695,8 @@
           "title": "Tempel panel"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "Tambahkan baris",
@@ -8011,6 +8017,9 @@
       "title-delete-all-transformations": "Hapus semua transformasi?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_other": ""
@@ -9894,10 +9903,6 @@
       "to": "KE",
       "when": "KAPAN"
     },
-    "expression-query-editor": {
-      "helper-text-sql": "Jalankan SQL berformat MySQL terhadap tabel yang dikembalikan dari sumber data Anda. Kueri sumber data (yaitu \"A\", \"B\") tersedia sebagai tabel dan direferensikan oleh nama kueri. Bidang tersedia sebagai kolom, seperti yang dikembalikan dari sumber data.",
-      "label-operation": "Pengoperasian"
-    },
     "math": {
       "available-math-functions": "Fungsi matematika yang tersedia",
       "run-math-operations": "Jalankan operasi matematika pada satu kueri atau lebih. Anda mereferensikan kueri berdasarkan {{refExample}} yaitu {{ref1}}, {{ref2}}, {{ref3}}, dll.<br/>Contoh: <12>{{example}}</12>",
@@ -10435,6 +10440,24 @@
         "otherGroup": "Lainnya"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -10952,6 +10975,10 @@
         "placement-options": {
           "label-bottom": "Bawah",
           "label-right": "Kanan"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11047,6 +11074,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "Satu klik"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "Tambahkan tautan",
@@ -13681,16 +13711,16 @@
       "open": "Menu utama",
       "pin-error": "Gagal memperbarui item menu yang disematkan",
       "pinned-list-label": "Item yang disematkan",
+      "section-resize": "",
       "undock": "Lepas gandengan menu"
     },
     "megamenu-item": {
       "children-error": "Gagal memuat item",
+      "children-partial-error": "",
       "collapse-aria-label": "Ciutkan bagian: {{sectionName}}",
       "expand-aria-label": "Perluas bagian: {{sectionName}}",
       "loading-aria-label": "Memuat {{sectionName}}",
-      "reorder-aria-label": "Susun ulang {{itemName}}",
-      "starred-dashboard-icon": "Dasbor",
-      "starred-folder-icon": "Folder"
+      "reorder-aria-label": "Susun ulang {{itemName}}"
     },
     "org-switcher": {
       "aria-label": "Ubah organisasi"
@@ -13875,12 +13905,32 @@
         "undo-label": "Pengeditan Assistant"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "Batalkan",
       "confirm-discard": "Buang",
       "confirm-keep": "Simpan",
       "confirm-text": "Ingin menyimpan perubahan yang Anda buat saat melihat notebook ini?",
       "confirm-title": "Perubahan panel belum disimpan"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17157,6 +17207,13 @@
       "wide-list": "Daftar format lebar",
       "wide-list-desc": "Horizontal, nama dan nilai, sparkline area, satu warna"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "Stat",
       "stat-color-background": "Stat - warna latar belakang",
@@ -17359,6 +17416,7 @@
     "description-page-size": "Jumlah baris per halaman. Saat kosong, ukuran halaman didasarkan pada tinggi panel.",
     "description-show-columns-sidebar": "Buka bilah sisi pengelolaan kolom dengan panel, bukan dari menu kolom",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "Bidang yang berisi objek JSON dengan properti CSS",
     "description-tooltip-from-field": "Render sel dari bidang (tersembunyi atau terlihat) dalam tooltip",
     "description-zebra-striping": "Ganti warna latar belakang setiap baris berikutnya",
@@ -17403,6 +17461,7 @@
     "name-show-columns-sidebar": "Tampilkan bilah sisi kolom",
     "name-show-row-numbers": "",
     "name-show-table-header": "Tampilkan header tabel",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "Tampilkan tooltip saat kursor diarahkan",
     "name-styling-from-field": "Penataan dari bidang",
     "name-tooltip-from-field": "Tooltip dari bidang",
@@ -17700,6 +17759,10 @@
       "time-zone-option": "Zona waktu",
       "time-zone-selection": "Pemilihan zona waktu"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "Gunakan rentang waktu",
       "default-error": "Masukkan tanggal ({{dateExample}}) atau waktu relatif ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -17717,6 +17780,12 @@
       "to": "ke",
       "zoom-out-button": "Perkecil rentang waktu",
       "zoom-out-tooltip-new": "Perkecil rentang waktu <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "Gunakan rentang waktu",

@@ -48,25 +48,16 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts SettingsResource) (*spec3.OpenAPI, 
 	if cfg == nil {
 		return nil, fmt.Errorf("no route registered: %s", opts.Path)
 	}
-	if cfg.Post == nil {
-		return nil, fmt.Errorf("expecting POST under: %s", opts.Path)
-	}
+	// Read-only settings have no POST, and so nowhere to show the examples;
+	// everything else is described as for writable settings.
+	create := cfg.Post
 
 	// Replace the generic DataSourceSpec with the explicit one
 	settings := opts.Schema.SettingsSchema
 	if !settings.IsZero() {
 		resourceSpec := settings.Spec
 		if opts.IsApp {
-			resourceSpec = &spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Type: []string{"object"},
-					Properties: map[string]spec.Schema{
-						"pinned":   *spec.BooleanProperty().WithDescription("shows up in the sidebar"),
-						"enabled":  *spec.BooleanProperty().WithDescription("can be executed"),
-						"jsonData": *settings.Spec,
-					},
-				},
-			}
+			resourceSpec = AppSettingsSpec(settings)
 
 			example := map[string]any{
 				"metadata": map[string]any{
@@ -74,7 +65,6 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts SettingsResource) (*spec3.OpenAPI, 
 				},
 				"spec": map[string]any{
 					"enabled": true,
-					"pinned":  true,
 					// JSONData (from examples)
 				},
 			}
@@ -124,8 +114,8 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts SettingsResource) (*spec3.OpenAPI, 
 		}
 
 		examples := opts.Schema.SettingsExamples
-		if !examples.IsZero() {
-			for _, c := range cfg.Post.RequestBody.Content {
+		if !examples.IsZero() && create != nil && create.RequestBody != nil {
+			for _, c := range create.RequestBody.Content {
 				c.Examples = examples.Examples
 			}
 		}
@@ -303,4 +293,33 @@ func copyComponents(src *spec3.Components, dst *spec3.Components) {
 		}
 		maps.Copy(dst.RequestBodies, src.RequestBodies)
 	}
+}
+
+// AppSettingsSpec is the spec of an app's settings object as the settings API
+// describes it, in its OpenAPI and its manifest: whether the app is enabled,
+// next to its jsonData. The settings schema's spec is the contents of
+// jsonData; without one, jsonData is any object (AnyJSONData).
+func AppSettingsSpec(settings *pluginschema.Settings) *spec.Schema {
+	jsonData := AnyJSONData()
+	if !settings.IsZero() && settings.Spec != nil {
+		jsonData = settings.Spec
+	}
+	return &spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Type: []string{"object"},
+			Properties: map[string]spec.Schema{
+				"enabled":  *spec.BooleanProperty().WithDescription("can be executed"),
+				"jsonData": *jsonData,
+			},
+		},
+	}
+}
+
+// AnyJSONData is the jsonData of an app whose settings schema does not define
+// it: any object.
+func AnyJSONData() *spec.Schema {
+	return &spec.Schema{SchemaProps: spec.SchemaProps{
+		Type:                 []string{"object"},
+		AdditionalProperties: &spec.SchemaOrBool{Allows: true},
+	}}
 }

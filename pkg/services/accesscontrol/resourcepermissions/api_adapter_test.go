@@ -1676,6 +1676,10 @@ func (m *mockResourcePermissionStore) SetResourcePermissions(ctx context.Context
 	return nil, nil
 }
 
+func (m *mockResourcePermissionStore) SetUserResourcePermissions(ctx context.Context, orgID int64, commands []SetResourcePermissionsCommand, hook UsersResourceHookFunc) ([]accesscontrol.ResourcePermission, error) {
+	return nil, nil
+}
+
 func (m *mockResourcePermissionStore) DeleteResourcePermissions(ctx context.Context, orgID int64, cmd *DeleteResourcePermissionsCmd) error {
 	return nil
 }

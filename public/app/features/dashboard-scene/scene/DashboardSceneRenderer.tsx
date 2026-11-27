@@ -19,6 +19,7 @@ import { useScopeActions } from 'app/features/scopes/selector/useScopeActions';
 import { useSelector } from 'app/types/store';
 
 import { ComposerOverlay } from '../composer/ComposerOverlay';
+import { ComposerOverAssistantEdit } from '../lifecycle/useComposerOverAssistantEdit';
 import { DashboardSidebarSplitter } from '../sidebar/DashboardSidebarSplitter';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../solo/SoloPanelContext';
 
@@ -26,6 +27,7 @@ import { DashboardOverlay } from './DashboardOverlay';
 import { type DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
 import { PlanBuildingOverlay } from './PlanBuildingOverlay';
+import { dashboardComposerEnabled } from './dashboardModes';
 import { PlanningControls } from './new-toolbar/PlanningControls';
 import { SandboxConsentBanner } from './sandbox-consent/SandboxConsentBanner';
 
@@ -189,6 +191,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
           />
         )}
         <DashboardOverlay dashboard={model} />
+        {dashboardComposerEnabled() && <ComposerOverAssistantEdit uid={uid} isEditing={Boolean(isEditing)} />}
       </Page>
     </>
   );

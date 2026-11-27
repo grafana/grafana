@@ -581,7 +581,7 @@ export type SearchExternalGroupMappingsApiArg = {
     externalGroups?: string[];
   };
 };
-export type GetSearchTeamsApiResponse = /** status 200 undefined */ any;
+export type GetSearchTeamsApiResponse = /** status 200 undefined */ GetSearchTeamsResponse;
 export type GetSearchTeamsApiArg = {
   /** team name query string (fuzzy/partial match). Mutually exclusive with title. */
   query?: string;
@@ -606,7 +606,7 @@ export type GetSearchTeamsApiArg = {
   /** sortable field */
   sort?: string;
 };
-export type GetSearchUsersApiResponse = unknown;
+export type GetSearchUsersApiResponse = /** status 200 OK */ GetSearchUsersResponse;
 export type GetSearchUsersApiArg = {
   query?: string;
   /** number of results to return */
@@ -1205,6 +1205,61 @@ export type DisplayList = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ListMeta;
+};
+export type GetSearchTeamsTeamHit = {
+  accessControl?: {
+    [key: string]: boolean;
+  };
+  email: string;
+  externalUID: string;
+  internalId?: number;
+  memberCount?: number;
+  name: string;
+  provisioned: boolean;
+  title: string;
+};
+export type GetSearchTeamsResponse = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  hits: GetSearchTeamsTeamHit[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  maxScore: number;
+  offset: number;
+  queryCost: number;
+  totalHits: number;
+};
+export type GetSearchUsersUserHit = {
+  accessControl?: {
+    [key: string]: boolean;
+  };
+  /** Display labels of the auth provider the user last signed in with, e.g. "LDAP". */
+  authLabels?: string[];
+  /** Avatar URL of the user, derived from the email. Omitted when the user has no email. */
+  avatarUrl?: string;
+  /** Creation timestamp, in epoch milliseconds. */
+  created: number;
+  disabled: boolean;
+  email: string;
+  /** Auth module identifiers the user is externally synced with. */
+  externalAuthModules?: string[];
+  /** Deprecated internal (legacy SQL) id of the user. */
+  internalId: number;
+  lastSeenAt: number;
+  lastSeenAtAge: string;
+  login: string;
+  name: string;
+  provisioned: boolean;
+  role: string;
+  score: number;
+  title: string;
+};
+export type GetSearchUsersResponse = {
+  hits: GetSearchUsersUserHit[];
+  maxScore: number;
+  offset: number;
+  queryCost: number;
+  totalHits: number;
 };
 export type Time = string;
 export type FieldsV1 = object;

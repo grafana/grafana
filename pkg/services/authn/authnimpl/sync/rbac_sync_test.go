@@ -840,6 +840,30 @@ func TestRBACSync_translateK8sPermissions(t *testing.T) {
 			expectedError: nil,
 		},
 		{
+			name: "should translate APIs that check unscoped RBAC actions",
+			k8sPerms: []string{
+				"notifications.alerting.grafana.app/templategroups:list",
+				"notifications.alerting.grafana.app/timeintervals:get",
+				"alertenrichment.grafana.app/alert-enrichments:list",
+				"queries.grafana.app/queries:create",
+			},
+			expectedPerms: []accesscontrol.Permission{
+				{Action: "alert.notifications.templates:read"},
+				{Action: "alert.notifications.time-intervals:read"},
+				{Action: "alert.enrichments:read"},
+				{Action: "queries:write"},
+			},
+		},
+		{
+			name: "should translate inhibition rules to their uid scoped actions",
+			k8sPerms: []string{
+				"notifications.alerting.grafana.app/inhibitionrules:get",
+			},
+			expectedPerms: []accesscontrol.Permission{
+				{Action: "alert.notifications.inhibition-rules:read", Scope: "inhibition-rules:uid:*"},
+			},
+		},
+		{
 			name: "should skip invalid permissions group/resource/additional/part:verb",
 			k8sPerms: []string{
 				"folder.grafana.app/folder/fold1/subresource:get",
@@ -904,6 +928,10 @@ func setupTestEnv(t *testing.T) *RBACSync {
 	require.NoError(t, permRegistry.RegisterPermission("dashboards:create", "folders:uid:"))
 	require.NoError(t, permRegistry.RegisterPermission("dashboards:delete", "dashboards:uid:"))
 	require.NoError(t, permRegistry.RegisterPermission("dashboards:delete", "folders:uid:"))
+	for _, action := range []string{"alert.notifications.templates:read", "alert.notifications.time-intervals:read", "alert.enrichments:read", "queries:write"} {
+		require.NoError(t, permRegistry.RegisterPermission(action, ""))
+	}
+	require.NoError(t, permRegistry.RegisterPermission("alert.notifications.inhibition-rules:read", "inhibition-rules:uid:"))
 
 	s := &RBACSync{
 		ac:           acMock,

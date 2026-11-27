@@ -15,6 +15,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	utilnet "k8s.io/apimachinery/pkg/util/net"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -24,6 +25,7 @@ import (
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboards" // TODO: Check if we can remove this import
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -2705,5 +2707,72 @@ func runDashboardTrashTests(t *testing.T, ctx TestContext) {
 		})
 		require.NoError(t, err)
 		require.Len(t, viewerTrashList.Items, 0, "Viewer should not see any trash items")
+	})
+
+	t.Run("recently deleted exposes dashboard metadata", func(t *testing.T) {
+		admin, editor := ctx.AdminUser, ctx.EditorUser
+		const (
+			title = "Dashboard deleted by another user"
+			tag   = "trash-metadata"
+		)
+		dashboardSpec := createDashboardObject(t, title, ctx.TestFolder.UID, 0)
+		require.NoError(t, unstructured.SetNestedStringSlice(dashboardSpec.Object, []string{tag}, "spec", "tags"))
+		dashboard, err := adminClient.Resource.Create(t.Context(), dashboardSpec, v1.CreateOptions{})
+		require.NoError(t, err)
+		apis.AwaitZanzanaReconcileNext(t, ctx.Helper)
+		require.Equal(t, admin.Identity.GetUID(), dashboard.GetAnnotations()[utils.AnnoKeyUpdatedBy])
+		deleter := editor.Identity.GetUID()
+		require.NotEqual(t, admin.Identity.GetUID(), deleter)
+
+		name := dashboard.GetName()
+		require.NoError(t, editorClient.Resource.Delete(t.Context(), name, v1.DeleteOptions{}))
+		trash, err := adminClient.Resource.List(t.Context(), v1.ListOptions{
+			LabelSelector: utils.LabelKeyGetTrash + "=true",
+			FieldSelector: "metadata.name=" + name,
+		})
+		require.NoError(t, err)
+		require.Len(t, trash.Items, 1)
+		item := trash.Items[0]
+		require.Equal(t, name, item.GetName())
+		require.Equal(t, deleter, item.GetAnnotations()[utils.AnnoKeyUpdatedBy])
+		deletedAt := item.GetDeletionTimestamp()
+		require.NotNil(t, deletedAt)
+		require.False(t, deletedAt.IsZero())
+
+		body, err := json.Marshal(searchv0.TrashQuery{
+			TypeMeta: v1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindTrashQuery},
+			Fields:   []string{"title", "folder", "tags", "deleted_by", "deletion_time"},
+			Limit:    100,
+		})
+		require.NoError(t, err)
+		gvr := getDashboardGVR()
+		gv := gvr.GroupVersion()
+		client := admin.RESTClient(t, &gv)
+		t.Cleanup(func() { utilnet.CloseIdleConnectionsFor(client.Client.Transport) })
+		result := client.Post().
+			Namespace(ctx.Helper.Namespacer(ctx.OrgID)).
+			Resource(gvr.Resource).
+			SubResource("trash").
+			SetHeader("Content-Type", "application/json").
+			Body(body).
+			Do(t.Context())
+		raw, err := result.Raw()
+		require.NoError(t, err)
+		var status int
+		result.StatusCode(&status)
+		require.Equal(t, http.StatusOK, status, "%s", raw)
+		var page searchv0.TrashResults
+		require.NoError(t, json.Unmarshal(raw, &page))
+		i := slices.IndexFunc(page.Items, func(row searchv0.ResultItem) bool { return row.Resource.Name == name })
+		require.NotEqual(t, -1, i, "dashboard %s on the recently deleted page", name)
+		fields := page.Items[i].Fields
+		require.NotNil(t, fields)
+		require.Equal(t, title, fields.Object["title"])
+		require.Equal(t, ctx.TestFolder.UID, fields.Object["folder"])
+		tags, _, err := unstructured.NestedStringSlice(fields.Object, "tags")
+		require.NoError(t, err)
+		require.Equal(t, []string{tag}, tags)
+		require.Equal(t, deleter, fields.Object["deleted_by"])
+		require.Equal(t, float64(deletedAt.UnixMilli()), fields.Object["deletion_time"])
 	})
 }
