@@ -231,6 +231,19 @@ func TestCascadeDelete_FailedStampDoesNotStopTheDelete(t *testing.T) {
 	require.Nil(t, store.requesterSeen)
 }
 
+func TestCascadeDelete_FailedStampKeepsTheFolderWhenARequesterIsLeftOver(t *testing.T) {
+	setRequesterToggles(t, true)
+	store, status, s := newRequesterStore()
+	left := cascadeDeleteRequesterOf(requesterUser)
+	store.existing["root"].Status.CascadeDelete = &foldersv1.FolderCascadeDeleteStatus{Requester: left}
+	status.err = errors.New("boom")
+
+	_, _, err := s.Delete(requesterCtx(requesterApp), "root", nil, forceDelete())
+	require.Error(t, err)
+	require.Nil(t, store.existing["root"].DeletionTimestamp, "the folder is not deleted under another identity's requester")
+	require.Equal(t, left, store.existing["root"].Status.CascadeDelete.Requester)
+}
+
 func TestCascadeDelete_FailedDeleteClearsTheRequester(t *testing.T) {
 	setRequesterToggles(t, true)
 	store, _, s := newRequesterStore()

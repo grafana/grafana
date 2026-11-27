@@ -760,6 +760,10 @@ func (s *cascadeDeleteStorage) deleteAsync(ctx context.Context, ns authlib.Names
 	svcCtx := identity.WithServiceIdentityContext(base, ns.OrgID)
 	stamped, err := s.recordCascadeDeleteRequester(svcCtx, f, requester)
 	if err != nil {
+		// A leftover requester would be taken for this delete's, and a wrong one is worse than none.
+		if leftover {
+			return nil, false, err
+		}
 		// The requester only feeds attribution and the access check already ran, so a failed stamp must
 		// not stop the delete, e.g. for a folder stored above the version cap, which can only be drained.
 		logging.FromContext(ctx).Warn("Failed to record the cascade-delete requester, deleting without it", "folder", f.Name, "error", err)
