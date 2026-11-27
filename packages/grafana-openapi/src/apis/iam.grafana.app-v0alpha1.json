@@ -4356,6 +4356,10 @@
               "type": "string"
             }
           },
+          "avatarUrl": {
+            "description": "Avatar URL of the user, derived from the email. Omitted when the user has no email.",
+            "type": "string"
+          },
           "created": {
             "description": "Creation timestamp, in epoch milliseconds.",
             "type": "integer",
