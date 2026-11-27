@@ -2222,6 +2222,8 @@ export type ListAlertRuleSearchRulesV0Alpha1SearchExistsLeaf = {
 };
 export type ListAlertRuleSearchRulesV0Alpha1SearchFilterLeaf = {
   field: string;
+  /** "In" on every filterable field. "NotIn" on labels, state and health only;
+    the other fields reject it. "All" is rejected. */
   operator: 'In' | 'NotIn' | 'All';
   values: string[];
 };
@@ -2328,6 +2330,8 @@ export type ListRecordingRuleSearchRulesV0Alpha1SearchExistsLeaf = {
 };
 export type ListRecordingRuleSearchRulesV0Alpha1SearchFilterLeaf = {
   field: string;
+  /** "In" on every filterable field. "NotIn" on labels, state and health only;
+    the other fields reject it. "All" is rejected. */
   operator: 'In' | 'NotIn' | 'All';
   values: string[];
 };

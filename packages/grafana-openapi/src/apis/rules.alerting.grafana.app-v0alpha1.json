@@ -4837,6 +4837,7 @@
         }
       },
       "ListAlertRuleSearchRulesV0alpha1SearchFilterLeaf": {
+        "description": "A filter over one field. The operator enum is the generic contract, but these\nroutes reject \"All\" and accept \"NotIn\" on labels, state and health only;\nevery other field takes \"In\" alone.",
         "type": "object",
         "required": ["field", "operator", "values"],
         "properties": {
@@ -4844,6 +4845,7 @@
             "type": "string"
           },
           "operator": {
+            "description": "\"In\" on every filterable field. \"NotIn\" on labels, state and health only;\nthe other fields reject it. \"All\" is rejected.",
             "type": "string",
             "enum": ["In", "NotIn", "All"]
           },
@@ -5168,6 +5170,7 @@
         }
       },
       "ListRecordingRuleSearchRulesV0alpha1SearchFilterLeaf": {
+        "description": "A filter over one field. The operator enum is the generic contract, but these\nroutes reject \"All\" and accept \"NotIn\" on labels, state and health only;\nevery other field takes \"In\" alone.",
         "type": "object",
         "required": ["field", "operator", "values"],
         "properties": {
@@ -5175,6 +5178,7 @@
             "type": "string"
           },
           "operator": {
+            "description": "\"In\" on every filterable field. \"NotIn\" on labels, state and health only;\nthe other fields reject it. \"All\" is rejected.",
             "type": "string",
             "enum": ["In", "NotIn", "All"]
           },
@@ -5849,7 +5853,6 @@
           "operator": {
             "description": "Operator is \"In\", \"NotIn\" or \"All\" in v1. \"In\" matches any of the values, \"NotIn\" excludes all of them, and \"All\" requires the field to hold every value, which only a field holding a list of values can do.\n\nPossible enum values:\n - `\"All\"` requires the resources whose field holds every one of the values, which only a field holding a list of values can do.\n - `\"In\"` keeps the resources whose field matches any of the values.\n - `\"NotIn\"` keeps the resources whose field matches none of them.",
             "type": "string",
-            "default": "",
             "enum": ["All", "In", "NotIn"]
           },
           "values": {

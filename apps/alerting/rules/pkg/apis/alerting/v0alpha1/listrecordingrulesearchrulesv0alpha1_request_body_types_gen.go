@@ -44,8 +44,13 @@ func (ListRecordingRuleSearchRulesV0alpha1RequestSearchTextLeaf) OpenAPIModelNam
 	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1RequestSearchTextLeaf"
 }
 
+// A filter over one field. The operator enum is the generic contract, but these
+// routes reject "All" and accept "NotIn" on labels, state and health only;
+// every other field takes "In" alone.
 type ListRecordingRuleSearchRulesV0alpha1RequestSearchFilterLeaf struct {
-	Field    string                                                              `json:"field"`
+	Field string `json:"field"`
+	// "In" on every filterable field. "NotIn" on labels, state and health only;
+	// the other fields reject it. "All" is rejected.
 	Operator ListRecordingRuleSearchRulesV0alpha1RequestSearchFilterLeafOperator `json:"operator"`
 	Values   []string                                                            `json:"values"`
 }
