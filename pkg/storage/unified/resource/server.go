@@ -59,13 +59,15 @@ func watchSendError(err error) error {
 	return err
 }
 
-// queueRPCError reports a full tenant queue as 429/ResourceExhausted;
-// other failures retain rpcErrorFrom's status and cancellation semantics.
 func queueRPCError(err error) error {
-	if errors.Is(err, scheduler.ErrTenantQueueFull) {
+	switch {
+	case errors.Is(err, scheduler.ErrQueueClosed):
+		return status.Error(codes.Unavailable, "request queue is closed")
+	case errors.Is(err, scheduler.ErrTenantQueueFull):
 		return GRPCStatusError(NewTooManyRequestsError("tenant queue is full, please try again later"))
+	default:
+		return rpcErrorFrom(err)
 	}
-	return rpcErrorFrom(err)
 }
 
 // rpcFailure logs res if it is a server error and returns it as the call's gRPC error.
@@ -3023,9 +3025,7 @@ func (s *server) runInQueue(ctx context.Context, tenantID, operation string, run
 			break
 		}
 
-		s.log.Warn("failed to enqueue runnable, retrying", "tenantID", tenantID, "error", err)
-		if !boff.Ongoing() {
-			// Backoff finished (retries exhausted or context canceled).
+		if errors.Is(err, scheduler.ErrQueueClosed) || !boff.Ongoing() {
 			if errors.Is(context.Cause(queueCtx), errQueueTimeout) {
 				err = errQueueTimeout
 			} else if queueCtx.Err() != nil {
@@ -3035,6 +3035,7 @@ func (s *server) runInQueue(ctx context.Context, tenantID, operation string, run
 			finishWait(err)
 			return err
 		}
+		s.log.Warn("failed to enqueue runnable, retrying", "tenantID", tenantID, "error", err)
 		boff.Wait()
 	}
 
