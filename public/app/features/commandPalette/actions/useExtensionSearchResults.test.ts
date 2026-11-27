@@ -78,6 +78,69 @@ describe('useExtensionSearchResults', () => {
     expect(result.current.isFetchingExtensionSearch).toBe(false);
   });
 
+  describe('pending providers', () => {
+    const slowProvider = (): [PluginExtensionCommandPaletteSearchProvider, () => void] => {
+      let answer: () => void = () => {};
+      const fn: PluginExtensionCommandPaletteSearchProvider = () =>
+        new Promise((resolve) => {
+          answer = () => resolve([{ id: 'r', title: 'Late result', path: '/r' }]);
+        });
+      return [fn, () => answer()];
+    };
+    const pendingTitles = (sections: Array<{ title: string; pending: boolean }>) =>
+      sections.filter((s) => s.pending).map((s) => s.title);
+
+    it('reports a provider as pending only once it has been running for 300 ms', async () => {
+      const [fn] = slowProvider();
+      register([extension('a', fn)]);
+      const { result } = renderHook(() => useExtensionSearchResults({ searchQuery: 'query', show: true }));
+
+      await advance(200 + 299);
+      expect(pendingTitles(result.current.extensionSearchSections)).toEqual([]);
+
+      await advance(1);
+      expect(pendingTitles(result.current.extensionSearchSections)).toEqual(['a']);
+    });
+
+    it('replaces the pending section with the results when the provider answers', async () => {
+      const [fn, answer] = slowProvider();
+      register([extension('a', fn)]);
+      const { result } = renderHook(() => useExtensionSearchResults({ searchQuery: 'query', show: true }));
+      await advance(600);
+
+      answer();
+      await advance(0);
+
+      expect(pendingTitles(result.current.extensionSearchSections)).toEqual([]);
+      expect(titles(result.current.extensionSearchSections)).toEqual(['Late result']);
+    });
+
+    it('stops reporting a provider as pending when it times out', async () => {
+      const [fn] = slowProvider();
+      register([extension('a', fn)]);
+      const { result } = renderHook(() => useExtensionSearchResults({ searchQuery: 'query', show: true }));
+      await advance(600);
+
+      await advance(3000);
+
+      expect(pendingTitles(result.current.extensionSearchSections)).toEqual([]);
+      expect(titles(result.current.extensionSearchSections)).toEqual([]);
+    });
+
+    it('does not report a provider as pending for the next query before it has been running for 300 ms', async () => {
+      const [fn] = slowProvider();
+      register([extension('a', fn)]);
+      const { result, rerender } = renderHook(({ q }) => useExtensionSearchResults({ searchQuery: q, show: true }), {
+        initialProps: { q: 'query' },
+      });
+      await advance(600);
+
+      rerender({ q: 'query2' });
+
+      expect(pendingTitles(result.current.extensionSearchSections)).toEqual([]);
+    });
+  });
+
   it('drops the section of a provider that is no longer registered', async () => {
     const a = extension('a', answers('from a'));
     const b = extension('b', answers('from b'));

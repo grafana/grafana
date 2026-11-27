@@ -5496,7 +5496,9 @@
       "experimental": "Experimental",
       "light-theme": "Light",
       "open-saved-queries": "Open saved queries",
-      "scopes": "Scopes"
+      "scopes": "Scopes",
+      "see-all-dashboards": "See all dashboards",
+      "see-all-folders": "See all folders"
     },
     "dialog-label": "Command palette",
     "empty-state": {
@@ -5520,6 +5522,10 @@
       "preferences": "Preferences",
       "recent-dashboards": "Recent dashboards",
       "recent-scopes": "Recent scopes"
+    },
+    "status": {
+      "result-count_one": "{{count}} result",
+      "result-count_other": "{{count}} results"
     },
     "tags": {
       "label": "Tags"

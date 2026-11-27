@@ -11,9 +11,16 @@ import { type ExtensionSearchSection, searchExtensionProviders } from './extensi
 
 const MIN_QUERY_LENGTH = 2;
 const DEBOUNCE_MS = 200;
+// How long a provider runs before its section shows a loading row.
+const PENDING_MS = 300;
+
+export interface ExtensionSearchSectionState extends ExtensionSearchSection {
+  /** The provider has not answered yet; `actions` is empty. */
+  pending: boolean;
+}
 
 export interface ExtensionSearchState {
-  extensionSearchSections: ExtensionSearchSection[];
+  extensionSearchSections: ExtensionSearchSectionState[];
   isFetchingExtensionSearch: boolean;
 }
 
@@ -49,6 +56,7 @@ export function useExtensionSearchResults({
   const functions = useStableFunctions(latestFunctions);
   const [sections, setSections] = useState<QuerySection[]>([]);
   // The search the providers last finished, so fetching is derived instead of set from inside the effect.
+  const [slowQuery, setSlowQuery] = useState<string | undefined>();
   const [settled, setSettled] = useState<{ query: string; functions: typeof functions } | undefined>();
 
   const query = searchQuery.trim();
@@ -62,6 +70,7 @@ export function useExtensionSearchResults({
     if (!active) {
       setSections([]);
       setSettled(undefined);
+      setSlowQuery(undefined);
     }
   }
 
@@ -71,7 +80,9 @@ export function useExtensionSearchResults({
     }
 
     const controller = new AbortController();
+    let pendingTimeout: ReturnType<typeof setTimeout> | undefined;
     const timeout = setTimeout(() => {
+      pendingTimeout = setTimeout(() => setSlowQuery(query), PENDING_MS);
       searchExtensionProviders(functions, query, controller.signal, (section) => {
         if (!controller.signal.aborted) {
           setSections((previous) => [...previous.filter((s) => s.section.id !== section.id), { query, section }]);
@@ -85,17 +96,22 @@ export function useExtensionSearchResults({
 
     return () => {
       clearTimeout(timeout);
+      clearTimeout(pendingTimeout);
       controller.abort();
     };
   }, [active, functions, query]);
 
-  const extensionSearchSections = useMemo(() => {
-    const position = (id: string) => functions.findIndex((f) => f.id === id);
-    return sections
-      .filter((s) => s.query === query && position(s.section.id) >= 0)
-      .map((s) => s.section)
-      .sort((a, b) => position(a.id) - position(b.id));
-  }, [sections, functions, query]);
+  const extensionSearchSections = useMemo(
+    () =>
+      functions.flatMap((f): ExtensionSearchSectionState[] => {
+        const answered = sections.find((s) => s.query === query && s.section.id === f.id);
+        if (answered) {
+          return [{ ...answered.section, pending: false }];
+        }
+        return active && slowQuery === query ? [{ id: f.id, title: f.title, actions: [], pending: true }] : [];
+      }),
+    [sections, functions, query, active, slowQuery]
+  );
 
   // While plugins are still loading there are no providers to run yet, which must not look like "no results".
   const isFetchingExtensionSearch =

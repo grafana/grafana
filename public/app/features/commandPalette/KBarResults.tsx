@@ -34,6 +34,22 @@ interface KBarResultsProps {
 
 const START_INDEX = 0;
 
+// Headers are strings and never active, and a section that is still loading is a header with no actions after it,
+// so several can follow each other.
+function nextActionIndex(items: Array<ActionImpl | string>, from: number, step: 1 | -1): number {
+  for (let i = from + step; i >= START_INDEX && i < items.length; i += step) {
+    if (typeof items[i] !== 'string') {
+      return i;
+    }
+  }
+  return from;
+}
+
+function firstActionIndex(items: Array<ActionImpl | string>): number {
+  const index = items.findIndex((item) => typeof item !== 'string');
+  return index < 0 ? START_INDEX : index;
+}
+
 export const KBarResults = (props: KBarResultsProps) => {
   const parentRef = React.useRef<HTMLDivElement | null>(null);
   // Active row element, used by the keyboard handler to perform on Enter
@@ -95,31 +111,11 @@ export const KBarResults = (props: KBarResultsProps) => {
       if (event.key === 'ArrowUp' || (event.ctrlKey && event.key === 'p')) {
         event.preventDefault();
         userMovedRef.current = true;
-        query.setActiveIndex((index) => {
-          let nextIndex = index > START_INDEX ? index - 1 : index;
-          // avoid setting active index on a group
-          if (typeof itemsRef.current[nextIndex] === 'string') {
-            if (nextIndex === 0) {
-              return index;
-            }
-            nextIndex -= 1;
-          }
-          return nextIndex;
-        });
+        query.setActiveIndex((index) => nextActionIndex(itemsRef.current, index, -1));
       } else if (event.key === 'ArrowDown' || (event.ctrlKey && event.key === 'n')) {
         event.preventDefault();
         userMovedRef.current = true;
-        query.setActiveIndex((index) => {
-          let nextIndex = index < itemsRef.current.length - 1 ? index + 1 : index;
-          // avoid setting active index on a group
-          if (typeof itemsRef.current[nextIndex] === 'string') {
-            if (nextIndex === itemsRef.current.length - 1) {
-              return index;
-            }
-            nextIndex += 1;
-          }
-          return nextIndex;
-        });
+        query.setActiveIndex((index) => nextActionIndex(itemsRef.current, index, 1));
       } else if (event.key === 'Enter' && event.shiftKey) {
         // Shift+Enter belongs to the Ask Assistant shortcut. Never fall back to activating the
         // highlighted row: when that shortcut is gated off, an unrelated action would run instead.
@@ -189,7 +185,7 @@ export const KBarResults = (props: KBarResultsProps) => {
       }
     }
 
-    query.setActiveIndex(typeof props.items[START_INDEX] === 'string' ? START_INDEX + 1 : START_INDEX);
+    query.setActiveIndex(firstActionIndex(props.items));
   }, [search, currentRootActionId, props.items, activeIndex, query]);
 
   const execute = React.useCallback(
