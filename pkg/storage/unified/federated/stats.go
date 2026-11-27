@@ -73,8 +73,7 @@ var migrationLogIDs = map[schema.GroupResource]string{
 // marks a table stale and takes precedence over config, as it does for the dual-writer's
 // storage mode resolution. That holds for callers without config too, since they have no
 // other way to know a resource lives only in unified storage.
-func (s *LegacyStatsGetter) legacyTableIsStale(ctx context.Context, sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper, resource string) (bool, error) {
-	reader := migrations.NewSessionStatusReader(sess, helper, s.Cfg, migrationLogIDs)
+func legacyTableIsStale(ctx context.Context, reader contract.MigrationStatusReader, resource string) (bool, error) {
 	mode, err := reader.GetStorageMode(ctx, schema.ParseGroupResource(resource))
 	return mode == contract.StorageModeUnified, err
 }
@@ -114,6 +113,8 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 
 	rsp := &resourcepb.ResourceStatsResponse{}
 	err = helper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		reader := migrations.NewSessionStatusReader(sess, helper, s.Cfg, migrationLogIDs)
+
 		// extraWhere, when non-empty, is ANDed onto the org+folder filter. It must be a
 		// literal fragment with no bound parameters.
 		fn := func(table, folderCol, g, r string, extraWhere string) error {
@@ -159,7 +160,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		// A failed staleness check is a legacy database failure too, so it is recorded as an error.
 		isStale := func(configKey, name string) (bool, error) {
 			start := time.Now()
-			stale, err := s.legacyTableIsStale(ctx, sess, helper, configKey)
+			stale, err := legacyTableIsStale(ctx, reader, configKey)
 			if err != nil {
 				s.accessed(ctx, in, helper.Server, name, start, err)
 				return false, &CountError{Resources: []string{name}, Err: err}
