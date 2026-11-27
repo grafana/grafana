@@ -1,3 +1,7 @@
+## 0.13.1 (2026-11-27)
+
+This was a version bump only for @grafana/plugin-compat to align it with other projects, there were no code changes.
+
 ## 0.13.0 (2026-11-25)
 
 Add optional request options to `callDataSourcePluginProxy` for HTTP methods, headers, bodies, cancellation, credentials, and response decoding. Use `BackendSrv.fetch` for all datasource proxy requests.
