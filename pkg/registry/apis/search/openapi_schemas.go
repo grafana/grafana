@@ -2,6 +2,7 @@ package search
 
 import (
 	"maps"
+	"slices"
 
 	openapi "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -36,7 +37,33 @@ func envelopeSchemas(roots ...string) map[string]spec.Schema {
 func envelopeDefinitions(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
 	defs := searchv0.GetOpenAPIDefinitions(ref)
 	maps.Copy(defs, commonv0.GetOpenAPIDefinitions(ref))
+	for name, def := range defs {
+		schema := def.Schema
+		clearInvalidEnumDefaults(&schema)
+		def.Schema = schema
+		defs[name] = def
+	}
 	return defs
+}
+
+// clearInvalidEnumDefaults removes a default the schema itself disallows.
+// openapi-gen gives a required field its zero value as the default, so an enum
+// defaults to "" — outside it, and a value the API rejects with a 422. Callers
+// read these schemas from the published spec, so they must not be offered it.
+func clearInvalidEnumDefaults(schema *spec.Schema) {
+	if schema == nil {
+		return
+	}
+	if len(schema.Enum) > 0 && schema.Default != nil && !slices.Contains(schema.Enum, schema.Default) {
+		schema.Default = nil
+	}
+	for name, property := range schema.Properties {
+		clearInvalidEnumDefaults(&property)
+		schema.Properties[name] = property
+	}
+	if schema.Items != nil {
+		clearInvalidEnumDefaults(schema.Items.Schema)
+	}
 }
 
 // jsonContent describes a JSON body carrying the named Go type.

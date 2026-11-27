@@ -106,6 +106,7 @@ func (c *legacySearchClient) Search(ctx context.Context, req SearchQuery) (*iamv
 			Created:       u.Created.UnixMilli(),
 		})
 	}
+	setAvatarURLs(c.cfg, result.Hits)
 	return result, nil
 }
 

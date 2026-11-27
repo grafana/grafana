@@ -1072,6 +1072,9 @@ spec:
               field:
                 type: string
               operator:
+                description: |-
+                  "In" on every filterable field. "NotIn" on labels, state and health only;
+                  the other fields reject it. "All" is rejected.
                 enum:
                 - In
                 - NotIn
@@ -1302,6 +1305,9 @@ spec:
               field:
                 type: string
               operator:
+                description: |-
+                  "In" on every filterable field. "NotIn" on labels, state and health only;
+                  the other fields reject it. "All" is rejected.
                 enum:
                 - In
                 - NotIn
@@ -1878,6 +1884,9 @@ spec:
             field:
               type: string
             operator:
+              description: |-
+                "In" on every filterable field. "NotIn" on labels, state and health only;
+                the other fields reject it. "All" is rejected.
               enum:
               - In
               - NotIn
@@ -2108,6 +2117,9 @@ spec:
             field:
               type: string
             operator:
+              description: |-
+                "In" on every filterable field. "NotIn" on labels, state and health only;
+                the other fields reject it. "All" is rejected.
               enum:
               - In
               - NotIn
