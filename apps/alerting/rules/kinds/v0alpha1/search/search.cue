@@ -14,9 +14,6 @@ package search
 	boost?: float64
 }
 
-// A filter over one field. The operator enum is the generic contract, but these
-// routes reject "All" and accept "NotIn" on labels, state and health only;
-// every other field takes "In" alone.
 #SearchFilterLeaf: {
 	field: string
 	// "In" on every filterable field. "NotIn" on labels, state and health only;

@@ -1068,10 +1068,6 @@ spec:
             type: object
           listAlertRuleSearchRulesV0alpha1SearchFilterLeaf:
             additionalProperties: false
-            description: |-
-              A filter over one field. The operator enum is the generic contract, but these
-              routes reject "All" and accept "NotIn" on labels, state and health only;
-              every other field takes "In" alone.
             properties:
               field:
                 type: string
@@ -1305,10 +1301,6 @@ spec:
             type: object
           listRecordingRuleSearchRulesV0alpha1SearchFilterLeaf:
             additionalProperties: false
-            description: |-
-              A filter over one field. The operator enum is the generic contract, but these
-              routes reject "All" and accept "NotIn" on labels, state and health only;
-              every other field takes "In" alone.
             properties:
               field:
                 type: string
@@ -1888,10 +1880,6 @@ spec:
           type: object
         listAlertRuleSearchRulesV0alpha1SearchFilterLeaf:
           additionalProperties: false
-          description: |-
-            A filter over one field. The operator enum is the generic contract, but these
-            routes reject "All" and accept "NotIn" on labels, state and health only;
-            every other field takes "In" alone.
           properties:
             field:
               type: string
@@ -2125,10 +2113,6 @@ spec:
           type: object
         listRecordingRuleSearchRulesV0alpha1SearchFilterLeaf:
           additionalProperties: false
-          description: |-
-            A filter over one field. The operator enum is the generic contract, but these
-            routes reject "All" and accept "NotIn" on labels, state and health only;
-            every other field takes "In" alone.
           properties:
             field:
               type: string

@@ -4837,7 +4837,6 @@
         }
       },
       "ListAlertRuleSearchRulesV0alpha1SearchFilterLeaf": {
-        "description": "A filter over one field. The operator enum is the generic contract, but these\nroutes reject \"All\" and accept \"NotIn\" on labels, state and health only;\nevery other field takes \"In\" alone.",
         "type": "object",
         "required": ["field", "operator", "values"],
         "properties": {
@@ -5170,7 +5169,6 @@
         }
       },
       "ListRecordingRuleSearchRulesV0alpha1SearchFilterLeaf": {
-        "description": "A filter over one field. The operator enum is the generic contract, but these\nroutes reject \"All\" and accept \"NotIn\" on labels, state and health only;\nevery other field takes \"In\" alone.",
         "type": "object",
         "required": ["field", "operator", "values"],
         "properties": {
