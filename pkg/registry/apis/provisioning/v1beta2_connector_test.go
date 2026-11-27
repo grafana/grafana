@@ -4,23 +4,30 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
 // fakeV0alpha1Connector responds with respond, or fails with err, and records the body it read.
@@ -239,28 +246,186 @@ func TestV1beta2Connector(t *testing.T) {
 	})
 }
 
+// fakeExtra adds storage and authorizes the subresource it names.
+type fakeExtra struct {
+	subresource string
+	storage     map[string]rest.Storage
+}
+
+func (e *fakeExtra) Authorize(_ context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
+	if a.GetSubresource() == e.subresource {
+		return authorizer.DecisionAllow, "", nil
+	}
+	return authorizer.DecisionNoOpinion, "", nil
+}
+
+func (e *fakeExtra) UpdateStorage(storage map[string]rest.Storage) error {
+	maps.Copy(storage, e.storage)
+	return nil
+}
+
+func (e *fakeExtra) PostProcessOpenAPI(*spec3.OpenAPI) error { return nil }
+
+type fakeV1beta2Extra struct{ fakeExtra }
+
+func (e *fakeV1beta2Extra) ServedOnV1beta2() {}
+
 func TestV1beta2ConnectorStorage(t *testing.T) {
-	b, scheme := newV1beta2TestBuilder(t, &APIBuilder{})
+	webhook := &fakeV0alpha1Connector{methods: []string{http.MethodPost}, newObj: &provisioning.WebhookResponse{}}
+	inner := &APIBuilder{
+		jobHistory: jobs.NewMockHistoryReader(t),
+		extras: []Extra{
+			&fakeV1beta2Extra{fakeExtra{storage: map[string]rest.Storage{"repositories/webhook": WithTimeout(webhook, time.Second)}}},
+			&fakeExtra{storage: map[string]rest.Storage{"repositories/enterprise": &fakeV0alpha1Connector{methods: []string{http.MethodGet}}}},
+		},
+	}
+	b, scheme := newV1beta2TestBuilder(t, inner)
 	storage, err := b.connectorStorage(scheme)
 	require.NoError(t, err)
 
-	expected := map[string]runtime.Object{
-		"repositories/refs":        &v1beta2.RefList{},
-		"repositories/resources":   &v1beta2.ResourceList{},
-		"repositories/stats":       &v1beta2.ResourceCountList{},
-		"repositories/history":     &v1beta2.HistoryList{},
-		"repositories/files":       &v1beta2.ResourceWrapper{},
-		"connections/repositories": &v1beta2.ExternalRepositoryList{},
+	get, post := []string{http.MethodGet}, []string{http.MethodPost}
+	expected := map[string]struct {
+		obj     runtime.Object
+		methods []string
+	}{
+		"repositories/test":        {&v1beta2.TestResults{}, post},
+		"repositories/files":       {&v1beta2.ResourceWrapper{}, []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}},
+		"repositories/refs":        {&v1beta2.RefList{}, get},
+		"repositories/resources":   {&v1beta2.ResourceList{}, get},
+		"repositories/stats":       {&v1beta2.ResourceCountList{}, get},
+		"repositories/history":     {&v1beta2.HistoryList{}, get},
+		"repositories/jobs":        {&v1beta2.Repository{}, []string{http.MethodPost, http.MethodGet}},
+		"repositories/webhook":     {&v1beta2.WebhookResponse{}, post},
+		"connections/repositories": {&v1beta2.ExternalRepositoryList{}, get},
+		"connections/authorize":    {&v1beta2.ConnectionAuthorizeRequest{}, post},
 	}
-	require.Len(t, storage, len(expected))
-	for path, obj := range expected {
+	require.Len(t, storage, len(expected), "only the extras v1beta2 serves add connectors")
+	for path, e := range expected {
 		s, ok := storage[path]
 		require.True(t, ok, "missing %s", path)
-		assert.IsType(t, obj, s.New(), path)
+		assert.IsType(t, e.obj, s.New(), path)
 		connector, ok := s.(rest.Connecter)
 		require.True(t, ok, path)
-		assert.Equal(t, []string{http.MethodGet}, connector.ConnectMethods(), path)
+		assert.ElementsMatch(t, e.methods, connector.ConnectMethods(), path)
 	}
+
+	t.Run("needs the v0alpha1 job history", func(t *testing.T) {
+		b, scheme := newV1beta2TestBuilder(t, &APIBuilder{})
+		_, err := b.connectorStorage(scheme)
+		require.ErrorContains(t, err, "job history")
+	})
+
+	t.Run("rejects extra storage that is not a connector", func(t *testing.T) {
+		inner := &APIBuilder{
+			jobHistory: jobs.NewMockHistoryReader(t),
+			extras:     []Extra{&fakeV1beta2Extra{fakeExtra{storage: map[string]rest.Storage{"repositories/plain": &historicJobStorage{}}}}},
+		}
+		b, scheme := newV1beta2TestBuilder(t, inner)
+		_, err := b.connectorStorage(scheme)
+		require.ErrorContains(t, err, "not a connector")
+	})
+}
+
+func TestV1beta2Authorizer(t *testing.T) {
+	inner := &APIBuilder{extras: []Extra{
+		&fakeV1beta2Extra{fakeExtra{subresource: "webhook"}},
+		&fakeExtra{subresource: "enterprise"},
+	}}
+	b, _ := newV1beta2TestBuilder(t, inner)
+	attrs := func(subresource string) authorizer.Attributes {
+		return authorizer.AttributesRecord{
+			Resource: provisioning.RepositoryResourceInfo.GetName(), Subresource: subresource, Verb: "create", ResourceRequest: true,
+		}
+	}
+
+	decision, _, err := b.GetAuthorizer().Authorize(context.Background(), attrs("webhook"))
+	require.NoError(t, err)
+	assert.Equal(t, authorizer.DecisionAllow, decision, "the extras v1beta2 serves authorize first")
+
+	decision, _, _ = b.GetAuthorizer().Authorize(context.Background(), attrs("enterprise"))
+	assert.NotEqual(t, authorizer.DecisionAllow, decision, "other extras don't apply to v1beta2")
+}
+
+func TestV1beta2RequestConversions(t *testing.T) {
+	_, scheme := newV1beta2TestBuilder(t, &APIBuilder{})
+
+	t.Run("job specs convert to v0alpha1", func(t *testing.T) {
+		convert := v1beta2JobSpecRequest(scheme)
+		out, err := convert([]byte(`{"action":"pr","repository":"repo","pr":{"pr":12,"ref":"main","isFork":false}}`))
+		require.NoError(t, err)
+		var spec provisioning.JobSpec
+		require.NoError(t, json.Unmarshal(out, &spec))
+		assert.Equal(t, provisioning.JobActionPullRequest, spec.Action)
+		require.NotNil(t, spec.PullRequest)
+		assert.Equal(t, 12, spec.PullRequest.PR)
+		assert.Equal(t, "main", spec.PullRequest.Ref)
+
+		_, err = convert([]byte(`{"action":"pull","bogus":true}`))
+		require.ErrorContains(t, err, "unknown field")
+	})
+
+	t.Run("empty test repositories stay empty", func(t *testing.T) {
+		convert := v1beta2TestRequest(scheme)
+		out, err := convert([]byte(`{}`))
+		require.NoError(t, err)
+		assert.Equal(t, `{}`, string(out))
+
+		body, err := json.Marshal(testV1beta2Repository())
+		require.NoError(t, err)
+		out, err = convert(body)
+		require.NoError(t, err)
+		var repo provisioning.Repository
+		require.NoError(t, json.Unmarshal(out, &repo))
+		assert.Equal(t, provisioning.APIVERSION, repo.APIVersion)
+		assert.Equal(t, "https://github.com/example/test", repo.Spec.GitHub.URL)
+	})
+}
+
+// The jobs connector reads finished jobs from the history, which Loki or unified storage backs.
+func TestV1beta2JobsConnectorHistory(t *testing.T) {
+	finished := provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "job", Namespace: "default", UID: "abc-123"},
+		Spec:       provisioning.JobSpec{Action: provisioning.JobActionPull, Repository: "repo", Pull: &provisioning.SyncJobOptions{Incremental: true}},
+		Status: provisioning.JobStatus{
+			State: provisioning.JobStateSuccess, Message: "done",
+			Summary: []*provisioning.JobResourceSummary{{Group: "dashboard.grafana.app", Kind: "Dashboard", Create: 2}},
+		},
+	}
+	history := jobs.NewMockHistoryReader(t)
+	history.EXPECT().GetJob(mock.Anything, "default", "repo", "abc-123").Return(finished.DeepCopy(), nil)
+	history.EXPECT().RecentJobs(mock.Anything, "default", "repo").Return(&provisioning.JobList{Items: []provisioning.Job{finished}}, nil)
+
+	b, scheme := newV1beta2TestBuilder(t, &APIBuilder{jobHistory: history})
+	storage, err := b.connectorStorage(scheme)
+	require.NoError(t, err)
+	connector := storage["repositories/jobs"].(rest.Connecter)
+
+	serve := func(path string) *recordingResponder {
+		responder := &recordingResponder{}
+		ctx := request.WithNamespace(context.Background(), "default")
+		handler, err := connector.Connect(ctx, "repo", nil, responder)
+		require.NoError(t, err)
+		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, path, nil).WithContext(ctx))
+		return responder
+	}
+	v0, err := json.Marshal(finished)
+	require.NoError(t, err)
+
+	rsp := serve("/apis/provisioning.grafana.app/v1beta2/namespaces/default/repositories/repo/jobs/abc-123")
+	require.NoError(t, rsp.err)
+	job, ok := rsp.obj.(*v1beta2.Job)
+	require.True(t, ok, "got %T", rsp.obj)
+	job.TypeMeta = metav1.TypeMeta{}
+	v1, err := json.Marshal(job)
+	require.NoError(t, err)
+	assert.JSONEq(t, string(v0), string(v1))
+
+	rsp = serve("/apis/provisioning.grafana.app/v1beta2/namespaces/default/repositories/repo/jobs")
+	require.NoError(t, rsp.err)
+	list, ok := rsp.obj.(*v1beta2.JobList)
+	require.True(t, ok, "got %T", rsp.obj)
+	require.Len(t, list.Items, 1)
+	assert.Equal(t, ptr.To(v1beta2.JobStateSuccess), list.Items[0].Status.State)
 }
 
 func TestV1beta2RouteConversion(t *testing.T) {
@@ -365,4 +530,102 @@ func TestDocumentV1beta2Subresources(t *testing.T) {
 	}
 	items := oas.Components.Schemas[v1beta2.ResourceStats{}.OpenAPIModelName()].Properties["instance"].Items.Schema
 	assert.Equal(t, "#/components/schemas/"+v1beta2.ResourceCount{}.OpenAPIModelName(), items.Ref.String())
+}
+
+func TestDocumentV1beta2WriteSubresources(t *testing.T) {
+	root := "/apis/" + v1beta2.GroupVersion.String() + "/"
+	repo := root + "namespaces/{namespace}/repositories/{name}"
+	connection := root + "namespaces/{namespace}/connections/{name}"
+	pathParam := func() []*spec3.Parameter {
+		return []*spec3.Parameter{{ParameterProps: spec3.ParameterProps{Name: "path", In: "path"}}}
+	}
+	all := func() *spec3.Path {
+		return &spec3.Path{PathProps: spec3.PathProps{
+			Get: &spec3.Operation{}, Post: &spec3.Operation{}, Put: &spec3.Operation{}, Delete: &spec3.Operation{},
+			Parameters: pathParam(),
+		}}
+	}
+	oas := &spec3.OpenAPI{
+		Paths: &spec3.Paths{Paths: map[string]*spec3.Path{
+			repo + "/files/{path}":    all(),
+			repo + "/test":            all(),
+			repo + "/jobs":            all(),
+			repo + "/jobs/{path}":     all(),
+			repo + "/webhook":         all(),
+			repo + "/render":          all(),
+			repo + "/render/{path}":   all(),
+			connection + "/authorize": all(),
+		}},
+		Components: &spec3.Components{Schemas: map[string]*spec.Schema{}},
+	}
+	documentV1beta2Subresources(oas, root)
+	paths := oas.Paths.Paths
+	responseRef := func(op *spec3.Operation) string {
+		return op.Responses.StatusCodeResponses[200].Content["application/json"].Schema.Ref.String()
+	}
+	requestRef := func(op *spec3.Operation) string {
+		return op.RequestBody.Content["application/json"].Schema.Ref.String()
+	}
+	ref := func(m interface{ OpenAPIModelName() string }) string {
+		return "#/components/schemas/" + m.OpenAPIModelName()
+	}
+
+	files := paths[repo+"/files/{path}"]
+	for _, op := range []*spec3.Operation{files.Put, files.Post, files.Delete} {
+		assert.Equal(t, ref(v1beta2.ResourceWrapper{}), responseRef(op))
+		assert.Equal(t, []string{"ref", "message", "skipDryRun", "originalPath"}, parameterNames(op.Parameters))
+	}
+	assert.Contains(t, files.Post.RequestBody.Content, "application/x-yaml")
+	assert.Nil(t, files.Delete.RequestBody)
+
+	test := paths[repo+"/test"].Post
+	assert.True(t, test.Deprecated)
+	assert.Equal(t, ref(v1beta2.Repository{}), requestRef(test))
+	assert.False(t, test.RequestBody.Required)
+	assert.Equal(t, ref(v1beta2.TestResults{}), responseRef(test))
+
+	jobs := paths[repo+"/jobs"]
+	assert.Equal(t, ref(v1beta2.JobSpec{}), requestRef(jobs.Post))
+	assert.Equal(t, ref(v1beta2.Job{}), responseRef(jobs.Post))
+	assert.Equal(t, ref(v1beta2.JobList{}), responseRef(jobs.Get))
+	assert.NotContains(t, paths, repo+"/jobs/{path}")
+	job := paths[repo+"/jobs/{uid}"]
+	require.NotNil(t, job)
+	assert.Nil(t, job.Post)
+	assert.Equal(t, "uid", job.Parameters[0].Name)
+	assert.Equal(t, ref(v1beta2.Job{}), responseRef(job.Get))
+
+	webhook := paths[repo+"/webhook"]
+	assert.Nil(t, webhook.Get)
+	assert.Equal(t, ref(v1beta2.WebhookResponse{}), responseRef(webhook.Post))
+
+	assert.NotContains(t, paths, repo+"/render")
+	assert.NotContains(t, paths, repo+"/render/{path}")
+	render := paths[repo+"/render/{guid}"]
+	require.NotNil(t, render)
+	assert.Equal(t, "guid", render.Parameters[0].Name)
+	assert.Contains(t, render.Get.Responses.StatusCodeResponses[200].Content, "image/png")
+
+	authorize := paths[connection+"/authorize"].Post
+	assert.True(t, authorize.RequestBody.Required)
+	assert.Equal(t, ref(v1beta2.ConnectionAuthorizeRequest{}), requestRef(authorize))
+	assert.Equal(t, ref(v1beta2.ConnectionAuthorizeRequest{}), responseRef(authorize))
+
+	for _, model := range []string{
+		v1beta2.TestResults{}.OpenAPIModelName(),
+		v1beta2.JobSpec{}.OpenAPIModelName(),
+		v1beta2.WebhookResponse{}.OpenAPIModelName(),
+		v1beta2.ConnectionAuthorizeRequest{}.OpenAPIModelName(),
+		v1beta2.ResourceWrapper{}.OpenAPIModelName(),
+	} {
+		assert.Contains(t, oas.Components.Schemas, model)
+	}
+}
+
+func parameterNames(params []*spec3.Parameter) []string {
+	names := make([]string, 0, len(params))
+	for _, p := range params {
+		names = append(names, p.Name)
+	}
+	return names
 }

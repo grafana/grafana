@@ -165,6 +165,11 @@ func ProvideWebhooks(provisioningURL string, registry prometheus.Registerer, rat
 	}
 }
 
+var (
+	_ provisioningapis.V1beta2Extra = (*WebhookExtraWithImages)(nil)
+	_ provisioningapis.V1beta2Extra = (*WebhookExtra)(nil)
+)
+
 // WebhookExtraWithImages implements the Extra interface for webhooks
 // to wrap around
 type WebhookExtraWithImages struct {
@@ -207,9 +212,13 @@ func (e *WebhookExtraWithImages) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 	return e.render.PostProcessOpenAPI(oas)
 }
 
+func (e *WebhookExtraWithImages) ServedOnV1beta2() {}
+
 type WebhookExtra struct {
 	webhook *webhookConnector
 }
+
+func (e *WebhookExtra) ServedOnV1beta2() {}
 
 func NewWebhookExtra(webhook *webhookConnector) *WebhookExtra {
 	return &WebhookExtra{webhook: webhook}
