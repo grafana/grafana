@@ -37,17 +37,13 @@ function mockTeams(teams: Array<{ name: string }>) {
   );
 }
 
+/** Mocks the alerts endpoint; returns the `filter` query params of each request received. */
 function mockAlerts(alerts: AlertmanagerAlert[]) {
-  server.use(http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () => HttpResponse.json(alerts)));
-}
-
-/** Mocks the alerts endpoint and returns the `filter` query params of each request received. */
-function captureAlertFilters() {
   const requests: string[][] = [];
   server.use(
     http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
       requests.push(new URL(request.url).searchParams.getAll('filter'));
-      return HttpResponse.json([]);
+      return HttpResponse.json(alerts);
     })
   );
   return requests;
@@ -144,7 +140,7 @@ describe('useFiringAlerts', () => {
   describe('team matchers', () => {
     it('matches own teams tolerantly: case-insensitive, punctuation as separator gaps', async () => {
       mockTeams([{ name: 'Platform Monitoring' }, { name: 'Team (US)' }]);
-      const requests = captureAlertFilters();
+      const requests = mockAlerts([]);
 
       const { result } = renderHook(() => useFiringAlerts(), { wrapper: getWrapper({}) });
       await waitFor(() => expect(result.current.loading).toBe(false));
@@ -157,7 +153,7 @@ describe('useFiringAlerts', () => {
 
     it('skips teams without letters or digits, sending no matcher when none remain', async () => {
       mockTeams([{ name: '@#$' }]);
-      const requests = captureAlertFilters();
+      const requests = mockAlerts([]);
 
       const { result } = renderHook(() => useFiringAlerts(), { wrapper: getWrapper({}) });
       await waitFor(() => expect(result.current.loading).toBe(false));
@@ -189,7 +185,7 @@ describe('useFiringAlerts', () => {
 
     it('matches a picked label exactly, in place of the own-teams default', async () => {
       mockTeams([{ name: 'Platform Monitoring' }]);
-      const requests = captureAlertFilters();
+      const requests = mockAlerts([]);
 
       // Picks are values set on real rules, so '.' is a plain character, not a wildcard.
       const { result } = renderHook(() => useFiringAlerts('team:team.one'), { wrapper: getWrapper({}) });
