@@ -291,6 +291,71 @@ func TestMapperRegistry_DashboardTemplates(t *testing.T) {
 	assert.False(t, mapping.HasFolderSupport(), "dashboard templates are not folder-scoped")
 }
 
+// TestMapperRegistry_UnscopedActions verifies resources whose API authorizers
+// check unscoped actions map each verb to those actions and skip scope.
+func TestMapperRegistry_UnscopedActions(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	for _, tc := range []struct {
+		group, resource           string
+		read, write, deleteAction string
+	}{
+		{"notifications.alerting.grafana.app", "templategroups", "alert.notifications.templates:read", "alert.notifications.templates:write", "alert.notifications.templates:delete"},
+		{"notifications.alerting.grafana.app", "timeintervals", "alert.notifications.time-intervals:read", "alert.notifications.time-intervals:write", "alert.notifications.time-intervals:delete"},
+		{"alertenrichment.grafana.app", "alert-enrichments", "alert.enrichments:read", "alert.enrichments:write", "alert.enrichments:write"},
+		{"queries.grafana.app", "queries", "queries:read", "queries:write", "queries:write"},
+	} {
+		t.Run(tc.group+"/"+tc.resource, func(t *testing.T) {
+			mapping, ok := reg.Get(tc.group, tc.resource, "")
+			require.True(t, ok)
+
+			for verb, want := range map[string]string{
+				utils.VerbGet:              tc.read,
+				utils.VerbList:             tc.read,
+				utils.VerbWatch:            tc.read,
+				utils.VerbCreate:           tc.write,
+				utils.VerbUpdate:           tc.write,
+				utils.VerbPatch:            tc.write,
+				utils.VerbDelete:           tc.deleteAction,
+				utils.VerbDeleteCollection: tc.deleteAction,
+			} {
+				action, ok := mapping.Action(verb)
+				assert.True(t, ok, verb)
+				assert.Equal(t, want, action, verb)
+				assert.True(t, mapping.SkipScope(verb), "verb %q must skip scope; the actions are granted unscoped", verb)
+			}
+			assert.False(t, mapping.HasFolderSupport())
+		})
+	}
+}
+
+// TestMapperRegistry_InhibitionRules verifies inhibition rules map to their
+// UID-scoped actions, with create checked without a scope.
+func TestMapperRegistry_InhibitionRules(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("notifications.alerting.grafana.app", "inhibitionrules", "")
+	require.True(t, ok)
+
+	for verb, want := range map[string]string{
+		utils.VerbGet:              accesscontrol.ActionAlertingNotificationsInhibitionRulesRead,
+		utils.VerbList:             accesscontrol.ActionAlertingNotificationsInhibitionRulesRead,
+		utils.VerbWatch:            accesscontrol.ActionAlertingNotificationsInhibitionRulesRead,
+		utils.VerbCreate:           accesscontrol.ActionAlertingNotificationsInhibitionRulesWrite,
+		utils.VerbUpdate:           accesscontrol.ActionAlertingNotificationsInhibitionRulesWrite,
+		utils.VerbPatch:            accesscontrol.ActionAlertingNotificationsInhibitionRulesWrite,
+		utils.VerbDelete:           accesscontrol.ActionAlertingNotificationsInhibitionRulesDelete,
+		utils.VerbDeleteCollection: accesscontrol.ActionAlertingNotificationsInhibitionRulesDelete,
+	} {
+		action, ok := mapping.Action(verb)
+		assert.True(t, ok, verb)
+		assert.Equal(t, want, action, verb)
+		assert.Equal(t, verb == utils.VerbCreate, mapping.SkipScope(verb), verb)
+	}
+	assert.Equal(t, "inhibition-rules:uid:rule1", mapping.Scope("rule1"))
+	assert.False(t, mapping.HasFolderSupport())
+}
+
 func TestMapperRegistry_InvalidDatasourceGroups(t *testing.T) {
 	reg := NewMapperRegistry()
 	for _, group := range []string{

@@ -3325,6 +3325,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "ルールの読み込みエラー",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Grafanaルール設定の読み込みに失敗しました：",
       "failed-to-load-grafana-rules-state": "Grafanaルールの状態の読み込みに失敗しました：",
       "failed-to-load-rules-config": "<2>{{dataSource}}</2>からのルール設定の読み込みに失敗しました",
