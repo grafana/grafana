@@ -55,7 +55,7 @@ Like an entity, every resource has:
 | Desired state | The configuration of the resource, such as the panels of a dashboard.                                  | `spec`                                               |
 | Relationships | References to other resources, such as the folder that contains it or the data sources it queries.     | Annotations such as `grafana.app/folder`, and `spec` |
 
-The following dashboard shows each property:
+The following dashboard snippet shows each property:
 
 ```yaml
 apiVersion: dashboard.grafana.app/v1
@@ -73,10 +73,8 @@ spec:
 
 Because every resource shares this shape, an as-code tool can store it as a file, compare it with what's running in Grafana, and apply changes the same way for any resource type.
 
-## Who manages a resource
+## Who manages a resource?
 
-You can create a resource in the Grafana UI, or let an as-code tool create it for you.
-When a tool creates a resource, Grafana records which tool manages it, and uses that record to decide whether you can change the resource in the UI.
-Give each resource a single manager, so that one tool doesn't overwrite changes made by another.
+You can create a resource in the Grafana UI, or use an as-code tool to create it for you. Grafana records the tool that created and manages your resource, and uses this information to decide whether you can change the resource in the UI.
 
 For what each tool records and allows, refer to [Manage resources in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/resources/manage-resources/).
