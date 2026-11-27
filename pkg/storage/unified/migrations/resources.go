@@ -76,14 +76,17 @@ func isMigrationEnabled(def MigrationDefinition, cfg *setting.Cfg) (bool, error)
 const migrationLogTableName = "unifiedstorage_migration_log"
 
 func successfulMigrationExists(ctx context.Context, sqlStore db.DB, migrationID string) (bool, error) {
-	var count int64
+	var migrated bool
 	err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
-		count, err = sess.Table(migrationLogTableName).
-			Where("migration_id = ? AND success = ?", migrationID, true).
-			Count()
+		migrated, err = hasSuccessfulMigration(sess, migrationLogTableName, migrationID)
 		return err
 	})
+	return migrated, err
+}
+
+func hasSuccessfulMigration(sess *db.Session, table, migrationID string) (bool, error) {
+	count, err := sess.Table(table).Where("migration_id = ? AND success = ?", migrationID, true).Count()
 	if err != nil {
 		return false, fmt.Errorf("failed to check migration existence: %w", err)
 	}
