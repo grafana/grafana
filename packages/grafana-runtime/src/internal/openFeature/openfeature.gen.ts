@@ -14,6 +14,8 @@ import {
 
 // Flag key constants for programmatic access
 export const FlagKeys = {
+  /** Enables multiple points of integration for Adaptive Logs Time Machine. */
+  AdaptivelogsEnableTimeMachine: "adaptivelogs.enableTimeMachine",
   /** Enable configuration of alert enrichments in Grafana Cloud. */
   AlertEnrichment: "alertEnrichment",
   /** Enables the alert rule restore feature */
@@ -437,6 +439,17 @@ export const FlagKeys = {
   /** Allows authenticated API calls in actions */
   VizActionsAuth: "vizActionsAuth",
 } as const;
+
+/**
+ * Enables multiple points of integration for Adaptive Logs Time Machine.
+ *
+ * **Details:**
+ * - flag key: `adaptivelogs.enableTimeMachine`
+ * - default value: `false`
+ */
+export const useFlagAdaptivelogsEnableTimeMachine = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("adaptivelogs.enableTimeMachine", false, options).value;
+};
 
 /**
  * Enable configuration of alert enrichments in Grafana Cloud.

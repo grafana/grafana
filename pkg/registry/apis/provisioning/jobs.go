@@ -532,7 +532,7 @@ func (c *jobsConnector) authorizeMigrateJob(ctx context.Context, repo repository
 	}
 
 	// Require delete permission only for what the migration will actually remove,
-	// mirroring UnifiedStorageMigrator:
+	// mirroring the migrate job's MigrationWorker:
 	//   - instance/unset targets always clean the whole namespace → delete-all.
 	//   - folder/folderless coexist with unmanaged resources and only delete on a
 	//     branch migration (the exported resources); a configured-branch migration

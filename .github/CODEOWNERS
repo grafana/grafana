@@ -1046,6 +1046,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/url.test.ts @grafana/grafana-frontend-navigation
 /public/app/core/utils/urlToken.ts @grafana/identity-access-team
 /public/app/core/utils/version.ts @grafana/data-sources-plugins
+/public/app/core/utils/yaml* @grafana/grafana-frontend-platform
 /public/app/core/utils/roles.ts @grafana/identity-access-team
 /public/app/core/utils/previewAssets* @grafana/grafana-frontend-platform
 /public/app/dev-utils.ts @grafana/grafana-frontend-platform
@@ -1464,6 +1465,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-diagnostics-e2e.yml @grafana/data-sources-plugins
 /.github/workflows/frontend-perf-tests.yaml @grafana/grafana-frontend-platform
 /.github/workflows/release-npm.yml @grafana/grafana-frontend-platform
+/.github/workflows/release-npm-independent-packages.yml @grafana/grafana-frontend-platform
 /.github/workflows/scripts/determine-npm-tag.sh @grafana/grafana-frontend-platform
 /.github/workflows/scripts/validate-commit-in-head.sh @grafana/grafana-frontend-platform
 /.github/workflows/scripts/test-endpoint-migration-check.sh @grafana/alerting-squad

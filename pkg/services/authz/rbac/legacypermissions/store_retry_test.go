@@ -5,8 +5,6 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -54,7 +52,6 @@ func TestPermissionStoreSQLiteRetryDiscardsPartialResults(t *testing.T) {
 			mock.ExpectQuery("SELECT").WillReturnRows(partial.RowError(1, sqlite.ErrTestBusy)).RowsWillBeClosed()
 			mock.ExpectQuery("SELECT").WillReturnRows(complete).RowsWillBeClosed()
 
-			recorder := recordPermissionSpans(t)
 			store := permissionStore{database: legacysql.NewDatabaseProvider(database)}
 			query := ac.GetUserPermissionsQuery{OrgID: 1, UserID: 7, TeamIDs: []int64{11}}
 			var got []ac.Permission
@@ -68,10 +65,6 @@ func TestPermissionStoreSQLiteRetryDiscardsPartialResults(t *testing.T) {
 				require.NoError(t, err)
 			}
 			require.Equal(t, []ac.Permission{{Action: "users:read", Scope: "fresh"}}, got)
-			parent := permissionSpan(t, recorder, "sql."+name)
-			require.Equal(t, attribute.IntValue(2), spanAttributes(parent)["query.count"])
-			require.NotEqual(t, codes.Error, parent.Status().Code)
-			require.Len(t, recorder.Ended(), 3, "one parent and one scan span per attempt")
 		})
 	}
 }

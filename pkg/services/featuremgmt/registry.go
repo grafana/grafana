@@ -1959,6 +1959,14 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "adaptivelogs.enableTimeMachine",
+			Description: "Enables multiple points of integration for Adaptive Logs Time Machine.",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true}, // OFREP/goff-only, no legacy toggle
+			Owner:       grafanaAdaptiveTelemetrySquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "alertingNotificationHistory",
 			Description: "Enables the notification history feature",
 			Stage:       FeatureStageGeneralAvailability,

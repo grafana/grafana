@@ -5,6 +5,20 @@
   "items": [
     {
       "metadata": {
+        "name": "adaptivelogs.enableTimeMachine",
+        "resourceVersion": "1795616925056",
+        "creationTimestamp": "2026-11-25T14:28:45Z"
+      },
+      "spec": {
+        "description": "Enables multiple points of integration for Adaptive Logs Time Machine.",
+        "stage": "experimental",
+        "codeowner": "@grafana/adaptive-telemetry",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertEnrichment",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2025-06-06T12:16:07Z"
