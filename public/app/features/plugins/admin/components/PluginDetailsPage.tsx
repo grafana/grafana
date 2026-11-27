@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useMedia } from 'react-use';
 
-import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
+import { type GrafanaTheme2, type NavModelItem, PluginType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Stack, TabContent, TextLink, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -30,6 +30,7 @@ export type Props = {
   notFoundNavModel?: NavModelItem;
   // Can be used to customise the content shown when a plugin with the given ID cannot be found
   notFoundComponent?: React.ReactElement;
+  showDatasourceComponents?: boolean;
 };
 
 export function PluginDetailsPage({
@@ -37,6 +38,7 @@ export function PluginDetailsPage({
   navId = 'plugins',
   notFoundComponent = <NotFoundPlugin />,
   notFoundNavModel,
+  showDatasourceComponents = false,
 }: Props) {
   const location = useLocation();
   const notFoundModel = notFoundNavModel ?? {
@@ -52,7 +54,13 @@ export function PluginDetailsPage({
   useGetPluginInsights(pluginId, plugin?.isInstalled ? plugin?.installedVersion : plugin?.latestVersion);
 
   const isNarrowScreen = useMedia('(max-width: 600px)');
-  const { navModel, activePageId } = usePluginDetailsTabs(plugin, queryParams.get('page'), isNarrowScreen);
+  const showComponents = showDatasourceComponents && plugin?.type === PluginType.datasource;
+  const { navModel, activePageId } = usePluginDetailsTabs(
+    plugin,
+    queryParams.get('page'),
+    isNarrowScreen,
+    showComponents
+  );
   const { actions, info, subtitle } = usePluginPageExtensions(plugin);
   const { isLoading: isFetchLoading } = useFetchStatus();
   const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
@@ -98,6 +106,7 @@ export function PluginDetailsPage({
               pageId={activePageId}
               info={info}
               showDetails={isNarrowScreen}
+              showComponents={showComponents}
             />
           </TabContent>
         </Page.Contents>

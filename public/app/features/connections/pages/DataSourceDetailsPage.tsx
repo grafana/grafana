@@ -19,6 +19,7 @@ export function DataSourceDetailsPage() {
     <PluginDetailsPage
       pluginId={id}
       navId={navId}
+      showDatasourceComponents
       notFoundComponent={<NotFoundDatasource />}
       notFoundNavModel={{
         text: t('connections.data-source-details-page.text.unknown-datasource', 'Unknown datasource'),

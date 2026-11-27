@@ -8,10 +8,11 @@ export function EditDataSourcePage() {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const pageId = params.get('page');
+  const componentId = params.get('component');
 
   return (
     <AdvisorCheckProvider>
-      <DataSourceTabPage uid={uid} pageId={pageId} />
+      <DataSourceTabPage uid={uid} pageId={pageId} componentId={componentId} />
     </AdvisorCheckProvider>
   );
 }

@@ -15,8 +15,17 @@ import { AccessControlAction } from 'app/types/accessControl';
 import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 import { type GenericDataSourcePlugin } from '../types';
+import { DATASOURCE_COMPONENTS_PAGE_ID } from '../utils';
 
 const loadingDSType = 'Loading';
+
+export function getDataSourceComponentsPageId(plugin?: Pick<GenericDataSourcePlugin, 'configPages'> | null) {
+  let pageId = DATASOURCE_COMPONENTS_PAGE_ID;
+  while (plugin?.configPages?.some((page) => page.id === pageId)) {
+    pageId = `grafana-${pageId}`;
+  }
+  return pageId;
+}
 
 export function buildNavModel(
   dataSource: DataSourceSettings,
@@ -38,6 +47,15 @@ export function buildNavModel(
       },
     ],
   };
+
+  const componentsPageId = getDataSourceComponentsPageId(plugin);
+  navModel.children!.push({
+    active: false,
+    icon: 'apps',
+    id: `datasource-${componentsPageId}-${dataSource.uid}`,
+    text: t('datasources.build-nav-model.text.components', 'Components'),
+    url: `datasources/edit/${dataSource.uid}/?page=${componentsPageId}`,
+  });
 
   if (plugin.configPages) {
     for (const page of plugin.configPages) {
@@ -116,9 +134,9 @@ export function buildNavModel(
 export function getDataSourceNav(main: NavModelItem, pageName: string): NavModel {
   let node: NavModelItem = { text: '' };
 
-  // find active page
+  const uid = main.id?.slice('datasource-'.length);
   for (const child of main.children!) {
-    if (child.id!.indexOf(pageName) > 0) {
+    if (child.id === `datasource-${pageName}-${uid}` || child.id === `datasource-page-${pageName}`) {
       child.active = true;
       node = child;
       break;

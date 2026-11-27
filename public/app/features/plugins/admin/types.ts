@@ -294,6 +294,7 @@ export enum PluginTabIds {
   CHANGELOG = 'changelog',
   PLUGINDETAILS = 'right-panel',
   DATASOURCE_CONNECTIONS = 'datasource-connections',
+  COMPONENTS = 'components',
   SCREENSHOTS = 'screenshots',
 }
 

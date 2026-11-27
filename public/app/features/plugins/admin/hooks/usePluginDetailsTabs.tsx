@@ -33,7 +33,8 @@ function getCurrentPageId(
 export const usePluginDetailsTabs = (
   plugin?: CatalogPlugin,
   pageId?: PluginTabIds | string | null,
-  isNarrowScreen?: boolean
+  isNarrowScreen?: boolean,
+  showComponents = false
 ): ReturnType => {
   const { loading, error, value: pluginConfig } = usePluginConfig(plugin);
   const { pathname } = useLocation();
@@ -84,6 +85,16 @@ export const usePluginDetailsTabs = (
         icon: 'info-circle',
         url: `${pathname}?page=${PluginTabIds.PLUGINDETAILS}`,
         active: PluginTabIds.PLUGINDETAILS === currentPageId,
+      });
+    }
+
+    if (showComponents) {
+      navModelChildren.push({
+        id: PluginTabIds.COMPONENTS,
+        text: t('plugins.use-plugin-details-tabs.components', 'Components'),
+        icon: 'apps',
+        url: `${pathname}?page=${PluginTabIds.COMPONENTS}`,
+        active: currentPageId === PluginTabIds.COMPONENTS,
       });
     }
 
@@ -161,6 +172,7 @@ export const usePluginDetailsTabs = (
     isNarrowScreen,
     loading,
     isDatasourceConnectionsTabEnabled,
+    showComponents,
   ]);
 
   const navModel: NavModelItem = {

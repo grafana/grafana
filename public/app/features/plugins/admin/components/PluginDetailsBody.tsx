@@ -7,6 +7,7 @@ import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type PageInfoItem, useFlagDatasourceConnectionsTab } from '@grafana/runtime/internal';
 import { type CellProps, type Column, InteractiveTable, Stack, useStyles2, Carousel } from '@grafana/ui';
+import { DataSourceComponentsList } from 'app/features/datasources/components/DataSourceComponentsList';
 
 import { AssistantOverview } from '../components/AssistantOverview/AssistantOverview';
 import { ASSISTANT_PLUGIN_ID } from '../components/AssistantOverview/constants';
@@ -26,11 +27,19 @@ type Props = {
   queryParams: UrlQueryMap;
   pageId: string;
   showDetails: boolean;
+  showComponents?: boolean;
 };
 
 type Cell<T extends keyof Permission = keyof Permission> = CellProps<Permission, Permission[T]>;
 
-export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetails }: Props): JSX.Element {
+export function PluginDetailsBody({
+  plugin,
+  queryParams,
+  pageId,
+  info,
+  showDetails,
+  showComponents,
+}: Props): JSX.Element {
   const styles = useStyles2(getStyles);
   const { value: pluginConfig, loading: pluginConfigLoading } = usePluginConfig(plugin);
   const isDatasourceConnectionsTabEnabled = useFlagDatasourceConnectionsTab();
@@ -143,6 +152,10 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
         />
       </>
     );
+  }
+
+  if (showComponents && pageId === PluginTabIds.COMPONENTS) {
+    return <DataSourceComponentsList type={plugin.id} />;
   }
 
   if (pluginConfig?.configPages) {
