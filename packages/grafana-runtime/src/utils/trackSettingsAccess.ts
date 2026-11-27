@@ -28,16 +28,24 @@ const NO_RECURSE_PATHS = new Set([
 
 const counts = new Map<string, { source: SettingsAccessSource; path: string; count: number }>();
 let flushTimer: ReturnType<typeof setInterval> | undefined;
+let flushing = false;
 
 function flushSettingsAccessCounts() {
   // Counts accumulate until the app has wired up a reporter.
   if (!report) {
     return;
   }
-  for (const { source, path, count } of counts.values()) {
-    try {
-      report({ source, path, count });
-    } catch {}
+  // Reporting reads config itself (reportInteraction spreads config.reportingStaticContext),
+  // which must not be counted as app usage.
+  flushing = true;
+  try {
+    for (const { source, path, count } of counts.values()) {
+      try {
+        report({ source, path, count });
+      } catch {}
+    }
+  } finally {
+    flushing = false;
   }
   counts.clear();
 }
@@ -59,6 +67,9 @@ function startFlushing() {
 }
 
 function count(source: SettingsAccessSource, path: string) {
+  if (flushing) {
+    return;
+  }
   startFlushing();
   const key = `${source}:${path}`;
   const entry = counts.get(key);
