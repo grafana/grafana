@@ -348,6 +348,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-08-20,grafana.cmdkHybridSearch,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-11-16,grafana.cmdkHybridSearchSkipRerank,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-10-29,grafana.cmdkDashboardTags,experimental,@grafana/grafana-frontend-navigation,false,false,true
+2026-11-27,grafana.cmdkExtensionSearch,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-07-16,assistant.fullscreenWorkspace,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-10-21,assistant.dashboard.artifacts,experimental,@grafana/dashboards-squad,false,false,true
 2026-06-19,splunk.useLegacyResultsApi,experimental,@grafana/data-sources-plugins,false,false,false
