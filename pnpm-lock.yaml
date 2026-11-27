@@ -757,8 +757,8 @@ importers:
         specifier: 1.64.1
         version: 1.64.1
       '@react-types/shared':
-        specifier: 3.31.0
-        version: 3.31.0(react@19.2.8)
+        specifier: 3.37.0
+        version: 3.37.0(react@19.2.8)
       '@rsdoctor/rspack-plugin':
         specifier: ^1.6.3
         version: 1.6.3(@emnapi/core@2.0.0-beta.2)(@emnapi/runtime@2.0.0-beta.2)(@rsbuild/core@2.2.5(core-js@3.44.0))(@rspack/core@2.2.4(@swc/helpers@0.5.17))(supports-color@7.2.0)(webpack@5.105.0)
@@ -5799,13 +5799,8 @@ packages:
       js-cookie:
         optional: true
 
-  '@react-types/shared@3.31.0':
-    resolution: {integrity: sha512-ua5U6V66gDcbLZe4P2QeyNgPp4YWD1ymGA6j3n+s8CGExtrCPe64v+g4mvpT8Bnb985R96e4zFT61+m0YCwqMg==}
-    peerDependencies:
-      react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
-
-  '@react-types/shared@3.36.0':
-    resolution: {integrity: sha512-DkP/H0C2YjjS7gZWKNqOmU8a16qHPjQNdzMwmTq9SzplM6Iw0kVMTZ0OIoe6FOgGqa+FwMsE2QbPjh/n3g/jXQ==}
+  '@react-types/shared@3.37.0':
+    resolution: {integrity: sha512-VNlZuifu4tHdxWPfHvoMfKsHA9kVTCGkduv5vKVTdinm8wHFJNhyVB5RzIMiRFj0q3RKoCbP68u2zaoBSiFueg==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
 
@@ -18981,11 +18976,7 @@ snapshots:
     optionalDependencies:
       js-cookie: 3.0.8
 
-  '@react-types/shared@3.31.0(react@19.2.8)':
-    dependencies:
-      react: 19.2.8
-
-  '@react-types/shared@3.36.0(react@19.2.8)':
+  '@react-types/shared@3.37.0(react@19.2.8)':
     dependencies:
       react: 19.2.8
 
@@ -27811,7 +27802,7 @@ snapshots:
       '@internationalized/date': 3.12.2
       '@internationalized/number': 3.6.7
       '@internationalized/string': 3.2.9
-      '@react-types/shared': 3.36.0(react@19.2.8)
+      '@react-types/shared': 3.37.0(react@19.2.8)
       '@swc/helpers': 0.5.17
       aria-hidden: 1.2.6
       clsx: 2.1.1
@@ -28190,7 +28181,7 @@ snapshots:
       '@internationalized/date': 3.12.2
       '@internationalized/number': 3.6.7
       '@internationalized/string': 3.2.9
-      '@react-types/shared': 3.36.0(react@19.2.8)
+      '@react-types/shared': 3.37.0(react@19.2.8)
       '@swc/helpers': 0.5.17
       react: 19.2.8
       use-sync-external-store: 1.6.0(react@19.2.8)

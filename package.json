@@ -111,7 +111,7 @@
     "@manypkg/get-packages": "^3.0.0",
     "@nx/devkit": "24.0.6",
     "@playwright/test": "1.64.1",
-    "@react-types/shared": "3.31.0",
+    "@react-types/shared": "3.37.0",
     "@rsdoctor/rspack-plugin": "^1.6.3",
     "@rspack/cli": "^2",
     "@rspack/core": "^2.1.7",
