@@ -78,6 +78,8 @@ The following screenshot demonstrates how groupings work:
 {{< image-map key="panel-groupings" >}}
 
 In addition to the option to add groupings from the sidebar, when you hover your cursor over relevant parts of the dashboard, **+ Add panel**, **+ New row**, **+ New tab**, **Group panels**, and ungroup buttons are visible.
+When you hover your cursor over a row header or a tab in edit mode, the actions tooltip is also displayed, which lets you open the grouping settings in the sidebar or copy, duplicate, or delete the grouping.
+For more information, refer to [Edit, copy, duplicate, or delete a grouping](#edit-copy-duplicate-or-delete-a-grouping).
 
 To see a repeating row in action, explore this demo dashboard on Grafana Play:
 
@@ -88,6 +90,7 @@ The following sections describe:
 - [Grouping configuration options](#grouping-configuration-options)
 - [Grouping layouts](#grouping-layouts)
 - [How to group panels](#group-panels)
+- [How to edit, copy, duplicate, or delete a grouping](#edit-copy-duplicate-or-delete-a-grouping)
 - [How to ungroup panels](#ungroup-panels)
 
 ## Grouping configuration options
@@ -139,7 +142,8 @@ To group all the panels on a dashboard, follow these steps:
    - Under a panel or group of panels, hover your mouse to reveal the **Group panels** button, click it and select **Group into row** or **Group into tab**.
 
    All the panels are moved into the grouping, and a dotted blue line surrounds the row or tab.
-   The sidebar opens, displaying the relevant options.
+   If the sidebar is already open, it displays the grouping options.
+   Otherwise, hover your cursor over the row header or tab and click **Row settings** or **Tab settings** in the actions tooltip to open the sidebar.
 
    {{< admonition type="tip" >}}
    While grouping is typically used for multiple panels, you can start a grouping with just one panel.
@@ -204,7 +208,8 @@ To add a nested grouping, follow these steps:
    {{< figure src="/media/docs/grafana/dashboards/screenshot-nest-group-v13.0.png" alt="Adding a nested grouping" max-width="500px" >}}
 
    The new grouping is added inside the first grouping, and the panels are moved into the nested grouping.
-   The sidebar opens displaying the relevant configuration options.
+   If the sidebar is already open, it displays the configuration options.
+   Otherwise, hover your cursor over the nested row header or tab and click **Row settings** or **Tab settings** in the actions tooltip to open the sidebar.
 
 1. Set the configuration options for the nested grouping.
 1. Click **Save**.
@@ -213,6 +218,41 @@ To add a nested grouping, follow these steps:
 1. Select **Viewing** in the dashboard mode drop-down list.
 
 You can add more one more level of grouping if needed.
+
+## Edit, copy, duplicate, or delete a grouping
+
+When you hover your cursor over a row header or a tab in edit mode, the actions tooltip is displayed.
+The tooltip also appears when keyboard focus moves onto the row header or tab, and you can close it by pressing `Escape`.
+Use the tooltip to manage a grouping without leaving the dashboard.
+
+The tooltip includes the following options:
+
+- **Row settings** or **Tab settings**: Opens the [grouping configuration options](#grouping-configuration-options) in the sidebar.
+- **Copy to clipboard**: Copies the grouping, including its panels, so you can paste it elsewhere on the dashboard.
+- **Duplicate**: Adds a copy of the grouping next to the original.
+- **Delete**: Deletes the grouping and all the panels it contains. If the grouping contains panels, Grafana asks you to confirm. If it's empty, Grafana deletes it immediately.
+
+For repeated instances of a row or tab, **Copy to clipboard**, **Duplicate**, and **Delete** are disabled.
+Use them on the original row or tab instead.
+
+To manage a grouping, follow these steps:
+
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
+1. (Optional) Click the **Content outline** icon to quickly navigate to the grouping you want to update.
+1. Hover your cursor over the row header or tab to display the actions tooltip.
+1. Click **Row settings**, **Tab settings**, **Copy to clipboard**, **Duplicate**, or **Delete**.
+   - If you selected **Row settings** or **Tab settings**, update the options in the sidebar.
+   - If you selected **Copy to clipboard**, navigate to the part of the dashboard where you want to add the copied grouping and click **Paste row** or **Paste tab**.
+
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Select **Viewing** in the dashboard mode drop-down list.
+
+{{< admonition type="caution" >}}
+Deleting a grouping also deletes its panels. To remove a grouping and keep its panels, refer to [Ungroup panels](#ungroup-panels).
+{{< /admonition >}}
 
 ## Ungroup panels
 

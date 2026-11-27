@@ -183,6 +183,27 @@ The available configuration options in the sidebar differ depending on the selec
 - **Groupings (rows and tabs)**: All configuration options are available in the sidebar.
 - **Panels**: High-level options are in the sidebar and further configuration options are in the **Edit panel** view.
 
+#### Open the sidebar for an element
+
+In edit mode, open the sidebar for an element or dashboard control by hovering over it to display the actions tooltip, and then click the element's settings icon.
+
+This applies to:
+
+- Panels
+- Rows and tabs (groupings)
+- Dashboard controls: filters, variables, annotations, and links
+
+The actions tooltip is also displayed when keyboard focus moves onto the element.
+Press `Tab` to move into the tooltip actions and `Escape` to close it.
+
+You can also open the sidebar in the following ways, independent of an element:
+
+- **Dashboard options icon**: Click the **Dashboard options** icon in the toolbar to open the sidebar with the dashboard options.
+- **Adding a dashboard element**: When you add any dashboard element, the sidebar opens with the configuration options for the new element.
+- **Edit auto layout**: When you try to resize a panel in an auto grid layout, click **Edit auto layout** to open the layout options in the sidebar.
+
+When the sidebar is already open, selecting another element updates the sidebar to show that element's options.
+
 #### Docked and undocked sidebar
 
 You can choose to use the sidebar docked or undocked by clicking the **Dock/Undock** icon in the sidebar.
@@ -230,6 +251,9 @@ To navigate the dashboard using the outline, follow these steps:
 
 ### Edit a dashboard
 
+When you're editing a dashboard, clicking an element selects it and clicking it again clears the selection.
+To open the sidebar for the element, hover over it and select the element's settings icon.
+
 To edit a dashboard, follow these steps:
 
 {{< admonition type="note" >}}
@@ -250,9 +274,9 @@ Editing a dashboard, including building one with Grafana Assistant, isn't availa
    | Group panels           | Group panels in any of the following ways depending on your needs:<ul><li>Click the **Add new element** icon and select **Add row/Group into rows** or **Add tab/Group into tabs**.</li><li>Hover your cursor on the dashboard to display the **Group panels** button and select a grouping option.</li><li>Hold `Shift` and click the panels you want to group, and then select a grouping option from the sidebar or [the bulk actions tooltip](#group-or-delete-multiple-panels-with-bulk-actions).</li></ul><p>For more information on groupings, refer to [Panel groupings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/).</p>   |
    | Edit panels | <p>Hover your cursor over any part of a panel to display the [actions tooltip](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#actions-tooltip), which has the following options: **Edit visualization**, **Panel settings**, **Duplicate**, **Remove**, **Expand**, and **More actions**.</p><p>Click the **Edit visualization** icon to open the panel editor, or the **Panel settings** icon to access high-level panel options in the sidebar. To copy the panel, click the **More actions** menu icon and select **More > Copy**.</p>  |
    | Delete multiple panels | Hold `Shift` and click the panels you want to update, hover your cursor over one of them to display the [bulk actions tooltip](#group-or-delete-multiple-panels-with-bulk-actions), and then click **Delete**. |
-   | Edit dashboard controls | <p>Hover your cursor over any part of a dashboard control to display the actions tooltip, which has the following options: **Settings**, **Duplicate**, and **Delete**. Click **Settings** to access options in the sidebar. For some controls, the tooltip also includes an **Edit query** or **Edit values** option. |
-   | Edit rows and tabs | Click a row or tab to access grouping settings in the sidebar. |
-   | Change layouts         | Click a row, tab, or the **Dashboard options** icon to open the sidebar and access layout options. For more information, refer to [panel layout options](#panel-layouts).   |
+   | Edit dashboard controls | <p>Hover your cursor over any part of a dashboard control to display the actions tooltip, which has the following options: a settings icon, such as **Variable settings** or **Filter settings**, **Duplicate**, and **Delete**. Click the settings icon to access options in the sidebar. For some controls, the tooltip also includes an **Edit query** or **Edit values** option. |
+   | Edit rows and tabs | <p>Hover your cursor over any part of a row header or a tab to display the actions tooltip, which has the following options: **Row settings** or **Tab settings**, **Copy to clipboard**, **Duplicate**, and **Delete**.</p><p>Click **Row settings** or **Tab settings** to access grouping settings in the sidebar.</p> |
+   | Change layouts         | Hover your cursor over a row or tab and click **Row settings** or **Tab settings**, or click the **Dashboard options** icon, to open the sidebar and access layout options. For more information, refer to [panel layout options](#panel-layouts).   |
    | Undo or redo changes   | Click the **Undo** or **Redo** icon in the toolbar. For more information, refer to [Undo and redo changes](#undo-and-redo-changes). (Public preview) |
 
 1. When you've finished making changes, click **Save**.
@@ -394,8 +418,10 @@ To update the panel layout, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Select **Editing** in the dashboard mode drop-down list.
-1. Click the dashboard or the grouping that contains the panel layout you want to update.
-1. Click the **Dashboard options** icon to open the sidebar, if needed.
+1. Do one of the following:
+   - To update the dashboard layout, click the **Dashboard options** icon to open the sidebar.
+   - To update the layout of a row or tab, hover your cursor over it and click **Row settings** or **Tab settings** in the actions tooltip to open the sidebar.
+
 1. Under **Layout**, select **Custom** or **Auto**.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
@@ -415,7 +441,7 @@ To configure repeats, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Select **Editing** in the dashboard mode drop-down list.
-1. Click the panel, row, or tab you want to update to open the sidebar, or click the **Dashboard options** icon to open it.
+1. Hover your cursor over the panel, row, or tab you want to update and click its settings icon, for example **Panel settings**, in the actions tooltip to open the sidebar, or click the **Dashboard options** icon to open it.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
 
@@ -531,7 +557,7 @@ To configure a show/hide rule, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Select **Editing** in the dashboard mode drop-down list.
-1. Click the panel, row, or tab you want to update to open the sidebar, or click the **Dashboard options** icon to open it.
+1. Hover your cursor over the panel, row, or tab you want to update and click its settings icon, for example **Panel settings**, in the actions tooltip to open the sidebar, or click the **Dashboard options** icon to open it.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
 
@@ -597,28 +623,37 @@ To resize a panel, follow these steps:
 
 ## Copy, duplicate, or delete dashboard elements
 
-You can copy and paste, duplicate, or delete any dashboard elements using the sidebar.
-To delete several panels at once, you can also use the actions tooltip; refer to [Edit multiple panels](#group-or-delete-multiple-panels-with-bulk-actions).
+You can copy and paste, duplicate, or delete any dashboard element using the actions tooltip or the sidebar.
+To delete several panels at once, you can also use the bulk actions tooltip; refer to [Group and delete multiple panels with bulk actions](#group-and-delete-multiple-panels-with-bulk-actions).
 
 To manage dashboard elements, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Select **Editing** in the dashboard mode drop-down list.
-1. Do one of the following:
-   - For panels, rows, or tabs, click the element you want to update to open the sidebar. If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
-   - For dashboard controls&mdash;filters, variables, annotations, or links&mdash; click the control at the top of the dashboard to display the edit and delete options, and then click the edit icon for the control. This opens the sidebar.
+1. Hover your cursor over the panel, row, tab, or dashboard control you want to update to display the actions tooltip.
 
-1. At the top of the sidebar, do one of the following:
-   - Click **Copy**.
-   - Click **Duplicate**. The duplicated element is added next to the original one. Proceed to step 6.
-   - Click **Delete** and then confirm you want to delete the control. Proceed to step 7.
+   If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
 
-1. If you selected **Copy**, navigate to the part of the dashboard where you want to add the copied element, and click **Paste panel**, **Paste row**, or **Paste tab**.
+1. In the actions tooltip, do one of the following:
+   - To copy a panel, click the **More actions** menu icon and select **More > Copy**.
+   - To copy a row or tab, click the **Copy to clipboard** icon.
+   - To duplicate an element, click **Duplicate**. The duplicated element is added next to the original one. Proceed to step 6.
+   - To delete an element, click **Remove** for a panel or **Delete** for any other element, and then confirm you want to delete it. Proceed to step 7. Grafana deletes a row or tab that doesn't contain any panels without asking for confirmation.
+
+   Dashboard controls can't be copied.
+   Alternatively, click the settings icon in the actions tooltip to open the sidebar, and then use the **Copy**, **Duplicate**, or **Delete** options at the top of the sidebar.
+
+1. If you copied an element, navigate to the part of the dashboard where you want to add the copied element, and click **Paste panel**, **Paste row**, or **Paste tab**.
 1. Update the copied or duplicated element if needed.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Select **Viewing** in the dashboard mode drop-down list.
+
+{{< admonition type="note" >}}
+For repeated instances of a row or tab, the **Copy to clipboard**, **Duplicate**, and **Delete** options are disabled in the actions tooltip, because you can't act on a repeated instance individually.
+Use these options on the original row or tab instead.
+{{< /admonition >}}
 
 ## Copy a dashboard
 
