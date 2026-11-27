@@ -63,8 +63,7 @@ type ControllerConfig struct {
 	natsSubscriber        *nats.SubscriberService
 	clients               resources.ClientFactory
 	manifestWatcher       services.Service
-	tokenExchangeClient   *authn.TokenExchangeClient
-	tlsConfig             *rest.TLSClientConfig
+	runnerClients         *runner.Clients
 	decryptService        decrypt.DecryptService
 	registry              prometheus.Registerer
 	relistProjection      *informer.RelistProjectionMetrics
@@ -118,17 +117,19 @@ type ControllerConfig struct {
 // token =
 // subscriber_credentials_file =
 // tls_enabled =
-func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer, tracer tracing.Tracer, subscriber *nats.SubscriberService) (*ControllerConfig, error) {
+func setupFromConfig(rt *runner.Runtime) (*ControllerConfig, error) {
+	cfg := rt.Cfg
 	if cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
 	}
 
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
 	controllerCfg := &ControllerConfig{
-		registry:       registry,
-		tracer:         tracer,
+		registry:       rt.Registerer,
+		tracer:         rt.Tracer,
+		runnerClients:  rt.Clients,
 		Settings:       cfg,
-		natsSubscriber: subscriber,
+		natsSubscriber: rt.Subscriber,
 		resyncInterval: operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
 		workerCount:    operatorSec.Key("worker_count").MustInt(1),
 		drainTimeout:   operatorSec.Key("drain_timeout").MustDuration(30 * time.Second),
@@ -486,32 +487,19 @@ func (c *ControllerConfig) Tracer() tracing.Tracer {
 	return c.tracer
 }
 
+func (c *ControllerConfig) runtimeClients() *runner.Clients {
+	if c.runnerClients == nil {
+		c.runnerClients = runner.NewClients(c.Settings)
+	}
+	return c.runnerClients
+}
+
 func (c *ControllerConfig) TokenExchangeClient() (*authn.TokenExchangeClient, error) {
-	if c.tokenExchangeClient != nil {
-		return c.tokenExchangeClient, nil
-	}
-
-	tokenExchangeClient, err := runner.TokenExchangeClient(c.Settings)
-	if err != nil {
-		return nil, err
-	}
-	c.tokenExchangeClient = tokenExchangeClient
-
-	return tokenExchangeClient, nil
+	return c.runtimeClients().TokenExchangeClient()
 }
 
 func (c *ControllerConfig) TLSConfig() (rest.TLSClientConfig, error) {
-	if c.tlsConfig != nil {
-		return *c.tlsConfig, nil
-	}
-
-	tlsConfig, err := runner.TLSConfig(c.Settings)
-	if err != nil {
-		return rest.TLSClientConfig{}, err
-	}
-	c.tlsConfig = &tlsConfig
-
-	return tlsConfig, nil
+	return c.runtimeClients().TLSConfig()
 }
 
 func (c *ControllerConfig) RepositoryFactory() (repository.Factory, error) {
