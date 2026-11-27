@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 
+	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -14,7 +15,7 @@ func TestBuildRESTClientRequiresServerURL(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.SectionWithEnvOverrides("operator").Key("folders_server_url").SetValue("https://localhost:6443")
 
-	_, err := buildRESTClient(cfg, "dashboards_server_url", "dashboard.grafana.app")
+	_, err := buildRESTClient(runner.NewClients(cfg), "dashboards_server_url", "dashboard.grafana.app")
 	require.ErrorContains(t, err, "dashboards_server_url is required")
 }
 
