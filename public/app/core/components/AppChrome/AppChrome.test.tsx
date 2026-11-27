@@ -1,11 +1,11 @@
 import { UNSAFE_PortalProvider } from '@react-aria/overlays';
 import userEvent from '@testing-library/user-event';
 import { KBarProvider } from 'kbar';
-import { type ReactNode } from 'react';
+import { type ReactNode, useEffect } from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { render, screen, waitFor, act, getWrapper, within } from 'test/test-utils';
 
-import { type NavModelItem } from '@grafana/data';
+import { type NavModelItem, PluginExtensionTypes } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, setBackendSrv, useScopes } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
@@ -29,6 +29,7 @@ import {
   useExtensionSidebarContext,
 } from './ExtensionSidebar/ExtensionSidebarProvider';
 import { DOCK_MENU_BUTTON_ID } from './MegaMenu/MegaMenuHeader';
+import { type PageCanvasModel, type PageCanvasProps } from './PageCanvas/types';
 import { SectionSidePanel } from './SectionNav/SectionSidePanel';
 
 jest.mock('@grafana/runtime', () => {
@@ -41,7 +42,54 @@ jest.mock('@grafana/runtime', () => {
     },
     usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
     useScopes: jest.fn(),
+    // The Assistant's page canvas component; every other extension point keeps the real hook.
+    usePluginComponents: jest.fn((options: { extensionPointId: string }) =>
+      options.extensionPointId === 'grafana/page-canvas/v0-alpha'
+        ? { components: [mockPageCanvasComponent], isLoading: false }
+        : actual.usePluginComponents(options)
+    ),
   };
+});
+
+const mockPageCanvasPlugin: { setCanvas?: PageCanvasProps['setCanvas']; props?: PageCanvasProps } = {};
+const mockPageCanvasComponent = Object.assign(
+  function PageCanvasPluginStub(props: PageCanvasProps) {
+    mockPageCanvasPlugin.setCanvas = props.setCanvas;
+    mockPageCanvasPlugin.props = props;
+    return <div data-testid="page-canvas-plugin">Report content</div>;
+  },
+  {
+    meta: {
+      id: 'grafana-assistant-app/page-canvas',
+      type: PluginExtensionTypes.component,
+      title: 'Canvas',
+      description: '',
+      pluginId: 'grafana-assistant-app',
+    },
+  }
+);
+
+let pageMounts = 0;
+function PageMountCounter() {
+  useEffect(() => {
+    pageMounts++;
+  }, []);
+  return <div>Live page</div>;
+}
+
+const canvasModel = (activeTabId: string): PageCanvasModel => ({
+  label: 'Canvas',
+  activeTabId,
+  tabs: [
+    { id: 'report', label: 'Report', shows: 'pane', closable: true, reorderable: true },
+    { id: 'dash', label: 'Checkout latency', shows: 'page', href: '/d/checkout', closable: true, reorderable: true },
+  ],
+  closedTabs: [],
+  onSelect: jest.fn(),
+  onClose: jest.fn(),
+  onReopen: jest.fn(),
+  onReorder: jest.fn(),
+  onCloseCanvas: jest.fn(),
 });
 
 jest.mock('app/features/scopes/ScopesContextProvider', () => ({
@@ -1440,6 +1488,168 @@ describe('AppChrome', () => {
         expect(await screen.findByTestId('page-children')).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: /^Menu/ })).not.toBeInTheDocument();
       });
+    });
+  });
+
+  describe('page canvas', () => {
+    beforeEach(async () => {
+      pageMounts = 0;
+      mockPageCanvasPlugin.setCanvas = undefined;
+      mockPageCanvasPlugin.props = undefined;
+      await act(async () => {
+        setTestFlags({ 'grafana.assistantPageCanvas': true });
+      });
+    });
+
+    it('keeps the page mounted as the canvas opens, covers it for a pane tab and shows it for a page tab', async () => {
+      setup(
+        <Page navId="child1">
+          <PageMountCounter />
+        </Page>
+      );
+      await screen.findByTestId('page-canvas-plugin');
+      const main = document.getElementById('pageContent')!;
+      expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+      expect(main).not.toHaveAttribute('inert');
+
+      act(() => mockPageCanvasPlugin.setCanvas!(canvasModel('report')));
+      expect(await screen.findByRole('tablist', { name: 'Canvas' })).toBeInTheDocument();
+      expect(main).toHaveAttribute('inert');
+      expect(screen.getByRole('tabpanel', { name: 'Report' })).toContainElement(
+        screen.getByTestId('page-canvas-plugin')
+      );
+
+      act(() => mockPageCanvasPlugin.setCanvas!(canvasModel('dash')));
+      expect(main).not.toHaveAttribute('inert');
+
+      act(() => mockPageCanvasPlugin.setCanvas!(null));
+      expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+      expect(document.getElementById('pageContent')).toBe(main);
+      expect(pageMounts).toBe(1);
+    });
+
+    it('joins the page card to the strip with the visual refresh, and gives it back its top when the canvas closes', async () => {
+      await act(async () => {
+        setTestFlags({ 'grafana.assistantPageCanvas': true, 'grafana.visualDesignRefresh': true });
+      });
+      setup(<Page navId="child1">Children</Page>);
+      await screen.findByTestId('page-canvas-plugin');
+      const pageCard = () => document.querySelector('[class*="page-wrapper"]')!;
+      expect(stylesFor(pageCard())).not.toContain('border-top-left-radius: unset');
+
+      act(() => mockPageCanvasPlugin.setCanvas!(canvasModel('dash')));
+      await waitFor(() => {
+        expect(stylesFor(pageCard())).toContain('border-top-left-radius: unset');
+      });
+      expect(stylesFor(pageCard())).toContain('border-top: none');
+
+      act(() => mockPageCanvasPlugin.setCanvas!(null));
+      await waitFor(() => {
+        expect(stylesFor(pageCard())).not.toContain('border-top-left-radius: unset');
+      });
+    });
+
+    it('ignores a model it cannot show', async () => {
+      setup(<Page navId="child1">Children</Page>);
+      await screen.findByTestId('page-canvas-plugin');
+      act(() => mockPageCanvasPlugin.setCanvas!({ ...canvasModel('report'), onSelect: 'not a function' } as never));
+      expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+    });
+
+    it('gives the frame the page area offsets, so the tab strip starts past the scopes drawer', async () => {
+      mockUseScopes.mockReturnValue({
+        state: { enabled: true, drawerOpened: true },
+      } as ReturnType<typeof useScopes>);
+      setup(<Page navId="child1">Children</Page>);
+      const main = document.getElementById('pageContent')!;
+      const frame = main.parentElement!.parentElement!;
+      await waitFor(() => {
+        expect(parseFloat(getComputedStyle(frame).paddingLeft)).toBeGreaterThan(0);
+      });
+      expect(parseFloat(getComputedStyle(main).paddingLeft) || 0).toBe(0);
+    });
+
+    it('shows no canvas in kiosk mode', async () => {
+      const { context } = setup(<Page navId="child1">Children</Page>);
+      await screen.findByTestId('page-canvas-plugin');
+      act(() => mockPageCanvasPlugin.setCanvas!(canvasModel('report')));
+      expect(await screen.findByRole('tablist')).toBeInTheDocument();
+
+      act(() => {
+        context.chrome.update({ kioskMode: KioskMode.Full });
+      });
+      await waitFor(() => {
+        expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('page-canvas-plugin')).not.toBeInTheDocument();
+    });
+
+    it('starts without a canvas when the plugin mounts again after kiosk mode', async () => {
+      const { context } = setup(<Page navId="child1">Children</Page>);
+      await screen.findByTestId('page-canvas-plugin');
+      act(() => mockPageCanvasPlugin.setCanvas!(canvasModel('report')));
+      expect(await screen.findByRole('tablist')).toBeInTheDocument();
+
+      act(() => context.chrome.update({ kioskMode: KioskMode.Full }));
+      await waitFor(() => {
+        expect(screen.queryByTestId('page-canvas-plugin')).not.toBeInTheDocument();
+      });
+      act(() => context.chrome.update({ kioskMode: undefined }));
+      await screen.findByTestId('page-canvas-plugin');
+      expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+
+      act(() => mockPageCanvasPlugin.setCanvas!(canvasModel('report')));
+      expect(await screen.findByRole('tablist')).toBeInTheDocument();
+    });
+
+    it('skips to the canvas pane while a pane tab covers the page, and to the page otherwise', async () => {
+      setup(<Page navId="child1">Children</Page>);
+      await screen.findByTestId('page-canvas-plugin');
+      const skipLink = await screen.findByRole('link', { name: 'Skip to main content' });
+
+      act(() => mockPageCanvasPlugin.setCanvas!(canvasModel('report')));
+      await userEvent.click(skipLink);
+      expect(screen.getByRole('tabpanel', { name: 'Report' })).toHaveFocus();
+
+      act(() => mockPageCanvasPlugin.setCanvas!(canvasModel('dash')));
+      await userEvent.click(skipLink);
+      expect(document.getElementById('pageContent')).toHaveFocus();
+    });
+
+    it("passes the page's name, and the new name when the page's navigation changes", async () => {
+      const { context } = setup(<Page navId="child1">Children</Page>);
+      await screen.findByTestId('page-canvas-plugin');
+      await waitFor(() => {
+        expect(mockPageCanvasPlugin.props?.page).toEqual({ title: 'Child1' });
+      });
+      const page = mockPageCanvasPlugin.props?.page;
+
+      act(() => context.chrome.update({ actions: [] }));
+      expect(mockPageCanvasPlugin.props?.page).toBe(page);
+
+      act(() => context.chrome.update({ pageNav: { text: 'CPU usage', url: '/d/cpu/cpu-usage' } }));
+      expect(mockPageCanvasPlugin.props?.page).toEqual({ title: 'CPU usage' });
+
+      // As Explore does: a pageNav without a link names the data source, not the page.
+      act(() => context.chrome.update({ pageNav: { text: 'loki' } }));
+      expect(mockPageCanvasPlugin.props?.page).toEqual({ title: 'Child1' });
+    });
+
+    it('passes no page until a page sets its navigation', async () => {
+      const { context } = setup(<div>Children</div>);
+      act(() => context.chrome.update({ actions: [] }));
+      await screen.findByTestId('page-canvas-plugin');
+      expect(mockPageCanvasPlugin.props).not.toHaveProperty('page');
+    });
+
+    it('renders the page as before with the flag off', async () => {
+      await act(async () => {
+        setTestFlags({});
+      });
+      setup(<Page navId="child1">Children</Page>);
+      await screen.findByText('Children');
+      expect(screen.queryByTestId('page-canvas-plugin')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('page-canvas-pane')).not.toBeInTheDocument();
     });
   });
 });
