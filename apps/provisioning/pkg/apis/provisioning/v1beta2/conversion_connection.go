@@ -60,14 +60,15 @@ func Convert_v1beta2_Connection_To_v0alpha1_Connection(in *Connection, out *v0al
 	if err != nil {
 		return err
 	}
-	if errs := ValidateConditions(field.NewPath("status", "conditions"), in.Status.Conditions); len(errs) > 0 {
-		return fmt.Errorf("convert connection %q: %w", in.Name, errs.ToAggregate())
+	status, err := connectionStatusToV0(in.Status)
+	if err != nil {
+		return fmt.Errorf("convert connection %q: %w", in.Name, err)
 	}
 	out.TypeMeta = metav1.TypeMeta{APIVersion: v0alpha1.SchemeGroupVersion.String(), Kind: "Connection"}
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
 	out.Spec = connectionSpecToV0(in.Spec)
 	out.Secure = secure
-	out.Status = connectionStatusToV0(in.Status)
+	out.Status = status
 	return nil
 }
 
@@ -251,10 +252,14 @@ func connectionStatusFromV0(in v0alpha1.ConnectionStatus) ConnectionStatus {
 	return out
 }
 
-func connectionStatusToV0(in ConnectionStatus) v0alpha1.ConnectionStatus {
+func connectionStatusToV0(in ConnectionStatus) (v0alpha1.ConnectionStatus, error) {
+	conditions, err := ConditionsToMeta(field.NewPath("status", "conditions"), in.Conditions)
+	if err != nil {
+		return v0alpha1.ConnectionStatus{}, err
+	}
 	out := v0alpha1.ConnectionStatus{
 		ObservedGeneration: in.ObservedGeneration,
-		Conditions:         ConditionsToMeta(in.Conditions),
+		Conditions:         conditions,
 		Health: v0alpha1.ConnectionHealthStatus{
 			Healthy: in.Health.Healthy,
 			Error:   v0alpha1.ConnectionHealthFailureType(optional.Value(in.Health.Error)),
@@ -280,5 +285,5 @@ func connectionStatusToV0(in ConnectionStatus) v0alpha1.ConnectionStatus {
 			Expiration:  optional.Value(in.Token.Expiration),
 		}
 	}
-	return out
+	return out, nil
 }
