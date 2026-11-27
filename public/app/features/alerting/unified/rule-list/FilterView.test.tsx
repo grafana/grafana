@@ -1,6 +1,6 @@
-import { render, screen, waitForElementToBeRemoved } from 'test/test-utils';
+import { act, render, screen, waitForElementToBeRemoved } from 'test/test-utils';
 
-import { setPluginComponentsHook, setPluginLinksHook, setReturnToPreviousHook } from '@grafana/runtime';
+import { config, setPluginComponentsHook, setPluginLinksHook, setReturnToPreviousHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import * as dataSourcesForRulesModule from '../hooks/useDataSourcesForRules';
@@ -9,7 +9,8 @@ import { grantUserPermissions } from '../mocks';
 import { installControllableIntersectionObserver } from '../mocks/intersectionObserver';
 import { setPrometheusRules } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
-import { type RulesFilter } from '../search/rulesSearchParser';
+import { RuleSource, type RulesFilter } from '../search/rulesSearchParser';
+import { setupDataSources } from '../testSetup/datasources';
 import { setupPrometheusAlertingPlugin } from '../testSetup/prometheusAlertingPlugin';
 import { SupportedPlugin } from '../types/pluginBridges';
 
@@ -79,6 +80,27 @@ describe('RuleList - FilterView', () => {
 
     await loadMoreResults();
     expect(await screen.findAllByRole('treeitem')).not.toHaveLength(0);
+  });
+
+  it('should keep the results of a running search when the data source cache refreshes', async () => {
+    render(<FilterView filterState={getFilter({ dataSourceNames: ['Mimir'] })} />);
+    await loadMoreResults();
+    const resultCount = screen.getAllByRole('treeitem').length;
+
+    act(() => {
+      // eslint-disable-next-line @grafana/no-config-datasources
+      setupDataSources(...Object.values(config.datasources));
+    });
+
+    expect(screen.getAllByRole('treeitem')).toHaveLength(resultCount);
+    await screen.findByTestId('load-more-helper');
+  });
+
+  it('should not wait for the rules source list when the search only uses Grafana-managed rules', async () => {
+    render(<FilterView filterState={getFilter({ ruleSource: RuleSource.Grafana })} />);
+
+    expect(screen.getByTestId('load-more-helper')).toBeInTheDocument();
+    await loadMoreResults();
   });
 
   it('should say that data source-managed rules are missing when the data source list fails', async () => {

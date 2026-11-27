@@ -8,7 +8,7 @@ import { EmptyState, Stack } from '@grafana/ui';
 import { withPerformanceLogging } from '../Analytics';
 import { isLoading, useAsync } from '../hooks/useAsync';
 import { useRouteProxyActive } from '../plugin-proxy/withRouteProxy';
-import { type RulesFilter } from '../search/rulesSearchParser';
+import { RuleSource, type RulesFilter } from '../search/rulesSearchParser';
 import { hashRule } from '../utils/rule-id';
 
 import { DataSourceRuleLoader } from './DataSourceRuleLoader';
@@ -123,11 +123,8 @@ function FilterViewResults({ filterState }: FilterViewProps) {
   );
 
   const loading = isLoading(state) || transitionPending;
-  // The first page load builds the iterator, and the iterator keeps its rules sources. So the first page waits
-  // for the rules source list. Until then there is no search to report on or to cancel.
-  const waitingForRulesSources = isLoadingRulesSources && state.status === 'not-executed';
   const numberOfRules = rules.length;
-  const noRulesFound = numberOfRules === 0 && !loading && !waitingForRulesSources;
+  const noRulesFound = numberOfRules === 0 && !loading;
   const loadingAborted = iteration.current?.abortController.signal.aborted;
   const cancelSearch = useCallback(() => {
     iteration.current?.abortController.abort();
@@ -147,6 +144,18 @@ function FilterViewResults({ filterState }: FilterViewProps) {
     }
     return 'searching';
   }, [doneSearching, loadingAborted]);
+
+  // The first page load builds the iterator, and the iterator keeps its rules sources. So a search that uses the
+  // data source-managed rules sources waits for their list before the first page load.
+  const usesExternalRulesSources = !routeProxyActive && filterState.ruleSource !== RuleSource.Grafana;
+  if (usesExternalRulesSources && isLoadingRulesSources && state.status === 'not-executed') {
+    return (
+      <ul aria-label={t('alerting.filter-view-results.aria-label-filteredrulelist', 'filtered-rule-list')}>
+        <AlertRuleListItemSkeleton />
+        <AlertRuleListItemSkeleton />
+      </ul>
+    );
+  }
 
   const rulesSourcesErrorNotice = !routeProxyActive && <RulesSourcesErrorNotice error={rulesSourcesError} />;
 
@@ -198,19 +207,17 @@ function FilterViewResults({ filterState }: FilterViewProps) {
               );
           }
         })}
-        {(loading || waitingForRulesSources) && (
+        {loading && (
           <>
             <AlertRuleListItemSkeleton />
             <AlertRuleListItemSkeleton />
           </>
         )}
       </ul>
-      {!noRulesFound && !waitingForRulesSources && (
+      {!noRulesFound && (
         <FilterStatus state={filterProgressState} numberOfRules={numberOfRules} onCancel={cancelSearch} />
       )}
-      {!doneSearching && !loading && !waitingForRulesSources && !loadingAborted && (
-        <LoadMoreHelper handleLoad={loadResultPage} />
-      )}
+      {!doneSearching && !loading && !loadingAborted && <LoadMoreHelper handleLoad={loadResultPage} />}
     </Stack>
   );
 }
