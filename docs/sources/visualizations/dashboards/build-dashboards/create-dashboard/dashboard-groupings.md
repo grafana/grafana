@@ -227,7 +227,7 @@ Use the tooltip to manage a grouping without leaving the dashboard.
 
 The tooltip includes the following options:
 
-- **Row settings** or **Tab settings**: Opens the [grouping configuration options](#grouping-configuration-options) in the sidebar. Clicking a row or tab selects it, but doesn't open the sidebar.
+- **Row settings** or **Tab settings**: Opens the [grouping configuration options](#grouping-configuration-options) in the sidebar.
 - **Copy to clipboard**: Copies the grouping, including its panels, so you can paste it elsewhere on the dashboard.
 - **Duplicate**: Adds a copy of the grouping next to the original.
 - **Delete**: Deletes the grouping and all the panels it contains. If the grouping contains panels, Grafana asks you to confirm. If it's empty, Grafana deletes it immediately.
@@ -242,8 +242,10 @@ To manage a grouping, follow these steps:
 1. (Optional) Click the **Content outline** icon to quickly navigate to the grouping you want to update.
 1. Hover your cursor over the row header or tab to display the actions tooltip.
 1. Click **Row settings**, **Tab settings**, **Copy to clipboard**, **Duplicate**, or **Delete**.
-1. If you selected **Row settings** or **Tab settings**, update the options in the sidebar.
-1. If you selected **Copy to clipboard**, navigate to the part of the dashboard where you want to add the copied grouping and click **Paste row** or **Paste tab**.
+
+   - If you selected **Row settings** or **Tab settings**, update the options in the sidebar.
+   - If you selected **Copy to clipboard**, navigate to the part of the dashboard where you want to add the copied grouping and click **Paste row** or **Paste tab**.
+
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.

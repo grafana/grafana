@@ -185,31 +185,23 @@ The available configuration options in the sidebar differ depending on the selec
 
 #### Open the sidebar for an element
 
-In edit mode, selecting a dashboard element doesn't open the sidebar.
-When you click a panel, row, tab, or dashboard control, Grafana selects it and the sidebar stays closed.
-To clear the selection, click the selected element again.
+In edit mode, open the sidebar for an element or dashboard control by hovering over it to display the actions tooltip, and then click the element's settings icon:
 
-To open the sidebar for an element, hover your cursor over it to display its actions tooltip, and then click the settings icon:
+<!-- TODO: screenshot here -->
 
-| Element    | Settings icon           |
-| ---------- | ----------------------- |
-| Panel      | **Panel settings**      |
-| Row        | **Row settings**        |
-| Tab        | **Tab settings**        |
-| Variable   | **Variable settings**   |
-| Filter     | **Filter settings**     |
-| Annotation | **Annotation settings** |
-| Link       | **Links settings**      |
+This applies to:
 
-The actions tooltip also appears when keyboard focus moves onto the element.
+- Panels
+- Rows and tabs (groupings)
+- Dashboard controls: filters, variables, annotations, and links
+
+The actions tooltip is also displayed when keyboard focus moves onto the element.
 Press `Tab` to move into the tooltip actions and `Escape` to close it.
-For more information about the panel actions tooltip, refer to [Actions tooltip](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-overview/#actions-tooltip).
 
 You can also open the sidebar in the following ways, independent of an element:
 
 - **Dashboard options icon**: Click the **Dashboard options** icon in the toolbar to open the sidebar with the dashboard options.
-- **Add new element icon**: Click the **Add new element** icon in the toolbar to open the sidebar with add options.
-- **Adding a dashboard control**: When you add a filter, variable, annotation query, or link, the sidebar opens with the configuration options for the new control.
+- **Adding a dashboard element**: When you add any dashboard element, the sidebar opens with the configuration options for the new element.
 - **Edit auto layout**: When you try to resize a panel in an auto grid layout, click **Edit auto layout** to open the layout options in the sidebar.
 
 When the sidebar is already open, selecting another element updates the sidebar to show that element's options.
@@ -260,6 +252,9 @@ To navigate the dashboard using the outline, follow these steps:
 1. Click the tree item to navigate that part of the dashboard.
 
 ### Edit a dashboard
+
+When you're editing a dashboard, clicking an element selects it and clicking it again clears the selection.
+To open the sidebar for the element, hover over it and select the element's settings icon.
 
 To edit a dashboard, follow these steps:
 
