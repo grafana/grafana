@@ -16,3 +16,12 @@ func LegacyPermissionCaller(namespace string) types.AuthInfo {
 		Rest:   authnlib.AccessTokenClaims{Namespace: namespace, Permissions: []string{LegacyUserPermissionsGrant}},
 	})
 }
+
+const LegacyUserPermissionsSearchGrant = "authz.grafana.app/legacyuserpermissions:search"
+
+func LegacySearchPermissionCaller(namespace string) types.AuthInfo {
+	return authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
+		Claims: jwt.Claims{Subject: "access-policy:embedded-grafana"},
+		Rest:   authnlib.AccessTokenClaims{Namespace: namespace, Permissions: []string{LegacyUserPermissionsSearchGrant}},
+	})
+}

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -55,6 +56,7 @@ type Loader struct {
 	enforced          bool // Standalone loading always uses SQL-backed permissions without a license service.
 	zanzana           MigratedPermissions
 	scopeResolver     legacyscopes.ScopeResolver
+	search            *PermissionSearch
 	flight            singleflight.Group
 	log               log.Logger
 }
@@ -63,8 +65,19 @@ func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver
 	cache *localcache.CacheService, cfg *setting.Cfg,
 	license licensing.Licensing, zanzana MigratedPermissions,
 ) *Loader {
-	return newLoader(legacysql.NewDatabaseProvider(sql), actionResolver, cache, cfg, zanzana,
+	return newEmbeddedLoader(sql, catalog, actionResolver, cache, cfg, license, zanzana, nil)
+}
+
+func newEmbeddedLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver,
+	cache *localcache.CacheService, cfg *setting.Cfg,
+	license licensing.Licensing, zanzana MigratedPermissions, scopeResolver legacyscopes.ScopeResolver,
+) *Loader {
+	loader := newLoader(legacysql.NewDatabaseProvider(sql), actionResolver, cache, cfg, zanzana,
 		WithLicensing(license), WithRoleCatalog(catalog))
+	loader.scopeResolver = scopeResolver
+	searchResolver, _ := zanzana.(*ZanzanaPermissionResolver)
+	loader.search = NewPermissionSearch(database.ProvideService(sql), catalog.snapshot, actionResolver, cache, scopeResolver, searchResolver, loader.log)
+	return loader
 }
 
 // NewEnforcedLoader follows standalone AuthZ's SQL-backed policy without a local
