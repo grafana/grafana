@@ -51,6 +51,22 @@ func TestListPublicStatic(t *testing.T) {
 		require.Equal(t, 5, frame.Rows())
 	})
 
+	t.Run("falls back to the source copy when the build output is empty", func(t *testing.T) {
+		fs := &fakeStore{folders: map[string]int{
+			"public-static/build/img/icons/marker": 0,
+			"public-static/img/icons/marker":       5,
+		}}
+		s := &Service{store: fs, log: log.NewNopLogger()}
+		frame, err := s.listPublicStatic(ctx, "img/icons/marker", 0)
+		require.NoError(t, err)
+		require.NotNil(t, frame)
+		require.Equal(t, 5, frame.Rows())
+		require.Equal(t, []string{
+			"public-static/build/img/icons/marker",
+			"public-static/img/icons/marker",
+		}, fs.listed)
+	})
+
 	t.Run("lists nothing when neither copy exists", func(t *testing.T) {
 		s := &Service{store: &fakeStore{}, log: log.NewNopLogger()}
 		frame, err := s.listPublicStatic(ctx, "img/icons/marker", 0)
