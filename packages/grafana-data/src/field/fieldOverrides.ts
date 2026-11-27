@@ -51,9 +51,28 @@ interface OverrideProps {
   properties: DynamicConfigValue[];
 }
 
+interface RunningMinMax {
+  min: number;
+  max: number;
+}
+
+function includeInMinMax(minMax: RunningMinMax, value: number) {
+  if (value < minMax.min) {
+    minMax.min = value;
+  }
+  if (value > minMax.max) {
+    minMax.max = value;
+  }
+}
+
+function toNumericRange({ min, max }: RunningMinMax): NumericRange {
+  const rangeMin = min === Infinity ? null : min;
+  const rangeMax = max === -Infinity ? null : max;
+  return { min: rangeMin, max: rangeMax, delta: (rangeMax ?? 0) - (rangeMin ?? 0) };
+}
+
 export function findNumericFieldMinMax(data: DataFrame[]): NumericRange {
-  let min: number | null = Infinity;
-  let max: number | null = -Infinity;
+  const minMax: RunningMinMax = { min: Infinity, max: -Infinity };
 
   for (const frame of data) {
     for (const field of frame.fields) {
@@ -70,35 +89,17 @@ export function findNumericFieldMinMax(data: DataFrame[]): NumericRange {
 
           if (v === null) {
             if (nullAsZero) {
-              if (min! > 0) {
-                min = 0;
-              }
-              if (max! < 0) {
-                max = 0;
-              }
+              includeInMinMax(minMax, 0);
             }
           } else if (typeof v === 'number' && !Number.isNaN(v)) {
-            if (min! > v) {
-              min = v;
-            }
-            if (max! < v) {
-              max = v;
-            }
+            includeInMinMax(minMax, v);
           }
         }
       }
     }
   }
 
-  if (min === Infinity) {
-    min = null;
-  }
-
-  if (max === -Infinity) {
-    max = null;
-  }
-
-  return { min, max, delta: (max ?? 0) - (min ?? 0) };
+  return toNumericRange(minMax);
 }
 
 /**
@@ -211,14 +212,7 @@ export function applyFieldOverrides(
         }
       }
 
-      // Try harder to set a real value that is not 'other'
-      let type = field.type;
-      if (!type || type === FieldType.other) {
-        const t = guessFieldTypeForField(field);
-        if (t) {
-          type = t;
-        }
-      }
+      const type = resolveFieldType(field);
 
       // Set the Min/Max value automatically
       const { range, newGlobalRange } = calculateRange(config, field, globalRange, data);
@@ -329,14 +323,14 @@ function calculateRange(
   globalRange: NumericRange | undefined,
   data: DataFrame[]
 ): { range?: NumericRange; newGlobalRange?: NumericRange } {
-  // A frame field's range describes its sparklines, so it must not become the global range of number fields.
+  // If range is defined with min/max, use it
+  if (isNumber(config.min) && isNumber(config.max)) {
+    const range = { min: config.min, max: config.max, delta: config.max - config.min };
+    return { range, newGlobalRange: globalRange ?? range };
+  }
+
+  // The shared sparkline range describes nested values, so it must not become the global range of number fields.
   if (field.type === FieldType.frame) {
-    if (isNumber(config.min) && isNumber(config.max)) {
-      return {
-        range: { min: config.min, max: config.max, delta: config.max - config.min },
-        newGlobalRange: globalRange,
-      };
-    }
     if (!config.fieldMinMax) {
       return { newGlobalRange: globalRange };
     }
@@ -349,12 +343,6 @@ function calculateRange(
       return { newGlobalRange: globalRange };
     }
     return { range: { min, max, delta: max - min }, newGlobalRange: globalRange };
-  }
-
-  // If range is defined with min/max, use it
-  if (isNumber(config.min) && isNumber(config.max)) {
-    const range = { min: config.min, max: config.max, delta: config.max - config.min };
-    return { range, newGlobalRange: globalRange ?? range };
   }
 
   // Only calculate ranges when the field is a number and one of min/max is set to auto.
@@ -378,10 +366,10 @@ function calculateRange(
 }
 
 // Only counts what the Table sparkline cell draws: the first number field of frames that also have a time
-// field, with non-finite values treated as null.
+// field. As in the cell's own per-row range, non-finite values are treated as null, so they are skipped, or count
+// as 0 when nullValueMode is AsZero (the nested field's own setting, otherwise the frame field's).
 function findSparklineMinMax(frames: unknown[], nullValueMode?: NullValueMode): NumericRange {
-  let min = Infinity;
-  let max = -Infinity;
+  const minMax: RunningMinMax = { min: Infinity, max: -Infinity };
 
   for (const frame of frames) {
     if (!isDataFrame(frame) || !frame.fields.some((f) => resolveFieldType(f) === FieldType.time)) {
@@ -399,19 +387,16 @@ function findSparklineMinMax(frames: unknown[], nullValueMode?: NullValueMode): 
         value = 0;
       }
       if (value !== null) {
-        min = Math.min(min, value);
-        max = Math.max(max, value);
+        includeInMinMax(minMax, value);
       }
     }
   }
 
-  const rangeMin = min === Infinity ? null : min;
-  const rangeMax = max === -Infinity ? null : max;
-  return { min: rangeMin, max: rangeMax, delta: (rangeMax ?? 0) - (rangeMin ?? 0) };
+  return toNumericRange(minMax);
 }
 
-// Nested field types are only guessed later, when applyFieldOverrides recurses into the frames, so guess them the
-// same way here to count the fields the sparkline will draw.
+// Nested field types are only guessed when applyFieldOverrides recurses into the frames, so findSparklineMinMax
+// also guesses them here to count the fields the sparkline will draw.
 function resolveFieldType(field: Field): FieldType {
   if (!field.type || field.type === FieldType.other) {
     return guessFieldTypeForField(field) ?? field.type;

@@ -632,16 +632,17 @@ describe('applyFieldOverrides', () => {
       it('does not change the range of number fields', () => {
         const frame = apply(
           [
-            { name: 'value', type: FieldType.number, values: [1, 2] },
             { name: 'trend', type: FieldType.frame, values: [sparkline([0, 10]), sparkline([100, 200])] },
+            { name: 'value', type: FieldType.number, values: [1, 2] },
           ],
           [fieldMinMaxFor('trend')]
         );
 
-        expect(frame.fields[0].state!.range).toEqual({ min: 1, max: 2, delta: 1 });
+        expect(frame.fields[0].state!.range).toEqual({ min: 0, max: 200, delta: 200 });
+        expect(frame.fields[1].state!.range).toEqual({ min: 1, max: 2, delta: 1 });
       });
 
-      it('does not pass an explicit min and max of a frame field on to later number fields', () => {
+      it('passes an explicit min and max of a frame field on to later number fields, as for other fields', () => {
         const frame = apply(
           [
             { name: 'trend', type: FieldType.frame, values: [sparkline([0, 10]), sparkline([100, 200])] },
@@ -659,7 +660,7 @@ describe('applyFieldOverrides', () => {
         );
 
         expect(frame.fields[0].state!.range).toEqual({ min: 0, max: 1000, delta: 1000 });
-        expect(frame.fields[1].state!.range).toEqual({ min: 1, max: 2, delta: 1 });
+        expect(frame.fields[1].state!.range).toEqual({ min: 0, max: 1000, delta: 1000 });
       });
 
       it('leaves frame fields without a range when it is not enabled', () => {
