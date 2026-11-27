@@ -87,10 +87,14 @@ export const KBarResults = (props: KBarResultsProps) => {
     activeIndex: state.activeIndex,
   }));
 
+  // Whether the user has picked a row since the last query, as opposed to the row highlighted by default.
+  const userMovedRef = React.useRef(false);
+
   React.useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       if (event.key === 'ArrowUp' || (event.ctrlKey && event.key === 'p')) {
         event.preventDefault();
+        userMovedRef.current = true;
         query.setActiveIndex((index) => {
           let nextIndex = index > START_INDEX ? index - 1 : index;
           // avoid setting active index on a group
@@ -104,6 +108,7 @@ export const KBarResults = (props: KBarResultsProps) => {
         });
       } else if (event.key === 'ArrowDown' || (event.ctrlKey && event.key === 'n')) {
         event.preventDefault();
+        userMovedRef.current = true;
         query.setActiveIndex((index) => {
           let nextIndex = index < itemsRef.current.length - 1 ? index + 1 : index;
           // avoid setting active index on a group
@@ -144,9 +149,48 @@ export const KBarResults = (props: KBarResultsProps) => {
     });
   }, [activeIndex, scrollToIndex]);
 
+  // What the active row was last reset against, to tell a changed query from results that merely arrived.
+  const previousRef = React.useRef<
+    { items: typeof props.items; search: string; currentRootActionId: typeof currentRootActionId } | undefined
+  >(undefined);
+
   React.useEffect(() => {
+    const previous = previousRef.current;
+    previousRef.current = { items: props.items, search, currentRootActionId };
+
+    if (previous) {
+      const sameQuery = previous.search === search && previous.currentRootActionId === currentRootActionId;
+      // Moving the active row changes activeIndex, which must not reset it.
+      if (sameQuery && previous.items === props.items) {
+        return;
+      }
+
+      if (!sameQuery) {
+        userMovedRef.current = false;
+      }
+
+      // Results that arrive late, such as plugin sections, must not move the row the user picked. Until they pick
+      // one the top row stays highlighted, otherwise a row carried over from the previous query would be followed
+      // to wherever the new results put it.
+      if (sameQuery && userMovedRef.current) {
+        const previousActive = previous.items[activeIndex];
+        if (previousActive !== undefined && typeof previousActive !== 'string') {
+          const sameAction = (item: ActionImpl | string | undefined) =>
+            item !== undefined && typeof item !== 'string' && item.id === previousActive.id;
+          if (sameAction(props.items[activeIndex])) {
+            return;
+          }
+          const index = props.items.findIndex(sameAction);
+          if (index >= 0) {
+            query.setActiveIndex(index);
+            return;
+          }
+        }
+      }
+    }
+
     query.setActiveIndex(typeof props.items[START_INDEX] === 'string' ? START_INDEX + 1 : START_INDEX);
-  }, [search, currentRootActionId, props.items, query]);
+  }, [search, currentRootActionId, props.items, activeIndex, query]);
 
   const execute = React.useCallback(
     (ev: React.MouseEvent, item: RenderParams['item']) => {
@@ -225,9 +269,16 @@ export const KBarResults = (props: KBarResultsProps) => {
           const { label: groupLabel, posInSet, setSize } = itemGroupInfo[virtualRow.index];
 
           const handlers = !isStringItem && {
-            onPointerMove: () =>
-              pointerMoved && activeIndex !== virtualRow.index && query.setActiveIndex(virtualRow.index),
-            onPointerDown: () => query.setActiveIndex(virtualRow.index),
+            onPointerMove: () => {
+              if (pointerMoved && activeIndex !== virtualRow.index) {
+                userMovedRef.current = true;
+                query.setActiveIndex(virtualRow.index);
+              }
+            },
+            onPointerDown: () => {
+              userMovedRef.current = true;
+              query.setActiveIndex(virtualRow.index);
+            },
             onClick: (ev: React.MouseEvent) => {
               // Report before perform, since perform may close the palette / navigate away
               props.onItemSelected?.(item, virtualRow.index, typeof url === 'function' ? url(search) : url);
