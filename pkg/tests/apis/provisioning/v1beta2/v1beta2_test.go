@@ -120,7 +120,11 @@ func TestIntegrationV1beta2Discovery(t *testing.T) {
 	for _, r := range resources.APIResources {
 		names = append(names, r.Name)
 	}
-	for _, expected := range []string{"repositories", "repositories/status", "connections", "connections/status", "jobs", "historicjobs"} {
+	for _, expected := range []string{
+		"repositories", "repositories/status", "connections", "connections/status", "jobs", "historicjobs",
+		"repositories/refs", "repositories/resources", "repositories/stats", "repositories/history", "repositories/files",
+		"connections/repositories",
+	} {
 		assert.Contains(t, names, expected)
 	}
 
