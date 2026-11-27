@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	storagev0 "github.com/grafana/grafana/pkg/apis/storage/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/router/routertest"
 	"github.com/grafana/grafana/pkg/server"
@@ -443,12 +444,12 @@ func newStubSigner(t *testing.T) *httptest.Server {
 func TestSetupFromConfigUsesRuntimeTracer(t *testing.T) {
 	tracer := tracing.NewNoopTracerService()
 	global := otel.GetTracerProvider()
-	cfg, err := setupFromConfig(setting.NewCfg(), prometheus.NewRegistry(), tracer, nil)
+	cfg, err := setupFromConfig(&runner.Runtime{Cfg: setting.NewCfg(), Registerer: prometheus.NewRegistry(), Tracer: tracer})
 	require.NoError(t, err)
 	require.Same(t, tracer, cfg.Tracer())
 	require.Same(t, global, otel.GetTracerProvider(), "a runtime tracer must leave the global provider alone")
 
-	cfg, err = setupFromConfig(setting.NewCfg(), prometheus.NewRegistry(), nil, nil)
+	cfg, err = setupFromConfig(&runner.Runtime{Cfg: setting.NewCfg(), Registerer: prometheus.NewRegistry()})
 	require.NoError(t, err)
 	require.NotNil(t, cfg.Tracer(), "operators without a runtime tracer still get a usable one")
 }
