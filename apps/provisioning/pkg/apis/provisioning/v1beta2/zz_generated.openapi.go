@@ -9,13 +9,18 @@ package v1beta2
 
 import (
 	resource "github.com/grafana/grafana-app-sdk/resource"
+	v0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		Author{}.OpenAPIModelName():                                     schema_pkg_apis_provisioning_v1beta2_Author(ref),
 		Connection{}.OpenAPIModelName():                                 schema_pkg_apis_provisioning_v1beta2_Connection(ref),
+		ConnectionAuthorizeRequest{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v1beta2_ConnectionAuthorizeRequest(ref),
+		ConnectionAuthorizeRequestSpec{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v1beta2_ConnectionAuthorizeRequestSpec(ref),
+		ConnectionAuthorizeRequestStatus{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v1beta2_ConnectionAuthorizeRequestStatus(ref),
 		ConnectionBitbucketConfig{}.OpenAPIModelName():                  schema_pkg_apis_provisioning_v1beta2_ConnectionBitbucketConfig(ref),
 		ConnectionCondition{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v1beta2_ConnectionCondition(ref),
 		ConnectionErrorDetails{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v1beta2_ConnectionErrorDetails(ref),
@@ -30,6 +35,10 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ConnectionStatus{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v1beta2_ConnectionStatus(ref),
 		ConnectionTokenStatus{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v1beta2_ConnectionTokenStatus(ref),
 		ConnectionWebhookConfig{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v1beta2_ConnectionWebhookConfig(ref),
+		ExternalRepository{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v1beta2_ExternalRepository(ref),
+		ExternalRepositoryList{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v1beta2_ExternalRepositoryList(ref),
+		FileItem{}.OpenAPIModelName():                                   schema_pkg_apis_provisioning_v1beta2_FileItem(ref),
+		FileList{}.OpenAPIModelName():                                   schema_pkg_apis_provisioning_v1beta2_FileList(ref),
 		HistoricJob{}.OpenAPIModelName():                                schema_pkg_apis_provisioning_v1beta2_HistoricJob(ref),
 		HistoricJobDeleteJobOptions{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v1beta2_HistoricJobDeleteJobOptions(ref),
 		HistoricJobExportJobOptions{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v1beta2_HistoricJobExportJobOptions(ref),
@@ -45,6 +54,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		HistoricJobStatus{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v1beta2_HistoricJobStatus(ref),
 		HistoricJobSyncJobOptions{}.OpenAPIModelName():                  schema_pkg_apis_provisioning_v1beta2_HistoricJobSyncJobOptions(ref),
 		HistoricJobTestJobOptions{}.OpenAPIModelName():                  schema_pkg_apis_provisioning_v1beta2_HistoricJobTestJobOptions(ref),
+		HistoryItem{}.OpenAPIModelName():                                schema_pkg_apis_provisioning_v1beta2_HistoryItem(ref),
+		HistoryList{}.OpenAPIModelName():                                schema_pkg_apis_provisioning_v1beta2_HistoryList(ref),
 		Job{}.OpenAPIModelName():                                        schema_pkg_apis_provisioning_v1beta2_Job(ref),
 		JobDeleteJobOptions{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v1beta2_JobDeleteJobOptions(ref),
 		JobExportJobOptions{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v1beta2_JobExportJobOptions(ref),
@@ -60,6 +71,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		JobStatus{}.OpenAPIModelName():                                  schema_pkg_apis_provisioning_v1beta2_JobStatus(ref),
 		JobSyncJobOptions{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v1beta2_JobSyncJobOptions(ref),
 		JobTestJobOptions{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v1beta2_JobTestJobOptions(ref),
+		ManagerStats{}.OpenAPIModelName():                               schema_pkg_apis_provisioning_v1beta2_ManagerStats(ref),
+		RefItem{}.OpenAPIModelName():                                    schema_pkg_apis_provisioning_v1beta2_RefItem(ref),
+		RefList{}.OpenAPIModelName():                                    schema_pkg_apis_provisioning_v1beta2_RefList(ref),
 		Repository{}.OpenAPIModelName():                                 schema_pkg_apis_provisioning_v1beta2_Repository(ref),
 		RepositoryBitbucketRepositoryConfig{}.OpenAPIModelName():        schema_pkg_apis_provisioning_v1beta2_RepositoryBitbucketRepositoryConfig(ref),
 		RepositoryBranchOptions{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v1beta2_RepositoryBranchOptions(ref),
@@ -83,8 +97,56 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		RepositorySyncOptions{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v1beta2_RepositorySyncOptions(ref),
 		RepositorySyncStatus{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v1beta2_RepositorySyncStatus(ref),
 		RepositoryTokenStatus{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v1beta2_RepositoryTokenStatus(ref),
+		RepositoryURLs{}.OpenAPIModelName():                             schema_pkg_apis_provisioning_v1beta2_RepositoryURLs(ref),
+		RepositoryView{}.OpenAPIModelName():                             schema_pkg_apis_provisioning_v1beta2_RepositoryView(ref),
+		RepositoryViewList{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v1beta2_RepositoryViewList(ref),
 		RepositoryWebhookConfig{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v1beta2_RepositoryWebhookConfig(ref),
 		RepositoryWebhookStatus{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v1beta2_RepositoryWebhookStatus(ref),
+		ResourceCount{}.OpenAPIModelName():                              schema_pkg_apis_provisioning_v1beta2_ResourceCount(ref),
+		ResourceCountList{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v1beta2_ResourceCountList(ref),
+		ResourceList{}.OpenAPIModelName():                               schema_pkg_apis_provisioning_v1beta2_ResourceList(ref),
+		ResourceListItem{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v1beta2_ResourceListItem(ref),
+		ResourceObjects{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v1beta2_ResourceObjects(ref),
+		ResourceRepositoryInfo{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v1beta2_ResourceRepositoryInfo(ref),
+		ResourceStats{}.OpenAPIModelName():                              schema_pkg_apis_provisioning_v1beta2_ResourceStats(ref),
+		ResourceType{}.OpenAPIModelName():                               schema_pkg_apis_provisioning_v1beta2_ResourceType(ref),
+		ResourceWrapper{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v1beta2_ResourceWrapper(ref),
+		SupportedResource{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v1beta2_SupportedResource(ref),
+		TestResults{}.OpenAPIModelName():                                schema_pkg_apis_provisioning_v1beta2_TestResults(ref),
+		WebhookResponse{}.OpenAPIModelName():                            schema_pkg_apis_provisioning_v1beta2_WebhookResponse(ref),
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_Author(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"username": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"avatarURL": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"name", "username"},
+			},
+		},
 	}
 }
 
@@ -147,6 +209,103 @@ func schema_pkg_apis_provisioning_v1beta2_Connection(ref common.ReferenceCallbac
 		},
 		Dependencies: []string{
 			resource.InlineSecureValue{}.OpenAPIModelName(), ConnectionSpec{}.OpenAPIModelName(), ConnectionStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_ConnectionAuthorizeRequest(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ConnectionAuthorizeRequest completes the OAuth authorization of a connection by exchanging an authorization code for tokens. It is the request and response body of the connection authorize subresource.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(ConnectionAuthorizeRequestSpec{}.OpenAPIModelName()),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(ConnectionAuthorizeRequestStatus{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"spec"},
+			},
+		},
+		Dependencies: []string{
+			ConnectionAuthorizeRequestSpec{}.OpenAPIModelName(), ConnectionAuthorizeRequestStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_ConnectionAuthorizeRequestSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"code": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The authorization code returned by the provider",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"redirectURI": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The redirect URI used in the authorization request",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"code"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_ConnectionAuthorizeRequestStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"authorized": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether the connection has been authorized",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"authorized"},
+			},
+		},
 	}
 }
 
@@ -739,6 +898,192 @@ func schema_pkg_apis_provisioning_v1beta2_ConnectionWebhookConfig(ref common.Ref
 				},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_ExternalRepository(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name of the repository",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"owner": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Owner is the user, organization, or workspace that owns the repository For GitHub: organization or user For GitLab: namespace (user or group) For Bitbucket: workspace For pure Git: empty",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "URL of the repository",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"name", "url"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_ExternalRepositoryList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ExternalRepositoryList is the response of the connection repositories subresource.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+						},
+					},
+					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(ExternalRepository{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			ExternalRepository{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_FileItem(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"size": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"hash": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"modified": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"author": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"path"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_FileList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "FileList is the response of the repository files subresource for a directory.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+						},
+					},
+					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(FileItem{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			FileItem{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -1546,6 +1891,112 @@ func schema_pkg_apis_provisioning_v1beta2_HistoricJobTestJobOptions(ref common.R
 	}
 }
 
+func schema_pkg_apis_provisioning_v1beta2_HistoryItem(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"ref": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"authors": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(Author{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"createdAt": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+				},
+				Required: []string{"ref", "message", "authors", "createdAt"},
+			},
+		},
+		Dependencies: []string{
+			Author{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_HistoryList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "HistoryList is the response of the repository history subresource.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+						},
+					},
+					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(HistoryItem{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			HistoryItem{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+	}
+}
+
 func schema_pkg_apis_provisioning_v1beta2_Job(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -2347,6 +2798,148 @@ func schema_pkg_apis_provisioning_v1beta2_JobTestJobOptions(ref common.Reference
 				},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_ManagerStats(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Manager kind",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Manager identity",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"stats": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "stats",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(ResourceCount{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"stats"},
+			},
+		},
+		Dependencies: []string{
+			ResourceCount{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_RefItem(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The name of the reference (branch or tag)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"hash": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The SHA hash of the commit this ref points to",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"refURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The URL to the reference (branch or tag)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"protected": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether this ref is protected (e.g. branch protection rules)",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"name"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_RefList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "RefList is the response of the repository refs subresource.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+						},
+					},
+					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(RefItem{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			RefItem{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -3527,6 +4120,296 @@ func schema_pkg_apis_provisioning_v1beta2_RepositoryTokenStatus(ref common.Refer
 	}
 }
 
+func schema_pkg_apis_provisioning_v1beta2_RepositoryURLs(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"repositoryURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A URL pointing to the repository this lives in",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"sourceURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A URL pointing to the file or ref in the repository",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"newPullRequestURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A URL that will create a new pull request for this branch",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"compareURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Compare this version to the target branch",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_RepositoryView(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "The generated repository option types have no DeepCopyInto, so RepositoryView is copied by hand.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The k8s name for this repository",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Repository display",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"},
+						},
+					},
+					"target": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When syncing, where values are saved\n\nPossible enum values:\n - `\"folder\"`\n - `\"folderless\"`\n - `\"instance\"`",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"folder", "folderless", "instance"},
+						},
+					},
+					"branch": {
+						SchemaProps: spec.SchemaProps{
+							Description: "For git, this is the target branch",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "For git, this is the target URL",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "For git, this is the target path",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"workflows": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "The supported workflows",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+										Enum:   []interface{}{"branch", "write"},
+									},
+								},
+							},
+						},
+					},
+					"commit": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Commit message options. Mirrors the same-named field on the repository spec.",
+							Ref:         ref(RepositoryCommitOptions{}.OpenAPIModelName()),
+						},
+					},
+					"branchOptions": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Branch naming options. Mirrors spec.branch. Exposed under `branchOptions` rather than `branch` because the view already uses `branch` for the git target branch name.",
+							Ref:         ref(RepositoryBranchOptions{}.OpenAPIModelName()),
+						},
+					},
+					"pullRequest": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Pull request options. Mirrors the same-named field on the repository spec.",
+							Ref:         ref(RepositoryPullRequestOptions{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"name", "title", "type", "target", "workflows"},
+			},
+		},
+		Dependencies: []string{
+			RepositoryBranchOptions{}.OpenAPIModelName(), RepositoryCommitOptions{}.OpenAPIModelName(), RepositoryPullRequestOptions{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_RepositoryViewList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "RepositoryViewList is the response of the namespace settings route. It shows a view of the configuration that is sanitized and is OK for logged in users to see.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"allowedTargets": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "The valid targets (can disable instance or folder types)",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+										Enum:   []interface{}{"folder", "folderless", "instance"},
+									},
+								},
+							},
+						},
+					},
+					"allowImageRendering": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether image rendering is allowed for dashboard previews",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"maxRepositories": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxRepositories is the maximum number of repositories allowed per namespace (0 = unlimited)",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"availableRepositoryTypes": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+										Enum:   []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"},
+									},
+								},
+							},
+						},
+					},
+					"availableConnectionTypes": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "AvailableConnectionTypes is the list of connection types supported in this instance",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+										Enum:   []interface{}{"bitbucketOAuth", "gitOAuth", "github", "githubEnterprise", "githubEnterpriseOAuth", "githubOAuth", "gitlabOAuth"},
+									},
+								},
+							},
+						},
+					},
+					"availableResources": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "AvailableResources is the list of resource types declared for provisioning in this instance, including disabled ones (see SupportedResource.Disabled).",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(SupportedResource{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(RepositoryView{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"allowImageRendering", "maxRepositories", "items"},
+			},
+		},
+		Dependencies: []string{
+			RepositoryView{}.OpenAPIModelName(), SupportedResource{}.OpenAPIModelName()},
+	}
+}
+
 func schema_pkg_apis_provisioning_v1beta2_RepositoryWebhookConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -3605,5 +4488,691 @@ func schema_pkg_apis_provisioning_v1beta2_RepositoryWebhookStatus(ref common.Ref
 				},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_ResourceCount(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"count": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+				},
+				Required: []string{"group", "resource", "count"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_ResourceCountList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ResourceCountList is the response of the repository stats subresource.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+						},
+					},
+					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(ResourceCount{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			ResourceCount{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_ResourceList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ResourceList is the response of the repository resources subresource.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+						},
+					},
+					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(ResourceListItem{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			ResourceListItem{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_ResourceListItem(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The k8s identifier",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"hash": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"time": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"folder": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"path", "group", "resource", "name", "hash"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_ResourceObjects(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The identified type for this object",
+							Default:     map[string]interface{}{},
+							Ref:         ref(ResourceType{}.OpenAPIModelName()),
+						},
+					},
+					"file": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The resource from the repository with all modifications applied eg, the name, folder etc will all be applied to this object",
+							Ref:         ref(v0alpha1.Unstructured{}.OpenAPIModelName()),
+						},
+					},
+					"existing": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The same value, currently saved in the grafana database",
+							Ref:         ref(v0alpha1.Unstructured{}.OpenAPIModelName()),
+						},
+					},
+					"action": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The action required/used for dryRun\n\nPossible enum values:\n - `\"create\"`\n - `\"delete\"`\n - `\"move\"`\n - `\"update\"`",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"create", "delete", "move", "update"},
+						},
+					},
+					"dryRun": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The value returned from a dryRun request",
+							Ref:         ref(v0alpha1.Unstructured{}.OpenAPIModelName()),
+						},
+					},
+					"upsert": {
+						SchemaProps: spec.SchemaProps{
+							Description: "For write events, this will return the value that was added or updated",
+							Ref:         ref(v0alpha1.Unstructured{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"type"},
+			},
+		},
+		Dependencies: []string{
+			ResourceType{}.OpenAPIModelName(), v0alpha1.Unstructured{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_ResourceRepositoryInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"},
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The display name for this repository",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The namespace this belongs to",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The name (identifier)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"type", "title", "namespace", "name"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_ResourceStats(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ResourceStats is the response of the namespace stats route.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+						},
+					},
+					"instance": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Stats across all unified storage When legacy storage is still used, this will offer a shim",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(ResourceCount{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"unmanaged": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Stats across all unified storage When legacy storage is still used, this will offer a shim",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(ResourceCount{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"managed": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Stats for each manager",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(ManagerStats{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			ManagerStats{}.OpenAPIModelName(), ResourceCount{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_ResourceType(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"classic": {
+						SchemaProps: spec.SchemaProps{
+							Description: "For non-k8s native formats, what did this start as\n\nPossible enum values:\n - `\"access-control\"`\n - `\"alerting\"`\n - `\"dashboard\"`\n - `\"datasources\"`",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"access-control", "alerting", "dashboard", "datasources"},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_ResourceWrapper(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ResourceWrapper is the response of the repository files subresource for a single file.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Path to the remote file",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"ref": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The request ref (or branch if exists)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"hash": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The repo hash value",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"repository": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Basic repository info",
+							Default:     map[string]interface{}{},
+							Ref:         ref(ResourceRepositoryInfo{}.OpenAPIModelName()),
+						},
+					},
+					"urls": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Typed links for this file (only supported by external systems, github etc)",
+							Ref:         ref(RepositoryURLs{}.OpenAPIModelName()),
+						},
+					},
+					"timestamp": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The modified time in the remote file system",
+							Ref:         ref("io.k8s.apimachinery.pkg.apis.meta.v1.Time"),
+						},
+					},
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Different flavors of the same object",
+							Default:     map[string]interface{}{},
+							Ref:         ref(ResourceObjects{}.OpenAPIModelName()),
+						},
+					},
+					"errors": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "If errors exist, show them here",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"repository", "resource"},
+			},
+		},
+		Dependencies: []string{
+			RepositoryURLs{}.OpenAPIModelName(), ResourceObjects{}.OpenAPIModelName(), ResourceRepositoryInfo{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Time"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_SupportedResource(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "SupportedResource describes a resource type declared for provisioning. A resource is identified by its group and kind; the API version and plural resource are resolved at runtime via discovery, so they are not part of this descriptor.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Group is the API group of the resource (e.g. \"dashboard.grafana.app\").",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is the kind of the resource (e.g. \"Dashboard\").",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"disabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Disabled reports whether the resource is declared but not acted on by provisioning. Active resources omit this field.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"group", "kind"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_TestResults(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TestResults is the response of the repository test subresource. RepositoryErrorDetails has no generated DeepCopyInto, so TestResults is copied by hand.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"code": {
+						SchemaProps: spec.SchemaProps{
+							Description: "HTTP status code",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"success": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Is the connection healthy",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"errors": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Field related errors",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(RepositoryErrorDetails{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"code", "success"},
+			},
+		},
+		Dependencies: []string{
+			RepositoryErrorDetails{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_provisioning_v1beta2_WebhookResponse(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "WebhookResponse is the response of the repository webhook subresource.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"code": {
+						SchemaProps: spec.SchemaProps{
+							Description: "HTTP Status code 200 implies that the payload was understood but nothing is required 202 implies that an async job has been scheduled to handle the request",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"added": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional message",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"job": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Jobs to be processed When the response is 202 (Accepted) the queued jobs will be returned",
+							Ref:         ref(JobSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			JobSpec{}.OpenAPIModelName()},
 	}
 }

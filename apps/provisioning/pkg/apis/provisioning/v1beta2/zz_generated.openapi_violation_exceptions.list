@@ -1,4 +1,6 @@
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,ConnectionGitOAuthConfig,Scopes
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,ExternalRepositoryList,Items
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,FileList,Items
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,HistoricJobDeleteJobOptions,Paths
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,HistoricJobDeleteJobOptions,Resources
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,HistoricJobExportJobOptions,Resources
@@ -10,6 +12,7 @@ API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioni
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,HistoricJobStatus,Errors
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,HistoricJobStatus,Summary
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,HistoricJobStatus,Warnings
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,HistoryList,Items
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,JobDeleteJobOptions,Paths
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,JobDeleteJobOptions,Resources
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,JobExportJobOptions,Resources
@@ -21,8 +24,11 @@ API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioni
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,JobStatus,Errors
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,JobStatus,Summary
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,JobStatus,Warnings
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,RefList,Items
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,RepositorySpec,Workflows
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,RepositoryWebhookStatus,SubscribedEvents
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,ResourceCountList,Items
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,ResourceList,Items
 API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,ConnectionList,ListMeta
 API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,HistoricJobList,ListMeta
 API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta2,JobList,ListMeta
