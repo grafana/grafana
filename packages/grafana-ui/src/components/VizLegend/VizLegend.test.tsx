@@ -19,7 +19,7 @@ function renderWithContext(ui: React.ReactElement, contextOverrides: Record<stri
   return { ...render(<PanelContextProvider value={context}>{ui}</PanelContextProvider>), eventBus };
 }
 
-const legendButton = () => screen.getByRole('button', { name: /all series selected/i });
+const legendButton = (name: string) => screen.getByRole('button', { name });
 
 describe('VizLegend', () => {
   describe('display modes', () => {
@@ -109,12 +109,12 @@ describe('VizLegend', () => {
         onToggleSeriesVisibility,
       });
 
-      await user.click(legendButton());
+      await user.click(legendButton('A'));
       expect(onToggleSeriesVisibility).toHaveBeenCalledWith('A', SeriesVisibilityChangeMode.ToggleSelection);
 
       onToggleSeriesVisibility.mockClear();
       await user.keyboard('{Control>}');
-      await user.click(legendButton());
+      await user.click(legendButton('A'));
       await user.keyboard('{/Control}');
       expect(onToggleSeriesVisibility).toHaveBeenCalledWith('A', SeriesVisibilityChangeMode.AppendToSelection);
     });
@@ -130,7 +130,7 @@ describe('VizLegend', () => {
         />,
         { onToggleSeriesVisibility }
       );
-      await userEvent.click(legendButton());
+      await userEvent.click(legendButton('A'));
       expect(onToggleSeriesVisibility).toHaveBeenCalledWith('A', SeriesVisibilityChangeMode.AppendToSelection);
     });
 
@@ -144,7 +144,7 @@ describe('VizLegend', () => {
         />,
         { onToggleSeriesVisibility }
       );
-      await userEvent.click(legendButton());
+      await userEvent.click(legendButton('Label'));
       expect(onToggleSeriesVisibility).toHaveBeenCalledWith('field', expect.any(String));
     });
 
@@ -160,7 +160,7 @@ describe('VizLegend', () => {
         />,
         { onToggleSeriesVisibility }
       );
-      await userEvent.click(legendButton());
+      await userEvent.click(legendButton('A'));
       expect(onLabelClick).toHaveBeenCalledTimes(1);
       expect(onToggleSeriesVisibility).toHaveBeenCalledTimes(1);
     });
@@ -173,7 +173,7 @@ describe('VizLegend', () => {
       );
       const publishSpy = jest.spyOn(eventBus, 'publish');
 
-      const button = legendButton();
+      const button = legendButton('A');
       await userEvent.hover(button);
       expect(publishSpy).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'data-hover', payload: expect.objectContaining({ dataId: 'A' }) })
