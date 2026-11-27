@@ -6,13 +6,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var JobsOperator = runner.Operator{
@@ -21,7 +18,7 @@ var JobsOperator = runner.Operator{
 	Logger:      "provisioning-job-controller",
 	NoNATS:      true,
 	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
-		controllerCfg, err := setupJobsControllerFromConfig(rt.Cfg, rt.Registerer, rt.Tracer)
+		controllerCfg, err := setupJobsControllerFromConfig(rt)
 		if err != nil {
 			return nil, err
 		}
@@ -95,13 +92,13 @@ type jobsControllerConfig struct {
 	cleanupInterval   time.Duration
 }
 
-func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer, tracer tracing.Tracer) (*jobsControllerConfig, error) {
-	controllerCfg, err := setupFromConfig(cfg, registry, tracer, nil)
+func setupJobsControllerFromConfig(rt *runner.Runtime) (*jobsControllerConfig, error) {
+	controllerCfg, err := setupFromConfig(rt)
 	if err != nil {
 		return nil, err
 	}
 
-	operatorSec := cfg.SectionWithEnvOverrides("operator")
+	operatorSec := rt.Cfg.SectionWithEnvOverrides("operator")
 
 	return &jobsControllerConfig{
 		ControllerConfig:  *controllerCfg,

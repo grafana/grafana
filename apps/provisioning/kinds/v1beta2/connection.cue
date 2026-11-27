@@ -51,6 +51,8 @@ connection: {
 			// webhook events. Use this when Grafana is not reachable from the public internet.
 			disabled?: bool
 		}
+
+		// +enum
 		#Type: "github" | "githubEnterprise" | "githubOAuth" | "githubEnterpriseOAuth" | "gitlabOAuth" | "bitbucketOAuth" | "gitOAuth"
 		spec: {
 			// The connection display name (shown in the UI)
@@ -91,8 +93,6 @@ connection: {
 			// Conditions represent the latest available observations of the connection's state.
 			// +listType=map
 			// +listMapKey=type
-			// +patchMergeKey=type
-			// +patchStrategy=merge
 			conditions?: [...#Condition]
 			// The connection health status
 			health: #HealthStatus
