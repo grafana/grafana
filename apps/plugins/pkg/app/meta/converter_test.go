@@ -270,17 +270,18 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 	})
 
 	t.Run("converts kinds", func(t *testing.T) {
+		notFolderScoped := false
 		jsonData := plugins.JSONData{
 			ID:   "test-app",
 			Name: "Test App",
 			Type: plugins.TypeApp,
 			Kinds: []plugins.AppKind{
 				{
-					Group: "widgets.ext.grafana.app", Kind: "Widget", Resource: "widgets", FolderScoped: true, Icon: "cube",
+					Group: "widgets.ext.grafana.app", Kind: "Widget", Icon: "cube", FolderScoped: &notFolderScoped,
 					Route: "/a/test-app/widgets/{name}", Label: "widget", LabelPlural: "widgets",
 				},
 				{
-					Group: "widgets.ext.grafana.app", Kind: "Gadget", Resource: "gadgets", Icon: "apps",
+					Group: "widgets.ext.grafana.app", Kind: "Gadget", Icon: "apps",
 					Route: "/a/test-app/gadgets/{name}",
 				},
 			},
@@ -290,11 +291,11 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 		label, labelPlural := "widget", "widgets"
 		assert.Equal(t, []pluginsv0alpha1.MetaAppKind{
 			{
-				Group: "widgets.ext.grafana.app", Kind: "Widget", Resource: "widgets", FolderScoped: true, Icon: "cube",
+				Group: "widgets.ext.grafana.app", Kind: "Widget", Icon: "cube", FolderScoped: &notFolderScoped,
 				Route: "/a/test-app/widgets/{name}", Label: &label, LabelPlural: &labelPlural,
 			},
 			{
-				Group: "widgets.ext.grafana.app", Kind: "Gadget", Resource: "gadgets", Icon: "apps",
+				Group: "widgets.ext.grafana.app", Kind: "Gadget", Icon: "apps",
 				Route: "/a/test-app/gadgets/{name}",
 			},
 		}, meta.Kinds)

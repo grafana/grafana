@@ -326,11 +326,11 @@
     },
     "kinds": {
       "type": "array",
-      "description": "For app plugins. Kinds of objects the app serves, so Grafana can name, draw and link its objects before the app loads.",
+      "description": "For app plugins. Kinds of objects the app serves, so Grafana can name, draw and link its objects before the app loads. Grafana adds a kind only where the server serves it.",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["group", "kind", "resource", "folderScoped", "icon", "route"],
+        "required": ["group", "kind", "icon", "route"],
         "properties": {
           "group": {
             "type": "string",
@@ -340,13 +340,9 @@
             "type": "string",
             "description": "Kubernetes kind, for example `Widget`."
           },
-          "resource": {
-            "type": "string",
-            "description": "Plural resource name in API paths, for example `widgets`."
-          },
           "folderScoped": {
             "type": "boolean",
-            "description": "Whether objects of the kind live in folders."
+            "description": "Whether objects of the kind live in folders. Without it, a namespaced kind does, as in the app manifest. Set it to `false` for a kind whose manifest opts out."
           },
           "icon": {
             "type": "string",
@@ -363,7 +359,7 @@
           },
           "labelPlural": {
             "type": "string",
-            "description": "Plural of `label`, for example `widgets`. Without it, Grafana uses `resource`."
+            "description": "Plural of `label`, for example `widgets`. Without it, Grafana uses the kind's plural in the API."
           }
         }
       }

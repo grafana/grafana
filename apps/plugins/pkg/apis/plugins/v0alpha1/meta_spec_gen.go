@@ -270,16 +270,16 @@ func (MetaExtensions) OpenAPIModelName() string {
 // A kind of object the app serves, so Grafana can name, draw and link its objects before the app's module loads
 // +k8s:openapi-gen=true
 type MetaAppKind struct {
-	Group        string `json:"group"`
-	Kind         string `json:"kind"`
-	Resource     string `json:"resource"`
-	FolderScoped bool   `json:"folderScoped"`
-	Icon         string `json:"icon"`
+	Group string `json:"group"`
+	Kind  string `json:"kind"`
+	Icon  string `json:"icon"`
 	// Path of the page of one object, in which {name} stands for the object's name
 	Route string `json:"route"`
+	// Whether objects of the kind live in folders. Without it, a namespaced kind does, as in the app manifest
+	FolderScoped *bool `json:"folderScoped,omitempty"`
 	// English name as it reads inside a sentence. Without one, Grafana uses the kind in lower case
 	Label *string `json:"label,omitempty"`
-	// Plural of the label. Without one, Grafana uses the resource
+	// Plural of the label. Without one, Grafana uses the kind's plural in the API
 	LabelPlural *string `json:"labelPlural,omitempty"`
 }
 

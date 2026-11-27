@@ -33,7 +33,6 @@ describe('v0alpha1AppMapper', () => {
     const kind = {
       group: 'widgets.ext.grafana.app',
       kind: 'Widget',
-      resource: 'widgets',
       folderScoped: true,
       icon: 'cube',
       route: '/a/myorg-someplugin-app/widgets/{name}',
@@ -54,7 +53,6 @@ describe('v0alpha1AppMapper', () => {
       {
         group: 'widgets.ext.grafana.app',
         kind: 'Widget',
-        resource: 'widgets',
         folderScoped: true,
         icon: 'cube',
         route: '/a/myorg-someplugin-app/widgets/{name}',

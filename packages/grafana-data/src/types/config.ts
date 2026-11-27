@@ -35,19 +35,19 @@ export interface AzureCloudInfo {
 
 /**
  * A kind of object an app plugin declares in its plugin.json, so Grafana can name, draw and link its objects before
- * the plugin's module loads.
+ * the plugin's module loads. `group` and `kind` name the kind; API discovery tells how the server serves it.
  */
 export type AppPluginKind = {
   group: string;
   kind: string;
-  resource: string;
-  folderScoped: boolean;
   icon: string;
   /** Path of the page of one object, in which `{name}` stands for the object's name */
   route: string;
+  /** Whether objects of the kind live in folders. Without it, a namespaced kind does, as in the app manifest */
+  folderScoped?: boolean;
   /** English name as it reads inside a sentence. Without one, Grafana uses the kind in lower case */
   label?: string;
-  /** Plural of `label`. Without one, Grafana uses the resource */
+  /** Plural of `label`. Without one, Grafana uses the kind's plural in the API */
   labelPlural?: string;
 };
 

@@ -503,8 +503,6 @@ func Test_ReadPluginJSON(t *testing.T) {
 					"kinds": [{
 						"group": "widgets.ext.grafana.app",
 						"kind": "Widget",
-						"resource": "widgets",
-						"folderScoped": true,
 						"icon": "cube",
 						"route": "/a/myorg-kinds-app/widgets/{name}",
 						"label": "widget",
@@ -518,14 +516,12 @@ func Test_ReadPluginJSON(t *testing.T) {
 				Name: "Kinds App",
 				Type: TypeApp,
 				Kinds: []AppKind{{
-					Group:        "widgets.ext.grafana.app",
-					Kind:         "Widget",
-					Resource:     "widgets",
-					FolderScoped: true,
-					Icon:         "cube",
-					Route:        "/a/myorg-kinds-app/widgets/{name}",
-					Label:        "widget",
-					LabelPlural:  "widgets",
+					Group:       "widgets.ext.grafana.app",
+					Kind:        "Widget",
+					Icon:        "cube",
+					Route:       "/a/myorg-kinds-app/widgets/{name}",
+					Label:       "widget",
+					LabelPlural: "widgets",
 				}},
 
 				Extensions: Extensions{

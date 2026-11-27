@@ -297,22 +297,20 @@ export const defaultExtensions = (): Extensions => ({
 export interface AppKind {
 	group: string;
 	kind: string;
-	resource: string;
-	folderScoped: boolean;
 	icon: string;
 	// Path of the page of one object, in which {name} stands for the object's name
 	route: string;
+	// Whether objects of the kind live in folders. Without it, a namespaced kind does, as in the app manifest
+	folderScoped?: boolean;
 	// English name as it reads inside a sentence. Without one, Grafana uses the kind in lower case
 	label?: string;
-	// Plural of the label. Without one, Grafana uses the resource
+	// Plural of the label. Without one, Grafana uses the kind's plural in the API
 	labelPlural?: string;
 }
 
 export const defaultAppKind = (): AppKind => ({
 	group: "",
 	kind: "",
-	resource: "",
-	folderScoped: false,
 	icon: "",
 	route: "",
 });

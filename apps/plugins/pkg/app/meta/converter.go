@@ -547,10 +547,9 @@ func kindsToMeta(kinds []plugins.AppKind) []pluginsv0alpha1.MetaAppKind {
 		v0Kind := pluginsv0alpha1.MetaAppKind{
 			Group:        kind.Group,
 			Kind:         kind.Kind,
-			Resource:     kind.Resource,
-			FolderScoped: kind.FolderScoped,
 			Icon:         kind.Icon,
 			Route:        kind.Route,
+			FolderScoped: kind.FolderScoped,
 		}
 		if kind.Label != "" {
 			v0Kind.Label = &kind.Label

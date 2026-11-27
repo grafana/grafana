@@ -1556,13 +1556,12 @@
         "required": [
           "group",
           "kind",
-          "resource",
-          "folderScoped",
           "icon",
           "route"
         ],
         "properties": {
           "folderScoped": {
+            "description": "Whether objects of the kind live in folders. Without it, a namespaced kind does, as in the app manifest",
             "type": "boolean"
           },
           "group": {
@@ -1579,10 +1578,7 @@
             "type": "string"
           },
           "labelPlural": {
-            "description": "Plural of the label. Without one, Grafana uses the resource",
-            "type": "string"
-          },
-          "resource": {
+            "description": "Plural of the label. Without one, Grafana uses the kind's plural in the API",
             "type": "string"
           },
           "route": {

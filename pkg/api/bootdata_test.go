@@ -340,8 +340,9 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 		Apps map[string]*plugins.AppDTO `json:"apps"`
 	}
 
+	notFolderScoped := false
 	widgetKinds := []plugins.AppKind{{
-		Group: "widgets.ext.grafana.app", Kind: "Widget", Resource: "widgets", Icon: "cube",
+		Group: "widgets.ext.grafana.app", Kind: "Widget", Icon: "cube", FolderScoped: &notFolderScoped,
 		Route: "/a/test-app/widgets/{name}", Label: "widget", LabelPlural: "widgets",
 	}}
 

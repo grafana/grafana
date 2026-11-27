@@ -782,15 +782,15 @@ export type MetaInfo = {
   version: string;
 };
 export type MetaAppKind = {
-  folderScoped: boolean;
+  /** Whether objects of the kind live in folders. Without it, a namespaced kind does, as in the app manifest */
+  folderScoped?: boolean;
   group: string;
   icon: string;
   kind: string;
   /** English name as it reads inside a sentence. Without one, Grafana uses the kind in lower case */
   label?: string;
-  /** Plural of the label. Without one, Grafana uses the resource */
+  /** Plural of the label. Without one, Grafana uses the kind's plural in the API */
   labelPlural?: string;
-  resource: string;
   /** Path of the page of one object, in which {name} stands for the object's name */
   route: string;
 };

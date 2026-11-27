@@ -374,8 +374,8 @@ export class GrafanaApp {
       if (isSignedInOrAnonymous()) {
         try {
           const apps = await getAppPluginMetas();
-          // Before the modules load: a module that adds its own kinds replaces what its plugin.json declares
-          addDeclaredPluginKinds(apps);
+          // Not awaited: the kinds wait for API discovery, which startup must not
+          void addDeclaredPluginKinds(apps);
           preloadPlugins(getAppPluginsToPreloadSync(apps));
         } catch (err) {
           notifyAppPluginMetasError(err);
