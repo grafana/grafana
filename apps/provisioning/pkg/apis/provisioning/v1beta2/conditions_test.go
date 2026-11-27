@@ -1,0 +1,148 @@
+package v1beta2
+
+import (
+	"encoding/json"
+	"slices"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+)
+
+func TestConditionJSONMatchesMetav1(t *testing.T) {
+	transition := metav1.NewTime(time.Date(2026, 11, 23, 18, 30, 15, 123456789, time.FixedZone("CET", 3600)))
+	tests := map[string]metav1.Condition{
+		"all fields set": {
+			Type: "Ready", Status: metav1.ConditionTrue, ObservedGeneration: 3,
+			LastTransitionTime: transition, Reason: "Available", Message: "ok",
+		},
+		"zero observedGeneration and lastTransitionTime": {
+			Type: "Ready", Status: metav1.ConditionFalse, Reason: "InvalidSpec",
+		},
+	}
+	for name, metaCondition := range tests {
+		t.Run(name, func(t *testing.T) {
+			want, err := json.Marshal(metaCondition)
+			require.NoError(t, err)
+
+			for kind, got := range map[string]any{
+				"connection": ConditionFromMeta[ConnectionCondition](metaCondition),
+				"repository": ConditionFromMeta[RepositoryCondition](metaCondition),
+			} {
+				b, err := json.Marshal(got)
+				require.NoError(t, err)
+				require.Equal(t, string(want), string(b), "%s: JSON including key order must match", kind)
+			}
+
+			var decoded ConnectionCondition
+			require.NoError(t, json.Unmarshal(want, &decoded))
+			reencoded, err := json.Marshal(decoded)
+			require.NoError(t, err)
+			require.Equal(t, string(want), string(reencoded), "stored metav1 JSON must round-trip unchanged")
+
+			var wantMeta metav1.Condition
+			require.NoError(t, json.Unmarshal(want, &wantMeta))
+			gotMeta, err := ConditionToMeta(field.NewPath("conditions").Index(0), decoded)
+			require.NoError(t, err)
+			require.Equal(t, wantMeta, gotMeta)
+		})
+	}
+}
+
+func TestConditionsNilStaysNil(t *testing.T) {
+	metaConditions, err := ConditionsToMeta[ConnectionCondition](field.NewPath("conditions"), nil)
+	require.NoError(t, err)
+	require.Nil(t, metaConditions)
+	require.Nil(t, ConditionsFromMeta[ConnectionCondition](nil))
+
+	b, err := json.Marshal(ConnectionStatus{})
+	require.NoError(t, err)
+	require.NotContains(t, string(b), "conditions")
+}
+
+func TestConditionsToMetaRejectsUnparsableTime(t *testing.T) {
+	path := field.NewPath("status", "conditions")
+	for name, ts := range map[string]string{"empty": "", "not a timestamp": "yesterday"} {
+		t.Run(name, func(t *testing.T) {
+			_, err := ConditionsToMeta(path, []ConnectionCondition{{Type: "Ready"}, {Type: "Other", LastTransitionTime: new(ts)}})
+			require.ErrorContains(t, err, "status.conditions[1].lastTransitionTime")
+			require.ErrorContains(t, err, "must be an RFC3339 timestamp")
+		})
+	}
+}
+
+func TestSetStatusCondition(t *testing.T) {
+	path := field.NewPath("status", "conditions")
+	ready := metav1.Condition{Type: "Ready", Status: metav1.ConditionTrue, Reason: "Available"}
+
+	var conditions []ConnectionCondition
+	changed, err := SetStatusCondition(path, &conditions, ready)
+	require.NoError(t, err)
+	require.True(t, changed)
+	require.Len(t, conditions, 1)
+	require.NotNil(t, conditions[0].LastTransitionTime, "meta.SetStatusCondition stamps new conditions")
+
+	changed, err = SetStatusCondition(path, &conditions, ready)
+	require.NoError(t, err)
+	require.False(t, changed)
+
+	t.Run("unparsable existing lastTransitionTime", func(t *testing.T) {
+		invalid := []ConnectionCondition{{Type: "Other", LastTransitionTime: new("yesterday")}}
+		conditions := slices.Clone(invalid)
+		changed, err := SetStatusCondition(path, &conditions, ready)
+		require.ErrorContains(t, err, "status.conditions[0].lastTransitionTime")
+		require.False(t, changed)
+		require.Equal(t, invalid, conditions)
+	})
+}
+
+func TestValidateConditions(t *testing.T) {
+	path := field.NewPath("status", "conditions")
+	tests := map[string]struct {
+		timestamp *string
+		wantErr   bool
+	}{
+		"unset":               {timestamp: nil},
+		"UTC":                 {timestamp: new("2026-01-02T03:04:05Z")},
+		"offset and fraction": {timestamp: new("2026-01-02T03:04:05.123+01:00")},
+		"empty":               {timestamp: new(""), wantErr: true},
+		"not a timestamp":     {timestamp: new("yesterday"), wantErr: true},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			conditions := []ConnectionCondition{{Type: "Ready"}, {Type: "Other", LastTransitionTime: tt.timestamp}}
+			list := ValidateConditions(path, conditions)
+			if !tt.wantErr {
+				require.Empty(t, list)
+				return
+			}
+			require.Len(t, list, 1)
+			require.Equal(t, "status.conditions[1].lastTransitionTime", list[0].Field)
+			require.Equal(t, field.ErrorTypeInvalid, list[0].Type)
+		})
+	}
+}
+
+func TestNormalizeConditions(t *testing.T) {
+	t.Run("rewrites in the metav1.Condition encoding", func(t *testing.T) {
+		got := NormalizeConditions([]ConnectionCondition{{
+			Type: "Ready", Status: "True", ObservedGeneration: new(int64(0)),
+			LastTransitionTime: new("2026-01-02T03:04:05.123+01:00"),
+		}})
+		require.Equal(t, []ConnectionCondition{{
+			Type: "Ready", Status: "True", LastTransitionTime: new("2026-01-02T02:04:05Z"),
+		}}, got)
+	})
+	t.Run("leaves invalid conditions for validation to reject", func(t *testing.T) {
+		in := []ConnectionCondition{
+			{Type: "Ready", ObservedGeneration: new(int64(0))},
+			{Type: "Other", LastTransitionTime: new("yesterday")},
+		}
+		require.Equal(t, in, NormalizeConditions(slices.Clone(in)))
+	})
+	t.Run("nil stays nil", func(t *testing.T) {
+		require.Nil(t, NormalizeConditions[ConnectionCondition](nil))
+	})
+}
