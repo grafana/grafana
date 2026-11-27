@@ -2195,6 +2195,20 @@ export type NotebookLibraryPanelKind = {
   kind: string;
   spec: NotebookLibraryPanelKindSpec;
 };
+export type NotebookAnnotationPanelFilter = {
+  /** Should the specified panels be included or excluded */
+  exclude?: boolean;
+  /** Panel IDs that should be included or excluded */
+  ids: number[];
+};
+export type NotebookAnnotationEventFieldMapping = {
+  /** Regular expression to apply to the field value */
+  regex?: string;
+  /** Source type for the field value */
+  source?: string;
+  /** Constant value to use when source is "text" */
+  value?: string;
+};
 export type NotebookV2Beta1DataQueryKindDatasource = {
   name?: string;
 };
@@ -2210,6 +2224,29 @@ export type NotebookDataQueryKind = {
     [key: string]: object;
   };
   version: string;
+};
+export type NotebookAnnotationQuerySpec = {
+  builtIn?: boolean;
+  enable: boolean;
+  filter?: NotebookAnnotationPanelFilter;
+  hide: boolean;
+  iconColor: string;
+  /** Catch-all field for datasource-specific properties. Should not be available in as code tooling. */
+  legacyOptions?: {
+    [key: string]: object;
+  };
+  /** Mappings define how to convert data frame fields to annotation event fields. */
+  mappings?: {
+    [key: string]: NotebookAnnotationEventFieldMapping;
+  };
+  name: string;
+  /** Placement can be used to display the annotation query somewhere else on the dashboard other than the default location. */
+  placement?: string;
+  query: NotebookDataQueryKind;
+};
+export type NotebookAnnotationQueryKind = {
+  kind: string;
+  spec: NotebookAnnotationQuerySpec;
 };
 export type NotebookPanelQuerySpec = {
   hidden: boolean;
@@ -2462,6 +2499,8 @@ export type NotebookVizConfigKind = {
   version: string;
 };
 export type NotebookV2PanelSpec = {
+  /** The annotations this panel showed when it was added from a dashboard, the only way a cell gets any. Each cell has its own, so they are kept with its panel. */
+  annotations?: NotebookAnnotationQueryKind[];
   data: NotebookV2QueryGroupKind;
   /** Shown in a info icon tooltip next to panel title */
   description?: string;

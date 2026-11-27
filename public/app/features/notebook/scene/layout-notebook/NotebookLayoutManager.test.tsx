@@ -128,6 +128,7 @@ jest.mock('./PanelQueryEditor', () => ({
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookLayoutManager, splitSeed } from './NotebookLayoutManager';
+import { deserializeFrozenAnnotations, freezeAnnotation, serializeFrozenAnnotations } from './frozenAnnotations';
 import { setQueryRunnerQueries } from './setQueryRunnerQueries';
 
 const DRAG_HANDLE_SELECTOR = '[data-rfd-drag-handle-draggable-id]';
@@ -889,6 +890,19 @@ describe('NotebookLayoutManager', () => {
 
       copy.state.$timeRange?.setState({ from: 'now-1h' });
       expect(original.state.$timeRange?.state.from).toBe('now-24h');
+    });
+
+    it("keeps a panel cell's frozen annotations on the copy", () => {
+      const { cell } = panelCell('latency');
+      const annotations = [freezeAnnotation({ name: 'Deploys', iconColor: 'blue' }, [])];
+      cell.setState({ $data: deserializeFrozenAnnotations(annotations) });
+      const manager = buildManager([cell]);
+
+      manager.duplicateCell(manager.state.cells[0]);
+
+      const [original, copy] = manager.state.cells;
+      expect(serializeFrozenAnnotations(copy.state.$data)).toEqual(annotations);
+      expect(copy.state.$data).not.toBe(original.state.$data);
     });
   });
 

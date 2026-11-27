@@ -48,6 +48,7 @@ API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardTimeSettingsSpec,QuickRanges
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardV2beta1FieldConfigSourceOverrides,Properties
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookAction,Variables
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookAnnotationPanelFilter,Ids
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookCodeCellContentSpec,Highlight
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookFetchOptions,Headers
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookFetchOptions,QueryParams
@@ -62,6 +63,7 @@ API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookThresholdsConfig,Steps
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookTimeSettingsSpec,AutoRefreshIntervals
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookTimeSettingsSpec,QuickRanges
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookV2PanelSpec,Annotations
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookV2PanelSpec,Links
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookV2QueryGroupSpec,Queries
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookV2QueryGroupSpec,Transformations

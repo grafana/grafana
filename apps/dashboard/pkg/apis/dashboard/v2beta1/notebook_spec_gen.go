@@ -244,6 +244,9 @@ type NotebookV2PanelSpec struct {
 	Data        NotebookV2QueryGroupKind `json:"data"`
 	VizConfig   NotebookVizConfigKind    `json:"vizConfig"`
 	Transparent *bool                    `json:"transparent,omitempty"`
+	// The annotations this panel showed when it was added from a dashboard, the only way a cell gets
+	// any. Each cell has its own, so they are kept with its panel.
+	Annotations []NotebookAnnotationQueryKind `json:"annotations,omitempty"`
 }
 
 // NewNotebookV2PanelSpec creates a new NotebookV2PanelSpec object.
@@ -1111,6 +1114,105 @@ func NewNotebookDynamicConfigValue() *NotebookDynamicConfigValue {
 // OpenAPIModelName returns the OpenAPI model name for NotebookDynamicConfigValue.
 func (NotebookDynamicConfigValue) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookDynamicConfigValue"
+}
+
+// +k8s:openapi-gen=true
+type NotebookAnnotationQueryKind struct {
+	Kind string                      `json:"kind"`
+	Spec NotebookAnnotationQuerySpec `json:"spec"`
+}
+
+// NewNotebookAnnotationQueryKind creates a new NotebookAnnotationQueryKind object.
+func NewNotebookAnnotationQueryKind() *NotebookAnnotationQueryKind {
+	return &NotebookAnnotationQueryKind{
+		Kind: "AnnotationQuery",
+		Spec: *NewNotebookAnnotationQuerySpec(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for NotebookAnnotationQueryKind.
+func (NotebookAnnotationQueryKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookAnnotationQueryKind"
+}
+
+// +k8s:openapi-gen=true
+type NotebookAnnotationQuerySpec struct {
+	Query     NotebookDataQueryKind          `json:"query"`
+	Enable    bool                           `json:"enable"`
+	Hide      bool                           `json:"hide"`
+	IconColor string                         `json:"iconColor"`
+	Name      string                         `json:"name"`
+	BuiltIn   *bool                          `json:"builtIn,omitempty"`
+	Filter    *NotebookAnnotationPanelFilter `json:"filter,omitempty"`
+	// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
+	Placement *string `json:"placement,omitempty"`
+	// Mappings define how to convert data frame fields to annotation event fields.
+	Mappings map[string]NotebookAnnotationEventFieldMapping `json:"mappings,omitempty"`
+	// Catch-all field for datasource-specific properties. Should not be available in as code tooling.
+	LegacyOptions map[string]interface{} `json:"legacyOptions,omitempty"`
+}
+
+// NewNotebookAnnotationQuerySpec creates a new NotebookAnnotationQuerySpec object.
+func NewNotebookAnnotationQuerySpec() *NotebookAnnotationQuerySpec {
+	return &NotebookAnnotationQuerySpec{
+		Query:     *NewNotebookDataQueryKind(),
+		BuiltIn:   (func(input bool) *bool { return &input })(false),
+		Placement: (func(input string) *string { return &input })(NotebookAnnotationQueryPlacement),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for NotebookAnnotationQuerySpec.
+func (NotebookAnnotationQuerySpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookAnnotationQuerySpec"
+}
+
+// +k8s:openapi-gen=true
+type NotebookAnnotationPanelFilter struct {
+	// Should the specified panels be included or excluded
+	Exclude *bool `json:"exclude,omitempty"`
+	// Panel IDs that should be included or excluded
+	Ids []float64 `json:"ids"`
+}
+
+// NewNotebookAnnotationPanelFilter creates a new NotebookAnnotationPanelFilter object.
+func NewNotebookAnnotationPanelFilter() *NotebookAnnotationPanelFilter {
+	return &NotebookAnnotationPanelFilter{
+		Exclude: (func(input bool) *bool { return &input })(false),
+		Ids:     []float64{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for NotebookAnnotationPanelFilter.
+func (NotebookAnnotationPanelFilter) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookAnnotationPanelFilter"
+}
+
+// Annotation Query placement. Defines where the annotation query should be displayed.
+// - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
+// +k8s:openapi-gen=true
+const NotebookAnnotationQueryPlacement = "inControlsMenu"
+
+// Annotation event field mapping. Defines how to map a data frame field to an annotation event field.
+// +k8s:openapi-gen=true
+type NotebookAnnotationEventFieldMapping struct {
+	// Source type for the field value
+	Source *string `json:"source,omitempty"`
+	// Constant value to use when source is "text"
+	Value *string `json:"value,omitempty"`
+	// Regular expression to apply to the field value
+	Regex *string `json:"regex,omitempty"`
+}
+
+// NewNotebookAnnotationEventFieldMapping creates a new NotebookAnnotationEventFieldMapping object.
+func NewNotebookAnnotationEventFieldMapping() *NotebookAnnotationEventFieldMapping {
+	return &NotebookAnnotationEventFieldMapping{
+		Source: (func(input string) *string { return &input })("field"),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for NotebookAnnotationEventFieldMapping.
+func (NotebookAnnotationEventFieldMapping) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookAnnotationEventFieldMapping"
 }
 
 // +k8s:openapi-gen=true

@@ -6438,6 +6438,114 @@
           }
         }
       },
+      "NotebookAnnotationEventFieldMapping": {
+        "description": "Annotation event field mapping. Defines how to map a data frame field to an annotation event field.",
+        "type": "object",
+        "properties": {
+          "regex": {
+            "description": "Regular expression to apply to the field value",
+            "type": "string"
+          },
+          "source": {
+            "description": "Source type for the field value",
+            "type": "string"
+          },
+          "value": {
+            "description": "Constant value to use when source is \"text\"",
+            "type": "string"
+          }
+        }
+      },
+      "NotebookAnnotationPanelFilter": {
+        "type": "object",
+        "required": ["ids"],
+        "properties": {
+          "exclude": {
+            "description": "Should the specified panels be included or excluded",
+            "type": "boolean"
+          },
+          "ids": {
+            "description": "Panel IDs that should be included or excluded",
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        }
+      },
+      "NotebookAnnotationQueryKind": {
+        "type": "object",
+        "required": ["kind", "spec"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookAnnotationQuerySpec"
+              }
+            ]
+          }
+        }
+      },
+      "NotebookAnnotationQuerySpec": {
+        "type": "object",
+        "required": ["query", "enable", "hide", "iconColor", "name"],
+        "properties": {
+          "builtIn": {
+            "type": "boolean"
+          },
+          "enable": {
+            "type": "boolean",
+            "default": false
+          },
+          "filter": {
+            "$ref": "#/components/schemas/NotebookAnnotationPanelFilter"
+          },
+          "hide": {
+            "type": "boolean",
+            "default": false
+          },
+          "iconColor": {
+            "type": "string",
+            "default": ""
+          },
+          "legacyOptions": {
+            "description": "Catch-all field for datasource-specific properties. Should not be available in as code tooling.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
+          "mappings": {
+            "description": "Mappings define how to convert data frame fields to annotation event fields.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/NotebookAnnotationEventFieldMapping"
+            }
+          },
+          "name": {
+            "type": "string",
+            "default": ""
+          },
+          "placement": {
+            "description": "Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.",
+            "type": "string"
+          },
+          "query": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookDataQueryKind"
+              }
+            ]
+          }
+        }
+      },
       "NotebookCellKind": {
         "description": "A cell holds non-panel narrative content (markdown text, code) in a notebook layout. Panel cells are not represented here — they reuse V2PanelKind.",
         "type": "object",
@@ -7379,6 +7487,13 @@
         "type": "object",
         "required": ["id", "title", "links", "data", "vizConfig"],
         "properties": {
+          "annotations": {
+            "description": "The annotations this panel showed when it was added from a dashboard, the only way a cell gets any. Each cell has its own, so they are kept with its panel.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotebookAnnotationQueryKind"
+            }
+          },
           "data": {
             "default": {},
             "allOf": [

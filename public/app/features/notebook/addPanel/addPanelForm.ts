@@ -12,4 +12,6 @@ export interface AddPanelFormValues {
   note: string;
   /** Whether a relative window is locked as the instants it covers now, instead of as "last 6 hours". */
   convertToAbsolute: boolean;
+  /** Whether the panel brings the annotations it shows on its dashboard. */
+  includeAnnotations: boolean;
 }

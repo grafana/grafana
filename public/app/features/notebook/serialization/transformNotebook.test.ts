@@ -2,12 +2,18 @@
 // forked names); it is a shared leaf type, so it comes straight from the generated module.
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
+import { sceneGraph } from '@grafana/scenes';
 import { defaultDataQueryKind } from '@grafana/schema/apis/notebook/v2beta1';
 import { type Resource } from 'app/features/apiserver/types';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
 import { NotebookScene } from '../scene/NotebookScene';
-import { defaultSpec as defaultNotebookSpec, type NotebookElement, type Spec as NotebookSpec } from '../types';
+import {
+  defaultSpec as defaultNotebookSpec,
+  type NotebookElement,
+  type PanelKind,
+  type Spec as NotebookSpec,
+} from '../types';
 
 import { transformNotebookSceneToSaveModel } from './transformNotebookSceneToSaveModel';
 import { transformNotebookToScene } from './transformNotebookToScene';
@@ -223,6 +229,57 @@ describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
       timeFrom: 'now-24h',
       timeTo: 'now',
     });
+  });
+
+  it("round-trips a panel cell's annotations and hands them to that cell's panel only", () => {
+    const annotations: PanelKind['spec']['annotations'] = [
+      {
+        kind: 'AnnotationQuery',
+        spec: {
+          name: 'Annotations & Alerts',
+          enable: true,
+          hide: true,
+          iconColor: 'rgba(0, 211, 255, 1)',
+          query: {
+            kind: 'DataQuery',
+            version: defaultDataQueryKind().version,
+            group: 'grafana',
+            spec: {
+              refId: 'Anno',
+              queryType: 'snapshot',
+              snapshot: [
+                {
+                  schema: {
+                    fields: [
+                      { name: 'time', type: 'time' },
+                      { name: 'text', type: 'string' },
+                    ],
+                  },
+                  data: { values: [[1700000000000], ['deploy']] },
+                },
+              ],
+            },
+          },
+        },
+      },
+    ];
+    const resource = notebookResource();
+    const latencyElement = resource.spec.elements['latency-panel'];
+    if (latencyElement.kind !== 'Panel') {
+      throw new Error('fixture: latency-panel is a panel');
+    }
+    latencyElement.spec.annotations = annotations;
+
+    const scene = transformNotebookToScene(resource);
+    const [latency, cpu] = ['latency-panel', 'saved-cpu-panel'].map(
+      (name) => scene.state.body.state.cells.find((cell) => cell.state.elementName === name)!.state.body!
+    );
+
+    expect(sceneGraph.getDataLayers(latency).map((set) => set.state.key)).toEqual([
+      scene.state.body.state.cells[1].state.$data!.state.key,
+    ]);
+    expect(sceneGraph.getDataLayers(cpu)).toEqual([]);
+    expect(transformNotebookSceneToSaveModel(scene).elements['latency-panel']).toEqual(latencyElement);
   });
 
   // The save path borrows the dashboard's vizPanelToSchemaV2, which is only safe here because both

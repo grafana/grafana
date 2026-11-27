@@ -1,4 +1,7 @@
+import { getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
 import {
+  SceneDataNode,
   SceneFlexItem,
   SceneFlexLayout,
   type SceneObject,
@@ -6,6 +9,7 @@ import {
   type SceneTimeRangeLike,
   VizPanel,
 } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 import { PanelTimeRange } from 'app/features/dashboard-scene/scene/panel-timerange/PanelTimeRange';
 
@@ -112,5 +116,40 @@ describe('AddPanelToNotebookScene.getCapturedTimeRange', () => {
     panelTimeRange.activate();
 
     expect(scene.getCapturedTimeRange()).toMatchObject({ from: 'now-2h', to: 'now', fiscalYearStartMonth: 3 });
+  });
+});
+
+describe('AddPanelToNotebookScene.getBuildAnnotations', () => {
+  function sceneShowingAnnotations() {
+    const panel = new VizPanel({
+      key: 'panel-1',
+      $data: new SceneDataNode({
+        data: {
+          state: LoadingState.Done,
+          series: [],
+          timeRange: getDefaultTimeRange(),
+          annotations: [toDataFrame([{ time: 1700000000000, text: 'deploy', source: { name: 'Deploys' } }])],
+        },
+      }),
+    });
+    return new AddPanelToNotebookScene({ panelRef: panel.getRef() });
+  }
+
+  afterEach(() => setTestFlags({}));
+
+  it('offers the annotations the panel is showing when the flag is on', () => {
+    setTestFlags({ [FlagKeys.DashboardNotebookAnnotations]: true });
+
+    expect(
+      sceneShowingAnnotations()
+        .getBuildAnnotations()?.()
+        .map((annotation) => annotation.spec.name)
+    ).toEqual(['Deploys']);
+  });
+
+  it('offers none while the flag is off, so the modal shows no checkbox', () => {
+    setTestFlags({ [FlagKeys.DashboardNotebookAnnotations]: false });
+
+    expect(sceneShowingAnnotations().getBuildAnnotations()).toBeUndefined();
   });
 });

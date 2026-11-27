@@ -7012,6 +7012,125 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookAnnotationEventFieldMapping": {
+        "description": "Annotation event field mapping. Defines how to map a data frame field to an annotation event field.",
+        "type": "object",
+        "properties": {
+          "regex": {
+            "description": "Regular expression to apply to the field value",
+            "type": "string"
+          },
+          "source": {
+            "description": "Source type for the field value",
+            "type": "string"
+          },
+          "value": {
+            "description": "Constant value to use when source is \"text\"",
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookAnnotationPanelFilter": {
+        "type": "object",
+        "required": [
+          "ids"
+        ],
+        "properties": {
+          "exclude": {
+            "description": "Should the specified panels be included or excluded",
+            "type": "boolean"
+          },
+          "ids": {
+            "description": "Panel IDs that should be included or excluded",
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookAnnotationQueryKind": {
+        "type": "object",
+        "required": [
+          "kind",
+          "spec"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookAnnotationQuerySpec"
+              }
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookAnnotationQuerySpec": {
+        "type": "object",
+        "required": [
+          "query",
+          "enable",
+          "hide",
+          "iconColor",
+          "name"
+        ],
+        "properties": {
+          "builtIn": {
+            "type": "boolean"
+          },
+          "enable": {
+            "type": "boolean",
+            "default": false
+          },
+          "filter": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookAnnotationPanelFilter"
+          },
+          "hide": {
+            "type": "boolean",
+            "default": false
+          },
+          "iconColor": {
+            "type": "string",
+            "default": ""
+          },
+          "legacyOptions": {
+            "description": "Catch-all field for datasource-specific properties. Should not be available in as code tooling.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
+          "mappings": {
+            "description": "Mappings define how to convert data frame fields to annotation event fields.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookAnnotationEventFieldMapping"
+            }
+          },
+          "name": {
+            "type": "string",
+            "default": ""
+          },
+          "placement": {
+            "description": "Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.",
+            "type": "string"
+          },
+          "query": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookDataQueryKind"
+              }
+            ]
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookCellKind": {
         "description": "A cell holds non-panel narrative content (markdown text, code) in a notebook layout. Panel cells are not represented here — they reuse V2PanelKind.",
         "type": "object",
@@ -8068,6 +8187,13 @@
           "vizConfig"
         ],
         "properties": {
+          "annotations": {
+            "description": "The annotations this panel showed when it was added from a dashboard, the only way a cell gets any. Each cell has its own, so they are kept with its panel.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookAnnotationQueryKind"
+            }
+          },
           "data": {
             "default": {},
             "allOf": [

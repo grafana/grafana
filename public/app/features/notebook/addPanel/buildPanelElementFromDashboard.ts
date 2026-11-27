@@ -1,3 +1,4 @@
+import { type AnnotationQuery, type DataFrame } from '@grafana/data';
 import { getDataSourceInstance } from '@grafana/runtime';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
@@ -5,6 +6,7 @@ import { vizPanelToSchemaV2 } from 'app/features/dashboard-scene/serialization/t
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { getLibraryPanelBehavior } from 'app/features/dashboard-scene/utils/utils';
 
+import { freezeAnnotation, type PanelAnnotations } from '../scene/layout-notebook/frozenAnnotations';
 import { type PanelElement } from '../types';
 
 /**
@@ -70,6 +72,55 @@ export async function buildPanelElementFromDashboard(vizPanel: VizPanel): Promis
   // unresolved default datasource, and the notebook should carry the datasource the panel actually
   // queried rather than inherit whatever default the dashboard had.
   return vizPanelToSchemaV2(captured);
+}
+
+/**
+ * The annotations the panel is showing, frozen into one layer for each layer they came from.
+ *
+ * Read from the panel's data rather than queried again, because that is exactly what the reader is
+ * looking at: fetched over the panel's window, narrowed to this panel by each layer's filter, and the
+ * same for every datasource. Notebooks have no annotations of their own, so none of it stays live.
+ */
+export function buildPanelAnnotationsFromDashboard(vizPanel: VizPanel): PanelAnnotations {
+  const framesBySource = new Map<AnnotationQuery, DataFrame[]>();
+
+  for (const frame of getPanelAnnotationFrames(vizPanel)) {
+    // A layer stamps its query on every event it emits, which is what tells the layers apart again.
+    const sources = frame.fields.find((field) => field.name === 'source')?.values ?? [];
+    const rowsBySource = new Map<AnnotationQuery, number[]>();
+    sources.forEach((source: unknown, row: number) => {
+      if (isAnnotationQuery(source)) {
+        rowsBySource.set(source, [...(rowsBySource.get(source) ?? []), row]);
+      }
+    });
+
+    for (const [source, rows] of rowsBySource) {
+      framesBySource.set(source, [...(framesBySource.get(source) ?? []), pickRows(frame, rows)]);
+    }
+  }
+
+  return Array.from(framesBySource, ([source, frames]) => freezeAnnotation(source, frames));
+}
+
+/** Whether the panel is showing any annotations, so the modal knows whether to offer them. */
+export function hasPanelAnnotations(vizPanel: VizPanel): boolean {
+  return getPanelAnnotationFrames(vizPanel).some((frame) => frame.length > 0);
+}
+
+function getPanelAnnotationFrames(vizPanel: VizPanel): DataFrame[] {
+  return sceneGraph.getData(vizPanel).state.data?.annotations ?? [];
+}
+
+function isAnnotationQuery(value: unknown): value is AnnotationQuery {
+  return typeof value === 'object' && value !== null && 'name' in value && typeof value.name === 'string';
+}
+
+function pickRows(frame: DataFrame, rows: number[]): DataFrame {
+  return {
+    ...frame,
+    fields: frame.fields.map((field) => ({ ...field, values: rows.map((row) => field.values[row]) })),
+    length: rows.length,
+  };
 }
 
 /**

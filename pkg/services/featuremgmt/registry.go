@@ -728,6 +728,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "dashboard.notebookAnnotations",
+			Description: "Copies the annotations a dashboard panel shows into a notebook when the panel is added to it",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "grafana.dashboardComposer",
 			Description: "Enables Composer mode for editing dashboards with Grafana Assistant",
 			Stage:       FeatureStageExperimental,

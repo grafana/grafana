@@ -178,6 +178,48 @@ describe('validateNotebookSpec', () => {
     expect(parsed.spec.data.spec.queryOptions).toMatchObject({ timeFrom: 'now-6h', timeTo: 'now' });
   });
 
+  it("keeps a panel element's annotations, which a non-strict parse would otherwise drop", () => {
+    const annotations = [
+      {
+        kind: 'AnnotationQuery' as const,
+        spec: {
+          name: 'Annotations & Alerts',
+          enable: true,
+          hide: true,
+          iconColor: 'rgba(0, 211, 255, 1)',
+          query: {
+            kind: 'DataQuery' as const,
+            version: 'v0',
+            group: 'grafana',
+            spec: { refId: 'Anno', queryType: 'snapshot', snapshot: [] },
+          },
+        },
+      },
+    ];
+
+    const result = validateNotebookSpec({
+      ...spec(),
+      elements: { panel: { ...PANEL, spec: { ...PANEL.spec, annotations } } },
+      layout: {
+        kind: 'NotebookLayout',
+        spec: {
+          cells: [
+            {
+              kind: 'NotebookLayoutItem',
+              spec: { element: { kind: 'ElementReference', name: 'panel' }, source: 'user' },
+            },
+          ],
+        },
+      },
+    });
+
+    const parsed = result.data?.elements.panel;
+    if (parsed?.kind !== 'Panel') {
+      throw new Error('expected a Panel element');
+    }
+    expect(parsed.spec.annotations).toEqual(annotations);
+  });
+
   it('rejects the retired v2beta1 transformation shape', () => {
     // `{ kind: <id>, spec: { id: <id> } }` is what a notebook carried before its panel chain was
     // reparented onto the dashboard v2 shape. Written as a plain object because it is deliberately not a

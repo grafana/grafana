@@ -27,11 +27,13 @@ import { NotebookTagsField } from '../NotebookTagsField';
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_ADD_TARGET, type NotebookEntryPoint } from '../analytics/types';
 import { canCreateNotebooks, canEditNotebooks } from '../permissions';
+import { type PanelAnnotations } from '../scene/layout-notebook/frozenAnnotations';
 import { type PanelElement } from '../types';
 import { loadSourceForEntryPoint, notebookEditHref, notebookViewUrl } from '../urls';
 
 import { ConvertToAbsoluteField } from './ConvertToAbsoluteField';
 import { CreateNotebookFields } from './CreateNotebookFields';
+import { IncludeAnnotationsField } from './IncludeAnnotationsField';
 import { LockTimeRangeField } from './LockTimeRangeField';
 import { NotebookPickerList } from './NotebookPickerList';
 import { type AddPanelFormValues } from './addPanelForm';
@@ -84,6 +86,8 @@ interface SinglePanelProps extends BaseProps {
   capturedTimeRange: CapturedTimeRange;
   /** Who the panel is attributed to. Defaults to the person adding it. */
   cellSource?: AppendedCellSource;
+  /** The annotations the panel is showing at its source, frozen on submit. Absent when it shows none. */
+  buildAnnotations?: () => PanelAnnotations;
   cells?: never;
 }
 
@@ -95,6 +99,7 @@ interface CellsProps extends BaseProps {
   buildPanel?: never;
   isLibraryPanel?: never;
   capturedTimeRange?: never;
+  buildAnnotations?: never;
 }
 
 type Props = SinglePanelProps | CellsProps;
@@ -104,6 +109,10 @@ interface LockOptions {
   convertToAbsolute: boolean;
 }
 
+interface SinglePanelOptions extends LockOptions {
+  includeAnnotations: boolean;
+}
+
 /**
  * Locks whenever asked, relative windows included: the checkbox named this panel's own window. Applied
  * here rather than in either builder, which serialize what the source has without deciding what the
@@ -111,12 +120,25 @@ interface LockOptions {
  */
 async function buildSinglePanelCell(
   props: SinglePanelProps,
-  { lockTimeRange, convertToAbsolute }: LockOptions
+  { lockTimeRange, convertToAbsolute, includeAnnotations }: SinglePanelOptions
 ): Promise<AppendedElement[]> {
   const built = await props.buildPanel();
+  const annotations = includeAnnotations ? props.buildAnnotations?.() : undefined;
   const range = convertToAbsolute ? toAbsoluteCapturedTimeRange(props.capturedTimeRange) : props.capturedTimeRange;
-  const panel = lockTimeRange ? withCapturedTimeRange(built, range) : built;
+  const panel = withAnnotations(lockTimeRange ? withCapturedTimeRange(built, range) : built, annotations);
   return [{ kind: 'panel', panel, isLibraryPanel: props.isLibraryPanel }];
+}
+
+/**
+ * A library panel element is shared with dashboards and has nowhere to keep them. The dashboard
+ * builder inlines library panels, so only a panel that reached here some other way goes without.
+ */
+function withAnnotations(panel: PanelElement, annotations: PanelAnnotations | undefined): PanelElement {
+  if (panel.kind !== 'Panel' || !annotations?.length) {
+    return panel;
+  }
+
+  return { ...panel, spec: { ...panel.spec, annotations } };
 }
 
 async function buildCells(
@@ -181,6 +203,7 @@ export function AddPanelToNotebookModalBody(props: Props) {
       title: defaultTitle ?? '',
       lockTimeRange: capturedTimeRanges.some(shouldLockCapturedTimeRange),
       convertToAbsolute: false,
+      includeAnnotations: true,
       note: '',
     },
   });
@@ -236,7 +259,10 @@ export function AddPanelToNotebookModalBody(props: Props) {
         const source = props.cellSource ?? 'user';
         const built = props.cells
           ? await buildCells(props.cells, lockOptions(values))
-          : await buildSinglePanelCell(props, lockOptions(values));
+          : await buildSinglePanelCell(props, {
+              ...lockOptions(values),
+              includeAnnotations: values.includeAnnotations,
+            });
         const note = values.note.trim();
         const cells: AppendedElement[] = note ? [{ kind: 'markdown', text: note }, ...built] : built;
         panelWasBuilt = true;
@@ -430,6 +456,11 @@ export function AddPanelToNotebookModalBody(props: Props) {
             {showConvertToAbsolute && (
               <div>
                 <ConvertToAbsoluteField control={control} disabled={isSubmitting || !lockTimeRange} />
+              </div>
+            )}
+            {props.buildAnnotations && (
+              <div>
+                <IncludeAnnotationsField control={control} disabled={isSubmitting} />
               </div>
             )}
           </Stack>

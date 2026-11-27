@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { lazy, Suspense } from 'react';
 
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   type SceneComponentProps,
   SceneObjectBase,
@@ -15,7 +16,11 @@ import { getDashboardSceneFor, getLibraryPanelBehavior } from 'app/features/dash
 import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
 
 import { ADD_PANEL_MODAL_WIDTH, addPanelToNotebookTitle } from './addPanelModal';
-import { buildPanelElementFromDashboard } from './buildPanelElementFromDashboard';
+import {
+  buildPanelAnnotationsFromDashboard,
+  buildPanelElementFromDashboard,
+  hasPanelAnnotations,
+} from './buildPanelElementFromDashboard';
 import { captureTimeRange, type CapturedTimeRange } from './capturedTimeRange';
 
 // The panel menu loads with every dashboard, so the picker, its API client and its form are split
@@ -40,6 +45,16 @@ export class AddPanelToNotebookScene extends SceneObjectBase<AddPanelToNotebookS
   };
 
   public buildPanel = () => buildPanelElementFromDashboard(this.state.panelRef.resolve());
+
+  /** Undefined when the panel shows no annotations, so the modal does not offer any. */
+  public getBuildAnnotations = () => {
+    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebookAnnotations, false)) {
+      return undefined;
+    }
+
+    const panel = this.state.panelRef.resolve();
+    return hasPanelAnnotations(panel) ? () => buildPanelAnnotationsFromDashboard(panel) : undefined;
+  };
 
   /**
    * Read from the panel the user opened this on, not from what buildPanel returns. buildPanel inlines
@@ -77,6 +92,7 @@ function AddPanelToNotebookSceneRenderer({ model }: SceneComponentProps<AddPanel
           entryPoint={NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL}
           isLibraryPanel={model.isLibraryPanel()}
           capturedTimeRange={model.getCapturedTimeRange()}
+          buildAnnotations={model.getBuildAnnotations()}
         />
       </Suspense>
     </Modal>

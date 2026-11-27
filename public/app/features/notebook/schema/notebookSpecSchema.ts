@@ -13,6 +13,7 @@
 import * as z from 'zod/mini';
 
 import {
+  annotationQueryKindSchema,
   elementReferenceSchema,
   libraryPanelKindSchema,
   nullableArray,
@@ -64,10 +65,19 @@ const cellKindSchema = z.object({
   }),
 }) satisfies z.ZodMiniType<CellKind>;
 
+// The dashboard panel plus the annotations a notebook panel carries itself. Declared so that parsing
+// keeps them: the object is non-strict, so an undeclared key is dropped.
+const notebookPanelKindSchema = z.object({
+  kind: z.literal('Panel'),
+  spec: z.extend(panelKindSchema.shape.spec, {
+    annotations: z.optional(z.array(annotationQueryKindSchema)),
+  }),
+});
+
 // CellKind first, to match the CUE: the first union member is the generated default.
 const notebookElementSchema = z.discriminatedUnion('kind', [
   cellKindSchema,
-  panelKindSchema,
+  notebookPanelKindSchema,
   libraryPanelKindSchema,
 ]) satisfies z.ZodMiniType<NotebookElement>;
 

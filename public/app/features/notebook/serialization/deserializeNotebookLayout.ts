@@ -8,6 +8,7 @@ import { type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashbo
 import { NotebookCellItem } from '../scene/layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
 import { buildCellSceneTimeRange, withQueryOptionsTimeRange } from '../scene/layout-notebook/cellTimeRange';
+import { deserializeFrozenAnnotations } from '../scene/layout-notebook/frozenAnnotations';
 import { type NotebookElement, type NotebookLayoutKind } from '../types';
 
 interface NotebookHeader {
@@ -61,6 +62,10 @@ export function deserializeNotebookLayout(
       // override, instead of being silently blanked below.
       const cellTimeRange = timeFrom && timeTo ? { $timeRange: buildCellSceneTimeRange(timeFrom, timeTo) } : {};
       const panelElement = timeFrom && timeTo ? withQueryOptionsTimeRange(element, undefined) : element;
+      // Saved on the panel but run from the cell, which holds the cell's own time range: the panel's
+      // query runner finds them by walking up from the panel.
+      const annotationLayers = deserializeFrozenAnnotations(element.spec.annotations);
+      const cellAnnotations = annotationLayers ? { $data: annotationLayers } : {};
 
       // buildVizPanelState is dashboard-typed and takes this directly: the notebook panel chain
       // carries the dashboard v2 shape, so the two generated types are structurally identical.
@@ -68,6 +73,7 @@ export function deserializeNotebookLayout(
         new NotebookCellItem({
           ...base,
           ...cellTimeRange,
+          ...cellAnnotations,
           body: new VizPanel(buildVizPanelState(panelElement, panelIdGenerator?.())),
         })
       );

@@ -154,6 +154,10 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		Notebook{}.OpenAPIModelName():                                                            schema_pkg_apis_dashboard_v2beta1_Notebook(ref),
 		NotebookAction{}.OpenAPIModelName():                                                      schema_pkg_apis_dashboard_v2beta1_NotebookAction(ref),
 		NotebookActionVariable{}.OpenAPIModelName():                                              schema_pkg_apis_dashboard_v2beta1_NotebookActionVariable(ref),
+		NotebookAnnotationEventFieldMapping{}.OpenAPIModelName():                                 schema_pkg_apis_dashboard_v2beta1_NotebookAnnotationEventFieldMapping(ref),
+		NotebookAnnotationPanelFilter{}.OpenAPIModelName():                                       schema_pkg_apis_dashboard_v2beta1_NotebookAnnotationPanelFilter(ref),
+		NotebookAnnotationQueryKind{}.OpenAPIModelName():                                         schema_pkg_apis_dashboard_v2beta1_NotebookAnnotationQueryKind(ref),
+		NotebookAnnotationQuerySpec{}.OpenAPIModelName():                                         schema_pkg_apis_dashboard_v2beta1_NotebookAnnotationQuerySpec(ref),
 		NotebookCellKind{}.OpenAPIModelName():                                                    schema_pkg_apis_dashboard_v2beta1_NotebookCellKind(ref),
 		NotebookCellKindOrV2PanelKindOrLibraryPanelKind{}.OpenAPIModelName():                     schema_pkg_apis_dashboard_v2beta1_NotebookCellKindOrV2PanelKindOrLibraryPanelKind(ref),
 		NotebookCellSpec{}.OpenAPIModelName():                                                    schema_pkg_apis_dashboard_v2beta1_NotebookCellSpec(ref),
@@ -6441,6 +6445,198 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookActionVariable(ref common.Referen
 	}
 }
 
+func schema_pkg_apis_dashboard_v2beta1_NotebookAnnotationEventFieldMapping(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Annotation event field mapping. Defines how to map a data frame field to an annotation event field.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"source": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Source type for the field value",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"value": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Constant value to use when source is \"text\"",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"regex": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Regular expression to apply to the field value",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookAnnotationPanelFilter(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"exclude": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Should the specified panels be included or excluded",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"ids": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Panel IDs that should be included or excluded",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"number"},
+										Format: "double",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"ids"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookAnnotationQueryKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookAnnotationQuerySpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"kind", "spec"},
+			},
+		},
+		Dependencies: []string{
+			NotebookAnnotationQuerySpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookAnnotationQuerySpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"query": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookDataQueryKind{}.OpenAPIModelName()),
+						},
+					},
+					"enable": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"hide": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"iconColor": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"builtIn": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"filter": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(NotebookAnnotationPanelFilter{}.OpenAPIModelName()),
+						},
+					},
+					"placement": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"mappings": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Mappings define how to convert data frame fields to annotation event fields.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(NotebookAnnotationEventFieldMapping{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"legacyOptions": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Catch-all field for datasource-specific properties. Should not be available in as code tooling.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"query", "enable", "hide", "iconColor", "name"},
+			},
+		},
+		Dependencies: []string{
+			NotebookAnnotationEventFieldMapping{}.OpenAPIModelName(), NotebookAnnotationPanelFilter{}.OpenAPIModelName(), NotebookDataQueryKind{}.OpenAPIModelName()},
+	}
+}
+
 func schema_pkg_apis_dashboard_v2beta1_NotebookCellKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -8163,12 +8359,25 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookV2PanelSpec(ref common.ReferenceC
 							Format: "",
 						},
 					},
+					"annotations": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The annotations this panel showed when it was added from a dashboard, the only way a cell gets any. Each cell has its own, so they are kept with its panel.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(NotebookAnnotationQueryKind{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"id", "title", "links", "data", "vizConfig"},
 			},
 		},
 		Dependencies: []string{
-			NotebookDataLink{}.OpenAPIModelName(), NotebookV2QueryGroupKind{}.OpenAPIModelName(), NotebookVizConfigKind{}.OpenAPIModelName()},
+			NotebookAnnotationQueryKind{}.OpenAPIModelName(), NotebookDataLink{}.OpenAPIModelName(), NotebookV2QueryGroupKind{}.OpenAPIModelName(), NotebookVizConfigKind{}.OpenAPIModelName()},
 	}
 }
 
