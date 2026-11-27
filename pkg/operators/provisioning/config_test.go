@@ -453,3 +453,9 @@ func TestSetupFromConfigUsesRuntimeTracer(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cfg.Tracer(), "operators without a runtime tracer still get a usable one")
 }
+
+func TestOperatorDefaultsKeepPreviousValues(t *testing.T) {
+	for _, op := range []runner.Operator{RepoOperator, ConnectionOperator, JobsOperator, JobQueueOperator} {
+		require.Equal(t, runner.Options{Workers: 1, Resync: 60 * time.Second, DrainTimeout: 30 * time.Second}, op.Defaults, op.Name)
+	}
+}

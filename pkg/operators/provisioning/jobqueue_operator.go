@@ -16,6 +16,7 @@ var JobQueueOperator = runner.Operator{
 	Name:        "provisioning-jobqueue",
 	Description: "Pick and execute provisioning jobs using lease-based claiming",
 	Logger:      "provisioning-jobqueue-controller",
+	Defaults:    operatorDefaults,
 	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
 		controllerCfg, err := setupJobQueueControllerFromConfig(rt)
 		if err != nil {
