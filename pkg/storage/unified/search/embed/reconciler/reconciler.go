@@ -520,11 +520,24 @@ func (s *Reconciler) sweep(ctx context.Context) {
 }
 
 func (s *Reconciler) reconcileCollection(ctx context.Context, builder embed.Builder, sinceRv int64, lastCalledAt *time.Time, backfillRV int64) (proven int64, complete, failed bool) {
-	if !embed.IsClusterScoped(builder) {
-		return s.reconcileSince(ctx, builder, sinceRv, lastCalledAt)
-	}
 	gr := schema.GroupResource{Group: builder.Group(), Resource: builder.Resource()}
 	collection := s.ensuredCollections[gr]
+	if !embed.IsClusterScoped(builder) {
+		if collection.Scope == "" {
+			var err error
+			collection, _, err = s.vectorBackend.ResolveCollection(ctx, gr.Group, gr.Resource)
+			if err != nil {
+				s.log.Error("reconciler: resolve collection scope", "group", gr.Group, "resource", gr.Resource, "err", err)
+				return sinceRv, true, true
+			}
+		}
+		// A tenant sweep would skip cluster events and could checkpoint past them.
+		if collection.Scope == vector.ScopeCluster {
+			s.log.Warn("reconciler: tenant builder has a cluster collection", "group", gr.Group, "resource", gr.Resource)
+			return sinceRv, true, true
+		}
+		return s.reconcileSince(ctx, builder, sinceRv, lastCalledAt)
+	}
 	partition := collection.PartitionKey
 	if collection.Scope != vector.ScopeCluster {
 		if backfillRV == 0 {

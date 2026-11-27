@@ -2307,6 +2307,52 @@ func TestReconciler_ManifestScopeChangeRevalidatesCachedCollection(t *testing.T)
 	assert.Equal(t, snowflakeRV(100), vec.latestRV)
 }
 
+func TestReconciler_TenantManifestDoesNotCheckpointPastClusterChanges(t *testing.T) {
+	cluster := clusterTestBuilder{fakeBuilder{group: "catalog.example.test", resource: "systemschemas"}}
+	tenant := fakeBuilder{group: "tenant.example.test", resource: "widgets"}
+	gr := schema.GroupResource{Group: cluster.group, Resource: cluster.resource}
+	for _, tc := range []struct {
+		name   string
+		cached bool
+	}{
+		{name: "live reload", cached: true},
+		{name: "after restart"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			deleted := change(gr.Group, gr.Resource, "", "deleted", snowflakeRV(115), nil)
+			deleted.Action = resourcepb.WatchEvent_DELETED
+			st := &fakeStorage{latestRvOverride: snowflakeRV(120), changes: []*resource.ModifiedResource{
+				change(gr.Group, gr.Resource, "", "schema", snowflakeRV(110), []byte("schema")),
+				deleted,
+				change(tenant.group, tenant.resource, "ns", "widget", snowflakeRV(120), []byte("widget")),
+			}}
+			vec := newFakeVector()
+			vec.latestRV = snowflakeRV(100)
+			vec.collections = map[schema.GroupResource]vector.Collection{
+				gr: {Group: gr.Group, Resource: gr.Resource, PartitionKey: gr.Resource, Scope: vector.ScopeCluster},
+			}
+			require.NoError(t, vec.CreateBackfillJob(t.Context(), testModel, gr.Resource, vec.latestRV, cluster.Version()))
+			s := newReconcilerWithBuilders(t, st, vec, cluster.fakeBuilder, tenant)
+			if tc.cached {
+				_, err := s.ensureResourceInitialized(t.Context(), cluster, vec.latestRV)
+				require.NoError(t, err)
+			}
+
+			s.sweep(t.Context())
+			assert.True(t, vec.hasUpsertFor("ns", tenant.resource, "widget"))
+			assert.False(t, vec.hasUpsertFor(resource.ClusterNamespace, gr.Resource, "schema"))
+			assert.Empty(t, vec.deletes)
+			assert.Equal(t, snowflakeRV(100), vec.latestRV)
+
+			s.builders = embed.NewBuilderSnapshot([]embed.Builder{cluster, tenant})
+			s.sweep(t.Context())
+			assert.True(t, vec.hasUpsertFor(resource.ClusterNamespace, gr.Resource, "schema"))
+			assert.Equal(t, []deleteCall{{resource.ClusterNamespace, testModel, gr.Resource, "deleted"}}, vec.deletes)
+			assert.Equal(t, snowflakeRV(120), vec.latestRV)
+		})
+	}
+}
+
 func TestReconciler_ClusterRevisionMismatchKeepsIndexingTenantWrites(t *testing.T) {
 	const group, plural = "catalog.example.test", "systemschemas"
 	const storedRevision = 2
