@@ -23,6 +23,8 @@ type GetSearchUsersUserHit struct {
 	ExternalAuthModules []string `json:"externalAuthModules,omitempty"`
 	// Display labels of the auth provider the user last signed in with, e.g. "LDAP".
 	AuthLabels []string `json:"authLabels,omitempty"`
+	// Avatar URL of the user, derived from the email. Omitted when the user has no email.
+	AvatarUrl *string `json:"avatarUrl,omitempty"`
 }
 
 // NewGetSearchUsersUserHit creates a new GetSearchUsersUserHit object.
