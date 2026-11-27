@@ -124,6 +124,34 @@ metadata:
 		require.Equal(t, string(utils.ManagerKindRepo), annotations[utils.AnnoKeyManagerKind], "Grafana still stamps its own annotations")
 	})
 
+	t.Run("a null annotation keeps the others", func(t *testing.T) {
+		info := &repository.FileInfo{
+			Path: "dashboard.yaml",
+			Data: []byte(`apiVersion: dashboard.grafana.app/v1
+kind: Dashboard
+metadata:
+  name: dash
+  annotations:
+    grafana.app/useCrossDashboardVariables: '{"global":"all"}'
+    example.com/empty:
+spec:
+  title: Test dashboard
+`),
+		}
+		parsed, err := parser.Parse(t.Context(), info)
+		require.NoError(t, err)
+		require.Empty(t, parsed.InvalidAnnotations)
+		annotations := parsed.Obj.GetAnnotations()
+		require.Equal(t, `{"global":"all"}`, annotations[AnnoKeyUseCrossDashboardVariables])
+		require.Contains(t, annotations, "example.com/empty")
+		require.Equal(t, "repo", annotations[utils.AnnoKeyManagerIdentity], "Grafana still stamps its own annotations")
+
+		data, err := parsed.ToSaveBytes()
+		require.NoError(t, err)
+		require.Contains(t, string(data), "grafana.app/useCrossDashboardVariables")
+		require.Contains(t, string(data), `example.com/empty: ""`)
+	})
+
 	t.Run("generate name will generate a name", func(t *testing.T) {
 		dash, err := parser.Parse(context.Background(), &repository.FileInfo{
 			Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
