@@ -20,6 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -201,26 +202,12 @@ var trashed = map[string]content{
 	trashedByUpdate: panel("Compat trashed by update", "Trashed by update", `up{trashed="update"}`),
 }
 
-// schemaFamily is one dashboard schema with the API versions that serve it.
+// schemaFamily describes how to write fixtures through the stable API version.
 type schemaFamily struct {
-	stable, beta string
-	spec         func(*testing.T, content) map[string]any
+	version string
+	spec    func(*testing.T, content) map[string]any
 	// fieldValidation is what the family's editor sends on save.
 	fieldValidation string
-}
-
-// apiVersion follows the editor's preference for its schema family.
-func (f schemaFamily) apiVersion(t *testing.T, versions []string) string {
-	t.Helper()
-	version := f.beta
-	switch {
-	case versions[0] == f.stable || versions[0] == f.beta:
-		version = versions[0]
-	case slices.Contains(versions, f.stable):
-		version = f.stable
-	}
-	require.Contains(t, versions, version)
-	return version
 }
 
 type roundTrip struct {
@@ -276,7 +263,7 @@ func validateSetupFixtures(writes map[string]fixtureWrites, newer bool) error {
 const fixtureManifestFile = "dashboard-write-versions.json"
 
 var (
-	v1Family = schemaFamily{stable: "v1", beta: "v1beta1", spec: v1Spec, fieldValidation: metav1.FieldValidationIgnore}
+	v1Family = schemaFamily{version: "v1", spec: v1Spec, fieldValidation: metav1.FieldValidationIgnore}
 
 	roundTrips = []roundTrip{
 		{name: "v1", setup: v1Family, edit: v1Family},
@@ -321,8 +308,9 @@ func requireWriterVersion(t *testing.T, served []string, apiVersion string) {
 
 func (c client) withWriter(t *testing.T, writer schemaFamily) client {
 	t.Helper()
+	require.Contains(t, c.served, writer.version, "dashboard fixture writer API version")
 	c.writer = writer
-	return c.withVersion(writer.apiVersion(t, c.served))
+	return c.withVersion(writer.version)
 }
 
 // views reads each fixture through every served version, including new versions that
@@ -410,15 +398,23 @@ func (c client) restore(t *testing.T, name string) {
 	require.NoError(t, unstructured.SetNestedField(metadata, "default", "annotations", utils.AnnoKeyGrantPermissions))
 	body, err := json.Marshal(map[string]any{"metadata": metadata, "spec": obj.Object["spec"]})
 	require.NoError(t, err, "restore payload for %s", c.fixture(name))
-	rsp := apis.DoRequestForTest(t, c.h, apis.RequestParams{
-		User:   c.h.Org1.Admin,
-		Method: http.MethodPost,
-		Path:   c.dashboardsPath(c.version),
-		Body:   body,
-	}, (*unstructured.Unstructured)(nil))
-	require.Equal(t, http.StatusCreated, rsp.Response.StatusCode, "restore %s in %s: %s", c.fixture(name), c.version, rsp.Body)
+	gvr := dashboardGR.WithVersion(c.version)
+	gv := gvr.GroupVersion()
+	restClient := c.h.Org1.Admin.RESTClient(t, &gv)
+	t.Cleanup(func() { utilnet.CloseIdleConnectionsFor(restClient.Client.Transport) })
+	result := restClient.Post().
+		Namespace(c.h.Namespacer(c.h.Org1.Admin.Identity.GetOrgID())).
+		Resource(gvr.Resource).
+		SetHeader("Content-Type", "application/json").
+		Body(body).
+		Do(t.Context())
+	raw, err := result.Raw()
+	require.NoError(t, err, "restore %s in %s: %s", c.fixture(name), c.version, raw)
+	var status int
+	result.StatusCode(&status)
+	require.Equal(t, http.StatusCreated, status, "restore %s in %s: %s", c.fixture(name), c.version, raw)
 	var restored unstructured.Unstructured
-	require.NoError(t, json.Unmarshal(rsp.Body, &restored), "decode restored %s in %s", c.fixture(name), c.version)
+	require.NoError(t, json.Unmarshal(raw, &restored), "decode restored %s in %s", c.fixture(name), c.version)
 	require.Equal(t, c.fixture(name), restored.GetName(), "restored dashboard in %s", c.version)
 	c.checkRestored(t, name, c.apiGroupVersion())
 }
@@ -593,11 +589,6 @@ func (c client) dashboardSpec(t *testing.T, name string, obj *unstructured.Unstr
 
 func (c client) apiGroupVersion() string {
 	return dashboardGR.WithVersion(c.version).GroupVersion().String()
-}
-
-func (c client) dashboardsPath(version string) string {
-	namespace := c.h.Namespacer(c.h.Org1.Admin.Identity.GetOrgID())
-	return fmt.Sprintf("/apis/%s/namespaces/%s/%s", dashboardGR.WithVersion(version).GroupVersion(), namespace, dashboardGR.Resource)
 }
 
 func (c client) trashEntry(t *testing.T, name string) *unstructured.Unstructured {
