@@ -999,6 +999,45 @@ describe('Combobox', () => {
       await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS + 300));
     });
 
+    it('picks an earlier result that matches the typed custom value with Enter, wherever it is listed', async () => {
+      const asyncOptions = jest.fn((searchTerm: string) =>
+        searchTerm === ''
+          ? Promise.resolve([{ value: 'Bob' }, { value: 'Alice' }])
+          : new Promise<ComboboxOption[]>(() => {})
+      );
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} createCustomValue />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+      await user.type(input, 'Alice', { skipClick: true });
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+      await user.keyboard('{Enter}');
+      expect(onChangeHandler).toHaveBeenLastCalledWith({ value: 'Alice' });
+    });
+
+    it('highlights the first fresh result, not the row at the stale highlight', async () => {
+      let resolveSearch: (options: ComboboxOption[]) => void = () => {};
+      const asyncOptions = jest.fn((searchTerm: string) =>
+        searchTerm === ''
+          ? Promise.resolve([{ value: 'Bob' }, { value: 'Alice' }])
+          : new Promise<ComboboxOption[]>((resolve) => {
+              resolveSearch = resolve;
+            })
+      );
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} createCustomValue />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+      await user.type(input, 'Alice', { skipClick: true });
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+      // The stale 'Alice' row, second in the list, holds the highlight while the search loads.
+      await act(async () => resolveSearch([{ value: 'Alice' }, { value: 'Alicia' }]));
+      await user.keyboard('{Enter}');
+      expect(onChangeHandler).toHaveBeenCalledWith({ value: 'Alice' });
+    });
+
     it("doesn't select a result that arrives while a newer search is debouncing", async () => {
       const asyncOptions = jest.fn((searchTerm: string) =>
         searchTerm === 'a'

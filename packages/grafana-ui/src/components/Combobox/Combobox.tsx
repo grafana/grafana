@@ -391,6 +391,13 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     },
   });
 
+  // A parent can close a controlled menu without Downshift reporting it, so forget the typing on any close.
+  useEffect(() => {
+    if (!isOpen) {
+      typedSinceOpenRef.current = false;
+    }
+  }, [isOpen]);
+
   useHighlightFreshOptions({
     stale: asyncOptionsStale,
     isOpen,
