@@ -8,6 +8,7 @@ import { TextLink } from '../Link/TextLink';
 import { TagList } from '../Tags/TagList';
 
 import { Card } from './Card';
+import mdx from './Card.mdx';
 
 const logo = 'https://grafana.com/static/assets/img/apple-touch-icon.png';
 
@@ -15,6 +16,7 @@ const meta: Meta<typeof Card> = {
   title: 'Layout/Card',
   component: Card,
   parameters: {
+    docs: { page: mdx },
     controls: {
       exclude: ['onClick', 'href', 'heading', 'description', 'className', 'noMargin'],
     },
