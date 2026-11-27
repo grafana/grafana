@@ -83,7 +83,11 @@ describe('template adoption', () => {
   });
 
   it('ends when the plugin answers no, throws, or never answers', async () => {
-    for (const adopter of [() => false, () => Promise.reject(new Error('down')), () => new Promise<boolean>(() => {})]) {
+    for (const adopter of [
+      () => false,
+      () => Promise.reject(new Error('down')),
+      () => new Promise<boolean>(() => {}),
+    ]) {
       registerAdopters(adopter);
       startTemplateAdoption();
       await settle(1_000);
