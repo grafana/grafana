@@ -3409,6 +3409,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Chyby při načítání pravidel",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Konfiguraci pravidel Grafany se nepodařilo načíst:",
       "failed-to-load-grafana-rules-state": "Stav pravidel Grafany se nepodařilo načíst:",
       "failed-to-load-rules-config": "Konfiguraci pravidel se nepodařilo načíst z <2>{{dataSource}}</2>",
