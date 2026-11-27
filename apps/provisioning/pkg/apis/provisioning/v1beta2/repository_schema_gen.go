@@ -5,29 +5,13 @@
 package v1beta2
 
 import (
-	"errors"
-
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaRepository = resource.NewSimpleSchema("provisioning.grafana.app", "v1beta2", NewRepository(), &RepositoryList{}, resource.WithKind("Repository"),
-		resource.WithPlural("repositories"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
-			FieldSelector: "spec.connection.name",
-			FieldValueFunc: func(o resource.Object) (string, error) {
-				cast, ok := o.(*Repository)
-				if !ok {
-					return "", errors.New("provided object must be of type *Repository")
-				}
-				if cast.Spec.Connection == nil {
-					return "", nil
-				}
-
-				return string(cast.Spec.Connection.Name), nil
-			},
-		},
-		}))
+		resource.WithPlural("repositories"), resource.WithScope(resource.NamespacedScope))
 	kindRepository = resource.Kind{
 		Schema: schemaRepository,
 		Codecs: map[resource.KindEncoding]resource.Codec{

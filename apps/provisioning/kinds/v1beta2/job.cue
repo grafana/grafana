@@ -2,8 +2,11 @@ package v1beta2
 
 // Job and HistoricJob share one schema: a HistoricJob is the persisted record of a finished Job.
 _jobSchema: {
+	// +enum
 	#Action: "pull" | "push" | "pr" | "migrate" | "delete" | "deleteResources" | "releaseResources" | "move" | "fixFolderMetadata" | "test" @cuetsy(kind="enum",memberNames="Pull|Push|PullRequest|Migrate|Delete|DeleteResources|ReleaseResources|Move|FixFolderMetadata|Test")
-	#State:  "pending" | "working" | "success" | "warning" | "error"
+
+	// +enum
+	#State: "pending" | "working" | "success" | "warning" | "error"
 	#ResourceRef: {
 		// Name is the name of the resource, such as a dashboard UID.
 		name?: string

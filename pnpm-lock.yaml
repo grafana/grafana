@@ -1045,8 +1045,8 @@ importers:
         specifier: 29.7.0
         version: 29.7.0(supports-color@7.2.0)
       jest-fail-on-console:
-        specifier: 3.3.1
-        version: 3.3.1
+        specifier: 3.3.4
+        version: 3.3.4(@jest/globals@30.3.0(supports-color@7.2.0))
       jest-junit:
         specifier: 16.0.0
         version: 16.0.0
@@ -11386,8 +11386,11 @@ packages:
     resolution: {integrity: sha512-4i6HItw/JSiJVsC5q0hnKIe/hbYfZLVG9YJ/0pU9Hz2n/9qZe3Rhn5s5CUZA5ORZlcdT/vmAXRMyONXJwPrmYQ==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
 
-  jest-fail-on-console@3.3.1:
-    resolution: {integrity: sha512-dmq/dmh5OBgJlD1MJdpznzwFQP8S7msf3ghTGWQLGhagWwHKzGtqXza76nuJUKOK7BdwqcTK6CCE49Xxv4ckUQ==}
+  jest-fail-on-console@3.3.4:
+    resolution: {integrity: sha512-ckcABlg7ZLy83RRVOE1YvJMF1thgVPozVp+DjnE36Z1CaIbTrSeSR2AU4de/SEpfFgp2qK62EHXfm47N74zMuw==}
+    engines: {yarn: 1.x}
+    peerDependencies:
+      '@jest/globals': '>=27.5.1'
 
   jest-get-type@29.6.3:
     resolution: {integrity: sha512-zrteXnqYxfQh7l5FHyL38jL39di8H8rHoecLH3JNxH3BwOrBsNeabdap5e0I23lD4HHI8W5VFBZqG4Eaq5LNcw==}
@@ -25435,7 +25438,9 @@ snapshots:
       jest-util: 30.3.0
       jest-validate: 30.3.0
 
-  jest-fail-on-console@3.3.1: {}
+  jest-fail-on-console@3.3.4(@jest/globals@30.3.0(supports-color@7.2.0)):
+    dependencies:
+      '@jest/globals': 30.3.0(supports-color@7.2.0)
 
   jest-get-type@29.6.3: {}
 
