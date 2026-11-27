@@ -75,7 +75,15 @@ func RegisterManagerKind(registration ManagerKindRegistration) {
 	managerKindRegistry[kind] = registration
 }
 
-func checkRegisteredKindAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+// IsRegisteredManagerKind reports whether kind was added with RegisterManagerKind.
+func IsRegisteredManagerKind(kind utils.ManagerKind) bool {
+	_, ok := managerKindRegistry[kind]
+	return ok
+}
+
+// CheckRegisteredKindAssignment runs the assignment check of the registered kind obj carries,
+// which decides whether the caller is that kind's manager. It returns nil for any other kind.
+func CheckRegisteredKindAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
 	kind := utils.ParseManagerKindString(obj.GetAnnotation(utils.AnnoKeyManagerKind))
 
 	if registration, ok := managerKindRegistry[kind]; ok {
@@ -138,7 +146,7 @@ func CheckManagerOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor
 		return err
 	}
 
-	if err := checkRegisteredKindAssignment(auth, obj); err != nil {
+	if err := CheckRegisteredKindAssignment(auth, obj); err != nil {
 		return err
 	}
 
@@ -192,7 +200,7 @@ func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAcc
 	}
 
 	if !hasOld {
-		if err := checkRegisteredKindAssignment(auth, obj); err != nil {
+		if err := CheckRegisteredKindAssignment(auth, obj); err != nil {
 			return err
 		}
 	}

@@ -3353,6 +3353,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Er is een fout opgetreden bij het laden van regels",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Kan Grafana-regelsconfiguratie niet laden:",
       "failed-to-load-grafana-rules-state": "Kan Grafana-regelsstatus niet laden:",
       "failed-to-load-rules-config": "Kan regelsconfiguratie vanuit <2>{{dataSource}}</2> niet laden",

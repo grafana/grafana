@@ -154,7 +154,7 @@ func (b *bleveQueryBackend) ReadAuthzMetadata(ctx context.Context, ids []string)
 	}
 	metadata := make(map[string]authzMetadata, len(res.Hits))
 	for _, hit := range res.Hits {
-		metadata[hit.ID] = authzMetadata{folder: value(hit.Sort[0]), deletedBy: value(hit.Sort[1])}
+		metadata[hit.ID] = authzMetadata{Folder: value(hit.Sort[0]), DeletedBy: value(hit.Sort[1])}
 	}
 	return queryMetadata{Values: metadata, Took: res.Took, Cost: res.Cost}, nil
 }

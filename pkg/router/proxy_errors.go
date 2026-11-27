@@ -7,7 +7,10 @@ import (
 	"sync"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 // backendResponseHeaderTimeout bounds how long a proxy waits for a backend's
@@ -39,11 +42,37 @@ func (p *proxyBufferPool) Put(buf []byte) { p.pool.Put(&buf) }
 // It is a policy decision, not evidence that the backend is unhealthy.
 var errBackendRedirect = errors.New("router: backend redirect rejected")
 
+// localProxyError is a failure of the router's own before a request reached
+// its backend, such as failing to sign it. The caller gets its status, and it
+// never counts against the backend's breaker.
+type localProxyError struct {
+	status *apierrors.StatusError
+	// reason labels grafana_router_backend_failures_total. It is empty for a
+	// request the router refused, which says nothing about the router either.
+	reason string
+}
+
+func (e *localProxyError) Error() string { return e.status.Error() }
+
+func (e *localProxyError) Unwrap() error { return e.status }
+
 // proxyErrorHandler is the ReverseProxy ErrorHandler for every proxy. It
-// records the failure for the breaker and answers 504 for a timeout and 502
-// otherwise, as the default handler does.
+// records the failure for the breaker and answers a localProxyError with its
+// own status, a timeout with 504 and anything else with 502, as the default
+// handler does.
 func proxyErrorHandler(w http.ResponseWriter, req *http.Request, err error) {
 	backendCallFrom(req.Context()).setProxyErr(err)
+	var local *localProxyError
+	if errors.As(err, &local) {
+		if local.status.Status().Code == http.StatusServiceUnavailable {
+			w.Header().Set("Retry-After", "1")
+		}
+		if req.Context().Err() == nil && local.reason != "" {
+			logging.FromContext(req.Context()).Warn("router: request not sent to backend", "path", req.URL.Path, "err", err)
+		}
+		_ = errhttp.Write(req.Context(), local.status, w)
+		return
+	}
 	status := http.StatusBadGateway
 	var netErr net.Error
 	if errors.As(err, &netErr) && netErr.Timeout() {

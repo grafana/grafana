@@ -617,6 +617,55 @@ func newBannersTranslation() translation {
 	return t
 }
 
+// newUnscopedTranslation maps a resource whose API authorizer checks
+// unscoped read, write and delete actions, with create mapping to write.
+// Every verb skips scope, as the resource's roles grant the actions unscoped.
+func newUnscopedTranslation(resource, readAction, writeAction, deleteAction string) translation {
+	t := translation{
+		resource:  resource,
+		attribute: "uid",
+		verbMapping: map[string]string{
+			utils.VerbGet:              readAction,
+			utils.VerbList:             readAction,
+			utils.VerbWatch:            readAction,
+			utils.VerbCreate:           writeAction,
+			utils.VerbUpdate:           writeAction,
+			utils.VerbPatch:            writeAction,
+			utils.VerbDelete:           deleteAction,
+			utils.VerbDeleteCollection: deleteAction,
+		},
+		skipScopeOnVerb: map[string]bool{},
+		folderSupport:   false,
+	}
+	for verb := range t.verbMapping {
+		t.skipScopeOnVerb[verb] = true
+	}
+	return t
+}
+
+// newInhibitionRuleTranslation maps notifications.alerting.grafana.app
+// inhibitionrules to the alert.notifications.inhibition-rules:* actions, which
+// are scoped by rule UID. Create is checked without a scope, as the rule has
+// no UID yet.
+func newInhibitionRuleTranslation() translation {
+	return translation{
+		resource:  "inhibition-rules",
+		attribute: "uid",
+		verbMapping: map[string]string{
+			utils.VerbGet:              accesscontrol.ActionAlertingNotificationsInhibitionRulesRead,
+			utils.VerbList:             accesscontrol.ActionAlertingNotificationsInhibitionRulesRead,
+			utils.VerbWatch:            accesscontrol.ActionAlertingNotificationsInhibitionRulesRead,
+			utils.VerbCreate:           accesscontrol.ActionAlertingNotificationsInhibitionRulesWrite,
+			utils.VerbUpdate:           accesscontrol.ActionAlertingNotificationsInhibitionRulesWrite,
+			utils.VerbPatch:            accesscontrol.ActionAlertingNotificationsInhibitionRulesWrite,
+			utils.VerbDelete:           accesscontrol.ActionAlertingNotificationsInhibitionRulesDelete,
+			utils.VerbDeleteCollection: accesscontrol.ActionAlertingNotificationsInhibitionRulesDelete,
+		},
+		folderSupport:   false,
+		skipScopeOnVerb: map[string]bool{utils.VerbCreate: true},
+	}
+}
+
 func NewMapperRegistry() MapperRegistry {
 	skipScopeOnAllVerbs := map[string]bool{
 		utils.VerbCreate:           true,
@@ -637,7 +686,20 @@ func NewMapperRegistry() MapperRegistry {
 			"alertmanagerimports": newAlertmanagerImportsTranslation(),
 			// No silence kind is served here yet; the translation exists so folder-scoped
 			// silence capability checks resolve. See newSilenceTranslation.
-			"silences": newSilenceTranslation(),
+			"silences":        newSilenceTranslation(),
+			"inhibitionrules": newInhibitionRuleTranslation(),
+			"templategroups": newUnscopedTranslation(
+				"alert.notifications.templates",
+				accesscontrol.ActionAlertingNotificationsTemplatesRead,
+				accesscontrol.ActionAlertingNotificationsTemplatesWrite,
+				accesscontrol.ActionAlertingNotificationsTemplatesDelete,
+			),
+			"timeintervals": newUnscopedTranslation(
+				"alert.notifications.time-intervals",
+				accesscontrol.ActionAlertingNotificationsTimeIntervalsRead,
+				accesscontrol.ActionAlertingNotificationsTimeIntervalsWrite,
+				accesscontrol.ActionAlertingNotificationsTimeIntervalsDelete,
+			),
 			"configs": newAlertingConfigTranslation(
 				accesscontrol.AlertingConfigResource,
 				accesscontrol.ActionAlertingConfigRead,
@@ -920,6 +982,14 @@ func NewMapperRegistry() MapperRegistry {
 		},
 		"banners.grafana.app": {
 			"announcement-banners": newBannersTranslation(),
+		},
+		// The enterprise alert enrichments and query library APIs check these
+		// unscoped actions, and have no delete action of their own.
+		"alertenrichment.grafana.app": {
+			"alert-enrichments": newUnscopedTranslation("alert.enrichments", "alert.enrichments:read", "alert.enrichments:write", "alert.enrichments:write"),
+		},
+		"queries.grafana.app": {
+			"queries": newUnscopedTranslation("queries", "queries:read", "queries:write", "queries:write"),
 		},
 	})
 

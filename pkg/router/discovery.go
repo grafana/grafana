@@ -110,7 +110,8 @@ func hashHexBytes(parts ...[]byte) string {
 
 // buildOpenAPIV3Index synthesizes the /openapi/v3 root document: a small
 // path -> {serverRelativeURL} map (never a merged schema — see AGENTS.md
-// "Discovery endpoints" / the design spec's "no cross-group merge" decision).
+// "Serving and discovery" and the discovery design's "no cross-group merge"
+// decision).
 // One entry per served group/version, hash-busted by that group's key.
 func buildOpenAPIV3Index(ctx context.Context, backends []Backend) cachedDoc {
 	sorted := sortedManifestBackends(backends)

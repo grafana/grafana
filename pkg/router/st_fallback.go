@@ -220,6 +220,9 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 }
 
 func (st *singleTenantFallback) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if refuseRemoteServicesCycle(w, req) {
+		return
+	}
 	var buf [6]string
 	parts := pathParts(req.URL.Path, buf[:0])
 	if len(parts) > 4 && parts[0] == "apis" && parts[1] != "" && parts[2] != "" && parts[3] == "namespaces" && parts[4] != "" {

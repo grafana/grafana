@@ -136,6 +136,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-06-05,pluginProxyPreserveTrailingSlash,GA,@grafana/grafana-catalog,false,false,false
 2024-06-06,azureMonitorPrometheusExemplars,GA,@grafana/data-sources-plugins,false,false,false
 2024-06-13,authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
+2026-11-24,authz.legacyUserPermissionsSearch,experimental,@grafana/identity-access-team,false,false,false
 2026-10-27,authz.legacyUserPermissionsShadow,experimental,@grafana/identity-access-team,false,false,false
 2026-10-06,authz.legacyUserPermissions,experimental,@grafana/identity-access-team,false,false,false
 2026-08-20,authz.userPermissions,experimental,@grafana/identity-access-team,false,false,false
@@ -421,3 +422,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-11-11,plugins.disableMTPluginsFallback,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-11-17,grafana.logsInfiniteScrollTop,preview,@grafana/observability-logs,false,false,true
 2026-11-11,grafana.dashboardQuestions,experimental,@grafana/dashboards-squad,false,false,true
+2026-11-24,grafana.bootdataAnalytics,experimental,@grafana/grafana-frontend-platform,false,false,false

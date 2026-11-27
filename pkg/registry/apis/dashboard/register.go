@@ -635,6 +635,13 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 		return apierrors.NewBadRequest(dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason)
 	}
 
+	if identity.IsRegisteredManagerKind(mgr.Kind) {
+		auth, _ := authlib.AuthInfoFrom(ctx)
+		if err := identity.CheckRegisteredKindAssignment(auth, accessor); err != nil {
+			return apierrors.NewBadRequest(dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason)
+		}
+	}
+
 	return nil
 }
 

@@ -6,6 +6,7 @@ import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getPortalContainer } from '@grafana/ui';
+import { preloadOptionEditors } from 'app/core/components/OptionsUI/registry';
 
 import { activateFullSceneTree } from '../../utils/test-utils';
 import { DashboardScene } from '../DashboardScene';
@@ -59,6 +60,9 @@ setPluginImportUtils({
   importPanelPlugin: async (id) => plugins[id],
   getPanelPluginFromCache: (id) => plugins[id],
 });
+
+// The buttons load the option editors' code as they mount and hold cards back until it has loaded.
+beforeAll(() => preloadOptionEditors());
 
 let deactivate: (() => void) | undefined;
 afterEach(() => {

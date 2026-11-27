@@ -13,17 +13,21 @@ const CONCURRENCY_LIMIT = 10;
 
 const noRulesSources: RulesSourceDataSource[] = [];
 
+export interface RulesSourcesWithRulerResult {
+  rulesSourcesWithRuler: RulesSourceDataSource[];
+  isLoading: boolean;
+  /** Set when the list of rules sources fails to load. A source whose discovery fails is left out without an error. */
+  error?: Error;
+}
+
 interface DiscoveryState {
   rulesSourcesToDiscover?: RulesSourceDataSource[];
   withRuler: RulesSourceDataSource[];
   isDone: boolean;
 }
 
-export function useRulesSourcesWithRuler(): {
-  rulesSourcesWithRuler: RulesSourceDataSource[];
-  isLoading: boolean;
-} {
-  const { items: dataSources, isLoading: isLoadingDataSources } = useDataSourcesForRules();
+export function useRulesSourcesWithRuler(): RulesSourcesWithRulerResult {
+  const { items: dataSources, isLoading: isListLoading, error } = useDataSourcesForRules();
   const [discovery, setDiscovery] = useState<DiscoveryState>({ withRuler: noRulesSources, isDone: false });
   const [discoverDsFeatures] = useLazyDiscoverDsFeaturesQuery();
 
@@ -73,7 +77,7 @@ export function useRulesSourcesWithRuler(): {
   }, [dataSources, discoverDsFeatures]);
 
   if (dataSources.length === 0) {
-    return { rulesSourcesWithRuler: noRulesSources, isLoading: isLoadingDataSources };
+    return { rulesSourcesWithRuler: noRulesSources, isLoading: isListLoading, error };
   }
 
   // Derived during render so that a list the effect has not processed yet never reads as ready,
@@ -82,6 +86,7 @@ export function useRulesSourcesWithRuler(): {
 
   return {
     rulesSourcesWithRuler: isCurrentList ? discovery.withRuler : noRulesSources,
-    isLoading: isLoadingDataSources || !isCurrentList || !discovery.isDone,
+    isLoading: isListLoading || !isCurrentList || !discovery.isDone,
+    error,
   };
 }
