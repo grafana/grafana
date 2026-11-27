@@ -380,7 +380,7 @@
     "react-inlinesvg": "^4.6.0",
     "react-loading-skeleton": "3.5.0",
     "react-moveable": "0.56.0",
-    "react-redux": "9.3.0",
+    "react-redux": "9.3.1",
     "react-resizable": "4.0.2",
     "react-router": "5.3.4",
     "react-router-dom": "5.3.4",
