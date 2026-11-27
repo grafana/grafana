@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestRemoteServiceFlag(t *testing.T) {
@@ -75,4 +77,55 @@ func TestOverlayLoaderServesBaseUntilRemotesPoll(t *testing.T) {
 
 	_, err = newOverlayLoader(fakeBackendLoader{err: errors.New("boom")}, remote).Load(context.Background())
 	require.Error(t, err, "a base failure still fails the load")
+}
+
+func TestRemoteServiceOptionsCAFile(t *testing.T) {
+	for _, tc := range []struct {
+		name, shared, own, want string
+	}{
+		{name: "defaults to the shared bundle", shared: "/shared.crt", want: "/shared.crt"},
+		{name: "its own bundle wins", shared: "/shared.crt", own: "/remotes.crt", want: "/remotes.crt"},
+		{name: "neither", want: ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			section := cfg.Raw.Section(remoteServicesSection)
+			if tc.shared != "" {
+				section.Key("apiservice_ca_bundle_file").SetValue(tc.shared)
+			}
+			if tc.own != "" {
+				section.Key("remote_services_ca_file").SetValue(tc.own)
+			}
+			require.Equal(t, tc.want, newRemoteServiceOptions(cfg, "stacks-1").caFile)
+		})
+	}
+}
+
+// Remote services are for cloud ST stack pods only: the standalone router and
+// a server without a stack ID refuse the file, before reading it.
+func TestRemoteServicesLoaderOnlyForCloudStacks(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "missing.yaml")
+	for _, tc := range []struct {
+		name    string
+		stackID string
+		target  []string
+		want    string
+	}{
+		{name: "no stack", target: []string{"all"}, want: "stack_id"},
+		{name: "standalone router", stackID: "1", target: []string{"router"}, want: "standalone router"},
+		{name: "a stack's pod", stackID: "1", target: []string{"all"}, want: "reading remote services file"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.StackID, cfg.Target = tc.stackID, tc.target
+			cfg.Raw.Section(remoteServicesSection).Key("remote_services_file").SetValue(file)
+			_, err := newRemoteServicesLoader(t.Context(), cfg, noRoutesLoader{})
+			require.ErrorContains(t, err, tc.want)
+		})
+	}
+
+	base := noRoutesLoader{}
+	got, err := newRemoteServicesLoader(t.Context(), setting.NewCfg(), base)
+	require.NoError(t, err)
+	require.Equal(t, RoutesLoader(base), got, "no file, nothing mounted")
 }

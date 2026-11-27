@@ -30,6 +30,9 @@ const (
 	failureRedirectRejected = "redirect_rejected"
 	failureOriginMismatch   = "stack_origin_mismatch"
 	failureAuth             = "auth"
+	// failureLoop is a request refused because it would cycle between an ST
+	// pod's remote services and the MT router (remote_services_cycle.go).
+	failureLoop = "loop"
 )
 
 type requestOutcomeKey struct{}
