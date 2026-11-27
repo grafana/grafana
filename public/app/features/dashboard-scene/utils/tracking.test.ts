@@ -328,7 +328,7 @@ describe('dashboard tracking', () => {
   describe('panel option variable usage tracking', () => {
     testWithFlags({ 'grafana.panelOptionInterpolation': true, ...defaultFlags });
 
-    it('counts the panels that set options from variables, on load and on save', async () => {
+    it('counts the panels that set options from variables on load', () => {
       const scene = buildSceneWithTextPanels(
         [{}, {}, {}, {}],
         [
@@ -363,16 +363,143 @@ describe('dashboard tracking', () => {
       const counts = { panel_count: 3, field_config_count: 2, threshold_count: 1, value_mapping_count: 1 };
 
       trackDashboardSceneLoaded(scene, 42);
+
+      expect(reportInteraction).toHaveBeenCalledWith('dashboards_panel_option_variable_usage', {
+        ...counts,
+        trigger: 'load',
+        dashboard_uid: 'dashboard-test',
+        isDynamicDashboard: true,
+      });
+    });
+
+    it('adds the options used, with how many panels use each, to the save event', async () => {
+      const thresholds = { mode: 'absolute', steps: [{ value: 0, color: 'red', valueExpr: '$t' }] };
+      const scene = buildSceneWithTextPanels(
+        [{}, {}, {}, {}, {}],
+        [
+          {
+            defaults: { varMappings: { min: '$min', 'custom.fillOpacity': '$o' } },
+            overrides: [
+              { matcher: { id: 'byName', options: 'A' }, properties: [{ id: 'varMappings.min', value: '$m' }] },
+            ],
+          },
+          { defaults: { varMappings: { min: '$min' } }, overrides: [] },
+          {
+            defaults: {},
+            overrides: [
+              { matcher: { id: 'byName', options: 'A' }, properties: [{ id: 'thresholds', value: thresholds }] },
+            ],
+          },
+          {
+            defaults: { mappings: [{ type: MappingType.ValueToText, options: { 1: { text: 'Host ${host}' } } }] },
+            overrides: [],
+          },
+          { defaults: { min: 0 }, overrides: [] },
+        ]
+      );
+
       await trackDashboardSceneCreatedOrSaved(false, scene, { name: 'name', url: 'url', diff_count: 0 });
 
-      for (const trigger of ['load', 'save']) {
-        expect(reportInteraction).toHaveBeenCalledWith('dashboards_panel_option_variable_usage', {
-          ...counts,
-          trigger,
-          dashboard_uid: 'dashboard-test',
-          isDynamicDashboard: true,
-        });
-      }
+      expect(reportInteraction).toHaveBeenCalledWith('dashboards_panel_option_variable_usage', {
+        panel_count: 4,
+        field_config_count: 2,
+        threshold_count: 1,
+        value_mapping_count: 1,
+        options: 'custom.fillOpacity:1,mappings:1,min:2,thresholds:1',
+        trigger: 'save',
+        dashboard_uid: 'dashboard-test',
+        isDynamicDashboard: true,
+      });
+    });
+
+    describe('on save', () => {
+      type TestScene = ReturnType<typeof buildSceneWithTextPanels>;
+
+      const minMapped: FieldConfigSource = { defaults: { varMappings: { min: '$min' } }, overrides: [] };
+      const save = (scene: TestScene, isNew = false) =>
+        trackDashboardSceneCreatedOrSaved(isNew, scene, { name: 'name', url: 'url', diff_count: 0 });
+      const setDefaults = (scene: TestScene, defaults: VizPanel['state']['fieldConfig']['defaults']) =>
+        scene.state.body.getVizPanels()[0].setState({ fieldConfig: { defaults, overrides: [] } });
+      const savedUsage = () =>
+        jest
+          .mocked(reportInteraction)
+          .mock.calls.filter(
+            ([name, properties]) => name === 'dashboards_panel_option_variable_usage' && properties?.trigger === 'save'
+          )
+          .map(([, properties]) => properties);
+
+      it('sends nothing on save when the usage is the same as on load', async () => {
+        const scene = buildSceneWithTextPanels([{}], [minMapped]);
+        trackDashboardSceneLoaded(scene, 42);
+
+        await save(scene);
+
+        expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_saved', expect.anything());
+        expect(savedUsage()).toEqual([]);
+      });
+
+      it('reports a change once, and nothing for a following save without changes', async () => {
+        const scene = buildSceneWithTextPanels([{}], [minMapped]);
+        trackDashboardSceneLoaded(scene, 42);
+        setDefaults(scene, { varMappings: { min: '$min', max: '$max' } });
+
+        await save(scene);
+        await save(scene);
+
+        expect(savedUsage()).toEqual([
+          {
+            panel_count: 1,
+            field_config_count: 1,
+            threshold_count: 0,
+            value_mapping_count: 0,
+            options: 'max:1,min:1',
+            trigger: 'save',
+            dashboard_uid: 'dashboard-test',
+            isDynamicDashboard: true,
+          },
+        ]);
+      });
+
+      it('reports an empty usage when the last expression is removed', async () => {
+        const scene = buildSceneWithTextPanels([{}], [minMapped]);
+        trackDashboardSceneLoaded(scene, 42);
+        setDefaults(scene, {});
+
+        await save(scene);
+
+        expect(savedUsage()).toEqual([
+          {
+            panel_count: 0,
+            field_config_count: 0,
+            threshold_count: 0,
+            value_mapping_count: 0,
+            options: '',
+            trigger: 'save',
+            dashboard_uid: 'dashboard-test',
+            isDynamicDashboard: true,
+          },
+        ]);
+      });
+
+      it('sends nothing for a new dashboard saved without expressions', async () => {
+        const scene = buildSceneWithTextPanels([{}], [{ defaults: { min: 0 }, overrides: [] }]);
+
+        await save(scene, true);
+
+        expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_created', expect.anything());
+        expect(savedUsage()).toEqual([]);
+      });
+
+      it('reports a copy saved with Save as, though its usage matches the original', async () => {
+        const scene = buildSceneWithTextPanels([{}], [minMapped]);
+        trackDashboardSceneLoaded(scene, 42);
+        // Saving a copy gives the scene the copy's uid before the save is tracked
+        scene.setState({ uid: 'copy-uid' });
+
+        await save(scene);
+
+        expect(savedUsage()).toEqual([expect.objectContaining({ options: 'min:1', dashboard_uid: 'copy-uid' })]);
+      });
     });
 
     it.each([
@@ -416,13 +543,15 @@ describe('dashboard tracking', () => {
       ['the flag is off', { defaults: { varMappings: { min: '$min' } }, overrides: [] }, false, true],
       ['the dashboard is not v2', { defaults: { varMappings: { min: '$min' } }, overrides: [] }, true, false],
       ['no panel uses variables', { defaults: { min: 0 }, overrides: [] }, true, true],
-    ])('does not report when %s', (_, fieldConfig, isFlagOn, isV2) => {
+    ])('does not report on load or save when %s', async (_, fieldConfig, isFlagOn, isV2) => {
       setTestFlags({ 'grafana.panelOptionInterpolation': isFlagOn, ...defaultFlags });
       const scene = buildSceneWithTextPanels([{}], [fieldConfig]);
       jest.spyOn(scene, 'isV2').mockReturnValue(isV2);
 
       trackDashboardSceneLoaded(scene, 42);
+      await trackDashboardSceneCreatedOrSaved(false, scene, { name: 'name', url: 'url', diff_count: 0 });
 
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_saved', expect.anything());
       expect(reportInteraction).not.toHaveBeenCalledWith('dashboards_panel_option_variable_usage', expect.anything());
     });
   });
