@@ -1,7 +1,25 @@
 import { type LoadingState } from './data';
 import { type DataFrame } from './dataFrame';
 import { type DataLinkPostProcessor } from './fieldOverrides';
-import { type TimeZone } from './time';
+import { type AdHocVariableFilter } from './templateVars';
+import { type TimeRange, type TimeZone } from './time';
+
+/**
+ * Host-supplied props for an exposed component that opts into discovery.
+ * `discovery.props` describes only additional props, passed alongside these reserved props.
+ *
+ * @alpha
+ */
+export interface DiscoverableComponentProps {
+  /** Datasource instance whose type matches `discovery.datasource`. */
+  datasource: { uid: string; type: string };
+  /** Resolved time range selected by the host. */
+  timeRange: TimeRange;
+  /** Filters selected by the host. Empty when none are selected. */
+  filters: AdHocVariableFilter[];
+  /** Emit only events declared in `discovery.events`, with a payload only if declared. */
+  onEvent?: (event: { name: string; payload?: unknown }) => void;
+}
 
 /**
  * Props for the PrometheusQueryResults exposed component.

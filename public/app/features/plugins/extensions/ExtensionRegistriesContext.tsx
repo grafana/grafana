@@ -1,10 +1,7 @@
 import { type PropsWithChildren, createContext, useContext } from 'react';
 
 import { type AddedComponentsRegistry } from 'app/features/plugins/extensions/registry/AddedComponentsRegistry';
-import {
-  type AddedFunctionsRegistry,
-  type AddedFunctionsRegistryItem,
-} from 'app/features/plugins/extensions/registry/AddedFunctionsRegistry';
+import { type AddedFunctionsRegistry } from 'app/features/plugins/extensions/registry/AddedFunctionsRegistry';
 import { type AddedLinksRegistry } from 'app/features/plugins/extensions/registry/AddedLinksRegistry';
 import { type ExposedComponentsRegistry } from 'app/features/plugins/extensions/registry/ExposedComponentsRegistry';
 
@@ -19,15 +16,6 @@ const AddedLinksRegistryContext = createContext<AddedLinksRegistry | undefined>(
 const AddedComponentsRegistryContext = createContext<AddedComponentsRegistry | undefined>(undefined);
 const AddedFunctionsRegistryContext = createContext<AddedFunctionsRegistry | undefined>(undefined);
 const ExposedComponentsRegistryContext = createContext<ExposedComponentsRegistry | undefined>(undefined);
-
-interface FunctionExtensionTransform {
-  isLoading: boolean;
-  apply<Signature>(items: Array<AddedFunctionsRegistryItem<Signature>>): Array<AddedFunctionsRegistryItem<Signature>>;
-}
-
-export const FunctionExtensionTransformsContext = createContext<ReadonlyMap<string, FunctionExtensionTransform>>(
-  new Map()
-);
 
 export function useAddedLinksRegistry(): AddedLinksRegistry {
   const context = useContext(AddedLinksRegistryContext);

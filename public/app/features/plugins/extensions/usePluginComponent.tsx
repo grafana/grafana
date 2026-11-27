@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { type ComponentDescriptor, usePluginContext } from '@grafana/data';
+import { type ComponentDescriptor, type DiscoverableComponentProps, usePluginContext } from '@grafana/data';
 import { type UsePluginComponentResult } from '@grafana/runtime';
 
 import { ExposedComponentOriginContext, useExposedComponentOriginPluginId } from './ExposedComponentOriginContext';
@@ -18,8 +18,10 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
   return useResolvedComponent<Props>(id);
 }
 
-// Core-only: CatalogPreview passes a descriptor from the validated registry, never a caller-supplied owner.
-export function useCatalogComponent<Props extends object>(entry: ComponentDescriptor) {
+// Core-only: Pass a descriptor from the validated registry, never a caller-supplied owner.
+export function useCatalogComponent<Props extends DiscoverableComponentProps = DiscoverableComponentProps>(
+  entry: ComponentDescriptor
+) {
   return useResolvedComponent<Props>(entry.id, entry.pluginId);
 }
 

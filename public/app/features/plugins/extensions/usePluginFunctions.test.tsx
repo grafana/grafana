@@ -1,4 +1,4 @@
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import type { JSX } from 'react';
 
 import {
@@ -9,8 +9,6 @@ import {
   PluginType,
 } from '@grafana/data';
 
-import * as descriptors from './ComponentDescriptorsContext';
-import { ASSISTANT_EXTENSION_POINT, AssistantAdapterProvider } from './adapters/assistant/adapter';
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import * as errors from './errors';
 import { isGrafanaDevMode } from './isGrafanaDevMode';
@@ -113,62 +111,6 @@ describe('usePluginFunctions()', () => {
         <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
-  });
-
-  it('should merge Assistant chits by provider before limiting and remove only catalog contributions', async () => {
-    const entries = ['one-app', 'two-app'].map((id) => ({
-      id: `${id}/a/v1`,
-      pluginId: id,
-      title: 'Example',
-      datasource: 'example',
-      prompt: 'Show data',
-      version: 'v1' as const,
-    }));
-    const state = jest.spyOn(descriptors, 'useDescriptorState').mockReturnValue({
-      registry: { list: () => entries, get: (id) => entries.find((entry) => entry.id === id) },
-      loading: false,
-      retry: jest.fn(),
-    });
-    const fn = jest.fn(() => ({
-      schemaVersion: 1,
-      starters: ['legacy'],
-      chits: [{ kind: 'inline', name: 'catalog612f7631' }],
-    }));
-    registries.addedFunctionsRegistry.register({
-      pluginId: 'one-app',
-      configs: [{ title: 'assistant-extension', targets: ASSISTANT_EXTENSION_POINT, fn }],
-    });
-    const Wrapper = wrapper;
-    try {
-      const { result, rerender } = renderHook(
-        () => usePluginFunctions<() => unknown>({ extensionPointId: ASSISTANT_EXTENSION_POINT, limitPerPlugin: 1 }),
-        {
-          wrapper: ({ children }) => (
-            <Wrapper>
-              <AssistantAdapterProvider>{children}</AssistantAdapterProvider>
-            </Wrapper>
-          ),
-        }
-      );
-      await waitFor(() =>
-        expect(result.current.functions.map((item) => item.pluginId)).toEqual(['one-app', 'two-app'])
-      );
-      expect(fn).not.toHaveBeenCalled();
-      expect(result.current.functions[0].fn()).toEqual({
-        schemaVersion: 1,
-        starters: ['legacy'],
-        chits: [{ kind: 'inline', name: 'catalog612f7631' }],
-      });
-      expect(result.current.functions[1].fn()).toEqual({
-        schemaVersion: 1,
-        chits: [expect.objectContaining({ kind: 'inline', name: 'catalog612f7631' })],
-      });
-      state.mockReturnValue({ loading: false, retry: jest.fn() });
-      rerender();
-      await waitFor(() => expect(result.current.functions.map((item) => item.pluginId)).toEqual(['one-app']));
-    } finally {
-      state.mockRestore();
-    }
   });
 
   it('should return an empty array if there are no function extensions registered for the extension point', () => {
