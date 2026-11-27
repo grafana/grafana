@@ -179,16 +179,19 @@ func (st RuleStore) getLatestVersionOfRulesByUID(ctx context.Context, orgID int6
 // caller already in a transaction can reuse it instead of opening a second session.
 func latestVersionOfRulesByUID(sess *db.Session, logger log.Logger, orgID int64, ruleUIDs []string, alertRuleVersionTable string) ([]alertRuleVersion, error) {
 	args, in := getINSubQueryArgs(ruleUIDs)
-	// take only the latest versions of each rule by GUID
+	// take only the latest versions of each rule by GUID.
+	// MAX(version) is answered from the (rule_org_id, rule_uid, rule_guid, version) index alone, and the
+	// join uses the unique (rule_guid, version) index. MAX(id) needed a heap fetch for every stored version
+	// on PostgreSQL, which is slow for rules with a long version history.
 	rows, err := sess.SQL(fmt.Sprintf(`
 	SELECT v1.* FROM %[1]s AS v1
 		INNER JOIN (
-		    SELECT rule_guid, MAX(id) AS id
+		    SELECT rule_guid, MAX(version) AS version
 		    FROM %[1]s
 		    WHERE rule_org_id = ?
 		      AND rule_uid IN (%[2]s)
 		    GROUP BY rule_guid
-		) AS v2 ON v1.rule_guid = v2.rule_guid AND v1.id = v2.id
+		) AS v2 ON v1.rule_guid = v2.rule_guid AND v1.version = v2.version
 	`, alertRuleVersionTable, strings.Join(in, ",")), append([]any{orgID}, args...)...).Rows(new(alertRuleVersion))
 	if err != nil {
 		return nil, err
