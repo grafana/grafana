@@ -123,7 +123,7 @@ func TestFeaturesValidate(t *testing.T) {
 }
 
 func TestProvideFeatures(t *testing.T) {
-	legacyProvider := func() memprovider.InMemoryProvider {
+	legacyProvider := func() *memprovider.InMemoryProvider {
 		return memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
 			featuremgmt.FlagAuthzDelegationChecks: {Key: featuremgmt.FlagAuthzDelegationChecks, DefaultVariant: "enabled", Variants: map[string]any{"enabled": true}},
 			featuremgmt.FlagKubernetesAuthzGlobalRolesApi: {
