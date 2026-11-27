@@ -2424,7 +2424,7 @@ importers:
         version: 1.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@rc-component/slider':
         specifier: ^1.0.1
-        version: 1.2.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 1.2.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@rc-component/tooltip':
         specifier: ^1.4.0
         version: 1.5.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -5707,8 +5707,8 @@ packages:
       react: '*'
       react-dom: '*'
 
-  '@rc-component/slider@1.2.1':
-    resolution: {integrity: sha512-viYU/3Vy8dXfTOAB/5rNkNHIsHJQ7DwK+sdQ5L76qDHhL8RtLfwsR7pYTUFfmKUgSAhSzEQolmfuDeIx3/fBJQ==}
+  '@rc-component/slider@1.2.2':
+    resolution: {integrity: sha512-DrzJRjZVGK6N/zYKAsi6k1g1IwTxVSDUA7SzgzQ5IOJz1nY3kLtq70t0T0Pw5yOYi1LNlt0rzCWaFvZmYsX6Gw==}
     engines: {node: '>=8.x'}
     peerDependencies:
       react: '>=16.9.0'
@@ -18846,7 +18846,7 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  '@rc-component/slider@1.2.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@rc-component/slider@1.2.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@rc-component/util': 1.14.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       clsx: 2.1.1
