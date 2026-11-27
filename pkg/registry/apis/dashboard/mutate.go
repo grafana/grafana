@@ -259,14 +259,10 @@ func mutateDashboardPreferences(a admission.Attributes) error {
 	if p := obj.Spec.Panels; p != nil {
 		p.Legend = nilIfUnset(p.Legend)
 		p.Tooltip = nilIfUnset(p.Tooltip)
-		p.Axis = nilIfUnset(p.Axis)
-		p.Graph = nilIfUnset(p.Graph)
 		p.Field = nilIfUnset(p.Field)
-		p.Frame = nilIfUnset(p.Frame)
 		obj.Spec.Panels = nilIfUnset(p)
 	}
 	if d := obj.Spec.Dashboard; d != nil {
-		d.AutoGrid = nilIfUnset(d.AutoGrid)
 		obj.Spec.Dashboard = nilIfUnset(d)
 	}
 

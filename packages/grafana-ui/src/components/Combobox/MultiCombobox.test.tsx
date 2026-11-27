@@ -78,6 +78,33 @@ describe('MultiCombobox', () => {
     expect(screen.getByPlaceholderText('Select')).toBeInTheDocument();
   });
 
+  it('forwards data attributes to the combobox input alongside data-testid', () => {
+    const options = [{ label: 'A', value: 'a' }];
+    render(
+      <MultiCombobox
+        options={options}
+        value={[]}
+        onChange={jest.fn()}
+        data-testid="my-multi-combobox"
+        data-analytics-id="labels_picked"
+      />
+    );
+
+    const input = screen.getByTestId('my-multi-combobox');
+    expect(input).toHaveAttribute('role', 'combobox');
+    expect(input).toHaveAttribute('data-analytics-id', 'labels_picked');
+  });
+
+  it('does not forward props that are not data attributes to the input', () => {
+    const options = [{ label: 'A', value: 'a' }];
+    const spreadProps = { title: 'Spread title', 'data-analytics-id': 'labels_picked' };
+    render(<MultiCombobox options={options} value={[]} onChange={jest.fn()} {...spreadProps} />);
+
+    const input = screen.getByRole('combobox');
+    expect(input).toHaveAttribute('data-analytics-id', 'labels_picked');
+    expect(input).not.toHaveAttribute('title');
+  });
+
   it('should not render with placeholder when options selected', async () => {
     const options = [
       { label: 'A', value: 'a' },
@@ -516,6 +543,30 @@ describe('MultiCombobox', () => {
       await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
 
       expect(asyncOptions).toHaveBeenCalled();
+    });
+
+    it("doesn't select an earlier search's result while the search for the typed text loads", async () => {
+      const asyncOptions = jest.fn((searchTerm: string) =>
+        searchTerm === 'Bob'
+          ? new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'Bob' }]), 1000))
+          : Promise.resolve([{ value: 'Alice' }])
+      );
+      render(<MultiCombobox options={asyncOptions} value={[]} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+      await user.type(input, 'Bob');
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+
+      await user.hover(screen.getByRole('option', { name: 'Alice' }));
+      await user.keyboard('{Enter}');
+      await user.click(screen.getByRole('option', { name: 'Alice' }));
+      expect(onChangeHandler).not.toHaveBeenCalled();
+
+      await act(async () => jest.advanceTimersByTimeAsync(1000));
+      await user.keyboard('{Enter}');
+      expect(onChangeHandler).toHaveBeenCalledWith([{ value: 'Bob' }]);
     });
 
     it('should allow async options and select value', async () => {

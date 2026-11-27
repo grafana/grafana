@@ -1,12 +1,12 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Dropdown, Icon, LinkButton, Menu, TextLink, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { type FolderDTO } from 'app/types/folders';
-import { GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
+import { type GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
 import { type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
@@ -54,6 +54,12 @@ interface GroupDetailsPageContentProps {
 
 function GroupDetailsPageContent({ dataSourceUid, namespaceId, groupName }: GroupDetailsPageContentProps) {
   const isGrafanaRuleGroup = dataSourceUid === GRAFANA_RULES_SOURCE_NAME;
+
+  // A stable reference lets the memoized rule rows skip re-rendering when this page re-renders
+  const grafanaGroupIdentifier = useMemo<GrafanaRuleGroupIdentifier>(
+    () => ({ groupName, groupOrigin: 'grafana', namespace: { uid: namespaceId } }),
+    [groupName, namespaceId]
+  );
 
   const { folder, loading: isFolderLoading } = useFolder(isGrafanaRuleGroup ? namespaceId : '');
   const {
@@ -166,10 +172,7 @@ function GroupDetailsPageContent({ dataSourceUid, namespaceId, groupName }: Grou
         {ruleSourceName && (
           <ul role="tree">
             {isGrafanaRuleGroup ? (
-              <GrafanaGroupLoader
-                groupIdentifier={{ groupName, groupOrigin: 'grafana', namespace: { uid: namespaceId } }}
-                namespaceName={namespaceName}
-              />
+              <GrafanaGroupLoader groupIdentifier={grafanaGroupIdentifier} namespaceName={namespaceName} />
             ) : (
               <DataSourceGroupLoader
                 groupIdentifier={{

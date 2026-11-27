@@ -3353,6 +3353,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Erros ao carregar regras",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Falha ao carregar a configuração das regras da Grafana:",
       "failed-to-load-grafana-rules-state": "Falha ao carregar a situação das regras da Grafana:",
       "failed-to-load-rules-config": "Falha ao carregar a configuração das regras de <2>{{dataSource}}</2>",
@@ -6613,6 +6614,10 @@
       "paused": "Este painel foi pausado pelo administrador",
       "try-again-later": "Tente novamente mais tarde"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Tem certeza de que deseja remover este painel?"
@@ -8069,6 +8074,9 @@
       "title-delete-all-transformations": "Deseja excluir todas as transformações?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_one": "",
@@ -10516,6 +10524,25 @@
         "otherGroup": "Outros"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_one": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -11034,6 +11061,11 @@
         "placement-options": {
           "label-bottom": "Inferior",
           "label-right": "Direita"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_one": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11129,6 +11161,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "Um clique"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "Adicionar link",
@@ -13785,6 +13820,7 @@
       "open": "Menu principal",
       "pin-error": "Erro ao atualizar os itens fixados do menu",
       "pinned-list-label": "Itens fixados",
+      "section-resize": "",
       "undock": "Desacoplar menu"
     },
     "megamenu-item": {
@@ -13983,12 +14019,32 @@
         "undo-label": "Edição do assistente"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "Cancelar",
       "confirm-discard": "Descartar",
       "confirm-keep": "Manter",
       "confirm-text": "Deseja manter as alterações feitas ao visualizar este bloco de anotações?",
       "confirm-title": "Alterações no painel não salvas"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17295,6 +17351,13 @@
       "wide-list": "Lista ampla",
       "wide-list-desc": "Horizontal, nome e valor, minigráfico de área, cor única"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "Estatística",
       "stat-color-background": "Estatística - cor de fundo",
@@ -17842,6 +17905,10 @@
       "time-zone-option": "Fuso horário",
       "time-zone-selection": "Seleção de fuso horário"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "Aplicar intervalo de tempo",
       "default-error": "Insira uma data ({{dateExample}}) ou hora relativa ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -17859,6 +17926,12 @@
       "to": "até",
       "zoom-out-button": "Diminuir o intervalo de tempo",
       "zoom-out-tooltip-new": "Diminuir o zoom do intervalo de tempo <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "Aplicar intervalo de tempo",

@@ -93,7 +93,15 @@ func (e *legacyExpressionExporter) convertPermission(
 	permission permissionEvaluator,
 ) (*authzextv1.LegacyExpression, error) {
 	if permission.Action == "" {
-		return nil, errors.New("legacy permission action is required")
+		if len(permission.Scopes) > 0 {
+			return nil, errors.New("legacy permission with scopes requires an action")
+		}
+
+		// Callers use an unscoped empty action as a deny placeholder.
+		// Encode it as an empty ANY rather than an invalid permission.
+		return &authzextv1.LegacyExpression{
+			Node: &authzextv1.LegacyExpression_Any{Any: &authzextv1.LegacyExpressionList{}},
+		}, nil
 	}
 
 	if len(permission.Scopes) > maxLegacyExpressionScopes-e.scopes {

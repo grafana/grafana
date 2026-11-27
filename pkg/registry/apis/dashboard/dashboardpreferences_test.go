@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -116,43 +115,6 @@ func TestDashboardPreferencesScopeFromName(t *testing.T) {
 	})
 }
 
-// Dashboards apply the value as the date math "now-" + nowDelay, so it is valid only if the frontend can apply it.
-func TestIsValidDashboardPreferencesNowDelay(t *testing.T) {
-	valid := []string{"1m", "5m", "30s", "1h", "1d", "1w", "1M", "1Q", "1y", "99999m"}
-	invalid := []struct{ value, why string }{
-		{"0", "no unit"},
-		{"-0", "a sign"},
-		{"0m", "valid date math, but it delays nothing"},
-		{"-1m", "a sign"},
-		{"+5m", "a sign"},
-		{"1h30m", "two units"},
-		{"1.5h", "a fraction"},
-		{"100ms", "not a unit of date math"},
-		{"1us", "not a unit of date math"},
-		{"abc", "not date math"},
-		{"1 m", "whitespace, which the frontend would strip"},
-		{"1m\n", "a control character"},
-		{"1m\x00abc", "a control character"},
-		{"1b", "business days, which the frontend doesn't know"},
-		{"1H", "capital H, which the frontend doesn't know"},
-		{"100000m", "more digits than the frontend reads"},
-		{"1h-30m", "compound date math"},
-		{"1m+1h", "compound date math that ends the range after now"},
-		{"m", "no amount"},
-	}
-
-	for _, value := range valid {
-		t.Run(fmt.Sprintf("valid %q", value), func(t *testing.T) {
-			require.True(t, isValidDashboardPreferencesNowDelay(value))
-		})
-	}
-	for _, tt := range invalid {
-		t.Run(fmt.Sprintf("invalid %q", tt.value), func(t *testing.T) {
-			require.False(t, isValidDashboardPreferencesNowDelay(tt.value), tt.why)
-		})
-	}
-}
-
 func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 	const repositoryManaged = "dashboard preferences can't be managed by a repository"
 	const folderAnnotation = "dashboard preferences can't have the grafana.app/folder annotation"
@@ -247,10 +209,10 @@ func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 		{name: "repository-managed", attrs: create(withAnnotations(u1Preferences(), map[string]string{utils.AnnoKeyManagerKind: "repo"})), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: repositoryManaged},
 		{name: "repository manager identity", attrs: create(withAnnotations(u1Preferences(), map[string]string{utils.AnnoKeyManagerIdentity: "repo-1"})), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: repositoryManaged},
 		{name: "legacy repository annotation", attrs: create(withAnnotations(u1Preferences(), map[string]string{"grafana.app/repoName": "repo-1"})), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: repositoryManaged},
-		{name: "invalid spec", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"fiscalYearStartMonth":12}}`)), requester: u1, wantErr: apierrors.IsInvalid},
+		{name: "invalid spec", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"cursorSync":"Bogus"}}`)), requester: u1, wantErr: apierrors.IsInvalid},
 		// A PUT is denied before admission reads the payload, so a POST must not report on it either.
-		{name: "invalid spec for a tier the caller can't write", attrs: create(withSpec(newDashboardPreferences("user-u2"), `{"dashboard":{"fiscalYearStartMonth":12}}`)), requester: u1, wantErr: apierrors.IsForbidden, wantErrMsg: "only the owner can access user dashboard preferences"},
-		{name: "invalid value for a tier the caller can't write", attrs: create(withSpec(newDashboardPreferences("namespace"), `{"dashboard":{"autoGrid":{"rowHeight":49}}}`)), requester: editor, wantErr: apierrors.IsForbidden, wantErrMsg: "only org admins can change org dashboard preferences"},
+		{name: "invalid spec for a tier the caller can't write", attrs: create(withSpec(newDashboardPreferences("user-u2"), `{"dashboard":{"cursorSync":"Bogus"}}`)), requester: u1, wantErr: apierrors.IsForbidden, wantErrMsg: "only the owner can access user dashboard preferences"},
+		{name: "invalid value for a tier the caller can't write", attrs: create(withSpec(newDashboardPreferences("namespace"), `{"dashboard":{"autoRefresh":"5s"}}`)), requester: editor, wantErr: apierrors.IsForbidden, wantErrMsg: "only org admins can change org dashboard preferences"},
 		{name: "refresh below minimum", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"autoRefresh":"5s"}}`)), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: `spec.dashboard.autoRefresh: Invalid value: "5s": Dashboard refresh interval is too low`},
 		{name: "refresh off", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"autoRefresh":""}}`)), requester: u1},
 		{name: "refresh auto", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"autoRefresh":"auto"}}`)), requester: u1},
@@ -262,23 +224,14 @@ func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 		// The refresh check passes it as a dashboard's refresh value, but it is not an interval to list.
 		{name: "auto refresh interval", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"autoRefreshIntervals":["1m","auto"]}}`)), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: `spec.dashboard.autoRefreshIntervals.1: Invalid value: "auto": must be a duration such as 30s or 1m`},
 		{name: "empty refresh interval", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"autoRefreshIntervals":[""]}}`)), requester: u1, wantErr: apierrors.IsInvalid},
-		{name: "now delay", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"nowDelay":"30s"}}`)), requester: u1},
-		{name: "now delay in days", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"nowDelay":"1d"}}`)), requester: u1},
-		{name: "now delay that isn't a duration", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"nowDelay":"soon"}}`)), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: `spec.dashboard.nowDelay: Invalid value: "soon": must be one amount and unit such as 30s or 1m`},
-		// Dashboards apply it as "now-" + nowDelay.
-		{name: "negative now delay", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"nowDelay":"-1m"}}`)), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: `spec.dashboard.nowDelay: Invalid value: "-1m": must be one amount and unit such as 30s or 1m`},
-		{name: "auto grid at the editor's minimums", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"autoGrid":{"maxColumnCount":1,"columnWidth":50,"rowHeight":50}}}`)), requester: u1},
-		{name: "max column count below the editor's minimum", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"autoGrid":{"maxColumnCount":0}}}`)), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: "spec.dashboard.autoGrid.maxColumnCount: Invalid value: 0: must be at least 1"},
-		{name: "column width below the editor's minimum", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"autoGrid":{"columnWidth":49}}}`)), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: "spec.dashboard.autoGrid.columnWidth: Invalid value: 49: must be at least 50"},
-		{name: "row height below the editor's minimum", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"autoGrid":{"rowHeight":49}}}`)), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: "spec.dashboard.autoGrid.rowHeight: Invalid value: 49: must be at least 50"},
 		{name: "panel preferences", attrs: create(withSpec(u1Preferences(), `{"panels":{"legend":{"showLegend":true}}}`)), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: "spec.panels: Forbidden: panel preferences are not supported yet"},
 		// A merge-patch that nulls the last panel value leaves the groups, which Mutate drops.
-		{name: "panels with no value set", attrs: create(withSpec(u1Preferences(), `{"panels":{"graph":{}}}`)), mutate: true, requester: u1},
-		{name: "reset", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"preload":true},"reset":["dashboard.nowDelay","dashboard.autoGrid.rowHeight"]}`)), requester: u1},
-		{name: "reset listed twice", attrs: create(withSpec(u1Preferences(), `{"reset":["dashboard.nowDelay","dashboard.nowDelay"]}`)), requester: u1, wantErr: apierrors.IsInvalid},
-		{name: "reset of a set field", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"nowDelay":"1m"},"reset":["dashboard.nowDelay"]}`)), requester: u1, wantErr: apierrors.IsInvalid},
+		{name: "panels with no value set", attrs: create(withSpec(u1Preferences(), `{"panels":{"legend":{}}}`)), mutate: true, requester: u1},
+		{name: "reset", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"preload":true},"reset":["dashboard.cursorSync","dashboard.timeRange"]}`)), requester: u1},
+		{name: "reset listed twice", attrs: create(withSpec(u1Preferences(), `{"reset":["dashboard.cursorSync","dashboard.cursorSync"]}`)), requester: u1, wantErr: apierrors.IsInvalid},
+		{name: "reset of a set field", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"cursorSync":"Crosshair"},"reset":["dashboard.cursorSync"]}`)), requester: u1, wantErr: apierrors.IsInvalid},
 		// Like spec.panels, a panel reset would be stored and ignored.
-		{name: "panel reset", attrs: create(withSpec(u1Preferences(), `{"reset":["dashboard.nowDelay","panels.legend.placement"]}`)), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: "spec.reset.1: Forbidden: panel preferences are not supported yet"},
+		{name: "panel reset", attrs: create(withSpec(u1Preferences(), `{"reset":["dashboard.cursorSync","panels.legend.placement"]}`)), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: "spec.reset.1: Forbidden: panel preferences are not supported yet"},
 		{name: "wrong type", attrs: create(&dashv2beta1.Notebook{}), requester: u1, wantErr: isPlainError, wantErrMsg: "unsupported dashboard preferences version"},
 
 		{name: "folder tier update", attrs: update(newDashboardPreferences("folder-f1"), newDashboardPreferences("folder-f1")), requester: editor},
@@ -290,7 +243,7 @@ func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 		{name: "legacy repository annotation on update", attrs: update(withAnnotations(u1Preferences(), map[string]string{"grafana.app/repoName": "repo-1"}), u1Preferences()), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: repositoryManaged},
 		// Nothing stored has such a name, so only the scope check rejects it.
 		{name: "update of a name that isn't a tier's", attrs: update(newDashboardPreferences("foo"), newDashboardPreferences("foo")), requester: admin, wantErr: apierrors.IsBadRequest, wantErrMsg: `metadata.name "foo" is not a dashboard preferences name`},
-		{name: "update with invalid spec", attrs: update(withSpec(u1Preferences(), `{"dashboard":{"fiscalYearStartMonth":12}}`), u1Preferences()), requester: u1, wantErr: apierrors.IsInvalid},
+		{name: "update with invalid spec", attrs: update(withSpec(u1Preferences(), `{"dashboard":{"cursorSync":"Bogus"}}`), u1Preferences()), requester: u1, wantErr: apierrors.IsInvalid},
 		{name: "update with refresh below minimum", attrs: update(withSpec(u1Preferences(), `{"dashboard":{"autoRefresh":"5s"}}`), u1Preferences()), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: `spec.dashboard.autoRefresh: Invalid value: "5s": Dashboard refresh interval is too low`},
 		{name: "update changing the refresh to below minimum", attrs: update(withSpec(u1Preferences(), `{"dashboard":{"autoRefresh":"5s"}}`), withSpec(u1Preferences(), `{"dashboard":{"autoRefresh":"1m"}}`)), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: `spec.dashboard.autoRefresh: Invalid value: "5s": Dashboard refresh interval is too low`},
 		{name: "update changing refresh intervals to below minimum", attrs: update(withSpec(u1Preferences(), `{"dashboard":{"autoRefreshIntervals":["5s","1m"]}}`), withSpec(u1Preferences(), `{"dashboard":{"autoRefreshIntervals":["1m"]}}`)), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: `spec.dashboard.autoRefreshIntervals.0: Invalid value: "5s": Dashboard refresh interval is too low`},
@@ -303,12 +256,10 @@ func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 		{name: "update adding an interval below minimum", attrs: update(withSpec(u1Preferences(), `{"dashboard":{"autoRefreshIntervals":["1m","5s"]}}`), withSpec(u1Preferences(), `{"dashboard":{"autoRefreshIntervals":["1m"]}}`)), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: `spec.dashboard.autoRefreshIntervals.1: Invalid value: "5s": Dashboard refresh interval is too low`},
 		// An empty list and no list compare equal, so this check can't depend on a change.
 		{name: "update with an empty refresh interval list", attrs: update(withSpec(u1Preferences(), `{"dashboard":{"autoRefreshIntervals":[]}}`), u1Preferences()), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: "spec.dashboard.autoRefreshIntervals: Invalid value: []: must not be empty; send null to clear it"},
-		{name: "update with a negative now delay", attrs: update(withSpec(u1Preferences(), `{"dashboard":{"nowDelay":"-1m"}}`), u1Preferences()), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: `spec.dashboard.nowDelay: Invalid value: "-1m"`},
-		{name: "update with a row height below the editor's minimum", attrs: update(withSpec(u1Preferences(), `{"dashboard":{"autoGrid":{"rowHeight":49}}}`), u1Preferences()), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: "spec.dashboard.autoGrid.rowHeight: Invalid value: 49: must be at least 50"},
 		{name: "update with panel preferences", attrs: update(withSpec(u1Preferences(), `{"panels":{"legend":{"showLegend":true}}}`), u1Preferences()), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: "spec.panels: Forbidden: panel preferences are not supported yet"},
 		{name: "update with a panel reset", attrs: update(withSpec(u1Preferences(), `{"reset":["panels.field.decimals"]}`), u1Preferences()), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: "spec.reset.0: Forbidden: panel preferences are not supported yet"},
 		// A merge-patch that sets a reset field keeps the stored list, so the set and the reset meet here.
-		{name: "update setting a reset field", attrs: update(withSpec(u1Preferences(), `{"dashboard":{"nowDelay":"1m"},"reset":["dashboard.nowDelay"]}`), withSpec(u1Preferences(), `{"reset":["dashboard.nowDelay"]}`)), requester: u1, wantErr: apierrors.IsInvalid},
+		{name: "update setting a reset field", attrs: update(withSpec(u1Preferences(), `{"dashboard":{"cursorSync":"Crosshair"},"reset":["dashboard.cursorSync"]}`), withSpec(u1Preferences(), `{"reset":["dashboard.cursorSync"]}`)), requester: u1, wantErr: apierrors.IsInvalid},
 		{name: "update without an old object", attrs: update(u1Preferences(), nil), requester: u1, wantErr: isPlainError, wantErrMsg: "old dashboard preferences"},
 
 		{name: "delete", attrs: dashboardPreferencesAttributesForOp(admission.Delete, nil, u1Preferences()), requester: u1},
@@ -480,11 +431,11 @@ func TestDashboardsAPIBuilderValidateDashboardPreferencesReportsEveryProblem(t *
 	}{
 		{
 			name:       "schema, reset and value problems",
-			spec:       `{"dashboard":{"fiscalYearStartMonth":12,"autoRefresh":"5s","nowDelay":"soon","autoGrid":{"columnWidth":49,"rowHeight":49}},"panels":{"frame":{"transparent":true}},"reset":["dashboard.preload","dashboard.preload"]}`,
-			wantCauses: []string{"spec.dashboard.fiscalYearStartMonth", "spec.reset.1", "spec.dashboard.autoRefresh", "spec.dashboard.nowDelay", "spec.dashboard.autoGrid.columnWidth", "spec.dashboard.autoGrid.rowHeight", "spec.panels"},
+			spec:       `{"dashboard":{"cursorSync":"Bogus","autoRefresh":"5s","autoRefreshIntervals":["1m","auto"]},"panels":{"legend":{"showLegend":true}},"reset":["dashboard.preload","dashboard.preload"]}`,
+			wantCauses: []string{"spec.dashboard.cursorSync", "spec.reset.1", "spec.dashboard.autoRefresh", "spec.dashboard.autoRefreshIntervals.1", "spec.panels"},
 		},
-		// The schema already rejects an empty value, and a second cause would restate the field.
-		{name: "a field the schema rejected", spec: `{"dashboard":{"nowDelay":""}}`, wantCauses: []string{"spec.dashboard.nowDelay"}},
+		// The schema already rejects a value this long, and a second cause for not being a duration would restate the field.
+		{name: "a field the schema rejected", spec: `{"dashboard":{"autoRefresh":"` + strings.Repeat("x", 33) + `"}}`, wantCauses: []string{"spec.dashboard.autoRefresh"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

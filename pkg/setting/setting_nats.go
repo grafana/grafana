@@ -69,8 +69,9 @@ type NATSSettings struct {
 
 	// DiscoveryInterval is how often an embedded node refreshes its registry
 	// heartbeat and reconciles cluster routes. DiscoveryTTL is how long a peer is
-	// trusted after its last heartbeat before its route is dropped and row pruned;
-	// keep it a comfortable multiple of DiscoveryInterval.
+	// trusted after a node last saw its heartbeat before its route is dropped; its
+	// row is pruned after four TTLs. Keep it a comfortable multiple of
+	// DiscoveryInterval; it is raised to at least 1s plus two intervals.
 	DiscoveryInterval time.Duration
 	DiscoveryTTL      time.Duration
 

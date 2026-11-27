@@ -433,8 +433,8 @@ var ErrIndexBuildInProgress = errors.New("another replica is building the index"
 var ErrIndexClosedDuringRebuild = errors.New("index was closed while it was being rebuilt")
 
 type BuildIndexOptions struct {
-	// RebuildFrom is the index seen by the rebuild worker, so the backend can
-	// avoid reopening it if idle cleanup closes it before the rebuild starts.
+	// RebuildFrom lets the backend size the rebuild and detect if idle cleanup
+	// closed the index while the worker was preparing to rebuild it.
 	RebuildFrom ResourceIndex
 
 	// Startup workers can try other indexes instead of waiting for a replica.
@@ -465,7 +465,7 @@ type SearchBackend interface {
 	PeekIndex(key NamespacedResource) ResourceIndex
 
 	// BuildIndex builds an index from scratch.
-	// Depending on the size hint, the backend may choose different options (eg: memory vs disk).
+	// The size hint determines whether to coordinate the build using remote snapshots.
 	// A negative size means the caller does not have a cheap size hint.
 	// The last known resource version can be used to detect that nothing has changed, and existing on-disk index can be reused.
 	// The builder will write all documents before returning.
@@ -1689,7 +1689,10 @@ func (s *searchServer) startupIndexStats(ctx context.Context) ([]ResourceStats, 
 	if err != nil {
 		return nil, err
 	}
-	return slices.DeleteFunc(stats, func(info ResourceStats) bool { return startupIndexSize(info) <= int64(s.initMinSize) }), nil
+	return slices.DeleteFunc(stats, func(info ResourceStats) bool {
+		// KV also reports cluster-scoped kinds, but Search requires a namespace.
+		return info.Namespace == "" || startupIndexSize(info) <= int64(s.initMinSize)
+	}), nil
 }
 
 func (s *searchServer) startupResourceStats(ctx context.Context, filter NamespacedResource, minCount int) ([]ResourceStats, error) {
@@ -1711,11 +1714,7 @@ func (s *searchServer) startupResourceStats(ctx context.Context, filter Namespac
 }
 
 func startupIndexSize(info ResourceStats) int64 {
-	// New per-resource indexes keep trash; namespace-wide indexes don't.
-	// Saved index stats already carry the full document count in Count.
-	if info.IsGlobal() {
-		return info.Count
-	}
+	// Saved stats already include all documents in Count and leave DeletedCount unset.
 	return info.Count + info.DeletedCount
 }
 
@@ -2250,15 +2249,8 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		s.builders.clearNamespacedCache(req.NamespacedResource)
 	}
 
-	size, err := idx.DocCount(ctx, "", nil)
-	if err != nil {
-		span.RecordError(fmt.Errorf("failed to get current index doc count: %w", err))
-		l.Warn("failed to get current index doc count, using unknown size", "error", err)
-		size = unknownBuildSize
-	}
-
-	// Pass rebuild=true to force rebuild of any existing file-based index.
-	_, err = s.buildWithOptions(ctx, req.NamespacedResource, size, "rebuild", true, req.lastImportTime, BuildIndexOptions{RebuildFrom: idx})
+	// The backend uses the original index's full count to decide whether to share the rebuild via snapshots.
+	_, err = s.buildWithOptions(ctx, req.NamespacedResource, unknownBuildSize, "rebuild", true, req.lastImportTime, BuildIndexOptions{RebuildFrom: idx})
 	if errors.Is(err, ErrIndexClosedDuringRebuild) {
 		l.Info("index was closed while it was being rebuilt, discarding the rebuilt index")
 	} else if err != nil {

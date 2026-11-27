@@ -31,7 +31,7 @@ func buildUnifiedRequest(query *Query) *resourcepb.ResourceSearchRequest {
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 	for _, f := range query.Filters {
-		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{Key: f.Field, Operator: strings.ToLower(f.Operator), Values: f.Values})
+		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{Key: f.Field, Operator: strings.ToLower(string(f.Operator)), Values: f.Values})
 	}
 	for _, r := range query.Regexes {
 		op := resource.OperatorRegex

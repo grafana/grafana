@@ -3353,6 +3353,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Fel vid laddning av regler",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Misslyckades med att ladda konfigurationen för Grafana-regler:",
       "failed-to-load-grafana-rules-state": "Misslyckades med att ladda tillståndet för Grafana-regler:",
       "failed-to-load-rules-config": "Det gick inte att ladda regelkonfigurationen från <2>{{dataSource}}</2>",
@@ -6613,6 +6614,10 @@
       "paused": "Denna instrumentpanel har pausats av administratören",
       "try-again-later": "Försök igen senare"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Är du säker på att du vill ta bort denna panel?"
@@ -8069,6 +8074,9 @@
       "title-delete-all-transformations": "Radera alla transformeringar?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_one": "",
@@ -10516,6 +10524,25 @@
         "otherGroup": "Övriga"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_one": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -11034,6 +11061,11 @@
         "placement-options": {
           "label-bottom": "Underst",
           "label-right": "Höger"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_one": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11129,6 +11161,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "En klickning"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "Lägg till länk",
@@ -13785,6 +13820,7 @@
       "open": "Huvudmeny",
       "pin-error": "Det gick inte att uppdatera fästa menyalternativ",
       "pinned-list-label": "Fästa objekt",
+      "section-resize": "",
       "undock": "Avdocka menyn"
     },
     "megamenu-item": {
@@ -13983,12 +14019,32 @@
         "undo-label": "Redigering i Assistant"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "Avbryt",
       "confirm-discard": "Kassera",
       "confirm-keep": "Behåll",
       "confirm-text": "Vill du behålla de ändringar du gjorde när du visade denna anteckningsbok?",
       "confirm-title": "Paneländringar som inte sparats"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17295,6 +17351,13 @@
       "wide-list": "Bred lista",
       "wide-list-desc": "Horisontell, namn och värde, trendlinje med ytfyllnad, enskild färg"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "Stat",
       "stat-color-background": "Stat – bakgrundsfärg",
@@ -17842,6 +17905,10 @@
       "time-zone-option": "Tidszon",
       "time-zone-selection": "Val av tidszon"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "Tillämpa tidsintervall",
       "default-error": "Ange ett datum ({{dateExample}}) eller en relativ tid ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -17859,6 +17926,12 @@
       "to": "till",
       "zoom-out-button": "Zooma ut tidsintervall",
       "zoom-out-tooltip-new": "Zooma ut tidsintervall <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "Tillämpa tidsintervall",

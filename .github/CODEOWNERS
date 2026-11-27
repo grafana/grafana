@@ -238,6 +238,7 @@
 /pkg/tests/api/admin/encryption/ @grafana/grafana-operator-experience-squad
 /pkg/tests/ha/ @grafana/grafana-search-and-storage
 /pkg/tests/compat/ @grafana/grafana-search-and-storage
+/pkg/tests/compat/dashboards/ @grafana/grafana-search-and-storage
 /pkg/tests/compat/folders/ @grafana/grafana-search-and-storage
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-services-squad
 /pkg/util/ @grafana/grafana-backend-services-squad
@@ -256,6 +257,9 @@
 /devenv/docker/blocks/self-instrumentation* @grafana/data-sources-plugins
 
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
+/devenv/provisioning-bootstrap/ @grafana/grafana-app-platform-squad
+/devenv/provisioning-bootstrap.ini @grafana/grafana-app-platform-squad
+/devenv/provisioning-bootstrap-cleanup.ini @grafana/grafana-app-platform-squad
 /devenv/bulk-folders/ @grafana/grafana-frontend-platform
 /devenv/create_docker_compose.sh @grafana/grafana-backend-services-squad
 /devenv/alert_rules.yaml @grafana/alerting-squad
@@ -538,6 +542,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/inspect-drawer.spec.ts @grafana/dashboards-squad
 /e2e-playwright/various-suite/keybinds.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/migrate-to-cloud.spec.ts @grafana/grafana-operator-experience-squad
+/e2e-playwright/various-suite/nav-landing-page-narrow.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/various-suite/navigation.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/various-suite/pie-chart.spec.ts @grafana/dataviz-squad
 /e2e-playwright/various-suite/prometheus-annotations.spec.ts @grafana/data-sources-plugins
@@ -721,6 +726,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/returnToPrevious.ts @grafana/grafana-frontend-navigation
 /packages/grafana-runtime/src/utils/toDataQueryError* @grafana/grafana-datasources-core-services
 /packages/grafana-runtime/src/utils/TracedError* @grafana/grafana-frontend-platform
+/packages/grafana-runtime/src/utils/trackSettingsAccess.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/userStorage* @grafana/grafana-catalog @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/useFavoriteDatasources* @grafana/grafana-catalog
 /packages/grafana-runtime/src/utils/getCachedPromise* @grafana/grafana-frontend-platform
@@ -1399,6 +1405,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support
 /.github/workflows/lint-build-docs.yml @grafana/docs-tooling
 /.github/workflows/pr-bundle-size.yml @grafana/grafana-frontend-platform
+/.github/workflows/pr-check-conventional-commits-title.yml @grafana/grafana-frontend-platform
 /.github/workflows/pr-checks.yml @tolzhabayev
 /.github/workflows/pr-endpoint-feature-toggle.yml @grafana/alerting-squad
 /.github/workflows/pr-mt-service-compatibility.yml @evictorero
@@ -1457,6 +1464,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-diagnostics-e2e.yml @grafana/data-sources-plugins
 /.github/workflows/frontend-perf-tests.yaml @grafana/grafana-frontend-platform
 /.github/workflows/release-npm.yml @grafana/grafana-frontend-platform
+/.github/workflows/release-npm-independent-packages.yml @grafana/grafana-frontend-platform
 /.github/workflows/scripts/determine-npm-tag.sh @grafana/grafana-frontend-platform
 /.github/workflows/scripts/validate-commit-in-head.sh @grafana/grafana-frontend-platform
 /.github/workflows/scripts/test-endpoint-migration-check.sh @grafana/alerting-squad
