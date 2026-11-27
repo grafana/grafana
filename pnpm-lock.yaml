@@ -534,8 +534,8 @@ importers:
         specifier: ^4.1.1
         version: 4.3.4
       marked:
-        specifier: 18.2.1
-        version: 18.2.1
+        specifier: 18.3.0
+        version: 18.3.0
       memoize-one:
         specifier: 7.0.0
         version: 7.0.0
@@ -1045,8 +1045,8 @@ importers:
         specifier: 29.7.0
         version: 29.7.0(supports-color@7.2.0)
       jest-fail-on-console:
-        specifier: 3.3.1
-        version: 3.3.1
+        specifier: 3.3.4
+        version: 3.3.4(@jest/globals@30.3.0(supports-color@7.2.0))
       jest-junit:
         specifier: 16.0.0
         version: 16.0.0
@@ -1549,10 +1549,10 @@ importers:
         version: 4.18.1
       marked:
         specifier: ^18.0.0
-        version: 18.2.1
+        version: 18.3.0
       marked-mangle:
         specifier: ^1.1.12
-        version: 1.1.14(marked@18.2.1)
+        version: 1.1.14(marked@18.3.0)
       ol:
         specifier: ^10.10.0
         version: 10.11.0
@@ -11386,8 +11386,11 @@ packages:
     resolution: {integrity: sha512-4i6HItw/JSiJVsC5q0hnKIe/hbYfZLVG9YJ/0pU9Hz2n/9qZe3Rhn5s5CUZA5ORZlcdT/vmAXRMyONXJwPrmYQ==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
 
-  jest-fail-on-console@3.3.1:
-    resolution: {integrity: sha512-dmq/dmh5OBgJlD1MJdpznzwFQP8S7msf3ghTGWQLGhagWwHKzGtqXza76nuJUKOK7BdwqcTK6CCE49Xxv4ckUQ==}
+  jest-fail-on-console@3.3.4:
+    resolution: {integrity: sha512-ckcABlg7ZLy83RRVOE1YvJMF1thgVPozVp+DjnE36Z1CaIbTrSeSR2AU4de/SEpfFgp2qK62EHXfm47N74zMuw==}
+    engines: {yarn: 1.x}
+    peerDependencies:
+      '@jest/globals': '>=27.5.1'
 
   jest-get-type@29.6.3:
     resolution: {integrity: sha512-zrteXnqYxfQh7l5FHyL38jL39di8H8rHoecLH3JNxH3BwOrBsNeabdap5e0I23lD4HHI8W5VFBZqG4Eaq5LNcw==}
@@ -12046,8 +12049,8 @@ packages:
     engines: {node: '>= 20'}
     hasBin: true
 
-  marked@18.2.1:
-    resolution: {integrity: sha512-ii4bxCTCqqwpT86XZWgJNs+ZnAIZksmLGYMViWA7PDIXYIeNo1x6cDdX3JOip9NM/cI6p8z57FxliACboTruMA==}
+  marked@18.3.0:
+    resolution: {integrity: sha512-ed8zmPXlBb3UfGXN5iHMQyMhFpdqLgoV5umUXx/Q1R+FW3q8VpqpyoKUwlENL9appo2UMvNLURDVaT3AMOryGA==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -25435,7 +25438,9 @@ snapshots:
       jest-util: 30.3.0
       jest-validate: 30.3.0
 
-  jest-fail-on-console@3.3.1: {}
+  jest-fail-on-console@3.3.4(@jest/globals@30.3.0(supports-color@7.2.0)):
+    dependencies:
+      '@jest/globals': 30.3.0(supports-color@7.2.0)
 
   jest-get-type@29.6.3: {}
 
@@ -26443,9 +26448,9 @@ snapshots:
       punycode.js: 2.3.1
       uc.micro: 2.1.0
 
-  marked-mangle@1.1.14(marked@18.2.1):
+  marked-mangle@1.1.14(marked@18.3.0):
     dependencies:
-      marked: 18.2.1
+      marked: 18.3.0
 
   marked-terminal@7.3.0(marked@9.1.6):
     dependencies:
@@ -26460,7 +26465,7 @@ snapshots:
 
   marked@16.3.0: {}
 
-  marked@18.2.1: {}
+  marked@18.3.0: {}
 
   marked@9.1.6: {}
 

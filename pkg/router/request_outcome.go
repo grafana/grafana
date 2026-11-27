@@ -30,6 +30,9 @@ const (
 	failureRedirectRejected = "redirect_rejected"
 	failureOriginMismatch   = "stack_origin_mismatch"
 	failureAuth             = "auth"
+	// failureLoop is a request refused because it would cycle between an ST
+	// pod's remote services and the MT router (remote_services_cycle.go).
+	failureLoop = "loop"
 )
 
 type requestOutcomeKey struct{}
@@ -90,7 +93,10 @@ func failureReason(req *http.Request, err error) string {
 		return ""
 	}
 	var netErr net.Error
+	var local *localProxyError
 	switch {
+	case errors.As(err, &local):
+		return local.reason
 	case errors.Is(err, errBackendRedirect):
 		return failureRedirectRejected
 	case errors.Is(err, errStackOriginMismatch):
