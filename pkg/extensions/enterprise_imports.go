@@ -237,6 +237,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/models"
 	_ "github.com/grafana/grafana/pkg/modules"
 	_ "github.com/grafana/grafana/pkg/operators/provisioning"
+	_ "github.com/grafana/grafana/pkg/operators/runner"
 	_ "github.com/grafana/grafana/pkg/plugins"
 	_ "github.com/grafana/grafana/pkg/plugins/auth"
 	_ "github.com/grafana/grafana/pkg/plugins/backendplugin"
