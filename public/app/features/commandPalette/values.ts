@@ -20,3 +20,4 @@ export const SECTION_DASHBOARDS = 'dashboards';
 export const SECTION_FOLDERS = 'folders';
 export const SECTION_NOTEBOOKS = 'notebooks';
 export const SECTION_EXTENSIONS = 'extensions';
+export const SECTION_EXTENSION_SEARCH = 'extension-search';

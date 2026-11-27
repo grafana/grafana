@@ -536,7 +536,7 @@ function getLinkExtensionOnClick(
   };
 }
 
-function getLinkExtensionPathWithTracking(pluginId: string, path: string, extensionPointId: string): string {
+export function getLinkExtensionPathWithTracking(pluginId: string, path: string, extensionPointId: string): string {
   return urlUtil.appendQueryToUrl(
     path,
     urlUtil.toUrlParams({
