@@ -15,9 +15,16 @@ export function setSettingsAccessReporter(reporter: SettingsAccessReporter) {
 
 const FLUSH_INTERVAL_MS = 30_000;
 
-// Their child keys are user data (datasource/plugin names) with unbounded cardinality, and
-// featureToggles is already reported by the legacy feature toggle proxy.
-const NO_RECURSE_PATHS = new Set(['datasources', 'panels', 'apps', 'featureToggles']);
+// Their child keys are user data (datasource/plugin names, app page paths) with unbounded
+// cardinality, and featureToggles is already reported by the legacy feature toggle proxy.
+const NO_RECURSE_PATHS = new Set([
+  'datasources',
+  'panels',
+  'apps',
+  'featureToggles',
+  'navigation.appSections',
+  'navigation.appStandalonePages',
+]);
 
 const counts = new Map<string, { source: SettingsAccessSource; path: string; count: number }>();
 let flushTimer: ReturnType<typeof setInterval> | undefined;
