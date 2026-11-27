@@ -3,7 +3,7 @@ import { Alert, Icon, LinkButton, Stack, Text } from '@grafana/ui';
 
 import { createBridgeURL } from '../../components/PluginBridge';
 import { WithReturnButton } from '../../components/WithReturnButton';
-import { useExternalRulesSources } from '../../hooks/useExternalRulesSources';
+import { useDataSourcesForRules } from '../../hooks/useDataSourcesForRules';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { useRouteProxyActive } from '../../plugin-proxy/withRouteProxy';
 import { SupportedPlugin } from '../../types/pluginBridges';
@@ -30,8 +30,8 @@ function useHandedOverRules(): { count: number; pluginRulesLink: string } {
   const routeProxyActive = useRouteProxyActive();
   const { searchQuery } = useRulesFilter();
 
-  const externalRulesSources = useExternalRulesSources().items;
-  const count = routeProxyActive ? externalRulesSources.length : 0;
+  const rulesDataSources = useDataSourcesForRules().items;
+  const count = routeProxyActive ? rulesDataSources.length : 0;
   const pluginRulesLink = createBridgeURL(
     SupportedPlugin.PrometheusAlerting,
     '/rules',

@@ -8,7 +8,7 @@ import server from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import * as externalRulesSourcesModule from '../hooks/useExternalRulesSources';
+import * as dataSourcesForRulesModule from '../hooks/useDataSourcesForRules';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
 import { addPlugin, setPrometheusRules } from '../mocks/server/configure';
@@ -26,7 +26,7 @@ setReturnToPreviousHook(() => () => {});
 
 grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 
-jest.mock('../hooks/useExternalRulesSources', () => makeSpyable('../hooks/useExternalRulesSources'));
+jest.mock('../hooks/useDataSourcesForRules', () => makeSpyable('../hooks/useDataSourcesForRules'));
 
 setupMswServer();
 
@@ -80,7 +80,7 @@ describe('RuleList - GroupedView', () => {
 
   it('should say that data source-managed rules are missing when the data source list fails', async () => {
     const listSpy = jest
-      .spyOn(externalRulesSourcesModule, 'useExternalRulesSources')
+      .spyOn(dataSourcesForRulesModule, 'useDataSourcesForRules')
       .mockReturnValue({ items: [], isLoading: false, error: new Error('list failed') });
 
     render(<GroupedView />);

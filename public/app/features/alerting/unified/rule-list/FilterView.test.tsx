@@ -3,7 +3,7 @@ import { render, screen, waitForElementToBeRemoved } from 'test/test-utils';
 import { setPluginComponentsHook, setPluginLinksHook, setReturnToPreviousHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import * as externalRulesSourcesModule from '../hooks/useExternalRulesSources';
+import * as dataSourcesForRulesModule from '../hooks/useDataSourcesForRules';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
 import { installControllableIntersectionObserver } from '../mocks/intersectionObserver';
@@ -26,7 +26,7 @@ setReturnToPreviousHook(() => returnToPrevious);
 
 grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 
-jest.mock('../hooks/useExternalRulesSources', () => makeSpyable('../hooks/useExternalRulesSources'));
+jest.mock('../hooks/useDataSourcesForRules', () => makeSpyable('../hooks/useDataSourcesForRules'));
 
 setupMswServer();
 
@@ -83,7 +83,7 @@ describe('RuleList - FilterView', () => {
 
   it('should say that data source-managed rules are missing when the data source list fails', async () => {
     const listSpy = jest
-      .spyOn(externalRulesSourcesModule, 'useExternalRulesSources')
+      .spyOn(dataSourcesForRulesModule, 'useDataSourcesForRules')
       .mockReturnValue({ items: [], isLoading: false, error: new Error('list failed') });
 
     render(<FilterView filterState={getFilter({ dataSourceNames: ['Mimir'] })} />);
@@ -97,7 +97,7 @@ describe('RuleList - FilterView', () => {
 
   it('should keep the data source list warning when no rules match', async () => {
     const listSpy = jest
-      .spyOn(externalRulesSourcesModule, 'useExternalRulesSources')
+      .spyOn(dataSourcesForRulesModule, 'useDataSourcesForRules')
       .mockReturnValue({ items: [], isLoading: false, error: new Error('list failed') });
 
     render(<FilterView filterState={getFilter({ freeFormWords: ['no-rule-has-this-name'] })} />);

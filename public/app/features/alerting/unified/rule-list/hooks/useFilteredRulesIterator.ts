@@ -15,10 +15,10 @@ import {
   type PromRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { useExternalRulesSources } from '../../hooks/useExternalRulesSources';
+import { useDataSourcesForRules } from '../../hooks/useDataSourcesForRules';
 import { useRouteProxyActive } from '../../plugin-proxy/withRouteProxy';
 import { RuleSource, type RulesFilter } from '../../search/rulesSearchParser';
-import { getDatasourceAPIUid } from '../../utils/datasource';
+import { getDatasourceAPIUid, toDataSourceRulesSourceIdentifier } from '../../utils/datasource';
 import { type RulePositionHash, createRulePositionHash } from '../rulePositionHash';
 
 import { getDatasourceFilter } from './datasourceFilter';
@@ -78,7 +78,7 @@ export interface FilteredRulesIteratorProvider {
 }
 
 export function useFilteredRulesIteratorProvider(): FilteredRulesIteratorProvider {
-  const { items: allExternalSources, isLoading, error } = useExternalRulesSources();
+  const { items: rulesDataSources, isLoading, error } = useDataSourcesForRules();
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ limitAlerts: 0 });
   // Data source managed rules belong to the Prometheus Alerting plugin once it's there, so we stop
@@ -111,7 +111,10 @@ export function useFilteredRulesIteratorProvider(): FilteredRulesIteratorProvide
     );
 
     // Determine which data sources to use
-    const externalRulesSourcesToFetchFrom = getRulesSourcesFromFilter(filterState, allExternalSources);
+    const externalRulesSourcesToFetchFrom = getRulesSourcesFromFilter(
+      filterState,
+      rulesDataSources.map(toDataSourceRulesSourceIdentifier)
+    );
 
     if (filterState.ruleSource === RuleSource.Grafana) {
       return { iterable: grafanaRulesGenerator, abortController };

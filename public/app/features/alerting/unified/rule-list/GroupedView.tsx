@@ -5,9 +5,9 @@ import { Stack } from '@grafana/ui';
 import { type DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
-import { useExternalRulesSources } from '../hooks/useExternalRulesSources';
+import { useDataSourcesForRules } from '../hooks/useDataSourcesForRules';
 import { useRouteProxyActive } from '../plugin-proxy/withRouteProxy';
-import { GrafanaRulesSource } from '../utils/datasource';
+import { GrafanaRulesSource, toDataSourceRulesSourceIdentifier } from '../utils/datasource';
 
 import { PaginatedDataSourceLoader } from './PaginatedDataSourceLoader';
 import { PaginatedGrafanaLoader } from './PaginatedGrafanaLoader';
@@ -39,13 +39,13 @@ export function GroupedView({
   // per data source any more. The Grafana-managed section header says where they went.
   const routeProxyActive = useRouteProxyActive();
   const {
-    items: allExternalRuleSources,
+    items: rulesDataSources,
     isLoading: isLoadingExternalRuleSources,
     error: externalRuleSourcesError,
-  } = useExternalRulesSources();
+  } = useDataSourcesForRules();
   const externalRuleSources = useMemo(
-    () => (routeProxyActive ? [] : allExternalRuleSources),
-    [routeProxyActive, allExternalRuleSources]
+    () => (routeProxyActive ? [] : rulesDataSources.map(toDataSourceRulesSourceIdentifier)),
+    [routeProxyActive, rulesDataSources]
   );
   const showExternalRuleSourcesLoading = isLoadingExternalRuleSources && !routeProxyActive;
 
