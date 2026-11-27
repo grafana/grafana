@@ -7,8 +7,6 @@ manifests under `/apis/discovery`. A `RoutesLoader` supplies routes as
 
 This file holds the current rules. The reasoning and history behind them are in the router specs,
 which live in the deployment_tools repository under `ksonnet/environments/grafana-router/specs/`.
-Start with `2026-09-25-router-design-notes.md`. Open work is tracked in
-`2026-10-23-router-review-plan.md` there.
 
 ## Rules
 
