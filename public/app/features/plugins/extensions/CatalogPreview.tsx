@@ -1,7 +1,7 @@
 import { Draft07 } from 'json-schema-library';
 import { useMemo, useState } from 'react';
 
-import { type AdHocVariableFilter, type ComponentDescriptor, type DataSourceRef, type TimeRange } from '@grafana/data';
+import { type ComponentDescriptor, type DataSourceRef, type DiscoverableComponentProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useDataSourceInstanceSettings } from '@grafana/runtime';
 
@@ -11,14 +11,12 @@ import { useCatalogComponent } from './usePluginComponent';
 
 export interface PreviewInputs {
   datasource?: DataSourceRef | string;
-  timeRange?: TimeRange;
+  timeRange?: DiscoverableComponentProps['timeRange'];
   extraProps?: Record<string, unknown>;
 }
 
-interface CatalogPreviewProps extends PreviewInputs {
+interface CatalogPreviewProps extends PreviewInputs, Pick<DiscoverableComponentProps, 'filters' | 'onEvent'> {
   componentId: string;
-  filters: AdHocVariableFilter[];
-  onEvent?: (event: { name: string; payload?: unknown }) => void;
 }
 
 function Loading() {
@@ -68,12 +66,6 @@ function PreviewSelection({ entry, selection }: { entry: ComponentDescriptor; se
   );
 }
 
-interface ViewProps {
-  timeRange: TimeRange;
-  filters: AdHocVariableFilter[];
-  onEvent?: CatalogPreviewProps['onEvent'];
-}
-
 function CheckDatasource({
   entry,
   uid,
@@ -83,7 +75,7 @@ function CheckDatasource({
   entry: ComponentDescriptor;
   uid: string;
   expectedType?: string | null;
-  viewProps: ViewProps;
+  viewProps: Omit<DiscoverableComponentProps, 'datasource'>;
 }) {
   const { settings, isLoading, error } = useDataSourceInstanceSettings(uid);
   if (isLoading) {
@@ -110,9 +102,9 @@ function ResolvedPreview({
   viewProps,
 }: {
   entry: ComponentDescriptor;
-  viewProps: ViewProps & { datasource: DataSourceRef };
+  viewProps: DiscoverableComponentProps;
 }) {
-  const { component: View, isLoading } = useCatalogComponent<typeof viewProps>(entry);
+  const { component: View, isLoading } = useCatalogComponent(entry);
   if (isLoading) {
     return <Loading />;
   }

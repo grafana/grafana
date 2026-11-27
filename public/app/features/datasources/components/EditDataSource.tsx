@@ -232,8 +232,7 @@ export function EditDataSourceView({
     return (
       <DataSourceInstanceComponents
         key={dataSource.uid}
-        uid={dataSource.uid}
-        type={dataSource.type}
+        datasource={{ uid: dataSource.uid, type: dataSource.type }}
         pageId={pageId}
         componentId={componentId}
       />

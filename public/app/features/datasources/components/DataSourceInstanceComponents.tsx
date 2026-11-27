@@ -4,8 +4,8 @@ import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useMeasure } from 'react-use';
 
 import {
-  type AdHocVariableFilter,
   type ComponentDescriptor,
+  type DiscoverableComponentProps,
   type GrafanaTheme2,
   getDefaultTimeRange,
 } from '@grafana/data';
@@ -34,15 +34,13 @@ const PHONE_PREVIEW_WIDTH = 390;
 
 type PreviewSize = 'small' | 'medium' | 'large';
 
-interface Props {
-  uid: string;
-  type: string;
+interface Props extends Pick<DiscoverableComponentProps, 'datasource'> {
   pageId: string;
   componentId?: string | null;
 }
 
-export function DataSourceInstanceComponents({ uid, type, pageId, componentId }: Props) {
-  const { entries, loading, error, retry } = useComponentDescriptors(type);
+export function DataSourceInstanceComponents({ datasource, pageId, componentId }: Props) {
+  const { entries, loading, error, retry } = useComponentDescriptors(datasource.type);
   const { value: providers } = useAppPluginMetas();
   const styles = useStyles2(getStyles);
   const [, setSearchParams] = useSearchParams();
@@ -210,8 +208,7 @@ export function DataSourceInstanceComponents({ uid, type, pageId, componentId }:
           <div className={cx(styles.preview, split && styles.previewPane)}>
             <ComponentPreview
               entry={selected}
-              uid={uid}
-              type={type}
+              datasource={datasource}
               size={wide ? previewSize : undefined}
               onSizeChange={setPreviewSize}
               onClose={closePreview}
@@ -223,19 +220,17 @@ export function DataSourceInstanceComponents({ uid, type, pageId, componentId }:
   );
 }
 
-interface ComponentPreviewProps {
+interface ComponentPreviewProps extends Pick<DiscoverableComponentProps, 'datasource'> {
   entry: ComponentDescriptor;
-  uid: string;
-  type: string;
   size?: PreviewSize;
   onSizeChange: (size: PreviewSize) => void;
   onClose: () => void;
 }
 
-function ComponentPreview({ entry, uid, type, size, onSizeChange, onClose }: ComponentPreviewProps) {
+function ComponentPreview({ entry, datasource, size, onSizeChange, onClose }: ComponentPreviewProps) {
   const previewRef = useRef<HTMLDivElement>(null);
   const [timeRange] = useState(getDefaultTimeRange);
-  const [filters] = useState<AdHocVariableFilter[]>([]);
+  const [filters] = useState<DiscoverableComponentProps['filters']>([]);
 
   useEffect(() => {
     previewRef.current?.focus();
@@ -285,7 +280,7 @@ function ComponentPreview({ entry, uid, type, size, onSizeChange, onClose }: Com
             </Button>
           </div>
         )}
-        <CatalogPreview componentId={entry.id} datasource={{ uid, type }} timeRange={timeRange} filters={filters} />
+        <CatalogPreview componentId={entry.id} datasource={datasource} timeRange={timeRange} filters={filters} />
       </Stack>
     </Box>
   );
