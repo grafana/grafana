@@ -67,7 +67,7 @@ func (b *v1beta2APIBuilder) connectorStorage(scheme *runtime.Scheme) (map[string
 			inner: NewConnectionAuthorizeConnector(b.inner),
 			opts: []v1beta2ConnectorOption{withV1beta2RequestBody(v1beta2RequestConversion{
 				MaxBytes: defaultMaxBodySize,
-				Convert:  v1beta2ObjectRequest(scheme, func() runtime.Object { return &v1beta2.ConnectionAuthorizeRequest{} }),
+				Convert:  v1beta2StrictObjectRequest(scheme, func() runtime.Object { return &v1beta2.ConnectionAuthorizeRequest{} }),
 			}, http.MethodPost)},
 		},
 	}, extraConnectors...)
@@ -116,6 +116,24 @@ func v1beta2TestRequest(scheme *runtime.Scheme) func([]byte) ([]byte, error) {
 			return body, nil
 		}
 		return convert(body)
+	}
+}
+
+// v1beta2StrictObjectRequest converts a JSON body holding the v1beta2 object newObj returns into
+// its storage version, rejecting unknown fields as connectors that decode strictly do.
+func v1beta2StrictObjectRequest(scheme *runtime.Scheme, newObj func() runtime.Object) func([]byte) ([]byte, error) {
+	return func(body []byte) ([]byte, error) {
+		obj := newObj()
+		decoder := json.NewDecoder(bytes.NewReader(body))
+		decoder.DisallowUnknownFields()
+		if err := decoder.Decode(obj); err != nil {
+			return nil, err
+		}
+		out, err := toStorageVersion(scheme, obj)
+		if err != nil {
+			return nil, err
+		}
+		return json.Marshal(out)
 	}
 }
 

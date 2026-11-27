@@ -257,5 +257,12 @@ func TestIntegrationV1beta2WriteSubresources(t *testing.T) {
 		// GitHub App connections are not authorized with OAuth; reaching that check shows the code arrived.
 		requireSameWrite(t, helper, http.MethodPost, path, bodies, http.StatusNotImplemented)
 		requireSameWrite(t, helper, http.MethodPost, path, sameBody([]byte(`{"spec":{}}`)), http.StatusBadRequest)
+
+		unknown := []byte(`{"spec":{"code":"abc","bogus":true}}`)
+		for _, version := range []string{"v0alpha1", "v1beta2"} {
+			code, raw := doSubresource(t, helper, http.MethodPost, version, path, unknown)
+			require.Equal(t, http.StatusBadRequest, code, "%s: %s", version, raw)
+			assert.Contains(t, string(raw), "unknown field", version)
+		}
 	})
 }
