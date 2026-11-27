@@ -27,6 +27,7 @@ type Client struct {
 	retryCount          int
 	grafanaComAPIToken  string
 	grafanaComAPIURL    string
+	grafanaEdition      string
 
 	log log.PrettyLogger
 }
@@ -270,6 +271,10 @@ func (c *Client) createReq(ctx context.Context, url *url.URL, compatOpts CompatO
 
 	if orig := ctx.Value(requestOrigin{}); orig != nil {
 		req.Header.Set("grafana-origin", orig.(string))
+	}
+
+	if c.grafanaEdition != "" {
+		req.Header.Set("grafana-edition", c.grafanaEdition)
 	}
 
 	if strings.HasPrefix(url.String(), c.grafanaComAPIURL) && c.grafanaComAPIToken != "" {

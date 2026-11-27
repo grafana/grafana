@@ -19,6 +19,10 @@ type PluginManagementCfg struct {
 	GrafanaComAPIURL   string
 	GrafanaComAPIToken string
 
+	// GrafanaEdition is "oss", "enterprise" or "cloud". It is reported to grafana.com
+	// with plugin downloads so installs can be split by where Grafana runs.
+	GrafanaEdition string
+
 	GrafanaAppURL string
 
 	Features Features

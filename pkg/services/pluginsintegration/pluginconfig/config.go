@@ -22,7 +22,7 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		allowedUnsigned = strings.Split(plugins.KeyValue("allow_loading_unsigned_plugins").Value(), ",")
 	}
 
-	return config.NewPluginManagementCfg(
+	pCfg := config.NewPluginManagementCfg(
 		settingProvider.KeyValue("", "app_mode").MustBool(cfg.Env == setting.Dev),
 		cfg.PluginsPaths,
 		extractPluginSettings(settingProvider),
@@ -37,7 +37,22 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		cfg.DisablePlugins,
 		cfg.ForwardHostEnvVars,
 		cfg.GrafanaComProxyAPIToken,
-	), nil
+	)
+	pCfg.GrafanaEdition = grafanaEdition(cfg)
+	return pCfg, nil
+}
+
+// grafanaEdition checks the stack ID first because Grafana Cloud runs the enterprise
+// build, so IsEnterprise alone can't tell Cloud apart from self-managed Enterprise.
+func grafanaEdition(cfg *setting.Cfg) string {
+	switch {
+	case cfg.StackID != "":
+		return "cloud"
+	case cfg.IsEnterprise:
+		return "enterprise"
+	default:
+		return "oss"
+	}
 }
 
 // PluginInstanceCfg contains the configuration for a plugin instance.

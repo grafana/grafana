@@ -50,6 +50,27 @@ func Test_Download(t *testing.T) {
 		require.Equal(t, "test", origin, "origin header should be set")
 	})
 
+	t.Run("it should set the edition header only when the edition is known", func(t *testing.T) {
+		for _, edition := range []string{"cloud", ""} {
+			var gotEdition []string
+			fakeServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				gotEdition = r.Header.Values("grafana-edition")
+				err := writeFakeZip(w)
+				require.NoError(t, err)
+			}))
+			cli := fakeServer.Client()
+			repo := Client{httpClient: *cli, httpClientNoTimeout: *cli, log: log.NewPrettyLogger("test"), grafanaEdition: edition}
+			_, err := repo.Download(context.Background(), fakeServer.URL, "", CompatOpts{})
+			fakeServer.Close()
+			require.NoError(t, err)
+			if edition == "" {
+				require.Empty(t, gotEdition, "edition header should not be sent")
+			} else {
+				require.Equal(t, []string{edition}, gotEdition)
+			}
+		}
+	})
+
 	t.Run("it should retry on error", func(t *testing.T) {
 		var count int
 		fakeServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
