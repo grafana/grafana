@@ -17,6 +17,7 @@ import { ComboboxList } from './ComboboxList';
 import { SuffixIcon } from './SuffixIcon';
 import { itemToString } from './filter';
 import { getComboboxStyles } from './getComboboxStyles';
+import { blockStaleOptions, useHighlightFreshOptions } from './staleOptions';
 import { type ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useOptions } from './useOptions';
@@ -201,10 +202,13 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     updateOptions,
     asyncLoading,
     asyncError,
+    asyncOptionsStale,
+    isOptionStale,
     resetSearch,
   } = useOptions(allOptions, createCustomValue, customValueDescription);
   const isAsync = typeof allOptions === 'function';
   const searchTermRef = useRef('');
+  const typedSinceOpenRef = useRef(false);
 
   useEffect(() => {
     if (isOpenProp === undefined) {
@@ -258,6 +262,9 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const onIsOpenChangeHandler = useCallback(
     (changes: { isOpen: boolean; inputValue?: string }) => {
       onIsOpenChangeProp?.(changes.isOpen);
+      if (changes.isOpen) {
+        typedSinceOpenRef.current = false;
+      }
 
       if (isOpenProp === undefined) {
         if (changes.isOpen && (changes.inputValue ?? '') === '') {
@@ -282,6 +289,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     getItemProps,
 
     selectItem,
+    setHighlightedIndex,
   } = useCombobox({
     menuId,
     labelId,
@@ -289,7 +297,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     items: filteredOptions,
     itemToString,
     selectedItem,
-    isItemDisabled: (item) => !!item?.infoOption,
+    isItemDisabled: (item) => !!item?.infoOption || isOptionStale(item),
 
     // Don't change downshift state in the onBlahChange handlers. Instead, use the stateReducer to make changes.
     // Downshift calls change handlers on the render after so you can get sync/flickering issues if you change its state
@@ -326,6 +334,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
       switch (type) {
         case useCombobox.stateChangeTypes.InputChange: {
+          typedSinceOpenRef.current = true;
           const searchTerm = newInputValue ?? '';
           searchTermRef.current = searchTerm;
           updateOptions(searchTerm);
@@ -338,6 +347,17 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     },
     stateReducer(state, actionAndChanges) {
       let { changes } = actionAndChanges;
+      changes = blockStaleOptions(
+        state,
+        { ...actionAndChanges, changes },
+        filteredOptions,
+        asyncOptionsStale,
+        isOptionStale
+      );
+      if (changes === state) {
+        return changes;
+      }
+
       const menuBeingOpened = state.isOpen === false && changes.isOpen === true;
       const menuBeingClosed = state.isOpen === true && changes.isOpen === false;
 
@@ -369,6 +389,16 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
       return changes;
     },
+  });
+
+  useHighlightFreshOptions({
+    stale: asyncOptionsStale,
+    isOpen,
+    hasTyped: () => typedSinceOpenRef.current,
+    highlightedIndex,
+    options: filteredOptions,
+    isOptionStale,
+    setHighlightedIndex,
   });
 
   const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(filteredOptions, isOpen);

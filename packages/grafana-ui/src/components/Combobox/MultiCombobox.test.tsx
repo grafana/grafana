@@ -545,6 +545,30 @@ describe('MultiCombobox', () => {
       expect(asyncOptions).toHaveBeenCalled();
     });
 
+    it("doesn't select an earlier search's result while the search for the typed text loads", async () => {
+      const asyncOptions = jest.fn((searchTerm: string) =>
+        searchTerm === 'Bob'
+          ? new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'Bob' }]), 1000))
+          : Promise.resolve([{ value: 'Alice' }])
+      );
+      render(<MultiCombobox options={asyncOptions} value={[]} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+      await user.type(input, 'Bob');
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+
+      await user.hover(screen.getByRole('option', { name: 'Alice' }));
+      await user.keyboard('{Enter}');
+      await user.click(screen.getByRole('option', { name: 'Alice' }));
+      expect(onChangeHandler).not.toHaveBeenCalled();
+
+      await act(async () => jest.advanceTimersByTimeAsync(1000));
+      await user.keyboard('{Enter}');
+      expect(onChangeHandler).toHaveBeenCalledWith([{ value: 'Bob' }]);
+    });
+
     it('should allow async options and select value', async () => {
       const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
       render(<MultiCombobox options={asyncOptions} value={[]} onChange={onChangeHandler} />);
