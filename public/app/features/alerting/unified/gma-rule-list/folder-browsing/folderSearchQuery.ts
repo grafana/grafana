@@ -19,15 +19,14 @@ export function buildFolderListSearchQuery(
   continueToken: string | undefined,
   { folder, folderUids }: FolderScope
 ): SearchQuery {
-  // Pushed rather than spread, so each leaf's operator is checked against the API's enum
-  // instead of widening to string in an untyped array literal.
-  const leaves: WhereNode[] = [];
-  if (folder) {
-    leaves.push({ text: { value: folder } });
-  }
-  if (folderUids.length > 0) {
-    leaves.push({ filter: { field: 'name', operator: 'In', values: folderUids } });
-  }
+  // Each leaf is `satisfies`-checked because a bare spread widens `operator` to string, which the
+  // generated WhereNode no longer accepts.
+  const leaves: WhereNode[] = [
+    ...(folder ? [{ text: { value: folder } } satisfies WhereNode] : []),
+    ...(folderUids.length > 0
+      ? [{ filter: { field: 'name', operator: 'In', values: folderUids } } satisfies WhereNode]
+      : []),
+  ];
   return {
     apiVersion: 'search.grafana.app/v0alpha1',
     kind: 'SearchQuery',
