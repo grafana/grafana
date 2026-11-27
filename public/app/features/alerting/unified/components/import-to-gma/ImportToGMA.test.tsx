@@ -189,8 +189,13 @@ jest.mock('./steps/Step2AlertRules', () => {
   const { useFormContext } = require('react-hook-form');
   return {
     Step2Content: function Step2Content() {
-      const { setValue, register } = useFormContext();
+      const { setValue, getValues, register } = useFormContext();
       useEffect(() => {
+        // What the real step requires before Next. A tree chosen on step 1 is kept.
+        if (!getValues('selectedRoutingTree')) {
+          setValue('selectedRoutingTree', 'default');
+        }
+        setValue('targetDatasourceUID', 'prometheus-uid');
         if (mockRulesScenario === 'yaml') {
           register('rulesYamlFile', { validate: () => mockRulesFileError ?? true });
           setValue('rulesSource', 'yaml');
@@ -219,7 +224,7 @@ jest.mock('./steps/Step2AlertRules', () => {
         if (mockSeedRulesSource) {
           setValue('rulesDatasourceUID', 'prometheus-uid');
         }
-      }, [setValue, register]);
+      }, [setValue, getValues, register]);
       return null;
     },
     useStep2Validation: () => true,

@@ -1178,6 +1178,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "authz.legacyUserPermissionsSearch",
+			Description:  "Route user permission searches through embedded AuthZ.",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "authz.legacyUserPermissionsShadow",
 			Description:  "Compare local permissions with embedded AuthZ in the background when authz.legacyUserPermissions is enabled.",
 			Stage:        FeatureStageExperimental,
@@ -1948,6 +1957,14 @@ var (
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "true",
+		},
+		{
+			Name:        "adaptivelogs.enableTimeMachine",
+			Description: "Enables multiple points of integration for Adaptive Logs Time Machine.",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true}, // OFREP/goff-only, no legacy toggle
+			Owner:       grafanaAdaptiveTelemetrySquad,
+			Expression:  "false",
 		},
 		{
 			Name:        "alertingNotificationHistory",
@@ -3638,6 +3655,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "grafana.bootdataAnalytics",
+			Description:  "Enable tracking of bootdata property access",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true, Go: true},
 		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!

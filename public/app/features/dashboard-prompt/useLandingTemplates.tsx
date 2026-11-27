@@ -43,9 +43,18 @@ export function useLandingTemplates({ showCustomTemplates }: { showCustomTemplat
 
   // The picked template travels to the Assistant as a pill in the prompt; picking it again takes it off.
   const [selected, setSelected] = useState<TemplateSelection>();
-  const select = useCallback((selection: TemplateSelection) => {
-    setSelected((current) => (current?.id === selection.id ? undefined : selection));
-  }, []);
+  // Counts the picks, so the prompt can take focus and show the person they can add to the template or send it.
+  const [focusRequest, setFocusRequest] = useState<number>();
+  const select = useCallback(
+    (selection: TemplateSelection) => {
+      const isPicking = selected?.id !== selection.id;
+      setSelected(isPicking ? selection : undefined);
+      if (isPicking) {
+        setFocusRequest((count) => (count ?? 0) + 1);
+      }
+    },
+    [selected?.id]
+  );
   const removePill = useCallback((id: string) => {
     setSelected((current) => (current?.contextItem.node.id === id ? undefined : current));
   }, []);
@@ -55,6 +64,7 @@ export function useLandingTemplates({ showCustomTemplates }: { showCustomTemplat
     isOpen,
     counts,
     selected,
+    focusRequest,
     removePill,
     clearSelection,
     renderToggle,

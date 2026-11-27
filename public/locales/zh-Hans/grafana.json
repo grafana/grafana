@@ -3325,6 +3325,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "加载规则时出错",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "加载 Grafana 规则配置失败：",
       "failed-to-load-grafana-rules-state": "加载 Grafana 规则状态失败",
       "failed-to-load-rules-config": "加载来自 <2>{{dataSource}}</2> 的规则配置失败",

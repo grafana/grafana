@@ -55,6 +55,7 @@ export function useOptions<T extends string | number>(
         return loadOptions(searchTerm)
           .then((options) => {
             setAsyncOptions(options);
+            setLoadedSearch(searchTerm);
             setAsyncLoading(false);
             setAsyncError(false);
           })
@@ -79,6 +80,9 @@ export function useOptions<T extends string | number>(
   const [asyncOptions, setAsyncOptions] = useState<Array<ComboboxOption<T>>>([]);
   const [asyncLoading, setAsyncLoading] = useState(false);
   const [asyncError, setAsyncError] = useState(false);
+  // The search the async options were loaded for. They belong to the typed search only when it matches, since a request
+  // can settle while a newer search is still debouncing, and a failed search leaves the earlier options in place.
+  const [loadedSearch, setLoadedSearch] = useState<string | null>(null);
 
   // This hook keeps its own inputValue state (rather than accepting it as an arg) because it needs to be
   // told it for async options loading anyway.
@@ -144,13 +148,29 @@ export function useOptions<T extends string | number>(
     setUserTypedSearch('');
   }, []);
 
+  // While a newer search is pending, or after one failed, the async options are an earlier search's results. They stay
+  // in the menu so it doesn't flicker, but can't be picked. The custom value always matches what was typed, as does an
+  // option with exactly that value when custom values are allowed, since it stands in for the custom value.
+  const customValueOption = finalOptions.customValueOption;
+  const asyncOptionsStale = isAsync && loadedSearch !== userTypedSearch;
+  const isOptionStale = useCallback(
+    (option: ComboboxOption<T> | null | undefined) =>
+      asyncOptionsStale &&
+      !!option &&
+      option !== customValueOption &&
+      !(createCustomValue && userTypedSearch !== '' && option.value === userTypedSearch),
+    [asyncOptionsStale, customValueOption, createCustomValue, userTypedSearch]
+  );
+
   return {
     options: finalOptions.options,
     groupStartIndices: finalOptions.groupStartIndices,
-    customValueOption: finalOptions.customValueOption,
+    customValueOption,
     updateOptions,
     asyncLoading,
     asyncError,
+    asyncOptionsStale,
+    isOptionStale,
     resetSearch,
   };
 }

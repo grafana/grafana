@@ -13,8 +13,9 @@ import {
   type PromBuildInfoResponse,
 } from 'app/types/unified-alerting-dto';
 
+import { getDataSourcesForRules } from '../hooks/useDataSourcesForRules';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME, getDataSourceByName, getRulesDataSourceByUID } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDataSourceByName } from '../utils/datasource';
 
 import { fetchRules } from './prometheus';
 import { type RulerApiSubtype, fetchTestRulerRulesGroup } from './ruler';
@@ -29,7 +30,7 @@ export async function discoverFeaturesByUid(dataSourceUid: string): Promise<Prom
     } satisfies PromApiFeatures;
   }
 
-  const dsConfig = getRulesDataSourceByUID(dataSourceUid);
+  const dsConfig = (await getDataSourcesForRules()).find((ds) => ds.uid === dataSourceUid);
   if (!dsConfig) {
     throw new Error(`Cannot find data source configuration for ${dataSourceUid}`);
   }

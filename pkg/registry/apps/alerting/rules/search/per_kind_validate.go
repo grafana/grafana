@@ -324,7 +324,7 @@ func validateFilterLeaf(f *searchv0.FilterPredicate, k perKind, p *field.Path) f
 		errs = append(errs, validateFilterField(f.Field, k, p.Child("field"))...)
 	}
 	if f.Operator != perKindFilterOperatorIn && f.Operator != perKindFilterOperatorNotIn {
-		errs = append(errs, field.NotSupported(p.Child("operator"), f.Operator, []string{perKindFilterOperatorIn, perKindFilterOperatorNotIn}))
+		errs = append(errs, field.NotSupported(p.Child("operator"), f.Operator, []string{string(perKindFilterOperatorIn), string(perKindFilterOperatorNotIn)}))
 	}
 	if len(f.Values) == 0 {
 		errs = append(errs, field.Required(p.Child("values"), "at least one value is required"))

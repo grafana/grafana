@@ -145,6 +145,7 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
   const step1 = useNotificationsStepNavigation(formAPI, dryRun);
 
   const step2 = useRulesStepNavigation(formAPI);
+  const { rulesSpec } = step2;
 
   // Step 1 values come from the snapshot validated on Next; the rest is read live.
   const { step1Snapshot } = step1;
@@ -160,17 +161,18 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
     isLoadingRules,
     rulesError,
   } = useRulesToImport({
-    rulesSource: formValues.rulesSource,
-    rulesDatasourceName: plan.willImportRules ? formValues.rulesDatasourceName : undefined,
-    rulesYamlFile: plan.willImportRules ? formValues.rulesYamlFile : null,
-    namespace: formValues.namespace,
-    ruleGroup: formValues.ruleGroup,
+    rulesSource: rulesSpec?.type ?? 'datasource',
+    rulesDatasourceName: rulesSpec?.type === 'datasource' ? rulesSpec.datasource.name : undefined,
+    rulesYamlFile: rulesSpec?.type === 'yaml' ? rulesSpec.file : null,
+    namespace: rulesSpec?.type === 'datasource' ? rulesSpec.namespace : undefined,
+    ruleGroup: rulesSpec?.type === 'datasource' ? rulesSpec.ruleGroup : undefined,
     targetFolder: undefined,
   });
 
   const { notificationsLock, showConfirmModal, importStatus, importError, startImport, confirmImport, closeConfirm } =
     useImportJob({
       getImportValues,
+      rulesSpec,
       rulesToImport,
       liveNotificationsLock,
       skipAutoSyncConfig: !steps.some(({ id }) => id === StepKey.Notifications),
@@ -214,6 +216,7 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
           {activeStep === StepKey.Review && (
             <ReviewStep
               formData={formValues}
+              rulesSpec={rulesSpec}
               onStartImport={startImport}
               dryRunResult={dryRun.dryRunResult}
               rulesToImport={rulesToImport}

@@ -14,6 +14,10 @@ export const usePopoverMenu = (containerElement: HTMLDivElement | null) => {
   });
   const [showDisablePopoverOptions, setShowDisablePopoverOptions] = useState(false);
   const handleDeselectionRef = useRef<((e: Event) => void) | null>(null);
+  // The logs can render in another window than this one, such as a Document Picture-in-Picture window. The text
+  // selection, the clicks that clear it and the viewport the menu fits in are that window's, so they're read from the
+  // line the user selected in.
+  const selectionDocumentRef = useRef<Document>(document);
   const { onClickFilterOutString, onClickFilterString } = useLogListContext();
 
   const popoverMenuSupported = useCallback(() => {
@@ -25,8 +29,8 @@ export const usePopoverMenu = (containerElement: HTMLDivElement | null) => {
 
   const closePopoverMenu = useCallback(() => {
     if (handleDeselectionRef.current) {
-      document.removeEventListener('click', handleDeselectionRef.current);
-      document.removeEventListener('contextmenu', handleDeselectionRef.current);
+      selectionDocumentRef.current.removeEventListener('click', handleDeselectionRef.current);
+      selectionDocumentRef.current.removeEventListener('contextmenu', handleDeselectionRef.current);
       handleDeselectionRef.current = null;
     }
     setPopoverState({
@@ -43,7 +47,7 @@ export const usePopoverMenu = (containerElement: HTMLDivElement | null) => {
         closePopoverMenu();
         return;
       }
-      if (document.getSelection()?.toString()) {
+      if (selectionDocumentRef.current.getSelection()?.toString()) {
         return;
       }
       closePopoverMenu();
@@ -53,7 +57,9 @@ export const usePopoverMenu = (containerElement: HTMLDivElement | null) => {
 
   const handleTextSelection = useCallback(
     (e: MouseEvent<HTMLElement>, row: LogListModel): boolean => {
-      const selection = document.getSelection()?.toString();
+      const ownerDocument = e.currentTarget.ownerDocument;
+      const ownerWindow = ownerDocument.defaultView ?? window;
+      const selection = ownerDocument.getSelection()?.toString();
       if (!selection) {
         return false;
       }
@@ -71,8 +77,9 @@ export const usePopoverMenu = (containerElement: HTMLDivElement | null) => {
 
       const MENU_WIDTH = 270;
       const MENU_HEIGHT = 105;
-      const x = e.clientX + MENU_WIDTH > window.innerWidth ? window.innerWidth - MENU_WIDTH : e.clientX;
-      const y = e.clientY + MENU_HEIGHT > window.innerHeight ? window.innerHeight - MENU_HEIGHT : e.clientY;
+      const { innerWidth, innerHeight } = ownerWindow;
+      const x = e.clientX + MENU_WIDTH > innerWidth ? innerWidth - MENU_WIDTH : e.clientX;
+      const y = e.clientY + MENU_HEIGHT > innerHeight ? innerHeight - MENU_HEIGHT : e.clientY;
 
       setPopoverState({
         selection,
@@ -80,8 +87,9 @@ export const usePopoverMenu = (containerElement: HTMLDivElement | null) => {
         selectedRow: row,
       });
       handleDeselectionRef.current = handleDeselection;
-      document.addEventListener('click', handleDeselection);
-      document.addEventListener('contextmenu', handleDeselection);
+      selectionDocumentRef.current = ownerDocument;
+      ownerDocument.addEventListener('click', handleDeselection);
+      ownerDocument.addEventListener('contextmenu', handleDeselection);
       return true;
     },
     [containerElement, handleDeselection, popoverMenuSupported]

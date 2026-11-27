@@ -17,7 +17,7 @@ func TestLoopbackService_Run(t *testing.T) {
 			builder := &APIBuilder{loopbackReady: make(chan struct{})}
 			builder.publishLoopbackConfig(&clientrest.Config{})
 			errController := errors.New("controller failed")
-			svc := newLoopbackService("test", builder, func(context.Context, *clientrest.Config) error {
+			svc := newLoopbackService("test", builder, false, func(context.Context, *clientrest.Config) error {
 				return errController
 			})
 
@@ -31,7 +31,7 @@ func TestLoopbackService_Run(t *testing.T) {
 			builder := &APIBuilder{loopbackReady: make(chan struct{})}
 			builder.publishLoopbackConfig(&clientrest.Config{})
 			ran := make(chan struct{})
-			svc := newLoopbackService("test", builder, func(context.Context, *clientrest.Config) error {
+			svc := newLoopbackService("test", builder, false, func(context.Context, *clientrest.Config) error {
 				close(ran)
 				return nil
 			})
@@ -52,7 +52,7 @@ func TestLoopbackService_Run(t *testing.T) {
 	t.Run("calls onStop when stopped before the API is served", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			builder := &APIBuilder{loopbackReady: make(chan struct{})}
-			svc := newLoopbackService("test", builder, func(context.Context, *clientrest.Config) error {
+			svc := newLoopbackService("test", builder, false, func(context.Context, *clientrest.Config) error {
 				t.Error("run must not be called before the API is served")
 				return nil
 			})
@@ -73,7 +73,7 @@ func TestLoopbackService_Run(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			builder := &APIBuilder{loopbackReady: make(chan struct{})}
 			builder.publishLoopbackConfig(&clientrest.Config{})
-			svc := newLoopbackService("test", builder, func(context.Context, *clientrest.Config) error {
+			svc := newLoopbackService("test", builder, false, func(context.Context, *clientrest.Config) error {
 				return context.Canceled
 			})
 

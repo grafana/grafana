@@ -18,17 +18,18 @@ import (
 
 func TestConnectionControllerService_IsDisabled(t *testing.T) {
 	tests := []struct {
-		name    string
-		builder *APIBuilder
-		want    bool
+		name                string
+		builder             *APIBuilder
+		controllersDisabled bool
+		want                bool
 	}{
 		{name: "provisioning disabled", builder: nil, want: true},
-		{name: "controllers disabled", builder: &APIBuilder{onlyApiServer: true}, want: true},
+		{name: "controllers disabled", builder: &APIBuilder{}, controllersDisabled: true, want: true},
 		{name: "controllers enabled", builder: &APIBuilder{}, want: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := ProvideConnectionControllerService(setting.NewCfg(), tt.builder, nil, prometheus.NewRegistry(), tracing.NewNoopTracerService(), nil, ProvideInformerMetrics(prometheus.NewRegistry()))
+			svc := ProvideConnectionControllerService(&setting.Cfg{DisableControllers: tt.controllersDisabled}, tt.builder, nil, prometheus.NewRegistry(), tracing.NewNoopTracerService(), nil, ProvideInformerMetrics(prometheus.NewRegistry()))
 			require.Equal(t, tt.want, svc.IsDisabled())
 			// The background service manager looks up this name in its
 			// dependency map; any other name would start it after Core.

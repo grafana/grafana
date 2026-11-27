@@ -1,5 +1,5 @@
 import type { BooleanFieldSettings } from '@react-awesome-query-builder/ui';
-import { type ComponentType, lazy, Suspense } from 'react';
+import { type ComponentType, lazy, Suspense, useState } from 'react';
 
 import {
   type FieldConfigPropertyItem,
@@ -39,15 +39,51 @@ import { RadioButtonGroup, Switch, TimeZonePicker } from '@grafana/ui';
 import type { DashboardPickerOptions } from './DashboardPicker';
 import type { ColorValueEditorSettings } from './color';
 
-// Wraps lazily-loaded editor components in a Suspense fallback so they can be used as standard editors
+const editorLoads: Array<() => Promise<unknown>> = [];
+
+// Wraps lazily-loaded editor components in a Suspense fallback so they can be used as standard editors. Once an
+// editor's code has loaded, editors mounted after that render it at once, rather than nothing for a moment as lazy()
+// does on each first render, so what holds them sees their full size as they mount.
 function lazyEditor<P extends object>(load: () => Promise<ComponentType<P>>): ComponentType<P> {
-  const LazyComponent = lazy(() => load().then((component) => ({ default: component })));
-  const LazyEditor = (props: P) => (
-    <Suspense fallback={null}>
-      <LazyComponent {...props} />
-    </Suspense>
-  );
+  let loaded: ComponentType<P> | undefined;
+  let loading: Promise<ComponentType<P>> | undefined;
+  const loadOnce = () =>
+    (loading ??= load().then(
+      (component) => (loaded = component),
+      (error) => {
+        // Forgotten, so a load that failed, e.g. while preloading, is tried again by the next preload or render.
+        loading = undefined;
+        throw error;
+      }
+    ));
+  editorLoads.push(loadOnce);
+
+  const LazyComponent = lazy(() => loadOnce().then((component) => ({ default: component })));
+  const LazyEditor = (props: P) => {
+    // Kept for as long as the editor is mounted, as switching from the lazy component would remount it.
+    const [Loaded] = useState(() => loaded);
+    return Loaded ? (
+      <Loaded {...props} />
+    ) : (
+      <Suspense fallback={null}>
+        <LazyComponent {...props} />
+      </Suspense>
+    );
+  };
   return LazyEditor;
+}
+
+let editorsPreloaded = false;
+
+/** Loads the code of every lazily loaded option editor, so the editors mounted after it resolves render in full. */
+export function preloadOptionEditors(): Promise<void> {
+  return Promise.all(editorLoads.map((load) => load())).then(() => {
+    editorsPreloaded = true;
+  });
+}
+
+export function areOptionEditorsPreloaded(): boolean {
+  return editorsPreloaded;
 }
 
 // Because this OptionsUI is built eagerly into the initial chunks, all editors are lazy-loaded.

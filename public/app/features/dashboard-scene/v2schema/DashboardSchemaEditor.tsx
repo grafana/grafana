@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import yaml from 'js-yaml';
+import { dump } from 'js-yaml';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
@@ -83,7 +83,7 @@ export function DashboardSchemaEditor({
       return localYamlContent;
     }
     try {
-      return yaml.dump(JSON.parse(value), { indent: 2, lineWidth: -1, noRefs: true });
+      return dump(JSON.parse(value), { indent: 2, lineWidth: -1, noRefs: true });
     } catch {
       return value;
     }

@@ -74,6 +74,25 @@ export interface ImportFormValues {
   yamlImportTargetDatasourceName?: string;
 }
 
+interface RulesDataSource {
+  uid: string;
+  name: string | null;
+}
+
+/** What the rules step imports. Built by `buildRulesImportSpec`, only from a complete form. */
+export type RulesImportSpec = {
+  selectedRoutingTree: string;
+  targetFolder?: Folder;
+  pauseAlertingRules: boolean;
+  pauseRecordingRules: boolean;
+  /** The data source that stores the recording rules. */
+  targetDatasourceUID: string;
+} & (
+  | { type: 'datasource'; datasource: RulesDataSource; namespace?: string; ruleGroup?: string }
+  // The data source is the one the rules run against.
+  | { type: 'yaml'; file: File; datasource: RulesDataSource }
+);
+
 export type Step1Values = Pick<
   ImportFormValues,
   | 'policyTreeName'

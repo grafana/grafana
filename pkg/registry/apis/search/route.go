@@ -213,8 +213,8 @@ func globalSearchExample() *searchv0.GlobalSearchQuery {
 	return &searchv0.GlobalSearchQuery{SearchQuery: searchv0.SearchQuery{
 		TypeMeta: v1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindSearchQuery},
 		Where: &searchv0.WhereNode{And: []searchv0.WhereNode{
-			{Filter: &searchv0.FilterPredicate{Field: resource.SEARCH_FIELD_FOLDER_TREE, Operator: "In", Values: []string{"team-a"}}},
-			{Filter: &searchv0.FilterPredicate{Field: resource.SEARCH_FIELD_GROUP_RESOURCE, Operator: "In", Values: []string{"dashboard.grafana.app/dashboards"}}},
+			{Filter: &searchv0.FilterPredicate{Field: resource.SEARCH_FIELD_FOLDER_TREE, Operator: searchv0.FilterOperatorIn, Values: []string{"team-a"}}},
+			{Filter: &searchv0.FilterPredicate{Field: resource.SEARCH_FIELD_GROUP_RESOURCE, Operator: searchv0.FilterOperatorIn, Values: []string{"dashboard.grafana.app/dashboards"}}},
 		}},
 		Sort:  []searchv0.SortField{{Field: resource.SEARCH_FIELD_UPDATED, Direction: "desc"}},
 		Limit: 10,

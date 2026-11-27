@@ -61,7 +61,7 @@ func TestRemoteRejectsBeforeLoading(t *testing.T) {
 }
 
 func TestRemoteCacheIsolationAndRefresh(t *testing.T) {
-	loader := &Loader{cache: localcache.New(0, 0)}
+	loader := &Loader{cache: localPermissionCache{cache: localcache.New(0, 0)}}
 	for _, key := range []string{"rbac-permissions-basic-role-1-viewer", "rbac-permissions-team-1-7", "rbac-permissions-direct-same", "rbac-zanzana-permissions-same"} {
 		for _, ns := range []string{"stacks-1", "stacks-2", "stacks-1"} {
 			ctx := context.WithValue(context.Background(), remoteNamespaceKey{}, ns)
@@ -96,4 +96,16 @@ func testIdentityCacheKey(t *testing.T, id *authzv1.LegacyPermissionIdentity, na
 	key, err := remoteIdentityCacheKey(id, namespace, orgID)
 	require.NoError(t, err)
 	return key
+}
+
+func TestTeamSetCacheKey(t *testing.T) {
+	require.Equal(t, teamSetCacheKey(1, []int64{1, 2}), teamSetCacheKey(1, []int64{1, 2}))
+	require.NotEqual(t, teamSetCacheKey(1, []int64{1, 2}), teamSetCacheKey(2, []int64{1, 2}), "org")
+	require.NotEqual(t, teamSetCacheKey(1, []int64{1, 2}), teamSetCacheKey(1, []int64{12}), "separator")
+	many := make([]int64, 1000)
+	for i := range many {
+		many[i] = int64(1_000_000 + i)
+	}
+	ctx := context.WithValue(context.Background(), remoteNamespaceKey{}, "stacks-1234567890")
+	require.Less(t, len(tenantCacheKey(ctx, teamSetCacheKey(1234567890, many))), 250)
 }
