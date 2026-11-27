@@ -21,6 +21,8 @@ In the **Dashboard controls** section of the sidebar, you can add variables, ann
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-controls-v13.1.png" max-width="400px" alt="Dashboard controls in the Dashboard options sidebar view" >}}
 
+When you add a filter, variable, annotation query, or link, the sidebar opens with the configuration options for the new control.
+
 ## Add filters and group by controls
 
 <!-- vale Grafana.WordList = NO -->
@@ -128,7 +130,10 @@ To add a URL link to your dashboard, follow these steps:
 ## Manage dashboard controls
 
 After you add dashboard controls, you can manage them from the dashboard options.
-In this view, the sidebar includes collapsible sections for filters, variables, annotations, and links, including hidden controls that aren't otherwise visible on the dashboard:
+You can also hover your cursor over a control on the dashboard to display the actions tooltip, and then click **Settings** to open that control in the sidebar.
+The tooltip also appears when keyboard focus moves onto the control.
+
+In the dashboard options view, the sidebar includes collapsible sections for filters, variables, annotations, and links, including hidden controls that aren't otherwise visible on the dashboard:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-controls-mgmt-v13.1.png" max-width="450px" alt="Dashboard controls in the Dashboard options sidebar view" >}}
 
