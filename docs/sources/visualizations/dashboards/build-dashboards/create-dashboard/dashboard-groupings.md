@@ -242,7 +242,6 @@ To manage a grouping, follow these steps:
 1. (Optional) Click the **Content outline** icon to quickly navigate to the grouping you want to update.
 1. Hover your cursor over the row header or tab to display the actions tooltip.
 1. Click **Row settings**, **Tab settings**, **Copy to clipboard**, **Duplicate**, or **Delete**.
-
    - If you selected **Row settings** or **Tab settings**, update the options in the sidebar.
    - If you selected **Copy to clipboard**, navigate to the part of the dashboard where you want to add the copied grouping and click **Paste row** or **Paste tab**.
 
