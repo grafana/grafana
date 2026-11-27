@@ -164,7 +164,7 @@ func newWorkers(cfg Config, deps Dependencies, metrics jobs.JobMetrics) []jobs.W
 		stageIfPossible,
 		metrics,
 	)
-	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
+	migrationWorker := migrate.NewMigrationWorker(
 		migrate.NewNamespaceCleaner(deps.Clients),
 		migrateExportWorker,
 		syncWorker,
@@ -178,7 +178,7 @@ func newWorkers(cfg Config, deps Dependencies, metrics jobs.JobMetrics) []jobs.W
 	return append([]jobs.Worker{
 		syncWorker,
 		exportWorker,
-		migrate.NewMigrationWorker(unifiedStorageMigrator),
+		migrationWorker,
 		deletepkg.NewWorker(syncWorker, stageIfPossible, deps.RepositoryResources, metrics),
 		move.NewWorker(syncWorker, stageIfPossible, deps.RepositoryResources, metrics),
 		fixfoldermetadata.NewWorker(deps.Clients),
