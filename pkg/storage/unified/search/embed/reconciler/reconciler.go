@@ -135,8 +135,7 @@ type Reconciler struct {
 	// Only failures retain bookkeeping; their payloads are re-read by the sweep.
 	retries map[string]retryState
 
-	// Keep the catalog partition key: it need not match the logical resource name.
-	ensuredResources map[schema.GroupResource]string
+	ensuredCollections map[schema.GroupResource]vector.Collection
 }
 
 // New constructs the embedding reconciler. The shared checkpoint starts at
@@ -176,7 +175,7 @@ func New(opts Options) (*Reconciler, error) {
 		log:                    log.New("embeddings_reconciler"),
 		metrics:                opts.Metrics,
 		retries:                make(map[string]retryState),
-		ensuredResources:       make(map[schema.GroupResource]string),
+		ensuredCollections:     make(map[schema.GroupResource]vector.Collection),
 		folderTitleResolver:    foldertitle.NewResolver(opts.Storage),
 	}, nil
 }
@@ -394,19 +393,17 @@ func (s *Reconciler) seedTypes() []schema.GroupResource {
 }
 
 // ensureResourceInitialized provisions a resource's partition leaf + backfill
-// job on its first write event, once per process (idempotent via
-// ensuredResources and the DB row). stoppingRV is the event's RV, bounding the
-// backfill of pre-existing rows for that resource.
+// job. stoppingRV bounds the backfill of pre-existing rows for that resource.
 func (s *Reconciler) ensureResourceInitialized(ctx context.Context, b embed.Builder, stoppingRV int64) (string, error) {
 	gr := schema.GroupResource{Group: b.Group(), Resource: b.Resource()}
-	if partition, ok := s.ensuredResources[gr]; ok {
-		return partition, nil
-	}
-
 	scope := vector.ScopeTenant
 	if embed.IsClusterScoped(b) {
 		scope = vector.ScopeCluster
 	}
+	if collection := s.ensuredCollections[gr]; collection.Scope == scope {
+		return collection.PartitionKey, nil
+	}
+
 	collection, err := s.vectorBackend.EnsureCollectionWithScope(ctx, gr.Group, gr.Resource, false, scope)
 	if err != nil {
 		return "", fmt.Errorf("ensure collection for %q: %w", gr, err)
@@ -415,7 +412,7 @@ func (s *Reconciler) ensureResourceInitialized(ctx context.Context, b embed.Buil
 	if err := s.vectorBackend.CreateBackfillJob(ctx, s.batchEmbedder.Model(), collection.PartitionKey, stoppingRV, b.Version()); err != nil {
 		return "", fmt.Errorf("create backfill job for %q: %w", gr, err)
 	}
-	s.ensuredResources[gr] = collection.PartitionKey
+	s.ensuredCollections[gr] = collection
 	return collection.PartitionKey, nil
 }
 
@@ -428,7 +425,7 @@ func (s *Reconciler) clusterBackfillWatermarks(ctx context.Context, builders []e
 			continue
 		}
 		gr := schema.GroupResource{Group: builder.Group(), Resource: builder.Resource()}
-		if _, initialized := s.ensuredResources[gr]; initialized {
+		if s.ensuredCollections[gr].Scope == vector.ScopeCluster {
 			continue
 		}
 		rv, err := resource.ListResourceWatermark(ctx, s.storage, gr.Group, gr.Resource)
@@ -527,8 +524,9 @@ func (s *Reconciler) reconcileCollection(ctx context.Context, builder embed.Buil
 		return s.reconcileSince(ctx, builder, sinceRv, lastCalledAt)
 	}
 	gr := schema.GroupResource{Group: builder.Group(), Resource: builder.Resource()}
-	partition := s.ensuredResources[gr]
-	if partition == "" {
+	collection := s.ensuredCollections[gr]
+	partition := collection.PartitionKey
+	if collection.Scope != vector.ScopeCluster {
 		if backfillRV == 0 {
 			return sinceRv, true, true
 		}

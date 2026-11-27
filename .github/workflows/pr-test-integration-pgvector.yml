@@ -18,9 +18,17 @@ on:
       - '**/go.sum'
       - '**/go.work'
       - '**/go.work.sum'
+      - pkg/storage/unified/resource/embedding_config.go
+      - pkg/storage/unified/resource/search.go
+      - pkg/storage/unified/resource/search_field_manifest.go
+      - pkg/storage/unified/resource/search_hybrid*.go
+      - pkg/storage/unified/resource/server.go
+      - pkg/storage/unified/resource/storage_backend.go
       - pkg/storage/unified/search/vector/**
       - pkg/storage/unified/search/embed/**
+      - pkg/storage/unified/search/options.go
       - pkg/storage/unified/sql/cluster_embeddings_test.go
+      - pkg/storage/unified/sql/server.go
       - devenv/docker/blocks/pgvector/**
       - devenv/.env
       - .github/actions/setup-go/**

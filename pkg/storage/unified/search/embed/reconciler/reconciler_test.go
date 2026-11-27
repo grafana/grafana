@@ -2283,6 +2283,30 @@ func TestReconciler_ClusterInitializationFailureKeepsIndexingTenantWrites(t *tes
 	assert.Equal(t, snowflakeRV(120), vec.latestRV)
 }
 
+func TestReconciler_ManifestScopeChangeRevalidatesCachedCollection(t *testing.T) {
+	tenant := fakeBuilder{group: "catalog.example.test", resource: "systemschemas"}
+	cluster := clusterTestBuilder{tenant}
+	partition := "tenant_systemschemas"
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(100)
+	vec.collections = map[schema.GroupResource]vector.Collection{
+		{Group: tenant.group, Resource: tenant.resource}: {
+			Group: tenant.group, Resource: tenant.resource, PartitionKey: partition, Scope: vector.ScopeTenant,
+		},
+	}
+	st := &fakeStorage{latestRvOverride: snowflakeRV(110), changes: []*resource.ModifiedResource{
+		change(cluster.group, cluster.resource, "", "schema", snowflakeRV(110), []byte("schema")),
+	}}
+	s := newReconcilerWithBuilders(t, st, vec, cluster)
+	cached, err := s.ensureResourceInitialized(t.Context(), tenant, vec.latestRV)
+	require.NoError(t, err)
+	require.Equal(t, partition, cached)
+
+	s.sweep(t.Context())
+	assert.Empty(t, vec.upserts)
+	assert.Equal(t, snowflakeRV(100), vec.latestRV)
+}
+
 func TestReconciler_ClusterRevisionMismatchKeepsIndexingTenantWrites(t *testing.T) {
 	const group, plural = "catalog.example.test", "systemschemas"
 	const storedRevision = 2

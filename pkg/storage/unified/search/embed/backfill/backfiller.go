@@ -362,7 +362,9 @@ func (b *VectorBackfiller) resolveBuilders(ctx context.Context) ([]collectionBui
 			continue
 		}
 		if collection.IsExternal || (collection.Scope == vector.ScopeCluster) != embed.IsClusterScoped(builder) {
-			return nil, fmt.Errorf("%s/%s has incompatible collection scope", builder.Group(), builder.Resource())
+			b.log.FromContext(ctx).Error("backfill: incompatible collection scope",
+				"group", builder.Group(), "resource", builder.Resource(), "scope", collection.Scope, "external", collection.IsExternal)
+			continue
 		}
 		builders = append(builders, collectionBuilder{Builder: builder, partitionKey: collection.PartitionKey})
 	}

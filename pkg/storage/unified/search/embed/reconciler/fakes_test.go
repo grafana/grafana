@@ -320,11 +320,11 @@ func (f *fakeVector) ResolveCollection(_ context.Context, group, resource string
 	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
 }
 
-func (f *fakeVector) EnsureCollectionWithScope(ctx context.Context, group, resource string, isExternal bool, scope vector.CollectionScope) (vector.Collection, error) {
-	return f.EnsureCollection(ctx, group, resource, isExternal)
+func (f *fakeVector) EnsureCollection(ctx context.Context, group, resource string, isExternal bool) (vector.Collection, error) {
+	return f.EnsureCollectionWithScope(ctx, group, resource, isExternal, vector.ScopeTenant)
 }
 
-func (f *fakeVector) EnsureCollection(_ context.Context, group, resource string, isExternal bool) (vector.Collection, error) {
+func (f *fakeVector) EnsureCollectionWithScope(_ context.Context, group, resource string, isExternal bool, scope vector.CollectionScope) (vector.Collection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.ensurePartitionErr != nil {
@@ -332,6 +332,9 @@ func (f *fakeVector) EnsureCollection(_ context.Context, group, resource string,
 	}
 	gr := schema.GroupResource{Group: group, Resource: resource}
 	collection, ok := f.collections[gr]
+	if ok && collection.Scope != "" && collection.Scope != scope {
+		return vector.Collection{}, vector.ErrCollectionScopeMismatch
+	}
 	if !ok {
 		key := resource
 		if isExternal {
@@ -339,6 +342,7 @@ func (f *fakeVector) EnsureCollection(_ context.Context, group, resource string,
 		}
 		collection = vector.Collection{Group: group, Resource: resource, PartitionKey: key, IsExternal: isExternal}
 	}
+	collection.Scope = scope
 	f.ensuredCollections = append(f.ensuredCollections, gr)
 	f.ensuredPartitions = append(f.ensuredPartitions, collection.PartitionKey)
 	return collection, nil

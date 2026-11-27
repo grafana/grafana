@@ -187,6 +187,28 @@ func TestRunBackfillCollectionUnavailable(t *testing.T) {
 	}
 }
 
+func TestRunBackfillScopeMismatchDoesNotBlockOtherJobs(t *testing.T) {
+	const folders = "folder.grafana.app/folders"
+	const dashboards = "dashboard.grafana.app/dashboards"
+	f := setupEnrollmentBackfillTest(t, []string{folders, dashboards}, []embed.Builder{dashboard.New()})
+	manifest := folderManifest(1, app.ManifestVersionKindEmbedField{Name: "title", Path: "spec.title"})
+	manifest.Versions[0].Kinds[0].Scope = "Cluster"
+	f.configs.Reload([]*app.ManifestData{manifest})
+	require.NoError(t, f.provider.Validate())
+	f.vec.collections = map[string]vector.Collection{
+		folders:    {Group: "folder.grafana.app", Resource: "folders", PartitionKey: "folders", Scope: vector.ScopeTenant},
+		dashboards: {Group: "dashboard.grafana.app", Resource: "dashboards", PartitionKey: "dashboards", Scope: vector.ScopeTenant},
+	}
+	f.vec.jobs = []vector.BackfillJob{
+		{ID: 1, Model: "test-model", Resource: "folders", StoppingRV: 100, ContentVersion: 1},
+		{ID: 2, Model: "test-model", Resource: "dashboards", StoppingRV: 100},
+	}
+
+	f.run(t, backfillIteration{completedJobs: []int64{2}})
+	assert.Equal(t, []resource.NamespacedResource{{Group: "dashboard.grafana.app", Resource: "dashboards"}}, f.storage.listKeys)
+	assert.False(t, f.vec.jobs[0].IsComplete)
+}
+
 func TestBackfillIdenticalContentUpdatesChangedFolder(t *testing.T) {
 	f := setupEnrollmentBackfillTest(t, []string{"folder.grafana.app/folders"}, nil)
 	f.configs.Reload([]*app.ManifestData{
