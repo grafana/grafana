@@ -17,10 +17,8 @@ import (
 	"k8s.io/client-go/util/flowcontrol"
 
 	"github.com/grafana/grafana/pkg/clientauth"
-	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/infra/tracingsetting"
 	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -120,7 +118,7 @@ type ControllerConfig struct {
 // token =
 // subscriber_credentials_file =
 // tls_enabled =
-func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer, subscriber *nats.SubscriberService) (*ControllerConfig, error) {
+func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer, tracer tracing.Tracer, subscriber *nats.SubscriberService) (*ControllerConfig, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
 	}
@@ -128,11 +126,18 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer, subscribe
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
 	controllerCfg := &ControllerConfig{
 		registry:       registry,
+		tracer:         tracer,
 		Settings:       cfg,
 		natsSubscriber: subscriber,
 		resyncInterval: operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
 		workerCount:    operatorSec.Key("worker_count").MustInt(1),
 		drainTimeout:   operatorSec.Key("drain_timeout").MustDuration(30 * time.Second),
+	}
+
+	// The no-op tracing service replaces the global OpenTelemetry provider, so
+	// build it only when the server passed no tracer.
+	if controllerCfg.tracer == nil {
+		controllerCfg.tracer = tracing.NewNoopTracerService()
 	}
 
 	for _, opt := range registeredConfigOptions {
@@ -401,7 +406,7 @@ func (c *ControllerConfig) DecryptService() (decrypt.DecryptService, error) {
 		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
 	}
 
-	decryptSvc, err := setupDecryptService(c.Settings, tracing.NewNoopTracerService(), tokenExchangeClient)
+	decryptSvc, err := setupDecryptService(c.Settings, c.Tracer(), tokenExchangeClient)
 	if err != nil {
 		return nil, fmt.Errorf("setup decrypt service: %w", err)
 	}
@@ -477,28 +482,8 @@ func (c *ControllerConfig) ProvisioningKeysLister(gvr schema.GroupVersionResourc
 	return keysapi.NewHTTPLister(restClient, gvr), nil
 }
 
-func (c *ControllerConfig) Tracer() (tracing.Tracer, error) {
-	if c.tracer != nil {
-		return c.tracer, nil
-	}
-
-	cfgProvider, err := configprovider.ProvideService(c.Settings)
-	if err != nil {
-		return nil, fmt.Errorf("failed to provide config: %w", err)
-	}
-	tracingConfig, err := tracingsetting.ProvideTracingConfig(cfgProvider)
-	if err != nil {
-		return nil, fmt.Errorf("failed to provide tracing config: %w", err)
-	}
-
-	tracer, err := tracing.ProvideService(tracingConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to provide tracing service: %w", err)
-	}
-
-	c.tracer = tracer
-
-	return c.tracer, nil
+func (c *ControllerConfig) Tracer() tracing.Tracer {
+	return c.tracer
 }
 
 func (c *ControllerConfig) TokenExchangeClient() (*authn.TokenExchangeClient, error) {
@@ -545,10 +530,7 @@ func (c *ControllerConfig) RepositoryFactory() (repository.Factory, error) {
 		enabledTypes[extra.Type()] = struct{}{}
 	}
 
-	tracer, err := c.Tracer()
-	if err != nil {
-		return nil, err
-	}
+	tracer := c.Tracer()
 
 	repositoryFactory, err := repository.ProvideFactory(enabledTypes, extras, tracer)
 	if err != nil {
@@ -575,10 +557,7 @@ func (c *ControllerConfig) ConnectionFactory() (connection.Factory, error) {
 		types = defaultConnectionTypes(extras)
 	}
 
-	tracer, err := c.Tracer()
-	if err != nil {
-		return nil, err
-	}
+	tracer := c.Tracer()
 
 	connectionFactory, err := connection.ProvideFactory(connection.ToConnectionTypes(types), extras, tracer)
 	if err != nil {

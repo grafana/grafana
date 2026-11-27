@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
 	"gopkg.in/ini.v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -264,9 +265,9 @@ func TestControllersOwnNATSSubscriber(t *testing.T) {
 		// Controllers that read managed resources keep their kinds current.
 		watchesManifests bool
 	}{
-		{"repository", RunRepoController, true},
-		{"connection", RunConnectionController, false},
-		{"job queue", RunJobQueueController, true},
+		{"repository", RepoOperator.Run, true},
+		{"connection", ConnectionOperator.Run, false},
+		{"job queue", JobQueueOperator.Run, true},
 	} {
 		t.Run(controller.name, func(t *testing.T) {
 			srv, err := natsserver.NewServer(&natsserver.Options{Host: "127.0.0.1", Port: natsserver.RANDOM_PORT, NoLog: true, NoSigs: true})
@@ -437,4 +438,17 @@ func newStubSigner(t *testing.T) *httptest.Server {
 	}))
 	t.Cleanup(signer.Close)
 	return signer
+}
+
+func TestSetupFromConfigUsesRuntimeTracer(t *testing.T) {
+	tracer := tracing.NewNoopTracerService()
+	global := otel.GetTracerProvider()
+	cfg, err := setupFromConfig(setting.NewCfg(), prometheus.NewRegistry(), tracer, nil)
+	require.NoError(t, err)
+	require.Same(t, tracer, cfg.Tracer())
+	require.Same(t, global, otel.GetTracerProvider(), "a runtime tracer must leave the global provider alone")
+
+	cfg, err = setupFromConfig(setting.NewCfg(), prometheus.NewRegistry(), nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, cfg.Tracer(), "operators without a runtime tracer still get a usable one")
 }

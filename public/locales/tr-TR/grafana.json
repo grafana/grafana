@@ -3353,6 +3353,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Kurallar yüklenirken hata oluştu",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Grafana kural yapılandırması yüklenemedi:",
       "failed-to-load-grafana-rules-state": "Grafana kural durumu yüklenemedi:",
       "failed-to-load-rules-config": "<2>{{dataSource}}</2> kaynağından kural yapılandırması yüklenemedi",
