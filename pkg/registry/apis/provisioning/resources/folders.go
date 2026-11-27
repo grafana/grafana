@@ -630,6 +630,9 @@ type EnsureFolderTreeExistsOptions struct {
 	// metadata (_folder.json) with a freshly generated UID instead of the
 	// original folder identifier. See EnsureFolderTreeExists for details.
 	GenerateNewFolderIDs bool
+	// NewFolderIDs lists the folders that get a freshly generated UID even when
+	// GenerateNewFolderIDs is false.
+	NewFolderIDs map[string]struct{}
 	// OnFolder is called for each folder in the tree. It is called with created
 	// set to false when the folder already exists in the repository, and true
 	// when the folder is created. startedAt is the time processing of this folder
@@ -682,7 +685,7 @@ func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, tree Folder
 		}
 
 		manifestID := folder.ID
-		if opts.GenerateNewFolderIDs {
+		if _, newID := opts.NewFolderIDs[folder.ID]; opts.GenerateNewFolderIDs || newID {
 			manifestID = grafanautil.GenerateShortUID()
 		}
 		msg := fmt.Sprintf("Add folder and folder metadata %s", p)

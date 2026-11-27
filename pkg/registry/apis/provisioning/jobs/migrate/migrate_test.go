@@ -330,7 +330,7 @@ func TestMigrationWorker_Migrate(t *testing.T) {
 				tt.setupMocks(mockNamespaceCleaner, exportWorker, syncWorker, progressRecorder, readerWriter)
 			}
 
-			migrator := NewMigrationWorker(mockNamespaceCleaner, exportWorker, syncWorker)
+			migrator := NewMigrationWorker(mockNamespaceCleaner, exporterWithoutFolderCheck(exportWorker), syncWorker)
 
 			var migrateOptions provisioning.MigrateJobOptions
 			if tt.name == "should pass migrate options to export job" {
@@ -392,7 +392,7 @@ func TestMigrationWorker_BranchMigration(t *testing.T) {
 		// syncWorker.Process must NOT be called: mockery fails the test on any
 		// unexpected call, so the absence of an expectation asserts the pull is skipped.
 
-		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		migrator := NewMigrationWorker(nc, exporterWithoutFolderCheck(exportWorker), syncWorker)
 		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x"},
 		}}, pr)
@@ -449,7 +449,7 @@ func TestMigrationWorker_BranchMigration(t *testing.T) {
 			return names["dash-1"] && names["dash-2"]
 		}), pr).Return(nil)
 
-		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		migrator := NewMigrationWorker(nc, exporterWithoutFolderCheck(exportWorker), syncWorker)
 		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{
 				Branch: "feature-x",
@@ -503,7 +503,7 @@ func TestMigrationWorker_BranchMigration(t *testing.T) {
 			return len(refs) == 1 && refs[0].Name == "dash-1"
 		}), pr).Return(nil)
 
-		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		migrator := NewMigrationWorker(nc, exporterWithoutFolderCheck(exportWorker), syncWorker)
 		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x"},
 		}}, pr)
@@ -551,7 +551,7 @@ func TestMigrationWorker_BranchMigration(t *testing.T) {
 			return len(refs) == 1 && refs[0].Name == "dash-1"
 		}), pr).Return(nil)
 
-		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		migrator := NewMigrationWorker(nc, exporterWithoutFolderCheck(exportWorker), syncWorker)
 		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x"},
 		}}, pr)
@@ -581,7 +581,7 @@ func TestMigrationWorker_BranchMigration(t *testing.T) {
 		}), pr).Return(nil)
 		nc.On("Clean", mock.Anything, "test-ns", pr).Return(nil)
 
-		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		migrator := NewMigrationWorker(nc, exporterWithoutFolderCheck(exportWorker), syncWorker)
 		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{Branch: "main"},
 		}}, pr)
@@ -626,7 +626,7 @@ func TestMigrationWorker_SkipResourceDeletion(t *testing.T) {
 			return job.Spec.Pull != nil
 		}), pr).Return(nil)
 
-		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		migrator := NewMigrationWorker(nc, exporterWithoutFolderCheck(exportWorker), syncWorker)
 		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{SkipResourceDeletion: true},
 		}}, pr)
@@ -651,7 +651,7 @@ func TestMigrationWorker_SkipResourceDeletion(t *testing.T) {
 			return job.Spec.Push != nil && job.Spec.Push.Branch == "feature-x"
 		}), mock.Anything).Return(nil)
 
-		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		migrator := NewMigrationWorker(nc, exporterWithoutFolderCheck(exportWorker), syncWorker)
 		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x", SkipResourceDeletion: true},
 		}}, pr)
@@ -709,7 +709,7 @@ func TestMigrationWorker_CommitMessagePrecedence(t *testing.T) {
 			syncWorker.On("Process", mock.Anything, repo, mock.Anything, pr).Return(nil)
 			nc.On("Clean", mock.Anything, "test-ns", pr).Return(nil)
 
-			migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+			migrator := NewMigrationWorker(nc, exporterWithoutFolderCheck(exportWorker), syncWorker)
 			job := provisioning.Job{
 				Spec: provisioning.JobSpec{
 					Message: tt.specMessage,
@@ -767,7 +767,7 @@ func TestMigrationWorker_TakeoverAllowlist(t *testing.T) {
 
 		nc.On("Clean", mock.Anything, "test-ns", pr).Return(nil)
 
-		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		migrator := NewMigrationWorker(nc, exporterWithoutFolderCheck(exportWorker), syncWorker)
 		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{}}}, pr)
 		require.NoError(t, err)
 	})
@@ -800,7 +800,7 @@ func TestMigrationWorker_TakeoverAllowlist(t *testing.T) {
 
 		nc.On("Clean", mock.Anything, "test-ns", pr).Return(nil)
 
-		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		migrator := NewMigrationWorker(nc, exporterWithoutFolderCheck(exportWorker), syncWorker)
 		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{}}}, pr)
 		require.NoError(t, err)
 	})
@@ -849,7 +849,7 @@ func TestMigrationWorker_TakeoverAllowlist(t *testing.T) {
 
 		nc.On("Clean", mock.Anything, "test-ns", pr).Return(nil)
 
-		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		migrator := NewMigrationWorker(nc, exporterWithoutFolderCheck(exportWorker), syncWorker)
 		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{}}}, pr)
 		require.NoError(t, err)
 	})
@@ -895,7 +895,7 @@ func TestMigrationWorker_SelectiveResources(t *testing.T) {
 			return job.Spec.Pull != nil
 		}), pr).Return(nil)
 
-		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		migrator := NewMigrationWorker(nc, exporterWithoutFolderCheck(exportWorker), syncWorker)
 		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{Resources: selected}}}, pr)
 		require.NoError(t, err)
 	})
@@ -915,7 +915,7 @@ func TestMigrationWorker_SelectiveResources(t *testing.T) {
 		// The migration is rejected up front, so nothing runs: no export, pull, or
 		// cleanup. mockery fails the test if any of those are called, since no
 		// expectations are registered for them.
-		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		migrator := NewMigrationWorker(nc, exporterWithoutFolderCheck(exportWorker), syncWorker)
 		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{Resources: selected}}}, pr)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "Instance repositories should only migrate all resources")
@@ -966,7 +966,7 @@ func TestMigrationWorker_CleanupSeesTheKindsOfTheExport(t *testing.T) {
 		cleaned = supported(args.Get(0).(context.Context))
 	}).Return(nil)
 
-	migrator := NewMigrationWorker(nc, exportWorker, jobs.NewMockWorker(t))
+	migrator := NewMigrationWorker(nc, exporterWithoutFolderCheck(exportWorker), jobs.NewMockWorker(t))
 	err := migrator.migrate(t.Context(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 		Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x"},
 	}}, pr)

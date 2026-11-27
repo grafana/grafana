@@ -10,25 +10,35 @@ import (
 	"github.com/grafana/grafana/pkg/infra/features"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/open-feature/go-sdk/openfeature"
 )
 
+// MigrationExporter runs the export phase of a migration. When folderCheck is
+// set, it runs the folder UID check and returns which folders kept their UID
+// and which were not exported. When folderCheck is nil, the results are nil.
+type MigrationExporter interface {
+	ExportForMigration(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder, folderCheck *resources.FolderCheckOptions) (*resources.FolderCheckResults, error)
+}
+
 type MigrationWorker struct {
 	namespaceCleaner NamespaceCleaner
-	exportWorker     jobs.Worker
+	exporter         MigrationExporter
 	syncWorker       jobs.Worker
+	takeoverEnabled  func(ctx context.Context, namespace string) bool
 }
 
 func NewMigrationWorker(
 	namespaceCleaner NamespaceCleaner,
-	exportWorker jobs.Worker,
+	exporter MigrationExporter,
 	syncWorker jobs.Worker,
 ) *MigrationWorker {
 	return &MigrationWorker{
 		namespaceCleaner: namespaceCleaner,
-		exportWorker:     exportWorker,
+		exporter:         exporter,
 		syncWorker:       syncWorker,
+		takeoverEnabled:  resources.FolderTakeoverEnabled,
 	}
 }
 

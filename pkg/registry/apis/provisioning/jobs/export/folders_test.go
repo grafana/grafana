@@ -602,7 +602,7 @@ func TestWriteFolderTree_PathCollisionFails(t *testing.T) {
 	repoResources := resources.NewMockRepositoryResources(t)
 	progress := jobs.NewMockJobProgressRecorder(t)
 
-	err := writeFolderTree(context.Background(), v0alpha1.ExportJobOptions{}, repoResources, tree, progress)
+	_, err := writeFolderTree(context.Background(), v0alpha1.ExportJobOptions{}, repoResources, tree, progress, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "both export to path")
 }
@@ -618,6 +618,6 @@ func TestWriteFolderTree_NoCollisionProceeds(t *testing.T) {
 	repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	progress := jobs.NewMockJobProgressRecorder(t)
 
-	err := writeFolderTree(context.Background(), v0alpha1.ExportJobOptions{}, repoResources, tree, progress)
+	_, err := writeFolderTree(context.Background(), v0alpha1.ExportJobOptions{}, repoResources, tree, progress, nil)
 	require.NoError(t, err)
 }
