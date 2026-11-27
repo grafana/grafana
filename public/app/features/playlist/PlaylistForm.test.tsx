@@ -37,6 +37,23 @@ const mockPlaylist: Playlist = {
   status: {},
 };
 
+const mockPerItemIntervalPlaylist: Playlist = {
+  apiVersion: 'playlist.grafana.app/v1',
+  kind: 'Playlist',
+  spec: {
+    title: 'A test playlist',
+    interval: '10m',
+    items: [
+      { type: 'dashboard_by_uid', value: 'uid_1', interval: '30s' },
+      { type: 'dashboard_by_uid', value: 'uid_2' },
+    ],
+  },
+  metadata: {
+    name: 'foo',
+  },
+  status: {},
+};
+
 const mockEmptyPlaylist: Playlist = {
   apiVersion: 'playlist.grafana.app/v1',
   kind: 'Playlist',
@@ -78,7 +95,7 @@ describe('PlaylistForm', () => {
     it('then interval field should have correct value', () => {
       getTestContext();
 
-      expect(screen.getByRole('textbox', { name: /interval/i })).toHaveValue('10m');
+      expect(screen.getByRole('textbox', { name: 'Interval' })).toHaveValue('10m');
     });
 
     it('then items row count should be correct', () => {
@@ -150,9 +167,23 @@ describe('PlaylistForm', () => {
       it('then an alert should appear and nothing should be submitted', async () => {
         const { onSubmitMock } = getTestContext();
 
-        await userEvent.clear(screen.getByRole('textbox', { name: /interval/i }));
+        await userEvent.clear(screen.getByRole('textbox', { name: 'Interval' }));
         await userEvent.click(screen.getByRole('button', { name: /save/i }));
         expect(screen.getAllByRole('alert')).toHaveLength(1);
+        expect(onSubmitMock).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('and interval is invalid', () => {
+      it('then an alert should appear and nothing should be submitted', async () => {
+        const { onSubmitMock } = getTestContext();
+
+        const input = screen.getByRole('textbox', { name: 'Interval' });
+        await userEvent.clear(input);
+        await userEvent.type(input, '30ssdddmm');
+        await userEvent.click(screen.getByRole('button', { name: /save/i }));
+
+        expect(await screen.findByRole('alert')).toHaveTextContent(/invalid interval/i);
         expect(onSubmitMock).not.toHaveBeenCalled();
       });
     });
@@ -163,6 +194,127 @@ describe('PlaylistForm', () => {
       getTestContext(mockEmptyPlaylist);
 
       expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
+    });
+  });
+
+  describe('per-dashboard interval overrides', () => {
+    it('always shows the global interval field and a per-row override input', () => {
+      getTestContext();
+
+      expect(screen.getByRole('textbox', { name: 'Interval' })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /interval for uid_1/i })).toBeInTheDocument();
+    });
+
+    it('renders existing per-item intervals in the row inputs', () => {
+      getTestContext(mockPerItemIntervalPlaylist);
+
+      expect(screen.getByRole('textbox', { name: 'Interval' })).toHaveValue('10m');
+      expect(screen.getByRole('textbox', { name: /interval for uid_1/i })).toHaveValue('30s');
+      expect(screen.getByRole('textbox', { name: /interval for uid_2/i })).toHaveValue('');
+    });
+
+    it('submits a per-item interval override and leaves blank rows without one', async () => {
+      const { onSubmitMock } = getTestContext();
+
+      await userEvent.type(screen.getByRole('textbox', { name: /interval for uid_1/i }), '30s');
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
+
+      expect(onSubmitMock).toHaveBeenCalledTimes(1);
+      expect(onSubmitMock).toHaveBeenCalledWith({
+        apiVersion: 'playlist.grafana.app/v1',
+        kind: 'Playlist',
+        spec: {
+          title: 'A test playlist',
+          interval: '10m',
+          items: [
+            { type: 'dashboard_by_uid', value: 'uid_1', interval: '30s' },
+            { type: 'dashboard_by_uid', value: 'uid_2' },
+            { type: 'dashboard_by_tag', value: 'tag_A' },
+          ],
+        },
+        metadata: {
+          name: 'foo',
+        },
+        status: {},
+      });
+    });
+
+    it('marks an unparseable per-item interval invalid and disables saving', async () => {
+      getTestContext();
+
+      const input = screen.getByRole('textbox', { name: /interval for uid_1/i });
+      await userEvent.type(input, 'not-an-interval');
+
+      expect(input).toBeInvalid();
+      expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
+    });
+
+    it('shows help for the per-item interval when the input is focused', async () => {
+      getTestContext();
+
+      await userEvent.hover(screen.getByRole('textbox', { name: /interval for uid_1/i }));
+
+      expect(await screen.findByText(/dashboard interval, e\.g\./i)).toBeInTheDocument();
+    });
+
+    it('describes an invalid per-item interval on the input', async () => {
+      getTestContext();
+
+      const input = screen.getByRole('textbox', { name: /interval for uid_1/i });
+      await userEvent.type(input, 'bad');
+
+      expect(input).toHaveAccessibleDescription(/invalid interval/i);
+    });
+
+    it('does not submit when Enter is pressed with an invalid per-item interval', async () => {
+      const { onSubmitMock } = getTestContext();
+
+      // Enter submits even though the disabled button can't be clicked.
+      await userEvent.type(screen.getByRole('textbox', { name: /interval for uid_1/i }), 'bad{Enter}');
+
+      expect(onSubmitMock).not.toHaveBeenCalled();
+    });
+
+    it('updates the row interval placeholder when the global interval changes', async () => {
+      getTestContext();
+
+      await userEvent.clear(screen.getByRole('textbox', { name: 'Interval' }));
+      await userEvent.type(screen.getByRole('textbox', { name: 'Interval' }), '42s');
+
+      expect(screen.getByRole('textbox', { name: /interval for uid_1/i })).toHaveAttribute(
+        'placeholder',
+        'Default (42s)'
+      );
+    });
+
+    it('keeps a per-item interval with its own row after another row is removed', async () => {
+      getTestContext(mockPerItemIntervalPlaylist);
+
+      // uid_1 has 30s, uid_2 is blank. Removing uid_1 must not leave 30s on uid_2's input.
+      await userEvent.click(within(rows()[0]).getByRole('button', { name: /delete playlist item/i }));
+      await waitFor(() => expect(rows()).toHaveLength(1));
+
+      expect(screen.getByRole('textbox', { name: /interval for uid_2/i })).toHaveValue('');
+    });
+
+    it('clearing a per-item interval removes the override', async () => {
+      const { onSubmitMock } = getTestContext(mockPerItemIntervalPlaylist);
+
+      await userEvent.clear(screen.getByRole('textbox', { name: /interval for uid_1/i }));
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
+
+      expect(onSubmitMock).toHaveBeenCalledTimes(1);
+      expect(onSubmitMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          spec: expect.objectContaining({
+            interval: '10m',
+            items: [
+              { type: 'dashboard_by_uid', value: 'uid_1' },
+              { type: 'dashboard_by_uid', value: 'uid_2' },
+            ],
+          }),
+        })
+      );
     });
   });
 });
