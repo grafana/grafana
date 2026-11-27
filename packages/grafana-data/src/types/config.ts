@@ -202,9 +202,6 @@ export interface CurrentUserDTO {
   permissions?: Record<string, boolean>;
   analytics: AnalyticsSettings;
   authenticatedBy: string;
-
-  /** @deprecated Use theme instead */
-  lightTheme: boolean;
 }
 
 /**

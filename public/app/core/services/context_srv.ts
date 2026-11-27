@@ -24,7 +24,7 @@ import { loadUserPermissions } from './userPermissions';
 export const AutoRefreshInterval = 'auto';
 export const RedirectToUrlKey = 'redirectTo';
 
-export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
+export class User implements CurrentUserInternal {
   isSignedIn: boolean;
   id: number;
   uid: string;

@@ -284,12 +284,10 @@ async function initBootDataFromLegacy() {
   cssLink.rel = 'stylesheet';
 
   const theme = window.grafanaBootData.user.theme;
-  if (theme === 'system') {
-    const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    window.grafanaBootData.user.lightTheme = !darkQuery.matches;
-  }
-
-  const isLightTheme = window.grafanaBootData.user.lightTheme;
+  // hardcoded instead of getThemeById, which would pull all of @grafana/data into this inlined script.
+  const lightThemes = ['light', 'deut_prot_light', 'tritanopia_light', 'desertbloom', 'zen'];
+  const isLightTheme =
+    theme === 'system' ? !window.matchMedia('(prefers-color-scheme: dark)').matches : lightThemes.includes(theme);
   document.body.classList.add(isLightTheme ? 'theme-light' : 'theme-dark');
 
   const lang = window.grafanaBootData.user.language;
