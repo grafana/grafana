@@ -782,6 +782,8 @@ export type MetaInfo = {
   version: string;
 };
 export type MetaAppKind = {
+  /** Path of the page that creates an object of the kind */
+  createRoute?: string;
   /** Whether objects of the kind live in folders. Without it, a namespaced kind does, as in the app manifest */
   folderScoped?: boolean;
   group: string;

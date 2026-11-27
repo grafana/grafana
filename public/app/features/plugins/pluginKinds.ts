@@ -52,7 +52,13 @@ function toDeclaredKind(pluginId: string, declared: AppPluginKind): DeclaredKind
   if (!knownIcon) {
     warn(`with the icon "${icon}", which Grafana does not have. Grafana draws "${FALLBACK_ICON}" instead.`);
   }
-  return [{ ...declared, icon: knownIcon ?? FALLBACK_ICON }];
+  // Like an unknown icon, a create route Grafana cannot use is no reason to hide the kind's objects
+  let createRoute = declared.createRoute || undefined;
+  if (createRoute && !isOwnRoute(pluginId, createRoute)) {
+    warn(`with a create route outside /a/${pluginId}/. Grafana leaves the create route out.`);
+    createRoute = undefined;
+  }
+  return [{ ...declared, icon: knownIcon ?? FALLBACK_ICON, createRoute }];
 }
 
 // What the server serves. When it cannot be asked, the declared kinds are left to their plugins' modules to add
@@ -68,7 +74,7 @@ async function getServedResources(): Promise<GroupDiscoveryResource[]> {
 
 // A kind the server does not serve gets no row: nothing could list or open its objects
 function toKindInfo(declared: DeclaredKind, served: GroupDiscoveryResource[]): KindInfo[] {
-  const { group, kind, icon, route, folderScoped, label, labelPlural } = declared;
+  const { group, kind, icon, route, createRoute, folderScoped, label, labelPlural } = declared;
   const api = served.find(({ responseKind }) => responseKind.group === group && responseKind.kind === kind);
   if (!api) {
     return [];
@@ -86,6 +92,7 @@ function toKindInfo(declared: DeclaredKind, served: GroupDiscoveryResource[]): K
       getLabel: kindLabel(() => label || kind.toLowerCase()),
       getPluralLabel: kindLabel(() => labelPlural || api.resource),
       getRoute: (name) => route.replaceAll('{name}', encodeURIComponent(name)),
+      createRoute,
     },
   ];
 }

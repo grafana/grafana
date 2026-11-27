@@ -353,6 +353,11 @@
             "description": "Path of the page of one object, under the app's own path. `{name}` stands for the object's name, for example `/a/example-app/widgets/{name}`.",
             "pattern": "^/a/[^/]+/.*\\{name\\}"
           },
+          "createRoute": {
+            "type": "string",
+            "description": "Path of the page that creates an object of the kind, under the app's own path, for example `/a/example-app/widgets/new`.",
+            "pattern": "^/a/[^/]+/.+"
+          },
           "label": {
             "type": "string",
             "description": "English name of the kind as it reads inside a sentence, for example `widget`. Without it, Grafana uses `kind` in lower case."

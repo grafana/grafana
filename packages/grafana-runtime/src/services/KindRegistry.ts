@@ -55,6 +55,11 @@ export interface KindInfo {
    * Absent when the kind has no page for a single object.
    */
   readonly getRoute?: (name: string, title?: string) => string;
+  /**
+   * The path of the page that creates an object of this kind, without the app sub path. Absent when the kind
+   * names no such page.
+   */
+  readonly createRoute?: string;
 }
 
 /** The key each of Grafana's own kinds has in {@link KindRegistry.coreKinds}. */

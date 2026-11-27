@@ -505,6 +505,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 						"kind": "Widget",
 						"icon": "cube",
 						"route": "/a/myorg-kinds-app/widgets/{name}",
+						"createRoute": "/a/myorg-kinds-app/widgets/new",
 						"label": "widget",
 						"labelPlural": "widgets"
 					}]
@@ -520,6 +521,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 					Kind:        "Widget",
 					Icon:        "cube",
 					Route:       "/a/myorg-kinds-app/widgets/{name}",
+					CreateRoute: "/a/myorg-kinds-app/widgets/new",
 					Label:       "widget",
 					LabelPlural: "widgets",
 				}},

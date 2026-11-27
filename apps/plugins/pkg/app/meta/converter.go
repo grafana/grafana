@@ -551,6 +551,9 @@ func kindsToMeta(kinds []plugins.AppKind) []pluginsv0alpha1.MetaAppKind {
 			Route:        kind.Route,
 			FolderScoped: kind.FolderScoped,
 		}
+		if kind.CreateRoute != "" {
+			v0Kind.CreateRoute = &kind.CreateRoute
+		}
 		if kind.Label != "" {
 			v0Kind.Label = &kind.Label
 		}

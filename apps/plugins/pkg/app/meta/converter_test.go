@@ -278,7 +278,8 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 			Kinds: []plugins.AppKind{
 				{
 					Group: "widgets.ext.grafana.app", Kind: "Widget", Icon: "cube", FolderScoped: &notFolderScoped,
-					Route: "/a/test-app/widgets/{name}", Label: "widget", LabelPlural: "widgets",
+					Route: "/a/test-app/widgets/{name}", CreateRoute: "/a/test-app/widgets/new",
+					Label: "widget", LabelPlural: "widgets",
 				},
 				{
 					Group: "widgets.ext.grafana.app", Kind: "Gadget", Icon: "apps",
@@ -288,11 +289,12 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 		}
 
 		meta := jsonDataToMetaJSONData(jsonData)
-		label, labelPlural := "widget", "widgets"
+		label, labelPlural, createRoute := "widget", "widgets", "/a/test-app/widgets/new"
 		assert.Equal(t, []pluginsv0alpha1.MetaAppKind{
 			{
 				Group: "widgets.ext.grafana.app", Kind: "Widget", Icon: "cube", FolderScoped: &notFolderScoped,
-				Route: "/a/test-app/widgets/{name}", Label: &label, LabelPlural: &labelPlural,
+				Route: "/a/test-app/widgets/{name}", CreateRoute: &createRoute,
+				Label: &label, LabelPlural: &labelPlural,
 			},
 			{
 				Group: "widgets.ext.grafana.app", Kind: "Gadget", Icon: "apps",

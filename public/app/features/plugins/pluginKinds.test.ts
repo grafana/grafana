@@ -95,6 +95,27 @@ describe('addDeclaredPluginKinds', () => {
     ]);
   });
 
+  it('gives a kind the page that creates its objects, as plugin.json declares it', async () => {
+    serve({ kind: 'Gadget', resource: 'gadgets' });
+
+    await addDeclaredPluginKinds([testApp([declaredKind('Gadget', { createRoute: '/a/test-app/gadgets/new' })])]);
+
+    expect(findKind(GROUP, 'Gadget')?.createRoute).toBe('/a/test-app/gadgets/new');
+  });
+
+  it("keeps a kind whose create route is outside the plugin's pages, without the create route", async () => {
+    serve({ kind: 'Gizmo', resource: 'gizmos' });
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    await addDeclaredPluginKinds([testApp([declaredKind('Gizmo', { createRoute: '/admin/users/new' })])]);
+
+    const kind = findKind(GROUP, 'Gizmo');
+    expect(kind?.resource).toBe('gizmos');
+    expect(kind?.createRoute).toBeUndefined();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining(`${GROUP}/Gizmo`));
+    warn.mockRestore();
+  });
+
   it('leaves out a kind that its declared group does not serve', async () => {
     const otherGroup = 'other.ext.grafana.app';
     serve({ kind: 'Served', resource: 'serveds' }, { kind: 'Namesake', resource: 'namesakes', group: otherGroup });

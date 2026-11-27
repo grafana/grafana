@@ -183,6 +183,8 @@ type AppKind struct {
 	Icon  string `json:"icon"`
 	// Route is the path of the page of one object, in which {name} stands for the object's name.
 	Route string `json:"route"`
+	// CreateRoute is the path of the page that creates an object of the kind.
+	CreateRoute string `json:"createRoute,omitempty"`
 	// FolderScoped tells whether objects of the kind live in folders. Without it, a namespaced kind does, as in
 	// the app manifest, so only false needs writing.
 	FolderScoped *bool `json:"folderScoped,omitempty"`

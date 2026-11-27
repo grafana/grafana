@@ -43,6 +43,8 @@ export type AppPluginKind = {
   icon: string;
   /** Path of the page of one object, in which `{name}` stands for the object's name */
   route: string;
+  /** Path of the page that creates an object of the kind */
+  createRoute?: string;
   /** Whether objects of the kind live in folders. Without it, a namespaced kind does, as in the app manifest */
   folderScoped?: boolean;
   /** English name as it reads inside a sentence. Without one, Grafana uses the kind in lower case */

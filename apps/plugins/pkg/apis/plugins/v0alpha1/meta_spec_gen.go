@@ -275,6 +275,8 @@ type MetaAppKind struct {
 	Icon  string `json:"icon"`
 	// Path of the page of one object, in which {name} stands for the object's name
 	Route string `json:"route"`
+	// Path of the page that creates an object of the kind
+	CreateRoute *string `json:"createRoute,omitempty"`
 	// Whether objects of the kind live in folders. Without it, a namespaced kind does, as in the app manifest
 	FolderScoped *bool `json:"folderScoped,omitempty"`
 	// English name as it reads inside a sentence. Without one, Grafana uses the kind in lower case
