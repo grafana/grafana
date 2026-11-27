@@ -170,7 +170,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
       // Return the value along with scale info
       if (color == null) {
-        const scaleResult = scaleFunc(numeric);
+        const scaleResult = scaleFunc(numeric, value);
         color = scaleResult.color;
         percent = scaleResult.percent;
       }
@@ -192,7 +192,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     }
 
     if (!color) {
-      const scaleResult = scaleFunc(-Infinity);
+      const scaleResult = scaleFunc(-Infinity, value);
       color = scaleResult.color;
       percent = scaleResult.percent;
     }

@@ -14259,6 +14259,13 @@
       "swatch-placeholder-aria-label": "Pick a color, {{placeholder}}"
     },
     "field-color": {
+      "assignment-label": "Assign colors by",
+      "assignment-series-index": "Series index",
+      "assignment-series-index-description": "Use the next color for each series",
+      "assignment-series-name": "Series name",
+      "assignment-series-name-description": "Give each series the same color everywhere its name appears",
+      "assignment-value": "Value",
+      "assignment-value-description": "Give each value the same color everywhere it appears. Different values can share a color.",
       "color-by-label": "Color series by",
       "reverse-label": "Reverse colors"
     },

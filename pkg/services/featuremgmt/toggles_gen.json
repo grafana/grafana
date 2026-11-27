@@ -2350,6 +2350,20 @@
     },
     {
       "metadata": {
+        "name": "dataviz.colorByValue",
+        "resourceVersion": "1795334308936",
+        "creationTimestamp": "2026-11-22T07:58:28Z"
+      },
+      "spec": {
+        "description": "Enable the option to color categorical palettes by value",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dataviz.experimentalColorSchemes",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-06-23T19:36:20Z"

@@ -1,7 +1,7 @@
 import { mergeWith, isArray, isObject, set, unset, isEqual, pickBy } from 'lodash';
 
 import { type FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
-import { fieldColorModeRegistry } from '../field/fieldColor';
+import { fieldColorModeRegistry, getFieldColorMode } from '../field/fieldColor';
 import { type FieldColorConfigSettings } from '../field/overrides/processors';
 import { FieldColorModeId } from '../types/fieldColor';
 import {
@@ -169,7 +169,17 @@ function adaptFieldColorMode(
 
   if (color && color.settings) {
     const colorSettings: FieldColorConfigSettings = color.settings;
-    const mode = fieldColorModeRegistry.getIfExists(fieldConfig.defaults.color?.mode);
+    let mode = fieldColorModeRegistry.getIfExists(fieldConfig.defaults.color?.mode);
+
+    if (fieldConfig.defaults.color?.assignment === 'value' && mode) {
+      if (!colorSettings.byValueSupport || colorSettings.bySeriesSupport) {
+        // Keep the palette but drop assigning by value, the same panels reset the by value schemes below
+        const { assignment, ...rest } = fieldConfig.defaults.color;
+        fieldConfig.defaults.color = rest;
+      } else {
+        mode = getFieldColorMode(mode.id, false, 'value');
+      }
+    }
 
     // When no support fo value colors, use classic palette
     if (!colorSettings.byValueSupport) {

@@ -235,9 +235,11 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
   } else {
     const hasPerBarColor = frame.fields.some((f) => {
       const fromThresholds = f.config.color?.mode === FieldColorModeId.Thresholds;
+      const fromValueHash = f.config.color != null && getFieldColorModeForField(f).assignment === 'value';
 
       return (
         fromThresholds ||
+        fromValueHash ||
         f.config.mappings?.some((m) => {
           // ValueToText mappings have a different format, where all of them are grouped into an object keyed by value
           if (m.type === 'value') {

@@ -11,11 +11,14 @@ import {
   type GrafanaTheme2,
   type FieldColorConfigSettings,
   type FieldColorSeriesByMode,
+  type FieldColorAssignment,
   getFieldColorMode,
   isReversibleFieldColorMode,
+  supportsFieldColorAssignment,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
+  useFlagDatavizColorByValue,
   useFlagDatavizExperimentalColorSchemes,
   useFlagDatavizReverseColorScheme,
   useFlagEnableColorblindSafePanelOptions,
@@ -35,12 +38,16 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
   const pieChartGradientColorScheme = useFlagPieChartGradientColorScheme();
   const experimentalColorSchemesEnabled = useFlagDatavizExperimentalColorSchemes();
   const reverseColorSchemeEnabled = useFlagDatavizReverseColorScheme();
+  const colorByValueEnabled = useFlagDatavizColorByValue();
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
   const colorMode = getFieldColorMode(value?.mode);
   const canReverse = reverseColorSchemeEnabled && isReversibleFieldColorMode(colorMode);
   const reverse = canReverse && Boolean(value?.reverse);
+  const canAssign = colorByValueEnabled && supportsFieldColorAssignment(colorMode);
+  // Panels that color whole series by a value (bySeriesSupport) reset the value assignment, so it is not offered there
+  const canAssignByValue = Boolean(item.settings?.byValueSupport) && !item.settings?.bySeriesSupport;
   const availableOptions = item.settings?.byValueSupport
     ? fieldColorModeRegistry.list()
     : fieldColorModeRegistry.list().filter((m) => !m.isByValue);
@@ -141,6 +148,58 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
     </Field>
   );
 
+  const assignmentOptions: Array<SelectableValue<FieldColorAssignment>> = [
+    {
+      label: t('options-ui.field-color.assignment-series-index', 'Series index'),
+      value: 'seriesIndex',
+      description: t(
+        'options-ui.field-color.assignment-series-index-description',
+        'Use the next color for each series'
+      ),
+    },
+    {
+      label: t('options-ui.field-color.assignment-series-name', 'Series name'),
+      value: 'seriesName',
+      description: t(
+        'options-ui.field-color.assignment-series-name-description',
+        'Give each series the same color everywhere its name appears'
+      ),
+    },
+  ];
+  if (canAssignByValue) {
+    assignmentOptions.push({
+      label: t('options-ui.field-color.assignment-value', 'Value'),
+      value: 'value',
+      description: t(
+        'options-ui.field-color.assignment-value-description',
+        'Give each value the same color everywhere it appears. Different values can share a color.'
+      ),
+    });
+  }
+  const assignment = assignmentOptions.some((o) => o.value === value?.assignment)
+    ? value?.assignment
+    : colorMode.assignment;
+
+  const onAssignmentChange = (newAssignment: FieldColorAssignment) => {
+    onChange({
+      ...value,
+      mode,
+      // The palette's own assignment is implied, so it is not saved
+      assignment: newAssignment === colorMode.assignment ? undefined : newAssignment,
+    });
+  };
+
+  const assignmentRadio = canAssign && (
+    <Field label={t('options-ui.field-color.assignment-label', 'Assign colors by')} noMargin>
+      <RadioButtonGroup
+        id={`${id}-assignment`}
+        value={assignment}
+        options={assignmentOptions}
+        onChange={onAssignmentChange}
+      />
+    </Field>
+  );
+
   if (mode === FieldColorModeId.Fixed || mode === FieldColorModeId.Shades) {
     return (
       <div className={styles.group}>
@@ -196,13 +255,14 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
     );
   }
 
-  if (reverseSwitch) {
+  if (reverseSwitch || assignmentRadio) {
     return (
       <>
         <div style={{ marginBottom: theme.spacing(2) }}>
           <Select minMenuHeight={200} options={options} value={mode} onChange={onModeChange} inputId={id} />
         </div>
         {reverseSwitch}
+        {assignmentRadio}
       </>
     );
   }

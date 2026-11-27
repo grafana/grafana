@@ -577,4 +577,27 @@ describe('PillCell', () => {
 
     // TODO: handle null values?
   });
+  describe('Color by value (palette assignment)', () => {
+    it('hashes the raw token, not the formatted text', () => {
+      const color = { mode: FieldColorModeId.PaletteClassic, assignment: 'value' as const };
+      const plain: Field = { ...fieldWithValues(['alpha']), config: { color } };
+      const formatted: Field = {
+        ...fieldWithValues(['alpha']),
+        config: { color },
+        display: (value: unknown) => ({ text: `<<${String(value)}>>`, numeric: NaN }),
+      };
+
+      const colorsOf = (field: Field) => {
+        render(
+          <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
+        );
+        const el = screen.getByText(/alpha/).closest('span')!;
+        return [el.style.getPropertyValue('--tag-background'), el.style.background, el.style.backgroundColor];
+      };
+
+      const expected = colorsOf(plain);
+      document.body.innerHTML = '';
+      expect(colorsOf(formatted)).toEqual(expected);
+    });
+  });
 });
