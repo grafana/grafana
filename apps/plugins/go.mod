@@ -134,7 +134,7 @@ require (
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/alerting v0.0.0-20261125102431-0a6d12aee725 // indirect
+	github.com/grafana/alerting v0.0.0-20261127163509-742fb7f49c95 // indirect
 	github.com/grafana/dataplane/sdata v0.0.10 // indirect
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // indirect
 	github.com/grafana/grafana-aws-sdk v1.5.5 // indirect
