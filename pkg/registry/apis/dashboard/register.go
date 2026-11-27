@@ -111,34 +111,35 @@ func (p *simpleClientProvider) GetOrCreateHandler(namespace string) client.K8sHa
 
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
-	dashboardService         dashboards.DashboardService
-	iamFeatures              iamapi.Features
-	accessControl            accesscontrol.AccessControl
-	accessClient             authlib.AccessClient
-	legacy                   legacy.DashboardAccessor
-	unified                  resource.ResourceClient
-	dashboardPermissions     dashboards.PermissionsRegistrationService
-	dashboardPermissionsSvc  accesscontrol.DashboardPermissionsService // TODO: once kubernetesAuthzResourcePermissionApis is enabled, rely solely on resourcePermissions and add integration test afterDelete hook
-	resourcePermissions      *rpclient.Client
-	scheme                   *runtime.Scheme
-	search                   *SearchHandler
-	QuotaService             quota.Service
-	ProvisioningService      provisioning.ProvisioningService
-	minRefreshInterval       string
-	settingService           settingservice.Service
-	dualWriter               dualwrite.Service
-	folderClientProvider     client.K8sHandlerProvider
-	libraryPanels            libraryelements.Service // for legacy library panels
-	publicDashboardService   publicdashboards.Service
-	snapshotService          dashboardsnapshots.Service
-	snapshotOptions          dashv0.SnapshotSharingOptions
-	snapshotBlobs            resourcepb.BlobStoreClient
-	snapshotStorage          rest.Storage             // for dual-write support in routes
-	homeDashboard            home.HomeDashboardGetter // On-prem home dashboard support
-	namespacer               request.NamespaceMapper
-	dashboardActivityChannel live.DashboardActivityChannel
-	isStandalone             bool // skips any handling including anything to do with legacy storage
-	lifecycleExtras          DashboardLifecycleExtras
+	dashboardService            dashboards.DashboardService
+	iamFeatures                 iamapi.Features
+	accessControl               accesscontrol.AccessControl
+	accessClient                authlib.AccessClient
+	legacy                      legacy.DashboardAccessor
+	unified                     resource.ResourceClient
+	dashboardPermissions        dashboards.PermissionsRegistrationService
+	dashboardPermissionsSvc     accesscontrol.DashboardPermissionsService // TODO: once kubernetesAuthzResourcePermissionApis is enabled, rely solely on resourcePermissions and add integration test afterDelete hook
+	resourcePermissions         *rpclient.Client
+	scheme                      *runtime.Scheme
+	search                      *SearchHandler
+	QuotaService                quota.Service
+	ProvisioningService         provisioning.ProvisioningService
+	minRefreshInterval          string
+	settingService              settingservice.Service
+	dualWriter                  dualwrite.Service
+	folderClientProvider        client.K8sHandlerProvider
+	libraryPanels               libraryelements.Service // for legacy library panels
+	publicDashboardService      publicdashboards.Service
+	snapshotService             dashboardsnapshots.Service
+	snapshotOptions             dashv0.SnapshotSharingOptions
+	snapshotBlobs               resourcepb.BlobStoreClient
+	snapshotStorage             rest.Storage                 // for dual-write support in routes
+	dashboardPreferencesStorage *dashboardPreferencesStorage // for the merged route
+	homeDashboard               home.HomeDashboardGetter     // On-prem home dashboard support
+	namespacer                  request.NamespaceMapper
+	dashboardActivityChannel    live.DashboardActivityChannel
+	isStandalone                bool // skips any handling including anything to do with legacy storage
+	lifecycleExtras             DashboardLifecycleExtras
 }
 
 func RegisterAPIService(
@@ -307,22 +308,17 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		return err
 	}
 
-	if err := scheme.AddFieldLabelConversionFunc(
-		dashv2beta1.VariableResourceInfo.GroupVersionKind(),
-		func(label, value string) (string, string, error) {
-			switch label {
-			case "metadata.name", "metadata.namespace", "spec.spec.name":
-				return label, value, nil
-			default:
-				return "", "", fmt.Errorf("field label not supported for Variable: %s", label)
-			}
-		},
-	); err != nil {
+	if err := dashv2.AddToScheme(scheme); err != nil {
 		return err
 	}
 
-	if err := dashv2.AddToScheme(scheme); err != nil {
-		return err
+	for _, gvk := range []schema.GroupVersionKind{
+		dashv2beta1.VariableResourceInfo.GroupVersionKind(),
+		dashv2.VariableResourceInfo.GroupVersionKind(),
+	} {
+		if err := scheme.AddFieldLabelConversionFunc(gvk, variableFieldLabelConversion); err != nil {
+			return err
+		}
 	}
 
 	// Register the explicit conversions
@@ -634,6 +630,13 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 		return apierrors.NewBadRequest(dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason)
 	}
 
+	if identity.IsRegisteredManagerKind(mgr.Kind) {
+		auth, _ := authlib.AuthInfoFrom(ctx)
+		if err := identity.CheckRegisteredKindAssignment(auth, accessor); err != nil {
+			return apierrors.NewBadRequest(dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason)
+		}
+	}
+
 	return nil
 }
 
@@ -785,22 +788,22 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 }
 
 func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a admission.Attributes) error {
-	variable, ok := a.GetObject().(*dashv2beta1.Variable)
-	if !ok {
-		return fmt.Errorf("unsupported variable version: %T", a.GetObject())
+	spec, err := variableSpecOf(a.GetObject())
+	if err != nil {
+		return err
 	}
 
-	if err := validateVariable(variable); err != nil {
+	if err := validateVariable(spec); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
-	accessor, err := utils.MetaAccessor(variable)
+	accessor, err := utils.MetaAccessor(a.GetObject())
 	if err != nil {
 		return fmt.Errorf("error getting variable meta accessor: %w", err)
 	}
 
 	folderUID := accessor.GetFolder()
-	if err := validateVariableMetadataName(variable.GetName(), getVariableName(variable.Spec), folderUID); err != nil {
+	if err := validateVariableMetadataName(accessor.GetName(), getVariableName(spec), folderUID); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
@@ -823,31 +826,31 @@ func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a adm
 }
 
 func (b *DashboardsAPIBuilder) validateVariableUpdate(ctx context.Context, a admission.Attributes) error {
-	newVariable, ok := a.GetObject().(*dashv2beta1.Variable)
-	if !ok {
-		return fmt.Errorf("unsupported variable version: %T", a.GetObject())
+	newSpec, err := variableSpecOf(a.GetObject())
+	if err != nil {
+		return err
 	}
 
-	oldVariable, ok := a.GetOldObject().(*dashv2beta1.Variable)
-	if !ok {
-		return fmt.Errorf("unsupported old variable version: %T", a.GetOldObject())
+	oldSpec, err := variableSpecOf(a.GetOldObject())
+	if err != nil {
+		return fmt.Errorf("old variable: %w", err)
 	}
 
-	if err := validateVariable(newVariable); err != nil {
+	if err := validateVariable(newSpec); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
-	oldAccessor, err := utils.MetaAccessor(oldVariable)
+	oldAccessor, err := utils.MetaAccessor(a.GetOldObject())
 	if err != nil {
 		return fmt.Errorf("error getting old variable meta accessor: %w", err)
 	}
 
-	newAccessor, err := utils.MetaAccessor(newVariable)
+	newAccessor, err := utils.MetaAccessor(a.GetObject())
 	if err != nil {
 		return fmt.Errorf("error getting new variable meta accessor: %w", err)
 	}
 
-	if getVariableName(newVariable.Spec) != getVariableName(oldVariable.Spec) {
+	if getVariableName(newSpec) != getVariableName(oldSpec) {
 		return apierrors.NewBadRequest("spec.spec.name cannot be changed; delete the variable and create a new one")
 	}
 
@@ -863,12 +866,11 @@ func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context, a adm
 	if obj == nil {
 		obj = a.GetObject()
 	}
-	variable, ok := obj.(*dashv2beta1.Variable)
-	if !ok {
-		return fmt.Errorf("unsupported variable version: %T", obj)
+	if _, err := variableSpecOf(obj); err != nil {
+		return err
 	}
 
-	accessor, err := utils.MetaAccessor(variable)
+	accessor, err := utils.MetaAccessor(obj)
 	if err != nil {
 		return fmt.Errorf("error getting variable meta accessor: %w", err)
 	}
@@ -1257,20 +1259,11 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	// Variable storage is always registered so FlagGrafanaDashboardGlobalVariables
 	// can be evaluated per request (and targeted per tenant) via OpenFeature in the
 	// authorizer, without requiring a restart. See GetAuthorizer.
-	gvStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(
-		opts.Scheme,
-		dashv2beta1.VariableResourceInfo,
-		opts.StorageOptsGetterFor(dashv2beta1.VariableResourceInfo, variableStorageOpts()),
-		grafanaregistry.SelectableFieldsOptions{
-			GetAttrs: VariableGetAttrs,
-		},
-	)
-	if err != nil {
-		return err
+	for _, info := range []utils.ResourceInfo{dashv2beta1.VariableResourceInfo, dashv2.VariableResourceInfo} {
+		if err := registerVariableStorage(apiGroupInfo, opts, info); err != nil {
+			return err
+		}
 	}
-
-	variableStorage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
-	variableStorage[dashv2beta1.VariableResourceInfo.StoragePath()] = gvStore
 
 	// Notebook storage is always registered so FlagDashboardNotebooks can be
 	// evaluated per request (and targeted per tenant) via OpenFeature in the
@@ -1293,6 +1286,25 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	return nil
 }
 
+// registerVariableStorage serves Variable at one version. Every version shares the
+// same objects in unified storage: each object keeps the version it was written
+// in, and reading it at another version converts it through the scheme.
+func registerVariableStorage(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions, info utils.ResourceInfo) error {
+	store, err := grafanaregistry.NewRegistryStoreWithSelectableFields(
+		opts.Scheme,
+		info,
+		opts.StorageOptsGetterFor(info, variableStorageOpts()),
+		grafanaregistry.SelectableFieldsOptions{
+			GetAttrs: VariableGetAttrs,
+		},
+	)
+	if err != nil {
+		return err
+	}
+	apiGroupInfo.VersionedResourcesStorageMap[info.GroupVersion().Version][info.StoragePath()] = store
+	return nil
+}
+
 // Mirrors the notebook block; StorageOptsGetterFor stamps the GVK so objects aren't persisted as another kind.
 func (b *DashboardsAPIBuilder) registerDashboardPreferencesStorage(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	store, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashv2beta1.DashboardPreferencesResourceInfo,
@@ -1302,6 +1314,7 @@ func (b *DashboardsAPIBuilder) registerDashboardPreferencesStorage(apiGroupInfo 
 	}
 	preferencesStorage := newDashboardPreferencesStorage(store, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), b.accessClient, b.accessControl, b.folderClientProvider)
 	apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION][dashv2beta1.DashboardPreferencesResourceInfo.StoragePath()] = preferencesStorage
+	b.dashboardPreferencesStorage = preferencesStorage
 	return nil
 }
 
@@ -1670,6 +1683,10 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 			func() rest.Storage { return b.snapshotStorage }, b.dashboardService, b.snapshotBlobs, b.snapshotReadFromUnified)
 		routes.Namespace = append(routes.Namespace, legacySearchRoutes.Namespace...)
 		routes.Namespace = append(routes.Namespace, snapshotAPIRoutes.Namespace...)
+	}
+
+	if gv.Version == dashv2beta1.VERSION {
+		routes.Namespace = append(routes.Namespace, b.dashboardPreferencesMergedRoute())
 	}
 
 	if len(routes.Namespace) == 0 {

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type CSSProperties, type FC } from 'react';
+import { type CSSProperties, type FC, type FormEvent } from 'react';
 
 import {
   type StandardEditorProps,
@@ -12,14 +12,16 @@ import {
   type FieldColorConfigSettings,
   type FieldColorSeriesByMode,
   getFieldColorMode,
+  isReversibleFieldColorMode,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   useFlagDatavizExperimentalColorSchemes,
+  useFlagDatavizReverseColorScheme,
   useFlagEnableColorblindSafePanelOptions,
   useFlagPieChartGradientColorScheme,
 } from '@grafana/runtime/internal';
-import { useStyles2, useTheme2, Field, RadioButtonGroup, Select, Stack } from '@grafana/ui';
+import { useStyles2, useTheme2, Field, RadioButtonGroup, Select, Stack, Switch } from '@grafana/ui';
 
 import { ColorValueEditor } from './color';
 
@@ -32,10 +34,13 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
   const colorblindSafePanelOptions = useFlagEnableColorblindSafePanelOptions();
   const pieChartGradientColorScheme = useFlagPieChartGradientColorScheme();
   const experimentalColorSchemesEnabled = useFlagDatavizExperimentalColorSchemes();
+  const reverseColorSchemeEnabled = useFlagDatavizReverseColorScheme();
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
   const colorMode = getFieldColorMode(value?.mode);
+  const canReverse = reverseColorSchemeEnabled && isReversibleFieldColorMode(colorMode);
+  const reverse = canReverse && Boolean(value?.reverse);
   const availableOptions = item.settings?.byValueSupport
     ? fieldColorModeRegistry.list()
     : fieldColorModeRegistry.list().filter((m) => !m.isByValue);
@@ -69,7 +74,7 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
       label: `${option.name}${suffix}`,
       description: option.description,
       component() {
-        return <FieldColorModeViz mode={option} theme={theme} />;
+        return <FieldColorModeViz mode={reverse ? getFieldColorMode(option.id, true) : option} theme={theme} />;
       },
     };
 
@@ -122,6 +127,20 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
 
   const mode = value?.mode ?? FieldColorModeId.Thresholds;
 
+  const onReverseChange = (event: FormEvent<HTMLInputElement>) => {
+    onChange({
+      ...value,
+      mode,
+      reverse: event.currentTarget.checked || undefined,
+    });
+  };
+
+  const reverseSwitch = canReverse && (
+    <Field label={t('options-ui.field-color.reverse-label', 'Reverse colors')} noMargin>
+      <Switch id={`${id}-reverse`} value={reverse} onChange={onReverseChange} />
+    </Field>
+  );
+
   if (mode === FieldColorModeId.Fixed || mode === FieldColorModeId.Shades) {
     return (
       <div className={styles.group}>
@@ -172,6 +191,18 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
         <Field label={t('options-ui.field-color.color-by-label', 'Color series by')}>
           <RadioButtonGroup value={value?.seriesBy ?? 'last'} options={seriesModes} onChange={onSeriesModeChange} />
         </Field>
+        {reverseSwitch}
+      </>
+    );
+  }
+
+  if (reverseSwitch) {
+    return (
+      <>
+        <div style={{ marginBottom: theme.spacing(2) }}>
+          <Select minMenuHeight={200} options={options} value={mode} onChange={onModeChange} inputId={id} />
+        </div>
+        {reverseSwitch}
       </>
     );
   }

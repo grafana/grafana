@@ -10,9 +10,10 @@ import {
 import { type RuleKind } from '../shared/ruleKind';
 
 export interface RuleSequenceMembership {
-  name: string;
+  /** The sequence's metadata.name; sequences have no title. */
+  uid: string;
   /** The sequence's evaluation interval, which overrides the rule's own. */
-  interval?: string;
+  interval: string;
 }
 
 // The generated search types `fields` as an untyped map, so the hit is still parsed here.
@@ -49,7 +50,12 @@ export function useRuleSequenceMembership(kind: RuleKind, uid: string) {
       return undefined;
     }
     const hit = parsed.data.items.find((candidate) => hitContains(candidate, kind, uid));
-    return hit ? { name: hit.resource.name, interval: hit.fields?.interval } : null;
+    if (!hit) {
+      return null;
+    }
+    const interval = hit.fields?.interval;
+    // Every sequence has an interval; a hit without one is unreadable, not a reason to show the rule's own interval.
+    return interval ? { uid: hit.resource.name, interval } : undefined;
   }, [currentData, isError, kind, uid]);
   return { sequence, isLoading, isError };
 }

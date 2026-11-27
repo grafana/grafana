@@ -16,6 +16,13 @@ manifest: {
 				foldersV1,
 			]
 		}
+		"v1alpha1": {
+			codegen: {
+				ts: {enabled: false}
+				go: {enabled: true}
+			}
+			kinds: [pendingFolderDeletionsV1alpha1]
+		}
 		"v1beta1": {
 			codegen: {
 				ts: {enabled: false}

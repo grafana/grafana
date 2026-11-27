@@ -139,6 +139,11 @@ type groupBreaker = gobreaker.TwoStepCircuitBreaker[struct{}]
 // its deadline passed. That says nothing about the backend's health.
 var errCallerGone = errors.New("router: caller's request ended")
 
+// errNotSent marks a request the router answered itself before sending it,
+// such as one it could not sign. It is excluded rather than a success, so it
+// neither resets the failure count nor closes a half-open breaker.
+var errNotSent = errors.New("router: request never reached the backend")
+
 // errRouterDeadline is the cause of a deadline the router sets on its own
 // fetches, such as discovery. Unlike the caller leaving, missing it says the
 // backend was too slow, so it counts against the backend's breaker.
@@ -157,9 +162,9 @@ func callerGone(ctx context.Context) error {
 
 // newGroupBreaker returns a circuit breaker with gobreaker's defaults (trips
 // after more than 5 consecutive failures, stays open 60s). Only errCallerGone
-// is excluded. Matching context errors instead would also exclude backend
-// timeouts, such as the transport's response-header timeout, which matches
-// context.DeadlineExceeded.
+// and errNotSent are excluded. Matching context errors instead would also
+// exclude backend timeouts, such as the transport's response-header timeout,
+// which matches context.DeadlineExceeded.
 func newGroupBreaker(group string) *groupBreaker {
 	return newObservedGroupBreaker(group, nil)
 }
@@ -210,7 +215,7 @@ func newObservedGroupBreaker(group string, onChange func(group string, to gobrea
 			return counts.ConsecutiveFailures >= breakerOpenAfter
 		},
 		IsExcluded: func(err error) bool {
-			return errors.Is(err, errCallerGone)
+			return errors.Is(err, errCallerGone) || errors.Is(err, errNotSent)
 		},
 	}
 	if onChange != nil {
@@ -222,7 +227,8 @@ func newObservedGroupBreaker(group string, onChange func(group string, to gobrea
 // breakerOutcome turns one proxy attempt into the error reported to the
 // breaker: errCallerGone if the request's own context
 // ended (checked first, so a disconnect is never counted against the
-// backend), the recorded proxy failure, a backend-failure error for
+// backend), errNotSent for a request the router answered itself, the
+// recorded proxy failure, a backend-failure error for
 // isBackendFailure statuses, or nil.
 func breakerOutcome(req *http.Request, status int, call *backendCall) error {
 	if err := callerGone(req.Context()); err != nil {
@@ -231,6 +237,9 @@ func breakerOutcome(req *http.Request, status int, call *backendCall) error {
 	if call.proxyErr != nil {
 		if errors.Is(call.proxyErr, errBackendRedirect) {
 			return nil // the backend answered; the router refused to relay it
+		}
+		if local := (*localProxyError)(nil); errors.As(call.proxyErr, &local) {
+			return errNotSent
 		}
 		return fmt.Errorf("router: proxy failed: %w", call.proxyErr)
 	}

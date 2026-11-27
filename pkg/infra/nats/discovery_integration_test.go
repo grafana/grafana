@@ -134,8 +134,8 @@ func TestDiscoveryWakeOnLeave(t *testing.T) {
 // table of the database selected by GRAFANA_TEST_DB, wired through
 // ProvideServer's SQL store as in production. The matrix covers the
 // dialect-specific upsert, range scan and batch queries and the table's
-// per-dialect key collation. The test drives every tick and the registry clock
-// itself rather than using synctest: route reloads start nats-server goroutines
+// per-dialect key collation. The test drives every tick, the registry clock and
+// the observer clocks itself rather than using synctest: route reloads start nats-server goroutines
 // that share its WaitGroup and do real network I/O, so they cannot run inside a
 // bubble.
 func TestIntegrationDiscoverySQL(t *testing.T) {
@@ -174,15 +174,27 @@ func TestIntegrationDiscoverySQL(t *testing.T) {
 	require.Equal(t, routeSetOf(c), a.discovery.routes)
 	require.Equal(t, routeSetOf(a), c.discovery.routes)
 
-	// Hard kill: c stops heartbeating without deregistering, so its row and route
-	// stay while its last heartbeat is within the TTL...
+	// Hard kill: c stops heartbeating without deregistering. a sees c's last
+	// heartbeat on its next tick, and keeps the route for the TTL from there...
 	c.shutdown()
-	now = now.Add(ttl)
+	now = now.Add(time.Second)
+	lastChange := now
+	tick(a)
+	now = lastChange.Add(ttl)
 	tick(a)
 	require.ElementsMatch(t, peersOf(a, c), registeredPeers(t, store))
 	require.Equal(t, routeSetOf(c), a.discovery.routes)
 
-	// ...and go on the first tick past it (heartbeats have one-second resolution).
+	// ...drops it on the first tick past the TTL, but keeps the row...
+	now = now.Add(time.Second)
+	tick(a)
+	require.ElementsMatch(t, peersOf(a, c), registeredPeers(t, store))
+	require.Empty(t, a.discovery.routes)
+
+	// ...until the row has been unchanged for longer than pruneAfter.
+	now = lastChange.Add(a.discovery.pruneAfter())
+	tick(a)
+	require.ElementsMatch(t, peersOf(a, c), registeredPeers(t, store))
 	now = now.Add(time.Second)
 	tick(a)
 	require.ElementsMatch(t, peersOf(a), registeredPeers(t, store))
@@ -352,7 +364,8 @@ func newSharedTestKV(t *testing.T) kv.KV {
 
 // startSteppedSQLServer starts an embedded server whose registry
 // ProvideServer builds on sqlStore, without running the discovery loop, and
-// points the registry clock at now so the test steps discovery itself.
+// points the registry and observer clocks at now so the test steps discovery
+// itself.
 func startSteppedSQLServer(t *testing.T, sqlStore db.DB, now *time.Time) *Server {
 	t.Helper()
 	s, err := ProvideServer(newEmbeddedTestCfg("127.0.0.1", ""), sqlStore, sqlTestCredentials(t, sqlStore).encryption, sqlTestCredentials(t, sqlStore).values, &contracts.SecretDBMigrated{}, prometheus.NewRegistry())
@@ -363,6 +376,7 @@ func startSteppedSQLServer(t *testing.T, sqlStore db.DB, now *time.Time) *Server
 	registry, ok := s.discovery.registry.(*kvPeerStore)
 	require.True(t, ok)
 	registry.now = func() time.Time { return *now }
+	s.discovery.now = func() time.Time { return *now }
 	return s
 }
 
@@ -382,7 +396,7 @@ func routeSetOf(nodes ...*Server) map[string]struct{} {
 	return routes
 }
 
-// registeredPeers reads the registry rows without pruning, unlike listActive.
+// registeredPeers reads the registry rows.
 func registeredPeers(t *testing.T, store kv.KV) []peer {
 	t.Helper()
 	var peers []peer

@@ -14,7 +14,10 @@ import { type StackedItem } from './utils';
 // The editors and plugin-driven header buttons need datasource and plugin wiring that is out of
 // scope here; this suite covers the stacked header's actions and per-item panels.
 jest.mock('../QueryEditorRenderer', () => ({
-  QueryEditorPanel: () => null,
+  // Stands in for the data source's editor making an edit.
+  QueryEditorPanel: ({ query, onQueryEdited }: { query: DataQuery | null; onQueryEdited?: () => void }) => (
+    <button onClick={() => onQueryEdited?.()}>Edit query {query?.refId}</button>
+  ),
 }));
 
 jest.mock('../TransformationEditorRenderer', () => ({
@@ -109,6 +112,15 @@ describe('StackedSection header actions', () => {
     await user.click(within(getSection('B')).getByRole('button', { name: 'Change data source' }));
 
     expect(changeDataSource).toHaveBeenCalledWith(ds1SettingsMock, 'B');
+  });
+
+  it('reports an edit from the query editor in any section, not only the selected one', async () => {
+    const onQueryEdited = jest.fn();
+    const { user } = renderSections({ actionsOverrides: { onQueryEdited } });
+
+    await user.click(within(getSection('B')).getByRole('button', { name: 'Edit query B' }));
+
+    expect(onQueryEdited).toHaveBeenCalledTimes(1);
   });
 
   it('disables the transformation in that section', async () => {

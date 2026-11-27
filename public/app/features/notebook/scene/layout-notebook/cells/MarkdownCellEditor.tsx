@@ -6,7 +6,7 @@ import { useMemo, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { useTheme2 } from '@grafana/ui';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import { InternalCodeMirrorEditor } from '@grafana/ui/internal';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { MarkdownFormatToolbar } from './MarkdownFormatToolbar';
@@ -169,7 +169,7 @@ export function MarkdownCellEditor({
 
   return (
     <div ref={editorContainerRef}>
-      <CodeMirrorEditor
+      <InternalCodeMirrorEditor
         value={text}
         height="auto"
         lineWrapping

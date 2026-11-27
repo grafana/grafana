@@ -649,17 +649,20 @@ func TestBuild_KindsWithTrashAreListedHere(t *testing.T) {
 
 // Folders get lexical and hybrid search but are not allowed to use search-backed trash.
 func TestBuild_FoldersGetSearchWithoutTrash(t *testing.T) {
+	alpha := schema.GroupVersion{Group: "folder.grafana.app", Version: "v1alpha1"}
 	versions := []schema.GroupVersion{
 		{Group: "folder.grafana.app", Version: "v1"},
 		{Group: "folder.grafana.app", Version: "v1beta1"},
+		alpha,
 	}
 	b := &fakeBuilder{gvs: versions}
 
 	got := paths(Build(true, true, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil, Options{HybridEnabled: true}))
 
-	for _, gv := range versions {
+	for _, gv := range versions[:2] {
 		assert.ElementsMatch(t, []string{"folders/search", "folders/search/hybrid"}, got[gv.String()])
 	}
+	assert.Empty(t, got[alpha.String()], "internal pending deletions must not expose search routes")
 }
 
 // Declining one endpoint must leave the other alone.

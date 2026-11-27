@@ -11,6 +11,7 @@ import { RuleLabels } from '../rule-row/RuleLabels';
 import { RuleListItem } from '../rule-row/RuleListItem';
 import { RuleOriginBadge } from '../rule-row/RuleOriginBadge';
 import { RuleStatusIcon } from '../rule-row/RuleStatusIcon';
+import { getRecordingRuleStatus } from '../rule-row/ruleStatus';
 import { EffectiveRuleInterval } from '../rule-sequences/EffectiveRuleInterval';
 import { type RuleSequenceMembership } from '../rule-sequences/ruleSequenceMembership';
 
@@ -25,12 +26,20 @@ interface RecordingRuleRowProps {
   rule?: RecordingRule;
   /** `null`: not in a sequence. Absent while loading or when the lookup failed. */
   sequence?: RuleSequenceMembership | null;
+  onSequenceClick: () => void;
   /** Edit button, More dropdown, or a loading skeleton — provided by RecordingRuleListEntry. */
   actions?: ReactNode;
 }
 
 /** Presentation-only; missing health renders "unavailable", never recording. */
-export function RecordingRuleRow({ searchHit, folderPath, rule, sequence, actions }: RecordingRuleRowProps) {
+export function RecordingRuleRow({
+  searchHit,
+  folderPath,
+  rule,
+  sequence,
+  onSequenceClick,
+  actions,
+}: RecordingRuleRowProps) {
   const titleId = useId();
   const href = grafanaRulesNav.viewLink(searchHit.uid, { includeReturnTo: true });
   // The write target is already shown in RuleRecordedMetric; exclude it from the queried list.
@@ -39,7 +48,7 @@ export function RecordingRuleRow({ searchHit, folderPath, rule, sequence, action
   return (
     <RuleListItem
       aria-labelledby={titleId}
-      icon={<RuleStatusIcon kind="recording" health={searchHit.health} paused={searchHit.paused} />}
+      icon={<RuleStatusIcon status={getRecordingRuleStatus(searchHit)} />}
       title={
         <Stack direction="row" alignItems="center" gap={0.5} wrap={false}>
           <TextLink id={titleId} href={href} color="primary" inline={false}>
@@ -51,7 +60,11 @@ export function RecordingRuleRow({ searchHit, folderPath, rule, sequence, action
       description={searchHit.lastError && <RuleDescription lastError={searchHit.lastError} />}
       right={
         <Stack alignItems="center" gap={1.5} wrap={false}>
-          <EffectiveRuleInterval sequence={sequence} ruleInterval={searchHit.interval} />
+          <EffectiveRuleInterval
+            sequence={sequence}
+            ruleInterval={searchHit.interval}
+            onSequenceClick={onSequenceClick}
+          />
           {actions}
         </Stack>
       }

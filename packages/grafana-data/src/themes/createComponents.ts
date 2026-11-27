@@ -174,6 +174,10 @@ export const ThemeComponentsInputSchema = z.partial(
     sidemenu: z.object({
       width: z.optional(z.number()),
     }),
+    navmenu: z.object({
+      activeItemBackground: z.optional(z.string()),
+      activeItemText: z.optional(z.string()),
+    }),
     horizontalDrawer: z.object({
       defaultHeight: z.optional(z.number()),
     }),
@@ -299,6 +303,10 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
     },
     sidemenu: {
       width: 57,
+    },
+    navmenu: {
+      activeItemBackground: colors.action.selected,
+      activeItemText: colors.text.primary,
     },
     // @ts-expect-error (added here to not crash plugins that might use it)
     menuTabs: {

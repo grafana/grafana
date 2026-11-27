@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
@@ -17,44 +18,31 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func TestSetResourceListerMode(t *testing.T) {
-	newBuilder := func() *APIBuilder {
-		return &APIBuilder{
-			unified:  resource.NewMockResourceClient(t),
-			clients:  resources.NewMockClientFactory(t),
-			features: featuremgmt.WithFeatures(),
-		}
-	}
-
-	for _, mode := range []string{"", resources.ListerSearch, resources.ListerAPIs} {
-		t.Run(fmt.Sprintf("mode %q", mode), func(t *testing.T) {
-			b := newBuilder()
-			require.NoError(t, b.SetResourceListerMode(mode))
-			require.NotNil(t, b.resourceLister)
-			// The factory captures the lister, so it has to be re-pointed with it.
-			require.NotNil(t, b.repositoryResources)
-		})
-	}
-
-	t.Run("apis reads the index in here, not a client pointed at ourselves", func(t *testing.T) {
-		b := newBuilder()
-		require.NoError(t, b.SetResourceListerMode(resources.ListerAPIs))
-		require.IsType(t, &resources.ResourceListerFromSearch{}, b.resourceLister)
+func TestProvideSupportedResourceProvider(t *testing.T) {
+	t.Run("returns an empty provider when provisioning is disabled", func(t *testing.T) {
+		supportedResourceProvider, err := ProvideSupportedResourceProvider(&setting.Cfg{ProvisioningResources: []string{"invalid"}})
+		require.NoError(t, err)
+		require.Empty(t, supportedResourceProvider.Configured())
 	})
 
-	t.Run("an unknown mode is rejected and leaves the lister alone", func(t *testing.T) {
-		b := newBuilder()
-		require.NoError(t, b.SetResourceListerMode(resources.ListerSearch))
-		before := b.resourceLister
+	t.Run("returns the configured resources", func(t *testing.T) {
+		supportedResourceProvider, err := ProvideSupportedResourceProvider(&setting.Cfg{
+			ProvisioningEnabled:   true,
+			ProvisioningResources: []string{"folder.grafana.app/Folder:folder"},
+		})
+		require.NoError(t, err)
+		require.Equal(t, []resources.SupportedResource{{
+			GroupKind:    resources.FolderKind.GroupKind(),
+			Capabilities: sets.New(resources.CapabilityFolder),
+		}}, supportedResourceProvider.Configured())
+	})
 
-		require.EqualError(t, b.SetResourceListerMode("index"),
-			`invalid [provisioning] resource_lister "index": expected "search" or "apis"`)
-		require.Same(t, before, b.resourceLister)
+	t.Run("rejects an invalid configuration", func(t *testing.T) {
+		_, err := ProvideSupportedResourceProvider(&setting.Cfg{ProvisioningEnabled: true, ProvisioningResources: []string{"invalid"}})
+		require.ErrorContains(t, err, "invalid [provisioning] resources configuration")
 	})
 }
 

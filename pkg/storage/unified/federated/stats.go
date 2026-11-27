@@ -10,12 +10,14 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -29,12 +31,11 @@ const (
 	alertRuleResource     = "alertrules.rules.alerting.grafana.app"
 	recordingRuleResource = "recordingrules.rules.alerting.grafana.app"
 	libraryPanelResource  = "librarypanels.dashboard.grafana.app"
-	libraryPanelMigration = "librarypanels migration"
-	migrationLogTable     = "unifiedstorage_migration_log"
 )
 
 // LegacyCountedResources is guarded by a test: once one of these gets a migration
-// registered, legacyTableIsStale has to read the migration status instead of config.
+// registered, it needs an entry in migrationLogIDs so legacyTableIsStale reads the
+// migration log for it.
 var LegacyCountedResources = []string{alertRuleResource, recordingRuleResource}
 
 // Read stats from legacy SQL
@@ -59,53 +60,22 @@ func (e *CountError) Unwrap() error { return e.Err }
 
 var ErrLegacyStatsUnavailable = errors.New("legacy stats source is unavailable")
 
-// kv_store convention used to mark a resource as fully migrated for one stack: namespace
-// "unified_storage.is_migrated", key "<resource>.<group>" (the same string shape as our own
-// alertRuleResource-style constants), org_id always 0 for this entry specifically (unlike
-// every other row in these stack databases, which use 1).
-const (
-	migratedKVNamespace = "unified_storage.is_migrated"
-	migratedKVValue     = "true"
-)
+// migrationLogIDs maps the resources whose legacy table can be migrated to the
+// unifiedstorage_migration_log ID that marks the migration as done. Resources absent here
+// (alert and recording rules) are not migrated yet, so their legacy table is never stale
+// because of a migration.
+var migrationLogIDs = map[schema.GroupResource]string{
+	schema.ParseGroupResource(libraryPanelResource): "librarypanels migration",
+}
 
 // From mode 4 on nothing writes the legacy table, so its rows are leftovers and counting
-// them would warn about resources that no longer exist. Library panels can also be
-// migrated while still in mode 1, so their successful migration log takes precedence
-// over config, as it does for the dual-writer's storage mode resolution. That holds for
-// callers without config too, since they have no other way to know a panel lives only in
-// unified storage.
-//
-// A caller with no DualWriterMode config at all (nil Cfg) otherwise falls back to a per-stack
-// kv_store marker instead.
-func (s *LegacyStatsGetter) legacyTableIsStale(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper, resource string) (bool, error) {
-	if resource == libraryPanelResource {
-		exists, err := sess.IsTableExist(helper.Table(migrationLogTable))
-		if err != nil {
-			return false, err
-		}
-		if exists {
-			count, err := sess.Table(helper.Table(migrationLogTable)).
-				Where("migration_id = ? AND success = ?", libraryPanelMigration, true).
-				Count()
-			if err != nil {
-				return false, err
-			}
-			if count > 0 {
-				return true, nil
-			}
-		}
-	}
-	if s.Cfg != nil {
-		return s.Cfg.UnifiedStorage[resource].DualWriterMode >= grafanarest.Mode4, nil
-	}
-
-	count, err := sess.Table(helper.Table("kv_store")).
-		Where("org_id = 0 AND namespace = ? AND "+helper.DB.Quote("key")+" = ? AND value = ?", migratedKVNamespace, resource, migratedKVValue).
-		Count()
-	if err != nil {
-		return false, err
-	}
-	return count > 0, nil
+// them would warn about resources that no longer exist. A successful migration log entry
+// marks a table stale and takes precedence over config, as it does for the dual-writer's
+// storage mode resolution. That holds for callers without config too, since they have no
+// other way to know a resource lives only in unified storage.
+func legacyTableIsStale(ctx context.Context, reader contract.MigrationStatusReader, resource string) (bool, error) {
+	mode, err := reader.GetStorageMode(ctx, schema.ParseGroupResource(resource))
+	return mode == contract.StorageModeUnified, err
 }
 
 func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
@@ -143,6 +113,8 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 
 	rsp := &resourcepb.ResourceStatsResponse{}
 	err = helper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		reader := migrations.NewSessionStatusReader(sess, helper, s.Cfg, migrationLogIDs)
+
 		// extraWhere, when non-empty, is ANDed onto the org+folder filter. It must be a
 		// literal fragment with no bound parameters.
 		fn := func(table, folderCol, g, r string, extraWhere string) error {
@@ -188,7 +160,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		// A failed staleness check is a legacy database failure too, so it is recorded as an error.
 		isStale := func(configKey, name string) (bool, error) {
 			start := time.Now()
-			stale, err := s.legacyTableIsStale(sess, helper, configKey)
+			stale, err := legacyTableIsStale(ctx, reader, configKey)
 			if err != nil {
 				s.accessed(ctx, in, helper.Server, name, start, err)
 				return false, &CountError{Resources: []string{name}, Err: err}
@@ -250,6 +222,9 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 
 	return rsp, err
 }
+
+// CallerCountsEndpoint identifies the /counts request path, not folder deletion checks.
+const CallerCountsEndpoint = "counts_endpoint"
 
 type callerKey struct{}
 

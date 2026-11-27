@@ -98,7 +98,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           editPanel: undefined,
         }),
         onClick: () => {
-          DashboardInteractions.panelActionClicked('view', getPanelIdForVizPanel(panel), 'panel');
+          DashboardInteractions.panelActionClicked('view', getPanelIdForVizPanel(panel), 'panel', panel.state.pluginId);
         },
       });
     }
@@ -212,7 +212,12 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         text: t('panel.header-menu.duplicate', `Duplicate`),
         iconClassName: 'file-copy-alt',
         onClick: () => {
-          DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(panel), 'panel');
+          DashboardInteractions.panelActionClicked(
+            'duplicate',
+            getPanelIdForVizPanel(panel),
+            'panel',
+            panel.state.pluginId
+          );
           dashboard.duplicatePanel(panel);
         },
         shortcut: 'p d',
@@ -228,7 +233,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
             : t('panel.header-menu.copy', `Copy`),
         iconClassName: 'copy',
         onClick: () => {
-          DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(panel), 'panel');
+          DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(panel), 'panel', panel.state.pluginId);
           dashboard.copyPanel(panel);
         },
         shortcut: 'p c',
@@ -241,6 +246,12 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
           iconClassName: 'link-broken',
           onClick: () => {
+            DashboardInteractions.panelActionClicked(
+              'unlink_library_panel',
+              getPanelIdForVizPanel(panel),
+              'panel',
+              panel.state.pluginId
+            );
             dashboard.showModal(
               new UnlinkLibraryPanelModal({
                 panelRef: panel.getRef(),
@@ -253,6 +264,12 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           text: t('panel.header-menu.replace-library-panel', `Replace library panel`),
           iconClassName: 'library-panel',
           onClick: () => {
+            DashboardInteractions.panelActionClicked(
+              'replace_library_panel',
+              getPanelIdForVizPanel(panel),
+              'panel',
+              panel.state.pluginId
+            );
             dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
           },
         });
@@ -261,6 +278,12 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           text: t('share-panel.menu.new-library-panel-title', 'New library panel'),
           iconClassName: 'plus-square',
           onClick: () => {
+            DashboardInteractions.panelActionClicked(
+              'new_library_panel',
+              getPanelIdForVizPanel(panel),
+              'panel',
+              panel.state.pluginId
+            );
             openShareDrawer(dashboard, {
               shareView: shareDashboardType.libraryPanel,
               panelRef: panel.getRef(),
@@ -450,7 +473,12 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         text: t('panel.header-menu.remove', `Remove`),
         iconClassName: 'trash-alt',
         onClick: () => {
-          DashboardInteractions.panelActionClicked('delete', getPanelIdForVizPanel(panel), 'panel');
+          DashboardInteractions.panelActionClicked(
+            'delete',
+            getPanelIdForVizPanel(panel),
+            'panel',
+            panel.state.pluginId
+          );
           onRemovePanel(dashboard, panel);
         },
         shortcut: 'p r',

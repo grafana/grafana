@@ -1,9 +1,10 @@
 import { screen, waitFor } from '@testing-library/react';
 import { type DataSourceFallbackWatcher, watchDataSourceFallbacks } from 'test/helpers/seedDataSources';
 
-import { config, locationService, setBackendSrv } from '@grafana/runtime';
+import { locationService, setBackendSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { MOCK_SUB_SCOPE_MIMIR_ITEMS } from '@grafana/test-utils/unstable';
+import { MOCK_SUB_SCOPE_MIMIR_ITEMS, testWithFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { type ScopesApiClient } from '../ScopesApiClient';
@@ -72,9 +73,7 @@ describe('Dashboards list', () => {
   let scopesDashboardsService: ScopesDashboardsService;
   let apiClient: ScopesApiClient;
 
-  beforeAll(() => {
-    config.featureToggles.scopeFilters = true;
-  });
+  testWithFlags({ [FlagKeys.ScopeFilters]: true });
 
   beforeEach(async () => {
     const result = await renderDashboard();

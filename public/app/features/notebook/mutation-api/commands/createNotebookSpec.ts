@@ -54,7 +54,9 @@ export const createNotebookSpecCommand: MutationCommand<CreateNotebookSpecPayloa
     'Create a NEW notebook from a complete NotebookSpec and open it: settings, elements (markdown, ' +
     'code, panel and library panel cells) and the ordered NotebookLayout that places them. Unlike the ' +
     'other notebook commands this one is saved immediately and the server assigns the uid. Use ' +
-    'APPLY_NOTEBOOK_SPEC to change a notebook that already exists.',
+    'APPLY_NOTEBOOK_SPEC to change a notebook that already exists. Comments attach to an element by ' +
+    'its name in `elements`, so give every element a unique, random name (for example ' +
+    '`heading-k3x9qa`) and never reuse the name of an element that was removed.',
 
   payloadSchema: createNotebookSpecPayloadSchema,
   permission: requiresNotebookCreate,

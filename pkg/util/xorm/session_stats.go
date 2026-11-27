@@ -32,13 +32,25 @@ func (session *Session) Count(bean ...interface{}) (int64, error) {
 		args = session.statement.RawParams
 	}
 
-	var total int64
-	err = session.queryRow(sqlStr, args...).Scan(&total)
-	if err == sql.ErrNoRows || err == nil {
-		return total, nil
+	rows, err := session.queryRows(sqlStr, args...)
+	if err != nil {
+		return 0, err
 	}
-
-	return 0, err
+	defer func() { _ = rows.Close() }()
+	if !rows.Next() {
+		return 0, rows.Err()
+	}
+	var total int64
+	if err := rows.Scan(&total); err != nil {
+		return 0, err
+	}
+	// A streaming driver can report a terminal error after delivering the count.
+	for rows.Next() {
+	}
+	if err := rows.Err(); err != nil {
+		return 0, err
+	}
+	return total, nil
 }
 
 // sum call sum some column. bean's non-empty fields are conditions.

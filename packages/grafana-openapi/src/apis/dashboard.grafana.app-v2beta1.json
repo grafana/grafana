@@ -242,6 +242,43 @@
         }
       ]
     },
+    "/dashboardpreferences/merged": {
+      "get": {
+        "tags": ["DashboardPreferences"],
+        "description": "Get the preferences a new dashboard in a folder starts from: each field from the highest tier that sets or resets it, and the tier it came from.",
+        "operationId": "getMergedDashboardPreferences",
+        "parameters": [
+          {
+            "name": "folder",
+            "in": "query",
+            "description": "UID of the folder the dashboard is created in. Omit it, or use general, for the top level.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeUser",
+            "in": "query",
+            "description": "Whether the caller's own preferences apply. Defaults to true. False leaves them out, giving what any dashboard created in the folder starts from, the folder's own preferences included. To see what a folder inherits, pass its parent as folder.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The merged preferences",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPreferencesMerged"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/dashboardpreferences/{name}": {
       "get": {
         "tags": ["DashboardPreferences"],
@@ -4726,14 +4763,6 @@
       "DashboardPreferencesDashboardDefaults": {
         "type": "object",
         "properties": {
-          "autoGrid": {
-            "description": "Applies only when the merged layout is AutoGridLayout.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/DashboardPreferencesV2beta1DashboardDefaultsAutoGrid"
-              }
-            ]
-          },
           "autoRefresh": {
             "description": "An empty string turns auto refresh off.",
             "type": "string"
@@ -4746,20 +4775,6 @@
           },
           "cursorSync": {
             "description": "Same values as the dashboard's cursorSync.",
-            "type": "string"
-          },
-          "fiscalYearStartMonth": {
-            "description": "0 is January.",
-            "type": "integer",
-            "format": "int64"
-          },
-          "hideTimepicker": {
-            "type": "boolean"
-          },
-          "layout": {
-            "type": "string"
-          },
-          "nowDelay": {
             "type": "string"
           },
           "preload": {
@@ -4805,26 +4820,71 @@
           }
         ]
       },
+      "DashboardPreferencesMerged": {
+        "description": "DashboardPreferencesMerged is what a new dashboard in a folder starts from. It is computed on request and never stored.",
+        "type": "object",
+        "required": ["spec", "sources"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "sources": {
+            "description": "Where each field came from, keyed by its path as in spec.reset, such as \"panels.legend.placement\". A field with no entry uses Grafana's built-in default.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/DashboardPreferencesMergedSource"
+            }
+          },
+          "spec": {
+            "description": "Only the fields some tier set. A field that is absent uses Grafana's built-in default.",
+            "default": {},
+            "$ref": "#/components/schemas/DashboardPreferencesMergedSpec"
+          }
+        }
+      },
+      "DashboardPreferencesMergedSource": {
+        "type": "object",
+        "required": ["tier"],
+        "properties": {
+          "name": {
+            "description": "The tier object's name. Left out for a parent folder the caller can't read.",
+            "type": "string"
+          },
+          "reset": {
+            "description": "The tier reset the field to Grafana's built-in default, so it is absent from spec.",
+            "type": "boolean"
+          },
+          "tier": {
+            "description": "Possible enum values:\n - `\"folder\"`\n - `\"org\"`\n - `\"user\"`",
+            "type": "string",
+            "default": "",
+            "enum": ["folder", "org", "user"]
+          }
+        }
+      },
+      "DashboardPreferencesMergedSpec": {
+        "description": "The stored spec without reset: a merged spec is resolved, so nothing in it is reset.",
+        "type": "object",
+        "properties": {
+          "dashboard": {
+            "$ref": "#/components/schemas/DashboardPreferencesDashboardDefaults"
+          },
+          "panels": {
+            "$ref": "#/components/schemas/DashboardPreferencesPanelDefaults"
+          }
+        }
+      },
       "DashboardPreferencesPanelDefaults": {
         "description": "Names and values follow Grafana's shared visualization options. Each value is written only into new built-in panels whose plugin has that option.",
         "type": "object",
         "properties": {
-          "axis": {
-            "$ref": "#/components/schemas/DashboardPreferencesV2beta1PanelDefaultsAxis"
-          },
           "field": {
             "$ref": "#/components/schemas/DashboardPreferencesV2beta1PanelDefaultsField"
-          },
-          "frame": {
-            "$ref": "#/components/schemas/DashboardPreferencesV2beta1PanelDefaultsFrame"
-          },
-          "graph": {
-            "description": "Time series, trend and candlestick only.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/DashboardPreferencesV2beta1PanelDefaultsGraph"
-              }
-            ]
           },
           "legend": {
             "$ref": "#/components/schemas/DashboardPreferencesV2beta1PanelDefaultsLegend"
@@ -4852,34 +4912,6 @@
           }
         }
       },
-      "DashboardPreferencesV2beta1DashboardDefaultsAutoGrid": {
-        "type": "object",
-        "properties": {
-          "columnWidth": {
-            "description": "Pixels; used when columnWidthMode is custom.",
-            "type": "integer",
-            "format": "int64"
-          },
-          "columnWidthMode": {
-            "type": "string"
-          },
-          "fillScreen": {
-            "type": "boolean"
-          },
-          "maxColumnCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "rowHeight": {
-            "description": "Pixels; used when rowHeightMode is custom.",
-            "type": "integer",
-            "format": "int64"
-          },
-          "rowHeightMode": {
-            "type": "string"
-          }
-        }
-      },
       "DashboardPreferencesV2beta1DashboardDefaultsTimeRange": {
         "type": "object",
         "required": ["from", "to"],
@@ -4894,26 +4926,6 @@
           }
         }
       },
-      "DashboardPreferencesV2beta1PanelDefaultsAxis": {
-        "type": "object",
-        "properties": {
-          "axisBorderShow": {
-            "type": "boolean"
-          },
-          "axisCenteredZero": {
-            "type": "boolean"
-          },
-          "axisGridShow": {
-            "type": "boolean"
-          },
-          "axisPlacement": {
-            "type": "string"
-          },
-          "scale": {
-            "type": "string"
-          }
-        }
-      },
       "DashboardPreferencesV2beta1PanelDefaultsField": {
         "type": "object",
         "properties": {
@@ -4921,40 +4933,6 @@
             "description": "Number of decimal places, 0 to 15.",
             "type": "integer",
             "format": "int64"
-          }
-        }
-      },
-      "DashboardPreferencesV2beta1PanelDefaultsFrame": {
-        "type": "object",
-        "properties": {
-          "transparent": {
-            "type": "boolean"
-          }
-        }
-      },
-      "DashboardPreferencesV2beta1PanelDefaultsGraph": {
-        "type": "object",
-        "properties": {
-          "fillOpacity": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "gradientMode": {
-            "type": "string"
-          },
-          "lineInterpolation": {
-            "type": "string"
-          },
-          "lineWidth": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pointSize": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "showPoints": {
-            "type": "string"
           }
         }
       },
@@ -4983,6 +4961,45 @@
           },
           "sort": {
             "type": "string"
+          }
+        }
+      },
+      "DashboardPrompt": {
+        "description": "A prompt viewers can run on a dashboard, row, or tab, offered by plugins in its controls.",
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "sources": {
+            "description": "The panels to answer it from. Unset for every panel in the dashboard, row, or tab the prompt is saved on.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardPromptSource"
+            }
+          },
+          "text": {
+            "description": "The prompt that is run. Viewers see it on the dashboard unless it has a title.",
+            "type": "string",
+            "default": ""
+          },
+          "title": {
+            "description": "A short title viewers see on the dashboard instead of the prompt. Unset to show the prompt.",
+            "type": "string"
+          }
+        }
+      },
+      "DashboardPromptSource": {
+        "description": "A panel that a prompt is answered from.",
+        "type": "object",
+        "required": ["element"],
+        "properties": {
+          "element": {
+            "description": "The panel, by its name in dashboard.spec.elements.",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DashboardElementReference"
+              }
+            ]
           }
         }
       },
@@ -5359,6 +5376,13 @@
           "layout": {
             "$ref": "#/components/schemas/DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind"
           },
+          "prompts": {
+            "description": "Prompts viewers can run on the panels in this row, offered by plugins in the row's controls.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardPrompt"
+            }
+          },
           "repeat": {
             "$ref": "#/components/schemas/DashboardRowRepeatOptions"
           },
@@ -5443,6 +5467,13 @@
             "description": "When set to true, the dashboard will load all panels in the dashboard when it's loaded.",
             "type": "boolean",
             "default": false
+          },
+          "prompts": {
+            "description": "Prompts viewers can run on the dashboard, offered by plugins in the dashboard controls.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardPrompt"
+            }
           },
           "revision": {
             "description": "Plugins only. The version of the dashboard installed together with the plugin. This is used to determine if the dashboard should be updated when the plugin is updated.",
@@ -5670,6 +5701,13 @@
           },
           "layout": {
             "$ref": "#/components/schemas/DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind"
+          },
+          "prompts": {
+            "description": "Prompts viewers can run on the panels in this tab, offered by plugins in the tab's controls.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardPrompt"
+            }
           },
           "repeat": {
             "$ref": "#/components/schemas/DashboardTabRepeatOptions"
@@ -6858,7 +6896,7 @@
         }
       },
       "NotebookNotebookLayoutItemSpec": {
-        "description": "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a V2PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI. `id` identifies the cell itself, as opposed to the element name, which clients choose and can reuse.",
+        "description": "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a V2PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI.",
         "type": "object",
         "required": ["element", "source"],
         "properties": {
@@ -6874,7 +6912,7 @@
             ]
           },
           "id": {
-            "description": "Assigned by the server on create or update and never changed by clients (a UUID v4). Comments anchor to this rather than to the element name.",
+            "description": "Optional. The server assigns one on create or update when the item has none, and keeps one the client sends, which must be a UUID v4 that no other item in the notebook has.",
             "type": "string"
           },
           "source": {
@@ -7035,6 +7073,7 @@
             "type": "string"
           },
           "elements": {
+            "description": "The key is the element ID. It identifies the cell: comments and other references anchor to it",
             "type": "object",
             "additionalProperties": {
               "$ref": "#/components/schemas/NotebookCellKindOrV2PanelKindOrLibraryPanelKind"
@@ -7722,9 +7761,9 @@
             "default": ""
           },
           "operator": {
-            "description": "Operator is \"In\", \"NotIn\" or \"All\" in v1. \"In\" matches any of the values, \"NotIn\" excludes all of them, and \"All\" requires the field to hold every value, which only a field holding a list of values can do.",
+            "description": "Operator is \"In\", \"NotIn\" or \"All\" in v1. \"In\" matches any of the values, \"NotIn\" excludes all of them, and \"All\" requires the field to hold every value, which only a field holding a list of values can do.\n\nPossible enum values:\n - `\"All\"` requires the resources whose field holds every one of the values, which only a field holding a list of values can do.\n - `\"In\"` keeps the resources whose field matches any of the values.\n - `\"NotIn\"` keeps the resources whose field matches none of them.",
             "type": "string",
-            "default": ""
+            "enum": ["All", "In", "NotIn"]
           },
           "values": {
             "type": "array",

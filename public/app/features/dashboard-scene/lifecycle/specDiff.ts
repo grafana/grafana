@@ -17,6 +17,33 @@ function withoutEmpty(value: unknown): unknown {
   return value === null || value === '' ? undefined : value;
 }
 
+/** Takes the values withoutEmpty drops out of `value`, in place; array items keep their places. */
+function pruneEmpty(value: unknown): boolean {
+  if (Array.isArray(value)) {
+    value.forEach(pruneEmpty);
+    return value.length === 0;
+  }
+  if (isRecord(value)) {
+    for (const [key, item] of Object.entries(value)) {
+      if (pruneEmpty(item)) {
+        delete value[key];
+      }
+    }
+    return Object.keys(value).length === 0;
+  }
+  return value === null || value === undefined || value === '';
+}
+
+/**
+ * A copy of `spec` without the values that mean "not set" (see withoutEmpty), so a diff people read
+ * shows what changed rather than how each side spells an unset value.
+ */
+export function withoutEmptyValues<T extends object>(spec: T): T {
+  const copy = structuredClone(spec);
+  pruneEmpty(copy);
+  return copy;
+}
+
 function same(a: unknown, b: unknown): boolean {
   return isEqual(withoutEmpty(a), withoutEmpty(b));
 }

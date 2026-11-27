@@ -24,16 +24,13 @@
 //   - Classification only: use [AsErrorResult](err) or [IsConflict](err);
 //     keep the original error.
 //
-// # Exceptions
+// BulkProcess reports failures through the terminal receive error. Check err
+// before accessing a potentially nil response. Always check a stream's terminal
+// receive error; successful sends do not imply success.
 //
-// BulkProcess now returns failures as terminal status errors, but remote servers
-// predating that change can still return BulkResponse.Error. The migration client
-// intentionally retains [ErrorFromResponse] to handle both forms until the Bulk
-// status rollout is confirmed. Do not remove this compatibility fallback based
-// only on the server code having merged. Check err before accessing a potentially
-// nil response. Always check a stream's terminal receive error; successful sends
-// do not imply success.
+// [StatusError] converts only an ErrorResult, not an accompanying returned error.
+//
+// # Per-item errors
 //
 // Still handle per-item errors (BackendReadResponse.Error, bulk rejections).
-// [StatusError] converts only an ErrorResult, not an accompanying returned error.
 package resource

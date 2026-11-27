@@ -312,6 +312,9 @@ async function initBootDataFromMT() {
       id: display.internalId ?? 0,
       uid: display.identity?.name ?? '',
       name: display.displayName,
+      email: display.email ?? '',
+      authenticatedBy: display.authenticatedBy ?? '',
+      orgId: 1,
       gravatarUrl: display.avatarURL ?? '',
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       orgRole: (display.role as OrgRole) ?? '',

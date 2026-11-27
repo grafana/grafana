@@ -4,7 +4,6 @@ import { useRegisterActions } from 'kbar';
 import { getWrapper } from 'test/test-utils';
 
 import { type ScopeNode } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
@@ -92,8 +91,7 @@ describe('useRegisterScopesActions', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useScopeServicesState as jest.Mock).mockReturnValue(mockScopeServicesState);
-    config.featureToggles.scopeFilters = true;
-    setTestFlags({ [FlagKeys.ScopeSearchAllLevels]: true });
+    setTestFlags({ [FlagKeys.ScopeFilters]: true, [FlagKeys.ScopeSearchAllLevels]: true });
   });
 
   afterEach(() => {
@@ -103,7 +101,9 @@ describe('useRegisterScopesActions', () => {
   });
 
   it('should return undefined scopesRow when feature toggle is off', () => {
-    config.featureToggles.scopeFilters = false;
+    act(() => {
+      setTestFlags({ [FlagKeys.ScopeFilters]: false });
+    });
 
     const onApply = jest.fn();
     const { result } = renderHook(() => {
@@ -304,7 +304,7 @@ describe('useRegisterScopesActions', () => {
 
   it('should not use global scope search if feature flag is off', async () => {
     act(() => {
-      setTestFlags({ [FlagKeys.ScopeSearchAllLevels]: false });
+      setTestFlags({ [FlagKeys.ScopeFilters]: true, [FlagKeys.ScopeSearchAllLevels]: false });
     });
     const mockFilterNode = jest.fn();
     // First run with empty scopes in the scopes service

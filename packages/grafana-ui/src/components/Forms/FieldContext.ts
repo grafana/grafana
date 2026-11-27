@@ -5,6 +5,10 @@ export interface FieldContextType {
    * The DOM ID to link the field label to the form control
    */
   id?: string;
+  /**
+   * The DOM ID of the field label, for controls that build their name from it
+   */
+  labelId?: string;
   invalid?: boolean;
   disabled?: boolean;
   loading?: boolean;

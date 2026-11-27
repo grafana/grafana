@@ -65,7 +65,7 @@ export function StackedQueryItem({ query, headingId, isCurrent }: StackedQueryIt
   const { panel } = usePanelContext();
   const { queries, data } = useQueryRunnerContext();
   const { showingDatasourceHelp } = useQueryEditorUIContext();
-  const { updateSelectedQuery, addQuery, runQueries, startQueryPreview } = useActionsContext();
+  const { updateSelectedQuery, addQuery, runQueries, startQueryPreview, onQueryEdited } = useActionsContext();
   const { queryDsData, queryDsLoading } = useQueryDatasource(query, dsSettings, panel);
   const editorType = getStackedQueryEditorType(query);
   const target = { cardType: editorType, query, dsData: queryDsData, dsLoading: queryDsLoading };
@@ -93,6 +93,7 @@ export function StackedQueryItem({ query, headingId, isCurrent }: StackedQueryIt
           addQuery={addQuery}
           runQueries={runQueries}
           startQueryPreview={startQueryPreview}
+          onQueryEdited={onQueryEdited}
         />
       </div>
     </>

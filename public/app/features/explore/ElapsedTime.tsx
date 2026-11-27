@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useInterval } from 'react-use';
 
 import { Time, type TimeProps } from './Time';
@@ -16,8 +16,11 @@ export const ElapsedTime = ({ resetKey, humanize, className }: ElapsedTimeProps)
 
   // hook that will schedule a interval and then update the elapsed value on every tick.
   useInterval(() => setElapsed(elapsed + INTERVAL), INTERVAL);
-  // this effect will only be run when resetKey changes. This will reset the elapsed to 0.
-  useEffect(() => setElapsed(0), [resetKey]);
+  const [prevResetKey, setPrevResetKey] = useState(resetKey);
+  if (resetKey !== prevResetKey) {
+    setPrevResetKey(resetKey);
+    setElapsed(0);
+  }
 
   return <Time timeInMs={elapsed} className={className} humanize={humanize} />;
 };

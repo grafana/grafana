@@ -78,10 +78,6 @@ func IsConflict(err error) bool {
 	return resourceutil.IsConflict(err)
 }
 
-func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
-	return resourceutil.ErrorFromResponse(respErr, err)
-}
-
 func AsErrorResult(err error) *resourcepb.ErrorResult {
 	return resourceutil.AsErrorResult(err)
 }

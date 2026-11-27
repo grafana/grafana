@@ -115,7 +115,7 @@ func (m *LoggerMiddleware) QueryChunkedData(ctx context.Context, req *backend.Qu
 	// inspects and logs per-refID response errors.
 	cw := &errorRecordingChunkedWriter{ChunkedDataWriter: w}
 	return m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
-		innerErr := m.BaseHandler.QueryChunkedData(ctx, req, cw)
+		innerErr := m.BaseHandler.QueryChunkedData(ctx, req, cw.writer())
 
 		if innerErr == nil {
 			ctxLogger := m.logger.FromContext(ctx)
@@ -124,6 +124,7 @@ func (m *LoggerMiddleware) QueryChunkedData(ctx context.Context, req *backend.Qu
 					"refID", re.refID,
 					"status", int(re.status),
 					"error", re.err,
+					"statusSource", re.source.String(),
 					"target", m.pluginTarget(ctx, req.PluginContext),
 				)
 			}
@@ -217,49 +218,4 @@ func (m *LoggerMiddleware) RunStream(ctx context.Context, req *backend.RunStream
 	})
 
 	return err
-}
-
-func (m *LoggerMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-	if req == nil {
-		return m.BaseHandler.ValidateAdmission(ctx, req)
-	}
-
-	var resp *backend.ValidationResponse
-	err := m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
-		var innerErr error
-		resp, innerErr = m.BaseHandler.ValidateAdmission(ctx, req)
-		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
-	})
-
-	return resp, err
-}
-
-func (m *LoggerMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-	if req == nil {
-		return m.BaseHandler.MutateAdmission(ctx, req)
-	}
-
-	var resp *backend.MutationResponse
-	err := m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
-		var innerErr error
-		resp, innerErr = m.BaseHandler.MutateAdmission(ctx, req)
-		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
-	})
-
-	return resp, err
-}
-
-func (m *LoggerMiddleware) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	if req == nil {
-		return m.BaseHandler.ConvertObjects(ctx, req)
-	}
-
-	var resp *backend.ConversionResponse
-	err := m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
-		var innerErr error
-		resp, innerErr = m.BaseHandler.ConvertObjects(ctx, req)
-		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
-	})
-
-	return resp, err
 }

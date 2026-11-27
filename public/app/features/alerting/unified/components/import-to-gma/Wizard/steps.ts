@@ -1,28 +1,39 @@
 import { t } from '@grafana/i18n';
 
+import { type ImportFormValues } from '../types';
+
 import { type NotificationsSourceOption, type RulesSourceOption, StepKey, type WizardStep } from './types';
+
+/** Settings > Import runs the full list. The rules importer, for users who can't open Settings, runs the short one. */
+export const WIZARD_STEPS = {
+  full: [StepKey.Notifications, StepKey.Rules, StepKey.Review],
+  rulesOnly: [StepKey.Rules, StepKey.Review],
+};
 
 /**
  * Returns the wizard steps configuration.
  * Uses a function to ensure translations are evaluated at runtime.
  */
-export const getWizardSteps = (): WizardStep[] => [
-  {
-    id: StepKey.Notifications,
-    name: t('alerting.import-to-gma.wizard.step-notifications', 'Notification configuration'),
-    description: t('alerting.import-to-gma.wizard.step-notifications-desc', 'Contact points, policies, templates'),
-  },
-  {
-    id: StepKey.Rules,
-    name: t('alerting.import-to-gma.wizard.step-rules', 'Rules'),
-    description: t('alerting.import-to-gma.wizard.step-rules-desc', 'Alert and recording rules'),
-  },
-  {
-    id: StepKey.Review,
-    name: t('alerting.import-to-gma.wizard.step-review', 'Review & import'),
-    description: t('alerting.import-to-gma.wizard.step-review-desc', 'Preview and confirm import'),
-  },
-];
+export const getWizardSteps = (stepKeys: StepKey[] = WIZARD_STEPS.full): WizardStep[] => {
+  const steps: Record<StepKey, WizardStep> = {
+    [StepKey.Notifications]: {
+      id: StepKey.Notifications,
+      name: t('alerting.import-to-gma.wizard.step-notifications', 'Notification configuration'),
+      description: t('alerting.import-to-gma.wizard.step-notifications-desc', 'Contact points, policies, templates'),
+    },
+    [StepKey.Rules]: {
+      id: StepKey.Rules,
+      name: t('alerting.import-to-gma.wizard.step-rules', 'Rules'),
+      description: t('alerting.import-to-gma.wizard.step-rules-desc', 'Alert and recording rules'),
+    },
+    [StepKey.Review]: {
+      id: StepKey.Review,
+      name: t('alerting.import-to-gma.wizard.step-review', 'Review & import'),
+      description: t('alerting.import-to-gma.wizard.step-review-desc', 'Preview and confirm import'),
+    },
+  };
+  return stepKeys.map((key) => steps[key]);
+};
 
 /** Whether Step 1's notifications will be handled via continuous Auto-sync instead of a one-time import. */
 export function isAutoSyncSelected(
@@ -46,14 +57,41 @@ export function isAutoSyncCommitted(
   return isAutoSyncSelected(autoSyncNotificationsEnabled, notificationsSource) && !step1Skipped;
 }
 
-export const getNextStep = (currentStep: StepKey): WizardStep | undefined => {
-  const steps = getWizardSteps();
+export interface ImportPlan {
+  willEnableAutoSync: boolean;
+  willImportNotifications: boolean;
+  willImportRules: boolean;
+}
+
+/** What confirming the import will do, from the steps the user completed or skipped. */
+export function getImportPlan(
+  values: Pick<
+    ImportFormValues,
+    | 'autoSyncNotificationsEnabled'
+    | 'notificationsSource'
+    | 'step1Completed'
+    | 'step1Skipped'
+    | 'step2Completed'
+    | 'step2Skipped'
+  >
+): ImportPlan {
+  return {
+    willEnableAutoSync: isAutoSyncCommitted(
+      values.autoSyncNotificationsEnabled ?? false,
+      values.notificationsSource,
+      values.step1Skipped
+    ),
+    willImportNotifications: values.step1Completed && !values.step1Skipped,
+    willImportRules: values.step2Completed && !values.step2Skipped,
+  };
+}
+
+export const getNextStep = (currentStep: StepKey, steps = getWizardSteps()): WizardStep | undefined => {
   const currentIndex = steps.findIndex((s) => s.id === currentStep);
   return steps[currentIndex + 1];
 };
 
-export const getPreviousStep = (currentStep: StepKey): WizardStep | undefined => {
-  const steps = getWizardSteps();
+export const getPreviousStep = (currentStep: StepKey, steps = getWizardSteps()): WizardStep | undefined => {
   const currentIndex = steps.findIndex((s) => s.id === currentStep);
   if (currentIndex <= 0) {
     return undefined;
@@ -90,30 +128,23 @@ export const getNotificationsSourceOptions = (): NotificationsSourceOption[] => 
 
 /**
  * Returns the source options for importing alert rules (Step 2).
- * @param includeYaml - Whether to include the YAML option (based on feature flag)
+ * Uses a function to ensure translations are evaluated at runtime.
  */
-export const getRulesSourceOptions = (includeYaml: boolean): RulesSourceOption[] => {
-  const options: RulesSourceOption[] = [
-    {
-      label: t('alerting.import-to-gma.step2.source.datasource', 'Data source'),
-      description: t(
-        'alerting.import-to-gma.step2.source.datasource-desc',
-        'Import from a Prometheus, Mimir, or Loki data source'
-      ),
-      value: 'datasource',
-    },
-  ];
-
-  if (includeYaml) {
-    options.push({
-      label: t('alerting.import-to-gma.step2.source.yaml', 'YAML file'),
-      description: t('alerting.import-to-gma.step2.source.yaml-desc', 'Import from a Prometheus rules YAML file'),
-      value: 'yaml',
-    });
-  }
-
-  return options;
-};
+export const getRulesSourceOptions = (): RulesSourceOption[] => [
+  {
+    label: t('alerting.import-to-gma.step2.source.datasource', 'Data source'),
+    description: t(
+      'alerting.import-to-gma.step2.source.datasource-desc',
+      'Import from a Prometheus, Mimir, or Loki data source'
+    ),
+    value: 'datasource',
+  },
+  {
+    label: t('alerting.import-to-gma.step2.source.yaml', 'YAML file'),
+    description: t('alerting.import-to-gma.step2.source.yaml-desc', 'Import from a Prometheus rules YAML file'),
+    value: 'yaml',
+  },
+];
 
 /**
  * Returns a label describing which rules will be paused after import.

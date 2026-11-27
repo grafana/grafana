@@ -16,42 +16,23 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
-	"github.com/grafana/grafana/pkg/services/apiserver"
-	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ProvidePullRequestWorker(
-	cfg *setting.Cfg,
-	renderer rendering.Service,
-	blobstore resource.ResourceClient,
-	configProvider apiserver.RestConfigProvider,
-	registry prometheus.Registerer,
-) *PullRequestWorker {
-	// Screenshot images are fetched server-side by the Git provider's image
-	// proxy and must be reachable from the public internet — prefer
-	// public_root_url when set. Clickable links stay on AppURL so internal
-	// reviewers reach Grafana via the canonical URL.
+// URLsFromConfig returns the URLs of a single-tenant Grafana. Screenshot images
+// are fetched server-side by the Git provider's image proxy and must be reachable
+// from the public internet, so they prefer public_root_url when set. Clickable
+// links stay on AppURL so internal reviewers reach Grafana via the canonical URL.
+func URLsFromConfig(cfg *setting.Cfg) URLProvider {
 	publicURL := cfg.AppURL
 	if cfg.ProvisioningPublicRootURL != "" {
 		publicURL = cfg.ProvisioningPublicRootURL
 	}
-	urls := URLProvider{
+	return URLProvider{
 		Internal: func(_ context.Context, _ string) string { return cfg.AppURL },
 		Public:   func(_ context.Context, _ string) string { return publicURL },
 	}
-
-	// FIXME: we should create providers for client and parsers, so that we don't have
-	// multiple connections for webhooks
-	clients := resources.NewClientFactory(configProvider)
-	parsers := resources.NewParserFactory(clients)
-	screenshotRenderer := NewScreenshotRenderer(renderer, blobstore)
-	evaluator := NewEvaluator(screenshotRenderer, parsers, urls, registry)
-	commenter := NewCommenter(cfg.ProvisioningAllowImageRendering, urls)
-
-	return NewPullRequestWorker(evaluator, commenter, registry)
 }
 
 //go:generate mockery --name=Evaluator --structname=MockEvaluator --inpackage --filename=mock_evaluator.go --with-expecter

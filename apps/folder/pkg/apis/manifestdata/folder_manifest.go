@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	v1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	v1alpha1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1alpha1"
 	v1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 )
 
@@ -54,6 +55,23 @@ var appManifestData = app.ManifestData{
 					},
 					SelectableFields: []string{
 						"spec.title",
+					},
+				},
+			},
+		},
+
+		{
+			Name:   "v1alpha1",
+			Served: true,
+			Kinds: []app.ManifestVersionKind{
+				{
+					Kind:       "PendingFolderDeletion",
+					Plural:     "PendingFolderDeletions",
+					Resource:   "pendingfolderdeletions",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: new(false),
 					},
 				},
 			},
@@ -103,8 +121,9 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"Folder/v1":      v1.FolderKind(),
-	"Folder/v1beta1": v1beta1.FolderKind(),
+	"Folder/v1":                      v1.FolderKind(),
+	"PendingFolderDeletion/v1alpha1": v1alpha1.PendingFolderDeletionKind(),
+	"Folder/v1beta1":                 v1beta1.FolderKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.

@@ -43,6 +43,10 @@ func newDashboardPreferencesAuthorizer(accessClient authlib.AccessClient, access
 
 			verb := attr.GetVerb()
 			if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaDashboardPreferences, false, openfeature.TransactionContext(ctx)) {
+				// Cleanup needs only the tiers, so merged is off with the rest of the feature.
+				if attr.GetName() == dashboardPreferencesMergedName {
+					return authorizer.DecisionDeny, "dashboard preferences feature is not enabled", nil
+				}
 				// Folder and user cleanup must still find and delete leftovers after the flag is turned
 				// off, including when the multi-tenant folder app calls with its own token.
 				if identity.IsServiceIdentity(ctx) {
@@ -98,8 +102,10 @@ func newDashboardPreferencesAuthorizer(accessClient authlib.AccessClient, access
 				}
 				return authorizer.DecisionDeny, "invalid dashboard preferences name", nil
 			case dashboardPreferencesMergedName:
-				// A merge starts from the org tier, so only a caller who can read that tier gets one. The merged
-				// handler must apply each tier's rules, including the namespace match, to every tier it reads.
+				// A merge starts from the org tier, so only a caller who can read that tier gets one. The merged handler
+				// judges the target folder by the folder tier's read rule and reads only the caller's own user tier.
+				// Parent folders apply whether or not the caller can read them, so everyone creating in a folder starts
+				// from the same values; sources leaves out the names of those the caller can't read.
 				if verb == utils.VerbGet {
 					return authorizeDashboardPreferencesName(ctx, accessClient, accessControl, requester, attr.GetNamespace(), dashv2beta1.DashboardPreferencesOrgName, utils.VerbGet)
 				}
@@ -168,7 +174,7 @@ func canWriteDashboardPreferencesOrgTier(ctx context.Context, accessControl acce
 		return false, nil
 	}
 	if accessControl == nil {
-		return requester.GetOrgRole() == identity.RoleAdmin, nil
+		return requester.GetOrgRole() == authlib.RoleAdmin, nil
 	}
 
 	allowed, err := accessControl.Evaluate(ctx, requester, accesscontrol.EvalPermission(accesscontrol.ActionOrgsPreferencesWrite))

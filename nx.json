@@ -22,27 +22,29 @@
   "release": {
     "groups": {
       "grafana": {
-        "projects": [
-          "@grafana/alerting",
-          "@grafana/api-clients",
-          "@grafana/data",
-          "@grafana/e2e-selectors",
-          "@grafana/flamegraph",
-          "@grafana/i18n",
-          "@grafana/o11y-ds-frontend",
-          "@grafana/openapi",
-          "@grafana/runtime",
-          "@grafana/schema",
-          "@grafana/sql",
-          "@grafana/ui",
-          "public/app/plugins/*/*"
-        ],
+        "projects": ["tag:release:grafana", "public/app/plugins/*/*"],
         "projectsRelationship": "fixed"
+      },
+      "independent-release": {
+        "projects": ["tag:release:independent"],
+        "projectsRelationship": "independent",
+        "version": {
+          "conventionalCommits": true
+        },
+        "changelog": {
+          "file": "{projectRoot}/CHANGELOG.md",
+          "renderOptions": {
+            "authors": false,
+            "commitReferences": true,
+            "versionTitleDate": true
+          }
+        }
       }
     },
     "version": {
       "versionActions": "scripts/release/version-actions.ts",
       "versionPrefix": "",
+      "updateDependents": "auto",
       "versionActionsOptions": {
         "skipLockFileUpdate": true
       },
@@ -54,7 +56,12 @@
     },
     "changelog": {
       "workspaceChangelog": false,
-      "projectChangelogs": false
+      "projectChangelogs": false,
+      "git": {
+        "commit": false,
+        "tag": false,
+        "stageChanges": false
+      }
     }
   }
 }

@@ -111,14 +111,12 @@ export function ReceiverForm<R extends ChannelValues>({
         notifyApp.error('Failed to save the contact point', message);
 
         if (isClientFetchError(e)) {
-          logWarning('Failed to save the contact point', {
-            status: String(e.status),
-            message,
-          });
+          logWarning('Failed to save the contact point', { status: String(e.status) });
         } else {
-          const error = new Error('Failed to save the contact point');
-          error.cause = e;
-          logError(error);
+          logError(
+            new Error('Failed to save the contact point'),
+            isFetchError(e) ? { status: String(e.status) } : undefined
+          );
         }
       }
     }

@@ -6303,9 +6303,13 @@
             "default": ""
           },
           "operator": {
-            "description": "Operator is \"In\", \"NotIn\" or \"All\" in v1. \"In\" matches any of the values, \"NotIn\" excludes all of them, and \"All\" requires the field to hold every value, which only a field holding a list of values can do.",
+            "description": "Operator is \"In\", \"NotIn\" or \"All\" in v1. \"In\" matches any of the values, \"NotIn\" excludes all of them, and \"All\" requires the field to hold every value, which only a field holding a list of values can do.\n\nPossible enum values:\n - `\"All\"` requires the resources whose field holds every one of the values, which only a field holding a list of values can do.\n - `\"In\"` keeps the resources whose field matches any of the values.\n - `\"NotIn\"` keeps the resources whose field matches none of them.",
             "type": "string",
-            "default": ""
+            "enum": [
+              "All",
+              "In",
+              "NotIn"
+            ]
           },
           "values": {
             "type": "array",

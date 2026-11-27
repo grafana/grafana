@@ -224,7 +224,7 @@ describe('<PanelEditActionsSingle />', () => {
 
     await actions.clickSettings();
 
-    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('settings', 1, 'edit_popover');
+    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('settings', 1, 'edit_popover', 'timeseries');
   });
 
   test('when the panel is a repeat clone and the user clicks Panel settings, the source panel is selected', async () => {
@@ -254,7 +254,7 @@ describe('<PanelEditActionsSingle />', () => {
     await actions.clickEditVisualization();
 
     expect(mockLocationServicePartial).toHaveBeenCalledWith({ editPanel: 1 });
-    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('configure', 1, 'edit_popover');
+    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('configure', 1, 'edit_popover', 'timeseries');
   });
 
   test('when the user clicks Duplicate in Auto grid, the panel is duplicated via its edit action', async () => {
@@ -279,7 +279,7 @@ describe('<PanelEditActionsSingle />', () => {
     await actions.clickDuplicate();
 
     expect(duplicateDefaultGridPanel).toHaveBeenCalledWith(layoutManager, panels[0]);
-    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('duplicate', 1, 'edit_popover');
+    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('duplicate', 1, 'edit_popover', 'timeseries');
   });
 
   test('when the user clicks Delete and confirms, the panel is removed via its layout manager', async () => {
@@ -300,7 +300,7 @@ describe('<PanelEditActionsSingle />', () => {
     event.payload.onConfirm();
 
     expect(removePanel).toHaveBeenCalledWith(panels[0]);
-    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('delete', 1, 'edit_popover');
+    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('delete', 1, 'edit_popover', 'timeseries');
     expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledTimes(1);
   });
 
@@ -340,7 +340,7 @@ describe('<PanelEditActionsSingle />', () => {
         await actions.clickCopy();
 
         expect(copyPanel).toHaveBeenCalledWith(panels[0]);
-        expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('copy', 1, 'edit_popover');
+        expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('copy', 1, 'edit_popover', 'timeseries');
       });
 
       test('shows a Copied tooltip that disappears after 2 seconds', () => {
@@ -591,8 +591,8 @@ describe('<PanelEditActionsBulk />', () => {
     const [event] = mockPublishAppEvent.mock.calls[0];
     event.payload.onConfirm();
 
-    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('delete', 1, 'edit_popover');
-    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('delete', 2, 'edit_popover');
+    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('delete', 1, 'edit_popover', 'timeseries');
+    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('delete', 2, 'edit_popover', 'timeseries');
   });
 });
 

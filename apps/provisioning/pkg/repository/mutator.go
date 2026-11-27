@@ -9,9 +9,9 @@ import (
 
 	"k8s.io/apiserver/pkg/admission"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // AdmissionMutator handles mutation for Repository resources
@@ -130,7 +130,7 @@ func InvalidateConnectionTokenOnURLChange(new, old *provisioning.Repository) {
 		return
 	}
 
-	new.Secure.Token = common.InlineSecureValue{Remove: true}
+	new.Secure.Token = resource.InlineSecureValue{Remove: true}
 }
 
 // suppliedNewToken reports whether the incoming object carries a token decision of its own.

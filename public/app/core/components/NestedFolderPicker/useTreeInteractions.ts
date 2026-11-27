@@ -25,17 +25,19 @@ export function useTreeInteractions({
   search,
   visible,
 }: TreeInteractionProps) {
-  const [focusedItemIndex, setFocusedItemIndex] = useState(-1);
-
-  useEffect(() => {
+  const [focusedItemIndex, setFocusedItemIndex] = useState(0);
+  const [prevVisible, setPrevVisible] = useState(visible);
+  const [prevSearch, setPrevSearch] = useState(search);
+  if (prevVisible !== visible) {
+    setPrevVisible(visible);
     if (visible) {
       setFocusedItemIndex(-1);
     }
-  }, [visible]);
-
-  useEffect(() => {
+  }
+  if (prevSearch !== search) {
+    setPrevSearch(search);
     setFocusedItemIndex(0);
-  }, [search]);
+  }
 
   useEffect(() => {
     document

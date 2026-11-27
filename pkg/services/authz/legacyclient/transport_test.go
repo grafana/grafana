@@ -10,6 +10,9 @@ import (
 	modernv1 "github.com/grafana/authlib/authz/proto/v1"
 
 	"github.com/stretchr/testify/require"
+	otelcodes "go.opentelemetry.io/otel/codes"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -20,6 +23,28 @@ import (
 	"github.com/grafana/authlib/types"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
+
+func TestLegacyRequesterContextWirePresence(t *testing.T) {
+	empty, cacheKey, namespace := "", "caller-cache-key", "stacks-12"
+	for _, tc := range []struct {
+		name           string
+		key, namespace *string
+	}{
+		{"absent", nil, nil}, {"empty", &empty, &empty}, {"values", &cacheKey, &namespace},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server := &legacyTransportServer{handle: func(req *authzv1.LegacyGetUserPermissionsRequest, _ authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
+				require.Equal(t, tc.key, req.Identity.CacheKey)
+				require.Equal(t, tc.namespace, req.Identity.RequesterNamespace)
+				return nil
+			}}
+			req := legacyRequest()
+			req.Identity.CacheKey, req.Identity.RequesterNamespace = tc.key, tc.namespace
+			_, err := newLegacyTransportClient(t, server).LegacyGetUserPermissions(t.Context(), legacyCaller("stacks-12", "authz.grafana.app/legacyuserpermissions:get"), req)
+			require.NoError(t, err)
+		})
+	}
+}
 
 func TestClient_LegacyGetUserPermissionsWireSnapshot(t *testing.T) {
 	server := &legacyTransportServer{handle: func(req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
@@ -159,15 +184,20 @@ func TestLegacyAuthzServiceIsSeparate(t *testing.T) {
 		require.NotEqual(t, "LegacyGetUserPermissions", stream.StreamName)
 	}
 
-	_, modernImplementsLegacy := any((*authzlib.ClientImpl)(nil)).(Service)
+	_, modernImplementsLegacy := any((*authzlib.ClientImpl)(nil)).(LegacyUserPermissionsClient)
 	require.False(t, modernImplementsLegacy)
 	_, legacyImplementsAccess := any((*LegacyClient)(nil)).(types.AccessClient)
 	require.False(t, legacyImplementsAccess)
 	modern := modernv1.File_proto_v1_authz_proto.Services().ByName("AuthzService")
 	require.Nil(t, modern.Methods().ByName("LegacyGetUserPermissions"))
+	require.Nil(t, modern.Methods().ByName("LegacySearchUsersPermissions"))
 	legacy := authzv1.File_legacy_authz_proto.Services().ByName("LegacyAuthzService")
-	require.Equal(t, 2, legacy.Methods().Len())
+	require.Equal(t, 3, legacy.Methods().Len())
 	require.NotNil(t, legacy.Methods().ByName("LegacyCheck"))
+	search := legacy.Methods().ByName("LegacySearchUsersPermissions")
+	require.NotNil(t, search)
+	require.True(t, search.IsStreamingServer())
+	require.True(t, search.Options().(*descriptorpb.MethodOptions).GetDeprecated())
 	enumeration := legacy.Methods().ByName("LegacyGetUserPermissions")
 	require.NotNil(t, enumeration)
 	require.True(t, enumeration.IsStreamingServer())
@@ -211,4 +241,25 @@ func newLegacyTransportConn(t *testing.T, handler authzv1.LegacyAuthzServiceServ
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, conn.Close()) })
 	return conn
+}
+
+type nilLegacySearchStreamClient struct {
+	authzv1.LegacyAuthzServiceClient
+}
+
+func (nilLegacySearchStreamClient) LegacySearchUsersPermissions(context.Context, *authzv1.LegacySearchUsersPermissionsRequest, ...grpc.CallOption) (authzv1.LegacyAuthzService_LegacySearchUsersPermissionsClient, error) {
+	return nil, nil
+}
+
+func TestLegacySearchNilStreamRecordsError(t *testing.T) {
+	recorder := tracetest.NewSpanRecorder()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
+	client := &LegacyClient{clientV1: nilLegacySearchStreamClient{}, tracer: provider.Tracer("test")}
+	req := LegacySearchUsersPermissionsRequest{Namespace: "default"}
+	_, err := client.LegacySearchUsersPermissions(t.Context(), legacyCaller("default", "authz.grafana.app/legacyuserpermissions:search"), req)
+	require.ErrorIs(t, err, ErrInvalidLegacySearchUsersPermissionsResponse)
+	spans := recorder.Ended()
+	require.Len(t, spans, 1)
+	require.Equal(t, otelcodes.Error, spans[0].Status().Code)
+	require.Contains(t, spans[0].Status().Description, "nil stream")
 }

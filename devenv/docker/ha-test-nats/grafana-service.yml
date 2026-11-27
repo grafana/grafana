@@ -1,0 +1,23 @@
+services:
+  grafana:
+    image: ${GRAFANA_IMAGE:-grafana/grafana-oss:dev}
+    # Self-heals a transient startup failure, such as the database not accepting connections yet.
+    restart: on-failure:3
+    env_file:
+      - ./db-${GRAFANA_DB:-mysql}.env
+    environment:
+      - GF_SERVER_ROOT_URL=http://localhost:${HTTP_PORT:-3000}
+      - GF_DATABASE_HIGH_AVAILABILITY=true
+      # The background plugin installer blocks shutdown while grafana.com is slow or unreachable.
+      - GF_PLUGINS_PREINSTALL_DISABLED=true
+      # Secrets Manager encrypts the NATS route credential under this key, so every instance needs the same one.
+      - GF_SECRETS_MANAGER_ENCRYPTION_SECRET_KEY_V1_SECRET_KEY=${SECRETS_MANAGER_SECRET_KEY:-ha-test-nats-secret-key}
+      - GF_NATS_ENABLED=true
+      - GF_NATS_CLUSTER_TLS_CERT_PATH=/certs/node.crt
+      - GF_NATS_CLUSTER_TLS_KEY_PATH=/certs/node.key
+      - GF_NATS_CLUSTER_TLS_CA_PATH=/certs/ca.crt
+    healthcheck:
+      test: curl -fsS -o /dev/null http://127.0.0.1:3000/api/health || exit 1
+      interval: 5s
+      timeout: 5s
+      retries: 60

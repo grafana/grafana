@@ -32,6 +32,8 @@ import { TimeSeriesPanel } from './TimeSeriesPanel';
 import { defaultGraphConfig, getGraphFieldConfig } from './config';
 import { type Options } from './panelcfg.gen';
 
+jest.mock('app/core/components/TimeSeries/utils', () => makeSpyable('app/core/components/TimeSeries/utils'));
+
 // uPlot builds series area fills via the Path2D copy constructor, which jest-canvas-mock drops; this shim
 // preserves it so fills, gradient bands, and markers land in the captured draw calls.
 installCanvasPath2DShim();

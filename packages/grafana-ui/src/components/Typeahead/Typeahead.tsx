@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { autoUpdate, offset, useFloating } from '@floating-ui/react';
-import { useEffect, useMemo, useRef, useState, type PropsWithChildren } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PropsWithChildren } from 'react';
 import { FixedSizeList } from 'react-window';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -62,7 +62,9 @@ export function Typeahead({ prefix, isOpen = false, groupedItems, menuRef, onSel
   // The menu handle is stable, but the keyboard plugin invokes it outside of render, so the methods
   // read the latest props/state through a ref and functional state updates.
   const latest = useRef({ allItems, typeaheadIndex, onSelectSuggestion });
-  latest.current = { allItems, typeaheadIndex, onSelectSuggestion };
+  useLayoutEffect(() => {
+    latest.current = { allItems, typeaheadIndex, onSelectSuggestion };
+  });
 
   const menu = useMemo<TypeaheadMenu>(
     () => ({

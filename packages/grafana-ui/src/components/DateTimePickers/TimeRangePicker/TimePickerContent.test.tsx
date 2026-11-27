@@ -13,6 +13,17 @@ describe('TimePickerContent', () => {
     createAbsoluteTimeRange('2019-10-18T07:50:27.433Z', '2019-10-18T07:51:27.433Z'),
   ];
 
+  it.each([true, false])('restores exact history bounds on selection (fullscreen: %s)', async (isFullscreen) => {
+    const onChange = jest.fn<void, [TimeRange]>();
+    renderComponent({ value: absoluteValue, history, isFullscreen, onChange });
+
+    await userEvent.click(screen.getByText('2019-12-17 07:48:27 to 2019-12-17 07:49:27'));
+
+    const [range] = onChange.mock.calls[0];
+    expect(range.from.toISOString()).toBe('2019-12-17T07:48:27.433Z');
+    expect(range.to.toISOString()).toBe('2019-12-17T07:49:27.433Z');
+  });
+
   describe('Wide Screen', () => {
     it('renders with history', async () => {
       renderComponent({ value: absoluteValue, history });
@@ -206,11 +217,12 @@ function renderComponent({
   history = [],
   hideQuickRanges = false,
   hideTimeZone = false,
+  onChange = noop,
 }: Pick<PropsWithScreenSize, 'value'> & Partial<PropsWithScreenSize>): RenderResult {
   return render(
     <TimePickerContentWithScreenSize
       onChangeTimeZone={noop}
-      onChange={noop}
+      onChange={onChange}
       quickOptions={[
         { from: 'now-5m', to: 'now', display: 'Last 5 minutes' },
         { from: 'now-15m', to: 'now', display: 'Last 15 minutes' },

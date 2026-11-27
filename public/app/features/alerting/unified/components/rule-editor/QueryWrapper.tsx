@@ -14,6 +14,7 @@ import {
   type PanelData,
   type RelativeTimeRange,
   type ThresholdsConfig,
+  getDataSourceRef,
   getDefaultRelativeTimeRange,
   rangeUtil,
 } from '@grafana/data';
@@ -166,7 +167,11 @@ export const QueryWrapper = ({
     return (
       <Stack direction="row" alignItems="center" gap={1}>
         <SelectingDataSourceTooltip />
-        <AlertingRuleQueryExtensionPoint query={Object.assign({}, query.model)} extensionsToShow="queryless" />
+        {/* A new rule's default query model has no datasource, which the extensions filter on */}
+        <AlertingRuleQueryExtensionPoint
+          query={{ ...query.model, datasource: getDataSourceRef(dsSettings) }}
+          extensionsToShow="queryless"
+        />
         <QueryOptions
           onChangeTimeRange={onChangeTimeRange}
           query={query}

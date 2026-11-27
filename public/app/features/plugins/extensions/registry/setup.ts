@@ -3,12 +3,14 @@ import { type AppPluginConfig, PluginExtensionExposedComponents } from '@grafana
 import { FlagKeys, getAppPluginMetas, getCachedPromise, getFeatureFlagClient } from '@grafana/runtime/internal';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
 import { CreateAlertFromPanelExposedComponentLazy } from 'app/features/alerting/unified/extensions/CreateAlertFromPanelExposedComponentLazy';
+import { FolderPermissionsExposedComponentLazy } from 'app/features/browse-dashboards/components/FolderPermissionsExposedComponentLazy';
 import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
 import { DashboardViewLazy } from 'app/features/dashboard-scene/embedding/DashboardViewLazy';
 import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibrary/OpenQueryLibraryExposedComponent';
 import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
 import { NotebookViewLazy } from 'app/features/notebook/embed/NotebookViewLazy';
 import { AddToNotebookFormExposedComponent } from 'app/features/notebook/extensions/AddToNotebookFormExposedComponent';
+import { StarToolbarButtonExposed } from 'app/features/stars/StarToolbarButton';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
@@ -72,6 +74,18 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         title: 'Notebook',
         description: 'An editable notebook, for a host rendering one outside the notebooks route',
         component: NotebookViewLazy,
+      },
+      {
+        id: PluginExtensionExposedComponents.FolderPermissionsV1,
+        title: 'Folder permissions',
+        description: 'Folder permissions editor, as in the folder page "Manage permissions" drawer',
+        component: FolderPermissionsExposedComponentLazy,
+      },
+      {
+        id: PluginExtensionExposedComponents.StarToolbarButtonV1,
+        title: 'Star toolbar button',
+        description: 'Stars or unstars one object, named by its API group, kind and name',
+        component: StarToolbarButtonExposed,
       },
       // Only with notebooks on: plugins treat the form's absence as notebooks being unavailable.
       ...(getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false)

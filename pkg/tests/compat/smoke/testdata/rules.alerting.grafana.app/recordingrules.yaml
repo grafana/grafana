@@ -1,0 +1,19 @@
+apiVersion: rules.alerting.grafana.app/v1beta1
+kind: RecordingRule
+metadata:
+  annotations:
+    grafana.app/folder: compat-smoke-folders
+spec:
+  title: Compat smoke recording rule
+  paused: true
+  metric: compat_smoke_total
+  targetDatasourceUID: compat-smoke-prometheus
+  trigger:
+    interval: 1m
+  expressions:
+    A:
+      datasourceUID: __expr__
+      model:
+        type: math
+        expression: "1"
+      source: true

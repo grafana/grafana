@@ -29,6 +29,13 @@ export interface Props {
   onClick?(): void;
   /** Callback for the cancel action */
   onCancel?(): void;
+  /** Custom data attributes (for example `data-analytics-id`), rendered on the button that opens the confirmation */
+  [key: `data-${string}`]: string | undefined;
+}
+
+// The `data-*` index signature does not stop other props from arriving through an object spread, so keep only `data-*`.
+function pickDataAttributes(props: Record<string, string | undefined>): Record<`data-${string}`, string | undefined> {
+  return Object.fromEntries(Object.entries(props).filter(([key]) => key.startsWith('data-')));
 }
 
 /**
@@ -47,7 +54,9 @@ export const ConfirmButton = ({
   onClick,
   onConfirm,
   size = 'md',
+  ...restProps
 }: Props) => {
+  const dataAttributes = pickDataAttributes(restProps);
   const mainButtonRef = useRef<HTMLButtonElement>(null);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -108,11 +117,18 @@ export const ConfirmButton = ({
     <div className={styles.container}>
       <span className={buttonClass}>
         {typeof children === 'string' ? (
-          <Button disabled={disabled} size={size} fill="text" onClick={onClickButton} ref={mainButtonRef}>
+          <Button
+            {...dataAttributes}
+            disabled={disabled}
+            size={size}
+            fill="text"
+            onClick={onClickButton}
+            ref={mainButtonRef}
+          >
             {children}
           </Button>
         ) : (
-          React.cloneElement(children, { disabled, onClick: onClickButton, ref: mainButtonRef })
+          React.cloneElement(children, { ...dataAttributes, disabled, onClick: onClickButton, ref: mainButtonRef })
         )}
       </span>
       <div className={confirmButtonContainerClass}>

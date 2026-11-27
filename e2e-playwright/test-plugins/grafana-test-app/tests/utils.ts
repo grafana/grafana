@@ -38,6 +38,9 @@ async function clickAndAssertWrite(page: Page, button: Locator, pluginId: string
 // Drives the disable -> enable round-trip, asserting each write routes through `expected` and the
 // reloaded page reflects the new state (button flip).
 export async function assertEnableDisableRoundtrip(page: Page, pluginId: string, expected: WritePath): Promise<void> {
+  // The details page shows a spinner until grafana.com answers; this fixture isn't published there, so a slow grafana.com would only flake the test.
+  await page.route('**/api/gnet/**', (route) => route.fulfill({ status: 404, json: {} }));
+
   await page.goto(`/plugins/${pluginId}`);
 
   const disableButton = page.getByRole('button', { name: 'Disable', exact: true });

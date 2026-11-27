@@ -6,11 +6,8 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/open-feature/go-sdk/openfeature"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // GetGlobalUserPermissions loads only the requested legacy actions using the
@@ -24,16 +21,7 @@ func (l *Loader) GetGlobalUserPermissions(
 		return nil, errors.New("global permission loading requires org zero")
 	}
 
-	defaultValue := false
-	settings := loadSettings{
-		enforcementEnabled: l.license.FeatureEnabled("accesscontrol.enforcement"),
-		excludeRedundantManagedPermissions: l.openFeatureClient.Boolean(
-			ctx,
-			featuremgmt.FlagExcludeRedundantManagedPermissions,
-			defaultValue,
-			openfeature.TransactionContext(ctx),
-		),
-	}
+	settings := l.settings(ctx)
 
 	query := queryFor(ac.GlobalOrgID, settings)
 	userID, err := internalID(user)
@@ -44,6 +32,21 @@ func (l *Loader) GetGlobalUserPermissions(
 	query.UserID = userID
 	query.Roles = ac.GetOrgRoles(user)
 
+	queries := []ac.GetUserPermissionsQuery{query}
+	if l.cfg.RBAC.PermissionCache && user.HasUniqueId() {
+		basic := basicRoleQueryFor(ac.GlobalOrgID, settings)
+		assigned := cachedAssignmentQueryFor(ac.GlobalOrgID, settings)
+		if basic.ExcludeRedundantManagedPermissions == assigned.ExcludeRedundantManagedPermissions {
+			queries[0].ExcludeRedundantManagedPermissions = basic.ExcludeRedundantManagedPermissions
+		} else {
+			// Cached OSS enumeration filters user grants but retains basic-role
+			// grants. Separate their queries only when their policies differ.
+			basic.Roles = query.Roles
+			assigned.UserID = userID
+			queries = []ac.GetUserPermissionsQuery{basic, assigned}
+		}
+	}
+
 	baseline := []ac.Permission{sharedWithMe()}
 	if !settings.enforcementEnabled {
 		baseline = append(baseline, l.catalog.Permissions(query.Roles...)...)
@@ -52,12 +55,14 @@ func (l *Loader) GetGlobalUserPermissions(
 	permissions := make(map[string][]string, len(actions))
 	for _, action := range actions {
 		matchingActions := append(slices.Clone(l.actions.ResolveAction(action)), action)
-		stored, err := l.store.permissionsForActions(ctx, query, matchingActions)
-		if err != nil {
-			return nil, fmt.Errorf("get permissions for actions: %w", err)
+		grants := slices.Clone(baseline)
+		for _, query := range queries {
+			stored, err := l.store.permissionsForActions(ctx, query, matchingActions)
+			if err != nil {
+				return nil, fmt.Errorf("get permissions for actions: %w", err)
+			}
+			grants = append(grants, l.actions.ExpandActionSets(stored)...)
 		}
-
-		grants := append(l.actions.ExpandActionSets(stored), baseline...)
 		for _, grant := range grants {
 			if grant.Action == action {
 				permissions[action] = append(permissions[action], grant.Scope)

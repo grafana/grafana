@@ -180,7 +180,7 @@ describe('QueryEditorSidebar', () => {
       expect(setSelectedQuery).toHaveBeenCalledWith({ refId: 'B', hide: false });
       expect(mockReportInteraction).toHaveBeenCalledWith(
         'grafana_panel_edit_next_interaction',
-        { action: 'add_query', source: 'new_query', card_source: 'section_header' },
+        { action: 'add_query', source: 'new_query', card_source: 'section_header', editor: 'next' },
         undefined
       );
     });

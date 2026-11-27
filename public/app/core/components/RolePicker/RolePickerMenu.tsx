@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useRef, useState, type JSX } from 'react';
+import { useEffect, useMemo, useRef, useState, type JSX } from 'react';
 
 import { type OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -91,7 +91,6 @@ export const RolePickerMenu = ({
 }: RolePickerMenuProps): JSX.Element => {
   const [selectedOptions, setSelectedOptions] = useState<Role[]>(appliedRoles);
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(basicRole);
-  const [rolesCollection, setRolesCollection] = useState<{ [key: string]: RolesCollectionEntry }>({});
   const subMenuNode = useRef<HTMLDivElement | null>(null);
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
@@ -110,7 +109,7 @@ export const RolePickerMenu = ({
 
   // Evaluate rolesCollection only if options changed, otherwise
   // it triggers unnecessary re-rendering of <RoleMenuGroupsSection /> component
-  useEffect(() => {
+  const rolesCollection = useMemo<{ [key: string]: RolesCollectionEntry }>(() => {
     const customRoles = options.filter(filterCustomRoles).sort(sortRolesByName);
     const fixedRoles = options.filter(filterFixedRoles).sort(sortRolesByName);
     const pluginRoles = options.filter(filterPluginsRoles).sort(sortRolesByName);
@@ -120,7 +119,7 @@ export const RolePickerMenu = ({
       plugin: convertRolesToGroupOptions(pluginRoles).sort((a, b) => roleNameCollator.compare(a.name, b.name)),
     };
 
-    setRolesCollection({
+    return {
       fixed: {
         groupType: GroupType.fixed,
         optionGroup: optionGroups.fixed,
@@ -139,7 +138,7 @@ export const RolePickerMenu = ({
         renderedName: `Plugin roles`,
         roles: pluginRoles,
       },
-    });
+    };
   }, [options]);
 
   const getSelectedGroupOptions = (group: string) => {

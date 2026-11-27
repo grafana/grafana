@@ -36,15 +36,49 @@ Package authors are free to create as many exports as they like but should consi
 
 ## Versioning
 
-We use [Nx Release](https://nx.dev/docs/guides/nx-release) to version packages. The `release` block in `nx.json` lists the packages that are versioned together. `@grafana/plugin-compat` is not in it because it has its own version.
+We use [Nx Release](https://nx.dev/docs/guides/nx-release) to version packages. The `release` block in `nx.json` versions the projects with the `release:grafana` tag together, plus the private plugin workspaces under `public/app/plugins`, which are versioned but never published. `pnpm packages:pack` packs only the projects with the `release:grafana` tag, so a package is published by the Grafana release only if it has that tag. `@grafana/plugin-compat` has the `release:independent` tag instead because it has its own version. The `independent-release` group is its own release group, selected by the `release:independent` tag. Commands that version Grafana packages, such as `pnpm packages:prepare`, pass `--groups=grafana` so they never touch the independent group. Do not run `nx release version` without `--groups`: the specifier would be applied to both groups.
 
-All packages are versioned according to the current Grafana version:
+All packages in the `grafana` group are versioned according to the current Grafana version:
 
 - Grafana v6.3.0-alpha1 -> @grafana/\* packages @ 6.3.0-alpha.1
 - Grafana v6.2.5 -> @grafana/\* packages @ 6.2.5
 - Grafana - main branch version (based on package.json, i.e. 6.4.0-pre) -> @grafana/\* packages @ 6.4.0-pre-<COMMIT-SHA> (see details below about packages publishing channels)
 
 > Please note that the @grafana/api-clients package is considered ALPHA even though it is not released as an alpha version.
+
+### Independent packages
+
+Some packages have their own version instead of following the Grafana version. Today that is `@grafana/plugin-compat`. For these packages, the version bump and the `CHANGELOG.md` entry come from the [conventional commit](https://www.conventionalcommits.org/) titles of the pull requests that change the package. Do not edit the `version` field or `CHANGELOG.md` by hand.
+
+A pull request that changes an independent package must have a title of the form `<type>(<scope>): <description>`, where the scope is optional, for example `feat: Add useDataSourceInstanceList` or `fix(plugin-compat): Handle a missing host API`. The `Check conventional commit pull request title` workflow fails the pull request otherwise. The title becomes the squash-merged commit message that Nx reads, so the description should make sense to consumers.
+
+A breaking change (`feat!: ...`) can have no scope or the scope of the package it changes, such as `plugin-compat` for `@grafana/plugin-compat`. Nx finds the package from the files a pull request changes and drops the breaking marker when the scope is something else, so `feat(datasources)!: ...` would be released as a minor change. The check does not catch this, so stick to those scopes for breaking changes.
+
+Below 1.0 Nx shifts the bump down one level (its [`adjustSemverBumpsForZeroMajorVersion`](https://nx.dev/docs/reference/nx-json) option, on by default), so choose by intent:
+
+| Title        | Use for                         | Released as (example: from 0.10.0) |
+| ------------ | ------------------------------- | ---------------------------------- |
+| `feat!: ...` | A breaking change for consumers | 0.11.0                             |
+| `feat: ...`  | A new feature or export         | 0.10.1                             |
+| `fix: ...`   | A bug fix                       | 0.10.1                             |
+| `chore: ...` | A change that needs no release  | no release                         |
+
+`perf`, `refactor`, `docs`, `build`, `types`, `examples`, `test`, `style`, `ci` and `revert` do not release either. Use `fix` for an internal improvement that consumers should get. Several pull requests in one release combine into the highest bump, and every releasing title becomes a changelog entry.
+
+The `Release NPM independent packages` workflow runs when a change to an independent package lands on `main`. A package is independent when its project has the `release:independent` tag. The workflow has four jobs:
+
+1. `plan` finds the merged version pull request that is still labelled `nx-release:pending` and works out which packages it released, and so which `<name>@<version>` tags are missing.
+2. `tag` creates those tags with the shared `create-release-tag.yml` workflow, one tag at a time. Tags that already exist are skipped.
+3. `release` starts after the tags exist, relabels the version pull request `nx-release:tagged`, and then opens or updates one pull request titled `chore: Release frontend packages`, from the `nx-release-branch--main` branch and labelled `nx-release:pending`, with the new versions and changelog entries. The title is a conventional commit of the `chore` type, so the squash-merged release commit never counts as a change when Nx works out the next version or the changelog. Nx counts the commits since the last tag, which is why the tags come first.
+4. `publish` also starts after the tags exist, and builds, validates and publishes just the tagged packages to npm. It does not wait for the `release` job.
+
+Merging the version pull request releases the packages.
+
+To preview a release, run the workflow from the Actions tab with `dry_run` enabled. To publish again after a failed run, re-run the failed jobs: jobs that succeeded keep their results, and tags that already exist are skipped. If the run can no longer be re-run, for example because the `publish` job failed after the version pull request was relabelled `nx-release:tagged`, add the label `nx-release:pending` to the merged version pull request again and start the workflow by hand: the existing tags are skipped, and the packages are built and published again. Do this only for the most recent release: publishing an older version moves the `latest` dist-tag back to it.
+
+If the `tag` job failed after a version pull request was merged, re-run the failed jobs or start the workflow by hand within 2 to 3 days: after that a new run no longer finds the merged version pull request. Later than that, add the label `nx-release:pending` to the merged version pull request again and start the workflow by hand.
+
+Nx finds the changes since the last release from the `<name>@<version>` git tag of the package, for example `@grafana/plugin-compat@0.10.0`, which the `tag` job creates. Do not delete these tags. If the tag for the version on `main` is missing, the `release` job fails with an error that names the tag and does not open a version pull request. Create the tag on the commit that published that version, for example by running the `Create Release Tag` workflow from the Actions tab with the tag and the commit, and run the workflow again.
 
 ### Stable releases
 
@@ -67,7 +101,7 @@ The `release-npm.yml` workflow publishes packages and is given the version to pu
 > You must be logged in to NPM as part of Grafana NPM org before attempting to publish to the npm registry.
 
 1. Run `pnpm packages:clean` script from the root directory. This will delete any previous builds of the packages.
-2. Run `pnpm packages:prepare <version>` script from the root directory, for example `pnpm packages:prepare 6.3.0-alpha.1`. This writes the version to every package in the release group. The version should be the same as the one being released.
+2. Run `pnpm packages:prepare <version>` script from the root directory, for example `pnpm packages:prepare 6.3.0-alpha.1`. This writes the version to every package in the `grafana` release group. The version should be the same as the one being released.
    - Make sure you use semver convention. So, _place a dot between prerelease id and prerelease number_, i.e. 6.3.0-alpha.1
 3. Run `pnpm packages:build` script that compiles distribution code in `packages/grafana-*/dist`.
 4. Run `pnpm packages:pack` script to compress each package into `npm-artifacts/*.tgz` files. This is required for pnpm to replace properties in the package.json files declared in the `publishConfig` property.

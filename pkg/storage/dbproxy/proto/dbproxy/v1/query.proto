@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package dbproxy.v1;
 
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -11,6 +13,10 @@ service DatabaseProxyService {
   // Sends columns first, followed by messages containing rows and/or warnings.
   // The final gRPC status determines whether the query succeeded.
   rpc Query(QueryRequest) returns (stream QueryResponse);
+  // Executes one write statement; final gRPC OK confirms success.
+  rpc Exec(ExecRequest) returns (ExecResponse);
+  // One stream owns one transaction and processes one command at a time.
+  rpc Transaction(stream TransactionRequest) returns (stream TransactionResponse);
 }
 
 message QueryRequest {
@@ -31,6 +37,78 @@ message QueryResponse {
   // Subsequent responses contain rows and/or warnings, with no columns.
   repeated Row rows = 2;
   repeated Warning warnings = 3;
+}
+
+message ExecRequest {
+  // Stack namespace used for authorization and settings lookups, e.g. stacks-123.
+  string namespace = 1;
+  // Stable caller-defined name for query attribution.
+  string query_name = 2;
+  // One write statement with unqualified database table names and ? placeholders.
+  string sql = 3;
+  // Values in placeholder order.
+  repeated Value parameters = 4;
+}
+
+message ExecResponse {
+  // UPDATE counts matched rows, including matches with unchanged values.
+  int64 rows_affected = 1;
+  // Generated insert ID, or zero when none is reported.
+  int64 last_insert_id = 2;
+}
+
+message TransactionRequest {
+  // Time budget for this command, allowing a shorter deadline than the transaction.
+  // Must be positive when set; capped by the remaining transaction lifetime.
+  google.protobuf.Duration timeout = 1;
+  // Fields of type google.protobuf.Empty select actions without arguments.
+  oneof command {
+    // Start the transaction; send this as the first command.
+    BeginRequest begin = 2;
+    // Run one read statement and receive schema and row batches.
+    Statement query = 3;
+    // Run one write or savepoint statement.
+    Statement exec = 4;
+    google.protobuf.Empty commit = 5;
+    google.protobuf.Empty rollback = 6;
+  }
+}
+
+message BeginRequest {
+  // Stack namespace used for authorization and settings lookups, e.g. stacks-123.
+  string namespace = 1;
+  // Request a read-only transaction.
+  bool read_only = 2;
+}
+
+message Statement {
+  // Stable caller-defined name for query attribution.
+  string query_name = 1;
+  // One statement with unqualified database table names and ? placeholders.
+  string sql = 2;
+  // Values in placeholder order.
+  repeated Value parameters = 3;
+}
+
+message TransactionResponse {
+  oneof result {
+    // Completes Begin, Query after all data, Commit, or Rollback according to the pending command.
+    google.protobuf.Empty ok = 1;
+    // Schema and row batches for the current query.
+    QueryResponse query = 2;
+    // Completes the current exec command.
+    ExecResponse exec = 3;
+    // Completes a failed command while the transaction remains usable.
+    TransactionCommandError error = 4;
+  }
+}
+
+// Only recoverable SQL errors use this in-stream result; fatal failures end the RPC.
+message TransactionCommandError {
+  // Safe error message for the caller.
+  string message = 1;
+  // Database code and SQLSTATE when available.
+  DatabaseError database_error = 2;
 }
 
 message Column {
@@ -118,4 +196,6 @@ enum ErrorReason {
   ERROR_REASON_DEADLINE_EXCEEDED = 11;
   ERROR_REASON_CANCELLED = 12;
   ERROR_REASON_INTERNAL = 13;
+  // A standalone write or transaction commit may have committed without confirmation.
+  ERROR_REASON_OUTCOME_UNKNOWN = 14;
 }

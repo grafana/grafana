@@ -26,6 +26,7 @@ import {
 } from './EditActions';
 import { useEditActionsLayout } from './EditActionsLayoutContext';
 import { EditActionsPopover, useHoverPopoverSupported } from './EditActionsPopover';
+import { PanelActionsWithQuickEdits, useOffersQuickEdits } from './PanelQuickEditActions';
 
 export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; children: JSX.Element }) {
   const theme = useTheme2();
@@ -59,27 +60,33 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
 export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
   const styles = useStyles2(getActionStyles);
   const isRepeated = isRepeatCloneOrChildOf(panel);
+  const offersQuickEdits = useOffersQuickEdits(panel);
 
   const onClickEdit = () => {
-    DashboardInteractions.panelActionClicked('settings', getPanelIdForVizPanel(panel), 'edit_popover');
+    DashboardInteractions.panelActionClicked(
+      'settings',
+      getPanelIdForVizPanel(panel),
+      'edit_popover',
+      panel.state.pluginId
+    );
     getDashboardSceneLike(panel).state.sidebar.openElementSettings(panel);
   };
 
   const onClickEditVisualization = () => {
     const panelId = getPanelIdForVizPanel(panel);
-    DashboardInteractions.panelActionClicked('configure', panelId, 'edit_popover');
+    DashboardInteractions.panelActionClicked('configure', panelId, 'edit_popover', panel.state.pluginId);
     locationService.partial({ editPanel: panelId });
   };
 
   const onClickCopy = () => {
     const panelId = getPanelIdForVizPanel(panel);
-    DashboardInteractions.panelActionClicked('copy', panelId, 'edit_popover');
+    DashboardInteractions.panelActionClicked('copy', panelId, 'edit_popover', panel.state.pluginId);
     getDashboardSceneLike(panel).copyPanel(panel);
   };
 
   const onClickDuplicate = () => {
     const panelId = getPanelIdForVizPanel(panel);
-    DashboardInteractions.panelActionClicked('duplicate', panelId, 'edit_popover');
+    DashboardInteractions.panelActionClicked('duplicate', panelId, 'edit_popover', panel.state.pluginId);
     duplicatePanel(panel);
   };
 
@@ -89,7 +96,7 @@ export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
     DashboardInteractions.trackDeleteDashboardElement('panel', 'edit_popover');
   };
 
-  return (
+  const actions = (
     <>
       <EditActionButton
         onClick={onClickEditVisualization}
@@ -132,6 +139,11 @@ export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
       />
     </>
   );
+
+  if (!offersQuickEdits) {
+    return actions;
+  }
+  return <PanelActionsWithQuickEdits panel={panel}>{actions}</PanelActionsWithQuickEdits>;
 }
 
 export function PanelEditActionsBulk({ panel }: { panel: VizPanel }) {

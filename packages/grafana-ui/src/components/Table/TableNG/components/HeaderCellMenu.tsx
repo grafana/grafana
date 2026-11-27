@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 import { Fragment, type RefObject, useCallback } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -55,7 +55,7 @@ export function HeaderCellMenu({
 
   const overlay = useCallback(
     () => (
-      <Menu ariaLabel={menuLabel}>
+      <Menu size="sm" ariaLabel={menuLabel}>
         {groups.map((group, index) => (
           <Fragment key={group[0]}>
             {index > 0 && <Menu.Divider />}

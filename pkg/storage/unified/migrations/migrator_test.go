@@ -374,7 +374,7 @@ var migrationIDsToDefault = map[string]bool{
 	foldersAndDashboardsID: true, // Auto-migrated when resource count is below threshold
 	shorturlsID:            true,
 	datasourceID:           false,
-	starsID:                false,
+	starsID:                true,
 	preferencesID:          true,
 	snapshotsID:            false,
 	librarypanelsID:        false,

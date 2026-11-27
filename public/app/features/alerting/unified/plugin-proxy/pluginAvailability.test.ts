@@ -7,6 +7,8 @@ import * as pluginBridgeProbe from '../hooks/pluginBridgeProbe';
 
 import { isPrometheusAlertingPluginEnabled } from './pluginAvailability';
 
+jest.mock('../hooks/pluginBridgeProbe', () => makeSpyable('../hooks/pluginBridgeProbe'));
+
 const logError = jest.fn();
 
 beforeEach(() => {

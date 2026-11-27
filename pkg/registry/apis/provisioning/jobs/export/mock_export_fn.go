@@ -26,17 +26,17 @@ func (_m *MockExportFn) EXPECT() *MockExportFn_Expecter {
 	return &MockExportFn_Expecter{mock: &_m.Mock}
 }
 
-// Execute provides a mock function with given fields: ctx, repoName, options, clients, repositoryResources, progress
-func (_m *MockExportFn) Execute(ctx context.Context, repoName string, options v0alpha1.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
-	ret := _m.Called(ctx, repoName, options, clients, repositoryResources, progress)
+// Execute provides a mock function with given fields: ctx, options, clients, repositoryResources, progress
+func (_m *MockExportFn) Execute(ctx context.Context, options v0alpha1.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
+	ret := _m.Called(ctx, options, clients, repositoryResources, progress)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Execute")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, v0alpha1.ExportJobOptions, resources.ResourceClients, resources.RepositoryResources, jobs.JobProgressRecorder) error); ok {
-		r0 = rf(ctx, repoName, options, clients, repositoryResources, progress)
+	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ExportJobOptions, resources.ResourceClients, resources.RepositoryResources, jobs.JobProgressRecorder) error); ok {
+		r0 = rf(ctx, options, clients, repositoryResources, progress)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -51,18 +51,17 @@ type MockExportFn_Execute_Call struct {
 
 // Execute is a helper method to define mock.On call
 //   - ctx context.Context
-//   - repoName string
 //   - options v0alpha1.ExportJobOptions
 //   - clients resources.ResourceClients
 //   - repositoryResources resources.RepositoryResources
 //   - progress jobs.JobProgressRecorder
-func (_e *MockExportFn_Expecter) Execute(ctx interface{}, repoName interface{}, options interface{}, clients interface{}, repositoryResources interface{}, progress interface{}) *MockExportFn_Execute_Call {
-	return &MockExportFn_Execute_Call{Call: _e.mock.On("Execute", ctx, repoName, options, clients, repositoryResources, progress)}
+func (_e *MockExportFn_Expecter) Execute(ctx interface{}, options interface{}, clients interface{}, repositoryResources interface{}, progress interface{}) *MockExportFn_Execute_Call {
+	return &MockExportFn_Execute_Call{Call: _e.mock.On("Execute", ctx, options, clients, repositoryResources, progress)}
 }
 
-func (_c *MockExportFn_Execute_Call) Run(run func(ctx context.Context, repoName string, options v0alpha1.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder)) *MockExportFn_Execute_Call {
+func (_c *MockExportFn_Execute_Call) Run(run func(ctx context.Context, options v0alpha1.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder)) *MockExportFn_Execute_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(v0alpha1.ExportJobOptions), args[3].(resources.ResourceClients), args[4].(resources.RepositoryResources), args[5].(jobs.JobProgressRecorder))
+		run(args[0].(context.Context), args[1].(v0alpha1.ExportJobOptions), args[2].(resources.ResourceClients), args[3].(resources.RepositoryResources), args[4].(jobs.JobProgressRecorder))
 	})
 	return _c
 }
@@ -72,7 +71,7 @@ func (_c *MockExportFn_Execute_Call) Return(_a0 error) *MockExportFn_Execute_Cal
 	return _c
 }
 
-func (_c *MockExportFn_Execute_Call) RunAndReturn(run func(context.Context, string, v0alpha1.ExportJobOptions, resources.ResourceClients, resources.RepositoryResources, jobs.JobProgressRecorder, string) error) *MockExportFn_Execute_Call {
+func (_c *MockExportFn_Execute_Call) RunAndReturn(run func(context.Context, v0alpha1.ExportJobOptions, resources.ResourceClients, resources.RepositoryResources, jobs.JobProgressRecorder) error) *MockExportFn_Execute_Call {
 	_c.Call.Return(run)
 	return _c
 }

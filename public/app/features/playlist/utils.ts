@@ -8,6 +8,8 @@ import { type SearchQuery } from '../search/service/types';
 
 import { type PlaylistItemUI } from './types';
 
+export const PLAYLISTS_URL = '/playlists';
+
 export function useCanWritePlaylists(): boolean {
   const enabled = useFlagPlaylistsRBAC();
   return enabled ? contextSrv.hasPermission(AccessControlAction.PlaylistsWrite) : contextSrv.isEditor;

@@ -90,7 +90,7 @@ const EMPTY_LAYOUT: Layout = {
  *
  * The layer itself takes no pointer events: outlines, the hover outline, the region draft and the hint are
  * drawn on it, so pointer moves and the wheel reach the document underneath (tooltips, crosshairs and hover
- * states keep working). Presses, clicks and drags on the document body are Composer's instead: taken on the
+ * states keep working). While a pick is pending, presses, clicks and drags on the document body are Composer's: taken on the
  * window in the capture phase before anything underneath sees them, so panel drag, graph drag-to-zoom,
  * menus and links never start. With Select on, a click picks the element under it and a press that moves
  * 8px draws a region, or selects the elements it covers when the pick asks for that; with Screenshot, a drag
@@ -111,7 +111,7 @@ export function ComposerOverlay({
 }) {
   const styles = useStyles2(getStyles);
   const overlayState = useSyncExternalStore(session.subscribe, session.getOverlayState);
-  const { picking, pickMode, paused, capturing, annotations, tool, drag } = overlayState;
+  const { picking, pickMode, paused, capturing, working, annotations, tool, drag } = overlayState;
   /** A Select drag picks the elements it covers instead of drawing a region. */
   const dragSelectsElements = tool === 'select' && drag === 'elements';
   const rootRef = useRef<HTMLDivElement>(null);
@@ -313,8 +313,9 @@ export function ComposerOverlay({
       cancelDrag();
       return;
     }
-    // Escape cancels a drag, else leaves Composer, before any other Escape handler (exit edit, close view
-    // panel) sees it, except inside an annotation anchor: that Escape belongs to the plugin's editor.
+    // Escape cancels a drag and otherwise does nothing: a stray key press must not end the session. It is
+    // still swallowed before any other Escape handler (exit edit, close view panel) sees it, except inside an
+    // annotation anchor: that Escape belongs to the plugin's editor.
     const onKeyDown = (event: KeyboardEvent) => {
       const fromAnchor = event.target instanceof Node && anchorHostRef.current?.contains(event.target);
       if (event.key !== 'Escape' || fromAnchor) {
@@ -322,11 +323,7 @@ export function ComposerOverlay({
       }
       event.preventDefault();
       event.stopPropagation();
-      if (dragStartRef.current) {
-        cancelDrag();
-      } else {
-        session.exit();
-      }
+      cancelDrag();
     };
     window.addEventListener('keydown', onKeyDown, true);
     window.addEventListener('blur', cancelDrag);
@@ -336,7 +333,7 @@ export function ComposerOverlay({
       window.removeEventListener('blur', cancelDrag);
       window.removeEventListener('scroll', cancelDrag, { capture: true });
     };
-  }, [picking, session, cancelDrag]);
+  }, [picking, cancelDrag]);
 
   /**
    * The rectangle between the press and the pointer, in viewport coordinates, clamped to the overlay (the
@@ -436,7 +433,8 @@ export function ComposerOverlay({
     [dragSelectsElements, session, dragRefOf]
   );
 
-  const hintAllowed = pickMode === 'element' && !paused && !capturing;
+  // No hint while Assistant edits: a send from the keyboard moves no pointer, and the edit's scroll would bring it back.
+  const hintAllowed = pickMode === 'element' && !paused && !capturing && !working;
 
   const hideHint = useCallback(() => {
     cancelAnimationFrame(hintFrameRef.current);
@@ -654,6 +652,11 @@ export function ComposerOverlay({
   // Presses, clicks and drags on the document body are Composer's; pointer moves and the wheel pass through.
   // On the window in the capture phase, so nothing underneath sees a press it would start a drag from.
   useEffect(() => {
+    // With no pick pending (the plugin's Pointer tool) the body works as it does outside Composer: drag and drop,
+    // menus and links. A paused or capturing overlay still holds it, so a turn or a screenshot is not disturbed.
+    if (!picking && !paused && !capturing) {
+      return undefined;
+    }
     /** A tab header keeps switching tabs, except while a capture renders the current one. */
     const isUsableTab = (target: Element) => !capturing && Boolean(target.closest(TAB_SELECTOR));
     /**
@@ -948,6 +951,7 @@ export function ComposerOverlay({
     drag,
     paused,
     capturing,
+    working,
     session,
     isOnDocumentBody,
     isOverControls,

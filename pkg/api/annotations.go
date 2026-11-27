@@ -74,7 +74,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 
 	items, err := hs.annotationsRepo.Find(c.Req.Context(), query)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to get annotations", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to get annotations", err)
 	}
 
 	for _, item := range items {
@@ -135,7 +135,7 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 
 	if canSave, err := hs.canCreateAnnotation(c, cmd.DashboardUID); err != nil || !canSave {
 		if err != nil {
-			return response.Error(http.StatusInternalServerError, "Error while checking annotation permissions", err)
+			return response.ErrOrFallback(http.StatusInternalServerError, "Error while checking annotation permissions", err)
 		} else {
 			return response.Error(http.StatusForbidden, "Access denied to save the annotation", nil)
 		}
@@ -400,7 +400,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *contextmodel.ReqContext) response
 	canSave, err := hs.canMassDeleteAnnotations(c, dashboardUID)
 	if err != nil || !canSave {
 		if err != nil {
-			return response.Error(http.StatusInternalServerError, "Error while checking annotation permissions", err)
+			return response.ErrOrFallback(http.StatusInternalServerError, "Error while checking annotation permissions", err)
 		} else {
 			return response.Error(http.StatusForbidden, "Access denied to mass delete annotations", nil)
 		}
@@ -409,7 +409,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *contextmodel.ReqContext) response
 	err = hs.annotationsRepo.Delete(c.Req.Context(), deleteParams)
 
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to delete annotations", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to delete annotations", err)
 	}
 
 	return response.Success("Annotations deleted")
@@ -463,7 +463,7 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *contextmodel.ReqContext) response.
 		ID:    annotationID,
 	})
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to delete annotation", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to delete annotation", err)
 	}
 
 	return response.Success("Annotation deleted")
@@ -478,7 +478,7 @@ func findAnnotationByID(ctx context.Context, repo annotations.Repository, annota
 	items, err := repo.Find(ctx, query)
 
 	if err != nil {
-		return nil, response.Error(http.StatusInternalServerError, "Failed to find annotation", err)
+		return nil, response.ErrOrFallback(http.StatusInternalServerError, "Failed to find annotation", err)
 	}
 
 	if len(items) == 0 {
@@ -512,7 +512,7 @@ func (hs *HTTPServer) GetAnnotationTags(c *contextmodel.ReqContext) response.Res
 
 	result, err := hs.annotationsRepo.FindTags(c.Req.Context(), query)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to find annotation tags", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to find annotation tags", err)
 	}
 
 	return response.JSON(http.StatusOK, annotations.GetAnnotationTagsResponse{Result: result})

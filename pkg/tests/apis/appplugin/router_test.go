@@ -122,7 +122,7 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(strings.ReplaceAll(`{"plugins":[{"host":"PLUGIN_HOST","definition":{
    "jsonData":{"id":"router-test-app","type":"app"},
-   "manifest":{
+   "manifests":[{
     "appName":"router-test-app","group":"router-test.ext.grafana.app","preferredVersion":"v1",
     "versions":[{"name":"v1","served":true,
      "openapi":{"paths":{
@@ -139,7 +139,7 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
      {"kind":"Gadget","plural":"gadgets","resource":"gadgets","scope":"Cluster",
       "schemas":{"Gadget":{"type":"object","properties":{"spec":{"type":"object","properties":{"value":{"type":"string"}}}}}}}
     ]}]
-   }
+   }]
   }}]}`, "PLUGIN_HOST", listener.Addr().String())))
 	})
 	mux.HandleFunc("GET /jwks", func(w http.ResponseWriter, r *http.Request) {

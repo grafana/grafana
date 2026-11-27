@@ -53,23 +53,23 @@ function renderBanner({ canEdit }: { canEdit: boolean }) {
 }
 
 describe('DashboardLifecycleBanner', () => {
-  it('explains that applying needs permission to save, for a requester who can edit but not save', async () => {
+  it('explains that saving needs permission to save, for a requester who can edit but not save', async () => {
     const { user } = renderBanner({ canEdit: false });
 
-    const apply = await screen.findByRole('button', { name: 'Apply' });
-    expect(apply).toBeDisabled();
+    const save = await screen.findByRole('button', { name: 'Save' });
+    expect(save).toBeDisabled();
 
-    await user.hover(apply);
+    await user.hover(save);
     expect(
       await screen.findByText(
-        'You don’t have permission to save “Random Data Demo”, so you can preview these changes but not apply them. Ask an admin for permission to save it.'
+        'You don’t have permission to save “Random Data Demo”, so you can preview these changes but not save them. Ask an admin for permission to save it.'
       )
     ).toBeInTheDocument();
   });
 
-  it('lets a requester who can save apply the changes', async () => {
+  it('lets a requester who can save save the changes', async () => {
     renderBanner({ canEdit: true });
 
-    expect(await screen.findByRole('button', { name: 'Apply' })).toBeEnabled();
+    expect(await screen.findByRole('button', { name: 'Save' })).toBeEnabled();
   });
 });

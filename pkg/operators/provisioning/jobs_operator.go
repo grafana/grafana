@@ -3,32 +3,37 @@ package provisioning
 import (
 	"context"
 	"fmt"
-	"log/slog"
-	"os"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/pkg/operators/runner"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
-func RunJobController(ctx context.Context, deps server.OperatorDependencies) error {
-	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})).With("logger", "provisioning-job-controller")
-	logger.Info("Starting provisioning job controller")
+var JobsOperator = runner.Operator{
+	Name:        "provisioning-jobs",
+	Description: "Manage provisioning job and history cleanup",
+	Logger:      "provisioning-job-controller",
+	Defaults:    operatorDefaults,
+	NoNATS:      true,
+	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
+		r, err := newJobsRunner(rt)
+		if err != nil {
+			return nil, err
+		}
+		return &runner.Parts{
+			Run: func(ctx context.Context, ready func()) error {
+				return runJobController(ctx, rt.Logger, r, ready)
+			},
+			ShutdownTimeout: 30 * time.Second,
+		}, nil
+	},
+}
 
-	controllerCfg, err := setupJobsControllerFromConfig(deps.Config, deps.Registerer)
-	if err != nil {
-		return fmt.Errorf("failed to setup operator: %w", err)
-	}
-
-	provisioningClient, err := controllerCfg.ProvisioningClient()
+func runJobController(ctx context.Context, logger logging.Logger, r *jobsRunner, ready func()) error {
+	provisioningClient, err := r.ProvisioningClient()
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
@@ -41,18 +46,14 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 	// runs regardless. The source choice reads the NATS config flag directly, not a
 	// subscriber: this operator has no NATS consumer role and holds no subscriber.
 	var historySource informer.DeltaSource
-	if controllerCfg.historyExpiration > 0 {
-		historyJobController := controller.NewHistoryJobController(
-			provisioningClient.ProvisioningV0alpha1(),
-			controllerCfg.historyExpiration,
-		)
-		historySource = informer.NewHistoricJobDeltaSource(controllerCfg.Settings.NATS.Enabled, provisioningClient, controllerCfg.historyExpiration)
-		if _, err := historySource.AddEventHandler(historyJobController.EventHandler()); err != nil {
-			return fmt.Errorf("add history job event handler: %w", err)
+	if r.historyExpiration > 0 {
+		historySource, err = controller.ProvideHistoryJobCleanup(ctx, r.Cfg.NATS.Enabled, provisioningClient, r.historyExpiration)
+		if err != nil {
+			return err
 		}
-		logger.Info("history cleanup enabled", "expiration", controllerCfg.historyExpiration.String())
+		logger.Info("history cleanup enabled", "expiration", r.historyExpiration.String())
 	} else {
-		logger.Info("history cleanup disabled", "history_expiration", controllerCfg.historyExpiration.String())
+		logger.Info("history cleanup disabled", "history_expiration", r.historyExpiration.String())
 	}
 	// HistoryWriter can be either Loki or the API server
 	// TODO: Loki configuration and setup in the same way we do for the API server
@@ -65,24 +66,10 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 	// }
 
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
-	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobClaimExpiry, deps.Registerer)
+	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobs.ClaimExpiry, r.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
-
-	var wg sync.WaitGroup
-
-	wg.Go(func() {
-		jobCleanupController := jobs.NewJobCleanupController(
-			jobStore,
-			jobHistoryWriter,
-			controllerCfg.cleanupInterval,
-		)
-		if err := jobCleanupController.Run(ctx); err != nil {
-			logger.Error("job cleanup controller failed", "error", err)
-		}
-		logger.Info("job cleanup controller stopped")
-	})
 
 	// Start the historic-job source when history cleanup is enabled; cleanup runs
 	// off its re-lists.
@@ -90,47 +77,33 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 		go historySource.Run(ctx.Done())
 	}
 
-	logger.Info("jobs operator is ready")
-	deps.HealthNotifier.SetReady()
-
-	<-ctx.Done()
-	deps.HealthNotifier.SetNotReady()
-	logger.Info("shutdown signal received, waiting for goroutines to finish")
-
-	shutdownTimeout := 30 * time.Second
-	done := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-		logger.Info("jobs operator shutdown complete")
-	case <-time.After(shutdownTimeout):
-		logger.Warn("shutdown timeout exceeded, forcing exit", "timeout", shutdownTimeout)
+	ready()
+	if err := jobs.NewJobCleanupController(jobStore, jobHistoryWriter, r.cleanupInterval).Run(ctx); err != nil {
+		logger.Error("job cleanup controller failed", "error", err)
 	}
-
+	logger.Info("job cleanup controller stopped")
+	// A failed cleanup pass must not take down history cleanup, so keep serving until shutdown.
+	<-ctx.Done()
 	return nil
 }
 
-type jobsControllerConfig struct {
-	ControllerConfig
+type jobsRunner struct {
+	*ProvisioningRunner
 	historyExpiration time.Duration
 	cleanupInterval   time.Duration
 }
 
-func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*jobsControllerConfig, error) {
-	controllerCfg, err := setupFromConfig(cfg, registry)
+func newJobsRunner(rt *runner.Runtime) (*jobsRunner, error) {
+	r, err := newProvisioningRunner(rt)
 	if err != nil {
 		return nil, err
 	}
 
-	operatorSec := cfg.SectionWithEnvOverrides("operator")
+	operatorSec := rt.Cfg.SectionWithEnvOverrides("operator")
 
-	return &jobsControllerConfig{
-		ControllerConfig:  *controllerCfg,
-		historyExpiration: operatorSec.Key("history_expiration").MustDuration(0),
-		cleanupInterval:   operatorSec.Key("cleanup_interval").MustDuration(time.Minute),
+	return &jobsRunner{
+		ProvisioningRunner: r,
+		historyExpiration:  operatorSec.Key("history_expiration").MustDuration(0),
+		cleanupInterval:    operatorSec.Key("cleanup_interval").MustDuration(time.Minute),
 	}, nil
 }

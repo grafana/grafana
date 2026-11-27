@@ -16,7 +16,8 @@ describe('IAM endpoint routing', () => {
     jest.mocked(getBackendSrv).mockReturnValue({ ...getBackendSrv(), fetch });
     const store = configureStore({
       reducer: { [generatedAPI.reducerPath]: generatedAPI.reducer },
-      middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(generatedAPI.middleware),
+      middleware: (getDefaultMiddleware) =>
+        getDefaultMiddleware({ serializableCheck: false, immutableCheck: false }).concat(generatedAPI.middleware),
     });
 
     try {

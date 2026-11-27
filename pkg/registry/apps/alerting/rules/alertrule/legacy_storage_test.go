@@ -23,14 +23,16 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	ngalertac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
-	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	migrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 )
@@ -88,36 +90,6 @@ func TestDeleteCollection_afterMigrationRoutesToUnifiedStorage(t *testing.T) {
 	require.Len(t, ruleStore.Rules[1], 1)
 }
 
-func TestToAPIError(t *testing.T) {
-	t.Run("validation failure becomes BadRequest", func(t *testing.T) {
-		err := toAPIError("my-rule", fmt.Errorf("%w: missing annotations.summary", ngmodels.ErrAlertRuleFailedValidation))
-		var statusErr *apierrors.StatusError
-		require.ErrorAs(t, err, &statusErr)
-		require.Equal(t, int32(400), statusErr.Status().Code)
-	})
-
-	t.Run("quota reached becomes Forbidden, naming the rule", func(t *testing.T) {
-		err := toAPIError("my-rule", ngmodels.ErrQuotaReached)
-		var statusErr *apierrors.StatusError
-		require.ErrorAs(t, err, &statusErr)
-		require.Equal(t, int32(403), statusErr.Status().Code)
-		require.Equal(t, "my-rule", statusErr.Status().Details.Name)
-	})
-
-	t.Run("not found stays NotFound, naming the rule", func(t *testing.T) {
-		err := toAPIError("my-rule", ngmodels.ErrAlertRuleNotFound)
-		var statusErr *apierrors.StatusError
-		require.ErrorAs(t, err, &statusErr)
-		require.Equal(t, int32(404), statusErr.Status().Code)
-		require.Equal(t, "my-rule", statusErr.Status().Details.Name)
-	})
-
-	t.Run("unrecognized error passes through unchanged", func(t *testing.T) {
-		original := fmt.Errorf("boom")
-		require.Same(t, original, toAPIError("my-rule", original))
-	})
-}
-
 // failingRuleValidator always rejects, standing in for the real quality-policy gate
 // without needing enterprise code in an OSS test.
 type failingRuleValidator struct{}
@@ -139,7 +111,7 @@ func (fakeRuleAccessControl) AuthorizeAccessToRuleGroup(context.Context, identit
 func (fakeRuleAccessControl) AuthorizeAccessInFolder(context.Context, identity.Requester, ngmodels.Namespaced) error {
 	return nil
 }
-func (fakeRuleAccessControl) AuthorizeRuleChanges(context.Context, identity.Requester, *rulestore.GroupDelta) error {
+func (fakeRuleAccessControl) AuthorizeRuleChanges(context.Context, identity.Requester, *ngrulesvc.GroupDelta) error {
 	return nil
 }
 func (fakeRuleAccessControl) AuthorizeNotificationSettings(context.Context, identity.Requester, []ngalertac.ReceiverRef) error {
@@ -171,11 +143,12 @@ func newTestLegacyStorageWithStores(t *testing.T, validator legacy.RuleMutationV
 	folderService := foldertest.NewFakeService()
 	folderService.ExpectedFolder = &folder.Folder{UID: "test-folder-uid", Title: "Test Folder"}
 
-	svc := legacy.NewLegacyRuleService(
+	svc := legacy.New(
 		ruleStore, provenanceStore, folderService, &quotas, ruleStore,
 		60, log.NewNopLogger(), nil, fakeRuleAccessControl{}, validator,
+		request.GetNamespaceMapper(&setting.Cfg{}),
 	)
-	return &legacyStorage{service: *svc, namespacer: nsMapperForTest()}, ruleStore, provenanceStore
+	return &legacyStorage{rules: svc.AlertRules()}, ruleStore, provenanceStore
 }
 
 // TestCreate_QualityPolicyRejection exercises Create end-to-end, asserting the status
@@ -311,12 +284,13 @@ func TestDeleteCollection(t *testing.T) {
 		require.Len(t, ruleStore.Rules[1], 3)
 	})
 
-	t.Run("rejects dry-run requests without deleting", func(t *testing.T) {
+	t.Run("dry-run returns the matching rules without deleting", func(t *testing.T) {
 		s, ruleStore := setup(t)
 
-		_, err := s.DeleteCollection(deleteCollectionTestContext(), nil, &metav1.DeleteOptions{DryRun: []string{metav1.DryRunAll}}, &internalversion.ListOptions{})
+		out, err := s.DeleteCollection(deleteCollectionTestContext(), nil, &metav1.DeleteOptions{DryRun: []string{metav1.DryRunAll}}, &internalversion.ListOptions{})
 
-		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
+		require.NoError(t, err)
+		require.Len(t, out.(*v1beta1.AlertRuleList).Items, 3)
 		require.Len(t, ruleStore.Rules[1], 3)
 	})
 

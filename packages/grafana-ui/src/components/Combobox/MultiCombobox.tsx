@@ -1,10 +1,12 @@
 import { cx } from '@emotion/css';
+import { useMergeRefs } from '@floating-ui/react';
 import { useCombobox, useMultipleSelection } from 'downshift';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { pickDataAttributes } from '../../utils/dataAttributes';
 import { useFieldContext } from '../Forms/FieldContext';
 import { Icon } from '../Icon/Icon';
 import { Portal } from '../Portal/Portal';
@@ -18,6 +20,7 @@ import { ValuePill } from './ValuePill';
 import { itemToString } from './filter';
 import { getComboboxStyles } from './getComboboxStyles';
 import { getMultiComboboxStyles } from './getMultiComboboxStyles';
+import { blockStaleOptions, useHighlightFreshOptions } from './staleOptions';
 import { ALL_OPTION_VALUE, type ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { MAX_SHOWN_ITEMS, useMeasureMulti } from './useMeasureMulti';
@@ -61,10 +64,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     prefixIcon,
     id: idProp,
     options: optionsProp,
+    ...restProps
   } = props;
+  const dataAttributes = pickDataAttributes(restProps);
 
   const styles = useStyles2(getComboboxStyles);
   const [inputValue, setInputValue] = useState('');
+  const typedSinceOpenRef = useRef(false);
   const [showFocusRing, setShowFocusRing] = useState(false);
 
   const fieldContext = useFieldContext();
@@ -80,6 +86,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     updateOptions,
     asyncLoading,
     asyncError,
+    asyncOptionsStale,
+    isOptionStale,
   } = useOptions(optionsProp, createCustomValue, customValueDescription);
   const loading = loadingProp || fieldContext.loading || asyncLoading;
 
@@ -118,10 +126,11 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     return addAllOption ? [allOptionItem, ...baseOptions] : baseOptions;
   }, [baseOptions, enableAllOption, allOptionItem]);
 
-  const { measureRef, counterMeasureRef, suffixMeasureRef, shownItems } = useMeasureMulti(
+  const { containerMeasureRef, measureRef, counterMeasureRef, suffixMeasureRef, shownItems } = useMeasureMulti(
     selectedItems,
     width,
-    disabled
+    disabled,
+    maxWidth
   );
 
   const isOptionSelected = useCallback(
@@ -138,6 +147,9 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   const { getSelectedItemProps, getDropdownProps, setSelectedItems, addSelectedItem, removeSelectedItem, reset } =
     useMultipleSelection({
       selectedItems, // initially selected items,
+      // Starting at -1 would let downshift's focus effect focus this input whenever the effect re-runs
+      // (StrictMode does this for a component that moved), so start at the value the stateReducer forces
+      initialActiveIndex: -999,
       onStateChange: ({ type, selectedItems: newSelectedItems }) => {
         switch (type) {
           case useMultipleSelection.stateChangeTypes.SelectedItemKeyDownBackspace:
@@ -181,18 +193,29 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       },
     });
 
-  const { isOpen, highlightedIndex, getMenuProps, getInputProps, getItemProps, getToggleButtonProps } = useCombobox({
+  const {
+    isOpen,
+    highlightedIndex,
+    getMenuProps,
+    getInputProps,
+    getItemProps,
+    getToggleButtonProps,
+    setHighlightedIndex,
+  } = useCombobox({
     items: options,
     itemToString,
     inputId: id,
     inputValue,
     selectedItem: null,
     defaultHighlightedIndex: 0,
-    isItemDisabled: (item) => !!item?.infoOption,
+    isItemDisabled: (item) => !!item?.infoOption || isOptionStale(item),
     scrollIntoView: () => {},
     stateReducer: (state, actionAndChanges) => {
       const { type } = actionAndChanges;
-      let { changes } = actionAndChanges;
+      let changes = blockStaleOptions(state, actionAndChanges, options, asyncOptionsStale, isOptionStale);
+      if (changes === state) {
+        return changes;
+      }
       const menuBeingOpened = state.isOpen === false && changes.isOpen === true;
 
       // Reset the input value when the menu is opened. If the menu is opened due to an input change
@@ -221,6 +244,9 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     },
 
     onIsOpenChange: ({ isOpen, inputValue }) => {
+      if (isOpen) {
+        typedSinceOpenRef.current = false;
+      }
       if (isOpen && inputValue === '') {
         updateOptions(inputValue);
       }
@@ -267,6 +293,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
           break;
         case useCombobox.stateChangeTypes.InputChange:
+          typedSinceOpenRef.current = true;
           // setInputValue is intentionally NOT called here. It is called synchronously in the
           // input's onChange handler instead, so that it is batched with downshift's dispatch
           // in a single React render.
@@ -278,7 +305,18 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     },
   });
 
+  useHighlightFreshOptions({
+    stale: asyncOptionsStale,
+    isOpen,
+    hasTyped: () => typedSinceOpenRef.current,
+    highlightedIndex,
+    options,
+    isOptionStale,
+    setHighlightedIndex,
+  });
+
   const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(options, isOpen);
+  const mergedContainerRef = useMergeRefs([containerRef, containerMeasureRef]);
   const multiStyles = useStyles2(
     getMultiComboboxStyles,
     isOpen,
@@ -295,7 +333,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   const { inputRef, inputWidth } = useMultiInputAutoSize(inputValue);
   return (
-    <div className={multiStyles.container} ref={containerRef}>
+    <div className={multiStyles.container} ref={mergedContainerRef}>
       <div className={cx(multiStyles.wrapper, { [multiStyles.disabled]: disabled })} ref={measureRef}>
         {prefixIcon && (
           <div className={multiStyles.prefixIcon}>
@@ -335,6 +373,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           <input
             className={multiStyles.input}
             {...getInputProps({
+              ...dataAttributes,
               ...getDropdownProps({
                 disabled,
                 preventKeyAction: isOpen,

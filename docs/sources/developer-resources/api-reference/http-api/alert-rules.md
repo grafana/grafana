@@ -36,8 +36,6 @@ This API is in `beta`, so it might change in future releases.
 
 Use this API to manage Grafana-managed alert rules, recording rules, and rule sequences as standalone resources. Each rule has its own versioned, schema-validated resource, so you can create, read, update, and delete a single rule without rewriting an entire rule group.
 
-All paths use the `rules.alerting.grafana.app` group and the `v1beta1` version. Replace `{namespace}` with your namespace. To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-
 Grafana also serves the earlier `v0alpha1` version for backward compatibility, including an experimental `configs` resource and rule search routes in `v0alpha1`. Use `v1beta1` for new integrations. In `v1beta1`, alert rule `notificationSettings` must include `type` (`SimplifiedRouting` or `NamedRoutingTree`), and `RuleSequence` uses `spec.alertRules` instead of `spec.alertingRules`.
 
 ## Before you begin
@@ -84,13 +82,17 @@ An `AlertRule` resource contains the following fields in `metadata`, `spec`, and
 
 The following table lists the main endpoints for `AlertRule` resources. For `PATCH`, collection `DELETE`, `POST /alertrules/search`, and `/status` sub-resource endpoints, refer to [Swagger](https://play.grafana.org/swagger?api=rules.alerting.grafana.app-v1beta1).
 
-| Method | Summary                                       | URI                                                                                 |
-| ------ | --------------------------------------------- | ----------------------------------------------------------------------------------- |
-| GET    | [List alert rules](#list-alert-rules)         | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules`        |
-| GET    | [Get an alert rule](#get-an-alert-rule)       | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}` |
-| POST   | [Create an alert rule](#create-an-alert-rule) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules`        |
-| PUT    | [Update an alert rule](#update-an-alert-rule) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}` |
-| DELETE | [Delete an alert rule](#delete-an-alert-rule) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}` |
+**Base path:** `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/`
+
+Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+| Method | Summary                                       | Path                |
+| ------ | --------------------------------------------- | ------------------- |
+| GET    | [List alert rules](#list-alert-rules)         | `alertrules`        |
+| GET    | [Get an alert rule](#get-an-alert-rule)       | `alertrules/{name}` |
+| POST   | [Create an alert rule](#create-an-alert-rule) | `alertrules`        |
+| PUT    | [Update an alert rule](#update-an-alert-rule) | `alertrules/{name}` |
+| DELETE | [Delete an alert rule](#delete-an-alert-rule) | `alertrules/{name}` |
 
 #### List alert rules
 
@@ -123,13 +125,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with an `AlertRuleList` object containing matching `AlertRule` items in `items`.
 
-##### Status codes
-
-- **200:** `OK`
-- **400:** Bad request (invalid selector)
-- **401:** Unauthorized
-- **403:** Access denied
-
 #### Get an alert rule
 
 `GET /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}`
@@ -154,13 +149,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the `AlertRule` object shown in [Create an alert rule](#create-an-alert-rule).
-
-##### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Alert rule not found
 
 #### Create an alert rule
 
@@ -333,16 +321,6 @@ Content-Type: application/json
 }
 ```
 
-##### Status codes
-
-- **201:** Created
-- **400:** Bad request (invalid JSON, invalid duration or expression, or missing folder)
-- **401:** Unauthorized
-- **403:** Access denied (missing RBAC permission, missing provenance permission, or alert rule quota reached)
-- **404:** Target folder not found
-- **409:** Conflict (an alert rule with the same `metadata.name` already exists)
-- **422:** Schema validation error (for example, `notificationSettings.type` is missing)
-
 #### Update an alert rule
 
 `PUT /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}`
@@ -429,16 +407,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with the updated `AlertRule` resource and an incremented `metadata.resourceVersion`.
 
-##### Status codes
-
-- **200:** Updated
-- **400:** Bad request (invalid JSON, invalid duration or expression, or missing folder)
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Alert rule or target folder not found
-- **409:** Conflict (`metadata.resourceVersion` doesn't match the stored version)
-- **422:** Schema validation error
-
 #### Delete an alert rule
 
 `DELETE /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}`
@@ -463,14 +431,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the deleted `AlertRule` object (or a `Status` object when served from unified storage).
-
-##### Status codes
-
-- **200:** Deleted
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Alert rule not found
-- **409:** Conflict (the alert rule is still referenced by a `RuleSequence`)
 
 ### Details
 
@@ -499,13 +459,15 @@ A `RecordingRule` resource uses the same folder and provenance annotations as `A
 
 The following table lists the main endpoints for `RecordingRule` resources. For `PATCH`, collection `DELETE`, `POST /recordingrules/search`, and `/status` sub-resource endpoints, refer to [Swagger](https://play.grafana.org/swagger?api=rules.alerting.grafana.app-v1beta1).
 
-| Method | Summary                                             | URI                                                                                     |
-| ------ | --------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| GET    | [List recording rules](#list-recording-rules)       | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules`        |
-| GET    | [Get a recording rule](#get-a-recording-rule)       | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}` |
-| POST   | [Create a recording rule](#create-a-recording-rule) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules`        |
-| PUT    | [Update a recording rule](#update-a-recording-rule) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}` |
-| DELETE | [Delete a recording rule](#delete-a-recording-rule) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}` |
+**Base path:** `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/`
+
+| Method | Summary                                             | Path                    |
+| ------ | --------------------------------------------------- | ----------------------- |
+| GET    | [List recording rules](#list-recording-rules)       | `recordingrules`        |
+| GET    | [Get a recording rule](#get-a-recording-rule)       | `recordingrules/{name}` |
+| POST   | [Create a recording rule](#create-a-recording-rule) | `recordingrules`        |
+| PUT    | [Update a recording rule](#update-a-recording-rule) | `recordingrules/{name}` |
+| DELETE | [Delete a recording rule](#delete-a-recording-rule) | `recordingrules/{name}` |
 
 #### List recording rules
 
@@ -531,13 +493,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with a `RecordingRuleList` object containing matching `RecordingRule` items in `items`.
 
-##### Status codes
-
-- **200:** `OK`
-- **400:** Bad request (invalid selector)
-- **401:** Unauthorized
-- **403:** Access denied
-
 #### Get a recording rule
 
 `GET /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}`
@@ -562,13 +517,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the `RecordingRule` resource.
-
-##### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Recording rule not found
 
 #### Create a recording rule
 
@@ -632,16 +580,6 @@ Replace `<SERVICE_ACCOUNT_TOKEN>`, `<FOLDER_UID>`, `<SOURCE_DATASOURCE_UID>`, an
 
 On success, Grafana returns `201 Created` with the created `RecordingRule` object.
 
-##### Status codes
-
-- **201:** Created
-- **400:** Bad request (invalid JSON, invalid metric name or duration, or missing folder)
-- **401:** Unauthorized
-- **403:** Access denied (missing RBAC permission, missing provenance permission, or rule quota reached)
-- **404:** Target folder not found
-- **409:** Conflict (a recording rule with the same `metadata.name` already exists)
-- **422:** Schema validation error
-
 #### Update a recording rule
 
 `PUT /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}`
@@ -701,16 +639,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with the updated `RecordingRule` object and an incremented `metadata.resourceVersion`.
 
-##### Status codes
-
-- **200:** Updated
-- **400:** Bad request (invalid JSON, invalid metric name or duration, or missing folder)
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Recording rule or target folder not found
-- **409:** Conflict (`metadata.resourceVersion` doesn't match the stored version)
-- **422:** Schema validation error
-
 #### Delete a recording rule
 
 `DELETE /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}`
@@ -735,14 +663,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the deleted `RecordingRule` object (or a `Status` object when served from unified storage).
-
-##### Status codes
-
-- **200:** Deleted
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Recording rule not found
-- **409:** Conflict (the recording rule is still referenced by a `RuleSequence`)
 
 ### Details
 
@@ -769,13 +689,15 @@ A `RuleSequence` resource requires `metadata.annotations["grafana.app/folder"]` 
 
 The following table lists the main endpoints for `RuleSequence` resources. For `PATCH`, collection `DELETE`, `POST /rulesequences/search`, and `/status` sub-resource endpoints, refer to [Swagger](https://play.grafana.org/swagger?api=rules.alerting.grafana.app-v1beta1).
 
-| Method | Summary                                           | URI                                                                                    |
-| ------ | ------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| GET    | [List rule sequences](#list-rule-sequences)       | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences`        |
-| GET    | [Get a rule sequence](#get-a-rule-sequence)       | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}` |
-| POST   | [Create a rule sequence](#create-a-rule-sequence) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences`        |
-| PUT    | [Update a rule sequence](#update-a-rule-sequence) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}` |
-| DELETE | [Delete a rule sequence](#delete-a-rule-sequence) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}` |
+**Base path:** `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/`
+
+| Method | Summary                                           | Path                   |
+| ------ | ------------------------------------------------- | ---------------------- |
+| GET    | [List rule sequences](#list-rule-sequences)       | `rulesequences`        |
+| GET    | [Get a rule sequence](#get-a-rule-sequence)       | `rulesequences/{name}` |
+| POST   | [Create a rule sequence](#create-a-rule-sequence) | `rulesequences`        |
+| PUT    | [Update a rule sequence](#update-a-rule-sequence) | `rulesequences/{name}` |
+| DELETE | [Delete a rule sequence](#delete-a-rule-sequence) | `rulesequences/{name}` |
 
 #### List rule sequences
 
@@ -801,12 +723,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with a `RuleSequenceList` object containing `RuleSequence` items in `items`.
 
-##### Status codes
-
-- **200:** `OK`
-- **401:** Unauthorized
-- **403:** Access denied
-
 #### Get a rule sequence
 
 `GET /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}`
@@ -831,13 +747,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the `RuleSequence` object.
-
-##### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Rule sequence not found
 
 #### Create a rule sequence
 
@@ -889,16 +798,6 @@ Replace `<FOLDER_UID>` with the shared folder UID, and replace `<REQUEST_RATE_RU
 
 On success, Grafana returns `201 Created` with the created `RuleSequence` object.
 
-##### Status codes
-
-- **201:** Created
-- **400:** Bad request (invalid JSON or missing folder)
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Target folder not found
-- **409:** Conflict (a rule sequence with the same `metadata.name` already exists)
-- **422:** Schema validation error (for example, a referenced rule is missing, in another folder, or already in another sequence)
-
 #### Update a rule sequence
 
 `PUT /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}`
@@ -949,16 +848,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with the updated `RuleSequence` object and an incremented `metadata.resourceVersion`.
 
-##### Status codes
-
-- **200:** Updated
-- **400:** Bad request (invalid JSON)
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Rule sequence not found
-- **409:** Conflict (`metadata.resourceVersion` doesn't match the stored version)
-- **422:** Schema validation error
-
 #### Delete a rule sequence
 
 `DELETE /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}`
@@ -984,17 +873,74 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with a `Status` object confirming deletion.
 
-##### Status codes
-
-- **200:** Deleted
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Rule sequence not found
-
 ### Details
 
 - **Same-folder requirement:** All referenced recording rules and alert rules must already exist in the same folder as the `RuleSequence`.
 - **Single-sequence membership:** Each rule can belong to at most one `RuleSequence`, and `spec.trigger.interval` must be an integer multiple of your instance's base evaluation interval.
+
+## Status codes
+
+The following sections list the status codes that the endpoints on this page return, by resource.
+
+### Alert rules
+
+The endpoints for alert rules return the following status codes:
+
+| Code  | Meaning                                                                                                                                                                                                        | Returned by                                                                                                            |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `200` | OK.                                                                                                                                                                                                            | [List](#list-alert-rules), [Get](#get-an-alert-rule), [Update](#update-an-alert-rule), [Delete](#delete-an-alert-rule) |
+| `201` | Created.                                                                                                                                                                                                       | [Create](#create-an-alert-rule)                                                                                        |
+| `400` | Bad request (invalid selector).                                                                                                                                                                                | [List](#list-alert-rules)                                                                                              |
+| `400` | Bad request (invalid JSON, or the alert rule service rejects the rule, for example because the UID isn't valid).                                                                                               | [Create](#create-an-alert-rule), [Update](#update-an-alert-rule)                                                       |
+| `401` | Unauthorized.                                                                                                                                                                                                  | All endpoints                                                                                                          |
+| `403` | Access denied.                                                                                                                                                                                                 | [List](#list-alert-rules), [Get](#get-an-alert-rule), [Delete](#delete-an-alert-rule)                                  |
+| `403` | Access denied, or the rule fails validation (for example, the folder is missing or doesn't exist, a duration or expression isn't valid, or the rule is in a `RuleSequence` and you move it to another folder). | [Update](#update-an-alert-rule)                                                                                        |
+| `403` | Access denied (missing RBAC permission or alert rule quota reached), or the rule fails validation (for example, the folder is missing or doesn't exist, or a duration or expression isn't valid).              | [Create](#create-an-alert-rule)                                                                                        |
+| `403` | The alert rule is still referenced by a `RuleSequence`.                                                                                                                                                        | [Delete](#delete-an-alert-rule)                                                                                        |
+| `404` | Alert rule not found.                                                                                                                                                                                          | [Get](#get-an-alert-rule), [Update](#update-an-alert-rule), [Delete](#delete-an-alert-rule)                            |
+| `409` | Conflict (an alert rule with the same `metadata.name` already exists).                                                                                                                                         | [Create](#create-an-alert-rule)                                                                                        |
+| `409` | Conflict (`metadata.resourceVersion` doesn't match the stored version), if Grafana uses unified storage for alert rules. Legacy storage ignores `metadata.resourceVersion`.                                    | [Update](#update-an-alert-rule)                                                                                        |
+| `409` | Conflict (the alert rule is managed by a different provenance, for example file provisioning).                                                                                                                 | [Update](#update-an-alert-rule), [Delete](#delete-an-alert-rule)                                                       |
+| `422` | Schema validation error (for example, `notificationSettings.type` is missing).                                                                                                                                 | [Create](#create-an-alert-rule)                                                                                        |
+| `422` | Schema validation error.                                                                                                                                                                                       | [Update](#update-an-alert-rule)                                                                                        |
+
+### Recording rules
+
+The endpoints for recording rules return the following status codes:
+
+| Code  | Meaning                                                                                                                                                                                                        | Returned by                                                                                                                         |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `200` | OK.                                                                                                                                                                                                            | [List](#list-recording-rules), [Get](#get-a-recording-rule), [Update](#update-a-recording-rule), [Delete](#delete-a-recording-rule) |
+| `201` | Created.                                                                                                                                                                                                       | [Create](#create-a-recording-rule)                                                                                                  |
+| `400` | Bad request (invalid selector).                                                                                                                                                                                | [List](#list-recording-rules)                                                                                                       |
+| `400` | Bad request (invalid JSON, or `metadata.generateName` or group labels are set in legacy storage mode).                                                                                                         | [Create](#create-a-recording-rule)                                                                                                  |
+| `400` | Bad request (invalid JSON).                                                                                                                                                                                    | [Update](#update-a-recording-rule)                                                                                                  |
+| `401` | Unauthorized.                                                                                                                                                                                                  | All endpoints                                                                                                                       |
+| `403` | Access denied.                                                                                                                                                                                                 | [List](#list-recording-rules), [Get](#get-a-recording-rule), [Delete](#delete-a-recording-rule)                                     |
+| `403` | Access denied, or the rule fails validation (for example, the folder is missing or doesn't exist, the metric or a duration isn't valid, or the rule is in a `RuleSequence` and you move it to another folder). | [Create](#create-a-recording-rule), [Update](#update-a-recording-rule)                                                              |
+| `403` | The recording rule is still referenced by a `RuleSequence`.                                                                                                                                                    | [Delete](#delete-a-recording-rule)                                                                                                  |
+| `404` | Recording rule not found.                                                                                                                                                                                      | [Get](#get-a-recording-rule), [Update](#update-a-recording-rule), [Delete](#delete-a-recording-rule)                                |
+| `409` | Conflict (a recording rule with the same `metadata.name` already exists).                                                                                                                                      | [Create](#create-a-recording-rule)                                                                                                  |
+| `409` | Conflict (`metadata.resourceVersion` doesn't match the stored version), if Grafana uses unified storage for recording rules. Legacy storage ignores `metadata.resourceVersion`.                                | [Update](#update-a-recording-rule)                                                                                                  |
+| `409` | Conflict (the recording rule is managed by a different provenance, for example file provisioning).                                                                                                             | [Update](#update-a-recording-rule), [Delete](#delete-a-recording-rule)                                                              |
+| `422` | Schema validation error (for example, the metric name doesn't match the required pattern).                                                                                                                     | [Create](#create-a-recording-rule), [Update](#update-a-recording-rule)                                                              |
+
+### Rule sequences
+
+The endpoints for rule sequences return the following status codes:
+
+| Code  | Meaning                                                                                                                                                                       | Returned by                                                                                                                     |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `200` | OK.                                                                                                                                                                           | [List](#list-rule-sequences), [Get](#get-a-rule-sequence), [Update](#update-a-rule-sequence), [Delete](#delete-a-rule-sequence) |
+| `201` | Created.                                                                                                                                                                      | [Create](#create-a-rule-sequence)                                                                                               |
+| `400` | Bad request (invalid JSON).                                                                                                                                                   | [Create](#create-a-rule-sequence), [Update](#update-a-rule-sequence)                                                            |
+| `401` | Unauthorized.                                                                                                                                                                 | All endpoints                                                                                                                   |
+| `403` | Access denied.                                                                                                                                                                | All endpoints                                                                                                                   |
+| `403` | The rule sequence fails validation (for example, the folder is missing or doesn't exist, or a referenced rule is missing, in another folder, or already in another sequence). | [Create](#create-a-rule-sequence), [Update](#update-a-rule-sequence)                                                            |
+| `404` | Rule sequence not found.                                                                                                                                                      | [Get](#get-a-rule-sequence), [Update](#update-a-rule-sequence), [Delete](#delete-a-rule-sequence)                               |
+| `409` | Conflict (a rule sequence with the same `metadata.name` already exists).                                                                                                      | [Create](#create-a-rule-sequence)                                                                                               |
+| `409` | Conflict (`metadata.resourceVersion` doesn't match the stored version).                                                                                                       | [Update](#update-a-rule-sequence)                                                                                               |
+| `422` | Schema validation error (for example, a rule reference name doesn't match the required pattern).                                                                              | [Create](#create-a-rule-sequence), [Update](#update-a-rule-sequence)                                                            |
 
 ## Migrate from the legacy Alerting Provisioning API
 

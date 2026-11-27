@@ -2,11 +2,11 @@ import { type Meta, type StoryFn, type StoryObj } from '@storybook/react';
 import { useCallback, useMemo, useState } from 'react';
 import { type CellProps } from 'react-table';
 
-import { LinkButton } from '../Button/Button';
 import { Checkbox } from '../Forms/Checkbox';
 import { Field } from '../Forms/Field';
 import { Icon } from '../Icon/Icon';
 import { Input } from '../Input/Input';
+import { LinkButton } from '../LinkButton/LinkButton';
 import { Text } from '../Text/Text';
 
 import { type FetchDataArgs, InteractiveTable, type InteractiveTableHeaderTooltip } from './InteractiveTable';

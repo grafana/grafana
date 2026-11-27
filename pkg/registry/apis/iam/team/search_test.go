@@ -562,6 +562,35 @@ func TestTeamSearchMemberCount(t *testing.T) {
 		}
 	})
 
+	t.Run("membercount=true - backend is asked for member counts", func(t *testing.T) {
+		for _, tt := range []struct {
+			param string
+			want  bool
+		}{
+			{param: "", want: false},
+			{param: "?membercount=false", want: false},
+			{param: "?membercount=true", want: true},
+		} {
+			backend := &fakeSearchBackend{}
+			searchHandler := &SearchHandler{
+				log:        log.New("grafana-apiserver.teams.search"),
+				client:     selectorForBackend(backend),
+				tracer:     tracing.NewNoopTracerService(),
+				teamGetter: mockGetter,
+			}
+
+			rr := httptest.NewRecorder()
+			req := httptest.NewRequest("GET", "/teams/search"+tt.param, nil)
+			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "default"}))
+
+			searchHandler.DoTeamSearch(rr, req)
+
+			require.Equal(t, 200, rr.Code)
+			require.NotNil(t, backend.lastQuery)
+			assert.Equal(t, tt.want, backend.lastQuery.MemberCount, "param %q", tt.param)
+		}
+	})
+
 	t.Run("membercount=true - getter error returns 500", func(t *testing.T) {
 		errorGetter := &mockTeamGetter{
 			getFunc: func(_ context.Context, _ string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -619,6 +648,36 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 		assert.Equal(t, int64(3), *hits[0].MemberCount)
 		require.NotNil(t, hits[1].MemberCount)
 		assert.Equal(t, int64(0), *hits[1].MemberCount)
+	})
+
+	t.Run("hits with backend member counts - skips team get", func(t *testing.T) {
+		var gets []string
+		mockGetter := &mockTeamGetter{
+			getFunc: func(_ context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
+				gets = append(gets, name)
+				return &iamv0alpha1.Team{Spec: iamv0alpha1.TeamSpec{Members: make([]iamv0alpha1.TeamTeamMember, 3)}}, nil
+			},
+		}
+
+		handler := &SearchHandler{
+			log:        log.New("test"),
+			tracer:     tracing.NewNoopTracerService(),
+			teamGetter: mockGetter,
+		}
+
+		backendCount := int64(5)
+		hits := []iamv0alpha1.GetSearchTeamsTeamHit{
+			{Name: "team-1", MemberCount: &backendCount},
+			{Name: "team-2"},
+		}
+
+		err := handler.enrichWithMemberCounts(context.Background(), "default", hits)
+		require.NoError(t, err)
+		assert.Equal(t, []string{"team-2"}, gets)
+		require.NotNil(t, hits[0].MemberCount)
+		assert.Equal(t, int64(5), *hits[0].MemberCount)
+		require.NotNil(t, hits[1].MemberCount)
+		assert.Equal(t, int64(3), *hits[1].MemberCount)
 	})
 
 	t.Run("one fails - returns error", func(t *testing.T) {

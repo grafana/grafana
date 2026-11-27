@@ -1,5 +1,5 @@
 import type { MermaidConfig } from 'mermaid';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { textUtil } from '@grafana/data';
 
@@ -18,11 +18,38 @@ import {
   TEXT_FRAME_PROTOCOL,
   type RenderCommand,
   type MermaidCommand,
+  type StylesCommand,
 } from './sandboxProtocol';
 
 export const WATCHDOG_TIMEOUT_MS = 15_000;
 
+type FullRenderCommand = Omit<RenderCommand, 'revision'> & { globalCss: string };
+
 let shellPolicy: Pick<TrustedTypePolicy, 'createHTML'> | undefined;
+
+// Route once per message instead of invoking every panel's listener for every frame notification.
+const frameListeners = new Map<string, (event: MessageEvent) => void>();
+
+function dispatchFrameMessage(event: MessageEvent) {
+  const message = event.data;
+  if (message && typeof message === 'object' && typeof message.channel === 'string') {
+    // The channel only routes the message; the controller still authenticates its source and payload.
+    frameListeners.get(message.channel)?.(event);
+  }
+}
+
+function listenToFrame(channel: string, listener: (event: MessageEvent) => void) {
+  if (frameListeners.size === 0) {
+    window.addEventListener('message', dispatchFrameMessage);
+  }
+  frameListeners.set(channel, listener);
+  return () => {
+    frameListeners.delete(channel);
+    if (frameListeners.size === 0) {
+      window.removeEventListener('message', dispatchFrameMessage);
+    }
+  };
+}
 
 export interface SandboxFrameProps {
   /** Sanitized when protected; legacy HTML respects the administrator's sanitizer setting. */
@@ -41,21 +68,25 @@ export interface SandboxFrameProps {
 
 export function SandboxFrame(props: SandboxFrameProps) {
   const { html, globalCss, policy, mermaid, diagramError } = props;
+  // Content-only protected updates and CSS-only updates avoid restarting the document.
+  // Policy and diagram configuration changes still need a fresh runtime.
   const [documentVersion, setDocumentVersion] = useState({ html, globalCss, policy, mermaid, diagramError, id: 0 });
-  if (
-    documentVersion.html !== html ||
-    documentVersion.globalCss !== globalCss ||
+  const shellChanged =
     documentVersion.policy !== policy ||
     documentVersion.mermaid !== mermaid ||
-    documentVersion.diagramError !== diagramError
-  ) {
-    setDocumentVersion({ html, globalCss, policy, mermaid, diagramError, id: documentVersion.id + 1 });
+    documentVersion.diagramError !== diagramError;
+  const contentChanged = documentVersion.html !== html;
+  if (contentChanged || documentVersion.globalCss !== globalCss || shellChanged) {
+    // Legacy scripts need a fresh realm.
+    const recreate = shellChanged || (contentChanged && policy === undefined);
+    setDocumentVersion({ html, globalCss, policy, mermaid, diagramError, id: documentVersion.id + Number(recreate) });
   }
-  // Fresh documents isolate each render's messages and runtime; an applied CSP also cannot be relaxed in place.
-  return <FrameDocument key={documentVersion.id} {...props} />;
+  // The controller tracks failures and blocked loads synchronously; React state would lag a batched update.
+  const recreate = useCallback(() => setDocumentVersion((current) => ({ ...current, id: current.id + 1 })), []);
+  return <FrameDocument key={documentVersion.id} {...props} onRecreate={recreate} />;
 }
 
-function FrameDocument(props: SandboxFrameProps) {
+function FrameDocument(props: SandboxFrameProps & { onRecreate: () => void }) {
   const { title, minHeight = 0, onState, onHeight } = props;
   const { iframeRef, sandboxState, dimensions, protectedFrame } = useFrameRuntime(props);
 
@@ -103,7 +134,8 @@ function useFrameRuntime({
   policy,
   mermaid,
   diagramError = 'Diagram could not be rendered',
-}: SandboxFrameProps) {
+  onRecreate,
+}: SandboxFrameProps & { onRecreate: () => void }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [sandboxState, setSandboxState] = useState<TextSandboxState>({ status: 'loading', resources: [] });
   const [dimensions, setDimensions] = useState({ height: 1, contentHeight: 0 });
@@ -111,6 +143,20 @@ function useFrameRuntime({
   // srcdoc inherits deployment CSP, so reuse Grafana's server nonce when one is present.
   const [nonce] = useState(() => document.querySelector<HTMLScriptElement>('script[nonce]')?.nonce || randomId());
   const protectedFrame = policy !== undefined;
+
+  const controllerRef = useRef<ReturnType<typeof createFrameController> | null>(null);
+  const command = useMemo<FullRenderCommand>(
+    () => ({ protocol: TEXT_FRAME_PROTOCOL, channel, type: 'render', html, globalCss, mermaid, diagramError }),
+    [channel, html, globalCss, mermaid, diagramError]
+  );
+  const latestCommand = useRef(command);
+  useLayoutEffect(() => {
+    latestCommand.current = command;
+    if (controllerRef.current?.update(command) === false) {
+      // Failed documents and blocked stylesheet loads need a fresh attempt.
+      onRecreate();
+    }
+  }, [command, onRecreate]);
 
   useLayoutEffect(() => {
     if (!iframeRef.current) {
@@ -121,26 +167,26 @@ function useFrameRuntime({
       policy,
       nonce,
       protectedFrame,
-      renderCommand: {
-        protocol: TEXT_FRAME_PROTOCOL,
-        channel,
-        type: 'render',
-        html,
-        globalCss,
-        mermaid,
-        diagramError,
-      },
+      renderCommand: latestCommand.current,
+      onReset: () => setSandboxState({ status: 'loading', resources: [] }),
       onStatus: (status) =>
         setSandboxState((current) => (current.status === status ? current : { ...current, status })),
-      onResize: setDimensions,
+      onResize: (incoming) =>
+        setDimensions((current) =>
+          current.height === incoming.height && current.contentHeight === incoming.contentHeight ? current : incoming
+        ),
       onBlocked: (incoming) =>
         setSandboxState((current) => {
           const resources = mergeResources(current.resources, incoming);
           return resources === current.resources ? current : { ...current, resources };
         }),
     });
-    return controller.dispose;
-  }, [channel, diagramError, globalCss, html, mermaid, nonce, policy, protectedFrame]);
+    controllerRef.current = controller;
+    return () => {
+      controllerRef.current = null;
+      controller.dispose();
+    };
+  }, [channel, nonce, policy, protectedFrame]);
 
   return { iframeRef, sandboxState, dimensions, protectedFrame };
 }
@@ -150,7 +196,8 @@ interface FrameControllerOptions {
   policy?: string;
   nonce: string;
   protectedFrame: boolean;
-  renderCommand: RenderCommand;
+  renderCommand: FullRenderCommand;
+  onReset: () => void;
   onStatus: (status: TextSandboxState['status']) => void;
   onResize: (dimensions: { height: number; contentHeight: number }) => void;
   onBlocked: (resources: BlockedResource[]) => void;
@@ -162,20 +209,24 @@ function createFrameController({
   nonce,
   protectedFrame,
   renderCommand,
+  onReset,
   onStatus,
   onResize,
   onBlocked,
 }: FrameControllerOptions) {
   // Protocol guards update synchronously, independently of React's reported state.
   let renderedDocument: string | undefined;
+  let revision = 0;
+  let styleRevision = 0;
   let hasFailed = false;
+  let hasBlocked = false;
   let mermaidRequested = false;
   let disposed = false;
   const expectedOrigin = protectedFrame ? 'null' : window.location.origin;
   // Opaque-origin frames require '*'; commands still target only this document's WindowProxy.
   const targetOrigin = protectedFrame ? '*' : window.location.origin;
   let watchdog = window.setTimeout(fail, WATCHDOG_TIMEOUT_MS);
-  window.addEventListener('message', onMessage);
+  const stopListening = listenToFrame(renderCommand.channel, onMessage);
   void loadSandboxRuntime()
     .then((runtimeSource) => {
       if (disposed) {
@@ -205,7 +256,8 @@ function createFrameController({
       event.source !== iframe.contentWindow ||
       event.origin !== expectedOrigin ||
       !isFrameNotification(message) ||
-      message.channel !== renderCommand.channel
+      message.channel !== renderCommand.channel ||
+      (message.type !== 'ready' && message.revision !== revision)
     ) {
       return;
     }
@@ -233,7 +285,10 @@ function createFrameController({
     // Moving an iframe within the DOM reloads its srcdoc. The new document passed its own CSP check, so it is a
     // fresh attempt even if the previous one failed.
     if (renderedDocument !== undefined) {
+      revision++;
+      onReset();
       hasFailed = false;
+      hasBlocked = false;
       mermaidRequested = false;
       clearTimeout(watchdog);
       watchdog = window.setTimeout(fail, WATCHDOG_TIMEOUT_MS);
@@ -241,7 +296,7 @@ function createFrameController({
       return;
     }
     renderedDocument = documentId;
-    iframe.contentWindow?.postMessage(renderCommand, targetOrigin);
+    iframe.contentWindow?.postMessage({ ...renderCommand, revision }, targetOrigin);
   }
 
   function loadRequestedMermaid() {
@@ -251,8 +306,8 @@ function createFrameController({
     mermaidRequested = true;
     const target = iframe.contentWindow;
     // A reloaded document requests its own copy; a late result for the previous one must not fail it.
-    const requestedBy = renderedDocument;
-    const isCurrent = () => !disposed && renderedDocument === requestedBy;
+    const requestedBy = revision;
+    const isCurrent = () => !disposed && revision === requestedBy;
     void loadSandboxMermaid()
       .then((source) => {
         if (!isCurrent() || hasFailed || !target || iframe.contentWindow !== target) {
@@ -262,6 +317,7 @@ function createFrameController({
           protocol: TEXT_FRAME_PROTOCOL,
           channel: renderCommand.channel,
           type: 'mermaid-source',
+          revision,
           source,
         };
         target.postMessage(command, targetOrigin);
@@ -289,6 +345,7 @@ function createFrameController({
 
   function recordBlockedResources(resources: BlockedResource[]) {
     if (renderedDocument !== undefined) {
+      hasBlocked = true;
       onBlocked(resources);
     }
   }
@@ -302,10 +359,55 @@ function createFrameController({
   function dispose() {
     disposed = true;
     clearTimeout(watchdog);
-    window.removeEventListener('message', onMessage);
+    stopListening();
   }
 
-  return { dispose };
+  /** Returns false when the content change needs a fresh document. */
+  function update(next: FullRenderCommand): boolean {
+    const contentChanged =
+      next.html !== renderCommand.html ||
+      next.mermaid !== renderCommand.mermaid ||
+      next.diagramError !== renderCommand.diagramError;
+    const cssChanged = next.globalCss !== renderCommand.globalCss;
+    if (!contentChanged && !cssChanged) {
+      return true;
+    }
+    if (contentChanged && (hasFailed || hasBlocked)) {
+      return false;
+    }
+    renderCommand = next;
+    if (!contentChanged) {
+      // Fonts can finish after content or diagrams start rendering. Keep their revision and reports intact.
+      if (renderedDocument !== undefined) {
+        const styles: StylesCommand = {
+          protocol: TEXT_FRAME_PROTOCOL,
+          channel: renderCommand.channel,
+          type: 'styles',
+          revision,
+          styleRevision: ++styleRevision,
+          globalCss: renderCommand.globalCss,
+        };
+        iframe.contentWindow?.postMessage(styles, targetOrigin);
+      }
+      return true;
+    }
+    revision++;
+    hasFailed = false;
+    mermaidRequested = false;
+    onReset();
+    clearTimeout(watchdog);
+    watchdog = window.setTimeout(fail, WATCHDOG_TIMEOUT_MS);
+    if (renderedDocument !== undefined) {
+      // Inlined fonts make CSS large; retaining the stylesheet must also avoid resending its bytes.
+      iframe.contentWindow?.postMessage(
+        { ...renderCommand, globalCss: cssChanged ? renderCommand.globalCss : undefined, revision },
+        targetOrigin
+      );
+    }
+    return true;
+  }
+
+  return { dispose, update };
 }
 
 function buildFrameShell({

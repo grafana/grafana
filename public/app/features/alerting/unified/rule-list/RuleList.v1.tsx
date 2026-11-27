@@ -20,16 +20,17 @@ import { RuleListStateView } from '../components/rules/RuleListStateView';
 import { RuleStats } from '../components/rules/RuleStats';
 import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
 import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
+import { useDataSourcesForRules } from '../hooks/useDataSourcesForRules';
 import { useFilteredRules, useRulesFilter } from '../hooks/useFilteredRules';
-import { useUnifiedAlertingSelector } from '../hooks/useUnifiedAlertingSelector';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../state/actions';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME, getAllRulesSourceNames } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 import { RuleListPageTitle } from './RuleListPageTitle';
 import { RuleListV1DeprecationNotice } from './RuleListV1DeprecationNotice';
 import { RuleListActionButtons } from './components/RuleListActionButtons';
+import { useRuleListStatus } from './useRuleListStatus';
 
 const VIEWS = {
   groups: RuleListGroupView,
@@ -48,7 +49,8 @@ const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const RuleListV1 = () => {
   const { navId, pageNav } = useAlertRulesNav();
   const dispatch = useDispatch();
-  const [rulesDataSourceNames] = useState(getAllRulesSourceNames);
+  const rulesSources = useDataSourcesForRules();
+  const { isLoading: loading, hasNoRules: hasNoAlertRulesCreatedYet } = useRuleListStatus(rulesSources);
   const [expandAll, setExpandAll] = useState(false);
 
   const onFilterCleared = useCallback(() => setExpandAll(false), []);
@@ -63,31 +65,6 @@ const RuleListV1 = () => {
   const view = VIEWS[viewType] ? viewType : 'groups';
 
   const ViewComponent = VIEWS[view];
-
-  const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
-  const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-
-  const loading = rulesDataSourceNames.some(
-    (name) => promRuleRequests[name]?.loading || rulerRuleRequests[name]?.loading
-  );
-
-  const promRequests = Object.entries(promRuleRequests);
-  const rulerRequests = Object.entries(rulerRuleRequests);
-
-  const allPromLoaded = promRequests.every(
-    ([_, state]) => state.dispatched && (state?.result !== undefined || state?.error !== undefined)
-  );
-  const allRulerLoaded = rulerRequests.every(
-    ([_, state]) => state.dispatched && (state?.result !== undefined || state?.error !== undefined)
-  );
-
-  const allPromEmpty = promRequests.every(([_, state]) => state.dispatched && state?.result?.length === 0);
-
-  const allRulerEmpty = rulerRequests.every(([_, state]) => {
-    const rulerRules = Object.entries(state?.result ?? {});
-    const noRules = rulerRules.every(([_, result]) => result?.length === 0);
-    return noRules && state.dispatched;
-  });
 
   const limitAlerts = hasActiveLabelsFilter ? undefined : LIMIT_ALERTS;
   // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
@@ -117,9 +94,6 @@ const RuleListV1 = () => {
   }, [dispatch, limitAlerts]);
   useInterval(fetchRules, RULE_LIST_POLL_INTERVAL_MS);
 
-  // Show splash only when we loaded all of the data sources and none of them has alerts
-  const hasNoAlertRulesCreatedYet =
-    allPromLoaded && allPromEmpty && promRequests.length > 0 && allRulerEmpty && allRulerLoaded;
   const hasAlertRulesCreated = !hasNoAlertRulesCreatedYet;
 
   const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
@@ -140,7 +114,7 @@ const RuleListV1 = () => {
       <Stack direction="column">
         <RuleListV1DeprecationNotice />
         {showImportToGMABanner && <ImportToGMABanner />}
-        <RuleListErrors />
+        <RuleListErrors rulesSources={rulesSources} />
         <RulesFilter onClear={onFilterCleared} />
         {hasAlertRulesCreated && (
           <Stack direction="row" alignItems="center">
@@ -159,7 +133,9 @@ const RuleListV1 = () => {
         )}
         <RuleStats namespaces={filteredNamespaces} />
         {hasNoAlertRulesCreatedYet && <NoRulesSplash />}
-        {hasAlertRulesCreated && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
+        {hasAlertRulesCreated && (
+          <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} rulesSources={rulesSources} />
+        )}
       </Stack>
     </AlertingPageWrapper>
   );

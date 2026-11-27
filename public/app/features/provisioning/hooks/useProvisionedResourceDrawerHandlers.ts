@@ -5,7 +5,7 @@ import { useDispatch } from 'app/types/store';
 import { buildResourceBranchRedirectUrl, type ResourceBranchAction } from '../utils/redirect';
 import { type ResourceKindInfo } from '../utils/resourceKinds';
 
-/** Shape forwarded by {@link SaveProvisionedResourceDrawer}'s `onBranchSuccess` callback. */
+/** Shape {@link SaveProvisionedResourceDrawer} forwards to `onBranchSuccess`. */
 interface BranchSuccessData {
   ref: string;
   urls?: Record<string, string>;
@@ -20,60 +20,61 @@ interface BranchSuccessData {
 
 export interface ProvisionedResourceDrawerHandlers {
   /**
-   * Write workflow: invalidate the kind's list cache and navigate to its collection page so the
-   * committed change shows up there.
+   * Write workflow: invalidate the kind's list cache and redirect so the committed change shows up
+   * at the destination.
    */
-  goToList: () => void;
+  onWriteSuccess: () => void;
   /**
-   * Branch (PR) workflow: builds the `onBranchSuccess` handler for the given commit action. It
-   * navigates to the kind's collection page with the pull-request params so the page surfaces the
-   * PR banner (mirrors the dashboard flow). `create`/`update`/`delete` differ only by this action.
+   * Branch (PR) workflow: redirects with the pull-request params so the destination surfaces the
+   * PR banner (mirrors the dashboard flow).
    */
-  makeOnBranchSuccess: (action: ResourceBranchAction) => (data: BranchSuccessData) => void;
+  onBranchSuccess: (data: BranchSuccessData) => void;
 }
 
 /**
  * Shared navigation/cache handlers for a provisioned resource's save and delete drawers.
  *
- * The redirect and list-navigation logic is identical across kinds — and across the save/delete
- * variants of one kind — differing only by the kind's `listRoute` and the commit action, both read
- * from the {@link ResourceKindInfo}. The kind's `invalidateListTags` (if any) is dispatched so the
- * committed change shows up on its list page.
+ * The redirect logic is identical across kinds — and across the save/delete variants of one kind —
+ * differing only by the destination and the commit action. `redirectUrl` comes from the caller
+ * rather than the kind: the page that owns the route knows it, the registry does not. The kind's
+ * `invalidateListTags` (if any) is dispatched so the committed change shows up there.
  */
-export function useProvisionedResourceDrawerHandlers(kind: ResourceKindInfo): ProvisionedResourceDrawerHandlers {
+export function useProvisionedResourceDrawerHandlers(
+  kind: ResourceKindInfo,
+  redirectUrl: string,
+  action: ResourceBranchAction
+): ProvisionedResourceDrawerHandlers {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const invalidate = () => {
-    const action = kind.invalidateListTags?.();
-    if (action) {
-      dispatch(action);
+    const invalidateAction = kind.invalidateListTags?.();
+    if (invalidateAction) {
+      dispatch(invalidateAction);
     }
   };
 
-  const goToList = () => {
+  const onWriteSuccess = () => {
     invalidate();
-    navigate(kind.listRoute);
+    navigate(redirectUrl);
   };
 
-  const makeOnBranchSuccess =
-    (action: ResourceBranchAction) =>
-    ({ ref, urls, repoType, configuredBranch, repoUrl, prTitle }: BranchSuccessData) => {
-      invalidate();
-      navigate(
-        buildResourceBranchRedirectUrl({
-          baseUrl: kind.listRoute,
-          paramName: 'new_pull_request_url',
-          paramValue: urls?.newPullRequestURL,
-          repoType,
-          action,
-          prTitle,
-          ref,
-          configuredBranch,
-          repoUrl: urls?.repositoryURL ?? repoUrl,
-        })
-      );
-    };
+  const onBranchSuccess = ({ ref, urls, repoType, configuredBranch, repoUrl, prTitle }: BranchSuccessData) => {
+    invalidate();
+    navigate(
+      buildResourceBranchRedirectUrl({
+        baseUrl: redirectUrl,
+        paramName: 'new_pull_request_url',
+        paramValue: urls?.newPullRequestURL,
+        repoType,
+        action,
+        prTitle,
+        ref,
+        configuredBranch,
+        repoUrl: urls?.repositoryURL ?? repoUrl,
+      })
+    );
+  };
 
-  return { goToList, makeOnBranchSuccess };
+  return { onWriteSuccess, onBranchSuccess };
 }

@@ -142,7 +142,6 @@ func TestNewKVBackendOptionsValues(t *testing.T) {
 	cfg.GarbageCollectionMaxAge = 8 * time.Minute
 	cfg.DashboardsGarbageCollectionMaxAge = 9 * time.Minute
 	cfg.KVLeaseTTL = 9 * time.Minute
-	cfg.FastLatestKeyLookupEnabled = true
 
 	opts := NewKVBackendOptions(cfg)
 
@@ -154,7 +153,6 @@ func TestNewKVBackendOptionsValues(t *testing.T) {
 	require.Equal(t, 7, opts.DashboardVersionsToKeep)
 	require.NotEmpty(t, opts.Holder)
 	require.Equal(t, 9*time.Minute, opts.LeaseTTL)
-	require.True(t, opts.FastLatestKeyLookup)
 	require.Equal(t, GarbageCollectionConfig{
 		Enabled:          true,
 		DryRun:           true,

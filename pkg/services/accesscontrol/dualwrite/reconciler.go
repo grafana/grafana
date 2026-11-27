@@ -47,6 +47,15 @@ type ZanzanaReconciler struct {
 func ProvideZanzanaReconciler(cfg *setting.Cfg, features featuremgmt.FeatureToggles, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService, folderService folder.Service, reg prometheus.Registerer) *ZanzanaReconciler {
 	pageSize := cfg.ZanzanaServer.ReadPageSize
 
+	// Managed permissions and role permissions write tuples on the same folder
+	// and dashboard objects, such as the basic roles' grants on the root folder
+	// (folder:general). Each reconciler deletes the tuples it does not collect,
+	// so without protecting the other's, every cycle would delete them and write
+	// them back, denying access in between.
+	managedFolders := managedPermissionsCollector(store, zanzana.KindFolders)
+	managedDashboards := managedPermissionsCollector(store, zanzana.KindDashboards)
+	rolePermissions := rolePermissionsCollector(store)
+
 	zanzanaReconciler := &ZanzanaReconciler{
 		cfg:      cfg,
 		log:      reconcilerLogger,
@@ -69,22 +78,22 @@ func ProvideZanzanaReconciler(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 			),
 			newResourceReconciler(
 				"managed folder permissions",
-				managedPermissionsCollector(store, zanzana.KindFolders),
+				managedFolders,
 				zanzanaCollector(zanzana.RelationsFolder, pageSize),
 				client,
-			),
+			).withProtected(rolePermissions),
 			newResourceReconciler(
 				"managed dashboard permissions",
-				managedPermissionsCollector(store, zanzana.KindDashboards),
+				managedDashboards,
 				zanzanaCollector(zanzana.RelationsResouce, pageSize),
 				client,
-			),
+			).withProtected(rolePermissions),
 			newResourceReconciler(
 				"role permissions",
-				rolePermissionsCollector(store),
+				rolePermissions,
 				zanzanaCollector(zanzana.RelationsFolder, pageSize),
 				client,
-			),
+			).withProtected(managedFolders, managedDashboards),
 			newResourceReconciler(
 				"basic role bindings",
 				basicRoleBindingsCollector(store),

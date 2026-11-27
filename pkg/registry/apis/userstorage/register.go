@@ -12,8 +12,8 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 
+	userstorage "github.com/grafana/grafana/apps/userstorage/pkg/apis/userstorage/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	userstorage "github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -33,11 +33,11 @@ func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration bui
 }
 
 func (b *UserStorageAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return userstorage.SchemeGroupVersion
+	return userstorage.GroupVersion
 }
 
 func (b *UserStorageAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	gv := userstorage.SchemeGroupVersion
+	gv := userstorage.GroupVersion
 	err := userstorage.AddToScheme(scheme)
 	if err != nil {
 		return err
@@ -69,7 +69,7 @@ func (b *UserStorageAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserve
 
 	storage[resourceInfo.StoragePath()] = storageReg
 
-	apiGroupInfo.VersionedResourcesStorageMap[userstorage.VERSION] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[userstorage.APIVersion] = storage
 	return nil
 }
 

@@ -105,7 +105,7 @@ export function resumeRecordingPendingChanges(scene: DashboardScene) {
 }
 
 /** `stored` with what changed from `before` to `after`: what didn't change keeps its stored form. */
-function rebase(stored: unknown, before: unknown, after: unknown): unknown {
+export function rebase(stored: unknown, before: unknown, after: unknown): unknown {
   if (isEqual(before, after)) {
     return stored;
   }
@@ -130,8 +130,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 /**
  * Edits to pending changes on the dashboard page (see PendingChangesHistory): the dashboard's
  * edit actions, the same ones its Undo steps through, are recorded in the plugin's history
- * instead, so an edit made by hand ends up like one the plugin made. The scene then counts as
- * saved: Exit edit has nothing to save or discard.
+ * instead, so an edit made by hand ends up like one the plugin made. The scene then has nothing
+ * left to record; the pending changes stay unsaved until the dashboard's Save saves them.
  */
 export async function recordPendingChange(
   scene: DashboardScene,

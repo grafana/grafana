@@ -89,7 +89,9 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
     'library panel cells) and the ordered NotebookLayout that places them. The scene is rebuilt from ' +
     'the spec. The change is saved automatically. Fails without changing anything if the person reading ' +
     'has unsaved panel changes you have not resolved yet (see viewOnlyChanges), or if someone else saved ' +
-    'the notebook since it was opened (see onConflict).',
+    'the notebook since it was opened (see onConflict). Comments attach to an element by its name in ' +
+    '`elements`: keep the names of elements that stay, give every new element a unique, random name ' +
+    '(for example `heading-k3x9qa`), and never reuse the name of an element that was removed.',
 
   payloadSchema: applyNotebookSpecPayloadSchema,
   permission: requiresNotebookEdit,

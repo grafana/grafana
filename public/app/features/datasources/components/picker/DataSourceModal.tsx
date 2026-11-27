@@ -121,25 +121,20 @@ export function DataSourceModal({
 
   // Built-in data sources used twice because of mobile layout adjustments
   // In movile the list is appended to the bottom of the DS list
-  const BuiltInList = ({ className }: { className?: string }) => {
-    return (
-      <BuiltInDataSourceList
-        className={className}
-        onChange={onChangeDataSource}
-        current={current}
-        filter={filter}
-        variables={variables}
-        tracing={tracing}
-        metrics={metrics}
-        type={type}
-        annotations={annotations}
-        alerting={alerting}
-        pluginId={pluginId}
-        logs={logs}
-        dashboard={dashboard}
-        mixed={mixed}
-      />
-    );
+  const builtInListProps = {
+    onChange: onChangeDataSource,
+    current,
+    filter,
+    variables,
+    tracing,
+    metrics,
+    type,
+    annotations,
+    alerting,
+    pluginId,
+    logs,
+    dashboard,
+    mixed,
   };
 
   return (
@@ -192,14 +187,14 @@ export function DataSourceModal({
             favoriteDataSources={favoriteDataSources}
             scrollRef={scrollRef}
           />
-          <BuiltInList className={styles.appendBuiltInDataSourcesList} />
+          <BuiltInDataSourceList {...builtInListProps} className={styles.appendBuiltInDataSourcesList} />
         </ScrollContainer>
       </div>
       <div className={styles.rightColumn}>
         <div className={styles.builtInDataSources}>
           <div className={styles.builtInDataSourcesList}>
             <ScrollContainer>
-              <BuiltInList />
+              <BuiltInDataSourceList {...builtInListProps} />
             </ScrollContainer>
           </div>
         </div>

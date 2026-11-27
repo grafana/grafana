@@ -5,7 +5,7 @@ import { type CommonBannerProps } from 'app/features/provisioning/components/Das
 import { PreviewBannerViewPR } from 'app/features/provisioning/components/Shared/PreviewBannerViewPR';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
-import { PROVISIONING_URL } from '../../constants';
+import { getRepositoryOverviewUrl } from '../../utils/repository';
 
 export function ProvisionedFolderPreviewBanner({ queryParams }: CommonBannerProps) {
   const provisioningEnabled = config.provisioningEnabled;
@@ -33,7 +33,7 @@ export function ProvisionedFolderPreviewBanner({ queryParams }: CommonBannerProp
         title={t('provisioned-folder-preview-banner.folder-pushed-to-repository', 'Folder pushed to repository')}
         severity="info"
         buttonContent={t('provisioned-folder-preview-banner.view-folder', 'View repository status')}
-        onRemove={() => locationService.push(`${PROVISIONING_URL}/${resourcePushedTo}/?tab=overview`)}
+        onRemove={() => locationService.push(getRepositoryOverviewUrl(resourcePushedTo))}
       >
         <Trans i18nKey="provisioned-folder-preview-banner.sync-needed">
           The folder has been successfully pushed to the repository but is not yet available in Grafana. It will appear

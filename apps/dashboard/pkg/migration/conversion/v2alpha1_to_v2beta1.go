@@ -744,11 +744,19 @@ func convertVariable_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVariableKind,
 	}
 
 	if in.GroupByVariableKind != nil {
+		group := ""
+		var uid *string
+		if in.GroupByVariableKind.Spec.Datasource != nil {
+			if in.GroupByVariableKind.Spec.Datasource.Type != nil {
+				group = *in.GroupByVariableKind.Spec.Datasource.Type
+			}
+			uid = in.GroupByVariableKind.Spec.Datasource.Uid
+		}
 		out.GroupByVariableKind = &dashv2beta1.DashboardGroupByVariableKind{
 			Kind:  in.GroupByVariableKind.Kind,
-			Group: *in.GroupByVariableKind.Spec.Datasource.Type,
+			Group: group,
 			Datasource: &dashv2beta1.DashboardV2beta1GroupByVariableKindDatasource{
-				Name: in.GroupByVariableKind.Spec.Datasource.Uid,
+				Name: uid,
 			},
 			Spec: dashv2beta1.DashboardGroupByVariableSpec{
 				Name:         in.GroupByVariableKind.Spec.Name,

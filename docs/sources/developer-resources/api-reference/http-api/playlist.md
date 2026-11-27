@@ -30,17 +30,25 @@ This API complies with the new Grafana API structure. To learn more refer to doc
 
 {{< /admonition >}}
 
+## Requirements
+
+By default, users with the Viewer role can read playlists, and users with the Editor or Admin role can also create, update, and delete them. Users with the None role can also read playlists. If the `playlistsRBAC` feature toggle is turned on, access uses the `playlists:read` and `playlists:write` actions instead. For the related fixed roles, refer to [RBAC role definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/). For more information about the default access, refer to [Organization roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#organization-roles).
+
 ## Endpoints
 
 These are the available endpoints:
 
-| Method | Summary                                 | URI                                                                     |
-| ------ | --------------------------------------- | ----------------------------------------------------------------------- |
-| GET    | [List Playlists](#list-playlists)       | `/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists`        |
-| GET    | [Get a Playlist](#get-a-playlist)       | `/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}` |
-| POST   | [Create a Playlist](#create-a-playlist) | `/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists`        |
-| PUT    | [Update a Playlist](#update-a-playlist) | `/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}` |
-| DELETE | [Delete a Playlist](#delete-a-playlist) | `/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}` |
+**Base path:** `/apis/playlist.grafana.app/v1/namespaces/{namespace}/`
+
+Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+| Method | Summary                                 | Path               |
+| ------ | --------------------------------------- | ------------------ |
+| GET    | [List Playlists](#list-playlists)       | `playlists`        |
+| GET    | [Get a Playlist](#get-a-playlist)       | `playlists/{name}` |
+| POST   | [Create a Playlist](#create-a-playlist) | `playlists`        |
+| PUT    | [Update a Playlist](#update-a-playlist) | `playlists/{name}` |
+| DELETE | [Delete a Playlist](#delete-a-playlist) | `playlists/{name}` |
 
 ## List Playlists
 
@@ -103,12 +111,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied
-
 ## Get a Playlist
 
 `GET /apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}`
@@ -163,13 +165,6 @@ Content-Type: application/json
   }
 }
 ```
-
-### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Playlist not found
 
 ## Create a Playlist
 
@@ -247,14 +242,6 @@ Content-Type: application/json
   }
 }
 ```
-
-### Status codes
-
-- **201:** Created
-- **400:** Errors (invalid JSON)
-- **401:** Unauthorized
-- **403:** Access denied
-- **409:** Conflict (a playlist with the same `metadata.name` already exists)
 
 ## Update a Playlist
 
@@ -344,16 +331,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **200:** Updated
-- **400:** Errors (invalid JSON)
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Playlist not found
-- **409:** Conflict (the playlist changed since you read it)
-- **422:** Invalid playlist, for example because `metadata.resourceVersion` is missing
-
 ## Delete a Playlist
 
 `DELETE /apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}`
@@ -392,13 +369,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **200:** Deleted
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Playlist not found
-
 ## Playlist Item Types
 
 Playlist items support three types:
@@ -406,3 +376,19 @@ Playlist items support three types:
 - `dashboard_by_uid`: Include a specific dashboard by its UID
 - `dashboard_by_tag`: Include all dashboards with a specific tag
 - `dashboard_by_id`: (Deprecated) Include a dashboard by internal ID
+
+## Status codes
+
+The endpoints on this page return the following status codes:
+
+| Code  | Meaning                                                                      | Returned by                                                                                                 |
+| ----- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `200` | OK.                                                                          | [List](#list-playlists), [Get](#get-a-playlist), [Update](#update-a-playlist), [Delete](#delete-a-playlist) |
+| `201` | Created.                                                                     | [Create](#create-a-playlist)                                                                                |
+| `400` | Bad request (invalid JSON).                                                  | [Create](#create-a-playlist), [Update](#update-a-playlist)                                                  |
+| `401` | Unauthorized.                                                                | All endpoints                                                                                               |
+| `403` | Access denied.                                                               | All endpoints                                                                                               |
+| `404` | Playlist not found.                                                          | [Get](#get-a-playlist), [Update](#update-a-playlist), [Delete](#delete-a-playlist)                          |
+| `409` | Conflict (a playlist with the same `metadata.name` already exists).          | [Create](#create-a-playlist)                                                                                |
+| `409` | Conflict (the playlist changed since you read it).                           | [Update](#update-a-playlist)                                                                                |
+| `422` | Invalid playlist, for example because `metadata.resourceVersion` is missing. | [Update](#update-a-playlist)                                                                                |

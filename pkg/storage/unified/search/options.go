@@ -99,7 +99,8 @@ func NewSearchOptions(
 		bleve, err := NewBleveBackend(BleveOptions{
 			Root:                           root,
 			FileThreshold:                  int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
-			IndexCacheTTL:                  cfg.IndexCacheTTL,             // How long to keep the index cache in memory
+			IndexCacheTTL:                  cfg.IndexCacheTTL,
+			IndexCacheTTLIdleOnly:          cfg.IndexCacheTTLIdleOnly,
 			GlobalIndexIdleTimeout:         cfg.GlobalSearchIndexIdleTimeout,
 			BuildVersion:                   cfg.BuildVersion,
 			OwnsIndex:                      ownsIndexFn,
@@ -110,10 +111,11 @@ func NewSearchOptions(
 			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,
 			DiskCleanupUnopenedGracePeriod: cfg.DiskIndexCleanupUnopenedGracePeriod,
 			PostRankAuthz: PostRankAuthzConfig{
-				OverFetchFactor: cfg.SearchPostRankAuthzOverFetchFactor,
-				MaxWindow:       cfg.SearchPostRankAuthzMaxWindow,
-				MaxCandidates:   cfg.SearchPostRankAuthzMaxCandidates,
-				FacetSampleSize: cfg.SearchPostRankAuthzFacetSampleSize,
+				OverFetchFactor:     cfg.SearchPostRankAuthzOverFetchFactor,
+				MaxWindow:           cfg.SearchPostRankAuthzMaxWindow,
+				MaxCandidates:       cfg.SearchPostRankAuthzMaxCandidates,
+				FacetSampleSize:     cfg.SearchPostRankAuthzFacetSampleSize,
+				ExactCountThreshold: cfg.SearchPostRankAuthzExactCountThreshold,
 			},
 			// From the garbage collection settings, so trash and storage cannot
 			// disagree about what is expired.

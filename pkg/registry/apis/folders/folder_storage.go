@@ -45,6 +45,8 @@ type folderStorage struct {
 
 	permissionsOnCreate  bool // cfg.RBAC.PermissionsOnCreation("folder")
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
+	// refreshCreator reloads the creator's permissions once the default permissions are committed.
+	refreshCreator func(ctx context.Context, requester identity.Requester)
 }
 
 func (s *folderStorage) New() runtime.Object {
@@ -196,6 +198,13 @@ func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID i
 	_, err := s.folderPermissionsSvc.SetPermissions(ctx, orgID, uid, permissions...)
 	if err != nil {
 		return err
+	}
+
+	// SetPermissions only clears the local permission cache. Reload the creator's
+	// permissions so that delegated AuthZ caches also see the new grant and the
+	// creator can read the folder in its next request.
+	if s.refreshCreator != nil {
+		s.refreshCreator(ctx, user)
 	}
 
 	return nil

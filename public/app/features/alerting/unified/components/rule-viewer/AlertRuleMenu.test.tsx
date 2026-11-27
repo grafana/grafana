@@ -18,13 +18,55 @@ import {
   mockRulerGrafanaRecordingRule,
 } from 'app/features/alerting/unified/mocks';
 import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
+import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import * as miscUtils from 'app/features/alerting/unified/utils/misc';
 import { fromCombinedRule } from 'app/features/alerting/unified/utils/rule-id';
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
+import { useEnrichmentAbility } from '../../hooks/abilities/otherAbilities';
+import {
+  usePromRuleAdministrationAbility,
+  usePromRuleExportAbility,
+  usePromRuleSilenceAbility,
+} from '../../hooks/abilities/rules/promRuleAbilities';
+import {
+  useRuleAdministrationAbility,
+  useRuleExportAbility,
+  useRuleSilenceAbility,
+} from '../../hooks/abilities/rules/rulerRuleAbilities';
 import { RuleAction } from '../../hooks/abilities/types';
+
+// Call-through spies: the real hooks still run, we only record whether they were invoked.
+jest.mock('../../hooks/abilities/otherAbilities', () => {
+  const actual = jest.requireActual('../../hooks/abilities/otherAbilities');
+  return { ...actual, useEnrichmentAbility: jest.fn(actual.useEnrichmentAbility) };
+});
+jest.mock('../../hooks/abilities/rules/promRuleAbilities', () => {
+  const actual = jest.requireActual('../../hooks/abilities/rules/promRuleAbilities');
+  return {
+    ...actual,
+    usePromRuleAdministrationAbility: jest.fn(actual.usePromRuleAdministrationAbility),
+    usePromRuleExportAbility: jest.fn(actual.usePromRuleExportAbility),
+    usePromRuleSilenceAbility: jest.fn(actual.usePromRuleSilenceAbility),
+  };
+});
+jest.mock('../../hooks/abilities/rules/rulerRuleAbilities', () => {
+  const actual = jest.requireActual('../../hooks/abilities/rules/rulerRuleAbilities');
+  return {
+    ...actual,
+    useRuleAdministrationAbility: jest.fn(actual.useRuleAdministrationAbility),
+    useRuleExportAbility: jest.fn(actual.useRuleExportAbility),
+    useRuleSilenceAbility: jest.fn(actual.useRuleSilenceAbility),
+  };
+});
+
+jest.mock('app/features/alerting/unified/utils/misc', () =>
+  jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(jest.requireActual('app/features/alerting/unified/utils/misc'), { createShareLink: jest.fn() })
+);
 
 const mockOpenAssistant = jest.fn();
 jest.mock('@grafana/assistant', () => ({
@@ -49,10 +91,11 @@ jest.mock('../../hooks/ruleGroup/usePauseAlertRule', () => ({
 
 const server = setupMswServer();
 
-setPluginLinksHook(() => ({
+const mockPluginLinksHook = jest.fn(() => ({
   links: [],
   isLoading: false,
 }));
+setPluginLinksHook(mockPluginLinksHook);
 
 setupDataSources();
 
@@ -111,6 +154,10 @@ describe('AlertRuleMenu', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest
+      .mocked(miscUtils.createShareLink)
+      .mockReset()
+      .mockImplementation(jest.requireActual('app/features/alerting/unified/utils/misc').createShareLink);
     mockPauseExecute.mockResolvedValue(undefined);
     mockOpenAssistant.mockClear();
     // Default: assistant unavailable
@@ -247,6 +294,160 @@ describe('AlertRuleMenu', () => {
       expect(menuContents).toHaveLength(1);
       expect(menuContents).toContain('Copy link');
     });
+  });
+
+  describe('Menu lifecycle', () => {
+    const menuHooks = {
+      useAssistant: mockUseAssistant,
+      usePluginLinks: mockPluginLinksHook,
+      useEnrichmentAbility: jest.mocked(useEnrichmentAbility),
+      usePromRuleAdministrationAbility: jest.mocked(usePromRuleAdministrationAbility),
+      usePromRuleExportAbility: jest.mocked(usePromRuleExportAbility),
+      usePromRuleSilenceAbility: jest.mocked(usePromRuleSilenceAbility),
+      useRuleAdministrationAbility: jest.mocked(useRuleAdministrationAbility),
+      useRuleExportAbility: jest.mocked(useRuleExportAbility),
+      useRuleSilenceAbility: jest.mocked(useRuleSilenceAbility),
+    };
+    const hooksCalledSoFar = () =>
+      Object.entries(menuHooks)
+        .filter(([, hook]) => hook.mock.calls.length > 0)
+        .map(([name]) => name);
+
+    it('runs the ability, assistant and plugin-link hooks only once the More button is clicked', async () => {
+      const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
+
+      render(
+        <AlertRuleMenu
+          promRule={mockRule.promRule}
+          rulerRule={mockRule.rulerRule}
+          identifier={identifier}
+          groupIdentifier={groupIdentifier}
+          handleSilence={handleSilence}
+          handleDelete={handleDelete}
+          handleDuplicateRule={handleDuplicateRule}
+        />
+      );
+      expect(await ui.moreButton.find()).toBeInTheDocument();
+
+      expect(hooksCalledSoFar()).toEqual([]);
+
+      await openMenu();
+
+      expect(hooksCalledSoFar()).toEqual(Object.keys(menuHooks));
+    });
+
+    it('updates the open menu when the rule is paused while the menu stays open', async () => {
+      grantUserPermissions([
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleUpdate,
+        AccessControlAction.FoldersRead,
+      ]);
+      const folderAccessControl = {
+        [AccessControlAction.AlertingRuleRead]: true,
+        [AccessControlAction.AlertingRuleUpdate]: true,
+        [AccessControlAction.FoldersRead]: true,
+      };
+      setFolderAccessControl(folderAccessControl);
+      mockFolderApi(server).folder(
+        'namespace-uid',
+        mockFolder({ uid: 'namespace-uid', title: 'Test Folder', accessControl: folderAccessControl })
+      );
+
+      const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
+      const pausedRule = getGrafanaRule({ rulerRule: mockGrafanaRulerRule({ is_paused: true }) });
+      const renderMenu = (rule: typeof mockRule) => (
+        <AlertRuleMenu
+          promRule={rule.promRule}
+          rulerRule={rule.rulerRule}
+          identifier={identifier}
+          groupIdentifier={groupIdentifier}
+          handleSilence={handleSilence}
+          handleDelete={handleDelete}
+          handleDuplicateRule={handleDuplicateRule}
+        />
+      );
+
+      const { rerender } = render(renderMenu(mockRule));
+      await openMenu();
+      expect(await ui.menuItems.pause.find()).toBeInTheDocument();
+
+      rerender(renderMenu(pausedRule));
+
+      expect(await ui.menuItems.resume.find()).toBeInTheDocument();
+      expect(ui.menuItems.pause.query()).not.toBeInTheDocument();
+    });
+
+    // A bare menu: unlike a row, nothing else here subscribes to what the abilities load.
+    const ruleFolderUid = 'NAMESPACE_UID'; // the folder of every mocked Grafana rule
+    it.each([
+      { gesture: 'hovering over', reachMoreButton: () => user.hover(ui.moreButton.get()) },
+      { gesture: 'tabbing to', reachMoreButton: () => user.tab() },
+    ])(
+      'opens on loaded data, with the first item focused and no new requests, after $gesture the More button',
+      async ({ reachMoreButton }) => {
+        const folderAccessControl = {
+          [AccessControlAction.AlertingRuleRead]: true,
+          [AccessControlAction.AlertingRuleUpdate]: true,
+          [AccessControlAction.AlertingSilenceCreate]: true,
+          [AccessControlAction.FoldersRead]: true,
+        };
+        grantUserPermissions([
+          AccessControlAction.AlertingRuleRead,
+          AccessControlAction.AlertingRuleUpdate,
+          AccessControlAction.AlertingInstanceCreate,
+          AccessControlAction.AlertingSilenceCreate,
+          AccessControlAction.FoldersRead,
+        ]);
+        setFolderAccessControl(folderAccessControl);
+        mockFolderApi(server).folder(
+          ruleFolderUid,
+          mockFolder({ uid: ruleFolderUid, title: 'Test Folder', accessControl: folderAccessControl })
+        );
+
+        const answeredPaths: string[] = [];
+        const recordAnswer = ({ request }: { request: Request }) => answeredPaths.push(new URL(request.url).pathname);
+        server.events.on('response:mocked', recordAnswer);
+        const requests = await captureRequests();
+        // Plugin settings are left out: "Declare incident" fetches its own whenever the menu opens
+        const requestedPaths = () =>
+          requests.map((request) => new URL(request.url).pathname).filter((path) => !path.startsWith('/api/plugins/'));
+
+        const { mockRule, identifier, groupIdentifier } = createDefaultRuleSetup();
+        render(
+          <AlertRuleMenu
+            promRule={mockRule.promRule}
+            rulerRule={mockRule.rulerRule}
+            identifier={identifier}
+            groupIdentifier={groupIdentifier}
+            handleSilence={handleSilence}
+            handleDelete={handleDelete}
+            handleDuplicateRule={handleDuplicateRule}
+          />
+        );
+        expect(await ui.moreButton.find()).toBeInTheDocument();
+        expect(requestedPaths()).toEqual([]);
+
+        await reachMoreButton();
+        await waitFor(() =>
+          expect(answeredPaths).toEqual(
+            expect.arrayContaining([
+              '/api/v1/ngalert',
+              expect.stringMatching(new RegExp(`/folders/${ruleFolderUid}$`)),
+              expect.stringMatching(new RegExp(`/folders/${ruleFolderUid}/access$`)),
+              expect.stringMatching(new RegExp(`/folders/${ruleFolderUid}/parents$`)),
+            ])
+          )
+        );
+        const pathsBeforeOpen = requestedPaths();
+
+        await openMenu();
+        server.events.removeListener('response:mocked', recordAnswer);
+
+        expect(ui.menuItems.silence.get()).toBeInTheDocument();
+        expect(ui.menuItems.pause.get()).toHaveFocus();
+        expect(requestedPaths()).toEqual(pathsBeforeOpen);
+      }
+    );
   });
 
   describe('Permissions', () => {
@@ -1564,7 +1765,7 @@ describe('AlertRuleMenu', () => {
         config.buildInfo.env = 'production';
 
         // Mock createShareLink to return undefined
-        const createShareLinkSpy = jest.spyOn(miscUtils, 'createShareLink');
+        const createShareLinkSpy = jest.mocked(miscUtils.createShareLink);
         createShareLinkSpy.mockReturnValue(undefined);
 
         render(
@@ -1587,7 +1788,9 @@ describe('AlertRuleMenu', () => {
         expect(menuItems.length).toBe(0);
         expect(linkItems.length).toBe(0);
 
-        createShareLinkSpy.mockRestore();
+        createShareLinkSpy
+          .mockReset()
+          .mockImplementation(jest.requireActual('app/features/alerting/unified/utils/misc').createShareLink);
       });
     });
 

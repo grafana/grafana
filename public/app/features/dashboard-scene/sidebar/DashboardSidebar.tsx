@@ -422,11 +422,21 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     return getPendingChangesHistory(getDashboardSceneFor(this).state);
   }
 
+  /** Whether Undo and Redo step through the pending changes' history while the Assistant edits them. */
+  public stepsPendingChangesHistory(): boolean {
+    const state = getDashboardSceneFor(this).state;
+    return Boolean(state.isEditing && getDashboardMode(state) === 'agent' && this.pendingChangesHistory());
+  }
+
   /**
    * Removes last action from undo stack and adds it to redo stack.
    */
   public undoAction() {
-    if (dashboardModesEnabled() && getDashboardMode(getDashboardSceneFor(this).state) !== 'edit') {
+    if (
+      dashboardModesEnabled() &&
+      getDashboardMode(getDashboardSceneFor(this).state) !== 'edit' &&
+      !this.stepsPendingChangesHistory()
+    ) {
       return;
     }
     const history = this.pendingChangesHistory();
@@ -507,7 +517,11 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * Removes last action from redo stack and adds it to undo stack.
    */
   public redoAction() {
-    if (dashboardModesEnabled() && getDashboardMode(getDashboardSceneFor(this).state) !== 'edit') {
+    if (
+      dashboardModesEnabled() &&
+      getDashboardMode(getDashboardSceneFor(this).state) !== 'edit' &&
+      !this.stepsPendingChangesHistory()
+    ) {
       return;
     }
     const history = this.pendingChangesHistory();

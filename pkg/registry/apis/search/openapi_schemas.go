@@ -2,14 +2,15 @@ package search
 
 import (
 	"maps"
-	"strings"
+	"slices"
 
+	openapi "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/util"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	commonv0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
 
 // Go names, because that is how the generated definitions are keyed.
@@ -25,52 +26,44 @@ const (
 	hybridSearchResultsGoName = envelopePkg + searchv0.KindHybridSearchResults
 )
 
-// componentPrefix is where an OpenAPI v3 document keeps its schemas.
-const componentPrefix = "#/components/schemas/"
-
-// friendly is the component name for a definition. Generated dependencies come in
-// two forms — Go import paths, and names already converted by OpenAPIModelName —
-// and converting an already-converted name reverses it twice.
-func friendly(name string) string {
-	if strings.Contains(name, "/") {
-		return util.ToRESTFriendlyName(name)
-	}
-	return name
-}
-
-func schemaRef(goName string) spec.Ref {
-	return spec.MustCreateRef(componentPrefix + friendly(goName))
-}
-
 // envelopeSchemas returns the components a route referencing roots needs, since
 // each group version's spec is self-contained.
-//
-// Dependencies are followed rather than listed so a new envelope field cannot
-// reference a component nobody publishes — which renders as an empty model with no
-// error. The common package is merged in because the envelope reaches types it
-// owns, and through them metav1.LabelSelector.
 func envelopeSchemas(roots ...string) map[string]spec.Schema {
-	defs := searchv0.GetOpenAPIDefinitions(schemaRef)
-	maps.Copy(defs, commonv0.GetOpenAPIDefinitions(schemaRef))
+	return builder.RouteSchemas(envelopeDefinitions, roots...)
+}
 
-	out := map[string]spec.Schema{}
-	queue := append([]string{}, roots...)
-	for len(queue) > 0 {
-		name := queue[0]
-		queue = queue[1:]
-
-		if _, seen := out[friendly(name)]; seen {
-			continue
-		}
-		def, ok := defs[name]
-		if !ok {
-			continue
-		}
-		out[friendly(name)] = def.Schema
-		queue = append(queue, def.Dependencies...)
+// The common package is merged in because the envelope reaches types it owns, and
+// through them metav1.LabelSelector.
+func envelopeDefinitions(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
+	defs := searchv0.GetOpenAPIDefinitions(ref)
+	maps.Copy(defs, commonv0.GetOpenAPIDefinitions(ref))
+	for name, def := range defs {
+		schema := def.Schema
+		clearInvalidEnumDefaults(&schema)
+		def.Schema = schema
+		defs[name] = def
 	}
+	return defs
+}
 
-	return out
+// clearInvalidEnumDefaults removes a default the schema itself disallows.
+// openapi-gen gives a required field its zero value as the default, so an enum
+// defaults to "" — outside it, and a value the API rejects with a 422. Callers
+// read these schemas from the published spec, so they must not be offered it.
+func clearInvalidEnumDefaults(schema *spec.Schema) {
+	if schema == nil {
+		return
+	}
+	if len(schema.Enum) > 0 && schema.Default != nil && !slices.Contains(schema.Enum, schema.Default) {
+		schema.Default = nil
+	}
+	for name, property := range schema.Properties {
+		clearInvalidEnumDefaults(&property)
+		schema.Properties[name] = property
+	}
+	if schema.Items != nil {
+		clearInvalidEnumDefaults(schema.Items.Schema)
+	}
 }
 
 // jsonContent describes a JSON body carrying the named Go type.
@@ -79,7 +72,7 @@ func jsonContent(goName string, example any) map[string]*spec3.MediaType {
 		"application/json": {
 			MediaTypeProps: spec3.MediaTypeProps{
 				Schema: &spec.Schema{
-					SchemaProps: spec.SchemaProps{Ref: schemaRef(goName)},
+					SchemaProps: spec.SchemaProps{Ref: builder.RouteSchemaRef(goName)},
 				},
 				Example: example,
 			},

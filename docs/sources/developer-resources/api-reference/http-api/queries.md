@@ -32,34 +32,29 @@ The legacy [Query history API](https://grafana.com/docs/grafana/<GRAFANA_VERSION
 
 Use this API to manage [saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries), also known as the query library. A saved query stores one or more data source queries with a title, description, and tags, so you and your team can reuse them in Explore and dashboards.
 
-All paths use the `queries.grafana.app` group and the `v1` version. Replace `{namespace}` with your namespace. To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-
 ## Before you begin
 
 Saved queries are only available in Grafana Enterprise and Grafana Cloud.
 
 ## Requirements
 
-You need the following permissions. For more information, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
-
-| Operation                  | Action          | Fixed role             |
-| -------------------------- | --------------- | ---------------------- |
-| Get and list               | `queries:read`  | `fixed:queries:reader` |
-| Create, update, and delete | `queries:write` | `fixed:queries:writer` |
-
-By default, the Viewer basic role includes `fixed:queries:reader`, and the Editor basic role includes `fixed:queries:writer`.
+By default, users with the Viewer role can read saved queries, and users with the Editor role can also create, update, and delete them. For the related actions and fixed roles, refer to [RBAC role definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/).
 
 ## Endpoints
 
 The following table lists the main endpoints. The Swagger documentation also includes endpoints to search saved queries, delete a collection of saved queries, apply partial updates with `PATCH`, and render a saved query with its template variables replaced.
 
-| Method | Summary                                       | URI                                                                  |
-| ------ | --------------------------------------------- | -------------------------------------------------------------------- |
-| GET    | [List saved queries](#list-saved-queries)     | `/apis/queries.grafana.app/v1/namespaces/{namespace}/queries`        |
-| GET    | [Get a saved query](#get-a-saved-query)       | `/apis/queries.grafana.app/v1/namespaces/{namespace}/queries/{name}` |
-| POST   | [Create a saved query](#create-a-saved-query) | `/apis/queries.grafana.app/v1/namespaces/{namespace}/queries`        |
-| PUT    | [Update a saved query](#update-a-saved-query) | `/apis/queries.grafana.app/v1/namespaces/{namespace}/queries/{name}` |
-| DELETE | [Delete a saved query](#delete-a-saved-query) | `/apis/queries.grafana.app/v1/namespaces/{namespace}/queries/{name}` |
+**Base path:** `/apis/queries.grafana.app/v1/namespaces/{namespace}/`
+
+Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+| Method | Summary                                       | Path             |
+| ------ | --------------------------------------------- | ---------------- |
+| GET    | [List saved queries](#list-saved-queries)     | `queries`        |
+| GET    | [Get a saved query](#get-a-saved-query)       | `queries/{name}` |
+| POST   | [Create a saved query](#create-a-saved-query) | `queries`        |
+| PUT    | [Update a saved query](#update-a-saved-query) | `queries/{name}` |
+| DELETE | [Delete a saved query](#delete-a-saved-query) | `queries/{name}` |
 
 ## List saved queries
 
@@ -144,12 +139,6 @@ Content-Type: application/json
 
 Continue making requests with the updated `continue` token until you receive a response without a `continue` field in the metadata, which means you've reached the last page.
 
-### Status codes
-
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied
-
 ## Get a saved query
 
 `GET /apis/queries.grafana.app/v1/namespaces/{namespace}/queries/{name}`
@@ -216,13 +205,6 @@ Content-Type: application/json
   }
 }
 ```
-
-### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Saved query not found, or you don't have query access to all referenced data sources
 
 ## Create a saved query
 
@@ -330,14 +312,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **201:** Created
-- **400:** Errors (invalid JSON)
-- **401:** Unauthorized
-- **403:** Access denied, for example if you don't have query access to all referenced data sources
-- **409:** Conflict (a saved query with the same `metadata.name` already exists)
-
 ## Update a saved query
 
 `PUT /apis/queries.grafana.app/v1/namespaces/{namespace}/queries/{name}`
@@ -437,15 +411,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **200:** Updated
-- **400:** Errors (invalid JSON)
-- **401:** Unauthorized
-- **403:** Access denied, for example if you don't have query access to all referenced data sources in the updated query
-- **404:** Saved query not found, or you don't have query access to all referenced data sources in the existing query
-- **409:** Conflict (the saved query changed since you read it)
-
 ## Delete a saved query
 
 `DELETE /apis/queries.grafana.app/v1/namespaces/{namespace}/queries/{name}`
@@ -486,12 +451,23 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
+## Status codes
 
-- **200:** Deleted
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Saved query not found, or you don't have query access to all referenced data sources
+The endpoints on this page return the following status codes:
+
+| Code  | Meaning                                                                                                        | Returned by                                                                                                              |
+| ----- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `200` | OK.                                                                                                            | [List](#list-saved-queries), [Get](#get-a-saved-query), [Update](#update-a-saved-query), [Delete](#delete-a-saved-query) |
+| `201` | Created.                                                                                                       | [Create](#create-a-saved-query)                                                                                          |
+| `400` | Bad request (invalid JSON).                                                                                    | [Create](#create-a-saved-query), [Update](#update-a-saved-query)                                                         |
+| `401` | Unauthorized.                                                                                                  | All endpoints                                                                                                            |
+| `403` | Access denied.                                                                                                 | [List](#list-saved-queries), [Get](#get-a-saved-query), [Delete](#delete-a-saved-query)                                  |
+| `403` | Access denied, for example if you don't have query access to all referenced data sources.                      | [Create](#create-a-saved-query)                                                                                          |
+| `403` | Access denied, for example if you don't have query access to all referenced data sources in the updated query. | [Update](#update-a-saved-query)                                                                                          |
+| `404` | Saved query not found, or you don't have query access to all referenced data sources.                          | [Get](#get-a-saved-query), [Delete](#delete-a-saved-query)                                                               |
+| `404` | Saved query not found, or you don't have query access to all referenced data sources in the existing query.    | [Update](#update-a-saved-query)                                                                                          |
+| `409` | Conflict (a saved query with the same `metadata.name` already exists).                                         | [Create](#create-a-saved-query)                                                                                          |
+| `409` | Conflict (the saved query changed since you read it).                                                          | [Update](#update-a-saved-query)                                                                                          |
 
 ## Differences from the legacy Query history API
 

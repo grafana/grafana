@@ -29,8 +29,6 @@ This API is in `beta`, so it might change in future releases.
 
 Use this API to manage [alert enrichment](https://grafana.com/docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/alert-enrichment/) in Grafana Cloud. An `AlertEnrichment` resource runs one or more enrichment steps when an alert fires and attaches additional context—such as data source query results, annotations, AI-generated explanations, or investigation links—before the alert notification is delivered.
 
-All paths use the `alertenrichment.grafana.app` group and the `v1beta1` version. Replace `{namespace}` with your stack namespace (`stacks-<STACK_ID>`). To learn more about namespaces in Grafana Cloud, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#grafana-cloud).
-
 ## Before you begin
 
 Before you begin, ensure you have the following:
@@ -76,14 +74,18 @@ An `AlertEnrichment` resource contains the following fields in `metadata` and `s
 
 The following table lists the main endpoints for `AlertEnrichment` resources. The Swagger specification also includes `DELETE` on the collection endpoint and watch query parameters.
 
-| Method | Summary                                                             | URI                                                                                         |
-| ------ | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| GET    | [List alert enrichment resources](#list-alert-enrichment-resources) | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments`        |
-| GET    | [Get an alert enrichment](#get-an-alert-enrichment)                 | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
-| POST   | [Create an alert enrichment](#create-an-alert-enrichment)           | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments`        |
-| PUT    | [Update an alert enrichment](#update-an-alert-enrichment)           | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
-| PATCH  | [Patch an alert enrichment](#patch-an-alert-enrichment)             | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
-| DELETE | [Delete an alert enrichment](#delete-an-alert-enrichment)           | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
+**Base path:** `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/`
+
+Replace `{namespace}` with your stack namespace, in the format `stacks-<STACK_ID>`. To learn more about namespaces in Grafana Cloud, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#grafana-cloud).
+
+| Method | Summary                                                             | Path                       |
+| ------ | ------------------------------------------------------------------- | -------------------------- |
+| GET    | [List alert enrichment resources](#list-alert-enrichment-resources) | `alert-enrichments`        |
+| GET    | [Get an alert enrichment](#get-an-alert-enrichment)                 | `alert-enrichments/{name}` |
+| POST   | [Create an alert enrichment](#create-an-alert-enrichment)           | `alert-enrichments`        |
+| PUT    | [Update an alert enrichment](#update-an-alert-enrichment)           | `alert-enrichments/{name}` |
+| PATCH  | [Patch an alert enrichment](#patch-an-alert-enrichment)             | `alert-enrichments/{name}` |
+| DELETE | [Delete an alert enrichment](#delete-an-alert-enrichment)           | `alert-enrichments/{name}` |
 
 #### List alert enrichment resources
 
@@ -173,12 +175,6 @@ Content-Type: application/json
 }
 ```
 
-##### Status codes
-
-- **200:** `OK`
-- **401:** Unauthorized
-- **403:** Access denied
-
 #### Get an alert enrichment
 
 `GET /apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}`
@@ -203,13 +199,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the `AlertEnrichment` object shown in [List alert enrichment resources](#list-alert-enrichment-resources).
-
-##### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Alert enrichment not found
 
 #### Create an alert enrichment
 
@@ -318,15 +307,6 @@ Content-Type: application/json
 }
 ```
 
-##### Status codes
-
-- **201:** Created
-- **400:** Bad request (invalid JSON or invalid matcher or duration syntax)
-- **401:** Unauthorized
-- **403:** Access denied
-- **409:** Conflict (an alert enrichment with the same `metadata.name` already exists)
-- **422:** Schema validation error
-
 #### Update an alert enrichment
 
 `PUT /apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}`
@@ -390,16 +370,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with the updated `AlertEnrichment` resource and an incremented `metadata.resourceVersion`.
 
-##### Status codes
-
-- **200:** Updated
-- **400:** Bad request (invalid JSON)
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Alert enrichment not found
-- **409:** Conflict (`metadata.resourceVersion` doesn't match the stored version)
-- **422:** Schema validation error
-
 #### Patch an alert enrichment
 
 `PATCH /apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}`
@@ -431,16 +401,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the updated `AlertEnrichment` resource.
-
-##### Status codes
-
-- **200:** Updated
-- **400:** Bad request (invalid JSON or patch)
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Alert enrichment not found
-- **409:** Conflict (`metadata.resourceVersion` doesn't match the stored version)
-- **422:** Schema validation error
 
 #### Delete an alert enrichment
 
@@ -480,16 +440,27 @@ Content-Type: application/json
 }
 ```
 
-##### Status codes
-
-- **200:** Deleted
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Alert enrichment not found
-
 ### Details
 
 When `spec.alertRuleUids` is omitted or empty, the enrichment applies globally across alerts matching `labelMatchers`, `annotationMatchers`, and `receivers`. When `spec.alertRuleUids` lists one or more alert rule UIDs, the enrichment runs only for those rules. Refer to [Requirements](#requirements) for how global and per-rule scoping affects access.
+
+## Status codes
+
+The endpoints on this page return the following status codes:
+
+| Code  | Meaning                                                                      | Returned by                                                                                                                                                                                  |
+| ----- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `200` | OK.                                                                          | [List](#list-alert-enrichment-resources), [Get](#get-an-alert-enrichment), [Update](#update-an-alert-enrichment), [Patch](#patch-an-alert-enrichment), [Delete](#delete-an-alert-enrichment) |
+| `201` | Created.                                                                     | [Create](#create-an-alert-enrichment)                                                                                                                                                        |
+| `400` | Bad request (invalid JSON or invalid matcher or duration syntax).            | [Create](#create-an-alert-enrichment)                                                                                                                                                        |
+| `400` | Bad request (invalid JSON).                                                  | [Update](#update-an-alert-enrichment)                                                                                                                                                        |
+| `400` | Bad request (invalid JSON or patch).                                         | [Patch](#patch-an-alert-enrichment)                                                                                                                                                          |
+| `401` | Unauthorized.                                                                | All endpoints                                                                                                                                                                                |
+| `403` | Access denied.                                                               | All endpoints                                                                                                                                                                                |
+| `404` | Alert enrichment not found.                                                  | [Get](#get-an-alert-enrichment), [Update](#update-an-alert-enrichment), [Patch](#patch-an-alert-enrichment), [Delete](#delete-an-alert-enrichment)                                           |
+| `409` | Conflict (an alert enrichment with the same `metadata.name` already exists). | [Create](#create-an-alert-enrichment)                                                                                                                                                        |
+| `409` | Conflict (`metadata.resourceVersion` doesn't match the stored version).      | [Update](#update-an-alert-enrichment), [Patch](#patch-an-alert-enrichment)                                                                                                                   |
+| `422` | Schema validation error.                                                     | [Create](#create-an-alert-enrichment), [Update](#update-an-alert-enrichment), [Patch](#patch-an-alert-enrichment)                                                                            |
 
 ## Related resources
 

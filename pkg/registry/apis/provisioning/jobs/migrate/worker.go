@@ -14,24 +14,21 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 )
 
-//go:generate mockery --name Migrator --structname MockMigrator --inpackage --filename mock_migrator.go --with-expecter
-type Migrator interface {
-	Migrate(ctx context.Context, rw repository.ReaderWriter, job provisioning.Job, progress jobs.JobProgressRecorder) error
-}
-
 type MigrationWorker struct {
-	unifiedMigrator Migrator
+	namespaceCleaner NamespaceCleaner
+	exportWorker     jobs.Worker
+	syncWorker       jobs.Worker
 }
 
-func NewMigrationWorkerFromUnified(unifiedMigrator Migrator) *MigrationWorker {
+func NewMigrationWorker(
+	namespaceCleaner NamespaceCleaner,
+	exportWorker jobs.Worker,
+	syncWorker jobs.Worker,
+) *MigrationWorker {
 	return &MigrationWorker{
-		unifiedMigrator: unifiedMigrator,
-	}
-}
-
-func NewMigrationWorker(unifiedMigrator Migrator) *MigrationWorker {
-	return &MigrationWorker{
-		unifiedMigrator: unifiedMigrator,
+		namespaceCleaner: namespaceCleaner,
+		exportWorker:     exportWorker,
+		syncWorker:       syncWorker,
 	}
 }
 
@@ -70,5 +67,5 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return errors.New("migration job submitted targeting repository that is not a ReaderWriter")
 	}
 
-	return w.unifiedMigrator.Migrate(ctx, rw, job, progress)
+	return w.migrate(ctx, rw, job, progress)
 }

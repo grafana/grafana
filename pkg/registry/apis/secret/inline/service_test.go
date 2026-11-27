@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
@@ -145,7 +146,7 @@ func TestProvideInlineSecureValueService(t *testing.T) {
 
 		desc := "custom desc"
 
-		name, err := inlineService.CreateInline(t.Context(), owner, common.NewSecretValue("test-value"), &desc)
+		name, err := inlineService.CreateInline(t.Context(), owner, resource.NewSecretValue("test-value"), &desc)
 		require.NoError(t, err)
 		require.Equal(t, "test-value", name)
 

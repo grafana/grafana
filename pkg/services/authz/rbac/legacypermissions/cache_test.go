@@ -3,10 +3,10 @@ package legacypermissions_test
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
 	"testing"
 
+	authcache "github.com/grafana/authlib/cache"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -15,10 +15,10 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -40,8 +40,9 @@ func (m *migratedGrants) ResolveCurrentUserPermissions(_ context.Context, _ iden
 
 func TestIntegrationLoaderCacheOptionsAndFailures(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
-	for _, enterprise := range []bool{false, true} {
-		t.Run(fmt.Sprintf("enterprise=%t", enterprise), func(t *testing.T) {
+	for _, mode := range []string{"oss", "enterprise", "standalone"} {
+		t.Run(mode, func(t *testing.T) {
+			enterprise := mode != "oss"
 			sql := db.NewTestStore(t)
 			a := ac.Permission{Action: "users:read", Scope: "users:*"}
 			b := ac.Permission{Action: "users:create"}
@@ -50,8 +51,13 @@ func TestIntegrationLoaderCacheOptionsAndFailures(t *testing.T) {
 			z := &migratedGrants{permissions: []ac.Permission{a, b, b}}
 			loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(),
 				resourcepermissions.NewActionSetService(), localcache.New(0, 0),
-				loaderConfig(true), featuremgmt.WithFeatures(), &enforcementLicense{enabled: enterprise}, z,
+				loaderConfig(true), &enforcementLicense{enabled: enterprise}, z,
 			)
+			if mode == "standalone" {
+				loader = legacypermissions.NewEnforcedLoader(legacysql.NewDatabaseProvider(sql),
+					resourcepermissions.NewActionSetService(), authcache.NewLocalCache(authcache.Config{}),
+					loaderConfig(true), z, nil)
+			}
 			requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleViewer}
 			check := func(options ac.Options, want ...ac.Permission) {
 				t.Helper()
@@ -75,7 +81,7 @@ func TestIntegrationLoaderCacheOptionsAndFailures(t *testing.T) {
 			check(ac.Options{ReloadCache: true}, a, a) // Best effort, not a partial SQL success.
 			z.err, z.permissions = nil, []ac.Permission{b}
 			check(ac.Options{}, a, a, c) // Failed reload retains the last successful cache entry.
-			loader.ClearUserPermissionCache(requester)
+			require.NoError(t, loader.ClearUserPermissionCache(context.Background(), requester))
 			check(ac.Options{}, a, a, b)
 			check(ac.Options{ReloadCache: true, SkipZanzanaCache: true}, a, a, b)
 		})
@@ -89,7 +95,7 @@ func TestIntegrationLoaderConcurrentSnapshots(t *testing.T) {
 	seedGrant(t, sql, "managed:one", 1, 7, permission)
 	loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(),
 		resourcepermissions.NewActionSetService(), localcache.New(0, 0),
-		loaderConfig(true), featuremgmt.WithFeatures(), &licensing.OSSLicensingService{},
+		loaderConfig(true), &licensing.OSSLicensingService{},
 		&migratedGrants{permissions: []ac.Permission{{Action: "users:create"}}},
 	)
 	requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleViewer}
@@ -146,7 +152,7 @@ func TestIntegrationLoaderComposesCurrentExternalGroups(t *testing.T) {
 	grants := &contextualGrants{}
 	loader := legacypermissions.NewLoader(db.NewTestStore(t), legacypermissions.NewRoleCatalog(),
 		resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg,
-		featuremgmt.WithFeatures(), &enforcementLicense{enabled: true}, grants)
+		&enforcementLicense{enabled: true}, grants)
 	requester := &user.SignedInUser{UserID: 7, UserUID: "alice", OrgID: 1}
 	for i, teams := range [][]string{{"team-a"}, {"team-b"}, nil, {"team-a"}} {
 		requester.ExternalGroups = teams

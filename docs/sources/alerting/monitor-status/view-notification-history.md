@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 title: View notification history
-weight: 445
+weight: 800
 ---
 
 # View notification history
