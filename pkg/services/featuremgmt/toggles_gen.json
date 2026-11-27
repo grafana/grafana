@@ -5745,6 +5745,21 @@
     },
     {
       "metadata": {
+        "name": "provisioning.v1Beta2API",
+        "resourceVersion": "1795739155195",
+        "creationTimestamp": "2026-11-27T00:25:55Z"
+      },
+      "spec": {
+        "description": "Serves the provisioning.grafana.app/v1beta2 API, stored as v0alpha1",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "provisioningExport",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-02-23T12:09:08Z"

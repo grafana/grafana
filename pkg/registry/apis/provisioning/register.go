@@ -491,6 +491,12 @@ func RegisterAPIService(
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	apiregistration.RegisterAPI(v1beta1Builder)
 
+	// Registered last: the order of the group's versions decides which version the shared
+	// v0alpha1/v1beta1 structs are persisted as.
+	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningV1Beta2API, false, openfeature.TransactionContext(ctx)) {
+		apiregistration.RegisterAPI(newV1beta2APIBuilder(builder))
+	}
+
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
 	return builder, nil
 }

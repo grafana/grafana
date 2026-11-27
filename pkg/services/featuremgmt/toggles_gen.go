@@ -99,6 +99,10 @@ const (
 	// Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers
 	FlagProvisioningPerformance = "provisioning.performance"
 
+	// FlagProvisioningV1Beta2API
+	// Serves the provisioning.grafana.app/v1beta2 API, stored as v0alpha1
+	FlagProvisioningV1Beta2API = "provisioning.v1Beta2API"
+
 	// FlagAwsAsyncQueryCaching
 	// Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled
 	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
