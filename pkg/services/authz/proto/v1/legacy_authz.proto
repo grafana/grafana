@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
+
 option go_package = "github.com/grafana/grafana/pkg/services/authz/proto/v1";
 
 package authz.extention.v1;
@@ -12,6 +14,13 @@ service LegacyAuthzService {
 
   // Deprecated: transitional compatibility API for legacy permission enumeration.
   rpc LegacyGetUserPermissions(LegacyGetUserPermissionsRequest) returns (stream LegacyGetUserPermissionsResponse) {
+    option deprecated = true;
+  }
+
+  // LegacySearchUsersPermissions is available only on Grafana's private embedded channel.
+  //
+  // Deprecated: transitional compatibility API for legacy permission search.
+  rpc LegacySearchUsersPermissions(LegacySearchUsersPermissionsRequest) returns (stream LegacySearchUsersPermissionsResponse) {
     option deprecated = true;
   }
 }
@@ -156,4 +165,51 @@ message LegacyBackgroundIdentity {
 
 message LegacyPermissionScopes {
   repeated string scopes = 1;
+}
+
+message LegacySearchUsersPermissionsRequest {
+  string namespace = 1;
+  reserved 2;
+  reserved "caller";
+  string action = 3;
+  string action_prefix = 4;
+  string scope = 5;
+  int64 user_id = 6;
+  repeated string action_sets = 7;
+  repeated string role_prefixes = 8;
+  LegacySearchRequester requester = 9;
+}
+
+message LegacySearchRequester {
+  LegacyPermissionIdentity identity = 1;
+  int64 org_id = 2;
+  repeated LegacyUserPermission effective_permissions = 3;
+  repeated LegacyUserPermission global_permissions = 4;
+  repeated string external_groups = 5;
+  bool has_directory_context = 6;
+  // Only the private embedded service may use this credential for IAM directory lookups.
+  string iam_id_token = 7;
+  string username = 8;
+  string name = 9;
+  // The direct IAM router forwards the authenticated caller's access token.
+  string iam_access_token = 10;
+}
+
+message LegacySearchUsersPermissionsResponse {
+  int64 user_id = 1;
+  repeated LegacySearchPermission permissions = 2;
+  bool nil_permissions = 3;
+}
+
+message LegacySearchPermission {
+  string action = 1;
+  string scope = 2;
+  string kind = 3;
+  string attribute = 4;
+  string identifier = 5;
+  string datasource_type = 6;
+  int64 id = 7;
+  int64 role_id = 8;
+  google.protobuf.Timestamp created = 9;
+  google.protobuf.Timestamp updated = 10;
 }

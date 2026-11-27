@@ -2893,16 +2893,6 @@
       "count": 1
     }
   },
-  "public/app/features/playlist/PlaylistForm.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 4
-    }
-  },
-  "public/app/features/playlist/ShareModal.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 3
-    }
-  },
   "public/app/features/plugins/admin/components/PluginDetailsBody.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1

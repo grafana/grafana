@@ -1216,6 +1216,20 @@
     },
     {
       "metadata": {
+        "name": "authz.legacyUserPermissionsSearch",
+        "resourceVersion": "1795541778092",
+        "creationTimestamp": "2026-11-24T17:36:18Z"
+      },
+      "spec": {
+        "description": "Route user permission searches through embedded AuthZ.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "authz.legacyUserPermissionsShadow",
         "resourceVersion": "1793097096771",
         "creationTimestamp": "2026-10-27T09:31:45Z",
