@@ -469,7 +469,7 @@ describe('secureJsonFieldsMapper', () => {
 describe('settingsSpecMapper', () => {
   const stored = { enabled: true, pinned: true, jsonData: { a: 1, b: 2 } };
 
-  it.each<{ desc: string; data: Partial<PluginMeta>; expected: Partial<SettingsSpec> }>([
+  it.each<{ desc: string; data: Partial<PluginMeta>; expected: SettingsSpec }>([
     { desc: 'keeps the stored spec when nothing is passed', data: {}, expected: stored },
     {
       desc: 'keeps the stored enabled when enabled is omitted',
@@ -501,13 +501,6 @@ describe('settingsSpecMapper', () => {
     { desc: 'ignores unrelated fields', data: { id: 'some-plugin', name: 'Some Plugin' }, expected: stored },
   ])('$desc', ({ data, expected }) => {
     expect(settingsSpecMapper(stored, data)).toStrictEqual(expected);
-  });
-
-  it('returns only the passed fields when nothing is stored', () => {
-    expect(settingsSpecMapper(undefined, { enabled: true, pinned: true, jsonData: { a: 1 } })).toStrictEqual({
-      enabled: true,
-      jsonData: { a: 1 },
-    });
   });
 });
 

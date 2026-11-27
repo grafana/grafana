@@ -30,11 +30,8 @@ import {
  * `POST /api/plugins/:id/settings` endpoint: an empty or omitted `jsonData` keeps the stored one,
  * and `pinned` is never stored. An omitted `enabled` keeps the stored value (legacy set `false`).
  */
-export function settingsSpecMapper(
-  stored: Partial<v0alpha1SettingsSpec> | undefined,
-  data: Partial<PluginMeta>
-): Partial<v0alpha1SettingsSpec> {
-  const result: Partial<v0alpha1SettingsSpec> = { ...stored };
+export function settingsSpecMapper(stored: v0alpha1SettingsSpec, data: Partial<PluginMeta>): v0alpha1SettingsSpec {
+  const result: v0alpha1SettingsSpec = { ...stored };
 
   if (data.enabled !== undefined) {
     result.enabled = data.enabled;
