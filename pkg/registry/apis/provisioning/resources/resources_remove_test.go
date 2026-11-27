@@ -1077,7 +1077,7 @@ func TestRenameResourceFile(t *testing.T) {
 		name, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old/x.json", "old-ref", "new/x.json", "new-ref", nil)
 
 		require.ErrorIs(t, err, ErrInvalidAnnotations)
-		require.EqualError(t, err, "Git Sync ignores annotations whose values are not strings: example.com/enabled")
+		require.EqualError(t, err, "Git Sync ignores 1 annotation whose value is not a string. Quote its value in the file to keep it.")
 		require.Equal(t, "same-name", name)
 		mockClient.AssertCalled(t, "Update", mock.Anything, newObj, mock.Anything, mock.Anything)
 	})

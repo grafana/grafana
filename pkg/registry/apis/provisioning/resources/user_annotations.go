@@ -2,6 +2,7 @@ package resources
 
 import (
 	"errors"
+	"fmt"
 	"slices"
 	"strings"
 
@@ -20,8 +21,13 @@ type InvalidAnnotationsError struct {
 	Keys []string
 }
 
+// Error reports only how many annotations were dropped: the keys come from the
+// file, and the message is copied into job and repository status.
 func (e *InvalidAnnotationsError) Error() string {
-	return "Git Sync ignores annotations whose values are not strings: " + strings.Join(e.Keys, ", ")
+	if len(e.Keys) == 1 {
+		return "Git Sync ignores 1 annotation whose value is not a string. Quote its value in the file to keep it."
+	}
+	return fmt.Sprintf("Git Sync ignores %d annotations whose values are not strings. Quote their values in the file to keep them.", len(e.Keys))
 }
 
 func (e *InvalidAnnotationsError) Unwrap() error {

@@ -192,7 +192,8 @@ func testPullRequestWebhookPostsComment(t *testing.T, helper *common.GitTestHelp
 	require.Contains(t, comment, "Grafana detected dashboard changes in this pull request")
 	require.Contains(t, comment, dashboardPath)
 	require.Contains(t, comment, "PR Comment Dashboard Updated")
-	require.Contains(t, comment, "> ⚠️ **Validation failed:** Git Sync ignores annotations whose values are not strings: @\u200bteam/enabled")
+	require.Contains(t, comment, "> ⚠️ **Validation failed:** Git Sync ignores 1 annotation whose value is not a string. Quote its value in the file to keep it.")
+	require.NotContains(t, comment, "team/enabled", "the comment reports how many annotations were ignored, not their keys")
 	require.NotContains(t, comment, "example.com/owner")
 
 	originalURL := commentLink(t, comment, "[view current](")

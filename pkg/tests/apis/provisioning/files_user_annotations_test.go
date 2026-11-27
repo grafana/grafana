@@ -323,7 +323,7 @@ func TestIntegrationProvisioning_FileWritesKeepUserAnnotations(t *testing.T) {
 		job := helper.AwaitLatestHistoricJob(t, repo)
 		common.RequireJobWarning(t, job)
 		warnings := strings.Join(common.MustNestedStringSlice(job.Object, "status", "warnings"), "\n")
-		require.Contains(t, warnings, "Git Sync ignores annotations whose values are not strings: "+flagKey+" (file: "+mixedPath)
+		require.Contains(t, warnings, "Git Sync ignores 1 annotation whose value is not a string. Quote its value in the file to keep it. (file: "+mixedPath)
 
 		live := liveDashboard(t, mixedName)
 		annotations := live.GetAnnotations()

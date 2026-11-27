@@ -2101,7 +2101,7 @@ func TestEvaluateFile_UserAnnotations(t *testing.T) {
 	const selection = "  annotations:\n    grafana.app/useCrossDashboardVariables: '{\"global\":\"all\"}'\n"
 	const reserved = "    grafana.app/alsoThisOne: ok\n"
 	const mixedAnnotations = selection + "    example.com/enabled: true\n"
-	const invalidAnnotationsError = "Git Sync ignores annotations whose values are not strings: example.com/enabled"
+	const invalidAnnotationsError = "Git Sync ignores 1 annotation whose value is not a string. Quote its value in the file to keep it."
 	for _, tt := range []struct {
 		name          string
 		action        repository.FileAction

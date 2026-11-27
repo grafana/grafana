@@ -64,6 +64,13 @@ func TestOmitAnnotationFromFile(t *testing.T) {
 	}
 }
 
+func TestInvalidAnnotationsError(t *testing.T) {
+	require.EqualError(t, &InvalidAnnotationsError{Keys: []string{"example.com/enabled"}},
+		"Git Sync ignores 1 annotation whose value is not a string. Quote its value in the file to keep it.")
+	require.EqualError(t, &InvalidAnnotationsError{Keys: []string{"@team/a", "[docs](http://e)"}},
+		"Git Sync ignores 2 annotations whose values are not strings. Quote their values in the file to keep them.")
+}
+
 func TestOmitNotUserAnnotations(t *testing.T) {
 	obj := map[string]any{"metadata": map[string]any{"annotations": map[string]any{
 		"example.com/owner":                   "team-a",
