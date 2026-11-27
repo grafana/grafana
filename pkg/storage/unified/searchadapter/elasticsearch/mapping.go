@@ -43,7 +43,7 @@ func indexMapping(provider resource.SearchFieldsProvider, key resource.Namespace
 			put(field.Prefix+name, elasticsearchObject{"type": "keyword"})
 		}
 		if name, ok := search.NgramVariant(def); ok {
-			put(field.Prefix+name, elasticsearchObject{"type": "text", "analyzer": "grafana_ngram"})
+			put(field.Prefix+name, elasticsearchObject{"type": "wildcard"})
 		}
 	}
 	for _, field := range []string{elasticsearchDocumentIDField, resource.SEARCH_FIELD_RV_STRING, resource.SEARCH_FIELD_DELETED_RV_SORT} {
@@ -66,13 +66,12 @@ func indexMapping(provider resource.SearchFieldsProvider, key resource.Namespace
 	}
 	return elasticsearchObject{
 		// Leave shard and replica counts to Elasticsearch defaults or index templates.
-		"settings": elasticsearchObject{"index.max_ngram_diff": 7,
+		"settings": elasticsearchObject{
 			"analysis": elasticsearchObject{
-				"filter": elasticsearchObject{"grafana_ngrams": elasticsearchObject{"type": "ngram", "min_gram": 3, "max_gram": 10}, "grafana_stop": elasticsearchObject{"type": "stop", "stopwords": stopwords}},
+				"filter": elasticsearchObject{"grafana_stop": elasticsearchObject{"type": "stop", "stopwords": stopwords}},
 				"analyzer": elasticsearchObject{
 					// Use the Bleve stop-word list to keep text matching consistent across backends.
 					standardAnalyzer: elasticsearchObject{"type": "custom", "tokenizer": "standard", "filter": []string{"lowercase", "grafana_stop"}},
-					"grafana_ngram":  elasticsearchObject{"type": "custom", "tokenizer": "whitespace", "filter": []string{"grafana_ngrams", "lowercase", "unique"}},
 				},
 			},
 		},

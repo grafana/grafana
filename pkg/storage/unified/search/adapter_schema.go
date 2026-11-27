@@ -78,7 +78,6 @@ func KeywordVariant(def resource.SearchFieldDefinition) (string, bool) { return 
 func NgramVariant(def resource.SearchFieldDefinition) (string, bool)   { return ngramVariant(def) }
 func LowerStrings(value any) (any, bool)                               { return lowerStrings(value) }
 func RemoveSmallTerms(text string) string                              { return removeSmallTerms(text) }
-func SplitTermCharacters(text string) string                           { return splitTermCharacters(text) }
 func FirstTermSeparator(text string) (string, bool)                    { return firstTermSeparator(text) }
 func ParseBooleanFilterValue(text string) (bool, bool)                 { return parseBooleanFilterValue(text) }
 func ParseDoubleFilterValue(key, text string) (float64, *resourcepb.ErrorResult) {

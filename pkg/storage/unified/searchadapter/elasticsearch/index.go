@@ -24,7 +24,7 @@ import (
 func (s *elasticsearchAdapter) indexMetadata() map[string]string {
 	ref := s.scope.Indexes[0]
 	return map[string]string{
-		"owner": "grafana-search-adapter-v1", "namespace": s.scope.Namespace,
+		"owner": "grafana-search-adapter-v2", "namespace": s.scope.Namespace,
 		"group": ref.Group, "resource": ref.Resource, "generation": ref.Generation, "schema_revision": ref.SchemaRevision,
 	}
 }
@@ -202,7 +202,7 @@ func (s *elasticsearchAdapter) indexDocument(id, name string, doc *enginepb.Sear
 		app = make(map[string]any)
 	}
 	source := elasticsearchObject{
-		elasticsearchDocumentIDField: id, "name": name, "title": doc.Title, "title_phrase": strings.ToLower(doc.Title), "title_ngram": doc.Title,
+		elasticsearchDocumentIDField: id, "name": name, "title": doc.Title, "title_phrase": strings.ToLower(doc.Title), "title_ngram": strings.ToLower(doc.Title),
 		"description": doc.Description, "folder": doc.Folder, "tags": doc.Tags, "labels": doc.Labels,
 		"created": doc.Created, "createdBy": doc.CreatedBy, "updated": doc.Updated, "updatedBy": doc.UpdatedBy,
 		"ownerReferences": doc.OwnerReferences, resource.SEARCH_FIELD_RV_STRING: strconv.FormatInt(doc.ResourceVersion, 10),
@@ -246,7 +246,8 @@ func (s *elasticsearchAdapter) indexDocument(id, name string, doc *enginepb.Sear
 			source[resource.SEARCH_FIELD_PREFIX+kw], name, sortValue = lower, kw, lower
 		}
 		if ngram, ok := search.NgramVariant(def); ok {
-			source[resource.SEARCH_FIELD_PREFIX+ngram] = value
+			lower, _ := search.LowerStrings(value)
+			source[resource.SEARCH_FIELD_PREFIX+ngram] = lower
 		}
 		if def.Array && def.HasCapability(resource.SearchCapabilitySort) {
 			if values := enginequery.FlattenSearchResultValue(sortValue); len(values) > 0 {

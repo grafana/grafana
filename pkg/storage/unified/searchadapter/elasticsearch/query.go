@@ -38,6 +38,7 @@ type elasticsearchQuery struct {
 type elasticsearchQueryBuilder struct {
 	schema           search.AdapterSchema
 	selectableFields []string
+	partialFields    map[string]string
 }
 
 func newElasticsearchQueryBuilder(provider resource.SearchFieldsProvider, key resource.NamespacedResource, selectableFields []string) (*elasticsearchQueryBuilder, error) {
@@ -45,9 +46,18 @@ func newElasticsearchQueryBuilder(provider resource.SearchFieldsProvider, key re
 	if err != nil {
 		return nil, err
 	}
+	partialFields := make(map[string]string)
+	for _, field := range search.AdapterFields(provider, key) {
+		if variant, ok := search.NgramVariant(field.Definition); ok {
+			name := field.Prefix + variant
+			partialFields[field.Name] = name
+			partialFields[name] = name
+		}
+	}
 	return &elasticsearchQueryBuilder{
 		schema:           fields,
 		selectableFields: slices.Clone(selectableFields),
+		partialFields:    partialFields,
 	}, nil
 }
 
@@ -365,7 +375,7 @@ func (b *elasticsearchQueryBuilder) textQuery(text string, requested []*resource
 				continue
 			}
 			pattern := text
-			if name == resource.SEARCH_FIELD_TITLE {
+			if name == resource.SEARCH_FIELD_TITLE || b.partialFields[name] == name {
 				pattern = strings.ToLower(pattern)
 			}
 			queries = append(queries, elasticsearchWildcard(name, pattern))
@@ -378,6 +388,16 @@ func (b *elasticsearchQueryBuilder) textQuery(text string, requested []*resource
 			// Native match queries would coerce text into numeric or boolean values.
 			queries = append(queries, elasticsearchObject{"match_none": elasticsearchObject{}})
 			continue
+		}
+		if partial := b.partialFields[field.Name]; partial != "" {
+			if partial == field.Name {
+				queries = append(queries, elasticsearchPartialMatch(partial, text, field.Boost))
+				continue
+			}
+			// The title already gets a separate partial clause via QueryFields.
+			if field.Name != resource.SEARCH_FIELD_TITLE {
+				queries = append(queries, elasticsearchPartialMatch(partial, text, field.Boost))
+			}
 		}
 		exact, lowered := b.schema.TextTerm(field.Name)
 		if strings.HasPrefix(field.Name, referenceFieldPrefix) || strings.HasPrefix(field.Name, labelFieldPrefix) {
@@ -397,6 +417,22 @@ func (b *elasticsearchQueryBuilder) textQuery(text string, requested []*resource
 		queries = append(queries, elasticsearchObject{queryType: elasticsearchObject{field.Name: options}})
 	}
 	return elasticsearchCombine("should", queries)
+}
+
+var escapeWildcard = strings.NewReplacer(`\`, `\\`, `*`, `\*`, `?`, `\?`)
+
+// A wildcard field checks the substring against the full value, not just shared grams.
+func elasticsearchPartialMatch(field, text string, boost float32) elasticsearchObject {
+	words := strings.Fields(search.RemoveSmallTerms(text))
+	if len(words) == 0 {
+		return elasticsearchObject{"match_none": elasticsearchObject{}}
+	}
+	queries := make([]elasticsearchObject, 0, len(words))
+	for _, word := range words {
+		pattern := "*" + escapeWildcard.Replace(strings.ToLower(word)) + "*"
+		queries = append(queries, elasticsearchObject{"wildcard": elasticsearchObject{field: elasticsearchObject{"value": pattern, "boost": boost}}})
+	}
+	return elasticsearchCombine("must", queries)
 }
 
 func elasticsearchCombine(operator string, queries []elasticsearchObject) elasticsearchObject {
@@ -464,10 +500,8 @@ func elasticsearchFieldFilter(field, value string) elasticsearchObject {
 		{"term": elasticsearchObject{resource.SEARCH_FIELD_TITLE_PHRASE: strings.TrimSuffix(strings.ToLower(value), " ")}},
 		tokenQuery,
 	}
-	if !strings.ContainsAny(value, whitespaceCharacters) {
-		queries = append(queries, elasticsearchObject{"match": elasticsearchObject{resource.SEARCH_FIELD_TITLE_NGRAM: elasticsearchObject{
-			"query": search.RemoveSmallTerms(search.SplitTermCharacters(value)), "operator": "and",
-		}}})
+	if !strings.ContainsAny(value, whitespaceCharacters+"*") {
+		queries = append(queries, elasticsearchPartialMatch(resource.SEARCH_FIELD_TITLE_NGRAM, value, 1))
 	}
 	return elasticsearchCombine("should", queries)
 }

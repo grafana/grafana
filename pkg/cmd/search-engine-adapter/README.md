@@ -12,4 +12,6 @@ The prototype loads search field declarations from Grafana’s built-in manifest
 
 Use `-listen` with `-allow-insecure-listen` to bind beyond loopback. The adapter uses unauthenticated plaintext gRPC; use it only on an isolated development network.
 
+Partial search matches actual substrings. Result order may differ from Bleve.
+
 Starting the adapter does not enable Grafana's remote search backend. Grafana still needs configuration for the adapter endpoint.

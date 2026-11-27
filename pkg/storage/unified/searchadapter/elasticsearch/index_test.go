@@ -43,6 +43,7 @@ func TestElasticsearchIndexThroughAdapter(t *testing.T) {
 	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
 		{Group: key.Group, Version: "v1", Resource: key.Resource}: {
 			{Name: "views", Path: "spec.views", Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}},
+			{Name: "summary", Path: "spec.summary", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityPartial}},
 		},
 	}, nil)
 	opts := ElasticsearchAdapterOptions{Endpoint: endpoint, Index: index, Key: indexKey, Generation: generation, SchemaRevision: revision, Fields: provider}
@@ -170,6 +171,34 @@ func TestElasticsearchIndexThroughAdapter(t *testing.T) {
 	require.NoError(t, write(deleteItem))
 	require.NoError(t, write(deleteItem), "already-deleted document is a no-op")
 	require.Empty(t, find("Renamed"))
+
+	t.Run("partial search requires a substring", func(t *testing.T) {
+		for _, name := range []string{"Database Overview", "DataBaseOps", "Metadata"} {
+			item := build(name, "nightly", rv+2)
+			item.Doc.Key = proto.CloneOf(key)
+			item.Doc.Key.Name = strings.ToLower(strings.ReplaceAll(name, " ", "-"))
+			item.Doc.Fields["summary"] = name
+			require.NoError(t, write(item))
+		}
+		cases := map[string]*grpcbackend.QueryBackend{
+			"title text":     query("DATABASE"),
+			"title filter":   query(""),
+			"app field text": query("DATABASE"),
+		}
+		cases["title filter"].Query.Requirements = []*enginepb.Requirement{{Key: "title", Operator: enginepb.SelectorOperator_SELECTOR_OPERATOR_EQUALS, Values: []string{"database"}}}
+		cases["app field text"].Query.QueryFields = []*enginepb.QueryField{{Name: "summary", Boost: 1}}
+		for name, backend := range cases {
+			t.Run(name, func(t *testing.T) {
+				res, err := backend.Search(t.Context(), enginequery.Request{Size: 10, Fields: []string{"title"}})
+				require.NoError(t, err)
+				titles := make([]any, 0, len(res.Hits))
+				for _, hit := range res.Hits {
+					titles = append(titles, hit.Fields["title"])
+				}
+				require.ElementsMatch(t, []any{"Database Overview", "DataBaseOps"}, titles)
+			})
+		}
+	})
 }
 
 func startTestAdapter(t *testing.T, opts ElasticsearchAdapterOptions) enginepb.SearchEngineClient {
