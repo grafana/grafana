@@ -50,6 +50,21 @@ func (RepositoryCommitOptions) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositoryCommitOptions"
 }
 
+// +enum
+// +k8s:openapi-gen=true
+type RepositoryCommitOptionsSigningMethod string
+
+const (
+	RepositoryCommitOptionsSigningMethodGpg   RepositoryCommitOptionsSigningMethod = "gpg"
+	RepositoryCommitOptionsSigningMethodSsh   RepositoryCommitOptionsSigningMethod = "ssh"
+	RepositoryCommitOptionsSigningMethodSmime RepositoryCommitOptionsSigningMethod = "smime"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for RepositoryCommitOptionsSigningMethod.
+func (RepositoryCommitOptionsSigningMethod) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositoryCommitOptionsSigningMethod"
+}
+
 // +k8s:openapi-gen=true
 type RepositoryBranchOptions struct {
 	// Template for the branch name created in branch workflow.
@@ -98,6 +113,20 @@ func (RepositoryPullRequestOptions) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositoryPullRequestOptions"
 }
 
+// +enum
+// +k8s:openapi-gen=true
+type RepositorySpecWorkflows string
+
+const (
+	RepositorySpecWorkflowsWrite  RepositorySpecWorkflows = "write"
+	RepositorySpecWorkflowsBranch RepositorySpecWorkflows = "branch"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for RepositorySpecWorkflows.
+func (RepositorySpecWorkflows) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositorySpecWorkflows"
+}
+
 // +k8s:openapi-gen=true
 type RepositorySyncOptions struct {
 	// Enabled must be saved as true before any sync job will run
@@ -116,6 +145,39 @@ func NewRepositorySyncOptions() *RepositorySyncOptions {
 // OpenAPIModelName returns the OpenAPI model name for RepositorySyncOptions.
 func (RepositorySyncOptions) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositorySyncOptions"
+}
+
+// +enum
+// +k8s:openapi-gen=true
+type RepositorySyncOptionsTarget string
+
+const (
+	RepositorySyncOptionsTargetInstance   RepositorySyncOptionsTarget = "instance"
+	RepositorySyncOptionsTargetFolder     RepositorySyncOptionsTarget = "folder"
+	RepositorySyncOptionsTargetFolderless RepositorySyncOptionsTarget = "folderless"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for RepositorySyncOptionsTarget.
+func (RepositorySyncOptionsTarget) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositorySyncOptionsTarget"
+}
+
+// +enum
+// +k8s:openapi-gen=true
+type RepositorySpecType string
+
+const (
+	RepositorySpecTypeLocal            RepositorySpecType = "local"
+	RepositorySpecTypeGithub           RepositorySpecType = "github"
+	RepositorySpecTypeGithubEnterprise RepositorySpecType = "githubEnterprise"
+	RepositorySpecTypeGit              RepositorySpecType = "git"
+	RepositorySpecTypeBitbucket        RepositorySpecType = "bitbucket"
+	RepositorySpecTypeGitlab           RepositorySpecType = "gitlab"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for RepositorySpecType.
+func (RepositorySpecType) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositorySpecType"
 }
 
 // +k8s:openapi-gen=true
@@ -350,66 +412,4 @@ func NewRepositorySpec() *RepositorySpec {
 // OpenAPIModelName returns the OpenAPI model name for RepositorySpec.
 func (RepositorySpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositorySpec"
-}
-
-// +enum
-// +k8s:openapi-gen=true
-type RepositoryCommitOptionsSigningMethod string
-
-const (
-	RepositoryCommitOptionsSigningMethodGpg   RepositoryCommitOptionsSigningMethod = "gpg"
-	RepositoryCommitOptionsSigningMethodSsh   RepositoryCommitOptionsSigningMethod = "ssh"
-	RepositoryCommitOptionsSigningMethodSmime RepositoryCommitOptionsSigningMethod = "smime"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for RepositoryCommitOptionsSigningMethod.
-func (RepositoryCommitOptionsSigningMethod) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositoryCommitOptionsSigningMethod"
-}
-
-// +enum
-// +k8s:openapi-gen=true
-type RepositorySyncOptionsTarget string
-
-const (
-	RepositorySyncOptionsTargetInstance   RepositorySyncOptionsTarget = "instance"
-	RepositorySyncOptionsTargetFolder     RepositorySyncOptionsTarget = "folder"
-	RepositorySyncOptionsTargetFolderless RepositorySyncOptionsTarget = "folderless"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for RepositorySyncOptionsTarget.
-func (RepositorySyncOptionsTarget) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositorySyncOptionsTarget"
-}
-
-// +enum
-// +k8s:openapi-gen=true
-type RepositorySpecWorkflows string
-
-const (
-	RepositorySpecWorkflowsWrite  RepositorySpecWorkflows = "write"
-	RepositorySpecWorkflowsBranch RepositorySpecWorkflows = "branch"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for RepositorySpecWorkflows.
-func (RepositorySpecWorkflows) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositorySpecWorkflows"
-}
-
-// +enum
-// +k8s:openapi-gen=true
-type RepositorySpecType string
-
-const (
-	RepositorySpecTypeLocal            RepositorySpecType = "local"
-	RepositorySpecTypeGithub           RepositorySpecType = "github"
-	RepositorySpecTypeGithubEnterprise RepositorySpecType = "githubEnterprise"
-	RepositorySpecTypeGit              RepositorySpecType = "git"
-	RepositorySpecTypeBitbucket        RepositorySpecType = "bitbucket"
-	RepositorySpecTypeGitlab           RepositorySpecType = "gitlab"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for RepositorySpecType.
-func (RepositorySpecType) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositorySpecType"
 }

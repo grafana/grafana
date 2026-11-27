@@ -4,6 +4,7 @@
 
 package v1beta2
 
+// +enum
 #HealthFailureType: "hook" | "health"
 
 #HealthStatus: {

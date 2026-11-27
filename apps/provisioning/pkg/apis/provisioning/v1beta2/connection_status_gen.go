@@ -127,9 +127,7 @@ type ConnectionStatus struct {
 	// Conditions represent the latest available observations of the connection's state.
 	// +listType=map
 	// +listMapKey=type
-	// +patchMergeKey=type
-	// +patchStrategy=merge
-	Conditions []ConnectionCondition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+	Conditions []ConnectionCondition `json:"conditions,omitempty"`
 	// The connection health status
 	Health ConnectionHealthStatus `json:"health"`
 	// Token holds metadata about the last generated connection token, used to avoid

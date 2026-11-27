@@ -660,9 +660,7 @@ func schema_pkg_apis_provisioning_v1beta2_ConnectionStatus(ref common.ReferenceC
 								"x-kubernetes-list-map-keys": []interface{}{
 									"type",
 								},
-								"x-kubernetes-list-type":       "map",
-								"x-kubernetes-patch-merge-key": "type",
-								"x-kubernetes-patch-strategy":  "merge",
+								"x-kubernetes-list-type": "map",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -3287,9 +3285,7 @@ func schema_pkg_apis_provisioning_v1beta2_RepositoryStatus(ref common.ReferenceC
 								"x-kubernetes-list-map-keys": []interface{}{
 									"type",
 								},
-								"x-kubernetes-list-type":       "map",
-								"x-kubernetes-patch-merge-key": "type",
-								"x-kubernetes-patch-strategy":  "merge",
+								"x-kubernetes-list-type": "map",
 							},
 						},
 						SchemaProps: spec.SchemaProps{

@@ -5,7 +5,6 @@ repository: {
 	pluralName: "Repositories"
 	validation: operations: ["CREATE", "UPDATE"]
 	mutation: operations: ["CREATE", "UPDATE"]
-	selectableFields: ["spec.connection.name"]
 	secure: [
 		{key: "token", description: "Token used to connect the configured repository"},
 		{key: "webhookSecret", description: "Some webhooks (including github) require a secret key value"},
@@ -79,7 +78,7 @@ repository: {
 			// Enabled must be saved as true before any sync job will run
 			enabled: bool
 			// Where values should be saved
-			target: "instance" | "folder" | "folderless"
+			target: #SyncOptionsTarget
 			// The interval between sync runs. The system defines a default value for this field, which will overwrite the user-defined one in case the latter is zero or lower than the system-defined one.
 			intervalSeconds?: int64
 		}
@@ -124,7 +123,7 @@ repository: {
 			signerEmail?: string
 			// Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime".
 			// When empty, commits are not signed.
-			signingMethod?: "gpg" | "ssh" | "smime"
+			signingMethod?: #CommitOptionsSigningMethod
 			// When true, commits are authored by the signer identity
 			// (signerName/signerEmail).
 			signerIsAuthor?: bool
@@ -178,6 +177,8 @@ repository: {
 			// Incremental synchronization for versioned repositories
 			incremental?: bool
 		}
+
+		// +enum
 		#JobState: "pending" | "working" | "success" | "warning" | "error"
 		#ResourceCount: {
 			group:    string
@@ -203,6 +204,7 @@ repository: {
 			// It is expressed as Unix milliseconds. 0 means the quota limits have not been refreshed yet.
 			updatedAt?: int64
 		}
+
 		#DeletionStatus: {
 			// State is the phase of the deletion.
 			state?: "Blocked"
@@ -214,8 +216,26 @@ repository: {
 			// showing to users.
 			message?: string
 			// Cause classifies the blocking error. It may be absent on older statuses.
-			cause?: "user" | "system"
+			cause?: #DeletionStatusCause
 		}
+
+		// Inline disjunctions cannot carry the +enum marker that publishes their values in OpenAPI,
+		// so they are named here, matching the type names codegen gives the inline form.
+
+		// +enum
+		#CommitOptionsSigningMethod: "gpg" | "ssh" | "smime"
+
+		// +enum
+		#SyncOptionsTarget: "instance" | "folder" | "folderless"
+
+		// +enum
+		#DeletionStatusCause: "user" | "system"
+
+		// +enum
+		#SpecWorkflows: "write" | "branch"
+
+		// +enum
+		#SpecType: "local" | "github" | "githubEnterprise" | "git" | "bitbucket" | "gitlab"
 		spec: {
 			// The repository display name (shown in the UI)
 			title: string
@@ -231,11 +251,11 @@ repository: {
 			// UI driven Workflow that allow changes to the contends of the repository.
 			// The order is relevant for defining the precedence of the workflows.
 			// When empty, the repository does not support any edits (eg, readonly)
-			workflows: [...("write" | "branch")]
+			workflows: [...#SpecWorkflows]
 			// Sync settings -- how values are pulled from the repository into grafana
 			sync: #SyncOptions
 			// The repository type.  When selected oneOf the values below should be non-nil
-			type: "local" | "github" | "githubEnterprise" | "git" | "bitbucket" | "gitlab"
+			type: #SpecType
 			// Webhook settings for the repository.
 			// When specified, the base URL overrides the auto-detected Grafana public URL
 			// used to register webhooks with the external Git provider.
@@ -272,8 +292,6 @@ repository: {
 			// Conditions represent the latest available observations of the repository's state.
 			// +listType=map
 			// +listMapKey=type
-			// +patchMergeKey=type
-			// +patchStrategy=merge
 			conditions?: [...#Condition]
 			// This will get updated with the current health status (and updated periodically)
 			health: #HealthStatus

@@ -232,6 +232,20 @@ func (RepositoryDeletionStatus) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositoryDeletionStatus"
 }
 
+// +enum
+// +k8s:openapi-gen=true
+type RepositoryDeletionStatusCause string
+
+const (
+	RepositoryDeletionStatusCauseUser   RepositoryDeletionStatusCause = "user"
+	RepositoryDeletionStatusCauseSystem RepositoryDeletionStatusCause = "system"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for RepositoryDeletionStatusCause.
+func (RepositoryDeletionStatusCause) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositoryDeletionStatusCause"
+}
+
 // +k8s:openapi-gen=true
 type RepositoryQuotaStatus struct {
 	// MaxRepositories is the maximum number of repositories allowed.
@@ -266,9 +280,7 @@ type RepositoryStatus struct {
 	// Conditions represent the latest available observations of the repository's state.
 	// +listType=map
 	// +listMapKey=type
-	// +patchMergeKey=type
-	// +patchStrategy=merge
-	Conditions []RepositoryCondition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+	Conditions []RepositoryCondition `json:"conditions,omitempty"`
 	// This will get updated with the current health status (and updated periodically)
 	Health RepositoryHealthStatus `json:"health"`
 	// Sync information with the last sync information
@@ -303,18 +315,4 @@ func NewRepositoryStatus() *RepositoryStatus {
 // OpenAPIModelName returns the OpenAPI model name for RepositoryStatus.
 func (RepositoryStatus) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositoryStatus"
-}
-
-// +enum
-// +k8s:openapi-gen=true
-type RepositoryDeletionStatusCause string
-
-const (
-	RepositoryDeletionStatusCauseUser   RepositoryDeletionStatusCause = "user"
-	RepositoryDeletionStatusCauseSystem RepositoryDeletionStatusCause = "system"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for RepositoryDeletionStatusCause.
-func (RepositoryDeletionStatusCause) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositoryDeletionStatusCause"
 }
