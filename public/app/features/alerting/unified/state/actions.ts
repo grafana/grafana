@@ -90,6 +90,26 @@ export const fetchRulerRulesAction = createAsyncThunk(
   }
 );
 
+/** Loads the names of the external rules sources that the user can see. The error stays in `state.rulesSourceList`. */
+const fetchRulesSourceListAction = createAsyncThunk(
+  alertingActionTypePrefix.fetchRulesSourceList,
+  async (): Promise<string[]> => {
+    const dataSources = await withSerializedError(getDataSourcesForRules());
+    return dataSources.map((ds) => ds.name);
+  }
+);
+
+/** The names of the external rules sources, or an empty list when the list fails to load. */
+async function loadRulesSourceList(dispatch: ThunkDispatch): Promise<string[]> {
+  const result = await dispatch(fetchRulesSourceListAction());
+
+  if (fetchRulesSourceListAction.rejected.match(result)) {
+    logWarning('Failed to load the rules source list', { error: result.error.message ?? 'unknown' });
+    return [];
+  }
+  return [...result.payload];
+}
+
 export function fetchPromAndRulerRulesAction({
   rulesSourceName,
   identifier,
@@ -106,6 +126,11 @@ export function fetchPromAndRulerRulesAction({
   state?: string[];
 }): ThunkResult<Promise<void>> {
   return async (dispatch) => {
+    // Feature discovery reads the rules source list, so its failure must reach `state.rulesSourceList` too.
+    if (rulesSourceName !== GRAFANA_RULES_SOURCE_NAME) {
+      await loadRulesSourceList(dispatch);
+    }
+
     const { data: dsFeatures } = await dispatch(
       featureDiscoveryApi.endpoints.discoverDsFeatures.initiate({ rulesSourceName })
     );
@@ -124,27 +149,13 @@ interface FetchPromRulesRulesActionProps {
   state?: string[];
 }
 
-/** Loads the names of the external rules sources that the user can see. The error stays in `state.rulesSourceList`. */
-const fetchRulesSourceListAction = createAsyncThunk(
-  alertingActionTypePrefix.fetchRulesSourceList,
-  async (): Promise<string[]> => {
-    const dataSources = await withSerializedError(getDataSourcesForRules());
-    return dataSources.map((ds) => ds.name);
-  }
-);
-
 /**
  * The names of all rules sources that the user can see, as `getAllRulesSourceNames` returns them.
  * When the external list fails, the failure is stored in `state.rulesSourceList` and the Grafana-managed source is
  * still returned.
  */
 async function getRulesSourceNames(dispatch: ThunkDispatch): Promise<string[]> {
-  const result = await dispatch(fetchRulesSourceListAction());
-  const names = fetchRulesSourceListAction.fulfilled.match(result) ? [...result.payload] : [];
-
-  if (fetchRulesSourceListAction.rejected.match(result)) {
-    logWarning('Failed to load the rules source list', { error: result.error.message ?? 'unknown' });
-  }
+  const names = await loadRulesSourceList(dispatch);
 
   if (getGlobalRuleAbility(RuleAction.View).granted) {
     names.push(GRAFANA_RULES_SOURCE_NAME);

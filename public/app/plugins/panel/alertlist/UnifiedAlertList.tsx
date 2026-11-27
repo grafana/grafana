@@ -247,8 +247,8 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   const havePreviousResults = Object.values(promRulesRequests).some((state) => state.result);
 
-  // Only the all-sources fetch loads the rules source list, so a panel for one data source ignores its error.
-  const showRulesSourceListError = !dataSourceName && Boolean(rulesSourceListError);
+  // A Grafana-only panel does not use the rules source list, so its error does not apply.
+  const showRulesSourceListError = dataSourceName !== GRAFANA_RULES_SOURCE_NAME && Boolean(rulesSourceListError);
 
   return (
     <ScrollContainer minHeight="100%">

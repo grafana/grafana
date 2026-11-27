@@ -259,7 +259,15 @@ describe('UnifiedAlertList', () => {
       );
     });
 
-    it('shows no warning when the panel shows the rules of one data source', async () => {
+    it('shows a warning when the panel shows the rules of one external data source', async () => {
+      renderPanel({ datasource: 'Mimir' });
+
+      expect(await screen.findByRole('alert', { name: 'Failed to load data source-managed rules' })).toHaveTextContent(
+        'list failed'
+      );
+    });
+
+    it('shows no warning when the panel shows only the Grafana-managed rules', async () => {
       const store = mockUnifiedAlertingStore({
         ...grafanaRuleMock,
         rulesSourceList: { loading: false, dispatched: true, result: undefined, error: { message: 'list failed' } },

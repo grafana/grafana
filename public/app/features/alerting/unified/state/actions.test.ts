@@ -7,9 +7,9 @@ import * as dataSourcesForRulesModule from '../hooks/useDataSourcesForRules';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockDataSource } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
-import { getAllRulesSourceNames } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getAllRulesSourceNames } from '../utils/datasource';
 
-import { fetchAllPromRulesAction } from './actions';
+import { fetchAllPromRulesAction, fetchPromAndRulerRulesAction } from './actions';
 
 jest.mock('../hooks/useDataSourcesForRules', () => makeSpyable('../hooks/useDataSourcesForRules'));
 
@@ -61,5 +61,35 @@ describe('fetchAllPromRulesAction', () => {
     await store.dispatch(fetchAllPromRulesAction());
 
     expect(store.getState().unifiedAlerting.rulesSourceList.error).toBeUndefined();
+  });
+});
+
+describe('fetchPromAndRulerRulesAction', () => {
+  beforeEach(() => {
+    grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]);
+    setupDataSources(mockDataSource({ uid: 'mimir', name: 'Mimir', jsonData: { manageAlerts: true } }));
+  });
+
+  it('stores the rules source list error when it fetches the rules of an external rules source', async () => {
+    const listSpy = jest
+      .spyOn(dataSourcesForRulesModule, 'getDataSourcesForRules')
+      .mockRejectedValue(new Error('list failed'));
+    const store = configureStore();
+
+    await store.dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: 'Mimir' }));
+
+    expect(store.getState().unifiedAlerting.rulesSourceList.error?.message).toBe('list failed');
+    listSpy.mockRestore();
+  });
+
+  it('does not load the rules source list when it fetches the Grafana-managed rules', async () => {
+    const listSpy = jest.spyOn(dataSourcesForRulesModule, 'getDataSourcesForRules');
+    const store = configureStore();
+
+    await store.dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
+
+    expect(listSpy).not.toHaveBeenCalled();
+    expect(store.getState().unifiedAlerting.rulesSourceList.dispatched).toBe(false);
+    listSpy.mockRestore();
   });
 });
