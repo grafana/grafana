@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -43,16 +44,17 @@ func setupTestEnv(t testing.TB, registerRoles bool) *Service {
 	sql := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	ac := &Service{
-		cache:          localcache.ProvideService(),
-		cfg:            cfg,
-		features:       featuremgmt.WithFeatures(),
-		log:            log.New("accesscontrol"),
-		registrations:  accesscontrol.RegistrationList{},
-		roles:          accesscontrol.BuildBasicRoleDefinitions(),
-		store:          database.ProvideService(sql),
-		sql:            sql,
-		permRegistry:   permreg.ProvidePermissionRegistry(),
-		actionResolver: resourcepermissions.NewActionSetService(),
+		openFeatureClient: openfeature.NewDefaultClient(),
+		cache:             localcache.ProvideService(),
+		cfg:               cfg,
+		features:          featuremgmt.WithFeatures(),
+		log:               log.New("accesscontrol"),
+		registrations:     accesscontrol.RegistrationList{},
+		roles:             accesscontrol.BuildBasicRoleDefinitions(),
+		store:             database.ProvideService(sql),
+		sql:               sql,
+		permRegistry:      permreg.ProvidePermissionRegistry(),
+		actionResolver:    resourcepermissions.NewActionSetService(),
 	}
 
 	if registerRoles {

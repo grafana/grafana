@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Grammar } from 'prismjs';
 
@@ -779,6 +779,31 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
         </LogDetailsContext.Provider>
       );
       expect(await screen.findByPlaceholderText('Search field names and values')).toBeInTheDocument();
+    });
+  });
+
+  // A Document Picture-in-Picture window (the Grafana Assistant pop-out) is another realm, as an iframe is: its
+  // elements fail this window's `instanceof` checks.
+  describe('In another window', () => {
+    test('Clicking a button in the log line does not count as a click on the line', () => {
+      const iframe = document.createElement('iframe');
+      document.body.appendChild(iframe);
+      const otherDocument = iframe.contentDocument!;
+      const container = otherDocument.body.appendChild(otherDocument.createElement('div'));
+      const { unmount } = render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} />
+        </LogListContextProvider>,
+        { container }
+      );
+
+      // user-event drives pointer input through this window's document, so fire the other window's event directly
+      fireEvent.click(within(otherDocument.body).getByRole('button', { name: 'Log menu' }));
+
+      expect(defaultProps.onClick).not.toHaveBeenCalled();
+      // Unmount before the iframe goes, or React cannot remove the line from it.
+      unmount();
+      iframe.remove();
     });
   });
 });

@@ -2,79 +2,72 @@ package provisioning
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/operators/internal/supervision"
+	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 )
 
-func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies) (runErr error) {
-	logger := newOperatorLogger("provisioning-jobqueue-controller")
-	logger.Info("Starting provisioning job queue controller")
+var JobQueueOperator = runner.Operator{
+	Name:        "provisioning-jobqueue",
+	Description: "Pick and execute provisioning jobs using lease-based claiming",
+	Logger:      "provisioning-jobqueue-controller",
+	Defaults:    operatorDefaults,
+	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
+		controllerCfg, err := setupJobQueueControllerFromConfig(rt)
+		if err != nil {
+			return nil, err
+		}
+		manifestWatcher, err := controllerCfg.ManifestWatcher()
+		if err != nil {
+			return nil, err
+		}
+		return &runner.Parts{
+			Services: []services.Service{manifestWatcher},
+			Run: func(ctx context.Context, ready func()) error {
+				return runJobQueueController(ctx, rt.Logger, controllerCfg, ready)
+			},
+			// Running jobs get their full timeout to finish before the process exits.
+			ShutdownTimeout: controllerCfg.maxJobTimeout + 30*time.Second,
+		}, nil
+	},
+}
 
-	controllerCfg, err := setupJobQueueControllerFromConfig(deps.Config, deps.Registerer)
-	if err != nil {
-		return fmt.Errorf("failed to setup operator: %w", err)
-	}
-
-	manifestWatcher, err := controllerCfg.ManifestWatcher()
-	if err != nil {
-		return err
-	}
-	ctx, stopServices, err := supervision.Start(ctx, controllerCfg.natsSubscriber, manifestWatcher)
-	defer func() {
-		deps.HealthNotifier.SetNotReady()
-		runErr = errors.Join(runErr, stopServices())
-	}()
-	if err != nil {
-		return err
-	}
-
+func runJobQueueController(ctx context.Context, logger logging.Logger, controllerCfg *jobQueueControllerConfig, ready func()) error {
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
-	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobs.ClaimExpiry, deps.Registerer)
+	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobs.ClaimExpiry, controllerCfg.Registry())
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	queue, err := buildJobQueue(controllerCfg, deps.Registerer, jobStore, jobHistoryWriter)
+	queue, err := buildJobQueue(controllerCfg, controllerCfg.Registry(), jobStore, jobHistoryWriter)
 	if err != nil {
 		return fmt.Errorf("build job queue: %w", err)
 	}
 
-	var wg sync.WaitGroup
-
-	wg.Go(func() {
-		logger.Info("job queue controller started")
+	queueDone := make(chan struct{})
+	go func() {
+		defer close(queueDone)
 		if err := queue.Run(ctx); err != nil {
 			logger.Error("job driver failed", "error", err)
 		}
 		logger.Info("job driver stopped")
-	})
+	}()
 
 	if !cache.WaitForCacheSync(ctx.Done(), queue.HasSynced) {
 		return fmt.Errorf("failed to sync job informer cache")
 	}
-
-	logger.Info("job queue operator is ready")
-	deps.HealthNotifier.SetReady()
-
-	<-ctx.Done()
-	deps.HealthNotifier.SetNotReady()
-	logger.Info("shutdown signal received, waiting for goroutines to finish")
-
-	awaitShutdown(logger, &wg, controllerCfg.maxJobTimeout+30*time.Second)
+	ready()
+	<-queueDone
 	return nil
 }
 
@@ -87,13 +80,13 @@ type jobQueueControllerConfig struct {
 	maxSyncWorkers       int
 }
 
-func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*jobQueueControllerConfig, error) {
-	controllerCfg, err := setupFromConfig(cfg, registry)
+func setupJobQueueControllerFromConfig(rt *runner.Runtime) (*jobQueueControllerConfig, error) {
+	controllerCfg, err := setupFromConfig(rt)
 	if err != nil {
 		return nil, err
 	}
 
-	operatorSec := cfg.SectionWithEnvOverrides("operator")
+	operatorSec := rt.Cfg.SectionWithEnvOverrides("operator")
 
 	// The jobs informer resyncs on jobInterval and that resync is the driver's
 	// only recovery path for unclaimed jobs. A non-positive value would disable

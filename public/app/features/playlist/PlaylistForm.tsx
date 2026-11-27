@@ -88,36 +88,40 @@ export const PlaylistForm = ({
         const isDisabled = items.length === 0 || Object.keys(errors).length > 0;
         return (
           <>
-            <Field
-              label={t('playlist-edit.form.name-label', 'Name')}
-              invalid={!!errors.title}
-              error={errors?.title?.message}
-            >
-              <Input
-                type="text"
-                {...register('title', { required: t('playlist-edit.form.name-required', 'Name is required') })}
-                placeholder={t('playlist-edit.form.name-placeholder', 'Name')}
-                defaultValue={name}
-                data-testid={selectors.pages.PlaylistForm.name}
-                id={playlistNameId}
-              />
-            </Field>
-            <Field
-              label={t('playlist-edit.form.interval-label', 'Interval')}
-              invalid={!!errors.interval}
-              error={errors?.interval?.message}
-            >
-              <Input
-                type="text"
-                {...register('interval', {
-                  required: t('playlist-edit.form.interval-required', 'Interval is required'),
-                })}
-                placeholder={t('playlist-edit.form.interval-placeholder', '5m')}
-                defaultValue={interval ?? '5m'}
-                data-testid={selectors.pages.PlaylistForm.interval}
-                id={playlistIntervalId}
-              />
-            </Field>
+            <Box display="flex" direction="column" gap={2} marginBottom={2}>
+              <Field
+                label={t('playlist-edit.form.name-label', 'Name')}
+                invalid={!!errors.title}
+                error={errors?.title?.message}
+                noMargin
+              >
+                <Input
+                  type="text"
+                  {...register('title', { required: t('playlist-edit.form.name-required', 'Name is required') })}
+                  placeholder={t('playlist-edit.form.name-placeholder', 'Name')}
+                  defaultValue={name}
+                  data-testid={selectors.pages.PlaylistForm.name}
+                  id={playlistNameId}
+                />
+              </Field>
+              <Field
+                label={t('playlist-edit.form.interval-label', 'Interval')}
+                invalid={!!errors.interval}
+                error={errors?.interval?.message}
+                noMargin
+              >
+                <Input
+                  type="text"
+                  {...register('interval', {
+                    required: t('playlist-edit.form.interval-required', 'Interval is required'),
+                  })}
+                  placeholder={t('playlist-edit.form.interval-placeholder', '5m')}
+                  defaultValue={interval ?? '5m'}
+                  data-testid={selectors.pages.PlaylistForm.interval}
+                  id={playlistIntervalId}
+                />
+              </Field>
+            </Box>
 
             {showRepositorySelect && (
               // RepositorySelect uses noMargin (shared component); add bottom spacing to match the
@@ -136,20 +140,22 @@ export const PlaylistForm = ({
             <PlaylistTable items={items} deleteItem={deleteItem} moveItem={moveItem} />
 
             <FieldSet label={t('playlist-edit.form.heading', 'Add dashboards')}>
-              <Field label={t('playlist-edit.form.add-title-label', 'Add by title')}>
-                <DashboardPicker id="dashboard-picker" onChange={addByUID} key={items.length} />
-              </Field>
+              <Box display="flex" direction="column" gap={2} paddingBottom={2}>
+                <Field label={t('playlist-edit.form.add-title-label', 'Add by title')} noMargin>
+                  <DashboardPicker id="dashboard-picker" onChange={addByUID} key={items.length} />
+                </Field>
 
-              <Field label={t('playlist-edit.form.add-tag-label', 'Add by tag')}>
-                <TagFilter
-                  isClearable
-                  tags={[]}
-                  hideValues
-                  tagOptions={tagOptions}
-                  onChange={addByTag}
-                  placeholder={t('playlist-edit.form.add-tag-placeholder', 'Select a tag')}
-                />
-              </Field>
+                <Field label={t('playlist-edit.form.add-tag-label', 'Add by tag')} noMargin>
+                  <TagFilter
+                    isClearable
+                    tags={[]}
+                    hideValues
+                    tagOptions={tagOptions}
+                    onChange={addByTag}
+                    placeholder={t('playlist-edit.form.add-tag-placeholder', 'Select a tag')}
+                  />
+                </Field>
+              </Box>
             </FieldSet>
 
             <Stack>

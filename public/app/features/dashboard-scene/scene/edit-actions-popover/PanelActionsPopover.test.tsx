@@ -44,11 +44,9 @@ jest.mock('@grafana/runtime', () => ({
   locationService: {
     ...jest.requireActual('@grafana/runtime').locationService,
     partial: jest.fn(),
-    push: jest.fn(),
   },
 }));
 const mockLocationServicePartial = jest.mocked(locationService.partial);
-const mockLocationServicePush = jest.mocked(locationService.push);
 
 // jsdom has no hover media features, which would turn off the edit actions used when the flag is off.
 jest.mock('./EditActionsPopover', () => ({
@@ -203,7 +201,7 @@ function renderWrapper(
 const getToolbar = () => screen.getByRole('toolbar', { name: 'Panel actions' });
 /** Toolbar buttons in order, with each separator shown as '|'. */
 const getToolbarLayout = () =>
-  Array.from(getToolbar().querySelectorAll('button, [role="separator"]')).map((element) =>
+  Array.from(getToolbar().querySelectorAll('button, a, [role="separator"]')).map((element) =>
     element.getAttribute('role') === 'separator' ? '|' : element.getAttribute('aria-label')
   );
 
@@ -242,7 +240,7 @@ describe('<PanelActionsWrapper />', () => {
       renderWrapper(panel);
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(await within(getToolbar()).findByRole('button', { name: 'Explore (p x)' })).toBeInTheDocument();
+      expect(await within(getToolbar()).findByRole('link', { name: 'Explore (p x)' })).toBeInTheDocument();
       expect(getToolbarLayout()).toEqual([
         'Edit visualization (e)',
         'Explore (p x)',
@@ -263,7 +261,7 @@ describe('<PanelActionsWrapper />', () => {
       renderWrapper(panel);
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(await within(getToolbar()).findByRole('button', { name: 'Explore (p x)' })).toBeInTheDocument();
+      expect(await within(getToolbar()).findByRole('link', { name: 'Explore (p x)' })).toBeInTheDocument();
       expect(getToolbarLayout()).toEqual(['Explore (p x)', '|', 'Expand (v)', 'More actions']);
     });
 
@@ -414,16 +412,29 @@ describe('<PanelActionsWrapper />', () => {
       expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('edit', 1, 'actions_popover', 'timeseries');
     });
 
-    test('clicking Explore opens the panel queries in Explore', async () => {
+    test('Explore links to the panel queries in Explore, and clicking it is reported', async () => {
       const panel = createPanel();
       createDashboard(panel);
       const user = userEvent.setup();
+      jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+      // jsdom can't navigate, so stand in for Grafana's app-wide link handling.
+      const preventNavigation = (event: Event) => event.preventDefault();
+      document.addEventListener('click', preventNavigation);
 
       renderWrapper(panel);
       await hoverAndRest(screen.getByTestId('reference-child'));
-      await user.click(await within(getToolbar()).findByRole('button', { name: 'Explore (p x)' }));
+      const link = await within(getToolbar()).findByRole('link', { name: 'Explore (p x)' });
+      expect(link).toHaveAttribute('href', '/explore?left=panel-1');
 
-      expect(mockLocationServicePush).toHaveBeenCalledWith('/explore?left=panel-1');
+      await user.click(link);
+      document.removeEventListener('click', preventNavigation);
+
+      expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith(
+        'explore',
+        1,
+        'actions_popover',
+        'timeseries'
+      );
     });
 
     test('when explicit sidebar opening is enabled, clicking Settings opens the panel settings', async () => {

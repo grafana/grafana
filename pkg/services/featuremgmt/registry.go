@@ -1178,6 +1178,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "authz.legacyUserPermissionsSearch",
+			Description:  "Route user permission searches through embedded AuthZ.",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "authz.legacyUserPermissionsShadow",
 			Description:  "Compare local permissions with embedded AuthZ in the background when authz.legacyUserPermissions is enabled.",
 			Stage:        FeatureStageExperimental,
@@ -2338,6 +2347,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "resourcePermissionsBulkUserValidation",
+			Description:  "Resolves and validates users in bulk when setting permissions for many users at once, such as SCIM team membership sync",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
+		},
+		{
 			Name:         "resourcePermissionsBulkUserWrites",
 			Description:  "Writes managed permissions and team memberships for many users in bulk instead of one user at a time, such as for SCIM team membership sync",
 			Stage:        FeatureStageExperimental,
@@ -2363,6 +2381,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "iam.useKubernetesUsersReadApi",
+			Description:  "Routes read-only user requests in the frontend from /api to the /apis endpoint. Depends on kubernetesUsersReadApi",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		{
 			Name:         "kubernetesServiceAccountsApi",

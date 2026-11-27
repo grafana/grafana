@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -41,7 +40,7 @@ func TestIntegrationRemoteLegacyPermissionsSharedCache(t *testing.T) {
 	shared := authcache.NewLocalCache(authcache.Config{})
 	replica := func() authzv1.LegacyAuthzServiceClient {
 		loader := legacypermissions.NewEnforcedLoader(legacysql.NewDatabaseProvider(sql), resourcepermissions.NewActionSetService(),
-			shared, loaderConfig(true), featuremgmt.WithFeatures(), z, nil)
+			shared, loaderConfig(true), z, nil)
 		return startRemoteReplica(t, loader)
 	}
 	a, b := replica(), replica()

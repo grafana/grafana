@@ -18,15 +18,13 @@ import {
   type DirectionDimensionConfig,
 } from '@grafana/schema';
 import { Portal } from '@grafana/ui';
+import { getColorDimensionFromData } from 'app/features/dimensions/color';
 import { type DimensionContext } from 'app/features/dimensions/context';
-import {
-  getColorDimensionFromData,
-  getResourceDimensionFromData,
-  getScalarDimensionFromData,
-  getScaleDimensionFromData,
-  getTextDimensionFromData,
-  getDirectionDimensionFromData,
-} from 'app/features/dimensions/utils';
+import { getDirectionDimensionFromData } from 'app/features/dimensions/direction';
+import { getResourceDimensionFromData } from 'app/features/dimensions/resource';
+import { getScalarDimensionFromData } from 'app/features/dimensions/scalar';
+import { getScaleDimensionFromData } from 'app/features/dimensions/scale';
+import { getTextDimensionFromData } from 'app/features/dimensions/text';
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/components/CanvasContextMenu';
 import { CanvasTooltip } from 'app/plugins/panel/canvas/components/CanvasTooltip';
 import { Connections } from 'app/plugins/panel/canvas/components/connections/Connections';

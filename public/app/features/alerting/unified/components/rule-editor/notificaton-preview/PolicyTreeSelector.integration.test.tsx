@@ -114,6 +114,7 @@ const grantAllPermissions = () => {
     AccessControlAction.DataSourcesRead,
     AccessControlAction.DataSourcesWrite,
     AccessControlAction.DataSourcesCreate,
+    AccessControlAction.FoldersCreate,
     AccessControlAction.FoldersWrite,
     AccessControlAction.FoldersRead,
     AccessControlAction.AlertingRuleExternalRead,
@@ -127,7 +128,6 @@ describe('PolicyTreeSelector', () => {
   beforeEach(() => {
     localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
     contextSrv.isEditor = true;
-    contextSrv.hasEditPermissionInFolders = true;
     setAlertmanagerChoices(AlertmanagerChoice.Internal, 1);
     grantAllPermissions();
   });

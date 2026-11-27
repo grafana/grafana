@@ -19,7 +19,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -231,7 +230,7 @@ func TestIntegrationPermissionTracingColdAndWarmCache(t *testing.T) {
 		ac.Permission{Action: "dashboards:read", Scope: "dashboards:uid:two"})
 	cfg := setting.NewCfg()
 	cfg.RBAC.PermissionCache = true
-	loader := NewLoader(database, NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &tracingLicense{}, nil)
+	loader := NewLoader(database, NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, &tracingLicense{}, nil)
 	requester := &user.SignedInUser{UserID: 7, UserUID: "seven", OrgID: 1, OrgRole: org.RoleViewer}
 	recorder := recordPermissionSpans(t)
 	cold, err := loader.GetUserPermissions(t.Context(), requester, ac.Options{})

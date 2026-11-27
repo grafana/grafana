@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -93,7 +92,7 @@ func TestIntegrationRemoteLegacyPermissionsGRPC(t *testing.T) {
 			return nil, status.Error(codes.Internal, "unexpected tenant")
 		}
 		return provider(ctx)
-	}, resourcepermissions.NewActionSetService(), authcache.NewLocalCache(authcache.Config{}), loaderConfig(true), featuremgmt.WithFeatures(), nil, nil)
+	}, resourcepermissions.NewActionSetService(), authcache.NewLocalCache(authcache.Config{}), loaderConfig(true), nil, nil)
 	client := startRemoteReplica(t, loader)
 	id := int64(999)
 	maliciousKey := "same-key"

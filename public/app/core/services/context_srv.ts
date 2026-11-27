@@ -42,7 +42,6 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
   timezone: string;
   weekStart: string;
   language: string;
-  hasEditPermissionInFolders: boolean;
   permissions?: UserPermission;
   analytics: AnalyticsSettings;
   fiscalYearStartMonth: number;
@@ -62,7 +61,6 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
     this.timezone = '';
     this.fiscalYearStartMonth = 0;
     this.theme = 'dark';
-    this.hasEditPermissionInFolders = false;
     this.email = '';
     this.name = '';
     this.language = '';
@@ -85,7 +83,6 @@ export class ContextSrv {
   isGrafanaAdmin: boolean;
   isEditor: boolean;
   sidemenuSmallBreakpoint = false;
-  hasEditPermissionInFolders: boolean;
   minRefreshInterval: string;
 
   private tokenRotationJobId = 0;
@@ -99,7 +96,6 @@ export class ContextSrv {
     this.isSignedIn = this.user.isSignedIn;
     this.isGrafanaAdmin = this.user.isGrafanaAdmin;
     this.isEditor = this.hasRole('Editor') || this.hasRole('Admin');
-    this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
     this.minRefreshInterval = config.minRefreshInterval;
 
     this.scheduleTokenRotationJob();
@@ -165,6 +161,12 @@ export class ContextSrv {
   // Checks whether user has required permission
   hasPermission(action: AccessControlAction | string): boolean {
     return userHasPermission(action, this.user);
+  }
+
+  get hasEditPermissionInFolders(): boolean {
+    return (
+      this.hasPermission(AccessControlAction.DashboardsCreate) || this.hasPermission(AccessControlAction.FoldersCreate)
+    );
   }
 
   isGrafanaVisible() {
