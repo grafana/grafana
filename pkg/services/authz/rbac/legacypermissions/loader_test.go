@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	authcache "github.com/grafana/authlib/cache"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -73,7 +74,7 @@ func TestIntegrationGetUserPermissionsSources(t *testing.T) {
 				)
 				if mode == "standalone" {
 					loader = legacypermissions.NewEnforcedLoader(legacysql.NewDatabaseProvider(sql), resolver,
-						localcache.New(0, 0), loaderConfig(cached), featuremgmt.WithFeatures(), nil, nil)
+						authcache.NewLocalCache(authcache.Config{}), loaderConfig(cached), featuremgmt.WithFeatures(), nil, nil)
 				}
 				seedGrant(t, sql, "managed:direct", 1, 7, accesscontrol.Permission{Action: "folders:view", Scope: "folders:uid:one"})
 				seedGrant(t, sql, "custom:direct", 1, 7, accesscontrol.Permission{Action: "users:create"})

@@ -61,7 +61,7 @@ func TestRemoteRejectsBeforeLoading(t *testing.T) {
 }
 
 func TestRemoteCacheIsolationAndRefresh(t *testing.T) {
-	loader := &Loader{cache: localcache.New(0, 0)}
+	loader := &Loader{cache: localPermissionCache{cache: localcache.New(0, 0)}}
 	for _, key := range []string{"rbac-permissions-basic-role-1-viewer", "rbac-permissions-team-1-7", "rbac-permissions-direct-same", "rbac-zanzana-permissions-same"} {
 		for _, ns := range []string{"stacks-1", "stacks-2", "stacks-1"} {
 			ctx := context.WithValue(context.Background(), remoteNamespaceKey{}, ns)

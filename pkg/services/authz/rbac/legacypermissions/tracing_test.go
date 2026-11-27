@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	authcache "github.com/grafana/authlib/cache"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -74,12 +75,12 @@ func TestPermissionCacheTracing(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			recorder := recordPermissionSpans(t)
-			loader := &Loader{cache: localcache.New(0, 0)}
+			loader := &Loader{cache: localPermissionCache{cache: localcache.New(0, 0)}}
 			const key = "private-cache-key"
 			old := []ac.Permission{{Action: "private-old-action"}}
 			fresh := []ac.Permission{{Action: "private-new-action"}}
 			if tc.cached {
-				loader.cache.Set(key, old, cacheTTL)
+				localStore(loader).Set(key, old, cacheTTL)
 			}
 			ctx := t.Context()
 			if tc.shadow {
@@ -129,7 +130,7 @@ func TestPermissionCacheTracing(t *testing.T) {
 				require.Empty(t, span.Events())
 			}
 			if tc.shadow {
-				value, present := loader.cache.Get(key)
+				value, present := localStore(loader).Get(key)
 				require.Equal(t, tc.cached, present)
 				if present {
 					require.Equal(t, old, value)
@@ -147,11 +148,11 @@ func TestPermissionCacheTracing(t *testing.T) {
 
 func TestPermissionTeamCacheTracing(t *testing.T) {
 	recorder := recordPermissionSpans(t)
-	loader := &Loader{cache: localcache.New(0, 0)}
+	loader := &Loader{cache: localPermissionCache{cache: localcache.New(0, 0)}}
 	requester := &user.SignedInUser{OrgID: 1}
 	requester.TeamIDs = []int64{10, 11} //nolint:staticcheck // The legacy team permission cache uses numeric team IDs.
 	for _, teamID := range requester.GetTeams() {
-		loader.cache.Set(ac.GetTeamPermissionCacheKey(teamID, 1), []ac.Permission{{Action: "users:read"}}, cacheTTL)
+		localStore(loader).Set(ac.GetTeamPermissionCacheKey(teamID, 1), []ac.Permission{{Action: "users:read"}}, cacheTTL)
 	}
 	permissions, err := loader.cachedTeams(t.Context(), requester, ac.Options{}, loadSettings{})
 	require.NoError(t, err)
@@ -296,37 +297,57 @@ func TestIntegrationRemoteTeamCacheTracing(t *testing.T) {
 	for _, tc := range []struct {
 		name         string
 		ttl          time.Duration
-		remote       bool
 		hits, misses int
+		queries      int
 		bypassed     bool
 	}{
-		{name: "remote", ttl: time.Minute, remote: true, hits: 1, misses: 1},
-		{name: "bypassed", ttl: 0, hits: 0, misses: 2, bypassed: true},
+		{name: "miss", ttl: time.Minute, misses: 2, queries: 1},
+		{name: "hit", ttl: time.Minute, hits: 2},
+		{name: "bypassed", ttl: 0, misses: 2, queries: 1, bypassed: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			loader := &Loader{
-				cache:   localcache.New(time.Hour, 0),
+				cache:   newSharedPermissionCache(authcache.NewLocalCache(authcache.Config{})),
 				store:   permissionStore{database: legacysql.NewDatabaseProvider(db.NewTestStore(t))},
 				actions: resourcepermissions.NewActionSetService(),
 			}
 			WithPermissionCacheTTL(tc.ttl)(loader)
-			ctx := t.Context()
-			if tc.remote {
-				ctx = context.WithValue(ctx, remoteNamespaceKey{}, "stacks-1")
+			ctx := context.WithValue(t.Context(), remoteNamespaceKey{}, "stacks-1")
+			if tc.hits > 0 {
+				key := tenantCacheKey(ctx, teamSetCacheKey(1, []int64{10, 11}))
+				require.NoError(t, loader.cache.set(ctx, key, []ac.Permission{{Action: "users:read"}}, time.Hour))
 			}
-			loader.cache.Set(tenantCacheKey(ctx, ac.GetTeamPermissionCacheKey(10, 1)), []ac.Permission{{Action: "users:read"}}, time.Hour)
 			requester := &user.SignedInUser{OrgID: 1}
-			requester.TeamIDs = []int64{10, 11, 10} //nolint:staticcheck // The legacy team permission cache uses numeric team IDs.
+			requester.TeamIDs = []int64{11, 10, 11} //nolint:staticcheck // The legacy team permission cache uses numeric team IDs.
 			recorder := recordPermissionSpans(t)
 
 			permissions, err := loader.cachedTeams(ctx, requester, ac.Options{}, loadSettings{})
 			require.NoError(t, err)
-			require.Len(t, permissions, 2)
+			require.Len(t, permissions, 1, "the team set is one cache entry")
 			attrs := spanAttributes(permissionSpan(t, recorder, "cache.teams"))
 			require.Equal(t, attribute.IntValue(2), attrs["team.count"])
 			require.Equal(t, attribute.IntValue(tc.hits), attrs["cache.hits"])
 			require.Equal(t, attribute.IntValue(tc.misses), attrs["cache.misses"])
 			require.Equal(t, attribute.BoolValue(tc.bypassed), attrs["cache.bypassed"])
+			queries := 0
+			for _, span := range recorder.Ended() {
+				if span.Name() == "authz.legacypermissions.sql.teams" {
+					queries++
+				}
+			}
+			require.Equal(t, tc.queries, queries)
 		})
 	}
+}
+
+func TestTeamSetCacheKey(t *testing.T) {
+	require.Equal(t, teamSetCacheKey(1, []int64{1, 2}), teamSetCacheKey(1, []int64{1, 2}))
+	require.NotEqual(t, teamSetCacheKey(1, []int64{1, 2}), teamSetCacheKey(2, []int64{1, 2}), "org")
+	require.NotEqual(t, teamSetCacheKey(1, []int64{1, 2}), teamSetCacheKey(1, []int64{12}), "separator")
+	many := make([]int64, 1000)
+	for i := range many {
+		many[i] = int64(1_000_000 + i)
+	}
+	ctx := context.WithValue(context.Background(), remoteNamespaceKey{}, "stacks-1234567890")
+	require.Less(t, len(tenantCacheKey(ctx, teamSetCacheKey(1234567890, many))), 250)
 }
