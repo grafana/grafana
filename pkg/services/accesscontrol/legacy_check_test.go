@@ -7,6 +7,7 @@ import (
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
@@ -64,9 +65,10 @@ func TestLegacyCheck_Evaluators(t *testing.T) {
 					})
 
 					response, err := service.LegacyCheck(types.WithAuthInfo(t.Context(), caller), &authzextv1.LegacyCheckRequest{
-						Namespace:  namespace,
-						Subject:    "user:user-1",
-						Expression: legacyExpressionForEvaluator(t, tc.Evaluator()),
+						Namespace:      namespace,
+						RequesterOrgId: proto.Int64(1),
+						Subject:        "user:user-1",
+						Expression:     legacyExpressionForEvaluator(t, tc.Evaluator()),
 					})
 					require.NoError(t, err)
 					require.NotNil(t, response)

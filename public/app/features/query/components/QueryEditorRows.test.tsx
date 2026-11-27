@@ -1,20 +1,20 @@
 import { act, queryByLabelText, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import type { DataSourceApi } from '@grafana/data';
+import { CoreApp, type DataSourceApi, type FieldType, type LoadingState, type PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   type DataSourceSrv,
   type GetDataSourceListFilters,
   getDataSourceInstance,
   getDataSourceInstanceSettings,
+  reportInteraction,
 } from '@grafana/runtime';
 import { type DataSourceRef, type DataQuery } from '@grafana/schema';
 import { mockBoundingClientRect } from '@grafana/test-utils';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { type InternalQueryEditorInsertionPropsV1 } from 'app/features/explore/SignalExplorer/internalInsertionContract';
-import createMockPanelData from 'app/plugins/datasource/azuremonitor/mocks/panelData';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { QueryEditorRows, type Props } from './QueryEditorRows';
@@ -50,7 +50,21 @@ jest.mock('@grafana/runtime', () => ({
   }),
   getDataSourceInstance: jest.fn(),
   getDataSourceInstanceSettings: jest.fn(),
+  reportInteraction: jest.fn(),
 }));
+
+// Lets a test end a drag without simulating one; the real context still renders the rows.
+let mockOnDragEnd: ((result: unknown) => void) | undefined;
+jest.mock('@hello-pangea/dnd', () => {
+  const actual = jest.requireActual('@hello-pangea/dnd');
+  return {
+    ...actual,
+    DragDropContext: (contextProps: { onDragEnd: (result: unknown) => void }) => {
+      mockOnDragEnd = contextProps.onDragEnd;
+      return <actual.DragDropContext {...contextProps} />;
+    },
+  };
+});
 jest
   .mocked(getDataSourceInstance)
   .mockImplementation((...args: unknown[]) => dsSrvMock.get(...(args as Parameters<DataSourceSrv['get']>)));
@@ -99,6 +113,54 @@ async function selectQueriesFromLibrary(testProps: Props, queries: DataQuery[], 
   stagedSelection = { queries };
   render(<QueryEditorRows {...testProps} />);
   await userEvent.click(await screen.findByTestId(`select-from-library-${refId}`));
+}
+
+type DeepPartial<T> = {
+  [P in keyof T]?: DeepPartial<T[P]>;
+};
+
+function createMockPanelData(overrides?: DeepPartial<PanelData>) {
+  const _mockPanelData: DeepPartial<PanelData> = {
+    state: 'Loading' as LoadingState,
+    series: [
+      {
+        refId: 'A',
+        fields: [
+          {
+            name: 'Time',
+            type: 'time' as FieldType,
+            config: { links: Array(1) },
+            values: [],
+            state: null,
+          },
+        ],
+        length: 360,
+      },
+    ],
+    annotations: [],
+    request: {
+      app: 'dashboard',
+      requestId: 'request',
+      timezone: 'browser',
+      panelId: 1,
+      timeInfo: '',
+      interval: '20s',
+      intervalMs: 20000,
+      targets: [],
+      maxDataPoints: 100,
+      rangeRaw: {
+        from: 'now-6h',
+        to: 'now',
+      },
+    },
+
+    structureRev: 15,
+    ...overrides,
+  };
+
+  const mockPanelData = _mockPanelData as PanelData;
+
+  return jest.mocked(mockPanelData);
 }
 
 const props: Props = {
@@ -807,3 +869,62 @@ function renderScenario(overrides?: Partial<Props>) {
     renderResult: render(<QueryEditorRows {...props} />),
   };
 }
+
+describe('QueryEditorRows query editor analytics', () => {
+  function EditingQueryEditor({ query, onChange }: { query: DataQuery; onChange: (query: DataQuery) => void }) {
+    return <button onClick={() => onChange({ ...query, queryType: 'edited' })}>Edit query {query.refId}</button>;
+  }
+
+  const editingDatasource = {
+    name: 'CloudManager',
+    type: DataSourceType.Alertmanager,
+    components: { QueryEditor: EditingQueryEditor },
+  } as unknown as DataSourceApi;
+
+  beforeEach(() => {
+    // Other suites in this file replace these mocks, so set what the rows load here.
+    jest.mocked(getDataSourceInstance).mockResolvedValue(editingDatasource);
+    jest.mocked(getDataSourceInstanceSettings).mockResolvedValue(mockDS);
+    jest.mocked(reportInteraction).mockClear();
+  });
+
+  afterEach(() => {
+    jest
+      .mocked(getDataSourceInstance)
+      .mockImplementation((...args: unknown[]) => dsSrvMock.get(...(args as Parameters<DataSourceSrv['get']>)));
+    jest
+      .mocked(getDataSourceInstanceSettings)
+      .mockImplementation(async (...args: unknown[]) =>
+        dsSrvMock.getInstanceSettings(...(args as Parameters<DataSourceSrv['getInstanceSettings']>))
+      );
+  });
+
+  it('reports an edit in a query row', async () => {
+    const onQueryEdited = jest.fn();
+    const onQueriesChange = jest.fn();
+    render(<QueryEditorRows {...props} onQueriesChange={onQueriesChange} onQueryEdited={onQueryEdited} />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit query B' }));
+
+    expect(onQueriesChange).toHaveBeenCalledWith([props.queries[0], { ...props.queries[1], queryType: 'edited' }]);
+    expect(onQueryEdited).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    { app: CoreApp.PanelEditor, reportOptions: undefined },
+    { app: CoreApp.Explore, reportOptions: { silent: true } },
+  ])('reports a query reorder in $app with options $reportOptions', async ({ app, reportOptions }) => {
+    const onQueriesChange = jest.fn();
+    render(<QueryEditorRows {...props} app={app} onQueriesChange={onQueriesChange} />);
+    await screen.findByRole('button', { name: 'Edit query B' });
+
+    act(() => mockOnDragEnd?.({ source: { index: 0 }, destination: { index: 1 } }));
+
+    expect(onQueriesChange).toHaveBeenCalledWith([props.queries[1], props.queries[0]]);
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_panel_edit_next_interaction',
+      { action: 'reorder', item_type: 'query', editor: 'classic' },
+      reportOptions
+    );
+  });
+});

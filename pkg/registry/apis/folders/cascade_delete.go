@@ -32,8 +32,12 @@ func grafanaDashboardGlobalVariablesEnabled(ctx context.Context) bool {
 	)
 }
 
-// folderAsyncCascadeDeleteEnabled gates stamping the cascade-delete finalizer on new folders, which
-// hands their deletion to the cascade controller.
+func folderPendingDeletionWritesEnabled(ctx context.Context) bool {
+	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagFolderPendingDeletionWrites, false, openfeature.TransactionContext(ctx))
+}
+
+// folderAsyncCascadeDeleteEnabled selects the delete mode: on hands folder deletes to the cascade
+// controller through the finalizer, off deletes synchronously.
 func folderAsyncCascadeDeleteEnabled(ctx context.Context) bool {
 	return openfeature.NewDefaultClient().Boolean(
 		ctx,

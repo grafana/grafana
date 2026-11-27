@@ -337,6 +337,7 @@ export const RowsList = (props: RowsListProps) => {
               rowIndex={row.index}
               width={width}
               cellHeight={cellHeight}
+              columnCount={row.cells.length}
             />
           )}
           {row.cells.map((cell: Cell, index: number) => (

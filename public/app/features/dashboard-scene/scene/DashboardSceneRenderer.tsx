@@ -2,17 +2,24 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
+import {
+  useFlagGrafanaPreserveDashboardLoginTabTitle,
+  useFlagGrafanaPreserveLoginTabTitle,
+} from '@grafana/runtime/internal';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { rememberLoginDashboardTitle } from 'app/core/services/loginSectionTitle';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
+import { useScopeActions } from 'app/features/scopes/selector/useScopeActions';
 import { useSelector } from 'app/types/store';
 
 import { ComposerOverlay } from '../composer/ComposerOverlay';
+import { ComposerOverAssistantEdit } from '../lifecycle/useComposerOverAssistantEdit';
 import { DashboardSidebarSplitter } from '../sidebar/DashboardSidebarSplitter';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../solo/SoloPanelContext';
 
@@ -20,6 +27,7 @@ import { DashboardOverlay } from './DashboardOverlay';
 import { type DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
 import { PlanBuildingOverlay } from './PlanBuildingOverlay';
+import { dashboardComposerEnabled } from './dashboardModes';
 import { PlanningControls } from './new-toolbar/PlanningControls';
 import { SandboxConsentBanner } from './sandbox-consent/SandboxConsentBanner';
 
@@ -38,15 +46,17 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     planning,
     mode,
     uid,
+    title,
   } = model.useState();
   const composerSession = mode === 'composer' ? model.getComposerSession() : undefined;
 
   const scopesServices = useScopesServices();
+  const { setRedirectEnabled } = useScopeActions();
 
   // Disable scope redirects while in edit mode so users aren't navigated away mid-edit.
   // Also close the scopes dashboards drawer while editing and restore it on exit.
   useEffect(() => {
-    scopesServices?.scopesSelectorService.setRedirectEnabled(!isEditing);
+    setRedirectEnabled(!isEditing);
 
     const drawerWasOpen = Boolean(isEditing && scopesServices?.scopesDashboardsService.state.drawerOpened);
     if (drawerWasOpen) {
@@ -54,16 +64,29 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     }
 
     return () => {
-      scopesServices?.scopesSelectorService.setRedirectEnabled(true);
+      setRedirectEnabled(true);
       if (drawerWasOpen && !scopesServices?.scopesDashboardsService.state.drawerOpened) {
         scopesServices?.scopesDashboardsService.toggleDrawer();
       }
     };
-  }, [scopesServices, isEditing]);
+  }, [scopesServices, setRedirectEnabled, isEditing]);
 
   const { type } = useParams();
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
+  const preserveLoginTitle = useFlagGrafanaPreserveLoginTabTitle();
+  const preserveDashboardTitle = useFlagGrafanaPreserveDashboardLoginTabTitle();
+  useEffect(() => {
+    if (
+      preserveLoginTitle &&
+      preserveDashboardTitle &&
+      uid &&
+      (location.pathname === `/d/${uid}` || location.pathname.startsWith(`/d/${uid}/`))
+    ) {
+      rememberLoginDashboardTitle(title, location.pathname);
+    }
+  }, [preserveLoginTitle, preserveDashboardTitle, uid, title, location.pathname, model]);
+
   const pageNav = model.getPageNav(location, navIndex);
   const navModel =
     type === 'snapshot'
@@ -168,6 +191,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
           />
         )}
         <DashboardOverlay dashboard={model} />
+        {dashboardComposerEnabled() && <ComposerOverAssistantEdit uid={uid} isEditing={Boolean(isEditing)} />}
       </Page>
     </>
   );

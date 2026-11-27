@@ -28,6 +28,10 @@ import (
 // whose configuration the external AM sync worker can fetch.
 var syncableAMImplementations = []string{"mimir", "cortex"}
 
+// defaultAMImplementation is what an alertmanager datasource without an "implementation" setting
+// counts as. The datasource editor and the alerting UI both treat a missing value as Mimir.
+const defaultAMImplementation = "mimir"
+
 type ConfigSrv struct {
 	datasourceService    datasources.DataSourceService
 	alertmanagerProvider ExternalAlertmanagerProvider
@@ -189,6 +193,9 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 				return response.Error(http.StatusBadRequest, "datasource must be of type alertmanager", nil)
 			}
 			impl := strings.ToLower(ds.JsonData.Get("implementation").MustString(""))
+			if impl == "" {
+				impl = defaultAMImplementation
+			}
 			if !slices.Contains(syncableAMImplementations, impl) {
 				return response.Error(http.StatusBadRequest, fmt.Sprintf(
 					"%q implementation is not supported for sync (must be one of: %s). Use the convert API for manual config import.",

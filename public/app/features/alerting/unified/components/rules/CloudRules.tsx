@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { useFlagAlertingMigrationWizardUI } from '@grafana/runtime/internal';
 import { Badge, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -11,10 +12,11 @@ import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
+import { type DataSourcesForRulesResult } from '../../hooks/useDataSourcesForRules';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getPaginationStyles } from '../../styles/pagination';
-import { getRulesDataSources, getRulesSourceUid } from '../../utils/datasource';
+import { getRulesSourceUid } from '../../utils/datasource';
 import { ALERTING_PATHS } from '../../utils/navigation';
 import { isAsyncRequestStatePending } from '../../utils/redux';
 import { createRelativeUrl } from '../../utils/url';
@@ -25,13 +27,14 @@ import { useCombinedGroupNamespace } from './useCombinedGroupNamespace';
 interface Props {
   namespaces: CombinedRuleNamespace[];
   expandAll: boolean;
+  rulesSources: DataSourcesForRulesResult;
 }
 
-export const CloudRules = ({ namespaces, expandAll }: Props) => {
+export const CloudRules = ({ namespaces, expandAll, rulesSources }: Props) => {
   const styles = useStyles2(getStyles);
 
   const promRules = useUnifiedAlertingSelector((state) => state.promRules);
-  const rulesDataSources = useMemo(getRulesDataSources, []);
+  const { items: rulesDataSources, isLoading: isLoadingRulesSources, error: rulesSourcesError } = rulesSources;
   const groupsWithNamespaces = useCombinedGroupNamespace(namespaces);
 
   const dataSourcesLoading = useMemo(
@@ -41,7 +44,7 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
 
   const hasSomeResults = rulesDataSources.some((ds) => Boolean(promRules[ds.name]?.result?.length));
   const hasDataSourcesConfigured = rulesDataSources.length > 0;
-  const hasDataSourcesLoading = dataSourcesLoading.length > 0;
+  const hasDataSourcesLoading = isLoadingRulesSources || dataSourcesLoading.length > 0;
   const hasNamespaces = namespaces.length > 0;
 
   const { numberOfPages, onPageChange, page, pageItems } = usePagination(
@@ -50,7 +53,10 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
     DEFAULT_PER_PAGE_PAGINATION
   );
 
+  // The migration wizard replaces this rules-only import tool, so only offer the old one without it.
+  const migrationWizardEnabled = useFlagAlertingMigrationWizardUI();
   const canMigrateToGMA =
+    !migrationWizardEnabled &&
     hasDataSourcesConfigured &&
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
@@ -93,7 +99,7 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
         />
       ))}
 
-      {!hasDataSourcesConfigured && (
+      {!isLoadingRulesSources && !rulesSourcesError && !hasDataSourcesConfigured && (
         <p>
           <Trans i18nKey="alerting.list-view.no-prom-or-loki-rules">
             There are no Prometheus or Loki data sources configured

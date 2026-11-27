@@ -26,8 +26,10 @@ func TestPreferencesCountValidatorStats(t *testing.T) {
 		resp *resourcepb.ResourceStatsResponse
 		err  error
 	}{
-		{name: "embedded error", resp: &resourcepb.ResourceStatsResponse{Error: result}},
 		{name: "grpc error", err: structured.Err()},
+		{name: "grpc error with partial response", resp: &resourcepb.ResourceStatsResponse{
+			Stats: []*resourcepb.ResourceStatsResponse_Stats{{Group: gr.Group, Resource: gr.Resource, Count: 1}},
+		}, err: structured.Err()},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			client := resource.NewMockResourceClient(t)

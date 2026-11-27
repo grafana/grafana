@@ -13,6 +13,10 @@ export interface DashboardActionMeta {
    * (e.g. `panel.remove` from `auto-grid` vs `custom-grid`).
    */
   scope?: string;
+  /** Who made the edit when it isn't the user in the dashboard UI (e.g. `mutation-api`). */
+  actor?: string;
+  /** The START_BATCH that collected the entry, so its caller can step only the entries it made. */
+  batchId?: string;
 }
 
 export interface DashboardEditActionEventPayload {

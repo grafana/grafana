@@ -1,6 +1,6 @@
 import { useUpdateRuleInRuleGroup } from 'app/features/alerting/unified/hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { useAsync } from 'app/features/alerting/unified/hooks/useAsync';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { fromRulerRuleAndRuleGroupIdentifier } from 'app/features/alerting/unified/utils/rule-id';
 import { getRuleGroupLocationFromRuleWithLocation } from 'app/features/alerting/unified/utils/rules';
 import { type RuleWithLocation } from 'app/types/unified-alerting';

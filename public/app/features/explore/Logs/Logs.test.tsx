@@ -80,25 +80,40 @@ jest.mock('@openfeature/react-sdk', () => ({
   useFlag: (flag: string, defaultValue: boolean) => useFlagMock(flag, defaultValue),
 }));
 
+const logListMock = jest.fn();
+jest.mock('app/features/logs/components/panel/LogList', () => {
+  const actual = jest.requireActual('app/features/logs/components/panel/LogList');
+  const { createElement } = jest.requireActual('react');
+  return {
+    ...actual,
+    LogList: (props: ComponentProps<typeof actual.LogList>) => {
+      logListMock(props);
+      return createElement(actual.LogList, props);
+    },
+  };
+});
+
 const fakeChangePanelState = jest.fn().mockReturnValue({ type: 'fakeAction' });
-jest.mock('../state/explorePane', () => ({
-  ...jest.requireActual('../state/explorePane'),
-  changePanelState: (exploreId: string, panel: 'logs', panelState: {} | ExploreLogsPanelState) => {
-    return fakeChangePanelState(exploreId, panel, panelState);
-  },
-}));
+jest.mock('../state/explorePane', () =>
+  jest.requireActual('test/helpers/partialMock').partialMock(jest.requireActual('../state/explorePane'), {
+    changePanelState: (exploreId: string, panel: 'logs', panelState: {} | ExploreLogsPanelState) => {
+      return fakeChangePanelState(exploreId, panel, panelState);
+    },
+  })
+);
 
 const fakeChangeQueries = jest.fn().mockReturnValue({ type: 'fakeChangeQueries' });
 const fakeRunQueries = jest.fn().mockReturnValue({ type: 'fakeRunQueries' });
-jest.mock('../state/query', () => ({
-  ...jest.requireActual('../state/query'),
-  changeQueries: (args: { queries: DataQuery[]; exploreId: string | undefined }) => {
-    return fakeChangeQueries(args);
-  },
-  runQueries: (args: { queries: DataQuery[]; exploreId: string | undefined }) => {
-    return fakeRunQueries(args);
-  },
-}));
+jest.mock('../state/query', () =>
+  jest.requireActual('test/helpers/partialMock').partialMock(jest.requireActual('../state/query'), {
+    changeQueries: (args: { queries: DataQuery[]; exploreId: string | undefined }) => {
+      return fakeChangeQueries(args);
+    },
+    runQueries: (args: { queries: DataQuery[]; exploreId: string | undefined }) => {
+      return fakeRunQueries(args);
+    },
+  })
+);
 
 describe('Logs', () => {
   let originalHref = window.location.href;
@@ -214,6 +229,16 @@ describe('Logs', () => {
     );
     return { ...rendered, store: fakeStore };
   };
+
+  it.each([true, false])('passes infiniteScrollTop=%s to the log list according to the flag', async (flag) => {
+    setBooleanFlags({ logsPanelControls: false, 'grafana.logsInfiniteScrollTop': flag });
+    logListMock.mockClear();
+
+    setup();
+
+    expect(await screen.findByText('log message 3')).toBeInTheDocument();
+    expect(logListMock).toHaveBeenLastCalledWith(expect.objectContaining({ infiniteScrollTop: flag }));
+  });
 
   it('should render logs', async () => {
     setup();

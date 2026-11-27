@@ -15,7 +15,13 @@ import {
 import { DashboardSavedEvent } from 'app/types/events';
 
 import { updateDashboardUidLastUsedDatasource } from '../../dashboard/utils/dashboard';
-import { finishSavingNewDashboard, withoutPendingChangesPreview } from '../lifecycle/pendingChangePreview';
+import {
+  finishCopyingPendingChanges,
+  finishSavingNewDashboard,
+  getScenePendingChangePreview,
+  proposesNewDashboard,
+  withoutPendingChangesPreview,
+} from '../lifecycle/pendingChangePreview';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { DashboardInteractions } from '../utils/interactions';
 import { trackDashboardSceneCreatedOrSaved } from '../utils/tracking';
@@ -48,6 +54,12 @@ export function useSaveDashboard(isCopy = false) {
 
         // A new dashboard proposed as pending changes is created under the uid it was proposed for.
         const newDashboardUid = options.isNew ? scene.state.meta.newDashboardUid : undefined;
+        // A copy of pending changes to a saved dashboard keeps them: the saved dashboard no longer has them.
+        const previewed = options.saveAsCopy ? getScenePendingChangePreview(scene.state) : undefined;
+        const copiedPendingChanges =
+          previewed?.previewing && scene.state.uid && !proposesNewDashboard(previewed.pending)
+            ? { uid: scene.state.uid, preview: previewed }
+            : undefined;
         // Attribute the submitted draft, even if the user switches modes while the save is in flight.
         const editSessionTracking = scene.getEditSessionTracking();
 
@@ -83,7 +95,11 @@ export function useSaveDashboard(isCopy = false) {
         await scene.saveCompleted(saveModel, resultData, options.folderUid, saveAsSource);
 
         if (newDashboardUid) {
-          await finishSavingNewDashboard(newDashboardUid);
+          await finishSavingNewDashboard(newDashboardUid, scene.state.meta.isEmbedded ? 'embedded' : 'page');
+        }
+
+        if (copiedPendingChanges) {
+          await finishCopyingPendingChanges(copiedPendingChanges.uid, copiedPendingChanges.preview);
         }
 
         if (editSessionTracking.edit_session_id) {
@@ -120,10 +136,17 @@ export function useSaveDashboard(isCopy = false) {
 
         const currentLocation = locationService.getLocation();
         const newUrl = locationUtil.stripBaseFromUrl(resultData.url);
-        // A saved proposal is a regular dashboard now, so the page stops previewing it.
-        const search = newDashboardUid ? withoutPendingChangesPreview(currentLocation.search) : currentLocation.search;
+        // A saved proposal is a regular dashboard now, and a copy has no pending changes: the page
+        // stops previewing them.
+        const search =
+          newDashboardUid || copiedPendingChanges
+            ? withoutPendingChangesPreview(currentLocation.search)
+            : currentLocation.search;
 
-        if (newUrl !== currentLocation.pathname || search !== currentLocation.search) {
+        if (
+          !scene.state.meta.isEmbedded &&
+          (newUrl !== currentLocation.pathname || search !== currentLocation.search)
+        ) {
           setTimeout(() => {
             locationService.push({ pathname: newUrl, search });
           });

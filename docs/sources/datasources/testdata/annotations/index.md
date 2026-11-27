@@ -30,7 +30,8 @@ The TestData data source can generate simulated [annotation](https://grafana.com
 
 To add a dashboard annotation query that uses TestData:
 
-1. Navigate to the dashboard you want to update and click **Edit**.
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click **Settings**.
 1. Select the **Annotations** tab.
 1. Click **Add annotation query**.
@@ -61,7 +62,8 @@ For a reference of all TestData scenarios, refer to the [TestData query editor](
 
 This example creates a time series panel with simulated data, then adds a TestData annotation query so you can verify how the panel renders annotation markers.
 
-1. Navigate to the dashboard you want to update and click **Edit**.
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add** icon and select **Visualization**.
 1. Select the **TestData** data source.
 1. Choose the **Random Walk** scenario from the **Scenario** drop-down.

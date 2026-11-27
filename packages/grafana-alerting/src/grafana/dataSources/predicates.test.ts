@@ -3,10 +3,13 @@ import { config } from '@grafana/runtime';
 
 import {
   SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES,
+  isAlertManagerWithConfigAPI,
   isDataSourceAllowedAsRecordingRulesTarget,
   isDataSourceManagingAlerts,
+  isSupportedExternalRulesSourceType,
   isValidRecordingRulesTarget,
 } from './predicates';
+import { AlertManagerImplementation } from './types';
 
 function mockDataSource(partial: Partial<DataSourceInstanceSettings> = {}): DataSourceInstanceSettings {
   return {
@@ -77,5 +80,34 @@ describe('isValidRecordingRulesTarget', () => {
     expect(isValidRecordingRulesTarget(mockDataSource({ type, jsonData: { allowAsRecordingRulesTarget: true } }))).toBe(
       false
     );
+  });
+});
+
+describe('isSupportedExternalRulesSourceType', () => {
+  it.each(['loki', ...SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES])('returns true for %s', (type) => {
+    expect(isSupportedExternalRulesSourceType(type)).toBe(true);
+  });
+
+  it.each(['grafana', 'alertmanager', 'graphite', 'Loki', ''])('returns false for "%s"', (type) => {
+    expect(isSupportedExternalRulesSourceType(type)).toBe(false);
+  });
+});
+
+describe('isAlertManagerWithConfigAPI', () => {
+  it.each([
+    { implementation: undefined, expected: true },
+    { implementation: AlertManagerImplementation.mimir, expected: true },
+    { implementation: AlertManagerImplementation.cortex, expected: true },
+    { implementation: AlertManagerImplementation.prometheus, expected: false },
+  ])('returns $expected when implementation is $implementation', ({ implementation, expected }) => {
+    expect(isAlertManagerWithConfigAPI({ implementation })).toBe(expected);
+  });
+
+  // jsonData is not validated against the enum, so it can hold values outside it. These rows pin today's
+  // exact-match behavior, which the migration must keep.
+  it.each([null, '', 'Mimir', 'mimr'])('returns false when implementation is %p', (implementation) => {
+    const raw = implementation as unknown as AlertManagerImplementation;
+
+    expect(isAlertManagerWithConfigAPI({ implementation: raw })).toBe(false);
   });
 });

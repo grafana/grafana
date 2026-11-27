@@ -1,19 +1,19 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { type SelectableValue, type StandardEditorProps, VariableOrigin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { type HeatmapCalculationBucketConfig, HeatmapCalculationMode } from '@grafana/schema';
 import { RadioButtonGroup, ScaleDistribution, Stack } from '@grafana/ui';
+import { SuggestionsInput } from 'app/core/components/SuggestionsInput/SuggestionsInput';
 
-import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { numberOrVariableValidator } from '../../utils';
 import { convertDurationToMilliseconds } from '../utils';
 
 export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<HeatmapCalculationBucketConfig>) => {
   const [isInvalid, setInvalid] = useState<boolean>(false);
 
-  const modeSwitchCounter = useRef(0);
+  const [modeSwitchCounter, setModeSwitchCounter] = useState(0);
 
   const modeOptions: Array<SelectableValue<HeatmapCalculationMode>> = [
     {
@@ -76,7 +76,7 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
         value={value?.mode || HeatmapCalculationMode.Size}
         options={value?.scale?.type === ScaleDistribution.Log ? logModeOptions : modeOptions}
         onChange={(mode) => {
-          modeSwitchCounter.current++;
+          setModeSwitchCounter((count) => count + 1);
 
           onValueChange({
             ...value,
@@ -88,7 +88,7 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
       <SuggestionsInput
         // we need this cause the value prop is not changeable after init
         // so we have to re-create the component during mode switches to reset the value to auto
-        key={modeSwitchCounter.current}
+        key={modeSwitchCounter}
         invalid={isInvalid}
         error={'Value needs to be an integer or a variable'}
         value={value?.value ?? ''}

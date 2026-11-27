@@ -142,15 +142,62 @@ describe('SidebarCard', () => {
       expect(setSelectedTransformation).toHaveBeenCalledWith(transformation);
       expect(toggleTransformationSelection).not.toHaveBeenCalled();
     });
+
+    it('selects a query when its data-query-sidebar-card container is clicked programmatically', () => {
+      const query: DataQuery = { refId: 'A', datasource: { type: 'test', uid: 'test' } };
+      const setSelectedQuery = jest.fn();
+
+      const { container } = renderWithQueryEditorProvider(<QueryCard query={query} />, {
+        queries: [query],
+        uiStateOverrides: { setSelectedQuery },
+      });
+
+      const card = container.querySelector<HTMLElement>('[data-query-sidebar-card="A"]');
+      expect(card).toBeInTheDocument();
+      card?.click();
+
+      expect(setSelectedQuery).toHaveBeenCalledTimes(1);
+      expect(setSelectedQuery).toHaveBeenCalledWith(query);
+    });
+
+    it('selects a transformation when its data-query-sidebar-card container is clicked programmatically', () => {
+      const query: DataQuery = { refId: 'A', datasource: { type: 'test', uid: 'test' } };
+      const transformation: Transformation = {
+        transformId: 'filterByValue-0',
+        registryItem: undefined,
+        transformConfig: { id: 'filterByValue', options: {} },
+      };
+      const setSelectedTransformation = jest.fn();
+
+      const { container } = renderWithQueryEditorProvider(<TransformationCard transformation={transformation} />, {
+        queries: [query],
+        transformations: [transformation],
+        selectedQuery: query,
+        uiStateOverrides: { setSelectedTransformation },
+      });
+
+      const card = container.querySelector<HTMLElement>('[data-query-sidebar-card="filterByValue-0"]');
+      expect(card).toBeInTheDocument();
+      card?.click();
+
+      expect(setSelectedTransformation).toHaveBeenCalledTimes(1);
+      expect(setSelectedTransformation).toHaveBeenCalledWith(transformation);
+    });
   });
 
   describe('add button and menu', () => {
-    it('renders the card and add button', () => {
+    it('renders the default card with actions, unpressed state, and no checkbox or hidden icon', () => {
       renderSidebarCard();
 
       expect(screen.getByRole('button', { name: /select card A/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /add below A/i })).toBeInTheDocument();
       expect(screen.getByText('Card content')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /select card A/i })).toHaveAttribute('aria-pressed', 'false');
+      expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('icon-eye-slash')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /hide query/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /duplicate query/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /remove query/i })).toBeInTheDocument();
     });
 
     it('clicking "Add query" calls addQuery with the card refId as afterRefId', async () => {
@@ -248,11 +295,6 @@ describe('SidebarCard', () => {
       expect(screen.getByRole('button', { name: /select card A/i })).toHaveAttribute('aria-pressed', 'true');
     });
 
-    it('sets aria-pressed to false when isSelected is false', () => {
-      renderSidebarCard({ id: 'A', isSelected: false });
-      expect(screen.getByRole('button', { name: /select card A/i })).toHaveAttribute('aria-pressed', 'false');
-    });
-
     it('fires a DOM blur on the focused editor even when mousedown preventDefault blocks focus transfer', async () => {
       // @hello-pangea/dnd installs a capture-phase mousedown listener that preventDefaults, so the
       // browser's native focus transfer never fires a blur on the previously focused element.
@@ -281,14 +323,37 @@ describe('SidebarCard', () => {
         document.body.removeChild(editorLike);
       }
     });
+
+    it('blurs the focused editor when the press lands on the card container outside the select control', async () => {
+      // The card's colour strip and border belong to the container, not the inner select control.
+      const onSelect = jest.fn();
+      const onEditorBlur = jest.fn();
+      const user = userEvent.setup();
+      const { container } = renderSidebarCard({ id: 'A', onSelect });
+
+      const suppressFocusTransfer = (e: Event) => e.preventDefault();
+      window.addEventListener('mousedown', suppressFocusTransfer, true);
+
+      const editorLike = document.createElement('input');
+      editorLike.addEventListener('blur', onEditorBlur, true);
+      document.body.appendChild(editorLike);
+      editorLike.focus();
+
+      try {
+        const card = container.querySelector<HTMLElement>('[data-query-sidebar-card="A"]');
+        expect(card).toBeInTheDocument();
+        await user.click(card!);
+
+        expect(onEditorBlur).toHaveBeenCalled();
+        expect(onSelect).toHaveBeenCalledTimes(1);
+      } finally {
+        window.removeEventListener('mousedown', suppressFocusTransfer, true);
+        document.body.removeChild(editorLike);
+      }
+    });
   });
 
   describe('multi-select checkbox', () => {
-    it('does not render the checkbox when multi-select mode is off', () => {
-      renderSidebarCard({ id: 'A', multiSelectMode: false });
-      expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
-    });
-
     it('renders the checkbox when multi-select mode is on', () => {
       renderSidebarCard({ id: 'A', multiSelectMode: true });
       expect(screen.getByRole('checkbox')).toBeInTheDocument();
@@ -353,20 +418,32 @@ describe('SidebarCard', () => {
       expect(icons.length).toBeGreaterThanOrEqual(2);
     });
 
-    it('does not render the hidden icon when the card is visible', () => {
-      renderSidebarCard({ id: 'A', isHidden: false });
-      expect(screen.queryByTestId('icon-eye-slash')).not.toBeInTheDocument();
+    it.each([
+      { action: 'duplicate', label: /duplicate query/i },
+      { action: 'hide', label: /hide query/i },
+    ])('clicking the $action action does not select the card', async ({ label }) => {
+      const { user, onSelect } = renderSidebarCard({ id: 'A' });
+
+      await user.click(screen.getByRole('button', { name: label }));
+
+      expect(onSelect).not.toHaveBeenCalled();
     });
 
-    it('renders the hover actions when hasActions is true', () => {
-      renderSidebarCard({
+    it.each([
+      { choice: 'confirm', label: /^confirm$/i, deletes: true },
+      { choice: 'cancel', label: /^cancel$/i, deletes: false },
+    ])('removing then choosing $choice does not select the card', async ({ label, deletes }) => {
+      const onDelete = jest.fn();
+      const { user, onSelect } = renderSidebarCard({
         id: 'A',
-        actionsOverrides: { onDelete: jest.fn(), onToggleHide: jest.fn(), onDuplicate: jest.fn() },
+        actionsOverrides: { onDelete, onToggleHide: jest.fn(), onDuplicate: jest.fn() },
       });
 
-      expect(screen.getByRole('button', { name: /hide query/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /duplicate query/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /remove query/i })).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: /remove query/i }));
+      await user.click(screen.getByRole('button', { name: label }));
+
+      expect(onDelete).toHaveBeenCalledTimes(deletes ? 1 : 0);
+      expect(onSelect).not.toHaveBeenCalled();
     });
 
     it('does not render the hover actions when hasActions is false', () => {

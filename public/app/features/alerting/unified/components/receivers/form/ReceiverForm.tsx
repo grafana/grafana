@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import * as React from 'react';
+import { type ComponentProps, useState } from 'react';
 import { type FieldErrors, FormProvider, type SubmitErrorHandler, useForm } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -38,7 +38,7 @@ interface Props<R extends ChannelValues> {
   initialValues?: ReceiverFormValues<R>;
   isEditable: boolean;
   isTestable?: boolean;
-  customValidators?: Record<string, React.ComponentProps<typeof ChannelSubForm>['customValidators']>;
+  customValidators?: Record<string, ComponentProps<typeof ChannelSubForm>['customValidators']>;
   /**
    * Should we show a warning that there is no default policy set,
    * and that contact point being created will be set as the default?
@@ -46,7 +46,7 @@ interface Props<R extends ChannelValues> {
   showDefaultRouteWarning?: boolean;
   contactPointId?: string;
   canManagePermissions?: boolean;
-  canEditProtectedFields: boolean;
+  canModifyProtectedFields: boolean;
 }
 
 export function ReceiverForm<R extends ChannelValues>({
@@ -63,7 +63,7 @@ export function ReceiverForm<R extends ChannelValues>({
   showDefaultRouteWarning,
   contactPointId,
   canManagePermissions,
-  canEditProtectedFields,
+  canModifyProtectedFields,
 }: Props<R>) {
   const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
@@ -72,12 +72,13 @@ export function ReceiverForm<R extends ChannelValues>({
   // normalize deprecated and new config values
   const normalizedConfig = normalizeFormValues(initialValues);
 
+  const [defaultId] = useState(Math.random);
   const defaultValues: ReceiverFormValues<R> = normalizedConfig ?? {
     name: '',
     items: [
       {
         ...defaultItem,
-        __id: String(Math.random()),
+        __id: String(defaultId),
       },
     ],
   };
@@ -110,14 +111,12 @@ export function ReceiverForm<R extends ChannelValues>({
         notifyApp.error('Failed to save the contact point', message);
 
         if (isClientFetchError(e)) {
-          logWarning('Failed to save the contact point', {
-            status: String(e.status),
-            message,
-          });
+          logWarning('Failed to save the contact point', { status: String(e.status) });
         } else {
-          const error = new Error('Failed to save the contact point');
-          error.cause = e;
-          logError(error);
+          logError(
+            new Error('Failed to save the contact point'),
+            isFetchError(e) ? { status: String(e.status) } : undefined
+          );
         }
       }
     }
@@ -211,7 +210,7 @@ export function ReceiverForm<R extends ChannelValues>({
               commonSettingsComponent={commonSettingsComponent}
               isEditable={isEditable}
               isTestable={isTestable}
-              canEditProtectedFields={canEditProtectedFields}
+              canModifyProtectedFields={canModifyProtectedFields}
               customValidators={customValidators ? customValidators[field.type] : undefined}
             />
           );

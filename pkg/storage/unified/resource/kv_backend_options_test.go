@@ -34,9 +34,13 @@ var callerSuppliedFields = map[string]string{
 	// TestNewKVBackendOptionsDisableStorageServices covers it instead.
 	"DisableStorageServices": "derived from cfg.Target, and false when this process runs the storage server",
 
-	"WatchOptions.BufferSize": "no setting; defaulted in WatchOptions.normalize",
-	"WatchOptions.MinBackoff": "no setting; defaulted in WatchOptions.normalize",
-	"WatchOptions.MaxBackoff": "no setting; defaulted in WatchOptions.normalize",
+	"WatchOptions.BufferSize":          "no setting; defaulted in WatchOptions.normalize",
+	"WatchOptions.MinBackoff":          "no setting; defaulted in WatchOptions.normalize",
+	"WatchOptions.MaxBackoff":          "no setting; defaulted in WatchOptions.normalize",
+	"WatchOptions.SettlePerCollection": "false for KV: its RVs are global and KV watches advance bookmarks from other collections, so events settle in global RV order",
+	"WatchOptions.CaptureReady":        "per-watch startup signal set by each watch caller, not a backend option",
+	"WatchOptions.Invalidate":          "per-watch invalidation set by each watch caller, not a backend option",
+	"WatchOptions.OnLate":              "no setting; the backend counts late notifications unless the caller sets it",
 
 	"TenantWatcherConfig.ResyncInterval": "no setting; defaulted by the tenant watcher",
 	"TenantWatcherConfig.RetryMaxDelay":  "no setting; defaulted by the tenant watcher",
@@ -138,7 +142,6 @@ func TestNewKVBackendOptionsValues(t *testing.T) {
 	cfg.GarbageCollectionMaxAge = 8 * time.Minute
 	cfg.DashboardsGarbageCollectionMaxAge = 9 * time.Minute
 	cfg.KVLeaseTTL = 9 * time.Minute
-	cfg.FastLatestKeyLookupEnabled = true
 
 	opts := NewKVBackendOptions(cfg)
 
@@ -150,7 +153,6 @@ func TestNewKVBackendOptionsValues(t *testing.T) {
 	require.Equal(t, 7, opts.DashboardVersionsToKeep)
 	require.NotEmpty(t, opts.Holder)
 	require.Equal(t, 9*time.Minute, opts.LeaseTTL)
-	require.True(t, opts.FastLatestKeyLookup)
 	require.Equal(t, GarbageCollectionConfig{
 		Enabled:          true,
 		DryRun:           true,

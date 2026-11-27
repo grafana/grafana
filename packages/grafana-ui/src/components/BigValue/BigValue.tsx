@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { memo } from 'react';
 
-import { clearButtonStyles } from '../Button/Button';
+import { clearButtonStyles } from '../Button/StyledButton.styles';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 import { buildLayout } from './BigValueLayout';

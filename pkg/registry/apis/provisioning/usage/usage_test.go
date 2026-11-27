@@ -48,8 +48,8 @@ func TestMetricCollector_CountManagedObjectsErrors(t *testing.T) {
 		response *resourcepb.CountManagedObjectsResponse
 		err      error
 	}{
-		{name: "embedded", response: &resourcepb.CountManagedObjectsResponse{Error: result}},
 		{name: "grpc details", err: st.Err()},
+		{name: "grpc details with partial response", response: managedCount(managedKind, 2), err: st.Err()},
 		{name: "ordinary transport", err: transportErr},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -63,9 +63,7 @@ func TestMetricCollector_CountManagedObjectsErrors(t *testing.T) {
 			metrics, err := fn(context.Background())
 			require.ErrorContains(t, err, "count managed objects on namespace default:")
 			require.Empty(t, metrics)
-			if tc.err != nil {
-				require.ErrorIs(t, err, tc.err)
-			}
+			require.ErrorIs(t, err, tc.err)
 		})
 	}
 }
@@ -167,7 +165,7 @@ func TestMetricCollector_RepositoryDimensions(t *testing.T) {
 					Connection: &provisioning.ConnectionInfo{Name: "my-conn"},
 				},
 				Status: provisioning.RepositoryStatus{
-					Health: provisioning.HealthStatus{Healthy: true},
+					Health: provisioning.RepositoryHealthStatus{Healthy: true},
 					Sync:   provisioning.SyncStatus{State: provisioning.JobStateSuccess},
 					Conditions: []metav1.Condition{
 						{Type: provisioning.ConditionTypeReady, Reason: provisioning.ReasonAvailable},
@@ -183,7 +181,7 @@ func TestMetricCollector_RepositoryDimensions(t *testing.T) {
 					Sync:  provisioning.SyncOptions{Enabled: false, Target: provisioning.SyncTargetTypeFolder},
 				},
 				Status: provisioning.RepositoryStatus{
-					Health: provisioning.HealthStatus{Healthy: false},
+					Health: provisioning.RepositoryHealthStatus{Healthy: false},
 					Sync:   provisioning.SyncStatus{State: provisioning.JobStateError},
 					Conditions: []metav1.Condition{
 						{Type: provisioning.ConditionTypeReady, Reason: provisioning.ReasonInvalidSpec},
@@ -243,7 +241,7 @@ func TestMetricCollector_ConnectionStats(t *testing.T) {
 		return []provisioning.Connection{
 			{
 				Spec:   provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
-				Status: provisioning.ConnectionStatus{Health: provisioning.HealthStatus{Healthy: true}},
+				Status: provisioning.ConnectionStatus{Health: provisioning.ConnectionHealthStatus{Healthy: true}},
 			},
 			{
 				Spec: provisioning.ConnectionSpec{
@@ -251,7 +249,7 @@ func TestMetricCollector_ConnectionStats(t *testing.T) {
 					Webhook: &provisioning.ConnectionWebhookConfig{Disabled: true},
 				},
 				Status: provisioning.ConnectionStatus{
-					Health: provisioning.HealthStatus{Healthy: false},
+					Health: provisioning.ConnectionHealthStatus{Healthy: false},
 					Conditions: []metav1.Condition{
 						{Type: provisioning.ConditionTypeReady, Reason: provisioning.ReasonAuthenticationFailed},
 					},

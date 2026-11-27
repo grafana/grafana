@@ -78,6 +78,7 @@ If an option is only available in view mode or edit mode, that's indicated:
   - **New alert rule**: Open the alert rule configuration page in **Alerting**, where you can [create a Grafana-managed alert](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#create-alerts-from-panels) based on the panel queries.
   - **Hide/Show legend**: Hide or show the panel legend.
   - **Get help**: Send a snapshot or panel data to Grafana Labs Technical Support.
+- **Add to notebook**: Add a copy of the panel to a new or existing notebook. This option is only available when notebooks are enabled and you have permission to edit or create notebooks. For more information, refer to [Add a panel from a dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/notebooks/#add-a-panel-from-a-dashboard).
 - **Remove**: Edit mode only. Remove the panel from the dashboard.
 
 ## View mode panel controls
@@ -220,13 +221,13 @@ Time series
 
 ## Add a panel
 
-To add a panel to an empty dashboard, click or drag the panel onto the dashboard:
+To add a panel to an empty dashboard, click **+ Add visualization**:
 
-![Empty dashboard state](/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.2.png)
+![Empty dashboard state](/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.3.png)
 
 To add a panel to an existing dashboard, follow these steps:
 
-1. Click **Edit** in the top-right corner of the dashboard.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-add-element-icon-v13.1.png" max-width="250px" alt="Add element icon" >}}

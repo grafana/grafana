@@ -100,7 +100,7 @@ func TestLocalSubjectMetadataAndPolicyIsolation(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, claims.Rest.Permissions)
 	require.Empty(t, claims.Rest.Scopes)
-	require.Empty(t, claims.Rest.ServiceIdentity)
+	require.Equal(t, "plugin:audit-app", claims.Rest.ServiceIdentity)
 	require.Equal(t, []string{"datasources:read"}, claims.Rest.DelegatedPermissions)
 	require.Equal(t, &authnlib.ActorClaims{Subject: "user:42", IDTokenClaims: authnlib.IDTokenClaims{
 		Identifier: "uid-42", Type: "user", Namespace: "default",

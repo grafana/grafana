@@ -21,7 +21,7 @@ inputs:
     description: Grafana version string used to name the tarball and bundle plugins.
     required: true
   frontend-artifact:
-    description: Name of the Actions artifact containing the built frontend (public/).
+    description: Name of the Actions artifact containing dist/frontend/.
     required: true
   backend-artifact:
     description: Name of the Actions artifact containing the compiled binary.
@@ -33,7 +33,7 @@ runs:
     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
       with:
         name: ${{ inputs.frontend-artifact }}
-        path: public
+        path: dist/frontend
 
     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
       with:

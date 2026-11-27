@@ -4,7 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"testing/synctest"
+	"time"
 
+	"github.com/go-jose/go-jose/v4/jwt"
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
@@ -35,6 +38,7 @@ func TestLocalUnattendedDelegation(t *testing.T) {
 			claims, err := verifier.Verify(context.Background(), token)
 			require.NoError(t, err)
 			require.Equal(t, "access-policy:obo-poc-app", claims.Subject)
+			require.Equal(t, "plugin:obo-poc-app", claims.Rest.ServiceIdentity)
 			require.Equal(t, "default", claims.Rest.Namespace)
 			require.Empty(t, claims.Rest.Permissions)
 			require.Equal(t, policy.DelegatedPermissions, claims.Rest.DelegatedPermissions)
@@ -85,6 +89,46 @@ func TestLocalUnattendedDelegation(t *testing.T) {
 		_, err := e.signForPolicy(context.Background(), denied, request())
 		require.ErrorIs(t, err, ErrLocalAccessDenied)
 	})
+}
+
+func TestLocalUnattendedDelegationAfterCallerTokenExpires(t *testing.T) {
+	for _, typ := range []types.IdentityType{types.TypeUser, types.TypeServiceAccount} {
+		t.Run(string(typ), func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				e, err := newLocalExchanger()
+				require.NoError(t, err)
+				policy := auditSubjectPolicy()
+				subject := authnlib.TokenExchangeSubject{Sub: types.NewTypeID(typ, "42"), Identifier: "uid-42", Type: string(typ), Namespace: "default"}
+				idToken := signTestToken(t, authnlib.TokenTypeID, subject.Sub, authnlib.IDTokenClaims{
+					Identifier: subject.Identifier, Type: typ, Namespace: subject.Namespace,
+				})
+				inbound, err := e.Exchange(context.Background(), authnlib.TokenExchangeRequest{
+					Namespace: subject.Namespace, Audiences: []string{policy.PluginID}, SubjectToken: idToken,
+				})
+				require.NoError(t, err)
+				req := authnlib.TokenExchangeRequest{Namespace: subject.Namespace, Audiences: policy.Audiences, SubjectToken: inbound.Token}
+				_, err = e.signForPolicy(context.Background(), policy, req)
+				require.NoError(t, err)
+
+				time.Sleep(localTokenTTL + jwt.DefaultLeeway + time.Second)
+				_, err = e.signForPolicy(context.Background(), policy, req)
+				require.ErrorIs(t, err, authnlib.ErrExpiredToken)
+
+				req.SubjectToken = ""
+				req.Subject = &subject
+				token, err := e.signForPolicy(context.Background(), policy, req)
+				require.NoError(t, err)
+				verifier := authnlib.NewAccessTokenVerifier(authnlib.VerifierConfig{AllowedAudiences: policy.Audiences}, e.keys)
+				claims, err := verifier.Verify(context.Background(), token)
+				require.NoError(t, err)
+				require.Equal(t, subject.Sub, authnlib.NewAccessTokenAuthInfo(*claims).GetSubject())
+				require.Equal(t, subject.Identifier, authnlib.NewAccessTokenAuthInfo(*claims).GetIdentifier())
+				require.Equal(t, "plugin:audit-app", claims.Rest.ServiceIdentity)
+				require.Equal(t, policy.DelegatedPermissions, claims.Rest.DelegatedPermissions)
+				require.Equal(t, time.Now().Add(localTokenTTL), claims.Expiry.Time())
+			})
+		})
+	}
 }
 
 func TestLocalSubjectRestrictionContract(t *testing.T) {

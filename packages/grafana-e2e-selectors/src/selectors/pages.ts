@@ -412,6 +412,14 @@ export const versionedPages = {
     ControlsButton: {
       '12.3.0': 'data-testid dashboard controls button',
     },
+    EditHistory: {
+      undo: {
+        '13.4.0': 'data-testid dashboard undo button',
+      },
+      redo: {
+        '13.4.0': 'data-testid dashboard redo button',
+      },
+    },
     SubMenu: {
       submenu: {
         '13.1.0': 'data-testid Dashboard submenu',
@@ -1338,6 +1346,18 @@ export const versionedPages = {
       },
       controls: {
         '13.3.0': 'data-testid notebooks item controls',
+      },
+      outline: {
+        '13.4.0': 'data-testid notebooks item outline',
+      },
+      outlineEntry: {
+        '13.4.0': 'data-testid notebooks item outline entry',
+      },
+      outlineButton: {
+        '13.4.0': 'data-testid notebooks item outline button',
+      },
+      outlineSearchInput: {
+        '13.4.0': 'data-testid notebooks item outline search input',
       },
     },
   },

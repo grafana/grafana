@@ -20,13 +20,15 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { edit } from '../../actions/utils/edit';
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
+import { type SceneQuestion } from '../../questions/types';
 import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
-import { cloneSectionVariableSet, removeRepeatLocalVariableFromSet } from '../../utils/clone';
+import { cloneSectionDataLayerSet, cloneSectionVariableSet, removeRepeatLocalVariableFromSet } from '../../utils/clone';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
 import { getDashboardSceneFor, getSlugForRowOrTab, interpolateSectionTitle } from '../../utils/utils';
+import { DashboardDataLayerSet } from '../DashboardDataLayerSet';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
@@ -55,6 +57,8 @@ export interface RowItemState extends SceneObjectState {
   isDropTarget?: boolean;
   conditionalRendering?: ConditionalRenderingGroup;
   repeatByVariable?: string;
+  /** Questions viewers can run on the panels in this row, offered by plugins in the row's controls */
+  questions?: SceneQuestion[];
   repeatedRows?: RowItem[];
   /** Marks object as a repeated object and a key pointer to source object */
   repeatSourceKey?: string;
@@ -82,6 +86,8 @@ export class RowItem
       title: state?.title ?? t('dashboard.rows-layout.row.new', 'New row'),
       layout: state?.layout ?? AutoGridLayoutManager.createEmpty(),
       conditionalRendering: state?.conditionalRendering ?? ConditionalRenderingGroup.createEmpty(),
+      // Query runners collect data layers when they activate, so a set attached later would not reach panels
+      $data: state?.$data ?? new DashboardDataLayerSet({}),
     });
 
     this.addActivationHandler(() => this._activationHandler());
@@ -116,9 +122,19 @@ export class RowItem
 
   public getOutlineChildren(isEditing?: boolean): SceneObject[] {
     const layoutChildren = this.state.layout.getOutlineChildren();
+    const sectionAnnotations =
+      this.state.$data instanceof DashboardDataLayerSet && this.state.$data.state.annotationLayers.length > 0
+        ? [this.state.$data]
+        : [];
+
     if (isEditing && this.state.$variables) {
-      return [this.getFiltersSet(), this.state.$variables, ...layoutChildren];
+      return [this.getFiltersSet(), this.state.$variables, ...sectionAnnotations, ...layoutChildren];
     }
+
+    if (isEditing && sectionAnnotations.length > 0) {
+      return [...sectionAnnotations, ...layoutChildren];
+    }
+
     return layoutChildren;
   }
 
@@ -210,10 +226,12 @@ export class RowItem
   // panelIdGenerator is a shared sequential counter created by the parent layout
   // we forward id to ensure sibling tabs never produce duplicate panel IDs
   public duplicate(panelIdGenerator?: PanelIdGenerator): RowItem {
+    const clonedData = cloneSectionDataLayerSet(this.state.$data);
     return this.clone({
       key: undefined,
       layout: this.getLayout().duplicate(panelIdGenerator),
       $variables: cloneSectionVariableSet(this.state.$variables),
+      ...(clonedData ? { $data: clonedData } : {}),
     });
   }
 

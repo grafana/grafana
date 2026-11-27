@@ -317,32 +317,34 @@ const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss }: Add
       isOpen={isOpen}
       onDismiss={onCancel}
     >
-      <Field label={t('admin.add-to-org-modal.label-organization', 'Organization')}>
-        <OrgPicker inputId="new-org-input" onSelected={onOrgSelect} excludeOrgs={userOrgs} autoFocus />
-      </Field>
-      <Field label={t('admin.add-to-org-modal.label-role', 'Role')} disabled={selectedOrg === null}>
-        <UserRolePicker
-          userId={user?.id || 0}
-          orgId={selectedOrg?.id}
-          basicRole={role}
-          onBasicRoleChange={onOrgRoleChange}
-          basicRoleDisabled={false}
-          roleOptions={roleOptions}
-          apply={true}
-          onApplyRoles={onRoleUpdate}
-          pendingRoles={pendingRoles}
-        />
-      </Field>
-      <Modal.ButtonRow>
-        <Stack gap={2} justifyContent="center">
-          <Button variant="secondary" fill="outline" onClick={onCancel}>
-            <Trans i18nKey="admin.user-orgs-modal.cancel-button">Cancel</Trans>
-          </Button>
-          <Button variant="primary" disabled={selectedOrg === null} onClick={onAddUserToOrg}>
-            <Trans i18nKey="admin.user-orgs-modal.add-button">Add to organization</Trans>
-          </Button>
-        </Stack>
-      </Modal.ButtonRow>
+      <Stack direction="column" gap={2}>
+        <Field noMargin label={t('admin.add-to-org-modal.label-organization', 'Organization')}>
+          <OrgPicker inputId="new-org-input" onSelected={onOrgSelect} excludeOrgs={userOrgs} autoFocus />
+        </Field>
+        <Field noMargin label={t('admin.add-to-org-modal.label-role', 'Role')} disabled={selectedOrg === null}>
+          <UserRolePicker
+            userId={user?.id || 0}
+            orgId={selectedOrg?.id}
+            basicRole={role}
+            onBasicRoleChange={onOrgRoleChange}
+            basicRoleDisabled={false}
+            roleOptions={roleOptions}
+            apply={true}
+            onApplyRoles={onRoleUpdate}
+            pendingRoles={pendingRoles}
+          />
+        </Field>
+        <Modal.ButtonRow>
+          <Stack gap={2} justifyContent="center">
+            <Button variant="secondary" fill="outline" onClick={onCancel}>
+              <Trans i18nKey="admin.user-orgs-modal.cancel-button">Cancel</Trans>
+            </Button>
+            <Button variant="primary" disabled={selectedOrg === null} onClick={onAddUserToOrg}>
+              <Trans i18nKey="admin.user-orgs-modal.add-button">Add to organization</Trans>
+            </Button>
+          </Stack>
+        </Modal.ButtonRow>
+      </Stack>
     </Modal>
   );
 });

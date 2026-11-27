@@ -8,7 +8,7 @@ import {
 import { filterBySelector } from 'app/features/alerting/unified/mocks/server/handlers/k8s/utils';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
 import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 import { receiverConfigToK8sIntegration } from 'app/features/alerting/unified/utils/k8s/utils';
 

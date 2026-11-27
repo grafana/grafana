@@ -1,14 +1,21 @@
-import { render, screen, waitFor } from 'test/test-utils';
+import { configureStore } from '@reduxjs/toolkit';
+import { http, HttpResponse } from 'msw';
+import { Provider } from 'react-redux';
+import { sendWindowFocus } from 'test/helpers/sendWindowFocus';
+import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, setBackendSrv } from '@grafana/runtime';
-import { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { setBackendSrv } from '@grafana/runtime';
+import { starsRoute, starUpdateRoute } from '@grafana/test-utils/handlers';
+import server, { setupMockServer } from '@grafana/test-utils/server';
+import { getFolderFixtures, setMockStarredDashboards } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { useSelector } from 'app/types/store';
+import { contextSrv } from 'app/core/services/context_srv';
+import { store } from 'app/store/store';
 
-import { StarToolbarButton } from './StarToolbarButton';
+import { StarToolbarButton, StarToolbarButtonExposed } from './StarToolbarButton';
 import { itemStarred } from './analytics/main';
 
 jest.mock('./analytics/main', () => ({
@@ -25,25 +32,6 @@ locationUtil.initialize({
   getVariablesUrlParams: jest.fn(),
 });
 
-/**
- * Test component that renders the list of starred items from the nav tree state
- *
- * This is just for basic assertions that we've added/removed items correctly
- */
-const TestStarredMenuItems = () => {
-  const navTree = useSelector((state) => state.navBarTree);
-  const starred = navTree.find((item) => item.id === 'starred');
-  return (
-    <div>
-      {starred?.children?.map((child) => (
-        <a key={child.id} href={child.url} data-testid={`starred-item-${child.text}`}>
-          {child.text}
-        </a>
-      ))}
-    </div>
-  );
-};
-
 const existingStarredItem = dashbdD.item;
 const itemToStar = folderA_folderB_dashbdB.item;
 const folderToStar = folderA.item;
@@ -54,56 +42,49 @@ const findStarButton = (title: string, isStarred: boolean) =>
 const setup = (
   itemForStarButton: typeof existingStarredItem | typeof itemToStar,
   { group = 'dashboard.grafana.app', kind = 'Dashboard' } = {}
-) => {
-  config.bootData.navTree = [
-    {
-      id: 'starred',
-      text: 'Starred',
-      children: [
-        {
-          text: existingStarredItem.title,
-          id: `starred/${existingStarredItem.uid}`,
-          url: existingStarredItem.url,
-        },
-      ],
-    },
-  ];
-  return render(
-    <>
-      <TestStarredMenuItems />
-      <StarToolbarButton title={itemForStarButton.title} group={group} kind={kind} id={itemForStarButton.uid} />
-    </>
-  );
-};
+) => render(<StarToolbarButton title={itemForStarButton.title} group={group} kind={kind} id={itemForStarButton.uid} />);
+
+testWithStarsUser();
 
 describe('StarToolbarButton', () => {
   beforeEach(() => {
     jest.mocked(itemStarred).mockClear();
   });
 
-  it('adds a nav menu item, including correct url', async () => {
+  it('stars and unstars the item', async () => {
     const { user } = setup(itemToStar);
-    const expectedTestId = `starred-item-${itemToStar.title}`;
-
-    expect(screen.queryByTestId(expectedTestId)).not.toBeInTheDocument();
 
     await user.click(await findStarButton(itemToStar.title, false));
+    expect(await findStarButton(itemToStar.title, true)).toBeInTheDocument();
 
-    const navItem = await screen.findByTestId(expectedTestId);
-
-    expect(navItem).toBeInTheDocument();
-    expect(navItem).toHaveAttribute('href', `/foo/bar/d/${itemToStar.uid}`);
+    await user.click(await findStarButton(itemToStar.title, true));
+    expect(await findStarButton(itemToStar.title, false)).toBeInTheDocument();
   });
 
-  it('removes a nav menu item', async () => {
-    const { user } = setup(existingStarredItem);
-    const expectedTestId = `starred-item-${existingStarredItem.title}`;
+  it('shows a star made elsewhere once the window regains focus', async () => {
+    setup(itemToStar);
+    await findStarButton(itemToStar.title, false);
 
-    expect(await screen.findByTestId(expectedTestId)).toBeInTheDocument();
+    // Starred in another tab, which nothing reports to this window
+    setMockStarredDashboards([existingStarredItem.uid, itemToStar.uid]);
+    act(() => sendWindowFocus());
 
-    await user.click(await findStarButton(existingStarredItem.title, true));
+    expect(await findStarButton(itemToStar.title, true)).toBeInTheDocument();
+  });
 
-    expect(screen.queryByTestId(expectedTestId)).not.toBeInTheDocument();
+  it('confirms the star, then the unstar, with a notification', async () => {
+    const { user } = setup(itemToStar);
+
+    await user.click(await findStarButton(itemToStar.title, false));
+    await user.click(await findStarButton(itemToStar.title, true));
+    await findStarButton(itemToStar.title, false);
+
+    await waitFor(() =>
+      expect(Object.values(store.getState().appNotifications.byId).map(({ title }) => title)).toEqual([
+        'Added to starred',
+        'Removed from starred',
+      ])
+    );
   });
 
   it('shows spinner initially and transitions to empty star when loading completes with no starred items', async () => {
@@ -160,6 +141,16 @@ describe('StarToolbarButton', () => {
     expect(itemStarred).toHaveBeenCalledTimes(1);
   });
 
+  it('reports no analytics event when the star is not stored', async () => {
+    server.use(http.put(starUpdateRoute, () => new HttpResponse(null, { status: 500 })));
+    const { user } = setup(itemToStar);
+
+    await user.click(await findStarButton(itemToStar.title, false));
+
+    expect(await findStarButton(itemToStar.title, false)).toBeInTheDocument();
+    expect(itemStarred).not.toHaveBeenCalled();
+  });
+
   it('reports a typed analytics event when unstarring a dashboard', async () => {
     const { user } = setup(existingStarredItem);
 
@@ -174,5 +165,70 @@ describe('StarToolbarButton', () => {
       });
     });
     expect(itemStarred).toHaveBeenCalledTimes(1);
+  });
+
+  describe('for a user without a stars resource', () => {
+    const starsRequest = jest.fn();
+
+    beforeEach(() => {
+      starsRequest.mockClear();
+      server.use(
+        http.get(starsRoute, () => {
+          starsRequest();
+          return HttpResponse.json({});
+        })
+      );
+    });
+
+    const expectNoStarButton = async () => {
+      setup(itemToStar);
+      expect(screen.queryByTestId(selectors.components.NavToolbar.markAsFavorite)).not.toBeInTheDocument();
+      await waitFor(() => expect(starsRequest).not.toHaveBeenCalled());
+    };
+
+    it('renders nothing and reads no stars for an anonymous user', async () => {
+      jest.replaceProperty(contextSrv, 'isSignedIn', false);
+      await expectNoStarButton();
+    });
+
+    it('renders nothing and reads no stars for a user without a uid', async () => {
+      jest.replaceProperty(contextSrv.user, 'uid', '');
+      await expectNoStarButton();
+    });
+  });
+});
+
+describe('StarToolbarButtonExposed', () => {
+  it('stars the object a plugin names', async () => {
+    const { user } = render(
+      <StarToolbarButtonExposed title="Capacity review" group="things.ext.grafana.app" kind="Thing" id="t1" />
+    );
+
+    await user.click(await findStarButton('Capacity review', false));
+
+    expect(await findStarButton('Capacity review', true)).toBeInTheDocument();
+  });
+
+  it('stars inside a Redux provider of the plugin that renders it', async () => {
+    const pluginStore = configureStore({ reducer: () => ({}) });
+    const { user } = render(
+      <Provider store={pluginStore}>
+        <StarToolbarButtonExposed title="Capacity review" group="things.ext.grafana.app" kind="Thing" id="t1" />
+      </Provider>
+    );
+
+    await user.click(await findStarButton('Capacity review', false));
+
+    expect(await findStarButton('Capacity review', true)).toBeInTheDocument();
+  });
+
+  it('renders nothing, and says why, when a plugin names no object', () => {
+    const error = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    render(<StarToolbarButtonExposed title="Capacity review" group="things.ext.grafana.app" kind="Thing" />);
+
+    expect(error).toHaveBeenCalledWith('[StarToolbarButton] Pass title, group, kind and id: the object to star.');
+    expect(screen.queryByTestId(selectors.components.NavToolbar.markAsFavorite)).not.toBeInTheDocument();
+    error.mockRestore();
   });
 });

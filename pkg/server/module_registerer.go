@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc"
 
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/modules"
 )
 
@@ -29,6 +30,11 @@ func (s *ModuleServer) GRPCServer() *grpc.Server {
 		return nil
 	}
 	return s.grpcService.GetServer()
+}
+
+// NATSPublisher implements modules.Dependencies.
+func (s *ModuleServer) NATSPublisher() nats.Publisher {
+	return s.natsPublisher
 }
 
 // ReadyNotifier implements modules.Dependencies.

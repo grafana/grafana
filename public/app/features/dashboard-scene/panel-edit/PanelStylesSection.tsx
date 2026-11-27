@@ -21,13 +21,42 @@ function presetModifiesThresholds(preset: PanelPluginVisualizationSuggestion): b
   return Boolean(preset.fieldConfig?.defaults?.thresholds);
 }
 
-export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionProps) {
-  const styles = useStyles2(getStyles);
-  const [selectedPreset, setSelectedPreset] = useState<string | undefined>(undefined);
+/** The panel's style presets and the data to preview them with, or null while there is nothing to show. */
+export function usePanelStylePresets(panel: VizPanel) {
   const { data } = sceneGraph.getData(panel).useState();
-
   const plugin = panel.getPlugin();
   const presets = useMemo(() => (plugin ? getPluginPresets(plugin, data?.series) : null), [plugin, data]);
+
+  if (!presets || presets.length === 0 || !data || !hasData(data)) {
+    return null;
+  }
+  return { presets, data };
+}
+
+export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionProps) {
+  const available = usePanelStylePresets(panel);
+
+  if (!available) {
+    return null;
+  }
+
+  return (
+    <OptionsPaneCategory
+      id="panel-styles"
+      title={t('dashboard-scene.panel-styles.title', 'Panel styles')}
+      isOpenDefault={true}
+    >
+      <PanelStylesGrid panel={panel} onApplyPreset={onApplyPreset} {...available} />
+    </OptionsPaneCategory>
+  );
+}
+
+interface PanelStylesGridProps extends PanelStylesSectionProps, NonNullable<ReturnType<typeof usePanelStylePresets>> {}
+
+/** The preset cards on their own, for surfaces that give them their own heading. */
+export function PanelStylesGrid({ panel, presets, data, onApplyPreset }: PanelStylesGridProps) {
+  const styles = useStyles2(getStyles);
+  const [selectedPreset, setSelectedPreset] = useState<string | undefined>(undefined);
 
   const handlePresetApply = useCallback(
     (preset: PanelPluginVisualizationSuggestion, index: number) => {
@@ -62,27 +91,17 @@ export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionP
     );
   };
 
-  if (!presets || presets.length === 0 || !data || !hasData(data)) {
-    return null;
-  }
-
   return (
-    <OptionsPaneCategory
-      id="panel-styles"
-      title={t('dashboard-scene.panel-styles.title', 'Panel styles')}
-      isOpenDefault={true}
-    >
-      <VisualizationCardGrid
-        items={presets}
-        data={data}
-        onItemClick={(preset, index) => handlePresetApply(preset, index)}
-        getItemKey={(preset) => preset.hash}
-        selectedKey={selectedPreset}
-        minColumnWidth={120}
-        maxCardWidth={MIN_MULTI_COLUMN_SIZE}
-        getBadge={getThresholdBadge}
-      />
-    </OptionsPaneCategory>
+    <VisualizationCardGrid
+      items={presets}
+      data={data}
+      onItemClick={(preset, index) => handlePresetApply(preset, index)}
+      getItemKey={(preset) => preset.hash}
+      selectedKey={selectedPreset}
+      minColumnWidth={120}
+      maxCardWidth={MIN_MULTI_COLUMN_SIZE}
+      getBadge={getThresholdBadge}
+    />
   );
 }
 

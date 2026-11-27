@@ -3,7 +3,14 @@ import { type SceneDataLayerProvider } from '@grafana/scenes';
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { partitionSceneObjects } from '../../sidebar/dashboard/helpers';
 
-export function partitionAnnotationsByDisplay(annotationLayers: SceneDataLayerProvider[]) {
+/**
+ * Sections have no controls menu (hasControlsMenu: false), so layers placed there are listed as visible,
+ * matching how the section controls render them.
+ */
+export function partitionAnnotationsByDisplay(
+  annotationLayers: SceneDataLayerProvider[],
+  { hasControlsMenu = true }: { hasControlsMenu?: boolean } = {}
+) {
   const {
     visible = [],
     controlsMenu = [],
@@ -14,7 +21,7 @@ export function partitionAnnotationsByDisplay(annotationLayers: SceneDataLayerPr
       if (a.state.isHidden) {
         return 'hidden';
       }
-      if (a.state.placement === 'inControlsMenu') {
+      if (hasControlsMenu && a.state.placement === 'inControlsMenu') {
         return 'controlsMenu';
       }
       return 'visible';

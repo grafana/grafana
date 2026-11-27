@@ -92,7 +92,7 @@ describe('ChannelSubForm', () => {
             commonSettingsComponent={GrafanaCommonChannelSettings}
             isEditable={true}
             isTestable={false}
-            canEditProtectedFields={true}
+            canModifyProtectedFields={true}
           />
         </FormProvider>
       </AlertmanagerProvider>
@@ -328,7 +328,7 @@ describe('ChannelSubForm', () => {
               commonSettingsComponent={GrafanaCommonChannelSettings}
               isEditable={true}
               isTestable={false}
-              canEditProtectedFields={true}
+              canModifyProtectedFields={true}
             />
           </FormProvider>
         </AlertmanagerProvider>
@@ -462,7 +462,7 @@ describe('ChannelSubForm', () => {
                 commonSettingsComponent={GrafanaCommonChannelSettings}
                 isEditable={true}
                 isTestable={false}
-                canEditProtectedFields={true}
+                canModifyProtectedFields={true}
               />
             </FormProvider>
           </AlertmanagerProvider>

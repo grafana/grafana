@@ -1,8 +1,9 @@
-import { type ComponentProps, type ReactNode } from 'react';
+import { EditorView } from '@codemirror/view';
+import { type ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { type Props } from 'react-virtualized-auto-sizer';
 import { render, screen, userEvent } from 'test/test-utils';
 
-import { type CodeEditor } from '@grafana/ui';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { getAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
@@ -13,23 +14,21 @@ import {
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { type NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
 import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { DEFAULT_TEMPLATES } from 'app/features/alerting/unified/utils/template-constants';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { TemplateSelector, TemplatesPicker, WrapWithTemplateSelection, getTemplateOptions } from './TemplateSelector';
 import { parseTemplates } from './utils';
 
-type CodeEditorProps = ComponentProps<typeof CodeEditor>;
-
 const alertmanagerConfigMock = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
 
-jest.mock('@grafana/ui', () => ({
-  ...jest.requireActual('@grafana/ui'),
-  CodeEditor: ({ value, onChange }: CodeEditorProps) => (
-    <textarea data-testid="code-editor" value={value} onChange={(e) => onChange?.(e.target.value)} />
-  ),
-}));
+jest.mock(
+  'react-virtualized-auto-sizer',
+  () =>
+    ({ children }: Props) =>
+      children({ width: 600, height: 400, scaledWidth: 1, scaledHeight: 1 })
+);
 
 const renderWithProvider = (children: ReactNode) =>
   render(
@@ -136,11 +135,19 @@ describe('TemplatesPicker', () => {
     await user.click(await screen.findByText(/edit title/i));
     const input = await screen.findByRole('combobox');
     expect(screen.queryByText('slack-template')).not.toBeInTheDocument();
-    await userEvent.click(input);
+    await user.click(input);
     expect(screen.getAllByRole('option')).toHaveLength(Object.keys(alertmanagerConfigMock.template_files).length + 3); // 4 templates in mock plus 3 in the default template
     const template = screen.getByRole('option', { name: 'slack-template' });
-    await userEvent.click(template);
-    expect(screen.getByText('slack-template')).toBeInTheDocument();
+    await user.click(template);
+    const editor = await screen.findByRole('textbox', { name: 'Template content' });
+    expect(editor).toHaveTextContent('{{ define "slack-template" }} Custom slack template {{ end }}');
+    expect(EditorView.findFromDOM(editor)?.state.readOnly).toBe(true);
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(editor.closest('.cm-editor')).toHaveStyle({ height: '400px' });
+
+    await user.click(input);
+    await user.click(screen.getByRole('option', { name: 'custom-email' }));
+    expect(editor).toHaveTextContent('Custom email template');
   });
 
   it('filters out Mimir templates when filterKind is grafana', async () => {

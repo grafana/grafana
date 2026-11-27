@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
+	authnlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/configprovider"
@@ -845,5 +846,131 @@ func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
 				assert.Nil(t, actualToken.Extra("id_token"))
 			}
 		})
+	}
+}
+
+func TestGetExternalSession_DelegatedUser(t *testing.T) {
+	latest := &auth.ExternalSession{ID: 2, UserID: 1, AuthModule: login.GenericOAuthModule}
+
+	tests := []struct {
+		desc            string
+		authenticatedBy string
+		serviceIdentity string
+		// validSessions are the user's sessions that are neither revoked nor expired, as GetUserTokens returns them.
+		validSessions []*auth.UserToken
+		expected      *auth.ExternalSession
+		expectedErr   error
+	}{
+		{
+			desc:            "should use the external session of the most recent valid session when Assistant acts for the user",
+			authenticatedBy: login.ExtendedJWTModule,
+			serviceIdentity: assistantServiceIdentity,
+			validSessions: []*auth.UserToken{
+				{Id: 1, UserId: 1, ExternalSessionId: 1, CreatedAt: 100},
+				{Id: 2, UserId: 1, ExternalSessionId: latest.ID, CreatedAt: 200},
+				{Id: 3, UserId: 1, CreatedAt: 300},
+			},
+			expected: latest,
+		},
+		{
+			desc:            "should return not found when no valid session has an external session",
+			authenticatedBy: login.ExtendedJWTModule,
+			serviceIdentity: assistantServiceIdentity,
+			validSessions:   []*auth.UserToken{{Id: 3, UserId: 1, CreatedAt: 300}},
+			expectedErr:     auth.ErrExternalSessionNotFound,
+		},
+		{
+			desc:            "should return not found when the user has no valid session",
+			authenticatedBy: login.ExtendedJWTModule,
+			serviceIdentity: assistantServiceIdentity,
+			validSessions:   []*auth.UserToken{},
+			expectedErr:     auth.ErrExternalSessionNotFound,
+		},
+		{
+			desc:            "should require a session token when another service acts for the user",
+			authenticatedBy: login.ExtendedJWTModule,
+			serviceIdentity: "other-service",
+			expectedErr:     auth.ErrExternalSessionTokenNotFound,
+		},
+		{
+			desc:            "should require a session token when the access token has no service identity",
+			authenticatedBy: login.ExtendedJWTModule,
+			expectedErr:     auth.ErrExternalSessionTokenNotFound,
+		},
+		{
+			desc:            "should still require a session token for other logins",
+			authenticatedBy: login.GenericOAuthModule,
+			serviceIdentity: assistantServiceIdentity,
+			expectedErr:     auth.ErrExternalSessionTokenNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		id := delegatedUser(tt.authenticatedBy, tt.serviceIdentity)
+		// OAuthTokenMiddleware passes the user.SignedInUser that the context handler derives from the identity.
+		requesters := map[string]identity.Requester{"identity": id, "signed in user": id.SignedInUser()}
+		for kind, usr := range requesters {
+			t.Run(tt.desc+" ("+kind+")", func(t *testing.T) {
+				sessionService := authtest.NewMockUserAuthTokenService(t)
+				if tt.validSessions != nil {
+					sessionService.On("GetUserTokens", mock.Anything, int64(1)).Return(tt.validSessions, nil).Once()
+				}
+				if tt.expected != nil {
+					sessionService.On("GetExternalSession", mock.Anything, tt.expected.ID).Return(tt.expected, nil).Once()
+				}
+				service := &Service{sessionService: sessionService}
+
+				session, err := service.getExternalSession(context.Background(), usr, 1, nil)
+
+				if tt.expectedErr != nil {
+					require.ErrorIs(t, err, tt.expectedErr)
+					assert.Nil(t, session)
+					return
+				}
+				require.NoError(t, err)
+				assert.Equal(t, tt.expected, session)
+			})
+		}
+	}
+}
+
+func TestGetCurrentOAuthToken_DelegatedUser(t *testing.T) {
+	sessionService := authtest.NewMockUserAuthTokenService(t)
+	sessionService.On("GetUserTokens", mock.Anything, int64(1)).Return([]*auth.UserToken{{Id: 1, UserId: 1, ExternalSessionId: 2}}, nil).Once()
+	sessionService.On("GetExternalSession", mock.Anything, int64(2)).Return(&auth.ExternalSession{
+		ID:          2,
+		UserID:      1,
+		AuthModule:  login.GenericOAuthModule,
+		AccessToken: unexpiredTokenWithoutRefreshWithIDToken.AccessToken,
+		ExpiresAt:   unexpiredTokenWithoutRefreshWithIDToken.Expiry,
+		IDToken:     UNEXPIRED_ID_TOKEN,
+	}, nil).Once()
+	authInfoService := authinfotest.NewMockAuthInfoService(t)
+	authInfoService.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{UserId: 1}).Return(&login.UserAuth{
+		AuthModule: login.GenericOAuthModule,
+	}, nil).Once()
+
+	service := &Service{
+		AuthInfoService: authInfoService,
+		sessionService:  sessionService,
+		tracer:          tracing.InitializeTracerForTest(),
+	}
+
+	// OAuthTokenMiddleware passes the user.SignedInUser that the context handler derives from the identity.
+	usr := delegatedUser(login.ExtendedJWTModule, assistantServiceIdentity).SignedInUser()
+	token := service.GetCurrentOAuthToken(context.Background(), usr, nil)
+
+	require.NotNil(t, token)
+	assert.Equal(t, unexpiredTokenWithoutRefreshWithIDToken.AccessToken, token.AccessToken)
+	assert.Equal(t, UNEXPIRED_ID_TOKEN, token.Extra("id_token"))
+}
+
+// delegatedUser returns user 1 as authenticated by authenticatedBy, with serviceIdentity in its access token claims.
+func delegatedUser(authenticatedBy, serviceIdentity string) *authn.Identity {
+	return &authn.Identity{
+		ID:                "1",
+		Type:              claims.TypeUser,
+		AuthenticatedBy:   authenticatedBy,
+		AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{ServiceIdentity: serviceIdentity}},
 	}
 }

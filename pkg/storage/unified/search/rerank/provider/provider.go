@@ -52,7 +52,7 @@ func newVertexReranker(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*re
 		return nil, fmt.Errorf("vertex rank client: %w", err)
 	}
 	model := "vertex/" + cfg.RerankVertexModel
-	scorer := vertex.NewReranker(client, cfg.RerankVertexModel)
+	scorer := vertex.NewRerankerWithHedgeDelay(client, cfg.RerankVertexModel, cfg.RerankHedgeDelay)
 	return &rerank.Reranker{
 		Scorer:     rerank.Instrument(scorer, model, duration),
 		Model:      model,
@@ -69,7 +69,7 @@ func newBedrockReranker(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*r
 	}
 	rt := bedrockruntime.NewFromConfig(awsCfg)
 	model := "bedrock/" + cfg.RerankBedrockModel
-	scorer := bedrock.NewReranker(bedrock.NewClient(rt), cfg.RerankBedrockModel)
+	scorer := bedrock.NewRerankerWithHedgeDelay(bedrock.NewClient(rt), cfg.RerankBedrockModel, cfg.RerankHedgeDelay)
 	return &rerank.Reranker{
 		Scorer:     rerank.Instrument(scorer, model, duration),
 		Model:      model,

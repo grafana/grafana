@@ -16,6 +16,9 @@ import { defaultSpec as defaultNotebookSpec, type Spec as NotebookSpec } from '.
 
 import { NotebookView, type DraftNotebookViewProps } from './NotebookView';
 
+jest.mock('../api/notebookResource', () => makeSpyable('../api/notebookResource'));
+jest.mock('../serialization/transformNotebookToScene', () => makeSpyable('../serialization/transformNotebookToScene'));
+
 const NOTEBOOKS_FLAG = 'dashboard.notebooks';
 
 /**
@@ -92,7 +95,7 @@ describe('NotebookView', () => {
       instances[0].setState({ isLoading: false, scene: aNotebookScene() });
     });
 
-    expect(await screen.findByRole('radio', { name: 'Edit' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /^Notebook mode:/ })).toBeInTheDocument();
   });
 
   it('does not mark the shared scene as embedded', async () => {
@@ -391,7 +394,7 @@ describe('NotebookView', () => {
       await renderDraft(<NotebookView spec={aDraftSpec()} />);
 
       // Editable, and nothing was fetched: a draft has no uid to load.
-      expect(await screen.findByRole('radio', { name: 'Edit' })).toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: /^Notebook mode:/ })).toBeInTheDocument();
       expect(loadedUids).toEqual([]);
     });
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -90,39 +91,69 @@ func TestRunMTAsLeader_LeaderRunsScheduler(t *testing.T) {
 // lease is lost, without waiting for the callback. The runner must re-enter the
 // election, and never let two scheduler runs overlap.
 func TestRunMTAsLeader_ReentersElectionAfterLeaseLoss(t *testing.T) {
-	setLeaderRetryBackoff(t, time.Millisecond)
+	synctest.Test(t, func(t *testing.T) {
+		setLeaderRetryBackoff(t, time.Millisecond)
 
-	var listCalls atomic.Int32
-	r := newCountingMTRunner(&listCalls, nil)
-
-	var rounds, active, maxActive atomic.Int32
-	r.leaderElector = &fakeElector{run: func(ctx context.Context, fn func(ctx context.Context)) error {
-		rounds.Add(1)
-		leaderCtx, loseLease := context.WithCancel(ctx)
-		go func() {
-			n := active.Add(1)
-			if n > maxActive.Load() {
-				maxActive.Store(n)
-			}
-			defer active.Add(-1)
-			fn(leaderCtx)
-		}()
-		select {
-		case <-time.After(5 * time.Millisecond):
-		case <-ctx.Done():
+		finishDiscovery := make(chan struct{})
+		var listCalls int
+		checkClient := &MockClient{
+			listFunc: func(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+				listCalls++
+				// Discovery ignores cancellation, so it can outlive the lease.
+				<-finishDiscovery
+				return &advisorv0alpha1.CheckList{}, nil
+			},
 		}
-		loseLease()
-		return nil
-	}}
+		r := createTestMTRunner(checkClient, &MockClient{}, &MockCheckService{checks: []checks.Check{}})
+		r.defaultEvalInterval = time.Hour
 
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-	defer cancel()
-	err := r.Run(ctx)
+		leaseLost := make(chan struct{})
+		var rounds int
+		r.leaderElector = &fakeElector{run: func(ctx context.Context, fn func(ctx context.Context)) error {
+			rounds++
+			leaderCtx, loseLease := context.WithCancel(ctx)
+			defer loseLease()
+			go fn(leaderCtx)
+			select {
+			case <-leaseLost:
+			case <-ctx.Done():
+			}
+			return nil
+		}}
 
-	assert.NoError(t, err, "cancelling the parent context is a clean shutdown")
-	assert.GreaterOrEqual(t, rounds.Load(), int32(2), "runner must re-enter the election after losing the lease")
-	assert.GreaterOrEqual(t, listCalls.Load(), int32(2), "each round that leads must run the scheduler")
-	assert.Equal(t, int32(1), maxActive.Load(), "scheduler runs must not overlap across rounds")
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		errCh := make(chan error, 1)
+		go func() {
+			errCh <- r.Run(ctx)
+		}()
+
+		// Let the first scheduler block in discovery before inspecting listCalls.
+		synctest.Wait()
+		assert.Equal(t, 1, listCalls, "the first leader must start discovery")
+
+		leaseLost <- struct{}{}
+
+		// Advance virtual time by a retry interval and let any premature retry block,
+		// so the round count reveals an election started before discovery finishes.
+		synctest.Sleep(leaderRetryBackoff)
+		assert.Equal(t, 1, rounds, "runner must wait for discovery to finish before re-entering the election")
+
+		close(finishDiscovery)
+
+		// Let the cancelled scheduler exit and the runner start its retry timer
+		// before advancing virtual time.
+		synctest.Wait()
+
+		// Expire the retry backoff in virtual time and let the next leader block
+		// after starting discovery, so both counts include the second round.
+		synctest.Sleep(leaderRetryBackoff)
+		assert.Equal(t, 2, rounds, "runner must re-enter the election after losing the lease")
+		assert.Equal(t, 2, listCalls, "each round that leads must run the scheduler")
+
+		cancel()
+		assert.NoError(t, <-errCh, "cancelling the parent context is a clean shutdown")
+	})
 }
 
 func TestRunMTAsLeader_SchedulerErrorReleasesLeaseAndIsReturned(t *testing.T) {

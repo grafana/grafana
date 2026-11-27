@@ -1,11 +1,11 @@
-import { useIsomorphicLayoutEffect } from '@react-hookz/web';
+import { useIsomorphicLayoutEffect } from '@react-hookz/web/useIsomorphicLayoutEffect/index.js';
 import { act, renderHook } from '@testing-library/react';
 import { Subject, type Observable } from 'rxjs';
 
 import { useObservable } from './useObservable';
 
-jest.mock('@react-hookz/web', () => {
-  const actual = jest.requireActual('@react-hookz/web');
+jest.mock('@react-hookz/web/useIsomorphicLayoutEffect/index.js', () => {
+  const actual = jest.requireActual('@react-hookz/web/useIsomorphicLayoutEffect/index.js');
   return {
     ...actual,
     useIsomorphicLayoutEffect: jest.fn(actual.useIsomorphicLayoutEffect),

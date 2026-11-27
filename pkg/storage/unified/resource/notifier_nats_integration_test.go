@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"iter"
 	"net"
+	"slices"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -41,7 +43,7 @@ func TestNatsWatchNotificationRoundTrip(t *testing.T) {
 		backend := newTestKVStorageBackend(pub)
 		expiry := NewWatchExpiry()
 		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, expiry, nil, &logging.NoOpLogger{})
-		out := notifier.Watch(ctx, WatchOptions{})
+		out := notifier.Watch(ctx, WatchOptions{SettleDelay: time.Millisecond})
 
 		event := Event{
 			Namespace:       "default",
@@ -77,7 +79,7 @@ func TestNatsWatchNotificationRoundTrip(t *testing.T) {
 		backend := newTestKVStorageBackend(pub)
 		expiry := NewWatchExpiry()
 		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, expiry, nil, &logging.NoOpLogger{})
-		out := notifier.Watch(ctx, WatchOptions{})
+		out := notifier.Watch(ctx, WatchOptions{SettleDelay: time.Millisecond})
 
 		establishInterest(t, ctx, out, backend)
 
@@ -155,7 +157,7 @@ func TestNatsWatchNotificationRoundTrip(t *testing.T) {
 		assert.Equal(t, int64(defaultMaxWatchNotificationBytes), pub.MaxPayload(), "the embedded server applies the NATS default")
 		assert.Equal(t, defaultMaxWatchNotificationBytes, backend.watchPublisher.maxWatchNotificationBytes())
 		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, NewWatchExpiry(), nil, &logging.NoOpLogger{})
-		out := notifier.Watch(ctx, WatchOptions{})
+		out := notifier.Watch(ctx, WatchOptions{SettleDelay: time.Millisecond})
 
 		event := Event{
 			Namespace:       "default",
@@ -194,7 +196,7 @@ func TestNatsWatchNotificationRoundTrip(t *testing.T) {
 		dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "nats_notifier_dropped_total"}, []string{"reason"})
 		expiry := NewWatchExpiry()
 		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, expiry, dropped, &logging.NoOpLogger{})
-		out := notifier.Watch(ctx, WatchOptions{})
+		out := notifier.Watch(ctx, WatchOptions{SettleDelay: time.Millisecond})
 
 		// Interest must be live first, else NATS drops the bad messages before the
 		// handler runs and the drop counters never move.
@@ -247,7 +249,7 @@ func startNatsRoundTrip(t *testing.T) (context.Context, *nats.PublisherService, 
 		ClusterPort:   natsserver.RANDOM_PORT,
 	}
 
-	server, err := nats.ProvideServer(cfg, nil, prometheus.NewRegistry())
+	server, err := nats.ProvideServer(cfg, nil, nil, nil, nil, prometheus.NewRegistry())
 	require.NoError(t, err)
 	startNatsService(t, ctx, server)
 
@@ -434,7 +436,7 @@ func TestNatsWatchExpiresWhenNotifierDrops(t *testing.T) {
 	watch, done := startNatsRecoveryWatch(t, ctx, srv, req)
 	requireNatsRecoveryEvent(t, watch, resourcepb.WatchEvent_BOOKMARK)
 	require.NoError(t, createTestPlaylist(ctx, srv))
-	requireNatsRecoveryEvent(t, watch, resourcepb.WatchEvent_ADDED)
+	beforeDrop := requireNatsRecoveryEvent(t, watch, resourcepb.WatchEvent_ADDED)
 	created := 2
 
 	// Notifications back up behind the stalled read until the buffer drops one.
@@ -463,6 +465,75 @@ func TestNatsWatchExpiresWhenNotifierDrops(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, created, count, "relist must recover the writes whose notifications were dropped")
+	requireResumeExpires(t, ctx, srv, req.Options, beforeDrop.Resource.Version, func() {
+		require.NoError(t, createTestPlaylist(ctx, srv))
+	})
+}
+
+// failingReadKV fails the first read of a value whose key contains name, like
+// a store that cannot read a notified write back.
+type failingReadKV struct {
+	KV
+	name    atomic.Pointer[string]
+	failing atomic.Bool
+	failed  chan struct{}
+}
+
+func (s *failingReadKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+	name := s.name.Load()
+	if name != nil && section == kv.DataSection && slices.ContainsFunc(keys, func(key string) bool { return strings.Contains(key, *name) }) && s.failing.CompareAndSwap(false, true) {
+		close(s.failed)
+		return func(yield func(kv.KeyValue, error) bool) { yield(kv.KeyValue{}, errors.New("read failed")) }
+	}
+	return s.KV.BatchGet(ctx, section, keys)
+}
+
+// A notified write that cannot be read back is missed by every watch, so the
+// watches and the resumes from before it must expire.
+func TestNatsWatchExpiresWhenNotifiedWriteCannotBeRead(t *testing.T) {
+	_, pub, sub := startNatsRoundTrip(t)
+	store := &failingReadKV{failed: make(chan struct{})}
+	srv := newWatchTestServer(t, watchTestServerOpts{
+		EventSubscriber: natsSubscriberAdapter{sub: sub},
+		EventPublisher:  pub,
+		WrapKV: func(kv KV) KV {
+			store.KV = kv
+			return store
+		},
+	})
+	ctx := authlib.WithAuthInfo(t.Context(), newWatchTestUser())
+	req := &resourcepb.WatchRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+		Group: watchTestGroup, Resource: watchTestResource, Namespace: watchTestNamespace,
+	}}, SendInitialEvents: true, AllowWatchBookmarks: true}
+
+	require.NoError(t, createTestPlaylist(ctx, srv))
+	watch, done := startNatsRecoveryWatch(t, ctx, srv, req)
+	requireNatsRecoveryEvent(t, watch, resourcepb.WatchEvent_BOOKMARK)
+	require.NoError(t, createTestPlaylist(ctx, srv))
+	beforeFailure := requireNatsRecoveryEvent(t, watch, resourcepb.WatchEvent_ADDED)
+
+	unreadable := fmt.Sprintf("playlist-%d", playlistCounter+1)
+	store.name.Store(&unreadable)
+	require.NoError(t, createTestPlaylist(ctx, srv))
+	select {
+	case <-store.failed:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the notified write was not read back")
+	}
+	// The stream reads writes back in order, so the next write reaches the
+	// watch only after the failed read was handled.
+	require.NoError(t, createTestPlaylist(ctx, srv))
+	select {
+	case err := <-done:
+		require.True(t, IsResourceVersionExpired(err), "expected ResourceExpired, got %v", err)
+	case event := <-watch.events:
+		t.Fatalf("watch skipped the write it could not read: got %s at %d", event.Type, event.Resource.Version)
+	case <-time.After(5 * time.Second):
+		t.Fatal("watch neither expired nor delivered the later write")
+	}
+	requireResumeExpires(t, ctx, srv, req.Options, beforeFailure.Resource.Version, func() {
+		require.NoError(t, createTestPlaylist(ctx, srv))
+	})
 }
 
 // Clients reconnect watches more often than the max age, so expiry must follow

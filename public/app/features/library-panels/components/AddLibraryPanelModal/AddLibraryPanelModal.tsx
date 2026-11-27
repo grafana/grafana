@@ -65,8 +65,9 @@ export const AddLibraryPanelContents = ({
     !isValidName?.value && isValidName.value !== undefined && panelName === debouncedPanelName && !waiting;
 
   return (
-    <>
+    <Stack direction="column" gap={2}>
       <Field
+        noMargin
         label={t('library-panel.add-modal.name', 'Library panel name')}
         invalid={invalidInput}
         error={invalidInput ? t('library-panel.add-modal.error', 'Library panel with this name already exists') : ''}
@@ -80,6 +81,7 @@ export const AddLibraryPanelContents = ({
         />
       </Field>
       <Field
+        noMargin
         label={t('library-panel.add-modal.folder', 'Save in folder')}
         description={t(
           'library-panel.add-modal.folder-description',
@@ -100,6 +102,6 @@ export const AddLibraryPanelContents = ({
           <Trans i18nKey="share-panel.new-library-panel.cancel-button">Cancel</Trans>
         </Button>
       </Stack>
-    </>
+    </Stack>
   );
 };

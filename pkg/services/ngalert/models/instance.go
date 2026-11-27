@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math"
 	"time"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 // LastResult contains the values and condition from the most recent evaluation.
@@ -69,6 +71,15 @@ type AlertInstance struct {
 	EvaluationDuration time.Duration `xorm:"evaluation_duration_ns"`
 	LastError          string        `xorm:"last_error"`
 	LastResult         LastResult    `xorm:"last_result"`
+}
+
+// RecordingSeries is a series a recording rule wrote to its target data source.
+// Labels are the full label set without the metric name.
+type RecordingSeries struct {
+	TargetDatasourceUID string
+	Metric              string
+	Labels              data.Labels
+	LastUpdate          time.Time
 }
 
 type AlertInstanceKey struct {

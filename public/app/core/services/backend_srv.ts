@@ -44,6 +44,7 @@ import { type DashboardDTO } from 'app/types/dashboard';
 import { type FolderDTO } from 'app/types/folders';
 
 import { ShowModalReactEvent } from '../../types/events';
+import { isMtFallbackConfigured } from '../navigation/mtFallback';
 import { isContentTypeJson, parseInitFromOptions, parseResponseBody, parseUrlFromOptions } from '../utils/fetch';
 import { isDataQuery, isLocalUrl } from '../utils/query';
 
@@ -51,6 +52,7 @@ import { FetchQueue } from './FetchQueue';
 import { FetchQueueWorker } from './FetchQueueWorker';
 import { ResponseQueue } from './ResponseQueue';
 import { type ContextSrv, contextSrv } from './context_srv';
+import { ST_POD_BUSY_STATUS, ST_POD_LOADING_MESSAGE } from './stPodReadyConstants';
 
 const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
 
@@ -397,6 +399,16 @@ export class BackendSrv implements BackendService {
       return;
     }
 
+    // the MT fallback loading UI already communicates this.
+    if (
+      err.status === ST_POD_BUSY_STATUS &&
+      typeof err.data?.message === 'string' &&
+      err.data.message.includes(ST_POD_LOADING_MESSAGE) &&
+      isMtFallbackConfigured()
+    ) {
+      return;
+    }
+
     // is showErrorAlert is undefined we only show alerts non data query and local api requests
     if (config.showErrorAlert === undefined && (isDataQuery(config.url) || !isLocalUrl(config.url))) {
       return;
@@ -688,12 +700,9 @@ export class BackendSrv implements BackendService {
     return this.get<DashboardDTO>(`/api/public/dashboards/${uid}`);
   }
 
-  /**
-   * @deprecated Use getFolderByUidFacade from app/api/clients/folder/v1beta1/hooks instead
-   * or manually handle calling legacy vs app platform API based on feature toggles
-   */
+  /** @deprecated Use getCombinedFolder from app/api/clients/folder/v1beta1/hooks instead */
   getFolderByUid(uid: string, options: FolderRequestOptions = {}) {
-    deprecationWarning('backend_srv', 'getFolderByUid(uid)', 'getFolderByUidFacade(uid)');
+    deprecationWarning('backend_srv', 'getFolderByUid(uid)', 'getCombinedFolder(uid)');
     const queryParams = new URLSearchParams();
     if (options.withAccessControl) {
       queryParams.set('accesscontrol', 'true');

@@ -1,6 +1,8 @@
 package extras
 
 import (
+	"slices"
+
 	"github.com/prometheus/client_golang/prometheus"
 
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -16,10 +18,9 @@ import (
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -44,13 +45,14 @@ func ProvideProvisioningOSSRepositoryExtras(
 	// http:// URLs with a token are only allowed in development or when explicitly opted in,
 	// since the token would otherwise travel in cleartext.
 	allowInsecure := cfg.Env == setting.Dev || cfg.ProvisioningAllowInsecure
+	userAgent := git.UserAgent(cfg.BuildVersion)
 	return []repository.Extra{
 		local.Extra(
 			cfg.HomePath,
-			cfg.PermittedProvisioningPaths,
+			PermittedLocalPaths(cfg),
 			operationMetrics,
 		),
-		git.Extra(decrypter, allowInsecure, operationMetrics, clientMetrics),
+		git.Extra(decrypter, allowInsecure, operationMetrics, clientMetrics, userAgent),
 		github.Extra(
 			decrypter,
 			ghFactory,
@@ -58,8 +60,25 @@ func ProvideProvisioningOSSRepositoryExtras(
 			allowInsecure,
 			operationMetrics,
 			clientMetrics,
+			userAgent,
 		),
 	}
+}
+
+// PermittedLocalPaths returns the prefixes a local repository may read. Being configured is
+// what permits the bootstrap path, since Grafana registers that repository itself.
+func PermittedLocalPaths(cfg *setting.Cfg) []string {
+	if cfg.ProvisioningBootstrapPath == "" {
+		return cfg.PermittedProvisioningPaths
+	}
+	// A value admission would reject is not granted either.
+	if bootstrap.ValidatePath(cfg.ProvisioningBootstrapPath) != nil {
+		return cfg.PermittedProvisioningPaths
+	}
+	// Resolved by the resolver's own helper, so the prefix and the candidate admission
+	// matches against it are the same string.
+	permitted := local.ResolvePath(cfg.HomePath, cfg.ProvisioningBootstrapPath)
+	return append(slices.Clone(cfg.PermittedProvisioningPaths), permitted)
 }
 
 func ProvideProvisioningOSSConnectionExtras(
@@ -77,10 +96,6 @@ func ProvideProvisioningOSSConnectionExtras(
 		// since the client secret and tokens would otherwise travel in cleartext.
 		gitoauth.Extra(decrypter, cfg.Env == setting.Dev || cfg.ProvisioningAllowInsecure),
 	}
-}
-
-func ProvideExtraWorkers(pullRequestWorker *pullrequest.PullRequestWorker) []jobs.Worker {
-	return []jobs.Worker{pullRequestWorker}
 }
 
 func ProvideFactoryFromConfig(cfg *setting.Cfg, tracer tracing.Tracer, extras []repository.Extra) (repository.Factory, error) {
@@ -108,7 +123,11 @@ func ProvideConnectionFactoryFromConfig(cfg *setting.Cfg, tracer tracing.Tracer,
 	types := cfg.ProvisioningConnectionTypes
 	if len(types) == 0 {
 		// Enforcing default connection values if settings are not set
-		types = []string{string(apisprovisioning.GithubConnectionType)}
+		types = []string{
+			string(apisprovisioning.GithubConnectionType),
+			string(apisprovisioning.GithubOAuthConnectionType),
+			string(apisprovisioning.GitOAuthConnectionType),
+		}
 	}
 
 	return connection.ProvideFactory(connection.ToConnectionTypes(types), extras, tracer)

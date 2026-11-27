@@ -1,12 +1,13 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
-import { lazy, type ComponentType } from 'react';
-import { act, render } from 'test/test-utils';
+import { lazy, type ComponentType, type ReactElement } from 'react';
+import { act, getWrapper, render } from 'test/test-utils';
 
 import { setBackendSrv, setEchoSrv } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { StPodReadyService, StPodStatus } from 'app/core/services/StPodReadyService';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { Echo } from '../services/echo/Echo';
@@ -44,7 +45,7 @@ async function setup(overrides: Partial<Props>) {
 describe('GrafanaRoute', () => {
   beforeEach(() => {
     setEchoSrv(new Echo());
-    server.use(http.get('/api/health', () => HttpResponse.json({ database: 'ok' })));
+    server.use(http.get('/_/status', () => HttpResponse.json({ status: 'active' })));
   });
 
   afterEach(async () => {
@@ -90,7 +91,7 @@ describe('GrafanaRoute', () => {
   });
 
   it('shows the fallback loader once the pod reports it is not ready for a route outside the allow list', async () => {
-    server.use(http.get('/api/health', () => HttpResponse.json({ database: 'failing' }, { status: 503 })));
+    server.use(http.get('/_/status', () => HttpResponse.json({ status: 'starting' })));
     await act(async () => {
       setTestFlags({ [FlagKeys.GrafanaMtFallback]: { allowList: ['/dashboards/*'] } });
     });
@@ -101,5 +102,91 @@ describe('GrafanaRoute', () => {
     });
 
     expect(await screen.findByTestId('page-fallback-loader')).toBeInTheDocument();
+  });
+
+  it('restarts the pod check when navigating between routes after an error', async () => {
+    server.use(http.get('/_/status', () => HttpResponse.error()));
+    await act(async () => {
+      setTestFlags({ [FlagKeys.GrafanaMtFallback]: { allowList: ['/dashboards/*'] } });
+    });
+
+    const stPodReady = new StPodReadyService();
+    const startSpy = jest.spyOn(stPodReady, 'start');
+    const wrapper = getWrapper({ grafanaContext: { stPodReady }, renderWithRouter: true });
+
+    let rerender!: (ui: ReactElement) => void;
+    await act(async () => {
+      ({ rerender } = render(
+        <GrafanaRoute
+          location={{ ...mockLocation, pathname: '/explore' }}
+          route={{ component: () => <div />, path: '/explore' }}
+        />,
+        { wrapper }
+      ));
+    });
+
+    await waitFor(() => expect(stPodReady.getStatus()).toBe(StPodStatus.Error));
+    expect(startSpy).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      rerender(
+        <GrafanaRoute
+          location={{ ...mockLocation, pathname: '/alerting' }}
+          route={{ component: () => <div />, path: '/alerting' }}
+        />
+      );
+    });
+
+    expect(startSpy).toHaveBeenCalledTimes(2);
+
+    stPodReady.stop();
+  });
+
+  it('starts polling on allow-listed routes without suspending the route', async () => {
+    server.use(http.get('/_/status', () => HttpResponse.json({ status: 'starting' })));
+    await act(async () => {
+      setTestFlags({ [FlagKeys.GrafanaMtFallback]: { allowList: ['/dashboards/*'] } });
+    });
+
+    const stPodReady = new StPodReadyService();
+    const startSpy = jest.spyOn(stPodReady, 'start');
+    const wrapper = getWrapper({ grafanaContext: { stPodReady }, renderWithRouter: true });
+
+    await act(async () => {
+      render(
+        <GrafanaRoute
+          location={{ ...mockLocation, pathname: '/dashboards/foo' }}
+          route={{ component: () => <div data-testid="real-page" />, path: '/dashboards/*' }}
+        />,
+        { wrapper }
+      );
+    });
+
+    expect(startSpy).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(stPodReady.getStatus()).toBe(StPodStatus.Waiting));
+    expect(await screen.findByTestId('real-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('page-fallback-loader')).not.toBeInTheDocument();
+
+    stPodReady.stop();
+  });
+
+  it('does not start polling when the mt fallback flag is not configured', async () => {
+    const stPodReady = new StPodReadyService();
+    const startSpy = jest.spyOn(stPodReady, 'start');
+    const wrapper = getWrapper({ grafanaContext: { stPodReady }, renderWithRouter: true });
+
+    await act(async () => {
+      render(
+        <GrafanaRoute
+          location={{ ...mockLocation, pathname: '/explore' }}
+          route={{ component: () => <div />, path: '/explore' }}
+        />,
+        { wrapper }
+      );
+    });
+
+    expect(startSpy).not.toHaveBeenCalled();
+
+    stPodReady.stop();
   });
 });

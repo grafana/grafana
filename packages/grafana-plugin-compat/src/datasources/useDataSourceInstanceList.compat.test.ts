@@ -7,12 +7,6 @@ import { getMockedDatasourceSrv, getMockedListItem } from '../utils/mocks';
 import { type GetDataSourceInstanceListFilters } from './types';
 import { useDataSourceInstanceList } from './useDataSourceInstanceList';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstanceList: undefined,
-  useDataSourceInstanceList: undefined,
-}));
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceList: undefined,

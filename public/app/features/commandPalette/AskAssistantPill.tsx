@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useKBar } from 'kbar';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -10,9 +10,8 @@ import { useStyles2 } from '@grafana/ui';
 
 /**
  * Button in the command palette search row offering to ask the Grafana Assistant, together with its Shift+Enter
- * shortcut. Deep search almost always returns something, so the empty state (and its "ask the assistant" button)
- * rarely shows anymore — this keeps that escape hatch reachable while results exist. Renders nothing when
- * the assistant is unavailable or the search query is empty.
+ * shortcut, keeping Assistant search reachable while results are displayed. Renders nothing when the assistant
+ * is unavailable or the search query is empty.
  */
 export function AskAssistantPill() {
   const styles = useStyles2(getStyles);
@@ -39,9 +38,11 @@ export function AskAssistantPill() {
   // first. State is read through refs so the listener registers once — onAskAssistant depends on searchQuery and
   // would re-register the listener on every input change.
   const onAskAssistantRef = useRef(onAskAssistant);
-  onAskAssistantRef.current = onAskAssistant;
   const canAskAssistantRef = useRef(canAskAssistant);
-  canAskAssistantRef.current = canAskAssistant;
+  useLayoutEffect(() => {
+    onAskAssistantRef.current = onAskAssistant;
+    canAskAssistantRef.current = canAskAssistant;
+  });
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       if (event.key !== 'Enter' || !event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {

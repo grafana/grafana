@@ -102,7 +102,7 @@ func TestBuildOpenAPIVersionSelection(t *testing.T) {
 
 	t.Run("a manifest the handler refuses is reported", func(t *testing.T) {
 		manifest := offlineManifest(t)
-		manifest.Versions[0].Kinds[0].Kind = "Settings"
+		manifest.Versions[0].Kinds[0].Kind = "Status"
 		_, err := BuildOpenAPI("example-app", manifest, "", OpenAPIOptions{})
 		require.ErrorContains(t, err, "reserved kind name")
 	})
@@ -152,7 +152,7 @@ func offlineManifest(t *testing.T) *app.ManifestData {
 			Served: true,
 			Kinds: []app.ManifestVersionKind{{
 				Kind:   "TestKind",
-				Plural: "TestKinds",
+				Plural: "TestKinds", Resource: "testkinds",
 				Scope:  "Namespaced",
 				Schema: &schema,
 				// Declared search fields are what enrol a kind in the

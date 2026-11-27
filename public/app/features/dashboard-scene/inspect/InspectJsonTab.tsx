@@ -37,6 +37,7 @@ import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformScen
 import { vizPanelToSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
+import { mobileEditNotAvailableMessage, useIsMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 import { getDashboardSceneFor, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 import { isGridLayoutItemKind, isPanelKindV2 } from '../v2schema/validation';
@@ -177,8 +178,8 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
       return;
     }
 
-    if (!dashboard.state.isEditing) {
-      dashboard.onEnterEditMode();
+    if (!dashboard.state.isEditing && !dashboard.onEnterEditMode()) {
+      return;
     }
 
     const oldState = gridItem.state;
@@ -235,8 +236,8 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
 
     const vizPanel = buildVizPanel(jsonObj, jsonObj.spec.id);
 
-    if (!dashboard.state.isEditing) {
-      dashboard.onEnterEditMode();
+    if (!dashboard.state.isEditing && !dashboard.onEnterEditMode()) {
+      return;
     }
 
     reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
@@ -260,8 +261,8 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
       return;
     }
 
-    if (!dashboard.state.isEditing) {
-      dashboard.onEnterEditMode();
+    if (!dashboard.state.isEditing && !dashboard.onEnterEditMode()) {
+      return;
     }
 
     panel.parent.setState(newState);
@@ -314,6 +315,8 @@ function InspectJsonTabComponent({ model }: SceneComponentProps<InspectJsonTab>)
   const { source: show, jsonText, error } = model.useState();
   const styles = useStyles2(getPanelInspectorStyles2);
   const options = model.getOptions();
+  const isMobileBlocked = useIsMobileEditDeprecated();
+  const isEditable = model.isEditable() && !isMobileBlocked;
 
   return (
     <div className={styles.wrap}>
@@ -327,11 +330,23 @@ function InspectJsonTabComponent({ model }: SceneComponentProps<InspectJsonTab>)
           />
         </Field>
         {model.isEditable() && (
-          <Button className={styles.toolbarItem} onClick={model.onApplyChange}>
+          <Button className={styles.toolbarItem} onClick={model.onApplyChange} disabled={isMobileBlocked}>
             <Trans i18nKey="dashboard-scene.inspect-json-tab.apply">Apply</Trans>
           </Button>
         )}
       </div>
+
+      {isMobileBlocked && model.isEditable() && (
+        <Alert
+          severity="warning"
+          title={t(
+            'dashboard-scene.inspect-json-tab.mobile-edit-unavailable',
+            'Editing is unavailable on small screens'
+          )}
+        >
+          <p>{mobileEditNotAvailableMessage()}</p>
+        </Alert>
+      )}
 
       {error && (
         <Alert severity="error" title={t('dashboard-scene.inspect-json-tab.validation-error', 'Validation error')}>
@@ -347,7 +362,7 @@ function InspectJsonTabComponent({ model }: SceneComponentProps<InspectJsonTab>)
               language="json"
               aria-label={t('dashboard.inspect-json.editor-label', 'JSON content')}
               value={jsonText}
-              readOnly={!model.isEditable()}
+              readOnly={!isEditable}
               onChange={model.onJsonTextChange}
               onBlur={model.onJsonTextChange}
             />
@@ -368,18 +383,22 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
       const isInspectingLibraryPanel = isLibraryPanel(panel);
       const gridItem = panel.parent;
 
+      // In V2 dashboards a library panel can sit in an AutoGridItem, where the
+      // legacy representation below throws ("LibraryPanel not child of
+      // DashboardGridItem"). vizPanelToSchemaV2 handles library panels in every
+      // V2 layout, so handle V2 dashboards before the legacy branch.
+      if (isDashboardV2Spec(getDashboardSceneFor(panel).getSaveModel())) {
+        objToStringify = vizPanelToSchemaV2(panel);
+        break;
+      }
+
       if (isInspectingLibraryPanel) {
         objToStringify = libraryPanelToLegacyRepresentation(panel);
         break;
       }
 
-      if (isDashboardV2Spec(getDashboardSceneFor(panel).getSaveModel())) {
-        objToStringify = vizPanelToSchemaV2(panel);
-        break;
-      } else {
-        if (gridItem instanceof DashboardGridItem) {
-          objToStringify = gridItemToPanel(gridItem);
-        }
+      if (gridItem instanceof DashboardGridItem) {
+        objToStringify = gridItemToPanel(gridItem);
       }
 
       break;

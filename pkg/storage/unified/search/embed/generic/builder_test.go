@@ -186,20 +186,23 @@ func TestBuilderSkipVersions(t *testing.T) {
 
 func TestBuilderDisplayTitle(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
-		title any
-		want  string
+		name string
+		spec map[string]any
+		want string
 	}{
-		{"title", "Article title", "Article title"},
-		{"name fallback", "", "Article name"},
-		{"non-string title", 42, "Article name"},
-		{"key fallback", nil, "from-key"},
+		{"title", map[string]any{"title": "Article title", "name": "Article name", "spec": map[string]any{"name": "nested-name"}}, "Article title"},
+		{"name fallback", map[string]any{"title": "", "name": "Article name", "spec": map[string]any{"name": "nested-name"}}, "Article name"},
+		{"non-string title", map[string]any{"title": 42, "name": "Article name"}, "Article name"},
+		{"key fallback", map[string]any{}, "from-key"},
+		{"missing name", map[string]any{"spec": map[string]any{"name": "nested-name"}}, "nested-name"},
+		{"empty name", map[string]any{"name": "", "spec": map[string]any{"name": "nested-name"}}, "nested-name"},
+		{"missing nested name", map[string]any{"spec": map[string]any{}}, "from-key"},
+		{"empty nested name", map[string]any{"spec": map[string]any{"name": ""}}, "from-key"},
+		{"non-string nested name", map[string]any{"spec": map[string]any{"name": 42}}, "from-key"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			spec := map[string]any{"body": "text", "title": tc.title}
-			if tc.title != nil {
-				spec["name"] = "Article name"
-			}
+			spec := tc.spec
+			spec["body"] = "text"
 			items, err := testBuilder(app.ManifestVersionKindEmbedField{Name: "body", Path: "spec.body"}).Extract(context.Background(), testKey(), testValue(t, testGR.Group+"/v1", spec), "")
 			require.NoError(t, err)
 			require.Len(t, items, 1)

@@ -10,8 +10,8 @@ const (
 
 	OpenAPIPrefix = "com.github.grafana.grafana.apps.alerting.alertrulequality.pkg.apis.alertrulequality.v0alpha1."
 
-	// DefaultPolicyName is the only accepted name for an AlertRuleQualityPolicy. The
-	// policy is org-wide, so it is a singleton and admission rejects any other name.
+	// DefaultPolicyName is the name of the org-wide AlertRuleQualityPolicy, a singleton.
+	// A team policy is named by the UID of its team instead.
 	DefaultPolicyName = "default"
 )
 

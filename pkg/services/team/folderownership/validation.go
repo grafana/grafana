@@ -44,9 +44,9 @@ func ValidateNoOwnedFolders(ctx context.Context, searcher resourcepb.ResourceInd
 		Limit:        1,
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+	if err != nil {
 		logging.FromContext(ctx).Error("Failed to search folders owned by team", "namespace", namespace, "teamUID", teamUID, "error", err)
-		return err
+		return resource.StatusErrorFromGRPC(err)
 	}
 	if resp == nil {
 		return fmt.Errorf("search for folders owned by team %q returned no response", teamUID)

@@ -453,6 +453,10 @@ export interface FieldConfig {
 	// How null values should be handled when calculating field stats
 	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
 	nullValueMode?: NullValueMode;
+	// Maps field-config property ids (e.g. `min`, `unit` or `custom.lineWidth`) to a dashboard-variable
+	// expression resolved at render time. The property's own value is the fallback when the expression
+	// doesn't resolve to a valid value for that property.
+	varMappings?: Record<string, string>;
 }
 
 export const defaultFieldConfig = (): FieldConfig => ({
@@ -838,6 +842,9 @@ export const defaultNotebookLayoutItemKind = (): NotebookLayoutItemKind => ({
  * records who authored the cell; `collapsed` hides the body in the UI.
  */
 export interface NotebookLayoutItemSpec {
+	// Optional. The server assigns one on create or update when the item has none, and keeps one
+	// the client sends, which must be a UUID v4 that no other item in the notebook has.
+	id?: string;
 	element: ElementReference;
 	source: "assistant" | "user";
 	collapsed?: boolean;
@@ -863,6 +870,7 @@ export interface Spec {
 	description?: string;
 	tags: string[];
 	timeSettings: TimeSettingsSpec;
+	// The key is the element ID. It identifies the cell: comments and other references anchor to it
 	elements: Record<string, NotebookElement>;
 	layout: NotebookLayoutKind;
 }

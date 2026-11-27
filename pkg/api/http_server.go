@@ -87,7 +87,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -205,7 +204,6 @@ type HTTPServer struct {
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
 	pluginsCDNService            *pluginscdn.Service
-	managedPluginsService        managedplugins.Manager
 
 	userService                     user.Service
 	tempUserService                 tempUser.Service
@@ -274,7 +272,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationMigrationProxy *annotationsapi.MigrationProxy,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
-	starService star.Service, csrfService csrf.Service, managedPlugins managedplugins.Manager,
+	starService star.Service, csrfService csrf.Service,
 	apiKeyService apikey.Service, kvStore kvstore.KVStore, usageStats usagestats.Service,
 	secretsMigrator secrets.Migrator, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
@@ -385,7 +383,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		statsService:                 statsService,
 		authnService:                 authnService,
 		pluginsCDNService:            pluginsCDNService,
-		managedPluginsService:        managedPlugins,
 		starApi:                      starApi,
 		promRegister:                 promRegister,
 		promGatherer:                 promGatherer,
@@ -459,6 +456,9 @@ func (w *customErrorLogger) Write(msg []byte) (int, error) {
 	return len(msg), nil
 }
 
+// httpShutdownGracePeriod is how long in-flight requests get to finish on shutdown.
+const httpShutdownGracePeriod = 10 * time.Second
+
 func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.context = ctx
 
@@ -466,9 +466,11 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 
 	// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
 	host := strings.TrimSuffix(strings.TrimPrefix(hs.Cfg.HTTPAddr, "["), "]")
+	watchesCtx, endWatches := context.WithCancel(context.Background())
+	defer endWatches()
 	hs.httpSrv = &http.Server{
 		Addr:        net.JoinHostPort(host, hs.Cfg.HTTPPort),
-		Handler:     hs.web,
+		Handler:     endWatchesOnShutdown(hs.web, watchesCtx),
 		ReadTimeout: hs.Cfg.ReadTimeout,
 	}
 
@@ -509,8 +511,18 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	// handle http shutdown on server context done
 	wg.Go(func() {
 		<-ctx.Done()
-		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
-			hs.log.Error("Failed to shutdown server", "error", err)
+		// Watches opened by in-process clients stay active until their own
+		// context is cancelled, and that only happens after this server has
+		// stopped, so end them first rather than wait out the grace period.
+		endWatches()
+		// Whatever else is still running is closed after the grace period.
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), httpShutdownGracePeriod)
+		defer cancel()
+		if err := hs.httpSrv.Shutdown(shutdownCtx); err != nil {
+			hs.log.Warn("Graceful shutdown did not complete, closing remaining connections", "error", err)
+			if err := hs.httpSrv.Close(); err != nil {
+				hs.log.Error("Failed to close server", "error", err)
+			}
 		}
 	})
 

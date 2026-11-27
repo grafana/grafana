@@ -1,5 +1,5 @@
 import { groupBy, isEmpty } from 'lodash';
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Icon, LinkButton, Stack, Text } from '@grafana/ui';
@@ -80,17 +80,6 @@ function PaginatedGroupsLoader({
   // However, if there are filters, we need to fetch more groups from the API to populate one frontend page
   const apiGroupPageSize = getApiGroupPageSize(hasFilters);
 
-  const groupsGenerator = useRef(
-    toIndividualRuleGroups(prometheusGroupsGenerator(rulesSourceIdentifier, apiGroupPageSize))
-  );
-
-  useEffect(() => {
-    const currentGenerator = groupsGenerator.current;
-    return () => {
-      currentGenerator.return();
-    };
-  }, []);
-
   const filterFn = useMemo(() => {
     const { groupMatches } = getDatasourceFilter({
       namespace: namespaceFilter,
@@ -111,7 +100,7 @@ function PaginatedGroupsLoader({
   }, [namespaceFilter, groupFilter]);
 
   const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
-    groupsGenerator.current,
+    () => toIndividualRuleGroups(prometheusGroupsGenerator(rulesSourceIdentifier, apiGroupPageSize)),
     FRONTED_GROUPED_PAGE_SIZE,
     filterFn
   );

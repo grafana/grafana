@@ -173,10 +173,16 @@ func TestCountFailedError(t *testing.T) {
 func TestCountStatsErrors(t *testing.T) {
 	forbidden := apierrors.NewForbidden(schema.GroupResource{}, "", errors.New("upstream denied"))
 	unstructuredGRPC := grpcstatus.Error(grpccodes.Internal, "pq: permission denied for table alert_rule")
+	notFoundStatus, statusErr := grpcstatus.New(grpccodes.NotFound, "index not found").
+		WithDetails(&resourcepb.ErrorResult{Code: 404, Reason: string(metav1.StatusReasonNotFound), Message: "index not found"})
+	require.NoError(t, statusErr)
+	structuredNotFound := notFoundStatus.Err()
+	canceledStatus, statusErr := grpcstatus.New(grpccodes.Canceled, "canceled").
+		WithDetails(&resourcepb.ErrorResult{Code: 499, Message: "client canceled"})
+	require.NoError(t, statusErr)
 
 	tests := []struct {
 		name          string
-		respErr       *resourcepb.ErrorResult
 		err           error
 		wantRaw       error
 		wantRawText   string
@@ -199,11 +205,18 @@ func TestCountStatsErrors(t *testing.T) {
 			wantPublicMsg: "count failed: could not count folder contents",
 		},
 		{
-			name:          "response-embedded 4xx becomes 500",
-			respErr:       &resourcepb.ErrorResult{Code: 404, Message: "index not found"},
+			name:          "structured gRPC 4xx becomes 500",
+			err:           structuredNotFound,
+			wantRaw:       structuredNotFound,
 			wantRawText:   "index not found",
 			wantCode:      500,
 			wantPublicMsg: "count failed: could not count folder contents",
+		},
+		{
+			name:          "structured gRPC cancel keeps its status",
+			err:           canceledStatus.Err(),
+			wantCode:      499,
+			wantPublicMsg: "client canceled",
 		},
 		{name: "local cancel", err: context.Canceled, wantRaw: context.Canceled, wantCode: 499},
 		{name: "local deadline", err: context.DeadlineExceeded, wantRaw: context.DeadlineExceeded, wantCode: 504},
@@ -219,7 +232,7 @@ func TestCountStatsErrors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			raw, public := countStatsErrors(tt.respErr, tt.err, false)
+			raw, public := countStatsErrors(tt.err, false)
 
 			require.Error(t, raw)
 			if tt.wantRaw != nil {

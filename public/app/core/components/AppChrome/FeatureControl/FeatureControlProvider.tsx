@@ -3,7 +3,7 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useM
 
 import { locationService } from '@grafana/runtime';
 import { getLocalStorageProvider } from '@grafana/runtime/internal';
-import { useStoredBoolean } from 'app/core/hooks/useStored';
+import { useStoredBoolean, useStoredString } from 'app/core/hooks/useStored';
 import { getPreviewAssetsFolder } from 'app/core/utils/previewAssets';
 
 import type { FeatureControlFlagProps } from './FeatureControlFlag';
@@ -12,8 +12,14 @@ const compare = new Intl.Collator('en', { sensitivity: 'base', numeric: true }).
 
 type Flag = NonNullable<FeatureControlFlagProps['flag']>;
 
+const recordToOverrides = (flags: Record<string, string>): Flag[] =>
+  Object.entries(flags)
+    .map(([key, value]) => ({ key, value }))
+    .sort((a, b) => compare(a.key, b.key));
+
 const FEATURE_CONTROL_ACCESSIBLE_LOCAL_STORAGE_KEY = 'grafana.feature-control.accessible';
 const FEATURE_CONTROL_OPEN_LOCAL_STORAGE_KEY = 'grafana.feature-control.open';
+const FEATURE_CONTROL_SUSPENDED_LOCAL_STORAGE_KEY = 'grafana.feature-control.suspended';
 
 export type FeatureControlContextType = {
   /** Whether the feature control button is in the toolbar */
@@ -24,6 +30,12 @@ export type FeatureControlContextType = {
   setIsOpen: (isOpen: boolean) => void;
   /** The current feature flag overrides */
   overrides: Flag[];
+  /** Whether overrides are temporarily reset to their default values */
+  isSuspended: boolean;
+  /** Snapshot the current overrides and clear them so flags evaluate to defaults */
+  resetToDefaults: () => void;
+  /** Re-apply the overrides snapshot taken by `resetToDefaults` */
+  restoreOverrides: () => void;
 };
 
 export const FeatureControlContext = createContext<FeatureControlContextType>({
@@ -32,6 +44,9 @@ export const FeatureControlContext = createContext<FeatureControlContextType>({
   isOpen: false,
   setIsOpen: () => {},
   overrides: [],
+  isSuspended: false,
+  resetToDefaults: () => {},
+  restoreOverrides: () => {},
 });
 
 export const useFeatureControlContext = () => useContext(FeatureControlContext);
@@ -79,13 +94,43 @@ export const FeatureControlContextProvider = ({ children }: { children: ReactNod
     return () => subscription.unsubscribe();
   }, [setIsAccessible, setIsOpen]);
 
+  const [suspendedBackup, setSuspendedBackup] = useStoredString(FEATURE_CONTROL_SUSPENDED_LOCAL_STORAGE_KEY, '');
+  const isSuspended = suspendedBackup !== '';
+
+  const resetToDefaults = useCallback(() => {
+    const current = getLocalStorageProvider().getFlags();
+    if (Object.keys(current).length === 0) {
+      return;
+    }
+    setSuspendedBackup(JSON.stringify(current));
+    getLocalStorageProvider().clearFlags();
+  }, [setSuspendedBackup]);
+
+  const restoreOverrides = useCallback(() => {
+    if (suspendedBackup) {
+      try {
+        getLocalStorageProvider().setFlags(JSON.parse(suspendedBackup));
+      } catch {}
+    }
+    setSuspendedBackup('');
+  }, [suspendedBackup, setSuspendedBackup]);
+
+  // While suspended, the active flags are cleared, so surface the snapshot instead
+  // so the panel can still show the overrides (greyed out).
+  const displayedOverrides = useMemo(() => {
+    if (!isSuspended) {
+      return overrides;
+    }
+    try {
+      return recordToOverrides(JSON.parse(suspendedBackup));
+    } catch {
+      return overrides;
+    }
+  }, [isSuspended, suspendedBackup, overrides]);
+
   useEffect(() => {
     const loadFlags = () => {
-      setOverrides(
-        Object.entries(getLocalStorageProvider().getFlags())
-          .map(([key, value]) => ({ key, value }))
-          .sort((a, b) => compare(a.key, b.key))
-      );
+      setOverrides(recordToOverrides(getLocalStorageProvider().getFlags()));
     };
     loadFlags();
 
@@ -101,9 +146,21 @@ export const FeatureControlContextProvider = ({ children }: { children: ReactNod
       setIsAccessible,
       isOpen,
       setIsOpen,
-      overrides,
+      overrides: displayedOverrides,
+      isSuspended,
+      resetToDefaults,
+      restoreOverrides,
     }),
-    [isAccessible, setIsAccessible, isOpen, setIsOpen, overrides]
+    [
+      isAccessible,
+      setIsAccessible,
+      isOpen,
+      setIsOpen,
+      displayedOverrides,
+      isSuspended,
+      resetToDefaults,
+      restoreOverrides,
+    ]
   );
 
   return <FeatureControlContext.Provider value={value}>{children}</FeatureControlContext.Provider>;

@@ -3,7 +3,12 @@ import { getDefaultFormValues } from '../../../rule-editor/formDefaults';
 import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
 import { NAMED_ROOT_LABEL_NAME } from '../../notification-policies/useNotificationPolicyRoute';
 
-import { buildAlertRuleResource, getNotificationSettings, toExpression } from './formValuesToAppPlatform';
+import {
+  buildAlertRuleResource,
+  buildRecordingRuleResource,
+  getNotificationSettings,
+  toExpression,
+} from './formValuesToAppPlatform';
 
 describe('getNotificationSettings', () => {
   const baseValues: RuleFormValues = {
@@ -92,6 +97,34 @@ describe('getNotificationSettings', () => {
       groupWait: '10s',
       groupInterval: '5m',
       repeatInterval: '4h',
+    });
+  });
+
+  it('leaves a cleared timing unset instead of sending an empty string', () => {
+    const result = getNotificationSettings({
+      ...baseValues,
+      manualRouting: true,
+      contactPoints: {
+        grafana: {
+          selectedContactPoint: 'team-receiver',
+          muteTimeIntervals: [],
+          activeTimeIntervals: [],
+          overrideGrouping: false,
+          groupBy: [],
+          overrideTimings: true,
+          groupWaitValue: '',
+          groupIntervalValue: '5m',
+          repeatIntervalValue: '',
+        },
+      },
+    });
+
+    expect(result).toStrictEqual({
+      type: 'SimplifiedRouting',
+      receiver: 'team-receiver',
+      muteTimeIntervals: [],
+      activeTimeIntervals: [],
+      groupInterval: '5m',
     });
   });
 
@@ -188,5 +221,29 @@ describe('buildAlertRuleResource label stripping', () => {
 
     expect(result.spec.notificationSettings).toEqual({ type: 'NamedRoutingTree', routingTree: 'OtherPolicy' });
     expect(result.spec.labels).not.toHaveProperty(NAMED_ROOT_LABEL_NAME);
+  });
+});
+
+describe('rule labels stay out of the resource metadata', () => {
+  const values = (type: RuleFormType): RuleFormValues => ({
+    ...getDefaultFormValues(),
+    condition: 'A',
+    type,
+    folder: { title: 'Test folder', uid: 'test-folder-uid' },
+    queries: [mockDataQuery()],
+    labels: [
+      { key: 'team', value: 'alerting' },
+      { key: 'grafana.com/group', value: 'not-a-group' },
+    ],
+  });
+
+  it.each([
+    ['alert', () => buildAlertRuleResource(values(RuleFormType.grafana))],
+    ['recording', () => buildRecordingRuleResource(values(RuleFormType.grafanaRecording))],
+  ])('sends %s rule labels in the spec and only the folder in metadata labels', (_, build) => {
+    const result = build();
+
+    expect(result.spec.labels).toEqual({ team: 'alerting', 'grafana.com/group': 'not-a-group' });
+    expect(result.metadata.labels).toEqual({ 'grafana.app/folder': 'test-folder-uid' });
   });
 });

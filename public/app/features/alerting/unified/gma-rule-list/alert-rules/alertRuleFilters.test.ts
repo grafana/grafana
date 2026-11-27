@@ -1,5 +1,5 @@
 import { parse } from '../rule-search/parser';
-import { createEmptyFilter } from '../rule-search/sharedRuleFilter';
+import { createRulesApiFilter } from '../rule-search/sharedRuleFilter';
 
 import { type AlertRuleFilter, alertRuleSearchSchema } from './alertRuleFilters';
 
@@ -32,7 +32,7 @@ describe('the Alert rules search', () => {
       filter: { state: 'normal' },
     },
   ])('reads $name', ({ query, filter }) => {
-    expect(parse(query, alertRuleSearchSchema).filter).toEqual({ ...createEmptyFilter(), ...filter });
+    expect(parse(query, alertRuleSearchSchema).filter).toEqual(createRulesApiFilter(filter));
   });
 
   it.each([
@@ -40,7 +40,7 @@ describe('the Alert rules search', () => {
     ['paused:maybe', 'paused'],
   ])('rejects %j as an invalid %s value and leaves the filter empty', (query, key) => {
     expect(parse(query, alertRuleSearchSchema)).toEqual({
-      filter: createEmptyFilter(),
+      filter: createRulesApiFilter(),
       issues: [{ key, reason: 'invalid' }],
     });
   });
@@ -72,14 +72,12 @@ describe('the Alert rules search', () => {
     ['panelId:4', 'panelId'],
     ['dashboard:d panelId:0', 'panelId'],
     ['policy:p contactPoint:c', 'contactPoint'],
+    ['paused:false', 'paused'],
   ])('reports %j as an invalid %s filter', (query, key) => {
     expect(alertIssues(query)).toEqual([{ key, reason: 'invalid' }]);
   });
 
-  it.each([
-    ['policy:default', 'policy'],
-    ['paused:false', 'paused'],
-  ])('reports %j as an unavailable %s filter', (query, key) => {
+  it.each([['policy:default', 'policy']])('reports %j as an unavailable %s filter', (query, key) => {
     expect(alertIssues(query)).toEqual([{ key, reason: 'unavailable' }]);
   });
 });

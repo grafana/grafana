@@ -255,14 +255,15 @@ const LogLineOTelDetailsField = ({
     [onClickFilterOutLabel, reportInteractionWrapper, log, keys]
   );
 
+  const refId = log.dataFrame?.refId;
   const labelFilterActive = useCallback(
     async (value?: string) => {
       if (isLabelFilterActive) {
-        return await isLabelFilterActive(keys[0], value ?? values[0], log.dataFrame?.refId);
+        return await isLabelFilterActive(keys[0], value ?? values[0], refId);
       }
       return false;
     },
-    [isLabelFilterActive, keys, values, log.dataFrame?.refId]
+    [isLabelFilterActive, keys, values, refId]
   );
 
   const showStats = useCallback(() => {

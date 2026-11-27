@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -428,15 +429,39 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return invalidRepositoryError(a.GetName(), list)
 	}
 
-	// Run validators
-	for _, validator := range v.validators {
-		list = append(list, validator.Validate(ctx, r)...)
-		if len(list) > 0 {
-			return invalidRepositoryError(a.GetName(), list)
+	// Switching the sync off introduces no content to authorize, and a repository whose path
+	// or URL has stopped being permitted must still be able to turn its own sync off.
+	if !isSyncDisableOnly(a, r) {
+		for _, validator := range v.validators {
+			list = append(list, validator.Validate(ctx, r)...)
+			if len(list) > 0 {
+				return invalidRepositoryError(a.GetName(), list)
+			}
 		}
 	}
 
 	return nil
+}
+
+// isSyncDisableOnly reports whether this update only turns off a running sync. Finalizers and
+// secure values count as changes too: both carry rules the validators enforce.
+func isSyncDisableOnly(a admission.Attributes, r *provisioning.Repository) bool {
+	if a.GetOperation() != admission.Update {
+		return false
+	}
+	old, ok := a.GetOldObject().(*provisioning.Repository)
+	if !ok || !old.Spec.Sync.Enabled || r.Spec.Sync.Enabled {
+		return false
+	}
+
+	// The interval is excluded because the mutator clamps it to min_sync_interval before this
+	// runs, so raising that setting would make every disable look like a second change.
+	want := old.DeepCopy()
+	want.Spec.Sync.Enabled = false
+	want.Spec.Sync.IntervalSeconds = r.Spec.Sync.IntervalSeconds
+	return apiequality.Semantic.DeepEqual(&r.Spec, &want.Spec) &&
+		apiequality.Semantic.DeepEqual(&r.Secure, &want.Secure) &&
+		slices.Equal(r.Finalizers, want.Finalizers)
 }
 
 func invalidRepositoryError(name string, list field.ErrorList) error {

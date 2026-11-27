@@ -4,25 +4,27 @@ import (
 	"context"
 	"fmt"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	registryrest "k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/apiserver/pkg/util/dryrun"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type unifiedBlobStorage struct {
 	grafanarest.Storage
-	blobs resourcepb.BlobStoreClient
 }
 
-// NewUnifiedBlobStorage stores snapshot dashboards as blobs on the unified side
-// without changing the legacy result or the object returned by the dual writer.
-func NewUnifiedBlobStorage(storage grafanarest.Storage, blobs resourcepb.BlobStoreClient) grafanarest.Storage {
-	return &unifiedBlobStorage{Storage: storage, blobs: blobs}
+// NewUnifiedBlobStorage validates Snapshot input before REST dry-run can bypass
+// apistore, and redacts write-only data from the resulting resource.
+func NewUnifiedBlobStorage(storage grafanarest.Storage) grafanarest.Storage {
+	return &unifiedBlobStorage{Storage: storage}
+}
+
+func (s *unifiedBlobStorage) Update(ctx context.Context, name string, objInfo registryrest.UpdatedObjectInfo, createValidation registryrest.ValidateObjectFunc, updateValidation registryrest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return nil, false, fmt.Errorf("snapshots are immutable and cannot be updated")
 }
 
 func (s *unifiedBlobStorage) Create(ctx context.Context, obj runtime.Object, validate registryrest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
@@ -30,15 +32,22 @@ func (s *unifiedBlobStorage) Create(ctx context.Context, obj runtime.Object, val
 	if !ok {
 		return nil, fmt.Errorf("expected Snapshot object, got %T", obj)
 	}
-	prepared := snap.DeepCopy()
-	// A blob must be tied to the final resource key. An unnamed Kubernetes create
-	// can still generate its name in the underlying storage.
-	if s.blobs != nil && prepared.Name != "" && prepared.Spec.Dashboard != nil &&
-		prepared.Blobs.Dashboard == nil && (prepared.Spec.External == nil || !*prepared.Spec.External) &&
-		(options == nil || !dryrun.IsDryRun(options.DryRun)) {
-		if err := moveDashboardToBlob(ctx, s.blobs, prepared); err != nil {
-			return nil, err
-		}
+	if _, err := inlineDashboardContent(snap); err != nil {
+		return nil, apierrors.NewBadRequest(err.Error())
 	}
-	return s.Storage.Create(ctx, prepared, validate, options)
+	prepared := snap.DeepCopy()
+	if prepared.Spec.External != nil && *prepared.Spec.External {
+		redactDashboardInput(prepared)
+	}
+	result, err := s.Storage.Create(ctx, prepared, validate, options)
+	if err != nil {
+		return nil, err
+	}
+	created, ok := result.(*dashv0.Snapshot)
+	if !ok {
+		return nil, fmt.Errorf("expected Snapshot result, got %T", result)
+	}
+	created = created.DeepCopy()
+	redactDashboardInput(created)
+	return created, nil
 }

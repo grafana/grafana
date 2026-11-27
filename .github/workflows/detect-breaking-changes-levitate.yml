@@ -39,7 +39,7 @@ jobs:
           cwd: './pr'
 
       - name: Install frontend dependencies
-        uses: ./pr/.github/actions/yarn-install
+        uses: ./pr/.github/actions/install-frontend-deps
         with:
           cwd: './pr'
 
@@ -86,7 +86,7 @@ jobs:
           cwd: './base'
 
       - name: Install frontend dependencies
-        uses: ./pr/.github/actions/yarn-install # run the action from the PR, pointing to the base checkout
+        uses: ./pr/.github/actions/install-frontend-deps # run the action from the PR, pointing to the base checkout
         with:
           cwd: './base'
 
@@ -124,7 +124,7 @@ jobs:
         uses: ./.github/actions/setup-node
 
       - name: Install frontend dependencies
-        uses: ./.github/actions/yarn-install
+        uses: ./.github/actions/install-frontend-deps
 
       - name: Get built packages from pr
         uses: actions/download-artifact@v8

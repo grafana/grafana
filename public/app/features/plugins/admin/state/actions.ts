@@ -1,13 +1,15 @@
 import { createAction, createAsyncThunk, type Update } from '@reduxjs/toolkit';
 import { from, forkJoin, timeout, lastValueFrom, catchError, of } from 'rxjs';
 
-import { type PanelPlugin, type PluginError } from '@grafana/data';
+import { AppEvents, type PanelPlugin, type PluginError } from '@grafana/data';
 import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
-import { refetchPanelPluginMetas } from '@grafana/runtime/internal';
+import { refetchPluginMetasAfterPluginChange } from '@grafana/runtime/internal';
+import { appEvents } from 'app/core/app_events';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import { type PluginDashboard } from 'app/types/plugins';
 import { type StoreState, type ThunkResult } from 'app/types/store';
 
+import { getDatasourceSrv } from '../../datasource_srv';
 import { clearPluginInfoInCache } from '../../loader/pluginInfoCache';
 import {
   getRemotePlugins,
@@ -192,6 +194,20 @@ export const fetchPluginInsights = createAsyncThunk<Update<CatalogPlugin, string
 
 export const addPlugins = createAction<CatalogPlugin[]>(`${STATE_PREFIX}/addPlugins`);
 
+// Panels and data sources carry the meta of their plugin, and a data source of a newly installed
+// plugin only shows up after a reload. One payload serves the metas and the reload. The metas come
+// first, because the reload joins the data sources with them. The plugin change has succeeded, so
+// a failed refresh must not fail it.
+async function refreshAfterPluginChange() {
+  try {
+    const settings = await getBackendSrv().get('/api/frontend/settings');
+    await refetchPluginMetasAfterPluginChange(settings);
+    await getDatasourceSrv().reload(settings);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
 // We are also using the install API endpoint to update the plugin
 export const install = createAsyncThunk<
   Update<CatalogPlugin, string>,
@@ -212,7 +228,7 @@ export const install = createAsyncThunk<
 
   try {
     await installPlugin(id, version);
-    await refetchPanelPluginMetas();
+    await refreshAfterPluginChange();
 
     if (installType !== PluginStatus.INSTALL) {
       clearPluginInfoInCache(id);
@@ -227,6 +243,12 @@ export const install = createAsyncThunk<
       return thunkApi.rejectWithValue(e.data);
     }
 
+    // The MT plugins API call uses fetch, so its failures are plain errors with the status in the message.
+    // Same shape as the FetchError payload above, which the catalog UI reads `message` and `id` from.
+    if (e instanceof Error) {
+      return thunkApi.rejectWithValue({ id, message: e.message });
+    }
+
     return thunkApi.rejectWithValue('Unknown error.');
   }
 });
@@ -238,7 +260,7 @@ export const uninstall = createAsyncThunk<Update<CatalogPlugin, string>, string>
   async (id, thunkApi) => {
     try {
       await uninstallPlugin(id);
-      await refetchPanelPluginMetas();
+      await refreshAfterPluginChange();
 
       clearPluginInfoInCache(id);
 
@@ -248,6 +270,11 @@ export const uninstall = createAsyncThunk<Update<CatalogPlugin, string>, string>
       };
     } catch (e) {
       console.error(e);
+
+      // A FetchError from backendSrv has already shown its own alert, a plain error from the MT plugins API has not.
+      if (!isFetchError(e) && e instanceof Error) {
+        appEvents.emit(AppEvents.alertError, [e.message]);
+      }
 
       return thunkApi.rejectWithValue('Unknown error.');
     }

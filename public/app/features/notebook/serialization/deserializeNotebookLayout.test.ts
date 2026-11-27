@@ -174,4 +174,33 @@ describe('deserializeNotebookLayout', () => {
       expect(manager.getVizPanels().map((panel) => panel.state.key)).toEqual(['panel-10', 'panel-11']);
     });
   });
+
+  describe('cell ids', () => {
+    it('reads the id the server gave a cell, and writes it back unchanged', () => {
+      const { layout, elements } = fixture();
+      const withIds: NotebookLayoutKind = {
+        ...layout,
+        spec: {
+          cells: layout.spec.cells.map((item, index) => ({
+            ...item,
+            spec: { ...item.spec, id: `00000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}` },
+          })),
+        },
+      };
+
+      const manager = deserializeNotebookLayout(withIds, elements);
+
+      expect(manager.state.cells.map((cell) => cell.state.id)).toEqual(withIds.spec.cells.map((item) => item.spec.id));
+      expect(manager.serialize()).toEqual(withIds);
+    });
+
+    it('leaves a notebook that predates ids without them, rather than writing an empty one', () => {
+      const { layout, elements } = fixture();
+
+      const manager = deserializeNotebookLayout(layout, elements);
+
+      expect(manager.state.cells.map((cell) => cell.state.id)).toEqual([undefined, undefined, undefined, undefined]);
+      expect(manager.serialize().spec.cells.some((item) => 'id' in item.spec)).toBe(false);
+    });
+  });
 });

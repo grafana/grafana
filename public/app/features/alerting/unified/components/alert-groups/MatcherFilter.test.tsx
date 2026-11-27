@@ -7,6 +7,8 @@ import * as analytics from '../../Analytics';
 
 import { MatcherFilter } from './MatcherFilter';
 
+jest.mock('../../Analytics', () => makeSpyable('../../Analytics'));
+
 const logInfoSpy = jest.spyOn(analytics, 'logInfo');
 
 describe('Analytics', () => {

@@ -1,6 +1,15 @@
+import tinycolor from 'tinycolor2';
 import type uPlot from 'uplot';
 
-import { createTheme, type Field, type FieldSparkline, FieldType, toDataFrame } from '@grafana/data';
+import {
+  createTheme,
+  type Field,
+  FieldColorModeId,
+  type FieldSparkline,
+  FieldType,
+  ThresholdsMode,
+  toDataFrame,
+} from '@grafana/data';
 
 import { getYRange, prepareConfig, preparePlotFrame } from './utils';
 
@@ -348,6 +357,90 @@ describe('prepareConfig', () => {
     expect(config.series.length).toBe(1);
     expect(config.series[0].getConfig().points?.show).not.toBe(true);
   });
+
+  describe('series color', () => {
+    const theme = createTheme();
+    const green = theme.visualization.getColorByName('green');
+    const orange = theme.visualization.getColorByName('orange');
+    const red = theme.visualization.getColorByName('red');
+    const blue = theme.visualization.getColorByName('blue');
+
+    const thresholds = {
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: 'green' },
+        { value: 50, color: 'orange' },
+        { value: 80, color: 'red' },
+      ],
+    };
+
+    const getStroke = (values: Array<number | null>, config: Field['config']) => {
+      const dataFrame = toDataFrame({
+        fields: [
+          { name: 'x', values: values.map((_, i) => i), type: FieldType.number },
+          { name: 'y', values, type: FieldType.number, config },
+        ],
+      });
+      const [x, y] = dataFrame.fields;
+      return String(prepareConfig({ x, y }, dataFrame, theme).series[0].getConfig().stroke);
+    };
+
+    it.each([
+      { description: 'the top of the range', values: [1, 2, 3, 4, 5], expected: green },
+      { description: 'the middle of the range', values: [1, 5, 3], expected: 'rgb(226, 192, 61)' },
+      { description: 'the bottom of the range', values: [5, 4, 3, 2, 1], expected: red },
+    ])('uses the scheme color when the last value is at $description', ({ values, expected }) => {
+      const stroke = getStroke(values, { color: { mode: FieldColorModeId.ContinuousRdYlGr } });
+
+      expect(tinycolor.equals(stroke, expected)).toBe(true);
+    });
+
+    it.each([
+      { description: 'above the top step', values: [1, 99], expected: red },
+      { description: 'in a middle step', values: [99, 60], expected: orange },
+      { description: 'in the base step', values: [99, 1], expected: green },
+    ])('uses the threshold color when the last value is $description', ({ values, expected }) => {
+      const stroke = getStroke(values, { color: { mode: FieldColorModeId.Thresholds }, thresholds });
+
+      expect(tinycolor.equals(stroke, expected)).toBe(true);
+    });
+
+    it('uses the threshold color for color.seriesBy instead of the last value', () => {
+      const stroke = getStroke([99, 1], { color: { mode: FieldColorModeId.Thresholds, seriesBy: 'max' }, thresholds });
+
+      expect(tinycolor.equals(stroke, red)).toBe(true);
+    });
+
+    it('uses the last non-null value when the series ends in null', () => {
+      const stroke = getStroke([1, 2, 3, 4, 5, null], { color: { mode: FieldColorModeId.ContinuousRdYlGr } });
+
+      expect(tinycolor.equals(stroke, green)).toBe(true);
+    });
+
+    it.each([
+      { description: 'a trailing null after 50', withNull: [1, 20, 90, 50, null], withoutNull: [1, 20, 90, 50, 50] },
+      { description: 'a trailing null after 90', withNull: [1, 20, 50, 90, null], withoutNull: [10, 30, 50, 70, 90] },
+    ])('colors series with the same last value alike despite $description', ({ withNull, withoutNull }) => {
+      const config = { color: { mode: FieldColorModeId.ContinuousRdYlGr } };
+
+      expect(tinycolor.equals(getStroke(withNull, config), getStroke(withoutNull, config))).toBe(true);
+    });
+
+    it('uses the last non-null threshold color when the series ends in null', () => {
+      const stroke = getStroke([10, 90, null], { color: { mode: FieldColorModeId.Thresholds }, thresholds });
+
+      expect(tinycolor.equals(stroke, red)).toBe(true);
+    });
+
+    it.each([
+      { description: 'rising', values: [1, 99] },
+      { description: 'falling', values: [99, 1] },
+    ])('uses the fixed color for a $description series', ({ values }) => {
+      const stroke = getStroke(values, { color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' } });
+
+      expect(tinycolor.equals(stroke, blue)).toBe(true);
+    });
+  });
 });
 
 describe('prepareConfig hover', () => {
@@ -383,6 +476,70 @@ describe('prepareConfig hover', () => {
       ],
       rect: { left: 100, top: 50 },
     }) as unknown as uPlot;
+
+  it.each([
+    [1000.4, 2000.4],
+    [2000.4, 1000.4],
+  ])('selects an ascending interval from projected bounds %s and %s', (start, end) => {
+    const sparkline = makeHoverSparkline();
+    sparkline.x!.type = FieldType.time;
+    const onRangeSelected = jest.fn();
+    const config = prepareConfig(
+      sparkline,
+      toDataFrame({ fields: [sparkline.x, sparkline.y] }),
+      theme,
+      false,
+      false,
+      undefined,
+      onRangeSelected
+    ).getConfig();
+    expect(config.cursor?.drag).toEqual({ x: true, y: false, setScale: false, dist: 5 });
+    const plot = {
+      select: { left: 10, width: 20 },
+      posToVal: jest.fn().mockReturnValueOnce(start).mockReturnValueOnce(end),
+      setSelect: jest.fn(),
+    } as unknown as uPlot;
+    config.hooks!.setSelect![0]!(plot);
+    expect(onRangeSelected).toHaveBeenCalledWith({ from: 1000, to: 2000 });
+    expect(plot.setSelect).toHaveBeenCalledWith({ left: 0, top: 0, width: 0, height: 0 }, false);
+  });
+
+  it.each([FieldType.number, undefined])('does not enable time selection for an x field of type %s', (type) => {
+    const sparkline = makeHoverSparkline();
+    sparkline.x!.type = FieldType.time;
+    sparkline.x = type ? { ...sparkline.x!, type } : undefined;
+    const frame = toDataFrame({ fields: sparkline.x ? [sparkline.x, sparkline.y] : [sparkline.y] });
+    const config = prepareConfig(sparkline, frame, theme, false, false, undefined, jest.fn()).getConfig();
+    expect(config.cursor?.show).toBe(false);
+    expect(config.hooks?.setSelect).toBeUndefined();
+  });
+
+  it.each([
+    [NaN, 2000],
+    [2000, 2000],
+    [1000, Infinity],
+  ])('ignores an invalid time selection (%s, %s)', (from, to) => {
+    const sparkline = makeHoverSparkline();
+    sparkline.x!.type = FieldType.time;
+    const onRangeSelected = jest.fn();
+    const config = prepareConfig(
+      sparkline,
+      toDataFrame({ fields: [sparkline.x, sparkline.y] }),
+      theme,
+      false,
+      false,
+      undefined,
+      onRangeSelected
+    ).getConfig();
+    const plot = {
+      select: { left: 10, width: 20 },
+      posToVal: jest.fn().mockReturnValueOnce(from).mockReturnValueOnce(to),
+      setSelect: jest.fn(),
+    } as unknown as uPlot;
+    config.hooks!.setSelect![0]!(plot);
+    expect(plot.setSelect).toHaveBeenCalledWith({ left: 0, top: 0, width: 0, height: 0 }, false);
+    expect(onRangeSelected).not.toHaveBeenCalled();
+  });
 
   it('disables the cursor and registers no hover hook by default', () => {
     const sparkline = makeHoverSparkline();

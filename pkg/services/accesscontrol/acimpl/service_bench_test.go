@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -32,14 +33,15 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 	sqlStore := db.InitTestDB(b) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	store := database.ProvideService(sqlStore)
 	acService := &Service{
-		cfg:            setting.NewCfg(),
-		log:            log.New("accesscontrol-test"),
-		registrations:  accesscontrol.RegistrationList{},
-		store:          store,
-		roles:          accesscontrol.BuildBasicRoleDefinitions(),
-		cache:          localcache.New(1*time.Second, 1*time.Second),
-		permRegistry:   permreg.ProvidePermissionRegistry(),
-		actionResolver: resourcepermissions.NewActionSetService(),
+		openFeatureClient: openfeature.NewDefaultClient(),
+		cfg:               setting.NewCfg(),
+		log:               log.New("accesscontrol-test"),
+		registrations:     accesscontrol.RegistrationList{},
+		store:             store,
+		roles:             accesscontrol.BuildBasicRoleDefinitions(),
+		cache:             localcache.New(1*time.Second, 1*time.Second),
+		permRegistry:      permreg.ProvidePermissionRegistry(),
+		actionResolver:    resourcepermissions.NewActionSetService(),
 	}
 
 	// Prepare default permissions
@@ -290,15 +292,16 @@ func setupBenchManyTeams(b *testing.B, teamCount int) (*Service, *user.SignedInU
 	cfg := setting.NewCfg()
 	cfg.RBAC.PermissionCache = true
 	acService := &Service{
-		cfg:            cfg,
-		features:       featuremgmt.WithFeatures(),
-		log:            log.New("accesscontrol-bench"),
-		registrations:  accesscontrol.RegistrationList{},
-		store:          store,
-		roles:          accesscontrol.BuildBasicRoleDefinitions(),
-		cache:          localcache.New(cacheTTL, cacheTTL),
-		permRegistry:   permreg.ProvidePermissionRegistry(),
-		actionResolver: resourcepermissions.NewActionSetService(),
+		openFeatureClient: openfeature.NewDefaultClient(),
+		cfg:               cfg,
+		features:          featuremgmt.WithFeatures(),
+		log:               log.New("accesscontrol-bench"),
+		registrations:     accesscontrol.RegistrationList{},
+		store:             store,
+		roles:             accesscontrol.BuildBasicRoleDefinitions(),
+		cache:             localcache.New(cacheTTL, cacheTTL),
+		permRegistry:      permreg.ProvidePermissionRegistry(),
+		actionResolver:    resourcepermissions.NewActionSetService(),
 	}
 	require.NoError(b, acService.RegisterFixedRoles(context.Background()))
 

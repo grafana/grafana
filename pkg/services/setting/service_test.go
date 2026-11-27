@@ -1,13 +1,14 @@
 package setting
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"maps"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
@@ -26,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/util/flowcontrol"
+	"k8s.io/client-go/util/retry"
 )
 
 func TestRemoteSettingService_ListAsIni(t *testing.T) {
@@ -267,6 +270,95 @@ func TestRemoteSettingService_List(t *testing.T) {
 		require.Error(t, err)
 		assert.Nil(t, result)
 		assert.Contains(t, err.Error(), "connection refused")
+	})
+
+	t.Run("should retry when the connection is reset before the response", func(t *testing.T) {
+		server, attempts := newFlakyServer(t, 1, resetConnection)
+		defer server.Close()
+
+		client := newTestClient(t, server.URL, 500)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		result, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		assert.Equal(t, int32(2), attempts.Load())
+	})
+
+	t.Run("should retry when the connection drops during the body read", func(t *testing.T) {
+		server, attempts := newFlakyServer(t, 1, truncateBody)
+		defer server.Close()
+
+		client := newTestClient(t, server.URL, 500)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		result, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		assert.Equal(t, int32(2), attempts.Load())
+	})
+
+	t.Run("should retry when the connection is refused", func(t *testing.T) {
+		server := newTestServer(t, []Setting{{Section: "server", Key: "port", Value: "3000"}}, "")
+		defer server.Close()
+		closedServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+		closedAddr := closedServer.Listener.Addr().String()
+		closedServer.Close()
+
+		var attempts atomic.Int32
+		client, err := New(Config{
+			URL:      server.URL,
+			CacheTTL: -1,
+			WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
+				return roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+					if attempts.Add(1) == 1 {
+						req = req.Clone(req.Context())
+						req.URL.Host = closedAddr
+					}
+					return rt.RoundTrip(req)
+				})
+			},
+		})
+		require.NoError(t, err)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		result, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		assert.Equal(t, int32(2), attempts.Load())
+	})
+
+	t.Run("should give up after repeated connection resets", func(t *testing.T) {
+		server, attempts := newFlakyServer(t, 100, resetConnection)
+		defer server.Close()
+
+		client := newTestClient(t, server.URL, 500)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		result, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.Error(t, err)
+		assert.Nil(t, result)
+		assert.Equal(t, int32(retry.DefaultBackoff.Steps), attempts.Load())
+	})
+
+	t.Run("should not retry invalid response bodies", func(t *testing.T) {
+		server, attempts := newFlakyServer(t, 100, func(t *testing.T, w http.ResponseWriter) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"items":"x"}`))
+		})
+		defer server.Close()
+
+		client := newTestClient(t, server.URL, 500)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		_, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.Error(t, err)
+		assert.Equal(t, int32(1), attempts.Load())
 	})
 
 	t.Run("should set user-agent header on requests", func(t *testing.T) {
@@ -745,6 +837,17 @@ func TestToIni(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
+	t.Run("should create client when CacheTTL exceeds the default CacheMaxStale", func(t *testing.T) {
+		client, err := New(Config{
+			URL:           "https://example.com",
+			WrapTransport: func(rt http.RoundTripper) http.RoundTripper { return rt },
+			CacheTTL:      time.Hour,
+		})
+
+		require.NoError(t, err)
+		assert.NotNil(t, client)
+	})
+
 	t.Run("should create client with default page size", func(t *testing.T) {
 		config := Config{
 			URL:           "https://example.com",
@@ -860,9 +963,25 @@ func TestListCache(t *testing.T) {
 		assert.Len(t, result2, 1)
 		assert.Equal(t, int32(1), requestCount.Load(), "second call should hit cache, not the server")
 
-		remoteClient := client.(*remoteSettingService)
-		assert.Equal(t, float64(1), testutil.ToFloat64(remoteClient.metrics.cacheHitTotal))
-		assert.Equal(t, float64(1), testutil.ToFloat64(remoteClient.metrics.cacheMissTotal))
+		assert.Equal(t, float64(1), requestsByResult(t, client, "fresh"))
+		assert.Equal(t, float64(1), requestsByResult(t, client, "miss"))
+	})
+
+	t.Run("should count an eviction when the cache is full", func(t *testing.T) {
+		server := newTestServer(t, []Setting{{Section: "server", Key: "port", Value: "3000"}}, "")
+		defer server.Close()
+		client, err := New(Config{
+			URL:             server.URL,
+			WrapTransport:   func(rt http.RoundTripper) http.RoundTripper { return rt },
+			CacheMaxEntries: 1,
+		})
+		require.NoError(t, err)
+
+		for _, namespace := range []string{"namespace-a", "namespace-b"} {
+			listPort(t, request.WithNamespace(context.Background(), namespace), client)
+		}
+
+		assert.Equal(t, float64(1), counterValue(t, client, "settings_service_list_settings_cache_eviction_total"))
 	})
 
 	t.Run("should miss cache for different selectors", func(t *testing.T) {
@@ -964,8 +1083,6 @@ func TestListCache(t *testing.T) {
 
 		remoteClient := client.(*remoteSettingService)
 		assert.NotNil(t, remoteClient.cache, "cache should be enabled by default")
-		assert.NotNil(t, remoteClient.metrics.cacheHitTotal, "cacheHitTotal should be set when cache enabled")
-		assert.NotNil(t, remoteClient.metrics.cacheMissTotal, "cacheMissTotal should be set when cache enabled")
 	})
 
 	t.Run("should not observe listResultSize on cache hit", func(t *testing.T) {
@@ -1015,7 +1132,8 @@ func TestListCache(t *testing.T) {
 		}))
 		defer server.Close()
 
-		// Use very short TTL so the cache expires between requests
+		// The 50ms server delay exceeds the 10ms TTL, so the entry goes stale while the first
+		// load runs. The cache must still share that single load between all callers.
 		client := newTestClientWithCache(t, server.URL, 500, 10*time.Millisecond)
 
 		done := make(chan struct{})
@@ -1036,6 +1154,311 @@ func TestListCache(t *testing.T) {
 	})
 }
 
+func TestListCacheStaleWhileRevalidate(t *testing.T) {
+	const cacheTTL = time.Second
+
+	t.Run("should return the new value when the refresh finishes within the stale wait", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			transport := &memTransport{body: portSettingsBody("3000")}
+			client := newMemClient(t, transport, cacheTTL)
+			ctx := request.WithNamespace(t.Context(), "test-namespace")
+			assert.Equal(t, "3000", listPort(t, ctx, client))
+
+			transport.body = portSettingsBody("4000")
+			time.Sleep(cacheTTL)
+
+			assert.Equal(t, "4000", listPort(t, ctx, client))
+			assert.Equal(t, int32(2), transport.calls.Load())
+			assert.Equal(t, float64(1), requestsByResult(t, client, "refreshed"))
+		})
+	})
+
+	t.Run("should return the old value when the refresh fails", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			transport := &memTransport{body: portSettingsBody("3000")}
+			client := newMemClient(t, transport, cacheTTL)
+			ctx := request.WithNamespace(t.Context(), "test-namespace")
+			assert.Equal(t, "3000", listPort(t, ctx, client))
+
+			transport.fail.Store(true)
+			time.Sleep(cacheTTL)
+
+			assert.Equal(t, "3000", listPort(t, ctx, client))
+			assert.Equal(t, float64(1), requestsByResult(t, client, "stale_error"))
+		})
+	})
+
+	t.Run("should keep a stale window when CacheTTL exceeds the default CacheMaxStale", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			transport := &memTransport{body: portSettingsBody("3000")}
+			client := newMemClient(t, transport, time.Hour)
+			ctx := request.WithNamespace(t.Context(), "test-namespace")
+			assert.Equal(t, "3000", listPort(t, ctx, client))
+
+			transport.fail.Store(true)
+			time.Sleep(time.Hour + time.Second)
+
+			assert.Equal(t, "3000", listPort(t, ctx, client))
+			assert.Equal(t, float64(1), requestsByResult(t, client, "stale_error"))
+		})
+	})
+
+	t.Run("should return an error when the entry is older than CacheMaxStale and the refresh fails", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			transport := &memTransport{body: portSettingsBody("3000")}
+			client := newMemClientWithConfig(t, transport, Config{CacheTTL: cacheTTL, CacheMaxStale: 5 * cacheTTL})
+			ctx := request.WithNamespace(t.Context(), "test-namespace")
+			assert.Equal(t, "3000", listPort(t, ctx, client))
+
+			transport.fail.Store(true)
+			time.Sleep(5 * cacheTTL)
+
+			_, err := client.List(ctx, metav1.LabelSelector{})
+			require.Error(t, err)
+			assert.Equal(t, int32(2), transport.calls.Load())
+		})
+	})
+
+	t.Run("should return the old value when the entry is younger than CacheMaxStale and the refresh fails", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			transport := &memTransport{body: portSettingsBody("3000")}
+			client := newMemClientWithConfig(t, transport, Config{CacheTTL: cacheTTL, CacheMaxStale: 5 * cacheTTL})
+			ctx := request.WithNamespace(t.Context(), "test-namespace")
+			assert.Equal(t, "3000", listPort(t, ctx, client))
+
+			transport.fail.Store(true)
+			time.Sleep(5*cacheTTL - time.Second)
+
+			assert.Equal(t, "3000", listPort(t, ctx, client))
+			assert.Equal(t, int32(2), transport.calls.Load())
+		})
+	})
+
+	t.Run("should return the old value at once when CacheStaleWait is negative", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			transport := &memTransport{body: portSettingsBody("3000"), delay: time.Millisecond}
+			client := newMemClientWithConfig(t, transport, Config{CacheTTL: cacheTTL, CacheStaleWait: -1})
+			ctx := request.WithNamespace(t.Context(), "test-namespace")
+			assert.Equal(t, "3000", listPort(t, ctx, client))
+
+			transport.body = portSettingsBody("4000")
+			time.Sleep(cacheTTL)
+
+			assert.Equal(t, "3000", listPort(t, ctx, client))
+			assert.Equal(t, float64(1), requestsByResult(t, client, "stale_timeout"))
+
+			// The refresh keeps running in the background; the bubble may end only after it.
+			time.Sleep(transport.delay)
+			synctest.Wait()
+		})
+	})
+
+	t.Run("should wait up to CacheStaleWait for the refresh", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			// The refresh takes longer than DefaultCacheStaleWait but less than CacheStaleWait.
+			transport := &memTransport{body: portSettingsBody("3000"), delay: 2 * DefaultCacheStaleWait}
+			client := newMemClientWithConfig(t, transport, Config{CacheTTL: cacheTTL, CacheStaleWait: 3 * DefaultCacheStaleWait})
+			ctx := request.WithNamespace(t.Context(), "test-namespace")
+			assert.Equal(t, "3000", listPort(t, ctx, client))
+
+			transport.body = portSettingsBody("4000")
+			time.Sleep(cacheTTL)
+
+			assert.Equal(t, "4000", listPort(t, ctx, client))
+			assert.Equal(t, float64(1), requestsByResult(t, client, "refreshed"))
+		})
+	})
+
+	t.Run("should fail a load that takes longer than CacheLoadTimeout", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			transport := &memTransport{body: portSettingsBody("3000"), delay: 2 * time.Second}
+			client := newMemClientWithConfig(t, transport, Config{CacheTTL: cacheTTL, CacheLoadTimeout: time.Second})
+			ctx := request.WithNamespace(t.Context(), "test-namespace")
+
+			_, err := client.List(ctx, metav1.LabelSelector{})
+			assert.ErrorIs(t, err, context.DeadlineExceeded)
+		})
+	})
+
+	t.Run("should keep loading after the caller context is cancelled", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			transport := &memTransport{body: portSettingsBody("3000"), delay: time.Second}
+			client := newMemClient(t, transport, cacheTTL)
+			ctx, cancel := context.WithCancel(request.WithNamespace(t.Context(), "test-namespace"))
+
+			listErr := make(chan error, 1)
+			go func() {
+				_, err := client.List(ctx, metav1.LabelSelector{})
+				listErr <- err
+			}()
+			time.Sleep(10 * time.Millisecond)
+			cancel()
+			assert.ErrorIs(t, <-listErr, context.Canceled)
+
+			time.Sleep(transport.delay)
+			synctest.Wait()
+
+			freshCtx := request.WithNamespace(t.Context(), "test-namespace")
+			assert.Equal(t, "3000", listPort(t, freshCtx, client))
+			assert.Equal(t, int32(1), transport.calls.Load())
+		})
+	})
+}
+
+func TestListKey_String(t *testing.T) {
+	assert.Equal(t, "ns|section=server|spec.key=port", listKey{"ns", "section=server", "spec.key=port"}.String())
+}
+
+func TestListCacheMetrics(t *testing.T) {
+	t.Run("should expose the cache metrics with the service label when caching is enabled", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			client := newMemClientWithConfig(t, &memTransport{body: portSettingsBody("3000")}, Config{CacheTTL: time.Second, ServiceName: "test"})
+			ctx := request.WithNamespace(t.Context(), "test-namespace")
+			listPort(t, ctx, client)
+
+			families := gatherFamilies(t, client)
+			for _, name := range []string{
+				"settings_service_list_settings_cache_size",
+				"settings_service_list_settings_cache_max_size",
+				"settings_service_list_settings_cache_load_duration_seconds",
+				"settings_service_list_settings_cache_entries",
+				"settings_service_list_settings_cache_hit_total",
+				"settings_service_list_settings_cache_miss_total",
+				"settings_service_list_settings_cache_eviction_total",
+			} {
+				family, ok := families[name]
+				require.True(t, ok, name)
+				for _, metric := range family.GetMetric() {
+					assert.Contains(t, labelPairs(metric), "service=test", name)
+				}
+			}
+		})
+	})
+
+	t.Run("should not expose the swrcache metrics when caching is disabled", func(t *testing.T) {
+		client := newMemClient(t, &memTransport{body: portSettingsBody("3000")}, -1)
+
+		for name := range gatherFamilies(t, client) {
+			assert.NotContains(t, name, "settings_service_list_settings_cache_hit")
+			assert.NotContains(t, name, "settings_service_list_settings_cache_miss")
+			assert.NotContains(t, name, "settings_service_list_settings_cache_eviction")
+			assert.NotContains(t, name, "settings_service_list_settings_cache_entries")
+			assert.NotContains(t, name, "settings_service_list_settings_cache_load_duration")
+		}
+	})
+}
+
+func TestListDuration(t *testing.T) {
+	const (
+		listMetric  = "settings_service_list_settings_duration_seconds"
+		fetchMetric = "settings_service_list_settings_fetch_duration_seconds"
+	)
+
+	t.Run("should count every call while the fetch histogram counts only loads", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			client := newMemClient(t, &memTransport{body: portSettingsBody("3000")}, time.Minute)
+			ctx := request.WithNamespace(t.Context(), "test-namespace")
+			listPort(t, ctx, client)
+			listPort(t, ctx, client)
+
+			assert.Equal(t, uint64(2), histogramCount(t, client, listMetric, "success"))
+			assert.Equal(t, uint64(1), histogramCount(t, client, fetchMetric, "success"))
+		})
+	})
+
+	t.Run("should record an error when the namespace is missing", func(t *testing.T) {
+		client := newMemClient(t, &memTransport{body: portSettingsBody("3000")}, time.Minute)
+
+		_, err := client.List(t.Context(), metav1.LabelSelector{})
+		require.Error(t, err)
+
+		assert.Equal(t, uint64(1), histogramCount(t, client, listMetric, "error"))
+	})
+
+	t.Run("should record one sample in both histograms when caching is disabled", func(t *testing.T) {
+		client := newMemClient(t, &memTransport{body: portSettingsBody("3000")}, -1)
+		ctx := request.WithNamespace(t.Context(), "test-namespace")
+		listPort(t, ctx, client)
+
+		assert.Equal(t, uint64(1), histogramCount(t, client, listMetric, "success"))
+		assert.Equal(t, uint64(1), histogramCount(t, client, fetchMetric, "success"))
+	})
+}
+
+// histogramCount returns the sample count of the histogram series with the given status label.
+func histogramCount(t *testing.T, collector prometheus.Collector, name, status string) uint64 {
+	t.Helper()
+	family, ok := gatherFamilies(t, collector)[name]
+	require.True(t, ok, name)
+	for _, metric := range family.GetMetric() {
+		if slices.Contains(labelPairs(metric), "status="+status) {
+			return metric.GetHistogram().GetSampleCount()
+		}
+	}
+	t.Fatalf("no status=%s series in %s", status, name)
+	return 0
+}
+
+func counterValue(t *testing.T, collector prometheus.Collector, name string) float64 {
+	t.Helper()
+	family, ok := gatherFamilies(t, collector)[name]
+	require.True(t, ok, name)
+	require.Len(t, family.GetMetric(), 1, name)
+	return family.GetMetric()[0].GetCounter().GetValue()
+}
+
+func portSettingsBody(value string) []byte {
+	return []byte(generateSettingsJSON([]Setting{{Section: "server", Key: "port", Value: value}}, ""))
+}
+
+func listPort(t *testing.T, ctx context.Context, client Service) string {
+	t.Helper()
+	settings, err := client.List(ctx, metav1.LabelSelector{})
+	require.NoError(t, err)
+	require.Len(t, settings, 1)
+	return settings[0].Value
+}
+
+// gatherFamilies registers collector in a pedantic registry, which fails the
+// test when Describe and Collect disagree.
+func gatherFamilies(t *testing.T, collector prometheus.Collector) map[string]*dto.MetricFamily {
+	t.Helper()
+	registry := prometheus.NewPedanticRegistry()
+	require.NoError(t, registry.Register(collector))
+	families, err := registry.Gather()
+	require.NoError(t, err)
+	byName := make(map[string]*dto.MetricFamily, len(families))
+	for _, family := range families {
+		byName[family.GetName()] = family
+	}
+	return byName
+}
+
+func labelPairs(metric *dto.Metric) []string {
+	pairs := make([]string, 0, len(metric.GetLabel()))
+	for _, label := range metric.GetLabel() {
+		pairs = append(pairs, label.GetName()+"="+label.GetValue())
+	}
+	return pairs
+}
+
+// requestsByResult returns the count of result from the hit or miss counter, whichever has the series.
+func requestsByResult(t *testing.T, collector prometheus.Collector, result string) float64 {
+	t.Helper()
+	families := gatherFamilies(t, collector)
+	for _, name := range []string{"settings_service_list_settings_cache_hit_total", "settings_service_list_settings_cache_miss_total"} {
+		family, ok := families[name]
+		require.True(t, ok, name)
+		for _, metric := range family.GetMetric() {
+			if slices.Contains(labelPairs(metric), "result="+result) {
+				return metric.GetCounter().GetValue()
+			}
+		}
+	}
+	t.Fatalf("no result=%s series", result)
+	return 0
+}
+
 // Helper functions
 
 func newTestServer(t *testing.T, settings []Setting, continueToken string) *httptest.Server {
@@ -1044,6 +1467,48 @@ func newTestServer(t *testing.T, settings []Setting, continueToken string) *http
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(generateSettingsJSON(settings, continueToken)))
 	}))
+}
+
+// newFlakyServer calls fail for the first failures requests, then serves one setting.
+func newFlakyServer(t *testing.T, failures int32, fail func(*testing.T, http.ResponseWriter)) (*httptest.Server, *atomic.Int32) {
+	t.Helper()
+	var attempts atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if attempts.Add(1) <= failures {
+			fail(t, w)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(generateSettingsJSON([]Setting{{Section: "server", Key: "port", Value: "3000"}}, "")))
+	}))
+	return server, &attempts
+}
+
+type roundTripperFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) { return f(req) }
+
+func hijack(t *testing.T, w http.ResponseWriter) *net.TCPConn {
+	t.Helper()
+	conn, _, err := http.NewResponseController(w).Hijack()
+	require.NoError(t, err)
+	tcpConn, ok := conn.(*net.TCPConn)
+	require.True(t, ok)
+	return tcpConn
+}
+
+// resetConnection sends a TCP RST instead of a response.
+func resetConnection(t *testing.T, w http.ResponseWriter) {
+	conn := hijack(t, w)
+	_ = conn.SetLinger(0)
+	_ = conn.Close()
+}
+
+// truncateBody sends headers and part of the body, then closes the connection.
+func truncateBody(t *testing.T, w http.ResponseWriter) {
+	conn := hijack(t, w)
+	_, _ = conn.Write([]byte("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 1000\r\n\r\n{\"items\":["))
+	_ = conn.Close()
 }
 
 func newTestClient(t *testing.T, serverURL string, pageSize int64) FieldSelectorService {
@@ -1138,55 +1603,4 @@ func TestInstrumentedRateLimiter(t *testing.T) {
 			assert.Equal(t, float64(0), testutil.ToFloat64(counter))
 		})
 	})
-}
-
-// Benchmark tests for streaming JSON parser
-
-func BenchmarkParseSettingList(b *testing.B) {
-	jsonData := generateSettingListJSON(4000, 100)
-	jsonBytes := []byte(jsonData)
-
-	b.ResetTimer()
-	b.ReportAllocs()
-
-	for b.Loop() {
-		reader := bytes.NewReader(jsonBytes)
-		_, _, _ = parseSettingList(context.Background(), reader)
-	}
-}
-
-func BenchmarkParseSettingList_SinglePage(b *testing.B) {
-	jsonData := generateSettingListJSON(500, 50)
-	jsonBytes := []byte(jsonData)
-
-	b.ResetTimer()
-	b.ReportAllocs()
-	for b.Loop() {
-		reader := bytes.NewReader(jsonBytes)
-		_, _, _ = parseSettingList(context.Background(), reader)
-	}
-}
-
-// generateSettingListJSON generates a K8s-style SettingList JSON response for benchmarks
-func generateSettingListJSON(totalSettings, numSections int) string {
-	var sb strings.Builder
-	sb.WriteString(`{"apiVersion":"setting.grafana.app/v1","kind":"SettingList","metadata":{"continue":""},"items":[`)
-
-	settingsPerSection := totalSettings / numSections
-	first := true
-	for section := range numSections {
-		for key := range settingsPerSection {
-			if !first {
-				sb.WriteString(",")
-			}
-			first = false
-			sb.WriteString(fmt.Sprintf(
-				`{"apiVersion":"setting.grafana.app/v1","kind":"Setting","metadata":{"name":"section-%03d--key-%03d","namespace":"bench-ns","labels":{"section":"section-%03d","key":"key-%03d"}},"spec":{"section":"section-%03d","key":"key-%03d","value":"value-for-section-%d-key-%d"}}`,
-				section, key, section, key, section, key, section, key,
-			))
-		}
-	}
-
-	sb.WriteString(`]}`)
-	return sb.String()
 }

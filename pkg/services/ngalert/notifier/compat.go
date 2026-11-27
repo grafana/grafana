@@ -208,8 +208,8 @@ func PostableGrafanaReceiversToAPI(in []*v1.PostableGrafanaReceiver) []*definiti
 	return out
 }
 
-// ExtraConfigsToAPI converts the domain extra configurations into their API shape. ManagedBy is
-// left empty; callers set it.
+// ExtraConfigsToAPI converts the domain extra configurations into their API shape. ManagedBy is the
+// stored owner.
 func ExtraConfigsToAPI(in []v1.ExtraConfiguration) []apimodels.ExtraConfiguration {
 	if in == nil {
 		return nil
@@ -220,6 +220,7 @@ func ExtraConfigsToAPI(in []v1.ExtraConfiguration) []apimodels.ExtraConfiguratio
 			Identifier:         cfg.Identifier,
 			TemplateFiles:      maps.Clone(cfg.TemplateFiles),
 			AlertmanagerConfig: cfg.AlertmanagerConfig,
+			ManagedBy:          cfg.ManagedBy,
 		}
 	}
 	return out

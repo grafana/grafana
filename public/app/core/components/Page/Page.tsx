@@ -6,6 +6,7 @@ import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
+import { usePageAreaEndsAboveDock } from '../AppChrome/PageAreaEnd';
 import NativeScrollbar from '../NativeScrollbar';
 
 import { PageContents } from './PageContents';
@@ -34,7 +35,8 @@ export const Page: PageType = ({
   ...otherProps
 }) => {
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
-  const styles = useStyles2(getStyles, visualRefreshEnabled);
+  const endsAboveDock = usePageAreaEndsAboveDock();
+  const styles = useStyles2(getStyles, visualRefreshEnabled, endsAboveDock);
   const navModel = usePageNav(navId, oldNavProp);
   const { chrome } = useGrafana();
 
@@ -64,6 +66,7 @@ export const Page: PageType = ({
         resolvedBg === 'gradient' && styles.wrapperGradient,
         className
       )}
+      data-page-card=""
       {...otherProps}
     >
       {(layout === PageLayoutType.Standard || layout === PageLayoutType.Home) && (
@@ -106,7 +109,7 @@ export const Page: PageType = ({
 
 Page.Contents = PageContents;
 
-const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
+const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean, endsAboveDock: boolean) => {
   return {
     wrapper: css(
       {
@@ -121,7 +124,14 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
         borderRadius: theme.shape.radius.lg,
         margin: theme.spacing(0, 0.5, 0.5, 0.5),
         border: `1px solid ${theme.colors.border.weak}`,
-      }
+      },
+      // Above a docked sidebar the page area ends inside the window. The page scrolls inside its card, so the card's
+      // bottom edge and its gap stay in view.
+      visualRefreshEnabled &&
+        endsAboveDock && {
+          minHeight: 0,
+          overflow: 'auto',
+        }
     ),
     wrapperPrimary: css({
       label: 'page-wrapper-primary',

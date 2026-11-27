@@ -278,6 +278,22 @@ func SetLoadedDimensionsToHysteresisCommand(query map[string]any, fingerprints F
 	return nil
 }
 
+// IsThresholdExpression reports whether query describes a threshold command.
+func IsThresholdExpression(query map[string]any) bool {
+	t, err := GetExpressionCommandType(query)
+	return err == nil && t == TypeThreshold
+}
+
+// ThresholdReferenceVar returns the RefID of the query a threshold command reads from (its "expression"
+// field), and whether query described a threshold command with that field set.
+func ThresholdReferenceVar(query map[string]any) (string, bool) {
+	if !IsThresholdExpression(query) {
+		return "", false
+	}
+	v, ok := query["expression"].(string)
+	return v, ok
+}
+
 func getConditionForHysteresisCommand(query map[string]any) (map[string]any, error) {
 	t, err := GetExpressionCommandType(query)
 	if err != nil {

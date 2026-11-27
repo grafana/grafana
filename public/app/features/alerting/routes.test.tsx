@@ -1,16 +1,23 @@
-import { config } from '@grafana/runtime';
+import { type ComponentType } from 'react';
+import { render, waitFor } from 'test/test-utils';
+
+import { OrgRole } from '@grafana/data';
+import { config, locationService } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { getAlertingRoutes } from './routes';
+import { grantUserRole } from './unified/mocks';
 
 describe('alerting route guards', () => {
   const previousPermissions = contextSrv.user.permissions;
+  const previousOrgRole = contextSrv.user.orgRole;
 
   afterEach(() => {
     contextSrv.user.permissions = previousPermissions;
+    contextSrv.user.orgRole = previousOrgRole;
   });
 
   function getRouteRolesGuard(path: string) {
@@ -69,41 +76,62 @@ describe('alerting route guards', () => {
   });
 
   describe('Import to Grafana Alerting route', () => {
-    const importToGmaPath = '/alerting/import-to-gma';
-
-    it('allows users holding both convert permissions', () => {
+    // The wizard lives on the admin-only Settings > Import tab, and the old URL redirects there.
+    it.each(['/alerting/import-to-gma', '/alerting/admin/import'])('is admin-only: %s', (path) => {
       contextSrv.user.permissions = {
         [AccessControlAction.AlertingRuleCreate]: true,
         [AccessControlAction.AlertingProvisioningSetStatus]: true,
       };
 
-      const guard = getRouteRolesGuard(importToGmaPath);
-      expect(guard()).toEqual([]);
+      const guard = getRouteRolesGuard(path);
+      expect(guard()).toEqual(['Admin']);
+    });
+  });
+
+  describe('Import data source managed rules route', () => {
+    const path = '/alerting/import-datasource-managed-rules';
+    const importPermissions = {
+      [AccessControlAction.AlertingRuleCreate]: true,
+      [AccessControlAction.AlertingProvisioningSetStatus]: true,
+    };
+
+    afterEach(() => {
+      setTestFlags();
     });
 
-    it('rejects users with only rule-create permission', () => {
-      contextSrv.user.permissions = {
-        [AccessControlAction.AlertingRuleCreate]: true,
-      };
+    it.each([true, false])(
+      'allows users with both import permissions, without the Admin role (wizard on: %s)',
+      (on) => {
+        setTestFlags({ [FlagKeys.AlertingMigrationWizardUI]: on });
+        contextSrv.user.permissions = importPermissions;
 
-      const guard = getRouteRolesGuard(importToGmaPath);
-      expect(guard()).toEqual(['Reject']);
+        expect(getRouteRolesGuard(path)()).toEqual([]);
+      }
+    );
+
+    it('sends admins on to the full wizard in Settings > Import', async () => {
+      setTestFlags({ [FlagKeys.AlertingMigrationWizardUI]: true });
+      grantUserRole(OrgRole.Admin);
+      contextSrv.user.permissions = importPermissions;
+      const Component = getAlertingRoutes().find((r) => r.path === path)!.component as ComponentType;
+
+      render(<Component />);
+
+      await waitFor(() => expect(locationService.getLocation().pathname).toBe('/alerting/admin/import'));
+      expect(locationService.getLocation().search).toBe('?step=rules');
     });
 
-    it('rejects users with only provisioning-set-status permission', () => {
-      contextSrv.user.permissions = {
-        [AccessControlAction.AlertingProvisioningSetStatus]: true,
-      };
+    it.each([
+      ['alert.rules:create', AccessControlAction.AlertingRuleCreate],
+      ['alert.provisioning.status:write', AccessControlAction.AlertingProvisioningSetStatus],
+    ])('rejects users who only have %s, with the wizard on or off', (_, onlyPermission) => {
+      contextSrv.user.permissions = { [onlyPermission]: true };
 
-      const guard = getRouteRolesGuard(importToGmaPath);
-      expect(guard()).toEqual(['Reject']);
-    });
+      setTestFlags({ [FlagKeys.AlertingMigrationWizardUI]: true });
+      expect(getRouteRolesGuard(path)()).toEqual(['Reject']);
 
-    it('rejects users with neither permission', () => {
-      contextSrv.user.permissions = {};
-
-      const guard = getRouteRolesGuard(importToGmaPath);
-      expect(guard()).toEqual(['Reject']);
+      setTestFlags({ [FlagKeys.AlertingMigrationWizardUI]: false });
+      expect(getRouteRolesGuard(path)()).toEqual(['Reject']);
     });
   });
 });
@@ -174,7 +202,9 @@ describe('GMA-only Alert rules route', () => {
     expect(routesOn.map((route) => route.path)).toEqual([
       ...routesOff.map((route) => route.path),
       '/alerting/rules/alert',
+      '/alerting/rules/alert/deleted',
       '/alerting/rules/recording',
+      '/alerting/rules/recording/deleted',
     ]);
   });
 

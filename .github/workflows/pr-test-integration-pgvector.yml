@@ -10,6 +10,8 @@ on:
       - opened
       - synchronize
       - reopened
+      - ready_for_review
+      - converted_to_draft
     paths:
       - Makefile
       - '**/go.mod'
@@ -31,8 +33,9 @@ permissions: {}
 
 jobs:
   pgvector:
-    # Run on `grafana/grafana` pushes, or on pull requests, to prevent double-running on mirrors
-    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
+    # Run on upstream pushes or PRs that are ready for review.
+    if: (github.event_name == 'push' && github.repository == 'grafana/grafana') ||
+      (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
     name: pgvector
     runs-on: ubuntu-x64-large-io
     permissions:

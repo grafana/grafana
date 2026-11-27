@@ -5,12 +5,16 @@ import { getValueFormat, type GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconButton, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { type ClickedItemData } from '../types';
+import { getProfilePercentage } from '../utils';
 
 import { type FlameGraphDataContainer } from './dataTransform';
 
 type Props = {
   data: FlameGraphDataContainer;
   totalTicks: number;
+  // Whole-profile total. Sandwich view rescales bars to the selected function, so `totalTicks` is that
+  // function's value and cannot be used as the denominator for "% of total".
+  totalProfileTicks: number;
   onFocusPillClick: () => void;
   onSandwichPillClick: () => void;
   focusedItem?: ClickedItemData;
@@ -18,7 +22,15 @@ type Props = {
 };
 
 const FlameGraphMetadata = memo(
-  ({ data, focusedItem, totalTicks, sandwichedLabel, onFocusPillClick, onSandwichPillClick }: Props) => {
+  ({
+    data,
+    focusedItem,
+    totalTicks,
+    totalProfileTicks,
+    sandwichedLabel,
+    onFocusPillClick,
+    onSandwichPillClick,
+  }: Props) => {
     const styles = useStyles2(getStyles);
     const parts: ReactNode[] = [];
     const ticksVal = getValueFormat('short')(totalTicks);
@@ -41,15 +53,15 @@ const FlameGraphMetadata = memo(
     );
 
     if (sandwichedLabel) {
+      const percentValue = getProfilePercentage({ value: totalTicks, total: totalProfileTicks });
+
       parts.push(
         <Tooltip key={'sandwich'} content={sandwichedLabel} placement="top">
           <div>
             <Icon size={'sm'} name={'angle-right'} />
             <div className={styles.metadataPill}>
-              <Icon size={'sm'} name={'gf-show-context'} />{' '}
-              <span className={styles.metadataPillName}>
-                {sandwichedLabel.substring(sandwichedLabel.lastIndexOf('/') + 1)}
-              </span>
+              <Icon size={'sm'} name={'gf-show-context'} />
+              &nbsp;{percentValue}% of total
               <IconButton
                 className={styles.pillCloseButton}
                 name={'times'}
@@ -65,7 +77,7 @@ const FlameGraphMetadata = memo(
     }
 
     if (focusedItem) {
-      const percentValue = totalTicks > 0 ? Math.round(10000 * (focusedItem.item.value / totalTicks)) / 100 : 0;
+      const percentValue = getProfilePercentage({ value: focusedItem.item.value, total: totalTicks });
       const iconName = percentValue > 0 ? 'eye' : 'exclamation-circle';
 
       parts.push(
@@ -118,14 +130,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     justifyContent: 'center',
     margin: '8px 0',
-  }),
-  metadataPillName: css({
-    label: 'metadataPillName',
-    maxWidth: '200px',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-    marginLeft: theme.spacing(0.5),
   }),
 });
 

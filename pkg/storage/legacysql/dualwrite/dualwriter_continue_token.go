@@ -4,6 +4,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"strings"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 // parseContinueTokens splits a dualwriter continue token (legacy, unified) if we received one.
@@ -15,10 +17,13 @@ func parseContinueTokens(token string) (string, string, error) {
 	}
 	decodedToken, err := base64.StdEncoding.DecodeString(token)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to decode dualwriter continue token: %w", err)
+		return "", "", apierrors.NewBadRequest(fmt.Sprintf("failed to decode dualwriter continue token: %v", err))
 	}
 	decodedTokens := strings.Split(string(decodedToken), ",")
-	if len(decodedTokens) > 1 {
+	if len(decodedTokens) > 2 || (len(decodedTokens) == 2 && decodedTokens[0] == "" && decodedTokens[1] == "") {
+		return "", "", apierrors.NewBadRequest("invalid dualwriter continue token")
+	}
+	if len(decodedTokens) == 2 {
 		return decodedTokens[0], decodedTokens[1], nil
 	}
 	return token, "", nil

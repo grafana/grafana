@@ -1,12 +1,28 @@
 package setting
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 )
+
+func TestPendingDeletionResourceSettings(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		t.Run(fmt.Sprint(enabled), func(t *testing.T) {
+			cfg := NewCfg()
+			require.False(t, cfg.PendingDeletionResourceEnabled)
+			args := CommandLineArgs{HomePath: "../../"}
+			if enabled {
+				args.Args = []string{"cfg:folder.pending_deletion_resource_enabled=true"}
+			}
+			require.NoError(t, cfg.Load(args))
+			require.Equal(t, enabled, cfg.PendingDeletionResourceEnabled)
+		})
+	}
+}
 
 func TestMaxDeptFolderSettings(t *testing.T) {
 	tests := []struct {

@@ -253,7 +253,6 @@ func TestIntegrationDistributor(t *testing.T) {
 			}},
 		}
 		distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.RebuildIndexes, instanceResponseCount)
-		require.Nil(t, distributorRes.Error)
 
 		// assert all instances got the response by looking at the merged details
 		count := strings.Count(distributorRes.Details, "{instance:")
@@ -496,7 +495,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        claims.RoleAdmin,
 		IsGrafanaAdmin: true, // can do anything
 	}
 	ctx := claims.WithAuthInfo(context.Background(), testUserA)

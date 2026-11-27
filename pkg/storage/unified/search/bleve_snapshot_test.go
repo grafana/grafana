@@ -11,6 +11,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/Masterminds/semver/v3"
@@ -22,11 +23,13 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -764,6 +767,64 @@ func TestBuildIndex_RebuildUsesFreshSnapshot(t *testing.T) {
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDownloadAttempts.WithLabelValues(snapshotPolicySameVersion, snapshotStatusSuccess)))
 }
 
+func TestBuildIndex_RebuildCountsTrashForSnapshotEligibility(t *testing.T) {
+	for _, includeTrash := range []bool{false, true} {
+		t.Run(fmt.Sprintf("trash=%t", includeTrash), func(t *testing.T) {
+			recorder := setupSnapshotSpanRecorder(t)
+			ctx := t.Context()
+			store := newHookableStore(t)
+			key := newTestNsResource()
+			be, metrics := newTestBleveBackend(t, SnapshotOptions{Store: store, MinDocCount: 2, MaxIndexAge: 24 * time.Hour})
+			original, err := be.BuildIndex(ctx, key, 1, "test", indexTestDocs(key, 1, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+			require.NoError(t, err)
+			if includeTrash {
+				require.NoError(t, original.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
+					Action: resource.ActionIndex,
+					Doc: &resource.IndexableDocument{
+						Key:       &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "deleted-doc"},
+						IsDeleted: new(true),
+					},
+				}}}))
+			}
+			live, err := original.DocCount(ctx, "", nil)
+			require.NoError(t, err)
+			require.Equal(t, int64(1), live, "search stats still exclude trash")
+			seedDownloadableSnapshot(t, ctx, store.inner, key, makeULID(t, time.Now()), freshSnapshot(time.Minute))
+
+			recorder.Reset()
+			built := false
+			_, err = be.BuildIndex(ctx, key, -1, "rebuild", func(idx resource.ResourceIndex) (int64, error) {
+				built = true
+				return indexTestDocs(key, 1, 101)(idx)
+			}, nil, true, time.Time{}, time.Hour, resource.BuildIndexOptions{RebuildFrom: original})
+			require.NoError(t, err)
+			require.Equal(t, !includeTrash, built)
+			var attrs []attribute.KeyValue
+			for _, span := range recorder.Ended() {
+				if span.Name() == "search.bleveBackend.BuildIndex" {
+					attrs = span.Attributes()
+					break
+				}
+			}
+			wantCount := int64(1)
+			if includeTrash {
+				wantCount++
+			}
+			require.Subset(t, attrs, []attribute.KeyValue{
+				attribute.Int64("snapshot.min_doc_count", 2),
+				attribute.Bool("snapshot.rebuild_coordination_enabled", includeTrash),
+				attribute.Int64("snapshot.doc_count", wantCount),
+			})
+			downloads := testutil.ToFloat64(metrics.IndexSnapshotDownloadAttempts.WithLabelValues(snapshotPolicySameVersion, snapshotStatusSuccess))
+			if includeTrash {
+				require.Equal(t, 1.0, downloads)
+			} else {
+				require.Zero(t, downloads)
+			}
+		})
+	}
+}
+
 // TestBuildIndex_RebuildFallsBackToBuilder verifies that on the rebuild path
 // when no fresh same-version snapshot is available, BuildIndex runs the
 // builder rather than falling back to the tiered selection.
@@ -796,6 +857,49 @@ func TestBuildIndex_RebuildFallsBackToBuilder(t *testing.T) {
 	assert.Equal(t, int32(1), builderCalled.Load(), "builder should run when no fresh snapshot is available")
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDownloadAttempts.WithLabelValues(snapshotPolicySameVersion, snapshotStatusEmpty)))
 	assert.Zero(t, store.downloadCalls.Load(), "older snapshot must not be downloaded on the rebuild path")
+}
+
+func TestBuildIndex_RebuildChecksLastImportTime(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		importOffset time.Duration
+		wantBuild    bool
+	}{
+		{name: "snapshot built before import", importOffset: time.Minute, wantBuild: true},
+		{name: "snapshot built at import", wantBuild: true},
+		{name: "snapshot built after import", importOffset: -time.Minute},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := newHookableStore(t)
+			ns := newTestNsResource()
+			meta := freshSnapshot(5 * time.Minute)
+			seedDownloadableSnapshot(t, t.Context(), store.inner, ns, makeULID(t, time.Now()), meta)
+			be, _ := newTestBleveBackend(t, SnapshotOptions{
+				Store:       store,
+				MinDocCount: 1,
+				MaxIndexAge: 24 * time.Hour,
+			})
+
+			builderCalled := false
+			idx, err := be.BuildIndex(t.Context(), ns, 10, "rebuild",
+				func(resource.ResourceIndex) (int64, error) {
+					builderCalled = true
+					return 1, nil
+				},
+				nil, true, meta.BuildTime.Add(tc.importOffset), time.Hour, resource.BuildIndexOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, idx)
+			require.Equal(t, tc.wantBuild, builderCalled)
+			if tc.wantBuild {
+				require.Zero(t, store.downloadCalls.Load(), "a recent upload must not make a pre-import build reusable")
+				info, err := idx.BuildInfo()
+				require.NoError(t, err)
+				require.True(t, info.BuildTime.After(meta.BuildTime.Add(tc.importOffset)))
+			} else {
+				require.Positive(t, store.downloadCalls.Load())
+			}
+		})
+	}
 }
 
 // TestBuildIndex_RebuildLeaderUploads verifies that a periodic rebuild leader
@@ -1675,7 +1779,7 @@ func TestBackgroundGlobalIndexBuildAndSnapshotRestore(t *testing.T) {
 					kind.group+"/v1", kind.name, name, name),
 			})
 			require.NoError(t, err)
-			require.Nil(t, rsp.Error)
+			require.Positive(t, rsp.ResourceVersion)
 		}
 	}
 	key := resource.GlobalSearchKey("default")
@@ -1712,8 +1816,8 @@ func TestBackgroundGlobalIndexBuildAndSnapshotRestore(t *testing.T) {
 	// Startup does not build the global index; the first search does, and gets
 	// 503 while it is being built.
 	rsp, err := server.Search(ctx, req)
-	require.NoError(t, err)
-	require.Equal(t, resource.NewServiceUnavailableError("the global search index for this namespace is still being built"), rsp.Error)
+	require.Nil(t, rsp)
+	require.Equal(t, resource.NewServiceUnavailableError("the global search index for this namespace is still being built").String(), resourceutil.ErrorResultFromGRPCDetails(err).String())
 	select {
 	case <-paused.started:
 	case <-ctx.Done():
@@ -1724,7 +1828,7 @@ func TestBackgroundGlobalIndexBuildAndSnapshotRestore(t *testing.T) {
 		t.Helper()
 		require.Eventually(t, func() bool {
 			rsp, err := server.Search(ctx, req)
-			return err == nil && rsp.Error == nil && rsp.TotalHits == 6
+			return err == nil && rsp != nil && rsp.TotalHits == 6
 		}, 5*time.Second, 10*time.Millisecond)
 	}
 	assertSearch(server)
@@ -1930,27 +2034,17 @@ func TestColdStart_WaitedForLeader(t *testing.T) {
 	ct := newColdStartTest(t, store)
 	withSnapshotBuildPollInterval(t, 10*time.Millisecond)
 
-	// Build the snapshot on the test goroutine — the build uses require.*,
-	// which would violate testing.TB rules if called from the helper
-	// goroutine below. The helper goroutine only writes prepared bytes to
-	// the bucket and reports any error back via errCh.
 	snap := buildDownloadableSnapshot(t, ct.ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
-	ctx := t.Context()
+	// The first probe must miss so this exercises the wait loop.
+	store.onLockBuild = sync.OnceFunc(func() {
+		require.NoError(t, snap.publish(t.Context(), store.inner))
+	})
 
-	// While coordinateColdStartBuild is in its wait loop, simulate the
-	// leader publishing the prepared snapshot. The next probe tick should
-	// pick it up.
-	errCh := make(chan error, 1)
-	go func() {
-		time.Sleep(25 * time.Millisecond)
-		errCh <- snap.publish(ctx, store.inner)
-	}()
-
-	role, lock, err := ct.coordinate(context.Background(), time.Time{})
+	role, lock, err := ct.coordinate(t.Context(), time.Time{})
 	require.NoError(t, err)
-	require.NoError(t, <-errCh)
 	assert.Equal(t, "downloaded", role)
 	assert.Nil(t, lock)
+	assert.Equal(t, int32(1), store.lockAcquireCalls.Load())
 	// The waiter must not have taken the lock, so lockReleaseCalls stays at
 	// zero (no Release was invoked because no Acquire ever succeeded).
 	assert.Zero(t, store.lockReleaseCalls.Load(),
@@ -1964,14 +2058,16 @@ func TestColdStart_WaitsUntilCanceled(t *testing.T) {
 	ct := newColdStartTest(t, store)
 	withSnapshotBuildPollInterval(t, 5*time.Millisecond)
 
-	ctx, cancel := context.WithTimeout(t.Context(), 50*time.Millisecond)
-	defer cancel()
-	role, lock, err := ct.coordinate(ctx, time.Time{})
-	require.ErrorIs(t, err, context.DeadlineExceeded)
-	assert.Equal(t, "error", role)
-	assert.Nil(t, lock)
-	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeContextCanceled))
-	assert.GreaterOrEqual(t, store.lockAcquireCalls.Load(), int32(2))
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(t.Context(), 50*time.Millisecond)
+		defer cancel()
+		role, lock, err := ct.coordinate(ctx, time.Time{})
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+		assert.Equal(t, "error", role)
+		assert.Nil(t, lock)
+		assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeContextCanceled))
+		assert.GreaterOrEqual(t, store.lockAcquireCalls.Load(), int32(2))
+	})
 }
 
 func TestColdStart_DefersWhenLeaderHoldsLock(t *testing.T) {
@@ -1993,19 +2089,15 @@ func TestColdStart_AcquiresLockAfterLeaderRelease(t *testing.T) {
 	ct := newColdStartTest(t, store)
 	withSnapshotBuildPollInterval(t, 10*time.Millisecond)
 
-	// Simulate the leader releasing the lock without uploading a snapshot
-	// (e.g. its build failed). The next tryAcquire in the wait loop should
-	// promote us.
-	go func() {
-		time.Sleep(25 * time.Millisecond)
-		store.setLockBuildErr(nil)
-	}()
+	// Release only after the first acquisition sees the held lock.
+	store.onLockBuild = sync.OnceFunc(func() { store.setLockBuildErr(nil) })
 
-	role, lock, err := ct.coordinate(context.Background(), time.Time{})
+	role, lock, err := ct.coordinate(t.Context(), time.Time{})
 	require.NoError(t, err)
 	assert.Equal(t, "leader", role)
 	require.NotNil(t, lock)
 	t.Cleanup(func() { _ = lock.Release() })
+	assert.Equal(t, int32(2), store.lockAcquireCalls.Load())
 	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeAcquiredLock))
 }
 

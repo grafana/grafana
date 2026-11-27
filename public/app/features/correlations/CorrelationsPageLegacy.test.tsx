@@ -16,7 +16,7 @@ import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 
-import { mockDataSource } from '../alerting/unified/mocks';
+import { mockDataSource } from '../alerting/unified/testSetup/mockDataSource';
 
 import { CorrelationsPageLegacy } from './CorrelationsPageWrapper';
 import {

@@ -243,6 +243,11 @@
         }
       [[end]]
 
+      [[if .LiveDisabled ]]
+        window.grafanaBootData.settings.liveEnabled = false;
+      [[end]]
+
+
     </script>
 
     <script nonce="[[.Nonce]]">

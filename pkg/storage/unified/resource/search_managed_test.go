@@ -42,7 +42,6 @@ func TestListManagedObjectsUsesDiscovery(t *testing.T) {
 
 	rsp, err := server.ListManagedObjects(t.Context(), &resourcepb.ListManagedObjectsRequest{Namespace: ns})
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	require.Len(t, rsp.Items, 2)
 
 	require.Zero(t, storage.statsCalls.Load(), "GetResourceStats must not be called")
@@ -67,7 +66,6 @@ func TestCountManagedObjectsUsesDiscovery(t *testing.T) {
 
 	rsp, err := server.CountManagedObjects(t.Context(), &resourcepb.CountManagedObjectsRequest{Namespace: ns})
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	require.Len(t, rsp.Items, 1)
 	require.Equal(t, int64(4), rsp.Items[0].Count)
 
@@ -82,18 +80,85 @@ func TestManagedObjectsRequireNamespace(t *testing.T) {
 	server := newDiscoveryTestSearchServer(t, storage, &mockSearchBackend{})
 
 	t.Run("ListManagedObjects", func(t *testing.T) {
-		rsp, err := server.ListManagedObjects(t.Context(), &resourcepb.ListManagedObjectsRequest{})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+		_, err := server.ListManagedObjects(t.Context(), &resourcepb.ListManagedObjectsRequest{})
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusBadRequest), rspErr.Code)
 	})
 
 	t.Run("CountManagedObjects", func(t *testing.T) {
-		rsp, err := server.CountManagedObjects(t.Context(), &resourcepb.CountManagedObjectsRequest{})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+		_, err := server.CountManagedObjects(t.Context(), &resourcepb.CountManagedObjectsRequest{})
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusBadRequest), rspErr.Code)
 	})
 
 	require.Zero(t, storage.listStoredCalls.Load(), "discovery must not run without a namespace")
+}
+
+func TestCountManagedObjectsFiltersByKindAndId(t *testing.T) {
+	const ns = "ns"
+	gr := NamespacedResource{Namespace: ns, Group: "group", Resource: "dashboards"}
+
+	// A manager identity is only unique inside its kind, so the same name can appear
+	// under two kinds at once.
+	counts := []*resourcepb.CountManagedObjectsResponse_ResourceCount{
+		{Kind: "file-provisioning", Id: "bootstrap", Count: 1},
+		{Kind: "repo", Id: "bootstrap", Count: 4},
+		{Kind: "repo", Id: "team-dashboards", Count: 7},
+	}
+
+	tests := []struct {
+		name string
+		kind string
+		id   string
+		want []*resourcepb.CountManagedObjectsResponse_ResourceCount
+	}{
+		{
+			name: "no filter returns everything",
+			want: counts,
+		},
+		{
+			name: "kind only",
+			kind: "repo",
+			want: []*resourcepb.CountManagedObjectsResponse_ResourceCount{counts[1], counts[2]},
+		},
+		{
+			name: "id only matches every kind",
+			id:   "bootstrap",
+			want: []*resourcepb.CountManagedObjectsResponse_ResourceCount{counts[0], counts[1]},
+		},
+		{
+			name: "kind and id",
+			kind: "repo",
+			id:   "bootstrap",
+			want: []*resourcepb.CountManagedObjectsResponse_ResourceCount{counts[1]},
+		},
+		{
+			name: "no match",
+			kind: "terraform",
+			id:   "bootstrap",
+			want: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			search := &mockSearchBackend{
+				cache: map[NamespacedResource]ResourceIndex{
+					gr: &MockResourceIndex{managedCounts: counts},
+				},
+			}
+			storage := &mockStorageBackend{
+				resourceStats: []ResourceStats{{NamespacedResource: gr, Count: 5}},
+			}
+			server := newDiscoveryTestSearchServer(t, storage, search)
+
+			rsp, err := server.CountManagedObjects(t.Context(), &resourcepb.CountManagedObjectsRequest{
+				Namespace: ns,
+				Kind:      tt.kind,
+				Id:        tt.id,
+			})
+			require.NoError(t, err)
+			require.Equal(t, tt.want, rsp.Items)
+		})
+	}
 }

@@ -3,7 +3,7 @@ import { screen } from '@testing-library/react';
 import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../constants';
-import { renderWithQueryEditorProvider } from '../testUtils';
+import { makeQueryActionTarget, renderWithQueryEditorProvider } from '../testUtils';
 
 import { SaveButton } from './SaveButton';
 
@@ -38,7 +38,7 @@ describe('SaveButton', () => {
   });
 
   it('renders the saved-query buttons and exposes a multi-query select callback', () => {
-    renderWithQueryEditorProvider(<SaveButton />, {
+    renderWithQueryEditorProvider(<SaveButton target={makeQueryActionTarget(selectedQuery)} />, {
       selectedQuery,
       uiStateOverrides: { cardType: QueryEditorType.Query },
     });
@@ -53,7 +53,7 @@ describe('SaveButton', () => {
     const runQueries = jest.fn();
     const addQuery = jest.fn().mockReturnValueOnce('B').mockReturnValueOnce('C');
 
-    renderWithQueryEditorProvider(<SaveButton />, {
+    renderWithQueryEditorProvider(<SaveButton target={makeQueryActionTarget(selectedQuery)} />, {
       selectedQuery,
       uiStateOverrides: { cardType: QueryEditorType.Query, setSelectedQuery },
       actionsOverrides: { updateSelectedQuery, addQuery, runQueries },
@@ -81,7 +81,7 @@ describe('SaveButton', () => {
     const addQuery = jest.fn();
     const runQueries = jest.fn();
 
-    renderWithQueryEditorProvider(<SaveButton />, {
+    renderWithQueryEditorProvider(<SaveButton target={makeQueryActionTarget(selectedQuery)} />, {
       selectedQuery,
       uiStateOverrides: { cardType: QueryEditorType.Query },
       actionsOverrides: { updateSelectedQuery, addQuery, runQueries },
@@ -94,13 +94,31 @@ describe('SaveButton', () => {
     expect(runQueries).not.toHaveBeenCalled();
   });
 
+  it('replaces the target query rather than the selected one', () => {
+    const updateSelectedQuery = jest.fn();
+    const setSelectedQuery = jest.fn();
+    const target: DataQuery = { refId: 'B', datasource: { uid: 'prom', type: 'prometheus' } };
+
+    renderWithQueryEditorProvider(<SaveButton target={makeQueryActionTarget(target)} />, {
+      selectedQuery,
+      uiStateOverrides: { cardType: QueryEditorType.Query, setSelectedQuery },
+      actionsOverrides: { updateSelectedQuery },
+    });
+
+    const fromLibrary: DataQuery = { refId: 'X', datasource: { uid: 'prom', type: 'prometheus' } };
+    capturedOnSelectQuery!(fromLibrary);
+
+    expect(updateSelectedQuery).toHaveBeenCalledWith({ ...fromLibrary, refId: 'B' }, 'B');
+    expect(setSelectedQuery).toHaveBeenCalledWith({ ...fromLibrary, refId: 'B' });
+  });
+
   it('still replaces a single query in place via the single-query callback', () => {
     const updateSelectedQuery = jest.fn();
     const setSelectedQuery = jest.fn();
     const runQueries = jest.fn();
     const addQuery = jest.fn();
 
-    renderWithQueryEditorProvider(<SaveButton />, {
+    renderWithQueryEditorProvider(<SaveButton target={makeQueryActionTarget(selectedQuery)} />, {
       selectedQuery,
       uiStateOverrides: { cardType: QueryEditorType.Query, setSelectedQuery },
       actionsOverrides: { updateSelectedQuery, addQuery, runQueries },

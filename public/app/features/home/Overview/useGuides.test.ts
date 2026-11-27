@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from 'test/test-utils';
+import { renderHook, waitFor } from '@testing-library/react';
 
 import type { PluginMeta } from '@grafana/data';
 import { getPluginSettings, isAppPluginInstalled } from '@grafana/runtime';

@@ -1,11 +1,11 @@
 // Code based on Material UI
 // The MIT License (MIT)
 // Copyright (c) 2014 Call-Em-All
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 /** @internal */
 export const ThemeSpacingOptionsSchema = z.object({
-  gridSize: z.int().positive().optional(),
+  gridSize: z.optional(z.int().check(z.positive())),
 });
 
 /** @internal */

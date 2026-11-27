@@ -1,92 +1,33 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useSyncExternalStore } from 'react';
 
-import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
-import { type IconName, locationUtil } from '@grafana/data';
-import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
-import { setStarred, setStarredItems, type StarredNavItem } from 'app/core/reducers/navBarTree';
-import { contextSrv } from 'app/core/services/context_srv';
-import { getFolderURL, starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { getIconForKind } from 'app/features/search/service/utils';
-import { dispatch } from 'app/store/store';
+import { useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
+import { subscribeToAppKinds } from 'app/core/kinds/coreKinds';
+import { type DashboardQueryResult, type SearchRow } from 'app/features/search/service/types';
+import { useDispatch } from 'app/types/store';
 
-import { findStarredNames, userStarsFieldSelector } from './utils';
-
-type StarItemArgs = {
-  id: string;
-  /** Title of the item - this is displayed in the nav */
-  title: string;
-};
-
-// Positive sortWeight pushes starred folders below dashboards in the nav; dashboards carry none
-const STARRED_FOLDER_SORT_WEIGHT = 1;
-
-/** Nav Starred entry (url + icon + sort rank) for a starred item, or undefined when this kind isn't shown in the nav. */
-function starredNavEntry(
-  group: string,
-  kind: string,
-  id: string
-): { url: string; icon?: IconName; sortWeight?: number } | undefined {
-  const foldersEnabled = starredFoldersEnabled();
-  if (group === DASHBOARD_API_GROUP && kind === 'Dashboard') {
-    // Icon only when folders can be starred too — that's when kinds need distinguishing
-    return {
-      url: locationUtil.assureBaseUrl(`/d/${id}`),
-      icon: foldersEnabled ? getIconForKind('dashboard') : undefined,
-    };
-  }
-  if (group === FOLDER_API_GROUP && kind === 'Folder' && foldersEnabled) {
-    return { url: getFolderURL(id), icon: getIconForKind('folder'), sortWeight: STARRED_FOLDER_SORT_WEIGHT };
-  }
-  return undefined;
-}
-
-/** Star or unstar an item */
-export const useStarItem = (group: string, kind: string) => {
-  const [addStar] = useAddStarMutation();
-  const [removeStar] = useRemoveStarMutation();
-
-  return async ({ id, title }: StarItemArgs, newStarredState: boolean) => {
-    const name = `user-${contextSrv.user.uid}`;
-    const mutationArgs = { id, name, group, kind };
-    try {
-      if (newStarredState) {
-        await addStar(mutationArgs).unwrap();
-      } else {
-        await removeStar(mutationArgs).unwrap();
-      }
-    } catch {
-      // Server rejected the change — leave the nav as-is rather than showing state that didn't persist
-      return;
-    }
-
-    const entry = starredNavEntry(group, kind, id);
-    if (entry) {
-      dispatch(
-        setStarred({
-          id,
-          title,
-          url: entry.url,
-          icon: entry.icon,
-          sortWeight: entry.sortWeight,
-          isStarred: newStarredState,
-        })
-      );
-    }
-  };
-};
+import { refetchStarred, useSearchStarredQuery } from './api';
+import { refetchStarredAppKinds, useSearchStarredAppKindsQuery } from './kindSearch';
+import { getStarredAppKinds, STARRED_INDEX_KINDS, type StarredKind } from './kinds';
+import { byTitle, canUseStars, findStarredNames, STAR_SET_SUBSCRIPTION, userStarsFieldSelector } from './utils';
 
 /**
  * Get starred items from the app platform API
  */
-export const useStarredItems = (group: string, kind: string, options?: { skip?: boolean }) => {
-  const skip = options?.skip ?? false;
-  const response = useListStarsQuery(skip ? skipToken : { fieldSelector: userStarsFieldSelector() });
+export const useStarredItems = (group: string, kind: string) => {
+  const canStar = canUseStars();
+  const response = useListStarsQuery(
+    canStar ? { fieldSelector: userStarsFieldSelector() } : skipToken,
+    STAR_SET_SUBSCRIPTION
+  );
 
+  // Keyed on the response data, not the response: a refetch that returns the same stars keeps the same array.
+  const { data, isLoading, isUninitialized } = response;
   const starredItems = useMemo(() => {
-    const { data, isLoading, isUninitialized } = response;
+    // A user without a stars resource has nothing starred
+    if (!canStar) {
+      return [];
+    }
 
     // If query hasn't been initiated yet or is still loading, return undefined to show loading state
     if (isUninitialized || isLoading) {
@@ -99,7 +40,7 @@ export const useStarredItems = (group: string, kind: string, options?: { skip?: 
     }
 
     return findStarredNames(data, group, kind);
-  }, [response, group, kind]);
+  }, [canStar, data, isLoading, isUninitialized, group, kind]);
 
   return {
     ...response,
@@ -109,105 +50,96 @@ export const useStarredItems = (group: string, kind: string, options?: { skip?: 
   };
 };
 
-// Matches the backend cap on starred nav children in bootData (buildStarredItemsNavLinks)
-const STARRED_NAV_CAP = 50;
+/** The settled rows of a user without a stars resource; one array, so views keyed on the rows keep their memos */
+const NO_STARRED_ROWS: DashboardQueryResult[] = [];
 
 /**
- * Sync starred dashboards into the nav tree on mount and when the star set changes.
- * Replaces whatever the backend shipped in bootData (which is empty in dual-writer mode 5).
+ * The star set as the argument of a starred search: the starred names of each of `kinds` that has any, by search
+ * kind. Names are sorted, so the argument is the set and not the order the API listed it in. Undefined until the
+ * set is read, which `skip` and a user without a stars resource never do.
  */
-export const useSyncStarredItemsInNav = () => {
-  const foldersEnabled = starredFoldersEnabled();
-  const {
-    data: dashboardUids,
-    isLoading: dashboardsLoading,
-    isError: dashboardsError,
-  } = useStarredItems(DASHBOARD_API_GROUP, 'Dashboard');
-  const {
-    data: folderUids,
-    isLoading: folderLoadingRaw,
-    isError: folderError,
-  } = useStarredItems(FOLDER_API_GROUP, 'Folder', { skip: !foldersEnabled });
-
-  // A skipped useStarredItems reports isLoading:true indefinitely, so only honor
-  // the folder query's loading/error when the feature is actually on.
-  const folderLoading = foldersEnabled ? folderLoadingRaw : false;
-  const isLoading = dashboardsLoading || folderLoading;
-  const isError = dashboardsError || (foldersEnabled && folderError);
-
-  // Initialized from the stars query so a remount with a warm RTK cache doesn't
-  // flash a loading state — the nav tree is already correct from the prior sync
-  const [hasSynced, setHasSynced] = useState(!isLoading);
-  const [searchFailed, setSearchFailed] = useState(false);
-
-  // Stable identities so the effect doesn't re-fire when an array ref changes but content is identical
-  const dashboardKey = useMemo(() => dashboardUids && [...dashboardUids].sort().join(','), [dashboardUids]);
-  const folderKey = useMemo(
-    () => (foldersEnabled ? folderUids && [...folderUids].sort().join(',') : ''),
-    [folderUids, foldersEnabled]
+const useStarredNames = (kinds: readonly StarredKind[], skip = false) => {
+  const stars = useListStarsQuery(
+    skip || !canUseStars() ? skipToken : { fieldSelector: userStarsFieldSelector() },
+    STAR_SET_SUBSCRIPTION
   );
+  const names = useMemo(
+    () =>
+      stars.data &&
+      kinds.flatMap(({ group, kind, searchKind }) => {
+        const starred = [...findStarredNames(stars.data, group, kind)].sort();
+        return starred.length > 0 ? [{ kind: searchKind, names: starred }] : [];
+      }),
+    [stars.data, kinds]
+  );
+  return { stars, names };
+};
 
-  useEffect(() => {
-    if (isLoading || dashboardKey === undefined || folderKey === undefined) {
-      return;
+/**
+ * The user's starred dashboards and folders, as search rows that follow the star set. The set is RTK
+ * cache every star toggle invalidates and the search is keyed by it, so a toggle anywhere re-searches while the
+ * previous rows stay up. Every caller shares one cache entry per star set; a view cuts the rows it shows after
+ * sorting them. `skip` leaves both requests unmade for a view that does not render stars, and a user without a
+ * stars resource never makes them. The star set is read and its rows searched again when the window regains focus:
+ * a star, rename or delete made in another tab, or by someone else, is reported to no one here.
+ * `refetchOnMountOrArgChange` searches again on each mount as well. `refetch` re-runs both requests; it is stable,
+ * so a view can call it from an effect on its own refresh schedule.
+ */
+export const useStarredDashboardsAndFolders = ({
+  skip,
+  refetchOnMountOrArgChange,
+}: { skip?: boolean; refetchOnMountOrArgChange?: boolean } = {}) => {
+  const canStar = canUseStars();
+  const { stars, names } = useStarredNames(STARRED_INDEX_KINDS, skip);
+  const search = useSearchStarredQuery(names ?? skipToken, { refetchOnMountOrArgChange, refetchOnFocus: true });
+  const dispatch = useDispatch();
+  const refetch = useCallback(() => dispatch(refetchStarred()), [dispatch]);
+
+  return {
+    // A user without a stars resource has nothing starred: settled and empty, not waiting on a request never made
+    rows: !skip && !canStar ? NO_STARRED_ROWS : search.data,
+    // Until the first rows land; a changed star set keeps the previous rows up while it loads.
+    loading: stars.isLoading || search.isLoading,
+    error: stars.isError || search.isError,
+    refetch,
+  };
+};
+
+/**
+ * Every starred object Grafana shows, as one list in title order: the starred dashboards and folders, with the
+ * starred objects of app kinds added. The app rows are searched apart, each kind through its plugin's API; a view
+ * of dashboards or folders alone has `useStarredDashboardsAndFolders`, which asks no plugin. Neither search waits
+ * for the other: `rows` holds what has answered so far. With `error` set the search of the dashboards and folders
+ * failed, so the rows are not all of the stars. A kind whose plugin cannot be searched is left out, not reported
+ * as an error.
+ */
+export const useStarredSearch = ({ refetchOnMountOrArgChange }: { refetchOnMountOrArgChange?: boolean } = {}) => {
+  const indexed = useStarredDashboardsAndFolders({ refetchOnMountOrArgChange });
+  // A plugin adds its kinds when its module loads, which may be after this view rendered, so they are followed
+  const appKinds = useSyncExternalStore(subscribeToAppKinds, getStarredAppKinds);
+  // A set without an app object is searched too, with no request: its empty rows replace those of the set before
+  const { names } = useStarredNames(appKinds);
+  const apps = useSearchStarredAppKindsQuery(names ?? skipToken, { refetchOnMountOrArgChange, refetchOnFocus: true });
+
+  const rows = useMemo((): SearchRow[] | undefined => {
+    if (!apps.data?.length) {
+      return indexed.rows;
     }
+    // Each search answers in its own order; sorted together, every kind reads as one list
+    return [...(indexed.rows ?? []), ...apps.data].sort(byTitle);
+  }, [indexed.rows, apps.data]);
+  const dispatch = useDispatch();
+  const { refetch: refetchIndexed } = indexed;
+  const refetch = useCallback(() => {
+    refetchIndexed();
+    dispatch(refetchStarredAppKinds());
+  }, [refetchIndexed, dispatch]);
 
-    const dashboardNames = dashboardKey === '' ? [] : dashboardKey.split(',');
-    const folderNames = folderKey === '' ? [] : folderKey.split(',');
-    // Dedupe so a uid starred as both kinds can't occupy two cap slots or render twice
-    const names = [...new Set([...dashboardNames, ...folderNames])].sort().slice(0, STARRED_NAV_CAP);
-
-    if (names.length === 0) {
-      dispatch(setStarredItems({ uids: [], items: [] }));
-      setHasSynced(true);
-      setSearchFailed(false);
-      return;
-    }
-
-    const kinds = foldersEnabled ? ['dashboard', 'folder'] : ['dashboard'];
-    // The search matches the uid union against both kinds, so a cross-kind uid collision can
-    // return an item that was never starred as that kind — keep only kind-matching hits.
-    const starredUidsByKind: Record<string, Set<string> | undefined> = {
-      dashboard: new Set(dashboardNames),
-      folder: new Set(folderNames),
-    };
-    let cancelled = false;
-
-    getGrafanaSearcher()
-      .search({ name: names, kind: kinds })
-      .then((response) => {
-        if (cancelled) {
-          return;
-        }
-        const items: StarredNavItem[] = [];
-        for (let i = 0; i < response.view.length; i++) {
-          const row = response.view.get(i);
-          if (!starredUidsByKind[row.kind]?.has(row.uid)) {
-            continue;
-          }
-          items.push({
-            id: row.uid,
-            title: row.name,
-            url: row.url,
-            icon: foldersEnabled ? getIconForKind(row.kind) : undefined,
-            sortWeight: row.kind === 'folder' ? STARRED_FOLDER_SORT_WEIGHT : undefined,
-          });
-        }
-        dispatch(setStarredItems({ uids: names, items }));
-        setHasSynced(true);
-        setSearchFailed(false);
-      })
-      .catch((err) => {
-        console.error('Failed to sync starred items to nav', err);
-        // Resolve the loading state rather than showing it forever
-        setHasSynced(true);
-        setSearchFailed(true);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [dashboardKey, folderKey, isLoading, foldersEnabled]);
-
-  return { isLoading: isLoading || !hasSynced, isError: isError || searchFailed };
+  return {
+    rows,
+    // Until there is a row to show or both searches have answered
+    loading: !rows?.length && (indexed.loading || apps.isLoading),
+    error: indexed.error,
+    refetch,
+  };
 };

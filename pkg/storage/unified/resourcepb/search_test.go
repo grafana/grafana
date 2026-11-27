@@ -3,10 +3,94 @@ package resourcepb
 import (
 	"testing"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/anypb"
 )
+
+func TestCallLevelErrorFieldsRetired(t *testing.T) {
+	for _, tc := range []struct {
+		message proto.Message
+		number  protoreflect.FieldNumber
+	}{
+		{&PutBlobResponse{}, 1},
+		{&GetBlobResponse{}, 1},
+		{&CreateResponse{}, 1},
+		{&UpdateResponse{}, 1},
+		{&DeleteResponse{}, 1},
+		{&ReadResponse{}, 1},
+		{&ListResponse{}, 5},
+		{&BulkResponse{}, 1},
+		{&ListManagedObjectsResponse{}, 3},
+		{&CountManagedObjectsResponse{}, 2},
+		{&QuotaUsageResponse{}, 1},
+		{&ResourceStatsResponse{}, 1},
+		{&ResourceSearchResponse{}, 1},
+		{&RebuildIndexesResponse{}, 3},
+		{&VectorSearchResponse{}, 1},
+	} {
+		d := tc.message.ProtoReflect().Descriptor()
+		t.Run(string(d.Name()), func(t *testing.T) {
+			if d.Fields().ByName("error") != nil || d.Fields().ByNumber(tc.number) != nil {
+				t.Fatal("call-level error field must be absent")
+			}
+			if !d.ReservedNames().Has("error") || !d.ReservedRanges().Has(tc.number) {
+				t.Fatal("retired error field name and number must stay reserved")
+			}
+		})
+	}
+}
+
+func TestErrorStatusDetailsContract(t *testing.T) {
+	want := &ErrorResult{Code: 409, Reason: "Conflict", Message: "write conflict", Details: &ErrorDetails{
+		Name: "dashboard", Group: "dashboard.grafana.app", Kind: "Dashboard", Uid: "uid", RetryAfterSeconds: 3,
+		Causes: []*ErrorCause{{Reason: "Conflict", Message: "stale version", Field: "metadata.resourceVersion"}},
+	}}
+	for _, tc := range []struct {
+		message proto.Message
+		name    string
+	}{
+		{want, "resource.ErrorResult"},
+		{want.Details, "resource.ErrorDetails"},
+		{want.Details.Causes[0], "resource.ErrorCause"},
+	} {
+		packed, err := anypb.New(tc.message)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if packed.TypeUrl != "type.googleapis.com/"+tc.name {
+			t.Fatalf("status detail type identity changed: %s", packed.TypeUrl)
+		}
+		decoded, err := packed.UnmarshalNew()
+		if err != nil || !proto.Equal(tc.message, decoded) {
+			t.Fatalf("detail decoding failed: %v", err)
+		}
+	}
+	st, err := status.New(codes.Aborted, "write conflict").WithDetails(want)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wire, err := proto.Marshal(st.Proto())
+	if err != nil {
+		t.Fatal(err)
+	}
+	decoded := st.Proto()
+	proto.Reset(decoded)
+	if err := proto.Unmarshal(wire, decoded); err != nil {
+		t.Fatal(err)
+	}
+	got := status.FromProto(decoded)
+	if got.Code() != codes.Aborted || len(got.Details()) != 1 {
+		t.Fatalf("unexpected decoded status: %v", got)
+	}
+	detail, ok := got.Details()[0].(*ErrorResult)
+	if !ok || !proto.Equal(want, detail) {
+		t.Fatalf("ErrorResult status details did not round-trip: %v", got.Details())
+	}
+}
 
 func TestSearchResultContract(t *testing.T) {
 	request := (&ResourceSearchRequest{}).ProtoReflect().Descriptor()

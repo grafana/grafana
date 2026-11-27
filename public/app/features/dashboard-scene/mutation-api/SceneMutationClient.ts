@@ -11,7 +11,7 @@
  * why no command carries a "is this the right kind of document" permission check.
  */
 
-import type * as z from 'zod';
+import type * as z from 'zod/mini';
 
 import type { LazyMutationCommand, MutationCommand, MutationContext } from './commands/types';
 import type { MutationClient, MutationRequest, MutationResult } from './types';
@@ -27,7 +27,7 @@ interface CommandRegistration<TScene> {
   handler: MutationHandler<TScene>;
   canExecute: (scene: TScene) => { allowed: true } | { allowed: false; error: string };
   readOnly: boolean;
-  payloadSchema: z.ZodType;
+  payloadSchema: z.ZodMiniType;
 }
 
 export class SceneMutationClient<TScene extends MutationTargetScene> implements MutationClient {
@@ -156,7 +156,7 @@ function createCommandRegistration<TScene>(cmd: MutationCommand<any, TScene>): C
 
 /** Flattens Zod issues into `<path>: <message>`, the shape a caller can act on and an agent can correct from. */
 function validatePayload(
-  schema: z.ZodType,
+  schema: z.ZodMiniType,
   payload: unknown
 ): { success: true; data: unknown } | { success: false; error: string } {
   const result = schema.safeParse(payload);

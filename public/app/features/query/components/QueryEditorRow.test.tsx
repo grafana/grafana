@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { type PropsWithChildren } from 'react';
+import { createRef, type PropsWithChildren } from 'react';
 
 import {
   CoreApp,
@@ -13,7 +13,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { type InternalQueryEditorInsertionPropsV1 } from 'app/features/explore/SignalExplorer/internalInsertionContract';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
@@ -539,6 +539,48 @@ describe('QueryEditorRow', () => {
       expect(onScrollIntoView).not.toHaveBeenCalled();
     });
 
+    it('reports back when the row unmounts mid-pin, so the owner flag is cleared', async () => {
+      const onScrollIntoView = jest.fn();
+      const { unmount } = render(
+        <QueryEditorRow {...props(data)} scrollIntoView onScrollIntoView={onScrollIntoView} />
+      );
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+      expect(onScrollIntoView).not.toHaveBeenCalled();
+
+      // Switching data pane tabs unmounts the row while it is still pinned.
+      unmount();
+
+      expect(onScrollIntoView).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not report again on unmount once the pin has finished', async () => {
+      const onScrollIntoView = jest.fn();
+      const { unmount } = render(
+        <QueryEditorRow {...props(data)} scrollIntoView onScrollIntoView={onScrollIntoView} />
+      );
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+
+      fireEvent.wheel(window);
+      unmount();
+
+      expect(onScrollIntoView).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not report on unmount after the scroll was retargeted at another row', async () => {
+      const onScrollIntoView = jest.fn();
+      const initialProps = props(data);
+      const { rerender, unmount } = render(
+        <QueryEditorRow {...initialProps} scrollIntoView onScrollIntoView={onScrollIntoView} />
+      );
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+
+      rerender(<QueryEditorRow {...initialProps} scrollIntoView={false} onScrollIntoView={onScrollIntoView} />);
+      unmount();
+
+      // Reporting would clear the owner's new scroll target.
+      expect(onScrollIntoView).not.toHaveBeenCalled();
+    });
+
     it('pins again if the row is retargeted later', async () => {
       const initialProps = props(data);
       const { rerender } = render(<QueryEditorRow {...initialProps} scrollIntoView />);
@@ -893,5 +935,113 @@ describe('QueryEditorRow', () => {
         expect(screen.queryByText('Replace with saved query')).not.toBeInTheDocument();
       });
     });
+  });
+});
+
+describe('QueryEditorRow analytics', () => {
+  const data: PanelData = {
+    state: LoadingState.Done,
+    series: [],
+    timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+  };
+
+  function EditingQueryEditor({ query, onChange }: { query: DataQuery; onChange: (query: DataQuery) => void }) {
+    return (
+      <>
+        <button onClick={() => onChange({ ...query, hide: false, datasource: { uid: 'edited' } })}>Edit query</button>
+        <button onClick={() => onChange({ ...query })}>Echo query</button>
+      </>
+    );
+  }
+
+  function renderRow(overrides: Partial<Props<DataQuery>> = {}) {
+    const ref = createRef<QueryEditorRow<DataQuery>>();
+    const onQueryEdited = jest.fn();
+    const onChange = jest.fn();
+    render(
+      <QueryEditorRow
+        ref={ref}
+        dataSource={mockDS}
+        query={{ refId: 'B' }}
+        queries={[{ refId: 'B' }]}
+        data={data}
+        id="test"
+        index={0}
+        onAddQuery={jest.fn()}
+        onRunQuery={jest.fn()}
+        onChange={onChange}
+        onRemoveQuery={jest.fn()}
+        onReplace={jest.fn()}
+        onQueryEdited={onQueryEdited}
+        range={data.timeRange}
+        {...overrides}
+      />
+    );
+    return { ref, onQueryEdited, onChange };
+  }
+
+  beforeEach(() => {
+    mockReportInteraction.mockClear();
+    mockGet.mockImplementation((..._args: unknown[]) =>
+      Promise.resolve({ ...mockDS, components: { QueryEditor: EditingQueryEditor } })
+    );
+  });
+
+  afterEach(() => {
+    mockGet.mockImplementation((..._args: unknown[]) => Promise.resolve(mockDS));
+  });
+
+  it('reports an edit from the data source query editor', async () => {
+    const { onQueryEdited, onChange } = renderRow();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit query' }));
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onQueryEdited).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not report an editor that sends back the query it was given', async () => {
+    const { onQueryEdited, onChange } = renderRow();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Echo query' }));
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onQueryEdited).not.toHaveBeenCalled();
+  });
+
+  it('does not report hiding a query as an edit', async () => {
+    const { ref, onQueryEdited, onChange } = renderRow();
+    await screen.findByRole('button', { name: 'Edit query' });
+
+    act(() => ref.current!.onHideQuery());
+
+    expect(onChange).toHaveBeenCalledWith({ refId: 'B', hide: true });
+    expect(onQueryEdited).not.toHaveBeenCalled();
+  });
+
+  it('reports a query hidden in the panel editor as a classic editor action', async () => {
+    const { ref } = renderRow();
+    await screen.findByRole('button', { name: 'Edit query' });
+
+    act(() => ref.current!.onHideQuery());
+
+    expect(mockReportInteraction).toHaveBeenCalledWith(
+      'grafana_panel_edit_next_interaction',
+      { action: 'toggle_hide', item_type: 'query', source: 'content_header', editor: 'classic' },
+      undefined
+    );
+  });
+
+  it('keeps the action silent outside the panel editor', async () => {
+    const { ref } = renderRow({ app: CoreApp.Explore });
+    await screen.findByRole('button', { name: 'Edit query' });
+
+    act(() => ref.current!.onHideQuery());
+
+    expect(mockReportInteraction).toHaveBeenCalledWith(
+      'grafana_panel_edit_next_interaction',
+      { action: 'toggle_hide', item_type: 'query', source: 'content_header', editor: 'classic' },
+      { silent: true }
+    );
   });
 });

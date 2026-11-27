@@ -82,10 +82,11 @@ type UpdateUserCommand struct {
 	Login string `json:"login"`
 	Theme string `json:"theme"`
 
-	UserID         int64 `json:"-"`
-	IsDisabled     *bool `json:"-"`
-	EmailVerified  *bool `json:"-"`
-	IsGrafanaAdmin *bool `json:"-"`
+	UserID         int64  `json:"-"`
+	UID            string `json:"-"`
+	IsDisabled     *bool  `json:"-"`
+	EmailVerified  *bool  `json:"-"`
+	IsGrafanaAdmin *bool  `json:"-"`
 	// If password is included it will be validated, hashed and updated for user.
 	Password *Password `json:"-"`
 	// If old password is included it will be validated against users current password.

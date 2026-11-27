@@ -1,4 +1,12 @@
+import { render, screen } from '@testing-library/react';
 import { of } from 'rxjs';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import {
   FieldType,
@@ -19,19 +27,38 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
-import * as libpanels from 'app/features/library-panels/state/api';
+import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { type DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { findVizPanelByKey } from '../utils/findVizPanel';
+import { useIsMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { InspectJsonTab } from './InspectJsonTab';
+
+jest.mock('app/features/library-panels/state/api', () =>
+  jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(jest.requireActual('app/features/library-panels/state/api'), {
+      getLibraryPanel: jest.fn(),
+    })
+);
+
+beforeEach(() => {
+  jest
+    .mocked(getLibraryPanel)
+    .mockReset()
+    .mockImplementation(jest.requireActual('app/features/library-panels/state/api').getLibraryPanel);
+});
 
 standardTransformersRegistry.setInit(getStandardTransformers);
 const panelPlugin: PanelPlugin = new PanelPlugin(() => null);
@@ -69,14 +96,6 @@ jest.mock('@grafana/runtime', () => ({
   getPluginLinkExtensions: jest.fn(() => ({
     extensions: [],
   })),
-  getDataSourceSrv: () => {
-    return {
-      get: jest.fn().mockResolvedValue({
-        getRef: () => ({ uid: 'ds1' }),
-      }),
-      getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
-    };
-  },
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     defaultDatasource: 'ds1',
@@ -89,6 +108,11 @@ jest.mock('@grafana/runtime', () => ({
       },
     },
   },
+}));
+
+jest.mock('../utils/mobileEditDeprecation', () => ({
+  ...jest.requireActual('../utils/mobileEditDeprecation'),
+  useIsMobileEditDeprecated: jest.fn(() => false),
 }));
 
 const runRequestMock = jest.fn().mockReturnValue(
@@ -120,6 +144,21 @@ const runRequestMock = jest.fn().mockReturnValue(
 
 setRunRequest(runRequestMock);
 
+beforeEach(() => {
+  const settings = makeDataSourceSettings('abcdef', 'abcdef', 'abcdef-type', { isDefault: true });
+  seedDataSources([{ settings, api: new MockDataSourceApi(settings) }], { legacySrv: 'mock' });
+});
+
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
+
 describe('InspectJsonTab', () => {
   it('Can show panel json', async () => {
     const { tab } = await buildTestScene();
@@ -135,6 +174,25 @@ describe('InspectJsonTab', () => {
     const obj = JSON.parse(tab.state.jsonText);
     expect(obj.gridPos).toEqual({ x: 0, y: 0, w: 8, h: 10 });
     expect(obj.type).toEqual('table');
+    expect(tab.isEditable()).toBe(false);
+  });
+
+  it('Can show panel json for a library panel in a V2 default grid', async () => {
+    const { tab } = await buildTestSceneWithLibraryPanel('v2');
+
+    const obj = JSON.parse(tab.state.jsonText);
+    expect(obj.kind).toBe('LibraryPanel');
+    expect(obj.spec.libraryPanel).toEqual({ uid: '111', name: 'LibraryPanel A' });
+  });
+
+  it('Can show panel json for a library panel laid out by the V2 auto grid', async () => {
+    const { tab } = await buildTestSceneWithLibraryPanel('v2', 'auto');
+
+    // In the V2 auto grid a library panel sits in an AutoGridItem, but the legacy representation needs a
+    // DashboardGridItem parent, so building the JSON threw instead of showing the panel.
+    const obj = JSON.parse(tab.state.jsonText);
+    expect(obj.kind).toBe('LibraryPanel');
+    expect(obj.spec.libraryPanel).toEqual({ uid: '111', name: 'LibraryPanel A' });
     expect(tab.isEditable()).toBe(false);
   });
 
@@ -187,6 +245,48 @@ describe('InspectJsonTab', () => {
     expect((panel2.parent as DashboardGridItem).state.width!).toBe(3);
 
     expect(tab.state.onClose).toHaveBeenCalled();
+  });
+
+  it('does not update the panel when entering edit mode is blocked', async () => {
+    const { tab, panel, scene } = await buildTestScene();
+    jest.spyOn(scene, 'onEnterEditMode').mockReturnValue(false);
+    scene.setState({ isEditing: false });
+
+    tab.onJsonTextChange(`{
+      "id": 12,
+      "type": "table",
+      "title": "New title",
+      "gridPos": { "x": 1, "y": 2, "w": 3, "h": 4 },
+      "options": {},
+      "fieldConfig": {},
+      "transformations": [],
+      "transparent": false
+    }`);
+
+    tab.onApplyChange();
+
+    expect(findVizPanelByKey(scene, panel.state.key)!.state.title).not.toBe('New title');
+    expect(tab.state.onClose).not.toHaveBeenCalled();
+  });
+
+  it('disables Apply and warns when edit is deprecated on mobile', async () => {
+    jest.mocked(useIsMobileEditDeprecated).mockReturnValue(true);
+    const { tab } = await buildTestScene();
+
+    render(<tab.Component model={tab} />);
+
+    expect(screen.getByText('Editing is unavailable on small screens')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Apply' })).toBeDisabled();
+  });
+
+  it('enables Apply without a warning when edit is not deprecated', async () => {
+    jest.mocked(useIsMobileEditDeprecated).mockReturnValue(false);
+    const { tab } = await buildTestScene();
+
+    render(<tab.Component model={tab} />);
+
+    expect(screen.queryByText('Editing is unavailable on small screens')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Apply' })).toBeEnabled();
   });
 
   it('Can update gridPos and forces layout re-render', async () => {
@@ -350,7 +450,10 @@ async function buildTestScene() {
   return { scene, tab, panel };
 }
 
-async function buildTestSceneWithLibraryPanel() {
+async function buildTestSceneWithLibraryPanel(
+  serializerVersion: 'v1' | 'v2' = 'v1',
+  layout: 'default' | 'auto' = 'default'
+) {
   const libraryPanel = new VizPanel({
     title: 'Panel A',
     pluginId: 'table',
@@ -385,16 +488,24 @@ async function buildTestSceneWithLibraryPanel() {
     version: 1,
   };
 
-  jest.spyOn(libpanels, 'getLibraryPanel').mockResolvedValue({ ...libraryPanelState, ...panel });
+  jest.mocked(getLibraryPanel).mockResolvedValue({ ...libraryPanelState, ...panel });
 
-  const scene = new DashboardScene({
-    title: 'hello',
-    uid: 'dash-1',
-    meta: {
-      canEdit: true,
+  const scene = new DashboardScene(
+    {
+      title: 'hello',
+      uid: 'dash-1',
+      meta: {
+        canEdit: true,
+      },
+      body:
+        layout === 'auto'
+          ? new AutoGridLayoutManager({
+              layout: new AutoGridLayout({ children: [new AutoGridItem({ body: libraryPanel })] }),
+            })
+          : DefaultGridLayoutManager.fromVizPanels([libraryPanel]),
     },
-    body: DefaultGridLayoutManager.fromVizPanels([libraryPanel]),
-  });
+    serializerVersion
+  );
 
   activateFullSceneTree(scene);
 

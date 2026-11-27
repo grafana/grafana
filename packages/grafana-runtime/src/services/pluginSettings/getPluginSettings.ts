@@ -5,11 +5,18 @@ import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getCachedPromiseWithArgs } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
 import { getPluginMetaFromCache } from '../pluginMeta/plugins';
+import {
+  assertPluginIdFormat,
+  getApiVersion,
+  getCacheKey,
+  getLegacyCacheKey,
+  getNamespace,
+  isAuthError,
+} from '../pluginUtils';
 
 import { logPluginSettingsDebug, logPluginSettingsError } from './logging';
 import { getSettingsMapper } from './mappers/mappers';
 import { type Settings as v0alpha1Settings } from './types';
-import { getApiVersion, getCacheKey, getLegacyCacheKey, getNamespace, isAuthError } from './utils';
 
 export function getLegacySettings(pluginId: string, showErrorAlert?: boolean): Promise<PluginMeta> {
   const options = { showErrorAlert, validatePath: true };
@@ -29,13 +36,17 @@ export function getLegacySettings(pluginId: string, showErrorAlert?: boolean): P
     });
 }
 
-export function getAppPluginSettings(pluginId: string, showErrorAlert?: boolean): Promise<v0alpha1Settings> {
+export function getAppPluginSettings(
+  pluginId: string,
+  showErrorAlert: boolean | undefined,
+  apiVersion: string
+): Promise<v0alpha1Settings> {
   const options = { showErrorAlert, validatePath: true };
   logPluginSettingsDebug('PluginSettings: getting plugin settings', { pluginId });
 
   return getBackendSrv()
     .get<v0alpha1Settings>(
-      `/apis/${pluginId}/${getApiVersion()}/namespaces/${getNamespace()}/app/instance`,
+      `/apis/${pluginId}/${apiVersion}/namespaces/${getNamespace()}/app/instance`,
       undefined,
       undefined,
       options
@@ -59,6 +70,8 @@ export function getAppPluginSettings(pluginId: string, showErrorAlert?: boolean)
  * @returns The plugin's `PluginMeta`.
  */
 export async function getPluginSettings(pluginId: string, showErrorAlert = false): Promise<PluginMeta> {
+  assertPluginIdFormat(pluginId);
+
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPluginSettings, false)) {
     return getCachedLegacySettings(pluginId, showErrorAlert);
   }
@@ -74,7 +87,7 @@ export async function getPluginSettings(pluginId: string, showErrorAlert = false
     return mapper(meta.spec);
   }
 
-  const settings = await getCachedAppSettings(pluginId, showErrorAlert);
+  const settings = await getCachedAppSettings(pluginId, showErrorAlert, await getApiVersion());
   const mapper = getSettingsMapper();
   return mapper(meta.spec, settings);
 }

@@ -23,8 +23,8 @@ describe('async data source APIs', () => {
     expect(stable[name]).toEqual(expect.any(Function));
   });
 
-  // @grafana/plugin-compat feature-detects these on the host's `@grafana/runtime/unstable` and silently
-  // falls back to the legacy implementation when one is missing, so they must stay until compat drops those hosts.
+  // @grafana/plugin-compat <= 0.7.0 feature-detects these on the host's `@grafana/runtime/unstable` and silently
+  // falls back to the legacy implementation when one is missing, so they must stay for plugins bundling it.
   it.each(graduatedDataSourceApis)('keeps %s on the unstable entrypoint as the same function', (name) => {
     expect(unstable[name]).toBe(stable[name]);
   });

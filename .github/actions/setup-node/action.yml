@@ -1,5 +1,5 @@
 name: Setup Node.js
-description: Sets up a node.js environment with presets for the Grafana repository. Use .github/actions/yarn-install to install and cache dependencies.
+description: Sets up a node.js environment with presets for the Grafana repository. Use .github/actions/install-frontend-deps to install and cache dependencies.
 
 inputs:
   cwd:

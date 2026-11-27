@@ -11,11 +11,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 type githubRepository struct {
@@ -50,7 +50,7 @@ func NewRepository(
 	config *provisioning.Repository,
 	gitRepo git.GitRepository,
 	factory *Factory,
-	token common.RawSecureValue,
+	token resource.RawSecureValue,
 ) (GithubRepository, error) {
 	return newRepository(ctx, config, gitRepo, factory, token, WithCustomServerURL(gitRepo.URL()))
 }
@@ -60,7 +60,7 @@ func newRepository(
 	config *provisioning.Repository,
 	gitRepo git.GitRepository,
 	factory *Factory,
-	token common.RawSecureValue,
+	token resource.RawSecureValue,
 	opts ...ClientOption,
 ) (GithubRepository, error) {
 	owner, repo, err := ParseOwnerRepoGithub(gitRepo.URL())

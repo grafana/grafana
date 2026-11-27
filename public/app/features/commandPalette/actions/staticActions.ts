@@ -10,6 +10,8 @@ import {
   shouldRenderInviteUserButton,
   performInviteUserClick,
 } from 'app/core/components/AppChrome/TopBar/InviteUserButtonUtils';
+import { getSelectableThemes } from 'app/core/components/ThemeSelector/getSelectableThemes';
+import { useNavTree } from 'app/core/navtree/useNavTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { changeTheme } from 'app/core/services/theme';
 import { currentMockApiState, toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
@@ -17,12 +19,12 @@ import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { useIsMobileEditDeprecated } from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/utils/identity';
 import { NOTEBOOK_ENTRY_POINT } from 'app/features/notebook/analytics/types';
 import { notebookNewEditHref } from 'app/features/notebook/urls';
 import { AccessControlAction } from 'app/types/accessControl';
-import { useSelector } from 'app/types/store';
 
 import { type CommandPaletteAction } from '../types';
 import {
@@ -39,10 +41,21 @@ function idForNavItem(navItem: NavModelItem) {
   return 'navModel.' + (navItem.id ?? navItem.url ?? navItem.text ?? navItem.subTitle);
 }
 
-function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = []): CommandPaletteAction[] {
+// list of nav ids that require edit mode. They get excluded from the command palette on mobile.
+const DASHBOARD_CREATION_NAV_IDS = new Set(['dashboards/new']);
+
+function navTreeToActions(
+  navTree: NavModelItem[],
+  parents: NavModelItem[] = [],
+  excludedIds?: Set<string>
+): CommandPaletteAction[] {
   const navActions: CommandPaletteAction[] = [];
 
   for (let navItem of navTree) {
+    if (navItem.id && excludedIds?.has(navItem.id)) {
+      continue;
+    }
+
     // help node needs enriching with the frontend links
     if (navItem.id === 'help') {
       navItem = getEnrichedHelpItem({ ...navItem });
@@ -93,7 +106,7 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
     navActions.push(action);
 
     if (children?.length) {
-      const childActions = navTreeToActions(children, [...parents, navItem]);
+      const childActions = navTreeToActions(children, [...parents, navItem], excludedIds);
       navActions.push(...childActions);
     }
   }
@@ -111,23 +124,25 @@ function getGlobalActions(): CommandPaletteAction[] {
       sectionId: SECTION_PREFERENCES,
       priority: PREFERENCES_PRIORITY,
     },
-    {
-      id: 'preferences/dark-theme',
-      name: t('command-palette.action.dark-theme', 'Dark'),
-      keywords: 'dark theme',
-      perform: () => changeTheme('dark'),
-      parent: 'preferences/theme',
-      priority: PREFERENCES_PRIORITY,
-    },
-    {
-      id: 'preferences/light-theme',
-      name: t('command-palette.action.light-theme', 'Light'),
-      keywords: 'light theme',
-      perform: () => changeTheme('light'),
-      parent: 'preferences/theme',
-      priority: PREFERENCES_PRIORITY,
-    },
   ];
+
+  const themeNames: Record<string, string> = {
+    dark: t('command-palette.action.dark-theme', 'Dark'),
+    light: t('command-palette.action.light-theme', 'Light'),
+    system: t('shared.preferences.theme.system-label', 'System preference'),
+  };
+
+  actions.push(
+    ...getSelectableThemes().map((theme) => ({
+      id: `preferences/${theme.id}-theme`,
+      name: themeNames[theme.id] ?? theme.name,
+      subtitle: theme.isExtra ? t('command-palette.action.experimental', 'Experimental') : undefined,
+      keywords: `${theme.name} theme`,
+      perform: () => changeTheme(theme.id),
+      parent: 'preferences/theme',
+      priority: PREFERENCES_PRIORITY,
+    }))
+  );
 
   if (process.env.NODE_ENV === 'development') {
     // eslint-disable @grafana/i18n/no-untranslated-strings
@@ -162,18 +177,23 @@ function getGlobalActions(): CommandPaletteAction[] {
 }
 
 export function useStaticActions(): CommandPaletteAction[] {
-  const navBarTree = useSelector((state) => state.navBarTree);
+  const navBarTree = useNavTree();
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
   const { queryLibraryEnabled, openDrawer } = useQueryLibraryContext();
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
 
   return useMemo(() => {
-    let navBarActions = navTreeToActions(navBarTree);
+    let navBarActions = navTreeToActions(
+      navBarTree,
+      [],
+      isMobileEditDeprecated ? DASHBOARD_CREATION_NAV_IDS : undefined
+    );
 
     const canCreateDashboard = contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
 
-    if (isTemplateDashboardsAvailable && canCreateDashboard) {
+    if (isTemplateDashboardsAvailable && canCreateDashboard && !isMobileEditDeprecated) {
       const navBarActionsWithoutActions = navBarActions.filter((action) => action.priority !== ACTIONS_PRIORITY);
       const navBarActionsWithActions = navBarActions.filter((action) => action.priority === ACTIONS_PRIORITY);
 
@@ -237,6 +257,7 @@ export function useStaticActions(): CommandPaletteAction[] {
     isAnalyticsFrameworkEnabled,
     isCustomDashboardTemplatesEnabled,
     isTemplateDashboardsAvailable,
+    isMobileEditDeprecated,
     navBarTree,
     queryLibraryEnabled,
     openDrawer,

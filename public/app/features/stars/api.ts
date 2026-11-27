@@ -1,0 +1,124 @@
+import { chunk } from 'lodash';
+
+import { type StarredResourceRef } from '@grafana/runtime/unstable';
+import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { type DashboardQueryResult } from 'app/features/search/service/types';
+import { type StoreState, type ThunkResult } from 'app/types/store';
+
+import { itemStarred } from './analytics/main';
+import { STARRED_INDEX_KINDS } from './kinds';
+import {
+  byTitle,
+  canUseStars,
+  findStarredNames,
+  type StarredNames,
+  userStarsFieldSelector,
+  userStarsName,
+} from './utils';
+
+/** Tag for the starred search rows, invalidated by changes that rewrite rows without changing the star set. */
+const STARRED_SEARCH_TAG = 'StarredSearch';
+
+// Names per search request. The search is a GET that carries the names in its URL, so a large star set goes in
+// several requests rather than one long one.
+const NAMES_PER_REQUEST = 50;
+
+const starsAPI = collectionsAPIv1alpha1.enhanceEndpoints({ addTagTypes: [STARRED_SEARCH_TAG] }).injectEndpoints({
+  endpoints: (build) => ({
+    /**
+     * Starred items as search rows, in title order. The star set is the argument, so a changed set is a new cache
+     * entry: the previous rows stay up as `data` while it loads, and a late answer for an old set can't overwrite
+     * it. RTK holds a slice's tag invalidations while one of its queries is in flight, so a star toggled during
+     * this search shows on its button once the search returns.
+     */
+    searchStarred: build.query<DashboardQueryResult[], StarredNames[]>({
+      providesTags: [STARRED_SEARCH_TAG],
+      // Dropped once no view shows it. A write re-searches only while its object is starred, so the search of
+      // an earlier star set would keep the row as it was, and show it again once the object is starred again
+      keepUnusedDataFor: 0,
+      queryFn: async (starred) => {
+        const uids = [...new Set(starred.flatMap(({ names }) => names))].sort();
+        if (uids.length === 0) {
+          return { data: [] };
+        }
+        const kinds = starred.map(({ kind }) => kind);
+        // A uid is matched against every kind asked for, so a resource of another kind that shares a starred uid
+        // comes back too: leave it room in the limit, drop it after.
+        const starredByKind = new Map(starred.map(({ kind, names }) => [kind, new Set(names)]));
+        try {
+          const searcher = getGrafanaSearcher();
+          const responses = await Promise.all(
+            chunk(uids, NAMES_PER_REQUEST).map((names) =>
+              searcher.search({ name: names, kind: kinds, limit: names.length * kinds.length })
+            )
+          );
+          // Each response is in title order; merged, the rows are sorted again so a star set that takes several
+          // requests reads like one that takes one
+          const rows = responses
+            .flatMap((response) => response.view.toArray())
+            .filter((row) => starredByKind.get(row.kind)?.has(row.uid))
+            .sort(byTitle);
+          return { data: rows };
+        } catch (error) {
+          return { error };
+        }
+      },
+    }),
+  }),
+});
+
+/** The current user's star set as the cache holds it; undefined until it is read. */
+export const selectUserStars = (state: StoreState) =>
+  collectionsAPIv1alpha1.endpoints.listStars.select({ fieldSelector: userStarsFieldSelector() })(state).data;
+
+/**
+ * Stars or unstars an object for the current user, and reports the change to analytics as made from `origin` once
+ * the server accepts it. The server accepts a star the set already holds, and an unstar of one it lacks, so a report
+ * counts an accepted request, not a change to the set. Rejects when the server refuses, and for a user without a
+ * stars resource. The mutation invalidates the `Stars` tag, so every starred view follows the set it reads again.
+ */
+export const setStarred =
+  ({ group, kind, name }: StarredResourceRef, starred: boolean, origin: string): ThunkResult<Promise<void>> =>
+  async (dispatch) => {
+    if (!canUseStars()) {
+      throw new Error('Cannot change stars: the current user has no stars resource');
+    }
+    const { addStar, removeStar } = collectionsAPIv1alpha1.endpoints;
+    const endpoint = starred ? addStar : removeStar;
+    // The route names the starred object `id`; its `name` is the user's stars resource. Untracked: nothing reads
+    // this mutation's state, and a tracked entry stays in the store until it is reset
+    await dispatch(endpoint.initiate({ group, kind, id: name, name: userStarsName() }, { track: false })).unwrap();
+    itemStarred({ group, kind, status: starred ? 'starred' : 'unstarred', origin });
+  };
+
+/**
+ * Re-searches the starred rows. Renames and deletions change a row without changing the star set, so nothing the
+ * star mutations invalidate would refresh it. A write to named items goes through `invalidateStarredSearchFor`
+ * instead; this form is for a folder delete, which cascades to descendants the client never listed.
+ */
+export const invalidateStarredSearch = () => starsAPI.util.invalidateTags([STARRED_SEARCH_TAG]);
+
+/**
+ * Re-searches the starred rows when one of `uids` is starred, as any kind. A save, rename or delete of an unstarred
+ * item changes no row, and most writes are to unstarred items, so the search is spared. Read from the cached star
+ * set: the rows are derived from it, so a star it does not hold has no row to refresh either.
+ */
+export const invalidateStarredSearchFor =
+  (uids: string[]): ThunkResult<void> =>
+  (dispatch, getState) => {
+    const data = selectUserStars(getState());
+    const starredNames = new Set(STARRED_INDEX_KINDS.flatMap(({ group, kind }) => findStarredNames(data, group, kind)));
+    if (uids.some((uid) => starredNames.has(uid))) {
+      dispatch(invalidateStarredSearch());
+    }
+  };
+
+/**
+ * Re-reads the star set and re-searches its rows, for a view that refreshes on its own schedule: stars and renames
+ * made elsewhere show at that rate. Invalidation rather than `refetch`, so it holds whether or not the queries have
+ * started, and every view sharing the cache follows.
+ */
+export const refetchStarred = () => starsAPI.util.invalidateTags(['Stars', STARRED_SEARCH_TAG]);
+
+export const { useSearchStarredQuery } = starsAPI;

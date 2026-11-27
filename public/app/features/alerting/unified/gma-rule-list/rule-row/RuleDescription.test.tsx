@@ -21,16 +21,4 @@ describe('RuleDescription', () => {
     expect(screen.getByText('remote write failed')).toBeInTheDocument();
     expect(screen.queryByText('CPU usage is high')).not.toBeInTheDocument();
   });
-
-  it('shows a tooltip with the full error text', async () => {
-    render(<RuleDescription lastError="remote write failed: connection refused" />);
-
-    expect(await screen.findByLabelText('remote write failed: connection refused')).toBeInTheDocument();
-  });
-
-  it('shows a tooltip with the full summary text', async () => {
-    render(<RuleDescription summary="Alert fires when CPU exceeds threshold" />);
-
-    expect(await screen.findByLabelText('Alert fires when CPU exceeds threshold')).toBeInTheDocument();
-  });
 });

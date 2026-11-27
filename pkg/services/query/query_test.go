@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -749,6 +750,33 @@ func TestQueryDataWithQSDSClient(t *testing.T) {
 	})
 }
 
+func TestQueryDataFromExpressionHeader(t *testing.T) {
+	dsQuery := `{"datasource": {"type": "mysql", "uid": "ds1"}, "refId": "A"}`
+
+	t.Run("panel query without an expression is not marked", func(t *testing.T) {
+		tc := setup(t, false, nil)
+
+		_, err := tc.queryService.QueryData(context.Background(), tc.signedInUser, true, metricRequestWithQueries(t, dsQuery))
+		require.NoError(t, err)
+
+		require.NotNil(t, tc.pluginContext.req)
+		require.Empty(t, tc.pluginContext.req.GetHTTPHeader(HeaderFromExpression))
+	})
+
+	t.Run("expression request without the browser header is marked", func(t *testing.T) {
+		tc := setup(t, false, nil)
+
+		_, err := tc.queryService.QueryData(context.Background(), tc.signedInUser, true, metricRequestWithQueries(t,
+			dsQuery,
+			`{"datasource": {"type": "__expr__", "uid": "__expr__"}, "refId": "B", "type": "math", "expression": "$A + 1"}`,
+		))
+		require.NoError(t, err)
+
+		require.NotNil(t, tc.pluginContext.req)
+		require.Equal(t, "true", tc.pluginContext.req.GetHTTPHeader(HeaderFromExpression))
+	})
+}
+
 func TestQueryToJson(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -879,7 +907,7 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 		pluginContext:          pc,
 		pluginRequestValidator: rv,
 		queryService:           queryService,
-		signedInUser:           &user.SignedInUser{OrgID: 1, Login: "login", Name: "name", Email: "email", OrgRole: identity.RoleAdmin, Namespace: "ns1"},
+		signedInUser:           &user.SignedInUser{OrgID: 1, Login: "login", Name: "name", Email: "email", OrgRole: authlib.RoleAdmin, Namespace: "ns1"},
 	}
 }
 

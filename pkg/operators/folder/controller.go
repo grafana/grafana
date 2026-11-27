@@ -2,33 +2,17 @@ package folder
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"log/slog"
-	"os"
-	"time"
 
-	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana-app-sdk/logging"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/tools/cache"
 
-	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/nats"
-	"github.com/grafana/grafana/pkg/operators/internal/supervision"
-	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/operators/runner"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
-	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
+	"github.com/grafana/grafana/pkg/services/folder/cascadedelete"
 )
-
-// queueGroup is the NATS queue group this controller's subscription joins, so
-// each live notification reaches only one replica.
-const queueGroup = "folder-controller"
 
 var folderGVR = schema.GroupVersionResource{
 	Group:    "folder.grafana.app",
@@ -36,91 +20,83 @@ var folderGVR = schema.GroupVersionResource{
 	Resource: "folders",
 }
 
-// RunFolderController watches Folder objects and logs deletion events.
-// This is a bare skeleton: no workqueue, no retries, no finalizers.
+// dashboardGVR names the group whose server the cascade deletes dashboards on.
+var dashboardGVR = schema.GroupVersionResource{
+	Group:    "dashboard.grafana.app",
+	Version:  "v1",
+	Resource: "dashboards",
+}
+
+// Operator runs the folder cascade-delete controller: it watches Folder objects and, for each
+// terminating folder carrying the cascade finalizer, deletes its contents and releases it.
 //
 // The delta source is NATS-backed when [nats] is enabled — falling back to
 // re-list-only if the live subscription can't open, rather than blocking
 // readiness on it — otherwise a plain apiserver watch, matching the pattern
 // in pkg/registry/apis/provisioning/informer's delta sources.
-func RunFolderController(ctx context.Context, deps server.OperatorDependencies) (runErr error) {
-	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})).With("logger", "folder-controller")
-	logger.Info("starting folder controller")
+var Operator = runner.Operator{
+	Name:        "folder-controller",
+	Description: "Delete the contents of folders being cascade-deleted",
+	Build:       build,
+}
 
-	restClient, err := buildRESTClient(deps.Config)
+func build(rt *runner.Runtime) (*runner.Parts, error) {
+	restClient, err := buildRESTClient(rt.Cfg, "folders_server_url", folderGVR.Group)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	dashboardClient, err := buildRESTClient(rt.Cfg, "dashboards_server_url", dashboardGVR.Group)
+	if err != nil {
+		return nil, err
 	}
 
-	handler := cache.ResourceEventHandlerFuncs{
-		DeleteFunc: func(obj any) {
-			accessor, err := utils.MetaAccessor(obj)
+	folders := dynamic.New(restClient)
+	var controllerOptions []cascadedelete.ControllerOption
+	if rt.Cfg.SectionWithEnvOverrides("operator").Key("pending_deletion_recovery").MustBool(false) {
+		controllerOptions = append(controllerOptions,
+			cascadedelete.WithPendingRecovery(cascadedelete.NewPendingClient(folders)),
+			cascadedelete.WithPendingMetrics(rt.Registerer),
+		)
+	}
+
+	return &runner.Parts{Run: func(ctx context.Context, ready func()) error {
+		searchClient, closeSearchClient, err := buildSearchClient(rt.Cfg, rt.Tracer, rt.Registerer)
+		if err != nil {
+			return err
+		}
+		defer closeSearchClient()
+		controller := cascadedelete.NewDefaultControllerWithOptions(groupRouter{
+			byGroup:  map[string]dynamic.Interface{dashboardGVR.Group: dynamic.New(dashboardClient)},
+			fallback: folders,
+		}, searchClient, controllerOptions)
+		// Run shuts the queue down itself, but only once the workers start; every earlier return needs it too.
+		defer controller.ShutDown()
+		handler := controller.Handler()
+
+		var reg cache.ResourceEventHandlerRegistration
+		if nats.Enabled(rt.Subscriber) {
+			inf := newFolderInformer(rt.Subscriber, keysapi.NewHTTPLister(restClient, folderGVR))
+			reg, err = inf.AddEventHandler(handler)
 			if err != nil {
-				logger.Error("folder delete event: failed to read object", "error", err)
-				return
+				return err
 			}
-			logger.Info("folder deleted",
-				"namespace", accessor.GetNamespace(),
-				"name", accessor.GetName())
-		},
-	}
-
-	subscriber := nats.ProvideSubscriber(nats.ProvideNATSConfig(deps.Config, nil), deps.Registerer)
-
-	var reg cache.ResourceEventHandlerRegistration
-	if nats.Enabled(subscriber) {
-		var stopSubscriber func() error
-		ctx, stopSubscriber = supervision.Watch(ctx, subscriber)
-		defer func() {
-			deps.HealthNotifier.SetNotReady()
-			runErr = errors.Join(runErr, stopSubscriber())
-		}()
-		if err := services.StartAndAwaitRunning(ctx, subscriber); err != nil {
-			if errors.Is(err, context.Canceled) && ctx.Err() != nil {
-				err = context.Cause(ctx)
+			go inf.Run(ctx.Done())
+		} else {
+			factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(folders, cascadedelete.ResyncPeriod, "", nil)
+			reg, err = factory.ForResource(folderGVR).Informer().AddEventHandler(handler)
+			if err != nil {
+				return err
 			}
-			return fmt.Errorf("failed to start NATS subscriber: %w", err)
+			factory.Start(ctx.Done())
 		}
 
-		newObject := func(ns, name string) runtime.Object {
-			return &folderv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
-		}
-		keys := keysapi.NewHTTPLister(restClient, folderGVR)
-		list := func(ctx context.Context) ([]runtime.Object, int64, error) {
-			return listFolderKeys(ctx, keys)
+		if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
+			rt.Logger.Error("failed to sync folder informer cache")
+			return context.Cause(ctx)
 		}
 
-		inf := usinformer.NewInformer(subscriber, folderGVR, "", 10*time.Minute, queueGroup, nil, newObject, list)
-		inf.AllowDegradedStart()
-
-		reg, err = inf.AddEventHandler(handler)
-		if err != nil {
-			return err
-		}
-		go inf.Run(ctx.Done())
-	} else {
-		factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynamic.New(restClient), 10*time.Minute, "", nil)
-		informer := factory.ForResource(folderGVR).Informer()
-
-		reg, err = informer.AddEventHandler(handler)
-		if err != nil {
-			return err
-		}
-		factory.Start(ctx.Done())
-	}
-
-	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
-		logger.Error("failed to sync folder informer cache")
-		return context.Cause(ctx)
-	}
-
-	logger.Info("folder controller is ready")
-	deps.HealthNotifier.SetReady()
-
-	<-ctx.Done()
-	deps.HealthNotifier.SetNotReady()
-	logger.Info("folder controller shutting down")
-	return nil
+		ready()
+		controller.Run(ctx, cascadedelete.DefaultWorkers)
+		return nil
+	}}, nil
 }

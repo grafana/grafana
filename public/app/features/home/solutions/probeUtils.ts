@@ -1,4 +1,4 @@
-import memoize from 'micro-memoize';
+import { memoize } from 'micro-memoize';
 import { fromEvent, lastValueFrom, type Observable, throwError } from 'rxjs';
 import { map, mergeMap, takeUntil } from 'rxjs/operators';
 
@@ -10,6 +10,7 @@ import {
   getDataSourceInstanceList,
   getDefaultDataSourceInstanceListItem,
 } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 /**
  * A lazily-started, shared solution fact derived from the solution's datasource: the first read
@@ -31,7 +32,7 @@ export function datasourceFact<T>(
       const ds = await datasource();
       return ds ? fetch(ds) : null;
     },
-    { isPromise: retryOnError }
+    { async: retryOnError }
   );
 }
 
@@ -222,6 +223,11 @@ const healthCache = new Map<string, TtlCachedPromise<boolean>>();
  * health check owns its cutoff, which cancels the request.
  */
 export function isDatasourceHealthy(uid: string): Promise<boolean> {
+  // /api/datasources/.../health is legacy-only; on a multi-tenant stack the probe query (which has its own
+  // deadline) decides on its own. The gate goes once this uses DataSourceWithBackend.callHealthCheck().
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantHomepage, false)) {
+    return Promise.resolve(true);
+  }
   let cache = healthCache.get(uid);
   if (!cache) {
     cache = createTtlCachedPromise(

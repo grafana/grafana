@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { mockBoundingClientRect } from '@grafana/test-utils';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 
 import { AdHocVariableForm, type AdHocVariableFormProps } from './AdHocVariableForm';
 

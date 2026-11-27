@@ -57,6 +57,7 @@ export const TagsInput = forwardRef<HTMLInputElement, Props>(
     const [newTagName, setNewTagName] = useState('');
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
+    const trimmedTagName = newTagName.trim();
 
     const onNameChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
       setNewTagName(event.target.value);
@@ -68,20 +69,20 @@ export const TagsInput = forwardRef<HTMLInputElement, Props>(
 
     const onAdd = (event?: React.MouseEvent | React.KeyboardEvent) => {
       event?.preventDefault();
-      if (!tags.includes(newTagName)) {
-        onChange(tags.concat(newTagName));
+      if (!tags.includes(trimmedTagName)) {
+        onChange(tags.concat(trimmedTagName));
       }
       setNewTagName('');
     };
 
     const onBlur = () => {
-      if (addOnBlur && newTagName) {
+      if (addOnBlur && trimmedTagName) {
         onAdd();
       }
     };
 
     const onKeyboardAdd = (event: React.KeyboardEvent) => {
-      if (event.key === 'Enter' && newTagName !== '') {
+      if (event.key === 'Enter' && trimmedTagName !== '') {
         onAdd(event);
       }
     };
@@ -105,7 +106,7 @@ export const TagsInput = forwardRef<HTMLInputElement, Props>(
               className={styles.addButtonStyle}
               onClick={onAdd}
               size="md"
-              disabled={newTagName.length <= 0}
+              disabled={trimmedTagName.length <= 0}
             >
               <Trans i18nKey="grafana-ui.tags-input.add">Add</Trans>
             </Button>

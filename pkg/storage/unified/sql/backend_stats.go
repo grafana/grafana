@@ -92,7 +92,7 @@ func (b *backend) GetStats(ctx context.Context, req *resourcepb.ResourceStatsReq
 		return nil
 	})
 	if err != nil {
-		rsp.Error = resource.AsErrorResult(err)
+		return nil, resource.GRPCStatusError(resource.AsErrorResult(err))
 	}
 	return rsp, nil
 }

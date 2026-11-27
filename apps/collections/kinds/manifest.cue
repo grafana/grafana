@@ -1,4 +1,4 @@
-package preferences
+package collections
 
 manifest: {
 	appName:       "collections"

@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { contentTypeOptions, type GrafanaTheme2, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, Input, Stack, Select, useStyles2 } from '@grafana/ui';
-
-import { SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
+import { SuggestionsInput } from 'app/core/components/SuggestionsInput/SuggestionsInput';
 
 interface Props {
   onChange: (v: Array<[string, string]>) => void;
@@ -25,16 +24,12 @@ export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader =
   const [paramValue, setParamValue] = useState('');
   const [contentTypeParamValue, setContentTypeParamValue] = useState('');
 
-  useEffect(() => {
-    if (contentTypeParamValue !== '') {
-      setContentTypeParamValue(contentTypeParamValue);
-    } else if (headersContentType) {
-      setContentTypeParamValue(headersContentType[1]);
-    }
-  }, [contentTypeParamValue, headersContentType]);
+  if (contentTypeParamValue === '' && headersContentType && headersContentType[1] !== '') {
+    setContentTypeParamValue(headersContentType[1]);
+  }
 
   // forces re-init of first SuggestionsInput(s), since they are stateful and don't respond to 'value' prop changes to be able to clear them :(
-  const [entryKey, setEntryKey] = useState(Math.random().toString());
+  const [entryKey, setEntryKey] = useState(() => Math.random().toString());
 
   const changeParamValue = (paramValue: string) => {
     setParamValue(paramValue);

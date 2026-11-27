@@ -137,11 +137,10 @@ func TestUnifiedUserLookupInvalidResponse(t *testing.T) {
 	for _, tt := range []struct {
 		name     string
 		response *resourcepb.ResourceSearchResponse
+		err      error
 		want     string
 	}{
-		{name: "response error", response: &resourcepb.ResourceSearchResponse{
-			Error: &resourcepb.ErrorResult{Code: 500, Message: "index failed"},
-		}, want: "index failed"},
+		{name: "status detail", err: resource.GRPCStatusError(&resourcepb.ErrorResult{Code: 500, Message: "index failed"}), want: "index failed"},
 		{name: "unknown format", response: &resourcepb.ResourceSearchResponse{
 			ResultFormat: resourcepb.ResourceSearchRequest_ResultFormat(-1),
 		}, want: "unsupported search result format"},
@@ -159,7 +158,7 @@ func TestUnifiedUserLookupInvalidResponse(t *testing.T) {
 		}, want: "has no resource key"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			index := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{tt.response}}
+			index := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{tt.response}, MockError: tt.err}
 			client := NewUnifiedSearchClient(index, nil)
 
 			err := validateEmail(t.Context(), client, "stacks-1", "user-1", "taken")

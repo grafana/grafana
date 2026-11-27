@@ -2,14 +2,31 @@ package nats
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
+	"fmt"
+	"math/big"
+	"net"
+	"net/url"
+	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
+	"github.com/go-kit/log/level"
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
 	natsserver "github.com/nats-io/nats-server/v2/server"
+	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/require"
@@ -90,20 +107,46 @@ func newTestServer(t *testing.T, nats setting.NATSSettings) (*Server, *Config) {
 	cfg := setting.NewCfg()
 	cfg.NATS = nats
 	// sqlStore is not touched here, so nil is acceptable.
-	s, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
+	s, err := ProvideServer(cfg, nil, nil, nil, nil, prometheus.NewRegistry())
 	require.NoError(t, err)
 	ep := ProvideNATSConfig(cfg, s)
 	return s, ep
 }
 
-func startService(t *testing.T, ctx context.Context, svc services.Service) {
+func startService(t *testing.T, ctx context.Context, svc services.Service) context.CancelFunc {
 	t.Helper()
-	require.NoError(t, svc.StartAsync(ctx))
-	require.NoError(t, svc.AwaitRunning(ctx))
+	// t.Context is canceled before cleanup, which would stop servers before
+	// their clients finish draining. Let LIFO cleanup own service cancellation.
+	runCtx, cancel := context.WithCancel(context.WithoutCancel(ctx))
 	t.Cleanup(func() {
+		cancel()
 		svc.StopAsync()
 		_ = svc.AwaitTerminated(context.Background())
 	})
+	require.NoError(t, svc.StartAsync(runCtx))
+	require.NoError(t, svc.AwaitRunning(ctx))
+	return cancel
+}
+
+func TestStartServiceCleanup(t *testing.T) {
+	var server, client *services.BasicService
+	synctest.Test(t, func(t *testing.T) {
+		server = services.NewIdleService(nil, nil)
+		client = services.NewIdleService(nil, func(error) error {
+			if server.State() != services.Running {
+				t.Error("server stopped before the client finished shutting down")
+			}
+			return nil
+		})
+		startService(t, t.Context(), server)
+		startService(t, t.Context(), client)
+		t.Cleanup(func() {
+			synctest.Wait()
+			require.Equal(t, services.Running, client.State(), "test context cancellation must not bypass ordered cleanup")
+		})
+	})
+	require.Equal(t, services.Terminated, client.State())
+	require.Equal(t, services.Terminated, server.State())
 }
 
 func newTestClient(t *testing.T, role connRole, cfg *Config) (*connection, services.Service, func() error) {
@@ -165,4 +208,223 @@ func (e *blockingTokenExchanger) Exchange(ctx context.Context, _ authnlib.TokenE
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}
+}
+
+type testCA struct {
+	cert *x509.Certificate
+	key  *ecdsa.PrivateKey
+}
+
+func newTestCA(t *testing.T, name string) *testCA {
+	t.Helper()
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+	tmpl := &x509.Certificate{
+		SerialNumber:          randomSerial(t),
+		Subject:               pkix.Name{CommonName: name},
+		NotBefore:             time.Now().Add(-time.Hour),
+		NotAfter:              time.Now().Add(time.Hour),
+		IsCA:                  true,
+		BasicConstraintsValid: true,
+		KeyUsage:              x509.KeyUsageCertSign,
+	}
+	der, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &key.PublicKey, key)
+	require.NoError(t, err)
+	cert, err := x509.ParseCertificate(der)
+	require.NoError(t, err)
+	return &testCA{cert: cert, key: key}
+}
+
+func (ca *testCA) pem() []byte {
+	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: ca.cert.Raw})
+}
+
+func (ca *testCA) pool() *x509.CertPool {
+	pool := x509.NewCertPool()
+	pool.AddCert(ca.cert)
+	return pool
+}
+
+// issue signs a leaf for 127.0.0.1 usable as both route server and client.
+func (ca *testCA) issue(t *testing.T, name string) tls.Certificate {
+	t.Helper()
+	return ca.issueWith(t, name, func(*x509.Certificate) {})
+}
+
+// issueWith is issue with the template adjusted by edit, e.g. other SANs or validity.
+func (ca *testCA) issueWith(t *testing.T, name string, edit func(*x509.Certificate)) tls.Certificate {
+	t.Helper()
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+	tmpl := &x509.Certificate{
+		SerialNumber: randomSerial(t),
+		Subject:      pkix.Name{CommonName: name},
+		NotBefore:    time.Now().Add(-time.Hour),
+		NotAfter:     time.Now().Add(time.Hour),
+		KeyUsage:     x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
+		IPAddresses:  []net.IP{net.ParseIP("127.0.0.1")},
+	}
+	edit(tmpl)
+	der, err := x509.CreateCertificate(rand.Reader, tmpl, ca.cert, &key.PublicKey, ca.key)
+	require.NoError(t, err)
+	leaf, err := x509.ParseCertificate(der)
+	require.NoError(t, err)
+	return tls.Certificate{Certificate: [][]byte{der}, PrivateKey: key, Leaf: leaf}
+}
+
+func randomSerial(t *testing.T) *big.Int {
+	t.Helper()
+	n, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 62))
+	require.NoError(t, err)
+	return n
+}
+
+// writeTestClusterTLS writes a leaf signed by issuer plus a CA bundle of trusted.
+func writeTestClusterTLS(t *testing.T, issuer *testCA, trusted ...*testCA) setting.NATSClusterTLSSettings {
+	t.Helper()
+	dir := t.TempDir()
+	cfg := setting.NATSClusterTLSSettings{
+		CertPath: filepath.Join(dir, "tls.crt"),
+		KeyPath:  filepath.Join(dir, "tls.key"),
+		CAPath:   filepath.Join(dir, "ca.crt"),
+	}
+	writeTestKeyPair(t, cfg, issuer.issue(t, "grafana-nats"))
+	var bundle []byte
+	for _, ca := range trusted {
+		bundle = append(bundle, ca.pem()...)
+	}
+	writeFileAtomic(t, cfg.CAPath, bundle)
+	return cfg
+}
+
+func writeTestKeyPair(t *testing.T, cfg setting.NATSClusterTLSSettings, cert tls.Certificate) {
+	t.Helper()
+	writeFileAtomic(t, cfg.CertPath, certPEM(cert))
+	writeFileAtomic(t, cfg.KeyPath, keyPEM(t, cert))
+}
+
+func certPEM(cert tls.Certificate) []byte {
+	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Certificate[0]})
+}
+
+func keyPEM(t *testing.T, cert tls.Certificate) []byte {
+	t.Helper()
+	der, err := x509.MarshalPKCS8PrivateKey(cert.PrivateKey)
+	require.NoError(t, err)
+	return pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: der})
+}
+
+func writeFileAtomic(t *testing.T, path string, data []byte) {
+	t.Helper()
+	require.NoError(t, replaceFile(path, data))
+}
+
+// replaceFile swaps path in one step so the watcher never reads a partial file.
+func replaceFile(path string, data []byte) error {
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, data, 0o600); err != nil { //nolint:gosec // paths are under t.TempDir()
+		return err
+	}
+	return os.Rename(tmp, path)
+}
+
+// hangGuard bounds event waits so a regression fails instead of hanging.
+const hangGuard = 15 * time.Second
+
+// logHook is a logger that hands info, warning and error messages to the test,
+// prefixed with their level.
+type logHook struct {
+	log.Logger
+	msgs chan string
+}
+
+func newLogHook() *logHook {
+	return &logHook{Logger: log.NewNopLogger(), msgs: make(chan string, 1024)}
+}
+
+func (h *logHook) Info(msg string, _ ...any)  { h.send("info: " + msg) }
+func (h *logHook) Warn(msg string, _ ...any)  { h.send("warn: " + msg) }
+func (h *logHook) Error(msg string, _ ...any) { h.send("error: " + msg) }
+
+// Log takes the records the embedded server writes directly.
+func (h *logHook) Log(keyvals ...any) error {
+	var lvl, msg string
+	for i := 0; i+1 < len(keyvals); i += 2 {
+		switch keyvals[i] {
+		case level.Key():
+			lvl = fmt.Sprint(keyvals[i+1])
+		case "msg":
+			msg = fmt.Sprint(keyvals[i+1])
+		}
+	}
+	h.send(lvl + ": " + msg)
+	return nil
+}
+
+func (h *logHook) send(msg string) {
+	select {
+	case h.msgs <- msg:
+	default:
+	}
+}
+
+// waitForLog blocks until a message containing substr is logged.
+func (h *logHook) waitForLog(t *testing.T, substr string) {
+	t.Helper()
+	guard := time.After(hangGuard)
+	for {
+		select {
+		case msg := <-h.msgs:
+			if strings.Contains(msg, substr) {
+				return
+			}
+		case <-guard:
+			t.Fatalf("no log containing %q", substr)
+		}
+	}
+}
+
+// drain returns the messages logged so far.
+func (h *logHook) drain() []string {
+	var msgs []string
+	for {
+		select {
+		case msg := <-h.msgs:
+			msgs = append(msgs, msg)
+		default:
+			return msgs
+		}
+	}
+}
+
+func connectInProcess(t *testing.T, s *Server) *natsclient.Conn {
+	t.Helper()
+	nc, err := natsclient.Connect(s.clientURL(), s.dialOptions()...)
+	require.NoError(t, err)
+	t.Cleanup(nc.Close)
+	return nc
+}
+
+// These let the external tests, which can import Secrets Manager, drive the
+// helpers of the internal ones.
+
+func NewEmbeddedTestCfg(listen string) *setting.Cfg { return newEmbeddedTestCfg(listen, "") }
+
+func StartService(t *testing.T, s *Server) { startService(t, t.Context(), s) }
+
+func RequireDelivery(t *testing.T, from, to *Server) { requireDelivery(t, from, to) }
+
+// RouteCredentialName and RouteCredentialVersion identify the route credential
+// among the Secrets Manager encrypted values.
+var RouteCredentialName = routeCredentialName(discoveryClusterName)
+
+const RouteCredentialVersion = routeCredentialVersion
+
+// RouteCredential returns the loaded route credential, nil while the server
+// waits for it.
+func RouteCredential(s *Server) *url.Userinfo {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.routeAuth
 }

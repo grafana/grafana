@@ -1,3 +1,4 @@
+import { contactPointRouting, policyRouting, toRuleNotificationSettings } from '@grafana/alerting/unstable';
 import {
   type AlertRule,
   type AlertRuleExecErrState,
@@ -102,7 +103,7 @@ export function buildAlertRuleResource(
     metadata: {
       name: existingK8sName,
       annotations: { [FOLDER_ANNOTATION]: folderUid },
-      labels: { ...labels, [FOLDER_ANNOTATION]: folderUid },
+      labels: { [FOLDER_ANNOTATION]: folderUid },
     },
     spec,
   };
@@ -136,7 +137,7 @@ export function buildRecordingRuleResource(
     metadata: {
       name: existingK8sName,
       annotations: { [FOLDER_ANNOTATION]: folderUid },
-      labels: { ...labels, [FOLDER_ANNOTATION]: folderUid },
+      labels: { [FOLDER_ANNOTATION]: folderUid },
     },
     spec,
   };
@@ -207,10 +208,7 @@ function toRecord(items: Array<{ key: string; value: string }>): Record<string, 
 
 export function getNotificationSettings(values: RuleFormValues): AlertRuleSpec['notificationSettings'] {
   if (values.selectedPolicy && !values.manualRouting) {
-    return {
-      type: 'NamedRoutingTree',
-      routingTree: values.selectedPolicy,
-    };
+    return toRuleNotificationSettings(policyRouting(values.selectedPolicy));
   }
 
   const settings = values.contactPoints?.grafana;
@@ -218,14 +216,14 @@ export function getNotificationSettings(values: RuleFormValues): AlertRuleSpec['
     return undefined;
   }
 
-  return {
-    type: 'SimplifiedRouting',
-    receiver: settings.selectedContactPoint,
-    muteTimeIntervals: settings.muteTimeIntervals,
-    activeTimeIntervals: settings.activeTimeIntervals,
-    groupBy: settings.overrideGrouping ? settings.groupBy : undefined,
-    groupWait: settings.overrideTimings ? settings.groupWaitValue : undefined,
-    groupInterval: settings.overrideTimings ? settings.groupIntervalValue : undefined,
-    repeatInterval: settings.overrideTimings ? settings.repeatIntervalValue : undefined,
-  };
+  return toRuleNotificationSettings(
+    contactPointRouting(settings.selectedContactPoint, {
+      muteTimeIntervals: settings.muteTimeIntervals,
+      activeTimeIntervals: settings.activeTimeIntervals,
+      groupBy: settings.overrideGrouping ? settings.groupBy : undefined,
+      groupWait: settings.overrideTimings ? settings.groupWaitValue : undefined,
+      groupInterval: settings.overrideTimings ? settings.groupIntervalValue : undefined,
+      repeatInterval: settings.overrideTimings ? settings.repeatIntervalValue : undefined,
+    })
+  );
 }

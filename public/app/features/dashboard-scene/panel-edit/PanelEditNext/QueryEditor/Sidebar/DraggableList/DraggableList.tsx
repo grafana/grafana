@@ -67,6 +67,9 @@ export function DraggableList<T>({
                       ref={dragProvided.innerRef}
                       {...dragProvided.draggableProps}
                       {...dragProvided.dragHandleProps}
+                      // The rendered card is the interactive control; a button role here would nest it inside another button.
+                      role={undefined}
+                      aria-describedby={undefined}
                       tabIndex={-1}
                       className={styles.draggableItem}
                       data-is-dragging={dragSnapshot.isDragging || undefined}

@@ -156,26 +156,31 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		})
 		querySpan.End()
 
-		// all errors get converted into k8s errors when sent in responder.Error and lose important context like downstream info
-		var e errutil.Error
-		if errors.As(err, &e) && e.Source == errutil.SourceDownstream {
-			_ = tracing.Error(reqSpan, err)
-			m.SetError()
-			responder.Object(int(backend.StatusBadRequest),
-				&dsV0.QueryDataResponse{QueryDataResponse: backend.QueryDataResponse{Responses: map[string]backend.DataResponse{
-					"A": {
-						Error:       errors.New(e.LogMessage),
-						ErrorSource: backend.ErrorSourceDownstream,
-						Status:      backend.StatusBadRequest,
-					},
-				}}},
-			)
-			return
-		}
-
 		if err != nil {
 			_ = tracing.Error(reqSpan, err)
 			m.SetError()
+
+			// responder.Error converts errors into Kubernetes Status responses, which do not
+			// preserve the datasource error source. Return downstream errors as QDR instead.
+			if dataResponse, ok := downstreamDataResponse(err); ok {
+				responses := make(map[string]backend.DataResponse, len(queries))
+				for _, query := range queries {
+					refID := query.RefID
+					if refID == "" {
+						refID = "A"
+					}
+					responses[refID] = dataResponse
+				}
+				if len(responses) == 0 {
+					responses["A"] = dataResponse
+				}
+
+				responder.Object(int(dataResponse.Status), &dsV0.QueryDataResponse{
+					QueryDataResponse: backend.QueryDataResponse{Responses: responses},
+				})
+				return
+			}
+
 			responder.Error(err)
 			return
 		}
@@ -184,4 +189,33 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			&dsV0.QueryDataResponse{QueryDataResponse: *rsp},
 		)
 	}), nil
+}
+
+func downstreamDataResponse(err error) (backend.DataResponse, bool) {
+	status := backend.StatusBadRequest
+	message := err.Error()
+
+	switch {
+	case errors.Is(err, context.Canceled):
+		status = backend.Status(499)
+	case errors.Is(err, context.DeadlineExceeded):
+		status = backend.Status(http.StatusRequestTimeout)
+	default:
+		var grafanaErr errutil.Error
+		if errors.As(err, &grafanaErr) && grafanaErr.Source.IsDownstream() {
+			message = grafanaErr.LogMessage
+			break
+		}
+
+		var sourceErr backend.ErrorWithSource
+		if !errors.As(err, &sourceErr) || sourceErr.ErrorSource() != backend.ErrorSourceDownstream {
+			return backend.DataResponse{}, false
+		}
+	}
+
+	return backend.ErrDataResponseWithSource(
+		status,
+		backend.ErrorSourceDownstream,
+		message,
+	), true
 }

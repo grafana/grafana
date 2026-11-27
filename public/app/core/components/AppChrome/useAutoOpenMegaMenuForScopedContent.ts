@@ -45,7 +45,7 @@ function useAutoOpenMegaMenuForScopedContent(chrome: AppChromeService) {
   useObservable(scopeServices?.scopesDashboardsService.stateObservable ?? EMPTY_OBSERVABLE, dashboardsState);
 
   // `loading` must gate this too: fetchDashboards() writes the new scope's forScopeNames and
-  // loading:true synchronously, but leaves the *previous* scope's dashboards/scopeNavigations in
+  // loading:true synchronously, but leaves the *previous* scope's scopeNavigations in
   // place until the fetch resolves. Without this, that stale leftover data reads as "the new scope
   // has content" and can force-open the menu before we actually know whether it does.
   const scopeContentKey =
@@ -53,9 +53,7 @@ function useAutoOpenMegaMenuForScopedContent(chrome: AppChromeService) {
       ? JSON.stringify(dashboardsState.forScopeNames)
       : null;
   const hasScopedDashboardsContent = Boolean(
-    scopeContentKey &&
-      dashboardsState &&
-      (dashboardsState.dashboards.length > 0 || dashboardsState.scopeNavigations.length > 0)
+    scopeContentKey && dashboardsState && dashboardsState.scopeNavigations.length > 0
   );
 
   // Tracks the key for the content we've last seen - null when there's currently none - so that

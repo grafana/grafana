@@ -58,28 +58,31 @@ export const ForgottenPassword = () => {
       <Legend>
         <Trans i18nKey="forgot-password.reset-password-header">Reset password</Trans>
       </Legend>
-      <Field
-        label={t('forgot-password.user-field-label', 'User')}
-        description={t(
-          'forgot-password.user-field-description',
-          'Enter your information to get a reset link sent to you'
-        )}
-        invalid={!!errors.userOrEmail}
-        error={errors?.userOrEmail?.message}
-      >
-        <Input
-          id="user-input"
-          placeholder={t('forgot-password.user-field-placeholder', 'Email or username')}
-          {...register('userOrEmail', { required: 'Email or username is required' })}
-        />
-      </Field>
-      <Stack>
-        <Button type="submit">
-          <Trans i18nKey="forgot-password.send-email-button">Send reset email</Trans>
-        </Button>
-        <LinkButton fill="text" href={loginHref}>
-          <Trans i18nKey="forgot-password.back-button">Back to login</Trans>
-        </LinkButton>
+      <Stack direction="column" gap={2}>
+        <Field
+          noMargin
+          label={t('forgot-password.user-field-label', 'User')}
+          description={t(
+            'forgot-password.user-field-description',
+            'Enter your information to get a reset link sent to you'
+          )}
+          invalid={!!errors.userOrEmail}
+          error={errors?.userOrEmail?.message}
+        >
+          <Input
+            id="user-input"
+            placeholder={t('forgot-password.user-field-placeholder', 'Email or username')}
+            {...register('userOrEmail', { required: 'Email or username is required' })}
+          />
+        </Field>
+        <Stack>
+          <Button type="submit">
+            <Trans i18nKey="forgot-password.send-email-button">Send reset email</Trans>
+          </Button>
+          <LinkButton fill="text" href={loginHref}>
+            <Trans i18nKey="forgot-password.back-button">Back to login</Trans>
+          </LinkButton>
+        </Stack>
       </Stack>
 
       <p className={styles}>

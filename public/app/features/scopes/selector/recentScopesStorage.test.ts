@@ -207,6 +207,12 @@ describe('writeRecentScope', () => {
       writeRecentScope(mockStore, [makeScope('scope-new')]);
 
       expect(mockStore.set).toHaveBeenCalledTimes(2);
+      expect(mockStore.set).toHaveBeenNthCalledWith(1, expect.any(String), expect.any(String), {
+        throwOnFailure: true,
+      });
+      expect(mockStore.set).toHaveBeenNthCalledWith(2, expect.any(String), expect.any(String), {
+        throwOnFailure: true,
+      });
       // Second call should have one fewer entry (oldest dropped)
       const retryStored = JSON.parse((mockStore.set as jest.Mock).mock.calls[1][1]);
       expect(retryStored).toHaveLength(2); // new + scope-0 (scope-1 dropped as oldest)

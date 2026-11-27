@@ -224,6 +224,31 @@ describe('DashboardCrossDashboardVariablesOptions', () => {
     expect(screen.getByText('cluster')).toBeVisible();
   });
 
+  it('shows a datasource variable required by a selected one as checked and locked', async () => {
+    const dashboard = createDashboard({
+      [AnnoKeyUseCrossDashboardVariables]: '{"global":"none","folder":["labels"]}',
+    });
+    const labels = makeCandidate('labels', 'folder', 'QueryVariable');
+    mockFetchPredefinedVariables.mockResolvedValue([
+      makeCandidate('ds', 'global', 'DatasourceVariable'),
+      makeCandidate('env', 'global'),
+      { ...labels, spec: { ...labels.spec, query: { datasource: { name: '${ds}' } } } } as VariableKind,
+    ]);
+
+    render(<DashboardCrossDashboardVariablesOptions dashboard={dashboard} />);
+
+    const ds = await screen.findByRole('checkbox', { name: /^ds/ });
+    expect(ds).toBeChecked();
+    expect(ds).toBeDisabled();
+    expect(screen.getByText('Required by labels')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'env' })).not.toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'env' })).toBeEnabled();
+    // Derived from the selection, not written into it.
+    expect(dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBe(
+      '{"global":"none","folder":["labels"]}'
+    );
+  });
+
   it('shows a zero count and stays closed when Global and Folder have no variables', async () => {
     mockFetchPredefinedVariables.mockResolvedValue([]);
 

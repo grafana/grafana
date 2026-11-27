@@ -92,6 +92,10 @@ type natsEventSubscriber struct {
 
 func (a natsEventSubscriber) Enabled() bool { return a.sub.Enabled() }
 
+// Started lets the notifier wait for the subscriber service, which the
+// monolith starts after it builds the storage server.
+func (a natsEventSubscriber) Started() <-chan struct{} { return a.sub.Started() }
+
 func (a natsEventSubscriber) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte), onReconnect func()) (resource.Subscription, error) {
 	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler), nats.WithOnReconnect(onReconnect))
 }
@@ -147,6 +151,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 			client, // The original
 			legacysql.NewDatabaseProvider(opts.DB),
 			opts.Cfg,
+			federated.WithMetrics(opts.Reg),
 		)
 	}
 
@@ -186,9 +191,8 @@ func newClient(opts options.StorageOptions,
 		}
 
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend:                 backend,
-			SeededWatchesEnabled:    cfg.SeededWatchesEnabled,
-			GRPCErrorResultToStatus: cfg.UnifiedStorageGRPCErrorResultToStatus,
+			Backend:              backend,
+			SeededWatchesEnabled: cfg.SeededWatchesEnabled,
 			Blob: resource.BlobConfig{
 				URL: opts.BlobStoreURL,
 			},
@@ -351,7 +355,8 @@ func configureInProcessManifests(ctx context.Context, cfg *setting.Cfg, searchOp
 	}
 	if discovery != nil && (searchOptions.SearchFields != nil || searchOptions.EmbeddingConfig != nil) {
 		watcherLog := log.New("search-manifest-watcher")
-		watcher := resource.NewLocalManifestWatcher(discovery, reg, searchOptions.ManifestReloader(watcherLog, manifests), watcherLog)
+		watcherReg := prometheus.WrapRegistererWith(prometheus.Labels{"component": "search"}, reg)
+		watcher := resource.NewLocalManifestWatcher(discovery, watcherReg, searchOptions.ManifestReloader(watcherLog, manifests), watcherLog)
 		if err := watcher.StartAsync(ctx); err != nil {
 			return fmt.Errorf("failed to start manifest watcher: %w", err)
 		}

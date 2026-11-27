@@ -126,7 +126,7 @@ Use the **Copy styles** and **Paste styles** options to do so:
 To copy and paste a panel style, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Navigate to the panel with the style you want to copy.
 1. Hover over any part of the panel you want to work on to display the menu on the top right corner.
 1. Click the menu and select **Styles > Copy styles**.

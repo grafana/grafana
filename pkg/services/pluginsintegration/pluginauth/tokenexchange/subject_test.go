@@ -67,6 +67,7 @@ func TestUnattendedDelegationHTTPClient(t *testing.T) {
 			claims, err := verifier.Verify(context.Background(), result.Token)
 			require.NoError(t, err)
 			require.Equal(t, "access-policy:allowed-app", claims.Subject)
+			require.Equal(t, "plugin:allowed-app", claims.Rest.ServiceIdentity)
 			require.Equal(t, tc.namespace, claims.Rest.Namespace)
 			require.Equal(t, tc.sub, claims.Rest.Actor.Subject)
 			require.Equal(t, tc.uid, claims.Rest.Actor.Identifier)

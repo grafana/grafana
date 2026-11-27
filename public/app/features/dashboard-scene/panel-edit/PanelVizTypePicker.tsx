@@ -87,7 +87,7 @@ export function PanelVizTypePicker({
   );
 
   /** TABS */
-  const tabs = useMemo(getTabs, []);
+  const [tabs] = useState(getTabs);
   const defaultTab = tabs[0].value;
   const [storedListMode, setStoredListMode] = useSessionStorage(LS_VISUALIZATION_SELECT_TAB_KEY, defaultTab);
 

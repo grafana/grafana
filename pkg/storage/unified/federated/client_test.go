@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -23,12 +24,12 @@ func TestFederatedGetStatsErrors(t *testing.T) {
 	result := &resourcepb.ErrorResult{Code: 404, Reason: "NotFound", Message: "folder not found"}
 	st, err := status.New(codes.NotFound, result.Message).WithDetails(result)
 	require.NoError(t, err)
-	for _, encoding := range []string{"embedded", "grpc"} {
-		t.Run(encoding, func(t *testing.T) {
-			response, err := &resourcepb.ResourceStatsResponse{Error: result}, error(nil)
-			if encoding == "grpc" {
-				response, err = nil, st.Err()
-			}
+	for name, response := range map[string]*resourcepb.ResourceStatsResponse{
+		"nil response":   nil,
+		"empty response": {},
+	} {
+		t.Run(name, func(t *testing.T) {
+			err := st.Err()
 			base := resource.NewMockResourceClient(t)
 			in := &resourcepb.ResourceStatsRequest{Namespace: "default", Folder: []string{"missing"}}
 			base.On("GetStats", mock.Anything, in).Return(response, err).Once()
@@ -40,8 +41,8 @@ func TestFederatedGetStatsErrors(t *testing.T) {
 			response, err = client.GetStats(context.Background(), in)
 			require.Error(t, err)
 			require.Nil(t, response)
-			require.Equal(t, result.Code, resource.AsErrorResult(err).Code)
-			require.Equal(t, result.Message, resource.AsErrorResult(err).Message)
+			require.True(t, proto.Equal(result, resource.AsErrorResult(err)), "status details must be preserved")
+			require.Equal(t, codes.NotFound, status.Code(err), "the gRPC status must be returned unchanged")
 		})
 	}
 }

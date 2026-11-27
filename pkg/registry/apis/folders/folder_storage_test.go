@@ -31,9 +31,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	folderlegacy "github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestFolderStorageCreateLogsOriginalError(t *testing.T) {
@@ -203,5 +205,119 @@ func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
 
 			folderPermService.AssertNumberOfCalls(t, "SetPermissions", tc.expectedCallsToSetPermissions)
 		})
+	}
+}
+
+func newRefreshingFolderStorage(t *testing.T, permErr error, acService accesscontrol.Service) (folderStorage, *FolderAPIBuilder) {
+	t.Helper()
+	folderPermService := acmock.NewMockedPermissionsService()
+	folderPermService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, permErr).Once()
+
+	store := grafanarest.NewMockStorage(t)
+	store.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&folders.Folder{}, nil)
+
+	b := &FolderAPIBuilder{acService: acService}
+	return folderStorage{
+		folderPermissionsSvc: folderPermService,
+		refreshCreator:       b.refreshCreatorAfterCommit,
+		store:                store,
+		permissionsOnCreate:  true,
+	}, b
+}
+
+func TestFolderStorageCreateRefreshesCreatorPermissions(t *testing.T) {
+	creators := map[string]*user.SignedInUser{
+		"user":            {UserID: 1, OrgID: 2},
+		"service account": {UserID: 3, OrgID: 2, IsServiceAccount: true},
+	}
+
+	for name, creator := range creators {
+		t.Run("reloads permissions for "+name+" creator", func(t *testing.T) {
+			acService := acmock.New()
+			var reloaded []accesscontrol.Options
+			acService.GetUserPermissionsFunc = func(_ context.Context, u identity.Requester, opts accesscontrol.Options) ([]accesscontrol.Permission, error) {
+				require.Equal(t, creator.GetCacheKey(), u.GetCacheKey())
+				reloaded = append(reloaded, opts)
+				return nil, nil
+			}
+			fs, _ := newRefreshingFolderStorage(t, nil, acService)
+
+			ctx := identity.WithRequester(request.WithNamespace(context.Background(), "org-2"), creator)
+			_, err := fs.Create(ctx, &folders.Folder{}, nil, &metav1.CreateOptions{})
+			require.NoError(t, err)
+
+			require.Equal(t, []accesscontrol.Options{{ReloadCache: true}}, reloaded)
+		})
+	}
+
+	t.Run("does not reload permissions when setting default permissions fails", func(t *testing.T) {
+		acService := acmock.New()
+		acService.GetUserPermissionsFunc = func(context.Context, identity.Requester, accesscontrol.Options) ([]accesscontrol.Permission, error) {
+			t.Fatal("permissions must not be reloaded after a failed permission write")
+			return nil, nil
+		}
+		fs, _ := newRefreshingFolderStorage(t, errors.New("write failed"), acService)
+
+		ctx := identity.WithRequester(request.WithNamespace(context.Background(), "org-2"), creators["user"])
+		_, err := fs.Create(ctx, &folders.Folder{}, nil, &metav1.CreateOptions{})
+		require.Error(t, err)
+	})
+}
+
+func TestIntegrationFolderStorageCreateRefreshesCreatorPermissionsAfterCommit(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	for _, serviceAccount := range []bool{false, true} {
+		for _, outcome := range []string{"commit", "rollback", "permission failure"} {
+			name := "user/"
+			if serviceAccount {
+				name = "service account/"
+			}
+			t.Run(name+outcome, func(t *testing.T) {
+				sql := sqlstore.NewTestStore(t, sqlstore.WithoutMigrator())
+				creator := &user.SignedInUser{UserID: 7, OrgID: 2, IsServiceAccount: serviceAccount}
+				failure := errors.New("failed")
+				var writeErr error
+				if outcome == "permission failure" {
+					writeErr = failure
+				}
+
+				calls := 0
+				acService := acmock.New()
+				acService.GetUserPermissionsFunc = func(ctx context.Context, u identity.Requester, opts accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					require.False(t, sqlstore.IsInTransaction(ctx))
+					require.Same(t, creator, u)
+					require.True(t, opts.ReloadCache)
+					calls++
+					return nil, nil
+				}
+				fs, b := newRefreshingFolderStorage(t, writeErr, acService)
+				sql.Bus().AddEventListener(b.onDefaultPermissionsSet)
+
+				ctx := identity.WithRequester(request.WithNamespace(t.Context(), "org-2"), creator)
+				err := sql.InTransaction(ctx, func(ctx context.Context) error {
+					require.NoError(t, sql.InTransaction(ctx, func(ctx context.Context) error {
+						_, err := fs.Create(ctx, &folders.Folder{}, nil, &metav1.CreateOptions{})
+						require.ErrorIs(t, err, writeErr)
+						return nil
+					}))
+					require.Zero(t, calls, "permissions must not be reloaded before the outermost commit")
+					if outcome == "rollback" {
+						return failure
+					}
+					return nil
+				})
+				if outcome == "rollback" {
+					require.ErrorIs(t, err, failure)
+				} else {
+					require.NoError(t, err)
+				}
+
+				if outcome == "commit" {
+					require.Equal(t, 1, calls)
+				} else {
+					require.Zero(t, calls)
+				}
+			})
+		}
 	}
 }

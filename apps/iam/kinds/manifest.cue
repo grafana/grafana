@@ -73,6 +73,7 @@ v0alpha1: {
 					request: {
 						query: {
 							query?:  string
+							member?: string
 							limit?:  int64 | 50
 							offset?: int64 | 0
 							page?:   int64 | 1
@@ -142,4 +143,6 @@ v0alpha1: {
 	accessControl?: {[string]: bool}
 	// Auth module identifiers the user is externally synced with.
 	externalAuthModules?: [...string]
+	// Display labels of the auth provider the user last signed in with, e.g. "LDAP".
+	authLabels?: [...string]
 }

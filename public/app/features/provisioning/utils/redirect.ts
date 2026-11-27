@@ -1,4 +1,6 @@
 import { type RepositoryUrLs } from 'app/api/clients/provisioning/v0alpha1';
+import kbn from 'app/core/utils/kbn';
+import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 
 import { type WorkflowOption } from '../types';
 
@@ -92,4 +94,9 @@ export function getJobListRedirectUrl({
     action,
     prTitle,
   });
+}
+
+/** Router path of a dashboard saved through provisioning. Bare: the router basename already carries appSubUrl. */
+export function getSavedDashboardPath(uid: string, title = '') {
+  return getDashboardUrl({ uid, slug: kbn.slugifyForUrl(title), currentQueryParams: window.location.search });
 }

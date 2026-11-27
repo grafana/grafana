@@ -2,6 +2,9 @@ package v1alpha1
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 )
@@ -77,4 +80,46 @@ func (c *StarsClient) Patch(ctx context.Context, identifier resource.Identifier,
 
 func (c *StarsClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
 	return c.client.Delete(ctx, identifier, opts)
+}
+
+type RemoveStarRequest struct {
+	Headers http.Header
+}
+
+func (c *StarsClient) RemoveStar(ctx context.Context, identifier resource.Identifier, request RemoveStarRequest) (*Stars, error) {
+	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
+		Path:    "/update/{group}/{kind}/{id}",
+		Verb:    "DELETE",
+		Headers: request.Headers,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cast := Stars{}
+	err = json.Unmarshal(resp, &cast)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response bytes into Stars: %w", err)
+	}
+	return &cast, nil
+}
+
+type AddStarRequest struct {
+	Headers http.Header
+}
+
+func (c *StarsClient) AddStar(ctx context.Context, identifier resource.Identifier, request AddStarRequest) (*Stars, error) {
+	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
+		Path:    "/update/{group}/{kind}/{id}",
+		Verb:    "PUT",
+		Headers: request.Headers,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cast := Stars{}
+	err = json.Unmarshal(resp, &cast)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response bytes into Stars: %w", err)
+	}
+	return &cast, nil
 }

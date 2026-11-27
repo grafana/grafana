@@ -321,3 +321,22 @@ func TestRepository_ShouldGenerateDashboardPreviews(t *testing.T) {
 		})
 	}
 }
+
+func TestRepositoryType_AllowsSecureValues(t *testing.T) {
+	gitTypes := []v0alpha1.RepositoryType{
+		v0alpha1.GitHubRepositoryType,
+		v0alpha1.GitHubEnterpriseRepositoryType,
+		v0alpha1.GitRepositoryType,
+		v0alpha1.BitbucketRepositoryType,
+		v0alpha1.GitLabRepositoryType,
+	}
+	for _, repoType := range gitTypes {
+		t.Run(string(repoType), func(t *testing.T) {
+			assert.False(t, repoType.AllowsSecureValues())
+		})
+	}
+
+	t.Run("local", func(t *testing.T) {
+		assert.True(t, v0alpha1.LocalRepositoryType.AllowsSecureValues())
+	})
+}

@@ -5,7 +5,7 @@ import { PageObject } from '../PageObject';
 // Buttons in the dashboard edit Toolbar (the icon strip). The value is the button's
 // accessible name (aria-label); lookups are scoped to the sidebar container so names
 // stay unambiguous. Add a button = one member of this union.
-type ButtonNames = 'Add' | 'Options' | 'Code' | 'Undo' | 'Redo' | 'Outline' | 'Filters';
+type ButtonNames = 'Add' | 'Options' | 'Code' | 'Outline' | 'Filters';
 
 /** Right side toolbar with icon buttons: Add new element (+), Dashboard options (cog), Content outline, etc. */
 export class Toolbar extends PageObject {

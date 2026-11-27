@@ -1,9 +1,8 @@
-import { test, expect } from './fixtures';
+import { expect, test } from './fixtures';
 import { flows } from './helpers';
 
 test.use({
   featureToggles: {
-    dashboardNewLayouts: true,
     dashboardUndoRedo: true,
   },
 });

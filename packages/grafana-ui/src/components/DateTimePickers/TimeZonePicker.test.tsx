@@ -2,9 +2,26 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { DefaultTimeZone, setTimeZoneResolver } from '@grafana/data';
+import type * as grafanaDataUnstable from '@grafana/data/unstable';
+import { getTimeZonesAt } from '@grafana/data/unstable';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { TimeZonePicker } from './TimeZonePicker';
+
+jest.mock('@grafana/data/unstable', () => ({
+  ...jest.requireActual<typeof grafanaDataUnstable>('@grafana/data/unstable'),
+  getTimeZonesAt: jest.fn(),
+}));
+
+const { getTimeZonesAt: getRealTimeZonesAt } = jest.requireActual<typeof grafanaDataUnstable>('@grafana/data/unstable');
+const timeZones = new Set([
+  'America/Chicago',
+  'Asia/Calcutta',
+  'Asia/Kolkata',
+  'Australia/Sydney',
+  'Europe/Moscow',
+  'Europe/Stockholm',
+]);
 
 // Fixed timestamp (northern-hemisphere winter) so DST-dependent abbreviations
 // and offsets are deterministic.
@@ -13,6 +30,10 @@ const JAN_15_2026 = Date.UTC(2026, 0, 15);
 describe('TimeZonePicker', () => {
   beforeEach(() => {
     jest.spyOn(Date, 'now').mockReturnValue(JAN_15_2026);
+    // Keep real timezone metadata while limiting repeated option rendering.
+    jest
+      .mocked(getTimeZonesAt)
+      .mockImplementation((...args) => getRealTimeZonesAt(...args).filter(({ name }) => timeZones.has(name)));
   });
 
   afterEach(() => {
@@ -119,6 +140,7 @@ describe('TimeZonePicker', () => {
 
   describe('with internal time zones', () => {
     it('lists Default, Browser Time and UTC at the top', async () => {
+      jest.mocked(getTimeZonesAt).mockImplementation(getRealTimeZonesAt);
       render(<TimeZonePicker onChange={jest.fn()} includeInternal={true} />);
 
       await userEvent.click(screen.getByRole('combobox'));
@@ -127,6 +149,9 @@ describe('TimeZonePicker', () => {
       expect(options[0]).toHaveTextContent('Default');
       expect(options[1]).toHaveTextContent('Browser Time');
       expect(options[2]).toHaveTextContent('Coordinated Universal Time');
+
+      await userEvent.type(screen.getByRole('combobox'), 'tokyo');
+      expect(await screen.findByText('Tokyo')).toBeInTheDocument();
     });
 
     it('shows the UTC, GMT abbreviation for the UTC option', async () => {

@@ -37,7 +37,7 @@ Set the following options to provide basic information about a panel and define 
 | Option                                       | Description                                                                           |
 | -------------------------------------------- | ------------------------------------------------------------------------------------- |
 | Title                                        | Text entered in this field appears at the top of your panel in the panel editor and in the dashboard. You can use [variables you have defined](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/) or [built-in variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/built-in-variables). |
-| [Description](#description-field-formatting) | Add a description to a panel to share with users any important information about it, such as its purpose. Text entered in this field appears in a tooltip in the upper-left corner of the panel. Conversely, toggle on the **As subtitle** switch to display the description just below the panel title instead. You can use [variables you have defined](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/) or dashboard-scoped [built-in variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/built-in-variables) (such as `$__from`, `$__to`, `$__dashboard`, `$__org`, and `$__user`). Query-scoped built-in variables (such as `$__interval` and `$__interval_ms`) are not available in this field. |
+| [Description](#description-field-formatting) | <p>Add a description to a panel to share with users any important information about it, such as its purpose. Text entered in this field appears in a tooltip in the upper-left corner of the panel.</p><p>Conversely, toggle on the **As subtitle** switch to display the description just below the panel title instead. You can use [variables you have defined](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/) or dashboard-scoped [built-in variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/built-in-variables) (such as `$__from`, `$__to`, `$__dashboard`, `$__org`, and `$__user`). Query-scoped built-in variables (such as `$__interval` and `$__interval_ms`) are not available in this field.</p> |
 | Transparent background                       | Toggle this switch on and off to control whether or not the panel has the same background color as the dashboard. | 
 | Panel links | Add [links to the panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/manage-dashboard-links/#panel-links) to create shortcuts to other dashboards, panels, and external websites. Access panel links by clicking the icon next to the panel title. |
 | Repeat options                               | Set whether to repeat the panel for each value in the selected variable. For more information, refer to [Configure repeating panels](#configure-repeating-panels).|
@@ -85,7 +85,7 @@ To configure repeating panels, follow these steps:
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
 
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the panel to open the sidebar.
 
 {{% shared-snippet path="/docs/grafana/latest/visualizations/dashboards/build-dashboards/create-dashboard/_index.md" id="configure-repeat" %}}
@@ -141,7 +141,7 @@ This ensures that as you change the time range of the dashboard, you only see da
 To configure a show/hide rule, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the panel you want to update to open the sidebar, or click the **Dashboard options** icon to open it.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
@@ -161,7 +161,7 @@ To configure a show/hide rule, follow these steps:
 1. When you've finished setting rules, save the dashboard.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save** again.
-1. Click **Exit edit**
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 Hidden panels aren't visible when the dashboard is in view mode.
 In edit mode, hidden dashboard panels are displayed with an icon or overlay indicating this.

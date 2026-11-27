@@ -243,11 +243,13 @@ func validateApiKey(orgID int64, key *apikey.APIKey) error {
 
 func newServiceAccountIdentity(key *apikey.APIKey) *authn.Identity {
 	return &authn.Identity{
-		ID:              strconv.FormatInt(*key.ServiceAccountId, 10),
-		Type:            claims.TypeServiceAccount,
-		OrgID:           key.OrgID,
-		AuthenticatedBy: login.APIKeyAuthModule,
-		ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},
+		ID:                      strconv.FormatInt(*key.ServiceAccountId, 10),
+		Type:                    claims.TypeServiceAccount,
+		OrgID:                   key.OrgID,
+		AuthenticatedBy:         login.APIKeyAuthModule,
+		ServiceAccountTokenID:   key.ID,
+		ServiceAccountTokenName: key.Name,
+		ClientParams:            authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},
 	}
 }
 

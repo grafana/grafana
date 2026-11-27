@@ -158,7 +158,8 @@ InfluxDB supports the use of filters for InfluxQL. They allow you to define mult
 
 To add filters:
 
-1. Navigate to the dashboard you want to update and click **Edit**.
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Filter and Group by**.
 1. Enter a **Name** for the filter.

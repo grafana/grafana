@@ -705,4 +705,50 @@ describe('PanelPlugin', () => {
       expect(supplier).not.toHaveBeenCalled();
     });
   });
+
+  describe('quick edits', () => {
+    it('offers no quick edits unless the panel declares them', () => {
+      expect(new PanelPlugin(() => <div />).getQuickEdits()).toEqual([]);
+    });
+
+    it('returns the declared quick edits in order', () => {
+      const panel = new PanelPlugin(() => <div />).setQuickEdits(() => [
+        { id: 'shape', title: 'Shape', icon: 'circle', optionIds: ['shape'] },
+        { id: 'size', title: 'Size', icon: 'expand-arrows', optionIds: ['size', 'custom.scale'] },
+      ]);
+
+      expect(panel.getQuickEdits().map((edit) => [edit.id, edit.optionIds])).toEqual([
+        ['shape', ['shape']],
+        ['size', ['size', 'custom.scale']],
+      ]);
+    });
+
+    it('reports whether a presets supplier is registered', () => {
+      expect(new PanelPlugin(() => <div />).hasPresetsSupplier()).toBe(false);
+      expect(new PanelPlugin(() => <div />).setPresetsSupplier(() => []).hasPresetsSupplier()).toBe(true);
+    });
+  });
+
+  describe('panel interactions', () => {
+    it('has no interactions unless the panel declares them', () => {
+      expect(new PanelPlugin(() => <div />).panelInteractions).toBeUndefined();
+    });
+
+    it('exposes the declared interactions', () => {
+      const interactions = {
+        interactions: [
+          {
+            id: 0,
+            name: 'organize',
+            mutates: ['TRANSFORMATION' as const],
+            schema: ['columnName'],
+            promotionHandler: jest.fn(),
+          },
+        ],
+      };
+      const panel = new PanelPlugin(() => <div />).setPanelInteractions(interactions).setNoPadding();
+
+      expect(panel.panelInteractions).toBe(interactions);
+    });
+  });
 });

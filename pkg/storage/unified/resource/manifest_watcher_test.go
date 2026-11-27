@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/clientauth"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -24,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
+	"k8s.io/client-go/rest"
 	k8stesting "k8s.io/client-go/testing"
 	"k8s.io/client-go/transport"
 )
@@ -403,6 +405,25 @@ func TestManifestWatcher_EmptyListKeepsPreviousSet(t *testing.T) {
 	require.Len(t, w.Manifests(), 1)
 }
 
+func TestManifestWatcher_EmptyListLogsAtDebugNotWarn(t *testing.T) {
+	// #137058: an install with no app manifests is empty for as long as it
+	// runs, so the empty case (both the per-source line and the cycle line)
+	// logs at debug on every poll, never warn. A list failure, tested
+	// elsewhere, stays an error.
+	empty := func(k8stesting.Action) (bool, runtime.Object, error) {
+		return true, &unstructured.UnstructuredList{}, nil
+	}
+	client := fakeManifestClient()
+	client.PrependReactor("list", "appmanifests", empty)
+	logger := &logtest.Fake{}
+	w := newManifestWatcher(appManifestSources(client), 0, nil, logger, nil)
+
+	w.runPollCycle(t.Context())
+	w.runPollCycle(t.Context())
+	require.Equal(t, 0, logger.WarnLogs.Calls, "an empty list is a normal state, not a warning")
+	require.Equal(t, 4, logger.DebugLogs.Calls, "each empty poll logs the source and cycle lines at debug")
+}
+
 func TestManifestWatcher_RecordsMetrics(t *testing.T) {
 	client := fakeManifestClient(
 		testAppManifestObj("m-dashboards", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
@@ -560,6 +581,23 @@ func TestManifestFromUnstructured_PreservesEmbeddingVersions(t *testing.T) {
 	require.False(t, data.Versions[1].Served)
 	require.Equal(t, []app.ManifestVersionKindEmbedField{{Name: "title", Path: "spec.oldTitle"}}, data.Versions[1].Kinds[0].Embed.Fields)
 	require.Equal(t, before, obj)
+}
+
+func TestManifestWatcherConfig_ExchangerReplacesTheTokenSettings(t *testing.T) {
+	exchanger := &fakeTokenExchanger{token: "exchanged-token"}
+
+	got, err := newManifestTokenExchanger(ManifestWatcherConfig{Exchanger: exchanger})
+
+	require.NoError(t, err, "no token and no token exchange URL are set")
+	require.Same(t, exchanger, got)
+}
+
+func TestManifestWatcherConfig_TLSReplacesTheCASettings(t *testing.T) {
+	tlsConfig := rest.TLSClientConfig{CAFile: "/etc/router/ca.crt", ServerName: "router"}
+
+	got := newManifestRESTConfig(ManifestWatcherConfig{CAFile: "/etc/other/ca.crt", AllowInsecure: true, TLS: &tlsConfig}, "https://router", nil)
+
+	require.Equal(t, tlsConfig, got.TLSClientConfig)
 }
 
 func TestNewManifestWatcherConfig(t *testing.T) {

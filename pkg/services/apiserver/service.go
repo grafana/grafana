@@ -32,6 +32,7 @@ import (
 	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
+	"github.com/grafana/grafana/pkg/apiserver/rawroutes"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -239,6 +240,17 @@ func ProvideService(
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
 	}
 
+	// Raw routes are registered before the /apis proxy so they are matched
+	// ahead of its catch-all and never enter the k8s handler chain.
+	if rawRoutes := rawroutes.Collect(appInstallers); len(rawRoutes) > 0 {
+		var rawErr error
+		s.rr.Group("/apis", func(apis routing.RouteRegister) {
+			rawErr = registerRawRoutes(apis, rawRoutes)
+		})
+		if rawErr != nil {
+			return nil, rawErr
+		}
+	}
 	s.rr.Group("/apis", proxyHandler)
 	s.rr.Group("/livez", proxyHandler)
 	s.rr.Group("/readyz", proxyHandler)
@@ -541,6 +553,10 @@ func (s *service) start(ctx context.Context) error {
 	// Capture the discovery seam so preferred can re-prioritize without a scheme mutation; group priorities mirror startup.
 	s.groupDiscoveryPriority = builder.BuilderGroupPriorities(builders)
 	s.discoveryManager = server.AggregatedDiscoveryGroupManager
+	if globalSearchAPIEnabled || globalHybridAPIEnabled {
+		// Global search has routes but no resources.
+		appsdkapiserver.AdvertiseRouteOnlyVersion(server.AggregatedDiscoveryGroupManager, globalSearchGV)
+	}
 
 	// Install the API group+version for existing builders
 	err = builder.InstallAPIs(s.scheme,
@@ -591,8 +607,7 @@ func (s *service) start(ctx context.Context) error {
 	s.options = o
 
 	var runningServer *genericapiserver.GenericAPIServer
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	isKubernetesAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) || s.cfg.EnableKubernetesAggregator
+	isKubernetesAggregatorEnabled := s.cfg.EnableKubernetesAggregator
 
 	if isKubernetesAggregatorEnabled {
 		aggregatorServer, err := s.aggregatorRunner.Configure(
@@ -605,7 +620,7 @@ func (s *service) start(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		// we are running with KubernetesAggregator FT set to true but with enterprise unlinked, handle this gracefully
+		// we are running with the kubernetes aggregator enabled but with enterprise unlinked, handle this gracefully
 		if aggregatorServer != nil {
 			runningServer, err = s.aggregatorRunner.Run(ctx, transport, s.stoppedCh)
 			if err != nil {
@@ -613,7 +628,7 @@ func (s *service) start(ctx context.Context) error {
 				return err
 			}
 		} else {
-			// even though the FT is set to true, enterprise isn't linked
+			// even though the aggregator is enabled, enterprise isn't linked
 			isKubernetesAggregatorEnabled = false
 		}
 	}

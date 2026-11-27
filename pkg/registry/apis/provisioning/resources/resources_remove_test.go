@@ -285,6 +285,54 @@ func TestRenameResourceFile(t *testing.T) {
 		mockClient.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 
+	t.Run("destination writing a secure value is rejected before the old resource is deleted", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		gitRepoInfo := provisioning.ResourceRepositoryInfo{
+			Name: testRepoName,
+			Type: provisioning.GitHubRepositoryType,
+		}
+
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old-path/dash.json"}
+		repo.On("Read", mock.Anything, "old-path/dash.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(&ParsedResource{
+			Obj: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "dashboard.grafana.app/v0alpha1",
+				"kind":       "Dashboard",
+				"metadata":   map[string]any{"name": "old-uid"},
+			}},
+			GVK:    dashboardGVK,
+			Client: mockClient,
+			Repo:   gitRepoInfo,
+		}, nil)
+
+		// A different name, so the rename takes the identity-change branch that
+		// deletes the old resource.
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json"}
+		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "dashboard.grafana.app/v0alpha1",
+				"kind":       "Dashboard",
+				"metadata":   map[string]any{"name": "new-uid"},
+				"secure":     map[string]any{"apiKey": map[string]any{"create": "super-secret"}},
+			}},
+			GVK:    dashboardGVK,
+			Client: mockClient,
+			Repo:   gitRepoInfo,
+		}, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		_, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "cannot be created or removed from a github repository")
+		require.NotContains(t, err.Error(), "super-secret")
+		mockClient.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
 	t.Run("different name deletes old then creates new", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)

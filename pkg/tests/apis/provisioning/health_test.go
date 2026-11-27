@@ -633,8 +633,9 @@ func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testin
 
 func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 	helper := sharedHelper(t)
+	remote, _ := common.StartPublicGitRemote(t, "git-write-permissions")
 
-	// Use public GitHub repository (grafana-git-sync-demo) via git type - no token needed for read access
+	// Use a public repository via git type - no token needed for read access
 	// This tests that:
 	// - With workflows: write permission check FAILS (we can't write to public repo without token)
 	// - Without workflows: succeeds (only needs read access)
@@ -652,8 +653,8 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 				"title": "Test Git Write Permission Denied",
 				"type":  "git",
 				"git": map[string]any{
-					"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
-					"branch": "integration-test",
+					"url":    remote.URL,
+					"branch": "main",
 				},
 				"workflows": []string{"write"}, // Write workflow configured
 				"sync": map[string]any{
@@ -719,8 +720,8 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 				"title": "Test Git Read-Only",
 				"type":  "git",
 				"git": map[string]any{
-					"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
-					"branch": "integration-test",
+					"url":    remote.URL,
+					"branch": "main",
 				},
 				// No workflows = read-only, no write permission check
 				"sync": map[string]any{
@@ -773,8 +774,8 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 					"title": "Test Git Unhealthy",
 					"type":  "git",
 					"git": map[string]any{
-						"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
-						"branch": "integration-test",
+						"url":    remote.URL,
+						"branch": "main",
 					},
 					"workflows": []string{"write"},
 					"sync": map[string]any{
@@ -823,8 +824,8 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 					"title": "Test Git Healthy Read-Only",
 					"type":  "git",
 					"git": map[string]any{
-						"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
-						"branch": "integration-test",
+						"url":    remote.URL,
+						"branch": "main",
 					},
 					// No workflows = read-only, no write permission needed
 					"sync": map[string]any{

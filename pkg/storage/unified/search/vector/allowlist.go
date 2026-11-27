@@ -43,3 +43,10 @@ func (a CollectionAllowlist) Allows(c Collection) bool {
 	_, ok := a.internal[key]
 	return ok
 }
+
+func (a CollectionAllowlist) AllowsInternalOrExternal(group, resource string) bool {
+	key := group + "/" + resource
+	_, internal := a.internal[key]
+	_, external := a.external[key]
+	return internal || external
+}

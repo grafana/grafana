@@ -35,7 +35,6 @@ export function transformNotebookToScene(resource: Resource<NotebookSpec>): Note
     refreshPicker: new SceneRefreshPicker({
       refresh: spec.timeSettings.autoRefresh,
       intervals: spec.timeSettings.autoRefreshIntervals,
-      withText: true,
     }),
   });
 

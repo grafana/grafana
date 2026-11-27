@@ -339,7 +339,7 @@ export function createDashboardSceneFromDashboardModel(
   }
 
   const scopeMeta =
-    config.featureToggles.scopeFilters && oldModel.scopeMeta
+    getFeatureFlagClient().getBooleanValue(FlagKeys.ScopeFilters, false) && oldModel.scopeMeta
       ? {
           trait: oldModel.scopeMeta.trait,
           groups: oldModel.scopeMeta.groups,
@@ -451,7 +451,6 @@ export function createDashboardSceneFromDashboardModel(
         refreshPicker: new SceneRefreshPicker({
           refresh: oldModel.refresh,
           intervals: oldModel.timepicker.refresh_intervals,
-          withText: true,
         }),
         hideTimeControls: oldModel.timepicker.hidden,
       }),

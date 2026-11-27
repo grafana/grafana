@@ -1,5 +1,5 @@
 import { Route, Routes } from 'react-router-dom-v5-compat';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { locationService, setPluginComponentHook } from '@grafana/runtime';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
@@ -8,6 +8,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 import { NotebookAnalytics } from '../analytics/main';
 import { NotebookScene } from '../scene/NotebookScene';
+import { NotebookCellItem } from '../scene/layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
 import { NOTEBOOK_NEW_URL } from '../urls';
 
@@ -88,6 +89,49 @@ describe('NotebookScenePage', () => {
     expect(await screen.findByRole('button', { name: 'Copy link' })).toBeInTheDocument();
   });
 
+  // The outline and the cell frames are separate components joined only by the frame's data
+  // attribute, so this is the one place that would notice the two drifting apart. Several headings in
+  // one cell, because landing on the cell's top would leave the later ones off-screen.
+  it('scrolls to the selected heading, not just to the top of its cell', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    const scrollIntoView = jest.spyOn(HTMLElement.prototype, 'scrollIntoView');
+    const cell = (key: string, text: string) =>
+      new NotebookCellItem({ key, elementName: key, source: 'user', content: { kind: 'Markdown', spec: { text } } });
+
+    await act(async () => {
+      getNotebookPageStateManager().setState({
+        isLoading: false,
+        scene: new NotebookScene({
+          title: 'Checkout latency investigation',
+          uid: 'nb-1',
+          body: new NotebookLayoutManager({
+            cells: [
+              cell('overview', '# Overview'),
+              cell('findings', '# Findings\n\nA long paragraph.\n\n## Root cause\n\nMore prose.\n\n## Follow-ups'),
+            ],
+          }),
+          $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+          timePicker: new SceneTimePicker({}),
+          refreshPicker: new SceneRefreshPicker({}),
+        }),
+      });
+      render(<NotebookScenePage />);
+    });
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Outline' }));
+    const outline = screen.getByRole('tree', { name: 'Notebook outline' });
+    await userEvent.click(within(outline).getByRole('button', { name: 'Expand Findings' }));
+    await userEvent.click(within(outline).getByRole('button', { name: 'Follow-ups' }));
+
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start', behavior: 'smooth' });
+    const target = scrollIntoView.mock.contexts[0];
+    expect(target).toBeInstanceOf(HTMLHeadingElement);
+    expect(target).toHaveTextContent('Follow-ups');
+    expect(target.closest('[data-notebook-cell-key]')).toHaveAttribute('data-notebook-cell-key', 'findings');
+    scrollIntoView.mockRestore();
+  });
+
   // Nothing is mocked here: building a blank notebook needs no request, which is the point of it.
   describe('the blank new-notebook route', () => {
     afterEach(() => {
@@ -101,7 +145,7 @@ describe('NotebookScenePage', () => {
       render(<NotebookScenePage />, { historyOptions: { initialEntries: [NOTEBOOK_NEW_URL] } });
 
       // The scene rendered, so this is the document rather than the loading or not-found branch.
-      expect(await screen.findByRole('radio', { name: 'Edit' })).toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: /^Notebook mode:/ })).toBeInTheDocument();
       expect(getNotebookPageStateManager().state.scene?.state.uid).toBeUndefined();
       // Copying a link to a notebook and exporting one both need a notebook that exists, so the
       // actions are refused until the first save creates it. The bar itself is rendered anyway: it
@@ -117,7 +161,7 @@ describe('NotebookScenePage', () => {
       render(<NotebookScenePage />, {
         historyOptions: { initialEntries: [`${NOTEBOOK_NEW_URL}?edit=true&from=now-3h&to=now`] },
       });
-      await screen.findByRole('radio', { name: 'Edit' });
+      await screen.findByRole('button', { name: /^Notebook mode:/ });
 
       // What autosave does when the create comes back.
       await act(async () => {
@@ -141,7 +185,7 @@ describe('NotebookScenePage', () => {
       render(<NotebookScenePage />, {
         historyOptions: { initialEntries: ['/notebooks', `${NOTEBOOK_NEW_URL}?edit=true`], initialIndex: 1 },
       });
-      await screen.findByRole('radio', { name: 'Edit' });
+      await screen.findByRole('button', { name: /^Notebook mode:/ });
 
       await act(async () => {
         getNotebookPageStateManager().state.scene!.setState({ uid: 'nb-new' });
@@ -160,7 +204,7 @@ describe('NotebookScenePage', () => {
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
 
       render(<NotebookScenePage />, { historyOptions: { initialEntries: [NOTEBOOK_NEW_URL] } });
-      await screen.findByRole('radio', { name: 'Edit' });
+      await screen.findByRole('button', { name: /^Notebook mode:/ });
 
       expect(jest.mocked(NotebookAnalytics.newStarted)).toHaveBeenCalledTimes(1);
       expect(jest.mocked(NotebookAnalytics.newStarted)).toHaveBeenCalledWith('notebook_list');
@@ -173,7 +217,7 @@ describe('NotebookScenePage', () => {
       render(<NotebookScenePage />, {
         historyOptions: { initialEntries: [`${NOTEBOOK_NEW_URL}?edit=true&notebookSource=command_palette`] },
       });
-      await screen.findByRole('radio', { name: 'Edit' });
+      await screen.findByRole('button', { name: /^Notebook mode:/ });
 
       expect(jest.mocked(NotebookAnalytics.newStarted)).toHaveBeenCalledWith('command_palette');
 
@@ -216,7 +260,7 @@ describe('NotebookScenePage', () => {
 
       await waitFor(() => expect(locationService.getLocation().pathname).toBe(NOTEBOOK_NEW_URL));
       expect(stateManager.state.scene?.state.uid).toBeUndefined();
-      expect(screen.getByRole('radio', { name: 'Edit' })).toBeChecked();
+      expect(screen.getByRole('button', { name: 'Notebook mode: Editing' })).toBeInTheDocument();
       expect(NotebookAnalytics.newStarted).toHaveBeenCalledWith('command_palette');
     });
 
@@ -237,7 +281,7 @@ describe('NotebookScenePage', () => {
 
       render(<NotebookScenePage />, { historyOptions: { initialEntries: [`${NOTEBOOK_NEW_URL}?edit=true`] } });
 
-      expect(await screen.findByRole('radio', { name: 'Edit' })).toBeChecked();
+      expect(await screen.findByRole('button', { name: 'Notebook mode: Editing' })).toBeInTheDocument();
     });
   });
 

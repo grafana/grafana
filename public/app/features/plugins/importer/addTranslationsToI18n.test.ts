@@ -8,6 +8,8 @@ import { type SystemJSWithLoaderHooks } from '../loader/types';
 
 import { addTranslationsToI18n } from './addTranslationsToI18n';
 
+jest.mock('@grafana/i18n/internal', () => makeSpyable('@grafana/i18n/internal'));
+
 describe('addTranslationsToI18n', () => {
   const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototype;
   const originalFetch = systemJSPrototype.fetch;

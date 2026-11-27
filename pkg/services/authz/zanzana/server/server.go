@@ -30,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -54,9 +53,12 @@ type Server struct {
 	authzv1.UnimplementedAuthzServiceServer
 	authzextv1.UnimplementedAuthzExtentionServiceServer
 
-	openFGAServer OpenFGAServer
-	openFGAClient openfgav1.OpenFGAServiceClient
-	store         storage.OpenFGADatastore
+	openFGAServer          OpenFGAServer
+	openFGAClient          openfgav1.OpenFGAServiceClient
+	store                  storage.OpenFGADatastore
+	permissionCacheEnabled bool
+	permissionCacheOnce    sync.Once
+	permissionCache        *permissionPrincipalCache
 
 	cfg      setting.ZanzanaServerSettings
 	stores   map[string]zanzana.StoreInfo
@@ -105,27 +107,28 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 	zanzanaCfg := cfg.ZanzanaServer
 
 	s := &Server{
-		openFGAServer: openfga,
-		openFGAClient: openFGAClient,
-		store:         store,
-		stores:        make(map[string]zanzana.StoreInfo),
-		cfg:           zanzanaCfg,
-		cache:         localcache.New(zanzanaCfg.CacheSettings.CheckQueryCacheTTL, cacheCleanInterval),
-		logger:        logger,
-		tracer:        tracer,
-		metrics:       newZanzanaServerMetrics(reg),
-		nsLimiterSize: int64(zanzanaCfg.MaxConcurrentRequestsPerNamespace),
+		openFGAServer:          openfga,
+		openFGAClient:          openFGAClient,
+		store:                  store,
+		permissionCacheEnabled: cfg.RBAC.PermissionCache,
+		stores:                 make(map[string]zanzana.StoreInfo),
+		cfg:                    zanzanaCfg,
+		cache:                  localcache.New(zanzanaCfg.CacheSettings.CheckQueryCacheTTL, cacheCleanInterval),
+		logger:                 logger,
+		tracer:                 tracer,
+		metrics:                newZanzanaServerMetrics(reg),
+		nsLimiterSize:          int64(zanzanaCfg.MaxConcurrentRequestsPerNamespace),
 	}
 
 	if zanzanaCfg.MaxConcurrentRequests > 0 {
 		s.globalSem = semaphore.NewWeighted(int64(zanzanaCfg.MaxConcurrentRequests))
 	}
 
-	var clientFactory resources.ClientFactory
+	var clientFactory reconcilerClients
 	if cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
 		if restConfig != nil {
 			// Embedded mode: use LoopbackClientConfig via the eventual provider
-			clientFactory = resources.NewClientFactory(restConfig)
+			clientFactory.loopback = restConfig
 		} else {
 			// Standalone mode: use explicit URLs with token exchange
 			if cfg.ZanzanaReconciler.FolderAPIServerURL == "" {
@@ -187,7 +190,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 				})
 			}
 
-			clientFactory = resources.NewClientFactoryForMultipleAPIServers(configProviders)
+			clientFactory.byGroup = configProviders
 		}
 	}
 
@@ -202,7 +205,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 
 		mtReconciler = reconciler.NewReconciler(
 			s,
-			clientFactory,
+			&clientFactory,
 			reconciler.Config{
 				Workers:             cfg.ZanzanaReconciler.Workers,
 				Interval:            cfg.ZanzanaReconciler.Interval,

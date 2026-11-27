@@ -54,33 +54,36 @@ export const VerifyEmail = () => {
       <Legend>
         <Trans i18nKey="sign-up.verify.header">Verify email</Trans>
       </Legend>
-      <Field
-        label={t('sign-up.verify.email-label', 'Email')}
-        description={t(
-          'sign-up.verify.email-description',
-          'Enter your email address to get a verification link sent to you'
-        )}
-        invalid={!!errors.email}
-        error={errors.email?.message}
-      >
-        <Input
-          id="email"
-          {...register('email', {
-            required: 'Email is required',
-            pattern: {
-              value: w3cStandardEmailValidator,
-              message: 'Email is invalid',
-            },
-          })}
-        />
-      </Field>
-      <Stack>
-        <Button type="submit">
-          <Trans i18nKey="sign-up.verify.send-button">Send verification email</Trans>
-        </Button>
-        <LinkButton fill="text" href={getConfig().appSubUrl + '/login'}>
-          <Trans i18nKey="sign-up.verify.back-button">Back to login</Trans>
-        </LinkButton>
+      <Stack direction="column" gap={2}>
+        <Field
+          noMargin
+          label={t('sign-up.verify.email-label', 'Email')}
+          description={t(
+            'sign-up.verify.email-description',
+            'Enter your email address to get a verification link sent to you'
+          )}
+          invalid={!!errors.email}
+          error={errors.email?.message}
+        >
+          <Input
+            id="email"
+            {...register('email', {
+              required: 'Email is required',
+              pattern: {
+                value: w3cStandardEmailValidator,
+                message: 'Email is invalid',
+              },
+            })}
+          />
+        </Field>
+        <Stack>
+          <Button type="submit">
+            <Trans i18nKey="sign-up.verify.send-button">Send verification email</Trans>
+          </Button>
+          <LinkButton fill="text" href={getConfig().appSubUrl + '/login'}>
+            <Trans i18nKey="sign-up.verify.back-button">Back to login</Trans>
+          </LinkButton>
+        </Stack>
       </Stack>
     </form>
   );

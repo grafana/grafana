@@ -44,6 +44,7 @@ export interface AlertRuleListItemProps {
   isPaused?: boolean;
   health?: RuleHealth;
   isProvisioned?: boolean;
+  provenance?: string;
   lastEvaluation?: string;
   evaluationInterval?: string;
   labels?: Labels;
@@ -78,6 +79,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     error,
     href,
     isProvisioned,
+    provenance,
     lastEvaluation,
     evaluationInterval,
     isPaused = false,
@@ -173,7 +175,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
           </TextLink>
           {origin && <PluginOriginBadge pluginId={origin.pluginId} size="sm" />}
           {/* show provisioned badge only when it also doesn't have plugin origin */}
-          {isProvisioned && !origin && <ProvisioningBadge />}
+          {isProvisioned && !origin && <ProvisioningBadge provenance={provenance} />}
           {/* let's not show labels for now, but maybe users would be interested later? Or maybe show them only in the list view? */}
           {/* {labels && <AlertLabels labels={labels} size="xs" />} */}
         </Stack>
@@ -208,6 +210,7 @@ export function RecordingRuleListItem({
   href,
   health,
   isProvisioned,
+  provenance,
   error,
   isPaused,
   origin,
@@ -246,7 +249,7 @@ export function RecordingRuleListItem({
           </TextLink>
           {origin && <PluginOriginBadge pluginId={origin.pluginId} size="sm" />}
           {/* show provisioned badge only when it also doesn't have plugin origin */}
-          {isProvisioned && !origin && <ProvisioningBadge />}
+          {isProvisioned && !origin && <ProvisioningBadge provenance={provenance} />}
           {/* let's not show labels for now, but maybe users would be interested later? Or maybe show them only in the list view? */}
           {/* {labels && <AlertLabels labels={labels} size="xs" />} */}
         </Stack>

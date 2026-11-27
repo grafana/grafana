@@ -65,9 +65,8 @@ async function runChecks(page: Page) {
 }
 
 async function createEmptyDatasource(page: Page): Promise<string> {
-  await page.goto('/connections/datasources');
-  await expect(page.getByText(/Add( new)? data source/)).toBeVisible();
-  await page.getByText(/Add( new)? data source/).click();
+  // Skip the "Add new data source" button: with the Grafana Assistant installed it only opens a menu.
+  await page.goto('/connections/datasources/new');
   await page.getByRole('button', { name: 'Prometheus' }).click();
   await expect(page.getByRole('button', { name: 'Edit title' })).toBeVisible();
   const dsName = await page.getByRole('heading', { level: 1 }).innerText();

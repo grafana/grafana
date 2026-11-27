@@ -61,8 +61,8 @@ func TestScreenshotRenderer_PutBlobErrors(t *testing.T) {
 		response *resourcepb.PutBlobResponse
 		err      error
 	}{
-		{name: "embedded", response: &resourcepb.PutBlobResponse{Error: result, Url: "https://example.com/invalid.png", Uid: "invalid"}},
 		{name: "grpc details", err: st.Err()},
+		{name: "grpc details with partial response", response: &resourcepb.PutBlobResponse{Url: "https://example.com/invalid.png", Uid: "invalid"}, err: st.Err()},
 		{name: "ordinary transport", err: transportErr},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -78,9 +78,7 @@ func TestScreenshotRenderer_PutBlobErrors(t *testing.T) {
 			}, "dashboard", nil)
 			require.Error(t, err)
 			require.Empty(t, url)
-			if tc.err != nil {
-				require.Same(t, tc.err, err)
-			}
+			require.Same(t, tc.err, err)
 		})
 	}
 }
@@ -297,7 +295,7 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 						// UserID 0 selects the synthetic render-service identity
 						// rather than a real user, so OrgRedirect never fires.
 						require.Equal(t, int64(0), opts.UserID)
-						require.Equal(t, identity.RoleAdmin, opts.OrgRole)
+						require.Equal(t, authlib.RoleAdmin, opts.OrgRole)
 						return &rendering.RenderResult{
 							FilePath: tmpFile,
 						}, nil
@@ -329,7 +327,7 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 					DoAndReturn(func(_ context.Context, _ rendering.RenderType, opts rendering.Opts) (*rendering.RenderResult, error) {
 						require.Equal(t, int64(1), opts.OrgID)
 						require.Equal(t, int64(0), opts.UserID)
-						require.Equal(t, identity.RoleAdmin, opts.OrgRole)
+						require.Equal(t, authlib.RoleAdmin, opts.OrgRole)
 						return &rendering.RenderResult{
 							FilePath: tmpFile,
 						}, nil

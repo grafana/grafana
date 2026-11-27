@@ -233,7 +233,6 @@ func createConnection(t *testing.T, helper *common.ProvisioningTestHelper, conne
 }
 
 var env = common.NewSharedGitEnv(
-	common.WithoutProvisioningFolderMetadata,
 	common.WithRepositoryTypes([]string{"git", "github"}),
 	common.WithConnectionTypes([]string{"github", "githubOAuth", "gitOAuth"}),
 )

@@ -2,8 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRef, useCallback } from 'react';
 
-import { createDataFrame, createTheme } from '@grafana/data';
-import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
+import { createDataFrame, createTheme, FieldType } from '@grafana/data';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import { data } from './FlameGraph/testData/dataNestedSet';
@@ -32,7 +32,6 @@ jest.mock('react-use', () => ({
 // from the client box - jsdom reports 0 for both.
 function mockTableSize({ width, height }: { width: number; height: number } = { width: 500, height: 500 }) {
   mockBoundingClientRect({ width, height });
-  mockClientSize({ width, height });
 }
 
 describe('labelSearch', () => {
@@ -92,6 +91,32 @@ describe('labelSearch', () => {
       const term = 'pattern_not_found';
       let found = labelSearch(term, container);
       expect(found.size).toBe(0);
+    });
+
+    it('keeps the same matches when a matching prefix is completed with different casing', () => {
+      const df = createDataFrame({
+        fields: [
+          { name: 'level', type: FieldType.number, values: [0, 1, 1, 1] },
+          {
+            name: 'label',
+            type: FieldType.string,
+            values: [
+              'total',
+              'github.com/prometheus/prometheus/tsdb.PostingsForMatchers',
+              'github.com/prometheus/prometheus/tsdb/index.PostingsForMatchers',
+              'github.com/prometheus/prometheus/tsdb.(*Head).Range',
+            ],
+          },
+          { name: 'value', type: FieldType.number, values: [3, 1, 1, 1] },
+          { name: 'self', type: FieldType.number, values: [0, 1, 1, 1] },
+        ],
+      });
+      const caseContainer = new FlameGraphDataContainer(df, { collapsing: false });
+      const matched = ['github.com/prometheus/prometheus/tsdb.PostingsForMatchers'];
+
+      expect([...labelSearch('tsdb.Postings', caseContainer)]).toEqual(matched);
+      expect([...labelSearch('tsdb.PostingsFor', caseContainer)]).toEqual(matched);
+      expect([...labelSearch('tsdb.Postingsfor', caseContainer)]).toEqual(matched);
     });
   });
 

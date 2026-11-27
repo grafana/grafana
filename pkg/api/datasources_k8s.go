@@ -28,6 +28,8 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 )
 
+const apiVersionForLegacy = "v0alpha1"
+
 // getK8sDataSourceByUIDHandler returns a handler that redirects GET /api/datasources/uid/:uid
 // to /apis/<plugin-type>.datasource.grafana.app/v0alpha1/namespaces/<org>/datasources/{uid} when the feature toggle is enabled.
 //
@@ -72,7 +74,7 @@ func (hs *HTTPServer) getK8sDataSourceByUIDHandler() web.Handler {
 
 		conn := conns.Items[0]
 
-		k8sDS, err := hs.getK8sDataSource(c, conn.APIGroup, conn.APIVersion, conn.Name)
+		k8sDS, err := hs.getK8sDataSource(c, conn.APIGroup, apiVersionForLegacy, conn.Name)
 		if err != nil {
 			return hs.handleK8sError(err)
 		}
@@ -196,7 +198,7 @@ func (hs *HTTPServer) callK8sDataSourceResourceHandler() web.Handler {
 		subPath := web.Params(c.Req)["*"]
 
 		k8sPath := fmt.Sprintf("/apis/%s/%s/namespaces/%s/datasources/%s/resources",
-			conn.APIGroup, conn.APIVersion, namespace, conn.Name)
+			conn.APIGroup, apiVersionForLegacy, namespace, conn.Name)
 		if subPath != "" {
 			k8sPath += "/" + subPath
 		}
@@ -253,7 +255,7 @@ func (hs *HTTPServer) callK8sDataSourceHealthHandler() web.Handler {
 		}
 
 		namespace := hs.namespacer(c.GetOrgID())
-		c.Req.URL.Path = fmt.Sprintf("/apis/%s/%s/namespaces/%s/datasources/%s/health", conn.APIGroup, conn.APIVersion, namespace, conn.Name)
+		c.Req.URL.Path = fmt.Sprintf("/apis/%s/%s/namespaces/%s/datasources/%s/health", conn.APIGroup, apiVersionForLegacy, namespace, conn.Name)
 		hs.dsEndpointRedirects.WithLabelValues("health", pluginTypeFromConnection(conn), "remote").Inc()
 		hs.clientConfigProvider.DirectlyServeHTTP(c.Resp, c.Req)
 	}

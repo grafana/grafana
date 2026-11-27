@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { Fragment, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
@@ -5,7 +6,7 @@ import { logError } from '@grafana/runtime';
 import { Badge, ConfirmModal, Tooltip, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { CodeText } from 'app/features/alerting/unified/components/common/TextVariants';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 
 import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useNotificationTemplateAbility } from '../../hooks/abilities/alertmanager/useNotificationTemplateAbility';
@@ -224,17 +225,13 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
         <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
           <td />
           <td colSpan={2}>
-            <DetailsField label="" horizontal={true}>
+            <DetailsField label="" horizontal={true} childrenWrapperClassName={templateContent}>
               <TemplateEditor
-                width={'auto'}
                 height={'auto'}
-                autoHeight={true}
                 value={template}
                 showLineNumbers={false}
-                monacoOptions={{
-                  readOnly: true,
-                  scrollBeyondLastLine: false,
-                }}
+                readOnly
+                aria-label={t('alerting.template-content-and-preview.label-template-content', 'Template content')}
               />
             </DetailsField>
           </td>
@@ -243,3 +240,9 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
     </Fragment>
   );
 }
+
+// Keep unwrapped template lines from setting the table's intrinsic width.
+const templateContent = css({
+  minWidth: 0,
+  contain: 'inline-size',
+});

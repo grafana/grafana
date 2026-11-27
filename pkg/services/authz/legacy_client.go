@@ -8,9 +8,11 @@ type LegacyAccessClient = legacyclient.LegacyAccessClient
 
 type LegacyCheckRequest = legacyclient.LegacyCheckRequest
 
-type LegacyGlobalEvaluation = legacyclient.LegacyGlobalEvaluation
+type LegacyActionRestriction = legacyclient.LegacyActionRestriction
 
 type LegacyInternalIdentity = legacyclient.LegacyInternalIdentity
+
+type LegacyBackgroundIdentity = legacyclient.LegacyBackgroundIdentity
 
 type LegacyInternalIdentityProfile = legacyclient.LegacyInternalIdentityProfile
 

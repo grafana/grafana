@@ -67,19 +67,35 @@ describe('change highlights', () => {
     expect(added.mount.parentElement?.id).toBe('untitled');
   });
 
-  it('dims only the unchanged panels, and undoes everything once there is nothing to mark', () => {
+  it('leaves the unchanged panels as they are, and takes every badge away once there is nothing to mark', () => {
     const { rerender, unmount } = renderHook(
       ({ marked }: { marked?: SpecChange[] }) => useChangeHighlights(dashboard, marked, getRoot),
       { initialProps: { marked: changes as SpecChange[] | undefined } }
     );
-    expect(Array.from(document.querySelectorAll('[data-lifecycle-dimmed]')).map((el) => el.id)).toEqual(['unchanged']);
+    expect(
+      Array.from(document.querySelectorAll('[data-lifecycle-badge]')).map(
+        (el) => el.parentElement?.closest('[data-viz-panel-key]')?.id
+      )
+    ).toEqual(['edited', 'untitled']);
+    expect(document.getElementById('unchanged')?.className).toBe('');
 
     rerender({ marked: undefined });
-    expect(document.querySelector('[data-lifecycle-dimmed]')).toBeNull();
     expect(document.querySelector('[data-lifecycle-badge]')).toBeNull();
 
     rerender({ marked: changes });
     unmount();
-    expect(document.querySelector('[data-lifecycle-badge], [data-lifecycle-dimmed]')).toBeNull();
+    expect(document.querySelector('[data-lifecycle-badge]')).toBeNull();
+  });
+
+  // Splitting rows into tabs moves every panel without changing one: nothing to point at.
+  it('marks nothing when the changes add or edit no panel', () => {
+    const elsewhere: SpecChange[] = [
+      { type: 'edited', target: 'layout', name: 'layout' },
+      { type: 'removed', target: 'panel', name: 'Memory' },
+    ];
+    const { result } = renderHook(() => useChangeHighlights(dashboard, elsewhere, getRoot));
+
+    expect(result.current).toEqual([]);
+    expect(document.querySelector('[data-lifecycle-badge]')).toBeNull();
   });
 });

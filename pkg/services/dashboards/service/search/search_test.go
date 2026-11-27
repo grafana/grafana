@@ -12,7 +12,6 @@ import (
 	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -144,16 +143,6 @@ func TestParseResults(t *testing.T) {
 			require.ErrorContains(t, err, "has no resource key")
 		}
 	})
-	t.Run("should preserve the status of a response error", func(t *testing.T) {
-		resSearchResp := &resourcepb.ResourceSearchResponse{
-			Error: resource.AsErrorResult(apierrors.NewServiceUnavailable("search unavailable")),
-		}
-
-		_, err := ParseResults(resSearchResp, 0)
-		require.Error(t, err)
-		require.True(t, apierrors.IsServiceUnavailable(err))
-		require.Equal(t, responsewriters.ErrorToAPIStatus(resource.StatusError(resSearchResp.Error)), responsewriters.ErrorToAPIStatus(err))
-	})
 }
 
 func makeResponse(names []string, totalHits int64) *resourcepb.ResourceSearchResponse {
@@ -177,19 +166,20 @@ func TestSearchAll_Errors(t *testing.T) {
 	grpcStatus, err := status.New(codes.ResourceExhausted, result.Message).WithDetails(result)
 	require.NoError(t, err)
 	for _, tc := range []struct {
-		name string
-		resp *resourcepb.ResourceSearchResponse
-		err  error
+		name        string
+		resp        *resourcepb.ResourceSearchResponse
+		err         error
+		richDetails bool
 	}{
-		{name: "embedded", resp: &resourcepb.ResourceSearchResponse{Error: result}},
-		{name: "grpc", err: grpcStatus.Err()},
-		{name: "wrapped grpc", err: fmt.Errorf("search: %w", grpcStatus.Err())},
+		{name: "grpc", err: grpcStatus.Err(), richDetails: true},
+		{name: "wrapped grpc", err: fmt.Errorf("search: %w", grpcStatus.Err()), richDetails: true},
+		{name: "grpc with partial response", resp: makeResponse([]string{"dashboard-2"}, 2), err: grpcStatus.Err(), richDetails: true},
+		{name: "permission denied", err: status.Error(codes.PermissionDenied, "denied")},
 		{name: "canceled", err: context.Canceled},
 		{name: "wrapped canceled", err: fmt.Errorf("search: %w", context.Canceled)},
 		{name: "deadline exceeded", err: context.DeadlineExceeded},
 		{name: "unstructured grpc", err: status.Error(codes.Unavailable, "private transport details")},
 		{name: "other transport error", err: fmt.Errorf("connection refused")},
-		{name: "transport takes precedence", resp: &resourcepb.ResourceSearchResponse{Error: result}, err: fmt.Errorf("connection refused")},
 	} {
 		for _, errorPage := range []int{1, 2} {
 			t.Run(fmt.Sprintf("%s/page %d", tc.name, errorPage), func(t *testing.T) {
@@ -205,10 +195,9 @@ func TestSearchAll_Errors(t *testing.T) {
 
 				results, err := SearchAll(context.Background(), 1, request, searchFn)
 
-				if tc.err != nil {
-					require.True(t, err == tc.err, "transport errors must be returned unchanged") //nolint:errorlint // Assert identity, not merely membership in the error chain.
-				} else {
-					requireDashboardSearchRateLimitStatus(t, err)
+				require.True(t, err == tc.err, "returned errors must be passed through unchanged") //nolint:errorlint // Assert identity, not merely membership in the error chain.
+				if tc.richDetails {
+					requireDashboardSearchRateLimitStatus(t, resource.StatusErrorFromGRPC(err))
 				}
 				require.Empty(t, results.Hits, "partial results must not be returned as a complete result")
 				require.Equal(t, errorPage, calls)

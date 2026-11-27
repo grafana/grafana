@@ -53,7 +53,7 @@ func (l *searchChildLister) ListChildren(ctx context.Context, namespace, folderU
 		Offset:       offset,
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+	if err := resource.StatusErrorFromGRPC(err); err != nil {
 		return nil, 0, fmt.Errorf("search %s in folder %q: %w", kind, folderUID, err)
 	}
 	// Rows in another format are not decoded here, so they must not read as an empty folder.

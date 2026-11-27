@@ -1,0 +1,36 @@
+import { ArgTypes, Canvas, Meta } from '@storybook/addon-docs/blocks';
+import { InlineButton } from './InlineButton';
+import * as InlineButtonStories from './InlineButton.story';
+
+<Meta title="MDX|InlineButton" component={InlineButton} />
+
+# InlineButton
+
+`InlineButton` renders a semantic `<button>` with the appearance of inline linked text.
+
+## When to use
+
+Use `InlineButton` for actions within text or data that open a dialog or drawer, reveal more content, or otherwise
+update the current page.
+
+## Never use for
+
+Use `TextLink` for navigation. Use `Button` for actions that should have the standard button treatment.
+
+## Do's and don'ts
+
+Don't override `InlineButton` to create other button treatments.
+
+## Usage
+
+<Canvas of={InlineButtonStories.Inline} />
+
+### Disabled
+
+<Canvas of={InlineButtonStories.Disabled} />
+
+## Accessibility
+
+## Props
+
+<ArgTypes of={InlineButton} />

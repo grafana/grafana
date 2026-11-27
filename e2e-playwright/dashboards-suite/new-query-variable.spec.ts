@@ -1,4 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
+import { expect, test } from '@grafana/plugin-e2e';
 
 const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
 const DASHBOARD_NAME = 'Templating - Nested Template Variables';
@@ -14,7 +14,8 @@ test.use({
   },
 });
 
-test.describe(
+// https://github.com/grafana/grafana/issues/116350
+test.describe.skip(
   'Variables - Query - Add variable',
   {
     tag: ['@dashboards'],

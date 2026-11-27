@@ -24,9 +24,9 @@ interface Props {
    */
   image?: ReactNode;
   /**
-   * Message to display to the user
+   * Message to display to the user. Strings use the `h4` text style; React nodes render as provided.
    */
-  message: string;
+  message: ReactNode;
   /**
    * Which variant to use. Affects the default image shown.
    */
@@ -59,9 +59,13 @@ export const EmptyState = ({
       <div className={styles.container}>
         {!hideImage && imageToShow}
         <Stack direction="column" alignItems="center">
-          <Text variant="h4" textAlignment="center">
-            {message}
-          </Text>
+          {typeof message === 'string' ? (
+            <Text variant="h4" textAlignment="center">
+              {message}
+            </Text>
+          ) : (
+            message
+          )}
           {children && (
             <Text color="secondary" textAlignment="center">
               {children}

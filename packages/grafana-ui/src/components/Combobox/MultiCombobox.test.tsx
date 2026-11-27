@@ -2,7 +2,8 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import React from 'react';
 
-import { mockComboboxRect } from '../../test-utils/mockDom';
+import { mockComboboxRect } from '@grafana/test-utils';
+
 import { Drawer } from '../Drawer/Drawer';
 import { Modal } from '../Modal/Modal';
 
@@ -75,6 +76,33 @@ describe('MultiCombobox', () => {
     ];
     render(<MultiCombobox options={options} value={[]} onChange={jest.fn()} placeholder="Select" />);
     expect(screen.getByPlaceholderText('Select')).toBeInTheDocument();
+  });
+
+  it('forwards data attributes to the combobox input alongside data-testid', () => {
+    const options = [{ label: 'A', value: 'a' }];
+    render(
+      <MultiCombobox
+        options={options}
+        value={[]}
+        onChange={jest.fn()}
+        data-testid="my-multi-combobox"
+        data-analytics-id="labels_picked"
+      />
+    );
+
+    const input = screen.getByTestId('my-multi-combobox');
+    expect(input).toHaveAttribute('role', 'combobox');
+    expect(input).toHaveAttribute('data-analytics-id', 'labels_picked');
+  });
+
+  it('does not forward props that are not data attributes to the input', () => {
+    const options = [{ label: 'A', value: 'a' }];
+    const spreadProps = { title: 'Spread title', 'data-analytics-id': 'labels_picked' };
+    render(<MultiCombobox options={options} value={[]} onChange={jest.fn()} {...spreadProps} />);
+
+    const input = screen.getByRole('combobox');
+    expect(input).toHaveAttribute('data-analytics-id', 'labels_picked');
+    expect(input).not.toHaveAttribute('title');
   });
 
   it('should not render with placeholder when options selected', async () => {
@@ -560,6 +588,7 @@ describe('MultiCombobox', () => {
 
       const input = screen.getByRole('combobox');
       await user.click(input);
+      await screen.findByRole('listbox');
 
       await user.keyboard('a');
       act(() => jest.advanceTimersByTime(DEBOUNCE_TIME_MS)); // Skip debounce
@@ -596,6 +625,7 @@ describe('MultiCombobox', () => {
 
       const input = screen.getByRole('combobox');
       await user.click(input);
+      await screen.findByRole('listbox');
 
       await user.keyboard('a');
       act(() => jest.advanceTimersByTime(10));
@@ -700,6 +730,52 @@ describe('MultiCombobox', () => {
       expect(screen.queryByText(loadingMessage)).not.toBeInTheDocument();
     });
   });
+
+  it('does not steal focus when it is moved among keyed siblings in StrictMode', async () => {
+    const options = [
+      { label: 'A', value: 'a' },
+      { label: 'B', value: 'b' },
+    ];
+
+    // StrictMode re-runs the effects of a component that React moves, after it has already rendered once
+    const Harness = ({ order }: { order: string[] }) => (
+      <React.StrictMode>
+        <input aria-label="search" />
+        {order.map((id) => (
+          <MultiCombobox key={id} options={options} value={[]} onChange={jest.fn()} />
+        ))}
+      </React.StrictMode>
+    );
+
+    const { rerender } = render(<Harness order={['first', 'second']} />);
+    const search = screen.getByLabelText('search');
+    await user.click(search);
+    expect(search).toHaveFocus();
+
+    rerender(<Harness order={['second', 'first']} />);
+
+    expect(search).toHaveFocus();
+  });
+
+  it.each(['{Delete}', '{Backspace}'])(
+    'does not clear the selection when %s is the first key pressed on a remove button',
+    async (key) => {
+      const options = [
+        { label: 'A', value: 'a' },
+        { label: 'B', value: 'b' },
+        { label: 'C', value: 'c' },
+      ];
+      const onChange = jest.fn();
+      render(<MultiCombobox width={200} options={options} value={['a', 'b', 'c']} onChange={onChange} />);
+
+      await user.tab();
+      expect(screen.getByRole('button', { name: 'Remove A' })).toHaveFocus();
+
+      await user.keyboard(key);
+
+      expect(onChange).not.toHaveBeenCalled();
+    }
+  );
 
   describe('Escape key behavior in overlays', () => {
     const options = [

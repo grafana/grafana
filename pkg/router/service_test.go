@@ -396,14 +396,14 @@ func TestMiddlewareEnabledBySettingsAPI(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			featuremgmt.WithEnabledFlags(t, tc.flags...)
 			features := featuremgmt.WithFeatures(tc.toggles...)
-			require.Equal(t, tc.middleware, middlewareEnabled(tc.cfg, features))
+			require.Equal(t, tc.middleware, MiddlewareEnabled(tc.cfg, features))
 			require.Equal(t, tc.settings, settingsEnabled(tc.cfg))
 			svc, err := ProvideService(tc.cfg, features, dummyRoutesLoader{}, prometheus.NewRegistry(), NewGrafanaRouter(nil, nil))
 			require.NoError(t, err)
 			require.Equal(t, tc.middleware, svc.middleware)
 		})
 	}
-	require.False(t, middlewareEnabled(grafana, nil))
+	require.False(t, MiddlewareEnabled(grafana, nil))
 	require.False(t, settingsEnabled(grafana))
 }
 

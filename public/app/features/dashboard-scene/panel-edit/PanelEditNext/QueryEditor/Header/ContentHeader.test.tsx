@@ -4,7 +4,7 @@ import { type DataSourceInstanceSettings, type DataSourcePluginMeta, type Scoped
 import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../constants';
-import { renderWithQueryEditorProvider } from '../testUtils';
+import { makeQueryActionTarget, makeStackedMode, renderWithQueryEditorProvider } from '../testUtils';
 
 import { ContentHeader, ContentHeaderSceneWrapper } from './ContentHeader';
 
@@ -19,7 +19,13 @@ jest.mock('app/features/datasources/components/picker/DataSourcePicker', () => (
 }));
 
 // Reads from QueryEditor context, which is out of scope for these header wiring tests.
-jest.mock('./HeaderActions', () => ({ HeaderActions: () => null }));
+const mockHeaderActions = jest.fn();
+jest.mock('./HeaderActions', () => ({
+  HeaderActions: (props: unknown) => {
+    mockHeaderActions(props);
+    return null;
+  },
+}));
 
 const resolvedSettings: DataSourceInstanceSettings = {
   uid: '${metrics_source}',
@@ -93,5 +99,64 @@ describe('ContentHeader query name', () => {
     });
 
     expect(screen.getByRole('button', { name: 'Edit query name' })).toBeInTheDocument();
+  });
+});
+
+describe('ContentHeaderSceneWrapper with a target', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('describes the target card instead of the selected one', () => {
+    const queryA = { refId: 'A' };
+    const queryB = { refId: 'B' };
+    const target = makeQueryActionTarget(queryB, { dsData: { dsSettings: resolvedSettings } });
+
+    renderWithQueryEditorProvider(<ContentHeaderSceneWrapper target={target} variant="stacked" />, {
+      queries: [queryA, queryB],
+      selectedQuery: queryA,
+      uiStateOverrides: { stackedMode: makeStackedMode({ enabled: true }) },
+    });
+
+    expect(pickerProps().current).toBe(resolvedSettings);
+    expect(mockHeaderActions.mock.lastCall?.[0]).toMatchObject({
+      target,
+      source: 'stacked_header',
+    });
+  });
+
+  it('reports the content header source for a stacked-variant header in single mode', () => {
+    const query = { refId: 'A' };
+
+    renderWithQueryEditorProvider(
+      <ContentHeaderSceneWrapper target={makeQueryActionTarget(query)} variant="stacked" />,
+      {
+        queries: [query],
+        uiStateOverrides: { stackedMode: makeStackedMode({ enabled: false }) },
+      }
+    );
+
+    expect(mockHeaderActions.mock.lastCall?.[0]).toMatchObject({ source: 'content_header' });
+  });
+
+  it('ignores a pending picker that belongs to the selection', () => {
+    const query = { refId: 'B' };
+
+    renderWithQueryEditorProvider(<ContentHeaderSceneWrapper target={makeQueryActionTarget(query)} />, {
+      queries: [query],
+      uiStateOverrides: { pendingExpression: { insertAfter: 'A' } },
+    });
+
+    expect(screen.queryByText('Select an expression')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit query name' })).toBeInTheDocument();
+  });
+
+  it('acts on the selected card from the default header', () => {
+    renderWithQueryEditorProvider(<ContentHeaderSceneWrapper />, { selectedQuery: { refId: 'A' } });
+
+    expect(mockHeaderActions.mock.lastCall?.[0]).toMatchObject({
+      target: undefined,
+      source: 'content_header',
+    });
   });
 });

@@ -2,7 +2,6 @@ import { t } from '@grafana/i18n';
 
 /**
  * Returns the tooltip text for a resource managed by a repository.
- * Shared by ManagedDashboardNavBarBadge and FolderRepo.
  */
 export function getManagedByRepositoryTooltip(title?: string): string {
   if (!title) {
@@ -27,6 +26,18 @@ export const getReadOnlyTooltipText = ({ isLocal = false }) => {
       );
 };
 
+export function getReadOnlyRepositoryTooltip(): string {
+  return t('provisioning.config-form.description-read-only', "Resources can't be modified through Grafana.");
+}
+
 export function getOrphanedRepositoryTooltip(): string {
   return t('provisioning.orphaned-repository-tooltip', 'Repository not found');
+}
+
+/**
+ * Tooltip for any provisioning resource (Repository, Connection, ...) owned by an external manager
+ * that does not allow edits, and is therefore read-only in the UI.
+ */
+export function getManagedReadOnlyTooltip(): string {
+  return t('provisioning.managed-read-only-tooltip', 'This resource is managed externally and is read-only');
 }

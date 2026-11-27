@@ -1,3 +1,4 @@
+import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
@@ -9,7 +10,6 @@ import { getMockConfig, setupMswServer } from '../../../mockApi';
 import { grantUserPermissions, mockAlertQuery, mockAlertmanagerAlert } from '../../../mocks';
 import { mockPreviewApiResponse } from '../../../mocks/grafanaRulerApi';
 import { type Folder } from '../../../types/rule-form';
-import * as dataSource from '../../../utils/datasource';
 import {
   type AlertManagerDataSource,
   GRAFANA_RULES_SOURCE_NAME,
@@ -21,16 +21,16 @@ import { NotificationPreview } from './NotificationPreview';
 
 jest.mock('../../../useRouteGroupsMatcher');
 
-jest
-  .spyOn(dataSource, 'useGetAlertManagerDataSourcesByPermissionAndConfig')
-  .mockReturnValue([{ name: GRAFANA_RULES_SOURCE_NAME, imgUrl: '', hasConfigurationAPI: true }]);
+jest.mock('../../../utils/datasource', () =>
+  jest.requireActual('test/helpers/partialMock').partialMock(jest.requireActual('../../../utils/datasource'), {
+    useGetAlertManagerDataSourcesByPermissionAndConfig: jest.fn(),
+    getDatasourceAPIUid: jest.fn((ds: string) => ds),
+  })
+);
 
-jest.spyOn(dataSource, 'getDatasourceAPIUid').mockImplementation((ds: string) => ds);
-
-const getAlertManagerDataSourcesByPermissionAndConfigMock =
-  useGetAlertManagerDataSourcesByPermissionAndConfig as jest.MockedFunction<
-    typeof useGetAlertManagerDataSourcesByPermissionAndConfig
-  >;
+const getAlertManagerDataSourcesByPermissionAndConfigMock = jest.mocked(
+  useGetAlertManagerDataSourcesByPermissionAndConfig
+);
 
 const ui = {
   contactPointGroup: byRole('list'),
@@ -48,6 +48,9 @@ const server = setupMswServer();
 
 beforeEach(() => {
   jest.clearAllMocks();
+  getAlertManagerDataSourcesByPermissionAndConfigMock.mockReturnValue([
+    { name: GRAFANA_RULES_SOURCE_NAME, imgUrl: '', hasConfigurationAPI: true },
+  ]);
 });
 
 const alertQuery = mockAlertQuery({ datasourceUid: 'whatever', refId: 'A' });
@@ -202,6 +205,41 @@ describe('NotificationPreview', () => {
     });
 
     expect(ui.contactPointGroup.query()).not.toBeInTheDocument();
+  });
+
+  it('should show an error when the notification policies cannot be loaded', async () => {
+    mockHasEditPermission(false);
+    mockOneAlertManager();
+    mockPreviewApiResponse(server, [mockAlertmanagerAlert({ labels: { tomato: 'red' } })]);
+    server.use(
+      http.get('/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace/routingtrees', () =>
+        HttpResponse.json({ message: 'boom' }, { status: 500 })
+      )
+    );
+
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
+
+    expect(await screen.findByText(/could not load routing preview for grafana/i)).toBeInTheDocument();
+    expect(screen.getByText(/boom/)).toBeInTheDocument();
+  });
+
+  it('should show an error instead of a blank preview when the selected policy no longer exists', async () => {
+    mockHasEditPermission(false);
+    mockOneAlertManager();
+    mockPreviewApiResponse(server, [mockAlertmanagerAlert({ labels: { tomato: 'red' } })]);
+
+    render(
+      <NotificationPreview
+        alertQueries={[alertQuery]}
+        customLabels={[]}
+        condition="A"
+        folder={folder}
+        policyName="deleted-policy"
+      />
+    );
+
+    expect(await screen.findByText(/could not load routing preview for grafana/i)).toBeInTheDocument();
+    expect(screen.getByText(/deleted-policy/)).toBeInTheDocument();
   });
 
   // Regression test for bug #3 from PR #124697:

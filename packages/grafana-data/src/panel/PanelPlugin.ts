@@ -1,6 +1,9 @@
 import { defaultsDeep, set } from 'lodash';
 import { type ComponentClass, type ComponentType } from 'react';
 
+import { type DataTransformerConfig } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { type StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
 import { type PanelModel } from '../types/dashboard';
@@ -38,6 +41,7 @@ import {
 import { type FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
 
+import { type PanelQuickEdit, type PanelQuickEditsSupplier } from './quickEdits';
 import { createFieldConfigRegistry } from './registryFactories';
 import { type PanelDataSummary } from './suggestions/getPanelDataSummary';
 
@@ -175,6 +179,33 @@ export interface PluginViewOptionsQuickToggles {
   fieldConfigProperties: string[];
 }
 
+type PanelInteractionMutation = 'TRANSFORMATION' | 'PANEL_SETTING' | 'FIELD_OVERRIDE';
+
+/** @alpha */
+export interface PanelInteraction {
+  id: number;
+  name: string;
+  description?: string;
+  /** What parts of the panel the interaction changes when it is promoted. */
+  mutates: PanelInteractionMutation[];
+  schema: unknown[];
+  /** Writes the interaction into the v2 dashboard JSON and returns the updated JSON. */
+  promotionHandler: (dashboard: DashboardV2Spec, context: PanelInteractionPromotionContext) => DashboardV2Spec;
+}
+
+/** @alpha */
+export interface PanelInteractionPromotionContext {
+  /** Key of the panel in the dashboard JSON's `elements`. */
+  elementKey: string;
+  /** The panel's ad hoc transformations, in the same shape as saved transformations. */
+  transformations: readonly DataTransformerConfig[];
+}
+
+/** @alpha */
+export interface PanelInteractions {
+  interactions: PanelInteraction[];
+}
+
 export class PanelPlugin<
   TOptions = any,
   TFieldConfigOptions extends object = {},
@@ -186,6 +217,7 @@ export class PanelPlugin<
   };
 
   private _viewPanelOptions?: PanelPluginViewOptions;
+  private _panelInteractions?: PanelInteractions;
   private _fieldConfigRegistry?: FieldConfigOptionsRegistry;
   private _initConfigRegistry = () => {
     return new FieldConfigOptionsRegistry();
@@ -194,6 +226,7 @@ export class PanelPlugin<
   private optionsSupplier?: PanelOptionsSupplier<TOptions>;
   private suggestionsSupplier?: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>;
   private presetsSupplier?: VisualizationPresetsSupplier<TOptions, TFieldConfigOptions>;
+  private quickEditsSupplier?: PanelQuickEditsSupplier<TOptions, TFieldConfigOptions>;
   private systemTransformationsSupplier?: SystemTransformationsSupplier;
   private systemTransformationsSupplierFailed = false;
 
@@ -267,6 +300,11 @@ export class PanelPlugin<
 
   get viewPanelOptions() {
     return this._viewPanelOptions;
+  }
+
+  /** @alpha */
+  get panelInteractions(): PanelInteractions | undefined {
+    return this._panelInteractions;
   }
 
   /**
@@ -667,6 +705,43 @@ export class PanelPlugin<
   }
 
   /**
+   * @alpha
+   * Register the quick edits offered for this panel's options, most used first. Quick edits from `@grafana/data`
+   * and `@grafana/ui` cover the standard and shared options, e.g. {@link unitQuickEdit}; the plugin defines its own
+   * for the rest. Without quick edits, none are offered.
+   *
+   * ```ts
+   * export const plugin = new PanelPlugin<Options>(MyPanel)
+   *   .setPanelOptions(...)
+   *   .setQuickEdits(() => [
+   *     unitQuickEdit(),
+   *     commonOptionsBuilder.legendQuickEdit(),
+   *     { id: 'shape', title: 'Shape', icon: 'circle', optionIds: ['shape'] },
+   *   ]);
+   * ```
+   */
+  setQuickEdits(supplier: PanelQuickEditsSupplier<TOptions, TFieldConfigOptions>): this {
+    this.quickEditsSupplier = supplier;
+    return this;
+  }
+
+  /**
+   * @alpha
+   * Return the quick edits for a panel plugin, most used first
+   */
+  getQuickEdits(): Array<PanelQuickEdit<TOptions, TFieldConfigOptions>> {
+    return this.quickEditsSupplier?.() ?? [];
+  }
+
+  /**
+   * @alpha
+   * Whether the plugin registered a presets supplier
+   */
+  hasPresetsSupplier(): boolean {
+    return Boolean(this.presetsSupplier);
+  }
+
+  /**
    * @deprecated use getSuggestions
    * we have to keep this method intact to support cloud-onboarding plugin.
    */
@@ -738,6 +813,12 @@ export class PanelPlugin<
    */
   setViewPanelOptions(options: PanelPluginViewOptions) {
     this._viewPanelOptions = options;
+    return this;
+  }
+
+  /** @alpha */
+  setPanelInteractions(interactions: PanelInteractions) {
+    this._panelInteractions = interactions;
     return this;
   }
 }

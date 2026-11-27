@@ -91,21 +91,7 @@ export const OptionField: FC<Props> = ({
 
   const labelText = option.element !== 'checkbox' && option.element !== 'radio' ? option.label : undefined;
 
-  const label = shouldShowProtectedIndicator ? (
-    <Stack direction="row" alignItems="center" gap={0.5}>
-      <Tooltip
-        content={t(
-          'alerting.receivers.protected.field.description',
-          'This field is protected and can only be edited by users with elevated permissions'
-        )}
-      >
-        <Icon size="sm" name="lock" data-testid="lock-icon" />
-      </Tooltip>
-      {labelText}
-    </Stack>
-  ) : (
-    labelText
-  );
+  const label = shouldShowProtectedIndicator ? <ProtectedFieldLabel label={labelText} /> : labelText;
 
   return (
     <Field
@@ -135,6 +121,22 @@ export interface ConfiguredSecureFieldProps {
   id: string;
   readOnly: boolean;
   onReset: () => void;
+}
+
+export function ProtectedFieldLabel({ label }: { label?: string }) {
+  return (
+    <Stack direction="row" alignItems="center" gap={0.5}>
+      <Tooltip
+        content={t(
+          'alerting.receivers.protected.field.description',
+          'This field is protected and can only be edited by users with elevated permissions'
+        )}
+      >
+        <Icon size="sm" name="lock" data-testid="lock-icon" />
+      </Tooltip>
+      {label}
+    </Stack>
+  );
 }
 
 export function ConfiguredSecretInput({ id, readOnly, onReset }: ConfiguredSecureFieldProps) {

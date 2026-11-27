@@ -71,6 +71,14 @@ func (r *MigrationRunner) legacyTableRenameEnabled() bool {
 	return r.cfg.Raw.Section("unified_storage").Key("migration_locking").MustBool(true)
 }
 
+// statementTimeout is the Postgres statement_timeout override for this migration, or zero.
+func (r *MigrationRunner) statementTimeout(opts RunOptions) time.Duration {
+	if opts.DriverName != migrator.Postgres {
+		return 0
+	}
+	return r.cfg.MigrationStatementTimeout
+}
+
 // Run executes the migration logic for all organizations.
 func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migrator.Migrator, opts RunOptions) error {
 	orgs, err := r.getAllOrgs(sess)
@@ -106,6 +114,13 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 			"unified-storage data for folders/dashboards.",
 			"resources", r.definition.ConfigResources())
 		return nil
+	}
+
+	if timeout := r.statementTimeout(opts); timeout > 0 {
+		// Covers the table locks and validators run on the migration session
+		if _, err := sess.Exec(StatementTimeoutSQL(timeout)); err != nil {
+			return fmt.Errorf("failed to set migration statement timeout: %w", err)
+		}
 	}
 
 	if opts.DriverName == migrator.SQLite {
@@ -209,9 +224,10 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, en
 	startTime := time.Now()
 
 	migrateOpts := MigrateOptions{
-		Namespace:   info.Value,
-		Resources:   r.resources,
-		WithHistory: true, // Migrate with full history
+		Namespace:        info.Value,
+		Resources:        r.resources,
+		WithHistory:      true, // Migrate with full history
+		StatementTimeout: r.statementTimeout(opts),
 		Progress: func(count int, msg string) {
 			r.log.Info("Migration progress", "org_id", info.OrgID, "count", count, "message", msg)
 		},
@@ -219,14 +235,17 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, en
 
 	// Execute the migration via legacy migrator
 	response, err := r.unifiedMigrator.Migrate(ctx, migrateOpts)
-	if err := resource.ErrorFromResponse(response.GetError(), err); err != nil {
+	if err != nil {
 		r.log.Error("Migration reported error", "org_id", info.OrgID, "error", err, "duration", time.Since(startTime))
 		return nil, fmt.Errorf("migration failed for org %d (%s): %w", info.OrgID, info.Value, err)
 	}
 
 	migrationFinishedAt := time.Now()
 
-	err = r.unifiedMigrator.RebuildIndexes(ctx, RebuildIndexOptions{
+	// Rebuilding and validating build search indexes, whose storage reads then get the migration
+	// statement timeout.
+	readCtx := resource.ContextWithMigrationRead(ctx)
+	err = r.unifiedMigrator.RebuildIndexes(readCtx, RebuildIndexOptions{
 		UsingDistributor:    opts.UsingDistributor,
 		NamespaceInfo:       info,
 		Resources:           r.resources,
@@ -244,7 +263,7 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, en
 		validationSess = engine.NewSession()
 		defer validationSess.Close()
 	}
-	if err := r.validateMigration(ctx, validationSess, response, r.validators); err != nil {
+	if err := r.validateMigration(readCtx, validationSess, response, r.validators); err != nil {
 		r.log.Error("Migration validation failed", "org_id", info.OrgID, "error", err, "duration", time.Since(startTime))
 		return nil, fmt.Errorf("migration validation failed for org %d (%s): %w", info.OrgID, info.Value, err)
 	}

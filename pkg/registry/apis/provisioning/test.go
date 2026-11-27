@@ -16,6 +16,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -139,6 +140,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 							))
 							return
 						}
+						repository.InvalidateConnectionTokenOnURLChange(&cfg, oldCfg)
 						repository.CopySecureValues(&cfg, oldCfg)
 
 						// Copying previous finalizers
@@ -232,7 +234,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 						return
 					}
 
-					cfg.Secure.Token.Create = token.Token
+					cfg.Secure.Token = resource.InlineSecureValue{Create: token.Token}
 				}
 
 				// Create a temporary repository

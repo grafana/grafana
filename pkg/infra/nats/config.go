@@ -92,6 +92,11 @@ func (c *Config) URLs() []string {
 	return append([]string(nil), c.cfg.ClientURLs...)
 }
 
+// inProcess reports whether connections go to the embedded server in-process.
+func (c *Config) inProcess() bool {
+	return c.server != nil && !c.server.IsDisabled()
+}
+
 // DialOptions returns extra dial options. In embedded mode this carries the
 // in-process server hop so the local connection bypasses TCP/TLS. Safe for
 // concurrent use.

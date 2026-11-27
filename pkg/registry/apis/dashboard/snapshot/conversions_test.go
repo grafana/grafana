@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	dashV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -20,7 +21,8 @@ func TestConvertK8sResourceToCreateCommand_Expires(t *testing.T) {
 			Spec: dashV0.SnapshotSpec{Expires: &oneWeekFromNow},
 		}
 
-		cmd := convertK8sResourceToCreateCommand(snap, orgID, userID)
+		cmd, err := convertK8sResourceToCreateCommand(snap, orgID, userID)
+		require.NoError(t, err)
 
 		assert.InDelta(t, oneWeekSeconds, cmd.Expires, 5,
 			"cmd.Expires should be ~1 week in seconds, got %d", cmd.Expires)
@@ -29,7 +31,8 @@ func TestConvertK8sResourceToCreateCommand_Expires(t *testing.T) {
 	t.Run("leaves Expires zero when spec has no expiration", func(t *testing.T) {
 		snap := &dashV0.Snapshot{Spec: dashV0.SnapshotSpec{}}
 
-		cmd := convertK8sResourceToCreateCommand(snap, orgID, userID)
+		cmd, err := convertK8sResourceToCreateCommand(snap, orgID, userID)
+		require.NoError(t, err)
 
 		assert.Equal(t, int64(0), cmd.Expires)
 	})
@@ -38,7 +41,8 @@ func TestConvertK8sResourceToCreateCommand_Expires(t *testing.T) {
 		past := time.Now().Add(-time.Hour).UnixMilli()
 		snap := &dashV0.Snapshot{Spec: dashV0.SnapshotSpec{Expires: &past}}
 
-		cmd := convertK8sResourceToCreateCommand(snap, orgID, userID)
+		cmd, err := convertK8sResourceToCreateCommand(snap, orgID, userID)
+		require.NoError(t, err)
 
 		assert.Equal(t, int64(0), cmd.Expires)
 	})
@@ -52,8 +56,10 @@ func TestConvertK8sResourceToCreateCommand_Expires(t *testing.T) {
 		original.Expires = oneWeekSeconds
 		original.External = true
 
-		snap := convertCreateCmdToK8sSnapshot(original, "default")
-		got := convertK8sResourceToCreateCommand(snap, orgID, userID)
+		snap, err := convertCreateCmdToK8sSnapshot(original, "default")
+		require.NoError(t, err)
+		got, err := convertK8sResourceToCreateCommand(snap, orgID, userID)
+		require.NoError(t, err)
 
 		assert.InDelta(t, original.Expires, got.Expires, 5)
 		assert.Equal(t, original.ExternalDeleteURL, got.ExternalDeleteURL)

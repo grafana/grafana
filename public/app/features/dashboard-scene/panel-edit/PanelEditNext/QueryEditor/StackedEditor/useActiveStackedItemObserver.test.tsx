@@ -9,7 +9,7 @@ import { useActiveStackedItemObserver } from './useActiveStackedItemObserver';
 interface StackProps {
   items: ReadonlyArray<{ id: string; type: StackedEditorItem['type'] }>;
   itemsKey: string;
-  onActiveItemChange: (item: StackedEditorItem) => void;
+  onActiveItemChange: (item: StackedEditorItem) => boolean | void;
 }
 
 function Stack({ items, itemsKey, onActiveItemChange }: StackProps) {
@@ -141,6 +141,17 @@ describe('useActiveStackedItemObserver', () => {
     observer.fire([makeEntry(getSection('A', QueryEditorType.Query), 0.8, 0)]);
 
     expect(onActiveItemChange).toHaveBeenCalledTimes(1);
+    expect(onActiveItemChange).toHaveBeenLastCalledWith({ type: QueryEditorType.Query, id: 'A' });
+  });
+
+  it('reports the same item again when the caller leaves the change unapplied', () => {
+    const onActiveItemChange = jest.fn().mockReturnValueOnce(false);
+    renderStack({ onActiveItemChange });
+
+    observer.fire([makeEntry(getSection('A', QueryEditorType.Query), 1, 0)]);
+    observer.fire([makeEntry(getSection('A', QueryEditorType.Query), 0.8, 0)]);
+
+    expect(onActiveItemChange).toHaveBeenCalledTimes(2);
     expect(onActiveItemChange).toHaveBeenLastCalledWith({ type: QueryEditorType.Query, id: 'A' });
   });
 

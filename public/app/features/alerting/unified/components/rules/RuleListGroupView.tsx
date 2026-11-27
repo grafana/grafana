@@ -4,7 +4,8 @@ import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { LogMessages, logInfo } from '../../Analytics';
 import { AlertingAction } from '../../hooks/useAbilities';
-import { isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
+import { type DataSourcesForRulesResult } from '../../hooks/useDataSourcesForRules';
+import { isCloudRulesSource, isGrafanaRulesSource } from '../../utils/rulesSource';
 import { Authorize } from '../Authorize';
 
 import { CloudRules } from './CloudRules';
@@ -13,11 +14,12 @@ import { GrafanaRules } from './GrafanaRules';
 interface Props {
   namespaces: CombinedRuleNamespace[];
   expandAll: boolean;
+  rulesSources: DataSourcesForRulesResult;
 }
 
 const collator = new Intl.Collator();
 
-export const RuleListGroupView = ({ namespaces, expandAll }: Props) => {
+export const RuleListGroupView = ({ namespaces, expandAll, rulesSources }: Props) => {
   const [grafanaNamespaces, cloudNamespaces] = useMemo(() => {
     const sorted = namespaces
       .map((namespace) => ({
@@ -41,7 +43,7 @@ export const RuleListGroupView = ({ namespaces, expandAll }: Props) => {
         <GrafanaRules namespaces={grafanaNamespaces} expandAll={expandAll} />
       </Authorize>
       <Authorize actions={[AlertingAction.ViewExternalAlertRule]}>
-        <CloudRules namespaces={cloudNamespaces} expandAll={expandAll} />
+        <CloudRules namespaces={cloudNamespaces} expandAll={expandAll} rulesSources={rulesSources} />
       </Authorize>
     </>
   );

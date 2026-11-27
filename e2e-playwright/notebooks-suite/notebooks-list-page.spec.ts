@@ -173,7 +173,19 @@ test.describe('Notebooks list pagination', () => {
     await page.goto('/notebooks');
     // Scoped to just this test's own rows - other specs' notebooks may exist in the list at the
     // same time, since Playwright runs spec files against the same server concurrently.
+    //
+    // The search is debounced, and until it commits the table still shows the unfiltered list -
+    // which already spans several pages, so a "2" button is there before the filter applies.
+    // Clicking it then would be undone when the filter commits and the table remounts on page 1.
+    // Waiting for the filtered response means the page-2 click lands on the settled, filtered table.
+    const filteredResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes('/notebooks/search') &&
+        response.request().method() === 'POST' &&
+        (response.request().postData() ?? '').includes(pagePrefix)
+    );
     await page.getByTestId(selectors.pages.Notebooks.List.searchInput).fill(pagePrefix);
+    await filteredResponse;
 
     // Not asserting any specific row here: sort is newest-updated-first, and all
     // PAGE_TEST_NOTEBOOK_COUNT notebooks are created within the same second, so which one lands

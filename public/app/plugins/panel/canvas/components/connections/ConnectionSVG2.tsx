@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { type DirectionDimensionConfig, DirectionDimensionMode, ConnectionDirection } from '@grafana/schema';
@@ -26,14 +26,13 @@ type Props = {
   scene: Scene;
 };
 
-let idCounter = 0;
 const htmlElementTypes = ['input', 'textarea'];
 
 export const ConnectionSVG = ({ setLineRef, setVertexPathRef, setVertexRef, setConnectionsSVGRef, scene }: Props) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
-  const headId = Date.now() + '_' + idCounter++;
+  const headId = useId();
   const CONNECTION_LINE_ID = useMemo(() => `connectionLineId-${headId}`, [headId]);
   const EDITOR_HEAD_ID = useMemo(() => `editorHead-${headId}`, [headId]);
   const defaultArrowColor = theme.colors.text.primary;
@@ -52,11 +51,14 @@ export const ConnectionSVG = ({ setLineRef, setVertexPathRef, setVertexRef, setC
     selectedConnectionRef.current = selectedConnection;
   });
 
-  useEffect(() => {
-    if (scene.panel.context.instanceState?.selectedConnection) {
-      setSelectedConnection(scene.panel.context.instanceState?.selectedConnection);
+  const instanceSelectedConnection = scene.panel.context.instanceState?.selectedConnection;
+  const [prevInstanceSelectedConnection, setPrevInstanceSelectedConnection] = useState<ConnectionState>();
+  if (instanceSelectedConnection !== prevInstanceSelectedConnection) {
+    setPrevInstanceSelectedConnection(instanceSelectedConnection);
+    if (instanceSelectedConnection) {
+      setSelectedConnection(instanceSelectedConnection);
     }
-  }, [scene.panel.context.instanceState?.selectedConnection]);
+  }
 
   const onKeyUp = (e: KeyboardEvent) => {
     const target = e.target;

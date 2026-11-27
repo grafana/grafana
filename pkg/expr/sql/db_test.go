@@ -588,6 +588,55 @@ func TestQueryFrames_EnumField(t *testing.T) {
 	}
 }
 
+func TestQueryFrames_NullFromNonNullableColumn(t *testing.T) {
+	input := data.NewFrame("A",
+		data.NewField("line", nil, []string{"a", "b", "c"}),
+		data.NewField("labels", nil, []json.RawMessage{
+			json.RawMessage(`{"level":"info"}`),
+			json.RawMessage(`{}`),
+			json.RawMessage(`{"level":"error"}`),
+		}),
+	).SetRefID("A")
+
+	info, errLevel := "info", "error"
+
+	tests := []struct {
+		name     string
+		query    string
+		expected *data.Field
+	}{
+		{
+			name:     "JSON_UNQUOTE of a missing key after a value",
+			query:    `SELECT JSON_UNQUOTE(JSON_EXTRACT(labels, '$.level')) AS level FROM A ORDER BY line`,
+			expected: data.NewField("level", nil, []*string{&info, nil, &errLevel}),
+		},
+		{
+			name:     "JSON_UNQUOTE of a missing key in the first row",
+			query:    `SELECT JSON_UNQUOTE(JSON_EXTRACT(labels, '$.level')) AS level FROM A WHERE line != 'a' ORDER BY line`,
+			expected: data.NewField("level", nil, []*string{nil, &errLevel}),
+		},
+		{
+			// go-mysql-server returns NULL here; MySQL returns 0. This case
+			// depends on that quirk, so an engine upgrade may change it.
+			name:     "JSON_LENGTH of an empty array",
+			query:    `SELECT JSON_LENGTH('[]') AS n`,
+			expected: data.NewField("n", nil, []*int64{nil}),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db := DB{}
+			frame, err := db.QueryFrames(context.Background(), &testTracer{}, "B", tt.query, data.Frames{input})
+			require.NoError(t, err)
+			require.Len(t, frame.Fields, 1)
+			if diff := cmp.Diff(tt.expected, frame.Fields[0], data.FrameTestCompareOptions()...); diff != "" {
+				require.FailNowf(t, "Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
 func TestSampleRow_EnumField(t *testing.T) {
 	enumConfig := &data.FieldConfig{TypeConfig: &data.FieldTypeConfig{
 		Enum: &data.EnumFieldConfig{Text: []string{"Unknown", "Up", "Down"}},

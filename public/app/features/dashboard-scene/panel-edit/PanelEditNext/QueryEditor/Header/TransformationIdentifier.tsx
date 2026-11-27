@@ -1,10 +1,14 @@
+import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { type DataTransformerConfig, type PanelData, transformerUsesDynamicRefId } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 import { usePreviousTransformationOutput } from '../hooks/usePreviousTransformationOutput';
 import { useTransformationGeneratedRefId } from '../hooks/useTransformationGeneratedRefId';
+import { framesForTopic } from '../hooks/useTransformedFrames';
 import { type Transformation } from '../types';
+import { truncatedTextStyles } from '../utils';
 
 import { EditableTransformationName } from './EditableTransformationName';
 
@@ -17,9 +21,6 @@ interface TransformationIdentifierProps {
   onUpdate: (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => void;
 }
 
-/** Stable identity for "no query data yet", so it does not re-run the replays below. */
-const NO_SERIES: PanelData['series'] = [];
-
 /**
  * The transformation's name in a header: editable for the transformations that produce a frame of
  * their own, plain text for the rest.
@@ -31,6 +32,8 @@ export function TransformationIdentifier({
   fallbackName,
   onUpdate,
 }: TransformationIdentifierProps) {
+  const styles = useStyles2(getStyles);
+
   // Follows the configuration rather than the data, so the editor does not appear and disappear as
   // queries come and go.
   const canSetRefId = transformation.registryItem
@@ -38,7 +41,11 @@ export function TransformationIdentifier({
     : false;
 
   if (!canSetRefId) {
-    return <>{fallbackName}</>;
+    return (
+      <span className={styles.plainName} title={fallbackName}>
+        {fallbackName}
+      </span>
+    );
   }
 
   return (
@@ -62,7 +69,7 @@ function EditableIdentifier({
   data,
   onUpdate,
 }: Omit<TransformationIdentifierProps, 'fallbackName'>) {
-  const rawData = data?.series ?? NO_SERIES;
+  const rawData = framesForTopic(data, transformation);
 
   const dynamicRefId = useTransformationGeneratedRefId({ transformation, transformations, rawData });
 
@@ -88,3 +95,7 @@ function EditableIdentifier({
     />
   );
 }
+
+const getStyles = () => ({
+  plainName: css(truncatedTextStyles),
+});

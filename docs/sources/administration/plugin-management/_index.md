@@ -62,7 +62,7 @@ If you're not logged in, you can also access the list of available plugins in th
 
 ## Manage your plugins
 
-We strongly recommend running the latest plugin version. Use [Grafana Advisor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/grafana-advisor) to check the status of your data sources and plugins.
+We strongly recommend running the latest plugin version. Use [Grafana Advisor](https://grafana.com/grafana/plugins/grafana-advisor-app/docs/) to check the status of your data sources and plugins.
 
 ### Install a plugin
 

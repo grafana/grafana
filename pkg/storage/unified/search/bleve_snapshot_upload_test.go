@@ -6,11 +6,13 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
 	index "github.com/blevesearch/bleve_index_api"
+	"github.com/oklog/ulid/v2"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	dto "github.com/prometheus/client_model/go"
@@ -382,8 +384,36 @@ func TestUploadSnapshot_SkipsWhenRecentSameVersionRemoteExists(t *testing.T) {
 	assert.Equal(t, int32(1), store.readManifestCalls.Load())
 }
 
-// TestUploadSnapshot_ProceedsWhenRemoteHasNewerIndexFormat verifies that the
-// probe does not skip when only too-new index-format snapshots are present.
+func TestUploadSnapshot_UsesIndexBuildVersion(t *testing.T) {
+	for _, tc := range []struct {
+		name          string
+		remoteVersion string
+		wantSkip      bool
+	}{
+		{name: "index version matches", remoteVersion: "11.4.0", wantSkip: true},
+		{name: "only running version matches", remoteVersion: "11.5.0"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := newHookableStore(t)
+			be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store, UploadInterval: time.Hour})
+			key := newTestNsResource()
+			idx := newCachedUploadTestIndexWithBuild(t, be, key, 42, "11.4.0", time.Now().Add(-3*time.Hour))
+			seedBuildSnapshot(t, store, key, tc.remoteVersion, time.Now().Add(-4*time.Hour), time.Now().Add(-5*time.Minute))
+
+			err := be.uploadSnapshot(t.Context(), key, idx)
+			if tc.wantSkip {
+				require.ErrorIs(t, err, errSkipRecentRemote)
+				assert.Zero(t, store.uploadCalls.Load())
+				assert.Zero(t, store.lockAcquireCalls.Load())
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, int32(1), store.uploadCalls.Load())
+				assert.Equal(t, "11.4.0", store.getLastUploadedMeta().BuildVersion)
+			}
+		})
+	}
+}
+
 func TestUploadSnapshot_ProceedsWhenRemoteHasNewerIndexFormat(t *testing.T) {
 	store := newHookableStore(t)
 	be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store, UploadInterval: time.Hour})
@@ -429,6 +459,54 @@ func TestUploadSnapshot_ProceedsWhenProbeErrors(t *testing.T) {
 	assert.Equal(t, int32(1), store.uploadCalls.Load())
 }
 
+type indexWithBuildInfoReadError struct {
+	copyableIndex
+	readFailed atomic.Bool
+}
+
+func (i *indexWithBuildInfoReadError) GetInternal(key []byte) ([]byte, error) {
+	if string(key) == internalBuildInfoKey && i.readFailed.CompareAndSwap(false, true) {
+		return nil, errors.New("temporary live index read failure")
+	}
+	return i.copyableIndex.GetInternal(key)
+}
+
+func TestUploadSnapshot_BuildInfoProbeFailure(t *testing.T) {
+	for _, tc := range []struct {
+		name            string
+		corruptMetadata bool
+	}{
+		{name: "valid staged metadata"},
+		{name: "invalid staged metadata", corruptMetadata: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := newHookableStore(t)
+			be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store, UploadInterval: time.Hour})
+			key := newTestNsResource()
+			idx := newUploadTestIndex(t, be, key, 42)
+			if tc.corruptMetadata {
+				require.NoError(t, idx.index.SetInternal([]byte(internalBuildInfoKey), []byte("{")))
+			}
+			live := &indexWithBuildInfoReadError{copyableIndex: idx.index.(copyableIndex)}
+			idx.index = live
+
+			err := be.uploadSnapshot(t.Context(), key, idx)
+
+			require.True(t, live.readFailed.Load())
+			assert.Zero(t, store.listKeyCalls.Load())
+			if tc.corruptMetadata {
+				require.ErrorContains(t, err, "reading snapshot build info")
+				assert.Zero(t, store.uploadCalls.Load())
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, int32(1), store.uploadCalls.Load())
+				assert.Equal(t, int64(42), store.getLastUploadedMeta().LatestResourceVersion)
+				assert.Equal(t, be.opts.BuildVersion, store.getLastUploadedMeta().BuildVersion)
+			}
+		})
+	}
+}
+
 // TestUploadSnapshot_SkipsProbeWhenUploadIntervalZero verifies that the probe
 // is gated on UploadInterval > 0, mirroring the local lastUploadTime logic.
 func TestUploadSnapshot_SkipsProbeWhenUploadIntervalZero(t *testing.T) {
@@ -455,6 +533,7 @@ func TestRunUploadSnapshots_SkipRecentRemote(t *testing.T) {
 	be, metrics := newTestBleveBackend(t, SnapshotOptions{Store: store, MinDocCount: 1, UploadInterval: time.Hour, MinDocChanges: 1})
 	idx := newCachedUploadTestIndex(t, be, key, 42)
 	require.NoError(t, writeSnapshotMutationCount(idx.index, 5))
+	be.setUploadTracking(key, time.Now().Add(-2*time.Hour))
 
 	before := time.Now()
 	be.runUploadSnapshots(t.Context())
@@ -517,33 +596,69 @@ func TestRunUploadSnapshots_SeedsTrackingFromRemote(t *testing.T) {
 }
 
 func TestRunUploadSnapshots_SeedThenUploadOnChanges(t *testing.T) {
-	store := newHookableStore(t)
-	be, _ := newSeedTestBackend(t, store)
-	key := newTestNsResource()
-	buildTime := time.Now().Add(-3 * time.Hour).Truncate(time.Second)
-	seedBuildSnapshot(t, store, key, be.opts.BuildVersion, buildTime, time.Now().Add(-2*time.Hour).UTC())
+	for _, age := range []time.Duration{0, 3 * time.Hour} {
+		t.Run(age.String(), func(t *testing.T) {
+			store := newHookableStore(t)
+			be, _ := newSeedTestBackend(t, store)
+			key := newTestNsResource()
+			seedBuildSnapshot(t, store, key, be.opts.BuildVersion, time.Now().Add(-4*time.Hour), time.Now().Add(-2*time.Hour).UTC())
 
-	idx := newCachedUploadTestIndexWithBuild(t, be, key, 42, be.opts.BuildVersion, buildTime)
-	require.NoError(t, writeSnapshotMutationCount(idx.index, 1000))
+			idx := newCachedUploadTestIndexWithBuild(t, be, key, 42, be.opts.BuildVersion, time.Now().Add(-age))
+			require.NoError(t, writeSnapshotMutationCount(idx.index, 1000))
 
-	be.runUploadSnapshots(t.Context())
+			be.runUploadSnapshots(t.Context())
 
-	assert.Equal(t, int32(1), store.uploadCalls.Load())
+			assert.Equal(t, int32(1), store.uploadCalls.Load())
+			count, err := idx.getSnapshotMutationCount()
+			require.NoError(t, err)
+			assert.Zero(t, count)
+		})
+	}
 }
 
-func TestRunUploadSnapshots_SeedIgnoresOtherBuildOfSameVersion(t *testing.T) {
+func TestRunUploadSnapshots_SeedsReplicaSnapshotAfterCleanup(t *testing.T) {
 	store := newHookableStore(t)
-	be, _ := newSeedTestBackend(t, store)
+	first, _ := newSeedTestBackend(t, store)
+	second, _ := newSeedTestBackend(t, store)
 	key := newTestNsResource()
-	buildTime := time.Now().Add(-3 * time.Hour).Truncate(time.Second)
-	seedBuildSnapshot(t, store, key, be.opts.BuildVersion, buildTime.Add(-time.Hour), time.Now().Add(-2*time.Hour).UTC())
+	now := time.Now().UTC()
+	firstBuild := now.Add(-5 * time.Hour).Truncate(time.Second)
+	secondBuild := now.Add(-4 * time.Hour).Truncate(time.Second)
+	newCachedUploadTestIndexWithBuild(t, first, key, 43, first.opts.BuildVersion, firstBuild)
+	idx := newCachedUploadTestIndexWithBuild(t, second, key, 42, second.opts.BuildVersion, secondBuild)
+	require.NoError(t, writeSnapshotMutationCount(idx.index, 5))
 
-	idx := newCachedUploadTestIndexWithBuild(t, be, key, 42, be.opts.BuildVersion, buildTime)
-	require.NoError(t, writeSnapshotMutationCount(idx.index, 0))
+	older := makeULID(t, now.Add(-3*time.Hour))
+	newer := makeULID(t, now.Add(-2*time.Hour))
+	seedSnapshot(t, t.Context(), store.inner, key, older, &IndexMeta{
+		BuildVersion: second.opts.BuildVersion, BuildTime: secondBuild,
+		UploadTimestamp: now.Add(-3 * time.Hour), LatestResourceVersion: 42,
+	})
+	seedSnapshot(t, t.Context(), store.inner, key, newer, &IndexMeta{
+		BuildVersion: first.opts.BuildVersion, BuildTime: firstBuild,
+		UploadTimestamp: now.Add(-2 * time.Hour), LatestResourceVersion: 43,
+	})
+	require.NoError(t, first.runResourceCleanup(t.Context(), key, first.log))
+	require.Equal(t, []ulid.ULID{newer}, listSeededIndexKeys(t, t.Context(), store.inner, key))
 
-	be.runUploadSnapshots(t.Context())
+	second.Stop()
+	restarted, err := NewBleveBackend(second.opts, resource.ProvideIndexMetrics(prometheus.NewRegistry()))
+	require.NoError(t, err)
+	t.Cleanup(restarted.Stop)
+	reopened, err := restarted.BuildIndex(t.Context(), key, 1, "init", func(resource.ResourceIndex) (int64, error) {
+		return 0, errors.New("the local index should be reused")
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, reopened)
+	require.Zero(t, store.downloadCalls.Load())
 
-	assert.Equal(t, int32(1), store.uploadCalls.Load())
+	restarted.runUploadSnapshots(t.Context())
+
+	assert.Zero(t, store.uploadCalls.Load())
+	requireTrackedAt(t, restarted, key, now.Add(-2*time.Hour))
+	count, err := reopened.(*bleveIndex).getSnapshotMutationCount()
+	require.NoError(t, err)
+	assert.Equal(t, int64(5), count)
 }
 
 func TestRunUploadSnapshots_SeedIgnoresOtherVersions(t *testing.T) {
@@ -561,7 +676,7 @@ func TestRunUploadSnapshots_SeedIgnoresOtherVersions(t *testing.T) {
 	assert.Equal(t, int32(1), store.uploadCalls.Load())
 }
 
-func TestRunUploadSnapshots_SeedSkipsLegacyIndex(t *testing.T) {
+func TestRunUploadSnapshots_SeedsLegacyIndex(t *testing.T) {
 	store := newHookableStore(t)
 	be, _ := newSeedTestBackend(t, store)
 	key := newTestNsResource()
@@ -576,7 +691,7 @@ func TestRunUploadSnapshots_SeedSkipsLegacyIndex(t *testing.T) {
 
 	be.runUploadSnapshots(t.Context())
 
-	assert.Equal(t, int32(1), store.uploadCalls.Load())
+	assert.Zero(t, store.uploadCalls.Load())
 }
 
 func TestRunUploadSnapshots_SeedRefreshesStaleRemote(t *testing.T) {
@@ -585,7 +700,7 @@ func TestRunUploadSnapshots_SeedRefreshesStaleRemote(t *testing.T) {
 	key := newTestNsResource()
 	buildTime := time.Now().Add(-100 * time.Hour).Truncate(time.Second)
 	// Past the MaxIndexAge/3 refresh interval, but still within MaxIndexAge.
-	seedBuildSnapshot(t, store, key, be.opts.BuildVersion, buildTime, time.Now().Add(-90*time.Hour).UTC())
+	seedBuildSnapshot(t, store, key, be.opts.BuildVersion, buildTime.Add(-time.Hour), time.Now().Add(-90*time.Hour).UTC())
 
 	idx := newCachedUploadTestIndexWithBuild(t, be, key, 42, be.opts.BuildVersion, buildTime)
 	require.NoError(t, writeSnapshotMutationCount(idx.index, 0))

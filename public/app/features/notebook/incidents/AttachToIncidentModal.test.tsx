@@ -91,7 +91,7 @@ describe('AttachToIncidentModal', () => {
   });
 
   // The caption is data IRM persists as the attachment's label, and t() escapes interpolated values
-  // by default — so without escapeValue:false this reads `Checkout&#39;s errors&#x2F;sec`.
+  // by default — so without escapeValue:false this reads `Checkout&#39;s errors/sec`.
   it('leaves punctuation in the caption alone', () => {
     const { props } = setup({ title: "Checkout's errors/sec" });
 

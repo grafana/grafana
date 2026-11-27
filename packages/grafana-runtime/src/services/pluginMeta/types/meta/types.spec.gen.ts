@@ -37,6 +37,8 @@ export interface JSONData {
 	// +listType=atomic
 	routes?: Route[];
 	skipDataQuery?: boolean;
+	// @alpha Suppress automatic starter queries without disabling explicit queries.
+	skipDefaultQuery?: boolean;
 	state?: "alpha" | "beta" | "stable" | "deprecated";
 	streaming?: boolean;
 	suggestions?: boolean;
@@ -243,6 +245,10 @@ export const defaultRole = (): Role => ({
 });
 
 export interface Extensions {
+	// Bundled Markdown skills keyed by plugin-local slug.
+	skills?: Record<string, {
+		path: string;
+	}>;
 	// +listType=atomic
 	addedComponents?: {
 		// +listType=set

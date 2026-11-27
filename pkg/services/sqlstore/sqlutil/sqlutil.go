@@ -18,6 +18,14 @@ type ITestDB interface {
 	Skipf(format string, args ...any)
 }
 
+// TestDBPeer is an ITestDB for an extra Grafana server that joins the test
+// database another server in the same process already set up, as the instances
+// of an HA cluster do. Its SQLStore gets its own engine and leaves the data alone.
+type TestDBPeer interface {
+	ITestDB
+	TestDBPeer()
+}
+
 type TestDB struct {
 	DriverName string
 	ConnStr    string

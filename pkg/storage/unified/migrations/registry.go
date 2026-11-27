@@ -45,13 +45,14 @@ type ResourceInfo struct {
 // MigrationDefinition defines a resource migration.
 // This is the public API for defining and registering migrations.
 type MigrationDefinition struct {
-	ID              string                                // Unique identifier for registry lookup (e.g., "folders-dashboards", "playlists")
-	MigrationID     string                                // ID for the migration log table entry (e.g., "folders and dashboards migration")
-	Resources       []ResourceInfo                        // Resources to migrate together, with their lock tables
-	Migrators       map[schema.GroupResource]MigratorFunc // Direct migrator functions per resource
-	Validators      []ValidatorFactory                    // Validator factories (validators created lazily)
-	RenameTables    []string                              // Legacy tables to rename with _legacy suffix after successful migration
-	SkipWhenMissing bool                                  // For fully migrated resources, the table may not exist at all
+	ID                  string                                // Unique identifier for registry lookup (e.g., "folders-dashboards", "playlists")
+	MigrationID         string                                // ID for the migration log table entry (e.g., "folders and dashboards migration")
+	Resources           []ResourceInfo                        // Resources to migrate together, with their lock tables
+	Migrators           map[schema.GroupResource]MigratorFunc // Direct migrator functions per resource
+	Validators          []ValidatorFactory                    // Validator factories (validators created lazily)
+	RenameTables        []string                              // Legacy tables to rename with _legacy suffix after successful migration
+	SkipWhenMissing     bool                                  // For fully migrated resources, the table may not exist at all
+	RequiresInlineBlobs bool                                  // RequiresInlineBlobs prevents sending resources to servers that cannot consume blob frames.
 }
 
 // CreateValidators creates validators from the stored factory functions.

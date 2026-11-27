@@ -4,7 +4,7 @@
  * List template variables for a scope (dashboard or row/tab section) in v2beta1 VariableKind format.
  */
 
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { SceneVariableSet } from '@grafana/scenes';
 
@@ -20,7 +20,7 @@ type ListVariablesPayload = z.infer<typeof listVariablesPayloadSchema>;
 
 export const listVariablesCommand: MutationCommand<ListVariablesPayload> = {
   name: 'LIST_VARIABLES',
-  description: payloads.listVariables.description ?? '',
+  description: z.globalRegistry.get(payloads.listVariables)?.description ?? '',
 
   payloadSchema: payloads.listVariables,
   permission: readOnly,

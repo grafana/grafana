@@ -69,7 +69,7 @@ For more information about alerting permissions and folder access, refer to [Con
 ## Understand policy scope
 
 A single quality policy applies to Grafana-managed alert rules across folders in your organization.
-Data source-managed alert rules and recording rules are excluded.
+Data source-managed alert rules, recording rules, and alert rules provided by plugins are excluded.
 
 Alert Advisor reports a finding when a required label or annotation is missing, empty, or contains only whitespace.
 The checks do not validate the content itself, they only check for the presence of a particular field.

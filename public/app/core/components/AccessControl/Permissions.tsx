@@ -6,12 +6,13 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Text, Box, Button, useStyles2, LoadingPlaceholder } from '@grafana/ui';
+import { Text, Box, Button, useStyles2 } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 
 import { AddPermission } from './AddPermission';
 import { PermissionList } from './PermissionList';
+import { PermissionsLoading } from './PermissionsLoading';
 import { PermissionTarget, type ResourcePermission, type SetPermission, type Description } from './types';
 
 const EMPTY_PERMISSION = '';
@@ -152,8 +153,11 @@ export const Permissions = ({
   const titleServiceAccount = t('access-control.permissions.serviceaccount', 'Service Account');
   const titleTeam = t('access-control.permissions.team', 'Team');
 
-  if (permissions.loading) {
-    return <LoadingPlaceholder text={t('access-control.permissions.loading', 'Loading permissions...')} />;
+  // Also before the first fetch starts: it waits for the description, and until then an empty editor reads as a
+  // resource with no permissions. Not through useAsyncFn's initial state, which would stop every later fetch
+  // from reporting loading, and with it the reset of the add form after a change.
+  if (permissions.loading || !(permissions.value || permissions.error)) {
+    return <PermissionsLoading />;
   }
 
   return (

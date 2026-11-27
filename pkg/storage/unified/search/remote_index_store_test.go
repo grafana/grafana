@@ -580,7 +580,8 @@ type hookableStore struct {
 	readSnapshotFileErr  error               // fires on ReadSnapshotFile (data-file phase of a download)
 	readManifestErrs     map[ulid.ULID]error // fires on ReadSnapshotManifest for the keyed snapshot
 
-	onUpload func() error
+	onUpload    func() error
+	onLockBuild func()
 
 	// Counters.
 	lockAcquireCalls  atomic.Int32
@@ -613,7 +614,11 @@ func (s *hookableStore) LockBuildIndex(ctx context.Context, ns resource.Namespac
 	s.mu.Lock()
 	s.lastLockBuildVersion = buildVersion
 	injected := s.lockBuildErr
+	onLockBuild := s.onLockBuild
 	s.mu.Unlock()
+	if onLockBuild != nil {
+		onLockBuild()
+	}
 	if injected != nil {
 		return nil, injected
 	}

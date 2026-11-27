@@ -33,7 +33,31 @@ func (rev *ConfigRevision) Imported() (ImportedConfigRevision, error) {
 	return result, nil
 }
 
-func (e ImportedConfigRevision) GetReceivers(uids []string) ([]*models.Receiver, error) {
+// GetReceivers returns the imported receivers, optionally filtered by name. Names are matched against the
+// receiver names as exposed by Grafana, i.e. after any renames needed to avoid collisions with existing receivers.
+func (e ImportedConfigRevision) GetReceivers(names []string) ([]*models.Receiver, error) {
+	return e.receivers(func(r v1.PostableApiReceiver) bool {
+		return len(names) == 0 || slices.Contains(names, r.Name)
+	})
+}
+
+// GetReceiver returns the imported receiver with the given UID, or models.ErrReceiverNotFound if there is none.
+// Imported receivers have no independent identity of their own, so their UID is derived from their (possibly renamed) name.
+// The exception is a collision with an existing UID, which gets a random one that is not stable across calls and so cannot be looked up.
+func (e ImportedConfigRevision) GetReceiver(uid string) (*models.Receiver, error) {
+	result, err := e.receivers(func(r v1.PostableApiReceiver) bool {
+		return string(r.UID) == uid
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(result) == 0 {
+		return nil, models.ErrReceiverNotFound.Errorf("")
+	}
+	return result[0], nil
+}
+
+func (e ImportedConfigRevision) receivers(match func(v1.PostableApiReceiver) bool) ([]*models.Receiver, error) {
 	if e.importedConfig == nil {
 		return nil, nil
 	}
@@ -43,18 +67,11 @@ func (e ImportedConfigRevision) GetReceivers(uids []string) ([]*models.Receiver,
 	}
 	merged, _, added := merge.Receivers(e.rev.Config.Receivers, imported, e.identifier)
 
-	capacity := len(uids)
-	if capacity == 0 {
-		capacity = len(added)
-	}
-	result := make([]*models.Receiver, 0, capacity)
+	result := make([]*models.Receiver, 0, len(added))
 	// added contains only the UIDs of the receivers from the staged config, renamed if necessary.
 	for _, uid := range added {
-		if len(uids) > 0 && !slices.Contains(uids, string(uid)) {
-			continue
-		}
 		r, ok := merged[uid]
-		if !ok {
+		if !ok || !match(r) {
 			continue
 		}
 		recv, err := PostableApiReceiverToReceiver(r, models.ResourceOriginImported)

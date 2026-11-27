@@ -11,6 +11,7 @@ import (
 type VectorMetrics struct {
 	SearchDuration               *prometheus.HistogramVec
 	HybridSearchDuration         *prometheus.HistogramVec
+	HybridSearchPhaseDuration    *prometheus.HistogramVec
 	EmbedDuration                *prometheus.HistogramVec
 	EmbedTokensTotal             *prometheus.CounterVec
 	EmbedSkippedVersionsTotal    *prometheus.CounterVec
@@ -55,6 +56,14 @@ func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"group", "resource", "status_code"}),
+		HybridSearchPhaseDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                            "grafana_vector_storage_hybrid_search_phase_duration_seconds",
+			Help:                            "Time (in seconds) spent in one HybridSearch database, embedding-provider, or reranking-provider call, labeled by phase and call status. Calls may overlap and are not additive parts of RPC duration.",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{"phase", "status"}),
 		EmbedDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "grafana_vector_storage_embed_duration_seconds",
 			Help:                            "Time (in seconds) spent in a single TextEmbedder call to the provider (Vertex/Bedrock), labeled by model, task, and status.",

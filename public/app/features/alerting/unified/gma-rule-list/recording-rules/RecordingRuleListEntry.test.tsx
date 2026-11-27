@@ -2,9 +2,12 @@ import { HttpResponse, http } from 'msw';
 import { render, screen } from 'test/test-utils';
 
 import { API_GROUP, API_VERSION } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
+import { grantPermissionsHelper } from '../../test/test-utils';
 import { FOLDER_PARENTS_URL, getRecordingRuleHandler } from '../mocks/handlers';
+import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
 
 import { RecordingRuleListEntry } from './RecordingRuleListEntry';
 
@@ -14,6 +17,7 @@ const server = setupMswServer();
 
 describe('RecordingRuleListEntry', () => {
   beforeEach(() => {
+    grantPermissionsHelper([AccessControlAction.AlertingRuleCreate]);
     // Provide a default no-badge rule so requests don't go unhandled in tests that don't care about badges.
     server.use(getRecordingRuleHandler());
   });
@@ -31,15 +35,45 @@ describe('RecordingRuleListEntry', () => {
     );
 
     render(
-      <ul>
-        <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m', folderUid: 'folder-1' }} />
-      </ul>
+      <RuleSequenceDrawerProvider>
+        <ul>
+          <RecordingRuleListEntry
+            searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m', folderUid: 'folder-1' }}
+            showFolderPath
+          />
+        </ul>
+      </RuleSequenceDrawerProvider>
     );
 
     expect(await screen.findByText('Platform')).toBeInTheDocument();
     expect(screen.getByText('Platform').compareDocumentPosition(screen.getByText('Team Metrics'))).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING
     );
+  });
+
+  it('neither shows nor requests the folder path when showFolderPath is false', async () => {
+    let parentLookups = 0;
+    server.use(
+      http.get(FOLDER_PARENTS_URL, () => {
+        parentLookups += 1;
+        return HttpResponse.json({ items: [{ name: 'folder-1', title: 'Team Metrics' }] });
+      })
+    );
+
+    render(
+      <RuleSequenceDrawerProvider>
+        <ul>
+          <RecordingRuleListEntry
+            searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m', folderUid: 'folder-1' }}
+            showFolderPath={false}
+          />
+        </ul>
+      </RuleSequenceDrawerProvider>
+    );
+
+    expect(await screen.findByRole('link', { name: 'cpu:usage:rate5m' })).toBeInTheDocument();
+    expect(screen.queryByText('Team Metrics')).not.toBeInTheDocument();
+    expect(parentLookups).toBe(0);
   });
 
   it('shows the provisioning badge after the full rule loads with provenance set', async () => {
@@ -64,9 +98,11 @@ describe('RecordingRuleListEntry', () => {
     );
 
     render(
-      <ul>
-        <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} />
-      </ul>
+      <RuleSequenceDrawerProvider>
+        <ul>
+          <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} showFolderPath />
+        </ul>
+      </RuleSequenceDrawerProvider>
     );
 
     expect(await screen.findByText('Provisioned')).toBeInTheDocument();
@@ -80,9 +116,11 @@ describe('RecordingRuleListEntry', () => {
     );
 
     render(
-      <ul>
-        <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} />
-      </ul>
+      <RuleSequenceDrawerProvider>
+        <ul>
+          <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} showFolderPath />
+        </ul>
+      </RuleSequenceDrawerProvider>
     );
 
     expect(await screen.findByText('cpu:usage:rate5m')).toBeInTheDocument();
@@ -91,12 +129,49 @@ describe('RecordingRuleListEntry', () => {
 
   it('shows no badge when the full rule has no provenance and no plugin origin', async () => {
     render(
-      <ul>
-        <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} />
-      </ul>
+      <RuleSequenceDrawerProvider>
+        <ul>
+          <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} showFolderPath />
+        </ul>
+      </RuleSequenceDrawerProvider>
     );
 
     expect(await screen.findByText('cpu:usage:rate5m')).toBeInTheDocument();
     expect(screen.queryByText('Provisioned')).not.toBeInTheDocument();
+  });
+
+  it('renders the More actions button when the full rule is available', async () => {
+    server.use(
+      getRecordingRuleHandler([
+        {
+          apiVersion: `${API_GROUP}/${API_VERSION}`,
+          kind: 'RecordingRule',
+          metadata: {
+            name: 'rule-1',
+            annotations: {
+              'grafana.com/access/canWrite': 'true',
+              'grafana.com/access/canDelete': 'true',
+            },
+          },
+          spec: {
+            title: 'cpu:usage:rate5m',
+            metric: 'cpu:usage:rate5m',
+            targetDatasourceUID: 'gdev-prometheus',
+            trigger: { interval: '1m' },
+            expressions: {},
+          },
+        },
+      ])
+    );
+
+    render(
+      <RuleSequenceDrawerProvider>
+        <ul>
+          <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} showFolderPath={false} />
+        </ul>
+      </RuleSequenceDrawerProvider>
+    );
+
+    expect(await screen.findByRole('button', { name: 'More' })).toBeInTheDocument();
   });
 });

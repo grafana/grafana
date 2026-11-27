@@ -178,6 +178,29 @@ func (s *LegacyService) GetUserTeamMemberships(ctx context.Context, orgID, userI
 	return teams, nil
 }
 
+func (s *LegacyService) GetUserTeamMembershipsByUID(ctx context.Context, query *team.GetUserTeamMembershipsByUIDQuery) ([]team.UserTeamMembership, error) {
+	ctx, span := s.tracer.Start(ctx, "team.GetUserTeamMembershipsByUID", trace.WithAttributes(
+		attribute.Int64("orgID", query.OrgID),
+		attribute.String("userUID", query.UserUID),
+	))
+	defer span.End()
+
+	rows, err := s.store.GetMembershipsByUserUID(ctx, query.OrgID, query.UserUID, query.External)
+	if err != nil {
+		return nil, err
+	}
+	memberships := make([]team.UserTeamMembership, 0, len(rows))
+	for _, r := range rows {
+		memberships = append(memberships, team.UserTeamMembership{
+			TeamID:     r.TeamID,
+			TeamUID:    r.TeamUID,
+			External:   r.External,
+			Permission: r.Permission,
+		})
+	}
+	return memberships, nil
+}
+
 func (s *LegacyService) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
 	ctx, span := s.tracer.Start(ctx, "team.GetTeamMembers", trace.WithAttributes(
 		attribute.Int64("orgID", query.OrgID),

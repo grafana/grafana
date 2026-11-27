@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
-import { AlertLabels, type RouteMatchResult, type RouteWithID } from '@grafana/alerting';
+import { AlertLabels } from '@grafana/alerting';
+import { type InstancePreview, type PreviewJourneyStep } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Stack, Text, useStyles2 } from '@grafana/ui';
@@ -15,7 +16,7 @@ type TreeMeta = {
 };
 
 type InstanceMatchProps = {
-  matchedInstance: RouteMatchResult<RouteWithID>;
+  matchedInstance: Pick<InstancePreview, 'labels'> & { matchingJourney: PreviewJourneyStep[] };
   policyTreeMetadata: TreeMeta;
 };
 

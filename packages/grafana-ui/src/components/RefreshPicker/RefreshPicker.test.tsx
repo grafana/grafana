@@ -95,4 +95,32 @@ describe('RefreshPicker', () => {
       expect(button).not.toBeInTheDocument();
     });
   });
+  describe('run button', () => {
+    it('should show its text when it has text', () => {
+      render(<RefreshPicker onIntervalChanged={jest.fn()} text="Run" />);
+      expect(screen.getByRole('button', { name: 'Run' })).toHaveTextContent('Run');
+    });
+    it('should be an icon-only button named Refresh when it has no text', () => {
+      render(<RefreshPicker onIntervalChanged={jest.fn()} />);
+      const button = screen.getByRole('button', { name: 'Refresh' });
+      expect(button).toBe(screen.getByTestId(selectors.components.RefreshPicker.runButtonV2));
+      expect(button.querySelector('div')).not.toBeInTheDocument();
+    });
+    it('should keep Refresh as hidden text when it has no text', () => {
+      render(<RefreshPicker onIntervalChanged={jest.fn()} />);
+      expect(screen.getByTestId(selectors.components.RefreshPicker.runButtonV2)).toHaveTextContent('Refresh');
+    });
+    it('should use the tooltip as its name when it has no text', () => {
+      render(<RefreshPicker onIntervalChanged={jest.fn()} isLoading tooltip="Cancel all queries" />);
+      expect(screen.getByRole('button', { name: 'Cancel all queries' })).toBeInTheDocument();
+    });
+    it('should use the tooltip as its name while loading when it has text but no loading text', () => {
+      render(<RefreshPicker onIntervalChanged={jest.fn()} text="5s" isLoading tooltip="Cancel all queries" />);
+      expect(screen.getByRole('button', { name: 'Cancel all queries' })).toBeInTheDocument();
+    });
+    it('should use the loading text as its name while loading', () => {
+      render(<RefreshPicker onIntervalChanged={jest.fn()} text="Refresh" loadingText="Cancel" isLoading />);
+      expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+    });
+  });
 });

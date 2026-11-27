@@ -5,14 +5,24 @@ import {
   type PluginInclude,
   PluginIncludeType,
 } from '@grafana/data';
+import { ASSISTANT_APP_ID } from 'app/core/appPluginIds';
+import { ASSISTANT_PAGES_PATH } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNavTitle } from 'app/core/utils/navBarItem-translations';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { type AppNavConfig, appNavConfigFor, appNavPathConfigFor } from './appNavConfig';
+import { type AppNavConfig, appNavConfigFor, appNavPathConfigFor, isOperatorPlacedSection } from './appNavConfig';
 import { NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
 import { PLUGIN_NAV_OVERRIDES } from './pluginNavOverrides';
-import { appendIntoSection, hoistedPluginPageId, pluginPageId, standalonePluginPageId, withAppSubUrl } from './utils';
+import {
+  appendIntoSection,
+  findNavById,
+  hoistAppPages,
+  pluginPageId,
+  standalonePluginPageId,
+  updateNavById,
+  withAppSubUrl,
+} from './utils';
 
 // Whether the user may see one of an app's pages. An include declaring an RBAC
 // action is gated on that action; otherwise the user's org role must rank at or
@@ -20,6 +30,17 @@ import { appendIntoSection, hoistedPluginPageId, pluginPageId, standalonePluginP
 // permissions map flattens scopes away, so the per-plugin scope the server
 // applies (plugins:id:*) cannot be checked here.
 const ORG_ROLE_RANK: Record<string, number> = { None: 0, Viewer: 1, Editor: 2, Admin: 3 };
+
+// No pluginId: routes.tsx registers a catch-all app route for every plugin nav
+// item, which would make the pages section own every Assistant url.
+const ASSISTANT_CREATE_PAGE_ACTION: NavModelItem = {
+  text: 'New Grafana Page',
+  id: 'assistant/pages/new',
+  icon: 'plus',
+  url: `${ASSISTANT_PAGES_PATH}/new`,
+  hideFromTabs: true,
+  isCreateAction: true,
+};
 
 // Apps with no nav config all carry the same sort weight, so sortNavTree leaves
 // them in whatever order they were placed. Order them here, by the title
@@ -111,7 +132,7 @@ function buildAppLink(app: AppPluginConfig): {
   const children: NavModelItem[] = [];
   const standalonePages: StandalonePage[] = [];
   const navConfig = appNavConfigFor(app.id);
-  const { filterInclude, hoistPages } = navConfig ?? {};
+  const { filterInclude } = navConfig ?? {};
 
   for (const include of app.includes ?? []) {
     if (!hasAccessToInclude(include) || (filterInclude && !filterInclude(include))) {
@@ -143,10 +164,8 @@ function buildAppLink(app: AppPluginConfig): {
       icon: toIconName(include.icon),
       pluginId: app.id,
       url: include.path,
-      // A hoisted app has no node of its own, so its pages carry the standalone
-      // id. Only pages: a dashboard include left with a `/d/<uid>` standalone id
-      // would register that url as an app route and shadow the dashboard itself
-      ...(hoistPages && { id: hoistedPluginPageId(include.path) }),
+      // Attached before placement, so the action follows the page wherever it lands
+      ...(canCreateAssistantPage(app, include) && { children: [ASSISTANT_CREATE_PAGE_ACTION] }),
     };
 
     // A page with its own placement leaves the app entirely, so it is not one of
@@ -155,9 +174,13 @@ function buildAppLink(app: AppPluginConfig): {
     // whatever addToNav says — plugins should not lean on that, a page meant for
     // the nav sets addToNav.
     const pathConfig = appNavPathConfigFor(include.path);
+    if (pathConfig?.hidden) {
+      continue;
+    }
     if (pathConfig) {
       standalonePages.push({
-        sectionId: pathConfig.sectionId,
+        // A page entry always names a section — only a hidden one may leave it out
+        sectionId: pathConfig.sectionId ?? NavID.apps,
         link: { ...withNavConfig(link, pathConfig), id: standalonePluginPageId(include.path) },
       });
       continue;
@@ -196,8 +219,27 @@ interface StandalonePage {
   link: NavModelItem;
 }
 
-/** Places a lifted page at the top level, or into the section it names */
+/**
+ * Places a lifted page at the top level, or into the section it names. A page
+ * whose url matches one already in that section replaces it rather than sitting
+ * beside it, which is how an operator points a core page at a plugin (Cloud does
+ * this for Add new connection and Infrastructure).
+ */
 function placeStandalonePage(tree: NavModelItem[], { sectionId, link }: StandalonePage): NavModelItem[] {
+  const section = findNavById(tree, sectionId);
+  const replaced = section?.children?.find((child) => child.url === link.url);
+  if (section && replaced) {
+    return updateNavById(tree, sectionId, (node) => ({
+      ...node,
+      children: (node.children ?? []).map((child) =>
+        // Only the fields the server copies (applinks.go): the core page keeps its
+        // own text, subtitle, keywords and flags, the plugin takes over the routing
+        child === replaced
+          ? { ...child, id: link.id, sortWeight: link.sortWeight, pluginId: link.pluginId, children: [] }
+          : child
+      ),
+    }));
+  }
   return appendIntoSection(tree, sectionId, [link]) ?? tree;
 }
 
@@ -210,7 +252,9 @@ function placeStandalonePage(tree: NavModelItem[], { sectionId, link }: Standalo
 function withNavConfig(link: NavModelItem, { sortWeight, text, subTitle, isNew, icon }: AppNavConfig): NavModelItem {
   return {
     ...link,
-    sortWeight,
+    // A config that names no weight means the appended position, as a zero weight
+    // does server-side — not "keep the default the link was built with"
+    sortWeight: sortWeight ?? 0,
     ...(text !== undefined && { text }),
     ...(subTitle !== undefined && { subTitle }),
     ...(isNew !== undefined && { isNew }),
@@ -231,6 +275,12 @@ function withAppNavConfig(app: AppPluginConfig, appLink: NavModelItem): NavModel
  */
 function placeAppInSection(tree: NavModelItem[], app: AppPluginConfig, appLink: NavModelItem): NavModelItem[] {
   const navConfig = appNavConfigFor(app.id);
+  // A hidden app leaves no node behind, but its pages are placed on their own
+  // terms: Cloud hides the Collector app and lists three of its pages directly,
+  // both through the instance config
+  if (navConfig?.hidden) {
+    return tree;
+  }
   const sectionId = navConfig?.sectionId ?? NavID.apps;
 
   const sectionChildren = navConfig?.hoistPages ? hoistAppPages(appLink, navConfig.hoistPages) : [appLink];
@@ -242,7 +292,11 @@ function placeAppInSection(tree: NavModelItem[], app: AppPluginConfig, appLink: 
 
   const shellConfig = PLUGIN_SECTION_SHELLS[sectionId];
   if (!shellConfig) {
-    console.warn('[navtree] plugin app nav id not found', app.id, sectionId);
+    // An operator naming a section that does not exist is how an app gets hidden,
+    // so only our own tables pointing somewhere unknown is worth warning about
+    if (!isOperatorPlacedSection(sectionId)) {
+      console.warn('[navtree] plugin app nav id not found', app.id, sectionId);
+    }
     return tree;
   }
   const { shell, absorbs = [], imgFromAppLogo } = shellConfig;
@@ -268,27 +322,18 @@ function placeAppInSection(tree: NavModelItem[], app: AppPluginConfig, appLink: 
   ];
 }
 
-// Hoisted pages without a pinned slot sort above the section's app entries
-// (which sit at small positive weights) while keeping their own relative order
-const HOISTED_PAGE_WEIGHT_OFFSET = -100;
-
 /**
- * Expands an app's pages into its target section as standalone entries instead
- * of nesting them under an app node (`hoistPages` in the app's nav config).
- * Pages pinned by `slotWeightByPath` take that section slot; the rest sort
- * above the section's app entries in their own order.
+ * Whether this include is the Assistant's pages section, asking for the nav,
+ * with the permission to create a page. Built here rather than as an override
+ * because only the include says whether the page wanted the nav at all.
  */
-function hoistAppPages(
-  appLink: NavModelItem,
-  { slotWeightByPath = {} }: NonNullable<AppNavConfig['hoistPages']>
-): NavModelItem[] {
-  return (appLink.children ?? []).map((child) => {
-    const slotWeight = child.url ? slotWeightByPath[child.url] : undefined;
-    return {
-      ...child,
-      sortWeight: slotWeight ?? HOISTED_PAGE_WEIGHT_OFFSET + (child.sortWeight ?? 0),
-    };
-  });
+function canCreateAssistantPage(app: AppPluginConfig, include: PluginInclude): boolean {
+  return (
+    app.id === ASSISTANT_APP_ID &&
+    include.path === ASSISTANT_PAGES_PATH &&
+    Boolean(include.addToNav) &&
+    contextSrv.hasPermission('assistant.ext.grafana.app/pages:create')
+  );
 }
 
 function hasAccessToInclude(include: PluginInclude): boolean {

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -14,7 +14,6 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { FlagKeys } from '@grafana/runtime/internal';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
@@ -339,6 +338,48 @@ describe('LogList', () => {
       await userEvent.click(screen.getByText('Confirm'));
       expect(disablePopoverMenu).toHaveBeenCalledTimes(1);
     });
+    // A Document Picture-in-Picture window (the Grafana Assistant pop-out) is another realm, as an iframe is: text
+    // selected there is that window's selection.
+    it('Appears after selecting text in another window, and closes on Escape or a press outside the list there', () => {
+      const iframe = document.createElement('iframe');
+      document.body.appendChild(iframe);
+      const otherDocument = iframe.contentDocument!;
+      const container = otherDocument.body.appendChild(otherDocument.createElement('div'));
+      const outside = otherDocument.body.appendChild(otherDocument.createElement('div'));
+      // nothing is selected in this window
+      const tabGetSelection = document.getSelection;
+      document.getSelection = () => null;
+      jest.spyOn(otherDocument, 'getSelection').mockReturnValue({
+        toString: () => 'selected log line',
+        removeAllRanges: () => {},
+        addRange: (range: Range) => {},
+      } as Selection);
+      const { unmount } = render(
+        <LogList {...defaultProps} onClickFilterString={jest.fn()} onClickFilterOutString={jest.fn()} />,
+        { container }
+      );
+
+      try {
+        // user-event drives pointer input through this window's document, so fire the other window's event directly
+        fireEvent.click(within(otherDocument.body).getByText('log message 1'));
+        expect(within(otherDocument.body).getByText('Copy selection')).toBeInTheDocument();
+
+        // Escape pressed in that window closes it
+        fireEvent.keyUp(otherDocument, { key: 'Escape' });
+        expect(within(otherDocument.body).queryByText('Copy selection')).not.toBeInTheDocument();
+
+        // so does a press outside the list there, while the text stays selected
+        fireEvent.click(within(otherDocument.body).getByText('log message 1'));
+        expect(within(otherDocument.body).getByText('Copy selection')).toBeInTheDocument();
+        fireEvent.contextMenu(outside);
+        expect(within(otherDocument.body).queryByText('Copy selection')).not.toBeInTheDocument();
+      } finally {
+        // Unmount before the iframe goes, or React cannot remove the list from it.
+        unmount();
+        iframe.remove();
+        document.getSelection = tabGetSelection;
+      }
+    });
     it('Does not appear when disabled', async () => {
       jest.mocked(isPopoverMenuDisabled).mockReturnValue(true);
       setup();
@@ -628,7 +669,7 @@ describe('LogList', () => {
 
   describe('Log details', () => {
     test('Supports showing log details', async () => {
-      setBooleanFlags({ otelLogsFormatting: true, [FlagKeys.GrafanaLogDetailsDisplayedFieldControls]: true });
+      setBooleanFlags({ otelLogsFormatting: true });
       jest.spyOn(store, 'get').mockImplementation((option: string) => {
         if (option === 'storage-key.detailsMode') {
           return 'sidebar';
@@ -672,7 +713,7 @@ describe('LogList', () => {
     });
 
     test('Supports showing inline log details', async () => {
-      setBooleanFlags({ otelLogsFormatting: true, [FlagKeys.GrafanaLogDetailsDisplayedFieldControls]: true });
+      setBooleanFlags({ otelLogsFormatting: true });
       jest.spyOn(store, 'get').mockImplementation((option: string) => {
         if (option === 'storage-key.detailsMode') {
           return 'inline';

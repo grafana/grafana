@@ -173,6 +173,21 @@ type SearchQuery struct {
 	Continue string `json:"continue,omitempty"`
 }
 
+// GlobalSearchQuery is the request body for POST
+// .../namespaces/{namespace}/global/search: a SearchQuery, and what only the
+// search across resource types offers.
+//
+// +k8s:deepcopy-gen=true
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type GlobalSearchQuery struct {
+	SearchQuery `json:",inline"`
+
+	// Access names verbs to check for each returned item against the caller:
+	// update, delete and set_permissions. Each item then says, in its access,
+	// whether the caller may do them. Only the returned page is checked.
+	Access []string `json:"access,omitempty"`
+}
+
 // TrashQuery is the request body for POST .../{resource}/trash. It is a
 // deliberately smaller subset of SearchQuery: trash documents index only the
 // standard fields, so there is no labelSelector and no faceting. Field
@@ -217,7 +232,7 @@ type GlobalSearchResults struct {
 	metav1.TypeMeta `json:",inline"`
 
 	Metadata GlobalResultsMetadata `json:"metadata"`
-	Items    []ResultItem          `json:"items"`
+	Items    []GlobalResultItem    `json:"items"`
 
 	// Facets holds term counts per requested facet field. Counts are computed
 	// over a bounded sample window, so they are best-effort/approximate.
@@ -316,6 +331,20 @@ type ResultItem struct {
 	// Fields holds the JSON values for the requested (or default) fields.
 	// Array-typed fields are returned as JSON arrays. Absent fields are omitted.
 	Fields *common.Unstructured `json:"fields,omitempty"`
+}
+
+// GlobalResultItem is one global search hit.
+//
+// +k8s:deepcopy-gen=true
+type GlobalResultItem struct {
+	ResultItem `json:",inline"`
+
+	// Access says, for each verb the query's access names, whether the caller
+	// may do it to this item. A verb that could not be checked is left out, so
+	// a missing verb means unknown rather than no. It reflects permissions only:
+	// an item can still refuse an edit, for example when it is provisioned (see
+	// the manager fields).
+	Access map[string]bool `json:"access,omitempty"`
 }
 
 // ResourceRef is the full identity of a returned item. Namespace is implicit

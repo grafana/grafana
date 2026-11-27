@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -52,6 +53,8 @@ func ProvideService(sql legacysql.LegacyDatabaseProvider,
 // ProvideServiceWithWatch is ProvideService that also announces legacy user
 // writes on the legacy watch subjects. It is separate so wire sets without the
 // NATS bus, such as the CLI's, can keep using ProvideService.
+// It keeps its signature because code outside this repository constructs the
+// service directly.
 func ProvideServiceWithWatch(sql legacysql.LegacyDatabaseProvider,
 	orgService org.Service,
 	cfg *setting.Cfg,
@@ -59,7 +62,18 @@ func ProvideServiceWithWatch(sql legacysql.LegacyDatabaseProvider,
 	cacheService *localcache.CacheService, tracer tracing.Tracer,
 	quotaService quota.Service, bundleRegistry supportbundles.Service,
 	configProvider apiserver.DirectRestConfigProvider, legacyWatch *legacywatch.Publisher) (*Service, error) {
-	legacyService, err := NewLegacyService(sql, orgService, cfg, teamService, cacheService, tracer, quotaService, bundleRegistry, legacyWatch)
+	return ProvideServiceWithPreferencesCleanup(sql, orgService, cfg, teamService, cacheService, tracer, quotaService, bundleRegistry, configProvider, legacyWatch, nil)
+}
+
+// ProvideServiceWithPreferencesCleanup is ProvideServiceWithWatch that also deletes a deleted user's DashboardPreferences user tier.
+func ProvideServiceWithPreferencesCleanup(sql legacysql.LegacyDatabaseProvider,
+	orgService org.Service,
+	cfg *setting.Cfg,
+	teamService team.Service,
+	cacheService *localcache.CacheService, tracer tracing.Tracer,
+	quotaService quota.Service, bundleRegistry supportbundles.Service,
+	configProvider apiserver.DirectRestConfigProvider, legacyWatch *legacywatch.Publisher, preferences dashboardpreferences.UserCleaner) (*Service, error) {
+	legacyService, err := NewLegacyService(sql, orgService, cfg, teamService, cacheService, tracer, quotaService, bundleRegistry, legacyWatch, preferences)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +167,7 @@ func (s *Service) GetByEmail(ctx context.Context, cmd *user.GetUserByEmailQuery)
 
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
 	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
-		return s.k8sService.Update(s.k8sCtxWithIdentity(ctx), cmd)
+		return s.k8sService.Update(s.k8sCtxForSelfRead(ctx, cmd.UserID, cmd.UID), cmd)
 	}
 
 	return s.legacyService.Update(ctx, cmd)

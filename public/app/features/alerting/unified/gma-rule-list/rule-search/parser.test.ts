@@ -1,13 +1,13 @@
 import { type RuleSearchSchema } from './filterDefinitions';
 import { parse } from './parser';
 import { sharedFilters } from './sharedFilters';
-import { type SharedRuleFilter, createEmptyFilter } from './sharedRuleFilter';
+import { type SharedRuleFilter, createRulesApiFilter } from './sharedRuleFilter';
 
 // Only the filters both pages share, so these rows hold on either page. Each page's own filters are tested next to
 // its schema.
 const sharedSchema: RuleSearchSchema<SharedRuleFilter> = {
   filters: Object.values(sharedFilters),
-  createEmptyFilter,
+  createEmptyFilter: createRulesApiFilter,
 };
 
 interface Row {
@@ -50,7 +50,12 @@ describe('parsing', () => {
       query: 'foo:"a b"',
       filter: { text: ['foo:a b'] },
     },
-    { name: 'several folders', query: 'folder:f1 folder:"My Folder"', filter: { folders: ['f1', 'My Folder'] } },
+    { name: 'the last folder', query: 'folder:f1 folder:"My Folder"', filter: { folder: 'My Folder' } },
+    {
+      name: 'several folder UIDs beside a folder name',
+      query: 'folderUid:f1 folder:Team folderUid:f2',
+      filter: { folder: 'Team', folderUids: ['f1', 'f2'] },
+    },
     {
       name: 'several data sources',
       query: 'datasource:ds-1 datasource:ds-2',
@@ -105,38 +110,59 @@ describe('parsing', () => {
     },
     { name: 'hidden plugin rules', query: 'plugins:hide', filter: { hidePluginRules: true } },
   ])('reads $name', ({ query, filter }) => {
-    expect(parse(query, sharedSchema).filter).toEqual({ ...createEmptyFilter(), ...filter });
+    expect(parse(query, sharedSchema).filter).toEqual(createRulesApiFilter(filter));
   });
 
   it.each([
     ['label:', 'label'],
     ['rule:', 'rule'],
     ['folder:""', 'folder'],
+  ])('rejects %j as a %s filter with no value and leaves the filter empty', (query, key) => {
+    expect(parse(query, sharedSchema)).toEqual({
+      filter: createRulesApiFilter(),
+      issues: [{ key, reason: 'missingValue' }],
+    });
+  });
+
+  it('reports folder: followed by a space as missing its value, and reads the rest as title text', () => {
+    expect(parse('folder: "perf folder 1"', sharedSchema)).toEqual({
+      filter: createRulesApiFilter({ text: ['perf folder 1'] }),
+      issues: [{ key: 'folder', reason: 'missingValue' }],
+    });
+  });
+
+  it.each([
     ['label:=api', 'label'],
     ['label:!', 'label'],
     ['plugins:show', 'plugins'],
     ['health:err', 'health'],
     ['folder:"My Fol', 'folder'],
   ])('rejects %j as an invalid %s value and leaves the filter empty', (query, key) => {
-    expect(parse(query, sharedSchema)).toEqual({ filter: createEmptyFilter(), issues: [{ key, reason: 'invalid' }] });
+    expect(parse(query, sharedSchema)).toEqual({
+      filter: createRulesApiFilter(),
+      issues: [{ key, reason: 'invalid' }],
+    });
   });
 
   it.each(['"cpu high', 'foo:"a b'])('rejects the unclosed quote in %j and leaves the filter empty', (query) => {
     expect(parse(query, sharedSchema)).toEqual({
-      filter: createEmptyFilter(),
+      filter: createRulesApiFilter(),
       issues: [{ key: null, reason: 'unclosedQuote' }],
     });
   });
 });
 
 describe('feedback', () => {
-  it.each(['cpu', 'folder:f1', 'label:team=api', 'label:team=~api.*'])('reports no issues for %j', (query) => {
-    expect(parse(query, sharedSchema).issues).toEqual([]);
-  });
+  it.each(['cpu', 'folder:f1', 'folder:f*', 'label:team=api', 'label:team=~api.*'])(
+    'reports no issues for %j',
+    (query) => {
+      expect(parse(query, sharedSchema).issues).toEqual([]);
+    }
+  );
 
   it.each([
-    ['folder:f*', 'folder'],
     ['datasource:__expr__', 'datasource'],
+    ['folderUid:f*', 'folderUid'],
     ['datasource:"my ds"', 'datasource'],
     ['label:team=a*', 'label'],
     ['label:!!team', 'label'],

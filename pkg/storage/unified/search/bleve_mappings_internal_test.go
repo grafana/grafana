@@ -433,7 +433,7 @@ func TestPostRankFacetTermsMatchKeywordVariant(t *testing.T) {
 	agg := newFacetAggregator(map[string]*resourcepb.ResourceSearchRequest_Facet{
 		"summary": {Field: "summary", Limit: 10},
 	}, newKindSearchFields(provider, gvr.Group, gvr.Resource, nil).storedFacetField)
-	agg.add(result.Hits[0])
+	agg.add(result.Hits[0].Fields)
 
 	nativeTerms := result.Facets["summary"].Terms.Terms()
 	require.Len(t, nativeTerms, 1)

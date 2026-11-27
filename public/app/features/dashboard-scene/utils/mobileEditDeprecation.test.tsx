@@ -1,9 +1,26 @@
 import { cleanup, screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { AppEvents } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
+import { appEvents } from 'app/core/app_events';
+import {
+  setDesktopViewport,
+  setMobileViewport,
+  setNarrowDesktopViewport,
+  testWithViewport,
+} from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 
-import { isMobileEditDeprecated, useIsMobileEditDeprecated } from './mobileEditDeprecation';
+import { DashboardScene } from '../scene/DashboardScene';
+
+import {
+  isEditEntryBlocked,
+  isMobileEditDeprecated,
+  notifyMobileEditNotAvailable,
+  redirectAwayFromMobileEdit,
+  useIsMobileEditDeprecated,
+} from './mobileEditDeprecation';
 
 const mockUseMediaQueryMinWidth = jest.fn();
 
@@ -14,27 +31,67 @@ jest.mock('app/core/hooks/useMediaQueryMinWidth', () => ({
 describe('isMobileEditDeprecated', () => {
   afterEach(() => {
     setTestFlags({});
-    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
   });
 
   it('is true when the toggle is on and the viewport is narrower than the sm breakpoint', () => {
     setTestFlags({ 'grafana.mobileEditDeprecation': true });
-    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+    setMobileViewport();
 
     expect(isMobileEditDeprecated()).toBe(true);
   });
 
   it('is false when the toggle is on but the viewport is at least the sm breakpoint', () => {
     setTestFlags({ 'grafana.mobileEditDeprecation': true });
-    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1200 });
+    setDesktopViewport();
 
     expect(isMobileEditDeprecated()).toBe(false);
   });
 
   it('is false on a mobile-sized viewport when the toggle is off', () => {
-    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+    setMobileViewport();
 
     expect(isMobileEditDeprecated()).toBe(false);
+  });
+
+  it('is false on a narrow viewport with a mouse-primary device, such as a zoomed desktop browser', () => {
+    setTestFlags({ 'grafana.mobileEditDeprecation': true });
+    setNarrowDesktopViewport();
+
+    expect(isMobileEditDeprecated()).toBe(false);
+  });
+});
+
+describe('isEditEntryBlocked', () => {
+  function buildScene(state?: Partial<ConstructorParameters<typeof DashboardScene>[0]>) {
+    return new DashboardScene({ title: 'hello', meta: { canEdit: true }, ...state });
+  }
+
+  testWithFlags({ 'grafana.mobileEditDeprecation': true });
+
+  testWithViewport('mobile');
+
+  it('blocks a dashboard that is not editing', () => {
+    expect(isEditEntryBlocked(buildScene())).toBe(true);
+  });
+
+  it('does not block a session already in full editing, so a viewport change mid-session is harmless', () => {
+    expect(isEditEntryBlocked(buildScene({ isEditing: true }))).toBe(false);
+  });
+
+  it('blocks a Viewing session, which is still isEditing but cannot switch back to Editing', () => {
+    setTestFlags({
+      dashboardNewLayouts: true,
+      'grafana.dashboardPreviewMode': true,
+      'grafana.mobileEditDeprecation': true,
+    });
+
+    expect(isEditEntryBlocked(buildScene({ isEditing: true, mode: 'view' }))).toBe(true);
+  });
+
+  it('does not block anything once the viewport is at least the sm breakpoint', () => {
+    setDesktopViewport();
+
+    expect(isEditEntryBlocked(buildScene())).toBe(false);
   });
 });
 
@@ -43,9 +100,22 @@ function Probe() {
 }
 
 /** `render` from test-utils supplies the OpenFeatureProvider the flag hook needs. */
-function setup({ flag, isAtLeastSm }: { flag: boolean; isAtLeastSm: boolean }) {
+function setup({
+  flag,
+  isAtLeastSm,
+  isTouchPrimary = true,
+}: {
+  flag: boolean;
+  isAtLeastSm: boolean;
+  isTouchPrimary?: boolean;
+}) {
   setTestFlags({ 'grafana.mobileEditDeprecation': flag });
   mockUseMediaQueryMinWidth.mockReturnValue(isAtLeastSm);
+  if (isTouchPrimary) {
+    setMobileViewport();
+  } else {
+    setNarrowDesktopViewport();
+  }
   render(<Probe />);
 }
 
@@ -72,5 +142,37 @@ describe('useIsMobileEditDeprecated', () => {
     setup({ flag: false, isAtLeastSm: false });
 
     expect(screen.getByText('allowed')).toBeInTheDocument();
+  });
+
+  it('is allowed below the sm breakpoint when the primary input is a mouse, such as a zoomed desktop browser', () => {
+    setup({ flag: true, isAtLeastSm: false, isTouchPrimary: false });
+
+    expect(screen.getByText('allowed')).toBeInTheDocument();
+  });
+});
+
+describe('notifyMobileEditNotAvailable', () => {
+  it('emits a warning toast explaining dashboard editing is unavailable on small screens', () => {
+    const emitSpy = jest.spyOn(appEvents, 'emit');
+
+    notifyMobileEditNotAvailable();
+
+    expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertWarning, [
+      'Dashboard editing is not available on small screens. Switch to a larger screen to continue.',
+    ]);
+  });
+});
+
+describe('redirectAwayFromMobileEdit', () => {
+  it('warns and redirects to /dashboards', () => {
+    const emitSpy = jest.spyOn(appEvents, 'emit');
+    const replaceSpy = jest.spyOn(locationService, 'replace').mockImplementation(() => {});
+
+    redirectAwayFromMobileEdit();
+
+    expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertWarning, [
+      'Dashboard editing is not available on small screens. Switch to a larger screen to continue.',
+    ]);
+    expect(replaceSpy).toHaveBeenCalledWith('/dashboards');
   });
 });

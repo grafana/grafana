@@ -42,7 +42,7 @@ func TestSearchErrorStatus(t *testing.T) {
 	st, err := status.New(codes.ResourceExhausted, "search is busy").WithDetails(failure)
 	require.NoError(t, err)
 	for name, client := range map[string]*MockClient{
-		"embedded":  {MockResponses: []*resourcepb.ResourceSearchResponse{{Error: failure}}},
+		"detailed":  {MockError: st.Err()},
 		"transport": {MockError: fmt.Errorf("search: %w", st.Err())},
 		"plain":     {MockError: fmt.Errorf("private database failure")},
 		"internal":  {MockError: status.Error(codes.Internal, "private database failure")},
@@ -562,6 +562,35 @@ func TestTeamSearchMemberCount(t *testing.T) {
 		}
 	})
 
+	t.Run("membercount=true - backend is asked for member counts", func(t *testing.T) {
+		for _, tt := range []struct {
+			param string
+			want  bool
+		}{
+			{param: "", want: false},
+			{param: "?membercount=false", want: false},
+			{param: "?membercount=true", want: true},
+		} {
+			backend := &fakeSearchBackend{}
+			searchHandler := &SearchHandler{
+				log:        log.New("grafana-apiserver.teams.search"),
+				client:     selectorForBackend(backend),
+				tracer:     tracing.NewNoopTracerService(),
+				teamGetter: mockGetter,
+			}
+
+			rr := httptest.NewRecorder()
+			req := httptest.NewRequest("GET", "/teams/search"+tt.param, nil)
+			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "default"}))
+
+			searchHandler.DoTeamSearch(rr, req)
+
+			require.Equal(t, 200, rr.Code)
+			require.NotNil(t, backend.lastQuery)
+			assert.Equal(t, tt.want, backend.lastQuery.MemberCount, "param %q", tt.param)
+		}
+	})
+
 	t.Run("membercount=true - getter error returns 500", func(t *testing.T) {
 		errorGetter := &mockTeamGetter{
 			getFunc: func(_ context.Context, _ string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -619,6 +648,36 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 		assert.Equal(t, int64(3), *hits[0].MemberCount)
 		require.NotNil(t, hits[1].MemberCount)
 		assert.Equal(t, int64(0), *hits[1].MemberCount)
+	})
+
+	t.Run("hits with backend member counts - skips team get", func(t *testing.T) {
+		var gets []string
+		mockGetter := &mockTeamGetter{
+			getFunc: func(_ context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
+				gets = append(gets, name)
+				return &iamv0alpha1.Team{Spec: iamv0alpha1.TeamSpec{Members: make([]iamv0alpha1.TeamTeamMember, 3)}}, nil
+			},
+		}
+
+		handler := &SearchHandler{
+			log:        log.New("test"),
+			tracer:     tracing.NewNoopTracerService(),
+			teamGetter: mockGetter,
+		}
+
+		backendCount := int64(5)
+		hits := []iamv0alpha1.GetSearchTeamsTeamHit{
+			{Name: "team-1", MemberCount: &backendCount},
+			{Name: "team-2"},
+		}
+
+		err := handler.enrichWithMemberCounts(context.Background(), "default", hits)
+		require.NoError(t, err)
+		assert.Equal(t, []string{"team-2"}, gets)
+		require.NotNil(t, hits[0].MemberCount)
+		assert.Equal(t, int64(5), *hits[0].MemberCount)
+		require.NotNil(t, hits[1].MemberCount)
+		assert.Equal(t, int64(3), *hits[1].MemberCount)
 	})
 
 	t.Run("one fails - returns error", func(t *testing.T) {
@@ -732,12 +791,6 @@ func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRe
 	return response, nil
 }
 func (m *MockClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) RecordEvent(ctx context.Context, in *resourcepb.RecordEventRequest, opts ...grpc.CallOption) (*resourcepb.RecordEventResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) GetResourceDailyStats(ctx context.Context, in *resourcepb.GetResourceDailyStatsRequest, opts ...grpc.CallOption) (resourcepb.ResourceStats_GetResourceDailyStatsClient, error) {
 	return nil, nil
 }
 func (m *MockClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {

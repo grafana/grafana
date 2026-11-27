@@ -74,6 +74,16 @@ it('keeps saving available while a turn pauses the session', () => {
   expect(saveButton()).not.toHaveAttribute('aria-disabled', 'true');
 });
 
+it('disables Discard while a turn runs without pausing the session', async () => {
+  const { session } = setup();
+  act(() => session.setWorking(true));
+  await act(async () =>
+    screen.getByTestId(selectors.components.NavToolbar.editDashboard.moreSaveOptionsButton).click()
+  );
+
+  expect(screen.getByRole('menuitem', { name: /^Discard changes/ })).toBeDisabled();
+});
+
 it('disables only Discard in the save menu while paused, and re-enables it on resume', async () => {
   const { session } = setup();
   act(() => session.setPaused(true));

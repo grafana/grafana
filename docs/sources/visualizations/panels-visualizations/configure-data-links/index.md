@@ -266,6 +266,10 @@ To access values and labels from other fields use:
 | `__data.fields["NameOfField"]`    | Value of field using name instead of index |
 | `__data.fields[1].labels.cluster` | Access labels of another field             |
 
+### Dashboard tabs
+
+Use `${__url_tab_state}` to preserve the selected tabs when a data link opens the same dashboard. The variable adds the URL parameters for the selected tabs, including nested tabs. For example, `/d/<UID>?${__url_time_range}&${__url_tab_state}` preserves both the time range and tab selection.
+
 ### Template variables
 
 When linking to another dashboard that uses template variables, select variable values for whoever clicks the link.
@@ -329,7 +333,8 @@ To add a data link, follow these steps:
 1. Click **Save** to save changes and close the dialog box.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back** and then **Exit edit**.
+1. Click **Back**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
    {{< /tab-content >}}
    {{< tab-content name="Add actions" >}}
@@ -363,7 +368,8 @@ To add a data link, follow these steps:
 1. Click **Save** to save changes and close the dialog box.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back** and then **Exit edit**.
+1. Click **Back**.
+1. Select **Viewing** in the dashboard mode drop-down list.
    {{< /tab-content >}}
    {{< /tabs >}}
 

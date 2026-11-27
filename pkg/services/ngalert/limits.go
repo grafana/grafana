@@ -31,25 +31,33 @@ func UsageReporter(rules rulestore.RuleCounter) quota.UsageReporterFunc {
 			orgID = scopeParams.OrgID
 		}
 
-		if orgUsage, err := rules.Count(ctx, orgID); err != nil {
+		counts, err := rules.CountByOrg(ctx)
+		if err != nil {
 			return u, err
-		} else {
-			tag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.OrgScope)
-			if err != nil {
-				return u, err
-			}
-			u.Set(tag, orgUsage)
 		}
 
-		if globalUsage, err := rules.Count(ctx, 0); err != nil {
-			return u, err
-		} else {
-			tag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.GlobalScope)
-			if err != nil {
-				return u, err
-			}
-			u.Set(tag, globalUsage)
+		var globalUsage int64
+		for _, c := range counts {
+			globalUsage += c
 		}
+
+		// Without an org in scope, the org usage matches the previous behavior of counting all rules.
+		orgUsage := globalUsage
+		if orgID != 0 {
+			orgUsage = counts[orgID]
+		}
+
+		orgTag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.OrgScope)
+		if err != nil {
+			return u, err
+		}
+		u.Set(orgTag, orgUsage)
+
+		globalTag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.GlobalScope)
+		if err != nil {
+			return u, err
+		}
+		u.Set(globalTag, globalUsage)
 
 		return u, nil
 	}

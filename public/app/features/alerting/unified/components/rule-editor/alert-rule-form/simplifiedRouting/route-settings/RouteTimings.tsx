@@ -1,25 +1,42 @@
 import { useFormContext } from 'react-hook-form';
 
+import {
+  type RoutingTimingError,
+  type RoutingTimings,
+  getRoutingTimingErrors,
+  useInheritedRoutingTimings,
+} from '@grafana/alerting/unstable';
+import { t } from '@grafana/i18n';
 import { Field, useStyles2 } from '@grafana/ui';
 import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
-import { promDurationValidator, repeatIntervalValidator } from 'app/features/alerting/unified/utils/amroutes';
 
 import { PromDurationInput } from '../../../../notification-policies/PromDurationInput';
 import { getFormStyles } from '../../../../notification-policies/formStyles';
 import { routeTimingsFields } from '../../../../notification-policies/routeTimingsFields';
-import { TIMING_OPTIONS_DEFAULTS } from '../../../../notification-policies/timingOptions';
 
 interface RouteTimingsProps {
   alertManager: string;
 }
+
+function getTimingErrorMessage(error: RoutingTimingError) {
+  return error === 'zero'
+    ? t('alerting.route-timings.error-zero', 'Must be greater than zero')
+    : t('alerting.route-timings.error-format', 'Invalid duration format. Must be {number}{time_unit}');
+}
+
+const validateTiming = (field: keyof RoutingTimings) => (value: string) => {
+  const error = getRoutingTimingErrors({ [field]: value })[field];
+  return error ? getTimingErrorMessage(error) : true;
+};
 
 export function RouteTimings({ alertManager }: RouteTimingsProps) {
   const formStyles = useStyles2(getFormStyles);
   const {
     register,
     formState: { errors },
-    getValues,
   } = useFormContext<RuleFormValues>();
+  const { timings: inherited } = useInheritedRoutingTimings();
+
   return (
     <>
       <Field
@@ -29,10 +46,10 @@ export function RouteTimings({ alertManager }: RouteTimingsProps) {
         error={errors.contactPoints?.[alertManager]?.groupWaitValue?.message}
       >
         <PromDurationInput
-          {...register(`contactPoints.${alertManager}.groupWaitValue`, { validate: promDurationValidator })}
+          {...register(`contactPoints.${alertManager}.groupWaitValue`, { validate: validateTiming('groupWait') })}
           aria-label={routeTimingsFields.groupWait.ariaLabel}
           className={formStyles.promDurationInput}
-          placeholder={TIMING_OPTIONS_DEFAULTS.group_wait}
+          placeholder={inherited.groupWait}
         />
       </Field>
       <Field
@@ -43,11 +60,11 @@ export function RouteTimings({ alertManager }: RouteTimingsProps) {
       >
         <PromDurationInput
           {...register(`contactPoints.${alertManager}.groupIntervalValue`, {
-            validate: promDurationValidator,
+            validate: validateTiming('groupInterval'),
           })}
           aria-label={routeTimingsFields.groupInterval.ariaLabel}
           className={formStyles.promDurationInput}
-          placeholder={TIMING_OPTIONS_DEFAULTS.group_interval}
+          placeholder={inherited.groupInterval}
         />
       </Field>
       <Field
@@ -58,14 +75,11 @@ export function RouteTimings({ alertManager }: RouteTimingsProps) {
       >
         <PromDurationInput
           {...register(`contactPoints.${alertManager}.repeatIntervalValue`, {
-            validate: (value: string) => {
-              const groupInterval = getValues(`contactPoints.${alertManager}.repeatIntervalValue`);
-              return repeatIntervalValidator(value, groupInterval);
-            },
+            validate: validateTiming('repeatInterval'),
           })}
           aria-label={routeTimingsFields.repeatInterval.ariaLabel}
           className={formStyles.promDurationInput}
-          placeholder={TIMING_OPTIONS_DEFAULTS.repeat_interval}
+          placeholder={inherited.repeatInterval}
         />
       </Field>
     </>

@@ -189,24 +189,25 @@ LIMIT
     [alerting, metadata]
   );
 
+  const metadataData = metadata?.data;
   const errorContext = useMemo(() => {
-    if (!metadata?.data) {
+    if (!metadataData) {
       return [];
     }
 
     const errors: string[] = [];
 
     // Handle multiple errors (preferred)
-    if (metadata.data.errors?.length) {
-      errors.push(...metadata.data.errors.map((err) => err.message).filter((msg): msg is string => Boolean(msg)));
+    if (metadataData.errors?.length) {
+      errors.push(...metadataData.errors.map((err) => err.message).filter((msg): msg is string => Boolean(msg)));
     }
     // Handle legacy single error
-    else if (metadata.data.error?.message) {
-      errors.push(metadata.data.error.message);
+    else if (metadataData.error?.message) {
+      errors.push(metadataData.error.message);
     }
 
     return errors;
-  }, [metadata?.data]);
+  }, [metadataData]);
 
   const onEditorChange = (expression: string) => {
     onChange({

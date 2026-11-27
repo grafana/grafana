@@ -8,6 +8,7 @@ import (
 	"maps"
 	"net/http"
 	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -387,6 +388,9 @@ type mockSearchBackend struct {
 	// Skips the build function, as for an index reused from disk.
 	reusesFromDisk bool
 
+	// Recorded as the build time of every index this backend builds.
+	buildTime time.Time
+
 	mu                sync.Mutex
 	buildIndexCalls   []buildIndexCall
 	cache             map[NamespacedResource]ResourceIndex
@@ -404,8 +408,9 @@ func (m *mockSearchBackend) SnapshotCountThreshold() int64 {
 func (m *mockSearchBackend) RemoveExpiredTrash(context.Context) {}
 
 type buildIndexCall struct {
-	key  NamespacedResource
-	size int64
+	key            NamespacedResource
+	size           int64
+	lastImportTime time.Time
 }
 
 func (m *mockSearchBackend) LoadOpenIndexStats(_ time.Time, _ time.Duration) ([]ResourceStats, error) {
@@ -441,6 +446,58 @@ func TestStartupIndexStatsCountLimit(t *testing.T) {
 			require.Equal(t, tc.wantLimit, storage.lastCountLimit.Load())
 		})
 	}
+}
+
+func TestStartupPrebuildsTrashHeavyIndexes(t *testing.T) {
+	storage := setupTestStorageBackend(t)
+	search := &mockSearchBackend{snapshotThreshold: 4, reusesFromDisk: true}
+	server, err := newSearchServer(SearchOptions{
+		Backend:           search,
+		Resources:         &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"dashboard.grafana.app": "dashboards"}},
+		InitMinCount:      2,
+		InitWorkerThreads: 1,
+	}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	for _, fixture := range []struct {
+		namespace     string
+		live, deleted int
+	}{
+		{"mixed", 1, 6},
+		{"trash-only", 0, 3},
+		{"at-threshold", 1, 1},
+	} {
+		for i := range fixture.live + fixture.deleted {
+			action := DataActionCreated
+			if i >= fixture.live {
+				action = DataActionDeleted
+			}
+			key := dashboardType(fixture.namespace)
+			require.NoError(t, storage.dataStore.Save(t.Context(), DataKey{
+				Group: key.Group, Resource: key.Resource, Namespace: key.Namespace,
+				Name: fmt.Sprintf("dashboard-%d", i), Action: action, ResourceVersion: node.Generate().Int64(),
+			}, strings.NewReader("{}")))
+		}
+	}
+
+	for i := range 3 {
+		require.NoError(t, storage.dataStore.Save(t.Context(), DataKey{
+			Group: "iam.grafana.app", Resource: "globalroles", Name: fmt.Sprintf("role-%d", i),
+			Action: DataActionDeleted, ResourceVersion: node.Generate().Int64(),
+		}, strings.NewReader("{}")))
+	}
+
+	liveOnly, err := storage.GetResourceStatsWithLimit(t.Context(), NamespacedResource{}, 2, 5)
+	require.NoError(t, err)
+	require.Empty(t, liveOnly, "existing callers still filter by live count")
+
+	built, err := server.buildIndexes(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, 2, built)
+	require.ElementsMatch(t, []buildIndexCall{
+		{key: dashboardType("mixed"), size: 5},
+		{key: dashboardType("trash-only"), size: 3},
+	}, search.buildIndexCalls)
 }
 
 // Saved indexes are used as they are: nothing asks storage which namespaces
@@ -492,7 +549,7 @@ func (m *mockSearchBackend) PeekIndex(key NamespacedResource) ResourceIndex {
 }
 
 func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, _ time.Duration, _ BuildIndexOptions) (ResourceIndex, error) {
-	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: featuresForTestIndex(m.keepsDeletedDocuments)}}
+	index := &MockResourceIndex{buildInfo: IndexBuildInfo{BuildTime: m.buildTime, Features: featuresForTestIndex(m.keepsDeletedDocuments)}}
 	m.mu.Lock()
 	m.lastUpdater = updater
 	m.mu.Unlock()
@@ -517,8 +574,9 @@ func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResour
 	// Determine if this is an empty index based on size
 	// Empty indexes are characterized by size == 0
 	m.buildIndexCalls = append(m.buildIndexCalls, buildIndexCall{
-		key:  key,
-		size: size,
+		key:            key,
+		size:           size,
+		lastImportTime: lastImportTime,
 	})
 
 	return index, nil
@@ -529,7 +587,9 @@ func (m *mockSearchBackend) TotalDocs() int64 {
 }
 
 func (m *mockSearchBackend) GetOpenIndexes() []NamespacedResource {
-	return m.openIndexes
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return slices.Clone(m.openIndexes)
 }
 
 func (m *mockSearchBackend) Stop() {
@@ -593,6 +653,38 @@ func newInitialBuildTestServer(t *testing.T, backend *initialBuildTestBackend, s
 		}
 	})
 	return server
+}
+
+// A global index searched recently before a restart is reopened with its last
+// search, so its idle time carries on. One idle for longer than the timeout is
+// not reopened at all.
+func TestStartupKeepsGlobalIndexIdleTimeAcrossRestart(t *testing.T) {
+	recent := time.Now().Add(-time.Hour).Truncate(time.Millisecond)
+	var mu sync.Mutex
+	reopened := map[NamespacedResource]time.Time{}
+	backend := &initialBuildTestBackend{beforeBuild: func(_ context.Context, key NamespacedResource, options BuildIndexOptions) error {
+		mu.Lock()
+		defer mu.Unlock()
+		reopened[key] = options.LastSearchedAt
+		return nil
+	}}
+	backend.openIndexStats = []ResourceStats{
+		{NamespacedResource: dashboardType("ns"), Count: 1},
+		{NamespacedResource: GlobalSearchKey("recent"), Count: 1, LastSearchedAt: recent},
+		{NamespacedResource: GlobalSearchKey("idle"), Count: 1, LastSearchedAt: time.Now().Add(-7 * time.Hour)},
+		{NamespacedResource: GlobalSearchKey("unknown"), Count: 1},
+	}
+	server := newInitialBuildTestServer(t, backend, nil, 1)
+	server.globalIndexIdleTimeout = 6 * time.Hour
+	require.NoError(t, server.init(t.Context()))
+
+	mu.Lock()
+	defer mu.Unlock()
+	require.Equal(t, map[NamespacedResource]time.Time{
+		dashboardType("ns"):        {},
+		GlobalSearchKey("recent"):  recent,
+		GlobalSearchKey("unknown"): {},
+	}, reopened, "an older list without search times reopens global indexes as before")
 }
 
 func TestStartupBuildsDeferHeldLocksWithoutOccupyingWorker(t *testing.T) {
@@ -838,9 +930,8 @@ func TestBackgroundGlobalBuildsStartAfterBlockingIndexes(t *testing.T) {
 			Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: namespace, Group: GlobalSearchGroup, Resource: GlobalSearchResource}},
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
-		require.NoError(t, err)
-		require.Equal(t, NewServiceUnavailableError("the global search index for this namespace is still being built"), rsp.Error,
-			"both queued and active global builds must return 503 without waiting")
+		require.Nil(t, rsp)
+		requireRPCError(t, err, NewServiceUnavailableError("the global search index for this namespace is still being built"))
 	}
 	close(releaseGlobals)
 	require.Eventually(t, func() bool {
@@ -1780,6 +1871,24 @@ func TestCombineBuildRequests(t *testing.T) {
 			expOK: true,
 			exp:   rebuildRequest{minBuildTime: now.Add(2 * time.Hour)},
 		},
+		"use max import time": {
+			a:     rebuildRequest{lastImportTime: now},
+			b:     rebuildRequest{lastImportTime: now.Add(time.Hour)},
+			expOK: true,
+			exp:   rebuildRequest{lastImportTime: now.Add(time.Hour)},
+		},
+		"preserve nonzero import time": {
+			a:     rebuildRequest{},
+			b:     rebuildRequest{lastImportTime: now},
+			expOK: true,
+			exp:   rebuildRequest{lastImportTime: now},
+		},
+		"merge build and import times independently": {
+			a:     rebuildRequest{minBuildTime: now.Add(time.Hour), lastImportTime: now},
+			b:     rebuildRequest{minBuildTime: now, lastImportTime: now.Add(time.Hour)},
+			expOK: true,
+			exp:   rebuildRequest{minBuildTime: now.Add(time.Hour), lastImportTime: now.Add(time.Hour)},
+		},
 		"use max version": {
 			a:     rebuildRequest{minBuildVersion: semver.MustParse("12.10.99")},
 			b:     rebuildRequest{minBuildVersion: semver.MustParse("10.15.20")},
@@ -1797,6 +1906,12 @@ func TestCombineBuildRequests(t *testing.T) {
 			b:     rebuildRequest{selectableFields: []string{"folder", "team"}},
 			expOK: true,
 			exp:   rebuildRequest{selectableFields: []string{"folder", "team", "title"}},
+		},
+		"keep migration read": {
+			a:     rebuildRequest{migrationRead: true},
+			b:     rebuildRequest{},
+			expOK: true,
+			exp:   rebuildRequest{migrationRead: true},
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -1820,19 +1935,15 @@ func TestCombineBuildRequests(t *testing.T) {
 // features safe: requiring a feature this binary never records would rebuild
 // every index on every check, forever.
 func TestRequiredIndexFeaturesAreCurrent(t *testing.T) {
-	for _, postRankAuthz := range []bool{false, true} {
-		for _, required := range RequiredIndexFeatures(postRankAuthz) {
-			require.Contains(t, CurrentIndexFeatures(), required)
-		}
+	for _, required := range RequiredIndexFeatures() {
+		require.Contains(t, CurrentIndexFeatures(), required)
 	}
 }
 
 func TestSortableTrashResourceVersionIsRecordedButNotRequired(t *testing.T) {
 	require.Contains(t, CurrentIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
 	require.NotContains(t, TrashIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
-	for _, postRankAuthz := range []bool{false, true} {
-		require.NotContains(t, RequiredIndexFeatures(postRankAuthz), IndexFeatureSortableTrashResourceVersion)
-	}
+	require.NotContains(t, RequiredIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
 }
 
 // Every index built now keeps deleted documents, and records it, so a reader can
@@ -1865,27 +1976,19 @@ func TestUnknownIndexRequirements(t *testing.T) {
 		UnknownIndexRequirements([]IndexFeature{IndexFeatureDeletedMarker, "feature-from-the-future"}))
 }
 
-// TestRequiredIndexFeaturesStoredFacets covers the gating that keeps the stored
-// facet mapping from rebuilding indexes where post-rank authorization is off.
+// PostRank facet aggregation needs stored facet fields on every index.
 func TestRequiredIndexFeaturesStoredFacets(t *testing.T) {
-	require.NotContains(t, RequiredIndexFeatures(false), IndexFeatureStoredFacets)
-	require.Contains(t, RequiredIndexFeatures(true), IndexFeatureStoredFacets)
+	require.Contains(t, RequiredIndexFeatures(), IndexFeatureStoredFacets)
 
-	// An index built before the stored facet mapping is reused with the option
-	// off, and rebuilt once it is on.
 	buildInfo := IndexBuildInfo{Features: slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments})}
-	require.Empty(t, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(false)))
-	require.Equal(t, []IndexFeature{IndexFeatureStoredFacets}, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(true)))
+	require.Equal(t, []IndexFeature{IndexFeatureStoredFacets}, MissingIndexFeatures(buildInfo, RequiredIndexFeatures()))
 }
 
-// An index missing the trash mappings must be rebuilt rather than serve an empty
-// trash, whatever the facet option is set to.
+// An index missing the trash mappings must be rebuilt rather than serve an empty trash.
 func TestTrashIndexFeaturesAreRequired(t *testing.T) {
 	buildInfo := IndexBuildInfo{Features: []IndexFeature{IndexFeatureStoredFacets}}
 	want := slices.Sorted(slices.Values(slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments})))
-	for _, postRankAuthz := range []bool{false, true} {
-		require.Equal(t, want, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(postRankAuthz)))
-	}
+	require.Equal(t, want, MissingIndexFeatures(buildInfo, RequiredIndexFeatures()))
 }
 
 // An index that maps the trash fields but was built before deleted documents were kept
@@ -1893,8 +1996,8 @@ func TestTrashIndexFeaturesAreRequired(t *testing.T) {
 func TestHoldingDeletedDocumentsIsRequired(t *testing.T) {
 	buildInfo := IndexBuildInfo{Features: TrashIndexFeatures()}
 	require.Equal(t,
-		[]IndexFeature{IndexFeatureHoldsDeletedDocuments},
-		MissingIndexFeatures(buildInfo, RequiredIndexFeatures(false)))
+		[]IndexFeature{IndexFeatureStoredFacets, IndexFeatureHoldsDeletedDocuments},
+		MissingIndexFeatures(buildInfo, RequiredIndexFeatures()))
 }
 
 func TestShouldRebuildIndex(t *testing.T) {
@@ -2354,14 +2457,14 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		{Namespace: "resource-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: lastImportTime,
 	}
 
-	support.findIndexesToRebuild(importTimes, nil, now, false)
+	support.findIndexesToRebuild(t.Context(), importTimes, nil, now, false)
 	require.Equal(t, 9, support.rebuildQueue.Len())
 
 	now5m := now.Add(5 * time.Minute)
 
 	// Running findIndexesToRebuild again should not add any new indexes to the rebuild queue, and all existing
 	// ones should be "combined" with new ones (this will "bump" minBuildTime)
-	support.findIndexesToRebuild(importTimes, nil, now5m, false)
+	support.findIndexesToRebuild(t.Context(), importTimes, nil, now5m, false)
 	require.Zero(t, search.getIndexCalls, "rebuild inspection must not refresh index idle timestamps")
 	require.Equal(t, 9, support.rebuildQueue.Len())
 
@@ -2433,7 +2536,6 @@ func TestRebuildIndexesIgnoresUnrelatedInvalidImportTime(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Nil(t, response.Error)
 	require.Zero(t, response.RebuildCount, "both requested indexes have caught up with their imports")
 	require.Len(t, response.BuildTimes, len(keys))
 	require.Zero(t, storage.listCalls, "explicit rebuilds must not read unrelated records")
@@ -2600,8 +2702,8 @@ func TestRebuildIndexes(t *testing.T) {
 
 		rsp, err := support.RebuildIndexes(context.Background(), rebuildReq)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		require.Equal(t, int64(0), rsp.RebuildCount, "no rebuilds should be triggered")
+		require.Zero(t, search.getIndexCalls, "collecting build metadata must not refresh index idle timestamps")
 
 		// Verify BuildTimes contains entries for key1 and key2, but not key3 (zero time)
 		require.Len(t, rsp.BuildTimes, 2, "should have 2 build times (key3 has zero time)")
@@ -2649,6 +2751,28 @@ func checkRebuildIndex(t *testing.T, support *searchServer, req rebuildRequest, 
 	}
 }
 
+func TestRebuildIndexPassesOriginalIndexToBackend(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	original := &MockResourceIndex{}
+	var rebuildFrom ResourceIndex
+	backend := &initialBuildTestBackend{
+		mockSearchBackend: mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{key: original}},
+		beforeBuild: func(_ context.Context, _ NamespacedResource, opts BuildIndexOptions) error {
+			rebuildFrom = opts.RebuildFrom
+			return ErrIndexClosedDuringRebuild
+		},
+	}
+	server, err := newSearchServer(SearchOptions{
+		Backend:   backend,
+		Resources: &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
+	}, &mockStorageBackend{}, nil, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	server.rebuildIndex(t.Context(), rebuildRequest{NamespacedResource: key, minBuildTime: time.Now()})
+
+	require.Same(t, original, rebuildFrom)
+}
+
 type failingRebuildSearchBackend struct {
 	mockSearchBackend
 	buildCalls atomic.Int32
@@ -2682,12 +2806,12 @@ func TestRebuildIndexesRejectsStaleIndexAfterFailedRebuild(t *testing.T) {
 		Namespace: key.Namespace,
 		Keys:      []*resourcepb.ResourceKey{{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
 	}
+	// The rebuild was attempted, but the partial count is not returned with the error.
 	rsp, err := support.RebuildIndexes(t.Context(), request)
-	require.NoError(t, err)
-	require.Equal(t, int64(1), rsp.RebuildCount)
+	require.Nil(t, rsp)
 	require.Equal(t, int32(1), search.buildCalls.Load())
-	require.Empty(t, rsp.BuildTimes)
-	require.ErrorContains(t, ErrorFromResponse(rsp.GetError(), nil), "not built after last import")
+	require.Equal(t, codes.Internal, status.Code(err))
+	require.Contains(t, rpcErrorResult(t, err).Message, "not built after last import")
 }
 
 func TestRebuildIndexesForResource(t *testing.T) {
@@ -2734,8 +2858,8 @@ func TestRebuildIndexesForResource(t *testing.T) {
 			Resource:  key.Resource,
 		}}}
 	rsp, err := support.RebuildIndexes(t.Context(), rebuildReq)
-	require.NoError(t, err)
-	require.Equal(t, "key namespace does not match request namespace", rsp.Error.Message)
+	require.Nil(t, rsp)
+	requireRPCError(t, err, NewBadRequestError("key namespace does not match request namespace"))
 
 	rebuildReq.Namespace = key.Namespace
 
@@ -2760,12 +2884,81 @@ func TestRebuildIndexesForResource(t *testing.T) {
 		LastImportTime:     time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC),
 	}}
 
+	search.buildTime = time.Date(2026, 1, 2, 12, 0, 0, 0, time.UTC)
 	rsp, err = support.RebuildIndexes(t.Context(), rebuildReq)
 	require.NoError(t, err)
 	require.Equal(t, int64(1), rsp.RebuildCount)
+	require.Len(t, rsp.BuildTimes, 1)
 
 	// rebuild waited for rebuild queue to process
 	require.Equal(t, 0, support.rebuildQueue.Len())
+}
+
+// migrationReadListStorage records, per index, whether each listing runs as a migration read.
+type migrationReadListStorage struct {
+	*mockStorageBackend
+
+	mu    sync.Mutex
+	marks map[NamespacedResource][]bool
+}
+
+func (m *migrationReadListStorage) ListIterator(ctx context.Context, req *resourcepb.ListRequest, callback func(ListIterator) error) (int64, error) {
+	key := req.Options.Key
+	nsr := NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}
+	m.mu.Lock()
+	m.marks[nsr] = append(m.marks[nsr], MigrationReadFromContext(ctx))
+	m.mu.Unlock()
+	return m.mockStorageBackend.ListIterator(ctx, req, callback)
+}
+
+func (m *migrationReadListStorage) marksFor(key NamespacedResource) []bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.marks[key]
+}
+
+// The rebuild worker reads as a migration only for the rebuilds a migration asked for.
+func TestRebuildIndexesQueuedRebuildKeepsMigrationRead(t *testing.T) {
+	migrated := NamespacedResource{Namespace: "migrated", Group: "group", Resource: "resource"}
+	other := NamespacedResource{Namespace: "other", Group: "group", Resource: "resource"}
+	importTime := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
+	storage := &migrationReadListStorage{
+		mockStorageBackend: &mockStorageBackend{lastImportTimes: []ResourceLastImportTime{
+			{NamespacedResource: migrated, LastImportTime: importTime},
+			{NamespacedResource: other, LastImportTime: importTime},
+		}},
+		marks: map[NamespacedResource][]bool{},
+	}
+	// Both indexes are open and predate the import, so the worker rebuilds them.
+	search := &mockSearchBackend{
+		buildTime: importTime.Add(time.Hour),
+		cache: map[NamespacedResource]ResourceIndex{
+			migrated: &MockResourceIndex{buildInfo: IndexBuildInfo{BuildTime: importTime.Add(-time.Hour)}},
+			other:    &MockResourceIndex{buildInfo: IndexBuildInfo{BuildTime: importTime.Add(-time.Hour)}},
+		},
+	}
+	support, err := newSearchServer(SearchOptions{
+		Backend:   search,
+		Resources: &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
+	}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+	require.NoError(t, support.init(t.Context()))
+	defer support.stop()
+
+	rebuild := func(ctx context.Context, key NamespacedResource) {
+		t.Helper()
+		rsp, err := support.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{
+			Namespace: key.Namespace,
+			Keys:      []*resourcepb.ResourceKey{{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
+		})
+		require.NoError(t, err)
+		require.EqualValues(t, 1, rsp.RebuildCount)
+	}
+	rebuild(ContextWithMigrationRead(t.Context()), migrated)
+	rebuild(t.Context(), other)
+
+	require.Equal(t, []bool{true}, storage.marksFor(migrated), "the migration's rebuild reads as the migration")
+	require.Equal(t, []bool{false}, storage.marksFor(other), "another rebuild reads as before")
 }
 
 func TestMaybeInjectFailure(t *testing.T) {
@@ -2843,14 +3036,13 @@ func TestSearchUsesRequestScopedFolderIndex(t *testing.T) {
 				req.Federated = []*resourcepb.ResourceKey{{Namespace: folderKey.Namespace, Group: folderKey.Group, Resource: folderKey.Resource}}
 			}
 			rsp, err := s.searchIndex(t.Context(), NewSearchStats("test"), req, tc.primary, nil)
-			require.NoError(t, err)
 			if tc.refreshError {
-				require.NotNil(t, rsp.Error)
-				require.Contains(t, rsp.Error.Message, "folder refresh failed")
+				require.Nil(t, rsp)
+				require.Contains(t, rpcErrorResult(t, err).Message, "folder refresh failed")
 				require.Nil(t, primary.req, "a failed folder refresh must prevent searching")
 				return
 			}
-			require.Nil(t, rsp.Error)
+			require.NoError(t, err)
 			require.Same(t, req, primary.req)
 			if tc.wantFolder {
 				require.Same(t, folderIndex, primary.indexes.Folders)
@@ -2893,7 +3085,7 @@ func TestSearchResolvesReplacementFolderIndex(t *testing.T) {
 		backend.cache[folderKey] = folders
 		rsp, err := s.searchIndex(t.Context(), NewSearchStats("test"), req, dashKey, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
+		require.NotNil(t, rsp)
 		require.Same(t, folders, primary.indexes.Folders)
 	}
 	require.Equal(t, 1, oldFolders.updateIndexCalls)
@@ -2922,11 +3114,37 @@ func TestSearchRejectsInvalidFolderTreeBeforeResolvingIndexes(t *testing.T) {
 				IsDeleted:    tc.deleted,
 				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			})
-			require.NoError(t, err)
-			require.NotNil(t, rsp.Error)
-			require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+			require.Nil(t, rsp)
+			require.Equal(t, int32(http.StatusBadRequest), rpcErrorResult(t, err).Code)
 			require.Zero(t, backend.getIndexCalls)
 			require.Empty(t, backend.buildIndexCalls)
+		})
+	}
+}
+
+// Only verbs a row can be checked for are accepted, and not where rows come from
+// another index or trash, whose checks differ.
+func TestValidateAccessVerbs(t *testing.T) {
+	for name, tc := range map[string]struct {
+		req     *resourcepb.ResourceSearchRequest
+		wantErr bool
+	}{
+		"none":            {req: &resourcepb.ResourceSearchRequest{}},
+		"supported verbs": {req: &resourcepb.ResourceSearchRequest{AccessVerbs: []string{"update", "delete", "set_permissions"}}},
+		"unknown verb":    {req: &resourcepb.ResourceSearchRequest{AccessVerbs: []string{"update", "get"}}, wantErr: true},
+		"deleted":         {req: &resourcepb.ResourceSearchRequest{AccessVerbs: []string{"update"}, IsDeleted: true}, wantErr: true},
+		"federated": {req: &resourcepb.ResourceSearchRequest{AccessVerbs: []string{"update"}, Federated: []*resourcepb.ResourceKey{
+			{Group: "folder.grafana.app", Resource: "folders"},
+		}}, wantErr: true},
+	} {
+		t.Run(name, func(t *testing.T) {
+			err := ValidateAccessVerbs(tc.req)
+			if tc.wantErr {
+				require.NotNil(t, err)
+				require.Equal(t, int32(http.StatusBadRequest), err.Code)
+			} else {
+				require.Nil(t, err)
+			}
 		})
 	}
 }
@@ -2958,11 +3176,10 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 			Limit:        -100,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
-		rsp, err := support.Search(context.Background(), req)
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, http.StatusBadRequest, int(rsp.Error.Code))
-		require.Equal(t, "limit cannot be negative", rsp.Error.Message)
+		_, err := support.Search(context.Background(), req)
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, http.StatusBadRequest, int(rspErr.Code))
+		require.Equal(t, "limit cannot be negative", rspErr.Message)
 	})
 
 	t.Run("negative offset returns error", func(t *testing.T) {
@@ -2978,11 +3195,10 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 			Offset:       -50,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
-		rsp, err := support.Search(context.Background(), req)
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, http.StatusBadRequest, int(rsp.Error.Code))
-		require.Equal(t, "offset cannot be negative", rsp.Error.Message)
+		_, err := support.Search(context.Background(), req)
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, http.StatusBadRequest, int(rspErr.Code))
+		require.Equal(t, "offset cannot be negative", rspErr.Message)
 	})
 }
 
@@ -3024,11 +3240,10 @@ func TestSearchRejectsFederatedTrashQueries(t *testing.T) {
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 
-	rsp, err := support.Search(context.Background(), req)
-	require.NoError(t, err)
-	require.NotNil(t, rsp.Error)
-	require.Equal(t, http.StatusBadRequest, int(rsp.Error.Code))
-	require.Equal(t, "searching deleted resources does not support federated queries", rsp.Error.Message)
+	_, err = support.Search(context.Background(), req)
+	rspErr := rpcErrorResult(t, err)
+	require.Equal(t, http.StatusBadRequest, int(rspErr.Code))
+	require.Equal(t, "searching deleted resources does not support federated queries", rspErr.Message)
 
 	backend.mu.Lock()
 	defer backend.mu.Unlock()
@@ -3109,7 +3324,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 	importTimes := map[NamespacedResource]time.Time{}
 
 	// Without jitter: all indexes are stale and should be queued.
-	chsNoJitter := support.findIndexesToRebuild(importTimes, nil, now, false)
+	chsNoJitter := support.findIndexesToRebuild(t.Context(), importTimes, nil, now, false)
 	require.Equal(t, numIndexes, len(chsNoJitter))
 
 	// Create a second server with the same config to get a fresh rebuild queue.
@@ -3117,7 +3332,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 	require.NoError(t, err)
 
 	// With jitter: some indexes get extra tolerance, so fewer should be queued.
-	chsWithJitter := support2.findIndexesToRebuild(importTimes, nil, now, true)
+	chsWithJitter := support2.findIndexesToRebuild(t.Context(), importTimes, nil, now, true)
 	require.Less(t, len(chsWithJitter), numIndexes, "jitter should cause some indexes to not be queued yet")
 	require.Greater(t, len(chsWithJitter), 0, "at least some indexes should still be queued")
 }
@@ -3182,6 +3397,7 @@ func TestRebuildIndexConcurrentRebuildsForSameKeyAreDeduplicated(t *testing.T) {
 	firstReq := rebuildRequest{
 		NamespacedResource: key,
 		minBuildTime:       time.Now().Add(-1 * time.Hour),
+		lastImportTime:     time.Now().Add(-time.Hour),
 		completeChannels:   []chan<- struct{}{firstDone},
 	}
 	firstReturned := make(chan struct{})
@@ -3218,6 +3434,7 @@ func TestRebuildIndexConcurrentRebuildsForSameKeyAreDeduplicated(t *testing.T) {
 		req := rebuildRequest{
 			NamespacedResource: key,
 			minBuildTime:       mbt,
+			lastImportTime:     mbt,
 			completeChannels:   []chan<- struct{}{deferredChans[i]},
 		}
 		returned := make(chan struct{})
@@ -3281,9 +3498,25 @@ func TestRebuildIndexConcurrentRebuildsForSameKeyAreDeduplicated(t *testing.T) {
 		"follow-up should carry the strictest minBuildTime; got %v want %v",
 		req.minBuildTime, latestMinBuildTime)
 
+	require.Equal(t, latestMinBuildTime, req.lastImportTime)
+
 	// Still only one BuildIndex call: the deferred follow-up has been
 	// enqueued but no worker is running in this test to pick it up.
 	require.Equal(t, int32(1), search.buildCalls.Load())
+
+	req, err = support.rebuildQueue.Next(t.Context())
+	require.NoError(t, err)
+	support.rebuildIndex(t.Context(), req)
+	require.Len(t, search.buildIndexCalls, 2)
+	require.Equal(t, firstReq.lastImportTime, search.buildIndexCalls[0].lastImportTime)
+	require.Equal(t, latestMinBuildTime, search.buildIndexCalls[1].lastImportTime)
+	for _, ch := range deferredChans {
+		select {
+		case <-ch:
+		default:
+			t.Fatal("completion channel should be closed after the follow-up rebuild")
+		}
+	}
 }
 
 // TestRebuildIndexNoFollowUpWhenNotInFlight verifies the happy path: a single
@@ -3310,9 +3543,11 @@ func TestRebuildIndexNoFollowUpWhenNotInFlight(t *testing.T) {
 	require.NoError(t, err)
 
 	done := make(chan struct{})
+	lastImportTime := time.Now().Add(-30 * time.Minute)
 	support.rebuildIndex(t.Context(), rebuildRequest{
 		NamespacedResource: key,
 		minBuildTime:       time.Now().Add(-1 * time.Hour),
+		lastImportTime:     lastImportTime,
 		completeChannels:   []chan<- struct{}{done},
 	})
 
@@ -3328,8 +3563,9 @@ func TestRebuildIndexNoFollowUpWhenNotInFlight(t *testing.T) {
 	require.False(t, inFlight, "in-flight tracker should be cleared")
 	require.Equal(t, 0, support.rebuildQueue.Len(), "no follow-up should be re-enqueued")
 	require.Len(t, search.buildIndexCalls, 1)
-	require.Equal(t, int64(50), search.buildIndexCalls[0].size)
-	require.Zero(t, storage.statsCalls.Load(), "rebuild should use the current index doc count instead of GetResourceStats")
+	require.Equal(t, unknownBuildSize, search.buildIndexCalls[0].size, "the backend sizes the rebuild from the original index")
+	require.Equal(t, lastImportTime, search.buildIndexCalls[0].lastImportTime)
+	require.Zero(t, storage.statsCalls.Load(), "rebuild should not count documents in storage")
 }
 
 // TestSearchServer_VectorSearch_ObservesDuration verifies the RPC histogram

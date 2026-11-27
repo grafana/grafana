@@ -1,16 +1,29 @@
 package sql
 
 import (
+	"context"
+	"database/sql"
+	"encoding/json"
+	"errors"
 	"math/rand"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	authlib "github.com/grafana/authlib/types"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -200,7 +213,7 @@ func TestTxChunker(t *testing.T) {
 				b.SQLMock.ExpectCommit()
 			}
 			var onCommit int
-			c, err := newTxChunker(ctx, b.db, ReadCommitted, tc.budget, tc.maxRows, func(int64) { onCommit++ })
+			c, err := newTxChunker(ctx, b.db, ReadCommitted, tc.budget, tc.maxRows, func(int64) { onCommit++ }, nil)
 			require.NoError(t, err)
 			for _, n := range tc.adds {
 				require.NoError(t, c.add(n, 1))
@@ -217,7 +230,7 @@ func TestTxChunker(t *testing.T) {
 		b.SQLMock.ExpectBegin()
 		b.SQLMock.ExpectRollback()
 
-		c, err := newTxChunker(ctx, b.db, ReadCommitted, 1000, txChunkerMaxRows, nil)
+		c, err := newTxChunker(ctx, b.db, ReadCommitted, 1000, txChunkerMaxRows, nil, nil)
 		require.NoError(t, err)
 		require.NoError(t, c.add(100, 1))
 		require.NoError(t, c.abort())
@@ -231,11 +244,62 @@ func TestTxChunker(t *testing.T) {
 		b.SQLMock.ExpectBegin()
 		b.SQLMock.ExpectCommit().WillReturnError(errTest)
 
-		c, err := newTxChunker(ctx, b.db, ReadCommitted, 1000, txChunkerMaxRows, nil)
+		c, err := newTxChunker(ctx, b.db, ReadCommitted, 1000, txChunkerMaxRows, nil, nil)
 		require.NoError(t, err)
 		// Flush triggers the failing commit; the error must surface and no new
 		// tx is begun.
 		require.ErrorIs(t, c.commit(), errTest)
+		require.NoError(t, b.SQLMock.ExpectationsWereMet())
+	})
+
+	t.Run("migration statement timeout is set first in every postgres transaction", func(t *testing.T) {
+		b, ctx := setupBackendTest(t)
+		b.dialect = sqltemplate.PostgreSQL
+		b.migrationStatementTimeout = 15 * time.Minute
+		for range 2 {
+			b.SQLMock.ExpectBegin()
+			b.SQLMock.ExpectExec("SET LOCAL statement_timeout = 900000").WillReturnResult(sqlmock.NewResult(0, 0))
+			b.SQLMock.ExpectCommit()
+		}
+
+		c, err := newTxChunker(ctx, b.db, ReadCommitted, 100, txChunkerMaxRows, nil, b.setMigrationStatementTimeout)
+		require.NoError(t, err)
+		require.NoError(t, c.add(100, 1))
+		require.NoError(t, c.commit())
+		require.NoError(t, b.SQLMock.ExpectationsWereMet())
+	})
+
+	t.Run("migration statement timeout is a no-op when unset or not postgres", func(t *testing.T) {
+		for _, tc := range []struct {
+			name    string
+			dialect sqltemplate.Dialect
+			timeout time.Duration
+		}{
+			{"unset", sqltemplate.PostgreSQL, 0},
+			{"mysql", sqltemplate.MySQL, time.Minute},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				b, ctx := setupBackendTest(t)
+				b.dialect = tc.dialect
+				b.migrationStatementTimeout = tc.timeout
+				b.SQLMock.ExpectBegin()
+				b.SQLMock.ExpectCommit()
+
+				c, err := newTxChunker(ctx, b.db, ReadCommitted, 100, txChunkerMaxRows, nil, b.setMigrationStatementTimeout)
+				require.NoError(t, err)
+				require.NoError(t, c.commit())
+				require.NoError(t, b.SQLMock.ExpectationsWereMet())
+			})
+		}
+	})
+
+	t.Run("onBegin error rolls back and surfaces", func(t *testing.T) {
+		b, ctx := setupBackendTest(t)
+		b.SQLMock.ExpectBegin()
+		b.SQLMock.ExpectRollback()
+
+		_, err := newTxChunker(ctx, b.db, ReadCommitted, 100, txChunkerMaxRows, nil, func(context.Context, sqldb.Tx) error { return errTest })
+		require.ErrorIs(t, err, errTest)
 		require.NoError(t, b.SQLMock.ExpectationsWereMet())
 	})
 
@@ -245,10 +309,47 @@ func TestTxChunker(t *testing.T) {
 		b.SQLMock.ExpectBegin()
 		b.SQLMock.ExpectCommit()
 
-		c, err := newTxChunker(ctx, b.db, ReadCommitted, 0, txChunkerMaxRows, nil)
+		c, err := newTxChunker(ctx, b.db, ReadCommitted, 0, txChunkerMaxRows, nil, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(defaultChunkBudget), c.budget)
 		require.NoError(t, c.commit())
+		require.NoError(t, b.SQLMock.ExpectationsWereMet())
+	})
+}
+
+func TestChunkedBackfillStatementTimeout(t *testing.T) {
+	key := &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	sizes := backfillSizes{"a": {rv: 1, size: 10}, "b": {rv: 2, size: 10}}
+
+	t.Run("postgres override wraps each backfill statement in its own transaction", func(t *testing.T) {
+		b, ctx := setupBackendTest(t)
+		b.dialect = sqltemplate.PostgreSQL
+		b.migrationStatementTimeout = 15 * time.Minute
+
+		b.SQLMock.ExpectBegin()
+		b.SQLMock.ExpectExec("SET LOCAL statement_timeout = 900000").WillReturnResult(sqlmock.NewResult(0, 0))
+		b.SQLMock.ExpectQuery("SELECT DISTINCT").WillReturnRows(sqlmock.NewRows([]string{"name"}).AddRow("a").AddRow("b"))
+		b.SQLMock.ExpectCommit()
+		for range 2 {
+			b.SQLMock.ExpectBegin()
+			b.SQLMock.ExpectExec("SET LOCAL statement_timeout = 900000").WillReturnResult(sqlmock.NewResult(0, 0))
+			b.SQLMock.ExpectExec("INSERT INTO resource").WillReturnResult(sqlmock.NewResult(0, 1))
+			b.SQLMock.ExpectCommit()
+		}
+
+		require.NoError(t, b.backfillCollection(ctx, b.execMigration, key, sizes, 10, nil))
+		require.NoError(t, b.SQLMock.ExpectationsWereMet())
+	})
+
+	t.Run("without an override the statements autocommit as before", func(t *testing.T) {
+		b, ctx := setupBackendTest(t)
+		b.dialect = sqltemplate.PostgreSQL
+
+		b.SQLMock.ExpectQuery("SELECT DISTINCT").WillReturnRows(sqlmock.NewRows([]string{"name"}).AddRow("a").AddRow("b"))
+		b.SQLMock.ExpectExec("INSERT INTO resource").WillReturnResult(sqlmock.NewResult(0, 1))
+		b.SQLMock.ExpectExec("INSERT INTO resource").WillReturnResult(sqlmock.NewResult(0, 1))
+
+		require.NoError(t, b.backfillCollection(ctx, b.execMigration, key, sizes, 10, nil))
 		require.NoError(t, b.SQLMock.ExpectationsWereMet())
 	})
 }
@@ -261,7 +362,10 @@ type fakeBatchIterator struct {
 	idx      int
 }
 
-func (f *fakeBatchIterator) NextBatch() bool {
+func (f *fakeBatchIterator) NextBatch(ctx context.Context) bool {
+	if ctx.Err() != nil {
+		return false
+	}
 	f.idx++
 	return f.idx <= len(f.batches)
 }
@@ -279,8 +383,21 @@ func (f *fakeBatchIterator) RollbackRequested() bool {
 
 // Next and Request satisfy BulkRequestIterator so the value can be passed to
 // processBulkChunked, which type-asserts it back to BulkRequestBatchIterator.
-func (f *fakeBatchIterator) Next() bool                       { return f.NextBatch() }
+func (f *fakeBatchIterator) Next() bool {
+	return f.NextBatch(context.Background())
+}
 func (f *fakeBatchIterator) Request() *resourcepb.BulkRequest { return nil }
+
+func TestSingleRequestBatchIteratorCancellation(t *testing.T) {
+	req := newSQLBulkRequest("item-1", resourcepb.BulkRequest_ADDED, nil)
+	batchIter := &singleRequestBatchIterator{iter: unitest.ToBulkIterator([]*resourcepb.BulkRequest{req})}
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	require.False(t, batchIter.NextBatch(ctx))
+	require.True(t, batchIter.NextBatch(t.Context()))
+	require.Equal(t, []*resourcepb.BulkRequest{req}, batchIter.Batch())
+}
 
 func TestProcessBulkChunkedRollbackRequested(t *testing.T) {
 	b, ctx := setupBackendTest(t)
@@ -311,10 +428,218 @@ func TestProcessBulkChunkedRollbackRequested(t *testing.T) {
 		rollback: []bool{true},
 	}
 
-	rsp := b.processBulkChunked(ctx, resource.BulkSettings{Collection: []*resourcepb.ResourceKey{key}}, iter)
-	require.NotNil(t, rsp.Error)
-	require.Contains(t, rsp.Error.Message, "rollback requested")
+	rsp, err := b.processBulkChunked(ctx, resource.BulkSettings{Collection: []*resourcepb.ResourceKey{key}}, iter)
+	require.ErrorContains(t, err, "rollback requested")
+	require.Nil(t, rsp)
 	require.NoError(t, b.SQLMock.ExpectationsWereMet())
+}
+
+func TestProcessBulkReturnsTransactionError(t *testing.T) {
+	b, ctx := setupBackendTest(t)
+	want := errors.New("begin failed")
+	b.SQLMock.ExpectBegin().WillReturnError(want)
+
+	rsp, err := b.processBulk(ctx, resource.BulkSettings{}, unitest.ToBulkIterator(nil))
+	require.ErrorIs(t, err, want)
+	require.Nil(t, rsp)
+	require.NoError(t, b.SQLMock.ExpectationsWereMet())
+}
+
+// A failure while staging the parquet buffer must fail the bulk call before
+// the collection is cleared, rather than importing the truncated buffer.
+func TestProcessBulkParquetBufferWriteErrorKeepsCollection(t *testing.T) {
+	if !db.IsTestDbSQLite() {
+		t.Skip("the parquet buffer is only used with SQLite")
+	}
+	ctx := t.Context()
+	eDB, err := dbimpl.ProvideResourceDB(db.NewTestStore(t), setting.NewCfg(), nil)
+	require.NoError(t, err)
+	storageBackend, err := NewBackend(BackendOptions{
+		DBProvider:             eDB,
+		DisablePruner:          true,
+		MigrationParquetBuffer: true,
+		TmpDir:                 t.TempDir(),
+	})
+	require.NoError(t, err)
+	b := storageBackend.(*backend)
+	require.Equal(t, "sqlite", b.dialect.DialectName())
+	svc := storageBackend.(services.Service)
+	require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
+	t.Cleanup(func() { require.NoError(t, services.StopAndAwaitTerminated(context.Background(), svc)) })
+
+	key := &resourcepb.ResourceKey{Namespace: "default", Group: "shorturl.grafana.app", Resource: "shorturls"}
+	settings := resource.BulkSettings{Collection: []*resourcepb.ResourceKey{key}}
+	value := func(name string) []byte {
+		return []byte(`{"apiVersion":"shorturl.grafana.app/v1beta1","kind":"ShortURL","metadata":{"name":"` + name + `","namespace":"default"},"spec":{"path":"d/test"}}`)
+	}
+
+	rsp, err := b.ProcessBulk(ctx, settings, unitest.ToBulkIterator([]*resourcepb.BulkRequest{
+		newSQLBulkRequest("item-1", resourcepb.BulkRequest_ADDED, value("item-1")),
+		newSQLBulkRequest("item-2", resourcepb.BulkRequest_ADDED, value("item-2")),
+	}))
+	require.NoError(t, err)
+	require.EqualValues(t, 2, rsp.Processed)
+
+	rsp, err = b.ProcessBulk(ctx, settings, unitest.ToBulkIterator([]*resourcepb.BulkRequest{
+		newSQLBulkRequest("item-3", resourcepb.BulkRequest_ADDED, value("item-3")),
+		newSQLBulkRequest("bad", resourcepb.BulkRequest_ADDED, []byte("{not json")),
+	}))
+	require.Error(t, err)
+	require.Nil(t, rsp)
+
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{Backend: storageBackend})
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, server.Stop(context.Background())) })
+	list, err := server.List(authlib.WithAuthInfo(ctx, testBulkBlobRequester()), &resourcepb.ListRequest{
+		Source:  resourcepb.ListRequest_STORE,
+		Options: &resourcepb.ListOptions{Key: key},
+	})
+	require.NoError(t, err)
+	require.Len(t, list.Items, 2)
+	names := make([]string, 0, len(list.Items))
+	for _, item := range list.Items {
+		var obj struct {
+			Metadata struct {
+				Name string `json:"name"`
+			} `json:"metadata"`
+		}
+		require.NoError(t, json.Unmarshal(item.Value, &obj))
+		names = append(names, obj.Metadata.Name)
+		require.NotEqual(t, "item-3", obj.Metadata.Name)
+		require.JSONEq(t, string(value(obj.Metadata.Name)), string(item.Value))
+	}
+	require.ElementsMatch(t, []string{"item-1", "item-2"}, names)
+
+	// The failed staging call must also release the collection's bulk lock.
+	rsp, err = b.ProcessBulk(ctx, settings, unitest.ToBulkIterator([]*resourcepb.BulkRequest{
+		newSQLBulkRequest("item-3", resourcepb.BulkRequest_ADDED, value("item-3")),
+	}))
+	require.NoError(t, err)
+	require.EqualValues(t, 1, rsp.Processed)
+}
+
+func TestProcessBulkRollsBackSQLFailures(t *testing.T) {
+	if !db.IsTestDbSQLite() {
+		t.Skip("rollback assertions use an isolated SQLite database")
+	}
+	for _, failCommit := range []bool{false, true} {
+		name := "second insert"
+		if failCommit {
+			name = "commit"
+		}
+		t.Run(name, func(t *testing.T) {
+			ctx := t.Context()
+			eDB, err := dbimpl.ProvideResourceDB(db.NewTestStore(t), setting.NewCfg(), nil)
+			require.NoError(t, err)
+			storageBackend, err := NewBackend(BackendOptions{DBProvider: eDB, DisablePruner: true})
+			require.NoError(t, err)
+			b := storageBackend.(*backend)
+			svc := storageBackend.(services.Service)
+			require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
+			t.Cleanup(func() { require.NoError(t, services.StopAndAwaitTerminated(context.Background(), svc)) })
+
+			request := func(name string) *resourcepb.BulkRequest {
+				return newSQLBulkRequest(name, resourcepb.BulkRequest_ADDED, []byte(`{"apiVersion":"shorturl.grafana.app/v1beta1","kind":"ShortURL","metadata":{"name":"`+name+`","namespace":"default"},"spec":{"path":"d/test"}}`))
+			}
+			original := request("original")
+			settings := resource.BulkSettings{Collection: []*resourcepb.ResourceKey{original.Key}}
+			_, err = b.ProcessBulk(ctx, settings, unitest.ToBulkIterator([]*resourcepb.BulkRequest{original}))
+			require.NoError(t, err)
+
+			want := errors.New("SQL bulk failure")
+			fault := &bulkFailureTx{err: want, failCommit: failCommit}
+			originalDB := b.db
+			b.db = &bulkFailureDB{DB: originalDB, fault: fault}
+			t.Cleanup(func() { b.db = originalDB })
+			rsp, err := b.ProcessBulk(ctx, settings, &fakeBatchIterator{batches: [][]*resourcepb.BulkRequest{
+				{request("item-1")}, {request("item-2")},
+			}})
+			require.ErrorIs(t, err, want)
+			require.Nil(t, rsp)
+			if failCommit {
+				require.Equal(t, 2, fault.successfulInserts)
+				require.True(t, fault.commitAttempted)
+			} else {
+				require.Equal(t, 1, fault.successfulInserts)
+			}
+			// Check real persisted rows, not only a mocked Rollback call.
+			for _, table := range []string{"resource", "resource_history"} {
+				rows, err := originalDB.QueryContext(ctx, "SELECT name, value FROM "+table+" WHERE namespace = ?", original.Key.Namespace)
+				require.NoError(t, err)
+				defer func() { require.NoError(t, rows.Close()) }()
+				require.True(t, rows.Next())
+				var name string
+				var value []byte
+				require.NoError(t, rows.Scan(&name, &value))
+				require.Equal(t, "original", name)
+				require.JSONEq(t, string(original.Value), string(value))
+				require.False(t, rows.Next())
+				require.NoError(t, rows.Err())
+			}
+		})
+	}
+}
+
+type bulkFailureDB struct {
+	sqldb.DB
+	fault *bulkFailureTx
+}
+
+func (d *bulkFailureDB) WithTx(ctx context.Context, opts *sql.TxOptions, fn sqldb.TxFunc) error {
+	return sqldb.NewWithTxFunc(func(ctx context.Context, opts *sql.TxOptions) (sqldb.Tx, error) {
+		tx, err := d.DB.BeginTx(ctx, opts)
+		if err != nil {
+			return nil, err
+		}
+		d.fault.Tx = tx
+		return d.fault, nil
+	}).WithTx(ctx, opts, fn)
+}
+
+type bulkFailureTx struct {
+	sqldb.Tx
+	err               error
+	failCommit        bool
+	successfulInserts int
+	commitAttempted   bool
+}
+
+func (t *bulkFailureTx) ExecContext(ctx context.Context, query string, args ...any) (sqldb.Result, error) {
+	words := strings.Fields(strings.ToLower(query))
+	isInsert := len(words) > 2 && words[0] == "insert" && words[1] == "into" && strings.Trim(words[2], "\"`") == "resource_history"
+	if isInsert && !t.failCommit && t.successfulInserts == 1 {
+		return nil, t.err
+	}
+	result, err := t.Tx.ExecContext(ctx, query, args...)
+	if isInsert && err == nil {
+		t.successfulInserts++
+	}
+	return result, err
+}
+
+func (t *bulkFailureTx) Commit() error {
+	t.commitAttempted = true
+	if t.failCommit {
+		// Model a commit failure that aborts the underlying transaction.
+		if err := t.Rollback(); err != nil {
+			return err
+		}
+		return t.err
+	}
+	return t.Tx.Commit()
+}
+
+func TestBulkRVUsesDeletionTime(t *testing.T) {
+	now := time.Now()
+	obj := &metav1.ObjectMeta{Annotations: map[string]string{
+		utils.AnnoKeyUpdatedTimestamp: now.Add(-2 * 365 * 24 * time.Hour).UTC().Format(time.RFC3339),
+	}}
+	deletedAt := metav1.NewTime(now.Add(-24 * time.Hour))
+	obj.SetDeletionTimestamp(&deletedAt)
+
+	rv := newBulkRV().next(obj)
+	// RVs are microseconds, bucketed to 10s with a counter in the low digits
+	require.InDelta(t, deletedAt.UnixMicro(), rv, float64(20*time.Second/time.Microsecond))
 }
 
 func TestBulkHistoryInsertRowLimit(t *testing.T) {
@@ -342,9 +667,22 @@ func TestPlanNameRanges(t *testing.T) {
 		{"crossing budget splits half-open", []string{"a", "b", "c", "d"}, 20, []nameRange{{"", "b", 20}, {"b", "", 20}}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			require.Equal(t, tc.want, planNameRanges(tc.names, sizeOf, tc.budget))
+			require.Equal(t, tc.want, planNameRanges(tc.names, sizeOf, tc.budget, 0))
 		})
 	}
+
+	t.Run("names that cost no bytes still split at the name limit", func(t *testing.T) {
+		deleted := func(string) int64 { return 0 }
+		got := planNameRanges([]string{"a", "b", "c", "d", "e"}, deleted, 100, 2)
+		require.Equal(t, []nameRange{{"", "b", 0}, {"b", "d", 0}, {"d", "", 0}}, got)
+	})
+
+	t.Run("the name limit and the byte budget both close a range", func(t *testing.T) {
+		got := planNameRanges([]string{"a", "b", "c", "d"}, sizeOf, 25, 3)
+		require.Equal(t, []nameRange{{"", "b", 20}, {"b", "", 20}}, got)
+		got = planNameRanges([]string{"a", "b", "c", "d"}, sizeOf, 1000, 3)
+		require.Equal(t, []nameRange{{"", "c", 30}, {"c", "", 10}}, got)
+	})
 
 	t.Run("coverage: every name maps to exactly one range, no gaps", func(t *testing.T) {
 		rng := rand.New(rand.NewSource(1))
@@ -364,7 +702,7 @@ func TestPlanNameRanges(t *testing.T) {
 		}
 		sizeFn := func(name string) int64 { return sizes[name] }
 
-		ranges := planNameRanges(names, sizeFn, 200)
+		ranges := planNameRanges(names, sizeFn, 200, 0)
 		require.NotEmpty(t, ranges)
 		require.Equal(t, "", ranges[len(ranges)-1].endName, "final range must be unbounded above")
 
@@ -481,10 +819,10 @@ func TestIntegrationBulkProcessAnalyzesResourceHistory(t *testing.T) {
 		newSQLBulkRequest("item-3", resourcepb.BulkRequest_ADDED, []byte(`{"apiVersion":"shorturl.grafana.app/v1beta1","kind":"ShortURL","metadata":{"name":"item-3","namespace":"default"},"spec":{"path":"d/c"}}`)),
 	})
 
-	resp := b.ProcessBulk(ctx, resource.BulkSettings{
+	resp, err := b.ProcessBulk(ctx, resource.BulkSettings{
 		Collection: []*resourcepb.ResourceKey{key},
 	}, iter)
-	require.Nil(t, resp.Error)
+	require.NoError(t, err)
 	require.Equal(t, int64(3), resp.Processed)
 
 	// The backfill must have populated the resource table from history.
@@ -495,7 +833,6 @@ func TestIntegrationBulkProcessAnalyzesResourceHistory(t *testing.T) {
 		Options: &resourcepb.ListOptions{Key: key},
 	})
 	require.NoError(t, err)
-	require.Nil(t, listResp.Error)
 	require.Len(t, listResp.Items, 3)
 
 	// On Postgres the ANALYZE must have refreshed statistics: a freshly created table

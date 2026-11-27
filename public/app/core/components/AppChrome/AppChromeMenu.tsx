@@ -2,51 +2,102 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
-import { useRef } from 'react';
+import { useEffect, useEffectEvent, useRef } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { useStyles2, useTheme2 } from '@grafana/ui';
+import { useFlagGrafanaMegaMenuPeekAndDock, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { getPortalContainer, useStyles2, useTheme2 } from '@grafana/ui';
+import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
+import { MEGA_MENU_OVERLAY_ID } from './MegaMenu/utils';
 import { getChromeHeaderLevelHeight } from './TopBar/useChromeHeaderHeight';
 
 interface Props {}
 
+/** The backdrop is presentational: it has no role or name. */
+export const MEGA_MENU_BACKDROP_TESTID = 'mega-menu-backdrop';
+
+/** Marks content that React Aria's focus containment treats as inside every scope. */
+const TOP_LAYER_ATTRIBUTE = 'data-react-aria-top-layer';
+
 export function AppChromeMenu({}: Props) {
   const theme = useTheme2();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const peekAndDock = useFlagGrafanaMegaMenuPeekAndDock();
   const { chrome } = useGrafana();
   const state = chrome.useState();
 
-  const ref = useRef(null);
-  const backdropRef = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
   const animationSpeed = theme.transitions.duration.shortest;
   const animationStyles = useStyles2(getAnimStyles, animationSpeed, visualRefreshEnabled);
 
   const isOpen = state.megaMenuOpen && !state.megaMenuDocked;
+  const isPeek = Boolean(state.megaMenuPeek);
   const onClose = () => chrome.setMegaMenuOpen(false);
+  // Pressing anything in a menu the pointer opened keeps it open, for example while a select inside it is open.
+  const keepOpen = () => isPeek && chrome.setMegaMenuOpen(true);
+
+  const shouldCloseOnInteractOutside = (element: Element) => {
+    // don't close when interacting with a select menu inside the mega menu
+    // e.g. for the org switcher
+    const isSelectMenu = document
+      .querySelector(`[data-testid="${selectors.components.Select.menu}"]`)
+      ?.contains(element);
+    // The toggle decides for itself: closing here would also swallow its click, so it could never dock the menu.
+    const isMenuToggle = peekAndDock && document.getElementById(MEGA_MENU_TOGGLE_ID)?.contains(element);
+    // Like a modal, the menu owns what it opens into the portal container, for example a section's popover. The
+    // backdrop renders there too.
+    const portalContainer = getPortalContainer();
+    const isPortalContent =
+      portalContainer !== document.body && portalContainer.contains(element) && !backdropRef.current?.contains(element);
+    return !isSelectMenu && !isMenuToggle && !isPortalContent;
+  };
 
   const { overlayProps, underlayProps } = useOverlay(
     {
-      isDismissable: true,
+      // Dismissing on a press outside also stops that press from reaching the page. A peek closes on it below instead.
+      isDismissable: !isPeek,
       isOpen: true,
       onClose,
-      shouldCloseOnInteractOutside: (element) => {
-        // don't close when interacting with a select menu inside the mega menu
-        // e.g. for the org switcher
-        const isSelectMenu = document
-          .querySelector(`[data-testid="${selectors.components.Select.menu}"]`)
-          ?.contains(element);
-        return !isSelectMenu;
-      },
+      shouldCloseOnInteractOutside,
     },
     ref
   );
+
+  // Focus stays in the open menu, but the menu owns its portal content here too: a dropdown a section opens there has
+  // to take focus. React Aria's containment counts anything under [data-react-aria-top-layer] as
+  // inside the scope, so the container carries it while the menu contains focus.
+  const containsFocus = isOpen && !isPeek;
+  useEffect(() => {
+    const portalContainer = getPortalContainer();
+    if (!containsFocus || portalContainer === document.body || portalContainer.hasAttribute(TOP_LAYER_ATTRIBUTE)) {
+      return;
+    }
+    portalContainer.setAttribute(TOP_LAYER_ATTRIBUTE, '');
+    return () => portalContainer.removeAttribute(TOP_LAYER_ATTRIBUTE);
+  }, [containsFocus]);
+
+  // A peek has no backdrop, so a press outside it reaches the page as well as closing it.
+  const closePeekOnPressOutside = useEffectEvent((event: PointerEvent) => {
+    const target = event.target;
+    if (target instanceof Element && !ref.current?.contains(target) && shouldCloseOnInteractOutside(target)) {
+      onClose();
+    }
+  });
+  useEffect(() => {
+    if (!isPeek) {
+      return;
+    }
+    const onPointerDown = (event: PointerEvent) => closePeekOnPressOutside(event);
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => document.removeEventListener('pointerdown', onPointerDown, true);
+  }, [isPeek]);
   const { dialogProps } = useDialog({ 'aria-label': t('navigation.megamenu.dialog-label', 'Navigation') }, ref);
   const styles = useStyles2(getStyles, visualRefreshEnabled);
 
@@ -62,20 +113,40 @@ export function AppChromeMenu({}: Props) {
         >
           <>
             {isOpen && (
-              <FocusScope contain autoFocus restoreFocus>
-                <MegaMenu className={styles.menu} onClose={onClose} ref={ref} {...overlayProps} {...dialogProps} />
+              // A menu the pointer opened leaves focus where it was, so hovering never interrupts typing.
+              <FocusScope contain={!isPeek} autoFocus={!isPeek} restoreFocus>
+                <MegaMenu
+                  id={MEGA_MENU_OVERLAY_ID}
+                  className={styles.menu}
+                  onClose={onClose}
+                  ref={ref}
+                  {...overlayProps}
+                  {...dialogProps}
+                  onPointerEnter={chrome.holdMegaMenuPeek}
+                  onPointerLeave={chrome.endMegaMenuPeek}
+                  onPointerDownCapture={keepOpen}
+                />
               </FocusScope>
             )}
           </>
         </CSSTransition>
         <CSSTransition
           nodeRef={backdropRef}
-          in={isOpen}
+          in={isOpen && !isPeek}
           unmountOnExit={true}
           classNames={animationStyles.backdrop}
           timeout={{ enter: animationSpeed, exit: 0 }}
         >
-          <div ref={backdropRef} className={styles.backdrop} {...underlayProps} />
+          <div
+            ref={backdropRef}
+            className={styles.backdrop}
+            data-testid={MEGA_MENU_BACKDROP_TESTID}
+            role="presentation"
+            {...underlayProps}
+            // The backdrop sits in the portal container, which React Aria counts as inside the menu while it contains
+            // focus, so a press on it closes the menu here rather than as a press outside.
+            onClick={onClose}
+          />
         </CSSTransition>
       </OverlayContainer>
     </div>

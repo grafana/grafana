@@ -30,6 +30,7 @@ import (
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -60,7 +61,7 @@ func setupAMTest(t *testing.T) *alertmanager {
 	}
 
 	kvStore := fakes.NewFakeKVStore(t)
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(sqlStore)))
 	decryptFn := secretsService.GetDecryptedValue
 
 	orgID := 1
@@ -337,7 +338,7 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 				if cfg.Receivers == nil {
 					cfg.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, 1)
 				}
-				r := v1.NewReceiver("new-receiver", nil, ngmodels.ProvenanceNone)
+				r := v1.NewReceiver(v1.ReceiverUID("new-receiver"), "new-receiver", nil, ngmodels.ProvenanceNone)
 				cfg.Receivers[r.UID] = r
 			},
 		},

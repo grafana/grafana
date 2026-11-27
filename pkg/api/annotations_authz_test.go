@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
@@ -220,8 +221,9 @@ type annotationLegacyEvaluator struct {
 
 func (a *annotationLegacyEvaluator) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
 	return a.client.LegacyCheck(ctx, legacyclient.LegacyCheckRequest{
-		Namespace: types.OrgNamespaceFormatter(user.GetOrgID()),
-		Subject:   user.GetUID(),
-		Evaluator: evaluator,
+		Namespace:      types.OrgNamespaceFormatter(user.GetOrgID()),
+		RequesterOrgID: proto.Int64(user.GetOrgID()),
+		Subject:        user.GetUID(),
+		Evaluator:      evaluator,
 	})
 }

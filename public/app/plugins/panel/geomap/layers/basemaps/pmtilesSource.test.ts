@@ -2,6 +2,7 @@ import Feature from 'ol/Feature';
 import TileState from 'ol/TileState';
 import VectorTile from 'ol/VectorTile';
 import type MVT from 'ol/format/MVT';
+import { get as getProjection } from 'ol/proj';
 
 // The archive is read over the network, so stand in for the library that does the reading
 const mockGetHeader = jest.fn();
@@ -32,6 +33,9 @@ function loadTile(source: PMTilesVectorSource, z = 10, x = 163, y = 395) {
     format,
     source.getTileLoadFunction()
   );
+  tile.extent = [0, 0, 1, 1];
+  tile.projection = getProjection('EPSG:3857');
+  tile.resolution = 1;
   tile.load();
   return tile;
 }

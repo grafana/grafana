@@ -3,9 +3,9 @@ package resource
 import (
 	"context"
 	"encoding/binary"
-	"encoding/hex"
 	"strings"
 	"time"
+	"uuid"
 )
 
 // blobUIDAges derives a blob's age from its UUIDv7 UID, so stores with no
@@ -28,13 +28,13 @@ func (blobUIDAges) FirstUnused(_ context.Context, key string, _ time.Time) (time
 
 // uuidV7Time returns the millisecond timestamp of a canonical UUIDv7 string.
 func uuidV7Time(uid string) (time.Time, bool) {
-	if len(uid) != 36 || uid[8] != '-' || uid[13] != '-' || uid[14] != '7' {
+	if len(uid) != 36 {
 		return time.Time{}, false
 	}
-	raw, err := hex.DecodeString(uid[:8] + uid[9:13])
-	if err != nil {
+	raw, err := uuid.Parse(uid)
+	if err != nil || raw[6]>>4 != 7 || raw[8]&0xc0 != 0x80 {
 		return time.Time{}, false
 	}
-	ms := binary.BigEndian.Uint64(append([]byte{0, 0}, raw...))
+	ms := binary.BigEndian.Uint64(raw[:8]) >> 16
 	return time.UnixMilli(int64(ms)), true
 }

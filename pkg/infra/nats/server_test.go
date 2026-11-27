@@ -1,13 +1,35 @@
 package nats
 
 import (
+	"bufio"
+	"bytes"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"io"
+	"math/big"
+	"net"
+	"path/filepath"
+	"strings"
+	"sync"
 	"testing"
+	"time"
 
+	"github.com/go-kit/log/level"
 	"github.com/grafana/dskit/services"
+	natsserver "github.com/nats-io/nats-server/v2/server"
+	natsclient "github.com/nats-io/nats.go"
+	"github.com/prometheus/client_golang/prometheus"
+	promtestutil "github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/term"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
 func TestServer(t *testing.T) {
@@ -51,6 +73,98 @@ func TestServer(t *testing.T) {
 	})
 }
 
+// TestServerRoutesMetric checks that the routes gauge counts peers with an
+// established route rather than the routes discovery applied.
+func TestServerRoutesMetric(t *testing.T) {
+	t.Run("counts each routed peer once", func(t *testing.T) {
+		store := newSharedTestKV(t)
+		reg := prometheus.NewRegistry()
+		a, err := newServer(newEmbeddedTestCfg("127.0.0.1", "").NATS, store, testCredentials(t, store), "", log.New("infra.nats.server"), reg)
+		require.NoError(t, err)
+		requireRoutesMetric(t, reg, 0)
+
+		startService(t, t.Context(), a)
+		b := startTestAuthServer(t, store, nil)
+		// Delivery needs a registered route on both sides. The route pool holds
+		// several connections per peer, which must count once.
+		requireDelivery(t, a, b)
+		requireRoutesMetric(t, reg, 1)
+		require.Equal(t, 1.0, promtestutil.ToFloat64(b.metrics.embeddedServerRoutes))
+
+		// The surviving server must notice the lost peer. It closes the route
+		// asynchronously, and nats-server reports that to no hook we can wait on.
+		b.StopAsync()
+		require.NoError(t, b.AwaitTerminated(t.Context()))
+		waitForRoutesMetric(t, a, 0)
+		requireRoutesMetric(t, reg, 0)
+	})
+
+	t.Run("does not count a discovered peer whose cluster port is unreachable", func(t *testing.T) {
+		store := newSharedTestKV(t)
+		closed, err := net.Listen("tcp", "127.0.0.1:0")
+		require.NoError(t, err)
+		unreachable := "nats://" + closed.Addr().String()
+		require.NoError(t, closed.Close())
+		require.NoError(t, newKVPeerStore(store, discoveryClusterName).upsert(t.Context(), peer{ServerName: "unreachable", RouteURL: unreachable}))
+
+		hook := newLogHook()
+		a := startTestAuthServer(t, store, hook)
+		hook.waitForLog(t, "info: reconciled nats cluster routes")
+		hook.waitForLog(t, "Error trying to connect to route")
+		require.Zero(t, promtestutil.ToFloat64(a.metrics.embeddedServerRoutes))
+	})
+
+	t.Run("does not count a peer that rejects the route credential", func(t *testing.T) {
+		hookB := newLogHook()
+		a := startTestAuthServer(t, newSharedTestKV(t), nil)
+		b := startTestAuthServer(t, newSharedTestKV(t), hookB)
+
+		require.NoError(t, a.setRoutes(natsserver.RoutesFromStr(routeURLForServer(b.cfg, b.server))))
+		hookB.waitForLog(t, "authentication error")
+		// The accepting side checks credentials before it registers the route.
+		// The dialer counts it only until the rejection arrives, so it is not
+		// asserted here.
+		require.Zero(t, promtestutil.ToFloat64(b.metrics.embeddedServerRoutes))
+	})
+
+	t.Run("is not registered without an embedded server", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.NATS = setting.NATSSettings{Enabled: true, Mode: setting.NATSModeExternal, ClientURLs: []string{"nats://example:4222"}}
+		reg := prometheus.NewRegistry()
+		_, err := ProvideServer(cfg, nil, nil, nil, nil, reg)
+		require.NoError(t, err)
+		n, err := promtestutil.GatherAndCount(reg, "grafana_nats_embedded_server_routes")
+		require.NoError(t, err)
+		require.Zero(t, n)
+	})
+}
+
+// waitForRoutesMetric waits until the routes gauge of s reads want.
+func waitForRoutesMetric(t *testing.T, s *Server, want float64) {
+	t.Helper()
+	guard := time.After(hangGuard)
+	for {
+		got := promtestutil.ToFloat64(s.metrics.embeddedServerRoutes)
+		if got == want {
+			return
+		}
+		select {
+		case <-guard:
+			t.Fatalf("routes metric %v, want %v", got, want)
+		case <-time.After(10 * time.Millisecond):
+		}
+	}
+}
+
+func requireRoutesMetric(t *testing.T, reg prometheus.Gatherer, want int) {
+	t.Helper()
+	expected := fmt.Sprintf(`# HELP grafana_nats_embedded_server_routes Number of other instances the embedded NATS server has an established cluster route to. Instances minus one when the cluster is fully connected.
+# TYPE grafana_nats_embedded_server_routes gauge
+grafana_nats_embedded_server_routes %d
+`, want)
+	require.NoError(t, promtestutil.GatherAndCompare(reg, strings.NewReader(expected), "grafana_nats_embedded_server_routes"))
+}
+
 func TestIsLoopbackRouteURL(t *testing.T) {
 	cases := map[string]bool{
 		"nats://127.0.0.1:6222": true,
@@ -64,4 +178,480 @@ func TestIsLoopbackRouteURL(t *testing.T) {
 			require.Equal(t, want, isLoopbackRouteURL(routeURL))
 		})
 	}
+}
+
+func TestServerWithoutClusteringOpensNoClusterPort(t *testing.T) {
+	// Hold the configured cluster port, as another instance on the host would.
+	held, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = held.Close() })
+	port := held.Addr().(*net.TCPAddr).Port
+
+	cases := []struct {
+		name      string
+		store     kv.KV
+		listen    string
+		discovery bool
+	}{
+		{name: "without a shared registry", discovery: true},
+		{name: "without a shared registry and an explicit listen address", listen: "127.0.0.1", discovery: true},
+		{name: "with discovery disabled", store: newSharedTestKV(t), listen: "0.0.0.0"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := newEmbeddedTestCfg(tc.listen, "")
+			cfg.NATS.ClusterPort = port
+			cfg.NATS.DiscoveryEnabled = tc.discovery
+			s, err := newServer(cfg.NATS, tc.store, testCredentials(t, tc.store), migrator.Postgres, log.NewNopLogger(), prometheus.NewRegistry())
+			require.NoError(t, err)
+			startService(t, t.Context(), s)
+
+			require.NoError(t, s.Health(t.Context()))
+			require.Nil(t, s.server.ClusterAddr())
+			require.Nil(t, s.discovery)
+			require.Nil(t, s.routeAuth)
+			require.Nil(t, s.routePlaceholder)
+			connectInProcess(t, s)
+		})
+	}
+}
+
+func TestServerClosesSilentRoute(t *testing.T) {
+	s := startUndiscoveredTLSServer(t, newSharedTestKV(t), setting.NATSClusterTLSSettings{}, nil)
+	peer, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = peer.Close() })
+
+	start := time.Now()
+	require.NoError(t, s.setRoutes(natsserver.RoutesFromStr("nats-route://"+peer.Addr().String())))
+	conn, err := peer.Accept()
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close() })
+
+	// The peer reads but never answers, like a half-dead route. The nats-server
+	// defaults would only close it after about a minute.
+	require.NoError(t, conn.SetReadDeadline(start.Add(30*time.Second)))
+	_, err = io.Copy(io.Discard, conn)
+	require.NoError(t, err, "the server should close the silent route")
+	require.Less(t, time.Since(start), 20*time.Second)
+}
+
+func TestServerClusterTLS(t *testing.T) {
+	t.Run("a route forms over mTLS and is advertised as tls", func(t *testing.T) {
+		ca := newTestCA(t, "grafana-nats-ca")
+		store := newSharedTestKV(t)
+		a := startTestTLSServer(t, store, writeTestClusterTLS(t, ca, ca))
+		b := startTestTLSServer(t, store, writeTestClusterTLS(t, ca, ca))
+
+		requireDelivery(t, a, b)
+		require.True(t, strings.HasPrefix(routeURLForServer(a.cfg, a.server), "tls://"))
+	})
+
+	t.Run("the cluster port rejects peers without a trusted client certificate", func(t *testing.T) {
+		ca := newTestCA(t, "grafana-nats-ca")
+		s := startTestTLSServer(t, newSharedTestKV(t), writeTestClusterTLS(t, ca, ca))
+		addr := s.server.ClusterAddr().String()
+
+		trusted := ca.issue(t, "peer")
+		info, err := readRouteInfo(addr, ca.pool(), &trusted)
+		require.NoError(t, err)
+		require.True(t, strings.HasPrefix(info, "INFO "), "trusted peer should get the route INFO, got %q", info)
+
+		_, err = readRouteInfo(addr, ca.pool(), nil)
+		require.ErrorContains(t, err, "certificate required")
+
+		other := newTestCA(t, "other-ca").issue(t, "intruder")
+		_, err = readRouteInfo(addr, ca.pool(), &other)
+		require.ErrorContains(t, err, "unknown certificate authority")
+	})
+
+	t.Run("a peer without cluster tls cannot join", func(t *testing.T) {
+		ca := newTestCA(t, "grafana-nats-ca")
+		store := newSharedTestKV(t)
+		hook := newLogHook()
+		secured := startTestTLSServerWithLog(t, store, writeTestClusterTLS(t, ca, ca), hook)
+		plain := startTestTLSServer(t, store, setting.NATSClusterTLSSettings{})
+
+		hook.waitForLog(t, "TLS route handshake error")
+		require.Zero(t, numRoutes(secured))
+		require.Zero(t, numRoutes(plain))
+	})
+
+	t.Run("a route to a peer whose certificate doesn't match its address is rejected", func(t *testing.T) {
+		ca := newTestCA(t, "grafana-nats-ca")
+		hookA := newLogHook()
+		// No discovery: only A dials, so the failure is A verifying B's server certificate.
+		store := newSharedTestKV(t)
+		a := startUndiscoveredTLSServer(t, store, writeTestClusterTLS(t, ca, ca), hookA)
+		tlsB := writeTestClusterTLS(t, ca, ca)
+		writeTestKeyPair(t, tlsB, ca.issueWith(t, "elsewhere", func(c *x509.Certificate) {
+			c.IPAddresses = []net.IP{net.ParseIP("10.9.9.9")}
+		}))
+		b := startUndiscoveredTLSServer(t, store, tlsB, nil)
+
+		require.NoError(t, a.setRoutes(natsserver.RoutesFromStr(routeURLForServer(b.cfg, b.server))))
+		hookA.waitForLog(t, "certificate is valid for 10.9.9.9, not 127.0.0.1")
+		require.Zero(t, numRoutes(a))
+		require.Zero(t, numRoutes(b))
+	})
+
+	t.Run("a peer with an expired certificate cannot join", func(t *testing.T) {
+		ca := newTestCA(t, "grafana-nats-ca")
+		store := newSharedTestKV(t)
+		hookA := newLogHook()
+		a := startTestTLSServerWithLog(t, store, writeTestClusterTLS(t, ca, ca), hookA)
+		tlsB := writeTestClusterTLS(t, ca, ca)
+		writeTestKeyPair(t, tlsB, ca.issueWith(t, "expired", func(c *x509.Certificate) {
+			c.NotBefore = time.Now().Add(-2 * time.Hour)
+			c.NotAfter = time.Now().Add(-time.Hour)
+		}))
+		b := startTestTLSServer(t, store, tlsB)
+
+		hookA.waitForLog(t, "certificate has expired")
+		require.Zero(t, numRoutes(a))
+		require.Zero(t, numRoutes(b))
+	})
+
+	t.Run("a rotated CA bundle is picked up without a restart", func(t *testing.T) {
+		caA := newTestCA(t, "ca-a")
+		caB := newTestCA(t, "ca-b")
+		store := newSharedTestKV(t)
+		tlsA := writeTestClusterTLS(t, caA, caA)
+		hookA := newLogHook()
+		a := startTestTLSServerWithLog(t, store, tlsA, hookA)
+		// B trusts both CAs; A only trusts its own, so it rejects B in both directions.
+		b := startTestTLSServer(t, store, writeTestClusterTLS(t, caB, caA, caB))
+
+		hookA.waitForLog(t, "TLS route handshake error")
+		require.Zero(t, numRoutes(a))
+
+		writeFileAtomic(t, tlsA.CAPath, append(caA.pem(), caB.pem()...))
+		a.clusterTLS.check()
+
+		requireDelivery(t, a, b)
+	})
+
+	t.Run("a rotated certificate is served to new connections", func(t *testing.T) {
+		ca := newTestCA(t, "grafana-nats-ca")
+		tlsCfg := writeTestClusterTLS(t, ca, ca)
+		s := startTestTLSServer(t, newSharedTestKV(t), tlsCfg)
+		addr := s.server.ClusterAddr().String()
+		peerCert := ca.issue(t, "peer")
+
+		before := servedLeaf(t, addr, ca.pool(), peerCert)
+		rotated := ca.issue(t, "rotated")
+		writeTestKeyPair(t, tlsCfg, rotated)
+		s.clusterTLS.check()
+
+		served := servedLeaf(t, addr, ca.pool(), peerCert)
+		require.NotEqual(t, 0, served.Cmp(before), "server kept serving the old certificate")
+		require.Equal(t, 0, served.Cmp(rotated.Leaf.SerialNumber))
+
+		// A later route change from discovery must not revert to the old certificate.
+		require.NoError(t, s.setRoutes(nil))
+		require.Equal(t, 0, servedLeaf(t, addr, ca.pool(), peerCert).Cmp(rotated.Leaf.SerialNumber))
+	})
+
+	t.Run("concurrent route and certificate reloads keep routes, certificate and client restriction", func(t *testing.T) {
+		ca := newTestCA(t, "grafana-nats-ca")
+		tlsA := writeTestClusterTLS(t, ca, ca)
+		// No discovery, so only the reloads below set A's routes.
+		store := newSharedTestKV(t)
+		a := startUndiscoveredTLSServer(t, store, tlsA, nil)
+		b := startUndiscoveredTLSServer(t, store, writeTestClusterTLS(t, ca, ca), nil)
+		routeB := natsserver.RoutesFromStr(routeURLForServer(b.cfg, b.server))
+
+		certs := make([]tls.Certificate, 10)
+		for i := range certs {
+			certs[i] = ca.issue(t, fmt.Sprintf("rotated-%d", i))
+		}
+		certPEMs, keyPEMs := make([][]byte, len(certs)), make([][]byte, len(certs))
+		for i, c := range certs {
+			certPEMs[i], keyPEMs[i] = certPEM(c), keyPEM(t, c)
+		}
+
+		var wg sync.WaitGroup
+		wg.Go(func() {
+			for i := range 50 {
+				routes := routeB
+				if i%2 == 0 {
+					routes = nil
+				}
+				assert.NoError(t, a.setRoutes(routes))
+			}
+			assert.NoError(t, a.setRoutes(routeB))
+		})
+		wg.Go(func() {
+			for i := range certs {
+				assert.NoError(t, replaceFile(tlsA.CertPath, certPEMs[i]))
+				assert.NoError(t, replaceFile(tlsA.KeyPath, keyPEMs[i]))
+				a.clusterTLS.check()
+			}
+		})
+		wg.Wait()
+
+		last := certs[len(certs)-1].Leaf.SerialNumber
+		require.Equal(t, 0, servedLeaf(t, a.server.ClusterAddr().String(), ca.pool(), ca.issue(t, "peer")).Cmp(last))
+		requireDelivery(t, a, b)
+
+		// The reloads keep the client port closed to socket clients.
+		_, err := natsclient.Connect(a.clientURL(), natsclient.Timeout(2*time.Second))
+		require.ErrorIs(t, err, natsclient.ErrAuthorization)
+		connectInProcess(t, a)
+	})
+
+	t.Run("invalid files keep the current certificates", func(t *testing.T) {
+		ca := newTestCA(t, "grafana-nats-ca")
+		tlsCfg := writeTestClusterTLS(t, ca, ca)
+		s := startTestTLSServer(t, newSharedTestKV(t), tlsCfg)
+		addr := s.server.ClusterAddr().String()
+		peerCert := ca.issue(t, "peer")
+		before := servedLeaf(t, addr, ca.pool(), peerCert)
+
+		// A key that doesn't match the certificate, as seen mid-rotation.
+		writeFileAtomic(t, tlsCfg.KeyPath, keyPEM(t, ca.issue(t, "other")))
+		s.clusterTLS.check()
+
+		require.Equal(t, 0, servedLeaf(t, addr, ca.pool(), peerCert).Cmp(before))
+	})
+
+	missing := setting.NATSClusterTLSSettings{
+		CertPath: filepath.Join(t.TempDir(), "missing.crt"),
+		KeyPath:  filepath.Join(t.TempDir(), "missing.key"),
+		CAPath:   filepath.Join(t.TempDir(), "missing-ca.crt"),
+	}
+
+	t.Run("startup fails on unreadable certificate files", func(t *testing.T) {
+		cfg := newEmbeddedTestCfg("127.0.0.1", "")
+		cfg.NATS.ClusterTLS = missing
+		store := newSharedTestKV(t)
+		_, err := newServer(cfg.NATS, store, testCredentials(t, store), "", log.NewNopLogger(), prometheus.NewRegistry())
+		require.ErrorContains(t, err, "read nats cluster tls cert")
+	})
+
+	t.Run("a server that cannot cluster ignores the certificate files", func(t *testing.T) {
+		cfg := newEmbeddedTestCfg("127.0.0.1", "")
+		cfg.NATS.ClusterTLS = missing
+		hook := newLogHook()
+		s, err := newServer(cfg.NATS, nil, routeCredentialStore{}, "", hook, prometheus.NewRegistry())
+		require.NoError(t, err)
+		require.Nil(t, s.clusterTLS)
+		requireLogCount(t, hook.drain(), "warn: nats cluster_tls_* settings are ignored", 1)
+	})
+}
+
+func TestServerClientPort(t *testing.T) {
+	t.Run("the client port is closed by default", func(t *testing.T) {
+		// Hold the configured port: the embedded server must start without binding it.
+		held, err := net.Listen("tcp", "127.0.0.1:0")
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = held.Close() })
+
+		s := startTestClientPortServer(t, setting.NATSSettings{
+			ListenAddress: "127.0.0.1",
+			ClientPort:    held.Addr().(*net.TCPAddr).Port,
+		}, nil)
+		require.NoError(t, s.Health(t.Context()))
+
+		// The loopback listener nats-server needs for routing rejects socket clients.
+		_, err = natsclient.Connect(s.clientURL(), natsclient.Timeout(2*time.Second))
+		require.ErrorIs(t, err, natsclient.ErrAuthorization)
+
+		// In-process clients are still accepted.
+		connectInProcess(t, s)
+	})
+
+	t.Run("client_listen lets socket clients exchange messages on client_listen_address", func(t *testing.T) {
+		hook := newLogHook()
+		// The cluster port binds every interface; the client port must stay on loopback.
+		s := startTestClientPortServer(t, setting.NATSSettings{
+			ListenAddress: "0.0.0.0",
+			ClientPort:    natsserver.RANDOM_PORT,
+			ClientListen:  true,
+		}, hook)
+		hook.waitForLog(t, "warn: nats client port is open without TLS or authentication")
+		require.True(t, s.server.Addr().(*net.TCPAddr).IP.IsLoopback(), "client port bound to %s", s.server.Addr())
+
+		external, err := natsclient.Connect(s.clientURL(), natsclient.Timeout(2*time.Second))
+		require.NoError(t, err)
+		t.Cleanup(external.Close)
+
+		const subject = "grafana.test.external"
+		local := connectInProcess(t, s)
+		sub, err := local.SubscribeSync(subject)
+		require.NoError(t, err)
+		require.NoError(t, local.Flush())
+
+		require.NoError(t, external.Publish(subject, []byte("hello")))
+		require.NoError(t, external.Flush())
+		msg, err := sub.NextMsg(hangGuard)
+		require.NoError(t, err)
+		require.Equal(t, []byte("hello"), msg.Data)
+	})
+
+	t.Run("client tls settings don't break the in-process connection", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(t.Context())
+		t.Cleanup(cancel)
+
+		cfg := setting.NewCfg()
+		cfg.NATS = setting.NATSSettings{
+			Enabled:       true,
+			Mode:          setting.NATSModeEmbedded,
+			ListenAddress: "127.0.0.1",
+			ClientPort:    natsserver.RANDOM_PORT,
+			ClusterPort:   natsserver.RANDOM_PORT,
+			TLS:           setting.NATSTLSSettings{Enabled: true},
+		}
+		server, err := ProvideServer(cfg, nil, nil, nil, nil, prometheus.NewRegistry())
+		require.NoError(t, err)
+		startService(t, ctx, server)
+
+		natsCfg := ProvideNATSConfig(cfg, server)
+		pub := ProvidePublisher(natsCfg, prometheus.NewRegistry())
+		sub := ProvideSubscriber(natsCfg, prometheus.NewRegistry())
+		startService(t, ctx, pub)
+		startService(t, ctx, sub)
+
+		// The in-process dial completes before starting returns.
+		require.NoError(t, pub.Health(ctx))
+		require.NoError(t, sub.Health(ctx))
+	})
+}
+
+func TestServerLogger(t *testing.T) {
+	hook := newLogHook()
+	l := serverLogger{log: hook}
+
+	l.Noticef("notice %d", 1)
+	l.Debugf("debug %d", 1)
+	l.Tracef("trace %d", 1)
+	require.Empty(t, hook.drain())
+
+	l.Warnf("route %s", "slow")
+	l.Errorf("handshake %s", "failed")
+	// Fatalf logs instead of exiting the process.
+	l.Fatalf("listen %s", "failed")
+	require.Equal(t, []string{"warn: route slow", "error: handshake failed", "error: listen failed"}, hook.drain())
+
+	t.Run("a message is only formatted when its level is written", func(t *testing.T) {
+		var out bytes.Buffer
+		logger := log.NewNopLogger()
+		// The terminal format is the default on a TTY, and the strictest about msg.
+		logger.Swap(level.NewFilter(term.NewTerminalLogger(&out), level.AllowError()))
+		formatted := 0
+		arg := stringerFunc(func() string { formatted++; return "slow" })
+		l := serverLogger{log: logger}
+
+		l.Warnf("route %s", arg)
+		require.Zero(t, formatted)
+		require.Empty(t, out.String())
+
+		l.Errorf("route %s", arg)
+		require.Equal(t, 1, formatted)
+		require.Contains(t, out.String(), "route slow")
+	})
+}
+
+type stringerFunc func() string
+
+func (f stringerFunc) String() string { return f() }
+
+// startTestClientPortServer starts an embedded server without discovery from
+// the given client settings.
+func startTestClientPortServer(t *testing.T, nats setting.NATSSettings, hook *logHook) *Server {
+	t.Helper()
+	cfg := setting.NewCfg()
+	nats.Enabled = true
+	nats.Mode = setting.NATSModeEmbedded
+	nats.ClusterPort = natsserver.RANDOM_PORT
+	cfg.NATS = nats
+	s, err := ProvideServer(cfg, nil, nil, nil, nil, prometheus.NewRegistry())
+	require.NoError(t, err)
+	if hook != nil {
+		s.log = hook
+	}
+	startService(t, t.Context(), s)
+	return s
+}
+
+func startTestTLSServer(t *testing.T, store kv.KV, tlsCfg setting.NATSClusterTLSSettings) *Server {
+	t.Helper()
+	return startTestTLSServerWithLog(t, store, tlsCfg, nil)
+}
+
+// startTestTLSServerWithLog starts an embedded server with discovery through
+// store; an empty tlsCfg runs without cluster TLS. Tests drive certificate
+// reloads with clusterTLS.check instead of waiting for the watcher.
+func startTestTLSServerWithLog(t *testing.T, store kv.KV, tlsCfg setting.NATSClusterTLSSettings, hook *logHook) *Server {
+	t.Helper()
+	s := newTestTLSServer(t, store, tlsCfg, hook)
+	startService(t, t.Context(), s)
+	return s
+}
+
+// startUndiscoveredTLSServer starts a server that can cluster through store
+// without running discovery, so only the test sets its routes.
+func startUndiscoveredTLSServer(t *testing.T, store kv.KV, tlsCfg setting.NATSClusterTLSSettings, hook *logHook) *Server {
+	t.Helper()
+	s := newTestTLSServer(t, store, tlsCfg, hook)
+	require.NoError(t, s.starting(t.Context()))
+	t.Cleanup(func() { _ = s.stopping(nil) })
+	return s
+}
+
+func newTestTLSServer(t *testing.T, store kv.KV, tlsCfg setting.NATSClusterTLSSettings, hook *logHook) *Server {
+	t.Helper()
+	cfg := setting.NewCfg()
+	cfg.NATS = setting.NATSSettings{
+		Enabled:           true,
+		Mode:              setting.NATSModeEmbedded,
+		ListenAddress:     "127.0.0.1",
+		ClientPort:        natsserver.RANDOM_PORT,
+		ClusterPort:       natsserver.RANDOM_PORT,
+		DiscoveryEnabled:  true,
+		DiscoveryInterval: 50 * time.Millisecond,
+		DiscoveryTTL:      time.Minute,
+		ClusterTLS:        tlsCfg,
+	}
+	s, err := newServer(cfg.NATS, store, testCredentials(t, store), "", log.New("infra.nats.server"), prometheus.NewRegistry())
+	require.NoError(t, err)
+	if hook != nil {
+		s.log = hook
+	}
+	if s.clusterTLS != nil {
+		s.clusterTLS.interval = time.Hour
+	}
+	return s
+}
+
+// readRouteInfo dials the cluster port like a peer and returns the first line
+// the server sends. The route INFO is only sent after the TLS handshake.
+func readRouteInfo(addr string, roots *x509.CertPool, cert *tls.Certificate) (string, error) {
+	tc := &tls.Config{MinVersion: tls.VersionTLS12, RootCAs: roots, ServerName: "127.0.0.1"}
+	if cert != nil {
+		// Present the certificate even when the server doesn't list its CA as acceptable.
+		tc.GetClientCertificate = func(*tls.CertificateRequestInfo) (*tls.Certificate, error) { return cert, nil }
+	}
+	conn, err := tls.DialWithDialer(&net.Dialer{Timeout: hangGuard}, "tcp", addr, tc)
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = conn.Close() }()
+	// TLS 1.3 reports a rejected client certificate on the first read.
+	_ = conn.SetReadDeadline(time.Now().Add(hangGuard))
+	return bufio.NewReader(conn).ReadString('\n')
+}
+
+// servedLeaf returns the serial number of the certificate the cluster port presents.
+func servedLeaf(t *testing.T, addr string, roots *x509.CertPool, cert tls.Certificate) *big.Int {
+	t.Helper()
+	conn, err := tls.DialWithDialer(&net.Dialer{Timeout: hangGuard}, "tcp", addr, &tls.Config{
+		MinVersion:   tls.VersionTLS12,
+		RootCAs:      roots,
+		ServerName:   "127.0.0.1",
+		Certificates: []tls.Certificate{cert},
+	})
+	require.NoError(t, err)
+	defer func() { _ = conn.Close() }()
+	return conn.ConnectionState().PeerCertificates[0].SerialNumber
 }

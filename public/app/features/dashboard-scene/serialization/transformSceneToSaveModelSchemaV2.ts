@@ -9,6 +9,7 @@ import {
   LocalValueVariable,
   type QueryVariable,
   sceneGraph,
+  type SceneDataLayerProvider,
   type SceneDataQuery,
   SceneDataTransformer,
   type SceneObject,
@@ -70,6 +71,7 @@ import { getPanelIdForVizPanel } from '../utils/utils-panels';
 import { type DSReferencesMapping } from './DashboardSceneSerializer';
 import { transformV1ToV2AnnotationQuery } from './annotations';
 import { normalizeDataSourceRef } from './normalizeDataSourceRef';
+import { serializeQuestions } from './questionsSerializer';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToSchemaV2Variables';
 import { buildTimeSettingsSpec } from './shared/timeSettings';
 import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
@@ -111,6 +113,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     cursorSync: getCursorSync(sceneDash),
     liveNow: getLiveNow(sceneDash),
     preload: sceneDash.preload ?? defaultDashboardV2Spec().preload,
+    prompts: serializeQuestions(scene, sceneDash.questions),
     editable: sceneDash.editable ?? defaultDashboardV2Spec().editable,
     links: (sceneDash.links || [])
       // Links with a `origin` property didn't come from the persisted JSON schema, so we also skip them
@@ -699,8 +702,15 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
   if (!(data instanceof DashboardDataLayerSet)) {
     return [];
   }
+  return annotationLayersToSchemaV2(data.state.annotationLayers, dsReferencesMapping);
+}
+
+export function annotationLayersToSchemaV2(
+  layers: SceneDataLayerProvider[],
+  dsReferencesMapping?: DSReferencesMapping
+): AnnotationQueryKind[] {
   const annotations: AnnotationQueryKind[] = [];
-  for (const layer of data.state.annotationLayers) {
+  for (const layer of layers) {
     if (!(layer instanceof dataLayers.AnnotationsDataLayer)) {
       continue;
     }

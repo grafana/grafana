@@ -4,7 +4,7 @@
  * Update a tab's metadata (title) by path.
  */
 
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
@@ -23,7 +23,7 @@ export type UpdateTabPayload = z.infer<typeof updateTabPayloadSchema>;
 
 export const updateTabCommand: MutationCommand<UpdateTabPayload> = {
   name: 'UPDATE_TAB',
-  description: payloads.updateTab.description ?? '',
+  description: z.globalRegistry.get(payloads.updateTab)?.description ?? '',
 
   payloadSchema: payloads.updateTab,
   permission: requiresNewDashboardLayouts,

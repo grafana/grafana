@@ -189,15 +189,16 @@ func permissionsTypeResolverFunc(scope string) (string, error) {
 	}
 }
 
-// isRoleManagementAction reports whether the action manages roles or role
-// bindings. Role management is the only family where a permissions:type:delegate
+// isRoleManagementAction reports whether the action mutates roles or role
+// bindings. These are the only actions where a `permissions:type:delegate“
 // grant also implies the wildcard scope: holding the delegate scope must allow
 // operating on any role or role binding. Expanding it for other actions would
 // turn a delegation-only grant into global access to the resource itself.
 func isRoleManagementAction(action string) bool {
 	switch action {
-	case "roles:read", "roles:write", "roles:delete",
-		"users.roles:read", "users.roles:add", "users.roles:remove":
+	case "roles:write", "roles:delete",
+		"users.roles:add", "users.roles:remove",
+		"teams.roles:add", "teams.roles:remove":
 		return true
 	}
 	return false

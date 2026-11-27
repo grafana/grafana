@@ -198,8 +198,8 @@ func TestIntegrationBulkChunkedCorrectnessAndBudget(t *testing.T) {
 	rec := &commitRecorder{}
 	b, sdb := newChunkedTestBackend(t, chunkedBudget, rec.observe)
 
-	rsp := b.ProcessBulk(ctx, resource.BulkSettings{Collection: []*resourcepb.ResourceKey{key}}, unitest.ToBulkIterator(reqs))
-	require.Nil(t, rsp.Error)
+	rsp, err := b.ProcessBulk(ctx, resource.BulkSettings{Collection: []*resourcepb.ResourceKey{key}}, unitest.ToBulkIterator(reqs))
+	require.NoError(t, err)
 	require.Equal(t, int64(len(reqs)), rsp.Processed)
 	require.Len(t, rsp.Summary, 1)
 	require.Equal(t, int64(0), rsp.Summary[0].PreviousHistory, "first run wipes an empty collection")
@@ -243,8 +243,8 @@ func TestIntegrationBulkChunkedCorrectnessAndBudget(t *testing.T) {
 		firstResourceCount := countTableRows(t, ctx, b, sdb, "resource", key)
 		require.Equal(t, int64(len(reqs)), int64(firstHistoryCount), "all events land in history")
 
-		rsp2 := b.ProcessBulk(ctx, resource.BulkSettings{Collection: []*resourcepb.ResourceKey{key}}, unitest.ToBulkIterator(reqs))
-		require.Nil(t, rsp2.Error)
+		rsp2, err := b.ProcessBulk(ctx, resource.BulkSettings{Collection: []*resourcepb.ResourceKey{key}}, unitest.ToBulkIterator(reqs))
+		require.NoError(t, err)
 		require.Len(t, rsp2.Summary, 1)
 		require.Equal(t, int64(firstHistoryCount), rsp2.Summary[0].PreviousHistory, "second wipe sees first run's history rows")
 		require.Equal(t, int64(firstResourceCount), rsp2.Summary[0].PreviousCount, "second wipe sees first run's resource rows")
@@ -256,8 +256,8 @@ func TestIntegrationBulkChunkedCorrectnessAndBudget(t *testing.T) {
 	nonChunked, nsdb := newTestBackend(t, GarbageCollectionConfig{})
 	nb := nonChunked.(*backend)
 	require.False(t, nb.migrationChunkedWrites)
-	rspNC := nb.ProcessBulk(ctx, resource.BulkSettings{Collection: []*resourcepb.ResourceKey{key}}, unitest.ToBulkIterator(reqs))
-	require.Nil(t, rspNC.Error)
+	_, err = nb.ProcessBulk(ctx, resource.BulkSettings{Collection: []*resourcepb.ResourceKey{key}}, unitest.ToBulkIterator(reqs))
+	require.NoError(t, err)
 	nonChunkedGot := readResourceTable(t, ctx, nb, nsdb, key)
 	require.Equal(t, nonChunkedGot, got, "chunked and non-chunked final resource rows must match")
 }
@@ -271,8 +271,8 @@ type killAfterKBatchIterator struct {
 	idx   int // number of NextBatch calls so far
 }
 
-func (it *killAfterKBatchIterator) NextBatch() bool {
-	if it.idx >= len(it.items) {
+func (it *killAfterKBatchIterator) NextBatch(ctx context.Context) bool {
+	if ctx.Err() != nil || it.idx >= len(it.items) {
 		return false
 	}
 	it.idx++
@@ -289,7 +289,9 @@ func (it *killAfterKBatchIterator) RollbackRequested() bool {
 
 // Next and Request only satisfy the non-batch BulkRequestIterator interface; the
 // chunked path uses NextBatch/Batch/RollbackRequested, so these are unreachable.
-func (it *killAfterKBatchIterator) Next() bool                       { return it.NextBatch() }
+func (it *killAfterKBatchIterator) Next() bool {
+	return it.NextBatch(context.Background())
+}
 func (it *killAfterKBatchIterator) Request() *resourcepb.BulkRequest { return it.Batch()[0] }
 
 // TestIntegrationBulkChunkedKillMidMigrationThenRestart checks cleanup and
@@ -318,9 +320,9 @@ func TestIntegrationBulkChunkedKillMidMigrationThenRestart(t *testing.T) {
 	// Kill after 8 batches: several chunks have committed by then, so partial
 	// history rows exist when the hard error is raised.
 	killed := &killAfterKBatchIterator{items: reqs, k: 8}
-	rsp := b.ProcessBulk(ctx, resource.BulkSettings{Collection: []*resourcepb.ResourceKey{key}}, killed)
-	require.NotNil(t, rsp.Error, "killed migration must return a hard error")
-	require.Contains(t, rsp.Error.Message, "rollback requested")
+	rsp, err := b.ProcessBulk(ctx, resource.BulkSettings{Collection: []*resourcepb.ResourceKey{key}}, killed)
+	require.ErrorContains(t, err, "rollback requested", "killed migration must return a hard error")
+	require.Nil(t, rsp)
 
 	// The resource table and last-import time must NOT have been touched: those
 	// phases run only after a clean history phase.
@@ -333,8 +335,8 @@ func TestIntegrationBulkChunkedKillMidMigrationThenRestart(t *testing.T) {
 
 	// Now run a full clean import: the phase-1 wipe must remove the partial
 	// garbage and the end state must be correct.
-	rsp2 := b.ProcessBulk(ctx, resource.BulkSettings{Collection: []*resourcepb.ResourceKey{key}}, unitest.ToBulkIterator(reqs))
-	require.Nil(t, rsp2.Error)
+	rsp2, err := b.ProcessBulk(ctx, resource.BulkSettings{Collection: []*resourcepb.ResourceKey{key}}, unitest.ToBulkIterator(reqs))
+	require.NoError(t, err)
 	require.Equal(t, int64(len(reqs)), rsp2.Processed)
 
 	got := readResourceTable(t, ctx, b, sdb, key)
@@ -371,8 +373,8 @@ func TestIntegrationBulkChunkedSQLiteRegression(t *testing.T) {
 	require.Equal(t, "sqlite", b.dialect.DialectName())
 	require.True(t, b.migrationChunkedWrites, "chunked writes are enabled on the backend")
 
-	rsp := b.ProcessBulk(ctx, resource.BulkSettings{Collection: []*resourcepb.ResourceKey{key}}, unitest.ToBulkIterator(reqs))
-	require.Nil(t, rsp.Error)
+	rsp, err := b.ProcessBulk(ctx, resource.BulkSettings{Collection: []*resourcepb.ResourceKey{key}}, unitest.ToBulkIterator(reqs))
+	require.NoError(t, err)
 	require.Equal(t, int64(len(reqs)), rsp.Processed)
 
 	// The chunked path must NOT have been taken on sqlite.

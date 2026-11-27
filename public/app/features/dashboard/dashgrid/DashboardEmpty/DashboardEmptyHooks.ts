@@ -33,14 +33,15 @@ export const useRepositoryStatus = ({ dashboard }: Props) => {
 interface HookProps extends Props {
   isReadOnlyRepo: boolean;
   isProvisioned: boolean;
+  isMobileEditDeprecated: boolean;
 }
 
-export const useOnAddVisualization = ({ dashboard, canCreate, isReadOnlyRepo }: HookProps) => {
+export const useOnAddVisualization = ({ dashboard, canCreate, isReadOnlyRepo, isMobileEditDeprecated }: HookProps) => {
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
 
   return useMemo(() => {
-    if (!canCreate || isReadOnlyRepo) {
+    if (!canCreate || isReadOnlyRepo || isMobileEditDeprecated) {
       return undefined;
     }
 
@@ -57,12 +58,18 @@ export const useOnAddVisualization = ({ dashboard, canCreate, isReadOnlyRepo }: 
 
       DashboardInteractions.emptyDashboardButtonClicked({ item: 'add_visualization' });
     };
-  }, [canCreate, isReadOnlyRepo, dashboard, dispatch, initialDatasource]);
+  }, [canCreate, isReadOnlyRepo, isMobileEditDeprecated, dashboard, dispatch, initialDatasource]);
 };
 
-export const useOnAddLibraryPanel = ({ dashboard, canCreate, isReadOnlyRepo, isProvisioned }: HookProps) => {
+export const useOnAddLibraryPanel = ({
+  dashboard,
+  canCreate,
+  isReadOnlyRepo,
+  isProvisioned,
+  isMobileEditDeprecated,
+}: HookProps) => {
   return useMemo(() => {
-    if (!canCreate || isProvisioned || isReadOnlyRepo) {
+    if (!canCreate || isProvisioned || isReadOnlyRepo || isMobileEditDeprecated) {
       return undefined;
     }
 
@@ -74,12 +81,17 @@ export const useOnAddLibraryPanel = ({ dashboard, canCreate, isReadOnlyRepo, isP
         onAddLibraryPanelImpl(dashboard);
       }
     };
-  }, [canCreate, isProvisioned, isReadOnlyRepo, dashboard]);
+  }, [canCreate, isProvisioned, isReadOnlyRepo, isMobileEditDeprecated, dashboard]);
 };
 
-export const useOnImportDashboard = ({ canCreate, isReadOnlyRepo, isProvisioned }: HookProps) => {
+export const useOnImportDashboard = ({
+  canCreate,
+  isReadOnlyRepo,
+  isProvisioned,
+  isMobileEditDeprecated,
+}: HookProps) => {
   return useMemo(() => {
-    if (!canCreate || isProvisioned || isReadOnlyRepo) {
+    if (!canCreate || isProvisioned || isReadOnlyRepo || isMobileEditDeprecated) {
       return undefined;
     }
 
@@ -87,5 +99,5 @@ export const useOnImportDashboard = ({ canCreate, isReadOnlyRepo, isProvisioned 
       DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_dashboard' });
       onImportDashboardImpl();
     };
-  }, [canCreate, isReadOnlyRepo, isProvisioned]);
+  }, [canCreate, isReadOnlyRepo, isProvisioned, isMobileEditDeprecated]);
 };

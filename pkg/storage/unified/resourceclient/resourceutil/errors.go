@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
+	authzlib "github.com/grafana/authlib/authz"
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 
@@ -58,22 +59,6 @@ func IsConflict(err error) bool {
 	return apierrors.IsConflict(StatusError(ErrorResultFromGRPCDetails(err)))
 }
 
-// ErrorFromResponse resolves the outcome of a unified storage call — which
-// reports failure either through a transport error or through a response that
-// embeds an ErrorResult — into a single error, so callers need one error
-// branch. The transport error is returned untouched to keep its gRPC status,
-// cancellation semantics and errors.Is/As chain intact; a response-embedded
-// result is converted to a typed Kubernetes error. Callers that need an ErrorResult
-// representation for status checks can convert the returned error with AsErrorResult.
-// Attached or response-embedded details are preserved when available.
-// Returns nil only when the call fully succeeded.
-func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
-	if err != nil {
-		return err
-	}
-	return StatusError(respErr)
-}
-
 // ErrorResultFromGRPCDetails returns the ErrorResult attached to a gRPC status error, or nil.
 func ErrorResultFromGRPCDetails(err error) *resourcepb.ErrorResult {
 	st, ok := grpcstatus.FromError(err)
@@ -98,7 +83,7 @@ func AsErrorResult(err error) *resourcepb.ErrorResult {
 
 	// Without this a namespace mismatch falls through
 	// to the generic 500 below, which is incorrect as it raises error budgets.
-	if errors.Is(err, claims.ErrNamespaceMismatch) {
+	if errors.Is(err, claims.ErrNamespaceMismatch) || errors.Is(err, authzlib.ErrNamespaceMismatch) {
 		return &resourcepb.ErrorResult{
 			Message: claims.ErrNamespaceMismatch.Error(),
 			Reason:  string(metav1.StatusReasonForbidden),
@@ -218,17 +203,17 @@ func StatusError(res *resourcepb.ErrorResult) error {
 	return status
 }
 
-// StatusErrorFromResponse derives a Kubernetes [apierrors.StatusError] from a
-// unified storage failure when it can: an embedded [resourcepb.ErrorResult], a gRPC status
-// (wrapped or not), an error already carrying an [apierrors.APIStatus], or a context error.
+// StatusErrorFromGRPC derives a Kubernetes [apierrors.StatusError] from the error returned
+// by a unified storage call when it can: a gRPC status (wrapped or not), an error already
+// carrying an [apierrors.APIStatus], or a context error. Returns nil for nil.
 // Unstructured gRPC server errors are logged and given a generic public message;
 // attached ErrorResult details retain their message. Anything else is returned
 // unchanged, so response writers apply their own sanitization and logging.
-// Unlike [AsErrorResult], [claims.ErrNamespaceMismatch] is not mapped to 403 — it passes through,
+// Unlike [AsErrorResult], namespace mismatch sentinels are not mapped to 403 — they pass through,
 // since that mapping only ever applied in-process.
-func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
+func StatusErrorFromGRPC(err error) error {
 	if err == nil {
-		return StatusError(respErr)
+		return nil
 	}
 	// In-process calls can return context errors instead of gRPC statuses.
 	localContextErr := (errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)) && OnlyCancellationErrors(err)

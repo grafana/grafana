@@ -454,6 +454,10 @@ Status Codes:
 
 ## Get Team Preferences
 
+{{< admonition type="note" >}}
+This endpoint is deprecated. Use the [Preferences HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/preferences/) with the `team-<TEAM_UID>` name instead. To learn how the legacy endpoints map to the new ones, refer to [Migrate from the legacy Preferences API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/preferences/#migrate-from-the-legacy-preferences-api).
+{{< /admonition >}}
+
 `GET /api/teams/:teamId/preferences`
 
 **Required permissions**
@@ -488,6 +492,10 @@ Content-Type: application/json
 ```
 
 ## Update Team Preferences
+
+{{< admonition type="note" >}}
+This endpoint is deprecated. Use the [Preferences HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/preferences/) with the `team-<TEAM_UID>` name instead. To learn how the legacy endpoints map to the new ones, refer to [Migrate from the legacy Preferences API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/preferences/#migrate-from-the-legacy-preferences-api).
+{{< /admonition >}}
 
 `PUT /api/teams/:teamId/preferences`
 

@@ -63,7 +63,7 @@ func (v *DataSourceCountValidator) Validate(ctx context.Context, sess *xorm.Sess
 				Namespace: summary.Namespace,
 				Kinds:     []string{fmt.Sprintf("%s/%s", summary.Group, summary.Resource)},
 			})
-			if err := resource.ErrorFromResponse(statsResp.GetError(), err); err != nil {
+			if err != nil {
 				return fmt.Errorf("failed to get stats for %s/%s: %w",
 					summary.Group, summary.Resource, err)
 			}

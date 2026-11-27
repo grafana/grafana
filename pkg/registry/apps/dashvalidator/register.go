@@ -2,6 +2,9 @@ package dashvalidator
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/simple"
@@ -49,11 +52,13 @@ func RegisterAppInstaller(
 
 	// Create specific config for the app with all components
 	specificConfig := &validatorapp.DashValidatorConfig{
-		DatasourceSvc:      datasourceSvc,
-		HTTPClientProvider: httpClientProvider,
-		MetricsCache:       metricsCache,
-		Validators:         validators,
-		AC:                 ac,
+		Datasources: &datasourceProvider{
+			svc:                datasourceSvc,
+			httpClientProvider: httpClientProvider,
+			ac:                 ac,
+		},
+		MetricsCache: metricsCache,
+		Validators:   validators,
 	}
 
 	// Create the app provider
@@ -121,4 +126,40 @@ func (a *DashValidatorAppInstaller) GetAuthorizer() authorizer.Authorizer {
 			return authorizer.DecisionDeny, "insufficient permissions: datasources:read, datasources:query, and dashboards:create required", nil
 		},
 	)
+}
+
+var _ validatorapp.DatasourceProvider = (*datasourceProvider)(nil)
+
+// datasourceProvider adapts Grafana's datasource and access control services
+// to the dashvalidator app's DatasourceProvider interface.
+type datasourceProvider struct {
+	svc                datasources.DataSourceService
+	httpClientProvider httpclient.Provider
+	ac                 accesscontrol.AccessControl
+}
+
+func (p *datasourceProvider) CanQuery(ctx context.Context, user identity.Requester, uid string) (bool, error) {
+	scope := datasources.ScopeProvider.GetResourceScopeUID(uid)
+	return p.ac.Evaluate(ctx, user, accesscontrol.EvalAll(
+		accesscontrol.EvalPermission(datasources.ActionRead, scope),
+		accesscontrol.EvalPermission(datasources.ActionQuery, scope),
+	))
+}
+
+func (p *datasourceProvider) Get(ctx context.Context, namespace, uid, dsType string) (*validatorapp.Datasource, error) {
+	ds, err := p.svc.GetDataSourceInNamespace(ctx, namespace, uid, dsType)
+	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			return nil, fmt.Errorf("%w: %w", validatorapp.ErrDatasourceNotFound, err)
+		}
+		return nil, err
+	}
+	return &validatorapp.Datasource{
+		UID:  ds.UID,
+		Type: ds.Type,
+		URL:  ds.URL,
+		Transport: func(ctx context.Context) (http.RoundTripper, error) {
+			return p.svc.GetHTTPTransport(ctx, ds, p.httpClientProvider)
+		},
+	}, nil
 }

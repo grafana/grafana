@@ -2,10 +2,17 @@ package socialimpl
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -442,4 +449,35 @@ signout_redirect_url = https://oauth.com/signout?post_logout_redirect_uri=https:
 	require.NoError(t, err)
 
 	require.Equal(t, expectedOAuthInfo, oauthInfo)
+}
+
+func TestNewOAuthTransport(t *testing.T) {
+	previous := otel.GetTextMapPropagator()
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+	t.Cleanup(func() { otel.SetTextMapPropagator(previous) })
+
+	traceparent := make(chan string, 1)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		traceparent <- r.Header.Get("traceparent")
+	}))
+	t.Cleanup(server.Close)
+
+	recorder := tracetest.NewSpanRecorder()
+	tp := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
+	client := &http.Client{Transport: newOAuthTransport("generic_oauth", http.DefaultTransport, otelhttp.WithTracerProvider(tp))}
+
+	ctx, parent := tp.Tracer("test").Start(t.Context(), "parent")
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, server.URL+"/token", nil)
+	require.NoError(t, err)
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	require.NoError(t, resp.Body.Close())
+	parent.End()
+
+	require.Empty(t, <-traceparent)
+
+	spans := recorder.Ended()
+	require.Len(t, spans, 2)
+	require.Equal(t, "oauth.generic_oauth POST", spans[0].Name())
+	require.Equal(t, parent.SpanContext().SpanID(), spans[0].Parent().SpanID())
 }

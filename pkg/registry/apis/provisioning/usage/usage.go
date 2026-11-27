@@ -94,7 +94,6 @@ func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, reposito
 			count, err = unified.CountManagedObjects(nsCtx, &resourcepb.CountManagedObjectsRequest{
 				Namespace: ns,
 			})
-			err = resource.ErrorFromResponse(count.GetError(), err)
 			if err != nil {
 				nsSpan.RecordError(err)
 				nsSpan.SetStatus(codes.Error, fmt.Sprintf("failed to count managed objects on namespace %s: %v", ns, err))

@@ -67,16 +67,53 @@ export function textSandboxPolicy(origins: string[], fontRoot: string): string {
     .join('; ');
 }
 
-export function getGlobalCss(): string {
-  return Array.from(document.styleSheets)
-    .filter((sheet) => sheet.ownerNode instanceof HTMLElement && sheet.ownerNode.dataset.emotion?.includes('global'))
-    .flatMap((sheet) => {
-      try {
-        return Array.from(sheet.cssRules, (rule) => rule.cssText);
-      } catch {
-        // A stylesheet may be inaccessible while being replaced or supplied cross-origin.
-        return [];
+let globalFontCssSnapshot: { sheets: CSSStyleSheet[]; lengths: number[]; css: string } | undefined;
+
+export function getGlobalFontCss(): string {
+  const sheets = Array.from(document.styleSheets).filter(
+    (sheet) => sheet.ownerNode instanceof HTMLElement && sheet.ownerNode.dataset.emotion?.includes('global')
+  );
+  try {
+    const lengths = sheets.map((sheet) => sheet.cssRules.length);
+    if (
+      globalFontCssSnapshot &&
+      sheets.length === globalFontCssSnapshot.sheets.length &&
+      sheets.every(
+        (sheet, index) =>
+          sheet === globalFontCssSnapshot!.sheets[index] && lengths[index] === globalFontCssSnapshot!.lengths[index]
+      )
+    ) {
+      return globalFontCssSnapshot.css;
+    }
+    const css = sheets
+      .flatMap((sheet) =>
+        Array.from(sheet.cssRules)
+          .filter((rule) => rule.type === CSSRule.FONT_FACE_RULE)
+          .map((rule) => rule.cssText)
+      )
+      .join('\n');
+    const snapshot = { sheets, lengths, css };
+    globalFontCssSnapshot = snapshot;
+    // Share serialization across a mount batch, without retaining font CSS across later CSSOM edits.
+    void Promise.resolve().then(() => {
+      if (globalFontCssSnapshot === snapshot) {
+        globalFontCssSnapshot = undefined;
       }
-    })
-    .join('\n');
+    });
+    return css;
+  } catch {
+    globalFontCssSnapshot = undefined;
+    // A stylesheet may be inaccessible while being replaced or supplied cross-origin.
+    return sheets
+      .flatMap((sheet) => {
+        try {
+          return Array.from(sheet.cssRules)
+            .filter((rule) => rule.type === CSSRule.FONT_FACE_RULE)
+            .map((rule) => rule.cssText);
+        } catch {
+          return [];
+        }
+      })
+      .join('\n');
+  }
 }

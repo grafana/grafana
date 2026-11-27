@@ -635,6 +635,33 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 	}
 }
 
+func TestIntegration_CountByOrg(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.NewTestStore(t)
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	b := &fakeBus{}
+	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+	counts, err := store.CountByOrg(context.Background())
+	require.NoError(t, err)
+	require.Empty(t, counts)
+
+	gen := models.RuleGen
+	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval))
+	for range 2 {
+		_ = createRule(t, store, gen.With(gen.WithOrgID(1)))
+	}
+	for range 3 {
+		_ = createRule(t, store, gen.With(gen.WithOrgID(2)))
+	}
+
+	counts, err = store.CountByOrg(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, map[int64]int64{1: 2, 2: 3}, counts)
+}
+
 func TestIntegration_CountRuleGroups(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
@@ -2407,6 +2434,8 @@ func TestIntegrationListAlertRulesByGroupCaseSensitiveOrdering(t *testing.T) {
 	})
 }
 
+var versionDiffIgnoredFields = []string{"ID", "Version", "Updated", "UpdatedBy", "FolderFullpath"}
+
 func TestIntegrationGetRuleVersions(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
@@ -2439,7 +2468,7 @@ func TestIntegrationGetRuleVersions(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, versions, 2)
 		assert.IsDecreasing(t, []int64{versions[0].ID, versions[1].ID})
-		diff := versions[1].Diff(&versions[0].AlertRule, alertRuleFieldsToIgnoreInDiff[:]...)
+		diff := versions[1].Diff(&versions[0].AlertRule, versionDiffIgnoredFields...)
 		assert.ElementsMatch(t, []string{"Title", "RuleGroupIndex"}, diff.Paths())
 	})
 
@@ -2469,7 +2498,7 @@ func TestIntegrationGetRuleVersions(t *testing.T) {
 		versions, err := store.GetAlertRuleVersions(context.Background(), ruleV3.OrgID, ruleV3.GUID)
 		require.NoError(t, err)
 		assert.Len(t, versions, 3)
-		diff := versions[0].Diff(&versions[1].AlertRule, alertRuleFieldsToIgnoreInDiff[:]...)
+		diff := versions[0].Diff(&versions[1].AlertRule, versionDiffIgnoredFields...)
 		assert.ElementsMatch(t, []string{"RuleGroup", "NamespaceUID"}, diff.Paths())
 	})
 }
@@ -4914,5 +4943,101 @@ func TestIntegrationGetAllFoldersWithRules(t *testing.T) {
 		got, err := ruleStore.GetAllFoldersWithRules(context.Background(), 99)
 		require.NoError(t, err)
 		require.Empty(t, got)
+	})
+}
+
+func TestIntegrationFolderRuleTypeFilters(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.NewTestStore(t)
+	cfg := setting.UnifiedAlertingSettings{BaseInterval: time.Second * 10}
+	ruleStore := createTestStore(sqlStore, nil, &logtest.Fake{}, cfg, &fakeBus{})
+
+	gen := models.RuleGen.With(models.RuleMuts.WithIntervalMatching(cfg.BaseInterval))
+	recordingGen := gen.With(
+		models.RuleMuts.WithAllRecordingRules(),
+		models.RuleMuts.WithMetric("metric1"),
+		models.RuleMuts.WithRecordFrom("A"),
+		func(rule *models.AlertRule) { rule.Record.TargetDatasourceUID = "target-ds-uid" },
+	)
+
+	insert := func(t *testing.T, g *models.AlertRuleGenerator, orgID int64, folder string) *models.AlertRule {
+		t.Helper()
+		rule := g.With(models.RuleMuts.WithOrgID(orgID), models.RuleMuts.WithNamespaceUID(folder)).Generate()
+		_, err := ruleStore.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.InsertRule{{AlertRule: rule}})
+		require.NoError(t, err)
+		return &rule
+	}
+
+	insert(t, gen, 1, "alert-only")
+	insert(t, recordingGen, 1, "recording-only")
+	insert(t, gen, 1, "both")
+	insert(t, recordingGen, 1, "both")
+	insert(t, recordingGen, 2, "other-org")
+	// Rows from before the record column existed hold NULL, and are alert rules.
+	legacy := insert(t, gen, 1, "legacy-alert")
+	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		_, err := sess.Exec("UPDATE alert_rule SET record = NULL WHERE org_id = ? AND uid = ?", int64(1), legacy.UID)
+		return err
+	})
+	require.NoError(t, err)
+
+	uids := func(uids ...string) map[string]struct{} {
+		s := make(map[string]struct{}, len(uids))
+		for _, uid := range uids {
+			s[uid] = struct{}{}
+		}
+		return s
+	}
+
+	t.Run("GetAllFoldersWithRulesByType", func(t *testing.T) {
+		for name, tc := range map[string]struct {
+			ruleType models.RuleTypeFilter
+			expected map[string]struct{}
+		}{
+			"alerting":  {models.RuleTypeFilterAlerting, uids("alert-only", "both", "legacy-alert")},
+			"recording": {models.RuleTypeFilterRecording, uids("recording-only", "both")},
+			"all":       {models.RuleTypeFilterAll, uids("alert-only", "recording-only", "both", "legacy-alert")},
+		} {
+			t.Run(name, func(t *testing.T) {
+				got, err := ruleStore.GetAllFoldersWithRulesByType(context.Background(), 1, tc.ruleType)
+				require.NoError(t, err)
+				require.Equal(t, tc.expected, got)
+			})
+		}
+
+		t.Run("rejects an unknown rule type", func(t *testing.T) {
+			_, err := ruleStore.GetAllFoldersWithRulesByType(context.Background(), 1, models.RuleTypeFilter(99))
+			require.Error(t, err)
+		})
+	})
+
+	t.Run("CountInFoldersByType", func(t *testing.T) {
+		folders := []string{"alert-only", "recording-only", "both", "legacy-alert"}
+		for name, tc := range map[string]struct {
+			ruleType models.RuleTypeFilter
+			expected int64
+		}{
+			"alerting":  {models.RuleTypeFilterAlerting, 3},
+			"recording": {models.RuleTypeFilterRecording, 2},
+			"all":       {models.RuleTypeFilterAll, 5},
+		} {
+			t.Run(name, func(t *testing.T) {
+				got, err := ruleStore.CountInFoldersByType(context.Background(), 1, folders, tc.ruleType, &user.SignedInUser{})
+				require.NoError(t, err)
+				require.Equal(t, tc.expected, got)
+			})
+		}
+
+		t.Run("single folder holding only the other kind", func(t *testing.T) {
+			got, err := ruleStore.CountInFoldersByType(context.Background(), 1, []string{"recording-only"}, models.RuleTypeFilterAlerting, &user.SignedInUser{})
+			require.NoError(t, err)
+			require.Zero(t, got)
+		})
+
+		t.Run("rejects an unknown rule type", func(t *testing.T) {
+			_, err := ruleStore.CountInFoldersByType(context.Background(), 1, folders, models.RuleTypeFilter(99), &user.SignedInUser{})
+			require.Error(t, err)
+		})
 	})
 }

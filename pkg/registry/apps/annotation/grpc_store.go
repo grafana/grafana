@@ -228,6 +228,11 @@ func mapGRPCError(err error) error {
 	}
 
 	switch st.Code() {
+	case codes.Canceled:
+		// Wrap the sentinel so the caller still sees a cancellation: the code itself
+		// does not survive, and a 500 here would count a client disconnect as a
+		// server error.
+		return fmt.Errorf("%w: %s", context.Canceled, st.Message())
 	case codes.NotFound:
 		return fmt.Errorf("%w: %s", ErrNotFound, st.Message())
 	case codes.AlreadyExists:
@@ -246,6 +251,8 @@ func mapToGRPCStatus(err error) error {
 	}
 
 	switch {
+	case errors.Is(err, context.Canceled):
+		return status.Error(codes.Canceled, err.Error())
 	case errors.Is(err, ErrNotFound):
 		return status.Error(codes.NotFound, err.Error())
 	case errors.Is(err, ErrAlreadyExists):

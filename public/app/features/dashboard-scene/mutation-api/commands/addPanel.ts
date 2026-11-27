@@ -6,7 +6,7 @@
  * to match the target layout (warning emitted if converted).
  */
 
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
@@ -27,7 +27,7 @@ export type AddPanelPayload = z.infer<typeof addPanelPayloadSchema>;
 
 export const addPanelCommand: MutationCommand<AddPanelPayload> = {
   name: 'ADD_PANEL',
-  description: payloads.addPanel.description ?? '',
+  description: z.globalRegistry.get(payloads.addPanel)?.description ?? '',
 
   payloadSchema: payloads.addPanel,
   permission: requiresEdit,

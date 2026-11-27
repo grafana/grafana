@@ -1,4 +1,4 @@
-import { act } from 'test/test-utils';
+import { act } from '@testing-library/react';
 
 import { type PluginMeta } from '@grafana/data';
 import { setLogger } from '@grafana/runtime/unstable';
@@ -6,6 +6,8 @@ import { setLogger } from '@grafana/runtime/unstable';
 import * as pluginBridgeProbe from '../hooks/pluginBridgeProbe';
 
 import { isPrometheusAlertingPluginEnabled } from './pluginAvailability';
+
+jest.mock('../hooks/pluginBridgeProbe', () => makeSpyable('../hooks/pluginBridgeProbe'));
 
 const logError = jest.fn();
 

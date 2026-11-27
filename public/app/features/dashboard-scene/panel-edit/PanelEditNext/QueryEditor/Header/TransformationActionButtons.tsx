@@ -4,23 +4,38 @@ import { FrameMatcherID } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 
-import { trackTransformationToolAction } from '../../tracking';
+import { type CardActionSource, trackTransformationToolAction } from '../../tracking';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
+import { type Transformation } from '../types';
 
-export function TransformationActionButtons() {
-  const { selectedTransformation, transformToggles } = useQueryEditorUIContext();
+interface TransformationActionButtonsProps {
+  transformation: Transformation;
+  source?: CardActionSource;
+}
+
+export function TransformationActionButtons({ transformation, source }: TransformationActionButtonsProps) {
+  const { selectedTransformation, setSelectedTransformation, transformToggles } = useQueryEditorUIContext();
   const { updateTransformation } = useActionsContext();
   const { data } = useQueryRunnerContext();
+
+  // Help and debug state is global and only rendered for the selected card.
+  const isSelected = selectedTransformation?.transformId === transformation.transformId;
+  const isShowingHelp = isSelected && transformToggles.showHelp;
+  const isShowingDebug = isSelected && transformToggles.showDebug;
+
+  // Selecting resets the toggles, so a non-selected card always opens its own help or debug view.
+  const selectThenToggle = (toggle: () => void) => {
+    if (!isSelected) {
+      setSelectedTransformation(transformation);
+    }
+    toggle();
+  };
 
   // Toggle filter: add/remove the filter property from the transformation config.
   // Mirrors v1 (TransformationOperationRow): only `filter` is toggled here; `topic` is
   // managed independently by the filter UI and must not be clobbered on removal.
   const handleFilterToggle = useCallback(() => {
-    if (!selectedTransformation) {
-      return;
-    }
-
-    const current = selectedTransformation.transformConfig;
+    const current = transformation.transformConfig;
 
     if (current.filter) {
       const { filter, ...restConfig } = current;
@@ -34,13 +49,9 @@ export function TransformationActionButtons() {
         },
       });
     }
-  }, [selectedTransformation, updateTransformation]);
+  }, [transformation, updateTransformation]);
 
-  if (!selectedTransformation) {
-    return null;
-  }
-
-  const config = selectedTransformation.transformConfig;
+  const config = transformation.transformConfig;
 
   // Show filter button as active if filter property exists on the transformation config
   // Note: `topic` is a related filter property for annotation filtering
@@ -51,7 +62,7 @@ export function TransformationActionButtons() {
   const hasData = (data?.series?.length ?? 0) > 0 || (data?.annotations?.length ?? 0) > 0;
   const showFilterButton = isFilterActive || hasData;
 
-  const helpLabel = transformToggles.showHelp
+  const helpLabel = isShowingHelp
     ? t('query-editor-next.action.hide-transformation-help', 'Hide transformation help')
     : t('query-editor-next.action.show-transformation-help', 'Show transformation help');
 
@@ -68,10 +79,10 @@ export function TransformationActionButtons() {
         size="sm"
         fill="text"
         icon="question-circle"
-        variant={transformToggles.showHelp ? 'primary' : 'secondary'}
+        variant={isShowingHelp ? 'primary' : 'secondary'}
         onClick={() => {
-          trackTransformationToolAction('toggle_help');
-          transformToggles.toggleHelp();
+          trackTransformationToolAction('toggle_help', source);
+          selectThenToggle(transformToggles.toggleHelp);
         }}
         tooltip={helpLabel}
         aria-label={helpLabel}
@@ -84,7 +95,7 @@ export function TransformationActionButtons() {
           icon="filter"
           variant={isFilterActive ? 'primary' : 'secondary'}
           onClick={() => {
-            trackTransformationToolAction('toggle_filter');
+            trackTransformationToolAction('toggle_filter', source);
             handleFilterToggle();
           }}
           tooltip={filterLabel}
@@ -96,10 +107,10 @@ export function TransformationActionButtons() {
         size="sm"
         fill="text"
         icon="bug"
-        variant={transformToggles.showDebug ? 'primary' : 'secondary'}
+        variant={isShowingDebug ? 'primary' : 'secondary'}
         onClick={() => {
-          trackTransformationToolAction('toggle_debug');
-          transformToggles.toggleDebug();
+          trackTransformationToolAction('toggle_debug', source);
+          selectThenToggle(transformToggles.toggleDebug);
         }}
         tooltip={t('query-editor-next.action.transformation-debug', 'Debug')}
         aria-label={t('query-editor-next.action.transformation-debug', 'Debug')}

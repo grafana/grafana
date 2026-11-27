@@ -131,10 +131,11 @@ describe('presentation', () => {
     resetExtensionSidebarPresentationForTests();
   });
 
-  it('floats a docked sidebar for the session, with the floating flag off, and docks it again on exit', async () => {
+  it('keeps an open docked sidebar docked, from the picker too', async () => {
     mountDashboard();
+    requestComposerEnter(DASHBOARD);
     const session = await composerApi.enter(DASHBOARD);
-    expect(sidebarPresentation()).toBe('floating');
+    expect(sidebarPresentation()).toBe('docked');
 
     session.exit();
 
@@ -195,6 +196,7 @@ describe('presentation', () => {
     notifyExtensionSidebarClosed();
 
     expect(session.signal.aborted).toBe(true);
+    expect(session.signal.reason).toBe('sidebar_closed');
     expect(sidebarPresentation()).toBe('docked');
   });
 
@@ -270,7 +272,7 @@ it('passes entry requests from Grafana to the registered listeners until they un
   const listener = jest.fn();
   const unsubscribe = composerApi.onEnterRequested(listener);
   requestComposerEnter(DASHBOARD);
-  expect(listener).toHaveBeenCalledWith(DASHBOARD);
+  expect(listener).toHaveBeenCalledWith(DASHBOARD, { assistantEdit: false });
 
   unsubscribe();
   requestComposerEnter(DASHBOARD);
@@ -287,7 +289,7 @@ it('passes notebook requests only to listeners that ask for them', () => {
   requestComposerEnter(notebook);
 
   expect(dashboards).not.toHaveBeenCalled();
-  expect(both).toHaveBeenCalledWith(notebook);
+  expect(both).toHaveBeenCalledWith(notebook, { assistantEdit: false });
   stopDashboards();
   stopBoth();
   clearPendingComposerEnterRequest();

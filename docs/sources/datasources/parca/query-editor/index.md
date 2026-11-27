@@ -9,13 +9,12 @@ keywords:
   - flame graph
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 menuTitle: Query editor
 title: Parca query editor
 weight: 300
-review_date: 2026-04-10
+review_date: 2026-10-08
 ---
 
 # Parca query editor

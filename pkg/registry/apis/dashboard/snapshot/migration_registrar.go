@@ -15,8 +15,9 @@ func SnapshotMigration(m migrator.SnapshotMigrator) migrations.MigrationDefiniti
 	}
 
 	return migrations.MigrationDefinition{
-		ID:          "snapshots",
-		MigrationID: "snapshots migration",
+		ID:                  "snapshots",
+		MigrationID:         "snapshots migration",
+		RequiresInlineBlobs: true,
 		Resources: []migrations.ResourceInfo{
 			{
 				GroupResource: snapshotGR,

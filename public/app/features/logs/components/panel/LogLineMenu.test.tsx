@@ -1,8 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type DataSourceApi, CoreApp, createTheme, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { type DataSourceSrv, getDataSourceSrv, getDataSourceInstance } from '@grafana/runtime';
+import { Portal } from '@grafana/ui';
 
 import * as logsUtils from '../../utils';
 import { createLogLine } from '../mocks/logRow';
@@ -13,6 +14,8 @@ import { LogLineMenu, type LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListContextProvider } from './LogListContext';
 import { defaultProps, defaultValue } from './__mocks__/LogListContext';
 import { type LogListModel } from './processing';
+
+jest.mock('../../utils', () => makeSpyable('../../utils'));
 
 jest.mock('./LogListContext');
 
@@ -99,6 +102,40 @@ describe('LogLineMenu', () => {
         });
       });
       copyTextSpy.mockRestore();
+    });
+
+    // A Document Picture-in-Picture window (the Grafana Assistant pop-out) is another window: only it has focus while
+    // the user works there, so the copy has to go through its clipboard, after the menu has closed too.
+    test('Copy log line as JSON copies in the window the menu was opened in', async () => {
+      const copyTextSpy = jest.spyOn(logsUtils, 'copyText').mockResolvedValue(undefined);
+      const iframe = document.createElement('iframe');
+      document.body.appendChild(iframe);
+      const otherDocument = iframe.contentDocument!;
+      const ui = () => (
+        <Portal root={otherDocument.body}>
+          <LogListContextProvider {...contextProps}>
+            <LogLineMenu log={log} styles={styles} />
+          </LogListContextProvider>
+        </Portal>
+      );
+      const view = render(ui());
+      // A Portal hands its element to the portals inside it, such as the menu's, from its second render.
+      view.rerender(ui());
+
+      try {
+        // user-event drives pointer input through this window's document, so fire the other window's events directly
+        fireEvent.click(within(otherDocument.body).getByLabelText('Log menu'));
+        fireEvent.click(within(otherDocument.body).getByText('Copy log line contents as JSON'));
+
+        await waitFor(() => expect(copyTextSpy).toHaveBeenCalled());
+        // the menu has closed by now, so the element is the one it was opened in
+        expect(copyTextSpy.mock.calls[0][1].current?.ownerDocument).toBe(otherDocument);
+      } finally {
+        copyTextSpy.mockRestore();
+        // Unmount before the iframe goes, or React cannot remove the menu from it.
+        view.unmount();
+        iframe.remove();
+      }
     });
 
     test('Renders custom log line menu items', async () => {

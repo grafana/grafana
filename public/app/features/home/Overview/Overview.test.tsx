@@ -42,20 +42,29 @@ describe('Overview', () => {
     mockCtaClicked.mockClear();
   });
 
-  it('renders nothing while guides load and omits Get started when they settle empty', async () => {
+  it('renders only the heading while guides load and omits Get started when they settle empty', async () => {
     mockUseGuides.mockReturnValue(undefined);
-    const { user, rerender } = render(<Overview solutions={EMPTY_SOLUTIONS} />);
+    const metrics = stubSolution('metrics', {
+      title: 'Metrics & infrastructure',
+      offer: async () => ({
+        availability: 'enable',
+        description: 'Connect Prometheus-compatible metrics.',
+        cta: { label: 'Enable', href: '/plugins/grafana-metricsdrilldown-app/', action: 'enable' },
+      }),
+    });
+    const { user, rerender } = render(<Overview solutions={[metrics]} />);
 
-    // Cards settled, guides still loading: neither filter nor content renders, since Get started
-    // painted now would flip to All solutions if guides settle empty.
+    // Guides still loading: neither filter nor content renders, since Get started painted now
+    // would flip to All solutions if guides settle empty.
     expect(screen.getByRole('heading', { name: /your observability stack overview/i })).toBeInTheDocument();
     expect(screen.queryByText('Recommended getting started guides')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /all solutions|get started/i })).not.toBeInTheDocument();
 
     mockUseGuides.mockReturnValue([]);
-    rerender(<Overview solutions={EMPTY_SOLUTIONS} />);
+    rerender(<Overview solutions={[metrics]} />);
 
-    await user.click(await screen.findByRole('button', { name: /all solutions/i }));
+    expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /all solutions/i }));
     expect(screen.queryByRole('menuitem', { name: 'Get started' })).not.toBeInTheDocument();
   });
 
@@ -118,13 +127,13 @@ describe('Overview', () => {
     expect(screen.getByRole('button', { name: /all solutions/i })).toBeInTheDocument();
   });
 
-  it('falls back to All solutions on an empty instance when guides settle empty', async () => {
+  it('renders nothing once solutions and guides both settle empty', async () => {
     mockUseGuides.mockReturnValue([]);
 
-    render(<Overview solutions={EMPTY_SOLUTIONS} />);
+    const { container } = render(<Overview solutions={EMPTY_SOLUTIONS} />);
 
-    expect(await screen.findByText('No solutions were found.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /all solutions/i })).toBeInTheDocument();
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
+    expect(screen.queryByText('No solutions were found.')).not.toBeInTheDocument();
   });
 
   it('hides the filter until solutions settle so the default never flips in view', async () => {
@@ -172,6 +181,7 @@ describe('Overview', () => {
     window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
 
     try {
+      mockUseGuides.mockReturnValue([guide]);
       const { user, rerender } = render(<Overview solutions={EMPTY_SOLUTIONS} />, {
         historyOptions: { initialEntries: ['/#needs-attention'] },
       });
@@ -184,7 +194,7 @@ describe('Overview', () => {
       await screen.findByText('No solutions were found.');
 
       // A guides change rebuilds the options; the already-handled hash must not re-apply.
-      mockUseGuides.mockReturnValue([guide]);
+      mockUseGuides.mockReturnValue([guide, { ...guide, id: 'second', title: 'Second guide', href: '/a/other-app' }]);
       rerender(<Overview solutions={EMPTY_SOLUTIONS} />);
 
       expect(await screen.findByText('No solutions were found.')).toBeInTheDocument();
@@ -201,6 +211,7 @@ describe('Overview', () => {
     window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
 
     try {
+      mockUseGuides.mockReturnValue([guide]);
       const { user } = render(<Overview solutions={EMPTY_SOLUTIONS} />, {
         historyOptions: { initialEntries: ['/#needs-attention'] },
       });
@@ -224,14 +235,15 @@ describe('Overview', () => {
   });
 
   it('clears an unrecognized anchor on an explicit filter pick', async () => {
+    mockUseGuides.mockReturnValue([guide]);
     const { user } = render(<Overview solutions={EMPTY_SOLUTIONS} />, {
       historyOptions: { initialEntries: ['/?orgId=1#needs-aattention'] },
     });
 
-    // The typo'd anchor selects nothing.
-    await screen.findByText('No solutions were found.');
+    // The typo'd anchor selects nothing, so the empty-instance default renders.
+    await screen.findByText('Recommended getting started guides');
 
-    await user.click(screen.getByRole('button', { name: /all solutions/i }));
+    await user.click(screen.getByRole('button', { name: /get started/i }));
     await user.click(screen.getByRole('menuitem', { name: 'Enabled solutions' }));
 
     await screen.findByText('No enabled solutions with recent activity were found.');
@@ -240,12 +252,11 @@ describe('Overview', () => {
   });
 
   it('tracks overview filter changes from the dropdown', async () => {
-    mockUseGuides.mockReturnValue([]);
+    mockUseGuides.mockReturnValue([guide]);
 
     const { user } = render(<Overview solutions={EMPTY_SOLUTIONS} />);
 
-    await screen.findByText('No solutions were found.');
-    await user.click(screen.getByRole('button', { name: /all solutions/i }));
+    await user.click(await screen.findByRole('button', { name: /get started/i }));
     await user.click(screen.getByRole('menuitem', { name: 'Needs attention' }));
 
     expect(mockCtaClicked).toHaveBeenCalledWith({
@@ -412,6 +423,8 @@ describe('Overview', () => {
   });
 
   it('settles instead of holding skeletons when required facts reject', async () => {
+    mockUseGuides.mockReturnValue([guide]);
+    window.localStorage.setItem('grafana.home.overview.option', 'all-solutions');
     const metrics = stubSolution('metrics', {
       datasource: async () => {
         throw new Error('datasource lookup failed');

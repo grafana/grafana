@@ -17,17 +17,9 @@ interface SidebarHeaderActionsProps {
   contentKey: string;
   /** Rendered with `compact` so children can drop labels when the header runs out of room. */
   children: (compact: boolean) => ReactNode;
-  /** Pinned to the right edge, outside the measured region. */
-  trailing?: ReactNode;
 }
 
-export function SidebarHeaderActions({
-  sidebarSize,
-  setSidebarSize,
-  contentKey,
-  children,
-  trailing,
-}: SidebarHeaderActionsProps) {
+export function SidebarHeaderActions({ sidebarSize, setSidebarSize, contentKey, children }: SidebarHeaderActionsProps) {
   const styles = useStyles2(getStyles);
   const isMini = sidebarSize === SidebarSize.Mini;
   const { containerRef, contentRef, compact } = useCompactOnOverflow(contentKey);
@@ -48,7 +40,6 @@ export function SidebarHeaderActions({
         <div ref={containerRef} className={styles.measuredRegion}>
           <div ref={contentRef}>{children(compact)}</div>
         </div>
-        {trailing}
       </div>
     </div>
   );
@@ -69,8 +60,7 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       width: '100%',
     }),
-    // The space left over between the fixed buttons — what the children must fit into.
-    // Taking all free space is also what keeps `trailing` pinned to the right edge.
+    // The space left over beside the fixed button — what the children must fit into.
     measuredRegion: css({
       flex: 1,
       minWidth: 0,

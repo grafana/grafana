@@ -63,6 +63,9 @@ NotebookLayoutItemKind: {
 // (markdown/code content) or a V2PanelKind in the notebook's elements map. `source`
 // records who authored the cell; `collapsed` hides the body in the UI.
 NotebookLayoutItemSpec: {
+	// Optional. The server assigns one on create or update when the item has none, and keeps one
+	// the client sends, which must be a UUID v4 that no other item in the notebook has.
+	id?:        string
 	element:    ElementReference
 	source:     "assistant" | "user"
 	collapsed?: bool
@@ -137,6 +140,7 @@ NotebookSpec: {
 	description?: string
 	tags: [...string] | *[]
 	timeSettings: TimeSettingsSpec
+	// The key is the element ID. It identifies the cell: comments and other references anchor to it
 	elements: [string]: NotebookElement
 	layout: NotebookLayoutKind
 }

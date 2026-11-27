@@ -1,8 +1,10 @@
 package adapter
 
 import (
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
+	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
@@ -54,6 +56,36 @@ const (
 	// lease.
 	GlobalRoleSeeder = accesscontrol.GlobalRoleSeederServiceName
 
+	// NATSServer, NATSPublisher and NATSSubscriber are the module names of the
+	// NATS bus services.
+	NATSServer     = nats.ServerServiceName
+	NATSPublisher  = nats.PublisherServiceName
+	NATSSubscriber = nats.SubscriberServiceName
+
+	// ProvisioningConnectionController is the module name of the in-process
+	// provisioning connection controller.
+	ProvisioningConnectionController = provisioningapis.ConnectionControllerServiceName
+
+	// ProvisioningRepositoryController is the module name of the in-process
+	// provisioning repository controller.
+	ProvisioningRepositoryController = provisioningapis.RepositoryControllerServiceName
+
+	// ProvisioningJobQueue is the module name of the in-process provisioning
+	// job queue.
+	ProvisioningJobQueue = provisioningapis.JobQueueServiceName
+
+	// ProvisioningBootstrap is the module name of the in-process provisioning
+	// bootstrap repository reconciler.
+	ProvisioningBootstrap = provisioningapis.BootstrapServiceName
+
+	// ProvisioningJobCleanup is the module name of the in-process provisioning
+	// expired-job cleanup controller.
+	ProvisioningJobCleanup = provisioningapis.JobCleanupServiceName
+
+	// ProvisioningUsageStats is the module name of the in-process provisioning
+	// usage stats registration.
+	ProvisioningUsageStats = provisioningapis.UsageStatsServiceName
+
 	// SQLStore is the module name for the SQLStore background service.
 	// It is the root of the dependency graph so that the database engine is
 	// closed last during shutdown, after every other service has stopped.
@@ -66,18 +98,31 @@ const (
 // unless they are explicitly listed in this map.
 func dependencyMap() map[string][]string {
 	return map[string][]string{
-		SQLStore:           {},
-		Tracing:            {SQLStore},
-		GrafanaAPIServer:   {Tracing},
-		Router:             {GrafanaAPIServer},
-		PluginStore:        {GrafanaAPIServer},
-		PluginInstaller:    {PluginStore},
-		IAMRolesSyncer:     {GrafanaAPIServer},
-		FixedRolesLoader:   {PluginInstaller, IAMRolesSyncer},
-		Provisioning:       {PluginStore, PluginInstaller, FixedRolesLoader},
-		InstallSync:        {Provisioning},
-		GlobalRoleSeeder:   {GrafanaAPIServer},
-		Core:               {GrafanaAPIServer, PluginStore, PluginInstaller, FixedRolesLoader, Provisioning, InstallSync, GlobalRoleSeeder},
-		BackgroundServices: {Core, Router},
+		SQLStore:       {},
+		Tracing:        {SQLStore},
+		NATSServer:     {SQLStore},
+		NATSPublisher:  {NATSServer},
+		NATSSubscriber: {NATSServer},
+		// API server post-start hooks start NATS informers, and its writes
+		// publish watch notifications.
+		GrafanaAPIServer: {Tracing, NATSPublisher, NATSSubscriber},
+		Router:           {GrafanaAPIServer},
+		PluginStore:      {GrafanaAPIServer},
+		PluginInstaller:  {PluginStore},
+		IAMRolesSyncer:   {GrafanaAPIServer},
+		FixedRolesLoader: {PluginInstaller, IAMRolesSyncer},
+		Provisioning:     {PluginStore, PluginInstaller, FixedRolesLoader},
+		InstallSync:      {Provisioning},
+		GlobalRoleSeeder: {GrafanaAPIServer},
+		Core:             {GrafanaAPIServer, PluginStore, PluginInstaller, FixedRolesLoader, Provisioning, InstallSync, GlobalRoleSeeder},
+		// Not behind Core: classic provisioning retries would delay connection
+		// token refresh, repository reconciliation and Git Sync job processing.
+		ProvisioningConnectionController: {GrafanaAPIServer},
+		ProvisioningRepositoryController: {GrafanaAPIServer},
+		ProvisioningJobQueue:             {GrafanaAPIServer},
+		ProvisioningBootstrap:            {GrafanaAPIServer},
+		ProvisioningJobCleanup:           {GrafanaAPIServer},
+		ProvisioningUsageStats:           {GrafanaAPIServer},
+		BackgroundServices:               {Core, Router, ProvisioningConnectionController, ProvisioningRepositoryController, ProvisioningJobQueue, ProvisioningBootstrap, ProvisioningJobCleanup, ProvisioningUsageStats},
 	}
 }

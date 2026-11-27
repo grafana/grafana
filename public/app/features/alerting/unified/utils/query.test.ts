@@ -3,7 +3,7 @@ import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { type CombinedRule } from 'app/types/unified-alerting';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
-import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from './constants';
 import { alertRuleToQueries } from './query';
 
 describe('alertRuleToQueries', () => {

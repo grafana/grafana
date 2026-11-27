@@ -19,10 +19,9 @@ import { Trans, t } from '@grafana/i18n';
 import { config, getPluginSettings, isFetchError, locationSearchToObject } from '@grafana/runtime';
 import { refetchPluginSettings } from '@grafana/runtime/internal';
 import { getLogger } from '@grafana/runtime/unstable';
-import { Alert, ErrorWithStack } from '@grafana/ui';
+import { Alert, ErrorWithStack, PageLoader } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
-import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
@@ -94,9 +93,10 @@ function AppRootPage({ pluginId, pluginNavSection }: Props) {
     const PluginNavFallback = pluginNavFallbacks[pluginId];
     const shouldRenderFallback = !loading && loadingError && errorStatus === 404 && PluginNavFallback;
 
-    return (
+    return loading ? (
+      <PageLoader />
+    ) : (
       <Page navModel={navModel} pageNav={{ text: '' }} layout={currentLayout}>
-        {loading && <PageLoader />}
         {shouldRenderFallback ? <PluginNavFallback /> : !loading && loadingError && <EntityNotFound entity="App" />}
       </Page>
     );
@@ -178,7 +178,7 @@ function AppRootPage({ pluginId, pluginNavSection }: Props) {
     return contextSrv.hasRole(pathRole);
   };
 
-  const AccessDenied = () => {
+  if (!userHasPermissionsToPluginPage()) {
     return (
       <Alert severity="warning" title={t('plugins.app-root-page.access-denied.title-access-denied', 'Access denied')}>
         <Trans i18nKey="plugins.app-root-page.access-denied.permission">
@@ -186,10 +186,6 @@ function AppRootPage({ pluginId, pluginNavSection }: Props) {
         </Trans>
       </Alert>
     );
-  };
-
-  if (!userHasPermissionsToPluginPage()) {
-    return <AccessDenied />;
   }
 
   if (!pluginNav) {

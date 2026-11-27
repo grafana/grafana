@@ -114,6 +114,13 @@ func (db *PostgresDialect) IndexCheckSQL(tableName, indexName string) (string, [
 	return sql, args
 }
 
+func (db *PostgresDialect) ColumnCheckSQL(tableName, columnName string) (string, []any) {
+	// to_regclass resolves the table through the whole search_path, like the ALTER TABLE that adds the column.
+	args := []any{db.Quote(tableName), columnName}
+	sql := "SELECT 1 FROM pg_attribute WHERE attrelid = to_regclass(?) AND attname = ? AND attnum > 0 AND NOT attisdropped"
+	return sql, args
+}
+
 func (db *PostgresDialect) DropIndexSQL(tableName string, index *Index) string {
 	quote := db.Quote
 	idxName := index.XName(tableName)

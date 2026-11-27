@@ -35,6 +35,8 @@ type openIndexListEntry struct {
 	Group     string `json:"group"`
 	Resource  string `json:"resource"`
 	DocCount  int64  `json:"docCount"`
+	// LastSearchedAt is in Unix milliseconds; omitted when unknown.
+	LastSearchedAt int64 `json:"lastSearchedAt,omitempty"`
 }
 
 func (b *bleveBackend) LoadOpenIndexStats(now time.Time, maxAge time.Duration) ([]resource.ResourceStats, error) {
@@ -84,6 +86,10 @@ func readOpenIndexList(reader io.Reader, now time.Time, maxAge time.Duration) ([
 		if !ok {
 			return nil, fmt.Errorf("invalid index entry at position %d", i)
 		}
+		// Older servers could save cluster-scoped indexes that Search cannot query.
+		if stat.Namespace == "" {
+			continue
+		}
 		if seen[stat.NamespacedResource] {
 			return nil, fmt.Errorf("duplicate index entry for %s", stat.String())
 		}
@@ -111,8 +117,12 @@ func validateOpenIndexListTimestamp(writtenAtValue string, now time.Time, maxAge
 }
 
 func openIndexListStat(entry openIndexListEntry) (resource.ResourceStats, bool) {
-	if entry.Namespace == "" || entry.Group == "" || entry.Resource == "" || entry.DocCount <= 0 {
+	if entry.Group == "" || entry.Resource == "" || entry.DocCount <= 0 || entry.LastSearchedAt < 0 {
 		return resource.ResourceStats{}, false
+	}
+	var lastSearchedAt time.Time
+	if entry.LastSearchedAt > 0 {
+		lastSearchedAt = time.UnixMilli(entry.LastSearchedAt)
 	}
 	return resource.ResourceStats{
 		NamespacedResource: resource.NamespacedResource{
@@ -120,7 +130,8 @@ func openIndexListStat(entry openIndexListEntry) (resource.ResourceStats, bool) 
 			Group:     entry.Group,
 			Resource:  entry.Resource,
 		},
-		Count: entry.DocCount,
+		Count:          entry.DocCount,
+		LastSearchedAt: lastSearchedAt,
 	}, true
 }
 
@@ -134,6 +145,9 @@ func (b *bleveBackend) WriteOpenIndexStats(now time.Time) error {
 
 	indexes := make([]openIndexListEntry, 0, len(keys))
 	for _, key := range keys {
+		if key.Namespace == "" {
+			continue
+		}
 		idx := b.peekCachedIndex(key)
 		if idx == nil {
 			continue
@@ -153,12 +167,14 @@ func (b *bleveBackend) WriteOpenIndexStats(now time.Time) error {
 			continue
 		}
 
-		indexes = append(indexes, openIndexListEntry{
-			Namespace: key.Namespace,
-			Group:     key.Group,
-			Resource:  key.Resource,
-			DocCount:  int64(docCount),
-		})
+		entry := openIndexListEntry{
+			Namespace:      key.Namespace,
+			Group:          key.Group,
+			Resource:       key.Resource,
+			DocCount:       int64(docCount),
+			LastSearchedAt: idx.lastSearchedAt.Load(),
+		}
+		indexes = append(indexes, entry)
 	}
 
 	path := filepath.Join(b.opts.Root, openIndexListFileName)

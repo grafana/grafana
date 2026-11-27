@@ -2,9 +2,11 @@ import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../constants';
 import { type StackedEditorItem } from '../QueryEditorContext';
+import { makeQueryActionTarget } from '../testUtils';
 import { type Transformation } from '../types';
 
 import {
+  getStackedItemFromTarget,
   getStackedItemKey,
   getStackedItemsKey,
   getStackedQueryEditorType,
@@ -117,6 +119,26 @@ describe('isStackedItemHidden', () => {
         transformation: { ...transformation, transformConfig: { ...transformation.transformConfig, disabled: true } },
       })
     ).toBe(true);
+  });
+});
+
+describe('getStackedItemFromTarget', () => {
+  it('keeps the card type of a query target', () => {
+    const target = makeQueryActionTarget(expressionQuery, { cardType: QueryEditorType.Expression });
+
+    expect(getStackedItemFromTarget(target)).toEqual({
+      type: QueryEditorType.Expression,
+      id: 'C',
+      query: expressionQuery,
+    });
+  });
+
+  it('identifies a transformation target by its transform id', () => {
+    expect(getStackedItemFromTarget({ cardType: QueryEditorType.Transformation, transformation })).toEqual({
+      type: QueryEditorType.Transformation,
+      id: 'organize-0',
+      transformation,
+    });
   });
 });
 

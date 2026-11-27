@@ -5,7 +5,7 @@ import { MatcherOperator, type RouteWithID } from 'app/plugins/datasource/alertm
 import { type FormAmRoute } from '../types/amroutes';
 
 import { amRouteToFormAmRoute, emptyRoute, formAmRouteToAmRoute } from './amroutes';
-import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from './constants';
 
 const emptyAmRoute: RouteWithID = {
   id: uniqueId(),

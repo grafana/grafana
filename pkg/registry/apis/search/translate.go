@@ -71,8 +71,14 @@ func GlobalSearchGVR() schema.GroupVersionResource {
 // TranslateGlobalSearchQuery is TranslateSearchQuery for a search that spans
 // resource types. The fields come from the global index rather than from
 // a kind's declarations, so no kind is named and no provider is consulted.
-func TranslateGlobalSearchQuery(q *searchv0.SearchQuery, namespace string) (*resourcepb.ResourceSearchRequest, field.ErrorList) {
-	return translateSearchQuery(q, GlobalSearchGVR(), namespace, globalFieldSet())
+func TranslateGlobalSearchQuery(q *searchv0.GlobalSearchQuery, namespace string) (*resourcepb.ResourceSearchRequest, field.ErrorList) {
+	accessErrs := validateAccess(q.Access, field.NewPath("access"))
+	req, errs := translateSearchQuery(&q.SearchQuery, GlobalSearchGVR(), namespace, globalFieldSet())
+	if errs = append(errs, accessErrs...); len(errs) > 0 {
+		return nil, errs
+	}
+	req.AccessVerbs = slices.Compact(slices.Sorted(slices.Values(q.Access)))
+	return req, nil
 }
 
 func translateSearchQuery(q *searchv0.SearchQuery, gvr schema.GroupVersionResource, namespace string, fs *fieldSet) (*resourcepb.ResourceSearchRequest, field.ErrorList) {
@@ -107,6 +113,16 @@ func translateSearchQuery(q *searchv0.SearchQuery, gvr schema.GroupVersionResour
 	req.Limit = resolveLimit(q.Limit)
 	req.SearchAfter = searchAfter
 	return req, nil
+}
+
+func validateAccess(verbs []string, path *field.Path) field.ErrorList {
+	var errs field.ErrorList
+	for i, verb := range verbs {
+		if !slices.Contains(resource.SearchAccessVerbs, verb) {
+			errs = append(errs, field.NotSupported(path.Index(i), verb, resource.SearchAccessVerbs))
+		}
+	}
+	return errs
 }
 
 // TranslateTrashQuery validates a TrashQuery against the fixed uniform trash

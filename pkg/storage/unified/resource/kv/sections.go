@@ -10,8 +10,6 @@ const (
 	LeasesSection                 = "unified/leases"
 	SearchSnapshotManifestSection = "search/snapshot-manifest"
 	SearchSnapshotDataSection     = "search/snapshot-data"
-	StatsDailySection             = "stats/daily"
-	StatsAggregatesSection        = "stats/aggregates"
 	NATSPeersSection              = "nats/peers"
 	VersionPolicySection          = "apiserver/versionpolicy"
 	BlobDataSection               = "unified/blob-data"
@@ -23,8 +21,6 @@ var AllSections = []string{
 	NATSPeersSection,
 	SearchSnapshotDataSection,
 	SearchSnapshotManifestSection,
-	StatsAggregatesSection,
-	StatsDailySection,
 	BlobDataSection,
 	DataSection,
 	EventsSection,

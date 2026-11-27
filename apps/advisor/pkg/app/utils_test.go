@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
+	"sync"
 	"testing"
-	"time"
+	"testing/synctest"
 
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -302,7 +304,6 @@ func TestProcessCheckRetry_DryRun_NeverPersisted(t *testing.T) {
 	// dry-run request is never persisted. grafana-app-sdk's AdmissionRequest has no
 	// dryRun flag, so this is detected indirectly by the annotation never showing up
 	// when polling storage. No patches should be issued in this case.
-	retryAnnotationPollingInterval = 1 * time.Millisecond
 	obj := &advisorv0alpha1.Check{}
 	obj.SetAnnotations(map[string]string{
 		checks.RetryAnnotation:  "item",
@@ -326,9 +327,11 @@ func TestProcessCheckRetry_DryRun_NeverPersisted(t *testing.T) {
 		items: []any{"item"},
 	}
 
-	err = processCheckRetry(ctx, logging.DefaultLogger, client, typesClient, obj, check)
-	assert.Error(t, err)
-	assert.Empty(t, client.values, "no patches should be issued for a retry annotation that never lands in storage")
+	synctest.Test(t, func(t *testing.T) {
+		err = processCheckRetry(ctx, logging.DefaultLogger, client, typesClient, obj, check)
+		assert.Error(t, err)
+		assert.Empty(t, client.values, "no patches should be issued for a retry annotation that never lands in storage")
+	})
 }
 
 func TestProcessCheckRetry_SkipMissingItem(t *testing.T) {
@@ -400,7 +403,6 @@ func TestProcessCheckRetry_Success(t *testing.T) {
 }
 
 func TestProcessCheckRetry_Success_Polling(t *testing.T) {
-	retryAnnotationPollingInterval = 1 * time.Millisecond
 	obj := &advisorv0alpha1.Check{}
 	obj.SetAnnotations(map[string]string{
 		checks.RetryAnnotation:  "item",
@@ -439,9 +441,11 @@ func TestProcessCheckRetry_Success_Polling(t *testing.T) {
 		items: []any{"item"},
 	}
 
-	err = processCheckRetry(ctx, logging.DefaultLogger, client, typesClient, obj, check)
-	assert.NoError(t, err)
-	assert.Equal(t, 1, retryCount)
+	synctest.Test(t, func(t *testing.T) {
+		err = processCheckRetry(ctx, logging.DefaultLogger, client, typesClient, obj, check)
+		assert.NoError(t, err)
+		assert.Equal(t, 1, retryCount)
+	})
 }
 
 func TestProcessCheckRetry_PreservesOtherItemsFailures(t *testing.T) {
@@ -534,6 +538,134 @@ func TestProcessCheckRetry_AddsFailuresWhenNoneExisted(t *testing.T) {
 	assert.Equal(t, "failure from retry", obj.Status.Report.Failures[0].Item)
 }
 
+func newRetryAdmissionObj(t *testing.T, stored *advisorv0alpha1.Check, item string) *advisorv0alpha1.Check {
+	obj := stored.DeepCopy()
+	obj.SetAnnotations(map[string]string{
+		checks.RetryAnnotation:  item,
+		checks.StatusAnnotation: checks.StatusAnnotationProcessed,
+	})
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	meta.SetCreatedBy("user:1")
+	return obj
+}
+
+func TestProcessCheckRetry_OverlappingRetries(t *testing.T) {
+	stored := &advisorv0alpha1.Check{}
+	stored.SetAnnotations(map[string]string{
+		checks.StatusAnnotation: checks.StatusAnnotationProcessed,
+	})
+	stored.Status.Report.Count = 3
+	stored.Status.Report.Failures = []advisorv0alpha1.CheckReportFailure{
+		{ItemID: "a", StepID: "old"},
+		{ItemID: "b", StepID: "old"},
+		{ItemID: "c", StepID: "old"},
+	}
+	// Both admission objects carry the report from before either retry ran
+	objA := newRetryAdmissionObj(t, stored, "a")
+	objB := newRetryAdmissionObj(t, stored, "b")
+	// Retry "b" was requested right after "a" and overwrote the shared annotation
+	stored.SetAnnotations(objB.GetAnnotations())
+	client := &statefulClient{stored: stored}
+	typesClient := &mockTypesClient{}
+	ctx := context.TODO()
+
+	synctest.Test(t, func(t *testing.T) {
+		checkA := &mockCheck{items: []any{"a"}, retryFailures: []advisorv0alpha1.CheckReportFailure{{ItemID: "a", StepID: "new"}}}
+		err := processCheckRetry(ctx, logging.DefaultLogger, client, typesClient, objA, checkA)
+		require.NoError(t, err, "a superseded retry must not fail")
+		assert.Equal(t, "b", checks.GetRetryAnnotation(client.current()), "retry a must not clear the annotation of retry b")
+
+		checkB := &mockCheck{items: []any{"b"}, retryFailures: []advisorv0alpha1.CheckReportFailure{{ItemID: "b", StepID: "new"}}}
+		err = processCheckRetry(ctx, logging.DefaultLogger, client, typesClient, objB, checkB)
+		require.NoError(t, err)
+
+		final := client.current()
+		assert.Empty(t, checks.GetRetryAnnotation(final))
+		assert.Equal(t, checks.StatusAnnotationProcessed, checks.GetStatusAnnotation(final))
+		assert.Equal(t, int64(3), final.Status.Report.Count)
+		assert.ElementsMatch(t, []advisorv0alpha1.CheckReportFailure{
+			{ItemID: "c", StepID: "old"},
+			{ItemID: "a", StepID: "new"},
+			{ItemID: "b", StepID: "new"},
+		}, final.Status.Report.Failures)
+	})
+}
+
+func TestProcessCheckRetry_OverlappingRetries_Concurrent(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		stored := &advisorv0alpha1.Check{}
+		stored.SetAnnotations(map[string]string{
+			checks.RetryAnnotation:  "b",
+			checks.StatusAnnotation: checks.StatusAnnotationProcessed,
+		})
+		stored.Status.Report.Failures = []advisorv0alpha1.CheckReportFailure{
+			{ItemID: "a", StepID: "old"},
+			{ItemID: "b", StepID: "old"},
+		}
+
+		objA := newRetryAdmissionObj(t, stored, "a")
+		objB := newRetryAdmissionObj(t, stored, "b")
+
+		client := &statefulClient{stored: stored}
+		typesClient := &mockTypesClient{}
+
+		checkA := &mockCheck{items: []any{"a"}, retryFailures: []advisorv0alpha1.CheckReportFailure{{ItemID: "a", StepID: "new"}}}
+		retryAErr := make(chan error, 1)
+		go func() {
+			retryAErr <- processCheckRetry(t.Context(), logging.DefaultLogger, client, typesClient, objA, checkA)
+		}()
+
+		// Let retry A observe B's annotation before B can clear it.
+		synctest.Wait()
+
+		assert.Empty(t, retryAErr, "retry A should still be polling")
+
+		checkB := &mockCheck{items: []any{"b"}, retryFailures: []advisorv0alpha1.CheckReportFailure{{ItemID: "b", StepID: "new"}}}
+		errB := processCheckRetry(t.Context(), logging.DefaultLogger, client, typesClient, objB, checkB)
+		errA := <-retryAErr
+
+		require.NoError(t, errB, "retry B")
+		require.NoError(t, errA, "retry A")
+
+		final := client.current()
+		assert.Empty(t, checks.GetRetryAnnotation(final))
+		assert.ElementsMatch(t, []advisorv0alpha1.CheckReportFailure{
+			{ItemID: "a", StepID: "new"},
+			{ItemID: "b", StepID: "new"},
+		}, final.Status.Report.Failures)
+	})
+}
+
+func TestWaitForRetryAnnotation_Superseded(t *testing.T) {
+	obj := &advisorv0alpha1.Check{}
+	gets := 0
+	client := &mockClient{
+		get: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+			gets++
+			current := &advisorv0alpha1.Check{}
+			current.SetAnnotations(map[string]string{checks.RetryAnnotation: fmt.Sprintf("other-%d", gets)})
+			return current, nil
+		},
+	}
+
+	synctest.Test(t, func(t *testing.T) {
+		err := waitForRetryAnnotation(context.TODO(), logging.DefaultLogger, client, obj, "item")
+		assert.NoError(t, err)
+		assert.Equal(t, 6, gets, "should keep polling for its own annotation before giving up")
+	})
+}
+
+func TestWaitForRetryAnnotation_NeverSet(t *testing.T) {
+	obj := &advisorv0alpha1.Check{}
+	client := &mockClient{res: &advisorv0alpha1.Check{}}
+
+	synctest.Test(t, func(t *testing.T) {
+		err := waitForRetryAnnotation(context.TODO(), logging.DefaultLogger, client, obj, "item")
+		assert.Error(t, err)
+	})
+}
+
 func TestRunStepsInParallel_ConcurrentHeaderAccess(t *testing.T) {
 	// Create an HTTP request with headers to simulate the real scenario
 	req, err := http.NewRequest("GET", "/test", nil)
@@ -584,14 +716,18 @@ func TestRunStepsInParallel_ConcurrentHeaderAccess(t *testing.T) {
 			}
 		}()
 
-		failures, err := runStepsInParallel(ctx, logging.DefaultLogger, nil, steps, items)
+		originalHeaders := req.Header.Clone()
+		synctest.Test(t, func(t *testing.T) {
+			failures, err := runStepsInParallel(ctx, logging.DefaultLogger, nil, steps, items)
 
-		// Verify no error occurred
-		assert.NoError(t, err)
-		// Should have no failures since our mock step doesn't report failures
-		assert.Empty(t, failures)
-		// Verify no panics occurred
-		assert.Equal(t, int32(0), panicCount)
+			// Verify no error occurred
+			assert.NoError(t, err)
+			// Should have no failures since our mock step doesn't report failures
+			assert.Empty(t, failures)
+			// Verify no panics occurred
+			assert.Equal(t, int32(0), panicCount)
+			assert.Equal(t, originalHeaders, req.Header)
+		})
 	})
 }
 
@@ -613,6 +749,41 @@ func (m *mockClient) Get(ctx context.Context, id resource.Identifier) (resource.
 		return m.get(ctx, id)
 	}
 	return m.res, nil
+}
+
+// statefulClient keeps a single stored Check and applies patches to it, like the apiserver
+type statefulClient struct {
+	resource.Client
+	mu     sync.Mutex
+	stored *advisorv0alpha1.Check
+}
+
+func (s *statefulClient) current() *advisorv0alpha1.Check {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.stored.DeepCopy()
+}
+
+func (s *statefulClient) Get(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+	return s.current(), nil
+}
+
+func (s *statefulClient) PatchInto(ctx context.Context, id resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions, obj resource.Object) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	op := req.Operations[0]
+	switch op.Path {
+	case "/metadata/annotations":
+		s.stored.SetAnnotations(maps.Clone(op.Value.(map[string]string)))
+	case "/status":
+		status := op.Value.(advisorv0alpha1.CheckStatus)
+		var cpy advisorv0alpha1.CheckStatus
+		status.DeepCopyInto(&cpy)
+		s.stored.Status = cpy
+	default:
+		return fmt.Errorf("unexpected patch path %s", op.Path)
+	}
+	return nil
 }
 
 type mockTypesClient struct {

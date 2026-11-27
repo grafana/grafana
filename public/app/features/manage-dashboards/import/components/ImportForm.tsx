@@ -92,6 +92,7 @@ export function ImportForm({
                   }
                 }}
                 value={value.uid}
+                permission="create"
               />
             )}
             name="folder"

@@ -11,7 +11,7 @@ interface RuleListItemProps extends AriaAttributes {
   description?: ReactNode;
   /** Right column; never wraps. Used for interval and actions. */
   right?: ReactNode;
-  /** Falsy entries are dropped. */
+  /** Falsy entries are dropped. A child that renders null is hidden so it does not leave an empty bordered slot. */
   meta?: ReactNode[];
 }
 
@@ -75,6 +75,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   metaItem: css({
     borderLeft: `1px solid ${theme.colors.border.strong}`,
     paddingLeft: theme.spacing(1),
+    // A child component that returns null leaves this wrapper empty; hide it so there is no bordered gap.
+    '&:empty': { display: 'none' },
   }),
   overflow: css({
     overflow: 'hidden',

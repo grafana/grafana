@@ -41,8 +41,9 @@ func TestRenderErrorStatus(t *testing.T) {
 		resp *resourcepb.GetBlobResponse
 		err  error
 	}{
-		"embedded":  {resp: &resourcepb.GetBlobResponse{Error: failure}},
-		"transport": {err: fmt.Errorf("get blob: %w", st.Err())},
+		"grpc":                   {err: st.Err()},
+		"wrapped grpc":           {err: fmt.Errorf("get blob: %w", st.Err())},
+		"grpc with partial body": {resp: &resourcepb.GetBlobResponse{Value: []byte("partial"), ContentType: "image/png"}, err: st.Err()},
 	} {
 		t.Run(name, func(t *testing.T) {
 			client := resource.NewMockResourceClient(t)

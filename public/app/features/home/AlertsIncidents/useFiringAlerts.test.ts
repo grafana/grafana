@@ -1,15 +1,17 @@
 import { http, HttpResponse } from 'msw';
-import { getWrapper, renderHook, waitFor } from 'test/test-utils';
+import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { makeAlert, mockAlerts, mockTeams } from './alertIncidentTabsTestUtils';
 import { HOME_CARD_MAX_ITEMS } from './constants';
-import { canViewFiringAlerts, useFiringAlerts } from './useFiringAlerts';
+import { useFiringAlerts } from './useFiringAlerts';
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -31,15 +33,54 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-describe('canViewFiringAlerts', () => {
-  it('is true when the user has AlertingInstanceRead permission', () => {
-    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
-    expect(canViewFiringAlerts()).toBe(true);
+describe('enabled', () => {
+  afterEach(async () => {
+    // setTestFlags fires OpenFeature events that update React state while the hook is still mounted
+    // (RTL cleanup runs in a later afterEach).
+    await act(async () => {
+      setTestFlags({});
+    });
   });
 
-  it('is false when the user lacks AlertingInstanceRead permission', () => {
+  it('is true when the user has AlertingInstanceRead permission', async () => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
+    const { result } = renderHook(() => useFiringAlerts(), { wrapper: getWrapper({}) });
+
+    expect(result.current.enabled).toBe(true);
+    await waitFor(() => expect(result.current.loading).toBe(false));
+  });
+
+  it('is false when the user lacks AlertingInstanceRead permission', async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-    expect(canViewFiringAlerts()).toBe(false);
+
+    const { result } = renderHook(() => useFiringAlerts(), { wrapper: getWrapper({}) });
+
+    expect(result.current.enabled).toBe(false);
+    // The skipped teams lookup still settles useAsync a tick later.
+    await act(async () => {});
+  });
+
+  it('is false on a multi-tenant homepage even with permission, without requesting teams or alerts', async () => {
+    setTestFlags({ [FlagKeys.GrafanaMultiTenantHomepage]: true });
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    const requests: string[] = [];
+    server.use(
+      http.get('/api/user/teams', ({ request }) => {
+        requests.push(request.url);
+        return HttpResponse.json([]);
+      })
+    );
+    const alertRequests = mockAlerts([]);
+
+    const { result } = renderHook(() => useFiringAlerts(), { wrapper: getWrapper({}) });
+
+    await waitFor(() => expect(result.current.enabled).toBe(false));
+    expect(result.current.loading).toBe(false);
+    // The skipped teams lookup still settles useAsync a tick later.
+    await act(async () => {});
+    expect(requests).toEqual([]);
+    expect(alertRequests).toEqual([]);
   });
 });
 
@@ -118,6 +159,24 @@ describe('useFiringAlerts', () => {
     expect(result.current.hasTeams).toBe(true);
   });
 
+  it.each([
+    ['a 500', () => HttpResponse.json({ message: 'nope' }, { status: 500 })],
+    [
+      'an HTML body',
+      () => HttpResponse.text('<!doctype html>', { status: 200, headers: { 'Content-Type': 'text/html' } }),
+    ],
+  ])('falls back to unfiltered alerts when the teams lookup returns %s', async (_, respond) => {
+    server.use(http.get('/api/user/teams', respond));
+    const requests = mockAlerts([]);
+
+    const { result } = renderHook(() => useFiringAlerts(), { wrapper: getWrapper({}) });
+
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(requests[0]).toEqual([]);
+    expect(result.current.hasTeams).toBe(false);
+    await waitFor(() => expect(result.current.loading).toBe(false));
+  });
+
   describe('team matchers', () => {
     it('matches own teams tolerantly: case-insensitive, punctuation as separator gaps', async () => {
       mockTeams([{ name: 'Platform Monitoring' }, { name: 'Team (US)' }]);
@@ -140,6 +199,28 @@ describe('useFiringAlerts', () => {
       await waitFor(() => expect(result.current.loading).toBe(false));
 
       expect(requests).toEqual([[]]);
+    });
+
+    it('filters own teams in the browser when their matcher would overflow the request URL', async () => {
+      // 50 four-word team names encode to about 10 KB of filter, past what proxies accept in a request line.
+      mockTeams(Array.from({ length: 50 }, (_, i) => ({ name: `Team ${i} Platform Ops` })));
+      const requests = mockAlerts([
+        makeAlert({ labels: { alertname: 'Slugged own team', team: 'team-3-platform-ops' } }),
+        makeAlert({ labels: { alertname: 'Upper-cased own team', team: 'TEAM_49_PLATFORM_OPS' } }),
+        // Anchored like Alertmanager's regex matchers, so a longer name is another team.
+        makeAlert({ labels: { alertname: 'Other team', team: 'team-3-platform-ops-eu' } }),
+        makeAlert({ labels: { alertname: 'No team' } }),
+      ]);
+
+      const { result } = renderHook(() => useFiringAlerts(), { wrapper: getWrapper({}) });
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      expect(requests).toEqual([[]]);
+      expect(result.current.visibleAlerts.map(({ alert }) => alert.labels.alertname).sort()).toEqual([
+        'Slugged own team',
+        'Upper-cased own team',
+      ]);
+      expect(result.current.count).toBe(2);
     });
 
     it('matches a picked label exactly, in place of the own-teams default', async () => {

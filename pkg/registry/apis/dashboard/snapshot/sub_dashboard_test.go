@@ -1,7 +1,6 @@
 package snapshot
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -23,15 +22,18 @@ import (
 )
 
 type snapshotBlobServer struct {
-	resourcepb.UnimplementedBlobStoreServer
+	resourcepb.UnimplementedBlobStoreStreamingServer
 	get      *resourcepb.GetBlobRequest
 	metadata metadata.MD
 }
 
-func (s *snapshotBlobServer) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
+func (s *snapshotBlobServer) GetBlobStream(req *resourcepb.GetBlobRequest, stream resourcepb.BlobStoreStreaming_GetBlobStreamServer) error {
 	s.get = req
-	s.metadata, _ = metadata.FromIncomingContext(ctx)
-	return &resourcepb.GetBlobResponse{Value: []byte(`{"title":"CPU"}`)}, nil
+	s.metadata, _ = metadata.FromIncomingContext(stream.Context())
+	if err := stream.Send(&resourcepb.GetBlobResponse{ContentType: "application/json"}); err != nil {
+		return err
+	}
+	return stream.Send(&resourcepb.GetBlobResponse{Value: []byte(`{"title":"CPU"}`)})
 }
 
 func TestPublicSnapshotDashboardRemoteClient(t *testing.T) {
@@ -50,15 +52,14 @@ func TestPublicSnapshotDashboardRemoteClient(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			server := &snapshotBlobServer{}
 			channel := &inprocgrpc.Channel{}
-			channel.RegisterService(&resourcepb.BlobStore_ServiceDesc, server)
+			channel.RegisterService(&resourcepb.BlobStoreStreaming_ServiceDesc, server)
 			client, err := resourceclient.NewStandaloneRemoteResourceClient(noop.NewTracerProvider().Tracer("snapshot-test"), channel, channel, resourceclient.RemoteResourceClientConfig{
 				TokenExchanger: authnlib.NewStaticTokenExchanger("service-token"),
 			})
 			require.NoError(t, err)
 			snap := newBlobTestSnapshot()
 			snap.Namespace = namespace
-			snap.Spec.Dashboard = nil
-			snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: "blob-1"}
+			snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: new("blob-1")}
 			// Exercise blob credentials independently of the remote metadata lookup
 			// covered by TestPublicSnapshotMetadataWithStandaloneRemoteClient.
 			getter := grafanarest.NewMockStorage(t)

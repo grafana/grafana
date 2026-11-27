@@ -228,7 +228,7 @@ func NewRelistProjectionMetrics(reg prometheus.Registerer) *RelistProjectionMetr
 	return &RelistProjectionMetrics{
 		projections: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_provisioning_informer_relist_projection_total",
-			Help: "Re-lists by what the server returned: keys is the keys-only projection (identities, no object bodies), objects is the full list. Reports whether keys_only_relist took effect, and shows the fallback when a server does not serve the projection.",
+			Help: "Re-lists by what the server returned: keys is the keys-only projection (identities, no object bodies), objects is the full list. Shows the fallback when a server does not serve the projection.",
 		}, []string{"group", "resource", "projection"}),
 	}
 }

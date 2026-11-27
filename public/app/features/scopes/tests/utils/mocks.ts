@@ -1,37 +1,17 @@
-import { type DataSourceRef } from '@grafana/schema';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import { seedDataSources } from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
-export const getDatasource = async (ref: DataSourceRef) => {
-  if (ref.uid === '-- Grafana --') {
-    return {
-      id: 1,
-      uid: '-- Grafana --',
-      name: 'grafana',
-      type: 'grafana',
-      meta: {
-        id: 'grafana',
-      },
-    };
-  }
+// Scenes resolves the fixture's `grafana` uid through the async registry without awaiting, so an
+// unseeded uid becomes an unhandled rejection that jest-setup rethrows.
+export function seedScopesDataSources() {
+  const grafana = makeDataSourceSettings('grafana', '-- Grafana --', 'grafana');
+  const testData = makeDataSourceSettings('gdev-testdata', 'testDs1', 'grafana-testdata-datasource', {
+    isDefault: true,
+  });
 
-  return {
-    meta: {
-      id: 'grafana-testdata-datasource',
-    },
-    name: 'grafana-testdata-datasource',
-    type: 'grafana-testdata-datasource',
-    uid: 'gdev-testdata',
-    getRef: () => {
-      return { type: 'grafana-testdata-datasource', uid: 'gdev-testdata' };
-    },
-  };
-};
-
-export const getInstanceSettings = () => ({
-  id: 1,
-  uid: 'gdev-testdata',
-  name: 'testDs1',
-  type: 'grafana-testdata-datasource',
-  meta: {
-    id: 'grafana-testdata-datasource',
-  },
-});
+  seedDataSources(
+    [grafana, testData].map((settings) => ({ settings, api: new MockDataSourceApi(settings) })),
+    { legacySrv: 'mock' }
+  );
+}

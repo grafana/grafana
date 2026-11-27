@@ -34,9 +34,6 @@ snapshotV0alpha1: {
 
 			// Snapshot delete key
 			deleteKey?: string
-
-			// The raw dashboard (unstructured for now)
-			dashboard?: [string]: _
 		}
 		blobs: {
 			dashboard?: #BlobReference
@@ -45,7 +42,9 @@ snapshotV0alpha1: {
 }
 
 #BlobReference: {
-	uid:          string
+	uid?: string
+	// Write-only base64-encoded dashboard JSON, replaced by a server-issued reference on write.
+	data?:        string
 	size?:        int64
 	hash?:        string
 	contentType?: string

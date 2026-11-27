@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -18,7 +18,6 @@ interface Props {
 export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
   const {
     control,
-    watch,
     formState: { errors },
     setValue,
   } = useFormContext<RuleFormValues>();
@@ -26,7 +25,7 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
   const style = useStyles2(getStyle);
   const { namespaceGroups, isLoading } = useGetNameSpacesByDatasourceName(rulesSourceName);
 
-  const namespace = watch('namespace');
+  const namespace = useWatch({ control, name: 'namespace' });
 
   const namespaceOptions: Array<SelectableValue<string>> = useMemo(
     () =>

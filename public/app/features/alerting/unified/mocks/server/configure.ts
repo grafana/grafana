@@ -4,12 +4,12 @@ import { type PluginMeta } from '@grafana/data';
 import { invalidatePluginSettingsCache } from '@grafana/runtime/internal';
 import server from '@grafana/test-utils/server';
 import { type RulesAPIVersion } from 'app/features/alerting/unified/api/rulesApiVersion';
-import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import {
   getAlertmanagerConfigHandler,
   grafanaAlertingConfigurationStatusHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
-import { getFolderHandler } from 'app/features/alerting/unified/mocks/server/handlers/folders';
+import { getFolderAccessHandler, getFolderHandlers } from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import { getRulesAPIGroupHandler } from 'app/features/alerting/unified/mocks/server/handlers/k8s/alertRules.k8s';
 import { listNamespacedTimeIntervalHandler } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
 import {
@@ -66,18 +66,18 @@ export const setAlertmanagerChoices = (alertmanagersChoice: AlertmanagerChoice, 
 };
 
 /**
- * Makes the mock server respond with different folder access control settings
+ * Makes the mock server report the given access control for every folder. Only access is overridden: a folder outside
+ * `DEFAULT_FOLDERS` still has to be seeded with `setFolderResponse`, or `useGetCombinedFolderQuery` reports it as missing.
  */
 export const setFolderAccessControl = (accessControl: FolderDTO['accessControl']) => {
-  server.use(getFolderHandler(mockFolder({ hasAcl: true, accessControl })));
+  server.use(getFolderAccessHandler(accessControl));
 };
 
 /**
  * Makes the mock server respond with different folder response, for just the folder in question
  */
 export const setFolderResponse = (response: Partial<FolderDTO>) => {
-  const handler = http.get<{ folderUid: string }>(`/api/folders/${response.uid}`, () => HttpResponse.json(response));
-  server.use(handler);
+  server.use(...getFolderHandlers(response));
 };
 
 export const setUpdateGrafanaRulerRuleNamespaceResolver = (

@@ -3,13 +3,16 @@ import { parse } from './parser';
 import { buildSharedLeaves } from './searchQueryLeaves';
 import { getRejectionIssues } from './searchRejection';
 import { sharedFilters } from './sharedFilters';
-import { type SharedRuleFilter, createEmptyFilter } from './sharedRuleFilter';
+import { type SharedRuleFilter, createRulesApiFilter } from './sharedRuleFilter';
 
-const schema: RuleSearchSchema<SharedRuleFilter> = { filters: Object.values(sharedFilters), createEmptyFilter };
+const schema: RuleSearchSchema<SharedRuleFilter> = {
+  filters: Object.values(sharedFilters),
+  createEmptyFilter: createRulesApiFilter,
+};
 
-function rejectionOf(query: string, causes: Array<{ field?: string; message: string }>) {
+function rejectionOf(query: string, causes: Array<{ field?: string; message: string }>, folderUids: string[] = []) {
   const error = { status: 422, data: { message: 'invalid', details: { causes } } };
-  return getRejectionIssues(error, buildSharedLeaves(parse(query, schema).filter));
+  return getRejectionIssues(error, buildSharedLeaves({ filter: parse(query, schema).filter, folderUids }));
 }
 
 describe('getRejectionIssues', () => {
@@ -24,9 +27,15 @@ describe('getRejectionIssues', () => {
       { field: 'where.and[2].regex.pattern', message: 'missing )' },
       { field: 'where.and[1].filter.values', message: 'bad uid' },
     ];
-    expect(rejectionOf('cpu folder:f1 label:team=~(', causes)).toEqual([
+    expect(rejectionOf('cpu folder:Team label:team=~(', causes, ['f1'])).toEqual([
       { key: 'label', reason: 'rejected', message: 'missing )' },
       { key: 'folder', reason: 'rejected', message: 'bad uid' },
+    ]);
+  });
+
+  it('names folderUid for a rejected folder leaf when no folder name was typed', () => {
+    expect(rejectionOf('folderUid:f1', [{ field: 'where.filter.values', message: 'bad uid' }], ['f1'])).toEqual([
+      { key: 'folderUid', reason: 'rejected', message: 'bad uid' },
     ]);
   });
 

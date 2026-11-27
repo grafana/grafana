@@ -112,11 +112,10 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 
 	blob := obj.GetBlob()
 	if blob != nil {
-		rsp, err := s.Blob.GetResourceBlob(ctx, key, blob, true)
-		if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
-			return nil, fmt.Errorf("error reading blob: %w", err)
+		value, err = resource.ReadBlobForIndex(ctx, s.Blob, key, blob)
+		if err != nil {
+			return nil, err
 		}
-		value = rsp.Value
 	}
 
 	summary, err := dashboard.ReadDashboardWithLogContext(bytes.NewReader(value), s.DatasourceLookup, map[string]any{

@@ -18,9 +18,9 @@ import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { calculateNextEvaluationEstimate } from '../../rule-list/components/util';
-import { Annotation } from '../../utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
+import { Annotation, GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { getRulePluginOrigin, isPausedRule, rulerRuleType } from '../../utils/rules';
+import { getRulesSourceName } from '../../utils/rulesSource';
 import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
 import { ProvisioningBadge } from '../Provisioning';
@@ -226,7 +226,7 @@ function useColumns(
           }
 
           const provenance = rulerRule.grafana_alert.provenance;
-          return provenance ? <ProvisioningBadge /> : null;
+          return provenance ? <ProvisioningBadge provenance={provenance} /> : null;
         },
         size: '100px',
       },

@@ -417,3 +417,9 @@ Refer to the [log filters configuration documentation](ref:log-filters) for more
 [log]
 filters = rendering:debug,report.api:debug,report.render:debug,report.scheduler:debug,report.sender:debug,report.service:debug
 ```
+
+### Scheduled report stops running
+
+A scheduled report stops running when you disable or delete the account of the user who last edited it.
+
+To restore scheduled runs, have an active user [edit the report](#edit-reports) and click **Update report**.

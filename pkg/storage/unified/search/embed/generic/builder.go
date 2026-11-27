@@ -133,7 +133,7 @@ func fieldText(value any) string {
 }
 
 func resourceTitle(obj map[string]any, fallback string) string {
-	for _, path := range []string{"spec.title", "spec.name"} {
+	for _, path := range []string{"spec.title", "spec.name", "spec.spec.name"} {
 		raw, _ := fieldpath.Extract(obj, path)
 		if title, ok := raw.(string); ok && strings.TrimSpace(title) != "" {
 			return title

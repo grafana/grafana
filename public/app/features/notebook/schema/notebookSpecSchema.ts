@@ -2,15 +2,15 @@
  * Canonical Zod schema for the Notebook spec. Mirrors
  * `apps/dashboard/kinds/v2beta1/notebook_spec.cue` with the same conventions as
  * {@link ../../dashboard-scene/v2schema/dashboardV2Schema} (CUE `*value` defaults as
- * `.optional().default(...)`, Go nil slices via `nullableArray`, non-strict objects for forward
- * compatibility, `satisfies z.ZodType<...>` so schema and generated interface cannot drift).
+ * `z._default(schema, ...)`, Go nil slices via `nullableArray`, non-strict objects for forward
+ * compatibility, `satisfies z.ZodMiniType<...>` so schema and generated interface cannot drift).
  *
  * The panel, library-panel and time-settings leaves ARE the dashboard v2 ones, so they are imported
  * rather than restated. They are generated into a different module than the notebook types, so
  * `satisfies` is checked against the notebook types while the shared schemas supply the value.
  */
 
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import {
   elementReferenceSchema,
@@ -40,36 +40,36 @@ const markdownCellContentKindSchema = z.object({
   spec: z.object({
     text: z.string(),
   }),
-}) satisfies z.ZodType<MarkdownCellContentKind>;
+}) satisfies z.ZodMiniType<MarkdownCellContentKind>;
 
 const codeCellContentKindSchema = z.object({
   kind: z.literal('Code'),
   spec: z.object({
     language: z.string(),
     code: z.string(),
-    highlight: nullableArray(z.number()).optional(),
-    annotation: z.string().optional(),
+    highlight: z.optional(nullableArray(z.number())),
+    annotation: z.optional(z.string()),
   }),
-}) satisfies z.ZodType<CodeCellContentKind>;
+}) satisfies z.ZodMiniType<CodeCellContentKind>;
 
 const cellContentKindSchema = z.discriminatedUnion('kind', [
   markdownCellContentKindSchema,
   codeCellContentKindSchema,
-]) satisfies z.ZodType<CellContentKind>;
+]) satisfies z.ZodMiniType<CellContentKind>;
 
 const cellKindSchema = z.object({
   kind: z.literal('Cell'),
   spec: z.object({
     content: cellContentKindSchema,
   }),
-}) satisfies z.ZodType<CellKind>;
+}) satisfies z.ZodMiniType<CellKind>;
 
 // CellKind first, to match the CUE: the first union member is the generated default.
 const notebookElementSchema = z.discriminatedUnion('kind', [
   cellKindSchema,
   panelKindSchema,
   libraryPanelKindSchema,
-]) satisfies z.ZodType<NotebookElement>;
+]) satisfies z.ZodMiniType<NotebookElement>;
 
 // ---------------------------------------------------------------------------
 // Layout (flat, ordered — no nesting, unlike every dashboard layout)
@@ -79,17 +79,20 @@ const notebookLayoutItemKindSchema = z.object({
   kind: z.literal('NotebookLayoutItem'),
   spec: z.object({
     element: elementReferenceSchema,
+    // Assigned by the server. Declared so that parsing keeps it: the object is non-strict, so an
+    // undeclared key is dropped, and a spec read, validated and written back would lose every id.
+    id: z.optional(z.string()),
     source: z.enum(['assistant', 'user']),
-    collapsed: z.boolean().optional(),
+    collapsed: z.optional(z.boolean()),
   }),
-}) satisfies z.ZodType<NotebookLayoutItemKind>;
+}) satisfies z.ZodMiniType<NotebookLayoutItemKind>;
 
 const notebookLayoutKindSchema = z.object({
   kind: z.literal('NotebookLayout'),
   spec: z.object({
     cells: nullableArray(notebookLayoutItemKindSchema),
   }),
-}) satisfies z.ZodType<NotebookLayoutKind>;
+}) satisfies z.ZodMiniType<NotebookLayoutKind>;
 
 // ---------------------------------------------------------------------------
 // Top-level NotebookSpec
@@ -99,12 +102,15 @@ const notebookLayoutKindSchema = z.object({
 // referential check below, which is the malformation that actually costs a cell.
 const notebookSpecSchema = z.object({
   title: z.string(),
-  description: z.string().optional(),
+  description: z.optional(z.string()),
   tags: nullableArray(z.string()),
   timeSettings: timeSettingsSpecSchema,
-  elements: z.preprocess((value) => (value == null ? {} : value), z.record(z.string(), notebookElementSchema)),
+  elements: z.pipe(
+    z.transform((value) => (value == null ? {} : value)),
+    z.record(z.string(), notebookElementSchema)
+  ),
   layout: notebookLayoutKindSchema,
-}) satisfies z.ZodType<NotebookSpec>;
+}) satisfies z.ZodMiniType<NotebookSpec>;
 
 export interface NotebookSpecValidationResult {
   success: boolean;

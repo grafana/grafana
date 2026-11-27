@@ -1925,6 +1925,68 @@ func TestService_Patch(t *testing.T) {
 		require.Equal(t, "stored-client-id", env.store.ActualSSOSettings.Settings["client_id"])
 	})
 
+	t.Run("converts camelCase keys to snake_case", func(t *testing.T) {
+		t.Parallel()
+
+		env := setupTestEnv(t, false, false, false)
+
+		provider := social.GenericOAuthProviderName
+		patchData := map[string]any{
+			"orgMapping":       "org-a:OrganizationA:Admin",
+			"orgAttributePath": "grafana_orgs",
+		}
+
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		reloadable.On("Validate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		var wg sync.WaitGroup
+		wg.Add(1)
+		reloadable.On("Reload", mock.Anything, mock.Anything).Run(func(mock.Arguments) { wg.Done() }).Return(nil).Once()
+		env.reloadables[provider] = reloadable
+
+		env.store.GetFn = func(ctx context.Context, provider string) (*models.SSOSettings, error) {
+			return &models.SSOSettings{
+				ID:       "someid",
+				Provider: provider,
+				Settings: map[string]any{
+					"org_mapping":        "",
+					"org_attribute_path": "old",
+				},
+			}, nil
+		}
+		env.store.UpsertFn = func(ctx context.Context, settings *models.SSOSettings) error {
+			env.store.ActualSSOSettings = *settings
+			return nil
+		}
+
+		err := env.service.Patch(context.Background(), provider, patchData, &user.SignedInUser{})
+		require.NoError(t, err)
+		wg.Wait()
+
+		require.Equal(t, map[string]any{
+			"org_mapping":        "org-a:OrganizationA:Admin",
+			"org_attribute_path": "grafana_orgs",
+		}, env.store.ActualSSOSettings.Settings)
+	})
+
+	t.Run("returns error if keys collide after conversion", func(t *testing.T) {
+		t.Parallel()
+
+		env := setupTestEnv(t, false, false, false)
+
+		provider := social.GenericOAuthProviderName
+		env.reloadables[provider] = ssosettingstests.NewMockReloadable(t)
+		env.store.GetFn = func(ctx context.Context, provider string) (*models.SSOSettings, error) {
+			return &models.SSOSettings{Provider: provider, Settings: map[string]any{}}, nil
+		}
+
+		err := env.service.Patch(context.Background(), provider, map[string]any{
+			"orgMapping":  "a",
+			"org_mapping": "b",
+		}, &user.SignedInUser{})
+		require.Error(t, err)
+		require.True(t, ssosettings.ErrInvalidSettings.Is(err))
+	})
+
 	t.Run("returns error if provider is not configurable", func(t *testing.T) {
 		t.Parallel()
 

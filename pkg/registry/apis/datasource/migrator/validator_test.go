@@ -28,8 +28,10 @@ func TestDataSourceCountValidatorStats(t *testing.T) {
 		resp *resourcepb.ResourceStatsResponse
 		err  error
 	}{
-		{name: "embedded error", resp: &resourcepb.ResourceStatsResponse{Error: result}},
 		{name: "grpc error", err: structured.Err()},
+		{name: "grpc error with partial response", resp: &resourcepb.ResourceStatsResponse{
+			Stats: []*resourcepb.ResourceStatsResponse_Stats{{Group: group, Resource: "datasources", Count: 1}},
+		}, err: structured.Err()},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			eng, err := xorm.NewEngine("sqlite3", ":memory:")

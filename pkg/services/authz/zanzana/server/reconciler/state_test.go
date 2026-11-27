@@ -10,21 +10,21 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
 // fakeStateStore is an in-memory StateStore with optional error injection.
 type fakeStateStore struct {
-	mu     sync.Mutex
-	values map[string]string
-	getErr error
-	setErr error
-	delErr error
+	mu        sync.Mutex
+	values    map[string]string
+	snapshots map[string]string
+	getErr    error
+	setErr    error
+	delErr    error
 }
 
 func newFakeStateStore() *fakeStateStore {
-	return &fakeStateStore{values: map[string]string{}}
+	return &fakeStateStore{values: map[string]string{}, snapshots: map[string]string{}}
 }
 
 func (f *fakeStateStore) Get(_ context.Context, key string) (string, bool, error) {
@@ -57,6 +57,26 @@ func (f *fakeStateStore) Del(_ context.Context, key string) error {
 	return nil
 }
 
+func (f *fakeStateStore) GetGlobalRoleSnapshot(_ context.Context, key string) (string, bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.getErr != nil {
+		return "", false, f.getErr
+	}
+	v, ok := f.snapshots[key]
+	return v, ok, nil
+}
+
+func (f *fakeStateStore) SetGlobalRoleSnapshot(_ context.Context, key, value string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.setErr != nil {
+		return f.setErr
+	}
+	f.snapshots[key] = value
+	return nil
+}
+
 func (f *fakeStateStore) has(key string) bool {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -84,7 +104,7 @@ func (f *fakeStateStore) record(t *testing.T, key string, state namespaceState) 
 	f.values[key] = string(raw)
 }
 
-func newReconcilerWithState(srv *stubServer, cf resources.ClientFactory, ss StateStore) *Reconciler {
+func newReconcilerWithState(srv *stubServer, cf ClientFactory, ss StateStore) *Reconciler {
 	r := newReconcilerForTest(srv, cf)
 	r.stateStore = ss
 	return r

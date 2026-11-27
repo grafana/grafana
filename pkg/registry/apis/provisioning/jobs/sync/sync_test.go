@@ -72,7 +72,7 @@ func TestSyncer_Sync(t *testing.T) {
 				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
 
 				progress.On("SetMessage", mock.Anything, "full sync").Return()
-				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedMessages: []string{"full sync"},
 		},
@@ -95,7 +95,7 @@ func TestSyncer_Sync(t *testing.T) {
 				})
 				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
 				progress.On("SetMessage", mock.Anything, "incremental sync").Return()
-				incrementalSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, "old-ref", "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				incrementalSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, "old-ref", "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedRef:      "new-ref",
 			expectedMessages: []string{"incremental sync"},
@@ -129,7 +129,7 @@ func TestSyncer_Sync(t *testing.T) {
 				})
 				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
 				progress.On("SetMessage", mock.Anything, "full sync").Return()
-				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedMessages: []string{"full sync"},
 		},
@@ -172,7 +172,7 @@ func TestSyncer_Sync(t *testing.T) {
 				})
 				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
 				progress.On("SetMessage", mock.Anything, "incremental sync").Return()
-				incrementalSyncFn.On("Execute", mock.Anything, mock.Anything, "old-ref", "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(fmt.Errorf("incremental sync failed"))
+				incrementalSyncFn.On("Execute", mock.Anything, mock.Anything, "old-ref", "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(fmt.Errorf("incremental sync failed"))
 			},
 			expectedRef:      "new-ref",
 			expectedMessages: []string{"incremental sync"},
@@ -210,7 +210,6 @@ func TestSyncer_Sync(t *testing.T) {
 				tracing.NewNoopTracerService(),
 				10,
 				jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
-				false,
 				0,
 			)
 

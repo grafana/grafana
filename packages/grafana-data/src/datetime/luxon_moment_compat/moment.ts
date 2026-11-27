@@ -158,6 +158,8 @@ export interface MomentLike {
   isValid(): boolean;
   isBefore(input?: MomentInput, unit?: StartEndUnit): boolean;
   isAfter(input?: MomentInput, unit?: StartEndUnit): boolean;
+  isSameOrAfter(input?: MomentInput, unit?: StartEndUnit): boolean;
+  isSameOrBefore(input?: MomentInput, unit?: StartEndUnit): boolean;
   isBetween(a: MomentInput, b: MomentInput, unit?: StartEndUnit, inclusivity?: Inclusivity): boolean;
   isSame(input?: MomentInput, unit?: StartEndUnit): boolean;
   diff(input: MomentInput, unit?: DiffUnit, asFloat?: boolean): number;
@@ -1140,6 +1142,14 @@ class MomentCompat implements MomentLike {
 
   isAfter(other?: MomentInput, unit?: StartEndUnit): boolean {
     return unitBoundary(this._dt, unit, this._locale).toMillis() > normalizeInput(other).toMillis();
+  }
+
+  isSameOrAfter(other?: MomentInput, unit?: StartEndUnit): boolean {
+    return this.isSame(other, unit) || this.isAfter(other, unit);
+  }
+
+  isSameOrBefore(other?: MomentInput, unit?: StartEndUnit): boolean {
+    return this.isSame(other, unit) || this.isBefore(other, unit);
   }
 
   isBetween(a: MomentInput, b: MomentInput, unit?: StartEndUnit, inclusivity: Inclusivity = '()'): boolean {

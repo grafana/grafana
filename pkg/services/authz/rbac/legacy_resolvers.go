@@ -5,10 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"time"
+
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -32,6 +36,8 @@ type legacyScopeRequest struct {
 	identityType      types.IdentityType
 	userUID           string
 	skipCache         bool
+	teamIDs           []int64
+	restrictedActions []string
 	globalIdentity    *legacyGlobalIdentity
 	internalRequester identity.Requester
 }
@@ -75,8 +81,17 @@ func (s *Service) validateLegacyScopeNamespace(ns types.NamespaceInfo) error {
 		return nil
 	}
 
-	if s.legacyScopeNamespace == nil || s.legacyScopeNamespace(ns.OrgID) != ns.Value {
-		return errors.New("namespace does not belong to embedded scope resolvers")
+	if s.legacyScopeNamespace == nil {
+		return errors.New("legacy scope namespace is not set")
+	}
+
+	namespace := s.legacyScopeNamespace(ns.OrgID)
+	if namespace != ns.Value {
+		return fmt.Errorf(
+			"namespace %q does not belong to embedded scope resolvers: expected %q",
+			ns.Value,
+			namespace,
+		)
 	}
 
 	return nil
@@ -94,7 +109,19 @@ func (s *Service) newLegacyScopeMutator(
 	loadedActions := make(map[string]bool)
 	var requester identity.Requester
 
-	return func(ctx context.Context, scope string) ([]string, error) {
+	return func(ctx context.Context, scope string) (scopes []string, err error) {
+		start := time.Now()
+		ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.resolveLegacyScope")
+		defer func() {
+			if err != nil && !errors.Is(err, accesscontrol.ErrResolverNotFound) {
+				_ = tracing.Error(span, err)
+			}
+
+			s.metrics.legacyScopeResolutionDuration.Observe(time.Since(start).Seconds())
+			span.SetAttributes(attribute.Int("resolved_scope_count", len(scopes)))
+			span.End()
+		}()
+
 		if err := s.validateLegacyScopeNamespace(req.namespace); err != nil {
 			return nil, err
 		}
@@ -107,6 +134,7 @@ func (s *Service) newLegacyScopeMutator(
 		if !ok {
 			return nil, accesscontrol.ErrResolverNotFound
 		}
+		span.SetAttributes(attribute.String("scope_prefix", accesscontrol.ScopePrefix(scope)))
 
 		if requester == nil {
 			var err error
@@ -123,7 +151,7 @@ func (s *Service) newLegacyScopeMutator(
 		// Resolvers must observe the checked subject, never that caller's privileges.
 		ctx = identity.WithRequester(ctx, requester)
 
-		scopes, err := resolver.Resolve(ctx, requester.GetOrgID(), scope)
+		scopes, err = resolver.Resolve(ctx, requester.GetOrgID(), scope)
 		if err != nil {
 			return nil, fmt.Errorf("could not resolve %v: %w", scope, err)
 		}
@@ -158,33 +186,19 @@ func (s *Service) loadLegacyResolverPermissions(
 	}
 
 	for _, action := range dependencies.RequiredActions() {
+		if !req.permitsAction(action) {
+			continue
+		}
 		if _, ok := grants[action]; ok || loadedActions[action] {
 			continue
 		}
 
-		if req.globalIdentity != nil {
-			additional, err := s.getLegacyGlobalPermissions(ctx, req.globalIdentity, []string{action})
-			if err != nil {
-				return err
-			}
-			if scopes, ok := additional[action]; ok {
-				grants[action] = scopes
-			}
-		} else {
-			scopes, err := s.getLegacyIdentityScopes(
-				ctx,
-				req.namespace,
-				req.identityType,
-				req.userUID,
-				action,
-				req.skipCache,
-			)
-			if err != nil {
-				return fmt.Errorf("could not get legacy identity scopes: %w", err)
-			}
-			if len(scopes) > 0 {
-				grants[action] = scopes
-			}
+		additional, err := s.getLegacyPermissions(ctx, req, []string{action})
+		if err != nil {
+			return fmt.Errorf("could not get legacy resolver permissions: %w", err)
+		}
+		if scopes, ok := additional[action]; ok {
+			grants[action] = scopes
 		}
 		// Remember empty lookups separately: adding even a nil scope slice to
 		// grants would allow action-only checks for an action the subject lacks.
@@ -228,10 +242,10 @@ func (s *Service) legacyResolverRequester(
 
 		requester.UserID = identifiers.ID
 		requester.UserUID = identifiers.UID
-		requester.OrgRole = identity.RoleType(role.Role)
+		requester.OrgRole = types.RoleType(role.Role)
 		requester.IsGrafanaAdmin = role.IsAdmin
 	case types.TypeAnonymous:
-		requester.OrgRole = identity.RoleType(s.settings.AnonOrgRole)
+		requester.OrgRole = types.RoleType(s.settings.AnonOrgRole)
 	case types.TypeRenderService:
 	default:
 		return nil, fmt.Errorf("unsupported identity type: %s", req.identityType)

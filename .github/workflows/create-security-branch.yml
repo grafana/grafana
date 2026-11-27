@@ -15,9 +15,13 @@ on:
         type: string
         description: 'The repository to create the security branch in (e.g., grafana/grafana-security-mirror)'
         required: true
+      allow_existing:
+        type: boolean
+        description: Succeed and return the security branch when it already exists
+        default: false
     outputs:
       branch:
-        description: The new security branch that was created
+        description: The new or already existing security branch
         value: ${{ jobs.main.outputs.branch }}
   workflow_dispatch:
     inputs:
@@ -34,6 +38,10 @@ on:
         type: string
         description: 'The repository to create the security branch in (e.g., grafana/grafana-security-mirror)'
         required: true
+      allow_existing:
+        type: boolean
+        description: Succeed and return the security branch when it already exists
+        default: false
 
 permissions: {}
 
@@ -102,6 +110,7 @@ jobs:
         env:
           INPUT_RELEASE_BRANCH: ${{ inputs.release_branch }}
           INPUT_SECURITY_BRANCH_NUMBER: ${{ inputs.security_branch_number }}
+          ALLOW_EXISTING: ${{ inputs.allow_existing }}
         run: |
           # When the source release branch is itself a security branch (e.g.
           # release-11.2.3+security-01), appending another +security-NN would produce a
@@ -121,10 +130,20 @@ jobs:
 
           SECURITY_BRANCH="${BASE_BRANCH}+security-${SECURITY_NUMBER}"
 
-          # Check if branch already exists
-          if git show-ref --verify --quiet "refs/heads/${SECURITY_BRANCH}"; then
+          # The checkout only fetches the source branch, so check the remote on retries.
+          if git ls-remote --exit-code --heads origin "refs/heads/${SECURITY_BRANCH}" >/dev/null; then
+              if [[ "${ALLOW_EXISTING}" == "true" ]]; then
+                  echo "Security branch ${SECURITY_BRANCH} already exists"
+                  echo "branch=${SECURITY_BRANCH}" >> "${GITHUB_OUTPUT}"
+                  exit 0
+              fi
               echo "::error::Security branch ${SECURITY_BRANCH} already exists"
               exit 1
+          else
+              status=$?
+              if [[ "$status" -ne 2 ]]; then
+                  exit "$status"
+              fi
           fi
 
           # Create and push the new branch from the release branch

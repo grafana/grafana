@@ -159,3 +159,31 @@ func discoveryResource(resource, kind string) apidiscoveryv2.APIResourceDiscover
 		Verbs:        []string{"get", "list"},
 	}
 }
+
+func TestDiscoveryClient_PreferredResources(t *testing.T) {
+	playlists := discoveryResource("playlists", "Playlist")
+	groups := []apidiscoveryv2.APIGroupDiscovery{
+		discoveryGroup("playlist.grafana.app", "v1", apidiscoveryv2.DiscoveryFreshnessCurrent, playlists),
+		discoveryGroup("myorg-withbackend-app", "v0alpha1", apidiscoveryv2.DiscoveryFreshnessStale),
+	}
+
+	t.Run("answers with the groups that did resolve", func(t *testing.T) {
+		c, _ := newTestDiscoveryClient(t, groups...)
+
+		got, err := c.PreferredResources(t.Context(), func(group string) bool {
+			return group == "playlist.grafana.app"
+		})
+		require.NoError(t, err)
+		require.Len(t, got, 1)
+		require.Equal(t, "playlist.grafana.app/v1", got[0].GroupVersion)
+	})
+
+	t.Run("fails when a group the caller asked about is stale", func(t *testing.T) {
+		c, _ := newTestDiscoveryClient(t, groups...)
+
+		_, err := c.PreferredResources(t.Context(), func(group string) bool {
+			return group == "myorg-withbackend-app"
+		})
+		require.ErrorContains(t, err, "stale GroupVersion discovery: myorg-withbackend-app/v0alpha1")
+	})
+}

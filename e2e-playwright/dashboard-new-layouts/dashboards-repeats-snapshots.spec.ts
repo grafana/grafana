@@ -5,7 +5,7 @@ import { type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e'
 import { type SnapshotCreateResponse } from '../../public/app/features/dashboard/services/SnapshotSrv';
 import testV2DashWithRepeats from '../dashboards/V2DashWithRepeats.json';
 
-import { test, expect } from './fixtures';
+import { expect, test } from './fixtures';
 import { flows } from './helpers';
 import { type Panels } from './page-objects';
 
@@ -43,9 +43,6 @@ async function publishDashboardSnapshot(
 }
 
 test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
   viewport: { width: 1920, height: 1080 },
 });
 

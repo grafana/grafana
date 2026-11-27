@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { type DataFrame } from '@grafana/data';
@@ -30,7 +31,9 @@ export function useColumnTransformations(
   api: PanelRuntimeTransformations | undefined,
   owner: string,
   enabled = sourceIndex >= 0,
-  sourceSeries: readonly DataFrame[] | undefined = api?.getSourceSeries(owner)
+  sourceSeries: readonly DataFrame[] | undefined = api?.getSourceSeries(owner),
+  onInteraction?: (action: 'visibility' | 'reorder') => void,
+  displaySeries?: readonly DataFrame[]
 ) {
   const { transformations, update } = useTableTransformations(api, owner);
   useEffect(() => {
@@ -41,12 +44,22 @@ export function useColumnTransformations(
   const sourceFrame = enabled && sourceIndex >= 0 ? sourceSeries?.[sourceIndex] : undefined;
   const context = useMemo(
     () =>
-      sourceFrame && sourceSeries && sourceIndex >= 0 ? prepareColumnContext(sourceSeries, sourceIndex) : undefined,
-    [sourceFrame, sourceSeries, sourceIndex]
+      sourceFrame && sourceSeries && sourceIndex >= 0
+        ? prepareColumnContext(sourceSeries, sourceIndex, displaySeries)
+        : undefined,
+    [sourceFrame, sourceSeries, sourceIndex, displaySeries]
   );
-  // Keep the last non-empty source catalog per frame; ad-hoc output changes are not the comparison baseline.
+  // Keep the last non-empty source catalog per frame as the comparison baseline.
+  // The baseline belongs to one panel, so it is cleared when the table stays mounted
+  // while the dashboard swaps the panel underneath it (for example undoing an edit).
   const previousCatalogs = useRef(new Map<string, string[]>());
+  const catalogsApi = useRef(api);
   useEffect(() => {
+    if (catalogsApi.current !== api) {
+      catalogsApi.current = api;
+      previousCatalogs.current.clear();
+    }
+
     if (!context || context.catalog.length === 0) {
       return;
     }
@@ -61,22 +74,43 @@ export function useColumnTransformations(
           : current
       );
     }
-  }, [context, sourceFrame?.refId, sourceIndex, update]);
+  }, [api, context, sourceFrame?.refId, sourceIndex, update]);
   const onHiddenColumnsChange = useCallback(
     (hidden: ReadonlySet<string>) => {
       if (context) {
-        update((current) => columnTransformations.columnVisibility.write(current, hidden, context));
+        update(
+          (current) => {
+            const next = columnTransformations.columnVisibility.write(current, hidden, context);
+            return isEqual(current, next) ? current : next;
+          },
+          () => onInteraction?.('visibility')
+        );
       }
     },
-    [context, update]
+    [context, update, onInteraction]
   );
   const onColumnOrderChange = useCallback(
     (order: string[]) => {
       if (context) {
-        update((current) => columnTransformations.columnOrder.write(current, order, context));
+        const displayCatalog = context.displayNames ?? context.catalog;
+        let orderChanged = false;
+        update(
+          (current) => {
+            const before = columnTransformations.columnOrder.read(current, context).columnOrder ?? displayCatalog;
+            const next = columnTransformations.columnOrder.write(current, order, context);
+            const after = columnTransformations.columnOrder.read(next, context).columnOrder ?? displayCatalog;
+            orderChanged = !isEqual(before, after);
+            return orderChanged ? next : current;
+          },
+          () => {
+            if (orderChanged) {
+              onInteraction?.('reorder');
+            }
+          }
+        );
       }
     },
-    [context, update]
+    [context, update, onInteraction]
   );
 
   return useMemo(() => {
@@ -90,7 +124,7 @@ export function useColumnTransformations(
 
     return {
       ...columnProps,
-      columnCatalog: columnProps.columnOrder ?? context.catalog,
+      columnCatalog: columnProps.columnOrder ?? context.displayNames ?? context.catalog,
       onColumnOrderChange,
       onHiddenColumnsChange,
     };

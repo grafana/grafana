@@ -448,12 +448,31 @@ func PermissionsForActions(actions []string, scope string) []Permission {
 }
 
 func BackgroundUser(name string, orgID int64, role org.RoleType, permissions []Permission) identity.Requester {
-	return &user.SignedInUser{
-		OrgID:   orgID,
-		OrgRole: role,
-		Login:   "grafana_" + name,
-		Permissions: map[int64]map[string][]string{
-			orgID: GroupScopesByAction(permissions),
+	return &backgroundUser{
+		name: name,
+		SignedInUser: &user.SignedInUser{
+			OrgID:   orgID,
+			OrgRole: role,
+			Login:   "grafana_" + name,
+			Permissions: map[int64]map[string][]string{
+				orgID: GroupScopesByAction(permissions),
+			},
 		},
 	}
+}
+
+type backgroundUser struct {
+	*user.SignedInUser
+	name string
+}
+
+// BackgroundUserName recognizes only requesters created by BackgroundUser.
+// A matching login or missing database ID does not establish an internal caller.
+func BackgroundUserName(requester identity.Requester) (string, bool) {
+	u, ok := requester.(*backgroundUser)
+	if !ok || u == nil || u.SignedInUser == nil {
+		return "", false
+	}
+
+	return u.name, true
 }

@@ -32,8 +32,8 @@ func testManifest(t *testing.T) *app.ManifestData {
 				Served: true,
 				Kinds: []app.ManifestVersionKind{{
 					Kind:   "TestKind",
-					Plural: "TestKinds",
-					Scope:  "Namespaced",
+					Plural: "TestKinds", Resource: "testkinds",
+					Scope: "Namespaced",
 					Schema: testVersionSchema(t, `{
 						"TestKind":{"type":"object","properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},
 						"spec":{"type":"object","additionalProperties":false,"properties":{"testField":{"type":"integer"}},"required":["testField"]}
@@ -45,8 +45,8 @@ func testManifest(t *testing.T) *app.ManifestData {
 				Served: true,
 				Kinds: []app.ManifestVersionKind{{
 					Kind:   "TestKind",
-					Plural: "TestKinds",
-					Scope:  "Namespaced",
+					Plural: "TestKinds", Resource: "testkinds",
+					Scope: "Namespaced",
 					Schema: testVersionSchema(t, `{
 						"TestKind":{"type":"object","properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},
 						"spec":{"type":"object","additionalProperties":false,"properties":{"testField":{"type":"string"},"foo":{"$ref":"#/components/schemas/Foo"}},"required":["testField","foo"]},

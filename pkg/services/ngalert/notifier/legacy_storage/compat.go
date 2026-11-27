@@ -1,7 +1,6 @@
 package legacy_storage
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"maps"
@@ -13,16 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
-
-var NameToUid = models.NameToUid
-
-func UidToName(uid string) (string, error) {
-	data, err := base64.RawURLEncoding.DecodeString(uid)
-	if err != nil {
-		return uid, err
-	}
-	return string(data), nil
-}
 
 func IntegrationToPostableGrafanaReceiver(integration *models.Integration) (*v1.PostableGrafanaReceiver, error) {
 	postable := &v1.PostableGrafanaReceiver{

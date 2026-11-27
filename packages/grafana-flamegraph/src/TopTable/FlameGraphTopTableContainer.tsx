@@ -6,6 +6,7 @@ import {
   applyFieldOverrides,
   type DataFrame,
   type DataLinkClickEvent,
+  type DisplayProcessor,
   type Field,
   FieldType,
   type GrafanaTheme2,
@@ -19,6 +20,7 @@ import {
   type TableCustomCellOptions,
   type TableFieldOptions,
   type TableSortByFieldState,
+  Tooltip,
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
@@ -26,8 +28,11 @@ import { TableNG } from '@grafana/ui/unstable';
 
 import { diffColorBlindColors, diffDefaultColors } from '../FlameGraph/colors';
 import { type FlameGraphDataContainer } from '../FlameGraph/dataTransform';
+import { ProfileTooltipContent } from '../ProfileTooltipContent';
+import { ProfileTooltipDetails } from '../ProfileTooltipDetails';
 import { TOP_TABLE_COLUMN_WIDTH } from '../constants';
 import { type ColorScheme, ColorSchemeDiff, type TableData } from '../types';
+import { getProfileTooltipData } from '../utils';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -274,8 +279,22 @@ function buildTableDataFrame(
       length: symbolField.values.length,
     };
   } else {
-    const selfField = createNumberField('Self', data.selfField.config.unit);
-    const totalField = createNumberField('Total', data.valueField.config.unit);
+    const totalTicks = data.data.length > 0 ? data.getValue(0) : 0;
+    const unitTitle = data.getUnitTitle();
+    const selfField = createProfileValueField({
+      name: 'Self',
+      unit: data.selfField.config.unit,
+      totalTicks,
+      unitTitle,
+      display: data.valueDisplayProcessor,
+    });
+    const totalField = createProfileValueField({
+      name: 'Total',
+      unit: data.valueField.config.unit,
+      totalTicks,
+      unitTitle,
+      display: data.valueDisplayProcessor,
+    });
 
     for (let key in table) {
       actionField.values.push(null);
@@ -317,6 +336,52 @@ function createNumberField(name: string, unit?: string): Field {
       custom: tableFieldOptions,
     },
   };
+}
+
+interface ProfileValueFieldOptions {
+  name: string;
+  unit?: string;
+  totalTicks: number;
+  unitTitle: string;
+  display: DisplayProcessor;
+}
+
+function createProfileValueField({ name, unit, totalTicks, unitTitle, display }: ProfileValueFieldOptions): Field {
+  const field = createNumberField(name, unit);
+  const cellOptions: TableCustomCellOptions = {
+    type: TableCellDisplayMode.Custom,
+    cellComponent: ({ field, value, frame, rowIndex }) => {
+      if (typeof value !== 'number') {
+        return null;
+      }
+
+      const symbolField = frame.fields.find((entry) => entry.name === 'Symbol')!;
+      const selfField = frame.fields.find((entry) => entry.name === 'Self')!;
+      const totalField = frame.fields.find((entry) => entry.name === 'Total')!;
+      const tooltipData = getProfileTooltipData({
+        displayValue: display(totalField.values[rowIndex]),
+        displaySelf: display(selfField.values[rowIndex]),
+        unitTitle,
+        totalTicks,
+      });
+      const percentage = field.name === 'Self' ? tooltipData.percentSelf : tooltipData.percentValue;
+
+      return (
+        <Tooltip
+          content={
+            <ProfileTooltipContent label={symbolField.values[rowIndex]}>
+              <ProfileTooltipDetails data={tooltipData} />
+            </ProfileTooltipContent>
+          }
+        >
+          <span dir="ltr">{percentage.toFixed(2)}%</span>
+        </Tooltip>
+      );
+    },
+  };
+
+  field.config.custom.cellOptions = cellOptions;
+  return field;
 }
 
 const actionColumnWidth = 61;

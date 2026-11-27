@@ -1,10 +1,12 @@
 import { cx } from '@emotion/css';
+import { useMergeRefs } from '@floating-ui/react';
 import { useCombobox } from 'downshift';
 import React, { type ComponentProps, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { pickDataAttributes } from '../../utils/dataAttributes';
 import { useFieldContext } from '../Forms/FieldContext';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
@@ -62,7 +64,12 @@ interface ComboboxStaticProps<T extends string | number>
    * */
   width?: number | 'auto';
 
+  inputRef?: React.Ref<HTMLInputElement>;
+
   ['data-testid']?: string;
+
+  /** Custom data attributes (for example `data-analytics-id`), rendered on the combobox input */
+  [key: `data-${string}`]: string | undefined;
 
   /**
    * Called when the input loses focus.
@@ -166,6 +173,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     'aria-label': ariaLabel,
     'data-testid': dataTestId,
     autoFocus,
+    inputRef: externalInputRef,
     onBlur,
     disabled: disabledProp,
     invalid: invalidProp,
@@ -174,7 +182,9 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     isOpen: isOpenProp,
     onIsOpenChange: onIsOpenChangeProp,
     loading: loadingProp,
+    ...restProps
   } = props;
+  const dataAttributes = pickDataAttributes(restProps);
   const fieldContext = useFieldContext();
   const id = idProp ?? fieldContext.id;
   const disabled = disabledProp ?? fieldContext.disabled;
@@ -362,6 +372,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   });
 
   const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(filteredOptions, isOpen);
+  const mergedInputRef = useMergeRefs([inputRef, externalInputRef]);
 
   const isAutoSize = width === 'auto';
   const InputComponent = isAutoSize ? AutoSizeInput : Input;
@@ -414,7 +425,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         className={styles.input}
         suffix={inputSuffix}
         {...getInputProps({
-          ref: inputRef,
+          ...dataAttributes,
+          ref: mergedInputRef,
           onChange: noop, // Empty onCall to avoid TS error https://github.com/downshift-js/downshift/issues/718
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
           'aria-label': ariaLabel,

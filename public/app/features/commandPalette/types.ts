@@ -1,6 +1,6 @@
 import { type Action, type ActionImpl } from 'kbar';
 
-import { type ManagerKind } from 'app/features/apiserver/types';
+import { ManagerKind } from 'app/features/apiserver/types';
 
 type NotNullable<T> = Exclude<T, null | undefined>;
 
@@ -16,6 +16,7 @@ type RootCommandPaletteAction = Omit<Action, 'parent'> & {
   target?: React.HTMLAttributeAnchorTarget;
   url?: string | URLCallback;
   managedBy?: ManagerKind;
+  tags?: string[];
   /** Stable, language-agnostic section id for analytics (see SECTION_* in values.ts). */
   sectionId?: string;
 };
@@ -37,6 +38,20 @@ type ChildCommandPaletteAction = Action & {
 export function getActionSectionId(action: ActionImpl): string | undefined {
   if ('sectionId' in action && typeof action.sectionId === 'string') {
     return action.sectionId;
+  }
+  return undefined;
+}
+
+export function getActionManagedBy(action: ActionImpl): ManagerKind | undefined {
+  if ('managedBy' in action) {
+    return Object.values(ManagerKind).find((kind) => kind === action.managedBy);
+  }
+  return undefined;
+}
+
+export function getActionTags(action: ActionImpl): string[] | undefined {
+  if ('tags' in action && Array.isArray(action.tags) && action.tags.every((tag) => typeof tag === 'string')) {
+    return action.tags;
   }
   return undefined;
 }

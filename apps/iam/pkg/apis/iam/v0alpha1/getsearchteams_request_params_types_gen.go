@@ -2,8 +2,11 @@
 
 package v0alpha1
 
+// query is the schema of the query parameters, whose fields are the parameters.
+// Deprecated: declare them in parameters, with in: "query".
 type GetSearchTeamsRequestParams struct {
 	Query  *string `json:"query,omitempty"`
+	Member *string `json:"member,omitempty"`
 	Limit  int64   `json:"limit,omitempty"`
 	Offset int64   `json:"offset,omitempty"`
 	Page   int64   `json:"page,omitempty"`

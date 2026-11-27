@@ -111,6 +111,12 @@ type fakeSubscriber struct{}
 
 func (*fakeSubscriber) Enabled() bool { return true }
 
+func (*fakeSubscriber) Started() <-chan struct{} {
+	ch := make(chan struct{})
+	close(ch)
+	return ch
+}
+
 func (*fakeSubscriber) Subscribe(_ context.Context, _ string, _ nats.MessageHandler, _ ...nats.SubscribeOption) (nats.Subscription, error) {
 	return nil, nil
 }

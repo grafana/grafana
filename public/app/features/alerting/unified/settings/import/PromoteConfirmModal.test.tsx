@@ -8,6 +8,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
+import { convertResponse } from '../../mocks/convertApi';
 import {
   SYNC_SUCCEEDED_CONDITION,
   setupAutoSyncConfigWriteError,
@@ -115,11 +116,16 @@ describe('PromoteConfirmModal', () => {
 
   it('previews the merge impact and renamed resources from the dry-run, then promotes on confirm', async () => {
     let promoted = false;
+    const importSources: Array<string | null> = [];
     server.use(
-      http.post(CONVERT_URL, fullDryRunResponse),
-      http.post(PROMOTE_URL, () => {
+      http.post(CONVERT_URL, ({ request }) => {
+        importSources.push(request.headers.get('X-Grafana-Alerting-Import-Source'));
+        return fullDryRunResponse();
+      }),
+      http.post(PROMOTE_URL, ({ request }) => {
+        importSources.push(request.headers.get('X-Grafana-Alerting-Import-Source'));
         promoted = true;
-        return HttpResponse.json({ status: 'success' });
+        return HttpResponse.json(convertResponse());
       })
     );
 
@@ -147,13 +153,15 @@ describe('PromoteConfirmModal', () => {
 
     await waitFor(() => expect(onDismiss).toHaveBeenCalled());
     expect(promoted).toBe(true);
+    // Both the preview dry run and the promote come from the settings page.
+    expect(importSources).toEqual(['import_settings', 'import_settings']);
   });
 
   it('clears the configured auto-sync datasource after promoting a sync-managed config', async () => {
     const { getStored } = setupStatefulAutoSyncConfig(server, { specUid: 'mimir-uid' });
     server.use(
       http.post(CONVERT_URL, fullDryRunResponse),
-      http.post(PROMOTE_URL, () => HttpResponse.json({}))
+      http.post(PROMOTE_URL, () => HttpResponse.json(convertResponse()))
     );
 
     const onDismiss = jest.fn();
@@ -173,7 +181,7 @@ describe('PromoteConfirmModal', () => {
     const { patchSpy } = setupStatefulAutoSyncConfig(server, { specUid: 'mimir-uid' });
     server.use(
       http.post(CONVERT_URL, fullDryRunResponse),
-      http.post(PROMOTE_URL, () => HttpResponse.json({}))
+      http.post(PROMOTE_URL, () => HttpResponse.json(convertResponse()))
     );
 
     const onDismiss = jest.fn();
@@ -189,7 +197,7 @@ describe('PromoteConfirmModal', () => {
   it('reports a promote that succeeded but could not clear auto-sync as a warning, not a failure', async () => {
     server.use(
       http.post(CONVERT_URL, fullDryRunResponse),
-      http.post(PROMOTE_URL, () => HttpResponse.json({}))
+      http.post(PROMOTE_URL, () => HttpResponse.json(convertResponse()))
     );
     setupAutoSyncConfigWriteError(server, { code: 500, message: 'etcdserver: request timed out' });
 
@@ -219,7 +227,7 @@ describe('PromoteConfirmModal', () => {
     });
     server.use(
       http.post(CONVERT_URL, fullDryRunResponse),
-      http.post(PROMOTE_URL, () => HttpResponse.json({}))
+      http.post(PROMOTE_URL, () => HttpResponse.json(convertResponse()))
     );
 
     const onDismiss = jest.fn();
@@ -238,7 +246,9 @@ describe('PromoteConfirmModal', () => {
   });
 
   it('surfaces a validation error and keeps promote disabled when the dry-run is invalid', async () => {
-    server.use(http.post(CONVERT_URL, () => HttpResponse.json({ status: 'error', error: 'invalid config' })));
+    server.use(
+      http.post(CONVERT_URL, () => HttpResponse.json(convertResponse({ status: 'error', error: 'invalid config' })))
+    );
 
     const onDismiss = jest.fn();
     render(<PromoteConfirmModal stagedConfig={stagedConfig} onDismiss={onDismiss} />);
@@ -255,7 +265,7 @@ describe('PromoteConfirmModal', () => {
   ])('allows promote when the dry-run preview is blocked by %s (%d)', async (_reason, status) => {
     server.use(
       http.post(CONVERT_URL, () => HttpResponse.json({ message: 'blocked' }, { status })),
-      http.post(PROMOTE_URL, () => HttpResponse.json({ status: 'success' }))
+      http.post(PROMOTE_URL, () => HttpResponse.json(convertResponse()))
     );
 
     const onDismiss = jest.fn();

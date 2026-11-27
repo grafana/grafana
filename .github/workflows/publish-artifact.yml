@@ -76,7 +76,39 @@ jobs:
             echo "has-artifacts=true" >> "$GITHUB_OUTPUT"
           fi
       - name: Upload artifacts
+        id: upload-artifacts
         if: steps.coalesce.outputs.has-artifacts == 'true'
+        continue-on-error: true
+        uses: grafana/shared-workflows/actions/push-to-gcs@main
+        with:
+          bucket: ${{ inputs.bucket }}
+          environment: ${{ inputs.environment }}
+          parent: false
+          path: out
+          bucket_path: ${{ inputs.bucket-path }}
+          service_account: ${{ inputs.service-account }}
+          gzip: false
+      - name: Wait before retrying upload
+        if: steps.upload-artifacts.outcome == 'failure'
+        run: sleep 10
+      - name: Upload artifacts (retry 1)
+        id: upload-artifacts-retry
+        if: steps.upload-artifacts.outcome == 'failure'
+        continue-on-error: true
+        uses: grafana/shared-workflows/actions/push-to-gcs@main
+        with:
+          bucket: ${{ inputs.bucket }}
+          environment: ${{ inputs.environment }}
+          parent: false
+          path: out
+          bucket_path: ${{ inputs.bucket-path }}
+          service_account: ${{ inputs.service-account }}
+          gzip: false
+      - name: Wait before final upload attempt
+        if: steps.upload-artifacts-retry.outcome == 'failure'
+        run: sleep 30
+      - name: Upload artifacts (retry 2)
+        if: steps.upload-artifacts-retry.outcome == 'failure'
         uses: grafana/shared-workflows/actions/push-to-gcs@main
         with:
           bucket: ${{ inputs.bucket }}

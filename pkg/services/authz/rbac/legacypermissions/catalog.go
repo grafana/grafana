@@ -8,8 +8,9 @@ import (
 )
 
 // RoleCatalog holds the current built-in and plugin grants for each basic role.
-// Registration publishes complete snapshots; enumeration never calls the service
-// that registered them. Readers and writers cannot mutate each other's slices.
+// Registration publishes once per role-update critical section. A concurrent
+// reader sees the old or new batch, without waiting for registration or SQL
+// seeding. Readers and writers cannot mutate each other's slices.
 type RoleCatalog struct {
 	mu    sync.RWMutex
 	roles map[string][]ac.Permission

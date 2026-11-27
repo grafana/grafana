@@ -5,7 +5,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { type NavModelItem, PageLayoutType } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { contextSrv, RedirectToUrlKey } from 'app/core/services/context_srv';
 import { getLoginSectionTitle } from 'app/core/services/loginSectionTitle';
@@ -66,6 +66,12 @@ describe('Render', () => {
 
     expect(screen.getByRole('heading', { name: 'pageNav title' })).toBeInTheDocument();
     expect(screen.getAllByRole('tab').length).toBe(2);
+  });
+
+  it('places header actions in a row that wraps', () => {
+    setup({ pageNav, actions: <button type="button">Header action</button> });
+
+    expect(screen.getByRole('button', { name: 'Header action' }).parentElement).toHaveStyle({ flexWrap: 'wrap' });
   });
 
   it('should update chrome with section, pageNav and layout', async () => {

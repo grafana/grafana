@@ -1,15 +1,18 @@
 import { Provider } from 'react-redux';
-import { render, testWithFeatureToggles } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import { OrgRole } from '@grafana/data';
+import { type RulesSourceDataSource } from '@grafana/alerting/internal';
+import { type DataSourceInstanceSettings, OrgRole } from '@grafana/data';
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { type DataSourcesForRulesResult } from '../../hooks/useDataSourcesForRules';
 import { setupMswServer } from '../../mockApi';
-import { grantUserPermissions, grantUserRole, mockUnifiedAlertingStore } from '../../mocks';
+import { grantUserPermissions, grantUserRole } from '../../mocks';
 import { mimirDataSource } from '../../mocks/server/configure';
 import { setupAutoSyncConfig } from '../../mocks/server/handlers/k8s/config.k8s';
+import { mockUnifiedAlertingStore } from '../../testSetup/mockUnifiedAlertingStore';
 
 import { CloudRules } from './CloudRules';
 
@@ -23,7 +26,11 @@ const ui = {
   migrateButton: byRole('link', { name: /import to grafana-managed rules/i }),
 };
 
-function renderWithCloudResults() {
+function toRulesSourceDataSource({ uid, name, meta }: DataSourceInstanceSettings): RulesSourceDataSource {
+  return { uid, type: 'prometheus', name, meta, managesAlerts: true, allowedAsRecordingRuleTarget: true };
+}
+
+function renderWithCloudResults(rulesSources?: Partial<DataSourcesForRulesResult>) {
   const { dataSource } = mimirDataSource();
   const store = mockUnifiedAlertingStore({
     promRules: {
@@ -32,7 +39,11 @@ function renderWithCloudResults() {
   });
   return render(
     <Provider store={store}>
-      <CloudRules namespaces={[]} expandAll={false} />
+      <CloudRules
+        namespaces={[]}
+        expandAll={false}
+        rulesSources={{ items: [toRulesSourceDataSource(dataSource)], isLoading: false, ...rulesSources }}
+      />
     </Provider>
   );
 }
@@ -41,8 +52,6 @@ describe('CloudRules — Mimir AM auto-sync', () => {
   beforeEach(() => {
     grantUserRole(OrgRole.Admin);
     grantUserPermissions([
-      // External read is required for getRulesDataSources() to include the Mimir DS.
-      AccessControlAction.AlertingRuleExternalRead,
       // Both grafana-managed perms are required to enable canMigrateToGMA.
       AccessControlAction.AlertingRuleCreate,
       AccessControlAction.AlertingProvisioningSetStatus,
@@ -67,5 +76,25 @@ describe('CloudRules — Mimir AM auto-sync', () => {
       expect(btn).not.toHaveAttribute('aria-disabled', 'true');
       expect(requestSpy).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('CloudRules — rules source list', () => {
+  it('says that no data sources are configured when the list is empty', () => {
+    renderWithCloudResults({ items: [] });
+
+    expect(screen.getByText('There are no Prometheus or Loki data sources configured')).toBeInTheDocument();
+  });
+
+  it('does not say that no data sources are configured while the list loads', () => {
+    renderWithCloudResults({ items: [], isLoading: true });
+
+    expect(screen.queryByText('There are no Prometheus or Loki data sources configured')).not.toBeInTheDocument();
+  });
+
+  it('does not say that no data sources are configured when the list fails to load', () => {
+    renderWithCloudResults({ items: [], error: new Error('Failed to fetch') });
+
+    expect(screen.queryByText('There are no Prometheus or Loki data sources configured')).not.toBeInTheDocument();
   });
 });

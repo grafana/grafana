@@ -1,5 +1,5 @@
 import { apps } from '../test-fixtures/config.apps';
-import { v0alpha1Response } from '../test-fixtures/v0alpha1Response';
+import { myOrgTestAppMeta, v0alpha1Response } from '../test-fixtures/v0alpha1Response';
 
 import { v0alpha1AppMapper } from './v0alpha1AppMapper';
 
@@ -8,6 +8,27 @@ const PLUGIN_IDS = v0alpha1Response.items
   .map((i) => ({ pluginId: i.spec.pluginJson.id }));
 
 describe('v0alpha1AppMapper', () => {
+  it('preserves declared skills in app metadata', () => {
+    const meta = {
+      ...myOrgTestAppMeta,
+      spec: {
+        ...myOrgTestAppMeta.spec,
+        pluginJson: {
+          ...myOrgTestAppMeta.spec.pluginJson,
+          extensions: {
+            skills: { 'investigate-errors': { path: 'skills/investigate-errors/SKILL.md' } },
+          },
+        },
+      },
+    };
+
+    const result = v0alpha1AppMapper({ ...v0alpha1Response, items: [meta] });
+
+    expect(result[meta.spec.pluginJson.id].extensions.skills).toEqual({
+      'investigate-errors': { path: 'skills/investigate-errors/SKILL.md' },
+    });
+  });
+
   describe.each(PLUGIN_IDS)('when called for pluginId:$pluginId', ({ pluginId }) => {
     it('should map id property correctly', () => {
       const result = v0alpha1AppMapper(v0alpha1Response);
@@ -77,7 +98,7 @@ describe('v0alpha1AppMapper', () => {
   it('should only map specs with type app', () => {
     const result = v0alpha1AppMapper(v0alpha1Response);
 
-    expect(v0alpha1Response.items).toHaveLength(38);
+    expect(v0alpha1Response.items).toHaveLength(37);
     expect(Object.keys(result)).toHaveLength(4);
     expect(Object.keys(result)).toEqual(Object.keys(apps));
   });

@@ -121,6 +121,12 @@ func newPluginManifestsClient(section *setting.DynamicSection, prefix string) (*
 // token on every request, unless they set discovery_auth = none.
 func NewCloudRoutesLoader(cfg *setting.Cfg, deps PluginDependencies) (RoutesLoader, error) {
 	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
+	if cloudAppSettingsEnabled(cfg) {
+		if section.Key("plugins_url").MustString("") == "" || deps.Settings.LegacyStore == nil || deps.AccessClient == nil {
+			return nil, fmt.Errorf("cloud_router: app_settings_plugins requires plugins_url, a legacy settings provider, and an AuthZ client for app access")
+		}
+	}
+	deps.Cfg = cfg
 
 	aggregateTargetConfigs, err := parseAggregateTargets(cfg)
 	if err != nil {
@@ -171,8 +177,41 @@ func NewCloudRoutesLoader(cfg *setting.Cfg, deps PluginDependencies) (RoutesLoad
 		}
 	}
 
+	aggregateTargets, err := buildAggregateTargets(aggregateTargetConfigs, tokenExchanger)
+	if err != nil {
+		return nil, err
+	}
+
+	var singleTenantFallback *singleTenantFallback
+	if singleTenantDiscoveryURL != "" {
+		discoURL, err := url.Parse(singleTenantDiscoveryURL)
+		if err != nil {
+			return nil, fmt.Errorf("%s: st_discovery_url: %w", cloudRouterSection, err)
+		}
+
+		singleTenantFallback, err = newSingleTenantFallback(singleTenantFallbackOptions{
+			cacheSize:           section.Key("st_cache_size").MustInt(defaultSingleTenantCacheSize),
+			breakerCacheSize:    section.Key("st_breaker_cache_size").MustInt(defaultSingleTenantBreakerCacheSize),
+			lookupRate:          section.Key("st_lookup_rate").MustFloat64(defaultSingleTenantLookupRate),
+			lookupBurst:         section.Key("st_lookup_burst").MustInt(defaultSingleTenantLookupBurst),
+			discoveryCacheBytes: section.Key("st_discovery_cache_bytes").MustInt(defaultSingleTenantDiscoveryCacheBytes),
+			resolveHost:         newGComURLResolver(cfg.GrafanaComAPIURL, cfg.GrafanaComSSOAPIToken),
+			discoveryHost:       discoURL,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("%s: st_discovery_url: %w", cloudRouterSection, err)
+		}
+	}
+
+	return newCloudLoader(aggregateTargets, targets, singleTenantFallback)
+}
+
+// buildAggregateTargets builds the polled targets for configs. tokenExchanger
+// signs the discovery polls of every target that does not use anonymous
+// discovery.
+func buildAggregateTargets(configs []aggregateTargetConfig, tokenExchanger authnlib.TokenExchanger) ([]*aggregateTarget, error) {
 	var aggregateTargets []*aggregateTarget
-	for _, targetCfg := range aggregateTargetConfigs {
+	for _, targetCfg := range configs {
 		if targetCfg.Audience == "" && !targetCfg.anonymousDiscovery() {
 			return nil, fmt.Errorf("%s%s: audience is required when url is set", aggregateSectionPrefix, targetCfg.Name)
 		}
@@ -205,29 +244,7 @@ func NewCloudRoutesLoader(cfg *setting.Cfg, deps PluginDependencies) (RoutesLoad
 		}
 		aggregateTargets = append(aggregateTargets, target)
 	}
-
-	var singleTenantFallback *singleTenantFallback
-	if singleTenantDiscoveryURL != "" {
-		discoURL, err := url.Parse(singleTenantDiscoveryURL)
-		if err != nil {
-			return nil, fmt.Errorf("%s: st_discovery_url: %w", cloudRouterSection, err)
-		}
-
-		singleTenantFallback, err = newSingleTenantFallback(singleTenantFallbackOptions{
-			cacheSize:           section.Key("st_cache_size").MustInt(defaultSingleTenantCacheSize),
-			breakerCacheSize:    section.Key("st_breaker_cache_size").MustInt(defaultSingleTenantBreakerCacheSize),
-			lookupRate:          section.Key("st_lookup_rate").MustFloat64(defaultSingleTenantLookupRate),
-			lookupBurst:         section.Key("st_lookup_burst").MustInt(defaultSingleTenantLookupBurst),
-			discoveryCacheBytes: section.Key("st_discovery_cache_bytes").MustInt(defaultSingleTenantDiscoveryCacheBytes),
-			resolveHost:         newGComURLResolver(cfg.GrafanaComAPIURL, cfg.GrafanaComSSOAPIToken),
-			discoveryHost:       discoURL,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("%s: st_discovery_url: %w", cloudRouterSection, err)
-		}
-	}
-
-	return newCloudLoader(aggregateTargets, targets, singleTenantFallback)
+	return aggregateTargets, nil
 }
 
 // cloudLoader is a RoutesLoader and a dskit service. It merges the configured
@@ -434,10 +451,11 @@ const aggregateMaxIdleConnsPerHost = 100
 // aggregateTokenWrapper picks the header for the exchanged CAP token on a
 // target's discovery polls.
 func aggregateTokenWrapper(targetCfg aggregateTargetConfig, tokenExchanger authnlib.TokenExchanger) transport.WrapperFunc {
+	namespace := cmp.Or(targetCfg.TokenNamespace, clientauth.WildcardNamespace)
 	if targetCfg.bearerDiscovery() {
-		return clientauth.NewStaticTokenExchangeAuthorizationTransportWrapper(tokenExchanger, targetCfg.Audience, clientauth.WildcardNamespace)
+		return clientauth.NewStaticTokenExchangeAuthorizationTransportWrapper(tokenExchanger, targetCfg.Audience, namespace)
 	}
-	return clientauth.NewStaticTokenExchangeTransportWrapper(tokenExchanger, targetCfg.Audience, clientauth.WildcardNamespace)
+	return clientauth.NewStaticTokenExchangeTransportWrapper(tokenExchanger, targetCfg.Audience, namespace)
 }
 
 // newAggregateBaseTransport returns a fresh base transport for one aggregate

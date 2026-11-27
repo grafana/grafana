@@ -12,12 +12,6 @@ import { buildDashboardVariableValueSpec } from './fixtures/dashboard-variable-v
 const HIDDEN_WRAPPER_SELECTOR = '.dashboard-visible-hidden-element';
 const HIDDEN_ICON_TEST_ID = 'icon-eye-slash';
 
-test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
-});
-
 test.describe(
   'Dashboard - Conditional Rendering - Rules creation',
   {

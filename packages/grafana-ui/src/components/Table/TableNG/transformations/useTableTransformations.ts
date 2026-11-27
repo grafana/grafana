@@ -1,4 +1,4 @@
-import { useCallback, useState, useSyncExternalStore } from 'react';
+import { useCallback, useRef, useState, useSyncExternalStore } from 'react';
 
 import { type DataTransformerConfig } from '@grafana/data';
 
@@ -7,7 +7,8 @@ import { type PanelRuntimeTransformations } from '../../../PanelChrome/PanelCont
 const EMPTY_TRANSFORMATIONS: readonly DataTransformerConfig[] = [];
 
 export type UpdateTransformations = (
-  change: (current: readonly DataTransformerConfig[]) => readonly DataTransformerConfig[]
+  change: (current: readonly DataTransformerConfig[]) => readonly DataTransformerConfig[],
+  onChanged?: () => void
 ) => void;
 
 export function useTableTransformations(
@@ -20,16 +21,23 @@ export function useTableTransformations(
     useCallback(() => api?.get(owner) ?? EMPTY_TRANSFORMATIONS, [api, owner])
   );
   const [local, setLocal] = useState<readonly DataTransformerConfig[]>(EMPTY_TRANSFORMATIONS);
+  const localRef = useRef(local);
   const update: UpdateTransformations = useCallback(
-    (change) => {
+    (change, onChanged) => {
       if (!api && localFallback) {
-        setLocal(change);
+        const next = change(localRef.current);
+        if (next !== localRef.current) {
+          localRef.current = next;
+          setLocal(next);
+          onChanged?.();
+        }
       } else if (api) {
         // Read at write time so successive actions cannot overwrite one another.
         const current = api.get(owner);
         const next = change(current);
         if (next !== current) {
           api.set(owner, next);
+          onChanged?.();
         }
       }
     },

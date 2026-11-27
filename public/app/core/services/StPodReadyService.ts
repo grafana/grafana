@@ -1,9 +1,8 @@
 import { BehaviorSubject } from 'rxjs';
 
 import { useObservable } from '@grafana/data/unstable';
-import { getBackendSrv, isFetchError } from '@grafana/runtime';
 
-import { ST_POD_POLL_INTERVAL_MS, ST_POD_READY_TTL_MS, ST_POD_TIMEOUT_MS } from './stPodReadyConstants';
+import { DEFAULT_ST_POD_POLL_INTERVAL_MS, ST_POD_READY_TTL_MS, ST_POD_TIMEOUT_MS } from './stPodReadyConstants';
 
 export enum StPodStatus {
   Unknown = 'unknown',
@@ -11,26 +10,29 @@ export enum StPodStatus {
   Ready = 'ready',
   Timeout = 'timeout',
   Error = 'error',
+  Captcha = 'captcha',
 }
 
-const POD_BUSY_STATUS = 503;
+enum GatewayState {
+  Active = 'active',
+  Starting = 'starting',
+  Migrating = 'migrating',
+  Restoring = 'restoring',
+  Archiving = 'archiving',
+  Suspended = 'suspended',
+  Migrated = 'migrated',
+  Deleting = 'deleting',
+  Outdated = 'outdated',
+  Unavailable = 'unavailable',
+  Captcha = 'captcha',
+  NotFound = 'not_found',
+  Error = 'error',
+}
 
 interface PendingResolver {
   promise: Promise<void>;
   resolve: () => void;
 }
-
-interface HealthResponse {
-  database?: string;
-}
-
-const createPending = (): PendingResolver => {
-  let resolve!: () => void;
-  const promise = new Promise<void>((res) => {
-    resolve = res;
-  });
-  return { promise, resolve };
-};
 
 export class StPodReadyService {
   readonly state = new BehaviorSubject<StPodStatus>(StPodStatus.Unknown);
@@ -40,6 +42,7 @@ export class StPodReadyService {
   private pollAbort: AbortController | null = null;
   private pending: PendingResolver | null = null;
   private readyAt: number | null = null;
+  private nextPollDelayMs: number = DEFAULT_ST_POD_POLL_INTERVAL_MS;
 
   getStatus(): StPodStatus {
     return this.state.getValue();
@@ -51,7 +54,8 @@ export class StPodReadyService {
   }
 
   getReadyPromise(): Promise<void> {
-    if (this.state.getValue() === StPodStatus.Ready) {
+    const status = this.state.getValue();
+    if (status === StPodStatus.Ready || status === StPodStatus.Captcha) {
       return Promise.resolve();
     }
     return this.ensurePending().promise;
@@ -72,13 +76,13 @@ export class StPodReadyService {
     this.beginPolling();
   }
 
-  private isPolling(): boolean {
-    return this.timeoutTimer !== null || this.pollTimer !== null || this.pollAbort !== null;
-  }
-
   /** Test-only teardown. Not called by the production lifecycle. */
   stop(): void {
     this.clearTimers();
+  }
+
+  private isPolling(): boolean {
+    return this.timeoutTimer !== null || this.pollTimer !== null || this.pollAbort !== null;
   }
 
   private expireStaleReady(): void {
@@ -95,6 +99,7 @@ export class StPodReadyService {
   private reset(): void {
     this.clearTimers();
     this.readyAt = null;
+    this.nextPollDelayMs = DEFAULT_ST_POD_POLL_INTERVAL_MS;
     this.resolvePending();
     this.state.next(StPodStatus.Unknown);
   }
@@ -126,27 +131,39 @@ export class StPodReadyService {
     const abort = new AbortController();
     this.pollAbort = abort;
     try {
-      const response: HealthResponse = await getBackendSrv().get('/api/health', undefined, undefined, {
-        showErrorAlert: false,
-        abortSignal: abort.signal,
+      const response = await fetch('/_/status', {
+        signal: abort.signal,
+        cache: 'no-store',
+        credentials: 'omit',
       });
       if (abort.signal.aborted) {
         return;
       }
-      if (response?.database === 'ok') {
-        this.transitionToReady();
-      } else {
-        this.transitionToBusy();
+
+      this.nextPollDelayMs = parseRetryAfterMs(response.headers.get('retry-after'));
+
+      const gatewayStatus = await parseGatewayStatus(response);
+      const mapped = mapGatewayStatus(gatewayStatus, response.status);
+      switch (mapped) {
+        case StPodStatus.Ready:
+          this.transitionToReady();
+          break;
+        case StPodStatus.Waiting:
+          this.transitionToBusy();
+          break;
+        case StPodStatus.Captcha:
+          this.transitionToCaptcha();
+          break;
+        case StPodStatus.Error:
+        default:
+          this.transitionToError();
+          break;
       }
     } catch (err) {
       if (abort.signal.aborted) {
         return;
       }
-      if (isFetchError(err) && err.status === POD_BUSY_STATUS) {
-        this.transitionToBusy();
-      } else {
-        this.transitionToError();
-      }
+      this.transitionToError();
     } finally {
       if (this.pollAbort === abort) {
         this.pollAbort = null;
@@ -157,10 +174,10 @@ export class StPodReadyService {
 
   private schedulePoll(): void {
     const status = this.state.getValue();
-    if (status === StPodStatus.Ready || status === StPodStatus.Error) {
+    if (status === StPodStatus.Ready || status === StPodStatus.Error || status === StPodStatus.Captcha) {
       return;
     }
-    this.pollTimer = setTimeout(() => this.poll(), ST_POD_POLL_INTERVAL_MS);
+    this.pollTimer = setTimeout(() => this.poll(), this.nextPollDelayMs);
   }
 
   private transitionToReady(): void {
@@ -201,6 +218,16 @@ export class StPodReadyService {
     this.clearTimers();
   }
 
+  private transitionToCaptcha(): void {
+    if (this.state.getValue() === StPodStatus.Captcha) {
+      return;
+    }
+    this.readyAt = null;
+    this.state.next(StPodStatus.Captcha);
+    this.resolvePending();
+    this.clearTimers();
+  }
+
   private clearTimers(): void {
     if (this.pollTimer !== null) {
       clearTimeout(this.pollTimer);
@@ -215,4 +242,61 @@ export class StPodReadyService {
       this.pollAbort = null;
     }
   }
+}
+
+const WAITING_GATEWAY_STATES = new Set<string>([
+  GatewayState.Starting,
+  GatewayState.Migrating,
+  GatewayState.Restoring,
+  GatewayState.Archiving,
+  GatewayState.Migrated,
+  GatewayState.Unavailable,
+]);
+
+function createPending(): PendingResolver {
+  let resolve!: () => void;
+  const promise = new Promise<void>((res) => {
+    resolve = res;
+  });
+  return { promise, resolve };
+}
+
+/** @internal exported for unit tests only */
+export function mapGatewayStatus(raw: string | undefined, httpStatus: number): StPodStatus {
+  if (httpStatus >= 400) {
+    return StPodStatus.Error;
+  }
+  if (raw === GatewayState.Active) {
+    return StPodStatus.Ready;
+  }
+  if (raw === GatewayState.Captcha) {
+    return StPodStatus.Captcha;
+  }
+  if (raw !== undefined && WAITING_GATEWAY_STATES.has(raw)) {
+    return StPodStatus.Waiting;
+  }
+  return StPodStatus.Error;
+}
+
+/** @internal exported for unit tests only */
+export function parseRetryAfterMs(raw: string | null): number {
+  if (raw === null || !/^\d+$/.test(raw)) {
+    return DEFAULT_ST_POD_POLL_INTERVAL_MS;
+  }
+  const seconds = Number(raw);
+  if (seconds <= 0) {
+    return DEFAULT_ST_POD_POLL_INTERVAL_MS;
+  }
+  return seconds * 1000;
+}
+
+/** @internal exported for unit tests only */
+export async function parseGatewayStatus(response: Response): Promise<string | undefined> {
+  try {
+    const { status }: { status?: unknown } = await response.json();
+    if (typeof status === 'string') {
+      return status;
+    }
+  } catch {}
+  return undefined;
 }

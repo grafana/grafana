@@ -25,4 +25,20 @@ func TestDependencyMap(t *testing.T) {
 			require.True(t, found, "module %s is not a dependency of any other module", module)
 		}
 	})
+
+	t.Run("the NATS bus starts before the API server", func(t *testing.T) {
+		deps := dependencyMap()
+		require.Subset(t, deps[GrafanaAPIServer], []string{NATSPublisher, NATSSubscriber})
+		require.Equal(t, []string{NATSServer}, deps[NATSSubscriber])
+		require.Equal(t, []string{NATSServer}, deps[NATSPublisher])
+	})
+
+	for _, module := range []string{ProvisioningConnectionController, ProvisioningRepositoryController, ProvisioningJobQueue, ProvisioningBootstrap} {
+		t.Run(module+" waits for the API server but not for classic provisioning", func(t *testing.T) {
+			deps := dependencyMap()
+			require.Equal(t, []string{GrafanaAPIServer}, deps[module])
+			require.Contains(t, deps[BackgroundServices], module)
+			require.NotContains(t, deps[Core], module)
+		})
+	}
 }

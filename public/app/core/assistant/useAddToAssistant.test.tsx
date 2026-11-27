@@ -6,7 +6,6 @@ import {
   EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY,
   getComponentIdFromComponentMeta,
 } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarUtils';
-import { setFullscreenWorkspaceActive } from 'app/core/components/AppChrome/FullscreenWorkspace/fullscreenWorkspaceState';
 
 import { useAddToAssistant } from './useAddToAssistant';
 
@@ -36,22 +35,19 @@ beforeEach(() => {
 afterEach(() => {
   store.delete(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
   store.delete('grafana-assistant-active-chat-id');
-  setFullscreenWorkspaceActive(false);
 });
 
 it.each([
-  ['closed', undefined, false, undefined],
-  ['sidebar', 'grafana-assistant-app', false, 'active-chat'],
-  ['fullscreen', undefined, true, 'active-chat'],
-  ['other plugin', 'grafana-pathfinder-app', false, undefined],
-])('selects conversation at invocation when %s', (_, pluginId, fullscreen, chatId) => {
+  ['closed', undefined, undefined],
+  ['sidebar', 'grafana-assistant-app', 'active-chat'],
+  ['other plugin', 'grafana-pathfinder-app', undefined],
+])('selects conversation at invocation when %s', (_, pluginId, chatId) => {
   const { result } = renderHook(() => useAddToAssistant({ origin: 'grafana/test' }));
   // Visibility and active chat can change after the menu renders.
   store.set('grafana-assistant-active-chat-id', 'active-chat');
   if (pluginId) {
     store.set(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY, getComponentIdFromComponentMeta(pluginId, 'Assistant'));
   }
-  setFullscreenWorkspaceActive(fullscreen);
   result.current.addToAssistant(context);
   expect(openAssistant).toHaveBeenCalledWith({
     origin: 'grafana/test',

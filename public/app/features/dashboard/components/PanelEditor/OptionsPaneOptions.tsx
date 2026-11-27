@@ -50,7 +50,7 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
 
   const mainBoxElements: React.ReactNode[] = [];
   const isSearching = searchQuery.length > 0;
-  const optionRadioFilters = useMemo(getOptionRadioFilters, []);
+  const [optionRadioFilters] = useState(getOptionRadioFilters);
 
   const allOptions = isPanelModelLibraryPanel(panel)
     ? [libraryPanelOptions, panelFrameOptions, ...vizOptions]

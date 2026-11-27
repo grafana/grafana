@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
-import { lazy, Suspense, useEffect, useMemo, useState, type Ref } from 'react';
-import { useDebounce, useMeasure } from 'react-use';
+import { lazy, memo, Suspense, useEffect, useMemo, useState, type Ref } from 'react';
+import { useDebounce } from 'react-use';
 
 import {
   CoreApp,
@@ -39,11 +39,14 @@ import { TextNGFooter } from './TextNGFooter';
 import { TextNGHtmlView } from './TextNGHtmlView';
 import { TextNGTruncationNotice } from './TextNGTruncationNotice';
 import { type TextSandboxProps } from './TextSandbox';
+import { TextSandboxConsentNotice } from './TextSandboxConsentNotice';
 import { type TextNGEditorChange } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
+import { useTextEditorChangeReporter } from './editor/useTextEditorChangeReporter';
 import { DEFAULT_VIEW_MODE, type ViewMode } from './editor/viewMode';
 import { usePagination } from './pagination';
 import { catchTemplateError, renderContent, type RenderedContent, type RowWindow } from './renderContent';
+import { useTextPanelHeight } from './useTextPanelHeight';
 import { useThemedReplaceVariables } from './useThemedReplaceVariables';
 import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat, isTextNewFeaturesEnabled } from './utils';
 import { getTextVariableSuggestions } from './variableSuggestions';
@@ -78,9 +81,13 @@ export function TextNGPanel(props: Props) {
   } = props;
   const styles = useStyles2(getStyles);
   const replaceVariables = useThemedReplaceVariables(props.replaceVariables);
+  const reportEditorChange = useTextEditorChangeReporter(id);
   const isEditing = app === CoreApp.PanelEditor;
   // Repeated copies share `id`. The dashboard gives each copy its own id in the request.
-  const consent = { panelId: data.request?.panelId ?? id, panelTitle: title, dashboardUid: data.request?.dashboardUID };
+  const consent = useMemo(
+    () => ({ panelId: data.request?.panelId ?? id, panelTitle: title, dashboardUid: data.request?.dashboardUID }),
+    [data.request?.panelId, data.request?.dashboardUID, id, title]
+  );
   const content = options.content ?? defaultOptions.content ?? '';
   // Gated here and not only in the options pane: a panel saved while the flag was on
   // still carries its per-row mode, and the pane cannot withhold what is already set.
@@ -273,7 +280,11 @@ export function TextNGPanel(props: Props) {
         series={series}
         replaceVariables={replaceVariables}
         suggestions={suggestions}
-        onChange={(change) => onOptionsChange(applyEditorChange(options, change))}
+        onChange={(change) => {
+          onOptionsChange(applyEditorChange(options, change));
+          // `options` is still the state before this change, which is what the report compares against.
+          reportEditorChange(options, change);
+        }}
         view={view}
         onViewChange={setView}
         transparent={transparent}
@@ -297,8 +308,17 @@ export function TextNGPanel(props: Props) {
       <TextNGFooter left={frameSelector} center={paginationBar} right={truncationNotice} />
     ) : null;
 
+  // Publishes nothing visible itself; warns through the shared panel status UI
+  // while sandboxed content is blocked pending viewer consent.
+  const consentNotice = <TextSandboxConsentNotice consent={consent} />;
+
   if (!panelFooter) {
-    return panel;
+    return (
+      <>
+        {panel}
+        {consentNotice}
+      </>
+    );
   }
 
   // Fit-content: no fixed-height flex wrapper — the footer sits below the panel
@@ -309,6 +329,7 @@ export function TextNGPanel(props: Props) {
       <Stack direction="column" gap={1}>
         {panel}
         {panelFooter}
+        {consentNotice}
       </Stack>
     );
   }
@@ -319,6 +340,7 @@ export function TextNGPanel(props: Props) {
         {panel}
       </Stack>
       {panelFooter}
+      {consentNotice}
     </Stack>
   );
 }
@@ -341,7 +363,8 @@ interface TextNGViewProps extends ProcessedContent {
   consent?: TextSandboxProps['consent'];
 }
 
-function TextNGView({
+// Panel width changes flow through CSS; avoid rerendering unchanged content on every resize event.
+const TextNGView = memo(function TextNGView({
   mode,
   content,
   error,
@@ -354,7 +377,7 @@ function TextNGView({
 }: TextNGViewProps) {
   const styles = useStyles2(getStyles);
   // Measured on the panel's own box, which the frame cannot resize, so the fill cannot feed back.
-  const [fillRef, { height: fillHeight }] = useMeasure<HTMLDivElement>();
+  const [fillRef, fillHeight] = useTextPanelHeight();
 
   if (error) {
     return <Alert severity="error" title={error} data-testid="TextNGPanel-error" />;
@@ -405,7 +428,7 @@ function TextNGView({
       </ScrollContainer>
     </div>
   );
-}
+});
 
 // Only mounted while the lazy editor chunk loads, so the extra processing runs
 // at most once per edit session.

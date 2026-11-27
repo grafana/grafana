@@ -2056,7 +2056,7 @@ func TestReconciler_SweepKeepsManifestSnapshotAcrossResources(t *testing.T) {
 			Versions: []app.ManifestVersion{{
 				Name: "v1beta1",
 				Kinds: []app.ManifestVersionKind{{
-					Kind: "Folder", Plural: folderGR.Resource,
+					Kind: "Folder", Plural: folderGR.Resource, Resource: folderGR.Resource,
 					Embed: &app.ManifestVersionKindEmbed{Fields: []app.ManifestVersionKindEmbedField{{Name: "description", Path: "spec.description"}}},
 				}},
 			}},

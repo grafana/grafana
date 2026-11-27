@@ -11,6 +11,8 @@ interface RadialArcPathEndpointMarksPropsBase {
   dimensions: RadialGaugeDimensions;
   fieldDisplay: FieldDisplay;
   endpointMarker: 'point' | 'glow';
+  /** Value sits at the start of the arc, so the marker belongs there rather than at the clockwise end. */
+  markerAtStart?: boolean;
   roundedBars?: boolean;
   startAngle: number;
   glowFilter?: string;
@@ -44,6 +46,7 @@ export const RadialArcPathEndpointMarks = memo(
     arcLengthDeg,
     dimensions,
     endpointMarker,
+    markerAtStart = false,
     fieldDisplay,
     xStart,
     xEnd,
@@ -67,12 +70,19 @@ export const RadialArcPathEndpointMarks = memo(
         const dotRadius =
           endpointMarker === 'point' ? Math.min((barWidth / 2) * DOT_RADIUS_FACTOR, MAX_DOT_RADIUS) : barWidth / 2;
 
+        const tipX = markerAtStart ? xStart : xEnd;
+        const tipY = markerAtStart ? yStart : yEnd;
+        const otherX = markerAtStart ? xEnd : xStart;
+        const otherY = markerAtStart ? yEnd : yStart;
+        const tipColor = pointColorEnd;
+        const otherColor = pointColorStart;
+
         return (
           <>
             {arcLengthDeg > ENDPOINT_MARKER_MIN_ANGLE && (
-              <circle cx={xStart} cy={yStart} r={dotRadius} fill={pointColorStart} opacity={DOT_OPACITY} />
+              <circle cx={otherX} cy={otherY} r={dotRadius} fill={otherColor} opacity={DOT_OPACITY} />
             )}
-            <circle cx={xEnd} cy={yEnd} r={dotRadius} fill={pointColorEnd} opacity={DOT_OPACITY} />
+            <circle cx={tipX} cy={tipY} r={dotRadius} fill={tipColor} opacity={DOT_OPACITY} />
           </>
         );
       }
@@ -80,12 +90,20 @@ export const RadialArcPathEndpointMarks = memo(
         if (arcLengthDeg <= ENDPOINT_MARKER_MIN_ANGLE) {
           return null;
         }
-        const offsetAngle = toRad(ENDPOINT_MARKER_MIN_ANGLE);
-        const xStartMark = centerX + radius * Math.cos(endRadians + offsetAngle);
-        const yStartMark = centerY + radius * Math.sin(endRadians + offsetAngle);
+        // toRad also rotates by -90° so the gauge's 0° points up. An offset must not use that rotation.
+        const offsetAngle = (ENDPOINT_MARKER_MIN_ANGLE * Math.PI) / 180;
+        const tipRadians = markerAtStart ? toRad(angle) : endRadians;
+        const outerRadians = markerAtStart ? tipRadians - offsetAngle : tipRadians + offsetAngle;
+        const xOuter = centerX + radius * Math.cos(outerRadians);
+        const yOuter = centerY + radius * Math.sin(outerRadians);
+        const xTip = markerAtStart ? xStart : xEnd;
+        const yTip = markerAtStart ? yStart : yEnd;
+        // The outer point sits 10° beyond the tip, away from the bar. The short arc back
+        // to the value is clockwise for the start tip and counterclockwise for the end tip.
+        const sweepFlag = markerAtStart ? 1 : 0;
         return (
           <path
-            d={`M ${xStartMark} ${yStartMark} A ${radius} ${radius} 0 0 1 ${xEnd} ${yEnd}`}
+            d={`M ${xOuter} ${yOuter} A ${radius} ${radius} 0 0 ${sweepFlag} ${xTip} ${yTip}`}
             fill="none"
             strokeWidth={barWidth}
             stroke={endpointMarkerGlowFilter}

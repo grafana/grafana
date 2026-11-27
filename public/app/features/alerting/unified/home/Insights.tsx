@@ -1,6 +1,8 @@
-import { type DataSourceInstanceSettings, type DataSourceJsonData } from '@grafana/data';
+import { useMemo } from 'react';
+
+import { type DataSourceInstanceListItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { useDataSourceInstanceListItem } from '@grafana/runtime';
 import {
   EmbeddedScene,
   NestedScene,
@@ -17,7 +19,6 @@ import {
 } from '@grafana/scenes';
 import { Icon, Text, Tooltip } from '@grafana/ui';
 
-import { getAPINamespace } from '../../../../api/utils';
 import { SectionFooter } from '../insights/SectionFooter';
 import { SectionSubheader } from '../insights/SectionSubheader';
 import { getActiveGrafanaAlertsScene } from '../insights/grafana/Active';
@@ -51,89 +52,59 @@ import { getPendingCloudAlertsScene } from '../insights/mimir/rules/Pending';
 export interface DataSourceInformation {
   type: string;
   uid: string;
-  settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
+  item?: DataSourceInstanceListItem;
 }
-const ashDs: DataSourceInformation = {
-  type: 'loki',
-  uid: 'grafanacloud-alert-state-history',
-  settings: undefined,
-};
 
-const cloudUsageDs: DataSourceInformation = {
-  type: 'prometheus',
-  uid: 'grafanacloud-usage',
-  settings: undefined,
-};
+export interface InsightsDataSources {
+  ashDs: DataSourceInformation;
+  cloudUsageDs: DataSourceInformation;
+  grafanaCloudPromDs: DataSourceInformation;
+}
 
-const grafanaCloudPromDs: DataSourceInformation = {
-  type: 'prometheus',
-  uid: 'grafanacloud-prom',
-  settings: undefined,
-};
+const ASH_DS = { type: 'loki', uid: 'grafanacloud-alert-state-history' };
+const CLOUD_USAGE_DS = { type: 'prometheus', uid: 'grafanacloud-usage' };
+const GRAFANA_CLOUD_PROM_DS = { type: 'prometheus', uid: 'grafanacloud-prom' };
 
-const themeColors = config.theme2.colors;
+// A failed lookup leaves `item` undefined, so its sections stay hidden as if the data source were missing.
+// The runtime already logs the failures that matter, so this hook does not log them again.
+export function useInsightsDataSources(): { isLoading: boolean; dataSources: InsightsDataSources } {
+  const ash = useDataSourceInstanceListItem(ASH_DS.uid);
+  const cloudUsage = useDataSourceInstanceListItem(CLOUD_USAGE_DS.uid);
+  const grafanaCloudProm = useDataSourceInstanceListItem(GRAFANA_CLOUD_PROM_DS.uid);
 
-const SERIES_COLOR_MAPPING = {
-  alerting: themeColors.error.main,
-  firing: themeColors.error.main,
-  active: themeColors.error.main,
-  missed: themeColors.error.main,
-  failed: themeColors.error.main,
-  pending: themeColors.warning.main,
-  recovering: themeColors.warning.main,
-  nodata: themeColors.info.main,
-  'active evaluation': themeColors.info.main,
-  normal: themeColors.success.main,
-  success: themeColors.success.main,
-  error: themeColors.warning.text,
-};
+  const dataSources = useMemo(
+    () => ({
+      ashDs: { ...ASH_DS, item: ash.item },
+      cloudUsageDs: { ...CLOUD_USAGE_DS, item: cloudUsage.item },
+      grafanaCloudPromDs: { ...GRAFANA_CLOUD_PROM_DS, item: grafanaCloudProm.item },
+    }),
+    [ash.item, cloudUsage.item, grafanaCloudProm.item]
+  );
 
-// ⚠️ these colors will _not_ update if user changes their theme without refreshing
-export function overrideToFixedColor(key: keyof typeof SERIES_COLOR_MAPPING) {
   return {
-    mode: 'fixed',
-    fixedColor: SERIES_COLOR_MAPPING[key],
+    isLoading: ash.isLoading || cloudUsage.isLoading || grafanaCloudProm.isLoading,
+    dataSources,
   };
 }
 
-export const PANEL_STYLES = { minHeight: 300 };
+export function isInsightsAvailable({ cloudUsageDs }: InsightsDataSources): boolean {
+  return Boolean(cloudUsageDs.item);
+}
 
-const THIS_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-1w', to: 'now' });
-
-const namespace = getAPINamespace();
-
-export const INSTANCE_ID = namespace.includes('stacks-') ? namespace.replace('stacks-', '') : undefined;
-
-const getInsightsDataSources = () => {
-  const dataSourceSrv = getDataSourceSrv();
-
-  [ashDs, cloudUsageDs, grafanaCloudPromDs].forEach((ds) => {
-    ds.settings = dataSourceSrv.getInstanceSettings(ds.uid);
-  });
-  return [ashDs, cloudUsageDs, grafanaCloudPromDs];
-};
-
-export const insightsIsAvailable = () => {
-  const [_, cloudUsageDs, __] = getInsightsDataSources();
-  return cloudUsageDs.settings;
-};
-
-export function getInsightsScenes() {
-  const [ashDs, cloudUsageDs, grafanaCloudPromDs] = getInsightsDataSources();
-
+export function getInsightsScenes({ ashDs, cloudUsageDs, grafanaCloudPromDs }: InsightsDataSources) {
   const categories = [];
 
-  const showGrafanaManaged = ashDs.settings && cloudUsageDs.settings;
-  const showGrafanaAlertmanager = Boolean(cloudUsageDs.settings);
-  const showMimirAlertmanager = Boolean(cloudUsageDs.settings);
-  const showMimirManaged = cloudUsageDs.settings && grafanaCloudPromDs.settings;
-  const showMimirManagedPerGroup = Boolean(cloudUsageDs.settings);
+  const showGrafanaManaged = ashDs.item && cloudUsageDs.item;
+  const showGrafanaAlertmanager = Boolean(cloudUsageDs.item);
+  const showMimirAlertmanager = Boolean(cloudUsageDs.item);
+  const showMimirManaged = cloudUsageDs.item && grafanaCloudPromDs.item;
+  const showMimirManagedPerGroup = Boolean(cloudUsageDs.item);
 
   if (showGrafanaManaged) {
     categories.push(
       new SceneFlexItem({
         ySizing: 'content',
-        body: getGrafanaManagedScenes(),
+        body: getGrafanaManagedScenes(ashDs, cloudUsageDs),
       })
     );
   }
@@ -142,7 +113,7 @@ export function getInsightsScenes() {
     categories.push(
       new SceneFlexItem({
         ySizing: 'content',
-        body: getGrafanaAlertmanagerScenes(),
+        body: getGrafanaAlertmanagerScenes(cloudUsageDs),
       })
     );
   }
@@ -151,7 +122,7 @@ export function getInsightsScenes() {
     categories.push(
       new SceneFlexItem({
         ySizing: 'content',
-        body: getMimirManagedRulesScenes(),
+        body: getMimirManagedRulesScenes(grafanaCloudPromDs, cloudUsageDs),
       })
     );
   }
@@ -160,7 +131,7 @@ export function getInsightsScenes() {
     categories.push(
       new SceneFlexItem({
         ySizing: 'content',
-        body: getMimirManagedRulesPerGroupScenes(),
+        body: getMimirManagedRulesPerGroupScenes(cloudUsageDs),
       })
     );
   }
@@ -169,13 +140,13 @@ export function getInsightsScenes() {
     categories.push(
       new SceneFlexItem({
         ySizing: 'content',
-        body: getCloudScenes(),
+        body: getCloudScenes(cloudUsageDs),
       })
     );
   }
 
   return new EmbeddedScene({
-    $timeRange: THIS_WEEK_TIME_RANGE,
+    $timeRange: new SceneTimeRange({ from: 'now-1w', to: 'now' }),
     controls: [
       new SceneReactObject({
         component: SectionSubheader,
@@ -215,7 +186,7 @@ export function getInsightsScenes() {
   });
 }
 
-function getGrafanaManagedScenes() {
+function getGrafanaManagedScenes(ashDs: DataSourceInformation, cloudUsageDs: DataSourceInformation) {
   return new NestedScene({
     title: t('alerting.get-grafana-managed-scenes.title.grafanamanaged-alert-rules', 'Grafana-managed alert rules'),
     canCollapse: true,
@@ -305,7 +276,7 @@ function getGrafanaManagedScenes() {
   });
 }
 
-function getGrafanaAlertmanagerScenes() {
+function getGrafanaAlertmanagerScenes(cloudUsageDs: DataSourceInformation) {
   return new NestedScene({
     title: t('alerting.get-grafana-alertmanager-scenes.title.grafana-alertmanager', 'Grafana Alertmanager'),
     canCollapse: true,
@@ -328,7 +299,7 @@ function getGrafanaAlertmanagerScenes() {
   });
 }
 
-function getCloudScenes() {
+function getCloudScenes(cloudUsageDs: DataSourceInformation) {
   return new NestedScene({
     title: t('alerting.get-cloud-scenes.title.mimir-alertmanager', 'Mimir Alertmanager'),
     canCollapse: true,
@@ -362,7 +333,7 @@ function getCloudScenes() {
   });
 }
 
-function getMimirManagedRulesScenes() {
+function getMimirManagedRulesScenes(grafanaCloudPromDs: DataSourceInformation, cloudUsageDs: DataSourceInformation) {
   return new NestedScene({
     title: t('alerting.get-mimir-managed-rules-scenes.title.mimirmanaged-alert-rules', 'Mimir-managed alert rules'),
     canCollapse: true,
@@ -403,7 +374,7 @@ function getMimirManagedRulesScenes() {
   });
 }
 
-function getMimirManagedRulesPerGroupScenes() {
+function getMimirManagedRulesPerGroupScenes(cloudUsageDs: DataSourceInformation) {
   const ruleGroupHandler = new QueryVariable({
     label: t('alerting.get-mimir-managed-rules-per-group-scenes.rule-group-handler.label.rule-group', 'Rule Group'),
     name: 'rule_group',

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import memoizeOne from 'memoize-one';
+import { memoizeOne } from 'memoize-one';
 import { useId } from 'react';
 
 import { type PanelProps } from '@grafana/data';

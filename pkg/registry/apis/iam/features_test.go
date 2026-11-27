@@ -105,12 +105,18 @@ func TestFeaturesValidate(t *testing.T) {
 		require.ErrorContains(t, err, "resource permissions")
 	})
 
+	t.Run("datasource resource permissions require resource permissions", func(t *testing.T) {
+		err := (Features{DatasourceResourcePermissions: true}).Validate()
+		require.ErrorContains(t, err, "resource permissions")
+	})
+
 	t.Run("accepts valid dependencies", func(t *testing.T) {
 		err := (Features{
 			ServiceAccountsAPI:                true,
 			ServiceAccountTokensAPI:           true,
 			ResourcePermissionsAPI:            true,
 			ServiceAccountResourcePermissions: true,
+			DatasourceResourcePermissions:     true,
 		}).Validate()
 		require.NoError(t, err)
 	})
@@ -119,6 +125,7 @@ func TestFeaturesValidate(t *testing.T) {
 func TestProvideFeatures(t *testing.T) {
 	legacyProvider := func() memprovider.InMemoryProvider {
 		return memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+			featuremgmt.FlagAuthzDelegationChecks: {Key: featuremgmt.FlagAuthzDelegationChecks, DefaultVariant: "enabled", Variants: map[string]any{"enabled": true}},
 			featuremgmt.FlagKubernetesAuthzGlobalRolesApi: {
 				Key:            featuremgmt.FlagKubernetesAuthzGlobalRolesApi,
 				DefaultVariant: "enabled",
@@ -140,7 +147,7 @@ func TestProvideFeatures(t *testing.T) {
 	}{
 		{
 			name: "absent configuration resolves legacy flags",
-			want: Features{GlobalRolesAPI: true, ZanzanaSync: true},
+			want: Features{GlobalRolesAPI: true, ZanzanaSync: true, AuthzDelegationChecks: true},
 		},
 		{
 			name: "explicit configuration replaces legacy flags",
@@ -148,13 +155,30 @@ func TestProvideFeatures(t *testing.T) {
 				"api":                  "roles, rolebindings, resourcepermissions",
 				"zanzana_sync_enabled": "false",
 				"service_account_resource_permissions_enabled": "true",
+				"datasource_resource_permissions_enabled":      "true",
 			},
 			want: Features{
 				RolesAPI:                          true,
 				RoleBindingsAPI:                   true,
 				ResourcePermissionsAPI:            true,
 				ServiceAccountResourcePermissions: true,
+				DatasourceResourcePermissions:     true,
 			},
+		},
+		{
+			name:   "explicit AuthZ delegation opt-in",
+			values: map[string]string{"api": "roles,rolebindings", "authz_delegation_checks_enabled": "true"},
+			want:   Features{RolesAPI: true, RoleBindingsAPI: true, AuthzDelegationChecks: true},
+		},
+		{
+			name:    "AuthZ delegation requires explicit APIs",
+			values:  map[string]string{"authz_delegation_checks_enabled": "true"},
+			wantErr: "iam.api must be configured",
+		},
+		{
+			name:    "invalid AuthZ delegation boolean",
+			values:  map[string]string{"api": "roles", "authz_delegation_checks_enabled": "invalid"},
+			wantErr: "invalid iam.authz_delegation_checks_enabled",
 		},
 		{
 			name:   "explicit none disables legacy flags",
@@ -242,6 +266,8 @@ func TestFeaturesFromFlags(t *testing.T) {
 		{name: "auth info", flag: featuremgmt.FlagKubernetesAuthInfoApi, want: Features{AuthInfoAPI: true}},
 		{name: "user permissions", flag: featuremgmt.FlagAuthzUserPermissions, want: Features{UserPermissionsAPI: true}},
 		{name: "service account resource permissions", flag: featuremgmt.FlagKubernetesAuthzServiceAccountResourcePermissions, want: Features{ServiceAccountResourcePermissions: true}},
+		{name: "AuthZ delegation", flag: featuremgmt.FlagAuthzDelegationChecks, want: Features{AuthzDelegationChecks: true}},
+		{name: "datasource resource permissions", flag: featuremgmt.FlagKubernetesAuthzDatasourceResourcePermissions, want: Features{DatasourceResourcePermissions: true}},
 		{name: "Zanzana sync", flag: featuremgmt.FlagKubernetesAuthzZanzanaSync, want: Features{ZanzanaSync: true}},
 	}
 

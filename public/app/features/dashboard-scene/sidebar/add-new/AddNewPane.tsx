@@ -20,6 +20,7 @@ import { AddButton } from './AddButton';
 import { AddFilters } from './AddFilters';
 import { AddLink } from './AddLink';
 import { AddNewSection } from './AddNewSection';
+import { AddQuestion } from './AddQuestion';
 import { AddRow } from './AddRow';
 import { AddTab } from './AddTab';
 import { AddVariable } from './AddVariable';
@@ -135,8 +136,9 @@ function AddNewPaneRenderer({ model }: SceneComponentProps<AddNewPane>) {
         <AddNewSection title={t('dashboard.sidebar.add.dashboard-controls', 'Dashboard controls')}>
           <AddFilters dashboardScene={dashboardScene} />
           <AddVariable dashboardScene={dashboardScene} selectedElement={selectedObj} />
-          <AddAnnotationQuery dashboardScene={dashboardScene} />
+          <AddAnnotationQuery dashboardScene={dashboardScene} selectedElement={selectedObj} />
           <AddLink dashboardScene={dashboardScene} />
+          <AddQuestion dashboardScene={dashboardScene} selectedElement={selectedObj} />
         </AddNewSection>
       </ScrollContainer>
     </div>

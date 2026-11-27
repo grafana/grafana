@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type LinkModel, type ActionModel } from '@grafana/data';
+import { createTheme, type LinkModel, type ActionModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { DataLinksActionsTooltip } from './DataLinksActionsTooltip';
@@ -52,6 +52,129 @@ describe('DataLinksActionsTooltip', () => {
     const link = screen.getByText('Data Link1');
     await userEvent.click(link);
     expect(mockLink.onClick).toHaveBeenCalledTimes(1);
+  });
+
+  describe('data link menu', () => {
+    const links = [mockLink, { ...mockLink, title: 'Data Link2', href: 'http://link2.com', target: '_self' as const }];
+    const firstLink = () => screen.getByRole('menuitem', { name: 'Data Link1' });
+
+    const clickIsDefaultPrevented = async (modifier?: string) => {
+      let prevented: boolean | undefined;
+      document.addEventListener('click', (event) => (prevented = event.defaultPrevented), { once: true });
+
+      const user = userEvent.setup();
+      if (modifier) {
+        await user.keyboard(`{${modifier}>}`);
+      }
+      await user.click(firstLink());
+
+      return prevented;
+    };
+
+    it('should render each link once, as a menu item with its url and target', () => {
+      render(<DataLinksActionsTooltip links={links} coords={mockCoords} />);
+
+      const theme = createTheme();
+      expect(screen.getByRole('menu')).toHaveStyle({
+        padding: theme.spacing(theme.components.menu.padding),
+        borderRadius: theme.shape.radius[theme.components.menu.borderRadius],
+      });
+
+      const items = screen.getAllByRole('menuitem');
+      expect(items).toHaveLength(2);
+      expect(items[0]).toHaveAttribute('data-role', 'menuitem');
+      expect(items[0]).toHaveAttribute('href', 'http://link1.com');
+      expect(items[0]).toHaveAttribute('target', '_blank');
+      expect(items[1]).toHaveAttribute('href', 'http://link2.com');
+      expect(items[1]).toHaveAttribute('target', '_self');
+    });
+
+    it('should call the link onClick instead of navigating', async () => {
+      render(<DataLinksActionsTooltip links={links} coords={mockCoords} />);
+
+      expect(await clickIsDefaultPrevented()).toBe(true);
+      expect(mockLink.onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it.each(['Control', 'Meta', 'Shift'])('should leave a %s click to the browser', async (modifier) => {
+      render(<DataLinksActionsTooltip links={links} coords={mockCoords} />);
+
+      expect(await clickIsDefaultPrevented(modifier)).toBe(false);
+      expect(mockLink.onClick).not.toHaveBeenCalled();
+    });
+
+    it('should navigate normally when the link has no onClick', async () => {
+      const { onClick, ...plainLink } = mockLink;
+      render(
+        <DataLinksActionsTooltip links={[plainLink, { ...plainLink, title: 'Data Link2' }]} coords={mockCoords} />
+      );
+
+      expect(await clickIsDefaultPrevented()).toBe(false);
+    });
+
+    it('should call the link onClick once when activated with the space key', async () => {
+      render(<DataLinksActionsTooltip links={links} coords={mockCoords} />);
+
+      firstLink().focus();
+      await userEvent.keyboard(' ');
+
+      expect(mockLink.onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('should keep actions as buttons that the keyboard can reach', async () => {
+      render(<DataLinksActionsTooltip links={links} actions={[mockAction]} coords={mockCoords} />);
+
+      firstLink().focus();
+      await userEvent.keyboard('{ArrowDown}');
+      expect(screen.getByRole('menuitem', { name: 'Data Link2' })).toHaveFocus();
+      await userEvent.tab();
+
+      const action = screen.getByRole('button', { name: 'Action1' });
+      expect(action).toHaveFocus();
+      expect(screen.getByRole('menu')).not.toContainElement(action);
+    });
+
+    it.each(['link', 'action'])('should dismiss once with Escape from a %s', async (target) => {
+      const onTooltipClose = jest.fn();
+      render(
+        <DataLinksActionsTooltip
+          links={links}
+          actions={[mockAction]}
+          coords={mockCoords}
+          onTooltipClose={onTooltipClose}
+        />
+      );
+
+      firstLink().focus();
+      if (target === 'action') {
+        await userEvent.tab();
+        expect(screen.getByRole('button', { name: 'Action1' })).toHaveFocus();
+      }
+      await userEvent.keyboard('{Escape}');
+      expect(onTooltipClose).toHaveBeenCalledTimes(1);
+    });
+
+    it('should keep the footer hint for a one-click link', () => {
+      render(<DataLinksActionsTooltip links={[{ ...mockLink, oneClick: true }, links[1]]} coords={mockCoords} />);
+
+      expect(screen.queryByRole('menuitem')).not.toBeInTheDocument();
+      expect(screen.getByText(/Click to open/)).toBeInTheDocument();
+    });
+
+    it('should keep the footer hint for a one-click action', () => {
+      render(
+        <DataLinksActionsTooltip links={links} actions={[{ ...mockAction, oneClick: true }]} coords={mockCoords} />
+      );
+
+      expect(screen.queryByRole('menuitem')).not.toBeInTheDocument();
+      expect(screen.getByText(/Click to/)).toBeInTheDocument();
+    });
+  });
+
+  it('should focus the first menu item when opened', () => {
+    render(<DataLinksActionsTooltip links={[mockLink, { ...mockLink, title: 'Data Link2' }]} coords={mockCoords} />);
+
+    expect(screen.getByRole('menuitem', { name: 'Data Link1' })).toHaveFocus();
   });
 
   it('should render when there is only one action', () => {

@@ -74,10 +74,11 @@ export function useInstanceAlertState(ruleUID: string, instanceLabels: Labels): 
   });
   const { data } = runner.useState();
 
+  const series = data?.series;
   return useMemo(() => {
-    if (!DATASOURCE_UID || !query || !data?.series) {
+    if (!DATASOURCE_UID || !query || !series) {
       return null;
     }
-    return getInstanceStateFromMetricSeries(data.series);
-  }, [query, data?.series]);
+    return getInstanceStateFromMetricSeries(series);
+  }, [query, series]);
 }
