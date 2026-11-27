@@ -1,0 +1,74 @@
+{
+  "apiVersion": "provisioning.grafana.app/v1beta2",
+  "kind": "Connection",
+  "metadata": {
+    "name": "github-app",
+    "namespace": "default",
+    "uid": "6f1c3a52-8d4e-4b8e-9d2a-2f0d6c1b7e10",
+    "resourceVersion": "42",
+    "generation": 3,
+    "creationTimestamp": "2026-11-20T10:00:00Z",
+    "annotations": {
+      "grafana.com/createdBy": "user:admin"
+    }
+  },
+  "spec": {
+    "title": "GitHub App",
+    "description": "Main GitHub App",
+    "type": "github",
+    "url": "https://github.com/grafana",
+    "github": {
+      "appID": "12345",
+      "installationID": "67890"
+    },
+    "webhook": {
+      "disabled": true
+    }
+  },
+  "secure": {
+    "privateKey": {
+      "name": "inline-private-key"
+    },
+    "token": {
+      "name": "inline-token"
+    }
+  },
+  "status": {
+    "observedGeneration": 3,
+    "fieldErrors": [
+      {
+        "type": "FieldValueInvalid",
+        "field": "spec.github.appID",
+        "detail": "app not found",
+        "badValue": "12345"
+      }
+    ],
+    "conditions": [
+      {
+        "type": "Ready",
+        "status": "False",
+        "observedGeneration": 3,
+        "lastTransitionTime": "2026-11-23T17:30:15Z",
+        "reason": "AuthenticationFailed",
+        "message": "bad credentials"
+      },
+      {
+        "type": "NamespaceQuota",
+        "status": "True",
+        "lastTransitionTime": null,
+        "reason": "QuotaUnlimited",
+        "message": ""
+      }
+    ],
+    "health": {
+      "healthy": false,
+      "error": "health",
+      "checked": 1795000000000,
+      "message": ["bad credentials"]
+    },
+    "token": {
+      "lastUpdated": 1795000000000,
+      "expiration": 1795003600000
+    }
+  }
+}
