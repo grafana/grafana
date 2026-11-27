@@ -1,14 +1,15 @@
 import { chain, truncate } from 'lodash';
 import { useCallback } from 'react';
 
-import { type DataSourceInstanceSettings, type IconName } from '@grafana/data';
+import { type RulesSourceDataSource } from '@grafana/alerting/internal';
+import { type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceInstanceList, logError, logWarning } from '@grafana/runtime';
 import { type ComboboxOption } from '@grafana/ui';
 import { type GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { prometheusApi } from '../../../api/prometheusApi';
-import { getRulesDataSources } from '../../../utils/datasource';
+import { getDataSourcesForRules } from '../../../hooks/useDataSourcesForRules';
 import { stringifyErrorLike } from '../../../utils/misc';
 
 type FetchGrafanaGroups = ReturnType<typeof prometheusApi.useLazyGetGrafanaGroupsQuery>[0];
@@ -16,8 +17,9 @@ type FetchExternalGroups = ReturnType<typeof prometheusApi.useLazyGetGroupsQuery
 
 // Module-scope utilities
 const collator = new Intl.Collator();
-function getExternalRuleDataSources() {
-  return getRulesDataSources().filter((ds: DataSourceInstanceSettings) => !!ds?.url);
+async function getExternalRuleDataSources() {
+  const dataSources = await getDataSourcesForRules();
+  return dataSources.filter((ds) => !!ds.url);
 }
 
 // Cap on how many groups we fetch per source to keep the request fast. Note this limits
@@ -105,7 +107,14 @@ async function fetchExternalNamespaceNames(
 ): Promise<{ externalNamespaces: Map<string, Set<string>>; isLimitReached: boolean }> {
   // Map each namespace to the data source(s) it appears in, so options can show their origin.
   const externalNamespaces = new Map<string, Set<string>>();
-  const dataSources = getExternalRuleDataSources();
+  let dataSources: RulesSourceDataSource[];
+  // A failed list must not also drop the Grafana folders, which the caller awaits together with this.
+  try {
+    dataSources = await getExternalRuleDataSources();
+  } catch (error) {
+    logWarning('Failed to load data sources for namespace autocomplete', { error: stringifyErrorLike(error) });
+    return { externalNamespaces, isLimitReached: false };
+  }
   const calls = dataSources.map((ds) =>
     fetchExternalGroups({
       ruleSource: { uid: ds.uid },

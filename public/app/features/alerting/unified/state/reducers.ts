@@ -14,6 +14,7 @@ const reducer = combineReducers({
   promRules: createRulesSlice<RuleNamespace[]>('promRules', alertingActionTypePrefix.fetchPromRules).reducer,
   rulerRules: createRulesSlice<RulerRulesConfigDTO | null>('rulerRules', alertingActionTypePrefix.fetchRulerRules)
     .reducer,
+  rulesSourceList: createAsyncSlice<string[]>('rulesSourceList', alertingActionTypePrefix.fetchRulesSourceList).reducer,
   saveAMConfig: createAsyncSlice<void>('saveAMConfig', alertingActionTypePrefix.updateAlertManagerConfig).reducer,
   deleteAMConfig: createAsyncSlice<void>('deleteAMConfig', alertingActionTypePrefix.deleteAlertManagerConfig).reducer,
   managedAlertStateHistory: createAsyncSlice<{ ruleUID: string; history: StateHistoryItem[] }>(
