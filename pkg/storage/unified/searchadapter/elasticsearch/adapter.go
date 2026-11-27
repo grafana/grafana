@@ -221,7 +221,12 @@ func (s *elasticsearchAdapter) prepare(query *enginepb.QuerySpec, window *engine
 	if state != enginepb.DocumentState_DOCUMENT_STATE_LIVE && state != enginepb.DocumentState_DOCUMENT_STATE_TRASH {
 		return NativeBackend{}, elasticsearchQuery{}, status.Error(codes.InvalidArgument, "invalid document state")
 	}
-	req := &resourcepb.ResourceSearchRequest{Query: query.Text, IsDeleted: state == enginepb.DocumentState_DOCUMENT_STATE_TRASH, Options: &resourcepb.ListOptions{}}
+	req := &resourcepb.ResourceSearchRequest{
+		Query:        query.Text,
+		IsDeleted:    state == enginepb.DocumentState_DOCUMENT_STATE_TRASH,
+		Options:      &resourcepb.ListOptions{},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}
 	for _, field := range query.QueryFields {
 		if field.GetName() == "" {
 			return NativeBackend{}, elasticsearchQuery{}, status.Error(codes.InvalidArgument, "missing query field name")
