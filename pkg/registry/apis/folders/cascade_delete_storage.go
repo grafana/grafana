@@ -738,6 +738,7 @@ func (s *cascadeDeleteStorage) deleteAsync(ctx context.Context, ns authlib.Names
 	// have none, and whatever reads the requester must handle that. The first delete owns it, so a
 	// terminating folder keeps its requester. A requester left on a live folder by an earlier failed
 	// delete is cleared, so it isn't taken for this delete's.
+	// A failed stamp does not stop the delete.
 	requester := cascadeDeleteRequesterOf(user)
 	leftover := f.Status.CascadeDelete != nil && f.Status.CascadeDelete.Requester != nil
 	if s.status == nil || !folderAsyncCascadeDeleteEnabled(ctx) || len(options.DryRun) > 0 || terminating || (requester == nil && !leftover) {
@@ -758,7 +759,10 @@ func (s *cascadeDeleteStorage) deleteAsync(ctx context.Context, ns authlib.Names
 	svcCtx := identity.WithServiceIdentityContext(base, ns.OrgID)
 	stamped, err := s.recordCascadeDeleteRequester(svcCtx, f, requester)
 	if err != nil {
-		return nil, false, err
+		// The requester only feeds attribution and the access check already ran, so a failed stamp must
+		// not stop the delete, e.g. for a folder stored above the version cap, which can only be drained.
+		logging.FromContext(ctx).Warn("Failed to record the cascade-delete requester, deleting without it", "folder", f.Name, "error", err)
+		return s.Storage.Delete(ctx, f.Name, deleteValidation, options)
 	}
 	// Delete the stamped version, so an edit in between is a conflict rather than a stale requester.
 	options = options.DeepCopy()

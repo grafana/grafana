@@ -215,14 +215,15 @@ func TestCascadeDelete_DoesNotRecordTheRequesterFor(t *testing.T) {
 	})
 }
 
-func TestCascadeDelete_FailedStampStopsTheDelete(t *testing.T) {
+func TestCascadeDelete_FailedStampDoesNotStopTheDelete(t *testing.T) {
 	setRequesterToggles(t, true)
 	store, status, s := newRequesterStore()
 	status.err = errors.New("boom")
 
 	_, _, err := s.Delete(requesterCtx(requesterUser), "root", nil, forceDelete())
-	require.Error(t, err)
-	require.Nil(t, store.existing["root"].DeletionTimestamp, "the folder is not deleted without a requester")
+	require.NoError(t, err)
+	require.NotNil(t, store.existing["root"].DeletionTimestamp, "the folder is deleted without a requester")
+	require.Nil(t, store.requesterSeen)
 }
 
 func TestCascadeDelete_FailedDeleteClearsTheRequester(t *testing.T) {
