@@ -68,26 +68,36 @@ For alerting, you can only release rules that came from Terraform, `kubectl`, or
 
 ## Resource managers
 
-The following table summarizes the available as code tools, who sets the annotations for resource management, the resource manager (`grafana.app/managedBy`) they use, the manager's instance (`grafana.app/managerId`), and ????.
+The following table summarizes the available as code tools, who sets the annotations for resource management, the resource manager (`grafana.app/managedBy`) they use, the manager's instance (`grafana.app/managerId`), and whether Grafana records the file that the resource's definition comes from.
 
-| Tool                                                                                                                   | Annotations set by | Manager                     | Instance                | Records a source |
-| ---------------------------------------------------------------------------------------------------------------------- | ------------------ | --------------------------- | ----------------------- | ---------------- |
-| [Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/)                                       | Grafana            | `repo`                      | The repository name     | Yes              |
-| [On-prem file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/provision-resources/)           | Grafana            | `repo`                      | The repository name     | Yes              |
-| [Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/terraform/)                                     | Caller             | `terraform`                 | The provider identifier | No               |
-| Kubernetes manifests                                                                                                   | Caller             | `kubectl`                   | The identifier you set  | No               |
-| Plugins                                                                                                                | Grafana            | `plugin`                    | The plugin identifier   | No               |
-| Grafana, for resources it owns itself, such as fixed roles                                                             | Grafana            | `grafana`                   | The resource name       | No               |
-| [`bootstrap_path`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#bootstrap_path) | Grafana            | `file-provisioning`         | `bootstrap`             | No               |
-| [Classic file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning)            | Grafana            | `classic-file-provisioning` | The provisioner name    | Yes              |
+| Tool                                                                                                                   | Annotations set by | Manager                     | Instance                | Resource definition |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------------ | --------------------------- | ----------------------- | ------------------- |
+| [Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/)                                       | Grafana            | `repo`                      | The repository name     | Yes                 |
+| [On-prem file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/provision-resources/)           | Grafana            | `repo`                      | The repository name     | Yes                 |
+| [Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/terraform/)                                     | Caller             | `terraform`                 | The provider identifier | No                  |
+| Kubernetes manifests                                                                                                   | Caller             | `kubectl`                   | The identifier you set  | No                  |
+| Plugins                                                                                                                | Grafana            | `plugin`                    | The plugin identifier   | No                  |
+| Grafana, for resources it owns itself, such as fixed roles                                                             | Grafana            | `grafana`                   | The resource name       | No                  |
+| [`bootstrap_path`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#bootstrap_path) | Grafana            | `file-provisioning`         | `bootstrap`             | No                  |
+| [Classic file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning)            | Grafana            | `classic-file-provisioning` | The provisioner name    | Yes                 |
+
+{{< admonition type="note" >}}
+`classic-file-provisioning`, `classic-api-provisioning`, and `classic-converted-prometheus` are deprecated and exist for migration only. The last two mark resources from the legacy Alerting provisioning HTTP API and the Alerting Convert Prometheus API, and record no manager identity because neither records the tool that made the call.
+{{< /admonition >}}
+
+### The `repo` manager
 
 On-prem file provisioning uses the same `Repository` resource as Git Sync with the type set to `local`, which is why both record `repo`. Classic file provisioning is the older configuration-file mechanism and is unrelated to it, despite the similar name.
 
 `bootstrap_path` marks only the `Repository` resource that the setting configures, so you can't edit that configuration in the UI. The dashboards and folders it provisions are managed by that repository and stay editable.
 
-{{< admonition type="note" >}}
-`classic-file-provisioning`, `classic-api-provisioning`, and `classic-converted-prometheus` are deprecated and exist for migration only. The last two mark resources from the legacy Alerting provisioning HTTP API and the Alerting Convert Prometheus API, and record no manager identity because neither records the tool that made the call.
-{{< /admonition >}}
+### Manage your resource definition
+
+The **Resource definition** column shows whether Grafana records the file that a resource's definition comes from.
+For more information on resource definitions, refer to [Resource definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/resources/#resource-definitions).
+
+- **Yes:** The tool reconciles Grafana with a file, such as a dashboard JSON file in a repository or on disk, and that file is the source of truth. Grafana stores the path to the file in `grafana.app/sourcePath`, a checksum of its contents in `grafana.app/sourceChecksum`, and the time it last changed in `grafana.app/sourceTimestamp`, so that it can tell which file the resource comes from and whether the file has changed.
+- **No:** Grafana doesn't record a source. Terraform and `kubectl` keep their definitions in files, but they send Grafana only the resulting API request. Plugins and Grafana itself create the resource directly, and `bootstrap_path` doesn't track the file it reads at startup.
 
 ## Edit a managed resource
 

@@ -73,6 +73,18 @@ spec:
 
 Because every resource shares this shape, an as-code tool can store it as a file, compare it with what's running in Grafana, and apply changes the same way for any resource type.
 
+### Resource definitions
+
+A resource's _definition_ is the full description of the resource in JSON or YAML: its `apiVersion`, `kind`, `metadata`, and `spec`.
+For a dashboard, that's the dashboard JSON, including its title, panels, queries, and variables.
+
+The same definition can exist in two places:
+
+- **In Grafana:** The copy that Grafana stores and shows in the UI.
+- **Outside Grafana:** A file that you write or export, such as a dashboard JSON file in a Git repository or a Terraform configuration.
+
+Some as-code tools keep Grafana in sync with the file, and Grafana records which file the resource comes from. To learn which tools do this, refer to [Resource definition](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/resources/manage-resources/#resource-definition).
+
 ## Who manages a resource?
 
 You can create a resource in the Grafana UI, or use an as-code tool to create it for you. Grafana records the tool that created and manages your resource, and uses this information to decide whether you can change the resource in the UI.
