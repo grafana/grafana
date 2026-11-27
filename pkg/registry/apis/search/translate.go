@@ -51,6 +51,14 @@ const (
 // kind defaults to title.
 var defaultTextFields = []string{resource.SEARCH_FIELD_TITLE}
 
+// filterOperatorNames is what v1 accepts, in the order the validation error
+// lists them. Taken from the API's enum so the message cannot drift from it.
+var filterOperatorNames = []string{
+	string(searchv0.FilterOperatorIn),
+	string(searchv0.FilterOperatorNotIn),
+	string(searchv0.FilterOperatorAll),
+}
+
 // TranslateSearchQuery validates q against the fields declared for
 // (gvr) and, on success, returns the backend request scoped to namespace.
 // On failure it returns a field.ErrorList suitable for a 400 BadRequest.
@@ -397,7 +405,7 @@ func validateLeaf(n *searchv0.WhereNode, key string, fs *fieldSet, p *field.Path
 				// A field holding one value cannot hold two, so this would always come
 				// back empty and the caller would have no way to tell that apart from
 				// nothing matching.
-				if f.Operator == "All" && len(f.Values) > 1 && !def.Array && f.Field != resource.SEARCH_FIELD_FOLDER_TREE {
+				if f.Operator == searchv0.FilterOperatorAll && len(f.Values) > 1 && !def.Array && f.Field != resource.SEARCH_FIELD_FOLDER_TREE {
 					errs = append(errs, field.Invalid(fp.Child("operator"), f.Operator,
 						fmt.Sprintf("All with several values requires a field holding a list of values; %q holds a single value", f.Field)))
 				}
@@ -405,8 +413,8 @@ func validateLeaf(n *searchv0.WhereNode, key string, fs *fieldSet, p *field.Path
 		}
 		if f.Field == resource.SEARCH_FIELD_FOLDER_TREE {
 			errs = append(errs, validateFolderTreeFilter(f, fp)...)
-		} else if f.Operator != "In" && f.Operator != "NotIn" && f.Operator != "All" {
-			errs = append(errs, field.NotSupported(fp.Child("operator"), f.Operator, []string{"In", "NotIn", "All"}))
+		} else if f.Operator != searchv0.FilterOperatorIn && f.Operator != searchv0.FilterOperatorNotIn && f.Operator != searchv0.FilterOperatorAll {
+			errs = append(errs, field.NotSupported(fp.Child("operator"), f.Operator, filterOperatorNames))
 		}
 		if len(f.Values) == 0 {
 			errs = append(errs, field.Required(fp.Child("values"), "at least one value is required"))
@@ -652,8 +660,8 @@ func validateLabelSelector(sel *metav1.LabelSelector, p *field.Path) field.Error
 // than left empty.
 func validateFolderTreeFilter(f *searchv0.FilterPredicate, p *field.Path) field.ErrorList {
 	errs := field.ErrorList{}
-	if f.Operator != "In" {
-		errs = append(errs, field.NotSupported(p.Child("operator"), f.Operator, []string{"In"}))
+	if f.Operator != searchv0.FilterOperatorIn {
+		errs = append(errs, field.NotSupported(p.Child("operator"), f.Operator, []string{string(searchv0.FilterOperatorIn)}))
 	}
 	for i, v := range f.Values {
 		if v == "" {
@@ -748,9 +756,11 @@ func applyText(req *resourcepb.ResourceSearchRequest, t *searchv0.TextPredicate)
 func filterRequirement(f *searchv0.FilterPredicate) *resourcepb.Requirement {
 	op := "in"
 	switch f.Operator {
-	case "NotIn":
+	case searchv0.FilterOperatorIn:
+		// In is what the requirement defaults to, so only the others change it.
+	case searchv0.FilterOperatorNotIn:
 		op = "notin"
-	case "All":
+	case searchv0.FilterOperatorAll:
 		// The backend combines several values of "=" with AND, which is what All
 		// asks for. A single value stays on the "in" path so All and In agree on it,
 		// including on title, where only "in" matches exactly.

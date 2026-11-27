@@ -5,7 +5,8 @@ import {
   PromApplication,
   type RulesSourceApplication,
 } from '../../../../types/unified-alerting-dto';
-import { GRAFANA_RULES_SOURCE_NAME, getDataSourceUID, getRulesDataSourceByUID } from '../utils/datasource';
+import { getDataSourcesForRules } from '../hooks/useDataSourcesForRules';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 import { alertingApi } from './alertingApi';
 import { discoverAlertmanagerFeatures, discoverFeaturesByUid } from './buildInfo';
@@ -40,12 +41,12 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
     discoverDsFeatures: build.query<RulesSourceFeatures, { rulesSourceName: string } | { uid: RulesSourceUid }>({
       keepUnusedDataFor: 3600,
       queryFn: async (rulesSourceIdentifier) => {
-        const dataSourceUID = getDataSourceUID(rulesSourceIdentifier);
-        if (!dataSourceUID) {
-          return { error: new Error(`Unable to find data source for ${JSON.stringify(rulesSourceIdentifier)}`) };
-        }
+        const isGrafana =
+          'uid' in rulesSourceIdentifier
+            ? rulesSourceIdentifier.uid === GrafanaRulesSourceSymbol
+            : rulesSourceIdentifier.rulesSourceName === GRAFANA_RULES_SOURCE_NAME;
 
-        if (dataSourceUID === GrafanaRulesSourceSymbol) {
+        if (isGrafana) {
           return {
             data: {
               name: GRAFANA_RULES_SOURCE_NAME,
@@ -56,12 +57,16 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
           };
         }
 
-        const dataSourceSettings = dataSourceUID ? getRulesDataSourceByUID(dataSourceUID) : undefined;
-        if (!dataSourceSettings) {
-          return { error: new Error(`Missing data source configuration for ${rulesSourceIdentifier}`) };
-        }
-
         try {
+          const dataSources = await getDataSourcesForRules();
+          const dataSourceSettings =
+            'uid' in rulesSourceIdentifier
+              ? dataSources.find((ds) => ds.uid === rulesSourceIdentifier.uid)
+              : dataSources.find((ds) => ds.name === rulesSourceIdentifier.rulesSourceName);
+          if (!dataSourceSettings) {
+            return { error: new Error(`Unable to find data source for ${JSON.stringify(rulesSourceIdentifier)}`) };
+          }
+
           const features = await discoverFeaturesByUid(dataSourceSettings.uid);
 
           const rulerConfig = features.features.rulerApiEnabled
