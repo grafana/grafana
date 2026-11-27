@@ -7,13 +7,13 @@ import (
 	"testing"
 	"time"
 
+	authcache "github.com/grafana/authlib/cache"
 	claims "github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
@@ -45,7 +45,7 @@ func TestIntegrationEnforcedLoaderStoredBasicRoles(t *testing.T) {
 			actions.StoreActionSet("dashboards:view", []string{"dashboards:read"})
 			cfg := loaderConfig(cached)
 			loader := legacypermissions.NewEnforcedLoader(legacysql.NewDatabaseProvider(sql), actions,
-				localcache.New(0, 0), cfg, nil, nil)
+				authcache.NewLocalCache(authcache.Config{}), cfg, nil, nil)
 			requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleViewer}
 			check := func(options ac.Options, action string) {
 				t.Helper()
@@ -82,7 +82,7 @@ func TestIntegrationEnforcedLoaderGlobalPermissions(t *testing.T) {
 	seedGrant(t, sql, "custom:global", 0, 7, ac.Permission{Action: "dashboards:view", Scope: "dashboards:*"})
 	seedGrant(t, sql, "custom:local", 1, 7, ac.Permission{Action: "dashboards:read", Scope: "dashboards:uid:local"})
 	loader := legacypermissions.NewEnforcedLoader(legacysql.NewDatabaseProvider(sql), actions,
-		localcache.New(0, 0), loaderConfig(true), nil, nil)
+		authcache.NewLocalCache(authcache.Config{}), loaderConfig(true), nil, nil)
 	got, err := loader.GetGlobalUserPermissions(context.Background(),
 		&user.SignedInUser{UserID: 7, OrgID: 0, OrgRole: org.RoleNone}, []string{"dashboards:read"})
 	require.NoError(t, err)
@@ -106,7 +106,7 @@ func TestIntegrationEnforcedLoaderResolvesProviderPerRequest(t *testing.T) {
 			return nil, unavailable
 		}
 		return provider(ctx)
-	}, resourcepermissions.NewActionSetService(), localcache.New(0, 0), loaderConfig(false), nil, nil)
+	}, resourcepermissions.NewActionSetService(), authcache.NewLocalCache(authcache.Config{}), loaderConfig(false), nil, nil)
 	requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleNone}
 	for _, namespace := range []string{"stacks-1", "stacks-2", "stacks-1"} {
 		got, err := loader.GetUserPermissions(request.WithNamespace(context.Background(), namespace), requester, ac.Options{})
@@ -129,7 +129,7 @@ func TestIntegrationEnforcedLoaderReadsCurrentFeatureToggle(t *testing.T) {
 	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 	seedGrant(t, sql, "managed:filtered", 1, 7, ac.Permission{Action: "dashboards:read", Scope: "dashboards:uid:one", Kind: "dashboards"})
 	loader := legacypermissions.NewEnforcedLoader(legacysql.NewDatabaseProvider(sql), resourcepermissions.NewActionSetService(),
-		localcache.New(0, 0), loaderConfig(false), nil, nil)
+		authcache.NewLocalCache(authcache.Config{}), loaderConfig(false), nil, nil)
 	for _, enabled := range []bool{false, true, false} {
 		target := "disabled"
 		if enabled {
@@ -166,7 +166,7 @@ func TestIntegrationEnforcedLoaderTeamsAndDuplicates(t *testing.T) {
 	for _, cached := range []bool{false, true} {
 		t.Run(fmt.Sprintf("cache=%t", cached), func(t *testing.T) {
 			loader := legacypermissions.NewEnforcedLoader(legacysql.NewDatabaseProvider(sql), resourcepermissions.NewActionSetService(),
-				localcache.New(0, 0), loaderConfig(cached), nil, nil)
+				authcache.NewLocalCache(authcache.Config{}), loaderConfig(cached), nil, nil)
 			requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleNone}
 			requester.TeamIDs = []int64{42} //nolint:staticcheck // The legacy team permission cache uses numeric team IDs.
 			for _, options := range []ac.Options{{}, {}, {ReloadCache: true}} {
@@ -191,7 +191,7 @@ func TestIntegrationEnforcedLoaderScopeResolver(t *testing.T) {
 	seedGrant(t, sql, "custom:user", 1, 7, ac.Permission{Action: "users:read", Scope: "users:id:7"})
 	scopes := &enforcedScopeResolver{}
 	loader := legacypermissions.NewEnforcedLoader(legacysql.NewDatabaseProvider(sql), resourcepermissions.NewActionSetService(),
-		localcache.New(0, 0), loaderConfig(false), nil, scopes)
+		authcache.NewLocalCache(authcache.Config{}), loaderConfig(false), nil, scopes)
 	got, err := loader.GetUserPermissions(request.WithNamespace(context.Background(), "stacks-1"),
 		&user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleNone}, ac.Options{})
 	require.NoError(t, err)

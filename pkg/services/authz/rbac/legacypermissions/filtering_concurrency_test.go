@@ -43,7 +43,7 @@ func TestFilteringSeparatesConcurrentAssemblies(t *testing.T) {
 			}
 			<-release
 			return nil, disabledErr
-		}, nil, localcache.New(0, 0), cfg, nil, WithLicensing(&licensing.OSSLicensingService{}), WithRoleCatalog(NewRoleCatalog()))
+		}, nil, localPermissionCache{cache: localcache.New(0, 0)}, cfg, nil, WithLicensing(&licensing.OSSLicensingService{}), WithRoleCatalog(NewRoleCatalog()))
 		requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleNone}
 		off, on := make(chan error, 1), make(chan error, 1)
 		load := func(target string, result chan<- error) {
