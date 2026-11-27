@@ -15,6 +15,7 @@ import { getTextDataUsage } from 'app/plugins/panel/text/dataUsage';
 import { type Options, TextMode } from 'app/plugins/panel/text/panelcfg.gen';
 
 import { CustomDashboardTemplateInteractions } from '../analytics/dashboard-templates/main';
+import { PENDING_CHANGES_QUERY_PARAM } from '../lifecycle/pendingChangePreview';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -68,6 +69,8 @@ export async function trackDashboardSceneCreatedOrSaved(
     expression_counts?: Record<string, number>;
   } & Partial<DashboardEditSessionTracking>
 ) {
+  // Read before the first await: a save that moves the page queues its navigation right after calling this.
+  const { pathname, search } = locationService.getLocation();
   const sceneDashboardTrackingInfo = dashboard.getTrackingInformation();
   const dynamicDashboardsTrackingInformation = dashboard.getDynamicDashboardsTrackingInformation();
 
@@ -108,10 +111,13 @@ export async function trackDashboardSceneCreatedOrSaved(
   trackPanelOptionVariableUsage(dashboard, 'save');
 
   if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false) && isNew) {
-    const { pathname, search } = locationService.getLocation();
+    const params = new URLSearchParams(search);
     const isOnTemplateRoute = pathname === DASHBOARD_LIBRARY_ROUTES.Template;
-    const templateUid = new URLSearchParams(search).get('dashboardTemplateUid');
-    if (isOnTemplateRoute && templateUid) {
+    // A template the Assistant made a conversation's draft is saved from the draft's page, which keeps the
+    // template's params.
+    const isDraftOfTemplate = pathname.startsWith('/d/') && params.has(PENDING_CHANGES_QUERY_PARAM);
+    const templateUid = params.get('dashboardTemplateUid');
+    if ((isOnTemplateRoute || isDraftOfTemplate) && templateUid) {
       CustomDashboardTemplateInteractions.dashboardSavedFromTemplate({
         dashboardUid: dashboard.state.uid ?? '',
         templateUid,

@@ -223,6 +223,32 @@ describe('dashboard tracking', () => {
       expect(CustomDashboardTemplateInteractions.dashboardSavedFromTemplate).not.toHaveBeenCalled();
     });
 
+    it('fires for the draft the Assistant made of the template, saved from its page with the template params', async () => {
+      setTestFlags({ 'grafana.customDashboardTemplates': true, ...defaultFlags });
+      locationService.push('/d/new-uid?pendingChanges=chat-1&dashboardTemplateUid=tpl-42');
+      const scene = buildTestScene();
+      await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u', diff_count: 0 });
+
+      expect(CustomDashboardTemplateInteractions.dashboardSavedFromTemplate).toHaveBeenCalledWith({
+        dashboardUid: 'dashboard-test',
+        templateUid: 'tpl-42',
+      });
+    });
+
+    it('reads the page the save happened on, though the save moves the page right after', async () => {
+      setTestFlags({ 'grafana.customDashboardTemplates': true, ...defaultFlags });
+      locationService.push('/dashboard/template?dashboardTemplateUid=tpl-42');
+      const scene = buildTestScene();
+      const tracked = trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u', diff_count: 0 });
+      locationService.push('/d/dashboard-test/saved');
+      await tracked;
+
+      expect(CustomDashboardTemplateInteractions.dashboardSavedFromTemplate).toHaveBeenCalledWith({
+        dashboardUid: 'dashboard-test',
+        templateUid: 'tpl-42',
+      });
+    });
+
     it('does not fire when dashboardTemplateUid is missing from the URL', async () => {
       setTestFlags({ 'grafana.customDashboardTemplates': true });
       locationService.push('/dashboard/template');
