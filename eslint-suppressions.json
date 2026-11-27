@@ -1183,11 +1183,6 @@
       "count": 9
     }
   },
-  "public/app/features/alerting/state/reducers.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    }
-  },
   "public/app/features/alerting/unified/NotificationPoliciesPage.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -1633,11 +1628,6 @@
   "public/app/features/alerting/unified/triage/scene/AlertRuleSummary.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/types/alerting.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 3
     }
   },
   "public/app/features/alerting/unified/types/receiver-form.ts": {
