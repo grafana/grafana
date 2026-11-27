@@ -3409,6 +3409,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Ошибки при загрузке правил",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Не удалось загрузить конфигурацию правил Grafana:",
       "failed-to-load-grafana-rules-state": "Не удалось загрузить состояние правил Grafana:",
       "failed-to-load-rules-config": "Не удалось загрузить конфигурацию правил из <2>{{dataSource}}</2>",

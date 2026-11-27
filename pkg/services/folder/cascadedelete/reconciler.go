@@ -32,6 +32,9 @@ type ChildKind string
 const (
 	ChildFolder    ChildKind = "folders"
 	ChildDashboard ChildKind = "dashboards"
+	// ChildAlertRule is opt-in via Reconciler.Handlers; a lister may return one child named after the
+	// folder, and deleting it removes all the folder's rules at once.
+	ChildAlertRule ChildKind = "alertrules"
 )
 
 // Child is a direct child of a folder.
@@ -148,23 +151,25 @@ func (r *Reconciler) Reconcile(ctx context.Context, f *foldersv1.Folder) (Result
 	batch := int64(r.batchSize())
 	cursors := make([]childCursor, 0, len(r.Handlers))
 	var total int64
+	var failures []error
 	for _, h := range r.Handlers {
 		page, n, err := h.Lister.ListChildren(ctx, f.Namespace, f.Name, h.Kind, 0, batch)
 		if err != nil {
-			err = fmt.Errorf("list %s: %w", h.Kind, err)
-			status.State = foldersv1.FolderCascadeDeleteStatusStateFailed
-			status.Errors = []string{err.Error()}
-			return Result{}, errors.Join(err, r.writeStatus(ctx, f, prior, status))
+			// A kind that cannot be listed is recorded and retried, but must not hold up the others.
+			failures = append(failures, fmt.Errorf("list %s: %w", h.Kind, err))
+			continue
 		}
 		n = max(n, int64(len(page)))
 		cursors = append(cursors, childCursor{h: h, page: page, offset: int64(len(page)), total: n})
 		total += n
 	}
-	if status.Total == nil {
+	// With a kind unlisted the totals are partial, and the folder is not known to be empty.
+	listFailed := len(failures) > 0
+	if status.Total == nil && !listFailed {
 		status.Total = &total
 	}
 
-	if total == 0 {
+	if total == 0 && !listFailed {
 		remaining := int64(0)
 		status.State = foldersv1.FolderCascadeDeleteStatusStateCompleted
 		status.Remaining = &remaining
@@ -185,7 +190,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, f *foldersv1.Folder) (Result
 
 	remaining := total
 	issued, gone := int64(0), 0
-	var failures []error
 	for i := range cursors {
 		cur := &cursors[i]
 		for issued < batch {
@@ -220,6 +224,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, f *foldersv1.Folder) (Result
 		}
 	}
 
+	// With a kind unlisted this counts only the kinds that listed, which is a lower bound; a stale
+	// count from an earlier pass would be no truer, and the failed state says it cannot be trusted.
 	status.Remaining = &remaining
 	status.State = foldersv1.FolderCascadeDeleteStatusStateInProgress
 	status.Errors = nil
@@ -233,14 +239,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, f *foldersv1.Folder) (Result
 		}
 		slices.Sort(msgs)
 		status.Errors = msgs[:min(len(msgs), maxStatusErrors)]
-		logger.Warn("Folder cascade delete pass had failures", "failed", len(failures), "remaining", remaining)
+		logger.Warn("Folder cascade delete pass had failures", "failed", len(failures), "remaining", remaining, "partialList", listFailed)
 	}
 	writeErr := r.writeStatus(ctx, f, prior, status)
 	switch {
 	case issued > 0:
 		return Result{Requeue: true}, errors.Join(errors.Join(failures...), writeErr)
 	case len(failures) > 0:
-		// A later page failed to list before anything was issued.
+		// A kind or a later page failed to list before anything was issued.
 		return Result{}, errors.Join(errors.Join(failures...), writeErr)
 	case writeErr != nil:
 		return Result{}, writeErr
