@@ -1002,15 +1002,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// TODO: Remove this connector when we deprecate the test endpoint
 	// We should use fieldErrors from status instead.
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = WithTimeout(NewTestConnector(b, testTester), 30*time.Second)
-	// The files subresource authorizes folders and resources with
-	// accessWithAdmin. The verb-aware checker (reads fall back to Viewer,
-	// writes to Editor) is only used to list files and as a fallback where no
-	// folder permission can apply: a new resource in a folder that is not
-	// synced into Grafana and has no synced ancestor, in an instance or
-	// folderless repository (see resources.NewFilesAuthorizer). Repository-
-	// level operations remain Admin-gated by authorizeRepositorySubresource.
-	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = WithTimeout(NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.accessWithAdmin, b.maxFileSize), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = WithTimeout(b.newFilesConnector(), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = WithTimeout(NewRefsConnector(b), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b, b.resourceLister), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("stats")] = WithTimeout(NewStatsConnector(b.resourceLister), 30*time.Second)
@@ -1028,6 +1020,18 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	apiGroupInfo.VersionedResourcesStorageMap[b.gv.Version] = storage
 	return nil
+}
+
+// newFilesConnector authorizes folders and resources with accessWithAdmin. The
+// verb-aware checker (reads fall back to Viewer, writes to Editor) is only used
+// to list files and as a fallback where no folder permission can apply: a new
+// resource in a folder that is not synced into Grafana and has no synced
+// ancestor, in an instance or folderless repository (see
+// resources.NewFilesAuthorizer). Repository-level operations remain Admin-gated
+// by authorizeRepositorySubresource.
+func (b *APIBuilder) newFilesConnector() *filesConnector {
+	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
+	return NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.accessWithAdmin, b.maxFileSize)
 }
 
 // performanceEnabled reports whether the synthetic "test" job type is enabled.
@@ -1159,59 +1163,12 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 		}
 	}
 
-	ref := &spec3.Parameter{
-		ParameterProps: spec3.ParameterProps{
-			Name:    "ref",
-			In:      "query",
-			Example: "",
-			Examples: map[string]*spec3.Example{
-				"": {
-					ExampleProps: spec3.ExampleProps{
-						Summary: "The default",
-					},
-				},
-				"branch": {
-					ExampleProps: spec3.ExampleProps{
-						Value:   "my-branch",
-						Summary: "Select branch",
-					},
-				},
-				"commit": {
-					ExampleProps: spec3.ExampleProps{
-						Value:   "7f7cc2153",
-						Summary: "Commit hash (or prefix)",
-					},
-				},
-			},
-			Description: "branch or commit hash",
-			Schema:      spec.StringProperty(),
-			Required:    false,
-		},
-	}
+	ref := refQueryParameter()
 
 	sub = oas.Paths.Paths[repoprefix+"/resources"]
 	if sub != nil {
 		sub.Get.Description = "Get the resources this repository manages"
-		sub.Get.Parameters = []*spec3.Parameter{
-			{
-				ParameterProps: spec3.ParameterProps{
-					Name:        "limit",
-					In:          "query",
-					Description: "maximum number of items to return; omit for all of them",
-					Schema:      spec.Int64Property(),
-					Required:    false,
-				},
-			},
-			{
-				ParameterProps: spec3.ParameterProps{
-					Name:        "continue",
-					In:          "query",
-					Description: "continue token from the metadata of the previous page",
-					Schema:      spec.StringProperty(),
-					Required:    false,
-				},
-			},
-		}
+		sub.Get.Parameters = resourcesQueryParameters()
 	}
 
 	sub = oas.Paths.Paths[repoprefix+"/history"]
@@ -1624,6 +1581,61 @@ spec:
 	}
 
 	return oas, nil
+}
+
+func refQueryParameter() *spec3.Parameter {
+	return &spec3.Parameter{
+		ParameterProps: spec3.ParameterProps{
+			Name:    "ref",
+			In:      "query",
+			Example: "",
+			Examples: map[string]*spec3.Example{
+				"": {
+					ExampleProps: spec3.ExampleProps{
+						Summary: "The default",
+					},
+				},
+				"branch": {
+					ExampleProps: spec3.ExampleProps{
+						Value:   "my-branch",
+						Summary: "Select branch",
+					},
+				},
+				"commit": {
+					ExampleProps: spec3.ExampleProps{
+						Value:   "7f7cc2153",
+						Summary: "Commit hash (or prefix)",
+					},
+				},
+			},
+			Description: "branch or commit hash",
+			Schema:      spec.StringProperty(),
+			Required:    false,
+		},
+	}
+}
+
+func resourcesQueryParameters() []*spec3.Parameter {
+	return []*spec3.Parameter{
+		{
+			ParameterProps: spec3.ParameterProps{
+				Name:        "limit",
+				In:          "query",
+				Description: "maximum number of items to return; omit for all of them",
+				Schema:      spec.Int64Property(),
+				Required:    false,
+			},
+		},
+		{
+			ParameterProps: spec3.ParameterProps{
+				Name:        "continue",
+				In:          "query",
+				Description: "continue token from the metadata of the previous page",
+				Schema:      spec.StringProperty(),
+				Required:    false,
+			},
+		},
+	}
 }
 
 // Historic jobs are internal. Keep both resource routes and any cross-namespace

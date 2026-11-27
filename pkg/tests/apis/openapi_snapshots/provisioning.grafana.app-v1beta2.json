@@ -818,6 +818,56 @@
         }
       ]
     },
+    "/apis/provisioning.grafana.app/v1beta2/namespaces/{namespace}/connections/{name}/repositories": {
+      "get": {
+        "tags": [
+          "Connection"
+        ],
+        "summary": "List external repositories",
+        "description": "List repositories available from the external git provider through this connection. Returns 501 Not Implemented for connection types that cannot list repositories",
+        "operationId": "getConnectionRepositories",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ExternalRepositoryList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta2",
+          "kind": "ExternalRepositoryList"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the ExternalRepositoryList",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/apis/provisioning.grafana.app/v1beta2/namespaces/{namespace}/connections/{name}/status": {
       "get": {
         "tags": [
@@ -2652,6 +2702,483 @@
         }
       ]
     },
+    "/apis/provisioning.grafana.app/v1beta2/namespaces/{namespace}/repositories/{name}/files/": {
+      "get": {
+        "tags": [
+          "Repository"
+        ],
+        "summary": "File listing",
+        "description": "Get the files and content hash",
+        "operationId": "getRepositoryFiles",
+        "parameters": [
+          {
+            "name": "ref",
+            "in": "query",
+            "description": "branch or commit hash",
+            "schema": {
+              "type": "string"
+            },
+            "examples": {
+              "": {
+                "summary": "The default"
+              },
+              "branch": {
+                "summary": "Select branch",
+                "value": "my-branch"
+              },
+              "commit": {
+                "summary": "Commit hash (or prefix)",
+                "value": "7f7cc2153"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.FileList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta2",
+          "kind": "ResourceWrapper"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the ResourceWrapper",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/provisioning.grafana.app/v1beta2/namespaces/{namespace}/repositories/{name}/files/{path}": {
+      "get": {
+        "tags": [
+          "Repository"
+        ],
+        "description": "Read value from upstream repository",
+        "operationId": "getRepositoryFilesWithPath",
+        "parameters": [
+          {
+            "name": "ref",
+            "in": "query",
+            "description": "branch or commit hash",
+            "schema": {
+              "type": "string"
+            },
+            "examples": {
+              "": {
+                "summary": "The default"
+              },
+              "branch": {
+                "summary": "Select branch",
+                "value": "my-branch"
+              },
+              "commit": {
+                "summary": "Commit hash (or prefix)",
+                "value": "7f7cc2153"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ResourceWrapper"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta2",
+          "kind": "ResourceWrapper"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the ResourceWrapper",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "path",
+          "in": "path",
+          "description": "path to the resource",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/provisioning.grafana.app/v1beta2/namespaces/{namespace}/repositories/{name}/history": {
+      "get": {
+        "tags": [
+          "Repository"
+        ],
+        "description": "Get the history of the repository",
+        "operationId": "getRepositoryHistory",
+        "parameters": [
+          {
+            "name": "ref",
+            "in": "query",
+            "description": "branch or commit hash",
+            "schema": {
+              "type": "string"
+            },
+            "examples": {
+              "": {
+                "summary": "The default"
+              },
+              "branch": {
+                "summary": "Select branch",
+                "value": "my-branch"
+              },
+              "commit": {
+                "summary": "Commit hash (or prefix)",
+                "value": "7f7cc2153"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.HistoryList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta2",
+          "kind": "HistoryList"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the HistoryList",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/provisioning.grafana.app/v1beta2/namespaces/{namespace}/repositories/{name}/history/{path}": {
+      "get": {
+        "tags": [
+          "Repository"
+        ],
+        "description": "Get the history of a path",
+        "operationId": "getRepositoryHistoryWithPath",
+        "parameters": [
+          {
+            "name": "ref",
+            "in": "query",
+            "description": "branch or commit hash",
+            "schema": {
+              "type": "string"
+            },
+            "examples": {
+              "": {
+                "summary": "The default"
+              },
+              "branch": {
+                "summary": "Select branch",
+                "value": "my-branch"
+              },
+              "commit": {
+                "summary": "Commit hash (or prefix)",
+                "value": "7f7cc2153"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.HistoryList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta2",
+          "kind": "HistoryList"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the HistoryList",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "path",
+          "in": "path",
+          "description": "path to the resource",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/provisioning.grafana.app/v1beta2/namespaces/{namespace}/repositories/{name}/refs": {
+      "get": {
+        "tags": [
+          "Repository"
+        ],
+        "summary": "Repository refs listing",
+        "description": "Get the repository references",
+        "operationId": "getRepositoryRefs",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RefList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta2",
+          "kind": "RefList"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the RefList",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/provisioning.grafana.app/v1beta2/namespaces/{namespace}/repositories/{name}/resources": {
+      "get": {
+        "tags": [
+          "Repository"
+        ],
+        "description": "Get the resources this repository manages",
+        "operationId": "getRepositoryResources",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "maximum number of items to return; omit for all of them",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "continue",
+            "in": "query",
+            "description": "continue token from the metadata of the previous page",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ResourceList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta2",
+          "kind": "ResourceList"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the ResourceList",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/provisioning.grafana.app/v1beta2/namespaces/{namespace}/repositories/{name}/stats": {
+      "get": {
+        "tags": [
+          "Repository"
+        ],
+        "summary": "Repository resource stats",
+        "description": "Count the resources this repository manages",
+        "operationId": "getRepositoryStats",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ResourceCountList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta2",
+          "kind": "ResourceCountList"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the ResourceCountList",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/apis/provisioning.grafana.app/v1beta2/namespaces/{namespace}/repositories/{name}/status": {
       "get": {
         "tags": [
@@ -2911,6 +3438,72 @@
           }
         }
       ]
+    },
+    "/apis/provisioning.grafana.app/v1beta2/namespaces/{namespace}/settings": {
+      "get": {
+        "tags": [
+          "Provisioning",
+          "Repository"
+        ],
+        "description": "Get the frontend settings for this namespace",
+        "operationId": "getFrontendSettings",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositoryViewList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/apis/provisioning.grafana.app/v1beta2/namespaces/{namespace}/stats": {
+      "get": {
+        "tags": [
+          "Provisioning",
+          "Repository"
+        ],
+        "description": "Get resource stats for this namespace",
+        "operationId": "getResourceStats",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ResourceStats"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2967,6 +3560,26 @@
           }
         },
         "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.Author": {
+        "type": "object",
+        "required": [
+          "name",
+          "username"
+        ],
+        "properties": {
+          "avatarURL": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "default": ""
+          },
+          "username": {
+            "type": "string",
+            "default": ""
+          }
+        }
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.Connection": {
         "type": "object",
@@ -3440,6 +4053,122 @@
           "disabled": {
             "description": "Disabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
             "type": "boolean"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ExternalRepository": {
+        "type": "object",
+        "required": [
+          "name",
+          "url"
+        ],
+        "properties": {
+          "name": {
+            "description": "Name of the repository",
+            "type": "string",
+            "default": ""
+          },
+          "owner": {
+            "description": "Owner is the user, organization, or workspace that owns the repository For GitHub: organization or user For GitLab: namespace (user or group) For Bitbucket: workspace For pure Git: empty",
+            "type": "string"
+          },
+          "url": {
+            "description": "URL of the repository",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ExternalRepositoryList": {
+        "description": "ExternalRepositoryList is the response of the connection repositories subresource.",
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ExternalRepository"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ExternalRepositoryList",
+            "version": "v1beta2"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.FileItem": {
+        "type": "object",
+        "required": [
+          "path"
+        ],
+        "properties": {
+          "author": {
+            "type": "string"
+          },
+          "hash": {
+            "type": "string"
+          },
+          "modified": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "path": {
+            "type": "string",
+            "default": ""
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.FileList": {
+        "description": "FileList is the response of the repository files subresource for a directory.",
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.FileItem"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
           }
         }
       },
@@ -3972,6 +4701,65 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.HistoryItem": {
+        "type": "object",
+        "required": [
+          "ref",
+          "message",
+          "authors",
+          "createdAt"
+        ],
+        "properties": {
+          "authors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.Author"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "createdAt": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "message": {
+            "type": "string",
+            "default": ""
+          },
+          "ref": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.HistoryList": {
+        "description": "HistoryList is the response of the repository history subresource.",
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.HistoryItem"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.Job": {
         "type": "object",
         "required": [
@@ -4500,6 +5288,94 @@
             "format": "int32"
           }
         }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ManagerStats": {
+        "type": "object",
+        "required": [
+          "stats"
+        ],
+        "properties": {
+          "id": {
+            "description": "Manager identity",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Manager kind",
+            "type": "string"
+          },
+          "stats": {
+            "description": "stats",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ResourceCount"
+            },
+            "x-kubernetes-list-type": "atomic"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RefItem": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "hash": {
+            "description": "The SHA hash of the commit this ref points to",
+            "type": "string"
+          },
+          "name": {
+            "description": "The name of the reference (branch or tag)",
+            "type": "string",
+            "default": ""
+          },
+          "protected": {
+            "description": "Whether this ref is protected (e.g. branch protection rules)",
+            "type": "boolean"
+          },
+          "refURL": {
+            "description": "The URL to the reference (branch or tag)",
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RefList": {
+        "description": "RefList is the response of the repository refs subresource.",
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RefItem"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "RefList",
+            "version": "v1beta2"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.Repository": {
         "type": "object",
@@ -5336,6 +6212,200 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositoryURLs": {
+        "type": "object",
+        "properties": {
+          "compareURL": {
+            "description": "Compare this version to the target branch",
+            "type": "string"
+          },
+          "newPullRequestURL": {
+            "description": "A URL that will create a new pull request for this branch",
+            "type": "string"
+          },
+          "repositoryURL": {
+            "description": "A URL pointing to the repository this lives in",
+            "type": "string"
+          },
+          "sourceURL": {
+            "description": "A URL pointing to the file or ref in the repository",
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositoryView": {
+        "description": "The generated repository option types have no DeepCopyInto, so RepositoryView is copied by hand.",
+        "type": "object",
+        "required": [
+          "name",
+          "title",
+          "type",
+          "target",
+          "workflows"
+        ],
+        "properties": {
+          "branch": {
+            "description": "For git, this is the target branch",
+            "type": "string"
+          },
+          "branchOptions": {
+            "description": "Branch naming options. Mirrors spec.branch. Exposed under `branchOptions` rather than `branch` because the view already uses `branch` for the git target branch name.",
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositoryBranchOptions"
+          },
+          "commit": {
+            "description": "Commit message options. Mirrors the same-named field on the repository spec.",
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositoryCommitOptions"
+          },
+          "name": {
+            "description": "The k8s name for this repository",
+            "type": "string",
+            "default": ""
+          },
+          "path": {
+            "description": "For git, this is the target path",
+            "type": "string"
+          },
+          "pullRequest": {
+            "description": "Pull request options. Mirrors the same-named field on the repository spec.",
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositoryPullRequestOptions"
+          },
+          "target": {
+            "description": "When syncing, where values are saved\n\nPossible enum values:\n - `\"folder\"`\n - `\"folderless\"`\n - `\"instance\"`",
+            "type": "string",
+            "default": "",
+            "enum": [
+              "folder",
+              "folderless",
+              "instance"
+            ]
+          },
+          "title": {
+            "description": "Repository display",
+            "type": "string",
+            "default": ""
+          },
+          "type": {
+            "description": "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
+            "type": "string",
+            "default": "",
+            "enum": [
+              "bitbucket",
+              "git",
+              "github",
+              "githubEnterprise",
+              "gitlab",
+              "local"
+            ]
+          },
+          "url": {
+            "description": "For git, this is the target URL",
+            "type": "string"
+          },
+          "workflows": {
+            "description": "The supported workflows",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "branch",
+                "write"
+              ]
+            },
+            "x-kubernetes-list-type": "atomic"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositoryViewList": {
+        "description": "RepositoryViewList is the response of the namespace settings route. It shows a view of the configuration that is sanitized and is OK for logged in users to see.",
+        "type": "object",
+        "required": [
+          "allowImageRendering",
+          "maxRepositories",
+          "items"
+        ],
+        "properties": {
+          "allowImageRendering": {
+            "description": "Whether image rendering is allowed for dashboard previews",
+            "type": "boolean",
+            "default": false
+          },
+          "allowedTargets": {
+            "description": "The valid targets (can disable instance or folder types)",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "folder",
+                "folderless",
+                "instance"
+              ]
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "availableConnectionTypes": {
+            "description": "AvailableConnectionTypes is the list of connection types supported in this instance",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "bitbucketOAuth",
+                "gitOAuth",
+                "github",
+                "githubEnterprise",
+                "githubEnterpriseOAuth",
+                "githubOAuth",
+                "gitlabOAuth"
+              ]
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "availableRepositoryTypes": {
+            "description": "AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "bitbucket",
+                "git",
+                "github",
+                "githubEnterprise",
+                "gitlab",
+                "local"
+              ]
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "availableResources": {
+            "description": "AvailableResources is the list of resource types declared for provisioning in this instance, including disabled ones (see SupportedResource.Disabled).",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.SupportedResource"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositoryView"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "maxRepositories": {
+            "description": "MaxRepositories is the maximum number of repositories allowed per namespace (0 = unlimited)",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositoryWebhookConfig": {
         "type": "object",
         "properties": {
@@ -5375,6 +6445,420 @@
           },
           "uuid": {
             "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ResourceCount": {
+        "type": "object",
+        "required": [
+          "group",
+          "resource",
+          "count"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "group": {
+            "type": "string",
+            "default": ""
+          },
+          "resource": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ResourceCountList": {
+        "description": "ResourceCountList is the response of the repository stats subresource.",
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ResourceCount"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ResourceCountList",
+            "version": "v1beta2"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ResourceList": {
+        "description": "ResourceList is the response of the repository resources subresource.",
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ResourceListItem"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ResourceList",
+            "version": "v1beta2"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ResourceListItem": {
+        "type": "object",
+        "required": [
+          "path",
+          "group",
+          "resource",
+          "name",
+          "hash"
+        ],
+        "properties": {
+          "folder": {
+            "type": "string"
+          },
+          "group": {
+            "type": "string",
+            "default": ""
+          },
+          "hash": {
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "description": "The k8s identifier",
+            "type": "string",
+            "default": ""
+          },
+          "path": {
+            "type": "string",
+            "default": ""
+          },
+          "resource": {
+            "type": "string",
+            "default": ""
+          },
+          "time": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ResourceObjects": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "action": {
+            "description": "The action required/used for dryRun\n\nPossible enum values:\n - `\"create\"`\n - `\"delete\"`\n - `\"move\"`\n - `\"update\"`",
+            "type": "string",
+            "enum": [
+              "create",
+              "delete",
+              "move",
+              "update"
+            ]
+          },
+          "dryRun": {
+            "description": "The value returned from a dryRun request",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+              }
+            ]
+          },
+          "existing": {
+            "description": "The same value, currently saved in the grafana database",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+              }
+            ]
+          },
+          "file": {
+            "description": "The resource from the repository with all modifications applied eg, the name, folder etc will all be applied to this object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+              }
+            ]
+          },
+          "type": {
+            "description": "The identified type for this object",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ResourceType"
+              }
+            ]
+          },
+          "upsert": {
+            "description": "For write events, this will return the value that was added or updated",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+              }
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ResourceRepositoryInfo": {
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "namespace",
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "description": "The name (identifier)",
+            "type": "string",
+            "default": ""
+          },
+          "namespace": {
+            "description": "The namespace this belongs to",
+            "type": "string",
+            "default": ""
+          },
+          "title": {
+            "description": "The display name for this repository",
+            "type": "string",
+            "default": ""
+          },
+          "type": {
+            "description": "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`\n - `\"local\"`",
+            "type": "string",
+            "default": "",
+            "enum": [
+              "bitbucket",
+              "git",
+              "github",
+              "githubEnterprise",
+              "gitlab",
+              "local"
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ResourceStats": {
+        "description": "ResourceStats is the response of the namespace stats route.",
+        "type": "object",
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "instance": {
+            "description": "Stats across all unified storage When legacy storage is still used, this will offer a shim",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ResourceCount"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "managed": {
+            "description": "Stats for each manager",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ManagerStats"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "metadata": {
+            "default": {},
+            "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+          },
+          "unmanaged": {
+            "description": "Stats across all unified storage When legacy storage is still used, this will offer a shim",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ResourceCount"
+            },
+            "x-kubernetes-list-type": "atomic"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ResourceType": {
+        "type": "object",
+        "properties": {
+          "classic": {
+            "description": "For non-k8s native formats, what did this start as\n\nPossible enum values:\n - `\"access-control\"`\n - `\"alerting\"`\n - `\"dashboard\"`\n - `\"datasources\"`",
+            "type": "string",
+            "enum": [
+              "access-control",
+              "alerting",
+              "dashboard",
+              "datasources"
+            ]
+          },
+          "group": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "resource": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ResourceWrapper": {
+        "description": "ResourceWrapper is the response of the repository files subresource for a single file.",
+        "type": "object",
+        "required": [
+          "repository",
+          "resource"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "errors": {
+            "description": "If errors exist, show them here",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "hash": {
+            "description": "The repo hash value",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "path": {
+            "description": "Path to the remote file",
+            "type": "string"
+          },
+          "ref": {
+            "description": "The request ref (or branch if exists)",
+            "type": "string"
+          },
+          "repository": {
+            "description": "Basic repository info",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ResourceRepositoryInfo"
+              }
+            ]
+          },
+          "resource": {
+            "description": "Different flavors of the same object",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.ResourceObjects"
+              }
+            ]
+          },
+          "timestamp": {
+            "description": "The modified time in the remote file system",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
+              }
+            ]
+          },
+          "urls": {
+            "description": "Typed links for this file (only supported by external systems, github etc)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.RepositoryURLs"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ResourceWrapper",
+            "version": "v1beta2"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta2.SupportedResource": {
+        "description": "SupportedResource describes a resource type declared for provisioning. A resource is identified by its group and kind; the API version and plural resource are resolved at runtime via discovery, so they are not part of this descriptor.",
+        "type": "object",
+        "required": [
+          "group",
+          "kind"
+        ],
+        "properties": {
+          "disabled": {
+            "description": "Disabled reports whether the resource is declared but not acted on by provisioning. Active resources omit this field.",
+            "type": "boolean"
+          },
+          "group": {
+            "description": "Group is the API group of the resource (e.g. \"dashboard.grafana.app\").",
+            "type": "string",
+            "default": ""
+          },
+          "kind": {
+            "description": "Kind is the kind of the resource (e.g. \"Dashboard\").",
+            "type": "string",
+            "default": ""
           }
         }
       },

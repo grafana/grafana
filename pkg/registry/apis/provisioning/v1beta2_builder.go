@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -38,9 +39,11 @@ var (
 
 // v1beta2APIBuilder serves the v1beta2 kinds. Objects are stored, admitted and reconciled as
 // v1beta2StorageVersion: the stores convert through v1beta2StorageSerializer, and admission and
-// authorization delegate to the v0alpha1 builder. Enterprise extras don't apply to v1beta2 yet.
+// authorization delegate to the v0alpha1 builder, and so do the connectors and namespace routes,
+// through converting adapters. Enterprise extras don't apply to v1beta2 yet.
 type v1beta2APIBuilder struct {
 	inner     *APIBuilder
+	scheme    *runtime.Scheme
 	admission *v1beta2Admission
 }
 
@@ -53,6 +56,7 @@ func (b *v1beta2APIBuilder) GetGroupVersion() schema.GroupVersion {
 }
 
 func (b *v1beta2APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+	b.scheme = scheme
 	b.admission = &v1beta2Admission{scheme: scheme, inner: b.inner}
 	if err := v1beta2.AddToScheme(scheme); err != nil {
 		return err
@@ -140,6 +144,12 @@ func (b *v1beta2APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.AP
 		storage[v1beta2.HistoricJobResourceInfo.StoragePath()] = &historicJobStorage{Store: historicJobStore}
 	}
 
+	connectors, err := b.connectorStorage(opts.Scheme)
+	if err != nil {
+		return fmt.Errorf("create connectors: %w", err)
+	}
+	maps.Copy(storage, connectors)
+
 	apiGroupInfo.VersionedResourcesStorageMap[v1beta2.APIVersion] = storage
 	return nil
 }
@@ -188,6 +198,8 @@ func (b *v1beta2APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions
 
 func (b *v1beta2APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	oas.Info.Description = "Provisioning"
-	hideHistoricJobPaths(oas.Paths.Paths, "/apis/"+v1beta2.GroupVersion.String()+"/")
+	root := "/apis/" + v1beta2.GroupVersion.String() + "/"
+	hideHistoricJobPaths(oas.Paths.Paths, root)
+	documentV1beta2Subresources(oas, root)
 	return oas, nil
 }

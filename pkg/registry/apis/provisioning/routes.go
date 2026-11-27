@@ -1,11 +1,13 @@
 package provisioning
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
 
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -23,6 +25,14 @@ import (
 // TODO: Move the specific logic to the connector so that we don't have logic all over the place.
 // GetAPIRoutes implements the direct HTTP handlers that bypass k8s
 func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
+	return namespaceRoutes(
+		provisioning.ResourceStats{}.OpenAPIModelName(), b.handleStats,
+		provisioning.RepositoryViewList{}.OpenAPIModelName(), b.handleSettings,
+	)
+}
+
+// namespaceRoutes describes the stats and settings routes, which respond with the named models.
+func namespaceRoutes(statsModel string, stats http.HandlerFunc, settingsModel string, settings http.HandlerFunc) *builder.APIRoutes {
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
@@ -55,7 +65,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 														MediaTypeProps: spec3.MediaTypeProps{
 															Schema: &spec.Schema{
 																SchemaProps: spec.SchemaProps{
-																	Ref: spec.MustCreateRef("#/components/schemas/" + provisioning.ResourceStats{}.OpenAPIModelName()),
+																	Ref: spec.MustCreateRef("#/components/schemas/" + statsModel),
 																},
 															},
 														},
@@ -69,7 +79,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 						},
 					},
 				},
-				Handler: WithTimeoutFunc(b.handleStats, 30*time.Second),
+				Handler: WithTimeoutFunc(stats, 30*time.Second),
 			},
 			{
 				Path: "settings",
@@ -103,7 +113,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 														MediaTypeProps: spec3.MediaTypeProps{
 															Schema: &spec.Schema{
 																SchemaProps: spec.SchemaProps{
-																	Ref: spec.MustCreateRef("#/components/schemas/" + provisioning.RepositoryViewList{}.OpenAPIModelName()),
+																	Ref: spec.MustCreateRef("#/components/schemas/" + settingsModel),
 																},
 															},
 														},
@@ -117,14 +127,37 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 						},
 					},
 				},
-				Handler: WithTimeoutFunc(b.handleSettings, 30*time.Second),
+				Handler: WithTimeoutFunc(settings, 30*time.Second),
 			},
 		},
 	}
 }
 
-// TODO: why didn't we create a connector as we did before or have a separate file?
+// routeConversion converts a v0alpha1 route response before it is encoded.
+type routeConversion func(in runtime.Object) (runtime.Object, error)
+
+func writeRouteResponse(ctx context.Context, w http.ResponseWriter, obj runtime.Object, convert routeConversion) {
+	if convert != nil {
+		var err error
+		if obj, err = convert(obj); err != nil {
+			errhttp.Write(ctx, err, w)
+			return
+		}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(obj)
+}
+
 func (b *APIBuilder) handleStats(w http.ResponseWriter, r *http.Request) {
+	b.serveStats(w, r, nil)
+}
+
+func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
+	b.serveSettings(w, r, nil)
+}
+
+// TODO: why didn't we create a connector as we did before or have a separate file?
+func (b *APIBuilder) serveStats(w http.ResponseWriter, r *http.Request, convert routeConversion) {
 	u, ok := authlib.AuthInfoFrom(r.Context())
 	if !ok {
 		w.WriteHeader(400)
@@ -137,13 +170,12 @@ func (b *APIBuilder) handleStats(w http.ResponseWriter, r *http.Request) {
 		errhttp.Write(r.Context(), err, w)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(stats)
+	writeRouteResponse(r.Context(), w, stats, convert)
 }
 
 // TODO: why didn't we create a connector as we did before or have a separate file?
 // TODO: is there a better way to provide a filtered view of the repositories to the frontend?
-func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
+func (b *APIBuilder) serveSettings(w http.ResponseWriter, r *http.Request, convert routeConversion) {
 	ctx := r.Context()
 	u, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
@@ -185,7 +217,7 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	settings := provisioning.RepositoryViewList{
+	settings := &provisioning.RepositoryViewList{
 		Items:                    make([]provisioning.RepositoryView, len(all)),
 		AllowedTargets:           b.allowedTargets,
 		AvailableRepositoryTypes: b.repoFactory.Types(),
@@ -214,6 +246,5 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 			PullRequest:   val.Spec.PullRequest,
 		}
 	}
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(settings)
+	writeRouteResponse(ctx, w, settings, convert)
 }
