@@ -534,8 +534,8 @@ importers:
         specifier: ^4.1.1
         version: 4.3.4
       marked:
-        specifier: 18.2.1
-        version: 18.2.1
+        specifier: 18.3.0
+        version: 18.3.0
       memoize-one:
         specifier: 7.0.0
         version: 7.0.0
@@ -1549,10 +1549,10 @@ importers:
         version: 4.18.1
       marked:
         specifier: ^18.0.0
-        version: 18.2.1
+        version: 18.3.0
       marked-mangle:
         specifier: ^1.1.12
-        version: 1.1.14(marked@18.2.1)
+        version: 1.1.14(marked@18.3.0)
       ol:
         specifier: ^10.10.0
         version: 10.11.0
@@ -12046,8 +12046,8 @@ packages:
     engines: {node: '>= 20'}
     hasBin: true
 
-  marked@18.2.1:
-    resolution: {integrity: sha512-ii4bxCTCqqwpT86XZWgJNs+ZnAIZksmLGYMViWA7PDIXYIeNo1x6cDdX3JOip9NM/cI6p8z57FxliACboTruMA==}
+  marked@18.3.0:
+    resolution: {integrity: sha512-ed8zmPXlBb3UfGXN5iHMQyMhFpdqLgoV5umUXx/Q1R+FW3q8VpqpyoKUwlENL9appo2UMvNLURDVaT3AMOryGA==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -26443,9 +26443,9 @@ snapshots:
       punycode.js: 2.3.1
       uc.micro: 2.1.0
 
-  marked-mangle@1.1.14(marked@18.2.1):
+  marked-mangle@1.1.14(marked@18.3.0):
     dependencies:
-      marked: 18.2.1
+      marked: 18.3.0
 
   marked-terminal@7.3.0(marked@9.1.6):
     dependencies:
@@ -26460,7 +26460,7 @@ snapshots:
 
   marked@16.3.0: {}
 
-  marked@18.2.1: {}
+  marked@18.3.0: {}
 
   marked@9.1.6: {}
 
