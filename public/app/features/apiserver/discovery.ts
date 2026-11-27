@@ -1,6 +1,6 @@
 import { lastValueFrom, map } from 'rxjs';
 
-import { type BackendSrvRequest, type FetchResponse, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { type FetchResponse, getBackendSrv, isFetchError } from '@grafana/runtime';
 
 import { type GroupVersionKind, type K8sAPIGroup, type ListMeta } from './types';
 
@@ -38,13 +38,10 @@ export type APIGroupDiscoveryList = {
   items: GroupDiscoveryItem[];
 };
 
-export async function getAPIGroupDiscoveryList(
-  options?: Pick<BackendSrvRequest, 'showErrorAlert'>
-): Promise<APIGroupDiscoveryList> {
+export async function getAPIGroupDiscoveryList(): Promise<APIGroupDiscoveryList> {
   return await lastValueFrom(
     getBackendSrv()
       .fetch<APIGroupDiscoveryList>({
-        ...options,
         method: 'GET',
         url: '/apis',
         headers: {

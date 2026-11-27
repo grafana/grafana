@@ -96,17 +96,6 @@ describe('app kinds', () => {
     expect(findKind(group, 'Widget')?.getLabel()).toBe('New widget');
   });
 
-  it('names a kind by the labels Grafana has for it, whatever labels its plugin adds it with', () => {
-    addKinds([{ ...appKind('Page', 'Plugin page'), group: 'assistant.ext.grafana.app' }]);
-
-    const page = findKind('assistant.ext.grafana.app', 'Page');
-    expect([page?.getLabel(), page?.getLabel({ upperFirst: false }), page?.getPluralLabel()]).toEqual([
-      'Page',
-      'page',
-      'Pages',
-    ]);
-  });
-
   it('tells a listener each time a plugin adds a kind, until the listener unsubscribes', () => {
     const listener = jest.fn();
     const unsubscribe = subscribeToAppKinds(listener);

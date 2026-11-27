@@ -130,17 +130,6 @@ const appKinds = new Map<string, KindInfo>();
 const appKindListeners = new Set<() => void>();
 
 /**
- * The labels Grafana translates itself for kinds that app plugins serve, by `group/Kind`. They name a kind in the
- * user's language before its plugin's module loads, and whether or not the plugin has translations of its own.
- */
-const APP_KIND_LABELS: Partial<Record<string, Pick<KindInfo, 'getLabel' | 'getPluralLabel'>>> = {
-  'assistant.ext.grafana.app/Page': {
-    getLabel: kindLabel(() => t('app-kinds.assistant-page.label', 'page')),
-    getPluralLabel: kindLabel(() => t('app-kinds.assistant-page.label-plural', 'pages')),
-  },
-};
-
-/**
  * Whether `group` names this kind: its own group, or for a collection kind a group served inside the
  * collection, which is the group a single object carries.
  */
@@ -158,18 +147,12 @@ export function getAppKinds(): KindInfo[] {
   return [...appKinds.values()];
 }
 
-/**
- * Adds the kinds an app plugin serves. A kind that Grafana serves itself keeps its core row, and a kind that
- * Grafana has labels for is named by those.
- */
+/** Adds the kinds an app plugin serves. A kind that Grafana serves itself keeps its core row. */
 export function addKinds(added: KindInfo[]) {
   let changed = false;
   for (const kind of added) {
     if (!kinds.some((row) => row.kind === kind.kind && coversGroup(row, kind.group))) {
-      const key = `${kind.group}/${kind.kind}`;
-      // Grafana's labels win, so a label keeps its language when the plugin's module adds the kind again
-      const labels = APP_KIND_LABELS[key];
-      appKinds.set(key, labels ? { ...kind, ...labels } : kind);
+      appKinds.set(`${kind.group}/${kind.kind}`, kind);
       changed = true;
     }
   }

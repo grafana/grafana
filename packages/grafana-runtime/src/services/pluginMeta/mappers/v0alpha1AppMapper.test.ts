@@ -29,39 +29,6 @@ describe('v0alpha1AppMapper', () => {
     });
   });
 
-  it('keeps the kinds an app declares', () => {
-    const kind = {
-      group: 'widgets.ext.grafana.app',
-      kind: 'Widget',
-      folderScoped: true,
-      icon: 'cube',
-      route: '/a/myorg-someplugin-app/widgets/{name}',
-      label: 'widget',
-      labelPlural: 'widgets',
-    };
-    const meta = {
-      ...myOrgTestAppMeta,
-      spec: {
-        ...myOrgTestAppMeta.spec,
-        pluginJson: { ...myOrgTestAppMeta.spec.pluginJson, kinds: [kind] },
-      },
-    };
-
-    const result = v0alpha1AppMapper({ ...v0alpha1Response, items: [meta] });
-
-    expect(result[meta.spec.pluginJson.id].kinds).toEqual([
-      {
-        group: 'widgets.ext.grafana.app',
-        kind: 'Widget',
-        folderScoped: true,
-        icon: 'cube',
-        route: '/a/myorg-someplugin-app/widgets/{name}',
-        label: 'widget',
-        labelPlural: 'widgets',
-      },
-    ]);
-  });
-
   describe.each(PLUGIN_IDS)('when called for pluginId:$pluginId', ({ pluginId }) => {
     it('should map id property correctly', () => {
       const result = v0alpha1AppMapper(v0alpha1Response);

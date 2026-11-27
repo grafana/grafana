@@ -4435,12 +4435,6 @@
       "sign-in": "Sign in"
     }
   },
-  "app-kinds": {
-    "assistant-page": {
-      "label": "page",
-      "label-plural": "pages"
-    }
-  },
   "app-notification": {
     "item": {
       "trace-id": "Trace ID: {{traceId}}"
