@@ -19,6 +19,11 @@
   },
   "defaultBase": "main",
   "analytics": false,
+  "pluginsConfig": {
+    "@nx/js": {
+      "projectsAffectedByDependencyUpdates": "auto"
+    }
+  },
   "release": {
     "groups": {
       "grafana": {
