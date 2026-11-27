@@ -127,7 +127,7 @@ func TestCompatVerify(t *testing.T) {
 			} else {
 				requireWriterVersion(t, versions, written.Update)
 				c.checkHistory(t, revision(1), revision(2), revision(3), rolledBackRevision())
-				c.checkRestored(t, trashedBySetup, written.Update)
+				c.checkRestored(t, trashedBySetup)
 				c.restore(t, trashedByUpdate)
 				live = append(live, trashedBySetup)
 			}
@@ -417,7 +417,7 @@ func (c client) restore(t *testing.T, name string) {
 	var restored unstructured.Unstructured
 	require.NoError(t, json.Unmarshal(raw, &restored), "decode restored %s in %s", c.fixture(name), c.version)
 	require.Equal(t, c.fixture(name), restored.GetName(), "restored dashboard in %s", c.version)
-	c.checkRestored(t, name, c.apiGroupVersion())
+	c.checkRestored(t, name)
 }
 
 // checkHistory checks every saved revision of history, given oldest first, in the order
@@ -518,7 +518,7 @@ func (c client) expectedTrashMetadata(name string) trashMetadata {
 
 // checkRestored checks a restored dashboard: it is back in its folder with its content,
 // and no longer in the trash.
-func (c client) checkRestored(t *testing.T, name, writerAPIVersion string) {
+func (c client) checkRestored(t *testing.T, name string) {
 	t.Helper()
 	want, _ := c.expectedTrash(name)
 	legacyID := c.expectedTrashMetadata(name).LegacyID
@@ -561,7 +561,7 @@ func (c client) readContent(t *testing.T, name string, obj *unstructured.Unstruc
 	var err error
 	switch c.version {
 	case "v0alpha1", "v1", "v1beta1":
-		got, err = parseV1(spec, false)
+		got, err = parseV1(spec)
 	default:
 		return content{}, false
 	}
@@ -630,8 +630,8 @@ func v1Spec(_ *testing.T, c content) map[string]any {
 	}
 }
 
-func parseV1(spec map[string]any, tabs bool) (content, error) {
-	if err := checkV1Wire(spec, tabs); err != nil {
+func parseV1(spec map[string]any) (content, error) {
+	if err := checkV1Wire(spec); err != nil {
 		return content{}, err
 	}
 
@@ -665,7 +665,7 @@ func parseV1(spec map[string]any, tabs bool) (content, error) {
 	}, nil
 }
 
-func checkV1Wire(spec map[string]any, tabs bool) error {
+func checkV1Wire(spec map[string]any) error {
 	panel := map[string]any{
 		"id":      1,
 		"targets": []any{map[string]any{"refId": "A", "datasource": map[string]any{}}},
