@@ -17,8 +17,9 @@ var RepoOperator = runner.Operator{
 	Name:        "provisioning-repo",
 	Description: "Watch provisioning repositories",
 	Logger:      "provisioning-repo-controller",
+	Defaults:    operatorDefaults,
 	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
-		controllerCfg, err := setupFromConfig(rt.Cfg, rt.Registerer, rt.Tracer, rt.Subscriber)
+		controllerCfg, err := setupFromConfig(rt)
 		if err != nil {
 			return nil, err
 		}

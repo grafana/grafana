@@ -304,4 +304,57 @@ describe('DraggableManager', () => {
       });
     });
   });
+
+  // A Document Picture-in-Picture window (the Grafana Assistant pop-out) is another realm, as an iframe is: the moves
+  // and release of a drag that starts there happen in that window only.
+  describe('drags in another window', () => {
+    it('follows the drag in the window the mousedown happened in', () => {
+      const iframe = document.createElement('iframe');
+      document.body.appendChild(iframe);
+      const otherWindow = iframe.contentDocument!.defaultView!;
+      const mousedown = new otherWindow.MouseEvent('mousedown', { button: 0, clientX: baseClientX, view: otherWindow });
+
+      instance.handleMouseDown({
+        ...baseMouseEvt,
+        type: 'mousedown',
+        nativeEvent: mousedown,
+      } as unknown as React.MouseEvent);
+      otherWindow.dispatchEvent(new otherWindow.MouseEvent('mousemove', { button: 0, clientX: baseClientX + 10 }));
+      otherWindow.dispatchEvent(new otherWindow.MouseEvent('mouseup', { button: 0, clientX: baseClientX + 10 }));
+
+      expect(ctorOpts.onDragMove).toHaveBeenCalledWith(expect.objectContaining({ type: EUpdateTypes.DragMove }));
+      expect(ctorOpts.onDragEnd).toHaveBeenCalledWith(expect.objectContaining({ type: EUpdateTypes.DragEnd }));
+      expect(instance.isDragging()).toBe(false);
+      iframe.remove();
+    });
+
+    it('measures again when the window the element is in resizes', () => {
+      const iframe = document.createElement('iframe');
+      document.body.appendChild(iframe);
+      const otherWindow = iframe.contentDocument!.defaultView!;
+      instance = new DraggableManager({ ...ctorOpts, resetBoundsOnResize: true });
+      const mouseenter = new otherWindow.MouseEvent('mouseenter', {
+        button: 0,
+        clientX: baseClientX,
+        view: otherWindow,
+      });
+      instance.handleMouseEnter({
+        ...baseMouseEvt,
+        type: 'mouseenter',
+        nativeEvent: mouseenter,
+      } as unknown as React.MouseEvent);
+      getBounds.mockClear();
+
+      otherWindow.dispatchEvent(new otherWindow.Event('resize'));
+      instance.handleMouseMove({
+        ...baseMouseEvt,
+        type: 'mousemove',
+        nativeEvent: mouseenter,
+      } as unknown as React.MouseEvent);
+
+      expect(getBounds).toHaveBeenCalledTimes(1);
+      instance.dispose();
+      iframe.remove();
+    });
+  });
 });

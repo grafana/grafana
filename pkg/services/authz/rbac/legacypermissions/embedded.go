@@ -97,6 +97,7 @@ func newEmbeddedClient(loader *Loader, cfg *setting.Cfg, reg prometheus.Register
 	server := &embeddedServer{loader: loader, cfg: cfg, guard: guard, metrics: newMetrics(reg, "embedded")}
 	channel := (&inprocgrpc.Channel{}).WithServerStreamInterceptor(func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		ctx := stream.Context()
+		search := info.FullMethod == authzv1.LegacyAuthzService_LegacySearchUsersPermissions_FullMethodName
 		if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
 			ctx = trace.ContextWithSpanContext(ctx, trace.SpanContextFromContext(clientCtx))
 			// Preserve request targeting so embedded and direct loads evaluate the same flags.
@@ -108,21 +109,35 @@ func newEmbeddedClient(loader *Loader, cfg *setting.Cfg, reg prometheus.Register
 			// Preserve their SQL session without forwarding unrelated context values.
 			// Receiver renames refresh permissions after the outermost transaction commits.
 			// No other caller is known to read permissions inside a transaction.
-			if sess, ok := clientCtx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
+			sess, _ := clientCtx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession)
+			if sess != nil || search {
 				call, ok := clientCtx.Value(embeddedTransactionCallKey{}).(*embeddedTransactionCall)
 				if !ok || !call.start() {
 					return status.Error(codes.Canceled, "embedded transaction call already returned")
 				}
 				defer close(call.done)
-				ctx = context.WithValue(ctx, sqlstore.ContextSessionKey{}, sess)
+				if sess != nil {
+					ctx = context.WithValue(ctx, sqlstore.ContextSessionKey{}, sess)
+				}
+			}
+			if search {
+				call, ok := clientCtx.Value(embeddedSearchCallKey{}).(*embeddedSearchCall)
+				if !ok {
+					return status.Error(codes.PermissionDenied, "legacy search requires an embedded call")
+				}
+				ctx = context.WithValue(ctx, embeddedSearchCallKey{}, call)
 			}
 		}
 		ctx = context.WithValue(ctx, embeddedCallKey{}, guard)
-		ctx = types.WithAuthInfo(ctx, LegacyPermissionCaller("*"))
+		if search {
+			ctx = types.WithAuthInfo(ctx, LegacySearchPermissionCaller("*"))
+		} else {
+			ctx = types.WithAuthInfo(ctx, LegacyPermissionCaller("*"))
+		}
 		return handler(srv, embeddedStream{ServerStream: stream, ctx: ctx})
 	})
 	authzv1.RegisterLegacyAuthzServiceServer(channel, server)
-	return &embeddedClient{LegacyUserPermissionsClient: legacyclient.NewLegacyClient(channel)}
+	return &embeddedClient{LegacyUserPermissionsClient: legacyclient.NewLegacyClient(channel, legacyclient.WithLegacyTracerClientOption(tracer))}
 }
 
 func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) (err error) {
@@ -176,8 +191,12 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 
 func (l *Loader) streamPermissions(ctx context.Context, req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer, namespace string, orgID int64) error {
 	requester := &legacyRequester{
-		SignedInUser: &user.SignedInUser{OrgID: orgID, OrgRole: types.RoleType(req.Identity.OrgRole), IsGrafanaAdmin: req.Identity.IsGrafanaAdmin, TeamIDs: req.Identity.TeamIds}, //nolint:staticcheck // The compatibility contract carries numeric RBAC memberships separately from contextual groups.
-		identity:     req.Identity, namespace: namespace,
+		SignedInUser: &user.SignedInUser{
+			OrgID: orgID, OrgRole: types.RoleType(req.Identity.OrgRole), IsGrafanaAdmin: req.Identity.IsGrafanaAdmin,
+			TeamIDs:        req.Identity.TeamIds, //nolint:staticcheck // The compatibility contract carries numeric RBAC memberships separately from contextual groups.
+			ExternalGroups: req.Identity.GetGroups(),
+		},
+		identity: req.Identity, namespace: namespace,
 	}
 	if ns, ok := ctx.Value(remoteNamespaceKey{}).(string); ok {
 		key, err := remoteIdentityCacheKey(req.Identity, ns, orgID)
@@ -239,10 +258,9 @@ func (r *legacyRequester) GetInternalID() (int64, error) {
 	}
 	return *r.identity.InternalId, nil
 }
-func (r *legacyRequester) HasUniqueId() bool           { return r.identity.HasUniqueId }
-func (r *legacyRequester) GetNamespace() string        { return r.namespace }
-func (r *legacyRequester) GetGroups() []string         { return r.identity.Groups }
-func (r *legacyRequester) GetExternalGroups() []string { return r.identity.Groups }
+func (r *legacyRequester) HasUniqueId() bool    { return r.identity.HasUniqueId }
+func (r *legacyRequester) GetNamespace() string { return r.namespace }
+func (r *legacyRequester) GetGroups() []string  { return r.identity.Groups }
 func (r *legacyRequester) GetCacheKey() string {
 	if r.remoteCacheKey != "" {
 		return r.remoteCacheKey
