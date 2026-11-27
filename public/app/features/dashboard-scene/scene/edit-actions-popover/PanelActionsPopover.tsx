@@ -11,6 +11,7 @@ import { type VizPanel, type VizPanelMenu } from '@grafana/scenes';
 import { Dropdown, ElementSelectionContext, Icon, IconButton, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 import { getFocusStyles, PanelChromeHeaderControlsContext } from '@grafana/ui/internal';
 
+import { useComposerPointerMode } from '../../composer/useComposerPointerMode';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
 import { useIsMobileEditDeprecated } from '../../utils/mobileEditDeprecation';
@@ -184,7 +185,10 @@ function PanelActions({
 
   const isExpanded = Boolean(viewPanel);
   const isRepeat = isRepeatCloneOrChildOf(panel);
-  const offersQuickEdits = useOffersQuickEdits(panel) && isEditing;
+  // Composer, which hides the other manual edits, still offers quick edits, as they change only the panel's options.
+  // Only while presses reach the dashboard (the Assistant's Pointer tool), as during a pick they are Composer's.
+  const isComposerPointer = useComposerPointerMode(dashboard);
+  const offersQuickEdits = useOffersQuickEdits(panel) && (isEditing || isComposerPointer);
   // Like isEditEntryBlocked, which the panel menu checks: on small screens, editing can't be started from here.
   const isEditEntryBlocked = useIsMobileEditDeprecated() && !isEditing;
   // Like the panel menu: no Edit in composer mode, where only the Composer session writes.

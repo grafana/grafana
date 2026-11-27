@@ -12,7 +12,10 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 
 import { changeViewPanelFieldConfig, changeViewPanelOptions } from '../actions/panel/changeViewPanelOptions';
-import { createPresetApplyHandler } from '../panel-edit/createPresetApplyHandler';
+import { applyPreset, createPresetApplyHandler } from '../panel-edit/createPresetApplyHandler';
+import type { DashboardScene } from '../scene/DashboardScene';
+import { isComposerEditing, isComposerMode } from '../scene/dashboardModes';
+import { isDashboardSceneLike } from '../scene/types/dashboard';
 
 export interface ResolvedQuickEdit {
   quickEdit: ReturnType<PanelPlugin['getQuickEdits']>[number];
@@ -51,8 +54,18 @@ export function useQuickEdits(panel: VizPanel, enabled = true): QuickEdits {
       currentOptions: options,
       currentFieldConfig: fieldConfig,
       reportInteractionUI: 'quick-edits',
-      onOptionsChange: (next, name, category) => changeViewPanelOptions(panel, next, name, category),
-      onFieldConfigChange: (next, name, category) => changeViewPanelFieldConfig(panel, next, name, category),
+      onOptionsChange: (next, name, category) =>
+        writeQuickEdit(
+          panel,
+          () => changeViewPanelOptions(panel, next, name, category),
+          () => panel.onOptionsChange(next)
+        ),
+      onFieldConfigChange: (next, name, category) =>
+        writeQuickEdit(
+          panel,
+          () => changeViewPanelFieldConfig(panel, next, name, category),
+          () => panel.onFieldConfigChange(next, true)
+        ),
     });
     const byId = new Map<string, OptionsPaneItemDescriptor>();
     const collect = (category: OptionsPaneCategoryDescriptor) => {
@@ -74,9 +87,38 @@ export function useQuickEdits(panel: VizPanel, enabled = true): QuickEdits {
     });
   }, [enabled, panel, plugin, data, options, fieldConfig, _pluginInstanceState]);
 
-  const applyPreset = useMemo(() => createPresetApplyHandler(panel), [panel]);
+  const onApplyPreset = useMemo(() => {
+    const recordPreset = createPresetApplyHandler(panel);
+    return (preset: PanelPluginVisualizationSuggestion, prevFieldConfig: FieldConfigSource) =>
+      writeQuickEdit(
+        panel,
+        () => recordPreset(preset, prevFieldConfig),
+        () => applyPreset(panel, preset)
+      );
+  }, [panel]);
 
-  return { edits, applyPreset };
+  return { edits, applyPreset: onApplyPreset };
+}
+
+/**
+ * Makes a quick edit: `record` as an ordinary edit, or `apply` straight to the panel. Composer lets only its own
+ * session write, except for quick edits: over Editing they are recorded like any other edit. Over Viewing, which has
+ * no edit session for them and stays Viewing, they are applied to the panel alone.
+ */
+function writeQuickEdit(panel: VizPanel, record: () => void, apply: () => void) {
+  const root = panel.getRoot();
+  if (!isDashboardScene(root) || !isComposerMode(root.state)) {
+    record();
+  } else if (isComposerEditing(root.state)) {
+    root.withComposerQuickEdit(record);
+  } else {
+    apply();
+  }
+}
+
+/** Checked without importing DashboardScene at runtime, which imports the panel renderers that hold quick edits. */
+function isDashboardScene(obj: unknown): obj is DashboardScene {
+  return isDashboardSceneLike(obj);
 }
 
 /**
