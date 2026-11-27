@@ -110,7 +110,7 @@ export function useRenderedLogsWindow(
       // Only the InfiniteScroll type is supported
       visualisationType !== 'logs' ||
       // If the "old" debounced value doesn't match a recent change, we disable until it catches up
-      renderedLogsWindowDebounced?.logsSortOrder !== logsSortOrder ||
+      (hasData && renderedLogsWindowDebounced?.logsSortOrder !== logsSortOrder) ||
       // Still fetching - we don't know yet whether there's anything to show
       (loading && !hasData)
     ) {
