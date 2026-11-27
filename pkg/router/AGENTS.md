@@ -134,6 +134,24 @@ which live in the deployment_tools repository under `docs/grafana-router/specs/`
   - With a requester, `Impersonate-*` and `X-Grafana-Org-Id` are dropped too, so only the
     requester's tokens decide who the request acts as. Without one, the backend authorizes them
     against the caller's own credentials.
+  - The remote services (`remote_services_file`) are **only for Grafana Cloud single-tenant stack
+    pods**. They are a stopgap that lets an ST pod reach MT services until every request starts at
+    the MT router, which falls back to the ST pods. The loader refuses the standalone router and a
+    server without `[environment] stack_id`; don't configure them anywhere else. Every remote
+    request carries `Grafana-Remote-Services-Origin` (`remote_services_cycle.go`). The MT router's
+    ST fallback answers a marked request with 508 instead of sending it back to an ST pod. An ST
+    pod's remote services also refuse to send a request that arrived marked, which covers an MT
+    router without that check. Both count as `reason="loop"`.
+  - The remote services then sign each request in place
+    of those tokens, as the kube-aggregator did (`remote_services_auth.go`). A resource request
+    gets the requester's ID token exchanged on behalf of the requester, for the group's audience
+    and the request's namespace. A cluster-scoped request uses the stack's namespace and may only
+    read. A service identity may only use the stack's namespace. Anything else gets the stack's
+    discovery token. Only `Authorization` carries the result. A request the signer refuses or can't
+    sign is a `localProxyError`: it answers with its own status (503 with `Retry-After` when the
+    exchange fails) and never reaches the backend. The breaker excludes it (`errNotSent`) rather
+    than counting it as a success. Remote requests also carry `Grafana-Upstream-Traceparent`, since
+    the kube-apiserver in front of the MT services drops `traceparent`.
 - **Log through the app-sdk logger from the context:** `logging.FromContext(ctx)` from
   `github.com/grafana/grafana-app-sdk/logging`. Don't use `log/slog` or `pkg/infra/log`. If a
   function that logs has no context, pass one in from its caller (a request's `Context()`, or the
