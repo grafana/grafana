@@ -183,20 +183,24 @@ The available configuration options in the sidebar differ depending on the selec
 - **Groupings (rows and tabs)**: All configuration options are available in the sidebar.
 - **Panels**: High-level options are in the sidebar and further configuration options are in the **Edit panel** view.
 
-#### Open the sidebar for an element
+#### Open the sidebar for a dashboard element
 
-In edit mode, selecting a dashboard element doesn't open the sidebar.
-When you click a panel, row, or tab, Grafana selects it and the sidebar stays closed.
-To clear the selection, click the selected element again.
+In edit mode, open the sidebar for an element or dashboard control by hovering over it to display the actions tooltip, and then click the **Settings**:
 
-You open the sidebar for an element with an explicit action.
-Use any of the following:
+screenshot here
 
-- **Actions tooltip**: Hover your cursor over a panel, row, tab, or dashboard control to display the actions tooltip, and then click **Settings**.
-  The tooltip also appears when keyboard focus moves onto the element.
-  Press `Tab` to move into the tooltip actions and `Escape` to close it.
+This applies to:
+
+- Panels
+- Rows and tabs (groupings)
+- Dashboard controls: filters, variables, annotations, and links
+
+The actions tooltip is also displayed when keyboard focus moves onto the element.
+Press `Tab` to move into the tooltip actions and `Escape` to close it.
+
+You can also open the sidebar in the following ways, independent of an element:
+
 - **Dashboard options icon**: Click the **Dashboard options** icon in the toolbar to open the sidebar with the dashboard options.
-- **Add new element**: Click the **Add new element** icon in the toolbar to open the sidebar with add options.
 - **Adding a dashboard control**: When you add a filter, variable, annotation query, or link, the sidebar opens with the configuration options for the new control.
 - **Edit auto layout**: When you try to resize a panel in an auto grid layout, click **Edit auto layout** to open the layout options in the sidebar.
 
@@ -248,6 +252,9 @@ To navigate the dashboard using the outline, follow these steps:
 1. Click the tree item to navigate that part of the dashboard.
 
 ### Edit a dashboard
+
+When you're editing a dashboard, clicking an element selects it and clicking it again clears the selection.
+To open the sidebar for the element, hover over it and select the **Settings** icon.
 
 To edit a dashboard, follow these steps:
 
