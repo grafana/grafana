@@ -42,6 +42,9 @@ type LegacyDatabaseHelper struct {
 	// table name locator
 	Table func(n string) string
 
+	// TableExists optionally probes a resolved table when the backend cannot query catalog tables.
+	TableExists func(sess *sqlstore.DBSession, table string) (bool, error)
+
 	// Server names the database server behind DB, for logs. Empty when unknown.
 	Server string
 

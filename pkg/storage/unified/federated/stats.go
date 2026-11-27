@@ -102,6 +102,9 @@ func (s *LegacyStatsGetter) legacyTableIsStale(sess *sqlstore.DBSession, helper 
 // when one connection serves several databases, and IsTableExist would then look for a table
 // literally named "schema.table" in the connection's default schema, which never exists.
 func tableExists(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper, table string) (bool, error) {
+	if helper.TableExists != nil {
+		return helper.TableExists(sess, table)
+	}
 	schema, name, qualified := strings.Cut(table, ".")
 	if !qualified {
 		return sess.IsTableExist(table)
@@ -261,6 +264,9 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 
 	return rsp, err
 }
+
+// CallerCountsEndpoint identifies the /counts request path, not folder deletion checks.
+const CallerCountsEndpoint = "counts_endpoint"
 
 type callerKey struct{}
 
