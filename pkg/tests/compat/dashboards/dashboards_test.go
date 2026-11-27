@@ -434,7 +434,6 @@ func (c client) checkHistory(t *testing.T, want ...savedRevision) {
 		live := v.checkLive(t, history, want[len(want)-1].content)
 		require.EqualValues(t, len(want), live.GetGeneration(), "%s in %s", v.fixture(history), v.version)
 	}
-
 }
 
 // historyError compares the history entries, which the API returns newest first, with
