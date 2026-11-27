@@ -1,16 +1,4 @@
-import { type DataFrame, type PanelData, type Field, getFieldDisplayName, ReducerID } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import {
-  type ResourceDimensionConfig,
-  type ScaleDimensionConfig,
-  type TextDimensionConfig,
-  type ColorDimensionConfig,
-  type ScalarDimensionConfig,
-  type DirectionDimensionConfig,
-  type ConnectionDirection,
-} from '@grafana/schema';
-
-import { type DimensionSupplier } from './types';
+import { type DataFrame, type Field, getFieldDisplayName, ReducerID } from '@grafana/data';
 
 export function findField(frame?: DataFrame, name?: string): Field | undefined {
   const idx = findFieldIndex(name, frame);
