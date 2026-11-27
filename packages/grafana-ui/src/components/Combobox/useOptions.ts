@@ -80,15 +80,13 @@ export function useOptions<T extends string | number>(
   const [asyncOptions, setAsyncOptions] = useState<Array<ComboboxOption<T>>>([]);
   const [asyncLoading, setAsyncLoading] = useState(false);
   const [asyncError, setAsyncError] = useState(false);
-  // The search the async options were loaded for. A request can settle while a newer search is still debouncing.
+  // The search the async options were loaded for. They belong to the typed search only when it matches, since a request
+  // can settle while a newer search is still debouncing, and a failed search leaves the earlier options in place.
   const [loadedSearch, setLoadedSearch] = useState<string | null>(null);
 
   // This hook keeps its own inputValue state (rather than accepting it as an arg) because it needs to be
   // told it for async options loading anyway.
   const [userTypedSearch, setUserTypedSearch] = useState('');
-
-  // While a newer search is pending, or after one failed, the async options are an earlier search's results.
-  const asyncOptionsStale = isAsync && (asyncLoading || asyncError || loadedSearch !== userTypedSearch);
 
   const addCustomValue = useCallback(
     (opts: Array<ComboboxOption<T>>) => {
@@ -97,8 +95,7 @@ export function useOptions<T extends string | number>(
       if (createCustomValue && userTypedSearch) {
         // Since the label of a normal option does not have to match its value and a custom option has the same value and label,
         // we just focus on the value to check if the option already exists
-        // A stale match doesn't count: it can't be picked, and its search may never come back.
-        const customValueExists = !asyncOptionsStale && opts.some((opt) => opt.value === userTypedSearch);
+        const customValueExists = opts.some((opt) => opt.value === userTypedSearch);
         if (!customValueExists) {
           // Make sure to clone the array first to avoid mutating the original array!
           currentOptions = currentOptions.slice();
@@ -112,7 +109,7 @@ export function useOptions<T extends string | number>(
       }
       return { options: currentOptions, customValueOption };
     },
-    [asyncOptionsStale, createCustomValue, customValueDescription, userTypedSearch]
+    [createCustomValue, customValueDescription, userTypedSearch]
   );
 
   const updateOptions = useCallback(
@@ -151,12 +148,18 @@ export function useOptions<T extends string | number>(
     setUserTypedSearch('');
   }, []);
 
-  // Stale options stay in the menu so it doesn't flicker, but can't be picked. The custom value always matches what was
-  // typed.
+  // While a newer search is pending, or after one failed, the async options are an earlier search's results. They stay
+  // in the menu so it doesn't flicker, but can't be picked. The custom value always matches what was typed, as does an
+  // option with exactly that value when custom values are allowed, since it stands in for the custom value.
   const customValueOption = finalOptions.customValueOption;
+  const asyncOptionsStale = isAsync && loadedSearch !== userTypedSearch;
   const isOptionStale = useCallback(
-    (option: ComboboxOption<T> | null | undefined) => asyncOptionsStale && !!option && option !== customValueOption,
-    [asyncOptionsStale, customValueOption]
+    (option: ComboboxOption<T> | null | undefined) =>
+      asyncOptionsStale &&
+      !!option &&
+      option !== customValueOption &&
+      !(createCustomValue && option.value === userTypedSearch),
+    [asyncOptionsStale, customValueOption, createCustomValue, userTypedSearch]
   );
 
   return {

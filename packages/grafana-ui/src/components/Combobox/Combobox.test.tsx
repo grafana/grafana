@@ -975,6 +975,30 @@ describe('Combobox', () => {
       expect(onChangeHandler).toHaveBeenCalledWith({ value: 'Bob' });
     });
 
+    it('lets the results for the typed search be picked while the same search reloads', async () => {
+      const asyncOptions = jest.fn(
+        (searchTerm: string) =>
+          new Promise<ComboboxOption[]>((resolve) =>
+            setTimeout(() => resolve([{ value: `${searchTerm} result` }]), 300)
+          )
+      );
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await user.type(input, 'ab');
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS + 300));
+      // A quickly deleted typo searches for 'ab' again.
+      await user.type(input, 'c{Backspace}', { skipClick: true });
+      // Past the debounce, with the repeat request still in flight.
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+      expect(asyncOptions).toHaveBeenLastCalledWith('ab');
+      await user.click(screen.getByRole('option', { name: 'ab result' }));
+      expect(onChangeHandler).toHaveBeenCalledWith({ value: 'ab result' });
+
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS + 300));
+    });
+
     it("doesn't select a result that arrives while a newer search is debouncing", async () => {
       const asyncOptions = jest.fn((searchTerm: string) =>
         searchTerm === 'a'
@@ -1012,7 +1036,7 @@ describe('Combobox', () => {
       expect(screen.getByRole('option', { name: 'Bob' })).toBeVisible();
     });
 
-    it('offers the custom value after a failed search, even when an earlier result matches it', async () => {
+    it('lets an earlier result that matches the typed custom value be picked after a failed search', async () => {
       jest.spyOn(console, 'error').mockImplementation();
       const asyncOptions = jest.fn((searchTerm: string) =>
         searchTerm === '' ? Promise.resolve([{ value: 'Alice' }]) : Promise.reject(new Error('forbidden'))
@@ -1024,10 +1048,10 @@ describe('Combobox', () => {
       await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
       await user.type(input, 'Alice');
       await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+      expect(screen.getAllByRole('option', { name: /Alice/ })).toHaveLength(1);
       await user.keyboard('{Enter}');
-      expect(onChangeHandler).toHaveBeenCalledWith(
-        expect.objectContaining({ value: 'Alice', description: 'Use custom value' })
-      );
+      expect(onChangeHandler).toHaveBeenCalledWith({ value: 'Alice' });
+      expect(screen.queryByText('Use custom value')).not.toBeInTheDocument();
     });
 
     it("doesn't select an earlier search's result after the search for the typed text fails", async () => {
