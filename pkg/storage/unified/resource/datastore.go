@@ -263,8 +263,7 @@ func (d *dataStore) LastResourceVersion(ctx context.Context, key ListRequestKey)
 		return dataKey, err
 	}
 	// A namespaced object whose name starts with a digit sorts above this
-	// cluster-scoped object's rows, so scan below it. This runs after the lookup
-	// above has released its cursor, so it never needs a second connection.
+	// cluster-scoped object's rows, so scan below it.
 	for k, err := range pagedKeys(ctx, d.kv, dataSection, ListOptions{
 		StartKey: key.Prefix(),
 		EndKey:   newest,
