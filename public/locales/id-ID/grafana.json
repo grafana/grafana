@@ -3325,6 +3325,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Kesalahan saat memuat aturan",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Gagal memuat konfigurasi aturan Grafana:",
       "failed-to-load-grafana-rules-state": "Gagal memuat status aturan Grafana:",
       "failed-to-load-rules-config": "Gagal memuat konfigurasi aturan dari <2>{{dataSource}}</2>",

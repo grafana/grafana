@@ -3353,6 +3353,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Hiba történt a szabályok betöltésekor",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "A Grafana-szabályok konfigurációjának betöltése nem sikerült:",
       "failed-to-load-grafana-rules-state": "A Grafana-szabályok állapotának betöltése nem sikerült:",
       "failed-to-load-rules-config": "A szabályok konfigurációjának betöltése nem sikerült a(z) <2>{{dataSource}}</2> névtérből",

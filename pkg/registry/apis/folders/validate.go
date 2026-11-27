@@ -606,9 +606,10 @@ func validateOnDelete(ctx context.Context,
 	// takes the same opt-in regardless of that flag, since the cascade controller removes its
 	// subtree; keying on the finalizer rather than a flag keeps folders without it from being deleted
 	// around their contents.
-	if (cascadeDeleteEnabled || hasCascadeDeleteFinalizer(f)) && forceDeleteFromDeleteOptions(deleteOptions) {
+	finalizer := hasCascadeFinalizerOnDelete(ctx, f)
+	if (cascadeDeleteEnabled || finalizer) && forceDeleteFromDeleteOptions(deleteOptions) {
 		msg := "folder force-delete bypassing empty check; its subtree (child folders and dashboards) will be cascade-deleted, along with alert rules and library elements when running in-process (monolith)"
-		if hasCascadeDeleteFinalizer(f) {
+		if finalizer {
 			// Delete hands these folders to the cascade controller, which removes only child folders and
 			// dashboards.
 			msg = "folder force-delete bypassing empty check; its child folders and dashboards will be deleted by the cascade controller"
