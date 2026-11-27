@@ -2,7 +2,7 @@
 
 Watches `Folder` objects and, for each terminating folder carrying the `folder.grafana.app/controller-cascade-delete` finalizer, deletes its subfolders and dashboards and then releases the finalizer.
 
-Folders get the finalizer when they are created with the `folder.asyncCascadeDeleteThroughController` feature toggle on.
+Folders get the finalizer when they are created, or when their delete starts, with the `folder.asyncCascadeDeleteThroughController` feature toggle on. A delete that starts with the toggle off removes it instead.
 
 ## Permissions
 
@@ -10,7 +10,7 @@ Two identities are involved, and each needs its own permissions.
 
 ### The user who deletes the folder
 
-The controller deletes the contents as its own identity, so the folders API checks the requester's access to the contents when a forced delete of a finalizer folder is requested, before the folder is marked terminating. A requester without any of these gets a `403`, and the folder is left untouched.
+The controller deletes the contents as its own identity, so with the toggle on the folders API checks the requester's access to the contents on every delete, forced or not, before the folder is marked terminating. A folder that is already terminating, and a subfolder the controller deletes under one, are not checked again. A requester without any of these gets a `403`, and the folder is left untouched.
 
 In addition to the permission to delete the folder itself, the requester needs:
 

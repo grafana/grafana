@@ -42,10 +42,12 @@ export const PopoverMenu = ({
         close();
       }
     }
-    document.addEventListener('keyup', handleEscape);
+    // the menu can render in another window than this one, such as a Document Picture-in-Picture window
+    const menuDocument = containerRef.current?.ownerDocument ?? document;
+    menuDocument.addEventListener('keyup', handleEscape);
 
     return () => {
-      document.removeEventListener('keyup', handleEscape);
+      menuDocument.removeEventListener('keyup', handleEscape);
     };
   }, [close]);
 

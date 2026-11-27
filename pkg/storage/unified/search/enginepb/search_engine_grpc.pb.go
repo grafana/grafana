@@ -34,12 +34,18 @@ type SearchEngineClient interface {
 	SearchCandidates(ctx context.Context, in *SearchCandidatesRequest, opts ...grpc.CallOption) (*SearchCandidatesResponse, error)
 	// Reads known IDs, omitting documents that disappeared.
 	// With query set, also omits documents that no longer match it.
+	// When folder is requested for authorization, each hit must include a string.
+	// Use an empty string for a document known to be at the root.
 	ReadDocuments(ctx context.Context, in *ReadDocumentsRequest, opts ...grpc.CallOption) (*ReadDocumentsResponse, error)
 	// Creates the configured index from the schema identified by IndexReference,
 	// or verifies that it was created for this scope.
 	EnsureIndex(ctx context.Context, in *EnsureIndexRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Applies one batch of distinct document keys. Success means its effects are visible to search.
-	// Submit batches sequentially. On failure some items may already have been applied.
+	// An error, including a deadline, can leave some or all writes applied.
+	// Replay of an identical batch is safe once earlier attempts have finished,
+	// provided no later batch has been sent. Do not send later batches or advance
+	// the write checkpoint until the batch succeeds. If the outcome cannot be
+	// resolved, rebuild into a fresh generation.
 	WriteDocuments(ctx context.Context, in *WriteDocumentsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
@@ -99,12 +105,18 @@ type SearchEngineServer interface {
 	SearchCandidates(context.Context, *SearchCandidatesRequest) (*SearchCandidatesResponse, error)
 	// Reads known IDs, omitting documents that disappeared.
 	// With query set, also omits documents that no longer match it.
+	// When folder is requested for authorization, each hit must include a string.
+	// Use an empty string for a document known to be at the root.
 	ReadDocuments(context.Context, *ReadDocumentsRequest) (*ReadDocumentsResponse, error)
 	// Creates the configured index from the schema identified by IndexReference,
 	// or verifies that it was created for this scope.
 	EnsureIndex(context.Context, *EnsureIndexRequest) (*emptypb.Empty, error)
 	// Applies one batch of distinct document keys. Success means its effects are visible to search.
-	// Submit batches sequentially. On failure some items may already have been applied.
+	// An error, including a deadline, can leave some or all writes applied.
+	// Replay of an identical batch is safe once earlier attempts have finished,
+	// provided no later batch has been sent. Do not send later batches or advance
+	// the write checkpoint until the batch succeeds. If the outcome cannot be
+	// resolved, rebuild into a fresh generation.
 	WriteDocuments(context.Context, *WriteDocumentsRequest) (*emptypb.Empty, error)
 }
 

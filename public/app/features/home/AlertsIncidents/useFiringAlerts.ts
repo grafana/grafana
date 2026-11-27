@@ -8,10 +8,12 @@ import { useFlagGrafanaMultiTenantHomepage } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/filters/severity';
+import { matcherToMatcherField } from 'app/features/alerting/unified/utils/alertmanager';
 import { ALERTMANAGER_NAME_QUERY_KEY, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
+import { encodeMatcher } from 'app/features/alerting/unified/utils/matchers';
 import { ALERTING_PATHS, alertListPageLink } from 'app/features/alerting/unified/utils/navigation';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
-import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertmanagerAlert, type Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type Team } from 'app/types/teams';
 
@@ -42,31 +44,43 @@ function toTolerantPattern(teamName: string): string | null {
   return runs && SEPARATORS + runs.join(SEPARATORS) + SEPARATORS;
 }
 
-function buildTolerantTeamMatchers(teamNames: string[]) {
+// Alertmanager takes matchers only in the query string. Past this many encoded characters the own-teams
+// filter runs in the browser, keeping the request line well under proxy limits like nginx's 8 KiB default.
+const MAX_SERVER_TEAM_FILTER_LENGTH = 4096;
+
+/** `matchers` go to Alertmanager; `clientTeamPattern`, when set, is matched against each fetched alert's team label. */
+type AlertFilter = { matchers: Matcher[]; clientTeamPattern?: string };
+
+function buildTolerantTeamFilter(teamNames: string[]): AlertFilter {
   const patterns = uniq(teamNames.map(toTolerantPattern).filter((p): p is string => p !== null));
   if (patterns.length === 0) {
-    return [];
+    return { matchers: [] };
   }
+  const pattern = patterns.join('|');
   // (?i) (a Go RE2 inline flag): the label's casing is as unpredictable as its separators.
-  return [{ name: 'team', value: `(?i)${patterns.join('|')}`, isRegex: true, isEqual: true }];
+  const matcher = { name: 'team', value: `(?i)${pattern}`, isRegex: true, isEqual: true };
+  const encodedLength = encodeURIComponent(encodeMatcher(matcherToMatcherField(matcher))).length;
+  return encodedLength <= MAX_SERVER_TEAM_FILTER_LENGTH
+    ? { matchers: [matcher] }
+    : { matchers: [], clientTeamPattern: pattern };
 }
 
 /**
- * Which matchers to send for the current dropdown selection:
+ * How to filter for the current dropdown selection:
  * an explicit "All" pick means no filter at all, a picked label wins next,
  * and with no selection we fall back to the user's own teams when they have any.
  */
-function resolveMatchers(scope: FilterScope, userTeamNames: string[]) {
+function resolveAlertFilter(scope: FilterScope, userTeamNames: string[]): AlertFilter {
   switch (scope.kind) {
     case 'all':
-      return [];
+      return { matchers: [] };
     case 'label':
       // Picks are labels set on real rules, so they're matched exactly.
-      return [{ name: scope.label.key, value: scope.label.value, isRegex: false, isEqual: true }];
+      return { matchers: [{ name: scope.label.key, value: scope.label.value, isRegex: false, isEqual: true }] };
     case 'default':
       // The `team` alert label is free-form — typically some slugged or re-cased variant
       // of the Grafana team name — so the own-teams default matches tolerantly.
-      return buildTolerantTeamMatchers(userTeamNames);
+      return buildTolerantTeamFilter(userTeamNames);
   }
 }
 
@@ -103,11 +117,11 @@ export function useFiringAlerts(selectedFilter: FilterSelection = '') {
   const hasTeams = teamNames.length > 0;
 
   const filterScope = resolveFilterScope(selectedFilter);
-  // No memo needed: RTK Query serializes query args, so referential identity doesn't matter.
-  const matchers = resolveMatchers(filterScope, teamNames);
+  // No memo needed: RTK Query serializes query args, and the client pattern is a string compared by value.
+  const { matchers, clientTeamPattern } = resolveAlertFilter(filterScope, teamNames);
 
   const {
-    data: alerts,
+    data: fetchedAlerts,
     isFetching: alertsLoading,
     error,
     refetch,
@@ -120,6 +134,15 @@ export function useFiringAlerts(selectedFilter: FilterSelection = '') {
           showErrorAlert: false,
         }
   );
+
+  const alerts = useMemo(() => {
+    if (!fetchedAlerts || !clientTeamPattern) {
+      return fetchedAlerts;
+    }
+    // `u` for the \p{...} classes and `i` for RE2's (?i); anchored like Alertmanager's regex matchers.
+    const teamRegex = new RegExp(`^(?:${clientTeamPattern})$`, 'iu');
+    return fetchedAlerts.filter((alert) => teamRegex.test(alert.labels.team ?? ''));
+  }, [fetchedAlerts, clientTeamPattern]);
 
   // enabled && ... so the useAsync microtask tick doesn't report loading for gated users
   const loading = enabled && (teamsLoading || alertsLoading);

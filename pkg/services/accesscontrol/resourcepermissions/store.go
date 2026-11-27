@@ -356,17 +356,19 @@ type roleAdder func(roleID int64) error
 func (s *store) setResourcePermission(
 	sess *db.Session, orgID int64, roleName string, adder roleAdder, cmd SetResourcePermissionCommand,
 ) (*accesscontrol.ResourcePermission, error) {
-	role, err := s.getOrCreateManagedRole(sess, orgID, roleName, adder)
+	role, created, err := s.getOrCreateManagedRole(sess, orgID, roleName, adder)
 	if err != nil {
 		return nil, err
 	}
 
-	rawSQL := `SELECT p.* FROM permission as p INNER JOIN role r on r.id = p.role_id WHERE r.id = ? AND p.scope = ?`
-
 	var current []accesscontrol.Permission
 	scope := accesscontrol.Scope(cmd.Resource, cmd.ResourceAttribute, cmd.ResourceID)
-	if err := sess.SQL(rawSQL, role.ID, scope).Find(&current); err != nil {
-		return nil, err
+	// A role created by this call has no permissions yet.
+	if !created {
+		rawSQL := `SELECT p.* FROM permission as p INNER JOIN role r on r.id = p.role_id WHERE r.id = ? AND p.scope = ?`
+		if err := sess.SQL(rawSQL, role.ID, scope).Find(&current); err != nil {
+			return nil, err
+		}
 	}
 
 	missing := make(map[string]struct{}, len(cmd.Actions))
@@ -725,15 +727,20 @@ func (s *store) builtInRoleAdder(sess *db.Session, orgID int64, builtinRole stri
 	}
 }
 
-func (s *store) getOrCreateManagedRole(sess *db.Session, orgID int64, name string, add roleAdder) (*accesscontrol.Role, error) {
+// getOrCreateManagedRole returns the managed role with the given name, creating
+// it if it doesn't exist. created reports whether this call created the role.
+func (s *store) getOrCreateManagedRole(sess *db.Session, orgID int64, name string, add roleAdder) (*accesscontrol.Role, bool, error) {
 	role := accesscontrol.Role{OrgID: orgID, Name: name}
 	has, err := sess.Where("org_id = ? AND name = ?", orgID, name).Get(&role)
+	if err != nil {
+		return nil, false, err
+	}
 
 	// If managed role does not exist, create it and add it to user/team/builtin
 	if !has {
 		uid, err := generateNewRoleUID(sess, orgID)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 		role = accesscontrol.Role{
@@ -745,19 +752,17 @@ func (s *store) getOrCreateManagedRole(sess *db.Session, orgID int64, name strin
 		}
 
 		if _, err := sess.Insert(&role); err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 		if err := add(role.ID); err != nil {
-			return nil, err
+			return nil, false, err
 		}
+
+		return &role, true, nil
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
-	return &role, nil
+	return &role, false, nil
 }
 
 func generateNewRoleUID(sess *db.Session, orgID int64) (string, error) {

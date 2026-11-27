@@ -1,4 +1,5 @@
 import { type PropsOf } from '@emotion/react';
+import { useState } from 'react';
 
 import { useAssistant } from '@grafana/assistant';
 import { AppEvents } from '@grafana/data';
@@ -58,25 +59,10 @@ interface Props {
   fill?: PropsOf<typeof Button>['fill'];
 }
 
-/**
- * Get a list of menu items + divider elements for rendering in an alert rule's
- * dropdown menu
- * If the consumer of this component comes from the alert list view, we need to use promRule to check abilities and permissions,
- * as we have removed all requests to the ruler API in the list view.
- */
-const AlertRuleMenu = ({
-  promRule,
-  rulerRule,
-  identifier,
-  groupIdentifier,
-  handleSilence,
-  handleManageEnrichments,
-  handleDelete,
-  handleDuplicateRule,
-  onPauseChange,
-  buttonSize,
-  fill,
-}: Props) => {
+type MenuItemsProps = Omit<Props, 'buttonSize' | 'fill'>;
+type AbilityProps = Pick<Props, 'promRule' | 'rulerRule' | 'groupIdentifier'>;
+
+function useMenuAbilities({ promRule, rulerRule, groupIdentifier }: AbilityProps) {
   // check all abilities and permissions using rulerRule
   const rulerAbilities = useRuleAdministrationAbility(rulerRule, groupIdentifier);
   const rulerSilenceAbility = useRuleSilenceAbility(rulerRule);
@@ -88,11 +74,37 @@ const AlertRuleMenu = ({
   const grafanaSilenceAbility = usePromRuleSilenceAbility(grafanaPromRule);
   const grafanaExportAbility = usePromRuleExportAbility(grafanaPromRule);
 
-  const canPause = isGranted(rulerAbilities.pause) || isGranted(grafanaAbilities.pause);
-  const canDelete = isGranted(rulerAbilities.delete) || isGranted(grafanaAbilities.delete);
-  const canDuplicate = isGranted(rulerAbilities.duplicate) || isGranted(grafanaAbilities.duplicate);
-  const canSilence = isGranted(rulerSilenceAbility) || isGranted(grafanaSilenceAbility);
-  const canExport = isGranted(rulerExportAbility) || isGranted(grafanaExportAbility);
+  return {
+    canPause: isGranted(rulerAbilities.pause) || isGranted(grafanaAbilities.pause),
+    canDelete: isGranted(rulerAbilities.delete) || isGranted(grafanaAbilities.delete),
+    canDuplicate: isGranted(rulerAbilities.duplicate) || isGranted(grafanaAbilities.duplicate),
+    canSilence: isGranted(rulerSilenceAbility) || isGranted(grafanaSilenceAbility),
+    canExport: isGranted(rulerExportAbility) || isGranted(grafanaExportAbility),
+  };
+}
+
+/**
+ * Get a list of menu items + divider elements for rendering in an alert rule's
+ * dropdown menu
+ * If the consumer of this component comes from the alert list view, we need to use promRule to check abilities and permissions,
+ * as we have removed all requests to the ruler API in the list view.
+ */
+const AlertRuleMenuItems = ({
+  promRule,
+  rulerRule,
+  identifier,
+  groupIdentifier,
+  handleSilence,
+  handleManageEnrichments,
+  handleDelete,
+  handleDuplicateRule,
+  onPauseChange,
+}: MenuItemsProps) => {
+  const { canPause, canDelete, canDuplicate, canSilence, canExport } = useMenuAbilities({
+    promRule,
+    rulerRule,
+    groupIdentifier,
+  });
 
   const ruleExtensionLinks = useRulePluginLinkExtension(promRule, groupIdentifier);
 
@@ -132,7 +144,7 @@ const AlertRuleMenu = ({
     config.featureToggles.alertingEnrichmentPerRule &&
     isGranted(enrichmentReadAbility);
 
-  const menuItems = (
+  return (
     <>
       {canManageEnrichments && (
         <Menu.Item
@@ -207,11 +219,35 @@ const AlertRuleMenu = ({
       )}
     </>
   );
+};
+
+// Mounted once the More button is hovered or focused. The abilities are what the items wait on, so their data
+// is loaded by the time the menu opens and it shows every item, with the first one focused.
+const WarmMenuData = (abilityProps: AbilityProps) => {
+  useMenuAbilities(abilityProps);
+  return null;
+};
+
+// The hooks live in AlertRuleMenuItems, which Dropdown only mounts while the menu is open,
+// so a closed menu stays cheap in lists with many rows.
+const AlertRuleMenu = ({ buttonSize, fill, ...menuItemsProps }: Props) => {
+  const [warm, setWarm] = useState(false);
+  const startWarming = () => setWarm(true);
 
   return (
-    <Dropdown overlay={<Menu>{menuItems}</Menu>} placement="bottom">
-      <MoreButton size={buttonSize} fill={fill} />
-    </Dropdown>
+    <>
+      {warm && <WarmMenuData {...menuItemsProps} />}
+      <Dropdown
+        overlay={
+          <Menu>
+            <AlertRuleMenuItems {...menuItemsProps} />
+          </Menu>
+        }
+        placement="bottom"
+      >
+        <MoreButton size={buttonSize} fill={fill} onMouseEnter={startWarming} onFocus={startWarming} />
+      </Dropdown>
+    </>
   );
 };
 

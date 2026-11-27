@@ -738,7 +738,9 @@ const indexMetricsRefreshInterval = 60 * time.Second
 func (b *bleveBackend) updateIndexMetricsPeriodically(ctx context.Context, indexPath string) {
 	defer b.bgTasksWg.Done()
 
+	mergeSampler := bleveMergeSampler{limiter: &processBleveMergeLogLimiter}
 	for ctx.Err() == nil {
+		mergeSampler.sample(b, bleveMergeLogMinElapsed)
 		b.updateMemoryIndexSizeMetrics(ctx)
 		b.updateIndexSizeMetric(ctx, indexPath)
 		b.updateIndexedKindsMetric(ctx)

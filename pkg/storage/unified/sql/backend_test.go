@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -137,6 +138,34 @@ func TestContinueTokenMatchesListRequest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, tt.want, continueTokenMatchesListRequest(tt.token, tt.req))
 		})
+	}
+}
+
+func TestBackend_malformedContinueToken(t *testing.T) {
+	t.Parallel()
+
+	be, ctx := setupBackendTest(t)
+	req := func(token string) *resourcepb.ListRequest {
+		return &resourcepb.ListRequest{
+			Options:       &resourcepb.ListOptions{Key: resKey},
+			Limit:         10,
+			NextPageToken: token,
+		}
+	}
+	noIteration := func(resource.ListIterator) error {
+		t.Fatal("malformed continuation must fail before iteration")
+		return nil
+	}
+
+	// "bogus" fails base64 decoding, the other decodes but is not a JSON token.
+	for _, token := range []string{"bogus", "bm90LWEtdG9rZW4="} {
+		_, err := be.listAtRevision(ctx, req(token), noIteration)
+		require.True(t, apierrors.IsBadRequest(err), "listAtRevision %q: got %v", token, err)
+		require.Contains(t, err.Error(), "invalid continue token")
+
+		_, err = be.getHistory(ctx, req(token), noIteration)
+		require.True(t, apierrors.IsBadRequest(err), "getHistory %q: got %v", token, err)
+		require.Contains(t, err.Error(), "invalid continue token")
 	}
 }
 

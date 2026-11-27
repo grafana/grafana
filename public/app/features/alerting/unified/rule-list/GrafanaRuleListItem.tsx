@@ -1,3 +1,7 @@
+import { isEqual, omit } from 'lodash';
+import { memo, useMemo } from 'react';
+import { shallowEqual } from 'react-redux';
+
 import { type GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 import { type GrafanaPromRuleDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
@@ -24,7 +28,23 @@ interface GrafanaRuleListItemProps {
   evalIntervalSeconds?: number;
 }
 
-export function GrafanaRuleListItem({
+// The row doesn't show these, and every rule gets new values each time its group evaluates.
+// Remove one here if the row ever starts showing it, or its updates will be skipped.
+const IGNORED_RULE_FIELDS = ['lastEvaluation', 'evaluationTime'] as const;
+
+function arePropsEqual(prev: GrafanaRuleListItemProps, next: GrafanaRuleListItemProps) {
+  const { rule: prevRule, ...prevOtherProps } = prev;
+  const { rule: nextRule, ...nextOtherProps } = next;
+
+  return (
+    shallowEqual(prevOtherProps, nextOtherProps) &&
+    (prevRule === nextRule || isEqual(omit(prevRule, IGNORED_RULE_FIELDS), omit(nextRule, IGNORED_RULE_FIELDS)))
+  );
+}
+
+export const GrafanaRuleListItem = memo(GrafanaRuleListItemImpl, arePropsEqual);
+
+function GrafanaRuleListItemImpl({
   rule,
   groupIdentifier,
   namespaceName,
@@ -38,6 +58,13 @@ export function GrafanaRuleListItem({
     GRAFANA_RULES_SOURCE_NAME,
     groupIdentifier.namespace.uid,
     groupIdentifier.groupName
+  );
+
+  // memo can't skip this row when a prop other than rule/groupIdentifier changes (e.g. namespaceName);
+  // a stable element keeps the actions from re-rendering then
+  const actions = useMemo(
+    () => <RuleActionsButtons promRule={rule} groupIdentifier={groupIdentifier} compact />,
+    [rule, groupIdentifier]
   );
 
   const commonProps: RuleListItemCommonProps = {
@@ -54,7 +81,7 @@ export function GrafanaRuleListItem({
     provenance,
     isPaused: rule?.isPaused,
     application: 'grafana' as const,
-    actions: <RuleActionsButtons promRule={rule} groupIdentifier={groupIdentifier} compact />,
+    actions,
     querySourceUIDs: rule?.queriedDatasourceUIDs,
     origin: getRulePluginOrigin(rule),
     evalIntervalSeconds,
