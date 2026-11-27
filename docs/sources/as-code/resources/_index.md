@@ -43,9 +43,7 @@ An entity is anything that gives you data: a service, a host, a container, a dat
 Each entity has a unique identity, a type, metadata that describes it, and relationships to other entities, so you can find it, group it, and follow its dependencies.
 In Grafana Cloud, [Knowledge Graph](/docs/grafana-cloud/knowledge-graph/) uses this model for the services and infrastructure that send you telemetry.
 
-A Grafana resource applies the same model to the objects that let you work with that data.
-A data source points to a system that gives you data, a dashboard visualizes it, and an alert rule watches it.
-Like an entity, every resource has:
+A Grafana resource applies the same model to the objects that let you work with that data. Like an entity, every resource has:
 
 | Property      | What it records                                                                                        | Where it lives                                       |
 | ------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
@@ -55,23 +53,7 @@ Like an entity, every resource has:
 | Desired state | The configuration of the resource, such as the panels of a dashboard.                                  | `spec`                                               |
 | Relationships | References to other resources, such as the folder that contains it or the data sources it queries.     | Annotations such as `grafana.app/folder`, and `spec` |
 
-The following dashboard snippet shows each property:
-
-```yaml
-apiVersion: dashboard.grafana.app/v1
-kind: Dashboard
-metadata:
-  name: checkout-latency
-  namespace: default
-  labels:
-    team: payments
-  annotations:
-    grafana.app/folder: payments-folder
-spec:
-  title: Checkout latency
-```
-
-Because every resource shares this shape, an as-code tool can store it as a file, compare it with what's running in Grafana, and apply changes the same way for any resource type.
+Because every resource shares this data structure, an as-code tool can store it as a file, compare it with what's running in Grafana, and apply changes the same way for any resource type.
 
 ### Resource definitions
 
@@ -83,7 +65,7 @@ The same definition can exist in two places:
 - **In Grafana:** The copy that Grafana stores and shows in the UI.
 - **Outside Grafana:** A file that you write or export, such as a dashboard JSON file in a Git repository or a Terraform configuration.
 
-Some as-code tools keep Grafana in sync with the file, and Grafana records which file the resource comes from. To learn which tools do this, refer to [Resource definition](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/resources/manage-resources/#resource-definition).
+Some as-code tools keep Grafana in sync with the file, and Grafana records which file the resource comes from. To learn which tools do this, refer to [Manage your resource definition](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/resources/manage-resources/#manage-your-resource-definition).
 
 ## Who manages a resource?
 
