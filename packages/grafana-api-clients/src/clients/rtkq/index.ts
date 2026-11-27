@@ -22,6 +22,7 @@ import { generatedAPI as teamPreferencesAPI } from './preferences/team';
 import { generatedAPI as preferencesAPIv1 } from './preferences/v1';
 import { generatedAPI as preferencesAPIv1alpha1 } from './preferences/v1alpha1';
 import { generatedAPI as provisioningAPIv0alpha1 } from './provisioning/v0alpha1';
+import { generatedAPI as provisioningAPIv1beta2 } from './provisioning/v1beta2';
 import { generatedAPI as quotasAPIv0alpha1 } from './quotas/v0alpha1';
 import { generatedAPI as rulesAlertingAPIv0alpha1 } from './rules.alerting/v0alpha1';
 import { generatedAPI as rulesAlertingAPIv1beta1 } from './rules.alerting/v1beta1';
@@ -39,6 +40,7 @@ export const allMiddleware = [
   collectionsAPIv1alpha1.middleware, // stars
   preferencesAPIv1alpha1.middleware,
   provisioningAPIv0alpha1.middleware,
+  provisioningAPIv1beta2.middleware,
   shortURLAPIv1beta1.middleware,
   correlationsAPIv0alpha1.middleware,
   notificationsAlertingAPIv0alpha1.middleware,
@@ -70,6 +72,7 @@ export const allReducers = {
   [collectionsAPIv1alpha1.reducerPath]: collectionsAPIv1alpha1.reducer,
   [preferencesAPIv1alpha1.reducerPath]: preferencesAPIv1alpha1.reducer,
   [provisioningAPIv0alpha1.reducerPath]: provisioningAPIv0alpha1.reducer,
+  [provisioningAPIv1beta2.reducerPath]: provisioningAPIv1beta2.reducer,
   [shortURLAPIv1beta1.reducerPath]: shortURLAPIv1beta1.reducer,
   [correlationsAPIv0alpha1.reducerPath]: correlationsAPIv0alpha1.reducer,
   [notificationsAlertingAPIv0alpha1.reducerPath]: notificationsAlertingAPIv0alpha1.reducer,

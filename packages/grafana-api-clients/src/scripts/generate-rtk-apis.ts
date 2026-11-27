@@ -168,6 +168,7 @@ const config: ConfigFile = {
     ...createAPIConfig('collections', 'v1alpha1'),
     ...createAPIConfig('preferences', 'v1alpha1'),
     ...createAPIConfig('provisioning', 'v0alpha1'),
+    ...createAPIConfig('provisioning', 'v1beta2'),
     ...createAPIConfig('shorturl', 'v1beta1'),
     ...createAPIConfig('notifications.alerting', 'v0alpha1'),
     ...createAPIConfig('notifications.alerting', 'v1beta1'),

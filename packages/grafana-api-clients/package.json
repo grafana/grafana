@@ -155,6 +155,17 @@
         "default": "./dist/cjs/clients/rtkq/provisioning/v0alpha1/index.cjs"
       }
     },
+    "./rtkq/provisioning/v1beta2": {
+      "@grafana-app/source": "./src/clients/rtkq/provisioning/v1beta2/index.ts",
+      "import": {
+        "types": "./dist/esm/clients/rtkq/provisioning/v1beta2/index.d.mts",
+        "default": "./dist/esm/clients/rtkq/provisioning/v1beta2/index.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/clients/rtkq/provisioning/v1beta2/index.d.cts",
+        "default": "./dist/cjs/clients/rtkq/provisioning/v1beta2/index.cjs"
+      }
+    },
     "./rtkq/shorturl/v1beta1": {
       "@grafana-app/source": "./src/clients/rtkq/shorturl/v1beta1/index.ts",
       "import": {
