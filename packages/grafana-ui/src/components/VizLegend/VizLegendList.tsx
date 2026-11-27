@@ -29,8 +29,6 @@ export const VizLegendList = <T extends unknown>({
 }: Props<T>) => {
   const styles = useStyles2(getStyles);
 
-  const allItemsSelected = useMemo(() => !items.some((item) => item.disabled), [items]);
-
   const itemRenderer =
     itemRendererProp ??
     ((item: VizLegendItem<T>) => (
@@ -40,7 +38,6 @@ export const VizLegendList = <T extends unknown>({
         onLabelMouseOver={onLabelMouseOver}
         onLabelMouseOut={onLabelMouseOut}
         readonly={readonly}
-        allItemsSelected={allItemsSelected}
       />
     ));
 
