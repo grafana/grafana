@@ -5,9 +5,8 @@ proxy that serves `/apis` and `/openapi/v3` by API group, and publishes the serv
 manifests under `/apis/discovery`. A `RoutesLoader` supplies routes as
 `[]Backend`. Routes change rarely, as apps and plugins are rolled out or get new versions.
 
-This file holds the current rules. For the reasoning and history behind them, see `specs/`,
-especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
-`specs/2026-10-23-router-review-plan.md`.
+This file holds the current rules. The reasoning and history behind them are in the router specs,
+which live in the deployment_tools repository under `docs/grafana-router/specs/`.
 
 ## Rules
 
@@ -331,10 +330,9 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   - The list applies `labelSelector` (manifests have no labels) and `fieldSelector` (only
     `metadata.name`), and rejects others with a 400. It ignores `limit` and returns the whole list
     without a `continue` token, which clients accept.
-  - The status page (`discovery_status.go`) is readable by any authenticated caller, and lists every
-    group, hidden ones too, so it holds only names, states and counts: never credentials, addresses,
-    URLs or error text, which carry
-    internal hosts. A backend that serves a plugin's APIs reports the plugin through the optional
+  - The status page (`discovery_status.go`) is only for Grafana admins (and org Admins with
+    `status_open_to_admin`), but lists every group, hidden ones too, so it holds only names, states
+    and counts: never credentials, addresses, URLs or error text, which carry internal hosts. A backend that serves a plugin's APIs reports the plugin through the optional
     `PluginStatusProvider` interface, under the same rule. Breaker thresholds are the constants
     `breakerOpenAfter` and `breakerOpenFor`, which the page reports, so change them there.
   - The swagger UI's router pages (`public/swagger/RouterStatusPage.tsx`, `ManifestsPage.tsx`)
@@ -372,8 +370,8 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   - Polled responses go through `decodeLimitedJSON`: aggregate and ST discovery (16 MiB),
     `plugins_url` and `core_url` (`maxPluginManifestsBytes`, 32 MiB) and grafana.com stack lookups
     (`maxStackResponseBytes`, 1 MiB). A response over its limit fails the poll.
-- **Metrics:** `specs/2026-09-26-router-metrics.md` lists every metric, its labels and example
-  dashboard queries; keep it in sync with `metrics.go`.
+- **Metrics:** the router specs' `2026-09-26-router-metrics.md` lists every metric, its labels and
+  example dashboard queries; keep it in sync with `metrics.go`.
   - Request metrics are recorded in `metrics.go`. Route state is read at scrape time by
     `routerCollector` (also in `metrics.go`), from atomics and the snapshot, so reconcile and
     serving never update gauges.
@@ -559,12 +557,4 @@ Dispatch by group has no injection sinks, since the group is only ever used as a
 
 ## Further reading
 
-- `specs/2026-08-17-router-discovery-openapi-design.md`: the original discovery and OpenAPI design
-  (historical; its key decisions still hold).
-- `specs/2026-08-19-router-circuit-breaker-design.md`: why health checks are passive, and why
-  gobreaker (the mechanics have since changed).
-- `specs/2026-09-11-router-aggregate-discovery-design.md`: aggregate targets and the cooldown.
-- `specs/2026-09-25-router-design-notes.md`: why there's no mux, readiness, notify semantics,
-  config history.
-- `specs/2026-09-26-router-metrics.md`: every metric, and dashboard queries.
-- `specs/2026-10-23-router-review-plan.md`: open work.
+The router specs are in deployment_tools under `docs/grafana-router/specs/`.
