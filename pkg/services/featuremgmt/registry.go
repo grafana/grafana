@@ -298,6 +298,16 @@ var (
 			Generate:    Generate{Go: true},
 		},
 		{
+			Name:            "provisioning.v1Beta2API",
+			Description:     "Serves the provisioning.grafana.app/v1beta2 API, stored as v0alpha1",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			HideFromDocs:    true,
+			Expression:      "false",
+			Generate:        Generate{Go: true},
+		},
+		{
 			Name:        "awsAsyncQueryCaching",
 			Description: "Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled",
 			Stage:       FeatureStageGeneralAvailability,

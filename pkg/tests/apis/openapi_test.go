@@ -48,6 +48,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagGrafanaDashboardGlobalVariables,
 			featuremgmt.FlagGrafanaDashboardPreferences,
 			featuremgmt.FlagDashboardNotebooks,
+			featuremgmt.FlagProvisioningV1Beta2API,
 		},
 	})
 
@@ -108,6 +109,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	}, {
 		Group:   "provisioning.grafana.app",
 		Version: "v1beta1",
+	}, {
+		Group:   "provisioning.grafana.app",
+		Version: "v1beta2",
 	}, {
 		Group:   "iam.grafana.app",
 		Version: "v0alpha1",

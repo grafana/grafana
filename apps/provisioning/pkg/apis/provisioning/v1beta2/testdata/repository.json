@@ -1,0 +1,159 @@
+{
+  "kind": "Repository",
+  "apiVersion": "provisioning.grafana.app/v0alpha1",
+  "metadata": {
+    "name": "repo",
+    "namespace": "default",
+    "uid": "6f1c1f4e-0d0f-4c43-9d55-5d3f0f2b7a11",
+    "resourceVersion": "42",
+    "generation": 3,
+    "creationTimestamp": "2026-11-20T10:00:00Z",
+    "labels": {
+      "team": "platform"
+    },
+    "annotations": {
+      "grafana.com/updatedBy": "user:admin"
+    },
+    "finalizers": [
+      "remove-orphan-resources"
+    ]
+  },
+  "spec": {
+    "title": "Repository",
+    "description": "All the dashboards",
+    "commit": {
+      "singleResourceMessageTemplate": "{{action}} {{resourceKind}}: {{title}}",
+      "enforceTemplate": true,
+      "signerName": "Grafana",
+      "signerEmail": "noreply@grafana.com",
+      "signingMethod": "smime",
+      "signerIsAuthor": true,
+      "smimeCertificate": "-----BEGIN CERTIFICATE-----"
+    },
+    "branch": {
+      "nameTemplate": "grafana/{{random}}",
+      "enforceTemplate": true
+    },
+    "pullRequest": {
+      "titleTemplate": "{{title}}",
+      "generateDashboardPreviews": true
+    },
+    "workflows": [
+      "write",
+      "branch"
+    ],
+    "sync": {
+      "enabled": true,
+      "target": "folder",
+      "intervalSeconds": 60
+    },
+    "type": "github",
+    "webhook": {
+      "baseUrl": "https://grafana.example.com",
+      "disabled": true
+    },
+    "github": {
+      "url": "https://github.com/example/test",
+      "branch": "main",
+      "generateDashboardPreviews": true,
+      "path": "grafana/"
+    },
+    "connection": {
+      "name": "github-app"
+    }
+  },
+  "secure": {
+    "token": {
+      "name": "repo-token"
+    },
+    "webhookSecret": {
+      "name": "repo-webhook",
+      "description": "webhook secret"
+    },
+    "commitSigningKey": {
+      "remove": true
+    }
+  },
+  "status": {
+    "observedGeneration": 3,
+    "fieldErrors": [
+      {
+        "type": "FieldValueInvalid",
+        "field": "spec.github.branch",
+        "detail": "branch not found",
+        "origin": "github",
+        "badValue": "mian"
+      }
+    ],
+    "conditions": [
+      {
+        "type": "Ready",
+        "status": "True",
+        "observedGeneration": 3,
+        "lastTransitionTime": "2026-11-20T10:05:00Z",
+        "reason": "Available",
+        "message": "ok"
+      },
+      {
+        "type": "PullStatus",
+        "status": "False",
+        "lastTransitionTime": null,
+        "reason": "Failure",
+        "message": ""
+      }
+    ],
+    "health": {
+      "healthy": false,
+      "error": "health",
+      "checked": 1795600000000,
+      "message": [
+        "branch not found"
+      ]
+    },
+    "sync": {
+      "state": "success",
+      "job": "repo-sync-1",
+      "started": 1795600000000,
+      "finished": 1795600001000,
+      "lastChecked": 1795600002000,
+      "scheduled": 1795600060000,
+      "message": [],
+      "lastRef": "abc123",
+      "incremental": true
+    },
+    "stats": [
+      {
+        "group": "dashboard.grafana.app",
+        "resource": "dashboards",
+        "count": 12
+      }
+    ],
+    "webhook": {
+      "id": 7,
+      "uuid": "1b4e28ba-2fa1-11d2-883f-0016d3cca427",
+      "url": "https://grafana.example.com/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/repo/webhook",
+      "subscribedEvents": [
+        "push",
+        "pull_request"
+      ],
+      "lastEvent": 1795600003000,
+      "lastRotated": 1795500000000
+    },
+    "token": {
+      "lastUpdated": 1795500000000,
+      "expiration": 1798000000000
+    },
+    "deleteError": "could not delete webhook",
+    "deletion": {
+      "state": "Blocked",
+      "finalizer": "cleanup",
+      "message": "could not delete webhook",
+      "cause": "user"
+    },
+    "quota": {
+      "maxRepositories": 10,
+      "maxResourcesPerRepository": 1000,
+      "updatedAt": 1795600000000
+    }
+  }
+}
