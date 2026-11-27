@@ -87,7 +87,7 @@ func testFolderControllerOwnsNATSSubscriber(t *testing.T, recovery, resource boo
 	health := server.NewHealthNotifier()
 	done := make(chan error, 1)
 	go func() {
-		done <- RunFolderController(ctx, server.OperatorDependencies{
+		done <- Operator.Run(ctx, server.OperatorDependencies{
 			Config: cfg, Registerer: prometheus.NewRegistry(), HealthNotifier: health, Tracer: tracing.NewNoopTracerService(),
 		})
 	}()
@@ -157,7 +157,7 @@ func TestFolderControllerCacheSyncFailureCause(t *testing.T) {
 		ctx, cancel := context.WithCancelCause(ctx)
 		defer cancel(nil)
 		cancelOperator <- cancel
-		return RunFolderController(ctx, server.OperatorDependencies{
+		return Operator.Run(ctx, server.OperatorDependencies{
 			Config: cfg, Registerer: prometheus.NewRegistry(), HealthNotifier: health, Tracer: tracing.NewNoopTracerService(),
 		})
 	}, nil)

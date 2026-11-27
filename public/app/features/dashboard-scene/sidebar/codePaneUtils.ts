@@ -1,4 +1,4 @@
-import yaml from 'js-yaml';
+import { dump } from 'js-yaml';
 
 import { t } from '@grafana/i18n';
 import { type Dashboard } from '@grafana/schema';
@@ -17,7 +17,7 @@ import { buildDashboardResource, validateDashboardResourceEnvelope } from './das
 
 function serializeResource(resource: unknown, format: SchemaEditorFormat): string {
   if (format === 'yaml') {
-    return yaml.dump(resource, { indent: 2, lineWidth: -1, noRefs: true });
+    return dump(resource, { indent: 2, lineWidth: -1, noRefs: true });
   }
   return JSON.stringify(resource, null, 2);
 }

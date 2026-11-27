@@ -19,6 +19,7 @@ const esModules = [
   'nanoid',
   'marked',
   'memoize',
+  'memoize-one',
   'mimic-function',
   'ml-regression-polynomial',
   'monaco-promql',

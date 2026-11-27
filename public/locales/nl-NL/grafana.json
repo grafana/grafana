@@ -3353,6 +3353,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Er is een fout opgetreden bij het laden van regels",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Kan Grafana-regelsconfiguratie niet laden:",
       "failed-to-load-grafana-rules-state": "Kan Grafana-regelsstatus niet laden:",
       "failed-to-load-rules-config": "Kan regelsconfiguratie vanuit <2>{{dataSource}}</2> niet laden",
@@ -6613,6 +6614,10 @@
       "paused": "Dit dashboard is gepauzeerd door de beheerder",
       "try-again-later": "Probeer het later opnieuw"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Ben je zeker dat je dit paneel wilt verwijderen?"
@@ -6740,7 +6745,8 @@
           "title": "Paneel plakken"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "Rij toevoegen",
@@ -8068,6 +8074,9 @@
       "title-delete-all-transformations": "Alle transformaties verwijderen?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_one": "",
@@ -9968,10 +9977,6 @@
       "to": "TO",
       "when": "WANNEER"
     },
-    "expression-query-editor": {
-      "helper-text-sql": "Voer SQL in MySQL-dialect uit op de tabellen die zijn opgehaald uit je gegevensbronnen. Query’s uit gegevensbronnen (zoals \"A\", \"B\") zijn beschikbaar als tabellen en kunnen worden aangeroepen via de querynaam. Velden zijn beschikbaar als kolommen, zoals geretourneerd door de gegevensbron.",
-      "label-operation": "Werking"
-    },
     "math": {
       "available-math-functions": "Beschikbare wiskundige functies",
       "run-math-operations": "Wiskundige bewerkingen uitvoeren op een of meer query's. Je verwijst naar de query met {{refExample}} bijv.{{ref1}}, {{ref2}}, {{ref3}}enz.<br/>Voorbeeld: <12>{{example}}</12>",
@@ -10519,6 +10524,25 @@
         "otherGroup": "Anders"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_one": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -11037,6 +11061,11 @@
         "placement-options": {
           "label-bottom": "Onder",
           "label-right": "Rechts"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_one": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11132,6 +11161,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "Eén-klik"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "Link toevoegen",
@@ -13788,16 +13820,16 @@
       "open": "Hoofdmenu",
       "pin-error": "Kan vastgezette menu-items niet bijwerken",
       "pinned-list-label": "Vastgezette items",
+      "section-resize": "",
       "undock": "Menu ontkoppelen"
     },
     "megamenu-item": {
       "children-error": "Kan items niet laden",
+      "children-partial-error": "",
       "collapse-aria-label": "Sectie samenvouwen: {{sectionName}}",
       "expand-aria-label": "Sectie uitvouwen: {{sectionName}}",
       "loading-aria-label": "{{sectionName}} aan het laden",
-      "reorder-aria-label": "{{itemName}} opnieuw ordenen",
-      "starred-dashboard-icon": "Dashboard",
-      "starred-folder-icon": "Map"
+      "reorder-aria-label": "{{itemName}} opnieuw ordenen"
     },
     "org-switcher": {
       "aria-label": "Organisatie wijzigen"
@@ -13987,12 +14019,32 @@
         "undo-label": "Bewerking door Assistant"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "Annuleren",
       "confirm-discard": "Negeren",
       "confirm-keep": "Behouden",
       "confirm-text": "Wil je de wijzigingen behouden die je hebt aangebracht tijdens het bekijken van deze notitieboek?",
       "confirm-title": "Niet-opgeslagen paneelwijzigingen"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17299,6 +17351,13 @@
       "wide-list": "Brede lijst",
       "wide-list-desc": "Horizontaal, naam en waarde, gebiedssparkline, één kleur"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "Stat",
       "stat-color-background": "Stat - kleur achtergrond",
@@ -17502,6 +17561,7 @@
     "description-page-size": "Aantal rijen per pagina. Wanneer leeg, is het paginaformaat gebaseerd op de paneelhoogte.",
     "description-show-columns-sidebar": "De zijbalk voor kolombeheer openen met het paneel, in plaats van vanuit een kolommenmenu",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "Een veld met JSON-objecten met CSS-eigenschappen",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "De achtergrondkleur van elke tweede rij afwisselen",
@@ -17546,6 +17606,7 @@
     "name-show-columns-sidebar": "Zijbalk met kolommen weergeven",
     "name-show-row-numbers": "",
     "name-show-table-header": "Header tabel tonen",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "Hover-tooltip weergeven",
     "name-styling-from-field": "Styling vanuit veld",
     "name-tooltip-from-field": "",
@@ -17844,6 +17905,10 @@
       "time-zone-option": "Tijdzone",
       "time-zone-selection": "Selectie van tijdzones"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "Tijdsbereik toepassen",
       "default-error": "Voer een datum ({{dateExample}}) of relatieve tijd in ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -17861,6 +17926,12 @@
       "to": "tot",
       "zoom-out-button": "Tijdsbereik uitzoomen",
       "zoom-out-tooltip-new": "Tijdsbereik uitzoomen <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "Tijdsbereik toepassen",

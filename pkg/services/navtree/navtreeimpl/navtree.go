@@ -95,18 +95,8 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 
 	treeRoot.AddSection(s.getHomeNode(c, prefs))
 
-	if hasAccess(ac.EvalPermission(dashboards.ActionDashboardsRead)) {
-		// Starred dashboards are populated client-side (useSyncStarredItemsInNav).
-		// The backend only emits the empty section as a container for the client to fill.
-		treeRoot.AddSection(&navtree.NavLink{
-			Text:           "Starred",
-			Id:             "starred",
-			Icon:           "star",
-			SortWeight:     navtree.WeightSavedItems,
-			Children:       []*navtree.NavLink{},
-			EmptyMessageId: "starred-empty",
-			Url:            s.cfg.AppSubURL + "/dashboards?starred",
-		})
+	if starredSection := s.buildStarredNavLink(c); starredSection != nil {
+		treeRoot.AddSection(starredSection)
 	}
 
 	if c.IsPublicDashboardView() || hasAccess(ac.EvalAny(
@@ -200,6 +190,25 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	}
 
 	return treeRoot, nil
+}
+
+// buildStarredNavLink returns the Starred section for signed-in users. Stars cover
+// plugin kinds, so dashboard read access is not required to have something starred.
+// The section is empty: the client fills it with the user's starred items
+// (useSyncStarredItemsInNav).
+func (s *ServiceImpl) buildStarredNavLink(c *contextmodel.ReqContext) *navtree.NavLink {
+	if !c.IsSignedIn {
+		return nil
+	}
+	return &navtree.NavLink{
+		Text:           "Starred",
+		Id:             "starred",
+		Icon:           "star",
+		SortWeight:     navtree.WeightSavedItems,
+		Children:       []*navtree.NavLink{},
+		EmptyMessageId: "starred-empty",
+		Url:            s.cfg.AppSubURL + "/dashboards?starred",
+	}
 }
 
 func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Preference) *navtree.NavLink {

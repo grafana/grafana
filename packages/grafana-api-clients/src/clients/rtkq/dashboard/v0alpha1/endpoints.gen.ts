@@ -888,8 +888,13 @@ export type ExistsPredicate = {
 };
 export type FilterPredicate = {
   field: string;
-  /** Operator is "In", "NotIn" or "All" in v1. "In" matches any of the values, "NotIn" excludes all of them, and "All" requires the field to hold every value, which only a field holding a list of values can do. */
-  operator: string;
+  /** Operator is "In", "NotIn" or "All" in v1. "In" matches any of the values, "NotIn" excludes all of them, and "All" requires the field to hold every value, which only a field holding a list of values can do.
+    
+    Possible enum values:
+     - `"All"` requires the resources whose field holds every one of the values, which only a field holding a list of values can do.
+     - `"In"` keeps the resources whose field matches any of the values.
+     - `"NotIn"` keeps the resources whose field matches none of them. */
+  operator: 'All' | 'In' | 'NotIn';
   values: string[];
 };
 export type RangePredicate = {

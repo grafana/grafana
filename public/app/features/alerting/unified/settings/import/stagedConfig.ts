@@ -1,5 +1,4 @@
-import { load } from 'js-yaml';
-
+import { loadYaml } from 'app/core/utils/yaml';
 import { type MuteTimeInterval, type Receiver, type Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { encodeMatcher, normalizeMatchers } from '../../utils/matchers';
@@ -89,7 +88,7 @@ export function parseStagedAlertmanagerConfig(yamlConfig: string | undefined): S
   }
 
   try {
-    const parsed = load(yamlConfig);
+    const parsed = loadYaml(yamlConfig);
     return isStagedAlertmanagerConfig(parsed) ? parsed : undefined;
   } catch {
     return undefined;

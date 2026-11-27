@@ -27,6 +27,7 @@ import {
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 
+import { useRulesSourcesWithRuler } from '../../hooks/useRuleSourcesWithRuler';
 import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { type Folder } from '../../types/rule-form';
 import { DataSourceType } from '../../utils/datasource';
@@ -459,6 +460,7 @@ function DataSourceField({ recordingTargets }: { recordingTargets: DataSourcesWi
     setValue,
     getValues,
   } = useFormContext<ImportFormValues>();
+  const rulesSources = useRulesSourcesWithRuler();
   return (
     <Field
       label={
@@ -477,8 +479,15 @@ function DataSourceField({ recordingTargets }: { recordingTargets: DataSourcesWi
           />
         </Stack>
       }
-      invalid={!!errors.selectedDatasourceName}
-      error={errors.selectedDatasourceName?.message}
+      invalid={Boolean(errors.selectedDatasourceName || rulesSources.error)}
+      error={
+        errors.selectedDatasourceName?.message ??
+        (rulesSources.error &&
+          t(
+            'alerting.import-to-gma.datasource.rules-sources-error',
+            'Failed to load the list of data sources with a ruler'
+          ))
+      }
       htmlFor="datasource-picker"
       noMargin
     >
@@ -487,6 +496,7 @@ function DataSourceField({ recordingTargets }: { recordingTargets: DataSourcesWi
         render={({ field: { onChange, ref, ...field } }) => (
           <CloudRulesSourcePicker
             {...field}
+            rulesSources={rulesSources}
             width={50}
             inputId="datasource-picker"
             disabled={recordingTargets.isLoading}

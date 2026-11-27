@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
@@ -75,7 +77,7 @@ func TestIntegrationLegacyCheckGlobalParity(t *testing.T) {
 				license.On("FeatureEnabled", "accesscontrol.enforcement").Return(enterprise)
 				cfg := setting.NewCfg()
 				cfg.RBAC.PermissionCache = cached
-				loader := legacypermissions.NewLoader(database, catalog, actions, localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), license, nil)
+				loader := legacypermissions.NewLoader(database, catalog, actions, localcache.New(0, 0), cfg, license, nil)
 				s := setupService().WithLegacyScopeResolvers(accesscontrol.NewScopeResolverRegistry(), types.OrgNamespaceFormatter)
 				s.store = store.NewStore(legacysql.NewDatabaseProvider(database), tracing.NewNoopTracerService())
 				s.userPermissionsEvaluator = loader
@@ -281,4 +283,76 @@ func seedLegacyGlobalGrant(
 		_, err := session.Insert(&accesscontrol.UserRole{RoleID: role.ID, OrgID: orgID, UserID: userID, Created: now})
 		return err
 	}))
+}
+
+func TestIntegrationLegacyCheckGlobalManagedPermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagExcludeRedundantManagedPermissions: {
+			State:          memprovider.Enabled,
+			Variants:       map[string]any{"value": true},
+			DefaultVariant: "value",
+		},
+	})))
+	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
+	const userID int64 = 7
+	const userUID = "managed-user"
+	database := db.NewTestStore(t)
+	require.NoError(t, database.WithDbSession(t.Context(), func(session *db.Session) error {
+		now := time.Now()
+		_, err := session.Insert(&user.User{ID: userID, UID: userUID, Login: userUID, Email: "managed@example.org", Created: now, Updated: now})
+		return err
+	}))
+	seedLegacyGlobalGrant(t, database, accesscontrol.GlobalOrgID, userID, "", "managed:individual", "dashboards:read", "dashboards:uid:individual")
+	seedLegacyGlobalGrant(t, database, accesscontrol.GlobalOrgID, userID, "", "managed:action-set", "dashboards:view", "dashboards:uid:action-set")
+	require.NoError(t, database.WithDbSession(t.Context(), func(session *db.Session) error {
+		_, err := session.Exec("UPDATE permission SET kind = ? WHERE action IN (?, ?)", "dashboards", "dashboards:read", "dashboards:view")
+		return err
+	}))
+
+	for _, cached := range []bool{false, true} {
+		t.Run(fmt.Sprintf("cache=%t", cached), func(t *testing.T) {
+			actions := resourcepermissions.NewActionSetService()
+			actions.StoreActionSet("dashboards:view", []string{"dashboards:read"})
+			license := licensingtest.NewFakeLicensing()
+			license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true)
+			cfg := setting.NewCfg()
+			cfg.RBAC.PermissionCache = cached
+			loader := legacypermissions.NewLoader(database, legacypermissions.NewRoleCatalog(), actions, localcache.New(0, 0), cfg, license, nil)
+			service := setupService().WithLegacyScopeResolvers(accesscontrol.NewScopeResolverRegistry(), types.OrgNamespaceFormatter)
+			service.store = store.NewStore(legacysql.NewDatabaseProvider(database), tracing.NewNoopTracerService())
+			service.userPermissionsEvaluator = loader
+			requester := &user.SignedInUser{UserID: userID, UserUID: userUID, OrgID: accesscontrol.GlobalOrgID, OrgRole: org.RoleNone, Namespace: "org-12"}
+			grants, err := loader.GetUserPermissions(t.Context(), requester, accesscontrol.Options{})
+			require.NoError(t, err)
+			requester.Permissions = map[int64]map[string][]string{accesscontrol.GlobalOrgID: accesscontrol.GroupScopesByActionContext(t.Context(), grants)}
+
+			for _, orgID := range []int64{accesscontrol.GlobalOrgID, accesscontrol.NoOrgID} {
+				for _, check := range []struct {
+					name, scope string
+					allowed     bool
+				}{
+					{name: "individual grant", scope: "dashboards:uid:individual", allowed: cached},
+					{name: "action-set grant", scope: "dashboards:uid:action-set", allowed: true},
+				} {
+					t.Run(fmt.Sprintf("org=%d/%s", orgID, check.name), func(t *testing.T) {
+						requester.OrgID = orgID
+						evaluator := accesscontrol.EvalPermission("dashboards:read", check.scope)
+						allowed, err := acimpl.ProvideAccessControlTest().Evaluate(t.Context(), requester, evaluator)
+						require.NoError(t, err)
+						require.Equal(t, check.allowed, allowed)
+						expression, err := accesscontrol.ToLegacyExpression(evaluator)
+						require.NoError(t, err)
+						response, err := service.LegacyCheck(legacyCheckContext(t), &authzextv1.LegacyCheckRequest{
+							Namespace: "org-12", Subject: requester.GetUID(), Expression: expression,
+							RequesterOrgId: proto.Int64(orgID),
+							Restriction:    &authzextv1.LegacyActionRestriction{Actions: []string{"dashboards:read"}},
+						})
+						require.NoError(t, err)
+						require.True(t, proto.Equal(&authzextv1.LegacyCheckResponse{Allowed: allowed}, response), "got %v", response)
+					})
+				}
+			}
+		})
+	}
 }

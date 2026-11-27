@@ -64,6 +64,45 @@ describe('ConfirmModal', () => {
     expect(screen.queryByRole('button', { name: 'Confirm' })).not.toBeInTheDocument();
   });
 
+  it('forwards data attributes to the dialog that contains the confirm button', () => {
+    render(
+      <ConfirmModal
+        title="Delete dashboard"
+        body="Are you sure?"
+        confirmText="Delete"
+        isOpen={true}
+        onConfirm={() => {}}
+        onDismiss={() => {}}
+        data-analytics-id="dashboard_delete_confirm"
+      />
+    );
+
+    const dialog = screen.getByRole('dialog', { name: 'Delete dashboard' });
+    expect(dialog).toHaveAttribute('data-analytics-id', 'dashboard_delete_confirm');
+    expect(dialog).toContainElement(screen.getByRole('button', { name: 'Delete' }));
+  });
+
+  it('does not forward props that are not data attributes to the modal', async () => {
+    const onDismiss = jest.fn();
+    const spreadProps = { closeOnEscape: false, 'data-analytics-id': 'dashboard_delete_confirm' };
+    render(
+      <ConfirmModal
+        title="Delete dashboard"
+        body="Are you sure?"
+        confirmText="Delete"
+        isOpen={true}
+        onConfirm={() => {}}
+        onDismiss={onDismiss}
+        {...spreadProps}
+      />
+    );
+
+    expect(screen.getByRole('dialog')).toHaveAttribute('data-analytics-id', 'dashboard_delete_confirm');
+
+    await user.keyboard('{Escape}');
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
   it('disables the confirm button initially when confirmation text is present', () => {
     render(
       <ConfirmModal

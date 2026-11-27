@@ -13,12 +13,14 @@ package identity
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	authtypes "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/pkg/apimachinery/internal/managerkinds"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -43,6 +45,52 @@ func CheckClassicFPAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 		Reason:  metav1.StatusReasonForbidden,
 		Message: "Can not set the classic-file-provisioning resource manager",
 	}}
+}
+
+// ManagerKindRegistration represents a manager kind that a build adds on top of the built-in ones.
+type ManagerKindRegistration interface {
+	Kind() utils.ManagerKind
+
+	// CheckAssignment decides who may assign the kind.
+	CheckAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
+}
+
+var managerKindRegistry = map[utils.ManagerKind]ManagerKindRegistration{}
+
+// RegisterManagerKind registers a manager kind with the check that decides who may assign it.
+// Call it from init: the registry is not safe for concurrent use. It panics if the kind is
+// empty, built-in or already registered.
+func RegisterManagerKind(registration ManagerKindRegistration) {
+	kind := registration.Kind()
+
+	if kind == utils.ManagerKindUnknown {
+		panic("RegisterManagerKind: the kind is empty")
+	}
+
+	if utils.ParseManagerKindString(string(kind)) != utils.ManagerKindUnknown {
+		panic(fmt.Sprintf("RegisterManagerKind: %q is already a known kind", kind))
+	}
+
+	managerkinds.Add(string(kind))
+	managerKindRegistry[kind] = registration
+}
+
+// IsRegisteredManagerKind reports whether kind was added with RegisterManagerKind.
+func IsRegisteredManagerKind(kind utils.ManagerKind) bool {
+	_, ok := managerKindRegistry[kind]
+	return ok
+}
+
+// CheckRegisteredKindAssignment runs the assignment check of the registered kind obj carries,
+// which decides whether the caller is that kind's manager. It returns nil for any other kind.
+func CheckRegisteredKindAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	kind := utils.ParseManagerKindString(obj.GetAnnotation(utils.AnnoKeyManagerKind))
+
+	if registration, ok := managerKindRegistry[kind]; ok {
+		return registration.CheckAssignment(auth, obj)
+	}
+
+	return nil
 }
 
 func CheckManagerWriteAuthz(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
@@ -97,6 +145,11 @@ func CheckManagerOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor
 	if err := CheckClassicFPAssignment(auth, obj); err != nil {
 		return err
 	}
+
+	if err := CheckRegisteredKindAssignment(auth, obj); err != nil {
+		return err
+	}
+
 	return CheckManagerWriteAuthz(auth, obj)
 }
 
@@ -139,11 +192,18 @@ func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAcc
 	}
 
 	// Adding a manager or updating flags on the same owner. Gate only a *new* classic-FP
-	// assignment: rewriting one that already carries it must keep working (allowUiUpdates).
+	// or registered-kind assignment: rewriting one that already carries it must keep working (allowUiUpdates).
 	if !hasOld || managerOld.Kind != utils.ManagerKindClassicFP { // nolint:staticcheck
 		if err := CheckClassicFPAssignment(auth, obj); err != nil {
 			return err
 		}
 	}
+
+	if !hasOld {
+		if err := CheckRegisteredKindAssignment(auth, obj); err != nil {
+			return err
+		}
+	}
+
 	return CheckManagerWriteAuthz(auth, obj)
 }

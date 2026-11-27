@@ -1,6 +1,6 @@
-import { isEmpty, noop } from 'lodash';
+import { isEmpty, noop, pick } from 'lodash';
 import { useMemo } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
 import { useDataSourcesWithValidRecordingTargetByUid } from '@grafana/alerting/internal';
@@ -32,7 +32,7 @@ import { type ImportFormValues } from '../types';
 
 import { ImportSourceCard } from './ImportSourceCard';
 import { usePredictedAutoSyncIdentifier } from './useAutoSyncPrediction';
-import { getRoutingTreeOptions, isStep2Valid } from './utils';
+import { RULES_SPEC_FIELDS, buildRulesImportSpec, getRoutingTreeOptions } from './utils';
 
 interface Step2ContentProps {
   step1Completed: boolean;
@@ -335,42 +335,22 @@ function OverrideWarning({ rulesThatMightBeOverwritten }: { rulesThatMightBeOver
  */
 export function useStep2Validation(canImport: boolean): boolean {
   const {
-    watch,
+    control,
     formState: { errors },
   } = useFormContext<ImportFormValues>();
-  const [
-    rulesSource,
-    rulesDatasourceUID,
-    rulesYamlFile,
-    yamlImportTargetDatasourceUID,
-    selectedRoutingTree,
-    targetDatasourceUID,
-  ] = watch([
-    'rulesSource',
-    'rulesDatasourceUID',
-    'rulesYamlFile',
-    'yamlImportTargetDatasourceUID',
-    'selectedRoutingTree',
-    'targetDatasourceUID',
-  ]);
+  const values = useWatch({ control, compute: (formValues) => pick(formValues, RULES_SPEC_FIELDS) });
+  const spec = buildRulesImportSpec(values);
 
-  const hasStep2Errors =
-    !!errors.rulesSource ||
-    (rulesSource === 'datasource' && !!errors.rulesDatasourceUID) ||
-    (rulesSource === 'yaml' && (!!errors.rulesYamlFile || !!errors.yamlImportTargetDatasourceUID)) ||
-    !!errors.selectedRoutingTree ||
-    !!errors.targetDatasourceUID;
-
-  if (!canImport || hasStep2Errors) {
+  if (!canImport || !spec) {
     return false;
   }
 
-  return isStep2Valid({
-    rulesSource,
-    rulesYamlFile,
-    rulesDatasourceUID,
-    yamlImportTargetDatasourceUID,
-    selectedRoutingTree,
-    targetDatasourceUID,
-  });
+  const hasStep2Errors =
+    Boolean(errors.rulesSource) ||
+    (spec.type === 'datasource' && Boolean(errors.rulesDatasourceUID)) ||
+    (spec.type === 'yaml' && (Boolean(errors.rulesYamlFile) || Boolean(errors.yamlImportTargetDatasourceUID))) ||
+    Boolean(errors.selectedRoutingTree) ||
+    Boolean(errors.targetDatasourceUID);
+
+  return !hasStep2Errors;
 }

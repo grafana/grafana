@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { dump, load } from 'js-yaml';
+import { dump } from 'js-yaml';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -8,6 +8,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Drawer, Icon, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import { loadYaml } from 'app/core/utils/yaml';
 
 import { type RulerRuleDTO } from '../../../../../types/unified-alerting-dto';
 import { type RuleFormValues } from '../../types/rule-form';
@@ -70,7 +71,7 @@ const InspectorYamlTab = ({ onSubmit }: YamlTabProps) => {
   const [yamlDraft, setYamlDraft] = useState(alertRuleAsYaml);
 
   const onApply = () => {
-    const rulerRule = load(alertRuleAsYaml) as RulerRuleDTO;
+    const rulerRule = loadYaml(alertRuleAsYaml) as RulerRuleDTO;
     const currentFormValues = getValues();
 
     const yamlFormValues = rulerRuleToRuleFormValues(rulerRule);
