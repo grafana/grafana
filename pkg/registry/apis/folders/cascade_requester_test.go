@@ -28,9 +28,14 @@ type terminatingStore struct {
 	options       *metav1.DeleteOptions
 }
 
-func (s *terminatingStore) Delete(_ context.Context, name string, _ rest.ValidateObjectFunc, o *metav1.DeleteOptions) (runtime.Object, bool, error) {
+func (s *terminatingStore) Delete(ctx context.Context, name string, v rest.ValidateObjectFunc, o *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	f := s.existing[name]
 	s.options = o
+	if v != nil {
+		if err := v(ctx, f); err != nil {
+			return nil, false, err
+		}
+	}
 	if f.Status.CascadeDelete != nil {
 		s.requesterSeen = f.Status.CascadeDelete.Requester
 	}
@@ -271,4 +276,29 @@ func TestCascadeDelete_ClearsARequesterLeftOnALiveFolder(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, store.requesterSeen, "the delete is not attributed to a leftover requester")
 	require.NotNil(t, store.existing["root"].DeletionTimestamp)
+}
+
+func TestCascadeDelete_ValidatesOnceWhenStamping(t *testing.T) {
+	count := func(calls *int) rest.ValidateObjectFunc {
+		return func(context.Context, runtime.Object) error { *calls++; return nil }
+	}
+
+	t.Run("a stamped delete", func(t *testing.T) {
+		setRequesterToggles(t, true)
+		_, _, s := newRequesterStore()
+		var calls int
+		_, _, err := s.Delete(requesterCtx(requesterUser), "root", count(&calls), forceDelete())
+		require.NoError(t, err)
+		require.Equal(t, 1, calls)
+	})
+
+	t.Run("a delete whose stamp failed", func(t *testing.T) {
+		setRequesterToggles(t, true)
+		_, status, s := newRequesterStore()
+		status.err = errors.New("boom")
+		var calls int
+		_, _, err := s.Delete(requesterCtx(requesterUser), "root", count(&calls), forceDelete())
+		require.NoError(t, err)
+		require.Equal(t, 1, calls)
+	})
 }

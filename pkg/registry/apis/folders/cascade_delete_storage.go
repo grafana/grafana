@@ -749,12 +749,13 @@ func (s *cascadeDeleteStorage) deleteAsync(ctx context.Context, ns authlib.Names
 	if err := checkDeletePreconditions(f, options); err != nil {
 		return nil, false, err
 	}
-	// Validate first, so a rejected delete doesn't leave a stamp behind. Storage.Delete validates
-	// again, against the stamped version.
+	// Validate once, up front, so a rejected delete doesn't leave a stamp behind. The stamp only changes
+	// the status, so the result holds for the stamped version and Storage.Delete need not repeat it.
 	if deleteValidation != nil {
 		if err := deleteValidation(ctx, f); err != nil {
 			return nil, false, err
 		}
+		deleteValidation = rest.ValidateAllObjectFunc
 	}
 	svcCtx := identity.WithServiceIdentityContext(base, ns.OrgID)
 	stamped, err := s.recordCascadeDeleteRequester(svcCtx, f, requester)
