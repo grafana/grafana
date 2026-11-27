@@ -185,9 +185,7 @@ The available configuration options in the sidebar differ depending on the selec
 
 #### Open the sidebar for an element
 
-In edit mode, open the sidebar for an element or dashboard control by hovering over it to display the actions tooltip, and then click the element's settings icon:
-
-<!-- TODO: screenshot here -->
+In edit mode, open the sidebar for an element or dashboard control by hovering over it to display the actions tooltip, and then click the element's settings icon.
 
 This applies to:
 
