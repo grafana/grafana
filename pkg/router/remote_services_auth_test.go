@@ -27,6 +27,11 @@ func TestRemoteServiceAudience(t *testing.T) {
 		"mimir.ext.grafana.com":       "*.ext.grafana.com",
 		"widgets.ext.grafana.app":     "apiextensions.k8s.io",
 		"folder.grafana.app":          "folder.grafana.app",
+		"datasource.grafana.app":      "*.datasource.grafana.app",
+		// Suffixes match whole labels only.
+		"pertenantdatasource.grafana.app": "pertenantdatasource.grafana.app",
+		"next.grafana.app":                "next.grafana.app",
+		"context.grafana.com":             "context.grafana.com",
 	} {
 		require.Equal(t, want, remoteServiceAudience(group), group)
 	}
@@ -178,7 +183,12 @@ func TestRemoteServiceSignerFailuresSkipTheBreaker(t *testing.T) {
 			require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &status))
 			require.EqualValues(t, tc.status, status.Code)
 			require.Zero(t, sent)
-			require.Zero(t, router.served[group].breaker.Counts().TotalFailures)
+			// Excluded, not a success: a success would reset the failure count
+			// and could close a half-open breaker.
+			counts := router.served[group].breaker.Counts()
+			require.Zero(t, counts.TotalFailures)
+			require.Zero(t, counts.TotalSuccesses)
+			require.EqualValues(t, 1, counts.TotalExclusions)
 		})
 	}
 }
@@ -187,9 +197,9 @@ func TestRemoteServiceFailureReason(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/apis/g/v1", nil)
 	refused := remoteForbidden(&request.RequestInfo{APIGroup: "g"}, errors.New("no"))
 	require.Empty(t, failureReason(req, refused))
-	require.NoError(t, breakerOutcome(req, http.StatusForbidden, &backendCall{proxyErr: refused}))
+	require.ErrorIs(t, breakerOutcome(req, http.StatusForbidden, &backendCall{proxyErr: refused}), errNotSent)
 
 	unsigned := &localProxyError{status: apierrors.NewServiceUnavailable("signer down"), reason: failureAuth}
 	require.Equal(t, failureAuth, failureReason(req, unsigned))
-	require.NoError(t, breakerOutcome(req, http.StatusServiceUnavailable, &backendCall{proxyErr: unsigned}))
+	require.ErrorIs(t, breakerOutcome(req, http.StatusServiceUnavailable, &backendCall{proxyErr: unsigned}), errNotSent)
 }

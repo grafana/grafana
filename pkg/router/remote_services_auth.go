@@ -125,7 +125,9 @@ func remoteForbidden(info *request.RequestInfo, err error) error {
 }
 
 // remoteServiceAudiences maps a group suffix to the audience of the MT service
-// that serves the group. Any other group is its own audience.
+// that serves the group. Any other group is its own audience. The aggregator
+// matched raw suffixes; matching whole labels keeps a group such as
+// pertenantdatasource.grafana.app its own audience.
 var remoteServiceAudiences = []struct{ suffix, audience string }{
 	{"plugins.grafana.com", "*.plugins.grafana.com"},
 	{"datasource.grafana.app", "*.datasource.grafana.app"},
@@ -135,7 +137,7 @@ var remoteServiceAudiences = []struct{ suffix, audience string }{
 
 func remoteServiceAudience(group string) string {
 	for _, a := range remoteServiceAudiences {
-		if strings.HasSuffix(group, a.suffix) {
+		if group == a.suffix || strings.HasSuffix(group, "."+a.suffix) {
 			return a.audience
 		}
 	}
