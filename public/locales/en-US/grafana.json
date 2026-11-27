@@ -3298,8 +3298,10 @@
         "inline_one": "{{count}} data source is managed by the Prometheus Alerting plugin",
         "inline_other": "{{count}} data sources are managed by the Prometheus Alerting plugin",
         "inline-action": "View",
+        "inline-unknown-count": "Data sources are managed by the Prometheus Alerting plugin",
         "title_one": "{{count}} data source is managed by the Prometheus Alerting plugin",
-        "title_other": "{{count}} data sources are managed by the Prometheus Alerting plugin"
+        "title_other": "{{count}} data sources are managed by the Prometheus Alerting plugin",
+        "title-unknown-count": "Data sources are managed by the Prometheus Alerting plugin"
       },
       "ds-error": {
         "title": "Cannot load rules for this datasource"
