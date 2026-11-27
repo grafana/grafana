@@ -15,17 +15,31 @@ export interface CommentsProviderProps {
   children: ReactNode;
 }
 
-export interface CommentsTriggerProps {
-  /** Identifies what is commented on within the target: a cell id, a panel key, ... Opaque to the API. */
-  anchorId: string;
-  className?: string;
-  /** Tells the feature whether the box is open, so it can show which anchor the comments belong to. */
-  onActiveChange?: (active: boolean) => void;
+/**
+ * What a feature gets for one anchor, to build its own entry point with. The comments UI supplies the
+ * behavior; the feature supplies the component and decides where it shows.
+ */
+export interface CommentsAnchor {
+  /** How many comments, replies included, are open on the anchor. */
+  count: number;
+  /** Whether the anchor's comments are showing. */
+  isOpen: boolean;
+  /** Opens the anchor's comments, or closes them. */
+  toggle: () => void;
+  /**
+   * Call with the element the box should float beside, as a ref callback: `ref={anchor.setElement}`.
+   * (Not named `ref`: the React Compiler lint takes any object with a `ref` property for a ref.)
+   */
+  setElement: (element: HTMLElement | null) => void;
+  /** Whether the user may add comments; without it they can only read what is there. */
+  canWrite: boolean;
 }
+
+type UseCommentsAnchor = (anchorId: string) => CommentsAnchor | undefined;
 
 interface CommentsImplementation {
   Provider: ComponentType<CommentsProviderProps>;
-  Trigger: ComponentType<CommentsTriggerProps>;
+  useAnchor: UseCommentsAnchor;
 }
 
 let internal: CommentsImplementation | undefined;
@@ -47,16 +61,18 @@ export function CommentsProvider({ target, children }: CommentsProviderProps) {
   return <Provider target={target}>{children}</Provider>;
 }
 
+const useNoAnchor: UseCommentsAnchor = () => undefined;
+
 /**
- * Place this wherever the feature wants the comment button: a gutter, a panel header, a line of text. Must
- * be under a `CommentsProvider`; renders nothing otherwise, in OSS, or when comments are off for the kind.
+ * The hook a feature builds its entry point with: attach `setElement` and `toggle` to whatever element and
+ * handler it likes, and put it wherever its layout wants it (a gutter, a panel header, a line of text).
+ * Returns undefined, so the feature renders nothing, in OSS, outside a `CommentsProvider`, on the PDF
+ * render route, and when comments are off for the kind.
  */
-export function CommentsTrigger(props: CommentsTriggerProps) {
-  const Trigger = internal?.Trigger;
-  if (!Trigger || isRenderRoute()) {
-    return null;
-  }
-  return <Trigger {...props} />;
+export function useCommentsAnchor(anchorId: string): CommentsAnchor | undefined {
+  // Fixed at boot, so every render calls the same hook.
+  const useAnchor = internal?.useAnchor ?? useNoAnchor;
+  return useAnchor(anchorId);
 }
 
 // The PDF render route (see notebookRenderUrl) reads the notebook for a screenshot and takes no part in
