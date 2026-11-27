@@ -7,8 +7,12 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	promtest "github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/semaphore"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 
@@ -683,4 +687,40 @@ func TestIntegrationShadowListDoesNotProvisionStoreOrCacheResults(t *testing.T) 
 	require.NoError(t, err)
 	require.Equal(t, shadowResult.GetItems(), ordinary.GetItems())
 	require.NotEmpty(t, server.cache.Items())
+}
+
+func TestIntegrationShadowListProductionIsolation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	server := setupOpenFGAServer(t)
+	setup(t, server)
+	ctx := newContextWithNamespace()
+	req := &authzv1.ListRequest{
+		Namespace: namespace, Verb: utils.VerbList, Subject: "user:1",
+		Group: dashboardGroup, Resource: dashboardResource,
+	}
+
+	t.Run("production latency", func(t *testing.T) {
+		res, err := server.List(shadow.WithContext(ctx), req)
+		require.NoError(t, err)
+		require.Equal(t, []string{"1"}, res.GetItems())
+		require.Zero(t, promtest.CollectAndCount(server.metrics.requestDurationSeconds))
+
+		_, err = server.List(ctx, req)
+		require.NoError(t, err)
+		require.Equal(t, 1, promtest.CollectAndCount(server.metrics.requestDurationSeconds))
+	})
+	t.Run("production concurrency", func(t *testing.T) {
+		server.globalSem = semaphore.NewWeighted(1)
+		release, err := server.acquireSlot("Check", namespace)
+		require.NoError(t, err)
+		t.Cleanup(release)
+
+		res, err := server.List(shadow.WithContext(ctx), req)
+		require.NoError(t, err)
+		require.Equal(t, []string{"1"}, res.GetItems())
+
+		_, err = server.List(ctx, req)
+		require.Equal(t, codes.ResourceExhausted, status.Code(err))
+	})
 }

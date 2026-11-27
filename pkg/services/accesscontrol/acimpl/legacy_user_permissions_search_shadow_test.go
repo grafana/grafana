@@ -139,9 +139,11 @@ func TestPermissionSearchShadowSnapshots(t *testing.T) {
 		ctx, cancel := context.WithCancel(openfeature.WithTransactionContext(t.Context(), eval))
 		defer cancel()
 		ctx = context.WithValue(ctx, requestKey{}, "request value")
+		teamIDs := []int64{1}
 		caller := &user.SignedInUser{
 			OrgID: 1, Namespace: "stacks-42", UserID: 5, UserUID: "caller",
-			TeamIDs: []int64{1}, TeamUIDs: []string{"team"}, ExternalGroups: []string{"group"},
+			TeamIDs:  teamIDs, //nolint:staticcheck // The legacy Search RPC still snapshots numeric team membership.
+			TeamUIDs: []string{"team"}, ExternalGroups: []string{"group"},
 			IDToken: "test-id-token", AccessToken: "test-access-token",
 			Permissions: map[int64]map[string][]string{1: {"users:read": {"users:id:2"}}, ac.GlobalOrgID: {"global.users:read": {"global.users:id:2"}}},
 		}
@@ -182,7 +184,7 @@ func TestPermissionSearchShadowSnapshots(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, expected, got)
 
-		caller.TeamIDs[0], caller.TeamUIDs[0], caller.ExternalGroups[0] = 9, "different team", "different group"
+		teamIDs[0], caller.TeamUIDs[0], caller.ExternalGroups[0] = 9, "different team", "different group"
 		caller.Permissions[ac.GlobalOrgID]["global.users:read"][0] = "different global grants"
 		options.ActionSets[0], options.RolePrefixes[0] = "different set", "different prefix"
 		wildcards[0] = "different wildcard"

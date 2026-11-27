@@ -81,32 +81,9 @@ func (s *embeddedServer) LegacySearchUsersPermissions(req *authzv1.LegacySearchU
 		}
 		endPermissionSpan(span, err)
 	}()
-	if s.guard == nil || ctx.Value(embeddedCallKey{}) != s.guard {
-		return status.Error(codes.PermissionDenied, "legacy search is embedded-only")
-	}
-	authInfo, ok := types.AuthInfoFrom(ctx)
-	if !ok || authInfo == nil {
-		return status.Error(codes.Unauthenticated, "authentication is required")
-	}
-	permission := authzlib.CheckServicePermissions(authInfo, "authz.grafana.app", "legacyuserpermissions", "search")
-	if !permission.ServiceCall || !permission.Allowed {
-		return status.Error(codes.PermissionDenied, "legacy search request denied")
-	}
-	if !types.NamespaceMatches(authInfo.GetNamespace(), req.GetNamespace()) {
-		return status.Error(codes.PermissionDenied, "namespace mismatch")
-	}
-	ns, err := types.ParseNamespace(req.GetNamespace())
+	ns, err := s.authorizeSearchNamespace(ctx, req.GetNamespace())
 	if err != nil {
-		return status.Errorf(codes.InvalidArgument, "invalid namespace: %v", err)
-	}
-	if ns.OrgID < 1 {
-		return status.Error(codes.InvalidArgument, "concrete namespace required")
-	}
-	if s.cfg.StackID != "" && ns.Value != legacyscopes.StackNamespace(s.cfg.StackID) {
-		return status.Error(codes.PermissionDenied, "namespace does not match this instance")
-	}
-	if s.cfg.StackID == "" && ns.StackID != 0 {
-		return status.Error(codes.PermissionDenied, "namespace does not match this instance")
+		return err
 	}
 	caller, err := searchRequester(ns, req.GetRequester())
 	if err != nil {
@@ -171,6 +148,37 @@ func (s *embeddedServer) LegacySearchUsersPermissions(req *authzv1.LegacySearchU
 	}
 
 	return streamSearchResults(stream, results)
+}
+
+func (s *embeddedServer) authorizeSearchNamespace(ctx context.Context, namespace string) (types.NamespaceInfo, error) {
+	if s.guard == nil || ctx.Value(embeddedCallKey{}) != s.guard {
+		return types.NamespaceInfo{}, status.Error(codes.PermissionDenied, "legacy search is embedded-only")
+	}
+	authInfo, ok := types.AuthInfoFrom(ctx)
+	if !ok || authInfo == nil {
+		return types.NamespaceInfo{}, status.Error(codes.Unauthenticated, "authentication is required")
+	}
+	permission := authzlib.CheckServicePermissions(authInfo, "authz.grafana.app", "legacyuserpermissions", "search")
+	if !permission.ServiceCall || !permission.Allowed {
+		return types.NamespaceInfo{}, status.Error(codes.PermissionDenied, "legacy search request denied")
+	}
+	if !types.NamespaceMatches(authInfo.GetNamespace(), namespace) {
+		return types.NamespaceInfo{}, status.Error(codes.PermissionDenied, "namespace mismatch")
+	}
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return types.NamespaceInfo{}, status.Errorf(codes.InvalidArgument, "invalid namespace: %v", err)
+	}
+	if ns.OrgID < 1 {
+		return types.NamespaceInfo{}, status.Error(codes.InvalidArgument, "concrete namespace required")
+	}
+	if s.cfg.StackID != "" && ns.Value != legacyscopes.StackNamespace(s.cfg.StackID) {
+		return types.NamespaceInfo{}, status.Error(codes.PermissionDenied, "namespace does not match this instance")
+	}
+	if s.cfg.StackID == "" && ns.StackID != 0 {
+		return types.NamespaceInfo{}, status.Error(codes.PermissionDenied, "namespace does not match this instance")
+	}
+	return ns, nil
 }
 
 func streamSearchResults(stream authzv1.LegacyAuthzService_LegacySearchUsersPermissionsServer, results map[int64][]accesscontrol.Permission) error {

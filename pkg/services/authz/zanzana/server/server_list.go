@@ -28,6 +28,19 @@ import (
 type skipListCacheKey struct{}
 
 func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.ListResponse, error) {
+	// Search shadows are already bounded by their runner and per-request fanout.
+	if shadow.IsShadow(ctx) {
+		ctx, span := s.tracer.Start(ctx, "server.List.shadow")
+		defer span.End()
+
+		res, err := s.list(ctx, r)
+		if err != nil {
+			span.SetStatus(codes.Error, "shadow Zanzana list failed")
+			return nil, errors.New("shadow Zanzana list failed")
+		}
+		return res, nil
+	}
+
 	release, err := s.acquireSlot("List", r.GetNamespace())
 	if err != nil {
 		return nil, err
@@ -41,14 +54,6 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 		s.metrics.requestDurationSeconds.WithLabelValues("List").Observe(time.Since(start).Seconds())
 	}()
 
-	if shadow.IsShadow(ctx) {
-		res, err := s.list(ctx, r)
-		if err != nil {
-			span.SetStatus(codes.Error, "shadow Zanzana list failed")
-			return nil, errors.New("shadow Zanzana list failed")
-		}
-		return res, nil
-	}
 	span.SetAttributes(attribute.String("namespace", r.GetNamespace()))
 
 	ctxLogger := s.logger.FromContext(ctx).New(
