@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -178,7 +177,6 @@ func TestIntegrationLegacyCheckSharedWithMeParity(t *testing.T) {
 				resourcepermissions.NewActionSetService(),
 				localcache.New(0, 0),
 				cfg,
-				featuremgmt.WithFeatures(),
 				license,
 				nil,
 			)
@@ -198,7 +196,7 @@ func TestIntegrationLegacyCheckSharedWithMeParity(t *testing.T) {
 						UserID:    ident.id,
 						UserUID:   ident.uid,
 						OrgID:     12,
-						OrgRole:   identity.RoleViewer,
+						OrgRole:   types.RoleViewer,
 						Namespace: "org-12",
 						CacheKey:  types.NewTypeID(ident.kind, ident.uid),
 					}

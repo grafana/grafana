@@ -6,6 +6,8 @@
  * by load convention).
  */
 
+import * as z from 'zod/mini';
+
 import type { AnnotationQueryKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import type { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
@@ -17,7 +19,7 @@ import { readOnly, type MutationCommand } from './types';
 
 export const listAnnotationsCommand: MutationCommand<Record<string, never>> = {
   name: 'LIST_ANNOTATIONS',
-  description: payloads.listAnnotations.description ?? '',
+  description: z.globalRegistry.get(payloads.listAnnotations)?.description ?? '',
 
   payloadSchema: payloads.listAnnotations,
   permission: readOnly,

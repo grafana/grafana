@@ -9,6 +9,7 @@ const command: RenderCommand = {
   protocol: TEXT_FRAME_PROTOCOL,
   channel: 'test',
   type: 'render',
+  revision: 0,
   html: '',
   globalCss: '',
   diagramError: 'Diagram failed',

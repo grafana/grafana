@@ -46,6 +46,7 @@ type RuleGroupReader interface {
 // RuleCounter counts rules for quota reporting.
 type RuleCounter interface {
 	Count(ctx context.Context, orgID int64) (int64, error)
+	CountByOrg(ctx context.Context) (map[int64]int64, error)
 }
 
 // RuleGroupCounter counts distinct rule group names for usage reporting.

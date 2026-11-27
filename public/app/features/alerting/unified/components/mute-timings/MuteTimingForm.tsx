@@ -102,11 +102,9 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance, editMode }
         notifyApp.error(title, message);
 
         if (isClientFetchError(error)) {
-          logWarning(title, { status: String(error.status), message });
+          logWarning(title, { status: String(error.status) });
         } else {
-          const saveError = new Error(title);
-          saveError.cause = error;
-          logError(saveError);
+          logError(new Error(title), isFetchError(error) ? { status: String(error.status) } : undefined);
         }
       }
     }

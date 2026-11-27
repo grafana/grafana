@@ -37,17 +37,31 @@ import { ElementSelectionContext, Portal, useStyles2, useTheme2 } from '@grafana
 export const WAIT_FOR_MOUSE_REST_DURATION_MS = 225;
 /** With `grafana.panelActionsPopover` on, every edit actions popover opens this soon, and without a fade. */
 export const PANEL_ACTIONS_POPOVER_REST_DURATION_MS = 150;
+const POINTER_EVENTS = ['pointermove', 'pointerdown'] as const;
+
+interface EditActionsPopoverContextValue {
+  closePopover: () => void;
+  /** Holds the popover open while something its content opened elsewhere is in use, e.g. a quick-edit card. */
+  holdOpen: (hold: boolean) => void;
+  /** The element the popover belongs to, e.g. a panel, for placing what its content opens beside it. */
+  getReference: () => Element | null;
+}
 
 /**
- * Lets popover content close the popover programmatically, e.g. before opening a modal on top of it.
+ * Lets popover content close the popover programmatically, e.g. before opening a modal on top of it, or hold it open.
  */
-const EditActionsPopoverContext = createContext<{ closePopover: () => void }>({ closePopover: () => {} });
+const EditActionsPopoverContext = createContext<EditActionsPopoverContextValue>({
+  closePopover: () => {},
+  holdOpen: () => {},
+  getReference: () => null,
+});
 export const useEditActionsPopover = () => useContext(EditActionsPopoverContext);
 
 /**
  * Checks whether the device supports fine-pointer hover (mouse/trackpad).
- * On touch, a panel tap opens both the hover popover and the edit sidebar at once.
- * Used for panels only: the popover would cover the sidebar that PanelChrome auto-opens; variable/annotation/link controls are fine without this guard.
+ * Panels use this guard when selection auto-opens the sidebar, preventing
+ * a touch tap from opening both the sidebar and popover.
+ * With explicit sidebar opening enabled (`grafana.dashboardSidebarExplicitOpen=true`), panels bypass this guard.
  */
 export function useHoverPopoverSupported(defaultValue = true) {
   return useMedia('(hover: hover) and (pointer: fine)', defaultValue);
@@ -107,14 +121,21 @@ export function EditActionsPopover({
   // Read from the client on each render rather than with the hook, so a popover doesn't need an OpenFeatureProvider above it.
   const isActionsPopoverEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelActionsPopover, false);
   const [isOpen, setIsOpen] = useState(false);
+  const heldByContentRef = useRef(false);
+  // Where the pointer last was while held open, as hover stops reporting once it is ignored.
+  const lastPointerTarget = useRef<EventTarget | null>(null);
+  const trackPointer = useRef((event: PointerEvent) => {
+    lastPointerTarget.current = event.target;
+  });
 
   const isSelectable = Boolean(useContext(ElementSelectionContext)?.enabled);
   const isEnabled = !disabled && (isSelectable || showOutsideEditMode);
 
   const keepOpenRef = useRef(keepOpen);
   keepOpenRef.current = keepOpen;
+  // Hover closes it when the pointer moves to something it opened, which is portaled elsewhere.
   const onOpenChange = useCallback((open: boolean) => {
-    if (!open && keepOpenRef.current) {
+    if (!open && (keepOpenRef.current || heldByContentRef.current)) {
       return;
     }
     setIsOpen(open);
@@ -177,7 +198,68 @@ export function EditActionsPopover({
     }
   }, [keepOpen, isOpen, refs]);
 
-  const popoverContextValue = useMemo(() => ({ closePopover: () => setIsOpen(false) }), []);
+  // Closes the popover once the pointer next moves, if it moves outside, after being released while the pointer was
+  // elsewhere.
+  const closeIfPointerOutside = useRef<((event: PointerEvent) => void) | null>(null);
+
+  const popoverContextValue = useMemo(() => {
+    const isInside = (target: EventTarget | null) =>
+      target instanceof Node &&
+      Boolean(refs.domReference.current?.contains(target) || refs.floating.current?.contains(target));
+    const cancelPendingClose = () => {
+      const listener = closeIfPointerOutside.current;
+      if (listener) {
+        POINTER_EVENTS.forEach((type) => window.removeEventListener(type, listener, { capture: true }));
+        closeIfPointerOutside.current = null;
+      }
+    };
+
+    return {
+      closePopover: () => setIsOpen(false),
+      holdOpen: (hold: boolean) => {
+        if (hold === heldByContentRef.current) {
+          return;
+        }
+        heldByContentRef.current = hold;
+        cancelPendingClose();
+        if (hold) {
+          lastPointerTarget.current = null;
+          POINTER_EVENTS.forEach((type) =>
+            window.addEventListener(type, trackPointer.current, { capture: true, passive: true })
+          );
+          return;
+        }
+        POINTER_EVENTS.forEach((type) => window.removeEventListener(type, trackPointer.current, { capture: true }));
+        const target = lastPointerTarget.current;
+        if (!target || isInside(target)) {
+          return;
+        }
+        // The pointer left while held open, e.g. onto a card the content opened, and hover will not report leaving
+        // again. Closing now would also take the focus that the content is returning into the popover, e.g. to the
+        // button that opened the card, so wait for the pointer to move.
+        const listener = (event: PointerEvent) => {
+          cancelPendingClose();
+          if (!isInside(event.target)) {
+            setIsOpen(false);
+          }
+        };
+        closeIfPointerOutside.current = listener;
+        POINTER_EVENTS.forEach((type) => window.addEventListener(type, listener, { capture: true, passive: true }));
+      },
+      getReference: () => (refs.domReference.current instanceof Element ? refs.domReference.current : null),
+    };
+  }, [refs]);
+
+  useEffect(() => {
+    const listener = trackPointer.current;
+    return () => {
+      POINTER_EVENTS.forEach((type) => window.removeEventListener(type, listener, { capture: true }));
+      const pending = closeIfPointerOutside.current;
+      if (pending) {
+        POINTER_EVENTS.forEach((type) => window.removeEventListener(type, pending, { capture: true }));
+      }
+    };
+  }, []);
 
   const floating = (
     <div
@@ -207,7 +289,8 @@ export function EditActionsPopover({
   return (
     <>
       {cloneElement(children, {
-        ...getReferenceProps({ ref: mergedRef }),
+        // Passing the child's own props lets the interaction handlers chain with, not replace, its handlers.
+        ...getReferenceProps({ ...children.props, ref: mergedRef }),
         'data-edit-actions-id': context.floatingId,
       })}
       {showPopover && keyboardAccessible && (

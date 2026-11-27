@@ -195,13 +195,16 @@ export const NotebookAnalytics = {
     source: NotebookEntryPoint,
     cellCount: number,
     addedPanel?: AddedPanel,
-    lockTimeRange?: boolean
+    lockTimeRange?: boolean,
+    hasText?: boolean,
+    originPluginId?: string
   ): void {
     createCreatedEvent({
       notebookUid,
       source,
       cellCount,
-      ...(lockTimeRange === undefined ? {} : { target: NOTEBOOK_ADD_TARGET.NEW, lockTimeRange }),
+      ...(originPluginId ? { originPluginId } : {}),
+      ...(lockTimeRange === undefined ? {} : { target: NOTEBOOK_ADD_TARGET.NEW, lockTimeRange, hasText }),
       // The blank notebook route sends none of these. It creates from whatever cells exist by its
       // first save, not around one panel.
       ...(addedPanel && addedPanelProperties(addedPanel)),
@@ -242,14 +245,18 @@ export const NotebookAnalytics = {
     source: NotebookEntryPoint,
     position: number,
     addedPanel: AddedPanel | undefined,
-    lockTimeRange: boolean
+    lockTimeRange: boolean,
+    hasText: boolean,
+    originPluginId?: string
   ): void {
     createCellAddedFromAddToNotebookEvent({
       notebookUid,
       source,
       position,
+      ...(originPluginId ? { originPluginId } : {}),
       target: NOTEBOOK_ADD_TARGET.EXISTING,
       lockTimeRange,
+      hasText,
       cellType: addedPanel ? NOTEBOOK_ADDED_CELL_TYPE.PANEL : NOTEBOOK_ADDED_CELL_TYPE.MARKDOWN,
       ...(addedPanel && addedPanelProperties(addedPanel)),
     });
@@ -260,9 +267,19 @@ export const NotebookAnalytics = {
     source: NotebookEntryPoint,
     target: NotebookAddTarget,
     reason: NotebookAddFailedReason,
-    lockTimeRange: boolean
+    lockTimeRange: boolean,
+    hasText: boolean,
+    originPluginId?: string
   ): void {
-    createAddFailedEvent({ notebookUid, source, target, reason, lockTimeRange });
+    createAddFailedEvent({
+      notebookUid,
+      source,
+      target,
+      reason,
+      lockTimeRange,
+      hasText,
+      ...(originPluginId ? { originPluginId } : {}),
+    });
   },
 
   blockInserted(notebookUid: string, blockType: NotebookBlockType, via: NotebookBlockInsertVia): void {

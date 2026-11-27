@@ -196,7 +196,7 @@ export function PanelChrome({
   onCancelQuery,
   onOpenMenu,
   collapsible = false,
-  collapsed,
+  collapsed: collapsedProp,
   onToggleCollapse,
   onFocus,
   onMouseMove,
@@ -240,9 +240,7 @@ export function PanelChrome({
   const onHeaderLeave = React.useCallback(() => setSelectableHighlight(false), []);
 
   // if collapsed is not defined, then component is uncontrolled and state is managed internally
-  if (collapsed === undefined) {
-    collapsed = !isOpen;
-  }
+  const collapsed = collapsedProp ?? !isOpen;
 
   const descriptionTitleItem = description && (
     <PanelDescription description={description} className={dragClassCancel} />

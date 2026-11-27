@@ -11,7 +11,8 @@ import { InlineToast } from '../InlineToast/InlineToast';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { ColorIndicatorPosition, VizTooltipColorIndicator } from './VizTooltipColorIndicator';
-import { VizTooltipColorPlacement, type VizTooltipDelta, type VizTooltipItem } from './types';
+import { useVizTooltipSize } from './VizTooltipContext';
+import { VizTooltipColorPlacement, type VizTooltipDelta, type VizTooltipItem, type VizTooltipSize } from './types';
 
 interface VizTooltipRowProps extends Omit<VizTooltipItem, 'value'> {
   /** The formatted value to display. Widened from `VizTooltipItem.value` to also accept numbers, null, and ReactNode. */
@@ -60,7 +61,8 @@ export const VizTooltipRow = ({
   isHiddenFromViz,
   delta,
 }: VizTooltipRowProps) => {
-  const styles = useStyles2(getStyles, justify, marginRight);
+  const size = useVizTooltipSize();
+  const styles = useStyles2(getStyles, justify, marginRight, size);
 
   const deltaDisplay = delta == null ? null : `(${delta.numeric > 0 ? '+' : ''}${delta.text})`;
 
@@ -79,18 +81,21 @@ export const VizTooltipRow = ({
   // the delta is a separate node for coloring, but copying the value should keep both values
   const copyText = deltaDisplay == null ? value : `${value} ${deltaDisplay}`;
 
-  const innerValueScrollStyle: CSSProperties = showValueScroll
-    ? {
-        maxHeight: 55,
-        whiteSpace: 'wrap',
-        wordBreak: 'break-word',
-        overflowY: 'auto',
-      }
-    : {
-        whiteSpace: 'pre-line',
-        wordBreak: 'break-word',
-        lineHeight: 1.2,
-      };
+  // A narrow tooltip wraps the value to its full height rather than boxing it into a fixed-height
+  // scroll area, so the fixed-height scroll is only used in the default (`auto`) layout.
+  const innerValueScrollStyle: CSSProperties =
+    showValueScroll && size !== 'narrow'
+      ? {
+          maxHeight: 55,
+          whiteSpace: 'wrap',
+          wordBreak: 'break-word',
+          overflowY: 'auto',
+        }
+      : {
+          whiteSpace: 'pre-line',
+          wordBreak: 'break-word',
+          lineHeight: 1.2,
+        };
 
   const [showLabelTooltip, setShowLabelTooltip] = useState(false);
 
@@ -268,11 +273,11 @@ const getDeltaClass = (delta: VizTooltipDelta, styles: ReturnType<typeof getStyl
   return isFavorable ? styles.deltaFavorable : styles.deltaUnfavorable;
 };
 
-const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string) => ({
+const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string, size: VizTooltipSize = 'auto') => ({
   contentWrapper: css({
     display: 'flex',
     maxWidth: '100%',
-    alignItems: 'start',
+    alignItems: size === 'narrow' ? 'center' : 'start',
     justifyContent: justify,
     columnGap: theme.spacing(0.75),
   }),
@@ -282,6 +287,7 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
     fontVariantNumeric: theme.flags.tabularNums ? 'tabular-nums' : undefined,
     textOverflow: 'ellipsis',
     overflow: 'hidden',
+    ...(size === 'narrow' && { textAlign: 'right' }),
   }),
   colorWrapper: css({
     alignSelf: 'center',
@@ -289,10 +295,16 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
   }),
   labelWrapper: css({
     flexGrow: 1,
+    flexShrink: 1,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     color: theme.colors.text.secondary,
     fontWeight: 400,
+    ...(size === 'narrow' && {
+      maxWidth: '75%',
+      overflow: 'visible',
+      overflowWrap: 'break-word',
+    }),
   }),
   // block wrapper between labelWrapper and the inline label, so it must carry the ellipsis itself
   labelTooltipTarget: css({
@@ -302,7 +314,9 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
   valueWrapper: css({
     display: 'flex',
     alignItems: 'center',
-    flexShrink: 0,
+    flexShrink: size === 'narrow' ? 1 : 0,
+    minWidth: size === 'narrow' ? '25%' : undefined,
+    justifyContent: size === 'narrow' ? 'flex-end' : undefined,
     alignSelf: 'center',
     marginRight,
   }),

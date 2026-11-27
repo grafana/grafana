@@ -246,6 +246,61 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 				require.Contains(t, string(response.Body()), "template must have content")
 			})
 		})
+
+		t.Run("hide promoted Mimir templates", func(t *testing.T) {
+			mimir := v1.NewTemplateGroup("mimir-template", "shared", "{{ define \"mimir\" }}mimir{{ end }}", v1.TemplateKindMimir, models.ProvenanceNone)
+			grafana := v1.NewTemplateGroup("grafana-template", "grafana", "{{ define \"grafana\" }}grafana{{ end }}", v1.TemplateKindGrafana, models.ProvenanceNone)
+			config, err := notifier.Load([]byte(testConfig))
+			require.NoError(t, err)
+			config.Templates = map[v1.ResourceUID]v1.TemplateGroup{
+				mimir.UID:   mimir,
+				grafana.UID: grafana,
+			}
+			raw, err := legacy_storage.SerializeAlertmanagerConfig(*config)
+			require.NoError(t, err)
+
+			env := createTestEnv(t, string(raw))
+			prov := env.prov.(*provisioning.MockProvisioningStore)
+			sut := createProvisioningSrvSutFromEnv(t, &env)
+			configStore := legacy_storage.NewAlertmanagerConfigStore(&env.store, notifier.NewExtraConfigsCrypto(env.secrets), env.features)
+			templateService := provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log, validation.ValidateProvenanceRelaxed)
+			rc := createTestRequestCtx()
+
+			response := sut.RouteGetTemplates(&rc)
+			require.Equal(t, http.StatusOK, response.Status())
+			require.Contains(t, string(response.Body()), grafana.Title)
+			require.NotContains(t, string(response.Body()), mimir.Title)
+
+			response = sut.RouteGetTemplate(&rc, string(mimir.UID))
+			require.Equal(t, http.StatusNotFound, response.Status())
+
+			response = sut.RoutePutTemplate(&rc, definitions.NotificationTemplateContent{
+				Template:        "{{ define \"grafana\" }}conditional{{ end }}",
+				ResourceVersion: mimir.Version,
+			}, mimir.Title)
+			require.Equal(t, http.StatusNotFound, response.Status())
+
+			templatesBefore, err := templateService.WithIncludeImported().GetTemplates(t.Context(), 1)
+			require.NoError(t, err)
+
+			response = sut.RoutePutTemplate(&rc, definitions.NotificationTemplateContent{
+				Template: "{{ define \"grafana\" }}created{{ end }}",
+			}, mimir.Title)
+			require.Equal(t, http.StatusBadRequest, response.Status())
+			require.Contains(t, string(response.Body()), "alerting.notifications.templates.nameExists")
+
+			templatesAfter, err := templateService.WithIncludeImported().GetTemplates(t.Context(), 1)
+			require.NoError(t, err)
+			require.Equal(t, templatesBefore, templatesAfter)
+
+			response = sut.RouteDeleteTemplate(&rc, string(mimir.UID))
+			require.Equal(t, http.StatusNoContent, response.Status())
+			stored, err := templateService.WithIncludeImported().GetTemplate(t.Context(), 1, string(mimir.UID))
+			require.NoError(t, err)
+			require.Equal(t, mimir, stored)
+			prov.AssertNotCalled(t, "SetProvenance", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+			prov.AssertNotCalled(t, "DeleteProvenance", mock.Anything, mock.Anything, mock.Anything)
+		})
 	})
 
 	t.Run("mute timings", func(t *testing.T) {
@@ -801,6 +856,15 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 				require.Equal(t, 404, response.Status())
 			})
 
+			t.Run("folder is missing, GET returns 500", func(t *testing.T) {
+				sut := createMissingFolderSut(t)
+				rc := createTestRequestCtx()
+
+				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
+
+				require.Equal(t, 500, response.Status())
+			})
+
 			t.Run("accept header contains yaml, GET returns text yaml", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
@@ -1079,6 +1143,15 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 				response := sut.RouteGetAlertRuleExport(&rc, "rule404")
 
 				require.Equal(t, 404, response.Status())
+			})
+
+			t.Run("folder is missing, GET returns 500", func(t *testing.T) {
+				sut := createMissingFolderSut(t)
+				rc := createTestRequestCtx()
+
+				response := sut.RouteGetAlertRuleExport(&rc, "rule1")
+
+				require.Equal(t, 500, response.Status())
 			})
 
 			t.Run("accept header contains yaml, GET returns text yaml", func(t *testing.T) {
@@ -2426,6 +2499,25 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		nsValidator:      &provisioning.NotificationSettingsValidatorProviderFake{},
 		settings:         settings,
 	}
+}
+
+// missingFolderService fails folder lookups with the folder service's not-found error, which carries a 404 status.
+type missingFolderService struct {
+	folder.Service
+}
+
+func (missingFolderService) Get(context.Context, *folder.GetFolderQuery) (*folder.Folder, error) {
+	return nil, folder.ErrFolderNotFound.Errorf("%w", dashboards.ErrFolderNotFound)
+}
+
+// createMissingFolderSut returns a server whose stored rule "rule1" points at a folder that no longer exists.
+func createMissingFolderSut(t *testing.T) ProvisioningSrv {
+	t.Helper()
+
+	env := createTestEnv(t, testConfig)
+	insertRule(t, createProvisioningSrvSutFromEnv(t, &env), createTestAlertRule("rule1", 1))
+	env.folderService = missingFolderService{Service: env.folderService}
+	return createProvisioningSrvSutFromEnv(t, &env)
 }
 
 func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {

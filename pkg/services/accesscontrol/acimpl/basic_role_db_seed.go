@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -33,9 +34,16 @@ func (s *Service) refreshBasicRolePermissionsInDB(ctx context.Context, rolesSnap
 		return run(ctx)
 	}
 
+	lockTimeConfig := serverlock.LockTimeConfig{
+		MaxInterval: ossBasicRoleSeedTimeout,
+		MinWait:     100 * time.Millisecond,
+		MaxWait:     time.Second,
+	}
 	var err error
-	errLock := s.serverLock.LockExecuteAndRelease(ctx, ossBasicRoleSeedLockName, ossBasicRoleSeedTimeout, func(ctx context.Context) {
+	errLock := s.serverLock.LockExecuteAndReleaseWithRetries(ctx, ossBasicRoleSeedLockName, lockTimeConfig, func(ctx context.Context) {
 		err = run(ctx)
+	}, func(int) error {
+		return ctx.Err()
 	})
 	if errLock != nil {
 		return errLock

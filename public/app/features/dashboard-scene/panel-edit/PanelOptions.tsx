@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import * as React from 'react';
 
 import { type PanelData } from '@grafana/data';
@@ -16,6 +16,7 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { getLibraryPanelBehavior, isInV2Dashboard, isLibraryPanel } from '../utils/utils';
 
 import { getPanelFrameOptions, getPanelStylesOptions } from './getPanelFrameOptions';
+import { createOverrideChangeReporter } from './overrideChangeReporter';
 
 interface Props {
   panel: VizPanel;
@@ -64,6 +65,9 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
     return;
   }, [panel]);
 
+  const overrideChangeReporter = useMemo(() => createOverrideChangeReporter(panel), [panel]);
+  useEffect(() => () => overrideChangeReporter.flush(), [overrideChangeReporter]);
+
   const justOverrides = useMemo(
     () =>
       getFieldOverrideCategories(
@@ -75,9 +79,10 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
           panel.onFieldConfigChange(newConfig, true);
         },
         options,
-        varMappingsEnabled
+        varMappingsEnabled,
+        overrideChangeReporter.report
       ),
-    [data, searchQuery, panel, fieldConfig, options, varMappingsEnabled]
+    [data, searchQuery, panel, fieldConfig, options, varMappingsEnabled, overrideChangeReporter]
   );
 
   const isSearching = searchQuery.length > 0;

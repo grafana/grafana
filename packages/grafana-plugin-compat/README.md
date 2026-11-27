@@ -20,8 +20,9 @@ Ships both ESM and CommonJS builds, so it works with `import` and `require`.
   `getDataSourceInstanceSettings`,
   `getDefaultDataSourceInstanceListItem` and its
   `useDefaultDataSourceInstanceListItem` hook, `useDataSourceInstanceList`,
-  `useDataSourceInstanceListItem`, and `registerRuntimeDataSourceInstance`.
-  Replacements for `getDataSourceSrv()` methods.
+  `useDataSourceInstanceListItem`, `registerRuntimeDataSourceInstance`, and
+  `callDataSourcePluginProxy`. Replacements for `getDataSourceSrv()` methods and
+  the `getBackendSrv()` datasource-proxy endpoint.
 - `@grafana/plugin-compat/apps` — `getPluginSettings`, `updateAppPluginSettings`,
   `getAppPluginHealth`, and `callAppPluginProxy`. Replacements for the
   `getBackendSrv()` plugin-settings, app-health, and plugin-proxy endpoints.
@@ -30,6 +31,7 @@ Ships both ESM and CommonJS builds, so it works with `import` and `require`.
 
 ```ts
 import {
+  callDataSourcePluginProxy,
   getDataSourceInstance,
   getDataSourceInstanceList,
   getDataSourceInstanceListItem,
@@ -47,6 +49,18 @@ const proxyResponse = await callAppPluginProxy({
   pluginId: 'myorg-myplugin-app',
   routePath: 'my-route/resource',
 });
+const dataSourceProxyResponse = await callDataSourcePluginProxy<Blob>({
+  pluginId: 'myorg-myplugin-datasource',
+  uid: 'my-uid',
+  routePath: 'render?format=pprof',
+  request: {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: { query: 'cpu' },
+    responseType: 'blob',
+  },
+});
+const profile = dataSourceProxyResponse?.data;
 
 // `undefined` unless the org default is one of the items.
 const items = await getDataSourceInstanceList({ type: 'prometheus' });
@@ -65,6 +79,10 @@ registerRuntimeDataSourceInstance({ dataSource: new MyRuntimeDataSource('my-plug
 `getAppPluginHealth` resolves with the health result for both healthy and unhealthy responses. Inspect `health?.status`; authentication, transport, and other non-health failures reject. The k8s path defaults an omitted message to an empty string; legacy health responses are returned unchanged. Known non-app plugins return `undefined` when k8s metadata is available.
 
 `callAppPluginProxy` sends a GET request to a configured app proxy route; `routePath` is relative, without a leading slash. It uses the host's stable `@grafana/runtime` export when available, otherwise the legacy `/api/plugin-proxy/:pluginId/*` endpoint. The optional `apiVersion` is ignored by legacy requests; `showErrorAlert` defaults to `false`.
+
+`callDataSourcePluginProxy` sends a request to a configured datasource proxy route. Pass the plugin's `pluginId`, the datasource instance's `uid`, and a relative `routePath` without a leading slash. It uses the host's stable `@grafana/runtime` export when available, otherwise the legacy `/api/datasources/proxy/uid/:uid/*` endpoint. The optional `apiVersion` is forwarded to the stable export and ignored by the fallback; `showErrorAlert` defaults to `false`.
+
+Without `request`, it sends GET. Supply `request` to set `method` (defaults to GET), `headers`, `data`, `abortSignal`, `credentials`, or `responseType` (`json`, `text`, `blob`, or `arraybuffer`). All successful requests return `FetchResponse<T>`, including `data`, `status`, and `headers`. Starting in `0.13.0`, callers must read the payload from `response.data`, including calls without request options. HTTP failures reject with `FetchError`. Metadata identifying a non-datasource plugin can still result in `undefined`.
 
 On hosts with the async APIs, a data source registered this way is not visible
 to `getDataSourceSrv()`. Look it up with `getDataSourceInstance` instead.

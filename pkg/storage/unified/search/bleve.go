@@ -23,6 +23,7 @@ import (
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
+	"github.com/blevesearch/bleve/v2/index/scorch"
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/blevesearch/bleve/v2/search"
 	"github.com/blevesearch/bleve/v2/search/query"
@@ -87,6 +88,10 @@ type BleveOptions struct {
 	// Index cache TTL for bleve indices. 0 disables expiration for in-memory indexes.
 	// Also used for file-based indexes, if they are not owned by this instance, and they are not fetched from the cache recently.
 	IndexCacheTTL time.Duration
+
+	// IndexCacheTTLIdleOnly keeps searched memory indexes open regardless of age,
+	// avoiding rebuilds that may reclaim little memory. IndexCacheTTL becomes an idle timeout.
+	IndexCacheTTLIdleOnly bool
 
 	// GlobalIndexIdleTimeout closes a global index this instance owns once it has
 	// not been searched for this long, so a namespace nobody searches stops paying
@@ -491,6 +496,11 @@ func (b *bleveBackend) evictExpiredOrUnownedIndexesPeriodically(ctx context.Cont
 
 func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 	cacheTTLMillis := b.opts.IndexCacheTTL.Milliseconds()
+	// Search timestamps use milliseconds; round up so short TTLs still enable cleanup.
+	memoryIdleTimeoutMillis := cacheTTLMillis
+	if b.opts.IndexCacheTTL%time.Millisecond > 0 {
+		memoryIdleTimeoutMillis++
+	}
 	unownedIdleTimeoutMillis := min(b.opts.IndexCacheTTL, unownedIndexIdleTimeout).Milliseconds()
 
 	globalIdleTimeoutMillis := b.opts.GlobalIndexIdleTimeout.Milliseconds()
@@ -503,10 +513,16 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 
 	b.cacheMx.Lock()
 	for key, idx := range b.cache {
-		// Memory indexes do not merge segments, so active indexes must also expire.
-		if !idx.expiration.IsZero() && now.After(idx.expiration) {
+		// Memory indexes do not merge segments, so age-based expiry can reclaim memory.
+		if !b.opts.IndexCacheTTLIdleOnly && !idx.expiration.IsZero() && now.After(idx.expiration) {
 			delete(b.cache, key)
 			expired[key] = idx
+			continue
+		}
+		if b.opts.IndexCacheTTLIdleOnly && idx.indexStorage == indexStorageMemory && b.opts.IndexCacheTTL > 0 &&
+			now.UnixMilli()-idx.lastSearchedAt.Load() > memoryIdleTimeoutMillis {
+			delete(b.cache, key)
+			idle[key] = idx
 			continue
 		}
 
@@ -722,7 +738,10 @@ const indexMetricsRefreshInterval = 60 * time.Second
 func (b *bleveBackend) updateIndexMetricsPeriodically(ctx context.Context, indexPath string) {
 	defer b.bgTasksWg.Done()
 
+	mergeSampler := bleveMergeSampler{limiter: &processBleveMergeLogLimiter}
 	for ctx.Err() == nil {
+		mergeSampler.sample(b, bleveMergeLogMinElapsed)
+		b.updateMemoryIndexSizeMetrics(ctx)
 		b.updateIndexSizeMetric(ctx, indexPath)
 		b.updateIndexedKindsMetric(ctx)
 
@@ -793,6 +812,47 @@ func (b *bleveBackend) updateIndexedKindsMetric(ctx context.Context) {
 		b.indexMetrics.IndexedKinds.DeleteLabelValues(kind, resource.IndexedDocumentsDeleted)
 		delete(b.reportedIndexedKinds, kind)
 	}
+}
+
+func (b *bleveBackend) updateMemoryIndexSizeMetrics(ctx context.Context) {
+	var totalSize, maxSize uint64
+	for _, key := range b.GetOpenIndexes() {
+		if ctx.Err() != nil {
+			return
+		}
+		idx := b.peekCachedIndex(key)
+		if idx == nil || idx.indexStorage != indexStorageMemory {
+			continue
+		}
+		advanced, err := idx.index.Advanced()
+		if err != nil {
+			b.log.Debug("Skipping memory index size measurement", "key", key, "err", err)
+			continue
+		}
+		reader, err := advanced.Reader()
+		if err != nil {
+			b.log.Debug("Skipping memory index size measurement", "key", key, "err", err)
+			continue
+		}
+		snapshot, ok := reader.(*scorch.IndexSnapshot)
+		if !ok {
+			if reader != nil {
+				_ = reader.Close()
+			}
+			continue
+		}
+		// Scorch can return a typed nil if the index closed after the cache lookup.
+		if snapshot == nil {
+			continue
+		}
+		// Partially obsolete segments still occupy their full estimated size.
+		size := uint64(snapshot.Size())
+		_ = snapshot.Close()
+		totalSize += size
+		maxSize = max(maxSize, size)
+	}
+	b.indexMetrics.MemoryIndexSize.Set(float64(totalSize))
+	b.indexMetrics.MemoryIndexMaxSize.Set(float64(maxSize))
 }
 
 // updateIndexSizeMetric sets the total size of all file-based indices metric.
@@ -999,16 +1059,43 @@ func (b *bleveBackend) BuildIndex(
 
 	logWithDetails := b.log.FromContext(ctx).New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "reason", indexBuildReason)
 	resourceDir := b.getResourceDir(key)
+	cachedIndex := b.getCachedIndex(key, time.Now())
+	original := cachedIndex
+	rebuildFrom, _ := options.RebuildFrom.(*bleveIndex)
+	if rebuildFrom != nil {
+		original = rebuildFrom
+	}
+	originalHasMemoryIdleTimeout := rebuild && b.opts.IndexCacheTTLIdleOnly && b.opts.IndexCacheTTL > 0 &&
+		original != nil && original.indexStorage == indexStorageMemory
+	if originalHasMemoryIdleTimeout && cachedIndex != original {
+		return nil, resource.ErrIndexClosedDuringRebuild
+	}
+	if rebuild && rebuildFrom != nil && b.opts.Snapshot.Store != nil && maxFreshSnapshotAge > 0 {
+		// Rebuilding writes trash too, so use the raw count, not the live-only search count.
+		count, err := rebuildFrom.index.DocCount()
+		if err != nil {
+			logWithDetails.Warn("failed to count documents for snapshot coordination", "error", err)
+		} else if count <= math.MaxInt64 {
+			docCount = int64(count)
+		}
+	}
 	// Large enough to coordinate with other replicas: download a snapshot, or build
 	// and upload one while they wait.
 	snapshotBuildEnabled := b.opts.Snapshot.Store != nil && docCount >= b.opts.Snapshot.MinDocCount
+	if rebuild {
+		span.SetAttributes(
+			attribute.Int64("snapshot.min_doc_count", b.opts.Snapshot.MinDocCount),
+			attribute.Bool("snapshot.rebuild_coordination_enabled", snapshotBuildEnabled && maxFreshSnapshotAge > 0),
+		)
+		if docCount >= 0 {
+			span.SetAttributes(attribute.Int64("snapshot.doc_count", docCount))
+		}
+	}
 	// A global index is built when it is first searched, without a size, so it
 	// may be large. Downloading its snapshot is much cheaper than building it, but
 	// it must not wait for another replica's build, as a small index would.
 	downloadOnly := b.opts.Snapshot.Store != nil && docCount < 0 && key.IsGlobal()
-	skipIfBuilding := options.SkipIfBuilding
-
-	prepared, err := b.prepareIndex(ctx, key, snapshotBuildEnabled, downloadOnly, mapper, selectableFields, searchFieldsHash, rebuild, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails, skipIfBuilding)
+	prepared, err := b.prepareIndex(ctx, key, snapshotBuildEnabled, downloadOnly, mapper, selectableFields, searchFieldsHash, rebuild, cachedIndex != nil, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails, options.SkipIfBuilding)
 	if err != nil {
 		return nil, err
 	}
@@ -1101,7 +1188,7 @@ func (b *bleveBackend) BuildIndex(
 	}
 
 	// Set expiration after building the index. Only expire in-memory indexes.
-	if prepared.fileIndexName == "" && b.opts.IndexCacheTTL > 0 {
+	if prepared.fileIndexName == "" && b.opts.IndexCacheTTL > 0 && !b.opts.IndexCacheTTLIdleOnly {
 		idx.expiration = time.Now().Add(b.opts.IndexCacheTTL)
 	}
 
@@ -1114,10 +1201,8 @@ func (b *bleveBackend) BuildIndex(
 
 	b.cacheMx.Lock()
 	prev := b.cache[key]
-	if rebuild && prev == nil && key.IsGlobal() {
-		// Closed for being idle while it was being rebuilt. Publishing the rebuilt
-		// index would open it again and restart its idle clock, so it is closed
-		// instead.
+	// The original index can go idle even if its replacement was promoted to disk.
+	if (rebuild && key.IsGlobal() && prev == nil) || (originalHasMemoryIdleTimeout && prev != original) {
 		b.cacheMx.Unlock()
 		return nil, resource.ErrIndexClosedDuringRebuild
 	}
@@ -1170,19 +1255,18 @@ func (b *bleveBackend) prepareIndex(
 	selectableFields []string,
 	searchFieldsHash string,
 	rebuild bool,
+	hasCachedIndex bool,
 	lastImportTime time.Time,
 	maxFreshSnapshotAge time.Duration,
 	resourceDir string,
 	logger log.Logger,
 	skipIfBuilding bool,
 ) (preparedBuildIndex, error) {
-	cachedIndex := b.getCachedIndex(key, time.Now())
-
 	// We only check for the existing file-based index if we don't already have an open index for this key,
 	// and if rebuild flag is not set.
 	// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
 	// If we do have an unexpired cached index already, or if rebuild is true, we always build a new index from scratch.
-	if cachedIndex == nil && !rebuild {
+	if !hasCachedIndex && !rebuild {
 		return b.prepareUncachedFileIndex(ctx, key, resourceDir, mapper, selectableFields, searchFieldsHash, lastImportTime, snapshotBuildEnabled, downloadOnly, logger, skipIfBuilding)
 	}
 
@@ -1854,11 +1938,6 @@ func (b *bleveBackend) closeAllIndexes() {
 	}
 }
 
-type updateRequest struct {
-	requestTime time.Time
-	callback    chan updateResult
-}
-
 type updateResult struct {
 	rv  int64
 	err error
@@ -1889,9 +1968,9 @@ type bleveIndex struct {
 	// RV returned by last List/ListModifiedSince operation. Updated when updating index.
 	resourceVersion atomic.Int64
 
-	// Timestamp when the last update to the index was done (started).
-	// Subsequent update requests only trigger new update if minUpdateInterval has elapsed.
+	// Requests arriving before this time reuse the last update's result, including failures.
 	nextUpdateTime time.Time
+	lastUpdateErr  error
 
 	standard resource.SearchableDocumentFields
 	fields   resource.SearchableDocumentFields
@@ -1915,10 +1994,10 @@ type bleveIndex struct {
 	rvPersistedAt     time.Time
 
 	updaterMu       sync.Mutex
-	updaterCond     *sync.Cond         // Used to signal the updater goroutine that there is work to do, or updater is no longer enabled and should stop. Also used by updater itself to stop early if there's no work to be done.
-	updaterShutdown bool               // When set to true, index is getting closed and updater is no longer going to update index.
-	updaterQueue    []updateRequest    // Queue of requests for next updater iteration.
-	updaterCancel   context.CancelFunc // If not nil, the updater goroutine is running with context associated with this cancel function.
+	updaterCond     *sync.Cond                      // Used to signal the updater goroutine that there is work to do, or updater is no longer enabled and should stop. Also used by updater itself to stop early if there's no work to be done.
+	updaterShutdown bool                            // When set to true, index is getting closed and updater is no longer going to update index.
+	updaterQueue    map[chan updateResult]time.Time // Pending callers keyed by their result channel for cancellation.
+	updaterCancel   context.CancelFunc              // If not nil, the updater goroutine is running with context associated with this cancel function.
 	updaterWg       sync.WaitGroup
 
 	indexMetrics     *resource.BleveIndexMetrics
@@ -2561,7 +2640,7 @@ func (b *bleveIndex) search(
 	stats.AddRequestConversionTime(time.Since(conversionStarts))
 
 	if postRank {
-		return b.runPostFilterAuthz(ctx, access, rowAccess, req, index, searchrequest, selectFields, fieldValueSchema, stats, response, trashAuthz)
+		return b.runPostFilterAuthz(ctx, access, rowAccess, req, index, searchrequest, fieldValueSchema, stats, response, trashAuthz)
 	}
 
 	res, err := searchInContext(ctx, index, searchrequest)
@@ -2579,10 +2658,11 @@ func (b *bleveIndex) search(
 	stats.AddReturnedDocuments(len(res.Hits))
 
 	resultsConversionStart := time.Now()
-	if err := b.setSearchResults(response, fieldValueSchema, res.Hits, searchrequest.Sort); err != nil {
+	hits := toQueryHits(res.Hits, searchrequest.Sort)
+	if err := setSearchResults(b.logger, response, fieldValueSchema, hits); err != nil {
 		return nil, err
 	}
-	b.addRowAccess(ctx, rowAccess, req.AccessVerbs, response, res.Hits)
+	addRowAccess(ctx, b.logger, rowAccess, req.AccessVerbs, response, hits)
 
 	// parse the facet fields
 	for k, v := range res.Facets {
@@ -3909,7 +3989,6 @@ func (b *bleveIndex) stopUpdaterAndCloseIndex() error {
 	b.updaterMu.Lock()
 	b.updaterShutdown = true
 	b.updaterCond.Broadcast()
-	// if updater is running, cancel it. (Setting to nil is only done from updater itself in defer.)
 	if b.updaterCancel != nil {
 		b.updaterCancel()
 	}
@@ -3926,8 +4005,7 @@ func (b *bleveIndex) UpdateIndex(ctx context.Context) (int64, error) {
 		return 0, nil
 	}
 
-	// Use chan with buffer size 1 to ensure that we can always send the result back, even if there's no reader anymore.
-	req := updateRequest{requestTime: time.Now(), callback: make(chan updateResult, 1)}
+	requestedAt := time.Now()
 
 	// Make sure that the updater goroutine is running.
 	b.updaterMu.Lock()
@@ -3936,7 +4014,17 @@ func (b *bleveIndex) UpdateIndex(ctx context.Context) (int64, error) {
 		return 0, fmt.Errorf("cannot update index: %w", bleve.ErrorIndexClosed)
 	}
 
-	b.updaterQueue = append(b.updaterQueue, req)
+	if err := ctx.Err(); err != nil {
+		b.updaterMu.Unlock()
+		return 0, err
+	}
+
+	// The updater may already have taken this batch when the caller cancels.
+	result := make(chan updateResult, 1)
+	if b.updaterQueue == nil {
+		b.updaterQueue = make(map[chan updateResult]time.Time)
+	}
+	b.updaterQueue[result] = requestedAt
 
 	// If updater is not running, start it.
 	if b.updaterCancel == nil {
@@ -3948,8 +4036,14 @@ func (b *bleveIndex) UpdateIndex(ctx context.Context) (int64, error) {
 	// wait for the update to finish
 	select {
 	case <-ctx.Done():
+		b.updaterMu.Lock()
+		delete(b.updaterQueue, result)
+		if len(b.updaterQueue) == 0 {
+			b.updaterQueue = nil
+		}
+		b.updaterMu.Unlock()
 		return 0, ctx.Err()
-	case ur := <-req.callback:
+	case ur := <-result:
 		return ur.rv, ur.err
 	}
 }
@@ -3958,21 +4052,10 @@ func (b *bleveIndex) UpdateIndex(ctx context.Context) (int64, error) {
 func (b *bleveIndex) startUpdater() {
 	c, cancel := context.WithCancel(context.Background())
 	b.updaterCancel = cancel
-	b.updaterWg.Add(1)
-
-	go func() {
-		defer func() {
-			cancel() // Make sure to call this to release resources.
-
-			b.updaterMu.Lock()
-			b.updaterCancel = nil
-			b.updaterMu.Unlock()
-
-			b.updaterWg.Done()
-		}()
-
+	b.updaterWg.Go(func() {
+		defer cancel()
 		b.runUpdater(c)
-	}()
+	})
 }
 
 const maxWait = 5 * time.Second
@@ -3990,7 +4073,11 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 
 		shutdown := b.updaterShutdown
 		batch := b.updaterQueue
-		b.updaterQueue = nil // empty the queue for the next batch
+		b.updaterQueue = nil
+		if shutdown || len(batch) == 0 {
+			// A caller queuing after we decide to exit must start a new updater.
+			b.updaterCancel = nil
+		}
 		b.updaterMu.Unlock()
 
 		t.Stop()
@@ -4001,21 +4088,21 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 		}
 
 		if shutdown {
-			for _, req := range batch {
-				req.callback <- updateResult{err: fmt.Errorf("cannot update index: %w", bleve.ErrorIndexClosed)}
+			for result := range batch {
+				result <- updateResult{err: fmt.Errorf("cannot update index: %w", bleve.ErrorIndexClosed)}
 			}
 			return
 		}
 
-		// Check if requests arrived before minUpdateInterval since the last update has elapsed, and remove such requests.
-		for ix := 0; ix < len(batch); {
-			req := batch[ix]
-			if req.requestTime.Before(b.nextUpdateTime) {
-				req.callback <- updateResult{rv: b.resourceVersion.Load()}
-				batch = append(batch[:ix], batch[ix+1:]...)
-			} else {
-				// Keep in the batch
-				ix++
+		// Reuse the last result, including errors, for requests that arrived within minUpdateInterval of the last update's start.
+		for result, requestedAt := range batch {
+			if requestedAt.Before(b.nextUpdateTime) {
+				if b.lastUpdateErr != nil {
+					result <- updateResult{err: b.lastUpdateErr}
+				} else {
+					result <- updateResult{rv: b.resourceVersion.Load()}
+				}
+				delete(batch, result)
 			}
 		}
 
@@ -4024,16 +4111,16 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 			continue
 		}
 
-		// Bump next update time
-		b.nextUpdateTime = time.Now().Add(b.minUpdateInterval)
-
 		var rv int64
 		var err = ctx.Err()
 		if err == nil {
+			started := time.Now()
 			rv, err = b.updateIndexWithLatestModifications(ctx, len(batch))
+			b.nextUpdateTime = started.Add(b.minUpdateInterval)
+			b.lastUpdateErr = err
 		}
-		for _, req := range batch {
-			req.callback <- updateResult{rv: rv, err: err}
+		for result := range batch {
+			result <- updateResult{rv: rv, err: err}
 		}
 	}
 }
@@ -4047,6 +4134,9 @@ func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context, req
 
 	startTime := time.Now()
 	listRV, docs, err := b.updaterFn(ctx, b, sinceRV)
+	if err == nil {
+		err = ctx.Err()
+	}
 	if err == nil && listRV > 0 && listRV != sinceRV {
 		err = b.advanceResourceVersion(listRV, docs) // updates b.resourceVersion
 	}
@@ -4658,19 +4748,6 @@ func newResponseFacet(v *search.FacetResult) *resourcepb.ResourceSearchResponse_
 		}
 	}
 	return f
-}
-
-// docInfo holds document information for authorization
-type docInfo struct {
-	doc          *search.DocumentMatch
-	namespace    string
-	group        string
-	resourceType string
-	name         string
-	folder       string
-	verb         string
-	// Only read on the trash path.
-	deletedBy string
 }
 
 // firstTermSeparator returns the first configured separator found in v.

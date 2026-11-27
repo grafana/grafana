@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
-	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 )
 
 const defaultAlertmanagerConfigJSON = `
@@ -114,7 +114,7 @@ type fakeRuleAccessControlService struct {
 	Calls                             []call
 	AuthorizeAccessToRuleGroupFunc    func(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
 	AuthorizeAccessInFolderFunc       func(ctx context.Context, user identity.Requester, namespaced models.Namespaced) error
-	AuthorizeRuleChangesFunc          func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error
+	AuthorizeRuleChangesFunc          func(ctx context.Context, user identity.Requester, change *ngrulesvc.GroupDelta) error
 	AuthorizeNotificationSettingsFunc func(ctx context.Context, user identity.Requester, receivers []accesscontrol.ReceiverRef) error
 	CanReadAllRulesFunc               func(ctx context.Context, user identity.Requester) (bool, error)
 	CanWriteAllRulesFunc              func(ctx context.Context, user identity.Requester) (bool, error)
@@ -149,7 +149,7 @@ func (s *fakeRuleAccessControlService) AuthorizeRuleRead(ctx context.Context, us
 	return nil
 }
 
-func (s *fakeRuleAccessControlService) AuthorizeRuleGroupWrite(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
+func (s *fakeRuleAccessControlService) AuthorizeRuleGroupWrite(ctx context.Context, user identity.Requester, change *ngrulesvc.GroupDelta) error {
 	s.RecordCall("AuthorizeRuleGroupWrite", ctx, user, change)
 	if s.AuthorizeRuleChangesFunc != nil {
 		return s.AuthorizeRuleChangesFunc(ctx, user, change)

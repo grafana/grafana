@@ -288,7 +288,7 @@ func (s *Service) getFolderByID(ctx context.Context, id int64, orgID int64) (*fo
 
 func (s *Service) returnFirstFolderSearchResult(ctx context.Context, orgID int64, hits v0alpha1.SearchResults) (*folder.Folder, error) {
 	if len(hits.Hits) == 0 {
-		return nil, dashboards.ErrFolderNotFound
+		return nil, errFolderNotFound
 	}
 
 	uid := hits.Hits[0].Name

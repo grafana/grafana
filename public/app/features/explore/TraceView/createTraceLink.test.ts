@@ -45,6 +45,47 @@ describe('getTimeRangeFromTimestamps', () => {
   });
 });
 
+describe('createTraceLogsLink time shift', () => {
+  it('treats a unit-less 0 time shift as no shift', () => {
+    const rootSpan = {
+      spanID: 'span1',
+      traceID: 'trace1',
+      processID: 'p1',
+      operationName: 'checkout',
+      logs: [],
+      startTime: new Date('2020-10-14T01:00:00Z').valueOf() * 1000,
+      duration: 1000 * 1000,
+      flags: 0,
+      hasChildren: false,
+      dataFrameRowIndex: 0,
+      tags: [],
+      process: { serviceName: 'checkout', tags: [{ key: 'service.namespace', value: 'shop' }] },
+    } as unknown as TraceSpan;
+
+    const link = createTraceLogsLink({
+      splitOpenFn: jest.fn(),
+      traceToLogsOptions: {
+        customQuery: false,
+        datasourceUid: 'loki-uid',
+        spanStartTimeShift: '0',
+        spanEndTimeShift: '0',
+      },
+      trace: {
+        traceID: 'trace1',
+        traceName: 'checkout',
+        startTime: rootSpan.startTime,
+        duration: rootSpan.duration,
+        spans: [rootSpan],
+        processes: { p1: rootSpan.process },
+      } as unknown as Trace,
+      logsDataSourceSettings: { uid: 'loki-uid', name: 'Loki', type: 'loki' } as unknown as DataSourceInstanceSettings,
+    });
+
+    const left = JSON.parse(new URLSearchParams(link!.href.split('?')[1]).get('left')!);
+    expect(left.range).toEqual({ from: '1602637200000', to: '1602637201000' });
+  });
+});
+
 describe('createTraceLogsLink data source type', () => {
   const rootSpan = {
     spanID: 'span1',

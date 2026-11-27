@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
-import { type ChangeEvent, type FocusEvent, type KeyboardEvent, useCallback, useId, useState } from 'react';
+import { type KeyboardEvent, useCallback, useId, useState } from 'react';
 
 import { type GrafanaTheme2, type StandardEditorProps, type NumberFieldConfigSettings } from '@grafana/data';
 import { hasVarMappingVariableReference, isInVarMappingRange } from '@grafana/data/internal';
-import { FieldValidationMessage, Input, useFieldContext, useStyles2 } from '@grafana/ui';
+import { FieldValidationMessage, useFieldContext, useStyles2 } from '@grafana/ui';
+import { SuggestionsInput } from 'app/core/components/SuggestionsInput/SuggestionsInput';
+import { getVariableSuggestions } from 'app/core/components/SuggestionsInput/getVariableSuggestions';
 
 import { getOutOfRangeText, getRangeText, NumberInput } from './NumberInput';
 
@@ -41,10 +43,11 @@ type VarMappingProps = Omit<StandardEditorProps<number | string, NumberFieldConf
  * Number editor that also accepts variable expressions. It's a separate component because
  * `NumberValueEditor` is used directly by some panel editors that expect a numeric `onChange`.
  *
- * A `type="number"` input can't hold a `$`, so this is a text input. On blur or Enter, text with a
- * variable reference is passed to `onChange` as a string, which callers store in `varMappings`. A
- * `$` without a variable isn't stored. Anything else is parsed as a number in the settings' range,
- * or reverted when it isn't one.
+ * A `type="number"` input can't hold a `$`, so this is a text input that suggests dashboard
+ * variables on `$`. On blur, Enter or picking a suggestion, text with a variable reference is
+ * passed to `onChange` as a string, which callers store in `varMappings`. A `$` without a variable
+ * isn't stored. Anything else is parsed as a number in the settings' range, or reverted when it
+ * isn't one.
  */
 export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMappingProps) => {
   const { settings } = item;
@@ -116,24 +119,28 @@ export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMa
   const describedBy = [fieldContext['aria-describedby'], localDescribedBy].filter(Boolean).join(' ') || undefined;
 
   return (
-    <div>
-      <Input
-        type="text"
+    // Only captures Enter bubbling up from the input; the input itself stays the interactive element
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+    <div
+      onKeyDown={(e: KeyboardEvent<HTMLDivElement>) => {
+        // SuggestionsInput only handles Enter to pick a suggestion, and prevents the default then
+        if (e.key === 'Enter' && !e.defaultPrevented && e.target instanceof HTMLInputElement) {
+          commit(e.target.value);
+        }
+      }}
+    >
+      <SuggestionsInput
         id={id}
         value={text}
         placeholder={settings?.placeholder}
+        suggestions={getVariableSuggestions()}
         invalid={rangeError !== undefined || fieldContext.invalid}
         aria-describedby={describedBy}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => {
-          setText(e.currentTarget.value);
+        onInputChange={(next) => {
+          setText(next);
           setRangeError(undefined);
         }}
-        onBlur={(e: FocusEvent<HTMLInputElement>) => commit(e.currentTarget.value)}
-        onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-          if (e.key === 'Enter') {
-            commit(e.currentTarget.value);
-          }
-        }}
+        onChange={commit}
       />
       {rangeText && (
         <div id={rangeId} className={styles.rangeHint}>

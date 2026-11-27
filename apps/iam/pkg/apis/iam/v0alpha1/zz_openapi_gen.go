@@ -1159,6 +1159,27 @@ func schema_pkg_apis_iam_v0alpha1_GetSearchUsersUserHit(ref common.ReferenceCall
 							},
 						},
 					},
+					"authLabels": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Display labels of the auth provider the user last signed in with, e.g. \"LDAP\".",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"avatarUrl": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Avatar URL of the user, derived from the email. Omitted when the user has no email.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"name", "title", "login", "email", "role", "lastSeenAt", "lastSeenAtAge", "provisioned", "disabled", "internalId", "created", "score"},
 			},

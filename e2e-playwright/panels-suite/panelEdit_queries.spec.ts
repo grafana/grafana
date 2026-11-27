@@ -2,6 +2,10 @@ import { type Locator, type Page } from 'playwright-core';
 
 import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
+test.use({
+  openFeature: { flags: { queryEditorNext: false } },
+});
+
 test.describe(
   'Panels test: Queries',
   {

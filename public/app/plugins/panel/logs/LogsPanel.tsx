@@ -30,6 +30,7 @@ import {
   store,
 } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
+import { useFlagGrafanaLogsInfiniteScrollTop } from '@grafana/runtime/internal';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
@@ -174,6 +175,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
     grammar,
   } = options;
   const style = useStyles2(getStyles);
+  const infiniteScrollTopEnabled = useFlagGrafanaLogsInfiniteScrollTop();
   const [contextRow, setContextRow] = useState<LogRowModel | null>(null);
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
   const [displayedFields, setDisplayedFields] = useState<string[]>(options.displayedFields ?? []);
@@ -513,6 +515,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
             getFieldLinks={getFieldLinks}
             grammar={isGrammar(grammar) ? grammar : undefined}
             isLabelFilterActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
+            infiniteScrollTop={Boolean(enableInfiniteScrolling) && infiniteScrollTopEnabled}
             initialScrollPosition={initialScrollPosition}
             loadingState={loadMoreState}
             logLineMenuCustomItems={

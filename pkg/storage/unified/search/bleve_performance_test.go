@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -54,6 +55,66 @@ func BenchmarkBleveBuildIndexStorageSelection(b *testing.B) {
 			})
 		})
 	}
+}
+
+// This isolates search and batching overhead; the controlled access client does
+// not measure real authorization service latency.
+func BenchmarkBlevePostRankExactCount(b *testing.B) {
+	for _, total := range []int{1000, 5000, 10000} {
+		for _, visible := range []int{0, 10, 50, 100} {
+			for _, limit := range []int64{10, 50} {
+				for _, exact := range []bool{false, true} {
+					if visible == 0 && exact {
+						continue // Both modes already exhaust every match when all access is denied.
+					}
+					b.Run(fmt.Sprintf("matches=%d/visible=%d/page=%d/exact=%t", total, visible, limit, exact), func(b *testing.B) {
+						benchmarkPostRankExactCount(b, total, visible, limit, exact)
+					})
+				}
+			}
+		}
+	}
+}
+
+func benchmarkPostRankExactCount(b *testing.B, total, visible int, limit int64, exact bool) {
+	var threshold int
+	if exact {
+		threshold = total
+	}
+	index := newTestGlobalIndexPostRankWithConfig(b, int64(total), search.PostRankAuthzConfig{ExactCountThreshold: threshold})
+	docs := make([]*resource.BulkIndexItem, total)
+	for i := range docs {
+		folder := "denied"
+		if i%100 < visible {
+			folder = "allowed"
+		}
+		docs[i] = newDoc(fmt.Sprintf("doc-%05d", i), folder)
+	}
+	require.NoError(b, index.BulkIndex(&resource.BulkIndexRequest{Items: docs}))
+	ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+	ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: postRankKey.Namespace})
+	q := listQuery(limit)
+	res, err := index.Search(ctx, ac, q, nil, nil)
+	require.NoError(b, err)
+	require.Len(b, res.Rows, min(int(limit), total*visible/100))
+	if exact || visible == 0 {
+		require.True(b, res.TotalHitsExact)
+		require.Equal(b, int64(total*visible/100), res.TotalHits)
+	} else {
+		require.False(b, res.TotalHitsExact)
+		require.Equal(b, int64(total), res.TotalHits)
+	}
+	ac.checked, ac.batchChecks = 0, 0
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		if _, err := index.Search(ctx, ac, q, nil, nil); err != nil {
+			b.Fatal(err)
+		}
+	}
+	b.StopTimer()
+	b.ReportMetric(float64(ac.checked)/float64(b.N), "candidates/op")
+	b.ReportMetric(float64(ac.batchChecks)/float64(b.N), "auth-batches/op")
 }
 
 func benchmarkBuildIndex(b *testing.B, docs int, fileThreshold int64) {

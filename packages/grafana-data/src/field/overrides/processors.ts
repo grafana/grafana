@@ -1,3 +1,5 @@
+import { VariableFormatID } from '@grafana/schema';
+
 import { type Action } from '../../types/action';
 import { type Field } from '../../types/dataFrame';
 import { type DataLink } from '../../types/dataLink';
@@ -9,7 +11,7 @@ import {
 import { type SelectableValue } from '../../types/select';
 import { type SliderMarks } from '../../types/slider';
 import { type Threshold, type ThresholdsConfig } from '../../types/thresholds';
-import { type ValueMapping } from '../../types/valueMapping';
+import { MappingType, type ValueMapping, type ValueMappingResult } from '../../types/valueMapping';
 import { sortThresholds } from '../thresholds';
 
 export const identityOverrideProcessor = <T>(value: T) => {
@@ -76,15 +78,61 @@ export const actionsOverrideProcessor = (
   return value;
 };
 
-export interface ValueMappingFieldConfigSettings {}
+export interface ValueMappingFieldConfigSettings {
+  /** Interpolates dashboard variables in the display texts */
+  interpolateText?: boolean;
+}
 
 export const valueMappingsOverrideProcessor = (
   value: any,
-  _context: FieldOverrideContext,
-  _settings?: ValueMappingFieldConfigSettings
+  context: FieldOverrideContext,
+  settings?: ValueMappingFieldConfigSettings
 ): ValueMapping[] => {
-  return value; // !!!! likely not !!!!
+  const { replaceVariables } = context;
+  if (!settings?.interpolateText || !replaceVariables || !Array.isArray(value) || !value.some(hasTextWithVariable)) {
+    return value;
+  }
+
+  // A `$` that doesn't name a known variable, as in `$5 off`, is left as typed by the interpolation
+  const interpolate = (result: ValueMappingResult): ValueMappingResult =>
+    mayHaveVariable(result?.text)
+      ? { ...result, text: replaceVariables(result.text, context.field?.state?.scopedVars, VariableFormatID.Text) }
+      : result;
+
+  return value.map((mapping: ValueMapping): ValueMapping => {
+    switch (mapping.type) {
+      case MappingType.ValueToText:
+        return {
+          ...mapping,
+          options: Object.fromEntries(
+            Object.entries(mapping.options).map(([key, result]) => [key, interpolate(result)])
+          ),
+        };
+      case MappingType.RangeToText:
+        return { ...mapping, options: { ...mapping.options, result: interpolate(mapping.options.result) } };
+      case MappingType.RegexToText:
+        return { ...mapping, options: { ...mapping.options, result: interpolate(mapping.options.result) } };
+      case MappingType.SpecialValue:
+        return { ...mapping, options: { ...mapping.options, result: interpolate(mapping.options.result) } };
+      default:
+        return mapping;
+    }
+  });
 };
+
+function hasTextWithVariable(mapping: ValueMapping): boolean {
+  const results =
+    mapping.type === MappingType.ValueToText ? Object.values(mapping.options ?? {}) : [mapping.options?.result];
+  return results.some((result) => mayHaveVariable(result?.text));
+}
+
+/**
+ * Whether a display text may reference a variable, as `$var`, `${var}` or `[[var]]`. Hand-edited
+ * JSON can hold a text that isn't a string, which is left as is.
+ */
+function mayHaveVariable(text: unknown): text is string {
+  return typeof text === 'string' && (text.includes('$') || text.includes('[['));
+}
 
 export interface SelectFieldConfigSettings<T> {
   allowCustomValue?: boolean;

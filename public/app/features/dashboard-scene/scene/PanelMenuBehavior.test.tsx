@@ -29,6 +29,7 @@ import { LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
+import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import * as storeModule from 'app/store/store';
@@ -39,6 +40,7 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
+import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { NewAlertRuleDrawer } from './NewAlertRuleDrawer';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { onRemovePanel, panelMenuBehavior, toggleVizPanelLegend } from './PanelMenuBehavior';
@@ -63,6 +65,25 @@ jest.mock('app/core/services/context_srv');
 jest.mock('app/store/store', () => ({
   dispatch: jest.fn(),
 }));
+
+jest.mock('app/features/alerting/unified/utils/rule-form', () =>
+  jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(jest.requireActual('app/features/alerting/unified/utils/rule-form'), {
+      scenesPanelToRuleFormValues: jest.fn((...args) =>
+        jest.requireActual('app/features/alerting/unified/utils/rule-form').scenesPanelToRuleFormValues(...args)
+      ),
+    })
+);
+
+afterEach(() => {
+  jest
+    .mocked(scenesPanelToRuleFormValues)
+    .mockReset()
+    .mockImplementation(
+      jest.requireActual('app/features/alerting/unified/utils/rule-form').scenesPanelToRuleFormValues
+    );
+});
 
 const getObservablePluginLinksMock = jest.fn().mockReturnValue(of([]));
 setGetObservablePluginLinks(getObservablePluginLinksMock);
@@ -834,6 +855,67 @@ describe('panelMenuBehavior', () => {
       expect(moreMenu?.find((i) => i.text === 'New library panel')).toBeDefined();
     });
 
+    it.each([
+      { itemText: 'Duplicate', reportedItem: 'duplicate' },
+      { itemText: 'Copy', reportedItem: 'copy' },
+      { itemText: 'Remove', reportedItem: 'delete' },
+    ])(
+      'reports $reportedItem with the panel id and panel type when $itemText is clicked in the panel menu',
+      async ({ itemText, reportedItem }) => {
+        const track = jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+        try {
+          const { scene, menu, panel } = await buildTestScene({});
+          scene.setState({ isEditing: true });
+          jest.spyOn(scene, 'duplicatePanel').mockImplementation();
+          jest.spyOn(scene, 'copyPanel').mockImplementation();
+          panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+          menu.activate();
+          await new Promise((r) => setTimeout(r, 1));
+
+          const items = menu.state.items ?? [];
+          const subMenu = items.find((i) => i.text === 'More...')?.subMenu ?? [];
+          const item = [...items, ...subMenu].find((i) => i.text === itemText);
+          item?.onClick?.({} as React.MouseEvent);
+
+          expect(track).toHaveBeenCalledTimes(1);
+          expect(track).toHaveBeenCalledWith(reportedItem, 12, 'panel', 'table');
+        } finally {
+          track.mockRestore();
+        }
+      }
+    );
+
+    it.each([
+      { itemText: 'Unlink library panel', reportedItem: 'unlink_library_panel', isLibrary: true },
+      { itemText: 'Replace library panel', reportedItem: 'replace_library_panel', isLibrary: true },
+      { itemText: 'New library panel', reportedItem: 'new_library_panel', isLibrary: false },
+    ])(
+      'reports $reportedItem when $itemText is clicked in the panel menu',
+      async ({ itemText, reportedItem, isLibrary }) => {
+        const track = jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+        try {
+          const { scene, menu, panel } = await buildTestScene({});
+          scene.setState({ isEditing: true });
+          jest.spyOn(scene, 'showModal').mockImplementation();
+          jest.spyOn(scene, 'onShowAddLibraryPanelDrawer').mockImplementation();
+          if (isLibrary) {
+            panel.setState({ $behaviors: [new LibraryPanelBehavior({ isLoaded: true, uid: 'uid', name: 'Library' })] });
+          }
+          panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+          menu.activate();
+          await new Promise((r) => setTimeout(r, 1));
+
+          const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu ?? [];
+          moreMenu.find((i) => i.text === itemText)?.onClick?.({} as React.MouseEvent);
+
+          expect(track).toHaveBeenCalledTimes(1);
+          expect(track).toHaveBeenCalledWith(reportedItem, 12, 'panel', 'table');
+        } finally {
+          track.mockRestore();
+        }
+      }
+    );
+
     it('should only contain explore when embedded', async () => {
       const { menu, panel } = await buildTestScene({ isEmbedded: true });
 
@@ -994,7 +1076,7 @@ describe('panelMenuBehavior', () => {
 
   describe('onCreateAlert', () => {
     beforeEach(() => {
-      jest.spyOn(storeModule, 'dispatch').mockImplementation(() => {});
+      jest.mocked(storeModule.dispatch).mockImplementation(() => {});
       jest.spyOn(locationService, 'push').mockImplementation(() => {});
     });
 
@@ -1003,14 +1085,12 @@ describe('panelMenuBehavior', () => {
 
       it('should open the new alert rule drawer with prefilled values on success', async () => {
         const { menu, panel, scene } = await buildTestScene({});
-        const mockFormValues = { someKey: 'someValue' };
+        const mockFormValues: Partial<RuleFormValues> = { name: 'someValue' };
 
         config.unifiedAlertingEnabled = true;
         grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
 
-        jest
-          .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
-          .mockResolvedValue(mockFormValues);
+        jest.mocked(scenesPanelToRuleFormValues).mockResolvedValue(mockFormValues);
         const showModalSpy = jest.spyOn(scene, 'showModal');
 
         menu.activate();
@@ -1037,9 +1117,7 @@ describe('panelMenuBehavior', () => {
         config.unifiedAlertingEnabled = true;
         grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
 
-        jest
-          .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
-          .mockResolvedValue(undefined);
+        jest.mocked(scenesPanelToRuleFormValues).mockResolvedValue(undefined);
         const showModalSpy = jest.spyOn(scene, 'showModal');
 
         menu.activate();
@@ -1058,9 +1136,7 @@ describe('panelMenuBehavior', () => {
       it('should show error notification and not open the drawer on failure', async () => {
         const { menu, panel, scene } = await buildTestScene({});
         const mockError = new Error('Test error');
-        jest
-          .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
-          .mockRejectedValue(mockError);
+        jest.mocked(scenesPanelToRuleFormValues).mockRejectedValue(mockError);
         const showModalSpy = jest.spyOn(scene, 'showModal');
 
         menu.activate();
@@ -1084,14 +1160,12 @@ describe('panelMenuBehavior', () => {
 
       it('should navigate to /alerting/new and not open the drawer', async () => {
         const { menu, scene } = await buildTestScene({});
-        const mockFormValues = { someKey: 'someValue' };
+        const mockFormValues: Partial<RuleFormValues> = { name: 'someValue' };
 
         config.unifiedAlertingEnabled = true;
         grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
 
-        jest
-          .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
-          .mockResolvedValue(mockFormValues);
+        jest.mocked(scenesPanelToRuleFormValues).mockResolvedValue(mockFormValues);
         const showModalSpy = jest.spyOn(scene, 'showModal');
 
         menu.activate();

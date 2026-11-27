@@ -16,12 +16,25 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
+import { DashboardInteractions } from '../utils/interactions';
 import { activateFullSceneTree } from '../utils/test-utils';
-import * as utils from '../utils/utils';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { PanelOptions } from './PanelOptions';
 import { PanelOptionsPane } from './PanelOptionsPane';
 
+jest.mock('app/core/components/SuggestionsInput/getVariableSuggestions', () => ({
+  getVariableSuggestions: () => [
+    { value: 't', label: 't', origin: 'template' },
+    { value: 'other', label: 'other', origin: 'template' },
+  ],
+}));
+
+jest.mock('../utils/utils', () =>
+  jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(jest.requireActual('../utils/utils'), { getDashboardSceneFor: jest.fn() })
+);
 jest.mock('app/features/dashboard/components/GenAI/LazyGenAIButtons', () => ({
   LazyGenAIPanelTitleButton: () => null,
   LazyGenAIPanelDescriptionButton: () => null,
@@ -74,7 +87,7 @@ function placeInDashboard(panel: VizPanel, serializerVersion?: 'v1' | 'v2') {
 }
 
 // Needed when the panel is not part of an DashboardScene
-jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(new DashboardScene({}));
+jest.mocked(getDashboardSceneFor).mockReturnValue(new DashboardScene({}));
 
 interface SetupOptions {
   panel?: VizPanel;
@@ -169,11 +182,21 @@ describe('PanelOptions', () => {
     });
 
     it('Can delete rule', async () => {
+      const panelSettingChanged = jest.spyOn(DashboardInteractions, 'panelSettingChanged').mockImplementation();
       await setup();
 
       await userEvent.click(screen.getByLabelText('Remove override'));
 
+      expect(panelSettingChanged).toHaveBeenCalledWith({
+        item: 'remove_override',
+        source: 'panel_editor',
+        // The mocked plugin loader resolves every panel to TestPanel.
+        panel_type: 'TestPanel',
+        panel_id: 1,
+        matcher_id: 'byName',
+      });
       expect(screen.queryByText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
+      panelSettingChanged.mockRestore();
     });
   });
 
@@ -272,11 +295,11 @@ describe('PanelOptions', () => {
         await setupWithExpressions('v2');
 
         const minInput = getMinInput();
-        expect(minInput).toHaveAttribute('type', 'text');
+        expect(minInput).not.toHaveAttribute('type', 'number');
         expect(minInput).toHaveValue('$min');
 
         const decimalsInput = getDecimalsOverrideInput();
-        expect(decimalsInput).toHaveAttribute('type', 'text');
+        expect(decimalsInput).not.toHaveAttribute('type', 'number');
         expect(decimalsInput).toHaveValue('$decimals');
       });
 
@@ -360,11 +383,26 @@ describe('PanelOptions', () => {
 
         const minInput = getMinInput();
         await userEvent.clear(minInput);
-        await userEvent.type(minInput, '$other{Enter}');
+        // Escape closes the variable list, so Enter commits the typed text
+        await userEvent.type(minInput, '$other{Escape}{Enter}');
 
         const { defaults } = panel.state.fieldConfig;
         expect(defaults.varMappings).toEqual({ min: '$other' });
         expect(defaults.min).toBe(0);
+      });
+
+      it('suggests dashboard variables on $ and writes the picked one', async () => {
+        const { panel } = await setupWithExpressions('v2');
+
+        const minInput = getMinInput();
+        await userEvent.clear(minInput);
+        await userEvent.type(minInput, '$');
+        expect(await screen.findByText('other')).toBeInTheDocument();
+
+        await userEvent.keyboard('{ArrowDown}{Enter}');
+
+        expect(panel.state.fieldConfig.defaults.varMappings).toEqual({ min: '${other}' });
+        expect(getMinInput()).toHaveValue('${other}');
       });
     });
   });
@@ -404,5 +442,29 @@ describe('PanelOptions', () => {
     });
 
     expect((panel.state.$behaviors![0] as LibraryPanelBehavior).state.name).toBe('new library panel name');
+  });
+
+  it('reports renaming a library panel only when the name changed', async () => {
+    const track = jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+    const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
+    panel.setState({
+      $behaviors: [new LibraryPanelBehavior({ isLoaded: true, uid: 'uid', name: 'libraryPanelName' })],
+    });
+    new DashboardGridItem({ body: panel });
+    const { renderResult } = await setup({ panel });
+    const input = await renderResult.findByTestId('library panel name input');
+
+    await act(async () => {
+      fireEvent.blur(input, { target: { value: 'libraryPanelName' } });
+    });
+    expect(track).not.toHaveBeenCalled();
+
+    await act(async () => {
+      fireEvent.blur(input, { target: { value: 'Customer revenue' } });
+    });
+    expect(track).toHaveBeenCalledTimes(1);
+    // The file's plugin loader resolves every panel to the TestPanel plugin.
+    expect(track).toHaveBeenCalledWith('rename_library_panel', 1, 'panel_editor', 'TestPanel');
+    track.mockRestore();
   });
 });

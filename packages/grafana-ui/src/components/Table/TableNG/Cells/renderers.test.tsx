@@ -3,8 +3,9 @@ import { render } from '@testing-library/react';
 import { createDataFrame, createTheme, type Field, FieldType } from '@grafana/data';
 
 import { type TableCellOptions, TableCellDisplayMode, type TableCustomCellOptions } from '../../types';
+import { getAutoRendererDisplayMode } from '../utils';
 
-import { getAutoRendererDisplayMode, getCellRenderer } from './renderers';
+import { getCellRenderer } from './renderers';
 
 // Performance testing utilities
 const measurePerformance = (fn: () => void, iterations = 100) => {

@@ -373,6 +373,89 @@ func TestNatsNotifierHydratesEachConsumer(t *testing.T) {
 	})
 }
 
+func TestNatsNotifierDeliversAfterTheDefaultSettleDelay(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		nt := newNatsNotifierTest(t)
+		events, _ := nt.watch(t)
+		synctest.Wait()
+
+		rv := time.Now().UnixMicro()
+		nt.history.add("a", rv, resourcepb.WatchEvent_MODIFIED)
+		nt.history.add("b", rv+1, resourcepb.WatchEvent_MODIFIED)
+		nt.publish(t, "b", rv+1)
+		time.Sleep(defaultNATSSettleDelay / 2)
+		// A lower RV arriving within the delay is still delivered first.
+		nt.publish(t, "a", rv)
+		synctest.Wait()
+
+		time.Sleep(defaultNATSSettleDelay - time.Nanosecond)
+		synctest.Wait()
+		require.Empty(t, events)
+		time.Sleep(time.Nanosecond)
+		synctest.Wait()
+		require.Equal(t, rv, receive(t, events).ResourceVersion)
+		require.Equal(t, rv+1, receive(t, events).ResourceVersion)
+		require.Zero(t, nt.invalidator.invalidations())
+	})
+}
+
+// A write announced after a later one of its collection was delivered could
+// be behind any watch or resume, so it is a gap like a bus drop.
+func TestNatsNotifierExpiresWatchesOnALateArrival(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		nt := newNatsNotifierTest(t)
+		events, floors := nt.watch(t)
+		other, err := nt.notifier.notify(t.Context())
+		require.NoError(t, err)
+		synctest.Wait()
+
+		rv := time.Now().UnixMicro()
+		nt.history.add("a", rv, resourcepb.WatchEvent_MODIFIED)
+		nt.history.add("b", rv+1, resourcepb.WatchEvent_MODIFIED)
+		nt.publish(t, "b", rv+1)
+		settle()
+		require.Equal(t, rv+1, receive(t, events).ResourceVersion)
+		require.Equal(t, rv+1, receive(t, other).ResourceVersion)
+		require.Zero(t, nt.invalidator.invalidations())
+
+		nt.publish(t, "a", rv)
+		settle()
+
+		require.Empty(t, events, "a late write is not delivered out of order")
+		require.Equal(t, 1, nt.invalidator.invalidations())
+		require.Equal(t, float64(2), nt.missingEvents(missingReasonLate), "one per consumer")
+		gr := resource.GroupResource{Group: "g", Resource: "r"}
+		require.Equal(t, rv+2, floors.get()[gr], "resumes from before the latest RV expire")
+		require.False(t, floors.isHeld())
+		requireClosed(t, other)
+	})
+}
+
+func TestNatsNotifierIgnoresALateArrivalCoveredByTheStart(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		nt := newNatsNotifierTest(t)
+		rv := time.Now().UnixMicro()
+		// Committed before the watch started, so its starting RVs cover it.
+		nt.history.add("a", rv, resourcepb.WatchEvent_MODIFIED)
+		events, _ := nt.watch(t)
+		synctest.Wait()
+
+		// The starting RVs are above a, so b is the first write after them.
+		nt.history.add("b", rv+2, resourcepb.WatchEvent_MODIFIED)
+		nt.publish(t, "b", rv+2)
+		settle()
+		require.Equal(t, rv+2, receive(t, events).ResourceVersion)
+
+		// a's notification shows up late, after b.
+		nt.publish(t, "a", rv)
+		settle()
+
+		require.Empty(t, events)
+		require.Zero(t, nt.invalidator.invalidations(), "a write the watch started after is not lost")
+		require.Zero(t, nt.missingEvents(missingReasonLate))
+	})
+}
+
 func TestNatsNotifierExpiresWatchesWhenHistoryIsGone(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		nt := newNatsNotifierTest(t)
@@ -406,7 +489,7 @@ func TestNatsNotifierDeliverReportsMissingWritesFirst(t *testing.T) {
 		out := make(chan *resource.WrittenEvent, len(batch))
 		var reported []missingEvent
 		deliveredWhenReported := -1
-		require.True(t, nt.notifier.deliver(t.Context(), batch, groupResourceRV{}, out, func(e missingEvent) {
+		require.True(t, nt.notifier.deliver(t.Context(), batch, groupResourceRV{}, map[resource.GroupResource]int64{}, out, func(e missingEvent) {
 			reported = append(reported, e)
 			deliveredWhenReported = len(out)
 		}))
@@ -424,7 +507,7 @@ func TestNatsNotifierDeliverReportsMissingWritesFirst(t *testing.T) {
 		nt.history.readErr = errors.New("database unavailable")
 		nt.history.mu.Unlock()
 		reported = nil
-		require.True(t, nt.notifier.deliver(t.Context(), batch, groupResourceRV{}, out, func(e missingEvent) { reported = append(reported, e) }))
+		require.True(t, nt.notifier.deliver(t.Context(), batch, groupResourceRV{}, map[resource.GroupResource]int64{}, out, func(e missingEvent) { reported = append(reported, e) }))
 		require.Len(t, reported, 1)
 		require.Empty(t, out)
 		require.Equal(t, float64(len(batch)), nt.missingEvents(missingReasonHistoryReadFailed))

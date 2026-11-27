@@ -9,6 +9,13 @@ import { FieldConfigExpressionsContext } from 'app/core/components/OptionsUI/fie
 
 import { ThresholdsEditor, type Props } from './ThresholdsEditor';
 
+jest.mock('app/core/components/SuggestionsInput/getVariableSuggestions', () => ({
+  getVariableSuggestions: () => [
+    { value: 'warn', label: 'warn', origin: 'template' },
+    { value: 'crit', label: 'crit', origin: 'template' },
+  ],
+}));
+
 let props: Props;
 
 const setup = (propOverrides?: Partial<Props>, { fieldConfigExpressions = false } = {}) => {
@@ -655,5 +662,149 @@ describe('ThresholdsEditor', () => {
         ],
       });
     });
+
+    it('lists dashboard variables on $ and stores the picked one as the step expression', async () => {
+      const onChange = jest.fn();
+      setup(
+        {
+          thresholds: {
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: -Infinity, color: '#7EB26D' },
+              { value: 50, color: '#EAB839' },
+              { value: 75, color: '#6ED0E0' },
+            ],
+          },
+          onChange,
+        },
+        { fieldConfigExpressions: true }
+      );
+
+      // Threshold 2 is the step with value 50
+      const input = screen.getByRole('textbox', { name: 'Threshold 2' });
+      await userEvent.clear(input);
+      await userEvent.type(input, '$');
+      expect(await screen.findByText('crit')).toBeInTheDocument();
+      await userEvent.keyboard('{ArrowDown}{Enter}');
+
+      expect(onChange).toHaveBeenLastCalledWith({
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: '#7EB26D' },
+          { value: 0, valueExpr: '${crit}', color: '#EAB839' },
+          { value: 75, color: '#6ED0E0' },
+        ],
+      });
+      expect(screen.getByRole('textbox', { name: 'Threshold 2' })).toHaveValue('${crit}');
+    });
+
+    it('re-sorts by the typed number after a picked expression is replaced', async () => {
+      const onChange = jest.fn();
+      setup(
+        {
+          thresholds: {
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: -Infinity, color: '#7EB26D' },
+              { value: 50, valueExpr: '$warn', color: '#EAB839' },
+              { value: 75, color: '#6ED0E0' },
+            ],
+          },
+          onChange,
+        },
+        { fieldConfigExpressions: true }
+      );
+
+      const input = screen.getByRole('textbox', { name: 'Threshold 2' });
+      await userEvent.clear(input);
+      await userEvent.type(input, '100');
+      await userEvent.tab();
+
+      expect(screen.getByRole('textbox', { name: 'Threshold 1' })).toHaveValue('100');
+      expect(onChange).toHaveBeenLastCalledWith({
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: '#7EB26D' },
+          { value: 75, color: '#6ED0E0' },
+          { value: 100, color: '#EAB839' },
+        ],
+      });
+    });
+    it('keeps partially typed numbers as typed until blur', async () => {
+      const onChange = jest.fn();
+      setup(
+        {
+          thresholds: {
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: -Infinity, color: '#7EB26D' },
+              { value: 50, color: '#EAB839' },
+            ],
+          },
+          onChange,
+        },
+        { fieldConfigExpressions: true }
+      );
+
+      const input = screen.getByRole('textbox', { name: 'Threshold 1' });
+      await userEvent.clear(input);
+      await userEvent.type(input, '5.');
+      expect(input).toHaveValue('5.');
+
+      await userEvent.type(input, '5');
+      await userEvent.tab();
+      expect(input).toHaveValue('5.5');
+      expect(onChange).toHaveBeenLastCalledWith({
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: '#7EB26D' },
+          { value: 5.5, color: '#EAB839' },
+        ],
+      });
+    });
+
+    it('removes a threshold with one click right after editing it', async () => {
+      const onChange = jest.fn();
+      setup(
+        {
+          thresholds: {
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: -Infinity, color: '#7EB26D' },
+              { value: 50, color: '#EAB839' },
+            ],
+          },
+          onChange,
+        },
+        { fieldConfigExpressions: true }
+      );
+
+      const input = screen.getByRole('textbox', { name: 'Threshold 1' });
+      await userEvent.clear(input);
+      await userEvent.type(input, '5.');
+      await userEvent.click(screen.getByRole('button', { name: 'Remove threshold 1' }));
+
+      expect(screen.queryByDisplayValue('5')).not.toBeInTheDocument();
+      expect(onChange).toHaveBeenLastCalledWith({
+        mode: ThresholdsMode.Absolute,
+        steps: [{ value: -Infinity, color: '#7EB26D' }],
+      });
+    });
+  });
+
+  it('keeps the number input without suggestions when expressions are off', async () => {
+    setup({
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: '#7EB26D' },
+          { value: 50, color: '#EAB839' },
+        ],
+      },
+    });
+
+    const input = screen.getByRole('spinbutton', { name: 'Threshold 1' });
+    await userEvent.type(input, '$');
+    expect(screen.queryByText('warn')).not.toBeInTheDocument();
   });
 });

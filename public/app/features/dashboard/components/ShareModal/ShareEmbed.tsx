@@ -69,45 +69,50 @@ export function ShareEmbed({
       <p>
         <Trans i18nKey="share-modal.embed.info">Generate HTML for embedding an iframe with this panel</Trans>
       </p>
-      <Field>
-        <Stack gap={1} alignItems="start">
-          <Switch
-            label={t('share-modal.embed.time-range', 'Lock time range')}
-            id="share-current-time-range"
-            value={useCurrentTimeRange}
-            onChange={onUseCurrentTimeRangeChange}
+      <Stack direction="column" gap={2}>
+        <Field noMargin>
+          <Stack gap={1} alignItems="start">
+            <Switch
+              label={t('share-modal.embed.time-range', 'Lock time range')}
+              id="share-current-time-range"
+              value={useCurrentTimeRange}
+              onChange={onUseCurrentTimeRangeChange}
+            />
+            <Label
+              description={t(
+                'embed.share.time-range-description',
+                'Change the current relative time range to an absolute time range'
+              )}
+            >
+              <Trans i18nKey="embed.share.time-range-label">Lock time range</Trans>
+            </Label>
+          </Stack>
+        </Field>
+        <ThemePicker selectedTheme={selectedTheme} onChange={onThemeChange} />
+      </Stack>
+      <Stack direction="column" gap={2}>
+        <Field
+          label={t('share-modal.embed.html', 'Embed HTML')}
+          description={t(
+            'share-modal.embed.html-description',
+            'The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled, the users viewing that page need to be signed into Grafana for the graph to load.'
+          )}
+          noMargin
+        >
+          <TextArea
+            data-testid="share-embed-html"
+            id="share-panel-embed-embed-html-textarea"
+            rows={5}
+            value={iframeHtml}
+            onChange={onIframeHtmlChange}
           />
-          <Label
-            description={t(
-              'embed.share.time-range-description',
-              'Change the current relative time range to an absolute time range'
-            )}
-          >
-            <Trans i18nKey="embed.share.time-range-label">Lock time range</Trans>
-          </Label>
+        </Field>
+        <Stack gap={1} justifyContent={'start'}>
+          {clipboardButton}
+          <Button variant="secondary" fill="outline" onClick={onCancelClick}>
+            <Trans i18nKey="snapshot.share.cancel-button">Cancel</Trans>
+          </Button>
         </Stack>
-      </Field>
-      <ThemePicker selectedTheme={selectedTheme} onChange={onThemeChange} />
-      <Field
-        label={t('share-modal.embed.html', 'Embed HTML')}
-        description={t(
-          'share-modal.embed.html-description',
-          'The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled, the users viewing that page need to be signed into Grafana for the graph to load.'
-        )}
-      >
-        <TextArea
-          data-testid="share-embed-html"
-          id="share-panel-embed-embed-html-textarea"
-          rows={5}
-          value={iframeHtml}
-          onChange={onIframeHtmlChange}
-        />
-      </Field>
-      <Stack gap={1} justifyContent={'start'}>
-        {clipboardButton}
-        <Button variant="secondary" fill="outline" onClick={onCancelClick}>
-          <Trans i18nKey="snapshot.share.cancel-button">Cancel</Trans>
-        </Button>
       </Stack>
     </>
   );

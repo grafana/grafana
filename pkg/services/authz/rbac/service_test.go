@@ -802,7 +802,7 @@ func TestService_mapping(t *testing.T) {
 		Login:          "test",
 		UserID:         123,
 		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        types.RoleAdmin,
 		IsGrafanaAdmin: true, // can do anything
 		Namespace:      ns,
 		OrgID:          1,
@@ -2108,6 +2108,58 @@ func TestService_Check(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "should allow banners update with unscoped banners:write",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "banners.grafana.app",
+				Resource:  "announcement-banners",
+				Verb:      "update",
+				Name:      "banner1",
+			},
+			permissions: []accesscontrol.Permission{{Action: "banners:write", Scope: ""}},
+			expected:    true,
+		},
+		{
+			name: "should allow banners get with unscoped banners:write (update reads the current object as the caller)",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "banners.grafana.app",
+				Resource:  "announcement-banners",
+				Verb:      "get",
+				Name:      "banner1",
+			},
+			permissions: []accesscontrol.Permission{{Action: "banners:write", Scope: ""}},
+			expected:    true,
+		},
+		{
+			name: "should deny banners get without banners:write",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "banners.grafana.app",
+				Resource:  "announcement-banners",
+				Verb:      "get",
+				Name:      "banner1",
+			},
+			permissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:*"}},
+			expected:    false,
+		},
+		{
+			name: "should deny banners update without banners:write",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "banners.grafana.app",
+				Resource:  "announcement-banners",
+				Verb:      "update",
+				Name:      "banner1",
+			},
+			permissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:*"}},
+			expected:    false,
+		},
+		{
 			name: "should allow named playlists update with unscoped playlists:write",
 			req: &authzv1.CheckRequest{
 				Namespace: "org-12",
@@ -2134,6 +2186,124 @@ func TestService_Check(t *testing.T) {
 			},
 			permissions: []accesscontrol.Permission{
 				{Action: "playlists:read", Scope: ""},
+			},
+			expected: false,
+		},
+		{
+			name: "should allow named dashboardtemplates get with unscoped dashboardtemplates:read",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboardtemplates.grafana.app",
+				Resource:  "dashboardtemplates",
+				Verb:      "get",
+				Name:      "tpl1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboardtemplates:read", Scope: ""},
+			},
+			expected: true,
+		},
+		{
+			name: "should allow named dashboardtemplates delete with unscoped dashboardtemplates:write",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboardtemplates.grafana.app",
+				Resource:  "dashboardtemplates",
+				Verb:      "delete",
+				Name:      "tpl1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboardtemplates:write", Scope: ""},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny dashboardtemplates create with only dashboardtemplates:read",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboardtemplates.grafana.app",
+				Resource:  "dashboardtemplates",
+				Verb:      "create",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboardtemplates:read", Scope: ""},
+			},
+			expected: false,
+		},
+		{
+			name: "should allow named templategroups get with unscoped alert.notifications.templates:read",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "notifications.alerting.grafana.app",
+				Resource:  "templategroups",
+				Verb:      "get",
+				Name:      "tpl1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "alert.notifications.templates:read", Scope: ""},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny templategroups delete with only alert.notifications.templates:write",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "notifications.alerting.grafana.app",
+				Resource:  "templategroups",
+				Verb:      "delete",
+				Name:      "tpl1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "alert.notifications.templates:write", Scope: ""},
+			},
+			expected: false,
+		},
+		{
+			name: "should allow queries create with unscoped queries:write",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "queries.grafana.app",
+				Resource:  "queries",
+				Verb:      "create",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "queries:write", Scope: ""},
+			},
+			expected: true,
+		},
+		{
+			name: "should allow inhibitionrules get with inhibition-rules:read scoped to its uid",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "notifications.alerting.grafana.app",
+				Resource:  "inhibitionrules",
+				Verb:      "get",
+				Name:      "rule1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "alert.notifications.inhibition-rules:read", Scope: "inhibition-rules:uid:rule1"},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny inhibitionrules get with inhibition-rules:read scoped to another uid",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "notifications.alerting.grafana.app",
+				Resource:  "inhibitionrules",
+				Verb:      "get",
+				Name:      "rule1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "alert.notifications.inhibition-rules:read", Scope: "inhibition-rules:uid:rule2"},
 			},
 			expected: false,
 		},

@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 
@@ -14,24 +16,40 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationPreferences_K8sAPIs(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
+	// routed serves preferences from the preferences app through the router,
+	// which has no legacy sync: the same checks must hold either way.
+	for _, routed := range []bool{false, true} {
+		t.Run(fmt.Sprintf("routed:%t", routed), func(t *testing.T) {
+			testPreferencesK8sAPIs(t, routed)
+		})
+	}
+}
+
+func testPreferencesK8sAPIs(t *testing.T, routed bool) {
+	flags := []string{featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs}
+	if routed {
+		flags = append(flags,
+			featuremgmt.FlagGrafanaUseRouterMiddleware,
+			featuremgmt.FlagRouterRegisterCoreAPIs,
+			featuremgmt.FlagApppluginsLoadAppManifest,
+		)
+	}
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: false,
-		DisableAnonymous:  true,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-		},
+		AppModeProduction:    false,
+		DisableAnonymous:     true,
+		LocalPluginAPI:       routed,
+		EnableFeatureToggles: flags,
 	})
 
 	t.Run("user preferences round-trip", func(t *testing.T) {
 		adminUser := "user-" + helper.Org1.Admin.Identity.GetIdentifier()
-		putResult := putUserPrefsK8s(t, helper, helper.Org1.Admin, adminUser, fmt.Sprintf(`{"metadata": {"name": "%s"}, "spec": {"theme":"dark","weekStart":"monday","timezone":"Europe/London"}}`, adminUser))
+		putResult := putUserPrefsK8s(t, helper, helper.Org1.Admin, adminUser, fmt.Sprintf(`{"apiVersion": "preferences.grafana.app/v1", "kind": "Preferences", "metadata": {"name": "%s"}, "spec": {"theme":"dark","weekStart":"monday","timezone":"Europe/London"}}`, adminUser))
 		require.NoError(t, putResult.Error())
 
 		got := getUserPrefsK8s(t, helper, helper.Org1.Admin, adminUser)
@@ -45,13 +63,13 @@ func TestIntegrationPreferences_K8sAPIs(t *testing.T) {
 
 	t.Run("team preferences write", func(t *testing.T) {
 		teamUID := helper.Org1.Staff.UID
-		putResult := putTeamPrefsK8s(t, helper, teamUID, fmt.Sprintf(`{"metadata": {"name": "team-%s"}, "spec": {"theme":"light","weekStart":"sunday"}}`, teamUID))
+		putResult := putTeamPrefsK8s(t, helper, teamUID, fmt.Sprintf(`{"apiVersion": "preferences.grafana.app/v1", "kind": "Preferences", "metadata": {"name": "team-%s"}, "spec": {"theme":"light","weekStart":"sunday"}}`, teamUID))
 		require.NoError(t, putResult.Error())
 	})
 
 	t.Run("team preferences read", func(t *testing.T) {
 		teamUID := helper.Org1.Staff.UID
-		putResult := putTeamPrefsK8s(t, helper, teamUID, fmt.Sprintf(`{"metadata": {"name": "team-%s"}, "spec": {"theme":"light","weekStart":"sunday"}}`, teamUID))
+		putResult := putTeamPrefsK8s(t, helper, teamUID, fmt.Sprintf(`{"apiVersion": "preferences.grafana.app/v1", "kind": "Preferences", "metadata": {"name": "team-%s"}, "spec": {"theme":"light","weekStart":"sunday"}}`, teamUID))
 		require.NoError(t, putResult.Error())
 
 		got := getTeamPrefsK8s(t, helper, teamUID)
@@ -62,7 +80,7 @@ func TestIntegrationPreferences_K8sAPIs(t *testing.T) {
 	})
 
 	t.Run("org preferences round-trip", func(t *testing.T) {
-		putResult := putOrgPrefsK8s(t, helper, `{"metadata": {"name": "namespace"}, "spec": {"theme":"dark","timezone":"UTC"}}`)
+		putResult := putOrgPrefsK8s(t, helper, `{"apiVersion": "preferences.grafana.app/v1", "kind": "Preferences", "metadata": {"name": "namespace"}, "spec": {"theme":"dark","timezone":"UTC"}}`)
 		require.NoError(t, putResult.Error())
 
 		got := getOrgPrefsK8s(t, helper)
@@ -90,7 +108,7 @@ func TestIntegrationPreferences_K8sAPIs(t *testing.T) {
 	t.Run("PUT replaces, PATCH merges", func(t *testing.T) {
 		// Seed full prefs for the org, then PATCH only one field — others must remain.
 		putResult := putOrgPrefsK8s(t, helper,
-			`{"metadata": {"name": "namespace"}, "spec": {"theme":"dark","weekStart":"monday","timezone":"UTC"}}`)
+			`{"apiVersion": "preferences.grafana.app/v1", "kind": "Preferences", "metadata": {"name": "namespace"}, "spec": {"theme":"dark","weekStart":"monday","timezone":"UTC"}}`)
 		require.NoError(t, putResult.Error())
 
 		patchResult := patchOrgPrefsK8s(t, helper, `{"spec": {"theme":"light"}}`)
@@ -104,7 +122,7 @@ func TestIntegrationPreferences_K8sAPIs(t *testing.T) {
 		require.Equal(t, "UTC", *merged.Spec.Timezone, "PATCH must leave timezone untouched")
 
 		// PUT now with a sparse body — fields the request omits should clear.
-		require.NoError(t, putOrgPrefsK8s(t, helper, `{"metadata": {"name": "namespace"}, "spec": {"theme":"dark"}}`).Error())
+		require.NoError(t, putOrgPrefsK8s(t, helper, `{"apiVersion": "preferences.grafana.app/v1", "kind": "Preferences", "metadata": {"name": "namespace"}, "spec": {"theme":"dark"}}`).Error())
 		replaced := getOrgPrefsK8s(t, helper)
 		require.NotNil(t, replaced.Spec.Theme)
 		require.Equal(t, "dark", *replaced.Spec.Theme)
@@ -117,10 +135,96 @@ func TestIntegrationPreferences_K8sAPIs(t *testing.T) {
 		}
 	})
 
+	t.Run("a user cannot read another user's preferences", func(t *testing.T) {
+		adminName := "user-" + helper.Org1.Admin.Identity.GetIdentifier()
+		require.NoError(t, putUserPrefsK8s(t, helper, helper.Org1.Admin, adminName,
+			fmt.Sprintf(`{"apiVersion": "preferences.grafana.app/v1", "kind": "Preferences", "metadata": {"name": "%s"}, "spec": {"theme":"dark"}}`, adminName)).Error())
+
+		client := helper.Org1.Viewer.RESTClient(t, &preferences.GroupVersion)
+		_, err := client.Get().AbsPath("apis", "preferences.grafana.app", "v1", "namespaces", "default", "preferences", adminName).Do(context.Background()).Raw()
+		require.Error(t, err, "the viewer reads the admin's preferences")
+		require.True(t, apierrors.IsForbidden(err), "got %v", err)
+	})
+
+	t.Run("a user cannot write another user's or the org's preferences", func(t *testing.T) {
+		adminName := "user-" + helper.Org1.Admin.Identity.GetIdentifier()
+		err := putUserPrefsK8s(t, helper, helper.Org1.Viewer, adminName,
+			fmt.Sprintf(`{"apiVersion": "preferences.grafana.app/v1", "kind": "Preferences", "metadata": {"name": "%s"}, "spec": {"theme":"light"}}`, adminName)).Error()
+		require.Error(t, err, "the viewer writes the admin's preferences")
+
+		client := helper.Org1.Viewer.RESTClient(t, &preferences.GroupVersion)
+		err = client.Put().AbsPath("apis", "preferences.grafana.app", "v1", "namespaces", "default", "preferences", "namespace").
+			Body([]byte(`{"apiVersion": "preferences.grafana.app/v1", "kind": "Preferences", "metadata": {"name": "namespace"}, "spec": {"theme":"light"}}`)).
+			Do(context.Background()).Error()
+		require.Error(t, err, "a viewer writes the org's preferences")
+	})
+
+	t.Run("a user lists only the preferences they own", func(t *testing.T) {
+		adminName := "user-" + helper.Org1.Admin.Identity.GetIdentifier()
+		require.NoError(t, putUserPrefsK8s(t, helper, helper.Org1.Admin, adminName,
+			fmt.Sprintf(`{"apiVersion": "preferences.grafana.app/v1", "kind": "Preferences", "metadata": {"name": "%s"}, "spec": {"theme":"dark"}}`, adminName)).Error())
+
+		viewer := helper.Org1.Viewer
+		client := viewer.RESTClient(t, &preferences.GroupVersion)
+		raw, err := client.Get().AbsPath("apis", "preferences.grafana.app", "v1", "namespaces", "default", "preferences").Do(context.Background()).Raw()
+		require.NoError(t, err, string(raw))
+
+		list := &preferences.PreferencesList{}
+		require.NoError(t, json.Unmarshal(raw, list))
+		viewerName := "user-" + viewer.Identity.GetIdentifier()
+		for _, item := range list.Items {
+			require.NotEqual(t, adminName, item.Name, "another user's preferences are listed")
+			require.True(t, item.Name == viewerName || item.Name == "namespace" || strings.HasPrefix(item.Name, "team-"),
+				"unexpected preferences %q in the viewer's list", item.Name)
+		}
+	})
+
+	t.Run("a list can select one object by name", func(t *testing.T) {
+		admin := helper.Org1.Admin
+		adminName := "user-" + admin.Identity.GetIdentifier()
+		teamName := "team-" + helper.Org1.Staff.UID
+		require.NoError(t, putUserPrefsK8s(t, helper, admin, adminName,
+			fmt.Sprintf(`{"apiVersion": "preferences.grafana.app/v1", "kind": "Preferences", "metadata": {"name": "%s"}, "spec": {"theme":"dark"}}`, adminName)).Error())
+		require.NoError(t, putOrgPrefsK8s(t, helper, `{"apiVersion": "preferences.grafana.app/v1", "kind": "Preferences", "metadata": {"name": "namespace"}, "spec": {"theme":"dark"}}`).Error())
+		require.NoError(t, putTeamPrefsK8s(t, helper, helper.Org1.Staff.UID,
+			fmt.Sprintf(`{"apiVersion": "preferences.grafana.app/v1", "kind": "Preferences", "metadata": {"name": "%s"}, "spec": {"theme":"light"}}`, teamName)).Error())
+
+		listNamedRaw := func(user apis.User, name string) ([]byte, error) {
+			client := user.RESTClient(t, &preferences.GroupVersion)
+			return client.Get().AbsPath("apis", "preferences.grafana.app", "v1", "namespaces", "default", "preferences").
+				Param("fieldSelector", "metadata.name="+name).Do(context.Background()).Raw()
+		}
+		listNamed := func(user apis.User, name string) []string {
+			t.Helper()
+			raw, err := listNamedRaw(user, name)
+			require.NoError(t, err, string(raw))
+			list := &preferences.PreferencesList{}
+			require.NoError(t, json.Unmarshal(raw, list))
+			names := make([]string, 0, len(list.Items))
+			for _, item := range list.Items {
+				names = append(names, item.Name)
+			}
+			return names
+		}
+
+		// An admin who also has their own preferences gets only the one asked for
+		require.Equal(t, []string{"namespace"}, listNamed(admin, "namespace"))
+		require.Equal(t, []string{adminName}, listNamed(admin, adminName))
+		require.Equal(t, []string{teamName}, listNamed(admin, teamName))
+		_, err := listNamedRaw(admin, "user-nobody")
+		require.True(t, apierrors.IsForbidden(err), "another user's name: %v", err)
+
+		// A viewer reads the org's, but not another user's
+		viewer := helper.Org1.Viewer
+		require.Equal(t, []string{"namespace"}, listNamed(viewer, "namespace"))
+		_, err = listNamedRaw(viewer, adminName)
+		require.True(t, apierrors.IsForbidden(err), "another user's name: %v", err)
+	})
+
 	t.Run("merged preferences via resource-shaped GET", func(t *testing.T) {
 		admin := helper.Org1.Admin
 		adminName := "user-" + admin.Identity.GetIdentifier()
-		putResult := putUserPrefsK8s(t, helper, admin, adminName, fmt.Sprintf(`{"metadata": {"name": "%s"}, "spec": {"theme":"aubergine"}}`, adminName))
+		putResult := putUserPrefsK8s(t, helper, admin, adminName, fmt.Sprintf(`{"apiVersion": "preferences.grafana.app/v1", "kind": "Preferences", "metadata": {"name": "%s"}, "spec": {"theme":"aubergine"}}`, adminName))
 		require.NoError(t, putResult.Error())
 
 		client := admin.RESTClient(t, &preferences.GroupVersion)

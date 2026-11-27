@@ -94,7 +94,7 @@ func TestInternalIdentityProfileUntrustedRequester(t *testing.T) {
 				Type:           types.TypeAccessPolicy,
 				UserUID:        identity.InternalIdentityService.String(),
 				OrgID:          internalProfileTestOrgID,
-				OrgRole:        identity.RoleAdmin,
+				OrgRole:        types.RoleAdmin,
 				IsGrafanaAdmin: true,
 				Permissions: map[int64]map[string][]string{
 					internalProfileTestOrgID: service.GetPermissions(),

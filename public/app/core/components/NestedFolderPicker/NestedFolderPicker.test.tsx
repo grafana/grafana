@@ -5,7 +5,7 @@ import { act, fireEvent, render, screen, waitFor, within } from 'test/test-utils
 import { config, setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
+import { folderHandlers, getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { resolveStarredFolders } from 'app/features/stars/folders';
@@ -116,6 +116,16 @@ describe('NestedFolderPicker', () => {
     expect(
       await screen.findByRole('button', { name: `Select folder: ${folderA.item.title} currently selected` })
     ).toBeInTheDocument();
+  });
+
+  it('is disabled when the viewer has no access to the selected folder', async () => {
+    server.use(
+      http.get(folderHandlers.FOLDER_BY_NAME, () => HttpResponse.json({ message: 'Forbidden' }, { status: 403 }))
+    );
+
+    render(<NestedFolderPicker onChange={mockOnChange} value={folderA.item.uid} />);
+
+    expect(await screen.findByRole('button', { name: 'Select folder' })).toBeDisabled();
   });
 
   it('clicking the button opens the folder picker', async () => {
@@ -735,10 +745,15 @@ describe('NestedFolderPicker', () => {
       expect(mockOnChange).toHaveBeenCalledWith(folderA_folderA.item.uid, folderA_folderA.item.title);
     });
 
-    it.each<{ name: string; flags: Parameters<typeof setTestFlags>[0]; permission: 'edit' | 'create' }>([
-      { name: 'the feature flag is off', flags: {}, permission: 'create' },
-      { name: 'the picker does not opt in', flags: readOnlyFlags, permission: 'edit' },
-    ])('does not show read only folders when $name', async ({ flags, permission }) => {
+    it.each<{
+      name: string;
+      flags: Parameters<typeof setTestFlags>[0];
+      permission: 'edit' | 'create';
+      sent: 'edit' | 'create';
+    }>([
+      { name: 'the feature flag is off', flags: {}, permission: 'create', sent: 'create' },
+      { name: 'the picker does not opt in', flags: readOnlyFlags, permission: 'edit', sent: 'edit' },
+    ])('does not show read only folders when $name', async ({ flags, permission, sent }) => {
       setTestFlags(flags);
       const requests: URLSearchParams[] = [];
       server.use(
@@ -755,8 +770,9 @@ describe('NestedFolderPicker', () => {
 
       expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();
       expect(screen.queryByRole('img', { name: 'Read only' })).not.toBeInTheDocument();
+      expect(requests.length).toBeGreaterThan(0);
       for (const params of requests) {
-        expect(params.get('permission')).toBe('edit');
+        expect(params.get('permission')).toBe(sent);
         expect(params.has('include')).toBe(false);
       }
     });

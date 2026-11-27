@@ -70,13 +70,14 @@ func TestIntegrationDefaultPermissionsRefreshAfterCommit(t *testing.T) {
 							cache := localcache.New(0, 0)
 							license := &licensing.OSSLicensingService{}
 							catalog := legacypermissions.NewRoleCatalog()
-							client := legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(sql, catalog, actions, cache, cfg, features, license, nil), cfg)
+							client := legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(sql, catalog, actions, cache, cfg, license, nil), cfg)
 							var store accesscontrol.Store = database.ProvideService(sql)
 							if legacy {
 								store = actest.FakeStore{ExpectedErr: errors.New("local enumeration must not run")}
 							}
-							ac := acimpl.ProvideOSSService(cfg, store, actions, cache, features,
+							ac, initErr := acimpl.ProvideOSSService(cfg, store, actions, cache, features,
 								tracing.InitializeTracerForTest(), sql, permreg.ProvidePermissionRegistry(), nil, iam.Features{}, client, catalog)
+							require.NoError(t, initErr)
 							requester := &user.SignedInUser{UserID: 1, UserUID: "creator", OrgID: 1, OrgRole: org.RoleViewer, IsServiceAccount: serviceAccount}
 							failure := errors.New("failed")
 							recorder := &creatorPermissionRecorder{Service: ac, t: t}

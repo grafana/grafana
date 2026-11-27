@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Dropdown, Icon, Menu, ToolbarButton, Tooltip, useStyles2, type IconName } from '@grafana/ui';
 
@@ -84,6 +85,11 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
             description={option.description}
             icon={option.icon}
             role="menuitemradio"
+            testId={
+              option.value === 'view'
+                ? selectors.components.NavToolbar.editDashboard.modeViewingOption
+                : selectors.components.NavToolbar.editDashboard.modeEditingOption
+            }
             ariaChecked={mode === option.value}
             disabled={!state.editable && option.value !== 'view'}
             className={styles.item}
@@ -113,6 +119,7 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
           isOpen={isMenuOpen}
           aria-label={t('dashboard.modes.current', 'Dashboard mode: {{mode}}', { mode: current.label })}
           aria-haspopup="menu"
+          data-testid={selectors.components.NavToolbar.editDashboard.modePickerButton}
           disabled={editBlockedOnMobile}
         >
           {current.label}

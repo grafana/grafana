@@ -31,7 +31,7 @@ permissions: {}
 env:
   # community-triage logic version this repo is pinned to. Bump deliberately;
   # re-resolve with: git ls-remote https://github.com/grafana/community-triage main
-  TRIAGE_REF: 7438a8c243f7152d6164c3216d68eec2b69c5e49 # trufflehog:ignore
+  TRIAGE_REF: e574ada77e9945de840e4ff1b16da47b9958fc18 # trufflehog:ignore
   STALE_THRESHOLD_DAYS: ${{ inputs.stale_days || 30 }}
 
 concurrency:

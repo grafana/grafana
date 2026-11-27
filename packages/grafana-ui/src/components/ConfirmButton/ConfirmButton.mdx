@@ -7,11 +7,17 @@ import { ConfirmButton } from './ConfirmButton';
 
 The ConfirmButton is an interactive component that adds a double-confirm option to a clickable action. When clicked, the action is replaced by an inline confirmation with the option to cancel. In Grafana, this is used, for example, for editing values in settings tables.
 
-## Variants
+## When to use
 
-There are four variants of the `ConfirmButton`: primary, secondary, destructive, and link. The primary and secondary variants include a primary or secondary `Button` component. The primary and secondary variant should be used to confirm actions like saving or adding data. The destructive variant includes a destructive `Button` component. The destructive variant should be used to double-confirm a deletion or removal of an element. The link variant doesn't include any button and double-confirms as links instead.
+No component-specific guidance documented yet.
 
-Apart from the button variant, you can also modify the button size and the button text.
+## Never use for
+
+No component-specific guidance documented yet.
+
+## Do's and don'ts
+
+No component-specific guidance documented yet.
 
 ## Usage
 
@@ -29,7 +35,13 @@ Apart from the button variant, you can also modify the button size and the butto
 </ConfirmButton>
 ```
 
-## With a custom button
+### Variants
+
+There are four variants of the `ConfirmButton`: primary, secondary, destructive, and link. The primary and secondary variants include a primary or secondary `Button` component. The primary and secondary variant should be used to confirm actions like saving or adding data. The destructive variant includes a destructive `Button` component. The destructive variant should be used to double-confirm a deletion or removal of an element. The link variant doesn't include any button and double-confirms as links instead.
+
+Apart from the button variant, you can also modify the button size and the button text.
+
+### With a custom button
 
 You can pass a custom button as a child to the `ConfirmButton`. The child will automatically receive the correct `onClick` from `ConfirmButton`.
 
@@ -46,5 +58,9 @@ You can pass a custom button as a child to the `ConfirmButton`. The child will a
   <Button variant="secondary">Click me</Button>
 </ConfirmButton>
 ```
+
+## Accessibility
+
+## Props
 
 <ArgTypes of={ConfirmButton} />

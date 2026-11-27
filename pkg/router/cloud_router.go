@@ -121,6 +121,12 @@ func newPluginManifestsClient(section *setting.DynamicSection, prefix string) (*
 // token on every request, unless they set discovery_auth = none.
 func NewCloudRoutesLoader(cfg *setting.Cfg, deps PluginDependencies) (RoutesLoader, error) {
 	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
+	if cloudAppSettingsEnabled(cfg) {
+		if section.Key("plugins_url").MustString("") == "" || deps.Settings.LegacyStore == nil || deps.AccessClient == nil {
+			return nil, fmt.Errorf("cloud_router: app_settings_plugins requires plugins_url, a legacy settings provider, and an AuthZ client for app access")
+		}
+	}
+	deps.Cfg = cfg
 
 	aggregateTargetConfigs, err := parseAggregateTargets(cfg)
 	if err != nil {
@@ -171,39 +177,9 @@ func NewCloudRoutesLoader(cfg *setting.Cfg, deps PluginDependencies) (RoutesLoad
 		}
 	}
 
-	var aggregateTargets []*aggregateTarget
-	for _, targetCfg := range aggregateTargetConfigs {
-		if targetCfg.Audience == "" && !targetCfg.anonymousDiscovery() {
-			return nil, fmt.Errorf("%s%s: audience is required when url is set", aggregateSectionPrefix, targetCfg.Name)
-		}
-		tlsCfg, err := buildAggregateTLSConfig(targetCfg.CAFile, targetCfg.InsecureSkipVerify)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %s: %w", cloudRouterSection, targetCfg.Name, err)
-		}
-		// proxyTransport forwards the caller's own credentials unchanged. The CAP
-		// token is only for the router's own discovery poll (restCfg below).
-		proxyTransport := newAggregateBaseTransport(tlsCfg)
-		restCfg := &rest.Config{
-			Host: targetCfg.URL,
-			// A per-target clone, so this discovery client owns its pool;
-			// WrapTransport still applies the CAP token exchange on top of it.
-			// TLS is set on the transport because client-go rejects a custom
-			// Transport combined with TLSClientConfig.
-			Transport: newAggregateBaseTransport(tlsCfg),
-			Timeout:   defaultAggregateDiscoveryTimeout,
-		}
-		if !targetCfg.anonymousDiscovery() {
-			restCfg.WrapTransport = aggregateTokenWrapper(targetCfg, tokenExchanger)
-		}
-		httpClient, err := rest.HTTPClientFor(restCfg)
-		if err != nil {
-			return nil, fmt.Errorf("%s: building http client for %s: %w", cloudRouterSection, targetCfg.Name, err)
-		}
-		target, err := newAggregateTarget(targetCfg, httpClient, proxyTransport)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %s: %w", cloudRouterSection, targetCfg.Name, err)
-		}
-		aggregateTargets = append(aggregateTargets, target)
+	aggregateTargets, err := buildAggregateTargets(aggregateTargetConfigs, tokenExchanger)
+	if err != nil {
+		return nil, err
 	}
 
 	var singleTenantFallback *singleTenantFallback
@@ -228,6 +204,51 @@ func NewCloudRoutesLoader(cfg *setting.Cfg, deps PluginDependencies) (RoutesLoad
 	}
 
 	return newCloudLoader(aggregateTargets, targets, singleTenantFallback)
+}
+
+// buildAggregateTargets builds the polled targets for configs. tokenExchanger
+// signs the discovery polls of every target that does not use anonymous
+// discovery.
+func buildAggregateTargets(configs []aggregateTargetConfig, tokenExchanger authnlib.TokenExchanger) ([]*aggregateTarget, error) {
+	var aggregateTargets []*aggregateTarget
+	for _, targetCfg := range configs {
+		if targetCfg.Audience == "" && !targetCfg.anonymousDiscovery() {
+			return nil, fmt.Errorf("%s%s: audience is required when url is set", aggregateSectionPrefix, targetCfg.Name)
+		}
+		tlsCfg, err := buildAggregateTLSConfig(targetCfg.CAFile, targetCfg.InsecureSkipVerify)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %s: %w", cloudRouterSection, targetCfg.Name, err)
+		}
+		// proxyTransport forwards the caller's own credentials unchanged, unless
+		// wrapProxy signs them. The CAP token is only for the router's own
+		// discovery poll (restCfg below).
+		var proxyTransport http.RoundTripper = newAggregateBaseTransport(tlsCfg)
+		if targetCfg.wrapProxy != nil {
+			proxyTransport = targetCfg.wrapProxy(proxyTransport)
+		}
+		restCfg := &rest.Config{
+			Host: targetCfg.URL,
+			// A per-target clone, so this discovery client owns its pool;
+			// WrapTransport still applies the CAP token exchange on top of it.
+			// TLS is set on the transport because client-go rejects a custom
+			// Transport combined with TLSClientConfig.
+			Transport: newAggregateBaseTransport(tlsCfg),
+			Timeout:   defaultAggregateDiscoveryTimeout,
+		}
+		if !targetCfg.anonymousDiscovery() {
+			restCfg.WrapTransport = aggregateTokenWrapper(targetCfg, tokenExchanger)
+		}
+		httpClient, err := rest.HTTPClientFor(restCfg)
+		if err != nil {
+			return nil, fmt.Errorf("%s: building http client for %s: %w", cloudRouterSection, targetCfg.Name, err)
+		}
+		target, err := newAggregateTarget(targetCfg, httpClient, proxyTransport)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %s: %w", cloudRouterSection, targetCfg.Name, err)
+		}
+		aggregateTargets = append(aggregateTargets, target)
+	}
+	return aggregateTargets, nil
 }
 
 // cloudLoader is a RoutesLoader and a dskit service. It merges the configured
@@ -434,10 +455,11 @@ const aggregateMaxIdleConnsPerHost = 100
 // aggregateTokenWrapper picks the header for the exchanged CAP token on a
 // target's discovery polls.
 func aggregateTokenWrapper(targetCfg aggregateTargetConfig, tokenExchanger authnlib.TokenExchanger) transport.WrapperFunc {
+	namespace := cmp.Or(targetCfg.TokenNamespace, clientauth.WildcardNamespace)
 	if targetCfg.bearerDiscovery() {
-		return clientauth.NewStaticTokenExchangeAuthorizationTransportWrapper(tokenExchanger, targetCfg.Audience, clientauth.WildcardNamespace)
+		return clientauth.NewStaticTokenExchangeAuthorizationTransportWrapper(tokenExchanger, targetCfg.Audience, namespace)
 	}
-	return clientauth.NewStaticTokenExchangeTransportWrapper(tokenExchanger, targetCfg.Audience, clientauth.WildcardNamespace)
+	return clientauth.NewStaticTokenExchangeTransportWrapper(tokenExchanger, targetCfg.Audience, namespace)
 }
 
 // newAggregateBaseTransport returns a fresh base transport for one aggregate

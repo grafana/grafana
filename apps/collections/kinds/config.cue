@@ -1,4 +1,4 @@
-package preferences
+package collections
 
 config: {
 	codegen: {

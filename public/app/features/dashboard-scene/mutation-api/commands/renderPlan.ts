@@ -2,7 +2,8 @@
  * RENDER_PLAN command
  *
  * Renders a whole dashboard plan in one call: rows or tabs (optionally with rows nested inside a
- * tab), each with query-less placeholder panels, plus any stand-in variables. A revision re-renders
+ * tab), each with query-less placeholder panels, plus any stand-in variables. Names on a section
+ * belong to that row or tab; names on the plan belong to the dashboard. A revision re-renders
  * the whole plan, so there is nothing to build up incrementally the way ADD_ROW/ADD_TAB/ADD_PANEL do.
  *
  * With phase "building" the plan's sample data does not render: the dashboard waits behind a loading
@@ -19,7 +20,7 @@
  * mode (see refuseWhilePlanning for the few actions still reachable without it). With plan editing
  * enabled its layout can still be arranged by hand (see canArrangeLayout).
  */
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { CustomVariable, SceneVariableSet, type SceneVariable, type VizPanel } from '@grafana/scenes';
 import { defaultPanelSpec, type PanelKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -116,16 +117,29 @@ function buildPlanGrid(
   );
 }
 
+function buildSampleVariables(names: string[] | undefined): SceneVariable[] {
+  if (!names?.length) {
+    return [];
+  }
+  // Leave these unparented. The one SceneVariableSet that owns them is created by the caller.
+  return names.map((name) => new CustomVariable({ name, query: getPlanningVariableValues().join(',') }));
+}
+
 function buildPlanBody(
   plan: DashboardPlan,
   buildPanel: (panel: DashboardPlanPanel) => VizPanel,
-  editing: boolean
+  editing: boolean,
+  sampleVariables: boolean
 ): RowsLayoutManager | TabsLayoutManager {
-  const sectionState = (section: DashboardPlanRow) => ({
-    ...(editing ? { key: getSectionKeyForPlanSection(section.id) } : {}),
-    title: section.title,
-    layout: buildPlanGrid(section.panels, buildPanel, editing),
-  });
+  const sectionState = (section: DashboardPlanRow) => {
+    const variables = sampleVariables ? buildSampleVariables(section.variables) : [];
+    return {
+      ...(editing ? { key: getSectionKeyForPlanSection(section.id) } : {}),
+      title: section.title,
+      layout: buildPlanGrid(section.panels, buildPanel, editing),
+      ...(variables.length ? { $variables: new SceneVariableSet({ variables }) } : {}),
+    };
+  };
 
   if (plan.layout !== 'tabs') {
     return new RowsLayoutManager({ rows: plan.sections.map((section) => new RowItem(sectionState(section))) });
@@ -147,7 +161,7 @@ function buildPlanBody(
 
 export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
   name: 'RENDER_PLAN',
-  description: payloads.renderPlan.description ?? '',
+  description: z.globalRegistry.get(payloads.renderPlan)?.description ?? '',
   payloadSchema: payloads.renderPlan,
   permission: requiresEdit,
   readOnly: false,
@@ -183,13 +197,11 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
 
       const body = isBuilding
         ? editing
-          ? buildPlanBody(plan, buildSkeletonPanel, editing)
+          ? buildPlanBody(plan, buildSkeletonPanel, editing, false)
           : DefaultGridLayoutManager.createEmpty()
-        : buildPlanBody(plan, (panel) => buildPlanPanel(panel, editing), editing);
+        : buildPlanBody(plan, (panel) => buildPlanPanel(panel, editing), editing, true);
 
-      const variables: SceneVariable[] = (isBuilding ? [] : (plan.variables ?? [])).map(
-        (name) => new CustomVariable({ name, query: getPlanningVariableValues().join(',') })
-      );
+      const variables: SceneVariable[] = isBuilding ? [] : buildSampleVariables(plan.variables);
 
       const notify = (action: 'build' | 'dismiss') => {
         const { planning } = scene.state;

@@ -345,7 +345,7 @@ Content-Type: application/json
 
 `GET /api/annotations/tags`
 
-Find all the event tags created in the annotations.
+Find all the event tags created in the annotations. Tags are organization-wide, so the list and counts cover every annotation in the organization.
 
 **Required permissions**
 

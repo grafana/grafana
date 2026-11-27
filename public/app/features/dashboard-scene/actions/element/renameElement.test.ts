@@ -11,6 +11,7 @@ import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { type EditableDashboardElement } from '../../scene/types/EditableDashboardElement';
+import { DashboardInteractions } from '../../utils/interactions';
 import { activateFullSceneTree } from '../../utils/test-utils';
 import { duplicateAutoGridPanel } from '../layout/duplicateAutoGridPanel';
 import { getEditableElementFor } from '../utils/getEditableElementFor';
@@ -102,6 +103,48 @@ describe.each([
     expect(getName(element)).toBe('New');
     expect(sidebar.state.undoStack).toHaveLength(1);
     expect(sidebar.state.redoStack).toHaveLength(0);
+  });
+});
+
+describe('renameElement tracking', () => {
+  let panelSettingChanged: jest.SpyInstance;
+  let deactivate: (() => void) | undefined;
+
+  beforeEach(() => {
+    panelSettingChanged = jest.spyOn(DashboardInteractions, 'panelSettingChanged').mockImplementation();
+  });
+
+  afterEach(() => {
+    panelSettingChanged.mockRestore();
+    deactivate?.();
+  });
+
+  it('reports a panel renamed in the outline', () => {
+    const { dashboard, source } = setupPanel();
+    deactivate = activateFullSceneTree(dashboard);
+
+    renameElement({ source, element: getEditableElementFor(source)!, oldName: 'Old', newName: 'New' });
+
+    expect(panelSettingChanged).toHaveBeenCalledTimes(1);
+    expect(panelSettingChanged).toHaveBeenCalledWith({
+      item: 'change_panel_title',
+      source: 'outline',
+      panel_type: 'table',
+      panel_id: 1,
+    });
+  });
+
+  it.each([
+    ['row', setupRow],
+    ['tab', setupTab],
+  ])('does not report a %s rename as a panel setting', (_, setup) => {
+    const { dashboard, source } = setup();
+    deactivate = activateFullSceneTree(dashboard);
+
+    renameElement({ source, element: getEditableElementFor(source)!, oldName: 'Old', newName: 'New' });
+
+    expect(getName(getEditableElementFor(source)!)).toBe('New');
+    expect(panelSettingChanged).not.toHaveBeenCalled();
   });
 });
 

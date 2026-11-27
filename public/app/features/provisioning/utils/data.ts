@@ -1,4 +1,8 @@
-import { type CommitOptions, type InlineSecureValue, type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  type CommitOptions,
+  type ComGithubGrafanaGrafanaAppSdkResourceInlineSecureValue as InlineSecureValue,
+  type RepositorySpec,
+} from 'app/api/clients/provisioning/v0alpha1';
 
 import { type RepositoryFormData } from '../types';
 

@@ -16,16 +16,18 @@ import {
 } from '@grafana/data';
 import { isVarMappingExpressionInput } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { type VizPanel } from '@grafana/scenes';
+import { VizPanel } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
 import { VarMappingNumberValueEditor } from 'app/core/components/OptionsUI/number';
 import { LibraryVizPanelInfo } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
 import { type LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils-panels';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
+import { getReportableOptionValue } from './getReportableOptionValue';
 import { getOptionOverrides, getVarMappingOptionOverrides } from './state/getOptionOverrides';
 import { type OptionPaneRenderProps } from './types';
 import {
@@ -249,7 +251,20 @@ export function getLibraryVizPanelOptionsCategory(libraryPanel: LibraryPanelBeha
               id={descriptor.props.id}
               data-testid="library panel name input"
               defaultValue={libraryPanel.state.name}
-              onBlur={(e) => libraryPanel.setState({ name: e.currentTarget.value })}
+              onBlur={(e) => {
+                const name = e.currentTarget.value;
+                const renamed = name !== libraryPanel.state.name;
+                libraryPanel.setState({ name });
+                const panel = libraryPanel.parent;
+                if (renamed && panel instanceof VizPanel) {
+                  DashboardInteractions.panelActionClicked(
+                    'rename_library_panel',
+                    getPanelIdForVizPanel(panel),
+                    'panel_editor',
+                    panel.state.pluginId
+                  );
+                }
+              }}
             />
           );
         },
@@ -276,7 +291,7 @@ export interface OptionPaneRenderProps2 {
   instanceState: unknown;
   currentOptions: Record<string, unknown>;
   currentFieldConfig: FieldConfigSource;
-  reportInteractionUI: 'panel-edit' | 'view-panel';
+  reportInteractionUI: 'panel-edit' | 'view-panel' | 'quick-edits';
   onOptionsChange?: (options: Record<string, unknown>, name: string, category: string) => void;
   onFieldConfigChange?: (fieldConfig: FieldConfigSource, name: string, category: string) => void;
   varMappingsEnabled?: boolean;
@@ -317,8 +332,8 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
       // Merged rather than replaced, so an editor that drops a key from an object value keeps the old
       // key — clearing requires setting it to undefined. Documented on StandardEditorProps.onChange.
       // Switching to replace here would break editors that emit partial values for their own path.
+      const option = panelOptionItems.find((item) => item.path === path);
       if (props.onOptionsChange) {
-        const option = panelOptionItems.find((item) => item.path === path);
         props.onOptionsChange(newOptions, option?.name ?? path, option?.category?.[0] ?? plugin.meta.name);
       } else {
         panel.onOptionsChange(newOptions);
@@ -327,7 +342,9 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
       DashboardInteractions.setVisualOption({
         ui: props.reportInteractionUI,
         option: path,
-        value: JSON.stringify(value),
+        ...getReportableOptionValue(value, option?.settings),
+        panel_type: plugin.meta.id,
+        panel_id: getPanelIdForVizPanel(panel),
       });
     },
   };
@@ -392,7 +409,9 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
             DashboardInteractions.setVisualOption({
               ui: props.reportInteractionUI,
               option: `?${fieldOption.isCustom ? 'custom.' : ''}${fieldOption.path}`,
-              value: JSON.stringify(value),
+              ...getReportableOptionValue(v, fieldOption.settings),
+              panel_type: plugin.meta.id,
+              panel_id: getPanelIdForVizPanel(panel),
             });
           };
 

@@ -33,9 +33,6 @@ const (
 type dataStore struct {
 	kv    KV
 	cache *gocache.Cache
-	// fastLatestKeyLookup resolves latest-version reads with a single-row
-	// descending lookup. Off by default while it is rolled out.
-	fastLatestKeyLookup bool
 }
 
 type dataImportBatchWriter interface {
@@ -174,6 +171,10 @@ func (k GetRequestKey) Prefix() string {
 
 // Keys returns all keys for a given key by iterating through the KV store
 func (d *dataStore) Keys(ctx context.Context, key ListRequestKey, sort SortOrder) iter.Seq2[DataKey, error] {
+	return d.keys(ctx, key, sort, 0)
+}
+
+func (d *dataStore) keys(ctx context.Context, key ListRequestKey, sort SortOrder, pageTimeout time.Duration) iter.Seq2[DataKey, error] {
 	if err := key.Validate(); err != nil {
 		return func(yield func(DataKey, error) bool) {
 			yield(DataKey{}, err)
@@ -183,11 +184,11 @@ func (d *dataStore) Keys(ctx context.Context, key ListRequestKey, sort SortOrder
 	prefix := key.Prefix()
 	return func(yield func(DataKey, error) bool) {
 		defer span.End()
-		for k, err := range pagedKeys(ctx, d.kv, dataSection, ListOptions{
+		for k, err := range pagedKeysWithTimeout(ctx, d.kv, dataSection, ListOptions{
 			StartKey: prefix,
 			EndKey:   PrefixRangeEnd(prefix),
 			Sort:     sort,
-		}, keyPageSize) {
+		}, keyPageSize, pageTimeout) {
 			if err != nil {
 				yield(DataKey{}, err)
 				return
@@ -251,7 +252,7 @@ func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequest
 
 	listKey := ListRequestKey(key)
 
-	if rv == 0 && d.fastLatestKeyLookup {
+	if rv == 0 {
 		// The newest key for a single resource is the last one in key order, so a
 		// one-row descending lookup avoids scanning the resource's whole history.
 		dataKey, err := d.LastResourceVersion(ctx, listKey)
@@ -280,7 +281,7 @@ type ListRequestOptions struct {
 	// ContinueNamespace is the namespace to continue from.
 	// Only used when Key.Namespace is empty (cross-namespace query).
 	ContinueNamespace string
-	// ContinueName is the name to continue from.
+	// ContinueName is the last name already listed; listing resumes strictly after it.
 	ContinueName    string
 	ResourceVersion int64
 	IncludeDeleted  bool
@@ -312,21 +313,17 @@ func (d *dataStore) ListLatestResourceKeys(ctx context.Context, key ListRequestK
 // reads. Bounds and ordering are preserved, but pages are separate reads, not
 // a transactional snapshot. Callers use an unlimited overall scan (base.Limit = 0).
 func pagedKeys(ctx context.Context, kv KV, section string, base ListOptions, pageSize int) iter.Seq2[string, error] {
+	return pagedKeysWithTimeout(ctx, kv, section, base, pageSize, 0)
+}
+
+func pagedKeysWithTimeout(ctx context.Context, kv KV, section string, base ListOptions, pageSize int, pageTimeout time.Duration) iter.Seq2[string, error] {
 	return func(yield func(string, error) bool) {
 		opts := base
 		opts.Limit = int64(pageSize)
 		resuming := false
 
 		for {
-			page := make([]string, 0, opts.Limit)
-			var scanErr error
-			for key, err := range kv.Keys(ctx, section, opts) {
-				if err != nil {
-					scanErr = err
-					break
-				}
-				page = append(page, key)
-			}
+			page, scanErr := readKeyPage(ctx, kv, section, opts, pageTimeout)
 			// The KV cursor for this page is now closed.
 			if scanErr != nil {
 				yield("", scanErr)
@@ -362,6 +359,22 @@ func pagedKeys(ctx context.Context, kv KV, section string, base ListOptions, pag
 	}
 }
 
+func readKeyPage(ctx context.Context, kv KV, section string, opts ListOptions, timeout time.Duration) ([]string, error) {
+	if timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+	page := make([]string, 0, opts.Limit)
+	for key, err := range kv.Keys(ctx, section, opts) {
+		if err != nil {
+			return nil, err
+		}
+		page = append(page, key)
+	}
+	return page, ctx.Err()
+}
+
 // ListResourceKeysAtRevision returns an iterator over data keys for resources at a specific revision.
 // If rv is 0, it returns the latest versions. Deleted keys are returned only when requested.
 func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, options ListRequestOptions) iter.Seq2[DataKey, error] {
@@ -387,7 +400,9 @@ func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, options List
 		if options.Key.Namespace == "" && options.ContinueNamespace != "" {
 			continueKey.Namespace = options.ContinueNamespace
 		}
-		startKey = continueKey.Prefix()
+		// continueKey.Prefix() return a trailing '/'
+		// Names cannot contain '/', so this skips exactly the continue item's keys.
+		startKey = PrefixRangeEnd(continueKey.Prefix())
 	}
 
 	listOptions := ListOptions{
@@ -631,7 +646,7 @@ func (d *dataStore) GetResourceStats(ctx context.Context, nsr NamespacedResource
 	))
 	defer span.End()
 
-	return d.resourceStats(ctx, nsr, minCount, 0)
+	return d.resourceStats(ctx, nsr, minCount, 0, false)
 }
 
 // ListStoredResources implements StorageBackend for the KV backend.
@@ -699,20 +714,20 @@ func (d *dataStore) groupResourceExistsInNamespace(ctx context.Context, gr Group
 	return false, nil
 }
 
-// GetResourceStatsWithLimit implements StorageBackend. See the interface docs.
-func (d *dataStore) GetResourceStatsWithLimit(ctx context.Context, nsr NamespacedResource, minCount, countLimit int) ([]ResourceStats, error) {
+func (d *dataStore) resourceStatsWithLimit(ctx context.Context, nsr NamespacedResource, minCount, countLimit int, includeDeleted bool) ([]ResourceStats, error) {
 	ctx, span := tracer.Start(ctx, "resource.dataStore.GetResourceStatsWithLimit", trace.WithAttributes(
 		attribute.Int("minCount", minCount),
 		attribute.Int("countLimit", countLimit),
+		attribute.Bool("includeDeleted", includeDeleted),
 	))
 	defer span.End()
 
-	return d.resourceStats(ctx, nsr, minCount, countLimit)
+	return d.resourceStats(ctx, nsr, minCount, countLimit, includeDeleted)
 }
 
 // resourceStats enumerates the stored group/resources and counts each one per
 // namespace. countLimit is forwarded to processGroupResourceStats (0 = exact).
-func (d *dataStore) resourceStats(ctx context.Context, nsr NamespacedResource, minCount, countLimit int) ([]ResourceStats, error) {
+func (d *dataStore) resourceStats(ctx context.Context, nsr NamespacedResource, minCount, countLimit int, includeDeleted bool) ([]ResourceStats, error) {
 	groupResources, err := d.getGroupResources(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get group resources: %w", err)
@@ -726,7 +741,7 @@ func (d *dataStore) resourceStats(ctx context.Context, nsr NamespacedResource, m
 		if nsr.Resource != "" && gr.Resource != nsr.Resource {
 			continue
 		}
-		grStats, err := d.processGroupResourceStats(ctx, gr, nsr.Namespace, minCount, countLimit)
+		grStats, err := d.processGroupResourceStats(ctx, gr, nsr.Namespace, minCount, countLimit, includeDeleted)
 		if err != nil {
 			return nil, fmt.Errorf("failed to process stats for %s/%s: %w", gr.Group, gr.Resource, err)
 		}
@@ -735,13 +750,11 @@ func (d *dataStore) resourceStats(ctx context.Context, nsr NamespacedResource, m
 	return stats, nil
 }
 
-// processGroupResourceStats counts live resources per namespace for one
-// group/resource. When countLimit > 0 it stops counting a namespace once it
-// reaches countLimit and seeks past the rest of that namespace's keys instead of
-// scanning them, which is cheaper than an exact count on large history; the
-// reported Count is then at least countLimit and ResourceVersion is 0 (the scan
-// may stop before the newest key). countLimit <= 0 produces exact counts.
-func (d *dataStore) processGroupResourceStats(ctx context.Context, gr GroupResource, namespace string, minCount, countLimit int) ([]ResourceStats, error) {
+// processGroupResourceStats counts each name by its latest state. When
+// includeDeleted is set, both the minimum and the cap apply to the combined
+// count. A capped scan skips the rest of the namespace and leaves its resource
+// version unset, since it may not have seen the newest key.
+func (d *dataStore) processGroupResourceStats(ctx context.Context, gr GroupResource, namespace string, minCount, countLimit int, includeDeleted bool) ([]ResourceStats, error) {
 	ctx, span := tracer.Start(ctx, "resource.dataStore.processGroupResourceStats")
 	defer span.End()
 
@@ -765,7 +778,7 @@ func (d *dataStore) processGroupResourceStats(ctx context.Context, gr GroupResou
 	curNS := ""
 	curName := ""
 	var curNameLive bool
-	var curNameRV, liveCount, maxRV int64
+	var curNameRV, liveCount, deletedCount, maxRV int64
 
 	flushName := func() {
 		if !haveName {
@@ -773,10 +786,11 @@ func (d *dataStore) processGroupResourceStats(ctx context.Context, gr GroupResou
 		}
 		if curNameLive {
 			liveCount++
+		} else if includeDeleted {
+			deletedCount++
 		}
-		// maxRV is the namespace's latest version, reported as ResourceVersion in
-		// exact mode only; a capped count has no meaningful latest version.
-		if countLimit == 0 && curNameRV > maxRV {
+		// A capped scan may not have seen the latest resource version.
+		if countLimit <= 0 && curNameRV > maxRV {
 			maxRV = curNameRV
 		}
 		haveName, curName, curNameLive, curNameRV = false, "", false, 0
@@ -784,14 +798,15 @@ func (d *dataStore) processGroupResourceStats(ctx context.Context, gr GroupResou
 
 	emit := func() {
 		flushName()
-		if open && liveCount > int64(minCount) {
+		if open && liveCount+deletedCount > int64(minCount) {
 			stats = append(stats, ResourceStats{
 				NamespacedResource: NamespacedResource{Namespace: curNS, Group: gr.Group, Resource: gr.Resource},
 				Count:              liveCount,
+				DeletedCount:       deletedCount,
 				ResourceVersion:    maxRV,
 			})
 		}
-		open, curNS, liveCount, maxRV = false, "", 0, 0
+		open, curNS, liveCount, deletedCount, maxRV = false, "", 0, 0, 0
 	}
 
 	// startKey is the inclusive lower bound; it advances past capped namespaces,
@@ -817,25 +832,22 @@ func (d *dataStore) processGroupResourceStats(ctx context.Context, gr GroupResou
 			}
 			if !haveName || dk.Name != curName {
 				flushName()
+				// Stop before starting the next name: this key may not be its latest revision.
+				if countLimit > 0 && liveCount+deletedCount >= int64(countLimit) {
+					ns := curNS
+					emit()
+					if ns == "" {
+						startKey = endKey
+					} else {
+						startKey = PrefixRangeEnd(gr.Group + "/" + gr.Resource + "/" + ns + "/")
+					}
+					seeked = true
+					break
+				}
 				haveName, curName = true, dk.Name
 			}
 			curNameLive = dk.Action != DataActionDeleted
 			curNameRV = dk.ResourceVersion
-
-			if countLimit > 0 && liveCount >= int64(countLimit) {
-				ns := curNS
-				emit()
-				// Skip the rest of this namespace by advancing the lower bound past it.
-				// A cluster-scoped resource is one partition under group/resource, so
-				// jump to the end.
-				if ns == "" {
-					startKey = endKey
-				} else {
-					startKey = PrefixRangeEnd(gr.Group + "/" + gr.Resource + "/" + ns + "/")
-				}
-				seeked = true
-				break
-			}
 		}
 		if !seeked {
 			emit()

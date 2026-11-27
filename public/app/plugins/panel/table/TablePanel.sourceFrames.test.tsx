@@ -20,7 +20,7 @@ import {
 import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { TableCellDisplayMode, type TableOptions } from '@grafana/schema';
-import { mockClientSize } from '@grafana/test-utils';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider, type PanelRuntimeTransformations } from '@grafana/ui';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
@@ -33,7 +33,7 @@ import { plugin } from './module';
 const transformations: readonly DataTransformerConfig[] = [];
 
 beforeAll(() => {
-  mockClientSize({ width: 800, height: 600 });
+  mockBoundingClientRect({ width: 800, height: 600 });
   standardEditorsRegistry.setInit(getAllOptionEditors);
   standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
   setPluginImportUtils({
@@ -113,7 +113,7 @@ function panel(
   );
 }
 
-it('filters rows locally in panel edit without changing saved transformations', async () => {
+it('writes row filters to the ad hoc transformations in panel edit', async () => {
   const sourceSeries = [makeFrame()];
   const set = jest.fn();
   render(panel(sourceSeries, ({ linkModel }) => linkModel, 0, sourceSeries, set, CoreApp.PanelEditor));
@@ -123,8 +123,14 @@ it('filters rows locally in panel edit without changing saved transformations', 
   await userEvent.type(screen.getByRole('textbox', { name: 'Maximum' }), '10');
   await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
 
-  expect(screen.getAllByRole('link', { name: 'Inspect' })).toHaveLength(1);
-  expect(set).not.toHaveBeenCalled();
+  expect(set).toHaveBeenCalledWith('grafana:table-view', [
+    expect.objectContaining({
+      id: 'filterByValue',
+      options: expect.objectContaining({
+        target: { refId: 'A', frameIndex: 0, frameKey: '["A",0]', parentIndex: undefined, parentKey: undefined },
+      }),
+    }),
+  ]);
 });
 
 it('keeps local filters when a frame gains a column with the new-features flag off', async () => {

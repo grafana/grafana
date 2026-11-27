@@ -1,4 +1,4 @@
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { LoadingState } from '@grafana/data';
 
@@ -11,7 +11,7 @@ import { readOnly, type MutationCommand } from './types';
 
 export const getPanelErrorsCommand: MutationCommand<z.infer<typeof payloads.getPanelErrors>> = {
   name: 'GET_PANEL_ERRORS',
-  description: payloads.getPanelErrors.description ?? '',
+  description: z.globalRegistry.get(payloads.getPanelErrors)?.description ?? '',
   payloadSchema: payloads.getPanelErrors,
   permission: readOnly,
   readOnly: true,

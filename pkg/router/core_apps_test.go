@@ -56,8 +56,8 @@ func TestWithOwnAccessKinds(t *testing.T) {
 	manifest := &app.ManifestData{
 		Group: "rules.alerting.grafana.app",
 		Versions: []app.ManifestVersion{{Name: "v0alpha1", Served: true, Kinds: []app.ManifestVersionKind{
-			{Kind: "RuleSequence", Plural: "RuleSequences"},
-			{Kind: "Other", Plural: "others"},
+			{Kind: "RuleSequence", Plural: "RuleSequences", Resource: "rulesequences"},
+			{Kind: "Other", Plural: "others", Resource: "others"},
 		}}},
 		ExtraPermissions: &app.Permissions{AccessKinds: []app.KindPermission{
 			{Group: "folder.grafana.app", Resource: "folders", Actions: []app.KindPermissionAction{"get"}},

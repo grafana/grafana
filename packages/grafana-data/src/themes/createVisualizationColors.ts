@@ -1,4 +1,4 @@
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { FALLBACK_COLOR } from '../types/fieldColor';
 
@@ -40,8 +40,8 @@ const createHueSchema = <T>(color: T extends ThemeVizColorName ? T : never) =>
       z.object({
         color: z.string(),
         name: createShadeSchema(color),
-        aliases: z.array(z.string()).optional(),
-        primary: z.boolean().optional(),
+        aliases: z.optional(z.array(z.string())),
+        primary: z.optional(z.boolean()),
       })
     ),
   });
@@ -61,8 +61,8 @@ const ThemeVizHueSchema = z.union([
 export type ThemeVizHue = z.infer<typeof ThemeVizHueSchema>;
 
 export const ThemeVisualizationColorsInputSchema = z.object({
-  hues: z.array(ThemeVizHueSchema).optional(),
-  palette: z.array(z.string()).optional(),
+  hues: z.optional(z.array(ThemeVizHueSchema)),
+  palette: z.optional(z.array(z.string())),
 });
 
 export type ThemeVisualizationColorsInput = z.infer<typeof ThemeVisualizationColorsInputSchema>;

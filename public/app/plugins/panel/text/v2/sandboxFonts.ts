@@ -1,7 +1,38 @@
+// Share in-flight fetches and encoding across panels, including when their stylesheets differ.
 const fonts = new Map<string, Promise<string>>();
 
+// Share stylesheet preparation across panels, retaining only the latest theme's inlined font payload.
+let prepared: { css: string; fontRoot: string; baseURI: string; result: Promise<string>; value?: string } | undefined;
+
+/** A warm hit avoids creating a fallback document only to replace it in a promise continuation. */
+export function getPreparedSandboxFonts(globalCss: string, fontRoot: string): string | undefined {
+  if (prepared?.css === globalCss && prepared.fontRoot === fontRoot && prepared.baseURI === document.baseURI) {
+    return prepared.value;
+  }
+  return undefined;
+}
+
 /** Only application-owned global CSS is accepted here, never panel content. */
-export async function inlineSandboxFonts(globalCss: string, fontRoot: string): Promise<string> {
+export function inlineSandboxFonts(globalCss: string, fontRoot: string): Promise<string> {
+  const baseURI = document.baseURI;
+  if (prepared?.css === globalCss && prepared.fontRoot === fontRoot && prepared.baseURI === baseURI) {
+    return prepared.result;
+  }
+  const entry: NonNullable<typeof prepared> = {
+    css: globalCss,
+    fontRoot,
+    baseURI,
+    result: prepareFonts(globalCss, fontRoot).then((css) => {
+      // Complete this entry, not whichever theme may have replaced it while fonts were loading.
+      entry.value = css;
+      return css;
+    }),
+  };
+  prepared = entry;
+  return entry.result;
+}
+
+async function prepareFonts(globalCss: string, fontRoot: string): Promise<string> {
   const root = new URL(fontRoot, document.baseURI);
   const urls = Array.from(globalCss.matchAll(/url\(["']?([^"')]+)["']?\)/g));
   const replacements = await Promise.all(

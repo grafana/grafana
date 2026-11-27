@@ -151,19 +151,9 @@ func TestBlobClientStreamingRoundTrip(t *testing.T) {
 	}
 }
 
-func TestBlobClientUnaryFallback(t *testing.T) {
+func TestBlobClientNeverCallsUnary(t *testing.T) {
 	for _, streaming := range []bool{false, true} {
-		name := "old server"
-		if streaming {
-			name = "unsupported backend"
-		}
-		t.Run(name, func(t *testing.T) {
-			putReq := &resourcepb.PutBlobRequest{ContentType: "application/json", Folder: "folder", Value: []byte("blob")}
-			getReq := &resourcepb.GetBlobRequest{Uid: "uid", ResourceVersion: 12, MustProxyBytes: true}
-			putRequests := make(chan *resourcepb.PutBlobRequest, 1)
-			getRequests := make(chan *resourcepb.GetBlobRequest, 1)
-			wantPut := &resourcepb.PutBlobResponse{Uid: "uid", Size: 4, MimeType: "application/json", Charset: "utf-8"}
-			wantGet := &resourcepb.GetBlobResponse{ContentType: "application/json", Value: putReq.Value}
+		t.Run(strconv.FormatBool(streaming), func(t *testing.T) {
 			srv := &blobTestServer{
 				put: func(stream resourcepb.BlobStoreStreaming_PutBlobStreamServer) error {
 					if _, err := stream.Recv(); err != nil {
@@ -174,54 +164,36 @@ func TestBlobClientUnaryFallback(t *testing.T) {
 				get: func(*resourcepb.GetBlobRequest, resourcepb.BlobStoreStreaming_GetBlobStreamServer) error {
 					return status.Error(codes.Unimplemented, "unsupported backend")
 				},
-				unaryPut: func(req *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
-					putRequests <- req
-					return wantPut, nil
-				},
-				unaryGet: func(req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
-					getRequests <- req
-					return wantGet, nil
-				},
 			}
 			client := newBlobTestClient(t, srv, streaming)
-			put, err := client.PutBlob(t.Context(), putReq)
-			require.NoError(t, err)
-			require.True(t, proto.Equal(wantPut, put))
-			require.True(t, proto.Equal(putReq, <-putRequests))
-			get, err := client.GetBlob(t.Context(), getReq)
-			require.NoError(t, err)
-			require.True(t, proto.Equal(wantGet, get))
-			require.True(t, proto.Equal(getReq, <-getRequests))
-			require.EqualValues(t, 1, srv.putCalls.Load())
-			require.EqualValues(t, 1, srv.getCalls.Load())
+			_, err := client.PutBlob(t.Context(), &resourcepb.PutBlobRequest{Value: []byte("blob")})
+			require.Equal(t, codes.Unimplemented, status.Code(err))
+			_, err = client.GetBlob(t.Context(), &resourcepb.GetBlobRequest{})
+			require.Equal(t, codes.Unimplemented, status.Code(err))
+			require.Zero(t, srv.putCalls.Load())
+			require.Zero(t, srv.getCalls.Load())
 		})
 	}
 }
 
-func TestBlobClientKeepsSignedURLRequestsUnary(t *testing.T) {
-	putRequests := make(chan *resourcepb.PutBlobRequest, 1)
-	getRequests := make(chan *resourcepb.GetBlobRequest, 1)
-	srv := &blobTestServer{
-		unaryPut: func(req *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
-			putRequests <- req
-			return &resourcepb.PutBlobResponse{Url: "https://example.com/upload"}, nil
-		},
-		unaryGet: func(req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
-			getRequests <- req
-			return &resourcepb.GetBlobResponse{Url: "https://example.com/download"}, nil
-		},
-	}
+func TestBlobClientStreamsWithoutMustProxyBytes(t *testing.T) {
+	srv := &blobTestServer{get: func(_ *resourcepb.GetBlobRequest, stream resourcepb.BlobStoreStreaming_GetBlobStreamServer) error {
+		if err := stream.Send(&resourcepb.GetBlobResponse{ContentType: "text/plain"}); err != nil {
+			return err
+		}
+		return stream.Send(&resourcepb.GetBlobResponse{Value: []byte("blob")})
+	}}
 	client := newBlobTestClient(t, srv, true)
-	putReq := &resourcepb.PutBlobRequest{Method: resourcepb.PutBlobRequest_HTTP}
-	put, err := client.PutBlob(t.Context(), putReq)
+	get, err := client.GetBlob(t.Context(), &resourcepb.GetBlobRequest{})
 	require.NoError(t, err)
-	require.Equal(t, "https://example.com/upload", put.Url)
-	require.True(t, proto.Equal(putReq, <-putRequests))
-	getReq := &resourcepb.GetBlobRequest{Uid: "uid"}
-	get, err := client.GetBlob(t.Context(), getReq)
-	require.NoError(t, err)
-	require.Equal(t, "https://example.com/download", get.Url)
-	require.True(t, proto.Equal(getReq, <-getRequests))
+	require.Equal(t, []byte("blob"), get.Value)
+	require.Zero(t, srv.getCalls.Load())
+}
+
+func TestBlobClientRejectsSignedURLUpload(t *testing.T) {
+	client := newBlobTestClient(t, &blobTestServer{}, true)
+	_, err := client.PutBlob(t.Context(), &resourcepb.PutBlobRequest{Method: resourcepb.PutBlobRequest_HTTP})
+	require.Equal(t, codes.InvalidArgument, status.Code(err))
 }
 
 func TestBlobClientDoesNotReplayFailures(t *testing.T) {

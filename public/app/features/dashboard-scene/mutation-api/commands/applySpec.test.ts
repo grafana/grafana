@@ -13,7 +13,7 @@ import { cloneDeep } from 'lodash';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
-import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -360,6 +360,124 @@ describe('APPLY_SPEC with a panel open for editing', () => {
 
     expect(editedPanelKey(scene)).toBeUndefined();
   });
+});
+
+describe('APPLY_SPEC with a GroupByVariable', () => {
+  const adhoc = {
+    kind: 'AdhocVariable',
+    group: 'prometheus',
+    datasource: { name: 'prom' },
+    spec: { name: 'filters', baseFilters: [], filters: [], defaultKeys: [] },
+  } as unknown as VariableKind;
+
+  const groupBy = {
+    kind: 'GroupByVariable',
+    group: 'prometheus',
+    datasource: { name: 'prom' },
+    spec: { name: 'groupBy', current: { text: ['job'], value: ['job'] } },
+  } as unknown as VariableKind;
+
+  beforeEach(() => {
+    setTestFlags({ dashboardNewLayouts: true });
+  });
+
+  afterEach(() => {
+    setTestFlags({});
+  });
+
+  it.each([false, true])(
+    'rejects a dashboard-level one with its replacement and leaves the dashboard unchanged (validate: %s)',
+    async (validate) => {
+      const scene = buildScene(makeSpec());
+      const before = await readSpec(scene);
+
+      const result = await applySpec(
+        scene,
+        makeSpec((spec) => {
+          spec.variables = [adhoc, groupBy];
+        }),
+        validate
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain(
+        'Validation failed: variables.1.kind: GroupByVariable is no longer supported. Use an AdhocVariable with spec.enableGroupBy: true'
+      );
+      expect(await readSpec(scene)).toEqual(before);
+    }
+  );
+
+  it.each([false, true])(
+    'rejects a row-level one and leaves the dashboard unchanged (validate: %s)',
+    async (validate) => {
+      const scene = buildScene(makeSpec());
+      const before = await readSpec(scene);
+
+      const result = await applySpec(
+        scene,
+        makeSpec((spec) => {
+          spec.layout = {
+            kind: 'RowsLayout',
+            spec: { rows: [{ kind: 'RowsLayoutRow', spec: { layout: spec.layout, variables: [adhoc, groupBy] } }] },
+          };
+        }),
+        validate
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain(
+        'Validation failed: layout.spec.rows.0.spec.variables.1.kind: GroupByVariable is no longer supported.'
+      );
+      expect(await readSpec(scene)).toEqual(before);
+    }
+  );
+
+  it('names every one, at dashboard and section level, in a single error', async () => {
+    const scene = buildScene(makeSpec());
+
+    const result = await applySpec(
+      scene,
+      makeSpec((spec) => {
+        spec.variables = [groupBy];
+        spec.layout = {
+          kind: 'TabsLayout',
+          spec: { tabs: [{ kind: 'TabsLayoutTab', spec: { layout: spec.layout, variables: [groupBy] } }] },
+        };
+      })
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain(
+      'Validation failed: variables.0.kind, layout.spec.tabs.0.spec.variables.0.kind: GroupByVariable is no longer supported.'
+    );
+  });
+
+  it.each([false, true])(
+    'applies the replacement the error names: an AdhocVariable with group by enabled and a groupBy filter (validate: %s)',
+    async (validate) => {
+      const scene = buildScene(makeSpec());
+      const replacement = {
+        ...adhoc,
+        spec: { ...adhoc.spec, enableGroupBy: true, filters: [{ key: 'job', operator: 'groupBy', value: '' }] },
+      } as unknown as VariableKind;
+
+      const result = await applySpec(
+        scene,
+        makeSpec((spec) => {
+          spec.variables = [replacement];
+        }),
+        validate
+      );
+
+      expect(result.success).toBe(true);
+      const { variables } = await readSpec(scene);
+      expect(variables.map((variable) => variable.kind)).toEqual(['AdhocVariable']);
+      expect(variables[0].spec).toMatchObject({
+        enableGroupBy: true,
+        filters: [expect.objectContaining({ key: 'job', operator: 'groupBy', value: '' })],
+      });
+    }
+  );
 });
 
 describe('APPLY_SPEC with a user-set transformation refId', () => {

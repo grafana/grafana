@@ -4,6 +4,7 @@ export default function ReactInlineSVG({
   src,
   innerRef,
   cacheRequests,
+  cacheElements,
   preProcessor,
   onLoad,
   ...rest
@@ -11,6 +12,7 @@ export default function ReactInlineSVG({
   src: string;
   innerRef: Ref<SVGSVGElement>;
   cacheRequests: boolean;
+  cacheElements?: boolean;
   preProcessor: () => string;
   onLoad?: () => void;
 }) {

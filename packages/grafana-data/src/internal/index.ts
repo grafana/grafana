@@ -18,6 +18,7 @@ export {
   isVarMappingExpressionInput,
   type VarMappingKind,
 } from '../field/overrides/processors';
+export { setVarMappingsEnabledResolver } from '../field/fieldOverrides';
 export {
   clearCustomFieldConfig,
   clearCustomVarMappings,
@@ -77,7 +78,10 @@ export {
   defaultWindowOptions,
   checkBinaryValueType,
   type CumulativeOptions,
+  getFieldTemplateReference,
+  parseFieldTemplate,
   type ReduceOptions,
+  type TemplateOptions,
   type UnaryOptions,
   WindowAlignment,
   type WindowOptions,
@@ -150,3 +154,6 @@ export {
 export { getPillElements } from '../transformations/matchers/pillElements';
 export { dateTimeFormatTimeAgoShort } from '../datetime/formatter';
 export { getAllowedRestrictedGrafanaApis } from '../context/plugins/RestrictedGrafanaApis';
+
+export { getFieldColorPalette } from '../field/fieldColor';
+export { getValueMappingResult, isNumeric } from '../utils/valueMappings';

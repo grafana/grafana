@@ -164,8 +164,8 @@ const (
 type BlobStoreStreamingClient interface {
 	// First upload message has metadata only; subsequent messages have only value.
 	PutBlobStream(ctx context.Context, opts ...grpc.CallOption) (BlobStoreStreaming_PutBlobStreamClient, error)
-	// First response has content_type (or error); subsequent responses have only
-	// value. Consume the stream to EOF to detect errors.
+	// First response has content_type; subsequent responses have only value.
+	// Consume the stream to EOF to detect terminal status errors.
 	GetBlobStream(ctx context.Context, in *GetBlobRequest, opts ...grpc.CallOption) (BlobStoreStreaming_GetBlobStreamClient, error)
 }
 
@@ -253,8 +253,8 @@ func (x *blobStoreStreamingGetBlobStreamClient) Recv() (*GetBlobResponse, error)
 type BlobStoreStreamingServer interface {
 	// First upload message has metadata only; subsequent messages have only value.
 	PutBlobStream(BlobStoreStreaming_PutBlobStreamServer) error
-	// First response has content_type (or error); subsequent responses have only
-	// value. Consume the stream to EOF to detect errors.
+	// First response has content_type; subsequent responses have only value.
+	// Consume the stream to EOF to detect terminal status errors.
 	GetBlobStream(*GetBlobRequest, BlobStoreStreaming_GetBlobStreamServer) error
 }
 

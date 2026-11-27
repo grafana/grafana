@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"testing/synctest"
 
 	"github.com/stretchr/testify/require"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -233,6 +235,67 @@ func TestStore_CancelledContext(t *testing.T) {
 
 		_, exists := ps.Plugin(cancelledCtx(), p.ID)
 		require.False(t, exists)
+	})
+}
+
+func TestStore_Notify(t *testing.T) {
+	newPlugin := func(id string) *plugins.Plugin {
+		return &plugins.Plugin{JSONData: plugins.JSONData{ID: id}}
+	}
+
+	t.Run("Notifies after a plugin is added to or removed from the registry", func(t *testing.T) {
+		reg := registry.NewInMemory()
+		ps := New(reg, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+		ch := ps.Notify(t.Context())
+
+		require.NoError(t, reg.Add(t.Context(), newPlugin("test-datasource")))
+		require.Len(t, ch, 1)
+		<-ch
+
+		require.NoError(t, reg.Remove(t.Context(), "test-datasource", ""))
+		require.Len(t, ch, 1)
+	})
+
+	t.Run("Notifies about plugins loaded while the store starts", func(t *testing.T) {
+		reg := registry.NewInMemory()
+		ps := New(reg, &pluginfakes.FakeLoader{
+			LoadFunc: func(ctx context.Context, _ plugins.PluginSource) ([]*plugins.Plugin, error) {
+				p := newPlugin("test-datasource")
+				p.SetLogger(log.NewTestLogger())
+				return []*plugins.Plugin{p}, reg.Add(ctx, p)
+			},
+		}, &pluginfakes.FakeSourceRegistry{ListFunc: func(_ context.Context) []plugins.PluginSource {
+			return []plugins.PluginSource{&pluginfakes.FakePluginSource{}}
+		}})
+		ps.loadOnStartup = true
+		ch := ps.Notify(t.Context())
+
+		require.NoError(t, ps.StartAsync(context.Background()))
+		require.NoError(t, ps.AwaitRunning(context.Background()))
+		require.Len(t, ch, 1)
+
+		ps.StopAsync()
+		require.NoError(t, ps.AwaitTerminated(context.Background()))
+	})
+
+	t.Run("Closes the channel once the context is done when the registry cannot notify", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			ps := New(pluginfakes.NewFakePluginRegistry(), &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+			ctx, cancel := context.WithCancel(t.Context())
+			ch := ps.Notify(ctx)
+
+			select {
+			case <-ch:
+				t.Fatal("channel received or closed before the context was done")
+			default:
+			}
+
+			cancel()
+			synctest.Wait()
+
+			_, ok := <-ch
+			require.False(t, ok)
+		})
 	})
 }
 

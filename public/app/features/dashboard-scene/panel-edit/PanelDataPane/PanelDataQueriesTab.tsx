@@ -50,6 +50,7 @@ import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { setQueryRunnerQueries } from '../../utils/queryRunnerState';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { trackAddQuery } from '../PanelEditNext/tracking';
+import { getChangedQueryOptions, getQueryOptionState, trackQueryOptionChanges } from '../queryOptionChanges';
 
 import { type PanelDataPaneTab, type PanelDataTabHeaderProps, TabId } from './types';
 import { useHasBackendDatasource } from './utils';
@@ -245,6 +246,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   public onQueryOptionsChange = (options: QueryGroupOptions) => {
     const panel = this.state.panelRef.resolve();
     const dataObj = this.queryRunner;
+    const optionsBefore = getQueryOptionState(panel, dataObj);
 
     const dataObjStateUpdate: Partial<SceneQueryRunner['state']> = {};
     const panelStateUpdate: Partial<VizPanel['state']> = {};
@@ -283,6 +285,15 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
     dataObj.setState(dataObjStateUpdate);
     dataObj.runQueries();
+    trackQueryOptionChanges(
+      panel,
+      getChangedQueryOptions(optionsBefore, getQueryOptionState(panel, dataObj)),
+      'classic'
+    );
+  };
+
+  public onQueryEdited = () => {
+    getDashboardSceneFor(this).state.editPanel?.recordQueryEdit();
   };
 
   public onQueriesChange = (queries: SceneDataQuery[]) => {
@@ -325,7 +336,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
   public addQueryClick = async () => {
     const queries = this.getQueries();
-    trackAddQuery('new_query', 'legacy', { silent: true });
+    trackAddQuery('new_query', 'legacy', { editor: 'classic' });
     this.onQueriesChange(addQuery(queries, await this.newQuery()));
   };
 
@@ -493,6 +504,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
         onAddQuery={model.onAddQuery}
         onQueriesChange={model.onQueriesChange}
         onRunQueries={model.onRunQueries}
+        onQueryEdited={model.onQueryEdited}
         onUpdateDatasources={queryLibraryEnabled ? model.updateDatasourceIfNeeded : undefined}
         app={CoreApp.PanelEditor}
         panelRef={model.state.panelRef}

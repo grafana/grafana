@@ -203,6 +203,7 @@ const injectedRtkApi = api
           url: `/search`,
           params: {
             query: queryArg.query,
+            lifecycle: queryArg.lifecycle,
             type: queryArg['type'],
             folder: queryArg.folder,
             name: queryArg.name,
@@ -510,6 +511,8 @@ export type SearchDashboardsAndFoldersApiResponse = /** status 200 undefined */ 
 export type SearchDashboardsAndFoldersApiArg = {
   /** user query string */
   query?: string;
+  /** dashboard lifecycle filter: draft returns only drafts, all returns drafts and published. When empty, drafts are hidden if the namespace hides them by default */
+  lifecycle?: 'draft' | 'all';
   /** search dashboards or folders.  When empty, this will search both */
   type?: 'folder' | 'dashboard';
   /** search/list within a folder (not recursive) */
@@ -885,8 +888,13 @@ export type ExistsPredicate = {
 };
 export type FilterPredicate = {
   field: string;
-  /** Operator is "In", "NotIn" or "All" in v1. "In" matches any of the values, "NotIn" excludes all of them, and "All" requires the field to hold every value, which only a field holding a list of values can do. */
-  operator: string;
+  /** Operator is "In", "NotIn" or "All" in v1. "In" matches any of the values, "NotIn" excludes all of them, and "All" requires the field to hold every value, which only a field holding a list of values can do.
+    
+    Possible enum values:
+     - `"All"` requires the resources whose field holds every one of the values, which only a field holding a list of values can do.
+     - `"In"` keeps the resources whose field matches any of the values.
+     - `"NotIn"` keeps the resources whose field matches none of them. */
+  operator: 'All' | 'In' | 'NotIn';
   values: string[];
 };
 export type RangePredicate = {

@@ -2,14 +2,17 @@ package apis
 
 import (
 	"fmt"
+	"net/http"
 	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/client-go/kubernetes"
 
+	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -46,6 +49,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagKubernetesServiceAccountTokensApi,
 			featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint,
 			featuremgmt.FlagGrafanaDashboardGlobalVariables,
+			featuremgmt.FlagGrafanaDashboardPreferences,
 			featuremgmt.FlagDashboardNotebooks,
 		},
 	})
@@ -76,6 +80,17 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 
 		require.NoError(t, err, "requesting OpenAPI v3")
 		require.NotEmpty(t, paths, "has registered paths")
+	})
+
+	t.Run("query service version discovery accepts both groups", func(t *testing.T) {
+		for _, group := range []string{datasource.GROUP, "query.grafana.app"} {
+			res := DoRequest(h, RequestParams{
+				User: h.Org1.Admin,
+				Path: "/apis/" + group + "/" + datasource.VERSION,
+			}, &metav1.APIResourceList{})
+			require.Equal(t, http.StatusOK, res.Response.StatusCode, string(res.Body))
+			require.Equal(t, datasource.SchemeGroupVersion.String(), res.Result.GroupVersion)
+		}
 	})
 
 	dir := "openapi_snapshots"
@@ -111,7 +126,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "iam.grafana.app",
 		Version: "v0alpha1",
 	}, {
-		Group:   "query.grafana.app",
+		Group:   "datasource.grafana.app",
 		Version: "v0alpha1",
 	}, {
 		Group:   "advisor.grafana.app",

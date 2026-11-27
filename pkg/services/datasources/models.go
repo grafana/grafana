@@ -224,6 +224,34 @@ type UpdateDataSourceCommand struct {
 	BeforeSave func(ctx context.Context, uid string, jsonData *simplejson.Json) `json:"-"`
 
 	AllowLBACRuleUpdates bool `json:"-"`
+
+	// BasicAuthUserSet allows an explicitly empty username to replace the stored value.
+	// Partial internal updates leave this false to preserve the existing username.
+	BasicAuthUserSet bool `json:"-"`
+}
+
+// UnmarshalJSON overrides the default JSON decoding to distinguish an omitted
+// BasicAuthUser from an explicitly empty one, preserving omission as "no change".
+func (cmd *UpdateDataSourceCommand) UnmarshalJSON(data []byte) error {
+	// This new type has the command's fields but no UnmarshalJSON method.
+	// Decoding it therefore uses Go's normal decoder instead of calling us again.
+	type command UpdateDataSourceCommand
+	// The embedded pointer points to cmd itself. When json.Unmarshal below reads
+	// fields such as name and type, it writes them into cmd through this pointer.
+	payload := struct {
+		*command
+		// This field takes priority over the command's string field during decoding.
+		// Missing or null means keep the username. An empty string means clear it.
+		BasicAuthUser *string `json:"basicAuthUser"`
+	}{command: (*command)(cmd)}
+	if err := json.Unmarshal(data, &payload); err != nil {
+		return err
+	}
+	cmd.BasicAuthUserSet = payload.BasicAuthUser != nil
+	if cmd.BasicAuthUserSet {
+		cmd.BasicAuthUser = *payload.BasicAuthUser
+	}
+	return nil
 }
 
 // DeleteDataSourceCommand will delete a DataSource based on OrgID as well as the UID (preferred), ID, or Name.

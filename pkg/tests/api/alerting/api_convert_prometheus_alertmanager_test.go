@@ -427,19 +427,12 @@ receivers:
 		require.Contains(t, receiverNames, "promoted-webhook")
 		require.Contains(t, mainConfig.TemplateFiles, "promoted.tmpl")
 
-		// Promoted template must be accessible via the provisioning templates API with no provenance —
-		// meaning it is not locked and can be edited through regular APIs.
+		// Promoted templates use the Mimir kind and must be hidden from the provisioning templates API.
 		templates, status, _ := apiClient.GetTemplatesWithStatus(t)
 		requireStatusCode(t, http.StatusOK, status, "")
-		var found *apimodels.NotificationTemplate
-		for i := range templates {
-			if templates[i].Name == "promoted.tmpl" {
-				found = &templates[i]
-				break
-			}
+		for _, tmpl := range templates {
+			require.NotEqual(t, "promoted.tmpl", tmpl.Name, "promoted.tmpl must not appear in the provisioning templates API")
 		}
-		require.NotNil(t, found, "promoted.tmpl must appear in the provisioning templates API")
-		require.Empty(t, found.Provenance, "promoted template must have no provenance (not locked)")
 	})
 
 	t.Run("dry-run with promote validates but does not save", func(t *testing.T) {

@@ -21,6 +21,7 @@ const (
 // cachedMeta represents a cached metadata entry with expiration time
 type cachedMeta struct {
 	meta      pluginsv0alpha1.MetaSpec
+	provider  string
 	ttl       time.Duration
 	expiresAt time.Time
 }
@@ -78,6 +79,7 @@ func (pm *ProviderManager) GetMeta(ctx context.Context, ref PluginRef) (*Result,
 
 	if exists && time.Now().Before(cached.expiresAt) {
 		metrics.MetaCacheLookupTotal.WithLabelValues("hit").Inc()
+		metrics.MetaResolutionsTotal.WithLabelValues(cached.provider, ref.ID).Inc()
 		return &Result{
 			Meta: cached.meta,
 			TTL:  cached.ttl,
@@ -95,6 +97,7 @@ func (pm *ProviderManager) GetMeta(ctx context.Context, ref PluginRef) (*Result,
 
 		if err == nil {
 			metrics.MetaFetchDurationSeconds.WithLabelValues(provider.Name(), "success").Observe(duration.Seconds())
+			metrics.MetaResolutionsTotal.WithLabelValues(provider.Name(), ref.ID).Inc()
 
 			// Don't cache results with a zero TTL
 			if result.TTL == 0 {
@@ -104,6 +107,7 @@ func (pm *ProviderManager) GetMeta(ctx context.Context, ref PluginRef) (*Result,
 			pm.cacheMu.Lock()
 			pm.cache[cacheKey] = &cachedMeta{
 				meta:      result.Meta,
+				provider:  provider.Name(),
 				ttl:       result.TTL,
 				expiresAt: time.Now().Add(result.TTL),
 			}

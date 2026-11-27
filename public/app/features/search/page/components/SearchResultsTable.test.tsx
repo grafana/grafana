@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type MouseEvent } from 'react';
 import { Subject } from 'rxjs';
@@ -141,6 +141,34 @@ describe('SearchResultsTable', () => {
       expect(screen.getByText('My dashboard 1')).toBeInTheDocument();
       expect(screen.getByText('foo')).toBeInTheDocument();
       expect(screen.getByText('bar')).toBeInTheDocument();
+    });
+
+    it('removes placeholder rows when pagination finds the end of the results', async () => {
+      let totalRows = 3;
+      const response: QueryResponse = {
+        view: mockSearchResult.view,
+        get totalRows() {
+          return totalRows;
+        },
+        isItemLoaded: (index) => index === 0,
+        loadMoreItems: async () => {
+          totalRows = 1;
+        },
+      };
+
+      render(
+        <SearchResultsTable
+          keyboardEvents={mockKeyboardEvents}
+          response={response}
+          onTagSelected={mockOnTagSelected}
+          clearSelection={mockClearSelection}
+          height={1000}
+          width={1000}
+        />
+      );
+
+      await waitFor(() => expect(screen.getAllByRole('row')).toHaveLength(2));
+      expect(screen.getByText('My dashboard 1')).toBeInTheDocument();
     });
 
     it('does not render a description tooltip indicator when there is no description', async () => {
@@ -510,5 +538,44 @@ describe('SearchResultsTable', () => {
       expect(noData).toBeInTheDocument();
       expect(screen.queryByRole('table', { name: 'Search results table' })).not.toBeInTheDocument();
     });
+  });
+
+  it('names a dashboard and a folder by their singular kind', async () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'kind', values: ['dashboard', 'folder'] },
+        { name: 'uid', values: ['dash', 'folder'] },
+        { name: 'name', values: ['A dashboard', 'A folder'] },
+        { name: 'url', values: ['/d/dash', '/dashboards/f/folder'] },
+        { name: 'tags', type: FieldType.other, values: [[], []] },
+        { name: 'location', values: ['', ''] },
+      ],
+    });
+    const [dataFrame] = applyFieldOverrides({
+      data: [frame],
+      fieldConfig: { defaults: {}, overrides: [] },
+      replaceVariables: (value) => value,
+      theme: createTheme(),
+    });
+    const response: QueryResponse = {
+      view: new DataFrameView<DashboardQueryResult>(dataFrame),
+      totalRows: frame.length,
+      isItemLoaded: jest.fn().mockReturnValue(true),
+      loadMoreItems: jest.fn(),
+    };
+
+    render(
+      <SearchResultsTable
+        response={response}
+        clearSelection={mockClearSelection}
+        onTagSelected={mockOnTagSelected}
+        keyboardEvents={mockKeyboardEvents}
+        height={1000}
+        width={1000}
+      />
+    );
+
+    expect(await screen.findByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Folder')).toBeInTheDocument();
   });
 });

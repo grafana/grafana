@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
@@ -29,14 +30,23 @@ func ProvideService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, quot
 // changes on the legacy watch subjects, since the IAM User resource is a
 // membership. It is separate so wire sets without the NATS bus, such as the
 // CLI's, can keep using ProvideService.
+// It keeps its signature because code outside this repository constructs the
+// service directly.
 func ProvideServiceWithWatch(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, quotaService quota.Service, watch *legacywatch.Publisher) (org.Service, error) {
+	return ProvideServiceWithPreferencesCleanup(sql, cfg, quotaService, watch, nil)
+}
+
+// ProvideServiceWithPreferencesCleanup is ProvideServiceWithWatch that also deletes a user's DashboardPreferences
+// user tier in an org they are removed from.
+func ProvideServiceWithPreferencesCleanup(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, quotaService quota.Service, watch *legacywatch.Publisher, preferences dashboardpreferences.UserCleaner) (org.Service, error) {
 	log := log.New("org service")
 	s := &Service{
 		store: &sqlStore{
-			sql:   sql,
-			log:   log,
-			cfg:   cfg,
-			watch: watch,
+			sql:         sql,
+			log:         log,
+			cfg:         cfg,
+			watch:       watch,
+			preferences: preferences,
 		},
 		cfg: cfg,
 		log: log,

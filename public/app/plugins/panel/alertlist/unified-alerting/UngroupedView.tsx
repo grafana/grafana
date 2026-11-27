@@ -4,6 +4,7 @@ import { useLocation } from 'react-use';
 import { type GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, TextLink, Stack, useStyles2 } from '@grafana/ui';
+import { useNow } from 'app/core/hooks/useNow';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { Spacer } from 'app/features/alerting/unified/components/Spacer';
 import { fromCombinedRule, stringifyIdentifier } from 'app/features/alerting/unified/utils/rule-id';
@@ -34,6 +35,18 @@ function getGrafanaInstancesTotal(totals: Partial<Record<AlertInstanceTotalState
   return Object.values(totals)
     .filter((total) => total !== undefined)
     .reduce((total, currentTotal) => total + currentTotal, 0);
+}
+
+function ActiveFor({ since }: { since: Date }) {
+  const now = useNow();
+  return (
+    <Trans
+      i18nKey="alertlist.ungrouped-mode-view.active-for"
+      values={{ duration: intervalToAbbreviatedDurationString({ start: since, end: now }) }}
+    >
+      for <span>{'{{duration}}'}</span>
+    </Trans>
+  );
 }
 
 const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstances, hideViewRuleLinkText }: Props) => {
@@ -106,14 +119,7 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
                         {alertStateToReadable(alertingRule.state)}
                       </span>{' '}
                       {firstActiveAt && alertingRule.state !== PromAlertingRuleState.Inactive && (
-                        <Trans
-                          i18nKey="alertlist.ungrouped-mode-view.active-for"
-                          values={{
-                            duration: intervalToAbbreviatedDurationString({ start: firstActiveAt, end: Date.now() }),
-                          }}
-                        >
-                          for <span>{'{{duration}}'}</span>
-                        </Trans>
+                        <ActiveFor since={firstActiveAt} />
                       )}
                     </div>
                   </div>

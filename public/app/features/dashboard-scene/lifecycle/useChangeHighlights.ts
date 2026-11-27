@@ -14,9 +14,6 @@ const DASHBOARD_VIEW_ATTRIBUTE = 'data-dashboard-view';
 /** Marks the element a changed panel's badge renders into. */
 const BADGE_ATTRIBUTE = 'data-lifecycle-badge';
 
-/** Marks a panel dimmed because the pending changes leave it as it is. */
-const DIMMED_ATTRIBUTE = 'data-lifecycle-dimmed';
-
 /** Marks a panel positioned for a badge in its corner. */
 const CORNER_ATTRIBUTE = 'data-lifecycle-corner';
 
@@ -76,9 +73,9 @@ function badgeMount(panel: Element, classes: { inline: string; corner: string; c
 
 /**
  * Marks the panels pending changes add or edit, in the view `getRoot` returns: a badge beside each
- * one's title, which the caller renders into the returned mounts, and the other panels dimmed. Marks
- * nothing when the changes add or edit no panel. Decorates the rendered panels by their scene key
- * instead of changing scene state, so marking never makes the dashboard dirty.
+ * one's title, which the caller renders into the returned mounts. The other panels stay as they are.
+ * Decorates the rendered panels by their scene key instead of changing scene state, so marking never
+ * makes the dashboard dirty.
  */
 export function useChangeHighlights(
   dashboard: DashboardScene,
@@ -90,8 +87,6 @@ export function useChangeHighlights(
 
   useEffect(() => {
     const root = getRoot();
-    // Dimming points at the changed panels. With none to point at, such as a layout, variable or
-    // settings change, or a removed panel, it would only grey out the whole dashboard.
     const panels = changedPanels(changes ?? []);
     if (panels.size === 0 || !root) {
       setTargets([]);
@@ -107,7 +102,6 @@ export function useChangeHighlights(
       }),
       cornerHost: css({ position: 'relative' }),
     };
-    const dimmed = css({ opacity: 0.4 });
     let current: ChangeBadgeTarget[] = [];
     const decorate = () => {
       const next: ChangeBadgeTarget[] = [];
@@ -115,9 +109,6 @@ export function useChangeHighlights(
         const change = panels.get(panel.getAttribute('data-viz-panel-key') ?? '');
         if (change) {
           next.push({ change, mount: badgeMount(panel, classes) });
-        } else if (!panel.hasAttribute(DIMMED_ATTRIBUTE)) {
-          panel.classList.add(dimmed);
-          panel.setAttribute(DIMMED_ATTRIBUTE, '');
         }
       }
       // Rendering the badges mutates the view too; only a new or lost mount needs another render.
@@ -136,10 +127,6 @@ export function useChangeHighlights(
       queryDashboardView(root, `[${CORNER_ATTRIBUTE}]`).forEach((panel) => {
         panel.classList.remove(classes.cornerHost);
         panel.removeAttribute(CORNER_ATTRIBUTE);
-      });
-      queryDashboardView(root, `[${DIMMED_ATTRIBUTE}]`).forEach((panel) => {
-        panel.classList.remove(dimmed);
-        panel.removeAttribute(DIMMED_ATTRIBUTE);
       });
       setTargets([]);
     };

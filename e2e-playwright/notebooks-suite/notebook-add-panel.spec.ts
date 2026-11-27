@@ -9,7 +9,7 @@ const NOTEBOOKS_API = `/apis/dashboard.grafana.app/v2beta1/namespaces/${NAMESPAC
 
 const SUFFIX = Date.now().toString(36);
 
-/** Pulls the uid out of the success toast's "View notebook" link, whatever query string it carries. */
+/** Pulls the uid out of the success toast's "Open notebook" link, whatever query string it carries. */
 function extractNotebookUid(href: string | null): string | undefined {
   return href?.match(/\/notebooks\/([^/?]+)/)?.[1];
 }
@@ -71,9 +71,10 @@ test.describe('Add panel to notebook from Explore', () => {
     await page.getByRole('button', { name: 'Add to notebook', exact: true }).click();
 
     // Success closes the modal and leaves a toast with a link, rather than navigating away.
-    const viewLink = page.getByRole('link', { name: 'View notebook' });
-    await expect(viewLink).toBeVisible();
-    createdUid = extractNotebookUid(await viewLink.getAttribute('href'));
+    const openLink = page.getByRole('link', { name: 'Open notebook' });
+    await expect(openLink).toBeVisible();
+    await expect(openLink).toHaveAttribute('href', /[?&]edit=true(?:&|$)/);
+    createdUid = extractNotebookUid(await openLink.getAttribute('href'));
     expect(createdUid).toBeTruthy();
 
     await expectPersistedPanel(request, createdUid!);
@@ -113,9 +114,10 @@ test.describe('Add panel to notebook from a dashboard panel', () => {
     await page.getByRole('textbox', { name: /Notebook name/ }).fill(notebookTitle);
     await page.getByRole('button', { name: 'Add to notebook', exact: true }).click();
 
-    const viewLink = page.getByRole('link', { name: 'View notebook' });
-    await expect(viewLink).toBeVisible();
-    createdUid = extractNotebookUid(await viewLink.getAttribute('href'));
+    const openLink = page.getByRole('link', { name: 'Open notebook' });
+    await expect(openLink).toBeVisible();
+    await expect(openLink).toHaveAttribute('href', /[?&]edit=true(?:&|$)/);
+    createdUid = extractNotebookUid(await openLink.getAttribute('href'));
     expect(createdUid).toBeTruthy();
 
     await expectPersistedPanel(request, createdUid!);

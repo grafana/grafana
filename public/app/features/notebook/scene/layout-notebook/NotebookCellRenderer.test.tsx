@@ -30,6 +30,8 @@ import { isEditableQueryPanel, NotebookCellRenderer } from './NotebookCellRender
 import { NotebookLayoutManager } from './NotebookLayoutManager';
 import { NOTEBOOK_CELL_CONTROLS_PINNED_CLASS } from './edit/cellClassNames';
 
+jest.mock('app/features/library-panels/state/api', () => makeSpyable('app/features/library-panels/state/api'));
+
 setAppEvents(new EventBusSrv());
 setRunRequest(runRequest);
 setPluginImportUtils({
@@ -86,9 +88,9 @@ beforeEach(() => {
 });
 
 // See CodeCell.test.tsx — the real editor does not run in jsdom.
-jest.mock('@grafana/ui/unstable', () => ({
-  ...jest.requireActual('@grafana/ui/unstable'),
-  CodeMirrorEditor: ({
+jest.mock('@grafana/ui/internal', () => ({
+  ...jest.requireActual('@grafana/ui/internal'),
+  InternalCodeMirrorEditor: ({
     value,
     readOnly,
     onChange,
@@ -478,7 +480,7 @@ describe('NotebookCellRenderer', () => {
       act(() => layout.duplicateCell(cell));
       await waitFor(() => expect(screen.getAllByRole('heading', { name: 'Latency' })).toHaveLength(2));
       const original = within(screen.getByRole('group', { name: 'panel-1' }));
-      const copy = within(screen.getByRole('group', { name: 'panel-1-copy-1' }));
+      const copy = within(screen.getByRole('group', { name: /^visualization-[a-z0-9]{6}$/ }));
       expect(original.getAllByRole('button', { name: 'Block actions' })).toHaveLength(1);
       expect(copy.getAllByRole('button', { name: 'Block actions' })).toHaveLength(1);
       expect(copy.getAllByRole('button', { name: 'Edit panel title' })).toHaveLength(1);

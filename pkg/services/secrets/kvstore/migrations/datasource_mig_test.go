@@ -10,19 +10,17 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -39,8 +37,7 @@ func SetupTestDataSourceSecretMigrationService(t *testing.T, sqlStore db.DB, kvS
 	quotaService := quotatest.New(false, nil)
 	dsRetriever := dsservice.ProvideDataSourceRetriever(sqlStore, features)
 	dsService, err := dsservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(),
-		acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
-		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()), dsRetriever, nil)
+		acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, dsRetriever, nil)
 	require.NoError(t, err)
 	migService := ProvideDataSourceMigrationService(dsService, kvStore, features)
 	return migService
@@ -53,7 +50,7 @@ func TestIntegrationMigrate(t *testing.T) {
 		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		kvStore := kvstore.ProvideService(sqlStore)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		secretsStore := secretskvs.NewSQLSecretsKVStore(legacysql.NewDatabaseProvider(sqlStore), secretsService, log.New("test.logger"))
 		migService := SetupTestDataSourceSecretMigrationService(t, sqlStore, kvStore, secretsStore)
 		ds := dsservice.CreateStore(sqlStore, log.NewNopLogger())
 		dataSourceName := "Test"

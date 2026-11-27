@@ -116,18 +116,12 @@ export function ConfirmImportModal({
     if (autoSyncActive) {
       return (
         <>
-          <Trans i18nKey="alerting.import-to-gma.confirm.autosync-success-body">
-            Auto-sync enabled. Redirecting...
-          </Trans>
+          <Trans i18nKey="alerting.import-to-gma.confirm.autosync-success-body">Auto-sync enabled.</Trans>
           {rulesImportedNote}
         </>
       );
     }
-    return (
-      <Trans i18nKey="alerting.import-to-gma.confirm.success-body">
-        Resources imported successfully. Redirecting...
-      </Trans>
-    );
+    return <Trans i18nKey="alerting.import-to-gma.confirm.success-body">Resources imported successfully.</Trans>;
   };
 
   const getErrorBody = () => {
@@ -192,6 +186,12 @@ export function ConfirmImportModal({
                 : t('alerting.import-to-gma.confirm.confirm', 'Start Import')}
             </Button>
           </>
+        )}
+
+        {isSuccess && (
+          <Button variant="primary" onClick={onDismiss}>
+            {t('alerting.import-to-gma.confirm.continue', 'Continue')}
+          </Button>
         )}
 
         {(isError || isPartialError) && (

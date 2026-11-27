@@ -244,16 +244,16 @@ Import '../status-history/utils' reaches outside the 'histogram' plugin director
 
 ### `zod-import-namespace`
 
-Require all zod imports to use a namespace named `z` from the root `zod` package.
+Require all zod imports to use a namespace named `z` from `zod/mini`.
 
 This rule allows only:
 
 ```ts
-import * as z from 'zod';
-import type * as z from 'zod';
+import * as z from 'zod/mini';
+import type * as z from 'zod/mini';
 ```
 
-It disallows any other zod import style, including named/default imports and all zod subpath imports such as `zod/mini`. This ensures that all zod imports are consistent, allowing for a smaller bundle size.
+It disallows any other zod import style, including named/default imports and imports from the root `zod` package. This keeps first-party Zod usage on the smaller Mini API.
 
 #### Examples
 
@@ -263,11 +263,11 @@ import { z } from 'zod';
 import z from 'zod';
 import * as zod from 'zod';
 import type { ZodType } from 'zod';
-import * as z from 'zod/mini';
+import * as z from 'zod/v4';
 
 // Good ✅
-import * as z from 'zod';
-import type * as z from 'zod';
+import * as z from 'zod/mini';
+import type * as z from 'zod/mini';
 ```
 
 ### `define-feature-events`

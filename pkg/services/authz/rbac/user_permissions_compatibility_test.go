@@ -119,9 +119,10 @@ func TestIntegrationUserPermissionsRPCCompatibility(t *testing.T) {
 			actions := resourcepermissions.NewActionSetService()
 			actions.StoreActionSet("contract:view", []string{"contract:read", "contract:inspect"})
 			catalog := legacypermissions.NewRoleCatalog()
-			previous := acimpl.ProvideOSSService(cfg, database.ProvideService(sql), actions, localcache.New(0, 0),
+			previous, initErr := acimpl.ProvideOSSService(cfg, database.ProvideService(sql), actions, localcache.New(0, 0),
 				features, tracing.InitializeTracerForTest(), sql, nil, nil, localPermissionsFeatures{}, nil, catalog)
-			loader := legacypermissions.NewLoader(sql, catalog, actions, localcache.New(0, 0), cfg, features, &licensing.OSSLicensingService{}, nil)
+			require.NoError(t, initErr)
+			loader := legacypermissions.NewLoader(sql, catalog, actions, localcache.New(0, 0), cfg, &licensing.OSSLicensingService{}, nil)
 			caller := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 				Claims: jwt.Claims{Subject: "access-policy:grafana"},
 				Rest:   authn.AccessTokenClaims{Namespace: "default", Permissions: []string{"authz.grafana.app/userpermissions:get"}},

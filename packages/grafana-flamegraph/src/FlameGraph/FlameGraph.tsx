@@ -17,13 +17,13 @@
 // TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 // THIS SOFTWARE.
 import { css, cx } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Button, ButtonGroup, Icon, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { ColorSchemeButton } from '../ColorSchemeButton';
-import { alignOptions } from '../FlameGraphHeader';
+import { alignOptions, symbolLabelOptions } from '../FlameGraphHeader';
 import { PIXELS_PER_LEVEL } from '../constants';
 import {
   type ClickedItemData,
@@ -31,6 +31,7 @@ import {
   type ColorSchemeDiff,
   type PaneView,
   type ViewMode,
+  type SymbolLabel,
   type TextAlign,
 } from '../types';
 
@@ -49,6 +50,7 @@ type Props = {
   onItemFocused: (data: ClickedItemData) => void;
   focusedItemData?: ClickedItemData;
   textAlign: TextAlign;
+  symbolLabel: SymbolLabel;
   sandwichItem?: string;
   onSandwich: (label: string) => void;
   onFocusPillClick: () => void;
@@ -64,6 +66,7 @@ type Props = {
   viewMode: ViewMode;
   paneView: PaneView;
   onTextAlignChange: (align: TextAlign) => void;
+  onSymbolLabelChange: (label: SymbolLabel) => void;
   onColorSchemeChange: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
   isDiffMode: boolean;
 };
@@ -78,6 +81,7 @@ const FlameGraph = ({
   onItemFocused,
   focusedItemData,
   textAlign,
+  symbolLabel,
   onSandwich,
   sandwichItem,
   onFocusPillClick,
@@ -92,38 +96,27 @@ const FlameGraph = ({
   viewMode,
   paneView,
   onTextAlignChange,
+  onSymbolLabelChange,
   onColorSchemeChange,
   isDiffMode,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const [levels, setLevels] = useState<LevelItem[][]>();
-  const [levelsCallers, setLevelsCallers] = useState<LevelItem[][]>();
-  const [totalProfileTicks, setTotalProfileTicks] = useState<number>(0);
-  const [totalProfileTicksRight, setTotalProfileTicksRight] = useState<number>();
-  const [totalViewTicks, setTotalViewTicks] = useState<number>(0);
+  const { levels, levelsCallers, totalProfileTicks, totalProfileTicksRight, totalViewTicks } = useMemo(() => {
+    let levels = data.getLevels();
+    let totalProfileTicks = levels.length ? levels[0][0].value : 0;
+    let totalProfileTicksRight = levels.length ? levels[0][0].valueRight : undefined;
+    let totalViewTicks = totalProfileTicks;
+    let levelsCallers: LevelItem[][] | undefined = undefined;
 
-  useEffect(() => {
-    if (data) {
-      let levels = data.getLevels();
-      let totalProfileTicks = levels.length ? levels[0][0].value : 0;
-      let totalProfileTicksRight = levels.length ? levels[0][0].valueRight : undefined;
-      let totalViewTicks = totalProfileTicks;
-      let levelsCallers = undefined;
-
-      if (sandwichItem) {
-        const [callers, callees] = data.getSandwichLevels(sandwichItem);
-        levels = callees;
-        levelsCallers = callers;
-        // We need this separate as in case of diff profile we want to compute diff colors based on the original ticks.
-        totalViewTicks = callees[0]?.[0]?.value ?? 0;
-      }
-      setLevels(levels);
-      setLevelsCallers(levelsCallers);
-      setTotalProfileTicks(totalProfileTicks);
-      setTotalProfileTicksRight(totalProfileTicksRight);
-      setTotalViewTicks(totalViewTicks);
+    if (sandwichItem) {
+      const [callers, callees] = data.getSandwichLevels(sandwichItem);
+      levels = callees;
+      levelsCallers = callers;
+      // We need this separate as in case of diff profile we want to compute diff colors based on the original ticks.
+      totalViewTicks = callees[0]?.[0]?.value ?? 0;
     }
+    return { levels, levelsCallers, totalProfileTicks, totalProfileTicksRight, totalViewTicks };
   }, [data, sandwichItem]);
 
   if (!levels) {
@@ -140,6 +133,7 @@ const FlameGraph = ({
     onItemFocused,
     focusedItemData,
     textAlign,
+    symbolLabel,
     onSandwich,
     sandwichItem,
     colorScheme,
@@ -236,9 +230,17 @@ const FlameGraph = ({
           </ButtonGroup>
           <RadioButtonGroup<TextAlign>
             size="sm"
+            aria-label="Text alignment"
             options={alignOptions}
             value={textAlign}
             onChange={onTextAlignChange}
+          />
+          <RadioButtonGroup<SymbolLabel>
+            size="sm"
+            aria-label="Symbol label"
+            options={symbolLabelOptions}
+            value={symbolLabel}
+            onChange={onSymbolLabelChange}
           />
         </div>
       </div>

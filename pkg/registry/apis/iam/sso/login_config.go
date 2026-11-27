@@ -3,6 +3,7 @@ package sso
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -10,13 +11,11 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 // LoginConfigName is the singleton name for the pre-auth login-config read.
@@ -29,7 +28,6 @@ const loginConfigPath = "ssosettings/" + LoginConfigName
 // needs to render the login form. Field names mirror dtos.FrontendSettingsDTO so
 // the frontend can migrate to this endpoint without reshaping.
 type LoginConfigDTO struct {
-	Source            string                        `json:"source"`
 	DisableLoginForm  bool                          `json:"disableLoginForm"`
 	DisableUserSignUp bool                          `json:"disableUserSignUp"`
 	LoginHint         string                        `json:"loginHint"`
@@ -47,16 +45,15 @@ type LoginOAuthProvider struct {
 }
 
 // LoginConfigHandler serves the pre-auth login-config singleton. It reads the
-// stack's SSO config through the mode-aware ssosettings service (MT-Settings at
-// dual-writer mode >= 3, legacy/config otherwise) and never emits secret fields.
+// stack's SSO config through the given ssosettings service and the login-form
+// settings through cfgProvider, both per request, and never emits secret fields.
 type LoginConfigHandler struct {
-	cfg *setting.Cfg
-	sso ssosettings.Service
-	log log.Logger
+	cfgProvider configprovider.ConfigProvider
+	sso         ssosettings.Service
 }
 
-func NewLoginConfigHandler(cfg *setting.Cfg, ssoSvc ssosettings.Service) *LoginConfigHandler {
-	return &LoginConfigHandler{cfg: cfg, sso: ssoSvc, log: log.New("iam.sso.loginconfig")}
+func NewLoginConfigHandler(cfgProvider configprovider.ConfigProvider, ssoSvc ssosettings.Service) *LoginConfigHandler {
+	return &LoginConfigHandler{cfgProvider: cfgProvider, sso: ssoSvc}
 }
 
 func (h *LoginConfigHandler) GetAPIRoutes(_ map[string]common.OpenAPIDefinition) *builder.APIRoutes {
@@ -72,27 +69,33 @@ func (h *LoginConfigHandler) GetAPIRoutes(_ map[string]common.OpenAPIDefinition)
 }
 
 func (h *LoginConfigHandler) handle(w http.ResponseWriter, req *http.Request) {
-	dto := h.build(req.Context())
+	dto, err := h.build(req.Context())
+	if err != nil {
+		errhttp.Write(req.Context(), err, w)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(dto)
 }
 
-func (h *LoginConfigHandler) build(ctx context.Context) LoginConfigDTO {
-	dto := LoginConfigDTO{
-		Source:            h.source(),
-		DisableLoginForm:  h.cfg.DisableLoginForm,
-		DisableUserSignUp: !h.cfg.AllowUserSignUp,
-		LoginHint:         h.cfg.LoginHint,
-		PasswordHint:      h.cfg.PasswordHint,
-		LdapEnabled:       h.cfg.LDAPAuthEnabled,
-		OAuth:             map[string]LoginOAuthProvider{},
+func (h *LoginConfigHandler) build(ctx context.Context) (LoginConfigDTO, error) {
+	cfg, err := h.cfgProvider.Get(ctx)
+	if err != nil {
+		return LoginConfigDTO{}, fmt.Errorf("get config: %w", err)
 	}
 
 	settings, err := h.sso.List(ctx)
 	if err != nil {
-		// A read failure must not break the login page: return what cfg already gave us.
-		h.log.FromContext(ctx).Error("failed to list sso settings for login config", "error", err)
-		return dto
+		return LoginConfigDTO{}, fmt.Errorf("list sso settings: %w", err)
+	}
+
+	dto := LoginConfigDTO{
+		DisableLoginForm:  cfg.DisableLoginForm,
+		DisableUserSignUp: !cfg.AllowUserSignUp,
+		LoginHint:         cfg.LoginHint,
+		PasswordHint:      cfg.PasswordHint,
+		LdapEnabled:       cfg.LDAPAuthEnabled,
+		OAuth:             map[string]LoginOAuthProvider{},
 	}
 
 	oauth := map[string]struct{}{}
@@ -118,16 +121,7 @@ func (h *LoginConfigHandler) build(ctx context.Context) LoginConfigDTO {
 		dto.OAuth[s.Provider] = LoginOAuthProvider{Name: name, Icon: icon}
 	}
 
-	return dto
-}
-
-// source reports where the served config comes from, so a consumer can tell MT
-// from legacy without inspecting the values.
-func (h *LoginConfigHandler) source() string {
-	if resCfg, ok := h.cfg.UnifiedStorage[legacyiamv0.SSOSettingResourceInfo.GroupResource().String()]; ok && resCfg.DualWriterMode >= grafanarest.Mode3 {
-		return "mt-settings"
-	}
-	return "database"
+	return dto, nil
 }
 
 // truthy coerces a settings value to a bool. MT-Settings stores every value as a

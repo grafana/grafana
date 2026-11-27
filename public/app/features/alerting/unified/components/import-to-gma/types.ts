@@ -69,7 +69,29 @@ export interface ImportFormValues {
   pauseAlertingRules: boolean;
   pauseRecordingRules: boolean;
   targetDatasourceUID?: string;
+  /** The data source the rules of an uploaded YAML file run against. Only used for the YAML source. */
+  yamlImportTargetDatasourceUID?: string;
+  yamlImportTargetDatasourceName?: string;
 }
+
+interface RulesDataSource {
+  uid: string;
+  name: string | null;
+}
+
+/** What the rules step imports. Built by `buildRulesImportSpec`, only from a complete form. */
+export type RulesImportSpec = {
+  selectedRoutingTree: string;
+  targetFolder?: Folder;
+  pauseAlertingRules: boolean;
+  pauseRecordingRules: boolean;
+  /** The data source that stores the recording rules. */
+  targetDatasourceUID: string;
+} & (
+  | { type: 'datasource'; datasource: RulesDataSource; namespace?: string; ruleGroup?: string }
+  // The data source is the one the rules run against.
+  | { type: 'yaml'; file: File; datasource: RulesDataSource }
+);
 
 export type Step1Values = Pick<
   ImportFormValues,

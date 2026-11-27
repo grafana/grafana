@@ -3,6 +3,7 @@ package dashboard
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
@@ -50,7 +52,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission/rpclient"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
 	apiserverrequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -68,6 +72,27 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
+const registeredManagerKind utils.ManagerKind = "test-registered-kind"
+
+const registeredKindService = "test-manager-service"
+
+type testManagerKind struct{}
+
+func (testManagerKind) Kind() utils.ManagerKind { return registeredManagerKind }
+
+func (testManagerKind) CheckAssignment(auth authlib.AuthInfo, _ utils.GrafanaMetaAccessor) error {
+	if auth != nil {
+		if ids := auth.GetExtra()[authn.ServiceIdentityKey]; len(ids) == 1 && ids[0] == registeredKindService {
+			return nil
+		}
+	}
+	return errors.New("not the manager")
+}
+
+func init() {
+	identity.RegisterManagerKind(testManagerKind{})
+}
+
 func TestDashboardAPIBuilder_Validate(t *testing.T) {
 	oneInt64 := int64(1)
 	zeroInt64 := int64(0)
@@ -76,6 +101,18 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), //nolint:staticcheck
 		utils.AnnoKeyManagerIdentity: "some-provisioner",
 	}
+	registered := map[string]string{
+		utils.AnnoKeyManagerKind:     string(registeredManagerKind),
+		utils.AnnoKeyManagerIdentity: "some-manager",
+	}
+	kindService := &identity.StaticRequester{
+		Type:    authlib.TypeAccessPolicy,
+		UserUID: "6f1c2a90-policy",
+		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{ServiceIdentity: registeredKindService},
+		},
+	}
+	serverAdmin := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "server-admin", IsGrafanaAdmin: true}
 	newDashboard := func(annotations map[string]string) *dashv1.Dashboard {
 		return &dashv1.Dashboard{
 			Spec:       common.Unstructured{},
@@ -88,6 +125,7 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		name             string
 		existingObj      runtime.Object
 		collectionDelete bool
+		caller           identity.Requester
 		deletionOptions  metav1.DeleteOptions
 		expectedError    bool
 		expectBadRequest bool
@@ -98,6 +136,57 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 			deletionOptions:  metav1.DeleteOptions{GracePeriodSeconds: nil},
 			expectedError:    true,
 			expectBadRequest: true,
+		},
+		{
+			name:             "should block deletion of a dashboard managed by a registered kind",
+			existingObj:      newDashboard(registered),
+			deletionOptions:  metav1.DeleteOptions{GracePeriodSeconds: nil},
+			expectedError:    true,
+			expectBadRequest: true,
+		},
+		{
+			name:             "should block a server admin deleting a dashboard managed by a registered kind",
+			existingObj:      newDashboard(registered),
+			caller:           serverAdmin,
+			deletionOptions:  metav1.DeleteOptions{GracePeriodSeconds: nil},
+			expectedError:    true,
+			expectBadRequest: true,
+		},
+		{
+			name:            "should allow the registered kind's manager to delete its dashboard",
+			existingObj:     newDashboard(registered),
+			caller:          kindService,
+			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: nil},
+			expectedError:   false,
+		},
+		{
+			name:             "should block the registered kind's manager from deleting a classic file provisioned dashboard",
+			existingObj:      newDashboard(classicFP),
+			caller:           kindService,
+			deletionOptions:  metav1.DeleteOptions{GracePeriodSeconds: nil},
+			expectedError:    true,
+			expectBadRequest: true,
+		},
+		{
+			name:            "should not run the check for a registered kind if grace period is set to 0",
+			existingObj:     newDashboard(registered),
+			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: &zeroInt64},
+			expectedError:   false,
+		},
+		{
+			name:             "should not run the check for a registered kind on DeleteCollection requests",
+			existingObj:      newDashboard(registered),
+			collectionDelete: true,
+			deletionOptions:  metav1.DeleteOptions{GracePeriodSeconds: nil},
+			expectedError:    false,
+		},
+		{
+			name: "should allow deletion of a registered kind without a manager identity",
+			existingObj: newDashboard(map[string]string{
+				utils.AnnoKeyManagerKind: string(registeredManagerKind),
+			}),
+			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: nil},
+			expectedError:   false,
 		},
 		{
 			name:            "should return an error if the existing dashboard is missing",
@@ -148,8 +237,13 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 					name = ""
 				}
 
+				ctx := context.Background()
+				if tt.caller != nil {
+					ctx = identity.WithRequester(ctx, tt.caller)
+				}
+
 				b := &DashboardsAPIBuilder{isStandalone: standalone}
-				err := b.Validate(context.Background(), admission.NewAttributesRecord(
+				err := b.Validate(ctx, admission.NewAttributesRecord(
 					nil,
 					tt.existingObj,
 					dashv1.DashboardResourceInfo.GroupVersionKind(),
@@ -898,11 +992,6 @@ func TestLibraryPanelStorageDeclaresGVK(t *testing.T) {
 		"standalone writes must not accept client-supplied SQL IDs")
 }
 
-// The remaining resources in the group -- variables, notebooks and snapshots --
-// are each served by a single version, but they share the dashboard group with
-// six dashboard versions. Nothing about a stored object's group says which kind
-// it is, so each of these has to declare its own GVK or the codec would be free
-// to persist it under some other kind in the group.
 // TestSnapshotRegistrationFiltersEveryServedVersion is a registration-level guard:
 // it discovers every served Snapshot version from the manifest, exercises the GET
 // and LIST endpoints actually registered for that version, and verifies the
@@ -1032,6 +1121,11 @@ func TestSnapshotRegistrationFiltersEveryServedVersion(t *testing.T) {
 	}
 }
 
+// The remaining resources in the group -- variables, notebooks, snapshots and
+// dashboard preferences -- are each served by a single version, but they share
+// the dashboard group with six dashboard versions. Nothing about a stored
+// object's group says which kind it is, so each of these has to declare its own
+// GVK or the codec would be free to persist it under some other kind in the group.
 func TestOtherDashboardGroupResourcesDeclareGVK(t *testing.T) {
 	group := dashv0.DashboardResourceInfo.GroupResource().Group
 
@@ -1042,8 +1136,10 @@ func TestOtherDashboardGroupResourcesDeclareGVK(t *testing.T) {
 		folder bool
 	}{
 		{"variables", dashv2beta1.VariableResourceInfo, variableStorageOpts(), true},
+		{"variables v2", dashv2.VariableResourceInfo, variableStorageOpts(), true},
 		{"notebooks", dashv2beta1.NotebookResourceInfo, notebookStorageOpts(), false},
 		{"snapshots", dashv0.SnapshotResourceInfo, snapshotStorageOpts(), false},
+		{"dashboardpreferences", dashv2beta1.DashboardPreferencesResourceInfo, dashboardPreferencesStorageOpts(), false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			recorder := &gvkRecorder{}
@@ -1069,10 +1165,69 @@ func TestOtherDashboardGroupResourcesDeclareGVK(t *testing.T) {
 	}
 }
 
+// storageOptionsRecorder captures the storage options each store is built with. Unlike gvkRecorder, it
+// builds a real store, from the getter it wraps.
+type storageOptionsRecorder struct {
+	apistore.StorageOptionsGetter
+	recorded []apistore.StorageOptions
+}
+
+func (r *storageOptionsRecorder) WithStorageOptions(opts apistore.StorageOptions) generic.RESTOptionsGetter {
+	r.recorded = append(r.recorded, opts)
+	return r.StorageOptionsGetter.WithStorageOptions(opts)
+}
+
+// Unified storage does no per-user filtering for dashboard preferences, so what is served has to be the
+// wrapper that keeps a list to the caller's tiers, and it must serve neither watch nor deletecollection,
+// which span every tier.
+func TestDashboardPreferencesRegisteredAsWrapper(t *testing.T) {
+	scheme := runtime.NewScheme()
+	require.NoError(t, dashv2beta1.AddToScheme(scheme))
+	codecs := serializer.NewCodecFactory(scheme)
+	optsGetter, err := restoptions.NewRESTOptionsGetterMemory(storagebackend.Config{
+		Codec: codecs.LegacyCodec(dashv2beta1.DashboardPreferencesResourceInfo.GroupVersion()),
+	}, nil)
+	require.NoError(t, err)
+	recorder := &storageOptionsRecorder{StorageOptionsGetter: optsGetter}
+	opts := apiserverbuilder.APIGroupOptions{Scheme: scheme, OptsGetter: recorder}
+
+	b := &DashboardsAPIBuilder{
+		accessClient:         &dashboardPreferencesAccessClient{},
+		accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		folderClientProvider: &staticHandlerProvider{},
+	}
+	groupInfo := &genericapiserver.APIGroupInfo{VersionedResourcesStorageMap: map[string]map[string]rest.Storage{dashv2beta1.VERSION: {}}}
+	require.NoError(t, b.registerDashboardPreferencesStorage(groupInfo, opts))
+	s := groupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]["dashboardpreferences"]
+	storage, isWrapper := s.(*dashboardPreferencesStorage)
+	_, isWatcher := s.(rest.Watcher)
+	_, isCollectionDeleter := s.(rest.CollectionDeleter)
+	require.True(t, isWrapper)
+	require.False(t, isWatcher)
+	require.False(t, isCollectionDeleter)
+	// The merged route reads the tiers through it.
+	require.Same(t, storage, b.dashboardPreferencesStorage)
+
+	// Without an access client every list silently leaves out the folder tier.
+	require.Same(t, b.accessClient, storage.accessClient)
+	// Without it, a list would judge the org tier by the org role instead of the org preferences permission.
+	require.Same(t, b.accessControl, storage.accessControl)
+	// Without it, every list fails: the folder tier is read by paging through the caller's folders.
+	require.Same(t, b.folderClientProvider, storage.folders)
+
+	// With folder support, storage would hold the folder tier to its folder's rules for content, and a
+	// folder synced from a repository takes only that repository's objects.
+	require.Len(t, recorder.recorded, 1)
+	so := recorder.recorded[0]
+	require.Equal(t, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), so.GVK)
+	require.False(t, so.EnableFolderSupport)
+	require.False(t, so.RequireFolder)
+}
+
 func TestAfterDeleteStopsWaitingForAStalledPermissionDelete(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		var client dynamic.NamespaceableResourceInterface = &stalledPermissionClient{}
-		b := &DashboardsAPIBuilder{resourcePermissionsSvc: &client}
+		b := &DashboardsAPIBuilder{resourcePermissions: rpclient.New(rpclient.Static(client), dashv1.DashboardResourceInfo.GroupVersionResource().GroupResource())}
 
 		start := time.Now()
 		b.afterDelete(&dashv1.Dashboard{ObjectMeta: metav1.ObjectMeta{Name: "dash-uid", Namespace: "stacks-1"}}, &metav1.DeleteOptions{})

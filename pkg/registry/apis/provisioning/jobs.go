@@ -21,7 +21,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -473,7 +472,7 @@ func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer re
 // trigger admin-restricted jobs (pull, releaseResources, deleteResources).
 // The fallback role still allows admins whose RBAC isn't explicitly set up.
 func (c *jobsConnector) authorizeAdminJob(ctx context.Context, cfg *provisioning.Repository) error {
-	return c.access.WithFallbackRole(identity.RoleAdmin).Check(ctx, authlib.CheckRequest{
+	return c.access.WithFallbackRole(authlib.RoleAdmin).Check(ctx, authlib.CheckRequest{
 		Verb:      utils.VerbUpdate,
 		Group:     provisioning.GROUP,
 		Resource:  provisioning.RepositoryResourceInfo.GetName(),
@@ -533,7 +532,7 @@ func (c *jobsConnector) authorizeMigrateJob(ctx context.Context, repo repository
 	}
 
 	// Require delete permission only for what the migration will actually remove,
-	// mirroring UnifiedStorageMigrator:
+	// mirroring the migrate job's MigrationWorker:
 	//   - instance/unset targets always clean the whole namespace → delete-all.
 	//   - folder/folderless coexist with unmanaged resources and only delete on a
 	//     branch migration (the exported resources); a configured-branch migration

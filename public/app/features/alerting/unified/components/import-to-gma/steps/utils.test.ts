@@ -1,4 +1,17 @@
-import { canRunDryRun, isStep1Valid, validatePolicyTreeName } from './utils';
+import { skipToken } from '@reduxjs/toolkit/query/react';
+
+import { mockImportFormValues } from '../testUtils';
+import { type Step1Values } from '../types';
+
+import {
+  buildDryRunArgs,
+  buildRulesImportSpec,
+  canRunDryRun,
+  getRoutingTreeOptions,
+  isStep1Valid,
+  pickStep1Values,
+  validatePolicyTreeName,
+} from './utils';
 
 describe('validatePolicyTreeName', () => {
   it.each(['prometheus-prod', 'my-alertmanager', 'a', 'abc123', 'my.config.name', 'a-b.c-d', '0', '1abc2'])(
@@ -238,5 +251,174 @@ describe('canRunDryRun', () => {
         autoSyncNotificationsEnabled: false,
       })
     ).toBe(false);
+  });
+});
+
+describe('buildDryRunArgs', () => {
+  const yamlFile = new File(['route: {}'], 'am.yaml');
+  const base: Step1Values = {
+    policyTreeName: '',
+    notificationsSource: 'yaml',
+    notificationsDatasourceUID: undefined,
+    notificationsDatasourceName: null,
+    notificationsYamlFile: yamlFile,
+    notificationsTemplateFiles: [],
+    autoSyncNotificationsEnabled: false,
+  };
+
+  it('skips the dry run until a source is chosen', () => {
+    expect(buildDryRunArgs({ ...base, notificationsYamlFile: null }, undefined)).toBe(skipToken);
+  });
+
+  it('skips the dry run while two template files share a name', () => {
+    const templateFiles = [new File(['a'], 'same.tmpl'), new File(['b'], 'same.tmpl')];
+    expect(buildDryRunArgs({ ...base, notificationsTemplateFiles: templateFiles }, undefined)).toBe(skipToken);
+  });
+
+  it('sends a valid policy tree name along as the config identifier', () => {
+    const args = buildDryRunArgs({ ...base, policyTreeName: 'imported' }, undefined);
+
+    expect(args).toMatchObject({ source: 'yaml', configIdentifier: 'imported' });
+    // Compared by identity: toMatchObject would walk into the File.
+    expect(args !== skipToken && args.yamlFile).toBe(yamlFile);
+  });
+
+  it('leaves out a policy tree name that would be rejected', () => {
+    expect(buildDryRunArgs({ ...base, policyTreeName: 'Not Valid' }, undefined)).toMatchObject({
+      configIdentifier: undefined,
+    });
+  });
+
+  describe('with Auto-sync', () => {
+    const autoSync: Step1Values = {
+      ...base,
+      notificationsSource: 'datasource',
+      notificationsDatasourceUID: 'mimir-uid',
+      notificationsDatasourceName: 'Mimir',
+      notificationsYamlFile: null,
+      autoSyncNotificationsEnabled: true,
+      policyTreeName: 'typed-name',
+    };
+
+    it('waits until the name the sync will pick is known', () => {
+      expect(buildDryRunArgs(autoSync, undefined)).toBe(skipToken);
+    });
+
+    it('checks under the name the sync will pick, not the typed one', () => {
+      expect(buildDryRunArgs(autoSync, 'mimir-sync')).toMatchObject({
+        source: 'datasource',
+        datasourceName: 'Mimir',
+        configIdentifier: 'mimir-sync',
+      });
+    });
+  });
+});
+
+describe('pickStep1Values', () => {
+  it('keeps exactly the step 1 fields', () => {
+    const values = mockImportFormValues({
+      step1Completed: true,
+      policyTreeName: 'imported',
+      notificationsSource: 'datasource',
+      notificationsDatasourceUID: 'uid',
+      notificationsDatasourceName: 'Mimir',
+      autoSyncNotificationsEnabled: true,
+      rulesSource: 'yaml',
+      namespace: 'ns',
+    });
+
+    expect(pickStep1Values(values)).toEqual({
+      policyTreeName: 'imported',
+      notificationsSource: 'datasource',
+      notificationsDatasourceUID: 'uid',
+      notificationsDatasourceName: 'Mimir',
+      notificationsYamlFile: null,
+      notificationsTemplateFiles: [],
+      autoSyncNotificationsEnabled: true,
+    });
+  });
+});
+
+describe('getRoutingTreeOptions', () => {
+  const existing = [
+    { label: 'default', value: 'default' },
+    { label: 'other', value: 'other' },
+  ];
+
+  it('lists the trees the API knows when step 1 has not been completed', () => {
+    expect(getRoutingTreeOptions(existing, 'imported', false)).toEqual(existing);
+  });
+
+  it('offers the tree step 1 will create first, since the API does not know it yet', () => {
+    expect(getRoutingTreeOptions(existing, 'imported', true)).toEqual([
+      { label: 'imported', value: 'imported' },
+      ...existing,
+    ]);
+  });
+
+  it('does not list a tree twice when the API already knows it', () => {
+    expect(getRoutingTreeOptions(existing, 'other', true)).toEqual(existing);
+  });
+
+  it('adds nothing when step 1 will not create a tree', () => {
+    expect(getRoutingTreeOptions(existing, '', true)).toEqual(existing);
+  });
+});
+
+describe('buildRulesImportSpec', () => {
+  const file = new File(['groups: []'], 'rules.yaml');
+  const settings = mockImportFormValues({
+    selectedRoutingTree: 'imported',
+    targetDatasourceUID: 'prometheus-uid',
+    pauseAlertingRules: false,
+    pauseRecordingRules: true,
+    targetFolder: { uid: 'folder-uid', title: 'Folder' },
+  });
+  const dataSourceValues = { ...settings, rulesDatasourceUID: 'prometheus-uid', rulesDatasourceName: 'Prometheus' };
+  const yamlValues = {
+    ...settings,
+    rulesSource: 'yaml' as const,
+    rulesYamlFile: file,
+    yamlImportTargetDatasourceUID: 'yaml-target-uid',
+    yamlImportTargetDatasourceName: 'Target',
+  };
+
+  it('describes a data source import with its filters and settings', () => {
+    expect(buildRulesImportSpec({ ...dataSourceValues, namespace: 'ns', ruleGroup: 'group' })).toEqual({
+      type: 'datasource',
+      datasource: { uid: 'prometheus-uid', name: 'Prometheus' },
+      namespace: 'ns',
+      ruleGroup: 'group',
+      selectedRoutingTree: 'imported',
+      targetDatasourceUID: 'prometheus-uid',
+      targetFolder: { uid: 'folder-uid', title: 'Folder' },
+      pauseAlertingRules: false,
+      pauseRecordingRules: true,
+    });
+  });
+
+  it('uses the data source chosen for a YAML file, not one left over from before the source was switched', () => {
+    const spec = buildRulesImportSpec({
+      ...yamlValues,
+      rulesDatasourceUID: 'left-over-uid',
+      rulesDatasourceName: 'Left over',
+    });
+
+    expect(spec?.type === 'yaml' && spec.file).toBe(file);
+    expect(spec?.datasource).toEqual({ uid: 'yaml-target-uid', name: 'Target' });
+  });
+
+  it('does not ask a data source import for a YAML target', () => {
+    expect(buildRulesImportSpec({ ...dataSourceValues, yamlImportTargetDatasourceUID: undefined })).toBeDefined();
+  });
+
+  it.each([
+    ['no data source is chosen', { ...dataSourceValues, rulesDatasourceUID: undefined }],
+    ['no YAML file is chosen', { ...yamlValues, rulesYamlFile: null }],
+    ['a YAML file has no data source to run against', { ...yamlValues, yamlImportTargetDatasourceUID: undefined }],
+    ['there is no policy tree', { ...dataSourceValues, selectedRoutingTree: '' }],
+    ['there is no recording rules target', { ...dataSourceValues, targetDatasourceUID: undefined }],
+  ])('is undefined while %s', (_, values) => {
+    expect(buildRulesImportSpec(values)).toBeUndefined();
   });
 });

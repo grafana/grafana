@@ -47,16 +47,21 @@ var hiddenUsersSelector = metav1.LabelSelector{
 // getHiddenUsers returns the set of hidden user logins by querying either the
 // local ConfigProvider (single-tenant) or the remote setting.Service (multi-tenant).
 func (f *StoreWrapper) getHiddenUsers(ctx context.Context) (map[string]struct{}, error) {
-	if f.cfgProvider != nil {
-		cfg, err := f.cfgProvider.Get(ctx)
+	return ReadHiddenUsers(ctx, f.cfgProvider, f.settingService)
+}
+
+// ReadHiddenUsers returns the configured hidden logins for the request's tenant.
+func ReadHiddenUsers(ctx context.Context, cfgProvider configprovider.ConfigProvider, settingService settingsvc.Service) (map[string]struct{}, error) {
+	if cfgProvider != nil {
+		cfg, err := cfgProvider.Get(ctx)
 		if err != nil {
 			return nil, err
 		}
 		return cfg.HiddenUsers, nil
 	}
 
-	if f.settingService != nil {
-		settings, err := f.settingService.List(ctx, hiddenUsersSelector)
+	if settingService != nil {
+		settings, err := settingService.List(ctx, hiddenUsersSelector)
 		if err != nil {
 			return nil, err
 		}

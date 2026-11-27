@@ -1,12 +1,12 @@
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
-import { isIconName } from '@grafana/data';
+import { isIconName, type IconName } from '@grafana/data';
 
 const UserListTabSchema = z.object({
   id: z.string(),
   label: z.string(),
-  icon: z.string().refine(isIconName, { error: 'Unknown icon' }).optional(),
-  counter: z.number().optional(),
+  icon: z.optional(z.pipe(z.string(), z.custom<IconName>(isIconName, { error: 'Unknown icon' }))),
+  counter: z.optional(z.number()),
 });
 
 export type UserListTab = z.infer<typeof UserListTabSchema>;

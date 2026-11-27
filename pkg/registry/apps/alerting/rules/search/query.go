@@ -173,9 +173,9 @@ func parseLabelMatcher(s string) labelMatcher {
 // "key"/"key=value" terms and in/notin operators so a matcher survives the
 // request and resolves the same way on both backends.
 func labelMatcherRequirement(m labelMatcher) *searchv0.FilterPredicate {
-	operator := "In"
+	operator := searchv0.FilterOperatorIn
 	if labelMatcherIsNegated(m) {
-		operator = "NotIn"
+		operator = searchv0.FilterOperatorNotIn
 	}
 	return &searchv0.FilterPredicate{Field: fieldLabels, Operator: operator, Values: []string{labelTerm(m)}}
 }

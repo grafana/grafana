@@ -142,7 +142,7 @@ export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
   return 0;
 };
 
-export const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
+const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
   // compare milliseconds
   if (a.timeEpochMs > b.timeEpochMs) {
     return -1;
@@ -347,13 +347,17 @@ export const isLogsVolumeLimited = (dataFrames: DataFrame[]) => {
 };
 
 export const copyText = async (text: string, buttonRef: React.MutableRefObject<Element | null>) => {
-  if (navigator.clipboard && window.isSecureContext) {
-    return navigator.clipboard.writeText(text);
+  // The button can render in another window than this one, such as a Document Picture-in-Picture window. The browser
+  // only lets the focused window write to the clipboard, which is the one the button is in.
+  const buttonDocument = buttonRef.current?.ownerDocument ?? document;
+  const buttonWindow = buttonDocument.defaultView ?? window;
+  if (buttonWindow.navigator.clipboard && buttonWindow.isSecureContext) {
+    return buttonWindow.navigator.clipboard.writeText(text);
   } else {
     // Use a fallback method for browsers/contexts that don't support the Clipboard API.
     // See https://web.dev/async-clipboard/#feature-detection.
     // Use textarea so the user can copy multi-line content.
-    const textarea = document.createElement('textarea');
+    const textarea = buttonDocument.createElement('textarea');
     // Normally we'd append this to the body. However if we're inside a focus manager
     // from react-aria, we can't focus anything outside of the managed area.
     // Instead, let's append it to the button. Then we're guaranteed to be able to focus + copy.
@@ -361,7 +365,7 @@ export const copyText = async (text: string, buttonRef: React.MutableRefObject<E
     textarea.value = text;
     textarea.focus();
     textarea.select();
-    document.execCommand('copy');
+    buttonDocument.execCommand('copy');
     textarea.remove();
   }
 };
@@ -410,8 +414,12 @@ export function getLogLevelInfo(dataFrame: DataFrame, allDataFrames: DataFrame[]
   return { level, valueField, timeField };
 }
 
+/**
+ * Whether `target` is an element of any window. The logs can render in another window than this one, such as a
+ * Document Picture-in-Picture window, whose elements fail this window's `instanceof Element`.
+ */
 export function targetIsElement(target: EventTarget | null): target is Element {
-  return target instanceof Element;
+  return target !== null && 'nodeType' in target && target.nodeType === Node.ELEMENT_NODE;
 }
 
 export function createLogRowsMap() {

@@ -183,7 +183,6 @@ type PluginClient interface {
 	backend.QueryChunkedDataHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
-	backend.ConversionHandler
 }
 
 func NewDataSourceAPIBuilder(

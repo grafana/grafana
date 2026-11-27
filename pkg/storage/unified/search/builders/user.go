@@ -16,6 +16,7 @@ const (
 	USER_LAST_SEEN_AT          = "lastSeenAt"
 	USER_ROLE                  = "role"
 	USER_DISABLED              = "disabled"
+	USER_PROVISIONED           = "provisioned"
 	USER_EXTERNAL_AUTH_MODULES = "externalAuthModules"
 )
 

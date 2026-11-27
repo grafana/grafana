@@ -1,6 +1,14 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { NumberValueEditor, VarMappingNumberValueEditor } from './number';
+
+jest.mock('app/core/components/SuggestionsInput/getVariableSuggestions', () => ({
+  getVariableSuggestions: () => [
+    { value: 't', label: 't', origin: 'template' },
+    { value: 'other', label: 'other', origin: 'template' },
+  ],
+}));
 
 const baseItem = {
   settings: {},
@@ -227,5 +235,89 @@ describe('VarMappingNumberValueEditor', () => {
     fireEvent.blur(screen.getByRole('textbox'), { target: { value: '[[myVar]]' } });
 
     expect(onChange).toHaveBeenCalledWith('[[myVar]]');
+  });
+
+  it('lists dashboard variables on $ and writes the picked one as ${name}', async () => {
+    const onChange = jest.fn();
+    render(
+      <VarMappingNumberValueEditor value={5} onChange={onChange} item={varItem} context={{ data: [] }} id="n20" />
+    );
+
+    const input = screen.getByRole('textbox');
+    await userEvent.clear(input);
+    await userEvent.type(input, '$');
+    await userEvent.click(await screen.findByText('t'));
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenLastCalledWith('${t}');
+    expect(screen.getByRole('textbox')).toHaveValue('${t}');
+  });
+
+  it('opens the variable list with Ctrl+Space and picks with the keyboard', async () => {
+    const onChange = jest.fn();
+    render(<VarMappingNumberValueEditor value="" onChange={onChange} item={varItem} context={{ data: [] }} id="n21" />);
+
+    const input = screen.getByRole('textbox');
+    await userEvent.click(input);
+    await userEvent.keyboard('{Control>} {/Control}');
+    expect(await screen.findByText('other')).toBeInTheDocument();
+    await userEvent.keyboard('{ArrowDown}{Enter}');
+
+    expect(onChange).toHaveBeenLastCalledWith('${other}');
+  });
+
+  it('shows a value that changes from outside, and reverts text that is not a number', () => {
+    const onChange = jest.fn();
+    const { rerender } = render(
+      <VarMappingNumberValueEditor value={5} onChange={onChange} item={varItem} context={{ data: [] }} id="n22" />
+    );
+
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'abc' } });
+    fireEvent.blur(screen.getByRole('textbox'));
+    expect(screen.getByRole('textbox')).toHaveValue('5');
+
+    rerender(
+      <VarMappingNumberValueEditor value={7} onChange={onChange} item={varItem} context={{ data: [] }} id="n22" />
+    );
+    expect(screen.getByRole('textbox')).toHaveValue('7');
+  });
+
+  it('keeps a lone $ as typed without storing it', () => {
+    const onChange = jest.fn();
+    render(
+      <VarMappingNumberValueEditor value={5} onChange={onChange} item={varItem} context={{ data: [] }} id="n13" />
+    );
+
+    fireEvent.blur(screen.getByRole('textbox'), { target: { value: '$' } });
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('rejects typed numbers out of the settings range, like the number input', () => {
+    const onChange = jest.fn();
+    const ranged = { settings: { min: 0, max: 10 } } as typeof varItem;
+    render(<VarMappingNumberValueEditor value={5} onChange={onChange} item={ranged} context={{ data: [] }} id="n14" />);
+
+    fireEvent.blur(screen.getByRole('textbox'), { target: { value: '50' } });
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByText('Out of range. Range: 0 to 10')).toBeInTheDocument();
+
+    fireEvent.blur(screen.getByRole('textbox'), { target: { value: '8' } });
+    expect(onChange).toHaveBeenCalledWith(8);
+    expect(screen.queryByText('Out of range. Range: 0 to 10')).not.toBeInTheDocument();
+  });
+
+  it('commits once for Enter followed by blur', () => {
+    const onChange = jest.fn();
+    render(
+      <VarMappingNumberValueEditor value={5} onChange={onChange} item={varItem} context={{ data: [] }} id="n15" />
+    );
+
+    const input = screen.getByRole('textbox');
+    fireEvent.change(input, { target: { value: '6' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    fireEvent.blur(input);
+
+    expect(onChange).toHaveBeenCalledTimes(1);
   });
 });

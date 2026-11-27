@@ -25,6 +25,7 @@ import {
   getLinksSupplier,
   setDynamicConfigValue,
   setFieldConfigDefaults,
+  setVarMappingsEnabledResolver,
   validateFieldConfig,
 } from './fieldOverrides';
 import { getFieldDisplayName } from './fieldState';
@@ -599,6 +600,9 @@ describe('applyFieldOverrides', () => {
     // `currentConfig == null` gate always lets defaults (and their varMappings) run.
     const numField = toDataFrame([{ value: 10 }, { value: 20 }]);
 
+    beforeAll(() => setVarMappingsEnabledResolver(() => true));
+    afterAll(() => setVarMappingsEnabledResolver(() => false));
+
     function makeReplaceVariables(variables: Record<string, unknown>): InterpolateFunction {
       // Mimics the function-format calling convention shared by sceneGraph.interpolate and
       // templateSrv.replace: the custom format function receives the raw variable value, which
@@ -641,6 +645,35 @@ describe('applyFieldOverrides', () => {
       expect(config.decimals).toEqual(3); // $missing is an unknown variable -> fallback to stored value
       // Resolved field configs never carry varMappings
       expect(config.varMappings).toBeUndefined();
+    });
+
+    describe('while resolution is turned off', () => {
+      beforeAll(() => setVarMappingsEnabledResolver(() => false));
+      afterAll(() => setVarMappingsEnabledResolver(() => true));
+
+      it('ignores varMappings from defaults and overrides and keeps the stored values', () => {
+        const data = applyFieldOverrides({
+          data: [numField],
+          fieldConfig: {
+            defaults: { min: 0, varMappings: { min: '$minVar' } },
+            overrides: [
+              {
+                matcher: { id: FieldMatcherID.byName, options: 'value' },
+                properties: [
+                  { id: 'max', value: 100 },
+                  { id: 'varMappings.max', value: '$maxVar' },
+                ],
+              },
+            ],
+          },
+          replaceVariables: makeReplaceVariables({ minVar: '5', maxVar: '50' }),
+          theme: createTheme(),
+          fieldConfigRegistry: customFieldRegistry,
+        })[0];
+
+        expect(data.fields[0].config.min).toEqual(0);
+        expect(data.fields[0].config.max).toEqual(100);
+      });
     });
 
     it('accepts a field config without defaults', () => {

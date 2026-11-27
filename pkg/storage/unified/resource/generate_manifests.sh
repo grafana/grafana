@@ -21,12 +21,21 @@ EXTERNAL_MANIFESTS="
 alerting_historian github.com/grafana/alerting/apps/historian/pkg/apis
 "
 
+# Manifest packages under ./apps that are deliberately not registered, one
+# package directory per line.
+EXCLUDED_MANIFESTS="
+apps/alerting/alertenrichment/pkg/generated/manifestdata
+"
+
 # Find all paths and store them
 find apps -name '*.go' 2>/dev/null | \
   xargs grep -l 'func LocalManifest() app.Manifest' 2>/dev/null | \
-  $AWK '{
+  $AWK -v excluded="$EXCLUDED_MANIFESTS" '
+  BEGIN { n = split(excluded, lines, "\n"); for (i = 1; i <= n; i++) if (lines[i] != "") skip[lines[i]] = 1 }
+  {
     path = $1
     sub(/\/[^\/]+\.go$/, "", path)
+    if (path in skip) next
     if (match(path, /^apps\/(.+)\/pkg/, arr)) {
       print path
     }

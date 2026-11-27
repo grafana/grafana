@@ -4,6 +4,12 @@ name: Build Go (matrix)
 
 on:
   pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+      - converted_to_draft
     paths:
       - '**/go.mod'
       - '**/go.sum'
@@ -37,7 +43,7 @@ jobs:
   build-go:
     # Run on `grafana/grafana` pushes, or on pull requests, to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
-    name: Build Go (${{ matrix.name }})
+    name: Build Go (${{ matrix.goos }}/${{ matrix.arch }})
     runs-on: ubuntu-x64-large
     permissions:
       contents: read
@@ -45,36 +51,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: windows/amd64
-            goos: windows
-            goarch: amd64
-          - name: windows/arm64
-            goos: windows
-            goarch: arm64
-          - name: darwin/arm64
-            goos: darwin
-            goarch: arm64
-          - name: darwin/amd64
-            goos: darwin
-            goarch: amd64
-          - name: linux/armv6
-            goos: linux
-            goarch: arm
-            goarm: "6"
-          - name: linux/armv7
-            goos: linux
-            goarch: arm
-            goarm: "7"
-          - name: linux/s390x
-            goos: linux
-            goarch: s390x
-          - name: linux/amd64
-            goos: linux
-            goarch: amd64
-          - name: linux/arm64
-            goos: linux
-            goarch: arm64
+        goos: [windows, darwin, linux]
+        arch: ${{ fromJSON(github.event.pull_request.draft == true && '["amd64"]' || '["amd64", "arm64"]') }}
+        include: >-
+          ${{ fromJSON(github.event.pull_request.draft == true && '[]' || '[
+            {"goos": "linux", "arch": "armv6", "goarch": "arm", "goarm": "6"},
+            {"goos": "linux", "arch": "armv7", "goarch": "arm", "goarm": "7"},
+            {"goos": "linux", "arch": "s390x"}
+          ]') }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -96,12 +80,12 @@ jobs:
         uses: ./.github/actions/setup-enterprise
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
-      - name: Build Go (Enterprise, ${{ matrix.name }})
+      - name: Build Go (Enterprise, ${{ matrix.goos }}/${{ matrix.arch }})
         if: steps.setup-enterprise.outcome == 'success'
         env:
           CGO_ENABLED: "0"
           GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
+          GOARCH: ${{ matrix.goarch || matrix.arch }}
           GOARM: ${{ matrix.goarm }}
         run: |
           make build-go
@@ -117,12 +101,12 @@ jobs:
         uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - name: Build Go (OSS, ${{ matrix.name }})
+      - name: Build Go (OSS, ${{ matrix.goos }}/${{ matrix.arch }})
         if: ${{ !cancelled() && (steps.setup-enterprise.outcome == 'skipped' || steps.checkout-oss.outcome == 'success') }}
         env:
           CGO_ENABLED: "0"
           GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
+          GOARCH: ${{ matrix.goarch || matrix.arch }}
           GOARM: ${{ matrix.goarm }}
         run: |
           make build-go
@@ -143,12 +127,16 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v3.0.0
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+      # Packages stub artifacts, so it compiles almost nothing. Saving its nearly empty build
+      # cache would take the shared GOCACHE key, and setup-go does not save again on a hit.
       - uses: ./.github/actions/setup-go
+        with:
+          cache-build: 'false'
       - uses: ./.github/actions/setup-fpm
       - name: Create stub artifacts
         run: |

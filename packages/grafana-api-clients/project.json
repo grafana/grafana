@@ -2,7 +2,7 @@
   "name": "@grafana/api-clients",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
-  "tags": ["scope:package", "type:runtime"],
+  "tags": ["scope:package", "type:runtime", "release:grafana"],
   "targets": {
     "build": {}
   }

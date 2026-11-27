@@ -15,4 +15,14 @@ const [isOpen, setIsOpen] = useState(false);
 </Collapse>;
 ```
 
+### Data attributes
+
+`Collapse` and `ControlledCollapse` render any `data-*` attribute, for example `data-analytics-id`, on the toggle button.
+
+```jsx
+<ControlledCollapse label="Query options" data-analytics-id="query_options_toggle">
+  <p>Panel data</p>
+</ControlledCollapse>
+```
+
 <ArgTypes of={Collapse} />

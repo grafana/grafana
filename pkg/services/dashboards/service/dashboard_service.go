@@ -1886,6 +1886,8 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 	return dr.UnstructuredToLegacyDashboard(ctx, out, orgID)
 }
 
+const includeDraftsSelector = utils.LabelKeyIncludeDrafts + "=true"
+
 func (dr *DashboardServiceImpl) deleteAllDashboardThroughK8s(ctx context.Context, orgID int64) error {
 	err := dr.k8sclient.DeleteCollection(ctx, orgID, v1.ListOptions{})
 	if err == nil || !apierrors.IsMethodNotSupported(err) {
@@ -1900,6 +1902,8 @@ func (dr *DashboardServiceImpl) deleteAllDashboardThroughK8s(ctx context.Context
 		list, err := dr.k8sclient.List(ctx, orgID, v1.ListOptions{
 			Limit:    listAllDashboardsLimit,
 			Continue: continueToken,
+			// Drafts are hidden from lists by default, but org deletion must remove them too.
+			LabelSelector: includeDraftsSelector,
 		})
 		if err != nil {
 			return err
@@ -1951,6 +1955,8 @@ func (dr *DashboardServiceImpl) listDashboardsThroughK8s(ctx context.Context, or
 		out, err := dr.k8sclient.List(ctx, orgID, v1.ListOptions{
 			Limit:    listAllDashboardsLimit,
 			Continue: continueToken,
+			// Callers such as the cloud migration need every dashboard, drafts included.
+			LabelSelector: includeDraftsSelector,
 		})
 		if err != nil {
 			return nil, err

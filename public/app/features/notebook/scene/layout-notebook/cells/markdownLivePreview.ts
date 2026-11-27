@@ -1,6 +1,13 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import { syntaxTree } from '@codemirror/language';
-import { type EditorState, type Extension, type Range, type SelectionRange } from '@codemirror/state';
+import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
+import {
+  EditorSelection,
+  type ChangeSpec,
+  type EditorState,
+  type Extension,
+  type Range,
+  type SelectionRange,
+} from '@codemirror/state';
 import {
   Decoration,
   type DecorationSet,
@@ -18,7 +25,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { toggleSurround } from 'app/plugins/panel/text/v2/editor/editorCommands';
 
-import { headingStyles } from './markdownHeadingStyles';
+import { headingBoldWeight, headingStyles } from './markdownHeadingStyles';
 
 // Inline marks the toolbar (and, later, other callers) can ask "is the selection already X" about.
 // Kept here, next to the decoration logic that walks the same tree, so there is one implementation of
@@ -55,6 +62,165 @@ export function findEnclosingMarkNode(tree: Tree, pos: number, typeNames: readon
     }
   }
   return undefined;
+}
+
+// Containers (quotes, list items) can nest and hold a heading, but nothing nests inside a heading.
+const BLOCK_PREFIX = /^(?:[ \t]*(?:>[ \t]?|(?:[-+*]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?))*(?:[ \t]{0,3}#{1,6}[ \t]+)?/;
+
+/**
+ * The part of the main selection an inline mark should wrap. Live preview hides a line's block prefix
+ * (`## `, `> `, `- [ ] `) and snaps the cursor past it, so a whole-line selection still starts at the
+ * line start and would otherwise wrap the hidden prefix, breaking the block. Starts after that prefix
+ * and drops a trailing line break (a triple-click selects it too). Trailing spaces are kept: inline
+ * code may end in one, and trimming it would stop an existing span from being recognised and
+ * unwrapped. Undefined when there is nothing to wrap or the selection is in code, where the text is
+ * literal.
+ */
+export function inlineMarkRange(state: EditorState): { from: number; to: number } | undefined {
+  const { from, to } = state.selection.main;
+  if (from === to || findEnclosingMarkNode(syntaxTree(state), from, ['FencedCode', 'CodeBlock'])) {
+    return undefined;
+  }
+  const line = state.doc.lineAt(from);
+  const prefix = BLOCK_PREFIX.exec(line.text);
+  const start = Math.max(from, line.from + (prefix?.[0].length ?? 0));
+  const end = from + state.sliceDoc(from, to).replace(/[\r\n]+$/, '').length;
+  return start < end ? { from: start, to: end } : undefined;
+}
+
+export function toggleSurroundInline(view: EditorView, before: string, after = before): void {
+  const range = inlineMarkRange(view.state);
+  const { anchor, head } = view.state.selection.main;
+  if (range && (range.from !== Math.min(anchor, head) || range.to !== Math.max(anchor, head))) {
+    view.dispatch({
+      selection:
+        anchor > head ? EditorSelection.range(range.to, range.from) : EditorSelection.range(range.from, range.to),
+    });
+  }
+  toggleSurround(view, before, after);
+}
+
+export type InlineMarkKind = 'bold' | 'italic' | 'strikethrough' | 'code';
+
+const INLINE_MARKS: Record<InlineMarkKind, { node: string; marker: string }> = {
+  bold: { node: BOLD_NODE, marker: '**' },
+  italic: { node: ITALIC_NODE, marker: '*' },
+  strikethrough: { node: STRIKETHROUGH_NODE, marker: '~~' },
+  code: { node: INLINE_CODE_NODE, marker: '`' },
+};
+
+/** Opening and closing delimiter children of an inline mark node, if it has both. */
+function delimiterRanges(node: SyntaxNode): Array<{ from: number; to: number }> {
+  const marks = node.getChildren(INLINE_MARK_CLOSING_TYPES[node.name]);
+  if (marks.length < 2) {
+    return [];
+  }
+  return [marks[0], marks[marks.length - 1]];
+}
+
+/**
+ * Toggles an inline mark (bold, italic, strikethrough, code) over the selection. Unlike plain
+ * `toggleSurround`, the selection is first widened to cover any inline mark whose delimiters it touches,
+ * so selecting just a leading or trailing `**` unwraps the span instead of piling more asterisks on.
+ * A selection holding several spans of the target mark merges them into one.
+ */
+export function toggleInlineMark(view: EditorView, kind: InlineMarkKind) {
+  const { state } = view;
+  const { node: targetName, marker } = INLINE_MARKS[kind];
+  const main = state.selection.main;
+  // Outside the block prefix; undefined for an empty selection or literal code, where plain wrapping applies.
+  const range = inlineMarkRange(state);
+  if (!range) {
+    toggleSurround(view, marker);
+    return;
+  }
+
+  const tree = ensureSyntaxTree(state, state.doc.length, 50) ?? syntaxTree(state);
+  const inlineNames = Object.keys(INLINE_MARK_CLOSING_TYPES);
+  let { from, to } = range;
+
+  // Widening can pull in further nodes (e.g. `***x***`), so repeat until nothing changes.
+  for (let changed = true; changed; ) {
+    changed = false;
+    tree.iterate({
+      from,
+      to,
+      enter: (ref) => {
+        if (!inlineNames.includes(ref.name) || (ref.from >= from && ref.to <= to)) {
+          return;
+        }
+        const overlapsDelimiter = delimiterRanges(ref.node).some((d) => d.from < to && from < d.to);
+        if (overlapsDelimiter) {
+          from = Math.min(from, ref.from);
+          to = Math.max(to, ref.to);
+          changed = true;
+        }
+      },
+    });
+  }
+
+  let enclosing: SyntaxNode | undefined;
+  const contained: SyntaxNode[] = [];
+  const delimiters: Array<{ from: number; to: number }> = [];
+  tree.iterate({
+    from,
+    to,
+    enter: (ref) => {
+      if (inlineNames.includes(ref.name)) {
+        delimiters.push(...delimiterRanges(ref.node));
+      }
+      if (ref.name !== targetName) {
+        return;
+      }
+      if (ref.from <= from && to <= ref.to) {
+        enclosing = ref.node;
+      } else if (ref.from >= from && ref.to <= to) {
+        contained.push(ref.node);
+      }
+    },
+  });
+
+  const changes: ChangeSpec[] = [];
+  const unwrap = (node: SyntaxNode) => {
+    for (const d of delimiterRanges(node)) {
+      changes.push({ from: d.from, to: d.to });
+    }
+  };
+
+  // Only actual delimiters count: a literal `_` next to the span is content, so the selection gets wrapped.
+  const onlyDelimiters = (start: number, end: number) => {
+    for (let pos = start; pos < end; ) {
+      const d = delimiters.find((r) => r.from <= pos && pos < r.to);
+      if (!d) {
+        return false;
+      }
+      pos = d.to;
+    }
+    return true;
+  };
+  const [only] = contained;
+  const onlyMarkedSpan =
+    !enclosing && contained.length === 1 && onlyDelimiters(from, only.from) && onlyDelimiters(only.to, to);
+
+  if (enclosing) {
+    unwrap(enclosing);
+  } else if (onlyMarkedSpan) {
+    unwrap(only);
+  } else {
+    contained.forEach(unwrap);
+    changes.push({ from, insert: marker }, { from: to, insert: marker });
+  }
+
+  const changeSet = state.changes(changes);
+  view.dispatch({
+    changes: changeSet,
+    selection:
+      main.anchor > main.head
+        ? EditorSelection.range(changeSet.mapPos(to, -1), changeSet.mapPos(from, 1))
+        : EditorSelection.range(changeSet.mapPos(from, 1), changeSet.mapPos(to, -1)),
+    userEvent: 'input',
+  });
+  view.focus();
 }
 
 /**
@@ -599,6 +765,12 @@ function buildEditorStyles(theme: GrafanaTheme2): { theme: Extension; classes: M
     [`.${classes.bold}`]: {
       fontWeight: theme.typography.fontWeightBold,
     },
+    [`.${classes.heading1} .${classes.bold}`]: { fontWeight: headingBoldWeight(theme.typography.h1, theme.typography) },
+    [`.${classes.heading2} .${classes.bold}`]: { fontWeight: headingBoldWeight(theme.typography.h2, theme.typography) },
+    [`.${classes.heading3} .${classes.bold}`]: { fontWeight: headingBoldWeight(theme.typography.h3, theme.typography) },
+    [`.${classes.heading4} .${classes.bold}`]: { fontWeight: headingBoldWeight(theme.typography.h4, theme.typography) },
+    [`.${classes.heading5} .${classes.bold}`]: { fontWeight: headingBoldWeight(theme.typography.h5, theme.typography) },
+    [`.${classes.heading6} .${classes.bold}`]: { fontWeight: headingBoldWeight(theme.typography.h6, theme.typography) },
     [`.${classes.italic}`]: {
       fontStyle: 'italic',
     },
@@ -659,14 +831,14 @@ function buildKeymap(): readonly KeyBinding[] {
     {
       key: 'Mod-b',
       run: (view) => {
-        toggleSurround(view, '**');
+        toggleInlineMark(view, 'bold');
         return true;
       },
     },
     {
       key: 'Mod-i',
       run: (view) => {
-        toggleSurround(view, '*');
+        toggleInlineMark(view, 'italic');
         return true;
       },
     },
@@ -675,11 +847,11 @@ function buildKeymap(): readonly KeyBinding[] {
 
 export interface MarkdownLivePreview {
   /**
-   * Pass as CodeMirrorEditor's dedicated `theme` prop, not layered into `extensions` — see the
+   * Pass as InternalCodeMirrorEditor's dedicated `theme` prop, not layered into `extensions` — see the
    * comment inside buildEditorStyles for why a layered theme can't reliably win against the default.
    */
   theme: Extension;
-  /** Pass as CodeMirrorEditor's `extensions` prop, alongside anything else (e.g. a focus request). */
+  /** Pass as InternalCodeMirrorEditor's `extensions` prop, alongside anything else (e.g. a focus request). */
   extensions: Extension;
 }
 

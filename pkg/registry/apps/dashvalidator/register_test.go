@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // mockAttributes implements authorizer.Attributes for testing.
@@ -25,6 +27,8 @@ func (m *mockAttributes) GetVerb() string {
 }
 
 func TestGetAuthorizer(t *testing.T) {
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagDashboardValidatorApp)
+
 	// Use real AccessControl evaluator — this tests actual permission evaluation
 	// against the user's permission map, not mocked behavior.
 	ac := acimpl.ProvideAccessControl(nil)
@@ -43,7 +47,7 @@ func TestGetAuthorizer(t *testing.T) {
 			ctx: identity.WithRequester(
 				context.TODO(),
 				&identity.StaticRequester{
-					OrgRole: identity.RoleAdmin,
+					OrgRole: authlib.RoleAdmin,
 					UserID:  1,
 					OrgID:   1,
 					Permissions: map[int64]map[string][]string{
@@ -65,7 +69,7 @@ func TestGetAuthorizer(t *testing.T) {
 			ctx: identity.WithRequester(
 				context.TODO(),
 				&identity.StaticRequester{
-					OrgRole: identity.RoleEditor,
+					OrgRole: authlib.RoleEditor,
 					UserID:  1,
 					OrgID:   1,
 					Permissions: map[int64]map[string][]string{
@@ -86,7 +90,7 @@ func TestGetAuthorizer(t *testing.T) {
 			ctx: identity.WithRequester(
 				context.TODO(),
 				&identity.StaticRequester{
-					OrgRole: identity.RoleViewer,
+					OrgRole: authlib.RoleViewer,
 					UserID:  1,
 					OrgID:   1,
 					Permissions: map[int64]map[string][]string{
@@ -107,7 +111,7 @@ func TestGetAuthorizer(t *testing.T) {
 			ctx: identity.WithRequester(
 				context.TODO(),
 				&identity.StaticRequester{
-					OrgRole: identity.RoleNone,
+					OrgRole: authlib.RoleNone,
 					UserID:  1,
 					OrgID:   1,
 					Permissions: map[int64]map[string][]string{
@@ -128,7 +132,7 @@ func TestGetAuthorizer(t *testing.T) {
 			ctx: identity.WithRequester(
 				context.TODO(),
 				&identity.StaticRequester{
-					OrgRole: identity.RoleNone,
+					OrgRole: authlib.RoleNone,
 					UserID:  1,
 					OrgID:   1,
 					Permissions: map[int64]map[string][]string{
@@ -148,7 +152,7 @@ func TestGetAuthorizer(t *testing.T) {
 			ctx: identity.WithRequester(
 				context.TODO(),
 				&identity.StaticRequester{
-					OrgRole: identity.RoleEditor,
+					OrgRole: authlib.RoleEditor,
 					UserID:  1,
 					OrgID:   1,
 					Permissions: map[int64]map[string][]string{
@@ -200,4 +204,33 @@ type authorizerTestCase struct {
 	expectedDecision authorizer.Decision
 	expectedReason   string
 	expectErr        bool
+}
+
+func TestGetAuthorizer_FlagDisabled(t *testing.T) {
+	featuremgmt.WithDisabledFlags(t, featuremgmt.FlagDashboardValidatorApp)
+	ac := acimpl.ProvideAccessControl(nil)
+
+	runAuthorizerTests(t, ac, []authorizerTestCase{
+		{
+			name: "authenticated admin is denied when the flag is off",
+			ctx: identity.WithRequester(
+				context.TODO(),
+				&identity.StaticRequester{
+					OrgRole: authlib.RoleAdmin,
+					UserID:  1,
+					OrgID:   1,
+					Permissions: map[int64]map[string][]string{
+						1: {
+							datasources.ActionRead:            {"datasources:*"},
+							datasources.ActionQuery:           {"datasources:*"},
+							dashboards.ActionDashboardsCreate: {"dashboards:*"},
+						},
+					},
+				},
+			),
+			attr:             &mockAttributes{verb: "create"},
+			expectedDecision: authorizer.DecisionDeny,
+			expectedReason:   "not enabled",
+		},
+	})
 }

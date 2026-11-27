@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 
+	authlib "github.com/grafana/authlib/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -78,6 +79,6 @@ func (auth roleAuthorizer) EvaluateConditions(_ context.Context, _ authorizer.Co
 	return authorizer.DecisionDeny, "", authorizer.ErrorConditionEvaluationNotSupported
 }
 
-func errorMessageForGrafanaOrgRole(orgRole identity.RoleType, a authorizer.Attributes) string {
+func errorMessageForGrafanaOrgRole(orgRole authlib.RoleType, a authorizer.Attributes) string {
 	return fmt.Sprintf("Grafana org role (%s) didn't allow %s access on requested resource=%s, path=%s", orgRole, a.GetVerb(), a.GetResource(), a.GetPath())
 }

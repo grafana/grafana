@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -50,24 +51,37 @@ var userAccessControlChecks = []accessControlCheck{
 	{action: "users.roles:read", group: iamv0.GROUP, resource: "rolebindings", verb: utils.VerbList},
 }
 
+// AuthLabelProvider resolves the most recently used auth module per user.
+type AuthLabelProvider interface {
+	GetUsersRecentlyUsedLabel(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error)
+}
+
 type SearchHandler struct {
 	log          log.Logger
 	client       *dualwrite.Selector[SearchBackend]
 	tracer       trace.Tracer
 	accessClient authlib.AccessClient
+	authLabel    AuthLabelProvider
 }
 
-func NewSearchHandler(tracer trace.Tracer, searchClient *dualwrite.Selector[SearchBackend], accessClient authlib.AccessClient) *SearchHandler {
+func NewSearchHandler(tracer trace.Tracer, searchClient *dualwrite.Selector[SearchBackend], accessClient authlib.AccessClient, authLabels AuthLabelProvider) *SearchHandler {
 	return &SearchHandler{
 		client:       searchClient,
 		log:          log.New("grafana-apiserver.users.search"),
 		tracer:       tracer,
 		accessClient: accessClient,
+		authLabel:    authLabels,
 	}
 }
 
-func (s *SearchHandler) GetAPIRoutes(defs map[string]k8scommon.OpenAPIDefinition) *builder.APIRoutes {
-	searchResults := defs["github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearchUsers"].Schema
+func (s *SearchHandler) GetAPIRoutes(_ map[string]k8scommon.OpenAPIDefinition) *builder.APIRoutes {
+	// Reference the component schema, as the definitions are built without a ref resolver
+	// and inlining one would drop the nested hit type.
+	searchResults := spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Ref: spec.MustCreateRef("#/components/schemas/" + iamv0.GetSearchUsersResponse{}.OpenAPIModelName()),
+		},
+	}
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
@@ -205,13 +219,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]k8scommon.OpenAPIDefinition
 							},
 							Responses: &spec3.Responses{
 								ResponsesProps: spec3.ResponsesProps{
-									Default: &spec3.Response{
-										ResponseProps: spec3.ResponseProps{
-											Description: "Default OK response",
-											Content: map[string]*spec3.MediaType{
-												"application/json": {
-													MediaTypeProps: spec3.MediaTypeProps{
-														Schema: &searchResults,
+									StatusCodeResponses: map[int]*spec3.Response{
+										200: {
+											ResponseProps: spec3.ResponseProps{
+												Description: "OK",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &searchResults,
+														},
 													},
 												},
 											},
@@ -301,6 +317,8 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.addAuthLabels(ctx, result.Hits)
+
 	if queryParams.Get("accesscontrol") == "true" && s.accessClient != nil {
 		if err := s.stampAccessControl(ctx, requester, result.Hits); err != nil {
 			span.RecordError(err)
@@ -353,6 +371,34 @@ func (s *SearchHandler) stampAccessControl(ctx context.Context, requester identi
 	}
 
 	return nil
+}
+
+func (s *SearchHandler) addAuthLabels(ctx context.Context, hits []iamv0.GetSearchUsersUserHit) {
+	if s.authLabel == nil || len(hits) == 0 {
+		return
+	}
+
+	ids := make([]int64, 0, len(hits))
+	for _, hit := range hits {
+		if hit.InternalId > 0 {
+			ids = append(ids, hit.InternalId)
+		}
+	}
+	if len(ids) == 0 {
+		return
+	}
+
+	modules, err := s.authLabel.GetUsersRecentlyUsedLabel(ctx, login.GetUserLabelsQuery{UserIDs: ids})
+	if err != nil {
+		s.log.Warn("failed to get user auth labels", "error", err)
+		return
+	}
+
+	for i := range hits {
+		if module, ok := modules[hits[i].InternalId]; ok {
+			hits[i].AuthLabels = []string{login.GetAuthProviderLabel(module)}
+		}
+	}
 }
 
 func (s *SearchHandler) write(w http.ResponseWriter, obj any) {

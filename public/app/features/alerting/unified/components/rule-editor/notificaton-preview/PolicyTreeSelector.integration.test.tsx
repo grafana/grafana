@@ -3,7 +3,7 @@ import { HttpResponse, http } from 'msw';
 import { type ReactNode } from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
+import { screen, waitFor, within } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { config, setPluginLinksHook } from '@grafana/runtime';
@@ -84,8 +84,6 @@ const selectFolderAndGroup = async (user: UserEvent) => {
   const folderOption = await within(folderPicker).findByLabelText(FOLDER_TITLE_HAPPY_PATH);
   await user.click(folderOption);
 
-  await user.click(await screen.findByRole('radio', { name: /use groups \(legacy\)/i }));
-
   const groupInput = await ui.inputs.group.find();
   const groupCombobox = await byRole('combobox').find(groupInput);
   await user.click(groupCombobox);
@@ -116,6 +114,7 @@ const grantAllPermissions = () => {
     AccessControlAction.DataSourcesRead,
     AccessControlAction.DataSourcesWrite,
     AccessControlAction.DataSourcesCreate,
+    AccessControlAction.FoldersCreate,
     AccessControlAction.FoldersWrite,
     AccessControlAction.FoldersRead,
     AccessControlAction.AlertingRuleExternalRead,
@@ -126,12 +125,9 @@ const grantAllPermissions = () => {
 };
 
 describe('PolicyTreeSelector', () => {
-  testWithFeatureToggles({ enable: ['alerting.rulesAPIV2'] });
-
   beforeEach(() => {
     localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
     contextSrv.isEditor = true;
-    contextSrv.hasEditPermissionInFolders = true;
     setAlertmanagerChoices(AlertmanagerChoice.Internal, 1);
     grantAllPermissions();
   });

@@ -1,11 +1,14 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
 import { generatedAPI } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
 import { type FilterIssue } from '../rule-search/parser';
 import { getRejectionIssues } from '../rule-search/searchRejection';
+import { type RuleSearchApiArgs } from '../rule-search/sharedRuleFilter';
 import { type RuleListMode } from '../rule-search/useRuleListSearchState';
-import { type RuleSearchPage, fetchRuleSearchPage, useRuleSearchResult } from '../shared/ruleSearchPage';
+import { useRuleSearchApiArgs, withFolderLookup } from '../rule-search/useRuleSearchApiArgs';
+import { type RuleSearchPage, ruleSearchPageQueryFn, useRuleSearchResult } from '../shared/ruleSearchPage';
 
 import { type RecordingRuleFilter } from './recordingRuleFilters';
 import { type RecordingRuleSearchHit, recordingRuleSearchHitSchema } from './recordingRuleSearchHit';
@@ -19,7 +22,7 @@ const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
   endpoints: (build) => ({
     searchRecordingRules: build.infiniteQuery<
       RuleSearchPage<RecordingRuleSearchHit>,
-      RecordingRuleFilter,
+      RuleSearchApiArgs<RecordingRuleFilter>,
       string | undefined
     >({
       infiniteQueryOptions: {
@@ -28,18 +31,15 @@ const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
       },
       // Results are a view of the current page only: leaving it drops them, and coming back searches again.
       keepUnusedDataFor: 0,
-      queryFn: ({ queryArg, pageParam }, { dispatch }) =>
-        fetchRuleSearchPage({
-          request: dispatch(
-            generatedAPI.endpoints.listRecordingRuleSearchRulesV0Alpha1.initiate(
-              { listRecordingRuleSearchRulesV0Alpha1RequestBody: buildRecordingRuleSearchQuery(queryArg, pageParam) },
-              // forceRefetch: a page refetch must not reuse an earlier answer for the same page.
-              { subscribe: false, forceRefetch: true }
-            )
-          ),
-          itemSchema: recordingRuleSearchHitSchema,
+      queryFn: ruleSearchPageQueryFn({
+        kind: 'recording',
+        search: generatedAPI.endpoints.listRecordingRuleSearchRulesV0Alpha1,
+        searchArg: (apiArgs, continueToken) => ({
+          listRecordingRuleSearchRulesV0Alpha1RequestBody: buildRecordingRuleSearchQuery(apiArgs, continueToken),
         }),
-      providesTags: ['RecordingRule'],
+        itemSchema: recordingRuleSearchHitSchema,
+      }),
+      providesTags: ['RecordingRule', 'RuleSequence'],
     }),
   }),
 });
@@ -47,7 +47,11 @@ const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
 const { useSearchRecordingRulesInfiniteQuery } = recordingRuleSearchAPI;
 
 export function useRecordingRuleSearch(filter: RecordingRuleFilter) {
-  return useRuleSearchResult(useSearchRecordingRulesInfiniteQuery(filter));
+  const folderLookup = useRuleSearchApiArgs('recording', filter);
+  return withFolderLookup(
+    folderLookup,
+    useRuleSearchResult(useSearchRecordingRulesInfiniteQuery(folderLookup.apiArgs ?? skipToken))
+  );
 }
 
 /**
@@ -60,9 +64,10 @@ export function useRecordingRuleSearchRejection(
 ): FilterIssue[] {
   // There is no List search in Folders mode or for a query that doesn't parse, so skip rather than send one.
   const skip = parseIssues.length > 0 || mode === 'folders';
-  const { error } = useSearchRecordingRulesInfiniteQuery(filter, { skip });
+  const { apiArgs } = useRuleSearchApiArgs('recording', filter, { skip });
+  const { error } = useSearchRecordingRulesInfiniteQuery(apiArgs ?? skipToken);
   return useMemo(
-    () => (skip ? [] : (getRejectionIssues(error, buildRecordingRuleLeaves(filter)) ?? [])),
-    [skip, error, filter]
+    () => (apiArgs ? (getRejectionIssues(error, buildRecordingRuleLeaves(apiArgs)) ?? []) : []),
+    [error, apiArgs]
   );
 }

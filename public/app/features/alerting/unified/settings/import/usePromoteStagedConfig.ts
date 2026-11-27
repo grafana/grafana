@@ -106,7 +106,7 @@ export function usePromoteStagedConfig(
 
   const onConfirm = async () => {
     try {
-      await promote({ identifier: stagedConfig.identifier }).unwrap();
+      await promote({ identifier: stagedConfig.identifier, source: 'import_settings' }).unwrap();
     } catch (err) {
       logError(new Error(stringifyErrorLike(err)));
       notifyApp.error(

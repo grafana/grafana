@@ -11,6 +11,29 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
+func TestUpdateDataSourceCommandBasicAuthUserPresence(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		body     string
+		username string
+		set      bool
+	}{
+		{name: "omitted", body: `{"name":"updated"}`},
+		{name: "null", body: `{"name":"updated","basicAuthUser":null}`},
+		{name: "empty", body: `{"name":"updated","basicAuthUser":""}`, set: true},
+		{name: "nonempty", body: `{"name":"updated","basicAuthUser":"new-user"}`, username: "new-user", set: true},
+		{name: "internal flag ignored", body: `{"name":"updated","BasicAuthUserSet":true}`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var cmd UpdateDataSourceCommand
+			require.NoError(t, json.Unmarshal([]byte(tc.body), &cmd))
+			require.Equal(t, "updated", cmd.Name)
+			require.Equal(t, tc.username, cmd.BasicAuthUser)
+			require.Equal(t, tc.set, cmd.BasicAuthUserSet)
+		})
+	}
+}
+
 func TestAllowedCookies(t *testing.T) {
 	testCases := []struct {
 		desc  string

@@ -17,8 +17,8 @@ type watchSeed struct {
 	highestRV         int64 // fixed before settling; retained events may end below this boundary
 }
 
-func writtenEventIdentity(event *WrittenEvent) (GroupResource, int64) {
-	return GroupResource{Group: event.Key.Group, Resource: event.Key.Resource}, event.ResourceVersion
+func writtenEventIdentity(event *WrittenEvent) (GroupResource, string, int64) {
+	return GroupResource{Group: event.Key.Group, Resource: event.Key.Resource}, event.Key.Namespace, event.ResourceVersion
 }
 
 func eventDataKey(event Event) DataKey {

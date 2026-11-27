@@ -23,7 +23,7 @@ func (m *storageService) getStorageMode(ctx context.Context, gr schema.GroupReso
 	resource := gr.String()
 	if m.statusReader == nil {
 		m.metrics.statusReaderNull.WithLabelValues(resource).Inc()
-		return storageModeFromConfigMode(m.cfg.UnifiedStorage[resource].DualWriterMode)
+		return storageModeFromConfigMode(m.cfg.UnifiedStorageConfig(resource).DualWriterMode)
 	}
 	mode, err := m.statusReader.GetStorageMode(ctx, gr)
 	if err != nil {

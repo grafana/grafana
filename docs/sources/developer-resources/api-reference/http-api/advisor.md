@@ -30,16 +30,15 @@ This API is in `alpha`, so it might change in future releases.
 
 {{< /admonition >}}
 
-The `/apis/advisor.grafana.app/*` API exposes the results of [Grafana Advisor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/grafana-advisor/), the app that runs regular health checks on your data sources, plugins, and Grafana instance.
+The `/apis/advisor.grafana.app/*` API exposes the results of [Grafana Advisor](https://grafana.com/grafana/plugins/grafana-advisor-app/docs/), the app that runs regular health checks on your data sources, plugins, and Grafana instance.
 
-Advisor stores each run as a `Check` resource. The check's `status.report` field contains the number of analyzed items and the list of failures. You can [read these checks](#list-checks) to [create an alert based on Grafana Advisor results](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/grafana-advisor/advisor-create-alert/). The rest of the endpoints are for internal use.
+Advisor stores each run as a `Check` resource. The check's `status.report` field contains the number of analyzed items and the list of failures. You can [read these checks](#list-checks) to [create an alert based on Grafana Advisor results](https://grafana.com/grafana/plugins/grafana-advisor-app/docs/advisor-create-alert/). The rest of the endpoints are for internal use.
 
-## Before you begin
+## Requirements
 
-Before you begin, ensure you have the following:
+To use the API you need **a service account token** to authenticate your requests. Refer to [HTTP API authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/authentication).
 
-- **Grafana Advisor enabled:** Advisor has generated at least one report. Refer to [Grafana Advisor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/grafana-advisor/) to generate your first report.
-- **A service account token with the Admin role:** Use it to authenticate your requests. Refer to [HTTP API authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/authentication).
+By default, only users with the Admin role can use the Advisor API. For more information, refer to [Organization roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#organization-roles).
 
 ## Endpoints
 
@@ -47,33 +46,38 @@ Before you begin, ensure you have the following:
 Reading checks to build alerts is the only supported public use case. The other endpoints are used internally by Grafana Advisor.
 {{< /admonition >}}
 
+To describe the resources that the Advisor API provides, send a `GET` request to `/apis/advisor.grafana.app/v0alpha1/`.
+
 These are the available endpoints:
 
-| Method | Summary                            | URI                                                                                  |
-| ------ | ---------------------------------- | ------------------------------------------------------------------------------------ |
-| GET    | Describe the available resources   | `/apis/advisor.grafana.app/v0alpha1/`                                                |
-| GET    | [List checks](#list-checks)        | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks`                   |
-| POST   | Create a check                     | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks`                   |
-| DELETE | Delete a collection of checks      | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks`                   |
-| GET    | Get a check                        | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks/{name}`            |
-| PUT    | Replace a check                    | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks/{name}`            |
-| PATCH  | Update a check                     | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks/{name}`            |
-| DELETE | Delete a check                     | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks/{name}`            |
-| GET    | Get the status of a check          | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks/{name}/status`     |
-| PUT    | Replace the status of a check      | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks/{name}/status`     |
-| PATCH  | Update the status of a check       | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks/{name}/status`     |
-| GET    | List check types                   | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checktypes`               |
-| POST   | Create a check type                | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checktypes`               |
-| DELETE | Delete a collection of check types | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checktypes`               |
-| GET    | Get a check type                   | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checktypes/{name}`        |
-| PUT    | Replace a check type               | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checktypes/{name}`        |
-| PATCH  | Update a check type                | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checktypes/{name}`        |
-| DELETE | Delete a check type                | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checktypes/{name}`        |
-| GET    | Get the status of a check type     | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checktypes/{name}/status` |
-| PUT    | Replace the status of a check type | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checktypes/{name}/status` |
-| PATCH  | Update the status of a check type  | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checktypes/{name}/status` |
-| POST   | Register check types               | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/register`                 |
-| GET    | Get translations                   | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/translations`             |
+**Base path:** `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/`
+
+Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+| Method | Summary                            | Path                       |
+| ------ | ---------------------------------- | -------------------------- |
+| GET    | [List checks](#list-checks)        | `checks`                   |
+| POST   | Create a check                     | `checks`                   |
+| DELETE | Delete a collection of checks      | `checks`                   |
+| GET    | Get a check                        | `checks/{name}`            |
+| PUT    | Replace a check                    | `checks/{name}`            |
+| PATCH  | Update a check                     | `checks/{name}`            |
+| DELETE | Delete a check                     | `checks/{name}`            |
+| GET    | Get the status of a check          | `checks/{name}/status`     |
+| PUT    | Replace the status of a check      | `checks/{name}/status`     |
+| PATCH  | Update the status of a check       | `checks/{name}/status`     |
+| GET    | List check types                   | `checktypes`               |
+| POST   | Create a check type                | `checktypes`               |
+| DELETE | Delete a collection of check types | `checktypes`               |
+| GET    | Get a check type                   | `checktypes/{name}`        |
+| PUT    | Replace a check type               | `checktypes/{name}`        |
+| PATCH  | Update a check type                | `checktypes/{name}`        |
+| DELETE | Delete a check type                | `checktypes/{name}`        |
+| GET    | Get the status of a check type     | `checktypes/{name}/status` |
+| PUT    | Replace the status of a check type | `checktypes/{name}/status` |
+| PATCH  | Update the status of a check type  | `checktypes/{name}/status` |
+| POST   | Register check types               | `register`                 |
+| GET    | Get translations                   | `translations`             |
 
 ## List checks
 
@@ -196,16 +200,21 @@ Each entry in `status.report.failures` contains the following fields:
 - **`itemID`:** The ID of the affected item, for example a data source UID.
 - **`links`:** Links to pages where you can fix the issue. Each link contains a `url`, a `message`, and an optional `messageKey` with the translation key of the message.
 
-### Status codes
+## Status codes
 
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied, for example if the namespace doesn't belong to your organization
+The endpoints on this page return the following status codes:
+
+| Code  | Meaning                                                                                                           | Returned by          |
+| ----- | ----------------------------------------------------------------------------------------------------------------- | -------------------- |
+| `200` | OK.                                                                                                               | [List](#list-checks) |
+| `400` | Bad request (invalid `labelSelector`).                                                                            | [List](#list-checks) |
+| `401` | Unauthorized.                                                                                                     | [List](#list-checks) |
+| `403` | Access denied, for example if you don't have the Admin role or the namespace doesn't belong to your organization. | [List](#list-checks) |
 
 ## Related resources
 
 Use the following resources to keep working with Grafana Advisor and the Grafana APIs:
 
-- **Alerting on Advisor results:** Refer to [Create an alert based on Grafana Advisor results](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/grafana-advisor/advisor-create-alert/).
-- **Grafana Advisor:** Refer to [Grafana Advisor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/grafana-advisor/).
+- **Alerting on Advisor results:** Refer to [Create an alert based on Grafana Advisor results](https://grafana.com/grafana/plugins/grafana-advisor-app/docs/advisor-create-alert/).
+- **Grafana Advisor:** Refer to [Grafana Advisor](https://grafana.com/grafana/plugins/grafana-advisor-app/docs/).
 - **API structure:** Refer to [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).

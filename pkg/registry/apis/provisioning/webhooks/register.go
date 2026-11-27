@@ -13,10 +13,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -119,23 +116,12 @@ func ProvideWebhooksWithImages(
 	cfg *setting.Cfg,
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
-	configProvider apiserver.RestConfigProvider,
 	registry prometheus.Registerer,
 ) *WebhookExtraBuilder {
-	// Webhook callbacks and screenshot images embedded in PR comments must be
-	// reachable from the public internet (the Git provider fetches them
-	// server-side). Prefer [provisioning] public_root_url when set; fall back
-	// to AppURL. Clickable links stay on AppURL so internal reviewers reach
-	// Grafana via the canonical, corp-network-friendly URL.
-	publicURL := cfg.AppURL
-	if cfg.ProvisioningPublicRootURL != "" {
-		publicURL = cfg.ProvisioningPublicRootURL
-	}
-	urls := pullrequest.URLProvider{
-		Internal: func(_ context.Context, _ string) string { return cfg.AppURL },
-		Public:   func(_ context.Context, _ string) string { return publicURL },
-	}
-	isPublic := isPublicURL(publicURL)
+	// Webhook callbacks must be reachable from the public internet, like the
+	// screenshot images embedded in PR comments.
+	urls := pullrequest.URLsFromConfig(cfg)
+	isPublic := isPublicURL(urls.Public(context.Background(), ""))
 
 	// Build the limiter once, outside the ExtraBuilder closure so multiple API versions (v0alpha, v1beta)
 	// will still use the same rate limiter
@@ -145,9 +131,6 @@ func ProvideWebhooksWithImages(
 		isPublic:    isPublic,
 		urlProvider: urls.Public,
 		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
-			clients := resources.NewClientFactory(configProvider)
-			parsers := resources.NewParserFactory(clients)
-
 			screenshotRenderer := pullrequest.NewScreenshotRenderer(renderer, blobstore)
 			render := NewRenderConnector(blobstore, b)
 			webhook := NewWebhookConnector(
@@ -158,16 +141,7 @@ func ProvideWebhooksWithImages(
 				rateLimiter,
 			)
 
-			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urls, registry)
-			commenter := pullrequest.NewCommenter(cfg.ProvisioningAllowImageRendering, urls)
-			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter, registry)
-
-			return NewWebhookExtraWithImages(
-				render,
-				webhook,
-				urls.Public,
-				[]jobs.Worker{pullRequestWorker},
-			)
+			return NewWebhookExtraWithImages(render, webhook)
 		},
 	}
 }
@@ -196,19 +170,12 @@ func ProvideWebhooks(provisioningURL string, registry prometheus.Registerer, rat
 type WebhookExtraWithImages struct {
 	render  *renderConnector
 	webhook *webhookConnector
-	workers []jobs.Worker
 }
 
-func NewWebhookExtraWithImages(
-	render *renderConnector,
-	webhook *webhookConnector,
-	urlProvider func(ctx context.Context, namespace string) string,
-	workers []jobs.Worker,
-) *WebhookExtraWithImages {
+func NewWebhookExtraWithImages(render *renderConnector, webhook *webhookConnector) *WebhookExtraWithImages {
 	return &WebhookExtraWithImages{
 		render:  render,
 		webhook: webhook,
-		workers: workers,
 	}
 }
 

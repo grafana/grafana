@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -24,7 +25,7 @@ type DataSource struct {
 
 	// Secure values allows setting values that are never shown to users
 	// The returned properties are only the names of the configured values
-	Secure common.InlineSecureValues `json:"secure,omitzero,omitempty"`
+	Secure resource.InlineSecureValues `json:"secure,omitzero,omitempty"`
 }
 
 func (DataSource) OpenAPIModelName() string {
