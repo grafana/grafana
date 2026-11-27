@@ -6,7 +6,7 @@ manifests under `/apis/discovery`. A `RoutesLoader` supplies routes as
 `[]Backend`. Routes change rarely, as apps and plugins are rolled out or get new versions.
 
 This file holds the current rules. The reasoning and history behind them are in the router specs,
-which live in the deployment_tools repository under `ksonnet/environments/grafana-router/specs/`.
+which live in the deployment_tools repository under `docs/grafana-router/specs/`.
 
 ## Rules
 
@@ -557,4 +557,4 @@ Dispatch by group has no injection sinks, since the group is only ever used as a
 
 ## Further reading
 
-The router specs are in deployment_tools under `ksonnet/environments/grafana-router/specs/`.
+The router specs are in deployment_tools under `docs/grafana-router/specs/`.
