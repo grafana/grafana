@@ -133,6 +133,17 @@ func Test_readPluginSettings(t *testing.T) {
 		}
 	})
 
+	t.Run("should parse plugins.arrow_query_data_plugins", func(t *testing.T) {
+		cfg := NewCfg()
+		sec, err := cfg.Raw.NewSection("plugins")
+		require.NoError(t, err)
+		_, err = sec.NewKey("arrow_query_data_plugins", "loki, tempo")
+		require.NoError(t, err)
+
+		require.NoError(t, cfg.readPluginSettings(cfg.Raw))
+		require.Equal(t, []string{"loki", "tempo"}, cfg.ArrowQueryDataPlugins)
+	})
+
 	t.Run("when plugins.preinstall_sync is defined", func(t *testing.T) {
 		tests := []struct {
 			name              string

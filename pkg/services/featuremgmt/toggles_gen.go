@@ -1077,4 +1077,8 @@ const (
 	// FlagDatasourcesGatewayQueryUsage
 	// Record billed query usage (Mimir samples read, Loki bytes processed) in query gateway audit events
 	FlagDatasourcesGatewayQueryUsage = "datasources.gatewayQueryUsage"
+
+	// FlagDatasourcesJsonQueryDataFormat
+	// Requests the JSON data frame wire format from backend plugins for unary QueryData
+	FlagDatasourcesJsonQueryDataFormat = "datasources.jsonQueryDataFormat"
 )
