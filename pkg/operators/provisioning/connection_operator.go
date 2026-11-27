@@ -2,34 +2,30 @@ package provisioning
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/operators/internal/supervision"
+	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
-	"github.com/grafana/grafana/pkg/server"
 )
 
-// RunConnectionController starts the connection controller operator.
-func RunConnectionController(ctx context.Context, deps server.OperatorDependencies) (runErr error) {
-	logger := newOperatorLogger("provisioning-connection-controller")
-	logger.Info("Starting provisioning connection controller")
+var ConnectionOperator = runner.Operator{
+	Name:        "provisioning-connection",
+	Description: "Watch provisioning connections",
+	Logger:      "provisioning-connection-controller",
+	Defaults:    operatorDefaults,
+	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
+		controllerCfg, err := setupFromConfig(rt)
+		if err != nil {
+			return nil, err
+		}
+		return &runner.Parts{Run: func(ctx context.Context, ready func()) error {
+			return runConnectionController(ctx, controllerCfg, ready)
+		}}, nil
+	},
+}
 
-	controllerCfg, err := setupFromConfig(deps.Config, deps.Registerer)
-	if err != nil {
-		return fmt.Errorf("failed to setup config: %w", err)
-	}
-
-	ctx, stopSubscriber, err := supervision.Start(ctx, controllerCfg.natsSubscriber)
-	defer func() {
-		deps.HealthNotifier.SetNotReady()
-		runErr = errors.Join(runErr, stopSubscriber())
-	}()
-	if err != nil {
-		return err
-	}
-
+func runConnectionController(ctx context.Context, controllerCfg *ControllerConfig, ready func()) error {
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
@@ -45,10 +41,7 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		return fmt.Errorf("failed to get health metrics recorder: %w", err)
 	}
 
-	tracer, err := controllerCfg.Tracer()
-	if err != nil {
-		return fmt.Errorf("failed to get tracer: %w", err)
-	}
+	tracer := controllerCfg.Tracer()
 
 	connKeys, err := controllerCfg.ProvisioningKeysLister(apisprovisioning.ConnectionResourceInfo.GroupVersionResource())
 	if err != nil {
@@ -72,8 +65,5 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		return err
 	}
 
-	return connController.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
-		logger.Info("connection operator is ready")
-		deps.HealthNotifier.SetReady()
-	})
+	return connController.Run(ctx, controllerCfg.NumberOfWorkers(), ready)
 }

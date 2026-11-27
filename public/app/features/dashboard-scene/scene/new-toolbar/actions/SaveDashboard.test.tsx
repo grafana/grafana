@@ -80,22 +80,22 @@ function buildTestScene(opts: BuildSceneOpts = {}) {
 }
 
 describe('SaveDashboard (toolbar)', () => {
-  let originalHasEditPermissionInFolders: boolean;
   let originalPermissions: typeof contextSrv.user.permissions;
 
   beforeEach(() => {
     registerSaveAsTemplateForm(null as unknown as Parameters<typeof registerSaveAsTemplateForm>[0]);
-    originalHasEditPermissionInFolders = contextSrv.hasEditPermissionInFolders;
-    contextSrv.hasEditPermissionInFolders = true;
     originalPermissions = contextSrv.user.permissions;
     // "Save as template" is gated on the dashboardtemplates:write RBAC action; grant it by
     // default so the visibility tests pass, and revoke it explicitly in the hidden cases.
-    contextSrv.user.permissions = { [AccessControlAction.DashboardTemplatesWrite]: true };
+    // FoldersCreate drives contextSrv.hasEditPermissionInFolders (a derived getter).
+    contextSrv.user.permissions = {
+      [AccessControlAction.DashboardTemplatesWrite]: true,
+      [AccessControlAction.FoldersCreate]: true,
+    };
   });
 
   afterEach(async () => {
     registerSaveAsTemplateForm(null as unknown as Parameters<typeof registerSaveAsTemplateForm>[0]);
-    contextSrv.hasEditPermissionInFolders = originalHasEditPermissionInFolders;
     contextSrv.user.permissions = originalPermissions;
     jest.clearAllMocks();
   });

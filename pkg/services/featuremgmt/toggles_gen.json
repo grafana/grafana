@@ -1216,6 +1216,20 @@
     },
     {
       "metadata": {
+        "name": "authz.legacyUserPermissionsSearch",
+        "resourceVersion": "1795541778092",
+        "creationTimestamp": "2026-11-24T17:36:18Z"
+      },
+      "spec": {
+        "description": "Route user permission searches through embedded AuthZ.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "authz.legacyUserPermissionsShadow",
         "resourceVersion": "1793097096771",
         "creationTimestamp": "2026-10-27T09:31:45Z",
@@ -4244,6 +4258,21 @@
         "description": "When storing datasource resource permissions, only store action sets and not the full list of underlying permissions",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "iam.useKubernetesUsersReadApi",
+        "resourceVersion": "1795683567766",
+        "creationTimestamp": "2026-11-26T08:59:27Z"
+      },
+      "spec": {
+        "description": "Routes read-only user requests in the frontend from /api to the /apis endpoint. Depends on kubernetesUsersReadApi",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }

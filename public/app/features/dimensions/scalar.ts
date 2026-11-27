@@ -1,4 +1,4 @@
-import { type DataFrame, type Field } from '@grafana/data';
+import { type DataFrame, type Field, type PanelData } from '@grafana/data';
 import { type ScalarDimensionConfig, ScalarDimensionMode } from '@grafana/schema';
 
 import { type DimensionSupplier } from './types';
@@ -55,4 +55,19 @@ function getScalarDimensionForField(field: Field | undefined, cfg: ScalarDimensi
     get,
     value: () => getLastNotNullFieldValue(field),
   };
+}
+
+export function getScalarDimensionFromData(
+  data: PanelData | undefined,
+  cfg: ScalarDimensionConfig
+): DimensionSupplier<number> {
+  if (data?.series && cfg.field) {
+    for (const frame of data.series) {
+      const d = getScalarDimension(frame, cfg);
+      if (!d.isAssumed || data.series.length === 1) {
+        return d;
+      }
+    }
+  }
+  return getScalarDimension(undefined, cfg);
 }

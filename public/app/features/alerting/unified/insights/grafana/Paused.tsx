@@ -2,8 +2,8 @@ import { ThresholdsMode } from '@grafana/data';
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 
-import { INSTANCE_ID, PANEL_STYLES } from '../../home/Insights';
 import { InsightsMenuButton } from '../InsightsMenuButton';
+import { INSTANCE_ID, PANEL_STYLES } from '../utils';
 
 export function getPausedGrafanaAlertsScene(datasource: DataSourceRef, panelTitle: string) {
   const expr = INSTANCE_ID

@@ -136,6 +136,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-06-05,pluginProxyPreserveTrailingSlash,GA,@grafana/grafana-catalog,false,false,false
 2024-06-06,azureMonitorPrometheusExemplars,GA,@grafana/data-sources-plugins,false,false,false
 2024-06-13,authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
+2026-11-24,authz.legacyUserPermissionsSearch,experimental,@grafana/identity-access-team,false,false,false
 2026-10-27,authz.legacyUserPermissionsShadow,experimental,@grafana/identity-access-team,false,false,false
 2026-10-06,authz.legacyUserPermissions,experimental,@grafana/identity-access-team,false,false,false
 2026-08-20,authz.userPermissions,experimental,@grafana/identity-access-team,false,false,false
@@ -275,6 +276,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-11-25,resourcePermissionsBulkUserWrites,experimental,@grafana/identity-access-team,false,false,false
 2026-02-26,kubernetesUsersApi,experimental,@grafana/identity-access-team,false,false,false
 2026-10-08,kubernetesUsersReadApi,experimental,@grafana/identity-access-team,false,false,false
+2026-11-26,iam.useKubernetesUsersReadApi,experimental,@grafana/identity-access-team,false,false,true
 2026-03-09,kubernetesServiceAccountsApi,experimental,@grafana/identity-access-team,false,false,false
 2026-03-09,kubernetesServiceAccountTokensApi,experimental,@grafana/identity-access-team,false,false,false
 2026-03-16,kubernetesSsoSettingsApi,experimental,@grafana/identity-access-team,false,false,false

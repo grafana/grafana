@@ -3409,6 +3409,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Błędy wczytywania reguł",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Nie udało się wczytać konfiguracji reguł Grafany:",
       "failed-to-load-grafana-rules-state": "Nie udało się wczytać stanu reguł Grafany:",
       "failed-to-load-rules-config": "Nie udało się wczytać konfiguracji reguł ze źródła <2>{{dataSource}}</2>",
