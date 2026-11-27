@@ -7,7 +7,6 @@ import (
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
-	"github.com/grafana/grafana/pkg/server"
 )
 
 var ConnectionOperator = runner.Operator{
@@ -15,7 +14,7 @@ var ConnectionOperator = runner.Operator{
 	Description: "Watch provisioning connections",
 	Logger:      "provisioning-connection-controller",
 	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
-		controllerCfg, err := setupFromConfig(rt.Cfg, rt.Registerer, rt.Subscriber)
+		controllerCfg, err := setupFromConfig(rt)
 		if err != nil {
 			return nil, err
 		}
@@ -23,13 +22,6 @@ var ConnectionOperator = runner.Operator{
 			return runConnectionController(ctx, controllerCfg, ready)
 		}}, nil
 	},
-}
-
-// RunConnectionController runs [ConnectionOperator].
-//
-// Deprecated: register [ConnectionOperator] with runner.Register instead.
-func RunConnectionController(ctx context.Context, deps server.OperatorDependencies) error {
-	return ConnectionOperator.Run(ctx, deps)
 }
 
 func runConnectionController(ctx context.Context, controllerCfg *ControllerConfig, ready func()) error {
@@ -48,10 +40,7 @@ func runConnectionController(ctx context.Context, controllerCfg *ControllerConfi
 		return fmt.Errorf("failed to get health metrics recorder: %w", err)
 	}
 
-	tracer, err := controllerCfg.Tracer()
-	if err != nil {
-		return fmt.Errorf("failed to get tracer: %w", err)
-	}
+	tracer := controllerCfg.Tracer()
 
 	connKeys, err := controllerCfg.ProvisioningKeysLister(apisprovisioning.ConnectionResourceInfo.GroupVersionResource())
 	if err != nil {

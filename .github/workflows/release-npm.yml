@@ -165,7 +165,7 @@ jobs:
               --force-publish \
               --yes
           else
-            pnpm exec nx release version "$VERSION"
+            pnpm exec nx release version --groups=grafana "$VERSION"
           fi
           # packages:pack runs the pnpm beforePacking hook (scripts/pnpm-pack-hooks.cjs), which stamps
           # GRAFANA_COMMIT as gitHead into the packed manifest. Older release branches do the

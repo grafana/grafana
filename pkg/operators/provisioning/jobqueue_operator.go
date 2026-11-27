@@ -7,12 +7,8 @@ import (
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -21,7 +17,7 @@ var JobQueueOperator = runner.Operator{
 	Description: "Pick and execute provisioning jobs using lease-based claiming",
 	Logger:      "provisioning-jobqueue-controller",
 	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
-		controllerCfg, err := setupJobQueueControllerFromConfig(rt.Cfg, rt.Registerer, rt.Subscriber)
+		controllerCfg, err := setupJobQueueControllerFromConfig(rt)
 		if err != nil {
 			return nil, err
 		}
@@ -38,13 +34,6 @@ var JobQueueOperator = runner.Operator{
 			ShutdownTimeout: controllerCfg.maxJobTimeout + 30*time.Second,
 		}, nil
 	},
-}
-
-// RunJobQueueController runs [JobQueueOperator].
-//
-// Deprecated: register [JobQueueOperator] with runner.Register instead.
-func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies) error {
-	return JobQueueOperator.Run(ctx, deps)
 }
 
 func runJobQueueController(ctx context.Context, logger logging.Logger, controllerCfg *jobQueueControllerConfig, ready func()) error {
@@ -90,13 +79,13 @@ type jobQueueControllerConfig struct {
 	maxSyncWorkers       int
 }
 
-func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer, subscriber *nats.SubscriberService) (*jobQueueControllerConfig, error) {
-	controllerCfg, err := setupFromConfig(cfg, registry, subscriber)
+func setupJobQueueControllerFromConfig(rt *runner.Runtime) (*jobQueueControllerConfig, error) {
+	controllerCfg, err := setupFromConfig(rt)
 	if err != nil {
 		return nil, err
 	}
 
-	operatorSec := cfg.SectionWithEnvOverrides("operator")
+	operatorSec := rt.Cfg.SectionWithEnvOverrides("operator")
 
 	// The jobs informer resyncs on jobInterval and that resync is the driver's
 	// only recovery path for unclaimed jobs. A non-positive value would disable

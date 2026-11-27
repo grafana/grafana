@@ -197,16 +197,19 @@ func TestDynamicClients_Delete(t *testing.T) {
 		kind ChildKind
 		gvr  schema.GroupVersionResource
 		obj  func(name string, terminating bool, finalizers ...string) *unstructured.Unstructured
+		// plain is the outcome of deleting a child without finalizers. The folders API stamps the
+		// finalizer on a subfolder, so it only goes terminating.
+		plain DeleteOutcome
 	}{
-		{kind: ChildDashboard, gvr: dashboardGVR, obj: unstructuredDashboard},
-		{kind: ChildFolder, gvr: folderGVR, obj: unstructuredFolder},
+		{kind: ChildDashboard, gvr: dashboardGVR, obj: unstructuredDashboard, plain: DeleteOutcomeDeleted},
+		{kind: ChildFolder, gvr: folderGVR, obj: unstructuredFolder, plain: DeleteOutcomePending},
 	} {
 		t.Run(string(tc.kind), func(t *testing.T) {
 			t.Run("force-deletes with uid and resourceVersion preconditions", func(t *testing.T) {
 				dyn := newFake(tc.obj("c", false))
 				outcome, err := deleteChild(t, dyn, tc.kind, "c")
 				require.NoError(t, err)
-				require.Equal(t, DeleteOutcomeDeleted, outcome)
+				require.Equal(t, tc.plain, outcome)
 
 				dels := deleteActions(dyn)
 				require.Len(t, dels, 1)

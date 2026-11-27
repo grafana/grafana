@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/operators/runner"
-	"github.com/grafana/grafana/pkg/server"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/services/folder/cascadedelete"
 )
@@ -41,19 +40,12 @@ var Operator = runner.Operator{
 	Build:       build,
 }
 
-// RunFolderController runs [Operator].
-//
-// Deprecated: register [Operator] with runner.Register instead.
-func RunFolderController(ctx context.Context, deps server.OperatorDependencies) error {
-	return Operator.Run(ctx, deps)
-}
-
 func build(rt *runner.Runtime) (*runner.Parts, error) {
-	restClient, err := buildRESTClient(rt.Cfg, "folders_server_url", folderGVR.Group)
+	restClient, err := buildRESTClient(rt.Clients, "folders_server_url", folderGVR.Group)
 	if err != nil {
 		return nil, err
 	}
-	dashboardClient, err := buildRESTClient(rt.Cfg, "dashboards_server_url", dashboardGVR.Group)
+	dashboardClient, err := buildRESTClient(rt.Clients, "dashboards_server_url", dashboardGVR.Group)
 	if err != nil {
 		return nil, err
 	}

@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useLayoutEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
 import { Icon, Text, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import { areOptionEditorsPreloaded, preloadOptionEditors } from 'app/core/components/OptionsUI/registry';
 
 import { PanelStylesGrid, usePanelStylePresets } from '../panel-edit/PanelStylesSection';
 import { DashboardInteractions } from '../utils/interactions';
@@ -38,6 +39,7 @@ export function QuickEditButtons({
   buttonClassName,
 }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
+  const editorsLoaded = useOptionEditorsLoaded();
   const { edits, applyPreset } = quickEdits;
   const open = edits.find((edit) => edit.quickEdit.id === openId);
   // The open quick edit can drop out, e.g. when a change leaves it nothing to offer, which takes its card with it.
@@ -78,7 +80,7 @@ export function QuickEditButtons({
           onClick={() => toggle(edit)}
         />
       ))}
-      {open && (
+      {open && editorsLoaded && (
         <QuickEditCard
           // Remounted for each quick edit, so the card takes focus and pulses again when another one opens.
           key={open.quickEdit.id}
@@ -98,6 +100,31 @@ export function QuickEditButtons({
       )}
     </>
   );
+}
+
+/**
+ * Whether the option editors' code has loaded, which starts as the buttons show. A card waits for it, so it is placed
+ * at its full size rather than at the size it has while its editors are still loading, and moved as they arrive.
+ */
+function useOptionEditorsLoaded() {
+  const [loaded, setLoaded] = useState(areOptionEditorsPreloaded);
+  useEffect(() => {
+    if (loaded) {
+      return;
+    }
+    let mounted = true;
+    const done = () => {
+      if (mounted) {
+        setLoaded(true);
+      }
+    };
+    // A chunk that fails to load is reported by the editor that needs it, so the card still opens.
+    preloadOptionEditors().then(done, done);
+    return () => {
+      mounted = false;
+    };
+  }, [loaded]);
+  return loaded;
 }
 
 /** The preset cards without the full editor's collapsible section, as the card gives them their heading. */

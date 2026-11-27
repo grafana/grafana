@@ -1,18 +1,31 @@
 package runner
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/json"
 	"encoding/pem"
 	"math/big"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
+	"github.com/grafana/authlib/authn"
 	"github.com/stretchr/testify/require"
+	"k8s.io/client-go/rest"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func generateTestCAPEM(t *testing.T) []byte {
@@ -82,4 +95,103 @@ func TestBuildTLSConfig(t *testing.T) {
 		_, err := buildTLSConfig(false, "", "", caFile)
 		require.ErrorContains(t, err, "failed to parse CA certificate")
 	})
+}
+
+func TestClientsShareOneTokenExchangeClient(t *testing.T) {
+	cfg := setting.NewCfg()
+	operator := cfg.SectionWithEnvOverrides("operator")
+	operator.Key("folders_server_url").SetValue("https://folders.example")
+	operator.Key("dashboards_server_url").SetValue("https://dashboards.example")
+	auth := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+	auth.Key("token").SetValue("test-token")
+	auth.Key("token_exchange_url").SetValue("https://exchange.example")
+
+	clients := NewClients(cfg)
+	first, err := clients.TokenExchangeClient()
+	require.NoError(t, err)
+	second, err := clients.TokenExchangeClient()
+	require.NoError(t, err)
+	require.Same(t, first, second)
+
+	folders, err := clients.RESTConfig("folders_server_url", "folder.grafana.app")
+	require.NoError(t, err)
+	dashboards, err := clients.RESTConfig("dashboards_server_url", "dashboard.grafana.app")
+	require.NoError(t, err)
+	require.Equal(t, "https://folders.example", folders.Host)
+	require.Equal(t, "https://dashboards.example", dashboards.Host)
+	require.NotNil(t, folders.WrapTransport)
+}
+
+func TestClientsReuseExchangedTokenPerAudience(t *testing.T) {
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key}, nil)
+	require.NoError(t, err)
+
+	var mu sync.Mutex
+	exchanges := map[string]int{}
+	exchange := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req authn.TokenExchangeRequest
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&req))
+		audience := strings.Join(req.Audiences, ",")
+		token, err := jwt.Signed(signer).Claims(&jwt.Claims{
+			Subject: audience,
+			Expiry:  jwt.NewNumericDate(time.Now().Add(time.Hour)),
+		}).Serialize()
+		require.NoError(t, err)
+		mu.Lock()
+		exchanges[audience]++
+		mu.Unlock()
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]string{"token": token}})
+	}))
+	t.Cleanup(exchange.Close)
+
+	var seenTokens []string
+	apiserver := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		seenTokens = append(seenTokens, r.Header.Get("X-Access-Token"))
+		mu.Unlock()
+	}))
+	t.Cleanup(apiserver.Close)
+
+	cfg := setting.NewCfg()
+	operator := cfg.SectionWithEnvOverrides("operator")
+	operator.Key("folders_server_url").SetValue(apiserver.URL)
+	operator.Key("folders_replica_url").SetValue(apiserver.URL)
+	operator.Key("dashboards_server_url").SetValue(apiserver.URL)
+	auth := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+	auth.Key("token").SetValue("test-token")
+	auth.Key("token_exchange_url").SetValue(exchange.URL)
+
+	clients := NewClients(cfg)
+	get := func(serverURLKey, audience string) {
+		restCfg, err := clients.RESTConfig(serverURLKey, audience)
+		require.NoError(t, err)
+		httpClient, err := rest.HTTPClientFor(restCfg)
+		require.NoError(t, err)
+		res, err := httpClient.Get(apiserver.URL)
+		require.NoError(t, err)
+		require.NoError(t, res.Body.Close())
+	}
+	get("folders_server_url", "folder.grafana.app")
+	get("folders_replica_url", "folder.grafana.app")
+	get("dashboards_server_url", "dashboard.grafana.app")
+
+	require.Equal(t, map[string]int{"folder.grafana.app": 1, "dashboard.grafana.app": 1}, exchanges)
+	require.Len(t, seenTokens, 3)
+	require.Equal(t, seenTokens[0], seenTokens[1])
+	require.NotEqual(t, seenTokens[0], seenTokens[2])
+}
+
+func TestClientsRetryAfterConfigError(t *testing.T) {
+	cfg := setting.NewCfg()
+	clients := NewClients(cfg)
+	_, err := clients.TokenExchangeClient()
+	require.ErrorContains(t, err, "token is required")
+
+	auth := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+	auth.Key("token").SetValue("test-token")
+	auth.Key("token_exchange_url").SetValue("https://exchange.example")
+	_, err = clients.TokenExchangeClient()
+	require.NoError(t, err, "a failed build must not be cached")
 }

@@ -10,9 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var JobsOperator = runner.Operator{
@@ -21,7 +18,7 @@ var JobsOperator = runner.Operator{
 	Logger:      "provisioning-job-controller",
 	NoNATS:      true,
 	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
-		controllerCfg, err := setupJobsControllerFromConfig(rt.Cfg, rt.Registerer)
+		controllerCfg, err := setupJobsControllerFromConfig(rt)
 		if err != nil {
 			return nil, err
 		}
@@ -32,13 +29,6 @@ var JobsOperator = runner.Operator{
 			ShutdownTimeout: 30 * time.Second,
 		}, nil
 	},
-}
-
-// RunJobController runs [JobsOperator].
-//
-// Deprecated: register [JobsOperator] with runner.Register instead.
-func RunJobController(ctx context.Context, deps server.OperatorDependencies) error {
-	return JobsOperator.Run(ctx, deps)
 }
 
 func runJobController(ctx context.Context, logger logging.Logger, controllerCfg *jobsControllerConfig, ready func()) error {
@@ -102,13 +92,13 @@ type jobsControllerConfig struct {
 	cleanupInterval   time.Duration
 }
 
-func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*jobsControllerConfig, error) {
-	controllerCfg, err := setupFromConfig(cfg, registry, nil)
+func setupJobsControllerFromConfig(rt *runner.Runtime) (*jobsControllerConfig, error) {
+	controllerCfg, err := setupFromConfig(rt)
 	if err != nil {
 		return nil, err
 	}
 
-	operatorSec := cfg.SectionWithEnvOverrides("operator")
+	operatorSec := rt.Cfg.SectionWithEnvOverrides("operator")
 
 	return &jobsControllerConfig{
 		ControllerConfig:  *controllerCfg,
