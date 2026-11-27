@@ -755,8 +755,8 @@ func (s *cascadeDeleteStorage) deleteAsync(ctx context.Context, ns authlib.Names
 	svcCtx := identity.WithServiceIdentityContext(base, ns.OrgID)
 	stamped, err := s.recordCascadeDeleteRequester(svcCtx, f, requester)
 	if err != nil {
-		// A leftover would pass for this delete's requester, and a wrong one is worse than none.
-		if leftover {
+		// Another identity's leftover would pass for this delete's requester, and a wrong one is worse than none.
+		if leftover && (requester == nil || *requester != *f.Status.CascadeDelete.Requester) {
 			return nil, false, err
 		}
 		// The requester only feeds attribution, so a failed stamp (e.g. an orphaned folder or one above

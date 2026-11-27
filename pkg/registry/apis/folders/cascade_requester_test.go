@@ -244,6 +244,31 @@ func TestCascadeDelete_FailedStampKeepsTheFolderWhenARequesterIsLeftOver(t *test
 	require.Equal(t, left, store.existing["root"].Status.CascadeDelete.Requester)
 }
 
+func TestCascadeDelete_FailedStampWithTheCallersOwnLeftoverStillDeletes(t *testing.T) {
+	setRequesterToggles(t, true)
+	store, status, s := newRequesterStore()
+	own := cascadeDeleteRequesterOf(requesterUser)
+	store.existing["root"].Status.CascadeDelete = &foldersv1.FolderCascadeDeleteStatus{Requester: own}
+	status.err = errors.New("boom")
+
+	_, _, err := s.Delete(requesterCtx(requesterUser), "root", nil, forceDelete())
+	require.NoError(t, err)
+	require.NotNil(t, store.existing["root"].DeletionTimestamp)
+	require.Equal(t, own, store.existing["root"].Status.CascadeDelete.Requester)
+}
+
+func TestCascadeDelete_FailedStampWithAnotherUsersLeftoverKeepsTheFolder(t *testing.T) {
+	setRequesterToggles(t, true)
+	store, status, s := newRequesterStore()
+	store.existing["root"].Status.CascadeDelete = &foldersv1.FolderCascadeDeleteStatus{Requester: cascadeDeleteRequesterOf(requesterUser)}
+	status.err = errors.New("boom")
+	other := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 8, UserUID: "other", OrgID: 1}
+
+	_, _, err := s.Delete(requesterCtx(other), "root", nil, forceDelete())
+	require.Error(t, err)
+	require.Nil(t, store.existing["root"].DeletionTimestamp)
+}
+
 func TestCascadeDelete_FailedDeleteClearsTheRequester(t *testing.T) {
 	setRequesterToggles(t, true)
 	store, _, s := newRequesterStore()
