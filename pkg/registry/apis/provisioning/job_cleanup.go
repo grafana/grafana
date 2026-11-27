@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // JobCleanupServiceName is the background-service module name of [JobCleanupService].
@@ -25,9 +26,9 @@ type JobCleanupService struct {
 // ProvideJobCleanupService is called by Wire. Depending on the builder orders it
 // after [RegisterAPIService], which registers the provisioning API group with
 // the API server.
-func ProvideJobCleanupService(builder *APIBuilder, registry prometheus.Registerer) *JobCleanupService {
+func ProvideJobCleanupService(cfg *setting.Cfg, builder *APIBuilder, registry prometheus.Registerer) *JobCleanupService {
 	s := &JobCleanupService{}
-	s.loopbackService = newControllerService(JobCleanupServiceName, builder, controller.Common{Registry: registry}, s.runController)
+	s.loopbackService = newControllerService(JobCleanupServiceName, builder, cfg.DisableControllers, controller.Common{Registry: registry}, s.runController)
 	return s
 }
 

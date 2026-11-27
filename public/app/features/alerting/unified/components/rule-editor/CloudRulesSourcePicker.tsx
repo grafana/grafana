@@ -6,12 +6,14 @@ import {
   type DataSourcePickerProps,
 } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { useRulesSourcesWithRuler } from '../../hooks/useRuleSourcesWithRuler';
+import { type RulesSourcesWithRulerResult } from '../../hooks/useRuleSourcesWithRuler';
 
 // Picked fields keep the callbacks compatible with both the current picker and the slim list item.
 type RulesSourceOption = Pick<DataSourceInstanceListItem, 'uid' | 'name' | 'type'>;
 
 interface Props extends DataSourcePickerProps {
+  /** From `useRulesSourcesWithRuler`. The parent calls the hook, so that its `Field` can show the list error. */
+  rulesSources: RulesSourcesWithRulerResult;
   disabled?: boolean;
   onChange: (ds: RulesSourceOption) => void;
   value: string | null;
@@ -19,8 +21,8 @@ interface Props extends DataSourcePickerProps {
   name?: string;
 }
 
-export function CloudRulesSourcePicker({ value, disabled, ...props }: Props): JSX.Element {
-  const { rulesSourcesWithRuler: dataSourcesWithRuler, isLoading } = useRulesSourcesWithRuler();
+export function CloudRulesSourcePicker({ value, disabled, rulesSources, ...props }: Props): JSX.Element {
+  const { rulesSourcesWithRuler: dataSourcesWithRuler, isLoading } = rulesSources;
 
   const dataSourceFilter = useCallback(
     (ds: RulesSourceOption): boolean => {

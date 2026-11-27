@@ -145,4 +145,6 @@ v0alpha1: {
 	externalAuthModules?: [...string]
 	// Display labels of the auth provider the user last signed in with, e.g. "LDAP".
 	authLabels?: [...string]
+	// Avatar URL of the user, derived from the email. Omitted when the user has no email.
+	avatarUrl?: string
 }

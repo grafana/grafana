@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
+func TestMigrationWorker_Migrate(t *testing.T) {
 	tests := []struct {
 		name          string
 		setupMocks    func(*MockNamespaceCleaner, *jobs.MockWorker, *jobs.MockWorker, *jobs.MockJobProgressRecorder, *repository.MockRepository)
@@ -330,7 +330,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 				tt.setupMocks(mockNamespaceCleaner, exportWorker, syncWorker, progressRecorder, readerWriter)
 			}
 
-			migrator := NewUnifiedStorageMigrator(mockNamespaceCleaner, exportWorker, syncWorker)
+			migrator := NewMigrationWorker(mockNamespaceCleaner, exportWorker, syncWorker)
 
 			var migrateOptions provisioning.MigrateJobOptions
 			if tt.name == "should pass migrate options to export job" {
@@ -344,7 +344,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 					Migrate: &migrateOptions,
 				},
 			}
-			err := migrator.Migrate(context.Background(), readerWriter, migrateJob, progressRecorder)
+			err := migrator.migrate(context.Background(), readerWriter, migrateJob, progressRecorder)
 
 			if tt.expectedError != "" {
 				require.Error(t, err)
@@ -358,7 +358,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 	}
 }
 
-func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
+func TestMigrationWorker_BranchMigration(t *testing.T) {
 	gitInstanceRepo := func(branch string) *provisioning.Repository {
 		return &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
@@ -392,8 +392,8 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 		// syncWorker.Process must NOT be called: mockery fails the test on any
 		// unexpected call, so the absence of an expectation asserts the pull is skipped.
 
-		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
-		err := migrator.Migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x"},
 		}}, pr)
 		require.NoError(t, err)
@@ -449,8 +449,8 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 			return names["dash-1"] && names["dash-2"]
 		}), pr).Return(nil)
 
-		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
-		err := migrator.Migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{
 				Branch: "feature-x",
 				Resources: []provisioning.ResourceRef{
@@ -503,8 +503,8 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 			return len(refs) == 1 && refs[0].Name == "dash-1"
 		}), pr).Return(nil)
 
-		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
-		err := migrator.Migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x"},
 		}}, pr)
 		require.NoError(t, err)
@@ -551,8 +551,8 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 			return len(refs) == 1 && refs[0].Name == "dash-1"
 		}), pr).Return(nil)
 
-		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
-		err := migrator.Migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x"},
 		}}, pr)
 		require.NoError(t, err)
@@ -581,15 +581,15 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 		}), pr).Return(nil)
 		nc.On("Clean", mock.Anything, "test-ns", pr).Return(nil)
 
-		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
-		err := migrator.Migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{Branch: "main"},
 		}}, pr)
 		require.NoError(t, err)
 	})
 }
 
-func TestUnifiedStorageMigrator_SkipResourceDeletion(t *testing.T) {
+func TestMigrationWorker_SkipResourceDeletion(t *testing.T) {
 	instanceRepo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
 		Spec: provisioning.RepositorySpec{
@@ -626,8 +626,8 @@ func TestUnifiedStorageMigrator_SkipResourceDeletion(t *testing.T) {
 			return job.Spec.Pull != nil
 		}), pr).Return(nil)
 
-		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
-		err := migrator.Migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{SkipResourceDeletion: true},
 		}}, pr)
 		require.NoError(t, err)
@@ -651,8 +651,8 @@ func TestUnifiedStorageMigrator_SkipResourceDeletion(t *testing.T) {
 			return job.Spec.Push != nil && job.Spec.Push.Branch == "feature-x"
 		}), mock.Anything).Return(nil)
 
-		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
-		err := migrator.Migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 			Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x", SkipResourceDeletion: true},
 		}}, pr)
 		require.NoError(t, err)
@@ -661,7 +661,7 @@ func TestUnifiedStorageMigrator_SkipResourceDeletion(t *testing.T) {
 	})
 }
 
-func TestUnifiedStorageMigrator_CommitMessagePrecedence(t *testing.T) {
+func TestMigrationWorker_CommitMessagePrecedence(t *testing.T) {
 	tests := []struct {
 		name        string
 		specMessage string
@@ -709,20 +709,20 @@ func TestUnifiedStorageMigrator_CommitMessagePrecedence(t *testing.T) {
 			syncWorker.On("Process", mock.Anything, repo, mock.Anything, pr).Return(nil)
 			nc.On("Clean", mock.Anything, "test-ns", pr).Return(nil)
 
-			migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
+			migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
 			job := provisioning.Job{
 				Spec: provisioning.JobSpec{
 					Message: tt.specMessage,
 					Migrate: &provisioning.MigrateJobOptions{Message: tt.optsMessage},
 				},
 			}
-			err := migrator.Migrate(context.Background(), repo, job, pr)
+			err := migrator.migrate(context.Background(), repo, job, pr)
 			require.NoError(t, err)
 		})
 	}
 }
 
-func TestUnifiedStorageMigrator_TakeoverAllowlist(t *testing.T) {
+func TestMigrationWorker_TakeoverAllowlist(t *testing.T) {
 	testGVK := schema.GroupVersionKind{Group: "dashboard.grafana.app", Version: "v1", Kind: "Dashboard"}
 
 	t.Run("export wraps progress recorder with collector that populates allowlist", func(t *testing.T) {
@@ -767,8 +767,8 @@ func TestUnifiedStorageMigrator_TakeoverAllowlist(t *testing.T) {
 
 		nc.On("Clean", mock.Anything, "test-ns", pr).Return(nil)
 
-		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
-		err := migrator.Migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{}}}, pr)
+		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{}}}, pr)
 		require.NoError(t, err)
 	})
 
@@ -800,8 +800,8 @@ func TestUnifiedStorageMigrator_TakeoverAllowlist(t *testing.T) {
 
 		nc.On("Clean", mock.Anything, "test-ns", pr).Return(nil)
 
-		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
-		err := migrator.Migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{}}}, pr)
+		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{}}}, pr)
 		require.NoError(t, err)
 	})
 
@@ -849,13 +849,13 @@ func TestUnifiedStorageMigrator_TakeoverAllowlist(t *testing.T) {
 
 		nc.On("Clean", mock.Anything, "test-ns", pr).Return(nil)
 
-		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
-		err := migrator.Migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{}}}, pr)
+		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{}}}, pr)
 		require.NoError(t, err)
 	})
 }
 
-func TestUnifiedStorageMigrator_SelectiveResources(t *testing.T) {
+func TestMigrationWorker_SelectiveResources(t *testing.T) {
 	selected := []provisioning.ResourceRef{
 		{Name: "dash-1", Kind: "Dashboard", Group: "dashboard.grafana.app"},
 		{Name: "dash-2", Kind: "Dashboard", Group: "dashboard.grafana.app"},
@@ -895,8 +895,8 @@ func TestUnifiedStorageMigrator_SelectiveResources(t *testing.T) {
 			return job.Spec.Pull != nil
 		}), pr).Return(nil)
 
-		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
-		err := migrator.Migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{Resources: selected}}}, pr)
+		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{Resources: selected}}}, pr)
 		require.NoError(t, err)
 	})
 
@@ -915,8 +915,8 @@ func TestUnifiedStorageMigrator_SelectiveResources(t *testing.T) {
 		// The migration is rejected up front, so nothing runs: no export, pull, or
 		// cleanup. mockery fails the test if any of those are called, since no
 		// expectations are registered for them.
-		migrator := NewUnifiedStorageMigrator(nc, exportWorker, syncWorker)
-		err := migrator.Migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{Resources: selected}}}, pr)
+		migrator := NewMigrationWorker(nc, exportWorker, syncWorker)
+		err := migrator.migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{Migrate: &provisioning.MigrateJobOptions{Resources: selected}}}, pr)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "Instance repositories should only migrate all resources")
 	})
@@ -924,7 +924,7 @@ func TestUnifiedStorageMigrator_SelectiveResources(t *testing.T) {
 
 // A kind that a manifest adds after the export has no copy in the repository, so the cleanup
 // must not see it.
-func TestUnifiedStorageMigrator_CleanupSeesTheKindsOfTheExport(t *testing.T) {
+func TestMigrationWorker_CleanupSeesTheKindsOfTheExport(t *testing.T) {
 	supportedResourceProvider := resources.NewSupportedResourceProvider(nil)
 	factory := resources.NewClientFactory(nil, supportedResourceProvider)
 	supported := func(ctx context.Context) []resources.SupportedResource {
@@ -966,8 +966,8 @@ func TestUnifiedStorageMigrator_CleanupSeesTheKindsOfTheExport(t *testing.T) {
 		cleaned = supported(args.Get(0).(context.Context))
 	}).Return(nil)
 
-	migrator := NewUnifiedStorageMigrator(nc, exportWorker, jobs.NewMockWorker(t))
-	err := migrator.Migrate(t.Context(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+	migrator := NewMigrationWorker(nc, exportWorker, jobs.NewMockWorker(t))
+	err := migrator.migrate(t.Context(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 		Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x"},
 	}}, pr)
 	require.NoError(t, err)

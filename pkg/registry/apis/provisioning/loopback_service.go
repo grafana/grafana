@@ -25,24 +25,25 @@ type loopbackService struct {
 	services.NamedService
 
 	builder *APIBuilder
-	run     func(ctx context.Context, restConfig *clientrest.Config) error
+	// disabled is set from disable_controllers.
+	disabled bool
+	run      func(ctx context.Context, restConfig *clientrest.Config) error
 	// waitFor, when set, also delays run until it is closed.
 	waitFor <-chan struct{}
 	// onStop, when set, is called once the service stops, however it stopped.
 	onStop func()
 }
 
-func newLoopbackService(name string, builder *APIBuilder, run func(ctx context.Context, restConfig *clientrest.Config) error) *loopbackService {
-	s := &loopbackService{builder: builder, run: run}
+func newLoopbackService(name string, builder *APIBuilder, disabled bool, run func(ctx context.Context, restConfig *clientrest.Config) error) *loopbackService {
+	s := &loopbackService{builder: builder, disabled: disabled, run: run}
 	s.NamedService = services.NewBasicService(nil, s.running, s.stopping).WithName(name)
 	return s
 }
 
-// IsDisabled implements registry.CanBeDisabled.
 // newControllerService is a loopbackService for a provisioning controller: it
 // runs with common completed by a client for the provisioning API.
-func newControllerService(name string, builder *APIBuilder, common controller.Common, run func(ctx context.Context, common controller.Common) error) *loopbackService {
-	return newLoopbackService(name, builder, func(ctx context.Context, restConfig *clientrest.Config) error {
+func newControllerService(name string, builder *APIBuilder, disabled bool, common controller.Common, run func(ctx context.Context, common controller.Common) error) *loopbackService {
+	return newLoopbackService(name, builder, disabled, func(ctx context.Context, restConfig *clientrest.Config) error {
 		client, err := clientset.NewForConfig(restConfig)
 		if err != nil {
 			return fmt.Errorf("create provisioning clientset: %w", err)
@@ -52,8 +53,9 @@ func newControllerService(name string, builder *APIBuilder, common controller.Co
 	})
 }
 
+// IsDisabled implements registry.CanBeDisabled.
 func (s *loopbackService) IsDisabled() bool {
-	return s.builder == nil || s.builder.onlyApiServer
+	return s.builder == nil || s.disabled
 }
 
 // Run implements registry.BackgroundService.

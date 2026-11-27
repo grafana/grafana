@@ -13,25 +13,9 @@ import (
 //go:generate mockery --name WrapWithStageFn --structname MockWrapWithStageFn --inpackage --filename mock_wrap_with_stage_fn.go --with-expecter
 type WrapWithStageFn func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repo repository.Repository, staged bool) error) error
 
-type UnifiedStorageMigrator struct {
-	namespaceCleaner NamespaceCleaner
-	exportWorker     jobs.Worker
-	syncWorker       jobs.Worker
-}
-
-func NewUnifiedStorageMigrator(
-	namespaceCleaner NamespaceCleaner,
-	exportWorker jobs.Worker,
-	syncWorker jobs.Worker,
-) *UnifiedStorageMigrator {
-	return &UnifiedStorageMigrator{
-		namespaceCleaner: namespaceCleaner,
-		exportWorker:     exportWorker,
-		syncWorker:       syncWorker,
-	}
-}
-
-func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.ReaderWriter, job provisioning.Job, progress jobs.JobProgressRecorder) error {
+// migrate exports the unmanaged resources to the repository, pulls them back
+// as managed resources, and then removes what the sync target does not keep.
+func (w *MigrationWorker) migrate(ctx context.Context, repo repository.ReaderWriter, job provisioning.Job, progress jobs.JobProgressRecorder) error {
 	options := provisioning.MigrateJobOptions{}
 	if job.Spec.Migrate != nil {
 		options = *job.Spec.Migrate
@@ -78,7 +62,7 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 			},
 		},
 	}
-	if err := m.exportWorker.Process(ctx, repo, exportJob, collector); err != nil {
+	if err := w.exportWorker.Process(ctx, repo, exportJob, collector); err != nil {
 		return fmt.Errorf("export resources: %w", err)
 	}
 
@@ -102,7 +86,7 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 				},
 			},
 		}
-		if err := m.syncWorker.Process(ctx, repo, syncJob, progress); err != nil {
+		if err := w.syncWorker.Process(ctx, repo, syncJob, progress); err != nil {
 			return fmt.Errorf("pull resources: %w", err)
 		}
 	}
@@ -125,7 +109,7 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 		// may be shared with resources that were not migrated.
 		if branchMigration {
 			progress.SetMessage(ctx, "delete migrated resources")
-			if err := m.namespaceCleaner.CleanResources(ctx, namespace, collector.ExportedNonFolderResources(), progress); err != nil {
+			if err := w.namespaceCleaner.CleanResources(ctx, namespace, collector.ExportedNonFolderResources(), progress); err != nil {
 				return fmt.Errorf("delete migrated resources: %w", err)
 			}
 		}
@@ -136,7 +120,7 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 		// did not take over (default branch), or the exports that were never taken
 		// over (branch).
 		progress.SetMessage(ctx, "clean namespace")
-		if err := m.namespaceCleaner.Clean(ctx, namespace, progress); err != nil {
+		if err := w.namespaceCleaner.Clean(ctx, namespace, progress); err != nil {
 			return fmt.Errorf("clean namespace: %w", err)
 		}
 	}

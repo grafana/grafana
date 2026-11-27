@@ -76,7 +76,7 @@ func ProvideJobQueueService(
 		},
 	}
 	common := controller.Common{Subscriber: subscriber, Registry: registry, Tracer: tracer}
-	s.loopbackService = newControllerService(JobQueueServiceName, builder, common, s.runController)
+	s.loopbackService = newControllerService(JobQueueServiceName, builder, cfg.DisableControllers, common, s.runController)
 	return s
 }
 

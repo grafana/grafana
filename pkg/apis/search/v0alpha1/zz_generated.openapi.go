@@ -110,10 +110,11 @@ func schema_pkg_apis_search_v0alpha1_FilterPredicate(ref common.ReferenceCallbac
 					},
 					"operator": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Operator is \"In\", \"NotIn\" or \"All\" in v1. \"In\" matches any of the values, \"NotIn\" excludes all of them, and \"All\" requires the field to hold every value, which only a field holding a list of values can do.",
+							Description: "Operator is \"In\", \"NotIn\" or \"All\" in v1. \"In\" matches any of the values, \"NotIn\" excludes all of them, and \"All\" requires the field to hold every value, which only a field holding a list of values can do.\n\nPossible enum values:\n - `\"All\"` requires the resources whose field holds every one of the values, which only a field holding a list of values can do.\n - `\"In\"` keeps the resources whose field matches any of the values.\n - `\"NotIn\"` keeps the resources whose field matches none of them.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
+							Enum:        []interface{}{"All", "In", "NotIn"},
 						},
 					},
 					"values": {

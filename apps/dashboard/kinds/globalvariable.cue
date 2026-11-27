@@ -2,9 +2,13 @@ package kinds
 
 import (
 	v2beta1 "github.com/grafana/grafana/sdkkinds/dashboard/v2beta1"
+	v2 "github.com/grafana/grafana/sdkkinds/dashboard/v2"
 )
 
-globalVariableV2beta1: {
+// The Variable kind is served at v2beta1 and v2 with identical specs, so every
+// version must share these declarations. Otherwise validation, mutation and
+// field selectors would accept a request in one version and reject it in another.
+_globalVariable: {
 	kind:       "Variable"
 	pluralName: "Variables"
 	search: {
@@ -26,7 +30,16 @@ globalVariableV2beta1: {
 	mutation: {
 		operations: ["CREATE", "UPDATE"]
 	}
+}
+
+globalVariableV2beta1: _globalVariable & {
 	schema: {
 		spec: v2beta1.VariableKind
+	}
+}
+
+globalVariableV2: _globalVariable & {
+	schema: {
+		spec: v2.VariableKind
 	}
 }

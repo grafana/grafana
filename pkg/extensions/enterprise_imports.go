@@ -296,7 +296,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	_ "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	_ "github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
-	_ "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	_ "github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	_ "github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	_ "github.com/grafana/grafana/pkg/registry/apis/query"

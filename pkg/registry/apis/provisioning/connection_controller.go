@@ -41,7 +41,7 @@ func ProvideConnectionControllerService(
 		informer: newControllerInformer(cfg, unified, informerMetrics),
 	}
 	common := controller.Common{Subscriber: subscriber, Registry: registry, Tracer: tracer}
-	s.loopbackService = newControllerService(ConnectionControllerServiceName, builder, common, s.runController)
+	s.loopbackService = newControllerService(ConnectionControllerServiceName, builder, cfg.DisableControllers, common, s.runController)
 	return s
 }
 

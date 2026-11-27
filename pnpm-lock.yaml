@@ -315,8 +315,8 @@ importers:
         specifier: ^0.18.0
         version: 0.18.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
       '@grafana/prometheus':
-        specifier: 13.2.4
-        version: 13.2.4(1748a23a2a87810d418bd023656497a3)
+        specifier: 13.2.5
+        version: 13.2.5(1748a23a2a87810d418bd023656497a3)
       '@grafana/runtime':
         specifier: workspace:*
         version: link:packages/grafana-runtime
@@ -403,7 +403,7 @@ importers:
         version: 6.6.15(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@reduxjs/toolkit':
         specifier: 2.12.0
-        version: 2.12.0(react-redux@9.3.0(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1))(react@19.2.8)
+        version: 2.12.0(react-redux@9.3.1(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1))(react@19.2.8)
       '@tanstack/react-virtual':
         specifier: ^3.5.1
         version: 3.14.28(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -493,7 +493,7 @@ importers:
         version: 1.11.13
       i18next:
         specifier: ^27.0.0
-        version: 27.2.6(@typescript/typescript6@6.0.2)
+        version: 27.2.7(@typescript/typescript6@6.0.2)
       idb:
         specifier: ^8.0.3
         version: 8.0.4
@@ -513,8 +513,8 @@ importers:
         specifier: 3.7.1
         version: 3.7.1
       js-yaml:
-        specifier: ^4.1.0
-        version: 4.3.2
+        specifier: ^5.0.0
+        version: 5.5.0
       json-schema-library:
         specifier: ^9.3.5
         version: 9.3.5
@@ -612,8 +612,8 @@ importers:
         specifier: 0.56.0
         version: 0.56.0
       react-redux:
-        specifier: 9.3.0
-        version: 9.3.0(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1)
+        specifier: 9.3.1
+        version: 9.3.1(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1)
       react-resizable:
         specifier: 4.0.2
         version: 4.0.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -750,6 +750,9 @@ importers:
       '@manypkg/get-packages':
         specifier: ^3.0.0
         version: 3.1.0
+      '@nx/devkit':
+        specifier: 24.0.6
+        version: 24.0.6(nx@24.0.6(@swc/core@1.13.3(@swc/helpers@0.5.17)))
       '@playwright/test':
         specifier: 1.64.1
         version: 1.64.1
@@ -834,9 +837,6 @@ importers:
       '@types/jquery':
         specifier: 3.5.33
         version: 3.5.33
-      '@types/js-yaml':
-        specifier: ^4.0.5
-        version: 4.0.9
       '@types/lodash':
         specifier: ^4.17.25
         version: 4.17.27
@@ -1022,7 +1022,7 @@ importers:
         version: 0.2.1
       i18next-cli:
         specifier: ^1.48.0
-        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.6)(@typescript/typescript6@6.0.2)(i18next@27.2.6(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
+        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.6)(@typescript/typescript6@6.0.2)(i18next@27.2.7(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
       ignore:
         specifier: 7.0.16
         version: 7.0.16
@@ -1081,8 +1081,8 @@ importers:
         specifier: 0.3.7
         version: 0.3.7
       nx:
-        specifier: 24.0.2
-        version: 24.0.2(@swc/core@1.13.3(@swc/helpers@0.5.17))
+        specifier: 24.0.6
+        version: 24.0.6(@swc/core@1.13.3(@swc/helpers@0.5.17))
       open:
         specifier: ^10.2.0
         version: 10.2.0
@@ -1109,7 +1109,7 @@ importers:
         version: 0.3.12
       react-i18next:
         specifier: ^18.0.0
-        version: 18.0.3(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(i18next@27.2.6(@typescript/typescript6@6.0.2))(react@19.2.8)
+        version: 18.0.3(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(i18next@27.2.7(@typescript/typescript6@6.0.2))(react@19.2.8)
       react-refresh:
         specifier: ^0.18.0
         version: 0.18.0
@@ -1123,11 +1123,11 @@ importers:
         specifier: 6.0.1
         version: 6.0.1
       rolldown:
-        specifier: 1.3.1
-        version: 1.3.1
+        specifier: 1.3.3
+        version: 1.3.3
       rolldown-plugin-dts:
         specifier: 0.28.6
-        version: 0.28.6(@typescript/typescript6@6.0.2)(oxc-resolver@11.21.2)(rolldown@1.3.1)
+        version: 0.28.6(@typescript/typescript6@6.0.2)(oxc-resolver@11.21.2)(rolldown@1.3.3)
       rspack-manifest-plugin:
         specifier: 5.2.2
         version: 5.2.2(@rspack/core@2.2.4(@swc/helpers@0.5.17))
@@ -1218,7 +1218,7 @@ importers:
         version: 19.2.4(@types/react@19.2.18)
       i18next-cli:
         specifier: ^1.48.0
-        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@27.2.6(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2)
+        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@27.2.7(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2)
       typescript:
         specifier: 6.0.2
         version: 6.0.2
@@ -1304,7 +1304,7 @@ importers:
         version: 19.2.4(@types/react@19.2.18)
       i18next-cli:
         specifier: ^1.48.0
-        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@27.2.6(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2)
+        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@27.2.7(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2)
       typescript:
         specifier: 6.0.2
         version: 6.0.2
@@ -1353,7 +1353,7 @@ importers:
         version: 19.2.4(@types/react@19.2.18)
       i18next-cli:
         specifier: ^1.48.0
-        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@27.2.6(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2)
+        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@27.2.7(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2)
       typescript:
         specifier: 6.0.2
         version: 6.0.2
@@ -1391,7 +1391,7 @@ importers:
         version: link:../grafana-ui
       '@reduxjs/toolkit':
         specifier: ^2.10.1
-        version: 2.12.0(react-redux@9.3.0(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1))(react@19.2.8)
+        version: 2.12.0(react-redux@9.3.1(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1))(react@19.2.8)
       fishery:
         specifier: ^2.3.1
         version: 2.4.0
@@ -1446,7 +1446,7 @@ importers:
         version: typescript@7.0.2
       i18next-cli:
         specifier: ^1.48.0
-        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.6)(@typescript/typescript6@6.0.2)(i18next@27.2.6(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
+        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.6)(@typescript/typescript6@6.0.2)(i18next@27.2.7(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
       react:
         specifier: 19.2.8
         version: 19.2.8
@@ -1454,14 +1454,14 @@ importers:
         specifier: 19.2.8
         version: 19.2.8(react@19.2.8)
       react-redux:
-        specifier: ^9.2.0
-        version: 9.3.0(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1)
+        specifier: ^9.3.0
+        version: 9.3.1(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1)
       rimraf:
         specifier: ^6.0.1
         version: 6.0.1
       rolldown:
-        specifier: 1.3.1
-        version: 1.3.1
+        specifier: 1.3.3
+        version: 1.3.3
       typescript:
         specifier: npm:@typescript/typescript6@^6.0.2
         version: '@typescript/typescript6@6.0.2'
@@ -1473,7 +1473,7 @@ importers:
         version: link:../grafana-runtime
       '@reduxjs/toolkit':
         specifier: ^2.10.0
-        version: 2.12.0(react-redux@9.3.0(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1))(react@19.2.8)
+        version: 2.12.0(react-redux@9.3.1(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1))(react@19.2.8)
       rxjs:
         specifier: ^7.8.2
         version: 7.8.2
@@ -1491,8 +1491,8 @@ importers:
         specifier: ^12.1.3
         version: 12.1.3
       rolldown:
-        specifier: 1.3.1
-        version: 1.3.1
+        specifier: 1.3.3
+        version: 1.3.3
       typescript:
         specifier: npm:@typescript/typescript6@^6.0.2
         version: '@typescript/typescript6@6.0.2'
@@ -1618,8 +1618,8 @@ importers:
         specifier: 6.0.1
         version: 6.0.1
       rolldown:
-        specifier: 1.3.1
-        version: 1.3.1
+        specifier: 1.3.3
+        version: 1.3.3
       rollup-plugin-copy:
         specifier: 3.5.0
         version: 3.5.0
@@ -1652,8 +1652,8 @@ importers:
         specifier: 6.0.1
         version: 6.0.1
       rolldown:
-        specifier: 1.3.1
-        version: 1.3.1
+        specifier: 1.3.3
+        version: 1.3.3
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -1792,8 +1792,8 @@ importers:
         specifier: 2.5.8
         version: 2.5.8
       rolldown:
-        specifier: 1.3.1
-        version: 1.3.1
+        specifier: 1.3.3
+        version: 1.3.3
       storybook:
         specifier: 10.6.2
         version: 10.6.2(patch_hash=768442e7adf5924c3d9ab1a30e280323e0d8085d995188fa8eb8d22079284367)(@types/react@19.2.18)(prettier@3.6.2)(react@19.2.8)
@@ -1817,7 +1817,7 @@ importers:
         version: 3.1.3
       i18next:
         specifier: ^27.0.0
-        version: 27.2.6(@typescript/typescript6@6.0.2)
+        version: 27.2.7(@typescript/typescript6@6.0.2)
       i18next-browser-languagedetector:
         specifier: ^8.0.0
         version: 8.3.1
@@ -1832,7 +1832,7 @@ importers:
         version: 19.2.8
       react-i18next:
         specifier: ^18.0.0
-        version: 18.0.3(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(i18next@27.2.6(@typescript/typescript6@6.0.2))(react@19.2.8)
+        version: 18.0.3(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(i18next@27.2.7(@typescript/typescript6@6.0.2))(react@19.2.8)
     devDependencies:
       '@types/react':
         specifier: 19.2.18
@@ -1841,8 +1841,8 @@ importers:
         specifier: npm:typescript@^7.0.2
         version: typescript@7.0.2
       rolldown:
-        specifier: 1.3.1
-        version: 1.3.1
+        specifier: 1.3.3
+        version: 1.3.3
       typescript:
         specifier: npm:@typescript/typescript6@^6.0.2
         version: '@typescript/typescript6@6.0.2'
@@ -1859,7 +1859,7 @@ importers:
         specifier: workspace:*
         version: link:../grafana-e2e-selectors
       '@grafana/plugin-compat':
-        specifier: ^0.13.0
+        specifier: workspace:^
         version: link:../grafana-plugin-compat
       '@grafana/plugin-ui':
         specifier: ^0.18.0
@@ -1911,8 +1911,8 @@ importers:
         specifier: 19.2.8
         version: 19.2.8
       rolldown:
-        specifier: 1.3.1
-        version: 1.3.1
+        specifier: 1.3.3
+        version: 1.3.3
       typescript:
         specifier: npm:@typescript/typescript6@^6.0.2
         version: '@typescript/typescript6@6.0.2'
@@ -1963,8 +1963,8 @@ importers:
         specifier: ^6.0.1
         version: 6.0.1
       rolldown:
-        specifier: 1.3.1
-        version: 1.3.1
+        specifier: 1.3.3
+        version: 1.3.3
       typescript:
         specifier: npm:@typescript/typescript6@^6.0.2
         version: '@typescript/typescript6@6.0.2'
@@ -2148,8 +2148,8 @@ importers:
         specifier: 6.0.1
         version: 6.0.1
       rolldown:
-        specifier: 1.3.1
-        version: 1.3.1
+        specifier: 1.3.3
+        version: 1.3.3
       typescript:
         specifier: npm:@typescript/typescript6@^6.0.2
         version: '@typescript/typescript6@6.0.2'
@@ -2163,8 +2163,8 @@ importers:
         specifier: 6.0.1
         version: 6.0.1
       rolldown:
-        specifier: 1.3.1
-        version: 1.3.1
+        specifier: 1.3.3
+        version: 1.3.3
       typescript:
         specifier: npm:@typescript/typescript6@^6.0.2
         version: '@typescript/typescript6@6.0.2'
@@ -2255,13 +2255,13 @@ importers:
         version: typescript@7.0.2
       i18next-cli:
         specifier: ^1.48.0
-        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.6)(@typescript/typescript6@6.0.2)(i18next@27.2.6(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
+        version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.6)(@typescript/typescript6@6.0.2)(i18next@27.2.7(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
       jest:
         specifier: ^29.6.4
         version: 29.7.0(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.6)(@typescript/typescript6@6.0.2))
       rolldown:
-        specifier: 1.3.1
-        version: 1.3.1
+        specifier: 1.3.3
+        version: 1.3.3
       typescript:
         specifier: npm:@typescript/typescript6@^6.0.2
         version: '@typescript/typescript6@6.0.2'
@@ -2424,7 +2424,7 @@ importers:
         version: 1.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@rc-component/slider':
         specifier: ^1.0.1
-        version: 1.2.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 1.2.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@rc-component/tooltip':
         specifier: ^1.4.0
         version: 1.5.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -2682,8 +2682,8 @@ importers:
         specifier: 6.0.1
         version: 6.0.1
       rolldown:
-        specifier: 1.3.1
-        version: 1.3.1
+        specifier: 1.3.3
+        version: 1.3.3
       rollup-plugin-copy:
         specifier: 3.5.0
         version: 3.5.0
@@ -2806,7 +2806,7 @@ importers:
         version: link:../../../../../packages/grafana-ui
       '@reduxjs/toolkit':
         specifier: 2.12.0
-        version: 2.12.0(react-redux@9.3.0(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1))(react@19.2.8)
+        version: 2.12.0(react-redux@9.3.1(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1))(react@19.2.8)
       lodash:
         specifier: ^4.17.23
         version: 4.18.1
@@ -3890,8 +3890,8 @@ packages:
       monaco-editor:
         optional: true
 
-  '@grafana/prometheus@13.2.4':
-    resolution: {integrity: sha512-vdP8h1B6MefT3pvZxEE/0HFO6K20gGujn9e7stX8JNshZohy/xenJ6tnUlaMpVGmpUvBr5Z65mD2dFIqZOl/Qw==}
+  '@grafana/prometheus@13.2.5':
+    resolution: {integrity: sha512-KixIyrcOYqERlvIduFWkn2y543gJb+VKy9A0mFFmqGu17/rAt3mgKL466e/Jjk5MLqpwa7mMMenN5Bcg1Klj+w==}
     engines: {node: '>=24', npm: '>=11.16.0'}
     peerDependencies:
       '@grafana/assistant': 0.1.34
@@ -4841,57 +4841,62 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@nx/nx-darwin-arm64@24.0.2':
-    resolution: {integrity: sha512-UXiD8QtdWPsoVXMkdFnuMtw2FoaF3kPiNcKvX4dv956YK6vuL8lafxvikADqjwlRlFhKAci+ePzpbjJDNsQBiA==}
+  '@nx/devkit@24.0.6':
+    resolution: {integrity: sha512-b/VfBRKLcjQm3w8m+tsQCpUIq8ChTiAghMFk2zgNDwXHFkQNblAA96Hm7a7+kbX2diPsQ7a1HpMXPp0iNbL6AA==}
+    peerDependencies:
+      nx: '>= 23 <= 25 || ^24.0.0-0'
+
+  '@nx/nx-darwin-arm64@24.0.6':
+    resolution: {integrity: sha512-XzMU1QvSqCTe0UI/rTpmLcWMljEzqkQ1w2Qvk9HZeJ0CLvET6MBKgb/nzsjj6ieXLNxkvJ7GDQmFm6uPm5uitw==}
     cpu: [arm64]
     os: [darwin]
 
-  '@nx/nx-darwin-x64@24.0.2':
-    resolution: {integrity: sha512-7YnPf0OqiF1ph2y3bI5BDuO101Yg6rg8noT4bKFZxdMROJs3OKr1sKyRdqSl8vAxCa+NJ2A6IjB1FWf1GGL2VA==}
+  '@nx/nx-darwin-x64@24.0.6':
+    resolution: {integrity: sha512-Oqdn1EieLXV/c3fs9S44D6yav1aPw5jKaWGFaJYme0mDNmQhv3kOXGnPPp2DAWE/S4+2h+TYF+DQeTA5u0tSkQ==}
     cpu: [x64]
     os: [darwin]
 
-  '@nx/nx-freebsd-x64@24.0.2':
-    resolution: {integrity: sha512-iAzv/voFRCUNetQ22JkkdTsRwCv/fkhbPexnCioPs9Sc5cD65IdkJnnioNiaE482DhKJeVHIwABpe6soEDmS4w==}
+  '@nx/nx-freebsd-x64@24.0.6':
+    resolution: {integrity: sha512-MjQGxeJ1Sf0hZNi6JW9hi/4WTRT3GqA1c0k26GkqWfM1m4o1bKzNjUUaFxuZv+EwJM7/tTpc2Pd5n7xtsd1RSw==}
     cpu: [x64]
     os: [freebsd]
 
-  '@nx/nx-linux-arm-gnueabihf@24.0.2':
-    resolution: {integrity: sha512-SymvR6WFm61wGrosjzYb7PgzNPH0la/wWRM6uzh5DIBfQqDfVe7FsIWU2quZdPWkiuo3ZgDiA1qqbQ0L3y0sug==}
+  '@nx/nx-linux-arm-gnueabihf@24.0.6':
+    resolution: {integrity: sha512-FuQ2GvyV7lFsQkgKldnWhHG2X5SoDsiMcuHliT2FbkxCRDmoAKLZn+v0am6R/oCtfBAN8TKEAY4Cg5R9yugAhw==}
     cpu: [arm]
     os: [linux]
 
-  '@nx/nx-linux-arm64-gnu@24.0.2':
-    resolution: {integrity: sha512-qq7JbQzpx1ZkwLP5fNWDNY8irgcHN5zdc7nnJ3wmrs42i9LmA8wqxQvXaZaKZCTRTVNNPNZhH90SpOceTMYGZg==}
+  '@nx/nx-linux-arm64-gnu@24.0.6':
+    resolution: {integrity: sha512-SRKKQv9ukvpPT8KToObgW6R3BfwVyRG2HnjXo7ox5+EXRu+A9T+aEgRUlU7FDsrhofLIPt/TnCyb5W/YsORCHA==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@nx/nx-linux-arm64-musl@24.0.2':
-    resolution: {integrity: sha512-ddqQ/KMnjEdbkRVgG9o2myyJpsERV0+wOGPzBKRQc8GGac1gOIpP16dMpvxdGH8TV5gSk4PCNxbkeoEjyzsZ5A==}
+  '@nx/nx-linux-arm64-musl@24.0.6':
+    resolution: {integrity: sha512-/LbBWlqQlMQ+6VFzZJm+8r53KUw8rbSrtVd9d0Hyo5mbwOV3LKeHlDreqSPrH9RzDPWeYUV9TQgt/RcVoLyGDw==}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@nx/nx-linux-x64-gnu@24.0.2':
-    resolution: {integrity: sha512-kI5ee7+jIgRVghc5Mfo9LeCaukVCGx5k2ObRBpA76SP1NT22PmdZcB6LsNj4Syr0DWdCw+ldPp0MSQKqjq3W7w==}
+  '@nx/nx-linux-x64-gnu@24.0.6':
+    resolution: {integrity: sha512-yloJm49ypgva/ynymFFm4xvF24xcI+HjkCVJi36Lf+fIK27ThPwpoOiJMbHpC3cAErkid+yxRKU9DOmMFFYppQ==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@nx/nx-linux-x64-musl@24.0.2':
-    resolution: {integrity: sha512-1PUtv4KDxgsEd7Uc/eNnFpFZ3RiN3sEyMQJ+sDJIGZedChY3qbJYgNfX/8WfEILGCSrRnGQuEvZo2+DV7pcZ9A==}
+  '@nx/nx-linux-x64-musl@24.0.6':
+    resolution: {integrity: sha512-GjxxzYYz7udJqlwb+ONcyo8CQC1wYjuq81+YtmMoeVBiF/kvHbkkg5Dq8V1jHzvI2timZIQsmWTPoir89ijF0A==}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@nx/nx-win32-arm64-msvc@24.0.2':
-    resolution: {integrity: sha512-vuX8/T2wEJsQwks8kmGQhy+zFQfIRPIMJImifX+o5bPFd3fdHPsAvIjPVoBfq29S/RKqzYGZBevWDibqllIYyw==}
+  '@nx/nx-win32-arm64-msvc@24.0.6':
+    resolution: {integrity: sha512-HwJjb30502K/L+dALg2ACegVe31hTp9vEURNJ3xRhsxF7ntt5UtLLGm5SrofYtDB++as+JwaTIzznYgR0pIpHQ==}
     cpu: [arm64]
     os: [win32]
 
-  '@nx/nx-win32-x64-msvc@24.0.2':
-    resolution: {integrity: sha512-bGfkGqJaD1diC85SF4Qjs6CR0pBDA0zklgF5iJk42EFhhOcxsDvvMUnb22iF12xPmsEM3Akpv4UoNXbn6t0NYw==}
+  '@nx/nx-win32-x64-msvc@24.0.6':
+    resolution: {integrity: sha512-qpdTKgb+KJx89S98abpLz3X7/ZgCFm7dta7oOpn4JxEgY1l2UB7UcW+6+kF2mjhc1xggn1QSu9DXExQc5r8ukw==}
     cpu: [x64]
     os: [win32]
 
@@ -5347,8 +5352,8 @@ packages:
   '@oxc-project/types@0.156.0':
     resolution: {integrity: sha512-1Duyg48TdJNdyhEB8Xn1L36bT9Pv6GUtlKjHxOys8xkaF/rQq3XJE+bAurSK/AgIz5mGFsb77cn9Pb20+WCScw==}
 
-  '@oxc-project/types@0.157.0':
-    resolution: {integrity: sha512-95iTox1qdt6WGWce3xwNOVayByOfLaYAq+qGPpub6NWbBh9sv0GG3+zyfh9ZBCO/jVu5A0EWI+qQI7g6fevjxg==}
+  '@oxc-project/types@0.159.0':
+    resolution: {integrity: sha512-QWjWhxheluOJ82kDHNyps00UvRpQCtI34B5A/SzpgQycUD/79FuvT4I0aQIfE/bdPwKmX4QPftnywFBH6FxJhQ==}
 
   '@oxc-resolver/binding-android-arm-eabi@11.21.2':
     resolution: {integrity: sha512-xQoCRv+gKax9KTdwdaQNnAFOai8neay7g3jExDIORzhbrejwGSJaZNTdOJHR5ziLg2joMxOCMOFMo4zuxza2uQ==}
@@ -5707,8 +5712,8 @@ packages:
       react: '*'
       react-dom: '*'
 
-  '@rc-component/slider@1.2.1':
-    resolution: {integrity: sha512-viYU/3Vy8dXfTOAB/5rNkNHIsHJQ7DwK+sdQ5L76qDHhL8RtLfwsR7pYTUFfmKUgSAhSzEQolmfuDeIx3/fBJQ==}
+  '@rc-component/slider@1.2.2':
+    resolution: {integrity: sha512-DrzJRjZVGK6N/zYKAsi6k1g1IwTxVSDUA7SzgzQ5IOJz1nY3kLtq70t0T0Pw5yOYi1LNlt0rzCWaFvZmYsX6Gw==}
     engines: {node: '>=8.x'}
     peerDependencies:
       react: '>=16.9.0'
@@ -5825,8 +5830,8 @@ packages:
     cpu: [arm]
     os: [android]
 
-  '@rolldown/binding-android-arm-eabi@1.3.1':
-    resolution: {integrity: sha512-yeCTS2g0J/CXg0QirfJdet9BW/vhx3UM7Nv8Cz0Cglh82e/7F+8ss2kYWx5xt+wbsFK0LV4485+PZxW0bs5udQ==}
+  '@rolldown/binding-android-arm-eabi@1.3.3':
+    resolution: {integrity: sha512-K1itOg1Xl50XyjLDa4qQZqaYsfiQbFbFRWXOEOupOsGr3whhm5ed4lgySd6Inohv2TB0+sdU4AxORKuS/TGang==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm]
     os: [android]
@@ -5837,8 +5842,8 @@ packages:
     cpu: [arm64]
     os: [android]
 
-  '@rolldown/binding-android-arm64@1.3.1':
-    resolution: {integrity: sha512-8RCJ1AODBZ7luSDvVSabNtDkxrRL1U4+kr9UG7X2GMrdPRD4gN07o8X61LouA8JSy8vXkgd8BIEpxXsP3WokgA==}
+  '@rolldown/binding-android-arm64@1.3.3':
+    resolution: {integrity: sha512-re+E0E3YSJXjEFzdOvBgkVUev1Gg49ileia04qy+Djn0lIMBr7pnwVOYQ+4vc9XbLClCmMziasqXHM7KTmKNKQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [android]
@@ -5849,8 +5854,8 @@ packages:
     cpu: [arm64]
     os: [darwin]
 
-  '@rolldown/binding-darwin-arm64@1.3.1':
-    resolution: {integrity: sha512-/oKBcpu993n68qe/Jn6mdc+CwtZLCFY34aCoG9PuWvBEMmGunyGAmrxhI5R78jasyJXXT9BX2pCzwQMT6Zdj8Q==}
+  '@rolldown/binding-darwin-arm64@1.3.3':
+    resolution: {integrity: sha512-6pMLYsUiQJXPkUj/CG447hOBKtbe+hjWw/wbxe/mucoPKgnLSVRTzey7s0kXfqrjxhDd3gQ2hj6lgUKRumsIzw==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [darwin]
@@ -5861,8 +5866,8 @@ packages:
     cpu: [x64]
     os: [darwin]
 
-  '@rolldown/binding-darwin-x64@1.3.1':
-    resolution: {integrity: sha512-vCmEnX+/BEVN+ar/jes4t+04RjQNrBoAd7PyQN7Wyklo+W1H1juKhcmlwjGaHQbZLdsYglZ8pBRwlQc+u5XLWA==}
+  '@rolldown/binding-darwin-x64@1.3.3':
+    resolution: {integrity: sha512-Lz+TskwvhceQgwnP+0ox5ZeL7HDDXHKWVRpOqC1Eo05y6rYyfvvep0msGqC95kQTykXrmGgP6qwJB1NdgNZVhg==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [darwin]
@@ -5873,8 +5878,8 @@ packages:
     cpu: [x64]
     os: [freebsd]
 
-  '@rolldown/binding-freebsd-x64@1.3.1':
-    resolution: {integrity: sha512-/76gLsW8sjHDcLFvqsXKWOKCtfzyUUuEmKP2jz6twjGVaVAkULflI7ny+NDE955RX0xYR4qLzvk+g8IgnYHsNQ==}
+  '@rolldown/binding-freebsd-x64@1.3.3':
+    resolution: {integrity: sha512-sIzqNDbA7GFDXU8k9/vcJyV1p45mCe+xHOLo9qD7gdbTbMlwB+SpnFoP7WSpC2iYdGfOX9pjBxCfViRn/Nu3Jw==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [freebsd]
@@ -5885,8 +5890,8 @@ packages:
     cpu: [arm]
     os: [linux]
 
-  '@rolldown/binding-linux-arm-gnueabihf@1.3.1':
-    resolution: {integrity: sha512-oci8r+L/3490VrKGcbJcqweykeFdV4DPn3FUxitWmzZQeGmsZCZ0oeCTU1XK3nV3UeqCVNAZy4lXsYE3RyCPHg==}
+  '@rolldown/binding-linux-arm-gnueabihf@1.3.3':
+    resolution: {integrity: sha512-HYysnZZ7HD3FM5RIBN6wDMoxtOjw4LS9HhRuQ57MsZt5XGpGRPxVpplvr7vUXRN+9MD8zb6vn1JRP06PXIuMYQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm]
     os: [linux]
@@ -5898,8 +5903,8 @@ packages:
     os: [linux]
     libc: [glibc]
 
-  '@rolldown/binding-linux-arm64-gnu@1.3.1':
-    resolution: {integrity: sha512-tcMHkX6NWVRE6Aqr3zXjpAvP9DIMxcifdaCvaTEVpdqRZn1EAeP3PcUtABxmJHU60PJB+dH3uMR/vsHsoAxdYA==}
+  '@rolldown/binding-linux-arm64-gnu@1.3.3':
+    resolution: {integrity: sha512-XAyLqWSoEKVc8wsDbCIz5o2sBY6ye+0YByK9ib5QxFReoM1KHyThSHsdUODa1DKNzlEfae+p9QwK62LsVwo6Nw==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [linux]
@@ -5912,8 +5917,8 @@ packages:
     os: [linux]
     libc: [musl]
 
-  '@rolldown/binding-linux-arm64-musl@1.3.1':
-    resolution: {integrity: sha512-rH04pFXdQfVI71O4U/yrcQlEmQAhUzuG9kNGhNdxGSAxtxB45lQ7XpuXmIV53eQTEjfWyl9NmAV9MOE/fux2AQ==}
+  '@rolldown/binding-linux-arm64-musl@1.3.3':
+    resolution: {integrity: sha512-oVyicDPj6vUVFRnuoQS7M2Ab8EkGWoq3a5ntyQqjtZoXfgVykIJqN2IAJSi9q9UyNoQUW0vbBLQSgGtlPJ40Kg==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [linux]
@@ -5926,8 +5931,8 @@ packages:
     os: [linux]
     libc: [glibc]
 
-  '@rolldown/binding-linux-ppc64-gnu@1.3.1':
-    resolution: {integrity: sha512-yXmS9FIJXFEIj58cey6eNtspMmi8/yeKDrqsKZ6taHnM+DB2HX5eGjdNV3V8anfThOch+zKL0TaBZIg/TeH6Vw==}
+  '@rolldown/binding-linux-ppc64-gnu@1.3.3':
+    resolution: {integrity: sha512-k7aFSWgUoi/X7jCst7UEof7pS5jc5ymD8mT/pdFE+pO1IBBI2+JU5Os4HEDqS/tYhetRggwM7MOiLP3cg1bSBQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [ppc64]
     os: [linux]
@@ -5940,8 +5945,8 @@ packages:
     os: [linux]
     libc: [glibc]
 
-  '@rolldown/binding-linux-s390x-gnu@1.3.1':
-    resolution: {integrity: sha512-JSATRKvP4es7A0hGhuj4EQtZIdlACqWDxeIg59vPAvo9APsyiFmWqdFdPjeihRQx1gmuLw8mD6r+bUEIzitP3g==}
+  '@rolldown/binding-linux-s390x-gnu@1.3.3':
+    resolution: {integrity: sha512-D5mxHpr1qIb1Pt5UT+Bm2p6vJ7+VxcxWcxZCYVDFzZwWRq9iLiEg4/ROsaXFQl1O8sDQZZJ55UoRWWMK64uH5w==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [s390x]
     os: [linux]
@@ -5954,8 +5959,8 @@ packages:
     os: [linux]
     libc: [glibc]
 
-  '@rolldown/binding-linux-x64-gnu@1.3.1':
-    resolution: {integrity: sha512-9+XaosVKfDsDIWUOoZwL1bdHD+52sZFbtbft67oGcgt5qDUq+0HJGGxZA2iD/YA0w7mPB2JrThjP0C/4bg/2+A==}
+  '@rolldown/binding-linux-x64-gnu@1.3.3':
+    resolution: {integrity: sha512-nmW1O4BbNEmQI9+KTHbJgbDv0EuyZy64oBnRlMCtLJ8lQMIJ/H/iziQ0g2IUlHEhNrSebGvs9cRrlRj8oEfP+g==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [linux]
@@ -5968,8 +5973,8 @@ packages:
     os: [linux]
     libc: [musl]
 
-  '@rolldown/binding-linux-x64-musl@1.3.1':
-    resolution: {integrity: sha512-zmTIXU38DaLB10om1EkwdbwBBTqiVB2IDmPXpiucbFwg9qtfQyxZktMIbrJkO/NFbqP5xiGsTaqSmhrdhpSt5Q==}
+  '@rolldown/binding-linux-x64-musl@1.3.3':
+    resolution: {integrity: sha512-ivU4JFHK5nFzrRbzp3+vwYdLj8mFckH4oz3hEl5LH/YeThr9/m2N2vF3NvLevtHq6e0COimgrEVyYTwQhh4ODg==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [linux]
@@ -5981,14 +5986,14 @@ packages:
     cpu: [arm64]
     os: [openharmony]
 
-  '@rolldown/binding-openharmony-arm64@1.3.1':
-    resolution: {integrity: sha512-hTJfT0txdxpVKSZAmrUsCSPZD7Ewh3PCtSWpLOJYkR7nYzJRTGzlyPsxMMk4yvry7RxCGvB3keEDUfxQM0/O1g==}
+  '@rolldown/binding-openharmony-arm64@1.3.3':
+    resolution: {integrity: sha512-XxZoRIkNZ/7pFgvOA8QJmx3uFjMyVz7zS2/urzlaFffoOGclDvpUAMu3AHKT551E8JBKXLxIjpYxYMdF6Mz9vQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [openharmony]
 
-  '@rolldown/binding-wasm32-wasi@1.3.1':
-    resolution: {integrity: sha512-uTcfNRCMeAQLqGi8a/+TApIkSeqrj1qx3t2sxAWvlN65sCLyg8z68zsCQLyYKEAQPPaHrEWqiceMah8Zd9U01A==}
+  '@rolldown/binding-wasm32-wasi@1.3.3':
+    resolution: {integrity: sha512-bBl1MB2gF26PSPy3CiDLiv+A6JGI546WbsDR34LfKAywSGeBeQXaDanoDG6QdZDJs53M1QyJir5MTKTu1n4ptA==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=23.5.0}
     cpu: [wasm32]
 
@@ -5998,8 +6003,8 @@ packages:
     cpu: [arm64]
     os: [win32]
 
-  '@rolldown/binding-win32-arm64-msvc@1.3.1':
-    resolution: {integrity: sha512-vWby/lJJgE16EBaO96mg30Rj1JMT5vI/tV/bOBL5atHTO58T8Rfude/aqUyG+iALSn3NMcO2TI9fFAtPUA4/Iw==}
+  '@rolldown/binding-win32-arm64-msvc@1.3.3':
+    resolution: {integrity: sha512-6rZur0hyen4LPhOxWIg7az1YX+Eo8Vvauc0D6lFYGK/QCvN+1XpnB8aFe3jQc/PBUGIReJJnLX3sS8h33/5v7A==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [win32]
@@ -6010,8 +6015,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@rolldown/binding-win32-x64-msvc@1.3.1':
-    resolution: {integrity: sha512-9mPxCYnOQ/Cu+YW/P18Ldxu9rmLFhRIxr8kSHjYwolgpUlzfAHoe+ykHP1WupPRR11+R9erOdxG7LIE8gd9YpA==}
+  '@rolldown/binding-win32-x64-msvc@1.3.3':
+    resolution: {integrity: sha512-Ggzyuq1mN7claruAZH10aiiM1N3LRCoMP5xDXPdU514ulL0D2bksCWgFqEmEM2/pDzEP7Dq+dcv7IH452jtr1w==}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [win32]
@@ -7258,9 +7263,6 @@ packages:
   '@types/js-cookie@3.0.6':
     resolution: {integrity: sha512-wkw9yd1kEXOPnvEeEV1Go1MmxtBJL0RR79aOTAApecWFVu7w0NNXNqhcWgvw2YgZDYadliXkl14pa3WXw5jlCQ==}
 
-  '@types/js-yaml@4.0.9':
-    resolution: {integrity: sha512-k4MGaQl5TGo/iipqb2UDG2UwjXziSWkh0uysQelTlJpX1qGlpUZYm8PnO4DxG1qBomtJUdYJ6qR6xdIah10JLg==}
-
   '@types/jsdom@20.0.1':
     resolution: {integrity: sha512-d0r18sZPmMQr1eG35u12FZfhIXNrnsPU/g5wvRKCUf/tOGilKKwYMYGqh33BNR6ba+2gkHw1EUiHoN3mn7E5IQ==}
 
@@ -8385,6 +8387,9 @@ packages:
 
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
+
+  argparse@3.0.4:
+    resolution: {integrity: sha512-fwWK3Zq22l4XJJjx5mcBHGikIk+hJqO+32dPm0Jur7+rtG5x1scOjSfdT9ZKeWHPpsya/l0HHK4tDImBkTrtvA==}
 
   aria-hidden@1.2.6:
     resolution: {integrity: sha512-ik3ZgC9dY/lYVVM++OISsaYDeg1tb0VtP5uL3ouh1koGOaUMDPpbFIei4JkFimWUFPn90sbMNMXQAIVOlnYKJA==}
@@ -10793,8 +10798,8 @@ packages:
   i18next@23.16.8:
     resolution: {integrity: sha512-06r/TitrM88Mg5FdUXAKL96dJMzgqLE5dv3ryBAra4KCwD9mJ4ndOTS95ZuymIGoE+2hzfdaMak2X11/es7ZWg==}
 
-  i18next@27.2.6:
-    resolution: {integrity: sha512-ScRHHL/oAHaEgi78K770XIDQmOiq3BLjD4zxEoDeva4NLXXLPb83mzeSjFw7SefkwCEpLNC+560Pg0Q3BnCLsA==}
+  i18next@27.2.7:
+    resolution: {integrity: sha512-q3XlM8YSo6Nmomd+MQ4JPGJGvhgHwfCRXNeFrM8l0F4TuIuoJBqhCxQrdGDHNMjObRuw5O0ReuU968ZeMVlfnw==}
     engines: {node: '>=22'}
     peerDependencies:
       typescript: ^5 || ^6 || ^7
@@ -11653,6 +11658,10 @@ packages:
     resolution: {integrity: sha512-SFNOvSJ+Dgf/9An904Yx+CgSlIPCkIpao4qo51lpee25TIRejdH3rhR4EZMGoNx3/TP3O+wzWuiTFl4sqbltzA==}
     hasBin: true
 
+  js-yaml@5.5.0:
+    resolution: {integrity: sha512-paNr4LFIFPjeeSmwNYdrb8FafLLG/Cr2Af3GjbsHJ5CxIjH4r0c2emlmRdAtpPAieP1gRVzk6buBbVP5gBMGAg==}
+    hasBin: true
+
   jsdoc-type-pratt-parser@4.1.0:
     resolution: {integrity: sha512-Hicd6JK5Njt2QB6XYFS7ok9e37O8AYk3jTcppG4YVQnYjOemymvTcmc7OWsmq/Qqj5TdRFO5/x/tIPmBeRtGHg==}
     engines: {node: '>=12.0.0'}
@@ -12450,8 +12459,8 @@ packages:
   nwsapi@2.2.2:
     resolution: {integrity: sha512-90yv+6538zuvUMnN+zCr8LuV6bPFdq50304114vJYJ8RDyK8D5O9Phpbd6SZWgI7PwzmmfN1upeOJlvybDSgCw==}
 
-  nx@24.0.2:
-    resolution: {integrity: sha512-8iM4TsVVVJBVgvEiPF4kYoiTB7W0TM+YO8SzPwTZOY+mRGz4lOF4gAJ/0uLIfMzbYGErHNVxG/DkxtO8ZE838g==}
+  nx@24.0.6:
+    resolution: {integrity: sha512-d/8V/yPOqAYPjtbwydBrzlksQ72eWr+Hw5TJoMuyIwF5KJH0xr2OCCzUlxIAxpe20cZKDk5ftGEspZ2Si7wgsg==}
     hasBin: true
     peerDependencies:
       '@swc-node/register': ^1.11.1
@@ -13333,8 +13342,8 @@ packages:
       redux:
         optional: true
 
-  react-redux@9.3.0:
-    resolution: {integrity: sha512-KQopgqFo/p/fgmAs5qz6p5RWaNAzq40WAu7fJIXnQpYxFPbJYtsJPWvGeF2rOBaY/kEuV77AVsX8TsQzKm+A/g==}
+  react-redux@9.3.1:
+    resolution: {integrity: sha512-vxMLT0lalUjbZPkoTepWyKAZbjIIFssNx/CEL9lTfwQBU6XpkGSmCNdcCIrkOBUgB68uftZMnbXVb6DwGnhRKQ==}
     peerDependencies:
       '@types/react': ^18.2.25 || ^19
       react: ^18.0 || ^19
@@ -13739,8 +13748,8 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
-  rolldown@1.3.1:
-    resolution: {integrity: sha512-RAIazzQpeoYB0r8jWuNDX+fT1NJ+9Cqdt0pSi9jc9zwX21k2x2IUPuYJmZxDB2k8ZisNv4gNIPj+HwRCTJG4uw==}
+  rolldown@1.3.3:
+    resolution: {integrity: sha512-ksB1g74e7haRy02OYm4lOQAlr6sK6hBpAY5R+YC30Gkv4L1COwF6M9umBAYAPxWpGow6Vr+IXtyDjH9fq7A+Zg==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
@@ -14863,8 +14872,8 @@ packages:
   undici-types@8.9.0:
     resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
 
-  undici@7.29.0:
-    resolution: {integrity: sha512-IDxfleLmmbSskfWSUATiN1nfn2rDuvnMOqb5CWR92iIfojA0Ud+ulOAAEQ57LPr9rWmsreUyf5lwyao+7GNNVw==}
+  undici@7.30.1:
+    resolution: {integrity: sha512-03KrMbjIFDWQR5RNPrSw3bd1r12JpyFQl9/yxjUbJtqkjmllqC5lFjZh6ujeuJCKr8EOQvRW872Oy/az+nLYxg==}
     engines: {node: '>=20.18.1'}
 
   unicode-emoji-modifier-base@1.0.0:
@@ -16680,7 +16689,7 @@ snapshots:
       - react-native
       - supports-color
 
-  '@grafana/prometheus@13.2.4(1748a23a2a87810d418bd023656497a3)':
+  '@grafana/prometheus@13.2.5(1748a23a2a87810d418bd023656497a3)':
     dependencies:
       '@emotion/css': 11.13.5(supports-color@7.2.0)
       '@floating-ui/react': 0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -16838,7 +16847,7 @@ snapshots:
       raf-schd: 4.0.3
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
-      react-redux: 9.3.0(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1)
+      react-redux: 9.3.1(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1)
       redux: 5.0.1
       use-memo-one: 1.1.3(react@19.2.8)
     transitivePeerDependencies:
@@ -16851,7 +16860,7 @@ snapshots:
       raf-schd: 4.0.3
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
-      react-redux: 9.3.0(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1)
+      react-redux: 9.3.1(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1)
       redux: 5.0.1
     transitivePeerDependencies:
       - '@types/react'
@@ -18206,34 +18215,43 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.17.1
 
-  '@nx/nx-darwin-arm64@24.0.2':
+  '@nx/devkit@24.0.6(nx@24.0.6(@swc/core@1.13.3(@swc/helpers@0.5.17)))':
+    dependencies:
+      ejs: 5.0.1
+      minimatch: 10.2.5
+      nx: 24.0.6(@swc/core@1.13.3(@swc/helpers@0.5.17))
+      semver: 7.8.6
+      tslib: 2.9.1
+      yargs-parser: 21.1.1
+
+  '@nx/nx-darwin-arm64@24.0.6':
     optional: true
 
-  '@nx/nx-darwin-x64@24.0.2':
+  '@nx/nx-darwin-x64@24.0.6':
     optional: true
 
-  '@nx/nx-freebsd-x64@24.0.2':
+  '@nx/nx-freebsd-x64@24.0.6':
     optional: true
 
-  '@nx/nx-linux-arm-gnueabihf@24.0.2':
+  '@nx/nx-linux-arm-gnueabihf@24.0.6':
     optional: true
 
-  '@nx/nx-linux-arm64-gnu@24.0.2':
+  '@nx/nx-linux-arm64-gnu@24.0.6':
     optional: true
 
-  '@nx/nx-linux-arm64-musl@24.0.2':
+  '@nx/nx-linux-arm64-musl@24.0.6':
     optional: true
 
-  '@nx/nx-linux-x64-gnu@24.0.2':
+  '@nx/nx-linux-x64-gnu@24.0.6':
     optional: true
 
-  '@nx/nx-linux-x64-musl@24.0.2':
+  '@nx/nx-linux-x64-musl@24.0.6':
     optional: true
 
-  '@nx/nx-win32-arm64-msvc@24.0.2':
+  '@nx/nx-win32-arm64-msvc@24.0.6':
     optional: true
 
-  '@nx/nx-win32-x64-msvc@24.0.2':
+  '@nx/nx-win32-x64-msvc@24.0.6':
     optional: true
 
   '@oazapfts/runtime@1.2.0': {}
@@ -18570,7 +18588,7 @@ snapshots:
 
   '@oxc-project/types@0.156.0': {}
 
-  '@oxc-project/types@0.157.0': {}
+  '@oxc-project/types@0.159.0': {}
 
   '@oxc-resolver/binding-android-arm-eabi@11.21.2':
     optional: true
@@ -18846,7 +18864,7 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  '@rc-component/slider@1.2.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@rc-component/slider@1.2.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@rc-component/util': 1.14.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       clsx: 2.1.1
@@ -18971,7 +18989,7 @@ snapshots:
     dependencies:
       react: 19.2.8
 
-  '@reduxjs/toolkit@2.12.0(react-redux@9.3.0(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1))(react@19.2.8)':
+  '@reduxjs/toolkit@2.12.0(react-redux@9.3.1(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1))(react@19.2.8)':
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@standard-schema/utils': 0.3.0
@@ -18981,89 +18999,89 @@ snapshots:
       reselect: 5.3.0
     optionalDependencies:
       react: 19.2.8
-      react-redux: 9.3.0(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1)
+      react-redux: 9.3.1(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1)
 
   '@remix-run/router@1.23.4': {}
 
   '@rolldown/binding-android-arm-eabi@1.2.16':
     optional: true
 
-  '@rolldown/binding-android-arm-eabi@1.3.1':
+  '@rolldown/binding-android-arm-eabi@1.3.3':
     optional: true
 
   '@rolldown/binding-android-arm64@1.2.16':
     optional: true
 
-  '@rolldown/binding-android-arm64@1.3.1':
+  '@rolldown/binding-android-arm64@1.3.3':
     optional: true
 
   '@rolldown/binding-darwin-arm64@1.2.16':
     optional: true
 
-  '@rolldown/binding-darwin-arm64@1.3.1':
+  '@rolldown/binding-darwin-arm64@1.3.3':
     optional: true
 
   '@rolldown/binding-darwin-x64@1.2.16':
     optional: true
 
-  '@rolldown/binding-darwin-x64@1.3.1':
+  '@rolldown/binding-darwin-x64@1.3.3':
     optional: true
 
   '@rolldown/binding-freebsd-x64@1.2.16':
     optional: true
 
-  '@rolldown/binding-freebsd-x64@1.3.1':
+  '@rolldown/binding-freebsd-x64@1.3.3':
     optional: true
 
   '@rolldown/binding-linux-arm-gnueabihf@1.2.16':
     optional: true
 
-  '@rolldown/binding-linux-arm-gnueabihf@1.3.1':
+  '@rolldown/binding-linux-arm-gnueabihf@1.3.3':
     optional: true
 
   '@rolldown/binding-linux-arm64-gnu@1.2.16':
     optional: true
 
-  '@rolldown/binding-linux-arm64-gnu@1.3.1':
+  '@rolldown/binding-linux-arm64-gnu@1.3.3':
     optional: true
 
   '@rolldown/binding-linux-arm64-musl@1.2.16':
     optional: true
 
-  '@rolldown/binding-linux-arm64-musl@1.3.1':
+  '@rolldown/binding-linux-arm64-musl@1.3.3':
     optional: true
 
   '@rolldown/binding-linux-ppc64-gnu@1.2.16':
     optional: true
 
-  '@rolldown/binding-linux-ppc64-gnu@1.3.1':
+  '@rolldown/binding-linux-ppc64-gnu@1.3.3':
     optional: true
 
   '@rolldown/binding-linux-s390x-gnu@1.2.16':
     optional: true
 
-  '@rolldown/binding-linux-s390x-gnu@1.3.1':
+  '@rolldown/binding-linux-s390x-gnu@1.3.3':
     optional: true
 
   '@rolldown/binding-linux-x64-gnu@1.2.16':
     optional: true
 
-  '@rolldown/binding-linux-x64-gnu@1.3.1':
+  '@rolldown/binding-linux-x64-gnu@1.3.3':
     optional: true
 
   '@rolldown/binding-linux-x64-musl@1.2.16':
     optional: true
 
-  '@rolldown/binding-linux-x64-musl@1.3.1':
+  '@rolldown/binding-linux-x64-musl@1.3.3':
     optional: true
 
   '@rolldown/binding-openharmony-arm64@1.2.16':
     optional: true
 
-  '@rolldown/binding-openharmony-arm64@1.3.1':
+  '@rolldown/binding-openharmony-arm64@1.3.3':
     optional: true
 
-  '@rolldown/binding-wasm32-wasi@1.3.1':
+  '@rolldown/binding-wasm32-wasi@1.3.3':
     dependencies:
       '@emnapi/core': 2.0.0-beta.2
       '@emnapi/runtime': 2.0.0-beta.2
@@ -19073,13 +19091,13 @@ snapshots:
   '@rolldown/binding-win32-arm64-msvc@1.2.16':
     optional: true
 
-  '@rolldown/binding-win32-arm64-msvc@1.3.1':
+  '@rolldown/binding-win32-arm64-msvc@1.3.3':
     optional: true
 
   '@rolldown/binding-win32-x64-msvc@1.2.16':
     optional: true
 
-  '@rolldown/binding-win32-x64-msvc@1.3.1':
+  '@rolldown/binding-win32-x64-msvc@1.3.3':
     optional: true
 
   '@rolldown/pluginutils@1.0.1': {}
@@ -20735,8 +20753,6 @@ snapshots:
 
   '@types/js-cookie@3.0.6': {}
 
-  '@types/js-yaml@4.0.9': {}
-
   '@types/jsdom@20.0.1':
     dependencies:
       '@types/node': 26.6.6
@@ -21862,6 +21878,8 @@ snapshots:
       sprintf-js: 1.0.3
 
   argparse@2.0.1: {}
+
+  argparse@3.0.4: {}
 
   aria-hidden@1.2.6:
     dependencies:
@@ -24643,7 +24661,7 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.29.7
 
-  i18next-cli@1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@27.2.6(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2):
+  i18next-cli@1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(i18next@27.2.7(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(typescript@6.0.2):
     dependencies:
       '@croct/json5-parser': 0.2.2
       '@swc/core': 1.15.40(@swc/helpers@0.5.17)
@@ -24659,7 +24677,7 @@ snapshots:
       minimatch: 10.2.6
       ora: 9.4.0
       react: 19.2.8
-      react-i18next: 17.0.15(i18next@27.2.6(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.2)
+      react-i18next: 17.0.15(i18next@27.2.7(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.2)
       yaml: 2.9.0
     transitivePeerDependencies:
       - '@swc/helpers'
@@ -24669,7 +24687,7 @@ snapshots:
       - react-native
       - typescript
 
-  i18next-cli@1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.6)(@typescript/typescript6@6.0.2)(i18next@27.2.6(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8)):
+  i18next-cli@1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.6)(@typescript/typescript6@6.0.2)(i18next@27.2.7(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8)):
     dependencies:
       '@croct/json5-parser': 0.2.2
       '@swc/core': 1.15.40(@swc/helpers@0.5.17)
@@ -24685,7 +24703,7 @@ snapshots:
       minimatch: 10.2.6
       ora: 9.4.0
       react: 19.2.8
-      react-i18next: 17.0.15(@typescript/typescript6@6.0.2)(i18next@27.2.6(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react-i18next: 17.0.15(@typescript/typescript6@6.0.2)(i18next@27.2.7(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       yaml: 2.9.0
     transitivePeerDependencies:
       - '@swc/helpers'
@@ -24716,7 +24734,7 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.29.7
 
-  i18next@27.2.6(@typescript/typescript6@6.0.2):
+  i18next@27.2.7(@typescript/typescript6@6.0.2):
     optionalDependencies:
       typescript: '@typescript/typescript6@6.0.2'
 
@@ -26063,6 +26081,10 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
+  js-yaml@5.5.0:
+    dependencies:
+      argparse: 3.0.4
+
   jsdoc-type-pratt-parser@4.1.0: {}
 
   jsdom@20.0.2(supports-color@7.2.0):
@@ -26911,7 +26933,7 @@ snapshots:
 
   nwsapi@2.2.2: {}
 
-  nx@24.0.2(@swc/core@1.13.3(@swc/helpers@0.5.17)):
+  nx@24.0.6(@swc/core@1.13.3(@swc/helpers@0.5.17)):
     dependencies:
       '@clack/core': 1.4.3
       '@clack/prompts': 1.7.0
@@ -26991,7 +27013,7 @@ snapshots:
       tmp: 0.2.7
       tsconfig-paths: 4.2.0
       tslib: 2.8.1
-      undici: 7.29.0
+      undici: 7.30.1
       util-deprecate: 1.0.2
       wcwidth: 1.0.1
       which: 3.0.1
@@ -27002,16 +27024,16 @@ snapshots:
       yargs: 17.7.2
       yargs-parser: 21.1.1
     optionalDependencies:
-      '@nx/nx-darwin-arm64': 24.0.2
-      '@nx/nx-darwin-x64': 24.0.2
-      '@nx/nx-freebsd-x64': 24.0.2
-      '@nx/nx-linux-arm-gnueabihf': 24.0.2
-      '@nx/nx-linux-arm64-gnu': 24.0.2
-      '@nx/nx-linux-arm64-musl': 24.0.2
-      '@nx/nx-linux-x64-gnu': 24.0.2
-      '@nx/nx-linux-x64-musl': 24.0.2
-      '@nx/nx-win32-arm64-msvc': 24.0.2
-      '@nx/nx-win32-x64-msvc': 24.0.2
+      '@nx/nx-darwin-arm64': 24.0.6
+      '@nx/nx-darwin-x64': 24.0.6
+      '@nx/nx-freebsd-x64': 24.0.6
+      '@nx/nx-linux-arm-gnueabihf': 24.0.6
+      '@nx/nx-linux-arm64-gnu': 24.0.6
+      '@nx/nx-linux-arm64-musl': 24.0.6
+      '@nx/nx-linux-x64-gnu': 24.0.6
+      '@nx/nx-linux-x64-musl': 24.0.6
+      '@nx/nx-win32-arm64-msvc': 24.0.6
+      '@nx/nx-win32-x64-msvc': 24.0.6
       '@swc/core': 1.13.3(@swc/helpers@0.5.17)
 
   nyc@15.1.0(supports-color@7.2.0):
@@ -27947,32 +27969,32 @@ snapshots:
     dependencies:
       react: 19.2.8
 
-  react-i18next@17.0.15(@typescript/typescript6@6.0.2)(i18next@27.2.6(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+  react-i18next@17.0.15(@typescript/typescript6@6.0.2)(i18next@27.2.7(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
       '@babel/runtime': 7.29.7
       html-parse-stringify: 4.0.1
-      i18next: 27.2.6(@typescript/typescript6@6.0.2)
+      i18next: 27.2.7(@typescript/typescript6@6.0.2)
       react: 19.2.8
       use-sync-external-store: 1.6.0(react@19.2.8)
     optionalDependencies:
       react-dom: 19.2.8(react@19.2.8)
       typescript: '@typescript/typescript6@6.0.2'
 
-  react-i18next@17.0.15(i18next@27.2.6(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.2):
+  react-i18next@17.0.15(i18next@27.2.7(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.2):
     dependencies:
       '@babel/runtime': 7.29.7
       html-parse-stringify: 4.0.1
-      i18next: 27.2.6(@typescript/typescript6@6.0.2)
+      i18next: 27.2.7(@typescript/typescript6@6.0.2)
       react: 19.2.8
       use-sync-external-store: 1.6.0(react@19.2.8)
     optionalDependencies:
       react-dom: 19.2.8(react@19.2.8)
       typescript: 6.0.2
 
-  react-i18next@18.0.3(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(i18next@27.2.6(@typescript/typescript6@6.0.2))(react@19.2.8):
+  react-i18next@18.0.3(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(i18next@27.2.7(@typescript/typescript6@6.0.2))(react@19.2.8):
     dependencies:
       html-parse-stringify: 4.0.1
-      i18next: 27.2.6(@typescript/typescript6@6.0.2)
+      i18next: 27.2.7(@typescript/typescript6@6.0.2)
       react: 19.2.8
     optionalDependencies:
       '@types/react': 19.2.18
@@ -28059,7 +28081,7 @@ snapshots:
       react-dom: 19.2.8(react@19.2.8)
       redux: 5.0.1
 
-  react-redux@9.3.0(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1):
+  react-redux@9.3.1(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1):
     dependencies:
       '@types/use-sync-external-store': 0.0.6
       react: 19.2.8
@@ -28477,12 +28499,12 @@ snapshots:
 
   robust-predicates@3.0.1: {}
 
-  rolldown-plugin-dts@0.28.6(@typescript/typescript6@6.0.2)(oxc-resolver@11.21.2)(rolldown@1.3.1):
+  rolldown-plugin-dts@0.28.6(@typescript/typescript6@6.0.2)(oxc-resolver@11.21.2)(rolldown@1.3.3):
     dependencies:
       dts-resolver: 3.0.0(oxc-resolver@11.21.2)
       get-tsconfig: 5.0.0-beta.6
       obug: 3.0.0
-      rolldown: 1.3.1
+      rolldown: 1.3.3
       yuku-ast: 0.10.2
       yuku-codegen: 0.10.2
       yuku-parser: 0.10.2
@@ -28512,27 +28534,27 @@ snapshots:
       '@rolldown/binding-win32-arm64-msvc': 1.2.16
       '@rolldown/binding-win32-x64-msvc': 1.2.16
 
-  rolldown@1.3.1:
+  rolldown@1.3.3:
     dependencies:
-      '@oxc-project/types': 0.157.0
+      '@oxc-project/types': 0.159.0
       '@rolldown/pluginutils': 1.0.1
     optionalDependencies:
-      '@rolldown/binding-android-arm-eabi': 1.3.1
-      '@rolldown/binding-android-arm64': 1.3.1
-      '@rolldown/binding-darwin-arm64': 1.3.1
-      '@rolldown/binding-darwin-x64': 1.3.1
-      '@rolldown/binding-freebsd-x64': 1.3.1
-      '@rolldown/binding-linux-arm-gnueabihf': 1.3.1
-      '@rolldown/binding-linux-arm64-gnu': 1.3.1
-      '@rolldown/binding-linux-arm64-musl': 1.3.1
-      '@rolldown/binding-linux-ppc64-gnu': 1.3.1
-      '@rolldown/binding-linux-s390x-gnu': 1.3.1
-      '@rolldown/binding-linux-x64-gnu': 1.3.1
-      '@rolldown/binding-linux-x64-musl': 1.3.1
-      '@rolldown/binding-openharmony-arm64': 1.3.1
-      '@rolldown/binding-wasm32-wasi': 1.3.1
-      '@rolldown/binding-win32-arm64-msvc': 1.3.1
-      '@rolldown/binding-win32-x64-msvc': 1.3.1
+      '@rolldown/binding-android-arm-eabi': 1.3.3
+      '@rolldown/binding-android-arm64': 1.3.3
+      '@rolldown/binding-darwin-arm64': 1.3.3
+      '@rolldown/binding-darwin-x64': 1.3.3
+      '@rolldown/binding-freebsd-x64': 1.3.3
+      '@rolldown/binding-linux-arm-gnueabihf': 1.3.3
+      '@rolldown/binding-linux-arm64-gnu': 1.3.3
+      '@rolldown/binding-linux-arm64-musl': 1.3.3
+      '@rolldown/binding-linux-ppc64-gnu': 1.3.3
+      '@rolldown/binding-linux-s390x-gnu': 1.3.3
+      '@rolldown/binding-linux-x64-gnu': 1.3.3
+      '@rolldown/binding-linux-x64-musl': 1.3.3
+      '@rolldown/binding-openharmony-arm64': 1.3.3
+      '@rolldown/binding-wasm32-wasi': 1.3.3
+      '@rolldown/binding-win32-arm64-msvc': 1.3.3
+      '@rolldown/binding-win32-x64-msvc': 1.3.3
 
   rollup-plugin-copy@3.5.0:
     dependencies:
@@ -29530,7 +29552,7 @@ snapshots:
       react-immutable-proptypes: 2.2.0(immutable@5.2.1)
       react-immutable-pure-component: 2.2.2(immutable@5.2.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react-inspector: 6.0.2(react@19.2.8)
-      react-redux: 9.3.0(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1)
+      react-redux: 9.3.1(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1)
       react-syntax-highlighter: 16.1.0(react@19.2.8)
       redux: 5.0.1
       remarkable: 2.0.1
@@ -29998,7 +30020,7 @@ snapshots:
 
   undici-types@8.9.0: {}
 
-  undici@7.29.0: {}
+  undici@7.30.1: {}
 
   unicode-emoji-modifier-base@1.0.0: {}
 

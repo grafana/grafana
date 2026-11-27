@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -94,6 +95,18 @@ func TestRunFillsRuntimeDefaults(t *testing.T) {
 	require.NotNil(t, rt.Registerer)
 	require.NotNil(t, rt.Tracer)
 	require.NotNil(t, rt.Clients)
+}
+
+func TestRunDefaultsSubscriberRegisterer(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.NATS = setting.NATSSettings{Enabled: true, Mode: setting.NATSModeExternal, ClientURLs: []string{"nats://127.0.0.1:4222"}}
+	var subscriber *nats.SubscriberService
+	op := Operator{Name: "test", Build: func(rt *Runtime) (*Parts, error) {
+		subscriber = rt.Subscriber
+		return nil, context.Canceled
+	}}
+	require.ErrorIs(t, op.Run(t.Context(), server.OperatorDependencies{Config: cfg, HealthNotifier: server.NewHealthNotifier()}), context.Canceled)
+	require.NotNil(t, subscriber, "usable NATS must get a subscriber without a supplied registerer")
 }
 
 func TestRunWithoutNATSURLsFallsBackToRelists(t *testing.T) {

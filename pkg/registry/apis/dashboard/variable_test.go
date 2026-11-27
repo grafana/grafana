@@ -9,6 +9,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/admission"
@@ -16,6 +17,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 
+	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -31,42 +33,41 @@ import (
 
 func TestValidateVariable(t *testing.T) {
 	t.Run("valid custom variable", func(t *testing.T) {
-		v := newCustomVariable("region", "region")
-		require.NoError(t, validateVariable(v))
-	})
-
-	t.Run("metadata and spec names can differ", func(t *testing.T) {
-		v := newCustomVariable("region", "env")
-		require.NoError(t, validateVariable(v))
+		v := newCustomVariableV2("region", "region")
+		require.NoError(t, validateVariable(v.Spec))
 	})
 
 	t.Run("empty variable name is rejected", func(t *testing.T) {
-		v := newCustomVariable("", "")
-		require.ErrorContains(t, validateVariable(v), "variable name must not be empty")
+		v := newCustomVariableV2("", "")
+		require.ErrorContains(t, validateVariable(v.Spec), "variable name must not be empty")
 	})
 
 	t.Run("reserved prefix is rejected", func(t *testing.T) {
-		v := newCustomVariable("__region", "__region")
-		require.ErrorContains(t, validateVariable(v), "must not start with '__'")
+		v := newCustomVariableV2("__region", "__region")
+		require.ErrorContains(t, validateVariable(v.Spec), "must not start with '__'")
 	})
 
 	t.Run("name with spaces is rejected", func(t *testing.T) {
-		v := newCustomVariable("my variable", "my-variable")
-		require.ErrorContains(t, validateVariable(v), "must contain only letters, digits, and underscores")
+		v := newCustomVariableV2("my variable", "my-variable")
+		require.ErrorContains(t, validateVariable(v.Spec), "must contain only letters, digits, and underscores")
 	})
 
 	t.Run("name with dot is rejected", func(t *testing.T) {
-		v := newCustomVariable("my.var", "my-var")
-		require.ErrorContains(t, validateVariable(v), "must contain only letters, digits, and underscores")
+		v := newCustomVariableV2("my.var", "my-var")
+		require.ErrorContains(t, validateVariable(v.Spec), "must contain only letters, digits, and underscores")
+	})
+
+	t.Run("missing variable kind is rejected", func(t *testing.T) {
+		require.ErrorContains(t, validateVariable(dashv2.VariableSpec{}), "exactly one variable kind")
 	})
 
 	t.Run("multiple variable kinds are rejected", func(t *testing.T) {
-		v := newCustomVariable("region", "region")
-		queryVariable := dashv2beta1.NewDashboardQueryVariableKind()
+		v := newCustomVariableV2("region", "region")
+		queryVariable := dashv2.NewDashboardQueryVariableKind()
 		queryVariable.Spec.Name = "region"
 		v.Spec.QueryVariableKind = queryVariable
 
-		require.ErrorContains(t, validateVariable(v), "exactly one variable kind")
+		require.ErrorContains(t, validateVariable(v.Spec), "exactly one variable kind")
 	})
 }
 
@@ -600,6 +601,21 @@ func newCustomVariable(variableName, metadataName string) *dashv2beta1.Variable 
 	}
 }
 
+func newCustomVariableV2(variableName, metadataName string) *dashv2.Variable {
+	customVariable := dashv2.NewDashboardCustomVariableKind()
+	customVariable.Spec.Name = variableName
+
+	spec := dashv2.NewVariableSpec()
+	spec.CustomVariableKind = customVariable
+
+	return &dashv2.Variable{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: metadataName,
+		},
+		Spec: *spec,
+	}
+}
+
 func TestDeriveVariableMetadataName(t *testing.T) {
 	t.Run("global scope uses spec name", func(t *testing.T) {
 		require.Equal(t, "status", deriveVariableMetadataName("status", ""))
@@ -644,15 +660,37 @@ func TestValidateVariableMetadataName(t *testing.T) {
 }
 
 func buildVariableAttributesForOp(op admission.Operation, newVariable, oldVariable *dashv2beta1.Variable) admission.Attributes {
+	var newObj, oldObj runtime.Object
+	if newVariable != nil {
+		newObj = newVariable
+	}
+	if oldVariable != nil {
+		oldObj = oldVariable
+	}
+	return buildVariableAttributes(op, newObj, oldObj, dashv2beta1.VariableResourceInfo)
+}
+
+func buildV2VariableAttributesForOp(op admission.Operation, newVariable, oldVariable *dashv2.Variable) admission.Attributes {
+	var newObj, oldObj runtime.Object
+	if newVariable != nil {
+		newObj = newVariable
+	}
+	if oldVariable != nil {
+		oldObj = oldVariable
+	}
+	return buildVariableAttributes(op, newObj, oldObj, dashv2.VariableResourceInfo)
+}
+
+func buildVariableAttributes(op admission.Operation, newObj, oldObj runtime.Object, info utils.ResourceInfo) admission.Attributes {
 	switch op {
 	case admission.Create:
 		return admission.NewAttributesRecord(
-			newVariable,
+			newObj,
 			nil,
-			dashv2beta1.VariableResourceInfo.GroupVersionKind(),
+			info.GroupVersionKind(),
 			"stacks-1",
-			newVariable.GetName(),
-			dashv2beta1.VariableResourceInfo.GroupVersionResource(),
+			newObj.(metav1.Object).GetName(),
+			info.GroupVersionResource(),
 			"",
 			admission.Create,
 			&metav1.CreateOptions{},
@@ -661,12 +699,12 @@ func buildVariableAttributesForOp(op admission.Operation, newVariable, oldVariab
 		)
 	case admission.Update:
 		return admission.NewAttributesRecord(
-			newVariable,
-			oldVariable,
-			dashv2beta1.VariableResourceInfo.GroupVersionKind(),
+			newObj,
+			oldObj,
+			info.GroupVersionKind(),
 			"stacks-1",
-			newVariable.GetName(),
-			dashv2beta1.VariableResourceInfo.GroupVersionResource(),
+			newObj.(metav1.Object).GetName(),
+			info.GroupVersionResource(),
 			"",
 			admission.Update,
 			&metav1.UpdateOptions{},
@@ -676,11 +714,11 @@ func buildVariableAttributesForOp(op admission.Operation, newVariable, oldVariab
 	default:
 		return admission.NewAttributesRecord(
 			nil,
-			oldVariable,
-			dashv2beta1.VariableResourceInfo.GroupVersionKind(),
+			oldObj,
+			info.GroupVersionKind(),
 			"stacks-1",
-			oldVariable.GetName(),
-			dashv2beta1.VariableResourceInfo.GroupVersionResource(),
+			oldObj.(metav1.Object).GetName(),
+			info.GroupVersionResource(),
 			"",
 			admission.Delete,
 			&metav1.DeleteOptions{},

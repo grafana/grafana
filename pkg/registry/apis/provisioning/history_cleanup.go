@@ -33,7 +33,7 @@ func ProvideHistoryJobCleanupService(cfg *setting.Cfg, builder *APIBuilder, subs
 		expiration = setting.ProvisioningHistoryExpirationDefault
 	}
 	s := &HistoryJobCleanupService{expiration: expiration}
-	s.loopbackService = newControllerService(HistoryJobCleanupServiceName, builder, controller.Common{Subscriber: subscriber}, s.runController)
+	s.loopbackService = newControllerService(HistoryJobCleanupServiceName, builder, cfg.DisableControllers, controller.Common{Subscriber: subscriber}, s.runController)
 	return s
 }
 
