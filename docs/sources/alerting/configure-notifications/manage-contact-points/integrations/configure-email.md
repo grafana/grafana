@@ -27,7 +27,7 @@ You can customize the [subject and main section of the email body](#optional-set
 In Grafana OSS, you must configure SMTP settings before you can enable email notifications.
 
 {{<admonition type="note">}}
-In Grafana Cloud, SMTP configuration is not required.
+In Grafana Cloud, SMTP configuration is not required. To send email through your own SMTP server, refer to [Configure SMTP settings in Grafana Cloud](#configure-smtp-settings-in-grafana-cloud).
 {{</admonition>}}
 
 1. Open the [configuration file](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/). The file is typically named `grafana.ini` or `custom.ini` and located in the `conf` directory of your Grafana installation.
@@ -37,6 +37,40 @@ In Grafana Cloud, SMTP configuration is not required.
 1. Save your changes and restart Grafana.
 
 1. Test email notifications by creating a contact point.
+
+## Configure SMTP settings in Grafana Cloud
+
+By default, Grafana Cloud sends alert emails through a shared SMTP server with a default sender. To send them through your own SMTP server and with your own sender, use the SMTP settings page.
+
+{{<admonition type="note">}}
+These settings only apply to emails sent by Grafana-managed alerts. They don't affect emails sent by the Mimir Alertmanager, which handles data source-managed alerts.
+{{</admonition>}}
+
+To configure your SMTP settings:
+
+1. Navigate to **Administration** -> **General** -> **SMTP settings**.
+1. Fill in the [SMTP settings](#smtp-settings).
+1. Click **Save**.
+
+To go back to the Grafana Cloud defaults, click **Reset to default values**. This removes all the settings saved on the page, including the password.
+
+### SMTP settings
+
+| Option       | Description                                                                                                                                                                                               |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Enable SMTP  | Turns email sending on or off for Grafana-managed alerts. When enabled, **Host** and **From address** are required.                                                                                       |
+| Host         | The address of your SMTP server in the format `hostname:port`, or `[ipv6]:port` for IPv6 addresses, with a port between 1 and 65535. For example, `smtp.example.com:587`. Private addresses are rejected. |
+| User         | The username used to authenticate with your SMTP server.                                                                                                                                                  |
+| Password     | The password used to authenticate with your SMTP server. Once saved, the password is hidden. Click **Reset** to replace it.                                                                               |
+| From address | The email address that appears as the sender of the notifications.                                                                                                                                        |
+| From name    | The name that appears as the sender of the notifications.                                                                                                                                                 |
+
+If you leave a field empty, Grafana Cloud uses its default value.
+
+The following rules apply when you save your settings:
+
+- To set a custom **From address** or **From name**, you must also set a custom **Host**. Emails sent through the Grafana Cloud SMTP server always use the default sender.
+- A custom **Host** requires a **User** and **Password** set on this page. The Grafana Cloud credentials are never sent to another server.
 
 ## Configure Email for a contact point
 
