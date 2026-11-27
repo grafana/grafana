@@ -7,16 +7,23 @@ import * as api from '../api';
 import { EditDataSource } from '../components/EditDataSource';
 import { EditDataSourceActions } from '../components/EditDataSourceActions';
 import { useDataSourceInfo } from '../components/useDataSourceInfo';
-import { useDataSource, useDataSourceRights } from '../state/hooks';
+import { useDataSource, useDataSourceRights, useDataSourceSettings } from '../state/hooks';
+import { getDataSourceComponentsPageId } from '../state/navModel';
 import { setNameAndVersion } from '../state/reducers';
+import { DATASOURCE_COMPONENTS_PAGE_ID } from '../utils';
 
 interface Props {
   uid: string;
   pageId: string | null;
+  componentId?: string | null;
 }
 
-function DataSourceTabPage({ uid, pageId }: Props) {
-  const { navId, pageNav, dataSourceHeader } = useDataSourceSettingsNav(pageId ?? undefined);
+function DataSourceTabPage({ uid, pageId, componentId }: Props) {
+  const { plugin } = useDataSourceSettings();
+  // Preview links use page=components even when the plugin owns that config page.
+  const activePageId =
+    pageId === DATASOURCE_COMPONENTS_PAGE_ID && componentId ? getDataSourceComponentsPageId(plugin) : pageId;
+  const { navId, pageNav, dataSourceHeader } = useDataSourceSettingsNav(activePageId ?? undefined);
   const { datasourceFailureByUID, hasCheck: advisorChecked } = useDatasourceFailureByUID();
 
   const info = useDataSourceInfo({
@@ -57,7 +64,7 @@ function DataSourceTabPage({ uid, pageId }: Props) {
       actions={<EditDataSourceActions uid={uid} />}
     >
       <Page.Contents>
-        <EditDataSource uid={uid} pageId={pageId} />
+        <EditDataSource uid={uid} pageId={activePageId} componentId={componentId} />
       </Page.Contents>
     </Page>
   );

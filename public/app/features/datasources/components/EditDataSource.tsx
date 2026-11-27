@@ -29,6 +29,7 @@ import {
   useTestDataSource,
   useUpdateDatasource,
 } from '../state/hooks';
+import { getDataSourceComponentsPageId } from '../state/navModel';
 import { dataSourceLoaded, testDataSourceFailed } from '../state/reducers';
 import { trackDsConfigClicked, trackDsConfigUpdated } from '../tracking';
 import { type DataSourceRights } from '../types';
@@ -36,6 +37,7 @@ import { type DataSourceRights } from '../types';
 import { ButtonRow } from './ButtonRow';
 import { CloudInfoBox } from './CloudInfoBox';
 import { DataSourceDefaultButton } from './DataSourceDefaultButton';
+import { DataSourceInstanceComponents } from './DataSourceInstanceComponents';
 import { DataSourceLoadError } from './DataSourceLoadError';
 import { DataSourceMissingRightsMessage } from './DataSourceMissingRightsMessage';
 import { DataSourcePluginConfigPage } from './DataSourcePluginConfigPage';
@@ -49,9 +51,10 @@ export type Props = {
   uid: string;
   // The ID of the custom datasource setting page
   pageId?: string | null;
+  componentId?: string | null;
 };
 
-export function EditDataSource({ uid, pageId }: Props) {
+export function EditDataSource({ uid, pageId, componentId }: Props) {
   useInitDataSourceSettings(uid);
 
   const dispatch = useDispatch();
@@ -68,6 +71,7 @@ export function EditDataSource({ uid, pageId }: Props) {
   return (
     <EditDataSourceView
       pageId={pageId}
+      componentId={componentId}
       dataSource={dataSource}
       dataSourceMeta={dataSourceMeta}
       dataSourceSettings={dataSourceSettings}
@@ -83,6 +87,7 @@ export function EditDataSource({ uid, pageId }: Props) {
 
 export type ViewProps = {
   pageId?: string | null;
+  componentId?: string | null;
   dataSource: DataSourceSettingsType;
   dataSourceMeta: DataSourcePluginMeta;
   dataSourceSettings: DataSourceSettingsState;
@@ -96,6 +101,7 @@ export type ViewProps = {
 
 export function EditDataSourceView({
   pageId,
+  componentId,
   dataSource,
   dataSourceMeta,
   dataSourceSettings,
@@ -218,6 +224,17 @@ export function EditDataSourceView({
           trackDsConfigClicked('delete');
           onDelete();
         }}
+      />
+    );
+  }
+
+  if (plugin && pageId === getDataSourceComponentsPageId(plugin)) {
+    return (
+      <DataSourceInstanceComponents
+        key={dataSource.uid}
+        datasource={{ uid: dataSource.uid, type: dataSource.type }}
+        pageId={pageId}
+        componentId={componentId}
       />
     );
   }
