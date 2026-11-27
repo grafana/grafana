@@ -13,12 +13,14 @@ package identity
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	authtypes "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/pkg/apimachinery/internal/managerkinds"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -56,15 +58,32 @@ type ManagerKindRegistration interface {
 var managerKindRegistry = map[utils.ManagerKind]ManagerKindRegistration{}
 
 // RegisterManagerKind registers a manager kind with the check that decides who may assign it.
+// Call it from init: the registry is not safe for concurrent use. It panics if the kind is
+// empty, built-in or already registered.
 func RegisterManagerKind(registration ManagerKindRegistration) {
 	kind := registration.Kind()
 
-	utils.RegisterManagerKind(kind)
+	if kind == utils.ManagerKindUnknown {
+		panic("RegisterManagerKind: the kind is empty")
+	}
 
+	if utils.ParseManagerKindString(string(kind)) != utils.ManagerKindUnknown {
+		panic(fmt.Sprintf("RegisterManagerKind: %q is already a known kind", kind))
+	}
+
+	managerkinds.Add(string(kind))
 	managerKindRegistry[kind] = registration
 }
 
-func checkRegisteredKindAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+// IsRegisteredManagerKind reports whether kind was added with RegisterManagerKind.
+func IsRegisteredManagerKind(kind utils.ManagerKind) bool {
+	_, ok := managerKindRegistry[kind]
+	return ok
+}
+
+// CheckRegisteredKindAssignment runs the assignment check of the registered kind obj carries,
+// which decides whether the caller is that kind's manager. It returns nil for any other kind.
+func CheckRegisteredKindAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
 	kind := utils.ParseManagerKindString(obj.GetAnnotation(utils.AnnoKeyManagerKind))
 
 	if registration, ok := managerKindRegistry[kind]; ok {
@@ -127,7 +146,7 @@ func CheckManagerOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor
 		return err
 	}
 
-	if err := checkRegisteredKindAssignment(auth, obj); err != nil {
+	if err := CheckRegisteredKindAssignment(auth, obj); err != nil {
 		return err
 	}
 
@@ -181,7 +200,7 @@ func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAcc
 	}
 
 	if !hasOld {
-		if err := checkRegisteredKindAssignment(auth, obj); err != nil {
+		if err := CheckRegisteredKindAssignment(auth, obj); err != nil {
 			return err
 		}
 	}

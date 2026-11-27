@@ -181,7 +181,10 @@ func (t *pluginManifestsTarget) fetch(ctx context.Context) ([]Backend, int, erro
 				return t.pluginClients(entry.Host, connectionID, manifest)
 			}
 
-			// Manifest APIs use their declared access checks; settings use legacy app access.
+			// Manifest APIs use their declared access checks; settings check app access.
+			// TODO: this grants every requester app access. Once MT settings calls pass
+			// with NewAppAccessCheckerWithClient (AuthZ Check), use it here too; see the
+			// follow-up in the router specs' MT app settings plan.
 			manifestDeps := t.deps
 			manifestDeps.AccessControl = pluginManifestAccessControl{}
 			// Only the operator-configured core source may serve core groups.
@@ -316,7 +319,7 @@ func forwardRouteCredentials(ctx context.Context, header http.Header) error {
 	}
 	if !baasbridge.DeclaredAccessChecked(ctx) { //nolint:staticcheck
 		if token := requester.GetAccessToken(); token != "" {
-			header.Set("X-Access-Token", token)
+			header.Set(accessTokenHeader, token)
 		}
 	}
 	return nil

@@ -3325,6 +3325,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "ルールの読み込みエラー",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Grafanaルール設定の読み込みに失敗しました：",
       "failed-to-load-grafana-rules-state": "Grafanaルールの状態の読み込みに失敗しました：",
       "failed-to-load-rules-config": "<2>{{dataSource}}</2>からのルール設定の読み込みに失敗しました",
@@ -6563,6 +6564,10 @@
       "paused": "このダッシュボードは管理者によって一時停止されています",
       "try-again-later": "後でやり直してください"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "このパネルを削除してもよろしいですか？"
@@ -8012,6 +8017,9 @@
       "title-delete-all-transformations": "すべての変換を削除しますか？"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_other": ""
@@ -10432,6 +10440,24 @@
         "otherGroup": "その他"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -10949,6 +10975,10 @@
         "placement-options": {
           "label-bottom": "下",
           "label-right": "右"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11044,6 +11074,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "ワンクリック"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "リンクの追加",
@@ -13678,6 +13711,7 @@
       "open": "メインメニュー",
       "pin-error": "ピン留めしたメニュー項目の更新に失敗しました",
       "pinned-list-label": "ピン留めした項目",
+      "section-resize": "",
       "undock": "メニューの固定を解除"
     },
     "megamenu-item": {
@@ -13871,12 +13905,32 @@
         "undo-label": "Assistantによる編集"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "キャンセル",
       "confirm-discard": "破棄",
       "confirm-keep": "保持する",
       "confirm-text": "このノートブックの表示中に加えた変更を保持しますか？",
       "confirm-title": "未保存のパネルの変更"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17153,6 +17207,13 @@
       "wide-list": "ワイドリスト",
       "wide-list-desc": "水平、名前と値、面スパークライン、単色"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "統計",
       "stat-color-background": "統計 - 背景色",
@@ -17698,6 +17759,10 @@
       "time-zone-option": "タイムゾーン",
       "time-zone-selection": "タイムゾーンの選択"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "時間範囲を適用",
       "default-error": "日付（{{dateExample}}）または相対時間（{{relativeTimeExample1}}、{{relativeTimeExample2}}）を入力してください",
@@ -17715,6 +17780,12 @@
       "to": "へ",
       "zoom-out-button": "時間範囲をズームアウト",
       "zoom-out-tooltip-new": "時間範囲ズームアウト <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "時間範囲を適用",

@@ -1,4 +1,4 @@
-import { type DataFrame } from '@grafana/data';
+import { type DataFrame, type PanelData } from '@grafana/data';
 import { type ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 
 import { type DimensionSupplier } from './types';
@@ -83,4 +83,19 @@ export function getResourceDimension(
     get: (index: number): string => getImageOrIcon(field.values[index]),
     value: () => getImageOrIcon(getLastNotNullFieldValue(field)),
   };
+}
+
+export function getResourceDimensionFromData(
+  data: PanelData | undefined,
+  cfg: ResourceDimensionConfig
+): DimensionSupplier<string> {
+  if (data?.series && cfg.field) {
+    for (const frame of data.series) {
+      const d = getResourceDimension(frame, cfg);
+      if (!d.isAssumed || data.series.length === 1) {
+        return d;
+      }
+    }
+  }
+  return getResourceDimension(undefined, cfg);
 }

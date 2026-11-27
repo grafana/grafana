@@ -10,6 +10,7 @@ import "@openfeature/core";
 
 declare module "@openfeature/core" {
   export type BooleanFlagKey =
+    | "grafana.responsiveTimePickerTabs"
     | "panelTitleSearch"
     | "publicDashboardsEmailSharing"
     | "canvasPanelNesting"
@@ -136,6 +137,7 @@ declare module "@openfeature/core" {
     | "queryEditorNext"
     | "queryeditor.coauthoringUi"
     | "kubernetesTeamsApi"
+    | "iam.useKubernetesUsersReadApi"
     | "managedPluginsV2"
     | "analyticsFramework"
     | "grafana.scenesFlickeringFix"

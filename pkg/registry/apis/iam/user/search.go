@@ -74,8 +74,14 @@ func NewSearchHandler(tracer trace.Tracer, searchClient *dualwrite.Selector[Sear
 	}
 }
 
-func (s *SearchHandler) GetAPIRoutes(defs map[string]k8scommon.OpenAPIDefinition) *builder.APIRoutes {
-	searchResults := defs["github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearchUsers"].Schema
+func (s *SearchHandler) GetAPIRoutes(_ map[string]k8scommon.OpenAPIDefinition) *builder.APIRoutes {
+	// Reference the component schema, as the definitions are built without a ref resolver
+	// and inlining one would drop the nested hit type.
+	searchResults := spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Ref: spec.MustCreateRef("#/components/schemas/" + iamv0.GetSearchUsersResponse{}.OpenAPIModelName()),
+		},
+	}
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
@@ -213,13 +219,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]k8scommon.OpenAPIDefinition
 							},
 							Responses: &spec3.Responses{
 								ResponsesProps: spec3.ResponsesProps{
-									Default: &spec3.Response{
-										ResponseProps: spec3.ResponseProps{
-											Description: "Default OK response",
-											Content: map[string]*spec3.MediaType{
-												"application/json": {
-													MediaTypeProps: spec3.MediaTypeProps{
-														Schema: &searchResults,
+									StatusCodeResponses: map[int]*spec3.Response{
+										200: {
+											ResponseProps: spec3.ResponseProps{
+												Description: "OK",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &searchResults,
+														},
 													},
 												},
 											},

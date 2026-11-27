@@ -75,8 +75,14 @@ func (s *SearchHandler) SetTeamGetter(getter k8srest.Getter) {
 	s.teamGetter = getter
 }
 
-func (s *SearchHandler) GetAPIRoutes(defs map[string]k8scommon.OpenAPIDefinition) *builder.APIRoutes {
-	searchResults := defs["github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearchTeams"].Schema
+func (s *SearchHandler) GetAPIRoutes(_ map[string]k8scommon.OpenAPIDefinition) *builder.APIRoutes {
+	// Reference the component schema, as the definitions are built without a ref resolver
+	// and inlining one would drop the nested hit type.
+	searchResults := spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Ref: spec.MustCreateRef("#/components/schemas/" + iamv0alpha1.GetSearchTeamsResponse{}.OpenAPIModelName()),
+		},
+	}
 
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{

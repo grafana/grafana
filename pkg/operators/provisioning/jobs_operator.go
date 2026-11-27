@@ -3,31 +3,36 @@ package provisioning
 import (
 	"context"
 	"fmt"
-	"log/slog"
-	"os"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
-func RunJobController(ctx context.Context, deps server.OperatorDependencies) error {
-	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})).With("logger", "provisioning-job-controller")
-	logger.Info("Starting provisioning job controller")
+var JobsOperator = runner.Operator{
+	Name:        "provisioning-jobs",
+	Description: "Manage provisioning job and history cleanup",
+	Logger:      "provisioning-job-controller",
+	Defaults:    operatorDefaults,
+	NoNATS:      true,
+	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
+		controllerCfg, err := setupJobsControllerFromConfig(rt)
+		if err != nil {
+			return nil, err
+		}
+		return &runner.Parts{
+			Run: func(ctx context.Context, ready func()) error {
+				return runJobController(ctx, rt.Logger, controllerCfg, ready)
+			},
+			ShutdownTimeout: 30 * time.Second,
+		}, nil
+	},
+}
 
-	controllerCfg, err := setupJobsControllerFromConfig(deps.Config, deps.Registerer)
-	if err != nil {
-		return fmt.Errorf("failed to setup operator: %w", err)
-	}
-
+func runJobController(ctx context.Context, logger logging.Logger, controllerCfg *jobsControllerConfig, ready func()) error {
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
@@ -61,24 +66,10 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 	// }
 
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
-	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobClaimExpiry, deps.Registerer)
+	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobs.ClaimExpiry, controllerCfg.Registry())
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
-
-	var wg sync.WaitGroup
-
-	wg.Go(func() {
-		jobCleanupController := jobs.NewJobCleanupController(
-			jobStore,
-			jobHistoryWriter,
-			controllerCfg.cleanupInterval,
-		)
-		if err := jobCleanupController.Run(ctx); err != nil {
-			logger.Error("job cleanup controller failed", "error", err)
-		}
-		logger.Info("job cleanup controller stopped")
-	})
 
 	// Start the historic-job source when history cleanup is enabled; cleanup runs
 	// off its re-lists.
@@ -86,27 +77,13 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 		go historySource.Run(ctx.Done())
 	}
 
-	logger.Info("jobs operator is ready")
-	deps.HealthNotifier.SetReady()
-
-	<-ctx.Done()
-	deps.HealthNotifier.SetNotReady()
-	logger.Info("shutdown signal received, waiting for goroutines to finish")
-
-	shutdownTimeout := 30 * time.Second
-	done := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-		logger.Info("jobs operator shutdown complete")
-	case <-time.After(shutdownTimeout):
-		logger.Warn("shutdown timeout exceeded, forcing exit", "timeout", shutdownTimeout)
+	ready()
+	if err := jobs.NewJobCleanupController(jobStore, jobHistoryWriter, controllerCfg.cleanupInterval).Run(ctx); err != nil {
+		logger.Error("job cleanup controller failed", "error", err)
 	}
-
+	logger.Info("job cleanup controller stopped")
+	// A failed cleanup pass must not take down history cleanup, so keep serving until shutdown.
+	<-ctx.Done()
 	return nil
 }
 
@@ -116,13 +93,13 @@ type jobsControllerConfig struct {
 	cleanupInterval   time.Duration
 }
 
-func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*jobsControllerConfig, error) {
-	controllerCfg, err := setupFromConfig(cfg, registry)
+func setupJobsControllerFromConfig(rt *runner.Runtime) (*jobsControllerConfig, error) {
+	controllerCfg, err := setupFromConfig(rt)
 	if err != nil {
 		return nil, err
 	}
 
-	operatorSec := cfg.SectionWithEnvOverrides("operator")
+	operatorSec := rt.Cfg.SectionWithEnvOverrides("operator")
 
 	return &jobsControllerConfig{
 		ControllerConfig:  *controllerCfg,

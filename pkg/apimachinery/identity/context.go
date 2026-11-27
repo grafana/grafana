@@ -241,6 +241,7 @@ var serviceIdentityTokenPermissions = []string{
 	"historian.alerting.grafana.app:*",
 	"notifications.alerting.grafana.app:*",
 	"rules.alerting.grafana.app:*",
+	"alertenrichment.grafana.app:*",
 	"alertingassistant.grafana.app/alert-rule-reviews:get",
 	"alertingassistant.grafana.app/alert-rule-reviews:create",
 	"alertingassistant.grafana.app/alert-rule-reviews:update",

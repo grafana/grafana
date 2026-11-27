@@ -54,6 +54,11 @@ type Options struct {
 	RoleGroup string
 	// OnSetUser if configured will be called each time a permission is set for a user
 	OnSetUser func(session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error
+	// OnSetUsers is the bulk form of OnSetUser. When the resourcePermissionsBulkUserWrites
+	// feature flag is enabled, SetPermissions writes batches of user permissions in bulk
+	// and calls OnSetUsers once per permission instead of OnSetUser once per user.
+	// Resources that set OnSetUser without OnSetUsers keep the per-user path.
+	OnSetUsers func(session *db.Session, orgID int64, users []accesscontrol.User, resourceID, permission string) error
 	// OnSetTeam if configured will be called each time a permission is set for a team
 	OnSetTeam func(session *db.Session, orgID, teamID int64, resourceID, permission string) error
 	// OnSetBuiltInRole if configured will be called each time a permission is set for a built-in role

@@ -62,7 +62,6 @@ describe('RuleEditor grafana managed rules', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     contextSrv.isEditor = true;
-    contextSrv.hasEditPermissionInFolders = true;
 
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,
@@ -72,6 +71,7 @@ describe('RuleEditor grafana managed rules', () => {
       AccessControlAction.DataSourcesRead,
       AccessControlAction.DataSourcesWrite,
       AccessControlAction.DataSourcesCreate,
+      AccessControlAction.FoldersCreate,
       AccessControlAction.FoldersWrite,
       AccessControlAction.FoldersRead,
       AccessControlAction.AlertingRuleExternalRead,
