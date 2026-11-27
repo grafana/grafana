@@ -208,9 +208,16 @@ func TestConnectionConversionErrors(t *testing.T) {
 	})
 
 	t.Run("unparsable lastTransitionTime", func(t *testing.T) {
-		in := &Connection{Status: ConnectionStatus{Conditions: []ConnectionCondition{{Type: "Ready", LastTransitionTime: new("yesterday")}}}}
+		in := &Connection{
+			ObjectMeta: metav1.ObjectMeta{Name: "broken"},
+			Status: ConnectionStatus{Conditions: []ConnectionCondition{
+				{Type: "Ready", LastTransitionTime: new("2026-01-02T03:04:05Z")},
+				{Type: "Other", LastTransitionTime: new("yesterday")},
+			}},
+		}
 		err := scheme.Convert(in, &v0alpha1.Connection{}, nil)
-		require.ErrorContains(t, err, "status.conditions[0].lastTransitionTime")
+		require.ErrorContains(t, err, `convert connection "broken"`)
+		require.ErrorContains(t, err, "status.conditions[1].lastTransitionTime")
 	})
 
 	t.Run("zero secure values are dropped and raw values kept", func(t *testing.T) {

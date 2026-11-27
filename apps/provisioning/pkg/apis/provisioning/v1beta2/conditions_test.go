@@ -44,13 +44,17 @@ func TestConditionJSONMatchesMetav1(t *testing.T) {
 
 			var wantMeta metav1.Condition
 			require.NoError(t, json.Unmarshal(want, &wantMeta))
-			require.Equal(t, wantMeta, ConditionToMeta(decoded))
+			gotMeta, err := ConditionToMeta(field.NewPath("conditions").Index(0), decoded)
+			require.NoError(t, err)
+			require.Equal(t, wantMeta, gotMeta)
 		})
 	}
 }
 
 func TestConditionsNilStaysNil(t *testing.T) {
-	require.Nil(t, ConditionsToMeta[ConnectionCondition](nil))
+	metaConditions, err := ConditionsToMeta[ConnectionCondition](field.NewPath("conditions"), nil)
+	require.NoError(t, err)
+	require.Nil(t, metaConditions)
 	require.Nil(t, ConditionsFromMeta[ConnectionCondition](nil))
 
 	b, err := json.Marshal(ConnectionStatus{})
@@ -58,13 +62,40 @@ func TestConditionsNilStaysNil(t *testing.T) {
 	require.NotContains(t, string(b), "conditions")
 }
 
+func TestConditionsToMetaRejectsUnparsableTime(t *testing.T) {
+	path := field.NewPath("status", "conditions")
+	for name, ts := range map[string]string{"empty": "", "not a timestamp": "yesterday"} {
+		t.Run(name, func(t *testing.T) {
+			_, err := ConditionsToMeta(path, []ConnectionCondition{{Type: "Ready"}, {Type: "Other", LastTransitionTime: new(ts)}})
+			require.ErrorContains(t, err, "status.conditions[1].lastTransitionTime")
+			require.ErrorContains(t, err, "must be an RFC3339 timestamp")
+		})
+	}
+}
+
 func TestSetStatusCondition(t *testing.T) {
+	path := field.NewPath("status", "conditions")
+	ready := metav1.Condition{Type: "Ready", Status: metav1.ConditionTrue, Reason: "Available"}
+
 	var conditions []ConnectionCondition
-	require.True(t, SetStatusCondition(&conditions, metav1.Condition{Type: "Ready", Status: metav1.ConditionTrue, Reason: "Available"}))
+	changed, err := SetStatusCondition(path, &conditions, ready)
+	require.NoError(t, err)
+	require.True(t, changed)
 	require.Len(t, conditions, 1)
 	require.NotNil(t, conditions[0].LastTransitionTime, "meta.SetStatusCondition stamps new conditions")
 
-	require.False(t, SetStatusCondition(&conditions, metav1.Condition{Type: "Ready", Status: metav1.ConditionTrue, Reason: "Available"}))
+	changed, err = SetStatusCondition(path, &conditions, ready)
+	require.NoError(t, err)
+	require.False(t, changed)
+
+	t.Run("unparsable existing lastTransitionTime", func(t *testing.T) {
+		invalid := []ConnectionCondition{{Type: "Other", LastTransitionTime: new("yesterday")}}
+		conditions := slices.Clone(invalid)
+		changed, err := SetStatusCondition(path, &conditions, ready)
+		require.ErrorContains(t, err, "status.conditions[0].lastTransitionTime")
+		require.False(t, changed)
+		require.Equal(t, invalid, conditions)
+	})
 }
 
 func TestValidateConditions(t *testing.T) {

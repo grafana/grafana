@@ -26,8 +26,8 @@ type Condition interface {
 }
 
 // ConditionToMeta converts a condition so the k8s.io/apimachinery/pkg/api/meta helpers can be used.
-// An unparsable lastTransitionTime becomes the zero time; use ValidateConditions to reject it first.
-func ConditionToMeta[C Condition](c C) metav1.Condition {
+// A lastTransitionTime that isn't RFC3339 is an error rather than a silently cleared timestamp.
+func ConditionToMeta[C Condition](path *field.Path, c C) (metav1.Condition, error) {
 	f := conditionFields(c)
 	out := metav1.Condition{
 		Type:    f.Type,
@@ -39,12 +39,14 @@ func ConditionToMeta[C Condition](c C) metav1.Condition {
 		out.ObservedGeneration = *f.ObservedGeneration
 	}
 	if f.LastTransitionTime != nil {
-		if t, err := time.Parse(time.RFC3339, *f.LastTransitionTime); err == nil {
-			// Local, because that is what decoding a metav1.Time from JSON produces.
-			out.LastTransitionTime = metav1.NewTime(t.Local())
+		t, err := time.Parse(time.RFC3339, *f.LastTransitionTime)
+		if err != nil {
+			return metav1.Condition{}, invalidTransitionTime(path, *f.LastTransitionTime)
 		}
+		// Local, because that is what decoding a metav1.Time from JSON produces.
+		out.LastTransitionTime = metav1.NewTime(t.Local())
 	}
-	return out
+	return out, nil
 }
 
 // ConditionFromMeta converts a metav1.Condition, leaving zero values nil so the JSON encoding
@@ -66,15 +68,20 @@ func ConditionFromMeta[C Condition](c metav1.Condition) C {
 	return C(out)
 }
 
-func ConditionsToMeta[C Condition](in []C) []metav1.Condition {
+// ConditionsToMeta converts conditions with ConditionToMeta, failing on the first unparsable lastTransitionTime.
+func ConditionsToMeta[C Condition](path *field.Path, in []C) ([]metav1.Condition, error) {
 	if in == nil {
-		return nil
+		return nil, nil
 	}
 	out := make([]metav1.Condition, len(in))
 	for i, c := range in {
-		out[i] = ConditionToMeta(c)
+		converted, err := ConditionToMeta(path.Index(i), c)
+		if err != nil {
+			return nil, err
+		}
+		out[i] = converted
 	}
-	return out
+	return out, nil
 }
 
 func ConditionsFromMeta[C Condition](in []metav1.Condition) []C {
@@ -97,7 +104,7 @@ func ValidateConditions[C Condition](path *field.Path, conditions []C) field.Err
 			continue
 		}
 		if _, err := time.Parse(time.RFC3339, *ts); err != nil {
-			list = append(list, field.Invalid(path.Index(i).Child("lastTransitionTime"), *ts, "must be an RFC3339 timestamp"))
+			list = append(list, invalidTransitionTime(path.Index(i), *ts))
 		}
 	}
 	return list
@@ -107,18 +114,27 @@ func ValidateConditions[C Condition](path *field.Path, conditions []C) field.Err
 // zero observedGeneration. Mutation runs before validation, so conditions that ValidateConditions rejects
 // are returned unchanged rather than having their timestamp silently cleared.
 func NormalizeConditions[C Condition](conditions []C) []C {
-	if len(ValidateConditions(field.NewPath(""), conditions)) > 0 {
+	metaConditions, err := ConditionsToMeta(field.NewPath(""), conditions)
+	if err != nil {
 		return conditions
 	}
-	return ConditionsFromMeta[C](ConditionsToMeta(conditions))
+	return ConditionsFromMeta[C](metaConditions)
 }
 
 // SetStatusCondition applies meta.SetStatusCondition to conditions and reports whether they changed.
-func SetStatusCondition[C Condition](conditions *[]C, newCondition metav1.Condition) bool {
-	metaConditions := ConditionsToMeta(*conditions)
+// It fails, leaving conditions unchanged, when an existing lastTransitionTime is unparsable.
+func SetStatusCondition[C Condition](path *field.Path, conditions *[]C, newCondition metav1.Condition) (bool, error) {
+	metaConditions, err := ConditionsToMeta(path, *conditions)
+	if err != nil {
+		return false, err
+	}
 	changed := meta.SetStatusCondition(&metaConditions, newCondition)
 	if changed {
 		*conditions = ConditionsFromMeta[C](metaConditions)
 	}
-	return changed
+	return changed, nil
+}
+
+func invalidTransitionTime(path *field.Path, ts string) *field.Error {
+	return field.Invalid(path.Child("lastTransitionTime"), ts, "must be an RFC3339 timestamp")
 }
