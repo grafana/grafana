@@ -53,6 +53,9 @@ type ManagerKindRegistration interface {
 
 	// CheckAssignment decides who may assign the kind.
 	CheckAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
+
+	// MayTakeOver reports whether the registered kind may replace `from` kind.
+	MayTakeOver(from utils.ManagerKind) bool
 }
 
 var managerKindRegistry = map[utils.ManagerKind]ManagerKindRegistration{}
@@ -91,6 +94,11 @@ func CheckRegisteredKindAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMet
 	}
 
 	return nil
+}
+
+func registeredKindMayTakeOver(kind, from utils.ManagerKind) bool {
+	registration, ok := managerKindRegistry[kind]
+	return ok && registration.MayTakeOver(from)
 }
 
 func CheckManagerWriteAuthz(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
@@ -187,8 +195,7 @@ func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAcc
 		return nil
 	}
 
-	// A registered kind's manager may take over a classic-FP resource in one update.
-	takeover := hasOld && managerOld.Kind == utils.ManagerKindClassicFP && IsRegisteredManagerKind(managerNew.Kind) // nolint:staticcheck
+	takeover := hasOld && registeredKindMayTakeOver(managerNew.Kind, managerOld.Kind)
 	if !takeover {
 		if err := utils.CheckManagerPropertiesOnUpdate(managerOld, managerNew, hasOld, hasNew); err != nil {
 			return err
