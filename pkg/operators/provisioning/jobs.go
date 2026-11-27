@@ -18,52 +18,52 @@ import (
 // buildJobQueue resolves the job queue dependencies from the operator config and
 // hands them to jobqueue.ProvideJobQueue, which the API server uses as well.
 func buildJobQueue(
-	controllerCfg *jobQueueControllerConfig,
+	r *jobQueueRunner,
 	registry prometheus.Registerer,
 	jobStore jobs.Store,
 	jobHistoryWriter jobs.HistoryWriter,
 ) (*jobqueue.Queue, error) {
-	tracer := controllerCfg.Tracer()
+	tracer := r.Tracer
 
-	clients, err := controllerCfg.Clients()
+	clients, err := r.ResourceClients()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get clients: %w", err)
 	}
 	parsers := resources.NewParserFactory(clients)
 
-	resourceLister, err := controllerCfg.ResourceLister()
+	resourceLister, err := r.ResourceLister()
 	if err != nil {
 		return nil, err
 	}
 
-	provisioningClient, err := controllerCfg.ProvisioningClient()
+	provisioningClient, err := r.ProvisioningClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	repoFactory, err := controllerCfg.RepositoryFactory()
+	repoFactory, err := r.RepositoryFactory()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get repository factory: %w", err)
 	}
 
-	urlProvider, err := controllerCfg.URLProvider()
+	urlProvider, err := r.URLProvider()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get URL provider: %w", err)
 	}
 
 	return jobqueue.ProvideJobQueue(
 		jobqueue.Config{
-			ConcurrentDrivers:    controllerCfg.concurrentDrivers,
-			MaxJobTimeout:        controllerCfg.maxJobTimeout,
-			JobInterval:          controllerCfg.jobInterval,
-			LeaseRenewalInterval: controllerCfg.leaseRenewalInterval,
-			MaxSyncWorkers:       controllerCfg.maxSyncWorkers,
-			MaxFileSize:          controllerCfg.Settings.ProvisioningMaxFileSize,
-			SyncResourceTimeout:  controllerCfg.Settings.ProvisioningSyncResourceTimeout,
+			ConcurrentDrivers:    r.concurrentDrivers,
+			MaxJobTimeout:        r.maxJobTimeout,
+			JobInterval:          r.jobInterval,
+			LeaseRenewalInterval: r.leaseRenewalInterval,
+			MaxSyncWorkers:       r.maxSyncWorkers,
+			MaxFileSize:          r.Cfg.ProvisioningMaxFileSize,
+			SyncResourceTimeout:  r.Cfg.ProvisioningSyncResourceTimeout,
 		},
 		jobqueue.Dependencies{
 			Client:              provisioningClient,
-			Subscriber:          controllerCfg.natsSubscriber,
+			Subscriber:          r.Subscriber,
 			Clients:             clients,
 			RepositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
 			ResourceLister:      resourceLister,

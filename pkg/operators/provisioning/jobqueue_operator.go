@@ -18,38 +18,38 @@ var JobQueueOperator = runner.Operator{
 	Logger:      "provisioning-jobqueue-controller",
 	Defaults:    operatorDefaults,
 	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
-		controllerCfg, err := setupJobQueueControllerFromConfig(rt)
+		r, err := newJobQueueRunner(rt)
 		if err != nil {
 			return nil, err
 		}
-		manifestWatcher, err := controllerCfg.ManifestWatcher()
+		manifestWatcher, err := r.ManifestWatcher()
 		if err != nil {
 			return nil, err
 		}
 		return &runner.Parts{
 			Services: []services.Service{manifestWatcher},
 			Run: func(ctx context.Context, ready func()) error {
-				return runJobQueueController(ctx, rt.Logger, controllerCfg, ready)
+				return runJobQueueController(ctx, rt.Logger, r, ready)
 			},
 			// Running jobs get their full timeout to finish before the process exits.
-			ShutdownTimeout: controllerCfg.maxJobTimeout + 30*time.Second,
+			ShutdownTimeout: r.maxJobTimeout + 30*time.Second,
 		}, nil
 	},
 }
 
-func runJobQueueController(ctx context.Context, logger logging.Logger, controllerCfg *jobQueueControllerConfig, ready func()) error {
-	provisioningClient, err := controllerCfg.ProvisioningClient()
+func runJobQueueController(ctx context.Context, logger logging.Logger, r *jobQueueRunner, ready func()) error {
+	provisioningClient, err := r.ProvisioningClient()
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
-	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobs.ClaimExpiry, controllerCfg.Registry())
+	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobs.ClaimExpiry, r.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	queue, err := buildJobQueue(controllerCfg, controllerCfg.Registry(), jobStore, jobHistoryWriter)
+	queue, err := buildJobQueue(r, r.Registerer, jobStore, jobHistoryWriter)
 	if err != nil {
 		return fmt.Errorf("build job queue: %w", err)
 	}
@@ -71,8 +71,8 @@ func runJobQueueController(ctx context.Context, logger logging.Logger, controlle
 	return nil
 }
 
-type jobQueueControllerConfig struct {
-	ControllerConfig
+type jobQueueRunner struct {
+	*ProvisioningRunner
 	maxJobTimeout        time.Duration
 	jobInterval          time.Duration
 	leaseRenewalInterval time.Duration
@@ -80,8 +80,8 @@ type jobQueueControllerConfig struct {
 	maxSyncWorkers       int
 }
 
-func setupJobQueueControllerFromConfig(rt *runner.Runtime) (*jobQueueControllerConfig, error) {
-	controllerCfg, err := setupFromConfig(rt)
+func newJobQueueRunner(rt *runner.Runtime) (*jobQueueRunner, error) {
+	r, err := newProvisioningRunner(rt)
 	if err != nil {
 		return nil, err
 	}
@@ -97,8 +97,8 @@ func setupJobQueueControllerFromConfig(rt *runner.Runtime) (*jobQueueControllerC
 		jobInterval = 30 * time.Second
 	}
 
-	return &jobQueueControllerConfig{
-		ControllerConfig:     *controllerCfg,
+	return &jobQueueRunner{
+		ProvisioningRunner:   r,
 		concurrentDrivers:    operatorSec.Key("concurrent_drivers").MustInt(3),
 		maxSyncWorkers:       operatorSec.Key("max_sync_workers").MustInt(10),
 		maxJobTimeout:        operatorSec.Key("max_job_timeout").MustDuration(20 * time.Minute),

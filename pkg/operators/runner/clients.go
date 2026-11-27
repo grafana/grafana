@@ -3,10 +3,12 @@ package runner
 import (
 	"crypto/x509"
 	"fmt"
+	"net/http"
 	"os"
 	"sync"
 
 	"github.com/grafana/authlib/authn"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/flowcontrol"
 
@@ -154,11 +156,16 @@ func (c *Clients) RESTConfig(serverURLKey, audience string) (*rest.Config, error
 	if err != nil {
 		return nil, err
 	}
-	return &rest.Config{
+	config := &rest.Config{
 		APIPath:         "/apis",
 		Host:            serverURL,
 		WrapTransport:   clientauth.NewStaticTokenExchangeTransportWrapper(tokenExchangeClient, audience, clientauth.WildcardNamespace),
 		TLSClientConfig: tlsConfig,
 		RateLimiter:     flowcontrol.NewFakeAlwaysRateLimiter(),
-	}, nil
+	}
+	// Carry W3C trace context so apiserver spans join the operator's traces.
+	config.Wrap(func(rt http.RoundTripper) http.RoundTripper {
+		return otelhttp.NewTransport(rt)
+	})
+	return config, nil
 }

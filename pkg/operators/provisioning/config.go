@@ -9,15 +9,12 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/flowcontrol"
 
 	"github.com/grafana/grafana/pkg/clientauth"
-	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -44,28 +41,23 @@ import (
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 )
 
-var registeredConfigOptions = []ConfigOption{}
+var registeredRunnerOptions = []RunnerOption{}
 
-func RegisterConfigOptions(opts ...ConfigOption) {
-	registeredConfigOptions = append(registeredConfigOptions, opts...)
+func RegisterRunnerOptions(opts ...RunnerOption) {
+	registeredRunnerOptions = append(registeredRunnerOptions, opts...)
 }
 
-type ConfigOption func(ctx context.Context, cfg *ControllerConfig) error
+type RunnerOption func(ctx context.Context, r *ProvisioningRunner) error
 
-// ControllerConfig contains the configuration that overlaps for the jobs and repo controllers
-type ControllerConfig struct {
-	Settings              *setting.Cfg
-	workerCount           int
-	resyncInterval        time.Duration
-	drainTimeout          time.Duration
+// ProvisioningRunner extends the shared operator runtime with what only the
+// provisioning operators need: their apiserver clients, factories and extras.
+type ProvisioningRunner struct {
+	*runner.Runtime
 	provisioningClient    *client.Clientset
 	provisioningRESTCfg   *rest.Config
-	natsSubscriber        *nats.SubscriberService
 	clients               resources.ClientFactory
 	manifestWatcher       services.Service
-	runnerClients         *runner.Clients
 	decryptService        decrypt.DecryptService
-	registry              prometheus.Registerer
 	relistProjection      *informer.RelistProjectionMetrics
 	freshness             *informer.FreshnessMetrics
 	repositoryFactory     repository.Factory
@@ -75,7 +67,6 @@ type ControllerConfig struct {
 	connectionExtras      []connection.Extra
 	ConnectionExtrasFunc  func() ([]connection.Extra, error)
 	healthMetricsRecorder controller.HealthMetricsRecorder
-	tracer                tracing.Tracer
 	quotaGetter           quotas.QuotaGetter
 	QuotaGetterFunc       func() (quotas.QuotaGetter, error)
 	urlProvider           func(ctx context.Context, namespace string) string
@@ -117,57 +108,41 @@ type ControllerConfig struct {
 // token =
 // subscriber_credentials_file =
 // tls_enabled =
-func setupFromConfig(rt *runner.Runtime) (*ControllerConfig, error) {
-	cfg := rt.Cfg
-	if cfg == nil {
+func newProvisioningRunner(rt *runner.Runtime) (*ProvisioningRunner, error) {
+	if rt.Cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
 	}
 
-	controllerCfg := &ControllerConfig{
-		registry:       rt.Registerer,
-		tracer:         rt.Tracer,
-		runnerClients:  rt.Clients,
-		Settings:       cfg,
-		natsSubscriber: rt.Subscriber,
-		resyncInterval: rt.Options.Resync,
-		workerCount:    rt.Options.Workers,
-		drainTimeout:   rt.Options.DrainTimeout,
-	}
+	r := &ProvisioningRunner{Runtime: rt}
 
-	// The no-op tracing service replaces the global OpenTelemetry provider, so
-	// build it only when the server passed no tracer.
-	if controllerCfg.tracer == nil {
-		controllerCfg.tracer = tracing.NewNoopTracerService()
-	}
-
-	for _, opt := range registeredConfigOptions {
-		if err := opt(context.Background(), controllerCfg); err != nil {
-			return nil, fmt.Errorf("failed to apply config option: %w", err)
+	for _, opt := range registeredRunnerOptions {
+		if err := opt(context.Background(), r); err != nil {
+			return nil, fmt.Errorf("failed to apply runner option: %w", err)
 		}
 	}
 
-	return controllerCfg, nil
+	return r, nil
 }
 
 // ResourceLister reads what a repository manages from the provisioning API server.
-func (c *ControllerConfig) ResourceLister() (resources.ResourceLister, error) {
+func (c *ProvisioningRunner) ResourceLister() (resources.ResourceLister, error) {
 	provisioningAPI, err := c.ProvisioningRESTClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provisioning REST client: %w", err)
 	}
-	return resources.NewResourceListerFromProvisioningAPI(provisioningAPI, c.Settings.ProvisioningResourceListerPageSize), nil
+	return resources.NewResourceListerFromProvisioningAPI(provisioningAPI, c.Cfg.ProvisioningResourceListerPageSize), nil
 }
 
 // SupportedResources is the configured provisionable set, which may name collections as wildcards.
-func (c *ControllerConfig) SupportedResources() ([]resources.SupportedResource, error) {
-	supported, err := resources.ParseSupportedResources(c.Settings.ProvisioningResources)
+func (c *ProvisioningRunner) SupportedResources() ([]resources.SupportedResource, error) {
+	supported, err := resources.ParseSupportedResources(c.Cfg.ProvisioningResources)
 	if err != nil {
 		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
 	}
 	return supported, nil
 }
 
-func (c *ControllerConfig) NewSupportedResourceProvider() (resources.SupportedResourceProvider, error) {
+func (c *ProvisioningRunner) NewSupportedResourceProvider() (resources.SupportedResourceProvider, error) {
 	configured, err := c.SupportedResources()
 	if err != nil {
 		return nil, err
@@ -176,27 +151,27 @@ func (c *ControllerConfig) NewSupportedResourceProvider() (resources.SupportedRe
 }
 
 // ManifestWatcher returns the unstarted service that keeps the supported
-// resources of [ControllerConfig.Clients] in sync with the API servers.
-func (c *ControllerConfig) ManifestWatcher() (services.Service, error) {
-	if _, err := c.Clients(); err != nil {
+// resources of [ProvisioningRunner.Clients] in sync with the API servers.
+func (c *ProvisioningRunner) ManifestWatcher() (services.Service, error) {
+	if _, err := c.ResourceClients(); err != nil {
 		return nil, fmt.Errorf("failed to get clients: %w", err)
 	}
 	return c.manifestWatcher, nil
 }
 
 // Clients Clients are clients that are used to connect to the different API servers.
-func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
+func (c *ProvisioningRunner) ResourceClients() (resources.ClientFactory, error) {
 	if c.clients != nil {
 		return c.clients, nil
 	}
 
-	operatorSec := c.Settings.SectionWithEnvOverrides("operator")
-	tlsConfig, err := c.TLSConfig()
+	operatorSec := c.Cfg.SectionWithEnvOverrides("operator")
+	tlsConfig, err := c.Clients.TLSConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get TLS configuration: %w", err)
 	}
 
-	tokenExchangeClient, err := c.TokenExchangeClient()
+	tokenExchangeClient, err := c.Clients.TokenExchangeClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
 	}
@@ -267,7 +242,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 			audiences = []string{provisioning.GROUP}
 		}
 		var audienceProvider clientauth.AudienceProvider = clientauth.NewStaticAudienceProvider(audiences...)
-		if group == resources.AnyGroup && c.Settings.ProvisioningRouterClient {
+		if group == resources.AnyGroup && c.Cfg.ProvisioningRouterClient {
 			audienceProvider = clientauth.NewRequestGroupAudienceProvider(setting.ExtJWTAccessTokenExpectAudience)
 		}
 
@@ -290,19 +265,19 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		configProviders[group] = NewDirectConfigProvider(config)
 	}
 
-	c.manifestWatcher, err = resources.NewRemoteManifestWatcher(supportedResourceProvider, c.Registry(), resource.ManifestWatcherConfig{
+	c.manifestWatcher, err = resources.NewRemoteManifestWatcher(supportedResourceProvider, c.Registerer, resource.ManifestWatcherConfig{
 		DiscoveryURL:      aggregatedServerURL,
 		DiscoveryAudience: setting.ExtJWTAccessTokenExpectAudience,
 		Exchanger:         tokenExchangeClient,
 		TLS:               &tlsConfig,
 		PollInterval:      time.Minute,
-		Log:               c.Settings.Logger,
+		Log:               c.Cfg.Logger,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create manifest watcher: %w", err)
 	}
 	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, supportedResourceProvider)
-	if c.Settings.ProvisioningRouterClient {
+	if c.Cfg.ProvisioningRouterClient {
 		if aggregatedServerURL == "" {
 			return nil, fmt.Errorf("aggregated_server_url is required in [operator] section when [provisioning] router_client is enabled")
 		}
@@ -312,41 +287,15 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	return clients, nil
 }
 
-func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {
+func (c *ProvisioningRunner) ProvisioningClient() (*client.Clientset, error) {
 	if c.provisioningClient != nil {
 		return c.provisioningClient, nil
 	}
 
-	tokenExchangeClient, err := c.TokenExchangeClient()
+	config, err := c.Clients.RESTConfig("provisioning_server_url", provisioning.GROUP)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
+		return nil, err
 	}
-
-	tlsConfig, err := c.TLSConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get TLS configuration: %w", err)
-	}
-
-	operatorSec := c.Settings.SectionWithEnvOverrides("operator")
-	provisioningServerURL := operatorSec.Key("provisioning_server_url").String()
-	if provisioningServerURL == "" {
-		return nil, fmt.Errorf("provisioning_server_url is required in [operator] section")
-	}
-	config := &rest.Config{
-		APIPath: "/apis",
-		Host:    provisioningServerURL,
-		WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(
-			tokenExchangeClient,
-			provisioning.GROUP,
-			clientauth.WildcardNamespace,
-		),
-		TLSClientConfig: tlsConfig,
-		RateLimiter:     flowcontrol.NewFakeAlwaysRateLimiter(),
-	}
-
-	// Propagate W3C trace context on Job updates and Repository/Connection status
-	// patches; otherwise they are leaf spans with no children on the apiserver side.
-	wrapWithTracing(config)
 
 	provisioningClient, err := client.NewForConfig(config)
 	if err != nil {
@@ -364,7 +313,7 @@ func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {
 // ProvisioningRESTClient returns a REST client for the provisioning apiserver,
 // for endpoints outside the typed clientset. It shares the clientset's config, so
 // building the clientset first is what supplies it.
-func (c *ControllerConfig) ProvisioningRESTClient() (rest.Interface, error) {
+func (c *ProvisioningRunner) ProvisioningRESTClient() (rest.Interface, error) {
 	if _, err := c.ProvisioningClient(); err != nil {
 		return nil, err
 	}
@@ -375,38 +324,17 @@ func (c *ControllerConfig) ProvisioningRESTClient() (rest.Interface, error) {
 	return rest.RESTClientFor(cfg)
 }
 
-// wrapWithTracing wraps the rest config transport with otelhttp so outbound
-// requests carry W3C trace context. It composes with any existing WrapTransport
-// (e.g. the token-exchange wrapper) rather than replacing it.
-func wrapWithTracing(config *rest.Config) {
-	config.Wrap(func(rt http.RoundTripper) http.RoundTripper {
-		return otelhttp.NewTransport(rt)
-	})
-}
-
-func (c *ControllerConfig) ResyncInterval() time.Duration {
-	return c.resyncInterval
-}
-
-func (c *ControllerConfig) NumberOfWorkers() int {
-	return c.workerCount
-}
-
-func (c *ControllerConfig) DrainTimeout() time.Duration {
-	return c.drainTimeout
-}
-
-func (c *ControllerConfig) DecryptService() (decrypt.DecryptService, error) {
+func (c *ProvisioningRunner) DecryptService() (decrypt.DecryptService, error) {
 	if c.decryptService != nil {
 		return c.decryptService, nil
 	}
 
-	tokenExchangeClient, err := c.TokenExchangeClient()
+	tokenExchangeClient, err := c.Clients.TokenExchangeClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
 	}
 
-	decryptSvc, err := setupDecryptService(c.Settings, c.Tracer(), tokenExchangeClient)
+	decryptSvc, err := setupDecryptService(c.Cfg, c.Tracer, tokenExchangeClient)
 	if err != nil {
 		return nil, fmt.Errorf("setup decrypt service: %w", err)
 	}
@@ -416,7 +344,7 @@ func (c *ControllerConfig) DecryptService() (decrypt.DecryptService, error) {
 	return decryptSvc, nil
 }
 
-func (c *ControllerConfig) QuotaGetter() (quotas.QuotaGetter, error) {
+func (c *ProvisioningRunner) QuotaGetter() (quotas.QuotaGetter, error) {
 	if c.quotaGetter != nil {
 		return c.quotaGetter, nil
 	}
@@ -431,8 +359,8 @@ func (c *ControllerConfig) QuotaGetter() (quotas.QuotaGetter, error) {
 	}
 
 	quotaStatus := provisioning.QuotaStatus{
-		MaxResourcesPerRepository: c.Settings.SectionWithEnvOverrides("provisioning").Key("max_resources_per_repository").MustInt64(0),
-		MaxRepositories:           c.Settings.SectionWithEnvOverrides("provisioning").Key("max_repositories").MustInt64(10),
+		MaxResourcesPerRepository: c.Cfg.SectionWithEnvOverrides("provisioning").Key("max_resources_per_repository").MustInt64(0),
+		MaxRepositories:           c.Cfg.SectionWithEnvOverrides("provisioning").Key("max_repositories").MustInt64(10),
 	}
 
 	c.quotaGetter = quotas.NewFixedQuotaGetter(quotaStatus)
@@ -440,22 +368,12 @@ func (c *ControllerConfig) QuotaGetter() (quotas.QuotaGetter, error) {
 	return c.quotaGetter, nil
 }
 
-func (c *ControllerConfig) Registry() prometheus.Registerer {
-	if c.registry != nil {
-		return c.registry
-	}
-
-	c.registry = prometheus.NewPedanticRegistry()
-
-	return c.registry
-}
-
 // RelistProjectionMetrics returns the process's re-list projection metrics.
 // Memoized because the collectors register on first call; building them twice
 // would panic on the duplicate.
-func (c *ControllerConfig) RelistProjectionMetrics() *informer.RelistProjectionMetrics {
+func (c *ProvisioningRunner) RelistProjectionMetrics() *informer.RelistProjectionMetrics {
 	if c.relistProjection == nil {
-		c.relistProjection = informer.NewRelistProjectionMetrics(c.Registry())
+		c.relistProjection = informer.NewRelistProjectionMetrics(c.Registerer)
 	}
 
 	return c.relistProjection
@@ -463,9 +381,9 @@ func (c *ControllerConfig) RelistProjectionMetrics() *informer.RelistProjectionM
 
 // FreshnessMetrics returns the process's reconcile read-freshness metrics.
 // Memoized for the same reason as RelistProjectionMetrics.
-func (c *ControllerConfig) FreshnessMetrics() *informer.FreshnessMetrics {
+func (c *ProvisioningRunner) FreshnessMetrics() *informer.FreshnessMetrics {
 	if c.freshness == nil {
-		c.freshness = informer.NewFreshnessMetrics(c.Registry())
+		c.freshness = informer.NewFreshnessMetrics(c.Registerer)
 	}
 
 	return c.freshness
@@ -473,7 +391,7 @@ func (c *ControllerConfig) FreshnessMetrics() *informer.FreshnessMetrics {
 
 // ProvisioningKeysLister returns the keys lister the informer re-list reads one
 // kind through.
-func (c *ControllerConfig) ProvisioningKeysLister(gvr schema.GroupVersionResource) (keysapi.Lister, error) {
+func (c *ProvisioningRunner) ProvisioningKeysLister(gvr schema.GroupVersionResource) (keysapi.Lister, error) {
 	restClient, err := c.ProvisioningRESTClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provisioning REST client: %w", err)
@@ -482,26 +400,7 @@ func (c *ControllerConfig) ProvisioningKeysLister(gvr schema.GroupVersionResourc
 	return keysapi.NewHTTPLister(restClient, gvr), nil
 }
 
-func (c *ControllerConfig) Tracer() tracing.Tracer {
-	return c.tracer
-}
-
-func (c *ControllerConfig) runtimeClients() *runner.Clients {
-	if c.runnerClients == nil {
-		c.runnerClients = runner.NewClients(c.Settings)
-	}
-	return c.runnerClients
-}
-
-func (c *ControllerConfig) TokenExchangeClient() (*authn.TokenExchangeClient, error) {
-	return c.runtimeClients().TokenExchangeClient()
-}
-
-func (c *ControllerConfig) TLSConfig() (rest.TLSClientConfig, error) {
-	return c.runtimeClients().TLSConfig()
-}
-
-func (c *ControllerConfig) RepositoryFactory() (repository.Factory, error) {
+func (c *ProvisioningRunner) RepositoryFactory() (repository.Factory, error) {
 	if c.repositoryFactory != nil {
 		return c.repositoryFactory, nil
 	}
@@ -517,7 +416,7 @@ func (c *ControllerConfig) RepositoryFactory() (repository.Factory, error) {
 		enabledTypes[extra.Type()] = struct{}{}
 	}
 
-	tracer := c.Tracer()
+	tracer := c.Tracer
 
 	repositoryFactory, err := repository.ProvideFactory(enabledTypes, extras, tracer)
 	if err != nil {
@@ -529,7 +428,7 @@ func (c *ControllerConfig) RepositoryFactory() (repository.Factory, error) {
 	return repositoryFactory, nil
 }
 
-func (c *ControllerConfig) ConnectionFactory() (connection.Factory, error) {
+func (c *ProvisioningRunner) ConnectionFactory() (connection.Factory, error) {
 	if c.connectionFactory != nil {
 		return c.connectionFactory, nil
 	}
@@ -539,12 +438,12 @@ func (c *ControllerConfig) ConnectionFactory() (connection.Factory, error) {
 		return nil, err
 	}
 
-	types := c.Settings.ProvisioningConnectionTypes
+	types := c.Cfg.ProvisioningConnectionTypes
 	if len(types) == 0 {
 		types = defaultConnectionTypes(extras)
 	}
 
-	tracer := c.Tracer()
+	tracer := c.Tracer
 
 	connectionFactory, err := connection.ProvideFactory(connection.ToConnectionTypes(types), extras, tracer)
 	if err != nil {
@@ -556,17 +455,17 @@ func (c *ControllerConfig) ConnectionFactory() (connection.Factory, error) {
 	return connectionFactory, nil
 }
 
-func (c *ControllerConfig) HealthMetricsRecorder() (controller.HealthMetricsRecorder, error) {
+func (c *ProvisioningRunner) HealthMetricsRecorder() (controller.HealthMetricsRecorder, error) {
 	if c.healthMetricsRecorder != nil {
 		return c.healthMetricsRecorder, nil
 	}
 
-	c.healthMetricsRecorder = controller.NewHealthMetricsRecorder(c.Registry())
+	c.healthMetricsRecorder = controller.NewHealthMetricsRecorder(c.Registerer)
 
 	return c.healthMetricsRecorder, nil
 }
 
-func (c *ControllerConfig) URLProvider() (func(ctx context.Context, namespace string) string, error) {
+func (c *ProvisioningRunner) URLProvider() (func(ctx context.Context, namespace string) string, error) {
 	if c.urlProvider != nil {
 		return c.urlProvider, nil
 	}
@@ -581,18 +480,18 @@ func (c *ControllerConfig) URLProvider() (func(ctx context.Context, namespace st
 	}
 
 	c.urlProvider = func(ctx context.Context, namespace string) string {
-		return c.Settings.AppURL
+		return c.Cfg.AppURL
 	}
 
 	return c.urlProvider, nil
 }
 
-func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
+func (c *ProvisioningRunner) RepositoryExtras() ([]repository.Extra, error) {
 	// Folder metadata read metrics are a process-global singleton recorded by the
 	// code that uses them rather than threaded through the returned extras, so they
 	// must be registered regardless of which extras path is taken below — including
 	// the custom RepositoryExtrasFunc path, which returns early.
-	resources.RegisterFolderMetadataMetrics(c.Registry())
+	resources.RegisterFolderMetadataMetrics(c.Registerer)
 
 	if c.repositoryExtras != nil {
 		return c.repositoryExtras, nil
@@ -612,12 +511,12 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 	if err != nil {
 		return nil, fmt.Errorf("get decrypt service: %w", err)
 	}
-	decrypter := repository.ProvideDecrypter(decryptSvc, repository.RegisterDecryptMetrics(c.Registry()))
-	operationMetrics := repository.RegisterOperationMetrics(c.Registry())
-	clientMetrics := gitrepo.RegisterClientMetrics(c.Registry())
+	decrypter := repository.ProvideDecrypter(decryptSvc, repository.RegisterDecryptMetrics(c.Registerer))
+	operationMetrics := repository.RegisterOperationMetrics(c.Registerer)
+	clientMetrics := gitrepo.RegisterClientMetrics(c.Registerer)
 
-	operatorSec := c.Settings.SectionWithEnvOverrides("operator")
-	provisioningSec := c.Settings.SectionWithEnvOverrides("provisioning")
+	operatorSec := c.Cfg.SectionWithEnvOverrides("operator")
+	provisioningSec := c.Cfg.SectionWithEnvOverrides("provisioning")
 	repoTypes := provisioningSec.Key("repository_types").Strings("|")
 	if len(repoTypes) == 0 {
 		repoTypes = []string{"git", "github"}
@@ -625,8 +524,8 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 
 	// http:// URLs with a token are only allowed in development or when explicitly opted in,
 	// since the token would otherwise travel in cleartext.
-	allowInsecure := c.Settings.Env == setting.Dev || provisioningSec.Key("allow_insecure").MustBool(false)
-	userAgent := gitrepo.UserAgent(c.Settings.BuildVersion)
+	allowInsecure := c.Cfg.Env == setting.Dev || provisioningSec.Key("allow_insecure").MustBool(false)
+	userAgent := gitrepo.UserAgent(c.Cfg.BuildVersion)
 
 	extras := make([]repository.Extra, 0)
 	for _, t := range repoTypes {
@@ -639,7 +538,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 			if provisioningAppURL != "" {
 				webhook = webhooks.ProvideWebhooks(
 					provisioningAppURL,
-					c.Registry(),
+					c.Registerer,
 					webhooks.NewConfiguredRateLimiter(
 						provisioningSec.Key("webhook_rate_limit_rps").MustInt(0),
 						provisioningSec.Key("webhook_trusted_ip_header").MustString(""),
@@ -666,7 +565,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 	return extras, nil
 }
 
-func (c *ControllerConfig) ConnectionExtras() ([]connection.Extra, error) {
+func (c *ProvisioningRunner) ConnectionExtras() ([]connection.Extra, error) {
 	if c.connectionExtras != nil {
 		return c.connectionExtras, nil
 	}
@@ -685,11 +584,11 @@ func (c *ControllerConfig) ConnectionExtras() ([]connection.Extra, error) {
 	if err != nil {
 		return nil, fmt.Errorf("get decrypt service: %w", err)
 	}
-	decrypter := connection.ProvideDecrypter(decryptSvc, connection.RegisterDecryptMetrics(c.Registry()))
+	decrypter := connection.ProvideDecrypter(decryptSvc, connection.RegisterDecryptMetrics(c.Registerer))
 
 	// http:// OAuth endpoints are only allowed in development or when explicitly opted in,
 	// since the client secret and tokens would otherwise travel in cleartext.
-	allowInsecure := c.Settings.Env == setting.Dev || c.Settings.SectionWithEnvOverrides("provisioning").Key("allow_insecure").MustBool(false)
+	allowInsecure := c.Cfg.Env == setting.Dev || c.Cfg.SectionWithEnvOverrides("provisioning").Key("allow_insecure").MustBool(false)
 
 	extras := []connection.Extra{
 		githubconnection.Extra(decrypter, githubconnection.ProvideFactory()),

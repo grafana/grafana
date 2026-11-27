@@ -83,19 +83,34 @@ func (op Operator) ServerOperator() server.Operator {
 	return server.Operator{Name: op.Name, Description: op.Description, RunFunc: op.Run}
 }
 
+// newRuntime builds the Runtime from deps, filling a registerer and tracer the
+// server did not pass so nothing reading them gets nil.
+func newRuntime(deps server.OperatorDependencies, loggerName string) *Runtime {
+	rt := &Runtime{
+		Cfg:        deps.Config,
+		Logger:     NewLogger(deps.Config, loggerName),
+		Registerer: deps.Registerer,
+		Tracer:     deps.Tracer,
+		Clients:    NewClients(deps.Config),
+	}
+	if rt.Registerer == nil {
+		rt.Registerer = prometheus.NewPedanticRegistry()
+	}
+	// The no-op tracing service replaces the global OpenTelemetry provider, so
+	// build it only when the server passed no tracer.
+	if rt.Tracer == nil {
+		rt.Tracer = tracing.NewNoopTracerService()
+	}
+	return rt
+}
+
 // Run runs op until ctx is done or one of its services fails.
 func (op Operator) Run(ctx context.Context, deps server.OperatorDependencies) (runErr error) {
 	name := op.Logger
 	if name == "" {
 		name = op.Name
 	}
-	rt := &Runtime{
-		Cfg:        deps.Config,
-		Logger:     NewLogger(deps.Config, name),
-		Registerer: deps.Registerer,
-		Tracer:     deps.Tracer,
-		Clients:    NewClients(deps.Config),
-	}
+	rt := newRuntime(deps, name)
 	natsUsable := !op.NoNATS
 	if deps.Config != nil {
 		if err := validateExternalNATS(deps.Config); err != nil && !op.NoNATS {
@@ -110,7 +125,7 @@ func (op Operator) Run(ctx context.Context, deps server.OperatorDependencies) (r
 		rt.Options = parseOptions(deps.Config, op.Defaults, natsUsable)
 	}
 	if natsUsable {
-		rt.Subscriber = NewSubscriber(deps.Config, deps.Registerer)
+		rt.Subscriber = NewSubscriber(deps.Config, rt.Registerer)
 	}
 	rt.Logger.Info("starting operator", "operator", op.Name)
 

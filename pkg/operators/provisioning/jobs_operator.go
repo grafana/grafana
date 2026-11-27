@@ -19,21 +19,21 @@ var JobsOperator = runner.Operator{
 	Defaults:    operatorDefaults,
 	NoNATS:      true,
 	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
-		controllerCfg, err := setupJobsControllerFromConfig(rt)
+		r, err := newJobsRunner(rt)
 		if err != nil {
 			return nil, err
 		}
 		return &runner.Parts{
 			Run: func(ctx context.Context, ready func()) error {
-				return runJobController(ctx, rt.Logger, controllerCfg, ready)
+				return runJobController(ctx, rt.Logger, r, ready)
 			},
 			ShutdownTimeout: 30 * time.Second,
 		}, nil
 	},
 }
 
-func runJobController(ctx context.Context, logger logging.Logger, controllerCfg *jobsControllerConfig, ready func()) error {
-	provisioningClient, err := controllerCfg.ProvisioningClient()
+func runJobController(ctx context.Context, logger logging.Logger, r *jobsRunner, ready func()) error {
+	provisioningClient, err := r.ProvisioningClient()
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
@@ -46,14 +46,14 @@ func runJobController(ctx context.Context, logger logging.Logger, controllerCfg 
 	// runs regardless. The source choice reads the NATS config flag directly, not a
 	// subscriber: this operator has no NATS consumer role and holds no subscriber.
 	var historySource informer.DeltaSource
-	if controllerCfg.historyExpiration > 0 {
-		historySource, err = controller.ProvideHistoryJobCleanup(ctx, controllerCfg.Settings.NATS.Enabled, provisioningClient, controllerCfg.historyExpiration)
+	if r.historyExpiration > 0 {
+		historySource, err = controller.ProvideHistoryJobCleanup(ctx, r.Cfg.NATS.Enabled, provisioningClient, r.historyExpiration)
 		if err != nil {
 			return err
 		}
-		logger.Info("history cleanup enabled", "expiration", controllerCfg.historyExpiration.String())
+		logger.Info("history cleanup enabled", "expiration", r.historyExpiration.String())
 	} else {
-		logger.Info("history cleanup disabled", "history_expiration", controllerCfg.historyExpiration.String())
+		logger.Info("history cleanup disabled", "history_expiration", r.historyExpiration.String())
 	}
 	// HistoryWriter can be either Loki or the API server
 	// TODO: Loki configuration and setup in the same way we do for the API server
@@ -66,7 +66,7 @@ func runJobController(ctx context.Context, logger logging.Logger, controllerCfg 
 	// }
 
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
-	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobs.ClaimExpiry, controllerCfg.Registry())
+	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobs.ClaimExpiry, r.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
@@ -78,7 +78,7 @@ func runJobController(ctx context.Context, logger logging.Logger, controllerCfg 
 	}
 
 	ready()
-	if err := jobs.NewJobCleanupController(jobStore, jobHistoryWriter, controllerCfg.cleanupInterval).Run(ctx); err != nil {
+	if err := jobs.NewJobCleanupController(jobStore, jobHistoryWriter, r.cleanupInterval).Run(ctx); err != nil {
 		logger.Error("job cleanup controller failed", "error", err)
 	}
 	logger.Info("job cleanup controller stopped")
@@ -87,23 +87,23 @@ func runJobController(ctx context.Context, logger logging.Logger, controllerCfg 
 	return nil
 }
 
-type jobsControllerConfig struct {
-	ControllerConfig
+type jobsRunner struct {
+	*ProvisioningRunner
 	historyExpiration time.Duration
 	cleanupInterval   time.Duration
 }
 
-func setupJobsControllerFromConfig(rt *runner.Runtime) (*jobsControllerConfig, error) {
-	controllerCfg, err := setupFromConfig(rt)
+func newJobsRunner(rt *runner.Runtime) (*jobsRunner, error) {
+	r, err := newProvisioningRunner(rt)
 	if err != nil {
 		return nil, err
 	}
 
 	operatorSec := rt.Cfg.SectionWithEnvOverrides("operator")
 
-	return &jobsControllerConfig{
-		ControllerConfig:  *controllerCfg,
-		historyExpiration: operatorSec.Key("history_expiration").MustDuration(0),
-		cleanupInterval:   operatorSec.Key("cleanup_interval").MustDuration(time.Minute),
+	return &jobsRunner{
+		ProvisioningRunner: r,
+		historyExpiration:  operatorSec.Key("history_expiration").MustDuration(0),
+		cleanupInterval:    operatorSec.Key("cleanup_interval").MustDuration(time.Minute),
 	}, nil
 }
