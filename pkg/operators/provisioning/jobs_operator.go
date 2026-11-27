@@ -16,6 +16,7 @@ var JobsOperator = runner.Operator{
 	Name:        "provisioning-jobs",
 	Description: "Manage provisioning job and history cleanup",
 	Logger:      "provisioning-job-controller",
+	Defaults:    operatorDefaults,
 	NoNATS:      true,
 	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
 		controllerCfg, err := setupJobsControllerFromConfig(rt)
