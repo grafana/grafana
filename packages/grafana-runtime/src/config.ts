@@ -32,6 +32,7 @@ import {
 } from '@grafana/data';
 
 import { getLegacyFeatureToggleMode, reportOrBlockLegacyFeatureToggles } from './utils/legacyFeatureToggles';
+import { trackSettingsAccess } from './utils/trackSettingsAccess';
 
 /**
  * @deprecated Use the type from `@grafana/data`
@@ -381,10 +382,21 @@ if (!bootData) {
  *
  * @public
  */
-export const config = new GrafanaBootConfig({
+const bootConfig = new GrafanaBootConfig({
   ...bootData.settings,
   // need to separately include bootData here
   // this allows people to access the user object on config.bootData.user and maintains backwards compatibility
   // TODO expose a user object (similar to `GrafanaBootConfig`) and deprecate this recursive bootData
   bootData,
 });
+
+// Wrapped only after construction so the constructor's merge of every setting isn't counted as reads.
+// config.bootData is the same object, so this covers both window.grafanaBootData and config.bootData.
+const trackBootData = Boolean(window.__grafanaBootdataAnalytics);
+if (trackBootData) {
+  bootData.settings = trackSettingsAccess(bootData.settings, 'bootData');
+}
+
+export const config = trackBootData
+  ? trackSettingsAccess(bootConfig, 'config', new Set(Object.keys(bootData.settings)))
+  : bootConfig;

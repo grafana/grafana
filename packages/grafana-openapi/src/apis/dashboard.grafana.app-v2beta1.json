@@ -4763,14 +4763,6 @@
       "DashboardPreferencesDashboardDefaults": {
         "type": "object",
         "properties": {
-          "autoGrid": {
-            "description": "Applies only when the merged layout is AutoGridLayout.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/DashboardPreferencesV2beta1DashboardDefaultsAutoGrid"
-              }
-            ]
-          },
           "autoRefresh": {
             "description": "An empty string turns auto refresh off.",
             "type": "string"
@@ -4783,20 +4775,6 @@
           },
           "cursorSync": {
             "description": "Same values as the dashboard's cursorSync.",
-            "type": "string"
-          },
-          "fiscalYearStartMonth": {
-            "description": "0 is January.",
-            "type": "integer",
-            "format": "int64"
-          },
-          "hideTimepicker": {
-            "type": "boolean"
-          },
-          "layout": {
-            "type": "string"
-          },
-          "nowDelay": {
             "type": "string"
           },
           "preload": {
@@ -4856,7 +4834,7 @@
             "type": "string"
           },
           "sources": {
-            "description": "Where each field came from, keyed by its path as in spec.reset, such as \"dashboard.autoGrid.columnWidth\". A field with no entry uses Grafana's built-in default.",
+            "description": "Where each field came from, keyed by its path as in spec.reset, such as \"panels.legend.placement\". A field with no entry uses Grafana's built-in default.",
             "type": "object",
             "additionalProperties": {
               "$ref": "#/components/schemas/DashboardPreferencesMergedSource"
@@ -4905,22 +4883,8 @@
         "description": "Names and values follow Grafana's shared visualization options. Each value is written only into new built-in panels whose plugin has that option.",
         "type": "object",
         "properties": {
-          "axis": {
-            "$ref": "#/components/schemas/DashboardPreferencesV2beta1PanelDefaultsAxis"
-          },
           "field": {
             "$ref": "#/components/schemas/DashboardPreferencesV2beta1PanelDefaultsField"
-          },
-          "frame": {
-            "$ref": "#/components/schemas/DashboardPreferencesV2beta1PanelDefaultsFrame"
-          },
-          "graph": {
-            "description": "Time series, trend and candlestick only.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/DashboardPreferencesV2beta1PanelDefaultsGraph"
-              }
-            ]
           },
           "legend": {
             "$ref": "#/components/schemas/DashboardPreferencesV2beta1PanelDefaultsLegend"
@@ -4948,34 +4912,6 @@
           }
         }
       },
-      "DashboardPreferencesV2beta1DashboardDefaultsAutoGrid": {
-        "type": "object",
-        "properties": {
-          "columnWidth": {
-            "description": "Pixels; used when columnWidthMode is custom.",
-            "type": "integer",
-            "format": "int64"
-          },
-          "columnWidthMode": {
-            "type": "string"
-          },
-          "fillScreen": {
-            "type": "boolean"
-          },
-          "maxColumnCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "rowHeight": {
-            "description": "Pixels; used when rowHeightMode is custom.",
-            "type": "integer",
-            "format": "int64"
-          },
-          "rowHeightMode": {
-            "type": "string"
-          }
-        }
-      },
       "DashboardPreferencesV2beta1DashboardDefaultsTimeRange": {
         "type": "object",
         "required": ["from", "to"],
@@ -4990,26 +4926,6 @@
           }
         }
       },
-      "DashboardPreferencesV2beta1PanelDefaultsAxis": {
-        "type": "object",
-        "properties": {
-          "axisBorderShow": {
-            "type": "boolean"
-          },
-          "axisCenteredZero": {
-            "type": "boolean"
-          },
-          "axisGridShow": {
-            "type": "boolean"
-          },
-          "axisPlacement": {
-            "type": "string"
-          },
-          "scale": {
-            "type": "string"
-          }
-        }
-      },
       "DashboardPreferencesV2beta1PanelDefaultsField": {
         "type": "object",
         "properties": {
@@ -5017,40 +4933,6 @@
             "description": "Number of decimal places, 0 to 15.",
             "type": "integer",
             "format": "int64"
-          }
-        }
-      },
-      "DashboardPreferencesV2beta1PanelDefaultsFrame": {
-        "type": "object",
-        "properties": {
-          "transparent": {
-            "type": "boolean"
-          }
-        }
-      },
-      "DashboardPreferencesV2beta1PanelDefaultsGraph": {
-        "type": "object",
-        "properties": {
-          "fillOpacity": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "gradientMode": {
-            "type": "string"
-          },
-          "lineInterpolation": {
-            "type": "string"
-          },
-          "lineWidth": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pointSize": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "showPoints": {
-            "type": "string"
           }
         }
       },

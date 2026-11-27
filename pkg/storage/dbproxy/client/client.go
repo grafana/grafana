@@ -17,7 +17,7 @@ const audience = "single-tenant-db-proxy"
 var ErrNotSent = errors.New("single-tenant database proxy: request not sent")
 
 // NewConn creates a lazy connection. The caller supplies transport credentials for the endpoint and owns Close.
-func NewConn(target string, transport credentials.TransportCredentials, exchanger authn.TokenExchanger) (*grpc.ClientConn, error) {
+func NewConn(target string, transport credentials.TransportCredentials, exchanger authn.TokenExchanger, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
 	if target == "" {
 		return nil, errors.New("proxy target required")
 	}
@@ -28,7 +28,8 @@ func NewConn(target string, transport credentials.TransportCredentials, exchange
 		return nil, errors.New("proxy token exchanger required")
 	}
 	interceptor := authn.NewGrpcClientInterceptor(exchanger, authn.WithClientInterceptorAudience([]string{audience}), authn.WithClientInterceptorNamespace("*"))
-	conn, err := grpc.NewClient(target, grpc.WithTransportCredentials(transport), grpc.WithStreamInterceptor(interceptor.StreamClientInterceptor), grpc.WithUnaryInterceptor(authenticateUnary(interceptor)), grpc.WithDisableRetry())
+	opts = append(opts, grpc.WithTransportCredentials(transport), grpc.WithStreamInterceptor(interceptor.StreamClientInterceptor), grpc.WithUnaryInterceptor(authenticateUnary(interceptor)), grpc.WithDisableRetry())
+	conn, err := grpc.NewClient(target, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("create proxy gRPC connection: %w", err)
 	}
