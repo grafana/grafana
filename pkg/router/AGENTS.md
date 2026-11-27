@@ -135,6 +135,14 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   - With a requester, `Impersonate-*` and `X-Grafana-Org-Id` are dropped too, so only the
     requester's tokens decide who the request acts as. Without one, the backend authorizes them
     against the caller's own credentials.
+  - The remote services (`remote_services_file` inside Grafana) then sign each request in place
+    of those tokens, as the kube-aggregator did (`remote_services_auth.go`). A resource request
+    gets the requester's ID token exchanged on behalf of the requester, for the group's audience
+    and the request's namespace. A cluster-scoped request uses the stack's namespace and may only
+    read. A service identity may only use the stack's namespace. Anything else gets the stack's
+    discovery token. Only `Authorization` carries the result. A request the signer refuses or can't
+    sign is a `localProxyError`: it answers with its own status (503 with `Retry-After` when the
+    exchange fails) and never reaches the backend or counts against its breaker.
 - **Log through the app-sdk logger from the context:** `logging.FromContext(ctx)` from
   `github.com/grafana/grafana-app-sdk/logging`. Don't use `log/slog` or `pkg/infra/log`. If a
   function that logs has no context, pass one in from its caller (a request's `Context()`, or the

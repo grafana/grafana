@@ -232,6 +232,9 @@ func breakerOutcome(req *http.Request, status int, call *backendCall) error {
 		if errors.Is(call.proxyErr, errBackendRedirect) {
 			return nil // the backend answered; the router refused to relay it
 		}
+		if local := (*localProxyError)(nil); errors.As(call.proxyErr, &local) {
+			return nil // the request never reached the backend
+		}
 		return fmt.Errorf("router: proxy failed: %w", call.proxyErr)
 	}
 	if isBackendFailure(status) {

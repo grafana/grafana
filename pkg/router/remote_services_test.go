@@ -38,9 +38,9 @@ func TestRemoteServiceTargets(t *testing.T) {
 	o := remoteServiceOptions{audience: "aud", tokenNamespace: "stacks-1", caFile: "ca.pem", insecure: true}
 	got := remoteServiceTargets(context.Background(), svcs, optedIn, o)
 	require.Equal(t, []aggregateTargetConfig{
-		{Name: "remote_mt:443", URL: "https://mt:443", PollInterval: defaultAggregatePollInterval, Audience: "aud", TokenNamespace: "stacks-1",
+		{Name: "remote_mt:443", URL: "https://mt:443", PollInterval: defaultAggregatePollInterval, DiscoveryAuth: discoveryAuthBearer, Audience: "aud", TokenNamespace: "stacks-1",
 			GroupPatterns: []string{"secret.grafana.app", "folder.grafana.app"}, CAFile: "ca.pem", InsecureSkipVerify: true},
-		{Name: "remote_x", URL: "https://x", PollInterval: defaultAggregatePollInterval, Audience: "aud", TokenNamespace: "stacks-1",
+		{Name: "remote_x", URL: "https://x", PollInterval: defaultAggregatePollInterval, DiscoveryAuth: discoveryAuthBearer, Audience: "aud", TokenNamespace: "stacks-1",
 			GroupPatterns: []string{"x.example.com"}, CAFile: "ca.pem", InsecureSkipVerify: true},
 	}, got)
 }

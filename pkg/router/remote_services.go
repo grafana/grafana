@@ -13,18 +13,23 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 
+	grafanarequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // The settings below replace what the embedded kube-aggregator reads to mount
 // multi-tenant (MT) APIs into a single-tenant Grafana's API server. They keep
 // the aggregator's names, so a deployment moves to the router by dropping the
-// kubernetesAggregator toggle, not by rewriting its config:
+// kubernetes_aggregator_enabled setting, not by rewriting its config:
 //
 //	[grafana-apiserver] remote_services_file        the MT services to mount
-//	[grpc_client_authentication] token              CAP token for discovery
+//	[grpc_client_authentication] token              CAP token that signs requests
 //	[grpc_client_authentication] token_exchange_url
-//	[grpc_client_authentication] token_namespace    namespace of the CAP token
+//	[grpc_client_authentication] token_namespace    namespace of the discovery
+//	                                                token; defaults to the stack's
+//
+// Every proxied request is signed, as the aggregator signed it
+// (remote_services_auth.go).
 //
 // TLS verifies against apiservice_ca_bundle_file, which cloud already sets for
 // the aggregator's remotes. The router adds remote_services_audience (the CAP
@@ -88,8 +93,8 @@ type remoteServiceOptions struct {
 // host:port, in file order, serving that host's opted-in groups. Cloud lists
 // every group at one MT aggregator, so this is one poller, not one per group.
 // The first entry for a group wins, as it does for the aggregator's version
-// priority. Discovery polls carry a CAP token; proxied requests carry the
-// caller's own credentials.
+// priority. Discovery polls carry a CAP token in Authorization, as the
+// aggregator's did.
 func remoteServiceTargets(ctx context.Context, svcs []remoteService, optedIn func(context.Context, string) bool, o remoteServiceOptions) []aggregateTargetConfig {
 	var targets []aggregateTargetConfig
 	byAddr := map[string]int{}
@@ -108,9 +113,11 @@ func remoteServiceTargets(ctx context.Context, svcs []remoteService, optedIn fun
 			i = len(targets)
 			byAddr[addr] = i
 			targets = append(targets, aggregateTargetConfig{
-				Name:               "remote_" + addr,
-				URL:                "https://" + addr,
-				PollInterval:       defaultAggregatePollInterval,
+				Name:         "remote_" + addr,
+				URL:          "https://" + addr,
+				PollInterval: defaultAggregatePollInterval,
+				// The aggregator sent its discovery token in Authorization.
+				DiscoveryAuth:      discoveryAuthBearer,
 				Audience:           o.audience,
 				TokenNamespace:     o.tokenNamespace,
 				CAFile:             o.caFile,
@@ -144,9 +151,11 @@ func newRemoteServicesLoader(ctx context.Context, cfg *setting.Cfg, base RoutesL
 		return nil, err
 	}
 	auth := cfg.SectionWithEnvOverrides(remoteServicesAuth)
+	// The aggregator signed every token for the stack's namespace.
+	stackNamespace := grafanarequest.GetNamespaceMapper(cfg)(1)
 	opts := remoteServiceOptions{
 		audience:       section.Key("remote_services_audience").MustString(defaultRemoteServicesAudience),
-		tokenNamespace: auth.Key("token_namespace").MustString(""),
+		tokenNamespace: auth.Key("token_namespace").MustString(stackNamespace),
 		// The CA cloud already sets for the aggregator's remotes.
 		caFile:   section.Key("apiservice_ca_bundle_file").MustString(""),
 		insecure: section.Key("remote_services_insecure").MustBool(false),
@@ -162,6 +171,10 @@ func newRemoteServicesLoader(ctx context.Context, cfg *setting.Cfg, base RoutesL
 	exchanger, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{TokenExchangeURL: exchangeURL, Token: token})
 	if err != nil {
 		return nil, fmt.Errorf("router: token exchange client: %w", err)
+	}
+	sign := newRemoteServiceSigner(exchanger, stackNamespace, opts.audience)
+	for i := range configs {
+		configs[i].wrapProxy = sign
 	}
 	targets, err := buildAggregateTargets(configs, exchanger)
 	if err != nil {

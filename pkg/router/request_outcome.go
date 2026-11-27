@@ -90,7 +90,10 @@ func failureReason(req *http.Request, err error) string {
 		return ""
 	}
 	var netErr net.Error
+	var local *localProxyError
 	switch {
+	case errors.As(err, &local):
+		return local.reason
 	case errors.Is(err, errBackendRedirect):
 		return failureRedirectRejected
 	case errors.Is(err, errStackOriginMismatch):
