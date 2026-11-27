@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	countCallerEndpoint    = "counts_endpoint"
+	countCallerEndpoint    = federated.CallerCountsEndpoint
 	countCallerDeleteCheck = "delete_check"
 
 	countOutcomeOK       = "ok"
