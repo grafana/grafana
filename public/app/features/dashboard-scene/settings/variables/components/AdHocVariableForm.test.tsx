@@ -61,7 +61,7 @@ describe('AdHocVariableForm', () => {
     await user.click(renderer.getByText(/prom/i));
 
     expect(onDataSourceChange).toHaveBeenCalledTimes(1);
-    expect(onDataSourceChange).toHaveBeenCalledWith(promDatasource, undefined);
+    expect(onDataSourceChange).toHaveBeenCalledWith(promDatasource);
   });
 
   it('should render the form with allow custom value true', async () => {
