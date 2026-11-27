@@ -54,7 +54,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/ssosettings/strategies"
 	_ "github.com/grafana/grafana/pkg/services/team/teamtest"
 	_ "github.com/grafana/grafana/pkg/services/user/usertest"
-	_ "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 	_ "github.com/grafana/grafana/pkg/storage/unified/resource/kv/test"
 	_ "github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 	_ "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
