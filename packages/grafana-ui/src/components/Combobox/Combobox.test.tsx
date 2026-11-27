@@ -331,6 +331,17 @@ describe('Combobox', () => {
     expect(screen.getByDisplayValue('Option 3')).toBeInTheDocument();
   });
 
+  it('closes the menu on Enter when no option matches the search', async () => {
+    render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
+
+    const input = screen.getByRole('combobox');
+    await userEvent.click(input);
+    await userEvent.keyboard('zzz{Enter}');
+
+    expect(input).toHaveAttribute('aria-expanded', 'false');
+    expect(onChangeHandler).not.toHaveBeenCalled();
+  });
+
   it('selects value by using keyboard only', async () => {
     render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
 
@@ -938,6 +949,183 @@ describe('Combobox', () => {
 
       expect(customItem).toHaveTextContent('fir');
       expect(customItem).toHaveTextContent('Use custom value');
+    });
+
+    it("doesn't select an earlier search's result while the search for the typed text loads", async () => {
+      const asyncOptions = jest.fn((searchTerm: string) =>
+        searchTerm === 'Bob'
+          ? new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'Bob' }]), 1000))
+          : Promise.resolve([{ value: 'Alice' }])
+      );
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+      expect(screen.getByRole('option', { name: 'Alice' })).toBeVisible();
+
+      await user.type(input, 'Bob{Enter}');
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+      await user.keyboard('{Enter}');
+      await user.click(screen.getByRole('option', { name: 'Alice' }));
+      expect(onChangeHandler).not.toHaveBeenCalled();
+
+      await act(async () => jest.advanceTimersByTimeAsync(1000));
+      await user.keyboard('{Enter}');
+      expect(onChangeHandler).toHaveBeenCalledWith({ value: 'Bob' });
+    });
+
+    it('lets the results for the typed search be picked while the same search reloads', async () => {
+      const asyncOptions = jest.fn(
+        (searchTerm: string) =>
+          new Promise<ComboboxOption[]>((resolve) =>
+            setTimeout(() => resolve([{ value: `${searchTerm} result` }]), 300)
+          )
+      );
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await user.type(input, 'ab');
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS + 300));
+      // A quickly deleted typo searches for 'ab' again.
+      await user.type(input, 'c{Backspace}', { skipClick: true });
+      // Past the debounce, with the repeat request still in flight.
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+      expect(asyncOptions).toHaveBeenLastCalledWith('ab');
+      await user.click(screen.getByRole('option', { name: 'ab result' }));
+      expect(onChangeHandler).toHaveBeenCalledWith({ value: 'ab result' });
+
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS + 300));
+    });
+
+    it('picks an earlier result that matches the typed custom value with Enter, wherever it is listed', async () => {
+      const asyncOptions = jest.fn((searchTerm: string) =>
+        searchTerm === ''
+          ? Promise.resolve([{ value: 'Bob' }, { value: 'Alice' }])
+          : new Promise<ComboboxOption[]>(() => {})
+      );
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} createCustomValue />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+      await user.type(input, 'Alice', { skipClick: true });
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+      await user.keyboard('{Enter}');
+      expect(onChangeHandler).toHaveBeenLastCalledWith({ value: 'Alice' });
+    });
+
+    it('highlights the first fresh result, not the row at the stale highlight', async () => {
+      let resolveSearch: (options: ComboboxOption[]) => void = () => {};
+      const asyncOptions = jest.fn((searchTerm: string) =>
+        searchTerm === ''
+          ? Promise.resolve([{ value: 'Bob' }, { value: 'Alice' }])
+          : new Promise<ComboboxOption[]>((resolve) => {
+              resolveSearch = resolve;
+            })
+      );
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} createCustomValue />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+      await user.type(input, 'Alice', { skipClick: true });
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+      // The stale 'Alice' row, second in the list, holds the highlight while the search loads.
+      expect(screen.getByRole('option', { name: 'Alice' })).toHaveAttribute('aria-selected', 'true');
+      await act(async () => resolveSearch([{ value: 'Alice' }, { value: 'Alicia' }]));
+      await user.keyboard('{Enter}');
+      expect(onChangeHandler).toHaveBeenCalledWith({ value: 'Alice' });
+    });
+
+    it("doesn't select a result that arrives while a newer search is debouncing", async () => {
+      const asyncOptions = jest.fn((searchTerm: string) =>
+        searchTerm === 'a'
+          ? new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'apple' }]), 300))
+          : new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'abacus' }]), 300))
+      );
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await user.type(input, 'a');
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS + 250));
+      await user.type(input, 'b');
+      // 'a' resolves while 'ab' is still debouncing.
+      await act(async () => jest.advanceTimersByTimeAsync(100));
+      expect(asyncOptions).not.toHaveBeenCalledWith('ab');
+      await user.click(screen.getByRole('option', { name: 'apple' }));
+      expect(onChangeHandler).not.toHaveBeenCalled();
+    });
+
+    it('keeps the typed search when Enter is pressed before any results arrive', async () => {
+      const asyncOptions = jest.fn(
+        () => new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'Bob' }]), 1000))
+      );
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await user.type(input, 'Bo{Enter}');
+      expect(input).toHaveValue('Bo');
+      expect(input).toHaveAttribute('aria-expanded', 'true');
+      expect(onChangeHandler).not.toHaveBeenCalled();
+
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS + 1000));
+      expect(screen.getByRole('option', { name: 'Bob' })).toBeVisible();
+    });
+
+    it('lets an earlier result that matches the typed custom value be picked after a failed search', async () => {
+      jest.spyOn(console, 'error').mockImplementation();
+      const asyncOptions = jest.fn((searchTerm: string) =>
+        searchTerm === '' ? Promise.resolve([{ value: 'Alice' }]) : Promise.reject(new Error('forbidden'))
+      );
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} createCustomValue />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+      await user.type(input, 'Alice');
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+      expect(screen.getAllByRole('option', { name: /Alice/ })).toHaveLength(1);
+      await user.keyboard('{Enter}');
+      expect(onChangeHandler).toHaveBeenCalledWith({ value: 'Alice' });
+      expect(screen.queryByText('Use custom value')).not.toBeInTheDocument();
+    });
+
+    it("doesn't select an earlier search's result after the search for the typed text fails", async () => {
+      jest.spyOn(console, 'error').mockImplementation();
+      const asyncOptions = jest.fn((searchTerm: string) =>
+        searchTerm === 'x' ? Promise.reject(new Error('forbidden')) : Promise.resolve([{ value: 'Alice' }])
+      );
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+      await user.type(input, 'x');
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+      expect(screen.getByText('An error occurred while loading options.')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('option', { name: 'Alice' }));
+      await user.keyboard('{Enter}');
+      expect(onChangeHandler).not.toHaveBeenCalled();
+    });
+
+    it('selects the custom value while the search for it loads', async () => {
+      const asyncOptions = jest.fn((searchTerm: string) =>
+        searchTerm === ''
+          ? Promise.resolve([{ value: 'first' }])
+          : new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'first' }]), 2000))
+      );
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} createCustomValue />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+      await user.type(input, 'fir{Enter}');
+      expect(onChangeHandler).toHaveBeenCalledWith(expect.objectContaining({ value: 'fir' }));
     });
 
     it('should display message when there is an error loading async options', async () => {

@@ -14,7 +14,10 @@ import { grantUserPermissions, mockDataSource } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
 import { buildInfoResponse } from '../testSetup/featureDiscovery';
 
+import * as dataSourcesForRulesModule from './useDataSourcesForRules';
 import { useRulesSourcesWithRuler } from './useRuleSourcesWithRuler';
+
+jest.mock('./useDataSourcesForRules', () => makeSpyable('./useDataSourcesForRules'));
 
 jest.mock('../api/buildInfo', () =>
   jest.requireActual('test/helpers/partialMock').partialMock(jest.requireActual('../api/buildInfo'), {
@@ -50,15 +53,34 @@ beforeEach(() => {
 });
 
 describe('useRulesSourcesWithRuler — baseline (current behaviour)', () => {
-  it('starts with empty list and no loading when there are no datasources', () => {
+  it('ends with an empty list and no loading when there are no datasources', async () => {
     setupDataSources();
 
     const { result } = renderHook(() => useRulesSourcesWithRuler(), {
       wrapper: getProviderWrapper(),
     });
 
-    expect(result.current.isLoading).toBe(false);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.rulesSourcesWithRuler).toEqual([]);
+    expect(result.current.error).toBeUndefined();
+  });
+
+  it('returns the error and no datasources when the rules source list fails', async () => {
+    setupDataSources(makeMimirDatasource('mimir-1', 'Mimir 1'));
+    const listError = new Error('list failed');
+    const listSpy = jest
+      .spyOn(dataSourcesForRulesModule, 'useDataSourcesForRules')
+      .mockReturnValue({ items: [], isLoading: false, error: listError });
+
+    const { result } = renderHook(() => useRulesSourcesWithRuler(), {
+      wrapper: getProviderWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.error).toBe(listError);
+    expect(result.current.rulesSourcesWithRuler).toEqual([]);
+    expect(discoverFeaturesByUid).not.toHaveBeenCalled();
+    listSpy.mockRestore();
   });
 
   it('returns datasources whose buildinfo indicates ruler support (Mimir)', async () => {

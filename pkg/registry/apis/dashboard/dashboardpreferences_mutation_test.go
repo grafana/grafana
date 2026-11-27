@@ -197,30 +197,20 @@ func TestDashboardsAPIBuilderMutateDashboardPreferences(t *testing.T) {
 			{"empty dashboard", `{"dashboard":{}}`, `{}`},
 			{"empty panels", `{"panels":{}}`, `{}`},
 			// Dropped from the bottom up, so a parent left with only empty children goes too.
-			{"dashboard with only an empty auto grid", `{"dashboard":{"autoGrid":{}}}`, `{}`},
 			{"panels with only an empty legend", `{"panels":{"legend":{}}}`, `{}`},
 			{"panels with only an empty tooltip", `{"panels":{"tooltip":{}}}`, `{}`},
-			{"panels with only an empty axis", `{"panels":{"axis":{}}}`, `{}`},
-			{"panels with only an empty graph", `{"panels":{"graph":{}}}`, `{}`},
 			{"panels with only an empty field", `{"panels":{"field":{}}}`, `{}`},
-			{"panels with only an empty frame", `{"panels":{"frame":{}}}`, `{}`},
 			{
 				"every empty object dropped and the rest kept",
-				`{"dashboard":{"preload":true,"autoGrid":{}},"panels":{"legend":{},"tooltip":{},"axis":{},"graph":{},"field":{},"frame":{"transparent":true}}}`,
-				`{"dashboard":{"preload":true},"panels":{"frame":{"transparent":true}}}`,
+				`{"dashboard":{"preload":true},"panels":{"legend":{},"tooltip":{"mode":"multi"},"field":{}}}`,
+				`{"dashboard":{"preload":true},"panels":{"tooltip":{"mode":"multi"}}}`,
 			},
 			// A set false, 0 or "" is a value, not an absence.
 			{"dashboard member set to false kept", `{"dashboard":{"preload":false}}`, `{"dashboard":{"preload":false}}`},
 			{"dashboard member set to an empty string kept", `{"dashboard":{"autoRefresh":""}}`, `{"dashboard":{"autoRefresh":""}}`},
-			{"dashboard member set to zero kept", `{"dashboard":{"fiscalYearStartMonth":0}}`, `{"dashboard":{"fiscalYearStartMonth":0}}`},
-			{"auto grid member set to false kept", `{"dashboard":{"autoGrid":{"fillScreen":false}}}`, `{"dashboard":{"autoGrid":{"fillScreen":false}}}`},
-			{"auto grid member set to zero kept", `{"dashboard":{"autoGrid":{"maxColumnCount":0}}}`, `{"dashboard":{"autoGrid":{"maxColumnCount":0}}}`},
 			{"legend member set to false kept", `{"panels":{"legend":{"showLegend":false}}}`, `{"panels":{"legend":{"showLegend":false}}}`},
 			{"tooltip member set to false kept", `{"panels":{"tooltip":{"hideZeros":false}}}`, `{"panels":{"tooltip":{"hideZeros":false}}}`},
-			{"axis member set to false kept", `{"panels":{"axis":{"axisGridShow":false}}}`, `{"panels":{"axis":{"axisGridShow":false}}}`},
-			{"graph member set to zero kept", `{"panels":{"graph":{"lineWidth":0}}}`, `{"panels":{"graph":{"lineWidth":0}}}`},
 			{"field member set to zero kept", `{"panels":{"field":{"decimals":0}}}`, `{"panels":{"field":{"decimals":0}}}`},
-			{"frame member set to false kept", `{"panels":{"frame":{"transparent":false}}}`, `{"panels":{"frame":{"transparent":false}}}`},
 			// Its members are required, so an empty one has to reach Validate and fail there.
 			{"empty time range kept", `{"dashboard":{"timeRange":{}}}`, `{"dashboard":{"timeRange":{"from":"","to":""}}}`},
 		}
@@ -295,14 +285,10 @@ func TestDashboardPreferencesNilIfUnsetTypesHaveOnlyNillableMembers(t *testing.T
 	// The types Mutate passes to nilIfUnset.
 	types := []reflect.Type{
 		reflect.TypeFor[dashv2beta1.DashboardPreferencesDashboardDefaults](),
-		reflect.TypeFor[dashv2beta1.DashboardPreferencesV2beta1DashboardDefaultsAutoGrid](),
 		reflect.TypeFor[dashv2beta1.DashboardPreferencesPanelDefaults](),
 		reflect.TypeFor[dashv2beta1.DashboardPreferencesV2beta1PanelDefaultsLegend](),
 		reflect.TypeFor[dashv2beta1.DashboardPreferencesV2beta1PanelDefaultsTooltip](),
-		reflect.TypeFor[dashv2beta1.DashboardPreferencesV2beta1PanelDefaultsAxis](),
-		reflect.TypeFor[dashv2beta1.DashboardPreferencesV2beta1PanelDefaultsGraph](),
 		reflect.TypeFor[dashv2beta1.DashboardPreferencesV2beta1PanelDefaultsField](),
-		reflect.TypeFor[dashv2beta1.DashboardPreferencesV2beta1PanelDefaultsFrame](),
 	}
 	for _, typ := range types {
 		t.Run(typ.Name(), func(t *testing.T) {

@@ -5,6 +5,20 @@
   "items": [
     {
       "metadata": {
+        "name": "adaptivelogs.enableTimeMachine",
+        "resourceVersion": "1795616925056",
+        "creationTimestamp": "2026-11-25T14:28:45Z"
+      },
+      "spec": {
+        "description": "Enables multiple points of integration for Adaptive Logs Time Machine.",
+        "stage": "experimental",
+        "codeowner": "@grafana/adaptive-telemetry",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertEnrichment",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2025-06-06T12:16:07Z"
@@ -2939,6 +2953,35 @@
         "frontend": true,
         "hideFromDocs": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.bootdataAnalytics",
+        "resourceVersion": "1795516456589",
+        "creationTimestamp": "2026-11-24T10:34:16Z"
+      },
+      "spec": {
+        "description": "Enable tracking of bootdata property access",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.bootdataMetrics",
+        "resourceVersion": "1795516432772",
+        "creationTimestamp": "2026-11-24T10:33:52Z",
+        "deletionTimestamp": "2026-11-24T10:34:16Z"
+      },
+      "spec": {
+        "description": "Enable tracking of bootdata access",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {

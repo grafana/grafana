@@ -726,6 +726,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/returnToPrevious.ts @grafana/grafana-frontend-navigation
 /packages/grafana-runtime/src/utils/toDataQueryError* @grafana/grafana-datasources-core-services
 /packages/grafana-runtime/src/utils/TracedError* @grafana/grafana-frontend-platform
+/packages/grafana-runtime/src/utils/trackSettingsAccess.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/userStorage* @grafana/grafana-catalog @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/useFavoriteDatasources* @grafana/grafana-catalog
 /packages/grafana-runtime/src/utils/getCachedPromise* @grafana/grafana-frontend-platform
@@ -1463,6 +1464,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-diagnostics-e2e.yml @grafana/data-sources-plugins
 /.github/workflows/frontend-perf-tests.yaml @grafana/grafana-frontend-platform
 /.github/workflows/release-npm.yml @grafana/grafana-frontend-platform
+/.github/workflows/release-npm-independent-packages.yml @grafana/grafana-frontend-platform
 /.github/workflows/scripts/determine-npm-tag.sh @grafana/grafana-frontend-platform
 /.github/workflows/scripts/validate-commit-in-head.sh @grafana/grafana-frontend-platform
 /.github/workflows/scripts/test-endpoint-migration-check.sh @grafana/alerting-squad
