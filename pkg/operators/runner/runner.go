@@ -118,7 +118,7 @@ func (op Operator) Run(ctx context.Context, deps server.OperatorDependencies) (r
 		rt.Options = parseOptions(deps.Config, op.Defaults, natsUsable)
 	}
 	if natsUsable {
-		rt.Subscriber = NewSubscriber(deps.Config, deps.Registerer)
+		rt.Subscriber = NewSubscriber(deps.Config, rt.Registerer)
 	}
 	rt.Logger.Info("starting operator", "operator", op.Name)
 
