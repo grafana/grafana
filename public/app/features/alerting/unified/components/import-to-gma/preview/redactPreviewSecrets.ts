@@ -1,4 +1,6 @@
-import { dump, load } from 'js-yaml';
+import { dump } from 'js-yaml';
+
+import { loadYaml } from 'app/core/utils/yaml';
 
 import type { NotificationChannelOption, NotifierDTO } from '../../../types/alerting';
 
@@ -53,7 +55,7 @@ export function reformatPreviewContent(rawContent: string, format: 'yaml' | 'jso
 
 function parseContent(content: string): unknown {
   try {
-    return load(content);
+    return loadYaml(content);
   } catch (e) {
     throw new PreviewRedactionError(e instanceof Error ? e.message : String(e));
   }

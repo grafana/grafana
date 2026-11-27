@@ -3409,6 +3409,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Ошибки при загрузке правил",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Не удалось загрузить конфигурацию правил Grafana:",
       "failed-to-load-grafana-rules-state": "Не удалось загрузить состояние правил Grafana:",
       "failed-to-load-rules-config": "Не удалось загрузить конфигурацию правил из <2>{{dataSource}}</2>",
@@ -6713,6 +6714,10 @@
       "paused": "Дашборд приостановлен администратором",
       "try-again-later": "Повторите попытку позже"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Действительно удалить панель?"
@@ -6840,7 +6845,8 @@
           "title": "Вставьте панель"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "Добавить строку",
@@ -8182,6 +8188,9 @@
       "title-delete-all-transformations": "Удалить все преобразования?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_one": "",
@@ -10116,10 +10125,6 @@
       "to": "К",
       "when": "КОГДА"
     },
-    "expression-query-editor": {
-      "helper-text-sql": "Выполните SQL-запрос на диалекте MySQL к таблицам, возвращенным вашими источниками данных. Запросы к источникам данных (например, «A», «B») доступны в виде таблиц с ссылкой на них по имени запроса. Поля доступны в виде столбцов, возвращенных источником данных.",
-      "label-operation": "Операция"
-    },
     "math": {
       "available-math-functions": "Доступные математические функции",
       "run-math-operations": "Выполните математические операции для одного или нескольких запросов. Для ссылки на запрос используется {{refExample}}, например {{ref1}}, {{ref2}}, {{ref3}} и т. д.<br/>Пример: <12>{{example}}</12>",
@@ -10687,6 +10692,27 @@
         "otherGroup": "Прочее"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_one": "",
+        "with-decimals_few": "",
+        "with-decimals_many": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -11207,6 +11233,13 @@
         "placement-options": {
           "label-bottom": "Снизу",
           "label-right": "Справа"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_one": "",
+          "values_few": "",
+          "values_many": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11302,6 +11335,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "Одно нажатие"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "Добавить ссылку",
@@ -14002,16 +14038,16 @@
       "open": "Главное меню",
       "pin-error": "Не удалось обновить закрепленные элементы меню",
       "pinned-list-label": "Закрепленные элементы",
+      "section-resize": "",
       "undock": "Открепить меню"
     },
     "megamenu-item": {
       "children-error": "Не удалось загрузить элементы",
+      "children-partial-error": "",
       "collapse-aria-label": "Свернуть раздел: {{sectionName}}",
       "expand-aria-label": "Развернуть раздел: {{sectionName}}",
       "loading-aria-label": "Загружается {{sectionName}}",
-      "reorder-aria-label": "Изменить порядок {{itemName}}",
-      "starred-dashboard-icon": "Дашборд",
-      "starred-folder-icon": "Папка"
+      "reorder-aria-label": "Изменить порядок {{itemName}}"
     },
     "org-switcher": {
       "aria-label": "Изменить организацию"
@@ -14211,12 +14247,32 @@
         "undo-label": "Редактирование с помощью Assistant"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "Отменить",
       "confirm-discard": "Отменить",
       "confirm-keep": "Сохранить",
       "confirm-text": "Сохранить изменения, внесенные при просмотре блокнота?",
       "confirm-title": "Несохраненные изменения на панели"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17583,6 +17639,13 @@
       "wide-list": "Широкий список",
       "wide-list-desc": "Горизонтальная ориентация, имя и значение, область со спарклайном, один цвет"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "Статистика",
       "stat-color-background": "Статистика: цветной фон",
@@ -17788,6 +17851,7 @@
     "description-page-size": "Количество строк на странице. Если значение не указано, размер страницы определяется на основе высоты панели.",
     "description-show-columns-sidebar": "Открывайте боковую панель управления столбцами с помощью панели, а не из меню столбца",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "Поле, содержащее объекты JSON со свойствами CSS",
     "description-tooltip-from-field": "Отобразите ячейку из поля (скрытого или видимого) в подсказке",
     "description-zebra-striping": "Чередовать цвет фона каждой второй строки",
@@ -17832,6 +17896,7 @@
     "name-show-columns-sidebar": "Показать боковую панель столбцов",
     "name-show-row-numbers": "",
     "name-show-table-header": "Показать заголовок таблицы",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "Показывать подсказку при наведении курсора",
     "name-styling-from-field": "Стилевое оформление из поля",
     "name-tooltip-from-field": "Подсказка из поля",
@@ -18132,6 +18197,10 @@
       "time-zone-option": "Часовой пояс",
       "time-zone-selection": "Выбор часового пояса"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "Применить временной диапазон",
       "default-error": "Введите дату ({{dateExample}}) или относительное время ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -18149,6 +18218,12 @@
       "to": "на",
       "zoom-out-button": "Уменьшение масштаба временного диапазона",
       "zoom-out-tooltip-new": "Уменьшение временного диапазона <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "Применить временной диапазон",

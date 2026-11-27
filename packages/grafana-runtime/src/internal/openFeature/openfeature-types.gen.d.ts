@@ -10,6 +10,7 @@ import "@openfeature/core";
 
 declare module "@openfeature/core" {
   export type BooleanFlagKey =
+    | "grafana.responsiveTimePickerTabs"
     | "panelTitleSearch"
     | "publicDashboardsEmailSharing"
     | "canvasPanelNesting"
@@ -112,6 +113,7 @@ declare module "@openfeature/core" {
     | "alertingImportAlertmanagerAPI"
     | "preferLibraryPanelTitle"
     | "otelLogsFormatting"
+    | "adaptivelogs.enableTimeMachine"
     | "dashboardLevelTimeMacros"
     | "favoriteDatasources"
     | "grafana.newTextPanel"
@@ -136,6 +138,7 @@ declare module "@openfeature/core" {
     | "queryEditorNext"
     | "queryeditor.coauthoringUi"
     | "kubernetesTeamsApi"
+    | "iam.useKubernetesUsersReadApi"
     | "managedPluginsV2"
     | "analyticsFramework"
     | "grafana.scenesFlickeringFix"
@@ -210,12 +213,14 @@ declare module "@openfeature/core" {
     | "dashboards.disablePublicDashboards"
     | "grafana.panelActionsPopover"
     | "grafana.dashboardSidebarExplicitOpen"
+    | "grafana.panelQuickEdits"
     | "grafana.folderPickerFolderEditAccess"
     | "grafana.panelOptionInterpolation"
     | "datasources.gatewayRateLimits"
     | "plugins.disableMTPluginsFallback"
     | "grafana.logsInfiniteScrollTop"
-    | "grafana.dashboardQuestions";
+    | "grafana.dashboardQuestions"
+    | "grafana.bootdataAnalytics";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

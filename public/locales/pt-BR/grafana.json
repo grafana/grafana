@@ -3353,6 +3353,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Erros ao carregar regras",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Falha ao carregar a configuração das regras da Grafana:",
       "failed-to-load-grafana-rules-state": "Falha ao carregar a situação das regras da Grafana:",
       "failed-to-load-rules-config": "Falha ao carregar a configuração das regras de <2>{{dataSource}}</2>",
@@ -6613,6 +6614,10 @@
       "paused": "Este painel foi pausado pelo administrador",
       "try-again-later": "Tente novamente mais tarde"
     },
+    "quick-edits": {
+      "close": "",
+      "presets-unavailable": ""
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Tem certeza de que deseja remover este painel?"
@@ -6740,7 +6745,8 @@
           "title": "Colar painel"
         },
         "question": {
-          "label": ""
+          "label": "",
+          "tooltip": ""
         },
         "row": {
           "add-label": "Adicionar linha",
@@ -8068,6 +8074,9 @@
       "title-delete-all-transformations": "Deseja excluir todas as transformações?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "",
+      "show-panel-actions": "",
+      "show-quick-edits": "",
       "tooltip-edit-panel-visualization": "",
       "tooltip-panel-settings": "",
       "panels-selected_one": "",
@@ -9968,10 +9977,6 @@
       "to": "ATÉ",
       "when": "QUANDO"
     },
-    "expression-query-editor": {
-      "helper-text-sql": "Execute o dialeto SQL do MySQL nas tabelas retornadas das suas fontes de dados. As consultas de fonte de dados (ou seja, \"A\", \"B\") estão disponíveis como tabelas e são referenciadas por nome de consulta. Os campos estão disponíveis como colunas, conforme retornados da fonte de dados.",
-      "label-operation": "Operação"
-    },
     "math": {
       "available-math-functions": "Funções matemáticas disponíveis",
       "run-math-operations": "Execute operações matemáticas em uma ou mais consultas. Você faz referência à consulta por meio de {{refExample}}, ou seja {{ref1}}, {{ref2}}, {{ref3}}etc.<br/>Exemplo: <12>{{example}}</12>",
@@ -10519,6 +10524,25 @@
         "otherGroup": "Outros"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": ""
+      },
+      "range": {
+        "auto": "",
+        "title": ""
+      },
+      "thresholds": {
+        "base-only": "",
+        "title": ""
+      },
+      "unit": {
+        "none": "",
+        "title": "",
+        "with-decimals_one": "",
+        "with-decimals_other": ""
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -11037,6 +11061,11 @@
         "placement-options": {
           "label-bottom": "Inferior",
           "label-right": "Direita"
+        },
+        "quick-edit": {
+          "hidden": "",
+          "values_one": "",
+          "values_other": ""
         }
       },
       "stacking": {
@@ -11132,6 +11161,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "Um clique"
+    },
+    "data-link-menu-items": {
+      "link": ""
     },
     "data-links-inline-editor": {
       "add-link": "Adicionar link",
@@ -13788,16 +13820,16 @@
       "open": "Menu principal",
       "pin-error": "Erro ao atualizar os itens fixados do menu",
       "pinned-list-label": "Itens fixados",
+      "section-resize": "",
       "undock": "Desacoplar menu"
     },
     "megamenu-item": {
       "children-error": "Erro ao carregar os itens",
+      "children-partial-error": "",
       "collapse-aria-label": "Recolher seção: {{sectionName}}",
       "expand-aria-label": "Expandir seção: {{sectionName}}",
       "loading-aria-label": "Carregando {{sectionName}}",
-      "reorder-aria-label": "Reordenar {{itemName}}",
-      "starred-dashboard-icon": "Painel de controle",
-      "starred-folder-icon": "Pasta"
+      "reorder-aria-label": "Reordenar {{itemName}}"
     },
     "org-switcher": {
       "aria-label": "Alterar organização"
@@ -13987,12 +14019,32 @@
         "undo-label": "Edição do assistente"
       }
     },
+    "outline": {
+      "aria-label": "",
+      "pane-header": "",
+      "search": {
+        "no-results": ""
+      },
+      "tree-item": {
+        "collapse": "",
+        "empty": "",
+        "expand": "",
+        "no-title": ""
+      },
+      "untitled-panel": ""
+    },
     "panel-changes": {
       "confirm-cancel": "Cancelar",
       "confirm-discard": "Descartar",
       "confirm-keep": "Manter",
       "confirm-text": "Deseja manter as alterações feitas ao visualizar este bloco de anotações?",
       "confirm-title": "Alterações no painel não salvas"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "",
+        "tooltip": ""
+      }
     }
   },
   "notebooks": {
@@ -17299,6 +17351,13 @@
       "wide-list": "Lista ampla",
       "wide-list-desc": "Horizontal, nome e valor, minigráfico de área, cor única"
     },
+    "quick-edits": {
+      "calculation": "",
+      "color": "",
+      "text": "",
+      "text-title-size": "",
+      "text-value-size": ""
+    },
     "suggestions": {
       "stat": "Estatística",
       "stat-color-background": "Estatística - cor de fundo",
@@ -17502,6 +17561,7 @@
     "description-page-size": "Número de linhas por página. Quando vazio, o tamanho da página é baseado na altura do painel.",
     "description-show-columns-sidebar": "Abrir a barra lateral de gestão de colunas com o painel, em vez de a partir de um menu de coluna",
     "description-show-row-numbers": "",
+    "description-sparkline-select-time-range": "",
     "description-styling-from-field": "Um campo contendo objetos JSON com propriedades CSS",
     "description-tooltip-from-field": "Renderizar uma célula a partir de um campo (oculto ou visível) em uma dica de ferramenta",
     "description-zebra-striping": "Alternar a cor de fundo das linhas de forma intercalada",
@@ -17546,6 +17606,7 @@
     "name-show-columns-sidebar": "Mostrar barra lateral de colunas",
     "name-show-row-numbers": "",
     "name-show-table-header": "Mostrar cabeçalho da tabela",
+    "name-sparkline-select-time-range": "",
     "name-sparkline-show-tooltip": "Mostrar dica de uso ao passar o mouse",
     "name-styling-from-field": "Estilo do campo",
     "name-tooltip-from-field": "Dica de ferramenta do campo",
@@ -17844,6 +17905,10 @@
       "time-zone-option": "Fuso horário",
       "time-zone-selection": "Seleção de fuso horário"
     },
+    "inline-calendar": {
+      "label": "",
+      "update-inputs": ""
+    },
     "range-content": {
       "apply-button": "Aplicar intervalo de tempo",
       "default-error": "Insira uma data ({{dateExample}}) ou hora relativa ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -17861,6 +17926,12 @@
       "to": "até",
       "zoom-out-button": "Diminuir o intervalo de tempo",
       "zoom-out-tooltip-new": "Diminuir o zoom do intervalo de tempo <br/> t -"
+    },
+    "tabs": {
+      "absolute": "",
+      "relative": "",
+      "search-label": "",
+      "search-placeholder": ""
     },
     "time-range": {
       "apply": "Aplicar intervalo de tempo",

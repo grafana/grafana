@@ -1,21 +1,25 @@
 import { Global } from '@emotion/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useMatch, useParams } from 'react-router-dom-v5-compat';
+import { useMedia } from 'react-use';
 
 import { PageLayoutType } from '@grafana/data';
 import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Box } from '@grafana/ui';
+import { Box, useTheme2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
+import { useGrafana } from 'app/core/context/GrafanaContext';
+import { KioskMode } from 'app/types/dashboard';
 
 import { NotebookAnalytics } from '../analytics/main';
 import { useTrackNotebookVisitForFeedback } from '../feedback/useTrackNotebookVisitForFeedback';
 import { NotebookPrompt } from '../scene/NotebookPrompt';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { NotebookSceneControls } from '../scene/NotebookSceneControls';
+import { NotebookSidebar } from '../scene/outline/NotebookSidebar';
 import {
   NOTEBOOK_NEW_URL,
   newNotebookEntryPoint,
@@ -102,6 +106,13 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
   const { title, uid } = scene.useState();
   // Varies with the mega menu, and this page is what knows there is an app header at all.
   const headerHeight = useChromeHeaderHeight();
+  const [controlsHeight, setControlsHeight] = useState(0);
+  const theme = useTheme2();
+  // Same breakpoint NotebookSceneControls sticks from: below it the row scrolls away, so it takes no
+  // room from the sidebar or from heading jumps.
+  const controlsAreSticky = useMedia(`(min-width: ${theme.breakpoints.values.md}px)`);
+  const { chrome } = useGrafana();
+  const { kioskMode } = chrome.useState();
 
   useTrackNotebookVisitForFeedback();
 
@@ -129,8 +140,20 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
       {/* Composed here rather than by the scene: whether a surface shows the controls row is a
           property of the surface. Page's own wrapper is already a flex column, so this and the
           document below sit in it as siblings. The toolbar rides inside the row. */}
-      <NotebookSceneControls model={scene} stickyOffset={headerHeight ?? 0} />
-      <scene.Component model={scene} />
+      <NotebookSceneControls model={scene} stickyOffset={headerHeight ?? 0} onHeightChange={setControlsHeight} />
+      <Box display="flex" grow={1}>
+        <Box display="flex" direction="column" flex={1} minWidth={0}>
+          <scene.Component model={scene} />
+        </Box>
+        {/* A display someone has put a notebook on has nobody navigating it, same as the dashboard. */}
+        {kioskMode !== KioskMode.Full && (
+          <NotebookSidebar
+            scene={scene}
+            stickyTop={(headerHeight ?? 0) + (controlsAreSticky ? controlsHeight : 0)}
+            scrollingChromeHeight={controlsAreSticky ? 0 : controlsHeight}
+          />
+        )}
+      </Box>
       <NotebookPrompt scene={scene} />
     </Page>
   );

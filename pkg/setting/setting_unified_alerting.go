@@ -279,6 +279,9 @@ type UnifiedAlertingStateHistorySettings struct {
 type UnifiedAlertingNotificationHistorySettings struct {
 	Enabled      bool
 	LokiSettings UnifiedAlertingLokiSettings
+	// LokiInjectUser sends the stack ID of the caller's namespace to Loki as the
+	// basic auth username, for gateways that tell tenants apart by it.
+	LokiInjectUser bool
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -623,6 +626,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 			LokiMaxQuerySize:      notificationHistory.Key("loki_max_query_size").MustInt(lokiDefaultMaxQuerySize),
 			ExternalLabels:        notificationHistoryLabels.KeysHash(),
 		},
+		LokiInjectUser: notificationHistory.Key("loki_inject_user").MustBool(false),
 	}
 	uaCfg.NotificationHistory = uaCfgNotificationHistory
 

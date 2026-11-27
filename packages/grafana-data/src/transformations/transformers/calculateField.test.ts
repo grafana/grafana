@@ -1,7 +1,7 @@
 import { DataFrameView } from '../../dataframe/DataFrameView';
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { cacheFieldDisplayNames } from '../../field/fieldState';
-import { FieldType } from '../../types/dataFrame';
+import { type DataFrame, FieldType } from '../../types/dataFrame';
 import { BinaryOperationID } from '../../utils/binaryOperators';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { UnaryOperationID } from '../../utils/unaryOperators';
@@ -12,10 +12,13 @@ import { transformDataFrame } from '../transformDataFrame';
 import {
   CalculateFieldMode,
   calculateFieldTransformer,
+  type CalculateFieldTransformerOptions,
   type ReduceOptions,
   WindowSizeMode,
   WindowAlignment,
+  getFieldTemplateReference,
   getNameFromOptions,
+  parseFieldTemplate,
 } from './calculateField';
 import { DataTransformerID } from './ids';
 
@@ -36,11 +39,11 @@ const seriesBC = toDataFrame({
   ],
 });
 
-describe('calculateField transformer w/ timeseries', () => {
-  beforeAll(() => {
-    mockTransformationsRegistry([calculateFieldTransformer]);
-  });
+beforeAll(() => {
+  mockTransformationsRegistry([calculateFieldTransformer]);
+});
 
+describe('calculateField transformer w/ timeseries', () => {
   beforeEach(() => {
     seriesA.fields.forEach((f) => {
       delete f.state;
@@ -1407,6 +1410,238 @@ describe('calculateField transformer w/ timeseries', () => {
       expect(data.fields[1].values[2]).toEqual(0.25);
       expect(data.fields[1].values[3]).toBeCloseTo(0.6666666, 4);
     });
+  });
+});
+
+describe('calculateField transformer template mode', () => {
+  const runTemplate = async (
+    template: string,
+    frames: DataFrame[],
+    extra: Partial<CalculateFieldTransformerOptions> = {}
+  ): Promise<DataFrame[]> => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: { mode: CalculateFieldMode.Template, template: { template }, ...extra },
+    };
+    let result: DataFrame[] = [];
+    await expect(transformDataFrame([cfg], frames)).toEmitValuesWith((received) => {
+      result = received[0];
+    });
+    return result;
+  };
+
+  const issueFrame = toDataFrame({
+    fields: [
+      { name: 'test1', type: FieldType.string, values: ['alpha', 'beta'] },
+      { name: 'test2', type: FieldType.string, values: ['apple', 'banana'] },
+      { name: 'test3', type: FieldType.number, values: [1, 2] },
+    ],
+  });
+
+  it('builds a string field from field references and literal text', async () => {
+    const [frame] = await runTemplate('${__data.fields.test2} (${__data.fields.test1}): ${__data.fields.test3}', [
+      issueFrame,
+    ]);
+
+    const output = frame.fields[3];
+    expect(output.name).toBe('Template');
+    expect(output.type).toBe(FieldType.string);
+    expect(output.values).toEqual(['apple (alpha): 1', 'banana (beta): 2']);
+  });
+
+  it('resolves bracket references to names with dots and spaces', async () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'host.name', type: FieldType.string, values: ['web-1'] },
+        { name: 'status code', type: FieldType.number, values: [404] },
+      ],
+    });
+
+    const [result] = await runTemplate(`\${__data.fields["host.name"]} \${__data.fields['status code']}`, [frame]);
+
+    expect(result.fields[2].values).toEqual(['web-1 404']);
+  });
+
+  it('formats numbers with automatic decimals and with the field unit and decimals config', async () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'Min', type: FieldType.number, values: [26.631780466] },
+        { name: 'Max', type: FieldType.number, values: [-6.789123] },
+        { name: 'Load', type: FieldType.number, values: [12.345], config: { unit: 'percent', decimals: 1 } },
+      ],
+    });
+
+    const [result] = await runTemplate('${__data.fields.Min} : ${__data.fields.Max} (${__data.fields.Load})', [frame]);
+
+    expect(result.fields[3].values).toEqual(['26.6 : -6.79 (12.3%)']);
+  });
+
+  it('applies the template decimals to every number, over the field decimals config', async () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'Min', type: FieldType.number, values: [26.631780466] },
+        { name: 'Load', type: FieldType.number, values: [12.345], config: { unit: 'percent', decimals: 1 } },
+      ],
+    });
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.Template,
+        template: { template: '${__data.fields.Min} (${__data.fields.Load})', decimals: 3 },
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [frame])).toEmitValuesWith((received) => {
+      expect(received[0][0].fields[2].values).toEqual(['26.632 (12.345%)']);
+    });
+  });
+
+  it('renders null and undefined values as empty strings', async () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'host', type: FieldType.string, values: ['a', null, undefined] }],
+    });
+
+    const [result] = await runTemplate('[${__data.fields.host}]', [frame]);
+
+    expect(result.fields[1].values).toEqual(['[a]', '[]', '[]']);
+  });
+
+  it('renders a reference to a missing field as an empty string', async () => {
+    const [frame] = await runTemplate('${__data.fields.test1}-${__data.fields.missing}', [issueFrame]);
+
+    expect(frame.fields[3].values).toEqual(['alpha-', 'beta-']);
+  });
+
+  it('adds a constant column for a template without field references', async () => {
+    const [frame] = await runTemplate('static text', [issueFrame]);
+
+    expect(frame.fields[3].values).toEqual(['static text', 'static text']);
+  });
+
+  it('leaves a frame unchanged when none of its references resolve', async () => {
+    const [frame] = await runTemplate('${__data.fields.missing}', [issueFrame]);
+
+    expect(frame.fields.map((f) => f.name)).toEqual(['test1', 'test2', 'test3']);
+  });
+
+  it.each([
+    { by: 'display name', template: '${__data.fields.Speed} km/h' },
+    { by: 'raw name', template: '${__data.fields.Value} km/h' },
+  ])('resolves a reference by $by', async ({ template }) => {
+    const frame = toDataFrame({
+      fields: [{ name: 'Value', type: FieldType.number, values: [7], config: { displayName: 'Speed' } }],
+    });
+
+    const [result] = await runTemplate(template, [frame]);
+
+    expect(result.fields[1].values).toEqual(['7 km/h']);
+  });
+
+  it('resolves a picked display name to that column when it collides with another raw name', async () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'hostname', type: FieldType.string, values: ['web-1'], config: { displayName: 'Host' } },
+        { name: 'Host', type: FieldType.string, values: ['legacy-1'], config: { displayName: 'Legacy host' } },
+      ],
+    });
+
+    const [result] = await runTemplate(getFieldTemplateReference('Host'), [frame]);
+
+    expect(result.fields[2].values).toEqual(['web-1']);
+  });
+
+  it('does not fall back to a raw-name match in another frame for a picked display name', async () => {
+    const frameA = toDataFrame({
+      fields: [{ name: 'hostname', type: FieldType.string, values: ['web-1'], config: { displayName: 'Host' } }],
+    });
+    const frameB = toDataFrame({
+      fields: [{ name: 'Host', type: FieldType.string, values: ['legacy-1'], config: { displayName: 'Legacy host' } }],
+    });
+
+    const [resultA, resultB] = await runTemplate(getFieldTemplateReference('Host'), [frameA, frameB]);
+
+    expect(resultA.fields[1].values).toEqual(['web-1']);
+    expect(resultB.fields.map((f) => f.name)).toEqual(['Host']);
+  });
+
+  it('formats time values in the dashboard timezone from $__timezone', async () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'Time', type: FieldType.time, values: [1700000000000] }],
+    });
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: { mode: CalculateFieldMode.Template, template: { template: '${__data.fields.Time}' } },
+    };
+    const ctx = { interpolate: (value: string) => (value === '$__timezone' ? 'Asia/Tokyo' : value) };
+
+    await expect(transformDataFrame([cfg], [frame], ctx)).toEmitValuesWith((received) => {
+      expect(received[0][0].fields[1].values).toEqual(['2023-11-15 07:13:20']);
+    });
+  });
+
+  it('resolves a generated reference to a name containing both quote types and a backslash', async () => {
+    const name = `say "it's" C:\\temp`;
+    const frame = toDataFrame({ fields: [{ name, type: FieldType.string, values: ['ok'] }] });
+
+    const [result] = await runTemplate(getFieldTemplateReference(name), [frame]);
+
+    expect(result.fields[1].values).toEqual(['ok']);
+  });
+
+  it('keeps literal dollar text and unsupported references as written', async () => {
+    const [frame] = await runTemplate('$5 ${__data.fields.test1.numeric} ${__data.fields.test1}', [issueFrame]);
+
+    expect(frame.fields[3].values).toEqual([
+      '$5 ${__data.fields.test1.numeric} alpha',
+      '$5 ${__data.fields.test1.numeric} beta',
+    ]);
+  });
+
+  it('uses the alias as name and replaces other fields when configured', async () => {
+    const [frame] = await runTemplate('${__data.fields.test1}/${__data.fields.test3}', [issueFrame], {
+      alias: 'Label',
+      replaceFields: true,
+    });
+
+    expect(frame.fields).toHaveLength(1);
+    expect(frame.fields[0].name).toBe('Label');
+    expect(frame.fields[0].values).toEqual(['alpha/1', 'beta/2']);
+  });
+
+  it('keeps the time field when replacing fields on a time series', async () => {
+    const [frame] = await runTemplate('${__data.fields.D}', [seriesBC], { replaceFields: true });
+
+    expect(frame.fields.map((f) => f.name)).toEqual(['TheTime', 'Template']);
+    expect(frame.fields[1].values).toEqual(['first', 'second']);
+  });
+});
+
+describe('parseFieldTemplate', () => {
+  it('splits a template into literal text and field references', () => {
+    expect(parseFieldTemplate('a ${__data.fields.x} b ${__data.fields["y.z"]}')).toEqual([
+      { text: 'a ' },
+      { field: 'x' },
+      { text: ' b ' },
+      { field: 'y.z' },
+    ]);
+  });
+
+  it('unescapes quotes and backslashes inside bracket references', () => {
+    expect(parseFieldTemplate(`\${__data.fields["a \\"b\\" \\\\c"]} \${__data.fields['it\\'s']}`)).toEqual([
+      { field: 'a "b" \\c' },
+      { text: ' ' },
+      { field: "it's" },
+    ]);
+  });
+});
+
+describe('getFieldTemplateReference', () => {
+  it.each([
+    { name: 'host', expected: '${__data.fields.host}' },
+    { name: 'host.name', expected: '${__data.fields["host.name"]}' },
+    { name: 'say "hi"', expected: '${__data.fields["say \\"hi\\""]}' },
+  ])('builds $expected for $name', ({ name, expected }) => {
+    expect(getFieldTemplateReference(name)).toBe(expected);
   });
 });
 

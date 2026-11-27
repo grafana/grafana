@@ -76,7 +76,6 @@ describe('RuleEditor grafana recording rules', () => {
     jest.clearAllMocks();
     setupDataSources(dataSources.default);
     contextSrv.isEditor = true;
-    contextSrv.hasEditPermissionInFolders = true;
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,
       AccessControlAction.AlertingRuleUpdate,
@@ -85,6 +84,7 @@ describe('RuleEditor grafana recording rules', () => {
       AccessControlAction.DataSourcesRead,
       AccessControlAction.DataSourcesWrite,
       AccessControlAction.DataSourcesCreate,
+      AccessControlAction.FoldersCreate,
       AccessControlAction.FoldersWrite,
       AccessControlAction.FoldersRead,
       AccessControlAction.AlertingRuleExternalRead,

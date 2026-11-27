@@ -76,6 +76,7 @@ public/css/*.min.css
 .devcontainer/
 .agents/
 .claude/*
+CLAUDE.local.md
 
 # Claude skills everyone should have. Re-including a path under an ignored
 # directory requires un-ignoring each parent dir first (git won't descend into

@@ -192,17 +192,17 @@ func (b *DashboardsAPIBuilder) validateDashboardIfStrict(ctx context.Context, a 
 }
 
 func mutateVariable(a admission.Attributes) error {
-	variable, ok := a.GetObject().(*dashboardV2beta1.Variable)
-	if !ok {
-		return fmt.Errorf("mutation error: expected variable, got %T", a.GetObject())
+	spec, err := variableSpecOf(a.GetObject())
+	if err != nil {
+		return fmt.Errorf("mutation error: %w", err)
 	}
 
-	meta, err := utils.MetaAccessor(variable)
+	meta, err := utils.MetaAccessor(a.GetObject())
 	if err != nil {
 		return err
 	}
 
-	labels := variable.GetLabels()
+	labels := meta.GetLabels()
 	if labels == nil {
 		labels = make(map[string]string)
 	}
@@ -217,10 +217,10 @@ func mutateVariable(a admission.Attributes) error {
 	} else {
 		delete(labels, variableFolderLabelKey)
 	}
-	variable.SetLabels(labels)
+	meta.SetLabels(labels)
 
-	if a.GetOperation() == admission.Create && variable.GetName() == "" {
-		variable.SetName(deriveVariableMetadataName(getVariableName(variable.Spec), meta.GetFolder()))
+	if a.GetOperation() == admission.Create && meta.GetName() == "" {
+		meta.SetName(deriveVariableMetadataName(getVariableName(spec), meta.GetFolder()))
 	}
 
 	return nil
@@ -259,14 +259,10 @@ func mutateDashboardPreferences(a admission.Attributes) error {
 	if p := obj.Spec.Panels; p != nil {
 		p.Legend = nilIfUnset(p.Legend)
 		p.Tooltip = nilIfUnset(p.Tooltip)
-		p.Axis = nilIfUnset(p.Axis)
-		p.Graph = nilIfUnset(p.Graph)
 		p.Field = nilIfUnset(p.Field)
-		p.Frame = nilIfUnset(p.Frame)
 		obj.Spec.Panels = nilIfUnset(p)
 	}
 	if d := obj.Spec.Dashboard; d != nil {
-		d.AutoGrid = nilIfUnset(d.AutoGrid)
 		obj.Spec.Dashboard = nilIfUnset(d)
 	}
 

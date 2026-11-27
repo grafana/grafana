@@ -1,5 +1,5 @@
 import { Route, Routes } from 'react-router-dom-v5-compat';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { locationService, setPluginComponentHook } from '@grafana/runtime';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
@@ -8,6 +8,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 import { NotebookAnalytics } from '../analytics/main';
 import { NotebookScene } from '../scene/NotebookScene';
+import { NotebookCellItem } from '../scene/layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
 import { NOTEBOOK_NEW_URL } from '../urls';
 
@@ -86,6 +87,49 @@ describe('NotebookScenePage', () => {
     });
 
     expect(await screen.findByRole('button', { name: 'Copy link' })).toBeInTheDocument();
+  });
+
+  // The outline and the cell frames are separate components joined only by the frame's data
+  // attribute, so this is the one place that would notice the two drifting apart. Several headings in
+  // one cell, because landing on the cell's top would leave the later ones off-screen.
+  it('scrolls to the selected heading, not just to the top of its cell', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    const scrollIntoView = jest.spyOn(HTMLElement.prototype, 'scrollIntoView');
+    const cell = (key: string, text: string) =>
+      new NotebookCellItem({ key, elementName: key, source: 'user', content: { kind: 'Markdown', spec: { text } } });
+
+    await act(async () => {
+      getNotebookPageStateManager().setState({
+        isLoading: false,
+        scene: new NotebookScene({
+          title: 'Checkout latency investigation',
+          uid: 'nb-1',
+          body: new NotebookLayoutManager({
+            cells: [
+              cell('overview', '# Overview'),
+              cell('findings', '# Findings\n\nA long paragraph.\n\n## Root cause\n\nMore prose.\n\n## Follow-ups'),
+            ],
+          }),
+          $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+          timePicker: new SceneTimePicker({}),
+          refreshPicker: new SceneRefreshPicker({}),
+        }),
+      });
+      render(<NotebookScenePage />);
+    });
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Outline' }));
+    const outline = screen.getByRole('tree', { name: 'Notebook outline' });
+    await userEvent.click(within(outline).getByRole('button', { name: 'Expand Findings' }));
+    await userEvent.click(within(outline).getByRole('button', { name: 'Follow-ups' }));
+
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start', behavior: 'smooth' });
+    const target = scrollIntoView.mock.contexts[0];
+    expect(target).toBeInstanceOf(HTMLHeadingElement);
+    expect(target).toHaveTextContent('Follow-ups');
+    expect(target.closest('[data-notebook-cell-key]')).toHaveAttribute('data-notebook-cell-key', 'findings');
+    scrollIntoView.mockRestore();
   });
 
   // Nothing is mocked here: building a blank notebook needs no request, which is the point of it.

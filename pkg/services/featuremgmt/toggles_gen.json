@@ -5,6 +5,20 @@
   "items": [
     {
       "metadata": {
+        "name": "adaptivelogs.enableTimeMachine",
+        "resourceVersion": "1795616925056",
+        "creationTimestamp": "2026-11-25T14:28:45Z"
+      },
+      "spec": {
+        "description": "Enables multiple points of integration for Adaptive Logs Time Machine.",
+        "stage": "experimental",
+        "codeowner": "@grafana/adaptive-telemetry",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertEnrichment",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2025-06-06T12:16:07Z"
@@ -1208,6 +1222,20 @@
       },
       "spec": {
         "description": "Load legacy Access Control permissions through embedded AuthZ.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "authz.legacyUserPermissionsSearch",
+        "resourceVersion": "1795541778092",
+        "creationTimestamp": "2026-11-24T17:36:18Z"
+      },
+      "spec": {
+        "description": "Route user permission searches through embedded AuthZ.",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
@@ -2929,6 +2957,35 @@
     },
     {
       "metadata": {
+        "name": "grafana.bootdataAnalytics",
+        "resourceVersion": "1795516456589",
+        "creationTimestamp": "2026-11-24T10:34:16Z"
+      },
+      "spec": {
+        "description": "Enable tracking of bootdata property access",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.bootdataMetrics",
+        "resourceVersion": "1795516432772",
+        "creationTimestamp": "2026-11-24T10:33:52Z",
+        "deletionTimestamp": "2026-11-24T10:34:16Z"
+      },
+      "spec": {
+        "description": "Enable tracking of bootdata access",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.cmdkDashboardTags",
         "resourceVersion": "1793824807529",
         "creationTimestamp": "2026-10-29T16:13:33Z",
@@ -3730,6 +3787,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.panelQuickEdits",
+        "resourceVersion": "1795097237850",
+        "creationTimestamp": "2026-11-19T14:07:17Z"
+      },
+      "spec": {
+        "description": "Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.pluginExtensionReactElementProps",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-15T14:07:35Z"
@@ -3833,6 +3905,20 @@
         "frontend": true,
         "hideFromDocs": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.responsiveTimePickerTabs",
+        "resourceVersion": "1795130480782",
+        "creationTimestamp": "2026-11-19T23:21:20Z"
+      },
+      "spec": {
+        "description": "Enable tabs and an inline calendar in the compact time range picker",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
@@ -4221,6 +4307,21 @@
     },
     {
       "metadata": {
+        "name": "iam.useKubernetesUsersReadApi",
+        "resourceVersion": "1795683567766",
+        "creationTimestamp": "2026-11-26T08:59:27Z"
+      },
+      "spec": {
+        "description": "Routes read-only user requests in the frontend from /api to the /apis endpoint. Depends on kubernetesUsersReadApi",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "idTokenCacheDisabled",
         "resourceVersion": "1793696077735",
         "creationTimestamp": "2026-11-03T08:54:37Z"
@@ -4348,7 +4449,8 @@
       "metadata": {
         "name": "kubernetesAggregator",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-02-12T20:59:35Z"
+        "creationTimestamp": "2024-02-12T20:59:35Z",
+        "deletionTimestamp": "2026-11-03T16:01:23Z"
       },
       "spec": {
         "description": "Enable grafana's embedded kube-aggregator",
@@ -4362,7 +4464,8 @@
       "metadata": {
         "name": "kubernetesAggregatorCapTokenAuth",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-05-15T18:14:23Z"
+        "creationTimestamp": "2025-05-15T18:14:23Z",
+        "deletionTimestamp": "2026-11-03T16:01:23Z"
       },
       "spec": {
         "description": "Enable CAP token based authentication in grafana's embedded kube-aggregator",
@@ -6240,6 +6343,34 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "resourcePermissionsBulkUserValidation",
+        "resourceVersion": "1795700063501",
+        "creationTimestamp": "2026-11-26T13:34:23Z"
+      },
+      "spec": {
+        "description": "Resolves and validates users in bulk when setting permissions for many users at once, such as SCIM team membership sync",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "resourcePermissionsBulkUserWrites",
+        "resourceVersion": "1795601562350",
+        "creationTimestamp": "2026-11-25T10:12:42Z"
+      },
+      "spec": {
+        "description": "Writes managed permissions and team memberships for many users in bulk instead of one user at a time, such as for SCIM team membership sync",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

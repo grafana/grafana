@@ -58,6 +58,8 @@ export interface DataSourceListProps {
   listboxId?: string;
   /** Reports the DOM id of the keyboard-highlighted option, for aria-activedescendant on the input */
   onActiveItemChange?: (id: string | undefined) => void;
+  /** Show a focus ring on the highlighted option */
+  showFocusRing?: boolean;
   /** Called once the list's rows are painted, with the count and whether a search term was already applied */
   onRendered?: (listedCount: number, searched: boolean) => void;
 }
@@ -74,6 +76,7 @@ export function DataSourceList(props: DataSourceListProps) {
     favoriteDataSources,
     listboxId,
     onActiveItemChange,
+    showFocusRing,
     scrollRef,
     onRendered,
   } = props;
@@ -126,6 +129,7 @@ export function DataSourceList(props: DataSourceListProps) {
           scrollRef={scrollRef}
           listboxId={listboxId}
           onActiveItemChange={onActiveItemChange}
+          showFocusRing={showFocusRing}
         />
       )}
     </div>

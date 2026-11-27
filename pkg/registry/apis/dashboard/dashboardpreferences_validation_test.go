@@ -52,70 +52,47 @@ func TestValidateDashboardPreferencesSpec(t *testing.T) {
 				"autoRefresh": "1m",
 				"autoRefreshIntervals": ["30s", "1m", "5m"],
 				"timeRange": {"from": "now-6h", "to": "now"},
-				"fiscalYearStartMonth": 11,
-				"nowDelay": "1m",
-				"hideTimepicker": false,
-				"cursorSync": "Tooltip",
-				"layout": "AutoGridLayout",
-				"autoGrid": {"maxColumnCount": 10, "columnWidthMode": "custom", "columnWidth": 2000, "rowHeightMode": "custom", "rowHeight": 2000, "fillScreen": true}
+				"cursorSync": "Tooltip"
 			},
 			"panels": {
 				"legend": {"showLegend": true, "placement": "right", "displayMode": "table"},
 				"tooltip": {"mode": "multi", "sort": "desc", "hideZeros": true},
-				"axis": {"axisPlacement": "left", "axisGridShow": true, "axisBorderShow": false, "axisCenteredZero": true, "scale": "log10"},
-				"graph": {"lineInterpolation": "smooth", "lineWidth": 10, "fillOpacity": 100, "gradientMode": "opacity", "showPoints": "always", "pointSize": 40},
-				"field": {"decimals": 15},
-				"frame": {"transparent": true}
+				"field": {"decimals": 15}
 			}
 		}`, nil},
-		// The schema bounds these at 0; the editor's higher minimums are admission's to enforce.
-		{"zeros valid", `{"dashboard":{"fiscalYearStartMonth":0,"autoGrid":{"maxColumnCount":0,"columnWidth":0,"rowHeight":0}},"panels":{"graph":{"lineWidth":0,"fillOpacity":0,"pointSize":0},"field":{"decimals":0}}}`, nil},
-		{"every size at its limit", `{"dashboard":{"autoRefresh":` + text(32) + `,"autoRefreshIntervals":` + list(30, text(32)) + `,"timeRange":{"from":` + text(64) + `,"to":` + text(64) + `},"nowDelay":` + text(32) + `}}`, nil},
+		{"zero decimals valid", `{"panels":{"field":{"decimals":0}}}`, nil},
+		{"every size at its limit", `{"dashboard":{"autoRefresh":` + text(32) + `,"autoRefreshIntervals":` + list(30, text(32)) + `,"timeRange":{"from":` + text(64) + `,"to":` + text(64) + `}}}`, nil},
 
 		{"autoRefresh too long", `{"dashboard":{"autoRefresh":` + text(33) + `}}`, []string{"spec.dashboard.autoRefresh"}},
 		{"time range start too long", `{"dashboard":{"timeRange":{"from":` + text(65) + `,"to":"now"}}}`, []string{"spec.dashboard.timeRange.from"}},
 		{"too many refresh intervals", `{"dashboard":{"autoRefreshIntervals":` + list(31, `"1m"`) + `}}`, []string{"spec.dashboard.autoRefreshIntervals"}},
 		{"refresh interval too long", `{"dashboard":{"autoRefreshIntervals":["1m",` + text(33) + `]}}`, []string{"spec.dashboard.autoRefreshIntervals.1"}},
 		{"empty refresh interval", `{"dashboard":{"autoRefreshIntervals":[""]}}`, []string{"spec.dashboard.autoRefreshIntervals.0"}},
-		{"empty now delay", `{"dashboard":{"nowDelay":""}}`, []string{"spec.dashboard.nowDelay"}},
 
-		{"fiscal year start month above 11", `{"dashboard":{"fiscalYearStartMonth":12}}`, []string{"spec.dashboard.fiscalYearStartMonth"}},
-		{"max column count above 10", `{"dashboard":{"autoGrid":{"maxColumnCount":11}}}`, []string{"spec.dashboard.autoGrid.maxColumnCount"}},
-		{"line width above 10", `{"panels":{"graph":{"lineWidth":11}}}`, []string{"spec.panels.graph.lineWidth"}},
-		{"fill opacity above 100", `{"panels":{"graph":{"fillOpacity":101}}}`, []string{"spec.panels.graph.fillOpacity"}},
-		{"point size above 40", `{"panels":{"graph":{"pointSize":41}}}`, []string{"spec.panels.graph.pointSize"}},
 		{"decimals below 0", `{"panels":{"field":{"decimals":-1}}}`, []string{"spec.panels.field.decimals"}},
 		// Below -1 the value also fails the minimum that the exclusive bound is written with.
 		{"decimals below -1", `{"panels":{"field":{"decimals":-2}}}`, []string{"spec.panels.field.decimals"}},
 		{"decimals above 15", `{"panels":{"field":{"decimals":16}}}`, []string{"spec.panels.field.decimals"}},
 
 		{"unknown cursor sync", `{"dashboard":{"cursorSync":"Bogus"}}`, []string{"spec.dashboard.cursorSync"}},
-		{"unknown layout", `{"dashboard":{"layout":"RowsLayout"}}`, []string{"spec.dashboard.layout"}},
-		{"unknown column width mode", `{"dashboard":{"autoGrid":{"columnWidthMode":"huge"}}}`, []string{"spec.dashboard.autoGrid.columnWidthMode"}},
-		{"unknown row height mode", `{"dashboard":{"autoGrid":{"rowHeightMode":"huge"}}}`, []string{"spec.dashboard.autoGrid.rowHeightMode"}},
 		{"unknown legend placement", `{"panels":{"legend":{"placement":"left"}}}`, []string{"spec.panels.legend.placement"}},
 		{"unknown legend display mode", `{"panels":{"legend":{"displayMode":"grid"}}}`, []string{"spec.panels.legend.displayMode"}},
 		{"unknown tooltip mode", `{"panels":{"tooltip":{"mode":"all"}}}`, []string{"spec.panels.tooltip.mode"}},
 		{"unknown tooltip sort", `{"panels":{"tooltip":{"sort":"random"}}}`, []string{"spec.panels.tooltip.sort"}},
-		{"unknown axis placement", `{"panels":{"axis":{"axisPlacement":"top"}}}`, []string{"spec.panels.axis.axisPlacement"}},
-		{"unknown axis scale", `{"panels":{"axis":{"scale":"log3"}}}`, []string{"spec.panels.axis.scale"}},
-		{"unknown line interpolation", `{"panels":{"graph":{"lineInterpolation":"cubic"}}}`, []string{"spec.panels.graph.lineInterpolation"}},
-		{"unknown gradient mode", `{"panels":{"graph":{"gradientMode":"rainbow"}}}`, []string{"spec.panels.graph.gradientMode"}},
-		{"unknown show points", `{"panels":{"graph":{"showPoints":"sometimes"}}}`, []string{"spec.panels.graph.showPoints"}},
 
 		{"empty time range start", `{"dashboard":{"timeRange":{"from":"","to":"now"}}}`, []string{"spec.dashboard.timeRange.from"}},
 		{"time range without end", `{"dashboard":{"timeRange":{"from":"now-1h"}}}`, []string{"spec.dashboard.timeRange.to"}}, // typed To re-marshals as ""
-		{"one cause per violation", `{"dashboard":{"cursorSync":"Bogus"},"panels":{"axis":{"scale":"log3"},"field":{"decimals":99}}}`, []string{"spec.dashboard.cursorSync", "spec.panels.axis.scale", "spec.panels.field.decimals"}},
+		{"one cause per violation", `{"dashboard":{"cursorSync":"Bogus"},"panels":{"legend":{"placement":"left"},"field":{"decimals":99}}}`, []string{"spec.dashboard.cursorSync", "spec.panels.legend.placement", "spec.panels.field.decimals"}},
 
 		// Admission rejects panel paths, but they are valid here like spec.panels.
-		{"reset", `{"dashboard":{"preload":true,"autoGrid":{"columnWidth":100}},"reset":["dashboard.nowDelay","dashboard.autoGrid.rowHeight","panels.field.decimals"]}`, nil},
+		{"reset", `{"dashboard":{"preload":true},"panels":{"legend":{"placement":"right"}},"reset":["dashboard.cursorSync","panels.legend.showLegend","panels.field.decimals"]}`, nil},
 		{"unknown reset path", `{"reset":["dashboard.title"]}`, []string{"spec.reset.0"}},
-		{"reset path listed twice", `{"reset":["dashboard.nowDelay","dashboard.preload","dashboard.nowDelay"]}`, []string{"spec.reset.2"}},
+		{"reset path listed twice", `{"reset":["dashboard.cursorSync","dashboard.preload","dashboard.cursorSync"]}`, []string{"spec.reset.2"}},
 		// The schema already has a cause for the second entry, so the duplicate adds none.
 		{"unknown reset path listed twice", `{"reset":["dashboard.title","dashboard.title"]}`, []string{"spec.reset.0", "spec.reset.1"}},
-		{"reset of a set field", `{"dashboard":{"nowDelay":"1m"},"reset":["dashboard.nowDelay"]}`, []string{"spec.reset.0"}},
+		{"reset of a set field", `{"dashboard":{"cursorSync":"Crosshair"},"reset":["dashboard.cursorSync"]}`, []string{"spec.reset.0"}},
 		{"reset of a field set to false", `{"dashboard":{"preload":false},"reset":["dashboard.preload"]}`, []string{"spec.reset.0"}},
-		{"reset of a set nested field", `{"dashboard":{"autoGrid":{"columnWidth":100}},"reset":["dashboard.preload","dashboard.autoGrid.columnWidth"]}`, []string{"spec.reset.1"}},
+		{"reset of a set nested field", `{"panels":{"legend":{"placement":"right"}},"reset":["dashboard.preload","panels.legend.placement"]}`, []string{"spec.reset.1"}},
 		{"reset of a set time range", `{"dashboard":{"timeRange":{"from":"now-1h","to":"now"}},"reset":["dashboard.timeRange"]}`, []string{"spec.reset.0"}},
 		{"reset of a set panel field", `{"panels":{"field":{"decimals":2}},"reset":["panels.field.decimals"]}`, []string{"spec.reset.0"}},
 	}
@@ -141,7 +118,7 @@ func TestValidateDashboardPreferencesSpec(t *testing.T) {
 
 func TestValidateDashboardPreferencesSpecErrorNamesTheObject(t *testing.T) {
 	err := validateDashboardPreferencesSpec("user-u1", dashv2beta1.DashboardPreferencesSpec{
-		Dashboard: &dashv2beta1.DashboardPreferencesDashboardDefaults{FiscalYearStartMonth: new(int64(12))},
+		Panels: &dashv2beta1.DashboardPreferencesPanelDefaults{Field: &dashv2beta1.DashboardPreferencesV2beta1PanelDefaultsField{Decimals: new(int64(16))}},
 	})
 
 	var se *apierrors.StatusError

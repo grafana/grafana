@@ -61,6 +61,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/org"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
@@ -106,6 +107,7 @@ func RegisterAPIService(
 	restConfig apiserver.RestConfigProvider,
 	mappers *resourcepermission.MappersRegistry,
 	legacyAuthInfoStore *authinfoimpl.Store,
+	authInfoStore login.Store,
 	remoteCache remotecache.CacheStorage,
 	legacyWatch *legacywatch.Publisher,
 ) (*IdentityAccessManagementAPIBuilder, error) {
@@ -205,7 +207,7 @@ func RegisterAPIService(
 		features:        features,
 		userPreferences: dashboardpreferences.ProvideUserCleaner(restConfig),
 	}
-	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, accessClient)
+	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, accessClient, authInfoStore)
 	builder.teamSearchHandler = team.NewSearchHandler(tracing, builder.teamSearchClient, accessClient)
 
 	apiregistration.RegisterAPI(builder)
@@ -1023,6 +1025,25 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 		},
 	}
 	oas.Components.Schemas[compBase+"UserPermissions"].Properties["permissions"] = schema
+
+	// The search hit refs are lost when the definitions are built without a ref resolver.
+	for _, p := range []struct{ response, hit string }{
+		{iamv0.GetSearchUsersResponse{}.OpenAPIModelName(), iamv0.GetSearchUsersUserHit{}.OpenAPIModelName()},
+		{iamv0.GetSearchTeamsResponse{}.OpenAPIModelName(), iamv0.GetSearchTeamsTeamHit{}.OpenAPIModelName()},
+	} {
+		resp := oas.Components.Schemas[p.response]
+		if resp == nil {
+			continue
+		}
+		hits := resp.Properties["hits"]
+		hits.Items = &spec.SchemaOrArray{
+			Schema: &spec.Schema{
+				SchemaProps: spec.SchemaProps{Ref: spec.MustCreateRef("#/components/schemas/" + p.hit)},
+			},
+		}
+		resp.Properties["hits"] = hits
+	}
+
 	oas.Components.Schemas[compBase+"DisplayList"].Properties["metadata"] = spec.Schema{
 		SchemaProps: spec.SchemaProps{
 			AllOf: []spec.Schema{

@@ -1,4 +1,4 @@
-import { type DataFrame, type Field } from '@grafana/data';
+import { type DataFrame, type Field, type PanelData } from '@grafana/data';
 import { ConnectionDirection, type DirectionDimensionConfig, DirectionDimensionMode } from '@grafana/schema';
 
 import { type DimensionSupplier } from './types';
@@ -55,4 +55,19 @@ function getDirectionDimensionForField(
     get: (index: number): ConnectionDirection => getDirectionFromValue(field.values[index]),
     value: () => getDirectionFromValue(getLastNotNullFieldValue(field)),
   };
+}
+
+export function getDirectionDimensionFromData(
+  data: PanelData | undefined,
+  cfg: DirectionDimensionConfig
+): DimensionSupplier<ConnectionDirection> {
+  if (data?.series && cfg.field) {
+    for (const frame of data.series) {
+      const d = getDirectionDimension(frame, cfg);
+      if (!d.isAssumed || data.series.length === 1) {
+        return d;
+      }
+    }
+  }
+  return getDirectionDimension(undefined, cfg);
 }

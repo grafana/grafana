@@ -883,7 +883,8 @@
       "label-disabled": "Data source",
       "message": {
         "please-select-a-data-source": "Please select a data source"
-      }
+      },
+      "rules-sources-error": "Failed to load the list of data sources with a ruler"
     },
     "cloud-evaluation-behavior": {
       "description-pending-period": "Period during which the threshold condition must be met to trigger an alert. Selecting \"None\" triggers the alert immediately once the condition is met.",
@@ -1937,7 +1938,8 @@
           "title": "Data source"
         },
         "label": "Data source",
-        "required-message": "Please select a data source"
+        "required-message": "Please select a data source",
+        "rules-sources-error": "Failed to load the list of data sources with a ruler"
       },
       "error": "Failed to import alert rules: {{error}}",
       "group": {
@@ -2000,7 +2002,6 @@
         "preview-config-aria": "Preview configuration",
         "preview-rules-aria": "Preview alert rules",
         "routing": "Notification routing",
-        "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
         "rules-error": "Could not read the rules file",
         "rules-skipped": "Alert rules will not be imported.",
@@ -3355,6 +3356,7 @@
       "button-errors_one": "{{count}} errors",
       "button-errors_other": "{{count}} errors",
       "cloud-rulessource-errors-title-errors-loading-rules": "Errors loading rules",
+      "failed-to-load-data-sources": "Failed to load data sources:",
       "failed-to-load-grafana-rules-config": "Failed to load Grafana rules config:",
       "failed-to-load-grafana-rules-state": "Failed to load Grafana rules state:",
       "failed-to-load-rules-config": "Failed to load rules config from <2>{{dataSource}}</2>",
@@ -4342,7 +4344,8 @@
     },
     "unified-alert-list": {
       "clear": "Clear",
-      "text-loading": "Loading..."
+      "text-loading": "Loading...",
+      "title-rules-source-list-error": "Failed to load data source-managed rules"
     },
     "unified-alert-list-panel": {
       "body-permission-required": "Sorry, you do not have the required permissions to read alert rules.",
@@ -6613,6 +6616,10 @@
       "paused": "This dashboard has been paused by the administrator",
       "try-again-later": "Try again later"
     },
+    "quick-edits": {
+      "close": "Close",
+      "presets-unavailable": "No styles to show for this panel's data"
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Are you sure you want to remove this panel?"
@@ -8069,8 +8076,11 @@
       "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-actions": {
+      "no-quick-edits": "No quick edits for this panel's settings",
       "panels-selected_one": "{{count}} panel selected",
       "panels-selected_other": "{{count}} panels selected",
+      "show-panel-actions": "Back to panel actions",
+      "show-quick-edits": "Quick edits",
       "tooltip-edit-panel-visualization": "Edit visualization",
       "tooltip-panel-settings": "Panel settings"
     },
@@ -10516,6 +10526,25 @@
         "otherGroup": "Others"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": "Style"
+      },
+      "range": {
+        "auto": "Auto",
+        "title": "Min / Max"
+      },
+      "thresholds": {
+        "base-only": "Base only",
+        "title": "Thresholds"
+      },
+      "unit": {
+        "none": "None",
+        "title": "Unit",
+        "with-decimals_one": "{{unit}}, {{count}} decimal",
+        "with-decimals_other": "{{unit}}, {{count}} decimals"
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -11036,6 +11065,11 @@
         "placement-options": {
           "label-bottom": "Bottom",
           "label-right": "Right"
+        },
+        "quick-edit": {
+          "hidden": "Hidden",
+          "values_one": "{{count}} value",
+          "values_other": "{{count}} values"
         }
       },
       "stacking": {
@@ -11131,6 +11165,9 @@
     },
     "data-link-inline-editor": {
       "one-click": "One click"
+    },
+    "data-link-menu-items": {
+      "link": "Link"
     },
     "data-links-inline-editor": {
       "add-link": "Add link",
@@ -13787,6 +13824,7 @@
       "open": "Main menu",
       "pin-error": "Failed to update pinned menu items",
       "pinned-list-label": "Pinned items",
+      "section-resize": "Resize navigation",
       "undock": "Undock menu"
     },
     "megamenu-item": {
@@ -13985,12 +14023,32 @@
         "undo-label": "Assistant edit"
       }
     },
+    "outline": {
+      "aria-label": "Notebook outline",
+      "pane-header": "Content outline",
+      "search": {
+        "no-results": "No results found for your query"
+      },
+      "tree-item": {
+        "collapse": "Collapse {{label}}",
+        "empty": "(empty)",
+        "expand": "Expand {{label}}",
+        "no-title": "<no title>"
+      },
+      "untitled-panel": "Untitled panel"
+    },
     "panel-changes": {
       "confirm-cancel": "Cancel",
       "confirm-discard": "Discard",
       "confirm-keep": "Keep",
       "confirm-text": "Do you want to keep the changes you made while viewing this notebook?",
       "confirm-title": "Unsaved panel changes"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "Outline",
+        "tooltip": "Content outline"
+      }
     }
   },
   "notebooks": {
@@ -17297,6 +17355,13 @@
       "wide-list": "Wide list",
       "wide-list-desc": "Horizontal, name and value, area sparkline, single color"
     },
+    "quick-edits": {
+      "calculation": "Calculation",
+      "color": "Color",
+      "text": "Text",
+      "text-title-size": "Title size",
+      "text-value-size": "Value size"
+    },
     "suggestions": {
       "stat": "Stat",
       "stat-color-background": "Stat - color background",
@@ -17844,6 +17909,10 @@
       "time-zone-option": "Time zone",
       "time-zone-selection": "Time zone selection"
     },
+    "inline-calendar": {
+      "label": "Calendar",
+      "update-inputs": "Update inputs"
+    },
     "range-content": {
       "apply-button": "Apply time range",
       "default-error": "Enter a date ({{dateExample}}) or relative time ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -17861,6 +17930,12 @@
       "to": "to",
       "zoom-out-button": "Zoom out time range",
       "zoom-out-tooltip-new": "Time range zoom out <br/> t -"
+    },
+    "tabs": {
+      "absolute": "Absolute",
+      "relative": "Relative",
+      "search-label": "Search quick ranges",
+      "search-placeholder": "Type quick ranges e.g. 3h"
     },
     "time-range": {
       "apply": "Apply time range",
@@ -18090,6 +18165,7 @@
           "binary-operation": "Binary operation",
           "reduce-row": "Reduce row",
           "row-index": "Row index",
+          "template": "Template",
           "unary-operation": "Unary operation"
         }
       },
@@ -18792,6 +18868,18 @@
         "prepare-spatial-field": "Prepare spatial field",
         "transform": "Transform"
       }
+    },
+    "template-options-editor": {
+      "aria-label-insert-field": "Insert field",
+      "error-unknown-fields": "Unknown fields: {{fields}}",
+      "label-decimals": "Decimals",
+      "label-insert-field": "Insert field",
+      "label-template": "Template",
+      "placeholder-decimals": "auto",
+      "placeholder-insert-field": "Select field",
+      "placeholder-template": "${__data.fields.host}: ${__data.fields.message}",
+      "tooltip-decimals": "Decimals for numbers in the template. Panel decimals do not apply because they are set after transformations run.",
+      "tooltip-template": "Combine text and field values into a string. Reference a field with ${__data.fields.name}."
     },
     "time-series-table": {
       "description": {
