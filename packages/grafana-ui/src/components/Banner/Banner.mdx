@@ -1,0 +1,153 @@
+import { Meta, ArgTypes, Canvas } from '@storybook/addon-docs/blocks';
+import { Banner } from './Banner';
+import * as BannerStories from './Banner.story';
+
+<Meta title="MDX|Banner" component={Banner} />
+
+# Banner
+
+Banner shows a message with an optional icon, a title, optional content, an optional action and an optional dismiss control. `variant` sets what kind of message it is.
+
+## When to use
+
+- To report a status: an error, a warning, information or a success. Set `variant` to the severity.
+- To show a message without a severity, such as a feature announcement. Leave `variant` as `neutral`, the default.
+- To show the single most important message on a page, such as an overdue invoice or a usage limit that has been reached. Set `isProminent` with a severity, place the banner at the top of the page, and show at most one.
+
+### Choosing the variant
+
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Message</th>
+      <th scope="col">Props</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">A failed action, or a problem the user must fix</th>
+      <td>
+        <code>variant="error"</code>
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Something the user should know before it causes a problem</th>
+      <td>
+        <code>variant="warning"</code>
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Information about the user's stack or task</th>
+      <td>
+        <code>variant="info"</code>
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Confirmation that an action worked, when the page doesn't already show it</th>
+      <td>
+        <code>variant="success"</code>
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">A feature announcement or other promotional message</th>
+      <td>
+        <code>variant="neutral"</code> (the default)
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">The single most important message on the page, about the whole page or account</th>
+      <td>
+        A severity with <code>isProminent</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+## Never use for
+
+- **A toast.** Publish an `appEvent` with `getAppEvents()`, and Grafana shows the toast.
+- **A decision the user must make before they continue.** Use `Modal`, or `ConfirmModal` for a simple confirmation such as deleting an item. A banner doesn't stop the user from carrying on with the page.
+- **A validation error on a single form field.** Use the `invalid` and `error` props on `Field`, which show the message below the input and link it to the input.
+- **A promotional message with a severity.** Use `variant="neutral"`. A promotion shown as `info` weakens genuine info messages.
+
+## Do's and don'ts
+
+### Writing content
+
+- Do give every banner a short title that makes sense on its own. Screen readers use it as the banner's name.
+- Do keep the content short: why the banner is shown, and what the user can do next.
+- Don't repeat the title in the content.
+
+### Actions and dismissal
+
+- Do offer at most two choices: dismissing the banner, or taking one action. The action is optional for the user, so don't make the banner depend on it.
+- Do pass a `Button` or `LinkButton` as `action`. Banner renders it as an outline button in its own colors, so its `variant`, `fill`, `size`, `fullWidth` and `className` are ignored.
+- Do use a `LinkButton` for an action that navigates, so that it keeps link behavior such as middle-click.
+- Do set `onRemove` to show a close icon, or also set `buttonContent` to show a short text button in its place, such as "Not now".
+- Do use a `BannerActionButton` for a button inside the content. Banner gives it the banner's colors.
+
+```tsx
+// Don't: a button positioned over the banner
+<Banner title="Quota limit reached" variant="warning" className={css({ position: 'relative' })}>
+  <Button className={css({ position: 'absolute', top: 8, right: 8 })}>Request increase</Button>
+</Banner>
+
+// Do: the action in `action`
+<Banner title="Quota limit reached" variant="warning" action={<Button>Request increase</Button>} onRemove={onDismiss} />
+```
+
+### Colors and spacing
+
+- Do give a neutral banner a `themeColor`: `primary` (the default), `secondary`, `tertiary` or `accent`.
+- Do pass all four of `backgroundColor`, `borderColor`, `iconColor` and `textColor` only when no theme color fits. Check that the text reaches 4.5:1 and the icon 3:1 on the background, in light and dark themes.
+- Don't restyle the banner's inner elements with `className`. Use `isCompact` for a shorter banner, and `bottomSpacing` and `topSpacing` for the space around it.
+
+<Canvas of={BannerStories.Examples} />
+
+## Usage
+
+```tsx
+import { Banner, Button, LinkButton } from '@grafana/ui';
+
+// A status message
+<Banner title="Couldn't save the dashboard" variant="error" onRemove={onDismiss}>
+  Another user changed it. Reload the dashboard to see their changes.
+</Banner>;
+
+// The single most important message on a page
+<Banner
+  title="Your invoice is overdue"
+  variant="warning"
+  isProminent
+  action={<LinkButton href={invoiceUrl}>View invoice</LinkButton>}
+/>;
+
+// A feature announcement
+<Banner
+  title="Try the new query editor"
+  icon="rocket"
+  action={<Button onClick={onTry}>Try it</Button>}
+  onRemove={onDismiss}
+>
+  It is faster and works with every data source.
+</Banner>;
+```
+
+## Accessibility
+
+`Banner` handles:
+
+- **Role:** a severity is a live region, which screen readers announce when it appears: `role="alert"` for `error` and `warning`, and `role="status"` for `info` and `success`. A neutral banner is a section landmark named by its title, which screen readers list with the page's landmarks but don't announce. Pass `role` to override it.
+- **Name:** the banner's accessible name is its `title`. Pass `aria-label` to override it.
+- **Close button:** the close icon button has the label "Close alert". A `buttonContent` button is named by its content.
+- **Loading:** with `isLoading`, the spinner has the label "Loading". The dismiss control stays, so the user can still dismiss the banner while it loads.
+
+You provide:
+
+- A `title` that makes sense on its own.
+- The right `variant`. Keep `error` and `warning` for messages that need attention now, because they are announced as soon as they appear.
+- Custom colors with enough contrast, when you pass them.
+
+## Props
+
+<ArgTypes of={Banner} />

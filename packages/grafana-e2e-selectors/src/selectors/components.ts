@@ -1257,6 +1257,11 @@ export const versionedComponents = {
       [MIN_GRAFANA_VERSION]: (severity: string) => `data-testid Alert ${severity}`,
     },
   },
+  Banner: {
+    container: {
+      '13.4.0': 'data-testid Banner',
+    },
+  },
   TransformTab: {
     content: {
       '10.1.0': 'data-testid Transform editor tab content',

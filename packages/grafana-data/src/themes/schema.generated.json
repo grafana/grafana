@@ -1852,6 +1852,168 @@
             }
           },
           "additionalProperties": false
+        },
+        "banner": {
+          "type": "object",
+          "properties": {
+            "prominent": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "background": {
+                      "type": "string"
+                    },
+                    "iconBoxBackground": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "border": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "warning": {
+                  "type": "object",
+                  "properties": {
+                    "background": {
+                      "type": "string"
+                    },
+                    "iconBoxBackground": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "border": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "info": {
+                  "type": "object",
+                  "properties": {
+                    "background": {
+                      "type": "string"
+                    },
+                    "iconBoxBackground": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "border": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "success": {
+                  "type": "object",
+                  "properties": {
+                    "background": {
+                      "type": "string"
+                    },
+                    "iconBoxBackground": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "border": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "neutral": {
+              "type": "object",
+              "properties": {
+                "primary": {
+                  "type": "object",
+                  "properties": {
+                    "background": {
+                      "type": "string"
+                    },
+                    "border": {
+                      "type": "string"
+                    },
+                    "icon": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "secondary": {
+                  "type": "object",
+                  "properties": {
+                    "background": {
+                      "type": "string"
+                    },
+                    "border": {
+                      "type": "string"
+                    },
+                    "icon": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "tertiary": {
+                  "type": "object",
+                  "properties": {
+                    "background": {
+                      "type": "string"
+                    },
+                    "border": {
+                      "type": "string"
+                    },
+                    "icon": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "accent": {
+                  "type": "object",
+                  "properties": {
+                    "background": {
+                      "type": "string"
+                    },
+                    "border": {
+                      "type": "string"
+                    },
+                    "icon": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false

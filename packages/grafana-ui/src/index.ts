@@ -196,6 +196,8 @@ export { VizLegend } from './components/VizLegend/VizLegend';
 export { VizLegendListItem } from './components/VizLegend/VizLegendListItem';
 
 export { Alert, type AlertVariant } from './components/Alert/Alert';
+export { Banner, type BannerProps, type BannerThemeColor, type BannerVariant } from './components/Banner/Banner';
+export { BannerActionButton, type BannerActionButtonProps } from './components/BannerActionButton/BannerActionButton';
 export { Collapse, ControlledCollapse } from './components/Collapse/Collapse';
 export { CollapsableSection } from './components/Collapse/CollapsableSection';
 export { DataLinkButton } from './components/DataLinks/DataLinkButton';
