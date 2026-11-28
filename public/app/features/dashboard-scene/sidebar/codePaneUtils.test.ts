@@ -1,4 +1,4 @@
-import yaml from 'js-yaml';
+import { load } from 'js-yaml';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -92,7 +92,7 @@ describe('getDashboardResourceText', () => {
 
   it('emits YAML with the same envelope when format is "yaml"', () => {
     const text = getDashboardResourceText(buildDashboard('abc-123'), 'yaml');
-    const parsed = yaml.load(text);
+    const parsed = load(text);
 
     expect(parsed).toEqual({
       apiVersion: 'dashboard.grafana.app/v2',
@@ -194,7 +194,7 @@ describe('getDashboardDiffTexts', () => {
     );
 
     expect(result!.original).toMatch(/^apiVersion: dashboard\.grafana\.app\/v2$/m);
-    const current = yaml.load(result!.current) as { spec: { title: string } };
+    const current = load(result!.current) as { spec: { title: string } };
     expect(current.spec.title).toBe('Changed title');
   });
 });

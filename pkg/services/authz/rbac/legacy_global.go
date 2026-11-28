@@ -75,7 +75,7 @@ func (s *Service) getLegacyGlobalIdentity(
 			UserID:         identifiers.ID,
 			UserUID:        identifiers.UID,
 			OrgID:          requesterOrgID,
-			OrgRole:        identity.RoleNone,
+			OrgRole:        types.RoleNone,
 			IsGrafanaAdmin: role.IsAdmin,
 			Namespace:      req.namespace.Value,
 			CacheKey:       fmt.Sprintf("%s:global:%d:%s", req.namespace.Value, requesterOrgID, types.NewTypeID(req.identityType, identifiers.UID)),

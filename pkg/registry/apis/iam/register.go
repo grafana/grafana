@@ -61,6 +61,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/org"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
@@ -106,6 +107,7 @@ func RegisterAPIService(
 	restConfig apiserver.RestConfigProvider,
 	mappers *resourcepermission.MappersRegistry,
 	legacyAuthInfoStore *authinfoimpl.Store,
+	authInfoStore login.Store,
 	remoteCache remotecache.CacheStorage,
 	legacyWatch *legacywatch.Publisher,
 ) (*IdentityAccessManagementAPIBuilder, error) {
@@ -205,7 +207,7 @@ func RegisterAPIService(
 		features:        features,
 		userPreferences: dashboardpreferences.ProvideUserCleaner(restConfig),
 	}
-	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, accessClient)
+	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, accessClient, authInfoStore)
 	builder.teamSearchHandler = team.NewSearchHandler(tracing, builder.teamSearchClient, accessClient)
 
 	apiregistration.RegisterAPI(builder)
@@ -617,15 +619,13 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
 	}
 
 	// TeamLBAC can be enabled in ST without serving the Team Kubernetes API.
-	// Prefer the registered Team storage when present because it already
-	// reflects the configured dual-write mode; otherwise evaluate membership
-	// through the internal legacy Team store.
-	teamStorage := storage[iamv0.TeamResourceInfo.StoragePath()]
-	if teamStorage == nil && b.legacyTeamStore != nil {
-		teamStorage = b.legacyTeamStore
+	// LBAC uses the internal Team store so directory redaction cannot change
+	// which rules apply to a subject.
+	var teamLister rest.Lister = b.teamStorage
+	if teamLister == nil && b.legacyTeamStore != nil {
+		teamLister = b.legacyTeamStore
 	}
-	teamLister, ok := teamStorage.(rest.Lister)
-	if !ok {
+	if teamLister == nil {
 		return fmt.Errorf("TeamLBACRule for-subject subresource requires Team lister storage")
 	}
 	// Kubernetes requires a separate storage-map entry for each named
@@ -662,27 +662,22 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		teamUniStore.BeginUpdate = b.BeginTeamUpdate
 	}
 
-	storage[teamResource.StoragePath()] = teamUniStore
-	b.teamGetter = teamUniStore
-	teamStorage := rest.Storage(teamUniStore)
-
+	var teamStorage grafanarest.Storage = teamUniStore
 	if b.legacyTeamStore != nil {
-		dw, err := opts.DualWriteBuilder(teamResource.GroupResource(), b.legacyTeamStore, teamUniStore)
+		teamStorage, err = opts.DualWriteBuilder(teamResource.GroupResource(), b.legacyTeamStore, teamUniStore)
 		if err != nil {
 			return err
 		}
-
-		storage[teamResource.StoragePath()] = dw
-		teamStorage = dw
-		if getter, ok := dw.(rest.Getter); ok {
-			b.teamGetter = getter
-		}
 	}
-
-	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing)
+	b.teamStorage = teamStorage
+	hiddenUsers := func(ctx context.Context) (map[string]struct{}, error) {
+		return user.ReadHiddenUsers(ctx, b.cfgProvider, b.settingService)
+	}
+	storage[teamResource.StoragePath()] = team.NewRosterStore(teamStorage, b.accessClient, b.store, hiddenUsers)
+	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamStorage, b.tracing)
 
 	if b.teamSearchHandler != nil {
-		b.teamSearchHandler.SetTeamGetter(b.teamGetter)
+		b.teamSearchHandler.SetTeamGetter(b.teamStorage)
 	}
 
 	// addmember / removemember mutate a single Spec.Members entry through
@@ -691,7 +686,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 	storage[teamResource.StoragePath("removemember")] = team.NewTeamRemoveMemberREST(teamStorage, b.tracing)
 
 	if b.teamGroupsHandlerProvider != nil {
-		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandlerProvider(b.teamGetter)
+		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandlerProvider(b.teamStorage)
 	}
 
 	return nil
@@ -832,7 +827,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 		}
 		if enableTeamsAPI {
 			backends := dualwrite.NewSelector[user.UserTeamsBackend](b.dual, iamv0.TeamResourceInfo.GroupResource(),
-				user.NewLegacyUserTeamsBackend(b.store, b.tracing), user.NewUnifiedUserTeamsBackend(b.unified, b.teamGetter))
+				user.NewLegacyUserTeamsBackend(b.store, b.tracing), user.NewUnifiedUserTeamsBackend(b.unified, b.teamStorage))
 			storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(backends, b.tracing)
 		}
 	}
@@ -1030,6 +1025,25 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 		},
 	}
 	oas.Components.Schemas[compBase+"UserPermissions"].Properties["permissions"] = schema
+
+	// The search hit refs are lost when the definitions are built without a ref resolver.
+	for _, p := range []struct{ response, hit string }{
+		{iamv0.GetSearchUsersResponse{}.OpenAPIModelName(), iamv0.GetSearchUsersUserHit{}.OpenAPIModelName()},
+		{iamv0.GetSearchTeamsResponse{}.OpenAPIModelName(), iamv0.GetSearchTeamsTeamHit{}.OpenAPIModelName()},
+	} {
+		resp := oas.Components.Schemas[p.response]
+		if resp == nil {
+			continue
+		}
+		hits := resp.Properties["hits"]
+		hits.Items = &spec.SchemaOrArray{
+			Schema: &spec.Schema{
+				SchemaProps: spec.SchemaProps{Ref: spec.MustCreateRef("#/components/schemas/" + p.hit)},
+			},
+		}
+		resp.Properties["hits"] = hits
+	}
+
 	oas.Components.Schemas[compBase+"DisplayList"].Properties["metadata"] = spec.Schema{
 		SchemaProps: spec.SchemaProps{
 			AllOf: []spec.Schema{
@@ -1219,7 +1233,7 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreate(ctx context.Context,
 	case *iamv0.Team:
 		return team.ValidateOnCreate(ctx, b.teamSearchClient, typedObj, b.externalGroupReconciler)
 	case *iamv0.TeamBinding:
-		return teambinding.ValidateOnCreate(ctx, typedObj, b.teamGetter, b.userGetter)
+		return teambinding.ValidateOnCreate(ctx, typedObj, b.teamStorage, b.userGetter)
 	case *iamv0.AuthInfo:
 		return authinfo.ValidateOnCreate(ctx, typedObj, b.userGetter)
 	case *iamv0.ResourcePermission:

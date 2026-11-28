@@ -1,8 +1,8 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { type DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { INSTANCE_ID, PANEL_STYLES } from '../../home/Insights';
 import { InsightsMenuButton } from '../InsightsMenuButton';
+import { INSTANCE_ID, PANEL_STYLES } from '../utils';
 
 export function getSilencesScene(datasource: DataSourceRef, panelTitle: string) {
   const expr = INSTANCE_ID

@@ -3,6 +3,7 @@ package dashboard
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
@@ -70,6 +72,27 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
+const registeredManagerKind utils.ManagerKind = "test-registered-kind"
+
+const registeredKindService = "test-manager-service"
+
+type testManagerKind struct{}
+
+func (testManagerKind) Kind() utils.ManagerKind { return registeredManagerKind }
+
+func (testManagerKind) CheckAssignment(auth authlib.AuthInfo, _ utils.GrafanaMetaAccessor) error {
+	if auth != nil {
+		if ids := auth.GetExtra()[authn.ServiceIdentityKey]; len(ids) == 1 && ids[0] == registeredKindService {
+			return nil
+		}
+	}
+	return errors.New("not the manager")
+}
+
+func init() {
+	identity.RegisterManagerKind(testManagerKind{})
+}
+
 func TestDashboardAPIBuilder_Validate(t *testing.T) {
 	oneInt64 := int64(1)
 	zeroInt64 := int64(0)
@@ -78,6 +101,18 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), //nolint:staticcheck
 		utils.AnnoKeyManagerIdentity: "some-provisioner",
 	}
+	registered := map[string]string{
+		utils.AnnoKeyManagerKind:     string(registeredManagerKind),
+		utils.AnnoKeyManagerIdentity: "some-manager",
+	}
+	kindService := &identity.StaticRequester{
+		Type:    authlib.TypeAccessPolicy,
+		UserUID: "6f1c2a90-policy",
+		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{ServiceIdentity: registeredKindService},
+		},
+	}
+	serverAdmin := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "server-admin", IsGrafanaAdmin: true}
 	newDashboard := func(annotations map[string]string) *dashv1.Dashboard {
 		return &dashv1.Dashboard{
 			Spec:       common.Unstructured{},
@@ -90,6 +125,7 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		name             string
 		existingObj      runtime.Object
 		collectionDelete bool
+		caller           identity.Requester
 		deletionOptions  metav1.DeleteOptions
 		expectedError    bool
 		expectBadRequest bool
@@ -100,6 +136,57 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 			deletionOptions:  metav1.DeleteOptions{GracePeriodSeconds: nil},
 			expectedError:    true,
 			expectBadRequest: true,
+		},
+		{
+			name:             "should block deletion of a dashboard managed by a registered kind",
+			existingObj:      newDashboard(registered),
+			deletionOptions:  metav1.DeleteOptions{GracePeriodSeconds: nil},
+			expectedError:    true,
+			expectBadRequest: true,
+		},
+		{
+			name:             "should block a server admin deleting a dashboard managed by a registered kind",
+			existingObj:      newDashboard(registered),
+			caller:           serverAdmin,
+			deletionOptions:  metav1.DeleteOptions{GracePeriodSeconds: nil},
+			expectedError:    true,
+			expectBadRequest: true,
+		},
+		{
+			name:            "should allow the registered kind's manager to delete its dashboard",
+			existingObj:     newDashboard(registered),
+			caller:          kindService,
+			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: nil},
+			expectedError:   false,
+		},
+		{
+			name:             "should block the registered kind's manager from deleting a classic file provisioned dashboard",
+			existingObj:      newDashboard(classicFP),
+			caller:           kindService,
+			deletionOptions:  metav1.DeleteOptions{GracePeriodSeconds: nil},
+			expectedError:    true,
+			expectBadRequest: true,
+		},
+		{
+			name:            "should not run the check for a registered kind if grace period is set to 0",
+			existingObj:     newDashboard(registered),
+			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: &zeroInt64},
+			expectedError:   false,
+		},
+		{
+			name:             "should not run the check for a registered kind on DeleteCollection requests",
+			existingObj:      newDashboard(registered),
+			collectionDelete: true,
+			deletionOptions:  metav1.DeleteOptions{GracePeriodSeconds: nil},
+			expectedError:    false,
+		},
+		{
+			name: "should allow deletion of a registered kind without a manager identity",
+			existingObj: newDashboard(map[string]string{
+				utils.AnnoKeyManagerKind: string(registeredManagerKind),
+			}),
+			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: nil},
+			expectedError:   false,
 		},
 		{
 			name:            "should return an error if the existing dashboard is missing",
@@ -150,8 +237,13 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 					name = ""
 				}
 
+				ctx := context.Background()
+				if tt.caller != nil {
+					ctx = identity.WithRequester(ctx, tt.caller)
+				}
+
 				b := &DashboardsAPIBuilder{isStandalone: standalone}
-				err := b.Validate(context.Background(), admission.NewAttributesRecord(
+				err := b.Validate(ctx, admission.NewAttributesRecord(
 					nil,
 					tt.existingObj,
 					dashv1.DashboardResourceInfo.GroupVersionKind(),
@@ -1044,6 +1136,7 @@ func TestOtherDashboardGroupResourcesDeclareGVK(t *testing.T) {
 		folder bool
 	}{
 		{"variables", dashv2beta1.VariableResourceInfo, variableStorageOpts(), true},
+		{"variables v2", dashv2.VariableResourceInfo, variableStorageOpts(), true},
 		{"notebooks", dashv2beta1.NotebookResourceInfo, notebookStorageOpts(), false},
 		{"snapshots", dashv0.SnapshotResourceInfo, snapshotStorageOpts(), false},
 		{"dashboardpreferences", dashv2beta1.DashboardPreferencesResourceInfo, dashboardPreferencesStorageOpts(), false},

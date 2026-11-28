@@ -8,11 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -31,6 +27,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
@@ -44,16 +44,17 @@ func setupTestEnv(t testing.TB, registerRoles bool) *Service {
 	sql := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	ac := &Service{
-		cache:          localcache.ProvideService(),
-		cfg:            cfg,
-		features:       featuremgmt.WithFeatures(),
-		log:            log.New("accesscontrol"),
-		registrations:  accesscontrol.RegistrationList{},
-		roles:          accesscontrol.BuildBasicRoleDefinitions(),
-		store:          database.ProvideService(sql),
-		sql:            sql,
-		permRegistry:   permreg.ProvidePermissionRegistry(),
-		actionResolver: resourcepermissions.NewActionSetService(),
+		openFeatureClient: openfeature.NewDefaultClient(),
+		cache:             localcache.ProvideService(),
+		cfg:               cfg,
+		features:          featuremgmt.WithFeatures(),
+		log:               log.New("accesscontrol"),
+		registrations:     accesscontrol.RegistrationList{},
+		roles:             accesscontrol.BuildBasicRoleDefinitions(),
+		store:             database.ProvideService(sql),
+		sql:               sql,
+		permRegistry:      permreg.ProvidePermissionRegistry(),
+		actionResolver:    resourcepermissions.NewActionSetService(),
 	}
 
 	if registerRoles {
@@ -488,10 +489,10 @@ func TestIntegrationService_DeclarePluginRoles_DynamicRegistration(t *testing.T)
 							{Action: "test-app:read", Scope: "test-app:*"},
 						},
 					},
-					Grants: []string{string(identity.RoleViewer)},
+					Grants: []string{string(authlib.RoleViewer)},
 				},
 			},
-			wantGrantedRoles: []string{string(identity.RoleViewer)},
+			wantGrantedRoles: []string{string(authlib.RoleViewer)},
 			wantPermissions:  []string{"test-app:read"},
 			wantPermCount:    1,
 		},
@@ -509,10 +510,10 @@ func TestIntegrationService_DeclarePluginRoles_DynamicRegistration(t *testing.T)
 							{Action: "dynamic-app:query", Scope: "dynamic-app:*"},
 						},
 					},
-					Grants: []string{string(identity.RoleViewer)},
+					Grants: []string{string(authlib.RoleViewer)},
 				},
 			},
-			wantGrantedRoles: []string{string(identity.RoleViewer)},
+			wantGrantedRoles: []string{string(authlib.RoleViewer)},
 			wantPermissions:  []string{"dynamic-app:read", "dynamic-app:query"},
 			wantPermCount:    2,
 		},
@@ -529,10 +530,10 @@ func TestIntegrationService_DeclarePluginRoles_DynamicRegistration(t *testing.T)
 							{Action: "multi-app:read", Scope: "multi-app:*"},
 						},
 					},
-					Grants: []string{string(identity.RoleViewer), string(identity.RoleEditor)},
+					Grants: []string{string(authlib.RoleViewer), string(authlib.RoleEditor)},
 				},
 			},
-			wantGrantedRoles: []string{string(identity.RoleViewer), string(identity.RoleEditor)},
+			wantGrantedRoles: []string{string(authlib.RoleViewer), string(authlib.RoleEditor)},
 			wantPermissions:  []string{"multi-app:read"},
 			wantPermCount:    1,
 		},
@@ -550,10 +551,10 @@ func TestIntegrationService_DeclarePluginRoles_DynamicRegistration(t *testing.T)
 							{Action: "batch-app:delete"},
 						},
 					},
-					Grants: []string{string(identity.RoleEditor)},
+					Grants: []string{string(authlib.RoleEditor)},
 				},
 			},
-			wantGrantedRoles: []string{string(identity.RoleEditor)},
+			wantGrantedRoles: []string{string(authlib.RoleEditor)},
 			wantPermissions:  []string{"batch-app:read", "batch-app:write", "batch-app:delete"},
 			wantPermCount:    3,
 		},
@@ -608,7 +609,7 @@ func TestIntegrationService_DeclarePluginRoles_UserPermissions(t *testing.T) {
 		testUser := &user.SignedInUser{
 			UserID:  1,
 			OrgID:   1,
-			OrgRole: identity.RoleViewer,
+			OrgRole: authlib.RoleViewer,
 		}
 
 		// Get initial permissions
@@ -626,7 +627,7 @@ func TestIntegrationService_DeclarePluginRoles_UserPermissions(t *testing.T) {
 						{Action: "perm-test-app:test", Scope: "perm-test-app:*"},
 					},
 				},
-				Grants: []string{string(identity.RoleViewer)},
+				Grants: []string{string(authlib.RoleViewer)},
 			},
 		})
 		require.NoError(t, err)
@@ -675,7 +676,7 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 			siuPermissions: listAllPerms,
 			searchOption:   searchOption,
 			ramRoles: map[string]*accesscontrol.RoleDTO{
-				string(identity.RoleAdmin): {Permissions: []accesscontrol.Permission{
+				string(authlib.RoleAdmin): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
 				}},
 				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
@@ -683,8 +684,8 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 				}},
 			},
 			storedRoles: map[int64][]string{
-				1: {string(identity.RoleEditor)},
-				2: {string(identity.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+				1: {string(authlib.RoleEditor)},
+				2: {string(authlib.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
 			},
 			want: map[int64][]accesscontrol.Permission{
 				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
@@ -701,8 +702,8 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
 			},
 			storedRoles: map[int64][]string{
-				1: {string(identity.RoleEditor)},
-				2: {string(identity.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+				1: {string(authlib.RoleEditor)},
+				2: {string(authlib.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
 			},
 			want: map[int64][]accesscontrol.Permission{
 				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
@@ -715,7 +716,7 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 			siuPermissions: listAllPerms,
 			searchOption:   searchOption,
 			ramRoles: map[string]*accesscontrol.RoleDTO{
-				string(identity.RoleAdmin): {Permissions: []accesscontrol.Permission{
+				string(authlib.RoleAdmin): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
 				}},
 				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
@@ -728,8 +729,8 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"}},
 			},
 			storedRoles: map[int64][]string{
-				1: {string(identity.RoleEditor)},
-				2: {string(identity.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+				1: {string(authlib.RoleEditor)},
+				2: {string(authlib.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
 			},
 			want: map[int64][]accesscontrol.Permission{
 				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
@@ -744,13 +745,13 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 			siuPermissions: listAllPerms,
 			searchOption:   accesscontrol.SearchOptions{Scope: "teams:id:2"},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
-				string(identity.RoleAdmin): {Permissions: []accesscontrol.Permission{
+				string(authlib.RoleAdmin): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
 				}},
 			},
 			storedRoles: map[int64][]string{
-				1: {string(identity.RoleEditor)},
-				2: {string(identity.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+				1: {string(authlib.RoleEditor)},
+				2: {string(authlib.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
 			},
 			want: map[int64][]accesscontrol.Permission{
 				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"}},
@@ -771,7 +772,7 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"}},
 			},
 			storedRoles: map[int64][]string{
-				1: {string(identity.RoleEditor)},
+				1: {string(authlib.RoleEditor)},
 				2: {accesscontrol.RoleGrafanaAdmin},
 			},
 			want: map[int64][]accesscontrol.Permission{
@@ -823,10 +824,10 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 			siuPermissions: listAllPerms,
 			searchOption:   accesscontrol.SearchOptions{UserID: 1},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
-				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
+				string(authlib.RoleEditor): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
 				}},
-				string(identity.RoleAdmin): {Permissions: []accesscontrol.Permission{
+				string(authlib.RoleAdmin): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:*"},
 				}},
 				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
@@ -839,8 +840,8 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"}},
 			},
 			storedRoles: map[int64][]string{
-				1: {string(identity.RoleEditor)},
-				2: {string(identity.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+				1: {string(authlib.RoleEditor)},
+				2: {string(authlib.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
 			},
 			want: map[int64][]accesscontrol.Permission{
 				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}, {Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"}},
@@ -857,9 +858,9 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 				3: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:3"}},
 			},
 			storedRoles: map[int64][]string{
-				1: {string(identity.RoleEditor)},
-				2: {string(identity.RoleEditor)},
-				3: {string(identity.RoleEditor)},
+				1: {string(authlib.RoleEditor)},
+				2: {string(authlib.RoleEditor)},
+				3: {string(authlib.RoleEditor)},
 			},
 			want: map[int64][]accesscontrol.Permission{
 				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
@@ -876,8 +877,8 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:2"}},
 			},
 			storedRoles: map[int64][]string{
-				1: {string(identity.RoleEditor)},
-				2: {string(identity.RoleEditor)},
+				1: {string(authlib.RoleEditor)},
+				2: {string(authlib.RoleEditor)},
 			},
 			want: map[int64][]accesscontrol.Permission{},
 		},
@@ -891,9 +892,9 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 				3: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:3"}},
 			},
 			storedRoles: map[int64][]string{
-				1: {string(identity.RoleEditor)},
-				2: {string(identity.RoleEditor)},
-				3: {string(identity.RoleEditor)},
+				1: {string(authlib.RoleEditor)},
+				2: {string(authlib.RoleEditor)},
+				3: {string(authlib.RoleEditor)},
 			},
 			want: map[int64][]accesscontrol.Permission{
 				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:2"}},
@@ -905,7 +906,7 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 			siuPermissions: listAllPerms,
 			searchOption:   searchOption,
 			storedRoles: map[int64][]string{
-				1: {string(identity.RoleEditor)},
+				1: {string(authlib.RoleEditor)},
 			},
 			wantErr:         true,
 			injectSearchErr: true, // Explicitly inject error from SearchUsersPermissions
@@ -978,7 +979,7 @@ func TestIntegrationService_SearchUsersPermissions_SingleUserPath(t *testing.T) 
 			},
 		},
 		ExpectedUsersRoles: map[int64][]string{
-			1: {string(identity.RoleEditor)},
+			1: {string(authlib.RoleEditor)},
 		},
 	}
 
@@ -1027,7 +1028,7 @@ func TestIntegrationService_SearchUsersPermissions_ActionSets(t *testing.T) {
 			},
 		},
 		ExpectedUsersRoles: map[int64][]string{
-			1: {string(identity.RoleEditor)},
+			1: {string(authlib.RoleEditor)},
 		},
 	}
 
@@ -1074,10 +1075,10 @@ func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 				UserID:       2,
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
-				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
+				string(authlib.RoleEditor): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsCreate},
 				}},
-				string(identity.RoleAdmin): {Permissions: []accesscontrol.Permission{
+				string(authlib.RoleAdmin): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
 				}},
 				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
@@ -1085,8 +1086,8 @@ func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 				}},
 			},
 			storedRoles: map[int64][]string{
-				1: {string(identity.RoleEditor)},
-				2: {string(identity.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+				1: {string(authlib.RoleEditor)},
+				2: {string(authlib.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
 			},
 			want: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
@@ -1104,8 +1105,8 @@ func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
 			},
 			storedRoles: map[int64][]string{
-				1: {string(identity.RoleEditor)},
-				2: {string(identity.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+				1: {string(authlib.RoleEditor)},
+				2: {string(authlib.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
 			},
 			want: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
@@ -1119,7 +1120,7 @@ func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 				UserID:       2,
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
-				string(identity.RoleAdmin): {Permissions: []accesscontrol.Permission{
+				string(authlib.RoleAdmin): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
 				}},
 				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
@@ -1132,8 +1133,8 @@ func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"}},
 			},
 			storedRoles: map[int64][]string{
-				1: {string(identity.RoleEditor)},
-				2: {string(identity.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+				1: {string(authlib.RoleEditor)},
+				2: {string(authlib.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
 			},
 			want: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
@@ -1149,7 +1150,7 @@ func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 				UserID:       1,
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
-				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
+				string(authlib.RoleEditor): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
 					{Action: accesscontrol.ActionUsersCreate},
 					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
@@ -1157,7 +1158,7 @@ func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 				}},
 			},
 			storedRoles: map[int64][]string{
-				1: {string(identity.RoleEditor)},
+				1: {string(authlib.RoleEditor)},
 			},
 			want: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
@@ -1171,7 +1172,7 @@ func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 				UserID: 1,
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
-				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
+				string(authlib.RoleEditor): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
 					{Action: accesscontrol.ActionUsersCreate},
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
@@ -1179,7 +1180,7 @@ func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 				}},
 			},
 			storedRoles: map[int64][]string{
-				1: {string(identity.RoleEditor)},
+				1: {string(authlib.RoleEditor)},
 			},
 			want: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
@@ -1198,12 +1199,12 @@ func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 				"dashboards:edit": {"dashboards:read", "dashboards:write", "dashboards:read-advanced"},
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
-				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
+				string(authlib.RoleEditor): {Permissions: []accesscontrol.Permission{
 					{Action: "dashboards:read", Scope: "dashboards:uid:ram"},
 				}},
 			},
 			storedRoles: map[int64][]string{
-				1: {string(identity.RoleEditor)},
+				1: {string(authlib.RoleEditor)},
 			},
 			storedPerms: map[int64][]accesscontrol.Permission{
 				1: {
@@ -1232,12 +1233,12 @@ func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 				"dashboards:edit": {"dashboards:read", "dashboards:write"},
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
-				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
+				string(authlib.RoleEditor): {Permissions: []accesscontrol.Permission{
 					{Action: "dashboards:read", Scope: "dashboards:uid:ram"},
 				}},
 			},
 			storedRoles: map[int64][]string{
-				1: {string(identity.RoleEditor)},
+				1: {string(authlib.RoleEditor)},
 			},
 			storedPerms: map[int64][]accesscontrol.Permission{
 				1: {

@@ -45,13 +45,13 @@ sequenceDiagram
 
 
 
-### /apis/query.grafana.app (in single tenant grafana)
+### /apis/datasource.grafana.app (in single tenant grafana)
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor User as User or Process
-    participant api as /apis/query.grafana.app
+    participant api as /apis/datasource.grafana.app
     participant db as Storage<br/>(CloudConfig)
     participant ds as Datasource<br/>Plugin
     participant expr as Expression<br/>Engine

@@ -172,8 +172,7 @@ func RegisterAPIService(
 }
 
 func (b *QueryAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	// TODO, finish rename return datasourceV0.SchemeGroupVersion
-	return schema.GroupVersion{Group: "query.grafana.app", Version: datasourceV0.VERSION}
+	return datasourceV0.SchemeGroupVersion
 }
 
 func addKnownTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {

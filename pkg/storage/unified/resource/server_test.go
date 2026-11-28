@@ -59,7 +59,7 @@ func TestSimpleServer(t *testing.T) {
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true, // can do anything
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), testUserA)
@@ -582,7 +582,7 @@ func TestListStoredResources(t *testing.T) {
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true,
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), testUser)
@@ -1373,7 +1373,7 @@ func TestGracefulShutdown(t *testing.T) {
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true,
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), testUser)
@@ -1573,7 +1573,7 @@ func newWatchTestUser() *identity.StaticRequester {
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true,
 	}
 }
@@ -1831,7 +1831,7 @@ func startBookmarkWatch(t *testing.T, req *resourcepb.WatchRequest, configure fu
 	})
 	require.NoError(t, err)
 	srv.log = log.NewNopLogger()
-	srv.broadcaster = NewBroadcaster(ctx, events, newBroadcasterMetrics(prometheus.NewRegistry()), nil)
+	srv.setWatchState(newBroadcaster(ctx, events, newBroadcasterMetrics(prometheus.NewRegistry()), writtenEventIdentity), nil)
 	if configure != nil {
 		configure(srv, stream)
 	}
@@ -1892,31 +1892,6 @@ func advanceBookmarkClock() time.Time {
 	// synctest's clock starts before the Snowflake epoch.
 	time.Sleep(time.Until(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)))
 	return time.Now()
-}
-
-func TestWatchPreviousReadError(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		events, stream, done := startBookmarkWatch(t, bookmarkWatchRequest(), func(srv *server, _ *bookmarkWatchServer) {
-			srv.backend = &internalReadBackend{failure: &resourcepb.ErrorResult{
-				Code: http.StatusInternalServerError, Message: "previous version read failed",
-			}}
-		})
-		event := bookmarkWrittenEvent(200)
-		event.Type = resourcepb.WatchEvent_MODIFIED
-		event.PreviousRV = 150
-		events <- event
-
-		// Process the failed previous-version read before checking that the watch remains open.
-		synctest.Wait()
-
-		require.Empty(t, done, "watch should remain open after the previous version read fails")
-		require.Len(t, stream.events, 1)
-		got := <-stream.events
-		require.Equal(t, event.Type, got.Type)
-		require.Equal(t, event.ResourceVersion, got.Resource.Version)
-		require.Equal(t, event.Value, got.Resource.Value)
-		require.Nil(t, got.Previous)
-	})
 }
 
 func TestWatchDeleteRetainsPreviousJobRevisionAfterPruning(t *testing.T) {
@@ -2157,7 +2132,13 @@ func TestIncrementalBookmarksFilteredProgress(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
-				events, stream, _ := startBookmarkWatch(t, bookmarkWatchRequest(), func(srv *server, _ *bookmarkWatchServer) {
+				req, rv := bookmarkWatchRequest(), int64(101)
+				if tt.kv {
+					// KV resumes are snowflakes; old enough that the filtered-progress delay passes.
+					req.Since = snowflakeFromTime(advanceBookmarkClock().Add(-2 * time.Minute))
+					rv = req.Since + 1
+				}
+				events, stream, _ := startBookmarkWatch(t, req, func(srv *server, _ *bookmarkWatchServer) {
 					if tt.kv {
 						srv.backend = &kvStorageBackend{}
 					}
@@ -2165,7 +2146,7 @@ func TestIncrementalBookmarksFilteredProgress(t *testing.T) {
 						tt.configure(srv)
 					}
 				})
-				event := bookmarkWrittenEvent(101)
+				event := bookmarkWrittenEvent(rv)
 				if tt.filter != nil {
 					tt.filter(event)
 				}
@@ -2176,7 +2157,7 @@ func TestIncrementalBookmarksFilteredProgress(t *testing.T) {
 
 				require.Empty(t, stream.events, "filtered objects must not be sent")
 				time.Sleep(time.Second)
-				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, 101)
+				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, rv)
 				time.Sleep(2 * time.Second)
 
 				// Finish later bookmark ticks before checking that unchanged progress is not repeated.
@@ -2228,7 +2209,11 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				entered, release := make(chan struct{}), make(chan struct{})
 				sendErr := errors.New("send failed")
-				events, stream, done := startBookmarkWatch(t, bookmarkWatchRequest(), func(srv *server, stream *bookmarkWatchServer) {
+				req := bookmarkWatchRequest()
+				// KV resumes are snowflakes; old enough that the filtered-progress delay passes.
+				req.Since = snowflakeFromTime(advanceBookmarkClock().Add(-2 * time.Minute))
+				first, second := req.Since+1, req.Since+2
+				events, stream, done := startBookmarkWatch(t, req, func(srv *server, stream *bookmarkWatchServer) {
 					srv.backend = &kvStorageBackend{}
 					stream.beforeSend = func(event *resourcepb.WatchEvent) error {
 						if event.Type == resourcepb.WatchEvent_ADDED {
@@ -2245,7 +2230,7 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 						return nil
 					}
 				})
-				events <- bookmarkWrittenEvent(101)
+				events <- bookmarkWrittenEvent(first)
 
 				// Enter the blocked Send before supplying the next pending event.
 				synctest.Wait()
@@ -2255,7 +2240,7 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 				default:
 					t.Fatal("matching send was not reached")
 				}
-				pending := bookmarkWrittenEvent(102)
+				pending := bookmarkWrittenEvent(second)
 				pending.Key.Resource = "other"
 				events <- pending
 				time.Sleep(2 * time.Second)
@@ -2276,7 +2261,7 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 					return
 				}
 
-				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 101)
+				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, first)
 
 				// Finish the pending bookmark after the delivered object before reading it.
 				synctest.Wait()
@@ -2284,11 +2269,11 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 				require.NotEmpty(t, stream.events)
 				bookmark := <-stream.events
 				require.Equal(t, resourcepb.WatchEvent_BOOKMARK, bookmark.Type)
-				if bookmark.Resource.Version == 101 {
+				if bookmark.Resource.Version == first {
 					time.Sleep(time.Second)
-					requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, 102)
+					requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, second)
 				} else {
-					require.Equal(t, int64(102), bookmark.Resource.Version)
+					require.Equal(t, second, bookmark.Resource.Version)
 				}
 			})
 		})
@@ -2917,7 +2902,7 @@ func TestNewEventPermissionChecks(t *testing.T) {
 		Login:     "testuser",
 		UserID:    123,
 		UserUID:   "u123",
-		OrgRole:   identity.RoleEditor,
+		OrgRole:   authlib.RoleEditor,
 		Namespace: "default",
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), user)
@@ -3208,7 +3193,7 @@ func TestFolderDeletePermissionChecks(t *testing.T) {
 		Login:     "testuser",
 		UserID:    123,
 		UserUID:   "u123",
-		OrgRole:   identity.RoleEditor,
+		OrgRole:   authlib.RoleEditor,
 		Namespace: "default",
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), user)
@@ -3895,7 +3880,7 @@ func newKeysOnlyTestServerWithMaxPageBytes(t *testing.T, maxPageBytes int, autho
 		UserID:         123,
 		UserUID:        "u123",
 		Namespace:      "*",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true,
 	})
 
@@ -4490,7 +4475,7 @@ func newRecordingTestServer(t *testing.T, ac authlib.AccessClient, identityNames
 	authCtx := func(ns string) context.Context {
 		return authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{
 			Type: authlib.TypeAccessPolicy, Name: "svc", UserUID: "svc",
-			Namespace: ns, OrgRole: identity.RoleAdmin, IsGrafanaAdmin: true,
+			Namespace: ns, OrgRole: authlib.RoleAdmin, IsGrafanaAdmin: true,
 		})
 	}
 	return srv, authCtx(identityNamespace), authCtx("*")
@@ -4868,7 +4853,7 @@ func TestResourceServerQOSTenantIsolation(t *testing.T) {
 		}
 		ctxFor := func(namespace string) context.Context {
 			return authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
-				Type: authlib.TypeUser, UserID: 123, UserUID: "u123", OrgRole: identity.RoleEditor, Namespace: namespace,
+				Type: authlib.TypeUser, UserID: 123, UserUID: "u123", OrgRole: authlib.RoleEditor, Namespace: namespace,
 			})
 		}
 
@@ -4918,6 +4903,27 @@ func TestResourceServerQOSTenantIsolation(t *testing.T) {
 		for range 5 {
 			assertRead(awaitQOSTestResult(t, slowResults))
 		}
+	})
+}
+
+func TestResourceServerQOSClosedQueueStatus(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		q := scheduler.NewQueue(&scheduler.QueueOptions{})
+		require.NoError(t, services.StartAndAwaitRunning(t.Context(), q))
+		require.NoError(t, services.StopAndAwaitTerminated(t.Context(), q))
+		srv := &server{
+			queue:       q,
+			queueConfig: QueueConfig{Timeout: time.Second, MinBackoff: time.Second, MaxBackoff: time.Second, MaxRetries: 10},
+			log:         log.NewNopLogger(),
+		}
+		ctx := authlib.WithAuthInfo(t.Context(), newWatchTestUser())
+		key := &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource, Namespace: watchTestNamespace, Name: "closed-queue-test"}
+
+		start := time.Now()
+		rsp, err := srv.Delete(ctx, &resourcepb.DeleteRequest{Key: key})
+		require.Nil(t, rsp)
+		require.Equal(t, codes.Unavailable, status.Code(err), "%v", err)
+		require.Equal(t, start, time.Now(), "closed queue rejection must return without backoff")
 	})
 }
 

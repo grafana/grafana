@@ -152,6 +152,7 @@ All shared test infrastructure lives in `common/testing.go`:
 | ------- | ----------- |
 | `provisioning/` (root) | `SecretsManagerEnableDBMigrations`, `WithoutExportFeatureFlag` |
 | `connection/` | none |
+| `connection/routermiddleware/` | `grafanaUseRouterMiddleware` feature toggle |
 | `repository/` | none |
 | `quota/` | none |
 | `jobs/` | GitHub mock in helper |

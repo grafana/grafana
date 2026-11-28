@@ -54,12 +54,12 @@ describe('splitFrontmatter', () => {
     expect(splitFrontmatter(`---\na: 1\n---\n${body}`).body).toBe(body);
   });
 
-  it('keeps scalars as the text the author wrote and an empty value as null', () => {
+  it('keeps scalars as the text the author wrote and an empty value as an empty string', () => {
     expect(splitFrontmatter('---\neditable: false\nweight: 1.10\nzip: 01234\nowner:\n---\n').frontmatter).toEqual({
       editable: 'false',
       weight: '1.10',
       zip: '01234',
-      owner: null,
+      owner: '',
     });
   });
 

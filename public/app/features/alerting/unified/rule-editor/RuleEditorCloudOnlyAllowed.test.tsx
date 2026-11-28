@@ -141,7 +141,6 @@ describe('RuleEditor cloud: checking editable data sources', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     contextSrv.isEditor = true;
-    contextSrv.hasEditPermissionInFolders = true;
     // grant all permissions in AccessControlActionEnum
     grantUserPermissions(Object.values(AccessControlAction));
   });

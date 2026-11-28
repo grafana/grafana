@@ -12,9 +12,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // Provider supplies the provider-specific pieces of an OAuth app connection
@@ -30,11 +30,11 @@ type oauthConnection struct {
 	provider     Provider
 	repoType     provisioning.RepositoryType
 	clientID     string
-	clientSecret common.RawSecureValue
-	token        common.RawSecureValue
+	clientSecret resource.RawSecureValue
+	token        resource.RawSecureValue
 }
 
-func newConnection(provider Provider, repoType provisioning.RepositoryType, cfg provisioning.ConnectionOAuthConfig, clientSecret, token common.RawSecureValue) *oauthConnection {
+func newConnection(provider Provider, repoType provisioning.RepositoryType, cfg provisioning.ConnectionOAuthConfig, clientSecret, token resource.RawSecureValue) *oauthConnection {
 	return &oauthConnection{
 		provider:     provider,
 		repoType:     repoType,
@@ -93,7 +93,7 @@ func (c *oauthConnection) GenerateRepositoryToken(_ context.Context, repo *provi
 	}
 
 	return &connection.ExpirableSecureValue{
-		Token:     common.RawSecureValue(token.AccessToken),
+		Token:     resource.RawSecureValue(token.AccessToken),
 		ExpiresAt: token.Expiry,
 	}, nil
 }
@@ -271,7 +271,7 @@ func (c *oauthConnection) ValidateToken() (expiresAt time.Time, err error) {
 // whole token is stored and both must survive controller restarts and
 // refresh-token rotation. A zero Expiry means the access token does not
 // expire.
-func parseToken(raw common.RawSecureValue) (*oauth2.Token, error) {
+func parseToken(raw resource.RawSecureValue) (*oauth2.Token, error) {
 	if raw.IsZero() {
 		return nil, errors.New("no token available")
 	}
@@ -285,12 +285,12 @@ func parseToken(raw common.RawSecureValue) (*oauth2.Token, error) {
 }
 
 // marshalToken encodes a token for storage in the connection's secure token.
-func marshalToken(token *oauth2.Token) (common.RawSecureValue, error) {
+func marshalToken(token *oauth2.Token) (resource.RawSecureValue, error) {
 	b, err := json.Marshal(token) // #nosec G117 -- intentional serialization into a secure value for the secret store
 	if err != nil {
 		return "", err
 	}
-	return common.RawSecureValue(b), nil
+	return resource.RawSecureValue(b), nil
 }
 
 var (

@@ -1,4 +1,4 @@
-import { type DataFrame, type Field, FieldType, formattedValueToString } from '@grafana/data';
+import { type DataFrame, type Field, FieldType, formattedValueToString, type PanelData } from '@grafana/data';
 import { type TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
 
 import { type DimensionSupplier } from './types';
@@ -60,4 +60,19 @@ function getTextDimensionForField(field: Field | undefined, config: TextDimensio
     get: (i) => disp(field.values[i]),
     value: () => disp(getLastNotNullFieldValue(field)),
   };
+}
+
+export function getTextDimensionFromData(
+  data: PanelData | undefined,
+  cfg: TextDimensionConfig
+): DimensionSupplier<string> {
+  if (data?.series && cfg.field) {
+    for (const frame of data.series) {
+      const d = getTextDimension(frame, cfg);
+      if (!d.isAssumed || data.series.length === 1) {
+        return d;
+      }
+    }
+  }
+  return getTextDimension(undefined, cfg);
 }

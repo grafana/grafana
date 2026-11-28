@@ -13,15 +13,15 @@ export function findHighlightChunksInText({
   searchWords,
   textToHighlight,
 }: {
-  searchWords: Array<string | RegExp>;
+  searchWords: ReadonlyArray<string | RegExp>;
   textToHighlight: string;
 }) {
-  const chunks: TextMatch[] = [];
-  for (const term of searchWords) {
+  const chunks: Array<TextMatch & { searchIndex: number }> = [];
+  searchWords.forEach((term, searchIndex) => {
     if (typeof term === 'string') {
-      chunks.push(...findMatchesInText(textToHighlight, term));
+      chunks.push(...findMatchesInText(textToHighlight, term).map((match) => ({ ...match, searchIndex })));
     }
-  }
+  });
   return chunks;
 }
 

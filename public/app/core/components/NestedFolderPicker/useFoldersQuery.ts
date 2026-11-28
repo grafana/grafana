@@ -21,6 +21,8 @@ export interface UseFoldersQueryProps {
   openFolders: Record<string, boolean>;
   /** With create, only list folders on the way to one the user can create dashboards in, and mark the ones they cannot as read only */
   permission?: SearchDashboardsAndFoldersApiArg['permission'];
+  /** With create, also list the folders on the way to a creatable one, marked read only */
+  includePathToCreatable?: boolean;
   rootFolderUID?: string;
   rootFolderItem?: DashboardsTreeItem;
 }
@@ -47,6 +49,7 @@ export function useFoldersQuery({
   rootFolderUID,
   rootFolderItem,
   permission,
+  includePathToCreatable = false,
 }: UseFoldersQueryProps) {
   const dispatch = useDispatch();
 
@@ -116,7 +119,7 @@ export function useFoldersQuery({
         folder: finalParentUid,
         type: 'folder',
         permission,
-        include: permission === 'create' ? 'pathToCreatable' : undefined,
+        include: permission === 'create' && includePathToCreatable ? 'pathToCreatable' : undefined,
       } as const;
 
       // Make a request
@@ -129,7 +132,7 @@ export function useFoldersQuery({
       // the subscriptions are saved in a ref so they can be unsubscribed on unmount
       requestsRef.current = requestsRef.current.concat([subscription]);
     },
-    [state, dispatch, permission]
+    [state, dispatch, permission, includePathToCreatable]
   );
 
   // Unsubscribe from all requests when the component is unmounted
@@ -167,7 +170,7 @@ export function useFoldersQuery({
         const name = item.name;
         const folderIsOpen = openFolders[name];
         // Only a folder the server marks as not creatable is read only
-        const readOnly = permission === 'create' && item.field?.canCreate === false;
+        const readOnly = permission === 'create' && includePathToCreatable && item.field?.canCreate === false;
         const flatItem: DashboardsTreeItem = {
           isOpen: Boolean(folderIsOpen),
           level: level,
@@ -215,7 +218,7 @@ export function useFoldersQuery({
     rootFlatTree.unshift(rootFolderItem || getRootFolderItem());
 
     return rootFlatTree;
-  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem, permission]);
+  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem, permission, includePathToCreatable]);
 
   return {
     emptyFolders,

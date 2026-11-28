@@ -1,5 +1,9 @@
 import { SceneVariableSet } from '@grafana/scenes';
-import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import {
+  type Spec as DashboardV2Spec,
+  type Prompt,
+  type TabsLayoutSpec,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -242,3 +246,34 @@ function sectionAnnotation(name: string) {
     },
   };
 }
+
+describe('questions', () => {
+  const tabWith = (prompts?: Prompt[]): DashboardV2Spec['layout'] => ({
+    kind: 'TabsLayout',
+    spec: {
+      tabs: [
+        {
+          kind: 'TabsLayoutTab',
+          spec: { title: 'Tab 1', prompts, layout: { kind: 'GridLayout', spec: { items: [] } } },
+        },
+      ],
+    },
+  });
+
+  it('keeps the questions saved on a tab through a load and a save', () => {
+    const prompts = [{ text: 'Which services keep restarting?' }];
+
+    const manager = deserializeTabsLayout(tabWith(prompts), {}, false);
+    expect(manager.state.tabs[0].state.questions).toEqual(prompts);
+
+    const serialized = serializeTabsLayout(manager).spec as TabsLayoutSpec;
+    expect(serialized.tabs[0].spec.prompts).toEqual(prompts);
+  });
+
+  it('leaves the key out when a tab has no questions', () => {
+    const manager = deserializeTabsLayout(tabWith(undefined), {}, false);
+
+    const serialized = serializeTabsLayout(manager).spec as TabsLayoutSpec;
+    expect(serialized.tabs[0].spec).not.toHaveProperty('prompts');
+  });
+});

@@ -15,6 +15,7 @@ import (
 
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	storagev0 "github.com/grafana/grafana/pkg/apis/storage/v0alpha1"
+	"github.com/grafana/grafana/pkg/operators/runner"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -92,7 +93,7 @@ func TestListFolderKeys(t *testing.T) {
 			cfg.SectionWithEnvOverrides("operator").Key("folders_server_url").SetValue(api.URL)
 			cfg.SectionWithEnvOverrides("grpc_client_authentication").Key("token").SetValue("test-token")
 			cfg.SectionWithEnvOverrides("grpc_client_authentication").Key("token_exchange_url").SetValue(api.URL + "/token")
-			client, err := buildRESTClient(cfg, "folders_server_url", folderGVR.Group)
+			client, err := buildRESTClient(runner.NewClients(cfg), "folders_server_url", folderGVR.Group)
 			require.NoError(t, err)
 
 			objs, listRV, err := listFolderKeys(t.Context(), keysapi.NewHTTPLister(client, folderGVR))

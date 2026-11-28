@@ -1,7 +1,8 @@
 import { type DataFrame, type Field, FieldType, ReducerID, toDataFrame } from '@grafana/data';
 import { type ScaleDimensionConfig } from '@grafana/schema';
 
-import { findField, findFieldIndex, getLastNotNullFieldValue, getScaleDimensionFromData } from './utils';
+import { getScaleDimensionFromData } from './scale';
+import { findField, findFieldIndex, getLastNotNullFieldValue } from './utils';
 
 function makeFrame(fields: Array<Partial<Field> & { name: string; values: unknown[] }>): DataFrame {
   return toDataFrame({ fields });

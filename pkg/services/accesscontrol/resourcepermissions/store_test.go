@@ -1089,7 +1089,7 @@ func TestIntegrationStore_setResourcePermission(t *testing.T) {
 			store, _, _ := setupTestEnv(t)
 
 			// Populate store with existing permissions
-			setPermissionsHelper(store, test.existingPermissions, t)
+			setPermissionsHelper(store, test.orgID, test.userID, test.existingPermissions, t)
 
 			// Set new permission
 			_, err := store.SetResourcePermissions(context.Background(), test.orgID, []SetResourcePermissionsCommand{
@@ -1130,13 +1130,19 @@ func retrievePermissionsHelper(store *store, t *testing.T) []orgPermission {
 	return permissions
 }
 
-func setPermissionsHelper(store *store, permissions []accesscontrol.Permission, t *testing.T) {
+func setPermissionsHelper(store *store, orgID, userID int64, permissions []accesscontrol.Permission, t *testing.T) {
+	if len(permissions) == 0 {
+		return
+	}
 	err := store.sql.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
+		role, _, err := store.getOrCreateManagedRole(sess, orgID, accesscontrol.ManagedUserRoleName(userID), store.userAdder(sess, orgID, userID))
+		if err != nil {
+			return err
+		}
 		sql := "INSERT INTO permission(role_id, action, scope, created, updated, kind, attribute, identifier) VALUES(?, ?, ?, ?, ?, ?, ?, ?)"
 		for _, p := range permissions {
 			kind, attribute, identifier := p.SplitScope()
-			// Hardcode role_id to 1 since the test only tests one managed role, would need to extend the logic if we test with several managed roles
-			_, err := sess.Exec(sql, 1, p.Action, p.Scope, time.Now(), time.Now(), kind, attribute, identifier)
+			_, err := sess.Exec(sql, role.ID, p.Action, p.Scope, time.Now(), time.Now(), kind, attribute, identifier)
 			if err != nil {
 				return err
 			}

@@ -5879,6 +5879,30 @@
         "title": "Frame is a columnar data structure where each column is a Field.",
         "type": "object"
       },
+      "FrameContinuation": {
+        "description": "A later chunk of a frame in a chunked response has only data, so a producer cannot add fields to a\nframe that it already sent. When a wide time series gets a new series after its first chunk, the\nproducer starts a new frame with all the fields, and sets FrameMeta.Continues on its first chunk.\nA receiver that builds the full response joins the two frames with JoinContinuation, so that the\nresponse has the frame that one conversion of all rows gives. A frame can be continued only once,\nand its frame ID takes no more chunks after that.",
+        "properties": {
+          "fields": {
+            "description": "Fields has one entry for each field of the frame that continues. The entry is the index of the\nsame field in the earlier frame, or -1 for a new field. Each field of the earlier frame must have\nexactly one entry.",
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "fillValue": {
+            "description": "FillValue is the value of the new fields in the rows of the earlier frame. When it is nil, these\nrows keep the zero value of the field type, which is null for a nullable field. LongToWide gives\nthe same values to the earlier rows of a series that starts late.",
+            "format": "double",
+            "type": "number"
+          },
+          "frameId": {
+            "description": "FrameID is the frame ID of the earlier frame, in the same refId.",
+            "type": "string"
+          }
+        },
+        "title": "Experimental: FrameContinuation is the value of FrameMeta.Continues.",
+        "type": "object"
+      },
       "FrameLabels": {
         "additionalProperties": {
           "type": "string"
@@ -5892,6 +5916,9 @@
           "channel": {
             "description": "Channel is the path to a stream in grafana live that has real-time updates for this data.",
             "type": "string"
+          },
+          "continues": {
+            "$ref": "#/components/schemas/FrameContinuation"
           },
           "custom": {
             "description": "Custom datasource specific values."
@@ -15525,8 +15552,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -15568,8 +15594,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -15608,8 +15633,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -15651,8 +15675,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -15694,8 +15717,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -15740,8 +15762,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -15794,8 +15815,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -15950,8 +15970,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -21074,6 +21093,23 @@
         "operationId": "getOrgUsersForCurrentOrg",
         "parameters": [
           {
+            "description": "Filter by the exact user UID within the current organization.",
+            "in": "query",
+            "name": "userUid",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by the exact numerical user ID within the current organization.",
+            "in": "query",
+            "name": "userId",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
             "in": "query",
             "name": "query",
             "schema": {
@@ -21835,8 +21871,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -21880,8 +21915,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -25511,8 +25545,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -25547,8 +25580,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -25600,8 +25632,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -25638,8 +25669,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],

@@ -9,83 +9,101 @@ import { IconButton, Text, useStyles2 } from '@grafana/ui';
 import { DraggableListItem } from './DraggableListItem';
 import { DroppableCategory } from './DroppableCategory';
 
-interface DraggableListProps<T extends { state: { key?: string; name: string } }> {
+type DraggableItem = { state: { key?: string; name: string } };
+
+interface DraggableListItemsProps<T extends DraggableItem> {
   items: T[];
-  droppableId: string;
-  title: string;
+  /** The list's test id. */
+  testId: string;
   onEditItem: (item: T) => void;
   onDuplicateItem: (item: T) => void;
   onDeleteItem: (item: T) => void;
   renderItemLabel: (item: T) => NonNullable<ReactNode>;
   /** Rows shown in this category that cannot be reordered, duplicated, or deleted. */
   leading?: ReactNode;
+}
+
+interface DraggableListProps<T extends DraggableItem> extends Omit<DraggableListItemsProps<T>, 'testId'> {
+  droppableId: string;
+  title: string;
   itemsCount?: number;
 }
 
-export function DraggableList<T extends { state: { key?: string; name: string } }>({
-  items,
+/** A titled group of draggable items, for a list split into several groups. */
+export function DraggableList<T extends DraggableItem>({
   droppableId,
   title,
+  itemsCount,
+  ...itemsProps
+}: DraggableListProps<T>) {
+  return (
+    <DroppableCategory droppableId={droppableId} title={title} itemsCount={itemsCount ?? itemsProps.items.length}>
+      <DraggableListItems testId={droppableId} {...itemsProps} />
+    </DroppableCategory>
+  );
+}
+
+/** The draggable items themselves, each with edit, duplicate, and delete actions. Render inside a `Droppable`. */
+export function DraggableListItems<T extends DraggableItem>({
+  items,
+  testId,
   onEditItem,
   onDuplicateItem,
   onDeleteItem,
   renderItemLabel,
   leading,
-  itemsCount,
-}: DraggableListProps<T>) {
+}: DraggableListItemsProps<T>) {
   const styles = useStyles2(getStyles);
 
   return (
-    <DroppableCategory droppableId={droppableId} title={title} itemsCount={itemsCount ?? items.length}>
-      <ul className={styles.list} data-testid={droppableId}>
-        {leading}
-        {items.map((item, index) => (
-          <DraggableListItem
-            key={item.state.key ?? item.state.name}
-            draggableId={item.state.key ?? item.state.name}
-            index={index}
-            actions={
-              <div className={styles.itemButtons}>
-                <IconButton
-                  data-testid={selectors.components.PanelEditor.ElementEditPane.List.ListItem.editButton(
-                    item.state.key ?? item.state.name
-                  )}
-                  tooltip={t('dashboard-scene.draggable-items-list.edit', 'Edit')}
-                  onClick={() => onEditItem(item)}
-                  name="pen"
-                  variant="secondary"
-                />
-                <IconButton
-                  data-testid={selectors.components.PanelEditor.ElementEditPane.List.ListItem.duplicateButton(
-                    item.state.key ?? item.state.name
-                  )}
-                  tooltip={t('dashboard-scene.draggable-items-list.duplicate', 'Duplicate')}
-                  onClick={() => onDuplicateItem(item)}
-                  name="copy"
-                  variant="secondary"
-                />
-                <IconButton
-                  data-testid={selectors.components.PanelEditor.ElementEditPane.List.ListItem.deleteButton(
-                    item.state.key ?? item.state.name
-                  )}
-                  tooltip={t('dashboard-scene.draggable-items-list.delete', 'Delete')}
-                  className={styles.destructiveButton}
-                  onClick={() => onDeleteItem(item)}
-                  name="trash-alt"
-                  variant="secondary"
-                />
-              </div>
-            }
-          >
-            <div className={styles.itemLabel}>
-              <Text variant="body" truncate>
-                {renderItemLabel(item)}
-              </Text>
+    <ul className={styles.list} data-testid={testId}>
+      {leading}
+      {items.map((item, index) => (
+        <DraggableListItem
+          key={item.state.key ?? item.state.name}
+          draggableId={item.state.key ?? item.state.name}
+          index={index}
+          actions={
+            <div className={styles.itemButtons}>
+              <IconButton
+                data-testid={selectors.components.PanelEditor.ElementEditPane.List.ListItem.editButton(
+                  item.state.key ?? item.state.name
+                )}
+                tooltip={t('dashboard-scene.draggable-items-list.edit', 'Edit')}
+                onClick={() => onEditItem(item)}
+                name="pen"
+                variant="secondary"
+              />
+              <IconButton
+                data-testid={selectors.components.PanelEditor.ElementEditPane.List.ListItem.duplicateButton(
+                  item.state.key ?? item.state.name
+                )}
+                tooltip={t('dashboard-scene.draggable-items-list.duplicate', 'Duplicate')}
+                onClick={() => onDuplicateItem(item)}
+                name="copy"
+                variant="secondary"
+              />
+              <IconButton
+                data-testid={selectors.components.PanelEditor.ElementEditPane.List.ListItem.deleteButton(
+                  item.state.key ?? item.state.name
+                )}
+                tooltip={t('dashboard-scene.draggable-items-list.delete', 'Delete')}
+                className={styles.destructiveButton}
+                onClick={() => onDeleteItem(item)}
+                name="trash-alt"
+                variant="secondary"
+              />
             </div>
-          </DraggableListItem>
-        ))}
-      </ul>
-    </DroppableCategory>
+          }
+        >
+          <div className={styles.itemLabel}>
+            <Text variant="body" truncate>
+              {renderItemLabel(item)}
+            </Text>
+          </div>
+        </DraggableListItem>
+      ))}
+    </ul>
   );
 }
 

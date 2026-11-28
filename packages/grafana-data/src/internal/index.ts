@@ -13,11 +13,8 @@
 export {
   actionsOverrideProcessor,
   getVarMappingKind,
-  getVarMappingOptions,
   hasVarMappingVariableReference,
-  interpolateVarMapping,
   isInVarMappingRange,
-  resolveVarMappingText,
   isVarMappingExpressionInput,
   type VarMappingKind,
 } from '../field/overrides/processors';
@@ -81,7 +78,10 @@ export {
   defaultWindowOptions,
   checkBinaryValueType,
   type CumulativeOptions,
+  getFieldTemplateReference,
+  parseFieldTemplate,
   type ReduceOptions,
+  type TemplateOptions,
   type UnaryOptions,
   WindowAlignment,
   type WindowOptions,

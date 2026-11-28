@@ -4,8 +4,10 @@ go 1.27.4
 
 require (
 	github.com/bwmarrin/snowflake v0.3.0
+	github.com/grafana/authlib v0.0.0-20261120113603-423cd15e9545
 	github.com/grafana/authlib/types v0.0.0-20261120113603-423cd15e9545
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600
+	github.com/grafana/grafana-app-sdk v0.63.3
 	github.com/grafana/grafana-app-sdk/logging v0.63.3
 	github.com/grafana/grafana/apps/alerting/alertrulequality v0.0.0-20260930150852-c73965d1f90d
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20260930150852-c73965d1f90d
@@ -62,6 +64,8 @@ require (
 	github.com/go-openapi/swag/stringutils v0.29.2 // indirect
 	github.com/go-openapi/swag/typeutils v0.29.2 // indirect
 	github.com/go-openapi/swag/yamlutils v0.29.2 // indirect
+	github.com/go-openapi/testify/enable/yaml/v2 v2.8.1 // indirect
+	github.com/go-openapi/testify/v2 v2.8.1 // indirect
 	github.com/goccy/go-json v0.12.0 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -71,9 +75,8 @@ require (
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/authlib v0.0.0-20261120113603-423cd15e9545 // indirect
-	github.com/grafana/grafana-app-sdk v0.63.3 // indirect
-	github.com/grafana/grafana-plugin-sdk-go v0.302.0 // indirect
+	github.com/grafana/grafana-plugin-sdk-go v0.303.0 // indirect
+	github.com/grafana/grafana/apps/secret v0.0.0-20260118065639-60cb766a97d6 // indirect
 	github.com/grafana/otel-profiling-go v0.7.0 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.12 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.1 // indirect
@@ -86,7 +89,7 @@ require (
 	github.com/jaegertracing/jaeger-idl v0.14.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/jszwedko/go-datemath v0.1.1-0.20260113213115-7f666eef0523 // indirect
-	github.com/klauspost/compress v1.20.3 // indirect
+	github.com/klauspost/compress v1.20.5 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.2 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
@@ -140,7 +143,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.5 // indirect
 	go.yaml.in/yaml/v3 v3.0.6 // indirect
 	golang.org/x/exp v0.0.0-20261113113407-e3970619a1a4 // indirect
-	golang.org/x/net v0.62.0 // indirect
+	golang.org/x/net v0.63.0 // indirect
 	golang.org/x/oauth2 v0.38.0 // indirect
 	golang.org/x/sync v0.25.0 // indirect
 	golang.org/x/sys v0.50.0 // indirect
@@ -148,7 +151,7 @@ require (
 	golang.org/x/text v0.44.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20261110000943-09e21b237f2c // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20261104224025-d1e00e9f33ab // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20261118221215-c8830f628b3f // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect

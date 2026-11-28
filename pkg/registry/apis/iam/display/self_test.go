@@ -119,7 +119,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		UserUID:         "u1",
 		UserID:          1,
 		OrgID:           1,
-		OrgRole:         identity.RoleEditor,
+		OrgRole:         authlib.RoleEditor,
 		AuthenticatedBy: "oauth_github",
 		Email:           "alice@example.com",
 		Namespace:       "default",
@@ -156,7 +156,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		// The cluster-scoped whoami route provides no namespace, so it must be set from the caller.
 		require.Equal(t, "default", resolver.gotNS)
 
-		want.Role = string(identity.RoleEditor)
+		want.Role = string(authlib.RoleEditor)
 		want.Namespace = "default"
 
 		var got iam.CurrentUserInfo
@@ -216,7 +216,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		t.Run("display resolution with namespace "+namespace, func(t *testing.T) {
 			caller := &identity.StaticRequester{
 				Type: authlib.TypeUser, UserUID: "u1", Name: "Alice", Namespace: namespace,
-				Email: "alice@example.com", AuthenticatedBy: "oauth_github", OrgRole: identity.RoleEditor,
+				Email: "alice@example.com", AuthenticatedBy: "oauth_github", OrgRole: authlib.RoleEditor,
 			}
 			resolver := &fakeResolver{result: &iam.DisplayList{Items: []iam.Display{{
 				Identity: iam.IdentityRef{Type: authlib.TypeUser, Name: "u1"},
@@ -325,7 +325,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 	for _, identifier := range []string{"", "0"} {
 		t.Run("anonymous identity "+identifier, func(t *testing.T) {
 			caller := &identity.StaticRequester{
-				Type: authlib.TypeAnonymous, UserUID: identifier, Namespace: "default", OrgRole: identity.RoleViewer,
+				Type: authlib.TypeAnonymous, UserUID: identifier, Namespace: "default", OrgRole: authlib.RoleViewer,
 			}
 			resolver := &fakeResolver{err: errors.New("anonymous must not query user records")}
 			rec := httptest.NewRecorder()

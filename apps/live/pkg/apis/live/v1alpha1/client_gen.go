@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -30,26 +29,23 @@ func NewCustomRouteClientFromGenerator(generator resource.ClientGenerator, defau
 	return NewCustomRouteClient(client), nil
 }
 
-type GetSomethingRequest struct {
-	Params  GetSomethingRequestParams
+type ConnectWebsocketRequest struct {
 	Headers http.Header
 }
 
-func (c *CustomRouteClient) GetSomething(ctx context.Context, namespace string, request GetSomethingRequest) (*GetSomethingResponse, error) {
-	params := url.Values{}
+func (c *CustomRouteClient) ConnectWebsocket(ctx context.Context, namespace string, request ConnectWebsocketRequest) (*ConnectWebsocketResponse, error) {
 	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
-		Path:    "/something",
+		Path:    "/ws",
 		Verb:    "GET",
-		Query:   params,
 		Headers: request.Headers,
 	})
 	if err != nil {
 		return nil, err
 	}
-	cast := GetSomethingResponse{}
+	cast := ConnectWebsocketResponse{}
 	err = json.Unmarshal(resp, &cast)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into GetSomethingResponse: %w", err)
+		return nil, fmt.Errorf("unable to unmarshal response bytes into ConnectWebsocketResponse: %w", err)
 	}
 	return &cast, nil
 }

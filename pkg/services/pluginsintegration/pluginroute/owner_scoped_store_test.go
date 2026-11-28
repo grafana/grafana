@@ -217,7 +217,7 @@ func (f failingUpdate) UpdatedObject(context.Context, runtime.Object) (runtime.O
 }
 
 func TestOwnerScopedStoreCreate(t *testing.T) {
-	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgRole: identity.RoleEditor}
+	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgRole: authlib.RoleEditor}
 
 	newStore := func(owned *ownerFromName) (*ownerScopedStore, *[]string) {
 		var created []string
@@ -283,7 +283,7 @@ func TestOwnerScopedStoreGrafanaAdminListsAll(t *testing.T) {
 
 func TestOwnerScopedStoreReadAll(t *testing.T) {
 	owned := &ownerFromName{owners: []resource.Owner{resource.UserResourceOwner}, ownerOfName: parseServiceUserName, readScope: readAll}
-	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgRole: identity.RoleViewer}
+	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgRole: authlib.RoleViewer}
 
 	// Every object is listed, and any one may be read...
 	_, all, err := (&ownerScopedStore{owned: owned}).ownedObjects(ctxFor(user))
@@ -320,7 +320,7 @@ func TestOwnerScopedStoreCreateGeneratedName(t *testing.T) {
 	}
 
 	// The name would be generated after the check, so it could not be authorized.
-	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgRole: identity.RoleEditor}
+	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgRole: authlib.RoleEditor}
 	_, err := store.Create(ctxFor(user), generated(), nil, &metav1.CreateOptions{})
 	require.True(t, apierrors.IsInvalid(err), "want an invalid error, got %v", err)
 	require.Zero(t, created)
@@ -332,7 +332,7 @@ func TestOwnerScopedStoreCreateGeneratedName(t *testing.T) {
 	require.Zero(t, created)
 
 	// One who may do anything to the kind may still have a name generated.
-	admin := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "root", OrgRole: identity.RoleAdmin}
+	admin := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "root", OrgRole: authlib.RoleAdmin}
 	orgAdmins := *store
 	orgAdmins.owned = namespaceUserTeamOwner()
 	orgAdmins.owned.allowOrgAdmin = true
@@ -375,7 +375,7 @@ func TestOwnerScopedStoreUpdateCreatesMissing(t *testing.T) {
 		}, checker, &created
 	}
 	// A team admin who may write the team but not create teams.
-	teamAdmin := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgRole: identity.RoleEditor}
+	teamAdmin := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgRole: authlib.RoleEditor}
 	write := func(name string) rest.UpdatedObjectInfo {
 		return rest.DefaultUpdatedObjectInfo(objectNamed(name))
 	}

@@ -82,11 +82,6 @@ function FrontmatterValue({ value, depth }: { value: YamlNode; depth: number }) 
     );
   }
 
-  // A key with no value (`owner:`) gets an empty cell, like GitHub shows it.
-  if (value === null) {
-    return null;
-  }
-
   const isList = Array.isArray(value);
 
   // Never serialize the parsed YAML: anchors can make it cyclic (JSON.stringify

@@ -96,15 +96,21 @@ func NewSettingsManifest(p PluginDefinition, match RouteMatcher) (manifest *app.
 	manifest.Group = p.JSONData.ID
 	manifest.PreferredVersion = SettingsAPIVersion
 
+	kind := settingsKind()
 	version := app.ManifestVersion{
 		Name:   SettingsAPIVersion,
 		Served: true,
-		Kinds:  []app.ManifestVersionKind{settingsKind()},
 	}
-	defer func() { manifest.Versions = []app.ManifestVersion{version} }()
+	defer func() {
+		version.Kinds = []app.ManifestVersionKind{kind}
+		manifest.Versions = []app.ManifestVersion{version}
+	}()
 
 	resources, proxy, components, errs := settingsRoutes(manifest)
-	version.OpenAPI.Components = components
+	version.OpenAPI.Components = cloneComponents(components)
+	if err := withPluginSchema(&kind, &version, resources, p.Schemas[SettingsAPIVersion]); err != nil {
+		errs = append(errs, err)
+	}
 	if len(resources) > 0 {
 		candidate := withPaths(version, resources)
 		if _, err := settingsRouteMux(candidate); err != nil {

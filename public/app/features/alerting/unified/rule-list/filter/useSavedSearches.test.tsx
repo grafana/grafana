@@ -15,7 +15,10 @@ const mockUserStorage = {
 // This prevents the module-level instance from caching state across tests
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
-  UserStorage: jest.fn().mockImplementation(() => mockUserStorage),
+  UserStorage: jest.fn().mockImplementation(() => ({
+    getItem: (key: string) => mockUserStorage.getItem(key),
+    setItem: (key: string, value: string) => mockUserStorage.setItem(key, value),
+  })),
 }));
 
 // Mock config BEFORE any imports that use it (jest.mock is hoisted)

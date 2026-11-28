@@ -8,13 +8,24 @@ import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromApplication } from 'app/types/unified-alerting-dto';
 
-import * as buildInfoModule from '../api/buildInfo';
+import { discoverFeaturesByUid } from '../api/buildInfo';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockDataSource } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
 import { buildInfoResponse } from '../testSetup/featureDiscovery';
 
+import * as dataSourcesForRulesModule from './useDataSourcesForRules';
 import { useRulesSourcesWithRuler } from './useRuleSourcesWithRuler';
+
+jest.mock('./useDataSourcesForRules', () => makeSpyable('./useDataSourcesForRules'));
+
+jest.mock('../api/buildInfo', () =>
+  jest.requireActual('test/helpers/partialMock').partialMock(jest.requireActual('../api/buildInfo'), {
+    discoverAlertmanagerFeatures: (...args: unknown[]) =>
+      jest.requireActual('../api/buildInfo').discoverAlertmanagerFeatures(...args),
+    discoverFeaturesByUid: jest.fn((...args) => jest.requireActual('../api/buildInfo').discoverFeaturesByUid(...args)),
+  })
+);
 
 const server = setupMswServer();
 
@@ -34,19 +45,42 @@ function makeMimirDatasource(uid: string, name: string) {
 }
 
 beforeEach(() => {
+  jest
+    .mocked(discoverFeaturesByUid)
+    .mockReset()
+    .mockImplementation(jest.requireActual('../api/buildInfo').discoverFeaturesByUid);
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingRuleExternalWrite]);
 });
 
 describe('useRulesSourcesWithRuler — baseline (current behaviour)', () => {
-  it('starts with empty list and no loading when there are no datasources', () => {
+  it('ends with an empty list and no loading when there are no datasources', async () => {
     setupDataSources();
 
     const { result } = renderHook(() => useRulesSourcesWithRuler(), {
       wrapper: getProviderWrapper(),
     });
 
-    expect(result.current.isLoading).toBe(false);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.rulesSourcesWithRuler).toEqual([]);
+    expect(result.current.error).toBeUndefined();
+  });
+
+  it('returns the error and no datasources when the rules source list fails', async () => {
+    setupDataSources(makeMimirDatasource('mimir-1', 'Mimir 1'));
+    const listError = new Error('list failed');
+    const listSpy = jest
+      .spyOn(dataSourcesForRulesModule, 'useDataSourcesForRules')
+      .mockReturnValue({ items: [], isLoading: false, error: listError });
+
+    const { result } = renderHook(() => useRulesSourcesWithRuler(), {
+      wrapper: getProviderWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.error).toBe(listError);
+    expect(result.current.rulesSourcesWithRuler).toEqual([]);
+    expect(discoverFeaturesByUid).not.toHaveBeenCalled();
+    listSpy.mockRestore();
   });
 
   it('returns datasources whose buildinfo indicates ruler support (Mimir)', async () => {
@@ -125,7 +159,7 @@ describe('useRulesSourcesWithRuler — bug reproductions (must fail before fix)'
     let concurrentCount = 0;
     let peakConcurrentCount = 0;
 
-    jest.spyOn(buildInfoModule, 'discoverFeaturesByUid').mockImplementation(async () => {
+    jest.mocked(discoverFeaturesByUid).mockImplementation(async () => {
       concurrentCount++;
       peakConcurrentCount = Math.max(peakConcurrentCount, concurrentCount);
       await new Promise<void>((resolve) => setTimeout(resolve, 20));

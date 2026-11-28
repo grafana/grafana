@@ -79,15 +79,15 @@ func (s *proxyServer) serve(user identity.Requester, method, path string) int {
 }
 
 var (
-	admin  = &identity.StaticRequester{OrgID: 1, OrgRole: identity.RoleAdmin}
-	viewer = &identity.StaticRequester{OrgID: 1, OrgRole: identity.RoleViewer}
+	admin  = &identity.StaticRequester{OrgID: 1, OrgRole: authlib.RoleAdmin}
+	viewer = &identity.StaticRequester{OrgID: 1, OrgRole: authlib.RoleViewer}
 )
 
 // exampleRoutes are declared most specific first, as plugins usually do, so
 // matching by declaration order and by specificity agree.
 func exampleRoutes(url string) []*plugins.Route {
 	return []*plugins.Route{
-		{Path: "api/admin", Method: http.MethodPost, ReqRole: identity.RoleAdmin, URL: url + "/admin"},
+		{Path: "api/admin", Method: http.MethodPost, ReqRole: authlib.RoleAdmin, URL: url + "/admin"},
 		{Path: "api/items/:id", Method: http.MethodGet, URL: url + "/items"},
 		{Path: "api/*", URL: url + "/api"},
 		{Path: "health", Method: http.MethodGet, URL: url + "/health"},

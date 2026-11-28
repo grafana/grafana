@@ -25,6 +25,10 @@ func (c contractEmbeddedClient) LegacyGetUserPermissions(ctx context.Context, ca
 	return c.get().LegacyGetUserPermissions(ctx, caller, req)
 }
 
+func (c contractEmbeddedClient) LegacySearchUsersPermissions(ctx context.Context, caller types.AuthInfo, req legacyclient.LegacySearchUsersPermissionsRequest) (legacyclient.LegacySearchUsersPermissionsResponse, error) {
+	return c.get().LegacySearchUsersPermissions(ctx, caller, req)
+}
+
 func wireContractEmbeddedClient(s *Service) {
 	// Tests finish configuring the service before its first public enumeration.
 	// Thereafter the actual loader, transport and client live for the whole fixture.
@@ -33,7 +37,7 @@ func wireContractEmbeddedClient(s *Service) {
 		if s.zanzanaResolver != nil {
 			migrated = s.zanzanaResolver
 		}
-		return legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(s.sql, s.RoleCatalog(), s.actionResolver, s.cache, s.cfg, s.features, &licensing.OSSLicensingService{}, migrated), s.cfg)
+		return legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(s.sql, s.RoleCatalog(), s.actionResolver, s.cache, s.cfg, &licensing.OSSLicensingService{}, migrated), s.cfg)
 	})}
 }
 

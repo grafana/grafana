@@ -70,7 +70,7 @@ func newRouterMetrics(reg prometheus.Registerer) *routerMetrics {
 			Namespace: "grafana",
 			Subsystem: "router",
 			Name:      "backend_failures_total",
-			Help:      "Requests whose backend could not be reached or answered, by group, plugin ID (empty for other backends) and reason: breaker_open, timeout, transport, redirect_rejected, stack_origin_mismatch or auth.",
+			Help:      "Requests whose backend could not be reached or answered, by group, plugin ID (empty for other backends) and reason: breaker_open, timeout, transport, redirect_rejected, stack_origin_mismatch, auth or loop.",
 		}, []string{"group", "plugin_id", "reason"}),
 		breakerTransitions: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "grafana",

@@ -15,7 +15,9 @@ package search
 }
 
 #SearchFilterLeaf: {
-	field:    string
+	field: string
+	// "In" on every filterable field. "NotIn" on labels, state and health only;
+	// the other fields reject it. "All" is rejected.
 	operator: "In" | "NotIn" | "All"
 	values: [...string]
 }

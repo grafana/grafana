@@ -738,7 +738,9 @@ const indexMetricsRefreshInterval = 60 * time.Second
 func (b *bleveBackend) updateIndexMetricsPeriodically(ctx context.Context, indexPath string) {
 	defer b.bgTasksWg.Done()
 
+	mergeSampler := bleveMergeSampler{limiter: &processBleveMergeLogLimiter}
 	for ctx.Err() == nil {
+		mergeSampler.sample(b, bleveMergeLogMinElapsed)
 		b.updateMemoryIndexSizeMetrics(ctx)
 		b.updateIndexSizeMetric(ctx, indexPath)
 		b.updateIndexedKindsMetric(ctx)
@@ -1057,18 +1059,10 @@ func (b *bleveBackend) BuildIndex(
 
 	logWithDetails := b.log.FromContext(ctx).New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "reason", indexBuildReason)
 	resourceDir := b.getResourceDir(key)
-	// Large enough to coordinate with other replicas: download a snapshot, or build
-	// and upload one while they wait.
-	snapshotBuildEnabled := b.opts.Snapshot.Store != nil && docCount >= b.opts.Snapshot.MinDocCount
-	// A global index is built when it is first searched, without a size, so it
-	// may be large. Downloading its snapshot is much cheaper than building it, but
-	// it must not wait for another replica's build, as a small index would.
-	downloadOnly := b.opts.Snapshot.Store != nil && docCount < 0 && key.IsGlobal()
-	skipIfBuilding := options.SkipIfBuilding
-
 	cachedIndex := b.getCachedIndex(key, time.Now())
 	original := cachedIndex
-	if rebuildFrom, ok := options.RebuildFrom.(*bleveIndex); ok && rebuildFrom != nil {
+	rebuildFrom, _ := options.RebuildFrom.(*bleveIndex)
+	if rebuildFrom != nil {
 		original = rebuildFrom
 	}
 	originalHasMemoryIdleTimeout := rebuild && b.opts.IndexCacheTTLIdleOnly && b.opts.IndexCacheTTL > 0 &&
@@ -1076,7 +1070,32 @@ func (b *bleveBackend) BuildIndex(
 	if originalHasMemoryIdleTimeout && cachedIndex != original {
 		return nil, resource.ErrIndexClosedDuringRebuild
 	}
-	prepared, err := b.prepareIndex(ctx, key, snapshotBuildEnabled, downloadOnly, mapper, selectableFields, searchFieldsHash, rebuild, cachedIndex != nil, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails, skipIfBuilding)
+	if rebuild && rebuildFrom != nil && b.opts.Snapshot.Store != nil && maxFreshSnapshotAge > 0 {
+		// Rebuilding writes trash too, so use the raw count, not the live-only search count.
+		count, err := rebuildFrom.index.DocCount()
+		if err != nil {
+			logWithDetails.Warn("failed to count documents for snapshot coordination", "error", err)
+		} else if count <= math.MaxInt64 {
+			docCount = int64(count)
+		}
+	}
+	// Large enough to coordinate with other replicas: download a snapshot, or build
+	// and upload one while they wait.
+	snapshotBuildEnabled := b.opts.Snapshot.Store != nil && docCount >= b.opts.Snapshot.MinDocCount
+	if rebuild {
+		span.SetAttributes(
+			attribute.Int64("snapshot.min_doc_count", b.opts.Snapshot.MinDocCount),
+			attribute.Bool("snapshot.rebuild_coordination_enabled", snapshotBuildEnabled && maxFreshSnapshotAge > 0),
+		)
+		if docCount >= 0 {
+			span.SetAttributes(attribute.Int64("snapshot.doc_count", docCount))
+		}
+	}
+	// A global index is built when it is first searched, without a size, so it
+	// may be large. Downloading its snapshot is much cheaper than building it, but
+	// it must not wait for another replica's build, as a small index would.
+	downloadOnly := b.opts.Snapshot.Store != nil && docCount < 0 && key.IsGlobal()
+	prepared, err := b.prepareIndex(ctx, key, snapshotBuildEnabled, downloadOnly, mapper, selectableFields, searchFieldsHash, rebuild, cachedIndex != nil, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails, options.SkipIfBuilding)
 	if err != nil {
 		return nil, err
 	}
@@ -1919,11 +1938,6 @@ func (b *bleveBackend) closeAllIndexes() {
 	}
 }
 
-type updateRequest struct {
-	requestTime time.Time
-	callback    chan updateResult
-}
-
 type updateResult struct {
 	rv  int64
 	err error
@@ -1954,9 +1968,9 @@ type bleveIndex struct {
 	// RV returned by last List/ListModifiedSince operation. Updated when updating index.
 	resourceVersion atomic.Int64
 
-	// Timestamp when the last update to the index was done (started).
-	// Subsequent update requests only trigger new update if minUpdateInterval has elapsed.
+	// Requests arriving before this time reuse the last update's result, including failures.
 	nextUpdateTime time.Time
+	lastUpdateErr  error
 
 	standard resource.SearchableDocumentFields
 	fields   resource.SearchableDocumentFields
@@ -1980,10 +1994,10 @@ type bleveIndex struct {
 	rvPersistedAt     time.Time
 
 	updaterMu       sync.Mutex
-	updaterCond     *sync.Cond         // Used to signal the updater goroutine that there is work to do, or updater is no longer enabled and should stop. Also used by updater itself to stop early if there's no work to be done.
-	updaterShutdown bool               // When set to true, index is getting closed and updater is no longer going to update index.
-	updaterQueue    []updateRequest    // Queue of requests for next updater iteration.
-	updaterCancel   context.CancelFunc // If not nil, the updater goroutine is running with context associated with this cancel function.
+	updaterCond     *sync.Cond                      // Used to signal the updater goroutine that there is work to do, or updater is no longer enabled and should stop. Also used by updater itself to stop early if there's no work to be done.
+	updaterShutdown bool                            // When set to true, index is getting closed and updater is no longer going to update index.
+	updaterQueue    map[chan updateResult]time.Time // Pending callers keyed by their result channel for cancellation.
+	updaterCancel   context.CancelFunc              // If not nil, the updater goroutine is running with context associated with this cancel function.
 	updaterWg       sync.WaitGroup
 
 	indexMetrics     *resource.BleveIndexMetrics
@@ -3975,7 +3989,6 @@ func (b *bleveIndex) stopUpdaterAndCloseIndex() error {
 	b.updaterMu.Lock()
 	b.updaterShutdown = true
 	b.updaterCond.Broadcast()
-	// if updater is running, cancel it. (Setting to nil is only done from updater itself in defer.)
 	if b.updaterCancel != nil {
 		b.updaterCancel()
 	}
@@ -3992,8 +4005,7 @@ func (b *bleveIndex) UpdateIndex(ctx context.Context) (int64, error) {
 		return 0, nil
 	}
 
-	// Use chan with buffer size 1 to ensure that we can always send the result back, even if there's no reader anymore.
-	req := updateRequest{requestTime: time.Now(), callback: make(chan updateResult, 1)}
+	requestedAt := time.Now()
 
 	// Make sure that the updater goroutine is running.
 	b.updaterMu.Lock()
@@ -4002,7 +4014,17 @@ func (b *bleveIndex) UpdateIndex(ctx context.Context) (int64, error) {
 		return 0, fmt.Errorf("cannot update index: %w", bleve.ErrorIndexClosed)
 	}
 
-	b.updaterQueue = append(b.updaterQueue, req)
+	if err := ctx.Err(); err != nil {
+		b.updaterMu.Unlock()
+		return 0, err
+	}
+
+	// The updater may already have taken this batch when the caller cancels.
+	result := make(chan updateResult, 1)
+	if b.updaterQueue == nil {
+		b.updaterQueue = make(map[chan updateResult]time.Time)
+	}
+	b.updaterQueue[result] = requestedAt
 
 	// If updater is not running, start it.
 	if b.updaterCancel == nil {
@@ -4014,8 +4036,14 @@ func (b *bleveIndex) UpdateIndex(ctx context.Context) (int64, error) {
 	// wait for the update to finish
 	select {
 	case <-ctx.Done():
+		b.updaterMu.Lock()
+		delete(b.updaterQueue, result)
+		if len(b.updaterQueue) == 0 {
+			b.updaterQueue = nil
+		}
+		b.updaterMu.Unlock()
 		return 0, ctx.Err()
-	case ur := <-req.callback:
+	case ur := <-result:
 		return ur.rv, ur.err
 	}
 }
@@ -4024,21 +4052,10 @@ func (b *bleveIndex) UpdateIndex(ctx context.Context) (int64, error) {
 func (b *bleveIndex) startUpdater() {
 	c, cancel := context.WithCancel(context.Background())
 	b.updaterCancel = cancel
-	b.updaterWg.Add(1)
-
-	go func() {
-		defer func() {
-			cancel() // Make sure to call this to release resources.
-
-			b.updaterMu.Lock()
-			b.updaterCancel = nil
-			b.updaterMu.Unlock()
-
-			b.updaterWg.Done()
-		}()
-
+	b.updaterWg.Go(func() {
+		defer cancel()
 		b.runUpdater(c)
-	}()
+	})
 }
 
 const maxWait = 5 * time.Second
@@ -4056,7 +4073,11 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 
 		shutdown := b.updaterShutdown
 		batch := b.updaterQueue
-		b.updaterQueue = nil // empty the queue for the next batch
+		b.updaterQueue = nil
+		if shutdown || len(batch) == 0 {
+			// A caller queuing after we decide to exit must start a new updater.
+			b.updaterCancel = nil
+		}
 		b.updaterMu.Unlock()
 
 		t.Stop()
@@ -4067,21 +4088,21 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 		}
 
 		if shutdown {
-			for _, req := range batch {
-				req.callback <- updateResult{err: fmt.Errorf("cannot update index: %w", bleve.ErrorIndexClosed)}
+			for result := range batch {
+				result <- updateResult{err: fmt.Errorf("cannot update index: %w", bleve.ErrorIndexClosed)}
 			}
 			return
 		}
 
-		// Check if requests arrived before minUpdateInterval since the last update has elapsed, and remove such requests.
-		for ix := 0; ix < len(batch); {
-			req := batch[ix]
-			if req.requestTime.Before(b.nextUpdateTime) {
-				req.callback <- updateResult{rv: b.resourceVersion.Load()}
-				batch = append(batch[:ix], batch[ix+1:]...)
-			} else {
-				// Keep in the batch
-				ix++
+		// Reuse the last result, including errors, for requests that arrived within minUpdateInterval of the last update's start.
+		for result, requestedAt := range batch {
+			if requestedAt.Before(b.nextUpdateTime) {
+				if b.lastUpdateErr != nil {
+					result <- updateResult{err: b.lastUpdateErr}
+				} else {
+					result <- updateResult{rv: b.resourceVersion.Load()}
+				}
+				delete(batch, result)
 			}
 		}
 
@@ -4090,16 +4111,16 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 			continue
 		}
 
-		// Bump next update time
-		b.nextUpdateTime = time.Now().Add(b.minUpdateInterval)
-
 		var rv int64
 		var err = ctx.Err()
 		if err == nil {
+			started := time.Now()
 			rv, err = b.updateIndexWithLatestModifications(ctx, len(batch))
+			b.nextUpdateTime = started.Add(b.minUpdateInterval)
+			b.lastUpdateErr = err
 		}
-		for _, req := range batch {
-			req.callback <- updateResult{rv: rv, err: err}
+		for result := range batch {
+			result <- updateResult{rv: rv, err: err}
 		}
 	}
 }
@@ -4113,6 +4134,9 @@ func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context, req
 
 	startTime := time.Now()
 	listRV, docs, err := b.updaterFn(ctx, b, sinceRV)
+	if err == nil {
+		err = ctx.Err()
+	}
 	if err == nil && listRV > 0 && listRV != sinceRV {
 		err = b.advanceResourceVersion(listRV, docs) // updates b.resourceVersion
 	}

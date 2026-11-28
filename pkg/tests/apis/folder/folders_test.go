@@ -15,6 +15,8 @@ import (
 	"time"
 	"uuid"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -426,6 +428,25 @@ func TestIntegrationFolderCascadeDeleteFinalizer(t *testing.T) {
 			require.Equal(t, expected, patched.GetFinalizers())
 		})
 
+		t.Run("a dry-run delete returns the terminating folder and writes nothing", func(t *testing.T) {
+			before, err := client.Resource.Get(ctx, "flag-on", metav1.GetOptions{})
+			require.NoError(t, err)
+
+			rsp := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodDelete,
+				Path:   fmt.Sprintf("/apis/%s/namespaces/%s/folders/flag-on?dryRun=All", gvr.GroupVersion().String(), helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())),
+			}, &unstructured.Unstructured{})
+			require.Equal(t, http.StatusOK, rsp.Response.StatusCode, string(rsp.Body))
+			require.NotNil(t, rsp.Result.GetDeletionTimestamp(), "the response is the folder a live delete would leave terminating")
+			require.Equal(t, expected, rsp.Result.GetFinalizers())
+
+			current, err := client.Resource.Get(ctx, "flag-on", metav1.GetOptions{})
+			require.NoError(t, err)
+			require.Nil(t, current.GetDeletionTimestamp())
+			require.Equal(t, before.GetResourceVersion(), current.GetResourceVersion())
+		})
+
 		t.Run("delete leaves it terminating until the finalizer is removed", func(t *testing.T) {
 			require.NoError(t, client.Resource.Delete(ctx, "flag-on", metav1.DeleteOptions{}))
 
@@ -440,6 +461,110 @@ func TestIntegrationFolderCascadeDeleteFinalizer(t *testing.T) {
 			_, err = client.Resource.Get(ctx, "flag-on", metav1.GetOptions{})
 			require.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
 		})
+	})
+
+	// The flag is read when the folder is deleted, so these flip it on the running server.
+	t.Run("the flag is read at delete time, not when the folder was created", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			EnableFeatureToggles: []string{},
+		})
+		client := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Admin, GVR: gvr})
+		setAsync := func(enabled bool) {
+			t.Helper()
+			provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+				featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: {
+					Key:            featuremgmt.FlagFolderAsyncCascadeDeleteThroughController,
+					DefaultVariant: "default",
+					Variants:       map[string]any{"default": enabled},
+				},
+			})
+			require.NoError(t, err)
+			require.NoError(t, openfeature.SetProviderAndWait(provider))
+		}
+		t.Cleanup(func() { setAsync(false) })
+		dryRunDelete := func(name string) apis.K8sResponse[unstructured.Unstructured] {
+			return apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodDelete,
+				Path:   fmt.Sprintf("/apis/%s/namespaces/%s/folders/%s?dryRun=All", gvr.GroupVersion().String(), helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()), name),
+			}, &unstructured.Unstructured{})
+		}
+
+		created, err := client.Resource.Create(ctx, newFolderObject(gvr.GroupVersion().String(), "stamp-at-delete"), metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.Empty(t, created.GetFinalizers(), "created while the flag was off")
+
+		setAsync(true)
+
+		t.Run("a dry-run delete returns the folder terminating with the finalizer, and writes nothing", func(t *testing.T) {
+			rsp := dryRunDelete("stamp-at-delete")
+			require.Equal(t, http.StatusOK, rsp.Response.StatusCode, string(rsp.Body))
+			require.NotNil(t, rsp.Result.GetDeletionTimestamp())
+			require.Equal(t, []string{folders.CascadeDeleteFinalizer}, rsp.Result.GetFinalizers())
+
+			current, err := client.Resource.Get(ctx, "stamp-at-delete", metav1.GetOptions{})
+			require.NoError(t, err)
+			require.Nil(t, current.GetDeletionTimestamp())
+			require.Empty(t, current.GetFinalizers())
+		})
+
+		t.Run("a delete stamps the finalizer and leaves the folder terminating", func(t *testing.T) {
+			require.NoError(t, client.Resource.Delete(ctx, "stamp-at-delete", metav1.DeleteOptions{}))
+
+			got, err := client.Resource.Get(ctx, "stamp-at-delete", metav1.GetOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, got.GetDeletionTimestamp())
+			require.Equal(t, []string{folders.CascadeDeleteFinalizer}, got.GetFinalizers())
+		})
+
+		t.Run("turning the flag off strips the finalizer, and the delete is immediate", func(t *testing.T) {
+			setAsync(true)
+			stamped, err := client.Resource.Create(ctx, newFolderObject(gvr.GroupVersion().String(), "strip-at-delete"), metav1.CreateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, []string{folders.CascadeDeleteFinalizer}, stamped.GetFinalizers())
+
+			setAsync(false)
+			require.NoError(t, client.Resource.Delete(ctx, "strip-at-delete", metav1.DeleteOptions{}))
+
+			_, err = client.Resource.Get(ctx, "strip-at-delete", metav1.GetOptions{})
+			require.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
+		})
+	})
+
+	// folderStorage hides deletecollection, so it is only served once the legacy permissions service
+	// is left unwired, which this toggle does.
+	t.Run("a collection delete is not supported and deletes nothing", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			EnableFeatureToggles: []string{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController, featuremgmt.FlagKubernetesAuthzResourcePermissionApis},
+		})
+		client := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Admin, GVR: gvr})
+
+		const label = "collection-delete"
+		before := map[string]string{}
+		for _, name := range []string{"coll-a", "coll-b"} {
+			obj := newFolderObject(gvr.GroupVersion().String(), name)
+			obj.SetLabels(map[string]string{label: "true"})
+			created, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, []string{folders.CascadeDeleteFinalizer}, created.GetFinalizers(), name)
+			before[name] = created.GetResourceVersion()
+		}
+
+		err := client.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: label + "=true"})
+		require.True(t, apierrors.IsMethodNotSupported(err), "expected 405, got %v", err)
+
+		for name, rv := range before {
+			got, err := client.Resource.Get(ctx, name, metav1.GetOptions{})
+			require.NoError(t, err, name)
+			require.Nil(t, got.GetDeletionTimestamp(), name)
+			require.Equal(t, rv, got.GetResourceVersion(), name)
+		}
 	})
 }
 
@@ -2883,6 +3008,30 @@ func TestIntegrationFolderValidationReturns400(t *testing.T) {
 			require.Equal(t, uc.expectedMessageID, string(statusErr.ErrStatus.Details.UID))
 		})
 	}
+
+	t.Run("nested title General is allowed but cannot be moved to root", func(t *testing.T) {
+		parent, err := client.Resource.Create(context.Background(),
+			makeFolder("nested-general-parent", "Nested General Parent", ""), metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		nested, err := client.Resource.Create(context.Background(),
+			makeFolder("nested-general", "General", parent.GetName()), metav1.CreateOptions{})
+		require.NoError(t, err, "a nested folder may be titled General")
+
+		annotations := nested.GetAnnotations()
+		delete(annotations, utils.AnnoKeyFolder)
+		nested.SetAnnotations(annotations)
+
+		_, err = client.Resource.Update(context.Background(), nested, metav1.UpdateOptions{})
+		require.Error(t, err)
+		require.Truef(t, apierrors.IsBadRequest(err),
+			"expected HTTP 400 BadRequest; got: %v (%T)", err, err)
+
+		var statusErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusErr), "expected *apierrors.StatusError; got %T", err)
+		require.NotNil(t, statusErr.ErrStatus.Details, "expected Status.Details to carry the errutil messageID")
+		require.Equal(t, "folder.name-exists", string(statusErr.ErrStatus.Details.UID))
+	})
 }
 
 // The k6 app provisions its own subfolders through a service account, so that

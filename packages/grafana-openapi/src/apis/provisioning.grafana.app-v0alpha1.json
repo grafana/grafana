@@ -3914,6 +3914,49 @@
   },
   "components": {
     "schemas": {
+      "com.github.grafana.grafana-app-sdk.resource.InlineSecureValue": {
+        "type": "object",
+        "oneOf": [
+          {
+            "required": ["create"]
+          },
+          {
+            "required": ["name"]
+          },
+          {
+            "required": ["remove"]
+          }
+        ],
+        "not": {
+          "required": ["description"],
+          "not": {
+            "required": ["create"]
+          }
+        },
+        "properties": {
+          "create": {
+            "description": "Plaintext value to create in the secret service. Used only in create or update requests.",
+            "type": "string",
+            "maxLength": 24576,
+            "minLength": 1
+          },
+          "description": {
+            "description": "Optional description for a newly created secret. Only valid when create is set.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Reference to an existing value in the secret service.",
+            "type": "string",
+            "maxLength": 253,
+            "minLength": 1
+          },
+          "remove": {
+            "description": "Remove this entry from the secure value map, deleting the secret if it is owned by this resource.",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "Author": {
         "type": "object",
         "required": ["name", "username"],
@@ -4214,7 +4257,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/InlineSecureValue"
+                "$ref": "#/components/schemas/com.github.grafana.grafana-app-sdk.resource.InlineSecureValue"
               }
             ]
           },
@@ -4223,7 +4266,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/InlineSecureValue"
+                "$ref": "#/components/schemas/com.github.grafana.grafana-app-sdk.resource.InlineSecureValue"
               }
             ]
           },
@@ -4232,7 +4275,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/InlineSecureValue"
+                "$ref": "#/components/schemas/com.github.grafana.grafana-app-sdk.resource.InlineSecureValue"
               }
             ]
           }
@@ -6312,7 +6355,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/InlineSecureValue"
+                "$ref": "#/components/schemas/com.github.grafana.grafana-app-sdk.resource.InlineSecureValue"
               }
             ]
           },
@@ -6321,7 +6364,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/InlineSecureValue"
+                "$ref": "#/components/schemas/com.github.grafana.grafana-app-sdk.resource.InlineSecureValue"
               }
             ]
           },
@@ -6330,7 +6373,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/InlineSecureValue"
+                "$ref": "#/components/schemas/com.github.grafana.grafana-app-sdk.resource.InlineSecureValue"
               }
             ]
           }
@@ -6593,43 +6636,6 @@
           }
         }
       },
-      "InlineSecureValue": {
-        "description": "Allow access to a secure value inside",
-        "oneOf": [
-          {
-            "required": ["name"]
-          },
-          {
-            "required": ["create"]
-          },
-          {
-            "required": ["remove"]
-          }
-        ],
-        "properties": {
-          "create": {
-            "description": "Create a secure value -- this is only used for POST/PUT",
-            "type": "string",
-            "maxLength": 24576,
-            "minLength": 1
-          },
-          "description": {
-            "description": "Optionally when creating a secure value, you can pass a custom description.",
-            "type": "string"
-          },
-          "name": {
-            "description": "Name in the secret service (reference)",
-            "type": "string",
-            "maxLength": 253,
-            "minLength": 1
-          },
-          "remove": {
-            "description": "Remove this value from the secure value map Values owned by this resource will be deleted if necessary",
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false
-      },
       "Unstructured": {
         "type": "object",
         "additionalProperties": true,
@@ -6672,9 +6678,9 @@
             "default": ""
           },
           "operator": {
-            "description": "Operator is \"In\", \"NotIn\" or \"All\" in v1. \"In\" matches any of the values, \"NotIn\" excludes all of them, and \"All\" requires the field to hold every value, which only a field holding a list of values can do.",
+            "description": "Operator is \"In\", \"NotIn\" or \"All\" in v1. \"In\" matches any of the values, \"NotIn\" excludes all of them, and \"All\" requires the field to hold every value, which only a field holding a list of values can do.\n\nPossible enum values:\n - `\"All\"` requires the resources whose field holds every one of the values, which only a field holding a list of values can do.\n - `\"In\"` keeps the resources whose field matches any of the values.\n - `\"NotIn\"` keeps the resources whose field matches none of them.",
             "type": "string",
-            "default": ""
+            "enum": ["All", "In", "NotIn"]
           },
           "values": {
             "type": "array",

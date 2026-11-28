@@ -7,10 +7,29 @@ import { Alert } from '../Alert/Alert';
 
 # IconButton
 
-This component looks just like an icon but behaves like a button. It fulfils an action when you click it and has a hover as well a focus states. You can choose which icon size you would like to use.
+This component looks just like an icon but behaves like a button. It fulfills an action when you click it and has a hover as well a focus states. You can choose which icon size you would like to use.
+
+## When to use
 
 `IconButton` is best used when you only want an icon instead of a button with text, for example when you want to place a solitary clickable icon next to text. An example where an `IconButton` is used in Grafana is the hamburger icon at the top left which opens the new navigation.
+
+## Never use for
+
+No component-specific guidance documented yet.
+
+## Do's and don'ts
+
+- Always include the button's label in a tooltip.
+- In exceptional cases where the tooltip does not make sense and the icon is unambiguous (e.g., angle-down for expanding a folder), add an aria-label and the tooltip will be removed.
+- When using an `IconButton` together with text, ensure they are aligned by adding a wrapper with `display: flex` and `align-items: center`.
+- Use in areas that are limited in space and are in a low-context environment.
+- Make sure the icon's significance is clear and unambiguous.
+- Use `IconButton` instead of a [Button](/docs/inputs-button--docs) when only an icon is needed.
+- Avoid using it in high-context situations.
+
 When using `IconButton` right next to a text element consider wrapping both in a flex container and use `align-items: center;` to make them align properly.
+
+## Usage
 
 There are two options to use the IconButton:
 
@@ -19,20 +38,7 @@ There are two options to use the IconButton:
 
 The IconButton used to have a property called `ariaLabel` which got deprecated. You can now use the regular property `aria-label` instead.
 
-### Do's
-
-- Always include the button's label in a tooltip.
-- In exceptional cases where the tooltip does not make sense and the icon is unambiguous (e.g., angle-down for expanding a folder), add an aria-label and the tooltip will be removed.
-- When using an `IconButton` together with text, ensure they are aligned by adding a wrapper with `display: flex` and `align-items: center`.
-- Use in areas that are limited in space and are in a low-context environment.
-- Make sure the icon's significance is clear and unambiguous.
-- Use `IconButton` instead of a [Button](/docs/inputs-button--docs) when only an icon is needed.
-
-### Don'ts
-
-- Avoid using it in high-context situations.
-
-## Variants
+### Variants
 
 <table>
   <thead>
@@ -65,6 +71,14 @@ The IconButton used to have a property called `ariaLabel` which got deprecated. 
       <td>This is used for delete actions.</td>
     </tr>
     <tr>
+      <th scope="row">Warning</th>
+      <td>Ghost</td>
+      <td>
+        Use this when the icon opens or points to something that needs attention, for example a warning next to a log
+        source. For a risky action, use Destructive instead.
+      </td>
+    </tr>
+    <tr>
       <th scope="row">Disabled</th>
       <td>Ghost</td>
       <td>
@@ -75,16 +89,16 @@ The IconButton used to have a property called `ariaLabel` which got deprecated. 
   </tbody>
 </table>
 
-## Anatomy
+### Anatomy
 
 - Icon
 - Container (on hover)
 
-## Placement
+### Placement
 
 `IconButton`s are best used in areas that are limited in space and are action-heavy. These could be toolbars or in areas that provide inline editing such as tables or cards.
 
-## Button Sizes
+### Button sizes
 
 <table>
   <thead>
@@ -153,20 +167,23 @@ The IconButton used to have a property called `ariaLabel` which got deprecated. 
   </tbody>
 </table>
 
-## Accessibility
-
-- Add a text for tooltip (it will also be used as the aria-label).
-- In exceptional cases where the tooltip does not make sense add the aria-label.
-
-## Behaviours
-
-### Hover
-
-On hover, the `IconButton` displays a tooltip that includes the IconButton's label.
-
 <Alert severity="warning" title={'Please note:'}>
   After reviewing this component we would like you to know that there are only 5 sizes available (sizes xs to xl). Sizes
   xxl and xxxl are now shown in size xl as well and will be deprecated in the future.
 </Alert>
+
+### Behaviors
+
+#### Hover
+
+On hover, the `IconButton` displays a tooltip that includes the IconButton's label.
+
+## Accessibility
+
+- Add a text for tooltip (it will also be used as the aria-label).
+- In exceptional cases where the tooltip does not make sense add the aria-label.
+- Color alone isn't enough for `warning`, so the tooltip or aria-label has to say what the problem is.
+
+## Props
 
 <ArgTypes of={IconButton} />

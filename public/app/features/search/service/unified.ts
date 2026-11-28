@@ -19,7 +19,7 @@ import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import kbn from 'app/core/utils/kbn';
-import { STARRED_KINDS } from 'app/features/stars/kinds';
+import { STARRED_INDEX_KINDS } from 'app/features/stars/kinds';
 import { canUseStars, findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
 import { dispatch } from 'app/store/store';
 
@@ -92,7 +92,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       })
     );
     // One uid may be starred as several kinds, so the search gets each uid once
-    const starsIds = [...new Set(STARRED_KINDS.flatMap((k) => findStarredNames(result.data, k.group, k.kind)))];
+    const starsIds = [...new Set(STARRED_INDEX_KINDS.flatMap((k) => findStarredNames(result.data, k.group, k.kind)))];
 
     if (starsIds.length) {
       return this.doSearchQuery({
@@ -191,22 +191,25 @@ export class UnifiedSearcher implements GrafanaSearcher {
     const view = new DataFrameView<DashboardQueryResult>(first);
 
     const getNextPage = async () => {
-      while (loadMax > view.dataFrame.length) {
+      while (view.dataFrame.length < Math.min(loadMax, meta.count)) {
         const offset = view.dataFrame.length;
-        if (offset >= meta.count) {
-          return;
-        }
         const nextPageUrl = `${uri}&offset=${offset}`;
         const resp = await this.fetchResponse(nextPageUrl);
-        const frame = toDashboardResults(resp, query.sort ?? '');
-        if (!frame) {
-          console.log('no results', frame);
-          return;
+        if (resp.hits.length === 0) {
+          // The initial total can be an upper bound. No more visible rows can advance this offset.
+          meta.count = offset;
+          break;
         }
+        const frame = toDashboardResults(resp, query.sort ?? '');
 
         // We append the frames and align the fields here, but if there are new fields, view won't know about them
         // and won't be accessible by doing `view.get(0).newField` for example
         appendFrame(view.dataFrame, frame);
+
+        // When the loaded rows reach the latest total, there is no need to probe for an empty page.
+        if (resp.totalHits === view.dataFrame.length) {
+          meta.count = view.dataFrame.length;
+        }
 
         // Add all the location lookup info
         const submeta = frame.meta?.custom;
@@ -218,20 +221,21 @@ export class UnifiedSearcher implements GrafanaSearcher {
           }
         }
       }
-      pending = undefined;
     };
 
     return {
-      totalRows: meta.count ?? first.length,
+      get totalRows() {
+        return meta.count;
+      },
 
       // This will be mutated when loadMoreItems is called.
       view,
 
       loadMoreItems: async (stopIndex: number): Promise<void> => {
         loadMax = Math.max(loadMax, stopIndex + 1);
-        if (!pending) {
-          pending = getNextPage();
-        }
+        pending ??= getNextPage().finally(() => {
+          pending = undefined;
+        });
         return pending;
       },
 

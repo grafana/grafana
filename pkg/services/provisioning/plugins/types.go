@@ -13,7 +13,6 @@ type appFromConfig struct {
 	OrgName        string
 	PluginID       string
 	Enabled        bool
-	Pinned         bool
 	PluginVersion  string
 	JSONData       map[string]any
 	SecureJSONData map[string]string
@@ -47,7 +46,6 @@ func (cfg *pluginsAsConfigV0) mapToPluginsFromConfig() *pluginsAsConfig {
 			OrgName:        app.OrgName.Value(),
 			PluginID:       app.Type.Value(),
 			Enabled:        !app.Disabled.Value(),
-			Pinned:         true,
 			JSONData:       app.JSONData.Value(),
 			SecureJSONData: app.SecureJSONData.Value(),
 		})

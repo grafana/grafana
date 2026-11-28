@@ -30,6 +30,15 @@ func TestCfg_ReadUnifiedAlertingSettings(t *testing.T) {
 		require.Equal(t, alertingDefaultInitializationTimeout, cfg.UnifiedAlerting.InitializationTimeout)
 	}
 
+	t.Run("notification history loki_inject_user", func(t *testing.T) {
+		require.False(t, cfg.UnifiedAlerting.NotificationHistory.LokiInjectUser)
+		cfg.Raw.Section("unified_alerting.notification_history").Key("loki_inject_user").SetValue("true")
+		require.NoError(t, cfg.ReadUnifiedAlertingSettings(cfg.Raw))
+		require.True(t, cfg.UnifiedAlerting.NotificationHistory.LokiInjectUser)
+		cfg.Raw.Section("unified_alerting.notification_history").Key("loki_inject_user").SetValue("false")
+		require.NoError(t, cfg.ReadUnifiedAlertingSettings(cfg.Raw))
+	})
+
 	t.Run("screenshot include_alert_history", func(t *testing.T) {
 		require.True(t, cfg.UnifiedAlerting.Screenshots.IncludeAlertHistory)
 		for _, value := range []bool{false, true} {

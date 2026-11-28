@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -77,20 +80,28 @@ func (s embeddedStream) Context() context.Context { return s.ctx }
 
 type embeddedServer struct {
 	authzv1.UnimplementedLegacyAuthzServiceServer
-	loader *Loader
-	cfg    *setting.Cfg
-	guard  *int
+	loader  *Loader
+	cfg     *setting.Cfg
+	guard   *int
+	metrics *serverMetrics
 }
 
 // NewEmbeddedClient owns a private in-process channel. The legacy handler is
 // deliberately never registered on a network server or the Check/List channel.
 func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.LegacyUserPermissionsClient {
+	return newEmbeddedClient(loader, cfg, nil)
+}
+
+func newEmbeddedClient(loader *Loader, cfg *setting.Cfg, reg prometheus.Registerer) legacyclient.LegacyUserPermissionsClient {
 	guard := new(int)
-	server := &embeddedServer{loader: loader, cfg: cfg, guard: guard}
+	server := &embeddedServer{loader: loader, cfg: cfg, guard: guard, metrics: newMetrics(reg, "embedded")}
 	channel := (&inprocgrpc.Channel{}).WithServerStreamInterceptor(func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		ctx := stream.Context()
+		search := info.FullMethod == authzv1.LegacyAuthzService_LegacySearchUsersPermissions_FullMethodName
 		if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
 			ctx = trace.ContextWithSpanContext(ctx, trace.SpanContextFromContext(clientCtx))
+			// Preserve request targeting so embedded and direct loads evaluate the same flags.
+			ctx = openfeature.WithTransactionContext(ctx, openfeature.TransactionContext(clientCtx))
 			if shadow.IsShadow(clientCtx) {
 				ctx = shadow.WithContext(ctx)
 			}
@@ -98,24 +109,46 @@ func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.LegacyUser
 			// Preserve their SQL session without forwarding unrelated context values.
 			// Receiver renames refresh permissions after the outermost transaction commits.
 			// No other caller is known to read permissions inside a transaction.
-			if sess, ok := clientCtx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
+			sess, _ := clientCtx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession)
+			if sess != nil || search {
 				call, ok := clientCtx.Value(embeddedTransactionCallKey{}).(*embeddedTransactionCall)
 				if !ok || !call.start() {
 					return status.Error(codes.Canceled, "embedded transaction call already returned")
 				}
 				defer close(call.done)
-				ctx = context.WithValue(ctx, sqlstore.ContextSessionKey{}, sess)
+				if sess != nil {
+					ctx = context.WithValue(ctx, sqlstore.ContextSessionKey{}, sess)
+				}
+			}
+			if search {
+				call, ok := clientCtx.Value(embeddedSearchCallKey{}).(*embeddedSearchCall)
+				if !ok {
+					return status.Error(codes.PermissionDenied, "legacy search requires an embedded call")
+				}
+				ctx = context.WithValue(ctx, embeddedSearchCallKey{}, call)
 			}
 		}
 		ctx = context.WithValue(ctx, embeddedCallKey{}, guard)
-		ctx = types.WithAuthInfo(ctx, LegacyPermissionCaller("*"))
+		if search {
+			ctx = types.WithAuthInfo(ctx, LegacySearchPermissionCaller("*"))
+		} else {
+			ctx = types.WithAuthInfo(ctx, LegacyPermissionCaller("*"))
+		}
 		return handler(srv, embeddedStream{ServerStream: stream, ctx: ctx})
 	})
 	authzv1.RegisterLegacyAuthzServiceServer(channel, server)
-	return &embeddedClient{LegacyUserPermissionsClient: legacyclient.NewLegacyClient(channel)}
+	return &embeddedClient{LegacyUserPermissionsClient: legacyclient.NewLegacyClient(channel, legacyclient.WithLegacyTracerClientOption(tracer))}
 }
 
-func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
+func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) (err error) {
+	started := time.Now()
+	defer func() {
+		result := "ok"
+		if err != nil {
+			result = "error"
+		}
+		s.metrics.observe(started, result)
+	}()
 	ctx := stream.Context()
 	if s.guard == nil || ctx.Value(embeddedCallKey{}) != s.guard {
 		return status.Error(codes.PermissionDenied, "legacy enumeration is embedded-only")
@@ -153,12 +186,30 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 	} else if req.NoOrgMembership {
 		orgID = -1
 	}
+	return s.loader.streamPermissions(ctx, req, stream, namespace, orgID)
+}
+
+func (l *Loader) streamPermissions(ctx context.Context, req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer, namespace string, orgID int64) error {
 	requester := &legacyRequester{
-		SignedInUser: &user.SignedInUser{OrgID: orgID, OrgRole: identity.RoleType(req.Identity.OrgRole), IsGrafanaAdmin: req.Identity.IsGrafanaAdmin, TeamIDs: req.Identity.TeamIds}, //nolint:staticcheck // The compatibility contract carries numeric RBAC memberships separately from contextual groups.
-		identity:     req.Identity, namespace: namespace,
+		SignedInUser: &user.SignedInUser{
+			OrgID: orgID, OrgRole: types.RoleType(req.Identity.OrgRole), IsGrafanaAdmin: req.Identity.IsGrafanaAdmin,
+			TeamIDs:        req.Identity.TeamIds, //nolint:staticcheck // The compatibility contract carries numeric RBAC memberships separately from contextual groups.
+			ExternalGroups: req.Identity.GetGroups(),
+		},
+		identity: req.Identity, namespace: namespace,
 	}
-	permissions, err := s.loader.GetUserPermissions(ctx, requester, ac.Options{ReloadCache: req.ReloadCache, SkipZanzanaCache: req.SkipZanzanaCache})
+	if ns, ok := ctx.Value(remoteNamespaceKey{}).(string); ok {
+		key, err := remoteIdentityCacheKey(req.Identity, ns, orgID)
+		if err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
+		requester.remoteCacheKey = key
+	}
+	permissions, err := l.GetUserPermissions(ctx, requester, ac.Options{ReloadCache: req.ReloadCache, SkipZanzanaCache: req.SkipZanzanaCache})
 	if err != nil {
+		return err
+	}
+	if err := ctx.Err(); err != nil {
 		return err
 	}
 	// Load successfully before streaming; clients discard all chunks on error.
@@ -183,8 +234,9 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 // roles, teams or admin state from database-backed identity caches.
 type legacyRequester struct {
 	*user.SignedInUser
-	identity  *authzv1.LegacyPermissionIdentity
-	namespace string
+	identity       *authzv1.LegacyPermissionIdentity
+	namespace      string
+	remoteCacheKey string
 }
 
 func (r *legacyRequester) GetIdentityType() types.IdentityType {
@@ -206,11 +258,13 @@ func (r *legacyRequester) GetInternalID() (int64, error) {
 	}
 	return *r.identity.InternalId, nil
 }
-func (r *legacyRequester) HasUniqueId() bool           { return r.identity.HasUniqueId }
-func (r *legacyRequester) GetNamespace() string        { return r.namespace }
-func (r *legacyRequester) GetGroups() []string         { return r.identity.Groups }
-func (r *legacyRequester) GetExternalGroups() []string { return r.identity.Groups }
+func (r *legacyRequester) HasUniqueId() bool    { return r.identity.HasUniqueId }
+func (r *legacyRequester) GetNamespace() string { return r.namespace }
+func (r *legacyRequester) GetGroups() []string  { return r.identity.Groups }
 func (r *legacyRequester) GetCacheKey() string {
+	if r.remoteCacheKey != "" {
+		return r.remoteCacheKey
+	}
 	if r.identity.CacheKey != nil {
 		return *r.identity.CacheKey
 	}
@@ -218,7 +272,7 @@ func (r *legacyRequester) GetCacheKey() string {
 	if !r.HasUniqueId() {
 		id = string(r.GetOrgRole())
 		if id == "" {
-			id = string(identity.RoleNone)
+			id = string(types.RoleNone)
 		}
 	}
 	return fmt.Sprintf("%d-%s-%s", r.GetOrgID(), r.GetIdentityType(), id)

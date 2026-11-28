@@ -3353,6 +3353,138 @@ func TestIndexUpdateWithErrors(t *testing.T) {
 	}
 }
 
+func TestIndexUpdatePacesRetriesAfterFailure(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const initialRV int64 = 10
+		const minInterval = 100 * time.Millisecond
+		updateErr := errors.New("KV unavailable")
+		var attempts []int64
+		idx := newTestBleveUpdater(t, func(_ context.Context, _ resource.ResourceIndex, sinceRV int64) (int64, int, error) {
+			attempts = append(attempts, sinceRV)
+			if len(attempts) == 1 {
+				return sinceRV + 1, 1, updateErr
+			}
+			return sinceRV + 2, 1, nil
+		})
+		idx.resourceVersion.Store(initialRV)
+		idx.minUpdateInterval = minInterval
+
+		_, err := idx.UpdateIndex(t.Context())
+		require.ErrorIs(t, err, updateErr)
+		synctest.Sleep(minInterval - time.Nanosecond)
+		_, err = idx.UpdateIndex(t.Context())
+		require.ErrorIs(t, err, updateErr)
+		require.Equal(t, []int64{initialRV}, attempts)
+
+		synctest.Sleep(time.Nanosecond)
+		rv, err := idx.UpdateIndex(t.Context())
+		require.NoError(t, err)
+		require.Equal(t, initialRV+2, rv)
+		require.Equal(t, []int64{initialRV, initialRV}, attempts)
+
+		rv, err = idx.UpdateIndex(t.Context())
+		require.NoError(t, err)
+		require.Equal(t, initialRV+2, rv)
+		require.Len(t, attempts, 2)
+	})
+}
+
+func TestIndexUpdateRemovesCanceledQueuedCallers(t *testing.T) {
+	updateErr := errors.New("KV unavailable")
+	for _, tc := range []struct {
+		name string
+		err  error
+	}{
+		{name: "success"},
+		{name: "error", err: updateErr},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				finish := make(chan struct{})
+				idx := newTestBleveUpdater(t, func(ctx context.Context, _ resource.ResourceIndex, sinceRV int64) (int64, int, error) {
+					if sinceRV == 0 {
+						select {
+						case <-ctx.Done():
+							return 0, 0, ctx.Err()
+						case <-finish:
+							return 1, 1, nil
+						}
+					}
+					if tc.err != nil {
+						return 0, 0, tc.err
+					}
+					return 2, 1, nil
+				})
+				update := func(ctx context.Context) <-chan updateResult {
+					result := make(chan updateResult, 1)
+					go func() {
+						rv, err := idx.UpdateIndex(ctx)
+						result <- updateResult{rv: rv, err: err}
+					}()
+					return result
+				}
+				queueLen := func() int {
+					idx.updaterMu.Lock()
+					defer idx.updaterMu.Unlock()
+					return len(idx.updaterQueue)
+				}
+
+				first := update(t.Context())
+				synctest.Wait()
+				ctx, cancel := context.WithCancel(t.Context())
+				defer cancel()
+				canceled := []<-chan updateResult{update(ctx), update(ctx)}
+				live := update(t.Context())
+				synctest.Wait()
+				require.Equal(t, 3, queueLen())
+
+				cancel()
+				for _, result := range canceled {
+					require.ErrorIs(t, (<-result).err, context.Canceled)
+				}
+				require.Equal(t, 1, queueLen(), "canceled callers must be removed before the first update finishes")
+				close(finish)
+				require.Equal(t, updateResult{rv: 1}, <-first)
+				result := <-live
+				require.ErrorIs(t, result.err, tc.err)
+				if tc.err == nil {
+					require.Equal(t, int64(2), result.rv)
+				}
+			})
+		})
+	}
+}
+
+func TestIndexUpdateCallerCancellationDoesNotCancelSharedUpdate(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		finish := make(chan struct{})
+		idx := newTestBleveUpdater(t, func(ctx context.Context, _ resource.ResourceIndex, sinceRV int64) (int64, int, error) {
+			select {
+			case <-ctx.Done():
+				return 0, 0, ctx.Err()
+			case <-finish:
+				return sinceRV + 1, 1, ctx.Err()
+			}
+		})
+
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		callerErr := make(chan error, 1)
+		go func() {
+			_, err := idx.UpdateIndex(ctx)
+			callerErr <- err
+		}()
+		synctest.Wait()
+
+		cancel()
+		require.ErrorIs(t, <-callerErr, context.Canceled)
+		close(finish)
+		synctest.Wait()
+
+		require.Equal(t, int64(1), idx.resourceVersion.Load())
+	})
+}
+
 func TestIndexBuildInfo(t *testing.T) {
 	ns := resource.NamespacedResource{
 		Namespace: "test",
