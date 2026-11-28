@@ -136,13 +136,13 @@ You can find the instance ID in the following places:
 
 ### Resource (`<resource>`)
 
-The resource is the type you want to interact with. Common examples include the following:
-
-ADD LINK TO DOC HERE
+The resource is the type of object you want to interact with. Common examples include the following:
 
 - **Dashboards:** Use `dashboards`.
 - **Playlists:** Use `playlists`.
 - **Folders:** Use `folders`.
+
+For more information, refer to [Resources in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/resources/).
 
 ### Kind (`<kind>`)
 
