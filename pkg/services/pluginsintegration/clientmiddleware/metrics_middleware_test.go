@@ -470,8 +470,8 @@ func TestCallResourceMultipleResponsesUsesFirstStatus(t *testing.T) {
 	})
 }
 
-// checkHistogram is a utility function that checks if a histogram with the given name and label values exists
-// and has been observed at least once.
+// checkHistogram is a utility function that checks if a histogram with the given name and label values exists,
+// has been observed at least once, and is exposed as a native histogram.
 func checkHistogram(promRegistry *prometheus.Registry, expMetricName string, expLabels map[string]string) error {
 	metrics, err := promRegistry.Gather()
 	if err != nil {
@@ -517,6 +517,10 @@ func checkHistogram(promRegistry *prometheus.Registry, expMetricName string, exp
 	}
 	if metric.Histogram.SampleCount == nil || *metric.Histogram.SampleCount == 0 {
 		return errors.New("found metric but no samples have been collected")
+	}
+	// Schema is only set on the protobuf histogram when native buckets are enabled.
+	if metric.Histogram.Schema == nil {
+		return fmt.Errorf("metric %q is not exposed as a native histogram", expMetricName)
 	}
 	return nil
 }
