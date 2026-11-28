@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
+	k8syaml "k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -143,8 +143,15 @@ func DecodeYAMLObject(input io.Reader) (*unstructured.Unstructured, *schema.Grou
 	// Strip BOMs before decoding YAML
 	data = util.StripBOMFromBytes(data)
 
-	obj, gvk, err := yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).
-		Decode(data, nil, nil)
+	// Convert with the YAML 1.2 core schema first: the Kubernetes serializer
+	// below resolves YAML 1.1 booleans and would read a bare `y` key as "true".
+	jsonData, err := yamlToJSON(data)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	obj, gvk, err := k8syaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).
+		Decode(jsonData, nil, nil)
 	if err != nil {
 		return nil, gvk, err
 	}
