@@ -1,10 +1,22 @@
+import { EditorView } from '@codemirror/view';
 import { css, cx } from '@emotion/css';
 import { useMemo, useRef, useState, type ReactNode, type Ref } from 'react';
 import { useDebounce, useMeasure } from 'react-use';
 
 import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert, Button, Dropdown, Icon, Menu, RadioButtonGroup, Stack, useStyles2, useTheme2 } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Dropdown,
+  ErrorBoundary,
+  Icon,
+  Menu,
+  RadioButtonGroup,
+  Stack,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
 import { CodeMirrorEditor, createCodeEditorTheme, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
 import config from 'app/core/config';
 
@@ -17,6 +29,7 @@ import { getFieldNames } from '../handlebars';
 import { catchTemplateError, interpolateTemplate, type RowWindow } from '../renderContent';
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage, isTextNewFeaturesEnabled } from '../utils';
 
+import { FmtMigrationNotice } from './FmtMigrationNotice';
 import { TextNGEditorFooter } from './TextNGEditorFooter';
 import { TextNGFeedbackButton } from './TextNGFeedbackButton';
 import { TextNGFormatToolbar } from './TextNGFormatToolbar';
@@ -46,6 +59,7 @@ export interface TextNGEditorProps {
   pagination?: ReactNode;
   previewRef?: Ref<HTMLDivElement>;
   series?: DataFrame[];
+  allFrames?: DataFrame[];
   replaceVariables: InterpolateFunction;
   suggestions?: VariableSuggestion[];
   onChange: (change: TextNGEditorChange) => void;
@@ -71,6 +85,8 @@ const getLanguageLabels = (): Record<CodeLanguage, string> => ({
   [CodeLanguage.Yaml]: 'YAML',
 });
 
+const NO_FRAMES: DataFrame[] = [];
+
 const COMMIT_DEBOUNCE_MS = 250;
 // Markdown, sanitization and the innerHTML reparse cost tens of milliseconds on
 // a large document, so the preview trails typing.
@@ -87,6 +103,7 @@ export function TextNGEditor({
   pagination,
   previewRef,
   series,
+  allFrames,
   replaceVariables,
   suggestions,
   onChange,
@@ -142,6 +159,14 @@ export function TextNGEditor({
       committedContent.current = next;
       onChange({ content: next });
     }
+  };
+
+  const replaceDraft = (next: string) => {
+    handleDraftChange(next);
+    setPreviewSource(next);
+    commitDraft();
+    const container = editorContainerRef.current;
+    (container ? EditorView.findFromDOM(container) : null)?.focus();
   };
 
   // Carries the pending draft, so the single options update cannot drop it.
@@ -315,6 +340,23 @@ export function TextNGEditor({
           <TextNGFeedbackButton />
         </Stack>
       </div>
+
+      <ErrorBoundary boundaryName="text-fmt-migration-notice">
+        {({ error }) =>
+          error ? null : (
+            <FmtMigrationNotice
+              content={previewSource}
+              mode={mode}
+              renderMode={renderMode}
+              format={format}
+              frames={allFrames ?? series ?? NO_FRAMES}
+              replaceVariables={replaceVariables}
+              getDraft={() => draftRef.current}
+              onConvert={replaceDraft}
+            />
+          )
+        }
+      </ErrorBoundary>
 
       <div className={cx(styles.body, view === 'split' && styles.splitBody)}>
         {showEditor && (
