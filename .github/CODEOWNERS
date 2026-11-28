@@ -78,6 +78,7 @@
 /pkg/README.md @grafana/grafana-backend-services-squad
 /pkg/ruleguard.rules.go @grafana/grafana-backend-services-squad
 /.golangci.yml @grafana/grafana-backend-services-squad
+/.golangci-usetesting.yml @grafana/grafana-backend-services-squad
 /scripts/modowners/ @grafana/grafana-backend-services-squad
 /scripts/go-workspace @grafana/grafana-app-platform-squad
 /scripts/ci/backend-tests @grafana/grafana-operator-experience-squad
