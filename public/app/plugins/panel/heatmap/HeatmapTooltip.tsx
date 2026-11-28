@@ -352,9 +352,11 @@ const HeatmapHoverCell = ({
     [index]
   );
 
+  // With an unknown layout the x value labels its own cell on the axis (e.g. a port or an index), while
+  // the bucket bounds assume it is the start of the bucket, so their max is one bucket past the hovered value.
   const headerItem: VizTooltipItem = {
     label: '',
-    value: xDisp(xBucketMax!)!,
+    value: xDisp(data.xLayout === HeatmapCellLayout.unknown ? xVals[index] : xBucketMax!)!,
   };
 
   let customContent: ReactElement[] = [];
