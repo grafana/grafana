@@ -100,6 +100,8 @@ type DrawerOverrides = {
   resource?: SaveProvisionedResourceDrawerProps['resource'];
   title?: string;
   action?: 'update' | 'delete';
+  onWriteSuccess?: () => void;
+  onBranchSaved?: () => void;
 };
 
 function setup(props: DrawerOverrides = {}) {
@@ -191,6 +193,37 @@ describe('SaveProvisionedResourceDrawer', () => {
       );
     });
 
+    it('lets onWriteSuccess replace the redirect after a configured-branch commit', async () => {
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, () =>
+          HttpResponse.json({ path: 'playlists/test-playlist.json', resource: { upsert: {} } })
+        )
+      );
+      const onWriteSuccess = jest.fn();
+
+      const { user } = setup({ onWriteSuccess });
+      await user.click(await screen.findByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => expect(onWriteSuccess).toHaveBeenCalledTimes(1));
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it('runs onBranchSaved before the pull request redirect', async () => {
+      mockRepoView({ repository: { ...mockRepository, workflows: ['branch'] } });
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, () =>
+          HttpResponse.json({ ref: 'feature-branch', path: 'playlists/test-playlist.json', resource: { upsert: {} } })
+        )
+      );
+      const onBranchSaved = jest.fn(() => expect(mockNavigate).not.toHaveBeenCalled());
+
+      const { user } = setup({ onBranchSaved });
+      await user.click(await screen.findByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith(expect.stringMatching(/^\/redirect-target\?/)));
+      expect(onBranchSaved).toHaveBeenCalledTimes(1);
+    });
+
     it('shows an error alert when the commit fails', async () => {
       server.use(
         http.put(`${BASE}/repositories/:name/files/*`, () => HttpResponse.json({ message: 'Boom' }, { status: 500 }))
@@ -260,6 +293,34 @@ describe('SaveProvisionedResourceDrawer', () => {
       // A new resource with no name gets a generated k8s-safe name in the committed file.
       const body = req.body as { metadata?: { name?: string } };
       expect(body.metadata?.name).toMatch(/^[a-z0-9]{12}$/);
+    });
+
+    it('starts the new file inside the given folder path', async () => {
+      server.use(
+        http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          capturedRequest = { url: new URL(request.url), body: await request.json() };
+          return HttpResponse.json({ resource: { upsert: {} } });
+        })
+      );
+
+      const { user } = render(
+        <SaveProvisionedResourceDrawer
+          resource={newPlaylist}
+          title={newPlaylist.spec?.title ?? ''}
+          action="create"
+          repositoryName="test-repo"
+          folderPath="team/"
+          redirectUrl="/redirect-target"
+          onDismiss={jest.fn()}
+        />
+      );
+
+      await user.click(await screen.findByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => expect(capturedRequest).not.toBeNull());
+      expect(requireCapturedRequest(capturedRequest).url.pathname).toMatch(
+        /\/repositories\/test-repo\/files\/team\/my-new-playlist\.json$/
+      );
     });
 
     it('commits to the path the user edits in the drawer', async () => {

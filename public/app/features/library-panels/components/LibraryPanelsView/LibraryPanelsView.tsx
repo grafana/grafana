@@ -83,17 +83,10 @@ export const LibraryPanelsView = ({
     };
   }, []);
 
-  const onDelete = ({ uid }: LibraryElementDTO) =>
-    asyncDispatch(
-      deleteLibraryPanel(uid, {
-        searchString,
-        sortDirection,
-        panelFilter,
-        folderFilterUIDs: folderFilter,
-        page,
-        perPage,
-      })
-    );
+  const searchArgs = { searchString, sortDirection, panelFilter, folderFilterUIDs: folderFilter, page, perPage };
+  const onDelete = ({ uid }: LibraryElementDTO) => asyncDispatch(deleteLibraryPanel(uid, searchArgs));
+  // A Git delete already removed the panel, so only the search that follows an API delete is needed.
+  const onRefresh = () => asyncDispatch(searchForLibraryPanels(searchArgs));
   const onPageChange = (page: number) => asyncDispatch(changePage({ page }));
   const hasFilter = searchString || panelFilter?.length || folderFilter?.length;
 
@@ -132,6 +125,7 @@ export const LibraryPanelsView = ({
             key={`library-panel=${i}`}
             libraryPanel={item}
             onDelete={onDelete}
+            onRefresh={onRefresh}
             onClick={onClickCard}
             showSecondaryActions={showSecondaryActions}
           />

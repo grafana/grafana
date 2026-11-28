@@ -1,12 +1,14 @@
-import { type FC, useEffect, useMemo, useReducer } from 'react';
+import { type FC, useEffect, useMemo, useReducer, useState } from 'react';
 
 import { LoadingState } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Modal, useStyles2 } from '@grafana/ui';
+import { isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 
 import { getModalStyles } from '../../styles';
 import { type LibraryElementDTO } from '../../types';
 import { asyncDispatcher } from '../LibraryPanelsView/actions';
+import { SaveProvisionedLibraryPanelDrawer } from '../SaveProvisionedLibraryPanelDrawer';
 
 import { getConnectedDashboards } from './actions';
 import { deleteLibraryPanelModalReducer, initialDeleteLibraryPanelModalState } from './reducer';
@@ -14,10 +16,13 @@ import { deleteLibraryPanelModalReducer, initialDeleteLibraryPanelModalState } f
 interface Props {
   libraryPanel: LibraryElementDTO;
   onConfirm: () => void;
+  /** Called after a repository-managed panel is deleted on the repository's configured branch. */
+  onDeleted?: () => void;
   onDismiss: () => void;
 }
 
-export const DeleteLibraryPanelModal: FC<Props> = ({ libraryPanel, onDismiss, onConfirm }) => {
+export const DeleteLibraryPanelModal: FC<Props> = ({ libraryPanel, onDismiss, onConfirm, onDeleted }) => {
+  const [showGitDrawer, setShowGitDrawer] = useState(false);
   const styles = useStyles2(getModalStyles);
   const [{ dashboardTitles, loadingState }, dispatch] = useReducer(
     deleteLibraryPanelModalReducer,
@@ -30,6 +35,17 @@ export const DeleteLibraryPanelModal: FC<Props> = ({ libraryPanel, onDismiss, on
 
   const connected = Boolean(dashboardTitles.length);
   const done = loadingState === LoadingState.Done;
+
+  if (showGitDrawer) {
+    return (
+      <SaveProvisionedLibraryPanelDrawer
+        action="delete"
+        panel={libraryPanel}
+        onDismiss={onDismiss}
+        onWriteSuccess={onDeleted}
+      />
+    );
+  }
 
   return (
     <Modal
@@ -48,7 +64,12 @@ export const DeleteLibraryPanelModal: FC<Props> = ({ libraryPanel, onDismiss, on
             <Button variant="secondary" onClick={onDismiss} fill="outline">
               <Trans i18nKey="library-panels.delete-library-panel-modal.cancel">Cancel</Trans>
             </Button>
-            <Button variant="destructive" onClick={onConfirm} disabled={connected}>
+            <Button
+              variant="destructive"
+              // Repository-managed panels are deleted by committing the file removal to Git.
+              onClick={isManagedByRepository(libraryPanel) ? () => setShowGitDrawer(true) : onConfirm}
+              disabled={connected}
+            >
               <Trans i18nKey="library-panels.delete-library-panel-modal.delete">Delete</Trans>
             </Button>
           </Modal.ButtonRow>

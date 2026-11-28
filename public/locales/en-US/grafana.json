@@ -8089,6 +8089,7 @@
       "table-view-label-table-view": "Table view"
     },
     "panel-editor": {
+      "library-panel-reload-failed": "The library panel was committed, but reloading it failed. Refresh the page to see the latest version.",
       "text": {
         "edit-panel": "Edit panel"
       }

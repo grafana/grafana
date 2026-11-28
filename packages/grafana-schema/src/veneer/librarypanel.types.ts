@@ -17,6 +17,13 @@ export interface LibraryElementDTOMeta {
 }
 
 export interface LibraryPanel {
+  /** App-platform identity and ownership, absent on legacy API responses. */
+  metadata?: {
+    name: string;
+    resourceVersion?: string;
+    generation?: number;
+    annotations?: Record<string, string | undefined>;
+  };
   /**
    * Panel description
    */

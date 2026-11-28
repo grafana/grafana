@@ -1,3 +1,4 @@
+import { customAlphabet } from 'nanoid';
 import { useCallback, useEffect, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
@@ -6,11 +7,21 @@ import { Trans, t } from '@grafana/i18n';
 import { type FetchError, isFetchError } from '@grafana/runtime';
 import { type LibraryPanel } from '@grafana/schema';
 import { Button, Field, Input, Stack } from '@grafana/ui';
+import { isK8sLibraryPanelsClientEnabled } from 'app/api/clients/dashboard/v0alpha1/libraryPanels';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { FolderDeadEndAlert } from 'app/features/provisioning/components/Dashboards/FolderDeadEndAlert';
+import { useResourceRepositorySelection } from 'app/features/provisioning/hooks/useResourceRepositorySelection';
+import { getSaveTarget, useSaveRepositoryView } from 'app/features/provisioning/hooks/useSaveRepositoryView';
+import { resourceKindInfos } from 'app/features/provisioning/utils/resourceKinds';
 
 import { type PanelModel } from '../../../dashboard/state/PanelModel';
 import { getLibraryPanelByName } from '../../state/api';
 import { usePanelSave } from '../../utils/usePanelSave';
+import { SaveProvisionedLibraryPanelDrawer } from '../SaveProvisionedLibraryPanelDrawer';
+
+// A repository create commits the panel under a name chosen here, so the dashboard panel can be linked to it.
+const generateUid = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 12);
 
 interface AddLibraryPanelContentsProps {
   onDismiss?: () => void;
@@ -29,6 +40,16 @@ export const AddLibraryPanelContents = ({
   const [panelName, setPanelName] = useState(panel.title);
   const [debouncedPanelName, setDebouncedPanelName] = useState(panel.title);
   const [waiting, setWaiting] = useState(false);
+  const { isAvailable } = useResourceRepositorySelection(resourceKindInfos.librarypanel);
+  // Repository ownership is only visible through the app-platform client, which keeps the annotations.
+  const k8sClient = useAsync(isK8sLibraryPanelsClientEnabled, []);
+  // The panel is committed to the repository that manages its folder, like a new dashboard. The
+  // root of a folderless repository could go either way, and keeps the Grafana save.
+  const folderView = useSaveRepositoryView({ folderUid, isNew: true });
+  const canUseGit = isAvailable && k8sClient.value;
+  const repositoryName =
+    canUseGit && getSaveTarget(folderView, 'database') === 'repository' ? folderView.repository?.name : undefined;
+  const [provisionedPanel, setProvisionedPanel] = useState<Pick<LibraryPanel, 'uid' | 'name' | 'model'>>();
 
   useEffect(() => setWaiting(true), [panelName]);
   useDebounce(() => setDebouncedPanelName(panelName), 350, [panelName]);
@@ -36,6 +57,11 @@ export const AddLibraryPanelContents = ({
   const { saveLibraryPanel } = usePanelSave();
 
   const onCreate = useCallback(() => {
+    if (repositoryName) {
+      const { scopedVars, ...model } = panel.getSaveModel();
+      setProvisionedPanel({ uid: generateUid(), name: panelName, model });
+      return;
+    }
     panel.libraryPanel = { uid: '', name: panelName };
 
     saveLibraryPanel(panel, folderUid!).then((res: LibraryPanel | FetchError) => {
@@ -46,7 +72,7 @@ export const AddLibraryPanelContents = ({
         panel.libraryPanel = undefined;
       }
     });
-  }, [panel, panelName, saveLibraryPanel, folderUid, onDismiss, onCreateLibraryPanel]);
+  }, [panel, panelName, repositoryName, saveLibraryPanel, folderUid, onDismiss, onCreateLibraryPanel]);
 
   const isValidName = useAsync(async () => {
     try {
@@ -90,10 +116,13 @@ export const AddLibraryPanelContents = ({
       >
         <FolderPicker onChange={(uid) => setFolderUid(uid)} value={folderUid} />
       </Field>
+      {/* Like a new dashboard: say why Create falls back to the Grafana save when the folder's repository can't be resolved */}
+      {canUseGit && <FolderDeadEndAlert status={folderView.status} error={folderView.error} />}
       <Stack gap={1} justifyContent={'start'}>
         <Button
           onClick={onCreate}
-          disabled={invalidInput}
+          // Until the folder's repository is known, the save could go to the wrong place.
+          disabled={invalidInput || Boolean(folderView.isLoading) || k8sClient.loading}
           data-testid={selectors.components.Drawer.NewLibraryPanelDrawer.createButton}
         >
           <Trans i18nKey="share-panel.new-library-panel.create-button">Create library panel</Trans>
@@ -102,6 +131,21 @@ export const AddLibraryPanelContents = ({
           <Trans i18nKey="share-panel.new-library-panel.cancel-button">Cancel</Trans>
         </Button>
       </Stack>
+      {provisionedPanel && repositoryName && (
+        <SaveProvisionedLibraryPanelDrawer
+          action="create"
+          repositoryName={repositoryName}
+          // The file goes in the folder's directory, so the panel stays in the folder it was created in.
+          folderPath={folderView.folder?.metadata?.annotations?.[AnnoKeySourcePath]}
+          panel={provisionedPanel}
+          onDismiss={() => setProvisionedPanel(undefined)}
+          onWriteSuccess={() => {
+            onDismiss?.();
+            // Linking only needs the identity: the library panel behavior loads the committed panel itself.
+            onCreateLibraryPanel?.({ ...provisionedPanel, type: provisionedPanel.model.type, version: 0 });
+          }}
+        />
+      )}
     </Stack>
   );
 };

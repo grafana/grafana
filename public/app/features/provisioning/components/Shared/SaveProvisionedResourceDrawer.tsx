@@ -34,7 +34,7 @@ import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { getCanPushToConfiguredBranch, getDefaultRef } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
-import { slugifyForFilename } from '../utils/path';
+import { joinPath, slugifyForFilename } from '../utils/path';
 
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 
@@ -59,8 +59,8 @@ type ProvisionedResource = ManagedResource & {
 const generateResourceName = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 12);
 
 /** Builds the repository file path for a new resource from its title, falling back to the kind key. */
-function getNewResourcePath(title: string, kindKey: string): string {
-  return `${slugifyForFilename(title) || kindKey}.json`;
+function getNewResourcePath(title: string, kindKey: string, folderPath = ''): string {
+  return joinPath(folderPath, `${slugifyForFilename(title) || kindKey}.json`);
 }
 
 interface BaseDrawerProps {
@@ -71,6 +71,8 @@ interface BaseDrawerProps {
    * resolve the repository.
    */
   resource: ProvisionedResource;
+  /** Committed file body, for kinds whose resource keeps data outside `spec`. Defaults to the resource's spec. */
+  body?: Record<string, unknown>;
   /**
    * Human-readable title for the drawer subtitle, the commit message and a new resource's file slug.
    * Passed explicitly rather than read from `spec.title` because the title field isn't consistent
@@ -89,6 +91,13 @@ interface BaseDrawerProps {
    * pull-request banner. The caller owns its own routes.
    */
   redirectUrl: string;
+  /**
+   * Replaces the `redirectUrl` redirect after a commit to the configured branch, for a caller that
+   * stays where it is (e.g. a dialog over a dashboard).
+   */
+  onWriteSuccess?: () => void;
+  /** Runs before the pull-request redirect, for a caller that must settle its own state before the page changes. */
+  onBranchSaved?: () => void;
   onDismiss?: () => void;
 }
 
@@ -96,9 +105,14 @@ interface BaseDrawerProps {
  * `action` + `repositoryName` are a discriminated union: `create` requires a `repositoryName` (a new
  * resource has no manager annotations yet, so they're synthesised for the chosen repository), while
  * `update`/`delete` resolve the repository from the existing resource's annotations and take none.
+ * A create may also take the repository directory of the folder the resource goes in, so the new
+ * file starts inside it.
  */
 export type SaveProvisionedResourceDrawerProps = BaseDrawerProps &
-  ({ action: 'create'; repositoryName: string } | { action: 'update' | 'delete'; repositoryName?: never });
+  (
+    | { action: 'create'; repositoryName: string; folderPath?: string }
+    | { action: 'update' | 'delete'; repositoryName?: never; folderPath?: never }
+  );
 
 interface FormProps {
   kindKey: ResourceKindKey;
@@ -112,6 +126,8 @@ interface FormProps {
   initialValues: BaseProvisionedFormData;
   repository?: RepositoryView;
   canPushToConfiguredBranch: boolean;
+  onWriteSuccess?: () => void;
+  onBranchSaved?: () => void;
   onDismiss?: () => void;
 }
 
@@ -127,6 +143,8 @@ function FormContent({
   initialValues,
   repository,
   canPushToConfiguredBranch,
+  onWriteSuccess,
+  onBranchSaved,
   onDismiss,
 }: FormProps) {
   const [error, setError] = useState<string | undefined>(undefined);
@@ -142,7 +160,7 @@ function FormContent({
   const { handleSubmit, watch, formState } = methods;
   const ref = watch('ref') ?? '';
 
-  const { onWriteSuccess, onBranchSuccess } = useProvisionedResourceDrawerHandlers(kind, redirectUrl, action);
+  const redirect = useProvisionedResourceDrawerHandlers(kind, redirectUrl, action);
 
   const templateVars: CommitTemplateVars = {
     action,
@@ -179,17 +197,19 @@ function FormContent({
     successMessage,
     handlers: {
       onDismiss,
-      onWriteSuccess,
+      onWriteSuccess: onWriteSuccess ?? redirect.onWriteSuccess,
       // Pushed to a branch: pass the repo info so the destination page can render the PR banner.
-      onBranchSuccess: ({ ref, urls }) =>
-        onBranchSuccess({
+      onBranchSuccess: ({ ref, urls }) => {
+        onBranchSaved?.();
+        redirect.onBranchSuccess({
           ref,
           urls,
           repoType: repository?.type,
           configuredBranch: repository?.branch,
           repoUrl: repository?.url,
           prTitle,
-        }),
+        });
+      },
     },
   });
 
@@ -268,7 +288,7 @@ function FormContent({
  * pages with no per-kind wrapper. Pass the resource, its title and the action: the drawer resolves
  * the kind from the resource's `apiVersion`+`kind` and derives the rest — the committed file body, a
  * new resource's name/path/annotations and the commit message. After the commit it redirects to
- * `redirectUrl`. `delete` commits no body. Renders nothing if the resource isn't a registered provisioning kind (pages only
+ * `redirectUrl`, unless `onWriteSuccess` takes over a configured-branch commit. `delete` commits no body. Renders nothing if the resource isn't a registered provisioning kind (pages only
  * open it for known managed resources).
  */
 export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDrawerProps) {
@@ -295,12 +315,16 @@ function ResourceDrawerContent({
   kindKey,
   redirectUrl,
   resource,
+  body: fileBody,
   action,
   title,
   repositoryName,
+  folderPath,
   successMessage,
   readOnlyMessage,
   branchPrefix,
+  onWriteSuccess,
+  onBranchSaved,
   onDismiss,
 }: ResourceDrawerContentProps) {
   const isNew = action === 'create';
@@ -321,7 +345,7 @@ function ResourceDrawerContent({
           annotations: {
             [AnnoKeyManagerKind]: ManagerKind.Repo,
             [AnnoKeyManagerIdentity]: repositoryName ?? '',
-            [AnnoKeySourcePath]: getNewResourcePath(title, kindKey),
+            [AnnoKeySourcePath]: getNewResourcePath(title, kindKey, folderPath),
           },
         },
       }
@@ -330,7 +354,12 @@ function ResourceDrawerContent({
   // Delete removes the file, so it commits no body; create/update commit the standard resource shape.
   const body = isDelete
     ? undefined
-    : { apiVersion: resource.apiVersion, kind: resource.kind, metadata: { name: resourceName }, spec: resource.spec };
+    : (fileBody ?? {
+        apiVersion: resource.apiVersion,
+        kind: resource.kind,
+        metadata: { name: resourceName },
+        spec: resource.spec,
+      });
 
   // Branch names can't contain spaces, so prefix from the stable kind key, not the display noun.
   const prefix = branchPrefix ?? kindKey;
@@ -397,6 +426,8 @@ function ResourceDrawerContent({
             initialValues={initialValues}
             repository={repository}
             canPushToConfiguredBranch={canPushToConfiguredBranch}
+            onWriteSuccess={onWriteSuccess}
+            onBranchSaved={onBranchSaved}
             onDismiss={onDismiss}
           />
         )}
