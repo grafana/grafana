@@ -12,6 +12,7 @@ import { SectionSidePanel } from '../core/components/AppChrome/SectionNav/Sectio
 import { AppNotificationList } from '../core/components/AppNotifications/AppNotificationList';
 import { ModalsContextProvider } from '../core/context/ModalsContextProvider';
 import { QueriesDrawerContextProvider } from '../features/explore/QueriesDrawer/QueriesDrawerContext';
+import { StoredCommitOutcome } from '../features/provisioning/components/Shared/StoredCommitOutcome';
 
 function ExtraProviders(props: { children: ReactNode; providers: Array<ComponentType<{ children: ReactNode }>> }) {
   return props.providers.reduce((tree, Provider): ReactNode => {
@@ -48,6 +49,7 @@ export function RouterWrapper(props: RouterWrapperProps) {
                   ))}
                 </AppChrome>
                 <ModalRoot />
+                <StoredCommitOutcome />
               </ModalsContextProvider>
             </ExtraProviders>
           </QueriesDrawerContextProvider>

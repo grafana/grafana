@@ -1,11 +1,13 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type Playlist } from 'app/api/clients/playlist/v1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
+import { COMMIT_OUTCOME_STORAGE_KEY } from '../../constants';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { setupProvisioningMswServer } from '../../mocks/server';
 
@@ -94,8 +96,6 @@ function requireCapturedRequest(req: CapturedRequest | null): CapturedRequest {
   return req as CapturedRequest;
 }
 
-// Overrides for the common (non-create) cases. `create` requires `repositoryName` (discriminated
-// union), so those tests render the drawer directly rather than via this update/delete-shaped helper.
 type DrawerOverrides = {
   resource?: SaveProvisionedResourceDrawerProps['resource'];
   title?: string;
@@ -108,7 +108,6 @@ function setup(props: DrawerOverrides = {}) {
       resource={mockPlaylist}
       title={mockPlaylist.spec?.title ?? ''}
       action="update"
-      redirectUrl="/redirect-target"
       onDismiss={jest.fn()}
       {...props}
     />
@@ -121,21 +120,22 @@ describe('SaveProvisionedResourceDrawer', () => {
   beforeEach(() => {
     capturedRequest = null;
     jest.clearAllMocks();
+    window.sessionStorage.clear();
     jest.spyOn(console, 'error').mockImplementation(() => {});
     mockRepoView();
   });
 
   describe('update', () => {
-    it('renders the drawer header, shared fields and save/cancel buttons', async () => {
+    it('renders the drawer header, shared fields and commit/cancel buttons', async () => {
       setup();
 
       expect(await screen.findByRole('heading', { name: /save provisioned playlist/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^commit/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
     });
 
-    it('commits the resource body for the write workflow and navigates to the redirect URL', async () => {
+    it('commits the resource body for the write workflow and reports the commit in the drawer', async () => {
       server.use(
         http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           capturedRequest = { url: new URL(request.url), body: await request.json() };
@@ -144,7 +144,7 @@ describe('SaveProvisionedResourceDrawer', () => {
       );
 
       const { user } = setup();
-      await user.click(await screen.findByRole('button', { name: /^save$/i }));
+      await user.click(await screen.findByRole('button', { name: /^commit/i }));
 
       await waitFor(() => expect(capturedRequest).not.toBeNull());
       const req = requireCapturedRequest(capturedRequest);
@@ -159,10 +159,11 @@ describe('SaveProvisionedResourceDrawer', () => {
         metadata: { name: 'playlist-uid' },
         spec: { title: 'Test Playlist', interval: '5m', items: [{ type: 'dashboard_by_uid', value: 'abc' }] },
       });
-      await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/redirect-target'));
+      expect(await screen.findByText(/committed to main/i)).toBeInTheDocument();
+      expect(mockNavigate).not.toHaveBeenCalled();
     });
 
-    it('sends the ref and navigates to the redirect URL with the pull request params for the branch workflow', async () => {
+    it('sends the ref and offers the pull request in the drawer for the branch workflow', async () => {
       // workflows[0] === 'branch' makes the branch (PR) workflow the default.
       mockRepoView({ repository: { ...mockRepository, workflows: ['branch'] } });
       server.use(
@@ -178,17 +179,16 @@ describe('SaveProvisionedResourceDrawer', () => {
       );
 
       const { user } = setup();
-      await user.click(await screen.findByRole('button', { name: /^save$/i }));
+      await user.click(await screen.findByRole('button', { name: /^commit/i }));
 
       await waitFor(() => expect(capturedRequest).not.toBeNull());
       expect(requireCapturedRequest(capturedRequest).url.searchParams.get('ref')).toBeTruthy();
-      await waitFor(() =>
-        expect(mockNavigate).toHaveBeenCalledWith(
-          expect.stringMatching(
-            /^\/redirect-target\?new_pull_request_url=https%3A%2F%2Fexample\.com%2Fpr%2F1&repo_type=git&action=update/
-          )
-        )
+      expect(await screen.findByText(/updated in a branch/i)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /open pull request/i })).toHaveAttribute(
+        'href',
+        'https://example.com/pr/1'
       );
+      expect(screen.getByText('feature-branch')).toBeInTheDocument();
     });
 
     it('shows an error alert when the commit fails', async () => {
@@ -197,7 +197,7 @@ describe('SaveProvisionedResourceDrawer', () => {
       );
 
       const { user } = setup();
-      await user.click(await screen.findByRole('button', { name: /^save$/i }));
+      await user.click(await screen.findByRole('button', { name: /^commit/i }));
 
       await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
     });
@@ -210,7 +210,7 @@ describe('SaveProvisionedResourceDrawer', () => {
         },
       });
 
-      await user.click(await screen.findByRole('button', { name: /^save$/i }));
+      await user.click(await screen.findByRole('button', { name: /^commit/i }));
 
       await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
     });
@@ -219,14 +219,14 @@ describe('SaveProvisionedResourceDrawer', () => {
       mockRepoView({ isReadOnlyRepo: true });
       setup();
 
-      expect(screen.queryByRole('button', { name: /^save$/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^commit/i })).not.toBeInTheDocument();
     });
 
     it('shows the missing-repository banner when no repository resolves', () => {
       mockRepoView({ repository: undefined, isMissingRepo: true });
       setup();
 
-      expect(screen.queryByRole('button', { name: /^save$/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^commit/i })).not.toBeInTheDocument();
     });
   });
 
@@ -245,12 +245,11 @@ describe('SaveProvisionedResourceDrawer', () => {
           title={newPlaylist.spec?.title ?? ''}
           action="create"
           repositoryName="test-repo"
-          redirectUrl="/redirect-target"
           onDismiss={jest.fn()}
         />
       );
 
-      await user.click(await screen.findByRole('button', { name: /^save$/i }));
+      await user.click(await screen.findByRole('button', { name: /^commit/i }));
 
       await waitFor(() => expect(capturedRequest).not.toBeNull());
       const req = requireCapturedRequest(capturedRequest);
@@ -276,7 +275,6 @@ describe('SaveProvisionedResourceDrawer', () => {
           title={newPlaylist.spec?.title ?? ''}
           action="create"
           repositoryName="test-repo"
-          redirectUrl="/redirect-target"
           onDismiss={jest.fn()}
         />
       );
@@ -285,7 +283,7 @@ describe('SaveProvisionedResourceDrawer', () => {
       const pathInput = await screen.findByDisplayValue('my-new-playlist.json');
       await user.clear(pathInput);
       await user.type(pathInput, 'custom/folder/my-file.json');
-      await user.click(screen.getByRole('button', { name: /^save$/i }));
+      await user.click(screen.getByRole('button', { name: /^commit/i }));
 
       await waitFor(() => expect(capturedRequest).not.toBeNull());
       expect(requireCapturedRequest(capturedRequest).url.pathname).toContain(
@@ -318,6 +316,21 @@ describe('SaveProvisionedResourceDrawer', () => {
       expect(req.method).toBe('DELETE');
       expect(req.url.pathname).toContain('/repositories/test-repo/files/playlists/test-playlist.json');
       expect(req.url.searchParams.get('message')).toBe('Delete playlist: Test Playlist');
+    });
+
+    it('offers no link to the deleted file', async () => {
+      server.use(
+        http.delete(`${BASE}/repositories/:name/files/*`, () =>
+          HttpResponse.json({
+            resource: {},
+            urls: { sourceURL: 'https://github.com/o/r/blob/main/playlists/test-playlist.json' },
+          })
+        )
+      );
+      const { user } = setup({ action: 'delete' });
+      await user.click(await screen.findByRole('button', { name: /^delete$/i }));
+      await screen.findByText(/committed to main/i);
+      expect(screen.queryByRole('link', { name: 'Open the committed file' })).not.toBeInTheDocument();
     });
 
     it('shows the read-only banner when the repository cannot be edited', () => {
@@ -356,10 +369,99 @@ describe('SaveProvisionedResourceDrawer', () => {
       const branch = await screen.findByRole('textbox', { name: /branch/i });
       await waitFor(() => expect(branch).toHaveValue('grafana/enforced-branch'));
 
-      await user.click(screen.getByRole('button', { name: /^save$/i }));
+      await user.click(screen.getByRole('button', { name: /^commit/i }));
 
       await waitFor(() => expect(capturedRequest).not.toBeNull());
       expect(requireCapturedRequest(capturedRequest).url.searchParams.get('ref')).toBe('grafana/enforced-branch');
+    });
+  });
+
+  describe('commit outcome', () => {
+    const respondWith = (body: object) =>
+      server.use(http.put(`${BASE}/repositories/:name/files/*`, () => HttpResponse.json(body)));
+
+    it('does not report a direct commit as live when Grafana has not applied it', async () => {
+      respondWith({ path: 'playlists/test-playlist.json', resource: {} });
+
+      const { user } = setup();
+      await user.click(await screen.findByRole('button', { name: /^commit/i }));
+
+      expect(await screen.findByText(/next time it syncs the repository/i)).toBeInTheDocument();
+    });
+
+    it('opens redirectUrl when the drawer closes after a commit', async () => {
+      respondWith({ path: 'playlists/test-playlist.json', resource: { upsert: {} } });
+      const onDismiss = jest.fn();
+
+      const { user } = render(
+        <SaveProvisionedResourceDrawer
+          resource={mockPlaylist}
+          title="Test Playlist"
+          action="update"
+          redirectUrl="/playlists"
+          onDismiss={onDismiss}
+        />
+      );
+      await user.click(await screen.findByRole('button', { name: /^commit/i }));
+      await screen.findByText(/committed to main/i);
+      expect(mockNavigate).not.toHaveBeenCalled();
+      await user.click(screen.getByTestId(selectors.components.Drawer.General.close));
+
+      expect(onDismiss).toHaveBeenCalled();
+      expect(mockNavigate).toHaveBeenCalledWith('/playlists');
+    });
+
+    it('offers going back to the list named by the kind', async () => {
+      respondWith({ path: 'playlists/test-playlist.json', resource: { upsert: {} } });
+
+      const { user } = render(
+        <SaveProvisionedResourceDrawer
+          resource={mockPlaylist}
+          title="Test Playlist"
+          action="update"
+          redirectUrl="/playlists"
+        />
+      );
+      await user.click(await screen.findByRole('button', { name: /^commit/i }));
+      await user.click(await screen.findByRole('button', { name: 'Back to all playlists' }));
+
+      expect(mockNavigate).toHaveBeenCalledWith('/playlists');
+    });
+
+    it('stores the outcome for a reload until the drawer goes away', async () => {
+      respondWith({ path: 'playlists/test-playlist.json', resource: { upsert: {} } });
+
+      const { user, unmount } = setup();
+      await user.click(await screen.findByRole('button', { name: /^commit/i }));
+      await screen.findByText(/committed to main/i);
+
+      expect(window.sessionStorage.getItem(COMMIT_OUTCOME_STORAGE_KEY)).not.toBeNull();
+      unmount();
+      expect(window.sessionStorage.getItem(COMMIT_OUTCOME_STORAGE_KEY)).toBeNull();
+    });
+
+    it('stores nothing when the drawer goes away before the commit lands', async () => {
+      let respond = () => {};
+      const responded = new Promise<void>((resolve) => {
+        respond = resolve;
+      });
+      let requested = false;
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, async () => {
+          requested = true;
+          await responded;
+          return HttpResponse.json({ path: 'playlists/test-playlist.json', resource: { upsert: {} } });
+        })
+      );
+
+      const { user, unmount } = setup();
+      await user.click(await screen.findByRole('button', { name: /^commit/i }));
+      await waitFor(() => expect(requested).toBe(true));
+      unmount();
+      respond();
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(window.sessionStorage.getItem(COMMIT_OUTCOME_STORAGE_KEY)).toBeNull();
     });
   });
 
