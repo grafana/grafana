@@ -1933,6 +1933,27 @@ describe('graphiteDatasource', () => {
       expect(updatedDate).toBe('');
     });
   });
+
+  describe('prepareBackendQueries', () => {
+    it('prepares the queries with `interpolateVariablesInQueries`, not `applyTemplateVariables`', () => {
+      const queries: GraphiteQuery[] = [
+        { refId: 'A', target: 'metric.a' },
+        { refId: 'B', target: 'sumSeries(#A)' },
+      ];
+
+      const result = ctx.ds.prepareBackendQueries(queries, {});
+
+      expect(result).toEqual([
+        { refId: 'A', target: 'metric.a', datasource: ctx.ds.getRef() },
+        {
+          refId: 'B',
+          target: 'sumSeries(#A)',
+          targetFull: 'sumSeries(metric.a)',
+          datasource: ctx.ds.getRef(),
+        },
+      ]);
+    });
+  });
 });
 
 describe('access scenarios', () => {
