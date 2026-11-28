@@ -287,6 +287,8 @@ type DashboardPanelQuerySpec struct {
 	Query  DashboardDataQueryKind `json:"query"`
 	RefId  string                 `json:"refId"`
 	Hidden bool                   `json:"hidden"`
+	// When set, the query only runs while the group evaluates to visible
+	ConditionalRendering *DashboardQueryConditionalRenderingGroupKind `json:"conditionalRendering,omitempty"`
 }
 
 // NewDashboardPanelQuerySpec creates a new DashboardPanelQuerySpec object.
@@ -300,6 +302,116 @@ func NewDashboardPanelQuerySpec() *DashboardPanelQuerySpec {
 // OpenAPIModelName returns the OpenAPI model name for DashboardPanelQuerySpec.
 func (DashboardPanelQuerySpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardPanelQuerySpec"
+}
+
+// Conditional rendering group of a panel query. Same as ConditionalRenderingGroupKind without the data item, which
+// cannot be evaluated for a query since it would depend on the data that the query produces.
+// +k8s:openapi-gen=true
+type DashboardQueryConditionalRenderingGroupKind struct {
+	Kind string                                      `json:"kind"`
+	Spec DashboardQueryConditionalRenderingGroupSpec `json:"spec"`
+}
+
+// NewDashboardQueryConditionalRenderingGroupKind creates a new DashboardQueryConditionalRenderingGroupKind object.
+func NewDashboardQueryConditionalRenderingGroupKind() *DashboardQueryConditionalRenderingGroupKind {
+	return &DashboardQueryConditionalRenderingGroupKind{
+		Kind: "ConditionalRenderingGroup",
+		Spec: *NewDashboardQueryConditionalRenderingGroupSpec(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardQueryConditionalRenderingGroupKind.
+func (DashboardQueryConditionalRenderingGroupKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardQueryConditionalRenderingGroupKind"
+}
+
+// +k8s:openapi-gen=true
+type DashboardQueryConditionalRenderingGroupSpec struct {
+	Visibility DashboardQueryConditionalRenderingGroupSpecVisibility                              `json:"visibility"`
+	Condition  DashboardQueryConditionalRenderingGroupSpecCondition                               `json:"condition"`
+	Items      []DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind `json:"items"`
+}
+
+// NewDashboardQueryConditionalRenderingGroupSpec creates a new DashboardQueryConditionalRenderingGroupSpec object.
+func NewDashboardQueryConditionalRenderingGroupSpec() *DashboardQueryConditionalRenderingGroupSpec {
+	return &DashboardQueryConditionalRenderingGroupSpec{
+		Items: []DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardQueryConditionalRenderingGroupSpec.
+func (DashboardQueryConditionalRenderingGroupSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardQueryConditionalRenderingGroupSpec"
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingVariableKind struct {
+	Kind string                                    `json:"kind"`
+	Spec DashboardConditionalRenderingVariableSpec `json:"spec"`
+}
+
+// NewDashboardConditionalRenderingVariableKind creates a new DashboardConditionalRenderingVariableKind object.
+func NewDashboardConditionalRenderingVariableKind() *DashboardConditionalRenderingVariableKind {
+	return &DashboardConditionalRenderingVariableKind{
+		Kind: "ConditionalRenderingVariable",
+		Spec: *NewDashboardConditionalRenderingVariableSpec(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingVariableKind.
+func (DashboardConditionalRenderingVariableKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingVariableKind"
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingVariableSpec struct {
+	Variable string                                            `json:"variable"`
+	Operator DashboardConditionalRenderingVariableSpecOperator `json:"operator"`
+	Value    string                                            `json:"value"`
+}
+
+// NewDashboardConditionalRenderingVariableSpec creates a new DashboardConditionalRenderingVariableSpec object.
+func NewDashboardConditionalRenderingVariableSpec() *DashboardConditionalRenderingVariableSpec {
+	return &DashboardConditionalRenderingVariableSpec{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingVariableSpec.
+func (DashboardConditionalRenderingVariableSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingVariableSpec"
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingTimeRangeSizeKind struct {
+	Kind string                                         `json:"kind"`
+	Spec DashboardConditionalRenderingTimeRangeSizeSpec `json:"spec"`
+}
+
+// NewDashboardConditionalRenderingTimeRangeSizeKind creates a new DashboardConditionalRenderingTimeRangeSizeKind object.
+func NewDashboardConditionalRenderingTimeRangeSizeKind() *DashboardConditionalRenderingTimeRangeSizeKind {
+	return &DashboardConditionalRenderingTimeRangeSizeKind{
+		Kind: "ConditionalRenderingTimeRangeSize",
+		Spec: *NewDashboardConditionalRenderingTimeRangeSizeSpec(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingTimeRangeSizeKind.
+func (DashboardConditionalRenderingTimeRangeSizeKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingTimeRangeSizeKind"
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingTimeRangeSizeSpec struct {
+	Value string `json:"value"`
+}
+
+// NewDashboardConditionalRenderingTimeRangeSizeSpec creates a new DashboardConditionalRenderingTimeRangeSizeSpec object.
+func NewDashboardConditionalRenderingTimeRangeSizeSpec() *DashboardConditionalRenderingTimeRangeSizeSpec {
+	return &DashboardConditionalRenderingTimeRangeSizeSpec{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingTimeRangeSizeSpec.
+func (DashboardConditionalRenderingTimeRangeSizeSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingTimeRangeSizeSpec"
 }
 
 // +k8s:openapi-gen=true
@@ -1336,42 +1448,6 @@ func (DashboardConditionalRenderingGroupSpec) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type DashboardConditionalRenderingVariableKind struct {
-	Kind string                                    `json:"kind"`
-	Spec DashboardConditionalRenderingVariableSpec `json:"spec"`
-}
-
-// NewDashboardConditionalRenderingVariableKind creates a new DashboardConditionalRenderingVariableKind object.
-func NewDashboardConditionalRenderingVariableKind() *DashboardConditionalRenderingVariableKind {
-	return &DashboardConditionalRenderingVariableKind{
-		Kind: "ConditionalRenderingVariable",
-		Spec: *NewDashboardConditionalRenderingVariableSpec(),
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingVariableKind.
-func (DashboardConditionalRenderingVariableKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingVariableKind"
-}
-
-// +k8s:openapi-gen=true
-type DashboardConditionalRenderingVariableSpec struct {
-	Variable string                                            `json:"variable"`
-	Operator DashboardConditionalRenderingVariableSpecOperator `json:"operator"`
-	Value    string                                            `json:"value"`
-}
-
-// NewDashboardConditionalRenderingVariableSpec creates a new DashboardConditionalRenderingVariableSpec object.
-func NewDashboardConditionalRenderingVariableSpec() *DashboardConditionalRenderingVariableSpec {
-	return &DashboardConditionalRenderingVariableSpec{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingVariableSpec.
-func (DashboardConditionalRenderingVariableSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingVariableSpec"
-}
-
-// +k8s:openapi-gen=true
 type DashboardConditionalRenderingDataKind struct {
 	Kind string                                `json:"kind"`
 	Spec DashboardConditionalRenderingDataSpec `json:"spec"`
@@ -1403,40 +1479,6 @@ func NewDashboardConditionalRenderingDataSpec() *DashboardConditionalRenderingDa
 // OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingDataSpec.
 func (DashboardConditionalRenderingDataSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingDataSpec"
-}
-
-// +k8s:openapi-gen=true
-type DashboardConditionalRenderingTimeRangeSizeKind struct {
-	Kind string                                         `json:"kind"`
-	Spec DashboardConditionalRenderingTimeRangeSizeSpec `json:"spec"`
-}
-
-// NewDashboardConditionalRenderingTimeRangeSizeKind creates a new DashboardConditionalRenderingTimeRangeSizeKind object.
-func NewDashboardConditionalRenderingTimeRangeSizeKind() *DashboardConditionalRenderingTimeRangeSizeKind {
-	return &DashboardConditionalRenderingTimeRangeSizeKind{
-		Kind: "ConditionalRenderingTimeRangeSize",
-		Spec: *NewDashboardConditionalRenderingTimeRangeSizeSpec(),
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingTimeRangeSizeKind.
-func (DashboardConditionalRenderingTimeRangeSizeKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingTimeRangeSizeKind"
-}
-
-// +k8s:openapi-gen=true
-type DashboardConditionalRenderingTimeRangeSizeSpec struct {
-	Value string `json:"value"`
-}
-
-// NewDashboardConditionalRenderingTimeRangeSizeSpec creates a new DashboardConditionalRenderingTimeRangeSizeSpec object.
-func NewDashboardConditionalRenderingTimeRangeSizeSpec() *DashboardConditionalRenderingTimeRangeSizeSpec {
-	return &DashboardConditionalRenderingTimeRangeSizeSpec{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingTimeRangeSizeSpec.
-func (DashboardConditionalRenderingTimeRangeSizeSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingTimeRangeSizeSpec"
 }
 
 // +k8s:openapi-gen=true
@@ -2809,6 +2851,47 @@ func (DashboardV2AdhocVariableKindDatasource) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
+type DashboardQueryConditionalRenderingGroupSpecVisibility string
+
+const (
+	DashboardQueryConditionalRenderingGroupSpecVisibilityShow DashboardQueryConditionalRenderingGroupSpecVisibility = "show"
+	DashboardQueryConditionalRenderingGroupSpecVisibilityHide DashboardQueryConditionalRenderingGroupSpecVisibility = "hide"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardQueryConditionalRenderingGroupSpecVisibility.
+func (DashboardQueryConditionalRenderingGroupSpecVisibility) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardQueryConditionalRenderingGroupSpecVisibility"
+}
+
+// +k8s:openapi-gen=true
+type DashboardQueryConditionalRenderingGroupSpecCondition string
+
+const (
+	DashboardQueryConditionalRenderingGroupSpecConditionAnd DashboardQueryConditionalRenderingGroupSpecCondition = "and"
+	DashboardQueryConditionalRenderingGroupSpecConditionOr  DashboardQueryConditionalRenderingGroupSpecCondition = "or"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardQueryConditionalRenderingGroupSpecCondition.
+func (DashboardQueryConditionalRenderingGroupSpecCondition) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardQueryConditionalRenderingGroupSpecCondition"
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingVariableSpecOperator string
+
+const (
+	DashboardConditionalRenderingVariableSpecOperatorEquals     DashboardConditionalRenderingVariableSpecOperator = "equals"
+	DashboardConditionalRenderingVariableSpecOperatorNotEquals  DashboardConditionalRenderingVariableSpecOperator = "notEquals"
+	DashboardConditionalRenderingVariableSpecOperatorMatches    DashboardConditionalRenderingVariableSpecOperator = "matches"
+	DashboardConditionalRenderingVariableSpecOperatorNotMatches DashboardConditionalRenderingVariableSpecOperator = "notMatches"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingVariableSpecOperator.
+func (DashboardConditionalRenderingVariableSpecOperator) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingVariableSpecOperator"
+}
+
+// +k8s:openapi-gen=true
 type DashboardRepeatOptionsDirection string
 
 const (
@@ -2845,21 +2928,6 @@ const (
 // OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingGroupSpecCondition.
 func (DashboardConditionalRenderingGroupSpecCondition) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingGroupSpecCondition"
-}
-
-// +k8s:openapi-gen=true
-type DashboardConditionalRenderingVariableSpecOperator string
-
-const (
-	DashboardConditionalRenderingVariableSpecOperatorEquals     DashboardConditionalRenderingVariableSpecOperator = "equals"
-	DashboardConditionalRenderingVariableSpecOperatorNotEquals  DashboardConditionalRenderingVariableSpecOperator = "notEquals"
-	DashboardConditionalRenderingVariableSpecOperatorMatches    DashboardConditionalRenderingVariableSpecOperator = "matches"
-	DashboardConditionalRenderingVariableSpecOperatorNotMatches DashboardConditionalRenderingVariableSpecOperator = "notMatches"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingVariableSpecOperator.
-func (DashboardConditionalRenderingVariableSpecOperator) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingVariableSpecOperator"
 }
 
 // +k8s:openapi-gen=true
@@ -3032,6 +3100,73 @@ func (resource *DashboardPanelKindOrLibraryPanelKind) UnmarshalJSON(raw []byte) 
 // OpenAPIModelName returns the OpenAPI model name for DashboardPanelKindOrLibraryPanelKind.
 func (DashboardPanelKindOrLibraryPanelKind) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardPanelKindOrLibraryPanelKind"
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind struct {
+	ConditionalRenderingVariableKind      *DashboardConditionalRenderingVariableKind      `json:"ConditionalRenderingVariableKind,omitempty"`
+	ConditionalRenderingTimeRangeSizeKind *DashboardConditionalRenderingTimeRangeSizeKind `json:"ConditionalRenderingTimeRangeSizeKind,omitempty"`
+}
+
+// NewDashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind creates a new DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind object.
+func NewDashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind() *DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind {
+	return &DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind` as JSON.
+func (resource DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind) MarshalJSON() ([]byte, error) {
+	if resource.ConditionalRenderingVariableKind != nil {
+		return json.Marshal(resource.ConditionalRenderingVariableKind)
+	}
+	if resource.ConditionalRenderingTimeRangeSizeKind != nil {
+		return json.Marshal(resource.ConditionalRenderingTimeRangeSizeKind)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind` from JSON.
+func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
+	parsedAsMap := make(map[string]interface{})
+	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
+		return err
+	}
+
+	discriminator, found := parsedAsMap["kind"]
+	if !found {
+		return nil
+	}
+
+	switch discriminator {
+	case "ConditionalRenderingTimeRangeSize":
+		var dashboardConditionalRenderingTimeRangeSizeKind DashboardConditionalRenderingTimeRangeSizeKind
+		if err := json.Unmarshal(raw, &dashboardConditionalRenderingTimeRangeSizeKind); err != nil {
+			return err
+		}
+
+		resource.ConditionalRenderingTimeRangeSizeKind = &dashboardConditionalRenderingTimeRangeSizeKind
+		return nil
+	case "ConditionalRenderingVariable":
+		var dashboardConditionalRenderingVariableKind DashboardConditionalRenderingVariableKind
+		if err := json.Unmarshal(raw, &dashboardConditionalRenderingVariableKind); err != nil {
+			return err
+		}
+
+		resource.ConditionalRenderingVariableKind = &dashboardConditionalRenderingVariableKind
+		return nil
+	}
+
+	return nil
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind.
+func (DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind"
 }
 
 // +k8s:openapi-gen=true

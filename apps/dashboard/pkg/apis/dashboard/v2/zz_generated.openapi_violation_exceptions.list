@@ -23,6 +23,7 @@ API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardIntervalVariableSpec,Options
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardPanelSpec,Links
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardPrompt,Sources
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardQueryConditionalRenderingGroupSpec,Items
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardQueryGroupSpec,Queries
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardQueryGroupSpec,Transformations
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardQueryVariableSpec,Options
@@ -51,6 +52,8 @@ API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/ap
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind,ConditionalRenderingDataKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind,ConditionalRenderingTimeRangeSizeKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind,ConditionalRenderingVariableKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind,ConditionalRenderingTimeRangeSizeKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind,ConditionalRenderingVariableKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind,AutoGridLayoutKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind,GridLayoutKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind,RowsLayoutKind
