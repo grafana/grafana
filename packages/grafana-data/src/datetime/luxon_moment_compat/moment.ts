@@ -464,6 +464,21 @@ function arithmeticDuration(duration: Duration): Duration {
   });
 }
 
+// Luxon cannot parse an ordinal day suffix. Moment accepts it for `Do` and, because non-strict
+// parsing ignores leftover text, for `D` and `DD` too (e.g. "Nov 20th, 2026" with "MMM D, YYYY").
+const ORDINAL_SUFFIX_PATTERN = /\b(\d{1,2})(?:st|nd|rd|th)\b/gi;
+const FORMAT_LITERAL_PATTERN = /\[([^\]]*)\]/g;
+
+// Ordinals inside the format's `[literal]` text are required by the format, so they are kept.
+function stripOrdinalSuffixes(value: string, format: MomentFormat): string {
+  const literals =
+    typeof format === 'string' ? Array.from(format.matchAll(FORMAT_LITERAL_PATTERN), (m) => m[1].toLowerCase()) : [];
+
+  return value.replace(ORDINAL_SUFFIX_PATTERN, (match, day) =>
+    literals.some((literal) => literal.includes(match.toLowerCase())) ? match : day
+  );
+}
+
 const formatParserCache = new Map<string, TokenParser>();
 
 // DateTime.fromFormat recompiles its token parser (including regex construction) on every call
@@ -492,6 +507,51 @@ function resolveParsedZone(dt: DateTime, options?: MomentOptions): DateTime {
   return preferEarlierOffset(dt).setZone(options?.zone ?? Settings.defaultZone);
 }
 
+// Returns undefined when the value is unparsable with the format and its permissive variants.
+function parseWithVariants(
+  value: string,
+  format: MomentFormat,
+  fmt: string,
+  options?: MomentOptions
+): DateTime | undefined {
+  const parsed = parseFromCachedFormat(value, fmt, options);
+  if (parsed.isValid || parsed.invalidReason !== 'unparsable') {
+    return parsed;
+  }
+
+  if (typeof format !== 'string') {
+    return undefined;
+  }
+
+  const permissiveInputs: Array<[string, string]> = [];
+  const abbreviatedMonthFormat = format.replaceAll('MMMM', 'MMM');
+  const valueWithoutCommas = value.replaceAll(',', '');
+  const formatWithoutCommas = format.replaceAll(',', '');
+
+  if (abbreviatedMonthFormat !== format) {
+    permissiveInputs.push([value, abbreviatedMonthFormat]);
+  }
+  if (valueWithoutCommas !== value || formatWithoutCommas !== format) {
+    permissiveInputs.push([valueWithoutCommas, formatWithoutCommas]);
+    if (abbreviatedMonthFormat !== format) {
+      permissiveInputs.push([valueWithoutCommas, formatWithoutCommas.replaceAll('MMMM', 'MMM')]);
+    }
+  }
+
+  for (const [permissiveValue, permissiveFormat] of permissiveInputs) {
+    const permissiveParsed = parseFromCachedFormat(
+      permissiveValue,
+      convertMomentToLuxonForParsing(permissiveFormat, options?.locale),
+      options
+    );
+    if (permissiveParsed.isValid || permissiveParsed.invalidReason !== 'unparsable') {
+      return permissiveParsed;
+    }
+  }
+
+  return undefined;
+}
+
 function parseWithFormat(value: string, format: MomentFormat, options?: MomentOptions): DateTime {
   if (format === ISO_8601) {
     return resolveParsedZone(DateTime.fromISO(value, { ...options, setZone: true }), options);
@@ -514,36 +574,18 @@ function parseWithFormat(value: string, format: MomentFormat, options?: MomentOp
   const momentFormat = typeof format === 'string' ? format : 'ISO_8601';
   const fmt = convertMomentToLuxonForParsing(momentFormat, options?.locale);
 
-  const parsed = parseFromCachedFormat(value, fmt, options);
-  if (parsed.isValid || parsed.invalidReason !== 'unparsable') {
+  const parsed = parseWithVariants(value, format, fmt, options);
+  if (parsed) {
     return parsed;
   }
 
-  if (typeof format === 'string') {
-    const permissiveInputs: Array<[string, string]> = [];
-    const abbreviatedMonthFormat = format.replaceAll('MMMM', 'MMM');
-    const valueWithoutCommas = value.replaceAll(',', '');
-    const formatWithoutCommas = format.replaceAll(',', '');
-
-    if (abbreviatedMonthFormat !== format) {
-      permissiveInputs.push([value, abbreviatedMonthFormat]);
-    }
-    if (valueWithoutCommas !== value || formatWithoutCommas !== format) {
-      permissiveInputs.push([valueWithoutCommas, formatWithoutCommas]);
-      if (abbreviatedMonthFormat !== format) {
-        permissiveInputs.push([valueWithoutCommas, formatWithoutCommas.replaceAll('MMMM', 'MMM')]);
-      }
-    }
-
-    for (const [permissiveValue, permissiveFormat] of permissiveInputs) {
-      const permissiveParsed = parseFromCachedFormat(
-        permissiveValue,
-        convertMomentToLuxonForParsing(permissiveFormat, options?.locale),
-        options
-      );
-      if (permissiveParsed.isValid || permissiveParsed.invalidReason !== 'unparsable') {
-        return permissiveParsed;
-      }
+  // Ordinal suffixes are only stripped once the value as given has failed every variant, so formats
+  // with a literal suffix (e.g. "D[th]") keep working and ordinary values skip the normalization.
+  const withoutOrdinals = stripOrdinalSuffixes(value, format);
+  if (withoutOrdinals !== value) {
+    const parsedWithoutOrdinals = parseWithVariants(withoutOrdinals, format, fmt, options);
+    if (parsedWithoutOrdinals) {
+      return parsedWithoutOrdinals;
     }
   }
 
