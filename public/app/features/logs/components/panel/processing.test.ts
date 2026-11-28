@@ -456,6 +456,56 @@ Value"
         expect(logListModel.highlightedLogAttributesTokens).toHaveLength(2);
       });
     });
+
+    describe('isFromTimeMachine', () => {
+      test('is false when the marker label is present but the flag is disabled', () => {
+        const log = createLogLine(
+          { labels: { __time_machine__: 'true' } },
+          {
+            escape: false,
+            order: LogsSortOrder.Descending,
+            timeMachineLogsEnabled: false,
+            timeZone: 'browser',
+            wrapLogMessage: true,
+          }
+        );
+
+        expect(log.isFromTimeMachine).toBe(false);
+      });
+
+      test('is true when the marker label is present and the flag is enabled', () => {
+        const log = createLogLine(
+          { labels: { __time_machine__: 'true' } },
+          {
+            escape: false,
+            order: LogsSortOrder.Descending,
+            timeMachineLogsEnabled: true,
+            timeZone: 'browser',
+            wrapLogMessage: true,
+          }
+        );
+
+        expect(log.isFromTimeMachine).toBe(true);
+        expect(log.timeMachineMessage).toBe(
+          'This log line was dropped by Adaptive Logs but remains available for a limited time'
+        );
+      });
+
+      test('is false when the flag is enabled but the marker label is absent', () => {
+        const log = createLogLine(
+          { labels: {} },
+          {
+            escape: false,
+            order: LogsSortOrder.Descending,
+            timeMachineLogsEnabled: true,
+            timeZone: 'browser',
+            wrapLogMessage: true,
+          }
+        );
+
+        expect(log.isFromTimeMachine).toBe(false);
+      });
+    });
   });
 
   test('Orders logs', () => {

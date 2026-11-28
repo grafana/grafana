@@ -64,6 +64,7 @@ jest.mock('@grafana/assistant', () => {
 jest.mock('@openfeature/react-sdk', () => ({
   ...jest.requireActual('@openfeature/react-sdk'),
   useBooleanFlagValue: (_flag: string, defaultValue: boolean) => defaultValue,
+  useFlag: (_flag: string, defaultValue: boolean) => ({ value: defaultValue }),
 }));
 
 const fontSize: LogListFontSize = 'default';

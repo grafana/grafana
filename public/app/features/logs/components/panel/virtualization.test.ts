@@ -26,6 +26,7 @@ describe('Virtualization', () => {
     showDuplicates: false,
     hasLogsWithErrors: false,
     hasSampledLogs: false,
+    hasLogsFromTimeMachine: false,
   };
 
   const preProcessOptions: PreProcessOptions = {
@@ -230,6 +231,24 @@ describe('Virtualization', () => {
         0
       );
       // Two lines for the log and one extra for the sampled icon
+      expect(size).toBe(THREE_LINES_HEIGHT);
+    });
+
+    test('Measures a multi-line time machine log line', () => {
+      log = createLogLine(
+        { labels: { place: 'luna' }, entry: new Array(TWO_LINES_OF_CHARACTERS).fill('e').join('') },
+        preProcessOptions
+      );
+
+      const size = getLogLineSize(
+        virtualization,
+        [log],
+        container,
+        [],
+        { ...defaultOptions, wrap: true, hasLogsFromTimeMachine: true },
+        0
+      );
+      // Two lines for the log and one extra for the time machine icon
       expect(size).toBe(THREE_LINES_HEIGHT);
     });
 

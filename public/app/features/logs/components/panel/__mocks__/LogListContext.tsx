@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 
 import { CoreApp, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
-import { checkLogsError, checkLogsSampled } from 'app/features/logs/utils';
+import { checkLogsError, checkLogsFromTimeMachine, checkLogsSampled } from 'app/features/logs/utils';
 
 import { type LogListContextData, type Props } from '../LogListContext';
 import { logHasErrorAttributes, type LogListModel } from '../processing';
@@ -160,6 +160,7 @@ export const LogListContextProvider = ({
   unwrappedColumns = false,
   wrapLogMessage = true,
 }: Partial<Props>) => {
+  const hasLogsFromTimeMachine = logs.some((log) => !!checkLogsFromTimeMachine(log));
   const hasLogsWithErrorAttributes = logs.some(logHasErrorAttributes);
   const hasLogsWithErrors = logs.some((log) => !!checkLogsError(log));
   const hasSampledLogs = logs.some((log) => !!checkLogsSampled(log));
@@ -172,6 +173,7 @@ export const LogListContextProvider = ({
         dedupStrategy,
         displayedFields,
         downloadLogs: jest.fn(),
+        hasLogsFromTimeMachine,
         hasLogsWithErrorAttributes,
         hasLogsWithErrors,
         hasSampledLogs,

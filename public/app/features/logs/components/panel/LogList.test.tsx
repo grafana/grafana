@@ -299,6 +299,58 @@ describe('LogList', () => {
     });
   });
 
+  describe('Time Machine log lines', () => {
+    test('Shows the Time Machine icon and tooltip when the flag is enabled', async () => {
+      setBooleanFlags({ 'adaptivelogs.enableTimeMachine': true });
+      const user = userEvent.setup();
+      const timeMachineLogs = [createLogRow({ uid: '1', labels: { __time_machine__: 'true' } })];
+
+      render(<LogList {...defaultProps} logs={timeMachineLogs} />);
+      const icon = screen.getByLabelText('Dropped log, temporarily available');
+
+      await user.hover(icon);
+
+      expect(
+        await screen.findByText('This log line was dropped by Adaptive Logs but remains available for a limited time')
+      ).toBeInTheDocument();
+    });
+
+    test('Hides the Time Machine icon when the flag is disabled, even if the log has the marker', () => {
+      setBooleanFlags({ 'adaptivelogs.enableTimeMachine': false });
+      const timeMachineLogs = [createLogRow({ uid: '1', labels: { __time_machine__: 'true' } })];
+
+      render(<LogList {...defaultProps} logs={timeMachineLogs} />);
+
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Dropped log, temporarily available')).not.toBeInTheDocument();
+    });
+
+    // A log line shouldn't have both markers in practice: Time Machine only returns lines that
+    // Adaptive Logs dropped, while the sampled marker is on lines that were kept. Both icons share
+    // one width-reserved slot, though, so rendering both would overflow it.
+    const bothMarkersLogs = [
+      createLogRow({ uid: '1', labels: { __time_machine__: 'true', __adaptive_logs_sampled__: '10' } }),
+    ];
+
+    test('Shows only the Time Machine icon when a log has both the Time Machine and sampled markers', () => {
+      setBooleanFlags({ 'adaptivelogs.enableTimeMachine': true });
+
+      render(<LogList {...defaultProps} logs={bothMarkersLogs} />);
+
+      expect(screen.getByLabelText('Dropped log, temporarily available')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Is sampled')).not.toBeInTheDocument();
+    });
+
+    test('Shows the sampled icon for a log with both markers when the flag is disabled', () => {
+      setBooleanFlags({ 'adaptivelogs.enableTimeMachine': false });
+
+      render(<LogList {...defaultProps} logs={bothMarkersLogs} />);
+
+      expect(screen.getByLabelText('Is sampled')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Dropped log, temporarily available')).not.toBeInTheDocument();
+    });
+  });
+
   describe('Popover menu', () => {
     function setup(overrides: Partial<Props> = {}) {
       return render(

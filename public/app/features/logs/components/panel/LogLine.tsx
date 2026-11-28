@@ -117,6 +117,7 @@ const LogLineComponent = memo(
     const {
       dedupStrategy,
       fontSize,
+      hasLogsFromTimeMachine,
       hasLogsWithErrors,
       hasLogsWithErrorAttributes,
       hasSampledLogs,
@@ -252,7 +253,7 @@ const LogLineComponent = memo(
               {log.hasErrorAttributes && <LogLineErrorAttributeIcon log={log} styles={styles} />}
             </div>
           )}
-          {hasSampledLogs && (
+          {(hasSampledLogs || hasLogsFromTimeMachine) && (
             <div className={`${styles.isSampled}`}>
               {log.isSampled && (
                 <Tooltip content={log.sampledMessage ?? ''} placement="right" theme="info">
@@ -261,6 +262,23 @@ const LogLineComponent = memo(
                     name="info-circle"
                     size="xs"
                     aria-label={t('logs.log-line.is-sampled', 'Is sampled')}
+                  />
+                </Tooltip>
+              )}
+              {log.isFromTimeMachine && (
+                <Tooltip
+                  content={t(
+                    'logs.log-line.is-from-time-machine-tooltip',
+                    'This log line was dropped by Adaptive Logs but remains available for a limited time'
+                  )}
+                  placement="right"
+                  theme="info"
+                >
+                  <Icon
+                    className={styles.logIconAccented}
+                    name="adaptive-telemetry"
+                    size="xs"
+                    aria-label={t('logs.log-line.is-from-time-machine', 'Dropped log, temporarily available')}
                   />
                 </Tooltip>
               )}
@@ -741,6 +759,9 @@ export const getStyles = (
     }),
     logIconInfo: css({
       color: theme.colors.info.main,
+    }),
+    logIconAccented: css({
+      color: theme.colors.accent.text,
     }),
     level: css({
       color: theme.colors.text.secondary,

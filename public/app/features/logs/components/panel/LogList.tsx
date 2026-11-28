@@ -21,6 +21,7 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { useFlagAdaptivelogsEnableTimeMachine } from '@grafana/runtime/internal';
 import { ConfirmModal, Icon, type PopoverContent, useStyles2, useTheme2 } from '@grafana/ui';
 import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
 import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
@@ -286,6 +287,7 @@ const LogListComponent = ({
     filterLevels,
     fontSize,
     forceEscape,
+    hasLogsFromTimeMachine,
     hasLogsWithErrors,
     hasLogsWithErrorAttributes,
     hasSampledLogs,
@@ -335,6 +337,7 @@ const LogListComponent = ({
   );
   const styles = useStyles2(getStyles, dimensions, displayedFields, { unwrappedColumns }, listHeight);
   const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
+  const timeMachineLogsEnabled = useFlagAdaptivelogsEnableTimeMachine();
   const widthContainer = wrapperRef.current ?? containerElement;
   const {
     closePopoverMenu,
@@ -389,6 +392,7 @@ const LogListComponent = ({
       preProcessLogs(
         logs,
         {
+          timeMachineLogsEnabled,
           getFieldLinks,
           escape: forceEscape ?? false,
           otelLogsFormattingEnabled,
@@ -403,6 +407,7 @@ const LogListComponent = ({
     );
     listRef.current?.resetAfterIndex(0);
   }, [
+    timeMachineLogsEnabled,
     forceEscape,
     getFieldLinks,
     grammar,
@@ -419,7 +424,16 @@ const LogListComponent = ({
   useEffect(() => {
     virtualization.resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
-  }, [forceEscape, otelLogsFormattingEnabled, prettifyJSON, sortOrder, timeZone, virtualization, wrapLogMessage]);
+  }, [
+    timeMachineLogsEnabled,
+    forceEscape,
+    otelLogsFormattingEnabled,
+    prettifyJSON,
+    sortOrder,
+    timeZone,
+    virtualization,
+    wrapLogMessage,
+  ]);
 
   // Cached height is only safe to carry over to a new `logs` array when it is the same underlying result set.
   const prevDataFramesRef = useRef(dataFrames);
@@ -602,6 +616,7 @@ const LogListComponent = ({
               itemCount={itemCount}
               itemData={itemData}
               itemSize={getLogLineSize.bind(null, virtualization, filteredLogs, widthContainer, displayedFields, {
+                hasLogsFromTimeMachine,
                 hasLogsWithErrors,
                 hasLogsWithErrorAttributes,
                 hasSampledLogs,
