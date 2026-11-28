@@ -194,6 +194,20 @@ describe('RowItemRenderer', () => {
     expect(copiedUrl.searchParams.get('drow')).toBe('Row-2/Row-1');
   });
 
+  it('styles a nested row title differently from a top-level row title', () => {
+    const nestedRow = new RowItem({ title: 'Inner row', layout: AutoGridLayoutManager.createEmpty() });
+    const outerRow = new RowItem({ title: 'Outer row', layout: new RowsLayoutManager({ rows: [nestedRow] }) });
+    const scene = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      body: new RowsLayoutManager({ rows: [outerRow] }),
+    });
+    render(<scene.Component model={scene} />);
+
+    const outerTitle = screen.getByTestId(selectors.components.DashboardRow.title('Outer row'));
+    const nestedTitle = screen.getByTestId(selectors.components.DashboardRow.title('Inner row'));
+    expect(nestedTitle.className).not.toBe(outerTitle.className);
+  });
+
   it('encodes slashes in row titles so they do not look like nested paths', async () => {
     Object.defineProperty(window, 'isSecureContext', { value: true, configurable: true });
 

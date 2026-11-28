@@ -45,7 +45,9 @@ export function RowHeader({
   const title = useInterpolatedTitle(model);
   const styles = useStyles2(getStyles);
   const clearStyles = useStyles2(clearButtonStyles);
-  const isTopLevel = model.parent?.parent instanceof DashboardScene;
+  // Repeat clones are stored on the source row's state, so their direct parent is the source row
+  // rather than the rows layout. Checking the layout keeps clones styled like their source.
+  const isTopLevel = model.getParentLayout().parent instanceof DashboardScene;
   const layoutType = mapIdToGridLayoutType(layout.descriptor.id);
 
   const titleElement = (
