@@ -130,10 +130,6 @@ func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
 		fT = data.FieldTypeFloat32
 	case types.Float64:
 		fT = data.FieldTypeFloat64
-	case types.Timestamp:
-		fT = data.FieldTypeTime
-	case types.Datetime:
-		fT = data.FieldTypeTime
 	case types.Boolean:
 		fT = data.FieldTypeBool
 	case types.JSON:
@@ -142,6 +138,10 @@ func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
 		switch {
 		case types.IsDecimal(col.Type):
 			fT = data.FieldTypeFloat64
+		case types.IsTime(col.Type):
+			// Covers DATE, DATETIME and TIMESTAMP at any fractional second precision.
+			// DATE_ADD and FROM_UNIXTIME, for example, return DATETIME(6).
+			fT = data.FieldTypeTime
 		case types.IsText(col.Type):
 			fT = data.FieldTypeString
 		default:
