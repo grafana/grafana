@@ -2,9 +2,11 @@ package ofrep
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -34,6 +36,10 @@ func (b *APIBuilder) evalFlagStatic(ctx context.Context, flagKey string, w http.
 	span.SetAttributes(attribute.String("flag_key", flagKey))
 
 	result, err := b.staticEvaluator.EvalFlag(ctx, flagKey)
+	if errors.Is(err, featuremgmt.ErrFlagNotFound) {
+		writeResponse(http.StatusNotFound, flagNotFoundResponse(flagKey), logger, w)
+		return
+	}
 	if err != nil {
 		err = tracing.Error(span, err)
 		logger.Error("Failed to evaluate static flag", "key", flagKey, "error", err)

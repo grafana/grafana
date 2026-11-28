@@ -2,6 +2,7 @@ package featuremgmt
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -11,6 +12,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// ErrFlagNotFound is returned by StaticFlagEvaluator.EvalFlag for a flag that is not defined.
+var ErrFlagNotFound = errors.New("flag not found")
 
 // StaticFlagEvaluator provides methods for evaluating static feature flags
 // it is only used when static provider is configured
@@ -49,7 +53,7 @@ type staticEvaluator struct {
 func (s *staticEvaluator) EvalFlag(ctx context.Context, flagKey string) (goffmodel.OFREPEvaluateSuccessResponse, error) {
 	flag, exists := s.flags[flagKey]
 	if !exists {
-		return goffmodel.OFREPEvaluateSuccessResponse{}, fmt.Errorf("flag %s not found", flagKey)
+		return goffmodel.OFREPEvaluateSuccessResponse{}, fmt.Errorf("%w: %s", ErrFlagNotFound, flagKey)
 	}
 
 	evalCtx := openfeature.TransactionContext(ctx)
