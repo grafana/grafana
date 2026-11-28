@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/dskit/services"
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -27,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	alertingauthz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -427,7 +429,17 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		alertingauthz.NewRuleService(ps.ac),
 		ps.ruleMutationValidator,
 	)
-	configStore := legacy_storage.NewAlertmanagerConfigStore(ps.alertingStore, notifier.NewExtraConfigsCrypto(ps.secretService), ps.features)
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	remoteAMEnabled := ps.features != nil && ps.features.IsEnabled(ctx, featuremgmt.FlagAlertmanagerRemotePrimary)
+	limitsProvider := provisioning.NewLimitsProvider(
+		ps.Cfg.UnifiedAlerting.RemoteAlertmanager,
+		remoteAMEnabled,
+		// A private registry avoids duplicate registration with the metrics ngalert already registered.
+		metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry()),
+		ps.tracer,
+		ps.log,
+	)
+	configStore := legacy_storage.NewAlertmanagerConfigStore(ps.alertingStore, notifier.NewExtraConfigsCrypto(ps.secretService), ps.features).WithLimitsProvider(limitsProvider)
 	routeService := routes.NewService(
 		configStore,
 		ps.provenanceStore,
@@ -463,7 +475,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 	notificationPolicyService := provisioning.NewNotificationPolicyService(configStore,
 		ps.provenanceStore, ps.SQLStore, routeService, ps.Cfg.UnifiedAlerting, ps.log, validation.ValidateProvenanceRelaxed)
 	mutetimingsService := provisioning.NewMuteTimingService(configStore, ps.provenanceStore, ps.alertingStore, ps.log, ps.ruleService, routeService, validation.ValidateProvenanceRelaxed)
-	templateService := provisioning.NewTemplateService(configStore, ps.provenanceStore, ps.alertingStore, ps.log, validation.ValidateProvenanceRelaxed)
+	templateService := provisioning.NewTemplateService(configStore, ps.provenanceStore, ps.alertingStore, ps.log, validation.ValidateProvenanceRelaxed).WithLimitsProvider(limitsProvider)
 	cfg := prov_alerting.ProvisionerConfig{
 		Path:                       alertingPath,
 		RuleService:                *ruleService,
