@@ -40,6 +40,11 @@ import { getDashboardSceneFor } from '../../utils/utils';
 import { getChangedQueryOptions, getQueryOptionState, trackQueryOptionChanges } from '../queryOptionChanges';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
+import { QueryCoauthoringSessionEngine } from './QueryEditor/coauthoring/QueryCoauthoringSessionEngine';
+import {
+  type QueryCoauthoringRange,
+  type QueryCoauthoringSession,
+} from './QueryEditor/coauthoring/queryCoauthoringContracts';
 import { startQueryPreview, type QueryPreview } from './QueryEditor/coauthoring/queryPreview';
 import { filterDataTransformerConfigs, getPanelScopedVars } from './QueryEditor/utils';
 import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from './constants';
@@ -118,6 +123,10 @@ export interface PanelDataPaneNextState extends SceneObjectState {
  */
 export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
   static Component = QueryEditorContent;
+
+  private get coauthoring(): QueryCoauthoringSessionEngine | undefined {
+    return QueryCoauthoringSessionEngine.get(this.state.panelRef.resolve());
+  }
 
   public constructor(state: PanelDataPaneNextState) {
     super(state);
@@ -382,7 +391,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     });
     this.resolveUniformDatasource();
     if (queries?.length) {
-      this.runQueries();
+      this.executeQueries();
     }
   };
 
@@ -395,7 +404,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       queries.splice(index + 1, 0, duplicated);
       return queries;
     });
-    this.runQueries();
+    this.executeQueries();
   };
 
   public toggleQueryHide = (refId: string) => {
@@ -403,10 +412,27 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       queries[index] = { ...query, hide: !query.hide };
       return queries;
     });
-    this.runQueries();
+    this.executeQueries();
   };
 
+  public startCoauthoringSession = (
+    refId: string,
+    ranges: QueryCoauthoringRange[] = [],
+    select?: (refId: string) => void
+  ): QueryCoauthoringSession => {
+    return QueryCoauthoringSessionEngine.getOrCreate(this.state.panelRef.resolve()).enter(refId, ranges, select);
+  };
+
+  public getCoauthoringEditorQueries = (): DataQuery[] | undefined => this.coauthoring?.getEditorQueries();
+
+  public closeCoauthoringSession = (reason: 'flag_off' | 'left_panel_edit') => this.coauthoring?.close(reason);
+
   public runQueries = () => {
+    this.coauthoring?.manualRun();
+    this.executeQueries();
+  };
+
+  private executeQueries = () => {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
     if (queryRunner) {
       queryRunner.runQueries();
@@ -427,7 +453,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     setQueryRunnerQueries(queryRunner, queries);
     this.resolveUniformDatasource();
     if (queries.length) {
-      this.runQueries();
+      this.executeQueries();
     }
   };
 
@@ -439,7 +465,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     const refIdSet = new Set(refIds);
     const queries = queryRunner.state.queries.map((q) => (refIdSet.has(q.refId) ? { ...q, hide } : q));
     queryRunner.setState({ queries });
-    this.runQueries();
+    this.executeQueries();
   };
 
   /**
@@ -618,7 +644,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
 
     transformations.splice(index, 1);
     transformer.setState({ transformations });
-    this.runQueries();
+    this.executeQueries();
   };
 
   public toggleTransformationDisabled = (index: number) => {
@@ -630,7 +656,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     const transformation = transformations[index];
     transformations[index] = { ...transformation, disabled: !transformation.disabled };
     transformer.setState({ transformations });
-    this.runQueries();
+    this.executeQueries();
   };
 
   public bulkDeleteTransformations = (indices: number[]) => {
@@ -643,7 +669,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       (_, i) => !indexSet.has(i)
     );
     transformer.setState({ transformations });
-    this.runQueries();
+    this.executeQueries();
   };
 
   public bulkToggleTransformationsDisabled = (indices: number[], disabled: boolean) => {
@@ -656,7 +682,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       indexSet.has(i) ? { ...t, disabled } : t
     );
     transformer.setState({ transformations });
-    this.runQueries();
+    this.executeQueries();
   };
 
   /**
