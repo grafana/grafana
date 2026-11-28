@@ -1,7 +1,8 @@
-import { StateField, type Extension } from '@codemirror/state';
+import { StateField, type EditorState, type Extension } from '@codemirror/state';
 import { EditorView, showTooltip, type Tooltip } from '@codemirror/view';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { faro } from '@grafana/faro-web-sdk';
 
 import { type SignatureHelp, type SignatureHelpProvider, type SignatureInformation } from './types';
 
@@ -27,7 +28,7 @@ export function signatureHelp(provider: SignatureHelpProvider, options: Signatur
   const field = StateField.define<SignatureHelpState | null>({
     create(state) {
       const pos = state.selection.main.head;
-      return toState(provider(state, pos), pos);
+      return toState(callProvider(provider, state, pos), pos);
     },
     update(value, tr) {
       // Only recompute when the document or selection changes; other transactions
@@ -37,7 +38,7 @@ export function signatureHelp(provider: SignatureHelpProvider, options: Signatur
       }
 
       const pos = tr.state.selection.main.head;
-      return toState(provider(tr.state, pos), pos);
+      return toState(callProvider(provider, tr.state, pos), pos);
     },
     provide: (stateField) =>
       showTooltip.from(stateField, (value) => (value ? createSignatureTooltip(value.help, value.pos) : null)),
@@ -50,6 +51,22 @@ export function signatureHelp(provider: SignatureHelpProvider, options: Signatur
   }
 
   return extensions;
+}
+
+// CodeMirror does not catch errors thrown from a state field, so a throwing provider
+// would break every edit (or the initial mount). Report it and show no tooltip instead.
+function callProvider(provider: SignatureHelpProvider, state: EditorState, pos: number): SignatureHelp | null {
+  try {
+    return provider(state, pos);
+  } catch (caughtError: unknown) {
+    const error =
+      caughtError instanceof Error
+        ? caughtError
+        : new Error('CodeMirror signature help provider failed', { cause: caughtError });
+
+    faro?.api?.pushError(error, { context: { type: 'sync', source: 'CodeMirror.signatureHelp' } });
+    return null;
+  }
 }
 
 // Treat help without any signatures as "no help" so the tooltip is never created
