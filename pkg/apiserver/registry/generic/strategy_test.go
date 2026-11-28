@@ -1,6 +1,7 @@
 package generic_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -12,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/apis/example"
+	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 )
 
 func TestGenericStrategy(t *testing.T) {
@@ -370,6 +372,58 @@ func TestCompleteStrategy(t *testing.T) {
 			})
 		})
 	})
+}
+
+func TestPrepareForCreateClearsClientResourceVersion(t *testing.T) {
+	t.Parallel()
+	gv := schema.GroupVersion{Group: "test", Version: "v1"}
+
+	withVerb := func(verb string) context.Context {
+		return genericapirequest.WithRequestInfo(t.Context(), &genericapirequest.RequestInfo{Verb: verb})
+	}
+
+	tests := []struct {
+		name        string
+		ctx         context.Context
+		wantCleared bool
+	}{
+		{name: "create request", ctx: withVerb("create"), wantCleared: true},
+		// In-process create-on-update has no request info; it must keep the version for
+		// optimistic concurrency (e.g. the GlobalRole reconciler).
+		{name: "in-process create-on-update (no request info)", ctx: t.Context(), wantCleared: false},
+		{name: "create-on-update (PUT)", ctx: withVerb("update"), wantCleared: false},
+		{name: "create-on-apply (PATCH)", ctx: withVerb("patch"), wantCleared: false},
+	}
+
+	strategies := []struct {
+		name     string
+		strategy interface {
+			PrepareForCreate(context.Context, runtime.Object)
+		}
+	}{
+		{name: "genericStrategy", strategy: generic.NewStrategy(runtime.NewScheme(), gv)},
+		{name: "genericCompleteStrategy", strategy: generic.NewCompleteStrategy(runtime.NewScheme(), gv)},
+	}
+
+	for _, s := range strategies {
+		for _, tt := range tests {
+			t.Run(s.name+"/"+tt.name, func(t *testing.T) {
+				t.Parallel()
+				obj := &example.Pod{ObjectMeta: metav1.ObjectMeta{
+					Name:            "test",
+					Namespace:       "default",
+					ResourceVersion: "123",
+				}}
+
+				s.strategy.PrepareForCreate(tt.ctx, obj)
+				if tt.wantCleared {
+					require.Empty(t, obj.ResourceVersion)
+				} else {
+					require.Equal(t, "123", obj.ResourceVersion)
+				}
+			})
+		}
+	}
 }
 
 func TestGetAttrs(t *testing.T) {

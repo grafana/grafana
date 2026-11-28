@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
 	"sigs.k8s.io/structured-merge-diff/v6/fieldpath"
@@ -55,6 +56,7 @@ func (g *genericStrategy) PrepareForCreate(ctx context.Context, obj runtime.Obje
 		return
 	}
 	meta.SetGeneration(1)
+	clearClientResourceVersion(ctx, meta)
 	objCopy := obj.DeepCopyObject()
 	err = runtime.SetZeroValue(objCopy)
 	if err != nil {
@@ -222,6 +224,20 @@ func (g *genericCompleteStrategy) PrepareForCreate(ctx context.Context, obj runt
 		return
 	}
 	meta.SetGeneration(1)
+	clearClientResourceVersion(ctx, meta)
+}
+
+// clearClientResourceVersion drops a client-supplied resourceVersion on a create request. The
+// server owns the field, so a create must not persist the value the client sent, and dry-run
+// must not reflect it either. Any other context keeps the version: an in-flight PUT or PATCH
+// that creates a missing object, and an in-process caller that has no request info, both rely
+// on it so a lost race against a concurrent delete still surfaces as a conflict.
+func clearClientResourceVersion(ctx context.Context, meta utils.GrafanaMetaAccessor) {
+	info, ok := genericapirequest.RequestInfoFrom(ctx)
+	if !ok || info.Verb != "create" {
+		return
+	}
+	meta.SetResourceVersion("")
 }
 
 func (g *genericCompleteStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {}
