@@ -1029,12 +1029,10 @@ github.com/go-openapi/swag/yamlutils v0.29.1/go.mod h1:rgsp3vT/QdWzKwn43CigDwjOG
 github.com/go-openapi/testify/enable/yaml/v2 v2.6.0/go.mod h1:tY+St1SGq4NFl0QIqdTY4aEdbChAHxhyB77XQi9iJCo=
 github.com/go-openapi/testify/enable/yaml/v2 v2.6.1/go.mod h1:YDPnwCRDu38/oJBVMBVXOUDiJ9cIeBHWvfImHaXqnv4=
 github.com/go-openapi/testify/enable/yaml/v2 v2.7.0/go.mod h1:mI1M88etYbc3PhgHsWQK2kwvNwW5aGFqMPbmib+SGIs=
-github.com/go-openapi/testify/enable/yaml/v2 v2.8.1/go.mod h1:74sM7nseyEwJFZ9yRNI77kCQAM5h8nZ4TmXI86voDHs=
 github.com/go-openapi/testify/v2 v2.5.1/go.mod h1:SgsVHtfooshd0tublTtJ50FPKhujf47YRqauXXOUxfw=
 github.com/go-openapi/testify/v2 v2.6.0/go.mod h1:SgsVHtfooshd0tublTtJ50FPKhujf47YRqauXXOUxfw=
 github.com/go-openapi/testify/v2 v2.6.1/go.mod h1:SgsVHtfooshd0tublTtJ50FPKhujf47YRqauXXOUxfw=
 github.com/go-openapi/testify/v2 v2.7.0/go.mod h1:SgsVHtfooshd0tublTtJ50FPKhujf47YRqauXXOUxfw=
-github.com/go-openapi/testify/v2 v2.8.1/go.mod h1:4gUN8jC+RqOE2qjW/vDmfyTvl5BCht4qL7oca0odrak=
 github.com/go-openapi/validate v0.24.0/go.mod h1:iyeX1sEufmv3nPbBdX3ieNviWnOZaJ1+zquzJEf2BAQ=
 github.com/go-openapi/validate v0.26.1/go.mod h1:B8UMgXiQiwwQWIbmuROlwJZDPGlikPuh7iHV1vPX9Oo=
 github.com/go-openapi/validate v1.0.0/go.mod h1:wwXGRqMQzOZ7PCqBcgNk+DD9+Cacnxv7we5T0M/eA3Y=
@@ -1119,6 +1117,7 @@ github.com/gorilla/handlers v1.5.2/go.mod h1:dX+xVpaxdSw+q0Qek8SSsl3dfMk3jNddUkM
 github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/grafana/alerting v0.0.0-20261120142630-6b20a0ecf293/go.mod h1:w6WjlRw178k8vWrLk3L0NXgXasSxr21EaPMBuy4ZuBA=
+github.com/grafana/alerting v0.0.0-20261127163509-742fb7f49c95/go.mod h1:OBTA0aLcxDpJX8ZzO6CCtmMggh8/yKZO1FOpx1NNtcQ=
 github.com/grafana/authlib v0.0.0-20260922202713-e3b571f7135d/go.mod h1:1y/QFuWzHw/S70DfBTA9odWcmqd/r/YuCUylNXohIrI=
 github.com/grafana/authlib/types v0.0.0-20260304161757-e152786a5bb4/go.mod h1:j+YTXmAcD4zCNyl4QSNqYSEe/q9KgrH1btodnhK29hI=
 github.com/grafana/cog v0.2.2/go.mod h1:8kbdBnF7hZhp7nB3zojgiHP4A8urY8hJOQulHcVnwDo=

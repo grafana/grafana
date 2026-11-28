@@ -39,12 +39,15 @@ func TestLiveSmtpConfig(t *testing.T) {
 		require.Equal(t, "live:25", got.Host)
 		require.Equal(t, "live@grafana.net", got.FromAddress)
 		require.Equal(t, "instance", got.EhloIdentity)
+		require.True(t, got.Disabled)
 		require.Equal(t, map[string]string{"Foo-Header": "foo"}, got.StaticHeaders)
 
 		smtp.Key("from_address").SetValue("updated@grafana.net")
+		smtp.Key("enabled").SetValue("true")
 		got, err = get(ctx)
 		require.NoError(t, err)
 		require.Equal(t, "updated@grafana.net", got.FromAddress)
+		require.False(t, got.Disabled)
 	})
 
 	t.Run("returns the error if the settings can't be read", func(t *testing.T) {

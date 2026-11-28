@@ -312,6 +312,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 		StartTLSPolicy: "test",
 		StaticHeaders:  map[string]string{"test": "true"},
 		User:           "Test User",
+		Disabled:       true,
 	}
 	applied, err = moa.ApplyConfig(ctx, 1, &ngmodels.AlertConfiguration{AlertmanagerConfiguration: testGrafanaConfig})
 	require.NoError(t, err)

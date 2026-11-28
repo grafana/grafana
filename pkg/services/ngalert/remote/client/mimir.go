@@ -64,6 +64,7 @@ type SmtpConfig struct {
 	StartTLSPolicy string            `json:"start_tls_policy"`
 	StaticHeaders  map[string]string `json:"static_headers"`
 	User           string            `json:"user"`
+	Disabled       bool              `json:"disabled"`
 }
 
 type Config struct {

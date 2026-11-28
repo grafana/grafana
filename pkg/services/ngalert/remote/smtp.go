@@ -32,6 +32,7 @@ func LiveSmtpConfig(cfgProvider configprovider.ConfigProvider, cfg *setting.Cfg)
 			StartTLSPolicy: s.StartTLSPolicy,
 			SkipVerify:     s.SkipVerify,
 			StaticHeaders:  s.StaticHeaders,
+			Disabled:       !s.Enabled,
 		}, nil
 	}
 }
