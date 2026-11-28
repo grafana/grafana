@@ -184,6 +184,8 @@ export const FlagKeys = {
   GrafanaBootdataAnalytics: "grafana.bootdataAnalytics",
   /** Shows dashboard tags in the command palette */
   GrafanaCmdkDashboardTags: "grafana.cmdkDashboardTags",
+  /** Lets app plugins contribute search results to the command palette */
+  GrafanaCmdkExtensionSearch: "grafana.cmdkExtensionSearch",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
   GrafanaCmdkHybridSearch: "grafana.cmdkHybridSearch",
   /** Skips reranking in command palette hybrid dashboard search */
@@ -1373,6 +1375,17 @@ export const useFlagGrafanaBootdataAnalytics = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaCmdkDashboardTags = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.cmdkDashboardTags", false, options).value;
+};
+
+/**
+ * Lets app plugins contribute search results to the command palette
+ *
+ * **Details:**
+ * - flag key: `grafana.cmdkExtensionSearch`
+ * - default value: `false`
+ */
+export const useFlagGrafanaCmdkExtensionSearch = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.cmdkExtensionSearch", false, options).value;
 };
 
 /**

@@ -3019,6 +3019,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "grafana.cmdkExtensionSearch",
+			Description: "Lets app plugins contribute search results to the command palette",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "assistant.fullscreenWorkspace",
 			Description: "Shows the Grafana Assistant Chat and Workspace buttons in the top bar, and Exit Workspace on the Assistant Workspace page",
 			Stage:       FeatureStageExperimental,

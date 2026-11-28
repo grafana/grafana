@@ -3003,6 +3003,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.cmdkExtensionSearch",
+        "resourceVersion": "1795773399620",
+        "creationTimestamp": "2026-11-27T09:56:39Z"
+      },
+      "spec": {
+        "description": "Lets app plugins contribute search results to the command palette",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.cmdkHybridSearch",
         "resourceVersion": "1793824807529",
         "creationTimestamp": "2026-08-20T12:34:45Z",

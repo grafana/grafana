@@ -166,6 +166,7 @@ declare module "@openfeature/core" {
     | "grafana.cmdkHybridSearch"
     | "grafana.cmdkHybridSearchSkipRerank"
     | "grafana.cmdkDashboardTags"
+    | "grafana.cmdkExtensionSearch"
     | "assistant.fullscreenWorkspace"
     | "assistant.dashboard.artifacts"
     | "table.paginationPageSize"
