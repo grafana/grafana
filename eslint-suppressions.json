@@ -2962,11 +2962,6 @@
       "count": 3
     }
   },
-  "public/app/features/profile/UserProfileEditForm.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 3
-    }
-  },
   "public/app/features/provisioning/Connection/ConnectionOAuthCallbackPage.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
