@@ -292,6 +292,7 @@ describe('calculateField transformer w/ timeseries', () => {
     await expect(transformDataFrame([cfg], [seriesA, seriesBC])).toEmitValuesWith((received) => {
       const data = received[0];
       expect(data).toEqual([
+        seriesA,
         {
           fields: [
             {
@@ -444,6 +445,52 @@ describe('calculateField transformer w/ timeseries', () => {
       ]);
     });
   });
+
+  it.each([
+    {
+      mode: CalculateFieldMode.UnaryOperation,
+      operation: { unary: { fieldName: 'value', operator: UnaryOperationID.Abs }, alias: 'absolute' },
+      expected: { absolute: 2 },
+    },
+    {
+      mode: CalculateFieldMode.BinaryOperation,
+      operation: {
+        binary: {
+          left: { matcher: { id: FieldMatcherID.byType, options: FieldType.number } },
+          operator: BinaryOperationID.Add,
+          right: 'value',
+        },
+      },
+      expected: { 'value + value': -4 },
+    },
+  ])(
+    'keeps a frame without the input field when replacing fields in $mode mode',
+    async ({ mode, operation, expected }) => {
+      const matchingFrame = toDataFrame({
+        fields: [
+          { name: 'name', type: FieldType.string, values: ['a'] },
+          { name: 'value', type: FieldType.number, values: [-2] },
+        ],
+      });
+      const unmatchedFrame = toDataFrame({
+        fields: [
+          { name: 'host', type: FieldType.string, values: ['x'] },
+          { name: 'count', type: FieldType.number, values: [2] },
+        ],
+      });
+      const cfg = {
+        id: DataTransformerID.calculateField,
+        options: { mode, ...operation, replaceFields: true },
+      };
+
+      await expect(transformDataFrame([cfg], [matchingFrame, unmatchedFrame])).toEmitValuesWith(([frames]) => {
+        expect(frames.map((frame) => new DataFrameView(frame).toArray())).toEqual([
+          [expected],
+          [{ host: 'x', count: 2 }],
+        ]);
+      });
+    }
+  );
 
   describe('unary math', () => {
     it('calculates absolute value accurately', async () => {
@@ -644,7 +691,7 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
-  it('transforms multiple queries + field + field in the old format (non existent right field)', async () => {
+  it('keeps joined data when the legacy binary operation cannot find its right field', async () => {
     const cfg = {
       id: DataTransformerID.calculateField,
       options: {
@@ -663,8 +710,11 @@ describe('calculateField transformer w/ timeseries', () => {
     };
 
     await expect(transformDataFrame([cfg], [seriesA, seriesBC])).toEmitValuesWith((received) => {
-      const data = received[0];
-      expect(data).toEqual([]);
+      expect(received[0]).toHaveLength(1);
+      expect(new DataFrameView(received[0][0]).toArray()).toEqual([
+        { TheTime: 1000, A: 1, B: 2, C: 3, D: 'first', E: true },
+        { TheTime: 2000, A: 100, B: 200, C: 300, D: 'second', E: false },
+      ]);
     });
   });
 
@@ -710,6 +760,7 @@ describe('calculateField transformer w/ timeseries', () => {
           ],
           length: 2,
         },
+        seriesBC,
       ]);
     });
   });
