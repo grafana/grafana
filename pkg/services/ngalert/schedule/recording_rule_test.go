@@ -17,6 +17,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/prometheus/prometheus/prompb"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/atomic"
 
@@ -28,8 +29,10 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsfakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval/eval_mocks"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
@@ -843,6 +846,128 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 			}
 		})
 	})
+}
+
+func TestRecordingRuleWriteTimestamp(t *testing.T) {
+	scheduledAt := time.Date(2026, 2, 23, 12, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name  string
+		query models.AlertQuery
+		want  time.Time
+	}{
+		{
+			name: "datasource query uses the end of its relative time range",
+			query: models.AlertQuery{
+				RefID:         "A",
+				DatasourceUID: "prometheus-uid",
+				RelativeTimeRange: models.RelativeTimeRange{
+					From: models.Duration(10 * time.Minute),
+					To:   models.Duration(5 * time.Minute),
+				},
+			},
+			want: scheduledAt.Add(-5 * time.Minute),
+		},
+		{
+			name: "datasource query without an offset uses the scheduled time",
+			query: models.AlertQuery{
+				RefID:         "A",
+				DatasourceUID: "prometheus-uid",
+				RelativeTimeRange: models.RelativeTimeRange{
+					From: models.Duration(10 * time.Minute),
+				},
+			},
+			want: scheduledAt,
+		},
+		{
+			name: "expression uses the scheduled time",
+			query: models.AlertQuery{
+				RefID:         "A",
+				DatasourceUID: expr.DatasourceUID,
+				RelativeTimeRange: models.RelativeTimeRange{
+					From: models.Duration(10 * time.Minute),
+					To:   models.Duration(5 * time.Minute),
+				},
+			},
+			want: scheduledAt,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rule := &models.AlertRule{
+				Record: &models.Record{From: "A"},
+				Data:   []models.AlertQuery{tt.query},
+			}
+			require.Equal(t, tt.want, recordingRuleWriteTimestamp(rule, scheduledAt))
+		})
+	}
+}
+
+func TestRecordingRuleWritesSamplesAtQueryEvaluationTime(t *testing.T) {
+	scheduledAt := time.Date(2026, 2, 23, 12, 0, 0, 0, time.UTC)
+	queryOffset := 5 * time.Minute
+
+	frame := data.NewFrame("test",
+		data.NewField("time", nil, []time.Time{scheduledAt.Add(-queryOffset)}),
+		data.NewField("value", data.Labels{"job": "test"}, []float64{42}),
+	)
+	frame.SetMeta(&data.FrameMeta{
+		Type:        data.FrameTypeNumericWide,
+		TypeVersion: data.FrameTypeVersion{0, 1},
+	})
+
+	evaluator := &eval_mocks.ConditionEvaluatorMock{}
+	evaluator.EXPECT().EvaluateRaw(mock.Anything, scheduledAt).Return(&backend.QueryDataResponse{
+		Responses: map[string]backend.DataResponse{
+			"A": {Frames: data.Frames{frame}},
+		},
+	}, nil)
+
+	var writeTimestamp time.Time
+	ruleProcess := newRecordingRule(
+		context.Background(),
+		models.AlertRuleKeyWithGroup{},
+		RetryConfig{},
+		clock.NewMock(),
+		eval_mocks.NewEvaluatorFactory(evaluator),
+		setting.RecordingRuleSettings{Enabled: true},
+		log.NewNopLogger(),
+		metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetSchedulerMetrics(),
+		tracing.NewNoopTracerService(),
+		writer.FakeWriter{WriteFunc: func(_ context.Context, _ string, ts time.Time, _ data.Frames, _ int64, _ map[string]string) error {
+			writeTimestamp = ts
+			return nil
+		}},
+		nil,
+		nil,
+		nil,
+	)
+
+	rule := &models.AlertRule{
+		OrgID: 1,
+		Record: &models.Record{
+			Metric:              "test_metric",
+			From:                "A",
+			TargetDatasourceUID: "",
+		},
+		Data: []models.AlertQuery{
+			{
+				RefID:         "A",
+				DatasourceUID: "prometheus-uid",
+				Model:         json.RawMessage(`{"expr":"up","instant":true,"range":false}`),
+				RelativeTimeRange: models.RelativeTimeRange{
+					From: models.Duration(10 * time.Minute),
+					To:   models.Duration(queryOffset),
+				},
+			},
+		},
+	}
+	evaluation := &Evaluation{scheduledAt: scheduledAt, rule: rule}
+
+	err := ruleProcess.tryEvaluation(context.Background(), evaluation, log.NewNopLogger())
+	require.NoError(t, err)
+	require.Equal(t, scheduledAt.Add(-queryOffset), writeTimestamp)
 }
 
 func withQueryForHealth(health string) models.AlertRuleMutator {
