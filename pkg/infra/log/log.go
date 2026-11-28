@@ -339,6 +339,14 @@ func getLogLevelFromString(levelName string) level.Option {
 // the filter is composed with logger name and level
 func getFilters(filterStrArray []string) map[string]level.Option {
 	filterMap := make(map[string]level.Option)
+	for name, levelName := range getFilterLevelNames(filterStrArray) {
+		filterMap[name] = getLogLevelFromString(levelName)
+	}
+	return filterMap
+}
+
+func getFilterLevelNames(filterStrArray []string) map[string]string {
+	filterMap := make(map[string]string)
 
 	for i := 0; i < len(filterStrArray); i++ {
 		filterStr := strings.TrimSpace(filterStrArray[i])
@@ -352,7 +360,7 @@ func getFilters(filterStrArray []string) map[string]level.Option {
 
 		parts := strings.Split(filterStr, ":")
 		if len(parts) > 1 {
-			filterMap[parts[0]] = getLogLevelFromString(parts[1])
+			filterMap[parts[0]] = parts[1]
 		}
 	}
 
@@ -431,9 +439,11 @@ func Reload() error {
 }
 
 type logWithFilters struct {
-	val      gokitlog.Logger
-	filters  map[string]level.Option
-	maxLevel level.Option
+	val              gokitlog.Logger
+	filters          map[string]level.Option
+	maxLevel         level.Option
+	levelName        string
+	filterLevelNames map[string]string
 }
 
 func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
@@ -447,7 +457,9 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 	}
 
 	defaultLevelName, _ := getLogLevelFromConfig("log", "info", cfg)
-	defaultFilters := getFilters(splitString(cfg.Section("log").Key("filters").String()))
+	defaultFilterStrs := splitString(cfg.Section("log").Key("filters").String())
+	defaultFilters := getFilters(defaultFilterStrs)
+	defaultFilterLevelNames := getFilterLevelNames(defaultFilterStrs)
 
 	configLoggers := make([]logWithFilters, 0, len(modes))
 	for _, mode := range modes {
@@ -459,8 +471,10 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 		}
 
 		// Log level.
-		_, leveloption := getLogLevelFromConfig("log."+mode, defaultLevelName, cfg)
-		modeFilters := getFilters(splitString(sec.Key("filters").String()))
+		levelName, leveloption := getLogLevelFromConfig("log."+mode, defaultLevelName, cfg)
+		modeFilterStrs := splitString(sec.Key("filters").String())
+		modeFilters := getFilters(modeFilterStrs)
+		modeFilterLevelNames := getFilterLevelNames(modeFilterStrs)
 
 		format := getLogFormat(sec.Key("format").MustString(""))
 
@@ -505,11 +519,14 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 		for key, value := range defaultFilters {
 			if _, exist := modeFilters[key]; !exist {
 				modeFilters[key] = value
+				modeFilterLevelNames[key] = defaultFilterLevelNames[key]
 			}
 		}
 
 		handler.filters = modeFilters
+		handler.filterLevelNames = modeFilterLevelNames
 		handler.maxLevel = leveloption
+		handler.levelName = levelName
 
 		configLoggers = append(configLoggers, handler)
 	}
@@ -518,6 +535,33 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 	}
 
 	return nil
+}
+
+var levelsByVerbosity = []string{"debug", "info", "warn", "error"}
+
+// LevelFor returns the most verbose level ("debug", "info", "warn" or "error") at which any log mode writes the named logger.
+func LevelFor(loggerName string) string {
+	root.mutex.RLock()
+	defer root.mutex.RUnlock()
+	if len(root.logFilters) == 0 {
+		return "debug"
+	}
+	most := len(levelsByVerbosity) - 1
+	for _, l := range root.logFilters {
+		name := l.levelName
+		if filterName, ok := l.filterLevelNames[loggerName]; ok {
+			name = filterName
+		}
+		switch name {
+		case "trace", "debug":
+			most = 0
+		case "info":
+			most = min(most, 1)
+		case "warn":
+			most = min(most, 2)
+		}
+	}
+	return levelsByVerbosity[most]
 }
 
 // SetupConsoleLogger setup Grafana console logger with provided level.

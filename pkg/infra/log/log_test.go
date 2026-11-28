@@ -10,6 +10,7 @@ import (
 	"github.com/go-kit/log/level"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 )
 
 func TestLogger(t *testing.T) {
@@ -263,6 +264,73 @@ func TestGetFilters(t *testing.T) {
 			"plugin.signature.validator",
 		}, keys)
 	})
+}
+
+func TestLevelFor(t *testing.T) {
+	tests := []struct {
+		name  string
+		modes []string
+		cfg   string
+		want  map[string]string
+	}{
+		{
+			name:  "level of the only mode",
+			modes: []string{"console"},
+			cfg:   "[log]\nlevel = warn\n[log.console]\n",
+			want:  map[string]string{"plugin.a": "warn"},
+		},
+		{
+			name:  "filter for the logger",
+			modes: []string{"console"},
+			cfg:   "[log]\nlevel = info\nfilters = plugin.a:debug\n[log.console]\n",
+			want:  map[string]string{"plugin.a": "debug", "plugin.b": "info"},
+		},
+		{
+			name:  "mode filter over the default filter",
+			modes: []string{"console"},
+			cfg:   "[log]\nlevel = info\nfilters = plugin.a:debug\n[log.console]\nfilters = plugin.a:error\n",
+			want:  map[string]string{"plugin.a": "error", "plugin.b": "info"},
+		},
+		{
+			name:  "most verbose of the modes",
+			modes: []string{"console", "file"},
+			cfg:   "[log]\nlevel = error\n[log.console]\nlevel = warn\n[log.file]\n",
+			want:  map[string]string{"plugin.a": "warn"},
+		},
+		{
+			name:  "trace and critical",
+			modes: []string{"console"},
+			cfg:   "[log]\nlevel = critical\nfilters = plugin.a:trace\n[log.console]\n",
+			want:  map[string]string{"plugin.a": "debug", "plugin.b": "error"},
+		},
+		{
+			name:  "unknown level allows errors only",
+			modes: []string{"console"},
+			cfg:   "[log]\nlevel = verbose\n[log.console]\n",
+			want:  map[string]string{"plugin.a": "error"},
+		},
+		{
+			name: "no log modes",
+			want: map[string]string{"plugin.a": "debug"},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			origRoot := root
+			root = newManager(gokitlog.NewNopLogger())
+			t.Cleanup(func() {
+				_ = Close()
+				root = origRoot
+			})
+			cfg, err := ini.Load([]byte(tc.cfg))
+			require.NoError(t, err)
+			require.NoError(t, ReadLoggingConfig(tc.modes, t.TempDir(), cfg))
+
+			for loggerName, want := range tc.want {
+				assert.Equal(t, want, LevelFor(loggerName), loggerName)
+			}
+		})
+	}
 }
 
 func TestWithContextualAttributes_appendsContext(t *testing.T) {
