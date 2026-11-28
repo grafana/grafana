@@ -1,0 +1,21 @@
+# Shared Traefik for the multi-worktree dev setup. Started by `mise run worktree:*`; see README.md.
+# GRAFANA_WORKTREES_HOME is set by scripts/worktree/worktree.mjs (default ~/.grafana-worktrees).
+name: grafana-worktrees
+
+services:
+  traefik:
+    image: traefik:v3.7
+    container_name: grafana-worktree-traefik
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    extra_hosts:
+      # Lets the proxy reach the dev servers and backend running on the host.
+      - 'host.docker.internal:host-gateway'
+    volumes:
+      - '${GRAFANA_WORKTREES_HOME:?set by worktree.mjs}/traefik/dynamic:/dynamic:ro'
+    command:
+      - --api.dashboard=true
+      - --entrypoints.web.address=:80
+      - --providers.file.directory=/dynamic
+      - --providers.file.watch=true

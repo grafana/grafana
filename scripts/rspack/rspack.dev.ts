@@ -46,7 +46,8 @@ const decoupledPlugins = getDecoupledPlugins();
 // renders it into index.html as the asset origin.
 function getDevServerOrigin(): { hostname: string; port: number } {
   const grafanaRoot = path.resolve(import.meta.dirname, '../..');
-  const raw = getEnvConfig(grafanaRoot).frontend_dev_server_url;
+  // The env var mirrors how the backend resolves `[frontend_dev] server_url`, so both sides agree.
+  const raw = process.env.GF_FRONTEND_DEV_SERVER_URL || getEnvConfig(grafanaRoot).frontend_dev_server_url;
 
   if (typeof raw !== 'string' || raw === '') {
     // Throw rather than build without a dev server: Grafana ignores a blank value and would
@@ -105,13 +106,17 @@ function isLoopbackOrigin(origin: string): boolean {
 function getDevServer(): DevServerConfiguration {
   const { hostname, port } = getDevServerOrigin();
   const grafanaRoot = path.resolve(import.meta.dirname, '../..');
+  // Set by `mise run worktree:frontend`; unset for a plain `pnpm start`.
+  const publicUrl = process.env.GRAFANA_DEV_SERVER_PUBLIC_URL;
 
   return {
     port,
 
     // Without an explicit host the dev server binds every interface, which puts `static`
     // below - the repository's own source tree - on whatever network the machine is joined to.
-    host: hostname,
+    // A worktree dev server is reached through a shared proxy under `GRAFANA_DEV_SERVER_PUBLIC_URL`,
+    // so it listens on loopback whatever name the page uses.
+    host: publicUrl ? '127.0.0.1' : hostname,
 
     hot: true,
 
@@ -156,7 +161,7 @@ function getDevServer(): DevServerConfiguration {
       },
       // The page is served by Grafana on another port, so the client cannot infer where its
       // socket lives. Point it back at this server.
-      webSocketURL: `ws://${hostname}:${port}/ws`,
+      webSocketURL: publicUrl ? `ws://${new URL(publicUrl).host}/ws` : `ws://${hostname}:${port}/ws`,
     },
 
     devMiddleware: {
