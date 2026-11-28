@@ -12,6 +12,7 @@ import {
   config,
   type DataSourceSrv,
   DataSourceWithBackend,
+  getDataSourceInstanceSettings,
   getPluginSettings,
   HealthCheckError,
   type HealthCheckResultDetails,
@@ -34,7 +35,7 @@ import { type ThunkDispatch, type ThunkResult } from 'app/types/store';
 
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';
-import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
+import { getDataSourceAuthType, hasAuthTypeResolver, trackDataSourceCreated, trackDataSourceTested } from '../tracking';
 
 import { buildCategories } from './buildCategories';
 import { buildNavModel } from './navModel';
@@ -158,6 +159,12 @@ export const testDataSource = (
 
     dispatch(testDataSourceStarting());
 
+    // Tracking must never block or fail the test, so a failed settings lookup just drops the property.
+    const instanceSettings = hasAuthTypeResolver(dsApi.meta.id)
+      ? await getDataSourceInstanceSettings(dsApi.uid).catch(() => undefined)
+      : undefined;
+    const authentication_type = getDataSourceAuthType(dsApi.meta.id, instanceSettings?.jsonData);
+
     dependencies.getBackendSrv().withNoBackendCache(async () => {
       try {
         const result = await dsApi.testDatasource();
@@ -172,6 +179,7 @@ export const testDataSource = (
           datasource_uid: dsApi.uid,
           success: true,
           path: editLink,
+          authentication_type,
         });
         appEvents.publish(new DataSourceTestSucceeded());
       } catch (err) {
@@ -185,6 +193,7 @@ export const testDataSource = (
           datasource_uid: dsApi.uid,
           success: false,
           path: editLink,
+          authentication_type,
         });
         appEvents.publish(new DataSourceTestFailed());
       }

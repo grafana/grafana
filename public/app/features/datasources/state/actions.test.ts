@@ -1,14 +1,21 @@
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
-import { type AppPluginMeta, type DataSourceSettings, type PluginMetaInfo, PluginType } from '@grafana/data';
-import { type DataSourceSrv, type FetchError, HealthCheckError } from '@grafana/runtime';
+import {
+  type AppPluginMeta,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type DataSourceSettings,
+  type PluginMetaInfo,
+  PluginType,
+} from '@grafana/data';
+import { type DataSourceSrv, type FetchError, getDataSourceInstanceSettings, HealthCheckError } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { type getBackendSrv } from 'app/core/services/backend_srv';
 import { type ThunkResult, type ThunkDispatch } from 'app/types/store';
 
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';
-import { getMockDataSource } from '../mocks/dataSourcesMocks';
+import { getMockDataSource, getMockDataSourceMeta } from '../mocks/dataSourcesMocks';
 import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
 import { type GenericDataSourcePlugin } from '../types';
 
@@ -40,9 +47,11 @@ jest.mock('app/core/app_events', () => ({
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: jest.fn().mockReturnValue({ reload: jest.fn() }),
+  getDataSourceInstanceSettings: jest.fn().mockResolvedValue(undefined),
   getBackendSrv: jest.fn().mockReturnValue({ get: jest.fn() }),
 }));
 jest.mock('../tracking', () => ({
+  ...jest.requireActual('../tracking'),
   trackDataSourceCreated: jest.fn(),
   trackDataSourceTested: jest.fn(),
 }));
@@ -307,6 +316,66 @@ describe('testDataSource', () => {
         grafana_version: '1.0',
         success: true,
         path: '/datasources/edit/CloudWatch',
+      });
+    });
+
+    describe('auth type tracking', () => {
+      const dependenciesFor = (pluginId: string): TestDataSourceDependencies => ({
+        getDatasourceSrv: () =>
+          ({
+            get: jest.fn().mockReturnValue({
+              testDatasource: jest.fn().mockReturnValue({ status: 'success', message: '' }),
+              meta: { id: pluginId },
+              uid: 'DS1234',
+            }),
+          }) as Pick<DataSourceSrv, 'get'>,
+        getBackendSrv: getBackendSrvMock,
+      });
+      const state = { testingStatus: { status: 'success', message: '', details: {} } };
+      const test = (dependencies: TestDataSourceDependencies) =>
+        thunkTester(state)
+          .givenThunk(testDataSource)
+          .whenThunkIsDispatched('DS', DATASOURCES_ROUTES.Edit, dependencies);
+
+      beforeEach(() => {
+        jest.mocked(getDataSourceInstanceSettings).mockReset().mockResolvedValue(undefined);
+      });
+
+      it('tracks the configured auth type for supported plugins', async () => {
+        const settings: DataSourceInstanceSettings<DataSourceJsonData & { authenticationType: string }> = {
+          uid: 'DS1234',
+          type: 'stackdriver',
+          name: 'GCM',
+          meta: getMockDataSourceMeta(),
+          readOnly: false,
+          access: 'proxy',
+          jsonData: { authenticationType: 'gce' },
+        };
+        jest.mocked(getDataSourceInstanceSettings).mockResolvedValue(settings);
+
+        await test(dependenciesFor('stackdriver'));
+
+        expect(getDataSourceInstanceSettings).toHaveBeenCalledWith('DS1234');
+        expect(trackDataSourceTested).toHaveBeenCalledWith(
+          expect.objectContaining({ plugin_id: 'stackdriver', success: true, authentication_type: 'gce' })
+        );
+      });
+
+      it('still tests the datasource when the settings lookup fails', async () => {
+        jest.mocked(getDataSourceInstanceSettings).mockRejectedValue(new Error('settings unavailable'));
+
+        const dispatchedActions = await test(dependenciesFor('stackdriver'));
+
+        expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceSucceeded(state.testingStatus)]);
+        expect(trackDataSourceTested).toHaveBeenCalledWith(
+          expect.objectContaining({ plugin_id: 'stackdriver', success: true, authentication_type: undefined })
+        );
+      });
+
+      it('does not look up settings for plugins without a resolver', async () => {
+        await test(dependenciesFor('prometheus'));
+
+        expect(getDataSourceInstanceSettings).not.toHaveBeenCalled();
       });
     });
 
