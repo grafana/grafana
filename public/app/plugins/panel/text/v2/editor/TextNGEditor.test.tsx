@@ -10,6 +10,7 @@ import config from 'app/core/config';
 import { CodeLanguage, RenderMode, TextMode } from '../../panelcfg.gen';
 import { SandboxFrame } from '../SandboxFrame';
 import { FOOTER_TEST_ID } from '../TextNGFooter';
+import * as fmtMigration from '../fmtMigration';
 
 import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange } from './TextNGEditor';
 import { FEEDBACK_BUTTON_TEST_ID } from './TextNGFeedbackButton';
@@ -677,5 +678,64 @@ describe('TextNGEditor handlebars preview', () => {
     );
 
     expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('Handlebars error:');
+  });
+});
+
+describe('TextNGEditor fmt migration', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('keeps the editor when the fmt check fails, since the notice is optional', () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    const find = jest.spyOn(fmtMigration, 'findFmtReads').mockImplementation(() => {
+      throw new Error('analysis failed');
+    });
+    render(
+      <TextNGEditor
+        content={'{{#each data}}- {{fmt.host}}\n{{/each}}'}
+        mode={TextMode.Markdown}
+        showLineNumbers={false}
+        renderMode={RenderMode.Once}
+        series={[toDataFrame({ fields: [{ name: 'host', values: ['web-1', 'web-2'] }] })]}
+        replaceVariables={(target) => target}
+        onChange={jest.fn()}
+        view="split"
+        onViewChange={jest.fn()}
+      />
+    );
+
+    expect(find).toHaveBeenCalled();
+    expect(screen.getByRole('textbox', { name: 'Text content' })).toHaveValue(
+      '{{#each data}}- {{fmt.host}}\n{{/each}}'
+    );
+    expect(screen.queryByRole('status', { name: 'fmt is deprecated' })).not.toBeInTheDocument();
+  });
+
+  it('replaces the content with the converted template and commits it like an edit', async () => {
+    const onChange = jest.fn();
+    render(
+      <TextNGEditor
+        content={'{{#each data}}- {{fmt.host}}\n{{/each}}'}
+        mode={TextMode.Markdown}
+        showLineNumbers={false}
+        renderMode={RenderMode.Once}
+        series={[toDataFrame({ fields: [{ name: 'host', values: ['web-1', 'web-2'] }] })]}
+        replaceVariables={(target) => target}
+        onChange={onChange}
+        view="split"
+        onViewChange={jest.fn()}
+      />
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Convert to display' }));
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Convert' }));
+
+    expect(screen.getByRole('textbox', { name: 'Text content' })).toHaveValue(
+      '{{#each data}}- {{display "host"}}\n{{/each}}'
+    );
+    expect(onChange).toHaveBeenCalledWith({ content: '{{#each data}}- {{display "host"}}\n{{/each}}' });
+    await waitFor(() => expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('web-1 web-2'));
+    expect(screen.queryByRole('status', { name: 'fmt is deprecated' })).not.toBeInTheDocument();
   });
 });

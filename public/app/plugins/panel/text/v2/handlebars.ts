@@ -265,11 +265,13 @@ export function buildAllRowsContext(series: DataFrame[], maxRows = Infinity, onR
 }
 
 export function compileTemplate(content: string, replaceVariables: InterpolateFunction): CompiledTemplate {
-  const env = createEnvironment(replaceVariables);
-
   // Parse up front so a syntax error throws here, not once per rendered row. Interpreted, since
   // compiling needs 'unsafe-eval'.
-  return interpret(env.parse(content), env);
+  return compileProgram(Handlebars.parse(content), replaceVariables);
+}
+
+export function compileProgram(program: hbs.AST.Program, replaceVariables: InterpolateFunction): CompiledTemplate {
+  return interpret(program, createEnvironment(replaceVariables));
 }
 
 const toNumber = (value: unknown): number => (typeof value === 'number' ? value : Number(value));

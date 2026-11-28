@@ -80,6 +80,11 @@ export function countRows(series: DataFrame[]): number {
   return series.reduce((total, frame) => total + (frame.fields.length > 0 ? frame.length : 0), 0);
 }
 
+// Code mode shows the source verbatim, and Handlebars' HTML escaping would mangle it.
+export function interpretsHandlebars(mode: TextMode): boolean {
+  return isTextNewFeaturesEnabled() && mode !== TextMode.Code;
+}
+
 export function interpolateTemplate(
   template: TextTemplate,
   replaceVariables: InterpolateFunction
@@ -87,11 +92,9 @@ export function interpolateTemplate(
   const { content, mode, series = [], renderMode, format } = template;
   const interpolate = isTextNewFeaturesEnabled() ? withReducerMacros(replaceVariables) : replaceVariables;
 
-  // Code mode shows the source verbatim, and Handlebars' HTML escaping would mangle it.
-  const compiled =
-    isTextNewFeaturesEnabled() && mode !== TextMode.Code
-      ? compileTemplate(escapeCommentedTemplates(content), replaceVariables)
-      : undefined;
+  const compiled = interpretsHandlebars(mode)
+    ? compileTemplate(escapeCommentedTemplates(content), replaceVariables)
+    : undefined;
 
   if (renderMode === RenderMode.PerRow && hasRenderableData(series)) {
     return interpolateEveryRow(template, series, interpolate, compiled);
@@ -140,7 +143,7 @@ const UNESCAPED_MUSTACHE = /(?<!\\)\{\{/g;
 // A comment the template itself builds, as in `{{#if hide}}<!--{{/if}}`, is not rescued by this.
 // Its delimiters sit inside the comment span either way, so the `{{#if}}` outside pairs with a
 // different `{{/if}}` than the author wrote, whatever is done to the contents.
-function escapeCommentedTemplates(content: string): string {
+export function escapeCommentedTemplates(content: string): string {
   return content.replace(HTML_COMMENT, (comment) => comment.replace(UNESCAPED_MUSTACHE, '\\{{'));
 }
 
