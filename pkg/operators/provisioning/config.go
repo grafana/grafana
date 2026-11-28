@@ -287,6 +287,37 @@ func (c *ProvisioningRunner) ResourceClients() (resources.ClientFactory, error) 
 	return clients, nil
 }
 
+// ControllerCommon returns what every provisioning controller of the operator is
+// built from.
+func (c *ProvisioningRunner) ControllerCommon() (controller.Common, error) {
+	provisioningClient, err := c.ProvisioningClient()
+	if err != nil {
+		return controller.Common{}, fmt.Errorf("failed to create provisioning client: %w", err)
+	}
+	common := controller.Common{Client: provisioningClient, Registry: c.Registerer, Tracer: c.Tracer}
+	// A nil *SubscriberService must stay a nil interface.
+	if c.Subscriber != nil {
+		common.Subscriber = c.Subscriber
+	}
+	return common, nil
+}
+
+// ControllerInformer returns the delta source and queue settings of the
+// controller for gvr.
+func (c *ProvisioningRunner) ControllerInformer(gvr schema.GroupVersionResource) (controller.Informer, error) {
+	keys, err := c.ProvisioningKeysLister(gvr)
+	if err != nil {
+		return controller.Informer{}, err
+	}
+	return controller.Informer{
+		Keys:             keys,
+		RelistMetrics:    c.RelistProjectionMetrics(),
+		FreshnessMetrics: c.FreshnessMetrics(),
+		ResyncInterval:   c.Options.Resync,
+		DrainTimeout:     c.Options.DrainTimeout,
+	}, nil
+}
+
 func (c *ProvisioningRunner) ProvisioningClient() (*client.Clientset, error) {
 	if c.provisioningClient != nil {
 		return c.provisioningClient, nil

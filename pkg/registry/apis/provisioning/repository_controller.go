@@ -2,18 +2,14 @@ package provisioning
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	clientrest "k8s.io/client-go/rest"
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
-	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -22,15 +18,6 @@ import (
 const repoControllerWorkers = 1
 
 const defaultWebhookSecretRotationInterval = 30 * 24 * time.Hour
-
-// controllerResyncInterval is the informer re-list interval of the repository
-// and connection controllers, from [provisioning] resync_interval.
-func controllerResyncInterval(cfg *setting.Cfg) time.Duration {
-	if cfg.ProvisioningControllerResyncInterval <= 0 {
-		return setting.ProvisioningControllerResyncIntervalDefault
-	}
-	return cfg.ProvisioningControllerResyncInterval
-}
 
 // RepositoryControllerServiceName is the background-service module name of
 // [RepositoryControllerService].
@@ -41,12 +28,7 @@ const RepositoryControllerServiceName = "provisioning-repository-controller"
 type RepositoryControllerService struct {
 	*loopbackService
 
-	subscriber                    nats.Subscriber
-	registry                      prometheus.Registerer
-	tracer                        tracing.Tracer
-	unified                       resource.ResourceClient
-	informerMetrics               *InformerMetrics
-	resyncInterval                time.Duration
+	informer                      controllerInformer
 	webhookSecretRotationInterval time.Duration
 }
 
@@ -68,36 +50,23 @@ func ProvideRepositoryControllerService(
 		webhookSecretRotationInterval = defaultWebhookSecretRotationInterval
 	}
 	s := &RepositoryControllerService{
-		subscriber:                    subscriber,
-		registry:                      registry,
-		tracer:                        tracer,
-		unified:                       unified,
-		informerMetrics:               informerMetrics,
-		resyncInterval:                controllerResyncInterval(cfg),
+		informer:                      newControllerInformer(cfg, unified, informerMetrics),
 		webhookSecretRotationInterval: webhookSecretRotationInterval,
 	}
-	s.loopbackService = newLoopbackService(RepositoryControllerServiceName, builder, cfg.DisableControllers, s.runController)
+	common := controller.Common{Subscriber: subscriber, Registry: registry, Tracer: tracer}
+	s.loopbackService = newControllerService(RepositoryControllerServiceName, builder, cfg.DisableControllers, common, s.runController)
 	// A changed or cleared bootstrap_path must be applied before the
 	// controller syncs the repository it replaces.
 	s.waitFor = bootstrap.Done()
 	return s
 }
 
-func (s *RepositoryControllerService) runController(ctx context.Context, restConfig *clientrest.Config) error {
-	client, err := clientset.NewForConfig(restConfig)
-	if err != nil {
-		return fmt.Errorf("create provisioning clientset: %w", err)
-	}
-
+func (s *RepositoryControllerService) runController(ctx context.Context, common controller.Common) error {
 	b := s.builder
-	relistProjectionMetrics, freshnessMetrics := s.informerMetrics.get()
 	repoController, err := controller.ProvideRepositoryController(controller.RepositoryControllerDeps{
-		ProvisioningClient:            client,
-		NATSSubscriber:                s.subscriber,
-		KeysLister:                    keysapi.NewGRPCLister(s.unified, provisioningapis.RepositoryResourceInfo.GroupVersionResource()),
-		RelistProjectionMetrics:       relistProjectionMetrics,
-		FreshnessMetrics:              freshnessMetrics,
-		HealthMetrics:                 controller.NewHealthMetricsRecorder(s.registry),
+		Common:                        common,
+		Informer:                      s.informer.forResource(provisioningapis.RepositoryResourceInfo.GroupVersionResource()),
+		HealthMetrics:                 controller.NewHealthMetricsRecorder(common.Registry),
 		RepoFactory:                   b.repoFactory,
 		ConnectionFactory:             b.connectionFactory,
 		ResourceLister:                b.resourceLister,
@@ -105,12 +74,8 @@ func (s *RepositoryControllerService) runController(ctx context.Context, restCon
 		Validator:                     b.repoValidator,
 		QuotaGetter:                   b.quotaGetter,
 		IncrementalPolicy:             b.incrementalPolicy,
-		Registry:                      s.registry,
-		Tracer:                        s.tracer,
 		ParallelOperations:            10,
-		ResyncInterval:                s.resyncInterval,
 		MinSyncInterval:               b.minSyncInterval,
-		DrainTimeout:                  30 * time.Second,
 		WebhookSecretRotationInterval: s.webhookSecretRotationInterval,
 	})
 	if err != nil {

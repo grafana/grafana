@@ -2,20 +2,16 @@ package provisioning
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	clientrest "k8s.io/client-go/rest"
 
-	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobqueue"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
@@ -32,9 +28,6 @@ var _ registry.CanBeDisabled = (*JobQueueService)(nil)
 type JobQueueService struct {
 	*loopbackService
 
-	subscriber         nats.Subscriber
-	registry           prometheus.Registerer
-	tracer             tracing.Tracer
 	screenshotRenderer pullrequest.ScreenshotRenderer
 	pullRequestURLs    pullrequest.URLProvider
 	cfg                jobqueue.Config
@@ -62,9 +55,6 @@ func ProvideJobQueueService(
 	}
 
 	s := &JobQueueService{
-		subscriber:         subscriber,
-		registry:           registry,
-		tracer:             tracer,
 		screenshotRenderer: pullrequest.NewScreenshotRenderer(renderer, blobstore),
 		pullRequestURLs:    pullrequest.URLsFromConfig(cfg),
 		cfg: jobqueue.Config{
@@ -85,38 +75,20 @@ func ProvideJobQueueService(
 			AllowImageRendering:  cfg.ProvisioningAllowImageRendering,
 		},
 	}
-	s.loopbackService = newLoopbackService(JobQueueServiceName, builder, cfg.DisableControllers, s.runController)
+	common := controller.Common{Subscriber: subscriber, Registry: registry, Tracer: tracer}
+	s.loopbackService = newControllerService(JobQueueServiceName, builder, cfg.DisableControllers, common, s.runController)
 	return s
 }
 
-func (s *JobQueueService) runController(ctx context.Context, restConfig *clientrest.Config) error {
-	client, err := clientset.NewForConfig(restConfig)
-	if err != nil {
-		return fmt.Errorf("create provisioning clientset: %w", err)
-	}
-
+func (s *JobQueueService) runController(ctx context.Context, common controller.Common) error {
 	b := s.builder
-	store, err := jobs.NewJobStore(client.ProvisioningV0alpha1(), jobs.ClaimExpiry, s.registry)
-	if err != nil {
-		return fmt.Errorf("create API client job store: %w", err)
-	}
-	historyWriter := jobs.NewAPIClientHistoryWriter(client.ProvisioningV0alpha1())
-	if b.jobHistoryLoki != nil {
-		historyWriter = b.jobHistoryLoki
-	}
-
 	queue, err := jobqueue.ProvideJobQueue(s.cfg, jobqueue.Dependencies{
-		Client:              client,
-		Subscriber:          s.subscriber,
+		Common:              common,
 		Clients:             b.clients,
 		RepositoryResources: b.repositoryResources,
 		ResourceLister:      b.resourceLister,
-		PatchStatus:         appcontroller.NewRepositoryStatusPatcher(client.ProvisioningV0alpha1()).Patch,
-		Store:               store,
-		RepoGetter:          resources.NewRepositoryGetter(b.repoFactory, client.ProvisioningV0alpha1()),
-		HistoryWriter:       historyWriter,
-		Tracer:              s.tracer,
-		Registry:            s.registry,
+		RepoFactory:         b.repoFactory,
+		HistoryWriter:       b.historyWriter(),
 		PerformanceEnabled:  performanceEnabled,
 		ScreenshotRenderer:  s.screenshotRenderer,
 		PullRequestURLs:     s.pullRequestURLs,

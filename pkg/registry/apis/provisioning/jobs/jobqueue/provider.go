@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/nats"
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
@@ -52,19 +51,20 @@ type Config struct {
 // between the in-process API server and the standalone operator, which is why
 // callers resolve them and ProvideJobQueue only wires them together.
 type Dependencies struct {
-	// Client and Subscriber feed the jobs informer: a NATS-backed one when
+	// Common feeds the jobs informer: a NATS-backed one when
 	// nats.Enabled(Subscriber), else an apiserver-backed one.
-	Client              versioned.Interface
-	Subscriber          nats.Subscriber
+	controller.Common
 	Clients             resources.ClientFactory
 	RepositoryResources resources.RepositoryResourcesFactory
 	ResourceLister      resources.ResourceLister
-	PatchStatus         jobsync.RepositoryPatchFn
-	Store               jobs.Store
-	RepoGetter          jobs.RepoGetter
-	HistoryWriter       jobs.HistoryWriter
-	Tracer              tracing.Tracer
-	Registry            prometheus.Registerer
+	// RepoFactory backs the default RepoGetter.
+	RepoFactory repository.Factory
+	// PatchStatus, Store, RepoGetter and HistoryWriter default to the
+	// provisioning API through Client when nil.
+	PatchStatus   jobsync.RepositoryPatchFn
+	Store         jobs.Store
+	RepoGetter    jobs.RepoGetter
+	HistoryWriter jobs.HistoryWriter
 	// PerformanceEnabled is evaluated per job to gate the synthetic load-testing worker.
 	PerformanceEnabled func(ctx context.Context) bool
 	// ScreenshotRenderer and PullRequestURLs back the pull request worker's
@@ -91,6 +91,9 @@ type Queue struct {
 //
 // The queue is not started; the caller owns its lifecycle and must call Run.
 func ProvideJobQueue(cfg Config, deps Dependencies) (*Queue, error) {
+	if err := deps.setDefaults(); err != nil {
+		return nil, err
+	}
 	metrics := jobs.RegisterJobMetrics(deps.Registry)
 	driver, err := jobs.NewConcurrentJobDriver(
 		cfg.ConcurrentDrivers,
@@ -188,4 +191,25 @@ func newWorkers(cfg Config, deps Dependencies, metrics jobs.JobMetrics) []jobs.W
 		perftest.NewWorker(deps.PerformanceEnabled),
 		pullRequestWorker,
 	}, deps.ExtraWorkers...)
+}
+
+func (deps *Dependencies) setDefaults() error {
+	client := deps.Client.ProvisioningV0alpha1()
+	if deps.Store == nil {
+		store, err := jobs.NewJobStore(client, jobs.ClaimExpiry, deps.Registry)
+		if err != nil {
+			return fmt.Errorf("create API client job store: %w", err)
+		}
+		deps.Store = store
+	}
+	if deps.HistoryWriter == nil {
+		deps.HistoryWriter = jobs.NewAPIClientHistoryWriter(client)
+	}
+	if deps.PatchStatus == nil {
+		deps.PatchStatus = appcontroller.NewRepositoryStatusPatcher(client).Patch
+	}
+	if deps.RepoGetter == nil {
+		deps.RepoGetter = resources.NewRepositoryGetter(deps.RepoFactory, client)
+	}
+	return nil
 }

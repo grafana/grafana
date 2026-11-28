@@ -2,18 +2,13 @@ package provisioning
 
 import (
 	"context"
-	"fmt"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	clientrest "k8s.io/client-go/rest"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
-	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -27,12 +22,7 @@ const ConnectionControllerServiceName = "provisioning-connection-controller"
 type ConnectionControllerService struct {
 	*loopbackService
 
-	subscriber      nats.Subscriber
-	registry        prometheus.Registerer
-	tracer          tracing.Tracer
-	unified         resource.ResourceClient
-	informerMetrics *InformerMetrics
-	resyncInterval  time.Duration
+	informer controllerInformer
 }
 
 // ProvideConnectionControllerService is called by Wire. Depending on the
@@ -48,38 +38,19 @@ func ProvideConnectionControllerService(
 	informerMetrics *InformerMetrics,
 ) *ConnectionControllerService {
 	s := &ConnectionControllerService{
-		subscriber:      subscriber,
-		registry:        registry,
-		tracer:          tracer,
-		unified:         unified,
-		informerMetrics: informerMetrics,
-		resyncInterval:  controllerResyncInterval(cfg),
+		informer: newControllerInformer(cfg, unified, informerMetrics),
 	}
-	s.loopbackService = newLoopbackService(ConnectionControllerServiceName, builder, cfg.DisableControllers, s.runController)
+	common := controller.Common{Subscriber: subscriber, Registry: registry, Tracer: tracer}
+	s.loopbackService = newControllerService(ConnectionControllerServiceName, builder, cfg.DisableControllers, common, s.runController)
 	return s
 }
 
-func (s *ConnectionControllerService) runController(ctx context.Context, restConfig *clientrest.Config) error {
-	client, err := clientset.NewForConfig(restConfig)
-	if err != nil {
-		return fmt.Errorf("create provisioning clientset: %w", err)
-	}
-
-	b := s.builder
-	relistMetrics, freshnessMetrics := s.informerMetrics.get()
-
+func (s *ConnectionControllerService) runController(ctx context.Context, common controller.Common) error {
 	connController, err := controller.ProvideConnectionController(controller.ConnectionControllerDeps{
-		Subscriber:        s.subscriber,
-		Client:            client,
-		Keys:              keysapi.NewGRPCLister(s.unified, provisioning.ConnectionResourceInfo.GroupVersionResource()),
-		ConnectionFactory: b.connectionFactory,
-		HealthMetrics:     controller.NewHealthMetricsRecorder(s.registry),
-		RelistMetrics:     relistMetrics,
-		FreshnessMetrics:  freshnessMetrics,
-		Registry:          s.registry,
-		Tracer:            s.tracer,
-		ResyncInterval:    s.resyncInterval,
-		DrainTimeout:      30 * time.Second,
+		Common:            common,
+		Informer:          s.informer.forResource(provisioning.ConnectionResourceInfo.GroupVersionResource()),
+		ConnectionFactory: s.builder.connectionFactory,
+		HealthMetrics:     controller.NewHealthMetricsRecorder(common.Registry),
 	})
 	if err != nil {
 		return err

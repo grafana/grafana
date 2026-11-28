@@ -3,37 +3,22 @@ package controller
 import (
 	"context"
 	"fmt"
-	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/pkg/infra/nats"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
-	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 )
 
 // ConnectionControllerDeps are the dependencies of a connection controller,
 // shared by the in-process apiserver and the standalone connection operator.
 type ConnectionControllerDeps struct {
-	Subscriber nats.Subscriber
-	Client     versioned.Interface
-	// Keys makes the NATS re-list keys-only; nil keeps the full-object re-list.
-	Keys              keysapi.Lister
+	Common
+	Informer
 	ConnectionFactory connection.Factory
-	// The metrics below register once per process, so callers that run other
-	// controllers pass the same instances to all of them.
-	HealthMetrics    HealthMetricsRecorder
-	RelistMetrics    *informer.RelistProjectionMetrics
-	FreshnessMetrics *informer.FreshnessMetrics
-	Registry         prometheus.Registerer
-	Tracer           tracing.Tracer
-	ResyncInterval   time.Duration
-	DrainTimeout     time.Duration
+	HealthMetrics     HealthMetricsRecorder
 }
 
 // ConnectionControllerRunner is a connection controller wired to its delta source.

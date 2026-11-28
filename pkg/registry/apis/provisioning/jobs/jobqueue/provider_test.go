@@ -17,14 +17,14 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 )
 
 func TestNewWorkers_EachActionHasExactlyOneWorker(t *testing.T) {
 	deps := Dependencies{
-		Tracer:             tracing.NewNoopTracerService(),
-		Registry:           prometheus.NewPedanticRegistry(),
+		Common:             controller.Common{Tracer: tracing.NewNoopTracerService(), Registry: prometheus.NewPedanticRegistry()},
 		PerformanceEnabled: func(context.Context) bool { return true },
 		ScreenshotRenderer: pullrequest.NewNoOpRenderer(),
 	}
@@ -56,8 +56,7 @@ func TestNewWorkers_EachActionHasExactlyOneWorker(t *testing.T) {
 func TestNewWorkers_AppendsExtraWorkers(t *testing.T) {
 	extra := &actionWorker{action: "custom"}
 	deps := Dependencies{
-		Tracer:             tracing.NewNoopTracerService(),
-		Registry:           prometheus.NewPedanticRegistry(),
+		Common:             controller.Common{Tracer: tracing.NewNoopTracerService(), Registry: prometheus.NewPedanticRegistry()},
 		PerformanceEnabled: func(context.Context) bool { return false },
 		ScreenshotRenderer: pullrequest.NewNoOpRenderer(),
 		ExtraWorkers:       []jobs.Worker{extra},
@@ -69,8 +68,7 @@ func TestNewWorkers_AppendsExtraWorkers(t *testing.T) {
 
 func TestNewWorkers_PerformanceDisabledSkipsTestJobs(t *testing.T) {
 	deps := Dependencies{
-		Tracer:             tracing.NewNoopTracerService(),
-		Registry:           prometheus.NewPedanticRegistry(),
+		Common:             controller.Common{Tracer: tracing.NewNoopTracerService(), Registry: prometheus.NewPedanticRegistry()},
 		PerformanceEnabled: func(context.Context) bool { return false },
 		ScreenshotRenderer: pullrequest.NewNoOpRenderer(),
 	}
@@ -91,12 +89,14 @@ func TestProvideJobQueue(t *testing.T) {
 	}
 	newDeps := func(t *testing.T, store jobs.Store, objects ...runtime.Object) Dependencies {
 		return Dependencies{
-			Client:             fake.NewClientset(objects...),
+			Common: controller.Common{
+				Client:   fake.NewClientset(objects...),
+				Tracer:   tracing.NewNoopTracerService(),
+				Registry: prometheus.NewPedanticRegistry(),
+			},
 			Store:              store,
 			RepoGetter:         jobs.NewMockRepoGetter(t),
 			HistoryWriter:      jobs.NewMockHistoryWriter(t),
-			Tracer:             tracing.NewNoopTracerService(),
-			Registry:           prometheus.NewPedanticRegistry(),
 			PerformanceEnabled: func(context.Context) bool { return false },
 			ScreenshotRenderer: pullrequest.NewNoOpRenderer(),
 		}
@@ -134,6 +134,32 @@ func TestProvideJobQueue(t *testing.T) {
 	t.Run("rejects an invalid config", func(t *testing.T) {
 		_, err := ProvideJobQueue(Config{ConcurrentDrivers: 0, MaxSyncWorkers: 1}, newDeps(t, jobs.NewMockStore(t)))
 		require.ErrorContains(t, err, "numDrivers must be greater than 0")
+	})
+}
+
+func TestDependencies_SetDefaults(t *testing.T) {
+	common := controller.Common{Client: fake.NewClientset(), Registry: prometheus.NewPedanticRegistry()}
+
+	t.Run("derives unset collaborators from the provisioning client", func(t *testing.T) {
+		deps := Dependencies{Common: common}
+		require.NoError(t, deps.setDefaults())
+
+		assert.NotNil(t, deps.Store)
+		assert.NotNil(t, deps.HistoryWriter)
+		assert.NotNil(t, deps.PatchStatus)
+		assert.NotNil(t, deps.RepoGetter)
+	})
+
+	t.Run("keeps collaborators the caller set", func(t *testing.T) {
+		store := jobs.NewMockStore(t)
+		writer := jobs.NewMockHistoryWriter(t)
+		getter := jobs.NewMockRepoGetter(t)
+		deps := Dependencies{Common: common, Store: store, HistoryWriter: writer, RepoGetter: getter}
+		require.NoError(t, deps.setDefaults())
+
+		assert.Same(t, store, deps.Store)
+		assert.Same(t, writer, deps.HistoryWriter)
+		assert.Same(t, getter, deps.RepoGetter)
 	})
 }
 

@@ -26,9 +26,14 @@ var ConnectionOperator = runner.Operator{
 }
 
 func runConnectionController(ctx context.Context, r *ProvisioningRunner, ready func()) error {
-	provisioningClient, err := r.ProvisioningClient()
+	common, err := r.ControllerCommon()
 	if err != nil {
-		return fmt.Errorf("failed to create provisioning client: %w", err)
+		return err
+	}
+
+	connInformer, err := r.ControllerInformer(apisprovisioning.ConnectionResourceInfo.GroupVersionResource())
+	if err != nil {
+		return err
 	}
 
 	connectionFactory, err := r.ConnectionFactory()
@@ -41,25 +46,11 @@ func runConnectionController(ctx context.Context, r *ProvisioningRunner, ready f
 		return fmt.Errorf("failed to get health metrics recorder: %w", err)
 	}
 
-	tracer := r.Tracer
-
-	connKeys, err := r.ProvisioningKeysLister(apisprovisioning.ConnectionResourceInfo.GroupVersionResource())
-	if err != nil {
-		return err
-	}
-
 	connController, err := controller.ProvideConnectionController(controller.ConnectionControllerDeps{
-		Subscriber:        r.Subscriber,
-		Client:            provisioningClient,
-		Keys:              connKeys,
+		Common:            common,
+		Informer:          connInformer,
 		ConnectionFactory: connectionFactory,
 		HealthMetrics:     healthMetricsRecorder,
-		RelistMetrics:     r.RelistProjectionMetrics(),
-		FreshnessMetrics:  r.FreshnessMetrics(),
-		Registry:          r.Registerer,
-		Tracer:            tracer,
-		ResyncInterval:    r.Options.Resync,
-		DrainTimeout:      r.Options.DrainTimeout,
 	})
 	if err != nil {
 		return err
