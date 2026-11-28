@@ -1009,3 +1009,86 @@ func TestIntegrationHTTPServer_GetFrontendSettings_publicDashboardDataSourceFilt
 
 	require.ElementsMatch(t, []string{"Prom", "Loki"}, names)
 }
+
+func TestIntegrationHTTPServer_GetFrontendSettings_legacyDatabaseFallback(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	pluginList := []pluginstore.Plugin{
+		{
+			Module: "/postgres/module.js",
+			JSONData: plugins.JSONData{
+				ID:       datasources.DS_POSTGRES,
+				Info:     plugins.Info{Version: "1.0.0"},
+				Type:     plugins.TypeDataSource,
+				AliasIDs: []string{"postgres"},
+			},
+			FS:              &pluginfakes.FakePluginFS{},
+			LoadingStrategy: plugins.LoadingStrategyScript,
+		},
+	}
+	pluginSettingsList := map[string]*pluginsettings.DTO{
+		datasources.DS_POSTGRES: {ID: 1, OrgID: 1, PluginID: datasources.DS_POSTGRES, Enabled: true},
+	}
+
+	pluginStore := &pluginstore.FakePluginStore{PluginList: pluginList}
+	pluginSettings := &pluginsettings.FakePluginSettings{Plugins: pluginSettingsList}
+
+	cfg := setting.NewCfg()
+	m, hs := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), pluginStore, pluginSettings, nil)
+
+	hs.DataSourcesService = &datafakes.FakeDataSourceService{
+		DataSources: []*datasources.DataSource{
+			{
+				UID:      "pg-alias-uid",
+				Name:     "PostgresAlias",
+				Type:     "postgres",
+				Database: "alias_db",
+				OrgID:    1,
+				JsonData: simplejson.New(),
+			},
+			{
+				UID:      "pg-canonical-uid",
+				Name:     "PostgresCanonical",
+				Type:     datasources.DS_POSTGRES,
+				Database: "canonical_db",
+				OrgID:    1,
+				JsonData: simplejson.New(),
+			},
+		},
+	}
+
+	m.UseMiddleware(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			reqContext := &contextmodel.ReqContext{
+				Context:      web.FromContext(ctx),
+				SignedInUser: &user.SignedInUser{OrgID: 1},
+			}
+			ctx = context.WithValue(ctx, ctxkey.Key{}, reqContext)
+			*reqContext.Req = *reqContext.Req.WithContext(ctx)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
+	recorder := httptest.NewRecorder()
+
+	m.ServeHTTP(recorder, req)
+
+	type settings struct {
+		Datasources map[string]plugins.DataSourceDTO `json:"datasources"`
+	}
+
+	var got settings
+	err := json.Unmarshal(recorder.Body.Bytes(), &got)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, recorder.Code)
+
+	// Canonical PostgreSQL datasource fallback works
+	require.Contains(t, got.Datasources, "PostgresCanonical")
+	require.Equal(t, "canonical_db", got.Datasources["PostgresCanonical"].JSONData["database"])
+
+	// Alias "postgres" datasource fallback should also work
+	require.Contains(t, got.Datasources, "PostgresAlias")
+	require.Equal(t, "alias_db", got.Datasources["PostgresAlias"].JSONData["database"])
+}
