@@ -41,6 +41,7 @@ const CHECKBOX_SLOT_OPEN_WIDTH = CHECKBOX_BOX_SIZE + CHECKBOX_HIT_PADDING * 2;
 
 interface SidebarCardProps {
   children: React.ReactNode;
+  extraActions?: React.ReactNode;
   id: string;
   isSelected: boolean;
   isMultiSelected?: boolean;
@@ -55,6 +56,7 @@ interface SidebarCardProps {
 
 export const SidebarCard = ({
   children,
+  extraActions,
   id,
   isSelected,
   isMultiSelected = false,
@@ -191,21 +193,26 @@ export const SidebarCard = ({
               </div>
             )}
           </div>
-          {/* Siblings of the select control, not children, so buttons never nest inside role="button". */}
-          {hasActions && !multiSelectMode && (
-            <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
-              <Actions
-                handleResetFocus={handleResetFocus}
-                item={item}
-                onDelete={onDelete}
-                onDuplicate={onDuplicate}
-                onToggleHide={onToggleHide}
-                order={{
-                  delete: 1,
-                  duplicate: 0,
-                  hide: 2,
-                }}
-              />
+          {!multiSelectMode && (
+            <div className={styles.actionSlot}>
+              {extraActions}
+              {/* Siblings of the select control, not children, so buttons never nest inside role="button". */}
+              {hasActions && !multiSelectMode && (
+                <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
+                  <Actions
+                    handleResetFocus={handleResetFocus}
+                    item={item}
+                    onDelete={onDelete}
+                    onDuplicate={onDuplicate}
+                    onToggleHide={onToggleHide}
+                    order={{
+                      delete: 1,
+                      duplicate: 0,
+                      hide: 2,
+                    }}
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -252,7 +259,7 @@ function getStyles(
 
   const hoverActions = css({
     position: 'absolute',
-    right: 0,
+    right: '100%',
     top: 0,
     bottom: 0,
     display: 'flex',
@@ -292,6 +299,7 @@ function getStyles(
   const indicatorWidth = isSelected ? 3 : 2;
 
   return {
+    actionSlot: css({ position: 'relative', display: 'flex', alignSelf: 'stretch', alignItems: 'center' }),
     cardContentIcons: css({
       display: 'flex',
       flexDirection: 'row',
