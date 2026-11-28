@@ -1,7 +1,8 @@
-import { type DataQuery, toDataFrameDTO, type DataFrame } from '@grafana/data';
+import { type DataQuery, toDataFrameDTO, type DataFrame, LoadingState } from '@grafana/data';
 
 import { type FetchError, type FetchResponse } from '../services';
 
+import { TracedError } from './TracedError';
 import {
   type BackendDataSourceResponse,
   cachedResponseNotice,
@@ -335,6 +336,25 @@ describe('Query Response parser', () => {
     expect(res.errors).toHaveLength(2);
     expect(res.errors?.[0].traceId).toBeUndefined();
     expect(res.errors?.[1].traceId).toBeUndefined();
+  });
+
+  test('should return an error response for a TracedError', () => {
+    // backend_srv rejects like this when response.json() fails, e.g. because the body exceeds the
+    // browser's maximum string length
+    const err = new TracedError(
+      'Failed to parse the response body as JSON: Unexpected end of JSON input.',
+      new SyntaxError('Unexpected end of JSON input')
+    );
+    const res = toDataQueryResponse(err);
+    expect(res.state).toBe(LoadingState.Error);
+    expect(res.data).toEqual([]);
+    expect(res.error?.message).toBe('Failed to parse the response body as JSON: Unexpected end of JSON input.');
+  });
+
+  test('should return an empty successful response for a thrown Error that is not a TracedError', () => {
+    // e.g. a TypeError from decoding a malformed frame, which DataSourceWithBackend.query also routes here
+    const res = toDataQueryResponse(new TypeError("Cannot read properties of undefined (reading 'length')"));
+    expect(res).toEqual({ data: [], state: LoadingState.Done });
   });
 
   test('should handle an error-response with traceIds', () => {
