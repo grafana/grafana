@@ -601,6 +601,10 @@ func resultKeepLast(state *State, rule *models.AlertRule, result eval.Result, lo
 			logger.Debug("Execution keep last state is Pending", "handler", "resultAlerting")
 			resultAlerting(state, rule, result, logger, reason)
 		} else {
+			if result.State == eval.NoData {
+				// A successful no-data evaluation must not retain an earlier error.
+				state.Error = nil
+			}
 			logger.Debug("Ignoring set next state to pending")
 		}
 	case eval.Normal:
