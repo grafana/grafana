@@ -878,7 +878,8 @@
       "label-disabled": "データソース",
       "message": {
         "please-select-a-data-source": "データソースを選択してください"
-      }
+      },
+      "rules-sources-error": ""
     },
     "cloud-evaluation-behavior": {
       "description-pending-period": "アラートをトリガーするために、しきい値の条件を満たす必要がある期間。「なし」を選択すると、条件が満たされた時点ですぐにアラートが発生します。",
@@ -1927,7 +1928,8 @@
           "title": "データソース"
         },
         "label": "データソース",
-        "required-message": "データソースを選択してください"
+        "required-message": "データソースを選択してください",
+        "rules-sources-error": ""
       },
       "error": "アラートルールのインポートに失敗しました：{{error}}",
       "group": {
@@ -1986,7 +1988,6 @@
         "preview-config-aria": "設定をプレビュー",
         "preview-rules-aria": "アラートルールをプレビューする",
         "routing": "通知ルーティング",
-        "routing-none": "ポリシーツリーが選択されていません",
         "routing-tree": "ポリシーツリー：{{name}}",
         "rules-error": "",
         "rules-skipped": "アラートルールはインポートされません。",
@@ -4304,7 +4305,8 @@
     },
     "unified-alert-list": {
       "clear": "消去",
-      "text-loading": "読み込み中..."
+      "text-loading": "読み込み中...",
+      "title-rules-source-list-error": ""
     },
     "unified-alert-list-panel": {
       "body-permission-required": "申し訳ありませんが、アラートルールの読み取りに必要な権限がありません。",
@@ -18015,6 +18017,7 @@
           "binary-operation": "二項演算",
           "reduce-row": "行の削減",
           "row-index": "行インデックス",
+          "template": "",
           "unary-operation": "単項演算"
         }
       },
@@ -18717,6 +18720,18 @@
         "prepare-spatial-field": "空間フィールドを準備",
         "transform": "変換"
       }
+    },
+    "template-options-editor": {
+      "aria-label-insert-field": "",
+      "error-unknown-fields": "",
+      "label-decimals": "",
+      "label-insert-field": "",
+      "label-template": "",
+      "placeholder-decimals": "",
+      "placeholder-insert-field": "",
+      "placeholder-template": "",
+      "tooltip-decimals": "",
+      "tooltip-template": ""
     },
     "time-series-table": {
       "description": {
