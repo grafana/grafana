@@ -40,6 +40,7 @@ declare module "@openfeature/core" {
     | "alertingUIUseBackendFilters"
     | "alertingUIUseFullyCompatBackendFilters"
     | "createAlertRuleFromPanel"
+    | "grafana.dashboardPanelPinning"
     | "dashboardNewLayouts"
     | "grafana.mobileEditDeprecation"
     | "dashboards.libraryPanelRepeatFromServerResolution"

@@ -52,6 +52,7 @@ import { VizPanelLinks, type VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
 import { VizPanelHeaderActions } from './VizPanelHeaderActions';
 import { canManuallyEditDashboard, dashboardModesEnabled, isViewingDashboard } from './dashboardModes';
+import { getPanelPinning } from './panel-pinning/PanelPinning';
 import { PanelTimeRangeDrawer } from './panel-timerange/PanelTimeRangeDrawer';
 
 /**
@@ -87,6 +88,16 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       !dashboard.state.panelSearch &&
       !dashboard.state.panelsPerRow;
     const isEditing = isFullDashboardEditing(dashboard.state);
+
+    const pinning = getPanelPinning(dashboard);
+    if (!isEditing && !isEditingPanel && pinning?.canPin(panel)) {
+      const isPinned = pinning.getSnapshot()?.panel === panel;
+      items.push({
+        text: isPinned ? t('panel.header-menu.unpin', 'Unpin panel') : t('panel.header-menu.pin', 'Pin to top'),
+        iconClassName: isPinned ? 'gf-pin-filled' : 'gf-pin-unfilled',
+        onClick: () => (isPinned ? pinning.unpin() : pinning.pin(panel)),
+      });
+    }
 
     if (!isEditingPanel && !hasActionsPopover) {
       items.push({
