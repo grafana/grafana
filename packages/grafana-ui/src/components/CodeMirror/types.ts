@@ -205,6 +205,11 @@ export interface CodeMirrorEditorProps {
    */
   lineWrapping?: boolean;
   /**
+   * Shows a button in the top-right corner that copies the whole document,
+   * regardless of the selection.
+   */
+  showCopyButton?: boolean;
+  /**
    * Rendered while the editor bundle is being lazily loaded. Defaults to a
    * loading placeholder; pass a styled preview of the content to avoid a
    * visual flash when the editor appears.
