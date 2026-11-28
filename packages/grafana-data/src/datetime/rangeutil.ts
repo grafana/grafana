@@ -624,7 +624,7 @@ export function describeInterval(str: string) {
     return {
       sec: intervals_in_seconds.s,
       type: 's',
-      count: parseInt(str, 10),
+      count: parseFloat(str),
     };
   }
 
@@ -648,7 +648,7 @@ export function describeInterval(str: string) {
   return {
     sec,
     type: matches[2],
-    count: parseInt(matches[1], 10),
+    count: parseFloat(matches[1]),
   };
 }
 
