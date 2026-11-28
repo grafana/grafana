@@ -42,6 +42,9 @@ type DataSourceConnection struct {
 	Plugin string `json:"plugin,omitempty"`
 
 	Labels map[string]string `json:"labels,omitempty"`
+
+	// Resource annotations, including the manager properties (grafana.app/managedBy, ...)
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 func (DataSourceConnection) OpenAPIModelName() string {
