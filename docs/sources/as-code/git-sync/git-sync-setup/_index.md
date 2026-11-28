@@ -32,7 +32,7 @@ Git Sync functionalities are constantly evolving. [Contact Grafana](https://graf
 To set up Git Sync and synchronize your Grafana dashboards and folders with a GitHub repository, follow these steps:
 
 1. Read [Before you begin](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-before/) carefully.
-1. Set up Git Sync [using the UI](#set-up-git-sync-using-the-ui), with [Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-terraform/), or [as code](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-code/).
+1. Set up Git Sync [using the UI](#set-up-git-sync-using-the-ui), with [Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-terraform/), or [as code](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-code/). If the instance has to come up already configured, you can instead [bootstrap the provisioning configuration from a directory](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-bootstrap/) on the Grafana server.
 1. After setup, [check your dashboards have been synced correctly](#check-your-dashboards-in-grafana).
 1. Optionally, you can also [extend Git Sync with webhooks and image rendering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-extend/).
 

@@ -27,7 +27,7 @@ aliases:
 
 # Set up Git Sync as code
 
-You can also configure Git Sync using `gcx`, the Grafana CLI. Since Git Sync configuration is managed as code using Custom Resource Definitions (CRDs), you can create your required resources in YAML files and push them to Grafana using `gcx`. This approach enables automated, GitOps-style workflows for managing Git Sync configuration instead of using the Grafana UI.
+Git Sync configuration is managed as code using Custom Resource Definitions (CRDs): a `Repository` resource, and a `Connection` resource when your authentication method needs one. You write them in YAML files and apply them to Grafana, instead of filling in the Grafana UI, which enables automated, GitOps-style workflows.
 
 For more information, refer to the following documents:
 
@@ -36,6 +36,23 @@ For more information, refer to the following documents:
 - [Grafana CLI documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/)
 
 To provision resources from a local file system as code instead of a Git repository, refer to [Set up file provisioning as code](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/provision-resources/file-path-setup#set-up-file-provisioning-as-code).
+
+## Choose an as-code approach
+
+You can apply the same resources in three ways. They differ in what has to exist before the configuration lands, so pick the one that fits your deployment:
+
+- **Grafana CLI**: push the resources to a running instance with `gcx`. Use this for scripted setup and CI pipelines. The rest of this page covers this approach, and the resource formats it describes apply to the other two.
+- **Terraform**: declare the resources in your Terraform configuration. Use this when Git Sync is part of a wider Terraform-managed estate. Refer to [Set up Git Sync with Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-terraform/).
+- **Bootstrap directory**: mount the resources as files on the Grafana server and let the instance provision itself at startup. Use this when the instance has to come up already configured and nothing can call the API afterwards, for example on ephemeral storage. Refer to [Bootstrap provisioning configuration from a directory](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-bootstrap/).
+
+The bootstrap directory is the newest of the three. Starting in Grafana 13.4.0, you enable it with a single setting in the Grafana configuration file:
+
+```ini
+[provisioning]
+bootstrap_path = /etc/grafana/provisioning/bootstrap
+```
+
+Grafana registers a repository over that directory on every start and syncs it, so the `repository.yaml` and `connection.yaml` files you put there are applied before anyone signs in. Unlike the other two approaches, it needs no credentials for the Grafana API and no post-start step. The files stay the source of truth: the repositories and connections they declare remain editable in Grafana, and Grafana commits each edit back to the directory. The setting also owns what it creates — emptying it deletes the repository and everything it provisioned.
 
 ## Set up Git Sync as code with the Grafana CLI
 
