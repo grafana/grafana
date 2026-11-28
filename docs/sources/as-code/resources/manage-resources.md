@@ -23,19 +23,18 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/resources/manage-reso
 
 A resource created using as code tools has additional information fields in the form of annotations:
 
-- `grafana.app/managedBy`: The manager of the resource, which depends on the tool that created it. Refer to Manager kinds for the available values.
+- `grafana.app/managedBy`: The manager of the resource, which depends on the as code tool that created it. Refer to [Resource annotations](#resource-annotations) for the available values.
+- `grafana.app/managerId`: The instance where the tool is. For Git Sync, this is the name of the repository resource. For Terraform, this is the provider identifier, for example `grafana-terraform-provider`.
 
-- `grafana.app/managerId`: The instance of that tool. For Git Sync, this is the name of the repository resource. For Terraform, this is the provider identifier, for example `grafana-terraform-provider`.
-
-A resource that carries both is a _managed resource_, and Grafana uses the record to decide whether you can change the resource in the UI and whether to reconcile it with an external source.
+A resource that carries both annotations is a _managed resource_, and Grafana uses the record to decide whether you can change the resource in the UI and whether to reconcile it with an external source.
 
 This page covers what each tool records and what it allows. For the annotations themselves, refer to [Manager and source annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#manager-and-source-annotations). To choose a tool, refer to [Overview of as code and provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/).
 
-## Resource managers
+## Resource annotations
 
-The following table summarizes the available as code tools, who sets the annotations for resource management, the resource manager (`grafana.app/managedBy`) they use, the manager's instance (`grafana.app/managerId`), and whether Grafana records the file that the resource's definition comes from.
+The following table summarizes the available as code tools, who sets the annotations for resource management, the resource manager (`grafana.app/managedBy`) they use, the resource manager's instance (`grafana.app/managerId`), and whether Grafana records the resource's definition file.
 
-| Tool                                                                                                                   | Annotations set by | Manager                     | Instance                | Resource definition |
+| Tool                                                                                                                   | Annotations set by | Resource manager            | Instance                | Resource definition |
 | ---------------------------------------------------------------------------------------------------------------------- | ------------------ | --------------------------- | ----------------------- | ------------------- |
 | [Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/)                                       | Grafana            | `repo`                      | The repository name     | Yes                 |
 | [On-prem file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/provision-resources/)           | Grafana            | `repo`                      | The repository name     | Yes                 |
@@ -46,17 +45,15 @@ The following table summarizes the available as code tools, who sets the annotat
 | [`bootstrap_path`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#bootstrap_path) | Grafana            | `file-provisioning`         | `bootstrap`             | No                  |
 | [Classic file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning)            | Grafana            | `classic-file-provisioning` | The provisioner name    | Yes                 |
 
-{{< admonition type="note" >}}
-`classic-file-provisioning`, `classic-api-provisioning`, and `classic-converted-prometheus` are deprecated and exist for migration only. The last two mark resources from the legacy Alerting provisioning HTTP API and the Alerting Convert Prometheus API, and record no manager identity because neither records the tool that made the call.
-{{< /admonition >}}
+### Resource manager
 
-### The `repo` manager
+On-prem file provisioning uses the same `Repository` resource as Git Sync with the type set to `local`, which is why both use `repo` as the resource manager.
 
-On-prem file provisioning uses the same `Repository` resource as Git Sync with the type set to `local`, which is why both record `repo`. Classic file provisioning is the older configuration-file mechanism and is unrelated to it, despite the similar name.
+Classic file provisioning is the older configuration-file mechanism and is unrelated to it, despite the similar name. `classic-file-provisioning`, `classic-api-provisioning`, and `classic-converted-prometheus` are deprecated and exist for migration only. The last two mark resources from the legacy Alerting provisioning HTTP API and the Alerting Convert Prometheus API, and record no manager identity because neither records the tool that made the call.
 
 `bootstrap_path` marks only the `Repository` resource that the setting configures, so you can't edit that configuration in the UI. The dashboards and folders it provisions are managed by that repository and stay editable.
 
-### Manage your resource definition
+### Resource definition
 
 The **Resource definition** column shows whether Grafana records the file that a resource's definition comes from.
 For more information on resource definitions, refer to [Resource definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/resources/#resource-definitions).
