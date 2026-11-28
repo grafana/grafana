@@ -6,10 +6,12 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -62,18 +64,24 @@ func LibraryPanelUIDScopeResolver(l *LibraryElementService, folderSvc folder.Ser
 		}
 
 		// The caller (e.g. the list endpoint) may already know this panel's folder.
-		// If so, use it and skip the per-panel database lookup; otherwise fetch it.
+		// Otherwise resolve it from the panel's primary store.
 		folderUID, ok := panelFolderFromContext(ctx, uid)
 		if !ok {
-			libElDTO, err := l.getLibraryElementByUid(ctx, user, model.GetLibraryElementCommand{
-				UID:        uid,
-				FolderName: dashboards.RootFolderName,
-			}, tree)
+			if useKubernetesLibraryPanels(ctx) || (l.Cfg != nil && l.Cfg.UnifiedStorage[setting.LibraryPanelResource].DualWriterMode >= grafanarest.Mode3) {
+				folderUID, err = l.k8sHandler.getLibraryPanelFolderUID(ctx, orgID, uid)
+			} else {
+				var element model.LibraryElementDTO
+				element, err = l.getLibraryElementByUid(ctx, user, model.GetLibraryElementCommand{
+					UID:        uid,
+					FolderName: dashboards.RootFolderName,
+				}, tree)
+				folderUID = element.FolderUID
+			}
 			if err != nil {
 				return nil, err
 			}
-			folderUID = libElDTO.FolderUID
-		} else if folderUID == "" {
+		}
+		if folderUID == "" {
 			// The list endpoint represents the general folder as "", but the scope
 			// machinery (and getLibraryElementByUid) uses the General folder UID.
 			folderUID = ac.GeneralFolderUID
