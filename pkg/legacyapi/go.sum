@@ -113,6 +113,12 @@ github.com/grafana/grafana-app-sdk/logging v0.63.3 h1:5s/6aN3zKkVUURNAfQp9VopGg+
 github.com/grafana/grafana-app-sdk/logging v0.63.3/go.mod h1:JpkWw7qVQA+XGAT8GJUEDAIgOxssceNpztB7oz7GWJw=
 github.com/grafana/grafana-plugin-sdk-go v0.303.0 h1:IZg5Fu0WHgaEzvYQsPeLGz89zNHUDwX5T1ylxVmTJEM=
 github.com/grafana/grafana-plugin-sdk-go v0.303.0/go.mod h1:Ee7cjex9VK/hMBunzLCDm32GQCEgRz4Jouo1jbMJINc=
+github.com/grafana/grafana/apps/dashboard v0.0.0-20261128003348-6fbc80550339 h1:tWcKSlIozir1NBCUjR+7b3jk9sVtIF5OtLptjLhMx70=
+github.com/grafana/grafana/apps/dashboard v0.0.0-20261128003348-6fbc80550339/go.mod h1:3exHZNAGqrKrCTmHtNph068dEdF+61T4R1+ocXe+Oag=
+github.com/grafana/grafana/pkg/apimachinery v0.0.0-20261128003348-6fbc80550339 h1:YYeWaqC45ElAi9A6tZ3R/S5Wr3/bUsQRNh6dy9L4Ek4=
+github.com/grafana/grafana/pkg/apimachinery v0.0.0-20261128003348-6fbc80550339/go.mod h1:E3205QGMsR2YxVwNPtI6xgeZ4AjNPcSX6C6Jv4AP72k=
+github.com/grafana/grafana/pkg/infra/slugify v0.0.0-20261128003348-6fbc80550339 h1:1yKeM7wnR/0G+BeWH46OoFga0ic++Q0QkQm3bqltlM0=
+github.com/grafana/grafana/pkg/infra/slugify v0.0.0-20261128003348-6fbc80550339/go.mod h1:fCnAfzHYBmFvXwz7Tcu3nK9a7kUR0ZL91jzS0N7XmK4=
 github.com/grafana/otel-profiling-go v0.7.0 h1:Q6CBLSgAnYmNQNNrj4ipG0S/K/K8iazA9E4kYRzZf0I=
 github.com/grafana/otel-profiling-go v0.7.0/go.mod h1:Gt7LHg3HEfBoU8ZVArhqYaiA65EjcBe3nd3+arX6eMY=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.12 h1:X6OemT2WcLtxdmNukEQuIp0c+efWVI/tBTd0oeWeDHI=

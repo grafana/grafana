@@ -60,6 +60,7 @@ replace (
 	github.com/grafana/grafana/pkg/infra/metrics => ../../pkg/infra/metrics
 	github.com/grafana/grafana/pkg/infra/slugify => ../../pkg/infra/slugify
 	github.com/grafana/grafana/pkg/infra/tracing => ../../pkg/infra/tracing
+	github.com/grafana/grafana/pkg/legacyapi => ../../pkg/legacyapi
 	github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
 	github.com/grafana/grafana/pkg/storage/unified/apistore => ../../pkg/storage/unified/apistore
 	github.com/grafana/grafana/pkg/storage/unified/resource/kv => ../../pkg/storage/unified/resource/kv
