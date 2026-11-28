@@ -44,7 +44,7 @@ For common examples and practical guidance on handling **Error**, **No Data**, a
 
 The **Error** state is triggered when the alert rule fails to evaluate its query or queries successfully.
 
-This can occur due to evaluation timeouts (default: `30s`) or repeated failures (default: `3`) when querying the data source. The [`evaluation_timeout`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#evaluation_timeout) and [`max_attempts`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_attempts) options control these settings.
+This can occur due to evaluation timeouts (default: `30s`) or repeated failures (default: `3`) when querying the data source. The [`evaluation_timeout`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#evaluation_timeout) and [`max_attempts`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_attempts) options control these settings. Grafana doesn't retry errors that repeat on every attempt, such as an oversized data source response or a query result over a limit.
 
 The **Error** state honors the [pending period](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/#pending-period): the alert instance transitions `Normal → Pending → Error`. Set the pending period to `0` to skip the **Pending** state and enter **Error** immediately.
 

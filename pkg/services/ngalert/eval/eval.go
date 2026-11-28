@@ -28,6 +28,10 @@ import (
 
 var logger = log.New("ngalert.eval")
 
+// ErrEvaluationResultLimit marks a condition result with more frames than the
+// alerting_rule_evaluation_results quota allows.
+var ErrEvaluationResultLimit = errors.New("query evaluation returned too many results")
+
 type EvaluatorFactory interface {
 	// Create builds an evaluator pipeline ready to evaluate a rule's query
 	Create(ctx EvaluationContext, condition models.Condition) (ConditionEvaluator, error)
@@ -88,7 +92,7 @@ func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (re
 		}
 		if conditionResultLength > r.evalResultLimit {
 			logger.FromContext(ctx).Error("Query evaluation returned too many results", "limit", r.evalResultLimit, "actual", conditionResultLength)
-			return nil, fmt.Errorf("query evaluation returned too many results: %d (limit: %d)", conditionResultLength, r.evalResultLimit)
+			return nil, fmt.Errorf("%w: %d (limit: %d)", ErrEvaluationResultLimit, conditionResultLength, r.evalResultLimit)
 		}
 	}
 
@@ -195,7 +199,8 @@ func (evalResults Results) HasNonRetryableErrors() bool {
 }
 
 // IsNonRetryableError reports whether an error is persistent and not worth retrying within an
-// evaluation cycle: malformed results, or deterministic Mimir query-limit / write rejections.
+// evaluation cycle: malformed results, query resource-limit rejections, evaluation result-limit
+// rejections, or non-retryable write rejections.
 func IsNonRetryableError(err error) bool {
 	if _, ok := errors.AsType[*invalidEvalResultFormatError](err); ok {
 		return true
@@ -204,6 +209,9 @@ func IsNonRetryableError(err error) bool {
 		return true
 	}
 	if errors.Is(err, expr.ErrQueryLimit) {
+		return true
+	}
+	if errors.Is(err, ErrEvaluationResultLimit) {
 		return true
 	}
 	if errors.Is(err, writer.ErrNonRetryableWrite) {
