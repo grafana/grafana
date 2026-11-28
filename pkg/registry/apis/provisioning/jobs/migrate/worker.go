@@ -26,20 +26,37 @@ type MigrationWorker struct {
 	namespaceCleaner NamespaceCleaner
 	exporter         MigrationExporter
 	syncWorker       jobs.Worker
+	takeoverMarker   FolderTakeoverMarker
 	takeoverEnabled  func(ctx context.Context, namespace string) bool
+}
+
+// MigrationWorkerOption configures a MigrationWorker.
+type MigrationWorkerOption func(*MigrationWorker)
+
+// WithFolderTakeoverMarker sets how a branch migration marks the folders that
+// the first sync after the merge takes over.
+func WithFolderTakeoverMarker(marker FolderTakeoverMarker) MigrationWorkerOption {
+	return func(w *MigrationWorker) {
+		w.takeoverMarker = marker
+	}
 }
 
 func NewMigrationWorker(
 	namespaceCleaner NamespaceCleaner,
 	exporter MigrationExporter,
 	syncWorker jobs.Worker,
+	opts ...MigrationWorkerOption,
 ) *MigrationWorker {
-	return &MigrationWorker{
+	w := &MigrationWorker{
 		namespaceCleaner: namespaceCleaner,
 		exporter:         exporter,
 		syncWorker:       syncWorker,
 		takeoverEnabled:  resources.FolderTakeoverEnabled,
 	}
+	for _, opt := range opts {
+		opt(w)
+	}
+	return w
 }
 
 func (w *MigrationWorker) IsSupported(ctx context.Context, job provisioning.Job) bool {
