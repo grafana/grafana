@@ -2,7 +2,13 @@ import { type DataTransformerConfig, type MatcherConfig } from '@grafana/data';
 import { createOrderFieldsComparer } from '@grafana/data/internal';
 
 import { toCatalogNames, toDisplayNames } from './columnContext';
-import { EMPTY_OPTIONS, findColumnsEntry, writeColumnsEntry } from './organizeFields';
+import {
+  EMPTY_OPTIONS,
+  findColumnsEntry,
+  normalizeColumnsEntry,
+  withColumnReferences,
+  writeColumnsEntry,
+} from './organizeFields';
 import { type ColumnContext, type TableTransformation } from './types';
 
 /**
@@ -28,7 +34,8 @@ function encodeColumnOrder(
 
 export const columnOrder = {
   read(configs, context) {
-    const { indexByName = {} } = findColumnsEntry(configs, context.frameFilter)?.options ?? {};
+    const { indexByName = {} } =
+      findColumnsEntry(normalizeColumnsEntry(configs, context), context.frameFilter)?.options ?? {};
     // Leave source order live until the user explicitly reorders.
     return {
       columnOrder: Object.keys(indexByName).length
@@ -36,7 +43,11 @@ export const columnOrder = {
         : undefined,
     };
   },
-  write: (configs, order, context) => encodeColumnOrder(configs, toCatalogNames(context, order), context.frameFilter),
+  write: (configs, order, context) =>
+    withColumnReferences(
+      encodeColumnOrder(normalizeColumnsEntry(configs, context), toCatalogNames(context, order), context.frameFilter),
+      context
+    ),
 } satisfies TableTransformation<{ columnOrder: string[] | undefined }, string[], ColumnContext>;
 
 function mergeColumnOrder(catalog: string[], indexByName: Record<string, number>): string[] {

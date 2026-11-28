@@ -2,8 +2,9 @@ import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useId, useMemo } from 'react';
 
-import { type GrafanaTheme2, type TransformerUIProps } from '@grafana/data';
+import { getFieldDisplayName, type GrafanaTheme2, type TransformerUIProps } from '@grafana/data';
 import {
+  createFieldReferenceResolver,
   createOrderFieldsComparer,
   createFieldsOrdererAuto,
   Order,
@@ -11,6 +12,7 @@ import {
   OrderByMode,
   OrderByType,
   type OrganizeFieldsTransformerOptions,
+  renameReferencedKeys,
 } from '@grafana/data/internal';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -40,10 +42,29 @@ function move(arr: unknown[], from: number, to: number) {
   arr.splice(to, 0, arr.splice(from, 1)[0]);
 }
 
-export const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeFieldsTransformerEditorProps) => {
+export const OrganizeFieldsTransformerEditor = ({
+  options: savedOptions,
+  input,
+  onChange,
+}: OrganizeFieldsTransformerEditorProps) => {
+  const fieldNames = useAllFieldNamesFromDataFrames(input);
+  const options = useMemo(() => {
+    if (input.length !== 1) {
+      return savedOptions;
+    }
+    const [frame] = input;
+    const resolve = createFieldReferenceResolver(frame);
+    return renameReferencedKeys(
+      savedOptions,
+      (reference) => {
+        const index = resolve(reference);
+        return index < 0 ? undefined : getFieldDisplayName(frame.fields[index], frame, input);
+      },
+      fieldNames
+    );
+  }, [savedOptions, input, fieldNames]);
   const { indexByName, excludeByName, renameByName, includeByName, orderBy, orderByMode } = options;
 
-  const fieldNames = useAllFieldNamesFromDataFrames(input);
   const orderedFieldNames = useMemo(() => {
     if (input.length > 0 && orderByMode === OrderByMode.Auto) {
       const autoOrderer = createFieldsOrdererAuto(orderBy ?? []);

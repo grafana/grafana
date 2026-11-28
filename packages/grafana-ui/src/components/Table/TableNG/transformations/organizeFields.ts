@@ -1,7 +1,14 @@
-import { isEqual } from 'lodash';
+import { isEqual, omit } from 'lodash';
 
 import { DataTransformerID, type DataTransformerConfig, type MatcherConfig } from '@grafana/data';
-import { type OrganizeFieldsTransformerOptions } from '@grafana/data/internal';
+import {
+  createFieldReferenceIndex,
+  type FieldReference,
+  type OrganizeFieldsTransformerOptions,
+  renameReferencedKeys,
+} from '@grafana/data/internal';
+
+import { type ColumnContext } from './types';
 
 export const EMPTY_OPTIONS: OrganizeFieldsTransformerOptions = { indexByName: {}, excludeByName: {}, renameByName: {} };
 
@@ -55,4 +62,77 @@ export function writeColumnsEntry(
   }
 
   return transformations.map((existing, index) => (index === entry.index ? config : existing));
+}
+
+function entryKeys({ excludeByName, indexByName, renameByName }: OrganizeFieldsTransformerOptions): Set<string> {
+  return new Set([
+    ...Object.keys(excludeByName ?? {}),
+    ...Object.keys(indexByName ?? {}),
+    ...Object.keys(renameByName ?? {}),
+  ]);
+}
+
+const catalogIndexes = new WeakMap<ColumnContext, (reference: FieldReference) => number>();
+
+function findCatalogName(context: ColumnContext, reference: FieldReference): string | undefined {
+  let find = catalogIndexes.get(context);
+  if (!find) {
+    find = createFieldReferenceIndex(context.references);
+    catalogIndexes.set(context, find);
+  }
+  return context.catalog[find(reference)];
+}
+
+const normalizedEntries = new WeakMap<
+  ColumnContext,
+  { transformations: readonly DataTransformerConfig[]; normalized: readonly DataTransformerConfig[] }
+>();
+
+export function normalizeColumnsEntry(
+  transformations: readonly DataTransformerConfig[],
+  context: ColumnContext
+): readonly DataTransformerConfig[] {
+  const cached = normalizedEntries.get(context);
+  if (cached?.transformations === transformations) {
+    return cached.normalized;
+  }
+
+  const entry = findColumnsEntry(transformations, context.frameFilter);
+  let normalized = transformations;
+  if (entry) {
+    const options = renameReferencedKeys(
+      entry.options,
+      (reference) => findCatalogName(context, reference),
+      context.catalog
+    );
+    if (options !== entry.options) {
+      normalized = transformations.map((config, index) => (index === entry.index ? { ...config, options } : config));
+    }
+  }
+  normalizedEntries.set(context, { transformations, normalized });
+  return normalized;
+}
+
+export function withColumnReferences(
+  transformations: readonly DataTransformerConfig[],
+  context: ColumnContext
+): DataTransformerConfig[] {
+  const entry = findColumnsEntry(transformations, context.frameFilter);
+  if (!entry) {
+    return [...transformations];
+  }
+
+  const catalogReferences = new Map(context.catalog.map((name, index) => [name, context.references[index]]));
+  const previous = new Map(Object.entries(entry.options.referenceByName ?? {}));
+  const references: Array<[string, FieldReference]> = [];
+  for (const key of entryKeys(entry.options)) {
+    const reference = catalogReferences.get(key) ?? previous.get(key);
+    if (reference) {
+      references.push([key, reference]);
+    }
+  }
+
+  const options = omit(entry.options, 'referenceByName');
+  const next = references.length > 0 ? { ...options, referenceByName: Object.fromEntries(references) } : options;
+  return transformations.map((config, index) => (index === entry.index ? { ...config, options: next } : config));
 }

@@ -1,8 +1,10 @@
 import { type DataTransformerConfig, type MatcherConfig } from '@grafana/data';
+import { type FieldReference } from '@grafana/data/internal';
 
 export interface ColumnContext {
   catalog: string[];
   displayNames?: string[];
+  references: FieldReference[];
   frameFilter?: MatcherConfig;
 }
 

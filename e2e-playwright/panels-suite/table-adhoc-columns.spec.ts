@@ -51,6 +51,52 @@ const displayNameDashboard = (uid: string) => ({
   ],
 });
 
+const labelVariable = (name: string, values: string[]) => ({
+  name,
+  type: 'custom',
+  query: values.join(','),
+  current: { text: values[0], value: values[0] },
+  options: values.map((value, index) => ({ text: value, value, selected: index === 0 })),
+});
+
+const upstreamRenameDashboard = (uid: string) => ({
+  uid,
+  title: `Table upstream renames ${uid}`,
+  schemaVersion: 41,
+  templating: {
+    list: [labelVariable('hostLabel', ['host', 'Host name']), labelVariable('regionLabel', ['region', 'host'])],
+  },
+  panels: [
+    {
+      id: 1,
+      type: 'table',
+      title: 'Upstream renames',
+      gridPos: { h: 12, w: 24, x: 0, y: 0 },
+      datasource: TESTDATA,
+      targets: [
+        {
+          refId: 'A',
+          datasource: TESTDATA,
+          scenarioId: 'csv_content',
+          csvContent: 'id,host,region\n1,web-1,us-east\n2,web-2,eu-west\n3,db-1,us-east',
+        },
+      ],
+      transformations: [
+        {
+          id: 'organize',
+          options: {
+            excludeByName: {},
+            indexByName: {},
+            renameByName: { host: '$hostLabel', region: '$regionLabel' },
+          },
+        },
+      ],
+      fieldConfig: { defaults: { custom: { filterable: true } }, overrides: [] },
+      options: { showHeader: true, showColumnsSidebar: true, cellHeight: 'sm' },
+    },
+  ],
+});
+
 test.describe('Panels test: Table - ad-hoc columns', { tag: ['@panels', '@table'] }, () => {
   test('restores a hidden column with its values', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
@@ -169,5 +215,75 @@ test.describe('Panels test: Table - ad-hoc columns with display names', { tag: [
     await expect.poll(() => headerNames(panel)).toEqual(['Requests', 'Customer']);
     await expect(panel.getByRole('gridcell', { name: 'customer-b' })).toBeVisible();
     await expect(panel.getByRole('row')).toHaveCount(2);
+  });
+});
+
+test.describe('Panels test: Table - ad-hoc columns with upstream renames', { tag: ['@panels', '@table'] }, () => {
+  let uid: string;
+
+  test.beforeEach(async ({ request }) => {
+    uid = randomUUID();
+    const response = await request.post('/api/dashboards/db', { data: { dashboard: upstreamRenameDashboard(uid) } });
+    expect(response.ok()).toBeTruthy();
+  });
+
+  test.afterEach(async ({ request }) => {
+    await request.delete(`/api/dashboards/uid/${uid}`);
+  });
+
+  test('keeps ad hoc changes on the same columns when an upstream organize renames them', async ({
+    gotoDashboardPage,
+    selectors,
+    page,
+  }) => {
+    test.slow();
+    const dashboardPage = await gotoDashboardPage({ uid });
+    const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Upstream renames'));
+    const table = selectors.components.Panels.Visualization.TableNG;
+    const pickValue = async (current: string, next: string) => {
+      await dashboardPage
+        .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(current))
+        .click();
+      await page.getByRole('option', { name: next, exact: true }).click();
+    };
+    const firstColumn = () => panel.getByRole('row').locator('[role="gridcell"]:first-child').allTextContents();
+
+    await waitForTableLoad(panel);
+    await panel.getByLabel('Column options for host').click();
+    await page.getByTestId(table.headerColumnMenu.hideItem).click();
+    await panel.getByRole('button', { name: 'Reorder region' }).press('ArrowUp');
+    await panel.getByRole('button', { name: 'Reorder region' }).press('ArrowUp');
+    await panel.getByLabel('Column options for region').click();
+    await page.getByTestId(table.headerColumnMenu.filterItem).click();
+    await page.getByRole('checkbox', { name: 'us-east', exact: true }).click();
+    await page.getByRole('button', { name: 'Apply' }).click();
+    await expect.poll(() => headerNames(panel)).toEqual(['region', 'id']);
+    await expect.poll(firstColumn).toEqual(['us-east', 'us-east']);
+
+    await pickValue('host', 'Host name');
+    await expect.poll(() => headerNames(panel)).toEqual(['region', 'id']);
+    await expect(panel.getByTestId(table.columnsSidebar.row('Host name')).getByRole('checkbox')).not.toBeChecked();
+    await expect.poll(firstColumn).toEqual(['us-east', 'us-east']);
+
+    await pickValue('region', 'host');
+    await expect.poll(() => headerNames(panel)).toEqual(['host', 'id']);
+    await expect.poll(firstColumn).toEqual(['us-east', 'us-east']);
+
+    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+    await panel.getByTestId(selectors.components.Panels.Panel.PanelAdHocChangesHeaderAction).click();
+    await page.getByRole('menuitem', { name: 'Save to dashboard' }).click();
+    const saveButton = dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton);
+    await saveButton.click();
+    await expect(saveButton).toBeHidden();
+    await expect.poll(() => headerNames(panel)).toEqual(['host', 'id']);
+
+    await page.reload();
+    await waitForTableLoad(panel);
+    await expect.poll(() => headerNames(panel)).toEqual(['host', 'id']);
+    await expect.poll(firstColumn).toEqual(['us-east', 'us-east']);
+    await pickValue('host', 'region');
+    await pickValue('Host name', 'host');
+    await expect.poll(() => headerNames(panel)).toEqual(['region', 'id']);
+    await expect.poll(firstColumn).toEqual(['us-east', 'us-east']);
   });
 });

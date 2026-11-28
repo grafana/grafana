@@ -13,7 +13,7 @@ it('composes local column and nested filter actions, and clears only the selecte
   const source = toDataFrame({ refId: 'A', fields: [{ name: 'value', values: [1, 2] }] });
   const field = source.fields[0];
   const context = { source, field, frameKey: 'A', frameIndex: 0 };
-  const columns = { catalog: ['value'] };
+  const columns = { catalog: ['value'], references: [{ name: 'value' }] };
   const predicate = createValuePredicate(field, ['1']);
   const { result } = renderHook(() => useTableTransformations(undefined, 'table', true));
 
@@ -50,7 +50,15 @@ it('composes local column and nested filter actions, and clears only the selecte
         filters: [{ fieldName: 'value', field: { name: 'value', labels: undefined }, config: predicate }],
       },
     },
-    { id: 'organize', options: { indexByName: { value: 0 }, excludeByName: {}, renameByName: {} } },
+    {
+      id: 'organize',
+      options: {
+        indexByName: { value: 0 },
+        excludeByName: {},
+        renameByName: {},
+        referenceByName: { value: { name: 'value' } },
+      },
+    },
   ]);
 });
 

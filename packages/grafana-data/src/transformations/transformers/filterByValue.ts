@@ -1,4 +1,3 @@
-import { isEqual } from 'lodash';
 import { map } from 'rxjs/operators';
 
 import { getFieldDisplayName } from '../../field/fieldState';
@@ -8,7 +7,7 @@ import {
   type SynchronousDataTransformerInfo,
   type MatcherConfig,
 } from '../../types/transformations';
-import { getRowIdentity } from '../frameIdentity';
+import { createFieldReferenceResolver, type FieldReference, getRowIdentity, isFieldReference } from '../frameIdentity';
 import { getValueMatcher } from '../matchers';
 
 import { DataTransformerID } from './ids';
@@ -26,7 +25,7 @@ export enum FilterByValueMatch {
 export interface FilterByValueFilter {
   fieldName: string;
   /** Resolve raw identity before display names, which can change with field overrides. */
-  field?: { name: string; labels?: Record<string, string> };
+  field?: FieldReference;
   config: MatcherConfig;
 }
 
@@ -103,10 +102,11 @@ function filterFrame(frame: DataFrame, options: FilterByValueTransformerOptions,
   frame.fields.forEach((field, index) => {
     fieldIndexByName[getFieldDisplayName(field, frame, data)] = index;
   });
+  let resolve: ((reference: unknown) => number) | undefined;
   const matchers = options.filters.flatMap((filter) => {
     const identity = filter.field;
-    const fieldIndex = identity
-      ? frame.fields.findIndex((field) => field.name === identity.name && isEqual(field.labels, identity.labels))
+    const fieldIndex = isFieldReference(identity)
+      ? (resolve ??= createFieldReferenceResolver(frame))(identity)
       : (fieldIndexByName[filter.fieldName] ?? -1);
     if (fieldIndex < 0) {
       if (options.missingField === 'ignore') {

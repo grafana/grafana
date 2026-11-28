@@ -1,5 +1,7 @@
 import { type DataFrame, type DataTransformerConfig, type MatcherConfig } from '@grafana/data';
 
+import { getVisibleFields } from '../utils';
+
 import {
   getFrameFilter,
   getSourceFrameIndex,
@@ -7,7 +9,13 @@ import {
   toCatalogNames,
   toDisplayNames,
 } from './columnContext';
-import { EMPTY_OPTIONS, findColumnsEntry, writeColumnsEntry } from './organizeFields';
+import {
+  EMPTY_OPTIONS,
+  findColumnsEntry,
+  normalizeColumnsEntry,
+  withColumnReferences,
+  writeColumnsEntry,
+} from './organizeFields';
 import { type ColumnContext, type TableTransformation } from './types';
 
 export function readColumnVisibility(configs: readonly DataTransformerConfig[], frameFilter?: MatcherConfig) {
@@ -36,6 +44,27 @@ export function encodeHiddenColumns(
   );
 }
 
+function readHiddenColumns(configs: readonly DataTransformerConfig[], context: ColumnContext): Set<string> {
+  const { hiddenColumns } = readColumnVisibility(normalizeColumnsEntry(configs, context), context.frameFilter);
+  return new Set(context.catalog.filter((name) => hiddenColumns.has(name)));
+}
+
+function writeHiddenColumns(
+  configs: readonly DataTransformerConfig[],
+  hidden: Iterable<string>,
+  context: ColumnContext
+): DataTransformerConfig[] {
+  const normalized = normalizeColumnsEntry(configs, context);
+  const catalog = new Set(context.catalog);
+  const { hiddenColumns } = readColumnVisibility(normalized, context.frameFilter);
+  const missingColumns = Array.from(hiddenColumns).filter((name) => !catalog.has(name));
+
+  return withColumnReferences(
+    encodeHiddenColumns(normalized, new Set([...missingColumns, ...hidden]), context.frameFilter),
+    context
+  );
+}
+
 export function ensureVisibleColumnPerFrame(
   transformations: readonly DataTransformerConfig[],
   sourceSeries: readonly DataFrame[]
@@ -44,37 +73,28 @@ export function ensureVisibleColumnPerFrame(
     if (getSourceFrameIndex(sourceSeries, index, sourceSeries) < 0) {
       return current;
     }
-    const { hiddenColumns } = readColumnVisibility(current, getFrameFilter(sourceSeries, index));
-    if (hiddenColumns.size === 0) {
+    const { hiddenColumns: storedHidden } = readColumnVisibility(current, getFrameFilter(sourceSeries, index));
+    if (storedHidden.size === 0 || storedHidden.size < getVisibleFields(sourceSeries[index].fields).length) {
       return current;
     }
     const context = prepareColumnContext(sourceSeries, index);
     if (!context || context.catalog.length === 0) {
       return current;
     }
+    const hiddenColumns = readHiddenColumns(current, context);
     if (context.catalog.some((name) => !hiddenColumns.has(name))) {
       return current;
     }
 
     // A refresh can leave only hidden columns. Reveal one so the table and its controls remain reachable.
     hiddenColumns.delete(context.catalog[0]);
-    return encodeHiddenColumns(current, hiddenColumns, context.frameFilter);
+    return writeHiddenColumns(current, hiddenColumns, context);
   }, transformations);
 }
 
 export const columnVisibility = {
   read: (configs, context) => ({
-    hiddenColumns: new Set(toDisplayNames(context, readColumnVisibility(configs, context.frameFilter).hiddenColumns)),
+    hiddenColumns: new Set(toDisplayNames(context, readHiddenColumns(configs, context))),
   }),
-  write: (configs, hidden, context) => {
-    const catalog = new Set(context.catalog);
-    const { hiddenColumns } = readColumnVisibility(configs, context.frameFilter);
-    const missingColumns = Array.from(hiddenColumns).filter((name) => !catalog.has(name));
-
-    return encodeHiddenColumns(
-      configs,
-      new Set([...missingColumns, ...toCatalogNames(context, hidden)]),
-      context.frameFilter
-    );
-  },
+  write: (configs, hidden, context) => writeHiddenColumns(configs, toCatalogNames(context, hidden), context),
 } satisfies TableTransformation<{ hiddenColumns: ReadonlySet<string> }, ReadonlySet<string>, ColumnContext>;

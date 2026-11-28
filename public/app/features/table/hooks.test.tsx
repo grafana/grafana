@@ -160,7 +160,12 @@ describe('useAdHocColumnState', () => {
       {
         id: 'organize',
         filter: { id: 'byRefId', options: 'B' },
-        options: { indexByName: {}, excludeByName: { B: true }, renameByName: {} },
+        options: {
+          indexByName: {},
+          excludeByName: { B: true },
+          renameByName: {},
+          referenceByName: { B: { name: 'B' } },
+        },
       },
     ]);
   });
@@ -294,7 +299,12 @@ describe('useAdHocColumnState', () => {
       {
         id: 'organize',
         filter: { id: 'byRefId', options: 'B' },
-        options: { indexByName: { other: 0, value: 1 }, excludeByName: {}, renameByName: {} },
+        options: {
+          indexByName: { other: 0, value: 1 },
+          excludeByName: {},
+          renameByName: {},
+          referenceByName: { other: { name: 'other' }, value: { name: 'value' } },
+        },
       },
     ]);
 
@@ -305,7 +315,12 @@ describe('useAdHocColumnState', () => {
       {
         id: 'organize',
         filter: { id: 'byRefId', options: 'B' },
-        options: { indexByName: { other: 0, value: 1 }, excludeByName: { value: true }, renameByName: {} },
+        options: {
+          indexByName: { other: 0, value: 1 },
+          excludeByName: { value: true },
+          renameByName: {},
+          referenceByName: { other: { name: 'other' }, value: { name: 'value' } },
+        },
       },
     ]);
   });

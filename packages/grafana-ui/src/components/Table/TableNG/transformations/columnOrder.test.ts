@@ -2,7 +2,13 @@ import { type DataTransformerConfig } from '@grafana/data';
 
 import { columnTransformations } from './registry';
 
-const context = { catalog: ['A', 'B', 'C', 'D'] };
+const columns = (catalog: string[], displayNames?: string[]) => ({
+  catalog,
+  displayNames,
+  references: catalog.map((name) => ({ name })),
+});
+const referencesTo = (...names: string[]) => Object.fromEntries(names.map((name) => [name, { name }]));
+const context = columns(['A', 'B', 'C', 'D']);
 const { columnOrder, columnVisibility } = columnTransformations;
 
 it('preserves source order until the user reorders', () => {
@@ -18,7 +24,12 @@ it('orders known columns and places new columns by their upstream neighbors with
   expect(configs).toEqual([
     {
       id: 'organize',
-      options: { indexByName: { C: 0, A: 1 }, excludeByName: {}, renameByName: {} },
+      options: {
+        indexByName: { C: 0, A: 1 },
+        excludeByName: {},
+        renameByName: {},
+        referenceByName: referencesTo('C', 'A'),
+      },
     },
   ]);
 });
@@ -26,7 +37,7 @@ it('orders known columns and places new columns by their upstream neighbors with
 it('places added columns by their upstream neighbors without disturbing the viewer order', () => {
   const configs = columnOrder.write([], ['C', 'A', 'B', 'D'], context);
 
-  expect(columnOrder.read(configs, { catalog: ['Before', 'A', 'New 1', 'New 2', 'B', 'C', 'D'] }).columnOrder).toEqual([
+  expect(columnOrder.read(configs, columns(['Before', 'A', 'New 1', 'New 2', 'B', 'C', 'D'])).columnOrder).toEqual([
     'C',
     'Before',
     'A',
@@ -35,7 +46,7 @@ it('places added columns by their upstream neighbors without disturbing the view
     'B',
     'D',
   ]);
-  expect(columnOrder.read(configs, { catalog: ['A', 'C', 'D'] }).columnOrder).toEqual(['C', 'A', 'D']);
+  expect(columnOrder.read(configs, columns(['A', 'C', 'D'])).columnOrder).toEqual(['C', 'A', 'D']);
   expect(columnOrder.read(configs, context).columnOrder).toEqual(['C', 'A', 'B', 'D']);
 });
 
@@ -51,7 +62,12 @@ it('updates one organize entry while preserving visibility, renames, and unrelat
     unrelated,
     {
       id: 'organize',
-      options: { indexByName: { B: 0, C: 1, A: 2, D: 3 }, excludeByName: {}, renameByName: { A: 'Alpha' } },
+      options: {
+        indexByName: { B: 0, C: 1, A: 2, D: 3 },
+        excludeByName: {},
+        renameByName: { A: 'Alpha' },
+        referenceByName: referencesTo('B', 'C', 'A', 'D'),
+      },
     },
   ]);
   expect(columnVisibility.read(ordered, context).hiddenColumns).toEqual(new Set(['B']));
@@ -59,9 +75,26 @@ it('updates one organize entry while preserving visibility, renames, and unrelat
   expect(initial).toEqual([unrelated, { id: 'organize', options: { renameByName: { A: 'Alpha' } } }]);
 });
 
+it('reads keys with malformed references by name and repairs them on the next write', () => {
+  const configs = [{ id: 'organize', options: { excludeByName: { B: true }, referenceByName: { B: null, C: 'C' } } }];
+
+  expect(columnVisibility.read(configs, context).hiddenColumns).toEqual(new Set(['B']));
+  expect(columnVisibility.write(configs, new Set(['B', 'C']), context)).toEqual([
+    {
+      id: 'organize',
+      options: {
+        indexByName: {},
+        excludeByName: { B: true, C: true },
+        renameByName: {},
+        referenceByName: referencesTo('B', 'C'),
+      },
+    },
+  ]);
+});
+
 describe('with display names', () => {
-  const rotated = { catalog: ['a', 'b', 'c'], displayNames: ['b', 'c', 'a'] };
-  const renamed = { catalog: ['customer_id', 'region_name'], displayNames: ['Customer', 'Region'] };
+  const rotated = columns(['a', 'b', 'c'], ['b', 'c', 'a']);
+  const renamed = columns(['customer_id', 'region_name'], ['Customer', 'Region']);
 
   it('reads columns by the names the table shows and writes them by source name', () => {
     const hidden = columnVisibility.write([], new Set(['b']), rotated);
@@ -70,7 +103,12 @@ describe('with display names', () => {
     expect(ordered).toEqual([
       {
         id: 'organize',
-        options: { indexByName: { c: 0, a: 1, b: 2 }, excludeByName: { a: true }, renameByName: {} },
+        options: {
+          indexByName: { c: 0, a: 1, b: 2 },
+          excludeByName: { a: true },
+          renameByName: {},
+          referenceByName: referencesTo('a', 'c', 'b'),
+        },
       },
     ]);
     expect(columnVisibility.read(ordered, rotated).hiddenColumns).toEqual(new Set(['b']));
@@ -84,14 +122,27 @@ describe('with display names', () => {
     expect(columnVisibility.write(configs, new Set(['Customer']), renamed)).toEqual([
       {
         id: 'organize',
-        options: { indexByName: {}, excludeByName: { Customer: true, customer_id: true }, renameByName: {} },
+        options: {
+          indexByName: {},
+          excludeByName: { Customer: true, customer_id: true },
+          renameByName: {},
+          referenceByName: referencesTo('customer_id'),
+        },
       },
     ]);
   });
 
   it('drops names the table does not show', () => {
     expect(columnOrder.write([], ['Region', 'customer_id'], renamed)).toEqual([
-      { id: 'organize', options: { indexByName: { region_name: 0 }, excludeByName: {}, renameByName: {} } },
+      {
+        id: 'organize',
+        options: {
+          indexByName: { region_name: 0 },
+          excludeByName: {},
+          renameByName: {},
+          referenceByName: referencesTo('region_name'),
+        },
+      },
     ]);
     expect(columnVisibility.write([], new Set(['region_name']), renamed)).toEqual([]);
   });
