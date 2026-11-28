@@ -3102,7 +3102,7 @@ var (
 			Description: "Enables tabular numerals for visualization legend values",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
+			Expression:  "true",
 			Generate:    Generate{React: true},
 		},
 		{

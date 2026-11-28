@@ -1237,10 +1237,10 @@ export const useFlagDatavizReverseColorScheme = (options?: ReactFlagEvaluationOp
  *
  * **Details:**
  * - flag key: `dataviz.tabularNums`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagDatavizTabularNums = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("dataviz.tabularNums", false, options).value;
+  return useFlag("dataviz.tabularNums", true, options).value;
 };
 
 /**
