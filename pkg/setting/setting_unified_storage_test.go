@@ -290,6 +290,31 @@ func TestKVLeaseTTLBounds(t *testing.T) {
 	}
 }
 
+func TestKVWriteCoordination(t *testing.T) {
+	for _, tc := range []struct {
+		configured string
+		expected   string
+	}{
+		{configured: "", expected: KVWriteCoordinationLease},
+		{configured: "lease", expected: KVWriteCoordinationLease},
+		{configured: "latest", expected: KVWriteCoordinationLatest},
+		{configured: "invalid", expected: KVWriteCoordinationLease},
+	} {
+		t.Run(tc.configured, func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			if tc.configured != "" {
+				cfg.Raw.Section("unified_storage").Key("kv_write_coordination").SetValue(tc.configured)
+			}
+
+			cfg.setUnifiedStorageConfig()
+
+			assert.Equal(t, tc.expected, cfg.KVWriteCoordination)
+		})
+	}
+}
+
 func TestSeededWatchesEnabled(t *testing.T) {
 	for _, tc := range []struct {
 		name       string

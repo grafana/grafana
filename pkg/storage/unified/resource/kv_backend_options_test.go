@@ -142,6 +142,7 @@ func TestNewKVBackendOptionsValues(t *testing.T) {
 	cfg.GarbageCollectionMaxAge = 8 * time.Minute
 	cfg.DashboardsGarbageCollectionMaxAge = 9 * time.Minute
 	cfg.KVLeaseTTL = 9 * time.Minute
+	cfg.KVWriteCoordination = "latest"
 
 	opts := NewKVBackendOptions(cfg)
 
@@ -153,6 +154,7 @@ func TestNewKVBackendOptionsValues(t *testing.T) {
 	require.Equal(t, 7, opts.DashboardVersionsToKeep)
 	require.NotEmpty(t, opts.Holder)
 	require.Equal(t, 9*time.Minute, opts.LeaseTTL)
+	require.Equal(t, WriteCoordinationLatest, opts.WriteCoordination)
 	require.Equal(t, GarbageCollectionConfig{
 		Enabled:          true,
 		DryRun:           true,

@@ -1439,4 +1439,208 @@ func runTestKVBatch(t *testing.T, kv kvpkg.KV, nsPrefix string) {
 		_, err = kv.Get(ctx, section, nk("error-context-key3"))
 		assert.ErrorIs(t, err, kvpkg.ErrNotFound, "fourth operation should not have been executed")
 	})
+
+	runTestKVBatchCompareAndSwap(t, ctx, kv, section, nk)
+	runTestKVBatchGuardedDelete(t, ctx, kv, section, nk)
+	runTestKVBatchUnbatchedSections(t, ctx, kv, section, nk)
+	runTestKVBatchAcrossSections(t, ctx, kv, section, nk)
+}
+
+func getKVValue(t *testing.T, ctx context.Context, kv kvpkg.KV, section, key string) string {
+	t.Helper()
+	reader, err := kv.Get(ctx, section, key)
+	require.NoError(t, err)
+	value, err := io.ReadAll(reader)
+	require.NoError(t, err)
+	require.NoError(t, reader.Close())
+	return string(value)
+}
+
+func runTestKVBatchCompareAndSwap(t *testing.T, ctx context.Context, kv kvpkg.KV, section string, nk func(string) string) {
+	cas := func(key, expected, value string) kvpkg.BatchOp {
+		return kvpkg.BatchOp{Mode: kvpkg.BatchOpCompareAndSwap, Key: key, Expected: []byte(expected), Value: []byte(value)}
+	}
+
+	t.Run("batch compare and swap succeeds when value matches", func(t *testing.T) {
+		key := nk("cas-match")
+		saveKVHelper(t, kv, ctx, section, key, strings.NewReader("v1"))
+
+		require.NoError(t, kv.Batch(ctx, section, []kvpkg.BatchOp{cas(key, "v1", "v2")}))
+		assert.Equal(t, "v2", getKVValue(t, ctx, kv, section, key))
+	})
+
+	t.Run("batch compare and swap fails when value differs", func(t *testing.T) {
+		key := nk("cas-mismatch")
+		saveKVHelper(t, kv, ctx, section, key, strings.NewReader("v2"))
+
+		err := kv.Batch(ctx, section, []kvpkg.BatchOp{cas(key, "v1", "v3")})
+		require.ErrorIs(t, err, kvpkg.ErrCompareAndSwapFailed)
+		var batchErr *kvpkg.BatchError
+		require.ErrorAs(t, err, &batchErr)
+		assert.Equal(t, 0, batchErr.Index)
+		assert.Equal(t, "v2", getKVValue(t, ctx, kv, section, key))
+	})
+
+	// SQL collations can compare text case and trailing-space insensitively.
+	t.Run("batch compare and swap compares bytes exactly", func(t *testing.T) {
+		key := nk("cas-exact")
+		saveKVHelper(t, kv, ctx, section, key, strings.NewReader("Token"))
+
+		for _, expected := range []string{"token", "Token ", "Tokén"} {
+			err := kv.Batch(ctx, section, []kvpkg.BatchOp{cas(key, expected, "replaced")})
+			require.ErrorIs(t, err, kvpkg.ErrCompareAndSwapFailed, "expected %q", expected)
+		}
+		assert.Equal(t, "Token", getKVValue(t, ctx, kv, section, key))
+	})
+
+	t.Run("batch compare and swap fails for non-existent key", func(t *testing.T) {
+		key := nk("cas-missing")
+		err := kv.Batch(ctx, section, []kvpkg.BatchOp{cas(key, "v1", "v2")})
+		require.ErrorIs(t, err, kvpkg.ErrNotFound)
+		_, err = kv.Get(ctx, section, key)
+		require.ErrorIs(t, err, kvpkg.ErrNotFound)
+	})
+
+	t.Run("batch compare and swap requires expected and value", func(t *testing.T) {
+		key := nk("cas-empty")
+		saveKVHelper(t, kv, ctx, section, key, strings.NewReader("v1"))
+		require.ErrorIs(t, kv.Batch(ctx, section, []kvpkg.BatchOp{cas(key, "", "v2")}), kvpkg.ErrEmptyValue)
+		require.ErrorIs(t, kv.Batch(ctx, section, []kvpkg.BatchOp{cas(key, "v1", "")}), kvpkg.ErrEmptyValue)
+		assert.Equal(t, "v1", getKVValue(t, ctx, kv, section, key))
+	})
+
+	t.Run("concurrent compare and swap - only one succeeds", func(t *testing.T) {
+		key := nk("cas-concurrent")
+		saveKVHelper(t, kv, ctx, section, key, strings.NewReader("v0"))
+
+		const writers = 4
+		var wg sync.WaitGroup
+		errs := make([]error, writers)
+		start := make(chan struct{})
+		for i := range writers {
+			wg.Go(func() {
+				<-start
+				errs[i] = kv.Batch(ctx, section, []kvpkg.BatchOp{cas(key, "v0", fmt.Sprintf("from-%d", i))})
+			})
+		}
+		close(start)
+		wg.Wait()
+
+		winner := -1
+		for i, err := range errs {
+			if err == nil {
+				require.Equal(t, -1, winner, "more than one swap succeeded")
+				winner = i
+				continue
+			}
+			require.ErrorIs(t, err, kvpkg.ErrCompareAndSwapFailed, "losers must see the winner's value")
+		}
+		require.NotEqual(t, -1, winner, "no swap succeeded")
+		assert.Equal(t, fmt.Sprintf("from-%d", winner), getKVValue(t, ctx, kv, section, key))
+	})
+}
+
+// runTestKVBatchGuardedDelete covers deleting a key only if it holds an
+// expected value: a compare and swap to the same value guards a delete in the
+// same batch.
+func runTestKVBatchGuardedDelete(t *testing.T, ctx context.Context, kv kvpkg.KV, section string, nk func(string) string) {
+	guardedDelete := func(key, expected string) []kvpkg.BatchOp {
+		return []kvpkg.BatchOp{
+			{Mode: kvpkg.BatchOpCompareAndSwap, Key: key, Expected: []byte(expected), Value: []byte(expected)},
+			{Mode: kvpkg.BatchOpDelete, Key: key},
+		}
+	}
+
+	t.Run("guarded delete succeeds when value matches", func(t *testing.T) {
+		key := nk("guarded-delete-match")
+		saveKVHelper(t, kv, ctx, section, key, strings.NewReader("v1"))
+
+		require.NoError(t, kv.Batch(ctx, section, guardedDelete(key, "v1")))
+		_, err := kv.Get(ctx, section, key)
+		require.ErrorIs(t, err, kvpkg.ErrNotFound)
+	})
+
+	t.Run("guarded delete keeps the key when value differs", func(t *testing.T) {
+		key := nk("guarded-delete-mismatch")
+		saveKVHelper(t, kv, ctx, section, key, strings.NewReader("Token"))
+
+		for _, expected := range []string{"v1", "token", "Token "} {
+			err := kv.Batch(ctx, section, guardedDelete(key, expected))
+			require.ErrorIs(t, err, kvpkg.ErrCompareAndSwapFailed, "expected %q", expected)
+		}
+		assert.Equal(t, "Token", getKVValue(t, ctx, kv, section, key))
+	})
+
+	t.Run("guarded delete fails for non-existent key", func(t *testing.T) {
+		err := kv.Batch(ctx, section, guardedDelete(nk("guarded-delete-missing"), "v1"))
+		require.ErrorIs(t, err, kvpkg.ErrNotFound)
+	})
+}
+
+// runTestKVBatchUnbatchedSections checks that sections whose values may live
+// outside the store's transactions are rejected, whether they are the batch's
+// section or an operation's, before anything is written.
+func runTestKVBatchUnbatchedSections(t *testing.T, ctx context.Context, kv kvpkg.KV, section string, nk func(string) string) {
+	for _, unbatched := range []string{
+		kvpkg.BlobDataSection,
+		kvpkg.LastImportTimeSection,
+		kvpkg.SearchSnapshotDataSection,
+		kvpkg.SearchSnapshotManifestSection,
+	} {
+		t.Run("batch rejects section "+unbatched, func(t *testing.T) {
+			require.False(t, kvpkg.SupportsBatch(unbatched))
+			key := nk("unbatched")
+
+			err := kv.Batch(ctx, unbatched, []kvpkg.BatchOp{{Mode: kvpkg.BatchOpPut, Key: key, Value: []byte("v")}})
+			require.ErrorIs(t, err, kvpkg.ErrBatchNotSupportedOnSection)
+
+			err = kv.Batch(ctx, section, []kvpkg.BatchOp{
+				{Mode: kvpkg.BatchOpPut, Key: key, Value: []byte("v")},
+				{Section: unbatched, Mode: kvpkg.BatchOpPut, Key: key, Value: []byte("v")},
+			})
+			require.ErrorIs(t, err, kvpkg.ErrBatchNotSupportedOnSection)
+			var batchErr *kvpkg.BatchError
+			require.ErrorAs(t, err, &batchErr)
+			require.Equal(t, 1, batchErr.Index)
+			_, err = kv.Get(ctx, section, key)
+			require.ErrorIs(t, err, kvpkg.ErrNotFound, "no operation of a rejected batch may run")
+		})
+	}
+}
+
+func runTestKVBatchAcrossSections(t *testing.T, ctx context.Context, kv kvpkg.KV, section string, nk func(string) string) {
+	other := kvpkg.LatestSection
+
+	t.Run("batch writes several sections atomically", func(t *testing.T) {
+		key := nk("cross-commit")
+		require.NoError(t, kv.Batch(ctx, section, []kvpkg.BatchOp{
+			{Section: other, Mode: kvpkg.BatchOpCreate, Key: key, Value: []byte("fence")},
+			{Mode: kvpkg.BatchOpPut, Key: key, Value: []byte("default section")},
+			{Section: kvpkg.DataSection, Mode: kvpkg.BatchOpPut, Key: key, Value: []byte("data")},
+		}))
+		assert.Equal(t, "fence", getKVValue(t, ctx, kv, other, key))
+		assert.Equal(t, "default section", getKVValue(t, ctx, kv, section, key))
+		assert.Equal(t, "data", getKVValue(t, ctx, kv, kvpkg.DataSection, key))
+	})
+
+	t.Run("batch failing in one section rolls back the others", func(t *testing.T) {
+		key := nk("cross-rollback")
+		saveKVHelper(t, kv, ctx, other, key, strings.NewReader("current"))
+
+		err := kv.Batch(ctx, section, []kvpkg.BatchOp{
+			{Section: kvpkg.DataSection, Mode: kvpkg.BatchOpPut, Key: key, Value: []byte("data")},
+			{Mode: kvpkg.BatchOpPut, Key: key, Value: []byte("default section")},
+			{Section: other, Mode: kvpkg.BatchOpCompareAndSwap, Key: key, Expected: []byte("stale"), Value: []byte("next")},
+		})
+		require.ErrorIs(t, err, kvpkg.ErrCompareAndSwapFailed)
+		var batchErr *kvpkg.BatchError
+		require.ErrorAs(t, err, &batchErr)
+		assert.Equal(t, other, batchErr.Op.Section)
+
+		assert.Equal(t, "current", getKVValue(t, ctx, kv, other, key))
+		_, err = kv.Get(ctx, section, key)
+		require.ErrorIs(t, err, kvpkg.ErrNotFound)
+		_, err = kv.Get(ctx, kvpkg.DataSection, key)
+		require.ErrorIs(t, err, kvpkg.ErrNotFound)
+	})
 }

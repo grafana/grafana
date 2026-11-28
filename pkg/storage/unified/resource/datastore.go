@@ -33,6 +33,9 @@ const (
 type dataStore struct {
 	kv    KV
 	cache *gocache.Cache
+	// maintainsLatest is set when latestSection names every resource's latest
+	// version, so paths that change history outside of writes must update it.
+	maintainsLatest bool
 }
 
 type dataImportBatchWriter interface {

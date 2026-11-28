@@ -885,6 +885,7 @@ type Cfg struct {
 	EnableSQLKVBackend                bool
 	KeyPathReconciliationEnabled      bool
 	KVLeaseTTL                        time.Duration
+	KVWriteCoordination               string
 	ResourceVersionMaxWait            time.Duration
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool

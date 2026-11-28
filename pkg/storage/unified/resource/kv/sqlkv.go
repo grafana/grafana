@@ -75,6 +75,8 @@ func (k *SqlKV) getQueryBuilder(section string) (*queryBuilder, error) {
 		tableName = "pending_tenant_deletions"
 	case LeasesSection:
 		tableName = "kv_leases"
+	case LatestSection:
+		tableName = "resource_latest"
 	case SearchSnapshotManifestSection:
 		tableName = "search_snapshot_manifest"
 	case SearchSnapshotDataSection:
@@ -537,12 +539,6 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 	if section == "" {
 		return fmt.Errorf("section is required")
 	}
-	// DataSection maps to resource_history, which has only a non-unique index
-	// on key_path, so Create/Update semantics can't be enforced atomically here.
-	// This may be lifted once key_path becomes unique on resource_history.
-	if section == DataSection {
-		return ErrBatchNotSupportedOnDataSection
-	}
 
 	if len(ops) == 0 {
 		return nil
@@ -551,16 +547,30 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 	if len(ops) > MaxBatchOps {
 		return fmt.Errorf("too many operations: %d > %d", len(ops), MaxBatchOps)
 	}
+	if err := validateBatchSections(section, ops); err != nil {
+		return err
+	}
 
-	for _, op := range ops {
+	builders := make([]*queryBuilder, len(ops))
+	for i, op := range ops {
 		if op.Mode != BatchOpDelete && len(op.Value) == 0 {
 			return ErrEmptyValue
 		}
-	}
-
-	qb, err := k.getQueryBuilder(section)
-	if err != nil {
-		return err
+		if op.Mode == BatchOpCompareAndSwap && len(op.Expected) == 0 {
+			return ErrEmptyValue
+		}
+		opSection := op.section(section)
+		// DataSection maps to resource_history, which has only a non-unique index
+		// on key_path, so conditional semantics can't be enforced atomically
+		// there. Callers make data writes conditional on another section.
+		if opSection == DataSection && op.Mode != BatchOpPut {
+			return &BatchError{Err: ErrBatchNotSupportedOnDataSection, Index: i, Op: op}
+		}
+		qb, err := k.getQueryBuilder(opSection)
+		if err != nil {
+			return err
+		}
+		builders[i] = qb
 	}
 
 	tx, txErr := k.db.BeginTx(ctx, nil)
@@ -572,16 +582,24 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 	}
 
 	for i, op := range ops {
-		keyPath := getKeyPath(section, op.Key)
+		qb := builders[i]
+		opSection := op.section(section)
+		keyPath := getKeyPath(opSection, op.Key)
 
 		var opErr error
 		switch op.Mode {
+		case BatchOpPut:
+			if opSection == DataSection {
+				opErr = k.batchPutData(ctx, tx, qb, keyPath, op.Value)
+			} else {
+				opErr = k.batchPut(ctx, tx, qb, keyPath, op.Value)
+			}
+		case BatchOpCompareAndSwap:
+			opErr = k.batchCompareAndSwap(ctx, tx, qb, keyPath, op.Expected, op.Value)
 		case BatchOpCreate:
 			opErr = k.batchInsert(ctx, tx, qb, keyPath, op.Value)
 		case BatchOpUpdate:
 			opErr = k.batchUpdate(ctx, tx, qb, keyPath, op.Value)
-		case BatchOpPut:
-			opErr = k.batchPut(ctx, tx, qb, keyPath, op.Value)
 		case BatchOpDelete:
 			opErr = k.batchDeleteOp(ctx, tx, qb, keyPath)
 		default:
@@ -604,6 +622,86 @@ func (k *SqlKV) batchPut(ctx context.Context, conn dbtx, qb *queryBuilder, keyPa
 	query, args := qb.buildUpsertQuery(keyPath, value)
 	_, err := conn.ExecContext(ctx, query, args...)
 	return err
+}
+
+// batchPutData mirrors Save on DataSection: resource_history rows carry
+// legacy columns and a guid, so they can't use the generic upsert. It reads
+// before writing, so on SQLite it must follow a write in the same batch to
+// avoid SQLITE_BUSY (see sqliteCompareResult).
+func (k *SqlKV) batchPutData(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, value []byte) error {
+	query, args := qb.buildExistsQuery(keyPath)
+	var exists int
+	err := conn.QueryRowContext(ctx, query, args...).Scan(&exists)
+	if errors.Is(err, sql.ErrNoRows) {
+		query, args = qb.buildInsertDatastoreQuery(keyPath, value, uuid.NewV4().String())
+		_, err = conn.ExecContext(ctx, query, args...)
+		return err
+	}
+	if err != nil {
+		return err
+	}
+	query, args = qb.buildUpdateDatastoreQuery(keyPath, value)
+	_, err = conn.ExecContext(ctx, query, args...)
+	return err
+}
+
+// batchCompareAndSwap updates keyPath's value if it still holds expected.
+func (k *SqlKV) batchCompareAndSwap(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, expected, value []byte) error {
+	if k.dialect.Name() == "sqlite" {
+		query, args := qb.buildCompareAndSwapQuery(keyPath, expected, value)
+		return k.sqliteCompareResult(ctx, conn, qb, keyPath, query, args)
+	}
+	if err := k.lockAndCompare(ctx, conn, qb, keyPath, expected); err != nil {
+		return err
+	}
+	query, args := qb.buildUpdateDatastoreQuery(keyPath, value)
+	_, err := conn.ExecContext(ctx, query, args...)
+	return err
+}
+
+// lockAndCompare locks keyPath's row and compares its value in Go. Comparing
+// in SQL would follow the column collation, which is case and trailing-space
+// insensitive on MySQL.
+func (k *SqlKV) lockAndCompare(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, expected []byte) error {
+	query, args := qb.buildGetForUpdateQuery(keyPath)
+	var current []byte
+	if err := conn.QueryRowContext(ctx, query, args...).Scan(&current); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrNotFound
+		}
+		return err
+	}
+	if !bytes.Equal(current, expected) {
+		return ErrCompareAndSwapFailed
+	}
+	return nil
+}
+
+// sqliteCompareResult runs a conditional update and reports why it matched no
+// row. SQLite has no row locks: a transaction that reads before it writes can't
+// upgrade its lock while another writer commits, and fails with SQLITE_BUSY
+// instead of waiting. Starting with the write makes it wait for the write lock.
+func (k *SqlKV) sqliteCompareResult(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath, query string, args []any) error {
+	result, err := conn.ExecContext(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n > 0 {
+		return nil
+	}
+	query, args = qb.buildExistsQuery(keyPath)
+	var exists int
+	if err := conn.QueryRowContext(ctx, query, args...).Scan(&exists); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrNotFound
+		}
+		return err
+	}
+	return ErrCompareAndSwapFailed
 }
 
 func (k *SqlKV) batchDeleteOp(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string) error {

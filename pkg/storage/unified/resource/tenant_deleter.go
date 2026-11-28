@@ -303,6 +303,15 @@ func (td *TenantDeleter) deleteTenant(ctx context.Context, tenantName string, gr
 		}
 
 		grStart := time.Now()
+		// Latest versions go first: a retry only finds this group/resource
+		// while the tenant still has data in it.
+		if td.dataStore.maintainsLatest {
+			if _, err := td.dataStore.deleteLatestVersions(ctx, listKey); err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, "deleting latest versions failed")
+				return err
+			}
+		}
 		if err := td.dataStore.BatchDelete(ctx, keys); err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, "batch delete failed")
