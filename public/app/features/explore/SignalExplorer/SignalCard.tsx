@@ -4,6 +4,7 @@ import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
+import { getFocusStyles } from '@grafana/ui/internal';
 
 interface Props {
   refId: string;
@@ -202,6 +203,8 @@ const getStyles = (theme: GrafanaTheme2, isOnlyCard: boolean) => {
     font: 'inherit',
     textAlign: 'left',
     cursor: 'pointer',
+    // Inset, because the header and the card clip overflow and would hide the default outer ring.
+    '&:focus-visible': getFocusStyles(theme, true),
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create(['padding-left'], {
         duration: theme.transitions.duration.shortest,
