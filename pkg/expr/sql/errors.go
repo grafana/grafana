@@ -295,6 +295,27 @@ func MakeInputConvertError(err error, refID string, forRefIDs map[string]struct{
 	return &ErrorWithCategory{category: ErrCategoryInputConversion, err: InputConvertError.Build(data)}
 }
 
+const ErrCategoryOutputConversion = "output_conversion"
+
+var sqlOutputConvertErrorStr = "failed to convert the results of sql expression [{{.Public.refId}}] into a data frame: {{ .Error }}"
+
+var OutputConvertError = errutil.NewBase(
+	errutil.StatusBadRequest, sseErrBase+ErrCategoryOutputConversion).MustTemplate(
+	sqlOutputConvertErrorStr,
+	errutil.WithPublic(sqlOutputConvertErrorStr))
+
+// MakeOutputConvertError creates an error for when a value in the result of a SQL expression can not be converted into a data frame field.
+func MakeOutputConvertError(err error, refID string) CategorizedError {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"refId": refID,
+		},
+		Error: err,
+	}
+
+	return &ErrorWithCategory{category: ErrCategoryOutputConversion, err: OutputConvertError.Build(data)}
+}
+
 const ErrCategoryEmptyQuery = "empty_query"
 
 var errEmptyQueryString = "sql expression [{{.Public.refId}}] failed because it has an empty SQL query"

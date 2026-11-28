@@ -113,12 +113,16 @@ func (db *DB) QueryFrames(ctx context.Context, tracer tracing.Tracer, name strin
 	}
 
 	// Convert the iterator into a Grafana data.Frame
-	f, err := convertToDataFrame(mCtx, iter, schema, QueryOptions.MaxOutputCells)
+	f, err := convertToDataFrame(mCtx, iter, schema, name, QueryOptions.MaxOutputCells)
 	if err != nil {
 		if ctx.Err() != nil {
 			return nil, contextErr(ctx.Err())
 		}
-		return nil, err
+		var catErr CategorizedError
+		if errors.As(err, &catErr) {
+			return nil, err
+		}
+		return nil, MakeGMSError(name, err)
 	}
 
 	f.Name = name

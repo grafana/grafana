@@ -3,6 +3,7 @@
 package sql
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,7 +17,7 @@ import (
 )
 
 // TODO: Should this accept a row limit and converters, like sqlutil.FrameFromRows?
-func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Schema, maxOutputCells int64) (*data.Frame, error) {
+func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Schema, refID string, maxOutputCells int64) (*data.Frame, error) {
 	f := &data.Frame{}
 
 	// Create fields based on the schema
@@ -33,7 +34,7 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 	cellCount := int64(0)
 
 	// Iterate through the rows and append data to fields
-	for {
+	for rowIdx := 0; ; rowIdx++ {
 		// Check for context cancellation or timeout
 		select {
 		case <-ctx.Done():
@@ -75,7 +76,7 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 			// of the interface
 			nV, _, err := schema[i].Type.Convert(ctx, val)
 			if err != nil {
-				return nil, err
+				return nil, MakeOutputConvertError(cellConvertError(ctx, schema[i], val, rowIdx, err), refID)
 			}
 
 			// Run the normalized value through fieldValFromRowVal to normalize
@@ -83,7 +84,7 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 			// values pointers as dataframe expects.
 			fV, err := fieldValFromRowVal(f.Fields[i].Type(), nV)
 			if err != nil {
-				return nil, fmt.Errorf("unexpected type for column %s: %w", schema[i].Name, err)
+				return nil, MakeOutputConvertError(fmt.Errorf("row %d, column %s: %w", rowIdx, schema[i].Name, err), refID)
 			}
 
 			f.Fields[i].Append(fV)
@@ -91,6 +92,21 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 	}
 
 	return f, nil
+}
+
+// cellConvertError names the row and column of a value that failed col.Type.Convert.
+// The engine's charset error already has a column and row in its text, but they
+// read '<unknown>' and 0 unless the context carries them. Setting them on every
+// cell costs allocations, so only a failed value is converted again with them.
+func cellConvertError(ctx *mysql.Context, col *mysql.Column, val interface{}, rowIdx int, err error) error {
+	if types.ErrBadCharsetString.Is(err) {
+		colCtx := context.WithValue(ctx.Context, types.ColumnNameKey, col.Name)
+		colCtx = context.WithValue(colCtx, types.RowNumberKey, int64(rowIdx))
+		if _, _, retryErr := col.Type.Convert(ctx.WithContext(colCtx), val); retryErr != nil {
+			return retryErr
+		}
+	}
+	return fmt.Errorf("row %d, column %s: %w", rowIdx, col.Name, err)
 }
 
 // toNullableField returns a copy of field with the nullable version of its type.
