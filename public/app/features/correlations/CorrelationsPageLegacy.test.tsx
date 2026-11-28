@@ -228,7 +228,7 @@ describe('CorrelationsPage - Legacy', () => {
             name: 'loki',
             readOnly: false,
             jsonData: {},
-            type: 'datasource',
+            type: 'loki',
           },
           { logs: true }
         ),
@@ -238,7 +238,7 @@ describe('CorrelationsPage - Legacy', () => {
             name: 'prometheus',
             readOnly: false,
             jsonData: {},
-            type: 'datasource',
+            type: 'prometheus',
           },
           { metrics: true, module: 'core:plugin/prometheus' }
         ),
@@ -309,7 +309,11 @@ describe('CorrelationsPage - Legacy', () => {
       await userEvent.click(await screen.findByRole('button', { name: /add$/i }));
 
       await waitFor(() => {
-        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_added');
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_added', {
+          correlationType: 'query',
+          sourceDatasourceType: 'loki',
+          targetDataSourceType: 'prometheus',
+        });
       });
 
       // the table showing correlations should have appeared
@@ -335,7 +339,7 @@ describe('CorrelationsPage - Legacy', () => {
               name: 'loki',
               readOnly: false,
               jsonData: {},
-              type: 'datasource',
+              type: 'loki',
             },
             {
               logs: true,
@@ -347,7 +351,7 @@ describe('CorrelationsPage - Legacy', () => {
               name: 'prometheus',
               readOnly: false,
               jsonData: {},
-              type: 'datasource',
+              type: 'prometheus',
             },
             {
               metrics: true,
@@ -360,7 +364,7 @@ describe('CorrelationsPage - Legacy', () => {
               name: 'elastic',
               readOnly: false,
               jsonData: {},
-              type: 'datasource',
+              type: 'elasticsearch',
             },
             {
               metrics: true,
@@ -460,11 +464,45 @@ describe('CorrelationsPage - Legacy', () => {
       await userEvent.click(screen.getByRole('button', { name: /add$/i }));
 
       await waitFor(() => {
-        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_added');
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_added', {
+          correlationType: 'query',
+          sourceDatasourceType: 'prometheus',
+          targetDataSourceType: 'elasticsearch',
+        });
       });
 
       // the table showing correlations should have appeared
       expect(await screen.findByRole('table')).toBeInTheDocument();
+    });
+
+    it('reports the external type and no target data source when adding an external correlation', async () => {
+      await userEvent.click(await screen.findByRole('button', { name: /add new/i }));
+
+      // step 1:
+      await userEvent.type(screen.getByRole('textbox', { name: /label/i }), 'External link');
+      await userEvent.click(await screen.findByRole('button', { name: /next$/i }));
+
+      // step 2:
+      openMenu(screen.getByLabelText('Correlation type'));
+      await userEvent.click(screen.getByText('External'));
+      await userEvent.type(screen.getByRole('textbox'), 'https://example.com');
+      await userEvent.click(await screen.findByRole('button', { name: /next$/i }));
+
+      // step 3:
+      await userEvent.click(screen.getByLabelText(/^source/i));
+      await userEvent.click(
+        within(screen.getByTestId(selectors.components.DataSourcePicker.dataSourceList)).getByText('prometheus')
+      );
+      await userEvent.type(screen.getByRole('textbox', { name: /results field/i }), 'Line');
+      await userEvent.click(screen.getByRole('button', { name: /add$/i }));
+
+      await waitFor(() => {
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_added', {
+          correlationType: 'external',
+          sourceDatasourceType: 'prometheus',
+          targetDataSourceType: undefined,
+        });
+      });
     });
 
     it('correctly closes the form when clicking on the close icon', async () => {
@@ -531,7 +569,11 @@ describe('CorrelationsPage - Legacy', () => {
       expect(await screen.findByRole('cell', { name: /edited label$/i }, { timeout: 5000 })).toBeInTheDocument();
 
       await waitFor(() => {
-        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_edited');
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_edited', {
+          correlationType: 'query',
+          sourceDatasourceType: 'loki',
+          targetDataSourceType: 'loki',
+        });
       });
     });
 
@@ -585,7 +627,11 @@ describe('CorrelationsPage - Legacy', () => {
       await userEvent.type(screen.getByLabelText(/expression/i), 'test expression');
       await userEvent.click(screen.getByRole('button', { name: /save$/i }));
       await waitFor(() => {
-        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_edited');
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_edited', {
+          correlationType: 'query',
+          sourceDatasourceType: 'loki',
+          targetDataSourceType: 'loki',
+        });
       });
     });
   });

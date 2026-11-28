@@ -109,6 +109,7 @@ export function saveCurrentCorrelation(
           await dispatch(reloadCorrelations(keys[0]));
           await dispatch(runQueries({ exploreId: keys[0] }));
           reportInteraction('grafana_explore_correlation_editor_saved', {
+            correlationType: corrSpec.type,
             sourceDatasourceType: sourceDatasource.type,
             targetDataSourceType: targetDatasource.type,
           });
@@ -138,6 +139,7 @@ export function saveCurrentCorrelation(
             await dispatch(reloadCorrelations(keys[0]));
             await dispatch(runQueries({ exploreId: keys[0] }));
             reportInteraction('grafana_explore_correlation_editor_saved', {
+              correlationType: correlation.type,
               sourceDatasourceType: sourceDatasource.type,
               targetDataSourceType: targetDatasource.type,
             });
