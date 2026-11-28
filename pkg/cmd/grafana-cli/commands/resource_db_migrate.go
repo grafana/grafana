@@ -40,13 +40,7 @@ func resourceDbMigrateCommand(context *cli.Context) error {
 }
 
 func configFromCommandLine(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
-	configOptions := strings.Split(cmd.String("configOverrides"), " ")
-	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
-		Config:   cmd.ConfigFile(),
-		HomePath: cmd.HomePath(),
-		// tailing arguments have precedence over the options string
-		Args: append(configOptions, cmd.Args().Slice()...),
-	})
+	cfg, err := cmd.Config()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load configuration: %w", err)
 	}

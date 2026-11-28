@@ -286,3 +286,29 @@ If you don't do this, the CLI:
 ```bash
 grafana cli admin data-migration encrypt-datasource-passwords
 ```
+
+### Run database schema migrations
+
+You can initialize or upgrade the database schema before you start the Grafana server.
+Both commands are safe to run multiple times: they only apply migrations that haven't run yet.
+They exit with code `0` on success and a non-zero code on failure.
+
+`db-migrate` runs the Grafana schema migrations against the configured database and reports the last applied migration.
+On an empty database, it creates the schema and the default organization and admin user.
+It doesn't run the unified storage resource migrations.
+If you set `skip_migrations = true` in the `[database]` section, it doesn't run any migrations.
+
+```sh
+grafana cli admin db-migrate --homepath /usr/share/grafana --config /etc/grafana/grafana.ini
+```
+
+`resource-db-migrate` runs only the unified storage resource schema migrations against the configured database.
+It runs even if `skip_migrations` is enabled.
+
+```sh
+grafana cli admin resource-db-migrate --homepath /usr/share/grafana --config /etc/grafana/grafana.ini
+```
+
+To prepare a database for both the Grafana schema and unified storage, run both commands.
+
+These commands accept `--homepath`, `--config`, and `--configOverrides` either as global options or after the command name.
