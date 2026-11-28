@@ -1,7 +1,6 @@
 package notifier
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"os"
@@ -42,7 +41,7 @@ func TestNewRedisPeerClusterMode(t *testing.T) {
 		}}, log.NewNopLogger(), prometheus.NewRegistry(), time.Second*60)
 	require.NoError(t, err)
 
-	ping := redisPeer.redis.Ping(context.Background())
+	ping := redisPeer.redis.Ping(t.Context())
 	require.NoError(t, ping.Err())
 }
 
@@ -64,7 +63,7 @@ func TestNewRedisPeerSentinelMode(t *testing.T) {
 	}, log.NewNopLogger(), prometheus.NewRegistry(), time.Second*60)
 	require.NoError(t, err)
 
-	ping := redisPeer.redis.Ping(context.Background())
+	ping := redisPeer.redis.Ping(t.Context())
 	require.NoError(t, ping.Err())
 }
 
@@ -94,7 +93,7 @@ func TestNewRedisPeerWithTLS(t *testing.T) {
 		}}, log.NewNopLogger(), prometheus.NewRegistry(), time.Second*60)
 	require.NoError(t, err)
 
-	ping := redisPeer.redis.Ping(context.Background())
+	ping := redisPeer.redis.Ping(t.Context())
 	require.NoError(t, ping.Err())
 }
 
@@ -130,7 +129,7 @@ func TestNewRedisPeerWithMutualTLS(t *testing.T) {
 		}}, log.NewNopLogger(), prometheus.NewRegistry(), time.Second*60)
 	require.NoError(t, err)
 
-	ping := redisPeer.redis.Ping(context.Background())
+	ping := redisPeer.redis.Ping(t.Context())
 	require.NoError(t, ping.Err())
 }
 

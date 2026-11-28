@@ -1,7 +1,6 @@
 package dsproxyclient
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"testing"
@@ -65,7 +64,7 @@ func TestClient_Get_RoutesThroughProxyWithExpectedUIDAndPath(t *testing.T) {
 	proxy := &fakeProxy{status: http.StatusOK, body: []byte("ok")}
 	c := New(proxy, log.NewNopLogger(), "/api/v1/alerts", "svc-login", "")
 
-	res, err := c.Get(context.Background(), testDS())
+	res, err := c.Get(t.Context(), testDS())
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.Status)
 	assert.Equal(t, []byte("ok"), res.Body)
@@ -81,11 +80,11 @@ func TestClient_Get_TrimsLeadingSlashOnUpstreamPath(t *testing.T) {
 
 	// One Client with a leading slash, one without — both must land on the
 	// same proxied path (no double slash).
-	_, err := New(proxy, log.NewNopLogger(), "config/v1/rules", "svc-login", "").Get(context.Background(), testDS())
+	_, err := New(proxy, log.NewNopLogger(), "config/v1/rules", "svc-login", "").Get(t.Context(), testDS())
 	require.NoError(t, err)
 	assert.Equal(t, "/api/datasources/proxy/uid/ds1/config/v1/rules", proxy.gotPath)
 
-	_, err = New(proxy, log.NewNopLogger(), "/config/v1/rules", "svc-login", "").Get(context.Background(), testDS())
+	_, err = New(proxy, log.NewNopLogger(), "/config/v1/rules", "svc-login", "").Get(t.Context(), testDS())
 	require.NoError(t, err)
 	assert.Equal(t, "/api/datasources/proxy/uid/ds1/config/v1/rules", proxy.gotPath)
 }
@@ -93,11 +92,11 @@ func TestClient_Get_TrimsLeadingSlashOnUpstreamPath(t *testing.T) {
 func TestClient_Get_SetsAcceptHeaderOnlyWhenNonEmpty(t *testing.T) {
 	proxy := &fakeProxy{status: http.StatusOK, body: []byte("{}")}
 
-	_, err := New(proxy, log.NewNopLogger(), "path", "login", "application/yaml").Get(context.Background(), testDS())
+	_, err := New(proxy, log.NewNopLogger(), "path", "login", "application/yaml").Get(t.Context(), testDS())
 	require.NoError(t, err)
 	assert.Equal(t, "application/yaml", proxy.gotAccept)
 
-	_, err = New(proxy, log.NewNopLogger(), "path", "login", "").Get(context.Background(), testDS())
+	_, err = New(proxy, log.NewNopLogger(), "path", "login", "").Get(t.Context(), testDS())
 	require.NoError(t, err)
 	assert.Equal(t, "", proxy.gotAccept)
 }
@@ -109,7 +108,7 @@ func TestClient_Get_ServiceIdentityUserCarriesOrgAndDatasourcePermissions(t *tes
 	proxy := &fakeProxy{status: http.StatusOK, body: []byte("{}")}
 	c := New(proxy, log.NewNopLogger(), "path", "grafana_external_am_sync", "")
 
-	_, err := c.Get(context.Background(), testDS())
+	_, err := c.Get(t.Context(), testDS())
 	require.NoError(t, err)
 	assert.Equal(t, "grafana_external_am_sync", proxy.gotUser)
 	assert.Equal(t, int64(7), proxy.gotOrgID)
@@ -122,7 +121,7 @@ func TestClient_Get_PassesThroughNon2xxStatusAndBody(t *testing.T) {
 	proxy := &fakeProxy{status: http.StatusInternalServerError, body: []byte("boom")}
 	c := New(proxy, log.NewNopLogger(), "path", "login", "")
 
-	res, err := c.Get(context.Background(), testDS())
+	res, err := c.Get(t.Context(), testDS())
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusInternalServerError, res.Status)
 	assert.Equal(t, []byte("boom"), res.Body)
@@ -133,7 +132,7 @@ func TestClient_Get_ProxyErrorPathDoesNotPanic(t *testing.T) {
 	proxy := &fakeProxy{apiErrStatus: http.StatusForbidden, apiErr: errors.New("access denied")}
 	c := New(proxy, log.NewNopLogger(), "path", "login", "")
 
-	res, err := c.Get(context.Background(), testDS())
+	res, err := c.Get(t.Context(), testDS())
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusForbidden, res.Status)
 }

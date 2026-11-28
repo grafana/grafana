@@ -88,7 +88,7 @@ func setupDataSources(t *testing.T) *testDataSources {
 		res.prom4.Close()
 	})
 
-	p1, _ := res.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+	p1, _ := res.AddDataSource(t.Context(), &datasources.AddDataSourceCommand{
 		Name:     "prom-1",
 		UID:      "prom-1",
 		Type:     datasources.DS_PROMETHEUS,
@@ -97,7 +97,7 @@ func setupDataSources(t *testing.T) *testDataSources {
 	p1.URL = res.prom1.srv.URL
 	res.prom1.ExpectedPath = "/api/v1/write"
 
-	p2, _ := res.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+	p2, _ := res.AddDataSource(t.Context(), &datasources.AddDataSourceCommand{
 		Name:     "prom-2",
 		UID:      "prom-2",
 		Type:     datasources.DS_PROMETHEUS,
@@ -107,14 +107,14 @@ func setupDataSources(t *testing.T) *testDataSources {
 	res.prom2.ExpectedPath = "/api/prom/push"
 
 	// Add a non-Prometheus datasource.
-	_, _ = res.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+	_, _ = res.AddDataSource(t.Context(), &datasources.AddDataSourceCommand{
 		Name: "loki-1",
 		UID:  "loki-1",
 		Type: datasources.DS_LOKI,
 	})
 
 	// Add a third Prometheus datasource that uses PDC.
-	p3, _ := res.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+	p3, _ := res.AddDataSource(t.Context(), &datasources.AddDataSourceCommand{
 		Name: "prom-3",
 		UID:  "prom-3",
 		Type: datasources.DS_PROMETHEUS,
@@ -130,7 +130,7 @@ func setupDataSources(t *testing.T) *testDataSources {
 	require.True(t, p3.IsSecureSocksDSProxyEnabled())
 
 	// Add a fourth Prometheus datasource with headers in the JSON config.
-	p4, _ := res.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+	p4, _ := res.AddDataSource(t.Context(), &datasources.AddDataSourceCommand{
 		Name:     "prom-4",
 		UID:      "prom-4",
 		Type:     datasources.DS_PROMETHEUS,
@@ -165,13 +165,13 @@ func TestDatasourceWriter(t *testing.T) {
 	t.Run("when writing a prometheus datasource then the request is made to the expected endpoint", func(t *testing.T) {
 		testDS.Reset()
 
-		err := writer.WriteDatasource(context.Background(), "prom-1", "metric", time.Now(), frames, 1, map[string]string{})
+		err := writer.WriteDatasource(t.Context(), "prom-1", "metric", time.Now(), frames, 1, map[string]string{})
 		require.NoError(t, err)
 
 		assert.Equal(t, 1, testDS.prom1.RequestsCount)
 		assert.Equal(t, 0, testDS.prom2.RequestsCount)
 
-		err = writer.WriteDatasource(context.Background(), "prom-2", "metric", time.Now(), frames, 1, map[string]string{})
+		err = writer.WriteDatasource(t.Context(), "prom-2", "metric", time.Now(), frames, 1, map[string]string{})
 		require.NoError(t, err)
 
 		assert.Equal(t, 1, testDS.prom1.RequestsCount)
@@ -181,7 +181,7 @@ func TestDatasourceWriter(t *testing.T) {
 	t.Run("when writing an unknown datasource then an error is returned", func(t *testing.T) {
 		testDS.Reset()
 
-		err := writer.WriteDatasource(context.Background(), "prom-unknown", "metric", time.Now(), frames, 1, map[string]string{})
+		err := writer.WriteDatasource(t.Context(), "prom-unknown", "metric", time.Now(), frames, 1, map[string]string{})
 		require.Error(t, err)
 		require.EqualError(t, err, "data source not found")
 	})
@@ -189,7 +189,7 @@ func TestDatasourceWriter(t *testing.T) {
 	t.Run("when writing a non-prometheus datasource then an error is returned", func(t *testing.T) {
 		testDS.Reset()
 
-		err := writer.WriteDatasource(context.Background(), "loki-1", "metric", time.Now(), frames, 1, map[string]string{})
+		err := writer.WriteDatasource(t.Context(), "loki-1", "metric", time.Now(), frames, 1, map[string]string{})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "can only write to data sources of type prometheus")
 		require.Contains(t, err.Error(), datasources.DS_LOKI)
@@ -198,7 +198,7 @@ func TestDatasourceWriter(t *testing.T) {
 	t.Run("when writing with an empty datasource uid then the default is written", func(t *testing.T) {
 		testDS.Reset()
 
-		err := writer.WriteDatasource(context.Background(), "", "metric", time.Now(), frames, 1, map[string]string{})
+		err := writer.WriteDatasource(t.Context(), "", "metric", time.Now(), frames, 1, map[string]string{})
 		require.NoError(t, err)
 	})
 
@@ -219,7 +219,7 @@ func TestDatasourceWriter(t *testing.T) {
 		}
 		writer = NewDatasourceWriter(cfg, testDS, httpclient.NewProvider(), pluginContextProvider, clock.New(), log.New("test"), met)
 
-		err := writer.WriteDatasource(context.Background(), "prom-1", "metric", time.Now(), frames, 1, map[string]string{})
+		err := writer.WriteDatasource(t.Context(), "prom-1", "metric", time.Now(), frames, 1, map[string]string{})
 		require.NoError(t, err)
 
 		assert.Equal(t, headers[header1], testDS.prom1.LastHeaders.Get(header1))
@@ -243,7 +243,7 @@ func TestDatasourceWriter(t *testing.T) {
 		writer = NewDatasourceWriter(cfg, testDS, httpclient.NewProvider(), pluginContextProvider, clock.New(), log.New("test"), met)
 
 		uid := "prom-4"
-		err := writer.WriteDatasource(context.Background(), uid, "metric", time.Now(), frames, 1, map[string]string{})
+		err := writer.WriteDatasource(t.Context(), uid, "metric", time.Now(), frames, 1, map[string]string{})
 		require.NoError(t, err)
 
 		dsHeaders := testDS.DataSourceHeaders[uid]
@@ -278,7 +278,7 @@ func TestDatasourceWriter(t *testing.T) {
 		}
 		writer := NewDatasourceWriter(cfg, testDS, httpclient.NewProvider(), pluginContextProvider, clock.New(), log.New("test"), met)
 
-		err := writer.WriteDatasource(context.Background(), "prom-1", "metric", time.Now(), frames, 1, map[string]string{})
+		err := writer.WriteDatasource(t.Context(), "prom-1", "metric", time.Now(), frames, 1, map[string]string{})
 		require.NoError(t, err)
 
 		assert.Equal(t, len(series), testDS.prom1.RequestsCount)
@@ -297,7 +297,7 @@ func TestDatasourceWriter(t *testing.T) {
 		met := metrics.NewRemoteWriterMetrics(prometheus.NewRegistry())
 		writer := NewDatasourceWriter(cfg, testDS, mockProvider, &mockPluginContextProvider{}, clock.New(), log.New("test"), met)
 
-		err := writer.WriteDatasource(context.Background(), "prom-3", "metric", time.Now(), frames, 1, map[string]string{})
+		err := writer.WriteDatasource(t.Context(), "prom-3", "metric", time.Now(), frames, 1, map[string]string{})
 		require.NoError(t, err)
 
 		assert.Equal(t, 1, mockProvider.callCount)
@@ -323,7 +323,7 @@ func TestDatasourceWriter(t *testing.T) {
 		met := metrics.NewRemoteWriterMetrics(prometheus.NewRegistry())
 		writer := NewDatasourceWriter(cfg, testDS, mockProvider, &mockPluginContextProvider{}, clock.New(), log.New("test"), met)
 
-		err := writer.WriteDatasource(context.Background(), "prom-1", "metric", time.Now(), frames, 1, map[string]string{})
+		err := writer.WriteDatasource(t.Context(), "prom-1", "metric", time.Now(), frames, 1, map[string]string{})
 		require.NoError(t, err)
 
 		require.Equal(t, 1, mockProvider.callCount)
@@ -354,7 +354,7 @@ func TestDatasourceWriter(t *testing.T) {
 				testDS.Reset()
 
 				if tc.datasourceUID == string(grafanaCloudPromType) {
-					gcProm, _ := testDS.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+					gcProm, _ := testDS.AddDataSource(t.Context(), &datasources.AddDataSourceCommand{
 						Name:     string(grafanaCloudPromType),
 						UID:      string(grafanaCloudPromType),
 						Type:     datasources.DS_PROMETHEUS,
@@ -372,7 +372,7 @@ func TestDatasourceWriter(t *testing.T) {
 				met := metrics.NewRemoteWriterMetrics(reg)
 				writer := NewDatasourceWriter(cfg, testDS, httpclient.NewProvider(), pluginContextProvider, clock.New(), log.New("test"), met)
 
-				err := writer.WriteDatasource(context.Background(), tc.datasourceUID, "metric", time.Now(), frames, 1, map[string]string{})
+				err := writer.WriteDatasource(t.Context(), tc.datasourceUID, "metric", time.Now(), frames, 1, map[string]string{})
 				require.NoError(t, err)
 
 				expectedMetric := fmt.Sprintf(`
@@ -487,7 +487,7 @@ func TestDatasourceWriterManagedPrometheus(t *testing.T) {
 		testDS := setupDataSources(t)
 		testDS.Reset()
 
-		ampDS, _ := testDS.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		ampDS, _ := testDS.AddDataSource(t.Context(), &datasources.AddDataSourceCommand{
 			Name:     "amp-1",
 			UID:      "amp-1",
 			Type:     datasources.DS_AMAZON_PROMETHEUS,
@@ -501,7 +501,7 @@ func TestDatasourceWriterManagedPrometheus(t *testing.T) {
 		met := metrics.NewRemoteWriterMetrics(reg)
 		writer := NewDatasourceWriter(cfg, testDS, httpclient.NewProvider(), &mockPluginContextProvider{}, clock.New(), log.New("test"), met)
 
-		err := writer.WriteDatasource(context.Background(), "amp-1", "metric", time.Now(), frames, 1, map[string]string{})
+		err := writer.WriteDatasource(t.Context(), "amp-1", "metric", time.Now(), frames, 1, map[string]string{})
 		require.NoError(t, err)
 		assert.Equal(t, 1, testDS.prom1.RequestsCount)
 
@@ -521,7 +521,7 @@ func TestDatasourceWriterManagedPrometheus(t *testing.T) {
 
 		mockProvider := newMockHTTPClientProvider()
 
-		ampDS, _ := testDS.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		ampDS, _ := testDS.AddDataSource(t.Context(), &datasources.AddDataSourceCommand{
 			Name:     "amp-sigv4",
 			UID:      "amp-sigv4",
 			Type:     datasources.DS_AMAZON_PROMETHEUS,
@@ -534,7 +534,7 @@ func TestDatasourceWriterManagedPrometheus(t *testing.T) {
 		met := metrics.NewRemoteWriterMetrics(prometheus.NewRegistry())
 		writer := NewDatasourceWriter(cfg, testDS, mockProvider, &mockPluginContextProvider{}, clock.New(), log.New("test"), met)
 
-		err := writer.WriteDatasource(context.Background(), "amp-sigv4", "metric", time.Now(), frames, 1, map[string]string{})
+		err := writer.WriteDatasource(t.Context(), "amp-sigv4", "metric", time.Now(), frames, 1, map[string]string{})
 		require.NoError(t, err)
 
 		// The AMP type is accepted and a client is constructed from the datasource's
@@ -550,7 +550,7 @@ func TestDatasourceWriterManagedPrometheus(t *testing.T) {
 
 		mockProvider := newMockHTTPClientProvider()
 
-		ampDS, _ := testDS.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		ampDS, _ := testDS.AddDataSource(t.Context(), &datasources.AddDataSourceCommand{
 			Name:     "amp-sigv4-service",
 			UID:      "amp-sigv4-service",
 			Type:     datasources.DS_AMAZON_PROMETHEUS,
@@ -563,7 +563,7 @@ func TestDatasourceWriterManagedPrometheus(t *testing.T) {
 		met := metrics.NewRemoteWriterMetrics(prometheus.NewRegistry())
 		writer := NewDatasourceWriter(cfg, testDS, mockProvider, &mockPluginContextProvider{}, clock.New(), log.New("test"), met)
 
-		err := writer.WriteDatasource(context.Background(), "amp-sigv4-service", "metric", time.Now(), frames, 1, map[string]string{})
+		err := writer.WriteDatasource(t.Context(), "amp-sigv4-service", "metric", time.Now(), frames, 1, map[string]string{})
 		require.NoError(t, err)
 
 		// The SDK's HTTPClientOptions leaves SigV4.Service empty, and the AWS signer

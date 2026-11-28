@@ -53,7 +53,7 @@ func TestGetTemplates(t *testing.T) {
 			"template2": models.ProvenanceFile,
 		}, nil)
 
-		result, err := sut.GetTemplates(context.Background(), orgID)
+		result, err := sut.GetTemplates(t.Context(), orgID)
 		require.NoError(t, err)
 
 		expected := []v1.TemplateGroup{
@@ -91,7 +91,7 @@ func TestGetTemplates(t *testing.T) {
 			}, nil
 		}
 
-		result, err := sut.GetTemplates(context.Background(), 1)
+		result, err := sut.GetTemplates(t.Context(), 1)
 
 		require.NoError(t, err)
 		require.Empty(t, result)
@@ -110,7 +110,7 @@ func TestGetTemplates(t *testing.T) {
 			"template2": models.ProvenanceFile,
 		}, nil)
 
-		result, err := sut.GetTemplates(context.Background(), orgID)
+		result, err := sut.GetTemplates(t.Context(), orgID)
 		require.NoError(t, err)
 
 		// Compute the UIDs that MergeTemplates assigns for imported templates so the expected
@@ -175,7 +175,7 @@ func TestGetTemplates(t *testing.T) {
 				return nil, expectedErr
 			}
 
-			_, err := sut.GetTemplates(context.Background(), 1)
+			_, err := sut.GetTemplates(t.Context(), 1)
 
 			require.ErrorIs(t, err, expectedErr)
 
@@ -192,7 +192,7 @@ func TestGetTemplates(t *testing.T) {
 			expectedErr := errors.New("test")
 			prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(nil, expectedErr)
 
-			_, err := sut.GetTemplates(context.Background(), 1)
+			_, err := sut.GetTemplates(t.Context(), 1)
 
 			require.ErrorIs(t, err, expectedErr)
 
@@ -231,7 +231,7 @@ func TestGetTemplate(t *testing.T) {
 		}
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 
-		result, err := sut.GetTemplate(context.Background(), orgID, templateName)
+		result, err := sut.GetTemplate(t.Context(), orgID, templateName)
 		require.NoError(t, err)
 
 		expected := v1.NewTemplateGroup("",
@@ -255,7 +255,7 @@ func TestGetTemplate(t *testing.T) {
 			assert.Equal(t, orgID, org)
 			return revision, nil
 		}
-		_, err := sut.GetTemplate(context.Background(), orgID, importedTemplateName)
+		_, err := sut.GetTemplate(t.Context(), orgID, importedTemplateName)
 		require.ErrorIs(t, err, ErrTemplateNotFound)
 	})
 
@@ -267,7 +267,7 @@ func TestGetTemplate(t *testing.T) {
 		}
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 
-		result, err := sut.GetTemplate(context.Background(), orgID, string(v1.TemplateUID(v1.TemplateKindGrafana, templateName)))
+		result, err := sut.GetTemplate(t.Context(), orgID, string(v1.TemplateUID(v1.TemplateKindGrafana, templateName)))
 		require.NoError(t, err)
 
 		expected := v1.NewTemplateGroup("",
@@ -300,11 +300,11 @@ func TestGetTemplate(t *testing.T) {
 		require.NotEmpty(t, uid, "imported template UID should not be empty")
 
 		t.Run("should be not found without flag enabled", func(t *testing.T) {
-			_, err := sut.GetTemplate(context.Background(), orgID, uid)
+			_, err := sut.GetTemplate(t.Context(), orgID, uid)
 			require.ErrorIs(t, err, ErrTemplateNotFound)
 		})
 
-		result, err := sut.WithIncludeImported().GetTemplate(context.Background(), orgID, uid)
+		result, err := sut.WithIncludeImported().GetTemplate(t.Context(), orgID, uid)
 		require.NoError(t, err)
 
 		expected := v1.NewTemplateGroup(v1.ResourceUID(uid),
@@ -323,7 +323,7 @@ func TestGetTemplate(t *testing.T) {
 			assert.Equal(t, orgID, org)
 			return revision, nil
 		}
-		_, err := sut.GetTemplate(context.Background(), orgID, "not-found")
+		_, err := sut.GetTemplate(t.Context(), orgID, "not-found")
 		require.ErrorIs(t, err, ErrTemplateNotFound)
 		prov.AssertExpectations(t)
 	})
@@ -336,7 +336,7 @@ func TestGetTemplate(t *testing.T) {
 				return nil, expectedErr
 			}
 
-			_, err := sut.GetTemplate(context.Background(), 1, templateName)
+			_, err := sut.GetTemplate(t.Context(), 1, templateName)
 
 			require.ErrorIs(t, err, expectedErr)
 
@@ -351,7 +351,7 @@ func TestGetTemplate(t *testing.T) {
 			expectedErr := errors.New("test")
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, expectedErr)
 
-			_, err := sut.GetTemplate(context.Background(), orgID, templateName)
+			_, err := sut.GetTemplate(t.Context(), orgID, templateName)
 			require.ErrorIs(t, err, expectedErr)
 
 			prov.AssertExpectations(t)
@@ -557,7 +557,7 @@ func TestUpsertTemplate(t *testing.T) {
 			Kind: v1.TemplateKindGrafana,
 		}
 
-		result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
+		result, err := sut.UpsertTemplate(t.Context(), orgID, tmpl)
 
 		require.NoError(t, err)
 		require.NoError(t, v1.ValidateTemplateUID(string(result.UID)), "a new template gets a valid UID")
@@ -603,7 +603,7 @@ func TestUpsertTemplate(t *testing.T) {
 				Kind: v1.TemplateKindGrafana,
 			}
 
-			result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
+			result, err := sut.UpsertTemplate(t.Context(), orgID, tmpl)
 
 			require.NoError(t, err)
 			assert.Equal(t, v1.NewTemplateGroup("",
@@ -641,7 +641,7 @@ func TestUpsertTemplate(t *testing.T) {
 				},
 			}
 
-			result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
+			result, err := sut.UpsertTemplate(t.Context(), orgID, tmpl)
 
 			require.NoError(t, err)
 			assert.Equal(t, v1.NewTemplateGroup("",
@@ -678,7 +678,7 @@ func TestUpsertTemplate(t *testing.T) {
 			Kind: v1.TemplateKindGrafana,
 		}
 
-		result, _ := sut.UpsertTemplate(context.Background(), orgID, tmpl)
+		result, _ := sut.UpsertTemplate(t.Context(), orgID, tmpl)
 
 		expectedContent := fmt.Sprintf("{{ define \"%s\" }}\n  content\n{{ end }}", templateName)
 		require.Equal(t, v1.NewTemplateGroup("",
@@ -702,7 +702,7 @@ func TestUpsertTemplate(t *testing.T) {
 			Title:   "name",
 			Content: "{{ .NotAField }}",
 		}
-		_, err := sut.UpsertTemplate(context.Background(), 1, tmpl)
+		_, err := sut.UpsertTemplate(t.Context(), 1, tmpl)
 
 		require.NoError(t, err)
 	})
@@ -715,7 +715,7 @@ func TestUpsertTemplate(t *testing.T) {
 				Title:   "",
 				Content: "",
 			}
-			_, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
+			_, err := sut.UpsertTemplate(t.Context(), orgID, tmpl)
 			require.ErrorIs(t, err, ErrTemplateInvalid)
 		})
 
@@ -724,7 +724,7 @@ func TestUpsertTemplate(t *testing.T) {
 				Title:   "",
 				Content: "{{ .MyField }",
 			}
-			_, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
+			_, err := sut.UpsertTemplate(t.Context(), orgID, tmpl)
 			require.ErrorIs(t, err, ErrTemplateInvalid)
 		})
 
@@ -753,7 +753,7 @@ func TestUpsertTemplate(t *testing.T) {
 		}
 		template.Provenance = models.ProvenanceNone
 
-		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
+		_, err := sut.UpsertTemplate(t.Context(), orgID, template)
 
 		require.ErrorIs(t, err, expectedErr)
 	})
@@ -774,7 +774,7 @@ func TestUpsertTemplate(t *testing.T) {
 			},
 		}
 
-		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
+		_, err := sut.UpsertTemplate(t.Context(), orgID, template)
 
 		require.ErrorIs(t, err, ErrVersionConflict)
 		prov.AssertExpectations(t)
@@ -793,7 +793,7 @@ func TestUpsertTemplate(t *testing.T) {
 				Provenance: models.ProvenanceNone,
 			},
 		}
-		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
+		_, err := sut.UpsertTemplate(t.Context(), orgID, template)
 		require.ErrorIs(t, err, ErrTemplateNotFound)
 	})
 
@@ -810,7 +810,7 @@ func TestUpsertTemplate(t *testing.T) {
 				Provenance: models.ProvenanceNone,
 			},
 		}
-		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
+		_, err := sut.UpsertTemplate(t.Context(), orgID, template)
 		require.ErrorIs(t, err, ErrTemplateNotFound)
 	})
 
@@ -827,7 +827,7 @@ func TestUpsertTemplate(t *testing.T) {
 			},
 			Kind: v1.TemplateKindMimir,
 		}
-		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
+		_, err := sut.UpsertTemplate(t.Context(), orgID, template)
 		require.ErrorIs(t, err, ErrTemplateInvalid)
 	})
 
@@ -846,7 +846,7 @@ func TestUpsertTemplate(t *testing.T) {
 				return nil, expectedErr
 			}
 
-			_, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
+			_, err := sut.UpsertTemplate(t.Context(), orgID, tmpl)
 			require.ErrorIs(t, err, expectedErr)
 		})
 
@@ -858,7 +858,7 @@ func TestUpsertTemplate(t *testing.T) {
 			expectedErr := errors.New("test")
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, expectedErr)
 
-			_, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
+			_, err := sut.UpsertTemplate(t.Context(), orgID, tmpl)
 
 			require.ErrorIs(t, err, expectedErr)
 
@@ -874,7 +874,7 @@ func TestUpsertTemplate(t *testing.T) {
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 			prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(expectedErr)
 
-			_, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
+			_, err := sut.UpsertTemplate(t.Context(), orgID, tmpl)
 			require.ErrorIs(t, err, expectedErr)
 
 			prov.AssertExpectations(t)
@@ -892,7 +892,7 @@ func TestUpsertTemplate(t *testing.T) {
 			prov.EXPECT().SaveSucceeds()
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 
-			_, err := sut.UpsertTemplate(context.Background(), 1, tmpl)
+			_, err := sut.UpsertTemplate(t.Context(), 1, tmpl)
 			require.ErrorIs(t, err, expectedErr)
 		})
 	})
@@ -932,7 +932,7 @@ func TestCreateTemplate(t *testing.T) {
 			assertInTransaction(t, ctx)
 		}).Return(nil)
 
-		result, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
+		result, err := sut.CreateTemplate(t.Context(), orgID, tmpl)
 
 		require.NoError(t, err)
 		require.NoError(t, v1.ValidateTemplateUID(string(result.UID)), "a new template gets a valid UID")
@@ -966,7 +966,7 @@ func TestCreateTemplate(t *testing.T) {
 
 		given := tmpl
 		given.UID = "chosen-uid"
-		result, err := sut.CreateTemplate(context.Background(), orgID, given)
+		result, err := sut.CreateTemplate(t.Context(), orgID, given)
 
 		require.NoError(t, err)
 		assert.Equal(t, v1.ResourceUID("chosen-uid"), result.UID)
@@ -983,7 +983,7 @@ func TestCreateTemplate(t *testing.T) {
 		for _, uid := range []string{"Upper", "a_b", "a:b", strings.Repeat("a", 41)} {
 			given := tmpl
 			given.UID = v1.ResourceUID(uid)
-			_, err := sut.CreateTemplate(context.Background(), orgID, given)
+			_, err := sut.CreateTemplate(t.Context(), orgID, given)
 
 			require.ErrorIs(t, err, ErrTemplateInvalid, uid)
 		}
@@ -1005,7 +1005,7 @@ func TestCreateTemplate(t *testing.T) {
 
 		given := tmpl
 		given.UID = "taken-uid"
-		_, err := sut.CreateTemplate(context.Background(), orgID, given)
+		_, err := sut.CreateTemplate(t.Context(), orgID, given)
 
 		require.ErrorIs(t, err, ErrTemplateUidExists)
 		for _, c := range store.Calls {
@@ -1027,7 +1027,7 @@ func TestCreateTemplate(t *testing.T) {
 			}, nil
 		}
 
-		_, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
+		_, err := sut.CreateTemplate(t.Context(), orgID, tmpl)
 
 		require.ErrorIs(t, err, ErrTemplateExists)
 	})
@@ -1040,7 +1040,7 @@ func TestCreateTemplate(t *testing.T) {
 				Title:   "",
 				Content: "",
 			}
-			_, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
+			_, err := sut.CreateTemplate(t.Context(), orgID, tmpl)
 			require.ErrorIs(t, err, ErrTemplateInvalid)
 		})
 
@@ -1049,7 +1049,7 @@ func TestCreateTemplate(t *testing.T) {
 				Title:   "",
 				Content: "{{ .MyField }",
 			}
-			_, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
+			_, err := sut.CreateTemplate(t.Context(), orgID, tmpl)
 			require.ErrorIs(t, err, ErrTemplateInvalid)
 		})
 
@@ -1059,7 +1059,7 @@ func TestCreateTemplate(t *testing.T) {
 				Content: "{{ define \"test\"}} test {{ end }}",
 				Kind:    "unknown",
 			}
-			_, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
+			_, err := sut.CreateTemplate(t.Context(), orgID, tmpl)
 			require.ErrorIs(t, err, ErrTemplateInvalid)
 		})
 
@@ -1076,7 +1076,7 @@ func TestCreateTemplate(t *testing.T) {
 			Kind:    v1.TemplateKindMimir,
 		}
 
-		_, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
+		_, err := sut.CreateTemplate(t.Context(), orgID, tmpl)
 		require.ErrorIs(t, err, ErrTemplateInvalid)
 	})
 
@@ -1088,7 +1088,7 @@ func TestCreateTemplate(t *testing.T) {
 				return nil, expectedErr
 			}
 
-			_, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
+			_, err := sut.CreateTemplate(t.Context(), orgID, tmpl)
 			require.ErrorIs(t, err, expectedErr)
 		})
 
@@ -1100,7 +1100,7 @@ func TestCreateTemplate(t *testing.T) {
 			}
 			prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(expectedErr)
 
-			_, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
+			_, err := sut.CreateTemplate(t.Context(), orgID, tmpl)
 			require.ErrorIs(t, err, expectedErr)
 
 			prov.AssertExpectations(t)
@@ -1118,7 +1118,7 @@ func TestCreateTemplate(t *testing.T) {
 			prov.EXPECT().SaveSucceeds()
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 
-			_, err := sut.CreateTemplate(context.Background(), 1, tmpl)
+			_, err := sut.CreateTemplate(t.Context(), 1, tmpl)
 			require.ErrorIs(t, err, expectedErr)
 		})
 	})
@@ -1159,7 +1159,7 @@ func TestUpdateTemplate(t *testing.T) {
 				ConcurrencyToken: amConfigToken,
 			}, nil
 		}
-		_, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
+		_, err := sut.UpdateTemplate(t.Context(), orgID, tmpl)
 
 		require.ErrorIs(t, err, ErrTemplateNotFound)
 
@@ -1183,7 +1183,7 @@ func TestUpdateTemplate(t *testing.T) {
 		}
 		tmpl := tmpl
 		tmpl.UID = "not-found"
-		_, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
+		_, err := sut.UpdateTemplate(t.Context(), orgID, tmpl)
 
 		require.ErrorIs(t, err, ErrTemplateNotFound)
 
@@ -1203,7 +1203,7 @@ func TestUpdateTemplate(t *testing.T) {
 				assertInTransaction(t, ctx)
 			}).Return(nil)
 
-			result, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
+			result, err := sut.UpdateTemplate(t.Context(), orgID, tmpl)
 
 			require.NoError(t, err)
 			assert.Equal(t, v1.NewTemplateGroup("",
@@ -1232,7 +1232,7 @@ func TestUpdateTemplate(t *testing.T) {
 				assertInTransaction(t, ctx)
 			}).Return(nil)
 
-			result, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
+			result, err := sut.UpdateTemplate(t.Context(), orgID, tmpl)
 
 			require.NoError(t, err)
 			assert.Equal(t, v1.NewTemplateGroup("",
@@ -1267,7 +1267,7 @@ func TestUpdateTemplate(t *testing.T) {
 		tmpl := tmpl
 		tmpl.UID = v1.TemplateUID(tmpl.Kind, tmpl.Title) // UID matches the current template
 		tmpl.Title = "new-template-name"                 // but name is different
-		result, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
+		result, err := sut.UpdateTemplate(t.Context(), orgID, tmpl)
 
 		require.NoError(t, err)
 		assert.Equal(t, v1.NewTemplateGroup(tmpl.UID,
@@ -1308,7 +1308,7 @@ func TestUpdateTemplate(t *testing.T) {
 		tmpl := tmpl
 		tmpl.UID = v1.TemplateUID(tmpl.Kind, tmpl.Title) // UID matches the current template
 		tmpl.Title = "new-template-name"                 // but name matches another existing template
-		_, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
+		_, err := sut.UpdateTemplate(t.Context(), orgID, tmpl)
 
 		require.ErrorIs(t, err, ErrTemplateExists)
 
@@ -1323,7 +1323,7 @@ func TestUpdateTemplate(t *testing.T) {
 				Title:   "",
 				Content: "",
 			}
-			_, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
+			_, err := sut.UpdateTemplate(t.Context(), orgID, tmpl)
 			require.ErrorIs(t, err, ErrTemplateInvalid)
 		})
 
@@ -1332,7 +1332,7 @@ func TestUpdateTemplate(t *testing.T) {
 				Title:   "",
 				Content: "{{ .MyField }",
 			}
-			_, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
+			_, err := sut.UpdateTemplate(t.Context(), orgID, tmpl)
 			require.ErrorIs(t, err, ErrTemplateInvalid)
 		})
 
@@ -1342,7 +1342,7 @@ func TestUpdateTemplate(t *testing.T) {
 				Content: "",
 				Kind:    "unknown",
 			}
-			_, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
+			_, err := sut.UpdateTemplate(t.Context(), orgID, tmpl)
 			require.ErrorIs(t, err, ErrTemplateInvalid)
 		})
 
@@ -1372,7 +1372,7 @@ func TestUpdateTemplate(t *testing.T) {
 		template.UID = v1.TemplateUID(v1.TemplateKindGrafana, template.Title)
 		template.Provenance = models.ProvenanceNone
 
-		_, err := sut.UpdateTemplate(context.Background(), orgID, template)
+		_, err := sut.UpdateTemplate(t.Context(), orgID, template)
 
 		require.ErrorIs(t, err, expectedErr)
 	})
@@ -1394,7 +1394,7 @@ func TestUpdateTemplate(t *testing.T) {
 			},
 		}
 
-		_, err := sut.UpdateTemplate(context.Background(), orgID, template)
+		_, err := sut.UpdateTemplate(t.Context(), orgID, template)
 
 		require.ErrorIs(t, err, ErrVersionConflict)
 		prov.AssertExpectations(t)
@@ -1418,7 +1418,7 @@ func TestUpdateTemplate(t *testing.T) {
 			Kind: v1.TemplateKindMimir,
 		}
 
-		_, err := sut.UpdateTemplate(context.Background(), orgID, template)
+		_, err := sut.UpdateTemplate(t.Context(), orgID, template)
 
 		require.ErrorIs(t, err, ErrTemplateInvalid)
 		prov.AssertExpectations(t)
@@ -1432,7 +1432,7 @@ func TestUpdateTemplate(t *testing.T) {
 				return nil, expectedErr
 			}
 
-			_, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
+			_, err := sut.UpdateTemplate(t.Context(), orgID, tmpl)
 			require.ErrorIs(t, err, expectedErr)
 		})
 
@@ -1444,7 +1444,7 @@ func TestUpdateTemplate(t *testing.T) {
 			expectedErr := errors.New("test")
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, expectedErr)
 
-			_, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
+			_, err := sut.UpdateTemplate(t.Context(), orgID, tmpl)
 
 			require.ErrorIs(t, err, expectedErr)
 
@@ -1460,7 +1460,7 @@ func TestUpdateTemplate(t *testing.T) {
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 			prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(expectedErr)
 
-			_, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
+			_, err := sut.UpdateTemplate(t.Context(), orgID, tmpl)
 			require.ErrorIs(t, err, expectedErr)
 
 			prov.AssertExpectations(t)
@@ -1478,7 +1478,7 @@ func TestUpdateTemplate(t *testing.T) {
 			prov.EXPECT().SaveSucceeds()
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 
-			_, err := sut.UpdateTemplate(context.Background(), 1, tmpl)
+			_, err := sut.UpdateTemplate(t.Context(), 1, tmpl)
 			require.ErrorIs(t, err, expectedErr)
 		})
 	})
@@ -1527,7 +1527,7 @@ func TestDeleteTemplate(t *testing.T) {
 					assertInTransaction(t, ctx)
 				}).Return(nil)
 
-				err := sut.DeleteTemplate(context.Background(), orgID, tt.templateNameOrUid, models.ProvenanceFile, templateVersion)
+				err := sut.DeleteTemplate(t.Context(), orgID, tt.templateNameOrUid, models.ProvenanceFile, templateVersion)
 
 				require.NoError(t, err)
 
@@ -1555,7 +1555,7 @@ func TestDeleteTemplate(t *testing.T) {
 					assertInTransaction(t, ctx)
 				}).Return(nil)
 
-				err := sut.DeleteTemplate(context.Background(), orgID, tt.templateNameOrUid, models.ProvenanceFile, "")
+				err := sut.DeleteTemplate(t.Context(), orgID, tt.templateNameOrUid, models.ProvenanceFile, "")
 
 				require.NoError(t, err)
 				require.Len(t, store.Calls, 2)
@@ -1595,7 +1595,7 @@ func TestDeleteTemplate(t *testing.T) {
 			assertInTransaction(t, ctx)
 		}).Return(nil)
 
-		err := sut.DeleteTemplate(context.Background(), orgID, expectedToDelete.Title, models.ProvenanceFile, templateVersion)
+		err := sut.DeleteTemplate(t.Context(), orgID, expectedToDelete.Title, models.ProvenanceFile, templateVersion)
 
 		require.NoError(t, err)
 
@@ -1620,7 +1620,7 @@ func TestDeleteTemplate(t *testing.T) {
 			return revision(), nil
 		}
 
-		err := sut.DeleteTemplate(context.Background(), orgID, "not-found", models.ProvenanceNone, "")
+		err := sut.DeleteTemplate(t.Context(), orgID, "not-found", models.ProvenanceNone, "")
 
 		require.NoError(t, err)
 
@@ -1641,7 +1641,7 @@ func TestDeleteTemplate(t *testing.T) {
 			return expectedErr
 		}
 
-		err := sut.DeleteTemplate(context.Background(), 1, templateName, models.ProvenanceNone, "")
+		err := sut.DeleteTemplate(t.Context(), 1, templateName, models.ProvenanceNone, "")
 
 		require.ErrorIs(t, err, expectedErr)
 
@@ -1655,7 +1655,7 @@ func TestDeleteTemplate(t *testing.T) {
 		}
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 
-		err := sut.DeleteTemplate(context.Background(), 1, templateName, models.ProvenanceNone, "bad-version")
+		err := sut.DeleteTemplate(t.Context(), 1, templateName, models.ProvenanceNone, "bad-version")
 
 		require.ErrorIs(t, err, ErrVersionConflict)
 	})
@@ -1668,7 +1668,7 @@ func TestDeleteTemplate(t *testing.T) {
 				return nil, expectedErr
 			}
 
-			err := sut.DeleteTemplate(context.Background(), orgID, templateName, models.ProvenanceNone, templateVersion)
+			err := sut.DeleteTemplate(t.Context(), orgID, templateName, models.ProvenanceNone, templateVersion)
 
 			require.ErrorIs(t, err, expectedErr)
 
@@ -1683,7 +1683,7 @@ func TestDeleteTemplate(t *testing.T) {
 			expectedErr := errors.New("test")
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, expectedErr)
 
-			err := sut.DeleteTemplate(context.Background(), orgID, templateName, models.ProvenanceNone, templateVersion)
+			err := sut.DeleteTemplate(t.Context(), orgID, templateName, models.ProvenanceNone, templateVersion)
 
 			require.ErrorIs(t, err, expectedErr)
 
@@ -1699,7 +1699,7 @@ func TestDeleteTemplate(t *testing.T) {
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 			prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(expectedErr)
 
-			err := sut.DeleteTemplate(context.Background(), orgID, templateName, models.ProvenanceNone, templateVersion)
+			err := sut.DeleteTemplate(t.Context(), orgID, templateName, models.ProvenanceNone, templateVersion)
 
 			require.ErrorIs(t, err, expectedErr)
 
@@ -1717,7 +1717,7 @@ func TestDeleteTemplate(t *testing.T) {
 			}
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 
-			err := sut.DeleteTemplate(context.Background(), orgID, templateName, models.ProvenanceNone, templateVersion)
+			err := sut.DeleteTemplate(t.Context(), orgID, templateName, models.ProvenanceNone, templateVersion)
 
 			require.ErrorIs(t, err, expectedErr)
 		})
@@ -1771,7 +1771,7 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 			return revision(5), nil // Already at the limit
 		}
 
-		_, err := sut.CreateTemplate(context.Background(), orgID, newTmpl)
+		_, err := sut.CreateTemplate(t.Context(), orgID, newTmpl)
 
 		require.ErrorIs(t, err, ErrTemplateLimitExceeded)
 	})
@@ -1793,7 +1793,7 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 		largeTmpl := newTmpl
 		largeTmpl.Content = "{{ define \"test\"}} this is a very long template content {{ end }}"
 
-		_, err := sut.CreateTemplate(context.Background(), orgID, largeTmpl)
+		_, err := sut.CreateTemplate(t.Context(), orgID, largeTmpl)
 
 		require.ErrorIs(t, err, ErrTemplateSizeExceeded)
 	})
@@ -1813,7 +1813,7 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 		}
 		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-		_, err := sut.CreateTemplate(context.Background(), orgID, newTmpl)
+		_, err := sut.CreateTemplate(t.Context(), orgID, newTmpl)
 
 		require.NoError(t, err)
 	})
@@ -1828,7 +1828,7 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 		}
 		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-		_, err := sut.CreateTemplate(context.Background(), orgID, newTmpl)
+		_, err := sut.CreateTemplate(t.Context(), orgID, newTmpl)
 
 		require.NoError(t, err)
 	})
@@ -1848,7 +1848,7 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 		}
 		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-		_, err := sut.CreateTemplate(context.Background(), orgID, newTmpl)
+		_, err := sut.CreateTemplate(t.Context(), orgID, newTmpl)
 
 		require.NoError(t, err)
 	})
@@ -1863,7 +1863,7 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 		}
 		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-		_, err := sut.CreateTemplate(context.Background(), orgID, newTmpl)
+		_, err := sut.CreateTemplate(t.Context(), orgID, newTmpl)
 
 		require.NoError(t, err)
 	})
@@ -1897,7 +1897,7 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 			Content:          "{{ define \"test\"}} this is a very long template content that exceeds the limit {{ end }}",
 		}
 
-		_, err := sut.UpdateTemplate(context.Background(), orgID, largeTmpl)
+		_, err := sut.UpdateTemplate(t.Context(), orgID, largeTmpl)
 
 		require.ErrorIs(t, err, ErrTemplateSizeExceeded)
 	})
@@ -1927,7 +1927,7 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 		}
 
 		// Update should succeed because count limit doesn't apply to updates
-		_, err := sut.UpdateTemplate(context.Background(), orgID, updateTmpl)
+		_, err := sut.UpdateTemplate(t.Context(), orgID, updateTmpl)
 
 		require.NoError(t, err)
 	})
@@ -1984,7 +1984,7 @@ func TestTemplateServiceWithUIDsNotDerivedFromTitles(t *testing.T) {
 	t.Run("gets the template by name", func(t *testing.T) {
 		sut, _, _ := newSut(t)
 
-		result, err := sut.GetTemplate(context.Background(), orgID, stored.Title)
+		result, err := sut.GetTemplate(t.Context(), orgID, stored.Title)
 
 		require.NoError(t, err)
 		assert.Equal(t, storedUID, result.UID)
@@ -1993,7 +1993,7 @@ func TestTemplateServiceWithUIDsNotDerivedFromTitles(t *testing.T) {
 	t.Run("gets the template by UID", func(t *testing.T) {
 		sut, _, _ := newSut(t)
 
-		result, err := sut.GetTemplate(context.Background(), orgID, string(storedUID))
+		result, err := sut.GetTemplate(t.Context(), orgID, string(storedUID))
 
 		require.NoError(t, err)
 		assert.Equal(t, stored.Title, result.Title)
@@ -2005,7 +2005,7 @@ func TestTemplateServiceWithUIDsNotDerivedFromTitles(t *testing.T) {
 		update.UID = ""
 		update.Version = ""
 
-		_, err := sut.UpdateTemplate(context.Background(), orgID, update)
+		_, err := sut.UpdateTemplate(t.Context(), orgID, update)
 
 		require.ErrorIs(t, err, ErrTemplateNotFound)
 		require.Len(t, store.Calls, 1, "nothing is saved")
@@ -2017,7 +2017,7 @@ func TestTemplateServiceWithUIDsNotDerivedFromTitles(t *testing.T) {
 		update.Content = "{{ define \"test\"}} updated {{ end }}"
 		update.Version = ""
 
-		result, err := sut.UpdateTemplate(context.Background(), orgID, update)
+		result, err := sut.UpdateTemplate(t.Context(), orgID, update)
 
 		require.NoError(t, err)
 		templates := savedTemplates(t, store)
@@ -2032,7 +2032,7 @@ func TestTemplateServiceWithUIDsNotDerivedFromTitles(t *testing.T) {
 		update.Title = "renamed"
 		update.Version = ""
 
-		result, err := sut.UpdateTemplate(context.Background(), orgID, update)
+		result, err := sut.UpdateTemplate(t.Context(), orgID, update)
 
 		require.NoError(t, err)
 		templates := savedTemplates(t, store)
@@ -2051,7 +2051,7 @@ func TestTemplateServiceWithUIDsNotDerivedFromTitles(t *testing.T) {
 		update.Content = "{{ define \"test\"}} updated {{ end }}"
 		update.Version = ""
 
-		result, err := sut.UpsertTemplate(context.Background(), orgID, update)
+		result, err := sut.UpsertTemplate(t.Context(), orgID, update)
 
 		require.NoError(t, err)
 		templates := savedTemplates(t, store)
@@ -2063,7 +2063,7 @@ func TestTemplateServiceWithUIDsNotDerivedFromTitles(t *testing.T) {
 	t.Run("deletes the template by name", func(t *testing.T) {
 		sut, store, _ := newSut(t)
 
-		err := sut.DeleteTemplate(context.Background(), orgID, stored.Title, models.ProvenanceNone, "")
+		err := sut.DeleteTemplate(t.Context(), orgID, stored.Title, models.ProvenanceNone, "")
 
 		require.NoError(t, err)
 		assert.Empty(t, savedTemplates(t, store))
@@ -2096,11 +2096,11 @@ func TestTemplateServiceByUID(t *testing.T) {
 	t.Run("gets the template with the UID", func(t *testing.T) {
 		sut, _, _ := newSut(t)
 
-		byName, err := sut.GetTemplate(context.Background(), orgID, string(uid))
+		byName, err := sut.GetTemplate(t.Context(), orgID, string(uid))
 		require.NoError(t, err)
 		require.Equal(t, decoy.UID, byName.UID, "by name, the title is looked at first")
 
-		byUID, err := sut.GetTemplateByUID(context.Background(), orgID, string(uid))
+		byUID, err := sut.GetTemplateByUID(t.Context(), orgID, string(uid))
 		require.NoError(t, err)
 		assert.Equal(t, target.UID, byUID.UID)
 	})
@@ -2108,7 +2108,7 @@ func TestTemplateServiceByUID(t *testing.T) {
 	t.Run("does not get a template by its title", func(t *testing.T) {
 		sut, _, _ := newSut(t)
 
-		_, err := sut.GetTemplateByUID(context.Background(), orgID, target.Title)
+		_, err := sut.GetTemplateByUID(t.Context(), orgID, target.Title)
 
 		require.ErrorIs(t, err, ErrTemplateNotFound)
 	})
@@ -2116,7 +2116,7 @@ func TestTemplateServiceByUID(t *testing.T) {
 	t.Run("deletes the template with the UID", func(t *testing.T) {
 		sut, store, _ := newSut(t)
 
-		err := sut.DeleteTemplateByUID(context.Background(), orgID, string(uid), models.ProvenanceNone, "")
+		err := sut.DeleteTemplateByUID(t.Context(), orgID, string(uid), models.ProvenanceNone, "")
 
 		require.NoError(t, err)
 		saved := store.Calls[len(store.Calls)-1].Args[1].(*legacy_storage.ConfigRevision).Config.Templates
@@ -2127,7 +2127,7 @@ func TestTemplateServiceByUID(t *testing.T) {
 	t.Run("does not delete a template by its title", func(t *testing.T) {
 		sut, store, _ := newSut(t)
 
-		err := sut.DeleteTemplateByUID(context.Background(), orgID, target.Title, models.ProvenanceNone, "")
+		err := sut.DeleteTemplateByUID(t.Context(), orgID, target.Title, models.ProvenanceNone, "")
 
 		require.NoError(t, err)
 		require.Len(t, store.Calls, 1, "nothing is saved as there is nothing to delete")

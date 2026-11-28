@@ -277,7 +277,7 @@ func TestHandleRuleChange(t *testing.T) {
 	t.Run("ignores events with no folder keys", func(t *testing.T) {
 		s := newTestService(&fakeSyncerStore{}, &fakeFolderClient{})
 
-		require.NoError(t, s.handleRuleChange(context.Background(), &rulestore.RuleChangeEvent{
+		require.NoError(t, s.handleRuleChange(t.Context(), &rulestore.RuleChangeEvent{
 			RuleKeys: []models.AlertRuleKey{{OrgID: 1, UID: "rule"}},
 		}))
 		require.Empty(t, s.take())
@@ -286,7 +286,7 @@ func TestHandleRuleChange(t *testing.T) {
 	t.Run("queues the event's folder keys", func(t *testing.T) {
 		s := newTestService(&fakeSyncerStore{}, &fakeFolderClient{})
 
-		require.NoError(t, s.handleRuleChange(context.Background(), &rulestore.RuleChangeEvent{
+		require.NoError(t, s.handleRuleChange(t.Context(), &rulestore.RuleChangeEvent{
 			FolderKeys: []models.FolderKey{{OrgID: 1, UID: "a"}, {OrgID: 1, UID: "b"}},
 		}))
 		require.Len(t, s.take(), 2)
@@ -296,7 +296,7 @@ func TestHandleRuleChange(t *testing.T) {
 		s := newTestService(&fakeSyncerStore{}, &fakeFolderClient{})
 		s.disabledOrgs = map[int64]struct{}{1: {}}
 
-		require.NoError(t, s.handleRuleChange(context.Background(), &rulestore.RuleChangeEvent{
+		require.NoError(t, s.handleRuleChange(t.Context(), &rulestore.RuleChangeEvent{
 			FolderKeys: []models.FolderKey{{OrgID: 1, UID: "a"}},
 		}))
 		require.Empty(t, s.take())
@@ -312,7 +312,7 @@ func TestPartialSync(t *testing.T) {
 		}}
 		s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 
-		require.NoError(t, s.partialSync(context.Background(), key))
+		require.NoError(t, s.partialSync(t.Context(), key))
 
 		require.Equal(t, []map[string]string{{
 			HasAlertRulesLabel: "true",
@@ -326,7 +326,7 @@ func TestPartialSync(t *testing.T) {
 		folders := &fakeFolderClient{folders: map[string]*folderv1.Folder{"folder-1": folder}}
 		s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 
-		require.NoError(t, s.partialSync(context.Background(), key))
+		require.NoError(t, s.partialSync(t.Context(), key))
 
 		require.Equal(t, []string{"5"}, folders.updateResourceVersions,
 			"the update must carry the version the folder was read at")
@@ -338,7 +338,7 @@ func TestPartialSync(t *testing.T) {
 		}}
 		s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 2}}, folders)
 
-		require.NoError(t, s.partialSync(context.Background(), key))
+		require.NoError(t, s.partialSync(t.Context(), key))
 
 		require.Equal(t, []map[string]string{{HasAlertRulesLabel: "true"}}, folders.updated)
 	})
@@ -364,7 +364,7 @@ func TestPartialSync(t *testing.T) {
 				}
 				s := newTestService(store, folders)
 
-				require.NoError(t, s.partialSync(context.Background(), key))
+				require.NoError(t, s.partialSync(t.Context(), key))
 				require.Equal(t, []map[string]string{tc.want}, folders.updated)
 			})
 		}
@@ -379,7 +379,7 @@ func TestPartialSync(t *testing.T) {
 		}}
 		s := newTestService(&fakeSyncerStore{recordingCounts: map[string]int64{"folder-1": 1}}, folders)
 
-		require.NoError(t, s.partialSync(context.Background(), key))
+		require.NoError(t, s.partialSync(t.Context(), key))
 
 		require.Equal(t, []map[string]string{{HasRecordingRulesLabel: "true"}}, folders.updated)
 	})
@@ -421,7 +421,7 @@ func TestPartialSync(t *testing.T) {
 				}
 				s := newTestService(store, folders)
 
-				require.NoError(t, s.partialSync(context.Background(), key))
+				require.NoError(t, s.partialSync(t.Context(), key))
 				require.Equal(t, []map[string]string{tc.want}, folders.updated)
 			})
 		}
@@ -436,7 +436,7 @@ func TestPartialSync(t *testing.T) {
 		}}
 		s := newTestService(&fakeSyncerStore{}, folders)
 
-		require.NoError(t, s.partialSync(context.Background(), key))
+		require.NoError(t, s.partialSync(t.Context(), key))
 
 		require.Equal(t, []map[string]string{{"unrelated": "keep"}}, folders.updated,
 			"only the syncer's labels may be removed")
@@ -458,7 +458,7 @@ func TestPartialSync(t *testing.T) {
 				}}
 				s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": tc.count}}, folders)
 
-				require.NoError(t, s.partialSync(context.Background(), key))
+				require.NoError(t, s.partialSync(t.Context(), key))
 				require.Empty(t, folders.updated, "expected no write when state already matches")
 			})
 		}
@@ -468,20 +468,20 @@ func TestPartialSync(t *testing.T) {
 		folders := &fakeFolderClient{folders: map[string]*folderv1.Folder{}}
 		s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 
-		require.NoError(t, s.partialSync(context.Background(), key))
+		require.NoError(t, s.partialSync(t.Context(), key))
 		require.Empty(t, folders.updated)
 	})
 
 	t.Run("propagates errors", func(t *testing.T) {
 		t.Run("counting rules", func(t *testing.T) {
 			s := newTestService(&fakeSyncerStore{err: errors.New("boom")}, &fakeFolderClient{})
-			require.ErrorContains(t, s.partialSync(context.Background(), key), "count alert rules in folder")
+			require.ErrorContains(t, s.partialSync(t.Context(), key), "count alert rules in folder")
 		})
 
 		t.Run("getting the folder", func(t *testing.T) {
 			folders := &fakeFolderClient{getErr: errors.New("boom")}
 			s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
-			require.ErrorContains(t, s.partialSync(context.Background(), key), "get folder")
+			require.ErrorContains(t, s.partialSync(t.Context(), key), "get folder")
 		})
 
 		t.Run("updating the folder", func(t *testing.T) {
@@ -490,7 +490,7 @@ func TestPartialSync(t *testing.T) {
 				updateErr: errors.New("boom"),
 			}
 			s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
-			require.ErrorContains(t, s.partialSync(context.Background(), key), "update folder label")
+			require.ErrorContains(t, s.partialSync(t.Context(), key), "update folder label")
 		})
 	})
 }
@@ -506,7 +506,7 @@ func TestDrain(t *testing.T) {
 		s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 		s.markDirty([]models.FolderKey{{OrgID: 1, UID: "folder-1"}})
 
-		s.drain(context.Background())
+		s.drain(t.Context())
 
 		require.Empty(t, s.take())
 	})
@@ -518,7 +518,7 @@ func TestDrain(t *testing.T) {
 		s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 		s.markDirty([]models.FolderKey{{OrgID: 1, UID: "folder-1"}})
 
-		s.drain(context.Background())
+		s.drain(t.Context())
 
 		require.Empty(t, s.take())
 	})
@@ -531,7 +531,7 @@ func TestDrain(t *testing.T) {
 		s := newTestService(rules, folders)
 		s.markDirty([]models.FolderKey{{OrgID: 1, UID: "folder-1"}})
 
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(t.Context())
 		cancel()
 		s.drain(ctx)
 
@@ -542,7 +542,7 @@ func TestDrain(t *testing.T) {
 func TestRunStopsOnContextCancellation(t *testing.T) {
 	s := newTestService(&fakeSyncerStore{}, &fakeFolderClient{})
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
 
 	require.NoError(t, s.Run(ctx))
@@ -608,7 +608,7 @@ func TestDrainRetries(t *testing.T) {
 		s.metrics = metrics.NewFolderLabelSyncerMetrics(reg)
 		s.markDirty([]models.FolderKey{key})
 
-		s.drain(context.Background())
+		s.drain(t.Context())
 
 		require.Equal(t, 3, folders.updateCalls, "should have retried twice before succeeding")
 		require.Equal(t, float64(1), counterValue(t, reg,
@@ -627,7 +627,7 @@ func TestDrainRetries(t *testing.T) {
 		s.metrics = metrics.NewFolderLabelSyncerMetrics(reg)
 		s.markDirty([]models.FolderKey{key})
 
-		s.drain(context.Background())
+		s.drain(t.Context())
 
 		require.Equal(t, retry.DefaultBackoff.Steps, folders.updateCalls,
 			"should stop at the configured attempt budget")
@@ -647,7 +647,7 @@ func TestDrainRetries(t *testing.T) {
 		s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 		s.markDirty([]models.FolderKey{key})
 
-		s.drain(context.Background())
+		s.drain(t.Context())
 
 		require.Equal(t, 1, folders.updateCalls, "a non-retriable error should fail on the first attempt")
 	})
@@ -691,7 +691,7 @@ func TestFailureMetrics(t *testing.T) {
 				s, reg := newMetered(tc.store, tc.folder)
 				s.markDirty([]models.FolderKey{{OrgID: 1, UID: "folder-1"}})
 
-				s.drain(context.Background())
+				s.drain(t.Context())
 
 				require.Equal(t, float64(1), counterValue(t, reg,
 					"grafana_alerting_folder_label_syncer_failures_total",
@@ -706,7 +706,7 @@ func TestFailureMetrics(t *testing.T) {
 		s, reg := newMetered(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, &fakeFolderClient{})
 		s.markDirty([]models.FolderKey{{OrgID: 1, UID: "folder-1"}})
 
-		s.drain(context.Background())
+		s.drain(t.Context())
 
 		require.Zero(t, counterValue(t, reg,
 			"grafana_alerting_folder_label_syncer_failures_total",
@@ -720,7 +720,7 @@ func TestFailureMetrics(t *testing.T) {
 		s, reg := newMetered(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 		s.markDirty([]models.FolderKey{{OrgID: 1, UID: "folder-1"}})
 
-		s.drain(context.Background())
+		s.drain(t.Context())
 
 		require.Equal(t, float64(1), counterValue(t, reg,
 			"grafana_alerting_folder_label_syncer_total", map[string]string{"sync_type": metrics.SyncTypePartial}))
@@ -736,7 +736,7 @@ func TestFailureMetrics(t *testing.T) {
 		t.Run("fetching orgs", func(t *testing.T) {
 			s, reg := newMetered(&fakeSyncerStore{orgsErr: errors.New("boom")}, &fakeFolderClient{})
 
-			require.Error(t, s.FullSync(context.Background()))
+			require.Error(t, s.FullSync(t.Context()))
 			require.Equal(t, float64(1), fullSyncFailures(t, reg))
 		})
 
@@ -745,7 +745,7 @@ func TestFailureMetrics(t *testing.T) {
 			s, reg := newMetered(store, &fakeFolderClient{})
 
 			// Per-org failures are tolerated, so FullSync itself succeeds.
-			require.NoError(t, s.FullSync(context.Background()))
+			require.NoError(t, s.FullSync(t.Context()))
 			require.Equal(t, float64(1), fullSyncFailures(t, reg))
 		})
 
@@ -753,7 +753,7 @@ func TestFailureMetrics(t *testing.T) {
 			store := &fakeSyncerStore{orgs: []int64{1}}
 			s, reg := newMetered(store, &fakeFolderClient{listErr: errors.New("boom")})
 
-			require.NoError(t, s.FullSync(context.Background()))
+			require.NoError(t, s.FullSync(t.Context()))
 			require.Equal(t, float64(1), fullSyncFailures(t, reg))
 		})
 	})
@@ -776,7 +776,7 @@ func TestFailureMetrics(t *testing.T) {
 			store := &fakeSyncerStore{orgs: []int64{1, 2}}
 			s, reg := newMetered(store, &fakeFolderClient{})
 
-			require.NoError(t, s.FullSync(context.Background()))
+			require.NoError(t, s.FullSync(t.Context()))
 			require.Equal(t, float64(2), fullSyncTotal(t, reg))
 			require.Zero(t, fullSyncFailures(t, reg))
 		})
@@ -787,7 +787,7 @@ func TestFailureMetrics(t *testing.T) {
 			folders := &fakeFolderClient{failNamespaces: map[string]struct{}{"org-1": {}}}
 			s, reg := newMetered(store, folders)
 
-			require.NoError(t, s.FullSync(context.Background()))
+			require.NoError(t, s.FullSync(t.Context()))
 			require.Equal(t, float64(2), fullSyncTotal(t, reg), "both orgs were attempted")
 			require.Equal(t, float64(1), fullSyncFailures(t, reg))
 			require.LessOrEqual(t, fullSyncFailures(t, reg), fullSyncTotal(t, reg))
@@ -798,7 +798,7 @@ func TestFailureMetrics(t *testing.T) {
 			s, reg := newMetered(store, &fakeFolderClient{})
 			s.disabledOrgs = map[int64]struct{}{2: {}}
 
-			require.NoError(t, s.FullSync(context.Background()))
+			require.NoError(t, s.FullSync(t.Context()))
 			require.Equal(t, float64(1), fullSyncTotal(t, reg))
 		})
 
@@ -806,7 +806,7 @@ func TestFailureMetrics(t *testing.T) {
 			// No org was reached, so there is no per-org outcome; the pass itself is the attempt.
 			s, reg := newMetered(&fakeSyncerStore{orgsErr: errors.New("boom")}, &fakeFolderClient{})
 
-			require.Error(t, s.FullSync(context.Background()))
+			require.Error(t, s.FullSync(t.Context()))
 			require.Equal(t, float64(1), fullSyncTotal(t, reg))
 			require.Equal(t, float64(1), fullSyncFailures(t, reg))
 		})
@@ -816,7 +816,7 @@ func TestFailureMetrics(t *testing.T) {
 		s := newTestService(&fakeSyncerStore{err: errors.New("boom")}, &fakeFolderClient{})
 		require.Nil(t, s.metrics)
 
-		require.Error(t, s.partialSync(context.Background(), models.FolderKey{OrgID: 1, UID: "folder-1"}))
+		require.Error(t, s.partialSync(t.Context(), models.FolderKey{OrgID: 1, UID: "folder-1"}))
 	})
 }
 

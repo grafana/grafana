@@ -1,7 +1,6 @@
 package notifier
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -301,7 +300,7 @@ func TestAddAutogenConfig(t *testing.T) {
 				onInvalid = IgnoreInvalidReceivers
 			}
 			route := RouteToAPI(tt.existingConfig.AlertmanagerConfig.Route)
-			err := AddAutogenConfig(context.Background(), &logtest.Fake{}, store, orgId, tt.existingConfig, route, onInvalid, nil)
+			err := AddAutogenConfig(t.Context(), &logtest.Fake{}, store, orgId, tt.existingConfig, route, onInvalid, nil)
 			if tt.expErrorContains != "" {
 				require.Error(t, err)
 				require.ErrorContains(t, err, tt.expErrorContains)

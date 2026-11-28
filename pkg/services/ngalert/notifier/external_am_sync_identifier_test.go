@@ -1,7 +1,6 @@
 package notifier
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -78,9 +77,9 @@ func TestSyncExternalAMs_ImportsUnderNameFromDatasource(t *testing.T) {
 	adminCfg.setUID(1, "p8e80f9aef21f6940")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 
-	saved, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), 1)
+	saved, err := cs.GetLatestAlertmanagerConfiguration(t.Context(), 1)
 	require.NoError(t, err)
 	cfg, err := Load([]byte(saved.AlertmanagerConfiguration))
 	require.NoError(t, err)
@@ -101,14 +100,14 @@ func TestSyncExternalAMs_KeepsNameAfterDatasourceRename(t *testing.T) {
 	adminCfg.setUID(1, "ds-1")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 
 	ds.Name = "Mimir Renamed"
 	// A changed upstream config so the second tick saves instead of skipping as unchanged.
 	proxy.setResponse("ds-1", http.StatusOK, mimirConfigBody(t, "route:\n  receiver: second\nreceivers:\n  - name: second"))
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 
-	saved, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), 1)
+	saved, err := cs.GetLatestAlertmanagerConfiguration(t.Context(), 1)
 	require.NoError(t, err)
 	cfg, err := Load([]byte(saved.AlertmanagerConfiguration))
 	require.NoError(t, err)
@@ -130,7 +129,7 @@ func TestSyncExternalAMs_FailsTheTickWhenTheNameCannotBeRecorded(t *testing.T) {
 	adminCfg.setWriteErr(1, fmt.Errorf("storage unavailable"))
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 
 	assertNoExtraConfigSaved(t, cs, 1)
 	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", ReasonConfigRead.Label())))
@@ -143,7 +142,7 @@ func newIdentifierTestSyncer(t *testing.T, adminCfg *fakeConfigClient, reader am
 }
 
 func TestEnsureSyncIdentifier(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("keeps the UID for a config imported before identifiers were recorded", func(t *testing.T) {
 		adminCfg := newFakeConfigClient()
@@ -275,7 +274,7 @@ func TestResolveSyncTarget_IniOverrideWorksWithoutTheConfigResource(t *testing.T
 	settings := &setting.Cfg{UnifiedAlerting: setting.UnifiedAlertingSettings{ExternalAlertmanagerUID: "operator-uid"}}
 	s := NewExternalAMSyncer(&dsfakes.FakeDataSourceService{}, nil, settings, nil, log.NewNopLogger(), adminCfg, adminCfg.nsMapper, nil)
 
-	target, err := s.resolveSyncTarget(context.Background(), 1)
+	target, err := s.resolveSyncTarget(t.Context(), 1)
 	require.NoError(t, err)
 	assert.Equal(t, syncTarget{uid: "operator-uid", origin: originIni, identifierUnknown: true}, target)
 	assert.Equal(t, "operator-uid", target.identifierOrUID())
@@ -290,9 +289,9 @@ func TestSyncExternalAMs_ImportUnderRecordedNameIsMarkedAutoSync(t *testing.T) {
 	adminCfg.setUID(1, "ds-1")
 
 	moa, _ := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
-	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+	moa.SyncAlertmanagersForOrgs(t.Context(), []int64{1})
 
-	gettable, err := moa.GetAlertmanagerConfiguration(context.Background(), 1, false)
+	gettable, err := moa.GetAlertmanagerConfiguration(t.Context(), 1, false)
 	require.NoError(t, err)
 	require.Len(t, gettable.ExtraConfigs, 1)
 	assert.Equal(t, "mimir-prod", gettable.ExtraConfigs[0].Identifier)
@@ -300,7 +299,7 @@ func TestSyncExternalAMs_ImportUnderRecordedNameIsMarkedAutoSync(t *testing.T) {
 }
 
 func TestDeleteExtraConfiguration_NameBasedSyncImport(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	signedIn := &user.SignedInUser{}
 
 	setup := func(t *testing.T) (*MultiOrgAlertmanager, *fakeConfigClient) {
@@ -346,7 +345,7 @@ func TestDeleteExtraConfiguration_NameBasedSyncImport(t *testing.T) {
 }
 
 func TestSyncExternalAMs_RecordedIdentifierUnavailable(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	signedIn := &user.SignedInUser{}
 	const syncedConfig = "route:\n  receiver: first\nreceivers:\n  - name: first"
 
@@ -427,7 +426,7 @@ func TestEnsureSyncIdentifier_ChoosesNothingWhileTheRecordedIdentifierIsUnavaila
 	adminCfg.setUID(1, "ds-1")
 	s := newIdentifierTestSyncer(t, adminCfg, fakeAMConfigReader{raw: validAMConfigBase}, namedMimirDS("ds-1", "Mimir Prod", 1))
 
-	_, err := s.ensureSyncIdentifier(context.Background(), 1, syncTarget{uid: "ds-1", origin: originIni, identifierUnknown: true})
+	_, err := s.ensureSyncIdentifier(t.Context(), 1, syncTarget{uid: "ds-1", origin: originIni, identifierUnknown: true})
 	require.Error(t, err)
 	assert.Equal(t, ReasonConfigRead, reasonOf(err))
 	obj, lookupErr := adminCfg.lookup("org-1")
@@ -439,7 +438,7 @@ func TestEnsureSyncIdentifier_ChoosesNothingWhileTheRecordedIdentifierIsUnavaila
 // treats an import without an owner as manual, so every save is refused until it is deleted. It is
 // then recreated under the UID. This test pins that, so a change to it is deliberate.
 func TestSyncExternalAMs_LegacyUIDImportWithoutOwnerIsRefusedUntilDeleted(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	proxy := singleAMProxy(t, "ds-1", "route:\n  receiver: first\nreceivers:\n  - name: first")
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{namedMimirDS("ds-1", "Mimir Prod", 1)}}
 	adminCfg := newFakeConfigClient()

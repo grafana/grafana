@@ -328,7 +328,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			results := resultsAtTime[ts]
 			clk.Set(ts)
 			var statesToSend StateTransitions
-			actual, _ := st.ProcessEvalResults(context.Background(), ts, alertRule, results, systemLabels, func(_ context.Context, states StateTransitions) {
+			actual, _ := st.ProcessEvalResults(t.Context(), ts, alertRule, results, systemLabels, func(_ context.Context, states StateTransitions) {
 				statesToSend = states
 			})
 
@@ -5554,7 +5554,7 @@ func TestProcessEvalResults_Screenshots(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			clk := clock.NewMock()
 
-			ctx := context.Background()
+			ctx := t.Context()
 			cfg := ManagerCfg{
 				Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
 				ExternalURL:   nil,

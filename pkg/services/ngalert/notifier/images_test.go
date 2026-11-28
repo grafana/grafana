@@ -1,7 +1,6 @@
 package notifier
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -112,7 +111,7 @@ func TestGetImage(t *testing.T) {
 					Annotations: model.LabelSet{alertingModels.ImageTokenAnnotation: model.LabelValue(test.token)},
 				},
 			}
-			image, err := store.GetImage(context.Background(), alert)
+			image, err := store.GetImage(t.Context(), alert)
 			require.NoError(tt, err)
 			if test.expImage == nil {
 				require.Nil(tt, image)
@@ -121,12 +120,12 @@ func TestGetImage(t *testing.T) {
 			require.Equal(tt, test.token, image.ID)
 			require.Equal(tt, test.expImage.URL, image.URL)
 			if test.expImageContent != nil {
-				ic, err := image.RawData(context.Background())
+				ic, err := image.RawData(t.Context())
 				require.NoError(tt, err)
 				require.Equal(tt, *test.expImageContent, ic)
 			}
 			if test.expRawDataErr != nil {
-				_, err := image.RawData(context.Background())
+				_, err := image.RawData(t.Context())
 				require.ErrorIs(tt, err, test.expRawDataErr)
 			}
 		})

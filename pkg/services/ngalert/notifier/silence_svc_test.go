@@ -51,7 +51,7 @@ func TestWithAccessControlMetadata(t *testing.T) {
 			authz: &authz,
 		}
 
-		require.NoError(t, svc.WithAccessControlMetadata(context.Background(), user, silencesWithMetadata...))
+		require.NoError(t, svc.WithAccessControlMetadata(t.Context(), user, silencesWithMetadata...))
 		for _, silence := range silencesWithMetadata {
 			assert.Equal(t, response[silence.Silence], *silence.Metadata.Permissions)
 		}
@@ -84,7 +84,7 @@ func TestWithRuleMetadata(t *testing.T) {
 			{Silence: new(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule3", labels.MatchEqual))())},
 		}
 
-		require.NoError(t, svc.WithRuleMetadata(context.Background(), user, silencesWithMetadata...))
+		require.NoError(t, svc.WithRuleMetadata(t.Context(), user, silencesWithMetadata...))
 		for i, silence := range silencesWithMetadata {
 			metadata := &models.SilenceRuleMetadata{
 				RuleUID:   rules[i].UID,
@@ -119,7 +119,7 @@ func TestWithRuleMetadata(t *testing.T) {
 			{Silence: new(models.SilenceGen()())},
 		}
 
-		require.NoError(t, svc.WithRuleMetadata(context.Background(), user, silencesWithMetadata...))
+		require.NoError(t, svc.WithRuleMetadata(t.Context(), user, silencesWithMetadata...))
 		assert.Equal(t, silencesWithMetadata[0].Metadata, models.SilenceMetadata{RuleMetadata: &models.SilenceRuleMetadata{ // Attach all metadata.
 			RuleUID:   rules[0].UID,
 			RuleTitle: rules[0].Title,
@@ -157,7 +157,7 @@ func TestWithRuleMetadata(t *testing.T) {
 			{Silence: new(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule3", labels.MatchEqual))())},
 		}
 
-		require.NoError(t, svc.WithRuleMetadata(context.Background(), user, silencesWithMetadata...))
+		require.NoError(t, svc.WithRuleMetadata(t.Context(), user, silencesWithMetadata...))
 		assert.Lenf(t, ruleAuthz.Calls, 1, "HasAccessInFolder should be called only once per namespace")
 		assert.Equal(t, "HasAccessInFolder", ruleAuthz.Calls[0].MethodName)
 		assert.Equal(t, "folder1", ruleAuthz.Calls[0].Arguments[2].(models.Namespaced).GetNamespaceUID())
@@ -224,7 +224,7 @@ func TestUpdateSilence(t *testing.T) {
 			}
 
 			modified := models.CopySilenceWith(silence, tc.mutators...)
-			_, err := svc.UpdateSilence(context.Background(), user, modified)
+			_, err := svc.UpdateSilence(t.Context(), user, modified)
 			if tc.errContains != "" {
 				assert.Error(t, err)
 				assert.ErrorContains(t, err, tc.errContains)
@@ -268,7 +268,7 @@ func TestSilenceService_CreateSilence_LimitsValidation(t *testing.T) {
 		}
 
 		newSilence := models.SilenceGen()()
-		_, err := svc.CreateSilence(context.Background(), user, newSilence)
+		_, err := svc.CreateSilence(t.Context(), user, newSilence)
 
 		require.ErrorIs(t, err, ErrSilenceLimitExceeded)
 	})
@@ -298,7 +298,7 @@ func TestSilenceService_CreateSilence_LimitsValidation(t *testing.T) {
 			models.SilenceMuts.WithMatcher("label1", "very-long-value-that-exceeds-limit", labels.MatchEqual),
 			models.SilenceMuts.WithMatcher("label2", "another-long-value-that-exceeds-limit", labels.MatchEqual),
 		)()
-		_, err := svc.CreateSilence(context.Background(), user, newSilence)
+		_, err := svc.CreateSilence(t.Context(), user, newSilence)
 
 		require.ErrorIs(t, err, ErrSilenceSizeExceeded)
 	})
@@ -324,7 +324,7 @@ func TestSilenceService_CreateSilence_LimitsValidation(t *testing.T) {
 		}
 
 		newSilence := models.SilenceGen()()
-		_, err := svc.CreateSilence(context.Background(), user, newSilence)
+		_, err := svc.CreateSilence(t.Context(), user, newSilence)
 
 		require.NoError(t, err)
 	})
@@ -345,7 +345,7 @@ func TestSilenceService_CreateSilence_LimitsValidation(t *testing.T) {
 		}
 
 		newSilence := models.SilenceGen()()
-		_, err := svc.CreateSilence(context.Background(), user, newSilence)
+		_, err := svc.CreateSilence(t.Context(), user, newSilence)
 
 		require.NoError(t, err)
 	})
@@ -371,7 +371,7 @@ func TestSilenceService_CreateSilence_LimitsValidation(t *testing.T) {
 		}
 
 		newSilence := models.SilenceGen()()
-		_, err := svc.CreateSilence(context.Background(), user, newSilence)
+		_, err := svc.CreateSilence(t.Context(), user, newSilence)
 
 		require.NoError(t, err)
 	})
@@ -392,7 +392,7 @@ func TestSilenceService_CreateSilence_LimitsValidation(t *testing.T) {
 		}
 
 		newSilence := models.SilenceGen()()
-		_, err := svc.CreateSilence(context.Background(), user, newSilence)
+		_, err := svc.CreateSilence(t.Context(), user, newSilence)
 
 		require.NoError(t, err)
 	})
@@ -411,7 +411,7 @@ func TestSilenceService_CreateSilence_LimitsValidation(t *testing.T) {
 		}
 
 		newSilence := models.SilenceGen()()
-		_, err := svc.CreateSilence(context.Background(), user, newSilence)
+		_, err := svc.CreateSilence(t.Context(), user, newSilence)
 
 		require.NoError(t, err)
 	})
@@ -450,7 +450,7 @@ func TestSilenceService_UpdateSilence_LimitsValidation(t *testing.T) {
 			models.SilenceMuts.WithMatcher("label1", "very-long-value-that-exceeds-limit", labels.MatchEqual),
 			models.SilenceMuts.WithMatcher("label2", "another-long-value-that-exceeds-limit", labels.MatchEqual),
 		)
-		_, err := svc.UpdateSilence(context.Background(), user, updatedSilence)
+		_, err := svc.UpdateSilence(t.Context(), user, updatedSilence)
 
 		require.ErrorIs(t, err, ErrSilenceSizeExceeded)
 	})
@@ -485,7 +485,7 @@ func TestSilenceService_UpdateSilence_LimitsValidation(t *testing.T) {
 
 		// Update should succeed because count limit doesn't apply to updates
 		updatedSilence := models.CopySilenceWith(existingSilence, models.SilenceMuts.Expired())
-		_, err := svc.UpdateSilence(context.Background(), user, updatedSilence)
+		_, err := svc.UpdateSilence(t.Context(), user, updatedSilence)
 
 		require.NoError(t, err)
 	})

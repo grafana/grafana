@@ -85,7 +85,7 @@ func TestStoreStateReader_GetAll(t *testing.T) {
 			}
 
 			manager := NewStoreStateReader(mockReader, log.NewNopLogger())
-			states := manager.GetAll(context.Background(), orgID)
+			states := manager.GetAll(t.Context(), orgID)
 
 			if tc.expectNilOnError {
 				require.Nil(t, states)
@@ -162,7 +162,7 @@ func TestStoreStateReader_GetStatesForRuleUID(t *testing.T) {
 			}
 
 			manager := NewStoreStateReader(mockReader, log.NewNopLogger())
-			states := manager.GetStatesForRuleUID(context.Background(), orgID, ruleUID)
+			states := manager.GetStatesForRuleUID(t.Context(), orgID, ruleUID)
 
 			if tc.expectNilOnError {
 				require.Nil(t, states)
@@ -227,7 +227,7 @@ func TestStoreStateReader_Status(t *testing.T) {
 			})).Return(tc.instances, tc.dbError).Once()
 
 			reader := NewStoreStateReader(mockReader, log.NewNopLogger())
-			status, exists := reader.Status(context.Background(), key)
+			status, exists := reader.Status(t.Context(), key)
 
 			require.Equal(t, tc.expectExists, exists)
 			require.Equal(t, tc.expectHealth, status.Health)

@@ -81,7 +81,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 	t.Run("service gets contact points from AM config", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), redactedUser)
+		cps, err := sut.GetContactPoints(t.Context(), cpsQuery(1), redactedUser)
 		require.NoError(t, err)
 
 		require.Len(t, cps, 2)
@@ -93,7 +93,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 		cfg := createEncryptedConfigWithIntegrationVersion(t, secretsService, "UID1", schema.V0mimir1)
 		sut := createContactPointServiceSutWithConfigStore(t, secretsService, fakes.NewFakeAlertmanagerConfigStore(cfg))
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), redactedUser)
+		cps, err := sut.GetContactPoints(t.Context(), cpsQuery(1), redactedUser)
 		require.NoError(t, err)
 
 		require.Len(t, cps, 1)
@@ -108,7 +108,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 		contactPoint.UID = "UID1"
 		contactPoint.Name = "grafana-default-email"
 
-		err := sut.UpdateContactPoint(context.Background(), 1, adminUser, contactPoint, models.ProvenanceNone)
+		err := sut.UpdateContactPoint(t.Context(), 1, adminUser, contactPoint, models.ProvenanceNone)
 
 		require.ErrorIs(t, err, ErrNotFound)
 		require.Nil(t, configStore.LastSaveCommand)
@@ -119,7 +119,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 		configStore := fakes.NewFakeAlertmanagerConfigStore(cfg)
 		sut := createContactPointServiceSutWithConfigStore(t, secretsService, configStore)
 
-		err := sut.DeleteContactPoint(context.Background(), 1, adminUser, "UID1")
+		err := sut.DeleteContactPoint(t.Context(), 1, adminUser, "UID1")
 
 		require.ErrorIs(t, err, ErrNotFound)
 		require.Nil(t, configStore.LastSaveCommand)
@@ -130,7 +130,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 		sut := createContactPointServiceSutWithConfigStore(t, secretsService, configStore)
 
 		for range 2 {
-			require.NoError(t, sut.DeleteContactPoint(context.Background(), 1, adminUser, "missing"))
+			require.NoError(t, sut.DeleteContactPoint(t.Context(), 1, adminUser, "missing"))
 		}
 	})
 
@@ -141,7 +141,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 		}
 		sut := createContactPointServiceSutWithConfigStore(t, secretsService, cfgStore)
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), redactedUser)
+		cps, err := sut.GetContactPoints(t.Context(), cpsQuery(1), redactedUser)
 		require.NoError(t, err)
 		require.NotNil(t, cps)
 		require.Empty(t, cps)
@@ -150,7 +150,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 	t.Run("service filters contact points by name", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, "slack receiver"), redactedUser)
+		cps, err := sut.GetContactPoints(t.Context(), cpsQueryWithName(1, "slack receiver"), redactedUser)
 		require.NoError(t, err)
 
 		require.Len(t, cps, 1)
@@ -160,7 +160,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 	t.Run("service filters contact points by name, returns empty when no match", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, "unknown"), redactedUser)
+		cps, err := sut.GetContactPoints(t.Context(), cpsQueryWithName(1, "unknown"), redactedUser)
 		require.NoError(t, err)
 
 		require.Len(t, cps, 0)
@@ -170,10 +170,10 @@ func TestIntegrationContactPointService(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
 
-		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		_, err := sut.CreateContactPoint(t.Context(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), redactedUser)
+		cps, err := sut.GetContactPoints(t.Context(), cpsQuery(1), redactedUser)
 		require.NoError(t, err)
 		require.Len(t, cps, 3)
 		require.Equal(t, "test-contact-point", cps[2].Name)
@@ -186,10 +186,10 @@ func TestIntegrationContactPointService(t *testing.T) {
 		newCp := createTestContactPoint()
 		newCp.UID = customUID
 
-		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		_, err := sut.CreateContactPoint(t.Context(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), redactedUser)
+		cps, err := sut.GetContactPoints(t.Context(), cpsQueryWithName(1, newCp.Name), redactedUser)
 		require.NoError(t, err)
 		require.Len(t, cps, 1)
 		require.Equal(t, customUID, cps[0].UID)
@@ -201,10 +201,10 @@ func TestIntegrationContactPointService(t *testing.T) {
 		newCp := createTestContactPoint()
 		newCp.UID = customUID
 
-		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		_, err := sut.CreateContactPoint(t.Context(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		_, err = sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		_, err = sut.CreateContactPoint(t.Context(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.Error(t, err)
 	})
 
@@ -238,7 +238,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				newCp := createTestContactPoint()
 				tc.cp(&newCp)
-				_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+				_, err := sut.CreateContactPoint(t.Context(), 1, redactedUser, newCp, models.ProvenanceAPI)
 				require.ErrorIs(t, err, ErrValidation)
 			})
 		}
@@ -249,11 +249,11 @@ func TestIntegrationContactPointService(t *testing.T) {
 		newCp := createTestContactPoint()
 		newCp.Type = "Slack"
 
-		created, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		created, err := sut.CreateContactPoint(t.Context(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 		assert.EqualValues(t, slack.Type, created.Type)
 
-		got, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), redactedUser)
+		got, err := sut.GetContactPoints(t.Context(), cpsQueryWithName(1, newCp.Name), redactedUser)
 		require.NoError(t, err)
 		require.Len(t, got, 1)
 		assert.EqualValues(t, slack.Type, got[0].Type)
@@ -292,7 +292,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 
 		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
-		newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		newCp, err := sut.CreateContactPoint(t.Context(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		for _, tc := range testCases {
@@ -306,7 +306,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 					Provenance:            newCp.Provenance,
 				}
 				tc.cp(&cp)
-				err = sut.UpdateContactPoint(context.Background(), 1, adminUser, cp, models.ProvenanceAPI)
+				err = sut.UpdateContactPoint(t.Context(), 1, adminUser, cp, models.ProvenanceAPI)
 				require.ErrorIs(t, err, ErrValidation)
 			})
 		}
@@ -315,14 +315,14 @@ func TestIntegrationContactPointService(t *testing.T) {
 	t.Run("update accepts contact points with type in another case", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
-		newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		newCp, err := sut.CreateContactPoint(t.Context(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 		newCp.Type = "Slack"
 
-		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
+		err = sut.UpdateContactPoint(t.Context(), 1, adminUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		got, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), redactedUser)
+		got, err := sut.GetContactPoints(t.Context(), cpsQueryWithName(1, newCp.Name), redactedUser)
 		require.NoError(t, err)
 		require.Len(t, got, 1)
 		assert.EqualValues(t, slack.Type, got[0].Type)
@@ -340,7 +340,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 		oldName := newCp.Name
 		newName := "new-name"
 
-		newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		newCp, err := sut.CreateContactPoint(t.Context(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		newCp.Name = newName
@@ -350,7 +350,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 			return nil
 		}
 
-		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
+		err = sut.UpdateContactPoint(t.Context(), 1, adminUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		parsed, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(store.LastSaveCommand.AlertmanagerConfiguration))
@@ -387,10 +387,10 @@ func TestIntegrationContactPointService(t *testing.T) {
 				sut := createContactPointServiceSutWithConfigStore(t, secretsService, store)
 				sut.receiverService = &fakeReceiverService{}
 
-				cp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestContactPoint(), models.ProvenanceAPI)
+				cp, err := sut.CreateContactPoint(t.Context(), 1, redactedUser, createTestContactPoint(), models.ProvenanceAPI)
 				require.NoError(t, err)
 				if tc.split {
-					_, err = sut.CreateContactPoint(context.Background(), 1, adminUser, createTestContactPoint(), models.ProvenanceAPI)
+					_, err = sut.CreateContactPoint(t.Context(), 1, adminUser, createTestContactPoint(), models.ProvenanceAPI)
 					require.NoError(t, err)
 				}
 				if tc.rename {
@@ -437,11 +437,11 @@ func TestIntegrationContactPointService(t *testing.T) {
 				sut := createContactPointServiceSutWithConfigStore(t, secretsService, store)
 				sut.receiverService = &fakeReceiverService{}
 
-				cp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestContactPoint(), models.ProvenanceAPI)
+				cp, err := sut.CreateContactPoint(t.Context(), 1, redactedUser, createTestContactPoint(), models.ProvenanceAPI)
 				require.NoError(t, err)
 				if tc.rename {
 					// Share the receiver with another integration so that renaming creates a new one.
-					_, err = sut.CreateContactPoint(context.Background(), 1, adminUser, createTestContactPoint(), models.ProvenanceAPI)
+					_, err = sut.CreateContactPoint(t.Context(), 1, adminUser, createTestContactPoint(), models.ProvenanceAPI)
 					require.NoError(t, err)
 					cp.Name = "new-name"
 				}
@@ -477,7 +477,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 	t.Run("default provenance of contact points is none", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), redactedUser)
+		cps, err := sut.GetContactPoints(t.Context(), cpsQuery(1), redactedUser)
 		require.NoError(t, err)
 
 		require.Equal(t, models.ProvenanceNone, models.Provenance(cps[0].Provenance))
@@ -532,19 +532,19 @@ func TestIntegrationContactPointService(t *testing.T) {
 				sut := createContactPointServiceSut(t, secretsService)
 				newCp := createTestContactPoint()
 
-				newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, test.from)
+				newCp, err := sut.CreateContactPoint(t.Context(), 1, redactedUser, newCp, test.from)
 				require.NoError(t, err)
 
-				cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), redactedUser)
+				cps, err := sut.GetContactPoints(t.Context(), cpsQueryWithName(1, newCp.Name), redactedUser)
 				require.NoError(t, err)
 				require.Equal(t, newCp.UID, cps[0].UID)
 				require.Equal(t, test.from, models.Provenance(cps[0].Provenance))
 
-				err = sut.UpdateContactPoint(context.Background(), 1, adminUser, newCp, test.to)
+				err = sut.UpdateContactPoint(t.Context(), 1, adminUser, newCp, test.to)
 				if test.errNil {
 					require.NoError(t, err)
 
-					cps, err = sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), redactedUser)
+					cps, err = sut.GetContactPoints(t.Context(), cpsQueryWithName(1, newCp.Name), redactedUser)
 					require.NoError(t, err)
 					require.Equal(t, newCp.UID, cps[0].UID)
 					require.Equal(t, test.to, models.Provenance(cps[0].Provenance))
@@ -561,11 +561,11 @@ func TestIntegrationContactPointService(t *testing.T) {
 		fakeConfigStore := fakes.NewFakeAlertmanagerConfigStore(cfg)
 		sut := createContactPointServiceSutWithConfigStore(t, secretsService, fakeConfigStore)
 		newCp := createTestContactPoint()
-		config, err := sut.configStore.Get(context.Background(), 1)
+		config, err := sut.configStore.Get(t.Context(), 1)
 		require.NoError(t, err)
 		expectedConcurrencyToken := config.ConcurrencyToken
 
-		_, err = sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		_, err = sut.CreateContactPoint(t.Context(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		intercepted := fakeConfigStore.LastSaveCommand
@@ -606,7 +606,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 				settings, _ := simplejson.NewJson([]byte(tc.settingsJSON))
 				newCp.Settings = settings
 
-				_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+				_, err := sut.CreateContactPoint(t.Context(), 1, redactedUser, newCp, models.ProvenanceAPI)
 				if tc.expectedError == "" {
 					require.NoError(t, err)
 				} else {
@@ -617,7 +617,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 
 				q := cpsQueryWithName(1, newCp.Name)
 				q.Decrypt = true
-				cps, err := sut.GetContactPoints(context.Background(), q, decryptedUser)
+				cps, err := sut.GetContactPoints(t.Context(), q, decryptedUser)
 				require.NoError(t, err)
 				require.Len(t, cps, 1)
 				require.Equal(t, tc.expectedValue, cps[0].Settings.Get("token").MustString())
@@ -629,7 +629,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 		sut.emailValidator = notifier.NewFakeEmailValidator(t, nil)
 
-		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
+		_, err := sut.CreateContactPoint(t.Context(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
 		require.NoError(t, err)
 	})
 
@@ -637,17 +637,17 @@ func TestIntegrationContactPointService(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 		sut.emailValidator = notifier.NewFakeEmailValidator(t, fmt.Errorf("not an org member"))
 
-		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
+		_, err := sut.CreateContactPoint(t.Context(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
 		require.Error(t, err)
 	})
 
 	t.Run("email contact point update fails when validator rejects email", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
-		created, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
+		created, err := sut.CreateContactPoint(t.Context(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		sut.emailValidator = notifier.NewFakeEmailValidator(t, fmt.Errorf("not an org member"))
-		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, created, models.ProvenanceAPI)
+		err = sut.UpdateContactPoint(t.Context(), 1, adminUser, created, models.ProvenanceAPI)
 		require.Error(t, err)
 	})
 }
@@ -672,7 +672,7 @@ func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
 	t.Run("GetContactPoints gets redacted contact points by default", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), redactedUser)
+		cps, err := sut.GetContactPoints(t.Context(), cpsQuery(1), redactedUser)
 		require.NoError(t, err)
 
 		require.Len(t, cps, 2)
@@ -685,7 +685,7 @@ func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
 
 		q := cpsQuery(1)
 		q.Decrypt = true
-		_, err := sut.GetContactPoints(context.Background(), q, redactedUser)
+		_, err := sut.GetContactPoints(t.Context(), q, redactedUser)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 	t.Run("GetContactPoints errors when Decrypt = true and user is nil", func(t *testing.T) {
@@ -693,7 +693,7 @@ func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
 
 		q := cpsQuery(1)
 		q.Decrypt = true
-		_, err := sut.GetContactPoints(context.Background(), q, nil)
+		_, err := sut.GetContactPoints(t.Context(), q, nil)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 
@@ -703,7 +703,7 @@ func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
 		expectedName := "slack receiver"
 		q := cpsQueryWithName(1, expectedName)
 		q.Decrypt = true
-		cps, err := sut.GetContactPoints(context.Background(), q, decryptedUser)
+		cps, err := sut.GetContactPoints(t.Context(), q, decryptedUser)
 		require.NoError(t, err)
 
 		require.Len(t, cps, 1)
@@ -749,14 +749,14 @@ func TestIntegrationContactPointServiceProtectedFields(t *testing.T) {
 			Settings: settings,
 		}
 
-		created, err := sut.CreateContactPoint(context.Background(), 1, basicUser, newCp, models.ProvenanceAPI)
+		created, err := sut.CreateContactPoint(t.Context(), 1, basicUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		// Try to update the protected field 'url'
 		updatedSettings, _ := simplejson.NewJson([]byte(`{"url":"https://malicious.com/webhook"}`))
 		created.Settings = updatedSettings
 
-		err = sut.UpdateContactPoint(context.Background(), 1, basicUser, created, models.ProvenanceAPI)
+		err = sut.UpdateContactPoint(t.Context(), 1, basicUser, created, models.ProvenanceAPI)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "user is not authorized")
 	})
@@ -772,14 +772,14 @@ func TestIntegrationContactPointServiceProtectedFields(t *testing.T) {
 			Settings: settings,
 		}
 
-		created, err := sut.CreateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
+		created, err := sut.CreateContactPoint(t.Context(), 1, adminUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		// Update the protected field 'url' with admin user
 		updatedSettings, _ := simplejson.NewJson([]byte(`{"url":"https://newurl.com/webhook"}`))
 		created.Settings = updatedSettings
 
-		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, created, models.ProvenanceAPI)
+		err = sut.UpdateContactPoint(t.Context(), 1, adminUser, created, models.ProvenanceAPI)
 		require.NoError(t, err)
 	})
 
@@ -794,14 +794,14 @@ func TestIntegrationContactPointServiceProtectedFields(t *testing.T) {
 			Settings: settings,
 		}
 
-		created, err := sut.CreateContactPoint(context.Background(), 1, basicUser, newCp, models.ProvenanceAPI)
+		created, err := sut.CreateContactPoint(t.Context(), 1, basicUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		// Update non-protected field 'recipient' - keep token as redacted
 		updatedSettings, _ := simplejson.NewJson([]byte(`{"recipient":"#new-channel","token":"[REDACTED]"}`))
 		created.Settings = updatedSettings
 
-		err = sut.UpdateContactPoint(context.Background(), 1, basicUser, created, models.ProvenanceAPI)
+		err = sut.UpdateContactPoint(t.Context(), 1, basicUser, created, models.ProvenanceAPI)
 		require.NoError(t, err)
 	})
 
@@ -816,14 +816,14 @@ func TestIntegrationContactPointServiceProtectedFields(t *testing.T) {
 			Settings: settings,
 		}
 
-		created, err := sut.CreateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
+		created, err := sut.CreateContactPoint(t.Context(), 1, adminUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		// Try to update with nil user (should fail for any protected field change)
 		updatedSettings, _ := simplejson.NewJson([]byte(`{"url":"https://new-url.com/webhook"}`))
 		created.Settings = updatedSettings
 
-		err = sut.UpdateContactPoint(context.Background(), 1, nil, created, models.ProvenanceAPI)
+		err = sut.UpdateContactPoint(t.Context(), 1, nil, created, models.ProvenanceAPI)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "user is required")
 	})
@@ -839,7 +839,7 @@ func TestIntegrationContactPointServiceProtectedFields(t *testing.T) {
 			Settings: settings,
 		}
 
-		created, err := sut.CreateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
+		created, err := sut.CreateContactPoint(t.Context(), 1, adminUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		// Try to rename AND change protected field
@@ -847,7 +847,7 @@ func TestIntegrationContactPointServiceProtectedFields(t *testing.T) {
 		updatedSettings, _ := simplejson.NewJson([]byte(`{"url":"https://malicious.com/webhook"}`))
 		created.Settings = updatedSettings
 
-		err = sut.UpdateContactPoint(context.Background(), 1, basicUser, created, models.ProvenanceAPI)
+		err = sut.UpdateContactPoint(t.Context(), 1, basicUser, created, models.ProvenanceAPI)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "user is not authorized")
 	})
@@ -875,7 +875,7 @@ func TestCheckProtectedFields_HasUpdateProtectedError(t *testing.T) {
 					return false, tc.hasErr
 				},
 			}}
-			err := svc.checkProtectedFields(context.Background(), usr, "receiver-uid", typeSchema, cp, cp)
+			err := svc.checkProtectedFields(t.Context(), usr, "receiver-uid", typeSchema, cp, cp)
 			if tc.expectedErr != "" {
 				require.ErrorIs(t, err, tc.hasErr)
 				require.ErrorContains(t, err, tc.expectedErr)
@@ -1024,7 +1024,7 @@ func TestIntegrationAuthorization(t *testing.T) {
 	integration3 := GrafanaIntegrationConfigToEmbeddedContactPoint(&g3, models.ProvenanceAPI)
 	// Receivers are identified by a UID that need not be derived from their name, so look it up in the stored configuration.
 	uidOf := func(name string) string {
-		rev, err := sut.configStore.Get(context.Background(), user.OrgID)
+		rev, err := sut.configStore.Get(t.Context(), user.OrgID)
 		require.NoError(t, err)
 		for uid, r := range rev.Config.Receivers {
 			if r.Name == name {
@@ -1041,7 +1041,7 @@ func TestIntegrationAuthorization(t *testing.T) {
 				return nil
 			}
 			var err error
-			integration1, err = sut.CreateContactPoint(context.Background(), user.OrgID, user, integration1, models.ProvenanceAPI)
+			integration1, err = sut.CreateContactPoint(t.Context(), user.OrgID, user, integration1, models.ProvenanceAPI)
 			require.NoError(t, err)
 			assert.Len(t, authz.Calls, 1)
 			assert.Equal(t, []string{"AuthorizeCreate"}, authz.Calls.Methods())
@@ -1054,10 +1054,10 @@ func TestIntegrationAuthorization(t *testing.T) {
 				return nil
 			}
 			var err error
-			integration2, err = sut.CreateContactPoint(context.Background(), user.OrgID, user, integration2, models.ProvenanceAPI)
+			integration2, err = sut.CreateContactPoint(t.Context(), user.OrgID, user, integration2, models.ProvenanceAPI)
 			require.NoError(t, err)
 			assert.Equal(t, []string{"AuthorizeUpdateByUID"}, authz.Calls.Methods())
-			integration3, err = sut.CreateContactPoint(context.Background(), user.OrgID, user, integration3, models.ProvenanceAPI)
+			integration3, err = sut.CreateContactPoint(t.Context(), user.OrgID, user, integration3, models.ProvenanceAPI)
 			require.NoError(t, err)
 			assert.Equal(t, []string{"AuthorizeUpdateByUID", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
 		})
@@ -1078,7 +1078,7 @@ func TestIntegrationAuthorization(t *testing.T) {
 				assert.Equal(t, uidOf(receiverA), uid)
 				return nil
 			}
-			err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
+			err := sut.UpdateContactPoint(t.Context(), user.OrgID, user, newVersion, models.ProvenanceAPI)
 			require.NoError(t, err)
 			assert.Equal(t, []string{"HasUpdateProtected", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
 			integration2 = newVersion
@@ -1097,7 +1097,7 @@ func TestIntegrationAuthorization(t *testing.T) {
 				}
 				newVersion := integration1
 				newVersion.Name = receiverB
-				err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
+				err := sut.UpdateContactPoint(t.Context(), user.OrgID, user, newVersion, models.ProvenanceAPI)
 				require.NoError(t, err)
 				assert.ElementsMatch(t, []string{"HasUpdateProtected", "AuthorizeUpdateByUID", "AuthorizeCreate"}, authz.Calls.Methods())
 				integration1 = newVersion
@@ -1112,7 +1112,7 @@ func TestIntegrationAuthorization(t *testing.T) {
 				}
 				newVersion := integration2
 				newVersion.Name = receiverB
-				err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
+				err := sut.UpdateContactPoint(t.Context(), user.OrgID, user, newVersion, models.ProvenanceAPI)
 				require.NoError(t, err)
 				assert.ElementsMatch(t, []string{"HasUpdateProtected", "AuthorizeUpdateByUID", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
 				assert.ElementsMatch(t, []string{uidOf(receiverA), uidOf(receiverB)}, checked)
@@ -1129,7 +1129,7 @@ func TestIntegrationAuthorization(t *testing.T) {
 				}
 				newVersion := integration3
 				newVersion.Name = receiverC
-				err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
+				err := sut.UpdateContactPoint(t.Context(), user.OrgID, user, newVersion, models.ProvenanceAPI)
 				require.NoError(t, err)
 				assert.ElementsMatch(t, []string{"HasUpdateProtected", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
 				assert.Equal(t, uidA, uidOf(receiverC), "the receiver should keep its UID when renamed")
@@ -1149,7 +1149,7 @@ func TestIntegrationAuthorization(t *testing.T) {
 				}
 				newVersion := integration3
 				newVersion.Name = receiverB
-				err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
+				err := sut.UpdateContactPoint(t.Context(), user.OrgID, user, newVersion, models.ProvenanceAPI)
 				require.NoError(t, err)
 				assert.ElementsMatch(t, []string{"HasUpdateProtected", "AuthorizeDeleteByUID", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
 				integration3 = newVersion
@@ -1164,9 +1164,9 @@ func TestIntegrationAuthorization(t *testing.T) {
 				assert.Equal(t, uidOf(receiverB), uid)
 				return nil
 			}
-			err := sut.DeleteContactPoint(context.Background(), user.OrgID, user, integration3.UID)
+			err := sut.DeleteContactPoint(t.Context(), user.OrgID, user, integration3.UID)
 			require.NoError(t, err)
-			err = sut.DeleteContactPoint(context.Background(), user.OrgID, user, integration2.UID)
+			err = sut.DeleteContactPoint(t.Context(), user.OrgID, user, integration2.UID)
 			require.NoError(t, err)
 			assert.ElementsMatch(t, []string{"AuthorizeUpdateByUID", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
 		})
@@ -1177,7 +1177,7 @@ func TestIntegrationAuthorization(t *testing.T) {
 				assert.Equal(t, uidOf(receiverB), uid)
 				return nil
 			}
-			err := sut.DeleteContactPoint(context.Background(), user.OrgID, user, integration1.UID)
+			err := sut.DeleteContactPoint(t.Context(), user.OrgID, user, integration1.UID)
 			require.NoError(t, err)
 			assert.ElementsMatch(t, []string{"AuthorizeDeleteByUID"}, authz.Calls.Methods())
 		})
@@ -2212,7 +2212,7 @@ func TestValidateContactPointAllowedIntegrations(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateContactPoint(context.Background(), newCP(tc.integrationType), decryptFn, tc.allowed)
+			err := ValidateContactPoint(t.Context(), newCP(tc.integrationType), decryptFn, tc.allowed)
 			if tc.wantErr == "" {
 				require.NoError(t, err)
 			} else {
@@ -2235,7 +2235,7 @@ func TestValidateContactPoint_DuplicateSecrets(t *testing.T) {
 		Settings: settings,
 	}
 
-	err = ValidateContactPoint(context.Background(), contactPoint, decryptFn, nil)
+	err = ValidateContactPoint(t.Context(), contactPoint, decryptFn, nil)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "duplicate keys found for secret field")
 }

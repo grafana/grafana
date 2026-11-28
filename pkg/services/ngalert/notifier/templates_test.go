@@ -1,7 +1,6 @@
 package notifier
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -284,7 +283,7 @@ CommonAnnotations: {{ range .CommonAnnotations.SortedPairs }}{{ .Name }}={{ .Val
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			res, err := am.TestTemplate(context.Background(), test.input)
+			res, err := am.TestTemplate(t.Context(), test.input)
 			require.NoError(t, err)
 			assert.Equal(t, test.expected, *res)
 		})

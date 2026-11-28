@@ -2,7 +2,6 @@ package ngalert
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -42,7 +41,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+		_, err := configureHistorianBackend(t.Context(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.ErrorContains(t, err, "unrecognized")
 	})
@@ -58,7 +57,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+		_, err := configureHistorianBackend(t.Context(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.ErrorContains(t, err, "multi-backend target")
 		require.ErrorContains(t, err, "unrecognized")
@@ -76,7 +75,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+		_, err := configureHistorianBackend(t.Context(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.ErrorContains(t, err, "multi-backend target")
 		require.ErrorContains(t, err, "unrecognized")
@@ -97,7 +96,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+		h, err := configureHistorianBackend(t.Context(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -131,7 +130,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+		h, err := configureHistorianBackend(t.Context(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, h)
 
@@ -153,7 +152,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 			},
 		}
 
-		errCh := h.Record(context.Background(), rule, states)
+		errCh := h.Record(t.Context(), rule, states)
 		err = <-errCh
 		require.NoError(t, err)
 
@@ -188,7 +187,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+		_, err := configureHistorianBackend(t.Context(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.Error(t, err)
 		require.ErrorContains(t, err, "datasource UID must not be empty")
@@ -206,7 +205,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+		h, err := configureHistorianBackend(t.Context(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -223,7 +222,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+		h, err := configureHistorianBackend(t.Context(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -246,7 +245,7 @@ grafana_alerting_state_history_info{backend="annotations"} 1
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+		h, err := configureHistorianBackend(t.Context(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -275,7 +274,7 @@ func TestConfigureNotificationHistorian(t *testing.T) {
 			},
 		}
 
-		h, err := configureNotificationHistorian(context.Background(), ft, cfg, met, logger, tracer)
+		h, err := configureNotificationHistorian(t.Context(), ft, cfg, met, logger, tracer)
 		require.NotNil(t, h)
 		require.NoError(t, err)
 
@@ -313,7 +312,7 @@ grafana_alerting_notification_history_info 1
 				met := metrics.NewNotificationHistorianMetrics(reg)
 				logger := log.NewNopLogger()
 				tracer := tracing.InitializeTracerForTest()
-				h, err := configureNotificationHistorian(context.Background(), tc.ft, tc.cfg, met, logger, tracer)
+				h, err := configureNotificationHistorian(t.Context(), tc.ft, tc.cfg, met, logger, tracer)
 				require.Nil(t, h)
 				require.NoError(t, err)
 

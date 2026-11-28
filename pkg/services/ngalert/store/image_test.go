@@ -1,7 +1,6 @@
 package store_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -23,7 +22,7 @@ func TestIntegrationSaveAndGetImage(t *testing.T) {
 		return time.Now().Truncate(time.Second)
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	_, dbstore, _ := tests.SetupTestEnv(t, baseIntervalSeconds)
 
 	// create an image with a path on disk
@@ -92,7 +91,7 @@ func TestIntegrationGetImages(t *testing.T) {
 		return time.Now().Truncate(time.Second)
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	_, dbstore, _ := tests.SetupTestEnv(t, baseIntervalSeconds)
 
 	// create an image with a path on disk
@@ -172,7 +171,7 @@ func TestIntegrationDeleteExpiredImages(t *testing.T) {
 		return time.Now().Truncate(time.Second)
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	_, dbstore, _ := tests.SetupTestEnv(t, baseIntervalSeconds)
 
 	// create two images

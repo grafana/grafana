@@ -268,14 +268,14 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 			With(models.RuleGen.WithOrgID(1)).
 			With(models.RuleGen.WithPrometheusOriginalRuleDefinition("123")).
 			GenerateRef()
-		ruleStore.PutRule(context.Background(), rule)
+		ruleStore.PutRule(t.Context(), rule)
 
 		rc := createRequestCtx()
 		response := srv.RouteConvertPrometheusPostRuleGroup(rc, fldr.Title, simpleGroup)
 		require.Equal(t, http.StatusAccepted, response.Status())
 
 		// Get the rules
-		remaining, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+		remaining, err := ruleStore.ListAlertRules(t.Context(), &models.ListAlertRulesQuery{
 			OrgID: 1,
 		})
 		require.NoError(t, err)
@@ -306,7 +306,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 			require.Equal(t, expectedDef, promDefinition)
 
 			// Verify provenance was set to ProvenanceConvertedPrometheus
-			prov, err := provenanceStore.GetProvenance(context.Background(), r, 1)
+			prov, err := provenanceStore.GetProvenance(t.Context(), r, 1)
 			require.NoError(t, err)
 			require.Equal(t, models.ProvenanceConvertedPrometheus, prov)
 		}
@@ -330,9 +330,9 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 			With(models.RuleGen.WithOrgID(1)).
 			With(models.RuleGen.WithPrometheusOriginalRuleDefinition("123")).
 			GenerateRef()
-		ruleStore.PutRule(context.Background(), rule)
+		ruleStore.PutRule(t.Context(), rule)
 		// mark the rule as provisioned
-		err := provenanceStore.SetProvenance(context.Background(), rule, 1, models.ProvenanceAPI)
+		err := provenanceStore.SetProvenance(t.Context(), rule, 1, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		rc := createRequestCtx()
@@ -340,7 +340,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		require.Equal(t, http.StatusConflict, response.Status())
 
 		// Verify the rule is still present
-		remaining, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+		remaining, err := ruleStore.GetAlertRuleByUID(t.Context(), &models.GetAlertRuleByUIDQuery{
 			UID:   rule.UID,
 			OrgID: rule.OrgID,
 		})
@@ -456,7 +456,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
 		require.Equal(t, http.StatusAccepted, response.Status())
 
-		rules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+		rules, err := ruleStore.ListAlertRules(t.Context(), &models.ListAlertRulesQuery{
 			OrgID: 1,
 		})
 		require.NoError(t, err)
@@ -496,7 +496,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
 		require.Equal(t, http.StatusAccepted, response.Status())
 
-		rules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+		rules, err := ruleStore.ListAlertRules(t.Context(), &models.ListAlertRulesQuery{
 			OrgID: 1,
 		})
 		require.NoError(t, err)
@@ -565,7 +565,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 	t.Run("exec err state header", func(t *testing.T) {
 		errStatesByTitle := func(t *testing.T, ruleStore *fakes.RuleStore) map[string]models.ExecutionErrorState {
 			t.Helper()
-			rules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{OrgID: 1})
+			rules, err := ruleStore.ListAlertRules(t.Context(), &models.ListAlertRulesQuery{OrgID: 1})
 			require.NoError(t, err)
 			result := make(map[string]models.ExecutionErrorState, len(rules))
 			for _, r := range rules {
@@ -745,7 +745,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		require.Equal(t, http.StatusAccepted, response.Status())
 
 		// Get the created rules
-		rules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+		rules, err := ruleStore.ListAlertRules(t.Context(), &models.ListAlertRulesQuery{
 			OrgID: 1,
 		})
 		require.NoError(t, err)
@@ -753,7 +753,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 
 		// Verify provenance was set to ProvenanceNone
 		for _, r := range rules {
-			prov, err := provenanceStore.GetProvenance(context.Background(), r, 1)
+			prov, err := provenanceStore.GetProvenance(t.Context(), r, 1)
 			require.NoError(t, err)
 			require.Equal(t, models.ProvenanceNone, prov, "Provenance should be ProvenanceNone when X-Disable-Provenance header is set")
 			// Prometheus rule definition should not be saved when provenance is disabled
@@ -861,7 +861,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
 		require.Equal(t, http.StatusAccepted, response.Status())
 
-		remaining, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+		remaining, err := ruleStore.ListAlertRules(t.Context(), &models.ListAlertRulesQuery{
 			OrgID: 1,
 		})
 		require.NoError(t, err)
@@ -982,7 +982,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 				}
 
 				if tc.expectedNotificationSettings != nil {
-					createdRules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+					createdRules, err := ruleStore.ListAlertRules(t.Context(), &models.ListAlertRulesQuery{
 						OrgID: 1,
 					})
 					require.NoError(t, err)
@@ -1049,7 +1049,7 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 			With(models.RuleGen.WithIntervalSeconds(60)).
 			With(models.RuleGen.WithPrometheusOriginalRuleDefinition(string(promRuleYAML))).
 			GenerateRef()
-		ruleStore.PutRule(context.Background(), rule)
+		ruleStore.PutRule(t.Context(), rule)
 
 		// Create a rule in another group
 		groupKeyNotFromProm := models.GenerateGroupKey(rc.OrgID)
@@ -1060,7 +1060,7 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 			With(models.RuleGen.WithTitle("in another group")).
 			With(models.RuleGen.WithIntervalSeconds(60)).
 			GenerateRef()
-		ruleStore.PutRule(context.Background(), ruleInOtherFolder)
+		ruleStore.PutRule(t.Context(), ruleInOtherFolder)
 
 		t.Run("YAML response", func(t *testing.T) {
 			getResp := srv.RouteConvertPrometheusGetRuleGroup(rc, fldr.Title, groupKey.RuleGroup)
@@ -1169,7 +1169,7 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 				With(models.RuleGen.WithIntervalSeconds(60)).
 				With(models.RuleGen.WithPrometheusOriginalRuleDefinition(string(promRuleYAML))).
 				GenerateRef()
-			ruleStore.PutRule(context.Background(), rule)
+			ruleStore.PutRule(t.Context(), rule)
 		}
 
 		t.Run("YAML response", func(t *testing.T) {
@@ -1316,7 +1316,7 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 				With(models.RuleGen.WithIntervalSeconds(60)).
 				With(models.RuleGen.WithPrometheusOriginalRuleDefinition(string(promRuleYAML))).
 				GenerateRef()
-			ruleStore.PutRule(context.Background(), rule)
+			ruleStore.PutRule(t.Context(), rule)
 		}
 
 		t.Run("YAML response", func(t *testing.T) {
@@ -1474,7 +1474,7 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 				With(models.RuleGen.WithOrgID(1)).
 				With(models.RuleGen.WithPrometheusOriginalRuleDefinition(promDefinition)).
 				GenerateRef()
-			ruleStore.PutRule(context.Background(), rule)
+			ruleStore.PutRule(t.Context(), rule)
 
 			return srv, ruleStore, fldr, rule
 		}
@@ -1489,7 +1489,7 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 				With(models.RuleGen.WithGroupName(otherGroupName)).
 				With(models.RuleGen.WithPrometheusOriginalRuleDefinition("other prometheus definition")).
 				GenerateRef()
-			ruleStore.PutRule(context.Background(), otherRule)
+			ruleStore.PutRule(t.Context(), otherRule)
 
 			rc := createRequestCtx()
 
@@ -1497,7 +1497,7 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 			require.Equal(t, http.StatusAccepted, response.Status())
 
 			// Verify the rule in the specified group was deleted
-			remaining, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			remaining, err := ruleStore.GetAlertRuleByUID(t.Context(), &models.GetAlertRuleByUIDQuery{
 				UID:   rule.UID,
 				OrgID: rule.OrgID,
 			})
@@ -1505,7 +1505,7 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 			require.Nil(t, remaining)
 
 			// Verify the rule in the other group still exists
-			remainingOther, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			remainingOther, err := ruleStore.GetAlertRuleByUID(t.Context(), &models.GetAlertRuleByUIDQuery{
 				UID:   otherRule.UID,
 				OrgID: otherRule.OrgID,
 			})
@@ -1524,15 +1524,15 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 				With(models.RuleGen.WithOrgID(1)).
 				With(models.RuleGen.WithPrometheusOriginalRuleDefinition("prometheus definition")).
 				GenerateRef()
-			ruleStore.PutRule(context.Background(), rule2)
-			err := provenanceStore.SetProvenance(context.Background(), rule2, 1, models.ProvenanceAPI)
+			ruleStore.PutRule(t.Context(), rule2)
+			err := provenanceStore.SetProvenance(t.Context(), rule2, 1, models.ProvenanceAPI)
 			require.NoError(t, err)
 
 			response := srv.RouteConvertPrometheusDeleteNamespace(rc, fldr.Title)
 			require.Equal(t, http.StatusConflict, response.Status())
 
 			// Verify the rule is still present
-			remaining, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			remaining, err := ruleStore.GetAlertRuleByUID(t.Context(), &models.GetAlertRuleByUIDQuery{
 				UID:   rule.UID,
 				OrgID: rule.OrgID,
 			})
@@ -1545,7 +1545,7 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 			srv, ruleStore, fldr, rule := initNamespace("prometheus definition", withProvenanceStore(provenanceStore))
 
 			// Mark the rule as provisioned with API provenance
-			err := provenanceStore.SetProvenance(context.Background(), rule, 1, models.ProvenanceConvertedPrometheus)
+			err := provenanceStore.SetProvenance(t.Context(), rule, 1, models.ProvenanceConvertedPrometheus)
 			require.NoError(t, err)
 
 			rc := createRequestCtx()
@@ -1555,7 +1555,7 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 			require.Equal(t, http.StatusAccepted, response.Status())
 
 			// Verify the rule was deleted
-			remaining, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			remaining, err := ruleStore.GetAlertRuleByUID(t.Context(), &models.GetAlertRuleByUIDQuery{
 				UID:   rule.UID,
 				OrgID: rule.OrgID,
 			})
@@ -1609,7 +1609,7 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 				With(models.RuleGen.WithGroupName(groupName)).
 				With(models.RuleGen.WithPrometheusOriginalRuleDefinition(promDefinition)).
 				GenerateRef()
-			ruleStore.PutRule(context.Background(), rule)
+			ruleStore.PutRule(t.Context(), rule)
 
 			return srv, ruleStore, fldr, rule
 		}
@@ -1626,13 +1626,13 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 				With(models.RuleGen.WithGroupName(otherGroupName)).
 				With(models.RuleGen.WithPrometheusOriginalRuleDefinition("other prometheus definition")).
 				GenerateRef()
-			ruleStore.PutRule(context.Background(), otherRule)
+			ruleStore.PutRule(t.Context(), otherRule)
 
 			response := srv.RouteConvertPrometheusDeleteRuleGroup(rc, fldr.Title, groupName)
 			require.Equal(t, http.StatusAccepted, response.Status())
 
 			// Verify the rule was deleted
-			remaining, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			remaining, err := ruleStore.GetAlertRuleByUID(t.Context(), &models.GetAlertRuleByUIDQuery{
 				UID:   rule.UID,
 				OrgID: rule.OrgID,
 			})
@@ -1640,7 +1640,7 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 			require.Nil(t, remaining)
 
 			// Verify the otherRule from the "other-group" is still present
-			otherRuleRefreshed, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			otherRuleRefreshed, err := ruleStore.GetAlertRuleByUID(t.Context(), &models.GetAlertRuleByUIDQuery{
 				UID:   otherRule.UID,
 				OrgID: otherRule.OrgID,
 			})
@@ -1660,15 +1660,15 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 				With(models.RuleGen.WithGroupName(groupName)).
 				With(models.RuleGen.WithPrometheusOriginalRuleDefinition("prometheus definition")).
 				GenerateRef()
-			ruleStore.PutRule(context.Background(), rule2)
-			err := provenanceStore.SetProvenance(context.Background(), rule2, 1, models.ProvenanceAPI)
+			ruleStore.PutRule(t.Context(), rule2)
+			err := provenanceStore.SetProvenance(t.Context(), rule2, 1, models.ProvenanceAPI)
 			require.NoError(t, err)
 
 			response := srv.RouteConvertPrometheusDeleteRuleGroup(rc, fldr.Title, groupName)
 			require.Equal(t, http.StatusConflict, response.Status())
 
 			// Verify the rule is still present
-			remaining, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			remaining, err := ruleStore.GetAlertRuleByUID(t.Context(), &models.GetAlertRuleByUIDQuery{
 				UID:   rule.UID,
 				OrgID: rule.OrgID,
 			})
@@ -1681,7 +1681,7 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 			srv, ruleStore, fldr, rule := initGroup("prometheus definition", groupName, withProvenanceStore(provenanceStore))
 
 			// Mark the rule as provisioned with API provenance
-			err := provenanceStore.SetProvenance(context.Background(), rule, 1, models.ProvenanceConvertedPrometheus)
+			err := provenanceStore.SetProvenance(t.Context(), rule, 1, models.ProvenanceConvertedPrometheus)
 			require.NoError(t, err)
 
 			rc := createRequestCtx()
@@ -1691,7 +1691,7 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 			require.Equal(t, http.StatusAccepted, response.Status())
 
 			// Verify the rule was deleted
-			remaining, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			remaining, err := ruleStore.GetAlertRuleByUID(t.Context(), &models.GetAlertRuleByUIDQuery{
 				UID:   rule.UID,
 				OrgID: rule.OrgID,
 			})
@@ -1716,14 +1716,14 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 			With(models.RuleGen.WithOrgID(1)).
 			With(models.RuleGen.WithGroupName(groupName)).
 			GenerateRef()
-		ruleStore.PutRule(context.Background(), rule)
+		ruleStore.PutRule(t.Context(), rule)
 
 		// Attempt to delete via convert endpoint should return 404
 		response := srv.RouteConvertPrometheusDeleteRuleGroup(rc, fldr.Title, groupName)
 		require.Equal(t, http.StatusNotFound, response.Status())
 
 		// Verify the rule is still present
-		remaining, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+		remaining, err := ruleStore.GetAlertRuleByUID(t.Context(), &models.GetAlertRuleByUIDQuery{
 			UID:   rule.UID,
 			OrgID: rule.OrgID,
 		})
@@ -1926,7 +1926,7 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 		require.Len(t, rules, 4)
 
 		for _, rule := range rules {
-			parentFolders, err := folderService.GetParents(context.Background(), folder.GetParentsQuery{UID: rule.NamespaceUID, OrgID: 1})
+			parentFolders, err := folderService.GetParents(t.Context(), folder.GetParentsQuery{UID: rule.NamespaceUID, OrgID: 1})
 			require.NoError(t, err)
 			require.Len(t, parentFolders, 1)
 			require.Equal(t, fldr.UID, parentFolders[0].UID)
@@ -2081,7 +2081,7 @@ func createRequestCtx() *contextmodel.ReqContext {
 func assertRulesUseDatasource(t *testing.T, ruleStore *fakes.RuleStore, expectedDatasourceUID string, expectedRuleCount int) {
 	t.Helper()
 
-	rules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+	rules, err := ruleStore.ListAlertRules(t.Context(), &models.ListAlertRulesQuery{
 		OrgID: 1,
 	})
 	require.NoError(t, err)

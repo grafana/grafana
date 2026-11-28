@@ -1,7 +1,6 @@
 package merge
 
 import (
-	"context"
 	_ "embed"
 	"encoding/json"
 	"testing"
@@ -460,7 +459,7 @@ func TestMergeExtraConfig(t *testing.T) {
 
 	t.Run("should merge all resources, no renames", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
-		config, _, err := MergeExtraConfig(context.Background(), &input)
+		config, _, err := MergeExtraConfig(t.Context(), &input)
 		require.NoError(t, err)
 
 		assertMergedConfig(t, config, mergedConfig)
@@ -468,7 +467,7 @@ func TestMergeExtraConfig(t *testing.T) {
 
 	t.Run("should populate intervals by defaults", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirNoIntervals)
-		config, _, err := MergeExtraConfig(context.Background(), &input)
+		config, _, err := MergeExtraConfig(t.Context(), &input)
 		require.NoError(t, err)
 
 		assertMergedConfig(t, config, mergedNoIntervalsConfig)
@@ -476,7 +475,7 @@ func TestMergeExtraConfig(t *testing.T) {
 
 	t.Run("should rename receivers and refactor usages", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirWithExtraReceiver)
-		config, _, err := MergeExtraConfig(context.Background(), &input)
+		config, _, err := MergeExtraConfig(t.Context(), &input)
 		require.NoError(t, err)
 
 		assertMergedConfig(t, config, mergedRenamedReceiverConfig)
@@ -492,7 +491,7 @@ func TestMergeExtraConfig(t *testing.T) {
 			cfg.Receivers[r.UID] = r
 		})
 		input := withExtra(t, grafana, fullMimirWithOnlyExtraReceiver)
-		config, _, err := MergeExtraConfig(context.Background(), &input)
+		config, _, err := MergeExtraConfig(t.Context(), &input)
 		require.NoError(t, err)
 
 		assertMergedConfig(t, config, mergedSuffixedReceiverConfig)
@@ -502,7 +501,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		// fullMimirSwappedIntervals has mute_time_intervals=[ti-1] and time_intervals=[ti-2, mti-1],
 		// intentionally swapping names to verify uniqueness is enforced across both fields.
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirSwappedIntervals)
-		config, _, err := MergeExtraConfig(context.Background(), &input)
+		config, _, err := MergeExtraConfig(t.Context(), &input)
 		require.NoError(t, err)
 
 		assertMergedConfig(t, config, mergedRenamedIntervalsConfig)
@@ -511,14 +510,14 @@ func TestMergeExtraConfig(t *testing.T) {
 	t.Run("should not modify the base Grafana config", func(t *testing.T) {
 		g := load(t, fullGrafanaConfig)
 		input := withExtra(t, g, fullMimirConfig)
-		_, _, err := MergeExtraConfig(context.Background(), &input)
+		_, _, err := MergeExtraConfig(t.Context(), &input)
 		require.NoError(t, err)
 		assert.Equal(t, load(t, fullGrafanaConfig), g)
 	})
 
 	t.Run("should return base config unchanged if no extra configs", func(t *testing.T) {
 		input := *load(t, fullGrafanaConfig)
-		config, _, err := MergeExtraConfig(context.Background(), &input)
+		config, _, err := MergeExtraConfig(t.Context(), &input)
 		require.NoError(t, err)
 		assert.Equal(t, input, config)
 	})
@@ -527,14 +526,14 @@ func TestMergeExtraConfig(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *v1.ExtraConfiguration) {
 			e.Identifier = ""
 		})
-		_, _, err := MergeExtraConfig(context.Background(), &input)
+		_, _, err := MergeExtraConfig(t.Context(), &input)
 		require.ErrorContains(t, err, "identifier is required")
 	})
 
 	t.Run("should fail if identifier conflicts with existing managed route", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
 		input.ManagedRoutes = map[string]*v1.Route{identifier: nil}
-		_, _, err := MergeExtraConfig(context.Background(), &input)
+		_, _, err := MergeExtraConfig(t.Context(), &input)
 		require.ErrorContains(t, err, identifier)
 	})
 
@@ -542,13 +541,13 @@ func TestMergeExtraConfig(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *v1.ExtraConfiguration) {
 			e.Identifier = models.DefaultRoutingTreeName
 		})
-		_, _, err := MergeExtraConfig(context.Background(), &input)
+		_, _, err := MergeExtraConfig(t.Context(), &input)
 		require.ErrorContains(t, err, models.DefaultRoutingTreeName)
 	})
 
 	t.Run("should populate stats with added resource names", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
-		_, result, err := MergeExtraConfig(context.Background(), &input)
+		_, result, err := MergeExtraConfig(t.Context(), &input)
 		require.NoError(t, err)
 
 		assert.Equal(t, identifier, result.AddedRoute)
@@ -560,7 +559,7 @@ func TestMergeExtraConfig(t *testing.T) {
 
 	t.Run("should report renamed receiver in stats", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirWithExtraReceiver)
-		_, result, err := MergeExtraConfig(context.Background(), &input)
+		_, result, err := MergeExtraConfig(t.Context(), &input)
 		require.NoError(t, err)
 
 		assert.ElementsMatch(t, []string{"recv", "recv2", "grafana-default-email" + getDedupSuffix(identifier)}, result.AddedReceivers)
@@ -571,7 +570,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *v1.ExtraConfiguration) {
 			e.TemplateFiles = map[string]string{templateName: `{{ define "my-template" }}test{{ end }}`}
 		})
-		config, result, err := MergeExtraConfig(context.Background(), &input)
+		config, result, err := MergeExtraConfig(t.Context(), &input)
 		require.NoError(t, err)
 
 		require.Len(t, result.AddedTemplates, 1)
@@ -588,7 +587,7 @@ func TestMergeExtraConfig(t *testing.T) {
 
 	t.Run("should return empty stats when no extra configs", func(t *testing.T) {
 		input := *load(t, fullGrafanaConfig)
-		_, result, err := MergeExtraConfig(context.Background(), &input)
+		_, result, err := MergeExtraConfig(t.Context(), &input)
 		require.NoError(t, err)
 
 		assert.Equal(t, MergeResult{}, result)
@@ -596,7 +595,7 @@ func TestMergeExtraConfig(t *testing.T) {
 
 	t.Run("should add extra route to ManagedRoutes", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
-		config, _, err := MergeExtraConfig(context.Background(), &input)
+		config, _, err := MergeExtraConfig(t.Context(), &input)
 		require.NoError(t, err)
 
 		require.Contains(t, config.ManagedRoutes, identifier)
@@ -606,7 +605,7 @@ func TestMergeExtraConfig(t *testing.T) {
 	t.Run("should preserve existing managed routes in result", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
 		input.ManagedRoutes = map[string]*v1.Route{"existing-managed": {Receiver: "existing"}}
-		config, _, err := MergeExtraConfig(context.Background(), &input)
+		config, _, err := MergeExtraConfig(t.Context(), &input)
 		require.NoError(t, err)
 
 		assert.Contains(t, config.ManagedRoutes, "existing-managed")
@@ -615,7 +614,7 @@ func TestMergeExtraConfig(t *testing.T) {
 
 	t.Run("should add inhibition rules to ManagedInhibitionRules with identifier scope", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
-		config, _, err := MergeExtraConfig(context.Background(), &input)
+		config, _, err := MergeExtraConfig(t.Context(), &input)
 		require.NoError(t, err)
 
 		require.Len(t, config.InhibitionRules, 1)
@@ -646,7 +645,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *v1.ExtraConfiguration) {
 			e.TemplateFiles = map[string]string{templateName: templateContent}
 		})
-		config, result, err := MergeExtraConfig(context.Background(), &input)
+		config, result, err := MergeExtraConfig(t.Context(), &input)
 		require.NoError(t, err)
 
 		require.Len(t, result.AddedTemplates, 1)
@@ -671,7 +670,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		input.Templates = map[v1.ResourceUID]v1.TemplateGroup{
 			existingUID: v1.NewTemplateGroup(existingUID, templateName, templateContent, v1.TemplateKindMimir, models.ProvenanceNone),
 		}
-		config, result, err := MergeExtraConfig(context.Background(), &input)
+		config, result, err := MergeExtraConfig(t.Context(), &input)
 		require.NoError(t, err)
 
 		renamedName := templateName + getDedupSuffix(identifier)

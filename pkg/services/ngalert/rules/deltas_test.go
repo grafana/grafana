@@ -35,7 +35,7 @@ func TestCalculateChanges(t *testing.T) {
 			submitted = append(submitted, &models.AlertRuleWithOptionals{AlertRule: rule})
 		}
 
-		changes, err := ngrulesvc.CalculateChanges(context.Background(), fakeStore, groupKey, submitted)
+		changes, err := ngrulesvc.CalculateChanges(t.Context(), fakeStore, groupKey, submitted)
 		require.NoError(t, err)
 
 		require.Len(t, changes.New, len(submitted))
@@ -58,9 +58,9 @@ func TestCalculateChanges(t *testing.T) {
 		inDatabase := gen.With(gen.WithGroupKey(groupKey)).GenerateManyRef(1, 5)
 		inDatabaseMap := groupByUID(t, inDatabase)
 		fakeStore := fakes.NewRuleStore(t)
-		fakeStore.PutRule(context.Background(), inDatabase...)
+		fakeStore.PutRule(t.Context(), inDatabase...)
 
-		changes, err := ngrulesvc.CalculateChanges(context.Background(), fakeStore, groupKey, make([]*models.AlertRuleWithOptionals, 0))
+		changes, err := ngrulesvc.CalculateChanges(t.Context(), fakeStore, groupKey, make([]*models.AlertRuleWithOptionals, 0))
 		require.NoError(t, err)
 
 		require.Equal(t, groupKey, changes.GroupKey)
@@ -89,9 +89,9 @@ func TestCalculateChanges(t *testing.T) {
 		}
 
 		fakeStore := fakes.NewRuleStore(t)
-		fakeStore.PutRule(context.Background(), inDatabase...)
+		fakeStore.PutRule(t.Context(), inDatabase...)
 
-		changes, err := ngrulesvc.CalculateChanges(context.Background(), fakeStore, groupKey, submitted)
+		changes, err := ngrulesvc.CalculateChanges(t.Context(), fakeStore, groupKey, submitted)
 		require.NoError(t, err)
 
 		require.Equal(t, groupKey, changes.GroupKey)
@@ -127,9 +127,9 @@ func TestCalculateChanges(t *testing.T) {
 		}
 
 		fakeStore := fakes.NewRuleStore(t)
-		fakeStore.PutRule(context.Background(), inDatabase...)
+		fakeStore.PutRule(t.Context(), inDatabase...)
 
-		changes, err := ngrulesvc.CalculateChanges(context.Background(), fakeStore, groupKey, submitted)
+		changes, err := ngrulesvc.CalculateChanges(t.Context(), fakeStore, groupKey, submitted)
 		require.NoError(t, err)
 
 		require.Empty(t, changes.Update)
@@ -184,7 +184,7 @@ func TestCalculateChanges(t *testing.T) {
 		dbRule := gen.With(gen.WithOrgID(orgId)).GenerateRef()
 
 		fakeStore := fakes.NewRuleStore(t)
-		fakeStore.PutRule(context.Background(), dbRule)
+		fakeStore.PutRule(t.Context(), dbRule)
 
 		groupKey := models.GenerateGroupKey(orgId)
 
@@ -193,7 +193,7 @@ func TestCalculateChanges(t *testing.T) {
 				expected := gen.With(simulateSubmitted, testCase.mutator).GenerateRef()
 				expected.UID = dbRule.UID
 				submitted := *expected
-				changes, err := ngrulesvc.CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRuleWithOptionals{{AlertRule: submitted}})
+				changes, err := ngrulesvc.CalculateChanges(t.Context(), fakeStore, groupKey, []*models.AlertRuleWithOptionals{{AlertRule: submitted}})
 				require.NoError(t, err)
 				require.Len(t, changes.Update, 1)
 				ch := changes.Update[0]
@@ -211,7 +211,7 @@ func TestCalculateChanges(t *testing.T) {
 		inDatabaseMap := groupByUID(t, inDatabase)
 
 		fakeStore := fakes.NewRuleStore(t)
-		fakeStore.PutRule(context.Background(), inDatabase...)
+		fakeStore.PutRule(t.Context(), inDatabase...)
 
 		namespace := randFolder()
 		groupName := util.GenerateShortUID()
@@ -229,7 +229,7 @@ func TestCalculateChanges(t *testing.T) {
 			submitted = append(submitted, &models.AlertRuleWithOptionals{AlertRule: *rule, HasEditorSettings: true})
 		}
 
-		changes, err := ngrulesvc.CalculateChanges(context.Background(), fakeStore, groupKey, submitted)
+		changes, err := ngrulesvc.CalculateChanges(t.Context(), fakeStore, groupKey, submitted)
 		require.NoError(t, err)
 
 		require.Equal(t, groupKey, changes.GroupKey)
@@ -256,7 +256,7 @@ func TestCalculateChanges(t *testing.T) {
 		submitted := gen.With(gen.WithOrgID(orgId), simulateSubmitted).Generate()
 		require.NotEqual(t, "", submitted.UID)
 
-		diff, err := ngrulesvc.CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRuleWithOptionals{{AlertRule: submitted}})
+		diff, err := ngrulesvc.CalculateChanges(t.Context(), fakeStore, groupKey, []*models.AlertRuleWithOptionals{{AlertRule: submitted}})
 		require.NoError(t, err)
 
 		require.Len(t, diff.New, 1)
@@ -279,7 +279,7 @@ func TestCalculateChanges(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgId)
 		submitted := gen.With(gen.WithOrgID(orgId), simulateSubmitted, withoutUID).Generate()
 
-		_, err := ngrulesvc.CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRuleWithOptionals{{AlertRule: submitted}})
+		_, err := ngrulesvc.CalculateChanges(t.Context(), fakeStore, groupKey, []*models.AlertRuleWithOptionals{{AlertRule: submitted}})
 		require.ErrorIs(t, err, expectedErr)
 	})
 
@@ -297,7 +297,7 @@ func TestCalculateChanges(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgId)
 		submitted := gen.With(gen.WithOrgID(orgId), simulateSubmitted).Generate()
 
-		_, err := ngrulesvc.CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRuleWithOptionals{{AlertRule: submitted}})
+		_, err := ngrulesvc.CalculateChanges(t.Context(), fakeStore, groupKey, []*models.AlertRuleWithOptionals{{AlertRule: submitted}})
 		require.ErrorIs(t, err, expectedErr)
 	})
 }
@@ -450,7 +450,7 @@ func TestCalculateRuleGroupsDelete(t *testing.T) {
 		query := &models.ListAlertRulesQuery{
 			NamespaceUIDs: []string{"ns-2"},
 		}
-		deltas, err := ngrulesvc.CalculateRuleGroupsDelete(context.Background(), fakeStore, orgId, query)
+		deltas, err := ngrulesvc.CalculateRuleGroupsDelete(t.Context(), fakeStore, orgId, query)
 		require.ErrorIs(t, err, models.ErrAlertRuleGroupNotFound)
 		require.Nil(t, deltas)
 	})
@@ -484,7 +484,7 @@ func TestCalculateRuleGroupsDelete(t *testing.T) {
 			NamespaceUIDs: []string{folder.UID},
 		}
 
-		deltas, err := ngrulesvc.CalculateRuleGroupsDelete(context.Background(), fakeStore, orgId, query)
+		deltas, err := ngrulesvc.CalculateRuleGroupsDelete(t.Context(), fakeStore, orgId, query)
 		require.NoError(t, err)
 
 		require.Len(t, deltas, 2, "expected deltas for two groups")
@@ -517,7 +517,7 @@ func TestCalculateRuleGroupsDelete(t *testing.T) {
 			return nil
 		}
 
-		deltas, err := ngrulesvc.CalculateRuleGroupsDelete(context.Background(), fakeStore, orgId, nil)
+		deltas, err := ngrulesvc.CalculateRuleGroupsDelete(t.Context(), fakeStore, orgId, nil)
 		require.ErrorIs(t, err, expectedErr)
 		require.Nil(t, deltas)
 	})
@@ -531,7 +531,7 @@ func TestCalculateRuleGroupDelete(t *testing.T) {
 	fakeStore.Rules[groupKey.OrgID] = otherRules
 
 	t.Run("NotFound when group does not exist", func(t *testing.T) {
-		delta, err := ngrulesvc.CalculateRuleGroupDelete(context.Background(), fakeStore, groupKey)
+		delta, err := ngrulesvc.CalculateRuleGroupDelete(t.Context(), fakeStore, groupKey)
 		require.ErrorIs(t, err, models.ErrAlertRuleGroupNotFound, "expected ErrAlertRuleGroupNotFound but got %s", err)
 		require.Nil(t, delta)
 	})
@@ -540,7 +540,7 @@ func TestCalculateRuleGroupDelete(t *testing.T) {
 		groupRules := gen.With(gen.WithGroupKey(groupKey)).GenerateManyRef(3)
 		fakeStore.Rules[groupKey.OrgID] = append(fakeStore.Rules[groupKey.OrgID], groupRules...)
 
-		delta, err := ngrulesvc.CalculateRuleGroupDelete(context.Background(), fakeStore, groupKey)
+		delta, err := ngrulesvc.CalculateRuleGroupDelete(t.Context(), fakeStore, groupKey)
 		require.NoError(t, err)
 
 		assert.Equal(t, groupKey, delta.GroupKey)
@@ -562,7 +562,7 @@ func TestCalculateRuleDelete(t *testing.T) {
 	fakeStore.Rules[rule.OrgID] = otherRules
 
 	t.Run("nil when a rule does not exist", func(t *testing.T) {
-		delta, err := ngrulesvc.CalculateRuleDelete(context.Background(), fakeStore, rule.GetKey())
+		delta, err := ngrulesvc.CalculateRuleDelete(t.Context(), fakeStore, rule.GetKey())
 		require.ErrorIs(t, err, models.ErrAlertRuleNotFound)
 		require.Nil(t, delta)
 	})
@@ -572,7 +572,7 @@ func TestCalculateRuleDelete(t *testing.T) {
 		groupRules = append(groupRules, rule)
 		fakeStore.Rules[rule.OrgID] = append(fakeStore.Rules[rule.OrgID], groupRules...)
 
-		delta, err := ngrulesvc.CalculateRuleDelete(context.Background(), fakeStore, rule.GetKey())
+		delta, err := ngrulesvc.CalculateRuleDelete(t.Context(), fakeStore, rule.GetKey())
 		require.NoError(t, err)
 
 		assert.Equal(t, rule.GetGroupKey(), delta.GroupKey)
@@ -598,7 +598,7 @@ func TestCalculateRuleUpdate(t *testing.T) {
 
 	t.Run("when a rule is not changed", func(t *testing.T) {
 		cp := models.CopyRule(rule)
-		delta, err := ngrulesvc.CalculateRuleUpdate(context.Background(), fakeStore, &models.AlertRuleWithOptionals{
+		delta, err := ngrulesvc.CalculateRuleUpdate(t.Context(), fakeStore, &models.AlertRuleWithOptionals{
 			AlertRule: *cp,
 			HasPause:  false,
 		})
@@ -610,7 +610,7 @@ func TestCalculateRuleUpdate(t *testing.T) {
 		cp := models.CopyRule(rule)
 		cp.For = cp.For + 1*time.Minute // cause any diff
 
-		delta, err := ngrulesvc.CalculateRuleUpdate(context.Background(), fakeStore, &models.AlertRuleWithOptionals{
+		delta, err := ngrulesvc.CalculateRuleUpdate(t.Context(), fakeStore, &models.AlertRuleWithOptionals{
 			AlertRule: *cp,
 			HasPause:  false,
 		})
@@ -637,7 +637,7 @@ func TestCalculateRuleUpdate(t *testing.T) {
 		cp.NamespaceUID = targetGroupKey.NamespaceUID
 		cp.RuleGroup = targetGroupKey.RuleGroup
 
-		delta, err := ngrulesvc.CalculateRuleUpdate(context.Background(), fakeStore, &models.AlertRuleWithOptionals{
+		delta, err := ngrulesvc.CalculateRuleUpdate(t.Context(), fakeStore, &models.AlertRuleWithOptionals{
 			AlertRule: *cp,
 			HasPause:  false,
 		})
@@ -661,7 +661,7 @@ func TestCalculateRuleUpdate(t *testing.T) {
 		cp.Record = nil
 		cp.Data = []models.AlertQuery{{RefID: "something else"}}
 
-		delta, err := ngrulesvc.CalculateRuleUpdate(context.Background(), fakeStore, &models.AlertRuleWithOptionals{
+		delta, err := ngrulesvc.CalculateRuleUpdate(t.Context(), fakeStore, &models.AlertRuleWithOptionals{
 			AlertRule: *cp,
 			HasPause:  false,
 		})
@@ -682,7 +682,7 @@ func TestCalculateRuleUpdate(t *testing.T) {
 		cp := models.CopyRule(base)
 		cp.Data = []models.AlertQuery{{RefID: "something else"}}
 
-		delta, err := ngrulesvc.CalculateRuleUpdate(context.Background(), fakeStore, &models.AlertRuleWithOptionals{
+		delta, err := ngrulesvc.CalculateRuleUpdate(t.Context(), fakeStore, &models.AlertRuleWithOptionals{
 			AlertRule: *cp,
 			HasPause:  false,
 		})
@@ -704,7 +704,7 @@ func TestCalculateRuleCreate(t *testing.T) {
 		fakeStore := fakes.NewRuleStore(t)
 		rule := gen.GenerateRef()
 
-		delta, err := ngrulesvc.CalculateRuleCreate(context.Background(), fakeStore, rule)
+		delta, err := ngrulesvc.CalculateRuleCreate(t.Context(), fakeStore, rule)
 		require.NoError(t, err)
 
 		assert.Equal(t, rule.GetGroupKey(), delta.GroupKey)
@@ -723,7 +723,7 @@ func TestCalculateRuleCreate(t *testing.T) {
 		otherRules := gen.With(gen.WithGroupKey(rule.GetGroupKey()), gen.WithNamespaceUIDNotIn(rule.NamespaceUID)).GenerateManyRef(3)
 		fakeStore.Rules[rule.OrgID] = append(groupRules, otherRules...)
 
-		delta, err := ngrulesvc.CalculateRuleCreate(context.Background(), fakeStore, rule)
+		delta, err := ngrulesvc.CalculateRuleCreate(t.Context(), fakeStore, rule)
 		require.NoError(t, err)
 
 		assert.Equal(t, rule.GetGroupKey(), delta.GroupKey)
@@ -874,7 +874,7 @@ func (s deltaReadStore) GetAlertRulesGroupByRuleUID(ctx context.Context, q *mode
 }
 
 func TestService_deltasMatchStoreDeltas(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	orgID := int64(rand.Int32())
 	gen := models.RuleGen.With(models.RuleGen.WithOrgID(orgID))
 	groupKey := models.GenerateGroupKey(orgID)

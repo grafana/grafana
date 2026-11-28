@@ -1,7 +1,6 @@
 package notifier
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -68,7 +67,7 @@ func setupAMTest(t *testing.T) *alertmanager {
 	stateStore := NewFileStore(int64(orgID), kvStore)
 	crypto := NewCrypto(secretsService, s, l)
 
-	am, err := NewAlertmanager(context.Background(), 1, cfg, s, stateStore, &NilPeer{}, decryptFn, nil, m, featuremgmt.WithFeatures(), crypto, nil)
+	am, err := NewAlertmanager(t.Context(), 1, cfg, s, stateStore, &NilPeer{}, decryptFn, nil, m, featuremgmt.WithFeatures(), crypto, nil)
 	require.NoError(t, err)
 	return am
 }
@@ -100,10 +99,10 @@ func TestAlertmanager_SaveAndApplyExtraConfiguration_WithExternalSecrets(t *test
 		}),
 	}
 
-	err = moa.saveAndApplyConfig(context.Background(), 1, am, cfg)
+	err = moa.saveAndApplyConfig(t.Context(), 1, am, cfg)
 	require.NoError(t, err)
 
-	_, err = moa.SaveAndApplyExtraConfiguration(context.Background(), 1, &user.SignedInUser{}, noopExtraConfigAuthz{}, v1.ExtraConfiguration{
+	_, err = moa.SaveAndApplyExtraConfiguration(t.Context(), 1, &user.SignedInUser{}, noopExtraConfigAuthz{}, v1.ExtraConfiguration{
 		Identifier: "external-prometheus",
 		AlertmanagerConfig: `
 route:
@@ -128,7 +127,7 @@ receivers:
 	}, false, false, false)
 	require.NoError(t, err)
 
-	savedConfig, err := moa.configStore.GetLatestAlertmanagerConfiguration(context.Background(), am.(*alertmanager).Base.TenantID())
+	savedConfig, err := moa.configStore.GetLatestAlertmanagerConfiguration(t.Context(), am.(*alertmanager).Base.TenantID())
 	require.NoError(t, err)
 
 	// Verify secrets are encrypted in stored config
@@ -145,7 +144,7 @@ receivers:
 	require.NotContains(t, extraConfig.AlertmanagerConfig, "ABC123")
 
 	// Apply the saved configuration again and check that it is applied without errors
-	changed, err := moa.ApplyConfig(context.Background(), 1, savedConfig)
+	changed, err := moa.ApplyConfig(t.Context(), 1, savedConfig)
 	require.NoError(t, err)
 	require.False(t, changed) // No errors, but the config has not changed.
 	require.True(t, am.Ready())
@@ -246,7 +245,7 @@ receivers:
 			moa := NewTestMultiOrgAlertmanager(t, WithFeatureToggles(tc.features))
 			am, err := moa.AlertmanagerFor(1)
 			require.NoError(t, err)
-			ctx := context.Background()
+			ctx := t.Context()
 
 			err = moa.saveAndApplyConfig(ctx, 1, am, tc.config)
 
@@ -465,7 +464,7 @@ receivers:
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 
 			s := NewFakeConfigStore(t, map[int64]*ngmodels.AlertConfiguration{})
 			s.notificationSettings = map[int64]map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting{

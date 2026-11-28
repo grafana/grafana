@@ -1,7 +1,6 @@
 package notifier
 
 import (
-	"context"
 	"net/url"
 	"testing"
 
@@ -162,7 +161,7 @@ func TestEmailNotifierIntegration(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			emailNotifier := createSut(t, c.messageTmpl, c.subjectTmpl, emailTmpl, ns)
 
-			ok, err := emailNotifier.Notify(context.Background(), c.alerts...)
+			ok, err := emailNotifier.Notify(t.Context(), c.alerts...)
 			require.NoError(t, err)
 			require.True(t, ok)
 

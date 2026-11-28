@@ -1,7 +1,6 @@
 package notifier
 
 import (
-	"context"
 	"testing"
 
 	"github.com/alicebob/miniredis/v2"
@@ -58,7 +57,7 @@ func TestBroadcastAndHandleMessages(t *testing.T) {
 
 	channel := newRedisChannel(p, "testKey", channelName, "testType", 0).(*RedisChannel)
 
-	pubSub := rdb.Subscribe(context.Background(), channelName)
+	pubSub := rdb.Subscribe(t.Context(), channelName)
 	msgs := pubSub.Channel()
 
 	msg := []byte("test message")

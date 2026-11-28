@@ -94,7 +94,7 @@ func TestUpdateAlertRulePersistencePreconditions(t *testing.T) {
 			ruleStore: store, provenanceStore: fakes.NewFakeProvisioningStore(),
 			xact: xact, authz: fakeUpdateAuthz{},
 		}
-		_, err := service.UpdateAlertRule(context.Background(), requester, *updated, utils.ManagerProperties{}, false)
+		_, err := service.UpdateAlertRule(t.Context(), requester, *updated, utils.ManagerProperties{}, false)
 		require.NoError(t, err)
 		require.Equal(t, updated.Title, persisted.Title)
 		require.Equal(t, baselineVersion, stored.Version)
@@ -116,7 +116,7 @@ func TestUpdateAlertRulePersistencePreconditions(t *testing.T) {
 			return nil
 		}
 		service := &legacyRuleService{ruleStore: store, provenanceStore: provenance, xact: store, authz: fakeUpdateAuthz{}}
-		_, err := service.UpdateAlertRule(context.Background(), requester, *updated, utils.ManagerProperties{}, false)
+		_, err := service.UpdateAlertRule(t.Context(), requester, *updated, utils.ManagerProperties{}, false)
 		require.ErrorIs(t, err, rulestore.ErrOptimisticLock)
 	})
 }
@@ -162,7 +162,7 @@ func TestListAlertRules(t *testing.T) {
 				return true, nil
 			}
 
-			rules, _, token, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{})
+			rules, _, token, err := service.ListAlertRules(t.Context(), u, ListAlertRulesOptions{})
 			require.NoError(t, err)
 			require.Len(t, rules, len(allRules))
 			require.Empty(t, token)
@@ -179,7 +179,7 @@ func TestListAlertRules(t *testing.T) {
 				return folder.GetNamespaceUID() == groupKey2.NamespaceUID, nil
 			}
 
-			rules, _, token, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{})
+			rules, _, token, err := service.ListAlertRules(t.Context(), u, ListAlertRulesOptions{})
 			require.NoError(t, err)
 			require.Len(t, rules, len(rules2))
 			for _, r := range rules {
@@ -197,7 +197,7 @@ func TestListAlertRules(t *testing.T) {
 				return false, nil
 			}
 
-			rules, _, token, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{})
+			rules, _, token, err := service.ListAlertRules(t.Context(), u, ListAlertRulesOptions{})
 			require.NoError(t, err)
 			require.Empty(t, rules)
 			require.Empty(t, token)
@@ -213,7 +213,7 @@ func TestListAlertRules(t *testing.T) {
 				return folder.GetNamespaceUID() == groupKey2.NamespaceUID, nil
 			}
 
-			rules, _, token, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{
+			rules, _, token, err := service.ListAlertRules(t.Context(), u, ListAlertRulesOptions{
 				FolderFilter: ListRuleStringFilter{Include: []string{"inaccessible-folder"}},
 			})
 			require.NoError(t, err)
@@ -297,7 +297,7 @@ func TestDeleteAlertRules(t *testing.T) {
 	t.Run("deletes all rules and their provenance in a single transaction", func(t *testing.T) {
 		e := setup(t)
 
-		require.NoError(t, e.service.DeleteAlertRules(context.Background(), u, e.rules, nil, false))
+		require.NoError(t, e.service.DeleteAlertRules(t.Context(), u, e.rules, nil, false))
 
 		require.Empty(t, e.ruleStore.Rules[orgID])
 		require.Equal(t, 1, e.xact.calls)
@@ -307,7 +307,7 @@ func TestDeleteAlertRules(t *testing.T) {
 	t.Run("dry-run checks every rule but deletes nothing", func(t *testing.T) {
 		e := setup(t)
 
-		require.NoError(t, e.service.DeleteAlertRules(context.Background(), u, e.rules, nil, true))
+		require.NoError(t, e.service.DeleteAlertRules(t.Context(), u, e.rules, nil, true))
 
 		require.Len(t, e.ruleStore.Rules[orgID], len(e.rules))
 		require.Zero(t, e.xact.calls)
@@ -316,13 +316,13 @@ func TestDeleteAlertRules(t *testing.T) {
 		e.authz.canWriteAll = false
 		forbidden := errors.New("forbidden")
 		e.authz.authorizeFunc = func(*ngrulesvc.GroupDelta) error { return forbidden }
-		require.ErrorIs(t, e.service.DeleteAlertRules(context.Background(), u, e.rules, nil, true), forbidden)
+		require.ErrorIs(t, e.service.DeleteAlertRules(t.Context(), u, e.rules, nil, true), forbidden)
 	})
 
 	t.Run("is a no-op for an empty set", func(t *testing.T) {
 		e := setup(t)
 
-		require.NoError(t, e.service.DeleteAlertRules(context.Background(), u, nil, nil, false))
+		require.NoError(t, e.service.DeleteAlertRules(t.Context(), u, nil, nil, false))
 
 		require.Len(t, e.ruleStore.Rules[orgID], len(e.rules))
 		require.Zero(t, e.xact.calls)
@@ -338,7 +338,7 @@ func TestDeleteAlertRules(t *testing.T) {
 			return utils.ManagerProperties{}, nil
 		}
 
-		err := e.service.DeleteAlertRules(context.Background(), u, e.rules, nil, false)
+		err := e.service.DeleteAlertRules(t.Context(), u, e.rules, nil, false)
 
 		var utilErr errutil.Error
 		require.ErrorAs(t, err, &utilErr)
@@ -359,7 +359,7 @@ func TestDeleteAlertRules(t *testing.T) {
 				return nil
 			}
 
-			err := e.service.DeleteAlertRules(context.Background(), u, e.rules, nil, false)
+			err := e.service.DeleteAlertRules(t.Context(), u, e.rules, nil, false)
 
 			require.ErrorIs(t, err, forbidden)
 			require.Len(t, e.ruleStore.Rules[orgID], len(e.rules))
@@ -372,7 +372,7 @@ func TestDeleteAlertRules(t *testing.T) {
 			gone := e.rules[0]
 			e.ruleStore.Rules[orgID] = e.rules[1:]
 
-			require.NoError(t, e.service.DeleteAlertRules(context.Background(), u, e.rules, nil, false))
+			require.NoError(t, e.service.DeleteAlertRules(t.Context(), u, e.rules, nil, false))
 
 			require.Empty(t, e.ruleStore.Rules[orgID])
 			require.Equal(t, 1, e.xact.calls)
@@ -403,7 +403,7 @@ func TestDeleteAlertRule_SingleTransaction(t *testing.T) {
 		xact:            xact,
 	}
 
-	require.NoError(t, service.DeleteAlertRule(context.Background(), u, rule.UID, utils.ManagerProperties{}, false))
+	require.NoError(t, service.DeleteAlertRule(t.Context(), u, rule.UID, utils.ManagerProperties{}, false))
 
 	require.Empty(t, ruleStore.Rules[orgID])
 	require.Equal(t, 1, xact.calls)

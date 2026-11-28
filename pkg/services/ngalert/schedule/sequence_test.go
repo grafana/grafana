@@ -337,7 +337,7 @@ func TestProcessTick_ImportedGroupsStartsAreSpreadAcrossTheTick(t *testing.T) {
 	gen := models.RuleGen
 	for group := range 2 {
 		for index := range 2 {
-			ruleStore.PutRule(context.Background(), gen.With(
+			ruleStore.PutRule(t.Context(), gen.With(
 				gen.WithOrgID(1),
 				gen.WithNamespaceUID("ns"),
 				gen.WithGroupName(fmt.Sprintf("imported-%d", group)),

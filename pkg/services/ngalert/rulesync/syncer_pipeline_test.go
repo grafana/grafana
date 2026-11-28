@@ -1,7 +1,6 @@
 package rulesync
 
 import (
-	"context"
 	"net/http"
 	"testing"
 	"time"
@@ -54,7 +53,7 @@ func rulerAPIResponse(t *testing.T, cfg RulerConfig) []byte {
 }
 
 func TestSyncOrg_FromRulerAPI(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("rules served by the datasource API are fetched, converted and applied", func(t *testing.T) {
 		cfg := RulerConfig{

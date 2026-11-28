@@ -377,7 +377,7 @@ func TestRouteAccess(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			svc := NewRouteAccess[testRoute](&recordingAccessControlFake{}, fakes.NewFakeRoutePermissionsService(), false)
 
-			actual, err := svc.Access(context.Background(), testCase.user, allRoutes...)
+			actual, err := svc.Access(t.Context(), testCase.user, allRoutes...)
 
 			assert.NoError(t, err)
 			assert.Equalf(t, testCase.expected, actual, "expected: %v, actual: %v", testCase.expected, actual)
@@ -472,7 +472,7 @@ func TestRouteAccessFilterRead(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			svc := NewRouteAccess[testRoute](&recordingAccessControlFake{}, fakes.NewFakeRoutePermissionsService(), testCase.includeProvisioning)
 
-			actual, err := svc.FilterRead(context.Background(), testCase.user, allRoutes...)
+			actual, err := svc.FilterRead(t.Context(), testCase.user, allRoutes...)
 
 			if testCase.expected == nil {
 				assert.Error(t, err)
@@ -691,7 +691,7 @@ func TestRouteAccessAuthorizeLegacy(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			svc := NewRouteAccess[testRoute](&recordingAccessControlFake{}, fakes.NewFakeRoutePermissionsService(), false)
 
-			err := testCase.authorize(svc, context.Background(), testCase.user)
+			err := testCase.authorize(svc, t.Context(), testCase.user)
 
 			if testCase.expectErr {
 				assert.Error(t, err)
@@ -867,7 +867,7 @@ func TestRouteAccessAuthorizeScoped(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			svc := NewRouteAccess[testRoute](&recordingAccessControlFake{}, fakes.NewFakeRoutePermissionsService(), false)
 
-			err := testCase.authorize(svc, context.Background(), testCase.user)
+			err := testCase.authorize(svc, t.Context(), testCase.user)
 
 			if testCase.expectErr {
 				assert.Error(t, err)
@@ -1063,7 +1063,7 @@ func TestRouteAccessAuthorizeProvisioning(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			svc := NewRouteAccess[testRoute](&recordingAccessControlFake{}, fakes.NewFakeRoutePermissionsService(), testCase.includeProvisioning)
 
-			err := testCase.authorize(svc, context.Background(), testCase.user)
+			err := testCase.authorize(svc, t.Context(), testCase.user)
 
 			if testCase.expectErr {
 				assert.Error(t, err)

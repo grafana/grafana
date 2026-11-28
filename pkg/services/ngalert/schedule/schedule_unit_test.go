@@ -46,7 +46,7 @@ func TestProcessTicks(t *testing.T) {
 	testTracer := tracing.InitializeTracerForTest()
 	reg := prometheus.NewPedanticRegistry()
 	testMetrics := metrics.NewNGAlert(reg)
-	ctx := context.Background()
+	ctx := t.Context()
 	dispatcherGroup, ctx := errgroup.WithContext(ctx)
 
 	ruleStore := newFakeRulesStore()
@@ -138,7 +138,7 @@ func TestProcessTicks(t *testing.T) {
 	folderWithRuleGroup1 := fmt.Sprintf("%s;%s", ruleStore.getNamespaceTitle(alertRule1.NamespaceUID), alertRule1.RuleGroup)
 
 	t.Run("before 1st tick status should not be available", func(t *testing.T) {
-		_, ok := sched.Status(context.Background(), alertRule1.GetKey())
+		_, ok := sched.Status(t.Context(), alertRule1.GetKey())
 		require.False(t, ok, "status for a rule should not be present before the scheduler has created it")
 	})
 
@@ -167,7 +167,7 @@ func TestProcessTicks(t *testing.T) {
 	})
 
 	t.Run("after 1st tick status for rule should be available", func(t *testing.T) {
-		_, ok := sched.Status(context.Background(), alertRule1.GetKey())
+		_, ok := sched.Status(t.Context(), alertRule1.GetKey())
 		require.True(t, ok, "status for a rule that just evaluated was not available")
 		// Interestingly, the rules in this test are randomised, and are sometimes invalid.
 		// Therefore, we can't reliably assert anything about the actual health. It might be error, it might not, depending on randomness.
@@ -181,7 +181,7 @@ func TestProcessTicks(t *testing.T) {
 	folderWithRuleGroup2 := fmt.Sprintf("%s;%s", ruleStore.getNamespaceTitle(alertRule2.NamespaceUID), alertRule2.RuleGroup)
 
 	t.Run("before 2nd tick status for rule should not be available", func(t *testing.T) {
-		_, ok := sched.Status(context.Background(), alertRule2.GetKey())
+		_, ok := sched.Status(t.Context(), alertRule2.GetKey())
 		require.False(t, ok, "status for a rule should not be present before the scheduler has created it")
 	})
 
@@ -227,9 +227,9 @@ func TestProcessTicks(t *testing.T) {
 	})
 
 	t.Run("after 3rd tick status for both rules should be available", func(t *testing.T) {
-		_, ok := sched.Status(context.Background(), alertRule1.GetKey())
+		_, ok := sched.Status(t.Context(), alertRule1.GetKey())
 		require.True(t, ok, "status for a rule that just evaluated was not available")
-		_, ok = sched.Status(context.Background(), alertRule2.GetKey())
+		_, ok = sched.Status(t.Context(), alertRule2.GetKey())
 		require.True(t, ok, "status for a rule that just evaluated was not available")
 		// Interestingly, the rules in this test are randomised, and are sometimes invalid.
 		// Therefore, we can't reliably assert anything about the actual health. It might be error, it might not, depending on randomness.
@@ -276,9 +276,9 @@ func TestProcessTicks(t *testing.T) {
 	})
 
 	t.Run("after 5th tick status for both rules should be available regardless of pause state", func(t *testing.T) {
-		_, ok := sched.Status(context.Background(), alertRule1.GetKey())
+		_, ok := sched.Status(t.Context(), alertRule1.GetKey())
 		require.True(t, ok, "status for a rule that just evaluated was not available")
-		_, ok = sched.Status(context.Background(), alertRule2.GetKey())
+		_, ok = sched.Status(t.Context(), alertRule2.GetKey())
 		require.True(t, ok, "status for a rule that just evaluated was not available")
 		// Interestingly, the rules in this test are randomised, and are sometimes invalid.
 		// Therefore, we can't reliably assert anything about the actual health. It might be error, it might not, depending on randomness.
@@ -372,9 +372,9 @@ func TestProcessTicks(t *testing.T) {
 	})
 
 	t.Run("after 8th tick status for deleted rule should not be available", func(t *testing.T) {
-		_, ok := sched.Status(context.Background(), alertRule1.GetKey())
+		_, ok := sched.Status(t.Context(), alertRule1.GetKey())
 		require.False(t, ok, "status for a rule that was deleted should not be available")
-		_, ok = sched.Status(context.Background(), alertRule2.GetKey())
+		_, ok = sched.Status(t.Context(), alertRule2.GetKey())
 		require.True(t, ok, "status for a rule that just evaluated was not available")
 	})
 
@@ -408,11 +408,11 @@ func TestProcessTicks(t *testing.T) {
 		assertEvalRun(t, evalAppliedCh, tick, alertRule3.GetKey())
 	})
 	t.Run("after 10th tick status for remaining rules should be available", func(t *testing.T) {
-		_, ok := sched.Status(context.Background(), alertRule1.GetKey())
+		_, ok := sched.Status(t.Context(), alertRule1.GetKey())
 		require.False(t, ok, "status for a rule that was deleted should not be available")
-		_, ok = sched.Status(context.Background(), alertRule2.GetKey())
+		_, ok = sched.Status(t.Context(), alertRule2.GetKey())
 		require.True(t, ok, "status for a rule that just evaluated was not available")
-		_, ok = sched.Status(context.Background(), alertRule3.GetKey())
+		_, ok = sched.Status(t.Context(), alertRule3.GetKey())
 		require.True(t, ok, "status for a rule that just evaluated was not available")
 	})
 	t.Run("on 11th tick rule2 should be updated", func(t *testing.T) {
@@ -423,7 +423,7 @@ func TestProcessTicks(t *testing.T) {
 			AlertRuleKey: newRule2.GetKey(),
 		}
 
-		ruleStore.PutRule(context.Background(), newRule2)
+		ruleStore.PutRule(t.Context(), newRule2)
 
 		tick = tick.Add(cfg.BaseInterval)
 		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
@@ -466,7 +466,7 @@ func TestProcessTicks(t *testing.T) {
 		Version:      recordingRule1.Version,
 		AlertRuleKey: recordingRule1.GetKey(),
 	}
-	ruleStore.PutRule(context.Background(), recordingRule1)
+	ruleStore.PutRule(t.Context(), recordingRule1)
 
 	t.Run("on 13th tick recording rule should be updated", func(t *testing.T) {
 		// It has 2 * base interval - so normally it would not have been scheduled for evaluation this tick.
@@ -543,18 +543,18 @@ func TestProcessTicks(t *testing.T) {
 		require.Emptyf(t, updated, "No rules should be updated")
 	})
 	t.Run("after 17th tick no status should be available", func(t *testing.T) {
-		_, ok := sched.Status(context.Background(), alertRule1.GetKey())
+		_, ok := sched.Status(t.Context(), alertRule1.GetKey())
 		require.False(t, ok, "status for a rule that was deleted should not be available")
-		_, ok = sched.Status(context.Background(), alertRule2.GetKey())
+		_, ok = sched.Status(t.Context(), alertRule2.GetKey())
 		require.False(t, ok, "status for a rule that just evaluated was not available")
-		_, ok = sched.Status(context.Background(), alertRule3.GetKey())
+		_, ok = sched.Status(t.Context(), alertRule3.GetKey())
 		require.False(t, ok, "status for a rule that just evaluated was not available")
 	})
 
 	t.Run("scheduled rules should be sorted", func(t *testing.T) {
 		rules := gen.With(gen.WithOrgID(mainOrgID), gen.WithInterval(cfg.BaseInterval)).GenerateManyRef(10, 20)
 		ruleStore.rules = map[string]*models.AlertRule{}
-		ruleStore.PutRule(context.Background(), rules...)
+		ruleStore.PutRule(t.Context(), rules...)
 
 		tick = tick.Add(cfg.BaseInterval)
 
@@ -567,7 +567,7 @@ func TestProcessTicks(t *testing.T) {
 	t.Run("sequence should be evaluated in the correct order", func(t *testing.T) {
 		rules := gen.With(gen.WithOrgID(mainOrgID), gen.WithInterval(cfg.BaseInterval), gen.WithPrometheusOriginalRuleDefinition("def")).GenerateManyRef(10, 20)
 		ruleStore.rules = map[string]*models.AlertRule{}
-		ruleStore.PutRule(context.Background(), rules...)
+		ruleStore.PutRule(t.Context(), rules...)
 
 		// Create tracking for evaluation order by group
 		evalOrderByGroup := make(map[string][]string)
@@ -659,7 +659,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 	ruleStore := newFakeRulesStore()
 	reg := prometheus.NewPedanticRegistry()
 	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil, nil)
-	ctx := context.Background()
+	ctx := t.Context()
 	const firstOrgID int64 = 1
 	const secondOrgID int64 = 2
 
@@ -1186,7 +1186,7 @@ func (m *mockAlertRuleStopReasonProvider) FindReason(ctx context.Context, logger
 }
 
 func TestSchedule_deleteAlertRule(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	t.Run("when rule exists", func(t *testing.T) {
 		t.Run("it should stop evaluation loop and remove the controller from registry", func(t *testing.T) {
 			ruleStore := newFakeRulesStore()
@@ -1315,7 +1315,7 @@ func setupScheduler(
 	t.Helper()
 	testTracer := tracing.InitializeTracerForTest()
 	t.Cleanup(func() {
-		require.NoError(t, testTracer.(*tracing.TracingService).GetTracerProvider().Shutdown(context.Background()))
+		require.NoError(t, testTracer.(*tracing.TracingService).GetTracerProvider().Shutdown(context.WithoutCancel(t.Context())))
 	})
 
 	opts := &schedulerOpts{

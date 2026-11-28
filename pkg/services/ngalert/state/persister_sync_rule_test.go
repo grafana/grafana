@@ -1,7 +1,6 @@
 package state
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -52,7 +51,7 @@ func TestSyncRuleStatePersister_Sync(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 			mockStore := new(FakeInstanceStore)
 			persister := &SyncRuleStatePersister{
 				log:   log.New("test"),
@@ -103,7 +102,7 @@ func TestSyncRuleStatePersister_Sync(t *testing.T) {
 			log: log.New("test"),
 		}
 		tracer := otel.Tracer("test")
-		ctx := context.Background()
+		ctx := t.Context()
 		ctx, span := tracer.Start(ctx, "test-span")
 		ruleKey := models.AlertRuleKeyWithGroup{
 			AlertRuleKey: models.AlertRuleKey{

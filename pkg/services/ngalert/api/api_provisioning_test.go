@@ -2462,7 +2462,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	require.NoError(t, err)
 	// if not one of the two above, return ErrFolderNotFound
 	folderService.ExpectedError = dashboards.ErrFolderNotFound
-	err = store.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
+	err = store.SaveAlertmanagerConfiguration(t.Context(), &models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(raw),
 		ConfigurationVersion:      "v1",
 		Default:                   false,

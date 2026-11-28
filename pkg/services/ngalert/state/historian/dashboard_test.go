@@ -1,7 +1,6 @@
 package historian
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -19,7 +18,7 @@ func TestDashboardResolver(t *testing.T) {
 		dbs.On("GetDashboard", mock.Anything, mock.Anything).Return(result, nil)
 		sut := createDashboardResolverSut(dbs)
 
-		id, err := sut.getID(context.Background(), 1, "dashboard-uid")
+		id, err := sut.getID(t.Context(), 1, "dashboard-uid")
 
 		require.NoError(t, err)
 		require.Equal(t, exp, id)
@@ -30,7 +29,7 @@ func TestDashboardResolver(t *testing.T) {
 		dbs.On("GetDashboard", mock.Anything, mock.Anything).Return(nil, dashboards.ErrDashboardNotFound)
 		sut := createDashboardResolverSut(dbs)
 
-		_, err := sut.getID(context.Background(), 1, "not-exist")
+		_, err := sut.getID(t.Context(), 1, "not-exist")
 
 		require.Error(t, err)
 		require.ErrorIs(t, err, dashboards.ErrDashboardNotFound)

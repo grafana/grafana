@@ -145,7 +145,7 @@ func TestProcessEvalResults_CaptureBackoffIsPerRule(t *testing.T) {
 		return eval.Result{State: s, Instance: labels, EvaluatedAt: clk.Now()}
 	}
 	process := func(results ...eval.Result) []StateTransition {
-		transitions, _ := mgr.ProcessEvalResults(context.Background(), clk.Now(), &rule, results, nil, nil)
+		transitions, _ := mgr.ProcessEvalResults(t.Context(), clk.Now(), &rule, results, nil, nil)
 		return transitions
 	}
 

@@ -146,7 +146,7 @@ func TestRecordingRuleStaleMarkerFailures(t *testing.T) {
 		h.failStale, h.staleErr = true, foreignError{"err-mimir-max-active-series"}
 
 		logger := &logtest.Fake{}
-		h.rule.writeStale(context.Background(), h.now.Add(time.Minute), nil, logger)
+		h.rule.writeStale(t.Context(), h.now.Add(time.Minute), nil, logger)
 		require.Equal(t, 1, logger.WarnLogs.Calls)
 		require.Contains(t, logger.WarnLogs.Ctx, markerReasonMaxActiveSeries)
 	})

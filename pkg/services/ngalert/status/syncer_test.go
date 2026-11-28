@@ -151,7 +151,7 @@ func TestSyncer_sync_writesBothKindsAndDedupes(t *testing.T) {
 	}}
 	s := newTestSyncer(t, gen, &fakeOrgs{[]int64{1}}, states, status, nil)
 
-	require.NoError(t, s.sync(context.Background()))
+	require.NoError(t, s.sync(t.Context()))
 	require.Equal(t, 1, gen.alert.updates)
 	require.Equal(t, 1, gen.recording.updates)
 
@@ -161,7 +161,7 @@ func TestSyncer_sync_writesBothKindsAndDedupes(t *testing.T) {
 	require.Equal(t, model.RecordingRuleRecordingRuleHealthRecording, *rr.Status.Health)
 
 	// A second sync with unchanged status writes nothing new.
-	require.NoError(t, s.sync(context.Background()))
+	require.NoError(t, s.sync(t.Context()))
 	require.Equal(t, 1, gen.alert.updates)
 	require.Equal(t, 1, gen.recording.updates)
 }
@@ -184,7 +184,7 @@ func TestSyncer_sync_totalsUseSpecExecErrState(t *testing.T) {
 	}}
 	s := newTestSyncer(t, gen, &fakeOrgs{[]int64{1}}, states, &fakeStatus{}, nil)
 
-	require.NoError(t, s.sync(context.Background()))
+	require.NoError(t, s.sync(t.Context()))
 	require.Equal(t, &model.AlertRuleAlertRuleInstanceTotals{Error: new(int64(1))}, gen.alert.updated["default"].(*model.AlertRule).Status.Totals)
 	require.Equal(t, &model.AlertRuleAlertRuleInstanceTotals{Healthy: new(int64(1)), Error: new(int64(1))}, gen.alert.updated["ok"].(*model.AlertRule).Status.Totals)
 }
@@ -204,7 +204,7 @@ func TestSyncer_sync_skipsDisabledOrgs(t *testing.T) {
 		2: {},
 	})
 
-	require.NoError(t, s.sync(context.Background()))
+	require.NoError(t, s.sync(t.Context()))
 	require.Equal(t, 1, gen.alert.updates)
 	require.Equal(t, 1, gen.recording.updates)
 
@@ -214,7 +214,7 @@ func TestSyncer_sync_skipsDisabledOrgs(t *testing.T) {
 	require.Equal(t, model.RecordingRuleRecordingRuleHealthRecording, *rr.Status.Health)
 
 	// A second sync with unchanged status writes nothing new.
-	require.NoError(t, s.sync(context.Background()))
+	require.NoError(t, s.sync(t.Context()))
 	require.Equal(t, 1, gen.alert.updates)
 	require.Equal(t, 1, gen.recording.updates)
 }
@@ -227,11 +227,11 @@ func TestSyncer_sync_rewritesWhenStatusChanges(t *testing.T) {
 	states := &fakeStates{byUID: map[string][]*state.State{"alert1": {{State: eval.Normal}}}}
 	s := newTestSyncer(t, gen, &fakeOrgs{[]int64{1}}, states, &fakeStatus{}, nil)
 
-	require.NoError(t, s.sync(context.Background()))
+	require.NoError(t, s.sync(t.Context()))
 	require.Equal(t, 1, gen.alert.updates)
 
 	states.byUID["alert1"] = []*state.State{{State: eval.Alerting}}
-	require.NoError(t, s.sync(context.Background()))
+	require.NoError(t, s.sync(t.Context()))
 	require.Equal(t, 2, gen.alert.updates)
 }
 
@@ -250,7 +250,7 @@ func TestSyncer_sync_preservesOtherOperatorStatus(t *testing.T) {
 	}}
 	s := newTestSyncer(t, gen, &fakeOrgs{[]int64{1}}, states, &fakeStatus{}, nil)
 
-	require.NoError(t, s.sync(context.Background()))
+	require.NoError(t, s.sync(t.Context()))
 	require.Equal(t, 1, gen.alert.updates)
 
 	written := gen.alert.updated["alert1"].(*model.AlertRule)
@@ -267,11 +267,11 @@ func TestSyncer_sync_prunesDeletedRules(t *testing.T) {
 	s := newTestSyncer(t, gen, &fakeOrgs{[]int64{1}}, &fakeStates{}, &fakeStatus{}, nil)
 
 	key := ngmodels.AlertRuleKey{OrgID: 1, UID: "alert1"}
-	require.NoError(t, s.sync(context.Background()))
+	require.NoError(t, s.sync(t.Context()))
 	require.Contains(t, s.lastHash, key, "rule should be tracked after it is synced")
 
 	// The rule is deleted: it's no longer listed.
 	alertClient.list = &model.AlertRuleList{}
-	require.NoError(t, s.sync(context.Background()))
+	require.NoError(t, s.sync(t.Context()))
 	require.NotContains(t, s.lastHash, key, "deleted rule's change-detection entry should be pruned")
 }

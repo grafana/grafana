@@ -27,7 +27,7 @@ func TestCanReadAllRules(t *testing.T) {
 			return expected, nil
 		}
 		p := &provisioningRuleAccessControl{rs}
-		res, err := p.CanReadAllRules(context.Background(), testUser)
+		res, err := p.CanReadAllRules(t.Context(), testUser)
 		require.NoError(t, err)
 		require.Equal(t, expected, res)
 
@@ -47,7 +47,7 @@ func TestCanReadAllRules(t *testing.T) {
 			return false, expected
 		}
 		p := &provisioningRuleAccessControl{rs}
-		_, err := p.CanReadAllRules(context.Background(), testUser)
+		_, err := p.CanReadAllRules(t.Context(), testUser)
 		require.ErrorIs(t, err, expected)
 	})
 }
@@ -62,7 +62,7 @@ func TestCanWriteAllRules(t *testing.T) {
 			return expected, nil
 		}
 		p := &provisioningRuleAccessControl{rs}
-		res, err := p.CanWriteAllRules(context.Background(), testUser)
+		res, err := p.CanWriteAllRules(t.Context(), testUser)
 		require.NoError(t, err)
 		require.Equal(t, expected, res)
 
@@ -82,7 +82,7 @@ func TestCanWriteAllRules(t *testing.T) {
 			return false, expected
 		}
 		p := &provisioningRuleAccessControl{rs}
-		_, err := p.CanWriteAllRules(context.Background(), testUser)
+		_, err := p.CanWriteAllRules(t.Context(), testUser)
 		require.ErrorIs(t, err, expected)
 	})
 }
@@ -101,7 +101,7 @@ func TestAuthorizeAccessToRuleGroup(t *testing.T) {
 			return true, nil
 		}
 
-		err := provisioner.AuthorizeRuleGroupRead(context.Background(), testUser, rules)
+		err := provisioner.AuthorizeRuleGroupRead(t.Context(), testUser, rules)
 		require.NoError(t, err)
 
 		require.Len(t, rs.Calls, 1)
@@ -127,7 +127,7 @@ func TestAuthorizeAccessToRuleGroup(t *testing.T) {
 			return nil
 		}
 
-		err := provisioner.AuthorizeRuleGroupRead(context.Background(), testUser, rules)
+		err := provisioner.AuthorizeRuleGroupRead(t.Context(), testUser, rules)
 		require.NoError(t, err)
 
 		require.Len(t, rs.Calls, 2)
@@ -147,7 +147,7 @@ func TestAuthorizeAccessToRuleGroup(t *testing.T) {
 			return false, expected
 		}
 
-		err := provisioner.AuthorizeRuleGroupRead(context.Background(), testUser, rules)
+		err := provisioner.AuthorizeRuleGroupRead(t.Context(), testUser, rules)
 		require.ErrorIs(t, err, expected)
 
 		rs.HasAccessFunc = func(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
@@ -158,7 +158,7 @@ func TestAuthorizeAccessToRuleGroup(t *testing.T) {
 			return expected
 		}
 
-		err = provisioner.AuthorizeRuleGroupRead(context.Background(), testUser, rules)
+		err = provisioner.AuthorizeRuleGroupRead(t.Context(), testUser, rules)
 		require.ErrorIs(t, err, expected)
 	})
 }
@@ -177,7 +177,7 @@ func TestAuthorizeAccessToRule(t *testing.T) {
 			return true, nil
 		}
 
-		err := provisioner.AuthorizeRuleRead(context.Background(), testUser, &rule)
+		err := provisioner.AuthorizeRuleRead(t.Context(), testUser, &rule)
 		require.NoError(t, err)
 
 		require.Len(t, rs.Calls, 1)
@@ -203,7 +203,7 @@ func TestAuthorizeAccessToRule(t *testing.T) {
 			return nil
 		}
 
-		err := provisioner.AuthorizeRuleRead(context.Background(), testUser, &rule)
+		err := provisioner.AuthorizeRuleRead(t.Context(), testUser, &rule)
 		require.NoError(t, err)
 
 		require.Len(t, rs.Calls, 2)
@@ -223,7 +223,7 @@ func TestAuthorizeAccessToRule(t *testing.T) {
 			return false, expected
 		}
 
-		err := provisioner.AuthorizeRuleRead(context.Background(), testUser, &rule)
+		err := provisioner.AuthorizeRuleRead(t.Context(), testUser, &rule)
 		require.ErrorIs(t, err, expected)
 
 		rs.HasAccessFunc = func(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
@@ -234,7 +234,7 @@ func TestAuthorizeAccessToRule(t *testing.T) {
 			return expected
 		}
 
-		err = provisioner.AuthorizeRuleRead(context.Background(), testUser, &rule)
+		err = provisioner.AuthorizeRuleRead(t.Context(), testUser, &rule)
 		require.ErrorIs(t, err, expected)
 	})
 }
@@ -253,7 +253,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			return true, nil
 		}
 
-		err := provisioner.AuthorizeRuleGroupWrite(context.Background(), testUser, change)
+		err := provisioner.AuthorizeRuleGroupWrite(t.Context(), testUser, change)
 		require.NoError(t, err)
 
 		require.Len(t, rs.Calls, 1)
@@ -278,7 +278,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			return nil
 		}
 
-		err := provisioner.AuthorizeRuleGroupWrite(context.Background(), testUser, change)
+		err := provisioner.AuthorizeRuleGroupWrite(t.Context(), testUser, change)
 		require.NoError(t, err)
 
 		require.Len(t, rs.Calls, 2)
@@ -299,7 +299,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			return false, expected
 		}
 
-		err := provisioner.AuthorizeRuleGroupWrite(context.Background(), testUser, change)
+		err := provisioner.AuthorizeRuleGroupWrite(t.Context(), testUser, change)
 		require.ErrorIs(t, err, expected)
 
 		rs.HasAccessFunc = func(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
@@ -310,7 +310,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			return expected
 		}
 
-		err = provisioner.AuthorizeRuleGroupWrite(context.Background(), testUser, change)
+		err = provisioner.AuthorizeRuleGroupWrite(t.Context(), testUser, change)
 		require.ErrorIs(t, err, expected)
 	})
 }

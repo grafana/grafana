@@ -17,7 +17,7 @@ import (
 )
 
 func TestService_forwardsStoreMethods(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
 	requester := &user.SignedInUser{UserID: 27, OrgID: 41}
 	userUID := ngmodels.UserUID("writer")
@@ -145,7 +145,7 @@ func TestService_preservesNilAndEmptyResults(t *testing.T) {
 		{name: "empty", rules: ngmodels.RulesGroup{}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx, cancel := context.WithCancel(context.Background())
+			ctx, cancel := context.WithCancel(t.Context())
 			defer cancel()
 			query := &ngmodels.ListAlertRulesQuery{OrgID: 41}
 			spy := &serviceStoreSpy{
@@ -160,7 +160,7 @@ func TestService_preservesNilAndEmptyResults(t *testing.T) {
 }
 
 func TestService_preservesRulePointer(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 	query := &ngmodels.GetAlertRuleByUIDQuery{OrgID: 41, UID: "requested-rule"}
 	rule := &ngmodels.AlertRule{OrgID: 41, UID: query.UID}
@@ -182,7 +182,7 @@ func TestService_forwardsEmptyVariadics(t *testing.T) {
 		{name: "empty", uids: []string{}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx, cancel := context.WithCancel(context.Background())
+			ctx, cancel := context.WithCancel(t.Context())
 			defer cancel()
 			wantErr := errors.New("empty UID request")
 			namespaces := map[string]string{"rule": "folder"}
@@ -412,7 +412,7 @@ func (s *serviceSchedulingSpy) GetAlertRulesForScheduling(ctx context.Context, q
 
 func TestService_forwardsSchedulingQueryMutation(t *testing.T) {
 	for _, err := range []error{nil, errors.New("scheduling failure")} {
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(t.Context())
 		cancel()
 		query := &ngmodels.GetAlertRulesForSchedulingQuery{PopulateFolders: true, RuleGroups: []string{"scheduled-group"}}
 		spy := &serviceSchedulingSpy{err: err}
@@ -466,7 +466,7 @@ func TestService_forwardsRenameCallbacks(t *testing.T) {
 		t.Run(method, func(t *testing.T) {
 			for _, dryRun := range []bool{false, true} {
 				for _, err := range []error{nil, errors.New("rename failure")} {
-					ctx, cancel := context.WithCancel(context.Background())
+					ctx, cancel := context.WithCancel(t.Context())
 					cancel()
 					spy := &serviceRenameSpy{
 						t: t, ctx: ctx, method: method, dryRun: dryRun, err: err,

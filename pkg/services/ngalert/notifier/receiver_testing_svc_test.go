@@ -161,7 +161,7 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 			}
 			svc.allowedIntegrations = tc.allowedIntegrations
 			t.Cleanup(func() { svc.allowedIntegrations = nil })
-			result, err := svc.TestNewReceiverIntegration(context.Background(), tc.user, alert, *tc.integration)
+			result, err := svc.TestNewReceiverIntegration(t.Context(), tc.user, alert, *tc.integration)
 			if tc.expectedErr != nil {
 				require.ErrorIs(t, err, tc.expectedErr)
 				return
@@ -195,7 +195,7 @@ func TestReceiverTestingService_authorizeEdits_HasUpdateProtectedError(t *testin
 				},
 			}}
 			existing := integration.Clone()
-			err := svc.authorizeEdits(context.Background(), usr, rcv, &integration, &existing)
+			err := svc.authorizeEdits(t.Context(), usr, rcv, &integration, &existing)
 			if tc.expectedErr != "" {
 				require.ErrorIs(t, err, tc.hasErr)
 				require.ErrorContains(t, err, tc.expectedErr)
@@ -326,7 +326,7 @@ func TestReceiverTestingService_PatchIntegrationAndTest(t *testing.T) {
 			if tc.integration == nil {
 				tc.integration = &existingIntegration
 			}
-			_, err := svc.PatchIntegrationAndTest(context.Background(), tc.user, alert, tc.receiverUID, *tc.integration, tc.secretsToPatch)
+			_, err := svc.PatchIntegrationAndTest(t.Context(), tc.user, alert, tc.receiverUID, *tc.integration, tc.secretsToPatch)
 			require.ErrorIs(t, err, tc.expectedErr)
 		})
 	}
@@ -341,7 +341,7 @@ func TestReceiverTestingService_PatchIntegrationAndTest(t *testing.T) {
 
 		i := existingIntegration.Clone()
 		i.SecureSettings = nil
-		result, err := svc.PatchIntegrationAndTest(context.Background(), authorizedUser, alert, receiverUID, i, nil)
+		result, err := svc.PatchIntegrationAndTest(t.Context(), authorizedUser, alert, receiverUID, i, nil)
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
 		amMock.AssertExpectations(t)
@@ -358,7 +358,7 @@ func TestReceiverTestingService_PatchIntegrationAndTest(t *testing.T) {
 		secrets := slices.Collect(maps.Keys(existingIntegration.SecureSettings))
 		i.SecureSettings = nil
 
-		result, err := svc.PatchIntegrationAndTest(context.Background(), authorizedUser, alert, receiverUID, i, secrets)
+		result, err := svc.PatchIntegrationAndTest(t.Context(), authorizedUser, alert, receiverUID, i, secrets)
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
 
@@ -378,7 +378,7 @@ func TestReceiverTestingService_PatchIntegrationAndTest(t *testing.T) {
 		i := existingIntegration.Clone()
 		i.SecureSettings = nil
 
-		result, err := svc.PatchIntegrationAndTest(context.Background(), authorizedUser, alert, receiverUID, i, nil)
+		result, err := svc.PatchIntegrationAndTest(t.Context(), authorizedUser, alert, receiverUID, i, nil)
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
 

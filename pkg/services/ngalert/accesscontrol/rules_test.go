@@ -478,7 +478,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				for _, missing := range permissionCombinations {
 					ac := &recordingAccessControlFake{}
 					srv := NewRuleService(ac)
-					err := srv.AuthorizeRuleChanges(context.Background(), createUserWithPermissions(missing), groupChanges)
+					err := srv.AuthorizeRuleChanges(t.Context(), createUserWithPermissions(missing), groupChanges)
 
 					assert.Errorf(t, err, "expected error because less permissions than expected were provided. Provided: %v; Expected: %v; Diff: %v", missing, permissions, cmp.Diff(permissions, missing))
 					require.NotEmptyf(t, ac.EvaluateRecordings, "Access control was supposed to be called but it was not")
@@ -487,7 +487,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 
 			ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 			srv := NewRuleService(ac)
-			err := srv.AuthorizeRuleChanges(context.Background(), createUserWithPermissions(permissions), groupChanges)
+			err := srv.AuthorizeRuleChanges(t.Context(), createUserWithPermissions(permissions), groupChanges)
 			require.NoError(t, err)
 		})
 	}
@@ -528,7 +528,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 		ac := &recordingAccessControlFake{}
 		svc := NewRuleService(ac)
 
-		eval := svc.AuthorizeDatasourceAccessForRule(context.Background(), createUserWithPermissions(permissions), rule)
+		eval := svc.AuthorizeDatasourceAccessForRule(t.Context(), createUserWithPermissions(permissions), rule)
 
 		require.NoError(t, eval)
 		require.Len(t, ac.EvaluateRecordings, 1)
@@ -542,7 +542,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 		}
 		svc := NewRuleService(ac)
 
-		result := svc.AuthorizeDatasourceAccessForRule(context.Background(), createUserWithPermissions(nil), rule)
+		result := svc.AuthorizeDatasourceAccessForRule(t.Context(), createUserWithPermissions(nil), rule)
 
 		require.Error(t, result)
 		require.Len(t, ac.EvaluateRecordings, 1)
@@ -563,7 +563,7 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 		ac := &recordingAccessControlFake{}
 		svc := NewRuleService(ac)
 
-		result := svc.AuthorizeAccessToRuleGroup(context.Background(), createUserWithPermissions(permissions), rules)
+		result := svc.AuthorizeAccessToRuleGroup(t.Context(), createUserWithPermissions(permissions), rules)
 
 		require.NoError(t, result)
 		require.NotEmpty(t, ac.EvaluateRecordings)
@@ -578,7 +578,7 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 		ac := &recordingAccessControlFake{}
 		svc := NewRuleService(ac)
 
-		result := svc.AuthorizeAccessToRuleGroup(context.Background(), createUserWithPermissions(map[string][]string{}), rules)
+		result := svc.AuthorizeAccessToRuleGroup(t.Context(), createUserWithPermissions(map[string][]string{}), rules)
 
 		require.Error(t, result)
 		require.ErrorIs(t, result, ErrAuthorizationBase)
@@ -628,7 +628,7 @@ func TestCanReadAllRules(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		result, err := svc.CanReadAllRules(context.Background(), createUserWithPermissions(tc.permissions))
+		result, err := svc.CanReadAllRules(t.Context(), createUserWithPermissions(tc.permissions))
 		assert.NoError(t, err)
 		assert.Equalf(t, tc.expected, result, "permissions: %v", tc.permissions)
 	}
@@ -749,7 +749,7 @@ func TestHasAccessInFolder(t *testing.T) {
 			ac := &recordingAccessControlFake{}
 			svc := NewRuleService(ac)
 
-			result, err := svc.HasAccessInFolder(context.Background(), createUserWithPermissions(tc.permissions), tc.namespace)
+			result, err := svc.HasAccessInFolder(t.Context(), createUserWithPermissions(tc.permissions), tc.namespace)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, result)
 
@@ -821,7 +821,7 @@ func TestAuthorizeAccessInFolder(t *testing.T) {
 			ac := &recordingAccessControlFake{}
 			svc := NewRuleService(ac)
 
-			err := svc.AuthorizeAccessInFolder(context.Background(), createUserWithPermissions(tc.permissions), tc.namespace)
+			err := svc.AuthorizeAccessInFolder(t.Context(), createUserWithPermissions(tc.permissions), tc.namespace)
 
 			if tc.expectErr {
 				require.Error(t, err)
@@ -928,7 +928,7 @@ func TestHasAccessInFolderWithScopeResolver(t *testing.T) {
 
 			// Use namespace without fullpath - forces fallback to scope resolver
 			namespace := models.NewNamespaceUID("child")
-			result, err := svc.HasAccessInFolder(context.Background(), usr, namespace)
+			result, err := svc.HasAccessInFolder(t.Context(), usr, namespace)
 
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, result)
@@ -989,28 +989,28 @@ func TestRuleService_AuthorizeNotificationSettings(t *testing.T) {
 
 	t.Run("authorizes each receiver", func(t *testing.T) {
 		svc, recorder := newService()
-		require.NoError(t, svc.AuthorizeNotificationSettings(context.Background(), nil, []ReceiverRef{a, b, a}))
+		require.NoError(t, svc.AuthorizeNotificationSettings(t.Context(), nil, []ReceiverRef{a, b, a}))
 		require.Equal(t, []string{"uid-a", "uid-b", "uid-a"}, recorder.uids)
 	})
 
 	t.Run("does not look at receivers when the user can read all of them", func(t *testing.T) {
 		svc, recorder := newService()
 		recorder.readAllErr = nil
-		require.NoError(t, svc.AuthorizeNotificationSettings(context.Background(), nil, []ReceiverRef{a, missing}))
+		require.NoError(t, svc.AuthorizeNotificationSettings(t.Context(), nil, []ReceiverRef{a, missing}))
 		require.Empty(t, recorder.uids)
 		require.Equal(t, 1, recorder.readAll)
 	})
 
 	t.Run("requires access to all receivers for one that does not exist", func(t *testing.T) {
 		svc, recorder := newService()
-		err := svc.AuthorizeNotificationSettings(context.Background(), nil, []ReceiverRef{missing})
+		err := svc.AuthorizeNotificationSettings(t.Context(), nil, []ReceiverRef{missing})
 		require.ErrorIs(t, err, recorder.readAllErr)
 		require.Empty(t, recorder.uids, "access to a receiver cannot be scoped to one that does not exist")
 	})
 
 	t.Run("authorizes nothing without receivers", func(t *testing.T) {
 		svc, recorder := newService()
-		require.NoError(t, svc.AuthorizeNotificationSettings(context.Background(), nil, nil))
+		require.NoError(t, svc.AuthorizeNotificationSettings(t.Context(), nil, nil))
 		require.Empty(t, recorder.uids)
 		require.Zero(t, recorder.readAll, "there is nothing to be authorized")
 	})
@@ -1018,7 +1018,7 @@ func TestRuleService_AuthorizeNotificationSettings(t *testing.T) {
 	t.Run("stops at the first receiver that is not authorized", func(t *testing.T) {
 		svc, recorder := newService()
 		recorder.uidErr = errors.New("denied")
-		err := svc.AuthorizeNotificationSettings(context.Background(), nil, []ReceiverRef{a, b})
+		err := svc.AuthorizeNotificationSettings(t.Context(), nil, []ReceiverRef{a, b})
 		require.ErrorIs(t, err, recorder.uidErr)
 		require.Equal(t, []string{"uid-a"}, recorder.uids)
 	})

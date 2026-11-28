@@ -1,7 +1,6 @@
 package backtesting
 
 import (
-	"context"
 	"errors"
 	"math/rand"
 	"testing"
@@ -16,7 +15,7 @@ import (
 )
 
 func TestQueryEvaluator_Eval(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	interval := time.Duration(rand.Int63n(9)+1) * time.Second
 	times := rand.Intn(11) + 5
 	from := time.Now().Add(-time.Duration(times) * interval)

@@ -1,7 +1,6 @@
 package accesscontrol
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -38,7 +37,7 @@ func TestAlertmanagerImportsAccess_AuthorizeCreate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			fake := &recordingAccessControlFake{}
 			svc := NewAlertmanagerImportsAccess(fake)
-			err := svc.AuthorizeCreate(context.Background(), newUser(tc.permissions...))
+			err := svc.AuthorizeCreate(t.Context(), newUser(tc.permissions...))
 			if tc.expectedErr {
 				require.Error(t, err)
 			} else {
@@ -94,7 +93,7 @@ func TestAlertmanagerImportsAccess_AuthorizeUpdate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			fake := &recordingAccessControlFake{}
 			svc := NewAlertmanagerImportsAccess(fake)
-			err := svc.AuthorizeUpdate(context.Background(), newUser(tc.permissions...), tc.identifier)
+			err := svc.AuthorizeUpdate(t.Context(), newUser(tc.permissions...), tc.identifier)
 			if tc.expectedErr {
 				require.Error(t, err)
 			} else {
@@ -200,7 +199,7 @@ func TestAlertmanagerImportsAccess_AuthorizePromote(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			fake := &recordingAccessControlFake{}
 			svc := NewAlertmanagerImportsAccess(fake)
-			err := svc.AuthorizePromote(context.Background(), newUser(tc.permissions...), tc.result)
+			err := svc.AuthorizePromote(t.Context(), newUser(tc.permissions...), tc.result)
 			if tc.expectedErr {
 				require.Error(t, err)
 			} else {
@@ -256,7 +255,7 @@ func TestAlertmanagerImportsAccess_AuthorizeDelete(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			fake := &recordingAccessControlFake{}
 			svc := NewAlertmanagerImportsAccess(fake)
-			err := svc.AuthorizeDelete(context.Background(), newUser(tc.permissions...), tc.identifier)
+			err := svc.AuthorizeDelete(t.Context(), newUser(tc.permissions...), tc.identifier)
 			if tc.expectedErr {
 				require.Error(t, err)
 			} else {

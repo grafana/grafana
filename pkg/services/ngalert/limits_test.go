@@ -17,7 +17,7 @@ func TestUsageReporter(t *testing.T) {
 			OrgID: 1,
 		}
 
-		res, err := UsageReporter(rules)(context.Background(), &params)
+		res, err := UsageReporter(rules)(t.Context(), &params)
 
 		require.NoError(t, err)
 		rulesOrg, _ := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.OrgScope)
@@ -32,7 +32,7 @@ func TestUsageReporter(t *testing.T) {
 			OrgID: 1,
 		}
 
-		res, err := UsageReporter(rules)(context.Background(), &params)
+		res, err := UsageReporter(rules)(t.Context(), &params)
 
 		require.NoError(t, err)
 		rulesGlobal, _ := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.GlobalScope)
@@ -47,7 +47,7 @@ func TestUsageReporter(t *testing.T) {
 			OrgID: 3,
 		}
 
-		res, err := UsageReporter(rules)(context.Background(), &params)
+		res, err := UsageReporter(rules)(t.Context(), &params)
 
 		require.NoError(t, err)
 		rulesOrg, _ := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.OrgScope)
@@ -59,7 +59,7 @@ func TestUsageReporter(t *testing.T) {
 	t.Run("reports global usage if scope params are nil", func(t *testing.T) {
 		rules := newFakeUsageReader(map[int64]int64{1: 10, 2: 20})
 
-		res, err := UsageReporter(rules)(context.Background(), nil)
+		res, err := UsageReporter(rules)(t.Context(), nil)
 
 		require.NoError(t, err)
 		rulesGlobal, _ := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.GlobalScope)

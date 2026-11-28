@@ -33,7 +33,7 @@ func TestScreenshotImageService(t *testing.T) {
 	s := NewScreenshotImageService(cache, &limiter, log.NewNopLogger(), screenshots, 5*time.Second, images,
 		NewUploadingService(uploads, prometheus.NewRegistry()))
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("image is taken, uploaded, saved to database and cached", func(t *testing.T) {
 		// assert that the cache is checked for an existing image

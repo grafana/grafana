@@ -607,7 +607,7 @@ func TestValidate(t *testing.T) {
 				dsquerierclient.NewNullQSDatasourceClientBuilder(),
 			)
 			validator := NewConditionValidator(cacheService, expressions, store)
-			evalCtx := NewContext(context.Background(), u)
+			evalCtx := NewContext(t.Context(), u)
 
 			err := validator.Validate(evalCtx, condition)
 			if testCase.error {
@@ -737,7 +737,7 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 					dsquerierclient.NewNullQSDatasourceClientBuilder(),
 				),
 			)
-			evalCtx := NewContextWithPreviousResults(context.Background(), u, testCase.reader)
+			evalCtx := NewContextWithPreviousResults(t.Context(), u, testCase.reader)
 
 			eval, err := evaluator.Create(evalCtx, condition)
 			if testCase.error {
@@ -752,7 +752,7 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 			if testCase.reader == nil {
 				require.Empty(t, cmds[0].LoadedDimensions)
 			} else {
-				require.EqualValues(t, testCase.reader.Read(context.Background()), cmds[0].LoadedDimensions)
+				require.EqualValues(t, testCase.reader.Read(t.Context()), cmds[0].LoadedDimensions)
 			}
 		})
 	}
@@ -1259,7 +1259,7 @@ func TestEvaluate(t *testing.T) {
 			}
 			// Use a time far in the past so we can easily check if eval duration times are influenced by scheduledAt.
 			scheduledAt := time.Now().Add(-24 * time.Hour)
-			results, err := ev.Evaluate(context.Background(), scheduledAt)
+			results, err := ev.Evaluate(t.Context(), scheduledAt)
 			if tc.error != "" {
 				require.EqualError(t, err, tc.error)
 			} else {
@@ -1294,7 +1294,7 @@ func TestEvaluateRaw(t *testing.T) {
 				evalTimeout: 10 * time.Millisecond,
 			}
 
-			_, err := e.EvaluateRaw(context.Background(), time.Now())
+			_, err := e.EvaluateRaw(t.Context(), time.Now())
 			require.ErrorIs(t, err, context.DeadlineExceeded)
 		})
 	})
@@ -1385,7 +1385,7 @@ func TestEvaluateRawLimit(t *testing.T) {
 					evalResultLimit: tc.evalResultLimit,
 				}
 
-				result, err := e.EvaluateRaw(context.Background(), time.Now())
+				result, err := e.EvaluateRaw(t.Context(), time.Now())
 
 				if tc.error != "" {
 					require.Error(t, err)
@@ -1431,7 +1431,7 @@ func TestEvaluateRawLimit(t *testing.T) {
 					evalResultLimit: tc.evalResultLimit,
 				}
 
-				result, err := e.EvaluateRaw(context.Background(), time.Now())
+				result, err := e.EvaluateRaw(t.Context(), time.Now())
 				require.Error(t, err)
 				require.Equal(t, err, tc.queryEvalError)
 				require.Equal(t, result, tc.queryEvalResult)
@@ -1564,7 +1564,7 @@ func TestResults_Error(t *testing.T) {
 func TestCreate(t *testing.T) {
 	t.Run("should generate headers from metadata", func(t *testing.T) {
 		orgID := rand.Int63()
-		ctx := models.WithRuleKey(context.Background(), models.GenerateRuleKey(orgID))
+		ctx := models.WithRuleKey(t.Context(), models.GenerateRuleKey(orgID))
 		q := models.CreateClassicConditionExpression("A", "B", "avg", "gt", 1)
 		condition := models.Condition{
 			Condition: q.RefID,

@@ -40,13 +40,13 @@ func TestAnnotationHistorian(t *testing.T) {
 	t.Run("alert annotations are queryable", func(t *testing.T) {
 		anns := createTestAnnotationBackendSut(t)
 		items := []annotations.Item{createAnnotation()}
-		require.NoError(t, anns.store.Save(context.Background(), nil, items, 1, log.NewNopLogger()))
+		require.NoError(t, anns.store.Save(t.Context(), nil, items, 1, log.NewNopLogger()))
 
 		q := models.HistoryQuery{
 			RuleUID: "my-rule",
 			OrgID:   1,
 		}
-		frame, err := anns.Query(context.Background(), q)
+		frame, err := anns.Query(t.Context(), q)
 
 		require.NoError(t, err)
 		require.NotNil(t, frame)
@@ -66,14 +66,14 @@ func TestAnnotationHistorian(t *testing.T) {
 		anns.ac = ac
 
 		items := []annotations.Item{createAnnotation()}
-		require.NoError(t, anns.store.Save(context.Background(), nil, items, 1, log.NewNopLogger()))
+		require.NoError(t, anns.store.Save(t.Context(), nil, items, 1, log.NewNopLogger()))
 
 		q := models.HistoryQuery{
 			RuleUID:      "my-rule",
 			OrgID:        1,
 			SignedInUser: &user.SignedInUser{Name: "test-user", OrgID: 1},
 		}
-		_, err := anns.Query(context.Background(), q)
+		_, err := anns.Query(t.Context(), q)
 
 		require.ErrorIs(t, err, expectedErr)
 		assert.Len(t, ac.Calls, 1)
@@ -92,7 +92,7 @@ func TestAnnotationHistorian(t *testing.T) {
 			From:    now.Add(-10 * time.Second),
 			To:      now,
 		}
-		_, err := anns.Query(context.Background(), q)
+		_, err := anns.Query(t.Context(), q)
 
 		require.NoError(t, err)
 		query := store.lastQuery
@@ -109,7 +109,7 @@ func TestAnnotationHistorian(t *testing.T) {
 			Labels: data.Labels{"a": "b"},
 		})
 
-		err := <-anns.Record(context.Background(), rule, states)
+		err := <-anns.Record(t.Context(), rule, states)
 
 		require.NoError(t, err)
 	})
@@ -127,7 +127,7 @@ func TestAnnotationHistorian(t *testing.T) {
 			},
 		})
 
-		err := <-anns.Record(context.Background(), rule, states)
+		err := <-anns.Record(t.Context(), rule, states)
 
 		require.NoError(t, err)
 		require.Len(t, store.savedAnnotations, 1)
@@ -159,7 +159,7 @@ func TestAnnotationHistorian(t *testing.T) {
 			},
 		}
 
-		err := <-anns.Record(context.Background(), rule, states)
+		err := <-anns.Record(t.Context(), rule, states)
 
 		require.NoError(t, err)
 		require.Len(t, store.savedAnnotations, 2)
@@ -178,8 +178,8 @@ func TestAnnotationHistorian(t *testing.T) {
 			Labels: data.Labels{"a": "b"},
 		})
 
-		<-anns.Record(context.Background(), rule, states)
-		<-errAnns.Record(context.Background(), rule, states)
+		<-anns.Record(t.Context(), rule, states)
+		<-errAnns.Record(t.Context(), rule, states)
 
 		exp := bytes.NewBufferString(`
 # HELP grafana_alerting_state_history_transitions_failed_total The total number of state transitions that failed to be written - they are not retried.

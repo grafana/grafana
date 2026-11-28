@@ -130,7 +130,7 @@ func rootFolderRecordedAndReused(t *testing.T) (*fakeConfigClient, *memNamespace
 	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}
 	rs := &fakeRuleService{}
 	s := newRootFolderSyncer(t, cs, ns, fetch, rs)
-	s.SyncOrg(context.Background(), 1)
+	s.SyncOrg(t.Context(), 1)
 	require.Equal(t, ns.rootUID(t, "ds1"), recordedRootUID(cs), "first sync records the root folder it created")
 	return cs, ns, fetch, rs, s
 }
@@ -153,7 +153,7 @@ func TestSyncOrg_RenamedRootKeepsSyncingInTheSameFolder(t *testing.T) {
 	fetch.hash = 2
 	fetch.cfg = upstreamGroup("g2", "B")
 	rs.replaced = nil
-	s.SyncOrg(context.Background(), 1)
+	s.SyncOrg(t.Context(), 1)
 
 	require.Len(t, rs.replaced, 1, "the changed upstream is applied")
 	assert.Equal(t, root, ns.folders[rs.replaced[0].FolderUID].ParentUID, "still under the renamed root")
@@ -169,7 +169,7 @@ func TestSyncOrg_RenamedRootWithUnchangedUpstreamIsLeftAlone(t *testing.T) {
 	createdBefore := len(ns.created)
 
 	rs.replaced = nil
-	s.SyncOrg(context.Background(), 1)
+	s.SyncOrg(t.Context(), 1)
 
 	assert.Nil(t, rs.replaced, "unchanged upstream and an existing root: nothing to apply")
 	assert.Len(t, ns.created, createdBefore)
@@ -186,7 +186,7 @@ func TestSyncOrg_DeletedRootIsRecreatedWithTheSameUID(t *testing.T) {
 	ns.created = nil
 
 	rs.replaced = nil
-	s.SyncOrg(context.Background(), 1) // upstream hash unchanged
+	s.SyncOrg(t.Context(), 1) // upstream hash unchanged
 
 	require.Len(t, rs.replaced, 1, "an unchanged upstream is re-applied once the root folder is gone")
 	require.NotEmpty(t, ns.created)
@@ -204,7 +204,7 @@ func TestSyncOrg_RenamedAndThenDeletedRootIsRecreatedWithTheCanonicalTitle(t *te
 	ns.created = nil
 
 	rs.replaced = nil
-	s.SyncOrg(context.Background(), 1)
+	s.SyncOrg(t.Context(), 1)
 
 	require.Len(t, rs.replaced, 1)
 	assert.Equal(t, rootFolderTitle("ds1"), ns.folders[root].Title)
@@ -219,7 +219,7 @@ func TestSyncOrg_RootLookupErrorFailsTheTickWithoutCreating(t *testing.T) {
 		ns.getErr = boom
 
 		rs.replaced = nil
-		s.SyncOrg(context.Background(), 1)
+		s.SyncOrg(t.Context(), 1)
 
 		assert.Nil(t, rs.replaced)
 		assert.Empty(t, ns.created, "a lookup error must not look like a deleted folder")
@@ -235,7 +235,7 @@ func TestSyncOrg_RootLookupErrorFailsTheTickWithoutCreating(t *testing.T) {
 		fetch.hash = 2
 
 		rs.replaced = nil
-		s.SyncOrg(context.Background(), 1)
+		s.SyncOrg(t.Context(), 1)
 
 		assert.Nil(t, rs.replaced)
 		assert.Empty(t, ns.created)
@@ -249,7 +249,7 @@ func TestSyncOrg_WithoutARecordedUIDTheRootFolderIsFoundOrCreatedByTitle(t *test
 		cs.setSpec(1, "ds1")
 		rs := &fakeRuleService{}
 		s := newRootFolderSyncer(t, cs, ns, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
-		s.SyncOrg(context.Background(), 1)
+		s.SyncOrg(t.Context(), 1)
 		return cs, rs
 	}
 
@@ -283,7 +283,7 @@ func TestSyncOrg_IniPathKeepsTheRootFolderUIDInMemory(t *testing.T) {
 	s := newRootFolderSyncer(t, newFakeConfigClient(), ns, fetch, rs)
 	s.settings.ExternalRulerUID = "ds1"
 
-	s.SyncOrg(context.Background(), 1)
+	s.SyncOrg(t.Context(), 1)
 	root := ns.rootUID(t, "ds1")
 	require.Equal(t, root, s.state[1].rootFolderUID)
 
@@ -291,7 +291,7 @@ func TestSyncOrg_IniPathKeepsTheRootFolderUIDInMemory(t *testing.T) {
 	fetch.hash = 2
 	rs.replaced = nil
 	createdBefore := len(ns.created)
-	s.SyncOrg(context.Background(), 1)
+	s.SyncOrg(t.Context(), 1)
 
 	require.Len(t, rs.replaced, 1)
 	assert.Len(t, ns.created, createdBefore, "renamed root keeps syncing on the ini path too")
@@ -322,7 +322,7 @@ func TestBuildSyncStatus_RootFolderUIDCarriesForwardOnlyForTheSameDatasource(t *
 }
 
 func TestIsManagedFolder_FollowsTheRecordedRootFolder(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("a renamed root and its namespaces stay managed", func(t *testing.T) {
 		_, ns, _, rs, s := rootFolderRecordedAndReused(t)

@@ -124,7 +124,7 @@ func assertFramesEqual(t *testing.T, actualFrames data.Frames, expectedFrames da
 func TestPrometheusBackend_Record(t *testing.T) {
 	cfg := PrometheusConfig{DatasourceUID: "test-ds-uid", MetricName: testMetricName}
 	logger := log.NewNopLogger()
-	ctx := context.Background()
+	ctx := t.Context()
 	orgID := int64(1)
 	now := time.Now()
 	ruleMeta := history_model.RuleMeta{Title: "test rule"}
@@ -327,7 +327,7 @@ func TestPrometheusBackend_Query(t *testing.T) {
 
 	backend := NewRemotePrometheusBackend(cfg, fakeWriter, logger, met)
 
-	frame, err := backend.Query(context.Background(), ngmodels.HistoryQuery{})
+	frame, err := backend.Query(t.Context(), ngmodels.HistoryQuery{})
 	require.Error(t, err)
 	require.Nil(t, frame)
 	require.Contains(t, err.Error(), "prometheus historian backend does not support querying")
@@ -336,7 +336,7 @@ func TestPrometheusBackend_Query(t *testing.T) {
 func TestPrometheusBackend_Record_Metrics(t *testing.T) {
 	cfg := PrometheusConfig{DatasourceUID: "test-ds-uid", MetricName: testMetricName}
 	logger := log.NewNopLogger()
-	ctx := context.Background()
+	ctx := t.Context()
 	orgID := int64(1)
 	now := time.Now()
 	ruleMeta := history_model.RuleMeta{Title: "test rule"}
@@ -423,7 +423,7 @@ func TestPrometheusBackend_Record_Metrics(t *testing.T) {
 func TestPrometheusBackend_Record_PanicRecovery(t *testing.T) {
 	cfg := PrometheusConfig{DatasourceUID: "test-ds-uid", MetricName: testMetricName}
 	logger := log.NewNopLogger()
-	ctx := context.Background()
+	ctx := t.Context()
 	orgID := int64(1)
 	now := time.Now()
 	ruleMeta := history_model.RuleMeta{Title: "test rule"}

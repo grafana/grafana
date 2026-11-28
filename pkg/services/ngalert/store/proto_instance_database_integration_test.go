@@ -2,7 +2,6 @@ package store_test
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -25,7 +24,7 @@ const baseIntervalSeconds = 10
 func TestIntegration_CompressedAlertRuleStateOperations(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 	ng, _, ruleStore := tests.SetupTestEnv(t, baseIntervalSeconds)
 
 	const mainOrgID int64 = 1
@@ -143,7 +142,7 @@ func TestIntegration_SaveAlertInstancesForRule_DoesNotBlockOnOtherRulesMySQL(t *
 		t.Skip("lock behaviour is specific to MySQL")
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	ng, dbstore, ruleStore := tests.SetupTestEnv(t, baseIntervalSeconds)
 
 	rule1 := tests.CreateTestAlertRule(t, ctx, ruleStore, 60, 1)
@@ -231,7 +230,7 @@ func containsHash(t *testing.T, instances []*models.AlertInstance, hash string) 
 func TestIntegration_ProtoInstanceDBStore_VerifyCompressedData(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 	ng, dbstore, ruleStore := tests.SetupTestEnv(t, baseIntervalSeconds)
 
 	alertRule := tests.CreateTestAlertRule(t, ctx, ruleStore, 60, 1)
@@ -297,7 +296,7 @@ func decompressAlertInstances(compressed []byte) ([]*pb.AlertInstance, error) {
 func TestIntegration_RecordingSeriesInRuleState(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 	ng, dbstore, ruleStore := tests.SetupTestEnv(t, baseIntervalSeconds)
 
 	recording := tests.CreateTestAlertRule(t, ctx, ruleStore, 60, 1)

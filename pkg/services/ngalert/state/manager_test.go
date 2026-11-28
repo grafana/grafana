@@ -54,7 +54,7 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 
 	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
 	require.NoError(t, err)
-	ctx := context.Background()
+	ctx := t.Context()
 	ng, dbstore, ruleStore := tests.SetupTestEnv(t, 1)
 
 	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
@@ -308,7 +308,7 @@ func TestIntegrationDashboardAnnotations(t *testing.T) {
 	evaluationTime, err := time.Parse("2006-01-02", "2022-01-01")
 	require.NoError(t, err)
 
-	ctx := context.Background()
+	ctx := t.Context()
 	ng, dbstore, ruleStore := tests.SetupTestEnv(t, 1)
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
@@ -377,7 +377,7 @@ func TestIntegrationProcessEvalResultsTemplatedLabelKeysAreNotExpanded(t *testin
 	evaluationTime, err := time.Parse("2006-01-02", "2022-02-02")
 	require.NoError(t, err)
 
-	ctx := context.Background()
+	ctx := t.Context()
 	ng, dbstore, ruleStore := tests.SetupTestEnv(t, 1)
 
 	cfg := state.ManagerCfg{
@@ -1790,11 +1790,11 @@ func TestProcessEvalResults(t *testing.T) {
 						res[i].EvaluatedAt = evalTime
 					}
 					clk.Set(evalTime)
-					_, _ = st.ProcessEvalResults(context.Background(), evalTime, tc.alertRule, res, systemLabels, state.NoopSender)
+					_, _ = st.ProcessEvalResults(t.Context(), evalTime, tc.alertRule, res, systemLabels, state.NoopSender)
 					results += len(res)
 				}
 
-				states := st.GetStatesForRuleUID(context.Background(), tc.alertRule.OrgID, tc.alertRule.UID)
+				states := st.GetStatesForRuleUID(t.Context(), tc.alertRule.OrgID, tc.alertRule.UID)
 				assert.Len(t, states, len(tc.expectedStates))
 
 				expectedStates := make(map[data.Fingerprint]*state.State, len(tc.expectedStates))
@@ -1892,9 +1892,9 @@ func TestProcessEvalResults(t *testing.T) {
 			}),
 		)}
 
-		_, _ = st.ProcessEvalResults(context.Background(), time, rule, res, systemLabels, state.NoopSender)
+		_, _ = st.ProcessEvalResults(t.Context(), time, rule, res, systemLabels, state.NoopSender)
 
-		states := st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
+		states := st.GetStatesForRuleUID(t.Context(), rule.OrgID, rule.UID)
 		require.Len(t, states, 1)
 		state := states[0]
 		require.NotNil(t, state.Values)
@@ -1922,7 +1922,7 @@ func TestProcessEvalResults(t *testing.T) {
 		now := clk.Now()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(now)))
 
-		states, _ := st.ProcessEvalResults(context.Background(), now, rule, results, make(data.Labels), nil)
+		states, _ := st.ProcessEvalResults(t.Context(), now, rule, results, make(data.Labels), nil)
 		require.NotEmpty(t, states)
 
 		savedStates := make(map[data.Fingerprint]models.AlertInstance)
@@ -1967,7 +1967,7 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 	evaluationTime := time.Now().Truncate(time.Second).UTC()
 	interval := time.Minute
 
-	ctx := context.Background()
+	ctx := t.Context()
 	ng, dbstore, ruleStore := tests.SetupTestEnv(t, 1)
 
 	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
@@ -2077,7 +2077,7 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		ctx := context.Background()
+		ctx := t.Context()
 		cfg := state.ManagerCfg{
 			Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
 			ExternalURL:   nil,
@@ -2090,7 +2090,7 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 		}
 		st := state.NewManager(cfg, state.NewNoopPersister())
 		st.Warm(ctx, dbstore, ruleStore, ng.InstanceStore)
-		existingStatesForRule := st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
+		existingStatesForRule := st.GetStatesForRuleUID(t.Context(), rule.OrgID, rule.UID)
 
 		// We have loaded the expected number of entries from the db
 		assert.Equal(t, tc.startingStateCount, len(existingStatesForRule))
@@ -2101,7 +2101,7 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 					evalTime = re.EvaluatedAt
 				}
 			}
-			_, _ = st.ProcessEvalResults(context.Background(), evalTime, rule, res, data.Labels{
+			_, _ = st.ProcessEvalResults(t.Context(), evalTime, rule, res, data.Labels{
 				"alertname":                    rule.Title,
 				"__alert_rule_namespace_uid__": rule.NamespaceUID,
 				"__alert_rule_uid__":           rule.UID,
@@ -2112,7 +2112,7 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 				assert.Equal(t, s, cachedState)
 			}
 		}
-		existingStatesForRule = st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
+		existingStatesForRule = st.GetStatesForRuleUID(t.Context(), rule.OrgID, rule.UID)
 
 		// The expected number of state entries remains after results are processed
 		assert.Equal(t, tc.finalStateCount, len(existingStatesForRule))
@@ -2149,7 +2149,7 @@ func TestStaleResults(t *testing.T) {
 		}
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	clk := clock.NewMock()
 
 	store := &state.FakeInstanceStore{}
@@ -2195,7 +2195,7 @@ func TestStaleResults(t *testing.T) {
 	// Check that it returns just those state transitions that needs to be sent.
 	checkExpectedStateTransitions(t, statesToSend, map[data.Fingerprint]struct{}{state1: {}, state2: {}}) // Does not contain the Normal state3.
 
-	currentStates := st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
+	currentStates := st.GetStatesForRuleUID(t.Context(), rule.OrgID, rule.UID)
 	statesMap := checkExpectedStates(t, currentStates, initStates)
 	require.Equal(t, eval.Alerting, statesMap[state2].State) // make sure the state is alerting because we need it to be resolved later
 
@@ -2228,7 +2228,7 @@ func TestStaleResults(t *testing.T) {
 	})
 
 	t.Run("should remove stale states from cache", func(t *testing.T) {
-		currentStates = st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
+		currentStates = st.GetStatesForRuleUID(t.Context(), rule.OrgID, rule.UID)
 		checkExpectedStates(t, currentStates, map[data.Fingerprint]struct{}{
 			getCacheID(t, rule, results[0]): {},
 		})
@@ -2251,7 +2251,7 @@ func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
 	interval := time.Minute
-	ctx := context.Background()
+	ctx := t.Context()
 	ng, dbstore, ruleStore := tests.SetupTestEnv(t, 1)
 
 	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
@@ -2336,7 +2336,7 @@ func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 		}
 
 		t.Run(tc.desc, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 			clk := clock.NewMock()
 			clk.Set(time.Now())
 			cfg := state.ManagerCfg{
@@ -2353,7 +2353,7 @@ func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 			st.Warm(ctx, dbstore, ruleStore, ng.InstanceStore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alerts, _ := ng.InstanceStore.ListAlertInstances(ctx, q)
-			existingStatesForRule := st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
+			existingStatesForRule := st.GetStatesForRuleUID(t.Context(), rule.OrgID, rule.UID)
 
 			// We have loaded the expected number of entries from the db
 			assert.Equal(t, tc.startingStateCacheCount, len(existingStatesForRule))
@@ -2385,7 +2385,7 @@ func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 
 			q = &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alertInstances, _ := ng.InstanceStore.ListAlertInstances(ctx, q)
-			existingStatesForRule = st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
+			existingStatesForRule = st.GetStatesForRuleUID(t.Context(), rule.OrgID, rule.UID)
 
 			// The expected number of state entries remains after states are deleted
 			assert.Equal(t, tc.finalStateCacheCount, len(existingStatesForRule))
@@ -2398,7 +2398,7 @@ func TestIntegrationResetStateByRuleUID(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
 	interval := time.Minute
-	ctx := context.Background()
+	ctx := t.Context()
 	ng, dbstore, ruleStore := tests.SetupTestEnv(t, 1)
 
 	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
@@ -2481,7 +2481,7 @@ func TestIntegrationResetStateByRuleUID(t *testing.T) {
 		expectedStatesMap := stateSliceToMap(tc.expectedStates)
 
 		t.Run(tc.desc, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 			fakeHistorian := &state.FakeHistorian{StateTransitions: make([]state.StateTransition, 0)}
 			clk := clock.NewMock()
 			clk.Set(time.Now())
@@ -2499,7 +2499,7 @@ func TestIntegrationResetStateByRuleUID(t *testing.T) {
 			st.Warm(ctx, dbstore, ruleStore, ng.InstanceStore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alerts, _ := ng.InstanceStore.ListAlertInstances(ctx, q)
-			existingStatesForRule := st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
+			existingStatesForRule := st.GetStatesForRuleUID(t.Context(), rule.OrgID, rule.UID)
 
 			// We have loaded the expected number of entries from the db
 			assert.Equal(t, tc.startingStateCacheCount, len(existingStatesForRule))
@@ -2534,7 +2534,7 @@ func TestIntegrationResetStateByRuleUID(t *testing.T) {
 
 			q = &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alertInstances, _ := ng.InstanceStore.ListAlertInstances(ctx, q)
-			existingStatesForRule = st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
+			existingStatesForRule = st.GetStatesForRuleUID(t.Context(), rule.OrgID, rule.UID)
 
 			// The expected number of state entries remains after states are deleted
 			assert.Equal(t, tc.finalStateCacheCount, len(existingStatesForRule))
@@ -2544,7 +2544,7 @@ func TestIntegrationResetStateByRuleUID(t *testing.T) {
 }
 
 func TestResetStateByRuleUID(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	setupManager := func(historian state.Historian) *state.Manager {
 		cfg := state.ManagerCfg{
@@ -2789,7 +2789,7 @@ func TestStateManager_HistorianIntegration(t *testing.T) {
 				historian.StateTransitions = nil
 
 				_, _ = mgr.ProcessEvalResults(
-					context.Background(),
+					t.Context(),
 					evalTime,
 					scenario.rule,
 					results,

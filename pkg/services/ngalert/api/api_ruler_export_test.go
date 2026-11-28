@@ -2,7 +2,6 @@ package api
 
 import (
 	"bytes"
-	"context"
 	"embed"
 	"encoding/json"
 	"net/http"
@@ -254,7 +253,7 @@ func TestExportRules(t *testing.T) {
 	accessQuery.Model = model
 
 	hasAccess1 := gen.With(gen.WithGroupKey(hasAccessKey1), gen.WithQuery(accessQuery), gen.WithUniqueGroupIndex()).GenerateManyRef(5)
-	ruleStore.PutRule(context.Background(), hasAccess1...)
+	ruleStore.PutRule(t.Context(), hasAccess1...)
 	noAccessKey1 := ngmodels.AlertRuleGroupKey{
 		OrgID:        orgID,
 		NamespaceUID: f1.UID,
@@ -263,7 +262,7 @@ func TestExportRules(t *testing.T) {
 	noAccess1 := gen.With(gen.WithGroupKey(noAccessKey1), gen.WithQuery(noAccessQuery)).GenerateManyRef(5)
 	noAccessRule := gen.With(gen.WithGroupKey(noAccessKey1), gen.WithQuery(accessQuery)).GenerateRef()
 	noAccess1 = append(noAccess1, noAccessRule)
-	ruleStore.PutRule(context.Background(), noAccess1...)
+	ruleStore.PutRule(t.Context(), noAccess1...)
 
 	hasAccessKey2 := ngmodels.AlertRuleGroupKey{
 		OrgID:        orgID,
@@ -271,11 +270,11 @@ func TestExportRules(t *testing.T) {
 		RuleGroup:    "HAS-ACCESS-2",
 	}
 	hasAccess2 := gen.With(gen.WithGroupKey(hasAccessKey2), gen.WithQuery(accessQuery), gen.WithUniqueGroupIndex()).GenerateManyRef(5)
-	ruleStore.PutRule(context.Background(), hasAccess2...)
+	ruleStore.PutRule(t.Context(), hasAccess2...)
 
 	noAccessByFolder := gen.With(gen.WithQuery(accessQuery), gen.WithNamespaceUIDNotIn(f1.UID, f2.UID)).GenerateManyRef(10)
 
-	ruleStore.PutRule(context.Background(), noAccessByFolder...)
+	ruleStore.PutRule(t.Context(), noAccessByFolder...)
 	// overwrite the folders visible to user because PutRule automatically creates folders in the fake store.
 	ruleStore.Folders[orgID] = []*folder2.Folder{f1, f2}
 
@@ -472,7 +471,7 @@ func TestExportRules(t *testing.T) {
 			var exp []ngmodels.AlertRuleGroupWithFolderFullpath
 			gr := ngmodels.GroupByAlertRuleGroupKey(tc.expectedRules)
 			for key, rules := range gr {
-				folder, err := ruleStore.GetNamespaceByUID(context.Background(), key.NamespaceUID, orgID, nil)
+				folder, err := ruleStore.GetNamespaceByUID(t.Context(), key.NamespaceUID, orgID, nil)
 				require.NoError(t, err)
 				exp = append(exp, ngmodels.NewAlertRuleGroupWithFolderFullpathFromRulesGroup(key, rules, folder.Fullpath))
 			}

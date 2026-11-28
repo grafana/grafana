@@ -18,7 +18,7 @@ func TestIntegration_GetFolderUIDsWithMissingFullpath_NilProvider(t *testing.T) 
 	tutil.SkipIntegrationTestInShortMode(t)
 	sqlStore := db.NewTestStore(t)
 	store := &RuleStore{SQLStore: sqlStore}
-	ctx := context.Background()
+	ctx := t.Context()
 
 	for _, tc := range []struct {
 		folder string
@@ -71,7 +71,7 @@ func TestIntegration_GetFolderUIDsWithMissingFullpath_RoutedDatabaseAndTable(t *
 	localDB := db.NewTestStore(t)
 	routedDB := db.NewTestStore(t)
 	require.NotSame(t, localDB.GetEngine().DB(), routedDB.GetEngine().DB())
-	ctx := context.Background()
+	ctx := t.Context()
 	store := &RuleStore{SQLStore: localDB}
 	createRule(t, store, models.RuleGen.With(models.RuleGen.WithOrgID(1), models.RuleGen.WithNamespaceUID("local-only")))
 	require.NoError(t, localDB.WithDbSession(ctx, func(sess *db.Session) error {
@@ -123,7 +123,7 @@ func TestIntegration_GetFolderUIDsWithMissingFullpath_DoesNotReuseAmbientSession
 				store.LegacyDatabaseProvider = legacysql.NewDatabaseProvider(spy)
 			}
 			var ambient *db.Session
-			err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
+			err := sqlStore.InTransaction(t.Context(), func(ctx context.Context) error {
 				if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 					ambient = sess
 					return nil
@@ -161,7 +161,7 @@ func TestIntegration_GetFolderUIDsWithMissingFullpath_ErrorsDoNotFallBack(t *tes
 				},
 			}
 
-			uids, err := store.GetFolderUIDsWithMissingFullpath(context.Background(), 1)
+			uids, err := store.GetFolderUIDsWithMissingFullpath(t.Context(), 1)
 			if name == "provider error" {
 				require.ErrorIs(t, err, providerErr)
 			} else {

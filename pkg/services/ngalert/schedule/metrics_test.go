@@ -49,9 +49,9 @@ func TestSchedule_resetMetricsOnStop(t *testing.T) {
 			models.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
 			models.RuleGen.WithPrometheusOriginalRuleDefinition("test"),
 		).GenerateRef()
-		ruleStore.PutRule(context.Background(), alertRule)
+		ruleStore.PutRule(t.Context(), alertRule)
 
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(t.Context())
 		stopped := make(chan struct{})
 		go func() {
 			_ = sch.Run(ctx)

@@ -110,7 +110,7 @@ func newStaleHarness(t *testing.T) *staleHarness {
 		},
 	}
 
-	parent, cancel := context.WithCancel(context.Background())
+	parent, cancel := context.WithCancel(t.Context())
 	h.cancelParent = cancel
 	t.Cleanup(cancel)
 

@@ -1,7 +1,6 @@
 package rulesync
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"testing"
@@ -60,7 +59,7 @@ func testDS() *datasources.DataSource {
 }
 
 func TestRulerFetcher_Fetch(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("parses namespace-grouped rule configs", func(t *testing.T) {
 		want := RulerConfig{

@@ -146,7 +146,7 @@ func TestNewBacktestingEvaluator(t *testing.T) {
 
 		for _, testCase := range testCases {
 			t.Run(testCase.name, func(t *testing.T) {
-				e, err := newBacktestingEvaluator(context.Background(), evalFactory, nil, testCase.condition, nil)
+				e, err := newBacktestingEvaluator(t.Context(), evalFactory, nil, testCase.condition, nil)
 				if testCase.error {
 					require.Error(t, err)
 					return
@@ -211,12 +211,12 @@ func TestEvaluatorTest(t *testing.T) {
 			return states
 		}
 
-		frame, err := engine.Test(context.Background(), nil, rule, from, to, "")
+		frame, err := engine.Test(t.Context(), nil, rule, from, to, "")
 		require.NoError(t, err)
 		expectedLen := frame.Rows()
 		for range 100 {
 			jitter := time.Duration(rand.Int63n(ruleInterval.Milliseconds())) * time.Millisecond
-			frame, err = engine.Test(context.Background(), nil, rule, from, to.Add(jitter), "")
+			frame, err = engine.Test(t.Context(), nil, rule, from, to.Add(jitter), "")
 			require.NoError(t, err)
 			require.Equalf(t, expectedLen, frame.Rows(), "jitter %v caused result to be different that base-line", jitter)
 		}
@@ -230,7 +230,7 @@ func TestEvaluatorTest(t *testing.T) {
 			from := time.Now()
 			t.Run("when from > to", func(t *testing.T) {
 				to := from.Add(-ruleInterval)
-				_, err := engine.Test(context.Background(), nil, rule, from, to, "")
+				_, err := engine.Test(t.Context(), nil, rule, from, to, "")
 				require.ErrorIs(t, err, ErrInvalidInputData)
 			})
 		})
@@ -242,7 +242,7 @@ func TestEvaluatorTest(t *testing.T) {
 			}
 			from := time.Now()
 			to := from.Add(ruleInterval)
-			_, err := engine.Test(context.Background(), nil, rule, from, to, "")
+			_, err := engine.Test(t.Context(), nil, rule, from, to, "")
 			require.ErrorIs(t, err, expectedError)
 		})
 	})
