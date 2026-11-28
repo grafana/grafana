@@ -945,12 +945,16 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		require.NoError(t, err)
 
 		updates := make([]models.UpdateRule, 0, len(rules))
+		latestTitles := make(map[string]string, len(rules))
+		latestVersions := make(map[string]int64, len(rules))
 		for _, rule := range rules {
 			rule2 := models.CopyRule(rule, gen.WithTitle(util.GenerateShortUID()))
 			updates = append(updates, models.UpdateRule{
 				Existing: rule,
 				New:      *rule2,
 			})
+			latestTitles[rule.GUID] = rule2.Title
+			latestVersions[rule.GUID] = rule.Version + 1
 		}
 		err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, updates)
 		require.NoError(t, err)
@@ -976,6 +980,9 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 			for _, version := range versions {
 				assert.Equal(t, "", version.RuleUID)
 				assert.Equal(t, "test", *version.CreatedBy)
+				// The copy kept for recovery must be the latest version, not the first one.
+				assert.Equal(t, latestTitles[version.RuleGUID], version.Title)
+				assert.Equal(t, latestVersions[version.RuleGUID], version.Version)
 				// Remove the GUID from guids
 				for i, guid := range guids {
 					if guid == version.RuleGUID {
