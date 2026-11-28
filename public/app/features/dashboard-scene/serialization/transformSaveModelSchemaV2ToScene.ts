@@ -221,7 +221,7 @@ export function transformSaveModelSchemaV2ToScene(
       preload: dashboard.preload,
       questions: deserializeQuestions(dashboard.prompts, dashboard.elements),
       isDirty: false,
-      links: [...(options?.defaultLinks ?? []), ...dashboard.links],
+      links: [...(options?.defaultLinks ?? []), ...(dashboard.links ?? [])],
       meta,
       tags: dashboard.tags,
       title: dashboard.title,

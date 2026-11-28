@@ -310,6 +310,16 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     });
   });
 
+  it('loads a dashboard whose v2 save stored links as null', () => {
+    // A dashboard saved at v2 with the list left out of the body is stored with null (#136859)
+    const dashboard = cloneDeep(defaultDashboard);
+    Object.assign(dashboard.spec, { links: null });
+
+    const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+    expect(scene.state.links).toEqual([]);
+  });
+
   it('loads the questions saved on the dashboard', () => {
     const prompts = [{ text: 'What stands out on this dashboard?' }];
     const scene = transformSaveModelSchemaV2ToScene({
