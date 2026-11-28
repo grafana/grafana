@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacyannotations"
 )
 
 // ConfigVersion is used to figure out which API version a config uses.
@@ -19,6 +20,11 @@ type configVersion struct {
 type configs struct {
 	APIVersion int64
 	Prune      bool
+
+	// SourceFile is the name of the provisioning file these data sources came from.
+	// It is the only stable per-config identity available: unlike dashboard
+	// provisioning, a data source config carries no provisioner name.
+	SourceFile string
 
 	Datasources       []*upsertDataSourceFromConfig
 	DeleteDatasources []*deleteDatasourceConfig
@@ -199,7 +205,7 @@ func (cfg *configsV0) mapToDatasourceFromConfig(apiVersion int64) *configs {
 	return r
 }
 
-func createInsertCommand(ds *upsertDataSourceFromConfig) *datasources.AddDataSourceCommand {
+func createInsertCommand(ds *upsertDataSourceFromConfig, sourceFile string) *datasources.AddDataSourceCommand {
 	jsonData := simplejson.New()
 	if len(ds.JSONData) > 0 {
 		for k, v := range ds.JSONData {
@@ -224,6 +230,7 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *datasources.AddDataSou
 		ReadOnly:        !ds.Editable,
 		UID:             ds.UID,
 		IsPrunable:      ds.IsPrunable,
+		Columns:         legacyannotations.FileProvisioned(sourceFile, ds.Editable),
 	}
 
 	if cmd.UID == "" {
@@ -239,7 +246,7 @@ func safeUIDFromName(name string) string {
 	return strings.ToUpper(fmt.Sprintf("P%x", bs[:8]))
 }
 
-func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *datasources.UpdateDataSourceCommand {
+func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64, sourceFile string) *datasources.UpdateDataSourceCommand {
 	jsonData := simplejson.New()
 	if len(ds.JSONData) > 0 {
 		for k, v := range ds.JSONData {
@@ -267,5 +274,9 @@ func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *datasources.
 		ReadOnly:                !ds.Editable,
 		IgnoreOldSecureJsonData: true,
 		IsPrunable:              ds.IsPrunable,
+
+		// The file is the source of truth on every boot, so a renamed or edited
+		// config rewrites the annotations rather than merging into stale ones.
+		UpdateColumns: legacyannotations.FileProvisionedUpdate(sourceFile, ds.Editable),
 	}
 }

@@ -87,7 +87,9 @@ func (cr *configReader) parseDatasourceConfig(path string, file fs.DirEntry) (*c
 			return nil, err
 		}
 
-		return v1.mapToDatasourceFromConfig(apiVersion.APIVersion), nil
+		cfg := v1.mapToDatasourceFromConfig(apiVersion.APIVersion)
+		cfg.SourceFile = file.Name()
+		return cfg, nil
 	}
 
 	var v0 *configsV0
@@ -98,7 +100,9 @@ func (cr *configReader) parseDatasourceConfig(path string, file fs.DirEntry) (*c
 
 	cr.log.Warn("[Deprecated] the datasource provisioning config is outdated. please upgrade", "filename", filename)
 
-	return v0.mapToDatasourceFromConfig(apiVersion.APIVersion), nil
+	cfg := v0.mapToDatasourceFromConfig(apiVersion.APIVersion)
+	cfg.SourceFile = file.Name()
+	return cfg, nil
 }
 
 func (cr *configReader) validateDefaultUniqueness(ctx context.Context, datasources []*configs) error {

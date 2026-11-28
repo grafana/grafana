@@ -302,6 +302,9 @@ func (s *Service) ListConnections(ctx context.Context, query queryV0.DataSourceC
 	return result, nil
 }
 
+// grafanaAnnotationPrefix bounds what a connection listing carries.
+const grafanaAnnotationPrefix = "grafana.app/"
+
 func (s *Service) asConnection(ds *datasources.DataSource) (*queryV0.DataSourceConnection, error) {
 	var labels map[string]string
 	if ds.IsDefault {
@@ -310,13 +313,32 @@ func (s *Service) asConnection(ds *datasources.DataSource) (*queryV0.DataSourceC
 		}
 	}
 
-	return &queryV0.DataSourceConnection{
+	conn := &queryV0.DataSourceConnection{
 		Title:    ds.Name,
 		APIGroup: fmt.Sprintf("%s.datasource.grafana.app", ds.Type),
 		Name:     ds.UID,
 		Plugin:   ds.Type,
 		Labels:   labels,
-	}, nil
+	}
+
+	conn.Annotations = connectionAnnotations(ds)
+	return conn, nil
+}
+
+// connectionAnnotations returns the grafana.app annotations of a data source for a
+// connection listing. Keys outside grafana.app are dropped -- see
+// DataSourceConnection.Annotations.
+func connectionAnnotations(ds *datasources.DataSource) map[string]string {
+	var annotations map[string]string
+	for k, v := range ds.AsAnnotations() {
+		if strings.HasPrefix(k, grafanaAnnotationPrefix) {
+			if annotations == nil {
+				annotations = map[string]string{}
+			}
+			annotations[k] = v
+		}
+	}
+	return annotations
 }
 
 func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {

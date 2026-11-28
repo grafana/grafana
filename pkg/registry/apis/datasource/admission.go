@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacyannotations"
 )
 
 var _ builder.APIGroupValidation = (*DataSourceAPIBuilder)(nil)
@@ -44,12 +45,24 @@ func (b *DataSourceAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 	return validateNoTeamHTTPHeadersOnCreate(ctx, ds, &b.datasourceResourceInfo)
 }
 
-// Mutate preserves stored Team LBAC rules when a datasource PUT omits them.
-// PATCH removal is rejected so an explicit attempt cannot silently erase them.
+// Mutate preserves what a datasource PUT omits: the stored annotations, and the stored
+// Team LBAC rules. PATCH removal of the rules is rejected so an explicit attempt cannot
+// silently erase them.
 func (b *DataSourceAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
 	isUpdate := a.GetOperation() == admission.Update
 	isDatasourceResource := a.GetResource().Resource == b.datasourceResourceInfo.GetName()
-	if !isUpdate || !isDatasourceResource || !teamHTTPHeadersWriteGuardEnabled(ctx) {
+	if !isUpdate || !isDatasourceResource {
+		return nil
+	}
+	// Runs against each store's own copy, so a mirrored update keeps them in step. A
+	// create through update has no stored object to retain from.
+	if proposed, ok := a.GetObject().(*datasourceV0.DataSource); ok {
+		if stored, ok := a.GetOldObject().(*datasourceV0.DataSource); ok {
+			legacyannotations.RetainOnPut(ctx, proposed, stored)
+		}
+	}
+
+	if !teamHTTPHeadersWriteGuardEnabled(ctx) {
 		return nil
 	}
 	// UpdatedObjectInfo runs admission against SQL first, then against the

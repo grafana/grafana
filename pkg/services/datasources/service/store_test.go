@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacyannotations"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -701,4 +703,125 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.Equal(t, "ElasticsearchPrunable", dataSource.Name)
 		})
 	})
+}
+
+func TestIntegrationAnnotations(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	annotations := map[string]string{
+		"grafana.app/managedBy":          "repo",
+		"grafana.app/managerId":          "my-repo",
+		"grafana.app/managerAllowsEdits": "true",
+		"grafana.app/sourcePath":         "datasources/prom.yaml",
+		"grafana.app/sourceChecksum":     "abc123",
+	}
+
+	addManaged := func(t *testing.T, ss SqlStore) *datasources.DataSource {
+		t.Helper()
+		ds, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID:   10,
+			Name:    "managed",
+			Type:    datasources.DS_GRAPHITE,
+			Access:  datasources.DS_ACCESS_DIRECT,
+			Columns: legacyannotations.Columns{Annotations: annotations},
+		})
+		require.NoError(t, err)
+		return ds
+	}
+
+	reload := func(t *testing.T, ss SqlStore, uid string) *datasources.DataSource {
+		t.Helper()
+		ds, err := ss.GetDataSource(context.Background(), &datasources.GetDataSourceQuery{OrgID: 10, UID: uid})
+		require.NoError(t, err)
+		return ds
+	}
+
+	t.Run("round trips through the data_source table", func(t *testing.T) {
+		ss := SqlStore{db: db.InitTestDB(t)} //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		ds := reload(t, ss, addManaged(t, ss).UID)
+
+		require.Equal(t, annotations, ds.Annotations)
+	})
+
+	t.Run("an update that knows nothing about annotations keeps the stored ones", func(t *testing.T) {
+		ss := SqlStore{db: db.InitTestDB(t)} //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		added := addManaged(t, ss)
+
+		_, err := ss.UpdateDataSource(context.Background(), &datasources.UpdateDataSourceCommand{
+			ID:     added.ID,
+			OrgID:  10,
+			Name:   "renamed",
+			Type:   datasources.DS_GRAPHITE,
+			Access: datasources.DS_ACCESS_DIRECT,
+		})
+		require.NoError(t, err)
+
+		ds := reload(t, ss, added.UID)
+		require.Equal(t, "renamed", ds.Name)
+		require.Equal(t, annotations, ds.Annotations)
+	})
+
+	t.Run("an authoritative update replaces the stored annotations", func(t *testing.T) {
+		ss := SqlStore{db: db.InitTestDB(t)} //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		added := addManaged(t, ss)
+
+		moved := map[string]string{
+			"grafana.app/managedBy":  "repo",
+			"grafana.app/managerId":  "my-repo",
+			"grafana.app/sourcePath": "datasources/renamed.yaml",
+		}
+		_, err := ss.UpdateDataSource(context.Background(), &datasources.UpdateDataSourceCommand{
+			ID:     added.ID,
+			OrgID:  10,
+			Name:   "managed",
+			Type:   datasources.DS_GRAPHITE,
+			Access: datasources.DS_ACCESS_DIRECT,
+			UpdateColumns: legacyannotations.UpdateColumns{
+				Columns:           legacyannotations.Columns{Annotations: moved},
+				UpdateAnnotations: true,
+			},
+		})
+		require.NoError(t, err)
+
+		require.Equal(t, moved, reload(t, ss, added.UID).Annotations)
+	})
+
+	t.Run("an authoritative update releases the data source", func(t *testing.T) {
+		ss := SqlStore{db: db.InitTestDB(t)} //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		added := addManaged(t, ss)
+
+		_, err := ss.UpdateDataSource(context.Background(), &datasources.UpdateDataSourceCommand{
+			ID:            added.ID,
+			OrgID:         10,
+			Name:          "managed",
+			Type:          datasources.DS_GRAPHITE,
+			Access:        datasources.DS_ACCESS_DIRECT,
+			UpdateColumns: legacyannotations.UpdateColumns{UpdateAnnotations: true},
+		})
+		require.NoError(t, err)
+
+		require.Empty(t, reload(t, ss, added.UID).Annotations)
+	})
+}
+
+func TestIntegrationLargeAnnotationRoundTrip(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ss := SqlStore{db: db.InitTestDB(t)} //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+
+	large := strings.Repeat("x", 200*1024) // comfortably past TEXT
+	added, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		OrgID:  10,
+		Name:   "kubectl-managed",
+		Type:   datasources.DS_GRAPHITE,
+		Access: datasources.DS_ACCESS_DIRECT,
+		Columns: legacyannotations.Columns{Annotations: map[string]string{
+			"kubectl.kubernetes.io/last-applied-configuration": large,
+		}},
+	})
+	require.NoError(t, err)
+
+	stored, err := ss.GetDataSource(context.Background(), &datasources.GetDataSourceQuery{OrgID: 10, UID: added.UID})
+	require.NoError(t, err)
+	require.Len(t, stored.Annotations["kubectl.kubernetes.io/last-applied-configuration"], len(large))
 }

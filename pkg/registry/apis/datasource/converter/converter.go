@@ -91,6 +91,8 @@ func (r *Converter) AsDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 		}
 	}
 
+	ds.ToObject(obj)
+
 	if ds.APIVersion != "" {
 		obj.APIVersion = fmt.Sprintf("%s/%s", r.group, ds.APIVersion)
 	}
@@ -166,6 +168,8 @@ func (r *Converter) ToAddCommand(ds *datasourceV0.DataSource) (*datasources.AddD
 		IsDefault:       isDefault,
 	}
 
+	cmd.FromObject(ds)
+
 	jsonData := ds.Spec.JSONData()
 	if jsonData != nil {
 		cmd.JsonData = simplejson.NewFromAny(jsonData)
@@ -210,6 +214,8 @@ func (r *Converter) ToUpdateCommand(ds *datasourceV0.DataSource) (*datasources.U
 		// The resource contains the full state after any PATCH has been applied.
 		BasicAuthUserSet: true,
 	}
+
+	cmd.FromObject(ds) // a PUT is authoritative: no annotations releases
 
 	jsonData := ds.Spec.JSONData()
 	if jsonData != nil {
@@ -269,6 +275,8 @@ func (r Converter) AsLegacyDatasource(ds *datasourceV0.DataSource) (*datasources
 			legacyDS.ID, _ = strconv.ParseInt(idStr, 10, 64)
 		}
 	}
+
+	legacyDS.FromObject(ds)
 
 	if jsonData := ds.Spec.JSONData(); jsonData != nil {
 		legacyDS.JsonData = simplejson.NewFromAny(jsonData)

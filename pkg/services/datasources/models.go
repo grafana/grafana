@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacyannotations"
 )
 
 const (
@@ -70,6 +71,9 @@ type DataSource struct {
 	APIVersion string `json:"apiVersion" xorm:"api_version"`
 	// swagger:ignore
 	IsPrunable bool `xorm:"is_prunable"`
+
+	// Annotations, ManagerKind and ManagerIdentity, and the rules for writing them.
+	legacyannotations.Columns `xorm:"extends"`
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
@@ -179,6 +183,9 @@ type AddDataSourceCommand struct {
 	// swagger:ignore
 	IsPrunable bool `json:"-"`
 
+	// Never settable through the legacy HTTP API; these are json:"-" at the source.
+	legacyannotations.Columns
+
 	OrgID                   int64             `json:"-"`
 	UserID                  int64             `json:"-"`
 	ReadOnly                bool              `json:"-"`
@@ -213,6 +220,9 @@ type UpdateDataSourceCommand struct {
 
 	// The previous version -- used for optimistic locking
 	Version int `json:"version"`
+
+	// Never settable through the legacy HTTP API; these are json:"-" at the source.
+	legacyannotations.UpdateColumns
 
 	OrgID                   int64             `json:"-"`
 	ID                      int64             `json:"-"`

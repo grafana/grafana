@@ -1,6 +1,9 @@
 package migrations
 
-import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import (
+	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacyannotations"
+)
 
 func addDataSourceMigration(mg *Migrator) {
 	var tableV1 = Table{
@@ -150,4 +153,9 @@ func addDataSourceMigration(mg *Migrator) {
 	mg.AddMigration("Update json_data column to MediumText", NewRawSQLMigration("").
 		Mysql("ALTER TABLE data_source MODIFY COLUMN json_data MEDIUMTEXT;"),
 	)
+
+	// metadata.annotations of the app platform API, with the manager in columns of
+	// its own so it stays queryable. Shape, width and index all come from the package
+	// that reads and writes them.
+	legacyannotations.AddMigrations(mg, tableV2)
 }

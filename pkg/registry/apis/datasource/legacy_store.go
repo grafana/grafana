@@ -15,12 +15,14 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/resource"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource/converter"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacyannotations"
 )
 
 var (
@@ -101,6 +103,9 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 	if err := validateNoTeamHTTPHeadersOnCreate(ctx, ds, s.resourceInfo); err != nil {
 		return nil, err
 	}
+	if err := s.guard().OnCreate(ctx, ds); err != nil {
+		return nil, err
+	}
 
 	// Verify the secure value commands. While we're using dual writer, we can only support raw secret values and not references to secrets that already exist. This is because we need the raw values to write to the legacy store.
 	for _, v := range ds.Secure {
@@ -171,6 +176,10 @@ func (s *legacyStorage) prepareUpdate(ctx context.Context, name string, objInfo 
 		return nil, fmt.Errorf("expected a datasource object (old)")
 	}
 
+	if err := s.guard().OnUpdate(ctx, ds, oldDS); err != nil {
+		return nil, err
+	}
+
 	// Expose any secure value changes to the dual writer
 	var secureChanges resource.InlineSecureValues
 	for k, v := range ds.Secure {
@@ -220,6 +229,25 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 		}()
 	}
 
+	// The manager lives on the stored object, so deleting a managed resource needs a
+	// read first. A missing object falls through to the delete, which reports
+	// not-found the way it always did; any other read failure is returned rather than
+	// deleting a row whose manager could not be checked.
+	switch old, err := s.Get(ctx, name, &metav1.GetOptions{}); {
+	case err == nil:
+		ds, ok := old.(*v0alpha1.DataSource)
+		if !ok {
+			return nil, false, fmt.Errorf("expected a datasource object")
+		}
+		if err := s.guard().OnDelete(ctx, ds); err != nil {
+			return nil, false, err
+		}
+	case apierrors.IsNotFound(err):
+		// Nothing to gate; the delete below reports it.
+	default:
+		return nil, false, err
+	}
+
 	err := s.datasources.DeleteDataSource(ctx, name)
 	return nil, false, err
 }
@@ -238,9 +266,15 @@ func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation r
 		return nil, err
 	}
 	for _, ds := range dss.Items {
-		if err = s.datasources.DeleteDataSource(ctx, ds.Name); err != nil {
+		// Through s.Delete, so a collection delete cannot get past the gates a
+		// single delete has to pass.
+		if _, _, err := s.Delete(ctx, ds.Name, deleteValidation, options); err != nil {
 			return nil, err
 		}
 	}
 	return nil, nil
+}
+
+func (s *legacyStorage) guard() legacyannotations.Guard {
+	return legacyannotations.Guard{Resource: s.resourceInfo.GroupResource()}
 }
