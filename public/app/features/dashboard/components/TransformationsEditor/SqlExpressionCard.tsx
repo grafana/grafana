@@ -19,7 +19,7 @@ export function SqlExpressionCard({ name, description, imageUrl, onClick, testId
       <Card.Heading>{name}</Card.Heading>
       <Card.Description>
         <Text variant="bodySmall">{description}</Text>
-        {imageUrl && <img className={styles.image} src={imageUrl} alt={name} />}
+        {imageUrl && <img className={styles.image} src={imageUrl} alt="" />}
       </Card.Description>
     </Card>
   );

@@ -35,13 +35,22 @@ describe('TransformationCard', () => {
     expect(onClick).toHaveBeenCalledWith('organize');
   });
 
-  it('shows illustration when showIllustrations is true', () => {
+  it('describes the card button with the transformation description', () => {
+    const transform = standardTransformersRegistry.get(DataTransformerID.calculateField);
+    render(<TransformationCard transform={transform} onClick={onClick} showIllustrations />);
+
+    expect(screen.getByRole('button', { name: 'Add field from calculation' })).toHaveAccessibleDescription(
+      'Use the row values to calculate a new field.'
+    );
+  });
+
+  it('shows a decorative illustration when showIllustrations is true', () => {
     const transform = standardTransformersRegistry.get(DataTransformerID.organize);
     const { container } = render(<TransformationCard transform={transform} onClick={onClick} showIllustrations />);
 
     const img = container.querySelector('img');
     expect(img).toBeInTheDocument();
-    expect(img?.alt).toBe('Organize fields by name');
+    expect(img).toHaveAttribute('alt', '');
   });
 
   it('hides illustration when showIllustrations is false', () => {
@@ -92,6 +101,21 @@ describe('SqlExpressionCard', () => {
     await user.click(card!);
 
     expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('describes the card button with its description', () => {
+    render(
+      <SqlExpressionCard
+        name="Transform with SQL"
+        description="Manipulate data with SQL"
+        imageUrl="/test.svg"
+        onClick={onClick}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Transform with SQL' })).toHaveAccessibleDescription(
+      'Manipulate data with SQL'
+    );
   });
 
   it('renders image when imageUrl is provided', () => {

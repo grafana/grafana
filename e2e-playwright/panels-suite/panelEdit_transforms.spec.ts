@@ -97,6 +97,9 @@ test.describe(
       const applicabilityInfo = card.getByTestId(selectors.components.Transforms.applicabilityInfo);
       await expect(applicabilityInfo).toBeVisible();
       await expect(applicabilityInfo).toHaveAttribute('aria-label', /requires a time field/);
+      await expect(card.getByRole('button', { name: /^Format time/ })).toHaveAccessibleDescription(
+        'Set the output format of a time field The Format time transformation requires a time field to work. No time field could be found.'
+      );
     });
   }
 );

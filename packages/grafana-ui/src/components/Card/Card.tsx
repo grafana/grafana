@@ -49,6 +49,7 @@ const CardContext = React.createContext<{
   onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   disabled?: boolean;
   isSelected?: boolean;
+  descriptionId?: string;
 } | null>(null);
 
 /**
@@ -80,6 +81,7 @@ export const Card: CardInterface = ({
     () => React.Children.toArray(children).some((c) => React.isValidElement(c) && c.type === Tags),
     [children]
   );
+  const descriptionId = useId();
 
   const disableHover = disabled || (!onClick && !href);
   const onCardClick = onClick && !disabled ? onClick : undefined;
@@ -105,7 +107,15 @@ export const Card: CardInterface = ({
       hasTagsComponent={hasTagsComponent}
       {...htmlProps}
     >
-      <CardContext.Provider value={{ href, onClick: onCardClick, disabled, isSelected }}>
+      <CardContext.Provider
+        value={{
+          href,
+          onClick: onCardClick,
+          disabled,
+          isSelected,
+          descriptionId: hasDescriptionComponent && (href || onCardClick) ? descriptionId : undefined,
+        }}
+      >
         {!hasHeadingComponent && <Heading />}
         {children}
       </CardContext.Provider>
@@ -125,16 +135,19 @@ const Heading = ({
   children,
   className,
   'aria-label': ariaLabel,
+  'aria-describedby': ariaDescribedByProp,
   'data-testid': testId,
-}: ChildProps & { 'aria-label'?: string; 'data-testid'?: string }) => {
+}: ChildProps & { 'aria-label'?: string; 'aria-describedby'?: string; 'data-testid'?: string }) => {
   const context = useContext(CardContext);
   const styles = useStyles2(getHeadingStyles);
 
-  const { href, onClick, isSelected } = context ?? {
+  const { href, onClick, isSelected, descriptionId } = context ?? {
     href: undefined,
     onClick: undefined,
     isSelected: undefined,
+    descriptionId: undefined,
   };
+  const ariaDescribedBy = ariaDescribedByProp ?? descriptionId;
   const optionLabel = t('grafana-ui.card.option', 'option');
   const headingId = useId();
   const radioId = useId();
@@ -148,6 +161,7 @@ const Heading = ({
           href={href}
           className={styles.linkHack}
           aria-label={ariaLabel}
+          aria-describedby={ariaDescribedBy}
           data-testid={testId}
           onClick={onClick}
         >
@@ -159,6 +173,7 @@ const Heading = ({
           onClick={onClick}
           className={styles.linkHack}
           aria-label={ariaLabel}
+          aria-describedby={ariaDescribedBy}
           data-testid={testId}
           type="button"
         >
@@ -242,8 +257,13 @@ const getTagStyles = (theme: GrafanaTheme2) => ({
 /** Card description text */
 const Description = ({ children, className }: ChildProps) => {
   const styles = useStyles2(getDescriptionStyles);
+  const descriptionId = useContext(CardContext)?.descriptionId;
   const Element = typeof children === 'string' ? 'p' : 'div';
-  return <Element className={cx(styles.description, className)}>{children}</Element>;
+  return (
+    <Element id={descriptionId} className={cx(styles.description, className)}>
+      {children}
+    </Element>
+  );
 };
 Description.displayName = 'Description';
 

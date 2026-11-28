@@ -79,7 +79,7 @@ export function TransformationCard({
       </Card.Heading>
       <Card.Description>
         <Text variant="bodySmall">{description || ''}</Text>
-        {showIllustrations && imageUrl && <img className={styles.image} src={imageUrl} alt={transform.name} />}
+        {showIllustrations && imageUrl && <img className={styles.image} src={imageUrl} alt="" />}
         {!isApplicable && applicabilityDescription !== null && (
           <IconButton
             className={styles.applicableInfoButton}

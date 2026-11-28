@@ -43,7 +43,7 @@ export function ExpressionTypePicker() {
             <Card.Heading>{label}</Card.Heading>
             <Card.Description>
               <Text variant="bodySmall">{item.description ?? ''}</Text>
-              <img className={styles.image} src={imageUrl} alt={label} />
+              <img className={styles.image} src={imageUrl} alt="" />
             </Card.Description>
           </Card>
         );
