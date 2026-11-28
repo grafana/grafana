@@ -215,7 +215,11 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       if (ev.target instanceof HTMLElement && ev.target.closest('a[aria-haspopup], .rdg-cell')?.matches('a')) {
         const rowIdx = row.__index;
         setTooltipState({
-          coords: { clientX: ev.clientX, clientY: ev.clientY },
+          coords: {
+            clientX: ev.clientX,
+            clientY: ev.clientY,
+            contextElement: ev.target.closest('.rdg-cell') ?? ev.target,
+          },
           links: getCellLinks(field, rowIdx),
           actions: getCellActions(field, rowIdx),
         });

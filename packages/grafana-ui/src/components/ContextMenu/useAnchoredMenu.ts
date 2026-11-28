@@ -1,0 +1,90 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+import { SCROLL_DISMISS_DISTANCE } from '../../utils/floating';
+
+export interface MenuAnchor {
+  clientX: number;
+  clientY: number;
+  contextElement?: Element;
+}
+
+export function useAnchoredMenu(anchor: MenuAnchor | undefined, onClose?: () => void, trackPosition = true) {
+  const close = useRef(onClose);
+  useEffect(() => {
+    close.current = onClose;
+  }, [onClose]);
+
+  const reference = useMemo(() => {
+    if (!anchor) {
+      return undefined;
+    }
+    const { clientX, clientY, contextElement } = anchor;
+    const initialRect = contextElement?.getBoundingClientRect();
+    let lastPosition = { x: clientX, y: clientY };
+    return {
+      contextElement,
+      getBoundingClientRect() {
+        if (contextElement?.isConnected && initialRect) {
+          const rect = contextElement.getBoundingClientRect();
+          lastPosition = {
+            x: clientX + rect.left - initialRect.left,
+            y: clientY + rect.top - initialRect.top,
+          };
+        }
+        const { x, y } = lastPosition;
+        return { x, y, left: x, top: y, right: x, bottom: y, width: 0, height: 0 };
+      },
+    };
+  }, [anchor]);
+
+  const [tracked, setTracked] = useState<{ anchor: MenuAnchor; x: number; y: number }>();
+
+  useEffect(() => {
+    if (!anchor || !reference?.contextElement) {
+      return;
+    }
+    let dismissed = false;
+    const update = () => {
+      if (dismissed) {
+        return;
+      }
+      const { x, y } = reference.getBoundingClientRect();
+      if (
+        !reference.contextElement?.isConnected ||
+        Math.abs(x - anchor.clientX) > SCROLL_DISMISS_DISTANCE ||
+        Math.abs(y - anchor.clientY) > SCROLL_DISMISS_DISTANCE
+      ) {
+        dismissed = true;
+        close.current?.();
+        return;
+      }
+      if (trackPosition) {
+        setTracked((previous) =>
+          previous?.anchor === anchor && previous.x === x && previous.y === y ? previous : { anchor, x, y }
+        );
+      }
+    };
+
+    const observer = new MutationObserver(() => {
+      if (!reference.contextElement?.isConnected) {
+        update();
+      }
+    });
+    observer.observe(reference.contextElement.ownerDocument, { childList: true, subtree: true });
+    update();
+
+    // Capture includes scrolling inside dashboard and panel containers.
+    window.addEventListener('scroll', update, true);
+    window.addEventListener('resize', update);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', update, true);
+      window.removeEventListener('resize', update);
+    };
+  }, [anchor, reference, trackPosition]);
+
+  return {
+    reference,
+    position: tracked && tracked.anchor === anchor ? tracked : { x: anchor?.clientX ?? 0, y: anchor?.clientY ?? 0 },
+  };
+}

@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
@@ -3680,6 +3680,48 @@ describe('TableNG', () => {
       await userEvent.click(cell.parentElement!);
 
       expect(screen.queryByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper)).not.toBeInTheDocument();
+    });
+
+    it('follows and dismisses a data-link menu opened from a nested-table parent cell', async () => {
+      const data = createBasicDataFrame();
+      data.fields[0].config.links = [
+        { url: 'http://example.com/first', title: 'First' },
+        { url: 'http://example.com/second', title: 'Second' },
+      ];
+      data.fields[0].getLinks = () => data.fields[0].config.links!.map(toLinkModel);
+      data.fields.push({
+        name: '__nestedFrames',
+        type: FieldType.nestedFrames,
+        values: Array.from({ length: data.length }, () => [createBasicDataFrame()]),
+        config: {},
+      });
+      render(<TableNG data={data} width={800} height={600} />);
+      const link = screen.getByText('A1');
+      const cell = link.closest('.rdg-cell')!;
+      const initialRect = {
+        x: 100,
+        y: 200,
+        left: 100,
+        top: 200,
+        right: 150,
+        bottom: 220,
+        width: 50,
+        height: 20,
+        toJSON: () => ({}),
+      };
+      const rect = jest.spyOn(cell, 'getBoundingClientRect').mockReturnValue(initialRect);
+      await user.pointer({ target: link, keys: '[MouseLeft]', coords: { clientX: 125, clientY: 210 } });
+      expect(screen.getByRole('menuitem', { name: 'First' })).toBeInTheDocument();
+      const tooltip = screen.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper);
+      await waitFor(() => expect(tooltip).not.toHaveStyle({ transform: '' }));
+      const initialTransform = tooltip.style.transform;
+      rect.mockReturnValue({ ...initialRect, left: 60 });
+      fireEvent.scroll(window);
+      await waitFor(() => expect(tooltip.style.transform).not.toBe(initialTransform));
+      expect(screen.getByRole('menuitem', { name: 'First' })).toBeInTheDocument();
+      rect.mockReturnValue({ ...initialRect, left: 19 });
+      fireEvent.scroll(window);
+      expect(screen.queryByRole('menuitem', { name: 'First' })).not.toBeInTheDocument();
     });
 
     it('uses the correct row nested frame fields for data links', async () => {

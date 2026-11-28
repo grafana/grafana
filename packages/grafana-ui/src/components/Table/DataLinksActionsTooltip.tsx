@@ -1,11 +1,12 @@
-import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { useMemo, type ReactNode } from 'react';
+import { autoUpdate, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
+import { type ReactNode, useCallback } from 'react';
 
 import { type ActionModel, type LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { getPositioningMiddleware } from '../../utils/floating';
+import { useAnchoredMenu } from '../ContextMenu/useAnchoredMenu';
 import { Portal } from '../Portal/Portal';
 import { VizTooltipFooter } from '../VizTooltip/VizTooltipFooter';
 import { VizTooltipWrapper } from '../VizTooltip/VizTooltipWrapper';
@@ -31,38 +32,24 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
   // the order of middleware is important!
   const middleware = getPositioningMiddleware(placement);
 
-  const virtual = useMemo(() => {
-    const { clientX, clientY } = coords;
-
-    // https://floating-ui.com/docs/virtual-elements
-    return {
-      getBoundingClientRect() {
-        return {
-          width: 0,
-          height: 0,
-          x: clientX,
-          y: clientY,
-          top: clientY,
-          left: clientX,
-          right: clientX,
-          bottom: clientY,
-        };
-      },
-    };
-  }, [coords]);
-
-  const refCallback = (el: HTMLDivElement) => {
-    refs.setFloating(el);
-    refs.setReference(virtual);
-  };
+  const { reference: virtual } = useAnchoredMenu(coords, onTooltipClose, false);
 
   const { context, refs, floatingStyles } = useFloating({
     open: true,
     placement,
     onOpenChange: onTooltipClose,
     middleware,
-    // whileElementsMounted: autoUpdate,
+    whileElementsMounted: autoUpdate,
   });
+
+  const { setFloating, setReference } = refs;
+  const refCallback = useCallback(
+    (el: HTMLDivElement | null) => {
+      setFloating(el);
+      setReference(virtual ?? null);
+    },
+    [setFloating, setReference, virtual]
+  );
 
   const dismiss = useDismiss(context);
 
