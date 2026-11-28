@@ -34,16 +34,6 @@ grafana.assetSriChecks:
   metadata:
     public: "true"
 
-grafana.meticulousAIMode:
-  variations:
-    off: 'off'
-    on-prod-env: 'on-prod-env'
-    on-dev-env: 'on-dev-env'
-  defaultRule:
-    variation: off
-  metadata:
-    public: "true"
-
 frontendService.reducedBootDataAPI:
   variations:
     enabled: true
