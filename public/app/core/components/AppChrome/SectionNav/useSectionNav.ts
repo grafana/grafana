@@ -4,11 +4,12 @@ import { locationUtil, type NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { useSelector } from 'app/types/store';
 
-import { getActiveItem } from '../MegaMenu/utils';
+import { getActiveItem, hiddenKey } from '../MegaMenu/utils';
 
 export interface SectionNavModel {
   /** Groups with at least one destination */
   groups: NavModelItem[];
+  /** The key of the current link, as hiddenKey gives it */
   activeId?: string;
 }
 
@@ -37,15 +38,18 @@ function isUnderDestination(items: NavModelItem[], pathname: string): boolean {
   );
 }
 
-// The item with the longest matching URL. Plugin pages describe themselves to the chrome with
-// ids of their own, so the page's nav item alone does not always find them in the tree
+// The item with the longest matching URL, or none when two match equally: several pages of one
+// plugin share its root, so its landing page names none of them. Plugin pages describe themselves
+// to the chrome with ids of their own, so the page's nav item alone does not always find them
 function findByPathname(items: NavModelItem[], pathname: string): NavModelItem | undefined {
-  let best: { item: NavModelItem; length: number } | undefined;
+  let best: { item: NavModelItem; length: number; tied: boolean } | undefined;
   const visit = (nodes: NavModelItem[]) => {
     for (const node of nodes) {
       const length = matchLength(node, pathname);
       if (length > (best?.length ?? 0)) {
-        best = { item: node, length };
+        best = { item: node, length, tied: false };
+      } else if (best && length === best.length) {
+        best.tied = true;
       }
       if (node.children) {
         visit(node.children);
@@ -53,13 +57,14 @@ function findByPathname(items: NavModelItem[], pathname: string): NavModelItem |
     }
   };
   visit(items);
-  return best?.item;
+  return best?.tied ? undefined : best?.item;
 }
 
 // The link in the panel that an item belongs to: the item itself, or the link it is nested under
 function findLink(groups: NavModelItem[], target: NavModelItem | undefined): NavModelItem | undefined {
+  const targetKey = target && hiddenKey(target);
   const contains = (node: NavModelItem): boolean =>
-    node === target || node.id === target?.id || Boolean(node.children?.some(contains));
+    node === target || (targetKey && hiddenKey(node) === targetKey) || Boolean(node.children?.some(contains));
   return target ? groups.flatMap((group) => group.children ?? []).find(contains) : undefined;
 }
 
@@ -107,6 +112,7 @@ export function useSectionNav(
       return undefined;
     }
 
-    return { groups, activeId: findLink(groups, active)?.id };
+    const activeLink = findLink(groups, active);
+    return { groups, activeId: activeLink && hiddenKey(activeLink) };
   }, [sectionId, enabled, navTree, pathname, currentPage]);
 }

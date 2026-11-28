@@ -200,5 +200,15 @@ describe('breadcrumb utils', () => {
         ]);
       });
     });
+
+    it('shows an item that has no breadcrumb link as plain text', () => {
+      const sectionNav: NavModelItem = { text: 'My section', url: '/my-section', noBreadcrumbLink: true };
+      const pageNav: NavModelItem = { text: 'My page', url: '/my-page', parentItem: sectionNav };
+
+      expect(buildBreadcrumbs(sectionNav, pageNav)).toEqual([
+        { text: 'My section' },
+        { text: 'My page', href: '/my-page' },
+      ]);
+    });
   });
 });

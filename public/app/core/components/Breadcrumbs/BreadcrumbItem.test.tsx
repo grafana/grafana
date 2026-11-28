@@ -39,4 +39,16 @@ describe('BreadcrumbItem', () => {
     await user.tab();
     expect(screen.getByRole('button', { name: 'Next' })).toHaveFocus();
   });
+
+  it('shows a breadcrumb without a destination as plain text', () => {
+    jest.mocked(useBreadcrumbTruncation).mockReturnValue({ breadcrumbRef: { current: null }, isTruncated: false });
+    render(
+      <ul>
+        <BreadcrumbItem text="Administration" isCurrent={false} index={0} flexGrow={10} />
+      </ul>
+    );
+
+    expect(screen.getByText('Administration')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Administration' })).not.toBeInTheDocument();
+  });
 });

@@ -65,7 +65,10 @@ const NAV_TWEAKS: NavTweak[] = [
         (current, id) => moveNavItemToSection(current, id, NavID.cfgGeneral),
         placed
       );
-      return landOnFirstDestination(regrouped);
+      // With no destination the section nav has nothing to show, so the overview pages stay as they are
+      return firstAdministrationDestination(regrouped)
+        ? unlinkAdministrationOverviews(landOnFirstDestination(regrouped))
+        : regrouped;
     },
   },
 ];
@@ -109,6 +112,19 @@ function landOnFirstDestination(tree: NavModelItem[]): NavModelItem[] {
       ...(node.children ? { children: retarget(node.children) } : {}),
     }));
   return retarget(tree);
+}
+
+// The section nav replaces these overview pages, so breadcrumbs name them without linking to them
+const ADMIN_OVERVIEW_IDS: string[] = [NavID.cfg, NavID.cfgAccess, NavID.cfgPlugins];
+
+function unlinkAdministrationOverviews(tree: NavModelItem[]): NavModelItem[] {
+  const unlink = (nodes: NavModelItem[]): NavModelItem[] =>
+    nodes.map((node) => ({
+      ...node,
+      ...(node.id && ADMIN_OVERVIEW_IDS.includes(node.id) ? { noBreadcrumbLink: true } : {}),
+      ...(node.children ? { children: unlink(node.children) } : {}),
+    }));
+  return unlink(tree);
 }
 
 /** Applies independently gated tweaks without letting one failure abort store creation. */

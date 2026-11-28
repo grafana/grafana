@@ -3,6 +3,8 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Icon, Link, useStyles2 } from '@grafana/ui';
 
+import { hiddenKey } from '../MegaMenu/utils';
+
 interface Props {
   label: string;
   groups: NavModelItem[];
@@ -19,7 +21,11 @@ export function SectionNav({ label, groups, activeId }: Props) {
           <h2 className={styles.heading}>{group.text}</h2>
           <ul className={styles.list}>
             {(group.children ?? []).map((item) => (
-              <SectionNavLink key={item.id ?? item.url} item={item} isActive={item.id === activeId} />
+              <SectionNavLink
+                key={item.id ?? item.url}
+                item={item}
+                isActive={!!activeId && hiddenKey(item) === activeId}
+              />
             ))}
           </ul>
         </div>

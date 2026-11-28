@@ -23,31 +23,32 @@ export function BreadcrumbItem({ href, isCurrent, text, highlightText, index, fl
     reportInteraction('grafana_breadcrumb_clicked', { url: href });
   };
 
-  // Current page breadcrumb is not clickable
-  const breadcrumb = isCurrent ? (
-    <span
-      ref={(element) => {
-        breadcrumbRef.current = element;
-      }}
-      data-testid={Components.Breadcrumbs.breadcrumb(text)}
-      className={styles.breadcrumb}
-      aria-current="page"
-    >
-      {text}
-    </span>
-  ) : (
-    <a
-      ref={(element) => {
-        breadcrumbRef.current = element;
-      }}
-      onClick={onBreadcrumbClick}
-      data-testid={Components.Breadcrumbs.breadcrumb(text)}
-      className={cx(styles.breadcrumb, styles.breadcrumbLink)}
-      href={href}
-    >
-      {text}
-    </a>
-  );
+  // The current page's breadcrumb, and one with nowhere to go, is not clickable
+  const breadcrumb =
+    isCurrent || !href ? (
+      <span
+        ref={(element) => {
+          breadcrumbRef.current = element;
+        }}
+        data-testid={Components.Breadcrumbs.breadcrumb(text)}
+        className={styles.breadcrumb}
+        aria-current={isCurrent ? 'page' : undefined}
+      >
+        {text}
+      </span>
+    ) : (
+      <a
+        ref={(element) => {
+          breadcrumbRef.current = element;
+        }}
+        onClick={onBreadcrumbClick}
+        data-testid={Components.Breadcrumbs.breadcrumb(text)}
+        className={cx(styles.breadcrumb, styles.breadcrumbLink)}
+        href={href}
+      >
+        {text}
+      </a>
+    );
 
   return (
     <li className={styles.breadcrumbWrapper} style={{ flexGrow }}>
