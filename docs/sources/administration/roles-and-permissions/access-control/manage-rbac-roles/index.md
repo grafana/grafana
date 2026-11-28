@@ -265,16 +265,20 @@ The `jq` filters first strip the read-only `created` and `updated` timestamps an
 
 #### Example: Remove Grafana Assistant access from Viewers
 
-By default, viewers can access all app plugins that their organization role allows, including Grafana Assistant. To prevent viewers from accessing Grafana Assistant, remove the following permissions from the `basic:viewer` role:
+By default, viewers can access all app plugins that their organization role allows, including Grafana Assistant. The Viewer role includes `plugins.app:access` with the wildcard scope `plugins:*`, so removing only the Assistant-specific grant doesn't remove plugin access. Remove the following permissions from the `basic:viewer` role, including `plugins:id:*` if present:
 
-| Action                               | Scope                              |
-| ------------------------------------ | ---------------------------------- |
-| `grafana-assistant-app.chats:access` |                                    |
-| `plugins.app:access`                 | `plugins:id:grafana-assistant-app` |
+| Action                             | Scope                             |
+| ---------------------------------- | --------------------------------- |
+| `grafana-assistant-app.chats:access` |                                   |
+| `plugins.app:access`                | `plugins:id:grafana-assistant-app` |
+| `plugins.app:access`                | `plugins:*`                       |
+| `plugins.app:access`                | `plugins:id:*`                    |
 
-You can remove these permissions with the configuration file or with the API.
+Replace wildcard access with an explicit `plugins.app:access` grant for every other app plugin that viewers still need. Otherwise, they lose access to those plugins too. Newly installed app plugins also need an explicit grant. Permissions from roles assigned directly to users or through teams still apply, so review those assignments as well.
 
-Use the `role > from` list and `permission > state` option of your provisioning file to remove the permissions:
+You can make these changes with the configuration file or with the API. Both examples keep unrelated permissions and restore access to two other plugins. Replace _PLUGIN_ID_1_ and _PLUGIN_ID_2_ with the IDs of plugins to keep, and add or remove entries to include every plugin viewers need except Assistant.
+
+Use the `role > from` list and `permission > state` option of your provisioning file to remove the permissions and grant access to the other plugins. Set _ROLE_VERSION_ to an integer higher than the role's current version:
 
 ```yaml
 apiVersion: 2
@@ -282,7 +286,7 @@ apiVersion: 2
 roles:
   - name: 'basic:viewer'
     global: true
-    version: 9
+    version: <ROLE_VERSION>
     from:
       - name: 'basic:viewer'
         global: true
@@ -292,29 +296,46 @@ roles:
       - action: 'plugins.app:access'
         scope: 'plugins:id:grafana-assistant-app'
         state: 'absent'
+      - action: 'plugins.app:access'
+        scope: 'plugins:*'
+        state: 'absent'
+      - action: 'plugins.app:access'
+        scope: 'plugins:id:*'
+        state: 'absent'
+      - action: 'plugins.app:access'
+        scope: 'plugins:id:<PLUGIN_ID_1>'
+        state: 'present'
+      - action: 'plugins.app:access'
+        scope: 'plugins:id:<PLUGIN_ID_2>'
+        state: 'present'
 ```
 
-Alternatively, use the RBAC HTTP API. The following script fetches the `basic:viewer` role, removes the two Grafana Assistant permissions, increments the version, and updates the role:
+Alternatively, use the RBAC HTTP API. The following script fetches the `basic:viewer` role, removes the Assistant and wildcard permissions, restores access to the listed plugins, increments the version, and updates the role:
 
 ```bash
-# Fetch the role, remove the Grafana Assistant permissions, and increment its version
-curl -H "Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>" \
+set -euo pipefail
+
+# Fetch the role, remove the permissions, and increment its version
+curl --fail -H "Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>" \
   -X GET '<GRAFANA_URL>/api/access-control/roles/basic_viewer' | \
-  jq 'del(.created) | del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
-  jq 'del(.permissions[] | select(.action == "grafana-assistant-app.chats:access")) | del(.permissions[] | select(.action == "plugins.app:access" and .scope == "plugins:id:grafana-assistant-app"))' > basic_viewer.json
+  jq 'del(.created, .updated, .permissions[].created, .permissions[].updated) | .version += 1' | \
+  jq 'del(.permissions[] | select(.action == "grafana-assistant-app.chats:access" or (.action == "plugins.app:access" and (.scope == "plugins:id:grafana-assistant-app" or .scope == "plugins:*" or .scope == "plugins:id:*"))))' | \
+  jq --argjson plugins '["<PLUGIN_ID_1>", "<PLUGIN_ID_2>"]' \
+    '.permissions += ($plugins | map({action: "plugins.app:access", scope: ("plugins:id:" + .)})) | .permissions |= unique_by([.action, .scope])' > basic_viewer.json
 
 # Update the role with the modified permissions
-curl -H "Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>" -H "Content-Type: application/json" \
+curl --fail -H "Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>" -H "Content-Type: application/json" \
   -X PUT -d @basic_viewer.json \
   '<GRAFANA_URL>/api/access-control/roles/basic_viewer'
 ```
 
 Replace the following placeholders:
 
-- _`<SERVICE_ACCOUNT_TOKEN>`_: A service account token with permission to read and write roles.
-- _`<GRAFANA_URL>`_: The base URL of your Grafana instance.
+- _SERVICE_ACCOUNT_TOKEN_: A service account token with permission to read and write roles.
+- _GRAFANA_URL_: The base URL of your Grafana instance.
+- _PLUGIN_ID_1_ and _PLUGIN_ID_2_: The IDs of other app plugins viewers need. Adjust the `plugins` array to include all of them.
 
-To find the IDs of other app plugins, refer to [RBAC for app plugins](ref:rbac-for-app-plugins). That page also explains how to grant fine-grained app plugin access to specific users and teams without changing the basic roles.
+To find the IDs of other app plugins, refer to [RBAC for app plugins](../rbac-for-app-plugins/). That page also explains how to grant fine-grained app plugin access to specific users and teams without changing the basic roles.
 
 ## Reset basic roles to their default
 
