@@ -19,6 +19,11 @@ func TestIsSafe(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name:    "valid Unicode directory and file",
+			path:    "中文目录/监控看板.json",
+			wantErr: nil,
+		},
+		{
 			name:    "character space",
 			path:    "path/to/my file.json",
 			wantErr: nil,
@@ -308,6 +313,11 @@ func TestSafeSegment(t *testing.T) {
 			wantPath: "path/to/file.min.js",
 		},
 		{
+			name:     "path with valid Unicode characters",
+			path:     "中文目录/监控看板.json",
+			wantPath: "中文目录/监控看板.json",
+		},
+		{
 			name:     "path with invalid characters",
 			path:     "path/to/file#.txt",
 			wantPath: "path/to/",
@@ -365,6 +375,11 @@ func TestSanitizeSegment(t *testing.T) {
 			name:  "title with allowed punctuation preserved",
 			title: "my-folder_v1.2",
 			want:  "my-folder_v1.2",
+		},
+		{
+			name:  "Unicode title preserved",
+			title: "中文目录",
+			want:  "中文目录",
 		},
 		{
 			name:  "invalid character dropped and leading space trimmed",
