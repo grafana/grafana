@@ -255,6 +255,32 @@
         "background": "palette.ink750",
         "border": "palette.ink550"
       }
+    },
+    "alertBanner": {
+      "error": {
+        "background": "palette.red600",
+        "iconBoxBackground": "palette.red500",
+        "text": "palette.white",
+        "border": "palette.red400"
+      },
+      "warning": {
+        "background": "palette.amber600",
+        "iconBoxBackground": "palette.amber500",
+        "text": "palette.white",
+        "border": "palette.amber400"
+      },
+      "info": {
+        "background": "palette.blue600",
+        "iconBoxBackground": "palette.blue500",
+        "text": "palette.white",
+        "border": "palette.blue400"
+      },
+      "success": {
+        "background": "palette.sage600",
+        "iconBoxBackground": "palette.sage500",
+        "text": "palette.white",
+        "border": "palette.sage400"
+      }
     }
   },
   "typography": {

@@ -1,6 +1,16 @@
+import { readdirSync } from 'fs';
+import { join } from 'path';
+
 import { getContrastRatio } from './colorManipulator';
 import { createTheme } from './createTheme';
-import { getThemeById } from './registry';
+import { getBuiltInThemes, getThemeById } from './registry';
+
+// Every registered theme: the built-in ones and every theme definition, whether or not it is offered in the picker.
+const allThemeIds = getBuiltInThemes(
+  readdirSync(join(__dirname, 'themeDefinitions')).map((file) => file.replace(/\.json$/, ''))
+)
+  .map((theme) => theme.id)
+  .filter((id) => id !== 'system');
 
 describe('createTheme', () => {
   it('create custom theme', () => {
@@ -61,6 +71,58 @@ describe('createTheme', () => {
         for (const color of Object.values(theme.components.codeEditor)) {
           expect(getContrastRatio(color, background)).toBeGreaterThanOrEqual(4.5);
         }
+      }
+    }
+  );
+
+  it("defaults the alert banner tokens to each severity's main and shade colors", () => {
+    const theme = createTheme();
+
+    for (const severity of ['error', 'warning', 'info', 'success'] as const) {
+      expect(theme.components.alertBanner[severity]).toEqual({
+        background: theme.colors[severity].main,
+        iconBoxBackground: theme.colors[severity].shade,
+        text: theme.colors[severity].contrastText,
+        border: theme.colors[severity].subtleBorder,
+      });
+    }
+  });
+
+  // AlertBanner's text and icon use the text token. Text needs 4.5:1 on the banner's background, and the icon needs
+  // 3:1 on its icon box.
+  it.each(['visual_refresh_dark', 'visual_refresh_light'])(
+    'provides accessible alert banner colors for %s',
+    (themeId) => {
+      const theme = getThemeById(themeId);
+
+      for (const { background, iconBoxBackground, text } of Object.values(theme.components.alertBanner)) {
+        expect(getContrastRatio(text, background)).toBeGreaterThanOrEqual(4.5);
+        expect(getContrastRatio(text, iconBoxBackground)).toBeGreaterThanOrEqual(3);
+      }
+    }
+  );
+
+  // With the visual refresh flag on, Grafana shows AlertBanner's icon tile in every theme, including the ones that keep
+  // the default tokens: the severity's shade behind its contrast text color. The icon needs 3:1 on it.
+  it.each(allThemeIds)('provides an alert banner icon with 3:1 contrast on its icon box for %s', (themeId) => {
+    const theme = getThemeById(themeId);
+
+    for (const { iconBoxBackground, text } of Object.values(theme.components.alertBanner)) {
+      expect(getContrastRatio(text, iconBoxBackground)).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('checks the icon box contrast in more than the built-in and refresh themes', () => {
+    expect(allThemeIds).toEqual(expect.arrayContaining(['dark', 'light', 'deut_prot_dark', 'tritanopia_light']));
+  });
+
+  it.each(['visual_refresh_dark', 'visual_refresh_light'])(
+    'uses black or white alert banner text for %s',
+    (themeId) => {
+      const theme = getThemeById(themeId);
+
+      for (const { text } of Object.values(theme.components.alertBanner)) {
+        expect(text).toBe(theme.isLight ? '#000000' : '#ffffff');
       }
     }
   );

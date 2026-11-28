@@ -1852,6 +1852,84 @@
             }
           },
           "additionalProperties": false
+        },
+        "alertBanner": {
+          "type": "object",
+          "properties": {
+            "error": {
+              "type": "object",
+              "properties": {
+                "background": {
+                  "type": "string"
+                },
+                "iconBoxBackground": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "warning": {
+              "type": "object",
+              "properties": {
+                "background": {
+                  "type": "string"
+                },
+                "iconBoxBackground": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "info": {
+              "type": "object",
+              "properties": {
+                "background": {
+                  "type": "string"
+                },
+                "iconBoxBackground": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "success": {
+              "type": "object",
+              "properties": {
+                "background": {
+                  "type": "string"
+                },
+                "iconBoxBackground": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false
