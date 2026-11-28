@@ -6,6 +6,7 @@ import {
   describeInterval,
   describeTextRange,
   describeTimeRange,
+  intervalToMs,
   isRelativeTimeRange,
   relativeToTimeRange,
   roundInterval,
@@ -134,6 +135,34 @@ describe('Range Utils', () => {
         type: 'ms',
         count: -50,
       });
+    });
+
+    it('keeps the fractional part of decimal values', () => {
+      expect(describeInterval('1.5h')).toEqual({
+        sec: 3600,
+        type: 'h',
+        count: 1.5,
+      });
+      expect(describeInterval('2.5')).toEqual({
+        sec: 1,
+        type: 's',
+        count: 2.5,
+      });
+    });
+
+    it('parses a unit-less zero', () => {
+      expect(describeInterval('0')).toEqual({
+        sec: 1,
+        type: 's',
+        count: 0,
+      });
+    });
+  });
+
+  describe('intervalToMs', () => {
+    it('converts decimal intervals without truncating', () => {
+      expect(intervalToMs('1.5h')).toEqual(5400000);
+      expect(intervalToMs('0.5s')).toEqual(500);
     });
   });
 
