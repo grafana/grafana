@@ -1,4 +1,4 @@
-import { type NavModelItem } from '@grafana/data';
+import { locationUtil, type NavModelItem } from '@grafana/data';
 import { type RouteDescriptor } from 'app/core/navigation/types';
 import { getRootSectionForNode } from 'app/core/selectors/navModel';
 import AppRootPage from 'app/features/plugins/components/AppRootPage';
@@ -10,8 +10,11 @@ const isStandalonePluginPage = (id: string) => id.startsWith('standalone-plugin-
 function getPathForNavItem(navItem: PluginNavModelItem) {
   const pluginNavSection = getRootSectionForNode(navItem);
   const appPluginUrl = `/a/${navItem.pluginId}`;
-  const path = isStandalonePluginPage(navItem.id) ? navItem.url || appPluginUrl : appPluginUrl; // Only standalone pages can use core URLs, otherwise we fall back to "/a/:pluginId"
-  const isSensitive = isStandalonePluginPage(navItem.id) && !navItem.url?.startsWith('/a/'); // Have case-sensitive URLs only for standalone pages that have custom URLs
+  // Nav URLs carry the app sub URL, but routes are matched against a pathname
+  // the history basename has already stripped it from, so it comes off here
+  const navUrl = navItem.url && locationUtil.stripBaseFromUrl(navItem.url);
+  const path = isStandalonePluginPage(navItem.id) ? navUrl || appPluginUrl : appPluginUrl; // Only standalone pages can use core URLs, otherwise we fall back to "/a/:pluginId"
+  const isSensitive = isStandalonePluginPage(navItem.id) && !navUrl?.startsWith('/a/'); // Have case-sensitive URLs only for standalone pages that have custom URLs
 
   return {
     path: `${path}/*`,
