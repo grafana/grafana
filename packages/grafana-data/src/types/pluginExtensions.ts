@@ -248,6 +248,7 @@ export enum PluginExtensionPoints {
   AssistantOnboardingPage = 'grafana/assistant-onboarding/page/v1',
   HomepageExtra = 'grafana/homepage/extra/v1',
   UserListTab = 'grafana/admin/user-list/tab/v1',
+  ConnectionsEntryPoints = 'grafana/connections/entry-points/v1',
 }
 
 // Don't use directly in a plugin!

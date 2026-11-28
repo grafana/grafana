@@ -20,6 +20,7 @@ import { ROUTES } from '../../constants';
 import { CardGrid, type CardGridItem } from './CardGrid/CardGrid';
 import { CategoryHeader } from './CategoryHeader/CategoryHeader';
 import { NoAccessModal } from './NoAccessModal/NoAccessModal';
+import { useConnectionEntryPoints } from './components/ConnectionEntryPoints';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   searchContainer: css({
@@ -150,9 +151,16 @@ export function AddNewConnectionLegacy() {
     history.push({ query: { filterBy: value } });
   };
 
+  const entryPoints = useConnectionEntryPoints(searchTerm);
+
   const showNoResults = useMemo(
-    () => !isLoading && !error && dataSourcesPlugins.length < 1 && appsPlugins.length < 1,
-    [isLoading, error, dataSourcesPlugins, appsPlugins]
+    () =>
+      !isLoading &&
+      !error &&
+      dataSourcesPlugins.length < 1 &&
+      appsPlugins.length < 1 &&
+      !entryPoints.hasVisibleEntryPoints,
+    [isLoading, error, dataSourcesPlugins, appsPlugins, entryPoints.hasVisibleEntryPoints]
   );
 
   return (
@@ -241,12 +249,19 @@ export function AddNewConnectionLegacy() {
             )}
 
             {/* Apps Section */}
-            {appsPlugins.length > 0 && (
+            {(appsPlugins.length > 0 || entryPoints.hasVisibleEntryPoints) && (
               <>
                 <div className={styles.spacer} />
                 <CategoryHeader iconName="apps" label={t('connections.connect-data.apps-header', 'Apps')} />
-                <CardGrid items={appsCardGridItems} onClickItem={onClickCardGridItem} />
               </>
+            )}
+            {entryPoints.element}
+            {entryPoints.hasVisibleEntryPoints && appsPlugins.length > 0 && <div className={styles.spacer} />}
+            {appsPlugins.length > 0 && (
+              <CardGrid
+                items={appsCardGridItems.filter((item) => !entryPoints.pluginIds.has(item.id))}
+                onClickItem={onClickCardGridItem}
+              />
             )}
           </>
         )}
