@@ -21,6 +21,7 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { useFlagAdaptivelogsEnableTimeMachine } from '@grafana/runtime/internal';
 import { ConfirmModal, Icon, type PopoverContent, useStyles2, useTheme2 } from '@grafana/ui';
 import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
 import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
@@ -336,7 +337,7 @@ const LogListComponent = ({
   );
   const styles = useStyles2(getStyles, dimensions, displayedFields, { unwrappedColumns }, listHeight);
   const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
-  const timeMachineLogsEnabled = useBooleanFlagValue('adaptivelogs.enableTimeMachine', false);
+  const timeMachineLogsEnabled = useFlagAdaptivelogsEnableTimeMachine();
   const widthContainer = wrapperRef.current ?? containerElement;
   const {
     closePopoverMenu,

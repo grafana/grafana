@@ -26,6 +26,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction, getDataSourceInstance } from '@grafana/runtime';
+import { useFlagAdaptivelogsEnableTimeMachine } from '@grafana/runtime/internal';
 import { type PopoverContent } from '@grafana/ui';
 
 import {
@@ -272,7 +273,7 @@ export const LogListContextProvider = ({
   const [unwrappedColumns, setUnwrappedColumnsState] = useState(unwrappedColumnsProp);
   const [showLevel, setShowLevelState] = useState(showLevelProp);
   const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
-  const timeMachineLogsEnabled = useBooleanFlagValue('adaptivelogs.enableTimeMachine', false);
+  const timeMachineLogsEnabled = useFlagAdaptivelogsEnableTimeMachine();
 
   useEffect(() => {
     if (noInteractions) {
