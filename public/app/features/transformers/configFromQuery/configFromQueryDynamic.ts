@@ -1,3 +1,5 @@
+import { set } from 'lodash';
+
 import { type DataFrame, type Field, FieldType, getFieldDisplayName } from '@grafana/data';
 
 import {
@@ -6,6 +8,7 @@ import {
   finalizeFieldToConfig,
   type HandlerArguments,
   lookUpConfigHandler,
+  mergeFieldConfigFromQuery,
 } from '../fieldToConfigMapping/fieldToConfigMapping';
 
 import { type ConfigFromQueryTransformOptions } from './configFromQuery';
@@ -133,7 +136,7 @@ export function extractConfigFromQueryDynamic(
       config[fieldName].forEach((h) => {
         const res = h.processor(h.value, newConfig, context, h.handlerArgs || {});
         if (res !== null && res !== undefined) {
-          newConfig[h.targetProperty] = res;
+          set(newConfig, h.targetProperty, res);
         }
       });
 
@@ -141,10 +144,7 @@ export function extractConfigFromQueryDynamic(
 
       outputFrame.fields.push({
         ...field,
-        config: {
-          ...field.config,
-          ...newConfig,
-        },
+        config: mergeFieldConfigFromQuery(field.config, newConfig),
         // Reset state after a potential config change
         // This fixes things like display names not being updated in the state
         // Despite being configured correctly.

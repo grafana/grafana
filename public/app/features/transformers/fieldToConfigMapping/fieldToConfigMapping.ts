@@ -1,4 +1,4 @@
-import { isArray } from 'lodash';
+import { isArray, set } from 'lodash';
 
 import {
   anyToNumber,
@@ -75,13 +75,25 @@ export function getFieldConfigFromFrame(
 
     const newValue = handler.processor(configValue, config, context, mapping.handlerArguments);
     if (newValue != null) {
-      (config as any)[handler.targetProperty ?? handler.key] = newValue;
+      set(config, handler.targetProperty ?? handler.key, newValue);
     }
   }
 
   finalizeFieldToConfig(config, context);
 
   return config;
+}
+
+// Config coming from a query overrides the field's own config, except for `custom`, which is merged one level
+// deep so that mapping a single custom option does not discard the others already set on the field.
+export function mergeFieldConfigFromQuery(existing: FieldConfig, fromQuery: FieldConfig): FieldConfig {
+  const merged: FieldConfig = { ...existing, ...fromQuery };
+
+  if (existing.custom && fromQuery.custom) {
+    merged.custom = { ...existing.custom, ...fromQuery.custom };
+  }
+
+  return merged;
 }
 
 export function finalizeFieldToConfig(config: FieldConfig<unknown>, context: FieldToConfigContext) {
@@ -153,6 +165,12 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
   },
   {
     key: 'min',
+    processor: toNumericOrUndefined,
+  },
+  {
+    key: 'neutral',
+    name: 'Neutral',
+    targetProperty: 'custom.neutral',
     processor: toNumericOrUndefined,
   },
   {

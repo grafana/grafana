@@ -7,13 +7,26 @@ import { addOrientationOption, addStandardDataReduceOptions } from '../stat/comm
 
 import { EffectsEditor } from './EffectsEditor';
 import { GaugePanel } from './GaugePanel';
-import { gaugePanelChangedHandler, gaugePanelMigrationHandler, shouldMigrateGauge } from './migrations';
+import { gaugePanelChangedHandler, gaugePanelMigrationHandler, shouldRunGaugeMigration } from './migrations';
 import { defaultGaugePanelEffects, defaultOptions, type Options } from './panelcfg.gen';
 import { gaugePresetsSupplier } from './presets';
 import { gaugeSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options>(GaugePanel)
-  .useFieldConfig({})
+  .useFieldConfig({
+    useCustomConfig: (builder) => {
+      builder.addNumberInput({
+        path: 'neutral',
+        name: t('gauge.config.neutral.title', 'Neutral value'),
+        description: t('gauge.config.neutral.description', 'Leave empty to use Min as neutral point'),
+        category: [t('gauge.category-radial-bar', 'Gauge')],
+        settings: {
+          placeholder: t('gauge.config.neutral.placeholder', 'none'),
+          step: 1,
+        },
+      });
+    },
+  })
   .setPanelOptions((builder) => {
     const category = [t('gauge.category-radial-bar', 'Gauge')];
 
@@ -160,17 +173,6 @@ export const plugin = new PanelPlugin<Options>(GaugePanel)
       defaultValue: defaultOptions.textMode,
     });
 
-    builder.addNumberInput({
-      path: 'neutral',
-      name: t('gauge.config.neutral.title', 'Neutral value'),
-      description: t('gauge.config.neutral.description', 'Leave empty to use Min as neutral point'),
-      category,
-      settings: {
-        placeholder: t('gauge.config.neutral.placeholder', 'none'),
-        step: 1,
-      },
-    });
-
     builder.addBooleanSwitch({
       path: 'sparkline',
       name: t('gauge.config.sparkline', 'Show sparkline'),
@@ -207,5 +209,5 @@ export const plugin = new PanelPlugin<Options>(GaugePanel)
   })
   .setSuggestionsSupplier(gaugeSuggestionsSupplier)
   .setPresetsSupplier(gaugePresetsSupplier)
-  .setMigrationHandler(gaugePanelMigrationHandler, shouldMigrateGauge)
+  .setMigrationHandler(gaugePanelMigrationHandler, shouldRunGaugeMigration)
   .setPanelChangeHandler(gaugePanelChangedHandler);
