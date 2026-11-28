@@ -305,7 +305,8 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
       await titleInput.pressSequentially(title);
       const urlInput = page.getByRole('dialog').getByLabel('URL');
       await urlInput.click();
-      await urlInput.pressSequentially(url);
+      await urlInput.fill(url);
+      await expect(urlInput).toContainText(url);
       await page.getByRole('dialog').locator('button[aria-disabled="false"]').filter({ hasText: 'Save' }).click();
       await expect(page.getByRole('dialog')).not.toBeVisible();
     };
