@@ -712,8 +712,8 @@ importers:
         specifier: ^0.18.5
         version: 0.18.5
       '@axe-core/playwright':
-        specifier: ^4.11.1
-        version: 4.11.1(playwright-core@1.64.1)
+        specifier: ^4.14.0
+        version: 4.14.0(playwright-core@1.64.1)
       '@bsull/augurs':
         specifier: ^0.10.2
         version: 0.10.2
@@ -743,7 +743,7 @@ importers:
         version: 0.17.2(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)
       '@grafana/plugin-e2e':
         specifier: ^3.12.0
-        version: 3.12.0(@axe-core/playwright@4.11.1(playwright-core@1.64.1))(@playwright/test@1.64.1)
+        version: 3.12.0(@axe-core/playwright@4.14.0(playwright-core@1.64.1))(@playwright/test@1.64.1)
       '@grafana/test-utils':
         specifier: workspace:*
         version: link:packages/grafana-test-utils
@@ -935,7 +935,7 @@ importers:
         version: typescript@7.0.2
       axe-core:
         specifier: ^4.11.1
-        version: 4.11.1
+        version: 4.14.1
       blob-polyfill:
         specifier: 9.0.20240710
         version: 9.0.20240710
@@ -2917,8 +2917,9 @@ packages:
     resolution: {integrity: sha512-9ytjzGwxjm9Uz7I9avfbt5vlQt6uk9uRRESzJjqrznl6WKvI6dwYTo+vJ3U02Wrq/mR3iql/PzhvHhKdJIAjDQ==}
     engines: {node: '>=20'}
 
-  '@axe-core/playwright@4.11.1':
-    resolution: {integrity: sha512-mKEfoUIB1MkVTht0BGZFXtSAEKXMJoDkyV5YZ9jbBmZCcWDz71tegNsdTkIN8zc/yMi5Gm2kx7Z5YQ9PfWNAWw==}
+  '@axe-core/playwright@4.14.0':
+    resolution: {integrity: sha512-SGUhG5PIHd2eMdpgBF2PyQLOhX+qyDR2PT4cmoS4Qk2ak+jX/rrSvst9l0PGv5WTHolKpUMvVmoHpr4cZgf1RQ==}
+    engines: {node: '>=22.12.0'}
     peerDependencies:
       playwright-core: '>= 1.0.0'
 
@@ -8474,8 +8475,8 @@ packages:
     resolution: {integrity: sha512-zJAaP9zxTcvTHRlejau3ZOY4V7SRpiByf3/dxx2uyKxxor19tpmpV2QRsTKikckwhaPmr2dVpxxMr7jOCYVp5g==}
     engines: {node: '>=6.0.0'}
 
-  axe-core@4.11.1:
-    resolution: {integrity: sha512-BASOg+YwO2C+346x3LZOeoovTIoTrRqEsqMa6fmfAV0P+U9mFr9NsyOEpiYvFjbc64NMrSswhV50WdXzdb/Z5A==}
+  axe-core@4.14.1:
+    resolution: {integrity: sha512-FHfa+lmNjQZfJz1q8wKqIDwC6DExcHt/pkjNQb09a3NPjCKg2rhu5qb2S4r76ASyFNNtuFooJpZe37OgudVGtQ==}
     engines: {node: '>=4'}
 
   axios@1.20.0:
@@ -15582,9 +15583,9 @@ snapshots:
       typescript: 5.6.1-rc
       validate-npm-package-name: 5.0.1
 
-  '@axe-core/playwright@4.11.1(playwright-core@1.64.1)':
+  '@axe-core/playwright@4.14.0(playwright-core@1.64.1)':
     dependencies:
-      axe-core: 4.11.1
+      axe-core: 4.14.1
       playwright-core: 1.64.1
 
   '@babel/code-frame@7.26.2':
@@ -16610,13 +16611,13 @@ snapshots:
       '@grafana/schema': link:packages/grafana-schema
       react: 19.2.8
 
-  '@grafana/plugin-e2e@3.12.0(@axe-core/playwright@4.11.1(playwright-core@1.64.1))(@playwright/test@1.64.1)':
+  '@grafana/plugin-e2e@3.12.0(@axe-core/playwright@4.14.0(playwright-core@1.64.1))(@playwright/test@1.64.1)':
     dependencies:
       '@grafana/e2e-selectors': link:packages/grafana-e2e-selectors
       '@playwright/test': 1.64.1
       yaml: 2.9.0
     optionalDependencies:
-      '@axe-core/playwright': 4.11.1(playwright-core@1.64.1)
+      '@axe-core/playwright': 4.14.0(playwright-core@1.64.1)
 
   '@grafana/plugin-ui@0.17.6(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)':
     dependencies:
@@ -19641,7 +19642,7 @@ snapshots:
   '@storybook/addon-a11y@10.6.2(storybook@10.6.2(patch_hash=768442e7adf5924c3d9ab1a30e280323e0d8085d995188fa8eb8d22079284367)(@types/react@19.2.18)(prettier@3.6.2)(react@19.2.8))':
     dependencies:
       '@storybook/global': 5.0.0
-      axe-core: 4.11.1
+      axe-core: 4.14.1
       storybook: 10.6.2(patch_hash=768442e7adf5924c3d9ab1a30e280323e0d8085d995188fa8eb8d22079284367)(@types/react@19.2.18)(prettier@3.6.2)(react@19.2.8)
 
   '@storybook/addon-docs@10.6.2(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(storybook@10.6.2(patch_hash=768442e7adf5924c3d9ab1a30e280323e0d8085d995188fa8eb8d22079284367)(@types/react@19.2.18)(prettier@3.6.2)(react@19.2.8))':
@@ -21991,7 +21992,7 @@ snapshots:
 
   await-to-js@3.0.0: {}
 
-  axe-core@4.11.1: {}
+  axe-core@4.14.1: {}
 
   axios@1.20.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0):
     dependencies:
@@ -23661,7 +23662,7 @@ snapshots:
       array-includes: 3.1.9
       array.prototype.flatmap: 1.3.3
       ast-types-flow: 0.0.8
-      axe-core: 4.11.1
+      axe-core: 4.14.1
       axobject-query: 4.1.0
       damerau-levenshtein: 1.0.8
       emoji-regex: 9.2.2
