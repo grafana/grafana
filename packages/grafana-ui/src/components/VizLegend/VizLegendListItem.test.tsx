@@ -9,7 +9,7 @@ function makeItem(overrides: Partial<VizLegendItem> = {}): VizLegendItem {
 }
 
 function renderItem(overrides: Partial<Props<unknown>> = {}) {
-  return render(<VizLegendListItem item={makeItem()} allItemsSelected={true} {...overrides} />);
+  return render(<VizLegendListItem item={makeItem()} {...overrides} />);
 }
 
 describe('VizLegendListItem', () => {
@@ -19,14 +19,19 @@ describe('VizLegendListItem', () => {
     expect(screen.getByTestId('series-icon')).toBeInTheDocument();
   });
 
-  it('shows "All series selected" aria-label when allItemsSelected is true', () => {
-    renderItem({ allItemsSelected: true });
-    expect(screen.getByRole('button', { name: /all series selected/i })).toBeInTheDocument();
+  it('uses the series label as the accessible name', () => {
+    renderItem({ item: makeItem({ label: 'CPU' }) });
+    expect(screen.getByRole('button', { name: 'CPU' })).toBeInTheDocument();
   });
 
-  it('shows "Only <label> selected" aria-label when allItemsSelected is false', () => {
-    renderItem({ item: makeItem({ label: 'CPU' }), allItemsSelected: false });
-    expect(screen.getByRole('button', { name: /only cpu selected/i })).toBeInTheDocument();
+  it('marks visible series as pressed', () => {
+    renderItem({ item: makeItem({ label: 'CPU' }) });
+    expect(screen.getByRole('button', { name: 'CPU' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('marks hidden series as not pressed without changing the accessible name', () => {
+    renderItem({ item: makeItem({ label: 'CPU', disabled: true }) });
+    expect(screen.getByRole('button', { name: 'CPU' })).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('fires click, mouseover, and mouseout callbacks', async () => {

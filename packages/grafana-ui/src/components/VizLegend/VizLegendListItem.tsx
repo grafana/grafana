@@ -4,7 +4,6 @@ import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
@@ -25,7 +24,6 @@ export interface Props<T> {
     event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
   ) => void;
   readonly?: boolean;
-  allItemsSelected: boolean;
 }
 
 /**
@@ -38,7 +36,6 @@ export const VizLegendListItem = <T = unknown,>({
   onLabelMouseOut,
   className,
   readonly,
-  allItemsSelected,
 }: Props<T>) => {
   const styles = useStyles2(getStyles);
 
@@ -69,13 +66,6 @@ export const VizLegendListItem = <T = unknown,>({
     [item, onLabelClick]
   );
 
-  const getAriaLabel = () => {
-    if (allItemsSelected) {
-      return t('grafana-ui.viz-legend.all-series-selected', 'All series selected');
-    }
-    return t('grafana-ui.viz-legend.only-this-series-selected', 'Only {{label}} selected', { label: item.label });
-  };
-
   return (
     <div
       className={cx(styles.itemWrapper, item.disabled && styles.itemDisabled, className)}
@@ -91,7 +81,7 @@ export const VizLegendListItem = <T = unknown,>({
       <button
         disabled={readonly}
         type="button"
-        aria-label={getAriaLabel()}
+        aria-pressed={!item.disabled}
         onBlur={onMouseOut}
         onFocus={onMouseOver}
         onMouseOver={onMouseOver}
