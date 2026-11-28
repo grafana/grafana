@@ -62,7 +62,8 @@ export const SparklineCell = (props: SparklineCellProps) => {
     }
   });
 
-  const range = getMinMaxAndDelta(sparkline.y);
+  // With Field min/max the column's range is shared so every row's sparkline is drawn on the same scale.
+  const range = (field.config.fieldMinMax && field.state?.range) || getMinMaxAndDelta(sparkline.y);
   sparkline.y.config.min = range.min;
   sparkline.y.config.max = range.max;
   sparkline.y.state = { range };
