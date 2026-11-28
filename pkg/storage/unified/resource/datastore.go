@@ -133,6 +133,29 @@ func (k ListRequestKey) Prefix() string {
 	return fmt.Sprintf("%s/%s/%s/%s/", k.Group, k.Resource, k.Namespace, k.Name)
 }
 
+// rangeEnd is the exclusive end of the key range for k. Under a named prefix the
+// object's own rows continue with "<rv>~<action>~<folder>", and a positive RV
+// starts with '1'-'9', so the range ends after keys continuing with '9'. That
+// leaves out rows of namespaced objects, in a namespace with this cluster-scoped
+// object's name, whose names start with a later byte (':', letters, '_');
+// contains filters the rest.
+func (k ListRequestKey) rangeEnd() string {
+	if k.Name != "" {
+		return PrefixRangeEnd(k.Prefix() + "9")
+	}
+	return PrefixRangeEnd(k.Prefix())
+}
+
+// contains reports whether dataKey belongs to k. A cluster-scoped prefix also
+// matches namespaced objects in the namespace with that name, and a namespace
+// prefix matches the cluster-scoped object with that name.
+func (k ListRequestKey) contains(dataKey DataKey) bool {
+	if k.Namespace != "" && dataKey.Namespace != k.Namespace {
+		return false
+	}
+	return k.Name == "" || (dataKey.Namespace == k.Namespace && dataKey.Name == k.Name)
+}
+
 // GetRequestKey is used for getting a specific data object by latest version
 type GetRequestKey struct {
 	Group     string
@@ -186,19 +209,22 @@ func (d *dataStore) keys(ctx context.Context, key ListRequestKey, sort SortOrder
 		defer span.End()
 		for k, err := range pagedKeysWithTimeout(ctx, d.kv, dataSection, ListOptions{
 			StartKey: prefix,
-			EndKey:   PrefixRangeEnd(prefix),
+			EndKey:   key.rangeEnd(),
 			Sort:     sort,
 		}, keyPageSize, pageTimeout) {
 			if err != nil {
 				yield(DataKey{}, err)
 				return
 			}
-			key, err := ParseKey(k)
+			dataKey, err := ParseKey(k)
 			if err != nil {
 				yield(DataKey{}, err)
 				return
 			}
-			if !yield(key, nil) {
+			if !key.contains(dataKey) {
+				continue
+			}
+			if !yield(dataKey, nil) {
 				return
 			}
 		}
@@ -217,17 +243,39 @@ func (d *dataStore) LastResourceVersion(ctx context.Context, key ListRequestKey)
 	ctx, span := tracer.Start(ctx, "resource.dataStore.LastResourceVersion")
 	defer span.End()
 
-	prefix := key.Prefix()
-	for key, err := range d.kv.Keys(ctx, dataSection, ListOptions{
-		StartKey: prefix,
-		EndKey:   PrefixRangeEnd(prefix),
+	var newest string
+	for k, err := range d.kv.Keys(ctx, dataSection, ListOptions{
+		StartKey: key.Prefix(),
+		EndKey:   key.rangeEnd(),
 		Limit:    1,
 		Sort:     SortOrderDesc,
 	}) {
 		if err != nil {
 			return DataKey{}, err
 		}
-		return ParseKey(key)
+		newest = k
+	}
+	if newest == "" {
+		return DataKey{}, ErrNotFound
+	}
+	dataKey, err := ParseKey(newest)
+	if err != nil || key.contains(dataKey) {
+		return dataKey, err
+	}
+	// A namespaced object whose name starts with a digit sorts above this
+	// cluster-scoped object's rows, so scan below it.
+	for k, err := range pagedKeys(ctx, d.kv, dataSection, ListOptions{
+		StartKey: key.Prefix(),
+		EndKey:   newest,
+		Sort:     SortOrderDesc,
+	}, keyPageSize) {
+		if err != nil {
+			return DataKey{}, err
+		}
+		dataKey, err := ParseKey(k)
+		if err != nil || key.contains(dataKey) {
+			return dataKey, err
+		}
 	}
 	return DataKey{}, ErrNotFound
 }
@@ -407,7 +455,7 @@ func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, options List
 
 	listOptions := ListOptions{
 		StartKey: startKey,
-		EndKey:   PrefixRangeEnd(prefix),
+		EndKey:   options.Key.rangeEnd(),
 		Sort:     SortOrderAsc,
 	}
 
@@ -445,6 +493,11 @@ func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, options List
 			if err != nil {
 				yield(DataKey{}, err)
 				return
+			}
+			// Skip rows of other objects before the candidate logic, as they can
+			// sort between the rows of the requested object.
+			if !options.Key.contains(dataKey) {
+				continue
 			}
 
 			if candidateKey == nil {

@@ -1530,6 +1530,90 @@ func TestKvStorageBackend_ReadResource_DeletedResource(t *testing.T) {
 	require.Equal(t, objectToJSONBytes(t, testObj), response.Value)
 }
 
+func writeCollisionObject(t *testing.T, backend *kvStorageBackend, namespace, name, value string, eventType resourcepb.WatchEvent_Type, previousRV int64) (int64, []byte) {
+	t.Helper()
+	obj, err := createTestObjectWithName(name, NamespacedResource{Namespace: namespace, Group: collisionGroup, Resource: collisionResource}, value)
+	require.NoError(t, err)
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	event := WriteEvent{
+		Type:       eventType,
+		Key:        &resourcepb.ResourceKey{Namespace: namespace, Group: collisionGroup, Resource: collisionResource, Name: name},
+		Value:      objectToJSONBytes(t, obj),
+		Object:     meta,
+		PreviousRV: previousRV,
+	}
+	if eventType != resourcepb.WatchEvent_ADDED {
+		event.ObjectOld = meta
+	}
+	rv, err := backend.WriteEvent(t.Context(), event)
+	require.NoError(t, err)
+	return rv, event.Value
+}
+
+func TestKvStorageBackend_ReadResource_ClusterObjectNamedLikeNamespace(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := t.Context()
+
+	// The namespaced object exists first, so creating the cluster object must not
+	// find it as an existing resource.
+	widgetRV, _ := writeCollisionObject(t, backend, collisionName, "widget", "widget-v1", resourcepb.WatchEvent_ADDED, 0)
+	rv1, value1 := writeCollisionObject(t, backend, "", collisionName, "cluster-v1", resourcepb.WatchEvent_ADDED, 0)
+	rv2, value2 := writeCollisionObject(t, backend, "", collisionName, "cluster-v2", resourcepb.WatchEvent_MODIFIED, rv1)
+	_, widgetValue := writeCollisionObject(t, backend, collisionName, "widget", "widget-v2", resourcepb.WatchEvent_MODIFIED, widgetRV)
+
+	read := func(namespace, name string, rv int64) *BackendReadResponse {
+		return backend.ReadResource(ctx, &resourcepb.ReadRequest{
+			Key:             &resourcepb.ResourceKey{Namespace: namespace, Group: collisionGroup, Resource: collisionResource, Name: name},
+			ResourceVersion: rv,
+		})
+	}
+
+	resp := read("", collisionName, 0)
+	require.Nil(t, resp.Error)
+	require.Equal(t, rv2, resp.ResourceVersion)
+	require.Equal(t, value2, resp.Value)
+
+	resp = read("", collisionName, rv1)
+	require.Nil(t, resp.Error)
+	require.Equal(t, rv1, resp.ResourceVersion)
+	require.Equal(t, value1, resp.Value)
+
+	resp = read(collisionName, "widget", 0)
+	require.Nil(t, resp.Error)
+	require.Equal(t, widgetValue, resp.Value)
+
+	writeCollisionObject(t, backend, "", collisionName, "cluster-v2", resourcepb.WatchEvent_DELETED, rv2)
+
+	resp = read("", collisionName, 0)
+	require.NotNil(t, resp.Error)
+	require.Equal(t, int32(404), resp.Error.Code)
+
+	resp = read("", collisionName, rv2)
+	require.Nil(t, resp.Error)
+	require.Equal(t, value2, resp.Value)
+}
+
+func TestKvStorageBackend_PruneClusterObjectKeepsNamespacedRows(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	// Name "0" sorts below every cluster RV row, so a prefix scan would count it last
+	// and prune it.
+	namespaced := saveCollisionKey(t, backend.dataStore, collisionName, "0", 50, DataActionCreated)
+	cluster := make([]DataKey, 0, defaultPrunerHistoryLimit+1)
+	for i := range defaultPrunerHistoryLimit + 1 {
+		action := DataActionUpdated
+		if i == 0 {
+			action = DataActionCreated
+		}
+		cluster = append(cluster, saveCollisionKey(t, backend.dataStore, "", collisionName, int64(100+i), action))
+	}
+
+	require.NoError(t, backend.pruneEvents(t.Context(), PruningKey{Group: collisionGroup, Resource: collisionResource, Name: collisionName}))
+
+	allList := ListRequestKey{Group: collisionGroup, Resource: collisionResource}
+	require.ElementsMatch(t, append([]DataKey{namespaced}, cluster[1:]...), collectDataKeys(t, backend.dataStore.Keys(t.Context(), allList, SortOrderAsc)))
+}
+
 func TestKvStorageBackend_BatchReadResource_ReturnsDeletionMarkerWhenIncluded(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
