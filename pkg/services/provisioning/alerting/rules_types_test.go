@@ -36,6 +36,30 @@ func TestRuleGroup(t *testing.T) {
 		_, err = rg.MapToModel()
 		require.Error(t, err)
 	})
+	t.Run("a rule group with only a folderUid should not error", func(t *testing.T) {
+		rg := validRuleGroupV1(t)
+		rg.Folder = stringToStringValue("")
+		rg.FolderUID = stringToStringValue("test-uid")
+		group, err := rg.MapToModel()
+		require.NoError(t, err)
+		require.Equal(t, "test-uid", group.FolderUID)
+		require.Empty(t, group.FolderFullpath)
+	})
+	t.Run("a rule group with a folder and a folderUid should keep both", func(t *testing.T) {
+		rg := validRuleGroupV1(t)
+		rg.FolderUID = stringToStringValue(" test-uid ")
+		group, err := rg.MapToModel()
+		require.NoError(t, err)
+		require.Equal(t, "test-uid", group.FolderUID)
+		require.Equal(t, "Test", group.FolderFullpath)
+	})
+	t.Run("a rule group with neither a folder nor a folderUid should error", func(t *testing.T) {
+		rg := validRuleGroupV1(t)
+		rg.Folder = stringToStringValue("")
+		rg.FolderUID = stringToStringValue("  ")
+		_, err := rg.MapToModel()
+		require.Error(t, err)
+	})
 	t.Run("a rule group with out an interval should error", func(t *testing.T) {
 		rg := validRuleGroupV1(t)
 		var interval values.StringValue

@@ -59,8 +59,12 @@ groups:
   - orgId: 1
     # <string, required> name of the rule group
     name: my_rule_group
-    # <string, required> name of the folder the rule group will be stored in
+    # <string> name of the folder the rule group will be stored in. Required unless folderUid is set.
     folder: my_first_folder
+    # <string> UID of the folder the rule group will be stored in. If a folder with this UID
+    # exists, it's used. Otherwise, a folder with this UID and the title from folder is created.
+    # Use it to put rules in the same folder as dashboards provisioned with the same folderUid.
+    folderUid: my_first_folder_uid
     # <duration, required> interval that the rule group should be evaluated at
     interval: 60s
     # <list, required> list of rules that are part of the rule group
