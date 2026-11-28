@@ -18,8 +18,13 @@ type OrderByRowProps = {
 };
 
 const sortOrderOptions = [
-  { description: 'Sort by ascending', value: 'ASC', icon: 'sort-amount-up' } as const,
-  { description: 'Sort by descending', value: 'DESC', icon: 'sort-amount-down' } as const,
+  { description: 'Sort by ascending', ariaLabel: 'Sort by ascending', value: 'ASC', icon: 'sort-amount-up' } as const,
+  {
+    description: 'Sort by descending',
+    ariaLabel: 'Sort by descending',
+    value: 'DESC',
+    icon: 'sort-amount-down',
+  } as const,
 ];
 
 export function OrderByRow({ sql, onSqlChange, columns, showOffset }: OrderByRowProps) {

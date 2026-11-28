@@ -106,6 +106,8 @@ export interface SQLSelectableValue extends SelectableValue {
   raqbFieldType?: RAQBFieldTypes;
 }
 
+export type SQLQueryBuilderDB = Pick<DB, 'fields' | 'functions' | 'toRawSql'>;
+
 export interface DB {
   init?: (datasourceId?: string) => Promise<boolean>;
   datasets: () => Promise<string[]>;

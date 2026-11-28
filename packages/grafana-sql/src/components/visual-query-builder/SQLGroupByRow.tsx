@@ -1,7 +1,7 @@
 import { type SelectableValue } from '@grafana/data';
 
 import { type QueryWithDefaults } from '../../defaults';
-import { type DB, type SQLQuery } from '../../types';
+import { type SQLQueryBuilderDB, type SQLQuery } from '../../types';
 import { getColumnsWithIndices } from '../../utils/getColumnsWithIndices';
 import { useSqlChange } from '../../utils/useSqlChange';
 
@@ -11,7 +11,7 @@ interface SQLGroupByRowProps {
   fields: SelectableValue[];
   query: QueryWithDefaults;
   onQueryChange: (query: SQLQuery) => void;
-  db: DB;
+  db: SQLQueryBuilderDB;
 }
 
 export function SQLGroupByRow({ fields, query, onQueryChange, db }: SQLGroupByRowProps) {
