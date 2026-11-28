@@ -383,17 +383,18 @@ func (a *alertRule) Run() error {
 			// cases.
 			ctx, cancelFunc := context.WithTimeout(context.Background(), time.Minute)
 			defer cancelFunc()
+			ctx = ngmodels.WithRuleKey(ctx, a.key.AlertRuleKey)
 
 			a.logger.Info("Stopping alert rule routine", "reason", reason)
 			if errors.Is(reason, errRuleDeleted) {
 				// Clean up the state and send resolved notifications for firing alerts only if the reason for stopping
 				// the evaluation loop is that the rule was deleted.
-				stateTransitions := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key.AlertRuleKey), a.key, ngmodels.StateReasonRuleDeleted)
-				a.expireAndSend(grafanaCtx, stateTransitions)
+				stateTransitions := a.stateManager.DeleteStateByRuleUID(ctx, a.key, ngmodels.StateReasonRuleDeleted)
+				a.expireAndSend(ctx, stateTransitions)
 				return nil
 			}
 			// Otherwise, just clean up the cache.
-			a.stateManager.ForgetStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key.AlertRuleKey), a.key)
+			a.stateManager.ForgetStateByRuleUID(ctx, a.key)
 			return nil
 		}
 	}
