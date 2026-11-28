@@ -83,7 +83,7 @@ Looking for `gcx`? Have a look at the new [AI tools](https://grafana.com/docs/gr
 
 **Provisioning and as code** let you apply code management best practices to your observability resources. By representing Grafana resources as code, you can integrate them into existing infrastructure-as-code workflows and apply standard development practices. Instead of manually configuring dashboards or settings through the Grafana UI, you can:
 
-- Write configurations in code: Define dashboards in JSON or other supported formats.
+- Write resources and configurations in code: Define dashboards in JSON or other supported formats.
 - Sync your Grafana setup to GitHub: Track changes, collaborate, and roll back updates using Git and GitHub, or other remote sources.
 - Automate with CI/CD: Integrate Grafana directly into your development and deployment pipelines.
 - Standardize workflows: Ensure consistency across your teams by using repeatable, codified processes for managing Grafana resources.
@@ -96,7 +96,7 @@ For basic configuration provisioning refer to [Provision Grafana](https://grafan
 
 ## Explore
 
-Explore the available as code tools. Most can be used with one another.
+Learn about resources in Grafana and explore the available as code tools. Most can be used with one another.
 
 {{< card-grid key="cards" type="simple" >}}
 

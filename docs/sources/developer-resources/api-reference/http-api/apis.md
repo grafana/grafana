@@ -175,6 +175,10 @@ You would use the following API call:
 
 `GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/production-overview`
 
+### Spec
+
+The spec field describes the desired state of the resource. Its structure depends on the resource type and API version. Refer to the Swagger or OpenAPI documentation for the exact schema for a resource's spec.
+
 ### Metadata
 
 The metadata section contains information about the resource instance.
@@ -219,7 +223,7 @@ Common annotations include:
 
 #### Annotations for managed resources
 
-_Managed resources_ are resources created with as code tools, such as Git Sync, Terraform, or `kubectl`, and carry additional annotations that record which manager owns the resource, where the resource manager is, where the resource definition comes from, and whether you can edit it outside that tool. Grafana derives most of them, so before you set them by hand, understand how resources from as code tools ara managed. For what each tool records and allows, refer to [Manage resources in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/resources/manage-resources/).
+_Managed resources_ are resources created with as code tools, such as Git Sync, Terraform, or `kubectl`, and carry additional annotations that record which manager owns the resource, where the resource manager is, where the resource definition comes from, and whether you can edit it outside that tool. Grafana derives most of them, so before you set them by hand, understand how resources from as code tools are managed. For what each tool records and allows, refer to [Manage resources in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/resources/manage-resources/).
 
 Use the following annotations to manage these type of resources:
 
@@ -284,10 +288,6 @@ Earlier versions of Grafana recorded Git Sync ownership with the following annot
 | `grafana.app/repoPath`      | `grafana.app/sourcePath`                                            |
 | `grafana.app/repoHash`      | `grafana.app/sourceChecksum`                                        |
 | `grafana.app/repoTimestamp` | `grafana.app/sourceTimestamp`                                       |
-
-### Spec
-
-The spec field describes the desired state of the resource. Its structure depends on the resource type and API version. Refer to the Swagger or OpenAPI documentation for the exact schema for a resource's spec.
 
 ## Related resources
 
