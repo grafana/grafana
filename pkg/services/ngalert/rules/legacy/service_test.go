@@ -94,7 +94,7 @@ func TestUpdateAlertRulePersistencePreconditions(t *testing.T) {
 			ruleStore: store, provenanceStore: fakes.NewFakeProvisioningStore(),
 			xact: xact, authz: fakeUpdateAuthz{},
 		}
-		_, err := service.UpdateAlertRule(context.Background(), requester, *updated, utils.ManagerProperties{}, false)
+		_, err := service.UpdateAlertRule(context.Background(), requester, *updated, utils.ManagerProperties{}, WriteOptions{})
 		require.NoError(t, err)
 		require.Equal(t, updated.Title, persisted.Title)
 		require.Equal(t, baselineVersion, stored.Version)
@@ -116,8 +116,39 @@ func TestUpdateAlertRulePersistencePreconditions(t *testing.T) {
 			return nil
 		}
 		service := &legacyRuleService{ruleStore: store, provenanceStore: provenance, xact: store, authz: fakeUpdateAuthz{}}
-		_, err := service.UpdateAlertRule(context.Background(), requester, *updated, utils.ManagerProperties{}, false)
+		_, err := service.UpdateAlertRule(context.Background(), requester, *updated, utils.ManagerProperties{}, WriteOptions{})
 		require.ErrorIs(t, err, rulestore.ErrOptimisticLock)
+	})
+}
+
+func TestUpdateAlertRuleGroupInterval(t *testing.T) {
+	stored := models.RuleGen.With(models.RuleMuts.WithIntervalSeconds(60)).GenerateRef()
+	stored.NotificationSettings = nil
+	updated := stored.Copy()
+	updated.IntervalSeconds = 300
+
+	update := func(t *testing.T, opts WriteOptions) *models.AlertRule {
+		store := fakes.NewRuleStore(t)
+		store.Rules[stored.OrgID] = []*models.AlertRule{stored.Copy()}
+		var persisted *models.AlertRule
+		store.Hook = func(cmd any) error {
+			if updates, ok := cmd.([]models.UpdateRule); ok {
+				persisted = updates[0].New.Copy()
+			}
+			return nil
+		}
+		service := &legacyRuleService{ruleStore: store, provenanceStore: fakes.NewFakeProvisioningStore(), xact: store, authz: fakeUpdateAuthz{}}
+		_, err := service.UpdateAlertRule(context.Background(), &user.SignedInUser{OrgID: stored.OrgID}, *updated, utils.ManagerProperties{}, opts)
+		require.NoError(t, err)
+		return persisted
+	}
+
+	t.Run("keeps the group's interval", func(t *testing.T) {
+		require.Equal(t, int64(60), update(t, WriteOptions{}).IntervalSeconds)
+	})
+
+	t.Run("stores the rule's interval with group writes", func(t *testing.T) {
+		require.Equal(t, int64(300), update(t, WriteOptions{GroupWrites: true}).IntervalSeconds)
 	})
 }
 

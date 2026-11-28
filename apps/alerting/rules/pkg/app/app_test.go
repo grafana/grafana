@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	v1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
@@ -878,6 +879,34 @@ func TestRuleSequenceValidation_MembershipGuardrails(t *testing.T) {
 			Object: r,
 		})
 		require.NoError(t, err)
+	})
+}
+
+func TestRuleSequenceValidation_BeingDeleted(t *testing.T) {
+	// The sequence's recording rule was deleted after the sequence was written.
+	old := baseRuleSequence()
+	old.Spec.RecordingRules = []v1.RuleSequenceRuleRef{{Name: "deleted-rule"}}
+	old.DeletionTimestamp = &metav1.Time{Time: time.Now()}
+	old.Finalizers = []string{"finalizer"}
+
+	validate := func(r *v1.RuleSequence) error {
+		return ruleSequenceValidator(t, ruleSequenceRuntimeConfig()).Validate(context.Background(), &appsdk.AdmissionRequest{
+			Action:    resource.AdmissionActionUpdate,
+			Object:    r,
+			OldObject: old,
+		})
+	}
+
+	t.Run("finalizer removal is allowed", func(t *testing.T) {
+		r := old.Copy().(*v1.RuleSequence)
+		r.Finalizers = nil
+		require.NoError(t, validate(r))
+	})
+
+	t.Run("spec change is validated", func(t *testing.T) {
+		r := old.Copy().(*v1.RuleSequence)
+		r.Spec.AlertRules = nil
+		require.ErrorContains(t, validate(r), `rule "deleted-rule" does not exist`)
 	})
 }
 

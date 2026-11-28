@@ -73,7 +73,7 @@ func (r *AlertRules) Create(ctx context.Context, user identity.Requester, orgID 
 	if err != nil {
 		return nil, err
 	}
-	created, err := r.service.CreateAlertRule(ctx, user, *model, managerProps, dryRun)
+	created, err := r.service.CreateAlertRule(ctx, user, *model, managerProps, writeOptions(rule, dryRun))
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (r *AlertRules) Update(ctx context.Context, user identity.Requester, orgID 
 	if err := setUpdatePreconditions(rule, model); err != nil {
 		return nil, err
 	}
-	result, err := r.service.UpdateAlertRule(ctx, user, *model, managerProps, dryRun)
+	result, err := r.service.UpdateAlertRule(ctx, user, *model, managerProps, writeOptions(rule, dryRun))
 	if err != nil {
 		return nil, err
 	}

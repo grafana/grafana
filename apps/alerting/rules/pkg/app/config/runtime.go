@@ -32,6 +32,9 @@ type RuleSequenceMembershipResolver interface {
 }
 
 // RuntimeConfig holds configuration values needed at runtime by the alerting/rules app from the running Grafana instance.
+// RuleRefResolver looks up the rule with the given UID, and reports whether it exists.
+type RuleRefResolver func(ctx context.Context, uid string) (RuleRef, bool, error)
+
 type RuntimeConfig struct {
 	// function to check folder existence given its uid
 	FolderValidator func(ctx context.Context, folderUID string) (bool, error)
@@ -40,7 +43,7 @@ type RuntimeConfig struct {
 	// set of strings which are illegal for label keys on rules
 	ReservedLabelKeys             map[string]struct{}
 	NotificationSettingsValidator func(ctx context.Context, notificationSettings v1beta1.AlertRuleNotificationSettings) error
-	ResolveRuleRef                func(ctx context.Context, uid string) (RuleRef, bool, error)
+	ResolveRuleRef                RuleRefResolver
 	// MembershipResolver is used by admission validators to look up which
 	// RuleSequence (if any) owns a rule UID. The default implementation is a
 	// watch-backed in-memory index that provides O(1) lookups.

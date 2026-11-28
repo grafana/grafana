@@ -57,6 +57,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	"github.com/grafana/grafana/pkg/services/ngalert/prom/groupwriter"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
@@ -653,6 +654,7 @@ func (ng *AlertNG) init() error {
 		LegacyRuleService:     legacyRuleService,
 		AlertsRouter:          alertsRouter,
 		ExternalRulerSync:     ng.externalRulerSyncer,
+		ConvertedGroups:       groupwriter.NewWriter(ng.clientGenerator, request.GetNamespaceMapper(ng.Cfg), log.New("ngalert.convertedgroups")),
 		EvaluatorFactory:      evalFactory,
 		ConditionValidator:    conditionValidator,
 		FeatureManager:        ng.FeatureToggles,

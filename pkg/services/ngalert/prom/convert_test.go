@@ -339,7 +339,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				expectedLabels = withInternalLabel(expectedLabels)
 
 				uidData := fmt.Sprintf("%d|%s|%s|%d", tc.orgID, tc.namespace, tc.promGroup.Name, j)
-				u := ruleUUID(uidData)
+				u := StableUUID(uidData)
 				require.Equal(t, u.String(), grafanaRule.UID, tc.name)
 
 				require.Equal(t, expectedLabels, grafanaRule.Labels, tc.name)

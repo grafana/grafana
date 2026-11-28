@@ -209,13 +209,13 @@ func getUID(orgID int64, namespaceUID string, group string, position int, promRu
 
 	// Generate stable UUID based on the orgID, namespace, group and position.
 	uidData := fmt.Sprintf("%d|%s|%s|%d", orgID, namespaceUID, group, position)
-	u := ruleUUID(uidData)
+	u := StableUUID(uidData)
 
 	return u.String(), nil
 }
 
-// ruleUUID preserves the UUIDv5 OID namespace IDs used by existing imported rules.
-func ruleUUID(data string) uuid.UUID {
+// StableUUID returns the UUIDv5 of data in the OID namespace, the scheme existing imported rule UIDs use.
+func StableUUID(data string) uuid.UUID {
 	namespace := uuid.MustParse("6ba7b812-9dad-11d1-80b4-00c04fd430c8")
 	// SHA-1 preserves existing UUIDv5 rule IDs; this hash is not used for cryptographic security.
 	// #nosec G401 nosemgrep: go.lang.security.audit.crypto.use_of_weak_crypto.use-of-sha1

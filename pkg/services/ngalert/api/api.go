@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/inhibition_rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
+	"github.com/grafana/grafana/pkg/services/ngalert/prom/groupwriter"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
@@ -94,6 +95,8 @@ type API struct {
 	// ExternalRulerSync gates manual convert-API rule imports when external
 	// ruler sync owns the org's rules. Always set in RegisterAPIEndpoints.
 	ExternalRulerSync externalRulerSyncChecker
+	// ConvertedGroups writes the rule groups the convert API imports, and their rule sequences.
+	ConvertedGroups *groupwriter.Writer
 
 	// Hooks can be used to replace API handlers for specific paths.
 	Hooks *Hooks
@@ -118,6 +121,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		api.MultiOrgAlertmanager,
 		accesscontrol.NewAlertmanagerImportsAccess(api.AccessControl),
 		api.ExternalRulerSync,
+		api.ConvertedGroups,
 		m.ConvertRequests,
 	)
 
