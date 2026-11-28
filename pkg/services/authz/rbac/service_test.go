@@ -772,6 +772,77 @@ func TestService_checkPermission(t *testing.T) {
 			},
 			expected: true,
 		},
+		{
+			name:        "should deny reading a report with a matching UID grant",
+			permissions: []accesscontrol.Permission{{Action: "reports:read", Scope: "reports:uid:weekly"}},
+			check: checkRequest{
+				Action:   "reports:read",
+				Group:    "reporting.grafana.app",
+				Resource: "reports",
+				Verb:     utils.VerbGet,
+				Name:     "weekly",
+			},
+			expected: false,
+		},
+		{
+			name:        "should deny report capability probe with a per-report ID grant",
+			permissions: []accesscontrol.Permission{{Action: "reports:read", Scope: "reports:id:100"}},
+			check: checkRequest{
+				Action:   "reports:read",
+				Group:    "reporting.grafana.app",
+				Resource: "reports",
+				Verb:     utils.VerbGet,
+			},
+			expected: false,
+		},
+		{
+			name:        "should allow updating a report with the org-wide grant",
+			permissions: []accesscontrol.Permission{{Action: "reports:write", Scope: "reports:*"}},
+			check: checkRequest{
+				Action:   "reports:write",
+				Group:    "reporting.grafana.app",
+				Resource: "reports",
+				Verb:     utils.VerbUpdate,
+				Name:     "weekly",
+			},
+			expected: true,
+		},
+		{
+			name:        "should not interpret a legacy report ID as a resource name",
+			permissions: []accesscontrol.Permission{{Action: "reports:read", Scope: "reports:id:100"}},
+			check: checkRequest{
+				Action:   "reports:read",
+				Group:    "reporting.grafana.app",
+				Resource: "reports",
+				Verb:     utils.VerbGet,
+				Name:     "100",
+			},
+			expected: false,
+		},
+		{
+			name:        "should allow creating a report with an unscoped grant",
+			permissions: []accesscontrol.Permission{{Action: "reports:create"}},
+			check: checkRequest{
+				Action:   "reports:create",
+				Group:    "reporting.grafana.app",
+				Resource: "reports",
+				Verb:     utils.VerbCreate,
+				Name:     "new-report",
+			},
+			expected: true,
+		},
+		{
+			name:        "should deny creating a report with a UID-scoped grant",
+			permissions: []accesscontrol.Permission{{Action: "reports:create", Scope: "reports:uid:weekly"}},
+			check: checkRequest{
+				Action:   "reports:create",
+				Group:    "reporting.grafana.app",
+				Resource: "reports",
+				Verb:     utils.VerbCreate,
+				Name:     "new-report",
+			},
+			expected: false,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -1542,6 +1613,47 @@ func TestService_listPermission(t *testing.T) {
 				Options:  &ListRequestOptions{},
 			},
 			expectedItems: []string{"some_folder_parent", "some_folder_child"},
+		},
+		{
+			name: "should not list reports with named or unrelated grants",
+			permissions: []accesscontrol.Permission{
+				{Action: "reports:read", Scope: "reports:uid:weekly"},
+				{Action: "reports:read", Scope: "reports:id:100"},
+				{Action: "reports:read", Scope: "dashboards:*"},
+				{Action: "reports:read", Scope: "reports:other:*"},
+				{Action: "reports:read"},
+			},
+			list: listRequest{
+				Action:   "reports:read",
+				Group:    "reporting.grafana.app",
+				Resource: "reports",
+				Verb:     utils.VerbList,
+				Options:  &ListRequestOptions{},
+			},
+		},
+		{
+			name:        "should list all reports with a UID wildcard grant",
+			permissions: []accesscontrol.Permission{{Action: "reports:read", Scope: "reports:uid:*"}},
+			list: listRequest{
+				Action:   "reports:read",
+				Group:    "reporting.grafana.app",
+				Resource: "reports",
+				Verb:     utils.VerbList,
+				Options:  &ListRequestOptions{},
+			},
+			expectedAll: true,
+		},
+		{
+			name:        "should list all reports with a legacy ID wildcard grant",
+			permissions: []accesscontrol.Permission{{Action: "reports:read", Scope: "reports:id:*"}},
+			list: listRequest{
+				Action:   "reports:read",
+				Group:    "reporting.grafana.app",
+				Resource: "reports",
+				Verb:     utils.VerbList,
+				Options:  &ListRequestOptions{},
+			},
+			expectedAll: true,
 		},
 	}
 

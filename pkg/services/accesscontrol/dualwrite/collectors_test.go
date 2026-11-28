@@ -828,12 +828,17 @@ func TestIntegrationRolePermissionsCollector(t *testing.T) {
 
 		roleUID := createRole(t, env, "custom-role", 1)
 		addPermission(t, env, roleUID, "dashboards:read", "dashboards", "uid1")
+		addPermission(t, env, roleUID, "reports:read", "reports", "*")
+		addPermission(t, env, roleUID, "reports:write", "reports", "weekly")
 
 		collector := rolePermissionsCollector(env.db)
 		tuples, err := collector(env.ctx, 1)
 
 		require.NoError(t, err)
-		require.NotEmpty(t, tuples)
+		reportGrant := zanzana.NewGroupResourceTuple("role:"+roleUID+"#assignee", "get", "reporting.grafana.app", "reports", "")
+		require.Len(t, tuples, 2)
+		require.Contains(t, tuples[reportGrant.Object], reportGrant.String())
+		require.Len(t, tuples[reportGrant.Object], 1)
 	})
 
 	t.Run("should filter out managed roles", func(t *testing.T) {

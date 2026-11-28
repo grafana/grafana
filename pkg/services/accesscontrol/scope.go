@@ -28,6 +28,27 @@ func SplitScope(scope string) (string, string, string) {
 	}
 }
 
+// IsOrgWideReportGrant reports whether a legacy report grant can be used by App Platform.
+func IsOrgWideReportGrant(action, scope string) bool {
+	switch action {
+	case "reports:create":
+		if scope == "" {
+			return true
+		}
+	case "reports:read", "reports:write", "reports:delete":
+	default:
+		return false
+	}
+
+	// The legacy IAM role adapter also represents reports:id:* as reports:uid:*.
+	switch scope {
+	case "*", "reports:*", "reports:id:*", "reports:uid:*":
+		return true
+	default:
+		return false
+	}
+}
+
 func ParseScopeID(scope string) (int64, error) {
 	id, err := strconv.ParseInt(ScopeSuffix(scope), 10, 64)
 	if err != nil {
