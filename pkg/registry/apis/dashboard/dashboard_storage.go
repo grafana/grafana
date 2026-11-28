@@ -3,8 +3,10 @@ package dashboard
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -36,6 +38,36 @@ type dashboardStorageWrapper struct {
 
 	// Skip the legacy permission deletion when the App Platform path owns permissions
 	iamFeatures iamapi.Features
+
+	// Hide draft dashboards from List by default
+	lifecycleExtras DashboardLifecycleExtras
+}
+
+func (d dashboardStorageWrapper) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	return listHidingDrafts(ctx, d.Storage, d.lifecycleExtras, options)
+}
+
+// draftHidingStorage applies draft hiding to List only. Standalone mode uses it because it
+// has none of the other behaviors dashboardStorageWrapper adds. It embeds the concrete store
+// rather than grafanarest.Storage so Watch and DeleteCollection stay advertised.
+type draftHidingStorage struct {
+	*genericregistry.Store
+
+	lifecycleExtras DashboardLifecycleExtras
+}
+
+func (d draftHidingStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	return listHidingDrafts(ctx, d.Store, d.lifecycleExtras, options)
+}
+
+func listHidingDrafts(ctx context.Context, store rest.Lister, extras DashboardLifecycleExtras, options *internalversion.ListOptions) (runtime.Object, error) {
+	if options == nil {
+		options = &internalversion.ListOptions{}
+	}
+	hide := extras != nil && extras.HideDraftsByDefault(ctx)
+	opts := *options
+	opts.LabelSelector = applyDraftListSelector(options.LabelSelector, hide)
+	return store.List(ctx, &opts)
 }
 
 func (d dashboardStorageWrapper) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {

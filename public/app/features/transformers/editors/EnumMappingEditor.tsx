@@ -22,33 +22,6 @@ export const EnumMappingEditor = ({ input, options, transformIndex, onChange }: 
 
   const [enumRows, updateEnumRows] = useState<string[]>(options.conversions[transformIndex].enumConfig?.text ?? []);
 
-  // Generate enum values from scratch when none exist in save model
-  useEffect(() => {
-    // TODO: consider case when changing target field
-    if (!options.conversions[transformIndex].enumConfig?.text?.length && input.length) {
-      generateEnumValues();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [input]);
-
-  // Apply enum config to save model when enumRows change
-  useEffect(() => {
-    const applyEnumConfig = () => {
-      const textValues = enumRows.map((value) => value);
-      const conversions = options.conversions;
-      const enumConfig: EnumFieldConfig = { text: textValues };
-      conversions[transformIndex] = { ...conversions[transformIndex], enumConfig };
-
-      onChange({
-        ...options,
-        conversions: conversions,
-      });
-    };
-
-    applyEnumConfig();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transformIndex, enumRows]);
-
   const generateEnumValues = () => {
     // Loop through all fields in provided data frames to find the target field
     const targetField = input
@@ -72,6 +45,33 @@ export const EnumMappingEditor = ({ input, options, transformIndex, onChange }: 
 
     updateEnumRows([...enumValues]);
   };
+
+  // Generate enum values from scratch when none exist in save model
+  useEffect(() => {
+    // TODO: consider case when changing target field
+    if (!options.conversions[transformIndex].enumConfig?.text?.length && input.length) {
+      generateEnumValues();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [input]);
+
+  // Apply enum config to save model when enumRows change
+  useEffect(() => {
+    const applyEnumConfig = () => {
+      const textValues = enumRows.map((value) => value);
+      const conversions = [...options.conversions];
+      const enumConfig: EnumFieldConfig = { text: textValues };
+      conversions[transformIndex] = { ...conversions[transformIndex], enumConfig };
+
+      onChange({
+        ...options,
+        conversions: conversions,
+      });
+    };
+
+    applyEnumConfig();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transformIndex, enumRows]);
 
   const onChangeEnumMapping = (index: number, enumRow: string) => {
     const newList = [...enumRows];

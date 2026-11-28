@@ -27,4 +27,15 @@ describe('ColorSwatch', () => {
     expect(swatch).toHaveAttribute('aria-labelledby', 'swatch-name');
     expect(swatch).not.toHaveAttribute('aria-label');
   });
+
+  it('keeps its own name when aria-labelledby includes the swatch', () => {
+    render(
+      <>
+        <span id="field-label">Background</span>
+        <ColorSwatch id="swatch" color="#00ff00" aria-label="green" aria-labelledby="field-label swatch" />
+      </>
+    );
+
+    expect(screen.getByRole('button', { name: 'Background green color' })).toBeInTheDocument();
+  });
 });

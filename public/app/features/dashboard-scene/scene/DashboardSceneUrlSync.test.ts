@@ -5,6 +5,7 @@ import { locationService, setPluginImportUtils } from '@grafana/runtime';
 import { NewSceneObjectAddedEvent, SceneQueryRunner, UrlSyncManager, VizPanel } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
 import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
+import { testWithViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import * as libraryPanels from 'app/features/library-panels/state/api';
 
 import * as panelEditor from '../panel-edit/openPanelEditor';
@@ -19,6 +20,28 @@ import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 
+jest.mock('app/features/library-panels/state/api', () =>
+  jest
+    .requireActual('test/helpers/partialMock')
+    .partialMock(jest.requireActual('app/features/library-panels/state/api'), {
+      getLibraryPanel: jest.fn((...args) =>
+        jest.requireActual('app/features/library-panels/state/api').getLibraryPanel(...args)
+      ),
+    })
+);
+
+jest.mock('../panel-edit/openPanelEditor', () => ({
+  ...jest.requireActual('../panel-edit/openPanelEditor'),
+  openPanelEditor: jest.fn((...args) => jest.requireActual('../panel-edit/openPanelEditor').openPanelEditor(...args)),
+}));
+
+afterEach(() => {
+  jest
+    .mocked(libraryPanels.getLibraryPanel)
+    .mockReset()
+    .mockImplementation(jest.requireActual('app/features/library-panels/state/api').getLibraryPanel);
+});
+
 describe('DashboardSceneUrlSync', () => {
   describe('library panel editor loading', () => {
     beforeAll(() => {
@@ -31,7 +54,7 @@ describe('DashboardSceneUrlSync', () => {
       'finishes loading when the library panel is %s',
       async (outcome) => {
         const pending = createDeferred<LibraryPanel>();
-        const fetchPanel = jest.spyOn(libraryPanels, 'getLibraryPanel').mockReturnValue(pending.promise);
+        const fetchPanel = jest.mocked(libraryPanels.getLibraryPanel).mockReturnValue(pending.promise);
         const behavior = new LibraryPanelBehavior({ uid: 'library-a', name: 'Library A' });
         const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', $behaviors: [behavior] });
         const scene = new DashboardScene({ body: DefaultGridLayoutManager.fromVizPanels([panel]) });
@@ -67,7 +90,7 @@ describe('DashboardSceneUrlSync', () => {
           expect(panel.isActive).toBe(false);
         } finally {
           scene.cancelPendingViews();
-          fetchPanel.mockRestore();
+          fetchPanel.mockImplementation(jest.requireActual('app/features/library-panels/state/api').getLibraryPanel);
         }
       }
     );
@@ -75,17 +98,11 @@ describe('DashboardSceneUrlSync', () => {
     describe('when entering edit mode is blocked on mobile', () => {
       testWithFlags({ 'grafana.mobileEditDeprecation': true });
 
-      beforeEach(() => {
-        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
-      });
-
-      afterEach(() => {
-        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
-      });
+      testWithViewport('mobile');
 
       it('does not wait on an unloaded library panel or start loading the editor', () => {
         const pending = createDeferred<LibraryPanel>();
-        const fetchPanel = jest.spyOn(libraryPanels, 'getLibraryPanel').mockReturnValue(pending.promise);
+        const fetchPanel = jest.mocked(libraryPanels.getLibraryPanel).mockReturnValue(pending.promise);
         const behavior = new LibraryPanelBehavior({ uid: 'library-a', name: 'Library A' });
         const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', $behaviors: [behavior] });
         const scene = new DashboardScene({ body: DefaultGridLayoutManager.fromVizPanels([panel]) });
@@ -104,7 +121,7 @@ describe('DashboardSceneUrlSync', () => {
           expect(panel.isActive).toBeFalsy();
         } finally {
           scene.cancelPendingViews();
-          fetchPanel.mockRestore();
+          fetchPanel.mockImplementation(jest.requireActual('app/features/library-panels/state/api').getLibraryPanel);
         }
       });
     });
@@ -585,7 +602,7 @@ describe('DashboardSceneUrlSync', () => {
           },
         };
       });
-      const openEditor = jest.spyOn(panelEditor, 'openPanelEditor');
+      const openEditor = jest.mocked(panelEditor.openPanelEditor).mockClear();
       try {
         scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
         scene.urlSync?.updateFromUrl({ editPanel: null });
@@ -602,7 +619,7 @@ describe('DashboardSceneUrlSync', () => {
         first.resolve();
         second.resolve();
         scene.cancelPendingViews();
-        openEditor.mockRestore();
+        openEditor.mockClear();
         loadEditor.mockRestore();
       }
     });
@@ -655,13 +672,7 @@ describe('DashboardSceneUrlSync', () => {
       describe('on a mobile viewport', () => {
         testWithFlags({ 'grafana.mobileEditDeprecation': true });
 
-        beforeEach(() => {
-          Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
-        });
-
-        afterEach(() => {
-          Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
-        });
+        testWithViewport('mobile');
 
         it('does not enter edit mode or open the editview pane on mobile', async () => {
           const scene = buildTestScene();
@@ -806,7 +817,7 @@ describe('DashboardSceneUrlSync', () => {
     it('does not reopen the editor when URL sync closes it before its chunk arrives', async () => {
       const scene = buildTestScene();
       scene.setState({ isEditing: true });
-      const openEditor = jest.spyOn(panelEditor, 'openPanelEditor');
+      const openEditor = jest.mocked(panelEditor.openPanelEditor).mockClear();
       try {
         scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
         expect(scene.urlSync?.getUrlState().editPanel).toBe('panel-1');
@@ -822,7 +833,7 @@ describe('DashboardSceneUrlSync', () => {
         await openEditor.mock.results[1].value;
         expect(scene.state.editPanel?.getUrlKey()).toBe('1');
       } finally {
-        openEditor.mockRestore();
+        openEditor.mockClear();
       }
     });
   });

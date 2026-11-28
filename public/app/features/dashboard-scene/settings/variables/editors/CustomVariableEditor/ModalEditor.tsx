@@ -1,4 +1,4 @@
-import { type FormEvent, useRef, useState } from 'react';
+import { type FormEvent, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { type CustomVariableModel } from '@grafana/data';
@@ -87,12 +87,9 @@ export function ModalEditor(props: ModalEditorProps) {
 }
 
 function useDraftVariable(variable: CustomVariable) {
-  const draftVariableRef = useRef<CustomVariable | undefined>(undefined);
-  if (!draftVariableRef.current) {
-    draftVariableRef.current = new CustomVariable(variable.state);
-  }
-  const initialStateRef = useRef({ ...variable.state });
-  return { draftVariable: draftVariableRef.current, initialState: initialStateRef.current };
+  const [draftVariable] = useState(() => new CustomVariable(variable.state));
+  const [initialState] = useState(() => ({ ...variable.state }));
+  return { draftVariable, initialState };
 }
 
 function useModalEditor({ variable, onClose }: ModalEditorProps) {

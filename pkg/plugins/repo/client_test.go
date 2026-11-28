@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/stretchr/testify/require"
@@ -68,6 +69,22 @@ func Test_Download(t *testing.T) {
 		_, err := repo.Download(context.Background(), fakeServer.URL, "", CompatOpts{})
 		require.NoError(t, err)
 		require.Equal(t, 2, count, "should retry on error")
+	})
+
+	t.Run("it should fail when the body stalls", func(t *testing.T) {
+		downloadIdleTimeout = 100 * time.Millisecond
+		t.Cleanup(func() { downloadIdleTimeout = 60 * time.Second })
+		fakeServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Length", "1000")
+			_, _ = w.Write([]byte("partial"))
+			w.(http.Flusher).Flush()
+			<-r.Context().Done()
+		}))
+		defer fakeServer.Close()
+		cli := fakeServer.Client()
+		repo := Client{httpClient: *cli, httpClientNoTimeout: *cli, log: log.NewPrettyLogger("test")}
+		_, err := repo.Download(context.Background(), fakeServer.URL, "", CompatOpts{})
+		require.ErrorIs(t, err, errDownloadStalled)
 	})
 
 	t.Run("it should use gcom token when the token is available and request is to GCOM", func(t *testing.T) {

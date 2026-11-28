@@ -19,6 +19,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -261,6 +262,11 @@ func TestIntegrationDirectSQLStatsSplitsRecordingRules(t *testing.T) {
 	})
 }
 
+const (
+	migrationLogTable     = "unifiedstorage_migration_log"
+	libraryPanelMigration = "librarypanels migration"
+)
+
 func TestIntegrationLegacyTableIsStale(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -270,8 +276,7 @@ func TestIntegrationLegacyTableIsStale(t *testing.T) {
 		}}
 	}
 
-	// legacyTableIsStale queries kv_store when Cfg is nil, so every case needs a real
-	// session/helper, even the ones exercising the config-based fast path.
+	// Every case needs a real session/helper, even the ones exercising the config-based fast path.
 	// The check itself must run inside the WithDbSession callback -- the session isn't
 	// valid once that callback returns.
 	withSession := func(t *testing.T, check func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper)) {
@@ -286,19 +291,30 @@ func TestIntegrationLegacyTableIsStale(t *testing.T) {
 		}))
 	}
 
-	t.Run("no config means the legacy table is still the source of truth", func(t *testing.T) {
-		s := &LegacyStatsGetter{}
+	t.Run("no config means the legacy table is still the source of truth, even with a leftover kv_store marker", func(t *testing.T) {
 		withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
-			stale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
-			require.NoError(t, err)
-			require.False(t, stale)
+			reader := migrations.NewSessionStatusReader(sess, helper, nil, migrationLogIDs)
+			for _, resource := range LegacyCountedResources {
+				stale, err := legacyTableIsStale(t.Context(), reader, resource)
+				require.NoError(t, err)
+				require.False(t, stale, resource)
+
+				// Rows left by the removed kv_store lookup must not make the table stale.
+				_, err = sess.Exec("INSERT INTO "+helper.Table("kv_store")+" (org_id, namespace, "+helper.DB.Quote("key")+", value, created, updated) VALUES (0, ?, ?, ?, ?, ?)",
+					"unified_storage.is_migrated", resource, "true", time.Now(), time.Now())
+				require.NoError(t, err)
+
+				stale, err = legacyTableIsStale(t.Context(), reader, resource)
+				require.NoError(t, err)
+				require.False(t, stale, resource)
+			}
 		})
 	})
 
 	t.Run("unconfigured resource is still the source of truth", func(t *testing.T) {
-		s := &LegacyStatsGetter{Cfg: cfgWithMode(libraryPanelResource, grafanarest.Mode5)}
 		withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
-			stale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
+			reader := migrations.NewSessionStatusReader(sess, helper, cfgWithMode(libraryPanelResource, grafanarest.Mode5), migrationLogIDs)
+			stale, err := legacyTableIsStale(t.Context(), reader, alertRuleResource)
 			require.NoError(t, err)
 			require.False(t, stale)
 		})
@@ -306,9 +322,9 @@ func TestIntegrationLegacyTableIsStale(t *testing.T) {
 
 	t.Run("dual write modes keep the legacy table", func(t *testing.T) {
 		for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode0, grafanarest.Mode1, grafanarest.Mode2, grafanarest.Mode3} {
-			s := &LegacyStatsGetter{Cfg: cfgWithMode(alertRuleResource, mode)}
 			withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
-				stale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
+				reader := migrations.NewSessionStatusReader(sess, helper, cfgWithMode(alertRuleResource, mode), migrationLogIDs)
+				stale, err := legacyTableIsStale(t.Context(), reader, alertRuleResource)
 				require.NoError(t, err)
 				require.False(t, stale, "mode %d", mode)
 			})
@@ -317,9 +333,9 @@ func TestIntegrationLegacyTableIsStale(t *testing.T) {
 
 	t.Run("unified storage modes drop the legacy table", func(t *testing.T) {
 		for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode4, grafanarest.Mode5} {
-			s := &LegacyStatsGetter{Cfg: cfgWithMode(alertRuleResource, mode)}
 			withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
-				stale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
+				reader := migrations.NewSessionStatusReader(sess, helper, cfgWithMode(alertRuleResource, mode), migrationLogIDs)
+				stale, err := legacyTableIsStale(t.Context(), reader, alertRuleResource)
 				require.NoError(t, err)
 				require.True(t, stale, "mode %d", mode)
 			})
@@ -332,48 +348,91 @@ func TestIntegrationLegacyTableIsStale(t *testing.T) {
 		require.NoError(t, migrations.EnsureMigrationLogTable(ctx, testDB, cfg))
 		helper, err := legacysql.NewDatabaseProvider(testDB)(ctx)
 		require.NoError(t, err)
-		s := &LegacyStatsGetter{Cfg: cfgWithMode(libraryPanelResource, grafanarest.Mode1)}
 		insertLog := "INSERT INTO " + helper.Table(migrationLogTable) + " (" + helper.DB.Quote("migration_id") + ", " +
 			helper.DB.Quote("sql") + ", " + helper.DB.Quote("success") + ", " + helper.DB.Quote("error") + ", " +
 			helper.DB.Quote("timestamp") + ") VALUES (?, ?, ?, ?, ?)"
 		require.NoError(t, testDB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			stale, err := s.legacyTableIsStale(sess, helper, libraryPanelResource)
+			reader := migrations.NewSessionStatusReader(sess, helper, cfgWithMode(libraryPanelResource, grafanarest.Mode1), migrationLogIDs)
+			stale, err := legacyTableIsStale(ctx, reader, libraryPanelResource)
 			require.NoError(t, err)
 			require.False(t, stale)
 
 			_, err = sess.Exec(insertLog,
 				libraryPanelMigration, "test", false, "test failure", time.Now())
 			require.NoError(t, err)
-			stale, err = s.legacyTableIsStale(sess, helper, libraryPanelResource)
+			stale, err = legacyTableIsStale(ctx, reader, libraryPanelResource)
 			require.NoError(t, err)
 			require.False(t, stale)
 
 			_, err = sess.Exec(insertLog,
 				libraryPanelMigration, "test", true, "", time.Now())
 			require.NoError(t, err)
-			stale, err = s.legacyTableIsStale(sess, helper, libraryPanelResource)
+			stale, err = legacyTableIsStale(ctx, reader, libraryPanelResource)
 			require.NoError(t, err)
 			require.True(t, stale)
 			return nil
 		}))
 	})
 
-	t.Run("nil Cfg falls back to the per-stack kv_store marker", func(t *testing.T) {
-		s := &LegacyStatsGetter{}
-		withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
-			_, err := sess.Exec("INSERT INTO "+helper.Table("kv_store")+" (org_id, namespace, "+helper.DB.Quote("key")+", value, created, updated) VALUES (0, ?, ?, ?, ?, ?)",
-				migratedKVNamespace, alertRuleResource, migratedKVValue, time.Now(), time.Now())
-			require.NoError(t, err)
+	// A provider serving several databases over one connection names each table with its schema.
+	t.Run("library panels migration is found when tables are named with a schema", func(t *testing.T) {
+		ctx := context.Background()
+		testDB, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		require.NoError(t, migrations.EnsureMigrationLogTable(ctx, testDB, cfg))
+		base, err := legacysql.NewDatabaseProvider(testDB)(ctx)
+		require.NoError(t, err)
+		require.NoError(t, testDB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			schema := "main"
+			switch testDB.GetDBType() {
+			case migrator.MySQL:
+				_, err := sess.SQL("SELECT DATABASE()").Get(&schema)
+				require.NoError(t, err)
+			case migrator.Postgres:
+				_, err := sess.SQL("SELECT current_schema()").Get(&schema)
+				require.NoError(t, err)
+			}
+			helper := *base
+			helper.Table = func(n string) string { return schema + "." + n }
 
-			stale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
-			require.NoError(t, err)
-			require.True(t, stale)
-
-			// A different resource's key must not be affected.
-			stale, err = s.legacyTableIsStale(sess, helper, recordingRuleResource)
+			reader := migrations.NewSessionStatusReader(sess, &helper, nil, migrationLogIDs)
+			stale, err := legacyTableIsStale(ctx, reader, libraryPanelResource)
 			require.NoError(t, err)
 			require.False(t, stale)
-		})
+
+			_, err = sess.Exec("INSERT INTO "+helper.Table(migrationLogTable)+" ("+helper.DB.Quote("migration_id")+", "+
+				helper.DB.Quote("sql")+", "+helper.DB.Quote("success")+", "+helper.DB.Quote("error")+", "+
+				helper.DB.Quote("timestamp")+") VALUES (?, ?, ?, ?, ?)",
+				libraryPanelMigration, "test", true, "", time.Now())
+			require.NoError(t, err)
+			stale, err = legacyTableIsStale(ctx, reader, libraryPanelResource)
+			require.NoError(t, err)
+			require.True(t, stale)
+			return nil
+		}))
+	})
+
+	t.Run("library panels migration makes legacy counts stale without config", func(t *testing.T) {
+		ctx := context.Background()
+		testDB, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		require.NoError(t, migrations.EnsureMigrationLogTable(ctx, testDB, cfg))
+		helper, err := legacysql.NewDatabaseProvider(testDB)(ctx)
+		require.NoError(t, err)
+		require.NoError(t, testDB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			reader := migrations.NewSessionStatusReader(sess, helper, nil, migrationLogIDs)
+			stale, err := legacyTableIsStale(ctx, reader, libraryPanelResource)
+			require.NoError(t, err)
+			require.False(t, stale)
+
+			_, err = sess.Exec("INSERT INTO "+helper.Table(migrationLogTable)+" ("+helper.DB.Quote("migration_id")+", "+
+				helper.DB.Quote("sql")+", "+helper.DB.Quote("success")+", "+helper.DB.Quote("error")+", "+
+				helper.DB.Quote("timestamp")+") VALUES (?, ?, ?, ?, ?)",
+				libraryPanelMigration, "test", true, "", time.Now())
+			require.NoError(t, err)
+			stale, err = legacyTableIsStale(ctx, reader, libraryPanelResource)
+			require.NoError(t, err)
+			require.True(t, stale)
+			return nil
+		}))
 	})
 }
 
@@ -446,12 +505,12 @@ func TestIntegrationLegacyStatsRecordsFailedStalenessCheck(t *testing.T) {
 
 	testDB, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	ctx := request.WithNamespace(context.Background(), "default")
-	// With no Cfg the staleness check reads kv_store. Pointing it at a table that doesn't exist
-	// makes the check fail without touching the shared test database.
+	// Pointing the migration log at a table that exists but has no migration_id column makes the
+	// library panel staleness query fail without touching the shared test database.
 	provider := func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
 		return &legacysql.LegacyDatabaseHelper{DB: testDB, Table: func(n string) string {
-			if n == "kv_store" {
-				return "kv_store_missing"
+			if n == migrationLogTable {
+				return "kv_store"
 			}
 			return n
 		}}, nil
@@ -464,14 +523,15 @@ func TestIntegrationLegacyStatsRecordsFailedStalenessCheck(t *testing.T) {
 
 	var countErr *CountError
 	require.ErrorAs(t, err, &countErr)
-	require.Equal(t, []string{legacyAlertRules}, countErr.Resources)
-	require.Equal(t, uint64(1), observations(t, reg, legacyAlertRules, legacyOutcomeError))
-	require.Equal(t, uint64(0), observations(t, reg, legacyRecordingRules, legacyOutcomeError), "the first failure ends the request")
+	require.Equal(t, []string{legacyLibraryElements}, countErr.Resources)
+	require.Equal(t, uint64(1), observations(t, reg, legacyLibraryElements, legacyOutcomeError))
+	require.Equal(t, uint64(0), observations(t, reg, legacyAlertRules, legacyOutcomeError))
+	require.Equal(t, uint64(0), observations(t, reg, legacyRecordingRules, legacyOutcomeError))
 
 	failed := logger.withMsg("Legacy count failed")
 	require.Len(t, failed, 1)
 	require.Equal(t, "error", failed[0].level)
-	require.Equal(t, legacyAlertRules, failed[0].fields["resource"])
+	require.Equal(t, legacyLibraryElements, failed[0].fields["resource"])
 	require.Equal(t, "db-1", failed[0].fields["dbServer"])
 	require.Equal(t, legacyOutcomeError, failed[0].fields["outcome"])
 	require.NotNil(t, failed[0].fields["error"])

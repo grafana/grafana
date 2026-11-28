@@ -62,8 +62,8 @@ message ResourceStatsResponse {
     int64 count = 3;
   }
 
-  // Error details
-  ErrorResult error = 1;
+  reserved 1;
+  reserved "error";
 
   // All results exist within this key
   repeated Stats stats = 2;
@@ -184,8 +184,8 @@ message ResourceSearchResponse {
     int64 count = 2;
   }
 
-  // Error details
-  ErrorResult error = 1;
+  reserved 1;
+  reserved "error";
 
   // All results exist within this key
   ResourceKey key = 2;
@@ -323,8 +323,8 @@ message RebuildIndexesResponse {
   // Result message
   string details = 2;
 
-  // Error details
-  ErrorResult error = 3;
+  reserved 3;
+  reserved "error";
 
   // Build times for indexes (set by search pods, aggregated as MIN by distributor)
   repeated IndexBuildTime buildTimes = 4;
@@ -354,8 +354,8 @@ message VectorSearchRequest {
 }
 
 message VectorSearchResponse {
-  // Error details
-  ErrorResult error = 1;
+  reserved 1;
+  reserved "error";
 
   // Ranked results, ordered by ascending score (lower = closer).
   repeated VectorSearchResult results = 2;

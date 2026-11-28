@@ -13,8 +13,10 @@ import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
+import { NavID } from 'app/core/navtree/constants';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
+import { useDashboardsPageNav } from 'app/features/browse-dashboards/hooks/useDashboardsPageNav';
 import { buildNavModel, getVariablesTabID } from 'app/features/folders/state/navModel';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -49,6 +51,7 @@ export default function VariablesManagementPage() {
   // feature flag is enforced here via the OpenFeature hook. When it is off the variables page
   // is not a real route, so we render the standard not-found page.
   const globalVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
+  const listPageNav = useDashboardsPageNav(NavID.dashboardsVariables);
 
   const styles = useStyles2(getStyles);
   const { name: editName } = useParams<{ name?: string }>();
@@ -242,7 +245,7 @@ export default function VariablesManagementPage() {
     // If the list failed, still allow create with whatever names we have (may be empty).
     const showNewEditor = isNew && (!isLoading || isError);
     return (
-      <Page navId={originFolderUid ? 'dashboards/browse' : 'dashboards/variables'} pageNav={pageNav}>
+      <Page navId={originFolderUid ? NavID.dashboards : NavID.dashboardsVariables} pageNav={pageNav}>
         <Page.Contents isLoading={isNew ? isLoading && !isError : isLoading}>
           {showNewEditor || editVariable ? (
             // Key by route identity so local editor state resets when navigating
@@ -279,7 +282,8 @@ export default function VariablesManagementPage() {
 
   return (
     <Page
-      navId="dashboards/variables"
+      navId={NavID.dashboardsVariables}
+      pageNav={listPageNav}
       actions={
         (hasSharedVariablesEntryPoint || showNewVariable) && (
           <Stack gap={1}>

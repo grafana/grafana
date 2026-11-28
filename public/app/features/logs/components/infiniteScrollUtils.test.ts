@@ -1,6 +1,8 @@
 import { dateTime, rangeUtil, type DataQuery } from '@grafana/data';
 import { LogsSortOrder } from '@grafana/schema';
 
+import { LokiQueryDirection } from '../../loki-helpers/types';
+
 import {
   canScrollBottom,
   canScrollTop,
@@ -126,19 +128,33 @@ describe('loadMoreRangeFromVisible', () => {
 describe('withLokiInfiniteScrollBound', () => {
   const lokiQuery: DataQuery = { refId: 'A', datasource: { type: 'loki', uid: 'loki' } };
 
-  it('copies endNs onto a Loki query and omits startNs', () => {
+  it('copies endNs onto a Loki query, omits startNs and reads backward', () => {
     expect(withLokiInfiniteScrollBound(lokiQuery, { from: 1, to: 2, endNs: '20000000010' })).toEqual({
       refId: 'A',
       datasource: { type: 'loki', uid: 'loki' },
       endNs: '20000000010',
+      direction: LokiQueryDirection.Backward,
     });
   });
 
-  it('copies startNs onto a Loki query and omits endNs', () => {
+  it('copies startNs onto a Loki query, omits endNs and reads forward', () => {
     expect(withLokiInfiniteScrollBound({ refId: 'A' }, { from: 1, to: 2, startNs: '40000000000' }, 'loki')).toEqual({
       refId: 'A',
       startNs: '40000000000',
+      direction: LokiQueryDirection.Forward,
     });
+  });
+
+  it.each([
+    [LokiQueryDirection.Forward, { from: 1, to: 2, endNs: '20000000010' }, LokiQueryDirection.Backward],
+    [LokiQueryDirection.Backward, { from: 1, to: 2, startNs: '40000000000' }, LokiQueryDirection.Forward],
+  ])('overrides the %s direction of the original query', (direction, range, expected) => {
+    expect(withLokiInfiniteScrollBound({ ...lokiQuery, direction }, range).direction).toBe(expected);
+  });
+
+  it('does not set a direction without a nanosecond bound', () => {
+    const query = { ...lokiQuery, direction: LokiQueryDirection.Forward };
+    expect(withLokiInfiniteScrollBound(query, { from: 1, to: 2 })).toBe(query);
   });
 
   it('leaves a non-Loki query unchanged', () => {

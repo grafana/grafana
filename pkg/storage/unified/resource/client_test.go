@@ -104,17 +104,31 @@ func (*missingReadBackend) ReadResource(context.Context, *resourcepb.ReadRequest
 	return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "missing"}}
 }
 
-func TestLocalResourceClientErrorConversion(t *testing.T) {
+func TestResourceClientNativeErrors(t *testing.T) {
 	srv, err := NewResourceServer(ResourceServerOptions{Backend: &missingReadBackend{}})
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, srv.Stop(context.Background())) })
 	client := NewLocalResourceClient(srv)
 	ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
-	_, err = client.Read(ctx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
-		Namespace: "default", Group: "example.grafana.app", Resource: "widgets", Name: "missing",
-	}})
-	require.Equal(t, codes.NotFound, status.Code(err))
-	details := status.Convert(err).Details()
-	require.Len(t, details, 1)
-	require.Equal(t, int32(http.StatusNotFound), details[0].(*resourcepb.ErrorResult).Code)
+	for _, tc := range []struct {
+		name string
+		read func(context.Context, *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error)
+	}{
+		{"direct", srv.Read},
+		{"local", func(ctx context.Context, req *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+			return client.Read(ctx, req)
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			response, err := tc.read(ctx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
+				Namespace: "default", Group: "example.grafana.app", Resource: "widgets", Name: "missing",
+			}})
+			require.Nil(t, response)
+			require.Equal(t, codes.NotFound, status.Code(err))
+			details := status.Convert(err).Details()
+			require.Len(t, details, 1)
+			require.Equal(t, int32(http.StatusNotFound), details[0].(*resourcepb.ErrorResult).Code)
+			require.Equal(t, "missing", details[0].(*resourcepb.ErrorResult).Message)
+		})
+	}
 }

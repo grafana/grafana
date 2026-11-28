@@ -9,8 +9,8 @@ import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
 import { useGlobalRuleAbility } from '../../hooks/abilities/rules/ruleAbilities';
 import { RuleAction, SilenceAction } from '../../hooks/abilities/types';
-import { isGrafanaRulesSource } from '../../utils/datasource';
 import { makeAMLink, makeLabelBasedSilenceLink } from '../../utils/misc';
+import { isGrafanaRulesSource } from '../../utils/rulesSource';
 import { AnnotationDetailsField } from '../AnnotationDetailsField';
 
 interface AmNotificationsAlertDetailsProps {

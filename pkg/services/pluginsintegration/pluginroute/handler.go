@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"mime"
 	"net/http"
 	"slices"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/authorization/union"
@@ -56,13 +58,14 @@ import (
 type StorageProvider func(*runtime.Scheme, serializer.CodecFactory, []schema.GroupVersion) (generic.RESTOptionsGetter, error)
 
 type Options struct {
-	PluginInfo      plugins.Info
-	Storage         StorageProvider
-	PluginClient    appsettings.PluginClient
-	ClientV3        appclientv3.Client
-	ContextProvider appsettings.PluginContextWrapper
-	Decrypter       decrypt.DecryptService
-	AccessChecker   pluginaccesscontrol.AppAccessChecker
+	PluginInfo          plugins.Info
+	Storage             StorageProvider
+	PluginClient        appsettings.PluginClient
+	ClientV3            appclientv3.Client
+	ContextProvider     appsettings.PluginContextWrapper
+	Decrypter           decrypt.DecryptService
+	AccessChecker       pluginaccesscontrol.AppAccessChecker
+	NamespaceAuthorizer authorizer.Authorizer
 	// AccessClient runs the access checks a manifest declares on its routes.
 	// A route that declares one is refused without it.
 	AccessClient     authlib.AccessChecker
@@ -178,9 +181,13 @@ func NewAppSettingsHandler(plugin definition.PluginDefinition, opts Options) (*H
 	if reg == nil {
 		reg = prometheus.NewRegistry()
 	}
+	namespaceAuthorizer := opts.NamespaceAuthorizer
+	if namespaceAuthorizer == nil {
+		namespaceAuthorizer = apiserverauthorizer.NewNamespaceAuthorizer()
+	}
 	authz, err := union.New(
 		union.NamedAuthorizer{AuthorizerName: "impersonation", Authorizer: apiserverauthorizer.NewImpersonationAuthorizer()},
-		union.NamedAuthorizer{AuthorizerName: "namespace", Authorizer: apiserverauthorizer.NewNamespaceAuthorizer()},
+		union.NamedAuthorizer{AuthorizerName: "namespace", Authorizer: namespaceAuthorizer},
 		union.NamedAuthorizer{AuthorizerName: "plugin", Authorizer: b.GetAuthorizer()},
 	)
 	if err != nil {
@@ -280,7 +287,7 @@ func newServerHandler(b builder.APIGroupBuilder, opts Options, reg prometheus.Re
 	}); err != nil {
 		return nil, fmt.Errorf("%s: build group: %w", group, err)
 	}
-	info.NegotiatedSerializer = grafanarest.DefaultNoProtobufNegotiatedSerializer(codecs)
+	info.NegotiatedSerializer = typeMetaDefaulting{grafanarest.DefaultNoProtobufNegotiatedSerializer(codecs)}
 	if err := server.InstallAPIGroup(&info); err != nil {
 		return nil, fmt.Errorf("%s: install group: %w", group, err)
 	}
@@ -390,8 +397,25 @@ func (b *manifestBuilder) buildHandlerChain(builders []builder.APIGroupBuilder, 
 		if b.documents != nil {
 			next = b.documents(delegate)
 		}
-		return chain(b.routeMux(next, reg), c)
+		return strategicMergeAsMergePatch(chain(b.routeMux(next, reg), c))
 	}
+}
+
+// strategicMergeAsMergePatch serves a strategic merge patch as a JSON merge
+// patch. A manifest's kinds are unstructured, which the apiserver refuses a
+// strategic merge patch for, and it is the type the frontend clients send by
+// default. A kind has no patch strategies, so the two differ only in that a
+// merge patch replaces a list.
+func strategicMergeAsMergePatch(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPatch {
+			mediaType, params, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+			if err == nil && mediaType == string(types.StrategicMergePatchType) {
+				r.Header.Set("Content-Type", mime.FormatMediaType(string(types.MergePatchType), params))
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func UnifiedStorage(client resource.ResourceClient, secrets secret.InlineSecureValueSupport, configProvider apistore.RestConfigProvider) StorageProvider {

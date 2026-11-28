@@ -1,6 +1,6 @@
 import { cx, css } from '@emotion/css';
 import { debounce } from 'lodash';
-import { forwardRef, useState, useEffect, useMemo } from 'react';
+import { forwardRef, useState, useMemo } from 'react';
 import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
@@ -23,13 +23,13 @@ const ColorInput = forwardRef<HTMLInputElement, ColorInputProps>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const updateColor = useMemo(() => debounce(onChange, 100), []);
 
-    useEffect(() => {
+    if (color !== previousColor) {
       const newColor = tinycolor(color);
-      if (newColor.isValid() && color !== previousColor) {
+      if (newColor.isValid()) {
         setValue(newColor.toString());
         setPreviousColor(color);
       }
-    }, [color, previousColor]);
+    }
 
     const onChangeColor = (event: React.SyntheticEvent<HTMLInputElement>) => {
       const { value: colorValue } = event.currentTarget;

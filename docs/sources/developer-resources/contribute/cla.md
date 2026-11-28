@@ -1,9 +1,10 @@
 ---
 aliases:
-  - ../project/cla/ # /docs/grafana/next/project/cla/
-  - /docs/contributing/cla.html/
-  - ../developers/cla/ # /docs/grafana/next/developers/cla/
-  - ../developer-resources/cla/ # /docs/grafana/next/developers/cla/
+  - ../../developers/cla/ # /docs/grafana/next/developers/cla/
+  - ../../project/cla/ # /docs/grafana/next/project/cla/
+  - ../developer-resources/cla/ # /docs/grafana/next/developer-resources/cla/
+  - ../developers/cla/ # /docs/grafana/next/developer-resources/developers/cla/
+  - ../project/cla/ # /docs/grafana/next/developer-resources/project/cla/
 description: Contributor License Agreement (CLA)
 labels:
   products:
@@ -19,7 +20,7 @@ canonical: https://grafana.com/docs/grafana/latest/developer-resources/cla/
 This agreement is based on the Apache Software Foundation Contributor License Agreement.
 (v r190612)
 
-Thank you for your interest in software projects stewarded by Raintank, Inc. dba Grafana Labs (“Grafana Labs”). In order to clarify the intellectual property license
+Thank you for your interest in software projects stewarded by Grafana Labs Inc. In order to clarify the intellectual property license
 granted with Contributions from any person or entity, Grafana Labs
 must have a Contributor License Agreement (CLA) on file that has been
 agreed to by each Contributor, indicating agreement to the license terms

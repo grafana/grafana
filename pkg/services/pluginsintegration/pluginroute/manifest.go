@@ -64,9 +64,10 @@ func (b *manifestBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		return fmt.Errorf("plugin %s has no served versions", b.pluginID)
 	}
 	for _, gv := range gvs {
-		if err := apppluginV0.AddKnownTypes(scheme, gv); err != nil {
-			return err
-		}
+		// Settings are served by their own handler and scheme, so the settings
+		// types stay out of this one and a manifest may declare a Settings kind.
+		scheme.AddKnownTypes(gv, &apppluginV0.HealthCheckResult{}, &v1.Status{})
+		v1.AddToGroupVersion(scheme, gv)
 	}
 
 	if b.manifest != nil {
@@ -77,10 +78,10 @@ func (b *manifestBuilder) InstallSchema(scheme *runtime.Scheme) error {
 			}
 			registered[gvk] = true
 			listGVK := gvk.GroupVersion().WithKind(gvk.Kind + "List")
-			// The settings kind and the metav1 types are registered in every
-			// served version above, and AddKnownTypeWithName panics when a GVK
-			// is already bound to a different Go type -- so a kind named
-			// Settings or Status would take the whole server down at startup.
+			// The metav1 types are registered in every served version above, and
+			// AddKnownTypeWithName panics when a GVK is already bound to a
+			// different Go type -- so a kind named Status would take the whole
+			// server down at startup.
 			for _, taken := range []schema.GroupVersionKind{gvk, listGVK} {
 				if scheme.Recognizes(taken) {
 					return fmt.Errorf("kind %s in %s claims the reserved kind name %q",
@@ -100,6 +101,11 @@ func (b *manifestBuilder) InstallSchema(scheme *runtime.Scheme) error {
 			}
 			gv := schema.GroupVersion{Group: b.group, Version: version.Name}
 			for _, r := range version.Kinds {
+				// The app resource is the settings URL, which this group never serves.
+				if r.Resource == apppluginV0.APP_RESOURCE_NAME {
+					return fmt.Errorf("kind %s in %s claims the reserved resource name %q",
+						r.Kind, gv.String(), r.Resource)
+				}
 				if err := addKind(gv.WithKind(r.Kind)); err != nil {
 					return err
 				}
@@ -144,6 +150,7 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 					}
 					store, err := kindstore.New(gv.WithKind(kind.Kind), kind, admission, conversion, kindstore.Options{
 						StorageOptsGetter: opts.StorageOptsGetter,
+						NamespaceReadable: hardcodedNamespaceReadable(b.group, kind.Resource),
 					}, defs)
 					if err != nil {
 						return err
@@ -155,7 +162,7 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 						return fmt.Errorf("kind %s in %s claims the already registered resource %q",
 							kind.Kind, gv.String(), resource)
 					}
-					storage[resource] = store
+					storage[resource] = b.withListScope(resource, store)
 					kinds[gv.WithResource(resource)] = store
 
 					if store.HasStatus() {
@@ -186,4 +193,14 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 
 func (b *manifestBuilder) AllowedV0Alpha1Resources() []string {
 	return []string{builder.AllResourcesAllowed}
+}
+
+// withListScope applies the kind's list scope to its served storage. Direct
+// reads (the getter) keep using the unwrapped store.
+func (b *manifestBuilder) withListScope(resource string, store *kindstore.Store) rest.Storage {
+	policy := b.kindPolicies[resource]
+	if policy.ownerFromName != nil {
+		return newOwnerScopedStore(store, policy.ownerFromName, b.accessClient)
+	}
+	return store
 }

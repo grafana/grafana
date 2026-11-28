@@ -18,9 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -97,7 +95,9 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	ctx := c.Req.Context()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	useLuxon, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagDatetimeUseLuxon, false, openfeature.TransactionContext(ctx))
+	liveDisabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendDisableGrafanaLive, false, openfeature.TransactionContext(ctx))
 	legacyFeatureToggleMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyFeatureToggleHandling, "off", openfeature.TransactionContext(ctx))
+	bootdataAnalytics, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaBootdataAnalytics, false, openfeature.TransactionContext(ctx))
 
 	navTree, err := hs.navTreeService.GetNavTree(c, prefs)
 	if err != nil {
@@ -121,32 +121,28 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		return template.URL(assets.ContentDeliveryURL + assets.PublicPath + "img/" + name) // #nosec G203 nosemgrep: go.lang.security.audit.net.unescaped-data-in-url.unescaped-data-in-url
 	}
 
-	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	hasEditPerm := hasAccess(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(folder.ActionFoldersCreate)))
-
 	data := dtos.IndexViewData{
 		User: &dtos.CurrentUser{
-			Id:                         userID,
-			UID:                        c.UserUID, // << not set yet
-			IsSignedIn:                 c.IsSignedIn,
-			Login:                      c.Login,
-			Email:                      c.GetEmail(),
-			Name:                       c.Name,
-			OrgId:                      c.GetOrgID(),
-			OrgName:                    c.OrgName,
-			OrgRole:                    c.GetOrgRole(),
-			OrgCount:                   hs.getUserOrgCount(c, userID),
-			GravatarUrl:                dtos.GetGravatarUrl(hs.Cfg, c.GetEmail()),
-			IsGrafanaAdmin:             c.IsGrafanaAdmin,
-			Theme:                      theme.ID,
-			LightTheme:                 theme.Type == "light",
-			Timezone:                   prefs.Timezone,
-			WeekStart:                  weekStart,
-			Locale:                     locale,
-			Language:                   language,
-			HasEditPermissionInFolders: hasEditPerm,
-			Analytics:                  hs.buildUserAnalyticsSettings(c),
-			AuthenticatedBy:            c.GetAuthenticatedBy(),
+			Id:              userID,
+			UID:             c.UserUID, // << not set yet
+			IsSignedIn:      c.IsSignedIn,
+			Login:           c.Login,
+			Email:           c.GetEmail(),
+			Name:            c.Name,
+			OrgId:           c.GetOrgID(),
+			OrgName:         c.OrgName,
+			OrgRole:         c.GetOrgRole(),
+			OrgCount:        hs.getUserOrgCount(c, userID),
+			GravatarUrl:     dtos.GetGravatarUrl(hs.Cfg, c.GetEmail()),
+			IsGrafanaAdmin:  c.IsGrafanaAdmin,
+			Theme:           theme.ID,
+			LightTheme:      theme.Type == "light",
+			Timezone:        prefs.Timezone,
+			WeekStart:       weekStart,
+			Locale:          locale,
+			Language:        language,
+			Analytics:       hs.buildUserAnalyticsSettings(c),
+			AuthenticatedBy: c.GetAuthenticatedBy(),
 		},
 		Settings:                            settings,
 		ThemeType:                           theme.Type,
@@ -173,8 +169,10 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		Assets:                              assets,
 		RenderBindingSupported:              renderBindingSupported,
 		UseLuxon:                            useLuxon,
+		LiveDisabled:                        liveDisabled,
 		AssetSriChecksEnabled:               hs.Cfg.AssetSriChecksEnabled,
 		LegacyFeatureToggleMode:             legacyFeatureToggleMode,
+		BootdataAnalytics:                   bootdataAnalytics,
 		ESModuleAssetsEnabled:               assets.ESModule,
 	}
 

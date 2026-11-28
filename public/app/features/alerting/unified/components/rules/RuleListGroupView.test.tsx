@@ -8,12 +8,15 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import * as analytics from '../../Analytics';
+import { type DataSourcesForRulesResult } from '../../hooks/useDataSourcesForRules';
 import { setupMswServer } from '../../mockApi';
 import { mockCombinedRule } from '../../mocks';
 import { mimirDataSource } from '../../mocks/server/configure';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 
 import { RuleListGroupView } from './RuleListGroupView';
+
+jest.mock('../../Analytics', () => makeSpyable('../../Analytics'));
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
@@ -107,8 +110,10 @@ describe('RuleListGroupView', () => {
   });
 });
 
+const rulesSources: DataSourcesForRulesResult = { items: [], isLoading: false };
+
 function renderRuleList(namespaces: CombinedRuleNamespace[]) {
-  render(<RuleListGroupView namespaces={namespaces} expandAll />);
+  render(<RuleListGroupView namespaces={namespaces} expandAll rulesSources={rulesSources} />);
 }
 
 function getGrafanaNamespace(): CombinedRuleNamespace {

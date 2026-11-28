@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
@@ -43,16 +42,17 @@ var WireSetExts = wire.NewSet(
 
 	wire.InterfaceValue(new(legacy.ExternalGroupReconciler), legacy.NoopExternalGroupReconciler{}),
 
+	dashboardinternal.ProvideNoopDashboardLifecycleExtras,
+
 	// Auditing Options
 	auditing.ProvideNoopBackend,
 	auditing.ProvideNoopPolicyRuleProvider,
 )
 
 var provisioningExtras = wire.NewSet(
-	pullrequest.ProvidePullRequestWorker,
+	provisioning.ProvideSupportedResourceProvider,
 	webhooks.ProvideWebhooksWithImages,
 	extras.ProvideProvisioningExtraAPIs,
-	extras.ProvideExtraWorkers,
 	extras.ProvideQuotaGetter,
 )
 
@@ -67,6 +67,7 @@ var WireSet = wire.NewSet(
 	datasource.ProvideProxyDependencies,
 
 	// Secrets
+	secret.ProvideDatabaseMigrated,
 	secret.RegisterDependencies,
 	// Provisioning
 	provisioning.RegisterDependencies,
@@ -82,7 +83,15 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(folders.FolderContentsDeleter), new(*cleaner.ContentsCleaner)),
 	folders.RegisterAPIService,
 	iam.RegisterAPIService,
-	provisioning.RegisterAPIService,
+	provisioning.RegisterAPIServer,
+	provisioning.ProvideConnectionControllerService,
+	provisioning.ProvideHistoryJobCleanupService,
+	provisioning.ProvideBootstrapService,
+	provisioning.ProvideRepositoryControllerService,
+	provisioning.ProvideJobQueueService,
+	provisioning.ProvideJobCleanupService,
+	provisioning.ProvideUsageStatsService,
+	provisioning.ProvideInformerMetrics,
 	service.RegisterAPIService,
 	query.RegisterAPIService,
 	preferences.RegisterAPIService,

@@ -1,6 +1,7 @@
 import { screen, within } from '@testing-library/react';
 
 import { type DataSourceInstanceSettings, type TransformerRegistryItem } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../constants';
@@ -13,7 +14,10 @@ import { type StackedItem } from './utils';
 // The editors and plugin-driven header buttons need datasource and plugin wiring that is out of
 // scope here; this suite covers the stacked header's actions and per-item panels.
 jest.mock('../QueryEditorRenderer', () => ({
-  QueryEditorPanel: () => null,
+  // Stands in for the data source's editor making an edit.
+  QueryEditorPanel: ({ query, onQueryEdited }: { query: DataQuery | null; onQueryEdited?: () => void }) => (
+    <button onClick={() => onQueryEdited?.()}>Edit query {query?.refId}</button>
+  ),
 }));
 
 jest.mock('../TransformationEditorRenderer', () => ({
@@ -110,6 +114,15 @@ describe('StackedSection header actions', () => {
     expect(changeDataSource).toHaveBeenCalledWith(ds1SettingsMock, 'B');
   });
 
+  it('reports an edit from the query editor in any section, not only the selected one', async () => {
+    const onQueryEdited = jest.fn();
+    const { user } = renderSections({ actionsOverrides: { onQueryEdited } });
+
+    await user.click(within(getSection('B')).getByRole('button', { name: 'Edit query B' }));
+
+    expect(onQueryEdited).toHaveBeenCalledTimes(1);
+  });
+
   it('disables the transformation in that section', async () => {
     const toggleTransformationDisabled = jest.fn();
     const { user } = renderSections({ actionsOverrides: { toggleTransformationDisabled } });
@@ -125,6 +138,23 @@ describe('StackedSection header actions', () => {
     expect(getSection('A')).toHaveAccessibleName('Query A, Test DS');
     expect(getSection('B')).toHaveAccessibleName('Query B, Test DS');
     expect(getSection('organize-0')).toHaveAccessibleName('Transformation Organize fields');
+  });
+
+  it('marks query sections with the query row selectors that plugin-e2e looks up by refId', () => {
+    renderSections();
+
+    expect(getSection('A')).toHaveAttribute('data-testid', selectors.components.QueryEditorRows.rows);
+    expect(within(getSection('A')).getByTestId(selectors.components.QueryEditorRow.title('A'))).toBeInTheDocument();
+    expect(within(getSection('B')).getByTestId(selectors.components.QueryEditorRow.title('B'))).toBeInTheDocument();
+    expect(
+      within(getSection('A')).queryByTestId(selectors.components.QueryEditorRow.title('B'))
+    ).not.toBeInTheDocument();
+  });
+
+  it('does not mark transformation sections as query rows', () => {
+    renderSections();
+
+    expect(getSection('organize-0')).not.toHaveAttribute('data-testid');
   });
 
   it('shows data source help only in the current section', () => {

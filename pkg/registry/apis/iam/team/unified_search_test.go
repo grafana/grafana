@@ -1,11 +1,13 @@
 package team
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
@@ -136,11 +138,36 @@ func TestUnifiedTeamSearchMemberTotal(t *testing.T) {
 		})
 	}
 
-	t.Run("recount error", func(t *testing.T) {
-		client := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{page(7, false), {Error: &resourcepb.ErrorResult{Code: 500, Message: "count failed"}}}}
-		_, err := NewUnifiedSearchClient(client).Search(t.Context(), SearchQuery{Namespace: "stacks-1", Member: "user-1", Limit: 1})
-		require.ErrorContains(t, err, "count failed")
+	t.Run("recount returns status error", func(t *testing.T) {
+		failure := &resourcepb.ErrorResult{
+			Code: http.StatusServiceUnavailable, Reason: string(metav1.StatusReasonServiceUnavailable), Message: "count failed",
+			Details: &resourcepb.ErrorDetails{Group: "iam.grafana.app", Kind: "teams", RetryAfterSeconds: 3},
+		}
+		client := &recountErrorClient{MockClient: &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{page(7, false)}}, err: resource.GRPCStatusError(failure)}
+		result, err := NewUnifiedSearchClient(client).Search(t.Context(), SearchQuery{Namespace: "stacks-1", Member: "user-1", Limit: 1})
+		require.Len(t, client.MockCalls, 2, "the error must come from the recount")
+		require.Nil(t, result)
+		require.Equal(t, resource.StatusError(failure), err)
+		var statusErr *apierrors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(http.StatusServiceUnavailable), statusErr.ErrStatus.Code)
+		require.Equal(t, int32(3), statusErr.ErrStatus.Details.RetryAfterSeconds)
 	})
+}
+
+// recountErrorClient fails every Search after the first, so the authorized recount sees a returned error.
+type recountErrorClient struct {
+	*MockClient
+	err error
+}
+
+func (c *recountErrorClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	if c.CallCount > 0 {
+		c.MockCalls = append(c.MockCalls, in)
+		c.CallCount++
+		return nil, c.err
+	}
+	return c.MockClient.Search(ctx, in, opts...)
 }
 
 func TestUnifiedTeamSearchErrors(t *testing.T) {

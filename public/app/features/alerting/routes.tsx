@@ -1,13 +1,24 @@
-import { Navigate } from 'react-router-dom-v5-compat';
+import { Navigate, useLocation } from 'react-router-dom-v5-compat';
 
 import { config } from '@grafana/runtime';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
-import { type GrafanaRouteComponent, type RouteDescriptor } from 'app/core/navigation/types';
+import {
+  type GrafanaRouteComponent,
+  type GrafanaRouteComponentProps,
+  type RouteDescriptor,
+} from 'app/core/navigation/types';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { evaluateAccess, evaluateAccessAll } from './routePermissions';
-import { isNotificationHistoryEnabled, shouldUseGmaOnlyListView } from './unified/featureToggles';
+import { allowIf, evaluateAccess } from './routePermissions';
+import { canImportRulesToGMA } from './unified/components/import-to-gma/useCanImportToGMA';
+import {
+  isImportWizardEnabled,
+  isNotificationHistoryEnabled,
+  shouldUseGmaOnlyListView,
+} from './unified/featureToggles';
 import { proxied } from './unified/plugin-proxy/withRouteProxy';
+import { ALERTING_IMPORT_SETTINGS_URL } from './unified/settings/navigation';
 import {
   PERMISSIONS_CONTACT_POINTS,
   PERMISSIONS_NOTIFICATION_POLICIES,
@@ -18,6 +29,7 @@ import {
 import { alertActivityEnabled } from './unified/utils/pageAccess';
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
+  const migrationWizardEnabled = isImportWizardEnabled();
   const routes = [
     {
       path: '/alerting',
@@ -307,31 +319,22 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/import-datasource-managed-rules',
-      roles: evaluateAccess([
-        AccessControlAction.AlertingRuleCreate,
-        AccessControlAction.AlertingProvisioningSetStatus,
-      ]),
-      component: importAlertingComponent(
-        () =>
-          import(
-            /* webpackChunkName: "AlertingImportFromDSRules"*/ 'app/features/alerting/unified/components/import-to-gma/ImportToGMARules'
-          )
-      ),
-    },
-    {
-      path: '/alerting/import-to-gma',
-      roles: evaluateAccessAll([
-        AccessControlAction.AlertingRuleCreate,
-        AccessControlAction.AlertingProvisioningSetStatus,
-      ]),
-      component: config.featureToggles.alertingMigrationWizardUI
-        ? importAlertingComponent(
+      roles: allowIf(canImportRulesToGMA),
+      // Admins get the full wizard in Settings > Import; everyone else, who can't open Settings, gets rules only.
+      component: migrationWizardEnabled
+        ? ImportRulesRoute
+        : importAlertingComponent(
             () =>
               import(
-                /* webpackChunkName: "AlertingImportToGMA"*/ 'app/features/alerting/unified/components/import-to-gma/ImportToGMA'
+                /* webpackChunkName: "AlertingImportFromDSRules"*/ 'app/features/alerting/unified/components/import-to-gma/ImportToGMARules'
               )
-          )
-        : () => <Navigate replace to="/alerting/list" />,
+          ),
+    },
+    {
+      // The wizard moved to Settings > Import. Old links still work, including ?step=rules.
+      path: '/alerting/import-to-gma',
+      roles: () => ['Admin'],
+      component: migrationWizardEnabled ? RedirectToImportSettings : () => <Navigate replace to="/alerting/list" />,
     },
     proxied({
       path: '/alerting/new/:type?',
@@ -426,9 +429,9 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
-      path: '/alerting/admin/import',
+      path: ALERTING_IMPORT_SETTINGS_URL,
       roles: () => ['Admin'],
-      component: cfg.featureToggles.alertingMigrationWizardUI
+      component: migrationWizardEnabled
         ? importAlertingComponent(
             () =>
               import(
@@ -451,13 +454,24 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
 
   if (shouldUseGmaOnlyListView()) {
     // The GMA-only Alert rules page requires Grafana-managed read only, not the legacy GMA-or-DMA combo.
+    const gmaAlertRulesPage = importAlertingComponent(
+      () =>
+        import(
+          /* webpackChunkName: "GmaAlertRulesPage" */ 'app/features/alerting/unified/gma-rule-list/alert-rules/AlertRulesPage'
+        )
+    );
     routes.push({
       path: '/alerting/rules/alert',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
+      component: gmaAlertRulesPage,
+    });
+    routes.push({
+      path: '/alerting/rules/alert/deleted',
+      roles: () => ['Admin'],
       component: importAlertingComponent(
         () =>
           import(
-            /* webpackChunkName: "GmaAlertRulesPage" */ 'app/features/alerting/unified/gma-rule-list/alert-rules/AlertRulesPage'
+            /* webpackChunkName: "GmaAlertRulesDeletedPage" */ 'app/features/alerting/unified/gma-rule-list/alert-rules/AlertRulesDeletedPage'
           )
       ),
     });
@@ -471,6 +485,16 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
           )
       ),
     });
+    routes.push({
+      path: '/alerting/rules/recording/deleted',
+      roles: () => ['Admin'],
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "GmaRecordingRulesDeletedPage" */ 'app/features/alerting/unified/gma-rule-list/recording-rules/RecordingRulesDeletedPage'
+          )
+      ),
+    });
   }
 
   return routes;
@@ -481,4 +505,24 @@ function importAlertingComponent(loader: () => Promise<unknown>): GrafanaRouteCo
   const featureDisabledPageLoader = () =>
     import(/* webpackChunkName: "AlertingDisabled" */ 'app/features/alerting/unified/AlertingNotEnabled');
   return SafeDynamicImport(config.unifiedAlertingEnabled ? loader : featureDisabledPageLoader);
+}
+
+const LazyImportRulesPage = importAlertingComponent(() =>
+  import(
+    /* webpackChunkName: "AlertingImportRules" */ 'app/features/alerting/unified/components/import-to-gma/ImportToGMA'
+  ).then(({ ImportRulesPage }) => ({ default: ImportRulesPage }))
+);
+
+function ImportRulesRoute(props: GrafanaRouteComponentProps) {
+  // The same check as the Settings route's ['Admin'] guard, so nobody is redirected to a page that rejects them.
+  return contextSrv.hasRole('Admin') ? (
+    <Navigate replace to={`${ALERTING_IMPORT_SETTINGS_URL}?step=rules`} />
+  ) : (
+    <LazyImportRulesPage {...props} />
+  );
+}
+
+function RedirectToImportSettings() {
+  const { search } = useLocation();
+  return <Navigate replace to={{ pathname: ALERTING_IMPORT_SETTINGS_URL, search }} />;
 }

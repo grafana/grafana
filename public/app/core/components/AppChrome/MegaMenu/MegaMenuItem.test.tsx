@@ -4,6 +4,7 @@ import { act, getWrapper, render, screen } from 'test/test-utils';
 import { type NavModelItem } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { type StarredNavItem } from 'app/core/navtree/constants';
 import { StPodReadyService, StPodStatus } from 'app/core/services/StPodReadyService';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -106,11 +107,12 @@ describe('MegaMenuItem rendering branches', () => {
   });
 
   it('labels a starred folder leaf icon so screen readers can tell folders and dashboards apart', () => {
-    const starredFolder: NavModelItem = {
-      id: 'starred/abc',
+    const starredFolder: StarredNavItem = {
+      id: 'starred/folder/abc',
       text: 'My Folder',
       url: '/dashboards/f/abc',
       icon: 'folder',
+      starredKind: 'folder',
     };
 
     renderMenuItem(service, { link: starredFolder });
@@ -119,11 +121,12 @@ describe('MegaMenuItem rendering branches', () => {
   });
 
   it('labels a starred dashboard leaf icon so screen readers can tell folders and dashboards apart', () => {
-    const starredDashboard: NavModelItem = {
-      id: 'starred/xyz',
+    const starredDashboard: StarredNavItem = {
+      id: 'starred/dashboard/xyz',
       text: 'My Dashboard',
       url: '/d/xyz',
       icon: 'apps',
+      starredKind: 'dashboard',
     };
 
     renderMenuItem(service, { link: starredDashboard });
@@ -155,6 +158,20 @@ describe('MegaMenuItem rendering branches', () => {
     renderMenuItem(service, { link: section, childrenLoadError: true, defaultExpanded: true });
 
     expect(screen.getByText('Failed to load items')).toBeInTheDocument();
+  });
+
+  it('renders the children that loaded, then an error message, when some children failed to load', () => {
+    const section: NavModelItem = {
+      id: 'dynamic',
+      text: 'Dynamic',
+      url: '/dynamic',
+      children: [{ id: 'dynamic/loaded', text: 'Loaded item', url: '/dynamic/loaded' }],
+    };
+
+    renderMenuItem(service, { link: section, childrenLoadError: true, defaultExpanded: true });
+
+    expect(screen.getByRole('link', { name: 'Loaded item' })).toBeInTheDocument();
+    expect(screen.getByText('Failed to load some items')).toBeInTheDocument();
   });
 
   it('renders the empty message for an expanded section with no children and no loading state', () => {

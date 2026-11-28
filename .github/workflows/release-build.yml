@@ -20,9 +20,10 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}
+  # Preserve every scheduled build so it can dispatch the downstream nightly workflow.
+  group: ${{ github.workflow }}-${{ (inputs.source-event || github.event_name) == 'schedule' && github.run_id || 'default' }}
   # Let builds finish even when main receives commits faster than we can build them.
-  # The default queue keeps only the newest pending run, so builds can catch up.
+  # Non-scheduled builds keep only the newest pending run, so builds can catch up.
   cancel-in-progress: false
 
 # Builds the following artifacts:
@@ -504,7 +505,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v3.0.0
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
@@ -627,7 +628,7 @@ jobs:
           - name: windows-arm64
             arch: arm64
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v3.0.0
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
@@ -960,7 +961,7 @@ jobs:
           name: artifacts-packages-linux-amd64
           path: dist
 
-      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.4
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v3.0.0
 
       - name: Set up Docker Buildx
         run: docker buildx create --use

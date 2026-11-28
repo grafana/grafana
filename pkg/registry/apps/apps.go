@@ -85,10 +85,9 @@ func ProvideAppInstallers(
 		installers = append(installers, liveAppInstaller)
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagDashboardValidatorApp) {
-		installers = append(installers, dashvalidatorAppInstaller)
-	}
+	// The dashboard validator is always registered; its authorizer evaluates
+	// the dashboardValidatorApp OpenFeature flag on every request.
+	installers = append(installers, dashvalidatorAppInstaller)
 
 	// Applications under active development should be disabled by default
 	// and enabled in a dedicated section of **config.ini**.

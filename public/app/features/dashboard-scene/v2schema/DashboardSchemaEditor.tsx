@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import yaml from 'js-yaml';
+import { dump } from 'js-yaml';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, RadioButtonGroup, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import { InternalCodeMirrorEditor } from '@grafana/ui/internal';
 
 import { fetchDashboardSchema } from './dashboardSchemaFetcher';
 import { parseDashboardSchema } from './dashboardSchemaParser';
@@ -83,7 +83,7 @@ export function DashboardSchemaEditor({
       return localYamlContent;
     }
     try {
-      return yaml.dump(JSON.parse(value), { indent: 2, lineWidth: -1, noRefs: true });
+      return dump(JSON.parse(value), { indent: 2, lineWidth: -1, noRefs: true });
     } catch {
       return value;
     }
@@ -222,7 +222,7 @@ export function DashboardSchemaEditor({
       <div className={styles.editorContainer}>
         {contentOverride ?? (
           <div className={styles.codeEditorContainer}>
-            <CodeMirrorEditor
+            <InternalCodeMirrorEditor
               key={format}
               height="100%"
               value={displayValue}

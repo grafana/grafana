@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, isEqual } from 'lodash';
 
 import {
   type FieldConfigOptionsRegistry,
@@ -14,6 +14,7 @@ import {
   type StandardEditorContext,
   FieldType,
 } from '@grafana/data';
+import { isVarMappingExpressionInput, isVarMappingProp, wrapVarMappingPropId } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { type MatcherScope } from '@grafana/schema';
 import {
@@ -32,6 +33,7 @@ import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OverrideCategoryTitle } from './OverrideCategoryTitle';
+import { getVarMappingEditingKind } from './utils';
 
 const ALLOWED_SCOPES: MatcherScope[] = ['series', 'nested'];
 
@@ -49,6 +51,16 @@ function getFramesForMatcherScope(data: DataFrame[], scope?: MatcherScope): Data
   return data;
 }
 
+/** An override change, described by registry ids only. Matcher options and property values are never included. */
+export type OverrideChange =
+  | { item: 'add_override' | 'remove_override' | 'change_override_matcher'; overrideIndex: number; matcherId: string }
+  | {
+      item: 'add_override_property' | 'change_override_property' | 'remove_override_property';
+      overrideIndex: number;
+      matcherId: string;
+      propertyId: string;
+    };
+
 export function getFieldOverrideCategories(
   fieldConfig: FieldConfigSource,
   registry: FieldConfigOptionsRegistry,
@@ -56,7 +68,9 @@ export function getFieldOverrideCategories(
   searchQuery: string,
   onFieldConfigsChange: (config: FieldConfigSource) => void,
   // Panel options, so an override editor can render against them
-  options?: Record<string, unknown>
+  options?: Record<string, unknown>,
+  varMappingsEnabled = false,
+  onOverrideChanged?: (change: OverrideChange) => void
 ): OptionsPaneCategoryDescriptor[] {
   const categories: OptionsPaneCategoryDescriptor[] = [];
   const currentFieldConfig = fieldConfig;
@@ -72,9 +86,11 @@ export function getFieldOverrideCategories(
   };
 
   const onOverrideRemove = (overrideIndex: number) => {
+    const matcherId = currentFieldConfig.overrides[overrideIndex].matcher.id;
     let overrides = cloneDeep(currentFieldConfig.overrides);
     overrides.splice(overrideIndex, 1);
     onFieldConfigsChange({ ...currentFieldConfig, overrides });
+    onOverrideChanged?.({ item: 'remove_override', overrideIndex, matcherId });
   };
 
   const onOverrideAdd = (value: SelectableValue<string>) => {
@@ -89,6 +105,11 @@ export function getFieldOverrideCategories(
         ...currentFieldConfig.overrides,
         { matcher: { id: info.id, options: info.defaultOptions }, properties: [] },
       ],
+    });
+    onOverrideChanged?.({
+      item: 'add_override',
+      overrideIndex: currentFieldConfig.overrides.length,
+      matcherId: info.id,
     });
   };
 
@@ -214,12 +235,33 @@ export function getFieldOverrideCategories(
       },
     });
 
+    const reportOverrideChange = (
+      item:
+        | 'change_override_matcher'
+        | 'add_override_property'
+        | 'change_override_property'
+        | 'remove_override_property',
+      propertyId?: string
+    ) => {
+      if (item === 'change_override_matcher') {
+        onOverrideChanged?.({ item, overrideIndex: idx, matcherId: override.matcher.id });
+      } else if (propertyId) {
+        onOverrideChanged?.({ item, overrideIndex: idx, matcherId: override.matcher.id, propertyId });
+      }
+    };
+
     const onMatcherConfigChange = (options: unknown, scope: MatcherScope | undefined = override.matcher.scope) => {
       onOverrideChange(idx, { ...override, matcher: { ...override.matcher, scope, options } });
+      // Some matcher editors (the regex one) call onChange on every blur. Scope isn't compared: editors send
+      // their default scope when none is stored, which isn't a change either.
+      if (!isEqual(options, override.matcher.options)) {
+        reportOverrideChange('change_override_matcher');
+      }
     };
 
     const onMatcherScopeChange = (scope: MatcherScope) => {
       onOverrideChange(idx, { ...override, matcher: { ...override.matcher, scope } });
+      reportOverrideChange('change_override_matcher');
     };
 
     const onDynamicConfigValueAdd = (override: ConfigOverrideRule, value: SelectableValue<string>) => {
@@ -230,6 +272,7 @@ export function getFieldOverrideCategories(
       properties.push(propertyConfig);
 
       onOverrideChange(idx, { ...override, properties });
+      reportOverrideChange('add_override_property', registryItem.id);
     };
 
     const hasInvalidScope = override.matcher.scope && !uniqueMatcherScopes.has(override.matcher.scope);
@@ -284,27 +327,51 @@ export function getFieldOverrideCategories(
      */
     for (let propIdx = 0; propIdx < override.properties.length; propIdx++) {
       const property = override.properties[propIdx];
+
+      // varMappings.<id> entries are edited through the row of the property they map.
+      if (isVarMappingProp(property)) {
+        continue;
+      }
+
       const registryItemForProperty = registry.getIfExists(property.id);
 
       if (!registryItemForProperty) {
         continue;
       }
 
-      const onPropertyChange = (value: DynamicConfigValue) => {
-        onOverrideChange(idx, {
-          ...override,
-          properties: override.properties.map((prop, i) => {
-            if (i === propIdx) {
-              return { ...prop, value: value };
-            }
+      const varMappingId = wrapVarMappingPropId(property.id);
+      const varMappingKind = varMappingsEnabled ? getVarMappingEditingKind(registryItemForProperty) : undefined;
+      const varMappingExpr = varMappingKind ? override.properties.find((p) => p.id === varMappingId)?.value : undefined;
+      // The stored value stays as the fallback while an expression is shown.
+      const displayValue = typeof varMappingExpr === 'string' ? varMappingExpr : property.value;
 
-            return prop;
-          }),
-        });
+      const onPropertyChange = (value: unknown) => {
+        if (varMappingKind && isVarMappingExpressionInput(varMappingKind, value)) {
+          const varMappingEntry: DynamicConfigValue = { id: varMappingId, value };
+          const properties = override.properties.some((p) => p.id === varMappingId)
+            ? override.properties.map((p) => (p.id === varMappingId ? varMappingEntry : p))
+            : [...override.properties, varMappingEntry];
+          onOverrideChange(idx, { ...override, properties });
+          reportOverrideChange('change_override_property', property.id);
+          return;
+        }
+
+        // Writing a plain value also drops the expression, so the plain value takes effect. With the
+        // flag off this is the only way to get rid of an expression saved with the flag on.
+        const properties = override.properties
+          .map((prop, i) => (i === propIdx ? { ...prop, value } : prop))
+          .filter((p) => p.id !== varMappingId);
+
+        onOverrideChange(idx, { ...override, properties });
+        reportOverrideChange('change_override_property', property.id);
       };
 
       const onPropertyRemove = () => {
-        onOverrideChange(idx, { ...override, properties: override.properties.filter((_, i) => i !== propIdx) });
+        onOverrideChange(idx, {
+          ...override,
+          properties: override.properties.filter((p, i) => i !== propIdx && p.id !== varMappingId),
+        });
+        reportOverrideChange('remove_override_property', property.id);
       };
 
       const htmlId = `${overrideId}-property-${property.id}`;
@@ -323,10 +390,11 @@ export function getFieldOverrideCategories(
                 isSystemOverride={isSystemOverride}
                 onChange={onPropertyChange}
                 onRemove={onPropertyRemove}
-                property={property}
+                property={{ ...property, value: displayValue }}
                 registry={registry}
                 context={context}
                 searchQuery={searchQuery}
+                varMappingKind={varMappingKind}
               />
             );
           },

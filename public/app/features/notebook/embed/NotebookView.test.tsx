@@ -16,6 +16,9 @@ import { defaultSpec as defaultNotebookSpec, type Spec as NotebookSpec } from '.
 
 import { NotebookView, type DraftNotebookViewProps } from './NotebookView';
 
+jest.mock('../api/notebookResource', () => makeSpyable('../api/notebookResource'));
+jest.mock('../serialization/transformNotebookToScene', () => makeSpyable('../serialization/transformNotebookToScene'));
+
 const NOTEBOOKS_FLAG = 'dashboard.notebooks';
 
 /**

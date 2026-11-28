@@ -25,6 +25,12 @@ source "$(dirname "${BASH_SOURCE[0]}")/openapi-codegen.sh"
 
 selected_pkg="${1-}"
 
+# Packages that serve another version's OpenAPI definitions from their own
+# GetOpenAPIDefinitions, so a generated one would be declared twice.
+OPENAPI_SKIP_PKGS=(
+  "apps/preferences/pkg/apis/preferences/v1alpha1"
+)
+
 grafana::codegen:run() {
   local generate_root=$1
   local skipped="true"
@@ -45,6 +51,10 @@ grafana::codegen:run() {
       ${generate_root}/apis/${api_pkg}
 
    for pkg_version in $(grafana:codegen:lsdirs ./${generate_root}/apis/${api_pkg}); do
+      if [[ " ${OPENAPI_SKIP_PKGS[*]} " == *" ${generate_root}/apis/${api_pkg}/${pkg_version} "* ]]; then
+        echo "Skipping OpenAPI for ${generate_root}/apis/${api_pkg}/${pkg_version}"
+        continue
+      fi
       grafana::codegen::gen_openapi \
         --input-pkg-single ${generate_root}/apis/${api_pkg}/${pkg_version} \
         --output-base "${OUTDIR}" \
@@ -96,8 +106,9 @@ grafana::codegen:run pkg/apimachinery
 grafana::codegen:run apps/dashboard/pkg
 grafana::codegen:run apps/provisioning/pkg
 grafana::codegen:run apps/folder/pkg
-grafana::codegen:run apps/preferences/pkg
 grafana::codegen:run apps/collections/pkg
+grafana::codegen:run apps/preferences/pkg
+grafana::codegen:run apps/userstorage/pkg
 grafana::codegen:run apps/scope/pkg
 grafana::codegen:run apps/alerting/alertenrichment/pkg
 grafana::codegen:run apps/alerting/alertrulequality/pkg

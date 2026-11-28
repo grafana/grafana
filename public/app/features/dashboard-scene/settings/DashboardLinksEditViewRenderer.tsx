@@ -43,7 +43,7 @@ export function DashboardLinksEditViewRenderer({ model }: SceneComponentProps<Da
       [CATEGORY_PARAM_NAME]: SidebarCategoryType.DashboardLinks,
     });
     setTimeout(() => {
-      dashboard.state.sidebar.selectObject(dashboard);
+      dashboard.state.sidebar.openElementSettings(dashboard);
     }, 0);
 
     DashboardInteractions.takeMeToSidebarClicked({ item: 'links' });

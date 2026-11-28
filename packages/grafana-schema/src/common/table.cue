@@ -63,9 +63,10 @@ TableBarGaugeCellOptions: {
 // Sparkline cell options
 TableSparklineCellOptions: {
 	GraphFieldConfig
-	type:         TableCellDisplayMode & "sparkline"
-	hideValue?:   bool
-	showTooltip?: bool
+	type:             TableCellDisplayMode & "sparkline"
+	hideValue?:       bool
+	showTooltip?:     bool
+	selectTimeRange?: bool
 } @cuetsy(kind="interface")
 
 // Colored background cell options
@@ -142,6 +143,8 @@ TableOptions: {
 	// Alternates the background color of every other row. Only applies when the
 	// `table.refreshNewFeatures` feature toggle is enabled.
 	zebraStriping?: bool | *false
+	// Whether to show generated row positions. Only applies when `table.refreshNewFeatures` is enabled.
+	showRowNumbers?: bool | *false
 	// Whether the column management sidebar starts open.
 	showColumnsSidebar?: bool
 } @cuetsy(kind="interface")

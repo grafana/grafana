@@ -22,6 +22,8 @@ type Options struct {
 	KeepOriginalRuleDefinition bool
 	NotificationSettings       *models.NotificationSettings
 	ExtraLabels                map[string]string
+	// ExecErrState is the error state of the alert rules. Empty means the converter default.
+	ExecErrState models.ExecutionErrorState
 }
 
 // GroupHasRecordingRules reports whether the group contains any recording rules.
@@ -84,6 +86,7 @@ func ConvertRuleGroup(
 		EvaluationOffset:           &cfg.PrometheusConversion.RuleQueryOffset,
 		NotificationSettings:       opts.NotificationSettings,
 		ExtraLabels:                opts.ExtraLabels,
+		ExecErrState:               opts.ExecErrState,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Prometheus converter: %w", err)

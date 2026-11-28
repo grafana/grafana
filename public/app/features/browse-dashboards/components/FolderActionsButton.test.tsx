@@ -14,6 +14,8 @@ import { DeleteModal } from './BrowseActions/DeleteModal';
 import { MoveModal } from './BrowseActions/MoveModal';
 import { FolderActionsButton } from './FolderActionsButton';
 
+jest.mock('../permissions', () => makeSpyable('../permissions'));
+
 // Mock out the Permissions component for now
 jest.mock('app/core/components/AccessControl/Permissions', () => ({
   Permissions: () => <div>Hello!</div>,

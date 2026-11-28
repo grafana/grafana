@@ -5,15 +5,14 @@ import (
 	"database/sql"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
+	sdkresource "github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // PreferencesCountValidation enforces strict count parity between the legacy
@@ -139,15 +138,15 @@ func (v *preferencesCountValidator) countLegacy(sess *xorm.Session, orgID int64)
 	names := make(map[string]struct{}, len(rows))
 	for _, r := range rows {
 		// Mirror asPreferencesResource: team takes precedence over user.
-		owner := utils.OwnerReference{}
+		owner := sdkresource.OwnerReference{}
 		if r.TeamUID.Valid {
-			owner.Owner = utils.TeamResourceOwner
+			owner.Owner = sdkresource.TeamResourceOwner
 			owner.Identifier = r.TeamUID.String
 		} else if r.UserUID.Valid {
-			owner.Owner = utils.UserResourceOwner
+			owner.Owner = sdkresource.UserResourceOwner
 			owner.Identifier = r.UserUID.String
 		} else {
-			owner.Owner = utils.NamespaceResourceOwner
+			owner.Owner = sdkresource.NamespaceResourceOwner
 		}
 		names[owner.AsName()] = struct{}{}
 	}

@@ -8,6 +8,7 @@ import { FolderListRow } from '../folder-browsing/FolderListRow';
 import { FolderRuleCount } from '../folder-browsing/FolderRuleCount';
 import { useFolderPath } from '../folder-browsing/folderLookups';
 import { useSearchRuleFoldersInfiniteQuery } from '../folder-browsing/folderSearch';
+import { type FolderScope } from '../folder-browsing/folderSearchQuery';
 import { RuleListSkeleton } from '../rule-row/RuleListSkeleton';
 import { RuleRowList } from '../rule-row/RuleRowList';
 import { createRulesApiFilter } from '../rule-search/sharedRuleFilter';
@@ -19,14 +20,13 @@ import { RecordingRuleListEntry } from './RecordingRuleListEntry';
 import { useRecordingRuleSearch } from './recordingRuleSearch';
 
 interface FoldersViewProps {
-  /** The only filter Folders mode supports; scopes the folder listing itself. */
-  folderUids: string[];
+  scope: FolderScope;
 }
 
-export function RecordingRulesFoldersView({ folderUids }: FoldersViewProps) {
+export function RecordingRulesFoldersView({ scope }: FoldersViewProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const { data, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } =
-    useSearchRuleFoldersInfiniteQuery({ folderUids });
+    useSearchRuleFoldersInfiniteQuery({ kind: 'recording', ...scope });
   const folders = data?.pages.flatMap((page) => page.folders);
 
   const toggle = (uid: string) => {
@@ -58,7 +58,7 @@ export function RecordingRulesFoldersView({ folderUids }: FoldersViewProps) {
       <EmptyState
         variant="not-found"
         message={
-          folderUids.length > 0
+          scope.folder !== undefined || scope.folderUids.length > 0
             ? t('alerting.gma-rule-list.recording-rules.no-rules-match-folder', 'No recording rules match this folder')
             : t('alerting.gma-rule-list.recording-rules.no-rules', 'No recording rules found')
         }
@@ -67,7 +67,7 @@ export function RecordingRulesFoldersView({ folderUids }: FoldersViewProps) {
   }
 
   return (
-    <Stack direction="column" gap={2}>
+    <Stack direction="column" gap={1}>
       <RuleRowList>
         {folders.map((folder) => (
           <RecordingFolderListEntry
@@ -115,7 +115,7 @@ function RecordingFolderListEntry({ folderUid, title, expanded, onToggle }: Reco
 
 function ExpandedFolderRules({ folderUid, title }: { folderUid: string; title: string }) {
   const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry } = useRecordingRuleSearch(
-    createRulesApiFilter({ folders: [folderUid] })
+    createRulesApiFilter({ folderUids: [folderUid] })
   );
 
   const retryLabel = t(

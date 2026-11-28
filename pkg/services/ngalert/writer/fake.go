@@ -9,7 +9,8 @@ import (
 )
 
 type FakeWriter struct {
-	WriteFunc func(ctx context.Context, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error
+	WriteFunc      func(ctx context.Context, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error
+	WriteStaleFunc func(ctx context.Context, dsUID string, name string, t time.Time, orgID int64, labelSets []map[string]string) error
 }
 
 func (w FakeWriter) WriteDatasource(ctx context.Context, dsUID string, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error {
@@ -22,4 +23,12 @@ func (w FakeWriter) WriteDatasource(ctx context.Context, dsUID string, name stri
 	}
 
 	return w.WriteFunc(ctx, name, t, frames, orgID, extraLabels)
+}
+
+func (w FakeWriter) WriteStale(ctx context.Context, dsUID string, name string, t time.Time, orgID int64, labelSets []map[string]string) error {
+	if w.WriteStaleFunc == nil {
+		return nil
+	}
+
+	return w.WriteStaleFunc(ctx, dsUID, name, t, orgID, labelSets)
 }

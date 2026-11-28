@@ -216,7 +216,6 @@ func harnessOptions(kinds []resourceKind) []common.GrafanaOption {
 		}
 	}
 	return []common.GrafanaOption{
-		common.WithoutProvisioningFolderMetadata,
 		func(opts *testinfra.GrafanaOpts) {
 			// Setting [provisioning] resources replaces the default set.
 			opts.ProvisioningResources = tokens

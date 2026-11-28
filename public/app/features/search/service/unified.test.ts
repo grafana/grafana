@@ -1,16 +1,20 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
+import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 
 import { config, setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler, searchRoute, starsRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import { setStore } from 'app/store/store';
 
 import { type SearchQuery } from './types';
 import { toDashboardResults, type SearchHit, type SearchAPIResponse, UnifiedSearcher } from './unified';
+
+testWithStarsUser();
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -131,6 +135,76 @@ describe('Unified Storage Searcher', () => {
     //  properly these expects should work
     // expect(response.view.get(0).description).toBe(null);
     // expect(response.view.get(1).description).toBe('foobar');
+  });
+
+  it('stops fetching and reduces the row count when an upper-bound total outlasts the visible results', async () => {
+    const offsets: string[] = [];
+    server.use(
+      http.get(searchRoute, ({ request }) => {
+        const params = new URL(request.url).searchParams;
+        if (params.get('query') !== 'dashboard') {
+          return HttpResponse.json({ totalHits: 0, hits: [] });
+        }
+        const offset = params.get('offset') ?? '0';
+        offsets.push(offset);
+        if (offsets.length > 2) {
+          return HttpResponse.json({ message: 'Unexpected page request' }, { status: 400 });
+        }
+        return HttpResponse.json({
+          totalHits: 3,
+          hits: offset === '0' ? [{ name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboards' }] : [],
+        });
+      })
+    );
+
+    const response = await new UnifiedSearcher().search({ query: 'dashboard', limit: 1 });
+    expect(response.totalRows).toBe(3);
+
+    await response.loadMoreItems(2);
+    await response.loadMoreItems(2);
+
+    expect(response.totalRows).toBe(1);
+    expect(response.view.get(0).title).toBe('Dashboard 1');
+    expect(offsets).toEqual(['0', '1']);
+  });
+
+  it('stops fetching when a later page reports the loaded row count as the total', async () => {
+    const offsets: string[] = [];
+    server.use(
+      http.get(searchRoute, ({ request }) => {
+        const params = new URL(request.url).searchParams;
+        if (params.get('query') !== 'dashboard') {
+          return HttpResponse.json({ totalHits: 0, hits: [] });
+        }
+
+        const offset = params.get('offset') ?? '0';
+        offsets.push(offset);
+        switch (offset) {
+          case '0':
+            return HttpResponse.json({
+              totalHits: 3,
+              hits: [{ name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboards' }],
+            });
+          case '1':
+            return HttpResponse.json({
+              totalHits: 2,
+              hits: [{ name: 'dashboard2', title: 'Dashboard 2', resource: 'dashboards' }],
+            });
+          default:
+            return HttpResponse.json({ totalHits: 2, hits: [] });
+        }
+      })
+    );
+
+    const response = await new UnifiedSearcher().search({ query: 'dashboard', limit: 1 });
+    expect(response.totalRows).toBe(3);
+
+    await response.loadMoreItems(2);
+    await response.loadMoreItems(2);
+
+    expect(response.totalRows).toBe(2);
+    expect(response.view.get(1).title).toBe('Dashboard 2');
+    expect(offsets).toEqual(['0', '1']);
   });
 
   it('should filter search results by ownerReference', async () => {
@@ -274,6 +348,25 @@ describe('Unified Storage Searcher', () => {
       const response = await searcher.starred({ kind: ['dashboard', 'folder'] });
 
       expect(response.totalRows).toBe(0);
+      expect(findStarredSearchRequest()).toBeUndefined();
+    });
+
+    it('returns an empty response without reading stars for a user without a uid', async () => {
+      jest.replaceProperty(contextSrv.user, 'uid', '');
+      const starsRequest = jest.fn();
+      server.use(
+        http.get(starsRoute, () => {
+          starsRequest();
+          return HttpResponse.json({});
+        }),
+        captureSearchHandler(starredHits)
+      );
+
+      const searcher = new UnifiedSearcher();
+      const response = await searcher.starred({ kind: ['dashboard', 'folder'] });
+
+      expect(response.totalRows).toBe(0);
+      expect(starsRequest).not.toHaveBeenCalled();
       expect(findStarredSearchRequest()).toBeUndefined();
     });
   });

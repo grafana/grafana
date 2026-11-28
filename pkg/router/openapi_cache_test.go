@@ -203,7 +203,7 @@ func TestOpenAPIGroupVersionUnknownGroupIsNotFound(t *testing.T) {
 // conditionalUpstream honors (unstripped) If-None-Match with its own
 // unrelated 304 — proving the router strips conditional headers before
 // proxying on a cache miss, so it always gets a real body to judge and
-// cache. Regression test for the phantom-304 bug the design spec calls out.
+// cache. Regression test for the phantom-304 bug the discovery design calls out.
 type conditionalUpstream struct {
 	body string
 }

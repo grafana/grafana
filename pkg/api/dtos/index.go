@@ -36,11 +36,13 @@ type IndexViewData struct {
 	Assets                 *EntryPointAssets `json:"assets"` // Includes CDN info
 	RenderBindingSupported bool              `json:"-"`
 	UseLuxon               bool              `json:"-"`
+	LiveDisabled           bool              `json:"-"`
 	// AutoLoginRedirectURL is the URL the frontend should redirect to for auto-login.
 	// Empty means no auto-login redirect should occur.
 	AutoLoginRedirectURL    string `json:"autoLoginRedirectURL,omitempty"`
 	AssetSriChecksEnabled   bool   `json:"-"`
 	LegacyFeatureToggleMode string `json:"-"`
+	BootdataAnalytics       bool   `json:"-"`
 
 	// ESModuleAssetsEnabled mirrors Assets.ESModule — the template uses it to pick the
 	// matching <script type>.

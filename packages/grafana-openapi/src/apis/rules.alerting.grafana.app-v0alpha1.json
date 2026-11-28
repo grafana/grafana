@@ -4667,7 +4667,7 @@
                 "type": "string"
               },
               "pollInterval": {
-                "description": "pollInterval sets how often this org's rules are re-synced from\ndatasourceUid. Empty defaults to 5m; must be between 1m and 1h. The\nworker checks orgs against a short internal baseline and only does\nreal work for an org once its own pollInterval has elapsed, so this\nis a lower bound, not a guarantee — an org's actual sync can lag\nslightly past its configured interval. Has no effect on the operator\nini path, which always uses the 5m default.",
+                "description": "pollInterval sets how often this org's rules are re-synced from\ndatasourceUid. Empty defaults to 5m; must be between 1m and 24h. The\nworker checks orgs against a short internal baseline and only does\nreal work for an org once its own pollInterval has elapsed, so this\nis a lower bound, not a guarantee — an org's actual sync can lag\nslightly past its configured interval. Has no effect on the operator\nini path, which always uses the 5m default.",
                 "type": "string"
               }
             },
@@ -4706,6 +4706,10 @@
                 "description": "origin records which source supplied datasourceUid on the last run. \"ini\"\n(grafana.ini's unified_alerting.external_ruler_uid) wins over \"api\"\n(spec.externalRulerSync.datasourceUid).",
                 "type": "string",
                 "enum": ["api", "ini"]
+              },
+              "rootFolderUid": {
+                "description": "rootFolderUid is the UID of the folder the synced rules live under. The\nworker finds the folder by it, so a rename does not stop the sync and a\ndeleted folder is recreated with the same UID. Internal bookkeeping.",
+                "type": "string"
               }
             },
             "additionalProperties": false
@@ -4840,6 +4844,7 @@
             "type": "string"
           },
           "operator": {
+            "description": "\"In\" on every filterable field. \"NotIn\" on labels, state and health only;\nthe other fields reject it. \"All\" is rejected.",
             "type": "string",
             "enum": ["In", "NotIn", "All"]
           },
@@ -5171,6 +5176,7 @@
             "type": "string"
           },
           "operator": {
+            "description": "\"In\" on every filterable field. \"NotIn\" on labels, state and health only;\nthe other fields reject it. \"All\" is rejected.",
             "type": "string",
             "enum": ["In", "NotIn", "All"]
           },
@@ -5843,9 +5849,9 @@
             "default": ""
           },
           "operator": {
-            "description": "Operator is \"In\", \"NotIn\" or \"All\" in v1. \"In\" matches any of the values, \"NotIn\" excludes all of them, and \"All\" requires the field to hold every value, which only a field holding a list of values can do.",
+            "description": "Operator is \"In\", \"NotIn\" or \"All\" in v1. \"In\" matches any of the values, \"NotIn\" excludes all of them, and \"All\" requires the field to hold every value, which only a field holding a list of values can do.\n\nPossible enum values:\n - `\"All\"` requires the resources whose field holds every one of the values, which only a field holding a list of values can do.\n - `\"In\"` keeps the resources whose field matches any of the values.\n - `\"NotIn\"` keeps the resources whose field matches none of them.",
             "type": "string",
-            "default": ""
+            "enum": ["All", "In", "NotIn"]
           },
           "values": {
             "type": "array",

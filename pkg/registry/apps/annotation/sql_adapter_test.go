@@ -154,9 +154,11 @@ func TestSQLAdapter_Get(t *testing.T) {
 		assert.True(t, errors.Is(err, ErrNotFound))
 	})
 
-	t.Run("returns error for invalid name format", func(t *testing.T) {
-		_, err := adapter.Get(ctx, "default", "invalid")
-		require.Error(t, err)
+	t.Run("returns not found for names that are not legacy IDs", func(t *testing.T) {
+		for _, name := range []string{"invalid", "a-", "a-abc"} {
+			_, err := adapter.Get(ctx, "default", name)
+			assert.ErrorIs(t, err, ErrNotFound, name)
+		}
 	})
 }
 
@@ -261,6 +263,14 @@ func TestSQLAdapter_ListPagination(t *testing.T) {
 		assert.Len(t, result3.Items, 1)
 		assert.Empty(t, result3.Continue, "Expected no continuation token on last page")
 		assert.Equal(t, "a-5", result3.Items[0].Name)
+	})
+
+	t.Run("rejects bad continuation tokens as invalid input", func(t *testing.T) {
+		_, err := adapter.List(ctx, namespace, ListOptions{Limit: 2, Continue: "not-a-token"})
+		assert.ErrorIs(t, err, ErrInvalidInput)
+
+		_, err = adapter.List(ctx, namespace, ListOptions{Limit: 3, Continue: encodeContinueToken(2, 2)})
+		assert.ErrorIs(t, err, ErrInvalidInput)
 	})
 }
 

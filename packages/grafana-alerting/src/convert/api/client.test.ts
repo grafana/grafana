@@ -144,6 +144,39 @@ describe('convertAPI', () => {
     expect(reads).toHaveLength(1);
   });
 
+  it('sends the import source on rule imports, promotes and deletions', async () => {
+    const rulePosts = captureRequests('post', RULES_URL, accepted);
+    const promotes = captureRequests('post', `${ALERTMANAGER_URL}/prom-prod/promote`, accepted);
+    const deletes = captureRequests('delete', ALERTMANAGER_URL, accepted);
+    const store = createStore();
+
+    await store.dispatch(convertAPI.endpoints.postRuleGroups.initiate({ payload: {}, source: 'wizard' })).unwrap();
+    await store
+      .dispatch(
+        convertAPI.endpoints.promoteAlertmanagerConfig.initiate({ identifier: 'prom-prod', source: 'import_settings' })
+      )
+      .unwrap();
+    await store
+      .dispatch(
+        convertAPI.endpoints.deleteAlertmanagerConfig.initiate({ identifier: 'prom-prod', source: 'import_settings' })
+      )
+      .unwrap();
+
+    expect(rulePosts[0].headers.get('X-Grafana-Alerting-Import-Source')).toBe('wizard');
+    expect(promotes[0].headers.get('X-Grafana-Alerting-Import-Source')).toBe('import_settings');
+    expect(deletes[0].headers.get('X-Grafana-Alerting-Import-Source')).toBe('import_settings');
+  });
+
+  it('sends no import source for callers that do not set one', async () => {
+    const promotes = captureRequests('post', `${ALERTMANAGER_URL}/prom-prod/promote`, accepted);
+
+    await createStore()
+      .dispatch(convertAPI.endpoints.promoteAlertmanagerConfig.initiate({ identifier: 'prom-prod' }))
+      .unwrap();
+
+    expect(promotes[0].headers.has('X-Grafana-Alerting-Import-Source')).toBe(false);
+  });
+
   it('promotes an Alertmanager config by its encoded identifier', async () => {
     const promotions = captureRequests('post', `${ALERTMANAGER_URL}/:identifier/promote`, accepted);
 

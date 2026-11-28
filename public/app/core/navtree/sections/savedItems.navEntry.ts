@@ -1,15 +1,12 @@
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
-
 import { NavID, NavWeight } from '../constants';
 import { isSignedIn, type NavEntryBuilder } from '../utils';
 
-// Both are empty containers filled at runtime (starred dashboards by
-// useSyncStarredItemsInNav, bookmarks from preferences), same as with the
-// server-built tree.
+// Both ship as empty containers, same as with the server-built tree. The Starred children never enter the redux
+// tree: useNavTree derives them from the stars query. Bookmarks are filled from preferences.
 
 export const starredNavEntry: NavEntryBuilder = {
-  when: () => contextSrv.hasPermission(AccessControlAction.DashboardsRead),
+  // Stars are of any kind, so a user who can read no dashboard can still have stars to list
+  when: isSignedIn,
   build: () => ({
     text: 'Starred',
     id: NavID.starred,

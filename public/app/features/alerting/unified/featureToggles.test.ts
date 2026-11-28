@@ -1,8 +1,8 @@
 import { config } from '@grafana/runtime';
 
 import { isNotificationHistoryEnabled, shouldUseAlertingListViewV2 } from './featureToggles';
-import { mockLocalStorage } from './mocks';
 import { setPreviewToggle } from './previewToggles';
+import { mockLocalStorage } from './testSetup/mockLocalStorage';
 
 const localStorageMock = mockLocalStorage();
 

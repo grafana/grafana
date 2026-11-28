@@ -359,6 +359,160 @@ func TestGetTemplate(t *testing.T) {
 	})
 }
 
+func TestTemplateService_HidesMimirTemplates(t *testing.T) {
+	orgID := int64(1)
+	mimir := v1.NewTemplateGroup("mimir-template", "shared", "{{ define \"mimir\" }}mimir{{ end }}", v1.TemplateKindMimir, models.ProvenanceNone)
+	grafana := v1.NewTemplateGroup("grafana-template", "grafana", "{{ define \"grafana\" }}grafana{{ end }}", v1.TemplateKindGrafana, models.ProvenanceNone)
+
+	newRevision := func(templates ...v1.TemplateGroup) *legacy_storage.ConfigRevision {
+		stored := make(map[v1.ResourceUID]v1.TemplateGroup, len(templates))
+		for _, tmpl := range templates {
+			stored[tmpl.UID] = tmpl
+		}
+		return &legacy_storage.ConfigRevision{
+			Config: &v1.AMConfigV1{
+				Templates: stored,
+			},
+			ConcurrencyToken: util.GenerateShortUID(),
+		}
+	}
+
+	t.Run("list omits Mimir templates", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		store.GetFn = func(context.Context, int64) (*legacy_storage.ConfigRevision, error) {
+			return newRevision(mimir, grafana), nil
+		}
+		prov.EXPECT().GetProvenances(mock.Anything, orgID, mock.Anything).Return(map[string]models.Provenance{}, nil)
+
+		result, err := sut.GetTemplates(t.Context(), orgID)
+
+		require.NoError(t, err)
+		require.Equal(t, []v1.TemplateGroup{grafana}, result)
+		prov.AssertExpectations(t)
+	})
+
+	t.Run("list with only Mimir templates does not read provenance", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		store.GetFn = func(context.Context, int64) (*legacy_storage.ConfigRevision, error) {
+			return newRevision(mimir), nil
+		}
+
+		result, err := sut.GetTemplates(t.Context(), orgID)
+
+		require.NoError(t, err)
+		require.Empty(t, result)
+		prov.AssertNotCalled(t, "GetProvenances", mock.Anything, mock.Anything, mock.Anything)
+		prov.AssertExpectations(t)
+	})
+
+	t.Run("lookup by Mimir UID treats it as absent", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		store.GetFn = func(context.Context, int64) (*legacy_storage.ConfigRevision, error) {
+			return newRevision(mimir), nil
+		}
+
+		_, err := sut.GetTemplate(t.Context(), orgID, string(mimir.UID))
+
+		require.ErrorIs(t, err, ErrTemplateNotFound)
+		prov.AssertExpectations(t)
+	})
+
+	t.Run("ordinary upsert rejects a Grafana template when a Mimir template has the same title", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		store.GetFn = func(context.Context, int64) (*legacy_storage.ConfigRevision, error) {
+			return newRevision(mimir), nil
+		}
+
+		_, err := sut.UpsertTemplate(t.Context(), orgID, v1.TemplateGroup{
+			Title:   mimir.Title,
+			Content: "{{ define \"grafana\" }}grafana{{ end }}",
+			Kind:    v1.TemplateKindGrafana,
+		})
+
+		require.ErrorIs(t, err, ErrTemplateExists)
+		require.Len(t, store.Calls, 1, "nothing is saved")
+		prov.AssertExpectations(t)
+	})
+
+	t.Run("rename rejects a Mimir template title", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		store.GetFn = func(context.Context, int64) (*legacy_storage.ConfigRevision, error) {
+			return newRevision(mimir, grafana), nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, orgID).Return(models.ProvenanceNone, nil)
+		update := grafana
+		update.Title = mimir.Title
+
+		_, err := sut.UpdateTemplate(t.Context(), orgID, update)
+
+		require.ErrorIs(t, err, ErrTemplateExists)
+		require.Len(t, store.Calls, 1, "nothing is saved")
+		prov.AssertExpectations(t)
+	})
+
+	t.Run("conditional upsert with a Mimir template title treats it as absent", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		store.GetFn = func(context.Context, int64) (*legacy_storage.ConfigRevision, error) {
+			return newRevision(mimir), nil
+		}
+
+		_, err := sut.UpsertTemplate(t.Context(), orgID, v1.TemplateGroup{
+			Title:   mimir.Title,
+			Content: "{{ define \"grafana\" }}grafana{{ end }}",
+			Kind:    v1.TemplateKindGrafana,
+			ResourceMetadata: v1.ResourceMetadata{
+				Version: mimir.Version,
+			},
+		})
+
+		require.ErrorIs(t, err, ErrTemplateNotFound)
+		require.Len(t, store.Calls, 1, "nothing is saved")
+		prov.AssertExpectations(t)
+	})
+
+	t.Run("update by Mimir UID treats it as absent", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		store.GetFn = func(context.Context, int64) (*legacy_storage.ConfigRevision, error) {
+			return newRevision(mimir), nil
+		}
+		update := mimir
+		update.Content = "{{ define \"mimir\" }}updated{{ end }}"
+
+		_, err := sut.UpdateTemplate(t.Context(), orgID, update)
+
+		require.ErrorIs(t, err, ErrTemplateNotFound)
+		require.Len(t, store.Calls, 1, "nothing is saved")
+		prov.AssertExpectations(t)
+	})
+
+	t.Run("delete by Mimir UID is a no-op", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		store.GetFn = func(context.Context, int64) (*legacy_storage.ConfigRevision, error) {
+			return newRevision(mimir), nil
+		}
+
+		err := sut.DeleteTemplate(t.Context(), orgID, string(mimir.UID), models.ProvenanceNone, "")
+
+		require.NoError(t, err)
+		require.Len(t, store.Calls, 1, "nothing is saved")
+		prov.AssertExpectations(t)
+	})
+
+	t.Run("WithIncludeImported exposes a promoted Mimir template", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		store.GetFn = func(context.Context, int64) (*legacy_storage.ConfigRevision, error) {
+			return newRevision(mimir), nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, orgID).Return(models.ProvenanceNone, nil)
+
+		result, err := sut.WithIncludeImported().GetTemplate(t.Context(), orgID, string(mimir.UID))
+
+		require.NoError(t, err)
+		require.Equal(t, mimir, result)
+		prov.AssertExpectations(t)
+	})
+}
+
 func TestUpsertTemplate(t *testing.T) {
 	orgID := int64(1)
 	templateName := "template1"

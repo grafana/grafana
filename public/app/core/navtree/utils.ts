@@ -125,22 +125,39 @@ export function removeNavById(nodes: NavModelItem[], id: string): NavModelItem[]
  * level for NavID.root. Returns undefined when no such section exists, so the
  * caller decides what that means — the registry skips the item, while the
  * plugin nav builds the section from its shell. Returns a new tree.
+ *
+ * `after` lists ids to go behind, best first: the items land after the first
+ * one found, at either level. Needed because a section with no sortWeights keeps
+ * slice order — so at the top level, where every core section has a weight, it
+ * only orders an item against the other unweighted ones.
  */
 export function appendIntoSection(
   tree: NavModelItem[],
   parentId: string,
-  items: NavModelItem[]
+  items: NavModelItem[],
+  after: string[] = []
 ): NavModelItem[] | undefined {
   if (parentId === NavID.root) {
-    return [...tree, ...items];
+    return insertAfterFirstAnchor(tree, items, after);
   }
   if (!findNavById(tree, parentId)) {
     return undefined;
   }
   return updateNavById(tree, parentId, (parent) => ({
     ...parent,
-    children: [...(parent.children ?? []), ...items],
+    children: insertAfterFirstAnchor(parent.children ?? [], items, after),
   }));
+}
+
+/** Inserts items after the first anchor id present, or appends when none is. */
+function insertAfterFirstAnchor(siblings: NavModelItem[], items: NavModelItem[], after: string[]): NavModelItem[] {
+  for (const anchor of after) {
+    const index = siblings.findIndex((sibling) => sibling.id === anchor);
+    if (index > -1) {
+      return [...siblings.slice(0, index + 1), ...items, ...siblings.slice(index + 1)];
+    }
+  }
+  return [...siblings, ...items];
 }
 
 /**

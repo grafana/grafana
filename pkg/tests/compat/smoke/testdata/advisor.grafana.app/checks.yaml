@@ -1,0 +1,6 @@
+apiVersion: advisor.grafana.app/v0alpha1
+kind: Check
+metadata:
+  labels:
+    advisor.grafana.app/type: config
+spec: {}

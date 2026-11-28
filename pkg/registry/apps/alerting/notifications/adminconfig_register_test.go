@@ -61,6 +61,13 @@ func TestNewExternalSyncDatasourceValidator(t *testing.T) {
 		URL:      "http://am:9093",
 		JsonData: simplejson.NewFromAny(map[string]any{"implementation": "prometheus"}),
 	}
+	noImplDS := &datasources.DataSource{
+		UID:      "no-impl-uid",
+		OrgID:    1,
+		Type:     datasources.DS_ALERTMANAGER,
+		URL:      "http://mimir:9009",
+		JsonData: simplejson.New(),
+	}
 
 	tests := []struct {
 		name            string
@@ -111,6 +118,12 @@ func TestNewExternalSyncDatasourceValidator(t *testing.T) {
 			sources:         []*datasources.DataSource{badImplDS},
 			uid:             "vanilla-am-uid",
 			wantErrContains: "is not supported for sync",
+		},
+		{
+			name:        "DS without implementation is treated as mimir",
+			flagEnabled: true,
+			sources:     []*datasources.DataSource{noImplDS},
+			uid:         "no-impl-uid",
 		},
 		{
 			name:        "happy path: flag on, no ini, valid mimir DS",

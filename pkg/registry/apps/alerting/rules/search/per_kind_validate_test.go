@@ -39,7 +39,7 @@ func query() *searchv0.SearchQuery {
 	}
 }
 
-func perKindFilterLeaf(field, op string, values ...string) searchv0.WhereNode {
+func perKindFilterLeaf(field string, op searchv0.FilterOperator, values ...string) searchv0.WhereNode {
 	return searchv0.WhereNode{
 		Filter: &searchv0.FilterPredicate{Field: field, Operator: op, Values: values},
 	}

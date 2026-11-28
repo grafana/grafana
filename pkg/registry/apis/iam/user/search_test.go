@@ -64,7 +64,7 @@ func TestSearchFallback(t *testing.T) {
 			searchClient := dualwrite.NewSelector[SearchBackend](dual, iamv0.UserResourceInfo.GroupResource(),
 				NewUserLegacySearchClient(legacyService, tracing.NewNoopTracerService(), cfg),
 				NewUnifiedSearchClient(mockClient, cfg))
-			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, nil)
+			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, nil, nil)
 
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/searchUsers", nil)
@@ -89,6 +89,7 @@ func TestSearchFallback(t *testing.T) {
 				builders.USER_LAST_SEEN_AT,
 				builders.USER_ROLE,
 				builders.USER_DISABLED,
+				builders.USER_PROVISIONED,
 				builders.USER_EXTERNAL_AUTH_MODULES,
 				resource.SEARCH_FIELD_CREATED,
 				resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
@@ -146,6 +147,7 @@ func TestUserSearchFieldsAcceptedByIndex(t *testing.T) {
 				builders.USER_LAST_SEEN_AT:          lastSeenAt,
 				builders.USER_ROLE:                  "Admin",
 				builders.USER_DISABLED:              true,
+				builders.USER_PROVISIONED:           true,
 				builders.USER_EXTERNAL_AUTH_MODULES: []string{"oauth", "saml"},
 			},
 		},
@@ -158,6 +160,7 @@ func TestUserSearchFieldsAcceptedByIndex(t *testing.T) {
 		builders.USER_LAST_SEEN_AT,
 		builders.USER_ROLE,
 		builders.USER_DISABLED,
+		builders.USER_PROVISIONED,
 		builders.USER_EXTERNAL_AUTH_MODULES,
 		resource.SEARCH_FIELD_CREATED,
 		resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
@@ -173,7 +176,6 @@ func TestUserSearchFieldsAcceptedByIndex(t *testing.T) {
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, response.GetError())
 	require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, response.GetResultFormat())
 
 	parsed, err := parseResults(response)
@@ -187,6 +189,7 @@ func TestUserSearchFieldsAcceptedByIndex(t *testing.T) {
 	require.Equal(t, lastSeenAt, hit.LastSeenAt)
 	require.Equal(t, "Admin", hit.Role)
 	require.True(t, hit.Disabled)
+	require.True(t, hit.Provisioned)
 	require.Equal(t, []string{"oauth", "saml"}, hit.ExternalAuthModules)
 	require.Equal(t, createdAt, hit.Created)
 	require.Equal(t, int64(42), hit.InternalId)
@@ -326,6 +329,7 @@ func TestSearchSort(t *testing.T) {
 				tracing.NewNoopTracerService(),
 				selectorForBackend(NewUnifiedSearchClient(mockClient, &setting.Cfg{})),
 				authlib.FixedAccessClient(true),
+				nil,
 			)
 
 			rr := httptest.NewRecorder()
@@ -515,6 +519,7 @@ func TestAccessControl(t *testing.T) {
 				tracing.NewNoopTracerService(),
 				selectorForBackend(NewUnifiedSearchClient(mockClientWithHits(), &setting.Cfg{})),
 				tc.client,
+				nil,
 			)
 
 			rr := httptest.NewRecorder()
@@ -629,6 +634,7 @@ func TestParseResults(t *testing.T) {
 				{Name: builders.USER_EXTERNAL_AUTH_MODULES, Type: resourcepb.ResourceSearchField_STRING, IsArray: true},
 				{Name: resource.SEARCH_FIELD_CREATED, Type: resourcepb.ResourceSearchField_INT64},
 				{Name: legacyIDField, Type: resourcepb.ResourceSearchField_STRING},
+				{Name: builders.USER_PROVISIONED, Type: resourcepb.ResourceSearchField_BOOLEAN},
 			},
 			Rows: []*resourcepb.ResourceSearchRow{{
 				Key: &resourcepb.ResourceKey{Name: "uid-1"},
@@ -642,6 +648,7 @@ func TestParseResults(t *testing.T) {
 					{FieldIndex: 6, StringValues: []string{"authproxy", "ldap"}},
 					{FieldIndex: 7, Int64Values: []int64{created}},
 					{FieldIndex: 8, StringValues: []string{"42"}},
+					{FieldIndex: 9, BooleanValues: []bool{true}},
 				},
 			}},
 		}
@@ -662,6 +669,7 @@ func TestParseResults(t *testing.T) {
 		assert.Equal(t, lastSeen, hit.LastSeenAt)
 		assert.NotEmpty(t, hit.LastSeenAtAge)
 		assert.True(t, hit.Disabled)
+		assert.True(t, hit.Provisioned)
 		assert.Equal(t, []string{"authproxy", "ldap"}, hit.ExternalAuthModules)
 		assert.Equal(t, created, hit.Created)
 		assert.Equal(t, int64(42), hit.InternalId)
@@ -686,6 +694,7 @@ func TestParseResults(t *testing.T) {
 		assert.Zero(t, sr.Hits[0].LastSeenAt)
 		assert.Empty(t, sr.Hits[0].LastSeenAtAge)
 		assert.False(t, sr.Hits[0].Disabled)
+		assert.False(t, sr.Hits[0].Provisioned)
 		assert.Empty(t, sr.Hits[0].ExternalAuthModules)
 		assert.Zero(t, sr.Hits[0].Created)
 		assert.Zero(t, sr.Hits[0].InternalId)

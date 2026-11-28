@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
+
 option go_package = "github.com/grafana/grafana/pkg/services/authz/proto/v1";
 
 package authz.extention.v1;
@@ -14,14 +16,19 @@ service LegacyAuthzService {
   rpc LegacyGetUserPermissions(LegacyGetUserPermissionsRequest) returns (stream LegacyGetUserPermissionsResponse) {
     option deprecated = true;
   }
+
+  // LegacySearchUsersPermissions is available only on Grafana's private embedded channel.
+  //
+  // Deprecated: transitional compatibility API for legacy permission search.
+  rpc LegacySearchUsersPermissions(LegacySearchUsersPermissionsRequest) returns (stream LegacySearchUsersPermissionsResponse) {
+    option deprecated = true;
+  }
 }
 
 message LegacyCheckRequest {
   string namespace = 1;
   // Subject in authlib TypeID format, for example "user:1" or "service-account:uid".
   string subject = 2;
-  // Optional contextual team UIDs (used when external-group based team grants are in effect).
-  repeated string teams = 5;
   // Bypass server-side caches when true.
   bool skip_cache = 6;
   // Required check expression, including for a single permission.
@@ -29,13 +36,23 @@ message LegacyCheckRequest {
   // Evaluate without resolving scope attributes or inherited resource scopes,
   // corresponding to AccessControl.WithoutResolvers.
   bool skip_scope_resolution = 8;
-  // Present only for embedded instance-global evaluation. Namespace still selects the tenant.
-  LegacyGlobalEvaluation global_evaluation = 9;
-  // Trusted embedded assertion. Mutually exclusive with subject, global_evaluation and restriction.
+  // Requester's org state: 0 or -1 selects embedded global evaluation;
+  // positive values must match the namespace's org. Namespace still selects the tenant.
+  // Required for subject checks: absence must not be interpreted as org zero.
+  // Internal profiles derive their org from namespace and may omit this field.
+  optional int64 requester_org_id = 9;
+  // Trusted embedded assertion. Mutually exclusive with subject, restriction and a global requester_org_id.
   LegacyInternalIdentity internal_identity = 10;
   // Trusted caller's effective action limit, applied to both org and global checks.
-  // Absent is unrestricted; present with no actions denies all.
+  // Required for global checks. For org checks, absent is unrestricted; present with no actions denies all.
   LegacyActionRestriction restriction = 11;
+  // Trusted embedded organization membership snapshot. Absence loads memberships
+  // server-side; a present empty message asserts that the subject has no teams.
+  LegacyTeamIDs team_ids = 12;
+}
+
+message LegacyTeamIDs {
+  repeated int64 ids = 1;
 }
 
 message LegacyActionRestriction {
@@ -132,12 +149,6 @@ message LegacyGetUserPermissionsResponse {
   repeated LegacyUserPermission permissions = 1;
 }
 
-message LegacyGlobalEvaluation {
-  // Preserve the requester's org for resolver callbacks: 0 (global) or -1 (NoOrgID).
-  // Both evaluate permissions from org 0, never from the transport namespace's org.
-  int64 requester_org_id = 1;
-}
-
 message LegacyInternalIdentity {
   // Selects server-owned grants; the profile name itself is not authentication.
   string profile = 1;
@@ -154,4 +165,51 @@ message LegacyBackgroundIdentity {
 
 message LegacyPermissionScopes {
   repeated string scopes = 1;
+}
+
+message LegacySearchUsersPermissionsRequest {
+  string namespace = 1;
+  reserved 2;
+  reserved "caller";
+  string action = 3;
+  string action_prefix = 4;
+  string scope = 5;
+  int64 user_id = 6;
+  repeated string action_sets = 7;
+  repeated string role_prefixes = 8;
+  LegacySearchRequester requester = 9;
+}
+
+message LegacySearchRequester {
+  LegacyPermissionIdentity identity = 1;
+  int64 org_id = 2;
+  repeated LegacyUserPermission effective_permissions = 3;
+  repeated LegacyUserPermission global_permissions = 4;
+  repeated string external_groups = 5;
+  bool has_directory_context = 6;
+  // Only the private embedded service may use this credential for IAM directory lookups.
+  string iam_id_token = 7;
+  string username = 8;
+  string name = 9;
+  // The direct IAM router forwards the authenticated caller's access token.
+  string iam_access_token = 10;
+}
+
+message LegacySearchUsersPermissionsResponse {
+  int64 user_id = 1;
+  repeated LegacySearchPermission permissions = 2;
+  bool nil_permissions = 3;
+}
+
+message LegacySearchPermission {
+  string action = 1;
+  string scope = 2;
+  string kind = 3;
+  string attribute = 4;
+  string identifier = 5;
+  string datasource_type = 6;
+  int64 id = 7;
+  int64 role_id = 8;
+  google.protobuf.Timestamp created = 9;
+  google.protobuf.Timestamp updated = 10;
 }

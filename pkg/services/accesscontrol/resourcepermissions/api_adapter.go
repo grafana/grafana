@@ -1009,16 +1009,17 @@ func (s *Service) setTeamMembers(ctx context.Context, dynamicClient dynamic.Inte
 		permission iamv0.TeamTeamPermission
 		remove     bool
 	}
+	userUIDs, err := s.getUserUIDs(ctx, commands)
+	if err != nil {
+		return false, fmt.Errorf("failed to get user details: %w", err)
+	}
+
 	changes := make([]memberChange, 0, len(commands))
 	for _, cmd := range commands {
 		if cmd.UserID == 0 {
 			continue
 		}
-		userDetails, err := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: cmd.UserID})
-		if err != nil {
-			return false, fmt.Errorf("failed to get user details: %w", err)
-		}
-		mc := memberChange{uid: userDetails.UID, remove: cmd.Permission == ""}
+		mc := memberChange{uid: userUIDs[cmd.UserID], remove: cmd.Permission == ""}
 		if !mc.remove {
 			mp, err := stringToTeamMemberPermission(cmd.Permission)
 			if err != nil {

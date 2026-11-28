@@ -1,0 +1,5 @@
+apiVersion: secret.grafana.app/v1beta1
+kind: SecureValue
+spec:
+  description: Compat smoke secure value
+  value: compat-smoke-value

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
-import { useCallback, useEffect, useId, useState } from 'react';
+import { useCallback, useId, useState } from 'react';
 import * as React from 'react';
 import { useUpdateEffect } from 'react-use';
 
@@ -57,11 +57,13 @@ export function QueryOperationRow({
 
   // Force QueryOperationRow expansion when `isOpen` prop updates in parent component.
   // `undefined` can be deliberately passed value here, but we only want booleans to trigger the effect.
-  useEffect(() => {
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (prevIsOpen !== isOpen) {
+    setPrevIsOpen(isOpen);
     if (typeof isOpen === 'boolean') {
       setIsContentVisible(isOpen);
     }
-  }, [isOpen]);
+  }
 
   useUpdateEffect(() => {
     if (isContentVisible) {

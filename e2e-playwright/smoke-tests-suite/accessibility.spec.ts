@@ -110,7 +110,9 @@ test.describe(
       test(url, async ({ page, selectors, scanForA11yViolations }) => {
         await page.goto(url, { waitUntil: 'domcontentloaded' });
         await expect(page.getByTestId(selectors.components.Breadcrumbs.breadcrumb('Home')).first()).toBeVisible();
-        await page.waitForTimeout(1_000); // wait an additional second to allow any animations to complete and for the page to stabilize before starting the scan
+        // disable all transitions - this ensures we don't try to test an element mid-transition (e.g. secondary -> primary button will fail contrast)
+        await page.addStyleTag({ content: '*, *::before, *::after { transition: none !important; }' });
+        await page.waitForTimeout(1_000); // wait an additional second to allow the page to stabilize before starting the scan
         const results = await scanForA11yViolations({
           options: {
             rules: {

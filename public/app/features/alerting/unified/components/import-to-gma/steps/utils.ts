@@ -1,7 +1,13 @@
 /**
  * Shared validation utilities for import-to-gma steps
  */
+import { skipToken } from '@reduxjs/toolkit/query/react';
+
+import { type ComboboxOption } from '@grafana/ui';
+
+import { type ValidateAlertmanagerConfigImportArgs } from '../../../api/convertToGMAApi';
 import { isAutoSyncSelected } from '../Wizard/steps';
+import { type ImportFormValues, type RulesImportSpec, type Step1Values } from '../types';
 
 /** RFC 1123 subdomain pattern — must match the backend's identifier validation */
 const POLICY_TREE_NAME_PATTERN = /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/;
@@ -104,29 +110,119 @@ export function canRunDryRun(params: Step1ValidationParams): boolean {
   return isStep1Valid({ ...params, autoSyncNotificationsEnabled: false });
 }
 
-export interface Step2ValidationParams {
-  rulesSource: 'yaml' | 'datasource';
-  rulesYamlFile: File | null;
-  rulesDatasourceUID: string | null | undefined;
-  /** Selected routing tree name */
-  selectedRoutingTree: string;
-  targetDatasourceUID: string | null | undefined;
+/** The form fields `buildRulesImportSpec` reads. */
+export const RULES_SPEC_FIELDS = [
+  'rulesSource',
+  'rulesDatasourceUID',
+  'rulesDatasourceName',
+  'rulesYamlFile',
+  'yamlImportTargetDatasourceUID',
+  'yamlImportTargetDatasourceName',
+  'namespace',
+  'ruleGroup',
+  'selectedRoutingTree',
+  'targetFolder',
+  'pauseAlertingRules',
+  'pauseRecordingRules',
+  'targetDatasourceUID',
+] satisfies Array<keyof ImportFormValues>;
+
+export type RulesSpecValues = Pick<ImportFormValues, (typeof RULES_SPEC_FIELDS)[number]>;
+
+/** The rules import described by the form, or undefined until the form is complete. */
+export function buildRulesImportSpec(values: RulesSpecValues): RulesImportSpec | undefined {
+  const { selectedRoutingTree, targetDatasourceUID, targetFolder, pauseAlertingRules, pauseRecordingRules } = values;
+  if (!selectedRoutingTree || !targetDatasourceUID) {
+    return undefined;
+  }
+  const settings = { selectedRoutingTree, targetDatasourceUID, targetFolder, pauseAlertingRules, pauseRecordingRules };
+
+  if (values.rulesSource === 'yaml') {
+    const uid = values.yamlImportTargetDatasourceUID;
+    if (!values.rulesYamlFile || !uid) {
+      return undefined;
+    }
+    return {
+      ...settings,
+      type: 'yaml',
+      file: values.rulesYamlFile,
+      datasource: { uid, name: values.yamlImportTargetDatasourceName ?? null },
+    };
+  }
+
+  if (!values.rulesDatasourceUID) {
+    return undefined;
+  }
+  return {
+    ...settings,
+    type: 'datasource',
+    datasource: { uid: values.rulesDatasourceUID, name: values.rulesDatasourceName },
+    namespace: values.namespace,
+    ruleGroup: values.ruleGroup,
+  };
+}
+
+export function pickStep1Values(values: ImportFormValues): Step1Values {
+  return {
+    policyTreeName: values.policyTreeName,
+    notificationsSource: values.notificationsSource,
+    notificationsDatasourceUID: values.notificationsDatasourceUID,
+    notificationsDatasourceName: values.notificationsDatasourceName,
+    notificationsYamlFile: values.notificationsYamlFile,
+    notificationsTemplateFiles: values.notificationsTemplateFiles,
+    autoSyncNotificationsEnabled: values.autoSyncNotificationsEnabled,
+  };
 }
 
 /**
- * Validates that Step 2 form is complete and valid
+ * The dry run checks the configuration, so it can run as soon as there is one: a file was uploaded or a
+ * datasource picked. A valid policy tree name is sent along when there is one, since contact points that
+ * clash with existing ones are renamed after it. Auto-sync names the tree itself, so its dry run uses the
+ * name the sync will pick, and waits until that is known.
  */
-export function isStep2Valid(params: Step2ValidationParams): boolean {
-  const { rulesSource, rulesYamlFile, rulesDatasourceUID, selectedRoutingTree, targetDatasourceUID } = params;
+export function buildDryRunArgs(
+  values: Step1Values,
+  autoSyncIdentifier: string | undefined
+): ValidateAlertmanagerConfigImportArgs | typeof skipToken {
+  const autoSyncActive = isAutoSyncSelected(values.autoSyncNotificationsEnabled ?? false, values.notificationsSource);
+  const hasSource =
+    !findDuplicateTemplateFileName(values.notificationsTemplateFiles) &&
+    hasValidSourceSelection(
+      values.notificationsSource,
+      values.notificationsYamlFile,
+      values.notificationsDatasourceUID
+    );
+  if (!hasSource || (autoSyncActive && !autoSyncIdentifier)) {
+    return skipToken;
+  }
+  let configIdentifier: string | undefined;
+  if (autoSyncActive) {
+    configIdentifier = autoSyncIdentifier;
+  } else if (values.policyTreeName && validatePolicyTreeName(values.policyTreeName) === true) {
+    configIdentifier = values.policyTreeName;
+  }
+  return {
+    source: values.notificationsSource,
+    yamlFile: values.notificationsYamlFile,
+    templateFiles: values.notificationsTemplateFiles,
+    datasourceName: values.notificationsDatasourceName ?? undefined,
+    configIdentifier,
+  };
+}
 
-  if (!hasValidSourceSelection(rulesSource, rulesYamlFile, rulesDatasourceUID)) {
-    return false;
-  }
-  if (!selectedRoutingTree) {
-    return false;
-  }
-  if (!targetDatasourceUID) {
-    return false;
-  }
-  return true;
+/**
+ * The policy trees the rules step can route to: the ones the API knows, plus the one step 1 will create.
+ * That tree isn't known to the API yet, so it is offered first as the most relevant option.
+ */
+export function getRoutingTreeOptions(
+  existingTreeOptions: Array<ComboboxOption<string>>,
+  createdTreeName: string,
+  step1Completed: boolean
+): Array<ComboboxOption<string>> {
+  const isUncreatedTree =
+    step1Completed && createdTreeName && !existingTreeOptions.some((option) => option.value === createdTreeName);
+
+  return isUncreatedTree
+    ? [{ label: createdTreeName, value: createdTreeName }, ...existingTreeOptions]
+    : existingTreeOptions;
 }

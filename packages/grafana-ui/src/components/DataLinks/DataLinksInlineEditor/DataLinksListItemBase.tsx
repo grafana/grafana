@@ -45,8 +45,8 @@ export function DataLinksListItemBase<T extends DataLink | Action>({
         <div
           className={cx(styles.wrapper, styles.dragRow)}
           ref={provided.innerRef}
-          {...provided.draggableProps}
           key={index}
+          {...provided.draggableProps}
         >
           <div className={styles.linkDetails}>
             <div className={cx(styles.url, !hasTitle && styles.notConfigured)}>

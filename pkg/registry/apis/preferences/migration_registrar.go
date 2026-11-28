@@ -30,6 +30,7 @@ func PreferencesMigration(migrator legacy.PreferencesMigrator) migrations.Migrat
 			// (namespace + valid user + valid team), excluding orphans.
 			legacy.PreferencesCountValidation(preferencesGR),
 		},
-		RenameTables: []string{},
+		SkipWhenMissing: true, // fresh installs never create the preferences table
+		RenameTables:    []string{},
 	}
 }

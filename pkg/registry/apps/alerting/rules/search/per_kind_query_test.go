@@ -284,7 +284,7 @@ func TestPerKindTranslateQuery_labelSelector(t *testing.T) {
 // and repeating the leaf conjoins matchers. Negated values are rejected before
 // translation so the operator is the only source of polarity.
 func TestPerKindTranslateQuery_labelsFilterLeaf(t *testing.T) {
-	leaf := func(op string, vals ...string) searchv0.WhereNode {
+	leaf := func(op searchv0.FilterOperator, vals ...string) searchv0.WhereNode {
 		return perKindFilterLeaf(fieldLabels, op, vals...)
 	}
 	build := func(t *testing.T, nodes ...searchv0.WhereNode) *Query {
@@ -296,7 +296,7 @@ func TestPerKindTranslateQuery_labelsFilterLeaf(t *testing.T) {
 
 	t.Run("encodes one matcher per leaf", func(t *testing.T) {
 		for _, tc := range []struct {
-			op       string
+			op       searchv0.FilterOperator
 			value    string
 			operator string
 			// The term stays positive whatever the polarity: negation rides on the

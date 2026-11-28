@@ -8,6 +8,7 @@ import (
 	"maps"
 	"net/http"
 	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -447,6 +448,58 @@ func TestStartupIndexStatsCountLimit(t *testing.T) {
 	}
 }
 
+func TestStartupPrebuildsTrashHeavyIndexes(t *testing.T) {
+	storage := setupTestStorageBackend(t)
+	search := &mockSearchBackend{snapshotThreshold: 4, reusesFromDisk: true}
+	server, err := newSearchServer(SearchOptions{
+		Backend:           search,
+		Resources:         &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"dashboard.grafana.app": "dashboards"}},
+		InitMinCount:      2,
+		InitWorkerThreads: 1,
+	}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	for _, fixture := range []struct {
+		namespace     string
+		live, deleted int
+	}{
+		{"mixed", 1, 6},
+		{"trash-only", 0, 3},
+		{"at-threshold", 1, 1},
+	} {
+		for i := range fixture.live + fixture.deleted {
+			action := DataActionCreated
+			if i >= fixture.live {
+				action = DataActionDeleted
+			}
+			key := dashboardType(fixture.namespace)
+			require.NoError(t, storage.dataStore.Save(t.Context(), DataKey{
+				Group: key.Group, Resource: key.Resource, Namespace: key.Namespace,
+				Name: fmt.Sprintf("dashboard-%d", i), Action: action, ResourceVersion: node.Generate().Int64(),
+			}, strings.NewReader("{}")))
+		}
+	}
+
+	for i := range 3 {
+		require.NoError(t, storage.dataStore.Save(t.Context(), DataKey{
+			Group: "iam.grafana.app", Resource: "globalroles", Name: fmt.Sprintf("role-%d", i),
+			Action: DataActionDeleted, ResourceVersion: node.Generate().Int64(),
+		}, strings.NewReader("{}")))
+	}
+
+	liveOnly, err := storage.GetResourceStatsWithLimit(t.Context(), NamespacedResource{}, 2, 5)
+	require.NoError(t, err)
+	require.Empty(t, liveOnly, "existing callers still filter by live count")
+
+	built, err := server.buildIndexes(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, 2, built)
+	require.ElementsMatch(t, []buildIndexCall{
+		{key: dashboardType("mixed"), size: 5},
+		{key: dashboardType("trash-only"), size: 3},
+	}, search.buildIndexCalls)
+}
+
 // Saved indexes are used as they are: nothing asks storage which namespaces
 // could have a global index.
 func TestStartupIndexStatsUsesSavedIndexesWithoutDiscovery(t *testing.T) {
@@ -534,7 +587,9 @@ func (m *mockSearchBackend) TotalDocs() int64 {
 }
 
 func (m *mockSearchBackend) GetOpenIndexes() []NamespacedResource {
-	return m.openIndexes
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return slices.Clone(m.openIndexes)
 }
 
 func (m *mockSearchBackend) Stop() {
@@ -1852,6 +1907,12 @@ func TestCombineBuildRequests(t *testing.T) {
 			expOK: true,
 			exp:   rebuildRequest{selectableFields: []string{"folder", "team", "title"}},
 		},
+		"keep migration read": {
+			a:     rebuildRequest{migrationRead: true},
+			b:     rebuildRequest{},
+			expOK: true,
+			exp:   rebuildRequest{migrationRead: true},
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			res1, ok := combineRebuildRequests(tc.a, tc.b)
@@ -1874,19 +1935,15 @@ func TestCombineBuildRequests(t *testing.T) {
 // features safe: requiring a feature this binary never records would rebuild
 // every index on every check, forever.
 func TestRequiredIndexFeaturesAreCurrent(t *testing.T) {
-	for _, postRankAuthz := range []bool{false, true} {
-		for _, required := range RequiredIndexFeatures(postRankAuthz) {
-			require.Contains(t, CurrentIndexFeatures(), required)
-		}
+	for _, required := range RequiredIndexFeatures() {
+		require.Contains(t, CurrentIndexFeatures(), required)
 	}
 }
 
 func TestSortableTrashResourceVersionIsRecordedButNotRequired(t *testing.T) {
 	require.Contains(t, CurrentIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
 	require.NotContains(t, TrashIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
-	for _, postRankAuthz := range []bool{false, true} {
-		require.NotContains(t, RequiredIndexFeatures(postRankAuthz), IndexFeatureSortableTrashResourceVersion)
-	}
+	require.NotContains(t, RequiredIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
 }
 
 // Every index built now keeps deleted documents, and records it, so a reader can
@@ -1919,27 +1976,19 @@ func TestUnknownIndexRequirements(t *testing.T) {
 		UnknownIndexRequirements([]IndexFeature{IndexFeatureDeletedMarker, "feature-from-the-future"}))
 }
 
-// TestRequiredIndexFeaturesStoredFacets covers the gating that keeps the stored
-// facet mapping from rebuilding indexes where post-rank authorization is off.
+// PostRank facet aggregation needs stored facet fields on every index.
 func TestRequiredIndexFeaturesStoredFacets(t *testing.T) {
-	require.NotContains(t, RequiredIndexFeatures(false), IndexFeatureStoredFacets)
-	require.Contains(t, RequiredIndexFeatures(true), IndexFeatureStoredFacets)
+	require.Contains(t, RequiredIndexFeatures(), IndexFeatureStoredFacets)
 
-	// An index built before the stored facet mapping is reused with the option
-	// off, and rebuilt once it is on.
 	buildInfo := IndexBuildInfo{Features: slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments})}
-	require.Empty(t, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(false)))
-	require.Equal(t, []IndexFeature{IndexFeatureStoredFacets}, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(true)))
+	require.Equal(t, []IndexFeature{IndexFeatureStoredFacets}, MissingIndexFeatures(buildInfo, RequiredIndexFeatures()))
 }
 
-// An index missing the trash mappings must be rebuilt rather than serve an empty
-// trash, whatever the facet option is set to.
+// An index missing the trash mappings must be rebuilt rather than serve an empty trash.
 func TestTrashIndexFeaturesAreRequired(t *testing.T) {
 	buildInfo := IndexBuildInfo{Features: []IndexFeature{IndexFeatureStoredFacets}}
 	want := slices.Sorted(slices.Values(slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments})))
-	for _, postRankAuthz := range []bool{false, true} {
-		require.Equal(t, want, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(postRankAuthz)))
-	}
+	require.Equal(t, want, MissingIndexFeatures(buildInfo, RequiredIndexFeatures()))
 }
 
 // An index that maps the trash fields but was built before deleted documents were kept
@@ -1947,8 +1996,8 @@ func TestTrashIndexFeaturesAreRequired(t *testing.T) {
 func TestHoldingDeletedDocumentsIsRequired(t *testing.T) {
 	buildInfo := IndexBuildInfo{Features: TrashIndexFeatures()}
 	require.Equal(t,
-		[]IndexFeature{IndexFeatureHoldsDeletedDocuments},
-		MissingIndexFeatures(buildInfo, RequiredIndexFeatures(false)))
+		[]IndexFeature{IndexFeatureStoredFacets, IndexFeatureHoldsDeletedDocuments},
+		MissingIndexFeatures(buildInfo, RequiredIndexFeatures()))
 }
 
 func TestShouldRebuildIndex(t *testing.T) {
@@ -2408,14 +2457,14 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		{Namespace: "resource-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: lastImportTime,
 	}
 
-	support.findIndexesToRebuild(importTimes, nil, now, false)
+	support.findIndexesToRebuild(t.Context(), importTimes, nil, now, false)
 	require.Equal(t, 9, support.rebuildQueue.Len())
 
 	now5m := now.Add(5 * time.Minute)
 
 	// Running findIndexesToRebuild again should not add any new indexes to the rebuild queue, and all existing
 	// ones should be "combined" with new ones (this will "bump" minBuildTime)
-	support.findIndexesToRebuild(importTimes, nil, now5m, false)
+	support.findIndexesToRebuild(t.Context(), importTimes, nil, now5m, false)
 	require.Zero(t, search.getIndexCalls, "rebuild inspection must not refresh index idle timestamps")
 	require.Equal(t, 9, support.rebuildQueue.Len())
 
@@ -2487,7 +2536,6 @@ func TestRebuildIndexesIgnoresUnrelatedInvalidImportTime(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Nil(t, response.Error)
 	require.Zero(t, response.RebuildCount, "both requested indexes have caught up with their imports")
 	require.Len(t, response.BuildTimes, len(keys))
 	require.Zero(t, storage.listCalls, "explicit rebuilds must not read unrelated records")
@@ -2654,8 +2702,8 @@ func TestRebuildIndexes(t *testing.T) {
 
 		rsp, err := support.RebuildIndexes(context.Background(), rebuildReq)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		require.Equal(t, int64(0), rsp.RebuildCount, "no rebuilds should be triggered")
+		require.Zero(t, search.getIndexCalls, "collecting build metadata must not refresh index idle timestamps")
 
 		// Verify BuildTimes contains entries for key1 and key2, but not key3 (zero time)
 		require.Len(t, rsp.BuildTimes, 2, "should have 2 build times (key3 has zero time)")
@@ -2701,6 +2749,28 @@ func checkRebuildIndex(t *testing.T, support *searchServer, req rebuildRequest, 
 	} else {
 		require.Nil(t, idxAfter, "index should not exist after rebuildIndex")
 	}
+}
+
+func TestRebuildIndexPassesOriginalIndexToBackend(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	original := &MockResourceIndex{}
+	var rebuildFrom ResourceIndex
+	backend := &initialBuildTestBackend{
+		mockSearchBackend: mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{key: original}},
+		beforeBuild: func(_ context.Context, _ NamespacedResource, opts BuildIndexOptions) error {
+			rebuildFrom = opts.RebuildFrom
+			return ErrIndexClosedDuringRebuild
+		},
+	}
+	server, err := newSearchServer(SearchOptions{
+		Backend:   backend,
+		Resources: &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
+	}, &mockStorageBackend{}, nil, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	server.rebuildIndex(t.Context(), rebuildRequest{NamespacedResource: key, minBuildTime: time.Now()})
+
+	require.Same(t, original, rebuildFrom)
 }
 
 type failingRebuildSearchBackend struct {
@@ -2822,6 +2892,73 @@ func TestRebuildIndexesForResource(t *testing.T) {
 
 	// rebuild waited for rebuild queue to process
 	require.Equal(t, 0, support.rebuildQueue.Len())
+}
+
+// migrationReadListStorage records, per index, whether each listing runs as a migration read.
+type migrationReadListStorage struct {
+	*mockStorageBackend
+
+	mu    sync.Mutex
+	marks map[NamespacedResource][]bool
+}
+
+func (m *migrationReadListStorage) ListIterator(ctx context.Context, req *resourcepb.ListRequest, callback func(ListIterator) error) (int64, error) {
+	key := req.Options.Key
+	nsr := NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}
+	m.mu.Lock()
+	m.marks[nsr] = append(m.marks[nsr], MigrationReadFromContext(ctx))
+	m.mu.Unlock()
+	return m.mockStorageBackend.ListIterator(ctx, req, callback)
+}
+
+func (m *migrationReadListStorage) marksFor(key NamespacedResource) []bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.marks[key]
+}
+
+// The rebuild worker reads as a migration only for the rebuilds a migration asked for.
+func TestRebuildIndexesQueuedRebuildKeepsMigrationRead(t *testing.T) {
+	migrated := NamespacedResource{Namespace: "migrated", Group: "group", Resource: "resource"}
+	other := NamespacedResource{Namespace: "other", Group: "group", Resource: "resource"}
+	importTime := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
+	storage := &migrationReadListStorage{
+		mockStorageBackend: &mockStorageBackend{lastImportTimes: []ResourceLastImportTime{
+			{NamespacedResource: migrated, LastImportTime: importTime},
+			{NamespacedResource: other, LastImportTime: importTime},
+		}},
+		marks: map[NamespacedResource][]bool{},
+	}
+	// Both indexes are open and predate the import, so the worker rebuilds them.
+	search := &mockSearchBackend{
+		buildTime: importTime.Add(time.Hour),
+		cache: map[NamespacedResource]ResourceIndex{
+			migrated: &MockResourceIndex{buildInfo: IndexBuildInfo{BuildTime: importTime.Add(-time.Hour)}},
+			other:    &MockResourceIndex{buildInfo: IndexBuildInfo{BuildTime: importTime.Add(-time.Hour)}},
+		},
+	}
+	support, err := newSearchServer(SearchOptions{
+		Backend:   search,
+		Resources: &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
+	}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+	require.NoError(t, support.init(t.Context()))
+	defer support.stop()
+
+	rebuild := func(ctx context.Context, key NamespacedResource) {
+		t.Helper()
+		rsp, err := support.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{
+			Namespace: key.Namespace,
+			Keys:      []*resourcepb.ResourceKey{{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
+		})
+		require.NoError(t, err)
+		require.EqualValues(t, 1, rsp.RebuildCount)
+	}
+	rebuild(ContextWithMigrationRead(t.Context()), migrated)
+	rebuild(t.Context(), other)
+
+	require.Equal(t, []bool{true}, storage.marksFor(migrated), "the migration's rebuild reads as the migration")
+	require.Equal(t, []bool{false}, storage.marksFor(other), "another rebuild reads as before")
 }
 
 func TestMaybeInjectFailure(t *testing.T) {
@@ -2948,7 +3085,7 @@ func TestSearchResolvesReplacementFolderIndex(t *testing.T) {
 		backend.cache[folderKey] = folders
 		rsp, err := s.searchIndex(t.Context(), NewSearchStats("test"), req, dashKey, nil)
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
+		require.NotNil(t, rsp)
 		require.Same(t, folders, primary.indexes.Folders)
 	}
 	require.Equal(t, 1, oldFolders.updateIndexCalls)
@@ -3187,7 +3324,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 	importTimes := map[NamespacedResource]time.Time{}
 
 	// Without jitter: all indexes are stale and should be queued.
-	chsNoJitter := support.findIndexesToRebuild(importTimes, nil, now, false)
+	chsNoJitter := support.findIndexesToRebuild(t.Context(), importTimes, nil, now, false)
 	require.Equal(t, numIndexes, len(chsNoJitter))
 
 	// Create a second server with the same config to get a fresh rebuild queue.
@@ -3195,7 +3332,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 	require.NoError(t, err)
 
 	// With jitter: some indexes get extra tolerance, so fewer should be queued.
-	chsWithJitter := support2.findIndexesToRebuild(importTimes, nil, now, true)
+	chsWithJitter := support2.findIndexesToRebuild(t.Context(), importTimes, nil, now, true)
 	require.Less(t, len(chsWithJitter), numIndexes, "jitter should cause some indexes to not be queued yet")
 	require.Greater(t, len(chsWithJitter), 0, "at least some indexes should still be queued")
 }
@@ -3426,9 +3563,9 @@ func TestRebuildIndexNoFollowUpWhenNotInFlight(t *testing.T) {
 	require.False(t, inFlight, "in-flight tracker should be cleared")
 	require.Equal(t, 0, support.rebuildQueue.Len(), "no follow-up should be re-enqueued")
 	require.Len(t, search.buildIndexCalls, 1)
-	require.Equal(t, int64(50), search.buildIndexCalls[0].size)
+	require.Equal(t, unknownBuildSize, search.buildIndexCalls[0].size, "the backend sizes the rebuild from the original index")
 	require.Equal(t, lastImportTime, search.buildIndexCalls[0].lastImportTime)
-	require.Zero(t, storage.statsCalls.Load(), "rebuild should use the current index doc count instead of GetResourceStats")
+	require.Zero(t, storage.statsCalls.Load(), "rebuild should not count documents in storage")
 }
 
 // TestSearchServer_VectorSearch_ObservesDuration verifies the RPC histogram

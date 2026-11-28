@@ -58,7 +58,7 @@ func newBuilderWithSettings(service *fakeSettingService) *DashboardsAPIBuilder {
 	if service != nil {
 		settings = service
 	}
-	return NewAPIService(authlib.FixedAccessClient(true), nil, testutil.NewDataSourceProvider(testutil.StandardTestConfig), testutil.NewLibraryElementProvider(), nil, nil, nil, settings)
+	return NewAPIService(authlib.FixedAccessClient(true), nil, testutil.NewDataSourceProvider(testutil.StandardTestConfig), testutil.NewLibraryElementProvider(), nil, nil, nil, settings, NoopDashboardLifecycleExtras{})
 }
 
 func TestDashboardAPIBuilder_MinRefreshIntervalFor(t *testing.T) {

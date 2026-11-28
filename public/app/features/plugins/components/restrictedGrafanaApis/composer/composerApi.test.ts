@@ -196,6 +196,7 @@ describe('presentation', () => {
     notifyExtensionSidebarClosed();
 
     expect(session.signal.aborted).toBe(true);
+    expect(session.signal.reason).toBe('sidebar_closed');
     expect(sidebarPresentation()).toBe('docked');
   });
 
@@ -271,7 +272,7 @@ it('passes entry requests from Grafana to the registered listeners until they un
   const listener = jest.fn();
   const unsubscribe = composerApi.onEnterRequested(listener);
   requestComposerEnter(DASHBOARD);
-  expect(listener).toHaveBeenCalledWith(DASHBOARD);
+  expect(listener).toHaveBeenCalledWith(DASHBOARD, { assistantEdit: false });
 
   unsubscribe();
   requestComposerEnter(DASHBOARD);
@@ -288,7 +289,7 @@ it('passes notebook requests only to listeners that ask for them', () => {
   requestComposerEnter(notebook);
 
   expect(dashboards).not.toHaveBeenCalled();
-  expect(both).toHaveBeenCalledWith(notebook);
+  expect(both).toHaveBeenCalledWith(notebook, { assistantEdit: false });
   stopDashboards();
   stopBoth();
   clearPendingComposerEnterRequest();

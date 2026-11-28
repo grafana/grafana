@@ -3,9 +3,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { getDefaultTimeRange, LoadingState, type PanelData, store } from '@grafana/data';
 
 import { PanelModel } from '../../../state/PanelModel';
-import { DisplayMode } from '../types';
-
-export const PANEL_EDITOR_UI_STATE_STORAGE_KEY = 'grafana.dashboard.editor.ui';
+import { DisplayMode, PANEL_EDITOR_UI_STATE_STORAGE_KEY } from '../types';
 
 const DEFAULT_PANEL_EDITOR_UI_STATE: PanelEditorUIState = {
   isPanelOptionsVisible: true,

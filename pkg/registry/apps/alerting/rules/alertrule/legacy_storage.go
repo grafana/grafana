@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/util/dryrun"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/convert"
@@ -20,7 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 var validNotificationSettingsTypes = []string{
@@ -28,59 +30,14 @@ var validNotificationSettingsTypes = []string{
 	string(ngmodels.NotificationSettingsTypeNamedRoutingTree),
 }
 
-// onlyAlertingVersions filters versions to those representing alerting rules. Versions of
-// recording rules share storage but should not surface through the AlertRule resource.
-func onlyAlertingVersions(versions []*ngmodels.AlertRuleVersion) []*ngmodels.AlertRuleVersion {
-	out := versions[:0]
-	for _, v := range versions {
-		if v == nil {
-			continue
-		}
-		if v.Type() != ngmodels.RuleTypeAlerting {
-			continue
-		}
-		out = append(out, v)
-	}
-	return out
-}
-
-// onlyAlertingRules filters deleted rules to those representing alerting rules.
-func onlyAlertingRules(rules []*ngmodels.AlertRule) []*ngmodels.AlertRule {
-	out := rules[:0]
-	for _, r := range rules {
-		if r == nil {
-			continue
-		}
-		if r.Type() != ngmodels.RuleTypeAlerting {
-			continue
-		}
-		out = append(out, r)
-	}
-	return out
-}
-
 var (
-	_ grafanarest.Storage    = (*legacyStorage)(nil)
-	_ rest.CollectionDeleter = (*legacyStorage)(nil)
+	_ grafanarest.Storage            = (*legacyStorage)(nil)
+	_ rest.CollectionDeleter         = (*legacyStorage)(nil)
+	_ dualwrite.DryRunUpdatePreparer = (*legacyStorage)(nil)
 )
 
-// toAPIError classifies errors from the alert rule service into the matching apierrors status.
-func toAPIError(name string, err error) error {
-	switch {
-	case errors.Is(err, ngmodels.ErrAlertRuleFailedValidation):
-		return k8serrors.NewBadRequest(err.Error())
-	case errors.Is(err, ngmodels.ErrQuotaReached):
-		return k8serrors.NewForbidden(ResourceInfo.GroupResource(), name, err)
-	case errors.Is(err, ngmodels.ErrAlertRuleNotFound):
-		return k8serrors.NewNotFound(ResourceInfo.GroupResource(), name)
-	default:
-		return err
-	}
-}
-
 type legacyStorage struct {
-	service        provisioning.AlertRuleService
-	namespacer     request.NamespaceMapper
+	rules          *legacy.AlertRules
 	tableConverter rest.TableConvertor
 }
 
@@ -109,28 +66,23 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 // listSpecialMode handles the reserved label selectors (grafana.app/get-history and
 // grafana.app/get-trash). It returns handled=true when the selector matched and the result was
 // produced; callers should otherwise continue with the regular list pipeline.
-func (s *legacyStorage) listSpecialMode(ctx context.Context, orgID int64, user identity.Requester, opts *internalversion.ListOptions) (runtime.Object, bool, error) {
+func (s *legacyStorage) listSpecialMode(ctx context.Context, user identity.Requester, orgID int64, opts *internalversion.ListOptions) (runtime.Object, bool, error) {
 	mode, ruleName, err := common.ParseListMode(opts.LabelSelector, opts.FieldSelector)
 	if err != nil {
 		return nil, true, k8serrors.NewBadRequest(err.Error())
 	}
 	switch mode {
 	case common.ListModeHistory:
-		versions, err := s.service.GetAlertRuleVersions(ctx, user, ruleName)
+		out, err := s.rules.History(ctx, user, orgID, ruleName)
 		if err != nil {
 			if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 				return nil, true, k8serrors.NewNotFound(ResourceInfo.GroupResource(), ruleName)
 			}
 			return nil, true, err
 		}
-		out, err := convertVersionsToK8sResources(orgID, onlyAlertingVersions(versions), s.namespacer)
-		return out, true, err
+		return out, true, nil
 	case common.ListModeTrash:
-		deleted, err := s.service.GetDeletedAlertRules(ctx, user)
-		if err != nil {
-			return nil, true, err
-		}
-		out, err := convertDeletedToK8sResources(orgID, onlyAlertingRules(deleted), s.namespacer)
+		out, err := s.rules.Trash(ctx, user, orgID)
 		return out, true, err
 	case common.ListModeNormal:
 	}
@@ -148,7 +100,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
-	if out, handled, err := s.listSpecialMode(ctx, info.OrgID, user, opts); handled || err != nil {
+	if out, handled, err := s.listSpecialMode(ctx, user, info.OrgID, opts); handled || err != nil {
 		return out, err
 	}
 
@@ -162,13 +114,13 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	}
 
 	var (
-		titleFilter            provisioning.ListRuleStringFilter
-		pausedFilter           provisioning.ListRuleBoolFilter
-		dashboardFilter        provisioning.ListRuleStringFilter
-		panelIDFilter          provisioning.ListRuleStringFilter
-		notificationTypeFilter provisioning.ListRuleStringFilter
-		receiverFilter         provisioning.ListRuleStringFilter
-		routingTreeFilter      provisioning.ListRuleStringFilter
+		titleFilter            legacy.ListRuleStringFilter
+		pausedFilter           legacy.ListRuleBoolFilter
+		dashboardFilter        legacy.ListRuleStringFilter
+		panelIDFilter          legacy.ListRuleStringFilter
+		notificationTypeFilter legacy.ListRuleStringFilter
+		receiverFilter         legacy.ListRuleStringFilter
+		routingTreeFilter      legacy.ListRuleStringFilter
 	)
 	if opts.FieldSelector != nil && !opts.FieldSelector.Empty() {
 		for _, r := range opts.FieldSelector.Requirements() {
@@ -217,8 +169,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		}
 	}
 
-	rules, managerPropsMap, continueToken, err := s.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
-		RuleType:               ngmodels.RuleTypeFilterAlerting,
+	return s.rules.List(ctx, user, info.OrgID, legacy.ListAlertRulesOptions{
 		Limit:                  opts.Limit,
 		ContinueToken:          opts.Continue,
 		GroupFilter:            groupFilter,
@@ -231,10 +182,6 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		ReceiverFilter:         receiverFilter,
 		RoutingTreeFilter:      routingTreeFilter,
 	})
-	if err != nil {
-		return nil, err
-	}
-	return convertToK8sResources(info.OrgID, rules, managerPropsMap, s.namespacer, continueToken)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -247,22 +194,17 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 		return nil, err
 	}
 
-	rule, managerProps, err := s.service.GetAlertRule(ctx, user, name)
+	rule, err := s.rules.Get(ctx, user, info.OrgID, name)
 	if err != nil {
 		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 			return nil, k8serrors.NewNotFound(ResourceInfo.GroupResource(), name)
 		}
 		return nil, err
 	}
-
-	obj, err := convertToK8sResource(info.OrgID, &rule, managerProps, s.namespacer)
-	if err != nil && errors.Is(err, errInvalidRule) {
-		return nil, k8serrors.NewNotFound(ResourceInfo.GroupResource(), name)
-	}
-	return obj, err
+	return rule, nil
 }
 
-func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
+func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -288,71 +230,23 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 	if p.GenerateName != "" {
 		return nil, fmt.Errorf("generate-name is not supported in legacy storage mode")
 	}
-	domainModel, managerProps, err := convertToDomainModel(info.OrgID, p)
-	if err != nil {
-		return nil, err
-	}
 
-	created, err := s.service.CreateAlertRule(ctx, user, *domainModel, managerProps)
+	created, err := s.rules.Create(ctx, user, info.OrgID, p, options != nil && dryrun.IsDryRun(options.DryRun))
 	if err != nil {
-		return nil, toAPIError(p.GetName(), err)
+		return nil, common.ToAPIError(ResourceInfo.GroupResource(), p.GetName(), err)
 	}
-
-	return convertToK8sResource(info.OrgID, &created, managerProps, s.namespacer)
+	return created, nil
 }
 
-func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	info, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, false, err
-	}
+func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, _ bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return common.LegacyRuleUpdate(
+		ctx, name, objInfo, updateValidation, options != nil && dryrun.IsDryRun(options.DryRun),
+		ResourceInfo, s.Get, s.rules.Update,
+	)
+}
 
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, false, err
-	}
-
-	old, err := s.Get(ctx, name, nil)
-	if err != nil {
-		return old, false, err
-	}
-
-	obj, err := objInfo.UpdatedObject(ctx, old)
-	if err != nil {
-		return old, false, err
-	}
-	if updateValidation != nil {
-		if err := updateValidation(ctx, obj, old); err != nil {
-			return nil, false, err
-		}
-	}
-
-	new, err := convert.Hub[*v1beta1.AlertRule](obj)
-	if err != nil {
-		return nil, false, k8serrors.NewBadRequest("expected valid alert rule object")
-	}
-
-	domainModel, managerProps, err := convertToDomainModel(info.OrgID, new)
-	if err != nil {
-		return old, false, err
-	}
-
-	_, err = s.service.UpdateAlertRule(ctx, user, *domainModel, managerProps)
-	if err != nil {
-		return nil, false, toAPIError(name, err)
-	}
-
-	updated, managerProps, err := s.service.GetAlertRule(ctx, user, name)
-	if err != nil {
-		return nil, false, err
-	}
-
-	rule, err := convertToK8sResource(info.OrgID, &updated, managerProps, s.namespacer)
-	if err != nil {
-		return nil, false, err
-	}
-
-	return rule, false, nil
+func (s *legacyStorage) PrepareDryRunUpdate(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo) (runtime.Object, error) {
+	return common.LegacyRulePrepareDryRunUpdate(ctx, name, objInfo, ResourceInfo, s.Get, s.rules.Update)
 }
 
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, opts *metav1.DeleteOptions) (runtime.Object, bool, error) {
@@ -380,24 +274,75 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 		return nil, false, k8serrors.NewBadRequest("expected valid alert rule object")
 	}
 
-	// Derive manager properties the same way create/update do, so a resource managed
-	// by a specific manager (e.g. Terraform) is deleted with the matching manager and
-	// not the coarser provenance-derived equivalent.
-	_, managerProps, err := convertToDomainModel(info.OrgID, p)
-	if err != nil {
-		return nil, false, err
-	}
-
-	err = s.service.DeleteAlertRule(ctx, user, name, managerProps)
-	if err != nil {
+	if err := s.rules.Delete(ctx, user, info.OrgID, p, opts != nil && dryrun.IsDryRun(opts.DryRun)); err != nil {
 		return old, false, err
 	}
-
 	return old, false, nil
 }
 
-func (s *legacyStorage) DeleteCollection(_ context.Context, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *internalversion.ListOptions) (runtime.Object, error) {
-	// The dual-writer requires this interface even after migration routes
-	// collection deletion to unified storage. Legacy rows use the org SQL sweep.
-	return nil, k8serrors.NewMethodNotSupported(ResourceInfo.GroupResource(), "delete")
+// DeleteCollection deletes the alert rules matched by listOptions in pages of common.DeleteCollectionPageSize. Each page
+// is validated, authorized and deleted in its own transaction, so a page is deleted entirely or not at all. Like the
+// upstream apiserver, a failure stops the call with the pages before it already deleted.
+func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if listOptions == nil {
+		listOptions = &internalversion.ListOptions{}
+	}
+	if err := common.ValidateDeleteCollectionRequest(listOptions); err != nil {
+		return nil, err
+	}
+
+	opts := listOptions.DeepCopy()
+	// remaining is how many more rules the caller's limit allows; 0 means no limit.
+	remaining := opts.Limit
+	deleted := &v1beta1.AlertRuleList{Items: make([]v1beta1.AlertRule, 0)}
+	for {
+		opts.Limit = common.DeleteCollectionPageSize
+		if remaining > 0 && remaining < opts.Limit {
+			opts.Limit = remaining
+		}
+		items, next, err := common.ListPage(ctx, s.List, opts)
+		if err != nil {
+			return nil, err
+		}
+		rules := make([]*v1beta1.AlertRule, 0, len(items))
+		page := make([]v1beta1.AlertRule, 0, len(items))
+		for _, item := range items {
+			if deleteValidation != nil {
+				if err := deleteValidation(ctx, item); err != nil {
+					return nil, err
+				}
+			}
+			// The items come from our own List, so a conversion failure is a server error, not a bad request.
+			rule, err := convert.Hub[*v1beta1.AlertRule](item)
+			if err != nil {
+				return nil, k8serrors.NewInternalError(fmt.Errorf("failed to convert rule %q: %w", common.ObjectName(item), err))
+			}
+			rules = append(rules, rule)
+			page = append(page, *rule)
+		}
+		if err := s.rules.DeleteMany(ctx, user, info.OrgID, rules, options != nil && dryrun.IsDryRun(options.DryRun)); err != nil {
+			return nil, err
+		}
+		deleted.Items = append(deleted.Items, page...)
+
+		if remaining > 0 {
+			remaining -= int64(len(items))
+			if remaining <= 0 {
+				deleted.Continue = next
+				return deleted, nil
+			}
+		}
+		if next == "" {
+			return deleted, nil
+		}
+		opts.Continue = next
+	}
 }

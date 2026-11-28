@@ -50,6 +50,26 @@ const PANEL: NotebookElement = {
 };
 
 describe('validateNotebookSpec', () => {
+  it('keeps the id the server gave a cell, which a non-strict parse would otherwise drop', () => {
+    const base = spec();
+    const withId = spec({
+      layout: {
+        kind: 'NotebookLayout',
+        spec: {
+          cells: base.layout.spec.cells.map((item) => ({
+            ...item,
+            spec: { ...item.spec, id: '00000000-0000-4000-8000-000000000001' },
+          })),
+        },
+      },
+    });
+
+    const result = validateNotebookSpec(withId);
+
+    expect(result.data?.layout.spec.cells[0].spec.id).toBe('00000000-0000-4000-8000-000000000001');
+    expect(validateNotebookSpec(base).data?.layout.spec.cells[0].spec).not.toHaveProperty('id');
+  });
+
   it('accepts a minimal notebook', () => {
     expect(validateNotebookSpec(spec())).toMatchObject({ success: true, errors: [], warnings: [] });
   });

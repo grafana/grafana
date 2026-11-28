@@ -3,7 +3,7 @@ import { dropRight, last } from 'lodash';
 import { type DataFrame, type Labels, roundDecimals } from '@grafana/data';
 import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
-import { isCloudRulesSource } from '../../utils/datasource';
+import { isCloudRulesSource } from '../../utils/rulesSource';
 
 /**
  * ⚠️ `frame.fields` could be an empty array ⚠️

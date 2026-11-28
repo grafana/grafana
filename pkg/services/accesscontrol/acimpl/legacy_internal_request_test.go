@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -82,7 +83,7 @@ func TestBuildLegacyCheckInternalIdentity(t *testing.T) {
 			ac := ProvideAccessControlTest().WithoutResolvers().(*AccessControl)
 			evaluator := accesscontrol.EvalPermission("dashboards:create", "folders:uid:target")
 
-			req, err := ac.buildLegacyCheckRequest(tc.requester, evaluator, false, tc.mapper)
+			req, err := ac.buildLegacyCheckRequest(tc.requester, evaluator, tc.mapper)
 			if tc.wantError {
 				require.Error(t, err)
 				require.Equal(t, legacyclient.LegacyCheckRequest{}, req)
@@ -110,7 +111,7 @@ func TestBuildLegacyCheckBackgroundIdentity(t *testing.T) {
 			})
 			requester.GetPermissions()["action:without-scopes"] = nil
 
-			req, err := ProvideAccessControlTest().buildLegacyCheckRequest(requester, accesscontrol.EvalPermission("folders:read"), false, func(int64) string { return namespace })
+			req, err := ProvideAccessControlTest().buildLegacyCheckRequest(requester, accesscontrol.EvalPermission("folders:read"), func(int64) string { return namespace })
 			require.NoError(t, err)
 
 			expected := legacyclient.LegacyCheckRequest{
@@ -145,13 +146,13 @@ func TestBuildLegacyCheckDoesNotInferInternalIdentity(t *testing.T) {
 		Namespace: types.OrgNamespaceFormatter(legacyInternalRequestTestOrgID),
 	}
 
-	req, err := ProvideAccessControlTest().buildLegacyCheckRequest(requester, accesscontrol.EvalPermission("dashboards:create"), false, types.OrgNamespaceFormatter)
+	req, err := ProvideAccessControlTest().buildLegacyCheckRequest(requester, accesscontrol.EvalPermission("dashboards:create"), types.OrgNamespaceFormatter)
 	require.NoError(t, err)
 	require.Equal(t, legacyclient.LegacyCheckRequest{
-		Restriction: &legacyclient.LegacyActionRestriction{},
-		Namespace:   types.OrgNamespaceFormatter(legacyInternalRequestTestOrgID),
-		Subject:     types.NewTypeID(types.TypeAccessPolicy, identity.InternalIdentityService.String()),
-		Evaluator:   accesscontrol.EvalPermission("dashboards:create"),
-		Teams:       []string{},
+		RequesterOrgID: ptr.To(legacyInternalRequestTestOrgID),
+		Restriction:    &legacyclient.LegacyActionRestriction{},
+		Namespace:      types.OrgNamespaceFormatter(legacyInternalRequestTestOrgID),
+		Subject:        types.NewTypeID(types.TypeAccessPolicy, identity.InternalIdentityService.String()),
+		Evaluator:      accesscontrol.EvalPermission("dashboards:create"),
 	}, req)
 }

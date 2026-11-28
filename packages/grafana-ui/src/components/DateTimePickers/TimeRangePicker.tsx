@@ -3,17 +3,10 @@ import { autoUpdate, offset, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { memo, useCallback, useEffect, useRef, useState, type JSX } from 'react';
+import { memo, useContext, useCallback, useEffect, useRef, useState, type JSX } from 'react';
 import { useMedia } from 'react-use';
 
-import {
-  rangeUtil,
-  type GrafanaTheme2,
-  dateTimeFormat,
-  type TimeOption,
-  type TimeRange,
-  dateMath,
-} from '@grafana/data';
+import { rangeUtil, type GrafanaTheme2, type TimeOption, type TimeRange, dateMath, isDateTime } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type TimeZone } from '@grafana/schema';
@@ -28,11 +21,13 @@ import { ToolbarButton } from '../ToolbarButton/ToolbarButton';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
+import { TimeRangePickerContext } from './TimeRangePicker/TimeRangePickerContext';
 import { TimeZoneDescription } from './TimeZonePicker/TimeZoneDescription';
 import { getTimeZoneTitle } from './TimeZonePicker/TimeZoneTitle';
 import { getTimeZoneDisplayInfo } from './TimeZonePicker/timeZoneUtils';
 import { type WeekStart } from './WeekStartPicker';
 import { getQuickOptions } from './options';
+import { formatWithOptionalMs } from './utils';
 import { useTimeSync } from './utils/useTimeSync';
 
 /** @public */
@@ -69,6 +64,10 @@ export interface TimeRangePickerProps {
   onZoom: () => void;
   onError?: (error?: string) => void;
   history?: TimeRange[];
+  /**
+   * Replace the default quick-range presets, preserving the supplied order and labels.
+   * An empty array shows no presets. Search can still create custom relative durations.
+   */
   quickRanges?: TimeOption[];
   hideQuickRanges?: boolean;
   widthOverride?: number;
@@ -82,7 +81,20 @@ export interface TimeRangePickerProps {
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/date-time-pickers-timerangepicker--docs
  */
 export function TimeRangePicker(props: TimeRangePickerProps) {
+  return <ExperimentalTimeRangePicker {...props} />;
+}
+
+export interface ExperimentalTimeRangePickerProps extends TimeRangePickerProps {
+  /** Compact presentation. The tabbed design is opt-in. */
+  compactDesign?: 'legacy' | 'tabs';
+  /** Hide supplied history. Defaults to false; persistence remains the caller's responsibility. */
+  hideHistory?: boolean;
+  hideFiscalYear?: boolean;
+}
+
+export function ExperimentalTimeRangePicker(props: ExperimentalTimeRangePickerProps) {
   const [isOpen, setOpen] = useState(false);
+  const defaultCompactDesign = useContext(TimeRangePickerContext);
 
   const {
     value,
@@ -249,7 +261,9 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                   onChange={onChange}
                   quickOptions={quickRanges || getQuickOptions()}
                   history={history}
-                  showHistory
+                  showHistory={!props.hideHistory}
+                  compactDesign={props.compactDesign ?? defaultCompactDesign}
+                  hideFiscalYear={props.hideFiscalYear}
                   widthOverride={widthOverride}
                   onChangeTimeZone={onChangeTimeZone}
                   onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
@@ -312,11 +326,11 @@ export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRang
   return (
     <Stack alignItems="center" direction="column" gap={0}>
       <div className="text-center">
-        {dateTimeFormat(timeRange.from, { timeZone })}
+        {formatWithOptionalMs(timeRange.from, timeZone)}
         <div className="text-center">
           <Trans i18nKey="time-picker.range-picker.to">to</Trans>
         </div>
-        {dateTimeFormat(timeRange.to, { timeZone })}
+        {formatWithOptionalMs(timeRange.to, timeZone)}
       </div>
       <div className={styles.container}>
         <span className={styles.utc}>{timeZoneInfo ? getTimeZoneTitle(timeZoneInfo) : ''}</span>
@@ -350,6 +364,12 @@ const formattedRange = (value: TimeRange, timeZone?: TimeZone, quickRanges?: Tim
     to: dateMath.isMathString(value.raw.to) ? value.raw.to : value.to,
     from: dateMath.isMathString(value.raw.from) ? value.raw.from : value.from,
   };
+
+  if (isDateTime(adjustedTimeRange.from) && isDateTime(adjustedTimeRange.to)) {
+    const range = { from: adjustedTimeRange.from, to: adjustedTimeRange.to };
+    return `${formatWithOptionalMs(range.from, timeZone, range)} to ${formatWithOptionalMs(range.to, timeZone, range)}`;
+  }
+
   return rangeUtil.describeTimeRange(adjustedTimeRange, timeZone, quickRanges);
 };
 

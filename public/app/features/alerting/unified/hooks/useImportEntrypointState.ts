@@ -9,10 +9,11 @@ export interface ImportEntrypointState {
 }
 
 /**
- * Gates the entry points that import Alertmanager resources (the import wizard and its promo
+ * Gates the entry points that promote importing Alertmanager resources (the import wizard promo
  * banners): the convert endpoint rejects those with a 409 while external Alertmanager sync is
  * configured. Rules-only import is unaffected — the sync worker never touches alert rules and the
- * rule convert endpoints have no sync check — so those entry points must not use this hook.
+ * rule convert endpoints have no sync check — so entry points that also lead to rule import (like
+ * the wizard menu item, which locks only its notifications step) must not use this hook.
  */
 export function useImportEntrypointState(): ImportEntrypointState {
   const { isActive, isLoading } = useIsAutoSyncActive();

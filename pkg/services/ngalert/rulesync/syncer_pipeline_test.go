@@ -39,10 +39,8 @@ func newPipelineSyncer(proxy *fakeDatasourceProxy, rs *fakeRuleService, ns fakeN
 		ruleService:       rs,
 		namespaceStore:    ns,
 		folderPermissions: &recordingFolderPermissions{},
-		lastSyncHash:      make(map[int64]uint64),
-		lastAttemptAt:     make(map[int64]time.Time),
-		lastPollInterval:  make(map[int64]time.Duration),
-		cfgStore:          newCfgStore(cs, cs.nsMapper),
+		state:             make(map[int64]*orgSyncState),
+		cfgStore:          newCfgStore(cs, cs.nsMapper, log.NewNopLogger()),
 	}
 }
 
@@ -92,6 +90,13 @@ func TestSyncOrg_FromRulerAPI(t *testing.T) {
 		// Each namespace lands in its own subfolder under the sync root.
 		assert.Equal(t, "folder-cpu", folders["cpu-alerts"])
 		assert.Equal(t, "folder-mem", folders["mem-alerts"])
+
+		// The sync has no way to set an error state, so it keeps the converter default.
+		for _, g := range rs.replaced {
+			for _, r := range g.Rules {
+				assert.Equal(t, models.OkErrState, r.ExecErrState, "rule %s", r.Title)
+			}
+		}
 	})
 
 	t.Run("a group dropped upstream is pruned on the next fetch", func(t *testing.T) {

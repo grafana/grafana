@@ -9,6 +9,11 @@ import { usePluginLinks } from '@grafana/runtime';
 import { type DataQuery, LogsSortOrder } from '@grafana/schema';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
+import {
+  setDesktopViewport,
+  setMobileViewport,
+  setNarrowDesktopViewport,
+} from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { configureStore } from 'app/store/configureStore';
 import { type ExplorePanelData, type ExploreState } from 'app/types/explore';
 
@@ -293,18 +298,14 @@ describe('ToolbarExtensionPoint', () => {
     });
 
     describe('when mobileEditDeprecation is enabled', () => {
-      const originalMatchMedia = window.matchMedia;
-
       afterEach(() => {
         cleanup();
         setTestFlags({});
-        window.matchMedia = originalMatchMedia;
       });
 
       it('should not render "add to dashboard" action button on mobile', async () => {
         setTestFlags({ 'grafana.mobileEditDeprecation': true });
-        // no min-width breakpoint matches, i.e. a mobile viewport
-        window.matchMedia = (query) => ({ ...originalMatchMedia(query), matches: false });
+        setMobileViewport();
 
         renderWithExploreStore(setupToolbarExtensionPoint());
 
@@ -313,8 +314,16 @@ describe('ToolbarExtensionPoint', () => {
 
       it('should render "add to dashboard" action button on desktop', async () => {
         setTestFlags({ 'grafana.mobileEditDeprecation': true });
-        // every min-width breakpoint matches, i.e. a desktop viewport
-        window.matchMedia = (query) => ({ ...originalMatchMedia(query), matches: true });
+        setDesktopViewport();
+
+        renderWithExploreStore(setupToolbarExtensionPoint());
+
+        expect(await screen.findByRole('button', { name: /add to dashboard/i })).toBeVisible();
+      });
+
+      it('should render "add to dashboard" action button on a narrow desktop window, such as a zoomed browser', async () => {
+        setTestFlags({ 'grafana.mobileEditDeprecation': true });
+        setNarrowDesktopViewport();
 
         renderWithExploreStore(setupToolbarExtensionPoint());
 
@@ -324,8 +333,6 @@ describe('ToolbarExtensionPoint', () => {
   });
 
   describe('with a single non-dashboard extension on mobile', () => {
-    const originalMatchMedia = window.matchMedia;
-
     beforeAll(() => {
       contextSrvMock.hasPermission.mockReturnValue(true);
       usePluginLinksMock.mockReturnValue({
@@ -347,13 +354,11 @@ describe('ToolbarExtensionPoint', () => {
     afterEach(() => {
       cleanup();
       setTestFlags({});
-      window.matchMedia = originalMatchMedia;
     });
 
     it('should keep the remaining extension reachable from the "Add" menu', async () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
-      // no min-width breakpoint matches, i.e. a mobile viewport
-      window.matchMedia = (query) => ({ ...originalMatchMedia(query), matches: false });
+      setMobileViewport();
 
       renderWithExploreStore(setupToolbarExtensionPoint());
 

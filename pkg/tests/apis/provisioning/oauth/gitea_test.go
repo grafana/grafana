@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/nanogit/gittest"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -128,6 +129,35 @@ func (p *giteaProvider) CreateRepository(t *testing.T, helper *common.Provisioni
 	_, err = helper.Repositories.Resource.Create(t.Context(), repoObj, metav1.CreateOptions{})
 	require.NoError(t, err, "failed to create repository")
 	return repoName, dashboardUID, path
+}
+
+func TestIntegrationProvisioning_GitOAuthConnectionRejectsPrivateEndpoints(t *testing.T) {
+	helper := giteaHelper(t)
+
+	_, err := helper.Connections.Resource.Create(t.Context(), &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": provisioning.APIVERSION,
+		"kind":       "Connection",
+		"metadata": map[string]any{
+			"name":      "git-oauth-private-endpoint",
+			"namespace": helper.Namespace,
+		},
+		"spec": map[string]any{
+			"title": "git-oauth-private-endpoint",
+			"type":  string(provisioning.GitOAuthConnectionType),
+			"gitOAuth": map[string]any{
+				"authURL":  "https://169.254.169.254/login/oauth/authorize",
+				"tokenURL": "https://10.0.0.1/login/oauth/access_token",
+			},
+			"oauth": map[string]any{"clientID": "client-id"},
+		},
+		"secure": map[string]any{
+			"clientSecret": map[string]any{"create": "client-secret"},
+		},
+	}}, metav1.CreateOptions{FieldValidation: "Strict"})
+	require.Error(t, err)
+	require.True(t, apierrors.IsInvalid(err), "expected invalid connection, got %v", err)
+	require.Contains(t, err.Error(), "spec.gitOAuth.authURL")
+	require.Contains(t, err.Error(), "spec.gitOAuth.tokenURL")
 }
 
 func giteaAPI(t *testing.T, user *gittest.User, method, endpoint string, payload, into any) {

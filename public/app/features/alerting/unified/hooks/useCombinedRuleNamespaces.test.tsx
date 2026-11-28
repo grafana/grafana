@@ -4,9 +4,10 @@ import { Provider } from 'react-redux';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type CombinedRuleGroup, type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
-import { grantUserPermissions, mockUnifiedAlertingStore } from '../mocks';
+import { grantUserPermissions } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { mockUnifiedAlertingStore } from '../testSetup/mockUnifiedAlertingStore';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 import { NO_GROUP_PREFIX } from '../utils/rules';
 
 import {

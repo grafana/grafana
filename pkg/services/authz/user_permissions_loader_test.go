@@ -32,7 +32,7 @@ func TestIntegrationEmbeddedPermissionRPCsShareLoader(t *testing.T) {
 	grant := ac.Permission{Action: "contract:read", Scope: "contract:*"}
 	catalog.Replace(map[string][]ac.Permission{"Viewer": {grant, grant}})
 	loader := legacypermissions.NewLoader(sql, catalog, resourcepermissions.NewActionSetService(), localcache.New(0, 0),
-		cfg, features, &licensing.OSSLicensingService{}, nil)
+		cfg, &licensing.OSSLicensingService{}, nil)
 	// This service deliberately has no local evaluator. Enumeration must no longer
 	// call back into Access Control, even when using the pre-existing AuthZ client.
 	service := &recordingAccessControlService{}
@@ -50,6 +50,7 @@ func TestIntegrationEmbeddedPermissionRPCsShareLoader(t *testing.T) {
 		nil,
 		loader,
 		ac.NewScopeResolverRegistry(),
+		acimpl.ProvideAccessControlTest(),
 	)
 	require.NoError(t, err)
 	previousClient := newUserPermissionsClient(ProvideAuthZUserPermissionsClient(clients), false)

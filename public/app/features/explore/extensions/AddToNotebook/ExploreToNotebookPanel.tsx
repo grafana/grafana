@@ -3,7 +3,7 @@ import { AddPanelToNotebookModalBody } from 'app/features/notebook/addPanel/AddP
 import { buildPanelElementFromExplore } from 'app/features/notebook/addPanel/buildPanelElementFromExplore';
 import { captureTimeRange } from 'app/features/notebook/addPanel/capturedTimeRange';
 import { NOTEBOOK_ENTRY_POINT } from 'app/features/notebook/analytics/types';
-import { getTimeZone } from 'app/features/profile/state/selectors';
+import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { useSelector, type StoreState } from 'app/types/store';
 
 import { getExploreItemSelector } from '../../state/selectors';
@@ -26,6 +26,8 @@ export function ExploreToNotebookPanel({ exploreId, onClose }: Props) {
   // time picker described it.
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
 
+  const fiscalYearStartMonth = useSelector((state: StoreState) => getFiscalYearStartMonth(state.user));
+
   const buildPanel = async () => {
     // buildPanelElementFromExplore is synchronous and reads the panel metas map.
     await getPanelPluginMetasMap();
@@ -45,7 +47,7 @@ export function ExploreToNotebookPanel({ exploreId, onClose }: Props) {
       entryPoint={NOTEBOOK_ENTRY_POINT.EXPLORE}
       // Explore builds its panel from the pane's queries, so there is no library panel to send.
       isLibraryPanel={false}
-      capturedTimeRange={captureTimeRange(exploreItem.range.raw, timeZone)}
+      capturedTimeRange={captureTimeRange(exploreItem.range.raw, timeZone, fiscalYearStartMonth)}
     />
   );
 }

@@ -324,6 +324,22 @@ func TestVectorStore_UpsertValidation(t *testing.T) {
 	}
 }
 
+func TestVectorStore_UpsertAccepts500Inputs(t *testing.T) {
+	store := &fakeWriteStore{}
+	s := newTestVectorStoreServer(store)
+	req := validUpsertReq()
+	req.Inputs = make([]*resourcepb.EmbeddingInput, 500)
+	for i := range req.Inputs {
+		req.Inputs[i] = &resourcepb.EmbeddingInput{Uid: fmt.Sprintf("uid/%d", i), Content: "content", Title: "title"}
+	}
+
+	resp, err := s.Upsert(vsAuthedCtx(), req)
+	require.NoError(t, err)
+	assert.EqualValues(t, 500, resp.Upserted)
+	require.Len(t, store.upserts, 1)
+	assert.Len(t, store.upserts[0], 500)
+}
+
 func TestVectorStore_UpsertEmbedFailureIsInternal(t *testing.T) {
 	store := &fakeWriteStore{}
 	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4, wantErr: errors.New("provider down")}), []string{"g/r"}, nil, nil, nil)
@@ -377,6 +393,63 @@ func TestVectorStore_UpsertSubresourcesDiff(t *testing.T) {
 	for _, v := range call.Changed {
 		assert.Equal(t, "fold-2", v.Folder)
 	}
+}
+
+func TestVectorStore_UpsertSubresourcesAccepts501Chunks(t *testing.T) {
+	store := &fakeWriteStore{}
+	s := newTestVectorStoreServer(store)
+	inputs := make([]*resourcepb.EmbeddingInput, 501)
+	for i := range inputs {
+		inputs[i] = &resourcepb.EmbeddingInput{Subresource: fmt.Sprintf("chunk/%d", i), Content: "content", Title: "title"}
+	}
+
+	resp, err := s.UpsertSubresources(vsAuthedCtx(), &resourcepb.VectorUpsertSubresourcesRequest{
+		Namespace: "ns", Group: "g", Resource: "r", Uid: "entity", Inputs: inputs,
+	})
+	require.NoError(t, err)
+	assert.EqualValues(t, 501, resp.Created)
+	require.Len(t, store.replaceCalls, 1)
+	assert.Len(t, store.replaceCalls[0].Changed, 501)
+	assert.Len(t, store.replaceCalls[0].Desired, 501)
+}
+
+func TestVectorStore_UpsertSubresourcesAccepts2000Chunks(t *testing.T) {
+	store := &fakeWriteStore{}
+	s := newTestVectorStoreServer(store)
+	inputs := make([]*resourcepb.EmbeddingInput, 2000)
+	for i := range inputs {
+		inputs[i] = &resourcepb.EmbeddingInput{Subresource: fmt.Sprintf("chunk/%d", i), Content: "content", Title: "title"}
+	}
+
+	resp, err := s.UpsertSubresources(vsAuthedCtx(), &resourcepb.VectorUpsertSubresourcesRequest{
+		Namespace: "ns", Group: "g", Resource: "r", Uid: "entity", Inputs: inputs,
+	})
+	require.NoError(t, err)
+	assert.EqualValues(t, 2000, resp.Created)
+	require.Len(t, store.replaceCalls, 1)
+	assert.Len(t, store.replaceCalls[0].Changed, 2000)
+	assert.Len(t, store.replaceCalls[0].Desired, 2000)
+}
+
+func TestVectorStore_UpsertSubresourcesRejects2001ChunksBeforeEmbeddingOrWrites(t *testing.T) {
+	store := &fakeWriteStore{}
+	s := newTestVectorStoreServer(store)
+	counter := &countingTextEmbedder{client: &fakeTextEmbedder{dim: 4}}
+	s.embedder.TextEmbedder = counter
+	inputs := make([]*resourcepb.EmbeddingInput, 2001)
+	for i := range inputs {
+		inputs[i] = &resourcepb.EmbeddingInput{Subresource: fmt.Sprintf("chunk/%d", i), Content: "content", Title: "title"}
+	}
+
+	_, err := s.UpsertSubresources(vsAuthedCtx(), &resourcepb.VectorUpsertSubresourcesRequest{
+		Namespace: "ns", Group: "g", Resource: "r", Uid: "entity", Inputs: inputs,
+	})
+	require.Equal(t, codes.InvalidArgument, status.Code(err))
+	assert.EqualError(t, err, "rpc error: code = InvalidArgument desc = too many inputs: 2001 > 2000")
+	assert.Zero(t, counter.calls)
+	assert.Empty(t, store.ensured)
+	assert.Zero(t, store.lockCalls)
+	assert.Empty(t, store.replaceCalls)
 }
 
 func TestVectorStore_UpsertSubresourcesValidation(t *testing.T) {
@@ -447,6 +520,24 @@ func TestVectorStore_DeleteByUIDs(t *testing.T) {
 	assert.Equal(t, []string{"u1", "u2"}, store.deleteCalls[0].Sel.UIDs)
 	assert.Equal(t, "r_external", store.deleteCalls[0].Resource)
 	assert.Empty(t, store.ensured, "delete must never provision")
+}
+
+func TestVectorStore_DeleteAccepts500UIDs(t *testing.T) {
+	store := &fakeWriteStore{resolveFound: true, deleted: 500}
+	s := newTestVectorStoreServer(store)
+	uids := make([]string, 500)
+	for i := range uids {
+		uids[i] = fmt.Sprintf("uid/%d", i)
+	}
+
+	resp, err := s.Delete(vsAuthedCtx(), &resourcepb.VectorDeleteRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Selector: &resourcepb.VectorDeleteRequest_Uids{Uids: &resourcepb.StringList{Values: uids}},
+	})
+	require.NoError(t, err)
+	assert.EqualValues(t, 500, resp.Deleted)
+	require.Len(t, store.deleteCalls, 1)
+	assert.Equal(t, uids, store.deleteCalls[0].Sel.UIDs)
 }
 
 func TestVectorStoreScopeConflictStopsUpsertsBeforeEmbedding(t *testing.T) {

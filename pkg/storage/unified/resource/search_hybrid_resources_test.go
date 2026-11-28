@@ -93,6 +93,7 @@ func TestHybridSearch_ReportsRequestedManifestKindsWithNoResults(t *testing.T) {
 		version := hybridConfigVersion("v1", ptr.To(true))
 		version.Kinds[0].Kind = kind
 		version.Kinds[0].Plural = plural
+		version.Kinds[0].Resource = plural
 		m := hybridConfigManifest(version)
 		m.Group = group
 		return m

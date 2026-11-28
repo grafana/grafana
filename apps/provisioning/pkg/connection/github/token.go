@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana-app-sdk/resource"
 )
 
 const (
@@ -22,7 +22,7 @@ const (
 // callers persist precisely when the token stops working rather than a
 // separately computed, higher-precision estimate that could sit after the real
 // claim.
-func GenerateJWTToken(appID string, privateKey common.RawSecureValue) (common.RawSecureValue, time.Time, error) {
+func GenerateJWTToken(appID string, privateKey resource.RawSecureValue) (resource.RawSecureValue, time.Time, error) {
 	// Decode base64-encoded private key
 	privateKeyPEM, err := base64.StdEncoding.DecodeString(string(privateKey))
 	if err != nil {
@@ -49,10 +49,10 @@ func GenerateJWTToken(appID string, privateKey common.RawSecureValue) (common.Ra
 		return "", time.Time{}, fmt.Errorf("failed to sign JWT token: %w", err)
 	}
 
-	return common.RawSecureValue(signedToken), claims.ExpiresAt.Time, nil
+	return resource.RawSecureValue(signedToken), claims.ExpiresAt.Time, nil
 }
 
-func parseJWTToken(token, privateKey common.RawSecureValue) (*jwt.RegisteredClaims, error) {
+func parseJWTToken(token, privateKey resource.RawSecureValue) (*jwt.RegisteredClaims, error) {
 	privateKeyPEM, err := base64.StdEncoding.DecodeString(string(privateKey))
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode base64 private key: %w", err)

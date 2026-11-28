@@ -11,7 +11,7 @@ import { SceneContextProvider, VizPanel } from '@grafana/scenes-react';
 import { GraphDrawStyle, VisibilityMode } from '@grafana/schema';
 import { AxisPlacement, BarAlignment, StackingMode, Text, TooltipDisplayMode, useStyles2 } from '@grafana/ui';
 
-import { overrideToFixedColor } from '../../home/Insights';
+import { overrideToFixedColor } from '../../insights/utils';
 import { InstanceDetailsDrawer } from '../instance-details/InstanceDetailsDrawer';
 
 import { GenericRow } from './GenericRow';

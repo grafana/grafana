@@ -29,10 +29,7 @@ const DeleteUserModal = ({ user, hideModal }: { user: SessionUser; hideModal: ()
         </Trans>
       </p>
       <p className={styles.description}>
-        <Trans
-          i18nKey="public-dashboard-users-access-list.delete-user-shared-dashboards-modal.revoke-user-access-modal-desc-line2"
-          shouldUnescape
-        >
+        <Trans i18nKey="public-dashboard-users-access-list.delete-user-shared-dashboards-modal.revoke-user-access-modal-desc-line2">
           This action will immediately revoke {{ email: user.email }}&apos;s access to all shared dashboards.
         </Trans>
       </p>

@@ -17,6 +17,8 @@ import {
   preProcessPanelData,
 } from './processDataFrame';
 
+jest.mock('./guessFieldType', () => makeSpyable('./guessFieldType'));
+
 describe('toDataFrame', () => {
   it('converts timeseries to series', () => {
     const input1 = {

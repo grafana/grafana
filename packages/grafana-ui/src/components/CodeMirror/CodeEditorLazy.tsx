@@ -1,19 +1,19 @@
-import { lazy, Suspense } from 'react';
+import { lazy, type ReactNode, Suspense } from 'react';
 
 import { t } from '@grafana/i18n';
 
 import { ErrorBoundaryAlert } from '../ErrorBoundary/ErrorBoundary';
 import { LoadingPlaceholder } from '../LoadingPlaceholder/LoadingPlaceholder';
 
-import { type CodeMirrorEditorProps } from './types';
+import { type BaseCodeEditorProps, type CodeMirrorEditorProps, type InternalCodeMirrorEditorProps } from './types';
 
-const CodeEditor = lazy(() =>
-  import(/* webpackChunkName: "react-codemirror-editor" */ './CodeEditor').then((module) => ({
-    default: module.CodeEditor,
+const LazyBaseCodeEditor = lazy(() =>
+  import(/* webpackChunkName: "react-codemirror-editor" */ './BaseCodeEditor').then((module) => ({
+    default: module.BaseCodeEditor,
   }))
 );
 
-export function CodeMirrorEditor(props: CodeMirrorEditorProps) {
+function LazyEditor({ loadingFallback, ...props }: BaseCodeEditorProps & { loadingFallback?: ReactNode }) {
   return (
     <ErrorBoundaryAlert
       boundaryName="CodeMirrorEditorLazy"
@@ -22,13 +22,21 @@ export function CodeMirrorEditor(props: CodeMirrorEditorProps) {
     >
       <Suspense
         fallback={
-          props.loadingFallback ?? (
+          loadingFallback ?? (
             <LoadingPlaceholder text={t('grafana-ui.code-mirror.loading-placeholder', 'Loading editor')} />
           )
         }
       >
-        <CodeEditor {...props} />
+        <LazyBaseCodeEditor {...props} />
       </Suspense>
     </ErrorBoundaryAlert>
   );
+}
+
+export function CodeMirrorEditor(props: CodeMirrorEditorProps) {
+  return <LazyEditor {...props} />;
+}
+
+export function InternalCodeMirrorEditor(props: InternalCodeMirrorEditorProps) {
+  return <LazyEditor {...props} />;
 }

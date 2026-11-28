@@ -39,7 +39,7 @@ import { connectionTypesForProvider } from '../utils/connectionData';
 import { dataToSpec, deriveSigningKeySecret } from '../utils/data';
 import { extractFormErrors, getConfigFormErrors } from '../utils/getFormErrors';
 import { getHasTokenInstructions, getRemoteConfig } from '../utils/git';
-import { isManagedResourceReadOnly } from '../utils/managedResource';
+import { isProvisioningResourceReadOnly, isReleasedByFileProvisioning } from '../utils/managedResource';
 import { getRepositoryTypeConfig, isGitProvider, supportsWebhooks } from '../utils/repositoryTypes';
 
 import { BranchOptionsSection } from './BranchOptionsSection';
@@ -87,7 +87,10 @@ export function ConfigForm({ data }: ConfigFormProps) {
 
   const isEdit = Boolean(repositoryName);
   // Externally managed repositories (terraform, kubectl, ...) cannot be edited in the UI.
-  const isReadOnly = data ? isManagedResourceReadOnly(data) : false;
+  const isReadOnly = data ? isProvisioningResourceReadOnly(data) : false;
+  // A bootstrap repository left behind by a cleared bootstrap_path keeps its read-only
+  // configuration, but removing it is what the setting documents, so Delete stays.
+  const isReleased = data ? isReleasedByFileProvisioning(data, Boolean(data.spec?.sync?.enabled)) : false;
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | undefined>();
@@ -576,7 +579,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
               ? t('provisioning.config-form.button-saving', 'Saving...')
               : t('provisioning.config-form.button-save', 'Save')}
           </Button>
-          {repositoryName && data && !isReadOnly && (
+          {repositoryName && data && (!isReadOnly || isReleased) && (
             <DeleteRepositoryButton name={repositoryName} repository={data} redirectTo={PROVISIONING_URL} />
           )}
         </Stack>

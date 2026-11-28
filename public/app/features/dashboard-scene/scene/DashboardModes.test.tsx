@@ -10,6 +10,7 @@ import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import {
   createDashboardMutationApi,
   setDashboardMutationClientForTests,
@@ -52,6 +53,7 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
   // The v2 built-in annotation layer resolves a datasource on activation; never answer.
   getDataSourceSrv: () => ({ get: () => new Promise(() => {}), getInstanceSettings: jest.fn() }),
+  getDataSourceInstance: () => new Promise(() => {}),
 }));
 
 jest.mock('../saving/createDetectChangesWorker', () => ({
@@ -261,6 +263,7 @@ it('disables the mode picker in Viewing on mobile when mobileEditDeprecation is 
     'grafana.dashboardPreviewMode': true,
     'grafana.mobileEditDeprecation': true,
   });
+  setMobileViewport();
   const dashboard = setup();
   render(
     <TestProvider>
@@ -665,7 +668,7 @@ describe('Assistant edits from Viewing while Composer is on', () => {
     resetComposerEnterRequestsForTests();
   });
 
-  it('uses Agent editing, as with Composer off, without asking Assistant to enter Composer', async () => {
+  it('uses Editing instead of Agent editing, without asking Assistant to enter Composer', async () => {
     const listener = jest.fn();
     stopListening = addComposerEnterRequestListener(listener);
     const scene = setup();
@@ -673,8 +676,16 @@ describe('Assistant edits from Viewing while Composer is on', () => {
     expect((await assistantChangesTitle(scene, 'Assistant draft')).success).toBe(true);
 
     expect(listener).not.toHaveBeenCalled();
-    expect(getDashboardMode(scene.state)).toBe('agent');
+    expect(getDashboardMode(scene.state)).toBe('edit');
     expect(scene.state.title).toBe('Assistant draft');
+  });
+
+  it('uses Editing on a dashboard without a uid too, though Composer waits for the first save', async () => {
+    const scene = setup(false, true);
+
+    expect((await assistantChangesTitle(scene, 'Assistant draft')).success).toBe(true);
+
+    expect(getDashboardMode(scene.state)).toBe('edit');
   });
 });
 

@@ -6,7 +6,7 @@ import { MarkdownFrontmatterTable } from './MarkdownFrontmatterTable';
 
 describe('MarkdownFrontmatterTable', () => {
   it('renders one row per key, with the key as the row header, scalars as text and an empty value as an empty cell', () => {
-    render(<MarkdownFrontmatterTable data={{ title: 'Team A', version: '1.10', editable: 'false', owner: null }} />);
+    render(<MarkdownFrontmatterTable data={{ title: 'Team A', version: '1.10', editable: 'false', owner: '' }} />);
 
     expect(screen.getByRole('table', { name: 'Document metadata' })).toBeInTheDocument();
     expect(screen.getByRole('rowheader', { name: 'title' })).toBeInTheDocument();

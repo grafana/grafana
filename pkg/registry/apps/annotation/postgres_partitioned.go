@@ -297,7 +297,7 @@ func (s *PostgreSQLStore) List(ctx context.Context, namespace string, opts ListO
 			return nil, err
 		}
 		if token.Limit != opts.Limit {
-			return nil, fmt.Errorf("continue token limit does not match the request limit")
+			return nil, errContinueLimitMismatch
 		}
 		offset = token.Offset
 	}

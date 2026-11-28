@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
 	"github.com/grafana/grafana/pkg/util/sqlite"
@@ -136,6 +138,34 @@ func TestContinueTokenMatchesListRequest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, tt.want, continueTokenMatchesListRequest(tt.token, tt.req))
 		})
+	}
+}
+
+func TestBackend_malformedContinueToken(t *testing.T) {
+	t.Parallel()
+
+	be, ctx := setupBackendTest(t)
+	req := func(token string) *resourcepb.ListRequest {
+		return &resourcepb.ListRequest{
+			Options:       &resourcepb.ListOptions{Key: resKey},
+			Limit:         10,
+			NextPageToken: token,
+		}
+	}
+	noIteration := func(resource.ListIterator) error {
+		t.Fatal("malformed continuation must fail before iteration")
+		return nil
+	}
+
+	// "bogus" fails base64 decoding, the other decodes but is not a JSON token.
+	for _, token := range []string{"bogus", "bm90LWEtdG9rZW4="} {
+		_, err := be.listAtRevision(ctx, req(token), noIteration)
+		require.True(t, apierrors.IsBadRequest(err), "listAtRevision %q: got %v", token, err)
+		require.Contains(t, err.Error(), "invalid continue token")
+
+		_, err = be.getHistory(ctx, req(token), noIteration)
+		require.True(t, apierrors.IsBadRequest(err), "getHistory %q: got %v", token, err)
+		require.Contains(t, err.Error(), "invalid continue token")
 	}
 }
 
@@ -1030,10 +1060,9 @@ func TestBackend_StorageDisabled(t *testing.T) {
 		t.Parallel()
 		b, ctx := setupBackendTestStorageDisabled(t)
 
-		resp := b.ProcessBulk(ctx, resource.BulkSettings{}, nil)
-		require.NotNil(t, resp)
-		require.NotNil(t, resp.Error)
-		require.Contains(t, resp.Error.Message, "storage backend is not enabled")
+		resp, err := b.ProcessBulk(ctx, resource.BulkSettings{}, nil)
+		require.ErrorContains(t, err, "storage backend is not enabled")
+		require.Nil(t, resp)
 	})
 
 	t.Run("WatchWriteEvents returns error when storage is disabled", func(t *testing.T) {
@@ -1332,4 +1361,47 @@ func TestIntegrationReadHistoryVersions(t *testing.T) {
 	found, err = b.readHistoryVersions(ctx, []historyVersion{key("item2", "resource", updated)})
 	require.NoError(t, err)
 	require.Empty(t, found)
+}
+
+func TestListLatestMigrationReadStatementTimeout(t *testing.T) {
+	req := &resourcepb.ListRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "ns", Group: "gr", Resource: "rs"}}}
+	for _, tc := range []struct {
+		name      string
+		migration bool
+		dialect   sqltemplate.Dialect
+		timeout   time.Duration
+		wantSet   bool
+	}{
+		{name: "migration read on postgres", migration: true, dialect: sqltemplate.PostgreSQL, timeout: 15 * time.Minute, wantSet: true},
+		{name: "other read", dialect: sqltemplate.PostgreSQL, timeout: 15 * time.Minute},
+		{name: "migration read without override", migration: true, dialect: sqltemplate.PostgreSQL},
+		{name: "migration read on mysql", migration: true, dialect: sqltemplate.MySQL, timeout: 15 * time.Minute},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			b, ctx := setupBackendTest(t)
+			b.dialect = tc.dialect
+			b.migrationStatementTimeout = tc.timeout
+			if tc.migration {
+				ctx = resource.ContextWithMigrationRead(ctx)
+			}
+
+			b.SQLMock.ExpectBegin()
+			if tc.wantSet {
+				b.SQLMock.ExpectExec("SET LOCAL statement_timeout = 900000").WillReturnResult(sqlmock.NewResult(0, 0))
+			}
+			b.SQLMock.ExpectQuery("SELECT .* FROM resource_version").
+				WillReturnRows(sqlmock.NewRows([]string{"resource_version", "unix_timestamp"}).AddRow(10, 0))
+			b.SQLMock.ExpectQuery("SELECT .* FROM resource").
+				WillReturnRows(sqlmock.NewRows([]string{"guid", "resource_version", "namespace", "group", "resource", "name", "folder", "value"}))
+			b.SQLMock.ExpectCommit()
+
+			_, err := b.ListIterator(ctx, req, func(iter resource.ListIterator) error {
+				for iter.Next() {
+				}
+				return iter.Error()
+			})
+			require.NoError(t, err)
+			require.NoError(t, b.SQLMock.ExpectationsWereMet())
+		})
+	}
 }

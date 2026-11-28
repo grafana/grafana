@@ -89,6 +89,22 @@ var (
 const annotationsSubresource = "annotations"
 
 var resourceTranslations = map[string]resourceTranslation{
+	"secret.securevalues": {
+		typ:      TypeResource,
+		group:    "secret.grafana.app",
+		resource: "securevalues",
+		mapping: map[string]actionMapping{
+			"secret.securevalues:view":              newMapping(RelationSetView, ""),
+			"secret.securevalues:edit":              newMapping(RelationSetEdit, ""),
+			"secret.securevalues:admin":             newMapping(RelationSetAdmin, ""),
+			"secret.securevalues:read":              newMapping(RelationGet, ""),
+			"secret.securevalues:write":             newMapping(RelationUpdate, ""),
+			"secret.securevalues:create":            newMapping(RelationCreate, ""),
+			"secret.securevalues:delete":            newMapping(RelationDelete, ""),
+			"secret.securevalues.permissions:read":  newMapping(RelationGetPermissions, ""),
+			"secret.securevalues.permissions:write": newMapping(RelationSetPermissions, ""),
+		},
+	},
 	KindAnnotations: {
 		typ:      TypeResource,
 		group:    annotationGroup,
@@ -105,15 +121,21 @@ var resourceTranslations = map[string]resourceTranslation{
 		group:    "datasource.grafana.app",
 		resource: "datasources",
 		mapping: map[string]actionMapping{
-			"datasources:create":            newUnscopedMapping(RelationCreate),
-			"datasources:read":              newMapping(RelationGet, ""),
-			"datasources:write":             newMapping(RelationUpdate, ""),
-			"datasources:delete":            newMapping(RelationDelete, ""),
-			"datasources:query":             newMapping(RelationCreate, "query"),
-			"datasources.permissions:read":  newMapping(RelationGetPermissions, ""),
-			"datasources.permissions:write": newMapping(RelationSetPermissions, ""),
-			"datasources.caching:read":      newMapping(RelationGet, "caching"),
-			"datasources.caching:write":     newMapping(RelationUpdate, "caching"),
+			"datasources:create":                 newUnscopedMapping(RelationCreate),
+			"datasources:read":                   newMapping(RelationGet, ""),
+			"datasources:write":                  newMapping(RelationUpdate, ""),
+			"datasources:delete":                 newMapping(RelationDelete, ""),
+			"datasources:query":                  newMapping(RelationCreate, "query"),
+			"datasources.permissions:read":       newMapping(RelationGetPermissions, ""),
+			"datasources.permissions:write":      newMapping(RelationSetPermissions, ""),
+			"datasources.caching:read":           newMapping(RelationGet, "caching"),
+			"datasources.caching:write":          newMapping(RelationUpdate, "caching"),
+			"alert.instances.external:read":      newMapping(RelationGet, "alertinstances"),
+			"alert.instances.external:write":     newMapping(RelationUpdate, "alertinstances"),
+			"alert.rules.external:read":          newMapping(RelationGet, "alertrules"),
+			"alert.rules.external:write":         newMapping(RelationUpdate, "alertrules"),
+			"alert.notifications.external:read":  newMapping(RelationGet, "alertnotifications"),
+			"alert.notifications.external:write": newMapping(RelationUpdate, "alertnotifications"),
 		},
 	},
 	KindFolders: {
@@ -329,22 +351,16 @@ func translateActionToKubernetesAttributes(translation resourceTranslation, acti
 	return group, resource, subresource, verb, true
 }
 
-// TranslateActionToListParams translates an RBAC action to Zanzana List request parameters (group, resource, subresource, verb).
-// Returns empty strings if the action cannot be translated.
-func TranslateActionToListParams(action string) (group, resource, subresource, verb string) {
-	translationTypes := make([]string, 0, len(resourceTranslations))
-	for typ := range resourceTranslations {
-		translationTypes = append(translationTypes, typ)
-	}
-	sort.Strings(translationTypes)
-
-	for _, typ := range translationTypes {
-		translation := resourceTranslations[typ]
-		if group, resource, subresource, verb, ok := translateActionToKubernetesAttributes(translation, action); ok {
-			return group, resource, subresource, verb
+// TranslateActionToListParams returns every distinct List mapping for an RBAC action.
+// Returns nil if the action cannot be translated.
+func TranslateActionToListParams(action string) []ActionListEntry {
+	var entries []ActionListEntry
+	for _, entry := range supportedActions {
+		if entry.Action == action {
+			entries = append(entries, entry)
 		}
 	}
-	return "", "", "", ""
+	return entries
 }
 
 // ActionListEntry describes an action that Zanzana supports, along with
@@ -368,7 +384,7 @@ var supportedActions = func() []ActionListEntry {
 	sort.Strings(translationTypes)
 
 	var out []ActionListEntry
-	seen := make(map[string]struct{})
+	seen := make(map[ActionListEntry]struct{})
 	for _, typ := range translationTypes {
 		translation := resourceTranslations[typ]
 
@@ -379,29 +395,30 @@ var supportedActions = func() []ActionListEntry {
 		sort.Strings(actions)
 
 		for _, action := range actions {
-			if _, ok := seen[action]; ok {
-				continue
-			}
 			group, resource, subresource, verb, ok := translateActionToKubernetesAttributes(translation, action)
 			if !ok {
 				continue
 			}
 
-			seen[action] = struct{}{}
-			out = append(out, ActionListEntry{
+			entry := ActionListEntry{
 				Action:      action,
 				Group:       group,
 				Resource:    resource,
 				Subresource: subresource,
 				Verb:        verb,
-			})
+			}
+			if _, ok := seen[entry]; ok {
+				continue
+			}
+			seen[entry] = struct{}{}
+			out = append(out, entry)
 		}
 	}
 	return out
 }()
 
-// SupportedActions returns every RBAC action that Zanzana can resolve,
-// derived from the resource translation table.
+// SupportedActions returns the distinct List mappings derived from the translation table.
+// An action may have multiple entries when it applies to different resources.
 func SupportedActions() []ActionListEntry {
 	return supportedActions
 }

@@ -11,6 +11,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type ManagerKind } from '../../apiserver/types';
 import { type DashboardViewItem, type DashboardViewItemKind } from '../types';
 
+import { getIconForKind } from './icons';
 import { type DashboardQueryResult, type SearchQuery, type SearchResultMeta } from './types';
 
 /**
@@ -71,22 +72,6 @@ async function getCurrentFolderUID(): Promise<string | undefined> {
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-export function getIconForKind(kind: string, isOpen?: boolean): IconName {
-  if (kind === 'dashboard') {
-    return 'apps';
-  }
-
-  if (kind === 'folder') {
-    return isOpen ? 'folder-open' : 'folder';
-  }
-
-  if (kind === 'sharedwithme') {
-    return 'users-alt';
-  }
-
-  return 'question-circle';
 }
 
 export function getIconForItem(item: DashboardViewItemWithUIItems, isOpen?: boolean): IconName {

@@ -23,6 +23,7 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -764,6 +765,64 @@ func TestBuildIndex_RebuildUsesFreshSnapshot(t *testing.T) {
 	require.NotNil(t, idx)
 	assert.Zero(t, builderCalled.Load(), "builder should not run when a fresh remote snapshot is used")
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDownloadAttempts.WithLabelValues(snapshotPolicySameVersion, snapshotStatusSuccess)))
+}
+
+func TestBuildIndex_RebuildCountsTrashForSnapshotEligibility(t *testing.T) {
+	for _, includeTrash := range []bool{false, true} {
+		t.Run(fmt.Sprintf("trash=%t", includeTrash), func(t *testing.T) {
+			recorder := setupSnapshotSpanRecorder(t)
+			ctx := t.Context()
+			store := newHookableStore(t)
+			key := newTestNsResource()
+			be, metrics := newTestBleveBackend(t, SnapshotOptions{Store: store, MinDocCount: 2, MaxIndexAge: 24 * time.Hour})
+			original, err := be.BuildIndex(ctx, key, 1, "test", indexTestDocs(key, 1, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+			require.NoError(t, err)
+			if includeTrash {
+				require.NoError(t, original.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
+					Action: resource.ActionIndex,
+					Doc: &resource.IndexableDocument{
+						Key:       &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "deleted-doc"},
+						IsDeleted: new(true),
+					},
+				}}}))
+			}
+			live, err := original.DocCount(ctx, "", nil)
+			require.NoError(t, err)
+			require.Equal(t, int64(1), live, "search stats still exclude trash")
+			seedDownloadableSnapshot(t, ctx, store.inner, key, makeULID(t, time.Now()), freshSnapshot(time.Minute))
+
+			recorder.Reset()
+			built := false
+			_, err = be.BuildIndex(ctx, key, -1, "rebuild", func(idx resource.ResourceIndex) (int64, error) {
+				built = true
+				return indexTestDocs(key, 1, 101)(idx)
+			}, nil, true, time.Time{}, time.Hour, resource.BuildIndexOptions{RebuildFrom: original})
+			require.NoError(t, err)
+			require.Equal(t, !includeTrash, built)
+			var attrs []attribute.KeyValue
+			for _, span := range recorder.Ended() {
+				if span.Name() == "search.bleveBackend.BuildIndex" {
+					attrs = span.Attributes()
+					break
+				}
+			}
+			wantCount := int64(1)
+			if includeTrash {
+				wantCount++
+			}
+			require.Subset(t, attrs, []attribute.KeyValue{
+				attribute.Int64("snapshot.min_doc_count", 2),
+				attribute.Bool("snapshot.rebuild_coordination_enabled", includeTrash),
+				attribute.Int64("snapshot.doc_count", wantCount),
+			})
+			downloads := testutil.ToFloat64(metrics.IndexSnapshotDownloadAttempts.WithLabelValues(snapshotPolicySameVersion, snapshotStatusSuccess))
+			if includeTrash {
+				require.Equal(t, 1.0, downloads)
+			} else {
+				require.Zero(t, downloads)
+			}
+		})
+	}
 }
 
 // TestBuildIndex_RebuildFallsBackToBuilder verifies that on the rebuild path
@@ -1720,7 +1779,7 @@ func TestBackgroundGlobalIndexBuildAndSnapshotRestore(t *testing.T) {
 					kind.group+"/v1", kind.name, name, name),
 			})
 			require.NoError(t, err)
-			require.Nil(t, rsp.Error)
+			require.Positive(t, rsp.ResourceVersion)
 		}
 	}
 	key := resource.GlobalSearchKey("default")
@@ -1769,7 +1828,7 @@ func TestBackgroundGlobalIndexBuildAndSnapshotRestore(t *testing.T) {
 		t.Helper()
 		require.Eventually(t, func() bool {
 			rsp, err := server.Search(ctx, req)
-			return err == nil && rsp.Error == nil && rsp.TotalHits == 6
+			return err == nil && rsp != nil && rsp.TotalHits == 6
 		}, 5*time.Second, 10*time.Millisecond)
 	}
 	assertSearch(server)

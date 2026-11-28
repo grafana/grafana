@@ -238,14 +238,14 @@ func validatePermissionGrant(grant *openfgav1.TupleKey) error {
 
 func mergePrincipalGrants(grantLists [][]permissionListResult) []permissionListResult {
 	results := make([]permissionListResult, 0, len(common.SupportedActions()))
-	indexes := make(map[string]int)
+	indexes := make(map[common.ActionListEntry]int)
 	for _, entry := range common.SupportedActions() {
-		indexes[entry.Action] = len(results)
+		indexes[entry] = len(results)
 		results = append(results, permissionListResult{Entry: entry, List: &authzv1.ListResponse{}})
 	}
 	for _, grantList := range grantLists {
 		for _, grant := range grantList {
-			result := results[indexes[grant.Entry.Action]].List
+			result := results[indexes[grant.Entry]].List
 			result.All = result.All || grant.List.All
 			result.Items = append(result.Items, grant.List.Items...)
 			result.Folders = append(result.Folders, grant.List.Folders...)

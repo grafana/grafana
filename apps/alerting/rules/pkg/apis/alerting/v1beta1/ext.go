@@ -14,11 +14,18 @@ const (
 	ProvenanceStatusAnnotationKey = InternalPrefix + "provenance"
 	// Copy of the max title length used in legacy validation path
 	AlertRuleMaxTitleLength = 190
+	// Copy of the max rule group name length used in legacy validation path
+	AlertRuleMaxRuleGroupNameLength = 190
+	// Copy of the max rule UID length used in legacy validation path. The rule name is its UID.
+	AlertRuleMaxNameLength = 40
 	// Annotation key used to store the folder UID on resources
 	FolderAnnotationKey = "grafana.app/folder"
 	FolderLabelKey      = FolderAnnotationKey
 	// Annotation key mirroring the legacy PrometheusStyleRule original definition.
 	PrometheusRuleDefinitionAnnotationKey = "alerting.grafana.app/prometheus-rule-definition"
+	// Annotation that opts a write in to setting the group labels, which admission otherwise
+	// rejects on create and when grouping an ungrouped rule. Value must be "true".
+	AllowGroupWritesAnnotationKey = "alerting.grafana.app/allow-group-writes"
 )
 
 // NOTE: This is a copy of the constants from the alertrule package to avoid circular imports.

@@ -1,4 +1,3 @@
-import { userHasAllPermissions } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import type { AccessControlAction } from 'app/types/accessControl';
 
@@ -13,12 +12,8 @@ export function evaluateAccess(actions: AccessControlAction[]) {
   return () => contextSrv.evaluatePermission(actions);
 }
 
-/**
- * Like `evaluateAccess`, but requires the user to hold ALL of the given actions (AND
- * semantics) rather than any one of them. Use when access depends on a combination of
- * permissions — e.g. the import-to-GMA route, which needs both the convert endpoint's
- * rule-create and provisioning-set-status permissions.
- */
-export function evaluateAccessAll(actions: AccessControlAction[]) {
-  return () => (userHasAllPermissions(actions, contextSrv.user) ? [] : ['Reject']);
+/** Like `evaluateAccess`, for a check the "any of these actions" rule can't express, e.g. requiring several. */
+export function allowIf(isAllowed: () => boolean) {
+  // 'Reject' is the role no user has, which is how route guards deny access.
+  return () => (isAllowed() ? [] : ['Reject']);
 }

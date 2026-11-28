@@ -948,7 +948,10 @@ func TestIntegrationDashboardDeleteGracefulDegradation(t *testing.T) {
 		require.True(t, errors.IsNotFound(err), "dashboard should be gone after deletion")
 	})
 
-	t.Run("provisioned dashboard is still protected from deletion", func(t *testing.T) {
+	// Deletion of a genuinely provisioned dashboard is covered by
+	// TestIntegrationUpdatingProvisionionedDashboards in pkg/tests/api/dashboards. It cannot
+	// be covered here: the provisioner needs search, so it fails to start in this env.
+	t.Run("user can not forge classic-file-provisioning provenance", func(t *testing.T) {
 		dash := &unstructured.Unstructured{Object: map[string]interface{}{
 			"spec": map[string]interface{}{
 				"title":         "gd-test-provisioned",
@@ -959,26 +962,23 @@ func TestIntegrationDashboardDeleteGracefulDegradation(t *testing.T) {
 		created, err := client.Resource.Create(ctx, dash, metav1.CreateOptions{})
 		require.NoError(t, err)
 
-		// Mark as classic file provisioned
 		meta, err := utils.MetaAccessor(created)
 		require.NoError(t, err)
 		meta.SetManagerProperties(utils.ManagerProperties{
 			Kind:     utils.ManagerKindClassicFP, //nolint:staticcheck
 			Identity: "test-provisioner",
 		})
-		updated, err := client.Resource.Update(ctx, created, metav1.UpdateOptions{})
-		require.NoError(t, err)
 
-		// Verify manager properties are persisted
-		updatedMeta, err := utils.MetaAccessor(updated)
-		require.NoError(t, err)
-		mgr, managed := updatedMeta.GetManagerProperties()
-		require.True(t, managed, "dashboard should be marked as managed after update")
-		require.Equal(t, utils.ManagerKindClassicFP, mgr.Kind) //nolint:staticcheck
-		require.Equal(t, "test-provisioner", mgr.Identity)
+		_, err = client.Resource.Update(ctx, created, metav1.UpdateOptions{})
+		require.Error(t, err, "a user must not be able to assign the classic-file-provisioning manager")
+		require.True(t, errors.IsForbidden(err), "expected forbidden, got %v", err)
 
-		// Delete should be blocked even without search
-		err = client.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
-		require.Error(t, err, "provisioned dashboard delete should be blocked")
+		// The forged annotations must not have persisted.
+		fetched, err := client.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		fetchedMeta, err := utils.MetaAccessor(fetched)
+		require.NoError(t, err)
+		_, managed := fetchedMeta.GetManagerProperties()
+		require.False(t, managed, "forged manager properties must not persist")
 	})
 }

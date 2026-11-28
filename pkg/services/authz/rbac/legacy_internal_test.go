@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -131,7 +132,7 @@ func TestLegacyCheckInternalIdentityValidation(t *testing.T) {
 		{
 			name: "global user evaluation",
 			modify: func(r *legacyclient.LegacyCheckRequest) {
-				r.GlobalEvaluation = &legacyclient.LegacyGlobalEvaluation{}
+				r.RequesterOrgID = ptr.To(int64(accesscontrol.GlobalOrgID))
 			},
 		},
 		{
@@ -217,9 +218,10 @@ func TestLegacyCheckInternalClientPreservesUserGrants(t *testing.T) {
 	subject := types.NewTypeID(types.TypeUser, legacyInternalTestUserUID)
 
 	allowed, err := client.LegacyCheck(t.Context(), legacyclient.LegacyCheckRequest{
-		Namespace: types.OrgNamespaceFormatter(legacyInternalTestOrgID),
-		Subject:   subject,
-		Evaluator: accesscontrol.EvalPermission("dashboards:create"),
+		Namespace:      types.OrgNamespaceFormatter(legacyInternalTestOrgID),
+		RequesterOrgID: ptr.To[int64](legacyInternalTestOrgID),
+		Subject:        subject,
+		Evaluator:      accesscontrol.EvalPermission("dashboards:create"),
 	})
 	require.NoError(t, err)
 	require.False(t, allowed)

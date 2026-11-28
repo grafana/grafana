@@ -273,10 +273,6 @@ export function trackImportToGMAWizardStarted() {
   reportInteraction('grafana_alerting_import_to_gma_wizard_started');
 }
 
-export function trackImportToGMAWizardCancelled(payload: { cancelledAtStep: string; formDirty: boolean }) {
-  reportInteraction('grafana_alerting_import_to_gma_wizard_cancelled', payload);
-}
-
 export function trackImportToGMAWizardStepSkipped(payload: { step: 'notifications' | 'rules' }) {
   reportInteraction('grafana_alerting_import_to_gma_wizard_step_skipped', payload);
 }

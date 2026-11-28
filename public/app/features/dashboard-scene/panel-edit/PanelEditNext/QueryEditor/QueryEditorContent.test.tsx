@@ -12,7 +12,7 @@ import { type QueryEditorUIState } from './QueryEditorContext';
 import { makeStackedMode, renderWithQueryEditorProvider } from './testUtils';
 import { type AlertRule, type Transformation } from './types';
 
-// QueryEditorContent's job is composition: pick the header and the stacked or single-card body
+// QueryEditorContent's job is composition: pick the header and the stacked or single-item body
 // based on stacked-mode/picker/alert state. The children have their own tests, so we stub them
 // with recognizable markers and only assert which branch was rendered.
 jest.mock('./StackedEditor/StackedEditorRenderer', () => ({
@@ -21,8 +21,8 @@ jest.mock('./StackedEditor/StackedEditorRenderer', () => ({
 jest.mock('./Body/QueryEditorBody', () => ({
   QueryEditorBody: ({ children }: { children: ReactNode }) => <div data-testid="query-editor-body">{children}</div>,
 }));
-jest.mock('./Body/SingleEditorCard', () => ({
-  SingleEditorCard: () => <div data-testid="single-editor-card" />,
+jest.mock('./StackedEditor/SingleItemRenderer', () => ({
+  SingleItemRenderer: () => <div data-testid="single-item-renderer" />,
 }));
 jest.mock('./CardEditorRenderer', () => ({
   CardEditorRenderer: () => <div data-testid="card-editor-renderer" />,
@@ -60,26 +60,28 @@ describe('QueryEditorContent', () => {
 
     expect(screen.getByTestId('main-header')).toBeInTheDocument();
     expect(screen.getByTestId('stacked-editor-renderer')).toBeInTheDocument();
-    expect(screen.queryByTestId('single-editor-card')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('single-item-renderer')).not.toBeInTheDocument();
   });
 
-  it('renders the main header above a single card when stacked mode is disabled', () => {
+  it('renders the main header above the selected card when stacked mode is disabled', () => {
     renderContent({ stackedMode: makeStackedMode({ enabled: false }) });
 
     expect(screen.getByTestId('main-header')).toBeInTheDocument();
-    expect(screen.getByTestId('single-editor-card')).toBeInTheDocument();
+    expect(screen.getByTestId('single-item-renderer')).toBeInTheDocument();
     expect(screen.queryByTestId('stacked-editor-renderer')).not.toBeInTheDocument();
   });
 
   it.each([
     { name: 'a pending expression', overrides: { pendingExpression: { insertAfter: 'A' } } },
     { name: 'a pending transformation', overrides: { pendingTransformation: { insertAfter: 'A' } } },
-  ])('shows $name in a single card without the main header, even in stacked mode', ({ overrides }) => {
+  ])('shows $name picker with its own header and without the main header, even in stacked mode', ({ overrides }) => {
     renderContent({ stackedMode: makeStackedMode({ enabled: true }), ...overrides });
 
-    expect(screen.getByTestId('single-editor-card')).toBeInTheDocument();
+    expect(screen.getByTestId('content-header')).toBeInTheDocument();
+    expect(screen.getByTestId('card-editor-renderer')).toBeInTheDocument();
     expect(screen.queryByTestId('main-header')).not.toBeInTheDocument();
     expect(screen.queryByTestId('stacked-editor-renderer')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('single-item-renderer')).not.toBeInTheDocument();
   });
 
   describe('in alert view', () => {
@@ -93,7 +95,7 @@ describe('QueryEditorContent', () => {
       expect(screen.getByTestId('content-header')).toBeInTheDocument();
       expect(screen.getByTestId('card-editor-renderer')).toBeInTheDocument();
       expect(screen.queryByTestId('main-header')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('single-editor-card')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('single-item-renderer')).not.toBeInTheDocument();
       expect(screen.queryByTestId('stacked-editor-renderer')).not.toBeInTheDocument();
     });
 
@@ -119,11 +121,11 @@ describe('QueryEditorContent', () => {
       expect(screen.queryByTestId('stacked-editor-renderer')).not.toBeInTheDocument();
     });
 
-    it('keeps the single card when only transformations remain', () => {
+    it('keeps the selected card when only transformations remain', () => {
       renderWithQueryEditorProvider(<QueryEditorContent />, { queries: [], transformations: [transformation] });
 
       expect(screen.queryByTestId('queries-empty-state')).not.toBeInTheDocument();
-      expect(screen.getByTestId('single-editor-card')).toBeInTheDocument();
+      expect(screen.getByTestId('single-item-renderer')).toBeInTheDocument();
     });
 
     it.each([

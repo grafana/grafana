@@ -635,6 +635,33 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 	}
 }
 
+func TestIntegration_CountByOrg(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.NewTestStore(t)
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	b := &fakeBus{}
+	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+	counts, err := store.CountByOrg(context.Background())
+	require.NoError(t, err)
+	require.Empty(t, counts)
+
+	gen := models.RuleGen
+	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval))
+	for range 2 {
+		_ = createRule(t, store, gen.With(gen.WithOrgID(1)))
+	}
+	for range 3 {
+		_ = createRule(t, store, gen.With(gen.WithOrgID(2)))
+	}
+
+	counts, err = store.CountByOrg(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, map[int64]int64{1: 2, 2: 3}, counts)
+}
+
 func TestIntegration_CountRuleGroups(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
@@ -2407,6 +2434,8 @@ func TestIntegrationListAlertRulesByGroupCaseSensitiveOrdering(t *testing.T) {
 	})
 }
 
+var versionDiffIgnoredFields = []string{"ID", "Version", "Updated", "UpdatedBy", "FolderFullpath"}
+
 func TestIntegrationGetRuleVersions(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
@@ -2439,7 +2468,7 @@ func TestIntegrationGetRuleVersions(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, versions, 2)
 		assert.IsDecreasing(t, []int64{versions[0].ID, versions[1].ID})
-		diff := versions[1].Diff(&versions[0].AlertRule, alertRuleFieldsToIgnoreInDiff[:]...)
+		diff := versions[1].Diff(&versions[0].AlertRule, versionDiffIgnoredFields...)
 		assert.ElementsMatch(t, []string{"Title", "RuleGroupIndex"}, diff.Paths())
 	})
 
@@ -2469,7 +2498,7 @@ func TestIntegrationGetRuleVersions(t *testing.T) {
 		versions, err := store.GetAlertRuleVersions(context.Background(), ruleV3.OrgID, ruleV3.GUID)
 		require.NoError(t, err)
 		assert.Len(t, versions, 3)
-		diff := versions[0].Diff(&versions[1].AlertRule, alertRuleFieldsToIgnoreInDiff[:]...)
+		diff := versions[0].Diff(&versions[1].AlertRule, versionDiffIgnoredFields...)
 		assert.ElementsMatch(t, []string{"RuleGroup", "NamespaceUID"}, diff.Paths())
 	})
 }

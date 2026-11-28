@@ -275,6 +275,7 @@ manifest: {
 				},
 				globalVariableV2beta1,
 				notebookV2beta1,
+				dashboardPreferencesV2beta1,
 			]
 		}
 		"v2": {
@@ -301,6 +302,7 @@ manifest: {
 					}
 					searchFields: _dashboardSearchFields
 				},
+				globalVariableV2,
 			]
 		}
 	}

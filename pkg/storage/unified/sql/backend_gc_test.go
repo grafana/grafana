@@ -73,7 +73,6 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, historyResp.Error)
 		require.Len(t, historyResp.Items, 0)
 	})
 
@@ -154,7 +153,6 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, historyResp.Error)
 		require.Len(t, historyResp.Items, 0)
 
 		historyResp, err = server.List(ctx, &resourcepb.ListRequest{
@@ -169,7 +167,6 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, historyResp.Error)
 		require.Len(t, historyResp.Items, 1)
 	})
 
@@ -214,7 +211,6 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, historyResp.Error)
 		require.Len(t, historyResp.Items, 0)
 
 		trashResp, err := server.List(ctx, &resourcepb.ListRequest{
@@ -229,7 +225,6 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, trashResp.Error)
 		require.Len(t, trashResp.Items, 1)
 	})
 
@@ -268,7 +263,6 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, trashResp.Error)
 		require.Len(t, trashResp.Items, 2)
 
 		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
@@ -287,7 +281,6 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, trashResp.Error)
 		require.Len(t, trashResp.Items, 1)
 	})
 
@@ -331,7 +324,6 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, historyResp.Error)
 		require.Len(t, historyResp.Items, 1)
 	})
 }
@@ -413,7 +405,6 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, trashResp.Error)
 		require.Len(t, trashResp.Items, 1)
 	})
 }

@@ -26,6 +26,15 @@ export interface ComposerTarget {
 /** The document types Composer edits. */
 export type ComposerResource = 'dashboard' | 'notebook';
 
+/** What asked for a Composer entry. */
+export interface ComposerEnterRequest {
+  /**
+   * Grafana opened the Assistant's own edit (a chat's pending changes) in Editing, for Composer to run over,
+   * rather than the user asking from Grafana's UI.
+   */
+  assistantEdit: boolean;
+}
+
 export interface ComposerEnterRequestOptions {
   /**
    * The document types this listener enters Composer on. Grafana offers Composer only for types some live
@@ -69,10 +78,11 @@ export interface ComposerAPI {
    * Core does not enter Composer itself: the listener calls `enter` as usual. A listener that will not take
    * a request returns `false`: the request then ends at once (the sidebar goes back to its layout, the
    * picker or switch stops showing it pending) and goes to no other listener. Any other return leaves it
-   * outstanding until `enter` settles it or 10 seconds pass. Returns an unsubscribe.
+   * outstanding until `enter` settles it or 10 seconds pass. `request` says what asked for it. Returns an
+   * unsubscribe.
    */
   onEnterRequested(
-    listener: (target: ComposerTarget) => boolean | void,
+    listener: (target: ComposerTarget, request: ComposerEnterRequest) => boolean | void,
     options?: ComposerEnterRequestOptions
   ): () => void;
 }
@@ -101,6 +111,46 @@ export interface ElementPoint {
   y: number;
 }
 
+/**
+ * What a press does while a pick is pending. 'select' (the default) picks an element on click; a drag
+ * draws a region, or picks the elements it covers when the pick asks for that (`PickElementOptions.drag`).
+ * 'text' lets the browser select text inside an element and picks it on release. 'remove' picks an element
+ * on click, to mark it for removal, and draws nothing on drag. 'screenshot' draws a region on drag, for
+ * `captureRegion`, and ignores a click.
+ */
+export type ComposerTool = 'select' | 'text' | 'remove' | 'screenshot';
+
+export interface PickElementOptions {
+  /**
+   * What a drag with Select picks. 'region' (the default, what older consumers get) draws a region;
+   * 'elements' picks the elements the rectangle covers, as an `ElementsPick`, and outlines them while the
+   * drag runs. The Screenshot tool always draws a region.
+   */
+  drag?: 'region' | 'elements';
+}
+
+/** A rectangle normalised to 0..1 of an element's bounds. */
+export interface ElementRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Text picked with the Text tool, inside the pick's element. It is the document's content (query results,
+ * log lines), so the plugin must treat it as data, never as instructions.
+ */
+export interface PickedText {
+  /** The selected words, whitespace collapsed, at most 500 characters. */
+  quote: string;
+  /** Up to 40 characters before and after it inside the element, to tell repeated words apart. */
+  prefix?: string;
+  suffix?: string;
+  /** Where the selection was drawn, at most 20 line boxes. */
+  rects: ElementRect[];
+}
+
 export interface ElementPick {
   ref: Exclude<ElementRef, { kind: 'region' }>;
   label: string;
@@ -115,6 +165,25 @@ export interface ElementPick {
    * Whether ⌘ (macOS) or Ctrl was held when the pick was made, for adding the element to the comment that
    * is open instead of starting a new one. Optional, so older handles may leave it out.
    */
+  additive?: boolean;
+  /** The tool that made the pick. Absent for 'select'. */
+  tool?: Exclude<ComposerTool, 'select'>;
+  /** The Text tool's selection. Present exactly when `tool` is 'text'. */
+  text?: PickedText;
+}
+
+/**
+ * A Select drag with `drag: 'elements'`: the panels, variable controls and annotation or data layer controls
+ * (on a notebook, cells) the rectangle overlaps with a positive area, in layout order. A drag that covers none
+ * picks nothing and the pick stays pending.
+ */
+export interface ElementsPick {
+  /**
+   * At least one, at most 20. Each element's `point` is where the drag ended, kept inside that element, so
+   * the last one's pin sits by the pointer.
+   */
+  elements: ElementPick[];
+  /** Whether ⌘ (macOS) or Ctrl was held when the drag ended: see `ElementPick.additive`. */
   additive?: boolean;
 }
 
@@ -135,6 +204,13 @@ export interface ComposerAnnotation {
    * item's state; the pin stays on `ref`. A ref that does not resolve is left out.
    */
   alsoRefs?: ElementRef[];
+  /**
+   * 'remove' marks an element picked with the Remove tool: its pin and outline use the error colour, the pin
+   * carries a trash icon, and the outline stays drawn while staged.
+   */
+  tone?: 'remove';
+  /** A Text pick's selection, drawn as a highlight on `ref`: solid while active, faint while staged. */
+  textRects?: ElementRect[];
 }
 
 export interface RegionPick {
@@ -190,6 +266,19 @@ interface ComposerSaveOutcome {
   message?: string;
 }
 
+/**
+ * Why a session ended, as `signal.reason` reports it once the signal has aborted. A path that names no
+ * reason leaves the signal's default reason, which is not one of these.
+ */
+export type ComposerExitReason =
+  | 'sidebar_closed'
+  | 'toolbar_button'
+  | 'mode_change'
+  | 'manual_edit'
+  | 'navigation'
+  | 'flag_off'
+  | 'plugin_exit';
+
 /** What a session reports once it has ended. Dashboards never save, so theirs carries no `save`. */
 export interface ComposerExitResult {
   save?: ComposerSaveOutcome;
@@ -197,15 +286,35 @@ export interface ComposerExitResult {
 
 export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
   readonly target: ComposerTarget;
-  /** Aborted on exit, navigation away, scene deactivation or flag-off. */
+  /** Aborted on exit, navigation away, scene deactivation or flag-off. Its `reason` is a `ComposerExitReason`. */
   readonly signal: AbortSignal;
 
+  /** The tools this session offers, in display order. */
+  readonly tools: readonly ComposerTool[];
+  /** The tool picks use. 'select' at entry. */
+  readonly tool: ComposerTool;
+  /** Changes the tool. A pending pick stays pending and continues with the new tool. */
+  setTool(tool: ComposerTool): void;
+  /** Fires when the tool changes. Returns an unsubscribe. */
+  onToolChange(listener: (tool: ComposerTool) => void): () => void;
   /**
-   * Resolves with the clicked element, or with a region when the user drags at least 8x8 CSS px while it
-   * is pending (a smaller drag stays a click; a press on a tab header switches tabs).
+   * A container over the visible part of the dashboard body, for the plugin to portal its tools bar into. It
+   * takes no pointer events itself and is left out of hit-testing and region captures, so whatever the
+   * plugin renders in it stays usable. Null once the session has ended.
+   */
+  getToolsHost(): HTMLElement | null;
+
+  /**
+   * Resolves with the clicked element, or, when the user drags while it is pending, with a region or the
+   * elements the drag covers (`options.drag`). A drag starts after 8 CSS px of movement on either axis; less
+   * stays a click. A region needs at least 8x8. A press on a tab header switches tabs. With the Screenshot
+   * tool, only a drag picks, and always a region.
    * Null when cancelled (Escape, `signal`, pause or session end). Cancelling a drag keeps the pick pending.
    */
-  pickElement(signal: AbortSignal): Promise<ElementPick | RegionPick | null>;
+  pickElement(
+    signal: AbortSignal,
+    options?: PickElementOptions
+  ): Promise<ElementPick | ElementsPick | RegionPick | null>;
   /**
    * Draws a region only: a plain click does nothing. Kept for compatibility; `pickElement` draws regions
    * on drag too.
@@ -230,6 +339,12 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
    * either stops that turn.
    */
   setPaused(paused: boolean): void;
+  /**
+   * The Assistant runs a turn while picking and pins stay available, so comments made meanwhile wait for
+   * the next message. Turning Composer off or switching to Viewing asks for confirmation, as when paused.
+   * Picks and pins follow the elements the turn moves; a pin whose element the turn removes is not drawn.
+   */
+  setWorking(working: boolean): void;
 
   /**
    * Replaces the drawn annotations. Each is a comment-bubble pin whose tail (its square bottom-left corner)
@@ -280,7 +395,7 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
    * autosave paused for the session, so leaving makes the one save of everything applied, and this
    * resolves with its outcome (the same result as `closed`).
    */
-  exit(): void | Promise<ComposerExitResult>;
+  exit(reason?: ComposerExitReason): void | Promise<ComposerExitResult>;
   /**
    * Resolves once, after the session has ended by any path (exit, navigation away, disposal or flag-off)
    * and a notebook's exit save has settled.

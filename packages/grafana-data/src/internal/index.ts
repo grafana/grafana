@@ -10,7 +10,22 @@
  *
  */
 
-export { actionsOverrideProcessor } from '../field/overrides/processors';
+export {
+  actionsOverrideProcessor,
+  getVarMappingKind,
+  hasVarMappingVariableReference,
+  isInVarMappingRange,
+  isVarMappingExpressionInput,
+  type VarMappingKind,
+} from '../field/overrides/processors';
+export { setVarMappingsEnabledResolver } from '../field/fieldOverrides';
+export {
+  clearCustomFieldConfig,
+  clearCustomVarMappings,
+  isVarMappingProp,
+  unwrapVarMappingPropId,
+  wrapVarMappingPropId,
+} from '../panel/getPanelOptionsWithDefaults';
 export { nullToUndefThreshold } from '../transformations/transformers/nulls/nullToUndefThreshold';
 export { applyNullInsertThreshold } from '../transformations/transformers/nulls/nullInsertThreshold';
 export {
@@ -63,7 +78,10 @@ export {
   defaultWindowOptions,
   checkBinaryValueType,
   type CumulativeOptions,
+  getFieldTemplateReference,
+  parseFieldTemplate,
   type ReduceOptions,
+  type TemplateOptions,
   type UnaryOptions,
   WindowAlignment,
   type WindowOptions,
@@ -128,6 +146,14 @@ export { createFieldsOrdererAuto } from '../transformations/transformers/order';
 export { getRowIdentity } from '../transformations/frameIdentity';
 
 export { filterByValueTransformer, type FilterByValueConfig } from '../transformations/transformers/filterByValue';
-export { type ValueSetOptions } from '../transformations/matchers/valueMatchers/setMatchers';
+export {
+  type ValueSetOptions,
+  isPillCellField,
+  getValueSetCandidates,
+} from '../transformations/matchers/valueMatchers/setMatchers';
+export { getPillElements } from '../transformations/matchers/pillElements';
 export { dateTimeFormatTimeAgoShort } from '../datetime/formatter';
 export { getAllowedRestrictedGrafanaApis } from '../context/plugins/RestrictedGrafanaApis';
+
+export { getFieldColorPalette } from '../field/fieldColor';
+export { getValueMappingResult, isNumeric } from '../utils/valueMappings';

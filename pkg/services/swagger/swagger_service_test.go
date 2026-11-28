@@ -335,7 +335,8 @@ func TestSwaggerService_Lifecycle(t *testing.T) {
 		require.NoError(t, err)
 		service := createTestService(t, cfg)
 
-		require.NoError(t, services.StartAndAwaitRunning(t.Context(), service))
+		// The expected bind failure can move the service past Running before a waiter observes it.
+		require.NoError(t, service.StartAsync(t.Context()))
 
 		err = service.AwaitTerminated(t.Context())
 		require.Error(t, err)

@@ -35,7 +35,9 @@ import { type QueryGroupOptions } from 'app/types/query';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
+import { setQueryRunnerQueries } from '../../utils/queryRunnerState';
 import { getDashboardSceneFor } from '../../utils/utils';
+import { getChangedQueryOptions, getQueryOptionState, trackQueryOptionChanges } from '../queryOptionChanges';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
 import { startQueryPreview, type QueryPreview } from './QueryEditor/coauthoring/queryPreview';
@@ -303,14 +305,15 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
 
     const updatedQueries = mutator(queries[index], index, queries);
-    queryRunner.setState({ queries: updatedQueries });
+    setQueryRunnerQueries(queryRunner, updatedQueries);
+    return updatedQueries;
   }
 
   // Query Operations
   public updateQueries = (queries: DataQuery[]) => {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
     if (queryRunner) {
-      queryRunner.setState({ queries });
+      setQueryRunnerQueries(queryRunner, queries);
       this.resolveUniformDatasource();
     }
   };
@@ -364,18 +367,23 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       }
     }
 
-    queryRunner.setState({ queries: updatedQueries });
+    setQueryRunnerQueries(queryRunner, updatedQueries);
+    if (currentQueries.length === 0) {
+      queryRunner.runQueries();
+    }
 
     return newItem?.refId;
   };
 
   public deleteQuery = (refId: string) => {
-    this.mutateQuery(refId, (_query, index, queries) => {
+    const queries = this.mutateQuery(refId, (_query, index, queries) => {
       queries.splice(index, 1);
       return queries;
     });
     this.resolveUniformDatasource();
-    this.runQueries();
+    if (queries?.length) {
+      this.runQueries();
+    }
   };
 
   public duplicateQuery = (refId: string) => {
@@ -416,9 +424,11 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
     const refIdSet = new Set(refIds);
     const queries = queryRunner.state.queries.filter(({ refId }) => !refIdSet.has(refId));
-    queryRunner.setState({ queries });
+    setQueryRunnerQueries(queryRunner, queries);
     this.resolveUniformDatasource();
-    this.runQueries();
+    if (queries.length) {
+      this.runQueries();
+    }
   };
 
   public bulkToggleQueriesHide = (refIds: readonly string[], hide: boolean) => {
@@ -761,6 +771,10 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     queryRunner.runQueries();
   };
 
+  public onQueryEdited = () => {
+    getDashboardSceneFor(this).state.editPanel?.recordQueryEdit();
+  };
+
   // Query Options Operations
   public onQueryOptionsChange = (options: QueryGroupOptions) => {
     const panel = this.state.panelRef.resolve();
@@ -770,6 +784,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       return;
     }
 
+    const optionsBefore = getQueryOptionState(panel, queryRunner);
     const dataObjStateUpdate: Partial<SceneQueryRunner['state']> = {};
     const panelStateUpdate: Partial<VizPanel['state']> = {};
 
@@ -806,6 +821,11 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     panel.setState(panelStateUpdate);
     queryRunner.setState(dataObjStateUpdate);
     queryRunner.runQueries();
+    trackQueryOptionChanges(
+      panel,
+      getChangedQueryOptions(optionsBefore, getQueryOptionState(panel, queryRunner)),
+      'next'
+    );
   };
 
   public updateTransformation = (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => {

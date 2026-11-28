@@ -67,7 +67,7 @@ func ValidateWrite(cfg config.RuntimeConfig) validation.ValidateFunc[*model.Rule
 			memberships = resolved
 		}
 
-		for _, ref := range allRefs {
+		validateRef := func(ref model.RuleSequenceRuleRef, wantRecording bool) error {
 			ruleUID := string(ref.Name)
 			if ruleUID == "" {
 				return fmt.Errorf("rule ref name must not be empty")
@@ -88,6 +88,12 @@ func ValidateWrite(cfg config.RuntimeConfig) validation.ValidateFunc[*model.Rule
 				if ruleRef.FolderUID != seqFolderUID {
 					return fmt.Errorf("rule %q is in folder %q but rule sequence is in folder %q: all rules must be in the same folder as the sequence", ruleUID, ruleRef.FolderUID, seqFolderUID)
 				}
+				if wantRecording && !ruleRef.IsRecording {
+					return fmt.Errorf("rule %q is an alert rule but is listed in recordingRules", ruleUID)
+				}
+				if !wantRecording && ruleRef.IsRecording {
+					return fmt.Errorf("rule %q is a recording rule but is listed in alertRules", ruleUID)
+				}
 			}
 
 			membership, hasBulkMembership := memberships[ruleUID]
@@ -96,6 +102,18 @@ func ValidateWrite(cfg config.RuntimeConfig) validation.ValidateFunc[*model.Rule
 			}
 			if membership.Found && membership.SequenceUID != "" && membership.SequenceUID != r.Name {
 				return fmt.Errorf("rule %q already belongs to rule sequence %q", ruleUID, membership.SequenceUID)
+			}
+			return nil
+		}
+
+		for _, ref := range r.Spec.RecordingRules {
+			if err := validateRef(ref, true); err != nil {
+				return err
+			}
+		}
+		for _, ref := range r.Spec.AlertRules {
+			if err := validateRef(ref, false); err != nil {
+				return err
 			}
 		}
 

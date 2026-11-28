@@ -939,7 +939,7 @@ func TestTranslateSearchQuery_FolderTree(t *testing.T) {
 }
 
 func TestTranslateSearchQuery_FolderTreeValidation(t *testing.T) {
-	filter := func(operator string, values ...string) *searchv0.SearchQuery {
+	filter := func(operator searchv0.FilterOperator, values ...string) *searchv0.SearchQuery {
 		return searchQuery(&searchv0.WhereNode{Filter: &searchv0.FilterPredicate{
 			Field: resource.SEARCH_FIELD_FOLDER_TREE, Operator: operator, Values: values,
 		}})
@@ -1007,7 +1007,7 @@ func TestTranslateSearchQuery_ManifestCannotEnableFolderTree(t *testing.T) {
 }
 
 func TestTranslateGlobalSearchQuery_FolderTree(t *testing.T) {
-	filter := func(operator string, values ...string) *searchv0.SearchQuery {
+	filter := func(operator searchv0.FilterOperator, values ...string) *searchv0.SearchQuery {
 		return searchQuery(&searchv0.WhereNode{Filter: &searchv0.FilterPredicate{
 			Field: resource.SEARCH_FIELD_FOLDER_TREE, Operator: operator, Values: values,
 		}})

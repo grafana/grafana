@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/clientauth"
@@ -97,6 +98,7 @@ func ProvideAuthZClients(
 	eventualResourceClient *resource.EventualClient,
 	legacyLoader *legacypermissions.Loader,
 	scopeResolvers *accesscontrol.ScopeResolverRegistry,
+	accessControl accesscontrol.AccessControl,
 ) (*AuthZClients, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
@@ -209,6 +211,15 @@ func ProvideAuthZClients(
 			channel,
 			legacyclient.WithLegacyTracerClientOption(tracer),
 		)
+		if configurable, ok := accessControl.(legacyclient.LegacyCheckClientSetter); ok {
+			if err := configurable.SetLegacyCheckClient(
+				legacyAccessClient,
+				apirequest.GetNamespaceMapper(cfg),
+				reg,
+			); err != nil {
+				return nil, err
+			}
+		}
 
 		configureUserPermissionsClient(acService, rbacClient, cfg.IDUseExternalGroupsForGroupsClaim)
 		var accessClient authlib.AccessClient = rbacClient
@@ -246,9 +257,21 @@ func inProcessContextWithClientSpan(ctx context.Context) context.Context {
 func ProvideStandaloneAuthZClient(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer, reg prometheus.Registerer,
 ) (authlib.AccessClient, error) {
+	clients, err := ProvideStandaloneAuthZClients(cfg, features, tracer, reg)
+	if err != nil {
+		return nil, err
+	}
+	return clients.accessClient, nil
+}
+
+// ProvideStandaloneAuthZClients shares the remote connection across modern and
+// legacy permission checks without constructing the local SQL services.
+func ProvideStandaloneAuthZClients(
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer, reg prometheus.Registerer,
+) (*AuthZClients, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
-		return nil, nil
+		return &AuthZClients{}, nil
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -261,7 +284,7 @@ func ProvideStandaloneAuthZClient(
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if zanzanaEnabled && features.IsEnabledGlobally(featuremgmt.FlagZanzanaNoLegacyClient) {
-		return zanzanaClient, nil
+		return newAuthZClients(zanzanaClient, nil, nil), nil
 	}
 
 	authCfg, err := readAuthzClientSettings(cfg)
@@ -275,10 +298,14 @@ func ProvideStandaloneAuthZClient(
 	}
 
 	if zanzanaEnabled {
-		return newShadowClient(cfg.ZanzanaClient.PrimaryEngine, remoteRBACClient, zanzanaClient, reg)
+		client, err := newShadowClient(cfg.ZanzanaClient.PrimaryEngine, remoteRBACClient, zanzanaClient, reg)
+		if err != nil {
+			return nil, err
+		}
+		return newAuthZClients(client, remoteRBACClient.LegacyAccessClient, remoteRBACClient.UserPermissionsClient), nil
 	}
 
-	return remoteRBACClient, nil
+	return newAuthZClients(remoteRBACClient, remoteRBACClient.LegacyAccessClient, remoteRBACClient.UserPermissionsClient), nil
 }
 
 // newZanzanaAwareClient returns the appropriate access client when Zanzana is
@@ -337,6 +364,9 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, re
 	}, []string{"operation", "status_code"})
 
 	unaryInterceptors, streamInterceptors := instrument(authzRequestDuration, middleware.ReportGRPCStatusOption)
+	if clientCfg.grpcClientTimeout > 0 {
+		unaryInterceptors = append([]grpc.UnaryClientInterceptor{timeoutUnaryClientInterceptor(clientCfg.grpcClientTimeout)}, unaryInterceptors...)
+	}
 
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(transportCreds),
@@ -356,6 +386,18 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, re
 		// Disable looking up service config from TXT DNS records.
 		// This reduces the number of requests made to the DNS servers.
 		opts = append(opts, grpc.WithDisableServiceConfig())
+	}
+
+	// Keepalive pings detect silently dead connections (e.g. an unreachable server node),
+	// which would otherwise block calls until their deadline. The server must allow it:
+	// grpcserver only applies an enforcement policy when [grpc_server] keepalive_min_time
+	// is set, otherwise gRPC's default MinTime (5m, no pings without active streams) applies,
+	// and pinging more often results in GOAWAY(too_many_pings).
+	if clientCfg.grpcClientKeepaliveTime > 0 {
+		opts = append(opts, grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:    clientCfg.grpcClientKeepaliveTime,
+			Timeout: clientCfg.grpcClientKeepaliveTimeout,
+		}))
 	}
 
 	conn, err := grpc.NewClient(clientCfg.remoteAddress, opts...)
@@ -392,6 +434,20 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, re
 	}, nil
 }
 
+func timeoutUnaryClientInterceptor(timeout time.Duration) grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		if timeout <= 0 {
+			return invoker(ctx, method, req, reply, cc, opts...)
+		}
+		if deadline, ok := ctx.Deadline(); ok && time.Until(deadline) <= timeout {
+			return invoker(ctx, method, req, reply, cc, opts...)
+		}
+		ctx, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
+}
+
 func RegisterRBACAuthZService(
 	handler grpcserver.Provider,
 	db legacysql.LegacyDatabaseProvider,
@@ -402,6 +458,7 @@ func RegisterRBACAuthZService(
 	userPermissionsResolver rbac.UserPermissionsResolver,
 	exchangeClient authnlib.TokenExchanger,
 	cfg RBACServerSettings,
+	legacyEnumeration ...*legacypermissions.RemoteServer,
 ) {
 	var folderStore store.FolderStore
 	// FIXME: for now we default to using database read proxy for folders if the api url is not configured.
@@ -447,7 +504,20 @@ func RegisterRBACAuthZService(
 
 	srv := handler.GetServer()
 	authzv1.RegisterAuthzServiceServer(srv, server)
-	authzextv1.RegisterLegacyAuthzServiceServer(srv, server)
+	if len(legacyEnumeration) > 0 && legacyEnumeration[0] != nil {
+		authzextv1.RegisterLegacyAuthzServiceServer(srv, &remoteLegacyServer{Service: server, enumeration: legacyEnumeration[0]})
+	} else {
+		authzextv1.RegisterLegacyAuthzServiceServer(srv, server)
+	}
+}
+
+type remoteLegacyServer struct {
+	*rbac.Service
+	enumeration *legacypermissions.RemoteServer
+}
+
+func (s *remoteLegacyServer) LegacyGetUserPermissions(req *authzextv1.LegacyGetUserPermissionsRequest, stream authzextv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
+	return s.enumeration.LegacyGetUserPermissions(req, stream)
 }
 
 type NoopCache struct{}

@@ -7,9 +7,7 @@ description: Write and run unit and E2E tests for Grafana frontend code (React/T
 
 Write tests for Grafana frontend code that pass review on the first pass. Goals:
 **assert concrete behavior, not existence**; keep test descriptions honest; verify the test
-actually exercises the target code path; and stabilize the known flake classes. Several codeowner
-paths are opted into the gating `check-frontend-test-coverage.yml` check, so coverage that drops
-fails CI.
+actually exercises the target code path; and stabilize the known flake classes.
 
 ## Running Playwright E2E tests
 
@@ -121,6 +119,8 @@ The same "assert nothing" failure mode applies to what you choose to test, not o
 assert. A test earns its place only if you can name a code change it would catch — skip
 "renders without crashing" (unless there's a known crash bug), "initial value is empty
 string", or a boolean branch with no real logic behind it.
+
+**Never unit-test visual styling through CSS rules or selector matches. Rely on Meticulous for visual testing.**
 
 **Prove the assertion has teeth.** Before landing, mutate the asserted value (or the source it
 derives from) and confirm the test goes **red**. A test that stays green — because its expectation

@@ -4,7 +4,7 @@ import type VectorTileSource from 'ol/source/VectorTile';
 
 import { type EventBus, type GrafanaTheme2, type MapLayerOptions } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 
 // ol-mapbox-style is untransformed ESM under jest and only its side effects matter here.
 const applyStyleMock = jest.fn().mockResolvedValue(undefined);

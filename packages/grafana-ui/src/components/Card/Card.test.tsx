@@ -19,6 +19,22 @@ describe('Card', () => {
     expect(callback).toHaveBeenCalledTimes(1);
   });
 
+  it('should render data-testid on the clickable heading element', () => {
+    const callback = jest.fn();
+    render(
+      <Card noMargin onClick={callback}>
+        <Card.Heading data-testid="my-card">Test Heading</Card.Heading>
+      </Card>
+    );
+
+    const heading = screen.getByTestId('my-card');
+    expect(heading).toBe(screen.getByRole('button', { name: 'Test Heading' }));
+    expect(screen.getByTestId('data-testid Card heading')).toBeInTheDocument();
+
+    heading.click();
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
   describe('Card Actions', () => {
     it('Children should be disabled or enabled according to Card disabled prop', () => {
       const { rerender } = render(

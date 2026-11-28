@@ -37,6 +37,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "DashboardCompatibilityScore",
 					Plural:     "DashboardCompatibilityScores",
+					Resource:   "dashboardcompatibilityscores",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaDashboardCompatibilityScorev1alpha1,

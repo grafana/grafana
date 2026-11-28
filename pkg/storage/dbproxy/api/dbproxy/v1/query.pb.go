@@ -9,6 +9,8 @@ package dbproxyv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	structpb "google.golang.org/protobuf/types/known/structpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
@@ -107,6 +109,8 @@ const (
 	ErrorReason_ERROR_REASON_DEADLINE_EXCEEDED       ErrorReason = 11
 	ErrorReason_ERROR_REASON_CANCELLED               ErrorReason = 12
 	ErrorReason_ERROR_REASON_INTERNAL                ErrorReason = 13
+	// A standalone write or transaction commit may have committed without confirmation.
+	ErrorReason_ERROR_REASON_OUTCOME_UNKNOWN ErrorReason = 14
 )
 
 // Enum value maps for ErrorReason.
@@ -126,6 +130,7 @@ var (
 		11: "ERROR_REASON_DEADLINE_EXCEEDED",
 		12: "ERROR_REASON_CANCELLED",
 		13: "ERROR_REASON_INTERNAL",
+		14: "ERROR_REASON_OUTCOME_UNKNOWN",
 	}
 	ErrorReason_value = map[string]int32{
 		"ERROR_REASON_UNSPECIFIED":             0,
@@ -142,6 +147,7 @@ var (
 		"ERROR_REASON_DEADLINE_EXCEEDED":       11,
 		"ERROR_REASON_CANCELLED":               12,
 		"ERROR_REASON_INTERNAL":                13,
+		"ERROR_REASON_OUTCOME_UNKNOWN":         14,
 	}
 )
 
@@ -307,6 +313,567 @@ func (x *QueryResponse) GetWarnings() []*Warning {
 	return nil
 }
 
+type ExecRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Stack namespace used for authorization and settings lookups, e.g. stacks-123.
+	Namespace string `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	// Stable caller-defined name for query attribution.
+	QueryName string `protobuf:"bytes,2,opt,name=query_name,json=queryName,proto3" json:"query_name,omitempty"`
+	// One write statement with unqualified database table names and ? placeholders.
+	Sql string `protobuf:"bytes,3,opt,name=sql,proto3" json:"sql,omitempty"`
+	// Values in placeholder order.
+	Parameters    []*Value `protobuf:"bytes,4,rep,name=parameters,proto3" json:"parameters,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExecRequest) Reset() {
+	*x = ExecRequest{}
+	mi := &file_dbproxy_v1_query_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExecRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExecRequest) ProtoMessage() {}
+
+func (x *ExecRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_dbproxy_v1_query_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExecRequest.ProtoReflect.Descriptor instead.
+func (*ExecRequest) Descriptor() ([]byte, []int) {
+	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ExecRequest) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *ExecRequest) GetQueryName() string {
+	if x != nil {
+		return x.QueryName
+	}
+	return ""
+}
+
+func (x *ExecRequest) GetSql() string {
+	if x != nil {
+		return x.Sql
+	}
+	return ""
+}
+
+func (x *ExecRequest) GetParameters() []*Value {
+	if x != nil {
+		return x.Parameters
+	}
+	return nil
+}
+
+type ExecResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// UPDATE counts matched rows, including matches with unchanged values.
+	RowsAffected int64 `protobuf:"varint,1,opt,name=rows_affected,json=rowsAffected,proto3" json:"rows_affected,omitempty"`
+	// Generated insert ID, or zero when none is reported.
+	LastInsertId  int64 `protobuf:"varint,2,opt,name=last_insert_id,json=lastInsertId,proto3" json:"last_insert_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExecResponse) Reset() {
+	*x = ExecResponse{}
+	mi := &file_dbproxy_v1_query_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExecResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExecResponse) ProtoMessage() {}
+
+func (x *ExecResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_dbproxy_v1_query_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExecResponse.ProtoReflect.Descriptor instead.
+func (*ExecResponse) Descriptor() ([]byte, []int) {
+	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ExecResponse) GetRowsAffected() int64 {
+	if x != nil {
+		return x.RowsAffected
+	}
+	return 0
+}
+
+func (x *ExecResponse) GetLastInsertId() int64 {
+	if x != nil {
+		return x.LastInsertId
+	}
+	return 0
+}
+
+type TransactionRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Time budget for this command, allowing a shorter deadline than the transaction.
+	// Must be positive when set; capped by the remaining transaction lifetime.
+	Timeout *durationpb.Duration `protobuf:"bytes,1,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	// Fields of type google.protobuf.Empty select actions without arguments.
+	//
+	// Types that are valid to be assigned to Command:
+	//
+	//	*TransactionRequest_Begin
+	//	*TransactionRequest_Query
+	//	*TransactionRequest_Exec
+	//	*TransactionRequest_Commit
+	//	*TransactionRequest_Rollback
+	Command       isTransactionRequest_Command `protobuf_oneof:"command"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TransactionRequest) Reset() {
+	*x = TransactionRequest{}
+	mi := &file_dbproxy_v1_query_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TransactionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TransactionRequest) ProtoMessage() {}
+
+func (x *TransactionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_dbproxy_v1_query_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TransactionRequest.ProtoReflect.Descriptor instead.
+func (*TransactionRequest) Descriptor() ([]byte, []int) {
+	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *TransactionRequest) GetTimeout() *durationpb.Duration {
+	if x != nil {
+		return x.Timeout
+	}
+	return nil
+}
+
+func (x *TransactionRequest) GetCommand() isTransactionRequest_Command {
+	if x != nil {
+		return x.Command
+	}
+	return nil
+}
+
+func (x *TransactionRequest) GetBegin() *BeginRequest {
+	if x != nil {
+		if x, ok := x.Command.(*TransactionRequest_Begin); ok {
+			return x.Begin
+		}
+	}
+	return nil
+}
+
+func (x *TransactionRequest) GetQuery() *Statement {
+	if x != nil {
+		if x, ok := x.Command.(*TransactionRequest_Query); ok {
+			return x.Query
+		}
+	}
+	return nil
+}
+
+func (x *TransactionRequest) GetExec() *Statement {
+	if x != nil {
+		if x, ok := x.Command.(*TransactionRequest_Exec); ok {
+			return x.Exec
+		}
+	}
+	return nil
+}
+
+func (x *TransactionRequest) GetCommit() *emptypb.Empty {
+	if x != nil {
+		if x, ok := x.Command.(*TransactionRequest_Commit); ok {
+			return x.Commit
+		}
+	}
+	return nil
+}
+
+func (x *TransactionRequest) GetRollback() *emptypb.Empty {
+	if x != nil {
+		if x, ok := x.Command.(*TransactionRequest_Rollback); ok {
+			return x.Rollback
+		}
+	}
+	return nil
+}
+
+type isTransactionRequest_Command interface {
+	isTransactionRequest_Command()
+}
+
+type TransactionRequest_Begin struct {
+	// Start the transaction; send this as the first command.
+	Begin *BeginRequest `protobuf:"bytes,2,opt,name=begin,proto3,oneof"`
+}
+
+type TransactionRequest_Query struct {
+	// Run one read statement and receive schema and row batches.
+	Query *Statement `protobuf:"bytes,3,opt,name=query,proto3,oneof"`
+}
+
+type TransactionRequest_Exec struct {
+	// Run one write or savepoint statement.
+	Exec *Statement `protobuf:"bytes,4,opt,name=exec,proto3,oneof"`
+}
+
+type TransactionRequest_Commit struct {
+	Commit *emptypb.Empty `protobuf:"bytes,5,opt,name=commit,proto3,oneof"`
+}
+
+type TransactionRequest_Rollback struct {
+	Rollback *emptypb.Empty `protobuf:"bytes,6,opt,name=rollback,proto3,oneof"`
+}
+
+func (*TransactionRequest_Begin) isTransactionRequest_Command() {}
+
+func (*TransactionRequest_Query) isTransactionRequest_Command() {}
+
+func (*TransactionRequest_Exec) isTransactionRequest_Command() {}
+
+func (*TransactionRequest_Commit) isTransactionRequest_Command() {}
+
+func (*TransactionRequest_Rollback) isTransactionRequest_Command() {}
+
+type BeginRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Stack namespace used for authorization and settings lookups, e.g. stacks-123.
+	Namespace string `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	// Request a read-only transaction.
+	ReadOnly      bool `protobuf:"varint,2,opt,name=read_only,json=readOnly,proto3" json:"read_only,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BeginRequest) Reset() {
+	*x = BeginRequest{}
+	mi := &file_dbproxy_v1_query_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BeginRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BeginRequest) ProtoMessage() {}
+
+func (x *BeginRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_dbproxy_v1_query_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BeginRequest.ProtoReflect.Descriptor instead.
+func (*BeginRequest) Descriptor() ([]byte, []int) {
+	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *BeginRequest) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *BeginRequest) GetReadOnly() bool {
+	if x != nil {
+		return x.ReadOnly
+	}
+	return false
+}
+
+type Statement struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Stable caller-defined name for query attribution.
+	QueryName string `protobuf:"bytes,1,opt,name=query_name,json=queryName,proto3" json:"query_name,omitempty"`
+	// One statement with unqualified database table names and ? placeholders.
+	Sql string `protobuf:"bytes,2,opt,name=sql,proto3" json:"sql,omitempty"`
+	// Values in placeholder order.
+	Parameters    []*Value `protobuf:"bytes,3,rep,name=parameters,proto3" json:"parameters,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Statement) Reset() {
+	*x = Statement{}
+	mi := &file_dbproxy_v1_query_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Statement) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Statement) ProtoMessage() {}
+
+func (x *Statement) ProtoReflect() protoreflect.Message {
+	mi := &file_dbproxy_v1_query_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Statement.ProtoReflect.Descriptor instead.
+func (*Statement) Descriptor() ([]byte, []int) {
+	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *Statement) GetQueryName() string {
+	if x != nil {
+		return x.QueryName
+	}
+	return ""
+}
+
+func (x *Statement) GetSql() string {
+	if x != nil {
+		return x.Sql
+	}
+	return ""
+}
+
+func (x *Statement) GetParameters() []*Value {
+	if x != nil {
+		return x.Parameters
+	}
+	return nil
+}
+
+type TransactionResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Result:
+	//
+	//	*TransactionResponse_Ok
+	//	*TransactionResponse_Query
+	//	*TransactionResponse_Exec
+	//	*TransactionResponse_Error
+	Result        isTransactionResponse_Result `protobuf_oneof:"result"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TransactionResponse) Reset() {
+	*x = TransactionResponse{}
+	mi := &file_dbproxy_v1_query_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TransactionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TransactionResponse) ProtoMessage() {}
+
+func (x *TransactionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_dbproxy_v1_query_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TransactionResponse.ProtoReflect.Descriptor instead.
+func (*TransactionResponse) Descriptor() ([]byte, []int) {
+	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *TransactionResponse) GetResult() isTransactionResponse_Result {
+	if x != nil {
+		return x.Result
+	}
+	return nil
+}
+
+func (x *TransactionResponse) GetOk() *emptypb.Empty {
+	if x != nil {
+		if x, ok := x.Result.(*TransactionResponse_Ok); ok {
+			return x.Ok
+		}
+	}
+	return nil
+}
+
+func (x *TransactionResponse) GetQuery() *QueryResponse {
+	if x != nil {
+		if x, ok := x.Result.(*TransactionResponse_Query); ok {
+			return x.Query
+		}
+	}
+	return nil
+}
+
+func (x *TransactionResponse) GetExec() *ExecResponse {
+	if x != nil {
+		if x, ok := x.Result.(*TransactionResponse_Exec); ok {
+			return x.Exec
+		}
+	}
+	return nil
+}
+
+func (x *TransactionResponse) GetError() *TransactionCommandError {
+	if x != nil {
+		if x, ok := x.Result.(*TransactionResponse_Error); ok {
+			return x.Error
+		}
+	}
+	return nil
+}
+
+type isTransactionResponse_Result interface {
+	isTransactionResponse_Result()
+}
+
+type TransactionResponse_Ok struct {
+	// Completes Begin, Query after all data, Commit, or Rollback according to the pending command.
+	Ok *emptypb.Empty `protobuf:"bytes,1,opt,name=ok,proto3,oneof"`
+}
+
+type TransactionResponse_Query struct {
+	// Schema and row batches for the current query.
+	Query *QueryResponse `protobuf:"bytes,2,opt,name=query,proto3,oneof"`
+}
+
+type TransactionResponse_Exec struct {
+	// Completes the current exec command.
+	Exec *ExecResponse `protobuf:"bytes,3,opt,name=exec,proto3,oneof"`
+}
+
+type TransactionResponse_Error struct {
+	// Completes a failed command while the transaction remains usable.
+	Error *TransactionCommandError `protobuf:"bytes,4,opt,name=error,proto3,oneof"`
+}
+
+func (*TransactionResponse_Ok) isTransactionResponse_Result() {}
+
+func (*TransactionResponse_Query) isTransactionResponse_Result() {}
+
+func (*TransactionResponse_Exec) isTransactionResponse_Result() {}
+
+func (*TransactionResponse_Error) isTransactionResponse_Result() {}
+
+// Only recoverable SQL errors use this in-stream result; fatal failures end the RPC.
+type TransactionCommandError struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Safe error message for the caller.
+	Message string `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	// Database code and SQLSTATE when available.
+	DatabaseError *DatabaseError `protobuf:"bytes,2,opt,name=database_error,json=databaseError,proto3" json:"database_error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TransactionCommandError) Reset() {
+	*x = TransactionCommandError{}
+	mi := &file_dbproxy_v1_query_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TransactionCommandError) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TransactionCommandError) ProtoMessage() {}
+
+func (x *TransactionCommandError) ProtoReflect() protoreflect.Message {
+	mi := &file_dbproxy_v1_query_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TransactionCommandError.ProtoReflect.Descriptor instead.
+func (*TransactionCommandError) Descriptor() ([]byte, []int) {
+	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *TransactionCommandError) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *TransactionCommandError) GetDatabaseError() *DatabaseError {
+	if x != nil {
+		return x.DatabaseError
+	}
+	return nil
+}
+
 type Column struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -325,7 +892,7 @@ type Column struct {
 
 func (x *Column) Reset() {
 	*x = Column{}
-	mi := &file_dbproxy_v1_query_proto_msgTypes[2]
+	mi := &file_dbproxy_v1_query_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -337,7 +904,7 @@ func (x *Column) String() string {
 func (*Column) ProtoMessage() {}
 
 func (x *Column) ProtoReflect() protoreflect.Message {
-	mi := &file_dbproxy_v1_query_proto_msgTypes[2]
+	mi := &file_dbproxy_v1_query_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -350,7 +917,7 @@ func (x *Column) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Column.ProtoReflect.Descriptor instead.
 func (*Column) Descriptor() ([]byte, []int) {
-	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{2}
+	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *Column) GetName() string {
@@ -405,7 +972,7 @@ type DecimalSize struct {
 
 func (x *DecimalSize) Reset() {
 	*x = DecimalSize{}
-	mi := &file_dbproxy_v1_query_proto_msgTypes[3]
+	mi := &file_dbproxy_v1_query_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -417,7 +984,7 @@ func (x *DecimalSize) String() string {
 func (*DecimalSize) ProtoMessage() {}
 
 func (x *DecimalSize) ProtoReflect() protoreflect.Message {
-	mi := &file_dbproxy_v1_query_proto_msgTypes[3]
+	mi := &file_dbproxy_v1_query_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -430,7 +997,7 @@ func (x *DecimalSize) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DecimalSize.ProtoReflect.Descriptor instead.
 func (*DecimalSize) Descriptor() ([]byte, []int) {
-	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{3}
+	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *DecimalSize) GetPrecision() int64 {
@@ -468,7 +1035,7 @@ type Value struct {
 
 func (x *Value) Reset() {
 	*x = Value{}
-	mi := &file_dbproxy_v1_query_proto_msgTypes[4]
+	mi := &file_dbproxy_v1_query_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -480,7 +1047,7 @@ func (x *Value) String() string {
 func (*Value) ProtoMessage() {}
 
 func (x *Value) ProtoReflect() protoreflect.Message {
-	mi := &file_dbproxy_v1_query_proto_msgTypes[4]
+	mi := &file_dbproxy_v1_query_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -493,7 +1060,7 @@ func (x *Value) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Value.ProtoReflect.Descriptor instead.
 func (*Value) Descriptor() ([]byte, []int) {
-	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{4}
+	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *Value) GetKind() isValue_Kind {
@@ -639,7 +1206,7 @@ type Row struct {
 
 func (x *Row) Reset() {
 	*x = Row{}
-	mi := &file_dbproxy_v1_query_proto_msgTypes[5]
+	mi := &file_dbproxy_v1_query_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -651,7 +1218,7 @@ func (x *Row) String() string {
 func (*Row) ProtoMessage() {}
 
 func (x *Row) ProtoReflect() protoreflect.Message {
-	mi := &file_dbproxy_v1_query_proto_msgTypes[5]
+	mi := &file_dbproxy_v1_query_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -664,7 +1231,7 @@ func (x *Row) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Row.ProtoReflect.Descriptor instead.
 func (*Row) Descriptor() ([]byte, []int) {
-	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{5}
+	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *Row) GetValues() []*Value {
@@ -684,7 +1251,7 @@ type Warning struct {
 
 func (x *Warning) Reset() {
 	*x = Warning{}
-	mi := &file_dbproxy_v1_query_proto_msgTypes[6]
+	mi := &file_dbproxy_v1_query_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -696,7 +1263,7 @@ func (x *Warning) String() string {
 func (*Warning) ProtoMessage() {}
 
 func (x *Warning) ProtoReflect() protoreflect.Message {
-	mi := &file_dbproxy_v1_query_proto_msgTypes[6]
+	mi := &file_dbproxy_v1_query_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -709,7 +1276,7 @@ func (x *Warning) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Warning.ProtoReflect.Descriptor instead.
 func (*Warning) Descriptor() ([]byte, []int) {
-	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{6}
+	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Warning) GetCode() string {
@@ -739,7 +1306,7 @@ type QueryError struct {
 
 func (x *QueryError) Reset() {
 	*x = QueryError{}
-	mi := &file_dbproxy_v1_query_proto_msgTypes[7]
+	mi := &file_dbproxy_v1_query_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -751,7 +1318,7 @@ func (x *QueryError) String() string {
 func (*QueryError) ProtoMessage() {}
 
 func (x *QueryError) ProtoReflect() protoreflect.Message {
-	mi := &file_dbproxy_v1_query_proto_msgTypes[7]
+	mi := &file_dbproxy_v1_query_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -764,7 +1331,7 @@ func (x *QueryError) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryError.ProtoReflect.Descriptor instead.
 func (*QueryError) Descriptor() ([]byte, []int) {
-	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{7}
+	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *QueryError) GetReason() ErrorReason {
@@ -792,7 +1359,7 @@ type DatabaseError struct {
 
 func (x *DatabaseError) Reset() {
 	*x = DatabaseError{}
-	mi := &file_dbproxy_v1_query_proto_msgTypes[8]
+	mi := &file_dbproxy_v1_query_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -804,7 +1371,7 @@ func (x *DatabaseError) String() string {
 func (*DatabaseError) ProtoMessage() {}
 
 func (x *DatabaseError) ProtoReflect() protoreflect.Message {
-	mi := &file_dbproxy_v1_query_proto_msgTypes[8]
+	mi := &file_dbproxy_v1_query_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -817,7 +1384,7 @@ func (x *DatabaseError) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DatabaseError.ProtoReflect.Descriptor instead.
 func (*DatabaseError) Descriptor() ([]byte, []int) {
-	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{8}
+	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *DatabaseError) GetCode() string {
@@ -839,7 +1406,7 @@ var File_dbproxy_v1_query_proto protoreflect.FileDescriptor
 const file_dbproxy_v1_query_proto_rawDesc = "" +
 	"\n" +
 	"\x16dbproxy/v1/query.proto\x12\n" +
-	"dbproxy.v1\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x90\x01\n" +
+	"dbproxy.v1\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x90\x01\n" +
 	"\fQueryRequest\x12\x1c\n" +
 	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x1d\n" +
 	"\n" +
@@ -851,7 +1418,45 @@ const file_dbproxy_v1_query_proto_rawDesc = "" +
 	"\rQueryResponse\x12,\n" +
 	"\acolumns\x18\x01 \x03(\v2\x12.dbproxy.v1.ColumnR\acolumns\x12#\n" +
 	"\x04rows\x18\x02 \x03(\v2\x0f.dbproxy.v1.RowR\x04rows\x12/\n" +
-	"\bwarnings\x18\x03 \x03(\v2\x13.dbproxy.v1.WarningR\bwarnings\"\x92\x02\n" +
+	"\bwarnings\x18\x03 \x03(\v2\x13.dbproxy.v1.WarningR\bwarnings\"\x8f\x01\n" +
+	"\vExecRequest\x12\x1c\n" +
+	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x1d\n" +
+	"\n" +
+	"query_name\x18\x02 \x01(\tR\tqueryName\x12\x10\n" +
+	"\x03sql\x18\x03 \x01(\tR\x03sql\x121\n" +
+	"\n" +
+	"parameters\x18\x04 \x03(\v2\x11.dbproxy.v1.ValueR\n" +
+	"parameters\"Y\n" +
+	"\fExecResponse\x12#\n" +
+	"\rrows_affected\x18\x01 \x01(\x03R\frowsAffected\x12$\n" +
+	"\x0elast_insert_id\x18\x02 \x01(\x03R\flastInsertId\"\xca\x02\n" +
+	"\x12TransactionRequest\x123\n" +
+	"\atimeout\x18\x01 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x120\n" +
+	"\x05begin\x18\x02 \x01(\v2\x18.dbproxy.v1.BeginRequestH\x00R\x05begin\x12-\n" +
+	"\x05query\x18\x03 \x01(\v2\x15.dbproxy.v1.StatementH\x00R\x05query\x12+\n" +
+	"\x04exec\x18\x04 \x01(\v2\x15.dbproxy.v1.StatementH\x00R\x04exec\x120\n" +
+	"\x06commit\x18\x05 \x01(\v2\x16.google.protobuf.EmptyH\x00R\x06commit\x124\n" +
+	"\brollback\x18\x06 \x01(\v2\x16.google.protobuf.EmptyH\x00R\brollbackB\t\n" +
+	"\acommand\"I\n" +
+	"\fBeginRequest\x12\x1c\n" +
+	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x1b\n" +
+	"\tread_only\x18\x02 \x01(\bR\breadOnly\"o\n" +
+	"\tStatement\x12\x1d\n" +
+	"\n" +
+	"query_name\x18\x01 \x01(\tR\tqueryName\x12\x10\n" +
+	"\x03sql\x18\x02 \x01(\tR\x03sql\x121\n" +
+	"\n" +
+	"parameters\x18\x03 \x03(\v2\x11.dbproxy.v1.ValueR\n" +
+	"parameters\"\xe9\x01\n" +
+	"\x13TransactionResponse\x12(\n" +
+	"\x02ok\x18\x01 \x01(\v2\x16.google.protobuf.EmptyH\x00R\x02ok\x121\n" +
+	"\x05query\x18\x02 \x01(\v2\x19.dbproxy.v1.QueryResponseH\x00R\x05query\x12.\n" +
+	"\x04exec\x18\x03 \x01(\v2\x18.dbproxy.v1.ExecResponseH\x00R\x04exec\x12;\n" +
+	"\x05error\x18\x04 \x01(\v2#.dbproxy.v1.TransactionCommandErrorH\x00R\x05errorB\b\n" +
+	"\x06result\"u\n" +
+	"\x17TransactionCommandError\x12\x18\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\x12@\n" +
+	"\x0edatabase_error\x18\x02 \x01(\v2\x19.dbproxy.v1.DatabaseErrorR\rdatabaseError\"\x92\x02\n" +
 	"\x06Column\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12,\n" +
 	"\x12database_type_name\x18\x02 \x01(\tR\x10databaseTypeName\x124\n" +
@@ -900,7 +1505,7 @@ const file_dbproxy_v1_query_proto_rawDesc = "" +
 	"\x0fVALUE_TYPE_BOOL\x10\x05\x12\x15\n" +
 	"\x11VALUE_TYPE_STRING\x10\x06\x12\x14\n" +
 	"\x10VALUE_TYPE_BYTES\x10\a\x12\x18\n" +
-	"\x14VALUE_TYPE_TIMESTAMP\x10\b*\xe8\x03\n" +
+	"\x14VALUE_TYPE_TIMESTAMP\x10\b*\x8a\x04\n" +
 	"\vErrorReason\x12\x1c\n" +
 	"\x18ERROR_REASON_UNSPECIFIED\x10\x00\x12 \n" +
 	"\x1cERROR_REASON_INVALID_REQUEST\x10\x01\x12 \n" +
@@ -916,9 +1521,12 @@ const file_dbproxy_v1_query_proto_rawDesc = "" +
 	"\x12\"\n" +
 	"\x1eERROR_REASON_DEADLINE_EXCEEDED\x10\v\x12\x1a\n" +
 	"\x16ERROR_REASON_CANCELLED\x10\f\x12\x19\n" +
-	"\x15ERROR_REASON_INTERNAL\x10\r2V\n" +
+	"\x15ERROR_REASON_INTERNAL\x10\r\x12 \n" +
+	"\x1cERROR_REASON_OUTCOME_UNKNOWN\x10\x0e2\xe5\x01\n" +
 	"\x14DatabaseProxyService\x12>\n" +
-	"\x05Query\x12\x18.dbproxy.v1.QueryRequest\x1a\x19.dbproxy.v1.QueryResponse0\x01BIZGgithub.com/grafana/grafana/pkg/storage/dbproxy/api/dbproxy/v1;dbproxyv1b\x06proto3"
+	"\x05Query\x12\x18.dbproxy.v1.QueryRequest\x1a\x19.dbproxy.v1.QueryResponse0\x01\x129\n" +
+	"\x04Exec\x12\x17.dbproxy.v1.ExecRequest\x1a\x18.dbproxy.v1.ExecResponse\x12R\n" +
+	"\vTransaction\x12\x1e.dbproxy.v1.TransactionRequest\x1a\x1f.dbproxy.v1.TransactionResponse(\x010\x01BIZGgithub.com/grafana/grafana/pkg/storage/dbproxy/api/dbproxy/v1;dbproxyv1b\x06proto3"
 
 var (
 	file_dbproxy_v1_query_proto_rawDescOnce sync.Once
@@ -933,41 +1541,67 @@ func file_dbproxy_v1_query_proto_rawDescGZIP() []byte {
 }
 
 var file_dbproxy_v1_query_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_dbproxy_v1_query_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_dbproxy_v1_query_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_dbproxy_v1_query_proto_goTypes = []any{
-	(ValueType)(0),                // 0: dbproxy.v1.ValueType
-	(ErrorReason)(0),              // 1: dbproxy.v1.ErrorReason
-	(*QueryRequest)(nil),          // 2: dbproxy.v1.QueryRequest
-	(*QueryResponse)(nil),         // 3: dbproxy.v1.QueryResponse
-	(*Column)(nil),                // 4: dbproxy.v1.Column
-	(*DecimalSize)(nil),           // 5: dbproxy.v1.DecimalSize
-	(*Value)(nil),                 // 6: dbproxy.v1.Value
-	(*Row)(nil),                   // 7: dbproxy.v1.Row
-	(*Warning)(nil),               // 8: dbproxy.v1.Warning
-	(*QueryError)(nil),            // 9: dbproxy.v1.QueryError
-	(*DatabaseError)(nil),         // 10: dbproxy.v1.DatabaseError
-	(structpb.NullValue)(0),       // 11: google.protobuf.NullValue
-	(*timestamppb.Timestamp)(nil), // 12: google.protobuf.Timestamp
+	(ValueType)(0),                  // 0: dbproxy.v1.ValueType
+	(ErrorReason)(0),                // 1: dbproxy.v1.ErrorReason
+	(*QueryRequest)(nil),            // 2: dbproxy.v1.QueryRequest
+	(*QueryResponse)(nil),           // 3: dbproxy.v1.QueryResponse
+	(*ExecRequest)(nil),             // 4: dbproxy.v1.ExecRequest
+	(*ExecResponse)(nil),            // 5: dbproxy.v1.ExecResponse
+	(*TransactionRequest)(nil),      // 6: dbproxy.v1.TransactionRequest
+	(*BeginRequest)(nil),            // 7: dbproxy.v1.BeginRequest
+	(*Statement)(nil),               // 8: dbproxy.v1.Statement
+	(*TransactionResponse)(nil),     // 9: dbproxy.v1.TransactionResponse
+	(*TransactionCommandError)(nil), // 10: dbproxy.v1.TransactionCommandError
+	(*Column)(nil),                  // 11: dbproxy.v1.Column
+	(*DecimalSize)(nil),             // 12: dbproxy.v1.DecimalSize
+	(*Value)(nil),                   // 13: dbproxy.v1.Value
+	(*Row)(nil),                     // 14: dbproxy.v1.Row
+	(*Warning)(nil),                 // 15: dbproxy.v1.Warning
+	(*QueryError)(nil),              // 16: dbproxy.v1.QueryError
+	(*DatabaseError)(nil),           // 17: dbproxy.v1.DatabaseError
+	(*durationpb.Duration)(nil),     // 18: google.protobuf.Duration
+	(*emptypb.Empty)(nil),           // 19: google.protobuf.Empty
+	(structpb.NullValue)(0),         // 20: google.protobuf.NullValue
+	(*timestamppb.Timestamp)(nil),   // 21: google.protobuf.Timestamp
 }
 var file_dbproxy_v1_query_proto_depIdxs = []int32{
-	6,  // 0: dbproxy.v1.QueryRequest.parameters:type_name -> dbproxy.v1.Value
-	4,  // 1: dbproxy.v1.QueryResponse.columns:type_name -> dbproxy.v1.Column
-	7,  // 2: dbproxy.v1.QueryResponse.rows:type_name -> dbproxy.v1.Row
-	8,  // 3: dbproxy.v1.QueryResponse.warnings:type_name -> dbproxy.v1.Warning
-	0,  // 4: dbproxy.v1.Column.value_type:type_name -> dbproxy.v1.ValueType
-	5,  // 5: dbproxy.v1.Column.decimal_size:type_name -> dbproxy.v1.DecimalSize
-	11, // 6: dbproxy.v1.Value.null_value:type_name -> google.protobuf.NullValue
-	12, // 7: dbproxy.v1.Value.timestamp_value:type_name -> google.protobuf.Timestamp
-	6,  // 8: dbproxy.v1.Row.values:type_name -> dbproxy.v1.Value
-	1,  // 9: dbproxy.v1.QueryError.reason:type_name -> dbproxy.v1.ErrorReason
-	10, // 10: dbproxy.v1.QueryError.database_error:type_name -> dbproxy.v1.DatabaseError
-	2,  // 11: dbproxy.v1.DatabaseProxyService.Query:input_type -> dbproxy.v1.QueryRequest
-	3,  // 12: dbproxy.v1.DatabaseProxyService.Query:output_type -> dbproxy.v1.QueryResponse
-	12, // [12:13] is the sub-list for method output_type
-	11, // [11:12] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	13, // 0: dbproxy.v1.QueryRequest.parameters:type_name -> dbproxy.v1.Value
+	11, // 1: dbproxy.v1.QueryResponse.columns:type_name -> dbproxy.v1.Column
+	14, // 2: dbproxy.v1.QueryResponse.rows:type_name -> dbproxy.v1.Row
+	15, // 3: dbproxy.v1.QueryResponse.warnings:type_name -> dbproxy.v1.Warning
+	13, // 4: dbproxy.v1.ExecRequest.parameters:type_name -> dbproxy.v1.Value
+	18, // 5: dbproxy.v1.TransactionRequest.timeout:type_name -> google.protobuf.Duration
+	7,  // 6: dbproxy.v1.TransactionRequest.begin:type_name -> dbproxy.v1.BeginRequest
+	8,  // 7: dbproxy.v1.TransactionRequest.query:type_name -> dbproxy.v1.Statement
+	8,  // 8: dbproxy.v1.TransactionRequest.exec:type_name -> dbproxy.v1.Statement
+	19, // 9: dbproxy.v1.TransactionRequest.commit:type_name -> google.protobuf.Empty
+	19, // 10: dbproxy.v1.TransactionRequest.rollback:type_name -> google.protobuf.Empty
+	13, // 11: dbproxy.v1.Statement.parameters:type_name -> dbproxy.v1.Value
+	19, // 12: dbproxy.v1.TransactionResponse.ok:type_name -> google.protobuf.Empty
+	3,  // 13: dbproxy.v1.TransactionResponse.query:type_name -> dbproxy.v1.QueryResponse
+	5,  // 14: dbproxy.v1.TransactionResponse.exec:type_name -> dbproxy.v1.ExecResponse
+	10, // 15: dbproxy.v1.TransactionResponse.error:type_name -> dbproxy.v1.TransactionCommandError
+	17, // 16: dbproxy.v1.TransactionCommandError.database_error:type_name -> dbproxy.v1.DatabaseError
+	0,  // 17: dbproxy.v1.Column.value_type:type_name -> dbproxy.v1.ValueType
+	12, // 18: dbproxy.v1.Column.decimal_size:type_name -> dbproxy.v1.DecimalSize
+	20, // 19: dbproxy.v1.Value.null_value:type_name -> google.protobuf.NullValue
+	21, // 20: dbproxy.v1.Value.timestamp_value:type_name -> google.protobuf.Timestamp
+	13, // 21: dbproxy.v1.Row.values:type_name -> dbproxy.v1.Value
+	1,  // 22: dbproxy.v1.QueryError.reason:type_name -> dbproxy.v1.ErrorReason
+	17, // 23: dbproxy.v1.QueryError.database_error:type_name -> dbproxy.v1.DatabaseError
+	2,  // 24: dbproxy.v1.DatabaseProxyService.Query:input_type -> dbproxy.v1.QueryRequest
+	4,  // 25: dbproxy.v1.DatabaseProxyService.Exec:input_type -> dbproxy.v1.ExecRequest
+	6,  // 26: dbproxy.v1.DatabaseProxyService.Transaction:input_type -> dbproxy.v1.TransactionRequest
+	3,  // 27: dbproxy.v1.DatabaseProxyService.Query:output_type -> dbproxy.v1.QueryResponse
+	5,  // 28: dbproxy.v1.DatabaseProxyService.Exec:output_type -> dbproxy.v1.ExecResponse
+	9,  // 29: dbproxy.v1.DatabaseProxyService.Transaction:output_type -> dbproxy.v1.TransactionResponse
+	27, // [27:30] is the sub-list for method output_type
+	24, // [24:27] is the sub-list for method input_type
+	24, // [24:24] is the sub-list for extension type_name
+	24, // [24:24] is the sub-list for extension extendee
+	0,  // [0:24] is the sub-list for field type_name
 }
 
 func init() { file_dbproxy_v1_query_proto_init() }
@@ -975,8 +1609,21 @@ func file_dbproxy_v1_query_proto_init() {
 	if File_dbproxy_v1_query_proto != nil {
 		return
 	}
-	file_dbproxy_v1_query_proto_msgTypes[2].OneofWrappers = []any{}
 	file_dbproxy_v1_query_proto_msgTypes[4].OneofWrappers = []any{
+		(*TransactionRequest_Begin)(nil),
+		(*TransactionRequest_Query)(nil),
+		(*TransactionRequest_Exec)(nil),
+		(*TransactionRequest_Commit)(nil),
+		(*TransactionRequest_Rollback)(nil),
+	}
+	file_dbproxy_v1_query_proto_msgTypes[7].OneofWrappers = []any{
+		(*TransactionResponse_Ok)(nil),
+		(*TransactionResponse_Query)(nil),
+		(*TransactionResponse_Exec)(nil),
+		(*TransactionResponse_Error)(nil),
+	}
+	file_dbproxy_v1_query_proto_msgTypes[9].OneofWrappers = []any{}
+	file_dbproxy_v1_query_proto_msgTypes[11].OneofWrappers = []any{
 		(*Value_NullValue)(nil),
 		(*Value_Int64Value)(nil),
 		(*Value_Uint64Value)(nil),
@@ -992,7 +1639,7 @@ func file_dbproxy_v1_query_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_dbproxy_v1_query_proto_rawDesc), len(file_dbproxy_v1_query_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   9,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -219,21 +219,29 @@ func TestWithNatsWatchMaxAge(t *testing.T) {
 	const maxAge = 5 * time.Minute
 
 	tests := []struct {
-		name     string
-		enabled  bool
-		notifier bool
-		maxAge   time.Duration
-		want     time.Duration
+		name        string
+		storageType string
+		kv          bool
+		enabled     bool
+		notifier    bool
+		maxAge      time.Duration
+		want        time.Duration
 	}{
 		{name: "nats disabled leaves it off", notifier: true, maxAge: maxAge, want: 0},
 		{name: "notifier off leaves it off", enabled: true, maxAge: maxAge, want: 0},
 		{name: "enabled and notifier on propagates the age", enabled: true, notifier: true, maxAge: maxAge, want: maxAge},
+		{name: "kv backend propagates the age", kv: true, enabled: true, notifier: true, maxAge: maxAge, want: maxAge},
+		{name: "file backend polls, so it stays off", storageType: "file", enabled: true, notifier: true, maxAge: maxAge, want: 0},
 		{name: "zero leaves expiry off", enabled: true, notifier: true, maxAge: 0, want: 0},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
+			if tt.storageType != "" {
+				cfg.Raw.Section("grafana-apiserver").Key("storage_type").SetValue(tt.storageType)
+			}
+			cfg.EnableSQLKVBackend = tt.kv
 			cfg.NATS.Enabled = tt.enabled
 			cfg.NATS.Notifier = tt.notifier
 			cfg.NATS.NotifierWatchMaxAge = tt.maxAge
@@ -263,13 +271,11 @@ func TestWithBlobConfigUsesBlobBackend(t *testing.T) {
 		require.Same(t, blob, opts.Blob.Backend)
 	})
 
-	t.Run("prefers the blob url over the blob backend", func(t *testing.T) {
+	t.Run("rejects a configured bucket instead of silently switching storage", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.Raw.Section("grafana-apiserver").Key("blob_url").SetValue("mem://")
-		opts, err := buildResourceServerOptions(&ServerOptions{Cfg: cfg, BlobBackend: blob}, withBlobConfig)
-		require.NoError(t, err)
-		require.Nil(t, opts.Blob.Backend)
-		require.Equal(t, "mem://", opts.Blob.URL)
+		_, err := buildResourceServerOptions(&ServerOptions{Cfg: cfg, BlobBackend: blob}, withBlobConfig)
+		require.ErrorContains(t, err, "blob_url is no longer supported")
 	})
 }
 

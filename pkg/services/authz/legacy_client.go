@@ -10,8 +10,6 @@ type LegacyCheckRequest = legacyclient.LegacyCheckRequest
 
 type LegacyActionRestriction = legacyclient.LegacyActionRestriction
 
-type LegacyGlobalEvaluation = legacyclient.LegacyGlobalEvaluation
-
 type LegacyInternalIdentity = legacyclient.LegacyInternalIdentity
 
 type LegacyBackgroundIdentity = legacyclient.LegacyBackgroundIdentity

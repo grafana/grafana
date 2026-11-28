@@ -30,6 +30,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	authlib "github.com/grafana/authlib/types"
 	appsdk_k8s "github.com/grafana/grafana-app-sdk/k8s"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
@@ -37,10 +38,12 @@ import (
 	githubRepository "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -59,6 +62,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -88,6 +92,16 @@ var (
 	}
 )
 
+// NewIsolatedHTTPClient gives a test its own connection pool with the default test
+// HTTP settings.
+func NewIsolatedHTTPClient(t *testing.T) *http.Client {
+	t.Helper()
+	client := *sharedHTTPClient
+	client.Transport = sharedHTTPClient.Transport.(*http.Transport).Clone()
+	t.Cleanup(client.CloseIdleConnections)
+	return &client
+}
+
 type K8sTestHelper struct {
 	t               *testing.T
 	listenerAddress string
@@ -104,6 +118,8 @@ type K8sTestHelper struct {
 	orgSvc  org.Service
 	teamSvc team.Service
 	userSvc user.Service
+
+	reuseExistingUsers bool
 }
 
 type K8sTestHelperOpts struct {
@@ -112,8 +128,13 @@ type K8sTestHelperOpts struct {
 	Org1Users *OrgUsers
 	OrgBUsers *OrgUsers
 	// CustomHTTPClient replaces the shared HTTP client for this helper only.
-	// When nil, the shared default client is used.
+	// Discovery and resource clients reuse its transport when supplied.
 	CustomHTTPClient *http.Client
+	// ReuseExistingUsers looks up the default test users by login instead of failing when
+	// they already exist, so a new process can start against a database provisioned by
+	// another process. Service accounts and teams are not created in this mode, because
+	// their tokens cannot be recovered from the database.
+	ReuseExistingUsers bool
 }
 
 func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
@@ -192,6 +213,8 @@ func buildK8sTestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress st
 		t:               t,
 		Namespacer:      request.GetNamespaceMapper(nil),
 		httpClient:      httpClient,
+
+		reuseExistingUsers: opts.ReuseExistingUsers,
 	}
 
 	cfgProvider, err := configprovider.ProvideService(c.env.Cfg)
@@ -208,7 +231,7 @@ func buildK8sTestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress st
 	userSvc, err := userimpl.NewLegacyService(
 		legacysql.NewDatabaseProvider(c.env.SQLStore), orgSvc, c.env.Cfg, teamSvc,
 		localcache.ProvideService(), tracing.NewNoopTracerService(), quotaService,
-		supportbundlestest.NewFakeBundleService(), nil)
+		supportbundlestest.NewFakeBundleService(), nil, nil)
 	require.NoError(c.t, err)
 	c.userSvc = userSvc
 
@@ -259,6 +282,34 @@ func (c *K8sTestHelper) loadAPIGroups() {
 
 		time.Sleep(100 * time.Millisecond)
 	}
+}
+
+// WaitForCoreApp waits until the router serves group from a core app. Until
+// its first reconcile completes, the router leaves every request to the
+// embedded API server, which would make a routed run test the legacy builder.
+func (c *K8sTestHelper) WaitForCoreApp(group string) {
+	c.t.Helper()
+	require.EventuallyWithT(c.t, func(t *assert.CollectT) {
+		rsp := DoRequest(c, RequestParams{
+			User: c.Org1.Admin,
+			Path: "/apis/discovery/v1alpha2/status",
+		}, &struct {
+			Ready  bool `json:"ready"`
+			Groups []struct {
+				Group  string `json:"group"`
+				Source string `json:"source"`
+			} `json:"groups"`
+		}{})
+		if !assert.Equal(t, http.StatusOK, rsp.Response.StatusCode, "router status: %s", rsp.Body) {
+			return
+		}
+		assert.True(t, rsp.Result.Ready, "router is not ready")
+		served := false
+		for _, g := range rsp.Result.Groups {
+			served = served || (g.Group == group && g.Source == "core")
+		}
+		assert.True(t, served, "router does not serve %s from a core app", group)
+	}, 30*time.Second, 100*time.Millisecond)
 }
 
 func (c *K8sTestHelper) GetEnv() server.TestEnv {
@@ -333,6 +384,13 @@ func newOptimizedRestConfig(host string) *rest.Config {
 	}
 }
 
+func (c *K8sTestHelper) restConfigWithCustomTransport(cfg *rest.Config) *rest.Config {
+	if c.httpClient != sharedHTTPClient && c.httpClient.Transport != nil {
+		cfg.Transport = c.httpClient.Transport
+	}
+	return cfg
+}
+
 // This will set the expected Group/Version/Resource and return the discovery info if found
 func (c *K8sTestHelper) GetResourceClient(args ResourceClientArgs) *K8sResourceClient {
 	c.t.Helper()
@@ -350,17 +408,15 @@ func (c *K8sTestHelper) GetResourceClient(args ResourceClientArgs) *K8sResourceC
 		}
 	}
 
-	var client dynamic.Interface
-	var clientErr error
-
+	var cfg *rest.Config
 	if args.User != (User{}) {
-		client, clientErr = dynamic.NewForConfig(args.User.NewRestConfig())
+		cfg = args.User.NewRestConfig()
 	} else {
 		// Use service account token for authentication
-		cfg := newOptimizedRestConfig(fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr()))
+		cfg = newOptimizedRestConfig(fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr()))
 		cfg.BearerToken = args.ServiceAccountToken
-		client, clientErr = dynamic.NewForConfig(cfg)
 	}
+	client, clientErr := dynamic.NewForConfig(c.restConfigWithCustomTransport(cfg))
 	require.NoError(c.t, clientErr)
 
 	return &K8sResourceClient{
@@ -714,7 +770,8 @@ func (c *K8sTestHelper) List(user User, namespace string, gvr schema.GroupVersio
 }
 
 func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResponse[T] {
-	c.t.Helper()
+	t := c.t
+	t.Helper()
 
 	if params.Method == "" {
 		params.Method = http.MethodGet
@@ -745,7 +802,7 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 		baseUrl,
 		params.Path,
 	), body)
-	require.NoError(c.t, err)
+	require.NoError(t, err, "%s %s", params.Method, params.Path)
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
 	}
@@ -757,7 +814,7 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 	}
 
 	rsp, err := c.httpClient.Do(req)
-	require.NoError(c.t, err)
+	require.NoError(t, err, "%s %s", params.Method, params.Path)
 
 	r := K8sResponse[T]{
 		Response: rsp,
@@ -766,7 +823,8 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 	defer func() {
 		_ = rsp.Body.Close() // ignore any close errors
 	}()
-	r.Body, _ = io.ReadAll(rsp.Body)
+	r.Body, err = io.ReadAll(rsp.Body)
+	require.NoError(t, err, "read %s %s response", params.Method, params.Path)
 	if json.Valid(r.Body) {
 		_ = json.Unmarshal(r.Body, r.Result)
 
@@ -823,6 +881,9 @@ func (c *K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 		None:   c.CreateUser("none", orgName, org.RoleNone, nil),
 	}
 	users.OrgID = users.Admin.Identity.GetOrgID()
+	if c.reuseExistingUsers {
+		return users
+	}
 
 	// Create service accounts
 	users.AdminServiceAccount = c.CreateServiceAccount(users.Admin, "admin-sa", users.OrgID, org.RoleAdmin)
@@ -875,7 +936,7 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	baseUrl := fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr())
 
 	// make org1 admins grafana admins
-	isGrafanaAdmin := basicRole == identity.RoleAdmin && orgId == 1
+	isGrafanaAdmin := basicRole == authlib.RoleAdmin && orgId == 1
 	login := name
 	if isGrafanaAdmin {
 		login = "grafana-admin"
@@ -883,24 +944,37 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 		login = fmt.Sprintf("%s-%s", login, c.Namespacer(orgId))
 	}
 
-	u, err := c.userSvc.Create(context.Background(), &user.CreateUserCommand{
-		DefaultOrgRole: string(basicRole),
-		Password:       user.Password(name),
-		Login:          login,
-		OrgID:          orgId,
-		IsAdmin:        isGrafanaAdmin,
-		Name:           name,
-		Email:          fmt.Sprintf("%s@example.com", login),
-	})
-	require.NoError(c.t, err)
+	var u *user.User
+	var err error
+	if c.reuseExistingUsers {
+		u, err = c.userSvc.GetByLogin(context.Background(), &user.GetUserByLoginQuery{LoginOrEmail: login})
+		if goerrors.Is(err, user.ErrUserNotFound) {
+			u = nil
+		} else {
+			require.NoError(c.t, err)
+		}
+	}
+	created := u == nil
+	if created {
+		u, err = c.userSvc.Create(context.Background(), &user.CreateUserCommand{
+			DefaultOrgRole: string(basicRole),
+			Password:       user.Password(name),
+			Login:          login,
+			OrgID:          orgId,
+			IsAdmin:        isGrafanaAdmin,
+			Name:           name,
+			Email:          fmt.Sprintf("%s@example.com", login),
+		})
+		require.NoError(c.t, err)
+	}
 
 	// for tests to work we need to add grafana admins to every org
-	if isGrafanaAdmin {
+	if isGrafanaAdmin && created {
 		orgs, err := c.orgSvc.Search(context.Background(), &org.SearchOrgsQuery{})
 		require.NoError(c.t, err)
 		for _, o := range orgs {
 			_ = c.orgSvc.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
-				Role:   identity.RoleAdmin,
+				Role:   authlib.RoleAdmin,
 				OrgID:  o.ID,
 				UserID: u.ID,
 			})
@@ -1006,7 +1080,7 @@ func (c *K8sTestHelper) NewAdminRestConfig() *rest.Config {
 	cfg := newOptimizedRestConfig(baseUrl)
 	cfg.Username = c.Org1.Admin.Identity.GetLogin()
 	cfg.Password = c.Org1.Admin.password
-	return cfg
+	return c.restConfigWithCustomTransport(cfg)
 }
 
 func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {
@@ -1111,6 +1185,13 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 			}
 		}
 
+		// Types a distribution adds to the global search are named apart, so this
+		// snapshot covers only what every build serves.
+		if dropAddedGlobalSearchTypes(rsp.Result) {
+			body, err = rsp.Result.MarshalJSON()
+			require.NoError(t, err)
+		}
+
 		var prettyJSON bytes.Buffer
 		err = json.Indent(&prettyJSON, body, "", "  ")
 		require.NoError(t, err)
@@ -1140,6 +1221,31 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 			}
 		}
 	})
+}
+
+// globalSearchPath is the global search route as the search group's OpenAPI
+// spec names it.
+const globalSearchPath = "/apis/" + searchv0.APIVERSION + "/namespaces/{namespace}/" + resource.GlobalSearchResource + "/" + searchv0.SearchPathSegment
+
+// dropAddedGlobalSearchTypes removes the final paragraph of the global search
+// description when it names the types a distribution adds, and reports whether
+// it did. Nothing else is touched, so the snapshot still catches any other
+// change to that description or to another route.
+func dropAddedGlobalSearchTypes(api *spec3.OpenAPI) bool {
+	if api == nil || api.Paths == nil {
+		return false
+	}
+	path := api.Paths.Paths[globalSearchPath]
+	if path == nil || path.Post == nil {
+		return false
+	}
+	description := path.Post.Description
+	last := strings.LastIndex(description, "\n\n")
+	if last < 0 || !strings.HasPrefix(description[last+len("\n\n"):], search.GlobalSearchDeploymentTypesPrefix) {
+		return false
+	}
+	path.Post.Description = description[:last]
+	return true
 }
 
 // CreateServiceAccount creates a service account with the specified name, organization, and role using the HTTP API

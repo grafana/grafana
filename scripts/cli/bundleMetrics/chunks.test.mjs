@@ -4,17 +4,19 @@ import { describe, it } from 'node:test';
 import { getChunkMetrics } from './chunks.mts';
 
 describe('getChunkMetrics', () => {
-  it('deduplicates entrypoint assets, keeps shared assets per entrypoint, and filters asset types', () => {
+  it('counts unique named async JS files without including initial entrypoint JS', () => {
     const metrics = getChunkMetrics({
       chunks: [
-        { initial: true, modules: [], assets: ['app.js', 'theme.css'], size: 999999 },
+        { name: 'app', initial: true, modules: [], assets: ['app.js', 'shared.js', 'theme.css'], size: 999999 },
         {
+          name: 'lazy',
           initial: false,
           modules: [],
           assets: ['async-a.js', 'async-a.js', 'app.js', 'theme.css', 'app.js.map'],
           size: 999999,
         },
-        { initial: false, modules: [], assets: ['async-b.js'], parsedSize: 888888 },
+        { name: 'another-lazy', initial: false, modules: [], assets: ['async-a.js'] },
+        { name: '', initial: false, modules: [], assets: ['async-b.js'], parsedSize: 888888 },
       ],
       assets: [
         { path: 'app.js', size: 10 },
@@ -24,6 +26,7 @@ describe('getChunkMetrics', () => {
         { path: 'NOTICE', size: 100, gzipSize: 50 },
         { path: 'async-a.js', size: 12, gzipSize: 6 },
         { path: 'async-b.js', size: 20, gzipSize: 8 },
+        { path: 'standalone.js', size: 3 },
       ],
       entrypoints: [
         { name: 'app', assets: ['app.js', 'app.js', 'shared.js', 'theme.css', 'app.js.map', 'NOTICE'] },
@@ -33,8 +36,11 @@ describe('getChunkMetrics', () => {
 
     assert.deepEqual(metrics, {
       initialChunks: 1,
-      asyncChunks: 2,
+      asyncChunks: 3,
       largestAsyncJsBytes: 22,
+      totalChunksJsBytes: 49,
+      asyncChunksJsBytes: 32,
+      namedAsyncChunksJsBytes: 12,
       'entrypoints.app.js.bytes': 17,
       'entrypoints.app.css.bytes': 4,
       'entrypoints.app.css.gzipBytes': 0,

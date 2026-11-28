@@ -2,7 +2,6 @@ package cascadedelete
 
 import (
 	"context"
-	"errors"
 	"maps"
 	"slices"
 	"sort"
@@ -13,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/cache"
 
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -43,6 +43,7 @@ type memStore struct {
 
 	folders    map[string]*memFolder
 	dashboards map[string]string // name -> parent folder
+	rules      map[string]string // name -> parent folder; listed as one child per folder, like a bulk-deleted kind
 	// failDelete makes Delete of the named child return the error.
 	failDelete map[string]error
 
@@ -58,7 +59,7 @@ type memStore struct {
 }
 
 func newMemStore() *memStore {
-	return &memStore{folders: map[string]*memFolder{}, dashboards: map[string]string{}, failDelete: map[string]error{}, gets: map[string]int{}, rvs: map[string]int{}}
+	return &memStore{folders: map[string]*memFolder{}, dashboards: map[string]string{}, rules: map[string]string{}, failDelete: map[string]error{}, gets: map[string]int{}, rvs: map[string]int{}}
 }
 
 // notify delivers a folder change to the handler. The caller holds m.mu.
@@ -122,6 +123,12 @@ func (m *memStore) addDashboards(parent string, names ...string) {
 	}
 }
 
+func (m *memStore) addRules(parent string, names ...string) {
+	for _, n := range names {
+		m.rules[n] = parent
+	}
+}
+
 // userDelete is a DELETE on the folder, as the API would apply it.
 func (m *memStore) userDelete(name string) {
 	m.mu.Lock()
@@ -166,7 +173,7 @@ func (m *memStore) getLocked(name string) *foldersv1.Folder {
 	if !ok {
 		return nil
 	}
-	out := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: testNamespace, Name: name, Finalizers: slices.Clone(f.finalizers)}}
+	out := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: testNamespace, Name: name, UID: types.UID(name + "-uid"), Finalizers: slices.Clone(f.finalizers)}}
 	if f.parent != "" {
 		out.Annotations = map[string]string{utils.AnnoKeyFolder: f.parent}
 	}
@@ -194,6 +201,13 @@ func (m *memStore) childrenOf(folderUID string, kind ChildKind) []Child {
 		for _, name := range sortedKeys(m.dashboards) {
 			if m.dashboards[name] == folderUID {
 				out = append(out, Child{Kind: ChildDashboard, Name: name})
+			}
+		}
+	case ChildAlertRule:
+		for _, parent := range m.rules {
+			if parent == folderUID {
+				out = append(out, Child{Kind: ChildAlertRule, Name: folderUID})
+				break
 			}
 		}
 	}
@@ -232,6 +246,17 @@ func (m *memStore) Delete(ctx context.Context, _, parentUID string, c Child) (De
 		m.deleteCalls = append(m.deleteCalls, c.Name)
 		delete(m.dashboards, c.Name)
 		return DeleteOutcomeDeleted, nil
+	case ChildAlertRule:
+		if len(m.childrenOf(c.Name, ChildAlertRule)) == 0 || c.Name != parentUID {
+			return DeleteOutcomeGone, nil
+		}
+		m.deleteCalls = append(m.deleteCalls, "rules/"+c.Name)
+		for name, parent := range m.rules {
+			if parent == c.Name {
+				delete(m.rules, name)
+			}
+		}
+		return DeleteOutcomeDeleted, nil
 	default:
 		f, ok := m.folders[c.Name]
 		if !ok || f.parent != parentUID {
@@ -240,17 +265,12 @@ func (m *memStore) Delete(ctx context.Context, _, parentUID string, c Child) (De
 		if f.terminating {
 			return DeleteOutcomeTerminating, nil
 		}
-		if len(f.finalizers) == 0 {
-			// Mirrors validateOnDelete: without the finalizer a forced delete gets no bypass.
-			if len(m.childrenOf(c.Name, ChildFolder))+len(m.childrenOf(c.Name, ChildDashboard)) > 0 {
-				return 0, errors.New("folder is not empty")
-			}
-			m.deleteCalls = append(m.deleteCalls, c.Name)
-			delete(m.folders, c.Name)
-			m.notify(c.Name, true)
-			return DeleteOutcomeDeleted, nil
-		}
 		m.deleteCalls = append(m.deleteCalls, c.Name)
+		// Mirrors the folders API: the delete stamps the cascade finalizer on a subfolder that lacks it, and
+		// the forced delete then only marks it terminating, whatever it holds.
+		if !slices.Contains(f.finalizers, foldersv1.CascadeDeleteFinalizer) {
+			f.finalizers = append(f.finalizers, foldersv1.CascadeDeleteFinalizer)
+		}
 		f.terminating = true
 		m.notify(c.Name, false)
 		return DeleteOutcomePending, nil
@@ -301,10 +321,15 @@ func sortedKeys[V any](m map[string]V) []string {
 
 func newTestReconciler(m *memStore, batch int) *Reconciler {
 	return &Reconciler{
-		Children:  m,
-		Deleter:   m,
+		Handlers:  []KindHandler{{ChildFolder, m, m}, {ChildDashboard, m, m}},
 		Folders:   m,
 		BatchSize: batch,
+	}
+}
+
+func setLister(r *Reconciler, l ChildLister) {
+	for i := range r.Handlers {
+		r.Handlers[i].Lister = l
 	}
 }
 

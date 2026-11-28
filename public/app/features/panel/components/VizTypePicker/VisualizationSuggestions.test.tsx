@@ -58,7 +58,7 @@ jest.mock('@grafana/runtime/internal', () => ({
     error: undefined,
     value: [
       { id: 'timeseries', name: 'Time series', sort: 0, hideFromList: false },
-      { id: 'text', name: 'Text', sort: 1, hideFromList: false },
+      { id: 'text', name: 'Text', sort: 1, hideFromList: false, skipDefaultQuery: true },
       { id: 'dashlist', name: 'Dashboard list', sort: 2, hideFromList: false },
       { id: 'alertlist', name: 'Alert list', sort: 3, hideFromList: false },
     ],
@@ -81,6 +81,39 @@ describe('VisualizationSuggestions', () => {
       ],
       hasErrors: false,
     });
+  });
+
+  it.each([
+    { targets: [{ refId: 'A' }], showsText: false },
+    { targets: [{ refId: 'A', expr: 'up' }], showsText: true },
+    { targets: [{ refId: 'A' }, { refId: 'B' }], showsText: true },
+  ])('shows Text templates: $showsText for queries $targets', async ({ targets, showsText }) => {
+    mockGetAllSuggestions.mockResolvedValue({
+      suggestions: [
+        { pluginId: 'timeseries', name: 'Time series', hash: 'timeseries' },
+        { pluginId: 'text', name: 'Text - summary', hash: 'text' },
+      ],
+      hasErrors: false,
+    });
+
+    render(
+      <VisualizationSuggestions
+        onChange={jest.fn()}
+        panel={{ type: 'timeseries', targets } as PanelModel}
+        data={{
+          series: [toDataFrame({ fields: [{ name: 'value', type: FieldType.number, values: [1] }] })],
+          state: LoadingState.Done,
+          timeRange: getDefaultTimeRange(),
+        }}
+      />
+    );
+
+    expect(await screen.findByTestId('suggestion-card-timeseries')).toBeInTheDocument();
+    if (showsText) {
+      expect(screen.getByText('Text - summary')).toBeInTheDocument();
+    } else {
+      expect(screen.queryByText('Text - summary')).not.toBeInTheDocument();
+    }
   });
 
   it('should not regenerate suggestions when values change while streaming', async () => {

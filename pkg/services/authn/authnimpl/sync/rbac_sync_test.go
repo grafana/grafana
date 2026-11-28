@@ -274,6 +274,41 @@ func TestRBACSync_FetchPermissions(t *testing.T) {
 	}
 }
 
+// Plugin app platform actions are named like K8s permissions but have no
+// mapping; a token delegating one must keep it when the identity holds it.
+func TestRBACSync_FetchPermissions_PluginAppPlatformRestriction(t *testing.T) {
+	const pagesCreate = "assistant.ext.grafana.app/pages:create"
+	acMock := &acmock.Mock{
+		GetUserPermissionsFunc: func(ctx context.Context, siu identity.Requester, o accesscontrol.Options) ([]accesscontrol.Permission, error) {
+			return []accesscontrol.Permission{
+				{Action: pagesCreate},
+				{Action: "assistant.ext.grafana.app/pages:delete"},
+				{Action: "dashboards:read", Scope: "dashboards:uid:*"},
+			}, nil
+		},
+	}
+	s := &RBACSync{
+		ac:           acMock,
+		log:          log.NewNopLogger(),
+		tracer:       tracing.InitializeTracerForTest(),
+		permRegistry: permreg.ProvidePermissionRegistry(t),
+		mapper:       rbac.NewMapperRegistry(),
+	}
+	ident := &authn.Identity{
+		ID: "2", Type: claims.TypeServiceAccount, OrgID: 1,
+		ClientParams: authn.ClientParams{
+			SyncPermissions: true,
+			FetchPermissionsParams: authn.FetchPermissionsParams{
+				// pages:delete is held but not delegated; workflows is delegated but not held.
+				K8sRestrictedActions: []string{pagesCreate, "workflows.ext.grafana.app/definitions:get"},
+			},
+		},
+	}
+
+	require.NoError(t, s.SyncPermissionsHook(context.Background(), ident, &authn.Request{}))
+	require.Equal(t, map[string][]string{pagesCreate: {""}}, ident.Permissions[ident.OrgID])
+}
+
 func TestRBACSync_FetchPermissions_AccessPolicyNoTokenPermissions(t *testing.T) {
 	acMock := &acmock.Mock{
 		GetUserPermissionsFunc: func(ctx context.Context, siu identity.Requester, o accesscontrol.Options) ([]accesscontrol.Permission, error) {
@@ -805,6 +840,30 @@ func TestRBACSync_translateK8sPermissions(t *testing.T) {
 			expectedError: nil,
 		},
 		{
+			name: "should translate APIs that check unscoped RBAC actions",
+			k8sPerms: []string{
+				"notifications.alerting.grafana.app/templategroups:list",
+				"notifications.alerting.grafana.app/timeintervals:get",
+				"alertenrichment.grafana.app/alert-enrichments:list",
+				"queries.grafana.app/queries:create",
+			},
+			expectedPerms: []accesscontrol.Permission{
+				{Action: "alert.notifications.templates:read"},
+				{Action: "alert.notifications.time-intervals:read"},
+				{Action: "alert.enrichments:read"},
+				{Action: "queries:write"},
+			},
+		},
+		{
+			name: "should translate inhibition rules to their uid scoped actions",
+			k8sPerms: []string{
+				"notifications.alerting.grafana.app/inhibitionrules:get",
+			},
+			expectedPerms: []accesscontrol.Permission{
+				{Action: "alert.notifications.inhibition-rules:read", Scope: "inhibition-rules:uid:*"},
+			},
+		},
+		{
 			name: "should skip invalid permissions group/resource/additional/part:verb",
 			k8sPerms: []string{
 				"folder.grafana.app/folder/fold1/subresource:get",
@@ -869,6 +928,10 @@ func setupTestEnv(t *testing.T) *RBACSync {
 	require.NoError(t, permRegistry.RegisterPermission("dashboards:create", "folders:uid:"))
 	require.NoError(t, permRegistry.RegisterPermission("dashboards:delete", "dashboards:uid:"))
 	require.NoError(t, permRegistry.RegisterPermission("dashboards:delete", "folders:uid:"))
+	for _, action := range []string{"alert.notifications.templates:read", "alert.notifications.time-intervals:read", "alert.enrichments:read", "queries:write"} {
+		require.NoError(t, permRegistry.RegisterPermission(action, ""))
+	}
+	require.NoError(t, permRegistry.RegisterPermission("alert.notifications.inhibition-rules:read", "inhibition-rules:uid:"))
 
 	s := &RBACSync{
 		ac:           acMock,

@@ -1,7 +1,6 @@
-import { load } from 'js-yaml';
-
 import { type AlertmanagerUserConfig } from '@grafana/alerting/convert';
 import { t } from '@grafana/i18n';
+import { loadYaml } from 'app/core/utils/yaml';
 
 import { fetchAlertManagerConfig } from '../../api/alertmanager';
 
@@ -35,9 +34,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function loadYaml(content: string, { embedded = false } = {}): unknown {
+function parseYaml(content: string, { embedded = false } = {}): unknown {
   try {
-    return load(content);
+    return loadYaml(content);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     // Fail locally instead of shipping invalid YAML to the backend for a generic error there.
@@ -66,7 +65,7 @@ function loadYaml(content: string, { embedded = false } = {}): unknown {
  * convert API takes.
  */
 export function parseAlertmanagerYaml(yamlContent: string): AlertmanagerUserConfig {
-  const parsed = loadYaml(yamlContent);
+  const parsed = parseYaml(yamlContent);
 
   if (!isRecord(parsed)) {
     return { alertmanager_config: yamlContent, template_files: {} };
@@ -81,7 +80,7 @@ export function parseAlertmanagerYaml(yamlContent: string): AlertmanagerUserConf
 
   const wrapped =
     typeof rest.alertmanager_config === 'string'
-      ? loadYaml(rest.alertmanager_config, { embedded: true })
+      ? parseYaml(rest.alertmanager_config, { embedded: true })
       : rest.alertmanager_config;
   if (!isRecord(wrapped)) {
     throw new Error(
@@ -140,7 +139,10 @@ export function mergeTemplateFiles(
  * Resolve the alertmanager config and template files from a YAML file or datasource, as the body the
  * convert API takes. Shared between import, dry-run, and interactive validation flows.
  */
-export async function resolveAlertmanagerConfig(params: NotificationsSourceParams): Promise<AlertmanagerUserConfig> {
+// The name isn't needed to read the configuration, so the dry run can call this before one is entered.
+export async function resolveAlertmanagerConfig(
+  params: Omit<NotificationsSourceParams, 'configIdentifier'> & { configIdentifier?: string }
+): Promise<AlertmanagerUserConfig> {
   const { source, datasourceName, yamlFile, templateFiles } = params;
 
   if (source === 'yaml' && yamlFile) {

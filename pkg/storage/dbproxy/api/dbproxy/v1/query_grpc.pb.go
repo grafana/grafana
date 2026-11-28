@@ -19,7 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	DatabaseProxyService_Query_FullMethodName = "/dbproxy.v1.DatabaseProxyService/Query"
+	DatabaseProxyService_Query_FullMethodName       = "/dbproxy.v1.DatabaseProxyService/Query"
+	DatabaseProxyService_Exec_FullMethodName        = "/dbproxy.v1.DatabaseProxyService/Exec"
+	DatabaseProxyService_Transaction_FullMethodName = "/dbproxy.v1.DatabaseProxyService/Transaction"
 )
 
 // DatabaseProxyServiceClient is the client API for DatabaseProxyService service.
@@ -29,6 +31,10 @@ type DatabaseProxyServiceClient interface {
 	// Sends columns first, followed by messages containing rows and/or warnings.
 	// The final gRPC status determines whether the query succeeded.
 	Query(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[QueryResponse], error)
+	// Executes one write statement; final gRPC OK confirms success.
+	Exec(ctx context.Context, in *ExecRequest, opts ...grpc.CallOption) (*ExecResponse, error)
+	// One stream owns one transaction and processes one command at a time.
+	Transaction(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[TransactionRequest, TransactionResponse], error)
 }
 
 type databaseProxyServiceClient struct {
@@ -58,6 +64,29 @@ func (c *databaseProxyServiceClient) Query(ctx context.Context, in *QueryRequest
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type DatabaseProxyService_QueryClient = grpc.ServerStreamingClient[QueryResponse]
 
+func (c *databaseProxyServiceClient) Exec(ctx context.Context, in *ExecRequest, opts ...grpc.CallOption) (*ExecResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ExecResponse)
+	err := c.cc.Invoke(ctx, DatabaseProxyService_Exec_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *databaseProxyServiceClient) Transaction(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[TransactionRequest, TransactionResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &DatabaseProxyService_ServiceDesc.Streams[1], DatabaseProxyService_Transaction_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[TransactionRequest, TransactionResponse]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type DatabaseProxyService_TransactionClient = grpc.BidiStreamingClient[TransactionRequest, TransactionResponse]
+
 // DatabaseProxyServiceServer is the server API for DatabaseProxyService service.
 // All implementations must embed UnimplementedDatabaseProxyServiceServer
 // for forward compatibility.
@@ -65,6 +94,10 @@ type DatabaseProxyServiceServer interface {
 	// Sends columns first, followed by messages containing rows and/or warnings.
 	// The final gRPC status determines whether the query succeeded.
 	Query(*QueryRequest, grpc.ServerStreamingServer[QueryResponse]) error
+	// Executes one write statement; final gRPC OK confirms success.
+	Exec(context.Context, *ExecRequest) (*ExecResponse, error)
+	// One stream owns one transaction and processes one command at a time.
+	Transaction(grpc.BidiStreamingServer[TransactionRequest, TransactionResponse]) error
 	mustEmbedUnimplementedDatabaseProxyServiceServer()
 }
 
@@ -77,6 +110,12 @@ type UnimplementedDatabaseProxyServiceServer struct{}
 
 func (UnimplementedDatabaseProxyServiceServer) Query(*QueryRequest, grpc.ServerStreamingServer[QueryResponse]) error {
 	return status.Error(codes.Unimplemented, "method Query not implemented")
+}
+func (UnimplementedDatabaseProxyServiceServer) Exec(context.Context, *ExecRequest) (*ExecResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Exec not implemented")
+}
+func (UnimplementedDatabaseProxyServiceServer) Transaction(grpc.BidiStreamingServer[TransactionRequest, TransactionResponse]) error {
+	return status.Error(codes.Unimplemented, "method Transaction not implemented")
 }
 func (UnimplementedDatabaseProxyServiceServer) mustEmbedUnimplementedDatabaseProxyServiceServer() {}
 func (UnimplementedDatabaseProxyServiceServer) testEmbeddedByValue()                              {}
@@ -110,18 +149,54 @@ func _DatabaseProxyService_Query_Handler(srv interface{}, stream grpc.ServerStre
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type DatabaseProxyService_QueryServer = grpc.ServerStreamingServer[QueryResponse]
 
+func _DatabaseProxyService_Exec_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExecRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DatabaseProxyServiceServer).Exec(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DatabaseProxyService_Exec_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DatabaseProxyServiceServer).Exec(ctx, req.(*ExecRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DatabaseProxyService_Transaction_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(DatabaseProxyServiceServer).Transaction(&grpc.GenericServerStream[TransactionRequest, TransactionResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type DatabaseProxyService_TransactionServer = grpc.BidiStreamingServer[TransactionRequest, TransactionResponse]
+
 // DatabaseProxyService_ServiceDesc is the grpc.ServiceDesc for DatabaseProxyService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var DatabaseProxyService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "dbproxy.v1.DatabaseProxyService",
 	HandlerType: (*DatabaseProxyServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Exec",
+			Handler:    _DatabaseProxyService_Exec_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "Query",
 			Handler:       _DatabaseProxyService_Query_Handler,
 			ServerStreams: true,
+		},
+		{
+			StreamName:    "Transaction",
+			Handler:       _DatabaseProxyService_Transaction_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "dbproxy/v1/query.proto",

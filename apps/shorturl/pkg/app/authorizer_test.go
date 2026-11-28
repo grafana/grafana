@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
@@ -13,11 +14,11 @@ import (
 func TestGetAuthorizer(t *testing.T) {
 	auth := GetAuthorizer()
 
-	newContext := func(role identity.RoleType) context.Context {
+	newContext := func(role authlib.RoleType) context.Context {
 		return identity.WithRequester(context.Background(), &identity.StaticRequester{OrgRole: role})
 	}
 
-	allRoles := []identity.RoleType{identity.RoleNone, identity.RoleViewer, identity.RoleEditor, identity.RoleAdmin}
+	allRoles := []authlib.RoleType{authlib.RoleNone, authlib.RoleViewer, authlib.RoleEditor, authlib.RoleAdmin}
 
 	t.Run("non-resource requests get no opinion", func(t *testing.T) {
 		decision, _, err := auth.Authorize(context.Background(), authorizer.AttributesRecord{
@@ -74,7 +75,7 @@ func TestGetAuthorizer(t *testing.T) {
 			name += "/" + tc.subresource
 		}
 		t.Run(name+" is denied for None, Viewer and Editor", func(t *testing.T) {
-			for _, role := range []identity.RoleType{identity.RoleNone, identity.RoleViewer, identity.RoleEditor} {
+			for _, role := range []authlib.RoleType{authlib.RoleNone, authlib.RoleViewer, authlib.RoleEditor} {
 				decision, _, err := auth.Authorize(newContext(role), authorizer.AttributesRecord{
 					ResourceRequest: true,
 					Verb:            tc.verb,
@@ -86,7 +87,7 @@ func TestGetAuthorizer(t *testing.T) {
 		})
 
 		t.Run(name+" is allowed for Admin", func(t *testing.T) {
-			decision, _, err := auth.Authorize(newContext(identity.RoleAdmin), authorizer.AttributesRecord{
+			decision, _, err := auth.Authorize(newContext(authlib.RoleAdmin), authorizer.AttributesRecord{
 				ResourceRequest: true,
 				Verb:            tc.verb,
 				Subresource:     tc.subresource,

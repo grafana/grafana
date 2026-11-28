@@ -5,9 +5,8 @@ proxy that serves `/apis` and `/openapi/v3` by API group, and publishes the serv
 manifests under `/apis/discovery`. A `RoutesLoader` supplies routes as
 `[]Backend`. Routes change rarely, as apps and plugins are rolled out or get new versions.
 
-This file holds the current rules. For the reasoning and history behind them, see `specs/`,
-especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
-`specs/2026-10-23-router-review-plan.md`.
+This file holds the current rules. The reasoning and history behind them are in the router specs,
+which live in the deployment_tools repository under `docs/grafana-router/specs/`.
 
 ## Rules
 
@@ -19,12 +18,15 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   `cloud_router.go`, `aggregate_*.go`, `plugin_manifests*.go` and `st_*.go`.
 - **One backend owns every version of a group.** Dispatch is keyed by group (segment 2 of
   `/apis/<group>/...`). Don't reintroduce a path mux that flattens routes into prefixes. A duplicate
-  group in one `Load` makes the last one win, with a warning, and must never panic. The one
-  exception lives in the cloud loader: with the ST fallback, `dashboard.grafana.app` is split per
+  group in one `Load` makes the last one win, with a warning, and must never panic. A split lives
+  in the cloud loader: with the ST fallback, `dashboard.grafana.app` is split per
   request between its backend and the single-tenant stacks (`st_resources.go`). Library panels and
   snapshots always go to the stacks; otherwise users' writes go to the stacks, and reads and every
   request from a non-user identity (access policies, service accounts) stay on its backend. That
   group is still one backend, and its discovery and OpenAPI still come from the backend that owns it.
+  Cloud app settings use the same plugin backend and settings/subresource handlers as ST.
+  The namespace identifies the tenant; storage and credential dependencies are supplied by the
+  cloud loader.
 - **Keep connection pools across a reload.** Reconcile rebuilds only groups whose `Key()` changed,
   and each source keeps its transports or gRPC connections across polls, so a rebuilt group reuses
   its pool. Never recreate unrelated backends on a route change.
@@ -79,16 +81,24 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   the embedded server: its requests, discovery and OpenAPI. This is expected, and must keep working.
   Don't reintroduce a filter on which groups the router may serve. Which groups are routed is decided
   by the configured sources.
-- **A plugin backend serves only plugin groups and the routable core groups.** `newPluginBackend`
-  accepts a `*.ext.grafana.app` group or one of the hardcoded `routableCoreGroups`, from any source.
-  Every other core group is refused, so no plugin can claim it. Any plugin may shadow the
-  `routableCoreGroups` on purpose: they are low risk, and nothing serious happens if a plugin
-  misbehaves in them. Don't flag that as a vulnerability. Add a group only if the same holds for
-  it, never one whose data or permissions matter (dashboards, folders, IAM). The local plugin
+- **A plugin backend serves only plugin groups, except from trusted sources.** `newPluginBackend`
+  accepts only a `*.ext.grafana.app` group, so no local plugin, dev target or plugin deployment can
+  claim a core group. `buildPluginBackend(..., trusted=true)` serves any group, and only two callers
+  pass it: the operator-configured `core_url` source (`sourceCore`) and the in-process core apps built
+  from Grafana's own installers (`router.registerCoreAPIs`). Never make another source trusted without
+  the same operator or first-party control. The local plugin
   loader also serves each app plugin's settings API under its plugin ID
   (`newPluginSettingsBackend`): the single `app` resource, always named `instance`. A plugin ID
-  must be a DNS label with a hyphen, so it can never name a core or manifest group. The standalone
-  router never serves settings (`standaloneRouter`): it has no SQL settings store or dual writer.
+  must be a DNS label with a hyphen, so it can never name a core or manifest group. The
+  standalone cloud loader serves read-only settings for the plugins `[cloud_router]
+  app_settings_plugins` names, when a remote legacy reader and app-access checker are supplied
+  (`PluginDependencies.Settings`). The legacy side is the same `settingsStorage` ST uses
+  (`appsettings.NewReadOnlyLegacySettingsStore`), so ST and MT return identical objects. Storage
+  is selected by the migration policy, and only get/list are exposed. The OpenAPI matches ST's,
+  plugin schema and custom routes included, with only the settings kind's writes left out
+  (`TestReadOnlySettingsOpenAPI`). Health and resources call
+  the deployment's v2 client; proxy uses the shared ST handler and feature gate. The local
+  standalone plugin loader still serves no settings.
 - **One bad backend or plugin fails only its own group;** it must never stop the reconcile loop.
   A backend that fails to load is retried only when its own backoff passes (`loadGroup`, up to
   `groupLoadRetryMax`), not on every reconcile retry, since a plugin's load builds an API server.
@@ -124,6 +134,24 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   - With a requester, `Impersonate-*` and `X-Grafana-Org-Id` are dropped too, so only the
     requester's tokens decide who the request acts as. Without one, the backend authorizes them
     against the caller's own credentials.
+  - The remote services (`remote_services_file`) are **only for Grafana Cloud single-tenant stack
+    pods**. They are a stopgap that lets an ST pod reach MT services until every request starts at
+    the MT router, which falls back to the ST pods. The loader refuses the standalone router and a
+    server without `[environment] stack_id`; don't configure them anywhere else. Every remote
+    request carries `Grafana-Remote-Services-Origin` (`remote_services_cycle.go`). The MT router's
+    ST fallback answers a marked request with 508 instead of sending it back to an ST pod. An ST
+    pod's remote services also refuse to send a request that arrived marked, which covers an MT
+    router without that check. Both count as `reason="loop"`.
+  - The remote services then sign each request in place
+    of those tokens, as the kube-aggregator did (`remote_services_auth.go`). A resource request
+    gets the requester's ID token exchanged on behalf of the requester, for the group's audience
+    and the request's namespace. A cluster-scoped request uses the stack's namespace and may only
+    read. A service identity may only use the stack's namespace. Anything else gets the stack's
+    discovery token. Only `Authorization` carries the result. A request the signer refuses or can't
+    sign is a `localProxyError`: it answers with its own status (503 with `Retry-After` when the
+    exchange fails) and never reaches the backend. The breaker excludes it (`errNotSent`) rather
+    than counting it as a success. Remote requests also carry `Grafana-Upstream-Traceparent`, since
+    the kube-apiserver in front of the MT services drops `traceparent`.
 - **Log through the app-sdk logger from the context:** `logging.FromContext(ctx)` from
   `github.com/grafana/grafana-app-sdk/logging`. Don't use `log/slog` or `pkg/infra/log`. If a
   function that logs has no context, pass one in from its caller (a request's `Context()`, or the
@@ -164,7 +192,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Metrics, access logs, tracing | `metrics.go`, `logging.go`, `tracing.go`, `plugin_tracing.go` |
 | Source names, loader status, the shared poll loop (`polledSource`) and backend wrapper (`wrappedBackend`) | `sources.go` |
 | Loader selection | `loader_factory.go` |
-| Cloud loader: settings, source priority | `cloud_router.go` |
+| Cloud loader: settings, source priority | `cloud_router.go`, `cloud_settings.go` |
 | Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
 | Dev targets (`router.dev.<name>`), served by the local plugin loader | `dev_targets.go` |
 | Managed plugins (`plugins_url`), core APIs (`core_url`) and bridge (`bridge_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
@@ -177,8 +205,9 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 Exactly one loader serves:
 
 1. **The cloud loader**, only in the standalone router, when any `[cloud_router]` source or
-   `[router.aggregate.<name>]` target is configured (see Settings). `pkg/server` builds it with
-   `ProvideCloudRoutesLoader`. Grafana itself never polls the cloud sources.
+   `[router.aggregate.<name>]` target is configured (see Settings). `pkg/server` builds it through
+   the edition-specific `InitializeCloudRoutesLoader` Wire graph and `ProvideCloudRoutesLoader`.
+   Grafana itself never polls the cloud sources.
 2. **Otherwise the local plugin loader** (`ProvideRoutesLoader`), when plugin sources are
    available or any `[router.dev.<name>]` target is set. Dev targets come after the local
    plugins, so they win a shared group.
@@ -319,10 +348,9 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   - The list applies `labelSelector` (manifests have no labels) and `fieldSelector` (only
     `metadata.name`), and rejects others with a 400. It ignores `limit` and returns the whole list
     without a `continue` token, which clients accept.
-  - The status page (`discovery_status.go`) is readable by any authenticated caller, and lists every
-    group, hidden ones too, so it holds only names, states and counts: never credentials, addresses,
-    URLs or error text, which carry
-    internal hosts. A backend that serves a plugin's APIs reports the plugin through the optional
+  - The status page (`discovery_status.go`) is only for Grafana admins (and org Admins with
+    `status_open_to_admin`), but lists every group, hidden ones too, so it holds only names, states
+    and counts: never credentials, addresses, URLs or error text, which carry internal hosts. A backend that serves a plugin's APIs reports the plugin through the optional
     `PluginStatusProvider` interface, under the same rule. Breaker thresholds are the constants
     `breakerOpenAfter` and `breakerOpenFor`, which the page reports, so change them there.
   - The swagger UI's router pages (`public/swagger/RouterStatusPage.tsx`, `ManifestsPage.tsx`)
@@ -360,8 +388,8 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   - Polled responses go through `decodeLimitedJSON`: aggregate and ST discovery (16 MiB),
     `plugins_url` and `core_url` (`maxPluginManifestsBytes`, 32 MiB) and grafana.com stack lookups
     (`maxStackResponseBytes`, 1 MiB). A response over its limit fails the poll.
-- **Metrics:** `specs/2026-09-26-router-metrics.md` lists every metric, its labels and example
-  dashboard queries; keep it in sync with `metrics.go`.
+- **Metrics:** the router specs' `2026-09-26-router-metrics.md` lists every metric, its labels and
+  example dashboard queries; keep it in sync with `metrics.go`.
   - Request metrics are recorded in `metrics.go`. Route state is read at scrape time by
     `routerCollector` (also in `metrics.go`), from atomics and the snapshot, so reconcile and
     serving never update gauges.
@@ -439,8 +467,10 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | --- | --- |
 | `cap_token`, `token_exchange_url` | Required when any aggregate target without `discovery_auth = none` is set. The CAP token is exchanged per request. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
+| `app_settings_plugins` | Comma-separated globs of the plugin IDs whose read-only app settings the plugins source serves, so settings roll out per plugin: `*` serves every plugin. Unlike group patterns, unset or empty serves none (the default). Requires a remote legacy settings provider and the AuthZ client, which checks app access; declared proxy routes also need the legacy AuthZ client. `plugins_group_patterns` still applies. |
+| `cloudconfig_url`, `cloudconfig_ca_file` | Enterprise settings client origin and optional CA file. Uses `[grpc_client_authentication]` token exchange; no local SQL connection. |
 | `plugins_group_patterns` | Globs that narrow the plugin groups, with the same semantics as `group_patterns`. The deprecated name `plugins_group_regex` is still read, with a warning; if both are set, the new name wins. |
-| `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_patterns`. Like any plugin source, it may serve the core groups in `routableCoreGroups`. |
+| `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_patterns`. Unlike other plugin sources, it is trusted to serve core groups. |
 | `bridge_url` | Same format as `plugins_url`, for bridge deployments. Needs no CAP token. Backend keys are prefixed `bridge:`. |
 | `bridge_group_patterns` | Globs that narrow the bridge groups, with the same semantics as `group_patterns`. |
 | `plugins_ca_file`, `plugins_insecure`, `core_ca_file`, `core_insecure`, `bridge_ca_file`, `bridge_insecure` | TLS settings for polling an `https` `plugins_url`, `core_url` or `bridge_url`, with the same semantics as an aggregate target's `ca_file` and `insecure`. Unset trusts the system CAs. They don't apply to the gRPC connections to the plugin backends; see `[router.backend_grpc]`. |
@@ -545,12 +575,4 @@ Dispatch by group has no injection sinks, since the group is only ever used as a
 
 ## Further reading
 
-- `specs/2026-08-17-router-discovery-openapi-design.md`: the original discovery and OpenAPI design
-  (historical; its key decisions still hold).
-- `specs/2026-08-19-router-circuit-breaker-design.md`: why health checks are passive, and why
-  gobreaker (the mechanics have since changed).
-- `specs/2026-09-11-router-aggregate-discovery-design.md`: aggregate targets and the cooldown.
-- `specs/2026-09-25-router-design-notes.md`: why there's no mux, readiness, notify semantics,
-  config history.
-- `specs/2026-09-26-router-metrics.md`: every metric, and dashboard queries.
-- `specs/2026-10-23-router-review-plan.md`: open work.
+The router specs are in deployment_tools under `docs/grafana-router/specs/`.

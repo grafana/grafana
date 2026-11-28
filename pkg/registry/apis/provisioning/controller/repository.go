@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -134,17 +134,10 @@ func NewRepositoryController(
 	reconcileMetrics := registerReconcileErrorMetrics(registry)
 
 	rc := &RepositoryController{
-		client:    provisioningClient,
-		repos:     repos,
-		processed: usinformer.NewProcessedMetrics(registry, "repositories", natsBacked),
-		triggers:  make(map[string]usinformer.ProcessTrigger),
-		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[string](),
-			workqueue.TypedRateLimitingQueueConfig[string]{
-				Name:            "provisioningRepositoryController",
-				MetricsProvider: newWorkerQueueWaitProvider(registry, "repository"),
-			},
-		),
+		client:            provisioningClient,
+		repos:             repos,
+		processed:         usinformer.NewProcessedMetrics(registry, "repositories", natsBacked),
+		triggers:          make(map[string]usinformer.ProcessTrigger),
 		repoFactory:       repoFactory,
 		connectionFactory: connectionFactory,
 		healthChecker:     healthChecker,
@@ -175,6 +168,10 @@ func NewRepositoryController(
 		webhookSecretRotationInterval: webhookSecretRotationInterval,
 	}
 
+	rc.queue = newWorkerQueue(&rc.queueLag, workqueue.DefaultTypedControllerRateLimiter[string](), workqueue.TypedQueueConfig[string]{
+		Name:            "provisioningRepositoryController",
+		MetricsProvider: newWorkerQueueWaitProvider(registry, "repository"),
+	})
 	rc.processFn = rc.process
 	rc.enqueueRepository = rc.enqueue
 	rc.keyFunc = repoKeyFunc
@@ -197,7 +194,7 @@ func NewRepositoryController(
 	registry.MustRegister(prometheus.NewGaugeFunc(
 		prometheus.GaugeOpts{
 			Name: "grafana_provisioning_repository_worker_queue_lag_seconds",
-			Help: "Age in seconds of the oldest unfinished repository key (waiting or in flight) in this replica's queue, measured from first enqueue.",
+			Help: "Age in seconds of the oldest unfinished repository queue entry (waiting or in flight) in this replica, measured from that entry's enqueue, excluding retry backoff.",
 		},
 		func() float64 { return rc.queueLag.lag().Seconds() },
 	))
@@ -279,6 +276,12 @@ func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStar
 	}
 }
 
+// ShutDownQueue releases the work queue when Run is never called, such as
+// when the informer cache fails to sync. Run shuts the queue down itself.
+func (rc *RepositoryController) ShutDownQueue() {
+	rc.queue.ShutDown()
+}
+
 func (rc *RepositoryController) runWorker(ctx context.Context) {
 	for rc.processNextWorkItem(ctx) {
 	}
@@ -293,7 +296,6 @@ func (rc *RepositoryController) enqueue(obj interface{}, trigger usinformer.Proc
 	// Attribute the key before the enqueue so a worker that dequeues immediately
 	// sees it.
 	rc.setTrigger(key, trigger)
-	rc.queueLag.add(key)
 	rc.queue.Add(key)
 	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
 	// Log lag at enqueue so backlog is visible on add, not only at pickup.
@@ -402,11 +404,10 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 
 	// repoType is empty when process failed before resolving the object (bad key
 	// or not-found); the field is still emitted so type-scoped log filters match
-	// every failure/retry line for a resolvable repository. On error the key stays
-	// in flight so a retry (below) inherits its original enqueue time; the deferred
-	// done clears it once this attempt ends.
+	// every failure/retry line for a resolvable repository.
 	logger = logger.With("repositoryType", repoType, "queue_lag", rc.queueLag.lag(), "error", err, "attempts", attempts)
 	logger.Error("RepositoryController failed to process key")
+	rc.queueLag.done(key)
 
 	if attempts >= maxAttempts {
 		logger.Error("RepositoryController failed too many times")
@@ -427,7 +428,6 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	if ok {
 		rc.setTrigger(key, trigger)
 	}
-	rc.queueLag.add(key)
 	rc.queue.AddRateLimited(key)
 	logger.Info("RepositoryController will retry as the failure is transient", "queue_len", rc.queue.Len())
 
@@ -697,7 +697,7 @@ func (rc *RepositoryController) determineSyncStrategy(
 	repo repository.Repository,
 	shouldResync bool,
 	isBlocked bool,
-	healthStatus provisioning.HealthStatus,
+	healthStatus provisioning.RepositoryHealthStatus,
 ) *provisioning.SyncJobOptions {
 	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.determine_sync_strategy", repoSpanAttrs(obj))
 	defer span.End()
@@ -819,7 +819,7 @@ func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisionin
 	return nil
 }
 
-func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions, healthStatus provisioning.HealthStatus, shouldResync bool) []map[string]interface{} {
+func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions, healthStatus provisioning.RepositoryHealthStatus, shouldResync bool) []map[string]interface{} {
 	const unhealthyMessage = "Repository is unhealthy"
 
 	hasUnhealthyMessage := len(obj.Status.Sync.Message) > 0 && obj.Status.Sync.Message[0] == unhealthyMessage
@@ -996,7 +996,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		}
 
 		logger.Warn("unable to delete repository", "error", err)
-		deleteHealthStatus := provisioning.HealthStatus{
+		deleteHealthStatus := provisioning.RepositoryHealthStatus{
 			Healthy: false,
 			Error:   provisioning.HealthFailureHealth,
 			Checked: time.Now().UnixMilli(),
@@ -1227,7 +1227,6 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			// readable from the store yet. Wait for it rather than regenerating, which would
 			// delete it and can loop under secret-store read-after-write lag.
 			if tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated)) {
-				rc.queueLag.add(key)
 				rc.queue.AddAfter(key, tokenWriteRetryDelay)
 				logger.Info("repository token secret not yet readable after recent write; will retry",
 					"error", err, "retry_after", tokenWriteRetryDelay, "queue_len", rc.queue.Len())
@@ -1260,7 +1259,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			// Work on a copy so we don't mutate the shared informer-cache object, and
 			// overwrite the whole value so the stale reference name is cleared too.
 			obj = obj.DeepCopy()
-			obj.Secure.Token = common.InlineSecureValue{Create: token}
+			obj.Secure.Token = resource.InlineSecureValue{Create: token}
 
 			repo, err = rc.repoFactory.Build(ctx, obj)
 		}
@@ -1347,7 +1346,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 
 	// If over quota, override health to unhealthy.
 	if isOverQuota {
-		healthStatus = provisioning.HealthStatus{
+		healthStatus = provisioning.RepositoryHealthStatus{
 			Healthy: false,
 			Error:   provisioning.HealthFailureHealth,
 			Checked: time.Now().UnixMilli(),
@@ -1466,7 +1465,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 // missing) that got skipped this pass due to cooldown/repo inaccessibility, as
 // opposed to there being genuinely nothing to do — the caller uses this to
 // decide whether it's safe to advance observedGeneration.
-func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository, testResults *provisioning.TestResults, repoAccessible bool, shouldRotateSecret bool) (hookOps []map[string]interface{}, failureStatus *provisioning.HealthStatus, suppressWebhooks bool, err error) {
+func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository, testResults *provisioning.TestResults, repoAccessible bool, shouldRotateSecret bool) (hookOps []map[string]interface{}, failureStatus *provisioning.RepositoryHealthStatus, suppressWebhooks bool, err error) {
 	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.process_hooks", repoSpanAttrs(obj))
 	defer span.End()
 	webhookMissing := len(obj.Spec.Workflows) > 0 &&
@@ -1559,7 +1558,7 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 // The caller applies the patches so the failure can be persisted even when
 // reconciliation returns an error to the work queue.
 func (rc *RepositoryController) repositoryFailurePatchOps(obj *provisioning.Repository, err error, reason string) []map[string]interface{} {
-	healthStatus := provisioning.HealthStatus{
+	healthStatus := provisioning.RepositoryHealthStatus{
 		Healthy: false,
 		Error:   provisioning.HealthFailureHealth,
 		Checked: time.Now().UnixMilli(),
@@ -1572,7 +1571,7 @@ func (rc *RepositoryController) repositoryFailurePatchOps(obj *provisioning.Repo
 	)...)
 }
 
-func (rc *RepositoryController) healthPatchIfChanged(obj *provisioning.Repository, status provisioning.HealthStatus) []map[string]interface{} {
+func (rc *RepositoryController) healthPatchIfChanged(obj *provisioning.Repository, status provisioning.RepositoryHealthStatus) []map[string]interface{} {
 	if !rc.healthChecker.hasHealthStatusChanged(obj.Status.Health, status) {
 		return nil
 	}
@@ -1775,7 +1774,7 @@ func (rc *RepositoryController) generateRepositoryToken(
 	ctx context.Context,
 	obj *provisioning.Repository,
 	c *provisioning.Connection,
-) (_ common.RawSecureValue, _ []map[string]any, err error) {
+) (_ resource.RawSecureValue, _ []map[string]any, err error) {
 	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.generate_token", repoSpanAttrs(obj))
 	defer span.End()
 	defer func() {
@@ -1804,7 +1803,7 @@ func (rc *RepositoryController) generateRepositoryToken(
 		return "", nil, fmt.Errorf("unable to create token for repository: %w", err)
 	}
 
-	tokenStatus := provisioning.TokenStatus{LastUpdated: time.Now().UnixMilli()}
+	tokenStatus := provisioning.RepositoryTokenStatus{LastUpdated: time.Now().UnixMilli()}
 	if !token.ExpiresAt.IsZero() {
 		tokenStatus.Expiration = token.ExpiresAt.UnixMilli()
 	}

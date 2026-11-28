@@ -969,7 +969,7 @@ spec:
                 pollInterval:
                   description: |-
                     pollInterval sets how often this org's rules are re-synced from
-                    datasourceUid. Empty defaults to 5m; must be between 1m and 1h. The
+                    datasourceUid. Empty defaults to 5m; must be between 1m and 24h. The
                     worker checks orgs against a short internal baseline and only does
                     real work for an org once its own pollInterval has elapsed, so this
                     is a lower bound, not a guarantee — an org's actual sync can lag
@@ -1019,6 +1019,12 @@ spec:
                   - api
                   - ini
                   type: string
+                rootFolderUid:
+                  description: |-
+                    rootFolderUid is the UID of the folder the synced rules live under. The
+                    worker finds the folder by it, so a rename does not stop the sync and a
+                    deleted folder is recreated with the same UID. Internal bookkeeping.
+                  type: string
               type: object
             observedGeneration:
               description: |-
@@ -1066,6 +1072,9 @@ spec:
               field:
                 type: string
               operator:
+                description: |-
+                  "In" on every filterable field. "NotIn" on labels, state and health only;
+                  the other fields reject it. "All" is rejected.
                 enum:
                 - In
                 - NotIn
@@ -1296,6 +1305,9 @@ spec:
               field:
                 type: string
               operator:
+                description: |-
+                  "In" on every filterable field. "NotIn" on labels, state and health only;
+                  the other fields reject it. "All" is rejected.
                 enum:
                 - In
                 - NotIn
@@ -1872,6 +1884,9 @@ spec:
             field:
               type: string
             operator:
+              description: |-
+                "In" on every filterable field. "NotIn" on labels, state and health only;
+                the other fields reject it. "All" is rejected.
               enum:
               - In
               - NotIn
@@ -2102,6 +2117,9 @@ spec:
             field:
               type: string
             operator:
+              description: |-
+                "In" on every filterable field. "NotIn" on labels, state and health only;
+                the other fields reject it. "All" is rejected.
               enum:
               - In
               - NotIn

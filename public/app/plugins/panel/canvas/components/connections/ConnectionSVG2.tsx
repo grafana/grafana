@@ -51,11 +51,14 @@ export const ConnectionSVG = ({ setLineRef, setVertexPathRef, setVertexRef, setC
     selectedConnectionRef.current = selectedConnection;
   });
 
-  useEffect(() => {
-    if (scene.panel.context.instanceState?.selectedConnection) {
-      setSelectedConnection(scene.panel.context.instanceState?.selectedConnection);
+  const instanceSelectedConnection = scene.panel.context.instanceState?.selectedConnection;
+  const [prevInstanceSelectedConnection, setPrevInstanceSelectedConnection] = useState<ConnectionState>();
+  if (instanceSelectedConnection !== prevInstanceSelectedConnection) {
+    setPrevInstanceSelectedConnection(instanceSelectedConnection);
+    if (instanceSelectedConnection) {
+      setSelectedConnection(instanceSelectedConnection);
     }
-  }, [scene.panel.context.instanceState?.selectedConnection]);
+  }
 
   const onKeyUp = (e: KeyboardEvent) => {
     const target = e.target;

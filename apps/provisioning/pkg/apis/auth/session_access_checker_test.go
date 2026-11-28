@@ -16,12 +16,12 @@ import (
 // mockRequester implements identity.Requester for testing.
 type mockRequester struct {
 	identity.Requester
-	orgRole      identity.RoleType
+	orgRole      authlib.RoleType
 	identityType authlib.IdentityType
 	namespace    string
 }
 
-func (m *mockRequester) GetOrgRole() identity.RoleType {
+func (m *mockRequester) GetOrgRole() authlib.RoleType {
 	return m.orgRole
 }
 
@@ -45,7 +45,7 @@ func TestSessionAccessChecker_Check(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		fallbackRole  identity.RoleType
+		fallbackRole  authlib.RoleType
 		innerResponse authlib.CheckResponse
 		innerErr      error
 		requester     *mockRequester
@@ -53,58 +53,58 @@ func TestSessionAccessChecker_Check(t *testing.T) {
 	}{
 		{
 			name:          "allowed by checker",
-			fallbackRole:  identity.RoleAdmin,
+			fallbackRole:  authlib.RoleAdmin,
 			innerResponse: authlib.CheckResponse{Allowed: true},
-			requester:     &mockRequester{orgRole: identity.RoleViewer, identityType: authlib.TypeUser},
+			requester:     &mockRequester{orgRole: authlib.RoleViewer, identityType: authlib.TypeUser},
 			expectAllow:   true,
 		},
 		{
 			name:          "denied by checker, fallback to admin role succeeds",
-			fallbackRole:  identity.RoleAdmin,
+			fallbackRole:  authlib.RoleAdmin,
 			innerResponse: authlib.CheckResponse{Allowed: false},
-			requester:     &mockRequester{orgRole: identity.RoleAdmin, identityType: authlib.TypeUser},
+			requester:     &mockRequester{orgRole: authlib.RoleAdmin, identityType: authlib.TypeUser},
 			expectAllow:   true,
 		},
 		{
 			name:          "denied by checker, fallback to admin role fails for viewer",
-			fallbackRole:  identity.RoleAdmin,
+			fallbackRole:  authlib.RoleAdmin,
 			innerResponse: authlib.CheckResponse{Allowed: false},
-			requester:     &mockRequester{orgRole: identity.RoleViewer, identityType: authlib.TypeUser},
+			requester:     &mockRequester{orgRole: authlib.RoleViewer, identityType: authlib.TypeUser},
 			expectAllow:   false,
 		},
 		{
 			name:         "error from checker, fallback to admin role succeeds",
-			fallbackRole: identity.RoleAdmin,
+			fallbackRole: authlib.RoleAdmin,
 			innerErr:     errors.New("access check failed"),
-			requester:    &mockRequester{orgRole: identity.RoleAdmin, identityType: authlib.TypeUser},
+			requester:    &mockRequester{orgRole: authlib.RoleAdmin, identityType: authlib.TypeUser},
 			expectAllow:  true,
 		},
 		{
 			name:         "error from checker, fallback fails for viewer",
-			fallbackRole: identity.RoleAdmin,
+			fallbackRole: authlib.RoleAdmin,
 			innerErr:     errors.New("access check failed"),
-			requester:    &mockRequester{orgRole: identity.RoleViewer, identityType: authlib.TypeUser},
+			requester:    &mockRequester{orgRole: authlib.RoleViewer, identityType: authlib.TypeUser},
 			expectAllow:  false,
 		},
 		{
 			name:          "denied, editor fallback succeeds for editor",
-			fallbackRole:  identity.RoleEditor,
+			fallbackRole:  authlib.RoleEditor,
 			innerResponse: authlib.CheckResponse{Allowed: false},
-			requester:     &mockRequester{orgRole: identity.RoleEditor, identityType: authlib.TypeUser},
+			requester:     &mockRequester{orgRole: authlib.RoleEditor, identityType: authlib.TypeUser},
 			expectAllow:   true,
 		},
 		{
 			name:          "denied, editor fallback fails for viewer",
-			fallbackRole:  identity.RoleEditor,
+			fallbackRole:  authlib.RoleEditor,
 			innerResponse: authlib.CheckResponse{Allowed: false},
-			requester:     &mockRequester{orgRole: identity.RoleViewer, identityType: authlib.TypeUser},
+			requester:     &mockRequester{orgRole: authlib.RoleViewer, identityType: authlib.TypeUser},
 			expectAllow:   false,
 		},
 		{
 			name:          "no fallback configured, denied stays denied",
 			fallbackRole:  "", // no fallback
 			innerResponse: authlib.CheckResponse{Allowed: false},
-			requester:     &mockRequester{orgRole: identity.RoleAdmin, identityType: authlib.TypeUser},
+			requester:     &mockRequester{orgRole: authlib.RoleAdmin, identityType: authlib.TypeUser},
 			expectAllow:   false,
 		},
 	}
@@ -154,11 +154,11 @@ func TestSessionAccessChecker_WithFallbackRole_ImmutableOriginal(t *testing.T) {
 	}
 
 	original := NewSessionAccessChecker(mock)
-	withAdmin := original.WithFallbackRole(identity.RoleAdmin)
-	withEditor := original.WithFallbackRole(identity.RoleEditor)
+	withAdmin := original.WithFallbackRole(authlib.RoleAdmin)
+	withEditor := original.WithFallbackRole(authlib.RoleEditor)
 
 	ctx := identity.WithRequester(context.Background(), &mockRequester{
-		orgRole:      identity.RoleEditor,
+		orgRole:      authlib.RoleEditor,
 		identityType: authlib.TypeUser,
 	})
 
@@ -184,11 +184,11 @@ func TestSessionAccessChecker_WithFallbackRole_ChainedCalls(t *testing.T) {
 
 	// Ensure chained WithFallbackRole calls work correctly
 	checker := NewSessionAccessChecker(mock).
-		WithFallbackRole(identity.RoleAdmin).
-		WithFallbackRole(identity.RoleEditor) // This should override admin
+		WithFallbackRole(authlib.RoleAdmin).
+		WithFallbackRole(authlib.RoleEditor) // This should override admin
 
 	ctx := identity.WithRequester(context.Background(), &mockRequester{
-		orgRole:      identity.RoleEditor,
+		orgRole:      authlib.RoleEditor,
 		identityType: authlib.TypeUser,
 	})
 
@@ -201,13 +201,13 @@ func TestSessionAccessChecker_RealSignedInUser(t *testing.T) {
 		response: authlib.CheckResponse{Allowed: false},
 	}
 
-	checker := NewSessionAccessChecker(mock).WithFallbackRole(identity.RoleAdmin)
+	checker := NewSessionAccessChecker(mock).WithFallbackRole(authlib.RoleAdmin)
 
 	// Pretend to be a signed-in admin user
 	signedInUser := &identity.StaticRequester{
 		UserID:  1,
 		OrgID:   1,
-		OrgRole: identity.RoleAdmin,
+		OrgRole: authlib.RoleAdmin,
 	}
 
 	ctx := identity.WithRequester(context.Background(), signedInUser)
@@ -224,7 +224,7 @@ func TestSessionAccessChecker_FillsNamespace(t *testing.T) {
 	checker := NewSessionAccessChecker(mock)
 
 	ctx := identity.WithRequester(context.Background(), &mockRequester{
-		orgRole:      identity.RoleAdmin,
+		orgRole:      authlib.RoleAdmin,
 		identityType: authlib.TypeUser,
 		namespace:    "org-123",
 	})

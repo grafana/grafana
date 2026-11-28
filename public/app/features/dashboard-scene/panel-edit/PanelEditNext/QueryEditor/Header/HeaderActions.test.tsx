@@ -42,10 +42,6 @@ jest.mock('./PluginActions', () => ({
   PluginActions: () => <div data-testid="plugin-actions" />,
 }));
 
-jest.mock('./ExperimentalFeedbackButton', () => ({
-  ExperimentalFeedbackButton: () => <div data-testid="experimental-feedback-button" />,
-}));
-
 jest.mock('./QueryActionsMenu', () => ({
   QueryActionsMenu: () => <div data-testid="query-actions-menu" />,
 }));
@@ -182,14 +178,6 @@ describe('HeaderActions', () => {
 
     expect(toggleTransformationDisabled).toHaveBeenCalledWith('x-1');
     expect(deleteTransformation).toHaveBeenCalledWith('x-1');
-  });
-
-  it('omits the feedback button when asked', () => {
-    renderWithQueryEditorProvider(<HeaderActions showFeedbackButton={false} />, {
-      selectedQuery: { refId: 'A' },
-    });
-
-    expect(screen.queryByTestId('experimental-feedback-button')).not.toBeInTheDocument();
   });
 
   it('passes the selected transformation id to Actions', () => {

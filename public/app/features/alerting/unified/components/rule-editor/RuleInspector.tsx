@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
-import { dump, load } from 'js-yaml';
+import { dump } from 'js-yaml';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Drawer, Icon, Tab, TabsBar, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Drawer, Icon, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import { loadYaml } from 'app/core/utils/yaml';
 
 import { type RulerRuleDTO } from '../../../../../types/unified-alerting-dto';
 import { type RuleFormValues } from '../../types/rule-form';
@@ -18,6 +19,8 @@ import {
   recordingRulerRuleToRuleForm,
 } from '../../utils/rule-form';
 import { rulerRuleType } from '../../utils/rules';
+
+import { RuleInspectorTabs } from './RuleInspectorTabs';
 
 interface Props {
   onClose: () => void;
@@ -55,30 +58,6 @@ export const RuleInspector = ({ onClose }: Props) => {
   );
 };
 
-interface RuleInspectorTabsProps<T = string> {
-  tabs: Array<{ label: string; value: T }>;
-  activeTab: T;
-  setActiveTab: (tab: T) => void;
-}
-
-export function RuleInspectorTabs<T extends string>({ tabs, activeTab, setActiveTab }: RuleInspectorTabsProps<T>) {
-  return (
-    <TabsBar>
-      {tabs.map((tab, index) => {
-        return (
-          <Tab
-            key={`${tab.value}-${index}`}
-            label={tab.label}
-            value={tab.value}
-            onChangeTab={() => setActiveTab(tab.value)}
-            active={activeTab === tab.value}
-          />
-        );
-      })}
-    </TabsBar>
-  );
-}
-
 interface YamlTabProps {
   onSubmit: (newModel: RuleFormValues) => void;
 }
@@ -92,7 +71,7 @@ const InspectorYamlTab = ({ onSubmit }: YamlTabProps) => {
   const [yamlDraft, setYamlDraft] = useState(alertRuleAsYaml);
 
   const onApply = () => {
-    const rulerRule = load(alertRuleAsYaml) as RulerRuleDTO;
+    const rulerRule = loadYaml(alertRuleAsYaml) as RulerRuleDTO;
     const currentFormValues = getValues();
 
     const yamlFormValues = rulerRuleToRuleFormValues(rulerRule);

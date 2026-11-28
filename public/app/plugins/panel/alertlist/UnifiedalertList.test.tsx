@@ -12,10 +12,12 @@ import {
 } from '@grafana/data';
 import { config, TimeRangeUpdatedEvent, usePluginLinks } from '@grafana/runtime';
 import { BigValueColorMode } from '@grafana/ui';
+import * as dataSourcesForRulesModule from 'app/features/alerting/unified/hooks/useDataSourcesForRules';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { mockPromRulesApiResponse } from 'app/features/alerting/unified/mocks/grafanaRulerApi';
 import { mockRulerRulesApiResponse } from 'app/features/alerting/unified/mocks/rulerApi';
-import { Annotation } from 'app/features/alerting/unified/utils/constants';
+import { mockUnifiedAlertingStore } from 'app/features/alerting/unified/testSetup/mockUnifiedAlertingStore';
+import { Annotation, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { type DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import {
   type PromRuleGroupDTO,
@@ -31,14 +33,17 @@ import {
   mockPromRuleGroup,
   mockPromRuleNamespace,
   mockRulerGrafanaRule,
-  mockUnifiedAlertingStore,
 } from '../../../features/alerting/unified/mocks';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../features/alerting/unified/utils/datasource';
 import { AccessControlAction } from '../../../types/accessControl';
 
 import { UnifiedAlertListPanel } from './UnifiedAlertList';
 import { GroupMode, SortOrder, STAT_THRESHOLDS_DEFAULT, type UnifiedAlertListOptions, ViewMode } from './types';
 import * as utils from './util';
+
+jest.mock('./util', () => makeSpyable('./util'));
+jest.mock('app/features/alerting/unified/hooks/useDataSourcesForRules', () =>
+  makeSpyable('app/features/alerting/unified/hooks/useDataSourcesForRules')
+);
 
 const grafanaRuleMock = {
   promRules: {
@@ -165,9 +170,10 @@ const dashboard = {
   },
 };
 
-const renderPanel = (options: Partial<UnifiedAlertListOptions> = defaultOptions) => {
-  const store = mockUnifiedAlertingStore(grafanaRuleMock);
-
+const renderPanel = (
+  options: Partial<UnifiedAlertListOptions> = defaultOptions,
+  store = mockUnifiedAlertingStore(grafanaRuleMock)
+) => {
   const dashSrv: unknown = { getCurrent: () => dashboard };
   setDashboardSrv(dashSrv as DashboardSrv);
 
@@ -230,6 +236,48 @@ describe('UnifiedAlertList', () => {
       }),
       expect.anything()
     );
+  });
+
+  describe('when the rules source list fails', () => {
+    const listError = new Error('list failed');
+    let listSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      jest.spyOn(defaultProps, 'replaceVariables').mockReturnValue('');
+      listSpy = jest.spyOn(dataSourcesForRulesModule, 'getDataSourcesForRules').mockRejectedValue(listError);
+    });
+
+    afterEach(() => {
+      listSpy.mockRestore();
+    });
+
+    it('shows a warning when the panel shows the rules of all data sources', async () => {
+      renderPanel({ datasource: '' });
+
+      expect(await screen.findByRole('alert', { name: 'Failed to load data source-managed rules' })).toHaveTextContent(
+        'list failed'
+      );
+    });
+
+    it('shows a warning when the panel shows the rules of one external data source', async () => {
+      renderPanel({ datasource: 'Mimir' });
+
+      expect(await screen.findByRole('alert', { name: 'Failed to load data source-managed rules' })).toHaveTextContent(
+        'list failed'
+      );
+    });
+
+    it('shows no warning when the panel shows only the Grafana-managed rules', async () => {
+      const store = mockUnifiedAlertingStore({
+        ...grafanaRuleMock,
+        rulesSourceList: { loading: false, dispatched: true, result: undefined, error: { message: 'list failed' } },
+      });
+
+      renderPanel({ datasource: GRAFANA_RULES_SOURCE_NAME }, store);
+
+      await waitFor(() => expect(screen.queryByText('Loading...')).not.toBeInTheDocument());
+      expect(screen.queryByRole('alert', { name: 'Failed to load data source-managed rules' })).not.toBeInTheDocument();
+    });
   });
 
   it('should render authorization error when user has no permission', async () => {

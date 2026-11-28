@@ -24,8 +24,6 @@ type Plugin interface {
 	backend.QueryDataHandler
 	backend.QueryChunkedDataHandler
 	backend.CallResourceHandler
-	backend.AdmissionHandler
-	backend.ConversionHandler
 	backend.StreamHandler
 }
 

@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "target": "esnext",
     "module": "preserve",
     "moduleResolution": "bundler",

@@ -2,7 +2,7 @@ import { type DataSourceApi, type DataSourceRef, type DataQuery } from '@grafana
 import { config, DataSourceWithBackend, getDataSourceInstance } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { updateConfig } from 'app/core/config';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import {

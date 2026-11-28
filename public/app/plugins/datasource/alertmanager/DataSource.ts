@@ -1,13 +1,12 @@
 import { lastValueFrom, type Observable, of } from 'rxjs';
 
+import { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from '@grafana/alerting/internal';
 import { type DataQuery, type DataQueryResponse, DataSourceApi, type DataSourceInstanceSettings } from '@grafana/data';
 import { type BackendSrvRequest, getBackendSrv, isFetchError } from '@grafana/runtime';
 
 import { discoverAlertmanagerFeaturesByUrl } from '../../../features/alerting/unified/api/buildInfo';
 import { messageFromError } from '../../../features/alerting/unified/utils/redux';
 import { type AlertmanagerApiFeatures } from '../../../types/unified-alerting-dto';
-
-import { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from './types';
 
 export type AlertManagerQuery = {
   query: string;

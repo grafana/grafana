@@ -67,6 +67,8 @@ type IndexViewData struct {
 	// Feature flag for selecting the Luxon-backed date-time implementation
 	UseLuxon bool
 
+	LiveDisabled bool
+
 	// Options for controlling the inclusion and behavior of the Meticulous AI session recorder script.
 	MeticulousAIEnabled                   bool
 	MeticulousAIRecordingToken            string
@@ -85,6 +87,9 @@ type IndexViewData struct {
 
 	// Feature flag for controlling how the frontend handles reads of the legacy feature toggle map
 	LegacyFeatureToggleMode string
+
+	// Feature flag for counting reads of bootdata settings and reporting them as analytics
+	BootdataAnalytics bool
 
 	// ESModuleAssetsEnabled mirrors Assets.ESModule — the template uses it to pick the
 	// matching <script type>.
@@ -160,12 +165,14 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	ofClient := openfeature.NewDefaultClient()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	useLuxon, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagDatetimeUseLuxon, false, openfeature.TransactionContext(ctx))
+	liveDisabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendDisableGrafanaLive, false, openfeature.TransactionContext(ctx))
 	meticulousAIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaMeticulousAIMode, "off", openfeature.TransactionContext(ctx))
 	meticulousAIEnabled := meticulousAIMode == "on-prod-env" || meticulousAIMode == "on-dev-env"
 	meticulousAIProductionEnvironmentFlag := meticulousAIMode == "on-prod-env"
 	reduceBootdataAPI := requestConfig.FullFrontendSettings != nil
 	legacyAPIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyAPIHandling, "off", openfeature.TransactionContext(ctx))
 	legacyFeatureToggleMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyFeatureToggleHandling, "off", openfeature.TransactionContext(ctx))
+	bootdataAnalytics, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaBootdataAnalytics, false, openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
 		AppTitle:                              "Grafana",
@@ -180,6 +187,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		FullSettings:                          requestConfig.FullFrontendSettings, // only populated when FlagFrontendServiceReducedBootDataAPI enabled
 		RenderBindingSupported:                renderBindingSupported,
 		UseLuxon:                              useLuxon,
+		LiveDisabled:                          liveDisabled,
 		AssetSriChecksEnabled:                 p.config.AssetSriChecksEnabled,
 		MeticulousAIEnabled:                   meticulousAIEnabled,
 		MeticulousAIRecordingToken:            p.config.MeticulousAIRecordingToken,
@@ -188,6 +196,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		BootScript:                            p.bootScript,
 		LegacyAPIMode:                         legacyAPIMode,
 		LegacyFeatureToggleMode:               legacyFeatureToggleMode,
+		BootdataAnalytics:                     bootdataAnalytics,
 		ESModuleAssetsEnabled:                 assetsManifest.ESModule,
 	}
 

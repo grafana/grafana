@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -17,14 +18,23 @@ type aggregateTargetConfig struct {
 	PollInterval time.Duration
 	URL          string
 	Audience     string
+	// TokenNamespace is the namespace of the CAP token for discovery polls;
+	// empty means the wildcard namespace.
+	TokenNamespace string
 	// DiscoveryAuth is how the router authenticates its own discovery polls:
 	// discoveryAuthCAPToken (also the empty default), discoveryAuthBearer or
 	// discoveryAuthNone.
-	// Proxied requests always carry the caller's credentials regardless.
+	// Proxied requests carry the caller's credentials regardless, unless
+	// wrapProxy replaces them.
 	DiscoveryAuth      string
 	GroupPatterns      []string
 	CAFile             string
 	InsecureSkipVerify bool
+
+	// wrapProxy, when set, wraps the transport of the target's proxied
+	// requests. Only the remote services set it, to sign each request
+	// (remote_services_auth.go); [router.aggregate.<name>] sections never do.
+	wrapProxy func(http.RoundTripper) http.RoundTripper
 }
 
 const aggregateSectionPrefix = "router.aggregate."
@@ -114,7 +124,7 @@ func splitGroupPatterns(raw string) []string {
 		return nil
 	}
 	var patterns []string
-	for _, p := range strings.Split(raw, ",") {
+	for p := range strings.SplitSeq(raw, ",") {
 		patterns = append(patterns, strings.TrimSpace(p))
 	}
 	return patterns

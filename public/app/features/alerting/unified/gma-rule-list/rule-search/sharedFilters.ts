@@ -12,7 +12,15 @@ import {
   type SharedRuleFilter,
 } from './sharedRuleFilter';
 
-export type SharedFilterKey = 'rule' | 'folder' | 'datasource' | 'label' | 'plugins' | 'health';
+export type SharedFilterKey =
+  | 'rule'
+  | 'folder'
+  | 'folderUid'
+  | 'datasource'
+  | 'label'
+  | 'plugins'
+  | 'health'
+  | 'paused';
 
 /** The filters both pages support. */
 export const sharedFilters = {
@@ -30,13 +38,28 @@ export const sharedFilters = {
   folder: {
     key: 'folder',
     label: () => t('alerting.gma-rule-list.search.property.folder', 'Folder'),
-    description: () => t('alerting.gma-rule-list.search.help.folder', 'Folder (canonical value is the folder UID).'),
-    example: 'folder:folder-uid',
+    description: () =>
+      t(
+        'alerting.gma-rule-list.search.help.folder',
+        'Folder name or part of it, ignoring case. Quote a name with spaces: folder:"Team 01".'
+      ),
+    example: 'folder:Alerts',
     apply: (filter, value) => {
-      filter.folders.push(value);
+      filter.folder = value;
       return true;
     },
-    feedback: (filter) => (filter.folders.some(hasWildcard) ? 'invalid' : undefined),
+  },
+  folderUid: {
+    key: 'folderUid',
+    label: () => t('alerting.gma-rule-list.search.property.folder-uid', 'Folder UID'),
+    description: () =>
+      t('alerting.gma-rule-list.search.help.folder-uid', 'Folder UID. Several match rules in any of them.'),
+    example: 'folderUid:folder-uid',
+    apply: (filter, value) => {
+      filter.folderUids.push(value);
+      return true;
+    },
+    feedback: (filter) => (filter.folderUids.some(hasWildcard) ? 'invalid' : undefined),
   },
   datasource: {
     key: 'datasource',
@@ -101,7 +124,33 @@ export const sharedFilters = {
       return true;
     },
   },
+  paused: {
+    key: 'paused',
+    label: () => t('alerting.gma-rule-list.search.property.paused', 'Paused'),
+    description: () => t('alerting.gma-rule-list.search.help.paused', 'paused:true shows only paused rules.'),
+    example: 'paused:true',
+    values: ['true'],
+    apply: (filter, value) => {
+      if (value.toLowerCase() !== 'true') {
+        return false;
+      }
+      filter.paused = 'true';
+      return true;
+    },
+  },
 } satisfies { [Key in SharedFilterKey]: FilterDefinition<SharedRuleFilter, Key> };
+
+/** The `label:` value that reads back as `matcher`. */
+export function formatLabelMatcher({ key, operator, value = '' }: SearchLabelMatcher): string {
+  return {
+    exists: key,
+    absent: `!${key}`,
+    equal: `${key}=${value}`,
+    notEqual: `${key}!=${value}`,
+    regex: `${key}=~${value}`,
+    notRegex: `${key}!~${value}`,
+  }[operator];
+}
 
 /** Exact-match filters refuse `*`, since the rule search would treat it as a wildcard. */
 export function hasWildcard(value: string): boolean {

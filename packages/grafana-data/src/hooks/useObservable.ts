@@ -1,4 +1,4 @@
-import { useIsomorphicLayoutEffect } from '@react-hookz/web';
+import { useIsomorphicLayoutEffect } from '@react-hookz/web/useIsomorphicLayoutEffect/index.js';
 import { useState } from 'react';
 import { type Observable } from 'rxjs';
 

@@ -18,7 +18,7 @@ export function ShareDrawerConfirmAction({
 >) {
   const styles = useStyles2(getStyles);
 
-  const ConfirmBody = () => (
+  const confirmBody = (
     <div className={styles.bodyContainer}>
       <Stack justifyContent="space-between">
         <Stack gap={1} alignItems="center">
@@ -37,7 +37,7 @@ export function ShareDrawerConfirmAction({
 
   return (
     <ConfirmContent
-      body={<ConfirmBody />}
+      body={confirmBody}
       description={description}
       confirmButtonLabel={confirmButtonLabel}
       confirmButtonVariant="destructive"

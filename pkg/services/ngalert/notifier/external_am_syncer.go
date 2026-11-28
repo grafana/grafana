@@ -159,8 +159,8 @@ func reasonOf(err error) SyncReason {
 }
 
 // ClassifySaveError tags an error returned by SaveAndApplyExtraConfiguration.
-// Called from MAM's save path. ErrAlertmanagerMultipleExtraConfigsUnsupported
-// is split out so operators can distinguish it via dashboards.
+// Called from MAM's save path. Identifier conflicts are split out so operators
+// can distinguish them via dashboards.
 func ClassifySaveError(err error) *SyncError {
 	if err == nil {
 		return nil
@@ -168,6 +168,9 @@ func ClassifySaveError(err error) *SyncError {
 	// Already classified — return as-is so we don't double-wrap.
 	if existing, ok := errors.AsType[*SyncError](err); ok {
 		return existing
+	}
+	if errors.Is(err, ErrIdentifierAlreadyExists.Base) {
+		return &SyncError{Reason: ReasonIdentifierTaken, Cause: err}
 	}
 	if errors.Is(err, ErrAlertmanagerMultipleExtraConfigsUnsupported.Base) {
 		return &SyncError{Reason: ReasonIdentifierMismatch, Cause: err}

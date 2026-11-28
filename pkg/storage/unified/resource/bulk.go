@@ -83,7 +83,10 @@ type BulkRequestBatchIterator interface {
 }
 
 type BulkProcessingBackend interface {
-	ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse
+	// ProcessBulk imports the requests from iter into the collections in setting.
+	// Call-level failures are returned as errors, and the response is ignored
+	// when the error is non-nil. Per-item failures are reported in Rejected.
+	ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) (*resourcepb.BulkResponse, error)
 }
 
 type bulkRequestPreflighter interface {
@@ -299,33 +302,34 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 		defer spool.Close()
 		iter = spool
 	}
-	rsp := processBulkWithPreflight(ctx, backend, settings, iter)
-	if rsp == nil {
+	rsp, err := processBulkWithPreflight(ctx, backend, settings, iter)
+	if rsp == nil && err == nil {
 		return GRPCStatusError(&resourcepb.ErrorResult{
 			Code:    http.StatusInternalServerError,
 			Message: "Nothing returned from process batch",
 		})
 	}
-	if spool != nil && spool.err != nil {
-		rsp.Error = AsErrorResult(spool.err)
-	}
+	// The stream and spool errors explain why the backend stopped early, so
+	// they take precedence over the backend error. Partial results are not
+	// sent with a failure.
 	if runner.err != nil {
 		return rpcErrorFrom(runner.err)
 	}
-	// Bulk backends report a call-level failure in the response. Partial
-	// results are not sent with it, as with the conversion interceptor.
-	if rsp.Error != nil {
-		return GRPCStatusError(rsp.Error)
+	if spool != nil && spool.err != nil {
+		return rpcErrorFrom(spool.err)
+	}
+	if err != nil {
+		return rpcErrorFrom(err)
 	}
 
 	return sendAndClose(rsp)
 }
 
-func processBulkWithPreflight(ctx context.Context, backend BulkProcessingBackend, settings BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
+func processBulkWithPreflight(ctx context.Context, backend BulkProcessingBackend, settings BulkSettings, iter BulkRequestIterator) (*resourcepb.BulkResponse, error) {
 	if _, required := backend.(bulkPreflightBackend); required {
 		if preflighter, ok := iter.(bulkRequestPreflighter); ok {
 			if err := preflighter.Preflight(); err != nil {
-				return &resourcepb.BulkResponse{Error: AsErrorResult(err)}
+				return nil, err
 			}
 		}
 	}
@@ -903,8 +907,14 @@ func stopAndDrainTimer(timer *time.Timer) {
 }
 
 type bulkRV struct {
-	max    int64
-	lastRV int64
+	max int64
+	// lastRV is the latest RV given to each object, so its versions keep increasing
+	lastRV map[string]int64
+	// lastCounter is the highest counter used in each millisecond, so RVs stay unique
+	lastCounter map[int64]int64
+	// nextFree points a full millisecond at a later one that may still have counters left,
+	// so objects sharing a timestamp do not walk the same full milliseconds again
+	nextFree map[int64]int64
 }
 
 // Used when executing a bulk import so that we can generate snowflake RVs in the past.
@@ -913,11 +923,36 @@ type bulkRV struct {
 func newBulkRV() *bulkRV {
 	t := snowflakeFromTime(time.Now().Add(-30 * time.Second))
 	return &bulkRV{
-		max: t,
+		max:         t,
+		lastRV:      map[string]int64{},
+		lastCounter: map[int64]int64{},
+		nextFree:    map[int64]int64{},
 	}
 }
 
-func (x *bulkRV) next(obj metav1.Object) int64 {
+// next returns the RV for the next version of the object identified by key. The RV follows the
+// object's own timestamp (its deletion time for a deletion), so it keeps its age whatever order
+// objects arrive in, but never goes below the object's previous version and is never reused.
+// firstFree returns ms, or the first later millisecond that is not known to be full. It shortens
+// the chain of full milliseconds it follows, so later lookups skip it in one step.
+func (x *bulkRV) firstFree(ms int64) int64 {
+	free := ms
+	for {
+		next, ok := x.nextFree[free]
+		if !ok {
+			break
+		}
+		free = next
+	}
+	for ms != free {
+		next := x.nextFree[ms]
+		x.nextFree[ms] = free
+		ms = next
+	}
+	return free
+}
+
+func (x *bulkRV) next(key string, obj metav1.Object) int64 {
 	ts := snowflakeFromTime(obj.GetCreationTimestamp().Time)
 	anno := obj.GetAnnotations()
 	if anno != nil {
@@ -927,28 +962,46 @@ func (x *bulkRV) next(obj metav1.Object) int64 {
 			ts = snowflakeFromTime(t)
 		}
 	}
+	// Garbage collection ages a deletion by its RV, so a deletion takes its deletion time
+	if deleted := obj.GetDeletionTimestamp(); deleted != nil {
+		ts = snowflakeFromTime(deleted.Time)
+	}
 	if ts > x.max || ts < 1e18 {
 		ts = x.max
 	}
+	base := max(ts, x.lastRV[key])
 
-	// Use the object's timestamp as the base, but never go below the last
-	// emitted RV so that every value is unique regardless of iterator order.
-	base := max(ts, x.lastRV)
-
-	// Increment, keeping the sub-millisecond portion (low 22 bits) under 1000
-	// so that the snowflake ↔ microRV roundtrip (SnowflakeFromRV / RVFromSnowflake)
-	// is lossless.
+	// A snowflake RV holds the millisecond in its high bits and a counter in the low
+	// resourceVersionTimestampShift bits. The counter stays under 1000 so that the
+	// snowflake ↔ microRV roundtrip (SnowflakeFromRV / RVFromSnowflake) is lossless.
 	// TODO: remove when backwards compatibility is no longer needed
 	shift := resourceVersionTimestampShift
-	subMs := base & ((1 << shift) - 1)
-	if subMs >= 999 {
-		base = ((base >> shift) + 1) << shift
-	} else {
-		base++
+	ms := base >> shift
+	// One past base, so an object's new version is above its previous one
+	counter := base&(1<<shift-1) + 1
+	for {
+		if free := x.firstFree(ms); free != ms {
+			ms, counter = free, 0
+		}
+		// Above every counter already used in this millisecond, so no two objects share an RV
+		if used, ok := x.lastCounter[ms]; ok && counter <= used {
+			counter = used + 1
+		}
+		if counter < 1000 {
+			break
+		}
+		// This millisecond has no counter left, so continue in the next one
+		x.nextFree[ms] = ms + 1
+		ms, counter = ms+1, 0
+	}
+	x.lastCounter[ms] = counter
+	if counter == 999 {
+		x.nextFree[ms] = ms + 1
 	}
 
-	x.lastRV = base
-	return base
+	rv := ms<<shift | counter
+	x.lastRV[key] = rv
+	return rv
 }
 
 type BulkLock struct {

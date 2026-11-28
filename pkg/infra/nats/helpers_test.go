@@ -12,12 +12,14 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/go-kit/log/level"
@@ -105,20 +107,46 @@ func newTestServer(t *testing.T, nats setting.NATSSettings) (*Server, *Config) {
 	cfg := setting.NewCfg()
 	cfg.NATS = nats
 	// sqlStore is not touched here, so nil is acceptable.
-	s, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
+	s, err := ProvideServer(cfg, nil, nil, nil, nil, prometheus.NewRegistry())
 	require.NoError(t, err)
 	ep := ProvideNATSConfig(cfg, s)
 	return s, ep
 }
 
-func startService(t *testing.T, ctx context.Context, svc services.Service) {
+func startService(t *testing.T, ctx context.Context, svc services.Service) context.CancelFunc {
 	t.Helper()
-	require.NoError(t, svc.StartAsync(ctx))
-	require.NoError(t, svc.AwaitRunning(ctx))
+	// t.Context is canceled before cleanup, which would stop servers before
+	// their clients finish draining. Let LIFO cleanup own service cancellation.
+	runCtx, cancel := context.WithCancel(context.WithoutCancel(ctx))
 	t.Cleanup(func() {
+		cancel()
 		svc.StopAsync()
 		_ = svc.AwaitTerminated(context.Background())
 	})
+	require.NoError(t, svc.StartAsync(runCtx))
+	require.NoError(t, svc.AwaitRunning(ctx))
+	return cancel
+}
+
+func TestStartServiceCleanup(t *testing.T) {
+	var server, client *services.BasicService
+	synctest.Test(t, func(t *testing.T) {
+		server = services.NewIdleService(nil, nil)
+		client = services.NewIdleService(nil, func(error) error {
+			if server.State() != services.Running {
+				t.Error("server stopped before the client finished shutting down")
+			}
+			return nil
+		})
+		startService(t, t.Context(), server)
+		startService(t, t.Context(), client)
+		t.Cleanup(func() {
+			synctest.Wait()
+			require.Equal(t, services.Running, client.State(), "test context cancellation must not bypass ordered cleanup")
+		})
+	})
+	require.Equal(t, services.Terminated, client.State())
+	require.Equal(t, services.Terminated, server.State())
 }
 
 func newTestClient(t *testing.T, role connRole, cfg *Config) (*connection, services.Service, func() error) {
@@ -376,4 +404,27 @@ func connectInProcess(t *testing.T, s *Server) *natsclient.Conn {
 	require.NoError(t, err)
 	t.Cleanup(nc.Close)
 	return nc
+}
+
+// These let the external tests, which can import Secrets Manager, drive the
+// helpers of the internal ones.
+
+func NewEmbeddedTestCfg(listen string) *setting.Cfg { return newEmbeddedTestCfg(listen, "") }
+
+func StartService(t *testing.T, s *Server) { startService(t, t.Context(), s) }
+
+func RequireDelivery(t *testing.T, from, to *Server) { requireDelivery(t, from, to) }
+
+// RouteCredentialName and RouteCredentialVersion identify the route credential
+// among the Secrets Manager encrypted values.
+var RouteCredentialName = routeCredentialName(discoveryClusterName)
+
+const RouteCredentialVersion = routeCredentialVersion
+
+// RouteCredential returns the loaded route credential, nil while the server
+// waits for it.
+func RouteCredential(s *Server) *url.Userinfo {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.routeAuth
 }

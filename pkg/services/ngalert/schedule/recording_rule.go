@@ -2,6 +2,7 @@ package schedule
 
 import (
 	context "context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -18,9 +19,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+// Same bound as alert rules use when they clean up after their context is cancelled.
+const staleOnStopTimeout = time.Minute
 
 type RuleStatus struct {
 	Health              string
@@ -28,6 +33,20 @@ type RuleStatus struct {
 	EvaluationTimestamp time.Time
 	EvaluationDuration  time.Duration
 }
+
+// SeriesBudget caps how many series recording rules remember for stale markers.
+// state.SeriesBudget implements it.
+type SeriesBudget interface {
+	// Admit reserves room for one series and reports whether there was any.
+	Admit() bool
+	// Release gives back room for n series.
+	Release(n int)
+}
+
+type unlimitedBudget struct{}
+
+func (unlimitedBudget) Admit() bool { return true }
+func (unlimitedBudget) Release(int) {}
 
 type recordingRule struct {
 	key ngmodels.AlertRuleKeyWithGroup
@@ -46,6 +65,19 @@ type recordingRule struct {
 	evalFactory eval.EvaluatorFactory
 	cfg         setting.RecordingRuleSettings
 	writer      RecordingWriter
+
+	// Series from the last successful evaluation, to stale the ones that go missing.
+	// Every series in it, and only those, holds one slot of budget, so held is its size
+	// and the budget's use is the sum of held over all rules sharing it. Change written
+	// only through commitWritten and untrack, so the two cannot drift.
+	written writtenSeries
+	held    int
+	// How many series written had when its map was last built or compacted. Deleting entries
+	// does not shrink a map, so this is what its capacity is sized for.
+	writtenSized int
+	budget       SeriesBudget
+	// Latest tick an evaluation started for, whether or not it wrote. Only touched from Run.
+	lastTick time.Time
 
 	// Event hooks that are only used in tests.
 	evalAppliedHook evalAppliedFunc
@@ -67,10 +99,15 @@ func newRecordingRule(
 	metrics *metrics.Scheduler,
 	tracer tracing.Tracer,
 	writer RecordingWriter,
+	budget SeriesBudget,
 	evalAppliedHook evalAppliedFunc,
 	stopAppliedHook stopAppliedFunc,
 ) *recordingRule {
 	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key.AlertRuleKey))
+	if budget == nil {
+		budget = unlimitedBudget{}
+	}
+
 	return &recordingRule{
 		key:                 key,
 		ctx:                 ctx,
@@ -90,6 +127,7 @@ func newRecordingRule(
 		metrics:             metrics,
 		tracer:              tracer,
 		writer:              writer,
+		budget:              budget,
 	}
 }
 
@@ -141,6 +179,8 @@ func (r *recordingRule) Run() error {
 	r.logger.Debug("Recording rule routine started")
 
 	defer r.stopApplied()
+	// The closure reads written at exit: it is replaced on every evaluation.
+	defer func() { r.untrack(r.written) }()
 
 	for {
 		select {
@@ -163,6 +203,7 @@ func (r *recordingRule) Run() error {
 			}
 		case <-ctx.Done():
 			r.logger.Debug("Stopping recording rule routine")
+			r.staleOnStop(ctx)
 			return nil
 		}
 	}
@@ -177,6 +218,7 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 	evalTotal := r.metrics.EvalTotal.WithLabelValues(orgID)
 	evalTotalFailures := r.metrics.EvalFailures.WithLabelValues(orgID)
 	evalStart := r.clock.Now()
+	r.lastTick = ev.scheduledAt
 
 	defer func() {
 		evalTotal.Inc()
@@ -191,6 +233,7 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 
 	if ev.rule.IsPaused {
 		logger.Debug("Skip recording rule evaluation because it is paused")
+		r.markStale(ctx, markerBefore(ev.scheduledAt), logger)
 		return
 	}
 
@@ -294,10 +337,26 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 		))
 		logger.Debug("Query returned no data", "reason", err)
 		r.health.Store("nodata")
+		// A response we could not read says nothing about the series, so keep them.
+		if errors.Is(err, errNoData) {
+			r.markStale(ctx, markerBefore(ev.scheduledAt), logger)
+		}
 		return nil
 	}
 
 	filteredLabels := ngmodels.WithoutPrivateLabels(ev.rule.Labels)
+
+	// Markers go first: they are written one ms before the sample, so a marker for a series
+	// that is output again is overridden by the sample instead of conflicting with it.
+	var current writtenSeries
+	points, pointsErr := writer.PointsFromFrames(ev.rule.Record.Metric, ev.scheduledAt, frames, filteredLabels)
+	if pointsErr != nil {
+		logger.Warn("Failed to read series, stale markers are not tracked for this evaluation", "error", pointsErr)
+	} else {
+		current = newWrittenSeries(ev.rule.Record.TargetDatasourceUID, ev.rule.OrgID, ev.rule.Record.Metric, points)
+		r.writeStale(ctx, markerBefore(ev.scheduledAt), current, logger)
+	}
+
 	writeStart := r.clock.Now()
 	err = r.writer.WriteDatasource(ctx, ev.rule.Record.TargetDatasourceUID, ev.rule.Record.Metric, ev.scheduledAt, frames, ev.rule.OrgID, filteredLabels)
 	writeDur := r.clock.Now().Sub(writeStart)
@@ -313,7 +372,123 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 		attribute.Int64("frames", int64(len(frames))),
 	))
 
+	if pointsErr == nil {
+		r.commitWritten(current, logger)
+	}
+
 	return nil
+}
+
+// markerBefore is the marker time for a tick, one ms before its samples so they never share a timestamp.
+func markerBefore(tick time.Time) time.Time {
+	return tick.Add(-time.Millisecond)
+}
+
+// staleOnStop ends the remembered series of a rule that is gone for good.
+// The marker goes 1 ms after the latest started tick: Prometheus rejects older markers,
+// and a rule created later never has a tick that early.
+func (r *recordingRule) staleOnStop(ctx context.Context) {
+	reason := ctx.Err()
+	if !errors.Is(reason, errRuleDeleted) && !errors.Is(reason, errRuleRestarted) {
+		return
+	}
+	if len(r.written) == 0 || r.lastTick.IsZero() {
+		return
+	}
+
+	// The rule's own context is cancelled by now.
+	writeCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), staleOnStopTimeout)
+	defer cancel()
+	r.markStale(writeCtx, r.lastTick.Add(time.Millisecond), r.logger)
+}
+
+// markStale stales every remembered series and forgets all of them.
+func (r *recordingRule) markStale(ctx context.Context, markerAt time.Time, logger log.Logger) {
+	r.writeStale(ctx, markerAt, nil, logger)
+	r.commitWritten(nil, logger)
+}
+
+// commitWritten makes next the remembered series. Room goes back for the series that left
+// before new ones ask for it, so a series that replaces another fits in a full budget.
+// A new series that finds the budget full is not remembered, so it gets no marker later.
+func (r *recordingRule) commitWritten(next writtenSeries, logger log.Logger) {
+	var leaving writtenSeries
+	for target, set := range r.written {
+		for fp, labels := range set {
+			if !next.contains(target, fp) {
+				leaving = leaving.merge(writtenSeries{target: {fp: labels}})
+			}
+		}
+	}
+	r.untrack(leaving)
+
+	untracked, admitted := 0, 0
+	for target, set := range next {
+		for fp := range set {
+			if r.written.contains(target, fp) {
+				continue
+			}
+			if r.budget.Admit() {
+				r.held++
+				admitted++
+				continue
+			}
+			delete(set, fp)
+			untracked++
+		}
+		if len(set) == 0 {
+			delete(next, target)
+		}
+	}
+	if untracked > 0 {
+		// A map keeps its capacity when entries are deleted, and next was sized for every series.
+		next = next.compacted()
+		r.metrics.RecordingRuleUntrackedSeries.Add(float64(untracked))
+		logger.Warn("Series limit for stale markers reached, new series get no marker", "untracked", untracked, "tracked", r.held)
+	}
+	r.written = next
+	r.writtenSized = r.held
+	r.metrics.RecordingRuleTrackedSeries.Add(float64(admitted))
+}
+
+// untrack forgets the series in gone, which must be in written, and returns their room.
+func (r *recordingRule) untrack(gone writtenSeries) {
+	n := gone.size()
+	if n == 0 {
+		return
+	}
+	r.written.remove(gone)
+	r.held -= n
+	r.budget.Release(n)
+	r.metrics.RecordingRuleTrackedSeries.Sub(float64(n))
+}
+
+// writeStale writes markers at markerAt for the series from the previous evaluation that are
+// not in current, and forgets them. A failed write is logged, counted and not retried: queries
+// hide the series after the lookback anyway. The series are forgotten also when the data write
+// that follows fails, so they are not staled again on the next tick.
+// The writer sends batches, so part of a failed write may have been accepted. All the series
+// of a failed write are counted as failed.
+func (r *recordingRule) writeStale(ctx context.Context, markerAt time.Time, current writtenSeries, logger log.Logger) {
+	missing := r.written.missingFrom(current)
+	for target := range missing {
+		err := r.writer.WriteStale(ctx, target.dsUID, target.name, markerAt, target.orgID, missing.labelSets(target))
+		if err == nil {
+			continue
+		}
+
+		reason := markerFailureReason(err)
+		r.metrics.StaleMarkerFailures.WithLabelValues(reason).Add(float64(len(missing[target])))
+		logger.Warn("Failed to write stale markers", "metric", target.name, "series", len(missing[target]), "reason", reason, "error", err)
+	}
+
+	r.untrack(missing)
+	if r.held*2 < r.writtenSized {
+		// If the data write fails, commitWritten does not replace the map, and it would keep
+		// the capacity of series whose room other rules can already use.
+		r.written = r.written.compacted()
+		r.writtenSized = r.held
+	}
 }
 
 func (r *recordingRule) buildAndExecutePipeline(ctx context.Context, evalCtx eval.EvaluationContext, ev *Evaluation, logger log.Logger) (*backend.QueryDataResponse, error) {
@@ -350,7 +525,7 @@ func (r *recordingRule) frameRef(refID string, resp *backend.QueryDataResponse) 
 	}
 
 	if eval.IsNoData(targetNode) {
-		return nil, fmt.Errorf("response with refID %s has no data", refID)
+		return nil, fmt.Errorf("response with refID %s has no data: %w", refID, errNoData)
 	}
 
 	return targetNode.Frames, nil

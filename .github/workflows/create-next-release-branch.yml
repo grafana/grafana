@@ -10,9 +10,13 @@ on:
         description: The release branch to increment (eg providing `release-11.2.3` will result in `release-11.2.4` being created)
         type: string
         required: true
+      allow_existing:
+        description: Succeed and return the next branch when it already exists
+        type: boolean
+        default: false
     outputs:
       branch:
-        description: The new branch that was created
+        description: The new or already existing branch
         value: ${{ jobs.main.outputs.branch }}
   workflow_dispatch:
     inputs:
@@ -22,6 +26,10 @@ on:
         description: The release branch to increment (eg providing `release-11.2.3` will result in `release-11.2.4` being created)
         type: string
         required: true
+      allow_existing:
+        description: Succeed and return the next branch when it already exists
+        type: boolean
+        default: false
 
 permissions: {}
 
@@ -32,7 +40,7 @@ jobs:
       contents: read
       id-token: write
     outputs:
-      branch: ${{ steps.branch.outputs.branch }}
+      branch: ${{ steps.existing.outputs.branch || steps.branch.outputs.branch }}
     steps:
       # The right app + permission-set depends on which repo we're creating the branch in.
       # Each (app, repo) pair has a dedicated writer-<scope>-<tier> permission-set in the
@@ -74,8 +82,25 @@ jobs:
         with:
           github_app: ${{ steps.app-config.outputs.github_app }}
           permission_set: ${{ steps.app-config.outputs.permission_set }}
+      - name: Check for existing release branch
+        id: existing
+        if: ${{ inputs.allow_existing }}
+        env:
+          OWNER_REPO: ${{ inputs.ownerRepo }}
+          SOURCE: ${{ inputs.source }}
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+        run: |
+          # Match the bump-release action's patch bump; let the action validate other inputs.
+          if [[ "$SOURCE" =~ ^release-(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)([-+].*)?$ ]]; then
+            branch="release-${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.$((10#${BASH_REMATCH[3]} + 1))"
+            if gh api --silent "repos/${OWNER_REPO}/git/ref/heads/${branch}" 2>/dev/null; then
+              echo "Release branch ${branch} already exists in ${OWNER_REPO}"
+              echo "branch=${branch}" >> "$GITHUB_OUTPUT"
+            fi
+          fi
       - name: Create release branch
         id: branch
+        if: ${{ steps.existing.outputs.branch == '' }}
         uses: grafana/grafana-github-actions-go/bump-release@main # zizmor: ignore[unpinned-uses]
         with:
           ownerRepo: ${{ inputs.ownerRepo }}

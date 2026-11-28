@@ -1,4 +1,4 @@
-import { type ReactElement, useEffect, useMemo, useState } from 'react';
+import { type ReactElement, useMemo, useState } from 'react';
 
 import { parseFlags } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -237,7 +237,11 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
 
   const [newValue, setNewValue] = useState(value);
 
-  useEffect(() => setNewValue(value), [value]);
+  const [prevValue, setPrevValue] = useState(value);
+  if (prevValue !== value) {
+    setPrevValue(value);
+    setNewValue(value);
+  }
 
   const variables = useUserDefinedVariables(model);
 

@@ -53,7 +53,7 @@ export function getServerOrigin(url?: string): string {
 }
 
 // Remove leading and trailing slashes from a string.
-const stripSlashes = (s: string) => s.replace(/^\/+|\/+$/g, '');
+export const stripSlashes = (s: string) => s.replace(/^\/+|\/+$/g, '');
 
 // Split a path into segments and URL-encode each segment.
 // Ensures the final URL remains valid for all providers (GitHub, GitLab, etc.).

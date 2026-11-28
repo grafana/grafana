@@ -205,7 +205,7 @@ type VectorUpsertSubresourcesRequest struct {
 	Uid       string                 `protobuf:"bytes,4,opt,name=uid,proto3" json:"uid,omitempty"`             // required; the entity whose chunks are being synced
 	// required, non-empty; the complete desired chunk set for uid. Each input's uid must be
 	// empty or equal to uid. To remove all of an entity's rows, use Delete instead.
-	Inputs        []*EmbeddingInput `protobuf:"bytes,5,rep,name=inputs,proto3" json:"inputs,omitempty"` // max 500
+	Inputs        []*EmbeddingInput `protobuf:"bytes,5,rep,name=inputs,proto3" json:"inputs,omitempty"` // max 2,000
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

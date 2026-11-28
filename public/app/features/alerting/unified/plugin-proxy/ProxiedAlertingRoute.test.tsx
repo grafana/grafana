@@ -6,13 +6,15 @@ import * as appNotification from 'app/core/copy/appNotification';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { setupMswServer } from '../mockApi';
-import { mockDataSource } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
+import { mockDataSource } from '../testSetup/mockDataSource';
 import { SupportedPlugin } from '../types/pluginBridges';
 
 import { withRouteProxy } from './ProxiedAlertingRoute';
 import { routeProxies } from './proxies';
 import { type RouteProxy } from './types';
+
+jest.mock('app/core/copy/appNotification', () => makeSpyable('app/core/copy/appNotification'));
 
 jest.mock('react-router-dom-v5-compat', () => ({
   ...jest.requireActual('react-router-dom-v5-compat'),

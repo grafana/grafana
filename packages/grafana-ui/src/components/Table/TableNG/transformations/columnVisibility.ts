@@ -1,6 +1,12 @@
 import { type DataFrame, type DataTransformerConfig, type MatcherConfig } from '@grafana/data';
 
-import { getFrameFilter, getSourceFrameIndex, prepareColumnContext } from './columnContext';
+import {
+  getFrameFilter,
+  getSourceFrameIndex,
+  prepareColumnContext,
+  toCatalogNames,
+  toDisplayNames,
+} from './columnContext';
 import { EMPTY_OPTIONS, findColumnsEntry, writeColumnsEntry } from './organizeFields';
 import { type ColumnContext, type TableTransformation } from './types';
 
@@ -57,6 +63,18 @@ export function ensureVisibleColumnPerFrame(
 }
 
 export const columnVisibility = {
-  read: (configs, { frameFilter }) => readColumnVisibility(configs, frameFilter),
-  write: (configs, hidden, { frameFilter }) => encodeHiddenColumns(configs, hidden, frameFilter),
+  read: (configs, context) => ({
+    hiddenColumns: new Set(toDisplayNames(context, readColumnVisibility(configs, context.frameFilter).hiddenColumns)),
+  }),
+  write: (configs, hidden, context) => {
+    const catalog = new Set(context.catalog);
+    const { hiddenColumns } = readColumnVisibility(configs, context.frameFilter);
+    const missingColumns = Array.from(hiddenColumns).filter((name) => !catalog.has(name));
+
+    return encodeHiddenColumns(
+      configs,
+      new Set([...missingColumns, ...toCatalogNames(context, hidden)]),
+      context.frameFilter
+    );
+  },
 } satisfies TableTransformation<{ hiddenColumns: ReadonlySet<string> }, ReadonlySet<string>, ColumnContext>;

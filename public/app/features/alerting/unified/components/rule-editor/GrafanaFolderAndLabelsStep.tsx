@@ -7,7 +7,7 @@ import { Stack, Text } from '@grafana/ui';
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
 import { type KBObjectArray, type RuleFormValues } from '../../types/rule-form';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 
 import { FolderSelector } from './FolderSelector';
 import { NeedHelpInfo } from './NeedHelpInfo';
@@ -36,36 +36,6 @@ export function GrafanaFolderAndLabelsStep() {
     setShowLabelsEditor(false);
   }
 
-  function SectionDescription() {
-    return (
-      <Stack direction="row" gap={0.5} alignItems="center">
-        <Text variant="bodySmall" color="secondary">
-          <Trans i18nKey="alerting.rule-form.folder-and-labels">
-            Organize your alert rule with a folder and set of labels.
-          </Trans>
-        </Text>
-        <NeedHelpInfo
-          contentText={
-            <>
-              <p>
-                {t(
-                  'alerting.rule-form.folders.help-info',
-                  'Folders are used for storing alert rules. You can extend the access provided by a role to alert rules and assign permissions to individual folders.'
-                )}
-              </p>
-              <p>
-                {t(
-                  'alerting.rule-form.labels.help-info',
-                  'Labels are used to differentiate an alert from all other alerts.You can use them for searching, silencing, and routing notifications.'
-                )}
-              </p>
-            </>
-          }
-        />
-      </Stack>
-    );
-  }
-
   return (
     <RuleEditorSection
       stepNo={3}
@@ -83,5 +53,35 @@ export function GrafanaFolderAndLabelsStep() {
         />
       </Stack>
     </RuleEditorSection>
+  );
+}
+
+function SectionDescription() {
+  return (
+    <Stack direction="row" gap={0.5} alignItems="center">
+      <Text variant="bodySmall" color="secondary">
+        <Trans i18nKey="alerting.rule-form.folder-and-labels">
+          Organize your alert rule with a folder and set of labels.
+        </Trans>
+      </Text>
+      <NeedHelpInfo
+        contentText={
+          <>
+            <p>
+              {t(
+                'alerting.rule-form.folders.help-info',
+                'Folders are used for storing alert rules. You can extend the access provided by a role to alert rules and assign permissions to individual folders.'
+              )}
+            </p>
+            <p>
+              {t(
+                'alerting.rule-form.labels.help-info',
+                'Labels are used to differentiate an alert from all other alerts.You can use them for searching, silencing, and routing notifications.'
+              )}
+            </p>
+          </>
+        }
+      />
+    </Stack>
   );
 }

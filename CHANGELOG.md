@@ -1,3 +1,36 @@
+<!-- 13.3.2 START -->
+
+# 13.3.2 (2026-11-24)
+
+### Security
+
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88960
+
+### Features and enhancements
+
+- **Provisioning:** Preserve existing folder identities when creating children [#137552](https://github.com/grafana/grafana/pull/137552), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+
+<!-- 13.3.2 END -->
+<!-- 13.3.1 START -->
+
+# 13.3.1 (2026-11-10)
+
+### Security
+
+- Security: Fix CVE-2026-102589
+- Security: Fix CVE-2026-107509
+- Security: Fix CVE-2026-110992
+- Security: Fix CVE-2026-111024
+- Security: Fix CVE-2026-13721
+- Security: Fix CVE-2026-14242
+
+### Features and enhancements
+
+- **DateTime:** Update moment-timezone and easy-tz for 2026 time zone changes [#136951](https://github.com/grafana/grafana/pull/136951), [@joshhunt](https://github.com/joshhunt)
+- **Provisioning:** allow same-host URL change on connection-backed repositories [#137083](https://github.com/grafana/grafana/pull/137083), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+
+<!-- 13.3.1 END -->
 <!-- 13.3.0 START -->
 
 # 13.3.0 (2026-10-27)
@@ -181,6 +214,41 @@
 - **Runtime:** Stabilize plugin settings APIs [#134723](https://github.com/grafana/grafana/pull/134723), [@leventebalogh](https://github.com/leventebalogh)
 
 <!-- 13.3.0 END -->
+<!-- 13.2.7 START -->
+
+# 13.2.7 (2026-11-24)
+
+## Security
+
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
+
+<!-- 13.2.7 END -->
+<!-- 13.2.6 START -->
+
+# 13.2.6 (2026-11-10)
+
+### Security
+
+- Security: Fix CVE-2026-102589
+- Security: Fix CVE-2026-107509
+- Security: Fix CVE-2026-110992
+- Security: Fix CVE-2026-111024
+- Security: Fix CVE-2026-13721
+- Security: Fix CVE-2026-14242
+
+### Features and enhancements
+
+- **DateTime:** Update moment-timezone and easy-tz for 2026 time zone changes [#136950](https://github.com/grafana/grafana/pull/136950), [@joshhunt](https://github.com/joshhunt)
+- **Provisioning:** Handle repository build timeouts and branch outages [#135723](https://github.com/grafana/grafana/pull/135723), [@ferruvich](https://github.com/ferruvich)
+- **Provisioning:** allow same-host URL change on connection-backed repositories [#137091](https://github.com/grafana/grafana/pull/137091), [@MissingRoberto](https://github.com/MissingRoberto)
+
+### Bug fixes
+
+- **Unified search:** Fix empty results when all query words are under 3 chars [#137309](https://github.com/grafana/grafana/pull/137309), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+
+<!-- 13.2.6 END -->
 <!-- 13.2.5 START -->
 
 # 13.2.5 (2026-10-27)
@@ -457,6 +525,37 @@
 - **Tag:** Fix crash when picking an out of bounds `colorIndex` [#129579](https://github.com/grafana/grafana/pull/129579), [@ashharrison90](https://github.com/ashharrison90)
 
 <!-- 13.2.0 END -->
+<!-- 13.1.11 START -->
+
+# 13.1.11 (2026-11-24)
+
+## Security
+
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
+
+<!-- 13.1.11 END -->
+<!-- 13.1.10 START -->
+
+# 13.1.10 (2026-11-10)
+
+### Security
+
+- Security: Fix CVE-2026-102589
+- Security: Fix CVE-2026-106472
+- Security: Fix CVE-2026-107365
+- Security: Fix CVE-2026-107509
+- Security: Fix CVE-2026-110992
+- Security: Fix CVE-2026-111024
+- Security: Fix CVE-2026-13721
+- Security: Fix CVE-2026-14242
+
+### Features and enhancements
+
+- **Provisioning:** allow same-host URL change on connection-backed repositories [#137090](https://github.com/grafana/grafana/pull/137090), [@MissingRoberto](https://github.com/MissingRoberto)
+
+<!-- 13.1.10 END -->
 <!-- 13.1.9 START -->
 
 # 13.1.9 (2026-10-27)
@@ -808,6 +907,45 @@
 - **TimeOfDayPicker:** use Combobox [#123777](https://github.com/grafana/grafana/pull/123777), [@leeoniya](https://github.com/leeoniya)
 
 <!-- 13.1.0 END -->
+<!-- 13.0.14 START -->
+
+# 13.0.14 (2026-11-24)
+
+### Security
+
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
+
+<!-- 13.0.14 END -->
+<!-- 13.0.13 START -->
+
+# 13.0.13 (2026-11-10)
+
+## Security
+
+- Security: Fix CVE-2026-102589
+- Security: Fix CVE-2026-106472
+- Security: Fix CVE-2026-107365
+- Security: Fix CVE-2026-107509
+- Security: Fix CVE-2026-110992
+- Security: Fix CVE-2026-111024
+- Security: Fix CVE-2026-13721
+- Security: Fix CVE-2026-14242
+- Security: Fix CVE-2026-82014
+
+### Features and enhancements
+
+- **DateTime:** Bump moment-timezone to 0.6.6 for 2026 time zone changes [#136948](https://github.com/grafana/grafana/pull/136948), [@joshhunt](https://github.com/joshhunt)
+- **Provisioning:** allow same-host URL change on connection-backed repositories [#137092](https://github.com/grafana/grafana/pull/137092), [@MissingRoberto](https://github.com/MissingRoberto)
+
+<!-- 13.0.13 END -->
 <!-- 13.0.12 START -->
 
 # 13.0.12 (2026-10-27)
@@ -1346,6 +1484,40 @@
 - **TextLink:** Fix icon positioning if text wraps [#118233](https://github.com/grafana/grafana/pull/118233), [@ashharrison90](https://github.com/ashharrison90)
 
 <!-- 13.0.0 END -->
+<!-- 12.4.16 START -->
+
+# 12.4.16 (2026-11-24)
+
+### Security
+
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
+- Security: Fix CVE-2026-107561
+- Security: Fix CVE-2026-88943
+- Security: Fix CVE-2026-88960
+
+<!-- 12.4.16 END -->
+<!-- 12.4.15 START -->
+
+# 12.4.15 (2026-11-10)
+
+### Security
+
+- Security: Fix CVE-2026-102589
+- Security: Fix CVE-2026-106472
+- Security: Fix CVE-2026-106475
+- Security: Fix CVE-2026-107365
+- Security: Fix CVE-2026-107509
+- Security: Fix CVE-2026-111000
+- Security: Fix CVE-2026-81843
+- Security: Fix CVE-2026-82014
+
+### Features and enhancements
+
+- **DateTime:** Bump moment-timezone to 0.6.6 for 2026 time zone changes [#136947](https://github.com/grafana/grafana/pull/136947), [@joshhunt](https://github.com/joshhunt)
+
+<!-- 12.4.15 END -->
 <!-- 12.4.14 START -->
 
 # 12.4.14 (2026-10-27)

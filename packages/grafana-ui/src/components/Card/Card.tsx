@@ -121,7 +121,12 @@ interface ChildProps {
 }
 
 /** Main heading for the card */
-const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & { 'aria-label'?: string }) => {
+const Heading = ({
+  children,
+  className,
+  'aria-label': ariaLabel,
+  'data-testid': testId,
+}: ChildProps & { 'aria-label'?: string; 'data-testid'?: string }) => {
   const context = useContext(CardContext);
   const styles = useStyles2(getHeadingStyles);
 
@@ -138,15 +143,31 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
   return (
     <div data-testid={selectors.components.Card.heading} className={cx(styles.heading, className)}>
       {href ? (
-        <a id={headingId} href={href} className={styles.linkHack} aria-label={ariaLabel} onClick={onClick}>
+        <a
+          id={headingId}
+          href={href}
+          className={styles.linkHack}
+          aria-label={ariaLabel}
+          data-testid={testId}
+          onClick={onClick}
+        >
           {children}
         </a>
       ) : onClick ? (
-        <button id={headingId} onClick={onClick} className={styles.linkHack} aria-label={ariaLabel} type="button">
+        <button
+          id={headingId}
+          onClick={onClick}
+          className={styles.linkHack}
+          aria-label={ariaLabel}
+          data-testid={testId}
+          type="button"
+        >
           {children}
         </button>
       ) : (
-        <span id={headingId}>{children}</span>
+        <span id={headingId} data-testid={testId}>
+          {children}
+        </span>
       )}
       {isSelected !== undefined && (
         <RadioButtonDot

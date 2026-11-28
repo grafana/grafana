@@ -4,6 +4,8 @@ import { delay } from 'rxjs/operators';
 
 import { AppEvents, DataQueryErrorType, type EventBusExtended, PathValidationError } from '@grafana/data';
 import { type BackendSrvRequest, type FetchError, type FetchResponse } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { TokenRevokedModal } from '../../features/users/TokenRevokedModal';
 import { ShowModalReactEvent } from '../../types/events';
@@ -474,6 +476,58 @@ describe('backendSrv', () => {
           );
           expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertError, ['Failed to fetch', '']);
         });
+      });
+    });
+
+    describe('when fallback is configured', () => {
+      const loadingMessage = 'Your instance is loading, and will be ready shortly.';
+      const showError = (backendSrv: BackendSrv, status: number, message = loadingMessage) =>
+        backendSrv.showErrorAlert(
+          { url: 'api/do/something' } as BackendSrvRequest,
+          {
+            status,
+            data: { message },
+          } as FetchError
+        );
+      const enableMtFallback = () => setTestFlags({ [FlagKeys.GrafanaMtFallback]: { allowList: ['/dashboards'] } });
+
+      afterEach(() => {
+        setTestFlags({});
+      });
+
+      it('does not emit an alert for a 503 with the instance loading message', () => {
+        enableMtFallback();
+        const { backendSrv, appEventsMock } = getTestContext({});
+
+        showError(backendSrv, 503);
+
+        expect(appEventsMock.emit).not.toHaveBeenCalled();
+      });
+
+      it('still emits an alert for a 503 with a different message', () => {
+        enableMtFallback();
+        const { backendSrv, appEventsMock } = getTestContext({});
+
+        showError(backendSrv, 503, 'Service unavailable');
+
+        expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertError, ['Service unavailable', '', undefined]);
+      });
+
+      it('still emits an alert for a non-503 error with the instance loading message', () => {
+        enableMtFallback();
+        const { backendSrv, appEventsMock } = getTestContext({});
+
+        showError(backendSrv, 500);
+
+        expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertError, [loadingMessage, '', undefined]);
+      });
+
+      it('still emits an alert for the instance loading 503 when MT fallback is not configured', () => {
+        const { backendSrv, appEventsMock } = getTestContext({});
+
+        showError(backendSrv, 503);
+
+        expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertError, [loadingMessage, '', undefined]);
       });
     });
 

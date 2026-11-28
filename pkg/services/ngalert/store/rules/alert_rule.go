@@ -450,8 +450,6 @@ func (st RuleStore) GetRuleByID(ctx context.Context, query ngmodels.GetAlertRule
 	return result, err
 }
 
-// TEST-ONLY: declared in api.RuleStore and provisioning.RuleStore and implemented by the fake, but
-// no production caller.
 // GetAlertRulesGroupByRuleUID is a handler for retrieving a group of alert rules from that database by UID and organisation ID of one of rules that belong to that group.
 func (st RuleStore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) (result []*ngmodels.AlertRule, err error) {
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
@@ -1745,6 +1743,26 @@ func (st RuleStore) Count(ctx context.Context, orgID int64) (int64, error) {
 	return r.Count, err
 }
 
+// CountByOrg returns the number of alert rules in each organization that has at least one rule.
+func (st RuleStore) CountByOrg(ctx context.Context) (map[int64]int64, error) {
+	var rows []struct {
+		OrgID int64 `xorm:"org_id"`
+		Count int64 `xorm:"count"`
+	}
+	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		return sess.SQL("SELECT org_id, COUNT(*) AS count FROM alert_rule GROUP BY org_id").Find(&rows)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	counts := make(map[int64]int64, len(rows))
+	for _, r := range rows {
+		counts[r.OrgID] = r.Count
+	}
+	return counts, nil
+}
+
 // CountRuleGroups counts distinct rule group names, across all organizations when orgID is zero.
 // Groups with the same name in different folders or organizations count only once.
 func (st RuleStore) CountRuleGroups(ctx context.Context, orgID int64) (int64, error) {
@@ -2007,6 +2025,16 @@ var GenerateNewAlertRuleUID = func(sess *db.Session, orgID int64, ruleTitle stri
 	}
 
 	return "", ngmodels.ErrAlertRuleFailedGenerateUniqueUID
+}
+
+// ValidateAlertRuleForWrite runs the checks that InsertAlertRules and UpdateAlertRules apply to a rule before
+// writing it, so a dry run rejects what the write would reject. It works on a copy and writes nothing.
+func (st RuleStore) ValidateAlertRuleForWrite(alertRule ngmodels.AlertRule) error {
+	rule := alertRule.Copy()
+	if err := st.validateAlertRule(*rule); err != nil {
+		return err
+	}
+	return rule.PreSave(timeNow, nil)
 }
 
 // validateAlertRule validates the alert rule including db-level restrictions on field lengths.

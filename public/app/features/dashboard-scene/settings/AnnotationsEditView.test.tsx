@@ -1,5 +1,7 @@
+import { cleanup } from '@testing-library/react';
 import { map, of } from 'rxjs';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
+import { render, userEvent, waitFor } from 'test/test-utils';
 
 import {
   type AnnotationQuery,
@@ -11,8 +13,11 @@ import {
   LoadingState,
   type PanelData,
 } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneTimeRange, type dataLayers } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
+import { testWithFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet, NEW_ANNOTATION_NAME } from '../scene/DashboardDataLayerSet';
@@ -21,6 +26,7 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { AnnotationsEditView } from './AnnotationsEditView';
+import { AnnotationsEditViewRenderer } from './AnnotationsEditViewRenderer';
 import { MoveDirection } from './annotations/MoveDirection';
 
 const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
@@ -241,3 +247,54 @@ async function buildTestScene() {
 
   return { dashboard, annotationsView };
 }
+
+function renderSidebarRedirect() {
+  const view = new AnnotationsEditView({});
+  const dashboard = new DashboardScene({
+    isEditing: true,
+    editview: view,
+    $data: new DashboardDataLayerSet({ annotationLayers: [] }),
+  });
+  const user = userEvent.setup();
+  const result = render(<AnnotationsEditViewRenderer model={view} />);
+  const elements = {
+    takeMeThere: () => result.getByRole('button', { name: 'Take me there' }),
+  };
+
+  return {
+    ...result,
+    dashboard,
+    user,
+    elements,
+    actions: {
+      async goToSidebar() {
+        await user.click(elements.takeMeThere());
+      },
+    },
+  };
+}
+
+describe.each([true, false])('AnnotationsEditView with explicit sidebar opening %s', (explicitOpen) => {
+  afterEach(cleanup);
+
+  testWithFlags({
+    dashboardNewLayouts: true,
+    [FlagKeys.GrafanaDashboardSettingsRedesign]: true,
+    [FlagKeys.GrafanaDashboardSidebarExplicitOpen]: explicitOpen,
+  });
+
+  it('when clicking Take me there with the sidebar closed, opens dashboard settings at annotations', async () => {
+    const { dashboard, actions } = renderSidebarRedirect();
+    const sidebar = dashboard.state.sidebar;
+    expect(sidebar.state.openPane).toBeUndefined();
+
+    await actions.goToSidebar();
+
+    await waitFor(() => expect(sidebar.state.openPane?.getId()).toBe('element'));
+    expect(sidebar.getSelectedObject()).toBe(dashboard);
+    expect(locationService.getSearchObject()).toMatchObject({
+      showCategory: 'dashboard-annotations',
+      highlightCategory: 'dashboard-annotations',
+    });
+  });
+});

@@ -2,7 +2,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { useFlagAlertingMigrationWizardUI } from '@grafana/runtime/internal';
 import { useSelector } from 'app/types/store';
 
 import { useSettingsExtensionsNav } from './extensions';
@@ -10,7 +10,7 @@ import { useSettingsExtensionsNav } from './extensions';
 /** Deep-link target for the Alerting settings Alertmanager tab. */
 const ALERTING_SETTINGS_URL = '/alerting/admin/alertmanager';
 
-/** Deep-link target for the Alerting settings Import tab (auto-sync + staged config live here). */
+/** Deep-link target for the Alerting settings Import tab, which hosts the import wizard. */
 export const ALERTING_IMPORT_SETTINGS_URL = '/alerting/admin/import';
 
 export function useSettingsPageNav() {
@@ -20,6 +20,7 @@ export function useSettingsPageNav() {
   const settingsNav = navIndex['alerting-admin'];
 
   const extensionTabs = useSettingsExtensionsNav();
+  const importWizardEnabled = useFlagAlertingMigrationWizardUI();
 
   const importTab: NavModelItem = {
     id: 'import',
@@ -40,10 +41,9 @@ export function useSettingsPageNav() {
       icon: 'cloud',
       parentItem: settingsNav,
     },
-    // alertingMigrationWizardUI and alerting.syncExternalAlertmanager always ship together, so gating the
-    // Import tab (which now hosts the auto-sync card) on the wizard flag never hides auto-sync from an
-    // instance that has sync enabled.
-    ...(config.featureToggles.alertingMigrationWizardUI ? [importTab] : []),
+    // The wizard imports rules without the Alertmanager import API, so the tab only needs the wizard flag.
+    // Without that API the wizard locks its notifications step, which is where the staged copy shows.
+    ...(importWizardEnabled ? [importTab] : []),
     ...extensionTabs,
   ];
 

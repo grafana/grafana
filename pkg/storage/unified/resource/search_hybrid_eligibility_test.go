@@ -143,7 +143,6 @@ func TestVectorSearch_AllowedReadServices(t *testing.T) {
 					return
 				}
 				require.NoError(t, err)
-				require.Nil(t, resp.Error)
 				require.Len(t, resp.Results, 1)
 				require.Equal(t, "memory", resp.Results[0].Name)
 			})
@@ -335,6 +334,7 @@ func TestHybridSearch_RequiresManifestOptIn(t *testing.T) {
 			manifest := hybridConfigManifest(hybridConfigVersion("v1", &tc.enabled))
 			manifest.Group = key.Group
 			manifest.Versions[0].Kinds[0].Plural = key.Resource
+			manifest.Versions[0].Kinds[0].Resource = key.Resource
 			s.hybridSearchConfig = NewHybridSearchConfigRegistry([]*app.ManifestData{manifest})
 			target := tc.target
 			if target == nil {
@@ -360,7 +360,7 @@ func TestHybridSearch_RequiresManifestOptIn(t *testing.T) {
 func TestHybridSearch_LiveOptOutRejectsWholeRequest(t *testing.T) {
 	manifest := hybridConfigManifest(hybridConfigVersion("v1", ptr.To(true)))
 	manifest.Versions[0].Kinds = append(manifest.Versions[0].Kinds, app.ManifestVersionKind{
-		Kind: "Gadget", Scope: "Namespaced", Search: &app.ManifestVersionKindSearch{Hybrid: ptr.To(true)},
+		Kind: "Gadget", Plural: "Gadgets", Resource: "gadgets", Scope: "Namespaced", Search: &app.ManifestVersionKindSearch{Hybrid: ptr.To(true)},
 	})
 	options := SearchOptions{HybridSearchConfig: NewHybridSearchConfigRegistry(nil)}
 	s, index := newHybridResourcesTestServer(nil)

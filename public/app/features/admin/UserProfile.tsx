@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { memo, useRef, useState, useCallback, useEffect } from 'react';
+import { memo, useRef, useState, useCallback } from 'react';
 import * as React from 'react';
 
 import { Trans, t } from '@grafana/i18n';
@@ -198,9 +198,11 @@ const UserProfileRow = memo(
     const [value, setValue] = useState(valueProp);
     const inputElemRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
+    const [prevValueProp, setPrevValueProp] = useState(valueProp);
+    if (prevValueProp !== valueProp) {
+      setPrevValueProp(valueProp);
       setValue(valueProp);
-    }, [valueProp]);
+    }
 
     const focusInput = useCallback(() => {
       if (inputElemRef.current) {

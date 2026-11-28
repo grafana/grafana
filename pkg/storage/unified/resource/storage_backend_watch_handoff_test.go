@@ -50,7 +50,7 @@ func TestKVWatchSettledHandoff(t *testing.T) {
 				}
 				started := make(chan result, 1)
 				go func() {
-					seed, stream, err := backend.watchWriteEventsWithSeed(ctx, nil)
+					seed, stream, err := backend.watchWriteEventsWithSeed(ctx, nil, nil)
 					started <- result{seed, stream, err}
 				}()
 				synctest.Wait()
@@ -130,7 +130,7 @@ func TestKVWatchHandoffBoundaryFailure(t *testing.T) {
 	boundaryErr := errors.New("boundary read failed")
 	backend.eventStore.kv = &watchHandoffFaultKV{KV: backend.eventStore.kv, err: boundaryErr}
 
-	seed, stream, err := backend.watchWriteEventsWithSeed(t.Context(), nil)
+	seed, stream, err := backend.watchWriteEventsWithSeed(t.Context(), nil, nil)
 	require.ErrorIs(t, err, boundaryErr)
 	require.ErrorContains(t, err, "read watch handoff boundary")
 	require.Equal(t, watchSeed{}, seed)

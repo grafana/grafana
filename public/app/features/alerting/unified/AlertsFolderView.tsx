@@ -14,7 +14,7 @@ import { type GrafanaRuleDefinition, type RulerGrafanaRuleDTO } from 'app/types/
 import { usePagination } from './hooks/usePagination';
 import { useURLSearchParams } from './hooks/useURLSearchParams';
 import { combineMatcherStrings, labelsMatchMatchers } from './utils/alertmanager';
-import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from './utils/constants';
 import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';
 import { rulesNav } from './utils/navigation';
 

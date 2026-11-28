@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -133,14 +134,15 @@ func TestDiscoveryWakeOnLeave(t *testing.T) {
 // table of the database selected by GRAFANA_TEST_DB, wired through
 // ProvideServer's SQL store as in production. The matrix covers the
 // dialect-specific upsert, range scan and batch queries and the table's
-// per-dialect key collation. The test drives every tick and the registry clock
-// itself rather than using synctest: route reloads start nats-server goroutines
+// per-dialect key collation. The test drives every tick, the registry clock and
+// the observer clocks itself rather than using synctest: route reloads start nats-server goroutines
 // that share its WaitGroup and do real network I/O, so they cannot run inside a
 // bubble.
 func TestIntegrationDiscoverySQL(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.NewTestStore(t)
+	deleteRouteCredential(t, sqlStore)
 	now := time.Unix(1_000, 0)
 	a := startSteppedSQLServer(t, sqlStore, &now)
 	b := startSteppedSQLServer(t, sqlStore, &now)
@@ -172,46 +174,73 @@ func TestIntegrationDiscoverySQL(t *testing.T) {
 	require.Equal(t, routeSetOf(c), a.discovery.routes)
 	require.Equal(t, routeSetOf(a), c.discovery.routes)
 
-	// Hard kill: c stops heartbeating without deregistering, so its row and route
-	// stay while its last heartbeat is within the TTL...
+	// Hard kill: c stops heartbeating without deregistering. a sees c's last
+	// heartbeat on its next tick, and keeps the route for the TTL from there...
 	c.shutdown()
-	now = now.Add(ttl)
+	now = now.Add(time.Second)
+	lastChange := now
+	tick(a)
+	now = lastChange.Add(ttl)
 	tick(a)
 	require.ElementsMatch(t, peersOf(a, c), registeredPeers(t, store))
 	require.Equal(t, routeSetOf(c), a.discovery.routes)
 
-	// ...and go on the first tick past it (heartbeats have one-second resolution).
+	// ...drops it on the first tick past the TTL, but keeps the row...
+	now = now.Add(time.Second)
+	tick(a)
+	require.ElementsMatch(t, peersOf(a, c), registeredPeers(t, store))
+	require.Empty(t, a.discovery.routes)
+
+	// ...until the row has been unchanged for longer than pruneAfter.
+	now = lastChange.Add(a.discovery.pruneAfter())
+	tick(a)
+	require.ElementsMatch(t, peersOf(a, c), registeredPeers(t, store))
 	now = now.Add(time.Second)
 	tick(a)
 	require.ElementsMatch(t, peersOf(a), registeredPeers(t, store))
 	require.Empty(t, a.discovery.routes)
 }
 
-// TestIntegrationServerAutoListenAddress checks the cluster port binds every
-// interface only on a database instances on other hosts can share.
+// TestIntegrationServerAutoListenAddress checks an unset listen_address binds
+// the cluster port to every interface on a database instances on other hosts
+// can share, and opens no cluster port on SQLite, which they can't.
 func TestIntegrationServerAutoListenAddress(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.NewTestStore(t)
-	s, err := ProvideServer(newEmbeddedTestCfg("", ""), sqlStore, prometheus.NewRegistry())
+	deleteRouteCredential(t, sqlStore)
+	s, err := ProvideServer(newEmbeddedTestCfg("", ""), sqlStore, sqlTestCredentials(t, sqlStore).encryption, sqlTestCredentials(t, sqlStore).values, &contracts.SecretDBMigrated{}, prometheus.NewRegistry())
 	require.NoError(t, err)
 	require.NoError(t, s.starting(t.Context()))
 	t.Cleanup(func() { _ = s.stopping(nil) })
 
-	bound := s.server.ClusterAddr().IP
 	switch driver := sqlStore.GetDialect().DriverName(); driver {
 	case migrator.MySQL, migrator.Postgres:
 		require.Equal(t, wildcardListenAddress, s.opts.Cluster.Host)
 		// Go reports a dual-stack wildcard listener as "::".
+		bound := s.server.ClusterAddr().IP
 		require.True(t, bound.IsUnspecified(), "cluster port bound to %s", bound)
 	case migrator.SQLite:
-		require.Equal(t, loopbackListenAddress, s.opts.Cluster.Host)
-		require.True(t, bound.IsLoopback(), "cluster port bound to %s", bound)
+		require.Nil(t, s.server.ClusterAddr(), "a standalone server opened a cluster port")
+		require.Nil(t, s.discovery)
+		require.Empty(t, s.opts.Cluster.Username)
+		_, err := s.creds.read(t.Context(), routeCredentialName(discoveryClusterName))
+		require.Error(t, err, "a standalone server created the route credential")
+
+		// An explicit listen_address still clusters through the SQLite file.
+		now := time.Now()
+		explicit := startSteppedSQLServer(t, sqlStore, &now)
+		require.True(t, explicit.server.ClusterAddr().IP.IsLoopback())
+		require.Equal(t, routeAuthUser, explicit.opts.Cluster.Username)
+		return
 	default:
 		t.Fatalf("unexpected database %q", driver)
 	}
 	require.Equal(t, routeAuthUser, s.opts.Cluster.Username)
-	require.Equal(t, storedRouteCredential(t, s.kv), s.opts.Cluster.Password)
+	stored, err := s.creds.read(t.Context(), routeCredentialName(discoveryClusterName))
+	require.NoError(t, err)
+	require.Equal(t, stored, s.opts.Cluster.Password)
+	requireNotStored(t, s.kv, stored)
 
 	require.NotNil(t, s.discovery, "ProvideServer did not wire the SQL registry")
 	s.discovery.tick(t.Context())
@@ -226,11 +255,8 @@ func TestIntegrationRouteCredentialConcurrentCreate(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.NewTestStore(t)
-	store, err := kv.NewSQLKV(sqlStore.GetEngine().DB().DB, sqlStore.GetDialect().DriverName())
-	require.NoError(t, err)
-	key := routeCredentialKey(discoveryClusterName)
-	require.NoError(t, store.Delete(t.Context(), kv.NATSPeersSection, key))
-	t.Cleanup(func() { _ = store.Delete(context.Background(), kv.NATSPeersSection, key) })
+	deleteRouteCredential(t, sqlStore)
+	creds := sqlTestCredentials(t, sqlStore)
 
 	const loaders = 8
 	start := make(chan struct{})
@@ -240,10 +266,10 @@ func TestIntegrationRouteCredentialConcurrentCreate(t *testing.T) {
 	for i := range loaders {
 		wg.Go(func() {
 			<-start
-			creds, err := loadRouteCredentials(t.Context(), store, discoveryClusterName)
+			loaded, err := loadRouteCredentials(t.Context(), creds, discoveryClusterName)
 			errs[i] = err
 			if err == nil {
-				got[i], _ = creds.Password()
+				got[i], _ = loaded.Password()
 			}
 		})
 	}
@@ -251,10 +277,32 @@ func TestIntegrationRouteCredentialConcurrentCreate(t *testing.T) {
 	wg.Wait()
 
 	require.NoError(t, errors.Join(errs...))
-	want := storedRouteCredential(t, store)
+	want, err := creds.read(t.Context(), routeCredentialName(discoveryClusterName))
+	require.NoError(t, err)
 	for _, pass := range got {
 		require.Equal(t, want, pass)
 	}
+}
+
+// sqlTestCredentials keeps the route credential in the KV on sqlStore, with
+// the data keys every test server shares.
+func sqlTestCredentials(t *testing.T, sqlStore db.DB) routeCredentialStore {
+	t.Helper()
+	store, err := kv.NewSQLKV(sqlStore.GetEngine().DB().DB, sqlStore.GetDialect().DriverName())
+	require.NoError(t, err)
+	return testCredentials(t, store)
+}
+
+// deleteRouteCredential removes the route credential from sqlStore before and
+// after the test: test databases can outlive a test, and the data key that
+// encrypted a leftover credential may not.
+func deleteRouteCredential(t *testing.T, sqlStore db.DB) {
+	t.Helper()
+	store, err := kv.NewSQLKV(sqlStore.GetEngine().DB().DB, sqlStore.GetDialect().DriverName())
+	require.NoError(t, err)
+	key := kvEncryptedValueKey
+	require.NoError(t, store.Delete(t.Context(), kv.NATSPeersSection, key))
+	t.Cleanup(func() { _ = store.Delete(context.Background(), kv.NATSPeersSection, key) })
 }
 
 // nodeCfg bundles a node's full Cfg with the Server it drives, so callers can
@@ -299,7 +347,7 @@ func newTestDiscoveryServer(t *testing.T, store kv.KV, discoveryEnabled bool) (*
 		DiscoveryTTL:      time.Minute,
 	}
 	// Both servers discover each other through the shared registry.
-	s, err := newServer(cfg.NATS, store, "", log.New("infra.nats.server"), prometheus.NewRegistry())
+	s, err := newServer(cfg.NATS, store, testCredentials(t, store), "", log.New("infra.nats.server"), prometheus.NewRegistry())
 	require.NoError(t, err)
 	return s, cfg
 }
@@ -316,10 +364,11 @@ func newSharedTestKV(t *testing.T) kv.KV {
 
 // startSteppedSQLServer starts an embedded server whose registry
 // ProvideServer builds on sqlStore, without running the discovery loop, and
-// points the registry clock at now so the test steps discovery itself.
+// points the registry and observer clocks at now so the test steps discovery
+// itself.
 func startSteppedSQLServer(t *testing.T, sqlStore db.DB, now *time.Time) *Server {
 	t.Helper()
-	s, err := ProvideServer(newEmbeddedTestCfg("127.0.0.1", ""), sqlStore, prometheus.NewRegistry())
+	s, err := ProvideServer(newEmbeddedTestCfg("127.0.0.1", ""), sqlStore, sqlTestCredentials(t, sqlStore).encryption, sqlTestCredentials(t, sqlStore).values, &contracts.SecretDBMigrated{}, prometheus.NewRegistry())
 	require.NoError(t, err)
 	require.NoError(t, s.starting(t.Context()))
 	t.Cleanup(func() { _ = s.stopping(nil) })
@@ -327,6 +376,7 @@ func startSteppedSQLServer(t *testing.T, sqlStore db.DB, now *time.Time) *Server
 	registry, ok := s.discovery.registry.(*kvPeerStore)
 	require.True(t, ok)
 	registry.now = func() time.Time { return *now }
+	s.discovery.now = func() time.Time { return *now }
 	return s
 }
 
@@ -346,7 +396,7 @@ func routeSetOf(nodes ...*Server) map[string]struct{} {
 	return routes
 }
 
-// registeredPeers reads the registry rows without pruning, unlike listActive.
+// registeredPeers reads the registry rows.
 func registeredPeers(t *testing.T, store kv.KV) []peer {
 	t.Helper()
 	var peers []peer

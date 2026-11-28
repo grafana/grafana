@@ -5,7 +5,7 @@ package connection
 import (
 	context "context"
 
-	v0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana-app-sdk/resource"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -23,22 +23,22 @@ func (_m *MockSecureValues) EXPECT() *MockSecureValues_Expecter {
 }
 
 // ClientSecret provides a mock function with given fields: ctx
-func (_m *MockSecureValues) ClientSecret(ctx context.Context) (v0alpha1.RawSecureValue, error) {
+func (_m *MockSecureValues) ClientSecret(ctx context.Context) (resource.RawSecureValue, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ClientSecret")
 	}
 
-	var r0 v0alpha1.RawSecureValue
+	var r0 resource.RawSecureValue
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (v0alpha1.RawSecureValue, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (resource.RawSecureValue, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) v0alpha1.RawSecureValue); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) resource.RawSecureValue); ok {
 		r0 = rf(ctx)
 	} else {
-		r0 = ret.Get(0).(v0alpha1.RawSecureValue)
+		r0 = ret.Get(0).(resource.RawSecureValue)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -68,33 +68,33 @@ func (_c *MockSecureValues_ClientSecret_Call) Run(run func(ctx context.Context))
 	return _c
 }
 
-func (_c *MockSecureValues_ClientSecret_Call) Return(_a0 v0alpha1.RawSecureValue, _a1 error) *MockSecureValues_ClientSecret_Call {
+func (_c *MockSecureValues_ClientSecret_Call) Return(_a0 resource.RawSecureValue, _a1 error) *MockSecureValues_ClientSecret_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockSecureValues_ClientSecret_Call) RunAndReturn(run func(context.Context) (v0alpha1.RawSecureValue, error)) *MockSecureValues_ClientSecret_Call {
+func (_c *MockSecureValues_ClientSecret_Call) RunAndReturn(run func(context.Context) (resource.RawSecureValue, error)) *MockSecureValues_ClientSecret_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // PrivateKey provides a mock function with given fields: ctx
-func (_m *MockSecureValues) PrivateKey(ctx context.Context) (v0alpha1.RawSecureValue, error) {
+func (_m *MockSecureValues) PrivateKey(ctx context.Context) (resource.RawSecureValue, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for PrivateKey")
 	}
 
-	var r0 v0alpha1.RawSecureValue
+	var r0 resource.RawSecureValue
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (v0alpha1.RawSecureValue, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (resource.RawSecureValue, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) v0alpha1.RawSecureValue); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) resource.RawSecureValue); ok {
 		r0 = rf(ctx)
 	} else {
-		r0 = ret.Get(0).(v0alpha1.RawSecureValue)
+		r0 = ret.Get(0).(resource.RawSecureValue)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -124,33 +124,33 @@ func (_c *MockSecureValues_PrivateKey_Call) Run(run func(ctx context.Context)) *
 	return _c
 }
 
-func (_c *MockSecureValues_PrivateKey_Call) Return(_a0 v0alpha1.RawSecureValue, _a1 error) *MockSecureValues_PrivateKey_Call {
+func (_c *MockSecureValues_PrivateKey_Call) Return(_a0 resource.RawSecureValue, _a1 error) *MockSecureValues_PrivateKey_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockSecureValues_PrivateKey_Call) RunAndReturn(run func(context.Context) (v0alpha1.RawSecureValue, error)) *MockSecureValues_PrivateKey_Call {
+func (_c *MockSecureValues_PrivateKey_Call) RunAndReturn(run func(context.Context) (resource.RawSecureValue, error)) *MockSecureValues_PrivateKey_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Token provides a mock function with given fields: ctx
-func (_m *MockSecureValues) Token(ctx context.Context) (v0alpha1.RawSecureValue, error) {
+func (_m *MockSecureValues) Token(ctx context.Context) (resource.RawSecureValue, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Token")
 	}
 
-	var r0 v0alpha1.RawSecureValue
+	var r0 resource.RawSecureValue
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (v0alpha1.RawSecureValue, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (resource.RawSecureValue, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) v0alpha1.RawSecureValue); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) resource.RawSecureValue); ok {
 		r0 = rf(ctx)
 	} else {
-		r0 = ret.Get(0).(v0alpha1.RawSecureValue)
+		r0 = ret.Get(0).(resource.RawSecureValue)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -180,12 +180,12 @@ func (_c *MockSecureValues_Token_Call) Run(run func(ctx context.Context)) *MockS
 	return _c
 }
 
-func (_c *MockSecureValues_Token_Call) Return(_a0 v0alpha1.RawSecureValue, _a1 error) *MockSecureValues_Token_Call {
+func (_c *MockSecureValues_Token_Call) Return(_a0 resource.RawSecureValue, _a1 error) *MockSecureValues_Token_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockSecureValues_Token_Call) RunAndReturn(run func(context.Context) (v0alpha1.RawSecureValue, error)) *MockSecureValues_Token_Call {
+func (_c *MockSecureValues_Token_Call) RunAndReturn(run func(context.Context) (resource.RawSecureValue, error)) *MockSecureValues_Token_Call {
 	_c.Call.Return(run)
 	return _c
 }

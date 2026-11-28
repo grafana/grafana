@@ -11,8 +11,9 @@
 // # Error handling
 //
 // Unary gRPC calls, including NewLocalResourceClient, report failures through err.
-// Converted response errors carry ErrorResult status details. Handle err before
-// accessing the response; do not add legacy Error checks to status-only paths.
+// Structured errors carry ErrorResult status details. Migrated direct Go calls
+// also report failures through err. Handle err before accessing the response;
+// do not add legacy Error checks to status-only paths.
 //
 //   - HTTP/apiserver boundaries: use [StatusErrorFromGRPC](err) to preserve HTTP
 //     status. Return it unwrapped to the apiserver for APIStatus recognition;
@@ -23,18 +24,13 @@
 //   - Classification only: use [AsErrorResult](err) or [IsConflict](err);
 //     keep the original error.
 //
-// # Exceptions
+// BulkProcess reports failures through the terminal receive error. Check err
+// before accessing a potentially nil response. Always check a stream's terminal
+// receive error; successful sends do not imply success.
 //
-// BulkProcess bypasses unary conversion: check both CloseAndRecv's error and
-// BulkResponse.Error until its producer is migrated. Always check a stream's
-// terminal receive error; successful sends do not imply success.
+// [StatusError] converts only an ErrorResult, not an accompanying returned error.
 //
-// Direct Go calls can bypass conversion and return response-embedded errors.
-// Handle both forms on those paths.
-// Use [ErrorFromResponse] for Go callers or [StatusErrorFromResponse] at
-// HTTP/apiserver boundaries. Both prioritize err; check it before accessing a
-// potentially nil response.
+// # Per-item errors
 //
 // Still handle per-item errors (BackendReadResponse.Error, bulk rejections).
-// [StatusError] converts only an ErrorResult, not an accompanying returned error.
 package resource

@@ -34,7 +34,10 @@ func newSearchHandler(
 		))
 		defer span.End()
 		start := time.Now()
-		defer func() { observe(ctx, logger, metrics.RequestDuration, "search", start, err) }()
+		defer func() {
+			err = toAPIError(err, "")
+			observe(ctx, logger, metrics.RequestDuration, "search", start, err)
+		}()
 
 		queryParams := request.URL.Query()
 		opts := listOptionsFromQueryParams(queryParams)

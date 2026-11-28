@@ -484,7 +484,7 @@ func startEmbeddedStack(t *testing.T) (context.Context, *Server, *PublisherServi
 		ClusterPort: natsserver.RANDOM_PORT,
 	}
 
-	server, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
+	server, err := ProvideServer(cfg, nil, nil, nil, nil, prometheus.NewRegistry())
 	require.NoError(t, err)
 	startService(t, ctx, server)
 

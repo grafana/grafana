@@ -3,6 +3,8 @@ package serviceaccounts
 import (
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -196,7 +198,7 @@ type ExtSvcAccount struct {
 	Name       string
 	OrgID      int64
 	IsDisabled bool
-	Role       identity.RoleType
+	Role       authlib.RoleType
 }
 
 type ManageExtSvcAccountCmd struct {

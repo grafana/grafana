@@ -20,6 +20,8 @@ export interface Options {
   fieldSelectorWidth?: number;
   isLabelFilterActive?: unknown;
   logDetailsWidth?: number;
+  onClickFilterOutString?: unknown;
+  onClickFilterString?: unknown;
   permalinkedLogId?: string;
   showControls?: boolean;
   showCopyLogLink?: boolean;

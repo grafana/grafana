@@ -32,6 +32,7 @@ export function useDraggableManager(options: DraggableManagerOptions) {
     onMouseEnter: (event: React.MouseEvent) => managerRef.current?.handleMouseEnter(event),
     onMouseMove: (event: React.MouseEvent) => managerRef.current?.handleMouseMove(event),
     onMouseLeave: (event: React.MouseEvent) => managerRef.current?.handleMouseLeave(event),
+    resetBounds: () => managerRef.current?.resetBounds(),
   }));
   return handlers;
 }

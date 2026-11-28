@@ -10,6 +10,7 @@ import (
 
 	"github.com/golang/snappy"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -104,6 +105,12 @@ func (st ProtoInstanceDBStore) SaveAlertInstancesForRule(ctx context.Context, ke
 		return fmt.Errorf("failed to compress alert instances: %w", err)
 	}
 
+	if st.SQLStore.GetDBType() == migrator.MySQL {
+		return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			return st.updateThenUpsertCompressedAlertInstances(sess, key.OrgID, key.UID, compressedAlertInstances, time.Now())
+		})
+	}
+
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		return st.upsertCompressedAlertInstances(sess, key.OrgID, key.UID, compressedAlertInstances, time.Now())
 	})
@@ -120,12 +127,19 @@ func (st ProtoInstanceDBStore) DeleteAlertInstancesByRule(ctx context.Context, k
 }
 
 func (st ProtoInstanceDBStore) FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int, jitterFunc func(int) time.Duration) error {
-	if len(instances) == 0 {
+	return st.FullSyncWithSeries(ctx, instances, nil, batchSize, jitterFunc)
+}
+
+// FullSyncWithSeries rewrites the table from the instances and the recording series.
+// A rule that has only series gets a row of its own. A rule with an empty set gets none.
+func (st ProtoInstanceDBStore) FullSyncWithSeries(ctx context.Context, instances []models.AlertInstance, series map[models.AlertRuleKey][]models.RecordingSeries, batchSize int, jitterFunc func(int) time.Duration) error {
+	// Like FullSync, an empty state leaves the table alone. Empty series sets do not count as state.
+	if len(instances) == 0 && !hasSeries(series) {
 		return nil
 	}
 
 	logger := st.Logger.FromContext(ctx)
-	logger.Debug("FullSync called", "total_instances", len(instances))
+	logger.Debug("FullSync called", "total_instances", len(instances), "rules_with_series", len(series))
 
 	ruleGroups := make(map[models.AlertRuleKeyWithGroup][]models.AlertInstance)
 	for _, instance := range instances {
@@ -138,6 +152,16 @@ func (st ProtoInstanceDBStore) FullSync(ctx context.Context, instances []models.
 		}
 		ruleGroups[ruleKey] = append(ruleGroups[ruleKey], instance)
 	}
+	seriesGroups := make(map[models.AlertRuleKeyWithGroup][]models.RecordingSeries, len(series))
+	for key, set := range series {
+		if len(set) == 0 {
+			continue
+		}
+		seriesGroups[models.AlertRuleKeyWithGroup{AlertRuleKey: key}] = set
+		if _, ok := ruleGroups[models.AlertRuleKeyWithGroup{AlertRuleKey: key}]; !ok {
+			ruleGroups[models.AlertRuleKeyWithGroup{AlertRuleKey: key}] = nil
+		}
+	}
 
 	type preparedRule struct {
 		ruleKey        models.AlertRuleKeyWithGroup
@@ -146,19 +170,18 @@ func (st ProtoInstanceDBStore) FullSync(ctx context.Context, instances []models.
 	preparedRules := make([]preparedRule, 0, len(ruleGroups))
 
 	for ruleKey, ruleInstances := range ruleGroups {
-		// Convert and compress instances
-		compressedAlertInstances, err := convertAndCompressAlertInstances(ruleInstances)
+		compressed, err := convertAndCompressRuleState(ruleInstances, seriesGroups[ruleKey])
 		if err != nil {
-			logger.Error("Failed to compress instances for rule", "rule_uid", ruleKey.UID, "error", err)
+			logger.Error("Failed to compress state for rule", "rule_uid", ruleKey.UID, "error", err)
 			continue
 		}
 
 		preparedRules = append(preparedRules, preparedRule{
 			ruleKey:        ruleKey,
-			compressedData: compressedAlertInstances,
+			compressedData: compressed,
 		})
 
-		logger.Debug("Prepared rule for sync", "rule_uid", ruleKey.UID, "org_id", ruleKey.OrgID, "instances", len(ruleInstances))
+		logger.Debug("Prepared rule for sync", "rule_uid", ruleKey.UID, "org_id", ruleKey.OrgID, "instances", len(ruleInstances), "series", len(seriesGroups[ruleKey]))
 	}
 
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -213,12 +236,20 @@ func alertInstanceModelToProto(modelInstance models.AlertInstance) *pb.AlertInst
 
 // convertAndCompressAlertInstances converts model instances to protobuf and compresses them
 func convertAndCompressAlertInstances(instances []models.AlertInstance) ([]byte, error) {
-	alertInstancesProto := make([]*pb.AlertInstance, len(instances))
-	for i, instance := range instances {
-		alertInstancesProto[i] = alertInstanceModelToProto(instance)
-	}
+	return convertAndCompressRuleState(instances, nil)
+}
 
-	return compressAlertInstances(alertInstancesProto)
+// convertAndCompressRuleState converts the instances and series of one rule and compresses them as one row.
+func convertAndCompressRuleState(instances []models.AlertInstance, series []models.RecordingSeries) ([]byte, error) {
+	return compressRuleState(instancesToProto(instances), recordingSeriesModelsToProto(series))
+}
+
+func instancesToProto(instances []models.AlertInstance) []*pb.AlertInstance {
+	out := make([]*pb.AlertInstance, len(instances))
+	for i, instance := range instances {
+		out[i] = alertInstanceModelToProto(instance)
+	}
+	return out
 }
 
 // upsertCompressedAlertInstances performs upsert operation for compressed alert instances
@@ -235,8 +266,40 @@ func (st ProtoInstanceDBStore) upsertCompressedAlertInstances(sess *sqlstore.DBS
 	return err
 }
 
+// Under REPEATABLE READ, ON DUPLICATE KEY UPDATE locks the primary key supremum, which blocks writes of unrelated rules.
+// The UPDATE and the fallback upsert must be separate autocommit statements, or concurrent first writes of new rules deadlock.
+// Without clientFoundRows, an UPDATE of an unchanged row reports 0 rows, so a missing row is confirmed with a plain SELECT.
+func (st ProtoInstanceDBStore) updateThenUpsertCompressedAlertInstances(sess *sqlstore.DBSession, orgID int64, ruleUID string, compressedData []byte, timestamp time.Time) error {
+	res, err := sess.Exec("UPDATE alert_rule_state SET data = ?, updated_at = ? WHERE org_id = ? AND rule_uid = ?", compressedData, timestamp, orgID, ruleUID)
+	if err != nil {
+		return err
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected > 0 {
+		return nil
+	}
+
+	exists, err := sess.SQL("SELECT 1 FROM alert_rule_state WHERE org_id = ? AND rule_uid = ?", orgID, ruleUID).Exist()
+	if err != nil {
+		return err
+	}
+	if exists {
+		return nil
+	}
+
+	return st.upsertCompressedAlertInstances(sess, orgID, ruleUID, compressedData, timestamp)
+}
+
 func compressAlertInstances(instances []*pb.AlertInstance) ([]byte, error) {
-	mProto, err := proto.Marshal(&pb.AlertInstances{Instances: instances})
+	return compressRuleState(instances, nil)
+}
+
+func compressRuleState(instances []*pb.AlertInstance, series []*pb.RecordingSeries) ([]byte, error) {
+	mProto, err := proto.Marshal(&pb.AlertInstances{Instances: instances, Series: series})
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal protobuf: %w", err)
 	}
@@ -251,6 +314,10 @@ func compressAlertInstances(instances []*pb.AlertInstance) ([]byte, error) {
 		return nil, fmt.Errorf("failed to close snappy writer: %w", err)
 	}
 
+	// An empty state compresses to nothing, and a nil slice would be written as NULL.
+	if b.Len() == 0 {
+		return []byte{}, nil
+	}
 	return b.Bytes(), nil
 }
 
@@ -291,6 +358,17 @@ func alertInstanceProtoToModel(ruleUID string, ruleOrgID int64, protoInstance *p
 }
 
 func decompressAlertInstances(compressed []byte) ([]*pb.AlertInstance, error) {
+	state, err := decompressRuleState(compressed)
+	if err != nil {
+		return nil, err
+	}
+	if state == nil {
+		return nil, nil
+	}
+	return state.Instances, nil
+}
+
+func decompressRuleState(compressed []byte) (*pb.AlertInstances, error) {
 	if len(compressed) == 0 {
 		return nil, nil
 	}
@@ -301,12 +379,12 @@ func decompressAlertInstances(compressed []byte) ([]*pb.AlertInstance, error) {
 		return nil, fmt.Errorf("failed to read compressed data: %w", err)
 	}
 
-	var instances pb.AlertInstances
-	if err := proto.Unmarshal(b.Bytes(), &instances); err != nil {
+	var state pb.AlertInstances
+	if err := proto.Unmarshal(b.Bytes(), &state); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal protobuf: %w", err)
 	}
 
-	return instances.Instances, nil
+	return &state, nil
 }
 
 // nullableTimeToTimestamp converts a nullable time.Time to nil, if it is nil, otherwise it converts to timestamppb.Timestamp.

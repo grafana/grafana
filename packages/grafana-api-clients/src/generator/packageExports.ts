@@ -32,9 +32,14 @@ export function updatePackageJsonExports(basePath: string, groupName: string, ve
 
   packageJson.exports[exportKey] = {
     '@grafana-app/source': `./src/clients/rtkq/${subpath}/index.ts`,
-    types: `./dist/types/clients/rtkq/${subpath}/index.d.ts`,
-    import: `./dist/esm/clients/rtkq/${subpath}/index.mjs`,
-    require: `./dist/cjs/clients/rtkq/${subpath}/index.cjs`,
+    import: {
+      types: `./dist/esm/clients/rtkq/${subpath}/index.d.mts`,
+      default: `./dist/esm/clients/rtkq/${subpath}/index.mjs`,
+    },
+    require: {
+      types: `./dist/cjs/clients/rtkq/${subpath}/index.d.cts`,
+      default: `./dist/cjs/clients/rtkq/${subpath}/index.cjs`,
+    },
   };
 
   fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');

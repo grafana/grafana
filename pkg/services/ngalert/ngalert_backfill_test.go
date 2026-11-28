@@ -245,10 +245,11 @@ func newBackfillTestService(t *testing.T, orgCount int) (*AlertNG, *backfillFold
 	ruleService, err := rulesvc.ProvideService(sqlRules, folders)
 	require.NoError(t, err)
 	return &AlertNG{
-		SQLStore:  sqlStore,
-		Log:       logger,
-		store:     &store.DBstore{SQLStore: sqlStore, Logger: logger},
-		ruleStore: ruleService,
+		SQLStore:    sqlStore,
+		Log:         logger,
+		store:       &store.DBstore{SQLStore: sqlStore, Logger: logger},
+		ruleService: ruleService,
+		ruleStore:   sqlRules,
 	}, folders, sqlRules
 }
 
@@ -260,7 +261,7 @@ func seedBackfillRule(t *testing.T, ng *AlertNG, orgID int64, folderUID, uid str
 		models.RuleGen.WithIntervalMatching(time.Second),
 	).Generate()
 	rule.UID = uid
-	_, err := ng.ruleStore.InsertAlertRules(context.Background(), nil, []models.InsertRule{{AlertRule: rule}})
+	_, err := ng.ruleService.InsertAlertRules(context.Background(), nil, []models.InsertRule{{AlertRule: rule}})
 	require.NoError(t, err)
 	require.NoError(t, ng.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		_, err := sess.Exec("UPDATE alert_rule SET folder_fullpath = ? WHERE org_id = ? AND uid = ?", fullpath, orgID, uid)
