@@ -20,7 +20,7 @@ describe('Guide', () => {
       <Guide
         id="app-monitoring"
         title="Set up app monitoring"
-        description="Visualize traces, metrics, and logs from services you build and run."
+        description="Visualize traces, metrics, logs, and profiles from services you build and run."
         icon="apps"
         color="#ff780a"
         cta="Start setup"

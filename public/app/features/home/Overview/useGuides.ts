@@ -25,7 +25,7 @@ export function useGuides() {
         title: t('home.overview.get-started.cards.app-monitoring.title', 'Set up app monitoring'),
         description: t(
           'home.overview.get-started.cards.app-monitoring.description',
-          'Visualize traces, metrics, and logs from services you build and run.'
+          'Visualize traces, metrics, logs, and profiles from services you build and run.'
         ),
         icon: 'apps',
         color: theme.visualization.getColorByName('orange'),
