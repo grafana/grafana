@@ -143,6 +143,8 @@ So `title`, `description` and `tags` come from your spec: name them that way and
 
 `created` and `updated` can be filtered with a `range` leaf, so "everything updated in the last week" is a query you can write, and sorted, so results can be ordered by time.
 
+`managedBy` and the `manager.*` fields are read from the manager annotations on the object, which are defined in [Manager and source annotations](https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/apis/#manager-and-source-annotations). A resource only counts as managed when it carries a manager identity, so an object with no manager leaves these fields empty.
+
 ## 4. Request
 
 ```json

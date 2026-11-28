@@ -136,11 +136,13 @@ You can find the instance ID in the following places:
 
 ### Resource (`<resource>`)
 
-The resource is the type you want to interact with. Common examples include the following:
+The resource is the type of object you want to interact with. Common examples include the following:
 
 - **Dashboards:** Use `dashboards`.
 - **Playlists:** Use `playlists`.
 - **Folders:** Use `folders`.
+
+For more information, refer to [Resources in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/resources/).
 
 ### Kind (`<kind>`)
 
@@ -173,6 +175,10 @@ You would use the following API call:
 
 `GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/production-overview`
 
+### Spec
+
+The spec field describes the desired state of the resource. Its structure depends on the resource type and API version. Refer to the Swagger or OpenAPI documentation for the exact schema for a resource's spec.
+
 ### Metadata
 
 The metadata section contains information about the resource instance.
@@ -200,23 +206,88 @@ Updates to metadata or status don't affect this value.
 
 The time the object was created, formatted as an RFC 3339 UTC timestamp (for example, `2026-01-23T22:06:40Z`).
 
+#### Labels
+
+An optional map of key-value pairs for organizing and selecting resources.
+
 #### Annotations
 
-A map of key-value pairs.
+A map of key-value pairs with additional information.
 
 Common annotations include:
 
 - **`grafana.app/createdBy` and `grafana.app/updatedBy`:** Identify who created or last updated the resource. Use the format `<USER_TYPE>:<UID>`, for example `user:u000000839`.
 - **`grafana.app/folder`:** If the resource supports folders, this contains the folder UID that the object belongs to.
 - **`grafana.app/updatedTimestamp`:** Stores the last update time as an RFC 3339 UTC timestamp, for example `2026-01-23T05:17:31Z`.
+- **`grafana.app/managedBy` and `grafana.app/managerId`:** Identify the tool that manages the resource, such as Git Sync or Terraform. Refer to [Manager and source annotations](#manager-and-source-annotations).
 
-#### Labels
+#### Annotations for managed resources
 
-An optional map of key-value pairs for organizing and selecting resources.
+_Managed resources_ are resources created with as code tools, such as Git Sync, Terraform, or `kubectl`, and carry additional annotations that record which manager owns the resource, where the resource manager is, where the resource definition comes from, and whether you can edit it outside that tool. Grafana derives most of them, so before you set them by hand, understand how resources from as code tools are managed. For what each tool records and allows, refer to [Manage resources in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/resources/manage-resources/).
 
-### Spec
+Use the following annotations to manage these type of resources:
 
-The spec field describes the desired state of the resource. Its structure depends on the resource type and API version. Refer to the Swagger or OpenAPI documentation for the exact schema for a resource's spec.
+| Annotation                       | Description                                                                                                                                                                          |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `grafana.app/managedBy`          | The kind of tool that manages the resource. Refer to [Types of resource managers ](#types-of-resource-managers) for the available values.                                            |
+| `grafana.app/managerId`          | The instance of that tool. For Git Sync, this is the name of the repository resource. For Terraform, this is the provider identifier, for example `grafana-terraform-provider`.      |
+| `grafana.app/managerAllowsEdits` | When `true`, requesters other than the manager can edit the resource. When the annotation is absent or set to `false`, Grafana treats the resource as read-only outside its manager. |
+| `grafana.app/managerSuspended`   | When `true`, the manager skips updates to the resource. Use it to pause reconciliation without removing the manager.                                                                 |
+
+{{< admonition type="important" >}}
+
+A `grafana.app/managedBy` annotation on its own doesn't mark a resource as managed. **Grafana treats a resource as managed only when `grafana.app/managerId` holds a non-empty value.**
+
+{{< /admonition >}}
+
+##### Types of resource managers
+
+The `grafana.app/managedBy` annotation accepts the following values:
+
+| Value               | Description                                                                                                                             |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `repo`              | A repository manages the resource, either Git Sync or on-prem file provisioning, and `grafana.app/managerId` holds the repository name. |
+| `terraform`         | A Terraform provider manages the resource.                                                                                              |
+| `kubectl`           | A Kubernetes manifest applied with `kubectl` manages the resource.                                                                      |
+| `plugin`            | A plugin manages the resource.                                                                                                          |
+| `grafana`           | Grafana manages the resource itself.                                                                                                    |
+| `file-provisioning` | A file the instance was started with configures the resource, such as the repository that `bootstrap_path` registers.                   |
+
+You can only manually set `terraform` and `kubectl`. Grafana derives the rest, and rejects a write that sets `classic-file-provisioning` from any caller but the file provisioner.
+
+Grafana also sets the deprecated `classic-file-provisioning`, `classic-api-provisioning`, and `classic-converted-prometheus` values on resources from legacy provisioning: classic file provisioning, the legacy Alerting provisioning HTTP API, and the Alerting Convert Prometheus API. They exist for migration only, and new resources use one of the values in the preceding table.
+
+##### Who can work with managed resources?
+
+Grafana can work with a managed resource when `grafana.app/managerAllowsEdits` is `true` only. If the annotation is empty or set to `false`, only the resource manager can edit the resource. In API responses that expose manager properties, such as search results, the same value appears as the `allowEdits` field.
+
+##### Change the manager of a resource
+
+You can't change the manager of a resource in place. Instead, to hand a resource to a different tool, remove the manager annotations first, then write them again with the new values. The only exception is a Terraform provider migrating from a deprecated User-Agent identity to a stable one.
+
+Removing the manager from a repository-managed resource requires an administrator role.
+
+##### Source of the resource
+
+Use the following annotations to identify the source of a provisioned resource.
+Managers that reconcile from a source, such as Git Sync, set them. Managers without a concept of a source, such as Terraform, don't.
+
+| Annotation                    | Description                                                                                       |
+| ----------------------------- | ------------------------------------------------------------------------------------------------- |
+| `grafana.app/sourcePath`      | The path to the resource definition in the source, for example `dashboards/my-dashboard.json`.    |
+| `grafana.app/sourceChecksum`  | The checksum of the resource definition in the source, such as a Git commit hash.                 |
+| `grafana.app/sourceTimestamp` | The time the resource definition last changed in the source, as a Unix timestamp in milliseconds. |
+
+##### Deprecated repository annotations
+
+Earlier versions of Grafana recorded Git Sync ownership with the following annotations. Grafana still reads them, but it writes the manager and source annotations instead:
+
+| Deprecated annotation       | Replacement                                                         |
+| --------------------------- | ------------------------------------------------------------------- |
+| `grafana.app/repoName`      | `grafana.app/managerId`, with `grafana.app/managedBy` set to `repo` |
+| `grafana.app/repoPath`      | `grafana.app/sourcePath`                                            |
+| `grafana.app/repoHash`      | `grafana.app/sourceChecksum`                                        |
+| `grafana.app/repoTimestamp` | `grafana.app/sourceTimestamp`                                       |
 
 ## Related resources
 
