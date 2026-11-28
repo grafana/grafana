@@ -19,3 +19,4 @@ export {
 export { getSearchTeamsErrorHandler, getSearchTeamsHandler } from './api/teams/handlers';
 export { getSignedInUserTeamListHandler } from './api/user/handlers';
 export { customLoginHandler } from './auth/handlers';
+export { getAPIDiscoveryHandlers } from './apis/discovery';

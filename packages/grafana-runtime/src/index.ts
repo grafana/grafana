@@ -129,3 +129,6 @@ export {
 export { getAppPluginHealth } from './services/pluginHealth/getAppPluginHealth';
 export { callAppPluginProxy } from './services/pluginProxy/callAppPluginProxy';
 export { callDataSourcePluginProxy } from './services/pluginProxy/callDataSourcePluginProxy';
+export { getAPIGroup, invalidateAPIDiscovery } from './services/apiDiscovery/discovery';
+export { resolveAPIBaseURL, resolveAPIVersion, type ResolveAPIBaseURLOptions } from './services/apiDiscovery/resolve';
+export { type APIGroupInfo } from './services/apiDiscovery/types';

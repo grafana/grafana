@@ -1,5 +1,7 @@
 import { config } from '../config';
 
+import { isAPIVersion } from './apiDiscovery/versions';
+
 export async function getApiVersion(): Promise<string> {
   return 'v0alpha1';
 }
@@ -31,9 +33,8 @@ export function assertPluginIdFormat(pluginId = ''): void {
   }
 }
 
-const apiVersionPattern = /^v[0-9]+(?:(?:alpha|beta)[0-9]+)?$/;
 export function assertApiVersion(apiVersion = ''): void {
-  if (typeof apiVersion !== 'string' || !apiVersionPattern.test(apiVersion)) {
+  if (typeof apiVersion !== 'string' || !isAPIVersion(apiVersion)) {
     throw new Error(`Invalid API version "${apiVersion}"`);
   }
 }
