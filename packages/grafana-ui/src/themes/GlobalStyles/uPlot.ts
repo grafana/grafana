@@ -2,6 +2,8 @@ import { css } from '@emotion/react';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 
+import { getFocusStyles } from '../mixins';
+
 /**
  * Crosshair colour, one step below the axis label colour (`text.primary`) and well clear of the
  * gridlines it crosses. Exported so the contrast test has a single source of truth.
@@ -18,6 +20,7 @@ export function getUplotStyles(theme: GrafanaTheme2) {
   return css({
     '.uplot': {
       fontFamily: 'inherit',
+      '&:focus-visible': getFocusStyles(theme),
     },
 
     '.u-select': {
