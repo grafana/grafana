@@ -347,6 +347,16 @@ func distributeWithFailover[Req, Resp any](
 	if !ok {
 		md = make(metadata.MD)
 	}
+	if methodName == "HybridSearch" {
+		md = md.Copy()
+		if _, present := md[hybridSearchCallerIDKey]; !present {
+			if outgoing, ok := metadata.FromOutgoingContext(ctx); ok {
+				if values, present := outgoing[hybridSearchCallerIDKey]; present {
+					md[hybridSearchCallerIDKey] = slices.Clone(values)
+				}
+			}
+		}
+	}
 	outCtx := userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), namespace)
 
 	logger := ds.log.New("method", methodName, "namespace", namespace)

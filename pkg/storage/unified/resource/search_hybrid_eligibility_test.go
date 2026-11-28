@@ -283,7 +283,7 @@ func TestHybridSearch_GlobalMetricLabels(t *testing.T) {
 		labels[label.GetName()] = label.GetValue()
 	}
 	assert.Equal(t, map[string]string{
-		"group": GlobalSearchGroup, "resource": GlobalSearchResource, "status_code": codes.InvalidArgument.String(),
+		"group": GlobalSearchGroup, "resource": GlobalSearchResource, "status_code": codes.InvalidArgument.String(), "source": "unknown",
 	}, labels)
 	assert.Equal(t, uint64(2), metric.GetHistogram().GetSampleCount())
 }
