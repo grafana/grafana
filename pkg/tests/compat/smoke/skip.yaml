@@ -41,7 +41,6 @@ oss:
   teamlbacrules.iam.grafana.app: served but not implemented in OSS builds
 enterprise:
   teamlbacrules.iam.grafana.app: needs an existing datasource and team, which the smoke test does not create
-  keepers.secret.grafana.app: needs an external secret manager
 legacy_storage:
   librarypanels.dashboard.grafana.app: served from legacy SQL by default
   inhibitionrules.notifications.alerting.grafana.app: stored in the alertmanager configuration
