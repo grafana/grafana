@@ -71,17 +71,13 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
     </div>
   );
 
-  const sidebarHandle = (
-    <div
-      {...sidebarSplitter.splitterProps}
-      className={cx(sidebarSplitter.splitterProps.className, styles.sidebarHandle)}
-    />
-  );
+  const sidebarHandle = <div {...sidebarSplitter.splitterProps} />;
 
   const miniLayout = (
     <VizDataSplit
       splitter={vizDataSplitter}
       viz={viz}
+      handleClassName={styles.vizDataHandleMini}
       secondaryClassName={styles.bottom}
       expandClassName={styles.expandQueryPaneMini}
     >
@@ -132,19 +128,25 @@ interface VizDataSplitProps {
   viz: ReactNode;
   /** Rendered when the bottom pane is open. */
   children: ReactNode;
+  handleClassName?: string;
   /** Class for the bottom (secondary) pane. */
   secondaryClassName: string;
   /** Class for the collapsed-state expand bar. */
   expandClassName: string;
 }
 
-// Vertical viz/data split shared by both layouts. Only the bottom pane's contents and class names
-// differ between Mini and Full, so they're passed in.
-function VizDataSplit({ splitter, viz, children, secondaryClassName, expandClassName }: VizDataSplitProps) {
+function VizDataSplit({
+  splitter,
+  viz,
+  children,
+  handleClassName,
+  secondaryClassName,
+  expandClassName,
+}: VizDataSplitProps) {
   return (
     <div {...splitter.containerProps}>
       {viz}
-      <div {...splitter.splitterProps} />
+      <div {...splitter.splitterProps} className={cx(splitter.splitterProps.className, handleClassName)} />
       <div {...splitter.secondaryProps} className={cx(splitter.secondaryProps.className, secondaryClassName)}>
         {splitter.splitterState.collapsed ? (
           <ExpandQueryPane onClick={splitter.onToggleCollapse} className={expandClassName} />
@@ -198,6 +200,7 @@ const getExpandQueryPaneButtonStyles = (theme: GrafanaTheme2) => ({
 
 function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
   const isMini = sidebarSize === SidebarSize.Mini;
+  const miniPaneInset = theme.spacing(2);
 
   // Collapsed query pane bar: bottom-anchored, so only the top corners are rounded.
   const expandQueryPaneBar = {
@@ -234,7 +237,10 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
     vizContent: css({
       height: '100%',
       width: '100%',
-      ...(isMini && { paddingLeft: theme.spacing(2) }),
+      ...(isMini && { paddingLeft: miniPaneInset }),
+    }),
+    vizDataHandleMini: css({
+      marginLeft: miniPaneInset,
     }),
     fixedSizeViz: css({
       height: '100vh',
@@ -258,19 +264,11 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       minWidth: 0,
       minHeight: 0,
       overflow: 'hidden',
-      ...(isMini && { paddingLeft: theme.spacing(2) }),
+      ...(isMini && { paddingLeft: miniPaneInset }),
     }),
     sidebarContent: css({
       height: '100%',
       width: '100%',
-    }),
-    // The shared drag handle draws a fixed 200px pill, which the splitter container clips once the
-    // pane is shorter than that — the rounded ends disappear and it reads as a full-height bar.
-    // Scaling by percentage keeps it a pill at any height (40% matches 100px at a 250px pane).
-    sidebarHandle: css({
-      '&::after': {
-        height: 'min(200px, 40%)',
-      },
     }),
     dataPane: css({
       display: 'flex',
@@ -308,7 +306,7 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
     expandQueryPane: css(expandQueryPaneBar),
     expandQueryPaneMini: css({
       ...expandQueryPaneBar,
-      marginLeft: theme.spacing(2),
+      marginLeft: miniPaneInset,
     }),
   };
 }
