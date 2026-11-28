@@ -1,5 +1,12 @@
+import { BehaviorSubject, type Subscription } from 'rxjs';
+
 import { toggleAssistant, isAssistantAvailable } from '@grafana/assistant';
-import { type LocationService } from '@grafana/runtime';
+import {
+  type EmbeddedKeybinding,
+  type EmbeddedKeybindingService,
+  type EmbeddedKeybindingsSnapshot,
+  type LocationService,
+} from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
 
@@ -18,17 +25,46 @@ import { type RouteDescriptor } from '../navigation/types';
 import { mousetrap } from './mousetrap';
 import { toggleTheme } from './theme';
 
+const assistantShortcut = 'mod+.';
+
 export class KeybindingSrv {
   constructor(
     private locationService: LocationService,
     private chromeService: AppChromeService
   ) {}
 
-  private assistantSubscription: { unsubscribe: () => void } | null = null;
+  private assistantSubscription?: Subscription;
+  private rebuildingBindings = false;
+  private readonly embeddedBindings = new Map<string, { binding: EmbeddedKeybinding; run: () => void }>();
+  private readonly embeddedSnapshots = new BehaviorSubject<EmbeddedKeybindingsSnapshot>({ revision: 0, bindings: [] });
+
+  readonly embeddedKeybindings: EmbeddedKeybindingService = {
+    snapshots: this.embeddedSnapshots.asObservable(),
+    invoke: (id, revision) => {
+      const entry = this.embeddedBindings.get(id);
+      if (!entry || this.rebuildingBindings || revision !== this.embeddedSnapshots.value.revision) {
+        return false;
+      }
+      entry.run();
+      return true;
+    },
+  };
 
   clearAndInitGlobalBindings(route: RouteDescriptor) {
-    mousetrap.reset();
+    this.rebuildingBindings = true;
+    try {
+      this.assistantSubscription?.unsubscribe();
+      this.assistantSubscription = undefined;
+      mousetrap.reset();
+      this.embeddedBindings.clear();
+      this.initGlobalBindings(route);
+    } finally {
+      this.rebuildingBindings = false;
+      this.publishEmbeddedKeybindings();
+    }
+  }
 
+  private initGlobalBindings(route: RouteDescriptor) {
     // Chromeless pages like login and signup page don't get any global bindings
     if (!route.chromeless) {
       this.bind('?', this.showHelpModal);
@@ -38,7 +74,6 @@ export class KeybindingSrv {
       this.bind('g e', this.goToExplore);
       this.bind('g a', this.openAlerting);
       this.bind('g p', this.goToProfile);
-      // Conditionally bind open Assistant shortcut ('o a') if Assistant is available
       this.bindAssistantShortcutIfAvailable();
       this.bind('esc', this.exit);
       this.bindGlobalEsc();
@@ -111,18 +146,25 @@ export class KeybindingSrv {
   }
 
   private bindAssistantShortcutIfAvailable() {
-    // Clean up any existing subscription
-    if (this.assistantSubscription) {
-      this.assistantSubscription.unsubscribe();
-    }
-    // Subscribe to assistant availability and bind/unbind shortcut accordingly
     this.assistantSubscription = isAssistantAvailable().subscribe((available) => {
-      if (available) {
-        this.bind('mod+.', this.toggleAssistant);
-      } else {
-        // Unbind the shortcut if assistant becomes unavailable
-        mousetrap.unbind('mod+.');
+      if (available === this.embeddedBindings.has(assistantShortcut)) {
+        return;
       }
+      if (available) {
+        this.bind(assistantShortcut, this.toggleAssistant);
+      } else {
+        this.unbind(assistantShortcut);
+      }
+    });
+  }
+
+  private publishEmbeddedKeybindings() {
+    if (this.rebuildingBindings) {
+      return;
+    }
+    this.embeddedSnapshots.next({
+      revision: this.embeddedSnapshots.value.revision + 1,
+      bindings: Array.from(this.embeddedBindings.values(), ({ binding }) => binding),
     });
   }
 
@@ -164,33 +206,43 @@ export class KeybindingSrv {
   }
 
   bind(keyArg: string | string[], fn: () => void) {
-    mousetrap.bind(
-      keyArg,
-      (evt) => {
-        evt.preventDefault();
-        evt.stopPropagation();
-        evt.returnValue = false;
-        fn.call(this);
-      },
-      'keydown'
-    );
+    this.registerBinding(keyArg, fn, false);
   }
 
   bindGlobal(keyArg: string, fn: () => void) {
-    mousetrap.bindGlobal(
-      keyArg,
+    this.registerBinding(keyArg, fn, true);
+  }
+
+  private registerBinding(keyArg: string | string[], fn: () => void, allowInEditable: boolean) {
+    const keys = (Array.isArray(keyArg) ? keyArg : [keyArg]).map((key) => key.replace(/\s+/g, ' '));
+    const bind = allowInEditable ? mousetrap.bindGlobal : mousetrap.bind;
+    const run = () => fn.call(this);
+
+    bind(
+      keys,
       (evt) => {
         evt.preventDefault();
         evt.stopPropagation();
         evt.returnValue = false;
-        fn.call(this);
+        run();
       },
       'keydown'
     );
+
+    for (const key of keys) {
+      this.embeddedBindings.set(key, { binding: { id: key, keys: key, allowInEditable }, run });
+    }
+    this.publishEmbeddedKeybindings();
   }
 
-  unbind(keyArg: string, keyType?: string) {
-    mousetrap.unbind(keyArg, keyType);
+  unbind(keyArg: string, keyType = 'keydown') {
+    const key = keyArg.replace(/\s+/g, ' ');
+    const isGlobal = keyType === 'keydown' && this.embeddedBindings.get(key)?.binding.allowInEditable;
+    const unbind = isGlobal ? mousetrap.unbindGlobal : mousetrap.unbind;
+    unbind(key, keyType);
+    if (keyType === 'keydown' && this.embeddedBindings.delete(key)) {
+      this.publishEmbeddedKeybindings();
+    }
   }
 
   setupTimeRangeBindings(updateUrl = true) {
