@@ -61,7 +61,7 @@
     "lodash": "^4.17.23",
     "react": "^19.2.8",
     "react-use": "^17.6.1",
-    "react-virtualized-auto-sizer": "^1.0.26",
+    "react-virtualized-auto-sizer": "^2.0.0",
     "tinycolor2": "^1.6.0"
   },
   "devDependencies": {
