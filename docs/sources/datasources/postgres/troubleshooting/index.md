@@ -178,6 +178,29 @@ The following errors occur when there are issues with TLS configuration.
 1. Alternatively, enable SSL on the PostgreSQL server by configuring `ssl = on` in `postgresql.conf`.
 1. Ensure the server has valid SSL certificates configured.
 
+### Connection closed by a TLS-passthrough proxy
+
+**Error message:** `failed to connect to ... : tls error: EOF`
+
+**Cause:** A proxy in front of PostgreSQL routes TLS connections by server name (SNI) and passes TLS through to the server. With the default TLS/SSL negotiation, Grafana first sends a plain-text PostgreSQL SSL request. The proxy can't read a server name from this request, so it closes the connection.
+
+**Solution:**
+
+1. Set **TLS/SSL Negotiation** to `direct`.
+1. Set **Host URL** to the hostname that the proxy routes on. Grafana doesn't send a server name when the host is an IP address.
+1. Make sure the PostgreSQL server runs version 17 or later.
+
+### Direct TLS/SSL negotiation fails
+
+**Error message:** `failed to connect to ... : failed to write startup message: write failed: EOF`
+
+**Cause:** **TLS/SSL Negotiation** is set to `direct`, but the PostgreSQL server is older than version 17. Older servers don't accept a direct TLS/SSL handshake, so they close the connection.
+
+**Solution:**
+
+1. Upgrade the PostgreSQL server to version 17 or later.
+1. Alternatively, set **TLS/SSL Negotiation** to `postgres`.
+
 ### Client certificate error
 
 **Error message:** "TLS: failed to find any PEM data in certificate input" or "could not load client certificate"
