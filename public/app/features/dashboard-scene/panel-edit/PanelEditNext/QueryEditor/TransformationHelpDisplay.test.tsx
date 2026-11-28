@@ -1,10 +1,11 @@
-import { screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import type { DataTransformerInfo, TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getTransformationContent } from 'app/features/transformers/docs/getTransformationContent';
 
+import { useQueryEditorUIContext } from './QueryEditorContext';
 import { TransformationHelpDisplay } from './TransformationHelpDisplay';
 import { mockTransformToggles, renderWithQueryEditorProvider } from './testUtils';
 import type { Transformation } from './types';
@@ -13,7 +14,17 @@ jest.mock('app/features/transformers/docs/getTransformationContent', () => ({
   getTransformationContent: jest.fn(),
 }));
 
+jest.mock('./QueryEditorContext', () => {
+  const context = jest.requireActual<typeof import('./QueryEditorContext')>('./QueryEditorContext');
+
+  return {
+    ...context,
+    useQueryEditorUIContext: jest.fn(context.useQueryEditorUIContext),
+  };
+});
+
 const mockGetTransformationContent = jest.mocked(getTransformationContent);
+const mockUseQueryEditorUIContext = jest.mocked(useQueryEditorUIContext);
 
 const mockTransformationInfo: DataTransformerInfo = {
   id: 'test-transform',
@@ -45,6 +56,13 @@ describe('TransformationHelpDisplay', () => {
       name: 'Test Transform',
       helperDocs: 'Test help content',
     });
+  });
+
+  afterEach(() => {
+    mockUseQueryEditorUIContext.mockReset();
+    mockUseQueryEditorUIContext.mockImplementation(
+      jest.requireActual<typeof import('./QueryEditorContext')>('./QueryEditorContext').useQueryEditorUIContext
+    );
   });
 
   it('does not render when showHelp is false', () => {
@@ -94,6 +112,43 @@ describe('TransformationHelpDisplay', () => {
 
     expect(mockGetTransformationContent).toHaveBeenCalledWith('test-transform');
     await screen.findByText('Test help content');
+  });
+
+  it('does not show help from the previous transformation while new help loads', async () => {
+    const nextRegistryItem = {
+      ...mockRegistryItem,
+      id: 'next-transform',
+      name: 'Next Transform',
+    };
+    let resolveNextHelp!: (content: { name: string; helperDocs: string }) => void;
+
+    mockGetTransformationContent.mockImplementation((id) => {
+      if (id === mockRegistryItem.id) {
+        return Promise.resolve({ name: mockRegistryItem.name, helperDocs: 'Previous help content' });
+      }
+
+      return new Promise((resolve) => {
+        resolveNextHelp = resolve;
+      });
+    });
+
+    const context = {
+      selectedTransformation: makeTransformation(),
+      transformToggles: { ...mockTransformToggles, showHelp: true },
+    } as unknown as ReturnType<typeof useQueryEditorUIContext>;
+    mockUseQueryEditorUIContext.mockReturnValue(context);
+    const { rerender } = render(<TransformationHelpDisplay />);
+
+    await screen.findByText('Previous help content');
+
+    mockUseQueryEditorUIContext.mockReturnValue({ ...context, selectedTransformation: makeTransformation(nextRegistryItem) });
+    rerender(<TransformationHelpDisplay />);
+
+    expect(screen.queryByText('Previous help content')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /transformation documentation/i })).toBeInTheDocument();
+
+    resolveNextHelp({ name: nextRegistryItem.name, helperDocs: 'Next help content' });
+    await screen.findByText('Next help content');
   });
 
   it('shows fallback content when fetch fails', async () => {
