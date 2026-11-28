@@ -120,4 +120,21 @@ describe('when lexing graphite expression', () => {
     expect(tokens[4].value).toBe('true');
     expect(tokens[6].type).toBe('bool');
   });
+
+  it('should tokenize the pipe operator as its own token', () => {
+    const lexer = new Lexer('metric.test | scale(2)');
+    const tokens = lexer.tokenize();
+    expect(tokens[2].value).toBe('test');
+    expect(tokens[3].type).toBe('|');
+    expect(tokens[3].value).toBe('|');
+    expect(tokens[4].value).toBe('scale');
+  });
+
+  it('should tokenize the pipe operator without surrounding spaces', () => {
+    const lexer = new Lexer('metric.test|scale(2)');
+    const tokens = lexer.tokenize();
+    expect(tokens[2].value).toBe('test');
+    expect(tokens[3].type).toBe('|');
+    expect(tokens[4].value).toBe('scale');
+  });
 });
