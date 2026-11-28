@@ -219,6 +219,8 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"teams:read",           // accesscontrol.ActionTeamsRead,
 	"serviceaccounts:read", // serviceaccounts.ActionRead,
 	"plugins.app:access",   // pluginaccesscontrol.ActionAppAccess
+	"alert.rules:create",   // ActionAlertingRuleCreate — ExternalRulerSyncer creates synced rules.
+	"alert.rules:write",    // ActionAlertingRuleUpdate — ExternalRulerSyncer updates synced rules.
 )
 
 // Note: Any wildcard-prefixed permissions here must be whitelisted in authlib: https://github.com/grafana/authlib/blob/main/authz/service_permissions.go

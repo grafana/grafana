@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/prom"
+	"github.com/grafana/grafana/pkg/services/ngalert/prom/groupwriter"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -35,8 +36,6 @@ import (
 func rootFolderTitle(dsUID string) string {
 	return fmt.Sprintf("[Alerting] External Ruler Sync (%s)", dsUID)
 }
-
-const versionMessage = "external ruler sync"
 
 // defaultRulerSyncPollInterval is the effective poll interval when
 // spec.externalRulerSync.pollInterval is unset, and unconditionally on the ini
@@ -67,9 +66,13 @@ var convertedPrometheusManager = utils.ManagerProperties{Kind: utils.ManagerKind
 
 // ruleService is the subset of provisioning.AlertRuleService the syncer needs.
 type ruleService interface {
-	ReplaceRuleGroups(ctx context.Context, user identity.Requester, groups []*models.AlertRuleGroup, manager utils.ManagerProperties, versionMessage string) error
-	DeleteRuleGroups(ctx context.Context, user identity.Requester, manager utils.ManagerProperties, filterOpts *provisioning.FilterOptions) error
 	GetAlertGroupsWithFolderFullpath(ctx context.Context, user identity.Requester, filterOpts *provisioning.FilterOptions) ([]models.AlertRuleGroupWithFolderFullpath, error)
+}
+
+// groupWriter writes converted rule groups and their rule sequences, with the identity in the context.
+type groupWriter interface {
+	ReplaceGroups(ctx context.Context, orgID int64, groups []*models.AlertRuleGroup, manager utils.ManagerProperties) error
+	DeleteGroups(ctx context.Context, orgID int64, groups []groupwriter.GroupKey, manager utils.ManagerProperties) error
 }
 
 // namespaceStore creates/looks up the folders the imported rules live in.
@@ -120,6 +123,7 @@ type ExternalRulerSyncer struct {
 	datasources    datasourceGetter
 	fetcher        rulerFetcher
 	ruleService    ruleService
+	groups         groupWriter
 	namespaceStore namespaceStore
 	orgStore       orgStore
 	// folderPermissions restricts the sync folder to admin-only modification.
@@ -158,6 +162,7 @@ func NewExternalRulerSyncer(
 	folderPermissions accesscontrol.FolderPermissionsService,
 	clientGenerator resource.ClientGenerator,
 	namespaceMapper request.NamespaceMapper,
+	groups groupWriter,
 ) *ExternalRulerSyncer {
 	return &ExternalRulerSyncer{
 		settings:          settings,
@@ -166,6 +171,7 @@ func NewExternalRulerSyncer(
 		datasources:       datasourceService,
 		fetcher:           NewRulerFetcher(proxy, logger),
 		ruleService:       ruleSvc,
+		groups:            groups,
 		namespaceStore:    namespaceStore,
 		orgStore:          orgStore,
 		folderPermissions: folderPermissions,
@@ -584,7 +590,7 @@ func (s *ExternalRulerSyncer) apply(ctx context.Context, user identity.Requester
 		}
 	}
 
-	if err := s.ruleService.ReplaceRuleGroups(ctx, user, groups, convertedPrometheusManager, versionMessage); err != nil {
+	if err := s.groups.ReplaceGroups(ctx, orgID, groups, convertedPrometheusManager); err != nil {
 		return "", &SyncError{Reason: ReasonSave, Cause: err}
 	}
 
@@ -687,11 +693,9 @@ func (s *ExternalRulerSyncer) prune(ctx context.Context, user identity.Requester
 		if _, ok := desired[groupKey{folderUID: g.FolderUID, group: g.Title}]; ok {
 			continue // still present upstream
 		}
-		if err := s.ruleService.DeleteRuleGroups(ctx, user, convertedPrometheusManager, &provisioning.FilterOptions{
-			NamespaceUIDs:               []string{g.FolderUID},
-			RuleGroups:                  []string{g.Title},
-			HasPrometheusRuleDefinition: new(true),
-		}); err != nil {
+		err := s.groups.DeleteGroups(ctx, orgID, []groupwriter.GroupKey{{FolderUID: g.FolderUID, Title: g.Title}}, convertedPrometheusManager)
+		// The group's converted rules can be gone already, which leaves nothing to prune.
+		if err != nil && !errors.Is(err, models.ErrAlertRuleGroupNotFound) {
 			return fmt.Errorf("delete stale rule group %q in folder %q: %w", g.Title, g.FolderUID, err)
 		}
 		s.logger.Info("Pruned external ruler rule group no longer present upstream", "folder_uid", g.FolderUID, "group", g.Title)

@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/prom/groupwriter"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -37,6 +38,7 @@ func newPipelineSyncer(proxy *fakeDatasourceProxy, rs *fakeRuleService, ns fakeN
 		datasources:       fakeDatasourceGetter{ds: &datasources.DataSource{UID: "ds1", OrgID: 1, Type: datasources.DS_PROMETHEUS, URL: "http://mimir/prometheus"}},
 		fetcher:           NewRulerFetcher(proxy, log.NewNopLogger()),
 		ruleService:       rs,
+		groups:            rs,
 		namespaceStore:    ns,
 		folderPermissions: &recordingFolderPermissions{},
 		state:             make(map[int64]*orgSyncState),
@@ -115,8 +117,7 @@ func TestSyncOrg_FromRulerAPI(t *testing.T) {
 		s.SyncOrg(ctx, 1)
 
 		require.Len(t, rs.deleted, 1, "only the dropped group is pruned")
-		assert.Equal(t, []string{"folder-cpu"}, rs.deleted[0].NamespaceUIDs)
-		assert.Equal(t, []string{"stale-alerts"}, rs.deleted[0].RuleGroups)
+		assert.Equal(t, groupwriter.GroupKey{FolderUID: "folder-cpu", Title: "stale-alerts"}, rs.deleted[0])
 	})
 
 	t.Run("an empty ruler prunes everything it previously synced", func(t *testing.T) {
@@ -132,6 +133,6 @@ func TestSyncOrg_FromRulerAPI(t *testing.T) {
 
 		assert.Empty(t, rs.replaced, "nothing to apply from an empty ruler")
 		require.Len(t, rs.deleted, 1, "the previously-synced group is pruned")
-		assert.Equal(t, []string{"cpu-alerts"}, rs.deleted[0].RuleGroups)
+		assert.Equal(t, "cpu-alerts", rs.deleted[0].Title)
 	})
 }
