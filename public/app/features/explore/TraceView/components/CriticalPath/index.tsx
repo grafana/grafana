@@ -15,6 +15,7 @@
 import { memoizeOne } from 'memoize-one';
 
 import { type TraceSpan, type CriticalPathSection, type Trace } from '../types/trace';
+import { getTreeParent } from '../utils/span-ancestor-ids';
 
 import findLastFinishingChildSpan from './utils/findLastFinishingChildSpan';
 import getChildOfSpans from './utils/getChildOfSpans';
@@ -79,10 +80,9 @@ const computeCriticalPath = (
     // Now as there are no lfc's focus shifts to parent span from startTime of span
     // return from recursion and walk backwards to one level depth to parent span
     // provide span's startTime as returningChildStartTime
-    if (currentSpan.references.length) {
-      const parentSpanId: string = currentSpan.references.filter((reference) => reference.refType === 'CHILD_OF')[0]
-        .spanID;
-      computeCriticalPath(spanMap, parentSpanId, criticalPath, currentSpan.startTime);
+    const parentSpan = getTreeParent(currentSpan);
+    if (parentSpan) {
+      computeCriticalPath(spanMap, parentSpan.spanID, criticalPath, currentSpan.startTime);
     }
   }
   return criticalPath;
@@ -91,7 +91,7 @@ const computeCriticalPath = (
 function criticalPathForTrace(trace: Trace) {
   let criticalPath: CriticalPathSection[] = [];
   // As spans are already sorted based on startTime first span is always rootSpan
-  const rootSpanId = trace?.spans[0].spanID;
+  const rootSpanId = trace?.spans[0]?.spanID;
   // If there is root span then algorithm implements
   if (rootSpanId) {
     const spanMap = trace.spans.reduce((map, span) => {

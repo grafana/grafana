@@ -47,7 +47,8 @@ export function getRootSpan(spans: TraceSpan[]): TraceSpan | undefined {
       candidateSpan = spans[i];
     }
   }
-  return candidateSpan;
+  // Links back into the trace can leave every span with an internal reference
+  return candidateSpan ?? spans.find((span) => span.depth === 0);
 }
 
 export function _getTraceNameImpl(spans: TraceSpan[]) {

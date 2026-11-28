@@ -12,30 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { find as _find, get as _get } from 'lodash';
-
 import type TNil from '../types/TNil';
 import { type TraceSpan } from '../types/trace';
 
-function getFirstAncestor(span: TraceSpan): TraceSpan | TNil {
-  return _get(
-    _find(
-      span.references,
-      ({ span: ref, refType }) => ref && ref.spanID && (refType === 'CHILD_OF' || refType === 'FOLLOWS_FROM')
-    ),
-    'span'
-  );
+/**
+ * Returns the span above the given one in the span tree.
+ *
+ * A span below the top level sits under the target of its first reference. Top level spans can have references too,
+ * such as links to their own descendants, so references alone don't describe the tree.
+ */
+export function getTreeParent(span: TraceSpan): TraceSpan | TNil {
+  return span.depth > 0 ? span.references?.[0]?.span : undefined;
 }
 
 export default function spanAncestorIds(span: TraceSpan | TNil): string[] {
   const ancestorIDs: string[] = [];
-  if (!span) {
-    return ancestorIDs;
-  }
-  let ref = getFirstAncestor(span);
-  while (ref) {
-    ancestorIDs.push(ref.spanID);
-    ref = getFirstAncestor(ref);
+  let parent = span ? getTreeParent(span) : undefined;
+  while (parent) {
+    ancestorIDs.push(parent.spanID);
+    parent = getTreeParent(parent);
   }
   return ancestorIDs;
 }

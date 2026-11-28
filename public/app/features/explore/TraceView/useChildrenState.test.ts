@@ -63,13 +63,15 @@ describe('useChildrenState', () => {
   });
 
   describe('revealSpan', () => {
-    const grandparent = { spanID: 'grandparent', references: [] } as unknown as TraceSpan;
+    const grandparent = { spanID: 'grandparent', depth: 0, references: [] } as unknown as TraceSpan;
     const parent = {
       spanID: 'parent',
+      depth: 1,
       references: [{ refType: 'CHILD_OF', spanID: 'grandparent', span: grandparent }],
     } as TraceSpan;
     const child = {
       spanID: 'child',
+      depth: 2,
       references: [{ refType: 'CHILD_OF', spanID: 'parent', span: parent }],
     } as TraceSpan;
 
