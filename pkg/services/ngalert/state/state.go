@@ -789,6 +789,9 @@ func GetRuleExtraLabels(l log.Logger, rule *models.AlertRule, folderTitle string
 	extraLabels[prometheusModel.AlertNameLabel] = rule.Title
 	extraLabels[alertingModels.RuleUIDLabel] = rule.UID
 
+	// Include the alert rule's custom labels
+	maps.Copy(extraLabels, rule.Labels)
+
 	if includeFolder {
 		extraLabels[models.FolderTitleLabel] = folderTitle
 	}
