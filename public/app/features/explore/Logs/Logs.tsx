@@ -78,6 +78,7 @@ import { getUrlStateFromPaneState } from '../hooks/useStateSync/external.utils';
 import { changePanelState } from '../state/explorePane';
 import { changeQueries, runQueries } from '../state/query';
 
+import { AdaptiveLogsIncludeDroppedLogs } from './AdaptiveLogsIncludeDroppedLogs';
 import { ExploreLogsTable } from './ExploreLogsTable';
 import { LogsFeedback } from './LogsFeedback';
 import { LogsMetaRow } from './LogsMetaRow';
@@ -830,6 +831,14 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           )}
         </PanelChrome>
       </div>
+      <AdaptiveLogsIncludeDroppedLogs
+        {...{
+          queries: logsQueries,
+          logs: dedupedRows,
+          logsLoadingState: loadingState,
+          queryTimeRange: props.range,
+        }}
+      />
       <PanelChrome
         titleItems={[
           visualisationType === 'logs' ? null : (

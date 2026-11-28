@@ -35,6 +35,7 @@ import {
   getDataSourceSrv,
   getEchoSrv,
   setLocationService,
+  setPluginComponentHook,
   setPluginLinksHook,
 } from '@grafana/runtime';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
@@ -128,6 +129,7 @@ export function setupExplore(options?: SetupOptions): {
   });
 
   setPluginLinksHook(() => ({ links: [], isLoading: false }));
+  setPluginComponentHook(() => ({ component: null, isLoading: false }));
 
   // Clear this up otherwise it persists data source selection
   // TODO: probably add test for that too
