@@ -1210,6 +1210,10 @@ func (k *kvStorageBackend) generateResourceVersion() (int64, error) {
 	return 0, err
 }
 
+func (k *kvStorageBackend) ResourceListWatermark(ctx context.Context, _, _ string) (int64, error) {
+	return k.latestResourceVersion(ctx)
+}
+
 func (k *kvStorageBackend) latestResourceVersion(ctx context.Context) (int64, error) {
 	key, err := k.eventStore.LastEventKey(ctx)
 	if errors.Is(err, ErrNotFound) {

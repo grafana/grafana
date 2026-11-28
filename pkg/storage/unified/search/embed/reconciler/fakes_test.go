@@ -89,6 +89,9 @@ func (f *fakeStorage) ReadResource(_ context.Context, req *resourcepb.ReadReques
 	value, _ := json.Marshal(map[string]any{"spec": map[string]any{"title": title}})
 	return &resource.BackendReadResponse{Value: value}
 }
+func (f *fakeStorage) ResourceListWatermark(context.Context, string, string) (int64, error) {
+	return f.latestRvOverride, f.listErr
+}
 func (f *fakeStorage) ListIterator(context.Context, *resourcepb.ListRequest, func(resource.ListIterator) error) (int64, error) {
 	panic("not implemented")
 }
@@ -278,8 +281,9 @@ type fakeVector struct {
 	ensuredPartitions  []string
 	ensurePartitionErr error
 
-	backfillJobs      []backfillJobCall
-	createBackfillErr error
+	backfillJobs        []backfillJobCall
+	createBackfillErr   error
+	reopenBackfillCalls int
 
 	counts    []vector.EmbeddingCount
 	countsErr error
@@ -316,11 +320,11 @@ func (f *fakeVector) ResolveCollection(_ context.Context, group, resource string
 	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
 }
 
-func (f *fakeVector) EnsureCollectionWithScope(ctx context.Context, group, resource string, isExternal bool, scope vector.CollectionScope) (vector.Collection, error) {
-	return f.EnsureCollection(ctx, group, resource, isExternal)
+func (f *fakeVector) EnsureCollection(ctx context.Context, group, resource string, isExternal bool) (vector.Collection, error) {
+	return f.EnsureCollectionWithScope(ctx, group, resource, isExternal, vector.ScopeTenant)
 }
 
-func (f *fakeVector) EnsureCollection(_ context.Context, group, resource string, isExternal bool) (vector.Collection, error) {
+func (f *fakeVector) EnsureCollectionWithScope(_ context.Context, group, resource string, isExternal bool, scope vector.CollectionScope) (vector.Collection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.ensurePartitionErr != nil {
@@ -328,6 +332,9 @@ func (f *fakeVector) EnsureCollection(_ context.Context, group, resource string,
 	}
 	gr := schema.GroupResource{Group: group, Resource: resource}
 	collection, ok := f.collections[gr]
+	if ok && collection.Scope != "" && collection.Scope != scope {
+		return vector.Collection{}, vector.ErrCollectionScopeMismatch
+	}
 	if !ok {
 		key := resource
 		if isExternal {
@@ -335,6 +342,7 @@ func (f *fakeVector) EnsureCollection(_ context.Context, group, resource string,
 		}
 		collection = vector.Collection{Group: group, Resource: resource, PartitionKey: key, IsExternal: isExternal}
 	}
+	collection.Scope = scope
 	f.ensuredCollections = append(f.ensuredCollections, gr)
 	f.ensuredPartitions = append(f.ensuredPartitions, collection.PartitionKey)
 	return collection, nil
@@ -522,7 +530,19 @@ func (f *fakeVector) CreateBackfillJob(_ context.Context, model, res string, sto
 	return nil
 }
 
+func (f *fakeVector) BackfillContentVersion(_ context.Context, model, partition string) (int, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, job := range f.backfillJobs {
+		if job.Model == model && job.Resource == partition {
+			return job.ContentVersion, nil
+		}
+	}
+	return 0, nil
+}
+
 func (f *fakeVector) ReopenStaleBackfillJobs(context.Context, string, string, int, int64) (bool, error) {
+	f.reopenBackfillCalls++
 	return false, nil
 }
 func (f *fakeVector) UpdateBackfillJobCheckpoint(context.Context, int64, string, string) error {

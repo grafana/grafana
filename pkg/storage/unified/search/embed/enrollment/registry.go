@@ -19,6 +19,7 @@ import (
 type Registry struct {
 	configs         *resource.EmbeddingConfigRegistry
 	allowed         []schema.GroupResource
+	external        map[schema.GroupResource]bool
 	custom          map[schema.GroupResource]embed.Builder
 	skippedVersions *prometheus.CounterVec
 	log             log.Logger
@@ -28,12 +29,13 @@ var _ embed.BuilderProvider = (*Registry)(nil)
 
 // New defers declaration lookup until Validate so the initial live manifest
 // snapshot can load before enrollment is checked.
-func New(configs *resource.EmbeddingConfigRegistry, allowed []string, custom []embed.Builder, skippedVersions *prometheus.CounterVec) (*Registry, error) {
+func New(configs *resource.EmbeddingConfigRegistry, allowed []string, custom []embed.Builder, skippedVersions *prometheus.CounterVec, externalAllowed ...string) (*Registry, error) {
 	if configs == nil {
 		configs = resource.NewEmbeddingConfigRegistry()
 	}
 	r := &Registry{
 		configs:         configs,
+		external:        make(map[schema.GroupResource]bool),
 		custom:          make(map[schema.GroupResource]embed.Builder, len(custom)),
 		skippedVersions: skippedVersions,
 		log:             log.New("embedding-enrollment"),
@@ -51,6 +53,12 @@ func New(configs *resource.EmbeddingConfigRegistry, allowed []string, custom []e
 		if !seen[gr] {
 			r.allowed = append(r.allowed, gr)
 			seen[gr] = true
+		}
+	}
+	for _, entry := range externalAllowed {
+		gr, err := parseEntry(strings.TrimSpace(entry))
+		if err == nil && seen[gr] {
+			r.external[gr] = true
 		}
 	}
 	slices.SortFunc(r.allowed, func(a, b schema.GroupResource) int {
@@ -90,10 +98,12 @@ func (r *Registry) Has(group, resource string) bool {
 	if !slices.Contains(r.allowed, gr) {
 		return false
 	}
-	if _, ok := r.custom[gr]; ok {
-		return true
+	cluster, valid := r.configs.ResourceScope(gr)
+	_, custom := r.custom[gr]
+	if cluster {
+		return valid && !custom && !r.external[gr]
 	}
-	return r.configs.HasResource(gr)
+	return valid || (custom && !r.configs.HasResource(gr))
 }
 
 func (r *Registry) Allowed() []schema.GroupResource {
@@ -110,6 +120,16 @@ func (r *Registry) Validate() error {
 		_, isCustom := r.custom[gr]
 		if !isCustom && !declared[gr] {
 			return fmt.Errorf("internal embedding collection %s/%s has no custom builder or manifest embedding declaration", gr.Group, gr.Resource)
+		}
+		cluster, valid := r.configs.ResourceScope(gr)
+		if declared[gr] && !valid {
+			return fmt.Errorf("internal embedding collection %s/%s has incompatible manifest scope or re-embedding revision", gr.Group, gr.Resource)
+		}
+		if cluster && isCustom {
+			return fmt.Errorf("cluster embedding collection %s/%s requires manifest extraction", gr.Group, gr.Resource)
+		}
+		if cluster && r.external[gr] {
+			return fmt.Errorf("cluster embedding collection %s/%s overlaps external enrollment", gr.Group, gr.Resource)
 		}
 		partition, err := vector.InternalPartitionKey(gr.Resource)
 		if err != nil {
@@ -130,8 +150,10 @@ func (r *Registry) Validate() error {
 // resources. Startup validation remains strict about missing declarations.
 func (r *Registry) Snapshot() embed.BuilderSnapshot {
 	type declaration struct {
-		revision int
-		fields   map[string][]app.ManifestVersionKindEmbedField
+		revision   int
+		wrongScope bool
+		cluster    bool
+		fields     map[string][]app.ManifestVersionKindEmbedField
 	}
 	declared := make(map[schema.GroupResource]declaration)
 	for gvr, config := range r.configs.Snapshot() {
@@ -140,21 +162,33 @@ func (r *Registry) Snapshot() embed.BuilderSnapshot {
 		if d.fields == nil {
 			d.fields = make(map[string][]app.ManifestVersionKindEmbedField)
 			d.revision = config.ReembedVersion
+			d.cluster = config.ClusterScoped
 		}
 		d.fields[gvr.Version] = config.Fields
+		d.wrongScope = d.wrongScope || config.ClusterScoped != d.cluster || (d.cluster && config.ReembedVersion <= 0)
 		declared[gr] = d
 	}
 	builders := make([]embed.Builder, 0, len(r.allowed))
 	for _, gr := range r.allowed {
 		d, hasDeclaration := declared[gr]
 		builder, isCustom := r.custom[gr]
+		if hasDeclaration && (d.wrongScope || (d.cluster && (isCustom || r.external[gr]))) {
+			continue
+		}
 		if !isCustom {
 			if !hasDeclaration {
 				continue
 			}
 			builder = generic.New(gr, app.ManifestResourceEmbed{ReembedVersion: d.revision}, d.fields, r.skippedVersions)
 		}
+		if d.cluster {
+			builder = clusterBuilder{Builder: builder}
+		}
 		builders = append(builders, builder)
 	}
 	return embed.NewBuilderSnapshot(builders)
 }
+
+type clusterBuilder struct{ embed.Builder }
+
+func (clusterBuilder) ClusterScoped() bool { return true }

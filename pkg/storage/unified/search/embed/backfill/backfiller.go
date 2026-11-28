@@ -53,8 +53,7 @@ type Options struct {
 	// Metrics are always recorded. Nil means unregistered metrics, for
 	// callers without a registry.
 	Metrics *resource.VectorMetrics
-	// Interval is how often Run re-scans for incomplete jobs (jobs are
-	// created lazily by the reconciler's write path). Defaults to 1m.
+	// Interval is how often Run scans for incomplete jobs. Defaults to 1m.
 	Interval time.Duration
 	// PageSize is the number of non-dashboard resources per page. Defaults to 50.
 	PageSize int
@@ -198,7 +197,8 @@ func (b *VectorBackfiller) runBackfill(ctx context.Context) {
 			}
 			// The reconciler can create a job from a newer manifest revision after
 			// this backfill run captures its builders. Leave that job for the next run.
-			if job.ContentVersion > builders[index].Version() {
+			if job.ContentVersion > builders[index].Version() ||
+				(embed.IsClusterScoped(builders[index].Builder) && job.ContentVersion != builders[index].Version()) {
 				continue
 			}
 		}
@@ -228,11 +228,15 @@ func (b *VectorBackfiller) reopenStaleJobs(ctx context.Context, log log.Logger, 
 		log.Error("backfill: read reconciler checkpoint for reopen", "err", err)
 		return
 	}
-	if stoppingRV == 0 {
-		return
-	}
 	for _, builder := range builders {
-		reopened, err := b.vectorBackend.ReopenStaleBackfillJobs(ctx, b.batchEmbedder.Model(), builder.partitionKey, builder.Version(), stoppingRV)
+		model := b.batchEmbedder.Model()
+		var reopened bool
+		var err error
+		if embed.IsClusterScoped(builder.Builder) {
+			reopened, err = b.reopenClusterJob(ctx, model, builder)
+		} else if stoppingRV > 0 {
+			reopened, err = b.vectorBackend.ReopenStaleBackfillJobs(ctx, model, builder.partitionKey, builder.Version(), stoppingRV)
+		}
 		if err != nil {
 			log.Error("backfill: reopen stale jobs", "resource", builder.Resource(), "err", err)
 			continue
@@ -242,6 +246,28 @@ func (b *VectorBackfiller) reopenStaleJobs(ctx context.Context, log log.Logger, 
 				"resource", builder.Resource(), "version", builder.Version())
 		}
 	}
+}
+
+func (b *VectorBackfiller) reopenClusterJob(ctx context.Context, model string, builder collectionBuilder) (bool, error) {
+	version, err := b.vectorBackend.BackfillContentVersion(ctx, model, builder.partitionKey)
+	if err != nil || version == 0 || version >= builder.Version() {
+		return false, err
+	}
+
+	var reopened bool
+	// This is the same collection lock the reconciler holds while it writes.
+	err = b.vectorBackend.WithEntityLock(ctx, resource.ClusterNamespace, builder.partitionKey, "", func(ctx context.Context) error {
+		rv, err := resource.ListResourceWatermark(ctx, b.storage, builder.Group(), builder.Resource())
+		if err != nil {
+			return err
+		}
+		if rv <= 0 {
+			return nil
+		}
+		reopened, err = b.vectorBackend.ReopenStaleBackfillJobs(ctx, model, builder.partitionKey, builder.Version(), rv)
+		return err
+	})
+	return reopened, err
 }
 
 // runBackfillJob iterates the builders selected for the job. An empty
@@ -269,6 +295,9 @@ func (b *VectorBackfiller) runBackfillJob(ctx context.Context, job vector.Backfi
 	for _, builder := range builders {
 		// Job-level resource filter: empty means "all Builders," non-empty
 		// targets exactly that Builder.
+		if job.Resource == "" && embed.IsClusterScoped(builder.Builder) {
+			continue
+		}
 		if job.Resource != "" && builder.partitionKey != job.Resource {
 			continue
 		}
@@ -332,8 +361,10 @@ func (b *VectorBackfiller) resolveBuilders(ctx context.Context) ([]collectionBui
 			// The reconciler provisions the collection when it processes its first write.
 			continue
 		}
-		if collection.IsExternal {
-			return nil, fmt.Errorf("%s/%s is an external collection", builder.Group(), builder.Resource())
+		if collection.IsExternal || (collection.Scope == vector.ScopeCluster) != embed.IsClusterScoped(builder) {
+			b.log.FromContext(ctx).Error("backfill: incompatible collection scope",
+				"group", builder.Group(), "resource", builder.Resource(), "scope", collection.Scope, "external", collection.IsExternal)
+			continue
 		}
 		builders = append(builders, collectionBuilder{Builder: builder, partitionKey: collection.PartitionKey})
 	}
@@ -420,7 +451,7 @@ func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.Backf
 	inputs := make([]embedder.ResourceInput, len(page))
 	for i, item := range page {
 		if item.action == backfillEmbed {
-			inputs[i] = embedder.ResourceInput{Namespace: item.key.Namespace, ResourceVersion: item.rv, Items: item.items}
+			inputs[i] = embedder.ResourceInput{Namespace: item.storageNamespace, ResourceVersion: item.rv, Items: item.items}
 		}
 	}
 	vectors, err := b.batchEmbedder.EmbedResources(ctx, builder.partitionKey, builder.Version(), inputs)
@@ -488,18 +519,19 @@ const (
 )
 
 type preparedBackfillItem struct {
-	key          *resourcepb.ResourceKey
-	rv           int64
-	items        []embed.Item
-	folder       string
-	updateFolder bool
-	action       backfillAction
-	nextToken    string
-	status       string
-	err          error
-	ctx          context.Context
-	span         trace.Span
-	start        time.Time
+	storageNamespace string
+	key              *resourcepb.ResourceKey
+	rv               int64
+	items            []embed.Item
+	folder           string
+	updateFolder     bool
+	action           backfillAction
+	nextToken        string
+	status           string
+	err              error
+	ctx              context.Context
+	span             trace.Span
+	start            time.Time
 }
 
 // Preparation only reads storage. Writes wait until the page's provider calls
@@ -511,11 +543,12 @@ func (b *VectorBackfiller) prepareBackfillItem(ctx context.Context, job vector.B
 	group := builder.Group()
 	res := builder.Resource()
 	item := &preparedBackfillItem{
-		key:   &resourcepb.ResourceKey{Group: group, Resource: res, Namespace: namespace, Name: name},
-		rv:    iter.ResourceVersion(),
-		ctx:   ctx,
-		span:  span,
-		start: time.Now(),
+		storageNamespace: namespace,
+		key:              &resourcepb.ResourceKey{Group: group, Resource: res, Namespace: namespace, Name: name},
+		rv:               iter.ResourceVersion(),
+		ctx:              ctx,
+		span:             span,
+		start:            time.Now(),
 	}
 	span.SetAttributes(
 		attribute.String("group", group),
@@ -523,6 +556,15 @@ func (b *VectorBackfiller) prepareBackfillItem(ctx context.Context, job vector.B
 		attribute.String("namespace", namespace),
 		attribute.String("uid", name),
 	)
+
+	cluster := embed.IsClusterScoped(builder.Builder)
+	if cluster != (namespace == "") {
+		item.status = "skipped_scope_mismatch"
+		return item, nil
+	}
+	if cluster {
+		item.storageNamespace = resource.ClusterNamespace
+	}
 
 	// Compare in snowflake space so the bound holds whether the item RV and
 	// the stored stopping_rv came from the kv (snowflake) or legacy sql
@@ -533,7 +575,7 @@ func (b *VectorBackfiller) prepareBackfillItem(ctx context.Context, job vector.B
 	}
 
 	// Same-or-newer stored version: nothing to do.
-	version, exists, err := b.vectorBackend.ContentVersion(ctx, namespace, job.Model, builder.partitionKey, name)
+	version, exists, err := b.vectorBackend.ContentVersion(ctx, item.storageNamespace, job.Model, builder.partitionKey, name)
 	if err != nil {
 		return item, fmt.Errorf("content version check: %w", err)
 	}
@@ -594,7 +636,7 @@ func (b *VectorBackfiller) prepareBackfillItem(ctx context.Context, job vector.B
 	}
 
 	if isVersionStale {
-		stored, storedFolder, err := b.vectorBackend.GetSubresourceContent(ctx, namespace, job.Model, builder.partitionKey, name)
+		stored, storedFolder, err := b.vectorBackend.GetSubresourceContent(ctx, item.storageNamespace, job.Model, builder.partitionKey, name)
 		if err != nil {
 			return item, fmt.Errorf("get stored content %s/%s: %w", namespace, name, err)
 		}
@@ -628,7 +670,7 @@ func (b *VectorBackfiller) observeBackfillItem(item *preparedBackfillItem) {
 
 func (b *VectorBackfiller) writeBackfillItem(job vector.BackfillJob, builder collectionBuilder, item *preparedBackfillItem, vectors []vector.Vector) error {
 	ctx := item.ctx
-	namespace, name := item.key.Namespace, item.key.Name
+	namespace, name := item.storageNamespace, item.key.Name
 
 	// The reconciler may have handled a newer revision while this page was
 	// being embedded. If the resource has been modified since, then skip it

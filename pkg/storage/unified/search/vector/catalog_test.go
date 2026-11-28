@@ -138,3 +138,8 @@ func TestEnsureCollectionRejectsConcurrentDifferentScope(t *testing.T) {
 	require.ErrorIs(t, err, ErrCollectionScopeMismatch)
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
+
+func TestClusterCollectionScope(t *testing.T) {
+	require.NoError(t, validateCollectionScope(CollectionScope("cluster"), false))
+	require.Error(t, validateCollectionScope(CollectionScope("cluster"), true))
+}

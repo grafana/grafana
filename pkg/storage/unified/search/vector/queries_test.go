@@ -45,6 +45,7 @@ func TestVectorQueries(t *testing.T) {
 				{
 					Name: "external_with_ts",
 					Data: &sqlVectorCollectionUpsertRequest{
+						ComputeTS:   true,
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Resource:    "alertrules_external",
 						Vector: &Vector{

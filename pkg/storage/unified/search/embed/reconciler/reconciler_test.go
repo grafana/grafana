@@ -2191,3 +2191,220 @@ func TestReconciler_SeedPredecessorSurvivesSQLRVConversion(t *testing.T) {
 	predecessor := resource.SubtractDurationFromSnowflake(seed, seedLookback)
 	assert.Less(t, rvmanager.RVFromSnowflake(predecessor), sqlSeed)
 }
+
+func TestClusterCollectionBackfillsWithoutNewWrites(t *testing.T) {
+	const group, plural = "catalog.example.test", "systemschemas"
+	st := &fakeStorage{latestRvOverride: snowflakeRV(100)}
+	manifest := &app.ManifestData{
+		Group: group,
+		Embed: map[string]app.ManifestResourceEmbed{plural: {ReembedVersion: 1}},
+		Versions: []app.ManifestVersion{{
+			Name: "v1alpha1", Kinds: []app.ManifestVersionKind{{
+				Kind: "SystemSchema", Plural: plural, Resource: plural, Scope: "Cluster",
+				Embed: &app.ManifestVersionKindEmbed{Fields: []app.ManifestVersionKindEmbedField{{Name: "description", Path: "spec.description"}}},
+			}},
+		}},
+	}
+	registry, err := enrollment.New(resource.NewEmbeddingConfigRegistry([]*app.ManifestData{manifest}), []string{group + "/" + plural}, nil, nil)
+	require.NoError(t, err)
+	vec := newFakeVector()
+	s, err := New(Options{
+		Storage: st, VectorBackend: vec, BuilderProvider: registry,
+		BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(&fakeText{dim: 4})),
+	})
+	require.NoError(t, err)
+
+	s.sweep(t.Context())
+	require.Equal(t, []backfillJobCall{{Model: testModel, Resource: plural, StoppingRV: snowflakeRV(100), ContentVersion: 1}}, vec.backfillJobs)
+	require.Equal(t, snowflakeRV(100), vec.latestRV)
+
+	require.Zero(t, vec.reopenBackfillCalls, "only the backfiller can reset an in-progress job")
+
+	value := []byte(`{"apiVersion":"catalog.example.test/v1alpha1","spec":{"description":"connection pooling"}}`)
+	st.changes = []*resource.ModifiedResource{
+		change(group, plural, "", "database", snowflakeRV(110), value),
+		change(group, plural, "stacks-1", "database", snowflakeRV(120), value),
+	}
+	st.latestRvOverride = snowflakeRV(120)
+	s.sweep(t.Context())
+	require.Len(t, vec.upserts, 1)
+	require.Equal(t, "**cluster**", vec.upserts[0][0].Namespace)
+	require.Equal(t, "description: connection pooling", vec.upserts[0][0].Content)
+	require.Equal(t, snowflakeRV(120), vec.latestRV)
+}
+
+type clusterTestBuilder struct{ fakeBuilder }
+
+func (clusterTestBuilder) ClusterScoped() bool { return true }
+
+func TestReconciler_ClusterBootstrapPersistsCheckpointBeforeBackfill(t *testing.T) {
+	cluster := clusterTestBuilder{fakeBuilder{group: "catalog.example.test", resource: "systemschemas"}}
+	head := snowflakeRV(100)
+	st := &fakeStorage{latestRvOverride: resource.SubtractDurationFromSnowflake(head, 10*time.Second)}
+	vec := newFakeVector()
+	vec.setLatestRVErr = errBoom
+	s := newReconcilerWithBuilders(t, st, vec, cluster)
+
+	s.sweep(t.Context())
+	require.Zero(t, vec.latestRV)
+	require.Empty(t, vec.backfillJobs, "a restart must not retain a backfill bound without its checkpoint")
+
+	st.latestRvOverride = head
+	vec.setLatestRVErr = nil
+	s = newReconcilerWithBuilders(t, st, vec, cluster)
+	s.sweep(t.Context())
+	require.Len(t, vec.backfillJobs, 1)
+	assert.Equal(t, head, vec.backfillJobs[0].StoppingRV)
+	assert.Equal(t, head, vec.latestRV)
+}
+
+func TestReconciler_ClusterInitializationFailureKeepsIndexingTenantWrites(t *testing.T) {
+	cluster := clusterTestBuilder{fakeBuilder{group: "catalog.example.test", resource: "systemschemas"}}
+	tenant := fakeBuilder{group: "tenant.example.test", resource: "widgets"}
+	st := &fakeStorage{latestRvOverride: snowflakeRV(120), changes: []*resource.ModifiedResource{
+		change(cluster.group, cluster.resource, "", "schema", snowflakeRV(110), []byte(`{"spec":{}}`)),
+		change(tenant.group, tenant.resource, "ns", "widget", snowflakeRV(120), []byte(`{"spec":{}}`)),
+	}}
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(100)
+	s := newReconcilerWithBuilders(t, st, vec, cluster, tenant)
+	_, err := s.ensureResourceInitialized(t.Context(), tenant, vec.latestRV)
+	require.NoError(t, err)
+	vec.ensurePartitionErr = errBoom
+
+	s.sweep(t.Context())
+	assert.True(t, vec.hasUpsertFor("ns", tenant.resource, "widget"))
+	assert.False(t, vec.hasUpsertFor(resource.ClusterNamespace, cluster.resource, "schema"))
+	assert.Equal(t, snowflakeRV(100), vec.latestRV)
+
+	vec.ensurePartitionErr = nil
+	s.sweep(t.Context())
+	assert.True(t, vec.hasUpsertFor(resource.ClusterNamespace, cluster.resource, "schema"))
+	assert.Equal(t, snowflakeRV(120), vec.latestRV)
+}
+
+func TestReconciler_ManifestScopeChangeRevalidatesCachedCollection(t *testing.T) {
+	tenant := fakeBuilder{group: "catalog.example.test", resource: "systemschemas"}
+	cluster := clusterTestBuilder{tenant}
+	partition := "tenant_systemschemas"
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(100)
+	vec.collections = map[schema.GroupResource]vector.Collection{
+		{Group: tenant.group, Resource: tenant.resource}: {
+			Group: tenant.group, Resource: tenant.resource, PartitionKey: partition, Scope: vector.ScopeTenant,
+		},
+	}
+	st := &fakeStorage{latestRvOverride: snowflakeRV(110), changes: []*resource.ModifiedResource{
+		change(cluster.group, cluster.resource, "", "schema", snowflakeRV(110), []byte("schema")),
+	}}
+	s := newReconcilerWithBuilders(t, st, vec, cluster)
+	cached, err := s.ensureResourceInitialized(t.Context(), tenant, vec.latestRV)
+	require.NoError(t, err)
+	require.Equal(t, partition, cached)
+
+	s.sweep(t.Context())
+	assert.Empty(t, vec.upserts)
+	assert.Equal(t, snowflakeRV(100), vec.latestRV)
+}
+
+func TestReconciler_TenantManifestDoesNotCheckpointPastClusterChanges(t *testing.T) {
+	cluster := clusterTestBuilder{fakeBuilder{group: "catalog.example.test", resource: "systemschemas"}}
+	tenant := fakeBuilder{group: "tenant.example.test", resource: "widgets"}
+	gr := schema.GroupResource{Group: cluster.group, Resource: cluster.resource}
+	for _, tc := range []struct {
+		name   string
+		cached bool
+	}{
+		{name: "live reload", cached: true},
+		{name: "after restart"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			deleted := change(gr.Group, gr.Resource, "", "deleted", snowflakeRV(115), nil)
+			deleted.Action = resourcepb.WatchEvent_DELETED
+			st := &fakeStorage{latestRvOverride: snowflakeRV(120), changes: []*resource.ModifiedResource{
+				change(gr.Group, gr.Resource, "", "schema", snowflakeRV(110), []byte("schema")),
+				deleted,
+				change(tenant.group, tenant.resource, "ns", "widget", snowflakeRV(120), []byte("widget")),
+			}}
+			vec := newFakeVector()
+			vec.latestRV = snowflakeRV(100)
+			vec.collections = map[schema.GroupResource]vector.Collection{
+				gr: {Group: gr.Group, Resource: gr.Resource, PartitionKey: gr.Resource, Scope: vector.ScopeCluster},
+			}
+			require.NoError(t, vec.CreateBackfillJob(t.Context(), testModel, gr.Resource, vec.latestRV, cluster.Version()))
+			s := newReconcilerWithBuilders(t, st, vec, cluster.fakeBuilder, tenant)
+			if tc.cached {
+				_, err := s.ensureResourceInitialized(t.Context(), cluster, vec.latestRV)
+				require.NoError(t, err)
+			}
+
+			s.sweep(t.Context())
+			assert.True(t, vec.hasUpsertFor("ns", tenant.resource, "widget"))
+			assert.False(t, vec.hasUpsertFor(resource.ClusterNamespace, gr.Resource, "schema"))
+			assert.Empty(t, vec.deletes)
+			assert.Equal(t, snowflakeRV(100), vec.latestRV)
+
+			s.builders = embed.NewBuilderSnapshot([]embed.Builder{cluster, tenant})
+			s.sweep(t.Context())
+			assert.True(t, vec.hasUpsertFor(resource.ClusterNamespace, gr.Resource, "schema"))
+			assert.Equal(t, []deleteCall{{resource.ClusterNamespace, testModel, gr.Resource, "deleted"}}, vec.deletes)
+			assert.Equal(t, snowflakeRV(120), vec.latestRV)
+		})
+	}
+}
+
+func TestReconciler_ClusterRevisionMismatchKeepsIndexingTenantWrites(t *testing.T) {
+	const group, plural = "catalog.example.test", "systemschemas"
+	const storedRevision = 2
+	tenant := fakeBuilder{group: "tenant.example.test", resource: "widgets"}
+	for _, tc := range []struct {
+		name             string
+		manifestRevision int
+	}{
+		{"manifest rolled back", storedRevision - 1},
+		{"backfill has not reopened", storedRevision + 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			manifest := &app.ManifestData{
+				Group: group,
+				Embed: map[string]app.ManifestResourceEmbed{plural: {ReembedVersion: tc.manifestRevision}},
+				Versions: []app.ManifestVersion{{
+					Name: "v1alpha1", Kinds: []app.ManifestVersionKind{{
+						Kind: "SystemSchema", Resource: plural, Scope: "Cluster",
+						Embed: &app.ManifestVersionKindEmbed{Fields: []app.ManifestVersionKindEmbedField{{Name: "description", Path: "spec.description"}}},
+					}},
+				}},
+			}
+			configs := resource.NewEmbeddingConfigRegistry([]*app.ManifestData{manifest})
+			registry, err := enrollment.New(configs, []string{group + "/" + plural, tenant.group + "/" + tenant.resource}, []embed.Builder{tenant}, nil)
+			require.NoError(t, err)
+			clusterValue := []byte(`{"apiVersion":"catalog.example.test/v1alpha1","spec":{"description":"connection pooling"}}`)
+			st := &fakeStorage{latestRvOverride: snowflakeRV(120), lookback: 10, changes: []*resource.ModifiedResource{
+				change(group, plural, "", "schema", snowflakeRV(110), clusterValue),
+				change(group, plural, "", "late-schema", snowflakeRV(95), clusterValue),
+				change(tenant.group, tenant.resource, "ns", "widget", snowflakeRV(120), []byte(`{"spec":{}}`)),
+			}}
+			vec := newFakeVector()
+			vec.latestRV = snowflakeRV(100)
+			require.NoError(t, vec.CreateBackfillJob(t.Context(), testModel, plural, vec.latestRV, storedRevision))
+			s, err := New(Options{
+				Storage: st, VectorBackend: vec, BuilderProvider: registry,
+				BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(&fakeText{dim: 4})),
+			})
+			require.NoError(t, err)
+
+			s.sweep(t.Context())
+			assert.True(t, vec.hasUpsertFor("ns", tenant.resource, "widget"))
+			assert.False(t, vec.hasUpsertFor(resource.ClusterNamespace, plural, "schema"))
+			assert.False(t, vec.hasUpsertFor(resource.ClusterNamespace, plural, "late-schema"))
+			assert.Equal(t, snowflakeRV(100), vec.latestRV)
+
+			manifest.Embed[plural] = app.ManifestResourceEmbed{ReembedVersion: storedRevision}
+			configs.Reload([]*app.ManifestData{manifest})
+			s.sweep(t.Context())
+			assert.True(t, vec.hasUpsertFor(resource.ClusterNamespace, plural, "schema"))
+			assert.True(t, vec.hasUpsertFor(resource.ClusterNamespace, plural, "late-schema"))
+			assert.Equal(t, snowflakeRV(120), vec.latestRV)
+		})
+	}
+}

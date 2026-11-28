@@ -20,6 +20,7 @@ type CollectionScope string
 const (
 	ScopeTenant     CollectionScope = "tenant"
 	ScopeShared     CollectionScope = "shared"
+	ScopeCluster    CollectionScope = "cluster"
 	SharedNamespace                 = "__SHARED__"
 )
 
@@ -105,7 +106,7 @@ func (b *pgvectorBackend) EnsureCollectionWithScope(ctx context.Context, group, 
 		// have committed while the partition DDL failed transiently, which
 		// would otherwise wedge the collection forever (resolve keeps
 		// succeeding, DDL never runs again). Cheap once the partition exists.
-		if err := b.EnsureResourcePartition(ctx, c.PartitionKey); err != nil {
+		if err := b.ensureResourcePartition(ctx, c.PartitionKey, c.usesPostgresLexicalSearch()); err != nil {
 			return Collection{}, err
 		}
 		return c, nil
@@ -162,7 +163,7 @@ func (b *pgvectorBackend) EnsureCollectionWithScope(ctx context.Context, group, 
 		return Collection{}, fmt.Errorf("collection %s/%s changed kind or scope during provisioning: %w", group, resource, ErrCollectionScopeMismatch)
 	}
 
-	if err := b.EnsureResourcePartition(ctx, c.PartitionKey); err != nil {
+	if err := b.ensureResourcePartition(ctx, c.PartitionKey, c.usesPostgresLexicalSearch()); err != nil {
 		return Collection{}, err
 	}
 	return c, nil
@@ -171,11 +172,6 @@ func (b *pgvectorBackend) EnsureCollectionWithScope(ctx context.Context, group, 
 // hasPartitionKey reports whether any catalog row owns the given partition
 // key. Internal callers (reconciler, backfill) work in partition keys
 // directly, so validateResource checks this side of the mapping.
-func (b *pgvectorBackend) hasPartitionKey(ctx context.Context, key string) (bool, error) {
-	_, ok, err := b.collectionByPartitionKey(ctx, key)
-	return ok, err
-}
-
 func (b *pgvectorBackend) collectionByPartitionKey(ctx context.Context, key string) (Collection, bool, error) {
 	collections, err := b.listCollections(ctx)
 	if err != nil {
@@ -215,11 +211,18 @@ func (b *pgvectorBackend) listCollections(ctx context.Context) ([]Collection, er
 }
 
 func validateCollectionScope(scope CollectionScope, isExternal bool) error {
-	if scope != ScopeTenant && scope != ScopeShared {
+	if scope != ScopeTenant && scope != ScopeShared && scope != ScopeCluster {
 		return fmt.Errorf("invalid collection scope %q", scope)
+	}
+	if scope == ScopeCluster && isExternal {
+		return fmt.Errorf("cluster scope requires an internal collection")
 	}
 	if scope == ScopeShared && !isExternal {
 		return fmt.Errorf("shared scope requires an external collection")
 	}
 	return nil
+}
+
+func (c Collection) usesPostgresLexicalSearch() bool {
+	return c.IsExternal || c.Scope == ScopeCluster
 }

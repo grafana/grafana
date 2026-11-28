@@ -117,8 +117,7 @@ type Reconciler struct {
 	// folderTitleResolver is uncached: event rate is low and fresh titles beat cache staleness.
 	folderTitleResolver *foldertitle.Resolver
 
-	// Written keys provide the earliest observed RV until the initial
-	// checkpoint is persisted. No payloads are retained.
+	// Writes and cluster backfill watermarks seed the initial checkpoint.
 	seedMu sync.Mutex
 	seedRV int64
 	seeded bool
@@ -136,13 +135,11 @@ type Reconciler struct {
 	// Only failures retain bookkeeping; their payloads are re-read by the sweep.
 	retries map[string]retryState
 
-	// Keep the catalog partition key: it need not match the logical resource name.
-	ensuredResources map[schema.GroupResource]string
+	ensuredCollections map[schema.GroupResource]vector.Collection
 }
 
-// New constructs the embedding reconciler. A fleet that has never
-// checkpointed stays inert until the first write is delivered: the cursor is
-// seeded from it, and the sweep does nothing until it is.
+// New constructs the embedding reconciler. The shared checkpoint starts at
+// the earliest observed write or initial cluster backfill watermark.
 func New(opts Options) (*Reconciler, error) {
 	builders := make(map[schema.GroupResource]struct{}, len(opts.Builders))
 	if len(opts.Builders) == 0 && opts.BuilderProvider == nil {
@@ -178,7 +175,7 @@ func New(opts Options) (*Reconciler, error) {
 		log:                    log.New("embeddings_reconciler"),
 		metrics:                opts.Metrics,
 		retries:                make(map[string]retryState),
-		ensuredResources:       make(map[schema.GroupResource]string),
+		ensuredCollections:     make(map[schema.GroupResource]vector.Collection),
 		folderTitleResolver:    foldertitle.NewResolver(opts.Storage),
 	}, nil
 }
@@ -190,31 +187,29 @@ func (s *Reconciler) builderSnapshot() embed.BuilderSnapshot {
 	return s.builders
 }
 
-func (s *Reconciler) hasBuilder(group, resource string) bool {
-	if s.builderProvider != nil {
-		return s.builderProvider.Has(group, resource)
+// observeWrite tracks the earliest enrolled write for the initial checkpoint.
+func (s *Reconciler) observeWrite(ev *resource.WrittenEvent) {
+	if ev == nil || ev.Key == nil {
+		return
 	}
-	return s.builders.Has(group, resource)
+	if s.builderProvider != nil && !s.builderProvider.Has(ev.Key.Group, ev.Key.Resource) {
+		return
+	}
+	builder, ok := s.builderSnapshot().Get(ev.Key.Group, ev.Key.Resource)
+	if !ok || embed.IsClusterScoped(builder) != (ev.Key.Namespace == "") {
+		return
+	}
+	s.observeSeedRV(ev.ResourceVersion)
 }
 
-// observeWrite tracks the earliest write for the initial checkpoint.
-func (s *Reconciler) observeWrite(ev *resource.WrittenEvent) {
-	if ev == nil || ev.Key == nil || ev.Key.Namespace == "" {
-		return
-	}
-	if !s.hasBuilder(ev.Key.Group, ev.Key.Resource) {
-		return
-	}
-	rv := resource.ToSnowflakeRV(ev.ResourceVersion)
+func (s *Reconciler) observeSeedRV(rv int64) {
+	rv = resource.ToSnowflakeRV(rv)
 	if rv <= 0 {
 		return
 	}
 	s.seedMu.Lock()
 	defer s.seedMu.Unlock()
-	if s.seeded {
-		return
-	}
-	if s.seedRV == 0 || rv < s.seedRV {
+	if !s.seeded && (s.seedRV == 0 || rv < s.seedRV) {
 		s.seedRV = rv
 	}
 }
@@ -237,9 +232,7 @@ func (s *Reconciler) Run(ctx context.Context) error {
 	defer release()
 	s.log.Info("reconciler: lock acquired; entering active state")
 
-	// Backfill jobs are created lazily on the write path (the first event for
-	// a resource); the backfiller drains them in the background on its own
-	// advisory lock.
+	// The backfiller drains jobs in the background on its own advisory lock.
 	if s.backfiller != nil {
 		backfillDone := make(chan struct{})
 		defer func() { <-backfillDone }()
@@ -400,16 +393,18 @@ func (s *Reconciler) seedTypes() []schema.GroupResource {
 }
 
 // ensureResourceInitialized provisions a resource's partition leaf + backfill
-// job on its first write event, once per process (idempotent via
-// ensuredResources and the DB row). stoppingRV is the event's RV, bounding the
-// backfill of pre-existing rows for that resource.
+// job. stoppingRV bounds the backfill of pre-existing rows for that resource.
 func (s *Reconciler) ensureResourceInitialized(ctx context.Context, b embed.Builder, stoppingRV int64) (string, error) {
 	gr := schema.GroupResource{Group: b.Group(), Resource: b.Resource()}
-	if partition, ok := s.ensuredResources[gr]; ok {
-		return partition, nil
+	scope := vector.ScopeTenant
+	if embed.IsClusterScoped(b) {
+		scope = vector.ScopeCluster
+	}
+	if collection := s.ensuredCollections[gr]; collection.Scope == scope {
+		return collection.PartitionKey, nil
 	}
 
-	collection, err := s.vectorBackend.EnsureCollection(ctx, gr.Group, gr.Resource, false)
+	collection, err := s.vectorBackend.EnsureCollectionWithScope(ctx, gr.Group, gr.Resource, false, scope)
 	if err != nil {
 		return "", fmt.Errorf("ensure collection for %q: %w", gr, err)
 	}
@@ -417,8 +412,31 @@ func (s *Reconciler) ensureResourceInitialized(ctx context.Context, b embed.Buil
 	if err := s.vectorBackend.CreateBackfillJob(ctx, s.batchEmbedder.Model(), collection.PartitionKey, stoppingRV, b.Version()); err != nil {
 		return "", fmt.Errorf("create backfill job for %q: %w", gr, err)
 	}
-	s.ensuredResources[gr] = collection.PartitionKey
+	s.ensuredCollections[gr] = collection
 	return collection.PartitionKey, nil
+}
+
+// Sample the initial backfill bounds before seeding the shared checkpoint.
+// No job may persist with one of these bounds until the checkpoint is durable.
+func (s *Reconciler) clusterBackfillWatermarks(ctx context.Context, builders []embed.Builder) map[schema.GroupResource]int64 {
+	watermarks := make(map[schema.GroupResource]int64)
+	for _, builder := range builders {
+		if !embed.IsClusterScoped(builder) {
+			continue
+		}
+		gr := schema.GroupResource{Group: builder.Group(), Resource: builder.Resource()}
+		if s.ensuredCollections[gr].Scope == vector.ScopeCluster {
+			continue
+		}
+		rv, err := resource.ListResourceWatermark(ctx, s.storage, gr.Group, gr.Resource)
+		if err != nil || rv <= 0 {
+			s.log.Error("reconciler: read cluster backfill watermark", "group", gr.Group, "resource", gr.Resource, "rv", rv, "err", err)
+			continue
+		}
+		watermarks[gr] = rv
+		s.observeSeedRV(rv)
+	}
+	return watermarks
 }
 
 // sweep embeds everything written since the checkpoint. It is the only
@@ -434,6 +452,8 @@ func (s *Reconciler) sweep(ctx context.Context) {
 		s.lastSweepBuilders = snapshot
 		return
 	}
+	watermarks := s.clusterBackfillWatermarks(ctx, builders)
+
 	sinceRv, err := s.ensureCheckpoint(ctx)
 	if err != nil {
 		s.log.Error("reconciler: initialize checkpoint", "err", err)
@@ -450,8 +470,8 @@ func (s *Reconciler) sweep(ctx context.Context) {
 
 	startedAt := time.Now()
 
-	// One cursor for every builder, so it can only move to the lowest RV
-	// all of them proved.
+	// All collections share a cursor that can advance only to the lowest
+	// revision all of their sweeps proved.
 	target := int64(math.MaxInt64)
 	hasFailures := false
 	for _, b := range builders {
@@ -464,7 +484,8 @@ func (s *Reconciler) sweep(ctx context.Context) {
 		if s.lastSweepSinceRv == sinceRv && !s.lastSweepAt.IsZero() && s.lastSweepBuilders.Has(b.Group(), b.Resource()) {
 			calledAt = new(s.lastSweepAt)
 		}
-		proven, complete, failed := s.reconcileSince(ctx, b, sinceRv, calledAt)
+		gr := schema.GroupResource{Group: b.Group(), Resource: b.Resource()}
+		proven, complete, failed := s.reconcileCollection(ctx, b, sinceRv, calledAt, watermarks[gr])
 		hasFailures = hasFailures || failed
 		if !complete {
 			return
@@ -498,6 +519,60 @@ func (s *Reconciler) sweep(ctx context.Context) {
 	s.embedBackoff = nil
 }
 
+func (s *Reconciler) reconcileCollection(ctx context.Context, builder embed.Builder, sinceRv int64, lastCalledAt *time.Time, backfillRV int64) (proven int64, complete, failed bool) {
+	gr := schema.GroupResource{Group: builder.Group(), Resource: builder.Resource()}
+	collection := s.ensuredCollections[gr]
+	if !embed.IsClusterScoped(builder) {
+		if collection.Scope == "" {
+			var err error
+			collection, _, err = s.vectorBackend.ResolveCollection(ctx, gr.Group, gr.Resource)
+			if err != nil {
+				s.log.Error("reconciler: resolve collection scope", "group", gr.Group, "resource", gr.Resource, "err", err)
+				return sinceRv, true, true
+			}
+		}
+		// A tenant sweep would skip cluster events and could checkpoint past them.
+		if collection.Scope == vector.ScopeCluster {
+			s.log.Warn("reconciler: tenant builder has a cluster collection", "group", gr.Group, "resource", gr.Resource)
+			return sinceRv, true, true
+		}
+		return s.reconcileSince(ctx, builder, sinceRv, lastCalledAt)
+	}
+	partition := collection.PartitionKey
+	if collection.Scope != vector.ScopeCluster {
+		if backfillRV == 0 {
+			return sinceRv, true, true
+		}
+		var err error
+		partition, err = s.ensureResourceInitialized(ctx, builder, backfillRV)
+		if err != nil {
+			s.log.Error("reconciler: initialize cluster collection", "group", gr.Group, "resource", gr.Resource, "err", err)
+			return sinceRv, true, true
+		}
+	}
+	// An empty UID reserves the collection lock for revision handoff. A
+	// backfill cannot open a new revision while this sweep can still write.
+	err := s.vectorBackend.WithEntityLock(ctx, resource.ClusterNamespace, partition, "", func(ctx context.Context) error {
+		version, err := s.vectorBackend.BackfillContentVersion(ctx, s.batchEmbedder.Model(), partition)
+		if err != nil {
+			return err
+		}
+		if version != builder.Version() {
+			// Keep processing other collections without advancing past this
+			// kind's unread writes or skipping its lookback on recovery.
+			proven, complete, failed = sinceRv, true, true
+			return nil
+		}
+		proven, complete, failed = s.reconcileSince(ctx, builder, sinceRv, lastCalledAt)
+		return nil
+	})
+	if err != nil {
+		s.log.Error("reconciler: sweep cluster collection", "group", builder.Group(), "resource", builder.Resource(), "err", err)
+		return sinceRv, false, false
+	}
+	return proven, complete, failed
+}
+
 // reconcileSince walks ListModifiedSince one resource at a time and returns the RV
 // it proved complete; complete is false if the walk was interrupted.
 //
@@ -526,7 +601,7 @@ func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, 
 				"group", builder.Group(), "resource", builder.Resource(), "err", err)
 			return sinceRv, false, false
 		}
-		if mr == nil {
+		if mr == nil || embed.IsClusterScoped(builder) != (mr.Key.Namespace == "") {
 			continue
 		}
 		ev := &reconcileEvent{
@@ -667,9 +742,13 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, pa
 		)
 	}()
 
+	storageNamespace := ev.namespace
+	if embed.IsClusterScoped(builder) {
+		storageNamespace = resource.ClusterNamespace
+	}
 	switch ev.action {
 	case resourcepb.WatchEvent_DELETED:
-		if _, _, err := s.vectorBackend.DeleteRows(ctx, ev.namespace, s.batchEmbedder.Model(), partition, vector.DeleteSelector{UIDs: []string{ev.name}}); err != nil {
+		if _, _, err := s.vectorBackend.DeleteRows(ctx, storageNamespace, s.batchEmbedder.Model(), partition, vector.DeleteSelector{UIDs: []string{ev.name}}); err != nil {
 			statusLabel = "delete_error"
 			return err
 		}
@@ -705,7 +784,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, pa
 	items, err := builder.Extract(ctx, key, ev.value, folderTitle)
 	if errors.Is(err, embed.ErrSkip) {
 		// Preserved vectors must use the current folder for search authorization.
-		if err := s.vectorBackend.UpdateFolder(ctx, ev.namespace, s.batchEmbedder.Model(), partition, ev.name, embed.FolderUIDFromValue(ev.value)); err != nil {
+		if err := s.vectorBackend.UpdateFolder(ctx, storageNamespace, s.batchEmbedder.Model(), partition, ev.name, embed.FolderUIDFromValue(ev.value)); err != nil {
 			statusLabel = "update_folder_error"
 			return fmt.Errorf("update skipped resource folder: %w", err)
 		}
@@ -726,7 +805,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, pa
 	// drop everything stored under this UID rather than leaving orphans.
 	if len(items) == 0 {
 		s.log.Info("skipping empty extract", "namespace", ev.namespace, "group", ev.group, "resource", ev.resource, "name", ev.name)
-		if _, _, err := s.vectorBackend.DeleteRows(ctx, ev.namespace, model, partition, vector.DeleteSelector{UIDs: []string{ev.name}}); err != nil {
+		if _, _, err := s.vectorBackend.DeleteRows(ctx, storageNamespace, model, partition, vector.DeleteSelector{UIDs: []string{ev.name}}); err != nil {
 			statusLabel = "delete_error"
 			return err
 		}
@@ -735,7 +814,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, pa
 
 	uid := items[0].UID
 
-	stored, storedFolder, err := s.vectorBackend.GetSubresourceContent(ctx, ev.namespace, model, partition, uid)
+	stored, storedFolder, err := s.vectorBackend.GetSubresourceContent(ctx, storageNamespace, model, partition, uid)
 	if err != nil {
 		statusLabel = "get_content_error"
 		return fmt.Errorf("get stored content: %w", err)
@@ -778,7 +857,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, pa
 
 	var changed []vector.Vector
 	if len(toEmbed) > 0 {
-		changed, err = s.batchEmbedder.Embed(ctx, ev.namespace, partition, ev.rv, builder.Version(), toEmbed)
+		changed, err = s.batchEmbedder.Embed(ctx, storageNamespace, partition, ev.rv, builder.Version(), toEmbed)
 		if err != nil {
 			statusLabel = "embed_error"
 			return fmt.Errorf("embed: %w", err)
@@ -788,7 +867,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, pa
 	// UpsertReplaceSubresources commits the stale-delete and the new
 	// inserts atomically — a failure mid-way leaves the dashboard in
 	// its previous self-consistent state.
-	if err := s.vectorBackend.UpsertReplaceSubresources(ctx, ev.namespace, model, partition, uid, changed, nil, desired); err != nil {
+	if err := s.vectorBackend.UpsertReplaceSubresources(ctx, storageNamespace, model, partition, uid, changed, nil, desired); err != nil {
 		statusLabel = "upsert_error"
 		return fmt.Errorf("upsert: %w", err)
 	}

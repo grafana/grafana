@@ -548,6 +548,17 @@ func (f *fakeVector) ReopenStaleBackfillJobs(_ context.Context, model, res strin
 	return reopened, nil
 }
 
+func (f *fakeVector) BackfillContentVersion(_ context.Context, model, resource string) (int, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, job := range f.jobs {
+		if job.Model == model && job.Resource == resource {
+			return job.ContentVersion, nil
+		}
+	}
+	return 0, nil
+}
+
 // ListIncompleteBackfillJobs mirrors the real SQL's `is_complete = FALSE`
 // filter so tests can prove a completed job is invisible until reopened.
 func (f *fakeVector) ListIncompleteBackfillJobs(_ context.Context, model string) ([]vector.BackfillJob, error) {

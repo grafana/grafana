@@ -59,6 +59,12 @@ func (s BuilderSnapshot) Get(group, resource string) (Builder, bool) {
 	return builder, ok
 }
 
+// IsClusterScoped reports whether the builder accepts cluster resource keys.
+func IsClusterScoped(builder Builder) bool {
+	scoped, ok := builder.(interface{ ClusterScoped() bool })
+	return ok && scoped.ClusterScoped()
+}
+
 // Item is one chunk of a resource ready to be embedded.
 type Item struct {
 	UID         string          // resource UID (e.g. dashboard UID)

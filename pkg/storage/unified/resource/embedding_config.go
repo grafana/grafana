@@ -13,6 +13,7 @@ import (
 type EmbeddingConfig struct {
 	ReembedVersion int
 	Fields         []app.ManifestVersionKindEmbedField
+	ClusterScoped  bool
 }
 
 // EmbeddingConfigRegistry replaces complete snapshots so fields and
@@ -52,6 +53,22 @@ func (r *EmbeddingConfigRegistry) HasResource(gr schema.GroupResource) bool {
 	return false
 }
 
+// ResourceScope returns the common scope of the resource's embedding declarations.
+func (r *EmbeddingConfigRegistry) ResourceScope(gr schema.GroupResource) (clusterScoped, valid bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	for gvr, config := range r.configs {
+		if gvr.GroupResource() != gr {
+			continue
+		}
+		if (valid && config.ClusterScoped != clusterScoped) || (config.ClusterScoped && config.ReembedVersion <= 0) {
+			return false, false
+		}
+		clusterScoped, valid = config.ClusterScoped, true
+	}
+	return clusterScoped, valid
+}
+
 // Snapshot keeps every resource's fields and revision from the same reload.
 func (r *EmbeddingConfigRegistry) Snapshot() map[schema.GroupVersionResource]EmbeddingConfig {
 	r.mu.RLock()
@@ -87,6 +104,7 @@ func (r *EmbeddingConfigRegistry) Reload(sources ...[]*app.ManifestData) {
 							configs[gr.WithVersion(version.Name)] = EmbeddingConfig{
 								ReembedVersion: embed.ReembedVersion,
 								Fields:         slices.Clone(kind.Embed.Fields),
+								ClusterScoped:  kind.Scope == "Cluster",
 							}
 						}
 					}

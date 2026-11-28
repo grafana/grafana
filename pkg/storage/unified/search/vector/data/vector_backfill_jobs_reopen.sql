@@ -6,6 +6,11 @@ UPDATE vector_backfill_jobs
         {{ .Ident "last_error" }}       = NULL,
         {{ .Ident "updated_at" }}       = CURRENT_TIMESTAMP
     WHERE {{ .Ident "model" }} = {{ .Arg .Model }}
-      AND {{ .Ident "resource" }} IN ({{ .Arg .Resource }}, {{ .Arg "" }})
+      AND (
+          {{ .Ident "resource" }} = {{ .Arg .Resource }}
+          OR ({{ .Ident "resource" }} = '' AND NOT EXISTS (
+              SELECT 1 FROM embedding_collections WHERE partition_key = {{ .Arg .Resource }} AND scope = 'cluster'
+          ))
+      )
       AND {{ .Ident "content_version" }} < {{ .Arg .Version }}
 ;

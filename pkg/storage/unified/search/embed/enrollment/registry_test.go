@@ -299,3 +299,32 @@ func (b *testCustomBuilder) Version() int             { return 1 }
 func (b *testCustomBuilder) Extract(context.Context, *resourcepb.ResourceKey, []byte, string) ([]embed.Item, error) {
 	return nil, nil
 }
+
+func TestInternalEnrollmentUsesManifestScope(t *testing.T) {
+	const entry = "catalog.example.test/systemschemas"
+	manifest := testManifest("catalog.example.test", "systemschemas", 1, map[string][]app.ManifestVersionKindEmbedField{
+		"v1alpha1": {{Name: "description", Path: "spec.description"}},
+	})
+	manifest.Versions[0].Kinds[0].Scope = "Cluster"
+	configs := resource.NewEmbeddingConfigRegistry([]*app.ManifestData{manifest})
+	registry, err := New(configs, []string{entry}, nil, nil)
+	require.NoError(t, err)
+	require.NoError(t, registry.Validate())
+	builder, ok := registry.Snapshot().Get(manifest.Group, "systemschemas")
+	require.True(t, ok)
+	require.True(t, embed.IsClusterScoped(builder))
+	require.True(t, registry.Has(manifest.Group, "systemschemas"))
+
+	overlap, err := New(configs, []string{entry}, nil, nil, entry)
+	require.NoError(t, err)
+	require.ErrorContains(t, overlap.Validate(), "overlaps external enrollment")
+	require.False(t, overlap.Has(manifest.Group, "systemschemas"))
+	require.Empty(t, overlap.Snapshot().Builders())
+
+	manifest.Versions[0].Kinds[0].Scope = "Namespaced"
+	configs.Reload([]*app.ManifestData{manifest})
+	require.NoError(t, registry.Validate())
+	builder, ok = registry.Snapshot().Get(manifest.Group, "systemschemas")
+	require.True(t, ok)
+	require.False(t, embed.IsClusterScoped(builder))
+}

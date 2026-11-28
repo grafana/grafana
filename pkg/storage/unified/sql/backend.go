@@ -1683,6 +1683,10 @@ func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
 	return since, nil
 }
 
+func (b *backend) ResourceListWatermark(ctx context.Context, group, resource string) (int64, error) {
+	return b.fetchLatestRV(ctx, b.db, b.dialect, group, resource)
+}
+
 // fetchLatestRV returns the current maximum RV in the resource table
 func (b *backend) fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, group, resource string) (int64, error) {
 	ctx, span := tracer.Start(ctx, "sql.backend.fetchLatestRV")

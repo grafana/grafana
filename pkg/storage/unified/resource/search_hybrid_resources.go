@@ -23,12 +23,12 @@ func hybridSearchKeys(req *resourcepb.HybridSearchRequest) ([]*resourcepb.Resour
 		if req.Namespace != "" || len(req.Resources) > 0 {
 			return nil, invalid("use either key or namespace and resources")
 		}
-		if req.Key.Namespace == "" || req.Key.Group == "" || req.Key.Resource == "" {
+		if req.Key.Group == "" || req.Key.Resource == "" {
 			return nil, invalid("missing namespace, group or resource")
 		}
 		return []*resourcepb.ResourceKey{req.Key}, nil
 	}
-	if req.Namespace == "" || len(req.Resources) == 0 {
+	if len(req.Resources) == 0 || (req.Namespace == "" && len(req.Resources) != 1) {
 		return nil, invalid("namespace and at least one resource are required")
 	}
 	keys := make([]*resourcepb.ResourceKey, 0, len(req.Resources))

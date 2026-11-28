@@ -340,6 +340,17 @@ type StorageBackend interface {
 	ListResourceLastImportTimes(ctx context.Context) (map[NamespacedResource]time.Time, error)
 }
 
+// ListResourceWatermark returns the current list revision for a collection.
+func ListResourceWatermark(ctx context.Context, storage StorageBackend, group, resource string) (int64, error) {
+	reader, ok := storage.(interface {
+		ResourceListWatermark(context.Context, string, string) (int64, error)
+	})
+	if !ok {
+		return 0, fmt.Errorf("storage backend does not support resource revision lookups")
+	}
+	return reader.ResourceListWatermark(ctx, group, resource)
+}
+
 type ModifiedResource struct {
 	Action          resourcepb.WatchEvent_Type
 	Key             resourcepb.ResourceKey
