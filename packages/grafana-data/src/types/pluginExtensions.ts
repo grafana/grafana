@@ -222,6 +222,7 @@ export enum PluginExtensionPoints {
   DashboardSidebar = 'grafana/dashboard/sidebar/v1',
   DashboardControls = 'grafana/dashboard/controls/v1',
   DataSourceConfig = 'grafana/datasources/config',
+  DataSourcePermissions = 'grafana/datasources/permissions/v1',
   DataSourceConfigActions = 'grafana/datasources/config/actions',
   DataSourceConfigErrorStatus = 'grafana/datasources/config/error-status',
   DataSourceConfigStatus = 'grafana/datasources/config/status',
@@ -455,4 +456,14 @@ type Dashboard = {
   uid: string;
   title: string;
   tags: string[];
+};
+
+/** Context for custom editors on the Enterprise datasource Permissions tab.
+ * Backend APIs must independently enforce policy administration permissions.
+ */
+export type PluginExtensionDataSourcePermissionsContext = {
+  dataSourceUid: string;
+  dataSourceType: string;
+  readOnly: boolean;
+  basicAuthConfigured: boolean;
 };
