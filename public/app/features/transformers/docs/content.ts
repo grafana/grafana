@@ -181,6 +181,27 @@ In the field mapping specify:
 
 Grafana builds value mappings from your query result and applies them to the real data query results. You should see values being mapped and colored according to the config query results.
 
+#### Thresholds
+
+In the same way, every row in the configuration query result can define a single threshold step. See the following example.
+
+Config query result:
+
+| Threshold | Color  |
+| --------- | ------ |
+| 0         | green  |
+| 50        | orange |
+| 80        | red    |
+
+In the field mapping specify:
+
+| Field     | Use as             | Select     |
+| --------- | ------------------ | ---------- |
+| Threshold | Thresholds / Value | All values |
+| Color     | Thresholds / Color | All values |
+
+Rows that aren't numbers are skipped. If a row has no color, or the color isn't valid, the step uses red.
+
 > **Note:** When you use this transformation for thresholds, the visualization continues to use the panel's base threshold.
 
   `;
