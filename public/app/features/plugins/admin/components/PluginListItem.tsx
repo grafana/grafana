@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Badge, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { getFocusStyles } from '@grafana/ui/internal';
 import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 
 import { type CatalogPlugin, PluginIconName } from '../types';
@@ -122,6 +123,8 @@ const getStyles = (theme: GrafanaTheme2) => {
         '&:hover': {
           background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
         },
+
+        '&:focus-visible': getFocusStyles(theme, true),
       },
       visualRefreshEnabled && {
         background: theme.colors.background.primary,
