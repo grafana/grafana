@@ -3,7 +3,6 @@ package graphite
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -68,6 +67,7 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 	}
 
 	frames := data.Frames{}
+	streamRender := s.streamingRenderDecoderEnabled(ctx, req.PluginContext)
 
 	for refId, graphiteReq := range graphiteQueries {
 		_, span := tracing.DefaultTracer().Start(ctx, "graphite query")
@@ -99,7 +99,12 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 			}
 		}()
 
-		queryFrames, err := s.toDataFrames(res, refId)
+		var queryFrames data.Frames
+		if streamRender && res.StatusCode/100 == 2 {
+			queryFrames, err = s.decodeRenderResponse(res, refId)
+		} else {
+			queryFrames, err = s.toDataFrames(res, refId)
+		}
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
@@ -342,7 +347,7 @@ func epochMStoGraphiteTime(tr backend.TimeRange) (string, string) {
  */
 func parseDataTimePoint(dataTimePoint DataTimePoint) (time.Time, *float64, error) {
 	if !dataTimePoint[1].Valid {
-		return time.Time{}, nil, errors.New("failed to parse data point timestamp")
+		return time.Time{}, nil, errDataPointTimestamp
 	}
 
 	timestamp := time.Unix(int64(dataTimePoint[1].Float64), 0).UTC()

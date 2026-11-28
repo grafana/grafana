@@ -1,0 +1,1 @@
+{"version":"v0.1","meta":{"stats":{"executeplan.resolve-series.ms":1}},"series":[{"target":"a","tags":{"name":"a"},"datapoints":[[1,100]],"meta":[{"schema-name":"default","count":1}]}]}
