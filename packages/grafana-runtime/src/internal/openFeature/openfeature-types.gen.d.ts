@@ -215,6 +215,7 @@ declare module "@openfeature/core" {
     | "grafana.dashboardSidebarExplicitOpen"
     | "grafana.panelQuickEdits"
     | "grafana.folderPickerFolderEditAccess"
+    | "grafana.folderPickerSearchFullPath"
     | "grafana.panelOptionInterpolation"
     | "datasources.gatewayRateLimits"
     | "plugins.disableMTPluginsFallback"
