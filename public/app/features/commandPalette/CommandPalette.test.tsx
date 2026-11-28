@@ -525,6 +525,150 @@ describe('CommandPalette', () => {
       expect(screen.queryByText('Result for zq')).not.toBeInTheDocument();
     });
 
+    describe('layout', () => {
+      const originalIsSignedIn = contextSrv.user.isSignedIn;
+
+      beforeEach(() => {
+        contextSrv.user.isSignedIn = true;
+      });
+
+      afterEach(() => {
+        contextSrv.user.isSignedIn = originalIsSignedIn;
+      });
+
+      const stubSearch = (kind: 'dashboard' | 'folder', count: number) => {
+        const rows = Array.from({ length: count }, (_, i) => i + 1);
+        searchSpy.mockResolvedValue({
+          view: new DataFrameView<DashboardQueryResult>(
+            toDataFrame({
+              fields: [
+                { name: 'kind', values: rows.map(() => kind) },
+                { name: 'name', values: rows.map((i) => `${kind} ${i}`) },
+                { name: 'url', values: rows.map((i) => `/${kind}/${i}`) },
+                { name: 'location', values: rows.map(() => '') },
+              ],
+            })
+          ),
+          loadMoreItems: async () => {},
+          isItemLoaded: () => true,
+          totalRows: count,
+        });
+      };
+
+      it.each([
+        ['dashboard', 'See all dashboards'],
+        ['folder', 'See all folders'],
+      ] as const)('limits %s results to five and links to the dashboard search with the query', async (kind, label) => {
+        stubSearch(kind, 8);
+        await open();
+
+        await type('orders');
+
+        expect(screen.getByText(`${kind} 5`)).toBeInTheDocument();
+        expect(screen.queryByText(`${kind} 6`)).not.toBeInTheDocument();
+        expect(screen.getByText(label).closest('a')).toHaveAttribute('href', '/dashboards?query=orders');
+      });
+
+      it('shows five results without a See all row', async () => {
+        stubSearch('dashboard', 5);
+        await open();
+
+        await type('orders');
+
+        expect(screen.getByText('dashboard 5')).toBeInTheDocument();
+        expect(screen.queryByText('See all dashboards')).not.toBeInTheDocument();
+      });
+
+      it('shows every result and no status message when the feature flag is off', async () => {
+        setTestFlags({ 'grafana.cmdkExtensionSearch': false });
+        stubSearch('dashboard', 8);
+        await open();
+
+        await type('orders');
+
+        expect(screen.getByText('dashboard 8')).toBeInTheDocument();
+        expect(screen.queryByText('See all dashboards')).not.toBeInTheDocument();
+        expect(screen.queryByText(/\d+ results?$/)).not.toBeInTheDocument();
+      });
+
+      describe('while a provider is pending', () => {
+        let answer: (results: Array<{ id: string; title: string; path: string }>) => void;
+
+        beforeEach(() => {
+          setSearchProvider(() => new Promise((resolve) => (answer = resolve)));
+        });
+
+        it('shows the section header with a loading row only after 300 ms', async () => {
+          await open();
+          await type('orders');
+          expect(screen.queryByText(SECTION_TITLE)).not.toBeInTheDocument();
+
+          await advance(300);
+
+          expect(screen.getByText(SECTION_TITLE)).toBeInTheDocument();
+          expect(screen.getByTestId('command-palette-loading-row')).toBeInTheDocument();
+          expect(screen.queryByRole('option', { name: /Test plugin results/ })).not.toBeInTheDocument();
+        });
+
+        it('replaces the loading row with the results when the provider answers', async () => {
+          await open();
+          await type('orders');
+          await advance(300);
+
+          answer([{ id: 'r1', title: 'Orders service', path: '/a/test-plugin/orders' }]);
+          await advance(0);
+
+          expect(screen.queryByTestId('command-palette-loading-row')).not.toBeInTheDocument();
+          expect(screen.getByText('Orders service')).toBeInTheDocument();
+        });
+
+        it('removes the section when the provider answers with nothing', async () => {
+          await open();
+          await type('orders');
+          await advance(300);
+
+          answer([]);
+          await advance(0);
+
+          expect(screen.queryByText(SECTION_TITLE)).not.toBeInTheDocument();
+          expect(screen.queryByTestId('command-palette-loading-row')).not.toBeInTheDocument();
+        });
+      });
+
+      it('announces the number of results once, after every provider has answered', async () => {
+        let answerSlow: (results: Array<{ id: string; title: string; path: string }>) => void = () => {};
+        const functions = [
+          { title: 'Fast', fn: async () => [{ id: 'f1', title: 'Fast one', path: '/f1' }] },
+          {
+            title: 'Slow',
+            fn: () => new Promise<Array<{ id: string; title: string; path: string }>>((r) => (answerSlow = r)),
+          },
+        ].map(({ title, fn }) => ({
+          id: `${title}/search`,
+          type: PluginExtensionTypes.function as const,
+          title,
+          description: '',
+          pluginId: title,
+          fn,
+        }));
+        const result = { functions: functions as Array<PluginExtensionFunction<never>>, isLoading: false };
+        pluginFunctionsHook.mockImplementation(() => result satisfies UsePluginFunctionsResult<never>);
+        await open();
+
+        await type('orders');
+        expect(screen.getByText('Fast one')).toBeInTheDocument();
+        expect(screen.queryByText(/\d+ results?$/)).not.toBeInTheDocument();
+
+        answerSlow([
+          { id: 's1', title: 'Slow one', path: '/s1' },
+          { id: 's2', title: 'Slow two', path: '/s2' },
+        ]);
+        await advance(0);
+
+        expect(screen.getByText('3 results')).toBeInTheDocument();
+      });
+    });
+
     it('aborts the signal of an in-flight query when the query changes', async () => {
       const signals: AbortSignal[] = [];
       setSearchProvider(({ signal }) => {

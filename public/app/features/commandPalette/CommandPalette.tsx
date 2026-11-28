@@ -4,9 +4,10 @@ import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import { KBarAnimator, KBarPortal, KBarPositioner, VisualState, useKBar, ActionImpl } from 'kbar';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, urlUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaCmdkExtensionSearch, useFlagGrafanaCmdkHybridSearch } from '@grafana/runtime/internal';
@@ -17,13 +18,13 @@ import { KBarResults } from './KBarResults';
 import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
 import { useSearchResults } from './actions/dashboardActions';
-import { type ExtensionSearchSection } from './actions/extensionSearch';
 import {
   useRegisterExtensionActions,
   useRegisterRecentDashboardsActions,
   useRegisterStaticActions,
 } from './actions/useActions';
 import {
+  type ExtensionSearchSectionState,
   type ExtensionSearchState,
   NO_EXTENSION_SEARCH,
   useExtensionSearchResults,
@@ -33,7 +34,10 @@ import { resetCommandPaletteInputMode, setCommandPaletteInputMode } from './inpu
 import { useRegisterRecentScopesActions, useRegisterScopesActions } from './scopes/scopeActions';
 import { type CommandPaletteAction, getActionSectionId } from './types';
 import { useMatches } from './useMatches';
-import { SECTION_NOTEBOOKS } from './values';
+import { SEARCH_RESULTS_PRIORITY, SECTION_DASHBOARDS, SECTION_FOLDERS, SECTION_NOTEBOOKS } from './values';
+
+// With plugin sections, the search sections must not push them out of view.
+const SEARCH_SECTION_LIMIT = 5;
 
 export function CommandPalette() {
   useRegisterStaticActions();
@@ -165,6 +169,7 @@ function CommandPaletteContents() {
               isFetchingSearchResults={isFetching}
               searchResults={searchResults}
               extensionSearchSections={extensionSearchSections}
+              extensionSearchEnabled={extensionSearchEnabled}
               searchQuery={searchQuery}
               hybridSearchEnabled={hybridSearchEnabled}
             />
@@ -226,7 +231,8 @@ function AncestorBreadcrumbs() {
 interface RenderResultsProps {
   isFetchingSearchResults: boolean;
   searchResults: CommandPaletteAction[];
-  extensionSearchSections: ExtensionSearchSection[];
+  extensionSearchSections: ExtensionSearchSectionState[];
+  extensionSearchEnabled: boolean;
   searchQuery: string;
   // For event reporting
   hybridSearchEnabled: boolean;
@@ -236,6 +242,7 @@ const RenderResults = ({
   isFetchingSearchResults,
   searchResults,
   extensionSearchSections,
+  extensionSearchEnabled,
   searchQuery,
   hybridSearchEnabled,
 }: RenderResultsProps) => {
@@ -271,26 +278,58 @@ const RenderResults = ({
     [searchResults]
   );
 
+  const seeAllDashboardsUrl = urlUtil.renderUrl('/dashboards', { query: searchQuery.trim() });
+  const limitedFolderItems = useMemo(
+    () =>
+      extensionSearchEnabled
+        ? limitSection(folderResultItems, {
+            id: 'see-all/folders',
+            name: t('command-palette.action.see-all-folders', 'See all folders'),
+            section: foldersSectionTitle,
+            sectionId: SECTION_FOLDERS,
+            url: seeAllDashboardsUrl,
+          })
+        : folderResultItems,
+    [extensionSearchEnabled, folderResultItems, foldersSectionTitle, seeAllDashboardsUrl]
+  );
+  const limitedDashboardItems = useMemo(
+    () =>
+      extensionSearchEnabled
+        ? limitSection(dashboardResultItems, {
+            id: 'see-all/dashboards',
+            name: t('command-palette.action.see-all-dashboards', 'See all dashboards'),
+            section: dashboardsSectionTitle,
+            sectionId: SECTION_DASHBOARDS,
+            url: seeAllDashboardsUrl,
+          })
+        : dashboardResultItems,
+    [extensionSearchEnabled, dashboardResultItems, dashboardsSectionTitle, seeAllDashboardsUrl]
+  );
+
   const extensionSearchItems = useMemo(
     () =>
       extensionSearchSections
-        .filter((section) => section.actions.length > 0)
+        .filter((section) => section.pending || section.actions.length > 0)
         .flatMap((section) => [
           section.title,
           ...section.actions.map((action) => new ActionImpl(action, { store: {} })),
         ]),
     [extensionSearchSections]
   );
+  const loadingSectionTitles = useMemo(
+    () => new Set(extensionSearchSections.filter((section) => section.pending).map((section) => section.title)),
+    [extensionSearchSections]
+  );
 
   const items = useMemo(() => {
     const results = [...kbarResults];
-    if (folderResultItems.length > 0) {
+    if (limitedFolderItems.length > 0) {
       results.push(foldersSectionTitle);
-      results.push(...folderResultItems);
+      results.push(...limitedFolderItems);
     }
-    if (dashboardResultItems.length > 0) {
+    if (limitedDashboardItems.length > 0) {
       results.push(dashboardsSectionTitle);
-      results.push(...dashboardResultItems);
+      results.push(...limitedDashboardItems);
     }
     if (notebookResultItems.length > 0) {
       results.push(notebooksSectionTitle);
@@ -301,9 +340,9 @@ const RenderResults = ({
   }, [
     kbarResults,
     dashboardsSectionTitle,
-    dashboardResultItems,
+    limitedDashboardItems,
     foldersSectionTitle,
-    folderResultItems,
+    limitedFolderItems,
     notebooksSectionTitle,
     notebookResultItems,
     extensionSearchItems,
@@ -356,8 +395,21 @@ const RenderResults = ({
     );
   }
 
+  const resultCount = items.filter((item) => typeof item !== 'string' && !item.id.startsWith('see-all/')).length;
+
   return (
     <div className={styles.resultsContainer}>
+      {extensionSearchEnabled && (
+        <div role="status" className="sr-only">
+          {!isFetchingSearchResults && searchQuery.trim() !== '' && resultCount > 0
+            ? t('command-palette.status.result-count', '', {
+                count: resultCount,
+                defaultValue_one: '{{count}} result',
+                defaultValue_other: '{{count}} results',
+              })
+            : ''}
+        </div>
+      )}
       {hasKeywordResults && (
         <KBarResults
           items={items}
@@ -376,7 +428,14 @@ const RenderResults = ({
 
             const renderedItem =
               typeof item === 'string' ? (
-                <div className={cx(styles.sectionHeader, isFirst && styles.sectionHeaderFirst)}>{item}</div>
+                <div className={cx(styles.sectionHeader, isFirst && styles.sectionHeaderFirst)}>
+                  {item}
+                  {loadingSectionTitles.has(item) && (
+                    <div data-testid="command-palette-loading-row" className={styles.loadingRow}>
+                      <Skeleton width="40%" />
+                    </div>
+                  )}
+                </div>
               ) : (
                 <ResultItem action={item} active={active} currentRootActionId={rootActionId!} />
               );
@@ -388,6 +447,19 @@ const RenderResults = ({
     </div>
   );
 };
+
+function limitSection(
+  items: ActionImpl[],
+  seeAll: { id: string; name: string; section: string; sectionId: string; url: string }
+): ActionImpl[] {
+  if (items.length <= SEARCH_SECTION_LIMIT) {
+    return items;
+  }
+  return [
+    ...items.slice(0, SEARCH_SECTION_LIMIT),
+    new ActionImpl({ ...seeAll, priority: SEARCH_RESULTS_PRIORITY }, { store: {} }),
+  ];
+}
 
 const getSearchStyles = (theme: GrafanaTheme2) => {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
@@ -452,6 +524,9 @@ const getSearchStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
       borderTop: `1px solid ${theme.colors.border.weak}`,
       marginTop: theme.spacing(1),
+    }),
+    loadingRow: css({
+      paddingTop: theme.spacing(1),
     }),
     sectionHeaderFirst: css({
       paddingBottom: theme.spacing(1),

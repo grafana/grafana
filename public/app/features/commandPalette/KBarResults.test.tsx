@@ -300,6 +300,31 @@ describe('KBarResults', () => {
     const activeRow = () => screen.getByRole('option', { selected: true });
     const action = (id: string) => createAction({ id, name: id });
 
+    it('starts on the first action when several headers precede it', () => {
+      render(<WithKBarState items={['Loading', 'Dashboards', action('dash-1')]} search="a" />);
+
+      expect(activeRow()).toHaveAccessibleName('Dashboards: dash-1');
+    });
+
+    it('skips a run of headers with the arrow keys in both directions', () => {
+      const items = [action('a'), 'Loading', 'Dashboards', action('b')];
+      render(<WithKBarState items={items} search="a" />);
+
+      fireEvent.keyDown(window, { key: 'ArrowDown' });
+      expect(activeRow()).toHaveAccessibleName('Dashboards: b');
+
+      fireEvent.keyDown(window, { key: 'ArrowUp' });
+      expect(activeRow()).toHaveAccessibleName('a');
+    });
+
+    it('stays on the last action when only headers follow it', () => {
+      render(<WithKBarState items={[action('a'), 'Loading']} search="a" />);
+
+      fireEvent.keyDown(window, { key: 'ArrowDown' });
+
+      expect(activeRow()).toHaveAccessibleName('a');
+    });
+
     it('does not carry the highlight to a plugin result that is pushed down by dashboard results arriving later', () => {
       const [dash1, dash2, plugin1] = [action('dash-1'), action('dash-2'), action('plugin-1')];
       // Typing, the plugin's answer to the previous query is all that is on screen, so its result is the top row.
