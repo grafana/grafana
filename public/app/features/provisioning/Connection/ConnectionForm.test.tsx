@@ -172,11 +172,11 @@ describe('ConnectionForm', () => {
       expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     });
 
-    it('does not render Reauthorize, which would persist form edits', async () => {
+    it('offers Reauthorize, which authorizes without writing the spec', async () => {
       setup({ data: disconnectedOAuthConnection({ [AnnoKeyManagerKind]: ManagerKind.Terraform }) });
       await awaitSettingsLoaded();
 
-      expect(screen.queryByRole('button', { name: /reauthorize/i })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /reauthorize/i })).toBeInTheDocument();
     });
 
     it('offers Reauthorize for an unmanaged disconnected connection', async () => {
@@ -450,6 +450,24 @@ describe('ConnectionForm', () => {
         secure: { clientSecret: { name: 'configured' } },
       });
 
+    const createDisconnectedOAuthConnection = (): Connection => ({
+      ...createOAuthConnection(),
+      status: {
+        health: { healthy: false },
+        observedGeneration: 1,
+        conditions: [
+          {
+            type: 'Ready',
+            status: 'False',
+            reason: 'Rejected',
+            message: 'The provider rejected this connection.',
+            lastTransitionTime: new Date().toISOString(),
+            observedGeneration: 1,
+          },
+        ],
+      },
+    });
+
     beforeEach(() => {
       server.use(http.get(`${BASE}/settings`, () => HttpResponse.json({ availableConnectionTypes: ['gitlabOAuth'] })));
     });
@@ -518,6 +536,38 @@ describe('ConnectionForm', () => {
         expect(tab.close).toHaveBeenCalled();
         expect(screen.queryByText('Connecting')).not.toBeInTheDocument();
         expect(screen.getByRole('button', { name: /^save$/i })).toBeEnabled();
+      } finally {
+        openSpy.mockRestore();
+      }
+    });
+
+    it('reauthorizes from the stored configuration, ignoring form edits and writing no spec', async () => {
+      const tab = { closed: false, close: jest.fn(), location: { href: '' }, opener: {} };
+      // Window mock is intentionally partial; the hook only touches these fields.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const openSpy = jest.spyOn(window, 'open').mockReturnValue(tab as unknown as Window);
+
+      try {
+        let putCount = 0;
+        server.use(
+          http.put(`${BASE}/connections/:name`, () => {
+            putCount++;
+            return HttpResponse.json({});
+          })
+        );
+
+        const { user } = setup({ data: createDisconnectedOAuthConnection() });
+
+        const clientIDInput = await screen.findByLabelText(/^Application ID/);
+        await user.clear(clientIDInput);
+        await user.type(clientIDInput, 'typed-client');
+
+        await user.click(screen.getByRole('button', { name: /reauthorize/i }));
+
+        expect(await screen.findByText('Connecting')).toBeInTheDocument();
+        expect(tab.location.href).toContain('client_id=old-client');
+        expect(tab.location.href).not.toContain('typed-client');
+        expect(putCount).toBe(0);
       } finally {
         openSpy.mockRestore();
       }
