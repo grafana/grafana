@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
 func TestResolvePermissionsSecureValueScopes(t *testing.T) {
@@ -21,9 +22,11 @@ func TestResolvePermissionsSecureValueScopes(t *testing.T) {
 			{"wildcard", &authzv1.ListResponse{All: true}, "secret.securevalues:*"},
 		} {
 			t.Run(action+"/"+tc.name, func(t *testing.T) {
+				entries := common.TranslateActionToListParams(action)
+				require.Len(t, entries, 1)
 				for _, filter := range []string{"", "secret.securevalues:uid:personal-one"} {
 					permissions, err := ResolvePermissions(context.Background(), filter, []PermissionList{{
-						Resource: "securevalues", Action: action, List: tc.list,
+						Entry: entries[0], List: tc.list,
 					}})
 					require.NoError(t, err)
 					require.Equal(t, []ac.Permission{{Action: action, Scope: tc.want}}, permissions)

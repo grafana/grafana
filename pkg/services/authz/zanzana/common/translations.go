@@ -1,10 +1,12 @@
 package common
 
 import (
+	"cmp"
 	"slices"
 	"sort"
 
 	authlib "github.com/grafana/authlib/types"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	annotationv0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -12,6 +14,7 @@ import (
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 )
 
 const (
@@ -68,6 +71,8 @@ func newScopedMapping(relation, group, resource, subresource string) actionMappi
 }
 
 var (
+	secureValues = secretv1beta1.SecureValuesResourceInfo.GroupResource()
+
 	folderGroup    = folders.FolderResourceInfo.GroupResource().Group
 	folderResource = folders.FolderResourceInfo.GroupResource().Resource
 
@@ -88,11 +93,18 @@ var (
 // annotationsSubresource is the subresource for dashboard-scoped annotations.
 const annotationsSubresource = "annotations"
 
+const secureValueScopeKind = "secret.securevalues"
+
+// A List mapping can redirect to another resource, so scope names belong to the destination.
+var legacyScopeKinds = map[schema.GroupResource]string{
+	secureValues: secureValueScopeKind,
+}
+
 var resourceTranslations = map[string]resourceTranslation{
-	"secret.securevalues": {
+	secureValueScopeKind: {
 		typ:      TypeResource,
-		group:    "secret.grafana.app",
-		resource: "securevalues",
+		group:    secureValues.Group,
+		resource: secureValues.Resource,
 		mapping: map[string]actionMapping{
 			"secret.securevalues:view":              newMapping(RelationSetView, ""),
 			"secret.securevalues:edit":              newMapping(RelationSetEdit, ""),
@@ -371,14 +383,18 @@ type ActionListEntry struct {
 	Resource    string
 	Subresource string
 	Verb        string
+	// LegacyScopeKind is the default scope prefix for items returned by List.
+	LegacyScopeKind string
 }
 
 // supportedActions is the memoized result of building the action list from
 // resourceTranslations. The translation table is constant at runtime, so this
 // slice can be computed once and reused.
-var supportedActions = func() []ActionListEntry {
-	translationTypes := make([]string, 0, len(resourceTranslations))
-	for typ := range resourceTranslations {
+var supportedActions = buildSupportedActions(resourceTranslations)
+
+func buildSupportedActions(translations map[string]resourceTranslation) []ActionListEntry {
+	translationTypes := make([]string, 0, len(translations))
+	for typ := range translations {
 		translationTypes = append(translationTypes, typ)
 	}
 	sort.Strings(translationTypes)
@@ -386,7 +402,7 @@ var supportedActions = func() []ActionListEntry {
 	var out []ActionListEntry
 	seen := make(map[ActionListEntry]struct{})
 	for _, typ := range translationTypes {
-		translation := resourceTranslations[typ]
+		translation := translations[typ]
 
 		actions := make([]string, 0, len(translation.mapping))
 		for action := range translation.mapping {
@@ -400,12 +416,14 @@ var supportedActions = func() []ActionListEntry {
 				continue
 			}
 
+			listedResource := schema.GroupResource{Group: group, Resource: resource}
 			entry := ActionListEntry{
-				Action:      action,
-				Group:       group,
-				Resource:    resource,
-				Subresource: subresource,
-				Verb:        verb,
+				Action:          action,
+				Group:           group,
+				Resource:        resource,
+				Subresource:     subresource,
+				Verb:            verb,
+				LegacyScopeKind: cmp.Or(legacyScopeKinds[listedResource], resource),
 			}
 			if _, ok := seen[entry]; ok {
 				continue
@@ -415,7 +433,7 @@ var supportedActions = func() []ActionListEntry {
 		}
 	}
 	return out
-}()
+}
 
 // SupportedActions returns the distinct List mappings derived from the translation table.
 // An action may have multiple entries when it applies to different resources.

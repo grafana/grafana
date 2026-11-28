@@ -28,10 +28,7 @@ const (
 	permissionPrincipalLoadTimeout = 10 * time.Second
 )
 
-type permissionListResult struct {
-	Entry common.ActionListEntry
-	List  *authzv1.ListResponse
-}
+type permissionListResult = legacyscopes.PermissionList
 
 type principalGrants struct {
 	grants       []permissionListResult
@@ -119,12 +116,7 @@ func (s *Server) resolveUserPermissions(ctx context.Context, req *authzv1.GetUse
 		grantLists = append(grantLists, role.grants)
 	}
 
-	results := mergePrincipalGrants(grantLists)
-	lists := make([]legacyscopes.PermissionList, 0, len(results))
-	for _, result := range results {
-		lists = append(lists, legacyscopes.PermissionList{Resource: result.Entry.Resource, Action: result.Entry.Action, List: result.List})
-	}
-	permissions, err := legacyscopes.ResolvePermissions(ctx, "", lists)
+	permissions, err := legacyscopes.ResolvePermissions(ctx, "", mergePrincipalGrants(grantLists))
 	if err != nil {
 		return nil, err
 	}

@@ -6,21 +6,19 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
 // Formatter expresses grant locations as UID scopes without IAM lookups.
 type Formatter struct{}
 
-// resourceScope scopes an object by the resource type Zanzana listed it under
-// (e.g. "folders:uid:abc"), not by the action prefix, so permission actions like
-// "folders.permissions:read" stay scoped on "folders:uid:<uid>".
-func resourceScope(resource, name string) string {
-	return ac.Scope(resource, "uid", name)
+// A legacy kind can differ from the listed API resource, as it does for secure values.
+func resourceScope(kind, name string) string {
+	return ac.Scope(kind, "uid", name)
 }
 
-// resourceWildcardScope is the org-wide scope for the listed resource ("folders:*").
-func resourceWildcardScope(resource string) string {
-	return ac.Scope(resource, "*")
+func resourceWildcardScope(kind string) string {
+	return ac.Scope(kind, "*")
 }
 
 // folderScopeForLegacyRBAC returns a legacy RBAC scope for folder-scoped access (folders:uid:<uid>).
@@ -60,10 +58,8 @@ func userScopeKind(action string) string {
 }
 
 // Permissions formats grant locations. Numeric aliases are added by the permission loader.
-func (r Formatter) Permissions(resource, action, scope string, resp *authzv1.ListResponse) []ac.Permission {
-	if resource == "securevalues" && (strings.HasPrefix(action, "secret.securevalues:") || strings.HasPrefix(action, "secret.securevalues.permissions:")) {
-		resource = "secret.securevalues"
-	}
+func (r Formatter) Permissions(entry common.ActionListEntry, scope string, resp *authzv1.ListResponse) []ac.Permission {
+	action := entry.Action
 	permissions := []ac.Permission{}
 
 	// Build the set of scopes that satisfy the filter: the exact scope plus
@@ -91,7 +87,7 @@ func (r Formatter) Permissions(resource, action, scope string, resp *authzv1.Lis
 
 	// If All is true, the user has access to all resources of this type.
 	if resp.All {
-		if resource == "annotations" {
+		if entry.Resource == "annotations" {
 			// annotations:* would also authorize dashboard annotations.
 			appendIfMatches(ac.Permission{
 				Action: action,
@@ -109,7 +105,7 @@ func (r Formatter) Permissions(resource, action, scope string, resp *authzv1.Lis
 			}
 			appendIfMatches(ac.Permission{
 				Action: action,
-				Scope:  resourceWildcardScope(resource),
+				Scope:  resourceWildcardScope(entry.LegacyScopeKind),
 			})
 			// Generic dashboard list grants org-wide dashboard access; legacy RBAC also records
 			// folder wildcard for the same action (see SearchUsersPermissions / Reduce).
@@ -117,8 +113,8 @@ func (r Formatter) Permissions(resource, action, scope string, resp *authzv1.Lis
 				Action: action,
 				Scope:  ac.Scope("folders", "*"),
 			})
-		} else if resource == "dashboards" && strings.HasPrefix(action, "annotations:") {
-			appendIfMatches(ac.Permission{Action: action, Scope: resourceWildcardScope(resource)})
+		} else if entry.Resource == "dashboards" && strings.HasPrefix(action, "annotations:") {
+			appendIfMatches(ac.Permission{Action: action, Scope: resourceWildcardScope(entry.LegacyScopeKind)})
 			// Legacy annotation grants use folders:* for access across all dashboards.
 			appendIfMatches(ac.Permission{Action: action, Scope: ac.Scope("folders", "*")})
 		} else if isTeamRBACAction(action) {
@@ -134,13 +130,13 @@ func (r Formatter) Permissions(resource, action, scope string, resp *authzv1.Lis
 		} else {
 			appendIfMatches(ac.Permission{
 				Action: action,
-				Scope:  resourceWildcardScope(resource),
+				Scope:  resourceWildcardScope(entry.LegacyScopeKind),
 			})
 		}
 	}
 
 	for _, item := range resp.Items {
-		kind := resource
+		kind := entry.LegacyScopeKind
 		if isUserRBACAction(action) {
 			kind = userScopeKind(action)
 		}

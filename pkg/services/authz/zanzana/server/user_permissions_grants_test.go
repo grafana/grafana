@@ -189,7 +189,7 @@ func formatPermissionLists(results []permissionListResult) []accesscontrol.Permi
 	formatter := legacyscopes.Formatter{}
 	permissions := make([]accesscontrol.Permission, 0, len(results))
 	for _, result := range results {
-		permissions = append(permissions, formatter.Permissions(result.Entry.Resource, result.Entry.Action, "", result.List)...)
+		permissions = append(permissions, formatter.Permissions(result.Entry, "", result.List)...)
 	}
 	return permissions
 }

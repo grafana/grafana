@@ -120,7 +120,7 @@ func (r *ZanzanaPermissionResolver) searchPermissionsForIdentity(ctx context.Con
 		for _, entry := range common.TranslateActionToListParams(options.Action) {
 			// Per-user search resolves another identity's permissions; their request-time
 			// contextual team membership isn't available here, so no teams are passed.
-			perms, err := r.listPermissions(ctx, namespace, subject, nil, entry.Group, entry.Resource, entry.Subresource, entry.Verb, options.Action, options.Scope)
+			perms, err := r.listPermissions(ctx, namespace, subject, nil, entry, options.Scope)
 			if err != nil {
 				return nil, err
 			}
@@ -229,14 +229,14 @@ func (r *ZanzanaPermissionResolver) searchAllUsers(ctx context.Context, signedIn
 func isDashboardRBACAction(action string) bool { return strings.HasPrefix(action, "dashboards:") }
 
 // listPermissions lists permissions for a subject on a given group/resource
-func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespace, subject string, teams []string, group, resource, subresource, verb, action, scope string) ([]ac.Permission, error) {
+func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespace, subject string, teams []string, entry common.ActionListEntry, scope string) ([]ac.Permission, error) {
 	req := &authzv1.ListRequest{
 		Namespace:   namespace,
 		Subject:     subject,
-		Group:       group,
-		Verb:        verb,
-		Resource:    resource,
-		Subresource: subresource,
+		Group:       entry.Group,
+		Verb:        entry.Verb,
+		Resource:    entry.Resource,
+		Subresource: entry.Subresource,
 		Teams:       teams,
 	}
 
@@ -246,11 +246,11 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 	}
 
 	formatScope := scope
-	switch resource {
+	switch entry.Resource {
 	case "users", "teams", "serviceaccounts":
 		formatScope = ""
 	}
-	permissions := (legacyscopes.Formatter{}).Permissions(resource, action, formatScope, resp)
+	permissions := (legacyscopes.Formatter{}).Permissions(entry, formatScope, resp)
 	return legacyscopes.WithAliases(ctx, namespace, scope, r.scopeResolver, permissions)
 }
 
@@ -258,7 +258,7 @@ func (r *ZanzanaPermissionResolver) listAllWithPrefix(ctx context.Context, names
 	var permissions []ac.Permission
 	for _, entry := range common.SupportedActions() {
 		if strings.HasPrefix(entry.Action, prefix) {
-			perms, err := r.listPermissions(ctx, namespace, subject, teams, entry.Group, entry.Resource, entry.Subresource, entry.Verb, entry.Action, scope)
+			perms, err := r.listPermissions(ctx, namespace, subject, teams, entry, scope)
 			if err != nil {
 				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 					return nil, err

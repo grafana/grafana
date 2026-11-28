@@ -12,7 +12,7 @@ func TestTranslateActionToListParams_UsesDeterministicMapping(t *testing.T) {
 	expectedResource := dashboards.DashboardResourceInfo.GroupResource().Resource
 
 	for range 20 {
-		require.Equal(t, []ActionListEntry{{Action: "dashboards:read", Group: expectedGroup, Resource: expectedResource, Verb: "get"}}, TranslateActionToListParams("dashboards:read"))
+		require.Equal(t, []ActionListEntry{{Action: "dashboards:read", Group: expectedGroup, Resource: expectedResource, LegacyScopeKind: expectedResource, Verb: "get"}}, TranslateActionToListParams("dashboards:read"))
 	}
 }
 
@@ -62,10 +62,57 @@ func TestTranslateActionToListParams_AnnotationResources(t *testing.T) {
 	for action, verb := range map[string]string{"annotations:read": "get", "annotations:create": "create", "annotations:write": "update", "annotations:delete": "delete"} {
 		t.Run(action, func(t *testing.T) {
 			require.Equal(t, []ActionListEntry{
-				{Action: action, Group: "annotation.grafana.app", Resource: "annotations", Verb: verb},
-				{Action: action, Group: "dashboard.grafana.app", Resource: "dashboards", Subresource: "annotations", Verb: verb},
+				{Action: action, Group: "annotation.grafana.app", Resource: "annotations", LegacyScopeKind: "annotations", Verb: verb},
+				{Action: action, Group: "dashboard.grafana.app", Resource: "dashboards", LegacyScopeKind: "dashboards", Subresource: "annotations", Verb: verb},
 			}, TranslateActionToListParams(action))
 		})
 	}
 	require.Empty(t, TranslateActionToListParams("unknown:action"))
+}
+
+func TestActionListEntryLegacyScopeKind(t *testing.T) {
+	for _, tc := range []struct {
+		action, resource, kind string
+	}{
+		{"secret.securevalues:read", "securevalues", "secret.securevalues"},
+		{"secret.securevalues.permissions:read", "securevalues", "secret.securevalues"},
+		{"secret.securevalues.permissions:write", "securevalues", "secret.securevalues"},
+		{"folders.permissions:read", "folders", "folders"},
+		{"dashboards:read", "dashboards", "dashboards"},
+		// Inherited notebook actions must retain notebook scopes.
+		{"notebooks:read", "notebooks", "notebooks"},
+		{"datasources.caching:read", "datasources", "datasources"},
+	} {
+		t.Run(tc.action, func(t *testing.T) {
+			entries := TranslateActionToListParams(tc.action)
+			require.Len(t, entries, 1)
+			entry := entries[0]
+			require.Equal(t, tc.resource, entry.Resource)
+			require.Equal(t, tc.kind, entry.LegacyScopeKind)
+			require.Contains(t, SupportedActions(), entry)
+		})
+	}
+}
+
+func TestSupportedActionsUseListedResourceScopeKind(t *testing.T) {
+	const secretRead = "secret.securevalues:read"
+	const folderRead = "folders:read"
+	secret := resourceTranslations["secret.securevalues"]
+	folder := resourceTranslations[KindFolders]
+	secret.mapping = map[string]actionMapping{
+		secretRead:   newMapping(RelationGet, ""),
+		folderRead:   newScopedMapping(RelationGet, folder.group, folder.resource, ""),
+		"other:read": newScopedMapping(RelationGet, "other.example", secret.resource, ""),
+	}
+	folder.mapping = map[string]actionMapping{
+		folderRead: newMapping(RelationGet, ""),
+		secretRead: newScopedMapping(RelationGet, secret.group, secret.resource, ""),
+	}
+
+	entries := buildSupportedActions(map[string]resourceTranslation{KindFolders: folder, "secret.securevalues": secret})
+	require.ElementsMatch(t, []ActionListEntry{
+		{Action: secretRead, Group: secret.group, Resource: "securevalues", Verb: "get", LegacyScopeKind: "secret.securevalues"},
+		{Action: folderRead, Group: folder.group, Resource: "folders", Verb: "get", LegacyScopeKind: "folders"},
+		{Action: "other:read", Group: "other.example", Resource: "securevalues", Verb: "get", LegacyScopeKind: "securevalues"},
+	}, entries)
 }
