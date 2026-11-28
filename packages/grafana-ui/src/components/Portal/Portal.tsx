@@ -42,6 +42,20 @@ export function Portal(props: PropsWithChildren<Props>) {
 }
 
 /**
+ * The element of the Portal this component renders in, or null outside one (and on that Portal's first render).
+ * @internal
+ */
+export function useParentPortal() {
+  return useContext(PortalContext);
+}
+
+/**
+ * Makes the Portals inside render into `value`, as they do inside a Portal.
+ * @internal
+ */
+export const ParentPortalProvider = PortalContext.Provider;
+
+/**
  * Returns the container element Grafana renders overlays into (tooltips, menus, modals).
  * Content rendered into this container coexists with an open Modal: it is treated as
  * inside the modal for focus management and pressing it does not dismiss the modal.
