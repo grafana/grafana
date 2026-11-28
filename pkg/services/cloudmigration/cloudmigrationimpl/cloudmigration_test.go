@@ -2,6 +2,8 @@ package cloudmigrationimpl
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"maps"
 	"os"
@@ -87,6 +89,38 @@ func Test_CreateGetAndDeleteToken(t *testing.T) {
 	cm := cloudmigration.CloudMigrationSession{}
 	err = s.ValidateToken(context.Background(), cm)
 	assert.NoError(t, err)
+}
+
+func Test_CreateTokenRoutesToGMS(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name  string
+		label string
+		want  string
+	}{
+		{name: "no regional label keeps the cluster slug", label: "", want: "fake-cluser"},
+		{name: "regional label is appended to the cluster slug", label: "azure-0", want: "fake-cluser.azure-0"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			s := setUpServiceTest(t, func(c *setting.Cfg) {
+				c.CloudMigration.GMSRegionalLabel = tc.label
+			})
+
+			resp, err := s.CreateToken(t.Context())
+			require.NoError(t, err)
+
+			raw, err := base64.StdEncoding.DecodeString(resp.Token)
+			require.NoError(t, err)
+			var payload cloudmigration.Base64EncodedTokenPayload
+			require.NoError(t, json.Unmarshal(raw, &payload))
+
+			assert.Equal(t, tc.want, payload.Instance.ClusterSlug)
+			assert.Equal(t, "fake-region", payload.Instance.RegionSlug)
+		})
+	}
 }
 
 func Test_GetSnapshotStatusFromGMS(t *testing.T) {

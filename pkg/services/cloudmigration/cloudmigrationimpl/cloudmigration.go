@@ -321,7 +321,7 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 		Instance: cloudmigration.Base64HGInstance{
 			StackID:     instance.ID,
 			RegionSlug:  instance.RegionSlug,
-			ClusterSlug: instance.ClusterSlug, // This should be used for routing to GMS
+			ClusterSlug: gmsRoutingSlug(instance.ClusterSlug, s.cfg.CloudMigration.GMSRegionalLabel),
 			Slug:        instance.Slug,
 		},
 	})
@@ -330,6 +330,15 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 	}
 
 	return cloudmigration.CreateAccessTokenResponse{Token: base64.StdEncoding.EncodeToString(bytes)}, nil
+}
+
+// gmsRoutingSlug returns the value the migrating Grafana uses to route to GMS: it builds
+// cms-<slug>.<domain> from it.
+func gmsRoutingSlug(clusterSlug, regionalLabel string) string {
+	if regionalLabel == "" {
+		return clusterSlug
+	}
+	return clusterSlug + "." + regionalLabel
 }
 
 func (s *Service) findAccessPolicyByName(ctx context.Context, accessPolicyName string, region string) (*authapi.AccessPolicy, error) {

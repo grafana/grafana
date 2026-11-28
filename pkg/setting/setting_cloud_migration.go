@@ -18,6 +18,7 @@ type CloudMigrationSettings struct {
 	AuthAPIUrl                  string
 	SnapshotFolder              string
 	GMSDomain                   string
+	GMSRegionalLabel            string
 	AlertRulesState             string
 	ResourceStorageType         string
 	EncryptionAlgo              string
@@ -49,6 +50,7 @@ func (cfg *Cfg) readCloudMigrationSettings() {
 	cfg.CloudMigration.AuthAPIUrl = cloudMigration.Key("auth_api_url").MustString("")
 	cfg.CloudMigration.SnapshotFolder = cloudMigration.Key("snapshot_folder").MustString("")
 	cfg.CloudMigration.GMSDomain = cloudMigration.Key("domain").MustString("")
+	cfg.CloudMigration.GMSRegionalLabel = cloudMigration.Key("gms_regional_label").MustString("")
 	cfg.CloudMigration.AlertRulesState = cloudMigration.Key("alert_rules_state").In(GMSAlertRulesPaused, []string{GMSAlertRulesPaused, GMSAlertRulesUnchanged})
 	cfg.CloudMigration.ResourceStorageType = cloudMigration.Key("resource_storage_type").In("db", []string{"db", "fs"})
 	cfg.CloudMigration.EncryptionAlgo = cloudMigration.Key("encryption_algo").MustString("nacl")
