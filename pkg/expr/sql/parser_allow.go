@@ -235,7 +235,7 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 	// Aggregation functions
 	case "sum", "avg", "count", "min", "max":
 		return
-	case "stddev", "std", "stddev_pop", "stddev_sample":
+	case "stddev", "std", "stddev_pop", "stddev_samp":
 		return
 	case "variance", "var_pop", "var_samp":
 		return
