@@ -38,3 +38,8 @@ export function feedToDataFrame(feed: Feed): DataFrame {
     length: date.length,
   };
 }
+
+export function getProperty(node: Element, property: string): string {
+  const propNode = node.querySelector(property);
+  return propNode?.textContent ?? '';
+}
