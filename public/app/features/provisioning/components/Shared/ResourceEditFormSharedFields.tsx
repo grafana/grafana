@@ -4,12 +4,14 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { type KindInfo } from '@grafana/runtime/unstable';
 import { Combobox, Field, Input, TextArea } from '@grafana/ui';
 import {
   type RepositoryView,
   useGetRepositoryRefsQuery,
   useLazyGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
 import { stripSlashes, validateBranchName } from 'app/features/provisioning/utils/git';
 import { isGitProvider } from 'app/features/provisioning/utils/repositoryTypes';
@@ -19,14 +21,14 @@ import { useGetRepositoryFolders } from '../../hooks/useGetRepositoryFolders';
 import { useLastBranch } from '../../hooks/useLastBranch';
 import { usePRBranch } from '../../hooks/usePRBranch';
 import { type BaseProvisionedFormData } from '../../types/form';
-import { type ResourceKindKey } from '../../utils/resourceKinds';
+import { isSameKind } from '../../utils/resourceKinds';
 import { isKnownRef } from '../../utils/workflow';
 import { joinPath, splitPath } from '../utils/path';
 
 type SharedFieldName = 'path' | 'comment';
 
 interface DashboardEditFormSharedFieldsProps {
-  resourceType: ResourceKindKey;
+  kind: KindInfo;
   canPushToConfiguredBranch: boolean;
   isNew?: boolean;
   readOnly?: boolean;
@@ -47,7 +49,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
     canPushToConfiguredBranch,
     repository,
     isNew,
-    resourceType,
+    kind,
     hiddenFields,
     allowPathEdit,
     lockComment = false,
@@ -83,9 +85,9 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       [checkFile, repository?.name, watch]
     );
 
-    // New resources with an editable path (dashboards, playlists) get a path-exists check so a
-    // duplicate path is caught before submit rather than only by the API.
-    const shouldValidatePath = isNew && (resourceType === 'dashboard' || resourceType === 'playlist');
+    // A new resource with an editable path gets a path-exists check, so a duplicate path is caught
+    // before submit rather than only by the API.
+    const shouldValidatePath = isNew && !hiddenFields?.includes('path');
 
     const canPushToNonConfiguredBranch = repository?.workflows?.includes('branch');
     const canOnlyPushToConfiguredBranch = canPushToConfiguredBranch && !canPushToNonConfiguredBranch;
@@ -113,7 +115,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       canPushToNonConfiguredBranch,
     });
 
-    const showFolderFilename = (isNew || allowPathEdit) && resourceType === 'dashboard';
+    const showFolderFilename = (isNew || allowPathEdit) && isSameKind(kind, CORE_KINDS.dashboard);
     const configuredRepoPath = isGitProvider(repository?.type) ? stripSlashes(repository?.path ?? '') : undefined;
 
     // A new branch only exists after the save creates it; until the selected branch is a known
@@ -126,16 +128,15 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       ref: selectedBranchExists ? selectedBranch : undefined,
     });
 
-    const pathText =
-      resourceType === 'folder'
-        ? t(
-            'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder-path',
-            'Folder path inside the repository'
-          )
-        : t(
-            'provisioned-resource-form.save-or-delete-resource-shared-fields.description-file-path',
-            'File path inside the repository (.json or .yaml)'
-          );
+    const pathText = isSameKind(kind, CORE_KINDS.folder)
+      ? t(
+          'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder-path',
+          'Folder path inside the repository'
+        )
+      : t(
+          'provisioned-resource-form.save-or-delete-resource-shared-fields.description-file-path',
+          'File path inside the repository (.json or .yaml)'
+        );
 
     return (
       <>

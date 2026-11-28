@@ -1,11 +1,11 @@
 import { urlUtil } from '@grafana/data';
 import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
+import { CORE_KINDS, findKindByResource } from 'app/core/kinds/coreKinds';
 
 import { splitPath } from '../components/utils/path';
 import { FOLDER_METADATA_FILE } from '../constants';
 
 import { FOLDER_DOC_TAB_PARAM, isMarkdownFile } from './folderDocConventions';
-import { getKindInfoByResource, resourceKindInfos } from './resourceKinds';
 
 /**
  * Builds a resolver that maps a repo file/directory path to the in-app Grafana
@@ -60,7 +60,7 @@ export function createGrafanaLinkResolver(
       return undefined;
     }
 
-    return getKindInfoByResource(resource.resource)?.getRoute?.(resource.name);
+    return findKindByResource(resource.group, resource.resource)?.getRoute?.(resource.name);
   };
 }
 
@@ -74,11 +74,11 @@ function resolveMarkdownDocRoute(byPath: Map<string, ResourceListItem>, path: st
   const { directory, filename } = splitPath(path);
 
   const folder = byPath.get(directory);
-  if (folder?.resource !== resourceKindInfos.folder.resource || !folder.name) {
+  if (!folder?.name || findKindByResource(folder.group, folder.resource) !== CORE_KINDS.folder) {
     return undefined;
   }
 
-  return urlUtil.renderUrl(resourceKindInfos.folder.getRoute(folder.name), { [FOLDER_DOC_TAB_PARAM]: filename });
+  return urlUtil.renderUrl(CORE_KINDS.folder.getRoute(folder.name), { [FOLDER_DOC_TAB_PARAM]: filename });
 }
 
 function joinRepoPath(prefix: string | undefined, path: string): string {

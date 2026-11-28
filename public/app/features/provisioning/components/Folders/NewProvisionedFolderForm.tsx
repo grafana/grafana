@@ -24,6 +24,7 @@ import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
+import { getKindKey } from '../../utils/resourceKinds';
 import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -63,7 +64,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
   const title = watch('title');
   const templateVars: CommitTemplateVars = {
     action: 'create',
-    resourceKind: 'folder',
+    resourceKind: getKindKey(CORE_KINDS.folder),
     resourceID: '',
     title: title ?? '',
     ...getCurrentCommitUser(),
@@ -152,7 +153,6 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     folderUID: folder?.metadata.name ?? GENERAL_FOLDER_UID,
     isNewBranch,
     repository,
-    resourceType: 'folder',
     handlers: {
       onDismiss,
       onBranchSuccess,
@@ -246,7 +246,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
           )}
 
           <ResourceEditFormSharedFields
-            resourceType="folder"
+            kind={CORE_KINDS.folder}
             isNew
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}

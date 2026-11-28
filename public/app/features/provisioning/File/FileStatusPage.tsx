@@ -20,6 +20,7 @@ import { PROVISIONING_PREVIEW_URL } from '../constants';
 import { useGetResourceRepositoryView } from '../hooks/useGetResourceRepositoryView';
 import { usePRBranch } from '../hooks/usePRBranch';
 import { getFileHistoryUrl, getFileStatusUrl } from '../utils/repository';
+import { findKindOf } from '../utils/resourceKinds';
 
 enum TabSelection {
   File = 'file',
@@ -74,7 +75,7 @@ interface Props {
 }
 
 function ResourceView({ wrap, repo, repoRef, tab, isReadOnlyRepo }: Props) {
-  const isDashboard = wrap.resource?.type?.kind === CORE_KINDS.dashboard.kind;
+  const isDashboard = findKindOf(wrap.resource?.type) === CORE_KINDS.dashboard;
   const existingName = wrap.resource?.existing?.metadata?.name;
   const location = useLocation();
   const [queryParams] = useQueryParams();

@@ -6,6 +6,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { Button, Field, Input, Stack } from '@grafana/ui';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, useReplaceRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { useUrlParams } from 'app/core/navigation/hooks';
 import { type FolderDTO } from 'app/types/folders';
 import { useDispatch } from 'app/types/store';
@@ -19,6 +20,7 @@ import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../
 import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
+import { getKindKey } from '../../utils/resourceKinds';
 import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -50,7 +52,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
   const title = watch('title');
   const templateVars: CommitTemplateVars = {
     action: 'rename',
-    resourceKind: 'folder',
+    resourceKind: getKindKey(CORE_KINDS.folder),
     resourceID: folder.uid,
     title: title ?? '',
     ...getCurrentCommitUser(),
@@ -114,7 +116,6 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
 
   const { handleSuccess } = useProvisionedRequestHandler({
     isNewBranch,
-    resourceType: 'folder',
     folderUID: folder.uid,
     repository,
     successMessage: t(
@@ -182,7 +183,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
           </Field>
 
           <ResourceEditFormSharedFields
-            resourceType="folder"
+            kind={CORE_KINDS.folder}
             isNew={false}
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}

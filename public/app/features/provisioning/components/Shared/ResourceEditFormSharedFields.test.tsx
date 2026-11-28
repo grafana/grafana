@@ -3,15 +3,19 @@ import { type ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { render, renderHook, screen, waitFor } from 'test/test-utils';
 
+import { type KindInfo } from '@grafana/runtime/unstable';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 
 import { useBranchDropdownOptions } from '../../hooks/useBranchDropdownOptions';
 import { useGetRepositoryFolders } from '../../hooks/useGetRepositoryFolders';
+import { pluginKind } from '../../mocks/factories';
 import { setupProvisioningMswServer } from '../../mocks/server';
 import { type ProvisionedDashboardFormData } from '../../types/form';
+import { resourceKindInfos } from '../../utils/resourceKinds';
 
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 
@@ -59,6 +63,7 @@ interface SetupOptions {
   allowPathEdit?: boolean;
   lockComment?: boolean;
   commitMessage?: string;
+  kind?: KindInfo;
 }
 
 function setup(options: SetupOptions = {}) {
@@ -71,6 +76,7 @@ function setup(options: SetupOptions = {}) {
     allowPathEdit,
     lockComment,
     commitMessage,
+    kind = CORE_KINDS.dashboard,
   } = options;
 
   const defaultFormValues: Partial<ProvisionedDashboardFormData> = {
@@ -100,7 +106,7 @@ function setup(options: SetupOptions = {}) {
 
   return render(
     <FormWrapper>
-      <ResourceEditFormSharedFields {...componentProps} resourceType="dashboard" />
+      <ResourceEditFormSharedFields {...componentProps} kind={kind} />
     </FormWrapper>
   );
 }
@@ -149,7 +155,7 @@ describe('ResourceEditFormSharedFields', () => {
     });
 
     it('should make comment field readonly but not disabled when lockComment is true', () => {
-      const commitMessage = 'feat(dashboards): update My dashboard';
+      const commitMessage = 'feat(Dashboards): update My dashboard';
       setup({ lockComment: true, commitMessage });
 
       const commentTextarea = screen.getByRole('textbox', { name: /comment/i });
@@ -260,6 +266,13 @@ describe('ResourceEditFormSharedFields', () => {
       expect(filenameInput).toHaveValue('test.json');
     });
 
+    it('should render folder and filename fields for the provisioning copy of the dashboard kind', () => {
+      setup({ isNew: true, kind: resourceKindInfos.dashboard });
+
+      expect(screen.getByRole('textbox', { name: /filename/i })).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: /folder/i })).toBeInTheDocument();
+    });
+
     it.each([
       [mockRepo.github, 'Folder inside the repository. Leave empty for the repository root.'],
       [
@@ -360,7 +373,7 @@ describe('ResourceEditFormSharedFields', () => {
 
         return (
           <FormProvider {...methods}>
-            <ResourceEditFormSharedFields canPushToConfiguredBranch={true} isNew={true} resourceType="dashboard" />
+            <ResourceEditFormSharedFields canPushToConfiguredBranch={true} isNew={true} kind={CORE_KINDS.dashboard} />
           </FormProvider>
         );
       };
@@ -389,7 +402,7 @@ describe('ResourceEditFormSharedFields', () => {
 
         return (
           <FormProvider {...methods}>
-            <ResourceEditFormSharedFields canPushToConfiguredBranch={true} isNew={true} resourceType="dashboard" />
+            <ResourceEditFormSharedFields canPushToConfiguredBranch={true} isNew={true} kind={CORE_KINDS.dashboard} />
           </FormProvider>
         );
       };
@@ -442,7 +455,7 @@ describe('ResourceEditFormSharedFields', () => {
               <ResourceEditFormSharedFields
                 canPushToConfiguredBranch={false}
                 repository={{ ...mockRepo.github, branch: 'main' }}
-                resourceType="dashboard"
+                kind={CORE_KINDS.dashboard}
               />
               <button type="submit">Submit</button>
             </form>
@@ -496,6 +509,16 @@ describe('ResourceEditFormSharedFields', () => {
       await waitFor(() => {
         expect(screen.getByText('A file with this name already exists at this path')).toBeInTheDocument();
       });
+    });
+
+    it('should show error when a new resource of a plugin kind has a path that already exists', async () => {
+      server.use(http.get(`${BASE}/repositories/:name/files/*`, () => HttpResponse.json({ path: 'existing.json' })));
+
+      const { user } = setup({ isNew: true, kind: pluginKind, repository: mockRepo.github });
+
+      await user.type(screen.getByRole('textbox', { name: /Path/ }), 'things/existing.json');
+
+      expect(await screen.findByText('A file with this name already exists at this path')).toBeInTheDocument();
     });
 
     it('should not show error when file does not exist (404)', async () => {

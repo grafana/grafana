@@ -25,10 +25,10 @@ import {
   useGetRepositoryResourcesQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { findKindByResource } from 'app/core/kinds/coreKinds';
 
 import { type FlatTreeItem, type TreeItem } from '../types';
 import { getRepoFileUrl, getRepoHrefForProvider } from '../utils/git';
-import { getKindInfoByKind, getKindInfoByResource } from '../utils/resourceKinds';
 import {
   buildTree,
   filterByStatusAndResources,
@@ -36,6 +36,7 @@ import {
   flattenTree,
   getIconName,
   getStatusCategory,
+  getTypeLabel,
   type StatusCategory,
   mergeFilesAndResources,
 } from '../utils/treeUtils';
@@ -48,7 +49,7 @@ type TreeCell<T extends keyof FlatTreeItem = keyof FlatTreeItem> = CellProps<Fla
 
 function getGrafanaLink(item: TreeItem) {
   if (item.resourceName) {
-    return getKindInfoByKind(item.type)?.getRoute?.(item.resourceName);
+    return item.kind?.getRoute?.(item.resourceName);
   }
   return undefined;
 }
@@ -81,9 +82,11 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   );
 
   const resourceFilterOptions: Array<ComboboxOption<string>> = useMemo(() => {
-    const resources = new Set(resourcesQuery.data?.items?.map((item) => item.resource));
-    return Array.from(resources, (value) => ({
-      label: getKindInfoByResource(value)?.getPluralLabel() ?? value,
+    // The filter and its URL param go by the plural alone, so kinds that share a plural across
+    // groups share one option, labelled by the last of those groups.
+    const resources = new Map(resourcesQuery.data?.items?.map((item) => [item.resource, item.group]));
+    return Array.from(resources, ([value, group]) => ({
+      label: findKindByResource(group, value)?.getPluralLabel() ?? value,
       value,
     }));
   }, [resourcesQuery.data?.items]);
@@ -129,7 +132,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         header: t('provisioning.resource-tree.header-title', 'Title'),
         cell: ({ row: { original } }: TreeCell) => {
           const { item, level, isExpandable, isExpanded } = original;
-          const iconName = getIconName(item.type);
+          const iconName = getIconName(item);
           const link = getGrafanaLink(item);
           // Label the fold toggle by the item's own title so screen readers announce which
           // folder is being expanded/collapsed without needing a separate translated string.
@@ -169,7 +172,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         id: 'type',
         header: t('provisioning.resource-tree.header-type', 'Type'),
         cell: ({ row: { original } }: TreeCell) => {
-          return <span>{original.item.type}</span>;
+          return <span>{getTypeLabel(original.item)}</span>;
         },
       },
       {

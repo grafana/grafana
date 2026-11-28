@@ -3,9 +3,9 @@ import { type UnknownAction } from '@reduxjs/toolkit';
 import { getBackendSrv } from '@grafana/runtime';
 import { type KindInfo } from '@grafana/runtime/unstable';
 import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
-import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
+import { type ResourceCount, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
-import { CORE_KINDS, coversGroup } from 'app/core/kinds/coreKinds';
+import { CORE_KINDS, coversGroup, findKind, findKindByResource } from 'app/core/kinds/coreKinds';
 import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
@@ -56,19 +56,13 @@ type OnCoreKinds = {
 };
 
 /**
- * Registry of provisioning resource kinds, keyed by a stable identifier — the single source of truth
- * the UI reads from instead of scattering per-kind knowledge across switch statements (tree labels,
- * count labels, resource-ref unions, how to enumerate each kind). Each entry builds on the kind's
+ * Git Sync details for the core kinds that provisioning manages. Each entry builds on the kind's
  * shared description in {@link CORE_KINDS} (identity, icon, label, pages) and adds what only
  * provisioning needs.
  *
- * `as const` preserves the literal field types so the keys ({@link ResourceKindKey}) and tree labels
- * ({@link ResourceKindName}) are derived from this object: adding a kind is ONE entry here and one in
- * {@link CORE_KINDS} (plus, if needed, enabling it on the backend so it appears in the settings
- * endpoint's `availableResources`) — no parallel unions to keep in sync. Entries are validated
- * against {@link ResourceKindInfo} where `allKindInfos` is built below; `as const` is used instead of
- * `satisfies ResourceKindInfo` because the interface references the derived types, which `satisfies`
- * would make a circular reference.
+ * Adding a kind is ONE entry here and one in {@link CORE_KINDS} (plus, if needed, enabling it on the
+ * backend so it appears in the settings endpoint's `availableResources`). Entries are validated
+ * against {@link ResourceKindInfo} where `allKindInfos` is built below.
  */
 export const resourceKindInfos = {
   folder: {
@@ -124,35 +118,10 @@ export const resourceKindInfos = {
 } as const satisfies OnCoreKinds;
 
 /**
- * Stable per-kind key (`folder`, `dashboard`, `playlist`, ...) used to identify a provisioning
- * resource kind across the UI: the commit-message noun, branch-name prefix, telemetry and the shared
- * edit-form fields all use this. Derived from the registry keys, so a new kind only needs its
- * registry entry.
- */
-export type ResourceKindKey = keyof typeof resourceKindInfos;
-
-/**
- * Tree-view labels for the provisioning *resource* kinds (`Folder`, `Dashboard`, ...), derived from
- * the registry's `kind`s so the set stays in lockstep with the kinds above. The full tree
- * {@link TreeItemKind} (these labels plus the `File` fallback) is assembled from this in `../types`, so a
- * new kind needs no edit there either.
- */
-export type ResourceKindName = (typeof resourceKindInfos)[ResourceKindKey]['kind'];
-
-/**
  * Consumer-facing shape of a registry entry: the kind's shared description plus what provisioning
- * needs to know about it. `kind` is typed as the derived union, so a {@link ResourceKindInfo}
- * carries the kind's tree label without a separate lookup.
- *
- * This is the single source of truth the UI reads from instead of scattering per-kind knowledge
- * across switch statements (tree labels, count labels, resource-ref unions, how to enumerate each
- * kind). Adding a new provisioning kind is one {@link resourceKindInfos} entry on top of its
- * {@link CORE_KINDS} one, plus (if needed) enabling it on the backend so it appears in the settings
- * `availableResources`.
+ * needs to know about it.
  */
 export interface ResourceKindInfo extends KindInfo {
-  /** Kubernetes Kind, e.g. `Dashboard`. Also the label shown for this kind in the files/resources tree. */
-  kind: ResourceKindName;
   /**
    * Enumerates every resource of this kind on the instance. Each kind owns how it
    * lists itself — dashboards/folders through the unified search index, playlists
@@ -178,112 +147,55 @@ export interface ResourceKindInfo extends KindInfo {
 
 // Widening the `as const` registry to ResourceKindInfo[] here also validates every entry against the
 // interface — a missing or mis-typed field (e.g. an unknown `icon`) fails at this line rather than at
-// each call site. The registry keys and literal `kind` values stay the source of truth for the unions above.
+// each call site.
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
 /**
- * The group a kind is named by: the collection rather than the member group that served a given
- * resource, so every member of a collection is reported as one kind.
+ * Stable key for a kind: its Kubernetes kind in lower case, such as `playlist`, which is also the
+ * kind's key in {@link CORE_KINDS}. It is the commit message noun, the branch prefix, the telemetry
+ * value and the fallback file name. Repository templates are written against the lower-case form,
+ * so it must not follow how the kind is spelled. It is not the label either: a label is translated
+ * and can hold spaces, and this word lands in git history that every user shares.
  */
-export function getReportedGroup(group?: string, kind?: string): string | undefined {
-  const info = getKindInfoByGroupKind(group, kind);
-  return info?.collectionGroup ? info.group : group;
-}
-
-/** Look up a kind by its plural resource name (`ResourceListItem.resource`). */
-export function getKindInfoByResource(resource?: string): ResourceKindInfo | undefined {
-  return allKindInfos.find((info) => info.resource === resource);
+export function getKindKey(kind: Pick<KindInfo, 'kind'>): string {
+  return kind.kind.toLowerCase();
 }
 
 /**
- * Look up a kind by its Kubernetes Kind, which is also its tree label. Accepts any string (tree
- * items can be the `File` fallback, which has no backing kind and resolves to `undefined`) so
- * callers don't depend on the `TreeItemKind` union and create an import cycle with `../types`.
+ * Whether two descriptions name the same kind. The entries above are copies of their
+ * {@link CORE_KINDS} rows, so `===` tells a copy from its row. The group and the kind do not.
  */
-export function getKindInfoByKind(kind: string): ResourceKindInfo | undefined {
-  return allKindInfos.find((info) => info.kind === kind);
+export function isSameKind(a: Pick<KindInfo, 'group' | 'kind'>, b: Pick<KindInfo, 'group' | 'kind'>): boolean {
+  return a.group === b.group && a.kind === b.kind;
+}
+
+/** The Git Sync details provisioning keeps for a kind, if it keeps any. */
+export function findResourceKindInfo(kind: Pick<KindInfo, 'group' | 'kind'>): ResourceKindInfo | undefined {
+  return allKindInfos.find((info) => isSameKind(info, kind));
+}
+
+/** The kind of an object in an API response, which may leave out its group or its kind. */
+export function findKindOf(object: { group?: string; kind?: string } | undefined): KindInfo | undefined {
+  return object?.group && object.kind ? findKind(object.group, object.kind) : undefined;
 }
 
 /**
- * Look up a kind by a resource-stat group, accepting both the full API group
- * (`folder.grafana.app`) and the legacy short plural (`folders`) that the stats
- * endpoint can return interchangeably.
- *
- * Prefer `getKindInfoByStat` when a `resource` is available: several kinds can
- * share an API group, so the group alone does not always identify the kind.
+ * The kind that a resource stat counts. Compatibility hack: older stats responses may name folders
+ * by the legacy `folders` group. Every other stat needs the real API group.
  */
-export function getKindInfoByStatGroup(group?: string): ResourceKindInfo | undefined {
-  return allKindInfos.find((info) => (group !== undefined && coversGroup(info, group)) || info.resource === group);
-}
-
-function isResourceKindKey(key: string): key is ResourceKindKey {
-  return key in resourceKindInfos;
-}
-
-const allKindKeys = Object.keys(resourceKindInfos).filter(isResourceKindKey);
-
-/**
- * Look up a kind's registry key from a resource or a job summary row, which carry both the API group
- * (`dashboard.grafana.app`) and the Kubernetes Kind (`Dashboard`). Matches on whichever identifiers
- * are present so partially-populated summary rows still resolve.
- */
-export function getKindKeyByGroupKind(group?: string, kind?: string): ResourceKindKey | undefined {
-  if (!group && !kind) {
-    return undefined;
-  }
-  return allKindKeys.find((key) => {
-    const info: ResourceKindInfo = resourceKindInfos[key];
-    return (!group || coversGroup(info, group)) && (!kind || info.kind === kind);
-  });
-}
-
-/** Look up a kind from a resource or a job summary row; see {@link getKindKeyByGroupKind}. */
-export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceKindInfo | undefined {
-  const key = getKindKeyByGroupKind(group, kind);
-  return key && resourceKindInfos[key];
+export function findKindByStat({ group, resource }: Pick<ResourceCount, 'group' | 'resource'>): KindInfo | undefined {
+  const { folder } = CORE_KINDS;
+  const isLegacyFolder = group === folder.resource && resource === folder.resource;
+  return findKindByResource(isLegacyFolder ? folder.group : group, resource);
 }
 
 /**
- * Look up a kind from a resource-stat entry (`ResourceCount`), which carries both
- * an API `group` and a plural `resource` name. The plural resource uniquely
- * identifies the kind even when kinds share a group, so we match on it first and
- * fall back to a group-only match for stats that omit the resource.
+ * Whether a given kind is currently enabled for provisioning per the settings endpoint's
+ * `availableResources`. Disabled kinds (declared but not acted on) are excluded.
  */
-export function getKindInfoByStat(stat: { group?: string; resource?: string }): ResourceKindInfo | undefined {
-  const byResource = allKindInfos.find((info) => info.resource === stat.resource);
-  if (byResource) {
-    return byResource;
-  }
-  return getKindInfoByStatGroup(stat.group);
-}
-
-/**
- * Resolves which kinds the backend currently exposes for provisioning, gating on
- * the config-derived `availableResources` from the settings endpoint. Disabled
- * kinds (declared but not acted on) are excluded.
- *
- * When `availableResources` is unset (e.g. settings not loaded yet) we fall back
- * to the full registry as a best-effort default — this can include kinds the
- * backend currently ships disabled (e.g. playlists), so callers that must respect
- * the disabled state should wait for `availableResources` to be populated.
- */
-export function getAvailableResourceKinds(availableResources?: SupportedResource[]): ResourceKindInfo[] {
-  if (!availableResources) {
-    return allKindInfos;
-  }
-  return allKindInfos.filter((info) =>
-    availableResources.some(
-      (r) => r.group !== undefined && coversGroup(info, r.group) && r.kind === info.kind && !r.disabled
-    )
-  );
-}
-
-/** Whether a given kind is currently enabled for provisioning per the settings endpoint. */
-export function isResourceKindAvailable(info: ResourceKindInfo, availableResources?: SupportedResource[]): boolean {
-  // Compare on group/kind rather than object identity so callers can pass an
-  // equivalent descriptor that isn't the exact registry instance.
-  return getAvailableResourceKinds(availableResources).some(
-    (available) => available.group === info.group && available.kind === info.kind
+export function isResourceKindAvailable(info: KindInfo, availableResources: SupportedResource[]): boolean {
+  return availableResources.some(
+    (r) => r.group !== undefined && coversGroup(info, r.group) && r.kind === info.kind && !r.disabled
   );
 }
 
@@ -301,7 +213,7 @@ export function isResourceKindAvailable(info: ResourceKindInfo, availableResourc
  */
 export function getMigratableKinds(availableResources?: SupportedResource[]): ResourceKindInfo[] {
   return allKindInfos.filter((info) => {
-    if (info.kind === resourceKindInfos.folder.kind) {
+    if (info === resourceKindInfos.folder) {
       return false;
     }
     return availableResources ? isResourceKindAvailable(info, availableResources) : info.alwaysAvailable;

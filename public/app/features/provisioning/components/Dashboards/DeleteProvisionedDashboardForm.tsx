@@ -16,6 +16,7 @@ import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type DeleteJobSpec, toResourceRef } from '../../types/job';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
+import { getKindKey } from '../../utils/resourceKinds';
 import { getRequestRef } from '../../utils/workflow';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -53,7 +54,7 @@ export function DeleteProvisionedDashboardForm({
 
   const templateVars: CommitTemplateVars = {
     action: 'delete',
-    resourceKind: 'dashboard',
+    resourceKind: getKindKey(CORE_KINDS.dashboard),
     resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
     title: dashboard.state.title ?? '',
     ...getCurrentCommitUser(),
@@ -151,7 +152,7 @@ export function DeleteProvisionedDashboardForm({
               )}
 
               <ResourceEditFormSharedFields
-                resourceType="dashboard"
+                kind={CORE_KINDS.dashboard}
                 isNew={isNew}
                 readOnly={readOnly}
                 canPushToConfiguredBranch={canPushToConfiguredBranch}

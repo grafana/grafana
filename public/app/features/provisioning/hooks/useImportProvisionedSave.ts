@@ -14,6 +14,7 @@ import { getResourceCommitMessage } from 'app/features/provisioning/utils/commit
 import { buildResourceBranchRedirectUrl, getSavedDashboardPath } from 'app/features/provisioning/utils/redirect';
 
 import { getProvisionedRequestError } from '../components/utils/errors';
+import { getKindKey } from '../utils/resourceKinds';
 import { getRequestRef } from '../utils/workflow';
 
 import { useCreateOrUpdateRepositoryFile } from './useCreateOrUpdateRepositoryFile';
@@ -55,7 +56,6 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
   const [createFile, request] = useCreateOrUpdateRepositoryFile();
 
   const { handleSuccess } = useProvisionedRequestHandler({
-    resourceType: 'dashboard',
     repository,
   });
 
@@ -97,7 +97,7 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
             comment: form.comment,
             repository,
             action: 'create',
-            resourceKind: 'dashboard',
+            resourceKind: getKindKey(CORE_KINDS.dashboard),
             resourceID: uid ?? '',
             title,
           }),

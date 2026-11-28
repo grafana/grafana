@@ -186,7 +186,14 @@ describe('ResourceTreeView', () => {
 
   describe('resource filter', () => {
     const resources = [
-      { path: 'folder/dash.json', hash: 'aaa', name: 'dash', title: 'My Dashboard', resource: 'dashboards' },
+      {
+        path: 'folder/dash.json',
+        hash: 'aaa',
+        name: 'dash',
+        title: 'My Dashboard',
+        group: 'dashboard.grafana.app',
+        resource: 'dashboards',
+      },
       { path: 'folder/widget.json', hash: 'bbb', name: 'widget', title: 'My Widget', resource: 'widgets' },
     ];
 
@@ -231,8 +238,22 @@ describe('ResourceTreeView', () => {
       setupQueries(
         [{ path: 'folder/dash.json', hash: 'aaa' }],
         [
-          { path: 'folder', hash: '', name: 'folder-uid', title: 'My Folder', resource: 'folders' },
-          { path: 'folder/dash.json', hash: 'aaa', name: 'dash', title: 'My Dashboard', resource: 'dashboards' },
+          {
+            path: 'folder',
+            hash: '',
+            name: 'folder-uid',
+            title: 'My Folder',
+            group: 'folder.grafana.app',
+            resource: 'folders',
+          },
+          {
+            path: 'folder/dash.json',
+            hash: 'aaa',
+            name: 'dash',
+            title: 'My Dashboard',
+            group: 'dashboard.grafana.app',
+            resource: 'dashboards',
+          },
         ]
       );
       const { user } = render(<ResourceTreeView repo={repo} />);
@@ -251,7 +272,16 @@ describe('ResourceTreeView', () => {
     beforeEach(() => {
       setupQueries(
         [{ path: 'README.md', hash: 'aaa' }],
-        [{ path: 'orphan.json', hash: 'bbb', name: 'orphan', title: 'Orphan Dashboard', resource: 'dashboards' }]
+        [
+          {
+            path: 'orphan.json',
+            hash: 'bbb',
+            name: 'orphan',
+            title: 'Orphan Dashboard',
+            group: 'dashboard.grafana.app',
+            resource: 'dashboards',
+          },
+        ]
       );
     });
 
@@ -276,9 +306,30 @@ describe('ResourceTreeView', () => {
       { path: 'folder/dash.json', hash: 'aaa' },
     ];
     const resources = [
-      { path: '', hash: '', name: 'test-repo', title: 'Test Repository', resource: 'folders' },
-      { path: 'folder', hash: 'meta', name: 'folder-uid', title: 'My Folder', resource: 'folders' },
-      { path: 'folder/dash.json', hash: 'aaa', name: 'dash', title: 'My Dashboard', resource: 'dashboards' },
+      {
+        path: '',
+        hash: '',
+        name: 'test-repo',
+        title: 'Test Repository',
+        group: 'folder.grafana.app',
+        resource: 'folders',
+      },
+      {
+        path: 'folder',
+        hash: 'meta',
+        name: 'folder-uid',
+        title: 'My Folder',
+        group: 'folder.grafana.app',
+        resource: 'folders',
+      },
+      {
+        path: 'folder/dash.json',
+        hash: 'aaa',
+        name: 'dash',
+        title: 'My Dashboard',
+        group: 'dashboard.grafana.app',
+        resource: 'dashboards',
+      },
     ];
 
     beforeEach(() => {

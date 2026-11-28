@@ -19,6 +19,7 @@ import { type BaseProvisionedFormData } from '../../types/form';
 import { type DeleteJobSpec, toResourceRef } from '../../types/job';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
+import { getKindKey } from '../../utils/resourceKinds';
 import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -46,7 +47,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
 
   const templateVars: CommitTemplateVars = {
     action: 'delete',
-    resourceKind: 'folder',
+    resourceKind: getKindKey(CORE_KINDS.folder),
     resourceID: parentFolder?.uid ?? '',
     title: parentFolder?.title ?? '',
     ...getCurrentCommitUser(),
@@ -137,7 +138,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
               />
 
               <ResourceEditFormSharedFields
-                resourceType="folder"
+                kind={CORE_KINDS.folder}
                 isNew={false}
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}

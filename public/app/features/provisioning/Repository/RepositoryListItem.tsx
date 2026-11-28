@@ -7,6 +7,7 @@ import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Card, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { CORE_KINDS, findKindByResource } from 'app/core/kinds/coreKinds';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
@@ -22,7 +23,6 @@ import {
   isProvisioningResourceReadOnly,
 } from '../utils/managedResource';
 import { getRepositoryEditUrl, getRepositoryResourcesUrl } from '../utils/repository';
-import { getKindInfoByStat, resourceKindInfos } from '../utils/resourceKinds';
 import { getManagedReadOnlyTooltip } from '../utils/tooltip';
 
 import { SyncRepository } from './SyncRepository';
@@ -101,18 +101,21 @@ export function RepositoryListItem({ repository }: Props) {
           {spec?.description && <Text>{spec.description}</Text>}
           {status?.stats?.length && (
             <Stack gap={1} direction="row" wrap>
-              {status.stats.map((stat, index) => (
-                <LinkButton
-                  key={index}
-                  fill="outline"
-                  size="md"
-                  variant="secondary"
-                  icon={getKindInfoByStat(stat)?.icon ?? 'file-alt'}
-                  href={getRepositoryResourcesUrl(name, stat.resource)}
-                >
-                  {`${stat.count} ${stat.resource}`}
-                </LinkButton>
-              ))}
+              {status.stats.map((stat, index) => {
+                const kind = findKindByResource(stat.group, stat.resource);
+                return (
+                  <LinkButton
+                    key={index}
+                    fill="outline"
+                    size="md"
+                    variant="secondary"
+                    icon={kind?.icon ?? 'file-alt'}
+                    href={getRepositoryResourcesUrl(name, stat.resource)}
+                  >
+                    {`${stat.count} ${kind?.getPluralLabel({ upperFirst: false }) ?? stat.resource}`}
+                  </LinkButton>
+                );
+              })}
             </Stack>
           )}
         </Stack>
@@ -124,7 +127,7 @@ export function RepositoryListItem({ repository }: Props) {
         <Stack gap={1} direction="row">
           <LinkButton
             icon="eye"
-            href={resourceKindInfos.repository.getRoute(name)}
+            href={CORE_KINDS.repository.getRoute(name)}
             variant="primary"
             size="md"
             data-testid={selectors.pages.Provisioning.RepositoryList.viewLink(name)}
@@ -136,7 +139,7 @@ export function RepositoryListItem({ repository }: Props) {
             variant="secondary"
             icon="download-alt"
             size="md"
-            onClick={() => exportResourceAsJson(repository, resourceKindInfos.repository.kind)}
+            onClick={() => exportResourceAsJson(repository, CORE_KINDS.repository.kind)}
           >
             <Trans i18nKey="provisioning.repository-card.export">Export</Trans>
           </Button>

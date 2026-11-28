@@ -1,7 +1,19 @@
+import { type KindInfo, kindLabel } from '@grafana/runtime/unstable';
 import { type Job, type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 const DEFAULT_REPOSITORY_NAME = 'test-repo-abc123';
 const DEFAULT_REPOSITORY_LABEL = { 'provisioning.grafana.app/repository': DEFAULT_REPOSITORY_NAME };
+
+/** A kind as an app plugin adds it to the kind registry. */
+export const pluginKind: KindInfo = {
+  group: 'example.ext.grafana.app',
+  kind: 'Thing',
+  resource: 'things',
+  folderScoped: false,
+  getLabel: kindLabel(() => 'plugin thing'),
+  getPluralLabel: kindLabel(() => 'plugin things'),
+  icon: 'tag-alt',
+};
 
 export function createJob(overrides: Record<string, unknown> = {}): Job {
   const {

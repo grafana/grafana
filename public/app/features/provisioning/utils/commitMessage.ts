@@ -1,10 +1,7 @@
 import { t } from '@grafana/i18n';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import { type ResourceKindKey } from './resourceKinds';
-
 type CommitAction = 'create' | 'update' | 'delete' | 'move' | 'rename';
-type CommitResourceKind = ResourceKindKey;
 type CommitResourceID = string;
 
 interface BaseCommitTemplateVars {
@@ -18,7 +15,7 @@ interface BaseCommitTemplateVars {
 /** Single-resource operations always identify the resource by kind. */
 interface SingleResourceTemplateVars extends BaseCommitTemplateVars {
   action: CommitAction;
-  resourceKind: CommitResourceKind;
+  resourceKind: string;
 }
 
 /**
