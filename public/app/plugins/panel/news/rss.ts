@@ -1,4 +1,4 @@
-import { getProperty } from './feed';
+import { getProperty } from './utils';
 import { type Feed } from './types';
 
 export function parseRSSFeed(txt: string): Feed {
