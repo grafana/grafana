@@ -8,6 +8,7 @@ import { type ThunkResult, type ThunkDispatch } from 'app/types/store';
 
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';
+import { DataSourcePluginNotInstalledError } from '../errors';
 import { getMockDataSource } from '../mocks/dataSourcesMocks';
 import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
 import { type GenericDataSourcePlugin } from '../types';
@@ -268,6 +269,32 @@ describe('initDataSourceSettings', () => {
 
       expect(dispatchedActions).toEqual([initDataSourceSettingsFailed(new Error(expectedMessage))]);
       expect(dispatchedActions[0].payload).toBeInstanceOf(Error);
+    });
+  });
+
+  describe('when the plugin of the data source is not installed', () => {
+    it('passes the error on unchanged, so the edit page can explain it', async () => {
+      const notInstalled = new DataSourcePluginNotInstalledError({
+        uid: 'orphan',
+        name: 'Orphan',
+        pluginType: 'not-installed-datasource',
+      });
+      jest.mocked(api.getDataSourceByUid).mockRejectedValueOnce(notInstalled);
+      const dependencies = {
+        loadDataSource,
+        loadDataSourceMeta: jest.fn(),
+        getDataSource: jest.fn(),
+        getDataSourceMeta: jest.fn(),
+        importDataSourcePlugin: jest.fn(),
+      } as unknown as InitDataSourceSettingDependencies;
+
+      const dispatchedActions = await thunkTester({ dataSourceSettings: {}, dataSources: {} })
+        .givenThunk(initDataSourceSettings)
+        .whenThunkIsDispatched('orphan', dependencies);
+
+      expect(dispatchedActions).toHaveLength(1);
+      expect(dispatchedActions[0].type).toBe(initDataSourceSettingsFailed.type);
+      expect(dispatchedActions[0].payload).toBe(notInstalled);
     });
   });
 });

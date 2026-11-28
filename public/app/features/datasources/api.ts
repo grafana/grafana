@@ -3,16 +3,72 @@ import { lastValueFrom } from 'rxjs';
 
 import { type DataSourceSettings, type DataSourceJsonData } from '@grafana/data';
 import { config, getDataSourceInstanceList, isFetchError } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import {
+  type DataSourceConnectionWithMeta,
+  FlagKeys,
+  getDataSourceConnections,
+  getFeatureFlagClient,
+  isMTDataSourceFillEnabled,
+} from '@grafana/runtime/internal';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { getMessageFromError } from 'app/core/utils/errors';
+import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 import { DeprecatedInternalId } from '../apiserver/types';
 
+import { DataSourcePluginNotInstalledError } from './errors';
+
 export const getDataSources = async (): Promise<DataSourceSettings[]> => {
+  if (isMTDataSourceFillEnabled()) {
+    const connections = await getDataSourceConnections();
+    return connections.map(toListDataSourceSettings);
+  }
   return await getBackendSrv().get('/api/datasources');
 };
+
+// A connection has no URL, so the list shows none.
+function toListDataSourceSettings(connection: DataSourceConnectionWithMeta): DataSourceSettings {
+  const { uid, name, type, isDefault, meta } = connection;
+  return {
+    id: 0,
+    uid,
+    orgId: 0,
+    name,
+    type,
+    typeName: meta?.name ?? type,
+    typeLogoUrl: meta?.info?.logos?.small ?? icnDatasourceSvg,
+    access: '',
+    url: '',
+    user: '',
+    database: '',
+    basicAuth: false,
+    basicAuthUser: '',
+    isDefault,
+    jsonData: {},
+    secureJsonFields: {},
+    readOnly: false,
+    withCredentials: false,
+  };
+}
+
+const getApiGroupNotFoundError = (uid: string) => new Error(`Could not find data source group with uid: "${uid}"`);
+
+// The cache drops data sources whose plugin is not installed. Only the MT plugin metas list every
+// installed plugin; the boot data ones cover only the plugins of data sources the user can query.
+async function getDataSourceLoadError(uid: string): Promise<Error> {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
+    return getApiGroupNotFoundError(uid);
+  }
+  const connection = await getDataSourceConnections().then(
+    (connections) => connections.find((c) => c.uid === uid),
+    () => undefined
+  );
+  if (connection && !connection.meta) {
+    return new DataSourcePluginNotInstalledError({ uid, name: connection.name, pluginType: connection.type });
+  }
+  return getApiGroupNotFoundError(uid);
+}
 
 // From pkg/storage/unified/apistore/secure.go
 const LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX = 'lds-sv-';
@@ -215,7 +271,7 @@ const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string) => {
   let k8sVersion = 'v0alpha1';
   let k8sGroup = await getDataSourceK8sGroup(k8sName);
   if (k8sGroup === '') {
-    throw Error(`Could not find data source group with uid: "${k8sName}"`);
+    throw await getDataSourceLoadError(k8sName);
   }
 
   const url = `/apis/${k8sGroup}/${k8sVersion}/namespaces/${namespace}/datasources/${k8sName}`;
@@ -342,7 +398,7 @@ export const deleteDataSource = async (uid: string) => {
     let namespace = config.namespace;
     let k8sGroup = await getDataSourceK8sGroup(uid);
     if (k8sGroup === '') {
-      throw Error(`Could not find data source group with uid: "${uid}"`);
+      throw getApiGroupNotFoundError(uid);
     }
     let apiVersion = `${k8sGroup}/v0alpha1`;
     deleteUrl = `/apis/${apiVersion}/namespaces/${namespace}/datasources/${uid}`;

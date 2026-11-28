@@ -3,6 +3,7 @@ import { reducerTester } from 'test/core/redux/reducerTester';
 import { type PluginMeta, type PluginMetaInfo, PluginType, LayoutModes } from '@grafana/data';
 import { type DataSourceSettingsState, type DataSourcesState } from 'app/types/datasources';
 
+import { DataSourcePluginNotInstalledError } from '../errors';
 import { getMockDataSource, getMockDataSources } from '../mocks/dataSourcesMocks';
 import { type GenericDataSourcePlugin } from '../types';
 
@@ -159,6 +160,8 @@ describe('dataSourceSettingsReducer', () => {
   });
 
   describe('when initDataSourceSettingsFailed is dispatched', () => {
+    const orphanedDataSource = { uid: 'orphan', name: 'Orphan', pluginType: 'not-installed' };
+
     it('then state should be correct', () => {
       reducerTester<DataSourceSettingsState>()
         .givenReducer(dataSourceSettingsReducer, {
@@ -173,6 +176,16 @@ describe('dataSourceSettingsReducer', () => {
             loading: false,
             plugin: null,
           });
+          return true;
+        });
+    });
+
+    it('then state should flag a data source whose plugin is not installed', () => {
+      reducerTester<DataSourceSettingsState>()
+        .givenReducer(dataSourceSettingsReducer, { ...initialDataSourceSettingsState })
+        .whenActionIsDispatched(initDataSourceSettingsFailed(new DataSourcePluginNotInstalledError(orphanedDataSource)))
+        .thenStatePredicateShouldEqual((resultingState) => {
+          expect(resultingState.orphanedDataSource).toEqual(orphanedDataSource);
           return true;
         });
     });

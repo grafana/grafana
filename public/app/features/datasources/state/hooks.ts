@@ -120,6 +120,18 @@ export const useDataSourceSettings = () => {
 
 export const useDataSourceRights = (uid: string): DataSourceRights => {
   const dataSource = useDataSource(uid);
+  const orphan = useSelector((state) => state.dataSourceSettings.orphanedDataSource);
+
+  // A data source whose plugin is not installed never loads, so it has no access control metadata.
+  // The user permissions decide whether to show the disabled Delete button.
+  if (orphan?.uid === uid) {
+    return {
+      readOnly: false,
+      hasWriteRights: false,
+      hasDeleteRights: contextSrv.hasPermission(AccessControlAction.DataSourcesDelete),
+    };
+  }
+
   const readOnly = dataSource.readOnly === true;
   const hasWriteRights = contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesWrite, dataSource);
   const hasDeleteRights = contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesDelete, dataSource);

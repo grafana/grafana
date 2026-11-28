@@ -1,5 +1,6 @@
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, EmptyState, Stack } from '@grafana/ui';
+import { Alert, Button, EmptyState, Stack, TextLink } from '@grafana/ui';
+import { type OrphanedDataSource } from 'app/types/datasources';
 
 import { type DataSourceRights } from '../types';
 
@@ -10,9 +11,10 @@ export type Props = {
   dataSourceRights: DataSourceRights;
   onDelete: () => void;
   notFound: boolean;
+  orphanedDataSource?: OrphanedDataSource;
 };
 
-export function DataSourceLoadError({ dataSourceRights, onDelete, notFound, errorMsg }: Props) {
+export function DataSourceLoadError({ dataSourceRights, onDelete, notFound, orphanedDataSource, errorMsg }: Props) {
   const { readOnly, hasDeleteRights } = dataSourceRights;
   const canDelete = !readOnly && hasDeleteRights;
   const navigateBack = () => window.history.back();
@@ -22,7 +24,22 @@ export function DataSourceLoadError({ dataSourceRights, onDelete, notFound, erro
       {readOnly && <DataSourceReadOnlyMessage />}
       <Stack direction="column">
         <Stack direction="column" alignItems={notFound ? 'center' : 'flex-start'}>
-          {notFound ? (
+          {orphanedDataSource ? (
+            <Alert
+              severity="warning"
+              title={t(
+                'datasources.data-source-load-error.plugin-not-installed-title',
+                'The plugin of this data source is not installed'
+              )}
+            >
+              <Trans i18nKey="datasources.data-source-load-error.install-plugin">
+                <TextLink href={`/plugins/${encodeURIComponent(orphanedDataSource.pluginType)}`}>
+                  Install the plugin
+                </TextLink>{' '}
+                to use or edit this data source.
+              </Trans>
+            </Alert>
+          ) : notFound ? (
             <EmptyState
               variant="not-found"
               message={t('datasources.data-source-load-error.not-found', 'Data source not found')}
@@ -40,7 +57,19 @@ export function DataSourceLoadError({ dataSourceRights, onDelete, notFound, erro
         </Stack>
         <Stack direction="row" gap={2}>
           {canDelete && (
-            <Button type="submit" variant="destructive" onClick={onDelete}>
+            <Button
+              type="submit"
+              variant="destructive"
+              onClick={onDelete}
+              disabled={Boolean(orphanedDataSource)}
+              tooltip={
+                orphanedDataSource &&
+                t(
+                  'datasources.data-source-load-error.delete-plugin-not-installed',
+                  "A data source can't be deleted yet while its plugin is not installed"
+                )
+              }
+            >
               <Trans i18nKey="datasources.data-source-load-error.delete">Delete</Trans>
             </Button>
           )}

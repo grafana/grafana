@@ -29,13 +29,10 @@ function getConnectionPluginType(connection: DataSourceConnection): string {
 }
 
 /**
- * Join connections with plugin metas into a list snapshot, the way boot data builds its list:
- * - a connection whose plugin has no meta is dropped
- * - `type` is the plugin id, so aliased types are normalized
- * - built-in data sources are synthesized from the metas flagged `builtIn`
- * - the default is the connection labelled `default`, else `-- Grafana --`
+ * The metas list only the plugins installed for the namespace, so a connection whose type
+ * resolves to no meta is an orphan: its plugin is not installed.
  */
-export function toListSnapshot(connections: DataSourceConnection[], metas: DataSourcePluginMeta[]): MappedListSnapshot {
+function indexMetasByType(metas: DataSourcePluginMeta[]): Map<string, DataSourcePluginMeta> {
   const metaByType = new Map<string, DataSourcePluginMeta>();
   for (const meta of metas) {
     for (const alias of meta.aliasIDs ?? []) {
@@ -46,27 +43,62 @@ export function toListSnapshot(connections: DataSourceConnection[], metas: DataS
   for (const meta of metas) {
     metaByType.set(meta.id, meta);
   }
+  return metaByType;
+}
 
+export interface DataSourceConnectionWithMeta {
+  uid: string;
+  name: string;
+  /** The plugin id, so aliased types are normalized. The stored type when the plugin is not installed. */
+  type: string;
+  isDefault: boolean;
+  /** Unset when the plugin is not installed. */
+  meta?: DataSourcePluginMeta;
+}
+
+/**
+ * Join connections with plugin metas the way `/api/datasources` lists them: a connection whose
+ * plugin is not installed is kept, without a meta. {@link toListSnapshot} drops it.
+ */
+export function joinConnectionsWithMetas(
+  connections: DataSourceConnection[],
+  metas: DataSourcePluginMeta[]
+): DataSourceConnectionWithMeta[] {
+  const metaByType = indexMetasByType(metas);
+  return connections.map((connection) => {
+    const pluginType = getConnectionPluginType(connection);
+    const meta = metaByType.get(pluginType);
+    return {
+      uid: connection.name,
+      name: connection.title,
+      type: meta?.id ?? pluginType,
+      isDefault: isDefaultConnection(connection),
+      meta,
+    };
+  });
+}
+
+/**
+ * Join connections with plugin metas into a list snapshot, the way boot data builds its list:
+ * - a connection whose plugin has no meta is dropped
+ * - `type` is the plugin id, so aliased types are normalized
+ * - built-in data sources are synthesized from the metas flagged `builtIn`
+ * - the default is the connection labelled `default`, else `-- Grafana --`
+ */
+export function toListSnapshot(connections: DataSourceConnection[], metas: DataSourcePluginMeta[]): MappedListSnapshot {
   const items: DataSourceInstanceListItem[] = [];
   const droppedTypes: string[] = [];
   let defaultUid: string | undefined;
 
-  for (const connection of connections) {
-    const pluginType = getConnectionPluginType(connection);
-    const meta = metaByType.get(pluginType);
+  for (const { uid, name, type, isDefault, meta } of joinConnectionsWithMetas(connections, metas)) {
     if (!meta) {
-      droppedTypes.push(pluginType);
+      droppedTypes.push(type);
       continue;
     }
-    if (isDefaultConnection(connection) && defaultUid === undefined) {
-      defaultUid = connection.name;
+    if (isDefault && defaultUid === undefined) {
+      defaultUid = uid;
     }
-    items.push({
-      uid: connection.name,
-      name: connection.title,
-      type: meta.id,
-      meta,
-    });
+    items.push({ uid, name, type, meta });
   }
 
   const settings: Record<string, DataSourceInstanceSettings> = {};
