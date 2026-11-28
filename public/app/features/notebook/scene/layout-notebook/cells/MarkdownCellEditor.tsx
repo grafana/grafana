@@ -12,10 +12,12 @@ import { type CellContentKind } from 'app/features/notebook/types';
 import { MarkdownFormatToolbar } from './MarkdownFormatToolbar';
 import { navigationKeymap, scrollMarginExtension } from './focusExtension';
 import {
+  emptyOrderedTaskMarkerRange,
   enclosingListKind,
   markdownLivePreview,
   newlineInsertionPoint,
   nextListContinuation,
+  nextOrderedTaskContinuation,
 } from './markdownLivePreview';
 
 const continueChecklistMarkup = insertNewlineContinueMarkupCommand({ nonTightLists: false });
@@ -25,6 +27,32 @@ function continueChecklist(view: EditorView) {
   if (state.selection.main.empty) {
     const pos = state.selection.main.head;
     const insertAt = newlineInsertionPoint(syntaxTree(state), pos);
+
+    // Enter on an empty numbered task (`2. [ ] ` with nothing after it) leaves the list:
+    // CodeMirror's markup command counts the checkbox as content there and would continue
+    // the number instead, so clear the item's markers here.
+    const emptyTask = emptyOrderedTaskMarkerRange(state, pos);
+    if (emptyTask !== undefined) {
+      view.dispatch({
+        changes: { from: emptyTask.from, to: emptyTask.to, insert: '' },
+        selection: { anchor: emptyTask.from },
+        scrollIntoView: true,
+      });
+      return true;
+    }
+
+    // CodeMirror's markup continuation drops the checkbox when it continues a numbered task
+    // (`1. [x] First` becomes `2. `), so insert the continuation for those here instead.
+    const marker = nextOrderedTaskContinuation(state, pos);
+    if (marker !== undefined) {
+      view.dispatch({
+        changes: { from: insertAt, insert: '\n' + marker },
+        selection: { anchor: insertAt + 1 + marker.length },
+        scrollIntoView: true,
+      });
+      return true;
+    }
+
     if (insertAt !== pos) {
       view.dispatch({ selection: { anchor: insertAt } });
     }
