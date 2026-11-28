@@ -76,6 +76,8 @@ test.describe(
 
       await test.step('Rename a variable referenced by a panel', async () => {
         await flows.contentOutline.selectVariable(sidebar, variableUnderTest.name);
+        // We wait for the sidebar to show the selected variable, so the rename can't hit OtherVariable, which was open before.
+        await expect(nameInput).toHaveValue(variableUnderTest.name);
         await sidebar.variableOptions.setName(newName);
 
         // We expect the raw reference because the panel still uses $VariableUnderTest, which no variable resolves anymore.
