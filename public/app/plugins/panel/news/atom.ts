@@ -1,5 +1,5 @@
-import { getProperty } from './utils';
 import { type Feed } from './types';
+import { getProperty } from './utils';
 
 export function parseAtomFeed(txt: string): Feed {
   const domParser = new DOMParser();
