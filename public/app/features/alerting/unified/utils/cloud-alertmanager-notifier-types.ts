@@ -611,6 +611,23 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
       }),
     ],
   },
+  {
+    name: 'Microsoft Teams V2',
+    description: 'Sends notifications to Microsoft Teams through a Power Automate workflow',
+    type: 'msteamsv2',
+    info: '',
+    heading: 'Microsoft Teams V2 settings',
+    options: [
+      option('webhook_url', 'Webhook URL', 'The Power Automate workflow webhook URL.'),
+      option('title', 'Title', 'Message title template.', {
+        placeholder: '{{ template "msteamsv2.default.title" . }}',
+      }),
+      option('text', 'Text', 'Message body template.', {
+        placeholder: '{{ template "msteamsv2.default.text" . }}',
+      }),
+      httpConfigOption,
+    ],
+  },
 ];
 
 export const globalConfigOptions: NotificationChannelOption[] = [
