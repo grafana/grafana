@@ -15,7 +15,7 @@ import { type FavoriteDatasources, getTemplateSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { SearchStatus } from '@grafana/ui/internal';
 
-import { useDatasources, useRecentlyUsedDataSources } from '../../hooks';
+import { useRecentlyUsedDataSources } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { VirtualizedList } from './VirtualizedList';
@@ -30,27 +30,13 @@ export interface DataSourceListProps {
   className?: string;
   onChange: (ds: DataSourceInstanceSettings) => void;
   current: DataSourceRef | DataSourceInstanceSettings | string | null | undefined;
-  /** Would be nicer if these parameters were part of a filtering object */
-  tracing?: boolean;
-  mixed?: boolean;
-  dashboard?: boolean;
-  metrics?: boolean;
-  type?: string | string[];
-  annotations?: boolean;
-  variables?: boolean;
-  alerting?: boolean;
-  pluginId?: string;
-  /** If true,we show only DSs with logs; and if true, pluginId shouldnt be passed in */
-  logs?: boolean;
-  width?: number;
   keyboardEvents?: Observable<React.KeyboardEvent>;
-  inputId?: string;
   searchTerm?: string;
   nonSearchFilter?: (dataSource: DataSourceInstanceSettings) => boolean;
-  onClear?: () => void;
   onClickEmptyStateCTA?: () => void;
   enableKeyboardNavigation?: boolean;
-  dataSources?: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
+  /** The data sources to list, already fetched with the list filter flags by the owner of the list */
+  dataSources: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
   favoriteDataSources: FavoriteDatasources;
   /** Ref to the scroll container element, used by the virtualizer */
   scrollRef: React.RefObject<HTMLDivElement | null>;
@@ -142,23 +128,7 @@ function useSortedDataSources(
   recentlyUsedDataSources: string[],
   favoriteDataSources: FavoriteDatasources
 ) {
-  const dataSources = useDatasources(
-    {
-      alerting: props.alerting,
-      annotations: props.annotations,
-      dashboard: props.dashboard,
-      logs: props.logs,
-      metrics: props.metrics,
-      mixed: props.mixed,
-      pluginId: props.pluginId,
-      tracing: props.tracing,
-      type: props.type,
-      variables: props.variables,
-    },
-    props.dataSources
-  );
-
-  const { searchTerm, nonSearchFilter } = props;
+  const { dataSources, searchTerm, nonSearchFilter } = props;
   const favoriteUids = favoriteDataSources.enabled ? favoriteDataSources.initialFavoriteDataSources : undefined;
 
   const lookups = buildDataSourcePickerLookups(

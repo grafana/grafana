@@ -1,4 +1,5 @@
 import { type DataSourceInstanceSettings, type DataSourceJsonData, type DataSourceRef } from '@grafana/data';
+import { type GetDataSourceListFilters } from '@grafana/runtime';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import {
   initLastUsedDatasourceKeyForDashboard,
@@ -6,6 +7,37 @@ import {
 } from 'app/features/dashboard/utils/dashboard';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { type QueryGroupDataSource } from 'app/types/query';
+
+/** The list filter flags that the picker and the modal pass to the list request. */
+export type DataSourceListFilterFlags = Pick<
+  GetDataSourceListFilters,
+  | 'alerting'
+  | 'annotations'
+  | 'dashboard'
+  | 'logs'
+  | 'metrics'
+  | 'mixed'
+  | 'pluginId'
+  | 'tracing'
+  | 'type'
+  | 'variables'
+>;
+
+/** Picks the list filter flags out of a props object, so that other props don't end up in the list request. */
+export function getListFilters(props: DataSourceListFilterFlags): DataSourceListFilterFlags {
+  return {
+    alerting: props.alerting,
+    annotations: props.annotations,
+    dashboard: props.dashboard,
+    logs: props.logs,
+    metrics: props.metrics,
+    mixed: props.mixed,
+    pluginId: props.pluginId,
+    tracing: props.tracing,
+    type: props.type,
+    variables: props.variables,
+  };
+}
 
 export function isDataSourceMatch(
   ds: DataSourceInstanceSettings | undefined,

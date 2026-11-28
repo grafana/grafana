@@ -219,7 +219,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     dashboard.showModal(new PanelInspectDrawer({ panelRef: this.state.panelRef, currentTab: InspectTab.Query }));
   };
 
-  public onChangeDataSource = async (newSettings: DataSourceInstanceSettings, defaultQueries?: SceneDataQuery[]) => {
+  public onChangeDataSource = async (newSettings: DataSourceInstanceSettings) => {
     const { dsSettings } = this.state;
     const queryRunner = this.queryRunner;
     const panelContext = this.getPanelContext();
@@ -231,14 +231,9 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
     // We need to pass in newSettings.uid as well here as that can be a variable expression and we want to store that in the query model not the current ds variable value
     const keepEmpty = this.state.panelRef.resolve().getPlugin()?.meta.skipDefaultQuery && currentQueries.length === 0;
-    const queries =
-      defaultQueries || (keepEmpty ? [] : await updateQueries(nextDS, newSettings.uid, currentQueries, currentDS));
+    const queries = keepEmpty ? [] : await updateQueries(nextDS, newSettings.uid, currentQueries, currentDS);
 
     setQueryRunnerQueries(queryRunner, queries, { datasource: getDataSourceRef(newSettings) });
-
-    if (defaultQueries) {
-      queryRunner.runQueries();
-    }
 
     await this.loadDataSource();
   };

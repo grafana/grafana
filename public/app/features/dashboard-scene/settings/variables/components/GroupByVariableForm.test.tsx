@@ -98,7 +98,7 @@ describe('GroupByVariableForm', () => {
     await userEvent.click(screen.getByText(/prometheus/i));
 
     expect(onDataSourceChangeMock).toHaveBeenCalledTimes(1);
-    expect(onDataSourceChangeMock).toHaveBeenCalledWith(promDatasource, undefined);
+    expect(onDataSourceChangeMock).toHaveBeenCalledWith(promDatasource);
   });
 
   it('should not render code editor when no default options provided', async () => {

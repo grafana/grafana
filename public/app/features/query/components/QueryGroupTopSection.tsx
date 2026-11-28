@@ -11,12 +11,10 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { type DataQuery } from '@grafana/schema';
 import { Button, InlineFormLabel, Modal, useStyles2 } from '@grafana/ui';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { DataSourceModal } from 'app/features/datasources/components/picker/DataSourceModal';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
-import { type GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { type QueryGroupOptions } from 'app/types/query';
 
 import { QueryGroupOptionsEditor } from './QueryGroupOptions';
@@ -43,7 +41,7 @@ interface QueryGroupTopSectionProps {
   scopedVars?: ScopedVars;
   onOpenQueryInspector?: () => void;
   onOptionsChange?: (options: QueryGroupOptions) => void;
-  onDataSourceChange?: (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => Promise<void>;
+  onDataSourceChange?: (ds: DataSourceInstanceSettings) => Promise<void>;
 }
 
 export function QueryGroupTopSection({
@@ -70,8 +68,8 @@ export function QueryGroupTopSection({
             <DataSourcePickerWithPrompt
               options={options}
               scopedVars={scopedVars}
-              onChange={async (ds, defaultQueries) => {
-                return await onDataSourceChange?.(ds, defaultQueries);
+              onChange={async (ds) => {
+                return await onDataSourceChange?.(ds);
               }}
               isDataSourceModalOpen={Boolean(locationService.getSearchObject().firstPanel)}
             />
@@ -132,7 +130,7 @@ interface DataSourcePickerWithPromptProps {
   isDataSourceModalOpen?: boolean;
   options: QueryGroupOptions;
   scopedVars?: ScopedVars;
-  onChange: (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => Promise<void>;
+  onChange: (ds: DataSourceInstanceSettings) => Promise<void>;
 }
 
 function DataSourcePickerWithPrompt({ options, scopedVars, onChange, ...otherProps }: DataSourcePickerWithPromptProps) {
@@ -152,8 +150,8 @@ function DataSourcePickerWithPrompt({ options, scopedVars, onChange, ...otherPro
     variables: true,
     current: options.dataSource,
     scopedVars,
-    onChange: async (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => {
-      await onChange(ds, defaultQueries);
+    onChange: async (ds: DataSourceInstanceSettings) => {
+      await onChange(ds);
       setIsDataSourceModalOpen(false);
     },
   };

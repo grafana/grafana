@@ -12,7 +12,7 @@ import { type DataSourceInstanceSettings, type GrafanaTheme2, type ScopedVars } 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { type FavoriteDatasources, reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
-import { type DataQuery, type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
+import { type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
 import {
   Button,
   floatingUtils,
@@ -26,14 +26,13 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
-import { type GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
 import { useDatasource, useDatasources } from '../../hooks';
 
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
-import { dataSourceLabel } from './utils';
+import { type DataSourceListFilterFlags, dataSourceLabel, getListFilters } from './utils';
 
 export const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
 export const INTERACTION_ITEM = {
@@ -45,8 +44,8 @@ export const INTERACTION_ITEM = {
   TOGGLE_FAVORITE: 'toggle_favorite',
 };
 
-export interface DataSourcePickerProps {
-  onChange: (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => void;
+export interface DataSourcePickerProps extends DataSourceListFilterFlags {
+  onChange: (ds: DataSourceInstanceSettings) => void;
   current?: DataSourceInstanceSettings | string | DataSourceRef | null;
   recentlyUsed?: string[];
   hideTextValue?: boolean;
@@ -66,18 +65,6 @@ export interface DataSourcePickerProps {
    * doesn't identify the surface (e.g. the dashboard edit pane); otherwise it is derived from the URL.
    */
   journeySurface?: 'variable_editor' | 'annotation_editor';
-
-  // DS filters
-  tracing?: boolean;
-  mixed?: boolean;
-  dashboard?: boolean;
-  metrics?: boolean;
-  type?: string | string[];
-  annotations?: boolean;
-  variables?: boolean;
-  alerting?: boolean;
-  pluginId?: string;
-  logs?: boolean;
   filter?: (ds: DataSourceInstanceSettings) => boolean;
 }
 
@@ -130,18 +117,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   const prefixIcon =
     filterTerm && isOpen ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={currentValue} />;
 
-  const dataSources = useDatasources({
-    alerting: props.alerting,
-    annotations: props.annotations,
-    dashboard: props.dashboard,
-    logs: props.logs,
-    metrics: props.metrics,
-    mixed: props.mixed,
-    pluginId: props.pluginId,
-    tracing: props.tracing,
-    type: props.type,
-    variables: props.variables,
-  });
+  const dataSources = useDatasources(getListFilters(props));
   const favoriteDataSources = useFavoriteDatasources();
   const placement = 'bottom-start';
 
@@ -388,7 +364,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
               filterTerm={filterTerm}
               keyboardEvents={keyboardEvents}
               showFocusRing={showFocusRing}
-              onChange={(ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => {
+              onChange={(ds: DataSourceInstanceSettings) => {
                 if (ds.uid !== currentValue?.uid) {
                   closeHandedOff();
                   // Reported before onChange so the journey still ends if onChange throws or navigates
@@ -399,7 +375,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
                       ? favoriteDataSources.isFavoriteDatasource(ds.uid)
                       : undefined,
                   });
-                  onChange(ds, defaultQueries);
+                  onChange(ds);
                 } else {
                   // A selection in the advanced modal comes back here after the dropdown handed off its cycle
                   cycleIdRef.current ??= modalCycleIdRef.current;
@@ -467,7 +443,18 @@ interface PickerContentProps extends DataSourcePickerProps {
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
-  const { filterTerm, onChange, current, filter, dataSources, favoriteDataSources } = props;
+  const {
+    filterTerm,
+    onChange,
+    current,
+    filter,
+    dataSources,
+    favoriteDataSources,
+    keyboardEvents,
+    listboxId,
+    onActiveItemChange,
+    showFocusRing,
+  } = props;
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const changeCallback = useCallback(
@@ -483,8 +470,11 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
     <div style={props.style} ref={ref} className={styles.container}>
       <ScrollContainer showScrollIndicators ref={scrollRef}>
         <DataSourceList
-          {...props}
           favoriteDataSources={favoriteDataSources}
+          keyboardEvents={keyboardEvents}
+          listboxId={listboxId}
+          onActiveItemChange={onActiveItemChange}
+          showFocusRing={showFocusRing}
           enableKeyboardNavigation
           className={styles.dataSourceList}
           current={current}
@@ -588,22 +578,13 @@ function Footer({ onClose, onChange, ...props }: FooterProps) {
             onClick={() => {
               onClose();
               showModal(DataSourceModal, {
+                ...getListFilters(props),
                 reportedInteractionFrom: 'ds_picker',
-                tracing: props.tracing,
-                dashboard: props.dashboard,
-                mixed: props.mixed,
-                metrics: props.metrics,
-                type: props.type,
-                annotations: props.annotations,
-                variables: props.variables,
-                alerting: props.alerting,
-                pluginId: props.pluginId,
-                logs: props.logs,
                 filter: props.filter,
                 current: props.current,
                 onDismiss: hideModal,
-                onChange: (ds, defaultQueries) => {
-                  onChange(ds, defaultQueries);
+                onChange: (ds) => {
+                  onChange(ds);
                   hideModal();
                 },
                 dataSources: props.dataSources,

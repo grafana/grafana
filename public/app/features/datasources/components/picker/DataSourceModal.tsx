@@ -5,15 +5,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { type DataSourceInstanceSettings, type DataSourceRef, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
-import { type DataQuery } from '@grafana/schema';
 import { Modal, useStyles2, Input, Icon, ScrollContainer } from '@grafana/ui';
-import { type GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
 import { useDatasources } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { BuiltInDataSourceList } from './BuiltInDataSourceList';
 import { DataSourceList } from './DataSourceList';
+import { type DataSourceListFilterFlags, getListFilters } from './utils';
 
 const INTERACTION_EVENT_NAME = 'dashboards_dspickermodal_clicked';
 const INTERACTION_ITEM = {
@@ -25,44 +24,44 @@ const INTERACTION_ITEM = {
   OPEN_MODAL: 'open_modal',
 };
 
-export interface DataSourceModalProps {
-  onChange: (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => void;
+export interface DataSourceModalProps extends DataSourceListFilterFlags {
+  onChange: (ds: DataSourceInstanceSettings) => void;
   current: DataSourceRef | string | null | undefined;
   onDismiss: () => void;
   recentlyUsed?: string[];
   reportedInteractionFrom?: string;
-
-  // DS filters
   filter?: (ds: DataSourceInstanceSettings) => boolean;
-  tracing?: boolean;
-  mixed?: boolean;
-  dashboard?: boolean;
-  metrics?: boolean;
-  type?: string | string[];
-  annotations?: boolean;
-  variables?: boolean;
-  alerting?: boolean;
-  pluginId?: string;
-  logs?: boolean;
+  /**
+   * The data sources to list, when the caller already has them (the picker passes its own list).
+   * Without it, the modal fetches the list with the filter flags.
+   */
+  dataSources?: DataSourceInstanceSettings[];
 }
 
-export function DataSourceModal({
-  tracing,
-  dashboard,
-  mixed,
-  metrics,
-  type,
-  annotations,
-  variables,
-  alerting,
-  pluginId,
-  logs,
+export function DataSourceModal(props: DataSourceModalProps) {
+  if (props.dataSources) {
+    return <DataSourceModalContent {...props} dataSources={props.dataSources} />;
+  }
+  return <FetchingDataSourceModal {...props} />;
+}
+
+function FetchingDataSourceModal(props: DataSourceModalProps) {
+  const dataSources = useDatasources(getListFilters(props));
+  return <DataSourceModalContent {...props} dataSources={dataSources} />;
+}
+
+interface DataSourceModalContentProps extends DataSourceModalProps {
+  dataSources: DataSourceInstanceSettings[];
+}
+
+function DataSourceModalContent({
+  dataSources,
   filter,
   onChange,
   current,
   onDismiss,
   reportedInteractionFrom,
-}: DataSourceModalProps) {
+}: DataSourceModalContentProps) {
   const styles = useStyles2(getDataSourceModalStyles);
   const [search, setSearch] = useState('');
   const analyticsInteractionSrc = reportedInteractionFrom || 'modal';
@@ -82,20 +81,6 @@ export function DataSourceModal({
       is_favorite: favoriteDataSources.enabled ? favoriteDataSources.isFavoriteDatasource(ds.uid) : undefined,
     });
   };
-
-  // Get all datasources to report total_configured count
-  const dataSources = useDatasources({
-    tracing,
-    dashboard,
-    mixed,
-    metrics,
-    type,
-    annotations,
-    variables,
-    alerting,
-    pluginId,
-    logs,
-  });
 
   // Report interaction when modal is opened
   useEffect(() => {
@@ -125,16 +110,7 @@ export function DataSourceModal({
     onChange: onChangeDataSource,
     current,
     filter,
-    variables,
-    tracing,
-    metrics,
-    type,
-    annotations,
-    alerting,
-    pluginId,
-    logs,
-    dashboard,
-    mixed,
+    dataSources,
   };
 
   return (
@@ -173,16 +149,6 @@ export function DataSourceModal({
             }
             searchTerm={search}
             nonSearchFilter={(ds) => (filter ? filter(ds) : true) && !ds.meta.builtIn}
-            variables={variables}
-            tracing={tracing}
-            metrics={metrics}
-            type={type}
-            annotations={annotations}
-            alerting={alerting}
-            pluginId={pluginId}
-            logs={logs}
-            dashboard={dashboard}
-            mixed={mixed}
             dataSources={dataSources}
             favoriteDataSources={favoriteDataSources}
             scrollRef={scrollRef}

@@ -115,7 +115,7 @@ describe('DataSourceDropdown', () => {
       });
     });
 
-    it('should fetch the DS applying the correct filters consistently across lists', async () => {
+    it('fetches the list once with the filter flags when no list is given', async () => {
       const filters = {
         mixed: true,
         tracing: true,
@@ -129,26 +129,31 @@ describe('DataSourceDropdown', () => {
         logs: true,
       };
 
-      const props = {
-        onChange: () => {},
-        onDismiss: () => {},
-        current: mockDS1.name,
-        ...filters,
-        dataSources: mockDSList,
-      };
-
       getListMock.mockClear();
-      render(<DataSourceModal {...props}></DataSourceModal>);
+      render(<DataSourceModal onChange={() => {}} onDismiss={() => {}} current={mockDS1.name} {...filters} />);
       // Each DataSourceCard resolves its default-datasource status asynchronously; flush that before the test ends.
       await act(async () => {});
 
-      // Every call to the service must contain same filters
-      expect(getListMock).toHaveBeenCalled();
-      getListMock.mock.calls.forEach((call) =>
-        expect(call[0]).toMatchObject({
-          ...filters,
-        })
+      expect(getListMock).toHaveBeenCalledTimes(1);
+      expect(getListMock).toHaveBeenCalledWith(filters);
+    });
+
+    it('lists the given data sources without fetching', async () => {
+      getListMock.mockClear();
+      render(
+        <DataSourceModal
+          onChange={() => {}}
+          onDismiss={() => {}}
+          current={mockDS1.name}
+          metrics
+          dataSources={[mockDS2]}
+        />
       );
+      await act(async () => {});
+
+      expect(getListMock).not.toHaveBeenCalled();
+      expect(screen.getByText(mockDS2.name, { selector: 'span' })).toBeInTheDocument();
+      expect(screen.queryByText(mockDS1.name, { selector: 'span' })).not.toBeInTheDocument();
     });
   });
 

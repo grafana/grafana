@@ -436,7 +436,7 @@ describe('DataSourcePicker', () => {
       await screen.findByText(mockDS2.name, { selector: 'span' });
       await user.keyboard('{Enter}');
 
-      expect(onChange).toHaveBeenCalledWith(mockDS2, undefined);
+      expect(onChange).toHaveBeenCalledWith(mockDS2);
     });
   });
 
