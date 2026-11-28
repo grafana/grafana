@@ -101,7 +101,7 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
                 aria-label={t(
                   'playlist.playlist-table-rows.aria-label-playlist-item',
                   'Playlist item, {{itemType}}, {{itemValue}}',
-                  { itemType: item.type, itemValue: item.value }
+                  { itemType: item.type, itemValue: item.value, interpolation: { escapeValue: false } }
                 )}
               >
                 {renderItem(item)}

@@ -48,7 +48,10 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
           onClick={() => setStartPlaylist(playlist)}
           fill="outline"
           size="sm"
-          aria-label={t('playlist-page.card.start-label', 'Start playlist {{ name }} ', { name: playlist.spec?.title })}
+          aria-label={t('playlist-page.card.start-label', 'Start playlist {{ name }} ', {
+            name: playlist.spec?.title,
+            interpolation: { escapeValue: false },
+          })}
         >
           <Trans i18nKey="playlist-page.card.start">Start</Trans>
         </Button>
@@ -61,6 +64,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
               size="sm"
               aria-label={t('playlist-page.card.share-label', 'Share playlist {{ name }} ', {
                 name: playlist.spec?.title,
+                interpolation: { escapeValue: false },
               })}
               onClick={() => {
                 showModal(ShareModal, {
@@ -80,7 +84,10 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
             href={`/playlists/edit/${playlist.metadata?.name}`}
             icon="cog"
             size="sm"
-            aria-label={t('playlist-page.card.edit-label', 'Edit playlist {{ name }} ', { name: playlist.spec?.title })}
+            aria-label={t('playlist-page.card.edit-label', 'Edit playlist {{ name }} ', {
+              name: playlist.spec?.title,
+              interpolation: { escapeValue: false },
+            })}
           >
             <Trans i18nKey="playlist-page.card.edit">Edit</Trans>
           </LinkButton>
@@ -94,6 +101,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
             size="sm"
             aria-label={t('playlist-page.card.delete-label', 'Delete playlist {{ name }} ', {
               name: playlist.spec?.title,
+              interpolation: { escapeValue: false },
             })}
           >
             <Trans i18nKey="playlist-page.card.delete">Delete</Trans>
