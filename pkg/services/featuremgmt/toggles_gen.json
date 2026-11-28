@@ -147,6 +147,20 @@
     },
     {
       "metadata": {
+        "name": "alerting.legacyGroupsMigration",
+        "resourceVersion": "1795428371498",
+        "creationTimestamp": "2026-11-23T10:06:11Z"
+      },
+      "spec": {
+        "description": "Adds a Legacy groups tab to the Grafana-managed rule list pages, for converting evaluation groups into subfolders. Needs alerting.gmaOnlyListView",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.manualAssistantInvestigation",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-07-28T15:01:18Z"

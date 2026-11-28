@@ -24,6 +24,8 @@ export const FlagKeys = {
   AlertingDataSourceManagedRouteProxy: "alerting.dataSourceManagedRouteProxy",
   /** Enables the separate Grafana-managed Alert rules and Recording rules list pages, replacing the combined rule list */
   AlertingGmaOnlyListView: "alerting.gmaOnlyListView",
+  /** Adds a Legacy groups tab to the Grafana-managed rule list pages, for converting evaluation groups into subfolders. Needs alerting.gmaOnlyListView */
+  AlertingLegacyGroupsMigration: "alerting.legacyGroupsMigration",
   /** Enable manually starting an Assistant investigation from the alert instance drawer. */
   AlertingManualAssistantInvestigation: "alerting.manualAssistantInvestigation",
   /** Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them. */
@@ -493,6 +495,17 @@ export const useFlagAlertingDataSourceManagedRouteProxy = (options?: ReactFlagEv
  */
 export const useFlagAlertingGmaOnlyListView = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alerting.gmaOnlyListView", false, options).value;
+};
+
+/**
+ * Adds a Legacy groups tab to the Grafana-managed rule list pages, for converting evaluation groups into subfolders. Needs alerting.gmaOnlyListView
+ *
+ * **Details:**
+ * - flag key: `alerting.legacyGroupsMigration`
+ * - default value: `false`
+ */
+export const useFlagAlertingLegacyGroupsMigration = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.legacyGroupsMigration", false, options).value;
 };
 
 /**
