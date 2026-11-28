@@ -1,9 +1,16 @@
 import {
   type AdHocFilterWithLabels as SceneAdHocFilterWithLabels,
+  isAdHocVariable,
+  isConstantVariable,
+  isCustomVariable,
+  isDataSourceVariable,
+  isIntervalVariable,
+  isQueryVariable,
+  isSwitchVariable,
+  isTextBoxVariable,
   type MultiValueVariable,
   type SceneObject,
   type SceneVariables,
-  sceneUtils,
 } from '@grafana/scenes';
 import {
   type VariableModel,
@@ -58,7 +65,7 @@ export function sceneVariablesSetToVariables(
       type: variable.state.type,
     };
 
-    if (sceneUtils.isQueryVariable(variable)) {
+    if (isQueryVariable(variable)) {
       let options: VariableOption[] = [];
       if (keepQueryOptions) {
         options = variableValueOptionsToVariableOptions(variable.state);
@@ -96,7 +103,7 @@ export function sceneVariablesSetToVariables(
         variableObj.datasource = datasource;
       }
       variables.push(variableObj);
-    } else if (sceneUtils.isCustomVariable(variable)) {
+    } else if (isCustomVariable(variable)) {
       let options: VariableOption[] = [];
       if (keepQueryOptions) {
         options = variableValueOptionsToVariableOptions(variable.state);
@@ -120,7 +127,7 @@ export function sceneVariablesSetToVariables(
         valuesFormat: variable.state.valuesFormat ?? 'csv',
       };
       variables.push(customVariable);
-    } else if (sceneUtils.isDataSourceVariable(variable)) {
+    } else if (isDataSourceVariable(variable)) {
       variables.push({
         ...commonProperties,
         current: {
@@ -138,7 +145,7 @@ export function sceneVariablesSetToVariables(
         includeAll: variable.state.includeAll,
         ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
       });
-    } else if (sceneUtils.isConstantVariable(variable)) {
+    } else if (isConstantVariable(variable)) {
       variables.push({
         ...commonProperties,
         type: 'constant', // Explicitly set type to constant
@@ -152,7 +159,7 @@ export function sceneVariablesSetToVariables(
         query: variable.state.value,
         hide: OldVariableHide.hideVariable,
       });
-    } else if (sceneUtils.isIntervalVariable(variable)) {
+    } else if (isIntervalVariable(variable)) {
       const intervals = getIntervalsQueryFromNewIntervalModel(variable.state.intervals);
       variables.push({
         ...commonProperties,
@@ -174,7 +181,7 @@ export function sceneVariablesSetToVariables(
         auto_min: variable.state.autoMinInterval,
         auto_count: variable.state.autoStepCount,
       });
-    } else if (sceneUtils.isTextBoxVariable(variable)) {
+    } else if (isTextBoxVariable(variable)) {
       const current = {
         text: variable.state.value,
         value: variable.state.value,
@@ -186,7 +193,7 @@ export function sceneVariablesSetToVariables(
         options: [{ ...current, selected: true }],
         query: variable.state.value,
       });
-    } else if (sceneUtils.isAdHocVariable(variable)) {
+    } else if (isAdHocVariable(variable)) {
       const adhocVariable: VariableModel = {
         ...commonProperties,
         datasource: variable.state.datasource,
@@ -205,7 +212,7 @@ export function sceneVariablesSetToVariables(
         enableGroupBy: variable.state.enableGroupBy ?? false,
       };
       variables.push(adhocVariable);
-    } else if (sceneUtils.isSwitchVariable(variable)) {
+    } else if (isSwitchVariable(variable)) {
       variables.push({
         ...commonProperties,
         current: {
