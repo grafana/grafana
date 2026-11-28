@@ -1030,6 +1030,36 @@ func TestNewState(t *testing.T) {
 			assert.Equal(t, expected, state.Annotations["rule-"+key])
 		}
 	})
+	t.Run("rule annotations should be able to be expanded with rule labels", func(t *testing.T) {
+		result := eval.Result{
+			Instance: data.Labels{
+				"instance":    "server-01",
+				"environment": "staging",
+			},
+		}
+
+		rule := generateRule()
+		rule.Labels = map[string]string{
+			// Static rule label (the reported bug): must be visible in annotations.
+			"environment": "production",
+			"team":        "platform",
+			// Rule label that is itself a template: it is expanded first, and the
+			// annotation must see the expanded value, not the template string.
+			"owner": "{{ $labels.instance }}",
+		}
+		rule.Annotations = map[string]string{
+			"description": "Alert from {{ index .Labels \"environment\" }} environment owned by {{ index .Labels \"team\" }} on {{ index .Labels \"owner\" }}",
+			"allLabels":   "{{ $labels }}",
+		}
+
+		state := newState(context.Background(), l, rule, result, nil, url, 0, nil)
+
+		// Rule labels take precedence over result labels with the same key.
+		assert.Equal(t, "Alert from production environment owned by platform on server-01", state.Annotations["description"])
+		assert.Contains(t, state.Annotations["allLabels"], "environment=production")
+		assert.Equal(t, "production", state.Labels["environment"])
+		assert.Equal(t, "server-01", state.Labels["owner"])
+	})
 	t.Run("when result labels collide with system labels from LabelsUserCannotSpecify", func(t *testing.T) {
 		result := eval.Result{
 			Instance: ngmodels.GenerateAlertLabels(5, "result-"),
