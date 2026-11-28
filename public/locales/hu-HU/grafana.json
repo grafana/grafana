@@ -883,7 +883,8 @@
       "label-disabled": "Adatforrás",
       "message": {
         "please-select-a-data-source": "Válasszon adatforrást"
-      }
+      },
+      "rules-sources-error": ""
     },
     "cloud-evaluation-behavior": {
       "description-pending-period": "Az az időszak, amely alatt a küszöbfeltételnek teljesülnie kell a riasztás aktiválásához. A „Nincs” kiválasztása azonnal aktiválja a riasztást, amint a feltétel teljesül.",
@@ -1937,7 +1938,8 @@
           "title": "Adatforrás"
         },
         "label": "Adatforrás",
-        "required-message": "Válasszon adatforrást"
+        "required-message": "Válasszon adatforrást",
+        "rules-sources-error": ""
       },
       "error": "A riasztási szabályok importálása nem sikerült: {{error}}",
       "group": {
@@ -1996,7 +1998,6 @@
         "preview-config-aria": "Konfiguráció előnézete",
         "preview-rules-aria": "Riasztási szabályok előnézete",
         "routing": "Értesítési útválasztás",
-        "routing-none": "Nincs kijelölt házirendfa",
         "routing-tree": "Házirendfa: {{name}}",
         "rules-error": "",
         "rules-skipped": "A riasztási szabályok nem lesznek importálva.",
@@ -4343,7 +4344,8 @@
     },
     "unified-alert-list": {
       "clear": "Törlés",
-      "text-loading": "Betöltés…"
+      "text-loading": "Betöltés…",
+      "title-rules-source-list-error": ""
     },
     "unified-alert-list-panel": {
       "body-permission-required": "Sajnos nincs megfelelő engedélye a riasztási szabályok megtekintéséhez.",
@@ -18161,6 +18163,7 @@
           "binary-operation": "Bináris művelet",
           "reduce-row": "Sor csökkentése",
           "row-index": "Sorindex",
+          "template": "",
           "unary-operation": "Egyváltozós művelet"
         }
       },
@@ -18863,6 +18866,18 @@
         "prepare-spatial-field": "Térbeli mező előkészítése",
         "transform": "Átalakítás"
       }
+    },
+    "template-options-editor": {
+      "aria-label-insert-field": "",
+      "error-unknown-fields": "",
+      "label-decimals": "",
+      "label-insert-field": "",
+      "label-template": "",
+      "placeholder-decimals": "",
+      "placeholder-insert-field": "",
+      "placeholder-template": "",
+      "tooltip-decimals": "",
+      "tooltip-template": ""
     },
     "time-series-table": {
       "description": {

@@ -883,7 +883,8 @@
       "label-disabled": "Origem dos dados",
       "message": {
         "please-select-a-data-source": "Selecione uma origem de dados"
-      }
+      },
+      "rules-sources-error": ""
     },
     "cloud-evaluation-behavior": {
       "description-pending-period": "Período durante o qual a condição de limite deve ser cumprida para acionar um alerta. Selecionar \"Nenhum\" aciona o alerta imediatamente assim que a condição esteja cumprida.",
@@ -1937,7 +1938,8 @@
           "title": "Origem dos dados"
         },
         "label": "Origem dos dados",
-        "required-message": "Selecione uma origem de dados"
+        "required-message": "Selecione uma origem de dados",
+        "rules-sources-error": ""
       },
       "error": "Falha ao importar regras de alerta: {{error}}",
       "group": {
@@ -1996,7 +1998,6 @@
         "preview-config-aria": "Pré-visualizar configuração",
         "preview-rules-aria": "Pré-visualizar regras de alertas",
         "routing": "Encaminhamento das notificações",
-        "routing-none": "Nenhuma árvore de políticas selecionada",
         "routing-tree": "Árvore de políticas: {{name}}",
         "rules-error": "",
         "rules-skipped": "As regras de alertas não serão importadas.",
@@ -4343,7 +4344,8 @@
     },
     "unified-alert-list": {
       "clear": "Limpar",
-      "text-loading": "A carregar..."
+      "text-loading": "A carregar...",
+      "title-rules-source-list-error": ""
     },
     "unified-alert-list-panel": {
       "body-permission-required": "Lamentamos, mas não tem as permissões necessárias para ler as regras de alertas.",
@@ -18161,6 +18163,7 @@
           "binary-operation": "Operação binária",
           "reduce-row": "Reduzir linha",
           "row-index": "Índice de linha",
+          "template": "",
           "unary-operation": "Operação unária"
         }
       },
@@ -18863,6 +18866,18 @@
         "prepare-spatial-field": "Preparar campo espacial",
         "transform": "Transformar"
       }
+    },
+    "template-options-editor": {
+      "aria-label-insert-field": "",
+      "error-unknown-fields": "",
+      "label-decimals": "",
+      "label-insert-field": "",
+      "label-template": "",
+      "placeholder-decimals": "",
+      "placeholder-insert-field": "",
+      "placeholder-template": "",
+      "tooltip-decimals": "",
+      "tooltip-template": ""
     },
     "time-series-table": {
       "description": {

@@ -883,7 +883,8 @@
       "label-disabled": "Source de données",
       "message": {
         "please-select-a-data-source": "Veuillez sélectionner une source de données"
-      }
+      },
+      "rules-sources-error": ""
     },
     "cloud-evaluation-behavior": {
       "description-pending-period": "Période pendant laquelle la condition de seuil doit être remplie pour déclencher une alerte. Sélectionner « Aucun » déclenche l’alerte immédiatement une fois la condition remplie.",
@@ -1937,7 +1938,8 @@
           "title": "Source de données"
         },
         "label": "Source de données",
-        "required-message": "Veuillez sélectionner une source de données"
+        "required-message": "Veuillez sélectionner une source de données",
+        "rules-sources-error": ""
       },
       "error": "Échec de l’importation des règles d’alerte : {{error}}",
       "group": {
@@ -1996,7 +1998,6 @@
         "preview-config-aria": "Prévisualiser la configuration",
         "preview-rules-aria": "Prévisualiser les règles d’alerte",
         "routing": "Routage des notifications",
-        "routing-none": "Aucune arborescence de politique sélectionnée",
         "routing-tree": "Arborescence de la politique : {{name}}",
         "rules-error": "",
         "rules-skipped": "Les règles d’alerte ne seront pas importées.",
@@ -4343,7 +4344,8 @@
     },
     "unified-alert-list": {
       "clear": "Effacer",
-      "text-loading": "Chargement en cours..."
+      "text-loading": "Chargement en cours...",
+      "title-rules-source-list-error": ""
     },
     "unified-alert-list-panel": {
       "body-permission-required": "Nous sommes désolés, mais vous n’avez pas les autorisations requises pour lire les règles d’alerte.",
@@ -18161,6 +18163,7 @@
           "binary-operation": "Opération binaire",
           "reduce-row": "Réduire la ligne",
           "row-index": "Index de la ligne",
+          "template": "",
           "unary-operation": "Opération unaire"
         }
       },
@@ -18863,6 +18866,18 @@
         "prepare-spatial-field": "Préparer le champ spatial",
         "transform": "Transformer"
       }
+    },
+    "template-options-editor": {
+      "aria-label-insert-field": "",
+      "error-unknown-fields": "",
+      "label-decimals": "",
+      "label-insert-field": "",
+      "label-template": "",
+      "placeholder-decimals": "",
+      "placeholder-insert-field": "",
+      "placeholder-template": "",
+      "tooltip-decimals": "",
+      "tooltip-template": ""
     },
     "time-series-table": {
       "description": {

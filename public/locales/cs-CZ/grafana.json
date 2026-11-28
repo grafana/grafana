@@ -893,7 +893,8 @@
       "label-disabled": "Zdroj dat",
       "message": {
         "please-select-a-data-source": "Vyberte zdroj dat"
-      }
+      },
+      "rules-sources-error": ""
     },
     "cloud-evaluation-behavior": {
       "description-pending-period": "Období, během kterého musí být splněna podmínka prahové hodnoty pro spuštění výstrahy. Výběrem možnosti „Žádné“ se spustí výstraha okamžitě po splnění podmínky.",
@@ -1957,7 +1958,8 @@
           "title": "Zdroj dat"
         },
         "label": "Zdroj dat",
-        "required-message": "Vyberte zdroj dat"
+        "required-message": "Vyberte zdroj dat",
+        "rules-sources-error": ""
       },
       "error": "Nepodařilo se importovat pravidla výstrah: {{error}}",
       "group": {
@@ -2016,7 +2018,6 @@
         "preview-config-aria": "Zobrazit náhled konfigurace",
         "preview-rules-aria": "Náhled pravidel výstrah",
         "routing": "Směrování oznámení",
-        "routing-none": "Není vybrán žádný strom zásad",
         "routing-tree": "Strom zásad: {{name}}",
         "rules-error": "",
         "rules-skipped": "Pravidla výstrah nebudou importována.",
@@ -4421,7 +4422,8 @@
     },
     "unified-alert-list": {
       "clear": "Vymazat",
-      "text-loading": "Načítání…"
+      "text-loading": "Načítání…",
+      "title-rules-source-list-error": ""
     },
     "unified-alert-list-panel": {
       "body-permission-required": "Je nám líto, ale nemáte potřebná oprávnění k čtení pravidel výstrah.",
@@ -18453,6 +18455,7 @@
           "binary-operation": "Binární operace",
           "reduce-row": "Zmenšit řádek",
           "row-index": "Index řádku",
+          "template": "",
           "unary-operation": "Unární operace"
         }
       },
@@ -19155,6 +19158,18 @@
         "prepare-spatial-field": "Připravit prostorové pole",
         "transform": "Transformovat"
       }
+    },
+    "template-options-editor": {
+      "aria-label-insert-field": "",
+      "error-unknown-fields": "",
+      "label-decimals": "",
+      "label-insert-field": "",
+      "label-template": "",
+      "placeholder-decimals": "",
+      "placeholder-insert-field": "",
+      "placeholder-template": "",
+      "tooltip-decimals": "",
+      "tooltip-template": ""
     },
     "time-series-table": {
       "description": {

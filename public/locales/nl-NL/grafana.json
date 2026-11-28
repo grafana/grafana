@@ -883,7 +883,8 @@
       "label-disabled": "Gegevensbron",
       "message": {
         "please-select-a-data-source": "Selecteer een gegevensbron"
-      }
+      },
+      "rules-sources-error": ""
     },
     "cloud-evaluation-behavior": {
       "description-pending-period": "De periode waarin aan de drempelvoorwaarde moet worden voldaan om een waarschuwing te activeren. Als je 'Geen' selecteert, wordt de waarschuwing onmiddellijk geactiveerd zodra aan de voorwaarde is voldaan.",
@@ -1937,7 +1938,8 @@
           "title": "Gegevensbron"
         },
         "label": "Gegevensbron",
-        "required-message": "Selecteer een gegevensbron"
+        "required-message": "Selecteer een gegevensbron",
+        "rules-sources-error": ""
       },
       "error": "Kan waarschuwingsregels niet importeren: {{error}}",
       "group": {
@@ -1996,7 +1998,6 @@
         "preview-config-aria": "Voorbeeldweergave van configuratie",
         "preview-rules-aria": "Voorbeeld waarschuwingsregels bekijken",
         "routing": "Meldingsroutering",
-        "routing-none": "Geen beleidsboom geselecteerd",
         "routing-tree": "Beleidsboom: {{name}}",
         "rules-error": "",
         "rules-skipped": "Waarschuwingsregels worden niet geïmporteerd.",
@@ -4343,7 +4344,8 @@
     },
     "unified-alert-list": {
       "clear": "Wissen",
-      "text-loading": "Laden..."
+      "text-loading": "Laden...",
+      "title-rules-source-list-error": ""
     },
     "unified-alert-list-panel": {
       "body-permission-required": "Sorry, je hebt niet de vereiste toestemmingen om waarschuwingsregels te lezen.",
@@ -18161,6 +18163,7 @@
           "binary-operation": "Binaire bewerking",
           "reduce-row": "Rij verkleinen",
           "row-index": "Rij-index",
+          "template": "",
           "unary-operation": "Unaire bewerking"
         }
       },
@@ -18863,6 +18866,18 @@
         "prepare-spatial-field": "Ruimtelijk veld voorbereiden",
         "transform": "Transformeren"
       }
+    },
+    "template-options-editor": {
+      "aria-label-insert-field": "",
+      "error-unknown-fields": "",
+      "label-decimals": "",
+      "label-insert-field": "",
+      "label-template": "",
+      "placeholder-decimals": "",
+      "placeholder-insert-field": "",
+      "placeholder-template": "",
+      "tooltip-decimals": "",
+      "tooltip-template": ""
     },
     "time-series-table": {
       "description": {
