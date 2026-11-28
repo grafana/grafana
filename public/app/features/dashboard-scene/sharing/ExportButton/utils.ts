@@ -5,6 +5,7 @@ import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboard
 
 import { contextSrv } from '../../../../core/services/context_srv';
 import { type DashboardScene } from '../../scene/DashboardScene';
+import { getRenderTimeZone } from '../getRenderTimeZone';
 
 /**
  * Options for generating a dashboard image
@@ -40,10 +41,13 @@ export async function generateDashboardImage({
       };
     }
 
+    const timeZone = dashboard.state.$timeRange?.getTimeZone();
+
     const imageUrl = getDashboardUrl({
       uid: dashboard.state.uid,
       currentQueryParams: window.location.search,
       render: true,
+      timeZone: timeZone ? getRenderTimeZone(timeZone) : undefined,
       updateQuery: {
         height: -1, // image renderer will scroll through the dashboard and set the appropriate height
         width: window.innerWidth || config.rendererDefaultImageWidth || 1000,

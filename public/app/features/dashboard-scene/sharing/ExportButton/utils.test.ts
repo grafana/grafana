@@ -178,5 +178,29 @@ describe('Dashboard Export Image Utils', () => {
         },
       });
     });
+
+    it.each([
+      // jest.config.js sets TZ to Pacific/Easter, so that's what the browser resolves to
+      { dashboardTimeZone: 'browser', tz: 'Pacific/Easter' },
+      { dashboardTimeZone: 'utc', tz: 'UTC' },
+      { dashboardTimeZone: 'Europe/Berlin', tz: 'Europe/Berlin' },
+    ])('should render in the $dashboardTimeZone dashboard time zone', async ({ dashboardTimeZone, tz }) => {
+      config.rendererAvailable = true;
+      const mockBlob = new Blob(['test'], { type: 'image/png' });
+      const fetchMock = jest.fn().mockReturnValue(of({ ok: true, data: mockBlob }));
+      (getBackendSrv as jest.Mock).mockReturnValue({ fetch: fetchMock });
+
+      const dashboard = {
+        state: {
+          uid: 'test-uid',
+          $timeRange: { getTimeZone: () => dashboardTimeZone },
+        },
+      } as unknown as DashboardScene;
+
+      const result = await generateDashboardImage({ dashboard });
+
+      expect(result.error).toBeUndefined();
+      expect(getDashboardUrl).toHaveBeenLastCalledWith(expect.objectContaining({ render: true, timeZone: tz }));
+    });
   });
 });
