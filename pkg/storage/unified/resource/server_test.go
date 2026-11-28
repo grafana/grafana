@@ -830,23 +830,23 @@ func (f *fakeResourceIndexClient) GetStats(_ context.Context, req *resourcepb.Re
 func TestGetQuotaUsage(t *testing.T) {
 	ctx := t.Context()
 
-	t.Run("returns error when overrides service is not configured", func(t *testing.T) {
+	t.Run("returns an unenforced quota when overrides service is not configured", func(t *testing.T) {
 		s := &server{
 			overridesService: nil,
 			log:              log.NewNopLogger(),
 		}
 
-		_, err := s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
+		resp, err := s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
 			Key: &resourcepb.ResourceKey{
 				Namespace: "stacks-123",
 				Group:     "dashboard.grafana.app",
 				Resource:  "dashboards",
 			},
 		})
-		respErr := rpcErrorResult(t, err)
-		require.NotNil(t, respErr)
-		assert.Equal(t, int32(http.StatusNotImplemented), respErr.Code)
-		assert.Equal(t, "overrides service not configured on resource server", respErr.Message)
+		require.NoError(t, err)
+		require.Nil(t, resp.Error)
+		assert.Equal(t, int64(0), resp.Usage)
+		assert.Equal(t, int64(0), resp.Limit)
 	})
 
 	t.Run("returns usage and limit successfully", func(t *testing.T) {
