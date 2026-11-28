@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"runtime"
 	"testing"
+	"testing/synctest"
 	"time"
 )
 
@@ -172,27 +173,35 @@ func TestLex(t *testing.T) {
 
 // TestLexerClose verifies that a lexer can be explicitly closed
 func TestLexerClose(t *testing.T) {
-	// Create a lexer with some input
-	lexer := lex("1 + 2")
+	// Run inside a synctest bubble so that we can deterministically wait for the lexer
+	// goroutine to observe Close() before checking the channel. Otherwise the goroutine may
+	// still be about to send the next item, and a receive can win over the done signal.
+	synctest.Test(t, func(t *testing.T) {
+		// Create a lexer with some input
+		lexer := lex("1 + 2")
 
-	// Read one item to verify it's working
-	item := lexer.nextItem()
-	if item.typ != itemNumber || item.val != "1" {
-		t.Errorf("unexpected first item: %v", item)
-	}
-
-	// Close the lexer explicitly
-	lexer.Close()
-
-	// Verify the lexer's channel closes
-	select {
-	case _, ok := <-lexer.items:
-		if ok {
-			t.Fatal("lexer.items channel should be closed after lexer.Close()")
+		// Read one item to verify it's working
+		item := lexer.nextItem()
+		if item.typ != itemNumber || item.val != "1" {
+			t.Errorf("unexpected first item: %v", item)
 		}
-	case <-time.After(100 * time.Millisecond):
-		t.Fatal("timed out waiting for lexer.items channel to close")
-	}
+
+		// Close the lexer explicitly
+		lexer.Close()
+
+		// Wait until the lexer goroutine has processed the shutdown
+		synctest.Wait()
+
+		// Verify the lexer's channel closes
+		select {
+		case _, ok := <-lexer.items:
+			if ok {
+				t.Fatal("lexer.items channel should be closed after lexer.Close()")
+			}
+		case <-time.After(100 * time.Millisecond):
+			t.Fatal("timed out waiting for lexer.items channel to close")
+		}
+	})
 }
 
 // TestParseErrorNoLeak verifies that lexer goroutines are properly terminated when Parse encounters errors
