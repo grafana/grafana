@@ -1,0 +1,10 @@
+{
+  "apiVersion": "folder.grafana.app/v1beta1",
+  "kind": "Folder",
+  "metadata": {
+    "name": "gdev-git-sync-notes"
+  },
+  "spec": {
+    "title": "Notes"
+  }
+}

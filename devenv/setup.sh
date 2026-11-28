@@ -133,20 +133,31 @@ confirmLibraryPanelRouting() {
 	esac
 }
 
-provisioningBootstrap() {
-	local target
+# Exits unless conf/custom.ini is absent or already one of the given links. Each example replaces
+# the whole file, and the other has to be reverted while its own settings can still clean up.
+requireCustomIniSlot() {
+	local target allowed
 	target=$(customIniTarget)
 
-	if [ -e ../conf/custom.ini ] || [ -L ../conf/custom.ini ]; then
-		if [ "$target" != "../devenv/provisioning-bootstrap.ini" ] && [ "$target" != "../devenv/provisioning-bootstrap-cleanup.ini" ]; then
-			echo "conf/custom.ini already exists and is not the provisioning bootstrap link; merge devenv/provisioning-bootstrap.ini into it by hand"
-			exit 1
-		fi
+	if [ ! -e ../conf/custom.ini ] && [ ! -L ../conf/custom.ini ]; then
+		return 0
 	fi
+	for allowed in "$@"; do
+		if [ "$target" = "$allowed" ]; then
+			return 0
+		fi
+	done
 
-	confirmLibraryPanelRouting || exit 1
+	if [ -n "$target" ]; then
+		echo "conf/custom.ini points at $target; run ./setup.sh undev first"
+	else
+		echo "conf/custom.ini already exists; merge the example into it by hand"
+	fi
+	exit 1
+}
 
-	# gdev-testdata is always created in org 1, so elsewhere the dashboards lose their datasource.
+# gdev-testdata is always created in org 1, so elsewhere the dashboards lose their datasource.
+requireOrgOne() {
 	local namespace
 	namespace=$(bootstrapNamespace) || namespace=""
 	if [ -n "$namespace" ] && [ "$namespace" != "default" ]; then
@@ -155,11 +166,32 @@ provisioningBootstrap() {
 		echo "  so neither panel resolves its datasource. Use an org 1 instance, or BOOTSTRAP_FORCE=1."
 		[ "${BOOTSTRAP_FORCE:-}" = "1" ] || exit 1
 	fi
+}
+
+provisioningBootstrap() {
+	requireCustomIniSlot ../devenv/provisioning-bootstrap.ini ../devenv/provisioning-bootstrap-cleanup.ini
+
+	confirmLibraryPanelRouting || exit 1
+	requireOrgOne
 
 	devDatasources
 	echo -e "\xE2\x9C\x94 Setting up the provisioning bootstrap repository over devenv/provisioning-bootstrap"
 	echo -e "  Library panels are served from unified storage while this config is in place."
 	ln -s -f ../devenv/provisioning-bootstrap.ini ../conf/custom.ini
+}
+
+provisioningGitea() {
+	requireCustomIniSlot ../devenv/provisioning-gitea.ini
+
+	requireOrgOne
+
+	devDatasources
+	echo -e "\xE2\x9C\x94 Setting up Git Sync against the devenv Gitea over devenv/provisioning-gitea"
+	if ! curl -sf -o /dev/null "${GITEA_URL:-http://localhost:3002}/api/healthz"; then
+		echo -e "    ! Gitea is not reachable; start it with: make devenv sources=gitea"
+		echo -e "      The repository is registered either way and recovers once Gitea is up."
+	fi
+	ln -s -f ../devenv/provisioning-gitea.ini ../conf/custom.ini
 }
 
 scopes() {
@@ -227,6 +259,10 @@ undev() {
             echo -e "      Start Grafana (make run) and re-run, so the deletion finishes before the settings go."
             ;;
         esac
+    elif [ "$iniTarget" = "../devenv/provisioning-gitea.ini" ]; then
+        # One step: nothing here needs these settings to be deleted.
+        rm -f ../conf/custom.ini
+        echo -e "    \xE2\x9C\x94 Reverting the Gitea Git Sync setup; restart Grafana to delete what it synced"
     fi
 
     # Removing the symlinks
@@ -245,6 +281,7 @@ usage() {
 	echo "  bulk-folders                         - provision 200 folders with 3 dashboards in each"
 	echo "  scopes                               - provision scopes, scope nodes, and scope navigations"
 	echo "  provisioning-bootstrap               - provision devenv/provisioning-bootstrap via bootstrap_path (writes conf/custom.ini)"
+	echo "  provisioning-gitea                   - declare Git Sync against the devenv Gitea via bootstrap_path (writes conf/custom.ini)"
 	echo "  no args                              - provision core datasources and dev dashboards"
 	echo "  undev                                - removes any provisioning done by the setup.sh"
 }
@@ -266,6 +303,8 @@ main() {
 		scopes
 	elif [[ $cmd == "provisioning-bootstrap" ]]; then
 		provisioningBootstrap
+	elif [[ $cmd == "provisioning-gitea" ]]; then
+		provisioningGitea
 	elif [[ $cmd == "undev" ]]; then
  	   undev
 	else

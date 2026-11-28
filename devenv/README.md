@@ -57,6 +57,27 @@ triggers still needs the storage settings: the first run clears `bootstrap_path`
 restart, then the second unlinks once Grafana confirms the repository is gone. A `conf/custom.ini`
 symlink pointing elsewhere is left untouched.
 
+## Git Sync against a local Gitea
+
+The bootstrap above, pointed at a real Git server instead of a directory. The `gitea` docker block
+runs Gitea on `localhost:3002` and seeds it with a `grafana/devenv` repository holding a folder
+tree and two dashboards; `devenv/provisioning-gitea` declares a `git` repository over it through
+`bootstrap_path`, so Git Sync is configured without clicking through the UI.
+
+```bash
+make devenv sources=gitea
+./setup.sh provisioning-gitea
+```
+
+After `make run`, dashboards edited in Grafana are committed back to Gitea and pushes to Gitea
+arrive on the next poll. See `devenv/provisioning-gitea/README.md` and
+`devenv/docker/blocks/gitea/README.md`.
+
+Two of the three effects above apply here too — `devenv/datasources.yaml` is linked, and the
+default org must be org 1 — but library panel storage is left alone. Only one `bootstrap_path`
+can be set at a time, so this and the bootstrap example are mutually exclusive; setup refuses to
+switch between them until `./setup.sh undev` has reverted the current one.
+
 ## docker-compose with databases
 
 This command creates a docker-compose file with specified databases configured and ready to run. Each database has
