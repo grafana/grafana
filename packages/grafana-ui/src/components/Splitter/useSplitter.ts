@@ -160,7 +160,7 @@ export function useSplitter(options: UseSplitterOptions) {
         const newFlex = newSize / (containerPixels - handleSize);
         firstPane.style.flexGrow = `${newFlex}`;
         secondPane.style.flexGrow = `${1 - newFlex}`;
-        splitter.ariaValueNow = ariaValue(newSize, dims[minDimProp], dims[maxDimProp]);
+        splitter.setAttribute('aria-valuenow', pixelAriaValue(newSize, containerPixels, handleSize));
         onResizing?.(newFlex, newSize, secondPanePixels - diff);
       }
     },
@@ -331,7 +331,6 @@ export function useSplitter(options: UseSplitterOptions) {
     } else {
       firstPaneRef.current.style.flexGrow = `${resetSize}`;
       secondPaneRef.current.style.flexGrow = `${1 - resetSize}`;
-      splitterRef.current!.ariaValueNow = `${resetSize * 100}`;
     }
 
     // Report the reset like any other resize. A consumer that keeps the size outside the DOM would
@@ -342,12 +341,10 @@ export function useSplitter(options: UseSplitterOptions) {
     const firstPanePixels = primarySizeRef.current;
     const secondPanePixels = containerSize.current - firstPanePixels - handleSize;
 
-    if (usePixels) {
-      splitterRef.current!.setAttribute(
-        'aria-valuenow',
-        pixelAriaValue(firstPanePixels, containerSize.current, handleSize)
-      );
-    }
+    splitterRef.current!.setAttribute(
+      'aria-valuenow',
+      pixelAriaValue(firstPanePixels, containerSize.current, handleSize)
+    );
 
     onSizeChanged?.(getPrimaryFlexSize(firstPanePixels), firstPanePixels, secondPanePixels);
   }, [measurementProp, usePixels, pixelPrimary, resetSize, handleSize, onSizeChanged, getPrimaryFlexSize]);
@@ -486,10 +483,6 @@ export function useSplitter(options: UseSplitterOptions) {
       className: dragHandleStyle,
     },
   };
-}
-
-function ariaValue(value: number, min: number, max: number) {
-  return `${clamp(((value - min) / (max - min)) * 100, 0, 100)}`;
 }
 
 /** The primary pane's share of the space beside the handle, as a whole percentage. */
