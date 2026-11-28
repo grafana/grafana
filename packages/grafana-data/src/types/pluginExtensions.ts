@@ -217,6 +217,7 @@ export enum PluginExtensionPoints {
   AlertingRecordingRuleAction = 'grafana/alerting/recordingrule/action',
   AlertingRuleQueryEditor = 'grafana/alerting/alertingrule/queryeditor',
   CommandPalette = 'grafana/commandpalette/action',
+  CommandPaletteSearch = 'grafana/commandpalette/search/v0-alpha',
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
   DashboardEmpty = 'grafana/dashboard/empty',
   DashboardSidebar = 'grafana/dashboard/sidebar/v1',
@@ -399,6 +400,66 @@ export type PluginExtensionDataSourceConfigContext<
 };
 
 export type PluginExtensionCommandPaletteContext = {};
+
+/**
+ * Context passed to a command palette search provider registered at the
+ * `grafana/commandpalette/search/v0-alpha` extension point.
+ *
+ * @alpha
+ */
+export type PluginExtensionCommandPaletteSearchContext = {
+  /** What the user typed in the command palette, trimmed. At least two characters. */
+  searchQuery: string;
+  /** Aborted when the query changes, the palette closes, or the provider takes too long. */
+  signal: AbortSignal;
+};
+
+type PluginExtensionCommandPaletteSearchResultBase = {
+  /** Unique within the provider. Later results with the same id are dropped. */
+  id: string;
+  title: string;
+  description?: string;
+};
+
+/**
+ * A single result a plugin contributes to the command palette. A result needs a `path`, an `onSelect`, or both;
+ * results with neither are dropped.
+ *
+ * @alpha
+ */
+export type PluginExtensionCommandPaletteSearchResult = PluginExtensionCommandPaletteSearchResultBase &
+  (
+    | {
+        /**
+         * Where to navigate when the result is selected. Must be relative to the Grafana root, so it starts with
+         * a single `/`, for example `/a/my-plugin/page`. Absolute URLs and protocol-relative paths are dropped.
+         * Ignored if `onSelect` is set.
+         */
+        path: string;
+        onSelect?: () => void | Promise<void>;
+      }
+    | {
+        path?: string;
+        /** Called when the result is selected. Navigation to `path` does not happen when this is set. */
+        onSelect: () => void | Promise<void>;
+      }
+  );
+
+/**
+ * Function a plugin registers with `addFunction` at the `grafana/commandpalette/search/v0-alpha`
+ * extension point. The function's `title` becomes the section header in the command palette.
+ *
+ * Limits:
+ * - Called only once the query has at least 2 characters, after a 200 ms debounce.
+ * - Discarded if it takes longer than 3 seconds.
+ * - At most 5 results are shown; the rest are dropped.
+ * - A plugin can register one provider; further registrations are ignored.
+ *
+ * @alpha
+ */
+export type PluginExtensionCommandPaletteSearchProvider = (
+  context: PluginExtensionCommandPaletteSearchContext
+) => Promise<PluginExtensionCommandPaletteSearchResult[]>;
 
 export type PluginExtensionResourceAttributesContext = {
   // Key-value pairs of resource attributes, attribute name is the key
