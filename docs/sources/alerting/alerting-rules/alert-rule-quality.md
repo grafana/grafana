@@ -1,8 +1,8 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/alert-rule-quality/
-description: Use Alert Advisor to define required labels and annotations, review findings, and optionally enforce annotation and label requirements for Grafana-managed alert rules.
+description: Use Alert Optimizer to define required labels and annotations, review findings, and optionally enforce annotation and label requirements for Grafana-managed alert rules.
 keywords:
-  - alert advisor
+  - alert optimizer
   - alerting
   - annotations
   - enforcement
@@ -13,7 +13,7 @@ labels:
   products:
     - enterprise
     - cloud
-title: Improve alert rule quality with Alert Advisor
+title: Improve alert rule quality with Alert Optimizer
 weight: 600
 refs:
   configure-rbac:
@@ -43,13 +43,13 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/http-api-provisioning/
 ---
 
-# Improve alert rule quality with Alert Advisor
+# Improve alert rule quality with Alert Optimizer
 
 Alerts are easier to act on when they carry the right context.
 A runbook URL helps you investigate an issue, and a team label helps you route your notifications.
 
-Alert Advisor checks your Grafana-managed alert rules against a quality policy of required labels and annotations, so you can find and fix rules that are missing that context.
-With Alert Advisor, you can:
+Alert Optimizer checks your Grafana-managed alert rules against a quality policy of required labels and annotations, so you can find and fix rules that are missing that context.
+With Alert Optimizer, you can:
 
 - Define which labels and annotations your Grafana-managed alert rules must have.
 - Find rules that are missing required labels or annotations and update them.
@@ -71,7 +71,7 @@ For more information about alerting permissions and folder access, refer to [Con
 A single quality policy applies to Grafana-managed alert rules across folders in your organization.
 Data source-managed alert rules, recording rules, and alert rules provided by plugins are excluded.
 
-Alert Advisor reports a finding when a required label or annotation is missing, empty, or contains only whitespace.
+Alert Optimizer reports a finding when a required label or annotation is missing, empty, or contains only whitespace.
 The checks do not validate the content itself, they only check for the presence of a particular field.
 For example, requiring a runbook URL doesn't check whether the link works.
 
@@ -129,7 +129,7 @@ A policy with no required annotations or labels checks nothing.
 
 ## Review alert quality
 
-In Alert Advisor, the **Alert quality** tab lists rules that don't meet your policy and shows an overall quality score.
+In Alert Optimizer, the **Alert quality** tab lists rules that don't meet your policy and shows an overall quality score.
 
 To review the findings, follow these steps:
 
