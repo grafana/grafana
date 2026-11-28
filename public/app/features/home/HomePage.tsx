@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef } from 'react';
+import { type ReactNode, Suspense, useEffect, useRef } from 'react';
 
 import { OrgRole, PluginExtensionPoints } from '@grafana/data';
 import { renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
@@ -25,7 +25,12 @@ import { useHomepageSolutions } from './useHomepageSolutions';
  * Each section owns its loading state, so the shell paints at once. The setup-guide sections come last: arriving
  * late moves nothing above them.
  */
-export default function HomePage() {
+interface Props {
+  /** Extra header actions from the route, such as choosing a Grafana Page as home. */
+  actions?: ReactNode;
+}
+
+export default function HomePage({ actions }: Props = {}) {
   const solutions = useHomepageSolutions();
   // Onboarding for org members; anonymous or no-org users can't act on it, so skip the sections and their probes.
   const showSolutions = contextSrv.isSignedIn && contextSrv.user.orgRole !== OrgRole.None;
@@ -53,7 +58,10 @@ export default function HomePage() {
   return (
     <HomePageFrame
       actions={
-        <HeaderActions alertsData={alertsData} incidentsData={incidentsData} alertIncidentRef={alertIncidentRef} />
+        <Stack direction="row" gap={1} alignItems="flex-end">
+          {actions}
+          <HeaderActions alertsData={alertsData} incidentsData={incidentsData} alertIncidentRef={alertIncidentRef} />
+        </Stack>
       }
     >
       <Stack direction="column" gap={2}>

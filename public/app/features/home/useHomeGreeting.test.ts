@@ -4,7 +4,8 @@ import useHomeGreeting from './useHomeGreeting';
 
 jest.mock('@grafana/i18n', () => ({
   ...jest.requireActual('@grafana/i18n'),
-  t: (_key: string, defaultValue: string) => defaultValue,
+  t: (_key: string, defaultValue: string, values?: { name?: string }) =>
+    values?.name ? defaultValue.replace('{{name}}', values.name) : defaultValue,
 }));
 
 const setCurrentHour = (hour: number) => {
@@ -57,6 +58,13 @@ describe('useHomeGreeting', () => {
     expect(result.current).toBe('Good afternoon.');
   });
 
+  it('greets the person by name when given one', () => {
+    setCurrentHour(9);
+
+    const { result } = renderHook(() => useHomeGreeting('Dominik'));
+
+    expect(result.current).toBe('Good morning, Dominik');
+  });
   it('clears the interval when unmounted', () => {
     const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
 

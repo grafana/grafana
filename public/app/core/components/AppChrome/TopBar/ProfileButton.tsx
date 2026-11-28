@@ -9,6 +9,7 @@ import { Dropdown, Menu, MenuItem, ToolbarButton, useStyles2 } from '@grafana/ui
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { clearLoginSectionTitle } from 'app/core/services/loginSectionTitle';
+import { HomePagePickerModal, useCanPickHomePage } from 'app/features/home/HomePagePicker';
 import { usePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
 
 import { ThemeSelectorDrawer } from '../../ThemeSelector/ThemeSelectorDrawer';
@@ -27,6 +28,8 @@ export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
   const node = enrichWithInteractionTracking(cloneDeep(profileNode), false);
   const [showNewsDrawer, onToggleShowNewsDrawer] = useToggle(false);
   const [showThemeDrawer, onToggleThemeDrawer] = useToggle(false);
+  const [showHomePagePicker, onToggleHomePagePicker] = useToggle(false);
+  const canPickHomePage = useCanPickHomePage();
   const { components } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.UserProfileMenu,
   });
@@ -39,6 +42,13 @@ export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
     <TopNavBarMenu node={profileNode}>
       <>
         <MenuItem icon="palette" onClick={onToggleThemeDrawer} label={t('profile.change-theme', 'Change theme')} />
+        {canPickHomePage && (
+          <MenuItem
+            icon="home-alt"
+            onClick={onToggleHomePagePicker}
+            label={t('profile.change-home-page', 'Change home page')}
+          />
+        )}
         <Menu.Item
           icon="monitor"
           onClick={onToggleKioskMode}
@@ -85,6 +95,7 @@ export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
       </Dropdown>
       {showNewsDrawer && <NewsContainer onClose={onToggleShowNewsDrawer} />}
       {showThemeDrawer && <ThemeSelectorDrawer onClose={onToggleThemeDrawer} />}
+      {showHomePagePicker && <HomePagePickerModal onDismiss={onToggleHomePagePicker} />}
     </>
   );
 }
