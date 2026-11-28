@@ -253,7 +253,6 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 			success = false
 			continue
 		}
-		// TODO change this to consider situation when there is already a state, e.g. when readiness probe expired and state started from scratch.
 		for _, entry := range alertInstances {
 			ruleForEntry, ok := ruleByUID[entry.RuleUID]
 			if !ok {
@@ -270,8 +269,9 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 				state.Annotations = make(map[string]string)
 			}
 
-			st.cache.set(state)
-			statesCount++
+			if st.cache.restore(state) {
+				statesCount++
+			}
 		}
 	}
 }
@@ -426,6 +426,7 @@ func (st *Manager) ProcessEvalResults(
 	}
 
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
+	st.cache.markEvaluationStarted(alertRule.GetKey())
 	states := st.setNextStateForRule(ctx, alertRule, results, extraLabels, logger, fn, evaluatedAt)
 
 	missingSeriesStates, staleCount := st.processMissingSeriesStates(logger, evaluatedAt, alertRule, fn)
