@@ -105,14 +105,13 @@ export const SpanDetailLinkButtons = ({
       .filter((link) => link.type !== SpanLinkType.Traces)
       .map((link) => {
         if (link.type === SpanLinkType.Logs) {
-          return createLinkModel(
-            link,
-            SpanLinkType.Logs,
-            getLogsButtonCTA(settings, 'span'),
-            'gf-logs',
-            datasourceType,
-            datasourceUid
-          );
+          const destination = link.logsDestination;
+          // A named destination, or one of several, is labeled after the destination rather than the generic call to action.
+          const title =
+            link.title && (destination?.isOneOfMany || destination?.options.name?.trim())
+              ? link.title
+              : getLogsButtonCTA(settings, 'span');
+          return createLinkModel(link, SpanLinkType.Logs, title, 'gf-logs', datasourceType, datasourceUid);
         }
         if (link.type === SpanLinkType.Profiles && link.title === RelatedProfilesTitle) {
           linkToProfiles = link;
@@ -178,7 +177,9 @@ export const SpanDetailLinkButtons = ({
             <LogsLinkButton
               linkModel={spanLinkModel.linkModel}
               traceDatasourceUid={spanLinkModel.traceDatasourceUid}
-              key={index}
+              traceToLogsOptions={spanLinkModel.logsDestination?.options}
+              disableDatasourceFallback={spanLinkModel.logsDestination?.isOneOfMany}
+              key={getLinkKey(spanLinkModel, index)}
             />
           ) : (
             <SingleLinkButton spanLinkModel={spanLinkModel} key={index} />
@@ -189,6 +190,12 @@ export const SpanDetailLinkButtons = ({
     </span>
   );
 };
+
+// A logs link keeps the state of its own lookup, so it is keyed by its destination: a button never inherits the state
+// of another destination that used to be at the same position.
+function getLinkKey(spanLinkModel: SpanLinkModel, index: number) {
+  return spanLinkModel.logsDestination ? `logs-${spanLinkModel.logsDestination.index}` : index;
+}
 
 const styles = {
   linksContainer: css({
@@ -231,7 +238,9 @@ const DropDownMenu = ({ links }: { links: SpanLinkModel[] }) => {
             <LogsLinkMenuItem
               linkModel={spanLinkModel.linkModel}
               traceDatasourceUid={spanLinkModel.traceDatasourceUid}
-              key={index}
+              traceToLogsOptions={spanLinkModel.logsDestination?.options}
+              disableDatasourceFallback={spanLinkModel.logsDestination?.isOneOfMany}
+              key={getLinkKey(spanLinkModel, index)}
             />
           ) : (
             <Menu.Item
@@ -338,5 +347,6 @@ const createLinkModel = (
     type,
     linkModel,
     traceDatasourceUid,
+    logsDestination: link.logsDestination,
   };
 };

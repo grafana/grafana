@@ -3,12 +3,20 @@ import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { Provider } from 'react-redux';
 
-import { type DataFrame, MutableDataFrame, type TraceSearchProps } from '@grafana/data';
+import {
+  type DataFrame,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  MutableDataFrame,
+  type TraceSearchProps,
+} from '@grafana/data';
 import { mockTimeRange } from '@grafana/plugin-ui/test';
+import type * as Runtime from '@grafana/runtime';
 import {
   setPluginLinksHook,
   setPluginComponentsHook,
   useAppPluginInstalled,
+  useDataSourceInstanceSettings,
   reportInteraction,
 } from '@grafana/runtime';
 
@@ -19,6 +27,7 @@ import { initialExploreState } from '../state/main';
 import { makeExplorePaneState } from '../state/utils';
 
 import { TraceView } from './TraceView';
+import * as LogsLink from './components/TraceTimelineViewer/SpanDetail/LogsLink';
 import { SPAN_NAME } from './components/constants/span';
 import { type TraceData, type TraceSpanData } from './components/types/trace';
 import { transformDataFrames } from './utils/transform';
@@ -29,6 +38,12 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
   useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
 }));
+
+// Renders the real button unless a test stubs it, so tests can check what TraceView asks the button to do.
+jest.mock('./components/TraceTimelineViewer/SpanDetail/LogsLink', () => {
+  const actual = jest.requireActual('./components/TraceTimelineViewer/SpanDetail/LogsLink');
+  return { ...actual, LogsLinkButton: jest.fn(actual.LogsLinkButton) };
+});
 
 // The summary-span minimap gradient emits fractional rgb() channels that real browsers accept
 // but jest-canvas-mock rejects. The canvas render is not exercised by these tests, so stub it.
@@ -52,7 +67,8 @@ function getTraceView(
   spanFilters?: TraceSearchProps,
   spanId?: string,
   expandSpan?: boolean,
-  storeOverride?: ReturnType<typeof configureStore>
+  storeOverride?: ReturnType<typeof configureStore>,
+  datasource?: DataSourceApi
 ) {
   const store = configureStore({
     explore: {
@@ -71,7 +87,7 @@ function getTraceView(
         dataFrames={frames}
         splitOpenFn={() => {}}
         traceProp={transformDataFrames(frames[0])!}
-        datasource={undefined}
+        datasource={datasource}
         topOfViewRef={topOfViewRef}
         timeRange={mockTimeRange()}
         spanFilters={spanFilters}
@@ -113,6 +129,68 @@ describe('TraceView', () => {
       isLoading: false,
       components: [],
     }));
+  });
+
+  describe('trace-level logs link', () => {
+    const logsLinkButton = jest.mocked(LogsLink.LogsLinkButton);
+    let getDataSourceInstanceSettings: jest.SpyInstance;
+
+    beforeEach(() => {
+      // Only checks what TraceView asks the button to do.
+      logsLinkButton.mockImplementation(() => <></>);
+      getDataSourceInstanceSettings = jest
+        .spyOn(jest.requireMock<typeof Runtime>('@grafana/runtime'), 'getDataSourceInstanceSettings')
+        .mockImplementation(
+          async (ref) => ({ uid: ref, name: ref, type: 'loki', jsonData: {} }) as unknown as DataSourceInstanceSettings
+        );
+    });
+
+    afterEach(() => {
+      logsLinkButton.mockImplementation(
+        jest.requireActual<typeof LogsLink>('./components/TraceTimelineViewer/SpanDetail/LogsLink').LogsLinkButton
+      );
+      getDataSourceInstanceSettings.mockRestore();
+      jest.mocked(useDataSourceInstanceSettings).mockReturnValue({ isLoading: false, settings: undefined });
+    });
+
+    it.each([
+      {
+        name: 'stays on the first destination when there are several',
+        tracesToLogsAdditional: [{ customQuery: false, datasourceUid: 'audit-uid' }],
+        disableDatasourceFallback: true,
+      },
+      {
+        name: 'keeps data source fallback for a single destination',
+        tracesToLogsAdditional: undefined,
+        disableDatasourceFallback: false,
+      },
+    ])('$name', async ({ tracesToLogsAdditional, disableDatasourceFallback }) => {
+      const traceSettings = {
+        uid: 'trace-uid',
+        name: 'Tempo',
+        type: 'tempo',
+        jsonData: { tracesToLogsV2: { customQuery: false, datasourceUid: 'app-uid' }, tracesToLogsAdditional },
+      } as unknown as DataSourceInstanceSettings;
+      jest.mocked(useDataSourceInstanceSettings).mockImplementation((ref) => ({
+        isLoading: false,
+        settings: ref === 'trace-uid' ? traceSettings : undefined,
+      }));
+
+      render(
+        getTraceView([frameOld], undefined, undefined, undefined, undefined, {
+          uid: 'trace-uid',
+          name: 'Tempo',
+          type: 'tempo',
+        } as DataSourceApi)
+      );
+
+      await waitFor(() => expect(logsLinkButton).toHaveBeenCalled());
+      const props = logsLinkButton.mock.lastCall?.[0];
+      expect(props).toEqual(
+        expect.objectContaining({ forTrace: true, traceDatasourceUid: 'trace-uid', disableDatasourceFallback })
+      );
+      expect(props?.linkModel.interpolatedParams?.query?.datasource).toEqual({ type: 'loki', uid: 'app-uid' });
+    });
   });
 
   it('renders TraceTimelineViewer', () => {
