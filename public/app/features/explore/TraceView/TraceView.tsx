@@ -33,6 +33,7 @@ import { useDispatch, useSelector } from 'app/types/store';
 
 import { changePanelState } from '../state/explorePane';
 
+import { SpanProfilesProvider } from './SpanProfiles';
 import memoizedTraceCriticalPath from './components/CriticalPath';
 import { AdaptiveTracesRestoredBanner } from './components/TracePageHeader/AdaptiveTracesRestoredBanner';
 import { TracePageHeader } from './components/TracePageHeader/TracePageHeader';
@@ -342,75 +343,85 @@ export function TraceView(props: Props) {
           {/* Key by trace ID so the dismissed state resets when navigating directly between restored traces. */}
           {isRestoredByAdaptiveTraces && <AdaptiveTracesRestoredBanner key={traceProp.traceID} />}
 
-          <TracePageHeader
-            trace={traceProp}
-            data={props.dataFrames[0]}
-            timeZone={timeZone}
-            search={search}
-            setSearch={setSearch}
-            showSpanFilters={showSpanFilters}
-            setShowSpanFilters={setShowSpanFilters}
-            setFocusedSpanIdForSearch={focusSpanForSearch}
+          <SpanProfilesProvider
+            key={traceProp.traceID}
+            spans={traceProp.spans}
+            traceId={traceProp.traceID}
+            options={traceToProfilesOptions}
+            traceDuration={traceProp.duration}
+            traceName={traceProp.traceName}
             onGoToSpan={goToSpan}
-            spanFilterMatches={spanFilterMatches}
-            datasourceType={datasourceType}
-            datasourceName={datasourceName}
-            datasourceUid={datasourceUid}
-            setHeaderHeight={setHeaderHeight}
-            app={exploreId ? CoreApp.Explore : app}
-            updateNextViewRangeTime={updateNextViewRangeTime}
-            updateViewRangeTime={updateViewRangeTime}
-            viewRange={viewRange}
-            hideHeaderDetails={hideHeaderDetails}
-            logsLinkModel={logsLinkModel}
-          />
+          >
+            <TracePageHeader
+              trace={traceProp}
+              data={props.dataFrames[0]}
+              timeZone={timeZone}
+              search={search}
+              setSearch={setSearch}
+              showSpanFilters={showSpanFilters}
+              setShowSpanFilters={setShowSpanFilters}
+              setFocusedSpanIdForSearch={focusSpanForSearch}
+              onGoToSpan={goToSpan}
+              spanFilterMatches={spanFilterMatches}
+              datasourceType={datasourceType}
+              datasourceName={datasourceName}
+              datasourceUid={datasourceUid}
+              setHeaderHeight={setHeaderHeight}
+              app={exploreId ? CoreApp.Explore : app}
+              updateNextViewRangeTime={updateNextViewRangeTime}
+              updateViewRangeTime={updateViewRangeTime}
+              viewRange={viewRange}
+              hideHeaderDetails={hideHeaderDetails}
+              logsLinkModel={logsLinkModel}
+            />
 
-          <TraceTimelineViewer
-            findMatchesIDs={spanFilterMatches}
-            trace={traceProp}
-            traceToProfilesOptions={traceToProfilesOptions}
-            datasourceType={datasourceType}
-            datasourceUid={datasourceUid}
-            spanBarOptions={spanBarOptions?.spanBar}
-            traceTimeline={traceTimeline}
-            updateNextViewRangeTime={updateNextViewRangeTime}
-            updateViewRangeTime={updateViewRangeTime}
-            viewRange={viewRange}
-            timeZone={timeZone}
-            setSpanNameColumnWidth={setSpanNameColumnWidth}
-            collapseAll={collapseAll}
-            collapseOne={collapseOne}
-            expandAll={expandAll}
-            expandOne={expandOne}
-            childrenToggle={childrenToggle}
-            detailLogItemToggle={detailLogItemToggle}
-            detailLogsToggle={detailLogsToggle}
-            detailWarningsToggle={detailWarningsToggle}
-            detailStackTracesToggle={detailStackTracesToggle}
-            detailReferencesToggle={detailReferencesToggle}
-            detailReferenceItemToggle={detailReferenceItemToggle}
-            detailProcessToggle={detailProcessToggle}
-            detailTagsToggle={detailTagsToggle}
-            detailSummaryAttributesToggle={handleSummaryAttributesToggle}
-            detailToggle={handleDetailToggle}
-            addHoverIndentGuideId={addHoverIndentGuideId}
-            removeHoverIndentGuideId={removeHoverIndentGuideId}
-            createSpanLink={createSpanLink}
-            scrollElement={scrollElement}
-            focusedSpanId={focusedSpanId}
-            focusedSpanForSearch={focusedSpanForSearchToDisplay}
-            showSpanFilterMatchesOnly={search.matchesOnly}
-            createFocusSpanLink={createFocusSpanLink}
-            topOfViewRef={topOfViewRef}
-            headerHeight={headerHeight}
-            criticalPath={criticalPath}
-            traceFlameGraphs={traceFlameGraphs}
-            setTraceFlameGraphs={setTraceFlameGraphs}
-            redrawListView={redrawListView}
-            setRedrawListView={setRedrawListView}
-            timeRange={props.timeRange}
-            app={exploreId ? CoreApp.Explore : app}
-          />
+            <TraceTimelineViewer
+              findMatchesIDs={spanFilterMatches}
+              trace={traceProp}
+              traceToProfilesOptions={traceToProfilesOptions}
+              datasourceType={datasourceType}
+              datasourceUid={datasourceUid}
+              spanBarOptions={spanBarOptions?.spanBar}
+              traceTimeline={traceTimeline}
+              updateNextViewRangeTime={updateNextViewRangeTime}
+              updateViewRangeTime={updateViewRangeTime}
+              viewRange={viewRange}
+              timeZone={timeZone}
+              setSpanNameColumnWidth={setSpanNameColumnWidth}
+              collapseAll={collapseAll}
+              collapseOne={collapseOne}
+              expandAll={expandAll}
+              expandOne={expandOne}
+              childrenToggle={childrenToggle}
+              detailLogItemToggle={detailLogItemToggle}
+              detailLogsToggle={detailLogsToggle}
+              detailWarningsToggle={detailWarningsToggle}
+              detailStackTracesToggle={detailStackTracesToggle}
+              detailReferencesToggle={detailReferencesToggle}
+              detailReferenceItemToggle={detailReferenceItemToggle}
+              detailProcessToggle={detailProcessToggle}
+              detailTagsToggle={detailTagsToggle}
+              detailSummaryAttributesToggle={handleSummaryAttributesToggle}
+              detailToggle={handleDetailToggle}
+              addHoverIndentGuideId={addHoverIndentGuideId}
+              removeHoverIndentGuideId={removeHoverIndentGuideId}
+              createSpanLink={createSpanLink}
+              scrollElement={scrollElement}
+              focusedSpanId={focusedSpanId}
+              focusedSpanForSearch={focusedSpanForSearchToDisplay}
+              showSpanFilterMatchesOnly={search.matchesOnly}
+              createFocusSpanLink={createFocusSpanLink}
+              topOfViewRef={topOfViewRef}
+              headerHeight={headerHeight}
+              criticalPath={criticalPath}
+              traceFlameGraphs={traceFlameGraphs}
+              setTraceFlameGraphs={setTraceFlameGraphs}
+              redrawListView={redrawListView}
+              setRedrawListView={setRedrawListView}
+              timeRange={props.timeRange}
+              app={exploreId ? CoreApp.Explore : app}
+            />
+          </SpanProfilesProvider>
         </>
       ) : (
         <div className={styles.noDataMsg}>

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
@@ -21,9 +21,10 @@ import {
   getDataSourceInstance,
   useDataSourceInstanceSettings,
 } from '@grafana/runtime';
-import { useStyles2, useTheme2 } from '@grafana/ui';
+import { Collapse, Spinner, useStyles2, useTheme2 } from '@grafana/ui';
 import { type PyroscopeQuery } from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/pyroscope-types';
 
+import { SpanProfileRevealContext, useSpanProfiles } from '../../../SpanProfiles';
 import {
   defaultProfilingKeys,
   pyroscopeProfileIdTagKey,
@@ -50,7 +51,7 @@ export type SpanFlameGraphProps = {
 export default function SpanFlameGraph(props: SpanFlameGraphProps) {
   const {
     span,
-    traceToProfilesOptions,
+    traceToProfilesOptions: configuredOptions,
     timeZone,
     traceFlameGraphs,
     setTraceFlameGraphs,
@@ -58,6 +59,27 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
     traceDuration,
     traceName,
   } = props;
+  const profiles = useSpanProfiles();
+  const match =
+    profiles[span.spanID]?.find((match) => match.profileTypeId === configuredOptions?.profileTypeId) ??
+    profiles[span.spanID]?.find((match) => match.profileTypeId.includes(':cpu:nanoseconds:')) ??
+    profiles[span.spanID]?.[0];
+  const traceToProfilesOptions = useMemo(
+    () =>
+      match
+        ? {
+            datasourceUid: match.datasourceUid,
+            profileTypeId: match.profileTypeId,
+            customQuery: true,
+            query: match.labelSelector,
+          }
+        : configuredOptions,
+    [match, configuredOptions]
+  );
+  const [isOpen, setIsOpen] = useState(true);
+  const { spanId: revealedSpanId, reveal } = useContext(SpanProfileRevealContext);
+  const graphRef = useRef<HTMLDivElement>(null);
+  const [queryError, setQueryError] = useState(false);
   const [sizeRef, { height: containerHeight }] = useMeasure<HTMLDivElement>();
   const styles = useStyles2(getStyles);
   const profilesUid = traceToProfilesOptions?.datasourceUid;
@@ -67,7 +89,22 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
   const theme = useTheme2();
 
   const profileTag = span.tags.filter((tag) => tag.key === pyroscopeProfileIdTagKey);
-  const profileTagValue = profileTag.length > 0 ? profileTag[0].value : undefined;
+  const profileTagValue = match ? span.spanID : profileTag.length > 0 ? profileTag[0].value : undefined;
+  const cacheKey = match
+    ? `${match.datasourceUid}/${match.labelSelector}/${span.spanID}/${match.profileTypeId}`
+    : profileTagValue;
+
+  useEffect(() => {
+    if (revealedSpanId !== span.spanID) {
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      setIsOpen(true);
+      graphRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+      reveal('');
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [revealedSpanId, span.spanID, reveal]);
 
   const getTimeRangeForProfile = useCallback(() => {
     const spanStartMs = Math.floor(span.startTime / 1000) - 30000;
@@ -105,7 +142,9 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
       span: TraceSpan
     ) => {
       let labelSelector = '{}';
-      if (traceToProfilesOptions.customQuery && traceToProfilesOptions.query) {
+      if (match) {
+        labelSelector = match.labelSelector;
+      } else if (traceToProfilesOptions.customQuery && traceToProfilesOptions.query) {
         const scopedVars = {
           ...scopedVarsFromTrace(traceDuration, traceName, span.traceID),
           ...scopedVarsFromSpan(span),
@@ -150,16 +189,26 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
       const flameGraph = await getFlameGraphData(request, profilesDataSourceSettings.uid);
 
       if (flameGraph && flameGraph.length > 0) {
-        setTraceFlameGraphs({ ...traceFlameGraphs, [profileTagValue]: flameGraph });
+        setTraceFlameGraphs({ ...traceFlameGraphs, [cacheKey]: flameGraph });
       }
     },
-    [getTimeRangeForProfile, profileTagValue, setTraceFlameGraphs, timeZone, traceDuration, traceFlameGraphs, traceName]
+    [
+      getTimeRangeForProfile,
+      profileTagValue,
+      cacheKey,
+      match,
+      setTraceFlameGraphs,
+      timeZone,
+      traceDuration,
+      traceFlameGraphs,
+      traceName,
+    ]
   );
 
   useEffect(() => {
-    if (!Object.keys(traceFlameGraphs).includes(profileTagValue)) {
+    if (!Object.keys(traceFlameGraphs).includes(cacheKey)) {
       if (traceToProfilesOptions && profilesDataSourceSettings) {
-        queryFlameGraph(profilesDataSourceSettings, traceToProfilesOptions, span);
+        void queryFlameGraph(profilesDataSourceSettings, traceToProfilesOptions, span).catch(() => setQueryError(true));
       }
     }
   }, [
@@ -172,41 +221,51 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
     timeZone,
     queryFlameGraph,
     profileTagValue,
+    cacheKey,
   ]);
 
   useEffect(() => {
     setRedrawListView({});
   }, [containerHeight, setRedrawListView]);
 
-  if (!traceFlameGraphs[profileTagValue]) {
-    return <></>;
-  }
-
   return (
-    <div className={styles.flameGraph} ref={sizeRef}>
-      <div className={styles.flameGraphTitle}>
-        <Trans i18nKey="explore.span-flame-graph.flame-graph">Flame graph</Trans>
+    <div className={styles.flameGraph} ref={graphRef}>
+      <div ref={sizeRef}>
+        <Collapse
+          label={<Trans i18nKey="explore.span-flame-graph.flame-graph">Flame graph</Trans>}
+          isOpen={isOpen}
+          onToggle={() => setIsOpen((open) => !open)}
+        >
+          {queryError ? (
+            <Trans i18nKey="explore.span-flame-graph.failed">Unable to load the span flame graph.</Trans>
+          ) : traceFlameGraphs[cacheKey] ? (
+            <FlameGraph
+              data={traceFlameGraphs[cacheKey]}
+              getTheme={() => theme}
+              initialViewMode="single"
+              disableCollapsing={true}
+            />
+          ) : (
+            <div className={styles.loading} role="status">
+              <Spinner /> <Trans i18nKey="explore.span-flame-graph.loading">Loading span profile…</Trans>
+            </div>
+          )}
+        </Collapse>
       </div>
-      <FlameGraph
-        data={traceFlameGraphs[profileTagValue]}
-        getTheme={() => theme}
-        showFlameGraphOnly={true}
-        disableCollapsing={true}
-      />
     </div>
   );
 }
 
 const getStyles = () => {
   return {
+    loading: css({
+      minHeight: 150,
+      padding: '16px',
+    }),
     flameGraph: css({
       label: 'flameGraphInSpan',
-      margin: '5px',
-    }),
-    flameGraphTitle: css({
-      label: 'flameGraphTitleInSpan',
-      marginBottom: '5px',
-      fontWeight: 'bold',
+      width: '100%',
+      marginTop: '5px',
     }),
   };
 };
