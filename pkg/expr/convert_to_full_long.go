@@ -70,7 +70,8 @@ func convertNumericWideToFullLong(frames data.Frames) (data.Frames, error) {
 
 	labelKeySet := map[string]struct{}{}
 	for _, field := range inputFrame.Fields {
-		if !field.Type().Numeric() {
+		// A zero-row frame, or an empty item from numeric-multi, has no value to read.
+		if !field.Type().Numeric() || field.Len() == 0 {
 			continue
 		}
 		val, err := field.FloatAt(0)
@@ -105,7 +106,7 @@ func convertNumericWideToFullLong(frames data.Frames) (data.Frames, error) {
 	sort.Strings(labelKeys)
 
 	for _, field := range inputFrame.Fields {
-		if !field.Type().Numeric() {
+		if !field.Type().Numeric() || field.Len() == 0 {
 			continue
 		}
 		for _, k := range labelKeys {

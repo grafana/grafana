@@ -167,6 +167,30 @@ func TestConvertNumericWideToFullLong(t *testing.T) {
 			require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
 		}
 	})
+
+	t.Run("ZeroRowsReturnsEmptyFrame", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("numeric",
+				data.NewField("name", nil, []string{}),
+				data.NewField("age", data.Labels{"host": "a"}, []int64{}),
+				data.NewField("salary", nil, []*float64{}),
+			),
+		}
+		input[0].Meta = &data.FrameMeta{Type: data.FrameTypeNumericWide}
+
+		expected := data.NewFrame("",
+			data.NewField(SQLMetricFieldName, nil, []string{}),
+			data.NewField(SQLValueFieldName, nil, []*float64{}),
+		)
+		expected.Meta = &data.FrameMeta{Type: numericFullLongType}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		require.Len(t, output, 1)
+		if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
+		}
+	})
 }
 
 func TestConvertNumericWideToFullLongWithDisplayName(t *testing.T) {
@@ -361,6 +385,48 @@ func TestConvertNumericMultiToFullLong(t *testing.T) {
 		require.Len(t, output, 1)
 		if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
 			require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
+		}
+	})
+
+	t.Run("EmptyItemIsSkipped", func(t *testing.T) {
+		for _, tc := range []struct {
+			name  string
+			input data.Frames
+		}{
+			{
+				name: "empty item last",
+				input: data.Frames{
+					data.NewFrame("", data.NewField("cpu", data.Labels{"host": "a"}, []float64{1.0})),
+					data.NewFrame("", data.NewField("cpu", data.Labels{"host": "b"}, []float64{})),
+				},
+			},
+			{
+				name: "empty item first",
+				input: data.Frames{
+					data.NewFrame("", data.NewField("cpu", data.Labels{"host": "b"}, []float64{})),
+					data.NewFrame("", data.NewField("cpu", data.Labels{"host": "a"}, []float64{1.0})),
+				},
+			},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				for _, f := range tc.input {
+					f.Meta = &data.FrameMeta{Type: data.FrameTypeNumericMulti}
+				}
+
+				expected := data.NewFrame("",
+					data.NewField(SQLMetricFieldName, nil, []string{"cpu"}),
+					data.NewField(SQLValueFieldName, nil, []*float64{new(1.0)}),
+					data.NewField("host", nil, []*string{new("a")}),
+				)
+				expected.Meta = &data.FrameMeta{Type: numericFullLongType}
+
+				output, err := ConvertToFullLong(tc.input)
+				require.NoError(t, err)
+				require.Len(t, output, 1)
+				if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+					require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
+				}
+			})
 		}
 	})
 }
