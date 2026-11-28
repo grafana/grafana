@@ -1,6 +1,7 @@
 import { debounce } from 'lodash';
 
 import { getBackendSrv } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type FetchDataArgs } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
@@ -18,16 +19,19 @@ import {
   rolesFetchBegin,
   rolesFetchEnd,
 } from './reducers';
+import { fetchOrgUsersK8s } from './searchUsersK8s';
 
 export function loadUsers(): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
       dispatch(usersFetchBegin());
       const { perPage, page, searchQuery, sort } = getState().users;
-      const users = await getBackendSrv().get(
-        `/api/org/users/search`,
-        accessControlQueryParam({ perpage: perPage, page, query: searchQuery, sort })
-      );
+      const users = getFeatureFlagClient().getBooleanValue(FlagKeys.IamUseKubernetesUsersReadApi, false)
+        ? await fetchOrgUsersK8s(dispatch, { perPage, page, query: searchQuery, sort })
+        : await getBackendSrv().get(
+            `/api/org/users/search`,
+            accessControlQueryParam({ perpage: perPage, page, query: searchQuery, sort })
+          );
 
       if (
         contextSrv.licensedAccessControlEnabled() &&
