@@ -54,7 +54,7 @@ To create your first dashboard using the built-in `-- Grafana --` data source:
 1. Click the **Add new element** icon.
 1. In the middle of the dashboard, click **+ Add visualization**.
 
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.3.png" max-width="750px" alt="New dashboard" >}}
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.4.png" max-width="750px" alt="New dashboard" >}}
 
 1. On the panel, click **Configure visualization**.
 

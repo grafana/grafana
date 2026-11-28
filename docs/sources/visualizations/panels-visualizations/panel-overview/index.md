@@ -223,7 +223,7 @@ Time series
 
 To add a panel to an empty dashboard, click **+ Add visualization**:
 
-![Empty dashboard state](/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.3.png)
+![Empty dashboard state](/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.4.png)
 
 To add a panel to an existing dashboard, follow these steps:
 
