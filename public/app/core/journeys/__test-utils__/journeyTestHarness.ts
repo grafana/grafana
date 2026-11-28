@@ -34,7 +34,7 @@ export function createMockHandle(type: string): jest.Mocked<JourneyHandle> {
     journeyType: type,
     isActive: true,
     recordEvent: jest.fn(),
-    startStep: jest.fn().mockReturnValue(createMockStepHandle()),
+    startStep: jest.fn().mockImplementation(createMockStepHandle),
     end: jest.fn(),
     setAttributes: jest.fn(),
     onEnd: jest.fn(),
