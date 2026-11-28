@@ -298,3 +298,24 @@ type PullRequestRepo interface {
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
 	PullRequestClient() PullRequestClient
 }
+
+// NewPullRequest describes a pull request to open from Head into the repository's
+// configured branch.
+type NewPullRequest struct {
+	Head  string
+	Title string
+	Body  string
+}
+
+type SubmittedPullRequest struct {
+	Number int
+	URL    string
+}
+
+// PullRequestSubmitter is implemented by repositories that can open a pull request
+// with their own credentials.
+//
+//go:generate mockery --name PullRequestSubmitter --structname MockPullRequestSubmitter --inpackage --filename pull_request_submitter_mock.go --with-expecter
+type PullRequestSubmitter interface {
+	SubmitPullRequest(ctx context.Context, pr NewPullRequest) (*SubmittedPullRequest, error)
+}

@@ -55,9 +55,15 @@ var githubMock = &mockGithub{repos: map[string]*githubRepo{}, nextID: 1000}
 
 type githubRepo struct {
 	webhooksuite.State
-	id   int64
-	hook *github.Hook
-	opts webhooksuite.RepoOptions
+	id    int64
+	hook  *github.Hook
+	opts  webhooksuite.RepoOptions
+	pulls []openedPull
+}
+
+type openedPull struct {
+	authorization string
+	pull          github.NewPullRequest
 }
 
 type mockGithub struct {
@@ -97,6 +103,12 @@ func (f *mockGithub) State(repoName string) webhooksuite.State {
 	state := f.repos[repoName].State
 	state.Comments = append([]string(nil), state.Comments...)
 	return state
+}
+
+func (f *mockGithub) OpenedPulls(repoName string) []openedPull {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return append([]openedPull(nil), f.repos[repoName].pulls...)
 }
 
 func (f *mockGithub) Event(repoName string, e webhooksuite.Event) (http.Header, []byte) {
@@ -182,6 +194,18 @@ func (f *mockGithub) serveAPI(w http.ResponseWriter, r *http.Request) {
 		common.WriteJSON(w, http.StatusOK, []any{})
 	case sub == "hooks" || strings.HasPrefix(sub, "hooks/"):
 		f.serveHooks(w, r, repo, sub)
+	case sub == "pulls" && r.Method == http.MethodPost:
+		opened := openedPull{authorization: r.Header.Get("Authorization")}
+		if err := json.NewDecoder(r.Body).Decode(&opened.pull); err != nil {
+			common.WriteJSON(w, http.StatusBadRequest, map[string]any{"message": "Problems parsing JSON"})
+			return
+		}
+		repo.pulls = append(repo.pulls, opened)
+		number := len(repo.pulls)
+		common.WriteJSON(w, http.StatusCreated, &github.PullRequest{
+			Number:  new(number),
+			HTMLURL: new(fmt.Sprintf("https://github.example.com/git/%s/pull/%d", parts[1], number)),
+		})
 	case strings.HasPrefix(sub, "compare/"):
 		repo.MergeBaseCalls++
 		common.WriteJSON(w, http.StatusNotFound, map[string]any{"message": "Not Found"})

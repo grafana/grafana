@@ -39,6 +39,7 @@ type GithubRepository interface {
 	repository.RepositoryWithURLs
 	repository.StageableRepository
 	repository.BranchHandler
+	repository.PullRequestSubmitter
 	Owner() string
 	Repo() string
 	Client() Client
@@ -80,6 +81,12 @@ func newRepository(
 		owner:         owner,
 		repo:          repo,
 	}, nil
+}
+
+// SubmitPullRequest opens a pull request from pr.Head into the configured branch
+// with the repository's credentials, so GitHub records the app or connection as its author.
+func (r *githubRepository) SubmitPullRequest(ctx context.Context, pr repository.NewPullRequest) (*repository.SubmittedPullRequest, error) {
+	return r.gh.CreatePullRequest(ctx, r.config.Branch(), pr)
 }
 
 func (r *githubRepository) Owner() string {

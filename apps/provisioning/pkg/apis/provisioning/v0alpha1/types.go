@@ -1255,3 +1255,48 @@ type RefItem struct {
 func (RefItem) OpenAPIModelName() string {
 	return OpenAPIPrefix + "RefItem"
 }
+
+// PullRequestSubmission opens a pull request from a branch into the repository's
+// configured branch, using the repository's own credentials. It is the request and
+// response body of the repository submit subresource.
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type PullRequestSubmission struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec PullRequestSubmissionSpec `json:"spec"`
+
+	// +optional
+	Status PullRequestSubmissionStatus `json:"status,omitempty"`
+}
+
+func (PullRequestSubmission) OpenAPIModelName() string {
+	return OpenAPIPrefix + "PullRequestSubmission"
+}
+
+type PullRequestSubmissionSpec struct {
+	// The branch holding the changes
+	Ref string `json:"ref"`
+
+	// The pull request title
+	Title string `json:"title"`
+
+	// The pull request description
+	Description string `json:"description,omitempty"`
+}
+
+func (PullRequestSubmissionSpec) OpenAPIModelName() string {
+	return OpenAPIPrefix + "PullRequestSubmissionSpec"
+}
+
+type PullRequestSubmissionStatus struct {
+	// The pull request number
+	Number int `json:"number,omitempty"`
+
+	// The URL of the pull request
+	URL string `json:"url,omitempty"`
+}
+
+func (PullRequestSubmissionStatus) OpenAPIModelName() string {
+	return OpenAPIPrefix + "PullRequestSubmissionStatus"
+}
