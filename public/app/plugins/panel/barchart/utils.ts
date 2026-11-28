@@ -349,7 +349,9 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
 
     const customConfig: FieldConfig = { ...defaultFieldConfig, ...field.config.custom };
 
-    const scaleKey = field.config.unit || FIXED_UNIT;
+    // fields share a scale per unit, so a field placed on the right needs its own to get an axis there
+    const unitKey = field.config.unit || FIXED_UNIT;
+    const scaleKey = customConfig.axisPlacement === AxisPlacement.Right ? `${unitKey}/${AxisPlacement.Right}` : unitKey;
     const colorMode = getFieldColorModeForField(field);
     const scaleColor = getFieldSeriesColor(field, theme);
     const seriesColor = scaleColor.color;
