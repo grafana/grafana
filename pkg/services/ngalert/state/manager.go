@@ -72,6 +72,8 @@ type Manager struct {
 
 	// readiness gates whether evaluation results may be applied before the cache is warmed.
 	readiness ReadinessProbe
+
+	recording *RecordingSeriesManager
 }
 
 type ManagerCfg struct {
@@ -113,6 +115,9 @@ type ManagerCfg struct {
 	RequireWarm bool
 	// WarmGateTimeout is the grace window before gated evaluation proceeds anyway. 0 uses the default.
 	WarmGateTimeout time.Duration
+
+	// RecordingSeries configures the tracking of series written by recording rules.
+	RecordingSeries RecordingSeriesCfg
 }
 
 func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
@@ -159,6 +164,12 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 		readiness: readiness,
 	}
 
+	var seriesStore RecordingSeriesStore
+	if cfg.InstanceStore != nil {
+		seriesStore, _ = cfg.InstanceStore.(RecordingSeriesStore)
+	}
+	m.recording = newRecordingSeriesManager(cfg.RecordingSeries, seriesStore, readiness, cfg.Clock, cfg.Log)
+
 	return m
 }
 
@@ -167,13 +178,23 @@ func (st *Manager) Ready() Readiness {
 	return st.readiness.Ready()
 }
 
+// Recording returns the tracker for the series written by recording rules.
+func (st *Manager) Recording() *RecordingSeriesManager {
+	return st.recording
+}
+
 func (st *Manager) ClearCache() {
 	st.cache.reset()
+	st.recording.reset()
 	st.readiness.Reset()
 }
 
 func (st *Manager) Run(ctx context.Context) error {
-	st.persister.Async(ctx, st.cache)
+	var provider AlertInstancesProvider = st.cache
+	if st.recording.cfg.Enabled {
+		provider = seriesAwareProvider{AlertInstancesProvider: st.cache, series: st.recording}
+	}
+	st.persister.Async(ctx, provider)
 	return nil
 }
 
@@ -272,6 +293,12 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 
 			st.cache.set(state)
 			statesCount++
+		}
+
+		if st.recording.cfg.Enabled {
+			if _, ok := st.recording.warm(ctx, orgId, ruleByUID, logger); !ok {
+				success = false
+			}
 		}
 	}
 }
@@ -428,7 +455,7 @@ func (st *Manager) ProcessEvalResults(
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
 	states := st.setNextStateForRule(ctx, alertRule, results, extraLabels, logger, fn, evaluatedAt)
 
-	missingSeriesStates, staleCount := st.processMissingSeriesStates(logger, evaluatedAt, alertRule, fn)
+	missingSeriesStates, staleCount := processMissingSeriesStates(st.cache, logger, evaluatedAt, alertRule, fn)
 	span.AddEvent("results processed", trace.WithAttributes(
 		attribute.Int("state_transitions", len(states)),
 		attribute.Int("stale_states", staleCount),
@@ -577,11 +604,12 @@ func (st *Manager) Put(states []*State) {
 
 // processMissingSeriesStates finds cached states missing from the current evaluation,
 // resolves any that are stale, and returns them to be sent to the Alertmanager if needed.
-func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule, takeImageFn takeImageFn) ([]StateTransition, int) {
+// It takes the cache so that the recording series tracking can run it on its own cache.
+func processMissingSeriesStates(c *cache, logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule, takeImageFn takeImageFn) ([]StateTransition, int) {
 	missingTransitions := []StateTransition{}
 	staleStates := map[data.Fingerprint]struct{}{}
 
-	for _, s := range st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID) {
+	for _, s := range c.getStatesForRuleUID(alertRule.OrgID, alertRule.UID) {
 		// Skip states that were just evaluated. They're not missing.
 		if s.LastEvaluationTime.Equal(evaluatedAt) {
 			continue
@@ -628,7 +656,7 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 	}
 
 	// deleteRuleStates holds a lock on the cache, thus the pre-computed map of states.
-	st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
+	c.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
 		_, ok := staleStates[s.CacheID]
 		return ok
 	})

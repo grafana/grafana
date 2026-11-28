@@ -390,6 +390,8 @@ func (ng *AlertNG) init() error {
 	}
 	ng.RecordingWriter = recordingWriter
 
+	seriesBudget := state.NewSeriesBudget(ng.Cfg.UnifiedAlerting.RecordingRules.MaxTrackedSeries)
+
 	ng.schedCfg = schedule.SchedulerCfg{
 		RetryConfig: schedule.RetryConfig{
 			MaxAttempts:         ng.Cfg.UnifiedAlerting.MaxAttempts,
@@ -407,7 +409,7 @@ func (ng *AlertNG) init() error {
 		RuleStore:            ng.ruleService,
 		RuleSequenceStore:    ng.newRuleSequenceStore(),
 		RecordingRulesCfg:    ng.Cfg.UnifiedAlerting.RecordingRules,
-		SeriesBudget:         state.NewSeriesBudget(ng.Cfg.UnifiedAlerting.RecordingRules.MaxTrackedSeries),
+		SeriesBudget:         seriesBudget,
 		Metrics:              ng.Metrics.GetSchedulerMetrics(),
 		AlertSender:          alertsRouter,
 		Tracer:               ng.tracer,
@@ -459,6 +461,12 @@ func (ng *AlertNG) init() error {
 
 		IgnorePendingForNoDataAndError: ng.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAlertingIgnorePendingForNoDataAndError),
 		RequireWarm:                    ng.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAlertingStateManagerRequireWarm),
+		RecordingSeries: state.RecordingSeriesCfg{
+			Enabled:      ng.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAlertingRecordingRuleSeriesState),
+			WriteThrough: !ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic), //nolint:staticcheck // not yet migrated to OpenFeature
+			Budget:       seriesBudget,
+			Metrics:      ng.Metrics.GetSchedulerMetrics(),
+		},
 	}
 	statePersister := initStatePersister(stateManagerCfg, ng.FeatureToggles)
 	ng.stateManager = state.NewManager(stateManagerCfg, statePersister)

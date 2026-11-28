@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	pb "github.com/grafana/grafana/pkg/services/ngalert/store/proto/v1"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 var _ state.RecordingSeriesStore = ProtoInstanceDBStore{}
@@ -24,6 +25,11 @@ func (st ProtoInstanceDBStore) SaveRecordingSeriesForRule(ctx context.Context, k
 		return fmt.Errorf("failed to compress recording series: %w", err)
 	}
 
+	if st.SQLStore.GetDBType() == migrator.MySQL {
+		return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			return st.updateThenUpsertCompressedAlertInstances(sess, key.OrgID, key.UID, compressed, time.Now())
+		})
+	}
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		return st.upsertCompressedAlertInstances(sess, key.OrgID, key.UID, compressed, time.Now())
 	})

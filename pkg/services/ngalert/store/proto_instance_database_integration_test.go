@@ -440,3 +440,74 @@ func TestIntegration_RecordingSeriesInRuleState(t *testing.T) {
 		require.EqualValues(t, 0, rowCount(t, recording))
 	})
 }
+
+// The series save and delete take the same MySQL lock as the instance save, and a held back write of one
+// rule must not block the others. This is the path write-through takes for recording rules.
+func TestIntegration_RecordingSeriesSaves_DoNotBlockOnOtherRulesMySQL(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	if !db.IsTestDbMySQL() {
+		t.Skip("lock behaviour is specific to MySQL")
+	}
+
+	ctx := context.Background()
+	ng, dbstore, ruleStore := tests.SetupTestEnv(t, baseIntervalSeconds)
+	seriesStore, ok := ng.InstanceStore.(state.RecordingSeriesStore)
+	require.True(t, ok)
+
+	rule1 := tests.CreateTestAlertRule(t, ctx, ruleStore, 60, 1)
+	rule2 := tests.CreateTestAlertRule(t, ctx, ruleStore, 60, 1)
+	series := []models.RecordingSeries{{TargetDatasourceUID: "ds", Metric: "m", Labels: map[string]string{"a": "b"}, LastUpdate: time.Now()}}
+	require.NoError(t, seriesStore.SaveRecordingSeriesForRule(ctx, rule1.GetKeyWithGroup(), series))
+	instances := []models.AlertInstance{
+		*models.AlertInstanceGen(models.InstanceMuts.WithOrgID(1), models.InstanceMuts.WithRuleUID(rule2.UID), models.InstanceMuts.WithLabelsHash("hash")),
+	}
+	require.NoError(t, seriesStore.FullSyncWithSeries(ctx, instances, map[models.AlertRuleKey][]models.RecordingSeries{rule2.GetKey(): series}, 0, nil))
+
+	holderHasLock := make(chan struct{})
+	releaseHolder := make(chan struct{})
+	holderDone := make(chan error, 1)
+	go func() {
+		holderDone <- dbstore.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+			_, err := sess.Exec(
+				"INSERT INTO alert_rule_state (org_id, rule_uid, data, updated_at) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE data = VALUES(data), updated_at = VALUES(updated_at)",
+				1, rule1.UID, []byte("held"), time.Now(),
+			)
+			close(holderHasLock)
+			<-releaseHolder
+			return err
+		})
+	}()
+	t.Cleanup(func() {
+		select {
+		case <-releaseHolder:
+		default:
+			close(releaseHolder)
+		}
+		require.NoError(t, <-holderDone)
+	})
+	<-holderHasLock
+
+	finishes := func(t *testing.T, name string, fn func() error) {
+		t.Helper()
+		done := make(chan error, 1)
+		go func() { done <- fn() }()
+		select {
+		case err := <-done:
+			require.NoError(t, err)
+		case <-time.After(10 * time.Second):
+			require.Fail(t, name+" is blocked by an open write of another rule")
+		}
+	}
+
+	t.Run("deleting series of a rule that has alert state", func(t *testing.T) {
+		finishes(t, "deleting series", func() error { return seriesStore.DeleteRecordingSeriesForRule(ctx, rule2.GetKeyWithGroup()) })
+	})
+	t.Run("saving series", func(t *testing.T) {
+		finishes(t, "saving series", func() error { return seriesStore.SaveRecordingSeriesForRule(ctx, rule2.GetKeyWithGroup(), series) })
+	})
+	t.Run("saving the same series again", func(t *testing.T) {
+		for range 3 {
+			finishes(t, "saving the same series", func() error { return seriesStore.SaveRecordingSeriesForRule(ctx, rule2.GetKeyWithGroup(), series) })
+		}
+	})
+}
