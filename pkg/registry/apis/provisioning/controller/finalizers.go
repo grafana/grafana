@@ -27,7 +27,10 @@ type jobQueueCleaner interface {
 	// CleanupQueue deletes all queued jobs for the repository that are not
 	// currently being executed. Returns the number of jobs deleted.
 	CleanupQueue(ctx context.Context, namespace, repository string) (int, error)
+	CountRunning(ctx context.Context, namespace, repository string) (int, error)
 }
+
+var errJobsRunning = fmt.Errorf("repository has running jobs")
 
 type finalizer struct {
 	lister        resources.ResourceLister
@@ -61,80 +64,109 @@ func (e *finalizerError) Unwrap() error { return e.err }
 func (f *finalizer) process(ctx context.Context,
 	cfg *provisioning.Repository,
 ) error {
-	logger := logging.FromContext(ctx)
-	logger.Info("process finalizers", "finalizers", cfg.Finalizers)
+	logging.FromContext(ctx).Info("process finalizers", "finalizers", cfg.Finalizers)
 
 	// Clear the job queue first so no pending job gets picked up and starts
 	// running against the repository while the rest of the teardown proceeds.
-	orderedFinalizers := [4]string{
-		repository.RemovePendingJobsFinalizer,
+	if err := f.run(ctx, cfg, repository.RemovePendingJobsFinalizer); err != nil {
+		return err
+	}
+	if err := f.waitForRunningJobs(ctx, cfg); err != nil {
+		return err
+	}
+	for _, finalizer := range []string{
 		repository.CleanFinalizer,
 		repository.ReleaseOrphanResourcesFinalizer,
-		repository.RemoveOrphanResourcesFinalizer}
-
-	for _, finalizer := range orderedFinalizers {
-		if !slices.Contains(cfg.Finalizers, finalizer) {
-			continue
+		repository.RemoveOrphanResourcesFinalizer,
+	} {
+		if err := f.run(ctx, cfg, finalizer); err != nil {
+			return err
 		}
-		logger.Info("running finalizer", "finalizer", finalizer)
-		var err error
-		var count int
-		start := time.Now()
+	}
+	return nil
+}
 
-		switch finalizer {
-		case repository.RemovePendingJobsFinalizer:
-			logger.Info("clearing repository job queue")
-			count, err = f.jobs.CleanupQueue(ctx, cfg.Namespace, cfg.Name)
-			if err != nil {
-				err = fmt.Errorf("clear job queue: %w", err)
-			}
+func (f *finalizer) waitForRunningJobs(ctx context.Context, cfg *provisioning.Repository) error {
+	var orphan string
+	switch {
+	case slices.Contains(cfg.Finalizers, repository.ReleaseOrphanResourcesFinalizer):
+		orphan = repository.ReleaseOrphanResourcesFinalizer
+	case slices.Contains(cfg.Finalizers, repository.RemoveOrphanResourcesFinalizer):
+		orphan = repository.RemoveOrphanResourcesFinalizer
+	default:
+		return nil
+	}
 
-		case repository.CleanFinalizer:
-			logger.Info("running cleanup finalizer")
-			// Building decrypts secrets and constructs the provider client, so it
-			// fails when credentials have expired. That failure blocks deletion —
-			// forcing it is done by removing this finalizer, not by tolerating the
-			// error.
-			repo, buildErr := f.repoFactory.Build(ctx, cfg)
-			if buildErr != nil {
-				err = fmt.Errorf("create repository from configuration: %w", buildErr)
-			} else if webhookRepo, ok := repo.(repository.WebhookRepository); ok {
-				if err = webhookOnDelete(ctx, webhookRepo); err != nil {
-					err = fmt.Errorf("execute deletion hooks: %w", err)
-				}
-			}
+	running, err := f.jobs.CountRunning(ctx, cfg.Namespace, cfg.Name)
+	if err != nil {
+		return &finalizerError{finalizer: orphan, err: fmt.Errorf("count running jobs: %w", err)}
+	}
+	if running > 0 {
+		logging.FromContext(ctx).Info("waiting for running jobs before the finalizer", "finalizer", orphan, "running", running)
+		return errJobsRunning
+	}
+	return nil
+}
 
-		case repository.ReleaseOrphanResourcesFinalizer:
-			logger.Info("releasing orphan resources")
-			count, err = f.releaseExistingItems(ctx, cfg)
-			if err != nil {
-				err = fmt.Errorf("release resources: %w", err)
-			}
+func (f *finalizer) run(ctx context.Context, cfg *provisioning.Repository, finalizer string) error {
+	if !slices.Contains(cfg.Finalizers, finalizer) {
+		return nil
+	}
+	logger := logging.FromContext(ctx)
+	logger.Info("running finalizer", "finalizer", finalizer)
+	var err error
+	var count int
+	start := time.Now()
 
-		case repository.RemoveOrphanResourcesFinalizer:
-			logger.Info("removing orphan resources")
-			count, err = f.deleteExistingItems(ctx, cfg)
-			if err != nil {
-				err = fmt.Errorf("remove resources: %w", err)
-			}
-
-		default:
-			logger.Error("skipping unknown finalizer", "finalizer", finalizer)
-			continue
-		}
-
-		outcome := metricutils.SuccessOutcome
-		cause := ""
+	switch finalizer {
+	case repository.RemovePendingJobsFinalizer:
+		logger.Info("clearing repository job queue")
+		count, err = f.jobs.CleanupQueue(ctx, cfg.Namespace, cfg.Name)
 		if err != nil {
-			outcome = metricutils.ErrorOutcome
-			cause = classifyDeletionErrorCause(err)
+			err = fmt.Errorf("clear job queue: %w", err)
 		}
 
-		f.metrics.RecordFinalizer(finalizer, outcome, cause, count, time.Since(start).Seconds())
+	case repository.CleanFinalizer:
+		logger.Info("running cleanup finalizer")
+		// Building decrypts secrets and constructs the provider client, so it
+		// fails when credentials have expired. That failure blocks deletion —
+		// forcing it is done by removing this finalizer, not by tolerating the
+		// error.
+		repo, buildErr := f.repoFactory.Build(ctx, cfg)
+		if buildErr != nil {
+			err = fmt.Errorf("create repository from configuration: %w", buildErr)
+		} else if webhookRepo, ok := repo.(repository.WebhookRepository); ok {
+			if err = webhookOnDelete(ctx, webhookRepo); err != nil {
+				err = fmt.Errorf("execute deletion hooks: %w", err)
+			}
+		}
 
+	case repository.ReleaseOrphanResourcesFinalizer:
+		logger.Info("releasing orphan resources")
+		count, err = f.releaseExistingItems(ctx, cfg)
 		if err != nil {
-			return &finalizerError{finalizer: finalizer, err: err}
+			err = fmt.Errorf("release resources: %w", err)
 		}
+
+	case repository.RemoveOrphanResourcesFinalizer:
+		logger.Info("removing orphan resources")
+		count, err = f.deleteExistingItems(ctx, cfg)
+		if err != nil {
+			err = fmt.Errorf("remove resources: %w", err)
+		}
+	}
+
+	outcome := metricutils.SuccessOutcome
+	cause := ""
+	if err != nil {
+		outcome = metricutils.ErrorOutcome
+		cause = classifyDeletionErrorCause(err)
+	}
+
+	f.metrics.RecordFinalizer(finalizer, outcome, cause, count, time.Since(start).Seconds())
+
+	if err != nil {
+		return &finalizerError{finalizer: finalizer, err: err}
 	}
 	return nil
 }
