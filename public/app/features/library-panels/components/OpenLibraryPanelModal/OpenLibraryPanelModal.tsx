@@ -62,7 +62,7 @@ export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPa
                   defaultValue_one:
                     'This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:',
                   defaultValue_other:
-                    'This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:',
+                    'This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:',
                 }}
               >
                 This panel is being used in {{ count: connected }} dashboard. Please choose which dashboard to view the
