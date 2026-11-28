@@ -199,6 +199,8 @@ function getManagedByTooltip(managerKind?: ManagerKind, name?: string): string {
       return t('provisioning.managed-badge.file-provisioning', 'Managed by: Grafana configuration');
     case ManagerKind.ClassicFP:
       return t('provisioning.managed-badge.classic-file-provisioning', 'Managed by: File provisioning');
+    case ManagerKind.GrafanaCloud:
+      return t('provisioning.managed-badge.grafana-cloud', 'Managed by: Grafana Cloud');
     case ManagerKind.Repo:
       return getManagedByRepositoryTooltip(name);
     default:

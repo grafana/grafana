@@ -56,6 +56,7 @@ export enum ManagerKind {
   FileProvisioning = 'file-provisioning',
   /** @deprecated shim/migration path for legacy file provisioning */
   ClassicFP = 'classic-file-provisioning',
+  GrafanaCloud = 'grafana-cloud',
 }
 
 export const AnnoKeyManagerKind = 'grafana.app/managedBy';
