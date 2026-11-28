@@ -14005,6 +14005,11 @@
         "tooltip-default": "Lock panel time range"
       }
     },
+    "comments": {
+      "add": "Add comment",
+      "hide": "Hide comments",
+      "show": "Show comments"
+    },
     "errors": {
       "entity": "Notebook",
       "failed-to-load": "Failed to load notebook",

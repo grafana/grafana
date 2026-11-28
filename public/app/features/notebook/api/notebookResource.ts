@@ -10,6 +10,7 @@ import { extractErrorMessage } from 'app/api/utils';
 import { type Resource } from 'app/features/apiserver/types';
 import { dispatch } from 'app/store/store';
 
+import { NOTEBOOK_KIND } from '../constants';
 import { type Spec as NotebookSpec } from '../types';
 import { notebookViewUrl } from '../urls';
 
@@ -18,8 +19,6 @@ import { notebookViewUrl } from '../urls';
  * The apiserver appends a random suffix and returns the final name, so no uid is invented client-side.
  */
 const NOTEBOOK_NAME_PREFIX = 'n';
-
-const NOTEBOOK_KIND = 'Notebook';
 
 const NOTEBOOK_API_VERSION = `${API_GROUP}/${API_VERSION}`;
 
