@@ -16,6 +16,7 @@ import { type DashboardMeta } from 'app/types/dashboard';
 
 import { getPendingChangesHistory } from '../lifecycle/pendingChangePreview';
 import { hasUnrecordedPendingChange, recordPendingChange } from '../lifecycle/pendingChangesHistory';
+import { coversDashboard } from '../lifecycle/templateAdoption';
 import { SaveLibraryVizPanelModal } from '../panel-edit/SaveLibraryVizPanelModal';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { getLibraryPanelBehavior, hasActualSaveChanges, isLibraryPanel } from '../utils/utils';
@@ -191,6 +192,11 @@ const getStyles = () => ({
  * For some dashboards and users changes should be ignored *
  */
 export function ignoreChanges(scene: DashboardScene | null) {
+  // A template under the building screen was never shown, so there is nothing of the user's to keep.
+  if (scene && coversDashboard(scene.state)) {
+    return true;
+  }
+
   const original = scene?.getInitialSaveModel();
 
   if (!original) {

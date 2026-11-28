@@ -5,6 +5,7 @@ import { appEvents } from 'app/core/app_events';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 
+import { getRawDashboardV2Changes } from '../saving/getDashboardChanges';
 import { type DashboardChangeInfo } from '../saving/shared';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { dashboardComposerEnabled } from '../scene/dashboardModes';
@@ -121,6 +122,20 @@ export function getPendingChangesDiff(scene: DashboardScene): DashboardChangeInf
     hasRefreshChange: false,
     isNew: false,
   };
+}
+
+/**
+ * How much a draft changed from the dashboard it was started from (`startedFrom`), for its save to
+ * report as a save from that template's own page does. Undefined for a draft started from nothing.
+ */
+export function getChangesFromStart(scene: DashboardScene): number | undefined {
+  const preview = getScenePendingChangePreview(scene.state);
+  const start = preview?.previewing && proposesNewDashboard(preview.pending) ? preview.pending.startedFrom : undefined;
+  const saveModel = start && scene.getSaveModel();
+  if (!start || !isDashboardV2Spec(saveModel)) {
+    return undefined;
+  }
+  return getRawDashboardV2Changes(structuredClone(start), structuredClone(saveModel)).diffCount;
 }
 
 /**

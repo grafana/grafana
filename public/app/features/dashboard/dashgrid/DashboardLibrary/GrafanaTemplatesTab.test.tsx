@@ -1,11 +1,15 @@
+import { act } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { createRef } from 'react';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { locationService, setBackendSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { startTemplateAdoption } from 'app/features/dashboard-scene/lifecycle/templateAdoption';
 
 import { GrafanaTemplatesTab } from './GrafanaTemplatesTab';
 import { TemplateDashboardInteractions } from './interactions';
@@ -27,6 +31,8 @@ jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn(() => ({ isAvailable: true, openAssistant: jest.fn() })),
   createAssistantContextItem: jest.fn((type: string, data: object) => ({ type, ...data })),
 }));
+
+jest.mock('app/features/dashboard-scene/lifecycle/templateAdoption', () => ({ startTemplateAdoption: jest.fn() }));
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -238,5 +244,22 @@ describe('GrafanaTemplatesTab', () => {
     );
     expect(locationService.push).toHaveBeenCalledWith(expect.stringMatching(/^\/dashboard\/template\?.*gnetId=1/));
     expect(screen.queryByRole('button', { name: 'Attach template: RED metrics' })).not.toBeInTheDocument();
+    expect(startTemplateAdoption).not.toHaveBeenCalled();
+  });
+
+  it('covers the template with the building screen when Customize with Assistant opens it', async () => {
+    setTestFlags({
+      [FlagKeys.DashboardTemplatesAssistantButton]: true,
+      [FlagKeys.AssistantFrontendToolsDashboardTemplates]: true,
+    });
+    const { user } = renderTab();
+
+    await user.click(await screen.findByRole('button', { name: 'Customize with Assistant: RED metrics' }));
+
+    expect(locationService.push).toHaveBeenCalledWith(expect.stringMatching(/assistantSource=assistant_button/));
+    expect(jest.mocked(startTemplateAdoption).mock.invocationCallOrder[0]).toBeLessThan(
+      jest.mocked(locationService.push).mock.invocationCallOrder[0]
+    );
+    act(() => setTestFlags({}));
   });
 });

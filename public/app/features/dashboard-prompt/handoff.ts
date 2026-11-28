@@ -1,5 +1,6 @@
 import { createAssistantContextItem, type ChatContextItem, openAssistant } from '@grafana/assistant';
 import { locationService } from '@grafana/runtime';
+import { startTemplateAdoption } from 'app/features/dashboard-scene/lifecycle/templateAdoption';
 
 import { PROMPT_ORIGIN, MAX_LISTED_DATASOURCES, formatDashboardRefs, formatDatasources } from './prompts';
 import { type PromptDashboardRef, type PromptDatasource } from './types';
@@ -66,6 +67,8 @@ interface OpenTemplateArgs {
  * create_dashboard, which would replace the open template.
  */
 export function openTemplateInAssistant({ templateUrl, prompt, context }: OpenTemplateArgs): void {
+  // Until the Assistant turns the template into its draft, the building screen stands in for it.
+  startTemplateAdoption();
   // Navigate before opening, so the Assistant is less likely to note the blank dashboard as the current page.
   locationService.push(templateUrl);
   openAssistant({

@@ -7,6 +7,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, isFetchError, locationService, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { FilterInput, Grid, Pagination, Stack, useStyles2 } from '@grafana/ui';
+import { startTemplateAdoption } from 'app/features/dashboard-scene/lifecycle/templateAdoption';
 import { type PluginDashboard } from 'app/types/plugins';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
@@ -339,6 +340,10 @@ export const SuggestedDashboardsList = ({
     }
 
     const templateUrl = `${DASHBOARD_LIBRARY_ROUTES.Template}?${params.toString()}`;
+    if (customizeWithAssistant) {
+      // Until the Assistant turns the dashboard into its draft, the building screen stands in for it.
+      startTemplateAdoption();
+    }
     locationService.push(templateUrl);
   };
 

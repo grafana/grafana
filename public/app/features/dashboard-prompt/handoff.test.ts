@@ -1,6 +1,8 @@
 import { type ChatContextItem, openAssistant } from '@grafana/assistant';
 import { locationService } from '@grafana/runtime';
 
+import { startTemplateAdoption } from 'app/features/dashboard-scene/lifecycle/templateAdoption';
+
 import { buildPlanningInstructions, openTemplateInAssistant, startPlanningInAssistant } from './handoff';
 import { PROMPT_ORIGIN, MAX_LISTED_DATASOURCES } from './prompts';
 
@@ -20,6 +22,8 @@ jest.mock('@grafana/assistant', () => ({
     occurrences: [],
   })),
 }));
+
+jest.mock('app/features/dashboard-scene/lifecycle/templateAdoption', () => ({ startTemplateAdoption: jest.fn() }));
 
 const openAssistantMock = jest.mocked(openAssistant);
 
@@ -115,6 +119,10 @@ describe('openTemplateInAssistant', () => {
     });
 
     expect(push).toHaveBeenCalledWith('/dashboard/template?gnetId=1');
+    // The building screen stands in for the template from before it opens.
+    expect(jest.mocked(startTemplateAdoption).mock.invocationCallOrder[0]).toBeLessThan(
+      push.mock.invocationCallOrder[0]
+    );
     expect(openAssistantMock).toHaveBeenCalledWith({
       origin: PROMPT_ORIGIN,
       mode: 'dashboarding',

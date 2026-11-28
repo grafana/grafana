@@ -10,6 +10,7 @@ import {
   useFlagDashboardTemplatesAssistantButton,
 } from '@grafana/runtime/internal';
 import { EmptyState, Grid } from '@grafana/ui';
+import { startTemplateAdoption } from 'app/features/dashboard-scene/lifecycle/templateAdoption';
 
 import { DashboardCard } from './DashboardCard';
 import { NewTemplateDashboardInteractions } from './analytics/main';
@@ -132,6 +133,10 @@ export const GrafanaTemplatesTab = ({
       sourceEntryPoint,
       customizeWithAssistant ? TemplateDashboardSourceEntryPoint.ASSISTANT_BUTTON : undefined
     );
+    if (customizeWithAssistant) {
+      // Until the Assistant turns the template into its draft, the building screen stands in for it.
+      startTemplateAdoption();
+    }
     locationService.push(templateUrl);
   };
 
