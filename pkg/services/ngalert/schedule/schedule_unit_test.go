@@ -1533,3 +1533,117 @@ func assertScheduledContains(t *testing.T, scheduled []readyToRunItem, rule *mod
 	}
 	require.True(t, contains, "Expected a scheduled rule with key %s title %s but didn't get one, scheduled rules were %v", rule.GetKey(), rule.Title, scheduled)
 }
+
+func TestProcessTickOrphanedStateCleanup(t *testing.T) {
+	ctx := context.Background()
+	gen := models.RuleGen
+
+	// A rule whose state was warmed into the cache but that no longer exists
+	// in the store, as if it was deleted between the state cache warmup and
+	// the scheduler's first tick.
+	orphanedRule := gen.With(gen.WithOrgID(1), gen.WithInterval(time.Second)).GenerateRef()
+	existingRule := gen.With(gen.WithOrgID(1), gen.WithInterval(time.Second)).GenerateRef()
+
+	sender := NewSyncAlertsSenderMock()
+	// A resolved notification should be sent for the orphaned firing alert,
+	// just like when a registered rule's routine is stopped with errRuleDeleted.
+	sender.EXPECT().Send(mock.Anything, orphanedRule.GetKey(), mock.Anything).Return().Once()
+	// The existing rule is scheduled and its evaluation may asynchronously
+	// send a DatasourceError notification; allow it.
+	sender.EXPECT().Send(mock.Anything, mock.Anything, mock.Anything).Return().Maybe()
+
+	ruleStore := newFakeRulesStore()
+	instanceStore := &state.FakeInstanceStore{}
+	registry := prometheus.NewPedanticRegistry()
+	sch := setupScheduler(t, ruleStore, instanceStore, registry, sender, nil, nil, withSchedulerClock(clock.NewMock()))
+
+	sch.stateManager.Put([]*state.State{
+		stateForRule(orphanedRule, sch.clock.Now(), eval.Alerting),
+		stateForRule(existingRule, sch.clock.Now(), eval.Alerting),
+	})
+	ruleStore.PutRule(ctx, existingRule)
+
+	dispatcherGroup, ctx := errgroup.WithContext(ctx)
+	tick := sch.clock.Now()
+
+	_, _, _ = sch.processTick(ctx, dispatcherGroup, tick)
+
+	// The orphaned state should be removed on the first tick, the existing
+	// rule's state kept.
+	require.Equal(t, []models.AlertRuleKey{existingRule.GetKey()}, sch.stateManager.GetCachedRuleKeys())
+	sender.AssertExpectations(t)
+
+	// The cleanup runs only on the first tick.
+	sch.stateManager.Put([]*state.State{stateForRule(orphanedRule, sch.clock.Now(), eval.Alerting)})
+	_, _, _ = sch.processTick(ctx, dispatcherGroup, tick.Add(time.Second))
+	require.Len(t, sch.stateManager.GetCachedRuleKeys(), 2, "cleanup should not run again on subsequent ticks")
+}
+
+func TestProcessTickOrphanedStateCleanupWaitsForSuccessfulFetch(t *testing.T) {
+	ctx := context.Background()
+	gen := models.RuleGen
+
+	orphanedRule := gen.With(gen.WithOrgID(1), gen.WithInterval(time.Second)).GenerateRef()
+
+	sender := NewSyncAlertsSenderMock()
+	sender.EXPECT().Send(mock.Anything, orphanedRule.GetKey(), mock.Anything).Return().Once()
+
+	ruleStore := newFakeRulesStore()
+	instanceStore := &state.FakeInstanceStore{}
+	registry := prometheus.NewPedanticRegistry()
+	sch := setupScheduler(t, ruleStore, instanceStore, registry, sender, nil, nil, withSchedulerClock(clock.NewMock()))
+
+	sch.stateManager.Put([]*state.State{
+		stateForRule(orphanedRule, sch.clock.Now(), eval.Alerting),
+	})
+
+	dispatcherGroup, ctx := errgroup.WithContext(ctx)
+	tick := sch.clock.Now()
+
+	// When the first fetch of the alert rules fails, the cleanup must not run:
+	// the registry is empty and every warmed cache entry would wrongly look
+	// deleted.
+	sch.ruleSequenceStore = &failingRuleSequenceStore{}
+	_, _, _ = sch.processTick(ctx, dispatcherGroup, tick)
+	require.Equal(t, []models.AlertRuleKey{orphanedRule.GetKey()}, sch.stateManager.GetCachedRuleKeys(), "cleanup must not run after a failed fetch")
+
+	// On the next tick with a successful fetch, the deferred cleanup runs.
+	sch.ruleSequenceStore = &NoopRuleSequenceStore{}
+	_, _, _ = sch.processTick(ctx, dispatcherGroup, tick.Add(time.Second))
+	require.Empty(t, sch.stateManager.GetCachedRuleKeys(), "cleanup should run on the first tick with a successful fetch")
+	sender.AssertExpectations(t)
+}
+
+func TestProcessTickOrphanedStateCleanupSkipsDisabledOrgs(t *testing.T) {
+	ctx := context.Background()
+	gen := models.RuleGen
+
+	// A rule of a disabled org whose state was warmed into the cache. The
+	// scheduler's rule set omits rules of disabled orgs, so this rule is not
+	// part of the fetched rules even though it still exists.
+	disabledOrgRule := gen.With(gen.WithOrgID(2), gen.WithInterval(time.Second)).GenerateRef()
+	orphanedRule := gen.With(gen.WithOrgID(1), gen.WithInterval(time.Second)).GenerateRef()
+
+	ruleStore := newFakeRulesStore()
+	instanceStore := &state.FakeInstanceStore{}
+	registry := prometheus.NewPedanticRegistry()
+	sch := setupScheduler(t, ruleStore, instanceStore, registry, NewSyncAlertsSenderMock(), nil, nil, withSchedulerClock(clock.NewMock()))
+	sch.disabledOrgs = map[int64]struct{}{2: {}}
+
+	sch.stateManager.Put([]*state.State{
+		stateForRule(disabledOrgRule, sch.clock.Now(), eval.Normal),
+		stateForRule(orphanedRule, sch.clock.Now(), eval.Normal),
+	})
+
+	dispatcherGroup, ctx := errgroup.WithContext(ctx)
+	_, _, _ = sch.processTick(ctx, dispatcherGroup, sch.clock.Now())
+
+	// The disabled org's rule state is kept; the orphaned one is removed.
+	require.Equal(t, []models.AlertRuleKey{disabledOrgRule.GetKey()}, sch.stateManager.GetCachedRuleKeys())
+}
+
+type failingRuleSequenceStore struct{}
+
+func (f *failingRuleSequenceStore) GetRuleSequencesForScheduling(context.Context) ([]models.SchedulableRuleSequence, error) {
+	return nil, errors.New("sequence store not ready")
+}

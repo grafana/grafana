@@ -89,6 +89,16 @@ type schedule struct {
 
 	stateManager *state.Manager
 
+	// disabledOrgs are the organizations for which alerting is disabled. The
+	// scheduler's rule set omits their rules, so orphaned-state cleanup must
+	// not treat them as deleted.
+	disabledOrgs map[int64]struct{}
+
+	// orphanedStatesCleaned is set once the state cache has been checked for
+	// entries of rules that no longer exist, which happens on the first tick
+	// with a successful fetch of the alert rules.
+	orphanedStatesCleaned bool
+
 	appURL               *url.URL
 	disableGrafanaFolder bool
 	jitterEvaluations    JitterStrategy
@@ -143,6 +153,9 @@ type SchedulerCfg struct {
 	// SeriesBudget caps the series tracked for stale markers by all recording rules of this scheduler.
 	// nil counts them without a limit.
 	SeriesBudget SeriesBudget
+
+	// DisabledOrgs are the organizations for which alerting is disabled.
+	DisabledOrgs map[int64]struct{}
 }
 
 // NewScheduler returns a new scheduler.
@@ -179,6 +192,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		recordingWriter:        cfg.RecordingWriter,
 		ruleStopReasonProvider: cfg.RuleStopReasonProvider,
 		featureToggles:         cfg.FeatureToggles,
+		disabledOrgs:           cfg.DisabledOrgs,
 	}
 
 	return &sch
@@ -301,6 +315,19 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 	// this is the new current state. rulesDiff contains the previously existing rules that were different between this state and the previous state.
 	alertRules, folderTitles := sch.schedulableAlertRules.all()
+
+	// On the first tick with a successful fetch, clean up state cache entries
+	// of rules that no longer exist. A rule that was deleted after the state
+	// cache was warmed but before this tick was never registered, so the
+	// regular deleted-rule handling below never runs for it and its state
+	// would otherwise live in the cache until the next restart.
+	// The cleanup must not run after a failed fetch: the registry then still
+	// holds the previous state, which is empty on the first tick, and every
+	// warmed cache entry would wrongly look deleted.
+	if !sch.orphanedStatesCleaned && err == nil {
+		sch.orphanedStatesCleaned = true
+		sch.deleteOrphanedRuleStates(ctx, alertRules)
+	}
 
 	// registeredDefinitions is a map used for finding deleted alert rules
 	// initially it is assigned to all known alert rules from the previous cycle
@@ -439,6 +466,34 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	sch.deleteAlertRule(ctx, toDelete...)
 
 	return readyToRun, registeredDefinitions, updatedRules
+}
+
+// deleteOrphanedRuleStates removes state cache entries of alert rules that
+// no longer exist, sending resolved notifications for firing alerts just like
+// the routine of a deleted rule does.
+func (sch *schedule) deleteOrphanedRuleStates(ctx context.Context, alertRules []*ngmodels.AlertRule) {
+	existing := make(map[ngmodels.AlertRuleKey]struct{}, len(alertRules))
+	for _, rule := range alertRules {
+		existing[rule.GetKey()] = struct{}{}
+	}
+	for _, key := range sch.stateManager.GetCachedRuleKeys() {
+		if _, ok := existing[key]; ok {
+			continue
+		}
+		if _, disabled := sch.disabledOrgs[key.OrgID]; disabled {
+			// The scheduler's rule set omits rules of disabled orgs while the
+			// state cache warm loads instances for all orgs, so a rule of a
+			// disabled org would wrongly look deleted. Leave its state alone.
+			continue
+		}
+		sch.log.FromContext(ctx).Info("Removing state of alert rule that no longer exists", key.LogContext()...)
+		keyWithGroup := ngmodels.AlertRuleKeyWithGroup{AlertRuleKey: key}
+		transitions := sch.stateManager.DeleteStateByRuleUID(ctx, keyWithGroup, ngmodels.StateReasonRuleDeleted)
+		expiredAlerts := state.FromAlertsStateToStoppedAlert(transitions, sch.appURL, sch.clock)
+		if len(expiredAlerts.PostableAlerts) > 0 {
+			sch.alertsSender.Send(ctx, key, expiredAlerts)
+		}
+	}
 }
 
 // runJobFn sends the scheduled evaluation to the evaluation routine, optionally with a previous item to log the trigger source.

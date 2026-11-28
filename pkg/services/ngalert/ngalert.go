@@ -414,6 +414,7 @@ func (ng *AlertNG) init() error {
 		Log:                  log.New("ngalert.scheduler"),
 		RecordingWriter:      ng.RecordingWriter,
 		FeatureToggles:       ng.FeatureToggles,
+		DisabledOrgs:         ng.Cfg.UnifiedAlerting.DisabledOrgs,
 	}
 
 	history, err := configureHistorianBackend(
