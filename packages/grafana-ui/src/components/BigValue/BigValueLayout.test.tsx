@@ -101,6 +101,28 @@ describe('BigValueLayout', () => {
       expect(layout).toBeInstanceOf(WideWithChartLayout);
     });
 
+    it('keeps a 15px value on a 2-row stat', () => {
+      const layout = buildLayout(
+        getProps({
+          width: 150,
+          height: 26,
+          sparkline: undefined,
+          value: { text: '25', numeric: 25 },
+        })
+      );
+
+      expect(layout.panelPadding).toBe(4);
+      expect(layout.valueFontSize).toBe(15);
+    });
+
+    it('keeps the usual padding when the panel has room', () => {
+      const short = buildLayout(getProps({ width: 300, height: 80, sparkline: undefined }));
+      const tall = buildLayout(getProps({ width: 300, height: 200, sparkline: undefined }));
+
+      expect(short.panelPadding).toBe(8);
+      expect(tall.panelPadding).toBe(12);
+    });
+
     it.each([
       ['wide layout', {}],
       ['non-wide layout', { disableWideLayout: true }],

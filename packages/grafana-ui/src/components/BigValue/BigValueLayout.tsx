@@ -21,6 +21,23 @@ import { percentChangeString } from './PercentChange';
 const LINE_HEIGHT = 1.2;
 const MAX_TITLE_SIZE = 30;
 const VALUE_FONT_WEIGHT = 500;
+const TALL_PANEL_PADDING = 12;
+const SHORT_PANEL_PADDING = 8;
+// A 2-row stat is about 26px tall after the 40px header. 8px of padding on each
+// side leaves 10px for the value, which comes out at about 8px.
+const MIN_READABLE_VALUE_FONT = 14;
+
+function getPanelPadding(height: number): number {
+  const preferred = height > 100 ? TALL_PANEL_PADDING : SHORT_PANEL_PADDING;
+  const textHeightForMinFont = MIN_READABLE_VALUE_FONT * LINE_HEIGHT;
+  const paddingThatFits = Math.floor((height - textHeightForMinFont) / 2);
+
+  if (paddingThatFits >= preferred) {
+    return preferred;
+  }
+
+  return Math.max(0, paddingThatFits);
+}
 
 export abstract class BigValueLayout {
   titleFontSize: number;
@@ -41,7 +58,7 @@ export abstract class BigValueLayout {
     const { width, height, value, text } = props;
 
     this.valueColor = value.color ?? 'gray';
-    this.panelPadding = height > 100 ? 12 : 8;
+    this.panelPadding = getPanelPadding(height);
     this.textValues = getTextValues(props);
     this.justifyCenter = shouldJustifyCenter(props.justifyMode, this.textValues.title);
     this.valueToAlignTo = this.textValues.valueToAlignTo;
