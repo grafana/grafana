@@ -328,6 +328,69 @@ func TestIntegrationContactPointService(t *testing.T) {
 		assert.EqualValues(t, slack.Type, got[0].Type)
 	})
 
+	t.Run("update keeps the stored ciphertext of unchanged secrets", func(t *testing.T) {
+		testCases := []struct {
+			name           string
+			contactPoint   func() definitions.EmbeddedContactPoint
+			secretPath     []string
+			unchangedInput func(*simplejson.Json)
+		}{
+			{
+				name:           "top-level secret sent again in plain text",
+				contactPoint:   createTestContactPoint,
+				secretPath:     []string{"token"},
+				unchangedInput: func(*simplejson.Json) {},
+			},
+			{
+				name:         "top-level secret sent as redacted",
+				contactPoint: createTestContactPoint,
+				secretPath:   []string{"token"},
+				unchangedInput: func(s *simplejson.Json) {
+					s.Set("token", definitions.RedactedValue)
+				},
+			},
+			{
+				name: "nested secret sent again in plain text",
+				contactPoint: func() definitions.EmbeddedContactPoint {
+					settings, _ := simplejson.NewJson([]byte(`{"url":"http://localhost/hook","hmacConfig":{"secret":"value_hmac","header":"X-Signature"}}`))
+					return definitions.EmbeddedContactPoint{Name: "test-webhook", Type: "webhook", Settings: settings}
+				},
+				secretPath:     []string{"hmacConfig", "secret"},
+				unchangedInput: func(*simplejson.Json) {},
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				store := fakes.NewFakeAlertmanagerConfigStore(createEncryptedConfig(t, secretsService))
+				sut := createContactPointServiceSutWithConfigStore(t, secretsService, store)
+
+				created, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, tc.contactPoint(), models.ProvenanceAPI)
+				require.NoError(t, err)
+				savedOnCreate := store.LastSaveCommand.AlertmanagerConfiguration
+
+				unchanged := created
+				unchanged.Settings = tc.contactPoint().Settings
+				tc.unchangedInput(unchanged.Settings)
+				require.NoError(t, sut.UpdateContactPoint(context.Background(), 1, adminUser, unchanged, models.ProvenanceAPI))
+				assert.Equal(t, savedOnCreate, store.LastSaveCommand.AlertmanagerConfiguration)
+
+				changed := created
+				changed.Settings = tc.contactPoint().Settings
+				changed.Settings.SetPath(tc.secretPath, "new_value")
+				require.NoError(t, sut.UpdateContactPoint(context.Background(), 1, adminUser, changed, models.ProvenanceAPI))
+				assert.NotEqual(t, savedOnCreate, store.LastSaveCommand.AlertmanagerConfiguration)
+
+				q := cpsQueryWithName(1, created.Name)
+				q.Decrypt = true
+				cps, err := sut.GetContactPoints(context.Background(), q, decryptedUser)
+				require.NoError(t, err)
+				require.Len(t, cps, 1)
+				assert.Equal(t, "new_value", cps[0].Settings.GetPath(tc.secretPath...).MustString())
+			})
+		}
+	})
+
 	t.Run("update renames references when group is renamed", func(t *testing.T) {
 		cfg := createEncryptedConfig(t, secretsService)
 		store := fakes.NewFakeAlertmanagerConfigStore(cfg)
