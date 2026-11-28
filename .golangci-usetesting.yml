@@ -1,0 +1,37 @@
+# Fails on context.Background() and context.TODO() in tests; use t.Context() instead.
+# CI runs this only against changed lines (--new-from-rev) until existing calls are fixed,
+# then usetesting moves into .golangci.yml and this file goes away.
+#
+# In t.Cleanup callbacks, t.Context() is already canceled. Use context.WithoutCancel(t.Context()).
+
+# $schema: https://golangci-lint.run/jsonschema/golangci.jsonschema.json
+version: '2'
+run:
+  timeout: 30m
+  concurrency: 0 # GOMAXPROCS
+  allow-parallel-runners: true
+linters:
+  default: none
+  enable:
+    - usetesting
+  settings:
+    usetesting:
+      context-background: true
+      context-todo: true
+      os-chdir: false
+      os-create-temp: false
+      os-mkdir-temp: false
+      os-setenv: false
+      os-temp-dir: false
+  exclusions:
+    generated: lax
+    paths:
+      - devenv
+      - scripts
+      - third_party$
+      - builtin$
+      - examples$
+      - pkg/util/xorm
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
