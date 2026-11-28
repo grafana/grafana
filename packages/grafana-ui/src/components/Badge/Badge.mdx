@@ -16,6 +16,7 @@ Use `Badge` for a short, read-only label next to other content, such as a status
 ## Never use for
 
 - **A feature's release stage.** Use `FeatureBadge` with `featureState`. It renders a `Badge` with the standard text, icon and color for each stage, in accordance with [Grafana's Release Life Cycle](https://grafana.com/docs/release-life-cycle).
+- **A user-defined label, such as a dashboard tag.** Use [Tag](?path=/docs/information-tag--docs).
 - **A label that users click or remove.** Use `Tag`. Its `onClick` renders the label as a button, and `onRemove` adds a remove button. `Badge` renders a `div` with no button role or keyboard activation, so don't attach `onClick` to it.
 
 ## Do's and don'ts
@@ -25,10 +26,10 @@ Use `Badge` for a short, read-only label next to other content, such as a status
 
 ```tsx
 // Don't
-<Badge color="blue" text="New!" className={css({ background: theme.colors.primary.main, color: 'white' })} />
+<Badge color="brand" text="New!" className={css({ background: theme.colors.primary.main, color: 'white' })} />
 
 // Do
-<Badge color="purple" text="New!" />
+<Badge color="brand" text="New!" />
 ```
 
 ## Usage
@@ -36,12 +37,14 @@ Use `Badge` for a short, read-only label next to other content, such as a status
 ```tsx
 import { Badge } from '@grafana/ui';
 
-<Badge color="blue" text="New!" icon="rocket" />;
+<Badge color="brand" text="New!" icon="rocket" />;
 ```
 
 ### Color
 
-Badge accepts the named visualization colors to change the appearance: `blue`, `red`, `green`, `orange`, `purple`, `darkgrey` and `brand`. Note that these colors are not the same as the design system tokens such as success or error.
+Badge accepts the named visualization colors to change the appearance: `blue`, `red`, `green`, `orange`, `purple`, `darkgrey` and `brand`. These are named palette colors, rather than semantic theme token names such as `success` or `error`.
+
+Use `red` for errors, `orange` for warnings, `green` for success, `blue` for information and `brand` for promotions.
 
 An unknown `color` logs a warning and falls back to `darkgrey`. In development it also throws an error.
 
@@ -62,7 +65,7 @@ An unknown `color` logs a warning and falls back to `darkgrey`. In development i
 You can specify an icon name to show at the beginning of the badge.
 
 <ExampleFrame>
-  <Badge icon="rocket" color="blue" text="New!" />
+  <Badge icon="rocket" color="brand" text="New!" />
 </ExampleFrame>
 
 ### Tooltip
@@ -70,7 +73,7 @@ You can specify an icon name to show at the beginning of the badge.
 Specify a tooltip to show additional information on hover. Avoid putting lengthy content in the tooltip.
 
 <ExampleFrame>
-  <Badge icon="rocket" color="blue" text="New!" tooltip="Check out this new feature!" />
+  <Badge icon="rocket" color="brand" text="New!" tooltip="Check out this new feature!" />
 </ExampleFrame>
 
 ### Long text

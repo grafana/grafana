@@ -3,7 +3,8 @@ import { InlineField } from './InlineField';
 
 # InlineField
 
-A basic component for rendering form elements, like `Input`, `Checkbox`, `Combobox`, etc, inline together with `InlineLabel`. If the child element has `id` specified, the label's `htmlFor` attribute, pointing to the id, will be added.
+Use `InlineField` to render a label next to a form control such as `Input`, `Checkbox`, or `Combobox`.
+Outside fieldset mode, `InlineField` sets `htmlFor` on a string label to the resolved input ID. It uses the `htmlFor` prop, the child's `id`, or a generated ID, in that order. A custom input can read the resolved ID from `useFieldContext` and pass it to the input.
 
 ## When to use
 
@@ -55,6 +56,17 @@ If `tooltip` prop is provided, an info icon with supplied tooltip content will b
     </tr>
     <tr>
       <th scope="row">
+        <code>labelId</code>
+      </th>
+      <td>
+        <code>string | undefined</code>
+      </td>
+      <td>
+        The generated label ID when <code>label</code> is a string. Otherwise, <code>undefined</code>.
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">
         <code>invalid</code>
       </th>
       <td>
@@ -94,7 +106,7 @@ If `tooltip` prop is provided, an info icon with supplied tooltip content will b
         <code>string | undefined</code>
       </td>
       <td>
-        Always <code>undefined</code> in <code>InlineField</code>
+        The generated error message ID when the field displays an error. Otherwise, <code>undefined</code>.
       </td>
     </tr>
     <tr>
@@ -105,7 +117,8 @@ If `tooltip` prop is provided, an info icon with supplied tooltip content will b
         <code>string | undefined</code>
       </td>
       <td>
-        Set when the child is a <code>RadioButtonGroup</code> (fieldset mode)
+        The generated label ID in fieldset mode. Set <code>useFieldset</code> to enable this mode. It is enabled by
+        default when the child is a <code>RadioButtonGroup</code>.
       </td>
     </tr>
   </tbody>

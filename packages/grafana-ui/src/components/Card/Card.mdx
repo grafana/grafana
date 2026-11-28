@@ -1,0 +1,89 @@
+import { ArgTypes, Canvas } from '@storybook/addon-docs/blocks';
+import { Card } from './Card';
+import * as CardStories from './Card.story';
+
+# Card
+
+## When to use
+
+Use `Card` to group information and actions for one item, such as a dashboard with a title, a short description, and tags. The card can present content, open a destination, or trigger an action.
+
+## Never use for
+
+Use `TextLink` for a standalone link and `Button` for a standalone action.
+
+## Do's and don'ts
+
+Use `Card.Heading` for the title, `Card.Description` for explanatory text, `Card.Meta` for details such as a folder name, and `Card.Figure` for an icon or image. Put a [TagList](?path=/docs/information-taglist--docs) in `Card.Tags` to display tags. Place the `Card` subcomponents directly inside `Card` so it can lay them out.
+
+Pass `href` when the card takes users to a destination. Pass `onClick` when activating the card runs an action, such as opening a dialog. When there is no single destination or default action, leave the card static and put explicit controls in `Card.Actions`. Put supporting controls such as an icon button for more options in `Card.SecondaryActions`.
+
+Keep links and buttons out of `Card.Heading`. Use `isCompact` to reduce the card's padding in dense layouts.
+
+## Usage
+
+```tsx
+import { Card } from '@grafana/ui';
+
+<Card href="/d/service-health">
+  <Card.Heading>Service health</Card.Heading>
+  <Card.Description>Track error rates and request latency.</Card.Description>
+  <Card.Meta>Folder: Operations</Card.Meta>
+</Card>;
+```
+
+<Canvas of={CardStories.Basic} />
+
+### Navigation
+
+Use `href` to make the heading a link to the card's destination.
+
+<Canvas of={CardStories.AsALink} />
+
+### Actions
+
+Use `onClick` for a default action. Clicking within `Card.Meta` does not trigger the card's default action.
+
+<Canvas of={CardStories.AsAButton} />
+
+Use `Card.Actions` and `Card.SecondaryActions` for explicit controls on a static card.
+
+<Canvas of={CardStories.ActionCards} />
+
+### Metadata
+
+Pass separate strings as expressions or as an array. When passing an array of elements, give each element a stable `key`.
+
+<Canvas of={CardStories.MultipleMetadataElements} />
+
+<Canvas of={CardStories.ComplexMetadataElements} />
+
+Set `separator` on `Card.Meta` to change the separator between items.
+
+<Canvas of={CardStories.MultipleMetadataWithCustomSeparator} />
+
+### Tags
+
+<Canvas of={CardStories.Tags} />
+
+### Lists
+
+<Canvas of={CardStories.InsideAListItem} />
+
+### Media
+
+<Canvas of={CardStories.WithMediaElements} />
+
+### Combined content
+
+<Canvas of={CardStories.Full} />
+
+## Accessibility
+
+For navigation, `Card.Heading` renders a native link. For an enabled action, it renders a native button. Use a title that identifies the destination or action. Give icon-only actions an accessible name. In `Card.Figure`, describe informative images with `alt` and use `alt=""` for decorative images.
+
+`Card.Heading` provides a visual title. Use semantic headings in the surrounding layout where users need to navigate by heading. For a list of cards, use a `<ul>` or `<ol>` with each card in an `<li>`.
+
+## Props
+
+<ArgTypes of={Card} />

@@ -59,7 +59,7 @@ export const Basic: StoryFn = ({ body, title, ...args }) => {
       <Modal title={title} {...args} onDismiss={() => setIsOpen(false)}>
         {body}
         <Modal.ButtonRow>
-          <Button variant="secondary" fill="outline" onClick={() => setIsOpen(false)}>
+          <Button variant="secondary" onClick={() => setIsOpen(false)}>
             Cancel
           </Button>
           <Button>Button1</Button>

@@ -55,6 +55,7 @@ Don't strip a `Button`'s padding and border to make it look inline, like a link 
 ```tsx
 // Don't
 <Button
+  variant="secondary"
   fill="text"
   icon="times"
   aria-label="Remove"
@@ -66,7 +67,7 @@ Don't strip a `Button`'s padding and border to make it look inline, like a link 
 <IconButton name="times" tooltip="Remove" onClick={onRemove} />
 ```
 
-`Button fill="text"` without those overrides is fine for a low-emphasis action that should keep standard button sizing.
+Use `variant="secondary"` with `fill="text"` for a low-emphasis action that should keep standard button sizing.
 
 ### Don't force states with CSS
 
@@ -97,9 +98,8 @@ import { Button } from '@grafana/ui';
 ```
 
 - `variant`: `primary`, `secondary`, `accent`, `destructive` or `success`. Defaults to `primary`, or to `accent` when `fill` is `text`.
-  - See Variants for what `accent` and `success` are used for.
 - `fill`: `solid` (default), `outline` or `text`.
-- `size`: `sm`, `md` (default) or `lg`.
+- `size`: `xs`, `sm`, `md` (default) or `lg`. Use `sm`, `md` or `lg` for new buttons. The active theme determines the rendered dimensions and typography.
 - `icon` adds an icon, and `iconPlacement` puts it on the `left` (default) or `right` of the label.
 - `fullWidth` makes the button grow to fill its container.
 - `type` defaults to `button`, so set `type="submit"` to submit a form.
@@ -114,76 +114,14 @@ import { Button } from '@grafana/ui';
 
 ### Variants
 
-<table>
-  <thead>
-    <tr>
-      <th scope="col">Type</th>
-      <th scope="col">Component</th>
-      <th scope="col">Emphasis</th>
-      <th scope="col">Purpose</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th scope="row">Primary</th>
-      <td>
-        <p>Filled with Label</p>
-        <p>Filled with Icon + Label</p>
-        <p>Filled with Label + Icon</p>
-        <p>Filled with Icon + Label + Icon</p>
-      </td>
-      <td>High</td>
-      <td>
-        Used for "call to action", i.e. triggering the main action. There should never be more than one on a page. If
-        you need multiple buttons for different actions, decide which action is the most important and make that the
-        primary Button. All other Button components should be secondary. If there is no primary action, all Button
-        components should be secondary.
-      </td>
-    </tr>
-    <tr>
-      <th scope="row">Secondary</th>
-      <td>
-        <p>Filled</p>
-        <p>Outline</p>
-        <p>Text</p>
-      </td>
-      <td>Default</td>
-      <td>
-        The secondary Button is the default button style and can trigger various actions. How it is used depends on its
-        surroundings: 1. When next to the primary Button, the Secondary style can for example be used for "Cancel" or
-        "Abort" actions. 2. When there is no main important action on a given page, all Button components should use the
-        secondary style.
-      </td>
-    </tr>
-    <tr>
-      <th scope="row">Accent</th>
-      <td>
-        <p>Filled</p>
-        <p>Outline</p>
-        <p>Text</p>
-      </td>
-      <td>Not documented</td>
-      <td>
-        The default variant for <code>fill="text"</code>. It uses the theme's accent color, which is the same color as
-        Primary in the default themes. In Grafana it is also set on a few calls to action, such as starting a playlist.
-        No further usage guidance is documented yet.
-      </td>
-    </tr>
-    <tr>
-      <th scope="row">Success</th>
-      <td>
-        <p>Filled</p>
-        <p>Outline</p>
-        <p>Text</p>
-      </td>
-      <td>Not documented</td>
-      <td>
-        Uses the theme's success color. <code>ClipboardButton</code> switches to this variant to confirm a successful
-        copy. No further usage guidance is documented yet.
-      </td>
-    </tr>
-  </tbody>
-</table>
+Use one of these styles for new buttons.
+
+- Use Primary (`variant="primary"`) for the main action.
+- Use Secondary (`variant="secondary"`) for standard actions, such as Cancel.
+- Use Destructive (`variant="destructive"`) for deleting or irreversible actions.
+- Use Secondary text (`variant="secondary" fill="text"`) for low-emphasis actions.
+
+The API also supports `accent`, `success` and `fill="outline"`. For example, `ClipboardButton` uses `success` to confirm that it copied text.
 
 ### Primary
 
@@ -205,7 +143,7 @@ If there is no primary action, all `Button` components should be secondary.
 
 ### Secondary
 
-The secondary `Button` is the default button style and can trigger various actions. How it is used depends on its surroundings:
+Use the solid secondary `Button` for standard actions.
 
 1. When next to the primary `Button`, the Secondary style can for example be used for "Cancel" or "Abort" actions.
 2. When there is no main important action on a given page, all `Button` components should use the secondary style.
@@ -224,8 +162,9 @@ The secondary `Button` is the default button style and can trigger various actio
 
 ### Destructive
 
-Used for triggering a removing or deleting action. Because of its dominant coloring, it should be used sparingly. If you need multiple Destructive `Button` components in one view, we recommend using a secondary `Button` or a `fill="text"` `Button` instead and only use the Destructive variant to double confirm.
-If a destructive action has a confirmation step it does not need to be destructive, as long as the confirmation step has a destructive button. In tables containing delete actions we recommend `DeleteButton`. It renders a secondary `Button` with the trash-alt icon, gives it the accessible label "Delete" unless you pass `aria-label`, and asks for confirmation inline.
+Use Destructive sparingly for removing or deleting. If the action has a confirmation step, use Destructive on the confirmation button. The button that opens the confirmation can use solid Secondary or Secondary text.
+
+In tables containing delete actions we recommend `DeleteButton`. It renders a secondary `Button` with the trash-alt icon, gives it the accessible label "Delete" unless you pass `aria-label`, and asks for confirmation inline.
 
 <ExampleFrame>
   <Button variant="destructive" size="sm" style={{ margin: '5px' }}>
@@ -239,16 +178,18 @@ If a destructive action has a confirmation step it does not need to be destructi
   </Button>
 </ExampleFrame>
 
-### Text
+### Secondary text
+
+Set both `variant="secondary"` and `fill="text"` for a low-emphasis action.
 
 <ExampleFrame>
-  <Button fill="text" size="sm" style={{ margin: '5px' }}>
+  <Button variant="secondary" fill="text" size="sm" style={{ margin: '5px' }}>
     {'Small'}
   </Button>
-  <Button fill="text" size="md" style={{ margin: '5px' }}>
+  <Button variant="secondary" fill="text" size="md" style={{ margin: '5px' }}>
     {'Medium'}
   </Button>
-  <Button fill="text" size="lg" style={{ margin: '5px' }}>
+  <Button variant="secondary" fill="text" size="lg" style={{ margin: '5px' }}>
     {'Large'}
   </Button>
 </ExampleFrame>
@@ -268,41 +209,6 @@ To add an anchor that looks like a button use the `<LinkButton>` component and p
     {'Large'}
   </LinkButton>
 </ExampleFrame>
-
-### Button sizes and label typography
-
-<table>
-  <thead>
-    <tr>
-      <th scope="col">Size</th>
-      <th scope="col">Width-Height (px - rem)</th>
-      <th scope="col">Font-Size</th>
-      <th scope="col">Font-Weight</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th scope="row">Small</th>
-      <td>Auto - 24px</td>
-      <td>12px</td>
-      <td>500</td>
-    </tr>
-    <tr>
-      <th scope="row">Medium</th>
-      <td>Auto - 32px</td>
-      <td>14px</td>
-      <td>500</td>
-    </tr>
-    <tr>
-      <th scope="row">Large</th>
-      <td>Auto - 48px</td>
-      <td>18px</td>
-      <td>500</td>
-    </tr>
-  </tbody>
-</table>
-
-![button sizes](./images/button.sizes.png 'Visual representation of button sizes')
 
 ### Anatomy
 
@@ -342,9 +248,9 @@ To add an anchor that looks like a button use the `<LinkButton>` component and p
 
   A single screen can show more than one button, the other buttons can be in the same page with a primary button, these buttons have to be less important according to the actions, and do not distract users from the main content page. You should only group calls to action that are related to each other. A higher emphasis button can be paired with multiple buttons which are lower emphasis.
 
-- **Outline/Text Button -- Low Emphasis:**
+- **Secondary text Button** for low emphasis.
 
-  These buttons have less impact and are less distracting to the user's attention, on the same screen several of them can be used. They are actionable to take users to a new page, the main objective being to provide more information about that section.
+  Use this style for complementary actions that should draw less attention than the main action.
 
 ### Placement
 

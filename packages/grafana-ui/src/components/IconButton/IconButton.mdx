@@ -1,7 +1,6 @@
 import { Meta, ArgTypes } from '@storybook/addon-docs/blocks';
 import { IconButton } from './IconButton';
 import { Icon } from '../Icon/Icon';
-import { Alert } from '../Alert/Alert';
 
 <Meta title="MDX|IconButton" component={IconButton} />
 
@@ -98,79 +97,10 @@ The IconButton used to have a property called `ariaLabel` which got deprecated. 
 
 `IconButton`s are best used in areas that are limited in space and are action-heavy. These could be toolbars or in areas that provide inline editing such as tables or cards.
 
-### Button sizes
+### Icon sizes
 
-<table>
-  <thead>
-    <tr>
-      <th scope="col">Icon size</th>
-      <th scope="col">Name and size in Figma</th>
-      <th scope="col">Name and size in code</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th scope="row">12px</th>
-      <td>
-        <strong>small:</strong> 20px
-      </td>
-      <td>
-        <strong>xs:</strong> 20px
-      </td>
-    </tr>
-    <tr>
-      <th scope="row">14px</th>
-      <td></td>
-      <td>
-        <strong>sm:</strong> 22px
-      </td>
-    </tr>
-    <tr>
-      <th scope="row">16px</th>
-      <td>
-        <strong>medium:</strong> 28px
-      </td>
-      <td>
-        <strong>md:</strong> 24px
-      </td>
-    </tr>
-    <tr>
-      <th scope="row">18px</th>
-      <td></td>
-      <td>
-        <strong>lg:</strong> 26px
-      </td>
-    </tr>
-    <tr>
-      <th scope="row">24px</th>
-      <td>
-        <strong>large:</strong> 48px
-      </td>
-      <td>
-        <strong>xl:</strong> 32px
-      </td>
-    </tr>
-    <tr>
-      <th scope="row">24px</th>
-      <td></td>
-      <td>
-        <strong>xxl:</strong> 32px
-      </td>
-    </tr>
-    <tr>
-      <th scope="row">24px</th>
-      <td></td>
-      <td>
-        <strong>xxxl:</strong> 32px
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-<Alert severity="warning" title={'Please note:'}>
-  After reviewing this component we would like you to know that there are only 5 sizes available (sizes xs to xl). Sizes
-  xxl and xxxl are now shown in size xl as well and will be deprecated in the future.
-</Alert>
+The `size` prop sets the icon size. Use `xs`, `sm`, `md` (the default), `lg`, or `xl`.
+The deprecated values `xxl` and `xxxl` render at `xl`.
 
 ### Behaviors
 

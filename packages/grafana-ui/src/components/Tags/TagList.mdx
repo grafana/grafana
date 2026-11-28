@@ -4,10 +4,36 @@ import * as TagListStories from './TagList.story';
 
 # TagList
 
-List of tags with predefined margins and positioning.
+## When to use
+
+Use `TagList` to show a group of short labels, such as categories or environments. Leave the tags static when they provide information. Pass `onClick` when each label performs an action, such as filtering results by that tag.
+
+## Never use for
+
+To let users remove labels, render individual `Tag` components with `onRemove` in a `<ul>` with one `<li>` per tag. See the [Tag removal example](?path=/docs/information-tag--docs#removal).
+
+Use [TagsInput](?path=/docs/inputs-tagsinput--docs) for text entry and editing. Use [Badge](?path=/docs/information-badge--docs) for status labels such as "Failed".
+
+## Do's and don'ts
+
+Use a positive `displayMax` to show only the first few tags where space is limited. The list shows the number of hidden tags as a plain `+ N` count. Omit `displayMax` when users need to see or act on every tag.
+
+Keep labels short and meaningful. Keep clickable tags outside other buttons and links.
+
+## Usage
+
+```tsx
+import { TagList } from '@grafana/ui';
+
+<TagList tags={['production', 'mysql', 'api']} />;
+```
 
 <Canvas of={TagListStories.List} />
 
-### Props
+## Accessibility
+
+`TagList` renders a list named "Tags". With `onClick`, each visible tag is a native button that takes its name from its text by default. Use `getAriaLabel` when a button needs extra context, and include the visible label in the accessible name.
+
+## Props
 
 <ArgTypes of={TagList} />

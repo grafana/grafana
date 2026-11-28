@@ -38,8 +38,8 @@ The style of the Box can be defined using 5 props:
 
 - `borderColor`, with possible values: `weak`, `medium`, `strong`, `error`, `success`, `warning`, `info`
 - `borderStyle`, with possible values: `solid`, `dashed`
-- `borderRadius`, with possible values: `default`, `pill`, `circle`
-- `backgroundColor`, with possible values: `canvas`, `primary`, `secondary`, `error`, `success`, `warning`, `info`
+- `borderRadius` uses theme radius keys, including `default`, `sm`, `md`, `lg`, `pill`, and `circle`. See [`ThemeShape`](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/themes/createShape.ts).
+- `backgroundColor` uses theme background keys such as `canvas`, `page`, `primary`, `secondary`, and `elevated`. It also accepts `error`, `success`, `warning`, and `info`. See [`BackgroundColor`](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/Layout/Box/Box.tsx).
 - `boxShadow`, with possible values: `z1`, `z2`, `z3`
 
 ### Display

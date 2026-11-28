@@ -5,7 +5,7 @@ For inline text that navigates to another page, use `TextLink` instead.
 Don't make a `Button` look inline by stripping its padding and border with `className`:
 
 ```tsx
-<Button fill="text" className={css({ padding: 0, border: 'none' })} onClick={openDetails}>
+<Button variant="secondary" fill="text" className={css({ padding: 0, border: 'none' })} onClick={openDetails}>
   Show details
 </Button>
 ```
@@ -18,5 +18,5 @@ line height and aligns to the text baseline:
 <InlineButton onClick={openDetails}>Show details</InlineButton>
 ```
 
-Use `Button fill="text"` without those overrides for a low-emphasis action that should
+Use `Button variant="secondary" fill="text"` without those overrides for a low-emphasis action that should
 keep standard button sizing.

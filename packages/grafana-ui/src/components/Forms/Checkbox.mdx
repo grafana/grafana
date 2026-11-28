@@ -25,9 +25,21 @@ It is discouraged to set both `indeterminate` and `checked` state as a checkboxs
 ## Usage
 
 ```jsx
-import { Forms } from '@grafana/ui';
+import { useState } from 'react';
 
-<Checkbox value={true|false} label={...} description={...} onChange={...} />
+import { Checkbox } from '@grafana/ui';
+
+function ArchivedDashboardsOption() {
+  const [checked, setChecked] = useState(false);
+
+  return (
+    <Checkbox
+      label="Show archived dashboards"
+      value={checked}
+      onChange={(event) => setChecked(event.currentTarget.checked)}
+    />
+  );
+}
 ```
 
 The indeterminate state of the checkbox should be used when there is a group of child checkboxes that are in a mix of checked and unchecked states. For instance when you have a list of checkboxes representing the columns of a table, and you want to allow the user to select which columns to display. If some of the columns are checked, and some are unchecked, then the parent checkbox should be in an indeterminate state. If all the columns are checked, then the parent should be checked. If none of the columns are checked, then the parent should be unchecked.

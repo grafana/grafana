@@ -32,7 +32,7 @@ export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'descript
 }
 
 /**
- * A basic component for rendering form elements, like `Input`, `Checkbox`, `Combobox`, etc, inline together with `InlineLabel`. If the child element has `id` specified, the label's `htmlFor` attribute, pointing to the id, will be added.
+ * Renders a label next to a form control. The input ID resolves from `htmlFor`, the child's `id`, or a generated ID, in that order. Outside fieldset mode, a string label points to that ID.
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-inlinefield--docs
  */
