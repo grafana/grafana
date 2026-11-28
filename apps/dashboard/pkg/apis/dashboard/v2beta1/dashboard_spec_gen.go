@@ -2412,11 +2412,16 @@ type DashboardPrompt struct {
 	Title *string `json:"title,omitempty"`
 	// The panels to answer it from. Unset for every panel in the dashboard, row, or tab the prompt is saved on.
 	Sources []DashboardPromptSource `json:"sources,omitempty"`
+	// Placement can be used to display the prompt somewhere else on the dashboard other than above the visualisations.
+	// Only prompts saved on the dashboard have a controls menu to be placed in. Rows and tabs ignore it.
+	Placement *string `json:"placement,omitempty"`
 }
 
 // NewDashboardPrompt creates a new DashboardPrompt object.
 func NewDashboardPrompt() *DashboardPrompt {
-	return &DashboardPrompt{}
+	return &DashboardPrompt{
+		Placement: (func(input string) *string { return &input })(DashboardPromptPlacement),
+	}
 }
 
 // OpenAPIModelName returns the OpenAPI model name for DashboardPrompt.
@@ -2442,6 +2447,11 @@ func NewDashboardPromptSource() *DashboardPromptSource {
 func (DashboardPromptSource) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPromptSource"
 }
+
+// Prompt placement. Defines where the prompt should be displayed.
+// - "inControlsMenu" renders the prompt in the dashboard controls dropdown menu
+// +k8s:openapi-gen=true
+const DashboardPromptPlacement = "inControlsMenu"
 
 // Links with references to other dashboards or external resources
 // +k8s:openapi-gen=true
