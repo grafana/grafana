@@ -2,11 +2,14 @@ package connectors
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -371,4 +374,126 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 			assert.EqualValues(t, tc.expected, actual)
 		})
 	}
+}
+
+func TestOrgRoleMapper_getOrgIDForInternalMapping(t *testing.T) {
+	testCases := []struct {
+		name        string
+		orgIDCfg    string
+		setupMock   func(orgService *orgtest.MockService)
+		expectedID  int
+		expectedErr error
+	}{
+		{
+			name:       "should return the match-all org ID for the wildcard",
+			orgIDCfg:   "*",
+			expectedID: mapperMatchAllOrgID,
+		},
+		{
+			name:        "should return an error when the org is empty",
+			orgIDCfg:    "",
+			expectedErr: errors.New("the org name or id is empty"),
+		},
+		{
+			name:       "should return the numeric org ID as is",
+			orgIDCfg:   "3",
+			expectedID: 3,
+		},
+		{
+			name:     "should resolve the org name to its ID",
+			orgIDCfg: "Second Org",
+			setupMock: func(orgService *orgtest.MockService) {
+				orgService.On("GetByName", mock.Anything, &org.GetOrgByNameQuery{Name: "Second Org"}).Return(&org.Org{ID: 2}, nil)
+			},
+			expectedID: 2,
+		},
+		{
+			name:     "should return the lookup error when the org name cannot be resolved",
+			orgIDCfg: "Missing Org",
+			setupMock: func(orgService *orgtest.MockService) {
+				orgService.On("GetByName", mock.Anything, &org.GetOrgByNameQuery{Name: "Missing Org"}).Return(nil, org.ErrOrgNotFound)
+			},
+			expectedErr: org.ErrOrgNotFound,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			orgService := orgtest.NewMockService(t)
+			if tc.setupMock != nil {
+				tc.setupMock(orgService)
+			}
+			mapper := mustProvideOrgRoleMapper(t, setting.NewCfg(), orgService)
+
+			orgID, err := mapper.getOrgIDForInternalMapping(context.Background(), tc.orgIDCfg)
+
+			if tc.expectedErr != nil {
+				require.Error(t, err)
+				if errors.Is(tc.expectedErr, org.ErrOrgNotFound) {
+					assert.ErrorIs(t, err, org.ErrOrgNotFound)
+					assert.Contains(t, err.Error(), tc.orgIDCfg)
+				} else {
+					assert.EqualError(t, err, tc.expectedErr.Error())
+				}
+				assert.NotContains(t, err.Error(), "strconv")
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedID, orgID)
+		})
+	}
+}
+
+func TestOrgRoleMapper_ParseOrgMappingSettings_LogsLookupError(t *testing.T) {
+	orgService := orgtest.NewMockService(t)
+	orgService.On("GetByName", mock.Anything, &org.GetOrgByNameQuery{Name: "Missing Org"}).Return(nil, org.ErrOrgNotFound)
+
+	logger := &warnRecorder{Logger: log.NewNopLogger()}
+	mapper := mustProvideOrgRoleMapper(t, setting.NewCfg(), orgService)
+	mapper.logger = logger
+
+	actual := mapper.ParseOrgMappingSettings(context.Background(), []string{"ExternalOrg1:Missing Org:Editor"}, false)
+
+	assert.EqualValues(t, NewMappingConfiguration(map[string]map[int64]org.RoleType{}, false), actual)
+
+	// The unresolved org must be reported exactly once, and the reported error must be the
+	// lookup error, not the strconv error from trying to parse the org name as an ID.
+	require.Len(t, logger.warnings, 1)
+	assert.Equal(t, "Could not fetch OrgID. Skipping.", logger.warnings[0].msg)
+
+	loggedErr, ok := logger.warnings[0].value("err").(error)
+	require.True(t, ok, "expected the warning to carry an error")
+	assert.ErrorIs(t, loggedErr, org.ErrOrgNotFound)
+	assert.NotContains(t, loggedErr.Error(), "strconv")
+	assert.Equal(t, "Missing Org", logger.warnings[0].value("org"))
+}
+
+type recordedWarning struct {
+	msg string
+	ctx []any
+}
+
+func (w recordedWarning) value(key string) any {
+	for i := 0; i+1 < len(w.ctx); i += 2 {
+		if w.ctx[i] == key {
+			return w.ctx[i+1]
+		}
+	}
+	return nil
+}
+
+// warnRecorder records the warnings written through the logger, including the ones written
+// through a request-scoped logger obtained with FromContext.
+type warnRecorder struct {
+	log.Logger
+	warnings []recordedWarning
+}
+
+func (l *warnRecorder) Warn(msg string, ctx ...any) {
+	l.warnings = append(l.warnings, recordedWarning{msg: msg, ctx: ctx})
+}
+
+func (l *warnRecorder) FromContext(context.Context) log.Logger {
+	return l
 }
