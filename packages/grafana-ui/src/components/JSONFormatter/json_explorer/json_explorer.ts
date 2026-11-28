@@ -42,6 +42,9 @@ export class JsonExplorer {
   // A reference to the element that we render to
   private element: HTMLDivElement | null = null;
 
+  // A reference to the button that toggles the open state, only set for expandable values
+  private toggleButton: HTMLButtonElement | null = null;
+
   private skipChildren = false;
 
   /**
@@ -144,6 +147,14 @@ export class JsonExplorer {
   }
 
   /*
+   * can this value be expanded?
+   * Short number arrays are rendered inline so they have nothing to expand
+   */
+  private get isExpandable(): boolean {
+    return this.isObject && !(this.isArray && this.isNumberArray());
+  }
+
+  /*
    * did we receive a key argument?
    * This means that the formatter was called as a sub formatter of a parent formatter
    */
@@ -192,7 +203,12 @@ export class JsonExplorer {
         this.removeChildren(this.config.animateClose);
       }
       this.element.classList.toggle(cssClass('open'));
+      this.updateExpandedState();
     }
+  }
+
+  private updateExpandedState() {
+    this.toggleButton?.setAttribute('aria-expanded', String(this.isOpen));
   }
 
   /**
@@ -217,6 +233,7 @@ export class JsonExplorer {
         this.appendChildren(this.config.animateOpen);
         this.element.classList.add(cssClass('open'));
       }
+      this.updateExpandedState();
     }
   }
 
@@ -259,8 +276,10 @@ export class JsonExplorer {
     this.element = createElement('div', 'row');
 
     // construct the toggler link
-    const togglerLink = createElement('a', 'toggler-link');
+    this.toggleButton = this.isExpandable ? createElement('button', 'toggler-link') : null;
+    const togglerLink = this.toggleButton ?? createElement('a', 'toggler-link');
     const togglerIcon = createElement('span', 'toggler');
+    togglerIcon.setAttribute('aria-hidden', 'true');
 
     // if this is an object we need a wrapper span (toggler)
     if (this.isObject) {
@@ -356,8 +375,11 @@ export class JsonExplorer {
     }
 
     // add event listener for toggling
-    if (this.isObject) {
-      togglerLink.addEventListener('click', this.toggleOpen.bind(this));
+    if (this.toggleButton) {
+      // avoid submitting a surrounding form
+      this.toggleButton.type = 'button';
+      this.toggleButton.addEventListener('click', this.toggleOpen.bind(this));
+      this.updateExpandedState();
     }
 
     return this.element;
