@@ -5,6 +5,7 @@ on:
       - pkg/**
       - .github/workflows/go-lint.yml
       - .golangci.yml
+      - .golangci-usetesting.yml
       - go.*
     branches:
       - main
@@ -80,4 +81,27 @@ jobs:
           version: v2.14.0
           args: |
             --verbose $(go list -m -f '{{.Dir}}' | xargs -I{} sh -c 'test ! -f {}/.nolint && echo {}/...')
+          install-mode: binary
+
+  lint-go-usetesting:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.lint-changed == 'true'
+    runs-on: ubuntu-x64-xlarge
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          # HEAD~1 is the base branch for a PR merge commit, or the previous commit on push.
+          fetch-depth: 2
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+        with:
+          cache-build: 'false'
+      # Not only-new-issues: the action falls back to a full lint when the PR diff is too large for the GitHub API.
+      - name: golangci-lint (usetesting, changed lines only)
+        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          version: v2.14.0
+          args: |
+            --config .golangci-usetesting.yml --new-from-rev=HEAD~1 $(go list -m -f '{{.Dir}}' | xargs -I{} sh -c 'test ! -f {}/.nolint && echo {}/...')
           install-mode: binary

@@ -83,6 +83,7 @@ runs:
             - '**/Makefile'
           golangci_config:
             - '.golangci.yml'
+            - '.golangci-usetesting.yml'
           docker_build:
             # Files that can affect the built Docker image. Test-only changes
             # are excluded below because they never end up in the image.
