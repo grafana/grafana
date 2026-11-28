@@ -23,6 +23,7 @@ import (
 	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
@@ -114,6 +115,7 @@ type APIGroupOptions struct {
 	Scheme              *runtime.Scheme
 	OptsGetter          generic.RESTOptionsGetter
 	DualWriteBuilder    grafanarest.DualWriteBuilder
+	DualWriteService    dualwrite.Service
 	MetricsRegister     prometheus.Registerer
 	StorageOptsRegister apistore.StorageOptionsRegister
 	StorageOpts         *options.StorageOptions

@@ -372,7 +372,7 @@ func InstallAPIs(
 	for group, buildersForGroup := range buildersGroupMap {
 		g := genericapiserver.NewDefaultAPIGroupInfo(group, scheme, metav1.ParameterCodec, codecs)
 		for _, b := range buildersForGroup {
-			if err := installAPIGroupsForBuilder(&g, group, b, apiResourceConfig, scheme, optsGetter, dualWrite, reg, optsregister, storageOpts, features); err != nil {
+			if err := installAPIGroupsForBuilder(&g, group, b, apiResourceConfig, scheme, optsGetter, dualWrite, dualWriteService, reg, optsregister, storageOpts, features); err != nil {
 				return err
 			}
 		}
@@ -393,12 +393,13 @@ func InstallAPIs(
 }
 
 func installAPIGroupsForBuilder(g *genericapiserver.APIGroupInfo, group string, b APIGroupBuilder, apiResourceConfig *serverstorage.ResourceConfig, scheme *runtime.Scheme,
-	optsGetter generic.RESTOptionsGetter, dualWrite grafanarest.DualWriteBuilder, reg prometheus.Registerer, optsregister apistore.StorageOptionsRegister,
+	optsGetter generic.RESTOptionsGetter, dualWrite grafanarest.DualWriteBuilder, dualWriteService dualwrite.Service, reg prometheus.Registerer, optsregister apistore.StorageOptionsRegister,
 	storageOpts *options.StorageOptions, features featuremgmt.FeatureToggles) error {
 	if err := b.UpdateAPIGroupInfo(g, APIGroupOptions{
 		Scheme:              scheme,
 		OptsGetter:          optsGetter,
 		DualWriteBuilder:    dualWrite,
+		DualWriteService:    dualWriteService,
 		MetricsRegister:     reg,
 		StorageOptsRegister: optsregister,
 		StorageOpts:         storageOpts,

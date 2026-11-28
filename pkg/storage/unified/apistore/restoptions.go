@@ -18,6 +18,7 @@ import (
 	secret "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore/versionpolicy"
 	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var (
@@ -134,6 +135,11 @@ type RESTOptionsGetter struct {
 
 	// versionPolicy is shared across every resource this getter serves; nil disables maxAllowedVersion enforcement.
 	versionPolicy *versionpolicy.VersionPolicyRegistry
+}
+
+// ResourceIndex lets admission use the same search connection as the API group's storage.
+func (r *RESTOptionsGetter) ResourceIndex() resourcepb.ResourceIndexClient {
+	return r.client
 }
 
 // VersionPolicy returns the registry this getter enforces against; nil when enforcement is disabled.
