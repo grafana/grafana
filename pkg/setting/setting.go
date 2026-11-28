@@ -313,6 +313,8 @@ type Cfg struct {
 	PluginSkipPublicKeyDownload      bool
 	DisablePlugins                   []string
 	ForwardHostEnvVars               []string
+	ForwardGoRuntimeEnvVars          bool
+	PluginDefaultMemoryLimit         string
 	PreinstallPluginsAsync           []InstallPlugin
 	PreinstallPluginsSync            []InstallPlugin
 	PreinstallAutoUpdate             bool
