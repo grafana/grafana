@@ -183,6 +183,7 @@ At this stage, you have optimized your dashboard management use with a consisten
   - Tracking dashboard use. If you're an Enterprise user, you can take advantage of [Usage insights](ref:usage-insights).
 - Consistency by design.
 - Use scripting libraries to generate dashboards, ensure consistency in pattern and style.
+  - [Grafana Foundation SDK](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/foundation-sdk/)
   - grafonnet (Jsonnet)
   - grafanalib (Python)
 - No editing in the browser. Dashboard viewers change views with variables.
