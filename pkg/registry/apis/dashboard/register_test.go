@@ -89,6 +89,10 @@ func (testManagerKind) CheckAssignment(auth authlib.AuthInfo, _ utils.GrafanaMet
 	return errors.New("not the manager")
 }
 
+func (testManagerKind) MayTransition(from, to utils.ManagerKind) bool {
+	return from == utils.ManagerKindClassicFP && to == registeredManagerKind //nolint:staticcheck
+}
+
 func init() {
 	identity.RegisterManagerKind(testManagerKind{})
 }

@@ -53,6 +53,10 @@ type ManagerKindRegistration interface {
 
 	// CheckAssignment decides who may assign the kind.
 	CheckAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
+
+	// MayTransition reports whether one update may move a resource from `from` kind to `to` kind.
+	// It is asked when either kind is the registered kind.
+	MayTransition(from, to utils.ManagerKind) bool
 }
 
 var managerKindRegistry = map[utils.ManagerKind]ManagerKindRegistration{}
@@ -91,6 +95,22 @@ func CheckRegisteredKindAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMet
 	}
 
 	return nil
+}
+
+// mayTransition asks the registration when exactly one of the kinds is registered.
+// A move between two registered or two non-registered kinds is refused.
+func mayTransition(from, to utils.ManagerKind) bool {
+	fromRegistration, fromRegistered := managerKindRegistry[from]
+	toRegistration, toRegistered := managerKindRegistry[to]
+
+	switch {
+	case fromRegistered && !toRegistered:
+		return fromRegistration.MayTransition(from, to)
+	case toRegistered && !fromRegistered:
+		return toRegistration.MayTransition(from, to)
+	}
+
+	return false
 }
 
 func CheckManagerWriteAuthz(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
@@ -187,8 +207,11 @@ func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAcc
 		return nil
 	}
 
-	if err := utils.CheckManagerPropertiesOnUpdate(managerOld, managerNew, hasOld, hasNew); err != nil {
-		return err
+	transition := hasOld && mayTransition(managerOld.Kind, managerNew.Kind)
+	if !transition {
+		if err := utils.CheckManagerPropertiesOnUpdate(managerOld, managerNew, hasOld, hasNew); err != nil {
+			return err
+		}
 	}
 
 	// Adding a manager or updating flags on the same owner. Gate only a *new* classic-FP
@@ -199,7 +222,7 @@ func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAcc
 		}
 	}
 
-	if !hasOld {
+	if !hasOld || transition {
 		if err := CheckRegisteredKindAssignment(auth, obj); err != nil {
 			return err
 		}
