@@ -1,5 +1,8 @@
 import { type DataSourceInstanceSettings, type DataSourceJsonData } from '@grafana/data';
 
+import { getFeatureFlagClient } from '../internal/openFeature';
+import { FlagKeys } from '../internal/openFeature/openfeature.gen';
+
 interface JsonData extends DataSourceJsonData {
   oauthPassThru?: unknown; // we do not assume boolean, to be more robust
   azureCredentials?: {
@@ -34,7 +37,10 @@ function isProblematicAzureAuth(ds: DSSettings): boolean {
 }
 
 export function isDatasourceAuthCompatible(ds: DSSettings): boolean {
-  return !isOauthEnabled(ds) && !isProblematicAzureAuth(ds);
+  const oauthAllowed =
+    !isOauthEnabled(ds) ||
+    getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesMtOAuthPassthroughFrontend, false);
+  return oauthAllowed && !isProblematicAzureAuth(ds);
 }
 
 type AllowedTypes = {

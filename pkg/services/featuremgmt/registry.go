@@ -3395,6 +3395,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "datasources.mtOAuthPassthroughFrontend",
+			Description:  "Send data sources with Forward OAuth Identity to the app platform APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatasourcesCoreServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:        "grafana.panelPluginTransformations",
 			Description: "Let panel plugins register system transformations",
 			Stage:       FeatureStageExperimental,

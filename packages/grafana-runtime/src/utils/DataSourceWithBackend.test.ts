@@ -919,6 +919,14 @@ describe('DataSourceWithBackend', () => {
       );
     });
 
+    test('uses the new URL for a data source with oauth pass-thru when the oauth passthrough flag is on', () => {
+      mockGetBooleanValue.mockReturnValueOnce(true);
+      const { ds } = createMockDatasource({ jsonData: { oauthPassThru: true } as DataSourceJsonData });
+      expect(ds.buildResourcesDatasourceUrl('api/v1/labels')).toBe(
+        '/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels'
+      );
+    });
+
     test('uses the legacy URL when the resources list is empty', () => {
       mockGetObjectValue.mockReturnValue({ resources: [] });
       const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
