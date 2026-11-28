@@ -33,7 +33,12 @@ import { LogDetailsContextProvider, useLogDetailsContext } from './LogDetailsCon
 import { getGridTemplateColumns, type LogLineTimestampResolution } from './LogLine';
 import { LogLineDetails, type LogLineDetailsMode } from './LogLineDetails';
 import { type GetRowContextQueryFn, type LogLineMenuCustomItem } from './LogLineMenu';
-import { LogListContextProvider, type LogListState, useLogListContext } from './LogListContext';
+import {
+  LogListContextProvider,
+  type LogListState,
+  type OnRenderedLogsChanged,
+  useLogListContext,
+} from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { LOG_LIST_SEARCH_HEIGHT, LogListSearch } from './LogListSearch';
 import { LogListSearchContextProvider, useLogListSearchContext } from './LogListSearchContext';
@@ -78,6 +83,7 @@ export interface Props {
   onClickHideField?: (key: string) => void;
   onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
+  onRenderedLogsChanged?: OnRenderedLogsChanged;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
@@ -162,6 +168,7 @@ export const LogList = ({
   onLogOptionsChange,
   onLogLineHover,
   onPermalinkClick,
+  onRenderedLogsChanged,
   onPinLine,
   onOpenContext,
   onUnpinLine,
@@ -211,6 +218,7 @@ export const LogList = ({
       onLogOptionsChange={onLogOptionsChange}
       onLogLineHover={onLogLineHover}
       onPermalinkClick={onPermalinkClick}
+      onRenderedLogsChanged={onRenderedLogsChanged}
       onPinLine={onPinLine}
       onOpenContext={onOpenContext}
       onUnpinLine={onUnpinLine}

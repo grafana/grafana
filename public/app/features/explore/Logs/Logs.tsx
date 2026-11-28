@@ -78,7 +78,7 @@ import { getUrlStateFromPaneState } from '../hooks/useStateSync/external.utils';
 import { changePanelState } from '../state/explorePane';
 import { changeQueries, runQueries } from '../state/query';
 
-import { AdaptiveLogsIncludeDroppedLogs } from './AdaptiveLogsIncludeDroppedLogs';
+import { AdaptiveLogsIncludeDroppedLogs, useRenderedLogsWindow } from './AdaptiveLogsIncludeDroppedLogs';
 import { ExploreLogsTable } from './ExploreLogsTable';
 import { LogsFeedback } from './LogsFeedback';
 import { LogsMetaRow } from './LogsMetaRow';
@@ -789,6 +789,13 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [exploreId, loading, props.logsFrames, props.range]
   );
 
+  const { renderedLogsWindow, onRenderedLogsChanged } = useRenderedLogsWindow(
+    visualisationType,
+    logsSortOrder,
+    hasData,
+    loading
+  );
+
   return (
     <>
       {getRowContext && contextRow && (
@@ -837,6 +844,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           logs: dedupedRows,
           logsLoadingState: loadingState,
           queryTimeRange: props.range,
+          renderedLogsWindow,
         }}
       />
       <PanelChrome
@@ -975,6 +983,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   onOpenContext={onOpenContext}
                   onPermalinkClick={onPermalinkClick}
                   onPinLine={onPinToContentOutlineClick}
+                  onRenderedLogsChanged={onRenderedLogsChanged}
                   onUnpinLine={onPinToContentOutlineClick}
                   permalinkedLogId={panelState?.logs?.id}
                   pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}

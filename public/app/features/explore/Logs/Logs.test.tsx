@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 import { Provider } from 'react-redux';
@@ -17,6 +17,7 @@ import {
   type DataQuery,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
+import { LogsSortOrder } from '@grafana/schema';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { configureStore } from 'app/store/configureStore';
 
@@ -97,6 +98,19 @@ jest.mock('app/features/logs/components/panel/LogList', () => {
   };
 });
 
+const includeDroppedLogsMock = jest.fn();
+jest.mock('./AdaptiveLogsIncludeDroppedLogs', () => {
+  const actual = jest.requireActual('./AdaptiveLogsIncludeDroppedLogs');
+  const { createElement } = jest.requireActual('react');
+  return {
+    ...actual,
+    AdaptiveLogsIncludeDroppedLogs: (props: ComponentProps<typeof actual.AdaptiveLogsIncludeDroppedLogs>) => {
+      includeDroppedLogsMock(props);
+      return createElement(actual.AdaptiveLogsIncludeDroppedLogs, props);
+    },
+  };
+});
+
 const fakeChangePanelState = jest.fn().mockReturnValue({ type: 'fakeAction' });
 jest.mock('../state/explorePane', () =>
   jest.requireActual('test/helpers/partialMock').partialMock(jest.requireActual('../state/explorePane'), {
@@ -123,7 +137,7 @@ describe('Logs', () => {
   let originalHref = window.location.href;
 
   beforeEach(() => {
-    setBooleanFlags({ logsPanelControls: false });
+    setBooleanFlags({ logsPanelControls: false, 'adaptivelogs.enableTimeMachine': true });
     window.HTMLElement.prototype.scrollIntoView = jest.fn();
     window.HTMLElement.prototype.scroll = jest.fn();
     localStorage.clear();
@@ -253,6 +267,308 @@ describe('Logs', () => {
     expect(screen.getByText('log message 1')).toBeInTheDocument();
   });
 
+  it('passes a debounced renderedLogsWindow to AdaptiveLogsIncludeDroppedLogs', async () => {
+    includeDroppedLogsMock.mockClear();
+    setup();
+    await screen.findByText('log message 3');
+
+    const { onRenderedLogsChanged } = logListMock.mock.calls.at(-1)[0];
+    act(() => {
+      onRenderedLogsChanged({
+        visibleStartIndex: 1,
+        visibleStopIndex: 2,
+        overscanStartIndex: 0,
+        overscanStopIndex: 2,
+      });
+    });
+
+    await waitFor(() =>
+      expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          renderedLogsWindow: { startRowIndex: 1, endRowIndex: 2, logsSortOrder: LogsSortOrder.Descending },
+        })
+      )
+    );
+  });
+
+  it('coalesces rapid onRenderedLogsChanged calls into the last one', async () => {
+    includeDroppedLogsMock.mockClear();
+    setup();
+    await screen.findByText('log message 3');
+
+    const { onRenderedLogsChanged } = logListMock.mock.calls.at(-1)[0];
+    act(() => {
+      onRenderedLogsChanged({
+        visibleStartIndex: 0,
+        visibleStopIndex: 1,
+        overscanStartIndex: 0,
+        overscanStopIndex: 1,
+      });
+      onRenderedLogsChanged({
+        visibleStartIndex: 1,
+        visibleStopIndex: 2,
+        overscanStartIndex: 0,
+        overscanStopIndex: 2,
+      });
+    });
+
+    await waitFor(() =>
+      expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          renderedLogsWindow: { startRowIndex: 1, endRowIndex: 2, logsSortOrder: LogsSortOrder.Descending },
+        })
+      )
+    );
+    expect(includeDroppedLogsMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        renderedLogsWindow: expect.objectContaining({ startRowIndex: 0, endRowIndex: 1 }),
+      })
+    );
+  });
+
+  it('does not update renderedLogsWindow before the debounce window elapses', async () => {
+    includeDroppedLogsMock.mockClear();
+    setup();
+    await screen.findByText('log message 3');
+
+    const { onRenderedLogsChanged } = logListMock.mock.calls.at(-1)[0];
+    act(() => {
+      onRenderedLogsChanged({
+        visibleStartIndex: 1,
+        visibleStopIndex: 2,
+        overscanStartIndex: 0,
+        overscanStopIndex: 2,
+      });
+    });
+
+    expect(includeDroppedLogsMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({ renderedLogsWindow: expect.objectContaining({ startRowIndex: 1 }) })
+    );
+
+    await waitFor(() =>
+      expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          renderedLogsWindow: { startRowIndex: 1, endRowIndex: 2, logsSortOrder: LogsSortOrder.Descending },
+        })
+      )
+    );
+  });
+
+  it('cancels a pending debounced update when logsSortOrder changes', async () => {
+    includeDroppedLogsMock.mockClear();
+    setup();
+    await screen.findByText('log message 3');
+
+    const staleOnRenderedLogsChanged = logListMock.mock.calls.at(-1)[0].onRenderedLogsChanged;
+    act(() => {
+      staleOnRenderedLogsChanged({
+        visibleStartIndex: 1,
+        visibleStopIndex: 2,
+        overscanStartIndex: 0,
+        overscanStopIndex: 2,
+      });
+    });
+
+    const { onLogOptionsChange } = logListMock.mock.calls.at(-1)[0];
+    act(() => {
+      onLogOptionsChange('sortOrder', LogsSortOrder.Ascending);
+    });
+
+    const freshOnRenderedLogsChanged = logListMock.mock.calls.at(-1)[0].onRenderedLogsChanged;
+    act(() => {
+      freshOnRenderedLogsChanged({
+        visibleStartIndex: 0,
+        visibleStopIndex: 1,
+        overscanStartIndex: 0,
+        overscanStopIndex: 1,
+      });
+    });
+
+    await waitFor(() =>
+      expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          renderedLogsWindow: { startRowIndex: 0, endRowIndex: 1, logsSortOrder: LogsSortOrder.Ascending },
+        })
+      )
+    );
+    expect(includeDroppedLogsMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        renderedLogsWindow: expect.objectContaining({ startRowIndex: 1, endRowIndex: 2 }),
+      })
+    );
+  });
+
+  it('cancels the pending debounced update on unmount', async () => {
+    const { unmount } = setup();
+    await screen.findByText('log message 3');
+
+    const { onRenderedLogsChanged } = logListMock.mock.calls.at(-1)[0];
+    const cancelSpy = jest.spyOn(onRenderedLogsChanged, 'cancel');
+
+    unmount();
+
+    expect(cancelSpy).toHaveBeenCalled();
+  });
+
+  it('clears renderedLogsWindow when switching away from the logs visualisation', async () => {
+    includeDroppedLogsMock.mockClear();
+    setup();
+    await screen.findByText('log message 3');
+
+    const { onRenderedLogsChanged } = logListMock.mock.calls.at(-1)[0];
+    act(() => {
+      onRenderedLogsChanged({
+        visibleStartIndex: 1,
+        visibleStopIndex: 2,
+        overscanStartIndex: 0,
+        overscanStopIndex: 2,
+      });
+    });
+    await waitFor(() =>
+      expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          renderedLogsWindow: expect.objectContaining({ startRowIndex: 1, endRowIndex: 2 }),
+        })
+      )
+    );
+
+    await userEvent.click(screen.getByRole('radio', { name: 'Table' }));
+
+    await waitFor(() => expect(includeDroppedLogsMock.mock.calls.at(-1)[0].renderedLogsWindow).toBeUndefined());
+  });
+
+  it('updates renderedLogsWindow when logs changes even at the same indices (e.g. a query re-run)', async () => {
+    includeDroppedLogsMock.mockClear();
+    const dataFrame = getMockLokiFrame();
+    const logs = [
+      makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1 }),
+      makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 2 }),
+      makeLog({ uid: '3', rowId: 'id3', timeEpochMs: 3 }),
+    ];
+    const { rerender, store } = setup(undefined, dataFrame, logs);
+    await screen.findByText('log message 3');
+
+    const { onRenderedLogsChanged } = logListMock.mock.calls.at(-1)[0];
+    act(() => {
+      onRenderedLogsChanged(
+        { visibleStartIndex: 1, visibleStopIndex: 2, overscanStartIndex: 0, overscanStopIndex: 2 },
+        logs
+      );
+    });
+    await waitFor(() =>
+      expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          renderedLogsWindow: expect.objectContaining({ startRowIndex: 1, endRowIndex: 2 }),
+        })
+      )
+    );
+
+    // A query re-run that produces the same number of rows (so react-window's own onItemsRendered
+    // won't naturally re-fire - its memoization is keyed only on the index numbers, not content).
+    const newLogs = [
+      makeLog({ uid: '4', rowId: 'id4', timeEpochMs: 10 }),
+      makeLog({ uid: '5', rowId: 'id5', timeEpochMs: 11 }),
+      makeLog({ uid: '6', rowId: 'id6', timeEpochMs: 12 }),
+    ];
+    rerender(<Provider store={store}>{getComponent(undefined, dataFrame, newLogs)}</Provider>);
+
+    await waitFor(() => {
+      const window = includeDroppedLogsMock.mock.calls.at(-1)[0].renderedLogsWindow;
+      expect(window).toBeDefined();
+      expect(window.logs.some((log: LogRowModel) => log.uid === '1')).toBe(false);
+      expect(window.logs.some((log: LogRowModel) => ['4', '5', '6'].includes(log.uid))).toBe(true);
+    });
+  });
+
+  it('does not clear renderedLogsWindow when logs grows (e.g. loading more or live tailing)', async () => {
+    includeDroppedLogsMock.mockClear();
+    const dataFrame = getMockLokiFrame();
+    const logs = [
+      makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1 }),
+      makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 2 }),
+      makeLog({ uid: '3', rowId: 'id3', timeEpochMs: 3 }),
+    ];
+    const { rerender, store } = setup(undefined, dataFrame, logs);
+    await screen.findByText('log message 3');
+
+    const { onRenderedLogsChanged } = logListMock.mock.calls.at(-1)[0];
+    act(() => {
+      onRenderedLogsChanged(
+        { visibleStartIndex: 1, visibleStopIndex: 2, overscanStartIndex: 0, overscanStopIndex: 2 },
+        logs
+      );
+    });
+    await waitFor(() =>
+      expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          renderedLogsWindow: expect.objectContaining({ startRowIndex: 1, endRowIndex: 2 }),
+        })
+      )
+    );
+
+    // Same time range and queries, just more rows (e.g. "load more" or live tailing) - should not
+    // be treated as a query reset.
+    rerender(
+      <Provider store={store}>
+        {getComponent(undefined, dataFrame, [...logs, makeLog({ uid: '4', rowId: 'id4', timeEpochMs: 4 })])}
+      </Provider>
+    );
+
+    expect(includeDroppedLogsMock.mock.calls.at(-1)[0].renderedLogsWindow).not.toBeUndefined();
+  });
+
+  it('reports a defined-but-empty window when nothing is visible, instead of leaving a stale one', async () => {
+    includeDroppedLogsMock.mockClear();
+    const dataFrame = getMockLokiFrame();
+    const logs = [
+      makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1 }),
+      makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 2 }),
+      makeLog({ uid: '3', rowId: 'id3', timeEpochMs: 3 }),
+    ];
+    setup(undefined, dataFrame, logs);
+    await screen.findByText('log message 3');
+
+    const { onRenderedLogsChanged } = logListMock.mock.calls.at(-1)[0];
+    act(() => {
+      onRenderedLogsChanged(
+        { visibleStartIndex: 1, visibleStopIndex: 2, overscanStartIndex: 0, overscanStopIndex: 2 },
+        logs
+      );
+    });
+    await waitFor(() =>
+      expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          renderedLogsWindow: expect.objectContaining({ startRowIndex: 1, endRowIndex: 2 }),
+        })
+      )
+    );
+
+    // Simulates InfiniteScroll reporting "nothing real visible" (e.g. an in-panel filter left
+    // zero rows) - the window should become a defined-but-empty shape, not stay stuck at the
+    // previous non-empty value.
+    act(() => {
+      onRenderedLogsChanged(undefined, []);
+    });
+
+    await waitFor(() =>
+      expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          renderedLogsWindow: expect.objectContaining({ startRowIndex: undefined, endRowIndex: undefined, logs: [] }),
+        })
+      )
+    );
+  });
+
+  it('never sets up rendered-window tracking when the adaptivelogs.enableTimeMachine flag is disabled', async () => {
+    setBooleanFlags({ logsPanelControls: false, 'adaptivelogs.enableTimeMachine': false });
+    includeDroppedLogsMock.mockClear();
+    setup();
+    await screen.findByText('log message 3');
+
+    expect(logListMock).toHaveBeenLastCalledWith(expect.objectContaining({ onRenderedLogsChanged: undefined }));
+    expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(expect.objectContaining({ renderedLogsWindow: undefined }));
+  });
+
   it('should render no logs found', () => {
     setup({}, undefined, []);
 
@@ -262,6 +578,43 @@ describe('Logs', () => {
         name: /scan for older logs/i,
       })
     ).toBeInTheDocument();
+  });
+
+  it('reports a defined-but-empty window when there is no data at all, not a stale one', async () => {
+    includeDroppedLogsMock.mockClear();
+    const dataFrame = getMockLokiFrame();
+    const logs = [
+      makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1 }),
+      makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 2 }),
+      makeLog({ uid: '3', rowId: 'id3', timeEpochMs: 3 }),
+    ];
+    const { rerender, store } = setup(undefined, dataFrame, logs);
+    await screen.findByText('log message 3');
+
+    const { onRenderedLogsChanged } = logListMock.mock.calls.at(-1)[0];
+    act(() => {
+      onRenderedLogsChanged(
+        { visibleStartIndex: 1, visibleStopIndex: 2, overscanStartIndex: 0, overscanStopIndex: 2 },
+        logs
+      );
+    });
+    await waitFor(() =>
+      expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          renderedLogsWindow: expect.objectContaining({ startRowIndex: 1, endRowIndex: 2 }),
+        })
+      )
+    );
+
+    // The query now returns zero rows - LogList unmounts entirely (hasData is false), so nothing
+    // inside it could ever clear the stale window on its own.
+    rerender(<Provider store={store}>{getComponent(undefined, dataFrame, [])}</Provider>);
+
+    expect(includeDroppedLogsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        renderedLogsWindow: expect.objectContaining({ startRowIndex: undefined, endRowIndex: undefined, logs: [] }),
+      })
+    );
   });
 
   it('should render an actionable message when frames have rows but no time field', () => {

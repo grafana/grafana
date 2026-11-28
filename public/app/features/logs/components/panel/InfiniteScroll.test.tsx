@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { VariableSizeList } from 'react-window';
 
 import { createTheme, dateTimeForTimeZone, LoadingState, rangeUtil } from '@grafana/data';
@@ -7,9 +7,21 @@ import { LogsSortOrder } from '@grafana/schema';
 import { ScrollDirection, SCROLLING_THRESHOLD } from '../infiniteScrollUtils';
 import { createLogLine } from '../mocks/logRow';
 
-import { InfiniteScroll, type InfiniteScrollMode, type Props } from './InfiniteScroll';
+import { clampIndicesToLogs, InfiniteScroll, type InfiniteScrollMode, type Props } from './InfiniteScroll';
+import { LogListContextProvider } from './LogListContext';
+import { defaultProps as logListContextDefaultProps } from './__mocks__/LogListContext';
 import { type LogListModel } from './processing';
 import { LogLineVirtualization } from './virtualization';
+
+jest.mock('@grafana/assistant', () => ({
+  ...jest.requireActual('@grafana/assistant'),
+  useAssistant: jest.fn().mockReturnValue({ isLoading: false, isAvailable: true }),
+}));
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (_flag: string, defaultValue: boolean) => defaultValue,
+}));
 
 const defaultTz = 'browser';
 
@@ -714,6 +726,269 @@ describe('InfiniteScroll consecutive loads (regression #129033)', () => {
       rerender(ui(makeLogs(3), element, loadMoreMock, LoadingState.Done));
     });
     expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
+  });
+});
+
+describe('clampIndicesToLogs', () => {
+  const makeLogs = (count: number) => Array.from({ length: count }, (_, i) => createLogLine({ uid: `${i}` }));
+
+  test('leaves in-bounds indices untouched', () => {
+    expect(
+      clampIndicesToLogs(
+        { visibleStartIndex: 1, visibleStopIndex: 2, overscanStartIndex: 0, overscanStopIndex: 2 },
+        makeLogs(5)
+      )
+    ).toEqual({ visibleStartIndex: 1, visibleStopIndex: 2, overscanStartIndex: 0, overscanStopIndex: 2 });
+  });
+
+  test('clamps visibleStopIndex to the last real log when it lands on the loader row', () => {
+    const clamped = clampIndicesToLogs(
+      { visibleStartIndex: 1, visibleStopIndex: 3, overscanStartIndex: 0, overscanStopIndex: 3 },
+      makeLogs(3)
+    );
+    expect(clamped?.visibleStopIndex).toBe(2);
+  });
+
+  test('returns undefined when the loader row is the only item in view', () => {
+    // Previously this landed on an inverted range (startRowIndex > endRowIndex) because only
+    // visibleStopIndex was clamped - now neither end finds a real row, so there's nothing to report.
+    const clamped = clampIndicesToLogs(
+      { visibleStartIndex: 3, visibleStopIndex: 3, overscanStartIndex: 3, overscanStopIndex: 3 },
+      makeLogs(3)
+    );
+    expect(clamped).toBeUndefined();
+  });
+
+  test('walks inward across multiple out-of-bounds indices, not just one', () => {
+    const clamped = clampIndicesToLogs(
+      { visibleStartIndex: 1, visibleStopIndex: 4, overscanStartIndex: 0, overscanStopIndex: 4 },
+      makeLogs(2)
+    );
+    expect(clamped?.visibleStartIndex).toBe(1);
+    expect(clamped?.visibleStopIndex).toBe(1);
+  });
+
+  test('returns undefined when no real log row is in the reported range at all', () => {
+    const clamped = clampIndicesToLogs(
+      { visibleStartIndex: 3, visibleStopIndex: 3, overscanStartIndex: 3, overscanStopIndex: 3 },
+      makeLogs(0)
+    );
+    expect(clamped).toBeUndefined();
+  });
+});
+
+describe('InfiniteScroll onRenderedLogsChanged', () => {
+  test('calls the context callback when items render', async () => {
+    const onRenderedLogsChanged = jest.fn();
+    const { element } = getMockElement(0);
+    const logs = createLogs(absoluteRange.from, absoluteRange.to);
+
+    render(
+      <LogListContextProvider {...logListContextDefaultProps} onRenderedLogsChanged={onRenderedLogsChanged}>
+        <InfiniteScroll {...defaultProps} logs={logs} scrollElement={element as unknown as HTMLDivElement}>
+          {({ getItemKey, itemCount, itemData, onItemsRendered, Log }) => (
+            <VariableSizeList
+              height={100}
+              itemCount={itemCount}
+              itemData={itemData}
+              itemSize={() => virtualization.getLineHeight()}
+              itemKey={getItemKey}
+              layout="vertical"
+              onItemsRendered={onItemsRendered}
+              style={{ overflow: 'scroll' }}
+              width="100%"
+            >
+              {Log}
+            </VariableSizeList>
+          )}
+        </InfiniteScroll>
+      </LogListContextProvider>
+    );
+
+    expect(await screen.findByText('log line 1')).toBeInTheDocument();
+    expect(onRenderedLogsChanged).toHaveBeenCalledWith(
+      expect.objectContaining({ visibleStartIndex: 0, visibleStopIndex: expect.any(Number) }),
+      logs
+    );
+  });
+
+  test('re-pairs cached indices with a new logs array when logs changes without a scroll', async () => {
+    const onRenderedLogsChanged = jest.fn();
+    const { element } = getMockElement(0);
+    const logs = createLogs(absoluteRange.from, absoluteRange.to);
+
+    const { rerender } = render(
+      <LogListContextProvider {...logListContextDefaultProps} onRenderedLogsChanged={onRenderedLogsChanged}>
+        <InfiniteScroll {...defaultProps} logs={logs} scrollElement={element as unknown as HTMLDivElement}>
+          {({ getItemKey, itemCount, itemData, onItemsRendered, Log }) => (
+            <VariableSizeList
+              height={100}
+              itemCount={itemCount}
+              itemData={itemData}
+              itemSize={() => virtualization.getLineHeight()}
+              itemKey={getItemKey}
+              layout="vertical"
+              onItemsRendered={onItemsRendered}
+              style={{ overflow: 'scroll' }}
+              width="100%"
+            >
+              {Log}
+            </VariableSizeList>
+          )}
+        </InfiniteScroll>
+      </LogListContextProvider>
+    );
+
+    expect(await screen.findByText('log line 1')).toBeInTheDocument();
+    onRenderedLogsChanged.mockClear();
+
+    // Same count as before - react-window's own onItemsRendered won't necessarily re-fire, since
+    // its internal memoization is keyed only on the index numbers, not on logs content.
+    const newLogs = [
+      createLogLine({ entry: 'new log line 1', uid: 'new-log-1' }),
+      createLogLine({ entry: 'new log line 2', uid: 'new-log-2' }),
+    ];
+
+    rerender(
+      <LogListContextProvider {...logListContextDefaultProps} onRenderedLogsChanged={onRenderedLogsChanged}>
+        <InfiniteScroll {...defaultProps} logs={newLogs} scrollElement={element as unknown as HTMLDivElement}>
+          {({ getItemKey, itemCount, itemData, onItemsRendered, Log }) => (
+            <VariableSizeList
+              height={100}
+              itemCount={itemCount}
+              itemData={itemData}
+              itemSize={() => virtualization.getLineHeight()}
+              itemKey={getItemKey}
+              layout="vertical"
+              onItemsRendered={onItemsRendered}
+              style={{ overflow: 'scroll' }}
+              width="100%"
+            >
+              {Log}
+            </VariableSizeList>
+          )}
+        </InfiniteScroll>
+      </LogListContextProvider>
+    );
+
+    await waitFor(() =>
+      expect(onRenderedLogsChanged).toHaveBeenCalledWith(
+        expect.objectContaining({ visibleStartIndex: 0, visibleStopIndex: expect.any(Number) }),
+        newLogs
+      )
+    );
+  });
+
+  test('notifies with undefined indices when logs changes to nothing visible (e.g. filtered to zero)', async () => {
+    const onRenderedLogsChanged = jest.fn();
+    const { element } = getMockElement(0);
+    const logs = createLogs(absoluteRange.from, absoluteRange.to);
+
+    const { rerender } = render(
+      <LogListContextProvider {...logListContextDefaultProps} onRenderedLogsChanged={onRenderedLogsChanged}>
+        <InfiniteScroll {...defaultProps} logs={logs} scrollElement={element as unknown as HTMLDivElement}>
+          {({ getItemKey, itemCount, itemData, onItemsRendered, Log }) => (
+            <VariableSizeList
+              height={100}
+              itemCount={itemCount}
+              itemData={itemData}
+              itemSize={() => virtualization.getLineHeight()}
+              itemKey={getItemKey}
+              layout="vertical"
+              onItemsRendered={onItemsRendered}
+              style={{ overflow: 'scroll' }}
+              width="100%"
+            >
+              {Log}
+            </VariableSizeList>
+          )}
+        </InfiniteScroll>
+      </LogListContextProvider>
+    );
+
+    expect(await screen.findByText('log line 1')).toBeInTheDocument();
+    onRenderedLogsChanged.mockClear();
+
+    rerender(
+      <LogListContextProvider {...logListContextDefaultProps} onRenderedLogsChanged={onRenderedLogsChanged}>
+        <InfiniteScroll {...defaultProps} logs={[]} scrollElement={element as unknown as HTMLDivElement}>
+          {({ getItemKey, itemCount, itemData, onItemsRendered, Log }) => (
+            <VariableSizeList
+              height={100}
+              itemCount={itemCount}
+              itemData={itemData}
+              itemSize={() => virtualization.getLineHeight()}
+              itemKey={getItemKey}
+              layout="vertical"
+              onItemsRendered={onItemsRendered}
+              style={{ overflow: 'scroll' }}
+              width="100%"
+            >
+              {Log}
+            </VariableSizeList>
+          )}
+        </InfiniteScroll>
+      </LogListContextProvider>
+    );
+
+    await waitFor(() => expect(onRenderedLogsChanged).toHaveBeenCalledWith(undefined, []));
+  });
+
+  test('does not throw when no context callback is provided', async () => {
+    const { element } = getMockElement(0);
+    const logs = createLogs(absoluteRange.from, absoluteRange.to);
+
+    render(
+      <InfiniteScroll {...defaultProps} logs={logs} scrollElement={element as unknown as HTMLDivElement}>
+        {({ getItemKey, itemCount, itemData, onItemsRendered, Log }) => (
+          <VariableSizeList
+            height={100}
+            itemCount={itemCount}
+            itemData={itemData}
+            itemSize={() => virtualization.getLineHeight()}
+            itemKey={getItemKey}
+            layout="vertical"
+            onItemsRendered={onItemsRendered}
+            style={{ overflow: 'scroll' }}
+            width="100%"
+          >
+            {Log}
+          </VariableSizeList>
+        )}
+      </InfiniteScroll>
+    );
+
+    expect(await screen.findByText('log line 1')).toBeInTheDocument();
+  });
+
+  test('calls the context callback even when scrollElement is null', async () => {
+    const onRenderedLogsChanged = jest.fn();
+    const logs = createLogs(absoluteRange.from, absoluteRange.to);
+
+    render(
+      <LogListContextProvider {...logListContextDefaultProps} onRenderedLogsChanged={onRenderedLogsChanged}>
+        <InfiniteScroll {...defaultProps} logs={logs} scrollElement={null}>
+          {({ getItemKey, itemCount, itemData, onItemsRendered, Log }) => (
+            <VariableSizeList
+              height={100}
+              itemCount={itemCount}
+              itemData={itemData}
+              itemSize={() => virtualization.getLineHeight()}
+              itemKey={getItemKey}
+              layout="vertical"
+              onItemsRendered={onItemsRendered}
+              style={{ overflow: 'scroll' }}
+              width="100%"
+            >
+              {Log}
+            </VariableSizeList>
+          )}
+        </InfiniteScroll>
+      </LogListContextProvider>
+    );
+
+    expect(await screen.findByText('log line 1')).toBeInTheDocument();
+    expect(onRenderedLogsChanged).toHaveBeenCalled();
   });
 });
 

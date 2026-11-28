@@ -29,6 +29,7 @@ import {
 
 import { getStyles, LogLine } from './LogLine';
 import { LogLineMessage } from './LogLineMessage';
+import { useLogListContext } from './LogListContext';
 import { type LogListModel } from './processing';
 import { type LogLineVirtualization } from './virtualization';
 
@@ -333,11 +334,23 @@ export const InfiniteScroll = ({
     ]
   );
 
+  const { onRenderedLogsChanged } = useLogListContext();
+  const cachedIndicesRef = useRef<ListOnItemsRenderedProps | undefined>(undefined);
+
   const onItemsRendered = useCallback(
     (props: ListOnItemsRenderedProps) => {
+      // This only triggers if the indices are different, so we cache them for separate calls to onRenderedLogsChanged
+      cachedIndicesRef.current = props;
+      if (onRenderedLogsChanged) {
+        // undefined means nothing real is visible (e.g. only the loading row) - still notify, so a
+        // previous non-empty window doesn't linger once nothing is actually shown.
+        onRenderedLogsChanged(clampIndicesToLogs(props, logs), logs);
+      }
+
       if (!scrollElement) {
         return;
       }
+
       if (props.visibleStartIndex === 0) {
         noScrollRef.current = scrollElement.scrollHeight <= scrollElement.clientHeight;
       }
@@ -361,8 +374,15 @@ export const InfiniteScroll = ({
         setInfiniteLoaderState('idle');
       }
     },
-    [infiniteLoaderState, loadDirection, logs, scrollElement]
+    [infiniteLoaderState, loadDirection, logs, onRenderedLogsChanged, scrollElement]
   );
+
+  useEffect(() => {
+    if (cachedIndicesRef.current && onRenderedLogsChanged) {
+      // Cached indices are needed when the indices don't change but the logs do
+      onRenderedLogsChanged(clampIndicesToLogs(cachedIndicesRef.current, logs), logs);
+    }
+  }, [logs, onRenderedLogsChanged]);
 
   const getItemKey = useCallback((index: number) => (logs[index] ? logs[index].uniqueKey : index.toString()), [logs]);
 
@@ -395,6 +415,27 @@ export const InfiniteScroll = ({
     </>
   );
 };
+
+/**
+ * Narrows reported indices down to the first and last actual log indices
+ * (some post-logs indices are components appended to the window, like the loading message).
+ */
+export function clampIndicesToLogs(
+  indices: ListOnItemsRenderedProps,
+  logs: LogListModel[]
+): ListOnItemsRenderedProps | undefined {
+  if (indices.visibleStartIndex >= logs.length) {
+    return undefined;
+  }
+  let visibleStopIndex = indices.visibleStopIndex;
+  while (visibleStopIndex > indices.visibleStartIndex && !logs[visibleStopIndex]) {
+    visibleStopIndex--;
+  }
+  return {
+    ...indices,
+    visibleStopIndex,
+  };
+}
 
 function getMessageFromInfiniteLoaderState(
   state: InfiniteLoaderState,

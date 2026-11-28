@@ -11,6 +11,7 @@ import {
   useState,
 } from 'react';
 import { usePrevious } from 'react-use';
+import { type ListOnItemsRenderedProps } from 'react-window';
 
 import { createAssistantContextItem, type OpenAssistantProps, useAssistant } from '@grafana/assistant';
 import {
@@ -158,6 +159,9 @@ export type LogListState = Pick<
   | 'timestampResolution'
 >;
 
+/** Undefined range means nothing real is currently visible (e.g. filtered to zero). */
+export type OnRenderedLogsChanged = (range: ListOnItemsRenderedProps | undefined, logs: LogListModel[]) => void;
+
 export interface Props {
   app: CoreApp;
   allowDownload?: boolean;
@@ -187,6 +191,7 @@ export interface Props {
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
+  onRenderedLogsChanged?: OnRenderedLogsChanged;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
   onUnpinLine?: (row: LogRowModel) => void;
   permalinkedLogId?: string;
@@ -234,6 +239,7 @@ export const LogListContextProvider = ({
   onLogLineHover,
   onPermalinkClick,
   onPinLine,
+  onRenderedLogsChanged,
   onOpenContext,
   onUnpinLine,
   permalinkedLogId,
@@ -653,6 +659,7 @@ export const LogListContextProvider = ({
         onLogLineHover,
         onPermalinkClick,
         onPinLine,
+        onRenderedLogsChanged,
         onOpenContext,
         onUnpinLine,
         permalinkedLogId,

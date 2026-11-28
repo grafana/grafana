@@ -106,6 +106,19 @@ test('hasLogsWithErrorAttributes is false when logs have no error fields', () =>
   expect(screen.getByText('no-error-fields')).toBeInTheDocument();
 });
 
+test('Forwards onRenderedLogsChanged', () => {
+  const onRenderedLogsChanged = jest.fn();
+  const { result } = renderHook(() => useLogListContext(), {
+    wrapper: ({ children }: { children: ReactNode }) => (
+      <LogListContextProvider {...defaultProps} onRenderedLogsChanged={onRenderedLogsChanged}>
+        {children}
+      </LogListContextProvider>
+    ),
+  });
+
+  expect(result.current.onRenderedLogsChanged).toBe(onRenderedLogsChanged);
+});
+
 test('Identifies custom grammar', () => {
   const customWrapper = ({ children }: { children: ReactNode }) => (
     <LogListContext.Provider value={{ ...value, isCustomGrammar: true }}>{children}</LogListContext.Provider>

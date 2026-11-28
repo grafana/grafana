@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { LoadingState } from '@grafana/data';
 import { usePluginComponent } from '@grafana/runtime';
 import { LogsSortOrder } from '@grafana/schema';
-import { createLogRow } from 'app/features/logs/components/mocks/logRow';
+import { createLogLine, createLogRow } from 'app/features/logs/components/mocks/logRow';
 
 import { AdaptiveLogsIncludeDroppedLogs } from './AdaptiveLogsIncludeDroppedLogs';
 
@@ -41,11 +41,10 @@ const props = {
   logsLoadingState: LoadingState.Streaming,
   queries: [{ refId: 'A' }],
   renderedLogsWindow: {
-    startNs: '1000000000',
-    endNs: '2000000000',
     startRowIndex: 0,
     endRowIndex: 0,
     logsSortOrder: LogsSortOrder.Descending,
+    logs: [createLogLine({ uid: 'log-1' })],
   },
 };
 
@@ -92,6 +91,15 @@ describe('AdaptiveLogsIncludeDroppedLogs', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it('renders nothing when renderedLogsWindow.logs is longer than logs (stale window backstop)', () => {
+    mockPluginComponent({ component: PluginComponent, isLoading: false });
+
+    const { container } = render(<AdaptiveLogsIncludeDroppedLogs {...props} logs={[]} />);
+
+    expect(container).toBeEmptyDOMElement();
+    expect(receivedProps).not.toHaveBeenCalled();
+  });
+
   it.each([
     { desc: 'missing', queries: undefined },
     { desc: 'empty', queries: [] },
@@ -107,7 +115,14 @@ describe('AdaptiveLogsIncludeDroppedLogs', () => {
   it.each([
     { desc: 'renderedLogsWindow is missing', override: { renderedLogsWindow: undefined } },
     { desc: 'includeAdditionalLogs is missing', override: { includeAdditionalLogs: undefined } },
-    { desc: 'logs is empty', override: { logs: [] } },
+    {
+      desc: 'logs is empty',
+      override: { logs: [], renderedLogsWindow: { ...props.renderedLogsWindow, logs: [] } },
+    },
+    {
+      desc: 'logs is non-empty but renderedLogsWindow.logs is empty',
+      override: { logs: props.logs, renderedLogsWindow: { ...props.renderedLogsWindow, logs: [] } },
+    },
   ])('renders the plugin component when $desc', ({ override }) => {
     mockPluginComponent({ component: PluginComponent, isLoading: false });
 
