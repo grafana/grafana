@@ -1,8 +1,9 @@
-import { render, screen, waitFor } from 'test/test-utils';
+import { fireEvent, render, screen, waitFor } from 'test/test-utils';
 
+import { locationService } from '@grafana/runtime';
 import { type CellContentKind } from 'app/features/notebook/types';
 
-import { MarkdownCell } from './MarkdownCell';
+import { MarkdownCell, resetInitialHashRestorationForTests } from './MarkdownCell';
 
 jest.mock('@grafana/ui/internal', () => {
   const { useEffect, useRef } = require('react');
@@ -99,6 +100,151 @@ describe('MarkdownCell', () => {
 
     expect(await screen.findByLabelText('Markdown')).toBeInTheDocument();
     expect(screen.queryByText('bold')).not.toBeInTheDocument();
+  });
+
+  describe('contents links', () => {
+    const withContents: CellContentKind = {
+      kind: 'Markdown',
+      spec: { text: '## Table of Contents\n\n- [Herbs](#herbs)\n\n## Herbs\n\nBasil.' },
+    };
+
+    afterEach(() => {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      resetInitialHashRestorationForTests();
+    });
+
+    it('gives headings ids so a contents link has somewhere to go', async () => {
+      render(<MarkdownCell content={withContents} isEditing={false} onChange={jest.fn()} />);
+
+      expect(await screen.findByRole('heading', { name: 'Herbs' })).toHaveAttribute('id', 'herbs');
+    });
+
+    it('scrolls smoothly to the heading a contents link names', async () => {
+      const scrollIntoView = jest.spyOn(HTMLElement.prototype, 'scrollIntoView');
+      render(<MarkdownCell content={withContents} isEditing={false} onChange={jest.fn()} />);
+
+      fireEvent.click(await screen.findByRole('link', { name: 'Herbs' }));
+
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+      expect(locationService.getLocation().hash).toBe('#herbs');
+      scrollIntoView.mockRestore();
+    });
+
+    it('opens a copied url at the section its fragment names', async () => {
+      window.location.hash = '#herbs';
+      const scrollIntoView = jest.spyOn(HTMLElement.prototype, 'scrollIntoView');
+      render(<MarkdownCell content={withContents} isEditing={false} onChange={jest.fn()} />);
+
+      await screen.findByRole('heading', { name: 'Herbs' });
+      await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' }));
+      scrollIntoView.mockRestore();
+    });
+
+    it('does not re-restore hash scroll when editing ends or another cell mounts later', async () => {
+      window.location.hash = '#herbs';
+      locationService.push({ pathname: '/notebooks/nb1', hash: '#herbs' });
+      const scrollIntoView = jest.spyOn(HTMLElement.prototype, 'scrollIntoView');
+      const { rerender } = render(<MarkdownCell content={withContents} isEditing={false} onChange={jest.fn()} />);
+
+      await screen.findByRole('heading', { name: 'Herbs' });
+      await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(1));
+
+      // Enter and exit edit mode
+      rerender(<MarkdownCell content={withContents} isEditing={true} onChange={jest.fn()} />);
+      rerender(<MarkdownCell content={withContents} isEditing={false} onChange={jest.fn()} />);
+
+      // Mount another cell while the hash is still present in the URL
+      const otherCell: CellContentKind = {
+        kind: 'Markdown',
+        spec: { text: '## Other Heading\n\nContent.' },
+      };
+      render(<MarkdownCell content={otherCell} isEditing={false} onChange={jest.fn()} />);
+      await screen.findByRole('heading', { name: 'Other Heading' });
+
+      // Should not have jumped to #herbs again
+      expect(scrollIntoView).toHaveBeenCalledTimes(1);
+      scrollIntoView.mockRestore();
+    });
+
+    it('restores fragment on a new notebook when navigating client-side from an unhashed notebook', async () => {
+      // First notebook without any fragment
+      locationService.push({ pathname: '/notebooks/nb-plain', hash: '' });
+      window.location.hash = '';
+      const scrollIntoView = jest.spyOn(HTMLElement.prototype, 'scrollIntoView');
+      const { unmount } = render(<MarkdownCell content={withContents} isEditing={false} onChange={jest.fn()} />);
+
+      await screen.findByRole('heading', { name: 'Herbs' });
+      expect(scrollIntoView).not.toHaveBeenCalled();
+      unmount();
+
+      // Client-side open of another notebook with a section fragment
+      window.location.hash = '#other-heading';
+      locationService.push({ pathname: '/notebooks/nb-hashed', hash: '#other-heading' });
+
+      const notebook2Cell: CellContentKind = {
+        kind: 'Markdown',
+        spec: { text: '## Other Heading\n\nContent.' },
+      };
+      render(<MarkdownCell content={notebook2Cell} isEditing={false} onChange={jest.fn()} />);
+
+      await screen.findByRole('heading', { name: 'Other Heading' });
+      await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(1));
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
+      scrollIntoView.mockRestore();
+    });
+
+    it('does not jump or steal scroll on remount/uncollapse after a ToC link click sets the hash', async () => {
+      // Open notebook with no hash initially
+      locationService.push({ pathname: '/notebooks/nb1', hash: '' });
+      const scrollIntoView = jest.spyOn(HTMLElement.prototype, 'scrollIntoView');
+      const { rerender } = render(<MarkdownCell content={withContents} isEditing={false} onChange={jest.fn()} />);
+
+      await screen.findByRole('heading', { name: 'Herbs' });
+      expect(scrollIntoView).not.toHaveBeenCalled();
+
+      // Click Table of Contents link
+      fireEvent.click(await screen.findByRole('link', { name: 'Herbs' }));
+      expect(scrollIntoView).toHaveBeenCalledTimes(1);
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+      expect(locationService.getLocation().hash).toBe('#herbs');
+
+      // Now enter edit mode and leave edit mode; or mount another cell
+      rerender(<MarkdownCell content={withContents} isEditing={true} onChange={jest.fn()} />);
+      rerender(<MarkdownCell content={withContents} isEditing={false} onChange={jest.fn()} />);
+
+      const otherCell: CellContentKind = {
+        kind: 'Markdown',
+        spec: { text: '## Other Heading\n\nContent.' },
+      };
+      render(<MarkdownCell content={otherCell} isEditing={false} onChange={jest.fn()} />);
+      await screen.findByRole('heading', { name: 'Other Heading' });
+
+      // No additional scrollIntoView calls should have occurred
+      expect(scrollIntoView).toHaveBeenCalledTimes(1);
+      scrollIntoView.mockRestore();
+    });
+
+    it('leaves a link whose heading is not on the page to the browser', async () => {
+      const markdown: CellContentKind = { kind: 'Markdown', spec: { text: '[Missing](#missing)' } };
+      const scrollIntoView = jest.spyOn(HTMLElement.prototype, 'scrollIntoView');
+      render(<MarkdownCell content={markdown} isEditing={false} onChange={jest.fn()} />);
+
+      const click = fireEvent.click(await screen.findByRole('link', { name: 'Missing' }));
+
+      expect(click).toBe(true);
+      expect(scrollIntoView).not.toHaveBeenCalled();
+      scrollIntoView.mockRestore();
+    });
+
+    it('does not throw on a fragment that is not valid percent-encoding', async () => {
+      const markdown: CellContentKind = { kind: 'Markdown', spec: { text: '[Broken](#%)' } };
+      const scrollIntoView = jest.spyOn(HTMLElement.prototype, 'scrollIntoView');
+      render(<MarkdownCell content={markdown} isEditing={false} onChange={jest.fn()} />);
+
+      expect(() => fireEvent.click(screen.getByRole('link', { name: 'Broken' }))).not.toThrow();
+      expect(scrollIntoView).not.toHaveBeenCalled();
+      scrollIntoView.mockRestore();
+    });
   });
 
   describe('the caret', () => {
