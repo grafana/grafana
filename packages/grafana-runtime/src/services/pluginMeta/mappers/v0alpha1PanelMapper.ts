@@ -6,6 +6,7 @@ import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
 
 import {
   angularMapper,
+  dependenciesMapper,
   isCorePlugin,
   loadingStrategyMapper,
   stateMapper,
@@ -52,6 +53,7 @@ function specMapper(spec: v0alpha1Spec): PanelPluginMeta {
   const translations = spec.translations;
   const moduleHash = spec.module.hash;
   const aliasIDs = spec.aliasIds;
+  const dependencies = dependenciesMapper(spec, logPluginMetaWarning);
 
   return {
     id,
@@ -72,6 +74,7 @@ function specMapper(spec: v0alpha1Spec): PanelPluginMeta {
     translations,
     moduleHash,
     aliasIDs,
+    dependencies,
   };
 }
 
