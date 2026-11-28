@@ -178,10 +178,22 @@ export interface DashboardSceneLike extends SceneObject<DashboardSceneState>, La
   getInitialSaveModel(): Dashboard | DashboardV2Spec | undefined;
 
   isLibraryPanel(vizPanel: VizPanel): boolean;
+
+  isV2(): boolean;
 }
 
 export function isDashboardSceneLike(obj: unknown): obj is DashboardSceneLike {
   return typeof obj === 'object' && obj !== null && 'isDashboardScene' in obj && obj.isDashboardScene === true;
+}
+
+/**
+ * Whether the dashboard on screen uses the v2 schema. Panel option expressions only resolve there,
+ * because only v2 dashboards show and edit them.
+ */
+export function isActiveDashboardV2(): boolean {
+  const scene: SceneObject | undefined = window.__grafanaSceneContext;
+  const root = scene?.getRoot();
+  return isDashboardSceneLike(root) && root.isV2();
 }
 
 export function getDashboardSceneLike(sceneObject: SceneObject): DashboardSceneLike {

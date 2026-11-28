@@ -1,7 +1,12 @@
 import { get as lodashGet } from 'lodash';
 
 import { type DataFrame, type FieldConfigPropertyItem, type FieldConfigSource } from '@grafana/data';
-import { hasVarMappingVariableReference, isVarMappingProp, unwrapVarMappingPropId } from '@grafana/data/internal';
+import {
+  getVarMappingKind,
+  hasVarMappingVariableReference,
+  isVarMappingProp,
+  unwrapVarMappingPropId,
+} from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 
 import { type OptionPaneItemOverrideInfo } from '../types';
@@ -55,19 +60,21 @@ export function getOptionOverrides(
 /**
  * Marks an option that takes a variable, or a text option with variables in it, in the defaults or
  * in an override rule. The variables can be dashboard, global or data variables, so the tooltip
- * doesn't name a kind.
+ * doesn't name a kind. An expression left on an option that can't take one, like a slider, is
+ * ignored by the panel, so it isn't marked.
  */
 export function getVarMappingOptionOverrides(
   fieldOption: FieldConfigPropertyItem,
   fieldConfig: FieldConfigSource
 ): OptionPaneItemOverrideInfo[] {
   const isMappedKey = (key: string) => key === fieldOption.id;
-  const usesVariables =
-    Object.keys(fieldConfig.defaults.varMappings ?? {}).some(isMappedKey) ||
-    fieldConfig.overrides.some((rule) =>
-      rule.properties.some((prop) => isVarMappingProp(prop) && isMappedKey(unwrapVarMappingPropId(prop.id)))
-    ) ||
-    usesVariablesInText(fieldOption, fieldConfig);
+  const hasExpression =
+    getVarMappingKind(fieldOption) !== undefined &&
+    (Object.keys(fieldConfig.defaults.varMappings ?? {}).some(isMappedKey) ||
+      fieldConfig.overrides.some((rule) =>
+        rule.properties.some((prop) => isVarMappingProp(prop) && isMappedKey(unwrapVarMappingPropId(prop.id)))
+      ));
+  const usesVariables = hasExpression || usesVariablesInText(fieldOption, fieldConfig);
 
   if (!usesVariables) {
     return [];

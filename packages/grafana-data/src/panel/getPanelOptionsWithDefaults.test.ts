@@ -1,5 +1,6 @@
 import { mockStandardFieldConfigOptions } from '../../test/helpers/fieldConfig';
 import { getPanelPlugin } from '../../test/helpers/pluginMocks';
+import { numberOverrideProcessor } from '../field/overrides/processors';
 import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '../field/standardFieldConfigEditorRegistry';
 import { type FieldConfig } from '../types/dataFrame';
 import { FieldColorModeId } from '../types/fieldColor';
@@ -409,6 +410,49 @@ describe('getPanelOptionsWithDefaults', () => {
       expect(result.fieldConfig.overrides[0].properties).toEqual([
         { id: 'unit', value: 'bytes' },
         { id: 'varMappings.unit', value: '$unit' },
+      ]);
+    });
+
+    it('drops expressions on options that cannot take one, like a slider or a switch, keeping their values', () => {
+      const plugin = getPanelPlugin({ id: 'graph' }).useFieldConfig({
+        useCustomConfig: (builder) => {
+          builder.addNumberInput({ name: 'Custom prop', path: 'customProp' });
+          builder.addCustomEditor({
+            id: 'lineWidth',
+            path: 'lineWidth',
+            name: 'Line width',
+            editor: () => null,
+            override: () => null,
+            process: numberOverrideProcessor,
+            shouldApply: () => true,
+          });
+          builder.addBooleanSwitch({ name: 'Show border', path: 'showBorder' });
+        },
+      });
+
+      const result = runScenario({
+        plugin,
+        defaults: {
+          custom: { lineWidth: 2 },
+          varMappings: { 'custom.customProp': '$c', 'custom.lineWidth': '$w', 'custom.showBorder': '$b' },
+        },
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [
+              { id: 'custom.lineWidth', value: 3 },
+              { id: 'varMappings.custom.lineWidth', value: '$w' },
+              { id: 'varMappings.custom.customProp', value: '$c' },
+            ],
+          },
+        ],
+      });
+
+      expect(result.fieldConfig.defaults.varMappings).toEqual({ 'custom.customProp': '$c' });
+      expect(result.fieldConfig.defaults.custom).toMatchObject({ lineWidth: 2 });
+      expect(result.fieldConfig.overrides[0].properties).toEqual([
+        { id: 'custom.lineWidth', value: 3 },
+        { id: 'varMappings.custom.customProp', value: '$c' },
       ]);
     });
 

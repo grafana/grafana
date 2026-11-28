@@ -14,7 +14,12 @@ import {
   type StandardEditorContext,
   FieldType,
 } from '@grafana/data';
-import { isVarMappingExpressionInput, isVarMappingProp, wrapVarMappingPropId } from '@grafana/data/internal';
+import {
+  getVarMappingKind,
+  isVarMappingExpressionInput,
+  isVarMappingProp,
+  wrapVarMappingPropId,
+} from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { type MatcherScope } from '@grafana/schema';
 import {
@@ -33,7 +38,6 @@ import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OverrideCategoryTitle } from './OverrideCategoryTitle';
-import { getVarMappingEditingKind } from './utils';
 
 const ALLOWED_SCOPES: MatcherScope[] = ['series', 'nested'];
 
@@ -340,7 +344,7 @@ export function getFieldOverrideCategories(
       }
 
       const varMappingId = wrapVarMappingPropId(property.id);
-      const varMappingKind = varMappingsEnabled ? getVarMappingEditingKind(registryItemForProperty) : undefined;
+      const varMappingKind = varMappingsEnabled ? getVarMappingKind(registryItemForProperty) : undefined;
       const varMappingExpr = varMappingKind ? override.properties.find((p) => p.id === varMappingId)?.value : undefined;
       // The stored value stays as the fallback while an expression is shown.
       const displayValue = typeof varMappingExpr === 'string' ? varMappingExpr : property.value;
