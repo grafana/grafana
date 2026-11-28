@@ -1,6 +1,6 @@
 import { acceptCompletion, autocompletion, startCompletion, type CompletionSource } from '@codemirror/autocomplete';
 import { EditorState } from '@codemirror/state';
-import { keymap, type EditorView as CodeMirrorEditorView } from '@codemirror/view';
+import { keymap, type EditorView as CodeMirrorEditorView, type ViewUpdate } from '@codemirror/view';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { EditorView, type ReactCodeMirrorProps } from '@uiw/react-codemirror';
@@ -236,6 +236,29 @@ describe('BaseCodeEditor', () => {
     }
   });
 
+  it('keeps one change handler that calls the current onChange as it is added, replaced, and removed', () => {
+    const onChange = jest.fn();
+    const nextOnChange = jest.fn();
+    const viewUpdate = {} as ViewUpdate;
+    const { rerender } = render(<BaseCodeEditor value="SELECT 1" readOnly />);
+    const handleChange = capturedProps?.onChange;
+
+    handleChange?.('SELECT 2', viewUpdate);
+
+    rerender(<BaseCodeEditor value="SELECT 1" readOnly onChange={onChange} />);
+    handleChange?.('SELECT 3', viewUpdate);
+
+    rerender(<BaseCodeEditor value="SELECT 1" onChange={nextOnChange} />);
+    handleChange?.('SELECT 4', viewUpdate);
+
+    rerender(<BaseCodeEditor value="SELECT 1" readOnly />);
+    handleChange?.('SELECT 5', viewUpdate);
+
+    expect(capturedProps?.onChange).toBe(handleChange);
+    expect(onChange.mock.calls).toEqual([['SELECT 3', viewUpdate]]);
+    expect(nextOnChange.mock.calls).toEqual([['SELECT 4', viewUpdate]]);
+  });
+
   it('defaults to the Grafana theme when no theme prop is provided', () => {
     render(<BaseCodeEditor value="" onChange={jest.fn()} />);
 
@@ -322,3 +345,10 @@ describe('BaseCodeEditor with raw extensions', () => {
     expect(getExtensions()).toContain(extension);
   });
 });
+
+((isReadOnly: boolean) => [
+  // @ts-expect-error
+  <BaseCodeEditor key="editable" value="" />,
+  // @ts-expect-error
+  <BaseCodeEditor key="possibly editable" value="" readOnly={isReadOnly} />,
+])(false);

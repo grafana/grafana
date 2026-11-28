@@ -110,7 +110,7 @@ export interface SignatureHelp {
  */
 export type SignatureHelpProvider = (state: EditorState, pos: number) => SignatureHelp | null;
 
-export interface CodeMirrorEditorProps {
+interface CodeMirrorEditorStaticProps {
   /**
    * The current editor contents.
    */
@@ -128,10 +128,6 @@ export interface CodeMirrorEditorProps {
    * Editor height, such as `'200px'` or `'100%'`.
    */
   height?: string;
-  /**
-   * Called whenever the editor contents change.
-   */
-  onChange: (value: string) => void;
   /**
    * Called with the current editor contents when the editor loses focus.
    */
@@ -197,10 +193,6 @@ export interface CodeMirrorEditorProps {
    */
   indentWithTab?: boolean;
   /**
-   * Rejects all edits while keeping the text selectable.
-   */
-  readOnly?: boolean;
-  /**
    * Wraps long lines instead of scrolling horizontally.
    */
   lineWrapping?: boolean;
@@ -212,6 +204,31 @@ export interface CodeMirrorEditorProps {
   loadingFallback?: ReactNode;
 }
 
-export type BaseCodeEditorProps = Omit<CodeMirrorEditorProps, 'loadingFallback'>;
+interface EditableProps {
+  /**
+   * Called whenever the editor contents change.
+   */
+  onChange: (value: string) => void;
+  /**
+   * Rejects all edits while keeping the text selectable.
+   */
+  readOnly?: false;
+}
+
+interface ReadOnlyProps {
+  /**
+   * Called whenever the editor contents change.
+   */
+  onChange?: EditableProps['onChange'];
+  /**
+   * Rejects all edits while keeping the text selectable.
+   */
+  readOnly: true;
+}
+
+export type CodeMirrorEditorProps = (EditableProps | ReadOnlyProps) & CodeMirrorEditorStaticProps;
+
+export type BaseCodeEditorProps = (EditableProps | ReadOnlyProps) &
+  Omit<CodeMirrorEditorStaticProps, 'loadingFallback'>;
 
 export type InternalCodeMirrorEditorProps = CodeMirrorEditorProps;

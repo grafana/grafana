@@ -38,7 +38,7 @@ jest.mock('@grafana/ui/unstable', () => ({
       aria-label={ariaLabel}
       aria-labelledby={ariaLabelledBy}
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(e) => onChange?.(e.target.value)}
     />
   ),
 }));
