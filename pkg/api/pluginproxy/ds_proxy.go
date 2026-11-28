@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -127,6 +128,17 @@ func newHTTPClient() httpClient {
 		Timeout:   30 * time.Second,
 		Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 	}
+}
+
+func StatusSource(ctx context.Context, status int) string {
+	// The reverse proxy marks a client disconnect as downstream.
+	if status == proxyutil.StatusClientClosedRequest {
+		return "client"
+	}
+	if requestmeta.GetRequestMetaData(ctx).StatusSource == requestmeta.StatusSourceDownstream {
+		return string(requestmeta.StatusSourceDownstream)
+	}
+	return string(requestmeta.StatusSourceServer)
 }
 
 func (proxy *DataSourceProxy) HandleRequest() {
