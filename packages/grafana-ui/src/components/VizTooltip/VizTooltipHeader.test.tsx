@@ -15,6 +15,11 @@ describe('VizTooltipHeader', () => {
     expect(screen.getByText('Series A')).toBeInTheDocument();
   });
 
+  it('renders a hint under the header row', () => {
+    render(<VizTooltipHeader item={makeItem()} hint="Alt-click to filter" />);
+    expect(screen.getByText('Alt-click to filter')).toBeInTheDocument();
+  });
+
   it('renders the item value', () => {
     render(<VizTooltipHeader item={makeItem()} />);
     expect(screen.getByText('42')).toBeInTheDocument();
