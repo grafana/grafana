@@ -2,6 +2,9 @@ package service
 
 import (
 	"context"
+	"maps"
+	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -23,7 +26,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestService_DecryptedValuesCache(t *testing.T) {
-	t.Run("When plugin settings hasn't been updated, encrypted JSON should be fetched from cache", func(t *testing.T) {
+	t.Run("When plugin settings hasn't been updated, decrypted JSON should be fetched from cache", func(t *testing.T) {
 		ctx := context.Background()
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -43,22 +46,50 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 		}
 
 		// Populate cache
-		password, ok := psService.DecryptedValues(&ps)["password"]
-		require.Equal(t, "password", password)
-		require.True(t, ok)
+		first := psService.DecryptedValues(&ps)
+		require.Equal(t, map[string]string{"password": "password"}, first)
 
+		// The same map is returned, so the values were not decrypted again.
+		second := psService.DecryptedValues(&ps)
+		require.Equal(t, reflect.ValueOf(first).Pointer(), reflect.ValueOf(second).Pointer())
+	})
+
+	t.Run("When secure JSON changes within the same updated time, encrypted JSON should not be fetched from cache", func(t *testing.T) {
+		ctx := context.Background()
+
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		psService := ProvideService(nil, secretsService)
+
+		encryptedJsonData, err := secretsService.EncryptJsonData(
+			ctx,
+			map[string]string{
+				"password": "password",
+			}, secrets.WithoutScope())
+		require.NoError(t, err)
+
+		updated := time.Unix(100, 0)
+		ps := pluginsettings.DTO{
+			ID:             1,
+			JSONData:       map[string]any{},
+			SecureJSONData: encryptedJsonData,
+			Updated:        updated,
+		}
+
+		// Populate cache
+		require.Equal(t, map[string]string{"password": "password"}, psService.DecryptedValues(&ps))
+
+		// The database stores updated with second precision, so a second write in the
+		// same second keeps the same updated time.
 		encryptedJsonData, err = secretsService.EncryptJsonData(
 			ctx,
 			map[string]string{
 				"password": "",
+				"apiKey":   "new",
 			}, secrets.WithoutScope())
 		require.NoError(t, err)
-
 		ps.SecureJSONData = encryptedJsonData
 
-		password, ok = psService.DecryptedValues(&ps)["password"]
-		require.Equal(t, "password", password)
-		require.True(t, ok)
+		require.Equal(t, map[string]string{"password": "", "apiKey": "new"}, psService.DecryptedValues(&ps))
 	})
 
 	t.Run("When plugin settings is updated, encrypted JSON should not be fetched from cache", func(t *testing.T) {
@@ -276,6 +307,38 @@ func TestIntegrationPluginSettings(t *testing.T) {
 				require.Equal(t, "1.0.2", ps.PluginVersion)
 			})
 		})
+	})
+
+	t.Run("UpdatePluginSetting removes secure keys set to an empty value", func(t *testing.T) {
+		ctx := context.Background()
+		storedKeys := func(t *testing.T, pluginID string) []string {
+			t.Helper()
+			ps, err := psService.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{OrgID: 1, PluginID: pluginID})
+			require.NoError(t, err)
+			keys := slices.Collect(maps.Keys(ps.SecureJSONData))
+			slices.Sort(keys)
+			return keys
+		}
+
+		// A new row leaves out keys with an empty value.
+		require.NoError(t, psService.UpdatePluginSetting(ctx, &pluginsettings.UpdateArgs{
+			OrgID: 1, PluginID: "removal-app", Enabled: true,
+			SecureJSONData: map[string]string{"a": "x", "b": "y", "c": ""},
+		}))
+		require.Equal(t, []string{"a", "b"}, storedKeys(t, "removal-app"))
+
+		require.NoError(t, psService.UpdatePluginSetting(ctx, &pluginsettings.UpdateArgs{
+			OrgID: 1, PluginID: "removal-app", Enabled: true,
+			SecureJSONData: map[string]string{"a": ""},
+		}))
+		require.Equal(t, []string{"b"}, storedKeys(t, "removal-app"))
+
+		// Removing the last key must still write the column.
+		require.NoError(t, psService.UpdatePluginSetting(ctx, &pluginsettings.UpdateArgs{
+			OrgID: 1, PluginID: "removal-app", Enabled: true,
+			SecureJSONData: map[string]string{"b": ""},
+		}))
+		require.Empty(t, storedKeys(t, "removal-app"))
 	})
 
 	t.Run("Non-existing plugin settings", func(t *testing.T) {

@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -16,6 +17,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -79,6 +81,101 @@ func TestSettingsGet_WithPersistedSettings(t *testing.T) {
 	}), settings.ResourceVersion)
 	require.True(t, settings.Spec.Enabled)
 	require.Equal(t, map[string]any{"apiUrl": "https://api.example.com", "timeout": float64(30)}, settings.Spec.JsonData.Object)
+}
+
+// decryptingSettings stores ciphertext and decrypts it through a fixed map, as the
+// SQL service does. calls, when set, counts the decryptions.
+type decryptingSettings struct {
+	ps        *pluginsettings.DTO
+	decrypted map[string]string
+	calls     *int
+}
+
+func (d decryptingSettings) GetPluginSettingByPluginID(context.Context, *pluginsettings.GetByPluginIDArgs) (*pluginsettings.DTO, error) {
+	return d.ps, nil
+}
+
+func (d decryptingSettings) DecryptedValues(*pluginsettings.DTO) map[string]string {
+	if d.calls != nil {
+		*d.calls++
+	}
+	return d.decrypted
+}
+
+func TestSettingsGet_ListsSecureKeysWithoutDecrypting(t *testing.T) {
+	calls := 0
+	storage := NewReadOnlyLegacySettingsStore("test-app", decryptingSettings{
+		ps: &pluginsettings.DTO{
+			PluginID:       "test-app",
+			OrgID:          1,
+			SecureJSONData: map[string][]byte{"apiKey": []byte("cipher-1"), "empty": nil},
+		},
+		decrypted: map[string]string{"apiKey": "secret"},
+		calls:     &calls,
+	})
+
+	ctx := pluginsettings.WithSecureContextShim(request.WithNamespace(context.Background(), "default"))
+	obj, err := storage.Get(ctx, "instance", nil)
+	require.NoError(t, err)
+
+	settings := obj.(*apppluginV0.Settings)
+	require.Equal(t, resource.InlineSecureValues{
+		"apiKey": {Name: getLegacySecureValueName("test-app", "apiKey")},
+	}, settings.Secure)
+	require.Equal(t, 0, calls, "a read must not decrypt until a subresource asks for the values")
+
+	decrypt, ok := pluginsettings.StashedDecryptedSecureJSONLoader(ctx)
+	require.True(t, ok)
+	values, err := decrypt(ctx)
+	require.NoError(t, err)
+	require.Equal(t, map[string]string{"apiKey": "secret"}, values)
+	require.Equal(t, 1, calls)
+}
+
+func TestSettingsGet_DecryptedValuesOmitEmptyValues(t *testing.T) {
+	// Secrets removed before removals deleted the key are stored as an encrypted
+	// empty string, so the ciphertext is not empty.
+	storage := NewReadOnlyLegacySettingsStore("test-app", decryptingSettings{
+		ps: &pluginsettings.DTO{
+			PluginID:       "test-app",
+			OrgID:          1,
+			SecureJSONData: map[string][]byte{"kept": []byte("cipher-1"), "removed": []byte("cipher-2")},
+		},
+		decrypted: map[string]string{"kept": "secret", "removed": ""},
+	})
+
+	ctx := pluginsettings.WithSecureContextShim(request.WithNamespace(context.Background(), "default"))
+	_, err := storage.Get(ctx, "instance", nil)
+	require.NoError(t, err)
+
+	decrypt, ok := pluginsettings.StashedDecryptedSecureJSONLoader(ctx)
+	require.True(t, ok)
+	values, err := decrypt(ctx)
+	require.NoError(t, err)
+	require.Equal(t, map[string]string{"kept": "secret"}, values)
+}
+
+func TestSettingsGet_DecryptedValuesAreCopiedPerCall(t *testing.T) {
+	storage := newTestStorage(map[string]*pluginsettings.DTO{
+		"test-app": {PluginID: "test-app", OrgID: 1, SecureJSONData: map[string][]byte{"key": []byte("secret")}},
+	})
+
+	ctx := pluginsettings.WithSecureContextShim(request.WithNamespace(context.Background(), "default"))
+	obj, err := storage.Get(ctx, "instance", nil)
+	require.NoError(t, err)
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	decrypt, err := pluginsettings.GetDecryptedSecureJSONLoader(ctx, meta, nil)
+	require.NoError(t, err)
+
+	values, err := decrypt(ctx)
+	require.NoError(t, err)
+	require.Equal(t, map[string]string{"key": "secret"}, values)
+	values["key"] = "changed"
+
+	values, err = decrypt(ctx)
+	require.NoError(t, err)
+	require.Equal(t, map[string]string{"key": "secret"}, values)
 }
 
 func TestSettingsList(t *testing.T) {
@@ -339,7 +436,9 @@ func (r readOnlySettings) GetPluginSettingByPluginID(_ context.Context, args *pl
 	return nil, pluginsettings.ErrPluginSettingNotFound
 }
 
-func (readOnlySettings) DecryptedValues(*pluginsettings.DTO) map[string]string { return nil }
+func (readOnlySettings) DecryptedValues(ps *pluginsettings.DTO) map[string]string {
+	return (&pluginsettings.FakePluginSettings{}).DecryptedValues(ps)
+}
 
 func TestReadOnlyLegacySettingsStore(t *testing.T) {
 	plugins := map[string]*pluginsettings.DTO{

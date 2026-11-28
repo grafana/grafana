@@ -334,7 +334,10 @@ func TestSecureLifecycle(t *testing.T) {
 		err := prepareSecureValues(context.Background(), secureStore, resourceWithSecureValues(resource.InlineSecureValues{
 			"a": resource.InlineSecureValue{}, // MUST have Create, Remove or Name
 		}), nil, common.ObjectReference{}, info)
-		require.Error(t, err)
+		var status apierrors.APIStatus
+		require.ErrorAs(t, err, &status)
+		require.Equal(t, "invalid secure value state", status.Status().Message)
+		require.Equal(t, "secure.a", status.Status().Details.Causes[0].Field)
 	})
 
 	t.Run("setup errors", func(t *testing.T) {

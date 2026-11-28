@@ -203,9 +203,25 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error
 		return nil, fmt.Errorf("failed to get plugin settings: %w", err)
 	}
 	if ps != nil {
+		// Only the settings subresources need the values, so decrypt when they ask.
 		pluginsettings.WithDecryptedValues(ctx, func(ctx context.Context) (map[string]string, error) {
-			return s.pluginSettings.DecryptedValues(ps), nil
+			values := map[string]string{}
+			for k, v := range s.pluginSettings.DecryptedValues(ps) {
+				// Secrets removed before removals deleted the key are stored as an
+				// encrypted empty string.
+				if v != "" {
+					values[k] = v
+				}
+			}
+			return values, nil
 		})
+
+		secureValues := resource.InlineSecureValues{}
+		for k, v := range ps.SecureJSONData {
+			if len(v) > 0 {
+				secureValues[k] = resource.InlineSecureValue{Name: getLegacySecureValueName(s.pluginID, k)}
+			}
+		}
 
 		obj.SetCreationTimestamp(metav1.NewTime(ps.Updated))
 		obj.SetResourceVersion(getLegacySettingsResourceVersion(ps))
@@ -213,12 +229,6 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error
 		obj.Spec.Enabled = ps.Enabled
 		obj.Spec.JsonData = common.Unstructured{Object: ps.JSONData}
 
-		secureValues := make(resource.InlineSecureValues, len(ps.SecureJSONData))
-		for k, v := range ps.SecureJSONData {
-			if len(v) > 0 {
-				secureValues[k] = resource.InlineSecureValue{Name: getLegacySecureValueName(s.pluginID, k)}
-			}
-		}
 		obj.Secure = secureValues
 	}
 	return obj, nil

@@ -38,6 +38,14 @@ func (b *Builder) getSettings(ctx context.Context) (*apppluginV0.Settings, plugi
 		return settings, pluginsettings.EmptyDecryptedSecureJSONLoader, nil
 	}
 
+	// A legacy read has already decrypted the values through the plugin settings
+	// service, which notices changes within the same second. The legacy resource
+	// version has second precision, so caching by it could serve a changed secret
+	// for up to secureValuesTTL.
+	if loader, ok := pluginsettings.StashedDecryptedSecureJSONLoader(ctx); ok {
+		return settings, loader, nil
+	}
+
 	// Unified secrets belong to the shared storage group, while settings use the served group.
 	stored := settings.DeepCopy()
 	stored.APIVersion = apppluginV0.GROUP + "/" + apppluginV0.VERSION

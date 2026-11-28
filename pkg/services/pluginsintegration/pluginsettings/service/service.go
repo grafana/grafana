@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -43,8 +44,9 @@ type Service struct {
 }
 
 type cachedDecryptedJSON struct {
-	updated time.Time
-	json    map[string]string
+	updated   time.Time
+	encrypted map[string][]byte
+	json      map[string]string
 }
 
 type secureJSONDecryptionCache struct {
@@ -99,7 +101,19 @@ func (s *Service) UpdatePluginSetting(ctx context.Context, args *pluginsettings.
 		return err
 	}
 
-	encryptedSecureJsonData, err := s.secretsService.EncryptJsonData(ctx, args.SecureJSONData, secrets.WithoutScope())
+	// An empty value removes the key. Storing it encrypted would leave ciphertext that
+	// can't be told apart from a set secret without decrypting it.
+	toEncrypt := make(map[string]string, len(args.SecureJSONData))
+	var removed []string
+	for k, v := range args.SecureJSONData {
+		if v == "" {
+			removed = append(removed, k)
+			continue
+		}
+		toEncrypt[k] = v
+	}
+
+	encryptedSecureJsonData, err := s.secretsService.EncryptJsonData(ctx, toEncrypt, secrets.WithoutScope())
 	if err != nil {
 		return err
 	}
@@ -112,6 +126,7 @@ func (s *Service) UpdatePluginSetting(ctx context.Context, args *pluginsettings.
 		PluginId:                args.PluginID,
 		OrgId:                   args.OrgID,
 		EncryptedSecureJsonData: encryptedSecureJsonData,
+		RemovedSecureJsonKeys:   removed,
 	})
 }
 
@@ -127,7 +142,11 @@ func (s *Service) DecryptedValues(ps *pluginsettings.DTO) map[string]string {
 	s.decryptionCache.Lock()
 	defer s.decryptionCache.Unlock()
 
-	if item, present := s.decryptionCache.cache[ps.ID]; present && ps.Updated.Equal(item.updated) {
+	// Updated has second precision in the database, so two writes in the same second
+	// have the same Updated. Encryption is not deterministic, so compare the
+	// ciphertext too.
+	if item, present := s.decryptionCache.cache[ps.ID]; present && ps.Updated.Equal(item.updated) &&
+		maps.EqualFunc(item.encrypted, ps.SecureJSONData, bytes.Equal) {
 		return item.json
 	}
 
@@ -138,8 +157,9 @@ func (s *Service) DecryptedValues(ps *pluginsettings.DTO) map[string]string {
 	}
 
 	s.decryptionCache.cache[ps.ID] = cachedDecryptedJSON{
-		updated: ps.Updated,
-		json:    json,
+		updated:   ps.Updated,
+		encrypted: maps.Clone(ps.SecureJSONData),
+		json:      json,
 	}
 
 	return json
@@ -215,7 +235,13 @@ func (s *Service) updatePluginSetting(ctx context.Context, cmd *pluginsettings.U
 			return err
 		}
 
+		if pluginSetting.SecureJsonData == nil {
+			pluginSetting.SecureJsonData = map[string][]byte{}
+		}
 		maps.Copy(pluginSetting.SecureJsonData, cmd.EncryptedSecureJsonData)
+		for _, k := range cmd.RemovedSecureJsonKeys {
+			delete(pluginSetting.SecureJsonData, k)
+		}
 		if err := validateStoredSize("secureJsonData", pluginSetting.SecureJsonData); err != nil {
 			return err
 		}
@@ -234,7 +260,8 @@ func (s *Service) updatePluginSetting(ctx context.Context, cmd *pluginsettings.U
 		pluginSetting.JsonData = cmd.JsonData
 		pluginSetting.PluginVersion = cmd.PluginVersion
 
-		_, err = sess.ID(pluginSetting.Id).Update(&pluginSetting)
+		// xorm skips empty maps, so removing the last secure value would keep the old column.
+		_, err = sess.ID(pluginSetting.Id).MustCols("secure_json_data").Update(&pluginSetting)
 		return err
 	})
 }
