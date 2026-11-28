@@ -36,6 +36,8 @@ var ErrLoaderPanic = errors.New("swrcache: loader panicked")
 
 var errLoaderExited = fmt.Errorf("%w: loader exited without returning", ErrLoaderPanic)
 
+const defaultSweepInterval = 10 * time.Second
+
 var metricNamePattern = regexp.MustCompile("^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 type Options struct {
@@ -58,6 +60,9 @@ type Options struct {
 	// StaleWait bounds how long a read of a stale entry waits for its refresh. Zero means the read
 	// returns the old value at once and the refresh runs on.
 	StaleWait time.Duration
+	// SweepInterval is the minimum time between two sweeps of expired entries. Reads run the
+	// sweep, so a cache with no reads does not sweep. Zero means 10 seconds.
+	SweepInterval time.Duration
 	// LoadTimeout bounds each loader call.
 	LoadTimeout time.Duration
 	// MaxEntries is the LRU capacity.
@@ -70,8 +75,9 @@ type Options struct {
 }
 
 // Validate requires MetricsPrefix to match ^[a-zA-Z_][a-zA-Z0-9_]*$, TTL, RefreshInterval,
-// LoadTimeout and MaxEntries to be greater than zero, StaleWait and MinRefreshInterval not to be
-// negative, and MinRefreshInterval <= RefreshInterval <= TTL. Errors name the offending field.
+// LoadTimeout and MaxEntries to be greater than zero, StaleWait, MinRefreshInterval and
+// SweepInterval not to be negative, and MinRefreshInterval <= RefreshInterval <= TTL. Errors name
+// the offending field.
 func (o Options) Validate() error {
 	if !metricNamePattern.MatchString(o.MetricsPrefix) {
 		return fmt.Errorf("swrcache: MetricsPrefix %q is not a valid metric name", o.MetricsPrefix)
@@ -96,6 +102,7 @@ func (o Options) Validate() error {
 	}{
 		{"MinRefreshInterval", o.MinRefreshInterval},
 		{"StaleWait", o.StaleWait},
+		{"SweepInterval", o.SweepInterval},
 	}
 	for _, item := range nonNegative {
 		if item.value < 0 {
@@ -130,20 +137,22 @@ type entry[V any] struct {
 // RefreshInterval, or marked stale, refreshes it: the read waits up to StaleWait for the new value
 // and otherwise returns the old one. When a refresh fails, reads keep getting the old value until
 // TTL. Each key has at most one load running, and the cache refreshes only on reads; it starts no
-// background work. Loads of different keys run concurrently without a limit, and a load keeps
-// running for up to LoadTimeout after its callers stop waiting. Values are shared between callers
-// and must be treated as read only.
+// background work. Reads also remove expired entries, at most once per SweepInterval, so a cache
+// with no reads does not sweep. Loads of different keys run concurrently without a limit, and a
+// load keeps running for up to LoadTimeout after its callers stop waiting. Values are shared
+// between callers and must be treated as read only.
 //
 // Cache is a prometheus.Collector for its own metrics; the caller registers it.
 type Cache[K comparable, V any] struct {
-	mu      sync.Mutex // guards entries and flights
-	entries *simplelru.LRU[K, *entry[V]]
-	flights map[K]*flight[V]
-	load    Loader[K, V]
-	opts    Options
-	metrics metrics
-	logger  log.Logger
-	tracer  trace.Tracer
+	mu        sync.Mutex // guards entries, flights and lastSweep
+	entries   *simplelru.LRU[K, *entry[V]]
+	flights   map[K]*flight[V]
+	lastSweep time.Time
+	load      Loader[K, V]
+	opts      Options
+	metrics   metrics
+	logger    log.Logger
+	tracer    trace.Tracer
 }
 
 var _ prometheus.Collector = (*Cache[string, int])(nil)
@@ -161,12 +170,16 @@ func New[K comparable, V any](load Loader[K, V], opts Options) (*Cache[K, V], er
 		return nil, err
 	}
 	cache := &Cache[K, V]{
-		entries: entries,
-		flights: make(map[K]*flight[V]),
-		load:    load,
-		opts:    opts,
-		logger:  opts.Logger,
-		tracer:  opts.Tracer,
+		entries:   entries,
+		flights:   make(map[K]*flight[V]),
+		lastSweep: time.Now(),
+		load:      load,
+		opts:      opts,
+		logger:    opts.Logger,
+		tracer:    opts.Tracer,
+	}
+	if cache.opts.SweepInterval == 0 {
+		cache.opts.SweepInterval = defaultSweepInterval
 	}
 	if cache.logger == nil {
 		cache.logger = nopLogger{}
@@ -307,13 +320,15 @@ func (c *Cache[K, V]) begin(ctx context.Context, key K) (entryState, V, *flight[
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	now := time.Now()
+	c.sweep(now)
+
 	e, _ := c.entries.Get(key)
 	state := c.classify(e)
 	switch state {
 	case stateFresh:
 		return state, e.value, nil
 	case stateStale:
-		now := time.Now()
 		if !e.lastRefreshStart.IsZero() && now.Sub(e.lastRefreshStart) < c.opts.MinRefreshInterval {
 			return state, e.value, nil
 		}
@@ -322,6 +337,24 @@ func (c *Cache[K, V]) begin(ctx context.Context, key K) (entryState, V, *flight[
 	default:
 		var zero V
 		return state, zero, c.joinOrStartFlight(ctx, key, e)
+	}
+}
+
+// sweep removes expired entries, at most once per SweepInterval. It skips keys with a running
+// load, because run stores its result only into the entry that is still current, and it uses Peek
+// so that it does not change recency. Swept entries do not count as evictions. c.mu must be held.
+func (c *Cache[K, V]) sweep(now time.Time) {
+	if now.Sub(c.lastSweep) < c.opts.SweepInterval {
+		return
+	}
+	c.lastSweep = now
+	for _, key := range c.entries.Keys() {
+		if _, running := c.flights[key]; running {
+			continue
+		}
+		if e, ok := c.entries.Peek(key); ok && now.Sub(e.loadedAt) >= c.opts.TTL {
+			c.entries.Remove(key)
+		}
 	}
 }
 
@@ -504,8 +537,8 @@ func markStale[V any](e *entry[V]) {
 	e.lastRefreshStart = time.Time{}
 }
 
-// Len returns the number of entries. It includes entries whose first load is still running and
-// expired entries that no read has touched since they expired.
+// Len returns the number of entries. It includes entries whose load is running and expired
+// entries not yet swept.
 func (c *Cache[K, V]) Len() int {
 	c.mu.Lock()
 	defer c.mu.Unlock()

@@ -53,17 +53,19 @@ func TestOptions_Validate(t *testing.T) {
 		}
 	})
 
-	t.Run("should accept options when StaleWait and MinRefreshInterval are zero", func(t *testing.T) {
+	t.Run("should accept options when StaleWait, MinRefreshInterval and SweepInterval are zero", func(t *testing.T) {
 		opts := validOptions()
 		opts.StaleWait = 0
 		opts.MinRefreshInterval = 0
+		opts.SweepInterval = 0
 		require.NoError(t, opts.Validate())
 	})
 
-	t.Run("should reject options when StaleWait or MinRefreshInterval is negative", func(t *testing.T) {
+	t.Run("should reject options when StaleWait, MinRefreshInterval or SweepInterval is negative", func(t *testing.T) {
 		tests := map[string]func(*Options){
 			"StaleWait":          func(opts *Options) { opts.StaleWait = -1 },
 			"MinRefreshInterval": func(opts *Options) { opts.MinRefreshInterval = -1 },
+			"SweepInterval":      func(opts *Options) { opts.SweepInterval = -1 },
 		}
 		for field, negative := range tests {
 			opts := validOptions()
@@ -723,6 +725,66 @@ func TestCache_Get(t *testing.T) {
 		require.Equal(t, 1, cache.Len())
 	})
 
+	runInBubble(t, "should remove an expired entry of another key when a read comes SweepInterval or more after the last sweep", func(t *testing.T) {
+		opts := validOptions()
+		cache := newTestCache(t, opts, &scriptedLoader{})
+
+		mustGet(t, cache, "tenant-a")
+		synctest.Sleep(opts.TTL)
+		mustGet(t, cache, "tenant-b")
+
+		require.Equal(t, 1, cache.Len())
+	})
+
+	for _, tt := range []struct {
+		name string
+		set  time.Duration
+		want time.Duration
+	}{
+		{"the default", 0, defaultSweepInterval},
+		{"a custom SweepInterval", time.Minute, time.Minute},
+	} {
+		runInBubble(t, "should sweep again exactly SweepInterval after the last sweep and not before when SweepInterval is "+tt.name, func(t *testing.T) {
+			opts := validOptions()
+			opts.SweepInterval = tt.set
+			cache := newTestCache(t, opts, &scriptedLoader{})
+
+			mustGet(t, cache, "tenant-a")
+			synctest.Sleep(opts.TTL - time.Second)
+			mustGet(t, cache, "tenant-b")
+			require.Equal(t, 2, cache.Len())
+
+			// tenant-a expires during this sleep, but the next sweep is 1ns away.
+			synctest.Sleep(tt.want - time.Nanosecond)
+			mustGet(t, cache, "tenant-b")
+			require.Equal(t, 2, cache.Len())
+
+			synctest.Sleep(time.Nanosecond)
+			mustGet(t, cache, "tenant-b")
+			require.Equal(t, 1, cache.Len())
+		})
+	}
+
+	runInBubble(t, "should keep an expired entry in a sweep while its refresh is running", func(t *testing.T) {
+		release := make(chan struct{})
+		loader := &scriptedLoader{fn: blockCalls(release, 2)}
+		opts := validOptions()
+		opts.LoadTimeout = opts.TTL * 3
+		cache := newTestCache(t, opts, loader)
+
+		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
+		synctest.Sleep(opts.RefreshInterval)
+		require.Equal(t, 1, mustGet(t, cache, "tenant-a"))
+		synctest.Sleep(opts.TTL)
+		mustGet(t, cache, "tenant-b")
+		require.Equal(t, 2, cache.Len())
+
+		close(release)
+		synctest.Wait()
+		require.Equal(t, 2, mustGet(t, cache, "tenant-a"))
+		require.Equal(t, 3, loader.callCount())
+	})
+
 	runInBubble(t, "should count an entry whose first load is running in Len", func(t *testing.T) {
 		release := make(chan struct{})
 		cache := newTestCache(t, validOptions(), &scriptedLoader{fn: blockCalls(release, 1)})
@@ -1168,4 +1230,44 @@ func BenchmarkCache_Get(b *testing.B) {
 	runtime.ReadMemStats(&after)
 	b.ReportMetric(float64(int64(after.HeapAlloc)-int64(before.HeapAlloc)), "heap-growth-B")
 	b.ReportMetric(float64(cache.Len()), "entries")
+}
+
+// BenchmarkCache_sweep measures one sweep of a full cache. The sweep holds c.mu, so ns/op is the
+// delay it adds to the read that runs it and to every read waiting for the lock.
+func BenchmarkCache_sweep(b *testing.B) {
+	const entries = 2000
+	keys := make([]string, entries)
+	for i := range keys {
+		keys[i] = "tenant-" + strconv.Itoa(i)
+	}
+
+	for _, expired := range []int{0, entries / 2, entries} {
+		b.Run("expired="+strconv.Itoa(expired), func(b *testing.B) {
+			opts := validOptions()
+			opts.MaxEntries = entries
+			cache, err := New(func(ctx context.Context, key string) (int, error) { return 0, nil }, opts)
+			require.NoError(b, err)
+			now := time.Now()
+
+			b.ReportAllocs()
+			for range b.N {
+				b.StopTimer()
+				for i, key := range keys {
+					loadedAt := now
+					if i < expired {
+						loadedAt = now.Add(-opts.TTL)
+					}
+					cache.entries.Add(key, &entry[int]{loaded: true, loadedAt: loadedAt})
+				}
+				cache.lastSweep = now.Add(-opts.TTL)
+				b.StartTimer()
+
+				cache.mu.Lock()
+				cache.sweep(now)
+				cache.mu.Unlock()
+			}
+			b.StopTimer()
+			require.Equal(b, entries-expired, cache.Len())
+		})
+	}
 }
