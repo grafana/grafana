@@ -1,6 +1,6 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, FieldSet, Icon, Input, Tooltip } from '@grafana/ui';
+import { Box, Button, Field, FieldSet, Icon, Input, Tooltip } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import config from 'app/core/config';
 import { type UserDTO } from 'app/types/user';
@@ -35,45 +35,53 @@ const UserProfileEditForm = ({ user, isSavingUser, updateProfile }: Props) => {
         return (
           <>
             <FieldSet>
-              <Field
-                label={t('user-profile.fields.name-label', 'Name') + lockMessage}
-                invalid={!!errors.name}
-                error={<Trans i18nKey="user-profile.fields.name-error">Name is required</Trans>}
-                disabled={disabledEdit}
-              >
-                <Input
-                  {...register('name', { required: true })}
-                  id="edit-user-profile-name"
-                  placeholder={t('user-profile.fields.name-label', 'Name')}
-                  defaultValue={user?.name ?? ''}
-                  suffix={<InputSuffix />}
-                />
-              </Field>
+              <Box display="flex" direction="column" gap={2} paddingBottom={2}>
+                <Field
+                  noMargin
+                  label={t('user-profile.fields.name-label', 'Name') + lockMessage}
+                  invalid={!!errors.name}
+                  error={<Trans i18nKey="user-profile.fields.name-error">Name is required</Trans>}
+                  disabled={disabledEdit}
+                >
+                  <Input
+                    {...register('name', { required: true })}
+                    id="edit-user-profile-name"
+                    placeholder={t('user-profile.fields.name-label', 'Name')}
+                    defaultValue={user?.name ?? ''}
+                    suffix={<InputSuffix />}
+                  />
+                </Field>
 
-              <Field
-                label={t('user-profile.fields.email-label', 'Email') + lockMessage}
-                invalid={!!errors.email}
-                error={<Trans i18nKey="user-profile.fields.email-error">Email is required</Trans>}
-                disabled={disabledEdit}
-              >
-                <Input
-                  {...register('email', { required: true })}
-                  id="edit-user-profile-email"
-                  placeholder={t('user-profile.fields.email-label', 'Email')}
-                  defaultValue={user?.email ?? ''}
-                  suffix={<InputSuffix />}
-                />
-              </Field>
+                <Field
+                  noMargin
+                  label={t('user-profile.fields.email-label', 'Email') + lockMessage}
+                  invalid={!!errors.email}
+                  error={<Trans i18nKey="user-profile.fields.email-error">Email is required</Trans>}
+                  disabled={disabledEdit}
+                >
+                  <Input
+                    {...register('email', { required: true })}
+                    id="edit-user-profile-email"
+                    placeholder={t('user-profile.fields.email-label', 'Email')}
+                    defaultValue={user?.email ?? ''}
+                    suffix={<InputSuffix />}
+                  />
+                </Field>
 
-              <Field label={t('user-profile.fields.username-label', 'Username') + lockMessage} disabled={disabledEdit}>
-                <Input
-                  {...register('login')}
-                  id="edit-user-profile-username"
-                  defaultValue={user?.login ?? ''}
-                  placeholder={t('user-profile.fields.username-label', 'Username') + lockMessage}
-                  suffix={<InputSuffix />}
-                />
-              </Field>
+                <Field
+                  noMargin
+                  label={t('user-profile.fields.username-label', 'Username') + lockMessage}
+                  disabled={disabledEdit}
+                >
+                  <Input
+                    {...register('login')}
+                    id="edit-user-profile-username"
+                    defaultValue={user?.login ?? ''}
+                    placeholder={t('user-profile.fields.username-label', 'Username') + lockMessage}
+                    suffix={<InputSuffix />}
+                  />
+                </Field>
+              </Box>
             </FieldSet>
             <Button
               variant="primary"
