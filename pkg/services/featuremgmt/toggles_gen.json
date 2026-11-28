@@ -3035,16 +3035,16 @@
     {
       "metadata": {
         "name": "grafana.configFromQueryDynamicName",
-        "resourceVersion": "1792594531964",
+        "resourceVersion": "1795699798510",
         "creationTimestamp": "2026-09-17T22:29:38Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-10-21 14:55:31.964131578 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-11-26 13:29:58.510529 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables using the Config From Query Results transformation's Dynamic Field Name option",
         "stage": "experimental",
-        "codeowner": "@grafana/datapro",
+        "codeowner": "@grafana/grafana-dashboards-edit",
         "frontend": true,
         "expression": "false"
       }
@@ -3052,13 +3052,16 @@
     {
       "metadata": {
         "name": "grafana.correlationsSkipLegacy",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-04-27T17:03:23Z"
+        "resourceVersion": "1795699798510",
+        "creationTimestamp": "2026-04-27T17:03:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-26 13:29:58.510529 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Route any calls to legacy correlations endpoints to call through to app platform",
         "stage": "experimental",
-        "codeowner": "@grafana/datapro",
+        "codeowner": "@grafana/dataviz-squad",
         "expression": "false"
       }
     },
@@ -3298,13 +3301,16 @@
     {
       "metadata": {
         "name": "grafana.exploreMetricsSidebar",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-20T15:12:58Z"
+        "resourceVersion": "1795699798510",
+        "creationTimestamp": "2026-07-20T15:12:58Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-26 13:29:58.510529 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the sidebar in Explore metrics (Metrics Drilldown)",
         "stage": "experimental",
-        "codeowner": "@grafana/datapro",
+        "codeowner": "@grafana/sharing-squad",
         "frontend": true,
         "expression": "false"
       }
@@ -3742,13 +3748,16 @@
     {
       "metadata": {
         "name": "grafana.panelEditNextFeedbackEvent",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-05-28T18:04:20Z"
+        "resourceVersion": "1795699798510",
+        "creationTimestamp": "2026-05-28T18:04:20Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-26 13:29:58.510529 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables firing an event for PanelEditNext feedback that triggers an in-house survey",
         "stage": "experimental",
-        "codeowner": "@grafana/datapro",
+        "codeowner": "@grafana/grafana-dashboards-edit",
         "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
@@ -4664,13 +4673,16 @@
     {
       "metadata": {
         "name": "kubernetesCorrelations",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-08-29T14:46:39Z"
+        "resourceVersion": "1795699798510",
+        "creationTimestamp": "2025-08-29T14:46:39Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-26 13:29:58.510529 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Adds support for Kubernetes correlations",
         "stage": "experimental",
-        "codeowner": "@grafana/datapro",
+        "codeowner": "@grafana/dataviz-squad",
         "requiresRestart": true,
         "expression": "false"
       }
@@ -5392,13 +5404,16 @@
     {
       "metadata": {
         "name": "paneledit.buttonLabels",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-05T16:33:44Z"
+        "resourceVersion": "1795699798510",
+        "creationTimestamp": "2026-08-05T16:33:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-26 13:29:58.510529 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Shows text labels on the add and stacked view buttons in PanelEditNext",
         "stage": "experimental",
-        "codeowner": "@grafana/datapro",
+        "codeowner": "@grafana/grafana-dashboards-edit",
         "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
@@ -5859,16 +5874,16 @@
     {
       "metadata": {
         "name": "queryEditorNext",
-        "resourceVersion": "1794414145067",
+        "resourceVersion": "1795699798510",
         "creationTimestamp": "2026-01-23T18:40:47Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-11-11 16:22:25.067667 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-11-26 13:29:58.510529 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables next generation query editor experience",
         "stage": "GA",
-        "codeowner": "@grafana/datapro",
+        "codeowner": "@grafana/grafana-dashboards-edit",
         "frontend": true,
         "expression": "true"
       }
@@ -5890,13 +5905,16 @@
     {
       "metadata": {
         "name": "queryHistory.localOnly",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-05-29T14:58:02Z"
+        "resourceVersion": "1795699798510",
+        "creationTimestamp": "2026-05-29T14:58:02Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-26 13:29:58.510529 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Store query history in browser IndexedDB instead of server-side",
         "stage": "experimental",
-        "codeowner": "@grafana/datapro",
+        "codeowner": "@grafana/sharing-squad",
         "frontend": true,
         "expression": "false"
       }
@@ -5904,13 +5922,16 @@
     {
       "metadata": {
         "name": "queryHistory.recentQueriesUI",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-05-29T14:58:02Z"
+        "resourceVersion": "1795699798510",
+        "creationTimestamp": "2026-05-29T14:58:02Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-26 13:29:58.510529 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Replace the Query History drawer with a new Recent Queries modal UI",
         "stage": "experimental",
-        "codeowner": "@grafana/datapro",
+        "codeowner": "@grafana/sharing-squad",
         "frontend": true,
         "expression": "false"
       }
@@ -6042,13 +6063,16 @@
     {
       "metadata": {
         "name": "queryeditor.coauthoringUi",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-27T18:17:14Z"
+        "resourceVersion": "1795699798510",
+        "creationTimestamp": "2026-08-27T18:17:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-26 13:29:58.510529 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables AI-assisted coauthoring in code query editors",
         "stage": "experimental",
-        "codeowner": "@grafana/datapro",
+        "codeowner": "@grafana/grafana-dashboards-edit",
         "frontend": true,
         "expression": "false"
       }
@@ -6562,13 +6586,16 @@
     {
       "metadata": {
         "name": "smoothingTransformation",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-01-05T16:53:45Z"
+        "resourceVersion": "1795699798510",
+        "creationTimestamp": "2026-01-05T16:53:45Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-26 13:29:58.510529 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the ASAP smoothing transformation for time series data",
         "stage": "experimental",
-        "codeowner": "@grafana/datapro",
+        "codeowner": "@grafana/grafana-dashboards-edit",
         "frontend": true,
         "expression": "false"
       }
@@ -6630,13 +6657,16 @@
     {
       "metadata": {
         "name": "sqlExpressionsCodeMirror",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-05-14T13:29:34Z"
+        "resourceVersion": "1795699798510",
+        "creationTimestamp": "2026-05-14T13:29:34Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-26 13:29:58.510529 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables CodeMirror editor for SQL Expressions",
         "stage": "experimental",
-        "codeowner": "@grafana/datapro",
+        "codeowner": "@grafana/grafana-datasources-core-services",
         "frontend": true,
         "expression": "false"
       }
@@ -6644,13 +6674,16 @@
     {
       "metadata": {
         "name": "sqlExpressionsColumnAutoComplete",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-23T21:49:58Z"
+        "resourceVersion": "1795699798510",
+        "creationTimestamp": "2025-07-23T21:49:58Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-26 13:29:58.510529 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables column autocomplete for SQL Expressions",
         "stage": "experimental",
-        "codeowner": "@grafana/datapro",
+        "codeowner": "@grafana/grafana-datasources-core-services",
         "frontend": true,
         "expression": "false"
       }
@@ -6988,13 +7021,16 @@
     {
       "metadata": {
         "name": "transformationsEmptyPlaceholder",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-11-17T13:57:05Z"
+        "resourceVersion": "1795699798510",
+        "creationTimestamp": "2025-11-17T13:57:05Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-26 13:29:58.510529 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Show transformation quick-start cards in empty transformations state",
         "stage": "preview",
-        "codeowner": "@grafana/datapro",
+        "codeowner": "@grafana/grafana-dashboards-edit",
         "frontend": true,
         "expression": "false"
       }
