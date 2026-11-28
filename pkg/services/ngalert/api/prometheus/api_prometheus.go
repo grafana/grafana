@@ -342,6 +342,12 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		srv.provenanceStore,
 	)
 
+	ruleCount := 0
+	for _, group := range ruleResponse.Data.RuleGroups {
+		ruleCount += len(group.Rules)
+	}
+	srv.log.FromContext(ctx).Info("Rule statuses retrieved", "groups", len(ruleResponse.Data.RuleGroups), "rules", ruleCount)
+
 	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 }
 
