@@ -13,6 +13,10 @@ import (
 
 type ScopeResolverFunc func(scope string) (string, error)
 
+type ReportUIDResolver interface {
+	GetReportUIDByID(ctx context.Context, reportID int64, orgID int64) (uid string, found bool, err error)
+}
+
 func (s *Service) fetchServiceAccounts(ctx context.Context, ns types.NamespaceInfo) (map[int64]string, error) {
 	saIDs := make(map[int64]string)
 	query := legacy.ListServiceAccountsQuery{}
@@ -204,6 +208,46 @@ func isRoleManagementAction(action string) bool {
 	return false
 }
 
+func (s *Service) newReportNameResolver(ctx context.Context, ns types.NamespaceInfo) (ScopeResolverFunc, error) {
+	if s.reportUIDResolver == nil {
+		return nil, nil
+	}
+
+	return func(scope string) (string, error) {
+		reportIDStr := strings.TrimPrefix(scope, "reports:id:")
+		if reportIDStr == "*" {
+			return "reports:uid:*", nil
+		}
+
+		reportID, err := strconv.ParseInt(reportIDStr, 10, 64)
+		if err != nil {
+			return "", fmt.Errorf("invalid report ID %q: %w", reportIDStr, err)
+		}
+
+		if reportID <= 0 {
+			return "", fmt.Errorf("invalid report ID %q", reportIDStr)
+		}
+
+		if err := s.validateLegacyScopeNamespace(ns); err != nil {
+			return "", err
+		}
+
+		uid, found, err := s.reportUIDResolver.GetReportUIDByID(ctx, reportID, ns.OrgID)
+		if err != nil {
+			return "", err
+		}
+		if !found || uid == "" {
+			return "", nil
+		}
+
+		if strings.ContainsAny(uid, ":*?") {
+			return "", fmt.Errorf("invalid report UID %q", uid)
+		}
+
+		return "reports:uid:" + uid, nil
+	}, nil
+}
+
 func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, action, scopePrefix string) (ScopeResolverFunc, error) {
 	if scopePrefix == "teams:id:" {
 		return s.newTeamNameResolver(ctx, ns)
@@ -223,12 +267,15 @@ func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, acti
 	if scopePrefix == "users:id:" {
 		return s.newUserNameResolver(ctx, ns)
 	}
+	if scopePrefix == "reports:id:" {
+		return s.newReportNameResolver(ctx, ns)
+	}
 	// No resolver found for the given scope prefix.
 	return nil, nil
 }
 
 // resolveScopeMap translates scopes like "teams:id:1" to "teams:uid:t1".
-// It assumes only one scope resolver is needed for a given scope map, based on the first valid scope encountered.
+// It uses the first prefix with a resolver; UID scopes must not stop ID resolution.
 // The action the scopes were granted on decides whether permissions:type:delegate expands to the wildcard.
 func (s *Service) resolveScopeMap(ctx context.Context, ns types.NamespaceInfo, action string, scopeMap map[string]bool) (map[string]bool, error) {
 	var (
@@ -253,7 +300,8 @@ func (s *Service) resolveScopeMap(ctx context.Context, ns types.NamespaceInfo, a
 				return nil, err
 			}
 			if scopeResolver == nil {
-				break // No resolver found for this prefix
+				prefix = ""
+				continue // A later scope may have a resolver.
 			}
 		}
 
