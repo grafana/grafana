@@ -49,6 +49,7 @@ export const setupXAxisPan = (
 
   let activeMoveListener: ((e: MouseEvent) => void) | null = null;
   let activeUpListener: ((e: MouseEvent) => void) | null = null;
+  let activeDocument = xAxisEl.ownerDocument;
 
   const handleMouseEnter = () => {
     xAxisEl.style.cursor = 'grab';
@@ -59,7 +60,11 @@ export const setupXAxisPan = (
   };
 
   const handleMouseDown = (e: Event) => {
-    if (!(e instanceof MouseEvent)) {
+    // The chart can render in another window than this one, such as a Document Picture-in-Picture window, and can move
+    // there after it's set up. Its mouse events, and the moves and release of a drag, happen in that window.
+    const plotDocument = xAxisEl.ownerDocument;
+    const plotWindow = plotDocument.defaultView ?? window;
+    if (!(e instanceof plotWindow.MouseEvent)) {
       return;
     }
     e.preventDefault();
@@ -105,17 +110,18 @@ export const setupXAxisPan = (
         config.setState({ isPanning: false });
       }
 
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
+      plotDocument.removeEventListener('mousemove', onMove);
+      plotDocument.removeEventListener('mouseup', onUp);
       activeMoveListener = null;
       activeUpListener = null;
     };
 
     activeMoveListener = onMove;
     activeUpListener = onUp;
+    activeDocument = plotDocument;
 
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
+    plotDocument.addEventListener('mousemove', onMove);
+    plotDocument.addEventListener('mouseup', onUp);
   };
 
   xAxisEl.addEventListener('mouseenter', handleMouseEnter);
@@ -128,10 +134,10 @@ export const setupXAxisPan = (
     xAxisEl.removeEventListener('mousedown', handleMouseDown);
 
     if (activeMoveListener) {
-      document.removeEventListener('mousemove', activeMoveListener);
+      activeDocument.removeEventListener('mousemove', activeMoveListener);
     }
     if (activeUpListener) {
-      document.removeEventListener('mouseup', activeUpListener);
+      activeDocument.removeEventListener('mouseup', activeUpListener);
     }
   };
 };
