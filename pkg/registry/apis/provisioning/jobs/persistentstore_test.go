@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"context"
 	"errors"
 	"testing"
 	"time"
@@ -37,7 +36,7 @@ func TestClaim_StampsOwnerToken(t *testing.T) {
 	fakeClient := newTestClientset()
 	store := newTestStore(fakeClient)
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
@@ -61,7 +60,7 @@ func TestClaim_AlreadyClaimed(t *testing.T) {
 	fakeClient := newTestClientset()
 	store := newTestStore(fakeClient)
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
@@ -94,7 +93,7 @@ func TestClaim_RecordsContendedWhenAlreadyClaimed(t *testing.T) {
 	fakeClient := newTestClientset()
 	store := newStoreWithFreshQueueMetrics(fakeClient)
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
@@ -122,7 +121,7 @@ func TestClaim_NotFound(t *testing.T) {
 	fakeClient := newTestClientset()
 	store := newTestStore(fakeClient)
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	claimed, rollback, err := store.Claim(ctx, "stacks-123", "no-such-job", "0")
@@ -141,7 +140,7 @@ func TestClaim_RetriesOnConflict(t *testing.T) {
 	fakeClient := clientset.ProvisioningV0alpha1()
 	store := newTestStore(fakeClient)
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
@@ -175,7 +174,7 @@ func TestClaim_ConflictThenClaimedByOther(t *testing.T) {
 	fakeClient := clientset.ProvisioningV0alpha1()
 	store := newTestStore(fakeClient)
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
@@ -232,7 +231,7 @@ func TestClaim_RollbackSkipsJobOwnedByAnother(t *testing.T) {
 	fakeClient := newTestClientset()
 	store := newTestStore(fakeClient)
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
@@ -269,7 +268,7 @@ func TestRenewLease_LostToAnotherOwner(t *testing.T) {
 	fakeClient := newTestClientset()
 	store := newTestStore(fakeClient)
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	// The store's job is claimed by owner-B.
@@ -303,7 +302,7 @@ func TestRenewLease_LostToReincarnatedJob(t *testing.T) {
 	fakeClient := newTestClientset()
 	store := newTestStore(fakeClient)
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	created, err := fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
@@ -336,7 +335,7 @@ func TestComplete_RefusesJobOwnedByAnother(t *testing.T) {
 	fakeClient := newTestClientset()
 	store := newTestStore(fakeClient)
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	// The store holds a job now owned by owner-B (a reincarnation with a new UID).
@@ -384,7 +383,7 @@ func TestComplete_SucceedsForOwner(t *testing.T) {
 	fakeClient := newTestClientset()
 	store := newTestStore(fakeClient)
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	created, err := fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
@@ -442,7 +441,7 @@ func TestClaim_RecordsClaimMetrics(t *testing.T) {
 	fakeClient := newTestClientset()
 	store := newStoreWithFreshQueueMetrics(fakeClient)
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	// Claiming a job that does not exist returns an error and records no win.
@@ -480,7 +479,7 @@ func TestClaim_WaitRecordedOnlyOnSuccessfulClaim(t *testing.T) {
 	})
 	store := newStoreWithFreshQueueMetrics(cs.ProvisioningV0alpha1())
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	_, err = cs.ProvisioningV0alpha1().Jobs("stacks-123").Create(ctx, &provisioning.Job{
@@ -510,7 +509,7 @@ func TestClaim_RecordsErrorOnUpdateFailure(t *testing.T) {
 	})
 	store := newStoreWithFreshQueueMetrics(cs.ProvisioningV0alpha1())
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	_, err = cs.ProvisioningV0alpha1().Jobs("stacks-123").Create(ctx, &provisioning.Job{
@@ -542,7 +541,7 @@ func TestRenewLease_StaleResourceVersion(t *testing.T) {
 		},
 	}
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	created, err := fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
@@ -592,7 +591,7 @@ func TestRenewLease_ResourceVersionProgresses(t *testing.T) {
 		},
 	}
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	created, err := fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
@@ -643,7 +642,7 @@ func TestRenewLease_ThenUpdateDoesNotConflict(t *testing.T) {
 		},
 	}
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-123")
 	require.NoError(t, err)
 
 	created, err := fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{

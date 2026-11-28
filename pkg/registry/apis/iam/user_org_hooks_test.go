@@ -225,11 +225,11 @@ func TestBeginUserUpdate(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{mutateCallback: testRoleChange}
 
-		finishFunc, err := b.BeginUserUpdate(context.Background(), &newUser, &oldUser, nil)
+		finishFunc, err := b.BeginUserUpdate(t.Context(), &newUser, &oldUser, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finishFunc)
 
-		finishFunc(context.Background(), true)
+		finishFunc(t.Context(), true)
 		wg.Wait()
 	})
 
@@ -271,11 +271,11 @@ func TestBeginUserUpdate(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{mutateCallback: testRemoveRole}
 
-		finishFunc, err := b.BeginUserUpdate(context.Background(), &newUser, &oldUser, nil)
+		finishFunc, err := b.BeginUserUpdate(t.Context(), &newUser, &oldUser, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finishFunc)
 
-		finishFunc(context.Background(), true)
+		finishFunc(t.Context(), true)
 		wg.Wait()
 	})
 
@@ -324,11 +324,11 @@ func TestBeginUserUpdate(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{mutateCallback: testAddRole}
 
-		finishFunc, err := b.BeginUserUpdate(context.Background(), &newUser, &oldUser, nil)
+		finishFunc, err := b.BeginUserUpdate(t.Context(), &newUser, &oldUser, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finishFunc)
 
-		finishFunc(context.Background(), true)
+		finishFunc(t.Context(), true)
 		wg.Wait()
 	})
 
@@ -353,7 +353,7 @@ func TestBeginUserUpdate(t *testing.T) {
 			},
 		}
 
-		finishFunc, err := b.BeginUserUpdate(context.Background(), &newUser, &oldUser, nil)
+		finishFunc, err := b.BeginUserUpdate(t.Context(), &newUser, &oldUser, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finishFunc) // Hooks must always return a non-nil FinishFunc
 	})
@@ -387,12 +387,12 @@ func TestBeginUserUpdate(t *testing.T) {
 
 		b.zClient = &FakeZanzanaClient{mutateCallback: testNoCall}
 
-		finishFunc, err := b.BeginUserUpdate(context.Background(), &newUser, &oldUser, nil)
+		finishFunc, err := b.BeginUserUpdate(t.Context(), &newUser, &oldUser, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finishFunc)
 
 		// Call with success=false - should not trigger zanzana write
-		finishFunc(context.Background(), false)
+		finishFunc(t.Context(), false)
 		require.Equal(t, 0, callCount, "zanzana should not be called when update fails")
 	})
 
@@ -423,7 +423,7 @@ func TestBeginUserUpdate(t *testing.T) {
 			},
 		}
 
-		finishFunc, err := builder.BeginUserUpdate(context.Background(), &newUser, &oldUser, nil)
+		finishFunc, err := builder.BeginUserUpdate(t.Context(), &newUser, &oldUser, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finishFunc) // Hooks must always return a non-nil FinishFunc
 	})

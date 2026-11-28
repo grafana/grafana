@@ -31,7 +31,7 @@ func TestSubQueryConnectWhenDatasourceNotFound(t *testing.T) {
 	}
 
 	mr := mockResponder{}
-	_, err := sqr.Connect(context.Background(), "dsname-that-does-not-exist", nil, mr)
+	_, err := sqr.Connect(t.Context(), "dsname-that-does-not-exist", nil, mr)
 	require.Error(t, err)
 	var statusErr *k8serrors.StatusError
 	require.True(t, errors.As(err, &statusErr))
@@ -156,7 +156,7 @@ func executeSubQuery(t *testing.T, queryErr error) *recordingResponder {
 	}
 
 	responder := &recordingResponder{}
-	handler, err := sqr.Connect(context.Background(), "dsname", nil, responder)
+	handler, err := sqr.Connect(t.Context(), "dsname", nil, responder)
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(`{

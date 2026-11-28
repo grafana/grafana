@@ -68,8 +68,8 @@ func TestDashboardPreferencesAuthorizer(t *testing.T) {
 	// Grafana admins pass the namespace authorizer for every namespace.
 	grafanaAdmin := dashboardPreferencesRequester(authlib.TypeUser, "admin", authlib.RoleAdmin)
 	grafanaAdmin.IsGrafanaAdmin = true
-	_, service := identity.WithServiceIdentity(context.Background(), 1)
-	_, provisioning, err := identity.WithProvisioningIdentity(context.Background(), "stacks-1")
+	_, service := identity.WithServiceIdentity(t.Context(), 1)
+	_, provisioning, err := identity.WithProvisioningIdentity(t.Context(), "stacks-1")
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -153,7 +153,7 @@ func TestDashboardPreferencesAuthorizer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			setDashboardPreferencesToggle(t, !tt.flagOff)
-			ctx := identity.WithRequester(context.Background(), tt.requester)
+			ctx := identity.WithRequester(t.Context(), tt.requester)
 			for _, verb := range tt.verbs {
 				t.Run(verb, func(t *testing.T) {
 					attr := dashboardPreferencesAuthzAttributes(verb, tt.resName)
@@ -193,7 +193,7 @@ func TestDashboardPreferencesAuthorizer(t *testing.T) {
 		} {
 			t.Run(tt.verb, func(t *testing.T) {
 				var logs bytes.Buffer
-				ctx := logging.Context(identity.WithRequester(context.Background(), editor), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil)))
+				ctx := logging.Context(identity.WithRequester(t.Context(), editor), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil)))
 
 				decision, reason, err := failing.Authorize(ctx, dashboardPreferencesAuthzAttributes(tt.verb, "folder-f1"))
 
@@ -215,14 +215,14 @@ func TestDashboardPreferencesAuthorizer(t *testing.T) {
 	})
 
 	t.Run("a non-resource request has no opinion", func(t *testing.T) {
-		decision, _, err := authz.Authorize(identity.WithRequester(context.Background(), admin), authorizer.AttributesRecord{Verb: "get", Path: "/healthz"})
+		decision, _, err := authz.Authorize(identity.WithRequester(t.Context(), admin), authorizer.AttributesRecord{Verb: "get", Path: "/healthz"})
 
 		require.NoError(t, err)
 		require.Equal(t, authorizer.DecisionNoOpinion, decision)
 	})
 
 	t.Run("a request without a requester is denied", func(t *testing.T) {
-		decision, reason, err := authz.Authorize(context.Background(), dashboardPreferencesAuthzAttributes("get", "namespace"))
+		decision, reason, err := authz.Authorize(t.Context(), dashboardPreferencesAuthzAttributes("get", "namespace"))
 
 		require.Error(t, err)
 		require.Equal(t, authorizer.DecisionDeny, decision)
@@ -255,7 +255,7 @@ func TestDashboardPreferencesAuthorizerOrgTierTakesTheOrgPreferencesPermission(t
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := identity.WithRequester(context.Background(), tt.requester)
+			ctx := identity.WithRequester(t.Context(), tt.requester)
 			for _, verb := range tt.verbs {
 				t.Run(verb, func(t *testing.T) {
 					decision, reason, err := authz.Authorize(ctx, dashboardPreferencesAuthzAttributes(verb, "namespace"))
@@ -276,7 +276,7 @@ func TestDashboardPreferencesAuthorizerOrgTierTakesTheOrgPreferencesPermission(t
 	t.Run("a permission check that fails denies with a masked error", func(t *testing.T) {
 		checkErr := errors.New("permission backend failed")
 		failing := newDashboardPreferencesAuthorizer(&dashboardPreferencesAccessClient{}, actest.FakeAccessControl{ExpectedEvaluate: true, ExpectedErr: checkErr}, grafanaauthorizer.NewServiceAuthorizer())
-		ctx := identity.WithRequester(context.Background(), dashboardPreferencesRequester(authlib.TypeUser, "admin", authlib.RoleAdmin))
+		ctx := identity.WithRequester(t.Context(), dashboardPreferencesRequester(authlib.TypeUser, "admin", authlib.RoleAdmin))
 
 		decision, reason, err := failing.Authorize(ctx, dashboardPreferencesAuthzAttributes("update", "namespace"))
 
@@ -319,7 +319,7 @@ func TestDashboardPreferencesAuthorizerProvisioningRuleIsForAccessPolicyIdentiti
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := identity.WithRequester(context.Background(), tt.requester)
+			ctx := identity.WithRequester(t.Context(), tt.requester)
 			for _, verb := range tt.verbs {
 				t.Run(verb, func(t *testing.T) {
 					decision, reason, err := authz.Authorize(ctx, dashboardPreferencesAuthzAttributes(verb, "user-u1"))
@@ -344,8 +344,8 @@ func TestDashboardPreferencesAuthorizerNeverNoOpinion(t *testing.T) {
 		nil,
 		grafanaauthorizer.NewServiceAuthorizer(),
 	)
-	_, service := identity.WithServiceIdentity(context.Background(), 1)
-	_, provisioning, err := identity.WithProvisioningIdentity(context.Background(), "stacks-1")
+	_, service := identity.WithServiceIdentity(t.Context(), 1)
+	_, provisioning, err := identity.WithProvisioningIdentity(t.Context(), "stacks-1")
 	require.NoError(t, err)
 	requesters := []struct {
 		name      string
@@ -370,7 +370,7 @@ func TestDashboardPreferencesAuthorizerNeverNoOpinion(t *testing.T) {
 		t.Run(flag.name, func(t *testing.T) {
 			setDashboardPreferencesToggle(t, flag.enabled)
 			for _, r := range requesters {
-				ctx := identity.WithRequester(context.Background(), r.requester)
+				ctx := identity.WithRequester(t.Context(), r.requester)
 				for _, verb := range verbs {
 					for _, name := range names {
 						decision, _, err := authz.Authorize(ctx, dashboardPreferencesAuthzAttributes(verb, name))
@@ -387,7 +387,7 @@ func TestDashboardPreferencesAuthorizerNeverNoOpinion(t *testing.T) {
 func TestDashboardPreferencesFolderCheckRequest(t *testing.T) {
 	setDashboardPreferencesToggle(t, true)
 	requester := dashboardPreferencesRequester(authlib.TypeUser, "editor", authlib.RoleEditor)
-	ctx := identity.WithRequester(context.Background(), requester)
+	ctx := identity.WithRequester(t.Context(), requester)
 
 	tests := []struct{ verb, wantVerb string }{
 		{verb: "get", wantVerb: "get"},
@@ -423,7 +423,7 @@ func TestDashboardPreferencesFolderCheckRequest(t *testing.T) {
 		other := dashboardPreferencesRequester(authlib.TypeUser, "editor", authlib.RoleEditor)
 		other.Namespace = "stacks-2"
 
-		allowed, err := checkDashboardPreferencesFolderAccess(context.Background(), accessClient, other, "stacks-1", "f1", utils.VerbGet)
+		allowed, err := checkDashboardPreferencesFolderAccess(t.Context(), accessClient, other, "stacks-1", "f1", utils.VerbGet)
 
 		require.NoError(t, err)
 		require.False(t, allowed)
@@ -431,7 +431,7 @@ func TestDashboardPreferencesFolderCheckRequest(t *testing.T) {
 	})
 
 	t.Run("no access client denies", func(t *testing.T) {
-		allowed, err := checkDashboardPreferencesFolderAccess(context.Background(), nil, requester, "stacks-1", "f1", utils.VerbGet)
+		allowed, err := checkDashboardPreferencesFolderAccess(t.Context(), nil, requester, "stacks-1", "f1", utils.VerbGet)
 
 		require.NoError(t, err)
 		require.False(t, allowed)
@@ -441,7 +441,7 @@ func TestDashboardPreferencesFolderCheckRequest(t *testing.T) {
 func TestDashboardsAPIBuilderGetAuthorizerRoutesDashboardPreferences(t *testing.T) {
 	accessClient := &dashboardPreferencesAccessClient{grants: map[string][]string{"f1": {utils.VerbGet}}}
 	authz := (&DashboardsAPIBuilder{accessClient: accessClient}).GetAuthorizer()
-	ctx := identity.WithRequester(context.Background(), dashboardPreferencesRequester(authlib.TypeUser, "editor", authlib.RoleEditor))
+	ctx := identity.WithRequester(t.Context(), dashboardPreferencesRequester(authlib.TypeUser, "editor", authlib.RoleEditor))
 
 	t.Run("denies while the feature is off", func(t *testing.T) {
 		setDashboardPreferencesToggle(t, false)
@@ -457,7 +457,7 @@ func TestDashboardsAPIBuilderGetAuthorizerRoutesDashboardPreferences(t *testing.
 		setDashboardPreferencesToggle(t, true)
 		authz := (&DashboardsAPIBuilder{accessClient: accessClient, accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures())}).GetAuthorizer()
 		// Without the builder's access control, the editor role would decide and deny.
-		ctx := identity.WithRequester(context.Background(), dashboardPreferencesRequesterWith(authlib.TypeUser, authlib.RoleEditor, "orgs.preferences:write"))
+		ctx := identity.WithRequester(t.Context(), dashboardPreferencesRequesterWith(authlib.TypeUser, authlib.RoleEditor, "orgs.preferences:write"))
 
 		decision, reason, err := authz.Authorize(ctx, dashboardPreferencesAuthzAttributes("update", "namespace"))
 

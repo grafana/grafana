@@ -476,7 +476,7 @@ func TestPullRequestWorker_Process_StopsWhenHeadRefIsMissing(t *testing.T) {
 
 	spanRecorder := tracetest.NewSpanRecorder()
 	tracerProvider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(spanRecorder))
-	t.Cleanup(func() { require.NoError(t, tracerProvider.Shutdown(context.Background())) })
+	t.Cleanup(func() { require.NoError(t, tracerProvider.Shutdown(context.WithoutCancel(t.Context()))) })
 	ctx, parentSpan := tracerProvider.Tracer("test").Start(logging.Context(t.Context(), logging.DefaultLogger), "test")
 
 	err := worker.Process(ctx, repo, job, progress)

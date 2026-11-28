@@ -260,9 +260,9 @@ func TestValidateOnCreate(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			var ctx context.Context
 			if test.requester != nil && test.requester.Type == types.TypeServiceAccount {
-				ctx = identity.WithServiceIdentityContext(context.Background(), 1)
+				ctx = identity.WithServiceIdentityContext(t.Context(), 1)
 			} else {
-				ctx = identity.WithRequester(context.Background(), test.requester)
+				ctx = identity.WithRequester(t.Context(), test.requester)
 			}
 			err := ValidateOnCreate(ctx, test.obj, test.teamGetter, test.userGetter)
 			if test.errContains != "" {
@@ -554,7 +554,7 @@ func TestValidateOnUpdate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ctx := identity.WithRequester(context.Background(), test.requester)
+			ctx := identity.WithRequester(t.Context(), test.requester)
 			err := ValidateOnUpdate(ctx, test.obj, test.old)
 			assert.Equal(t, test.want, err)
 		})

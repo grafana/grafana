@@ -177,7 +177,7 @@ func TestConcurrentJobDriver_ProcessingAttributed(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			driver, reg, completed := newSuccessfulJobDriver(t, tt.natsBacked)
 
-			ctx, cancel := context.WithCancel(context.Background())
+			ctx, cancel := context.WithCancel(t.Context())
 			defer cancel()
 			runDone := make(chan error, 1)
 			go func() { runDone <- driver.Run(ctx) }()
@@ -226,7 +226,7 @@ func TestConcurrentJobDriver_AlreadyClaimedNotAttributed(t *testing.T) {
 		store, &MockRepoGetter{}, &MockHistoryWriter{}, reg, nil, false)
 	require.NoError(t, err)
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 	runDone := make(chan error, 1)
 	go func() { runDone <- driver.Run(ctx) }()
@@ -283,7 +283,7 @@ func TestConcurrentJobDriver_RecordsDeliveryLatency(t *testing.T) {
 		store, repoGetter, history, reg, nil, false, worker)
 	require.NoError(t, err)
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 	runDone := make(chan error, 1)
 	go func() { runDone <- driver.Run(ctx) }()

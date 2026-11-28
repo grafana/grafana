@@ -144,7 +144,7 @@ func TestLegacyStore_Create(t *testing.T) {
 			authinfoimpl.AuthInfoCacheKey(&login.GetAuthInfoQuery{UserId: 1, AuthId: "gh-123"}),
 		}
 		for _, key := range cacheKeys {
-			require.NoError(t, cache.Set(context.Background(), key, []byte("stale"), 0))
+			require.NoError(t, cache.Set(t.Context(), key, []byte("stale"), 0))
 		}
 
 		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"), cache)
@@ -157,7 +157,7 @@ func TestLegacyStore_Create(t *testing.T) {
 		require.Equal(t, "user-uid.oauth-github", authInfo.Name)
 
 		for _, key := range cacheKeys {
-			_, err := cache.Get(context.Background(), key)
+			_, err := cache.Get(t.Context(), key)
 			require.ErrorIs(t, err, remotecache.ErrCacheItemNotFound, "cache key %q should have been invalidated", key)
 		}
 	})
@@ -225,7 +225,7 @@ func TestLegacyStore_Update(t *testing.T) {
 			authinfoimpl.AuthInfoCacheKey(&login.GetAuthInfoQuery{UserId: 1, AuthId: "gh-123"}), // old AuthID, no module
 		}
 		for _, key := range cacheKeys {
-			require.NoError(t, cache.Set(context.Background(), key, []byte("stale"), 0))
+			require.NoError(t, cache.Set(t.Context(), key, []byte("stale"), 0))
 		}
 
 		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"), cache)
@@ -251,7 +251,7 @@ func TestLegacyStore_Update(t *testing.T) {
 		require.Equal(t, "ext-1", *authInfo.Spec.ExternalUID)
 
 		for _, key := range cacheKeys {
-			_, err := cache.Get(context.Background(), key)
+			_, err := cache.Get(t.Context(), key)
 			require.ErrorIs(t, err, remotecache.ErrCacheItemNotFound, "cache key %q should have been invalidated", key)
 		}
 	})
@@ -419,7 +419,7 @@ func TestLegacyStore_Delete(t *testing.T) {
 			authinfoimpl.AuthInfoCacheKey(&login.GetAuthInfoQuery{UserId: 1, AuthId: "gh-123"}),
 		}
 		for _, key := range cacheKeys {
-			require.NoError(t, cache.Set(context.Background(), key, []byte("stale"), 0))
+			require.NoError(t, cache.Set(t.Context(), key, []byte("stale"), 0))
 		}
 
 		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"), cache)
@@ -433,7 +433,7 @@ func TestLegacyStore_Delete(t *testing.T) {
 		require.Equal(t, "user-uid.oauth-github", authInfo.Name)
 
 		for _, key := range cacheKeys {
-			_, err := cache.Get(context.Background(), key)
+			_, err := cache.Get(t.Context(), key)
 			require.ErrorIs(t, err, remotecache.ErrCacheItemNotFound, "cache key %q should have been invalidated", key)
 		}
 	})

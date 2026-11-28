@@ -53,7 +53,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		historyWriter := &MockHistoryWriter{}
 
 		controller := NewJobCleanupController(store, historyWriter, 30*time.Second)
-		ctx := context.Background()
+		ctx := t.Context()
 
 		store.On("ListExpiredJobs", mock.Anything, mock.Anything, 100).Return([]*provisioning.Job{}, nil)
 
@@ -71,7 +71,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		historyWriter := &MockHistoryWriter{}
 
 		controller := NewJobCleanupController(store, historyWriter, 30*time.Second)
-		ctx := context.Background()
+		ctx := t.Context()
 
 		expectedErr := errors.New("list failed")
 		store.On("ListExpiredJobs", mock.Anything, mock.Anything, 100).Return(nil, expectedErr)
@@ -89,7 +89,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		historyWriter := &MockHistoryWriter{}
 
 		controller := NewJobCleanupController(store, historyWriter, 30*time.Second)
-		ctx := context.Background()
+		ctx := t.Context()
 
 		job := &provisioning.Job{
 			ObjectMeta: metav1.ObjectMeta{
@@ -129,7 +129,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		historyWriter := &MockHistoryWriter{}
 
 		controller := NewJobCleanupController(store, historyWriter, 30*time.Second)
-		ctx := context.Background()
+		ctx := t.Context()
 
 		job1 := &provisioning.Job{
 			ObjectMeta: metav1.ObjectMeta{
@@ -183,7 +183,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		historyWriter := &MockHistoryWriter{}
 
 		controller := NewJobCleanupController(store, historyWriter, 30*time.Second)
-		ctx := context.Background()
+		ctx := t.Context()
 
 		job := &provisioning.Job{
 			ObjectMeta: metav1.ObjectMeta{
@@ -216,7 +216,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		historyWriter := &MockHistoryWriter{}
 
 		controller := NewJobCleanupController(store, historyWriter, 30*time.Second)
-		ctx := context.Background()
+		ctx := t.Context()
 
 		job := &provisioning.Job{
 			ObjectMeta: metav1.ObjectMeta{
@@ -250,7 +250,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		fixedTime := time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC)
 		controller := NewJobCleanupController(store, historyWriter, 30*time.Second)
 		controller.clock = func() time.Time { return fixedTime }
-		ctx := context.Background()
+		ctx := t.Context()
 
 		job := &provisioning.Job{
 			ObjectMeta: metav1.ObjectMeta{
@@ -285,7 +285,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		historyWriter := &MockHistoryWriter{}
 
 		controller := NewJobCleanupController(store, historyWriter, 30*time.Second)
-		ctx := context.Background()
+		ctx := t.Context()
 
 		job := &provisioning.Job{
 			ObjectMeta: metav1.ObjectMeta{
@@ -324,7 +324,7 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		historyWriter := &MockHistoryWriter{}
 
 		controller := NewJobCleanupController(store, historyWriter, 30*time.Second)
-		ctx := context.Background()
+		ctx := t.Context()
 
 		jobs := []*provisioning.Job{
 			{
@@ -385,7 +385,7 @@ func TestJobCleanupController_Run(t *testing.T) {
 		// Override to even shorter for test
 		controller.cleanupInterval = 50 * time.Millisecond
 
-		ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+		ctx, cancel := context.WithTimeout(t.Context(), 200*time.Millisecond)
 		defer cancel()
 
 		// Expect initial cleanup + periodic cleanups (at least 2, maybe more depending on timing)
@@ -415,7 +415,7 @@ func TestJobCleanupController_Run(t *testing.T) {
 		controller := NewJobCleanupController(store, historyWriter, 30*time.Second)
 		controller.cleanupInterval = 1 * time.Second
 
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(t.Context())
 
 		// Expect initial cleanup
 		store.On("ListExpiredJobs", mock.Anything, mock.Anything, 100).Return([]*provisioning.Job{}, nil).Once()
@@ -441,7 +441,7 @@ func TestJobCleanupController_Run(t *testing.T) {
 		controller := NewJobCleanupController(store, historyWriter, 10*time.Second)
 		controller.cleanupInterval = 50 * time.Millisecond
 
-		ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
+		ctx, cancel := context.WithTimeout(t.Context(), 150*time.Millisecond)
 		defer cancel()
 
 		// Track successful calls after initial failure
@@ -474,7 +474,7 @@ func TestJobCleanupController_Run(t *testing.T) {
 		controller := NewJobCleanupController(store, historyWriter, 10*time.Second)
 		controller.cleanupInterval = 50 * time.Millisecond
 
-		ctx, cancel := context.WithTimeout(context.Background(), 125*time.Millisecond)
+		ctx, cancel := context.WithTimeout(t.Context(), 125*time.Millisecond)
 		defer cancel()
 
 		// Initial cleanup succeeds

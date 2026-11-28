@@ -327,7 +327,7 @@ func TestValidateOnCreate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := identity.WithRequester(
-				context.Background(),
+				t.Context(),
 				tt.requester,
 			)
 
@@ -764,7 +764,7 @@ func TestValidateOnUpdate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := identity.WithRequester(
-				context.Background(),
+				t.Context(),
 				tt.requester,
 			)
 

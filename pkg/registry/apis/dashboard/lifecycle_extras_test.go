@@ -53,7 +53,7 @@ func dashboardAttrs(op admission.Operation) admission.Attributes {
 }
 
 func TestLifecycleExtrasAdmission(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	boom := errors.New("lifecycle rejected")
 
 	t.Run("Mutate calls the lifecycle on dashboard create and update", func(t *testing.T) {

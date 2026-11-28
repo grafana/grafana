@@ -75,7 +75,7 @@ func TestDashboardsAPIBuilderValidateVariable(t *testing.T) {
 	generalScope := folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
 	builder := &DashboardsAPIBuilder{accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures())}
 	v := newCustomVariable("region", "region")
-	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+	ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
 			1: {ActionVariablesCreate: {generalScope}},
@@ -105,7 +105,7 @@ func TestDashboardsAPIBuilderValidateVariableCreateRequiresFolderPermission(t *t
 	v.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
 	generalScope := folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
 
-	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+	ctx := k8srequest.WithNamespace(t.Context(), "stacks-1")
 	ctx = identity.WithRequester(ctx, &identity.StaticRequester{
 		OrgID: 1,
 		// Root create only — not enough for folder-a.
@@ -143,7 +143,7 @@ func TestDashboardsAPIBuilderValidateVariableCreateMissingFolderHandlerReturnsEr
 	v.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
 	folderScope := folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)
 
-	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+	ctx := k8srequest.WithNamespace(t.Context(), "stacks-1")
 	ctx = identity.WithRequester(ctx, &identity.StaticRequester{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
@@ -176,7 +176,7 @@ func TestDashboardsAPIBuilderValidateVariableCreateMissingFolderHandlerReturnsEr
 
 func TestDashboardsAPIBuilderValidateVariableCreateMetadataNameContract(t *testing.T) {
 	generalScope := folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
-	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+	ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
 			1: {ActionVariablesCreate: {generalScope, folder.ScopeFoldersAll}},
@@ -207,7 +207,7 @@ func TestDashboardsAPIBuilderValidateVariableUpdateScopeChangeRejected(t *testin
 	newVariable := newCustomVariable("region", "region")
 	newVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "folder-a"})
 
-	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+	ctx := k8srequest.WithNamespace(t.Context(), "stacks-1")
 	ctx = identity.WithRequester(ctx, &identity.StaticRequester{
 		OrgRole: authlib.RoleEditor,
 		OrgID:   1,
@@ -229,7 +229,7 @@ func TestDashboardsAPIBuilderValidateVariableUpdateScopeChangeToGlobalRejected(t
 	oldVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "folder-a"})
 	newVariable := newCustomVariable("region", "region")
 
-	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+	ctx := k8srequest.WithNamespace(t.Context(), "stacks-1")
 	ctx = identity.WithRequester(ctx, &identity.StaticRequester{
 		OrgRole: authlib.RoleEditor,
 		OrgID:   1,
@@ -250,7 +250,7 @@ func TestDashboardsAPIBuilderValidateVariableUpdateRenameRejected(t *testing.T) 
 	oldVariable := newCustomVariable("region", "region")
 	newVariable := newCustomVariable("status", "region")
 
-	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+	ctx := k8srequest.WithNamespace(t.Context(), "stacks-1")
 	ctx = identity.WithRequester(ctx, &identity.StaticRequester{
 		OrgRole: authlib.RoleEditor,
 		OrgID:   1,
@@ -292,7 +292,7 @@ func TestVariableMutationPermissionsStackWide(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+			ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{
 				OrgID: 1,
 				Permissions: map[int64]map[string][]string{
 					1: tc.perms,
@@ -334,7 +334,7 @@ func TestVariableMutationPermissionsStandaloneAccessClient(t *testing.T) {
 			},
 		}
 
-		err := builder.Validate(identity.WithRequester(context.Background(), requester), buildVariableAttributesForOp(admission.Create, newVariable, nil), nil)
+		err := builder.Validate(identity.WithRequester(t.Context(), requester), buildVariableAttributesForOp(admission.Create, newVariable, nil), nil)
 		require.Error(t, err)
 		require.True(t, apierrors.IsForbidden(err))
 		require.Equal(t, authlib.CheckRequest{
@@ -356,7 +356,7 @@ func TestVariableMutationPermissionsStandaloneAccessClient(t *testing.T) {
 			},
 		}
 
-		err := builder.Validate(identity.WithRequester(context.Background(), requester), buildVariableAttributesForOp(admission.Create, newVariable, nil), nil)
+		err := builder.Validate(identity.WithRequester(t.Context(), requester), buildVariableAttributesForOp(admission.Create, newVariable, nil), nil)
 		require.NoError(t, err)
 	})
 
@@ -371,7 +371,7 @@ func TestVariableMutationPermissionsStandaloneAccessClient(t *testing.T) {
 			},
 		}
 
-		err := builder.Validate(identity.WithRequester(context.Background(), requester), buildVariableAttributesForOp(admission.Update, newVariable, oldVariable), nil)
+		err := builder.Validate(identity.WithRequester(t.Context(), requester), buildVariableAttributesForOp(admission.Update, newVariable, oldVariable), nil)
 		require.NoError(t, err)
 		require.Equal(t, accesscontrol.GeneralFolderUID, gotFolder)
 	})
@@ -390,7 +390,7 @@ func TestVariableMutationPermissionsStandaloneAccessClient(t *testing.T) {
 			folderClientProvider: &staticHandlerProvider{handler: &variableFolderAccessHandler{}},
 		}
 
-		ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+		ctx := k8srequest.WithNamespace(t.Context(), "stacks-1")
 		ctx = identity.WithRequester(ctx, requester)
 		err := builder.Validate(ctx, buildVariableAttributesForOp(admission.Create, folderVariable, nil), nil)
 		require.NoError(t, err)
@@ -402,7 +402,7 @@ func TestVariableMutationPermissionsStandaloneAccessClient(t *testing.T) {
 
 	t.Run("both accessControl and accessClient nil is forbidden", func(t *testing.T) {
 		builder := &DashboardsAPIBuilder{}
-		err := builder.Validate(identity.WithRequester(context.Background(), requester), buildVariableAttributesForOp(admission.Create, newVariable, nil), nil)
+		err := builder.Validate(identity.WithRequester(t.Context(), requester), buildVariableAttributesForOp(admission.Create, newVariable, nil), nil)
 		require.Error(t, err)
 		require.True(t, apierrors.IsForbidden(err))
 		require.Contains(t, err.Error(), "access control is not configured")
@@ -441,7 +441,7 @@ func TestVariableMutationPermissionsFolderScoped(t *testing.T) {
 				folderClientProvider: &staticHandlerProvider{handler: folderHandler},
 			}
 
-			ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+			ctx := k8srequest.WithNamespace(t.Context(), "stacks-1")
 			ctx = identity.WithRequester(ctx, &identity.StaticRequester{
 				OrgID: 1,
 				Permissions: map[int64]map[string][]string{
@@ -473,7 +473,7 @@ func TestVariableMutationPermissionsFolderScopedDryRun(t *testing.T) {
 			accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 			folderClientProvider: &staticHandlerProvider{handler: &variableFolderAccessHandler{}},
 		}
-		ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+		ctx := k8srequest.WithNamespace(t.Context(), "stacks-1")
 		ctx = identity.WithRequester(ctx, &identity.StaticRequester{
 			OrgID: 1,
 			Permissions: map[int64]map[string][]string{
@@ -504,7 +504,7 @@ func TestVariableMutationPermissionsFolderScopedDryRun(t *testing.T) {
 			accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 			folderClientProvider: &staticHandlerProvider{handler: &variableFolderAccessHandler{}},
 		}
-		ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+		ctx := k8srequest.WithNamespace(t.Context(), "stacks-1")
 		ctx = identity.WithRequester(ctx, &identity.StaticRequester{
 			OrgID: 1,
 			Permissions: map[int64]map[string][]string{
@@ -567,7 +567,7 @@ func TestVariableMutationPermissionsMissingFolder(t *testing.T) {
 				folderClientProvider: &staticHandlerProvider{handler: folderHandler},
 			}
 
-			ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+			ctx := k8srequest.WithNamespace(t.Context(), "stacks-1")
 			ctx = identity.WithRequester(ctx, &identity.StaticRequester{
 				OrgID: 1,
 				Permissions: map[int64]map[string][]string{

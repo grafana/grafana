@@ -1,7 +1,6 @@
 package folders
 
 import (
-	"context"
 	"os"
 	"testing"
 
@@ -55,32 +54,32 @@ func setKubernetesFolderCascadeDeleteToggle(t *testing.T, enabled bool) {
 func TestKubernetesFolderCascadeDeleteEnabled(t *testing.T) {
 	t.Run("disabled when toggle off", func(t *testing.T) {
 		setKubernetesFolderCascadeDeleteToggle(t, false)
-		require.False(t, kubernetesFolderCascadeDeleteEnabled(context.Background()))
+		require.False(t, kubernetesFolderCascadeDeleteEnabled(t.Context()))
 	})
 	t.Run("enabled when toggle on", func(t *testing.T) {
 		setKubernetesFolderCascadeDeleteToggle(t, true)
-		require.True(t, kubernetesFolderCascadeDeleteEnabled(context.Background()))
+		require.True(t, kubernetesFolderCascadeDeleteEnabled(t.Context()))
 	})
 }
 
 func TestGrafanaDashboardGlobalVariablesEnabled(t *testing.T) {
 	t.Run("disabled when toggle off", func(t *testing.T) {
 		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagGrafanaDashboardGlobalVariables: false})
-		require.False(t, grafanaDashboardGlobalVariablesEnabled(context.Background()))
+		require.False(t, grafanaDashboardGlobalVariablesEnabled(t.Context()))
 	})
 	t.Run("enabled when toggle on", func(t *testing.T) {
 		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagGrafanaDashboardGlobalVariables: true})
-		require.True(t, grafanaDashboardGlobalVariablesEnabled(context.Background()))
+		require.True(t, grafanaDashboardGlobalVariablesEnabled(t.Context()))
 	})
 }
 
 func TestFolderAsyncCascadeDeleteEnabled(t *testing.T) {
 	t.Run("disabled when toggle off", func(t *testing.T) {
 		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: false})
-		require.False(t, folderAsyncCascadeDeleteEnabled(context.Background()))
+		require.False(t, folderAsyncCascadeDeleteEnabled(t.Context()))
 	})
 	t.Run("enabled when toggle on", func(t *testing.T) {
 		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: true})
-		require.True(t, folderAsyncCascadeDeleteEnabled(context.Background()))
+		require.True(t, folderAsyncCascadeDeleteEnabled(t.Context()))
 	})
 }

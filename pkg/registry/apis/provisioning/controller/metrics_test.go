@@ -137,13 +137,13 @@ func TestHealthCheckMetrics(t *testing.T) {
 							testError:  testErr,
 						}
 						checker := NewRepositoryHealthChecker(nil, repository.NewTester(), recorder)
-						result, status, err = checker.refreshHealth(context.Background(), repo, existingStatus)
+						result, status, err = checker.refreshHealth(t.Context(), repo, existingStatus)
 					} else {
 						conn := &provisioning.Connection{}
 						tester := NewMockConnectionTester(t)
 						tester.EXPECT().TestConnection(mock.Anything, conn).Return(tt.result, testErr).Once()
 						checker := NewConnectionHealthChecker(tester, recorder)
-						result, status, err = checker.refreshHealth(context.Background(), conn, existingStatus)
+						result, status, err = checker.refreshHealth(t.Context(), conn, existingStatus)
 					}
 
 					if tt.err != nil {

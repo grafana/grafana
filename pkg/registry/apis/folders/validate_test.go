@@ -503,7 +503,7 @@ func TestValidateCreate(t *testing.T) {
 				maxDepth = 5
 			}
 
-			ctx := request.WithNamespace(context.Background(), "default")
+			ctx := request.WithNamespace(t.Context(), "default")
 			if tt.serviceAccount {
 				ctx = identity.WithRequester(ctx, &user.SignedInUser{UserID: 1, OrgID: 1, IsServiceAccount: true})
 			}
@@ -559,7 +559,7 @@ func TestValidateCreateDetachedAncestors(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{Name: "new", Annotations: map[string]string{utils.AnnoKeyFolder: "C"}},
 					Spec:       folders.FolderSpec{Title: "new"},
 				}
-				ctx := request.WithNamespace(context.Background(), "default")
+				ctx := request.WithNamespace(t.Context(), "default")
 				err := validateOnCreate(ctx, obj, newCreateParentsGetter(storage), 5, dryRun)
 				if dryRun || tc.brokenAt != "C" {
 					require.NoError(t, err)
@@ -1134,7 +1134,7 @@ func TestValidateUpdate(t *testing.T) {
 			m := grafanarest.NewMockStorage(t)
 			if tt.parents != nil {
 				for _, v := range tt.parents.Items {
-					m.On("Get", context.Background(), v.Name, &metav1.GetOptions{}).Return(&folders.Folder{
+					m.On("Get", t.Context(), v.Name, &metav1.GetOptions{}).Return(&folders.Folder{
 						ObjectMeta: metav1.ObjectMeta{
 							Name: v.Name,
 						}, Spec: folders.FolderSpec{
@@ -1145,10 +1145,10 @@ func TestValidateUpdate(t *testing.T) {
 			}
 			for i := range tt.allFolders {
 				f := tt.allFolders[i]
-				m.On("Get", context.Background(), f.Name, &metav1.GetOptions{}).Return(&f, nil).Maybe()
+				m.On("Get", t.Context(), f.Name, &metav1.GetOptions{}).Return(&f, nil).Maybe()
 			}
 
-			err := validateOnUpdate(context.Background(), tt.folder, tt.old, m,
+			err := validateOnUpdate(t.Context(), tt.folder, tt.old, m,
 				func(ctx context.Context, folder *folders.Folder) (*folders.FolderInfoList, error) {
 					return tt.parents, tt.parentsError
 				},
@@ -1568,7 +1568,7 @@ func TestValidateDelete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateOnDelete(context.Background(), tt.folder, tt.searcher, tt.deleteOptions, tt.cascadeDeleteEnabled, nil)
+			err := validateOnDelete(t.Context(), tt.folder, tt.searcher, tt.deleteOptions, tt.cascadeDeleteEnabled, nil)
 
 			if tt.expectedErr == "" {
 				require.NoError(t, err)
@@ -1737,7 +1737,7 @@ func TestGetChildrenBatchPagination(t *testing.T) {
 
 	t.Run("hasMore true via TotalHits when more pages remain (bleve path)", func(t *testing.T) {
 		searcher := &mockSearchClient{folders: makeFolders(5), paginate: true}
-		children, hasMore, err := getChildrenBatch(context.Background(), searcher, namespace, []string{parent}, 2, 0)
+		children, hasMore, err := getChildrenBatch(t.Context(), searcher, namespace, []string{parent}, 2, 0)
 		require.NoError(t, err)
 		require.Len(t, children, 2)
 		require.True(t, hasMore)
@@ -1747,7 +1747,7 @@ func TestGetChildrenBatchPagination(t *testing.T) {
 
 	t.Run("hasMore false on the final page", func(t *testing.T) {
 		searcher := &mockSearchClient{folders: makeFolders(5), paginate: true}
-		children, hasMore, err := getChildrenBatch(context.Background(), searcher, namespace, []string{parent}, 2, 4)
+		children, hasMore, err := getChildrenBatch(t.Context(), searcher, namespace, []string{parent}, 2, 4)
 		require.NoError(t, err)
 		require.Len(t, children, 1)
 		require.False(t, hasMore)
@@ -1755,7 +1755,7 @@ func TestGetChildrenBatchPagination(t *testing.T) {
 
 	t.Run("hasMore false when only one page exists and neither signal indicates more", func(t *testing.T) {
 		searcher := &mockSearchClient{folders: makeFolders(2), paginate: true}
-		children, hasMore, err := getChildrenBatch(context.Background(), searcher, namespace, []string{parent}, 10, 0)
+		children, hasMore, err := getChildrenBatch(t.Context(), searcher, namespace, []string{parent}, 10, 0)
 		require.NoError(t, err)
 		require.Len(t, children, 2)
 		require.False(t, hasMore)
@@ -1782,7 +1782,7 @@ func TestCheckSubtreeDepthIteratesAllPages(t *testing.T) {
 	searcher := &mockSearchClient{folders: all, paginate: true}
 	// remainingDepth is generous and children have no further descendants, so the
 	// recursion bottoms out cleanly and we only exercise the sibling pagination loop.
-	err := checkSubtreeDepth(context.Background(), searcher, namespace, parent, 10, 20)
+	err := checkSubtreeDepth(t.Context(), searcher, namespace, parent, 10, 20)
 	require.NoError(t, err)
 	// 1 call for the first 1000 children + 1 call for the final partial page,
 	// plus 1 recursive call per page that finds no grandchildren = 4 total.
@@ -1832,7 +1832,7 @@ func TestGetChildrenBatchSearchErrors(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			searcher := &mockSearchClient{searchErr: tt.err}
 
-			children, hasMore, err := getChildrenBatch(context.Background(), searcher, "default", []string{"parent"}, 10, 0)
+			children, hasMore, err := getChildrenBatch(t.Context(), searcher, "default", []string{"parent"}, 10, 0)
 
 			require.Empty(t, children)
 			require.False(t, hasMore)
@@ -2091,7 +2091,7 @@ func TestCheckMoveAccess(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := identity.WithRequester(context.Background(), &user.SignedInUser{
+			ctx := identity.WithRequester(t.Context(), &user.SignedInUser{
 				UserID: 1,
 				OrgID:  orgID,
 			})
@@ -2120,7 +2120,7 @@ func TestCheckMoveAccess(t *testing.T) {
 	}
 
 	t.Run("sanitizes BatchCheck transport error", func(t *testing.T) {
-		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: orgID})
+		ctx := identity.WithRequester(t.Context(), &user.SignedInUser{UserID: 1, OrgID: orgID})
 		mock := newMockAccessClient(nil)
 		mock.batchCheckErr = fmt.Errorf("boom")
 		err := checkMoveAccess(ctx, namespace, sourceUID, oldParentUID, newParentUID, mock)
@@ -2130,7 +2130,7 @@ func TestCheckMoveAccess(t *testing.T) {
 	})
 
 	t.Run("fails closed when BatchCheck omits the write-destination result", func(t *testing.T) {
-		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: orgID})
+		ctx := identity.WithRequester(t.Context(), &user.SignedInUser{UserID: 1, OrgID: orgID})
 		mock := newMockAccessClient([]allow{canCreateFolderInNew})
 		mock.dropResultFor = "writeDest"
 		err := checkMoveAccess(ctx, namespace, sourceUID, oldParentUID, newParentUID, mock)
@@ -2138,7 +2138,7 @@ func TestCheckMoveAccess(t *testing.T) {
 	})
 
 	t.Run("fails closed when BatchCheck omits an escalation verb result", func(t *testing.T) {
-		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: orgID})
+		ctx := identity.WithRequester(t.Context(), &user.SignedInUser{UserID: 1, OrgID: orgID})
 		mock := newMockAccessClient([]allow{canCreateFolderInNew})
 		mock.dropResultFor = "newFolder-" + utils.VerbGet
 		err := checkMoveAccess(ctx, namespace, sourceUID, oldParentUID, newParentUID, mock)
@@ -2221,7 +2221,7 @@ func TestValidateOnDeleteUsesTheFinalizerDecision(t *testing.T) {
 
 	// Delete admission sees the stored folder, while the delete persists the decision: a forced delete
 	// bypasses the empty check only for a folder that ends up with the finalizer.
-	require.NoError(t, validateOnDelete(withCascadeFinalizerOnDelete(context.Background(), true), folder(), notEmpty, force, false, nil))
-	require.ErrorContains(t, validateOnDelete(withCascadeFinalizerOnDelete(context.Background(), false), folder(cascade), notEmpty, force, false, nil), "folder.not-empty")
-	require.NoError(t, validateOnDelete(context.Background(), folder(cascade), notEmpty, force, false, nil), "without a decision the stored folder decides")
+	require.NoError(t, validateOnDelete(withCascadeFinalizerOnDelete(t.Context(), true), folder(), notEmpty, force, false, nil))
+	require.ErrorContains(t, validateOnDelete(withCascadeFinalizerOnDelete(t.Context(), false), folder(cascade), notEmpty, force, false, nil), "folder.not-empty")
+	require.NoError(t, validateOnDelete(t.Context(), folder(cascade), notEmpty, force, false, nil), "without a decision the stored folder decides")
 }

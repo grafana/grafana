@@ -55,7 +55,7 @@ func TestDataSourceCreateAdmission(t *testing.T) {
 				ds, nil, resourceInfo.GroupVersionKind(), ds.Namespace, ds.Name,
 				resourceInfo.GroupVersionResource(), "", admission.Create, &metav1.CreateOptions{}, false, nil,
 			)
-			err := admissionPlugin.Validate(context.Background(), attrs, nil)
+			err := admissionPlugin.Validate(t.Context(), attrs, nil)
 			if tt.wantField == "" {
 				require.NoError(t, err)
 				return
@@ -93,7 +93,7 @@ func TestDataSourceCreateAdmission(t *testing.T) {
 				ds, nil, resourceInfo.GroupVersionKind(), ds.Namespace, ds.Name,
 				gvr, tt.subresource, tt.operation, &metav1.CreateOptions{}, false, nil,
 			)
-			require.NoError(t, admissionPlugin.Validate(context.Background(), attrs, nil))
+			require.NoError(t, admissionPlugin.Validate(t.Context(), attrs, nil))
 		})
 	}
 }
@@ -113,7 +113,7 @@ func TestDataSourceCreateAdmissionFlagDisabled(t *testing.T) {
 		ds, nil, resourceInfo.GroupVersionKind(), ds.Namespace, ds.Name,
 		resourceInfo.GroupVersionResource(), "", admission.Create, &metav1.CreateOptions{}, false, nil,
 	)
-	require.NoError(t, admissionPlugin.Validate(context.Background(), attrs, nil))
+	require.NoError(t, admissionPlugin.Validate(t.Context(), attrs, nil))
 }
 
 type countingCreateDatasourceProvider struct {
@@ -138,7 +138,7 @@ func TestLegacyStorageCreateGuardBeforeWrite(t *testing.T) {
 			"jsonData": map[string]any{"teamHttpHeaders": []any{}},
 		}},
 	}
-	_, err := store.Create(context.Background(), blocked, nil, &metav1.CreateOptions{})
+	_, err := store.Create(t.Context(), blocked, nil, &metav1.CreateOptions{})
 	require.True(t, apierrors.IsInvalid(err), "expected an invalid-object response: %v", err)
 	require.Zero(t, provider.creates)
 
@@ -148,7 +148,7 @@ func TestLegacyStorageCreateGuardBeforeWrite(t *testing.T) {
 			"jsonData": map[string]any{"httpMethod": "POST"},
 		}},
 	}
-	_, err = store.Create(context.Background(), allowed, nil, &metav1.CreateOptions{})
+	_, err = store.Create(t.Context(), allowed, nil, &metav1.CreateOptions{})
 	require.NoError(t, err)
 	require.Equal(t, 1, provider.creates)
 }
@@ -164,7 +164,7 @@ func TestLegacyStorageCreateGuardFlagDisabled(t *testing.T) {
 			"jsonData": map[string]any{"teamHttpHeaders": []any{}},
 		}},
 	}
-	_, err := store.Create(context.Background(), ds, nil, &metav1.CreateOptions{})
+	_, err := store.Create(t.Context(), ds, nil, &metav1.CreateOptions{})
 	require.NoError(t, err)
 	require.Equal(t, 1, provider.creates)
 }
@@ -202,7 +202,7 @@ func TestDataSourceUpdateAdmission(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			old := updateGuardDataSource("example", tt.oldJSON)
 			ds := updateGuardDataSource("example", tt.newJSON)
-			ctx := request.WithRequestInfo(context.Background(), &request.RequestInfo{Verb: tt.verb})
+			ctx := request.WithRequestInfo(t.Context(), &request.RequestInfo{Verb: tt.verb})
 			attrs := admission.NewAttributesRecord(ds, old, resourceInfo.GroupVersionKind(), ds.Namespace, ds.Name,
 				resourceInfo.GroupVersionResource(), "", admission.Update, &metav1.UpdateOptions{}, false, nil)
 			err := admissionPlugin.Admit(ctx, attrs, nil)
@@ -234,7 +234,7 @@ func TestDataSourceUpdateAdmissionFlagDisabled(t *testing.T) {
 	ds := updateGuardDataSource("example", map[string]any{"teamHttpHeaders": []any{}})
 	attrs := admission.NewAttributesRecord(ds, old, resourceInfo.GroupVersionKind(), ds.Namespace, ds.Name,
 		resourceInfo.GroupVersionResource(), "", admission.Update, &metav1.UpdateOptions{}, false, nil)
-	require.NoError(t, admissionPlugin.Admit(context.Background(), attrs, nil))
+	require.NoError(t, admissionPlugin.Admit(t.Context(), attrs, nil))
 }
 
 func TestLegacyStorageUpdateGuardBeforeWrite(t *testing.T) {
@@ -245,13 +245,13 @@ func TestLegacyStorageUpdateGuardBeforeWrite(t *testing.T) {
 	header := map[string]any{"team-1": "sensitive-value"}
 	provider := &countingUpdateDatasourceProvider{stored: updateGuardDataSource("example", map[string]any{"teamHttpHeaders": header})}
 	store := &legacyStorage{datasources: provider, resourceInfo: &resourceInfo}
-	ctx := request.WithRequestInfo(context.Background(), &request.RequestInfo{Verb: "patch"})
+	ctx := request.WithRequestInfo(t.Context(), &request.RequestInfo{Verb: "patch"})
 	removed := updateGuardDataSource("example", map[string]any{"httpMethod": "POST"})
 	_, _, err := store.Update(ctx, "example", admittedUpdateInfo(removed, resourceInfo, admissionPlugin), nil, nil, false, &metav1.UpdateOptions{})
 	require.True(t, apierrors.IsInvalid(err), "expected an invalid-object response: %v", err)
 	require.Zero(t, provider.updates)
 
-	ctx = request.WithRequestInfo(context.Background(), &request.RequestInfo{Verb: "update"})
+	ctx = request.WithRequestInfo(t.Context(), &request.RequestInfo{Verb: "update"})
 	_, _, err = store.Update(ctx, "example", admittedUpdateInfo(removed, resourceInfo, admissionPlugin), nil, nil, false, &metav1.UpdateOptions{})
 	require.NoError(t, err)
 	require.Equal(t, 1, provider.updates)
@@ -295,7 +295,7 @@ func TestLegacyStorageUpdateGuardPatchFormats(t *testing.T) {
 			require.NoError(t, json.Unmarshal(patched, &requested))
 			provider := &countingUpdateDatasourceProvider{stored: old.DeepCopy()}
 			store := &legacyStorage{datasources: provider, resourceInfo: &resourceInfo}
-			ctx := request.WithRequestInfo(context.Background(), &request.RequestInfo{Verb: "patch"})
+			ctx := request.WithRequestInfo(t.Context(), &request.RequestInfo{Verb: "patch"})
 			_, _, err = store.Update(ctx, "example", admittedUpdateInfo(&requested, resourceInfo, admissionPlugin), nil, nil, false, &metav1.UpdateOptions{})
 			if tt.blocked {
 				require.True(t, apierrors.IsInvalid(err), "expected an invalid-object response: %v", err)
@@ -327,7 +327,7 @@ func TestDataSourceUpdateGuardAllowsStaleUnifiedMirror(t *testing.T) {
 
 	requested := updateGuardDataSource("example", map[string]any{"teamHttpHeaders": header, "httpMethod": "POST"})
 	objInfo := admittedUpdateInfo(requested, resourceInfo, admissionPlugin)
-	ctx := request.WithRequestInfo(context.Background(), &request.RequestInfo{Verb: "update"})
+	ctx := request.WithRequestInfo(t.Context(), &request.RequestInfo{Verb: "update"})
 	_, _, err = store.Update(ctx, "example", objInfo, nil, nil, false, &metav1.UpdateOptions{})
 	require.NoError(t, err)
 	require.Equal(t, 1, provider.updates)
@@ -378,7 +378,7 @@ func TestDataSourceUpdateGuardDryRunUsesSQLState(t *testing.T) {
 			} else {
 				objInfo = admittedUpdateInfo(updateGuardDataSource("example", tt.requested), resourceInfo, admissionPlugin)
 			}
-			ctx := request.WithRequestInfo(context.Background(), &request.RequestInfo{Verb: tt.verb})
+			ctx := request.WithRequestInfo(t.Context(), &request.RequestInfo{Verb: tt.verb})
 			obj, _, err := store.Update(ctx, "example", objInfo, nil, nil, false, &metav1.UpdateOptions{DryRun: []string{metav1.DryRunAll}})
 			if tt.wantError {
 				require.True(t, apierrors.IsInvalid(err), "expected an invalid-object response: %v", err)
@@ -435,7 +435,7 @@ func TestDataSourceUpdateGuardAllowsStoredRulesDuringMirrorCreate(t *testing.T) 
 					resourceInfo.GroupVersionResource(), "", admission.Create, &metav1.CreateOptions{}, tc.dryRun, nil)
 				return admissionPlugin.Validate(ctx, attrs, nil)
 			}
-			ctx := request.WithRequestInfo(context.Background(), &request.RequestInfo{Verb: tc.verb})
+			ctx := request.WithRequestInfo(t.Context(), &request.RequestInfo{Verb: tc.verb})
 			options := &metav1.UpdateOptions{}
 			if tc.dryRun {
 				options.DryRun = []string{metav1.DryRunAll}
@@ -480,7 +480,7 @@ func TestDataSourceUpdateGuardUnifiedPrimary(t *testing.T) {
 
 	requested := updateGuardDataSource("example", map[string]any{"httpMethod": "POST"})
 	objInfo := admittedUpdateInfo(requested, resourceInfo, admissionPlugin)
-	ctx := request.WithRequestInfo(context.Background(), &request.RequestInfo{Verb: "update"})
+	ctx := request.WithRequestInfo(t.Context(), &request.RequestInfo{Verb: "update"})
 	obj, _, err := store.Update(ctx, "example", objInfo, nil, nil, false, &metav1.UpdateOptions{})
 	require.NoError(t, err)
 	require.Zero(t, provider.updates)

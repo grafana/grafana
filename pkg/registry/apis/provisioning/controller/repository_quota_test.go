@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -136,7 +135,7 @@ func TestRepositoryQuotaConditions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 
 			// Create mock repositories
 			repos := make([]*provisioning.Repository, tt.repoCount)
@@ -184,7 +183,7 @@ func TestRepositoryQuotaConditions(t *testing.T) {
 // cost; once the store can carry the deletion state again, excluding deleting
 // repositories flips them back.
 func TestRepositoryQuotaConditions_CountsDeletingRepos(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	namespace := "test-ns"
 
 	tests := []struct {
@@ -313,7 +312,7 @@ func TestRepositoryQuotaConditions_CountsDeletingRepos(t *testing.T) {
 // the repository must make the quota check count it; otherwise a repository
 // blocked over quota elsewhere reads as within quota here and gets unblocked.
 func TestRepositoryQuotaConditions_CountsTheRepositoryUnderReconciliation(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	existing := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "existing", ResourceVersion: "1"}}
 	added := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "added-elsewhere", ResourceVersion: "2"}}
 

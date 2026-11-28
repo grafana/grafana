@@ -181,7 +181,7 @@ func newFreshnessRecorder(t *testing.T, resourceName string) (FreshnessRecorder,
 
 func TestFreshnessRecorder_Observe(t *testing.T) {
 	const res = "repositories"
-	ctx := context.Background()
+	ctx := t.Context()
 	notFound := apierrors.NewNotFound(schema.GroupResource{Resource: res}, "r")
 
 	t.Run("a read at or above the announced version is current", func(t *testing.T) {
@@ -332,7 +332,7 @@ func (s stubRepositoryGetter) Get(ctx context.Context, namespace, name string) (
 
 func TestObserveRepositoryFreshness(t *testing.T) {
 	const res = "repositories"
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("passes the result through untouched", func(t *testing.T) {
 		want := repoAt(testNamespace, "r", rvString(rvAgo(0)))
@@ -424,7 +424,7 @@ func TestNewRepositoryDeltaSource_ObservesReadFreshness(t *testing.T) {
 
 		require.True(t, sub.subscribed(subject))
 
-		ctx := context.Background()
+		ctx := t.Context()
 		// Before any notification there is nothing to compare against.
 		_, err := getter.Get(ctx, testNamespace, "r")
 		require.NoError(t, err)
@@ -481,7 +481,7 @@ func TestNewRepositoryDeltaSource_DeleteLeavesNoAnnouncement(t *testing.T) {
 			sub.publish(t, subject, evt)
 		}
 
-		_, err := getter.Get(context.Background(), testNamespace, "r")
+		_, err := getter.Get(t.Context(), testNamespace, "r")
 		assert.True(t, apierrors.IsNotFound(err), "the object is gone; the read must still 404")
 		for _, outcome := range []string{outcomeCurrent, outcomeBehind, outcomeNotFound} {
 			assert.Zerof(t, freshnessCount(t, reg, res, outcome), "outcome %q", outcome)
@@ -524,7 +524,7 @@ func TestNewConnectionDeltaSource_ObservesReadFreshness(t *testing.T) {
 			Type: resourcepb.WatchNotification_MODIFIED, Namespace: testNamespace, Name: "c", ResourceVersion: announced,
 		})
 
-		_, err := getter.Get(context.Background(), testNamespace, "c")
+		_, err := getter.Get(t.Context(), testNamespace, "c")
 		require.NoError(t, err)
 		assert.Equal(t, float64(1), freshnessCount(t, reg, res, outcomeBehind))
 	})

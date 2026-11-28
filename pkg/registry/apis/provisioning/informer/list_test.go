@@ -87,7 +87,7 @@ func TestListAllPages(t *testing.T) {
 				return l, nil
 			}
 
-			out, listRV, err := listAllPages(context.Background(), page)
+			out, listRV, err := listAllPages(t.Context(), page)
 			require.Equal(t, tt.wantCalls, calls)
 			if tt.wantErr {
 				require.Error(t, err)

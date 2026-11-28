@@ -85,7 +85,7 @@ func TestRulesForSubjectRESTGetRulesForUser(t *testing.T) {
 	})
 
 	handler := NewRulesForSubjectREST(ruleGetter, teamLister, tracing.NewNoopTracerService(), nil)
-	response, outcome, err := handler.getRulesForUser(context.Background(), "prometheus.datasource-a", "user-a")
+	response, outcome, err := handler.getRulesForUser(t.Context(), "prometheus.datasource-a", "user-a")
 	require.NoError(t, err)
 	require.Equal(t, forSubjectOutcomeFiltersReturned, outcome)
 	require.Equal(t, map[string][]string{
@@ -105,7 +105,7 @@ func TestRulesForSubjectRESTIgnoresMissingTeams(t *testing.T) {
 	})
 
 	handler := NewRulesForSubjectREST(ruleGetter, teamLister, tracing.NewNoopTracerService(), nil)
-	response, outcome, err := handler.getRulesForUser(context.Background(), "prometheus.datasource-a", "user-a")
+	response, outcome, err := handler.getRulesForUser(t.Context(), "prometheus.datasource-a", "user-a")
 	require.NoError(t, err)
 	require.Equal(t, forSubjectOutcomeNoTeamMembership, outcome)
 	require.Empty(t, response.TeamFilters)
@@ -122,7 +122,7 @@ func TestRulesForSubjectRESTPropagatesRuleReadErrors(t *testing.T) {
 	})
 
 	handler := NewRulesForSubjectREST(ruleGetter, unusedLister, tracing.NewNoopTracerService(), nil)
-	response, outcome, err := handler.getRulesForUser(context.Background(), "prometheus.datasource-a", "user-a")
+	response, outcome, err := handler.getRulesForUser(t.Context(), "prometheus.datasource-a", "user-a")
 	require.ErrorIs(t, err, wantErr)
 	require.Nil(t, response)
 	require.Empty(t, outcome)
@@ -138,10 +138,10 @@ func TestRulesForSubjectRESTConnectReturnsEmptyRulesWhenRuleDoesNotExist(t *test
 	})
 	handler := NewRulesForSubjectREST(ruleGetter, unusedLister, tracing.NewNoopTracerService(), nil)
 	responder := &testResponder{}
-	httpHandler, err := handler.Connect(context.Background(), "prometheus.datasource-a", nil, responder)
+	httpHandler, err := handler.Connect(t.Context(), "prometheus.datasource-a", nil, responder)
 	require.NoError(t, err)
 
-	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "org-1"})
+	ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Namespace: "org-1"})
 	ctx = k8srequest.WithRequestInfo(ctx, &k8srequest.RequestInfo{Parts: subjectRequestParts("user", "user-a")})
 	req := httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx)
 	httpHandler.ServeHTTP(httptest.NewRecorder(), req)
@@ -175,9 +175,9 @@ func TestRulesForSubjectRESTValidatesSubject(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			responder := &testResponder{}
-			httpHandler, err := handler.Connect(context.Background(), "prometheus.datasource-a", nil, responder)
+			httpHandler, err := handler.Connect(t.Context(), "prometheus.datasource-a", nil, responder)
 			require.NoError(t, err)
-			ctx := k8srequest.WithRequestInfo(context.Background(), &k8srequest.RequestInfo{Parts: tt.parts})
+			ctx := k8srequest.WithRequestInfo(t.Context(), &k8srequest.RequestInfo{Parts: tt.parts})
 			req := httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx)
 			httpHandler.ServeHTTP(httptest.NewRecorder(), req)
 			require.True(t, apierrors.IsBadRequest(responder.err))
@@ -205,10 +205,10 @@ func TestRulesForSubjectRESTConnectReturnsRules(t *testing.T) {
 	})
 	handler := NewRulesForSubjectREST(ruleGetter, teamLister, tracing.NewNoopTracerService(), nil)
 	responder := &testResponder{}
-	httpHandler, err := handler.Connect(context.Background(), "prometheus.datasource-a", nil, responder)
+	httpHandler, err := handler.Connect(t.Context(), "prometheus.datasource-a", nil, responder)
 	require.NoError(t, err)
 
-	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "org-1"})
+	ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Namespace: "org-1"})
 	ctx = k8srequest.WithRequestInfo(ctx, &k8srequest.RequestInfo{Parts: subjectRequestParts("user", "user-a")})
 	req := httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx)
 	httpHandler.ServeHTTP(httptest.NewRecorder(), req)
@@ -618,13 +618,13 @@ func TestRulesForSubjectRESTMetrics(t *testing.T) {
 			}
 			handler := NewRulesForSubjectREST(ruleGetter, teamLister, tracing.NewNoopTracerService(), reg)
 			responder := &testResponder{}
-			httpHandler, err := handler.Connect(context.Background(), "prometheus.datasource-a", nil, responder)
+			httpHandler, err := handler.Connect(t.Context(), "prometheus.datasource-a", nil, responder)
 			require.NoError(t, err)
 			parts := tt.parts
 			if parts == nil {
 				parts = subjectRequestParts("user", "user-a")
 			}
-			ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "org-1"})
+			ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Namespace: "org-1"})
 			ctx = k8srequest.WithRequestInfo(ctx, &k8srequest.RequestInfo{Parts: parts})
 			httpHandler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx))
 			require.Equal(t, float64(1), testutil.ToFloat64(handler.metrics.requestsTotal.WithLabelValues(tt.outcome, tt.errorClass, "prometheus")))

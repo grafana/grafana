@@ -1,7 +1,6 @@
 package usage
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -14,7 +13,7 @@ import (
 )
 
 func TestUsageNamespaceLister(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("cloud stack uses the default namespace and ignores orgs", func(t *testing.T) {
 		// StackID set => cloud. The orgs must not be consulted.
@@ -37,7 +36,7 @@ func TestUsageNamespaceLister(t *testing.T) {
 }
 
 func TestOrgNamespaceLister(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	// On-prem mapper: org 1 -> "default", org N -> "org-N".
 	onPremMapper := request.GetNamespaceMapper(&setting.Cfg{})
 
@@ -77,7 +76,7 @@ func TestOrgNamespaceLister(t *testing.T) {
 }
 
 func TestStackNamespaceLister(t *testing.T) {
-	nss, err := stackNamespaceLister("123")(context.Background())
+	nss, err := stackNamespaceLister("123")(t.Context())
 	require.NoError(t, err)
 	require.Equal(t, []string{"stacks-123"}, nss)
 }

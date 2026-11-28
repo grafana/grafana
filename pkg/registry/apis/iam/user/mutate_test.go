@@ -1,7 +1,6 @@
 package user
 
 import (
-	"context"
 	"testing"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -68,7 +67,7 @@ func TestMutateOnCreate_LoginEmail(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := MutateOnCreateAndUpdate(context.Background(), tc.inputUser)
+			err := MutateOnCreateAndUpdate(t.Context(), tc.inputUser)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedLogin, tc.inputUser.Spec.Login)
 			require.Equal(t, tc.expectedEmail, tc.inputUser.Spec.Email)
@@ -131,7 +130,7 @@ func TestMutateOnCreate_Role(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := MutateOnCreateAndUpdate(context.Background(), tc.inputUser)
+			err := MutateOnCreateAndUpdate(t.Context(), tc.inputUser)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedRole, tc.inputUser.Spec.Role)
 		})

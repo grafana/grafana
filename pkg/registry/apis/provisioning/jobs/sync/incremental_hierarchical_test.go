@@ -1,7 +1,6 @@
 package sync
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -362,7 +361,7 @@ func runHierarchicalErrorHandlingTest(t *testing.T, tt struct {
 
 	tt.setupMocks(mockVersioned, repoResources, progress)
 
-	err := IncrementalSync(context.Background(), withIncrementalSyncReader(t, repo, repoResources), tt.previousRef, tt.currentRef, repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
+	err := IncrementalSync(t.Context(), withIncrementalSyncReader(t, repo, repoResources), tt.previousRef, tt.currentRef, repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
 
 	if tt.expectError {
 		require.Error(t, err)
@@ -428,7 +427,7 @@ func TestIncrementalSync_HierarchicalErrorHandling_FailedFolderCreation(t *testi
 		return r.Path() == "other/file.json" && r.Action() == repository.FileActionCreated && r.Error() == nil
 	})).Return().Once()
 
-	err := IncrementalSync(context.Background(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
+	err := IncrementalSync(t.Context(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
 	require.NoError(t, err)
 	progress.AssertExpectations(t)
 }
@@ -473,7 +472,7 @@ func TestIncrementalSync_HierarchicalErrorHandling_FailedFileDeletion(t *testing
 			r.Warning() != nil
 	})).Return().Once()
 
-	err := IncrementalSync(context.Background(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
+	err := IncrementalSync(t.Context(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
 	require.NoError(t, err)
 	progress.AssertExpectations(t)
 	repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
@@ -514,7 +513,7 @@ func TestIncrementalSync_HierarchicalErrorHandling_DeletionNotAffectedByCreation
 		return r.Path() == "folder1/old.json" && r.Action() == repository.FileActionDeleted && r.Error() == nil
 	})).Return().Once()
 
-	err := IncrementalSync(context.Background(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
+	err := IncrementalSync(t.Context(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
 	require.NoError(t, err)
 	progress.AssertExpectations(t)
 }
@@ -558,7 +557,7 @@ func TestIncrementalSync_HierarchicalErrorHandling_MultiLevelNesting(t *testing.
 			r.Warning() != nil && r.Warning().Error() == "resource was not processed because the parent folder could not be created"
 	})).Return().Once()
 
-	err := IncrementalSync(context.Background(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
+	err := IncrementalSync(t.Context(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
 	require.NoError(t, err)
 	progress.AssertExpectations(t)
 }
@@ -609,7 +608,7 @@ func TestIncrementalSync_HierarchicalErrorHandling_MixedSuccessAndFailure(t *tes
 			r.Warning() != nil && r.Warning().Error() == "resource was not processed because the parent folder could not be created"
 	})).Return().Once()
 
-	err := IncrementalSync(context.Background(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
+	err := IncrementalSync(t.Context(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
 	require.NoError(t, err)
 	progress.AssertExpectations(t)
 	repoResources.AssertExpectations(t)
@@ -637,7 +636,7 @@ func TestIncrementalSync_HierarchicalErrorHandling_RenameWithFailedFolderCreatio
 			r.Warning() != nil && r.Warning().Error() == "resource was not processed because the parent folder could not be created"
 	})).Return().Once()
 
-	err := IncrementalSync(context.Background(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
+	err := IncrementalSync(t.Context(), withIncrementalSyncReader(t, repo, repoResources), "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t))
 	require.NoError(t, err)
 	progress.AssertExpectations(t)
 }

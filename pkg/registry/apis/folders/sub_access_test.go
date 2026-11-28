@@ -273,7 +273,7 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 
 			r := &subAccessREST{getter: store, accessClient: ac}
 
-			ctx := request.WithNamespace(context.Background(), "default")
+			ctx := request.WithNamespace(t.Context(), "default")
 			ctx = identity.WithRequester(ctx, &user.SignedInUser{UserID: 1, OrgID: 1})
 
 			got, err := r.getAccessInfo(ctx, "this-folder")
@@ -326,7 +326,7 @@ func TestSubAccessREST_getAccessInfo_virtualFolders(t *testing.T) {
 				}
 
 				r := &subAccessREST{getter: store, accessClient: ac}
-				ctx := request.WithNamespace(context.Background(), "default")
+				ctx := request.WithNamespace(t.Context(), "default")
 				ctx = identity.WithRequester(ctx, &user.SignedInUser{UserID: 1, OrgID: 1})
 
 				got, err := r.getAccessInfo(ctx, name)
@@ -370,7 +370,7 @@ func TestSubAccessREST_getAccessInfo_virtualFolders(t *testing.T) {
 		}
 
 		r := &subAccessREST{getter: store, accessClient: ac}
-		ctx := request.WithNamespace(context.Background(), "default")
+		ctx := request.WithNamespace(t.Context(), "default")
 		ctx = identity.WithRequester(ctx, &user.SignedInUser{UserID: 1, OrgID: 1})
 
 		got, err := r.getAccessInfo(ctx, folder.SharedWithMeFolderUID)

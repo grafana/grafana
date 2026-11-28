@@ -48,7 +48,7 @@ func (f *serviceAccountStoreFake) UpdateServiceAccount(_ context.Context, _ clai
 }
 
 func TestLegacyStoreGet(t *testing.T) {
-	ctx := genericapirequest.WithNamespace(context.Background(), "default")
+	ctx := genericapirequest.WithNamespace(t.Context(), "default")
 
 	t.Run("returns storage errors", func(t *testing.T) {
 		storageErr := errors.New("storage unavailable")
@@ -91,7 +91,7 @@ func TestLegacyStoreUpdate(t *testing.T) {
 		Created: time.Unix(1, 0).UTC(),
 		Updated: time.Unix(1, 0).UTC(),
 	}
-	ctx := genericapirequest.WithNamespace(context.Background(), "default")
+	ctx := genericapirequest.WithNamespace(t.Context(), "default")
 
 	t.Run("updates the mutable fields", func(t *testing.T) {
 		fake := &serviceAccountStoreFake{listResult: &legacy.ListServiceAccountResult{Items: []legacy.ServiceAccount{old}}}

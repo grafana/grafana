@@ -1,7 +1,6 @@
 package dashboard
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -74,7 +73,7 @@ func TestVariableGetAttrs(t *testing.T) {
 
 func TestDashboardsAPIBuilderValidateV2Variable(t *testing.T) {
 	generalScope := folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
-	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+	ctx := k8srequest.WithNamespace(t.Context(), "stacks-1")
 	ctx = identity.WithRequester(ctx, &identity.StaticRequester{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
@@ -140,12 +139,12 @@ func TestDashboardsAPIBuilderMutateV2Variable(t *testing.T) {
 
 	v := newCustomVariableV2("status", "")
 	v.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "folder-z"})
-	require.NoError(t, builder.Mutate(context.Background(), buildV2VariableAttributesForOp(admission.Create, v, nil), nil))
+	require.NoError(t, builder.Mutate(t.Context(), buildV2VariableAttributesForOp(admission.Create, v, nil), nil))
 	require.Equal(t, "status--folder-z", v.GetName())
 	require.Equal(t, "folder-z", v.GetLabels()[variableFolderLabelKey])
 
 	v.SetAnnotations(map[string]string{})
-	require.NoError(t, builder.Mutate(context.Background(), buildV2VariableAttributesForOp(admission.Update, v, nil), nil))
+	require.NoError(t, builder.Mutate(t.Context(), buildV2VariableAttributesForOp(admission.Update, v, nil), nil))
 	require.NotContains(t, v.GetLabels(), variableFolderLabelKey)
 	require.Equal(t, "status--folder-z", v.GetName())
 }

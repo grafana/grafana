@@ -1,7 +1,6 @@
 package provisioning
 
 import (
-	"context"
 	"testing"
 	"testing/synctest"
 
@@ -61,7 +60,7 @@ func TestUsageStatsService_Run(t *testing.T) {
 			builder := &APIBuilder{loopbackReady: make(chan struct{}), repoLister: nopRepoLister{}}
 			svc := ProvideUsageStatsService(&setting.Cfg{}, builder, stats, nil, tracing.NewNoopTracerService())
 			runErr := make(chan error, 1)
-			go func() { runErr <- svc.Run(context.Background()) }()
+			go func() { runErr <- svc.Run(t.Context()) }()
 
 			synctest.Wait()
 			assert.Zero(t, stats.registered)

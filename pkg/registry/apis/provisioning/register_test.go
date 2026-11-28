@@ -66,7 +66,7 @@ func subresourceAttrsWithVerb(sub, name, ns, verb string) authorizer.Attributes 
 // inspection view (always connections:read) and authorize mutates connection secrets
 // (always connections:write), regardless of the HTTP method used to reach them.
 func TestAuthorizeConnectionSubresource(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	const ns, name = "default", "my-connection"
 
 	connReq := func(verb string) func(authlib.CheckRequest) bool {

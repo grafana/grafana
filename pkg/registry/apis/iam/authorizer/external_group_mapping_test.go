@@ -1,7 +1,6 @@
 package authorizer
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -59,7 +58,7 @@ func TestExternalGroupMapping_AfterGet(t *testing.T) {
 
 			accessClient := &fakeAccessClient{checkFunc: checkFunc}
 			authz := NewExternalGroupMappingAuthorizer(accessClient)
-			ctx := types.WithAuthInfo(context.Background(), user)
+			ctx := types.WithAuthInfo(t.Context(), user)
 
 			err := authz.AfterGet(ctx, mapping)
 			if tt.shouldAllow {
@@ -100,7 +99,7 @@ func TestExternalGroupMapping_FilterList(t *testing.T) {
 
 	accessClient := &fakeAccessClient{compileFunc: compileFunc}
 	authz := NewExternalGroupMappingAuthorizer(accessClient)
-	ctx := types.WithAuthInfo(context.Background(), user)
+	ctx := types.WithAuthInfo(t.Context(), user)
 
 	obj, err := authz.FilterList(ctx, list)
 	require.NoError(t, err)
@@ -148,7 +147,7 @@ func TestExternalGroupMapping_BeforeCreate(t *testing.T) {
 
 			accessClient := &fakeAccessClient{checkFunc: checkFunc}
 			authz := NewExternalGroupMappingAuthorizer(accessClient)
-			ctx := types.WithAuthInfo(context.Background(), user)
+			ctx := types.WithAuthInfo(t.Context(), user)
 
 			err := authz.BeforeCreate(ctx, mapping)
 			if tt.shouldAllow {
@@ -171,7 +170,7 @@ func TestExternalGroupMapping_BeforeUpdate(t *testing.T) {
 		},
 	}
 	authz := NewExternalGroupMappingAuthorizer(accessClient)
-	ctx := types.WithAuthInfo(context.Background(), user)
+	ctx := types.WithAuthInfo(t.Context(), user)
 
 	err := authz.BeforeUpdate(ctx, mapping, mapping)
 	require.Error(t, err)
@@ -215,7 +214,7 @@ func TestExternalGroupMapping_BeforeDelete(t *testing.T) {
 
 			accessClient := &fakeAccessClient{checkFunc: checkFunc}
 			authz := NewExternalGroupMappingAuthorizer(accessClient)
-			ctx := types.WithAuthInfo(context.Background(), user)
+			ctx := types.WithAuthInfo(t.Context(), user)
 
 			err := authz.BeforeDelete(ctx, mapping)
 			if tt.shouldAllow {

@@ -1,7 +1,6 @@
 package migrate
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,7 +15,7 @@ import (
 var dashboardGVK = schema.GroupVersionKind{Group: "dashboard.grafana.app", Version: "v1", Kind: "Dashboard"}
 
 func TestExportedResourceCollector(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("captures successfully exported resources", func(t *testing.T) {
 		// Build each result once and use it for both the expectation and the call:

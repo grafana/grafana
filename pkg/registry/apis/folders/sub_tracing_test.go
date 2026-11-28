@@ -40,7 +40,7 @@ func newFolderTrace(t *testing.T) (context.Context, *tracetest.SpanRecorder, tra
 	t.Cleanup(func() {
 		tracer = previousTracer
 		span.End()
-		require.NoError(t, provider.Shutdown(context.Background()))
+		require.NoError(t, provider.Shutdown(context.WithoutCancel(t.Context())))
 	})
 	return ctx, recorder, span
 }

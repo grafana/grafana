@@ -274,10 +274,10 @@ func TestBeginTeamUpdate(t *testing.T) {
 			zClient:  &FakeZanzanaClient{mutateCallback: callback},
 		}
 
-		finish, err := b.BeginTeamUpdate(context.Background(), next, old, nil)
+		finish, err := b.BeginTeamUpdate(t.Context(), next, old, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finish, "BeginUpdate must always return a non-nil FinishFunc; the apiserver dereferences it without a nil check")
-		finish(context.Background(), true)
+		finish(t.Context(), true)
 	})
 
 	t.Run("creates tuples for added members", func(t *testing.T) {
@@ -312,10 +312,10 @@ func TestBeginTeamUpdate(t *testing.T) {
 			zClient:  &FakeZanzanaClient{mutateCallback: callback},
 		}
 
-		finish, err := b.BeginTeamUpdate(context.Background(), next, old, nil)
+		finish, err := b.BeginTeamUpdate(t.Context(), next, old, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finish)
-		finish(context.Background(), true)
+		finish(t.Context(), true)
 		wg.Wait()
 	})
 
@@ -350,10 +350,10 @@ func TestBeginTeamUpdate(t *testing.T) {
 			zClient:  &FakeZanzanaClient{mutateCallback: callback},
 		}
 
-		finish, err := b.BeginTeamUpdate(context.Background(), next, old, nil)
+		finish, err := b.BeginTeamUpdate(t.Context(), next, old, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finish)
-		finish(context.Background(), true)
+		finish(t.Context(), true)
 		wg.Wait()
 	})
 
@@ -394,10 +394,10 @@ func TestBeginTeamUpdate(t *testing.T) {
 			zClient:  &FakeZanzanaClient{mutateCallback: callback},
 		}
 
-		finish, err := b.BeginTeamUpdate(context.Background(), next, old, nil)
+		finish, err := b.BeginTeamUpdate(t.Context(), next, old, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finish)
-		finish(context.Background(), true)
+		finish(t.Context(), true)
 		wg.Wait()
 	})
 
@@ -466,10 +466,10 @@ func TestBeginTeamUpdate(t *testing.T) {
 			zClient:  &FakeZanzanaClient{mutateCallback: callback},
 		}
 
-		finish, err := b.BeginTeamUpdate(context.Background(), next, old, nil)
+		finish, err := b.BeginTeamUpdate(t.Context(), next, old, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finish)
-		finish(context.Background(), true)
+		finish(t.Context(), true)
 		wg.Wait()
 	})
 
@@ -488,10 +488,10 @@ func TestBeginTeamUpdate(t *testing.T) {
 			zClient:  &FakeZanzanaClient{mutateCallback: callback},
 		}
 
-		finish, err := b.BeginTeamUpdate(context.Background(), next, old, nil)
+		finish, err := b.BeginTeamUpdate(t.Context(), next, old, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finish)
-		finish(context.Background(), false)
+		finish(t.Context(), false)
 		time.Sleep(50 * time.Millisecond)
 	})
 
@@ -502,10 +502,10 @@ func TestBeginTeamUpdate(t *testing.T) {
 		}
 		old := newTeam("org-1", "team-1", member("user-1", iamv0.TeamTeamPermissionMember))
 		next := newTeam("org-1", "team-1", member("user-2", iamv0.TeamTeamPermissionMember))
-		finish, err := b.BeginTeamUpdate(context.Background(), next, old, nil)
+		finish, err := b.BeginTeamUpdate(t.Context(), next, old, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finish, "BeginUpdate must always return a non-nil FinishFunc; the apiserver dereferences it without a nil check")
-		finish(context.Background(), true)
+		finish(t.Context(), true)
 	})
 
 	// Parity with the old "empty old binding subject" case: empty-subject members
@@ -546,10 +546,10 @@ func TestBeginTeamUpdate(t *testing.T) {
 			zClient:  &FakeZanzanaClient{mutateCallback: callback},
 		}
 
-		finish, err := b.BeginTeamUpdate(context.Background(), next, old, nil)
+		finish, err := b.BeginTeamUpdate(t.Context(), next, old, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finish)
-		finish(context.Background(), true)
+		finish(t.Context(), true)
 		wg.Wait()
 	})
 
@@ -574,10 +574,10 @@ func TestBeginTeamUpdate(t *testing.T) {
 			zClient:  &FakeZanzanaClient{mutateCallback: callback},
 		}
 
-		finish, err := b.BeginTeamUpdate(context.Background(), next, old, nil)
+		finish, err := b.BeginTeamUpdate(t.Context(), next, old, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finish, "BeginUpdate must always return a non-nil FinishFunc; the apiserver dereferences it without a nil check")
-		finish(context.Background(), true)
+		finish(t.Context(), true)
 	})
 
 	t.Run("returns no-op finish func when team name is empty", func(t *testing.T) {
@@ -595,10 +595,10 @@ func TestBeginTeamUpdate(t *testing.T) {
 		old := newTeam("org-1", "", member("user-1", iamv0.TeamTeamPermissionMember))
 		next := newTeam("org-1", "", member("user-1", iamv0.TeamTeamPermissionAdmin))
 
-		finish, err := b.BeginTeamUpdate(context.Background(), next, old, nil)
+		finish, err := b.BeginTeamUpdate(t.Context(), next, old, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finish, "BeginUpdate must always return a non-nil FinishFunc; the apiserver dereferences it without a nil check")
-		finish(context.Background(), true)
+		finish(t.Context(), true)
 	})
 
 	t.Run("returns no-op finish func when team namespace is empty", func(t *testing.T) {
@@ -616,10 +616,10 @@ func TestBeginTeamUpdate(t *testing.T) {
 		old := newTeam("", "team-1", member("user-1", iamv0.TeamTeamPermissionMember))
 		next := newTeam("", "team-1", member("user-1", iamv0.TeamTeamPermissionAdmin))
 
-		finish, err := b.BeginTeamUpdate(context.Background(), next, old, nil)
+		finish, err := b.BeginTeamUpdate(t.Context(), next, old, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finish, "BeginUpdate must always return a non-nil FinishFunc; the apiserver dereferences it without a nil check")
-		finish(context.Background(), true)
+		finish(t.Context(), true)
 	})
 
 	t.Run("returns no-op finish func when oldObj is not a Team", func(t *testing.T) {
@@ -632,10 +632,10 @@ func TestBeginTeamUpdate(t *testing.T) {
 		next := newTeam("org-1", "team-1", member("user-1", iamv0.TeamTeamPermissionMember))
 		notATeam := &iamv0.User{ObjectMeta: metav1.ObjectMeta{Name: "user-1", Namespace: "org-1"}}
 
-		finish, err := b.BeginTeamUpdate(context.Background(), next, notATeam, nil)
+		finish, err := b.BeginTeamUpdate(t.Context(), next, notATeam, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finish, "BeginUpdate must always return a non-nil FinishFunc; the apiserver dereferences it without a nil check")
-		finish(context.Background(), true)
+		finish(t.Context(), true)
 	})
 
 	t.Run("returns no-op finish func when newObj is not a Team", func(t *testing.T) {
@@ -648,10 +648,10 @@ func TestBeginTeamUpdate(t *testing.T) {
 		old := newTeam("org-1", "team-1", member("user-1", iamv0.TeamTeamPermissionMember))
 		notATeam := &iamv0.User{ObjectMeta: metav1.ObjectMeta{Name: "user-1", Namespace: "org-1"}}
 
-		finish, err := b.BeginTeamUpdate(context.Background(), notATeam, old, nil)
+		finish, err := b.BeginTeamUpdate(t.Context(), notATeam, old, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finish, "BeginUpdate must always return a non-nil FinishFunc; the apiserver dereferences it without a nil check")
-		finish(context.Background(), true)
+		finish(t.Context(), true)
 	})
 
 	t.Run("does not panic when zanzana returns an error during finish", func(t *testing.T) {
@@ -672,11 +672,11 @@ func TestBeginTeamUpdate(t *testing.T) {
 		old := newTeam("org-1", "team-1", member("user-1", iamv0.TeamTeamPermissionMember))
 		next := newTeam("org-1", "team-1", member("user-2", iamv0.TeamTeamPermissionMember))
 
-		finish, err := b.BeginTeamUpdate(context.Background(), next, old, nil)
+		finish, err := b.BeginTeamUpdate(t.Context(), next, old, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finish)
 		require.NotPanics(t, func() {
-			finish(context.Background(), true)
+			finish(t.Context(), true)
 		})
 		wg.Wait()
 	})

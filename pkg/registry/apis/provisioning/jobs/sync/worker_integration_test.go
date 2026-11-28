@@ -73,7 +73,7 @@ func TestIntegrationSyncWorker_EarlySetupFailure(t *testing.T) {
 		},
 	}
 
-	err := worker.Process(context.Background(), readerWriter, job, progress)
+	err := worker.Process(t.Context(), readerWriter, job, progress)
 	require.EqualError(t, err, "create repository resources client: boom")
 
 	require.Len(t, patchCalls, 2)

@@ -45,7 +45,7 @@ func TestNewWorkers_EachActionHasExactlyOneWorker(t *testing.T) {
 	for _, action := range actions {
 		var supporting []jobs.Worker
 		for _, w := range workers {
-			if w.IsSupported(context.Background(), job(action)) {
+			if w.IsSupported(t.Context(), job(action)) {
 				supporting = append(supporting, w)
 			}
 		}
@@ -77,7 +77,7 @@ func TestNewWorkers_PerformanceDisabledSkipsTestJobs(t *testing.T) {
 	workers := newWorkers(Config{MaxSyncWorkers: 1}, deps, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 
 	for _, w := range workers {
-		assert.False(t, w.IsSupported(context.Background(), job(provisioning.JobActionTest)), "%T", w)
+		assert.False(t, w.IsSupported(t.Context(), job(provisioning.JobActionTest)), "%T", w)
 	}
 }
 
@@ -119,7 +119,7 @@ func TestProvideJobQueue(t *testing.T) {
 			queue, err := ProvideJobQueue(cfg, newDeps(t, store, pending, claimed))
 			require.NoError(t, err)
 
-			ctx, cancel := context.WithCancel(context.Background())
+			ctx, cancel := context.WithCancel(t.Context())
 			done := make(chan error, 1)
 			go func() { done <- queue.Run(ctx) }()
 

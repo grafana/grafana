@@ -88,10 +88,10 @@ func TestCascadeFinalizerDeleteStrategy(t *testing.T) {
 		folder   *folders.Folder
 		expected []string
 	}{
-		{name: "stamps", ctx: withCascadeFinalizerOnDelete(context.Background(), true), folder: folderWithFinalizers(), expected: []string{folders.CascadeDeleteFinalizer}},
-		{name: "strips, keeping others", ctx: withCascadeFinalizerOnDelete(context.Background(), false), folder: folderWithFinalizers(otherFinalizer, folders.CascadeDeleteFinalizer), expected: []string{otherFinalizer}},
-		{name: "no decision leaves it as stored", ctx: context.Background(), folder: folderWithFinalizers(folders.CascadeDeleteFinalizer), expected: []string{folders.CascadeDeleteFinalizer}},
-		{name: "a terminating folder is not touched", ctx: withCascadeFinalizerOnDelete(context.Background(), false), folder: terminating(folderWithFinalizers(folders.CascadeDeleteFinalizer)), expected: []string{folders.CascadeDeleteFinalizer}},
+		{name: "stamps", ctx: withCascadeFinalizerOnDelete(t.Context(), true), folder: folderWithFinalizers(), expected: []string{folders.CascadeDeleteFinalizer}},
+		{name: "strips, keeping others", ctx: withCascadeFinalizerOnDelete(t.Context(), false), folder: folderWithFinalizers(otherFinalizer, folders.CascadeDeleteFinalizer), expected: []string{otherFinalizer}},
+		{name: "no decision leaves it as stored", ctx: t.Context(), folder: folderWithFinalizers(folders.CascadeDeleteFinalizer), expected: []string{folders.CascadeDeleteFinalizer}},
+		{name: "a terminating folder is not touched", ctx: withCascadeFinalizerOnDelete(t.Context(), false), folder: terminating(folderWithFinalizers(folders.CascadeDeleteFinalizer)), expected: []string{folders.CascadeDeleteFinalizer}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -1,7 +1,6 @@
 package provisioning
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -51,7 +50,7 @@ func TestConnectionRepositoriesConnector(t *testing.T) {
 	})
 
 	t.Run("Connect returns handler that rejects non-GET methods", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		responder := &mockResponder{}
 
 		handler, err := connector.Connect(ctx, "test-connection", nil, responder)
@@ -69,7 +68,7 @@ func TestConnectionRepositoriesConnector(t *testing.T) {
 	})
 
 	t.Run("Connect returns handler that returns error when connection not found", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		responder := &mockResponder{}
 
 		access.EXPECT().
@@ -91,7 +90,7 @@ func TestConnectionRepositoriesConnector(t *testing.T) {
 	})
 
 	t.Run("Connect returns handler that lists repositories successfully", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		responder := &mockResponder{}
 
 		expectedRepos := []provisioning.ExternalRepository{
@@ -124,7 +123,7 @@ func TestConnectionRepositoriesConnector(t *testing.T) {
 	})
 
 	t.Run("Connect returns handler that returns error when listing repositories fails", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		responder := &mockResponder{}
 
 		lister := connection.NewMockRepositoryLister(t)
@@ -146,7 +145,7 @@ func TestConnectionRepositoriesConnector(t *testing.T) {
 	})
 
 	t.Run("Connect invalidates connection health on authentication failure", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		responder := &mockResponder{}
 
 		lister := connection.NewMockRepositoryLister(t)
@@ -198,7 +197,7 @@ func (m *mockResponder) Error(err error) {
 
 func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 	t.Run("lists repositories from GitHub connection", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		responder := &mockResponder{}
 
 		// Create a GitHub connection
@@ -288,7 +287,7 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 	})
 
 	t.Run("returns error when GitHub API fails", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		responder := &mockResponder{}
 
 		// Create a GitHub connection
@@ -358,7 +357,7 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 	})
 
 	t.Run("returns NotImplemented for GitLab connection", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		responder := &mockResponder{}
 
 		conn := connection.NewMockConnection(t)

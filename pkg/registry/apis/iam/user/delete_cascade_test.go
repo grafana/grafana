@@ -78,7 +78,7 @@ func authInfo(name string) iamv0.AuthInfo {
 }
 
 func TestCascadeDeleter_Delete(t *testing.T) {
-	ctx := request.WithNamespace(context.Background(), testNamespace)
+	ctx := request.WithNamespace(t.Context(), testNamespace)
 	notFound := apierrors.NewNotFound(iamv0.AuthInfoResourceInfo.GroupResource(), "ldap-1")
 
 	t.Run("deletes the user's auth infos before the user", func(t *testing.T) {

@@ -300,7 +300,7 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 				cfg.Spec.Sync.Target = tt.target
 			}
 			caller := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 42, Namespace: cfg.Namespace}
-			ctx := identity.WithRequester(context.Background(), caller)
+			ctx := identity.WithRequester(t.Context(), caller)
 			callerContext := mock.MatchedBy(func(readCtx context.Context) bool {
 				id, err := identity.GetRequester(readCtx)
 				return err == nil && id == caller
@@ -452,7 +452,7 @@ func TestFolderManager_FindExistingAncestorValidatesOwnership(t *testing.T) {
 }
 
 func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	newRepo := func(t *testing.T) (*repository.MockReaderWriter, *provisioning.Repository) {
 		cfg := &provisioning.Repository{
@@ -613,7 +613,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 }
 
 func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	newRepo := func(t *testing.T) (*repository.MockReaderWriter, *provisioning.Repository) {
 		cfg := &provisioning.Repository{
@@ -1086,7 +1086,7 @@ func TestEnsureFolderExists_DuplicateErrorCompatibility(t *testing.T) {
 						},
 					}
 					fm := NewFolderManager(repo, client, NewEmptyFolderTree(), FolderKind)
-					err := fm.EnsureFolderExists(context.Background(), Folder{ID: folderID, Title: "Folder"}, "")
+					err := fm.EnsureFolderExists(t.Context(), Folder{ID: folderID, Title: "Folder"}, "")
 
 					require.Equal(t, owner.wantErr, err)
 					require.Equal(t, []string{folderID, folderID}, client.getCalls)
@@ -1144,7 +1144,7 @@ func TestEnsureFolderExists_TakeoverAllowlist(t *testing.T) {
 		for _, id := range ids {
 			set[id] = struct{}{}
 		}
-		return WithTakeoverAllowlist(context.Background(), NewTakeoverAllowlist(set))
+		return WithTakeoverAllowlist(t.Context(), NewTakeoverAllowlist(set))
 	}
 
 	folderIdentifier := func(name string) ResourceIdentifier {
@@ -1191,7 +1191,7 @@ func TestEnsureFolderExists_TakeoverAllowlist(t *testing.T) {
 		}
 
 		fm := NewFolderManager(repo, client, NewEmptyFolderTree(), FolderKind)
-		err := fm.EnsureFolderExists(context.Background(), Folder{ID: folderID, Title: "New Title"}, "")
+		err := fm.EnsureFolderExists(t.Context(), Folder{ID: folderID, Title: "New Title"}, "")
 
 		var unmanagedErr *ResourceUnmanagedConflictError
 		require.True(t, errors.As(err, &unmanagedErr), "should return ResourceUnmanagedConflictError")
@@ -1267,7 +1267,7 @@ func TestEnsureFolderExists_TakeoverAllowlist(t *testing.T) {
 		}
 
 		fm := NewFolderManager(repo, client, NewEmptyFolderTree(), FolderKind)
-		err := fm.EnsureFolderExists(context.Background(), Folder{ID: folderID, Title: "New Title"}, "")
+		err := fm.EnsureFolderExists(t.Context(), Folder{ID: folderID, Title: "New Title"}, "")
 
 		var unmanagedErr *ResourceUnmanagedConflictError
 		require.True(t, errors.As(err, &unmanagedErr), "should return ResourceUnmanagedConflictError")
@@ -1380,7 +1380,7 @@ var _ dynamic.ResourceInterface = (*fakeDynamicResourceClient)(nil)
 
 func TestCreateFolderWithUID(t *testing.T) {
 	t.Run("top-level folder (no parent)", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		const stableUID = "my-top-level-uid"
 
 		config := newTestRepoConfig("test-repo")
@@ -1402,7 +1402,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 	})
 
 	t.Run("nested folder with parent already in tree", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		const stableUID = "child-stable-uid"
 
 		config := newTestRepoConfig("test-repo")
@@ -1431,7 +1431,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 	})
 
 	t.Run("nested folder where parent needs to be created", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		const stableUID = "child-stable-uid"
 
 		config := newTestRepoConfig("test-repo")
@@ -1461,7 +1461,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 	})
 
 	t.Run("nested folder with metadata reads stable parent UID from _folder.json", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		const stableUID = "child-stable-uid"
 		const stableParentUID = "stable-parent-uid"
 
@@ -1491,7 +1491,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 	})
 
 	t.Run("nested folder with metadata falls back to hash UID when _folder.json absent", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		const stableUID = "child-stable-uid"
 
 		config := newTestRepoConfig("test-repo")
@@ -1523,7 +1523,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 }
 
 func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("uses spec.title from _folder.json instead of directory name", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
@@ -1648,7 +1648,7 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 }
 
 func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	managedFolder := func(name, title, managerIdentity, sourcePath string) *unstructured.Unstructured {
 		annotations := map[string]interface{}{
@@ -1981,7 +1981,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 }
 
 func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	newTestRepoConfig := func(name string) *provisioning.Repository {
 		return &provisioning.Repository{
@@ -2154,7 +2154,7 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 }
 
 func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	newTestRepoConfig := func(name string) *provisioning.Repository {
 		return &provisioning.Repository{
@@ -2312,7 +2312,7 @@ func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
 }
 
 func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("flag ON + non-NotFound error at pre-walk site returns error", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
@@ -2375,7 +2375,7 @@ func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
 // TestEnsureFolderPathExist_UIDConflict covers the UID conflict guard inside the
 // safepath.Walk callback. Three distinct branches are exercised
 func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	managedFolder := func(name, title, managerIdentity string) *unstructured.Unstructured {
 		return &unstructured.Unstructured{
@@ -2724,7 +2724,7 @@ func TestEnsureFolderPathExist_NestedRelocations(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 			config := newTestRepoConfig("test-repo")
 			rw := repository.NewMockReaderWriter(t)
 			rw.On("Config").Return(config)
@@ -2825,7 +2825,7 @@ func TestEnsureFolderPathExist_NestedRelocations(t *testing.T) {
 }
 
 func TestEnsureFolderTreeExists(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	const ref = "main"
 
 	makeRepo := func(t *testing.T) *repository.MockReaderWriter {
@@ -3025,7 +3025,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 }
 
 func TestRenameFolderPath(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	managedFolder := func(name, title, managerIdentity string) *unstructured.Unstructured {
 		return &unstructured.Unstructured{
@@ -3273,7 +3273,7 @@ func TestRenameFolderPath(t *testing.T) {
 // TestEnsureFolderPathExist_EarlyReturnCheckIDConflict covers the conflict check
 // at root folder check..
 func TestEnsureFolderPathExist_EarlyReturnCheckIDConflict(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	folderJSON := func(uid, title string) []byte {
 		return []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"` + uid + `"},"spec":{"title":"` + title + `"}}`)

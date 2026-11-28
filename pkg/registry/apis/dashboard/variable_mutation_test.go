@@ -1,7 +1,6 @@
 package dashboard
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -19,7 +18,7 @@ func TestDashboardsAPIBuilderMutateVariable(t *testing.T) {
 	v.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "folder-a"})
 	require.Equal(t, "wrong-name", v.GetName())
 
-	err := builder.Mutate(context.Background(), admission.NewAttributesRecord(
+	err := builder.Mutate(t.Context(), admission.NewAttributesRecord(
 		v,
 		nil,
 		dashv2beta1.VariableResourceInfo.GroupVersionKind(),
@@ -39,7 +38,7 @@ func TestDashboardsAPIBuilderMutateVariable(t *testing.T) {
 
 	// Clearing folder annotation should remove the mirrored folder label.
 	v.SetAnnotations(map[string]string{})
-	err = builder.Mutate(context.Background(), admission.NewAttributesRecord(
+	err = builder.Mutate(t.Context(), admission.NewAttributesRecord(
 		v,
 		nil,
 		dashv2beta1.VariableResourceInfo.GroupVersionKind(),
@@ -58,7 +57,7 @@ func TestDashboardsAPIBuilderMutateVariable(t *testing.T) {
 	// When metadata.name is omitted on create, mutation derives it from spec name + folder.
 	v = newCustomVariable("status", "")
 	v.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "folder-z"})
-	err = builder.Mutate(context.Background(), admission.NewAttributesRecord(
+	err = builder.Mutate(t.Context(), admission.NewAttributesRecord(
 		v,
 		nil,
 		dashv2beta1.VariableResourceInfo.GroupVersionKind(),

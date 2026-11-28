@@ -214,7 +214,7 @@ func TestSyncer_Sync(t *testing.T) {
 			)
 
 			quotaTracker := quotas.NewMockQuotaTracker(t)
-			ref, err := syncer.Sync(context.Background(), repo, tt.options, repoResources, clients, progress, quotaTracker)
+			ref, err := syncer.Sync(t.Context(), repo, tt.options, repoResources, clients, progress, quotaTracker)
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError)
 			} else {

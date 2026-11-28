@@ -264,7 +264,7 @@ func TestMergeDashboardPreferencesEveryField(t *testing.T) {
 
 func TestDashboardPreferencesMergedFolders(t *testing.T) {
 	foldersGR := folders.FolderResourceInfo.GroupResource()
-	nsCtx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+	nsCtx := k8srequest.WithNamespace(t.Context(), "stacks-1")
 	nsInfo, err := authlib.ParseNamespace("stacks-1")
 	require.NoError(t, err)
 	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", authlib.RoleViewer)
@@ -549,7 +549,7 @@ func TestDashboardPreferencesMergedFolders(t *testing.T) {
 }
 
 func TestDashboardPreferencesMerged(t *testing.T) {
-	nsCtx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+	nsCtx := k8srequest.WithNamespace(t.Context(), "stacks-1")
 	get := []string{utils.VerbGet}
 	specs := map[string]string{
 		"namespace": `{"dashboard":{"autoRefresh":"1m","preload":false}}`,
@@ -581,7 +581,7 @@ func TestDashboardPreferencesMerged(t *testing.T) {
 
 	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", authlib.RoleViewer)
 	serviceAccount := dashboardPreferencesRequester(authlib.TypeServiceAccount, "sa", authlib.RoleAdmin)
-	_, service := identity.WithServiceIdentity(context.Background(), 1)
+	_, service := identity.WithServiceIdentity(t.Context(), 1)
 	noIdentifier := dashboardPreferencesRequester(authlib.TypeUser, "", authlib.RoleViewer)
 
 	fromUser := dashv2beta1.DashboardPreferencesMergedSource{Tier: dashv2beta1.DashboardPreferencesMergedTierUser, Name: "user-u1"}

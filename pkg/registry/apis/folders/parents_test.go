@@ -1,7 +1,6 @@
 package folders
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -144,7 +143,7 @@ func TestParents(t *testing.T) {
 			}
 
 			getter := newParentsGetter(m)
-			parents, err := getter(context.TODO(), &folders.Folder{
+			parents, err := getter(t.Context(), &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: tt.request.name,
 					Annotations: map[string]string{

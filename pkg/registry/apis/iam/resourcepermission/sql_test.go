@@ -118,7 +118,7 @@ func setupBackend(t *testing.T) *ResourcePermSqlBackend {
 func setupTestRoles(t *testing.T, store db.DB) {
 	sess := store.GetSqlxSession()
 
-	_, err := sess.Exec(context.Background(),
+	_, err := sess.Exec(t.Context(),
 		`INSERT INTO role (id, version, org_id, uid, name, display_name, description, group_name, hidden, created, updated)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?),
 		(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -132,7 +132,7 @@ func setupTestRoles(t *testing.T, store db.DB) {
 	require.NoError(t, err)
 
 	// Permissions
-	_, err = sess.Exec(context.Background(),
+	_, err = sess.Exec(t.Context(),
 		`INSERT INTO permission (role_id, action, scope, created, updated)
 		VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?), (?, ?, ?, ?, ?), (?, ?, ?, ?, ?), (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)`,
 		// Permissions for managed:users:1:permissions
@@ -149,7 +149,7 @@ func setupTestRoles(t *testing.T, store db.DB) {
 	)
 	require.NoError(t, err)
 
-	_, err = sess.Exec(context.Background(),
+	_, err = sess.Exec(t.Context(),
 		`INSERT INTO`+store.GetDialect().Quote("user")+`(id, org_id, uid, login, email, is_admin, is_service_account, created, updated, version)
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		// Users
@@ -159,7 +159,7 @@ func setupTestRoles(t *testing.T, store db.DB) {
 	)
 	require.NoError(t, err)
 
-	_, err = sess.Exec(context.Background(),
+	_, err = sess.Exec(t.Context(),
 		`INSERT INTO team (id, org_id, uid, name, created, updated)
 	VALUES (?, ?, ?, ?, ?, ?)`,
 		// Teams
@@ -168,7 +168,7 @@ func setupTestRoles(t *testing.T, store db.DB) {
 	require.NoError(t, err)
 
 	// User role bindings
-	_, err = sess.Exec(context.Background(),
+	_, err = sess.Exec(t.Context(),
 		`INSERT INTO user_role (org_id, user_id, role_id, created)
 	VALUES (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)`,
 		1, 1, 1, "2025-09-02 00:00:00", // User-1 -> managed:users:1:permissions
@@ -178,7 +178,7 @@ func setupTestRoles(t *testing.T, store db.DB) {
 	require.NoError(t, err)
 
 	// Team role bindings
-	_, err = sess.Exec(context.Background(),
+	_, err = sess.Exec(t.Context(),
 		`INSERT INTO team_role (org_id, team_id, role_id, created)
 	VALUES (?, ?, ?, ?)`,
 		1, 1, 5, "2025-09-02 00:00:00", // Team-1 -> managed:teams:1:permissions
@@ -186,7 +186,7 @@ func setupTestRoles(t *testing.T, store db.DB) {
 	require.NoError(t, err)
 
 	// basic role bindings
-	_, err = sess.Exec(context.Background(),
+	_, err = sess.Exec(t.Context(),
 		`INSERT INTO builtin_role (org_id, role, role_id, created, updated)
 	VALUES (?, ?, ?, ?, ?)`,
 		1, "Editor", 4, "2025-09-02 00:00:00", "2025-09-02 00:00:00", // Builtin Editor -> managed:builtins:editor:permissions
@@ -198,7 +198,7 @@ func setupFineGrainedPermissions(t *testing.T, store db.DB) {
 	sess := store.GetSqlxSession()
 
 	// Permissions
-	_, err := sess.Exec(context.Background(),
+	_, err := sess.Exec(t.Context(),
 		`INSERT INTO permission (role_id, action, scope, created, updated)
 		VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)`,
 		// Permissions for managed:users:2:permissions
@@ -212,7 +212,7 @@ func TestIntegration_ResourcePermSqlBackend_newRoleIterator(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
-	sql, err := backend.dbProvider(context.Background())
+	sql, err := backend.dbProvider(t.Context())
 	require.NoError(t, err)
 	setupTestRoles(t, sql.DB)
 
@@ -246,7 +246,7 @@ func TestIntegration_ResourcePermSqlBackend_newRoleIterator(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ns := types.NamespaceInfo{OrgID: tt.orgID}
-			it, err := backend.newRoleIterator(context.Background(), sql, ns, &tt.pagination)
+			it, err := backend.newRoleIterator(t.Context(), sql, ns, &tt.pagination)
 			require.NoError(t, err)
 			var result []v0alpha1.ResourcePermission
 			for it.Next() {
@@ -272,7 +272,7 @@ func TestIntegration_ResourcePermSqlBackend_getResourcePermission(t *testing.T) 
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
-	sql, err := backend.dbProvider(context.Background())
+	sql, err := backend.dbProvider(t.Context())
 	require.NoError(t, err)
 	setupTestRoles(t, sql.DB)
 
@@ -315,8 +315,8 @@ func TestIntegration_ResourcePermSqlBackend_getResourcePermission(t *testing.T) 
 				OrgID: tt.orgID,
 			}
 			var got *v0alpha1.ResourcePermission
-			err = sql.DB.GetSqlxSession().WithTransaction(context.Background(), func(tx *session.SessionTx) error {
-				got, err = backend.getResourcePermission(context.Background(), sql, tx, ns, tt.resource)
+			err = sql.DB.GetSqlxSession().WithTransaction(t.Context(), func(tx *session.SessionTx) error {
+				got, err = backend.getResourcePermission(t.Context(), sql, tx, ns, tt.resource)
 				return err
 			})
 
@@ -341,7 +341,7 @@ func TestIntegration_ResourcePermSqlBackend_deleteResourcePermission(t *testing.
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
-	sql, err := backend.dbProvider(context.Background())
+	sql, err := backend.dbProvider(t.Context())
 	require.NoError(t, err)
 	setupTestRoles(t, sql.DB)
 
@@ -382,7 +382,7 @@ func TestIntegration_ResourcePermSqlBackend_deleteResourcePermission(t *testing.
 			ns := types.NamespaceInfo{
 				OrgID: tt.orgID,
 			}
-			err := backend.deleteResourcePermission(context.Background(), sql, ns, tt.resource)
+			err := backend.deleteResourcePermission(t.Context(), sql, ns, tt.resource)
 			if tt.err != nil {
 				require.Error(t, err)
 				require.ErrorIs(t, err, tt.err)
@@ -391,8 +391,8 @@ func TestIntegration_ResourcePermSqlBackend_deleteResourcePermission(t *testing.
 			require.NoError(t, err)
 
 			// check that the resource has been deleted
-			err = sql.DB.GetSqlxSession().WithTransaction(context.Background(), func(tx *session.SessionTx) error {
-				_, err = backend.getResourcePermission(context.Background(), sql, tx, ns, tt.resource)
+			err = sql.DB.GetSqlxSession().WithTransaction(t.Context(), func(tx *session.SessionTx) error {
+				_, err = backend.getResourcePermission(t.Context(), sql, tx, ns, tt.resource)
 				return err
 			})
 			require.Error(t, err)
@@ -446,7 +446,7 @@ func TestIntegration_ResourcePermSqlBackend_CreateResourcePermission(t *testing.
 			},
 		}
 
-		ctx := context.Background()
+		ctx := t.Context()
 		backend := setupBackend(t)
 		sqlHelper, _ := backend.dbProvider(ctx)
 		backend.identityStore = NewFakeIdentityStore(t)
@@ -520,7 +520,7 @@ func TestIntegration_ResourcePermSqlBackend_UpdateResourcePermission(t *testing.
 
 	backend := setupBackend(t)
 	backend.identityStore = NewFakeIdentityStore(t)
-	ctx := context.Background()
+	ctx := t.Context()
 	sql, err := backend.dbProvider(ctx)
 	require.NoError(t, err)
 	setupTestRoles(t, sql.DB)
@@ -716,7 +716,7 @@ func TestIntegration_ResourcePermSqlBackend_ListDirectPermissionsForSubject(t *t
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
-	sql, err := backend.dbProvider(context.Background())
+	sql, err := backend.dbProvider(t.Context())
 	require.NoError(t, err)
 	setupTestRoles(t, sql.DB)
 
@@ -772,7 +772,7 @@ func TestIntegration_ResourcePermSqlBackend_ListDirectPermissionsForSubject(t *t
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := backend.ListDirectPermissionsForSubject(context.Background(), tt.namespace, tt.subject)
+			result, err := backend.ListDirectPermissionsForSubject(t.Context(), tt.namespace, tt.subject)
 			require.NoError(t, err)
 			if tt.wantNil {
 				require.Nil(t, result)
@@ -811,13 +811,13 @@ func TestIntegration_ResourcePermSqlBackend_ListDirectPermissionsForSubject_SAMa
 	// Seed a serviceaccounts:id:3 permission onto user-1's role.
 	// The backend should resolve it to serviceaccounts:uid:sa-1 on read.
 	sess := store.GetSqlxSession()
-	_, err := sess.Exec(context.Background(),
+	_, err := sess.Exec(t.Context(),
 		`INSERT INTO permission (role_id, action, scope, created, updated) VALUES (?, ?, ?, ?, ?)`,
 		1, "serviceaccounts:admin", "serviceaccounts:id:3", "2025-09-02", "2025-09-02",
 	)
 	require.NoError(t, err)
 
-	result, err := backend.ListDirectPermissionsForSubject(context.Background(), "default", "user-1")
+	result, err := backend.ListDirectPermissionsForSubject(t.Context(), "default", "user-1")
 	require.NoError(t, err)
 
 	got := make(map[string]string, len(result))
@@ -836,7 +836,7 @@ func TestIntegration_UpdateResourcePermission_VerbChange(t *testing.T) {
 
 	backend := setupBackend(t)
 	backend.identityStore = NewFakeIdentityStore(t)
-	ctx := context.Background()
+	ctx := t.Context()
 	sql, err := backend.dbProvider(ctx)
 	require.NoError(t, err)
 	setupTestRoles(t, sql.DB)
@@ -916,7 +916,7 @@ func TestIntegration_Datasource_WriteAndReadBackSharedGroup(t *testing.T) {
 
 	backend := setupBackend(t)
 	backend.identityStore = NewFakeIdentityStore(t)
-	ctx := context.Background()
+	ctx := t.Context()
 	sql, err := backend.dbProvider(ctx)
 	require.NoError(t, err)
 	setupTestRoles(t, sql.DB)

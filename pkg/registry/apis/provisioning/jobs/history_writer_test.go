@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,9 +25,9 @@ func TestWriteJob_PreservesStatusAndLabels(t *testing.T) {
 		Status: provisioning.JobStatus{State: provisioning.JobStateSuccess, ProgressUpdates: 7},
 	}
 
-	require.NoError(t, writer.WriteJob(context.Background(), job))
+	require.NoError(t, writer.WriteJob(t.Context(), job))
 
-	list, err := fakeClient.HistoricJobs("stacks-123").List(context.Background(), metav1.ListOptions{})
+	list, err := fakeClient.HistoricJobs("stacks-123").List(t.Context(), metav1.ListOptions{})
 	require.NoError(t, err)
 	require.Len(t, list.Items, 1)
 

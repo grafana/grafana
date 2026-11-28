@@ -118,7 +118,7 @@ func (l *testLogger) GetErrorLogs() []logEntry {
 }
 
 func TestJobProgressRecorderSetRefURLs(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Create a progress recorder
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
@@ -146,7 +146,7 @@ func TestJobProgressRecorderSetRefURLs(t *testing.T) {
 }
 
 func TestJobProgressRecorderSetRefURLsNil(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Create a progress recorder
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
@@ -168,7 +168,7 @@ func TestJobProgressRecorderSetRefURLsNil(t *testing.T) {
 }
 
 func TestJobProgressRecorderCompleteIncludesRefURLs(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Create a progress recorder
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
@@ -193,7 +193,7 @@ func TestJobProgressRecorderCompleteIncludesRefURLs(t *testing.T) {
 }
 
 func TestJobProgressRecorderWarningStatus(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Create a progress recorder
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
@@ -282,7 +282,7 @@ func TestJobProgressRecorderWarningStatus(t *testing.T) {
 }
 
 func TestJobProgressRecorderWarningWithErrors(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Create a progress recorder
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
@@ -331,7 +331,7 @@ func TestJobProgressRecorderWarningWithErrors(t *testing.T) {
 }
 
 func TestJobProgressRecorderWarningOnlyNoErrors(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Create a progress recorder
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
@@ -363,7 +363,7 @@ func TestJobProgressRecorderWarningOnlyNoErrors(t *testing.T) {
 }
 
 func TestJobProgressRecorderFolderFailureTracking(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Create a progress recorder
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
@@ -423,7 +423,7 @@ func TestJobProgressRecorderFolderFailureTracking(t *testing.T) {
 // each single-purpose worker records: push→writes, delete→deletes, move→creates
 // (a rename is recorded as create+delete, so count creates once), else→create+update+delete.
 func TestUpdateSummary_TotalChanges(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	noop := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
 
 	tests := []struct {
@@ -475,7 +475,7 @@ func TestUpdateSummary_TotalChanges(t *testing.T) {
 }
 
 func TestJobProgressRecorderFolderFailureTrackingFromWarning(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
@@ -508,7 +508,7 @@ func TestJobProgressRecorderFolderFailureTrackingFromWarning(t *testing.T) {
 }
 
 func TestJobProgressRecorderFolderUIDTooLongFailureTrackingFromWarning(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
@@ -542,7 +542,7 @@ func TestJobProgressRecorderFolderUIDTooLongFailureTrackingFromWarning(t *testin
 }
 
 func TestJobProgressRecorderFolderValidationFailureTrackingFromWarning(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
@@ -575,7 +575,7 @@ func TestJobProgressRecorderFolderValidationFailureTrackingFromWarning(t *testin
 }
 
 func TestJobProgressRecorderHasDirPathFailedCreation(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Create a progress recorder
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
@@ -616,7 +616,7 @@ func TestJobProgressRecorderHasDirPathFailedCreation(t *testing.T) {
 }
 
 func TestJobProgressRecorderHasDirPathFailedDeletion(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Create a progress recorder
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
@@ -658,7 +658,7 @@ func TestJobProgressRecorderHasDirPathFailedDeletion(t *testing.T) {
 }
 
 func TestJobProgressRecorderHasChildPathFailedCreation(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
@@ -703,7 +703,7 @@ func TestJobProgressRecorderHasChildPathFailedCreation(t *testing.T) {
 }
 
 func TestJobProgressRecorderHasChildPathFailedUpdate(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
@@ -809,7 +809,7 @@ func TestJobProgressRecorderHasChildPathFailedUpdate(t *testing.T) {
 }
 
 func TestJobProgressRecorderFailedUpdatesTracking(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
@@ -844,7 +844,7 @@ func TestJobProgressRecorderFailedUpdatesTracking(t *testing.T) {
 }
 
 func TestJobProgressRecorderResetResults(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Create a progress recorder
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
@@ -885,7 +885,7 @@ func TestJobProgressRecorderResetResults(t *testing.T) {
 
 func TestJobProgressRecorderLogsWarningsAtWarnLevel(t *testing.T) {
 	logger := newTestLogger()
-	ctx := logging.Context(context.Background(), logger)
+	ctx := logging.Context(t.Context(), logger)
 
 	// Create a progress recorder
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
@@ -921,7 +921,7 @@ func TestJobProgressRecorderLogsWarningsAtWarnLevel(t *testing.T) {
 
 func TestJobProgressRecorderLogsErrorsAtErrorLevel(t *testing.T) {
 	logger := newTestLogger()
-	ctx := logging.Context(context.Background(), logger)
+	ctx := logging.Context(t.Context(), logger)
 
 	// Create a progress recorder
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
@@ -957,7 +957,7 @@ func TestJobProgressRecorderLogsErrorsAtErrorLevel(t *testing.T) {
 
 func TestJobProgressRecorderLogsSuccessAtInfoLevel(t *testing.T) {
 	logger := newTestLogger()
-	ctx := logging.Context(context.Background(), logger)
+	ctx := logging.Context(t.Context(), logger)
 
 	// Create a progress recorder
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
@@ -990,7 +990,7 @@ func TestJobProgressRecorderLogsSuccessAtInfoLevel(t *testing.T) {
 }
 
 func TestJobProgressRecorderIgnoredActionsDontCountAsErrors(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Create a progress recorder
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
@@ -1018,7 +1018,7 @@ func TestJobProgressRecorderIgnoredActionsDontCountAsErrors(t *testing.T) {
 }
 
 func TestJobProgressRecorderResultReasons(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("Record accumulates warning reasons from results", func(t *testing.T) {
 		mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
@@ -1095,7 +1095,7 @@ func TestJobProgressRecorderResultReasons(t *testing.T) {
 }
 
 func TestJobProgressRecorderCompleteWithWarningError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
 
 	t.Run("warning-wrapped error completes in warning state and keeps its message", func(t *testing.T) {
@@ -1130,7 +1130,7 @@ func TestAsWarning(t *testing.T) {
 }
 
 func TestJobProgressRecorderTooManyErrorsConcurrency(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
 	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
@@ -1159,7 +1159,7 @@ func TestJobProgressRecorderTooManyErrorsConcurrency(t *testing.T) {
 }
 
 func TestJobProgressRecorder_UnsupportedPathWarningDoesNotBlockFolderCleanup(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	newRecorder := func() *jobProgressRecorder {
 		return NewJobProgressRecorder(func(context.Context, provisioning.JobStatus) error { return nil }, nil, "").(*jobProgressRecorder)
 	}

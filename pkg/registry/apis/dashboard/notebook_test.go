@@ -1,7 +1,6 @@
 package dashboard
 
 import (
-	"context"
 	"testing"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -73,7 +72,7 @@ func TestValidateNotebook(t *testing.T) {
 
 func TestDashboardsAPIBuilderValidateNotebook(t *testing.T) {
 	builder := &DashboardsAPIBuilder{}
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("rejects a non-notebook layout on create and update", func(t *testing.T) {
 		cases := []struct {
@@ -208,7 +207,7 @@ func TestMutateNotebook(t *testing.T) {
 
 func TestDashboardsAPIBuilderMutateNotebook(t *testing.T) {
 	builder := &DashboardsAPIBuilder{}
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("routes a notebook create to the notebook mutation", func(t *testing.T) {
 		nb := newNotebook("nb")
@@ -305,7 +304,7 @@ func authzAttributes(resource, verb string) authorizer.Attributes {
 // is gated per request in the authorizer: notebook storage is always registered,
 // so enablement is enforced here rather than at route-registration time.
 func TestDashboardsAPIBuilderNotebookAuthorizer(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	authz := (&DashboardsAPIBuilder{}).GetAuthorizer()
 
 	t.Run("denies notebook requests for every verb when disabled", func(t *testing.T) {

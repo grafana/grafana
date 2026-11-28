@@ -1,7 +1,6 @@
 package snapshot
 
 import (
-	"context"
 	"testing"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -49,7 +48,7 @@ func snapshotAttributes(verb, subresource string) authorizer.Attributes {
 // The snapshots resource is gated per request in the authorizer: storage is always
 // registered, so enablement is enforced here rather than at route-registration time.
 func TestSnapshotAuthorizer_FeatureGate(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	// accessControl is only reached after the feature gate; a disabled feature must
 	// short-circuit before it, so nil is safe for the disabled cases.
 	authz := NewSnapshotAuthorizer(nil)

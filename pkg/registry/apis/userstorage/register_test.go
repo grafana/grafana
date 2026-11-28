@@ -1,7 +1,6 @@
 package userstorage
 
 import (
-	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -60,7 +59,7 @@ func TestAuthorizer(t *testing.T) {
 			if tt.requesterID == "admin" {
 				requester.IsGrafanaAdmin = true
 			}
-			ctx := identity.WithRequester(context.Background(), requester)
+			ctx := identity.WithRequester(t.Context(), requester)
 			apiBuilder := &UserStorageAPIBuilder{}
 			auth := apiBuilder.GetAuthorizer()
 			at := &fakeAttributes{

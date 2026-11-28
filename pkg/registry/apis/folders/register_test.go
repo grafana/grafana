@@ -357,13 +357,13 @@ func TestFolderAPIBuilder_PendingDeletionAuthorization(t *testing.T) {
 		verb string
 		want authorizer.Decision
 	}{
-		{"no identity", context.Background(), "create", authorizer.DecisionDeny},
-		{"user", identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authtypes.TypeUser}), "create", authorizer.DecisionDeny},
-		{"user-created service account", identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authtypes.TypeServiceAccount}), "create", authorizer.DecisionDeny},
-		{"embedded service", identity.WithServiceIdentityContext(context.Background(), 1), "create", authorizer.DecisionAllow},
-		{"direct service", authtypes.WithAuthInfo(context.Background(), service), "create", authorizer.DecisionAllow},
-		{"wrong verb permission", authtypes.WithAuthInfo(context.Background(), service), "delete", authorizer.DecisionDeny},
-		{"delegated user", authtypes.WithAuthInfo(context.Background(), delegated), "create", authorizer.DecisionDeny},
+		{"no identity", t.Context(), "create", authorizer.DecisionDeny},
+		{"user", identity.WithRequester(t.Context(), &identity.StaticRequester{Type: authtypes.TypeUser}), "create", authorizer.DecisionDeny},
+		{"user-created service account", identity.WithRequester(t.Context(), &identity.StaticRequester{Type: authtypes.TypeServiceAccount}), "create", authorizer.DecisionDeny},
+		{"embedded service", identity.WithServiceIdentityContext(t.Context(), 1), "create", authorizer.DecisionAllow},
+		{"direct service", authtypes.WithAuthInfo(t.Context(), service), "create", authorizer.DecisionAllow},
+		{"wrong verb permission", authtypes.WithAuthInfo(t.Context(), service), "delete", authorizer.DecisionDeny},
+		{"delegated user", authtypes.WithAuthInfo(t.Context(), delegated), "create", authorizer.DecisionDeny},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			decision, _, _ := (&FolderAPIBuilder{}).GetAuthorizer().Authorize(tc.ctx, authorizer.AttributesRecord{
@@ -414,8 +414,8 @@ func TestFolderAPIBuilder_PendingDeletionAdmission(t *testing.T) {
 			}
 			attrs := admission.NewAttributesRecord(obj, old, pending.SchemeGroupVersion.WithKind("PendingFolderDeletion"), "default", obj.Name,
 				pending.SchemeGroupVersion.WithResource("pendingfolderdeletions"), "", op, nil, false, nil)
-			require.NoError(t, builder.Mutate(context.Background(), attrs, nil))
-			err := builder.Validate(context.Background(), attrs, nil)
+			require.NoError(t, builder.Mutate(t.Context(), attrs, nil))
+			err := builder.Validate(t.Context(), attrs, nil)
 			if tc.wantField != "" {
 				require.True(t, apierrors.IsInvalid(err), "expected validation status, got %v", err)
 				var status *apierrors.StatusError
@@ -453,8 +453,8 @@ func TestFolderDefaultResourcePermissionsUseRPClient(t *testing.T) {
 		b := &FolderAPIBuilder{resourcePermissions: rpclient.New(rpclient.Static(resourceClient), gr)}
 		_, meta := newFolder("root-uid", "")
 		id := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "user-123"}
-		require.NoError(t, b.setDefaultFolderPermissions(context.Background(), nil, id, meta))
-		rp, err := resourceClient.Namespace("org-7").Get(context.Background(), rpclient.Name(gr, "root-uid"), metav1.GetOptions{})
+		require.NoError(t, b.setDefaultFolderPermissions(t.Context(), nil, id, meta))
+		rp, err := resourceClient.Namespace("org-7").Get(t.Context(), rpclient.Name(gr, "root-uid"), metav1.GetOptions{})
 		require.NoError(t, err)
 		permissions, found, err := unstructured.NestedSlice(rp.Object, "spec", "permissions")
 		require.NoError(t, err)
@@ -471,17 +471,17 @@ func TestFolderDefaultResourcePermissionsUseRPClient(t *testing.T) {
 		resourceClient := dyn.Resource(gvr)
 		b := &FolderAPIBuilder{resourcePermissions: rpclient.New(rpclient.Static(resourceClient), gr)}
 		_, meta := newFolder("nested-uid", "parent-uid")
-		require.NoError(t, b.setDefaultFolderPermissions(context.Background(), nil, &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "user-123"}, meta))
+		require.NoError(t, b.setDefaultFolderPermissions(t.Context(), nil, &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "user-123"}, meta))
 		require.Empty(t, dyn.Actions())
 		_, rootMeta := newFolder("root-uid", "")
-		require.NoError(t, (&FolderAPIBuilder{}).setDefaultFolderPermissions(context.Background(), nil, &identity.StaticRequester{}, rootMeta))
+		require.NoError(t, (&FolderAPIBuilder{}).setDefaultFolderPermissions(t.Context(), nil, &identity.StaticRequester{}, rootMeta))
 		require.Empty(t, dyn.Actions())
 	})
 
 	t.Run("after delete removes the matching permission", func(t *testing.T) {
 		rpName := rpclient.Name(gr, "root-uid")
 		dyn := newClient()
-		_, err := dyn.Resource(gvr).Namespace("org-7").Create(context.Background(), &unstructured.Unstructured{Object: map[string]any{
+		_, err := dyn.Resource(gvr).Namespace("org-7").Create(t.Context(), &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": iamv0.ResourcePermissionInfo.GroupVersion().String(), "kind": "ResourcePermission",
 			"metadata": map[string]any{"name": rpName, "namespace": "org-7"},
 		}}, metav1.CreateOptions{})
@@ -490,7 +490,7 @@ func TestFolderDefaultResourcePermissionsUseRPClient(t *testing.T) {
 		b := &FolderAPIBuilder{resourcePermissions: rpclient.New(rpclient.Static(resourceClient), gr)}
 		obj, _ := newFolder("root-uid", "")
 		b.afterDelete(obj, &metav1.DeleteOptions{})
-		_, err = resourceClient.Namespace("org-7").Get(context.Background(), rpName, metav1.GetOptions{})
+		_, err = resourceClient.Namespace("org-7").Get(t.Context(), rpName, metav1.GetOptions{})
 		require.True(t, apierrors.IsNotFound(err))
 	})
 }
@@ -628,7 +628,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 				tt.setupFn(us)
 			}
 
-			err := b.Validate(request.WithNamespace(context.Background(), "stacks-123"), admission.NewAttributesRecord(
+			err := b.Validate(request.WithNamespace(t.Context(), "stacks-123"), admission.NewAttributesRecord(
 				tt.input.obj,
 				nil,
 				folders.SchemeGroupVersion.WithKind("folder"),
@@ -687,7 +687,7 @@ func TestFolderAPIBuilder_Validate_CreateMissingParent(t *testing.T) {
 					},
 					Spec: folders.FolderSpec{Title: "child"},
 				}
-				err := b.Validate(request.WithNamespace(context.Background(), "default"), admission.NewAttributesRecord(
+				err := b.Validate(request.WithNamespace(t.Context(), "default"), admission.NewAttributesRecord(
 					obj, nil, folders.SchemeGroupVersion.WithKind("Folder"), "default", obj.Name,
 					folders.SchemeGroupVersion.WithResource("folders"), "", admission.Create,
 					nil, dryRun, &user.SignedInUser{},
@@ -843,7 +843,7 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 				searcher: sm,
 			}
 
-			err := b.Validate(context.Background(), admission.NewAttributesRecord(
+			err := b.Validate(t.Context(), admission.NewAttributesRecord(
 				nil,
 				obj,
 				folders.SchemeGroupVersion.WithKind("folder"),
@@ -1037,7 +1037,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 				parents:  newParentsGetter(us),
 			}
 
-			err := b.Validate(context.Background(), admission.NewAttributesRecord(
+			err := b.Validate(t.Context(), admission.NewAttributesRecord(
 				tt.updatedObj,
 				obj,
 				folders.SchemeGroupVersion.WithKind("folder"),
@@ -1143,14 +1143,14 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 				&user.SignedInUser{},
 			)
 
-			err := b.Validate(context.Background(), admAttr, nil)
+			err := b.Validate(t.Context(), admAttr, nil)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
 
-			err = b.Mutate(context.Background(), admAttr, nil)
+			err = b.Mutate(t.Context(), admAttr, nil)
 			require.NoError(t, err)
 			require.Equal(t, tt.input, tt.expected)
 		})
@@ -1249,14 +1249,14 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 				&user.SignedInUser{},
 			)
 
-			err := b.Validate(context.Background(), admAttr, nil)
+			err := b.Validate(t.Context(), admAttr, nil)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
 
-			err = b.Mutate(context.Background(), admAttr, nil)
+			err = b.Mutate(t.Context(), admAttr, nil)
 			require.NoError(t, err)
 			require.Equal(t, tt.input, tt.expected)
 		})
@@ -1290,19 +1290,19 @@ func TestFolderAPIBuilder_Mutate_CascadeDeleteFinalizer(t *testing.T) {
 	t.Run("create with flag on stamps", func(t *testing.T) {
 		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: true})
 		f := folderWithFinalizers()
-		require.NoError(t, newBuilder(t).Mutate(context.Background(), attrs(f, nil, admission.Create), nil))
+		require.NoError(t, newBuilder(t).Mutate(t.Context(), attrs(f, nil, admission.Create), nil))
 		require.Equal(t, []string{folders.CascadeDeleteFinalizer}, f.Finalizers)
 	})
 	t.Run("create with flag off strips", func(t *testing.T) {
 		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: false})
 		f := folderWithFinalizers(folders.CascadeDeleteFinalizer)
-		require.NoError(t, newBuilder(t).Mutate(context.Background(), attrs(f, nil, admission.Create), nil))
+		require.NoError(t, newBuilder(t).Mutate(t.Context(), attrs(f, nil, admission.Create), nil))
 		require.Nil(t, f.Finalizers)
 	})
 	t.Run("update restores a dropped finalizer", func(t *testing.T) {
 		f := folderWithFinalizers()
 		old := folderWithFinalizers(folders.CascadeDeleteFinalizer)
-		require.NoError(t, newBuilder(t).Mutate(context.Background(), attrs(f, old, admission.Update), nil))
+		require.NoError(t, newBuilder(t).Mutate(t.Context(), attrs(f, old, admission.Update), nil))
 		require.Equal(t, []string{folders.CascadeDeleteFinalizer}, f.Finalizers)
 	})
 }

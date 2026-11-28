@@ -77,7 +77,7 @@ func TestMoveWorker_IsSupported(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			worker := NewWorker(nil, nil, nil, metrics)
-			result := worker.IsSupported(context.Background(), tt.job)
+			result := worker.IsSupported(t.Context(), tt.job)
 			require.Equal(t, tt.expected, result)
 		})
 	}
@@ -91,7 +91,7 @@ func TestMoveWorker_ProcessMissingMoveSettings(t *testing.T) {
 	}
 
 	worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), nil, job, nil)
+	err := worker.Process(t.Context(), nil, job, nil)
 	require.EqualError(t, err, "missing move settings")
 }
 
@@ -106,7 +106,7 @@ func TestMoveWorker_ProcessMissingTargetPath(t *testing.T) {
 	}
 
 	worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), nil, job, nil)
+	err := worker.Process(t.Context(), nil, job, nil)
 	require.EqualError(t, err, "target path is required for move operation")
 }
 
@@ -122,7 +122,7 @@ func TestMoveWorker_ProcessInvalidTargetPath(t *testing.T) {
 	}
 
 	worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), nil, job, nil)
+	err := worker.Process(t.Context(), nil, job, nil)
 	require.EqualError(t, err, "target path must be a directory (should end with '/')")
 }
 
@@ -150,7 +150,7 @@ func TestMoveWorker_CommitMessageFromJobSpec(t *testing.T) {
 	mockProgress.On("StrictMaxErrors", 1).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "move files in repository: expected stop")
 }
 
@@ -182,7 +182,7 @@ func TestMoveWorker_ProcessNotReaderWriter(t *testing.T) {
 	mockProgress.On("StrictMaxErrors", 1).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "move files in repository: move job submitted targeting repository that is not a ReaderWriter")
 }
 
@@ -206,7 +206,7 @@ func TestMoveWorker_ProcessWrapFnError(t *testing.T) {
 	mockProgress.On("StrictMaxErrors", 1).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "move files in repository: stage failed")
 }
 
@@ -254,7 +254,7 @@ func TestMoveWorker_ProcessMoveFilesSuccess(t *testing.T) {
 	})).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 }
 
@@ -291,7 +291,7 @@ func TestMoveWorker_ProcessMoveFilesSkipsSameSourceAndTarget(t *testing.T) {
 	})).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 	mockRepo.AssertNotCalled(t, "Move", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }
@@ -331,7 +331,7 @@ func TestMoveWorker_ProcessMoveFilesWithError(t *testing.T) {
 	mockProgress.On("TooManyErrors").Return(errors.New("too many errors"))
 
 	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "move files in repository: too many errors")
 }
 
@@ -377,7 +377,7 @@ func TestMoveWorker_ProcessWithSyncWorker(t *testing.T) {
 	}), mockProgress).Return(nil)
 
 	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 }
 
@@ -418,7 +418,7 @@ func TestMoveWorker_ProcessSyncWorkerError(t *testing.T) {
 	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.Anything, mockProgress).Return(syncError)
 
 	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "pull resources: sync failed")
 }
 
@@ -498,7 +498,7 @@ func TestMoveWorker_moveFiles(t *testing.T) {
 			}
 
 			worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-			err := worker.moveFiles(context.Background(), mockRepo, mockProgress, opts, tt.paths...)
+			err := worker.moveFiles(t.Context(), mockRepo, mockProgress, opts, tt.paths...)
 
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError)
@@ -531,7 +531,7 @@ func TestMoveWorker_moveFilesToRoot(t *testing.T) {
 	mockProgress.On("TooManyErrors").Return(nil)
 
 	worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.moveFiles(context.Background(), mockRepo, mockProgress, opts, "nested/dashboard.json")
+	err := worker.moveFiles(t.Context(), mockRepo, mockProgress, opts, "nested/dashboard.json")
 	require.NoError(t, err)
 
 	mockRepo.AssertExpectations(t)
@@ -667,7 +667,7 @@ func TestMoveWorker_ProcessWithResourceReferences(t *testing.T) {
 	}), mockProgress).Return(nil)
 
 	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 }
 
@@ -729,7 +729,7 @@ func TestMoveWorker_ProcessResourceReferencesError(t *testing.T) {
 	}), mockProgress).Return(nil)
 
 	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.NoError(t, err) // Should continue despite individual resource errors
 }
 
@@ -769,7 +769,7 @@ func TestMoveWorker_ProcessResourcesFactoryError(t *testing.T) {
 	mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(nil, factoryError)
 
 	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "move files in repository: create repository resources client: failed to create resources client")
 }
 
@@ -887,7 +887,7 @@ func TestMoveWorker_resolveResourcesToPaths(t *testing.T) {
 			}
 
 			worker := NewWorker(nil, nil, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-			paths, err := worker.resolveResourcesToPaths(context.Background(), mockRepo, mockProgress, tt.resources)
+			paths, err := worker.resolveResourcesToPaths(t.Context(), mockRepo, mockProgress, tt.resources)
 
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError)
@@ -999,7 +999,7 @@ func TestMoveWorker_RefURLsSetWithRef(t *testing.T) {
 	}
 
 	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepoWithURLs, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepoWithURLs, job, mockProgress)
 	require.NoError(t, err)
 
 	// Verify that SetRefURLs was called with the expected RefURLs
@@ -1057,7 +1057,7 @@ func TestMoveWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 	}
 
 	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepoWithURLs, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepoWithURLs, job, mockProgress)
 	require.NoError(t, err)
 
 	// Verify that SetRefURLs was NOT called since no ref was specified
@@ -1109,7 +1109,7 @@ func TestMoveWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	}
 
 	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 
 	// Verify that SetRefURLs was NOT called since repo doesn't support URLs

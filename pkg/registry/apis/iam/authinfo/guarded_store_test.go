@@ -1,7 +1,6 @@
 package authinfo
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -71,6 +70,6 @@ func TestRequireListSelectorRejectsMetadataName(t *testing.T) {
 }
 
 func TestGuardedStoreWatchRequiresSelector(t *testing.T) {
-	_, err := (&GuardedStore{}).Watch(context.Background(), &internalversion.ListOptions{})
+	_, err := (&GuardedStore{}).Watch(t.Context(), &internalversion.ListOptions{})
 	require.True(t, apierrors.IsBadRequest(err), "got %v", err)
 }

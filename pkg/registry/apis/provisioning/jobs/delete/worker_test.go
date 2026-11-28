@@ -77,7 +77,7 @@ func TestDeleteWorker_IsSupported(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			worker := NewWorker(nil, nil, nil, metrics)
-			result := worker.IsSupported(context.Background(), tt.job)
+			result := worker.IsSupported(t.Context(), tt.job)
 			require.Equal(t, tt.expected, result)
 		})
 	}
@@ -91,7 +91,7 @@ func TestDeleteWorker_ProcessMissingDeleteSettings(t *testing.T) {
 	}
 
 	worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), nil, job, nil)
+	err := worker.Process(t.Context(), nil, job, nil)
 	require.EqualError(t, err, "missing delete settings")
 }
 
@@ -123,7 +123,7 @@ func TestDeleteWorker_CommitMessageFromJobSpec(t *testing.T) {
 	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.Anything, mockProgress).Return(nil)
 
 	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 }
 
@@ -152,7 +152,7 @@ func TestDeleteWorker_ProcessNotReaderWriter(t *testing.T) {
 	mockProgress.On("StrictMaxErrors", 1).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "delete files from repository: delete job submitted targeting repository that is not a ReaderWriter")
 }
 
@@ -175,7 +175,7 @@ func TestDeleteWorker_ProcessWrapFnError(t *testing.T) {
 	mockProgress.On("StrictMaxErrors", 1).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "delete files from repository: stage failed")
 }
 
@@ -224,7 +224,7 @@ func TestDeleteWorker_ProcessDeleteFilesSuccess(t *testing.T) {
 	})).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 }
 
@@ -262,7 +262,7 @@ func TestDeleteWorker_ProcessDeleteFilesWithError(t *testing.T) {
 	mockProgress.On("TooManyErrors").Return(errors.New("too many errors"))
 
 	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "delete files from repository: too many errors")
 }
 
@@ -307,7 +307,7 @@ func TestDeleteWorker_ProcessWithSyncWorker(t *testing.T) {
 	}), mockProgress).Return(nil)
 
 	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 }
 
@@ -347,7 +347,7 @@ func TestDeleteWorker_ProcessSyncWorkerError(t *testing.T) {
 	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.Anything, mockProgress).Return(syncError)
 
 	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "pull resources: sync failed")
 }
 
@@ -428,7 +428,7 @@ func TestDeleteWorker_deleteFiles(t *testing.T) {
 			}
 
 			worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-			err := worker.deleteFiles(context.Background(), mockRepo, mockProgress, opts, tt.paths...)
+			err := worker.deleteFiles(t.Context(), mockRepo, mockProgress, opts, tt.paths...)
 
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError)
@@ -481,7 +481,7 @@ func TestDeleteWorker_Process_FileNotFoundIsWarning(t *testing.T) {
 	})).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 	mockRepo.AssertExpectations(t)
 	mockProgress.AssertExpectations(t)
@@ -538,7 +538,7 @@ func TestDeleteWorker_Process_ResourceNotFoundIsWarning(t *testing.T) {
 	})).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 	mockRepositoryResources.AssertExpectations(t)
 	mockProgress.AssertExpectations(t)
@@ -565,7 +565,7 @@ func TestDeleteWorker_deleteFilesFileNotFoundIsWarning(t *testing.T) {
 	mockProgress.On("TooManyErrors").Return(nil)
 
 	worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.deleteFiles(context.Background(), mockRepo, mockProgress, opts, path)
+	err := worker.deleteFiles(t.Context(), mockRepo, mockProgress, opts, path)
 
 	require.NoError(t, err)
 	mockRepo.AssertExpectations(t)
@@ -594,7 +594,7 @@ func TestDeleteWorker_deleteFilesOtherErrorIsNotWarning(t *testing.T) {
 	mockProgress.On("TooManyErrors").Return(nil)
 
 	worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.deleteFiles(context.Background(), mockRepo, mockProgress, opts, path)
+	err := worker.deleteFiles(t.Context(), mockRepo, mockProgress, opts, path)
 
 	require.NoError(t, err)
 	mockRepo.AssertExpectations(t)
@@ -683,7 +683,7 @@ func TestDeleteWorker_ProcessWithResourceRefs(t *testing.T) {
 	})).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 
 	mockResourcesFactory.AssertExpectations(t)
@@ -742,7 +742,7 @@ func TestDeleteWorker_ProcessResourceRefsOnly(t *testing.T) {
 	})).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 }
 
@@ -808,7 +808,7 @@ func TestDeleteWorker_ProcessResourceResolutionError(t *testing.T) {
 	}), mockProgress).Return(nil)
 
 	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.NoError(t, err) // Should succeed even with resource resolution error
 }
 
@@ -847,7 +847,7 @@ func TestDeleteWorker_ProcessResourcesFactoryError(t *testing.T) {
 	mockProgress.On("SetMessage", mock.Anything, "Resolving resource paths").Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "delete files from repository: create repository resources client: failed to create repository resources client")
 }
 
@@ -883,7 +883,7 @@ func TestDeleteWorker_ProcessResourceRefsNotReaderWriter(t *testing.T) {
 	mockProgress.On("StrictMaxErrors", 1).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "delete files from repository: delete job submitted targeting repository that is not a ReaderWriter")
 }
 
@@ -936,12 +936,12 @@ func TestDeleteWorker_ProcessResourceResolutionTooManyErrors(t *testing.T) {
 	mockProgress.On("TooManyErrors").Return(errors.New("too many errors"))
 
 	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "delete files from repository: too many errors")
 }
 
 func TestDeleteWorker_ProcessMissingSourcePathStopsBeforeDeletion(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
@@ -1090,7 +1090,7 @@ func TestDeleteWorker_ProcessMixedResourcesWithPartialFailure(t *testing.T) {
 	})).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.NoError(t, err) // Should succeed overall, with only the failed resource recorded as error
 }
 
@@ -1188,7 +1188,7 @@ func TestDeleteWorker_ProcessWithPathDeduplication(t *testing.T) {
 	})).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 
 	// Verify all mocks were called as expected - key point is that each file is only deleted once
@@ -1229,7 +1229,7 @@ func TestDeleteWorker_deleteFilesFileNotFoundWarning(t *testing.T) {
 	mockProgress.On("TooManyErrors").Return(nil)
 
 	worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.deleteFiles(context.Background(), mockRepo, mockProgress, opts, path)
+	err := worker.deleteFiles(t.Context(), mockRepo, mockProgress, opts, path)
 
 	require.NoError(t, err) // Should not return error, just record it as warning
 	mockRepo.AssertExpectations(t)
@@ -1268,7 +1268,7 @@ func TestDeleteWorker_deleteFilesOtherErrorNoWarning(t *testing.T) {
 	mockProgress.On("TooManyErrors").Return(nil)
 
 	worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.deleteFiles(context.Background(), mockRepo, mockProgress, opts, path)
+	err := worker.deleteFiles(t.Context(), mockRepo, mockProgress, opts, path)
 
 	require.NoError(t, err) // Should not return error, just record it
 	mockRepo.AssertExpectations(t)
@@ -1382,7 +1382,7 @@ func TestDeleteWorker_RefURLsSetWithRef(t *testing.T) {
 	}
 
 	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepoWithURLs, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepoWithURLs, job, mockProgress)
 	require.NoError(t, err)
 
 	// Verify that SetRefURLs was called with the expected RefURLs
@@ -1439,7 +1439,7 @@ func TestDeleteWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 	}
 
 	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepoWithURLs, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepoWithURLs, job, mockProgress)
 	require.NoError(t, err)
 
 	// Verify that SetRefURLs was NOT called since no ref was specified
@@ -1490,7 +1490,7 @@ func TestDeleteWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	}
 
 	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	err := worker.Process(t.Context(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 
 	// Verify that SetRefURLs was NOT called since repo doesn't support URLs

@@ -1,7 +1,6 @@
 package sync
 
 import (
-	"context"
 	"errors"
 	"slices"
 	"testing"
@@ -53,7 +52,7 @@ func TestSyncWorker_IsSupported(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			worker := NewSyncWorker(nil, nil, nil, nil, metrics, tracing.NewNoopTracerService(), 10, 0)
-			result := worker.IsSupported(context.Background(), tt.job)
+			result := worker.IsSupported(t.Context(), tt.job)
 			require.Equal(t, tt.expected, result)
 		})
 	}
@@ -70,7 +69,7 @@ func TestSyncWorker_ProcessNotReaderWriter(t *testing.T) {
 		},
 	})
 	worker := NewSyncWorker(nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracing.NewNoopTracerService(), 10, 0)
-	err := worker.Process(context.Background(), repo, provisioning.Job{}, jobs.NewMockJobProgressRecorder(t))
+	err := worker.Process(t.Context(), repo, provisioning.Job{}, jobs.NewMockJobProgressRecorder(t))
 	require.EqualError(t, err, "sync job submitted for repository that does not support read-write")
 }
 
@@ -209,7 +208,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			}
 
 			// Execute
-			err := worker.Process(context.Background(), readerWriter, job, progressRecorder)
+			err := worker.Process(t.Context(), readerWriter, job, progressRecorder)
 			require.NoError(t, err)
 
 			// Verify quota condition
@@ -354,7 +353,7 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 				},
 			}
 
-			err := worker.Process(context.Background(), readerWriter, job, progressRecorder)
+			err := worker.Process(t.Context(), readerWriter, job, progressRecorder)
 			require.NoError(t, err)
 
 			require.Equal(t, tt.jobStatus.Finished, capturedSyncStatus.Finished, "all completed syncs, including warnings, must reset the interval")
@@ -882,7 +881,7 @@ func TestSyncWorker_Process(t *testing.T) {
 			}
 
 			// Execute test
-			err := worker.Process(context.Background(), readerWriter, job, progressRecorder)
+			err := worker.Process(t.Context(), readerWriter, job, progressRecorder)
 
 			// Verify results
 			if tt.expectedError != "" {

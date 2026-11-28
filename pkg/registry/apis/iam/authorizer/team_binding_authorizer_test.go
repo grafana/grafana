@@ -1,7 +1,6 @@
 package authorizer
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -70,7 +69,7 @@ func TestTeamBinding_AfterGet(t *testing.T) {
 
 			accessClient := &fakeAccessClient{checkFunc: checkFunc}
 			authz := NewTeamBindingAuthorizer(accessClient)
-			ctx := types.WithAuthInfo(context.Background(), user)
+			ctx := types.WithAuthInfo(t.Context(), user)
 
 			err := authz.AfterGet(ctx, tt.teamBinding)
 			if tt.shouldAllow {
@@ -108,7 +107,7 @@ func TestTeamBinding_FilterList(t *testing.T) {
 
 	accessClient := &fakeAccessClient{compileFunc: compileFunc}
 	authz := NewTeamBindingAuthorizer(accessClient)
-	ctx := types.WithAuthInfo(context.Background(), user)
+	ctx := types.WithAuthInfo(t.Context(), user)
 
 	obj, err := authz.FilterList(ctx, list)
 	require.NoError(t, err)
@@ -154,7 +153,7 @@ func TestTeamBinding_BeforeCreate(t *testing.T) {
 
 			accessClient := &fakeAccessClient{checkFunc: checkFunc}
 			authz := NewTeamBindingAuthorizer(accessClient)
-			ctx := types.WithAuthInfo(context.Background(), user)
+			ctx := types.WithAuthInfo(t.Context(), user)
 
 			err := authz.BeforeCreate(ctx, binding)
 			if tt.shouldAllow {
@@ -197,7 +196,7 @@ func TestTeamBinding_BeforeUpdate(t *testing.T) {
 
 			accessClient := &fakeAccessClient{checkFunc: checkFunc}
 			authz := NewTeamBindingAuthorizer(accessClient)
-			ctx := types.WithAuthInfo(context.Background(), user)
+			ctx := types.WithAuthInfo(t.Context(), user)
 
 			err := authz.BeforeUpdate(ctx, binding, binding)
 			if tt.shouldAllow {
@@ -240,7 +239,7 @@ func TestTeamBinding_BeforeDelete(t *testing.T) {
 
 			accessClient := &fakeAccessClient{checkFunc: checkFunc}
 			authz := NewTeamBindingAuthorizer(accessClient)
-			ctx := types.WithAuthInfo(context.Background(), user)
+			ctx := types.WithAuthInfo(t.Context(), user)
 
 			err := authz.BeforeDelete(ctx, binding)
 			if tt.shouldAllow {

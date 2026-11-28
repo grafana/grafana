@@ -73,7 +73,7 @@ func TestScreenshotRenderer_PutBlobErrors(t *testing.T) {
 			blobstore := NewMockBlobStoreClient(t)
 			blobstore.EXPECT().PutBlob(mock.Anything, mock.Anything).Return(tc.response, tc.err).Once()
 
-			url, err := NewScreenshotRenderer(render, blobstore).RenderScreenshot(context.Background(), provisioning.ResourceRepositoryInfo{
+			url, err := NewScreenshotRenderer(render, blobstore).RenderScreenshot(t.Context(), provisioning.ResourceRepositoryInfo{
 				Namespace: "default", Name: "repo",
 			}, "dashboard", nil)
 			require.Error(t, err)
@@ -87,7 +87,7 @@ func TestScreenshotRenderer_IsAvailable(t *testing.T) {
 	t.Run("should return false when render service is nil", func(t *testing.T) {
 		blobstore := NewMockBlobStoreClient(t)
 		renderer := NewScreenshotRenderer(nil, blobstore)
-		require.False(t, renderer.IsAvailable(context.Background()))
+		require.False(t, renderer.IsAvailable(t.Context()))
 	})
 
 	t.Run("should return false when render service is not available", func(t *testing.T) {
@@ -99,7 +99,7 @@ func TestScreenshotRenderer_IsAvailable(t *testing.T) {
 		blobstore := NewMockBlobStoreClient(t)
 
 		renderer := NewScreenshotRenderer(render, blobstore)
-		require.False(t, renderer.IsAvailable(context.Background()))
+		require.False(t, renderer.IsAvailable(t.Context()))
 	})
 
 	t.Run("should return false when blobstore is nil", func(t *testing.T) {
@@ -110,7 +110,7 @@ func TestScreenshotRenderer_IsAvailable(t *testing.T) {
 		render.EXPECT().IsAvailable(gomock.Any()).Return(true)
 
 		renderer := NewScreenshotRenderer(render, nil)
-		require.False(t, renderer.IsAvailable(context.Background()))
+		require.False(t, renderer.IsAvailable(t.Context()))
 	})
 
 	t.Run("should return true when both services are available", func(t *testing.T) {
@@ -122,7 +122,7 @@ func TestScreenshotRenderer_IsAvailable(t *testing.T) {
 		blobstore := NewMockBlobStoreClient(t)
 
 		renderer := NewScreenshotRenderer(render, blobstore)
-		require.True(t, renderer.IsAvailable(context.Background()))
+		require.True(t, renderer.IsAvailable(t.Context()))
 	})
 }
 
@@ -385,7 +385,7 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 
 			// Mirror production: the job driver stamps the worker identity for the
 			// repository's org onto the context before the renderer runs.
-			ctx := context.Background()
+			ctx := t.Context()
 			if identityCtx, _, idErr := identity.WithProvisioningIdentity(ctx, tc.repoInfo.Namespace); idErr == nil {
 				ctx = identityCtx
 			}
@@ -433,7 +433,7 @@ func TestScreenshotRenderer_PropagatesIdentity(t *testing.T) {
 		UserUID:   "u1",
 		Namespace: "test-ns",
 	}
-	inCtx := authlib.WithAuthInfo(context.Background(), user)
+	inCtx := authlib.WithAuthInfo(t.Context(), user)
 
 	// Assert outside the mock callback: require.* inside MatchedBy calls
 	// runtime.Goexit on failure and deadlocks the test waiting on a PutBlob

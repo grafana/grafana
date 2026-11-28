@@ -70,7 +70,7 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		cleaner := NewNamespaceCleaner(mockClientFactory)
 		progress := jobs.NewMockJobProgressRecorder(t)
 
-		err := cleaner.Clean(context.Background(), "test-namespace", progress)
+		err := cleaner.Clean(t.Context(), "test-namespace", progress)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "get clients: failed to get clients")
 
@@ -91,7 +91,7 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		// SetMessage now runs only after the client resolves, so it is not called on this path.
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
 
-		err := cleaner.Clean(context.Background(), "test-namespace", progress)
+		err := cleaner.Clean(t.Context(), "test-namespace", progress)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "get resource client: failed to get resource client")
 
@@ -134,7 +134,7 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 				result.Error().Error() == "deleting resource folder.grafana.app/Folder test-folder: delete failed"
 		})).Return()
 
-		err := cleaner.Clean(context.Background(), "test-namespace", progress)
+		err := cleaner.Clean(t.Context(), "test-namespace", progress)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "delete resource: delete failed")
 
@@ -217,7 +217,7 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 				result.Error() == nil
 		})).Return()
 
-		err := cleaner.Clean(context.Background(), "test-namespace", progress)
+		err := cleaner.Clean(t.Context(), "test-namespace", progress)
 		require.NoError(t, err)
 
 		mockClientFactory.AssertExpectations(t)
@@ -285,7 +285,7 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 				result.Error() == nil
 		})).Return()
 
-		err := cleaner.Clean(context.Background(), "test-namespace", progress)
+		err := cleaner.Clean(t.Context(), "test-namespace", progress)
 		require.NoError(t, err)
 
 		mockClientFactory.AssertExpectations(t)
@@ -338,7 +338,7 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 				result.Error() == nil
 		})).Return()
 
-		err := cleaner.Clean(context.Background(), "test-namespace", progress)
+		err := cleaner.Clean(t.Context(), "test-namespace", progress)
 		require.NoError(t, err)
 
 		mockClientFactory.AssertExpectations(t)

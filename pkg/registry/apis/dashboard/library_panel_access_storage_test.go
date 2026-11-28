@@ -47,7 +47,7 @@ func TestLibraryPanelAccessStorageMaterializesAndAuthorizesUpdate(t *testing.T) 
 		return updated, nil
 	})
 
-	ctx := requestcontext.WithNamespace(context.Background(), "stacks-1")
+	ctx := requestcontext.WithNamespace(t.Context(), "stacks-1")
 	updated, created, err := storage.Update(ctx, oldPanel.GetName(), patchInfo, nil, nil, false, &metav1.UpdateOptions{})
 	require.NoError(t, err)
 	require.False(t, created)
@@ -84,14 +84,14 @@ func TestLibraryPanelAccessStorageRejectsDeniedWrites(t *testing.T) {
 		func(context.Context, runtime.Object) error { return nil },
 	)
 
-	_, err := storage.Create(context.Background(), panel, nil, &metav1.CreateOptions{})
+	_, err := storage.Create(t.Context(), panel, nil, &metav1.CreateOptions{})
 	require.ErrorIs(t, err, denied)
 
-	_, _, err = storage.Update(context.Background(), panel.GetName(), rest.DefaultUpdatedObjectInfo(panel.DeepCopy()), nil, nil, false, &metav1.UpdateOptions{})
+	_, _, err = storage.Update(t.Context(), panel.GetName(), rest.DefaultUpdatedObjectInfo(panel.DeepCopy()), nil, nil, false, &metav1.UpdateOptions{})
 	require.ErrorIs(t, err, denied)
 	require.False(t, backend.updateCalled)
 
-	_, _, err = storage.Delete(context.Background(), panel.GetName(), nil, &metav1.DeleteOptions{})
+	_, _, err = storage.Delete(t.Context(), panel.GetName(), nil, &metav1.DeleteOptions{})
 	require.ErrorIs(t, err, denied)
 	require.False(t, backend.deleteCalled)
 }
@@ -117,7 +117,7 @@ func TestLibraryPanelAccessStorageRejectsConnectedDelete(t *testing.T) {
 		func(context.Context, runtime.Object) error { return nil },
 	)
 
-	ctx := requestcontext.WithNamespace(context.Background(), "stacks-1")
+	ctx := requestcontext.WithNamespace(t.Context(), "stacks-1")
 	_, _, err := storage.Delete(ctx, panel.GetName(), nil, &metav1.DeleteOptions{})
 	require.ErrorIs(t, err, connected)
 	require.Equal(t, panel.GetName(), validatedName)
@@ -145,7 +145,7 @@ func TestLibraryPanelAccessStorageDeleteLookupDoesNotRequireCallerReadAccess(t *
 		func(context.Context, runtime.Object) error { return nil },
 	)
 
-	ctx := requestcontext.WithNamespace(context.Background(), "stacks-1")
+	ctx := requestcontext.WithNamespace(t.Context(), "stacks-1")
 	ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: 1})
 	_, deleted, err := storage.Delete(ctx, panel.GetName(), nil, &metav1.DeleteOptions{})
 	require.NoError(t, err)
@@ -176,11 +176,11 @@ func TestLibraryPanelAccessStorageValidatesDestinationFolder(t *testing.T) {
 		},
 	)
 
-	_, err := storage.Create(context.Background(), testLibraryPanel("new-panel", "missing"), nil, &metav1.CreateOptions{})
+	_, err := storage.Create(t.Context(), testLibraryPanel("new-panel", "missing"), nil, &metav1.CreateOptions{})
 	require.ErrorIs(t, err, folderErr)
 
 	patchInfo := rest.DefaultUpdatedObjectInfo(testLibraryPanel("panel-a", "missing"))
-	_, _, err = storage.Update(context.Background(), oldPanel.GetName(), patchInfo, nil, nil, false, &metav1.UpdateOptions{})
+	_, _, err = storage.Update(t.Context(), oldPanel.GetName(), patchInfo, nil, nil, false, &metav1.UpdateOptions{})
 	require.ErrorIs(t, err, folderErr)
 	require.Equal(t, 2, validated)
 	require.False(t, backend.updateCalled)
@@ -202,7 +202,7 @@ func TestLibraryPanelAccessStoragePreservesWatchSupport(t *testing.T) {
 
 	watcher, ok := storage.(rest.Watcher)
 	require.True(t, ok)
-	actual, err := watcher.Watch(context.Background(), &metainternalversion.ListOptions{})
+	actual, err := watcher.Watch(t.Context(), &metainternalversion.ListOptions{})
 	require.NoError(t, err)
 	require.Same(t, expected, actual)
 }
@@ -260,7 +260,7 @@ func TestLibraryPanelAccessStorageAuthorizesCreateOnUpdate(t *testing.T) {
 		},
 	)
 
-	ctx := requestcontext.WithNamespace(context.Background(), "stacks-1")
+	ctx := requestcontext.WithNamespace(t.Context(), "stacks-1")
 	_, created, err := storage.Update(ctx, panel.GetName(), rest.DefaultUpdatedObjectInfo(panel), nil, nil, false, &metav1.UpdateOptions{})
 	require.NoError(t, err)
 	require.True(t, created)
@@ -285,7 +285,7 @@ func TestLibraryPanelAccessStorageRejectsDeniedCreateOnUpdate(t *testing.T) {
 		func(context.Context, runtime.Object) error { return nil },
 	)
 
-	_, _, err := storage.Update(context.Background(), panel.GetName(), rest.DefaultUpdatedObjectInfo(panel), nil, nil, false, &metav1.UpdateOptions{})
+	_, _, err := storage.Update(t.Context(), panel.GetName(), rest.DefaultUpdatedObjectInfo(panel), nil, nil, false, &metav1.UpdateOptions{})
 	require.ErrorIs(t, err, denied)
 	require.False(t, backend.updateCalled)
 }
@@ -306,7 +306,7 @@ func TestLibraryPanelAccessStorageCreateOnUpdateRetriesWhenPanelAppears(t *testi
 		func(context.Context, runtime.Object) error { return nil },
 	)
 
-	_, _, err := storage.Update(context.Background(), panel.GetName(), rest.DefaultUpdatedObjectInfo(panel), nil, nil, false, &metav1.UpdateOptions{})
+	_, _, err := storage.Update(t.Context(), panel.GetName(), rest.DefaultUpdatedObjectInfo(panel), nil, nil, false, &metav1.UpdateOptions{})
 	require.True(t, apierrors.IsConflict(err), "a racing create must not become an unauthorized update: %v", err)
 }
 

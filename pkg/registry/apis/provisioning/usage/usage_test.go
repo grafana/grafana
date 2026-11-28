@@ -60,7 +60,7 @@ func TestMetricCollector_CountManagedObjectsErrors(t *testing.T) {
 				return nil, nil
 			}
 			fn := MetricCollector(tracing.NewNoopTracerService(), nil, repoLister, nil, unified)
-			metrics, err := fn(context.Background())
+			metrics, err := fn(t.Context())
 			require.ErrorContains(t, err, "count managed objects on namespace default:")
 			require.Empty(t, metrics)
 			require.ErrorIs(t, err, tc.err)
@@ -72,7 +72,7 @@ func TestMetricCollector_CountManagedObjectsErrors(t *testing.T) {
 func TestMetricCollector_NoUnifiedStorage(t *testing.T) {
 	fn := MetricCollector(tracing.NewNoopTracerService(), nil, nil, nil, nil)
 
-	m, err := fn(context.Background())
+	m, err := fn(t.Context())
 	require.NoError(t, err)
 	require.Empty(t, m)
 }
@@ -97,7 +97,7 @@ func TestMetricCollector_FallbackDefaultNamespace(t *testing.T) {
 
 	fn := MetricCollector(tracing.NewNoopTracerService(), nil, repoLister, nil, unified)
 
-	m, err := fn(context.Background())
+	m, err := fn(t.Context())
 	require.NoError(t, err)
 	require.Equal(t, 2, m["stats.managed_by."+managedKind+".count"])
 	require.Equal(t, 1, m["stats.repository."+string(provisioning.GitHubRepositoryType)+".count"])
@@ -136,7 +136,7 @@ func TestMetricCollector_AggregatesAcrossNamespaces(t *testing.T) {
 
 	fn := MetricCollector(tracing.NewNoopTracerService(), namespaces, repoLister, nil, unified)
 
-	m, err := fn(context.Background())
+	m, err := fn(t.Context())
 	require.NoError(t, err)
 	require.Equal(t, 5, m["stats.managed_by."+managedKind+".count"])                               // 3 + 2
 	require.Equal(t, 3, m["stats.repository."+string(provisioning.GitHubRepositoryType)+".count"]) // 1 + 2
@@ -193,7 +193,7 @@ func TestMetricCollector_RepositoryDimensions(t *testing.T) {
 
 	fn := MetricCollector(tracing.NewNoopTracerService(), nil, repoLister, nil, unified)
 
-	m, err := fn(context.Background())
+	m, err := fn(t.Context())
 	require.NoError(t, err)
 
 	require.Equal(t, 2, m["stats.repository.count"])
@@ -260,7 +260,7 @@ func TestMetricCollector_ConnectionStats(t *testing.T) {
 
 	fn := MetricCollector(tracing.NewNoopTracerService(), nil, repoLister, connLister, unified)
 
-	m, err := fn(context.Background())
+	m, err := fn(t.Context())
 	require.NoError(t, err)
 
 	require.Equal(t, 2, m["stats.connection.count"])
@@ -285,6 +285,6 @@ func TestMetricCollector_ErrorFailFast(t *testing.T) {
 
 	fn := MetricCollector(tracing.NewNoopTracerService(), namespaces, nil, nil, unified)
 
-	_, err := fn(context.Background())
+	_, err := fn(t.Context())
 	require.Error(t, err)
 }

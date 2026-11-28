@@ -50,7 +50,7 @@ func TestValidateOnDeleteRecordsOutcome(t *testing.T) {
 			reg := prometheus.NewRegistry()
 			m := newDeleteCheckMetrics(reg, tt.legacyJoin)
 
-			_ = validateOnDelete(context.Background(), folder, tt.searcher, tt.options, tt.cascade, m)
+			_ = validateOnDelete(t.Context(), folder, tt.searcher, tt.options, tt.cascade, m)
 
 			require.Equal(t, 1.0, testutil.ToFloat64(m.checks.WithLabelValues(tt.wantOutcome, tt.wantJoin, tt.wantBlocking, "false")))
 			require.Equal(t, 1, recordedSeries(t, m.checks), "only one series should have been recorded")
@@ -72,7 +72,7 @@ func TestValidateOnDeleteBlockingKindIgnoresStatsOrder(t *testing.T) {
 			m := newDeleteCheckMetrics(prometheus.NewRegistry(), true)
 			searcher := &mockSearchClient{stats: &resourcepb.ResourceStatsResponse{Stats: order}}
 
-			err := validateOnDelete(context.Background(), folder, searcher, nil, false, m)
+			err := validateOnDelete(t.Context(), folder, searcher, nil, false, m)
 
 			require.ErrorContains(t, err, "contains 3 alertrules")
 			require.Equal(t, 1.0, testutil.ToFloat64(m.checks.WithLabelValues("refused_not_empty", "enabled", "alertrules", "false")))
@@ -91,7 +91,7 @@ func TestValidateLabelsDryRunDeletes(t *testing.T) {
 	obj := &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "nnn", Namespace: "default"}}
 	validate := func(dryRun bool) {
 		t.Helper()
-		err := b.Validate(context.Background(), admission.NewAttributesRecord(nil, obj,
+		err := b.Validate(t.Context(), admission.NewAttributesRecord(nil, obj,
 			folders.SchemeGroupVersion.WithKind("folder"), obj.Namespace, obj.Name,
 			folders.SchemeGroupVersion.WithResource("folders"), "", admission.Delete,
 			&metav1.DeleteOptions{}, dryRun, &user.SignedInUser{}), nil)
@@ -111,7 +111,7 @@ func TestDryRunCountFailureIsStillRecorded(t *testing.T) {
 	m := newDeleteCheckMetrics(prometheus.NewRegistry(), true).withDryRun(true)
 	folder := &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "nnn"}}
 
-	_ = validateOnDelete(context.Background(), folder, &mockSearchClient{statsErr: errors.New("boom")}, nil, false, m)
+	_ = validateOnDelete(t.Context(), folder, &mockSearchClient{statsErr: errors.New("boom")}, nil, false, m)
 
 	require.Equal(t, 1.0, testutil.ToFloat64(m.checks.WithLabelValues("refused_count_failed", "enabled", "none", "true")))
 }

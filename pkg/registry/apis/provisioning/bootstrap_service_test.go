@@ -222,7 +222,7 @@ func TestBootstrapService_Run(t *testing.T) {
 		svc, err := ProvideBootstrapService(setting.NewCfg(), builder)
 		require.NoError(t, err)
 		runErr := make(chan error, 1)
-		go func() { runErr <- svc.Run(context.Background()) }()
+		go func() { runErr <- svc.Run(t.Context()) }()
 		t.Cleanup(svc.StopAsync)
 
 		receive(t, svc.Done(), runErr)

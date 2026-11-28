@@ -91,7 +91,7 @@ func newTestREST() *ReadOnlyGlobalRoleREST {
 
 func TestGetReturnsCorrectRole(t *testing.T) {
 	r := newTestREST()
-	obj, err := r.Get(context.Background(), "basic_admin", &metav1.GetOptions{})
+	obj, err := r.Get(t.Context(), "basic_admin", &metav1.GetOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, obj)
 
@@ -106,14 +106,14 @@ func TestGetReturnsCorrectRole(t *testing.T) {
 
 func TestGetReturnsNotFound(t *testing.T) {
 	r := newTestREST()
-	_, err := r.Get(context.Background(), "nonexistent", &metav1.GetOptions{})
+	_, err := r.Get(t.Context(), "nonexistent", &metav1.GetOptions{})
 	require.Error(t, err)
 	assert.True(t, apierrors.IsNotFound(err))
 }
 
 func TestListReturnsAllRolesWithPermissions(t *testing.T) {
 	r := newTestREST()
-	obj, err := r.List(context.Background(), nil)
+	obj, err := r.List(t.Context(), nil)
 	require.NoError(t, err)
 	require.NotNil(t, obj)
 
@@ -141,28 +141,28 @@ func TestListReturnsAllRolesWithPermissions(t *testing.T) {
 
 func TestCreateReturnsMethodNotSupported(t *testing.T) {
 	r := newTestREST()
-	_, err := r.Create(context.Background(), nil, nil, &metav1.CreateOptions{})
+	_, err := r.Create(t.Context(), nil, nil, &metav1.CreateOptions{})
 	require.Error(t, err)
 	assert.True(t, apierrors.IsMethodNotSupported(err))
 }
 
 func TestUpdateReturnsMethodNotSupported(t *testing.T) {
 	r := newTestREST()
-	_, _, err := r.Update(context.Background(), "test", nil, nil, nil, false, &metav1.UpdateOptions{})
+	_, _, err := r.Update(t.Context(), "test", nil, nil, nil, false, &metav1.UpdateOptions{})
 	require.Error(t, err)
 	assert.True(t, apierrors.IsMethodNotSupported(err))
 }
 
 func TestDeleteReturnsMethodNotSupported(t *testing.T) {
 	r := newTestREST()
-	_, _, err := r.Delete(context.Background(), "test", nil, &metav1.DeleteOptions{})
+	_, _, err := r.Delete(t.Context(), "test", nil, &metav1.DeleteOptions{})
 	require.Error(t, err)
 	assert.True(t, apierrors.IsMethodNotSupported(err))
 }
 
 func TestDeleteCollectionReturnsMethodNotSupported(t *testing.T) {
 	r := newTestREST()
-	_, err := r.DeleteCollection(context.Background(), nil, &metav1.DeleteOptions{}, nil)
+	_, err := r.DeleteCollection(t.Context(), nil, &metav1.DeleteOptions{}, nil)
 	require.Error(t, err)
 	assert.True(t, apierrors.IsMethodNotSupported(err))
 }
@@ -176,7 +176,7 @@ func TestGetSwitchesToServiceIdentity(t *testing.T) {
 	svc := &mockACService{roles: newTestStaticRoles()}
 	r := NewReadOnlyGlobalRoleREST(svc)
 
-	_, err := r.Get(context.Background(), "basic_admin", &metav1.GetOptions{})
+	_, err := r.Get(t.Context(), "basic_admin", &metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.True(t, identity.IsServiceIdentity(svc.lastCallCtx))
 }
@@ -185,17 +185,17 @@ func TestListSwitchesToServiceIdentity(t *testing.T) {
 	svc := &mockACService{roles: newTestStaticRoles()}
 	r := NewReadOnlyGlobalRoleREST(svc)
 
-	_, err := r.List(context.Background(), nil)
+	_, err := r.List(t.Context(), nil)
 	require.NoError(t, err)
 	assert.True(t, identity.IsServiceIdentity(svc.lastCallCtx))
 }
 
 func TestConvertToTable(t *testing.T) {
 	r := newTestREST()
-	obj, err := r.Get(context.Background(), "basic_admin", &metav1.GetOptions{})
+	obj, err := r.Get(t.Context(), "basic_admin", &metav1.GetOptions{})
 	require.NoError(t, err)
 
-	table, err := r.ConvertToTable(context.Background(), obj, nil)
+	table, err := r.ConvertToTable(t.Context(), obj, nil)
 	require.NoError(t, err)
 	require.NotNil(t, table)
 	require.Len(t, table.Rows, 1)

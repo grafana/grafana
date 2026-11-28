@@ -168,7 +168,7 @@ func TestSubResourceREST_Connect(t *testing.T) {
 		r := &subResourceREST{builder: builder}
 
 		responder := &resourceMockResponder{}
-		handler, err := r.Connect(context.Background(), "test-ds", nil, responder)
+		handler, err := r.Connect(t.Context(), "test-ds", nil, responder)
 
 		require.Error(t, err)
 		require.Nil(t, handler)
@@ -193,7 +193,7 @@ func TestSubResourceREST_Connect(t *testing.T) {
 		r := &subResourceREST{builder: builder}
 
 		responder := &resourceMockResponder{}
-		handler, err := r.Connect(context.Background(), "test-ds", nil, responder)
+		handler, err := r.Connect(t.Context(), "test-ds", nil, responder)
 
 		require.Error(t, err)
 		require.Nil(t, handler)
@@ -236,7 +236,7 @@ func TestSubResourceREST_Connect(t *testing.T) {
 		r := &subResourceREST{builder: builder}
 
 		responder := &resourceMockResponder{}
-		handler, err := r.Connect(context.Background(), "test-ds", nil, responder)
+		handler, err := r.Connect(t.Context(), "test-ds", nil, responder)
 
 		require.NoError(t, err)
 		require.NotNil(t, handler)
@@ -299,7 +299,7 @@ func TestSubResourceREST_Connect(t *testing.T) {
 				}
 				r := &subResourceREST{builder: builder}
 
-				handler, err := r.Connect(context.Background(), "test-ds", nil, &resourceMockResponder{})
+				handler, err := r.Connect(t.Context(), "test-ds", nil, &resourceMockResponder{})
 				require.NoError(t, err)
 
 				req := httptest.NewRequest(method, "http://localhost/apis/test/datasources/test-ds/resources/path", nil)
@@ -332,7 +332,7 @@ func TestSubResourceREST_Connect(t *testing.T) {
 		r := &subResourceREST{builder: builder}
 
 		responder := &resourceMockResponder{}
-		handler, err := r.Connect(context.Background(), "test-ds", nil, responder)
+		handler, err := r.Connect(t.Context(), "test-ds", nil, responder)
 		require.NoError(t, err)
 
 		req := httptest.NewRequest(http.MethodGet, "http://localhost/apis/test/datasources/test-ds/resources/path", nil)
@@ -369,7 +369,7 @@ func TestSubResourceREST_Connect(t *testing.T) {
 		}
 		r := &subResourceREST{builder: builder}
 
-		handler, err := r.Connect(context.Background(), "test-ds", nil, &resourceMockResponder{})
+		handler, err := r.Connect(t.Context(), "test-ds", nil, &resourceMockResponder{})
 		require.NoError(t, err)
 
 		requestBody := `{"key": "value", "nested": {"foo": "bar"}}`
@@ -406,7 +406,7 @@ func TestSubResourceREST_Connect(t *testing.T) {
 		}
 		r := &subResourceREST{builder: builder}
 
-		handler, err := r.Connect(context.Background(), "test-ds", nil, &resourceMockResponder{})
+		handler, err := r.Connect(t.Context(), "test-ds", nil, &resourceMockResponder{})
 		require.NoError(t, err)
 
 		req := httptest.NewRequest(http.MethodGet, "http://localhost/apis/test/datasources/test-ds/resources/path", nil)
@@ -443,7 +443,7 @@ func TestSubResourceREST_Connect(t *testing.T) {
 		}
 		r := &subResourceREST{builder: builder}
 
-		handler, err := r.Connect(context.Background(), "test-ds", nil, &resourceMockResponder{})
+		handler, err := r.Connect(t.Context(), "test-ds", nil, &resourceMockResponder{})
 		require.NoError(t, err)
 
 		req := httptest.NewRequest(http.MethodGet, "http://localhost/apis/test/datasources/test-ds/resources/api/endpoint?foo=bar&baz=qux", nil)

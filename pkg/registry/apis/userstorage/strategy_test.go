@@ -1,7 +1,6 @@
 package userstorage
 
 import (
-	"context"
 	"testing"
 
 	"github.com/grafana/grafana/apps/userstorage/pkg/apis/userstorage/v0alpha1"
@@ -41,7 +40,7 @@ func TestValidate(t *testing.T) {
 					Name: tt.objectName,
 				},
 			}
-			ctx := identity.WithRequester(context.Background(), requester)
+			ctx := identity.WithRequester(t.Context(), requester)
 
 			strategy := newStrategy(nil, schema.GroupVersion{}, prometheus.DefaultRegisterer)
 			errs := strategy.Validate(ctx, obj)

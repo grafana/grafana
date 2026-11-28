@@ -1,7 +1,6 @@
 package provisioning
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -40,7 +39,7 @@ func subresourceAttrs(sub, name, ns string) authorizer.Attributes {
 // resources/stats/history/status are admin-only and gated on repositories:write so that the
 // repository-scoped Name is preserved (rather than proxying through an unrelated resource).
 func TestAuthorizeRepositorySubresource(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	const ns, name = "default", "my-repo"
 
 	repoWriteReq := func(req authlib.CheckRequest) bool {

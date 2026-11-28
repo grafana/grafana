@@ -330,7 +330,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				tracer:        tracing.InitializeTracerForTest(),
 			}
 
-			err := c.handleDelete(context.Background(), tc.repo)
+			err := c.handleDelete(t.Context(), tc.repo)
 			if tc.expectedErr != "" {
 				assert.Error(t, err)
 				assert.ErrorContains(t, err, tc.expectedErr)
@@ -381,7 +381,7 @@ func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 			Finalizers: []string{repository.CleanFinalizer},
 		},
 	}
-	err := c.handleDelete(context.Background(), repo)
+	err := c.handleDelete(t.Context(), repo)
 	require.NoError(t, err)
 	require.Equal(t, int32(2), calls.Load(), "finalizer-removal patch should retry once after a conflict")
 }
@@ -435,7 +435,7 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 			Finalizers: []string{repository.CleanFinalizer},
 		},
 	}
-	err := c.handleDelete(context.Background(), repo)
+	err := c.handleDelete(t.Context(), repo)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "remove finalizers")
 	require.Greater(t, calls.Load(), int32(1), "should retry at least once before giving up")
@@ -476,7 +476,7 @@ func TestRepositoryController_handleDelete_ObservesPendingAge(t *testing.T) {
 			Finalizers:        []string{repository.CleanFinalizer},
 		},
 	}
-	err := c.handleDelete(context.Background(), repo)
+	err := c.handleDelete(t.Context(), repo)
 	require.NoError(t, err)
 	assert.Equal(t, uint64(1), histogramCount(t, reg, repositoryDeletionPendingMetric))
 	assert.Equal(t, 1.0, counterValue(t, reg, repositoryDeletionsMetric))
@@ -552,7 +552,7 @@ func TestRepositoryController_handleDelete_ObservesPendingCauseBeforeFinalizers(
 				},
 				Status: tc.status,
 			}
-			require.NoError(t, c.handleDelete(context.Background(), repo))
+			require.NoError(t, c.handleDelete(t.Context(), repo))
 			family := gatherMetrics(t, reg)[repositoryDeletionPendingMetric]
 			require.NotNil(t, family)
 			require.Len(t, family.GetMetric(), 1)
@@ -605,7 +605,7 @@ func TestRepositoryController_handleDelete_RecordsCauseForNextReconcile(t *testi
 				},
 			}
 
-			require.ErrorIs(t, c.handleDelete(context.Background(), repo), tc.err)
+			require.ErrorIs(t, c.handleDelete(t.Context(), repo), tc.err)
 			require.Len(t, patcher.ops, 2)
 			recorded := patcher.ops[1]["value"].(*provisioning.DeletionStatus)
 			assert.Equal(t, tc.cause, recorded.Cause)
@@ -616,7 +616,7 @@ func TestRepositoryController_handleDelete_RecordsCauseForNextReconcile(t *testi
 			require.NoError(t, err)
 			require.NoError(t, json.Unmarshal(data, &repo.Status.Deletion))
 			repo.Status.DeleteError = recorded.Message
-			require.ErrorIs(t, c.handleDelete(context.Background(), repo), tc.err)
+			require.ErrorIs(t, c.handleDelete(t.Context(), repo), tc.err)
 			assert.Equal(t, uint64(1), histogramCountWithLabel(t, reg, repositoryDeletionPendingMetric, "cause", string(tc.cause)))
 			assert.Len(t, patcher.ops, 2, "unchanged status must not trigger another patch")
 		})
@@ -641,7 +641,7 @@ func TestRepositoryController_handleDelete_EmptyFinalizersDoesNotCount(t *testin
 			DeletionTimestamp: &deletion,
 		},
 	}
-	err := c.handleDelete(context.Background(), repo)
+	err := c.handleDelete(t.Context(), repo)
 	require.NoError(t, err)
 	// Age is still observed, but the deletion is not (re-)counted.
 	assert.Equal(t, uint64(1), histogramCount(t, reg, repositoryDeletionPendingMetric))
@@ -666,7 +666,7 @@ func TestRepositoryController_updateDeleteStatus_SkipsWhenUnchanged(t *testing.T
 			},
 		},
 	}
-	err := c.updateDeleteStatus(context.Background(), repo, errors.New("boom"))
+	err := c.updateDeleteStatus(t.Context(), repo, errors.New("boom"))
 	require.NoError(t, err)
 }
 
@@ -686,7 +686,7 @@ func TestRepositoryController_updateDeleteStatus_BackfillsCause(t *testing.T) {
 					},
 				},
 			}
-			require.NoError(t, c.updateDeleteStatus(context.Background(), repo, err))
+			require.NoError(t, c.updateDeleteStatus(t.Context(), repo, err))
 			require.Len(t, patcher.ops, 2)
 			deletion := patcher.ops[1]["value"].(*provisioning.DeletionStatus)
 			assert.Equal(t, provisioning.DeletionCauseUser, deletion.Cause)
@@ -721,7 +721,7 @@ func TestRepositoryController_updateDeleteStatus_BackfillsMissingStructuredStatu
 	repo := &provisioning.Repository{
 		Status: provisioning.RepositoryStatus{DeleteError: wrapped.Error()},
 	}
-	err := c.updateDeleteStatus(context.Background(), repo, wrapped)
+	err := c.updateDeleteStatus(t.Context(), repo, wrapped)
 	require.NoError(t, err)
 }
 
@@ -750,7 +750,7 @@ func TestRepositoryController_updateDeleteStatus_UsesAddOp(t *testing.T) {
 	repo := &provisioning.Repository{
 		Status: provisioning.RepositoryStatus{DeleteError: "old"},
 	}
-	err := c.updateDeleteStatus(context.Background(), repo, errors.New("new"))
+	err := c.updateDeleteStatus(t.Context(), repo, errors.New("new"))
 	require.NoError(t, err)
 }
 
@@ -778,7 +778,7 @@ func TestRepositoryController_updateDeleteStatus_NamesBlockingFinalizer(t *testi
 		finalizer: repository.CleanFinalizer,
 		err:       errors.New("boom"),
 	})
-	err := c.updateDeleteStatus(context.Background(), repo, wrapped)
+	err := c.updateDeleteStatus(t.Context(), repo, wrapped)
 	require.NoError(t, err)
 }
 
@@ -803,7 +803,7 @@ func TestRepositoryController_updateDeleteStatus_UsesNonEmptyFolderError(t *test
 
 	c := &RepositoryController{statusPatcher: patcher}
 	wrapped := fmt.Errorf("remove finalizers: %w", &finalizerError{finalizer: repository.RemoveOrphanResourcesFinalizer, err: folderErr})
-	err := c.updateDeleteStatus(context.Background(), &provisioning.Repository{}, wrapped)
+	err := c.updateDeleteStatus(t.Context(), &provisioning.Repository{}, wrapped)
 	require.NoError(t, err)
 }
 
@@ -821,25 +821,25 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 	largePolicy := repository.NewIncrementalSyncPolicy(1000)
 
 	t.Run("should use incremental sync", func(t *testing.T) {
-		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return([]repository.VersionedFileChange{
+		versioned.On("CompareFiles", t.Context(), obj.Status.Sync.LastRef, latestRef).Return([]repository.VersionedFileChange{
 			{
 				Action: repository.FileActionDeleted,
 				Path:   "test.json",
 			},
 		}, nil).Once()
-		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, largePolicy)
+		got, err := shouldUseIncrementalSync(t.Context(), versioned, obj, latestRef, largePolicy)
 		assert.NoError(t, err)
 		assert.True(t, got)
 	})
 
 	t.Run("should not use incremental sync when folder-only metadata is deleted", func(t *testing.T) {
-		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return([]repository.VersionedFileChange{
+		versioned.On("CompareFiles", t.Context(), obj.Status.Sync.LastRef, latestRef).Return([]repository.VersionedFileChange{
 			{
 				Action: repository.FileActionDeleted,
 				Path:   "test/.keep",
 			},
 		}, nil).Once()
-		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, largePolicy)
+		got, err := shouldUseIncrementalSync(t.Context(), versioned, obj, latestRef, largePolicy)
 		assert.NoError(t, err)
 		assert.False(t, got)
 	})
@@ -850,8 +850,8 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 		for i := range changes {
 			changes[i] = repository.VersionedFileChange{Action: repository.FileActionCreated, Path: "dashboards/d.json"}
 		}
-		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return(changes, nil).Once()
-		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, policy)
+		versioned.On("CompareFiles", t.Context(), obj.Status.Sync.LastRef, latestRef).Return(changes, nil).Once()
+		got, err := shouldUseIncrementalSync(t.Context(), versioned, obj, latestRef, policy)
 		assert.NoError(t, err)
 		assert.True(t, got, "diff one under threshold must stay incremental")
 	})
@@ -862,8 +862,8 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 		for i := range changes {
 			changes[i] = repository.VersionedFileChange{Action: repository.FileActionCreated, Path: "dashboards/d.json"}
 		}
-		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return(changes, nil).Once()
-		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, policy)
+		versioned.On("CompareFiles", t.Context(), obj.Status.Sync.LastRef, latestRef).Return(changes, nil).Once()
+		got, err := shouldUseIncrementalSync(t.Context(), versioned, obj, latestRef, policy)
 		assert.NoError(t, err)
 		assert.True(t, got, "diff at threshold must stay incremental (strict >)")
 	})
@@ -874,8 +874,8 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 		for i := range changes {
 			changes[i] = repository.VersionedFileChange{Action: repository.FileActionCreated, Path: "dashboards/d.json"}
 		}
-		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return(changes, nil).Once()
-		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, policy)
+		versioned.On("CompareFiles", t.Context(), obj.Status.Sync.LastRef, latestRef).Return(changes, nil).Once()
+		got, err := shouldUseIncrementalSync(t.Context(), versioned, obj, latestRef, policy)
 		assert.NoError(t, err)
 		assert.False(t, got, "diff above threshold must force a full sync")
 	})
@@ -886,15 +886,15 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 		for i := range changes {
 			changes[i] = repository.VersionedFileChange{Action: repository.FileActionCreated, Path: "dashboards/d.json"}
 		}
-		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return(changes, nil).Once()
-		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, policy)
+		versioned.On("CompareFiles", t.Context(), obj.Status.Sync.LastRef, latestRef).Return(changes, nil).Once()
+		got, err := shouldUseIncrementalSync(t.Context(), versioned, obj, latestRef, policy)
 		assert.NoError(t, err)
 		assert.True(t, got, "max_incremental_changes=0 disables the size check (unlimited)")
 	})
 
 	t.Run("propagates CompareFiles error without deciding", func(t *testing.T) {
-		versioned.On("CompareFiles", context.Background(), obj.Status.Sync.LastRef, latestRef).Return(nil, assert.AnError).Once()
-		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, largePolicy)
+		versioned.On("CompareFiles", t.Context(), obj.Status.Sync.LastRef, latestRef).Return(nil, assert.AnError).Once()
+		got, err := shouldUseIncrementalSync(t.Context(), versioned, obj, latestRef, largePolicy)
 		assert.Error(t, err)
 		assert.False(t, got, "on CompareFiles error the decision defaults to full sync (returned as false)")
 	})
@@ -1247,7 +1247,7 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 			}
 
 			// Test shouldResync
-			ctx := context.Background()
+			ctx := t.Context()
 			result := rc.shouldResync(ctx, tc.repo)
 
 			// Verify
@@ -1338,7 +1338,7 @@ func TestRepositoryController_process_IntervalNoop(t *testing.T) {
 			updated := obj.DeepCopy()
 			updated.Status.Sync.LastChecked = lastChecked
 			require.NoError(t, indexer.Update(updated))
-			assert.False(t, rc.shouldResync(context.Background(), updated))
+			assert.False(t, rc.shouldResync(t.Context(), updated))
 			patcher.ops = nil
 			_, err = rc.process("default/repo")
 			require.NoError(t, err)
@@ -1348,7 +1348,7 @@ func TestRepositoryController_process_IntervalNoop(t *testing.T) {
 			updated = updated.DeepCopy()
 			updated.Status.Sync.LastChecked = time.Now().Add(-10 * time.Minute).UnixMilli()
 			require.NoError(t, indexer.Update(updated))
-			assert.True(t, rc.shouldResync(context.Background(), updated))
+			assert.True(t, rc.shouldResync(t.Context(), updated))
 			repo.MockVersioned.On("LatestRef", mock.Anything).Return(obj.Status.Sync.LastRef, nil).Once()
 			_, err = rc.process("default/repo")
 			require.NoError(t, err)
@@ -1370,7 +1370,7 @@ func TestRepositoryController_process_IntervalNoopPatchFailure(t *testing.T) {
 	_, found := patcher.findPatchOp("/status/sync/lastChecked")
 	assert.True(t, found)
 	assert.Equal(t, original, obj)
-	assert.True(t, rc.shouldResync(context.Background(), obj), "a failed patch must leave the interval eligible for retry")
+	assert.True(t, rc.shouldResync(t.Context(), obj), "a failed patch must leave the interval eligible for retry")
 }
 
 func TestRepositoryController_shouldResync_LastChecked(t *testing.T) {
@@ -1440,7 +1440,7 @@ func TestRepositoryController_shouldResync_LastChecked(t *testing.T) {
 				}},
 				Status: provisioning.RepositoryStatus{Sync: tt.sync},
 			}
-			assert.Equal(t, tt.want, rc.shouldResync(context.Background(), obj))
+			assert.Equal(t, tt.want, rc.shouldResync(t.Context(), obj))
 		})
 	}
 }
@@ -1462,9 +1462,9 @@ func TestRepositoryController_shouldResync_MissingJobUsesFinished(t *testing.T) 
 				}},
 			}
 
-			assert.True(t, rc.shouldResync(context.Background(), obj), "a recent interval check must not delay missing-job recovery")
+			assert.True(t, rc.shouldResync(t.Context(), obj), "a recent interval check must not delay missing-job recovery")
 			obj.Status.Sync.Finished = time.Now().UnixMilli()
-			assert.False(t, rc.shouldResync(context.Background(), obj), "missing-job recovery must respect the interval since the last completed sync")
+			assert.False(t, rc.shouldResync(t.Context(), obj), "missing-job recovery must respect the interval since the last completed sync")
 		})
 	}
 }
@@ -1585,7 +1585,7 @@ func TestRepositoryController_FullSyncLastChecked(t *testing.T) {
 			health := provisioning.RepositoryHealthStatus{Healthy: true}
 			before := time.Now().UnixMilli()
 
-			opts := rc.determineSyncStrategy(context.Background(), obj, repo, tt.interval, false, health)
+			opts := rc.determineSyncStrategy(t.Context(), obj, repo, tt.interval, false, health)
 			require.Equal(t, &provisioning.SyncJobOptions{}, opts)
 			patcher := &capturePatcher{ops: rc.determineSyncStatusOps(obj, opts, health, tt.interval)}
 			op, found := patcher.findPatchOp("/status/sync/lastChecked")
@@ -1626,7 +1626,7 @@ func TestRepositoryController_determineSyncStrategy_SkippedInterval(t *testing.T
 				health.Healthy = false
 			}
 
-			opts := rc.determineSyncStrategy(context.Background(), obj, repo, shouldResync, tt.blocked, health)
+			opts := rc.determineSyncStrategy(t.Context(), obj, repo, shouldResync, tt.blocked, health)
 			assert.Nil(t, opts)
 			ops := rc.determineSyncStatusOps(obj, opts, health, shouldResync)
 			for _, op := range ops {
@@ -1674,7 +1674,7 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 			Status:     provisioning.RepositoryStatus{ObservedGeneration: 0},
 		}
 
-		status, err := rc.resolveQuotaStatus(context.Background(), repo)
+		status, err := rc.resolveQuotaStatus(t.Context(), repo)
 		require.ErrorIs(t, err, lookupErr)
 		assert.ErrorContains(t, err, "failed to get quota status")
 		assert.Equal(t, provisioning.QuotaStatus{}, status)
@@ -1704,7 +1704,7 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 			},
 		}
 
-		status, err := rc.resolveQuotaStatus(context.Background(), repo)
+		status, err := rc.resolveQuotaStatus(t.Context(), repo)
 		require.NoError(t, err)
 		assert.Equal(t, int64(5), status.MaxRepositories)
 		assert.Equal(t, int64(100), status.MaxResourcesPerRepository)
@@ -1734,7 +1734,7 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 			},
 		}
 
-		status, err := rc.resolveQuotaStatus(context.Background(), repo)
+		status, err := rc.resolveQuotaStatus(t.Context(), repo)
 		require.NoError(t, err)
 		assert.Equal(t, updatedAt, status.UpdatedAt)
 		family := gatherMetrics(t, reg)[repositoryQuotaAgeMetric]
@@ -1744,7 +1744,7 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 		firstAge := histogram.GetSampleSum()
 
 		repo.Status.Quota = status
-		status, err = rc.resolveQuotaStatus(context.Background(), repo)
+		status, err = rc.resolveQuotaStatus(t.Context(), repo)
 		require.NoError(t, err)
 		assert.Equal(t, updatedAt, status.UpdatedAt)
 		histogram = gatherMetrics(t, reg)[repositoryQuotaAgeMetric].GetMetric()[0].GetHistogram()
@@ -1777,7 +1777,7 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 		}
 		before := time.Now().UnixMilli()
 
-		status, err := rc.resolveQuotaStatus(context.Background(), repo)
+		status, err := rc.resolveQuotaStatus(t.Context(), repo)
 		require.NoError(t, err)
 		assert.Equal(t, int64(8), status.MaxRepositories)
 		assert.Equal(t, int64(200), status.MaxResourcesPerRepository)
@@ -4692,7 +4692,7 @@ func TestRepositoryController_process_ConfirmsOnlyToReleaseABlock(t *testing.T) 
 	rc, patcher, _, _ := newQuotaController(t, 1, repo)
 
 	store := usinformer.NewStore()
-	store.Update(context.Background(), &metav1.PartialObjectMetadata{ObjectMeta: other.ObjectMeta})
+	store.Update(t.Context(), &metav1.PartialObjectMetadata{ObjectMeta: other.ObjectMeta})
 	clientset := fake.NewClientset(repo, other)
 	getter := informer.NewClientRepositoryGetter(clientset.ProvisioningV0alpha1(), store)
 	rc.repos = getter
@@ -5473,7 +5473,7 @@ func TestRepositoryController_Run_DrainWaitsForInFlight(t *testing.T) {
 
 	rc.queue.Add("test/repo")
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	runDone := make(chan struct{})
 	go func() {
 		rc.Run(ctx, 1, func() {}, func() {})
@@ -5528,7 +5528,7 @@ func TestRepositoryController_Run_DrainTimeoutForcesShutdown(t *testing.T) {
 
 	rc.queue.Add("test/stuck")
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	runDone := make(chan struct{})
 	go func() {
 		rc.Run(ctx, 1, func() {}, func() {})
@@ -5574,7 +5574,7 @@ func TestRepositoryController_Run_OnShutdownCalledBeforeDrain(t *testing.T) {
 
 	rc.queue.Add("test/ordering")
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	runDone := make(chan struct{})
 	go func() {
 		rc.Run(ctx, 1, func() {}, func() {
@@ -5662,7 +5662,7 @@ func TestRepositoryController_RecordsProcessingByTrigger(t *testing.T) {
 
 			tt.feed(rc.EventHandler())
 
-			ctx, cancel := context.WithCancel(context.Background())
+			ctx, cancel := context.WithCancel(t.Context())
 			runDone := make(chan struct{})
 			go func() {
 				rc.Run(ctx, 1, func() {}, func() {})
@@ -5717,7 +5717,7 @@ func TestRepositoryController_DirtyRedeliveryKeepsLiveTrigger(t *testing.T) {
 	// Initial live add (apiserver watch, full RV, non-initial).
 	rc.EventHandler().AddFunc(&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo", ResourceVersion: "5"}}, false)
 
-	ctx := context.Background()
+	ctx := t.Context()
 	require.True(t, rc.processNextWorkItem(ctx)) // first pickup: live; enqueues the dirty live update
 	require.True(t, rc.processNextWorkItem(ctx)) // dirty redelivery: must stay live
 
@@ -5752,7 +5752,7 @@ func TestRepositoryController_InternalRescheduleNotCounted(t *testing.T) {
 	// informer event, no trigger entry.
 	rc.queue.Add("ns/repo")
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	runDone := make(chan struct{})
 	go func() {
 		rc.Run(ctx, 1, func() {}, func() {})

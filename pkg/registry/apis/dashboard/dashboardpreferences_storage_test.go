@@ -39,7 +39,7 @@ import (
 )
 
 func TestDashboardPreferencesStorageUpdate(t *testing.T) {
-	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+	ctx := k8srequest.WithNamespace(t.Context(), "stacks-1")
 	gr := dashv2beta1.DashboardPreferencesResourceInfo.GroupResource()
 	patchedDashboard := &dashv2beta1.DashboardPreferencesDashboardDefaults{Preload: new(true)}
 
@@ -366,7 +366,7 @@ func TestDashboardPreferencesStorageUpdate(t *testing.T) {
 }
 
 func TestDashboardPreferencesStorageNewEmptyDashboardPreferences(t *testing.T) {
-	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+	ctx := k8srequest.WithNamespace(t.Context(), "stacks-1")
 	gvk := dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind()
 	store := newDashboardPreferencesStorage(newFakeDashboardPreferencesStore(), gvk, nil, nil, nil)
 
@@ -419,7 +419,7 @@ func TestIsNotFoundForObject(t *testing.T) {
 }
 
 func TestDashboardPreferencesStorageList(t *testing.T) {
-	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+	ctx := k8srequest.WithNamespace(t.Context(), "stacks-1")
 	gvk := dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind()
 	stored := map[string]*dashv2beta1.DashboardPreferences{}
 	for _, obj := range []*dashv2beta1.DashboardPreferences{
@@ -570,7 +570,7 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 	// opinion on it. The tier rules' namespace checks keep it from reaching the store or the folder API,
 	// which would cover every org.
 	t.Run("a list across all namespaces reads nothing", func(t *testing.T) {
-		allNamespaces := k8srequest.WithNamespace(context.Background(), "")
+		allNamespaces := k8srequest.WithNamespace(t.Context(), "")
 		tests := []struct {
 			name      string
 			requester identity.Requester
@@ -636,8 +636,8 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 
 	// The only access-policy identities the authorizer lets list, and neither has a user to filter for.
 	t.Run("an access-policy caller gets the store's list unchanged", func(t *testing.T) {
-		_, service := identity.WithServiceIdentity(context.Background(), 1)
-		_, provisioning, err := identity.WithProvisioningIdentity(context.Background(), "stacks-1")
+		_, service := identity.WithServiceIdentity(t.Context(), 1)
+		_, provisioning, err := identity.WithProvisioningIdentity(t.Context(), "stacks-1")
 		require.NoError(t, err)
 
 		for _, caller := range []struct {

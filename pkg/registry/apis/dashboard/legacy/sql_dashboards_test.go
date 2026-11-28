@@ -124,7 +124,7 @@ func TestScanRow(t *testing.T) {
 	defer mockDB.Close() // nolint:errcheck
 
 	pathToFile := "path/to/file"
-	provisioner := provisioning.NewProvisioningServiceMock(context.Background())
+	provisioner := provisioning.NewProvisioningServiceMock(t.Context())
 	provisioner.GetDashboardProvisionerResolvedPathFunc = func(name string) string { return "provisioner" }
 	store := &dashboardSqlAccess{
 		namespacer:   func(_ int64) string { return "default" },
@@ -561,7 +561,7 @@ func TestRowsWrapper_PropagatesRowsErr(t *testing.T) {
 		_ = mockDB.Close()
 	}()
 
-	provisioner := provisioning.NewProvisioningServiceMock(context.Background())
+	provisioner := provisioning.NewProvisioningServiceMock(t.Context())
 	provisioner.GetDashboardProvisionerResolvedPathFunc = func(name string) string { return "provisioner" }
 	store := &dashboardSqlAccess{
 		namespacer:   func(_ int64) string { return "default" },
@@ -775,7 +775,7 @@ func TestDashboardMigrationQuery(t *testing.T) {
 func TestCollectMigrationPage(t *testing.T) {
 	store := &dashboardSqlAccess{
 		namespacer:   func(_ int64) string { return "default" },
-		provisioning: provisioning.NewProvisioningServiceMock(context.Background()),
+		provisioning: provisioning.NewProvisioningServiceMock(t.Context()),
 		log:          log.New("test"),
 	}
 	columns := []string{"orgId", "dashboard_id", "name", "title", "folder_uid", "deleted", "plugin_id", "origin_name", "origin_path", "origin_hash", "origin_ts", "created", "createdBy", "createdByID", "updated", "updatedBy", "updatedByID", "version", "message", "data", "api_version"}
@@ -888,7 +888,7 @@ func TestCollectMigrationPage(t *testing.T) {
 func TestCollectMigrationPageFolders(t *testing.T) {
 	store := &dashboardSqlAccess{
 		namespacer:   func(_ int64) string { return "default" },
-		provisioning: provisioning.NewProvisioningServiceMock(context.Background()),
+		provisioning: provisioning.NewProvisioningServiceMock(t.Context()),
 		log:          log.New("test"),
 	}
 	columns := []string{"orgId", "dashboard_id", "name", "title", "folder_uid", "deleted", "plugin_id", "origin_name", "origin_path", "origin_hash", "origin_ts", "created", "createdBy", "createdByID", "updated", "updatedBy", "updatedByID", "version", "message", "data", "api_version"}
@@ -1076,7 +1076,7 @@ func TestMigrateDashboardsSQLiteReadKeepsWritersOut(t *testing.T) {
 	conn, err := lockDB.Conn(ctx)
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		_, _ = conn.ExecContext(context.Background(), "ROLLBACK")
+		_, _ = conn.ExecContext(context.WithoutCancel(t.Context()), "ROLLBACK")
 		_ = conn.Close()
 		_ = lockDB.Close()
 	})

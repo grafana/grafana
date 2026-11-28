@@ -103,10 +103,10 @@ func newTestJobCleanupService() (*JobCleanupService, *APIBuilder) {
 func runJobCleanupService(t *testing.T, svc *JobCleanupService) <-chan error {
 	t.Helper()
 	done := make(chan error, 1)
-	go func() { done <- svc.Run(context.Background()) }()
+	go func() { done <- svc.Run(t.Context()) }()
 	t.Cleanup(func() {
 		svc.StopAsync()
-		_ = svc.AwaitTerminated(context.Background())
+		_ = svc.AwaitTerminated(context.WithoutCancel(t.Context()))
 	})
 	return done
 }

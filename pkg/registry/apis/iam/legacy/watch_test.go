@@ -48,7 +48,7 @@ func (bindingStore) DeleteTeamMember(context.Context, claims.NamespaceInfo, Dele
 // Team binding writes are announced as a modified team only: members are part
 // of the team's spec.
 func TestNotifyingStoreTeamBindings(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	ns := claims.NamespaceInfo{OrgID: 1, Value: "default"}
 
 	type change struct {

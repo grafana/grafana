@@ -542,7 +542,7 @@ func TestFinalizer_process(t *testing.T) {
 				cfg = tc.repo.Config()
 			}
 			cfg.Finalizers = tc.finalizers
-			err := f.process(context.Background(), cfg)
+			err := f.process(t.Context(), cfg)
 			if tc.expectedErr == "" {
 				assert.NoError(t, err)
 			} else {
@@ -734,7 +734,7 @@ func TestDeleteExistingItems_ResourcesBeforeFolders(t *testing.T) {
 	}
 
 	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
-	count, err := f.deleteExistingItems(context.Background(), repo)
+	count, err := f.deleteExistingItems(t.Context(), repo)
 	assert.NoError(t, err)
 	assert.Equal(t, 4, count)
 
@@ -781,7 +781,7 @@ func TestDeleteExistingItems_ReportsFirstNonEmptyFolder(t *testing.T) {
 		metrics:    func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
 		maxWorkers: 1,
 	}
-	count, err := f.deleteExistingItems(context.Background(), &provisioning.Repository{
+	count, err := f.deleteExistingItems(t.Context(), &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"},
 	})
 
@@ -838,7 +838,7 @@ func TestReleaseExistingItems_FoldersBeforeResources(t *testing.T) {
 	}
 
 	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
-	count, err := f.releaseExistingItems(context.Background(), repo)
+	count, err := f.releaseExistingItems(t.Context(), repo)
 	assert.NoError(t, err)
 	assert.Equal(t, 4, count)
 
@@ -894,7 +894,7 @@ func TestFinalizer_RoutesItemsToVersionlessClient(t *testing.T) {
 		}
 
 		repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
-		count, err := f.releaseExistingItems(context.Background(), repo)
+		count, err := f.releaseExistingItems(t.Context(), repo)
 		assert.NoError(t, err)
 		assert.Equal(t, 2, count)
 		clients.AssertExpectations(t)
@@ -943,7 +943,7 @@ func TestFinalizer_RoutesItemsToVersionlessClient(t *testing.T) {
 		}
 
 		repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
-		count, err := f.deleteExistingItems(context.Background(), repo)
+		count, err := f.deleteExistingItems(t.Context(), repo)
 		assert.NoError(t, err)
 		assert.Equal(t, 2, count)
 		clients.AssertExpectations(t)
@@ -1190,7 +1190,7 @@ func TestReleaseExistingItems_RetriesOnConflict(t *testing.T) {
 	}
 
 	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
-	count, err := f.releaseExistingItems(context.Background(), repo)
+	count, err := f.releaseExistingItems(t.Context(), repo)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, count)
 	assert.Equal(t, int32(2), calls.Load(), "patch should have been retried once after the initial conflict")
@@ -1236,7 +1236,7 @@ func TestDeleteExistingItems_RetriesOnConflict(t *testing.T) {
 	}
 
 	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
-	count, err := f.deleteExistingItems(context.Background(), repo)
+	count, err := f.deleteExistingItems(t.Context(), repo)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, count)
 	assert.Equal(t, int32(2), calls.Load(), "delete should have been retried once after the initial conflict")
@@ -1280,7 +1280,7 @@ func TestReleaseExistingItems_ReturnsErrorWhenConflictPersists(t *testing.T) {
 	}
 
 	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
-	_, err := f.releaseExistingItems(context.Background(), repo)
+	_, err := f.releaseExistingItems(t.Context(), repo)
 	assert.Error(t, err)
 	assert.Greater(t, calls.Load(), int32(1), "finalizer should have retried at least once before giving up")
 }
@@ -1300,7 +1300,7 @@ func TestProcess_RemovePendingJobsFinalizer(t *testing.T) {
 	repo := mockRepo{name: "my-repo", namespace: "default"}
 	cfg := repo.Config()
 	cfg.Finalizers = []string{repository.RemovePendingJobsFinalizer}
-	err := f.process(context.Background(), cfg)
+	err := f.process(t.Context(), cfg)
 	assert.NoError(t, err)
 }
 
@@ -1319,7 +1319,7 @@ func TestProcess_RemovePendingJobsFinalizer_Error(t *testing.T) {
 	repo := mockRepo{name: "my-repo", namespace: "default"}
 	cfg := repo.Config()
 	cfg.Finalizers = []string{repository.RemovePendingJobsFinalizer}
-	err := f.process(context.Background(), cfg)
+	err := f.process(t.Context(), cfg)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "clear job queue")
 }
@@ -1402,7 +1402,7 @@ func TestProcess_CleanFinalizer_RecordsErrorCause(t *testing.T) {
 
 			cfg := repo.Config()
 			cfg.Finalizers = []string{repository.CleanFinalizer}
-			err := f.process(context.Background(), cfg)
+			err := f.process(t.Context(), cfg)
 			assert.Error(t, err)
 
 			assert.Equal(t, float64(1), testutil.ToFloat64(
@@ -1441,7 +1441,7 @@ func TestProcess_RemoveOrphanResourcesFinalizer_NonEmptyFolderRecordsUserCause(t
 	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
 	f := &finalizer{lister: resourceLister, clientFactory: clientFactory, metrics: &metrics, maxWorkers: 1}
 
-	err := f.process(context.Background(), &provisioning.Repository{
+	err := f.process(t.Context(), &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "my-repo",
 			Namespace:  "default",

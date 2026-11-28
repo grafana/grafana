@@ -642,7 +642,7 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 			{Name: "team-2"},
 		}
 
-		err := handler.enrichWithMemberCounts(context.Background(), "default", hits)
+		err := handler.enrichWithMemberCounts(t.Context(), "default", hits)
 		require.NoError(t, err)
 		require.NotNil(t, hits[0].MemberCount)
 		assert.Equal(t, int64(3), *hits[0].MemberCount)
@@ -671,7 +671,7 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 			{Name: "team-2"},
 		}
 
-		err := handler.enrichWithMemberCounts(context.Background(), "default", hits)
+		err := handler.enrichWithMemberCounts(t.Context(), "default", hits)
 		require.NoError(t, err)
 		assert.Equal(t, []string{"team-2"}, gets)
 		require.NotNil(t, hits[0].MemberCount)
@@ -702,7 +702,7 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 			{Name: "team-ok-2"},
 		}
 
-		err := handler.enrichWithMemberCounts(context.Background(), "default", hits)
+		err := handler.enrichWithMemberCounts(t.Context(), "default", hits)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "team-bad")
 	})
@@ -724,7 +724,7 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 			{Name: "team-1"},
 		}
 
-		err := handler.enrichWithMemberCounts(context.Background(), "default", hits)
+		err := handler.enrichWithMemberCounts(t.Context(), "default", hits)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "unexpected type")
 	})

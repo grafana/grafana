@@ -52,7 +52,7 @@ func TestGetLegacyTeamID(t *testing.T) {
 		WithArgs(int64(1), "ffj1xdbwxf6kga").
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(int64(42)))
 
-	id, err := store.getLegacyTeamID(context.Background(), 1, "ffj1xdbwxf6kga")
+	id, err := store.getLegacyTeamID(t.Context(), 1, "ffj1xdbwxf6kga")
 	require.NoError(t, err)
 	require.Equal(t, int64(42), id)
 	require.NoError(t, mock.ExpectationsWereMet())

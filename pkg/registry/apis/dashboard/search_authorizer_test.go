@@ -133,7 +133,7 @@ func TestDashboardsAPIBuilderSearchAuthorizer(t *testing.T) {
 	for _, route := range routes {
 		for _, tc := range cases {
 			t.Run(route.verb+"/"+route.name+"/"+tc.name, func(t *testing.T) {
-				ctx := identity.WithRequester(context.Background(), tc.requester)
+				ctx := identity.WithRequester(t.Context(), tc.requester)
 				decision, _, err := authz.Authorize(ctx, searchAttributes(route.name, route.verb))
 				require.NoError(t, err)
 				require.Equal(t, tc.want, decision)
@@ -142,7 +142,7 @@ func TestDashboardsAPIBuilderSearchAuthorizer(t *testing.T) {
 	}
 
 	t.Run("the rule applies to every API version", func(t *testing.T) {
-		ctx := identity.WithRequester(context.Background(),
+		ctx := identity.WithRequester(t.Context(),
 			delegatedRequester("dashboard.grafana.app/dashboards:get", "folder.grafana.app/folders:get"))
 		for _, version := range []string{"v0alpha1", "v1", "v2beta1"} {
 			attr := searchAttributes("", "list").(authorizer.AttributesRecord)
@@ -154,14 +154,14 @@ func TestDashboardsAPIBuilderSearchAuthorizer(t *testing.T) {
 	})
 
 	t.Run("built-in service identity is allowed", func(t *testing.T) {
-		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		ctx := identity.WithServiceIdentityContext(t.Context(), 1)
 		decision, _, err := authz.Authorize(ctx, searchAttributes("", "list"))
 		require.NoError(t, err)
 		require.Equal(t, authorizer.DecisionAllow, decision)
 	})
 
 	t.Run("no identity is rejected", func(t *testing.T) {
-		decision, _, err := authz.Authorize(context.Background(), searchAttributes("", "list"))
+		decision, _, err := authz.Authorize(t.Context(), searchAttributes("", "list"))
 		require.ErrorContains(t, err, "no identity found")
 		require.Equal(t, authorizer.DecisionDeny, decision)
 	})
@@ -169,9 +169,9 @@ func TestDashboardsAPIBuilderSearchAuthorizer(t *testing.T) {
 	t.Run("search requests that are not the namespace search keep the service check", func(t *testing.T) {
 		// A subresource, an unknown name or a write verb must still need a
 		// grant on the search resource itself.
-		onlyDashboardsAndFolders := identity.WithRequester(context.Background(),
+		onlyDashboardsAndFolders := identity.WithRequester(t.Context(),
 			delegatedRequester("dashboard.grafana.app/dashboards:*", "folder.grafana.app/folders:*"))
-		withSearch := identity.WithRequester(context.Background(),
+		withSearch := identity.WithRequester(t.Context(),
 			delegatedRequester("dashboard.grafana.app/search:*"))
 
 		other := make([]authorizer.Attributes, 0, 8)
@@ -194,12 +194,12 @@ func TestDashboardsAPIBuilderSearchAuthorizer(t *testing.T) {
 	})
 
 	t.Run("dashboards requests still use the service check", func(t *testing.T) {
-		ctx := identity.WithRequester(context.Background(), delegatedRequester("dashboard.grafana.app/dashboards:get"))
+		ctx := identity.WithRequester(t.Context(), delegatedRequester("dashboard.grafana.app/dashboards:get"))
 		decision, _, err := authz.Authorize(ctx, authzAttributes(dashv0.DashboardResourceInfo.GetName(), "get"))
 		require.NoError(t, err)
 		require.Equal(t, authorizer.DecisionAllow, decision)
 
-		ctx = identity.WithRequester(context.Background(), delegatedRequester("folder.grafana.app/folders:get"))
+		ctx = identity.WithRequester(t.Context(), delegatedRequester("folder.grafana.app/folders:get"))
 		decision, _, err = authz.Authorize(ctx, authzAttributes(dashv0.DashboardResourceInfo.GetName(), "get"))
 		require.NoError(t, err)
 		require.Equal(t, authorizer.DecisionDeny, decision)
@@ -232,7 +232,7 @@ func TestNewSearchAuthorizer(t *testing.T) {
 	allow, deny, noOpinion := authorizer.DecisionAllow, authorizer.DecisionDeny, authorizer.DecisionNoOpinion
 	boom := errors.New("boom")
 	run := func(fake *recordingAuthorizer) (authorizer.Decision, string, error) {
-		return newSearchAuthorizer(fake.authorizer()).Authorize(context.Background(), searchAttributes("", "list"))
+		return newSearchAuthorizer(fake.authorizer()).Authorize(t.Context(), searchAttributes("", "list"))
 	}
 
 	t.Run("asks for list on dashboards and folders first", func(t *testing.T) {
@@ -321,7 +321,7 @@ func TestNewSearchAuthorizer(t *testing.T) {
 	t.Run("other requests go straight to the fallback", func(t *testing.T) {
 		fake := &recordingAuthorizer{decisions: []authorizer.Decision{allow}}
 		attr := authzAttributes("dashboards", "get")
-		_, _, err := newSearchAuthorizer(fake.authorizer()).Authorize(context.Background(), attr)
+		_, _, err := newSearchAuthorizer(fake.authorizer()).Authorize(t.Context(), attr)
 		require.NoError(t, err)
 		require.Equal(t, []authorizer.Attributes{attr}, fake.asked)
 	})

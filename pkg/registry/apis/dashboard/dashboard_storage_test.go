@@ -1,7 +1,6 @@
 package dashboard
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -21,7 +20,7 @@ import (
 
 func TestDashboardStorageWrapperDelete(t *testing.T) {
 	// "default" maps to orgID 1, which is required by NamespaceInfoFrom.
-	ctx := apirequest.WithNamespace(context.Background(), "default")
+	ctx := apirequest.WithNamespace(t.Context(), "default")
 
 	newWrapper := func(iamFeatures iamapi.Features, perms *acmock.MockPermissionsService) dashboardStorageWrapper {
 		storage := grafanarest.NewMockStorage(t)
@@ -55,7 +54,7 @@ func TestDashboardStorageWrapperDelete(t *testing.T) {
 }
 
 func TestDashboardStorageWrapperListHidesDrafts(t *testing.T) {
-	ctx := apirequest.WithNamespace(context.Background(), "default")
+	ctx := apirequest.WithNamespace(t.Context(), "default")
 
 	listSelector := func(t *testing.T, extras DashboardLifecycleExtras, in labels.Selector) string {
 		t.Helper()
@@ -95,7 +94,7 @@ var (
 )
 
 func TestListHidingDrafts(t *testing.T) {
-	ctx := apirequest.WithNamespace(context.Background(), "default")
+	ctx := apirequest.WithNamespace(t.Context(), "default")
 
 	listSelector := func(t *testing.T, extras DashboardLifecycleExtras, in labels.Selector) string {
 		t.Helper()

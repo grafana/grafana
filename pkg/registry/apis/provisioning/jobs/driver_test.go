@@ -97,13 +97,13 @@ func TestOnProgress_IncrementsProgressUpdates(t *testing.T) {
 	progressFn := driver.onProgress()
 	status := provisioning.JobStatus{State: provisioning.JobStateWorking, Message: "test"}
 
-	require.NoError(t, progressFn(context.Background(), status))
+	require.NoError(t, progressFn(t.Context(), status))
 	assert.Equal(t, int64(1), driver.currentJob.Status.ProgressUpdates)
 
-	require.NoError(t, progressFn(context.Background(), status))
+	require.NoError(t, progressFn(t.Context(), status))
 	assert.Equal(t, int64(2), driver.currentJob.Status.ProgressUpdates)
 
-	require.NoError(t, progressFn(context.Background(), status))
+	require.NoError(t, progressFn(t.Context(), status))
 	assert.Equal(t, int64(3), driver.currentJob.Status.ProgressUpdates)
 }
 
@@ -128,11 +128,11 @@ func TestOnProgress_FailedWriteDoesNotInflateCount(t *testing.T) {
 	progressFn := driver.onProgress()
 	status := provisioning.JobStatus{State: provisioning.JobStateWorking, Message: "test"}
 
-	require.Error(t, progressFn(context.Background(), status))
+	require.Error(t, progressFn(t.Context(), status))
 	assert.Equal(t, int64(0), driver.currentJob.Status.ProgressUpdates,
 		"a failed write must not increment the count")
 
-	require.NoError(t, progressFn(context.Background(), status))
+	require.NoError(t, progressFn(t.Context(), status))
 	assert.Equal(t, int64(1), driver.currentJob.Status.ProgressUpdates,
 		"the first successful write is the first counted update")
 }
@@ -162,7 +162,7 @@ func TestOnProgress_DeadlockOnConflict(t *testing.T) {
 
 	done := make(chan error, 1)
 	go func() {
-		done <- progressFn(context.Background(), status)
+		done <- progressFn(t.Context(), status)
 	}()
 
 	select {
@@ -195,7 +195,7 @@ func TestOnProgress_AllRetriesConflict(t *testing.T) {
 
 	done := make(chan error, 1)
 	go func() {
-		done <- progressFn(context.Background(), status)
+		done <- progressFn(t.Context(), status)
 	}()
 
 	select {
@@ -237,7 +237,7 @@ func TestOnProgress_MutexNotLeakedOnConflict(t *testing.T) {
 
 	done := make(chan error, 1)
 	go func() {
-		done <- progressFn(context.Background(), status)
+		done <- progressFn(t.Context(), status)
 	}()
 
 	select {
@@ -327,7 +327,7 @@ func TestProcessJob_OrphanCleanup_RepoNotFound(t *testing.T) {
 				Return(nil, newNotFoundError())
 			worker.EXPECT().Process(mock.Anything, nil, mock.Anything, recorder).Return(nil)
 
-			err := driver.processJob(context.Background(), recorder)
+			err := driver.processJob(t.Context(), recorder)
 			require.NoError(t, err)
 
 			// Verify worker.Process was called with nil repo
@@ -358,7 +358,7 @@ func TestProcessJob_OrphanCleanup_RepoTerminating(t *testing.T) {
 				Return(mockRepo, nil)
 			worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, recorder).Return(nil)
 
-			err := driver.processJob(context.Background(), recorder)
+			err := driver.processJob(t.Context(), recorder)
 			require.NoError(t, err)
 
 			worker.AssertCalled(t, "Process", mock.Anything, mockRepo, mock.Anything, recorder)
@@ -377,7 +377,7 @@ func TestProcessJob_NormalAction_RepoNotFound_ReturnsError(t *testing.T) {
 	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").
 		Return(nil, newNotFoundError())
 
-	err := driver.processJob(context.Background(), recorder)
+	err := driver.processJob(t.Context(), recorder)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to get repository")
 
@@ -400,7 +400,7 @@ func TestProcessJob_NormalAction_RepoTerminating_SkipsJob(t *testing.T) {
 	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").
 		Return(mockRepo, nil)
 
-	err := driver.processJob(context.Background(), recorder)
+	err := driver.processJob(t.Context(), recorder)
 	require.NoError(t, err)
 
 	worker.AssertNotCalled(t, "Process", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
@@ -424,7 +424,7 @@ func TestProcessJob_NormalAction_RepoPendingDelete_SkipsJob(t *testing.T) {
 		Return(mockRepo, nil)
 	recorder.EXPECT().Record(mock.Anything, mock.Anything)
 
-	err := driver.processJob(context.Background(), recorder)
+	err := driver.processJob(t.Context(), recorder)
 	require.NoError(t, err)
 
 	worker.AssertNotCalled(t, "Process", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
@@ -463,7 +463,7 @@ func TestProcessJob_AuthFailureRepo_SkipsJob(t *testing.T) {
 		Return(mockRepo, nil)
 	recorder.EXPECT().Record(mock.Anything, mock.Anything)
 
-	err := driver.processJob(context.Background(), recorder)
+	err := driver.processJob(t.Context(), recorder)
 	require.NoError(t, err, "an unreachable repository must not fail the job")
 
 	worker.AssertNotCalled(t, "Process", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
@@ -502,7 +502,7 @@ func TestProcessJob_AuthFailureRepo_TestActionStillRuns(t *testing.T) {
 		Return(mockRepo, nil)
 	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, recorder).Return(nil)
 
-	err := driver.processJob(context.Background(), recorder)
+	err := driver.processJob(t.Context(), recorder)
 	require.NoError(t, err)
 
 	worker.AssertCalled(t, "Process", mock.Anything, mockRepo, mock.Anything, recorder)
@@ -543,7 +543,7 @@ func TestProcessJob_StaleAuthFailureCondition_CallsWorker(t *testing.T) {
 		Return(mockRepo, nil)
 	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, recorder).Return(nil)
 
-	err := driver.processJob(context.Background(), recorder)
+	err := driver.processJob(t.Context(), recorder)
 	require.NoError(t, err)
 
 	worker.AssertCalled(t, "Process", mock.Anything, mockRepo, mock.Anything, recorder)
@@ -583,7 +583,7 @@ func TestProcessJob_UnhealthyButReachableRepo_CallsWorker(t *testing.T) {
 		Return(mockRepo, nil)
 	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, recorder).Return(nil)
 
-	err := driver.processJob(context.Background(), recorder)
+	err := driver.processJob(t.Context(), recorder)
 	require.NoError(t, err)
 
 	worker.AssertCalled(t, "Process", mock.Anything, mockRepo, mock.Anything, recorder)
@@ -623,7 +623,7 @@ func TestProcessJob_HookPermissionFailure_CallsWorker(t *testing.T) {
 		Return(mockRepo, nil)
 	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, recorder).Return(nil)
 
-	err := driver.processJob(context.Background(), recorder)
+	err := driver.processJob(t.Context(), recorder)
 	require.NoError(t, err)
 
 	worker.AssertCalled(t, "Process", mock.Anything, mockRepo, mock.Anything, recorder)
@@ -649,7 +649,7 @@ func TestProcessJob_UncheckedHealth_CallsWorker(t *testing.T) {
 		Return(mockRepo, nil)
 	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, recorder).Return(nil)
 
-	err := driver.processJob(context.Background(), recorder)
+	err := driver.processJob(t.Context(), recorder)
 	require.NoError(t, err)
 
 	worker.AssertCalled(t, "Process", mock.Anything, mockRepo, mock.Anything, recorder)
@@ -671,7 +671,7 @@ func TestProcessJob_HealthyRepo_CallsWorker(t *testing.T) {
 		Return(mockRepo, nil)
 	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, recorder).Return(nil)
 
-	err := driver.processJob(context.Background(), recorder)
+	err := driver.processJob(t.Context(), recorder)
 	require.NoError(t, err)
 
 	worker.AssertCalled(t, "Process", mock.Anything, mockRepo, mock.Anything, recorder)
@@ -694,7 +694,7 @@ func TestProcessJob_HealthyRepo_WorkerError_PropagatesError(t *testing.T) {
 	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, recorder).
 		Return(errors.New("sync failed"))
 
-	err := driver.processJob(context.Background(), recorder)
+	err := driver.processJob(t.Context(), recorder)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "sync failed")
 }
@@ -708,7 +708,7 @@ func TestProcessJob_NoSupportedWorkers_ReturnsError(t *testing.T) {
 
 	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(false)
 
-	err := driver.processJob(context.Background(), recorder)
+	err := driver.processJob(t.Context(), recorder)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "no workers were registered to handle the job")
 }
@@ -733,7 +733,7 @@ func TestProcessJob_OrphanCleanup_RepoRecreated_ReturnsError(t *testing.T) {
 			repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "deleted-repo").
 				Return(mockRepo, nil)
 
-			err := driver.processJob(context.Background(), recorder)
+			err := driver.processJob(t.Context(), recorder)
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), "exists and is healthy")
 
@@ -746,7 +746,7 @@ func TestProcessJob_NilCurrentJob_ReturnsNil(t *testing.T) {
 	driver := &jobProcessor{}
 	recorder := &MockJobProgressRecorder{}
 
-	err := driver.processJob(context.Background(), recorder)
+	err := driver.processJob(t.Context(), recorder)
 	require.NoError(t, err)
 }
 
@@ -783,7 +783,7 @@ func TestProcessJobWithLeaseCheck_LeaseExpiry_CancelsAndWaitsForWorker(t *testin
 	leaseExpired := make(chan struct{})
 	done := make(chan error, 1)
 	go func() {
-		done <- driver.processJobWithLeaseCheck(context.Background(), recorder, leaseExpired)
+		done <- driver.processJobWithLeaseCheck(t.Context(), recorder, leaseExpired)
 	}()
 
 	// Wait until the worker is running, then signal that the lease was lost.
@@ -844,7 +844,7 @@ func TestWithJobAuthorSignature(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			job := &provisioning.Job{ObjectMeta: metav1.ObjectMeta{Annotations: tt.annotations}}
-			ctx := withJobAuthorSignature(context.Background(), job)
+			ctx := withJobAuthorSignature(t.Context(), job)
 			assert.Equal(t, tt.expected, repository.GetAuthorSignature(ctx))
 		})
 	}

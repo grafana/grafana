@@ -29,49 +29,49 @@ func newTestInstaller() *InMemoryGlobalRoleApiInstaller {
 
 func TestValidateOnCreateReturnsError(t *testing.T) {
 	installer := newTestInstaller()
-	err := installer.ValidateOnCreate(context.Background(), &iamv0.GlobalRole{})
+	err := installer.ValidateOnCreate(t.Context(), &iamv0.GlobalRole{})
 	require.Error(t, err)
 }
 
 func TestValidateOnUpdateReturnsError(t *testing.T) {
 	installer := newTestInstaller()
-	err := installer.ValidateOnUpdate(context.Background(), &iamv0.GlobalRole{}, &iamv0.GlobalRole{})
+	err := installer.ValidateOnUpdate(t.Context(), &iamv0.GlobalRole{}, &iamv0.GlobalRole{})
 	require.Error(t, err)
 }
 
 func TestValidateOnDeleteReturnsError(t *testing.T) {
 	installer := newTestInstaller()
-	err := installer.ValidateOnDelete(context.Background(), &iamv0.GlobalRole{})
+	err := installer.ValidateOnDelete(t.Context(), &iamv0.GlobalRole{})
 	require.Error(t, err)
 }
 
 func TestMutateOnCreateReturnsError(t *testing.T) {
 	installer := newTestInstaller()
-	err := installer.MutateOnCreate(context.Background(), &iamv0.GlobalRole{})
+	err := installer.MutateOnCreate(t.Context(), &iamv0.GlobalRole{})
 	require.Error(t, err)
 }
 
 func TestMutateOnUpdateReturnsError(t *testing.T) {
 	installer := newTestInstaller()
-	err := installer.MutateOnUpdate(context.Background(), &iamv0.GlobalRole{}, &iamv0.GlobalRole{})
+	err := installer.MutateOnUpdate(t.Context(), &iamv0.GlobalRole{}, &iamv0.GlobalRole{})
 	require.Error(t, err)
 }
 
 func TestMutateOnDeleteReturnsError(t *testing.T) {
 	installer := newTestInstaller()
-	err := installer.MutateOnDelete(context.Background(), &iamv0.GlobalRole{})
+	err := installer.MutateOnDelete(t.Context(), &iamv0.GlobalRole{})
 	require.Error(t, err)
 }
 
 func TestMutateOnConnectReturnsNil(t *testing.T) {
 	installer := newTestInstaller()
-	err := installer.MutateOnConnect(context.Background(), &iamv0.GlobalRole{})
+	err := installer.MutateOnConnect(t.Context(), &iamv0.GlobalRole{})
 	assert.NoError(t, err)
 }
 
 func TestGetAuthorizer(t *testing.T) {
 	accessPolicyWithPerms := func(perms ...string) context.Context {
-		return types.WithAuthInfo(context.Background(), &identity.StaticRequester{
+		return types.WithAuthInfo(t.Context(), &identity.StaticRequester{
 			Type: types.TypeAccessPolicy,
 			AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{
 				Rest: authnlib.AccessTokenClaims{Permissions: perms},
@@ -87,7 +87,7 @@ func TestGetAuthorizer(t *testing.T) {
 	}{
 		{
 			name:         "unauthenticated is denied",
-			ctx:          context.Background(),
+			ctx:          t.Context(),
 			verb:         utils.VerbGet,
 			wantDecision: authorizer.DecisionDeny,
 		},
@@ -171,19 +171,19 @@ func TestGetAuthorizer(t *testing.T) {
 		},
 		{
 			name:         "user get is denied",
-			ctx:          types.WithAuthInfo(context.Background(), &identity.StaticRequester{Type: types.TypeUser}),
+			ctx:          types.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: types.TypeUser}),
 			verb:         utils.VerbGet,
 			wantDecision: authorizer.DecisionDeny,
 		},
 		{
 			name:         "user list is denied",
-			ctx:          types.WithAuthInfo(context.Background(), &identity.StaticRequester{Type: types.TypeUser}),
+			ctx:          types.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: types.TypeUser}),
 			verb:         utils.VerbList,
 			wantDecision: authorizer.DecisionDeny,
 		},
 		{
 			name:         "service account get is denied",
-			ctx:          types.WithAuthInfo(context.Background(), &identity.StaticRequester{Type: types.TypeServiceAccount}),
+			ctx:          types.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: types.TypeServiceAccount}),
 			verb:         utils.VerbGet,
 			wantDecision: authorizer.DecisionDeny,
 		},

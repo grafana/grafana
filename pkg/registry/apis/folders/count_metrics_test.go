@@ -44,7 +44,7 @@ func TestCountingSearcherRecordsOutcome(t *testing.T) {
 			m := newCountMetrics(prometheus.NewRegistry(), tt.legacyJoin)
 			searcher := m.wrap(&mockSearchClient{stats: &resourcepb.ResourceStatsResponse{}, statsErr: tt.err}, countCallerEndpoint)
 
-			_, err := searcher.GetStats(context.Background(), &resourcepb.ResourceStatsRequest{})
+			_, err := searcher.GetStats(t.Context(), &resourcepb.ResourceStatsRequest{})
 
 			require.Equal(t, tt.err, err, "the call result must pass through unchanged")
 			require.Equal(t, 1.0, testutil.ToFloat64(m.requests.WithLabelValues(countCallerEndpoint, tt.wantOutcome, tt.wantJoin)))
@@ -68,7 +68,7 @@ func TestCountMetricsLabelTheCaller(t *testing.T) {
 	require.Equal(t, 200, resp.status)
 
 	folder := &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "nnn"}}
-	require.NoError(t, validateOnDelete(context.Background(), folder, m.wrap(search, countCallerDeleteCheck), nil, false, nil))
+	require.NoError(t, validateOnDelete(t.Context(), folder, m.wrap(search, countCallerDeleteCheck), nil, false, nil))
 
 	require.Equal(t, 1.0, testutil.ToFloat64(m.requests.WithLabelValues("counts_endpoint", "ok", "enabled")))
 	require.Equal(t, 1.0, testutil.ToFloat64(m.requests.WithLabelValues("delete_check", "ok", "enabled")))
@@ -94,7 +94,7 @@ func TestValidateCountsDeleteChecksAsTheirOwnCaller(t *testing.T) {
 	}
 	obj := &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "nnn", Namespace: "default"}}
 
-	err := b.Validate(context.Background(), admission.NewAttributesRecord(nil, obj,
+	err := b.Validate(t.Context(), admission.NewAttributesRecord(nil, obj,
 		folders.SchemeGroupVersion.WithKind("folder"), obj.Namespace, obj.Name,
 		folders.SchemeGroupVersion.WithResource("folders"), "", admission.Delete,
 		&metav1.DeleteOptions{}, false, &user.SignedInUser{}), nil)
@@ -122,7 +122,7 @@ func TestUpdateAPIGroupInfoCountsTheEndpointAsItsOwnCaller(t *testing.T) {
 	for version, storage := range info.VersionedResourcesStorageMap {
 		counts, ok := storage["folders/counts"].(*subCountREST)
 		require.True(t, ok, "version %s", version)
-		_, err := counts.searcher.GetStats(context.Background(), &resourcepb.ResourceStatsRequest{})
+		_, err := counts.searcher.GetStats(t.Context(), &resourcepb.ResourceStatsRequest{})
 		require.NoError(t, err)
 	}
 	require.NotEmpty(t, info.VersionedResourcesStorageMap)
@@ -153,7 +153,7 @@ func TestCountingSearcherNamesTheCallerForTheFederatedClient(t *testing.T) {
 	for _, caller := range []string{countCallerEndpoint, countCallerDeleteCheck} {
 		inner := &callerSearcher{mockSearchClient: &mockSearchClient{stats: &resourcepb.ResourceStatsResponse{}}}
 
-		_, err := m.wrap(inner, caller).GetStats(context.Background(), &resourcepb.ResourceStatsRequest{})
+		_, err := m.wrap(inner, caller).GetStats(t.Context(), &resourcepb.ResourceStatsRequest{})
 
 		require.NoError(t, err)
 		require.Equal(t, caller, inner.caller)

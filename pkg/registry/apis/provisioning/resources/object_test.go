@@ -1,7 +1,6 @@
 package resources
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -31,7 +30,7 @@ func TestResourceListerFromSearch_ListErrors(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := resource.NewMockResourceClient(t)
 			store.EXPECT().ListManagedObjects(mock.Anything, mock.Anything).Return(nil, tc.err).Once()
-			got, err := NewResourceLister(store, nil, nil).List(context.Background(), "default", "repo", ListOptions{})
+			got, err := NewResourceLister(store, nil, nil).List(t.Context(), "default", "repo", ListOptions{})
 			require.Nil(t, got)
 			tc.assertError(t, err)
 		})
@@ -43,7 +42,7 @@ func TestResourceListerFromSearch_RejectsABadContinueTokenBeforeReading(t *testi
 	// fail as a bad request rather than as whatever the reads returned.
 	store := resource.NewMockResourceClient(t)
 	got, err := NewResourceLister(store, nil, nil).
-		List(context.Background(), "default", "repo", ListOptions{Continue: "not-a-token!"})
+		List(t.Context(), "default", "repo", ListOptions{Continue: "not-a-token!"})
 	require.Nil(t, got)
 	require.True(t, apierrors.IsBadRequest(err), "got %v", err)
 }
@@ -53,7 +52,7 @@ func TestResourceListerFromSearch_CountErrors(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := resource.NewMockResourceClient(t)
 			store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(nil, tc.err).Once()
-			got, err := NewResourceLister(store, nil, nil).Stats(context.Background(), "default")
+			got, err := NewResourceLister(store, nil, nil).Stats(t.Context(), "default")
 			require.Nil(t, got)
 			tc.assertError(t, err)
 		})
@@ -66,7 +65,7 @@ func TestResourceListerFromSearch_GetStatsErrors(t *testing.T) {
 			store := resource.NewMockResourceClient(t)
 			store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.CountManagedObjectsResponse{}, nil).Once()
 			store.EXPECT().GetStats(mock.Anything, mock.Anything).Return(nil, tc.err).Once()
-			got, err := NewResourceLister(store, nil, nil).Stats(context.Background(), "default")
+			got, err := NewResourceLister(store, nil, nil).Stats(t.Context(), "default")
 			require.Nil(t, got)
 			tc.assertError(t, err)
 		})
@@ -141,7 +140,7 @@ func TestResourceListerFromSearch_ListsCollectionMembersThroughClients(t *testin
 		{GroupKind: schema.GroupKind{Group: provisioningresources.CollectionPrefix + collection, Kind: "DataSource"}},
 	})
 
-	got, err := lister.List(context.Background(), "default", repository, ListOptions{})
+	got, err := lister.List(t.Context(), "default", repository, ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, []provisioning.ResourceListItem{
 		{Path: "ds-1.json", Group: member, Resource: "datasources", Name: "ds-1", Hash: "abc", Title: "Test data"},
@@ -209,7 +208,7 @@ func TestResourceListerFromSearch_ListsAMemberOnceWhenAPatternCoversADeclaredKin
 		{GroupKind: schema.GroupKind{Group: "*.grafana.app", Kind: "Playlist"}},
 	})
 
-	got, err := lister.List(context.Background(), "default", repository, ListOptions{})
+	got, err := lister.List(t.Context(), "default", repository, ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, []provisioning.ResourceListItem{
 		{Path: "db-1.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "db-1", Title: "Dashboard 1"},
@@ -266,7 +265,7 @@ func TestResourceListerFromSearch_KeepsADeclaredKindStoredInACollectionGroup(t *
 		{GroupKind: schema.GroupKind{Group: provisioningresources.CollectionWildcard + provisioningresources.CollectionSeparator + collection, Kind: "LibraryPanel"}},
 	})
 
-	got, err := lister.List(context.Background(), "default", repository, ListOptions{})
+	got, err := lister.List(t.Context(), "default", repository, ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, []provisioning.ResourceListItem{
 		{Path: "db-1.json", Group: collection, Resource: "dashboards", Name: "db-1", Title: "Dashboard 1"},
@@ -319,7 +318,7 @@ func TestResourceListerFromSearch_KeepsADisabledKindStoredInACollectionGroup(t *
 		{GroupKind: schema.GroupKind{Group: provisioningresources.CollectionWildcard + provisioningresources.CollectionSeparator + collection, Kind: "LibraryPanel"}},
 	})
 
-	got, err := lister.List(context.Background(), "default", repository, ListOptions{})
+	got, err := lister.List(t.Context(), "default", repository, ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, []provisioning.ResourceListItem{
 		{Path: "db-1.json", Group: collection, Resource: "dashboards", Name: "db-1", Title: "Dashboard 1"},
@@ -342,7 +341,7 @@ func TestResourceListerFromSearch_RepositoryStats(t *testing.T) {
 			},
 		}, nil).Once()
 
-		got, err := NewResourceLister(store, nil, nil).RepositoryStats(context.Background(), "default", repository)
+		got, err := NewResourceLister(store, nil, nil).RepositoryStats(t.Context(), "default", repository)
 		require.NoError(t, err)
 		require.Equal(t, []provisioning.ResourceCount{
 			{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 24},
@@ -362,7 +361,7 @@ func TestResourceListerFromSearch_RepositoryStats(t *testing.T) {
 			},
 		}, nil).Once()
 
-		got, err := NewResourceLister(store, nil, nil).RepositoryStats(context.Background(), "default", repository)
+		got, err := NewResourceLister(store, nil, nil).RepositoryStats(t.Context(), "default", repository)
 		require.NoError(t, err)
 		require.Equal(t, []provisioning.ResourceCount{
 			{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 24},
@@ -377,7 +376,7 @@ func TestResourceListerFromSearch_RepositoryStats(t *testing.T) {
 			},
 		}, nil).Once()
 
-		got, err := NewResourceLister(store, nil, nil).RepositoryStats(context.Background(), "default", repository)
+		got, err := NewResourceLister(store, nil, nil).RepositoryStats(t.Context(), "default", repository)
 		require.Nil(t, got)
 		require.True(t, apierrors.IsNotFound(err), "expected a not-found error, got %v", err)
 	})
@@ -387,7 +386,7 @@ func TestResourceListerFromSearch_RepositoryStats(t *testing.T) {
 		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).
 			Return(&resourcepb.CountManagedObjectsResponse{}, nil).Once()
 
-		got, err := NewResourceLister(store, nil, nil).RepositoryStats(context.Background(), "default", repository)
+		got, err := NewResourceLister(store, nil, nil).RepositoryStats(t.Context(), "default", repository)
 		require.Nil(t, got)
 		require.True(t, apierrors.IsNotFound(err), "expected a not-found error, got %v", err)
 	})

@@ -523,7 +523,7 @@ func TestAuthorizer_Authorize(t *testing.T) {
 			}
 			for _, check := range tt.check {
 				t.Run(check.name, func(t *testing.T) {
-					ctx := context.Background()
+					ctx := t.Context()
 					if check.user != nil {
 						ctx = identity.WithRequester(ctx, check.user)
 					}
@@ -567,7 +567,7 @@ func TestAuthorizer_TeamAccessClient(t *testing.T) {
 			AccessClient: authlib.FixedAccessClient(true),
 			Resource:     resource,
 		}
-		ctx := identity.WithRequester(context.Background(), adminNotInTeam)
+		ctx := identity.WithRequester(t.Context(), adminNotInTeam)
 		d, _, err := authz.Authorize(ctx, authorizer.AttributesRecord{
 			Verb:            "get",
 			APIGroup:        "group",
@@ -584,7 +584,7 @@ func TestAuthorizer_TeamAccessClient(t *testing.T) {
 			AccessClient: authlib.FixedAccessClient(false),
 			Resource:     resource,
 		}
-		ctx := identity.WithRequester(context.Background(), adminNotInTeam)
+		ctx := identity.WithRequester(t.Context(), adminNotInTeam)
 		d, reason, err := authz.Authorize(ctx, authorizer.AttributesRecord{
 			Verb:            "get",
 			APIGroup:        "group",

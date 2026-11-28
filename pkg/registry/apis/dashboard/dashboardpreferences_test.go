@@ -1,7 +1,6 @@
 package dashboard
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"strings"
@@ -127,7 +126,7 @@ func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 	otherStackAdmin := dashboardPreferencesRequester(authlib.TypeUser, "admin", authlib.RoleAdmin)
 	otherStackAdmin.Namespace = "stacks-2"
 	otherStackAdmin.IsGrafanaAdmin = true
-	_, service := identity.WithServiceIdentity(context.Background(), 1)
+	_, service := identity.WithServiceIdentity(t.Context(), 1)
 
 	create := func(obj runtime.Object) admission.Attributes {
 		return dashboardPreferencesAttributesForOp(admission.Create, obj, nil)
@@ -279,7 +278,7 @@ func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 				},
 				folderClientProvider: &staticHandlerProvider{handler: &variableFolderAccessHandler{notFoundAccessSubresource: tt.folderMissing}},
 			}
-			ctx := identity.WithRequester(k8srequest.WithNamespace(context.Background(), "stacks-1"), tt.requester)
+			ctx := identity.WithRequester(k8srequest.WithNamespace(t.Context(), "stacks-1"), tt.requester)
 			if tt.mutate {
 				require.NoError(t, builder.Mutate(ctx, tt.attrs, nil))
 			}
@@ -314,7 +313,7 @@ func TestDashboardsAPIBuilderValidateDashboardPreferencesCreateTakesTheOrgPrefer
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := identity.WithRequester(k8srequest.WithNamespace(context.Background(), "stacks-1"), tt.requester)
+			ctx := identity.WithRequester(k8srequest.WithNamespace(t.Context(), "stacks-1"), tt.requester)
 			attrs := dashboardPreferencesAttributesForOp(admission.Create, newDashboardPreferences(""), nil)
 			require.NoError(t, builder.Mutate(ctx, attrs, nil))
 
@@ -364,7 +363,7 @@ func TestDashboardsAPIBuilderValidateDashboardPreferencesUsesTheStackMinRefreshI
 				settingService:     settings,
 				accessClient:       &dashboardPreferencesAccessClient{},
 			}
-			ctx := identity.WithRequester(k8srequest.WithNamespace(context.Background(), "stacks-1"), u1)
+			ctx := identity.WithRequester(k8srequest.WithNamespace(t.Context(), "stacks-1"), u1)
 
 			err := builder.Validate(ctx, tt.attrs, nil)
 
@@ -389,7 +388,7 @@ func TestDashboardsAPIBuilderValidateDashboardPreferencesParsesRefreshWithoutAMi
 		dashboardService: &dashsvc.DashboardServiceImpl{},
 		accessClient:     &dashboardPreferencesAccessClient{},
 	}
-	ctx := identity.WithRequester(k8srequest.WithNamespace(context.Background(), "stacks-1"), u1)
+	ctx := identity.WithRequester(k8srequest.WithNamespace(t.Context(), "stacks-1"), u1)
 
 	tests := []struct{ name, spec, wantErrMsg string }{
 		{name: "refresh that isn't a duration", spec: `{"dashboard":{"autoRefresh":"soon"}}`, wantErrMsg: `spec.dashboard.autoRefresh: Invalid value: "soon": parsing refresh duration "soon" failed`},
@@ -423,7 +422,7 @@ func TestDashboardsAPIBuilderValidateDashboardPreferencesReportsEveryProblem(t *
 		minRefreshInterval: "10s",
 		accessClient:       &dashboardPreferencesAccessClient{},
 	}
-	ctx := identity.WithRequester(k8srequest.WithNamespace(context.Background(), "stacks-1"), u1)
+	ctx := identity.WithRequester(k8srequest.WithNamespace(t.Context(), "stacks-1"), u1)
 
 	tests := []struct {
 		name, spec string

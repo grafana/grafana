@@ -31,7 +31,7 @@ import (
 func TestDecryptService(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 	tracer := noop.NewTracerProvider().Tracer("test")
 
 	t.Run("when there are only errors from the storage, the service returns them in the map", func(t *testing.T) {

@@ -115,7 +115,7 @@ func TestDashboardAPIBuilder_MinRefreshIntervalFor(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			b := newBuilderWithSettings(tt.service)
 
-			require.Equal(t, tt.expected, b.minRefreshIntervalFor(context.Background(), "stacks-1"))
+			require.Equal(t, tt.expected, b.minRefreshIntervalFor(t.Context(), "stacks-1"))
 
 			if tt.service != nil {
 				require.Equal(t, 1, tt.service.calls)
@@ -227,7 +227,7 @@ func TestDashboardAPIBuilder_RefreshIntervalAdmission(t *testing.T) {
 				}
 
 				err := admissionPlugin.Validate(
-					identity.WithRequester(context.Background(), requester),
+					identity.WithRequester(t.Context(), requester),
 					admission.NewAttributesRecord(
 						dash,
 						oldObject,

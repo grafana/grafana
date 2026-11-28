@@ -46,7 +46,7 @@ func TestIntegrationConsolidation(t *testing.T) {
 		t.Parallel()
 		sut := testutils.Setup(t)
 
-		ctx := context.Background()
+		ctx := t.Context()
 		createAuthContext := func(ctx context.Context, namespace string, identityType types.IdentityType) context.Context {
 			return types.WithAuthInfo(ctx, &identity.StaticRequester{
 				Type:      identityType,
@@ -126,7 +126,7 @@ func TestIntegrationConsolidation(t *testing.T) {
 	t.Run("consolidation with multiple workers preserves decrypted content", func(t *testing.T) {
 		t.Parallel()
 		sut := testutils.Setup(t)
-		ctx := context.Background()
+		ctx := t.Context()
 
 		// Create values in multiple namespaces so multiple finalize goroutines run
 		for _, ns := range []string{"pw-ns1", "pw-ns2", "pw-ns3"} {
@@ -152,7 +152,7 @@ func TestIntegrationConsolidation(t *testing.T) {
 		t.Parallel()
 		sut := testutils.Setup(t)
 
-		ctx := context.Background()
+		ctx := t.Context()
 		createAuthContext := func(ctx context.Context, namespace string, identityType types.IdentityType) context.Context {
 			return types.WithAuthInfo(ctx, &identity.StaticRequester{
 				Type:      identityType,

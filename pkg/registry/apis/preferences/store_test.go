@@ -44,7 +44,7 @@ func TestListPreferences(t *testing.T) {
 		fake := &fakeStorage{items: allItems}
 		store := &preferencesStorage{Storage: fake, accessClient: claims.FixedAccessClient(true)}
 
-		ctx := identity.WithRequester(context.Background(), userABC)
+		ctx := identity.WithRequester(t.Context(), userABC)
 		list, err := store.ListPreferences(ctx, nil)
 		require.NoError(t, err)
 
@@ -66,7 +66,7 @@ func TestListPreferences(t *testing.T) {
 		}}
 		store := &preferencesStorage{Storage: fake}
 
-		ctx := identity.WithRequester(context.Background(), userABC)
+		ctx := identity.WithRequester(t.Context(), userABC)
 		list, err := store.ListPreferences(ctx, nil)
 		require.NoError(t, err)
 		require.Equal(t, []string{"team-b", "namespace"}, names(list))
@@ -76,7 +76,7 @@ func TestListPreferences(t *testing.T) {
 		fake := &fakeStorage{items: map[string]*preferences.Preferences{}}
 		store := &preferencesStorage{Storage: fake}
 
-		ctx := identity.WithRequester(context.Background(), userABC)
+		ctx := identity.WithRequester(t.Context(), userABC)
 		list, err := store.ListPreferences(ctx, nil)
 		require.NoError(t, err)
 		require.Empty(t, list.Items)
@@ -101,7 +101,7 @@ func TestListPreferences(t *testing.T) {
 		fake := &fakeStorage{items: teamItems}
 		store := &preferencesStorage{Storage: fake}
 
-		ctx := identity.WithRequester(context.Background(), user)
+		ctx := identity.WithRequester(t.Context(), user)
 		list, err := store.ListPreferences(ctx, nil)
 		require.NoError(t, err)
 
@@ -119,7 +119,7 @@ func TestListPreferences(t *testing.T) {
 		}}
 		store := &preferencesStorage{Storage: fake}
 
-		ctx := identity.WithRequester(context.Background(), userABC)
+		ctx := identity.WithRequester(t.Context(), userABC)
 		list, err := store.ListPreferences(ctx, nil)
 		require.NoError(t, err)
 		require.Equal(t, []string{"user-abc"}, names(list))
@@ -131,7 +131,7 @@ func TestListPreferences(t *testing.T) {
 		}}
 		store := &preferencesStorage{Storage: fake}
 
-		ctx := identity.WithRequester(context.Background(), userABC)
+		ctx := identity.WithRequester(t.Context(), userABC)
 		obj, err := store.List(ctx, nil)
 		require.NoError(t, err)
 		list, ok := obj.(*preferences.PreferencesList)
@@ -202,7 +202,7 @@ func TestListPreferences_FieldSelector(t *testing.T) {
 			fake := &fakeStorage{items: items}
 			store := &preferencesStorage{Storage: fake, accessClient: claims.FixedAccessClient(false)}
 
-			ctx := identity.WithRequester(context.Background(), userABC)
+			ctx := identity.WithRequester(t.Context(), userABC)
 			list, err := store.ListPreferences(ctx, &internalversion.ListOptions{
 				FieldSelector: tc.selector,
 			})
@@ -284,7 +284,7 @@ func TestListPreferences_FieldSelector_TeamAccess(t *testing.T) {
 				},
 			}
 			store := &preferencesStorage{Storage: fake, accessClient: client}
-			ctx := identity.WithRequester(context.Background(), user)
+			ctx := identity.WithRequester(t.Context(), user)
 			ctx = requestK8s.WithNamespace(ctx, user.Namespace)
 			list, err := store.ListPreferences(ctx, &internalversion.ListOptions{
 				FieldSelector: fields.OneTermEqualSelector("metadata.name", item.Name),
@@ -323,7 +323,7 @@ func TestListPreferences_Errors(t *testing.T) {
 
 	t.Run("missing requester", func(t *testing.T) {
 		store := &preferencesStorage{Storage: &fakeStorage{}}
-		_, err := store.ListPreferences(context.Background(), nil)
+		_, err := store.ListPreferences(t.Context(), nil)
 		require.Error(t, err)
 	})
 
@@ -334,7 +334,7 @@ func TestListPreferences_Errors(t *testing.T) {
 			"namespace": newPref("namespace"),
 		}}
 		store := &preferencesStorage{Storage: fake}
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+		ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{
 			Type:    claims.TypeServiceAccount,
 			UserUID: "sa-1",
 			Groups:  []string{"a"},
@@ -346,7 +346,7 @@ func TestListPreferences_Errors(t *testing.T) {
 
 	t.Run("user without identifier is rejected", func(t *testing.T) {
 		store := &preferencesStorage{Storage: &fakeStorage{}}
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+		ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{
 			Type: claims.TypeUser,
 		})
 		_, err := store.ListPreferences(ctx, nil)
@@ -355,14 +355,14 @@ func TestListPreferences_Errors(t *testing.T) {
 
 	t.Run("continue token is not supported", func(t *testing.T) {
 		store := &preferencesStorage{Storage: &fakeStorage{}}
-		ctx := identity.WithRequester(context.Background(), userABC)
+		ctx := identity.WithRequester(t.Context(), userABC)
 		_, err := store.ListPreferences(ctx, &internalversion.ListOptions{Continue: "abc"})
 		require.ErrorContains(t, err, "continue token not supported")
 	})
 
 	t.Run("non-empty label selector is rejected", func(t *testing.T) {
 		store := &preferencesStorage{Storage: &fakeStorage{}}
-		ctx := identity.WithRequester(context.Background(), userABC)
+		ctx := identity.WithRequester(t.Context(), userABC)
 		sel, err := labels.Parse("foo=bar")
 		require.NoError(t, err)
 		_, err = store.ListPreferences(ctx, &internalversion.ListOptions{LabelSelector: sel})
@@ -372,14 +372,14 @@ func TestListPreferences_Errors(t *testing.T) {
 	t.Run("empty label selector is allowed", func(t *testing.T) {
 		fake := &fakeStorage{items: map[string]*preferences.Preferences{}}
 		store := &preferencesStorage{Storage: fake}
-		ctx := identity.WithRequester(context.Background(), userABC)
+		ctx := identity.WithRequester(t.Context(), userABC)
 		_, err := store.ListPreferences(ctx, &internalversion.ListOptions{LabelSelector: labels.Everything()})
 		require.NoError(t, err)
 	})
 
 	t.Run("multi-term field selector is rejected", func(t *testing.T) {
 		store := &preferencesStorage{Storage: &fakeStorage{}}
-		ctx := identity.WithRequester(context.Background(), userABC)
+		ctx := identity.WithRequester(t.Context(), userABC)
 		sel, err := fields.ParseSelector("metadata.name=user-abc,metadata.namespace=default")
 		require.NoError(t, err)
 		_, err = store.ListPreferences(ctx, &internalversion.ListOptions{FieldSelector: sel})
@@ -388,7 +388,7 @@ func TestListPreferences_Errors(t *testing.T) {
 
 	t.Run("non metadata.name field selector is rejected", func(t *testing.T) {
 		store := &preferencesStorage{Storage: &fakeStorage{}}
-		ctx := identity.WithRequester(context.Background(), userABC)
+		ctx := identity.WithRequester(t.Context(), userABC)
 		_, err := store.ListPreferences(ctx, &internalversion.ListOptions{
 			FieldSelector: fields.OneTermEqualSelector("metadata.namespace", "default"),
 		})
@@ -397,7 +397,7 @@ func TestListPreferences_Errors(t *testing.T) {
 
 	t.Run("non-equals operator is rejected", func(t *testing.T) {
 		store := &preferencesStorage{Storage: &fakeStorage{}}
-		ctx := identity.WithRequester(context.Background(), userABC)
+		ctx := identity.WithRequester(t.Context(), userABC)
 		_, err := store.ListPreferences(ctx, &internalversion.ListOptions{
 			FieldSelector: fields.OneTermNotEqualSelector("metadata.name", "user-abc"),
 		})
@@ -407,14 +407,14 @@ func TestListPreferences_Errors(t *testing.T) {
 	t.Run("unexpected runtime type from Get bubbles up", func(t *testing.T) {
 		fake := &errorStorage{}
 		store := &preferencesStorage{Storage: fake}
-		ctx := identity.WithRequester(context.Background(), userABC)
+		ctx := identity.WithRequester(t.Context(), userABC)
 		_, err := store.ListPreferences(ctx, nil)
 		require.ErrorContains(t, err, "expected preferences")
 	})
 }
 
 func TestPreferencesStorage_Update(t *testing.T) {
-	ctx := requestK8s.WithNamespace(context.Background(), "default")
+	ctx := requestK8s.WithNamespace(t.Context(), "default")
 
 	// setTheme mimics the apiserver's merge-patch transformer: it requires
 	// the current object to carry a UID (the real transformer returns 404

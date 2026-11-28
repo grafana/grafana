@@ -256,7 +256,7 @@ func TestUpdateLastEvent(t *testing.T) {
 		}
 
 		require.NotPanics(t, func() {
-			err := updateLastEvent(context.Background(), cfg, patcher)
+			err := updateLastEvent(t.Context(), cfg, patcher)
 			assert.NoError(t, err)
 		})
 		assert.False(t, patcher.called, "patcher must not be called when Webhook is nil")
@@ -272,7 +272,7 @@ func TestUpdateLastEvent(t *testing.T) {
 			},
 		}
 
-		err := updateLastEvent(context.Background(), cfg, patcher)
+		err := updateLastEvent(t.Context(), cfg, patcher)
 		assert.NoError(t, err)
 		assert.False(t, patcher.called, "patcher must not be called when LastEvent is recent")
 	})
@@ -287,7 +287,7 @@ func TestUpdateLastEvent(t *testing.T) {
 			},
 		}
 
-		err := updateLastEvent(context.Background(), cfg, patcher)
+		err := updateLastEvent(t.Context(), cfg, patcher)
 		assert.NoError(t, err)
 		assert.True(t, patcher.called, "patcher must be called when LastEvent is stale")
 	})
@@ -302,7 +302,7 @@ func TestUpdateLastEvent(t *testing.T) {
 			},
 		}
 
-		err := updateLastEvent(context.Background(), cfg, patcher)
+		err := updateLastEvent(t.Context(), cfg, patcher)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "patch status")
 		assert.ErrorContains(t, err, "boom")

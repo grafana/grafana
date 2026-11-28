@@ -35,16 +35,16 @@ func TestMain(m *testing.M) {
 
 func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 	svc := setupTestService(t)
-	ctx := context.Background()
+	ctx := t.Context()
 	namespace := xkube.Namespace("test-namespace")
 
 	t.Run("encrypting should create DEK", func(t *testing.T) {
 		plaintext := []byte("very secret string")
 
-		encrypted, err := svc.Encrypt(context.Background(), namespace, plaintext, contracts.EncryptionOption{})
+		encrypted, err := svc.Encrypt(t.Context(), namespace, plaintext, contracts.EncryptionOption{})
 		require.NoError(t, err)
 
-		decrypted, err := svc.Decrypt(context.Background(), namespace, encrypted, contracts.EncryptionOption{})
+		decrypted, err := svc.Decrypt(t.Context(), namespace, encrypted, contracts.EncryptionOption{})
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
@@ -56,10 +56,10 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 	t.Run("encrypting another secret should use the same DEK", func(t *testing.T) {
 		plaintext := []byte("another very secret string")
 
-		encrypted, err := svc.Encrypt(context.Background(), namespace, plaintext, contracts.EncryptionOption{})
+		encrypted, err := svc.Encrypt(t.Context(), namespace, plaintext, contracts.EncryptionOption{})
 		require.NoError(t, err)
 
-		decrypted, err := svc.Decrypt(context.Background(), namespace, encrypted, contracts.EncryptionOption{})
+		decrypted, err := svc.Decrypt(t.Context(), namespace, encrypted, contracts.EncryptionOption{})
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
@@ -69,7 +69,7 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 	})
 
 	t.Run("usage stats should be registered", func(t *testing.T) {
-		reports, err := svc.usageStats.GetUsageReport(context.Background())
+		reports, err := svc.usageStats.GetUsageReport(t.Context())
 		require.NoError(t, err)
 
 		assert.Equal(t, 1, reports.Metrics["stats.secrets_manager.encryption.current_provider.secret_key.count"])
@@ -84,7 +84,7 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 	store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
 	require.NoError(t, err)
 
-	ctx := context.Background()
+	ctx := t.Context()
 	namespace := "test-namespace"
 
 	dataKey := &contracts.SecretDataKey{
@@ -217,7 +217,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		encryptionManager.providerConfig.CurrentProvider = encryption.ProviderID("fakeProvider.v1")
 
 		namespace := xkube.Namespace("test-namespace")
-		encrypted, _ := encryptionManager.Encrypt(context.Background(), namespace, []byte{}, contracts.EncryptionOption{})
+		encrypted, _ := encryptionManager.Encrypt(t.Context(), namespace, []byte{}, contracts.EncryptionOption{})
 		assert.True(t, fake.encryptCalled)
 		assert.False(t, fake.decryptCalled)
 
@@ -240,13 +240,13 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		}
 		svcDecrypt.providerConfig.CurrentProvider = encryption.ProviderID("fakeProvider.v1")
 
-		_, _ = svcDecrypt.Decrypt(context.Background(), namespace, encrypted, contracts.EncryptionOption{})
+		_, _ = svcDecrypt.Decrypt(t.Context(), namespace, encrypted, contracts.EncryptionOption{})
 		assert.True(t, fake.decryptCalled, "fake provider's decrypt should be called")
 	})
 }
 
 func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	namespace := xkube.Namespace("test-namespace")
 
 	// Generate random keys for testing
@@ -429,12 +429,12 @@ func (p *fakeProvider) Decrypt(_ context.Context, _ []byte) ([]byte, error) {
 }
 
 func TestEncryptionService_Decrypt(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	namespace := xkube.Namespace("test-namespace")
 
 	t.Run("empty payload should fail", func(t *testing.T) {
 		svc := setupTestService(t)
-		_, err := svc.Decrypt(context.Background(), namespace, contracts.EncryptedPayload{
+		_, err := svc.Decrypt(t.Context(), namespace, contracts.EncryptedPayload{
 			DataKeyID:     "test-data-key-id",
 			EncryptedData: []byte(""),
 		}, contracts.EncryptionOption{})
@@ -445,7 +445,7 @@ func TestEncryptionService_Decrypt(t *testing.T) {
 
 	t.Run("empty data key id should fail", func(t *testing.T) {
 		svc := setupTestService(t)
-		_, err := svc.Decrypt(context.Background(), namespace, contracts.EncryptedPayload{
+		_, err := svc.Decrypt(t.Context(), namespace, contracts.EncryptedPayload{
 			DataKeyID:     "",
 			EncryptedData: []byte("some payload"),
 		}, contracts.EncryptionOption{})
@@ -468,7 +468,7 @@ func TestEncryptionService_Decrypt(t *testing.T) {
 func TestIntegration_SecretsService(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 	someData := []byte(`some-data`)
 	namespace := xkube.Namespace("test-namespace")
 
@@ -597,7 +597,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 			)
 			require.NoError(t, err)
 
-			ctx := context.Background()
+			ctx := t.Context()
 			namespace := xkube.Namespace("test-namespace")
 
 			// Here's what actually matters and varies on each test: look at the test case name.
@@ -705,7 +705,7 @@ func (c *fatalNamespaceOnGetByIdCache) RemoveExpired(_ context.Context) {}
 func (c *fatalNamespaceOnGetByIdCache) Flush(_ context.Context, _ string) {}
 
 func TestConsolidateNamespace_FatalWhenCacheGetByIdReportsUnexpectedNamespace(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	tracer := noop.NewTracerProvider().Tracer("test")
 	database := database.ProvideDatabase(testDB, tracer)
@@ -755,7 +755,7 @@ func TestConsolidateNamespace_FatalWhenCacheGetByIdReportsUnexpectedNamespace(t 
 }
 
 func TestEncryptionService_WithSkipCache(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	namespace := xkube.Namespace("test-namespace")
 	plaintext := []byte("secret data")
 
@@ -836,7 +836,7 @@ func TestEncryptionService_WithSkipCache(t *testing.T) {
 }
 
 func TestEncryptionService_FlushCache(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	namespace := xkube.Namespace("test-namespace")
 	plaintext := []byte("secret data to encrypt")
 

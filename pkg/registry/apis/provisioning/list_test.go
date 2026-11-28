@@ -1,7 +1,6 @@
 package provisioning
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -34,7 +33,7 @@ func TestListConnector_PagingParameters(t *testing.T) {
 				Return(&provisioning.ResourceList{}, nil).Once()
 
 			responder := &testResponder{}
-			ctx := request.WithNamespace(context.Background(), "default")
+			ctx := request.WithNamespace(t.Context(), "default")
 			handler, err := NewListConnector(nil, lister).Connect(ctx, "repo", nil, responder)
 			require.NoError(t, err)
 
@@ -51,7 +50,7 @@ func TestListConnector_RejectsAnInvalidLimit(t *testing.T) {
 			// No expectation on the lister: a rejected limit must not reach storage.
 			lister := resources.NewMockResourceLister(t)
 			responder := &testResponder{}
-			ctx := request.WithNamespace(context.Background(), "default")
+			ctx := request.WithNamespace(t.Context(), "default")
 			handler, err := NewListConnector(nil, lister).Connect(ctx, "repo", nil, responder)
 			require.NoError(t, err)
 

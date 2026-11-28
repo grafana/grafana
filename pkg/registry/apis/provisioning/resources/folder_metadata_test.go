@@ -2,7 +2,6 @@ package resources
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -71,7 +70,7 @@ func TestReadFolderMetadata(t *testing.T) {
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
 			Return(&repository.FileInfo{Data: validData, Hash: "abc123"}, nil)
 
-		result, hash, err := ReadFolderMetadata(context.Background(), rw, "my-folder/", "")
+		result, hash, err := ReadFolderMetadata(t.Context(), rw, "my-folder/", "")
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -84,7 +83,7 @@ func TestReadFolderMetadata(t *testing.T) {
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
 			Return(nil, errors.New("file not found"))
 
-		_, _, err := ReadFolderMetadata(context.Background(), rw, "my-folder/", "")
+		_, _, err := ReadFolderMetadata(t.Context(), rw, "my-folder/", "")
 
 		require.Error(t, err)
 	})
@@ -94,7 +93,7 @@ func TestReadFolderMetadata(t *testing.T) {
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
 			Return(&repository.FileInfo{Data: []byte("not-json")}, nil)
 
-		_, _, err := ReadFolderMetadata(context.Background(), rw, "my-folder/", "")
+		_, _, err := ReadFolderMetadata(t.Context(), rw, "my-folder/", "")
 
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrInvalidFolderMetadata)
@@ -105,7 +104,7 @@ func TestReadFolderMetadata(t *testing.T) {
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"My Folder"}}`)}, nil)
 
-		_, _, err := ReadFolderMetadata(context.Background(), rw, "my-folder/", "")
+		_, _, err := ReadFolderMetadata(t.Context(), rw, "my-folder/", "")
 
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrInvalidFolderMetadata)
@@ -129,7 +128,7 @@ func TestParseFolderWithMetadata_MetadataHash(t *testing.T) {
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
 			Return(&repository.FileInfo{Data: validData, Hash: "metadata-hash-123"}, nil)
 
-		f, err := ParseFolderWithMetadata(context.Background(), rw, "my-folder/", "")
+		f, err := ParseFolderWithMetadata(t.Context(), rw, "my-folder/", "")
 		require.NoError(t, err)
 		assert.Equal(t, stableUID, f.ID)
 		assert.Equal(t, "My Folder", f.Title)
@@ -142,7 +141,7 @@ func TestParseFolderWithMetadata_MetadataHash(t *testing.T) {
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
 			Return(nil, repository.ErrFileNotFound)
 
-		f, err := ParseFolderWithMetadata(context.Background(), rw, "my-folder/", "")
+		f, err := ParseFolderWithMetadata(t.Context(), rw, "my-folder/", "")
 		require.NoError(t, err)
 		assert.Empty(t, f.MetadataHash)
 	})
@@ -169,7 +168,7 @@ func TestWriteFolderMetadata(t *testing.T) {
 			written = args.Get(3).([]byte)
 		}).Return(nil)
 
-		returnedUID, err := WriteFolderMetadata(context.Background(), rw, "myfolder/", manifest, "", "")
+		returnedUID, err := WriteFolderMetadata(t.Context(), rw, "myfolder/", manifest, "", "")
 
 		require.NoError(t, err)
 		assert.Equal(t, uid, returnedUID)
@@ -187,7 +186,7 @@ func TestWriteFolderMetadata(t *testing.T) {
 		rw.On("Create", mock.Anything, "myfolder/_folder.json", "", mock.Anything, "").
 			Return(assert.AnError)
 
-		_, err := WriteFolderMetadata(context.Background(), rw, "myfolder/", manifest, "", "")
+		_, err := WriteFolderMetadata(t.Context(), rw, "myfolder/", manifest, "", "")
 
 		require.Error(t, err)
 	})
@@ -392,7 +391,7 @@ func TestFindFoldersMissingMetadata(t *testing.T) {
 }
 
 func TestParseFolderResource(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	testPath := "team-a/project-x/"
 	testRef := "main"
 
@@ -626,7 +625,7 @@ func TestParseFolderResource(t *testing.T) {
 }
 
 func TestWriteFolderMetadataUpdate(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	const existingUID = "existing-uid-123"
 	existingManifest := NewFolderManifest(existingUID, "Original Title", FolderKind)
@@ -857,7 +856,7 @@ func TestWriteFolderMetadataUpdate(t *testing.T) {
 }
 
 func TestGetFolderID(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	testPath := "team-a/project-x/"
 	testRef := ""
 

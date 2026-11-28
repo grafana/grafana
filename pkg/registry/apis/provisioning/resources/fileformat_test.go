@@ -2,7 +2,6 @@ package resources
 
 import (
 	"bytes"
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -67,7 +66,7 @@ spec:
 
 	t.Run("load dashboard json", func(t *testing.T) {
 		// Support dashboard conversion
-		obj, gvk, classic, err := ReadClassicResource(context.Background(), &repository.FileInfo{
+		obj, gvk, classic, err := ReadClassicResource(t.Context(), &repository.FileInfo{
 			Data: []byte(`{
 			"schemaVersion": 7,
 			"panels": [],
@@ -106,9 +105,9 @@ spec:
 		}
 
 		// Support dashboard conversion
-		parsed, err := parser.Parse(context.Background(), info)
+		parsed, err := parser.Parse(t.Context(), info)
 		require.EqualError(t, err, "no clients configured")
-		err = parsed.DryRun(context.Background())
+		err = parsed.DryRun(t.Context())
 		require.EqualError(t, err, "no client configured")
 
 		require.Equal(t, provisioning.ClassicDashboard, parsed.Classic)
@@ -130,7 +129,7 @@ spec:
 			"tags": []
 		}`)...)
 
-		obj, gvk, classic, err := ReadClassicResource(context.Background(), &repository.FileInfo{
+		obj, gvk, classic, err := ReadClassicResource(t.Context(), &repository.FileInfo{
 			Data: dashboardJSON,
 		})
 
@@ -154,7 +153,7 @@ spec:
 
 	t.Run("load dashboard with Unicode BOM in strings", func(t *testing.T) {
 		// Dashboard with BOM characters embedded in string values
-		obj, gvk, classic, err := ReadClassicResource(context.Background(), &repository.FileInfo{
+		obj, gvk, classic, err := ReadClassicResource(t.Context(), &repository.FileInfo{
 			Data: []byte(`{
 				"title": "\ufeffDashboard Title",
 				"description": "Description\ufeffwith BOM",
@@ -268,7 +267,7 @@ spec:
 
 func TestReadClassicResource_TypeAssertions(t *testing.T) {
 	t.Run("numeric apiVersion does not panic", func(t *testing.T) {
-		_, _, _, err := ReadClassicResource(context.Background(), &repository.FileInfo{
+		_, _, _, err := ReadClassicResource(t.Context(), &repository.FileInfo{
 			Data: []byte(`{"apiVersion": 42}`),
 		})
 		require.Error(t, err)
@@ -276,7 +275,7 @@ func TestReadClassicResource_TypeAssertions(t *testing.T) {
 	})
 
 	t.Run("numeric Kind does not panic", func(t *testing.T) {
-		_, _, _, err := ReadClassicResource(context.Background(), &repository.FileInfo{
+		_, _, _, err := ReadClassicResource(t.Context(), &repository.FileInfo{
 			Data: []byte(`{"apiVersion": "playlist.grafana.app/v0alpha1", "Kind": 99}`),
 		})
 		require.Error(t, err)
@@ -284,7 +283,7 @@ func TestReadClassicResource_TypeAssertions(t *testing.T) {
 	})
 
 	t.Run("float64 apiVersion does not panic", func(t *testing.T) {
-		_, _, _, err := ReadClassicResource(context.Background(), &repository.FileInfo{
+		_, _, _, err := ReadClassicResource(t.Context(), &repository.FileInfo{
 			Data: []byte(`{"apiVersion": 1.5}`),
 		})
 		require.Error(t, err)
@@ -302,7 +301,7 @@ func TestReadClassicResource_EmptyInput(t *testing.T) {
 		{name: "UTF-8 BOM only", data: []byte{0xEF, 0xBB, 0xBF}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			obj, gvk, classic, err := ReadClassicResource(context.Background(), &repository.FileInfo{Data: tt.data})
+			obj, gvk, classic, err := ReadClassicResource(t.Context(), &repository.FileInfo{Data: tt.data})
 			require.ErrorIs(t, err, ErrUnableToReadResourceBytes)
 			require.Nil(t, obj)
 			require.Nil(t, gvk)
@@ -324,7 +323,7 @@ func TestParseFileResource(t *testing.T) {
 		{name: "UTF-16 BE BOM only", data: []byte{0xFE, 0xFF}},
 	} {
 		t.Run(tt.name+" returns validation error", func(t *testing.T) {
-			obj, gvk, classic, err := ParseFileResource(context.Background(), &repository.FileInfo{Data: tt.data})
+			obj, gvk, classic, err := ParseFileResource(t.Context(), &repository.FileInfo{Data: tt.data})
 			var validationErr *ResourceValidationError
 			require.ErrorAs(t, err, &validationErr)
 			if tt.emptyAfterBOM {
@@ -345,7 +344,7 @@ func TestParseFileResource(t *testing.T) {
 				"spec": { "title": "A playlist" }
 			}`),
 		}
-		obj, gvk, classic, err := ParseFileResource(context.Background(), info)
+		obj, gvk, classic, err := ParseFileResource(t.Context(), info)
 		require.NoError(t, err)
 		require.NotNil(t, obj)
 		require.NotNil(t, gvk)
@@ -362,7 +361,7 @@ func TestParseFileResource(t *testing.T) {
 				"tags": []
 			}`),
 		}
-		obj, gvk, classic, err := ParseFileResource(context.Background(), info)
+		obj, gvk, classic, err := ParseFileResource(t.Context(), info)
 		require.NoError(t, err)
 		require.NotNil(t, obj)
 		require.NotNil(t, gvk)
@@ -375,7 +374,7 @@ func TestParseFileResource(t *testing.T) {
 		info := &repository.FileInfo{
 			Data: []byte(`{"random": "data"}`),
 		}
-		obj, gvk, _, err := ParseFileResource(context.Background(), info)
+		obj, gvk, _, err := ParseFileResource(t.Context(), info)
 		require.Error(t, err)
 		require.Nil(t, obj)
 		require.Nil(t, gvk)

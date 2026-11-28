@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -177,7 +176,7 @@ func TestIntegrationWebhookController_ReconcileLifecycle(t *testing.T) {
 	repo.EXPECT().SubscribedEvents().Return(subscribedEvents).Maybe()
 	repo.EXPECT().WebhookClient().Return(ghClient).Maybe()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// applyStatus mimics the controller persisting the hooks' returned status patch.
 	applyStatus := func(patches []map[string]any) {
