@@ -46,12 +46,15 @@ function DashboardLinksMenu({ dashboardUID, link }: DashboardLinksMenuProps) {
       <div className={styles.dropdown}>
         <ScrollContainer maxHeight="inherit">
           {resolvedLinks.map((resolvedLink, index) => {
+            const isCurrentDashboard = resolvedLink.uid === dashboardUID;
             return (
               <Menu.Item
                 url={resolvedLink.url}
                 target={link.targetBlank ? '_blank' : undefined}
                 key={`dashlinks-dropdown-item-${resolvedLink.uid}-${index}`}
                 label={resolvedLink.title}
+                icon={isCurrentDashboard ? 'check' : undefined}
+                ariaCurrent={isCurrentDashboard ? 'page' : undefined}
                 testId={selectors.components.DashboardLinks.link}
                 aria-label={t(
                   'dashboard.dashboard-links-menu.aria-label-dashboard-name',
@@ -148,7 +151,7 @@ export function resolveLinks(
 ): ResolvedLinkDTO[] {
   const hits: ResolvedLinkDTO[] = [];
   for (const searchHit of searchHits) {
-    if (searchHit.uid === dashboardUID) {
+    if (!link.asDropdown && searchHit.uid === dashboardUID) {
       continue;
     }
     const uid = searchHit.uid;

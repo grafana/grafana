@@ -1,5 +1,5 @@
 import { type ComponentProps } from 'react';
-import { render, screen } from 'test/test-utils';
+import { render, screen, within } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { type DashboardLink } from '@grafana/schema';
@@ -56,6 +56,17 @@ describe('DashboardLinksDashboard', () => {
     await user.click(button);
     expect(await screen.findByRole('menu')).toBeInTheDocument();
     expect(await getDashboardLink(true)).toBeInTheDocument();
+  });
+
+  it('marks the current dashboard in the dropdown', async () => {
+    const { user } = renderComponent({ dashboardUID: dashbdD.item.uid });
+    await user.click(screen.getByRole('button', { name: /some title/i }));
+
+    const menu = within(await screen.findByRole('menu'));
+    const current = await menu.findByRole('menuitem', { current: 'page', name: new RegExp(dashbdD.item.title) });
+
+    expect(current.querySelector('[data-testid="icon-check"]')).toBeInTheDocument();
+    expect(menu.getAllByRole('menuitem', { current: 'page' })).toEqual([current]);
   });
 
   it('renders dropdown items with target _blank', async () => {
