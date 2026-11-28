@@ -14,6 +14,8 @@ import {
   toDuration,
   toDurationInMilliseconds,
   toDurationInSeconds,
+  toCompactDurationInMilliseconds,
+  toCompactDurationInSeconds,
   toDurationInHoursMinutesSeconds,
   toDurationInDaysHoursMinutesSeconds,
   toNanoSeconds,
@@ -237,6 +239,45 @@ describe('duration', () => {
   it('0 dtdhms', () => {
     const str = toDurationInHoursMinutesSeconds(0);
     expect(formattedValueToString(str)).toBe('00:00:00');
+  });
+
+  // compact duration
+  it('compact: 0 seconds', () => {
+    expect(formattedValueToString(toCompactDurationInSeconds(0, 0))).toBe('0s');
+  });
+  it('compact: 1 second', () => {
+    expect(formattedValueToString(toCompactDurationInSeconds(1, 0))).toBe('1s');
+  });
+  it('compact: 90 seconds default (no decimals specified)', () => {
+    expect(formattedValueToString(toCompactDurationInSeconds(90, undefined))).toBe('1m 30s');
+  });
+  it('compact: 76 seconds decimals=1', () => {
+    expect(formattedValueToString(toCompactDurationInSeconds(76, 1))).toBe('1m 16s');
+  });
+  it('compact: 76 seconds decimals=0', () => {
+    expect(formattedValueToString(toCompactDurationInSeconds(76, 0))).toBe('1m');
+  });
+  it('compact: 90061 seconds default (no decimals specified)', () => {
+    expect(formattedValueToString(toCompactDurationInSeconds(90061, undefined))).toBe('1d 1h 1m 1s');
+  });
+  it('compact: 90061 seconds (1d 1h 1m 1s) decimals=3', () => {
+    expect(formattedValueToString(toCompactDurationInSeconds(90061, 3))).toBe('1d 1h 1m 1s');
+  });
+  it('compact: negative', () => {
+    expect(formattedValueToString(toCompactDurationInSeconds(-90061, 3))).toBe('1d 1h 1m 1s ago');
+  });
+  it('compact: milliseconds input', () => {
+    expect(formattedValueToString(toCompactDurationInMilliseconds(90061000, 3))).toBe('1d 1h 1m 1s');
+  });
+  it('compact: sub-second ms input', () => {
+    expect(formattedValueToString(toCompactDurationInMilliseconds(500, 0))).toBe('500ms');
+  });
+  it('compact: months uses mo unit label', () => {
+    expect(formattedValueToString(toCompactDurationInSeconds(531536200, undefined))).toBe('16y 10mo 1w 5d 56m 40s');
+  });
+  it('compact: decimals skips intermediate zeros and does not consume depth budget', () => {
+    // 86400 (1d) + 60 (1m) = 86460s (0h intermediate). With decimals=1, expect '1d 1m', not '1d 0h'
+    expect(formattedValueToString(toCompactDurationInSeconds(86460, 1))).toBe('1d 1m');
   });
   it('86399 dtdhms', () => {
     const str = toDurationInDaysHoursMinutesSeconds(86399);
