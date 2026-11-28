@@ -87,4 +87,20 @@ describe('FlameGraphMetadata', () => {
     });
     expect(screen.getByText(/0% of total/)).toBeInTheDocument();
   });
+
+    it('does not label nanosecond values as samples', () => {
+    const container = textToDataContainer(`
+      [1//////////////]
+      [2][4//][7///]
+      [3][5]
+         [6]
+      `,
+      undefined,
+      'ns'
+    )!;
+    setup({ data: container });
+
+    expect(screen.queryByText(/samples/)).toBeNull();
+    expect(screen.getByText(/\(Time\)/)).toBeInTheDocument();
+  });
 });

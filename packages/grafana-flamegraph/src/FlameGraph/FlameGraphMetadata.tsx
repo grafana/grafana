@@ -45,10 +45,12 @@ const FlameGraphMetadata = memo(
       }
     }
 
+    const samplesText = data.shouldShowSamples() ? ` | ${ticksVal.text}${ticksVal.suffix} samples` : '';
+
     parts.push(
       <div className={styles.metadataPill} key={'default'}>
-        {unitValue} | {ticksVal.text}
-        {ticksVal.suffix} samples ({unitTitle})
+        {unitValue}
+        {samplesText} ({unitTitle})
       </div>
     );
 

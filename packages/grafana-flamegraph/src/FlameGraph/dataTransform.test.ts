@@ -146,6 +146,29 @@ describe('FlameGraphDataContainer', () => {
   });
 });
 
+describe('FlameGraphDataContainer.shouldShowSamples', () => {
+  function containerWithUnit(unit?: string) {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'level', values: [0, 1] },
+        { name: 'value', values: [10, 5], config: unit ? { unit } : {} },
+        { name: 'label', values: ['1', '2'], type: FieldType.string },
+        { name: 'self', values: [5, 5] },
+      ],
+    });
+    return new FlameGraphDataContainer(frame, { collapsing: true });
+  }
+
+  it.each([
+    ['ns', false],
+    ['short', true],
+    ['bytes', false],
+    [undefined, true],
+  ])('unit %s -> %s', (unit, expected) => {
+    expect(containerWithUnit(unit).shouldShowSamples()).toBe(expected);
+  });
+});
+
 describe('CollapsedMapContainer', () => {
   const defaultItem: LevelItem = {
     itemIndexes: [0],

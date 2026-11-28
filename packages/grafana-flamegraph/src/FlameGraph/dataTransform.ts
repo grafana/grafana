@@ -409,6 +409,10 @@ export class FlameGraphDataContainer {
       this.collapsedMap = collapsedMap;
     }
   }
+
+  shouldShowSamples(): boolean {
+    return this.getUnitTitle() === 'Count';
+  }
 }
 
 // Access field value with either single index or array of indexes. This is needed as we sometimes merge multiple

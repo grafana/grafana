@@ -55,7 +55,7 @@ export interface ProfileTooltipData {
   unitTitle: string;
   unitValue: string;
   unitSelf: string;
-  samples: string;
+  samples: string | undefined;
 }
 
 export interface ProfileTooltipDataOptions {
@@ -63,6 +63,7 @@ export interface ProfileTooltipDataOptions {
   displaySelf: DisplayValue;
   unitTitle: string;
   totalTicks: number;
+  showSamples?: boolean;
 }
 
 export interface ProfileValueDataOptions {
