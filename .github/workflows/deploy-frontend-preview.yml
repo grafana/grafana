@@ -46,6 +46,7 @@ jobs:
       should-deploy: ${{ steps.check.outputs.should-deploy }}
       pr-number: ${{ steps.pr.outputs.number }}
       head-sha: ${{ steps.check.outputs.head-sha }}
+      head-title: ${{ steps.check.outputs.head-title }}
       has-backend-changes: ${{ steps.check.outputs.has-backend-changes }}
       backend-only: ${{ steps.check.outputs.backend-only }}
     steps:
@@ -89,7 +90,7 @@ jobs:
           COMMENT_ID: ${{ github.event.comment.id }}
         run: |
           gh api "repos/${REPO}/issues/${PR_NUMBER}/labels" -f "labels[]=deploy-frontend-preview"
-          gh api "repos/${REPO}/issues/comments/${COMMENT_ID}/reactions" -f content=rocket
+          gh api "repos/${REPO}/issues/comments/${COMMENT_ID}/reactions" -f content=eyes
 
   comment-backend-only:
     name: Comment that the PR is backend-only
@@ -127,7 +128,7 @@ jobs:
           message: |
             ### Frontend preview
 
-            ⏳ The preview build for commit ${{ needs.check.outputs.head-sha }} is in progress.
+            ⏳ The preview build for ${{ needs.check.outputs.head-title }} (${{ needs.check.outputs.head-sha }}) is in progress.
 
             ${{ needs.check.outputs.has-backend-changes == 'true' && '⚠️ **Warning:** this PR contains backend changes. The preview only swaps the frontend assets of an existing instance, so it may not work correctly.' || '' }}
 
@@ -247,12 +248,13 @@ jobs:
         env:
           DEPLOY_NAME: ${{ steps.deploy-name.outputs.deploy-name }}
           HEAD_SHA: ${{ needs.check.outputs.head-sha }}
+          HEAD_TITLE: ${{ needs.check.outputs.head-title }}
           PREVIEW_URL: ${{ steps.preview-url.outputs.url }}
         run: |
           {
             echo "## Frontend preview deployed 🚀"
             echo ""
-            echo "- Deploy name: \`${DEPLOY_NAME}\` (commit ${HEAD_SHA})"
+            echo "- Deploy name: \`${DEPLOY_NAME}\` (${HEAD_TITLE} (${HEAD_SHA}))"
             echo "- Load it at: ${PREVIEW_URL}"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -265,12 +267,46 @@ jobs:
           message: |
             ### Frontend preview
 
-            ✅ The preview for commit ${{ needs.check.outputs.head-sha }} is live: **[open the preview](${{ steps.preview-url.outputs.url }})**.
+            ✅ The preview for ${{ needs.check.outputs.head-title }} (${{ needs.check.outputs.head-sha }}) is live: **[open the preview](${{ steps.preview-url.outputs.url }})**.
 
             - Each new push to this PR builds and deploys the preview again automatically.
             - Share the above link for others to preview it in their browsers too.
 
             ${{ needs.check.outputs.has-backend-changes == 'true' && '⚠️ **Warning:** this PR contains backend changes. The preview only swaps the frontend assets of an existing instance, so it may not work correctly.' || '' }}
+
+  react-result:
+    name: React to the command comment with the result
+    # Swaps the 👀 added while deploying for 🚀 on success or 👎 on failure.
+    # Cancelled runs only drop the 👀, since a newer run will react instead.
+    needs: [check, label, build, deploy]
+    if: |
+      always() && github.event_name == 'issue_comment' &&
+      needs.check.outputs.should-deploy == 'true'
+    runs-on: ubuntu-arm64-small
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Replace the 👀 reaction with the result
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+          ANY_FAILED: ${{ contains(needs.*.result, 'failure') }}
+        run: |
+          reactions="repos/${REPO}/issues/comments/${COMMENT_ID}/reactions"
+
+          gh api "${reactions}" --jq '.[] | select(.content == "eyes" and .user.login == "github-actions[bot]") | .id' |
+            while read -r id; do
+              gh api -X DELETE "${reactions}/${id}"
+            done
+
+          if [ "${ANY_FAILED}" = "true" ]; then
+            gh api "${reactions}" -f content=-1
+          elif [ "${DEPLOY_RESULT}" = "success" ]; then
+            gh api "${reactions}" -f content=rocket
+          fi
 
   comment-failure:
     name: Comment that the deploy failed
@@ -289,7 +325,7 @@ jobs:
           message: |
             ### Frontend preview
 
-            ❌ The preview deploy for commit ${{ needs.check.outputs.head-sha }} failed. See the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+            ❌ The preview deploy for ${{ needs.check.outputs.head-title }} (${{ needs.check.outputs.head-sha }}) failed. See the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
 
   comment-cancelled:
     name: Comment that the deploy was cancelled
@@ -313,4 +349,4 @@ jobs:
           message: |
             ### Frontend preview
 
-            ⚠️ The preview deploy for commit ${{ needs.check.outputs.head-sha }} was cancelled ([workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})). If a newer push superseded it, that run will update this comment when it finishes. Any previously deployed preview is still live.
+            ⚠️ The preview deploy for ${{ needs.check.outputs.head-title }} (${{ needs.check.outputs.head-sha }}) was cancelled ([workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})). If a newer push superseded it, that run will update this comment when it finishes. Any previously deployed preview is still live.

@@ -31,6 +31,9 @@ outputs:
   head-sha:
     description: Head commit SHA of the pull request
     value: ${{ steps.check.outputs.head-sha }}
+  head-title:
+    description: First line of the head commit message of the pull request
+    value: ${{ steps.check.outputs.head-title }}
 
 runs:
   using: composite
@@ -48,6 +51,7 @@ runs:
         pr=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}")
 
         head_sha=$(jq -r '.head.sha' <<< "$pr")
+        head_title=$(gh api "repos/${REPO}/commits/${head_sha}" --jq '.commit.message | split("\n")[0]')
         head_repo=$(jq -r '.head.repo.full_name // ""' <<< "$pr")
 
         is_fork=true
@@ -87,6 +91,7 @@ runs:
           echo "has-backend-changes=${has_backend_changes}"
           echo "backend-only=${backend_only}"
           echo "head-sha=${head_sha}"
+          echo "head-title=${head_title}"
         } >> "$GITHUB_OUTPUT"
 
         echo "PR #${PR_NUMBER}: should-deploy=${should_deploy} (has-backend-changes=${has_backend_changes}, backend-only=${backend_only}, is-fork=${is_fork}), head-sha=${head_sha}"
