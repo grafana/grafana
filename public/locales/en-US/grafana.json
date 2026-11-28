@@ -5047,6 +5047,15 @@
       "view-dashboard": "View dashboard",
       "view-folder": "View folder"
     },
+    "select-all-matching": {
+      "capped": "Only the first {{max}} of {{total}} items are selected.",
+      "load-error": "Failed to load all matching items",
+      "select-all_one": "Select the {{count}} item matching this search",
+      "select-all_other": "Select all {{count}} items matching this search",
+      "select-first": "Select the first {{max}} of {{total}} items",
+      "selected-count_one": "{{count}} item selected",
+      "selected-count_other": "{{count}} items selected"
+    },
     "shared-with-me": "Shared with me",
     "starred-folders": "Starred folders",
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
