@@ -93,6 +93,7 @@ export class ScopesService implements ScopesContextValue {
     }
 
     // Update scopes state based on URL.
+    let previousUrlScopes = queryParams.getAll('scopes');
     this.subscriptions.push(
       locationService.getLocationObservable().subscribe((location) => {
         if (!this.state.enabled) {
@@ -102,6 +103,8 @@ export class ScopesService implements ScopesContextValue {
         const queryParams = new URLSearchParams(location.search);
 
         const scopes = queryParams.getAll('scopes');
+        const urlScopesChanged = !isEqual(scopes, previousUrlScopes);
+        previousUrlScopes = scopes;
         const scopeNodeId = queryParams.get('scope_node');
 
         const navigationScope = queryParams.get('navigation_scope');
@@ -109,7 +112,9 @@ export class ScopesService implements ScopesContextValue {
 
         // Check if new scopes are different from the old scopes
         const currentScopes = this.selectorService.state.appliedScopes.map((scope) => scope.scopeId);
-        if (scopes.length && !isEqual(scopes, currentScopes)) {
+        // Variable URL updates can run before a scope change has reached the URL.
+        // Only changed scope parameters should overwrite the selector's state.
+        if (urlScopesChanged && scopes.length && !isEqual(scopes, currentScopes)) {
           // We only update scopes but never delete them. This is to keep the scopes in memory if user navigates to
           // page that does not use scopes (like from dashboard to dashboard list back to dashboard). If user
           // changes the URL directly, it would trigger a reload so scopes would still be reset.
