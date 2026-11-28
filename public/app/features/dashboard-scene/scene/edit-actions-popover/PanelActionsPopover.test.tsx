@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { Subscription } from 'rxjs';
-import { act, render, screen, userEvent, within } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { presetsQuickEdit } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
@@ -16,6 +16,8 @@ import { appEvents } from 'app/core/app_events';
 import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { ComposerSession } from '../../composer/ComposerSession';
+import { transformSceneToSaveModel } from '../../serialization/transformSceneToSaveModel';
 import { getCloneKey } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
 import { activateFullSceneTree } from '../../utils/test-utils';
@@ -771,18 +773,74 @@ describe('<PanelActionsWrapper />', () => {
         });
       });
 
-      afterEach(() => {
-        deactivate?.();
+      afterEach(async () => {
+        // In act, as leaving the dashboard ends Composer, which changes the actions, and the lookups they start.
+        await act(async () => deactivate?.());
         deactivate = undefined;
         offersLegend = true;
       });
 
-      async function renderWithQuickEdits({ isEditing }: { isEditing: boolean }) {
+      async function renderWithQuickEdits(state: { isEditing: boolean } & Parameters<typeof createDashboard>[1]) {
         const panel = createPanel({ pluginId: 'with-quick-edits', options: { legend: { showLegend: true } } });
-        deactivate = activateFullSceneTree(createDashboard(panel, { isEditing }));
-        renderWrapper(panel, { isEditing });
+        const dashboard = createDashboard(panel, state);
+        // Leaving Composer compares the dashboard with the version it loaded.
+        dashboard.setInitialSaveModel(transformSceneToSaveModel(dashboard));
+        deactivate = activateFullSceneTree(dashboard);
+        return { ...(await hoverPanel(panel, state.isEditing)), dashboard };
+      }
+
+      async function hoverPanel(panel: VizPanel, isSelectionEnabled: boolean) {
+        renderWrapper(panel, { isEditing: isSelectionEnabled });
         await hoverAndRest(screen.getByTestId('reference-child'));
         return { panel, user: userEvent.setup() };
+      }
+
+      /**
+       * Opens Composer over Editing or Viewing, optionally over the edit session kept from Editing. No pick is pending,
+       * as with the Assistant's Pointer tool. Composer turns element selection off.
+       */
+      async function renderInComposer({
+        over,
+        keepsEditSession = false,
+      }: {
+        over: 'edit' | 'view';
+        keepsEditSession?: boolean;
+      }) {
+        await act(async () => {
+          setTestFlags({
+            [FlagKeys.GrafanaPanelActionsPopover]: true,
+            [FlagKeys.GrafanaPanelQuickEdits]: true,
+            dashboardNewLayouts: true,
+            [FlagKeys.GrafanaDashboardPreviewMode]: true,
+            [FlagKeys.GrafanaDashboardComposer]: true,
+          });
+        });
+        const panel = createPanel({ pluginId: 'with-quick-edits', options: { legend: { showLegend: true } } });
+        const dashboard = createDashboard(panel, { uid: 'composer-test' });
+        dashboard.setInitialSaveModel(transformSceneToSaveModel(dashboard));
+        deactivate = activateFullSceneTree(dashboard);
+        let session: ComposerSession | undefined;
+        act(() => {
+          if (over === 'edit' || keepsEditSession) {
+            dashboard.setDashboardMode('edit');
+          }
+          session = ComposerSession.enter(dashboard);
+          if (over === 'view' && keepsEditSession) {
+            dashboard.setComposerEditing(false);
+          }
+        });
+        const context = await hoverPanel(panel, false);
+        // Explore is looked up as the actions show.
+        expect(await within(getToolbar()).findByRole('link', { name: 'Explore (p x)' })).toBeInTheDocument();
+        return { ...context, dashboard, session: session! };
+      }
+
+      async function hideLegendWithQuickEdits(user: ReturnType<typeof userEvent.setup>) {
+        await user.click(within(getToolbar()).getByRole('button', { name: 'Quick edits' }));
+        await user.click(within(getToolbar()).getByRole('button', { name: 'Legend: Shown' }));
+        await user.click(
+          within(screen.getByRole('dialog', { name: 'Legend' })).getByRole('switch', { name: 'Visibility' })
+        );
       }
 
       test('in edit mode, Quick edits leads the panel actions', async () => {
@@ -797,6 +855,62 @@ describe('<PanelActionsWrapper />', () => {
         expect(within(getToolbar()).getByRole('button', { name: 'Expand (v)' })).toBeInTheDocument();
         expect(within(getToolbar()).queryByRole('button', { name: 'Quick edits' })).not.toBeInTheDocument();
       });
+
+      test('in Composer with no pick pending, Quick edits leads the actions Composer leaves', async () => {
+        await renderInComposer({ over: 'edit' });
+
+        // The hidden quick edits' back button comes after the actions.
+        expect(getToolbarLayout().slice(0, 5)).toEqual([
+          'Quick edits',
+          'Explore (p x)',
+          '|',
+          'Expand (v)',
+          'More actions',
+        ]);
+      });
+
+      test("in Composer, Quick edits is not shown while a pick is pending, as presses are Composer's then", async () => {
+        const { session } = await renderInComposer({ over: 'edit' });
+        const pick = new AbortController();
+
+        act(() => void session.pickElement(pick.signal));
+        expect(within(getToolbar()).getByRole('link', { name: 'Explore (p x)' })).toBeInTheDocument();
+        expect(within(getToolbar()).queryByRole('button', { name: 'Quick edits' })).not.toBeInTheDocument();
+
+        act(() => pick.abort());
+        expect(within(getToolbar()).getByRole('button', { name: 'Quick edits' })).toBeInTheDocument();
+      });
+
+      test('in Composer over Editing, a quick edit changes the panel as an undoable edit', async () => {
+        const { dashboard, panel, user } = await renderInComposer({ over: 'edit' });
+
+        await hideLegendWithQuickEdits(user);
+
+        expect(panel.state.options).toEqual({ legend: { showLegend: false } });
+        expect(dashboard.state.sidebar.state.undoStack.map(({ description }) => description)).toEqual([
+          'Legend: Visibility',
+        ]);
+        await waitFor(() => expect(dashboard.state.isDirty).toBe(true));
+      });
+
+      test.each([
+        { name: 'without an edit session', keepsEditSession: false },
+        { name: 'with the edit session kept from Editing', keepsEditSession: true },
+      ])(
+        'in Composer over Viewing $name, a quick edit changes the panel and Composer stays over Viewing',
+        async ({ keepsEditSession }) => {
+          const { dashboard, panel, user } = await renderInComposer({ over: 'view', keepsEditSession });
+
+          await hideLegendWithQuickEdits(user);
+
+          expect(panel.state.options).toEqual({ legend: { showLegend: false } });
+          expect(dashboard.state).toMatchObject({ mode: 'composer', composerEditing: false });
+          expect(Boolean(dashboard.state.isEditing)).toBe(keepsEditSession);
+          expect(dashboard.state.sidebar.state.undoStack).toEqual([]);
+          // An edit session kept from Editing still sees the change, so leaving Composer offers to save it.
+          await waitFor(() => expect(Boolean(dashboard.state.isDirty)).toBe(keepsEditSession));
+        }
+      );
 
       test('Quick edits swaps the panel actions for the quick edits, which change the panel', async () => {
         const { panel, user } = await renderWithQuickEdits({ isEditing: true });

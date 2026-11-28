@@ -12,28 +12,7 @@ export function createPresetApplyHandler(panel: VizPanel) {
       meta: { actionId: 'panel.applyPreset' },
       description: t('dashboard.edit-actions.panel-preset', 'Apply panel preset'),
       source: panel,
-      perform: () => {
-        if (preset.fieldConfig) {
-          const { defaults, overrides } = panel.state.fieldConfig;
-          const presetDefaults = preset.fieldConfig.defaults;
-          panel.onFieldConfigChange(
-            {
-              defaults: {
-                ...defaults,
-                ...presetDefaults,
-                custom: { ...defaults.custom, ...presetDefaults?.custom },
-                ...(presetDefaults?.color && { color: presetDefaults.color }),
-                ...(presetDefaults?.thresholds && { thresholds: presetDefaults.thresholds }),
-              },
-              overrides,
-            },
-            true
-          );
-        }
-        if (preset.options) {
-          panel.onOptionsChange({ ...panel.state.options, ...preset.options }, true);
-        }
-      },
+      perform: () => applyPreset(panel, preset),
       undo: () => {
         panel.onFieldConfigChange(prevFieldConfig, true);
         if (preset.options) {
@@ -42,4 +21,28 @@ export function createPresetApplyHandler(panel: VizPanel) {
       },
     });
   };
+}
+
+/** Applies the preset to the panel as it is, without recording an edit. */
+export function applyPreset(panel: VizPanel, preset: PanelPluginVisualizationSuggestion) {
+  if (preset.fieldConfig) {
+    const { defaults, overrides } = panel.state.fieldConfig;
+    const presetDefaults = preset.fieldConfig.defaults;
+    panel.onFieldConfigChange(
+      {
+        defaults: {
+          ...defaults,
+          ...presetDefaults,
+          custom: { ...defaults.custom, ...presetDefaults?.custom },
+          ...(presetDefaults?.color && { color: presetDefaults.color }),
+          ...(presetDefaults?.thresholds && { thresholds: presetDefaults.thresholds }),
+        },
+        overrides,
+      },
+      true
+    );
+  }
+  if (preset.options) {
+    panel.onOptionsChange({ ...panel.state.options, ...preset.options }, true);
+  }
 }

@@ -285,6 +285,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   private _sidebarActivation?: CancelActivationHandler;
   private _assistantWrites = 0;
+  private _composerQuickEdits = 0;
   /** The open Composer session and the mode to return to when it ends. Set only while mode is `composer`. */
   private _composer?: { session: ComposerSession; modeBefore: DashboardMode };
   private _modePickerShown = false;
@@ -497,12 +498,29 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   }
 
+  /**
+   * Scopes a person's quick edit in Composer, the one manual change Composer lets through over Editing, as it changes
+   * only a panel's options. Synchronous mutations only, like withAssistantWrite.
+   */
+  public withComposerQuickEdit<T>(write: () => T): T {
+    this._composerQuickEdits++;
+    try {
+      return write();
+    } finally {
+      this._composerQuickEdits--;
+    }
+  }
+
   public prepareEditAction(meta?: DashboardActionMeta) {
     if (isArrangingPlan(this.state)) {
       return meta !== undefined && PLAN_ARRANGE_ACTIONS.has(meta.actionId);
     }
-    // In Composer only Assistant writes; one over Viewing switches Composer to Editing first.
+    // In Composer only Assistant writes; one over Viewing switches Composer to Editing first. A quick edit writes only
+    // over Editing and leaves Viewing as it is.
     if (isComposerMode(this.state)) {
+      if (this._assistantWrites === 0 && this._composerQuickEdits > 0) {
+        return isComposerEditing(this.state);
+      }
       return this._assistantWrites > 0 && (isComposerEditing(this.state) || this.startComposerEditingForAssistant());
     }
     if (dashboardModesEnabled() && getDashboardMode(this.state) === 'agent' && this._assistantWrites === 0) {
