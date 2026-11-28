@@ -6,9 +6,9 @@
     "background": {
       "canvas": "palette.ink950",
       "page": "palette.ink900",
-      "primary": "palette.ink850",
-      "secondary": "palette.ink750",
-      "elevated": "palette.ink750"
+      "primary": "palette.ink800",
+      "secondary": "palette.ink700",
+      "elevated": "palette.ink650"
     },
     "primary": {
       "main": "palette.ink100",
@@ -107,8 +107,8 @@
     },
     "border": {
       "weak": "palette.ink700",
-      "medium": "palette.ink650",
-      "strong": "palette.ink550"
+      "medium": "palette.ink600",
+      "strong": "palette.ink500"
     },
     "gradients": {
       "brandHorizontal": "linear-gradient(270deg, palette.orange400 0%, palette.orange500 100%)",
