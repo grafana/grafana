@@ -14107,6 +14107,14 @@
       "conflict-title": "Someone else has updated this notebook",
       "error-conflict": "Someone else saved this notebook first."
     },
+    "create-page": {
+      "context-title": "Notebook: {{title}}",
+      "exec-summary": "Exec summary",
+      "menu": "Create page with Assistant",
+      "presentation": "Presentation",
+      "prompt-exec-summary": "Create an exec summary Page from this notebook for leadership.",
+      "prompt-presentation": "Create a presentation Page from this notebook: slides with speaker notes for a meeting."
+    },
     "delete": {
       "body": "Are you sure you want to delete \"{{title}}\"?",
       "confirm": "Delete",
