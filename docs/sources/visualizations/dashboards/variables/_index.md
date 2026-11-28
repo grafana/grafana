@@ -41,13 +41,14 @@ You can use variables in:
 - [Dashboard and panel links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/manage-dashboard-links/)
 - Titles
 - Descriptions
+- [Some panel options](#variables-in-panel-options), such as **Min**, **Max**, **Unit**, and thresholds
 - [Transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/transform-data/)
 
 To work with variables, you typically do the following:
 
 1. Choose the type of variable that matches the value you want viewers to control.
 1. Add the variable to the dashboard.
-1. Use the variable in queries, titles, links, or other dashboard fields.
+1. Use the variable in queries, titles, links, panel options, or other dashboard fields.
 1. Manage the variable order, dependencies, and URL behavior as the dashboard grows.
 
 To see variable settings, select **Editing** in the dashboard mode drop-down list, click the **Dashboard options** icon in the toolbar, and expand the **Variables** section.
@@ -80,6 +81,29 @@ Choose a variable type based on how you want Grafana to get the value and how us
 | Switch        | Viewers need to toggle between two configured values.                                                                 |
 
 For the complete list of variable settings and type-specific steps, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/).
+
+## Variables in panel options
+
+You can use variables in field options that have a number field, and in the text options listed in this section.
+Field options are the options in **Standard options** and the options that a visualization applies to each field, such as axis settings.
+Most panel-wide options, such as legend, tooltip, and text size settings, don't accept variables, even if they have a number field.
+Some visualizations support variables in specific options, which their documentation describes.
+Options that you set with a drop-down list, radio buttons, a switch, or a slider don't accept variables either.
+
+The following panel options accept variables:
+
+- **Numeric field options:** Field options with a number field, such as **Min**, **Max**, **Decimals**, and the axis **Soft min** and **Soft max**.
+- **Unit:** The unit of a field, including custom units.
+- **Thresholds:** The value of each threshold step.
+- **Value mappings:** The display text of each mapping. The value, range, or regular expression that a mapping matches doesn't accept variables.
+- **Display name:** The name of a field or series, which appears in legends, tooltips, table headers, and stat titles.
+- **Axis label:** The text next to a chart axis.
+
+You can also use variables in these options in field overrides, so a variable can control an option for specific fields or series.
+
+{{< admonition type="note" >}}
+The variable input for numeric field options and **Unit** is only available in dashboards that use the [v2 schema](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/).
+{{< /admonition >}}
 
 ## Template variables {#templates}
 
