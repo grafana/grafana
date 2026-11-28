@@ -9,7 +9,7 @@ import {
   type DataLink,
   type Field,
   FieldType,
-  getFieldDataContextClone,
+  getValueDataContext,
   type InterpolateFunction,
   type InfinityOptions,
   type ScopedVars,
@@ -68,12 +68,14 @@ export const getActions = (
     return [];
   }
 
+  const valueDataContext = getValueDataContext(frame, field, fieldScopedVars, config);
+
   const actionModels = actions
     .filter((action) => {
       return action.type === ActionType.Fetch || isInfinityActionWithAuth(action);
     })
     .map((action: Action) => {
-      const dataContext: DataContextScopedVar = getFieldDataContextClone(frame, field, fieldScopedVars);
+      const dataContext: DataContextScopedVar = { value: { ...valueDataContext.value } };
       const actionScopedVars = {
         ...fieldScopedVars,
         __dataContext: dataContext,
@@ -82,13 +84,6 @@ export const getActions = (
       const boundReplaceVariables: InterpolateFunction = (value, scopedVars, format) => {
         return replaceVariables(value, { ...actionScopedVars, ...scopedVars }, format);
       };
-
-      // We are not displaying reduction result
-      if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
-        dataContext.value.rowIndex = config.valueRowIndex;
-      } else {
-        dataContext.value.calculatedValue = config.calculatedValue;
-      }
 
       const actionModel: ActionModel<Field> = {
         title: replaceVariables(action.title, actionScopedVars),

@@ -151,6 +151,8 @@ export {
   applyRawFieldOverrides,
   useFieldOverrides,
   getFieldDataContextClone,
+  /** @internal */
+  getValueDataContext,
   DataLinksContext,
   useDataLinksContext,
 } from './field/fieldOverrides';
