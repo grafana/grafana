@@ -8,6 +8,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 )
 
@@ -34,4 +35,30 @@ func (s *folderStatusStrategy) PrepareForUpdate(ctx context.Context, obj, old ru
 		return
 	}
 	oldFolder.Spec.DeepCopyInto(&newFolder.Spec)
+
+	keepCascadeDeleteRequester(ctx, newFolder, oldFolder)
+}
+
+// keepCascadeDeleteRequester makes the requester server-owned: only a service identity may change it,
+// and every other writer gets the stored value back.
+func keepCascadeDeleteRequester(ctx context.Context, newFolder, oldFolder *foldersv1.Folder) {
+	if identity.IsServiceIdentity(ctx) {
+		return
+	}
+	var stored *foldersv1.FolderCascadeDeleteStatus
+	if oldFolder.Status.CascadeDelete != nil && oldFolder.Status.CascadeDelete.Requester != nil {
+		stored = oldFolder.Status.CascadeDelete
+	}
+	switch {
+	case newFolder.Status.CascadeDelete != nil:
+		newFolder.Status.CascadeDelete.Requester = nil
+		if stored != nil {
+			restored := *stored.Requester
+			newFolder.Status.CascadeDelete.Requester = &restored
+		}
+	case stored != nil:
+		// A writer can't drop the status that holds the requester.
+		restored := *stored
+		newFolder.Status.CascadeDelete = &restored
+	}
 }

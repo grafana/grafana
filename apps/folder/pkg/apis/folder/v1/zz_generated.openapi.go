@@ -17,6 +17,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DescendantCounts{}.OpenAPIModelName():                                       schema_pkg_apis_folder_v1_DescendantCounts(ref),
 		Folder{}.OpenAPIModelName():                                                 schema_pkg_apis_folder_v1_Folder(ref),
 		FolderAccessInfo{}.OpenAPIModelName():                                       schema_pkg_apis_folder_v1_FolderAccessInfo(ref),
+		FolderCascadeDeleteRequester{}.OpenAPIModelName():                           schema_pkg_apis_folder_v1_FolderCascadeDeleteRequester(ref),
 		FolderCascadeDeleteStatus{}.OpenAPIModelName():                              schema_pkg_apis_folder_v1_FolderCascadeDeleteStatus(ref),
 		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1.FolderClient":    schema_pkg_apis_folder_v1_FolderClient(ref),
 		FolderInfo{}.OpenAPIModelName():                                             schema_pkg_apis_folder_v1_FolderInfo(ref),
@@ -189,6 +190,43 @@ func schema_pkg_apis_folder_v1_FolderAccessInfo(ref common.ReferenceCallback) co
 	}
 }
 
+func schema_pkg_apis_folder_v1_FolderCascadeDeleteRequester(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"sub": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The identity's subject, e.g. \"user:1\".",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"identifier": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The identity's unique identifier.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The identity type.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"sub", "identifier", "type"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_folder_v1_FolderCascadeDeleteStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -245,10 +283,18 @@ func schema_pkg_apis_folder_v1_FolderCascadeDeleteStatus(ref common.ReferenceCal
 							Format:      "int64",
 						},
 					},
+					"requester": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Who requested the delete; set by the server, not by clients.",
+							Ref:         ref(FolderCascadeDeleteRequester{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"state"},
 			},
 		},
+		Dependencies: []string{
+			FolderCascadeDeleteRequester{}.OpenAPIModelName()},
 	}
 }
 

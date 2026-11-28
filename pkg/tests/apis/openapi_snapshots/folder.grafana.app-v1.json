@@ -1313,6 +1313,31 @@
           }
         ]
       },
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderCascadeDeleteRequester": {
+        "type": "object",
+        "required": [
+          "sub",
+          "identifier",
+          "type"
+        ],
+        "properties": {
+          "identifier": {
+            "description": "The identity's unique identifier.",
+            "type": "string",
+            "default": ""
+          },
+          "sub": {
+            "description": "The identity's subject, e.g. \"user:1\".",
+            "type": "string",
+            "default": ""
+          },
+          "type": {
+            "description": "The identity type.",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderCascadeDeleteStatus": {
         "type": "object",
         "required": [
@@ -1335,6 +1360,14 @@
             "description": "Direct children not yet deleted, recomputed on each reconcile.",
             "type": "integer",
             "format": "int64"
+          },
+          "requester": {
+            "description": "Who requested the delete; set by the server, not by clients.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderCascadeDeleteRequester"
+              }
+            ]
           },
           "started": {
             "description": "When the cascade started, in Unix milliseconds.",

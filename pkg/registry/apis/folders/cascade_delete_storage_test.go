@@ -1644,7 +1644,7 @@ func TestCascadeDelete_ForwardsOptionalInterfaces(t *testing.T) {
 	setKubernetesFolderCascadeDeleteToggle(t, false)
 
 	inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}}
-	s := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil)
+	s := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil, nil)
 
 	watcher, ok := s.(rest.Watcher)
 	require.True(t, ok, "watch must be exposed when the wrapped store supports it")
@@ -1666,7 +1666,7 @@ func TestCascadeDelete_RejectsForcedCollectionDelete(t *testing.T) {
 			setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagKubernetesFolderCascadeDelete: enabled, featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: false})
 
 			inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}}
-			deleter := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil).(rest.CollectionDeleter)
+			deleter := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil, nil).(rest.CollectionDeleter)
 
 			_, err := deleter.DeleteCollection(ctxWithNamespace(), nil, forceDelete(), nil)
 			require.True(t, apierrors.IsBadRequest(err))
@@ -1685,7 +1685,7 @@ func TestCascadeDelete_CollectionDeleteNotSupportedWithAsyncCascade(t *testing.T
 		t.Run(name, func(t *testing.T) {
 			setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: true})
 			inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"a": newFolder("a")}}}
-			deleter := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil).(rest.CollectionDeleter)
+			deleter := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil, nil).(rest.CollectionDeleter)
 
 			_, err := deleter.DeleteCollection(ctxWithNamespace(), nil, opts, nil)
 			require.True(t, apierrors.IsMethodNotSupported(err), "got %v", err)
@@ -1696,7 +1696,7 @@ func TestCascadeDelete_CollectionDeleteNotSupportedWithAsyncCascade(t *testing.T
 	t.Run("flag off still forwards", func(t *testing.T) {
 		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: false})
 		inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}}
-		deleter := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil).(rest.CollectionDeleter)
+		deleter := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil, nil).(rest.CollectionDeleter)
 		_, err := deleter.DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
 		require.NoError(t, err)
 		require.True(t, inner.deletedCollection)
@@ -1724,7 +1724,7 @@ func TestCascadeDelete_RejectsCollectionDeleteOfFinalizerFolders(t *testing.T) {
 	}
 	deleter := func(t *testing.T, store *watchableFolderStorage) rest.CollectionDeleter {
 		setAsyncCascadeDeleteOff(t)
-		return newCascadeDeleteStorage(store, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil).(rest.CollectionDeleter)
+		return newCascadeDeleteStorage(store, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil, nil).(rest.CollectionDeleter)
 	}
 
 	t.Run("a selection with a finalizer folder is rejected before anything is deleted", func(t *testing.T) {
@@ -1873,7 +1873,7 @@ func (failingLister) List(context.Context, *metainternalversion.ListOptions) (ru
 
 func TestCascadeDelete_OptionalInterfacesNotExposedWhenUnsupported(t *testing.T) {
 	// Wrapped store lacks Watcher/CollectionDeleter: the wrapper must not advertise those verbs.
-	s := newCascadeDeleteStorage(&fakeFolderStorage{}, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil)
+	s := newCascadeDeleteStorage(&fakeFolderStorage{}, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil, nil)
 
 	_, isWatcher := s.(rest.Watcher)
 	require.False(t, isWatcher)

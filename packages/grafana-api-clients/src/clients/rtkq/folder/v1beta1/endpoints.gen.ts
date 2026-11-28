@@ -431,6 +431,14 @@ export type FolderSpec = {
   description?: string;
   title: string;
 };
+export type FolderCascadeDeleteRequester = {
+  /** The identity's unique identifier. */
+  identifier: string;
+  /** The identity's subject, e.g. "user:1". */
+  sub: string;
+  /** The identity type. */
+  type: string;
+};
 export type FolderCascadeDeleteStatus = {
   /** Errors encountered while deleting direct children. */
   errors?: string[];
@@ -438,6 +446,8 @@ export type FolderCascadeDeleteStatus = {
   finished?: number;
   /** Direct children not yet deleted, recomputed on each reconcile. */
   remaining?: number;
+  /** Who requested the delete; set by the server, not by clients. */
+  requester?: FolderCascadeDeleteRequester;
   /** When the cascade started, in Unix milliseconds. */
   started?: number;
   /** Current phase of the cascade delete. */

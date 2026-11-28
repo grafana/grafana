@@ -1179,6 +1179,27 @@
           }
         ]
       },
+      "FolderCascadeDeleteRequester": {
+        "type": "object",
+        "required": ["sub", "identifier", "type"],
+        "properties": {
+          "identifier": {
+            "description": "The identity's unique identifier.",
+            "type": "string",
+            "default": ""
+          },
+          "sub": {
+            "description": "The identity's subject, e.g. \"user:1\".",
+            "type": "string",
+            "default": ""
+          },
+          "type": {
+            "description": "The identity type.",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "FolderCascadeDeleteStatus": {
         "type": "object",
         "required": ["state"],
@@ -1199,6 +1220,14 @@
             "description": "Direct children not yet deleted, recomputed on each reconcile.",
             "type": "integer",
             "format": "int64"
+          },
+          "requester": {
+            "description": "Who requested the delete; set by the server, not by clients.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FolderCascadeDeleteRequester"
+              }
+            ]
           },
           "started": {
             "description": "When the cascade started, in Unix milliseconds.",

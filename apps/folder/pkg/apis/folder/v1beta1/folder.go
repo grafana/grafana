@@ -18,6 +18,9 @@ type (
 	FolderStatus                   = v1.FolderStatus
 	FolderCascadeDeleteStatus      = v1.FolderCascadeDeleteStatus
 	FolderCascadeDeleteStatusState = v1.FolderCascadeDeleteStatusState
+
+	FolderCascadeDeleteRequester     = v1.FolderCascadeDeleteRequester
+	FolderCascadeDeleteRequesterType = v1.FolderCascadeDeleteRequesterType
 )
 
 const (
@@ -28,6 +31,9 @@ const (
 	FolderCascadeDeleteStatusStateInProgress = v1.FolderCascadeDeleteStatusStateInProgress
 	FolderCascadeDeleteStatusStateCompleted  = v1.FolderCascadeDeleteStatusStateCompleted
 	FolderCascadeDeleteStatusStateFailed     = v1.FolderCascadeDeleteStatusStateFailed
+
+	FolderCascadeDeleteRequesterTypeUser           = v1.FolderCascadeDeleteRequesterTypeUser
+	FolderCascadeDeleteRequesterTypeServiceAccount = v1.FolderCascadeDeleteRequesterTypeServiceAccount
 )
 
 var (
