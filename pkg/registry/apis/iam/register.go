@@ -23,6 +23,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/authlib/authn"
+	authzlib "github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/types"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -333,6 +334,10 @@ func NewAPIService(
 					return teamLBACUsageAuthorizer.Authorize(ctx, a)
 				}
 
+				if a.GetResource() == iamv0.AuthInfoResourceInfo.GetName() {
+					return authorizeStandaloneAuthInfo(ctx, a)
+				}
+
 				if a.GetResource() == "roles" {
 					if user.GetIdentityType() != types.TypeAccessPolicy {
 						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
@@ -387,6 +392,34 @@ func NewAPIService(
 		builder.ssoLoginConfig = sso.NewLoginConfigHandler(ssoCfgProvider, ssoReadService)
 	}
 	return builder
+}
+
+// authorizeStandaloneAuthInfo authorizes AuthInfo reads in the standalone
+// apiserver. AuthInfo exposes credentials metadata, so only direct
+// access-policy service calls with the authinfos read permission may get, list
+// or watch it, and only within their own namespace. Wildcard-namespace
+// (platform) tokens keep access to every tenant, as in the namespace
+// authorizer's treatment of "*". Writes and all other callers stay denied.
+func authorizeStandaloneAuthInfo(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
+	user, ok := types.AuthInfoFrom(ctx)
+	if !ok {
+		return authorizer.DecisionDeny, "no identity found", nil
+	}
+	if a.GetVerb() != utils.VerbGet && a.GetVerb() != utils.VerbList && a.GetVerb() != utils.VerbWatch {
+		return authorizer.DecisionDeny, "authinfos is read-only", nil
+	}
+	if user.GetIdentityType() != types.TypeAccessPolicy {
+		return authorizer.DecisionDeny, "only access policy identities have access for now", nil
+	}
+	if !types.NamespaceMatches(user.GetNamespace(), a.GetNamespace()) {
+		return authorizer.DecisionDeny, "authinfos can only be read from the caller's namespace", nil
+	}
+	// get, list and watch all require the authinfos get permission; list is
+	// mapped to get in the check, and a list-only or watch-only grant is denied.
+	if !authzlib.CheckServicePermissions(user, a.GetAPIGroup(), a.GetResource(), utils.VerbGet).Allowed {
+		return authorizer.DecisionDeny, "calling service lacks authinfos read permission", nil
+	}
+	return authorizer.DecisionAllow, "", nil
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersion {
