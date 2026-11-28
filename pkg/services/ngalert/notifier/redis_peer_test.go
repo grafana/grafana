@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/madflojo/testcerts"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/require"
 )
 
@@ -40,6 +41,7 @@ func TestNewRedisPeerClusterMode(t *testing.T) {
 			CAPath:     certPaths.ca,
 			ServerName: "localhost",
 		}}, log.NewNopLogger(), prometheus.NewRegistry(), time.Second*60)
+	require.IsType(t, (*redis.ClusterClient)(nil), redisPeer.redis)
 	require.NoError(t, err)
 
 	ping := redisPeer.redis.Ping(context.Background())
