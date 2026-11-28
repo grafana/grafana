@@ -878,7 +878,8 @@
       "label-disabled": "Sumber data",
       "message": {
         "please-select-a-data-source": "Pilih sumber data"
-      }
+      },
+      "rules-sources-error": ""
     },
     "cloud-evaluation-behavior": {
       "description-pending-period": "Periode ketika syarat ambang batas harus dipenuhi untuk memicu peringatan. Memilih \"Tidak Ada\" akan segera memicu peringatan setelah syarat terpenuhi.",
@@ -1927,7 +1928,8 @@
           "title": "Sumber data"
         },
         "label": "Sumber data",
-        "required-message": "Pilih sumber data"
+        "required-message": "Pilih sumber data",
+        "rules-sources-error": ""
       },
       "error": "Gagal mengimpor aturan peringatan: {{error}}",
       "group": {
@@ -1986,7 +1988,6 @@
         "preview-config-aria": "Pratinjau konfigurasi",
         "preview-rules-aria": "Pratinjau aturan peringatan",
         "routing": "Perutean notifikasi",
-        "routing-none": "Tidak ada pohon kebijakan yang dipilih",
         "routing-tree": "Pohon kebijakan: {{name}}",
         "rules-error": "",
         "rules-skipped": "Aturan peringatan tidak akan diimpor.",
@@ -3325,6 +3326,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Kesalahan saat memuat aturan",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Gagal memuat konfigurasi aturan Grafana:",
       "failed-to-load-grafana-rules-state": "Gagal memuat status aturan Grafana:",
       "failed-to-load-rules-config": "Gagal memuat konfigurasi aturan dari <2>{{dataSource}}</2>",
@@ -4303,7 +4305,8 @@
     },
     "unified-alert-list": {
       "clear": "Hapus",
-      "text-loading": "Memuat..."
+      "text-loading": "Memuat...",
+      "title-rules-source-list-error": ""
     },
     "unified-alert-list-panel": {
       "body-permission-required": "Maaf, Anda tidak memiliki izin yang diperlukan untuk membaca aturan peringatan.",
@@ -18014,6 +18017,7 @@
           "binary-operation": "Operasi biner",
           "reduce-row": "Kurangi baris",
           "row-index": "Indeks baris",
+          "template": "",
           "unary-operation": "Operasi unary"
         }
       },
@@ -18716,6 +18720,18 @@
         "prepare-spatial-field": "Siapkan bidang spasial",
         "transform": "Ubah"
       }
+    },
+    "template-options-editor": {
+      "aria-label-insert-field": "",
+      "error-unknown-fields": "",
+      "label-decimals": "",
+      "label-insert-field": "",
+      "label-template": "",
+      "placeholder-decimals": "",
+      "placeholder-insert-field": "",
+      "placeholder-template": "",
+      "tooltip-decimals": "",
+      "tooltip-template": ""
     },
     "time-series-table": {
       "description": {

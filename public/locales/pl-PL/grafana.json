@@ -893,7 +893,8 @@
       "label-disabled": "Źródło danych",
       "message": {
         "please-select-a-data-source": "Wybierz źródło danych"
-      }
+      },
+      "rules-sources-error": ""
     },
     "cloud-evaluation-behavior": {
       "description-pending-period": "Okres, w którym musi zostać spełniony warunek progowy, aby uruchomić alert. Wybranie opcji „Brak” uruchamia alert natychmiast po spełnieniu warunku.",
@@ -1957,7 +1958,8 @@
           "title": "Źródło danych"
         },
         "label": "Źródło danych",
-        "required-message": "Wybierz źródło danych"
+        "required-message": "Wybierz źródło danych",
+        "rules-sources-error": ""
       },
       "error": "Nie udało się zaimportować reguł alertów: {{error}}",
       "group": {
@@ -2016,7 +2018,6 @@
         "preview-config-aria": "Podgląd konfiguracji",
         "preview-rules-aria": "Podgląd reguł alertów",
         "routing": "Przekierowywanie powiadomień",
-        "routing-none": "Nie wybrano drzewa zasad",
         "routing-tree": "Drzewo zasad: {{name}}",
         "rules-error": "",
         "rules-skipped": "Reguły alertów nie zostaną zaimportowane.",
@@ -3409,6 +3410,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Błędy wczytywania reguł",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Nie udało się wczytać konfiguracji reguł Grafany:",
       "failed-to-load-grafana-rules-state": "Nie udało się wczytać stanu reguł Grafany:",
       "failed-to-load-rules-config": "Nie udało się wczytać konfiguracji reguł ze źródła <2>{{dataSource}}</2>",
@@ -4420,7 +4422,8 @@
     },
     "unified-alert-list": {
       "clear": "Wyczyść",
-      "text-loading": "Ładowanie…"
+      "text-loading": "Ładowanie…",
+      "title-rules-source-list-error": ""
     },
     "unified-alert-list-panel": {
       "body-permission-required": "Nie masz wymaganych uprawnień do odczytu reguł alertów.",
@@ -18452,6 +18455,7 @@
           "binary-operation": "Działanie dwuargumentowe",
           "reduce-row": "Zredukuj wiersz",
           "row-index": "Indeks wiersza",
+          "template": "",
           "unary-operation": "Działanie jednoargumentowe"
         }
       },
@@ -19154,6 +19158,18 @@
         "prepare-spatial-field": "Przygotuj pole przestrzenne",
         "transform": "Przekształć"
       }
+    },
+    "template-options-editor": {
+      "aria-label-insert-field": "",
+      "error-unknown-fields": "",
+      "label-decimals": "",
+      "label-insert-field": "",
+      "label-template": "",
+      "placeholder-decimals": "",
+      "placeholder-insert-field": "",
+      "placeholder-template": "",
+      "tooltip-decimals": "",
+      "tooltip-template": ""
     },
     "time-series-table": {
       "description": {

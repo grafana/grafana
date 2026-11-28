@@ -883,7 +883,8 @@
       "label-disabled": "Sorgente dati",
       "message": {
         "please-select-a-data-source": "Seleziona un'origine di dati"
-      }
+      },
+      "rules-sources-error": ""
     },
     "cloud-evaluation-behavior": {
       "description-pending-period": "Periodo durante il quale la condizione di soglia deve essere soddisfatta per attivare un avviso. Selezionando \"Nessuno\" si attiva l'avviso non appena viene soddisfatta la condizione.",
@@ -1937,7 +1938,8 @@
           "title": "Origine dei dati"
         },
         "label": "Sorgente dati",
-        "required-message": "Seleziona un'origine di dati"
+        "required-message": "Seleziona un'origine di dati",
+        "rules-sources-error": ""
       },
       "error": "Impossibile importare le regole di avviso: {{error}}",
       "group": {
@@ -1996,7 +1998,6 @@
         "preview-config-aria": "Anteprima della configurazione",
         "preview-rules-aria": "Anteprima delle regole di avviso",
         "routing": "Instradamento delle notifiche",
-        "routing-none": "Nessuna struttura dei criteri selezionata",
         "routing-tree": "Struttura dei criteri: {{name}}",
         "rules-error": "",
         "rules-skipped": "Le regole di avviso non verranno importate.",
@@ -3353,6 +3354,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Errori durante il caricamento delle regole",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Impossibile caricare la configurazione delle regole di Grafana:",
       "failed-to-load-grafana-rules-state": "Impossibile caricare lo stato delle regole di Grafana:",
       "failed-to-load-rules-config": "Impossibile caricare la configurazione delle regole da <2>{{dataSource}}</2>",
@@ -4342,7 +4344,8 @@
     },
     "unified-alert-list": {
       "clear": "Cancella",
-      "text-loading": "Caricamento in corso..."
+      "text-loading": "Caricamento in corso...",
+      "title-rules-source-list-error": ""
     },
     "unified-alert-list-panel": {
       "body-permission-required": "Siamo spiacenti, non disponi delle autorizzazioni necessarie per leggere le regole di avviso.",
@@ -18160,6 +18163,7 @@
           "binary-operation": "Operazione binaria",
           "reduce-row": "Riduci riga",
           "row-index": "Indice riga",
+          "template": "",
           "unary-operation": "Operazione unaria"
         }
       },
@@ -18862,6 +18866,18 @@
         "prepare-spatial-field": "Prepara campo spaziale",
         "transform": "Trasforma"
       }
+    },
+    "template-options-editor": {
+      "aria-label-insert-field": "",
+      "error-unknown-fields": "",
+      "label-decimals": "",
+      "label-insert-field": "",
+      "label-template": "",
+      "placeholder-decimals": "",
+      "placeholder-insert-field": "",
+      "placeholder-template": "",
+      "tooltip-decimals": "",
+      "tooltip-template": ""
     },
     "time-series-table": {
       "description": {

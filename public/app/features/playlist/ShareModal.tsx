@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { type SelectableValue, type UrlQueryMap, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Checkbox, ClipboardButton, Field, FieldSet, Input, Modal, RadioButtonGroup } from '@grafana/ui';
+import { Box, Checkbox, ClipboardButton, Field, FieldSet, Input, Modal, RadioButtonGroup } from '@grafana/ui';
 import { buildBaseUrl } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { type PlaylistMode } from './types';
@@ -35,41 +35,46 @@ export const ShareModal = ({ playlistUid, onDismiss }: Props) => {
   return (
     <Modal isOpen={true} title={t('share-playlist.title', 'Share playlist')} onDismiss={onDismiss}>
       <FieldSet>
-        <Field label={t('share-playlist.mode', 'Mode')}>
-          <RadioButtonGroup value={mode} options={modes} onChange={setMode} />
-        </Field>
-        <Field>
-          <Checkbox
-            label={t('share-playlist.checkbox-label', 'Autofit')}
-            description={t('share-playlist.checkbox-description', 'Panel heights will be adjusted to fit screen size')}
-            name="autofix"
-            value={autoFit}
-            onChange={(e) => setAutofit(e.currentTarget.checked)}
-          />
-        </Field>
+        <Box display="flex" direction="column" gap={2} paddingBottom={2}>
+          <Field label={t('share-playlist.mode', 'Mode')} noMargin>
+            <RadioButtonGroup value={mode} options={modes} onChange={setMode} />
+          </Field>
+          <Field noMargin>
+            <Checkbox
+              label={t('share-playlist.checkbox-label', 'Autofit')}
+              description={t(
+                'share-playlist.checkbox-description',
+                'Panel heights will be adjusted to fit screen size'
+              )}
+              name="autofix"
+              value={autoFit}
+              onChange={(e) => setAutofit(e.currentTarget.checked)}
+            />
+          </Field>
 
-        <Field label={t('share-playlist.link-url-label', 'Link URL')}>
-          <Input
-            id="link-url-input"
-            value={shareUrl}
-            readOnly
-            addonAfter={
-              <ClipboardButton
-                icon="copy"
-                variant="primary"
-                getText={() => shareUrl}
-                onClipboardCopy={() => {
-                  reportInteraction('grafana_kiosk_mode', {
-                    action: 'share_playlist',
-                    mode: mode,
-                  });
-                }}
-              >
-                <Trans i18nKey="share-playlist.copy-link-button">Copy</Trans>
-              </ClipboardButton>
-            }
-          />
-        </Field>
+          <Field label={t('share-playlist.link-url-label', 'Link URL')} noMargin>
+            <Input
+              id="link-url-input"
+              value={shareUrl}
+              readOnly
+              addonAfter={
+                <ClipboardButton
+                  icon="copy"
+                  variant="primary"
+                  getText={() => shareUrl}
+                  onClipboardCopy={() => {
+                    reportInteraction('grafana_kiosk_mode', {
+                      action: 'share_playlist',
+                      mode: mode,
+                    });
+                  }}
+                >
+                  <Trans i18nKey="share-playlist.copy-link-button">Copy</Trans>
+                </ClipboardButton>
+              }
+            />
+          </Field>
+        </Box>
       </FieldSet>
     </Modal>
   );

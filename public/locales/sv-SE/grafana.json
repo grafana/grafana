@@ -883,7 +883,8 @@
       "label-disabled": "Datakälla",
       "message": {
         "please-select-a-data-source": "Välj en datakälla"
-      }
+      },
+      "rules-sources-error": ""
     },
     "cloud-evaluation-behavior": {
       "description-pending-period": "Period under vilken tröskelvillkoret måste uppfyllas för att utlösa ett larm. Om du väljer ”Inget” utlöses larmet omedelbart när villkoret har uppfyllts.",
@@ -1937,7 +1938,8 @@
           "title": "Datakälla"
         },
         "label": "Datakälla",
-        "required-message": "Välj en datakälla"
+        "required-message": "Välj en datakälla",
+        "rules-sources-error": ""
       },
       "error": "Misslyckades med att importera larmregler: {{error}}",
       "group": {
@@ -1996,7 +1998,6 @@
         "preview-config-aria": "Förhandsgranska konfigurationen",
         "preview-rules-aria": "Förhandsgranska larmregler",
         "routing": "Dirigering av aviseringar",
-        "routing-none": "Inget policyträd har valts",
         "routing-tree": "Policyträd: {{name}}",
         "rules-error": "",
         "rules-skipped": "Larmregler kommer inte att importeras.",
@@ -3353,6 +3354,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Fel vid laddning av regler",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Misslyckades med att ladda konfigurationen för Grafana-regler:",
       "failed-to-load-grafana-rules-state": "Misslyckades med att ladda tillståndet för Grafana-regler:",
       "failed-to-load-rules-config": "Det gick inte att ladda regelkonfigurationen från <2>{{dataSource}}</2>",
@@ -4342,7 +4344,8 @@
     },
     "unified-alert-list": {
       "clear": "Rensa",
-      "text-loading": "Laddar …"
+      "text-loading": "Laddar …",
+      "title-rules-source-list-error": ""
     },
     "unified-alert-list-panel": {
       "body-permission-required": "Tyvärr har du inte behörighet att läsa varningsregler.",
@@ -18160,6 +18163,7 @@
           "binary-operation": "Binär operation",
           "reduce-row": "Minska rad",
           "row-index": "Radindex",
+          "template": "",
           "unary-operation": "Unär operation"
         }
       },
@@ -18862,6 +18866,18 @@
         "prepare-spatial-field": "Förbered rumsligt fält",
         "transform": "Omvandla"
       }
+    },
+    "template-options-editor": {
+      "aria-label-insert-field": "",
+      "error-unknown-fields": "",
+      "label-decimals": "",
+      "label-insert-field": "",
+      "label-template": "",
+      "placeholder-decimals": "",
+      "placeholder-insert-field": "",
+      "placeholder-template": "",
+      "tooltip-decimals": "",
+      "tooltip-template": ""
     },
     "time-series-table": {
       "description": {

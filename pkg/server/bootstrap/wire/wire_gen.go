@@ -449,7 +449,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	roleCatalog := legacypermissions.NewRoleCatalog()
-	legacypermissionsLoader := legacypermissions.ProvideLoader(sqlStore, roleCatalog, actionSetService, cacheService, cfg, featureToggles, ossLicensingService, zanzanaClient, eventualRestConfigProvider)
+	legacypermissionsLoader := legacypermissions.ProvideLoader(sqlStore, roleCatalog, actionSetService, cacheService, cfg, featureToggles, ossLicensingService, zanzanaClient, eventualRestConfigProvider, userimplService)
 	legacyUserPermissionsClient := legacypermissions.ProvideClient(legacypermissionsLoader, cfg, registerer)
 	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService, zanzanaClient, eventualRestConfigProvider, features, legacyUserPermissionsClient, roleCatalog, registerer)
 	if err != nil {
@@ -984,7 +984,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	apiBuilder, err := provisioning3.RegisterAPIService(ctx, cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, repositoryFactory, connectionFactory, quotaGetter, subscriberService, grafanaRouter, supportedResourceProvider)
+	apiBuilder, err := provisioning3.RegisterAPIServer(ctx, cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, v13, repositoryFactory, connectionFactory, quotaGetter, grafanaRouter, supportedResourceProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -997,8 +997,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	repositoryControllerService := provisioning3.ProvideRepositoryControllerService(cfg, apiBuilder, bootstrapService, subscriberService, registerer, tracingService, v5, informerMetrics)
 	jobQueueService := provisioning3.ProvideJobQueueService(cfg, apiBuilder, subscriberService, registerer, tracingService, renderingService, v5)
-	jobCleanupService := provisioning3.ProvideJobCleanupService(apiBuilder, registerer)
-	usageStatsService := provisioning3.ProvideUsageStatsService(apiBuilder)
+	jobCleanupService := provisioning3.ProvideJobCleanupService(cfg, apiBuilder, registerer)
+	usageStatsService := provisioning3.ProvideUsageStatsService(cfg, apiBuilder, usageStats, orgService, tracingService)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
 	if err != nil {
@@ -1254,7 +1254,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	roleCatalog := legacypermissions.NewRoleCatalog()
-	legacypermissionsLoader := legacypermissions.ProvideLoader(sqlStore, roleCatalog, actionSetService, cacheService, cfg, featureToggles, ossLicensingService, zanzanaClient, eventualRestConfigProvider)
+	legacypermissionsLoader := legacypermissions.ProvideLoader(sqlStore, roleCatalog, actionSetService, cacheService, cfg, featureToggles, ossLicensingService, zanzanaClient, eventualRestConfigProvider, userimplService)
 	legacyUserPermissionsClient := legacypermissions.ProvideClient(legacypermissionsLoader, cfg, registerer)
 	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService, zanzanaClient, eventualRestConfigProvider, features, legacyUserPermissionsClient, roleCatalog, registerer)
 	if err != nil {
@@ -1799,7 +1799,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	apiBuilder, err := provisioning3.RegisterAPIService(ctx, cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, repositoryFactory, connectionFactory, quotaGetter, subscriberService, grafanaRouter, supportedResourceProvider)
+	apiBuilder, err := provisioning3.RegisterAPIServer(ctx, cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, v13, repositoryFactory, connectionFactory, quotaGetter, grafanaRouter, supportedResourceProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1812,8 +1812,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	repositoryControllerService := provisioning3.ProvideRepositoryControllerService(cfg, apiBuilder, bootstrapService, subscriberService, registerer, tracingService, v5, informerMetrics)
 	jobQueueService := provisioning3.ProvideJobQueueService(cfg, apiBuilder, subscriberService, registerer, tracingService, renderingService, v5)
-	jobCleanupService := provisioning3.ProvideJobCleanupService(apiBuilder, registerer)
-	usageStatsService := provisioning3.ProvideUsageStatsService(apiBuilder)
+	jobCleanupService := provisioning3.ProvideJobCleanupService(cfg, apiBuilder, registerer)
+	usageStatsService := provisioning3.ProvideUsageStatsService(cfg, apiBuilder, usageStats, orgService, tracingService)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
 	if err != nil {
@@ -2021,7 +2021,7 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	roleCatalog := legacypermissions.NewRoleCatalog()
 	hooksService := hooks.ProvideService()
 	ossLicensingService := licensing.ProvideService(cfg, hooksService)
-	legacypermissionsLoader := legacypermissions.ProvideLoader(sqlStore, roleCatalog, actionSetService, cacheService, cfg, featureToggles, ossLicensingService, zanzanaClient, eventualRestConfigProvider)
+	legacypermissionsLoader := legacypermissions.ProvideLoader(sqlStore, roleCatalog, actionSetService, cacheService, cfg, featureToggles, ossLicensingService, zanzanaClient, eventualRestConfigProvider, userimplService)
 	legacyUserPermissionsClient := legacypermissions.ProvideClient(legacypermissionsLoader, cfg, registerer)
 	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService, zanzanaClient, eventualRestConfigProvider, features, legacyUserPermissionsClient, roleCatalog, registerer)
 	if err != nil {
@@ -2205,7 +2205,7 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 		return nil, err
 	}
 	roleCatalog := legacypermissions.NewRoleCatalog()
-	legacypermissionsLoader := legacypermissions.ProvideLoader(sqlStore, roleCatalog, actionSetService, cacheService, cfg, featureToggles, ossLicensingService, zanzanaClient, eventualRestConfigProvider)
+	legacypermissionsLoader := legacypermissions.ProvideLoader(sqlStore, roleCatalog, actionSetService, cacheService, cfg, featureToggles, ossLicensingService, zanzanaClient, eventualRestConfigProvider, userimplService)
 	legacyUserPermissionsClient := legacypermissions.ProvideClient(legacypermissionsLoader, cfg, registerer)
 	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService, zanzanaClient, eventualRestConfigProvider, features, legacyUserPermissionsClient, roleCatalog, registerer)
 	if err != nil {

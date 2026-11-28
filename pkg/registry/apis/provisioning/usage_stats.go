@@ -6,8 +6,12 @@ import (
 	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // UsageStatsServiceName is the background-service module name of [UsageStatsService].
@@ -19,26 +23,29 @@ var _ registry.CanBeDisabled = (*UsageStatsService)(nil)
 // provisioning API is served, and then waits for shutdown.
 type UsageStatsService struct {
 	*loopbackService
+	usageStats      usagestats.Service
+	namespaceLister usage.NamespaceLister
+	tracer          tracing.Tracer
 }
 
 // ProvideUsageStatsService is called by Wire. Depending on the builder orders it
-// after [RegisterAPIService], which registers the provisioning API group with
+// after [RegisterAPIServer], which registers the provisioning API group with
 // the API server.
-func ProvideUsageStatsService(builder *APIBuilder) *UsageStatsService {
-	s := &UsageStatsService{}
-	s.loopbackService = newLoopbackService(UsageStatsServiceName, builder, s.register)
+func ProvideUsageStatsService(cfg *setting.Cfg, builder *APIBuilder, usageStats usagestats.Service, orgSvc org.Service, tracer tracing.Tracer) *UsageStatsService {
+	s := &UsageStatsService{usageStats: usageStats, namespaceLister: usage.UsageNamespaceLister(cfg, orgSvc), tracer: tracer}
+	// Not gated by disable_controllers: the collector reads API storage, not controller state.
+	s.loopbackService = newLoopbackService(UsageStatsServiceName, builder, false, s.register)
 	return s
 }
 
-// IsDisabled implements registry.CanBeDisabled. Only the preferred version
-// registers usage stats, and only when a usage stats service exists.
+// IsDisabled implements registry.CanBeDisabled.
 func (s *UsageStatsService) IsDisabled() bool {
-	return s.loopbackService.IsDisabled() || !s.builder.isPreferredVersion || s.builder.usageStats == nil
+	return s.loopbackService.IsDisabled() || s.usageStats == nil
 }
 
 func (s *UsageStatsService) register(ctx context.Context, _ *clientrest.Config) error {
 	b := s.builder
-	b.usageStats.RegisterMetricsFunc(usage.MetricCollector(b.tracer, b.usageNamespaceLister, b.repoLister.List, connection.NewStorageLister(b.connectionStore).List, b.unified))
+	s.usageStats.RegisterMetricsFunc(usage.MetricCollector(s.tracer, s.namespaceLister, b.repoLister.List, connection.NewStorageLister(b.connectionStore).List, b.unified))
 	<-ctx.Done()
 	return context.Cause(ctx)
 }

@@ -198,6 +198,11 @@ func ResolveSearchScopes(ctx context.Context, user identity.Requester, scope str
 	return result, nil
 }
 
+// StackNamespace preserves the configured stack ID for the embedded permission RPC.
+func StackNamespace(stackID string) string {
+	return "stacks-" + stackID
+}
+
 // PermissionNamespace selects the tenant for permission queries and IAM lookups.
 // Global and missing-membership requesters can retain a legacy namespace sentinel.
 // IAM lookups must use the validated transport tenant instead.

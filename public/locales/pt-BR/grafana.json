@@ -883,7 +883,8 @@
       "label-disabled": "Fonte de dados",
       "message": {
         "please-select-a-data-source": "Selecione uma fonte de dados"
-      }
+      },
+      "rules-sources-error": ""
     },
     "cloud-evaluation-behavior": {
       "description-pending-period": "Período durante o qual a condição limite deve ser atendida para disparar um alerta. Ao selecionar \"Nenhum\", o alerta será disparado imediatamente assim que a condição for atendida.",
@@ -1937,7 +1938,8 @@
           "title": "Fonte de dados"
         },
         "label": "Fonte de dados",
-        "required-message": "Selecione uma fonte de dados"
+        "required-message": "Selecione uma fonte de dados",
+        "rules-sources-error": ""
       },
       "error": "Falha ao importar regras de alerta: {{error}}",
       "group": {
@@ -1996,7 +1998,6 @@
         "preview-config-aria": "Pré-visualizar a configuração",
         "preview-rules-aria": "Pré-visualizar regras de alerta",
         "routing": "Encaminhamento de notificação",
-        "routing-none": "Nenhuma árvore de políticas selecionada",
         "routing-tree": "Árvore de políticas: {{name}}",
         "rules-error": "",
         "rules-skipped": "As regras de alerta não serão importadas.",
@@ -3353,6 +3354,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Erros ao carregar regras",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Falha ao carregar a configuração das regras da Grafana:",
       "failed-to-load-grafana-rules-state": "Falha ao carregar a situação das regras da Grafana:",
       "failed-to-load-rules-config": "Falha ao carregar a configuração das regras de <2>{{dataSource}}</2>",
@@ -4342,7 +4344,8 @@
     },
     "unified-alert-list": {
       "clear": "Limpar",
-      "text-loading": "Carregando..."
+      "text-loading": "Carregando...",
+      "title-rules-source-list-error": ""
     },
     "unified-alert-list-panel": {
       "body-permission-required": "Desculpe, você não tem as permissões necessárias para ler as regras de alerta.",
@@ -18160,6 +18163,7 @@
           "binary-operation": "Operação binária",
           "reduce-row": "Reduzir fileira",
           "row-index": "Índice de fileira",
+          "template": "",
           "unary-operation": "Operação unária"
         }
       },
@@ -18862,6 +18866,18 @@
         "prepare-spatial-field": "Preparar campo espacial",
         "transform": "Transformar"
       }
+    },
+    "template-options-editor": {
+      "aria-label-insert-field": "",
+      "error-unknown-fields": "",
+      "label-decimals": "",
+      "label-insert-field": "",
+      "label-template": "",
+      "placeholder-decimals": "",
+      "placeholder-insert-field": "",
+      "placeholder-template": "",
+      "tooltip-decimals": "",
+      "tooltip-template": ""
     },
     "time-series-table": {
       "description": {

@@ -11,7 +11,9 @@ import (
 	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type countingUsageStats struct {
@@ -32,19 +34,20 @@ type nopRepoLister struct {
 func TestUsageStatsService_IsDisabled(t *testing.T) {
 	stats := &countingUsageStats{}
 	tests := []struct {
-		name     string
-		builder  *APIBuilder
-		disabled bool
+		name                string
+		builder             *APIBuilder
+		usageStats          usagestats.Service
+		controllersDisabled bool
+		disabled            bool
 	}{
-		{name: "provisioning disabled", builder: nil, disabled: true},
-		{name: "controllers disabled", builder: &APIBuilder{onlyApiServer: true, isPreferredVersion: true, usageStats: stats}, disabled: true},
-		{name: "not the preferred version", builder: &APIBuilder{usageStats: stats}, disabled: true},
-		{name: "no usage stats service", builder: &APIBuilder{isPreferredVersion: true}, disabled: true},
-		{name: "enabled", builder: &APIBuilder{isPreferredVersion: true, usageStats: stats}, disabled: false},
+		{name: "provisioning disabled", usageStats: stats, disabled: true},
+		{name: "controllers disabled", builder: &APIBuilder{}, usageStats: stats, controllersDisabled: true, disabled: false},
+		{name: "no usage stats service", builder: &APIBuilder{}, disabled: true},
+		{name: "enabled", builder: &APIBuilder{}, usageStats: stats, disabled: false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			svc := ProvideUsageStatsService(tc.builder)
+			svc := ProvideUsageStatsService(&setting.Cfg{DisableControllers: tc.controllersDisabled}, tc.builder, tc.usageStats, nil, tracing.NewNoopTracerService())
 			assert.Equal(t, tc.disabled, svc.IsDisabled())
 			assert.Equal(t, UsageStatsServiceName, svc.ServiceName())
 		})
@@ -55,8 +58,8 @@ func TestUsageStatsService_Run(t *testing.T) {
 	t.Run("registers the collector once the provisioning API is served", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			stats := &countingUsageStats{}
-			builder := &APIBuilder{loopbackReady: make(chan struct{}), isPreferredVersion: true, usageStats: stats, repoLister: nopRepoLister{}}
-			svc := ProvideUsageStatsService(builder)
+			builder := &APIBuilder{loopbackReady: make(chan struct{}), repoLister: nopRepoLister{}}
+			svc := ProvideUsageStatsService(&setting.Cfg{}, builder, stats, nil, tracing.NewNoopTracerService())
 			runErr := make(chan error, 1)
 			go func() { runErr <- svc.Run(context.Background()) }()
 

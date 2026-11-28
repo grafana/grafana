@@ -878,7 +878,8 @@
       "label-disabled": "数据源",
       "message": {
         "please-select-a-data-source": "请选择数据源"
-      }
+      },
+      "rules-sources-error": ""
     },
     "cloud-evaluation-behavior": {
       "description-pending-period": "必须满足阈值条件才能触发警报的时间段。选择“无”将在条件满足后立即触发警报。",
@@ -1927,7 +1928,8 @@
           "title": "数据源"
         },
         "label": "数据源",
-        "required-message": "请选择数据源"
+        "required-message": "请选择数据源",
+        "rules-sources-error": ""
       },
       "error": "导入警报规则失败：{{error}}",
       "group": {
@@ -1986,7 +1988,6 @@
         "preview-config-aria": "预览配置",
         "preview-rules-aria": "预览警报规则",
         "routing": "通知路由",
-        "routing-none": "未选择策略树",
         "routing-tree": "策略树：{{name}}",
         "rules-error": "",
         "rules-skipped": "警报规则将不会被导入。",
@@ -3325,6 +3326,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "加载规则时出错",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "加载 Grafana 规则配置失败：",
       "failed-to-load-grafana-rules-state": "加载 Grafana 规则状态失败",
       "failed-to-load-rules-config": "加载来自 <2>{{dataSource}}</2> 的规则配置失败",
@@ -4303,7 +4305,8 @@
     },
     "unified-alert-list": {
       "clear": "清除",
-      "text-loading": "加载中..."
+      "text-loading": "加载中...",
+      "title-rules-source-list-error": ""
     },
     "unified-alert-list-panel": {
       "body-permission-required": "抱歉，您没有读取警报规则所需的权限。",
@@ -18014,6 +18017,7 @@
           "binary-operation": "二元运算",
           "reduce-row": "减少行",
           "row-index": "行索引",
+          "template": "",
           "unary-operation": "一元运算"
         }
       },
@@ -18716,6 +18720,18 @@
         "prepare-spatial-field": "准备空间字段",
         "transform": "转换"
       }
+    },
+    "template-options-editor": {
+      "aria-label-insert-field": "",
+      "error-unknown-fields": "",
+      "label-decimals": "",
+      "label-insert-field": "",
+      "label-template": "",
+      "placeholder-decimals": "",
+      "placeholder-insert-field": "",
+      "placeholder-template": "",
+      "tooltip-decimals": "",
+      "tooltip-template": ""
     },
     "time-series-table": {
       "description": {

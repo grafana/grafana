@@ -379,6 +379,10 @@ const (
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
 
+	// FlagAuthzLegacyUserPermissionsSearch
+	// Route user permission searches through embedded AuthZ.
+	FlagAuthzLegacyUserPermissionsSearch = "authz.legacyUserPermissionsSearch"
+
 	// FlagAuthzLegacyUserPermissionsShadow
 	// Compare local permissions with embedded AuthZ in the background when authz.legacyUserPermissions is enabled.
 	FlagAuthzLegacyUserPermissionsShadow = "authz.legacyUserPermissionsShadow"
@@ -1073,4 +1077,8 @@ const (
 	// FlagDatasourcesGatewayQueryUsage
 	// Record billed query usage (Mimir samples read, Loki bytes processed) in query gateway audit events
 	FlagDatasourcesGatewayQueryUsage = "datasources.gatewayQueryUsage"
+
+	// FlagGrafanaBootdataAnalytics
+	// Enable tracking of bootdata property access
+	FlagGrafanaBootdataAnalytics = "grafana.bootdataAnalytics"
 )

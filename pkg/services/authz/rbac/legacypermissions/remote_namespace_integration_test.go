@@ -5,16 +5,15 @@ import (
 	"testing"
 
 	authn "github.com/grafana/authlib/authn"
+	authcache "github.com/grafana/authlib/cache"
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
@@ -49,7 +48,7 @@ func TestIntegrationRemotePreservesRequesterNamespace(t *testing.T) {
 	loader := legacypermissions.NewEnforcedLoader(func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
 		require.Equal(t, "default", request.NamespaceValue(ctx))
 		return legacysql.NewDatabaseProvider(sql)(ctx)
-	}, resourcepermissions.NewActionSetService(), localcache.New(0, 0), loaderConfig(true), featuremgmt.WithFeatures(), resolver, nil)
+	}, resourcepermissions.NewActionSetService(), authcache.NewLocalCache(authcache.Config{}), loaderConfig(true), resolver, nil)
 	server := legacypermissions.NewRemoteServer(loader, nil, tracing.InitializeTracerForTest())
 	ctx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{Rest: authn.AccessTokenClaims{Namespace: "default", Permissions: []string{"authz.grafana.app/userpermissions:get"}}}))
 	for _, tc := range []struct {

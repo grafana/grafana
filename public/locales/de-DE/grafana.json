@@ -883,7 +883,8 @@
       "label-disabled": "Datenquelle",
       "message": {
         "please-select-a-data-source": "Bitte wählen Sie eine Datenquelle aus"
-      }
+      },
+      "rules-sources-error": ""
     },
     "cloud-evaluation-behavior": {
       "description-pending-period": "Zeitraum, in dem die Schwellenwertbedingung erfüllt sein muss, damit eine Warnung ausgelöst wird. Wenn Sie „Keine“ auswählen, wird die Warnung sofort ausgelöst, sobald die Bedingung erfüllt ist.",
@@ -1937,7 +1938,8 @@
           "title": "Datenquelle"
         },
         "label": "Datenquelle",
-        "required-message": "Bitte wählen Sie eine Datenquelle aus"
+        "required-message": "Bitte wählen Sie eine Datenquelle aus",
+        "rules-sources-error": ""
       },
       "error": "Import der Warnregeln fehlgeschlagen: {{error}}",
       "group": {
@@ -1996,7 +1998,6 @@
         "preview-config-aria": "Vorschau der Konfiguration ansehen",
         "preview-rules-aria": "Vorschau der Warnregeln ansehen",
         "routing": "Benachrichtigungs-Routing",
-        "routing-none": "Keine Richtlinienstruktur ausgewählt",
         "routing-tree": "Richtlinienstruktur: {{name}}",
         "rules-error": "",
         "rules-skipped": "Warnregeln werden nicht importiert.",
@@ -3353,6 +3354,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Fehler beim Laden der Regeln",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Fehler beim Laden der Regelkonfiguration in Grafana:",
       "failed-to-load-grafana-rules-state": "Fehler beim Laden des Regelstatus in Grafana:",
       "failed-to-load-rules-config": "Fehler beim Laden der Regelkonfiguration von <2>{{dataSource}}</2>",
@@ -4342,7 +4344,8 @@
     },
     "unified-alert-list": {
       "clear": "Löschen",
-      "text-loading": "Wird geladen ..."
+      "text-loading": "Wird geladen ...",
+      "title-rules-source-list-error": ""
     },
     "unified-alert-list-panel": {
       "body-permission-required": "Leider haben Sie nicht die erforderlichen Berechtigungen, um Warnregeln zu lesen.",
@@ -18160,6 +18163,7 @@
           "binary-operation": "Binäre Operation",
           "reduce-row": "Zeile reduzieren",
           "row-index": "Zeilenindex",
+          "template": "",
           "unary-operation": "Unäre Operation"
         }
       },
@@ -18862,6 +18866,18 @@
         "prepare-spatial-field": "Räumliches Feld vorbereiten",
         "transform": "Transformieren"
       }
+    },
+    "template-options-editor": {
+      "aria-label-insert-field": "",
+      "error-unknown-fields": "",
+      "label-decimals": "",
+      "label-insert-field": "",
+      "label-template": "",
+      "placeholder-decimals": "",
+      "placeholder-insert-field": "",
+      "placeholder-template": "",
+      "tooltip-decimals": "",
+      "tooltip-template": ""
     },
     "time-series-table": {
       "description": {

@@ -7,73 +7,63 @@ import (
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/operators/runner"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
-	"github.com/grafana/grafana/pkg/server"
 )
 
 var ConnectionOperator = runner.Operator{
 	Name:        "provisioning-connection",
 	Description: "Watch provisioning connections",
 	Logger:      "provisioning-connection-controller",
+	Defaults:    operatorDefaults,
 	Build: func(rt *runner.Runtime) (*runner.Parts, error) {
-		controllerCfg, err := setupFromConfig(rt.Cfg, rt.Registerer, rt.Subscriber)
+		r, err := newProvisioningRunner(rt)
 		if err != nil {
 			return nil, err
 		}
 		return &runner.Parts{Run: func(ctx context.Context, ready func()) error {
-			return runConnectionController(ctx, controllerCfg, ready)
+			return runConnectionController(ctx, r, ready)
 		}}, nil
 	},
 }
 
-// RunConnectionController runs [ConnectionOperator].
-//
-// Deprecated: register [ConnectionOperator] with runner.Register instead.
-func RunConnectionController(ctx context.Context, deps server.OperatorDependencies) error {
-	return ConnectionOperator.Run(ctx, deps)
-}
-
-func runConnectionController(ctx context.Context, controllerCfg *ControllerConfig, ready func()) error {
-	provisioningClient, err := controllerCfg.ProvisioningClient()
+func runConnectionController(ctx context.Context, r *ProvisioningRunner, ready func()) error {
+	provisioningClient, err := r.ProvisioningClient()
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	connectionFactory, err := controllerCfg.ConnectionFactory()
+	connectionFactory, err := r.ConnectionFactory()
 	if err != nil {
 		return fmt.Errorf("failed to setup connection factory: %w", err)
 	}
 
-	healthMetricsRecorder, err := controllerCfg.HealthMetricsRecorder()
+	healthMetricsRecorder, err := r.HealthMetricsRecorder()
 	if err != nil {
 		return fmt.Errorf("failed to get health metrics recorder: %w", err)
 	}
 
-	tracer, err := controllerCfg.Tracer()
-	if err != nil {
-		return fmt.Errorf("failed to get tracer: %w", err)
-	}
+	tracer := r.Tracer
 
-	connKeys, err := controllerCfg.ProvisioningKeysLister(apisprovisioning.ConnectionResourceInfo.GroupVersionResource())
+	connKeys, err := r.ProvisioningKeysLister(apisprovisioning.ConnectionResourceInfo.GroupVersionResource())
 	if err != nil {
 		return err
 	}
 
 	connController, err := controller.ProvideConnectionController(controller.ConnectionControllerDeps{
-		Subscriber:        controllerCfg.natsSubscriber,
+		Subscriber:        r.Subscriber,
 		Client:            provisioningClient,
 		Keys:              connKeys,
 		ConnectionFactory: connectionFactory,
 		HealthMetrics:     healthMetricsRecorder,
-		RelistMetrics:     controllerCfg.RelistProjectionMetrics(),
-		FreshnessMetrics:  controllerCfg.FreshnessMetrics(),
-		Registry:          controllerCfg.Registry(),
+		RelistMetrics:     r.RelistProjectionMetrics(),
+		FreshnessMetrics:  r.FreshnessMetrics(),
+		Registry:          r.Registerer,
 		Tracer:            tracer,
-		ResyncInterval:    controllerCfg.ResyncInterval(),
-		DrainTimeout:      controllerCfg.DrainTimeout(),
+		ResyncInterval:    r.Options.Resync,
+		DrainTimeout:      r.Options.DrainTimeout,
 	})
 	if err != nil {
 		return err
 	}
 
-	return connController.Run(ctx, controllerCfg.NumberOfWorkers(), ready)
+	return connController.Run(ctx, r.Options.Workers, ready)
 }

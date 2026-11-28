@@ -33,6 +33,10 @@ type authzClientSettings struct {
 	tokenNamespace   string
 
 	cacheTTL time.Duration
+
+	grpcClientKeepaliveTime    time.Duration
+	grpcClientKeepaliveTimeout time.Duration
+	grpcClientTimeout          time.Duration
 }
 
 func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
@@ -56,6 +60,13 @@ func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
 
 	s.remoteAddress = authzSection.Key("remote_address").MustString("")
 	s.certFile = authzSection.Key("cert_file").MustString("")
+
+	// Keepalive is disabled by default: pinging more often than the server's keepalive
+	// enforcement MinTime allows makes the server close the connection with
+	// GOAWAY(too_many_pings). See [grpc_server] keepalive_min_time.
+	s.grpcClientKeepaliveTime = authzSection.Key("grpc_client_keepalive_time").MustDuration(0)
+	s.grpcClientKeepaliveTimeout = authzSection.Key("grpc_client_keepalive_timeout").MustDuration(10 * time.Second)
+	s.grpcClientTimeout = authzSection.Key("grpc_client_timeout").MustDuration(0)
 
 	s.token = grpcClientAuthSection.Key("token").MustString("")
 	s.tokenNamespace = grpcClientAuthSection.Key("token_namespace").MustString("stacks-" + cfg.StackID)

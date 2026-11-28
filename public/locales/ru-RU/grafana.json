@@ -893,7 +893,8 @@
       "label-disabled": "Источник данных",
       "message": {
         "please-select-a-data-source": "Выберите источник данных"
-      }
+      },
+      "rules-sources-error": ""
     },
     "cloud-evaluation-behavior": {
       "description-pending-period": "Период, в течение которого должно быть выполнено пороговое условие для активации оповещения. Если выбрать «Нет», оповещение активируется сразу после выполнения условия.",
@@ -1957,7 +1958,8 @@
           "title": "Источник данных"
         },
         "label": "Источник данных",
-        "required-message": "Выберите источник данных"
+        "required-message": "Выберите источник данных",
+        "rules-sources-error": ""
       },
       "error": "Не удалось импортировать правила оповещения: {{error}}",
       "group": {
@@ -2016,7 +2018,6 @@
         "preview-config-aria": "Предварительный просмотр конфигурации",
         "preview-rules-aria": "Предварительный просмотр правил оповещения",
         "routing": "Маршрутизация уведомлений",
-        "routing-none": "Дерево политик не выбрано",
         "routing-tree": "Дерево политик: {{name}}",
         "rules-error": "",
         "rules-skipped": "Правила оповещений импортированы не будут.",
@@ -3409,6 +3410,7 @@
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Ошибки при загрузке правил",
+      "failed-to-load-data-sources": "",
       "failed-to-load-grafana-rules-config": "Не удалось загрузить конфигурацию правил Grafana:",
       "failed-to-load-grafana-rules-state": "Не удалось загрузить состояние правил Grafana:",
       "failed-to-load-rules-config": "Не удалось загрузить конфигурацию правил из <2>{{dataSource}}</2>",
@@ -4420,7 +4422,8 @@
     },
     "unified-alert-list": {
       "clear": "Очистить",
-      "text-loading": "Загрузка…"
+      "text-loading": "Загрузка…",
+      "title-rules-source-list-error": ""
     },
     "unified-alert-list-panel": {
       "body-permission-required": "К сожалению, у вас нет необходимых разрешений для чтения правил оповещения.",
@@ -18452,6 +18455,7 @@
           "binary-operation": "Бинарная операция",
           "reduce-row": "Уменьшить строку",
           "row-index": "Индекс строки",
+          "template": "",
           "unary-operation": "Унарная операция"
         }
       },
@@ -19154,6 +19158,18 @@
         "prepare-spatial-field": "Подготовить пространственное поле",
         "transform": "Преобразовать"
       }
+    },
+    "template-options-editor": {
+      "aria-label-insert-field": "",
+      "error-unknown-fields": "",
+      "label-decimals": "",
+      "label-insert-field": "",
+      "label-template": "",
+      "placeholder-decimals": "",
+      "placeholder-insert-field": "",
+      "placeholder-template": "",
+      "tooltip-decimals": "",
+      "tooltip-template": ""
     },
     "time-series-table": {
       "description": {

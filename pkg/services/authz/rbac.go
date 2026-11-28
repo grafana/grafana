@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/clientauth"
@@ -363,6 +364,9 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, re
 	}, []string{"operation", "status_code"})
 
 	unaryInterceptors, streamInterceptors := instrument(authzRequestDuration, middleware.ReportGRPCStatusOption)
+	if clientCfg.grpcClientTimeout > 0 {
+		unaryInterceptors = append([]grpc.UnaryClientInterceptor{timeoutUnaryClientInterceptor(clientCfg.grpcClientTimeout)}, unaryInterceptors...)
+	}
 
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(transportCreds),
@@ -382,6 +386,18 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, re
 		// Disable looking up service config from TXT DNS records.
 		// This reduces the number of requests made to the DNS servers.
 		opts = append(opts, grpc.WithDisableServiceConfig())
+	}
+
+	// Keepalive pings detect silently dead connections (e.g. an unreachable server node),
+	// which would otherwise block calls until their deadline. The server must allow it:
+	// grpcserver only applies an enforcement policy when [grpc_server] keepalive_min_time
+	// is set, otherwise gRPC's default MinTime (5m, no pings without active streams) applies,
+	// and pinging more often results in GOAWAY(too_many_pings).
+	if clientCfg.grpcClientKeepaliveTime > 0 {
+		opts = append(opts, grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:    clientCfg.grpcClientKeepaliveTime,
+			Timeout: clientCfg.grpcClientKeepaliveTimeout,
+		}))
 	}
 
 	conn, err := grpc.NewClient(clientCfg.remoteAddress, opts...)
@@ -416,6 +432,20 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, re
 			authzlib.WithTracerClientOption(tracer),
 		),
 	}, nil
+}
+
+func timeoutUnaryClientInterceptor(timeout time.Duration) grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		if timeout <= 0 {
+			return invoker(ctx, method, req, reply, cc, opts...)
+		}
+		if deadline, ok := ctx.Deadline(); ok && time.Until(deadline) <= timeout {
+			return invoker(ctx, method, req, reply, cc, opts...)
+		}
+		ctx, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
 }
 
 func RegisterRBACAuthZService(

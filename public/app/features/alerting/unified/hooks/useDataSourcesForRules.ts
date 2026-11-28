@@ -1,8 +1,12 @@
 import { useMemo } from 'react';
 
-import { type RulesSourceDataSource, useRulesSourceDataSources } from '@grafana/alerting/internal';
+import {
+  type RulesSourceDataSource,
+  getRulesSourceDataSources,
+  useRulesSourceDataSources,
+} from '@grafana/alerting/internal';
 
-import { useExternalGlobalRuleAbility } from './abilities/rules/ruleAbilities';
+import { getExternalGlobalRuleAbility, useExternalGlobalRuleAbility } from './abilities/rules/ruleAbilities';
 import { ExternalRuleAction } from './abilities/types';
 
 const collator = new Intl.Collator();
@@ -12,6 +16,16 @@ export interface DataSourcesForRulesResult {
   items: RulesSourceDataSource[];
   isLoading: boolean;
   error?: Error;
+}
+
+function narrowToDataSourcesForRules(
+  items: RulesSourceDataSource[],
+  canViewOrCreate: boolean
+): RulesSourceDataSource[] {
+  if (!canViewOrCreate) {
+    return noDataSources;
+  }
+  return items.filter((ds) => ds.managesAlerts).sort((a, b) => collator.compare(a.name, b.name));
 }
 
 /**
@@ -25,12 +39,7 @@ export function useDataSourcesForRules(): DataSourcesForRulesResult {
   const hasAccess = canView || canCreate;
   const { items, isLoading, error } = useRulesSourceDataSources();
 
-  const dataSources = useMemo(() => {
-    if (!hasAccess) {
-      return noDataSources;
-    }
-    return items.filter((ds) => ds.managesAlerts).sort((a, b) => collator.compare(a.name, b.name));
-  }, [items, hasAccess]);
+  const dataSources = useMemo(() => narrowToDataSourcesForRules(items, hasAccess), [items, hasAccess]);
 
   // A user who cannot use data source-managed rules does not need the list, so its loading state and error do not apply.
   if (!hasAccess) {
@@ -38,4 +47,16 @@ export function useDataSourcesForRules(): DataSourcesForRulesResult {
   }
 
   return { items: dataSources, isLoading, error };
+}
+
+/**
+ * The async version of {@link useDataSourcesForRules}, for code that runs outside React or inside async callbacks.
+ */
+export async function getDataSourcesForRules(): Promise<RulesSourceDataSource[]> {
+  const canView = getExternalGlobalRuleAbility(ExternalRuleAction.ViewAlertRule).granted;
+  const canCreate = getExternalGlobalRuleAbility(ExternalRuleAction.CreateAlertRule).granted;
+  if (!canView && !canCreate) {
+    return noDataSources;
+  }
+  return narrowToDataSourcesForRules(await getRulesSourceDataSources(), true);
 }

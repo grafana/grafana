@@ -1230,6 +1230,20 @@
     },
     {
       "metadata": {
+        "name": "authz.legacyUserPermissionsSearch",
+        "resourceVersion": "1795541778092",
+        "creationTimestamp": "2026-11-24T17:36:18Z"
+      },
+      "spec": {
+        "description": "Route user permission searches through embedded AuthZ.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "authz.legacyUserPermissionsShadow",
         "resourceVersion": "1793097096771",
         "creationTimestamp": "2026-10-27T09:31:45Z",
@@ -2939,6 +2953,35 @@
         "frontend": true,
         "hideFromDocs": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.bootdataAnalytics",
+        "resourceVersion": "1795516456589",
+        "creationTimestamp": "2026-11-24T10:34:16Z"
+      },
+      "spec": {
+        "description": "Enable tracking of bootdata property access",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.bootdataMetrics",
+        "resourceVersion": "1795516432772",
+        "creationTimestamp": "2026-11-24T10:33:52Z",
+        "deletionTimestamp": "2026-11-24T10:34:16Z"
+      },
+      "spec": {
+        "description": "Enable tracking of bootdata access",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {

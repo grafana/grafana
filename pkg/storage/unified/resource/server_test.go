@@ -4906,6 +4906,27 @@ func TestResourceServerQOSTenantIsolation(t *testing.T) {
 	})
 }
 
+func TestResourceServerQOSClosedQueueStatus(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		q := scheduler.NewQueue(&scheduler.QueueOptions{})
+		require.NoError(t, services.StartAndAwaitRunning(t.Context(), q))
+		require.NoError(t, services.StopAndAwaitTerminated(t.Context(), q))
+		srv := &server{
+			queue:       q,
+			queueConfig: QueueConfig{Timeout: time.Second, MinBackoff: time.Second, MaxBackoff: time.Second, MaxRetries: 10},
+			log:         log.NewNopLogger(),
+		}
+		ctx := authlib.WithAuthInfo(t.Context(), newWatchTestUser())
+		key := &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource, Namespace: watchTestNamespace, Name: "closed-queue-test"}
+
+		start := time.Now()
+		rsp, err := srv.Delete(ctx, &resourcepb.DeleteRequest{Key: key})
+		require.Nil(t, rsp)
+		require.Equal(t, codes.Unavailable, status.Code(err), "%v", err)
+		require.Equal(t, start, time.Now(), "closed queue rejection must return without backoff")
+	})
+}
+
 func TestResourceServerQOSTimeoutStatus(t *testing.T) {
 	for _, mode := range []string{"enqueue", "queued", "executing", "inline"} {
 		t.Run(mode, func(t *testing.T) {

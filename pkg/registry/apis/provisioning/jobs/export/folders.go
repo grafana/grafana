@@ -19,7 +19,7 @@ import (
 )
 
 // ExportFolders will load the full folder tree into memory and update the repositoryResources tree
-func ExportFolders(ctx context.Context, repoName string, options provisioning.ExportJobOptions, folderClient dynamic.ResourceInterface, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
+func ExportFolders(ctx context.Context, options provisioning.ExportJobOptions, folderClient dynamic.ResourceInterface, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	// Load and write all folders
 	// FIXME: we load the entire tree in memory
 	progress.SetMessage(ctx, "read folder tree from API server")

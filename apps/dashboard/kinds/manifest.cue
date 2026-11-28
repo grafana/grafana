@@ -302,6 +302,7 @@ manifest: {
 					}
 					searchFields: _dashboardSearchFields
 				},
+				globalVariableV2,
 			]
 		}
 	}

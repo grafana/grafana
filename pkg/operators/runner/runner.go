@@ -33,6 +33,11 @@ type Operator struct {
 	// NoNATS leaves Runtime.Subscriber nil for operators that consume no NATS
 	// deltas, so they neither register its metrics nor dial NATS.
 	NoNATS bool
+	// RequireExternalNATS fails the operator at startup when [nats] is enabled
+	// without an external server to reach, instead of running on re-lists alone.
+	RequireExternalNATS bool
+	// Defaults are the operator's values for the shared [operator] keys.
+	Defaults Options
 	// Build wires the operator from its runtime. It runs before any service
 	// starts, so it should only read configuration and construct things.
 	Build func(rt *Runtime) (*Parts, error)
@@ -58,9 +63,14 @@ type Runtime struct {
 	Logger     logging.Logger
 	Registerer prometheus.Registerer
 	Tracer     tracing.Tracer
+	// Clients builds apiserver clients that share one TLS config and token
+	// exchange client.
+	Clients *Clients
 	// Subscriber is the operator's NATS subscriber. The runner supervises it
 	// when [nats] is enabled; use nats.Enabled to choose a delta source.
 	Subscriber *nats.SubscriberService
+	// Options are the shared [operator] keys, resolved against Defaults.
+	Options Options
 }
 
 // Register adds op to the operators the Grafana binary can run.
@@ -73,20 +83,49 @@ func (op Operator) ServerOperator() server.Operator {
 	return server.Operator{Name: op.Name, Description: op.Description, RunFunc: op.Run}
 }
 
+// newRuntime builds the Runtime from deps, filling a registerer and tracer the
+// server did not pass so nothing reading them gets nil.
+func newRuntime(deps server.OperatorDependencies, loggerName string) *Runtime {
+	rt := &Runtime{
+		Cfg:        deps.Config,
+		Logger:     NewLogger(deps.Config, loggerName),
+		Registerer: deps.Registerer,
+		Tracer:     deps.Tracer,
+		Clients:    NewClients(deps.Config),
+	}
+	if rt.Registerer == nil {
+		rt.Registerer = prometheus.NewPedanticRegistry()
+	}
+	// The no-op tracing service replaces the global OpenTelemetry provider, so
+	// build it only when the server passed no tracer.
+	if rt.Tracer == nil {
+		rt.Tracer = tracing.NewNoopTracerService()
+	}
+	return rt
+}
+
 // Run runs op until ctx is done or one of its services fails.
 func (op Operator) Run(ctx context.Context, deps server.OperatorDependencies) (runErr error) {
 	name := op.Logger
 	if name == "" {
 		name = op.Name
 	}
-	rt := &Runtime{
-		Cfg:        deps.Config,
-		Logger:     NewLogger(deps.Config, name),
-		Registerer: deps.Registerer,
-		Tracer:     deps.Tracer,
+	rt := newRuntime(deps, name)
+	natsUsable := !op.NoNATS
+	if deps.Config != nil {
+		if err := validateExternalNATS(deps.Config); err != nil && !op.NoNATS {
+			if op.RequireExternalNATS {
+				return fmt.Errorf("setup %s: %w", op.Name, err)
+			}
+			// A subscriber that cannot connect would fail startup, so run without
+			// one and rely on periodic re-lists instead.
+			natsUsable = false
+			rt.Logger.Warn("NATS deltas unavailable; falling back to periodic re-lists", "operator", op.Name, "error", err)
+		}
+		rt.Options = parseOptions(deps.Config, op.Defaults, natsUsable)
 	}
-	if !op.NoNATS {
-		rt.Subscriber = NewSubscriber(deps.Config, deps.Registerer)
+	if natsUsable {
+		rt.Subscriber = NewSubscriber(deps.Config, rt.Registerer)
 	}
 	rt.Logger.Info("starting operator", "operator", op.Name)
 

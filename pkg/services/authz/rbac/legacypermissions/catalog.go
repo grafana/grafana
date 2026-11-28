@@ -37,3 +37,10 @@ func (c *RoleCatalog) Permissions(roles ...string) []ac.Permission {
 	}
 	return permissions
 }
+
+// snapshot returns the role batch from a single publication. Replace never mutates an existing batch.
+func (c *RoleCatalog) snapshot() map[string][]ac.Permission {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.roles
+}
