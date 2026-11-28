@@ -318,6 +318,7 @@ export interface ActionCellProps {
 }
 
 export interface PillCellProps {
+  cellOptions?: TableCellOptions;
   theme: GrafanaTheme2;
   field: Field;
   rowIdx: number;

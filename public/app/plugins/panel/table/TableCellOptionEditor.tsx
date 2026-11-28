@@ -10,6 +10,7 @@ import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
 import { ImageCellOptionsEditor } from './cells/ImageCellOptionsEditor';
 import { MarkdownCellOptionsEditor } from './cells/MarkdownCellOptionsEditor';
+import { PillCellOptionsEditor } from './cells/PillCellOptionsEditor';
 import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
 
 // The props that any cell type editor are expected
@@ -85,6 +86,9 @@ export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
       )}
       {cellType === TableCellDisplayMode.ColorBackground && (
         <ColorBackgroundCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+      )}
+      {cellType === TableCellDisplayMode.Pill && (
+        <PillCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
       {cellType === TableCellDisplayMode.Sparkline && (
         <SparklineCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />

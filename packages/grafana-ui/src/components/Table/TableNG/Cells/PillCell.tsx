@@ -14,7 +14,7 @@ import {
   formattedValueToString,
 } from '@grafana/data';
 import { getFieldColorPalette, getValueMappingResult, isNumeric } from '@grafana/data/internal';
-import { FieldColorModeId, ThresholdsMode } from '@grafana/schema';
+import { FieldColorModeId, TableCellDisplayMode, TablePillColorMode, ThresholdsMode } from '@grafana/schema';
 
 import { getTagColor, getTagColorIndexFromName, getTransparentOutlineColor } from '../../../../utils/tags';
 import { Tag } from '../../../Tags/Tag';
@@ -22,9 +22,15 @@ import { getActiveCellSelector, isTableCellStylesKeyEqual } from '../styles';
 import { type PillCellProps, type TableCellStyles } from '../types';
 import { inferPills } from '../utils';
 
-export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: PillCellProps) {
+export function PillCell({ rowIdx, field, theme, getTextColorForBackground, cellOptions }: PillCellProps) {
   const value = field.values[rowIdx];
   const resolveColor = useMemo(() => getPillColorResolver(field, theme), [field, theme]);
+  // The exact mode uses the resolved color directly as the pill background instead of
+  // adjusting it into a tonal pair. Absent an explicit choice the accessible mode applies.
+  const colorMode =
+    cellOptions?.type === TableCellDisplayMode.Pill
+      ? (cellOptions.colorMode ?? TablePillColorMode.Accessible)
+      : TablePillColorMode.Accessible;
   const pills: Pill[] = useMemo(() => {
     const pillValues = inferPills(value);
     return pillValues.length > 0
@@ -47,6 +53,20 @@ export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: Pi
   }
 
   return pills.map((pill) => {
+    // In exact mode the configured color is used directly as the pill background. A Tag
+    // derives a tonal background from its base color, so exact pills pass their colors as
+    // an inline style instead, keeping the Tag shape and typography. Palette-index pills
+    // have no configured color to honour, so they keep the Tag's own colors.
+    if (theme.flags.visualDesignRefresh && colorMode === TablePillColorMode.Exact && 'baseColor' in pill.color) {
+      const style = {
+        backgroundColor: pill.color.baseColor,
+        color: getTextColorForBackground(pill.color.baseColor),
+        border: pill.color.baseColor === TRANSPARENT ? `1px solid ${theme.colors.border.strong}` : undefined,
+        boxShadow: `inset 0 0 0 1px ${getTransparentOutlineColor(pill.color.baseColor, theme.colors.border.strong)}`,
+      };
+      return <Tag key={pill.key} name={pill.value} style={style} />;
+    }
+
     // Under the visual refresh, pills are Tag components so they match the refreshed tags rendered
     // everywhere else. Tag derives the colors from a data-driven base color or a palette index, so
     // every pill shares one class.
