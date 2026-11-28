@@ -3,6 +3,7 @@ package sso
 import (
 	"context"
 	"errors"
+	"net/http"
 	"testing"
 
 	authlib "github.com/grafana/authlib/types"
@@ -86,10 +87,14 @@ func TestRedactingStore_ListPropagatesError(t *testing.T) {
 // fakeAccessClient compiles to an ItemChecker that allows only the names in allow.
 type fakeAccessClient struct {
 	allow      map[string]bool
+	checkErr   error
 	compileErr error
 }
 
 func (f *fakeAccessClient) Check(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+	if f.checkErr != nil {
+		return authlib.CheckResponse{}, f.checkErr
+	}
 	if f.allow == nil {
 		return authlib.CheckResponse{Allowed: true}, nil
 	}
@@ -153,6 +158,23 @@ func TestRedactingStore_ListCompileErrorPropagates(t *testing.T) {
 
 	_, err = store.(rest.Lister).List(listCtx(), nil)
 	require.Error(t, err)
+}
+
+func TestRedactingStore_ListCompileErrorIsSanitized(t *testing.T) {
+	list := &iamv0.SSOSettingList{Items: []iamv0.SSOSetting{*ssoObj("github", map[string]any{"client_secret": "x"})}}
+	store, err := NewRedactingStore(&fakeInner{listed: list}, &fakeAccessClient{compileErr: errors.New(backendDiagnostic)})
+	require.NoError(t, err)
+
+	_, err = store.(rest.Lister).List(listCtx(), nil)
+	requireSanitizedResponse(t, err, http.StatusInternalServerError)
+}
+
+func TestRedactingStore_CreateCheckErrorIsSanitized(t *testing.T) {
+	store, err := NewRedactingStore(&fakeInner{created: ssoObj("github", map[string]any{})}, &fakeAccessClient{checkErr: errors.New(backendDiagnostic)})
+	require.NoError(t, err)
+
+	_, err = store.(rest.Creater).Create(listCtx(), ssoObj("github", map[string]any{}), nil, &metav1.CreateOptions{})
+	requireSanitizedResponse(t, err, http.StatusInternalServerError)
 }
 
 func TestRedactingStore_CreateAllowedForGrantedProvider(t *testing.T) {

@@ -97,7 +97,7 @@ func (s *redactingStore) authorizeProviderWrite(ctx context.Context, provider st
 		Name:      "auth." + provider,
 	}, "")
 	if err != nil {
-		return err
+		return backendError(ctx, err)
 	}
 	if !res.Allowed {
 		return apierrors.NewForbidden(iamv0.SSOSettingResourceInfo.GroupResource(), provider, fmt.Errorf("requires settings permission for the provider"))
@@ -155,7 +155,7 @@ func (s *redactingStore) providerChecker(ctx context.Context) (authlib.ItemCheck
 		Namespace: ns.Value,
 	})
 	if err != nil {
-		return nil, err
+		return nil, backendError(ctx, err)
 	}
 	return checker, nil
 }
