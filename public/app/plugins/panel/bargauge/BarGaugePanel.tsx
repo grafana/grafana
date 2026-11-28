@@ -6,9 +6,13 @@ import {
   type DisplayValueAlignmentFactors,
   type FieldConfig,
   type FieldDisplay,
+  FieldType,
+  GAUGE_DEFAULT_MAXIMUM,
+  getDisplayProcessor,
   getDisplayValueAlignmentFactors,
   getFieldDisplayValues,
   type PanelProps,
+  ReducerID,
   VizOrientation,
 } from '@grafana/data';
 import { BarGaugeSizing, BarGaugeValueMode, BigValueTextMode } from '@grafana/schema';
@@ -27,12 +31,14 @@ import { defaultOptions, type Options } from './panelcfg.gen';
 
 export type BarGaugePanelProps = PanelProps<Options>;
 
+type BarGaugeFieldDisplay = FieldDisplay & { displayProcessor?: DisplayProcessor };
+
 export function BarGaugePanel(props: BarGaugePanelProps) {
   const { height, width, options, data, renderCounter, fieldConfig, replaceVariables, timeZone } = props;
   const theme = useTheme2();
 
   const renderComponent = (
-    valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>,
+    valueProps: VizRepeaterRenderValueProps<BarGaugeFieldDisplay, DisplayValueAlignmentFactors>,
     menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
     const { value, alignmentFactors, orientation, width, height, count } = valueProps;
@@ -42,10 +48,8 @@ export function BarGaugePanel(props: BarGaugePanelProps) {
     // check if the total height is bigger than the visualization height, if so, there will be scrollbars for overflow
     const isOverflow = (height + spacing) * count - spacing > props.height;
 
-    let processor: DisplayProcessor | undefined = undefined;
-    if (view && isNumber(colIndex)) {
-      processor = view.getFieldDisplayProcessor(colIndex);
-    }
+    const processor =
+      value.displayProcessor ?? (isNumber(colIndex) ? view?.getFieldDisplayProcessor(colIndex) : undefined);
 
     return (
       <BarGauge
@@ -73,7 +77,7 @@ export function BarGaugePanel(props: BarGaugePanelProps) {
   };
 
   const renderValue = (
-    valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>
+    valueProps: VizRepeaterRenderValueProps<BarGaugeFieldDisplay, DisplayValueAlignmentFactors>
   ): JSX.Element => {
     const { value, orientation } = valueProps;
     const { hasLinks, getLinks } = value;
@@ -91,14 +95,54 @@ export function BarGaugePanel(props: BarGaugePanelProps) {
     return renderComponent(valueProps, {});
   };
 
-  const getValues = (): FieldDisplay[] => {
-    return getFieldDisplayValues({
+  const getValues = (): BarGaugeFieldDisplay[] => {
+    const values = getFieldDisplayValues({
       fieldConfig,
       reduceOptions: options.reduceOptions,
       replaceVariables,
       theme,
       data: data.series,
       timeZone,
+    });
+
+    if (options.reduceOptions.values || !options.reduceOptions.calcs.includes(ReducerID.delta)) {
+      return values;
+    }
+
+    const maxDelta = values.reduce(
+      (max, { name, display }) =>
+        name === ReducerID.delta && Number.isFinite(display.numeric) ? Math.max(max, display.numeric) : max,
+      0
+    );
+
+    return values.map((value) => {
+      const { name, display, view, colIndex } = value;
+      const sourceField = colIndex == null ? undefined : view?.dataFrame.fields[colIndex];
+      if (name !== ReducerID.delta || sourceField?.type !== FieldType.number || !Number.isFinite(display.numeric)) {
+        return value;
+      }
+
+      const config = sourceField.config;
+      if (config.min != null && config.max != null) {
+        return value;
+      }
+
+      // Counter increases use zero as the automatic baseline. A positive fallback keeps zero-delta bars empty.
+      const min = config.min ?? 0;
+      const autoMax = config.fieldMinMax ? display.numeric : maxDelta;
+      const max = config.max ?? Math.max(min, autoMax || GAUGE_DEFAULT_MAXIMUM);
+      const field = { ...value.field, min, max };
+      const displayProcessor = getDisplayProcessor({
+        field: {
+          ...sourceField,
+          config: field,
+          state: { ...sourceField.state, range: { min, max, delta: max - min } },
+        },
+        theme,
+        timeZone,
+      });
+      const { color, percent } = displayProcessor(display.numeric);
+      return { ...value, field, display: { ...display, color, percent }, displayProcessor };
     });
   };
 
