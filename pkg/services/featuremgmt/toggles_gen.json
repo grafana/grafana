@@ -5831,6 +5831,19 @@
     },
     {
       "metadata": {
+        "name": "provisioningMigrateFolderTakeover",
+        "resourceVersion": "1795719305294",
+        "creationTimestamp": "2026-11-26T18:55:05Z"
+      },
+      "spec": {
+        "description": "Keep the folder UID during migration when everything in the folder subtree is migrated, instead of generating a new folder UID",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "publicDashboardsEmailSharing",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2023-01-03T19:45:15Z"
