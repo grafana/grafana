@@ -223,6 +223,13 @@ export interface ExploreItemState {
 
   queryResponse: ExplorePanelData;
 
+  /**
+   * Whether the last query run was explicitly triggered by the user (Run button, keyboard shortcut,
+   * query editor run) rather than an automatic run (live tail, time sync, scanning, URL load). Used
+   * to decide whether to offer the guardrail soft-block continue prompt.
+   */
+  lastRunWasUserInitiated: boolean;
+
   showLogs?: boolean;
   showMetrics?: boolean;
   showTable?: boolean;

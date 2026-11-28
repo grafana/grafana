@@ -15,6 +15,7 @@ import { changeDatasource } from './state/datasource';
 import { setAddingSavedQueryAction, updateEditSavedQueryRefAction } from './state/explorePane';
 import { changeQueries, runQueries } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
+import { buildSoftBlockOverrideHeaders, collectSoftBlockTokens } from './utils/softBlock';
 
 interface Props {
   exploreId: string;
@@ -36,6 +37,11 @@ const makeSelectors = (exploreId: string) => {
     ),
     getEditSavedQueryRef: createSelector(exploreItemSelector, (s) => s!.editSavedQueryRef),
     getAddingSavedQuery: createSelector(exploreItemSelector, (s) => s!.addingSavedQuery),
+    getLastRunWasUserInitiated: createSelector(
+      exploreItemSelector,
+      (s: ExploreItemState | undefined) => s!.lastRunWasUserInitiated
+    ),
+    getIsLive: createSelector(exploreItemSelector, (s: ExploreItemState | undefined) => s!.isLive),
   };
 };
 
@@ -49,6 +55,8 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode, getQueryEditor
     getEventBridge,
     getEditSavedQueryRef,
     getAddingSavedQuery,
+    getLastRunWasUserInitiated,
+    getIsLive,
   } = useMemo(() => makeSelectors(exploreId), [exploreId]);
 
   const queries = useSelector(getQueries);
@@ -59,10 +67,27 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode, getQueryEditor
   const eventBridge = useSelector(getEventBridge);
   const editSavedQueryRef = useSelector(getEditSavedQueryRef);
   const addingSavedQuery = useSelector(getAddingSavedQuery);
+  const lastRunWasUserInitiated = useSelector(getLastRunWasUserInitiated);
+  const isLive = useSelector(getIsLive);
 
   const onRunQueries = useCallback(() => {
-    dispatch(runQueries({ exploreId }));
+    dispatch(runQueries({ exploreId, userInitiated: true }));
   }, [dispatch, exploreId]);
+
+  // Re-run the pane's queries once, carrying the guardrail override token(s) and the user's reason
+  // as transient request headers. Offered only when the last run was user-initiated and not live.
+  const onSoftBlockContinue = useCallback(
+    (reason: string) => {
+      const errors = queryResponse?.errors ?? (queryResponse?.error ? [queryResponse.error] : []);
+      const tokens = collectSoftBlockTokens(errors);
+      if (tokens.length === 0) {
+        return;
+      }
+      const overrideHeaders = buildSoftBlockOverrideHeaders(tokens, reason);
+      dispatch(runQueries({ exploreId, userInitiated: true, overrideHeaders }));
+    },
+    [dispatch, exploreId, queryResponse]
+  );
 
   const onChange = useCallback(
     (newQueries: DataQuery[], options?: { skipAutoImport?: boolean }) => {
@@ -132,6 +157,7 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode, getQueryEditor
       onUpdateDatasources={onUpdateDatasources}
       onAddQuery={onAddQuery}
       onRunQueries={onRunQueries}
+      onSoftBlockContinue={lastRunWasUserInitiated && !isLive ? onSoftBlockContinue : undefined}
       onQueryCopied={onQueryCopied}
       onQueryRemoved={onQueryRemoved}
       onQueryToggled={onQueryToggled}

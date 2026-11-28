@@ -2,11 +2,12 @@ import { type AnyAction, createAction, type PayloadAction } from '@reduxjs/toolk
 import deepEqual from 'fast-deep-equal';
 import { findLast, flatten, groupBy, head, map, mapValues, snakeCase, zipObject } from 'lodash';
 import { combineLatest, identity, type Observable, of, type SubscriptionLike, type Unsubscribable } from 'rxjs';
-import { mergeMap, throttleTime } from 'rxjs/operators';
+import { map as mapRx, mergeMap, throttleTime } from 'rxjs/operators';
 
 import {
   type AbsoluteTimeRange,
   type DataFrame,
+  type DataQueryRequest,
   DataQueryErrorType,
   type DataQueryResponse,
   type DataSourceApi,
@@ -201,6 +202,14 @@ export interface ChangeLoadingStatePayload {
   loadingState: LoadingState;
 }
 const changeLoadingStateAction = createAction<ChangeLoadingStatePayload>('changeLoadingState');
+
+export interface SetLastRunWasUserInitiatedPayload {
+  exploreId: string;
+  userInitiated: boolean;
+}
+const setLastRunWasUserInitiatedAction = createAction<SetLastRunWasUserInitiatedPayload>(
+  'explore/setLastRunWasUserInitiated'
+);
 
 export interface SetPausedStatePayload {
   exploreId: string;
@@ -521,16 +530,47 @@ async function handleHistory(
   }
 }
 
+/**
+ * Returns a copy of `request` with the named headers removed (matched case-insensitively), keeping
+ * every other header. The original object is left untouched so the request already handed to the
+ * datasource keeps its headers while the copy retained in Redux state does not.
+ */
+export function stripRequestHeaders(request: DataQueryRequest, headerNames: string[]): DataQueryRequest {
+  if (!request.headers) {
+    return request;
+  }
+
+  const blocked = new Set(headerNames.map((name) => name.toLowerCase()));
+  const headers = Object.fromEntries(
+    Object.entries(request.headers).filter(([name]) => !blocked.has(name.toLowerCase()))
+  );
+
+  return { ...request, headers };
+}
+
 interface RunQueriesOptions {
   exploreId: string;
   preserveCache?: boolean;
+  /**
+   * Whether this run was triggered by the user (as opposed to an automatic run). Runs are
+   * user-initiated by default; automatic runs (timers, synced-time reruns, scanning, live-tail
+   * transitions, etc.) must opt out by passing `userInitiated: false`.
+   */
+  userInitiated?: boolean;
+  /**
+   * Transient request headers merged into this single run's request only (e.g. guardrail soft-block
+   * override headers). Never persisted to the pane queries, URL state or rich history.
+   */
+  overrideHeaders?: Record<string, string>;
 }
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
 export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
   'explore/runQueries',
-  async ({ exploreId, preserveCache }, { dispatch, getState }) => {
+  async ({ exploreId, preserveCache, userInitiated, overrideHeaders }, { dispatch, getState }) => {
+    dispatch(setLastRunWasUserInitiatedAction({ exploreId, userInitiated: userInitiated !== false }));
+
     // Running cancel queries when Explore is scanning will cancel the scanning state
     if (!getState().explore?.panes[exploreId]?.scanning) {
       dispatch(cancelQueries(exploreId));
@@ -641,6 +681,11 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
         scopedVars
       );
 
+      // Merge transient override headers (e.g. guardrail soft-block) into this run's request only.
+      if (overrideHeaders) {
+        transaction.request.headers = { ...transaction.request.headers, ...overrideHeaders };
+      }
+
       dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 
       newQuerySource = combineLatest([
@@ -664,6 +709,19 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
         )
       );
 
+      // The datasource already received the request (with the override headers merged above), but
+      // the same request object comes back on the PanelData stream and is retained in Redux state
+      // (queryResponse.request, the results cache, the Query Inspector). Strip the one-shot override
+      // headers from a copy so they are never persisted, without mutating what the datasource got.
+      if (overrideHeaders) {
+        const overriddenHeaderNames = Object.keys(overrideHeaders);
+        newQuerySource = newQuerySource.pipe(
+          mapRx((data) =>
+            data.request ? { ...data, request: stripRequestHeaders(data.request, overriddenHeaderNames) } : data
+          )
+        );
+      }
+
       newQuerySubscription = newQuerySource.subscribe({
         next(data) {
           const exploreState = getState().explore.panes[exploreId];
@@ -674,7 +732,8 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
             if (data.state === LoadingState.Done && data.series.length === 0) {
               const range = getShiftedTimeRange(-1, exploreState!.range);
               dispatch(updateTime({ exploreId, absoluteRange: range }));
-              dispatch(runQueries({ exploreId }));
+              // Automatic rerun while scanning for more results.
+              dispatch(runQueries({ exploreId, userInitiated: false }));
             } else if (data.series[0]?.length > 0 || data.state === LoadingState.Done) {
               // We can stop scanning if we have a result
               dispatch(scanStopAction({ exploreId }));
@@ -981,7 +1040,8 @@ export function scanStart(exploreId: string): ThunkResult<void> {
     const range = getShiftedTimeRange(-1, getState().explore.panes[exploreId]!.range);
     // Set the new range to be displayed
     dispatch(updateTime({ exploreId, absoluteRange: range }));
-    dispatch(runQueries({ exploreId }));
+    // Scanning reruns automatically, so this is not a user-initiated run.
+    dispatch(runQueries({ exploreId, userInitiated: false }));
   };
 }
 
@@ -1244,6 +1304,13 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       isPaused: isPaused,
+    };
+  }
+
+  if (setLastRunWasUserInitiatedAction.match(action)) {
+    return {
+      ...state,
+      lastRunWasUserInitiated: action.payload.userInitiated,
     };
   }
 

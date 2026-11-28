@@ -62,7 +62,8 @@ export const updateTimeRange = (options: {
     if (syncedTimes) {
       Object.keys(getState().explore.panes).forEach((exploreId) => {
         dispatch(updateTime({ ...options, exploreId }));
-        dispatch(runQueries({ exploreId: exploreId, preserveCache: true }));
+        // Reruns on the other synced panes happen automatically, not by direct user action on them.
+        dispatch(runQueries({ exploreId: exploreId, preserveCache: true, userInitiated: false }));
       });
     } else {
       dispatch(updateTime({ ...options }));

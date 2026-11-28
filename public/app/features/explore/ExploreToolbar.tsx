@@ -141,11 +141,21 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     }
   };
 
+  // Automatic runs (the refresh-interval SetInterval callback) must not be marked user-initiated.
   const onRunQuery = (loading = false) => {
     if (loading) {
       return dispatch(cancelQueries(exploreId));
     } else {
-      return dispatch(runQueries({ exploreId }));
+      return dispatch(runQueries({ exploreId, userInitiated: false }));
+    }
+  };
+
+  // Pressing the Run button is an explicit, user-initiated run.
+  const onClickRunButton = (loading = false) => {
+    if (loading) {
+      return dispatch(cancelQueries(exploreId));
+    } else {
+      return dispatch(runQueries({ exploreId, userInitiated: true }));
     }
   };
 
@@ -317,7 +327,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             tooltip={showSmallTimePicker ? tooltipLabel : undefined}
             intervals={contextSrv.getValidIntervals(defaultIntervals)}
             isLive={isLive}
-            onRefresh={() => onRunQuery(loading)}
+            onRefresh={() => onClickRunButton(loading)}
             noIntervalPicker={isLive}
             primary={true}
             width={showSmallTimePicker ? '35px' : undefined}

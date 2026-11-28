@@ -12,7 +12,7 @@ import { type UserState } from '../profile/state/reducers';
 
 import { QueryRows } from './QueryRows';
 import { updateDatasourceInstanceAction } from './state/datasource';
-import { makeExplorePaneState } from './state/utils';
+import { createEmptyQueryResponse, makeExplorePaneState } from './state/utils';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -29,7 +29,19 @@ afterEach(() => {
   fallbacks?.expectNoFallbacks(['instance', 'settings', 'list']);
 });
 
-function setup(queries: DataQuery[], { resolveDatasource = true } = {}) {
+const READABLE =
+  'query range 2d exceeds the soft limit of 1d. Reduce the time range to 1d or less, or continue by retrying with a reason.';
+const SOFT_BLOCK_MESSAGE =
+  `${READABLE} Confirm with the user before retrying. [guardrail_soft_block] ` +
+  '{"code":"guardrail_soft_block","token":"abc.def"}';
+
+function setup(
+  queries: DataQuery[],
+  {
+    resolveDatasource = true,
+    paneOverrides = {},
+  }: { resolveDatasource?: boolean; paneOverrides?: Record<string, unknown> } = {}
+) {
   const fixtures = [
     {
       settings: {
@@ -85,6 +97,7 @@ function setup(queries: DataQuery[], { resolveDatasource = true } = {}) {
         datasourceInstance: resolveDatasource ? datasources['someDs-uid'] : undefined,
         queries,
         correlations: [],
+        ...paneOverrides,
       },
     },
     correlationEditorDetails: { editorMode: false, correlationDirty: false, queryEditorDirty: false, isExiting: false },
@@ -161,5 +174,68 @@ describe('Explore QueryRows', () => {
     // A remount would replace the container, so node identity is what proves it survived.
     expect(screen.getByTestId('query-editor-rows')).toBe(rowsBeforeSwitch);
     expect(await screen.findAllByText('newDs query editor')).toHaveLength(1);
+  });
+
+  describe('soft-block continue wiring', () => {
+    const softBlockResponse = () => ({
+      ...createEmptyQueryResponse(),
+      errors: [{ refId: 'A', message: SOFT_BLOCK_MESSAGE }],
+    });
+
+    it('offers the Continue prompt when the last run was user-initiated and the pane is not live', async () => {
+      const { store } = setup([{ refId: 'A' }], {
+        paneOverrides: { queryResponse: softBlockResponse(), lastRunWasUserInitiated: true, isLive: false },
+      });
+
+      render(
+        <Provider store={store}>
+          <QueryRows exploreId={'left'} changeCompactMode={jest.fn()} />
+        </Provider>
+      );
+
+      await screen.findAllByText('someDs query editor');
+
+      expect(await screen.findByText('Query paused by a guardrail')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument();
+      // The machine-readable trailer is never shown to the user.
+      expect(screen.queryByText(/guardrail_soft_block/)).not.toBeInTheDocument();
+    });
+
+    it('does not offer Continue for a non-user-initiated (auto) run, but still strips the trailer', async () => {
+      const { store } = setup([{ refId: 'A' }], {
+        paneOverrides: { queryResponse: softBlockResponse(), lastRunWasUserInitiated: false, isLive: false },
+      });
+
+      render(
+        <Provider store={store}>
+          <QueryRows exploreId={'left'} changeCompactMode={jest.fn()} />
+        </Provider>
+      );
+
+      await screen.findAllByText('someDs query editor');
+      expect(await screen.findByText(/query range 2d exceeds the soft limit of 1d/)).toBeInTheDocument();
+
+      expect(screen.queryByText('Query paused by a guardrail')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument();
+      expect(screen.queryByText(/guardrail_soft_block/)).not.toBeInTheDocument();
+    });
+
+    it('does not offer Continue while the pane is live-tailing', async () => {
+      const { store } = setup([{ refId: 'A' }], {
+        paneOverrides: { queryResponse: softBlockResponse(), lastRunWasUserInitiated: true, isLive: true },
+      });
+
+      render(
+        <Provider store={store}>
+          <QueryRows exploreId={'left'} changeCompactMode={jest.fn()} />
+        </Provider>
+      );
+
+      await screen.findAllByText('someDs query editor');
+      expect(await screen.findByText(/query range 2d exceeds the soft limit of 1d/)).toBeInTheDocument();
+
+      expect(screen.queryByText('Query paused by a guardrail')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument();
+    });
   });
 });
