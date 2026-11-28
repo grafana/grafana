@@ -79,9 +79,11 @@ func (r *UIDResolver) getDynamicClient(ctx context.Context, nsInfo types.Namespa
 	}
 	cli = dyn.Resource(gvr)
 
-	r.mu.Lock()
-	r.clients[gvr] = cli
-	r.mu.Unlock()
+	if !isSearchShadow(ctx) {
+		r.mu.Lock()
+		r.clients[gvr] = cli
+		r.mu.Unlock()
+	}
 
 	return cli.Namespace(nsInfo.Value), nil
 }
@@ -95,6 +97,12 @@ func (r *UIDResolver) getObjectID(ctx context.Context, nsInfo types.NamespaceInf
 	key := fmt.Sprintf("%s/%s/%s", gvr.Resource, nsInfo.Value, name)
 	if v, ok := r.cache.Get(key); ok {
 		return v.(int64), nil
+	}
+
+	// Shadow reads may reuse immutable mappings, but a miss stays within
+	// the comparison deadline and must not join a shared flight or warm caches.
+	if isSearchShadow(ctx) {
+		return r.fetchObjectID(ctx, nsInfo, gvr, name)
 	}
 
 	ch := r.sf.DoChan(key, func() (any, error) {
@@ -217,54 +225,18 @@ func (r *UIDResolver) getObjectUID(ctx context.Context, ns types.NamespaceInfo, 
 	if v, ok := r.cache.Get(key); ok {
 		return v.(string), nil
 	}
+	if isSearchShadow(ctx) {
+		return r.fetchObjectUID(ctx, ns, gvr, id)
+	}
 	ch := r.sf.DoChan(key, func() (any, error) {
 		if v, ok := r.cache.Get(key); ok {
 			return v.(string), nil
 		}
 		fetchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), uidToIDFetchTimeout)
 		defer cancel()
-		cli, err := r.getDynamicClient(fetchCtx, ns, gvr)
+		uid, err := r.fetchObjectUID(fetchCtx, ns, gvr, id)
 		if err != nil {
-			return "", err
-		}
-
-		fetchCtx = identity.WithServiceIdentityContext(fetchCtx, ns.OrgID)
-		var uid, continuation string
-		seen := make(map[string]bool)
-		for {
-			page, err := cli.List(fetchCtx, metav1.ListOptions{
-				LabelSelector: fmt.Sprintf("%s=%d", utils.LabelKeyDeprecatedInternalID, id), //nolint:staticcheck
-				Limit:         2, Continue: continuation,
-			})
-			if err != nil {
-				return "", err
-			}
-			for i := range page.Items {
-				item := &page.Items[i]
-				meta, err := utils.MetaAccessor(item)
-				if err != nil {
-					return "", err
-				}
-				if meta.GetDeprecatedInternalID() != id { //nolint:staticcheck // Numeric-scope compatibility.
-					return "", errors.New("identity ID lookup returned a different ID")
-				}
-				name := item.GetName()
-				if name == "" {
-					return "", errors.New("identity ID lookup returned an unnamed object")
-				}
-				if uid != "" && uid != name {
-					return "", errors.New("ambiguous identity ID lookup")
-				}
-				uid = name
-			}
-			continuation = page.GetContinue()
-			if continuation == "" {
-				break
-			}
-			if seen[continuation] {
-				return "", errors.New("identity ID lookup repeated a continuation token")
-			}
-			seen[continuation] = true
+			return nil, err
 		}
 
 		r.cacheMapping(gvr, ns, uid, id)
@@ -279,4 +251,52 @@ func (r *UIDResolver) getObjectUID(ctx context.Context, ns types.NamespaceInfo, 
 		}
 		return res.Val.(string), nil
 	}
+}
+
+func (r *UIDResolver) fetchObjectUID(ctx context.Context, ns types.NamespaceInfo, gvr schema.GroupVersionResource, id int64) (string, error) {
+	cli, err := r.getDynamicClient(ctx, ns, gvr)
+	if err != nil {
+		return "", err
+	}
+
+	ctx = identity.WithServiceIdentityContext(ctx, ns.OrgID)
+	var uid, continuation string
+	seen := make(map[string]bool)
+	for {
+		page, err := cli.List(ctx, metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("%s=%d", utils.LabelKeyDeprecatedInternalID, id), //nolint:staticcheck
+			Limit:         2, Continue: continuation,
+		})
+		if err != nil {
+			return "", err
+		}
+		for i := range page.Items {
+			item := &page.Items[i]
+			meta, err := utils.MetaAccessor(item)
+			if err != nil {
+				return "", err
+			}
+			if meta.GetDeprecatedInternalID() != id { //nolint:staticcheck // Numeric-scope compatibility.
+				return "", errors.New("identity ID lookup returned a different ID")
+			}
+			name := item.GetName()
+			if name == "" {
+				return "", errors.New("identity ID lookup returned an unnamed object")
+			}
+			if uid != "" && uid != name {
+				return "", errors.New("ambiguous identity ID lookup")
+			}
+			uid = name
+		}
+		continuation = page.GetContinue()
+		if continuation == "" {
+			break
+		}
+		if seen[continuation] {
+			return "", errors.New("identity ID lookup repeated a continuation token")
+		}
+		seen[continuation] = true
+	}
+
+	return uid, nil
 }

@@ -27,6 +27,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	healthv1pb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/keepalive"
+	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	clientrest "k8s.io/client-go/rest"
 
@@ -38,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/tracingsetting"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -87,7 +89,20 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Serv
 			}))
 			return ctx, nil
 		}
-		channel.WithServerUnaryInterceptor(grpcAuth.UnaryServerInterceptor(authenticate))
+		auth := grpcAuth.UnaryServerInterceptor(authenticate)
+		channel.WithServerUnaryInterceptor(func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (_ any, err error) {
+			clientCtx := inprocgrpc.ClientContext(ctx)
+			if info.FullMethod == authzv1.AuthzService_List_FullMethodName && clientCtx != nil && shadow.IsShadow(clientCtx) {
+				ctx = shadow.WithContext(ctx)
+				// In-process unary handlers run in their own goroutine.
+				defer func() {
+					if recover() != nil {
+						err = status.Error(codes.Internal, "shadow Zanzana list failed")
+					}
+				}()
+			}
+			return auth(ctx, req, info, handler)
+		})
 		channel.WithServerStreamInterceptor(inProcessStreamInterceptor(grpcAuth.StreamServerInterceptor(authenticate)))
 
 		authzv1.RegisterAuthzServiceServer(channel, zanzanaServer)

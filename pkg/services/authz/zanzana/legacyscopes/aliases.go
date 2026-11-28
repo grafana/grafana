@@ -25,8 +25,21 @@ type ScopeResolver interface {
 
 var aliasLogger = log.New("accesscontrol.scope_aliases")
 
+type searchShadowKey struct{}
+
+// WithSearchShadow scopes read-only alias resolution to a Search comparison.
+// A failed lookup makes that comparison inconclusive.
+func WithSearchShadow(ctx context.Context) context.Context {
+	return context.WithValue(ctx, searchShadowKey{}, struct{}{})
+}
+
+func isSearchShadow(ctx context.Context) bool {
+	return ctx.Value(searchShadowKey{}) != nil
+}
+
 // WithAliases adds equivalent identity scopes without persisting additional grants.
-// Lookup failures retain the source grant; cancellation aborts the complete result.
+// Lookup failures retain the source grant for ordinary requests. Search comparisons
+// and cancelled requests return an error for an incomplete result.
 func WithAliases(ctx context.Context, namespace, scope string, resolver ScopeResolver, permissions []ac.Permission) ([]ac.Permission, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
@@ -107,6 +120,9 @@ func resolveAlias(ctx context.Context, namespace string, resolver ScopeResolver,
 	if err != nil {
 		if ctx.Err() != nil {
 			return "", ctx.Err()
+		}
+		if isSearchShadow(ctx) {
+			return "", err
 		}
 		aliasLogger.Warn("could not resolve permission scope alias", "resource", ref.Resource, "attribute", ref.Attribute, "value", ref.Value, "error", err)
 		alias = ""

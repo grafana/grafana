@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
@@ -158,6 +159,7 @@ func (r *ZanzanaPermissionResolver) searchAllUsers(ctx context.Context, signedIn
 	const usersPageSize = 500
 	const maxConcurrentRequests = 16
 	page := 1
+	isShadow := shadow.IsShadow(ctx)
 	for {
 		searchQuery := &user.SearchUsersQuery{
 			SignedInUser: signedInUser,
@@ -178,9 +180,19 @@ func (r *ZanzanaPermissionResolver) searchAllUsers(ctx context.Context, signedIn
 		g, gctx := errgroup.WithContext(ctx)
 		g.SetLimit(maxConcurrentRequests)
 		for _, userHit := range searchResult.Users {
-			g.Go(func() error {
+			g.Go(func() (err error) {
+				if isShadow {
+					// These workers run outside the embedded handler's panic recovery.
+					defer func() {
+						if recover() != nil {
+							err = errors.New("shadow Zanzana user search panicked")
+						}
+					}()
+					if err := gctx.Err(); err != nil {
+						return err
+					}
+				}
 				var userPerms map[int64][]ac.Permission
-				var err error
 				// user.Search already returns id and uid; org user search excludes service accounts.
 				if userHit.UID != "" {
 					userPerms, err = r.searchPermissionsForIdentity(gctx, namespace, userHit.ID, userHit.UID, false, options)
@@ -188,7 +200,7 @@ func (r *ZanzanaPermissionResolver) searchAllUsers(ctx context.Context, signedIn
 					userPerms, err = r.searchSingleUser(gctx, namespace, userHit.ID, options)
 				}
 				if err != nil {
-					if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+					if isShadow || errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 						return err
 					}
 					zLogger.Warn("failed to resolve zanzana permissions for user", "userID", userHit.ID, "error", err)
@@ -240,6 +252,9 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 		Teams:       teams,
 	}
 
+	if shadow.IsShadow(ctx) {
+		req.Options = &authzv1.ListRequestOptions{Skipcache: true}
+	}
 	resp, err := r.client.List(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("zanzana list failed: %w", err)
@@ -260,7 +275,7 @@ func (r *ZanzanaPermissionResolver) listAllWithPrefix(ctx context.Context, names
 		if strings.HasPrefix(entry.Action, prefix) {
 			perms, err := r.listPermissions(ctx, namespace, subject, teams, entry.Group, entry.Resource, entry.Subresource, entry.Verb, entry.Action, scope)
 			if err != nil {
-				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+				if shadow.IsShadow(ctx) || errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 					return nil, err
 				}
 				zLogger.Warn("failed to list zanzana permissions for action, skipping", "action", entry.Action, "error", err)

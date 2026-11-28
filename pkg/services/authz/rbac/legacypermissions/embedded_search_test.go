@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync/atomic"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -17,8 +18,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -195,4 +199,63 @@ func TestEmbeddedSearchPreservesBackendFailureDuringCancellation(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestEmbeddedSearchShadowDoesNotReadOrWriteNamedUserCache(t *testing.T) {
+	req := embeddedSearchTestRequest()
+	req.Options.UserID = 2
+	grant := ac.Permission{Action: "test:read", Scope: "tests:id:one"}
+	var dbReads atomic.Int64
+	store := searchTestStore{search: func(context.Context, int64, ac.SearchOptions) (map[int64][]ac.Permission, error) {
+		p := grant
+		p.Scope = fmt.Sprintf("tests:id:%d", dbReads.Add(1))
+		return map[int64][]ac.Permission{2: {p}}, nil
+	}}
+	client := NewEmbeddedClient(&Loader{license: &licensing.OSSLicensingService{}, search: newSearchTestEngine(store, nil)}, setting.NewCfg())
+	caller := LegacySearchPermissionCaller(req.Namespace)
+
+	search := func(ctx context.Context, want string, reads int64) {
+		t.Helper()
+		got, err := client.LegacySearchUsersPermissions(ctx, caller, req)
+		require.NoError(t, err)
+		require.Equal(t, want, got.Permissions[2][0].Scope)
+		require.Equal(t, reads, dbReads.Load())
+	}
+
+	// A cold shadow read must not fill the cache. A hot shadow read must
+	// still query storage and must not replace the ordinary result.
+	search(shadow.WithContext(t.Context()), "tests:id:1", 1)
+	search(t.Context(), "tests:id:2", 2)
+	search(shadow.WithContext(t.Context()), "tests:id:3", 3)
+	search(t.Context(), "tests:id:2", 3)
+}
+
+func TestEmbeddedSearchShadowAppliesUnlicensedOuterScopeFiltering(t *testing.T) {
+	store := searchTestStore{search: func(context.Context, int64, ac.SearchOptions) (map[int64][]ac.Permission, error) {
+		return map[int64][]ac.Permission{2: {{Action: "teams:read", Scope: "teams:id:7"}}}, nil
+	}}
+	engine := newSearchTestEngine(store, nil)
+	engine.scopeResolver = searchScopeResolverFunc(func(_ context.Context, _ types.NamespaceInfo, ref legacyscopes.ScopeReference) (string, error) {
+		if ref == (legacyscopes.ScopeReference{Resource: "teams", Attribute: "id", Value: "7"}) {
+			return "target-team", nil
+		}
+		t.Errorf("unexpected scope lookup: %v", ref)
+		return "", nil
+	})
+	license := licensingtest.NewFakeLicensing()
+	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(false)
+	license.On("Edition").Return("Enterprise")
+	client := NewEmbeddedClient(&Loader{license: license, search: engine}, setting.NewCfg())
+	req := embeddedSearchTestRequest()
+	req.Options.Action, req.Options.Scope = "teams:read", "teams:id:7"
+	originalScope := "teams:uid:target-team"
+	req.FallbackScope = &originalScope
+	caller := LegacySearchPermissionCaller(req.Namespace)
+
+	ordinary, err := client.LegacySearchUsersPermissions(t.Context(), caller, req)
+	require.NoError(t, err)
+	require.Equal(t, map[int64][]ac.Permission{2: {{Action: "teams:read", Scope: "teams:id:7"}}}, ordinary.Permissions)
+	observed, err := client.LegacySearchUsersPermissions(shadow.WithContext(t.Context()), caller, req)
+	require.NoError(t, err)
+	require.Equal(t, map[int64][]ac.Permission{2: {{Action: "teams:read", Scope: originalScope}}}, observed.Permissions)
 }

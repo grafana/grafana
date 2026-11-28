@@ -6,11 +6,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
+	promtest "github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -24,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -418,6 +424,52 @@ func testPermissionSearchVisibility(t *testing.T, enabled bool) {
 	}
 }
 
+func TestIntegrationSearchUsersPermissions_ShadowHTTP(t *testing.T) {
+	featuremgmt.WithFlagValues(t, map[string]any{
+		featuremgmt.FlagAuthzLegacyUserPermissionsSearch:       true,
+		featuremgmt.FlagAuthzLegacyUserPermissionsSearchShadow: true,
+	})
+	f := newSearchPermissionsFixture(t, true)
+	alice := f.createUser(t, user.CreateUserCommand{UID: "alice", OrgID: f.orgID, DefaultOrgRole: "None"})
+	bob := f.createUser(t, user.CreateUserCommand{UID: "bob", OrgID: f.orgID, DefaultOrgRole: "None"})
+	role := f.createRole(t, f.orgID, "managed:read", []accesscontrol.Permission{
+		{Action: "test:read", Scope: "tests:id:*"},
+		{Action: "test:read", Scope: "tests:id:one"},
+	})
+	f.assignUser(t, f.orgID, alice.ID, role)
+	f.assignUser(t, f.orgID, bob.ID, role)
+	reg := prometheus.NewRegistry()
+	searchShadow, err := acimpl.NewLegacyUserPermissionsSearchShadow(reg)
+	require.NoError(t, err)
+	f.service.SetLegacyUserPermissionsSearchShadow(searchShadow)
+
+	synctest.Test(t, func(t *testing.T) {
+		release := make(chan struct{})
+		f.client.beforeSearch = func(ctx context.Context) {
+			if shadow.IsShadow(ctx) {
+				<-release
+			}
+		}
+		req := f.server.NewGetRequest("/api/access-control/users/permissions/search?action=test:read")
+		webtest.RequestWithSignedInUser(req, f.caller(f.orgID, fmt.Sprintf("users:id:%d", alice.ID)))
+		rec := httptest.NewRecorder()
+		f.server.Mux.ServeHTTP(rec, req)
+		close(release)
+
+		require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+		var got searchPermissionsResponse
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
+		require.Equal(t, searchPermissionsResponse{alice.ID: {"test:read": {"tests:id:*"}}}, got)
+		synctest.Wait()
+		require.EqualValues(t, 1, f.client.calls.Load())
+		const metric = "grafana_accesscontrol_user_permissions_search_shadow_comparisons_total"
+		require.NoError(t, promtest.GatherAndCompare(reg, strings.NewReader(
+			"# HELP "+metric+" Permission search shadow comparisons by outcome.\n"+
+				"# TYPE "+metric+" counter\n"+
+				metric+"{result=\"match\"} 1\n"), metric))
+	})
+}
+
 func TestIntegrationSearchUsersPermissions_Validation(t *testing.T) {
 	runSearchTransports(t, testPermissionSearchValidation)
 }
@@ -512,12 +564,16 @@ func runSearchTransports(t *testing.T, test func(*testing.T, bool)) {
 
 type searchClient struct {
 	legacyclient.LegacyUserPermissionsClient
-	calls       atomic.Int64
-	legacyCalls atomic.Int64
+	calls        atomic.Int64
+	legacyCalls  atomic.Int64
+	beforeSearch func(context.Context)
 }
 
 func (c *searchClient) LegacySearchUsersPermissions(ctx context.Context, caller authlib.AuthInfo, req legacyclient.LegacySearchUsersPermissionsRequest) (legacyclient.LegacySearchUsersPermissionsResponse, error) {
 	c.calls.Add(1)
+	if c.beforeSearch != nil {
+		c.beforeSearch(ctx)
+	}
 	return c.LegacyUserPermissionsClient.LegacySearchUsersPermissions(ctx, caller, req)
 }
 

@@ -198,3 +198,34 @@ func TestUIDToIDResolver_Caching(t *testing.T) {
 		require.Equal(t, int64(3), atomic.LoadInt64(getCount), "a zero id must not be cached")
 	})
 }
+
+func TestScopeResolverShadowMissDoesNotCacheEitherDirection(t *testing.T) {
+	ns := claims.NamespaceInfo{Value: "default", OrgID: 1}
+	for _, ref := range []ScopeReference{
+		{Resource: "users", Attribute: "uid", Value: "user-uid"},
+		{Resource: "users", Attribute: "id", Value: "42"},
+	} {
+		t.Run(ref.Attribute, func(t *testing.T) {
+			r, _ := newCountingResolver(t, 0, iamObject(userGVR.GroupVersion().WithKind("User"), ns.Value, "user-uid", 42))
+			want := "42"
+			if ref.Attribute == "id" {
+				want = "user-uid"
+			}
+			got, err := r.ResolveScope(WithSearchShadow(t.Context()), ns, ref)
+			require.NoError(t, err)
+			require.Equal(t, want, got)
+			_, hasUID := r.cache.Get("users/default/user-uid")
+			require.False(t, hasUID)
+			_, hasID := r.cache.Get(reverseIDKey(userGVR, ns, 42))
+			require.False(t, hasID)
+
+			got, err = r.ResolveScope(t.Context(), ns, ref)
+			require.NoError(t, err)
+			require.Equal(t, want, got)
+			_, hasUID = r.cache.Get("users/default/user-uid")
+			require.True(t, hasUID)
+			_, hasID = r.cache.Get(reverseIDKey(userGVR, ns, 42))
+			require.True(t, hasID)
+		})
+	}
+}

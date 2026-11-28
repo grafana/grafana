@@ -10,6 +10,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -107,6 +108,22 @@ func TestWithAliasesLookupErrorsPreserveSourceAndCancellationFails(t *testing.T)
 	})
 	got, err = WithAliases(ctx, "default", "", resolver, input)
 	require.ErrorIs(t, err, context.Canceled)
+	require.Empty(t, got)
+}
+
+func TestWithAliasesPreservesSourceForOtherShadowOperations(t *testing.T) {
+	input := []ac.Permission{{Action: "teams:read", Scope: "teams:id:42"}}
+	cause := errors.New("IAM unavailable")
+	resolver := scopeResolverFunc(func(context.Context, types.NamespaceInfo, ScopeReference) (string, error) {
+		return "", cause
+	})
+	ctx := shadow.WithContext(t.Context())
+	got, err := WithAliases(ctx, "default", "", resolver, input)
+	require.NoError(t, err)
+	require.Equal(t, input, got)
+
+	got, err = WithAliases(WithSearchShadow(ctx), "default", "", resolver, input)
+	require.ErrorIs(t, err, cause)
 	require.Empty(t, got)
 }
 

@@ -86,6 +86,10 @@ func ProvideService(
 	if err != nil {
 		return nil, err
 	}
+	service.searchShadow, err = NewLegacyUserPermissionsSearchShadow(reg)
+	if err != nil {
+		return nil, err
+	}
 	service.scopeResolver = legacypermissions.NewPermissionScopeResolver(features, restConfigProvider)
 	service.legacyShadow, err = NewLegacyUserPermissionsShadow(reg, cfg.RBAC.LegacyUserPermissionsShadowMaxConcurrent)
 	if err != nil {
@@ -128,6 +132,10 @@ func ProvideOSSService(
 	if err != nil {
 		return nil, err
 	}
+	searchShadow, err := NewLegacyUserPermissionsSearchShadow(nil)
+	if err != nil {
+		return nil, err
+	}
 	s := &Service{
 		actionResolver:            actionResolver,
 		cache:                     cache,
@@ -142,6 +150,7 @@ func ProvideOSSService(
 		sql:                       db,
 		serverLock:                lock,
 		legacyShadow:              legacyShadow,
+		searchShadow:              searchShadow,
 		legacyClient:              legacyClient,
 		roleCatalog:               roleCatalog,
 	}
@@ -174,6 +183,7 @@ type Service struct {
 	sql                       db.DB
 	serverLock                *serverlock.ServerLockService
 	singleFlight              singleflight.Group
+	searchShadow              *LegacyUserPermissionsSearchShadow
 	legacyShadow              *LegacyUserPermissionsShadow
 	legacyClient              legacyclient.LegacyUserPermissionsClient
 	userPermissionsClient     accesscontrol.UserPermissionsClient
@@ -801,13 +811,35 @@ func (s *Service) permissionSearch() *legacypermissions.PermissionSearch {
 
 // SearchUsersPermissions returns all users' permissions filtered by action prefixes.
 func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+	return s.searchUsersPermissions(ctx, usr, options, nil, nil)
+}
+
+// SetLegacyUserPermissionsSearchShadow shares Enterprise's shadow runner with
+// its unlicensed fallback. Call it during service construction.
+func (s *Service) SetLegacyUserPermissionsSearchShadow(searchShadow *LegacyUserPermissionsSearchShadow) {
+	s.searchShadow = searchShadow
+}
+
+// SearchUsersPermissionsWithScopeAliases preserves Enterprise's outer scope
+// normalization around the unlicensed OSS fallback. Its bulk visibility filter
+// still runs in the OSS fallback without an alias resolver.
+func (s *Service) SearchUsersPermissionsWithScopeAliases(ctx context.Context, usr identity.Requester, options accesscontrol.SearchOptions, resolver legacyscopes.ScopeResolver) (map[int64][]accesscontrol.Permission, error) {
+	originalScope := options.Scope
+	scope, err := legacyscopes.LegacySearchScope(ctx, usr, resolver, originalScope)
+	if err != nil {
+		return nil, err
+	}
+	options.Scope = scope
+	return s.searchUsersPermissions(ctx, usr, options, &originalScope, resolver)
+}
+
+func (s *Service) searchUsersPermissions(ctx context.Context, usr identity.Requester, options accesscontrol.SearchOptions, fallbackScope *string, resolver legacyscopes.ScopeResolver) (map[int64][]accesscontrol.Permission, error) {
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.SearchUsersPermissions")
 	defer span.End()
 
-	if LegacyUserPermissionsSearchEnabled(ctx) {
-		return GetLegacySearchUsersPermissions(ctx, s.legacyClient, usr, options, s.cfg)
-	}
-	return s.permissionSearch().Search(ctx, usr, options, false)
+	return s.searchShadow.search(ctx, s.legacyClient, usr, options, s.cfg, func() (map[int64][]accesscontrol.Permission, error) {
+		return s.permissionSearch().Search(ctx, usr, options, false)
+	}, fallbackScope, resolver)
 }
 
 func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, options accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {

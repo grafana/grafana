@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -56,8 +57,10 @@ func (s *PermissionSearch) Search(ctx context.Context, usr identity.Requester, o
 		}
 		results = map[int64][]ac.Permission{options.UserID: permissions}
 	} else {
-		timer := prometheus.NewTimer(metrics.MAccessSearchPermissionsSummary)
-		defer timer.ObserveDuration()
+		if !shadow.IsShadow(ctx) {
+			timer := prometheus.NewTimer(metrics.MAccessSearchPermissionsSummary)
+			defer timer.ObserveDuration()
+		}
 		results, err = s.searchAll(ctx, usr, options, enforced)
 		if err != nil {
 			return nil, err
@@ -65,7 +68,15 @@ func (s *PermissionSearch) Search(ctx context.Context, usr identity.Requester, o
 	}
 
 	options.Scope = originalScope
-	results = s.zanzana.MergeSearch(ctx, usr, usr.GetOrgID(), options, results, s.log)
+	if shadow.IsShadow(ctx) && s.zanzana != nil {
+		migrated, err := s.zanzana.SearchUsersPermissions(ctx, usr, usr.GetOrgID(), options)
+		if err != nil {
+			return nil, err
+		}
+		results = MergePermissions(results, migrated)
+	} else {
+		results = s.zanzana.MergeSearch(ctx, usr, usr.GetOrgID(), options, results, s.log)
+	}
 	return legacyscopes.ResolveSearchScopes(ctx, usr, originalScope, s.scopeResolver, results)
 }
 
@@ -134,13 +145,20 @@ func (s *PermissionSearch) SearchUserPermissions(ctx context.Context, orgID int6
 	ctx, span := tracer.Start(ctx, "authz.legacypermissions.SearchUserPermissions")
 	defer span.End()
 
-	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
-	defer timer.ObserveDuration()
+	if !shadow.IsShadow(ctx) {
+		timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
+		defer timer.ObserveDuration()
+	}
 
 	if searchOptions.UserID <= 0 {
 		return nil, fmt.Errorf("expected namespaced ID to be specified")
 	}
 
+	// The primary may have just filled the cache. A shadow read must run
+	// the actual search to compare independently of that result.
+	if shadow.IsShadow(ctx) {
+		return s.SearchUserPermissionsUncached(ctx, orgID, searchOptions, enforced)
+	}
 	if permissions, success := s.searchUserPermissionsFromCache(ctx, orgID, searchOptions); success {
 		return permissions, nil
 	}
@@ -186,6 +204,10 @@ func (s *PermissionSearch) SearchUserPermissionsUncached(ctx context.Context, or
 
 	if len(searchOptions.ActionSets) != 0 {
 		permissions = s.actions.ExpandActionSetsWithFilter(permissions, SearchActionFilter(searchOptions))
+	}
+
+	if shadow.IsShadow(ctx) {
+		return permissions, nil
 	}
 
 	key, err := ac.GetSearchPermissionCacheKey(s.log, &user.SignedInUser{UserID: searchOptions.UserID, OrgID: orgID}, searchOptions)

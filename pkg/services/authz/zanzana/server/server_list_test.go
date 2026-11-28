@@ -7,8 +7,12 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	promtest "github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/semaphore"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 
@@ -16,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -645,4 +651,76 @@ func TestIntegrationListDoesNotPoisonBatchCheckCache(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.True(t, res.GetResults()["c"].GetAllowed(), "directly-granted dashboard must stay authorized after a prior List")
+}
+
+func TestIntegrationShadowListDoesNotProvisionStoreOrCacheResults(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	server := setupOpenFGAServer(t)
+	server.cfg.CacheSettings.CheckQueryCacheEnabled = true
+	ctx := newContextWithNamespace()
+	req := &authzv1.ListRequest{
+		Namespace: namespace, Verb: utils.VerbList, Subject: "user:1",
+		Group: dashboardGroup, Resource: dashboardResource,
+	}
+	_, err := server.List(shadow.WithContext(ctx), req)
+	require.Error(t, err)
+	require.Empty(t, server.stores)
+	_, err = server.GetStore(ctx, namespace)
+	require.ErrorIs(t, err, zanzana.ErrStoreNotFound)
+
+	setup(t, server)
+	require.Empty(t, server.cache.Items())
+	shadowResult, err := server.List(shadow.WithContext(ctx), req)
+	require.NoError(t, err)
+	require.Equal(t, []string{"1"}, shadowResult.GetItems())
+	require.Empty(t, server.cache.Items())
+
+	req.Options = &authzv1.ListRequestOptions{Skipcache: true}
+	uncached, err := server.List(ctx, req)
+	require.NoError(t, err)
+	require.Equal(t, shadowResult.GetItems(), uncached.GetItems())
+	require.Empty(t, server.cache.Items())
+
+	req.Options = nil
+	ordinary, err := server.List(ctx, req)
+	require.NoError(t, err)
+	require.Equal(t, shadowResult.GetItems(), ordinary.GetItems())
+	require.NotEmpty(t, server.cache.Items())
+}
+
+func TestIntegrationShadowListProductionIsolation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	server := setupOpenFGAServer(t)
+	setup(t, server)
+	ctx := newContextWithNamespace()
+	req := &authzv1.ListRequest{
+		Namespace: namespace, Verb: utils.VerbList, Subject: "user:1",
+		Group: dashboardGroup, Resource: dashboardResource,
+	}
+
+	t.Run("production latency", func(t *testing.T) {
+		res, err := server.List(shadow.WithContext(ctx), req)
+		require.NoError(t, err)
+		require.Equal(t, []string{"1"}, res.GetItems())
+		require.Zero(t, promtest.CollectAndCount(server.metrics.requestDurationSeconds))
+
+		_, err = server.List(ctx, req)
+		require.NoError(t, err)
+		require.Equal(t, 1, promtest.CollectAndCount(server.metrics.requestDurationSeconds))
+	})
+	t.Run("production concurrency", func(t *testing.T) {
+		server.globalSem = semaphore.NewWeighted(1)
+		release, err := server.acquireSlot("Check", namespace)
+		require.NoError(t, err)
+		t.Cleanup(release)
+
+		res, err := server.List(shadow.WithContext(ctx), req)
+		require.NoError(t, err)
+		require.Equal(t, []string{"1"}, res.GetItems())
+
+		_, err = server.List(ctx, req)
+		require.Equal(t, codes.ResourceExhausted, status.Code(err))
+	})
 }

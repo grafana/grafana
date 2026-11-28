@@ -383,6 +383,10 @@ const (
 	// Route user permission searches through embedded AuthZ.
 	FlagAuthzLegacyUserPermissionsSearch = "authz.legacyUserPermissionsSearch"
 
+	// FlagAuthzLegacyUserPermissionsSearchShadow
+	// Compare local user permission searches with embedded AuthZ when authz.legacyUserPermissionsSearch is enabled.
+	FlagAuthzLegacyUserPermissionsSearchShadow = "authz.legacyUserPermissionsSearchShadow"
+
 	// FlagAuthzLegacyUserPermissionsShadow
 	// Compare local permissions with embedded AuthZ in the background when authz.legacyUserPermissions is enabled.
 	FlagAuthzLegacyUserPermissionsShadow = "authz.legacyUserPermissionsShadow"

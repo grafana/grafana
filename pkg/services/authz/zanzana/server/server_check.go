@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
@@ -254,7 +255,9 @@ func (s *Server) doOpenFGACheck(ctx context.Context, store *zanzana.StoreInfo, s
 	})
 
 	if err != nil {
-		s.logger.Error("failed to perform check", "error", err, "subject", subject, "relation", relation, "object", object)
+		if !shadow.IsShadow(ctx) {
+			s.logger.Error("failed to perform check", "error", err, "subject", subject, "relation", relation, "object", object)
+		}
 		return nil, fmt.Errorf("failed to perform openfga Check request: %w", err)
 	}
 

@@ -15,6 +15,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
@@ -91,8 +92,10 @@ func (c *Client) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.L
 	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.List")
 	defer span.End()
 
-	timer := prometheus.NewTimer(c.metrics.requestDurationSeconds.WithLabelValues("List"))
-	defer timer.ObserveDuration()
+	if !shadow.IsShadow(ctx) {
+		timer := prometheus.NewTimer(c.metrics.requestDurationSeconds.WithLabelValues("List"))
+		defer timer.ObserveDuration()
+	}
 
 	return c.authz.List(ctx, req)
 }

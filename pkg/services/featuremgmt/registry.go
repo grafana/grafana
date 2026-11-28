@@ -1187,6 +1187,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "authz.legacyUserPermissionsSearchShadow",
+			Description:  "Compare local user permission searches with embedded AuthZ when authz.legacyUserPermissionsSearch is enabled.",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "authz.legacyUserPermissionsShadow",
 			Description:  "Compare local permissions with embedded AuthZ in the background when authz.legacyUserPermissions is enabled.",
 			Stage:        FeatureStageExperimental,
