@@ -11,6 +11,9 @@ import (
 
 var _ FileStore = (*FileStoreManager)(nil)
 
+// ErrPluginDashboardNotFound is returned when a plugin does not include the requested dashboard.
+var ErrPluginDashboardNotFound = errors.New("plugin dashboard file not found")
+
 type FileStoreManager struct {
 	pluginStore     pluginstore.Store
 	pluginFileStore plugins.FileStore
@@ -83,7 +86,7 @@ func (m *FileStoreManager) GetPluginDashboardFileContents(ctx context.Context, a
 	}
 
 	if includedFile == nil {
-		return nil, errors.New("plugin dashboard file not found")
+		return nil, ErrPluginDashboardNotFound
 	}
 
 	cleanPath, err := plugins.CleanRelativePath(includedFile.Path)

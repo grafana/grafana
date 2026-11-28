@@ -3445,6 +3445,9 @@
           "401": {
             "$ref": "#/responses/unauthorisedError"
           },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
           "412": {
             "$ref": "#/responses/preconditionFailedError"
           },
