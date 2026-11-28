@@ -34,6 +34,7 @@ func ProvideService(cfg *config.PluginManagementCfg) (*Manager, error) {
 		BaseURL:            baseURL,
 		Logger:             log.NewPrettyLogger("plugin.repository"),
 		GrafanaComAPIToken: cfg.GrafanaComAPIToken,
+		GrafanaEdition:     cfg.GrafanaEdition,
 	}), nil
 }
 
@@ -41,12 +42,16 @@ type ManagerCfg struct {
 	SkipTLSVerify      bool
 	BaseURL            string
 	GrafanaComAPIToken string
-	Logger             log.PrettyLogger
+	// GrafanaEdition is sent to grafana.com as the grafana-edition header. Left empty, no header is sent.
+	GrafanaEdition string
+	Logger         log.PrettyLogger
 }
 
 func NewManager(cfg ManagerCfg) *Manager {
+	client := NewClient(cfg.SkipTLSVerify, cfg.GrafanaComAPIToken, cfg.BaseURL, cfg.Logger)
+	client.grafanaEdition = cfg.GrafanaEdition
 	return &Manager{
-		client: NewClient(cfg.SkipTLSVerify, cfg.GrafanaComAPIToken, cfg.BaseURL, cfg.Logger),
+		client: client,
 		log:    cfg.Logger,
 	}
 }

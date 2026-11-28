@@ -94,3 +94,25 @@ func TestProvidePluginInstanceConfigPluginAuth(t *testing.T) {
 	require.False(t, pluginCfg.LocalPluginTokens, "without a decision, Grafana does not sign plugin tokens")
 	require.Empty(t, pluginCfg.LocalAPIURL)
 }
+
+func TestProvidePluginManagementConfigGrafanaEdition(t *testing.T) {
+	tcs := []struct {
+		name         string
+		stackID      string
+		isEnterprise bool
+		expected     string
+	}{
+		{name: "self-managed OSS", expected: "oss"},
+		{name: "self-managed Enterprise", isEnterprise: true, expected: "enterprise"},
+		{name: "Grafana Cloud runs the enterprise build", stackID: "12345", isEnterprise: true, expected: "cloud"},
+	}
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := &setting.Cfg{Raw: ini.Empty(), StackID: tc.stackID, IsEnterprise: tc.isEnterprise}
+
+			pCfg, err := ProvidePluginManagementConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, pCfg.GrafanaEdition)
+		})
+	}
+}
