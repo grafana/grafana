@@ -242,7 +242,7 @@ func (m *MetricsMiddleware) CheckHealth(ctx context.Context, req *backend.CheckH
 	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
 		var innerErr error
 		resp, innerErr = m.BaseHandler.CheckHealth(ctx, req)
-		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
+		return instrumentationutils.RequestStatusFromCheckHealthResult(resp, innerErr), innerErr
 	})
 
 	return resp, err

@@ -258,3 +258,25 @@ func TestRequestStatusFromHTTPStatus(t *testing.T) {
 		})
 	}
 }
+
+func TestRequestStatusFromCheckHealthResult(t *testing.T) {
+	tcs := []struct {
+		desc           string
+		res            *backend.CheckHealthResult
+		err            error
+		expectedStatus RequestStatus
+	}{
+		{desc: "ok result", res: &backend.CheckHealthResult{Status: backend.HealthStatusOk}, expectedStatus: RequestStatusOK},
+		{desc: "unknown result", res: &backend.CheckHealthResult{Status: backend.HealthStatusUnknown}, expectedStatus: RequestStatusOK},
+		{desc: "nil result and error", expectedStatus: RequestStatusOK},
+		{desc: "error result", res: &backend.CheckHealthResult{Status: backend.HealthStatusError}, expectedStatus: RequestStatusError},
+		{desc: "returned error takes precedence", res: &backend.CheckHealthResult{Status: backend.HealthStatusOk}, err: errors.New("boom"), expectedStatus: RequestStatusError},
+		{desc: "returned cancellation", err: context.Canceled, expectedStatus: RequestStatusCancelled},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.desc, func(t *testing.T) {
+			require.Equal(t, tc.expectedStatus, RequestStatusFromCheckHealthResult(tc.res, tc.err))
+		})
+	}
+}

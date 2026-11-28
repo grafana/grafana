@@ -531,3 +531,70 @@ func newLabels(initialLabels prometheus.Labels, additional ...prometheus.Labels)
 	}
 	return r
 }
+
+func TestCheckHealthResultStatusMetrics(t *testing.T) {
+	pCtx := backend.PluginContext{PluginID: pluginID, PluginVersion: "1.0.0"}
+
+	testCases := []struct {
+		name           string
+		result         *backend.CheckHealthResult
+		err            error
+		expectedStatus instrumentationutils.RequestStatus
+	}{
+		{
+			name:           "OK result should be counted as ok",
+			result:         &backend.CheckHealthResult{Status: backend.HealthStatusOk},
+			expectedStatus: instrumentationutils.RequestStatusOK,
+		},
+		{
+			name:           "error result should be counted as error",
+			result:         &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: "authentication failed"},
+			expectedStatus: instrumentationutils.RequestStatusError,
+		},
+		{
+			name:           "unknown result should be counted as ok",
+			result:         &backend.CheckHealthResult{Status: backend.HealthStatusUnknown},
+			expectedStatus: instrumentationutils.RequestStatusOK,
+		},
+		{
+			name:           "returned cancellation should be counted as cancelled",
+			err:            context.Canceled,
+			expectedStatus: instrumentationutils.RequestStatusCancelled,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			promRegistry := prometheus.NewRegistry()
+			pluginsRegistry := pluginfakes.NewFakePluginRegistry()
+			require.NoError(t, pluginsRegistry.Add(context.Background(), &plugins.Plugin{
+				JSONData: plugins.JSONData{ID: pluginID, Backend: true},
+			}))
+
+			mw := newMetricsMiddleware(promRegistry, pluginsRegistry)
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				handlertest.WithMiddlewares(
+					backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
+						mw.BaseHandler = backend.NewBaseHandler(next)
+						return mw
+					}),
+				),
+			)
+			cdt.TestHandler.CheckHealthFunc = func(_ context.Context, _ *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+				return tc.result, tc.err
+			}
+
+			_, _ = cdt.MiddlewareHandler.CheckHealth(context.Background(), &backend.CheckHealthRequest{PluginContext: pCtx})
+
+			counter := mw.pluginRequestCounter.WithLabelValues(
+				pluginID,
+				string(backend.EndpointCheckHealth),
+				tc.expectedStatus.String(),
+				string(backendplugin.TargetUnknown),
+				pCtx.PluginVersion,
+				string(backend.DefaultErrorSource),
+			)
+			require.Equal(t, 1.0, testutil.ToFloat64(counter), "metric should be incremented with status=%s", tc.expectedStatus.String())
+		})
+	}
+}
