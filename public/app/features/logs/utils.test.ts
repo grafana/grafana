@@ -719,6 +719,31 @@ describe('downloadLogs', () => {
 
       expect(text).toContain('test entry');
     });
+
+    it('Downloads selected fields that come from data frame fields instead of labels', async () => {
+      // Shaped like an Elasticsearch logs response with `_source` as the log message field
+      const frame = toDataFrame({
+        refId: 'A',
+        meta: { preferredVisualisationType: 'logs' },
+        fields: [
+          { name: '@timestamp', type: FieldType.time, values: [100] },
+          { name: '_source', type: FieldType.string, values: ['{"host":"a","message":"disk full"}'] },
+          { name: '_id', type: FieldType.string, values: ['abc'] },
+          { name: 'host', type: FieldType.string, values: ['a'] },
+          { name: 'id', type: FieldType.string, values: ['logs#abc'] },
+          { name: 'message', type: FieldType.string, values: ['disk full'] },
+        ],
+      });
+      const rows = logSeriesToLogsModel([frame])!.rows;
+      expect(rows[0].labels.message).toBeUndefined();
+
+      downloadLogs(DownloadFormat.Text, rows, [], ['host', 'message']);
+
+      const blob = jest.mocked(saveAs).mock.calls[0][0];
+      const text = typeof blob === 'string' ? blob : await blob.text();
+
+      expect(text).toMatch(/\ta disk full\n$/);
+    });
   });
 
   describe('JSON format', () => {

@@ -189,16 +189,17 @@ export const checkLogsSampled = (logRow: LogRowModel): string | undefined => {
 export const escapeUnescapedString = (string: string) =>
   string.replace(/\\r\\n|\\n|\\t|\\r/g, (match: string) => (match.slice(1) === 't' ? '\t' : '\n'));
 
+function getDataframeFieldValues(log: LogRowModel): Record<string, string> {
+  return getDataframeFields(log).reduce<Record<string, string>>((acc, field) => {
+    acc[field.keys[0]] = field.values[0];
+    return acc;
+  }, {});
+}
+
 export function logRowsToReadableJson(logs: LogRowModel[], pickFields: string[] = []) {
   return logs.map((log) => {
-    const fields = getDataframeFields(log).reduce<Record<string, string>>((acc, field) => {
-      const key = field.keys[0];
-      acc[key] = field.values[0];
-      return acc;
-    }, {});
-
     let logFields = {
-      ...fields,
+      ...getDataframeFieldValues(log),
       ...log.labels,
     };
 
@@ -524,13 +525,15 @@ export const downloadLogs = async (
 ) => {
   switch (format) {
     case DownloadFormat.Text:
-      const shouldInjectLogLineBodyField = fields.length > 0 && fields.includes(LOG_LINE_BODY_FIELD_NAME);
-      const rowsForDownload = shouldInjectLogLineBodyField
+      // Selected fields can live in the data frame rather than in labels (e.g. Elasticsearch),
+      // so resolve them the same way the logs panel and JSON export do.
+      const rowsForDownload = fields.length
         ? logRows.map((row) => ({
             ...row,
             labels: {
+              ...getDataframeFieldValues(row),
               ...row.labels,
-              [LOG_LINE_BODY_FIELD_NAME]: row.entry,
+              ...(fields.includes(LOG_LINE_BODY_FIELD_NAME) ? { [LOG_LINE_BODY_FIELD_NAME]: row.entry } : {}),
             },
           }))
         : logRows;
