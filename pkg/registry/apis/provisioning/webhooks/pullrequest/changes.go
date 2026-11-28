@@ -82,8 +82,7 @@ type fileChangeInfo struct {
 	PreviewURL           string
 	PreviewScreenshotURL string
 
-	// HasRemovedMetadata is true when the original file contains metadata
-	// fields (namespace, labels, annotations) that will be removed when parsing the resource.
+	// HasRemovedMetadata controls the notice about metadata stripped from the file.
 	HasRemovedMetadata bool
 }
 
@@ -288,28 +287,24 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 		return info
 	}
 
-	if change.Action == repository.FileActionUpdated {
-		// Detect metadata stripped by resource parser.
-		// Read the file from the default branch (empty ref) and compare its
-		// metadata against the PR-branch parsed version.
-		baseFileInfo, baseErr := repo.Read(ctx, change.Path, "")
-		if baseErr == nil && baseFileInfo != nil {
-			baseObj, _, _, parseErr := resources.ParseFileResource(ctx, baseFileInfo)
-			if parseErr == nil && baseObj != nil {
-				info.HasRemovedMetadata = hasRemovedMetadata(baseObj, info.Parsed.Obj)
-			}
-		}
-	}
-
 	// Find a name within the file
 	obj := info.Parsed.Obj
 	info.Title = info.Parsed.Meta.FindTitle(obj.GetName())
+
+	if change.Action == repository.FileActionUpdated {
+		base, readErr := repo.Read(ctx, change.Path, "")
+		if readErr == nil && base != nil {
+			info.HasRemovedMetadata = fileHasRemovedMetadata(ctx, base, fileInfo, obj)
+		}
+	}
 
 	// Check what happens when we apply changes
 	// NOTE: this will also invoke any server side validation
 	err = info.Parsed.DryRun(ctx)
 	if err != nil {
 		info.Error = err.Error()
+	} else if keys := info.Parsed.InvalidAnnotations; len(keys) > 0 {
+		info.Error = (&resources.InvalidAnnotationsError{Keys: keys}).Error()
 	}
 
 	// Link back to the resource in Grafana when it already exists there.
@@ -476,20 +471,27 @@ func renderPath(grafanaBaseURL, urlPath string) string {
 	return path
 }
 
-// hasRemovedMetadata returns true if the original object (from the file)
-// contains metadata fields (namespace, labels, annotations) that are absent
-// or different in the parsed object (post-Parse).
-func hasRemovedMetadata(original, parsed *unstructured.Unstructured) bool {
-	if original.GetNamespace() != "" && parsed.GetNamespace() != original.GetNamespace() {
+func fileHasRemovedMetadata(ctx context.Context, base, head *repository.FileInfo, parsed *unstructured.Unstructured) bool {
+	original, _, _, err := resources.ParseFileResource(ctx, base)
+	if err != nil {
+		return false
+	}
+	if resources.IsFolderMetadataFile(head.Path) {
+		return hasRemovedMetadata(head.Path, original, parsed)
+	}
+	// Compare repository contents before Parse drops or stamps annotations.
+	updated, _, _, err := resources.ParseFileResource(ctx, head)
+	return err == nil && hasRemovedMetadata(head.Path, original, updated)
+}
+
+func hasRemovedMetadata(path string, original, updated *unstructured.Unstructured) bool {
+	if original.GetNamespace() != "" && updated.GetNamespace() != original.GetNamespace() {
 		return true
 	}
-	if len(original.GetLabels()) > 0 && hasMissingKeys(original.GetLabels(), parsed.GetLabels()) {
+	if len(original.GetLabels()) > 0 && hasMissingKeys(original.GetLabels(), updated.GetLabels()) {
 		return true
 	}
-	if len(original.GetAnnotations()) > 0 && hasMissingKeys(original.GetAnnotations(), parsed.GetAnnotations()) {
-		return true
-	}
-	return false
+	return resources.HasRemovedAnnotations(path, original, updated)
 }
 
 // hasMissingKeys returns true if any key in original is absent from parsed.

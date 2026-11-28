@@ -288,8 +288,9 @@ func (f *fileChangeInfo) SafeFilePath() string {
 }
 
 // escapeMarkdown neutralizes characters that would break a Markdown table cell
-// or link text (pipes and brackets) and flattens newlines, so titles coming
-// from resource files render verbatim in the PR comment.
+// or link text (pipes and brackets), flattens newlines and keeps @ from
+// mentioning anyone, so text coming from resource files renders verbatim in the
+// PR comment.
 func escapeMarkdown(s string) string {
 	return markdownEscaper.Replace(s)
 }
@@ -300,6 +301,7 @@ var markdownEscaper = strings.NewReplacer(
 	"|", "\\|",
 	"[", "\\[",
 	"]", "\\]",
+	"@", "@\u200b", // a zero-width space after @ stops GitHub from creating a mention
 )
 
 func (f *fileChangeInfo) StatusIcon() string {
@@ -312,9 +314,7 @@ func (f *fileChangeInfo) StatusIcon() string {
 // TruncatedError returns a sanitized, length-limited error suitable for a
 // pullrequest comment.
 func (f *fileChangeInfo) TruncatedError() string {
-	msg := strings.ReplaceAll(f.Error, "\n", " ")
-	msg = strings.ReplaceAll(msg, "\r", "")
-	msg = strings.ReplaceAll(msg, "|", "\\|")
+	msg := escapeMarkdown(f.Error)
 	if len(msg) > maxErrorLength {
 		return msg[:maxErrorLength] + "…"
 	}

@@ -128,6 +128,9 @@ type ParsedResource struct {
 
 	// Parsed contents
 	Obj *unstructured.Unstructured
+	// InvalidAnnotations lists the annotations dropped from the source file because
+	// their values are not strings, so previews and syncs can report them.
+	InvalidAnnotations []string
 	// Metadata accessor for the file object
 	Meta utils.GrafanaMetaAccessor
 
@@ -232,6 +235,9 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	}
 	obj.SetNamespace(r.repo.Namespace)
 
+	if !IsFolderMetadataFile(info.Path) {
+		parsed.InvalidAnnotations = omitNotUserAnnotations(obj.Object)
+	}
 	parsed.Meta.SetManagerProperties(utils.ManagerProperties{
 		Kind:     utils.ManagerKindRepo,
 		Identity: r.repo.Name,
@@ -632,6 +638,8 @@ func (f *ParsedResource) forceCreate(ctx context.Context) (done bool, err error)
 	return false, nil
 }
 
+// ToSaveBytes writes the resource name and, for ordinary resource files, user
+// annotations. Folder manifests retain only the name in metadata.
 func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
 	obj := f.Obj.DeepCopy().Object
 	delete(obj, "status")
@@ -639,7 +647,14 @@ func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
 	if name == "" {
 		delete(obj, "metadata")
 	} else {
-		obj["metadata"] = map[string]any{"name": name}
+		metadata := map[string]any{"name": name}
+		if !IsFolderMetadataFile(f.Info.Path) {
+			omitNotUserAnnotations(obj)
+			if annotations := (&unstructured.Unstructured{Object: obj}).GetAnnotations(); len(annotations) > 0 {
+				metadata["annotations"] = annotations
+			}
+		}
+		obj["metadata"] = metadata
 	}
 
 	switch path.Ext(f.Info.Path) {

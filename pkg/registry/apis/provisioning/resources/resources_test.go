@@ -251,6 +251,88 @@ func TestReplaceResourceFromFile(t *testing.T) {
 		deleteClient.AssertCalled(t, "Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything)
 	})
 
+	t.Run("dropped annotations are a warning on a written resource", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+
+		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "alerts/rule.json"}
+		repo.On("Read", mock.Anything, "alerts/rule.json", "").Return(fileInfo, nil)
+		parsed, client := newWritableParsedResource("same-uid")
+		parsed.InvalidAnnotations = []string{"example.com/enabled"}
+		mockParser.On("Parse", mock.Anything, fileInfo).Return(parsed, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		name, _, _, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "same-uid", replaceTestGVR)
+
+		var invalid *InvalidAnnotationsError
+		require.ErrorAs(t, err, &invalid)
+		require.Equal(t, []string{"example.com/enabled"}, invalid.Keys)
+		require.Equal(t, "same-uid", name)
+		client.AssertCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	for _, tt := range []struct {
+		name          string
+		existing      map[string]any
+		deleteErr     error
+		wantSkip      bool
+		wantAnnotated bool
+	}{
+		{name: "skipped delete keeps the annotation warning", existing: map[string]any{grafanautils.AnnoKeySourcePath: "other.json"}, wantSkip: true, wantAnnotated: true},
+		{name: "failed delete replaces the annotation warning", deleteErr: fmt.Errorf("forbidden")},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := repository.NewMockReaderWriter(t)
+			mockParser := NewMockParser(t)
+			mockClients := NewMockResourceClients(t)
+			mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
+			deleteClient := &MockDynamicResourceInterface{}
+
+			fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "alerts/rule.json"}
+			repo.On("Read", mock.Anything, "alerts/rule.json", "").Return(fileInfo, nil)
+			repo.On("Config").Return(replaceRepoConfig())
+			parsed, _ := newWritableParsedResource("new-uid")
+			parsed.InvalidAnnotations = []string{"example.com/enabled"}
+			mockParser.On("Parse", mock.Anything, fileInfo).Return(parsed, nil)
+			mockClients.On("ForResource", mock.Anything, replaceTestGVR).Return(deleteClient, replaceTestGVK, nil)
+			deleteClient.On("Get", mock.Anything, "old-uid", metav1.GetOptions{}, mock.Anything).Return(managedGrafanaObj("old-uid", "default", tt.existing), nil)
+			deleteClient.On("Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything).Return(tt.deleteErr).Maybe()
+
+			mgr := NewResourcesManager(repo, nil, mockParser, mockClients)
+			_, _, _, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "old-uid", replaceTestGVR)
+
+			require.Error(t, err)
+			require.Equal(t, tt.wantSkip, errors.Is(err, ErrResourceManagedByOtherFile))
+			require.Equal(t, tt.wantAnnotated, errors.Is(err, ErrInvalidAnnotations))
+		})
+	}
+
+	t.Run("dropped annotations still delete the old resource", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClients := NewMockResourceClients(t)
+		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
+		deleteClient := &MockDynamicResourceInterface{}
+
+		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "alerts/rule.json"}
+		repo.On("Read", mock.Anything, "alerts/rule.json", "").Return(fileInfo, nil)
+		repo.On("Config").Return(replaceRepoConfig())
+		parsed, _ := newWritableParsedResource("new-uid")
+		parsed.InvalidAnnotations = []string{"example.com/enabled"}
+		mockParser.On("Parse", mock.Anything, fileInfo).Return(parsed, nil)
+		mockClients.On("ForResource", mock.Anything, replaceTestGVR).Return(deleteClient, replaceTestGVK, nil)
+
+		deleteClient.On("Get", mock.Anything, "old-uid", metav1.GetOptions{}, mock.Anything).Return(managedGrafanaObj("old-uid", "default", nil), nil)
+		deleteClient.On("Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything).Return(nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, mockClients)
+		name, _, _, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "old-uid", replaceTestGVR)
+
+		require.ErrorIs(t, err, ErrInvalidAnnotations)
+		require.Equal(t, "new-uid", name)
+		deleteClient.AssertCalled(t, "Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything)
+	})
+
 	t.Run("write failure propagated without delete attempt", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)

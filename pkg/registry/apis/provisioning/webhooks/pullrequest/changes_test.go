@@ -2096,6 +2096,121 @@ func TestRenderScreenshotFromGrafanaURL(t *testing.T) {
 	}
 }
 
+func TestEvaluateFile_UserAnnotations(t *testing.T) {
+	const manifest = "apiVersion: dashboard.grafana.app/v1\nkind: Dashboard\nmetadata:\n  name: my-dash\n"
+	const selection = "  annotations:\n    grafana.app/useCrossDashboardVariables: '{\"global\":\"all\"}'\n"
+	const reserved = "    grafana.app/alsoThisOne: ok\n"
+	const mixedAnnotations = selection + "    example.com/enabled: true\n"
+	const invalidAnnotationsError = "Git Sync ignores 1 annotation whose value is not a string. Quote its value in the file to keep it."
+	for _, tt := range []struct {
+		name          string
+		action        repository.FileAction
+		annotations   string
+		baseExtra     string
+		wantRemoved   bool
+		nonString     bool
+		renderFailure bool
+		wantError     string
+	}{
+		{name: "screenshot error replaces the annotation error", action: repository.FileActionCreated, annotations: mixedAnnotations, nonString: true, renderFailure: true, wantError: "error rendering screenshot: renderer unavailable"},
+		{name: "ignored key still present in Git", action: repository.FileActionUpdated, annotations: mixedAnnotations + reserved, baseExtra: reserved, nonString: true, wantError: invalidAnnotationsError},
+		{name: "ignored key removed from Git", action: repository.FileActionUpdated, annotations: selection, baseExtra: reserved, wantRemoved: true},
+		{name: "intentional deletion", action: repository.FileActionUpdated},
+		{name: "valid selection", action: repository.FileActionCreated, annotations: selection},
+		{name: "selection retained alongside an unquoted boolean", action: repository.FileActionUpdated, annotations: mixedAnnotations, nonString: true, wantError: invalidAnnotationsError},
+		{name: "new file with an unquoted boolean", action: repository.FileActionCreated, annotations: mixedAnnotations, nonString: true, wantError: invalidAnnotationsError},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			change := repository.VersionedFileChange{Action: tt.action, Path: "dashboard.yaml", Ref: "pr"}
+			head := &repository.FileInfo{Path: change.Path, Ref: change.Ref, Data: []byte(manifest + tt.annotations)}
+			reader := repository.NewMockReader(t)
+			if tt.action == repository.FileActionUpdated {
+				base := &repository.FileInfo{Path: change.Path, Data: []byte(manifest + selection + tt.baseExtra)}
+				reader.EXPECT().Read(mock.Anything, change.Path, "").Return(base, nil)
+			}
+			reader.EXPECT().Read(mock.Anything, change.Path, change.Ref).Return(head, nil)
+
+			// Drop the non-string annotation and stamp the rest, as Parse does when
+			// it loads the PR file.
+			obj, gvk, _, err := resources.ParseFileResource(t.Context(), head)
+			require.NoError(t, err)
+			unstructured.RemoveNestedField(obj.Object, "metadata", "annotations", "grafana.app/alsoThisOne")
+			var invalid []string
+			if tt.nonString {
+				unstructured.RemoveNestedField(obj.Object, "metadata", "annotations", "example.com/enabled")
+				invalid = []string{"example.com/enabled"}
+			}
+			meta, err := utils.MetaAccessor(obj)
+			require.NoError(t, err)
+			meta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "repo"})
+			parser := resources.NewMockParser(t)
+			parser.EXPECT().Parse(mock.Anything, head).Return(&resources.ParsedResource{
+				Info: head, GVK: *gvk, Obj: obj, Meta: meta, DryRunResponse: obj, InvalidAnnotations: invalid,
+			}, nil)
+
+			eval := &evaluator{}
+			if tt.renderFailure {
+				renderer := NewMockScreenshotRenderer(t)
+				renderer.On("RenderScreenshot", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("", fmt.Errorf("renderer unavailable"))
+				eval.render = renderer
+				eval.metrics = registerScreenshotMetrics(prometheus.NewPedanticRegistry())
+			}
+			info := eval.evaluateFile(t.Context(), reader, "http://host", "", 0, change, provisioning.PullRequestJobOptions{}, parser, tt.renderFailure)
+			require.NotEmpty(t, info.PreviewURL, "the preview link is kept either way")
+			require.Equal(t, tt.wantRemoved, info.HasRemovedMetadata)
+			commenter := NewCommenter(false, URLProvider{}).(*commenter)
+			body, err := commenter.generateComment(t.Context(), changeInfo{Changes: []fileChangeInfo{info}})
+			require.NoError(t, err)
+			require.Equal(t, tt.wantError, info.Error)
+			if tt.wantError != "" {
+				require.Contains(t, body, "> ⚠️ **Validation failed:** "+tt.wantError)
+			} else {
+				require.NotContains(t, body, "Validation failed")
+			}
+		})
+	}
+}
+
+func TestEvaluateFile_FolderManifestAnnotations(t *testing.T) {
+	const path = "team/_folder.json"
+	const manifest = `{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"team","annotations":%s},"spec":{"title":%q}}`
+	for _, tt := range []struct {
+		name        string
+		base, head  string
+		wantRemoved bool
+	}{
+		{name: "user annotation removed", base: `{"example.com/owner":"team-a"}`, head: `{"example.com/enabled":true}`, wantRemoved: true},
+		{name: "title-only edit with a non-string annotation", base: `{"example.com/enabled":true}`, head: `{"example.com/enabled":true}`},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			change := repository.VersionedFileChange{Action: repository.FileActionUpdated, Path: path, Ref: "pr"}
+			base := &repository.FileInfo{Path: path, Data: []byte(fmt.Sprintf(manifest, tt.base, "Team"))}
+			head := &repository.FileInfo{Path: path, Ref: change.Ref, Data: []byte(fmt.Sprintf(manifest, tt.head, "Renamed team"))}
+
+			reader := repository.NewMockReader(t)
+			reader.EXPECT().Read(mock.Anything, path, "").Return(base, nil)
+			reader.EXPECT().Read(mock.Anything, path, change.Ref).Return(head, nil)
+			reader.EXPECT().Config().Return(&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "repo", Namespace: "default"}})
+
+			client := dynamicfake.NewSimpleDynamicClient(runtime.NewScheme()).Resource(resources.FolderResource).Namespace("default")
+			clients := resources.NewMockResourceClients(t)
+			clients.EXPECT().ForKind(mock.Anything, resources.FolderKind).Return(client, resources.FolderResource, nil)
+			clients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources)
+			factory := resources.NewMockClientFactory(t)
+			factory.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
+			parser, err := resources.NewParserFactory(factory).GetParser(t.Context(), reader)
+			require.NoError(t, err)
+
+			info := (&evaluator{}).evaluateFile(t.Context(), reader, "http://host", "", 0, change, provisioning.PullRequestJobOptions{}, parser, false)
+			require.Empty(t, info.Error)
+			require.Equal(t, "Renamed team", info.Title)
+			require.NotNil(t, info.Parsed.DryRunResponse)
+			require.Empty(t, info.Parsed.InvalidAnnotations)
+			require.Equal(t, tt.wantRemoved, info.HasRemovedMetadata)
+		})
+	}
+}
+
 func TestHasStrippedMetadata(t *testing.T) {
 	t.Run("original has extra metadata, parsed has only name", func(t *testing.T) {
 		original := &unstructured.Unstructured{Object: map[string]any{
@@ -2109,7 +2224,7 @@ func TestHasStrippedMetadata(t *testing.T) {
 		parsed := &unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{"name": "my-dash"},
 		}}
-		require.True(t, hasRemovedMetadata(original, parsed))
+		require.True(t, hasRemovedMetadata("dash.json", original, parsed))
 	})
 
 	t.Run("original and parsed have same metadata", func(t *testing.T) {
@@ -2119,7 +2234,7 @@ func TestHasStrippedMetadata(t *testing.T) {
 		parsed := &unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{"name": "my-dash"},
 		}}
-		require.False(t, hasRemovedMetadata(original, parsed))
+		require.False(t, hasRemovedMetadata("dash.json", original, parsed))
 	})
 
 	t.Run("original has labels, parsed lost them", func(t *testing.T) {
@@ -2132,7 +2247,7 @@ func TestHasStrippedMetadata(t *testing.T) {
 		parsed := &unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{"name": "my-dash"},
 		}}
-		require.True(t, hasRemovedMetadata(original, parsed))
+		require.True(t, hasRemovedMetadata("dash.json", original, parsed))
 	})
 
 	t.Run("original has empty labels, not counted", func(t *testing.T) {
@@ -2146,7 +2261,7 @@ func TestHasStrippedMetadata(t *testing.T) {
 		parsed := &unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{"name": "my-dash"},
 		}}
-		require.False(t, hasRemovedMetadata(original, parsed))
+		require.False(t, hasRemovedMetadata("dash.json", original, parsed))
 	})
 
 	t.Run("parsed has more annotations than original, not stripped", func(t *testing.T) {
@@ -2165,14 +2280,14 @@ func TestHasStrippedMetadata(t *testing.T) {
 				},
 			},
 		}}
-		require.False(t, hasRemovedMetadata(original, parsed))
+		require.False(t, hasRemovedMetadata("dash.json", original, parsed))
 	})
 
-	t.Run("original annotation key removed by parser", func(t *testing.T) {
+	t.Run("Grafana-owned annotation removed by parser", func(t *testing.T) {
 		original := &unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{
 				"name":        "my-dash",
-				"annotations": map[string]any{"custom/note": "important", "old/key": "value"},
+				"annotations": map[string]any{"custom/note": "important", "grafana.app/createdBy": "user:1"},
 			},
 		}}
 		parsed := &unstructured.Unstructured{Object: map[string]any{
@@ -2181,7 +2296,27 @@ func TestHasStrippedMetadata(t *testing.T) {
 				"annotations": map[string]any{"custom/note": "important"},
 			},
 		}}
-		require.True(t, hasRemovedMetadata(original, parsed))
+		require.True(t, hasRemovedMetadata("dash.json", original, parsed))
+	})
+
+	t.Run("user annotation removed is an intentional change, not stripped", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name": "my-dash",
+				"annotations": map[string]any{
+					"custom/note":                            "important",
+					"old/key":                                "value",
+					"grafana.app/useCrossDashboardVariables": `{"global":"all","folder":"none"}`,
+				},
+			},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":        "my-dash",
+				"annotations": map[string]any{"custom/note": "important"},
+			},
+		}}
+		require.False(t, hasRemovedMetadata("dash.json", original, parsed))
 	})
 
 	t.Run("namespace changed by parser", func(t *testing.T) {
@@ -2191,7 +2326,7 @@ func TestHasStrippedMetadata(t *testing.T) {
 		parsed := &unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{"name": "my-dash", "namespace": "default"},
 		}}
-		require.True(t, hasRemovedMetadata(original, parsed))
+		require.True(t, hasRemovedMetadata("dash.json", original, parsed))
 	})
 
 	t.Run("namespace same in both, not stripped", func(t *testing.T) {
@@ -2201,7 +2336,7 @@ func TestHasStrippedMetadata(t *testing.T) {
 		parsed := &unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{"name": "my-dash", "namespace": "default"},
 		}}
-		require.False(t, hasRemovedMetadata(original, parsed))
+		require.False(t, hasRemovedMetadata("dash.json", original, parsed))
 	})
 
 	t.Run("empty namespace in original is not counted", func(t *testing.T) {
@@ -2211,7 +2346,7 @@ func TestHasStrippedMetadata(t *testing.T) {
 		parsed := &unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{"name": "my-dash"},
 		}}
-		require.False(t, hasRemovedMetadata(original, parsed))
+		require.False(t, hasRemovedMetadata("dash.json", original, parsed))
 	})
 
 	t.Run("label value changed but key still present, not stripped", func(t *testing.T) {
@@ -2227,7 +2362,7 @@ func TestHasStrippedMetadata(t *testing.T) {
 				"labels": map[string]any{"team": "other"},
 			},
 		}}
-		require.False(t, hasRemovedMetadata(original, parsed))
+		require.False(t, hasRemovedMetadata("dash.json", original, parsed))
 	})
 
 	t.Run("label key removed by parser", func(t *testing.T) {
@@ -2243,7 +2378,7 @@ func TestHasStrippedMetadata(t *testing.T) {
 				"labels": map[string]any{"team": "platform"},
 			},
 		}}
-		require.True(t, hasRemovedMetadata(original, parsed))
+		require.True(t, hasRemovedMetadata("dash.json", original, parsed))
 	})
 }
 

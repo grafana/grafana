@@ -296,6 +296,9 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	}
 
 	name, gvk, err := r.writeResourceFromParsed(ctx, path, ref, parsed)
+	if err == nil {
+		err = invalidAnnotationsWarning(parsed)
+	}
 	return name, gvk, size, err
 }
 
@@ -362,11 +365,11 @@ func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, re
 // Used by full sync where the old identity is known from Changes().Existing.
 func (r *ResourcesManager) ReplaceResourceFromFile(ctx context.Context, path, ref string, oldName string, oldGVR schema.GroupVersionResource, opts ...WriteResourceOption) (string, schema.GroupVersionKind, int, error) {
 	newName, gvk, size, err := r.WriteResourceFromFile(ctx, path, ref, opts...)
-	if err != nil || oldName == "" || oldName == newName {
+	if (err != nil && !errors.Is(err, ErrInvalidAnnotations)) || oldName == "" || oldName == newName {
 		return newName, gvk, size, err
 	}
 
-	return newName, gvk, size, r.deleteOldResource(ctx, path, oldName, oldGVR, newName)
+	return newName, gvk, size, replaceResult(err, r.deleteOldResource(ctx, path, oldName, oldGVR, newName))
 }
 
 // ReplaceResourceFromFileByRef writes a resource from the file at path/ref and,
@@ -390,16 +393,31 @@ func (r *ResourcesManager) ReplaceResourceFromFileByRef(ctx context.Context, pat
 		opts = append(opts, WithExistingHash(oldInfo.Hash))
 	}
 	newName, gvk, size, writeErr := r.WriteResourceFromFile(ctx, path, ref, opts...)
-	if writeErr != nil {
+	if writeErr != nil && !errors.Is(writeErr, ErrInvalidAnnotations) {
 		return newName, gvk, size, writeErr
 	}
 
 	oldName := oldParsed.Obj.GetName()
 	if oldName == "" || oldName == newName {
-		return newName, gvk, size, nil
+		return newName, gvk, size, writeErr
 	}
 
-	return newName, gvk, size, r.deleteOldResource(ctx, path, oldName, oldParsed.GVR, newName)
+	return newName, gvk, size, replaceResult(writeErr, r.deleteOldResource(ctx, path, oldName, oldParsed.GVR, newName))
+}
+
+// replaceResult combines the outcome of a successful write, nil or a warning,
+// with the delete of the old resource. A failed delete is the result; a delete
+// skipped because another file owns the old resource is a warning too, so both
+// are reported.
+func replaceResult(writeErr, deleteErr error) error {
+	switch {
+	case deleteErr == nil:
+		return writeErr
+	case writeErr != nil && errors.Is(deleteErr, ErrResourceManagedByOtherFile):
+		return fmt.Errorf("%w; %w", deleteErr, writeErr)
+	default:
+		return deleteErr
+	}
 }
 
 // deleteOldResource deletes the previous resource when a name change is
@@ -532,7 +550,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 			// The old path is unsupported, so the parser rejected it and no resource
 			// was ever created from that file: there is nothing to clean up, and the
 			// write above succeeded whether or not the content changed.
-			return newName, "", gvk, size, nil
+			return newName, "", gvk, size, invalidAnnotationsWarning(newParsed)
 		}
 		return "", "", schema.GroupVersionKind{}, size, fmt.Errorf("failed to parse previous file: %w", oldParseErr)
 	}
@@ -580,7 +598,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		oldFolderName = ""
 	}
 
-	return newName, oldFolderName, gvk, size, nil
+	return newName, oldFolderName, gvk, size, invalidAnnotationsWarning(newParsed)
 }
 
 // RemoveResourceFromFile deletes the resource described by the file at path/ref.

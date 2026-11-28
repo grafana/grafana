@@ -77,6 +77,26 @@ func TestGenerateComment_EscapesTitle(t *testing.T) {
 	require.NotContains(t, captured, "Brackets [x]")
 }
 
+func TestGenerateComment_EscapesError(t *testing.T) {
+	dash := fileChangeInfo{
+		Change: repository.VersionedFileChange{Path: "dash.json"},
+		Parsed: &resources.ParsedResource{GVK: schema.GroupVersionKind{Kind: "Dashboard"}},
+		Error:  "ignored: @team/x [docs](http://e) | a\nb",
+	}
+	other := fileChangeInfo{Change: repository.VersionedFileChange{Path: "other.json"}}
+	for name, changes := range map[string][]fileChangeInfo{
+		"single dashboard": {dash},
+		"table":            {dash, other},
+	} {
+		t.Run(name, func(t *testing.T) {
+			body, err := NewCommenter(false, URLProvider{}).(*commenter).generateComment(t.Context(), changeInfo{Changes: changes})
+			require.NoError(t, err)
+			require.Contains(t, body, "ignored: @\u200bteam/x \\[docs\\](http://e) \\| a b")
+			require.NotContains(t, body, "@team")
+		})
+	}
+}
+
 func TestCommenter_Comment_FailedToComment(t *testing.T) {
 	repo, client := newPullRequestRepo(t)
 	client.On("CreatePullRequestComment", context.Background(), 1, mock.Anything).Return(errors.New("failed"))
