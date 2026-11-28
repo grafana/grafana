@@ -28,6 +28,19 @@ describe('MenuItem', () => {
     expect(screen.getByLabelText(selectors.components.Menu.MenuItem('Test')).nodeName).toBe('A');
   });
 
+  it('exposes the referenced element as the accessible description', () => {
+    render(
+      <>
+        {getMenuItem({ ariaDescribedBy: 'item-description' })}
+        <span id="item-description">Item description</span>
+      </>
+    );
+
+    expect(screen.getByLabelText(selectors.components.Menu.MenuItem('Test'))).toHaveAccessibleDescription(
+      'Item description'
+    );
+  });
+
   it('calls onClick when item is clicked', async () => {
     const onClick = jest.fn();
 

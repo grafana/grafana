@@ -36,6 +36,8 @@ export interface MenuItemProps<T = unknown> {
   description?: string;
   /** Aria label for accessibility support */
   ariaLabel?: string;
+  /** Id of an element describing the item, exposed as its accessible description */
+  ariaDescribedBy?: string;
   /** Aria checked for accessibility support */
   ariaChecked?: boolean;
   /** Target of the menu item (i.e. new window)  */
@@ -83,6 +85,7 @@ export const MenuItem = React.memo(
       variant = 'default',
       description,
       ariaLabel,
+      ariaDescribedBy,
       ariaChecked,
       target,
       onClick,
@@ -220,6 +223,7 @@ export const MenuItem = React.memo(
         data-role="menuitem" // used to identify menuitem in Menu.tsx
         ref={localRef}
         aria-label={ariaLabel}
+        aria-describedby={ariaDescribedBy}
         aria-checked={ariaChecked}
         // Announce to screen readers that this item opens a submenu, and whether it is
         // currently expanded, so nested items (e.g. under "More...") are discoverable.

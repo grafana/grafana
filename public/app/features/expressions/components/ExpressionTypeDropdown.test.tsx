@@ -28,6 +28,25 @@ describe('ExpressionTypeDropdown', () => {
     expect(onSelect).toHaveBeenCalledWith(ExpressionQueryType.math);
   });
 
+  it('exposes the option description to assistive technology', async () => {
+    const user = userEvent.setup();
+    render(
+      <ExpressionTypeDropdown handleOnSelect={jest.fn()}>
+        <Button>Add expression</Button>
+      </ExpressionTypeDropdown>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Add expression' }));
+    const menu = await screen.findByRole('menu');
+
+    expect(
+      within(menu).getByRole('menuitem', {
+        name: 'Math',
+        description: 'Free-form math formulas on time series or number data.',
+      })
+    ).toBeInTheDocument();
+  });
+
   it('keeps disabled expressions disabled while other expressions remain selectable', async () => {
     const onSelect = jest.fn();
     const user = userEvent.setup();
@@ -42,7 +61,7 @@ describe('ExpressionTypeDropdown', () => {
 
     await user.click(screen.getByRole('button', { name: 'Add expression' }));
     const menu = await screen.findByRole('menu');
-    const math = within(menu).getByRole('menuitem', { name: 'Math' });
+    const math = within(menu).getByRole('menuitem', { name: 'Math', description: 'Math is unavailable' });
     expect(math).toBeDisabled();
     await user.click(math);
     expect(onSelect).not.toHaveBeenCalled();
