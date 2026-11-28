@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Stack } from '@grafana/ui';
 import { type Job } from 'app/api/clients/provisioning/v0alpha1';
-import { contextSrv } from 'app/core/services/context_srv';
 
 import { JobStatus } from '../../Job/JobStatus';
 import { type StepStatusInfo } from '../../Wizard/types';
@@ -19,8 +18,8 @@ interface Props {
 
 /**
  * Shared banner/alert for orphaned resources (dashboards or folders) whose
- * provisioning repository no longer exists. All users see the warning;
- * admins can release or delete all resources from the missing repository.
+ * provisioning repository no longer exists. Any user who sees it can release
+ * or delete all resources from the missing repository; admins are not required.
  */
 export function OrphanedResourceBanner({ repositoryName }: Props) {
   const [actionType, setActionType] = useState<OrphanedResourceAction | null>(null);
@@ -28,7 +27,6 @@ export function OrphanedResourceBanner({ repositoryName }: Props) {
   const [jobResult, setJobResult] = useState<StepStatusInfo | null>(null);
   const navigate = useNavigate();
 
-  const isAdmin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
   const hideJobStatus = jobResult?.status === 'success';
   const result = jobResult ? getJobResultAlertByStatus()[jobResult.status] : undefined;
 
@@ -110,16 +108,14 @@ export function OrphanedResourceBanner({ repositoryName }: Props) {
           'This resource is managed by a repository that no longer exists'
         )}
         action={
-          isAdmin ? (
-            <Stack direction="row" gap={1} alignItems="center">
-              <Button variant="secondary" disabled={isSubmitting} onClick={() => openConfirm('releaseResources')}>
-                {t('provisioning.orphaned-resource-banner.convert-to-local-button', 'Convert to local')}
-              </Button>
-              <Button variant="destructive" disabled={isSubmitting} onClick={() => openConfirm('deleteResources')}>
-                {t('provisioning.orphaned-resource-banner.delete-button', 'Delete')}
-              </Button>
-            </Stack>
-          ) : undefined
+          <Stack direction="row" gap={1} alignItems="center">
+            <Button variant="secondary" disabled={isSubmitting} onClick={() => openConfirm('releaseResources')}>
+              {t('provisioning.orphaned-resource-banner.convert-to-local-button', 'Convert to local')}
+            </Button>
+            <Button variant="destructive" disabled={isSubmitting} onClick={() => openConfirm('deleteResources')}>
+              {t('provisioning.orphaned-resource-banner.delete-button', 'Delete')}
+            </Button>
+          </Stack>
         }
       >
         <Stack direction="column" gap={1}>
@@ -127,12 +123,6 @@ export function OrphanedResourceBanner({ repositoryName }: Props) {
             This resource cannot be saved or modified until it is converted to local. Converting to local or deleting it
             will affect all resources managed by that repository.
           </Trans>
-          {!isAdmin && (
-            <Trans i18nKey="provisioning.orphaned-resource-banner.contact-admin">
-              Contact your Grafana administrator to convert this resource to local or delete all resources from the
-              missing repository.
-            </Trans>
-          )}
         </Stack>
       </Alert>
       <OrphanedResourceActionConfirmModal

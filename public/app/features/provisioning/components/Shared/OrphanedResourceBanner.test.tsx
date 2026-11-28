@@ -40,8 +40,6 @@ function mockHook(overrides: Partial<ReturnType<typeof useOrphanedResourceAction
 
 describe('OrphanedResourceBanner', () => {
   beforeEach(() => {
-    jest.spyOn(contextSrv, 'hasRole').mockImplementation((role: string) => role === 'Admin');
-    contextSrv.isGrafanaAdmin = false;
     mockHook();
     mockNavigate.mockReset();
     MockJobStatus.mockClear();
@@ -51,26 +49,15 @@ describe('OrphanedResourceBanner', () => {
     jest.restoreAllMocks();
   });
 
-  it('shows Convert to local and Delete for admins', () => {
-    render(<OrphanedResourceBanner repositoryName="gone-repo" />);
-
-    expect(screen.getByRole('button', { name: 'Convert to local' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
-  });
-
-  it('does not show action buttons for non-admins and shows contact-admin copy', () => {
+  it('shows Convert to local and Delete to a user who is not an admin', () => {
     jest.spyOn(contextSrv, 'hasRole').mockReturnValue(false);
     contextSrv.isGrafanaAdmin = false;
 
     render(<OrphanedResourceBanner repositoryName="gone-repo" />);
 
-    expect(screen.queryByRole('button', { name: 'Convert to local' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /Contact your Grafana administrator to convert this resource to local or delete all resources from the missing repository/
-      )
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Convert to local' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeEnabled();
+    expect(screen.queryByText(/Contact your Grafana administrator/)).not.toBeInTheDocument();
   });
 
   it('opens release confirmation and calls submitRelease when confirmed', async () => {
