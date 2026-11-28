@@ -2,6 +2,8 @@ package resources
 
 import (
 	"bytes"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -16,8 +18,8 @@ func TestYAMLToJSON(t *testing.T) {
 	}{
 		{
 			name: "YAML 1.1 boolean words stay strings",
-			yaml: "y: 4\nyes: 1\non: 2\nn: 3\nno: 5\noff: 6\nrefId: N\ntarget: Y\nenabled: true\ndisabled: false\n",
-			want: `{"y":4,"yes":1,"on":2,"n":3,"no":5,"off":6,"refId":"N","target":"Y","enabled":true,"disabled":false}`,
+			yaml: "y: 4\nyes: 1\non: 2\nn: 3\nno: 5\noff: 6\nrefId: N\ntarget: Y\nenabled: true\ndisabled: false\nmixedCase: True\n",
+			want: `{"y":4,"yes":1,"on":2,"n":3,"no":5,"off":6,"refId":"N","target":"Y","enabled":true,"disabled":false,"mixedCase":true}`,
 		},
 		{
 			name: "timestamps keep the text that was written",
@@ -41,8 +43,8 @@ func TestYAMLToJSON(t *testing.T) {
 		},
 		{
 			name: "scalars keep their types",
-			yaml: "int: 42\nfloat: 3.5\nbig: 123456789012345678\nhex: 0x1f\noctal: 0o17\nnull: null\ntilde: ~\ntext: hello\n",
-			want: `{"int":42,"float":3.5,"big":123456789012345678,"hex":31,"octal":15,"null":null,"tilde":null,"text":"hello"}`,
+			yaml: "int: 42\nfloat: 3.5\nbig: 123456789012345678\nhex: 0x1f\nnull: null\ntilde: ~\ntext: hello\n",
+			want: `{"int":42,"float":3.5,"big":123456789012345678,"hex":31,"null":null,"tilde":null,"text":"hello"}`,
 		},
 		{
 			name: "non-string keys become their text",
@@ -71,6 +73,38 @@ func TestYAMLToJSON(t *testing.T) {
 			require.JSONEq(t, tt.want, string(got))
 		})
 	}
+}
+
+// Numeric forms are deliberately left exactly as the previous decoder resolved
+// them, so that this change stays limited to the YAML 1.1 boolean words. Strict
+// YAML 1.2 would read 0777 and 017 as strings, which would be a separate
+// breaking change for existing repository files.
+func TestYAMLToJSON_NumericResolutionIsUnchanged(t *testing.T) {
+	got, err := yamlToJSON([]byte("legacyOctal: 0777\noctal: 017\nmodernOctal: 0o17\nhex: 0x1f\nunderscore: 1_000\n"))
+	require.NoError(t, err)
+	require.JSONEq(t, `{"legacyOctal":511,"octal":15,"modernOctal":15,"hex":31,"underscore":1000}`, string(got))
+}
+
+// A document whose aliases multiply must fail instead of expanding until it
+// exhausts memory: the depth limit alone would still allow 10^10 values here.
+func TestYAMLToJSON_BoundsAliasExpansion(t *testing.T) {
+	doc := "level0: &level0 [x, x, x, x, x, x, x, x, x, x]\n"
+	for i := 1; i <= 10; i++ {
+		refs := strings.TrimSuffix(strings.Repeat(fmt.Sprintf("*level%d,", i-1), 10), ",")
+		doc += fmt.Sprintf("level%d: &level%d [%s]\n", i, i, refs)
+	}
+
+	_, err := yamlToJSON([]byte(doc))
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "expands to more than")
+}
+
+// A merge value that refers to its own container must return an error rather
+// than recurse until the stack overflows.
+func TestYAMLToJSON_BoundsMergeRecursion(t *testing.T) {
+	_, err := yamlToJSON([]byte("a: &a [*a]\nb:\n  <<: *a\n"))
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "nesting exceeds")
 }
 
 // A dashboard file is the case that exposed the YAML 1.1 resolution: the panel
