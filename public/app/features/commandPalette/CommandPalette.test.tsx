@@ -3,14 +3,29 @@ import { HttpResponse, http } from 'msw';
 import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
-import { PluginExtensionTypes } from '@grafana/data';
-import { reportInteraction, setBackendSrv, setPluginLinksHook } from '@grafana/runtime';
+import {
+  DataFrameView,
+  type PluginExtensionCommandPaletteSearchProvider,
+  type PluginExtensionFunction,
+  PluginExtensionPoints,
+  PluginExtensionTypes,
+  toDataFrame,
+} from '@grafana/data';
+import {
+  type UsePluginFunctionsResult,
+  reportInteraction,
+  setBackendSrv,
+  setPluginFunctionsHook,
+  setPluginLinksHook,
+} from '@grafana/runtime';
 import { setGetObservablePluginLinks } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { PortalContainer } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { type DashboardQueryResult } from 'app/features/search/service/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { getObservablePluginLinks } from '../plugins/extensions/getPluginExtensions';
@@ -23,6 +38,9 @@ setPluginLinksHook(() => ({
   isLoading: false,
 }));
 setGetObservablePluginLinks(getObservablePluginLinks);
+
+const noPluginFunctions = { functions: [], isLoading: false };
+setPluginFunctionsHook(() => noPluginFunctions);
 
 setBackendSrv(backendSrv);
 const server = setupMockServer();
@@ -58,6 +76,16 @@ jest.mock('react-virtual', () => ({
   }),
 }));
 
+function VisualStateProbe() {
+  const { query, visualState } = useKBar((state) => ({ visualState: state.visualState }));
+  return (
+    <>
+      <button onClick={() => query.toggle()}>Open</button>
+      <span data-testid="visual-state">{visualState}</span>
+    </>
+  );
+}
+
 const setup = () => {
   return render(
     <KBarProvider>
@@ -68,14 +96,17 @@ const setup = () => {
 
 // Window listeners run after the palette's own click handling, so this reads whether the palette cancelled the
 // link's navigation, then cancels it itself because jsdom can't navigate.
-const isNavigationCancelledOnClick = async (element: Element) => {
+const isNavigationCancelledOnClick = async (
+  element: Element,
+  user: ReturnType<typeof userEvent.setup> = userEvent.setup()
+) => {
   let cancelled: boolean | undefined;
   const recordAndCancel = (event: MouseEvent) => {
     cancelled = event.defaultPrevented;
     event.preventDefault();
   };
   window.addEventListener('click', recordAndCancel);
-  await userEvent.click(element);
+  await user.click(element);
   window.removeEventListener('click', recordAndCancel);
   return cancelled;
 };
@@ -90,7 +121,12 @@ const triggerEmptyState = async () => {
 
 describe('CommandPalette', () => {
   beforeEach(() => {
-    setTestFlags({ 'dashboard.notebooks': false, 'grafana.cmdkHybridSearch': false });
+    setTestFlags({
+      'dashboard.notebooks': false,
+      'grafana.cmdkHybridSearch': false,
+      'grafana.cmdkExtensionSearch': false,
+    });
+    setPluginFunctionsHook(() => noPluginFunctions);
     jest.mocked(KBarPortal).mockImplementation(({ children }) => <div>{children}</div>);
     setPluginLinksHook(() => ({
       links: [],
@@ -276,6 +312,288 @@ describe('CommandPalette', () => {
         'href',
         expect.stringContaining('/notebooks/nb1')
       );
+    });
+  });
+
+  describe('extension search results', () => {
+    const SECTION_TITLE = 'Test plugin results';
+    const SEARCH_PLACEHOLDER = 'Search or jump to...';
+
+    let pluginFunctionsHook: jest.Mock;
+    let searchSpy: jest.SpyInstance;
+
+    const setSearchProvider = (fn: PluginExtensionCommandPaletteSearchProvider) => {
+      const extension: PluginExtensionFunction<PluginExtensionCommandPaletteSearchProvider> = {
+        id: 'test-plugin/search',
+        type: PluginExtensionTypes.function,
+        title: SECTION_TITLE,
+        description: '',
+        pluginId: 'test-plugin',
+        fn,
+      };
+      // The runtime hook is generic over the function signature; the palette only requests search providers.
+      const result = { functions: [extension] as Array<PluginExtensionFunction<never>>, isLoading: false };
+      pluginFunctionsHook.mockImplementation(() => result satisfies UsePluginFunctionsResult<never>);
+    };
+
+    // Providers are third-party code, so tests hand them values the public types would reject.
+    const untyped = (value: unknown): PluginExtensionCommandPaletteSearchProvider => {
+      // @ts-expect-error the provider contract is only enforced at runtime for third-party plugins
+      return async () => value;
+    };
+
+    const advance = (ms: number) => act(() => jest.advanceTimersByTimeAsync(ms));
+
+    // Longer than the 200 ms debounce, so a typed query has reached the providers.
+    const DEBOUNCED = 250;
+
+    let user: ReturnType<typeof userEvent.setup>;
+
+    // Lets the palette's own mount-time requests settle inside act.
+    const open = async () => {
+      const view = setup();
+      // The dashboard search drops answers that aren't newer than the last one, and fake time stands still until advanced.
+      await advance(1);
+      return view;
+    };
+
+    const type = async (text: string) => {
+      await user.type(screen.getByPlaceholderText(SEARCH_PLACEHOLDER), text);
+      await advance(DEBOUNCED);
+    };
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      // The mock server answers over real I/O, which fake timers don't drive, so the dashboard search is stubbed.
+      searchSpy = jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue({
+        view: new DataFrameView<DashboardQueryResult>(toDataFrame({ fields: [] })),
+        loadMoreItems: async () => {},
+        isItemLoaded: () => true,
+        totalRows: 0,
+      });
+      user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      setTestFlags({ 'grafana.cmdkExtensionSearch': true });
+      pluginFunctionsHook = jest.fn(() => noPluginFunctions);
+      setPluginFunctionsHook(pluginFunctionsHook);
+    });
+
+    afterEach(() => {
+      searchSpy.mockRestore();
+      jest.useRealTimers();
+    });
+
+    it('does not subscribe to the extension point or call providers when the feature flag is off', async () => {
+      setTestFlags({ 'grafana.cmdkExtensionSearch': false });
+      const provider = jest.fn().mockResolvedValue([]);
+      setSearchProvider(provider);
+      await open();
+
+      await type('orders');
+
+      expect(screen.getByPlaceholderText(SEARCH_PLACEHOLDER)).toHaveValue('orders');
+      expect(pluginFunctionsHook).not.toHaveBeenCalled();
+      expect(provider).not.toHaveBeenCalled();
+    });
+
+    it('requests one search provider per plugin when the feature flag is on', async () => {
+      await open();
+
+      expect(pluginFunctionsHook).toHaveBeenCalledWith({
+        extensionPointId: PluginExtensionPoints.CommandPaletteSearch,
+        limitPerPlugin: 1,
+      });
+    });
+
+    it('calls providers only once the query has two characters', async () => {
+      const provider = jest.fn().mockResolvedValue([]);
+      setSearchProvider(provider);
+      await open();
+
+      await type('o');
+      expect(provider).not.toHaveBeenCalled();
+
+      await type('r');
+
+      expect(provider).toHaveBeenCalledTimes(1);
+      expect(provider).toHaveBeenCalledWith({ searchQuery: 'or', signal: expect.any(AbortSignal) });
+    });
+
+    it('shows results under the extension title and links to their path', async () => {
+      setSearchProvider(async () => [
+        { id: 'svc-1', title: 'Orders service', description: 'Checkout flow', path: '/a/test-plugin/orders' },
+      ]);
+      await open();
+
+      await type('orders');
+
+      expect(screen.getByText(SECTION_TITLE)).toBeInTheDocument();
+      const row = screen.getByText('Orders service').closest('a');
+      expect(row).toHaveAttribute('href', expect.stringContaining('/a/test-plugin/orders'));
+      expect(row).toHaveTextContent('Checkout flow');
+    });
+
+    it('shows results when the runtime hook returns a new but equal functions array on every render', async () => {
+      setSearchProvider(async () => [{ id: 'svc-1', title: 'Orders service', path: '/a/test-plugin/orders' }]);
+      const { functions } = pluginFunctionsHook();
+      pluginFunctionsHook.mockImplementation(() => ({ functions: [...functions], isLoading: false }));
+      await open();
+
+      await type('orders');
+
+      expect(screen.getByText('Orders service')).toBeInTheDocument();
+    });
+
+    it('calls onSelect instead of navigating when a result has one', async () => {
+      const onSelect = jest.fn();
+      setSearchProvider(async () => [
+        { id: 'svc-1', title: 'Orders service', path: '/a/test-plugin/orders', onSelect },
+      ]);
+      await open();
+      await type('orders');
+      const row = screen.getByText('Orders service').closest('a');
+
+      expect(await isNavigationCancelledOnClick(row!, user)).toBe(true);
+      expect(onSelect).toHaveBeenCalledTimes(1);
+    });
+
+    it('closes the palette when the onSelect of a result throws', async () => {
+      const onSelect = jest.fn(() => {
+        throw new Error('select boom');
+      });
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+      setSearchProvider(async () => [{ id: 'svc-1', title: 'Orders service', onSelect }]);
+      render(
+        <KBarProvider>
+          <VisualStateProbe />
+          <CommandPalette />
+        </KBarProvider>
+      );
+      await user.click(screen.getByRole('button', { name: 'Open' }));
+      expect(screen.getByTestId('visual-state')).toHaveTextContent('animating-in');
+      await type('orders');
+
+      await user.click(screen.getByText('Orders service'));
+
+      expect(onSelect).toHaveBeenCalledTimes(1);
+      expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('select boom'), expect.anything());
+      expect(screen.getByTestId('visual-state')).toHaveTextContent('animating-out');
+      consoleError.mockRestore();
+    });
+
+    it('does not offer a result with neither path nor onSelect, which would act as a drill-down parent', async () => {
+      setSearchProvider(
+        untyped([
+          { id: 'broken', title: 'Neither path nor handler' },
+          { id: 'ok', title: 'Orders service', path: '/a/test-plugin/orders' },
+        ])
+      );
+      await open();
+
+      await type('orders');
+
+      expect(screen.queryByText('Neither path nor handler')).not.toBeInTheDocument();
+      expect(screen.getByText('Orders service')).toBeInTheDocument();
+    });
+
+    it('ignores a result whose path leaves the Grafana origin', async () => {
+      setSearchProvider(
+        untyped([
+          { id: 'evil', title: 'Phishing', path: 'https://evil.example/login' },
+          { id: 'ok', title: 'Orders service', path: '/a/test-plugin/orders' },
+        ])
+      );
+      await open();
+
+      await type('orders');
+
+      expect(screen.queryByText('Phishing')).not.toBeInTheDocument();
+      expect(screen.getByText('Orders service')).toBeInTheDocument();
+    });
+
+    it('does not show the results of an earlier query while a provider has not answered the new one', async () => {
+      setSearchProvider(({ searchQuery }) =>
+        searchQuery === 'zq'
+          ? Promise.resolve([{ id: 'r1', title: 'Result for zq', path: '/zq' }])
+          : new Promise(() => {})
+      );
+      await open();
+      await type('zq');
+      expect(screen.getByText('Result for zq')).toBeInTheDocument();
+
+      await user.type(screen.getByPlaceholderText(SEARCH_PLACEHOLDER), 'x');
+
+      expect(screen.queryByText('Result for zq')).not.toBeInTheDocument();
+    });
+
+    it('aborts the signal of an in-flight query when the query changes', async () => {
+      const signals: AbortSignal[] = [];
+      setSearchProvider(({ signal }) => {
+        signals.push(signal);
+        return new Promise(() => {});
+      });
+      await open();
+
+      await type('or');
+      expect(signals).toHaveLength(1);
+      expect(signals[0].aborted).toBe(false);
+
+      await type('d');
+
+      expect(signals).toHaveLength(2);
+      expect(signals[0].aborted).toBe(true);
+      expect(signals[1].aborted).toBe(false);
+    });
+
+    it('aborts the signal of a pending query when the palette unmounts', async () => {
+      let signal: AbortSignal | undefined;
+      setSearchProvider(({ signal: s }) => {
+        signal = s;
+        return new Promise(() => {});
+      });
+      const { unmount } = await open();
+      await type('orders');
+      expect(signal).toBeDefined();
+
+      unmount();
+
+      expect(signal?.aborted).toBe(true);
+    });
+
+    it('shows the empty state only after pending providers have settled', async () => {
+      let resolveSearch: (results: []) => void = () => {};
+      const provider = jest.fn(() => new Promise<[]>((resolve) => (resolveSearch = resolve)));
+      setSearchProvider(provider);
+      await open();
+
+      await type('zzznomatch');
+      expect(provider).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText('No results found')).not.toBeInTheDocument();
+
+      resolveSearch([]);
+      await advance(0);
+
+      await advance(0);
+
+      expect(screen.getByText('No results found')).toBeInTheDocument();
+    });
+
+    it('does not show the empty state while the plugins that provide search are still loading', async () => {
+      const loading = { functions: [], isLoading: true };
+      pluginFunctionsHook.mockImplementation(() => loading);
+      const { rerender } = await open();
+
+      await type('zzznomatch');
+      expect(screen.queryByText('No results found')).not.toBeInTheDocument();
+
+      pluginFunctionsHook.mockImplementation(() => noPluginFunctions);
+      rerender(
+        <KBarProvider>
+          <CommandPalette />
+        </KBarProvider>
+      );
+      await advance(DEBOUNCED);
+
+      expect(screen.getByText('No results found')).toBeInTheDocument();
     });
   });
 
