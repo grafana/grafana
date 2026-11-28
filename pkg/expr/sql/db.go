@@ -79,6 +79,11 @@ func (db *DB) QueryFrames(ctx context.Context, tracer tracing.Tracer, name strin
 	// Create a new context with the session and tracer
 	mCtx := mysql.NewContext(ctx, mysql.WithSession(session), mysql.WithTracer(tracer), mysql.WithDisableFileWrites(true), mysql.WithDisableFileReads(true), mysql.WithTraceRedaction(true))
 
+	// Queries cannot set variables (see parser_allow.go), so every SQL expression runs in UTC whatever the host zone.
+	if err := mCtx.SetSessionVariable(mCtx, "time_zone", "+00:00"); err != nil {
+		return nil, fmt.Errorf("failed to set the SQL expression time zone: %w", err)
+	}
+
 	// Select the database in the context
 	mCtx.SetCurrentDatabase(dbName)
 

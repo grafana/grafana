@@ -9,6 +9,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 
 	mysql "github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/types"
@@ -137,6 +138,9 @@ func (ri *rowIter) Next(ctx *mysql.Context) (mysql.Row, error) {
 			}
 		case data.EnumItemIndex:
 			val = enumText(field, v)
+		case time.Time:
+			// The engine converts timestamps to UTC but hashes and formats raw row values, so rows carry UTC too.
+			val = v.UTC()
 		}
 
 		// If the field is JSON, convert json.RawMessage to types.JSONDocument
@@ -181,6 +185,13 @@ func SampleRow(frame *data.Frame, rowIdx int) []any {
 			if v != nil {
 				text := enumText(field, *v)
 				row[i] = &text
+			}
+		case time.Time:
+			row[i] = v.UTC()
+		case *time.Time:
+			if v != nil {
+				utc := v.UTC()
+				row[i] = &utc
 			}
 		}
 	}
