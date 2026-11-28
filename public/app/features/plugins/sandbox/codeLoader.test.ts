@@ -1,11 +1,13 @@
 import { PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { resolvePluginUrlWithBuildHash } from '../loader/pluginInfoCache';
+
 import { getPluginCode } from './codeLoader';
 
 jest.mock('../loader/pluginInfoCache', () => ({
   ...jest.requireActual('../loader/pluginInfoCache'),
-  resolvePluginUrlWithCache: jest.fn((url: string) => `http://localhost:3000${url}?_cache=abc`),
+  resolvePluginUrlWithBuildHash: jest.fn((url: string) => `http://localhost:3000${url}?_cache=abc`),
 }));
 
 const CDN_BASE_URL = 'https://cdn.example.com/plugins';
@@ -18,6 +20,7 @@ describe('getPluginCode SRI verification', () => {
   let digest: jest.Mock;
 
   beforeEach(() => {
+    jest.mocked(resolvePluginUrlWithBuildHash).mockClear();
     digest = jest.fn().mockResolvedValue(new Uint8Array(32).buffer);
     Object.defineProperty(globalThis, 'crypto', { value: { subtle: { digest } }, configurable: true });
     global.fetch = jest.fn().mockResolvedValue({ text: () => Promise.resolve(SOURCE) });
@@ -74,5 +77,23 @@ describe('getPluginCode SRI verification', () => {
       expect(code).toBe(SOURCE);
       expect(digest).not.toHaveBeenCalled();
     });
+  });
+
+  it('pins a local module through the build-hash resolver', async () => {
+    await getPluginCode({ id: 'test-plugin', type: PluginType.panel, module: 'public/plugins/test-plugin/module.js' });
+
+    expect(resolvePluginUrlWithBuildHash).toHaveBeenCalledWith(
+      expect.stringContaining('public/plugins/test-plugin/module.js')
+    );
+  });
+
+  it('fetches a CDN module as is', async () => {
+    await getPluginCode({
+      id: 'test-plugin',
+      type: PluginType.panel,
+      module: `${CDN_BASE_URL}/test-plugin/1.0.0/public/plugins/test-plugin/module.js`,
+    });
+
+    expect(resolvePluginUrlWithBuildHash).not.toHaveBeenCalled();
   });
 });
