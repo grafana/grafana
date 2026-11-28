@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/ldap"
@@ -88,17 +89,17 @@ func replaceNumbersInMap(m map[string]any) (map[string]any, error) {
 		case json.Number:
 			result[k], err = v.Int64()
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("field %q: %w", k, err)
 			}
 		case []any:
 			result[k], err = replaceNumbersInSlice(v)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("field %q: %w", k, err)
 			}
 		case map[string]any:
 			result[k], err = replaceNumbersInMap(v)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("field %q: %w", k, err)
 			}
 		default:
 			result[k] = v
