@@ -495,36 +495,37 @@ describe('HeatmapTooltip', () => {
       expect(screen.queryByText('200')).not.toBeInTheDocument();
     });
 
-    it.each([HeatmapCellLayout.unknown, HeatmapCellLayout.ge, HeatmapCellLayout.le])(
-      'shows the hovered numeric x value in the header for xLayout %s',
-      (xLayout) => {
-        const heatmap = createDataFrame({
-          meta: { type: DataFrameType.HeatmapCells },
-          fields: [
-            { name: 'x', type: FieldType.number, values: [1, 1, 2, 2, 3, 3], display: undefined },
-            { name: 'y', type: FieldType.number, values: [0, 1, 0, 1, 0, 1] },
-            { name: 'count', type: FieldType.number, values: [5, 10, 15, 20, 25, 30] },
-          ],
-        });
-        heatmap.fields[1].display = getDisplayProcessor({ field: heatmap.fields[1], theme });
-        heatmap.fields[2].display = getDisplayProcessor({ field: heatmap.fields[2], theme });
-        const dataRef = {
-          current: createMinimalHeatmapData({
-            heatmap,
-            heatmapColors: undefined,
-            xBucketSize: 1,
-            yBucketCount: 2,
-            xBucketCount: 3,
-            xLayout,
-          }),
-        };
-        // index 3 is the second y bucket of x=2
-        render(<HeatmapTooltip {...defaultProps} dataRef={dataRef} dataIdxs={[0, 3, 0]} />);
+    it.each([
+      [HeatmapCellLayout.unknown, '2', '3'],
+      [HeatmapCellLayout.ge, '3', '2'],
+      [HeatmapCellLayout.le, '2', '3'],
+    ])('shows the right numeric x value in the header for xLayout %s', (xLayout, shown, hidden) => {
+      const heatmap = createDataFrame({
+        meta: { type: DataFrameType.HeatmapCells },
+        fields: [
+          { name: 'x', type: FieldType.number, values: [1, 1, 2, 2, 3, 3], display: undefined },
+          { name: 'y', type: FieldType.number, values: [0, 1, 0, 1, 0, 1] },
+          { name: 'count', type: FieldType.number, values: [5, 10, 15, 20, 25, 30] },
+        ],
+      });
+      heatmap.fields[1].display = getDisplayProcessor({ field: heatmap.fields[1], theme });
+      heatmap.fields[2].display = getDisplayProcessor({ field: heatmap.fields[2], theme });
+      const dataRef = {
+        current: createMinimalHeatmapData({
+          heatmap,
+          heatmapColors: undefined,
+          xBucketSize: 1,
+          yBucketCount: 2,
+          xBucketCount: 3,
+          xLayout,
+        }),
+      };
+      // index 3 is the second y bucket of x=2
+      render(<HeatmapTooltip {...defaultProps} dataRef={dataRef} dataIdxs={[0, 3, 0]} />);
 
-        expect(screen.getByText('2')).toBeVisible();
-        expect(screen.queryByText('3')).not.toBeInTheDocument();
-      }
-    );
+      expect(screen.getByText(shown)).toBeVisible();
+      expect(screen.queryByText(hidden)).not.toBeInTheDocument();
+    });
 
     it('keeps showing the end of the bucket in the header for time x values', () => {
       const heatmap = createDataFrame({
