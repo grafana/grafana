@@ -3940,6 +3940,10 @@ func titleQueryFields() []*resourcepb.ResourceSearchRequest_QueryField {
 // concrete bleve fields: title fans out to its variants, others resolve to their
 // physical name. An empty request defaults to title.
 func (b *bleveIndex) resolveQueryFields(requested []*resourcepb.ResourceSearchRequest_QueryField) []*resourcepb.ResourceSearchRequest_QueryField {
+	return resolveQueryFields(b.fields, requested)
+}
+
+func resolveQueryFields(fields resource.SearchableDocumentFields, requested []*resourcepb.ResourceSearchRequest_QueryField) []*resourcepb.ResourceSearchRequest_QueryField {
 	if len(requested) == 0 {
 		return titleQueryFields()
 	}
@@ -3960,7 +3964,7 @@ func (b *bleveIndex) resolveQueryFields(requested []*resourcepb.ResourceSearchRe
 			continue
 		}
 		out = append(out, &resourcepb.ResourceSearchRequest_QueryField{
-			Name:  resolveFieldName(b.fields, f.Name),
+			Name:  resolveFieldName(fields, f.Name),
 			Boost: f.Boost,
 		})
 	}
