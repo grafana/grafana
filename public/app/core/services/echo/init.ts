@@ -189,6 +189,7 @@ async function initAzureAppInsightsBackend() {
       connectionString: config.applicationInsightsConnectionString,
       endpointUrl: config.applicationInsightsEndpointUrl,
       autoRouteTracking: config.applicationInsightsAutoRouteTracking,
+      user: contextSrv.user,
     })
   );
 }

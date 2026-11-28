@@ -7,9 +7,12 @@ import {
   type PageviewEchoEvent,
 } from '@grafana/runtime';
 
+import { type User } from '../../../context_srv';
+
 interface ApplicationInsights {
   trackPageView: () => void;
   trackEvent: (event: { name: string; properties?: Record<string, unknown> }) => void;
+  setAuthenticatedUserContext: (authenticatedUserId: string, accountId?: string, storeInCookie?: boolean) => void;
 }
 
 declare global {
@@ -24,6 +27,7 @@ export interface ApplicationInsightsBackendOptions {
   connectionString: string;
   endpointUrl?: string;
   autoRouteTracking?: boolean;
+  user?: User;
 }
 
 export class ApplicationInsightsBackend implements EchoBackend<PageviewEchoEvent, ApplicationInsightsBackendOptions> {
@@ -43,7 +47,12 @@ export class ApplicationInsightsBackend implements EchoBackend<PageviewEchoEvent
       .then((m) => (m.default ? m.default : m))
       .then(({ ApplicationInsights }) => {
         const init = new ApplicationInsights(applicationInsightsOpts);
-        window.applicationInsights = init.loadAppInsights();
+        const insights = init.loadAppInsights();
+        window.applicationInsights = insights;
+        const userId = options.user?.uid;
+        if (userId) {
+          insights?.setAuthenticatedUserContext?.(userId);
+        }
       });
   }
 
