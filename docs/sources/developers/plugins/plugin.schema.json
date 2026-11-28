@@ -324,6 +324,51 @@
         }
       }
     },
+    "kinds": {
+      "type": "array",
+      "description": "For app plugins. Kinds of objects the app serves, so Grafana can name, draw and link its objects before the app loads. Grafana adds a kind only where the server serves it.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["group", "kind", "icon", "route"],
+        "properties": {
+          "group": {
+            "type": "string",
+            "description": "API group of the kind, for example `example.ext.grafana.app`."
+          },
+          "kind": {
+            "type": "string",
+            "description": "Kubernetes kind, for example `Widget`."
+          },
+          "folderScoped": {
+            "type": "boolean",
+            "description": "Whether objects of the kind live in folders. Without it, a namespaced kind does, as in the app manifest. Set it to `false` for a kind whose manifest opts out."
+          },
+          "icon": {
+            "type": "string",
+            "description": "Icon of the kind. For information on available icon, refer to [Icons Overview](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview)."
+          },
+          "route": {
+            "type": "string",
+            "description": "Path of the page of one object, under the app's own path. `{name}` stands for the object's name, for example `/a/example-app/widgets/{name}`.",
+            "pattern": "^/a/[^/]+/.*\\{name\\}"
+          },
+          "createRoute": {
+            "type": "string",
+            "description": "Path of the page that creates an object of the kind, under the app's own path, for example `/a/example-app/widgets/new`.",
+            "pattern": "^/a/[^/]+/.+"
+          },
+          "label": {
+            "type": "string",
+            "description": "English name of the kind as it reads inside a sentence, for example `widget`. Without it, Grafana uses `kind` in lower case."
+          },
+          "labelPlural": {
+            "type": "string",
+            "description": "Plural of `label`, for example `widgets`. Without it, Grafana uses the kind's plural in the API."
+          }
+        }
+      }
+    },
     "logs": {
       "type": "boolean",
       "description": "For data source plugins, if the plugin supports logs. It may be used to filter logs only features."

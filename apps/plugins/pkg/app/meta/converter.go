@@ -531,7 +531,38 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 		meta.Languages = jsonData.Languages
 	}
 
+	meta.Kinds = kindsToMeta(jsonData.Kinds)
+
 	return meta
+}
+
+// kindsToMeta converts the kinds a plugin.json declares to pluginsv0alpha1.MetaAppKind.
+func kindsToMeta(kinds []plugins.AppKind) []pluginsv0alpha1.MetaAppKind {
+	if len(kinds) == 0 {
+		return nil
+	}
+
+	metaKinds := make([]pluginsv0alpha1.MetaAppKind, 0, len(kinds))
+	for _, kind := range kinds {
+		v0Kind := pluginsv0alpha1.MetaAppKind{
+			Group:        kind.Group,
+			Kind:         kind.Kind,
+			Icon:         kind.Icon,
+			Route:        kind.Route,
+			FolderScoped: kind.FolderScoped,
+		}
+		if kind.CreateRoute != "" {
+			v0Kind.CreateRoute = &kind.CreateRoute
+		}
+		if kind.Label != "" {
+			v0Kind.Label = &kind.Label
+		}
+		if kind.LabelPlural != "" {
+			v0Kind.LabelPlural = &kind.LabelPlural
+		}
+		metaKinds = append(metaKinds, v0Kind)
+	}
+	return metaKinds
 }
 
 // pluginStorePluginToMeta converts a pluginstore.Plugin to a pluginsv0alpha1.MetaSpec.

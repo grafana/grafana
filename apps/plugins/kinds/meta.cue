@@ -85,6 +85,25 @@ metaV0Alpha1: {
 	extensions?: #Extensions
 	// +listType=atomic
 	languages?: [...string]
+	// +listType=atomic
+	kinds?: [...#AppKind]
+}
+
+// A kind of object the app serves, so Grafana can name, draw and link its objects before the app's module loads
+#AppKind: {
+	group: string
+	kind:  string
+	icon:  string
+	// Path of the page of one object, in which {name} stands for the object's name
+	route: string
+	// Path of the page that creates an object of the kind
+	createRoute?: string
+	// Whether objects of the kind live in folders. Without it, a namespaced kind does, as in the app manifest
+	folderScoped?: bool
+	// English name as it reads inside a sentence. Without one, Grafana uses the kind in lower case
+	label?: string
+	// Plural of the label. Without one, Grafana uses the kind's plural in the API
+	labelPlural?: string
 }
 
 #Info: {

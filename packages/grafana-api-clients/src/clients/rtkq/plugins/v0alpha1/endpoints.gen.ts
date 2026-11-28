@@ -781,6 +781,21 @@ export type MetaInfo = {
   updated: string;
   version: string;
 };
+export type MetaAppKind = {
+  /** Path of the page that creates an object of the kind */
+  createRoute?: string;
+  /** Whether objects of the kind live in folders. Without it, a namespaced kind does, as in the app manifest */
+  folderScoped?: boolean;
+  group: string;
+  icon: string;
+  kind: string;
+  /** English name as it reads inside a sentence. Without one, Grafana uses the kind in lower case */
+  label?: string;
+  /** Plural of the label. Without one, Grafana uses the kind's plural in the API */
+  labelPlural?: string;
+  /** Path of the page of one object, in which {name} stands for the object's name */
+  route: string;
+};
 export type MetaQueryOptions = {
   cacheTimeout?: boolean;
   maxDataPoints?: boolean;
@@ -868,6 +883,8 @@ export type MetaJsonData = {
   /** +listType=atomic */
   includes?: MetaInclude[];
   info: MetaInfo;
+  /** +listType=atomic */
+  kinds?: MetaAppKind[];
   /** +listType=atomic */
   languages?: string[];
   logs?: boolean;

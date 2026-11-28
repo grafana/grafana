@@ -1453,6 +1453,43 @@
           }
         ]
       },
+      "MetaAppKind": {
+        "description": "A kind of object the app serves, so Grafana can name, draw and link its objects before the app's module loads",
+        "type": "object",
+        "required": ["group", "kind", "icon", "route"],
+        "properties": {
+          "createRoute": {
+            "description": "Path of the page that creates an object of the kind",
+            "type": "string"
+          },
+          "folderScoped": {
+            "description": "Whether objects of the kind live in folders. Without it, a namespaced kind does, as in the app manifest",
+            "type": "boolean"
+          },
+          "group": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "label": {
+            "description": "English name as it reads inside a sentence. Without one, Grafana uses the kind in lower case",
+            "type": "string"
+          },
+          "labelPlural": {
+            "description": "Plural of the label. Without one, Grafana uses the kind's plural in the API",
+            "type": "string"
+          },
+          "route": {
+            "description": "Path of the page of one object, in which {name} stands for the object's name",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "MetaDependencies": {
         "type": "object",
         "required": ["grafanaDependency"],
@@ -1879,6 +1916,13 @@
           },
           "info": {
             "$ref": "#/components/schemas/MetaInfo"
+          },
+          "kinds": {
+            "description": "+listType=atomic",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetaAppKind"
+            }
           },
           "languages": {
             "description": "+listType=atomic",

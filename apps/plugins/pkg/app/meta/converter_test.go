@@ -269,6 +269,40 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 		assert.Equal(t, pluginsv0alpha1.MetaIncludeRoleViewer, *meta.Includes[1].Role)
 	})
 
+	t.Run("converts kinds", func(t *testing.T) {
+		notFolderScoped := false
+		jsonData := plugins.JSONData{
+			ID:   "test-app",
+			Name: "Test App",
+			Type: plugins.TypeApp,
+			Kinds: []plugins.AppKind{
+				{
+					Group: "widgets.ext.grafana.app", Kind: "Widget", Icon: "cube", FolderScoped: &notFolderScoped,
+					Route: "/a/test-app/widgets/{name}", CreateRoute: "/a/test-app/widgets/new",
+					Label: "widget", LabelPlural: "widgets",
+				},
+				{
+					Group: "widgets.ext.grafana.app", Kind: "Gadget", Icon: "apps",
+					Route: "/a/test-app/gadgets/{name}",
+				},
+			},
+		}
+
+		meta := jsonDataToMetaJSONData(jsonData)
+		label, labelPlural, createRoute := "widget", "widgets", "/a/test-app/widgets/new"
+		assert.Equal(t, []pluginsv0alpha1.MetaAppKind{
+			{
+				Group: "widgets.ext.grafana.app", Kind: "Widget", Icon: "cube", FolderScoped: &notFolderScoped,
+				Route: "/a/test-app/widgets/{name}", CreateRoute: &createRoute,
+				Label: &label, LabelPlural: &labelPlural,
+			},
+			{
+				Group: "widgets.ext.grafana.app", Kind: "Gadget", Icon: "apps",
+				Route: "/a/test-app/gadgets/{name}",
+			},
+		}, meta.Kinds)
+	})
+
 	t.Run("converts include role types", func(t *testing.T) {
 		testCases := []struct {
 			role     authlib.RoleType

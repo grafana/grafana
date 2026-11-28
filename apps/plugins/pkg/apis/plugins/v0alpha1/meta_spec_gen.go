@@ -50,6 +50,8 @@ type MetaJSONData struct {
 	Extensions *MetaExtensions `json:"extensions,omitempty"`
 	// +listType=atomic
 	Languages []string `json:"languages,omitempty"`
+	// +listType=atomic
+	Kinds []MetaAppKind `json:"kinds,omitempty"`
 }
 
 // NewMetaJSONData creates a new MetaJSONData object.
@@ -263,6 +265,34 @@ func NewMetaExtensions() *MetaExtensions {
 // OpenAPIModelName returns the OpenAPI model name for MetaExtensions.
 func (MetaExtensions) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaExtensions"
+}
+
+// A kind of object the app serves, so Grafana can name, draw and link its objects before the app's module loads
+// +k8s:openapi-gen=true
+type MetaAppKind struct {
+	Group string `json:"group"`
+	Kind  string `json:"kind"`
+	Icon  string `json:"icon"`
+	// Path of the page of one object, in which {name} stands for the object's name
+	Route string `json:"route"`
+	// Path of the page that creates an object of the kind
+	CreateRoute *string `json:"createRoute,omitempty"`
+	// Whether objects of the kind live in folders. Without it, a namespaced kind does, as in the app manifest
+	FolderScoped *bool `json:"folderScoped,omitempty"`
+	// English name as it reads inside a sentence. Without one, Grafana uses the kind in lower case
+	Label *string `json:"label,omitempty"`
+	// Plural of the label. Without one, Grafana uses the kind's plural in the API
+	LabelPlural *string `json:"labelPlural,omitempty"`
+}
+
+// NewMetaAppKind creates a new MetaAppKind object.
+func NewMetaAppKind() *MetaAppKind {
+	return &MetaAppKind{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaAppKind.
+func (MetaAppKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaAppKind"
 }
 
 // +k8s:openapi-gen=true

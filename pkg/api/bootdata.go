@@ -425,6 +425,7 @@ func (hs *HTTPServer) newAppDTO(ctx context.Context, plugin pluginstore.Plugin, 
 		ModuleHash:      hs.pluginAssets.ModuleHash(ctx, plugin),
 		Translations:    plugin.Translations,
 		BuildMode:       plugin.BuildMode,
+		Kinds:           plugin.Kinds,
 	}
 
 	if settings.Enabled {

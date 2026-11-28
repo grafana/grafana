@@ -174,6 +174,26 @@ func (e Includes) RequiresRBACAction() bool {
 	return e.Action != ""
 }
 
+// AppKind declares how Grafana names, draws and links a kind of object an app plugin serves, before the plugin's
+// module loads. Group and Kind name the kind. How the server serves it, such as its plural, comes from API
+// discovery.
+type AppKind struct {
+	Group string `json:"group"`
+	Kind  string `json:"kind"`
+	Icon  string `json:"icon"`
+	// Route is the path of the page of one object, in which {name} stands for the object's name.
+	Route string `json:"route"`
+	// CreateRoute is the path of the page that creates an object of the kind.
+	CreateRoute string `json:"createRoute,omitempty"`
+	// FolderScoped tells whether objects of the kind live in folders. Without it, a namespaced kind does, as in
+	// the app manifest, so only false needs writing.
+	FolderScoped *bool `json:"folderScoped,omitempty"`
+	// Label is the English name as it reads inside a sentence. Without one, Grafana uses the kind in lower case.
+	Label string `json:"label,omitempty"`
+	// LabelPlural is the plural of Label. Without one, Grafana uses the kind's plural in the API.
+	LabelPlural string `json:"labelPlural,omitempty"`
+}
+
 type Dependency struct {
 	ID   string `json:"id"`
 	Type string `json:"type"`
@@ -343,6 +363,7 @@ type AppDTO struct {
 	ModuleHash      string            `json:"moduleHash,omitempty"`
 	Translations    map[string]string `json:"translations,omitempty"`
 	BuildMode       string            `json:"buildMode,omitempty"`
+	Kinds           []AppKind         `json:"kinds,omitempty"`
 }
 
 const (

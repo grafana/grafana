@@ -340,6 +340,12 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 		Apps map[string]*plugins.AppDTO `json:"apps"`
 	}
 
+	notFolderScoped := false
+	widgetKinds := []plugins.AppKind{{
+		Group: "widgets.ext.grafana.app", Kind: "Widget", Icon: "cube", FolderScoped: &notFolderScoped,
+		Route: "/a/test-app/widgets/{name}", Label: "widget", LabelPlural: "widgets",
+	}}
+
 	tests := []struct {
 		desc           string
 		pluginStore    func() pluginstore.Store
@@ -348,7 +354,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 		expected       settings
 	}{
 		{
-			desc: "disabled app with preload",
+			desc: "disabled app with preload and kinds",
 			pluginStore: func() pluginstore.Store {
 				return &pluginstore.FakePluginStore{
 					PluginList: []pluginstore.Plugin{
@@ -360,6 +366,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 								Info:    plugins.Info{Version: "0.5.0"},
 								Type:    plugins.TypeApp,
 								Preload: true,
+								Kinds:   widgetKinds,
 							},
 							FS:              &pluginfakes.FakePluginFS{},
 							LoadingStrategy: plugins.LoadingStrategyScript,
@@ -382,12 +389,13 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 						Version:         "0.5.0",
 						LoadingStrategy: plugins.LoadingStrategyScript,
 						// ModuleHash:      "sha256-test",
+						Kinds: widgetKinds,
 					},
 				},
 			},
 		},
 		{
-			desc: "enabled app with preload",
+			desc: "enabled app with preload and kinds",
 			pluginStore: func() pluginstore.Store {
 				return &pluginstore.FakePluginStore{
 					PluginList: []pluginstore.Plugin{
@@ -399,6 +407,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 								Info:    plugins.Info{Version: "0.5.0"},
 								Type:    plugins.TypeApp,
 								Preload: true,
+								Kinds:   widgetKinds,
 							},
 							FS:              &pluginfakes.FakePluginFS{},
 							LoadingStrategy: plugins.LoadingStrategyScript,
@@ -421,6 +430,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 						Version:         "0.5.0",
 						LoadingStrategy: plugins.LoadingStrategyScript,
 						// ModuleHash:      "sha256-test",
+						Kinds: widgetKinds,
 					},
 				},
 			},
