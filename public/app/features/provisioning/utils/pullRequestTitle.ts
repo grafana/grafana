@@ -1,6 +1,8 @@
 import { type BranchTemplateVars, substituteBranchVars } from './branchName';
 
 const MAX_PR_TITLE_LENGTH = 255;
+// Keeps the provider's "new pull request" URL well under common URL length limits.
+export const MAX_PR_DESCRIPTION_LENGTH = 2000;
 
 /** Renders pullRequest.titleTemplate. Same vars as the branch name, but free text:
  *  newlines/whitespace collapsed to single spaces, trimmed, capped. '' for an empty template. */
@@ -30,4 +32,30 @@ export function appendPullRequestTitleParam(
   const paramName = repoType === 'gitlab' ? 'merge_request[title]' : 'title';
   const sep = url.includes('?') ? '&' : '?';
   return `${url}${sep}${paramName}=${encodeURIComponent(title)}`;
+}
+
+// Only providers whose "new pull request" page documents a description query param.
+const PR_DESCRIPTION_PARAMS: Partial<Record<string, string>> = {
+  github: 'body',
+  githubEnterprise: 'body',
+  gitlab: 'merge_request[description]',
+};
+
+export function supportsPullRequestDescription(repoType: string | undefined): boolean {
+  return Boolean(repoType && PR_DESCRIPTION_PARAMS[repoType]);
+}
+
+/** Appends the provider-specific PR-description query param. Returns `url` unchanged when the
+ *  provider has no such param or there is no description. */
+export function appendPullRequestDescriptionParam(
+  url: string | undefined,
+  repoType: string | undefined,
+  description: string | undefined
+): string | undefined {
+  const paramName = repoType ? PR_DESCRIPTION_PARAMS[repoType] : undefined;
+  if (!url || !description || !paramName) {
+    return url;
+  }
+  const sep = url.includes('?') ? '&' : '?';
+  return `${url}${sep}${paramName}=${encodeURIComponent(description)}`;
 }

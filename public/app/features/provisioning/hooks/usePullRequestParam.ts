@@ -2,6 +2,7 @@ import { textUtil } from '@grafana/data';
 import { useUrlParams } from 'app/core/navigation/hooks';
 
 import { isValidRepoType } from '../guards';
+import { MAX_PR_DESCRIPTION_LENGTH } from '../utils/pullRequestTitle';
 
 const K8S_NAME_RE = /^[a-z0-9][a-z0-9-]{0,252}$/;
 
@@ -14,6 +15,7 @@ export const usePullRequestParam = () => {
   const resourcePushedTo = params.get('resource_pushed_to');
   const actionParam = params.get('action');
   const prTitleParam = params.get('pr_title');
+  const prDescriptionParam = params.get('pr_description');
   const decodedRepoType = repoType ? decodeURIComponent(repoType) : undefined;
   const decodedResourcePushedTo = resourcePushedTo ? decodeURIComponent(resourcePushedTo) : undefined;
 
@@ -28,5 +30,7 @@ export const usePullRequestParam = () => {
     // useUrlParams reads via URLSearchParams.get, which already percent-decodes; re-sanitize the
     // single-line shape defensively in case the param was hand-crafted in the URL.
     prTitle: prTitleParam ? prTitleParam.replace(/\s+/g, ' ').trim().slice(0, 255) : undefined,
+    // Multi-line Markdown, so only trimmed and capped; it is only ever URL-encoded into the provider link.
+    prDescription: prDescriptionParam?.trim().slice(0, MAX_PR_DESCRIPTION_LENGTH) || undefined,
   };
 };

@@ -146,6 +146,7 @@ function setup(props: Partial<DashboardPreviewBannerProps> = {}, overrides: Setu
     resourcePushedTo: 'abc',
     action: 'create',
     prTitle: undefined,
+    prDescription: undefined,
   });
 
   mockUseGetResourceRepositoryView.mockReturnValue({

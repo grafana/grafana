@@ -114,4 +114,18 @@ describe('usePullRequestParam', () => {
       expect(result.current.prTitle).toBeUndefined();
     });
   });
+
+  describe('prDescription', () => {
+    it('reads pr_description and keeps its line breaks', () => {
+      setParams({ pr_description: ' Adds a panel.\n\n## Changes\n- CPU ' });
+      const { result } = renderHook(() => usePullRequestParam());
+      expect(result.current.prDescription).toBe('Adds a panel.\n\n## Changes\n- CPU');
+    });
+
+    it('caps pr_description at 2000 characters', () => {
+      setParams({ pr_description: 'a'.repeat(2500) });
+      const { result } = renderHook(() => usePullRequestParam());
+      expect(result.current.prDescription).toBe('a'.repeat(2000));
+    });
+  });
 });
