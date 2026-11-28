@@ -58,6 +58,7 @@ function specMapper(spec: v0alpha1Spec): AppPluginConfig {
     moduleHash,
     name,
     includes,
+    kinds: spec.pluginJson.kinds,
     info: {
       description: info.description,
       // CDN-class plugins carry logo paths relative to spec.baseURL
