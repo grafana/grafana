@@ -283,16 +283,19 @@ describe('MixedDatasource', () => {
     });
   });
 
-  it('should filter out MixedDataSource queries', async () => {
-    const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+  it.each([{ uid: MIXED_DATASOURCE_NAME }, { type: 'mixed' }])(
+    'should filter out MixedDataSource queries with reference %j',
+    async (datasource) => {
+      const ds = new MixedDatasource({} as DataSourceInstanceSettings);
 
-    await expect(
-      ds.query({
-        targets: [{ refId: 'A', datasource: { uid: MIXED_DATASOURCE_NAME, id: 'datasource' } }],
-      } as unknown as DataQueryRequest)
-    ).toEmitValuesWith((results) => {
-      expect(results).toHaveLength(1);
-      expect(results[0].data).toHaveLength(0);
-    });
-  });
+      await expect(
+        ds.query({
+          targets: [{ refId: 'A', datasource }],
+        } as DataQueryRequest)
+      ).toEmitValuesWith((results) => {
+        expect(results).toHaveLength(1);
+        expect(results[0].data).toHaveLength(0);
+      });
+    }
+  );
 });

@@ -1,4 +1,6 @@
 import { find } from 'lodash';
+import { getQueryOptions } from 'test/helpers/getQueryOptions';
+import { MockObservableDataSourceApi } from 'test/mocks/datasource_srv';
 
 import {
   type DataSourceInstanceSettings,
@@ -6,7 +8,7 @@ import {
   type PanelPluginMeta,
   type TypedVariableModel,
 } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime';
+import { getDataSourceInstance, setTemplateSrv } from '@grafana/runtime';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import { type Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
 import {
@@ -21,10 +23,13 @@ import {
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import config from 'app/core/config';
+import { buildPanelKind } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 import { createAdHocVariableAdapter } from 'app/features/variables/adhoc/adapter';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
+import { MixedDatasource } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { LibraryElementKind } from '../../../library-panels/types';
 import { type DashboardJson } from '../../../manage-dashboards/types';
@@ -709,6 +714,47 @@ describe('dashboard exporter v1', () => {
 });
 
 describe('dashboard exporter v2', () => {
+  it('runs both datasources of a mixed panel after external export and provisioning reload', async () => {
+    const schemaCopy: DashboardV2Spec = JSON.parse(JSON.stringify(handyTestingSchema));
+    schemaCopy.elements = {
+      'panel-1': buildPanelKind({
+        id: 1,
+        type: 'table',
+        datasource: { type: 'mixed', uid: '-- Mixed --' },
+        targets: [
+          { refId: 'A', datasource: { type: 'testdb', uid: 'gfdb' } },
+          { refId: 'B', datasource: { type: 'other', uid: 'other' } },
+        ],
+        transformations: [{ id: 'configFromData', options: { configRefId: 'B' } }],
+      }),
+    };
+
+    const exported = await makeExportableV2(schemaCopy, true);
+    const reloaded: DashboardV2Spec = JSON.parse(JSON.stringify(exported));
+    const panel = reloaded.elements['panel-1'];
+    if (panel.kind !== 'Panel') {
+      throw new Error('Expected an exported panel');
+    }
+    expect(getPanelDataSource(panel)).toEqual({ type: 'mixed', uid: '-- Mixed --' });
+    const queries = panel.spec.data.spec.queries.map(panelQueryKindToSceneQuery);
+    expect(queries).toEqual([
+      { refId: 'A', hide: false, datasource: { type: 'testdb' } },
+      { refId: 'B', hide: false, datasource: { type: 'other' } },
+    ]);
+
+    const firstDatasource = new MockObservableDataSourceApi('TestDB', [{ data: ['table data'] }]);
+    const secondDatasource = new MockObservableDataSourceApi('OtherDB', [{ data: ['mapping data'] }]);
+    jest.mocked(getDataSourceInstance).mockResolvedValueOnce(firstDatasource).mockResolvedValueOnce(secondDatasource);
+    setTemplateSrv(new TemplateSrv());
+    const mixed = new MixedDatasource(stubs['mixed']);
+
+    await expect(mixed.query(getQueryOptions({ targets: queries }))).toEmitValuesWith((results) => {
+      expect(results.map((result) => result.data)).toEqual([['table data'], ['mapping data']]);
+    });
+    expect(getDataSourceInstance).toHaveBeenCalledWith({ type: 'testdb' }, {});
+    expect(getDataSourceInstance).toHaveBeenCalledWith({ type: 'other' }, {});
+  });
+
   it.each(['datasource', 'dashboard'])(
     'preserves a Dashboard query with group %s through export and reload',
     async (group) => {
