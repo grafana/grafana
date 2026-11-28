@@ -51,18 +51,29 @@ func (w *MigrationWorker) migrate(ctx context.Context, repo repository.ReaderWri
 
 	collector := newExportedResourceCollector(progress)
 
+	// The folder UID check keeps the UID of each folder whose whole subtree is
+	// migrated. GenerateNewFolderIDs then decides what happens to the other
+	// folders: they get a new UID, or they are not migrated.
+	var folderCheck *resources.FolderCheckOptions
+	if w.takeoverEnabled(ctx, namespace) {
+		folderCheck = &resources.FolderCheckOptions{GenerateNewIDs: options.GenerateNewFolderIDs}
+	}
+
 	exportJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Message: job.Spec.Message,
 			Push: &provisioning.ExportJobOptions{
-				Message:              options.Message,
-				Branch:               options.Branch,
-				Resources:            options.Resources,
-				GenerateNewFolderIDs: options.GenerateNewFolderIDs,
+				Message:   options.Message,
+				Branch:    options.Branch,
+				Resources: options.Resources,
+				// With the folder UID check, the check decides the UID of each folder.
+				GenerateNewFolderIDs: options.GenerateNewFolderIDs && folderCheck == nil,
 			},
 		},
 	}
-	if err := w.exportWorker.Process(ctx, repo, exportJob, collector); err != nil {
+
+	folderCheckResults, err := w.exporter.ExportForMigration(ctx, repo, exportJob, collector, folderCheck)
+	if err != nil {
 		return fmt.Errorf("export resources: %w", err)
 	}
 
@@ -74,8 +85,10 @@ func (w *MigrationWorker) migrate(ctx context.Context, repo repository.ReaderWri
 		// sync phase can claim those specific unmanaged resources without rejecting them.
 		ctx = resources.WithTakeoverAllowlist(ctx, collector.ExportedResources())
 
-		// Reset the results after the export as pull will operate on the same resources
-		progress.ResetResults(false)
+		// Reset the results after the export as pull will operate on the same
+		// resources. Keep the warnings about folders that are not migrated,
+		// because the pull does not report them again.
+		progress.ResetResults(folderCheckResults != nil && len(folderCheckResults.Skipped) > 0)
 
 		// Pull resources from the repository
 		progress.SetMessage(ctx, "pull resources")

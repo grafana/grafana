@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/dynamic"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -25,7 +26,7 @@ import (
 // The response status indicates the original stored version, so we can then request it in an un-converted form
 type conversionShim = func(ctx context.Context, item *unstructured.Unstructured) (*unstructured.Unstructured, error)
 
-func ExportResources(ctx context.Context, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool) error {
+func ExportResources(ctx context.Context, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool, skippedFolders sets.Set[string]) error {
 	progress.SetMessage(ctx, "start resource export")
 	for _, supported := range clients.SupportedResources() {
 		// skip folders as we do them first... so only non-folder kinds here
@@ -47,7 +48,7 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 			shim = newDashboardConversionShim(gvr, clients)
 		}
 
-		if err := exportResource(ctx, options, client, shim, repositoryResources, progress, generateNewUIDs); err != nil {
+		if err := exportResource(ctx, options, client, shim, repositoryResources, progress, generateNewUIDs, skippedFolders); err != nil {
 			return fmt.Errorf("export %s: %w", gvr.Resource, err)
 		}
 	}
@@ -72,7 +73,10 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 // named folder, and the parent-folder ancestry of every requested resource.
 // A resource whose folder was not named still lands at its nested path because
 // that folder (and its ancestors) is generated on demand from the folder API.
-func ExportSpecificResources(ctx context.Context, options provisioning.ExportJobOptions, folderClient dynamic.ResourceInterface, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool) error {
+//
+// When folderCheck is set, the folder UID check runs and its results are
+// returned. Otherwise the returned results are nil.
+func ExportSpecificResources(ctx context.Context, options provisioning.ExportJobOptions, folderClient dynamic.ResourceInterface, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool, folderCheck *resources.FolderCheckOptions) (*resources.FolderCheckResults, error) {
 	progress.SetMessage(ctx, "start selective resource export")
 
 	// resolvedKind caches the per-kind client and (for dashboards only) the
@@ -89,8 +93,10 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 	// to write it. Resources are written only after their folder ancestry has
 	// been exported so each one resolves to its correct nested path.
 	type pendingResource struct {
-		item *unstructured.Unstructured
-		shim conversionShim
+		item   *unstructured.Unstructured
+		shim   conversionShim
+		gr     schema.GroupResource
+		folder string
 	}
 	var pending []pendingResource
 
@@ -115,7 +121,7 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 				result.WithError(fmt.Errorf("resolve client for kind %q: %w", kindLabel(ref.Kind), err))
 				progress.Record(ctx, result.Build())
 				if err := progress.TooManyErrors(); err != nil {
-					return err
+					return nil, err
 				}
 				continue
 			}
@@ -144,7 +150,7 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 			}
 			progress.Record(ctx, result.Build())
 			if err := progress.TooManyErrors(); err != nil {
-				return err
+				return nil, err
 			}
 			continue
 		}
@@ -152,25 +158,42 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 		// Record the parent folder so its ancestry is exported before the
 		// resource is written. Meta extraction failures are surfaced by
 		// exportItem when the resource is written below.
+		var folder string
 		if meta, err := utils.MetaAccessor(item); err == nil {
-			if folder := meta.GetFolder(); folder != "" {
+			if folder = meta.GetFolder(); folder != "" {
 				folderUIDs = append(folderUIDs, folder)
 			}
 		}
-		pending = append(pending, pendingResource{item: item, shim: rk.shim})
+		pending = append(pending, pendingResource{item: item, shim: rk.shim, gr: rk.gvr.GroupResource(), folder: folder})
 	}
 
-	if err := exportFolderAncestry(ctx, options, folderClient, repositoryResources, progress, folderUIDs); err != nil {
-		return err
+	var planner *folderUIDPlanner
+	if folderUIDCheckRequested(options, folderCheck) {
+		supported, err := resources.SupportedFolderScopedResources(ctx, clients)
+		if err != nil {
+			return nil, fmt.Errorf("resolve supported resources: %w", err)
+		}
+		exported := make(exportedCounts)
+		for _, p := range pending {
+			exported.add(p.folder, p.gr)
+			supported.Insert(p.gr)
+		}
+		planner = newFolderUIDPlanner(*folderCheck, folderClient, supported, exported)
 	}
 
+	folderCheckResults, err := exportFolderAncestry(ctx, options, folderClient, repositoryResources, progress, folderUIDs, planner)
+	if err != nil {
+		return nil, err
+	}
+
+	skippedFolders := skippedFolderSet(folderCheckResults)
 	for _, p := range pending {
-		if err := exportItem(ctx, p.item, options, p.shim, repositoryResources, progress, generateNewUIDs, true); err != nil {
-			return err
+		if err := exportItem(ctx, p.item, options, p.shim, repositoryResources, progress, generateNewUIDs, true, skippedFolders); err != nil {
+			return nil, err
 		}
 	}
 
-	return nil
+	return folderCheckResults, nil
 }
 
 // kindLabel returns a human-readable label for a resource kind, falling back to
@@ -205,11 +228,12 @@ func exportResource(ctx context.Context,
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
 	generateNewUIDs bool,
+	skippedFolders sets.Set[string],
 ) error {
 	// FIXME: using k8s list will force evrything into one version -- we really want the original saved version
 	// this will work well enough for now, but needs to be revisted as we have a bigger mix of active versions
 	return resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
-		return exportItem(ctx, item, options, shim, repositoryResources, progress, generateNewUIDs, false)
+		return exportItem(ctx, item, options, shim, repositoryResources, progress, generateNewUIDs, false, skippedFolders)
 	})
 }
 
@@ -219,6 +243,8 @@ func exportResource(ctx context.Context,
 // exported, so the job should surface that failure rather than silently
 // dropping it. The bulk path keeps the quiet ignore since encountering
 // managed resources is expected when iterating the whole namespace.
+// A resource in one of skippedFolders, which the folder UID check left out, is
+// not exported.
 func exportItem(ctx context.Context,
 	item *unstructured.Unstructured,
 	options provisioning.ExportJobOptions,
@@ -227,6 +253,7 @@ func exportItem(ctx context.Context,
 	progress jobs.JobProgressRecorder,
 	generateNewUIDs bool,
 	explicitlyRequested bool,
+	skippedFolders sets.Set[string],
 ) error {
 	gvk := item.GroupVersionKind()
 	name := item.GetName()
@@ -260,6 +287,18 @@ func exportItem(ctx context.Context,
 		resultBuilder.WithError(metaError)
 		progress.Record(ctx, resultBuilder.Build())
 		return progress.TooManyErrors()
+	}
+
+	// The folder UID check can leave a folder out of the migration. Its
+	// resources stay where they are.
+	if skippedFolders.Has(meta.GetFolder()) {
+		if explicitlyRequested {
+			resultBuilder.WithError(fmt.Errorf("%s %q is not migrated: its folder contains resources that this migration does not move", kindName, name)).AsSkipped()
+		} else {
+			resultBuilder.WithAction(repository.FileActionIgnored)
+		}
+		progress.Record(ctx, resultBuilder.Build())
+		return nil
 	}
 
 	manager, managed := meta.GetManagerProperties()

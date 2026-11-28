@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/dynamic"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -20,6 +22,13 @@ import (
 
 // ExportFolders will load the full folder tree into memory and update the repositoryResources tree
 func ExportFolders(ctx context.Context, options provisioning.ExportJobOptions, folderClient dynamic.ResourceInterface, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
+	_, err := exportFolders(ctx, options, folderClient, repositoryResources, progress, nil)
+	return err
+}
+
+// exportFolders writes every unmanaged folder to the repository. When planner
+// is set, it returns what the folder UID check decided.
+func exportFolders(ctx context.Context, options provisioning.ExportJobOptions, folderClient dynamic.ResourceInterface, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, planner *folderUIDPlanner) (*resources.FolderCheckResults, error) {
 	// Load and write all folders
 	// FIXME: we load the entire tree in memory
 	progress.SetMessage(ctx, "read folder tree from API server")
@@ -45,31 +54,59 @@ func ExportFolders(ctx context.Context, options provisioning.ExportJobOptions, f
 
 		return tree.AddUnstructured(item)
 	}); err != nil {
-		return fmt.Errorf("load folder tree: %w", err)
+		return nil, fmt.Errorf("load folder tree: %w", err)
 	}
 
 	progress.SetMessage(ctx, "write folders to repository")
-	if err := writeFolderTree(ctx, options, repositoryResources, tree, progress); err != nil {
-		return fmt.Errorf("write folders to repository: %w", err)
+	folderCheckResults, err := writeFolderTree(ctx, options, repositoryResources, tree, progress, planner)
+	if err != nil {
+		return nil, fmt.Errorf("write folders to repository: %w", err)
 	}
 
-	return nil
+	return folderCheckResults, nil
 }
 
 // writeFolderTree replicates every folder in tree to the repository, recording
 // each folder as a job result. It is shared by the full-tree export and by the
 // selective export, which only assembles the folders that the requested
 // resources actually need.
-func writeFolderTree(ctx context.Context, options provisioning.ExportJobOptions, repositoryResources resources.RepositoryResources, tree resources.FolderTree, progress jobs.JobProgressRecorder) error {
+//
+// When planner is set, the folders whose whole subtree is exported keep their
+// original UID. The other folders get a new UID, or are not exported, as the
+// folder UID check says. writeFolderTree then returns what the check decided;
+// otherwise the results are nil.
+func writeFolderTree(ctx context.Context, options provisioning.ExportJobOptions, repositoryResources resources.RepositoryResources, tree resources.FolderTree, progress jobs.JobProgressRecorder, planner *folderUIDPlanner) (*resources.FolderCheckResults, error) {
 	if err := checkFolderPathCollisions(ctx, tree); err != nil {
-		return err
+		return nil, err
 	}
 
-	return repositoryResources.EnsureFolderTreeExists(ctx, tree, resources.EnsureFolderTreeExistsOptions{
+	var folderCheckResults *resources.FolderCheckResults
+	var newIDs map[string]struct{}
+	if planner != nil {
+		progress.SetMessage(ctx, "check which folders can be taken over")
+		plan := planner.plan(ctx, tree)
+		newIDs = plan.newIDs
+		folderCheckResults = &resources.FolderCheckResults{Skipped: sets.List(sets.KeySet(plan.skipped))}
+		for _, topLevel := range plan.skippedTopLevelFolders {
+			tree.Remove(topLevel.ID)
+		}
+		for _, blocking := range plan.blockingFolders {
+			progress.Record(ctx, jobs.NewFolderResult(blocking.folder.Path).WithName(blocking.folder.ID).
+				WithError(blockingFolderError(blocking)).
+				AsSkipped().Build())
+		}
+	}
+
+	err := repositoryResources.EnsureFolderTreeExists(ctx, tree, resources.EnsureFolderTreeExistsOptions{
 		Ref:                  options.Branch,
 		Path:                 options.Path,
 		GenerateNewFolderIDs: options.GenerateNewFolderIDs,
+		NewFolderIDs:         newIDs,
 		OnFolder: func(folder resources.Folder, created bool, startedAt time.Time, err error) error {
+			if _, newID := newIDs[folder.ID]; folderCheckResults != nil && !newID && created && err == nil {
+				folderCheckResults.Kept = append(folderCheckResults.Kept, folder.ID)
+			}
+
 			resultBuilder := jobs.NewFolderResult(folder.Path).WithName(folder.ID).WithAction(repository.FileActionCreated).WithStartTime(startedAt)
 
 			// A folder that failed to write must keep a non-ignored action: the
@@ -87,6 +124,13 @@ func writeFolderTree(ctx context.Context, options provisioning.ExportJobOptions,
 			return progress.TooManyErrors()
 		},
 	})
+	if err != nil {
+		return nil, err
+	}
+	if folderCheckResults != nil {
+		slices.Sort(folderCheckResults.Kept)
+	}
+	return folderCheckResults, nil
 }
 
 // checkFolderPathCollisions fails the export when two distinct folders normalize
@@ -116,9 +160,12 @@ func checkFolderPathCollisions(ctx context.Context, tree resources.FolderTree) e
 // API, collecting each ancestor so the full nested path can be reconstructed,
 // then writes that limited tree. A folder that was not explicitly requested is
 // generated here purely so its child resources resolve to a valid path.
-func exportFolderAncestry(ctx context.Context, options provisioning.ExportJobOptions, folderClient dynamic.ResourceInterface, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, folderUIDs []string) error {
+func exportFolderAncestry(ctx context.Context, options provisioning.ExportJobOptions, folderClient dynamic.ResourceInterface, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, folderUIDs []string, planner *folderUIDPlanner) (*resources.FolderCheckResults, error) {
 	if len(folderUIDs) == 0 {
-		return nil
+		if planner == nil {
+			return nil, nil
+		}
+		return &resources.FolderCheckResults{}, nil
 	}
 
 	progress.SetMessage(ctx, "export folders for selected resources")
@@ -128,11 +175,11 @@ func exportFolderAncestry(ctx context.Context, options provisioning.ExportJobOpt
 	seen := make(map[string]struct{})
 	for _, uid := range folderUIDs {
 		if err := collectFolderAncestry(ctx, uid, folderClient, tree, seen); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return writeFolderTree(ctx, options, repositoryResources, tree, progress)
+	return writeFolderTree(ctx, options, repositoryResources, tree, progress, planner)
 }
 
 // collectFolderAncestry adds the folder identified by folderUID and its

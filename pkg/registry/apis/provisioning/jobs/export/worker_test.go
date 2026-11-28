@@ -272,7 +272,7 @@ func TestExportWorker_ProcessStageOptions(t *testing.T) {
 	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
-	mockExportFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockExportFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
 	mockStageFn := NewMockWrapWithStageFn(t)
 	// Verify all stage options including Ref (branch), Timeout, and PushOnWrites
@@ -289,6 +289,64 @@ func TestExportWorker_ProcessStageOptions(t *testing.T) {
 	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
+}
+
+func TestExportWorker_FolderCheck(t *testing.T) {
+	job := v0alpha1.Job{Spec: v0alpha1.JobSpec{Action: v0alpha1.JobActionPush, Push: &v0alpha1.ExportJobOptions{}}}
+
+	newWorker := func(t *testing.T, exportFn ExportFn) (*ExportWorker, repository.Repository, jobs.JobProgressRecorder) {
+		mockRepo := repository.NewMockRepository(t)
+		mockRepo.On("Config").Return(&v0alpha1.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-namespace"},
+			Spec: v0alpha1.RepositorySpec{
+				Type:      v0alpha1.GitRepositoryType,
+				Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
+			},
+		})
+		mockProgress := jobs.NewMockJobProgressRecorder(t)
+		mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
+
+		mockClients := resources.NewMockClientFactory(t)
+		mockClients.On("Clients", mock.Anything, "test-namespace").Return(resources.NewMockResourceClients(t), nil)
+		mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
+		mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(resources.NewMockRepositoryResources(t), nil)
+
+		mockStageFn := NewMockWrapWithStageFn(t)
+		mockStageFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(_ context.Context, repo repository.Repository, _ repository.StageOptions, fn func(repository.Repository, bool) error) error {
+			return fn(repo, true)
+		})
+
+		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
+		return NewExportWorker(mockClients, mockRepoResources, exportFn, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())), mockRepo, mockProgress
+	}
+
+	t.Run("Process runs the export without the folder UID check", func(t *testing.T) {
+		var received *resources.FolderCheckOptions
+		called := false
+		worker, repo, progress := newWorker(t, func(_ context.Context, _ v0alpha1.ExportJobOptions, _ resources.ResourceClients, _ resources.RepositoryResources, _ jobs.JobProgressRecorder, folderCheck *resources.FolderCheckOptions) (*resources.FolderCheckResults, error) {
+			called = true
+			received = folderCheck
+			return nil, nil
+		})
+
+		require.NoError(t, worker.Process(context.Background(), repo, job, progress))
+		require.True(t, called)
+		require.Nil(t, received)
+	})
+
+	t.Run("ExportForMigration passes the options and returns the export's results", func(t *testing.T) {
+		want := &resources.FolderCheckResults{Kept: []string{"kept-folder"}, Skipped: []string{"skipped-folder"}}
+		var received *resources.FolderCheckOptions
+		worker, repo, progress := newWorker(t, func(_ context.Context, _ v0alpha1.ExportJobOptions, _ resources.ResourceClients, _ resources.RepositoryResources, _ jobs.JobProgressRecorder, folderCheck *resources.FolderCheckOptions) (*resources.FolderCheckResults, error) {
+			received = folderCheck
+			return want, nil
+		})
+
+		results, err := worker.ExportForMigration(context.Background(), repo, job, progress, &resources.FolderCheckOptions{GenerateNewIDs: false})
+		require.NoError(t, err)
+		require.Equal(t, &resources.FolderCheckOptions{GenerateNewIDs: false}, received)
+		require.Equal(t, want, results)
+	})
 }
 
 func TestExportWorker_ProcessStageOptionsWithBranch(t *testing.T) {
@@ -356,7 +414,7 @@ func TestExportWorker_ProcessStageOptionsWithBranch(t *testing.T) {
 			mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 			mockExportFn := NewMockExportFn(t)
-			mockExportFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			mockExportFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
 			mockStageFn := NewMockWrapWithStageFn(t)
 			// Verify that the stage options contain the correct branch reference and other parameters
@@ -406,7 +464,7 @@ func TestExportWorker_ProcessExportFnError(t *testing.T) {
 	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
-	mockExportFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("export failed"))
+	mockExportFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("export failed"))
 
 	mockStageFn := NewMockWrapWithStageFn(t)
 	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
@@ -516,7 +574,7 @@ func TestExportWorker_ProcessGitRepository(t *testing.T) {
 	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
-	mockExportFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockExportFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
 	mockStageFn := NewMockWrapWithStageFn(t)
 	// Verify clone and push options
@@ -566,7 +624,7 @@ func TestExportWorker_ProcessGitRepositoryExportFnError(t *testing.T) {
 	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
-	mockExportFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("export failed"))
+	mockExportFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("export failed"))
 
 	mockStageFn := NewMockWrapWithStageFn(t)
 	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
@@ -641,7 +699,7 @@ func TestExportWorker_CommitMessagePrecedence(t *testing.T) {
 			mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 			mockExportFn := NewMockExportFn(t)
-			mockExportFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			mockExportFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
 			mockReaderWriter := repository.NewMockReaderWriter(t)
 			mockStageFn := NewMockWrapWithStageFn(t)
@@ -706,7 +764,7 @@ func TestExportWorker_RefURLsSetWithBranch(t *testing.T) {
 	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
-	mockExportFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockExportFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
 	// Mock the ReaderWriter interface that the export function expects
 	mockReaderWriter := repository.NewMockReaderWriter(t)
@@ -766,7 +824,7 @@ func TestExportWorker_RefURLsNotSetWithoutBranch(t *testing.T) {
 	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
-	mockExportFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockExportFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
 	mockReaderWriter := repository.NewMockReaderWriter(t)
 
@@ -824,7 +882,7 @@ func TestExportWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
-	mockExportFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockExportFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
 	mockReaderWriter := repository.NewMockReaderWriter(t)
 

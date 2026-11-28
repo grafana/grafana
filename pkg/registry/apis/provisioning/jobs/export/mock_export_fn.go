@@ -26,22 +26,34 @@ func (_m *MockExportFn) EXPECT() *MockExportFn_Expecter {
 	return &MockExportFn_Expecter{mock: &_m.Mock}
 }
 
-// Execute provides a mock function with given fields: ctx, options, clients, repositoryResources, progress
-func (_m *MockExportFn) Execute(ctx context.Context, options v0alpha1.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
-	ret := _m.Called(ctx, options, clients, repositoryResources, progress)
+// Execute provides a mock function with given fields: ctx, options, clients, repositoryResources, progress, folderCheck
+func (_m *MockExportFn) Execute(ctx context.Context, options v0alpha1.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, folderCheck *resources.FolderCheckOptions) (*resources.FolderCheckResults, error) {
+	ret := _m.Called(ctx, options, clients, repositoryResources, progress, folderCheck)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Execute")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ExportJobOptions, resources.ResourceClients, resources.RepositoryResources, jobs.JobProgressRecorder) error); ok {
-		r0 = rf(ctx, options, clients, repositoryResources, progress)
+	var r0 *resources.FolderCheckResults
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ExportJobOptions, resources.ResourceClients, resources.RepositoryResources, jobs.JobProgressRecorder, *resources.FolderCheckOptions) (*resources.FolderCheckResults, error)); ok {
+		return rf(ctx, options, clients, repositoryResources, progress, folderCheck)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ExportJobOptions, resources.ResourceClients, resources.RepositoryResources, jobs.JobProgressRecorder, *resources.FolderCheckOptions) *resources.FolderCheckResults); ok {
+		r0 = rf(ctx, options, clients, repositoryResources, progress, folderCheck)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*resources.FolderCheckResults)
+		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, v0alpha1.ExportJobOptions, resources.ResourceClients, resources.RepositoryResources, jobs.JobProgressRecorder, *resources.FolderCheckOptions) error); ok {
+		r1 = rf(ctx, options, clients, repositoryResources, progress, folderCheck)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // MockExportFn_Execute_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Execute'
@@ -55,23 +67,24 @@ type MockExportFn_Execute_Call struct {
 //   - clients resources.ResourceClients
 //   - repositoryResources resources.RepositoryResources
 //   - progress jobs.JobProgressRecorder
-func (_e *MockExportFn_Expecter) Execute(ctx interface{}, options interface{}, clients interface{}, repositoryResources interface{}, progress interface{}) *MockExportFn_Execute_Call {
-	return &MockExportFn_Execute_Call{Call: _e.mock.On("Execute", ctx, options, clients, repositoryResources, progress)}
+//   - folderCheck *resources.FolderCheckOptions
+func (_e *MockExportFn_Expecter) Execute(ctx interface{}, options interface{}, clients interface{}, repositoryResources interface{}, progress interface{}, folderCheck interface{}) *MockExportFn_Execute_Call {
+	return &MockExportFn_Execute_Call{Call: _e.mock.On("Execute", ctx, options, clients, repositoryResources, progress, folderCheck)}
 }
 
-func (_c *MockExportFn_Execute_Call) Run(run func(ctx context.Context, options v0alpha1.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder)) *MockExportFn_Execute_Call {
+func (_c *MockExportFn_Execute_Call) Run(run func(ctx context.Context, options v0alpha1.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, folderCheck *resources.FolderCheckOptions)) *MockExportFn_Execute_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(v0alpha1.ExportJobOptions), args[2].(resources.ResourceClients), args[3].(resources.RepositoryResources), args[4].(jobs.JobProgressRecorder))
+		run(args[0].(context.Context), args[1].(v0alpha1.ExportJobOptions), args[2].(resources.ResourceClients), args[3].(resources.RepositoryResources), args[4].(jobs.JobProgressRecorder), args[5].(*resources.FolderCheckOptions))
 	})
 	return _c
 }
 
-func (_c *MockExportFn_Execute_Call) Return(_a0 error) *MockExportFn_Execute_Call {
-	_c.Call.Return(_a0)
+func (_c *MockExportFn_Execute_Call) Return(_a0 *resources.FolderCheckResults, _a1 error) *MockExportFn_Execute_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockExportFn_Execute_Call) RunAndReturn(run func(context.Context, v0alpha1.ExportJobOptions, resources.ResourceClients, resources.RepositoryResources, jobs.JobProgressRecorder) error) *MockExportFn_Execute_Call {
+func (_c *MockExportFn_Execute_Call) RunAndReturn(run func(context.Context, v0alpha1.ExportJobOptions, resources.ResourceClients, resources.RepositoryResources, jobs.JobProgressRecorder, *resources.FolderCheckOptions) (*resources.FolderCheckResults, error)) *MockExportFn_Execute_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -3022,6 +3022,29 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 		// to their folder path; only the manifest gets the new UID.
 		require.Equal(t, folder.ID, calls[0].folder.ID)
 	})
+
+	t.Run("without generateNewFolderIDs - folders in NewFolderIDs get a freshly generated UID", func(t *testing.T) {
+		repo := makeRepo(t)
+		inputTree, folder := makeInputTree("my-folder")
+
+		repo.On("Read", mock.Anything, "my-folder/", ref).Return(nil, repository.ErrFileNotFound)
+		repo.On("Create", mock.Anything, "my-folder/_folder.json", ref, mock.MatchedBy(func(data []byte) bool {
+			return !bytes.Contains(data, []byte(folder.ID))
+		}), "Add folder and folder metadata my-folder/").Return(nil)
+
+		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(), FolderKind)
+
+		var calls []fnCall
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{
+			Ref:          ref,
+			NewFolderIDs: map[string]struct{}{folder.ID: {}},
+			OnFolder:     recordingFn(&calls),
+		})
+
+		require.NoError(t, err)
+		require.Len(t, calls, 1)
+		require.True(t, calls[0].created)
+	})
 }
 
 func TestRenameFolderPath(t *testing.T) {

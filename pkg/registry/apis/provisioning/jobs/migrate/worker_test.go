@@ -122,7 +122,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 			progressRecorder := jobs.NewMockJobProgressRecorder(t)
 			featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
 
-			worker := NewMigrationWorker(NewMockNamespaceCleaner(t), exportWorker, jobs.NewMockWorker(t))
+			worker := NewMigrationWorker(NewMockNamespaceCleaner(t), exporterWithoutFolderCheck(exportWorker), jobs.NewMockWorker(t))
 
 			if tt.setupMocks != nil {
 				tt.setupMocks(exportWorker, progressRecorder)
@@ -178,7 +178,7 @@ func TestMigrationWorker_ConfigurationDisabled(t *testing.T) {
 			}
 
 			// Create migration worker
-			worker := NewMigrationWorker(NewMockNamespaceCleaner(t), exportWorker, jobs.NewMockWorker(t))
+			worker := NewMigrationWorker(NewMockNamespaceCleaner(t), exporterWithoutFolderCheck(exportWorker), jobs.NewMockWorker(t))
 
 			// Create a mock repository (ReaderWriter interface required)
 			mockRepo := repository.NewMockReaderWriter(t)
