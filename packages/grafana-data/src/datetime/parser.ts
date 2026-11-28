@@ -2,7 +2,7 @@
 import { lowerCase } from 'lodash';
 
 import { type DateTimeOptions, getTimeZone } from './common';
-import { parse, isValid } from './datemath';
+import { isValid, toDateTime } from './datemath';
 import { systemDateFormats } from './formats';
 import moment from './luxon_moment_compat/moment';
 import { type DateTimeInput, type DateTime, isDateTime, dateTime, toUtc, dateTimeForTimeZone } from './moment_wrapper';
@@ -21,6 +21,11 @@ export interface DateTimeOptionsWhenParsing extends DateTimeOptions {
    */
   roundUp?: boolean;
   fiscalYearStartMonth?: number;
+  /**
+   * The value to use as now when the input is a Grafana quick date. Pass the same value when
+   * parsing several dates that must be evaluated against one point in time, e.g. both ends of a range.
+   */
+  now?: DateTimeInput;
 }
 
 type DateTimeParser<T extends DateTimeOptions = DateTimeOptions> = (value: DateTimeInput, options?: T) => DateTime;
@@ -58,7 +63,12 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
       return dateTime();
     }
 
-    const parsed = parse(value, options?.roundUp, options?.timeZone, options?.fiscalYearStartMonth);
+    const parsed = toDateTime(value, {
+      roundUp: options?.roundUp,
+      timezone: options?.timeZone,
+      fiscalYearStartMonth: options?.fiscalYearStartMonth,
+      now: options?.now,
+    });
     return parsed || dateTime();
   }
 
