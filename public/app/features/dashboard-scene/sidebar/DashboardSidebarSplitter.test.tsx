@@ -1,4 +1,4 @@
-import { act, screen } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
@@ -7,6 +7,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils, setPluginLinksHook } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, SceneVariableSet, VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { useGrafana } from 'app/core/context/GrafanaContext';
+import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -79,7 +81,27 @@ describe('DashboardSidebarSplitter', () => {
     const scrollContainer = screen.getByTestId(selectors.components.DashboardSidebarSplitter.bodyContainer);
     expect(scrollContainer).toHaveAttribute('tabindex', '0');
   });
+
+  it('shows the managed badge next to the breadcrumbs and not in the sidebar', () => {
+    const scene = buildTestScene();
+    scene.setState({ meta: { k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Terraform } } } });
+
+    render(
+      <>
+        <BreadcrumbActions />
+        <DashboardSidebarSplitter dashboard={scene} />
+      </>
+    );
+
+    expect(within(screen.getByTestId('breadcrumb-actions')).getByTestId('icon-exchange-alt')).toBeInTheDocument();
+    expect(screen.getAllByTestId('icon-exchange-alt')).toHaveLength(1);
+  });
 });
+
+function BreadcrumbActions() {
+  const { chrome } = useGrafana();
+  return <div data-testid="breadcrumb-actions">{chrome.useState().breadcrumbActions}</div>;
+}
 
 export function buildTestScene() {
   const testScene = new DashboardScene({
