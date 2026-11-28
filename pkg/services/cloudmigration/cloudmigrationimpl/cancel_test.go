@@ -1,0 +1,78 @@
+package cloudmigrationimpl
+
+import (
+	"context"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
+)
+
+func TestCancelInFlightCancelsRegisteredJob(t *testing.T) {
+	t.Parallel()
+
+	s := &Service{}
+	registered := make(chan struct{})
+	finished := make(chan struct{})
+
+	go func() {
+		s.cancelMutex.Lock()
+		defer s.cancelMutex.Unlock()
+		defer s.clearCancelFunc()
+
+		jobCtx, cancel := context.WithCancel(context.Background())
+		s.setCancelFunc(cancel)
+		close(registered)
+		<-jobCtx.Done()
+		close(finished)
+	}()
+
+	<-registered
+	require.NoError(t, s.cancelInFlight())
+
+	select {
+	case <-finished:
+	case <-time.After(2 * time.Second):
+		t.Fatal("job did not finish after cancel")
+	}
+}
+
+func TestCancelInFlightNothingToCancel(t *testing.T) {
+	t.Parallel()
+
+	s := &Service{}
+	err := s.cancelInFlight()
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "nothing to cancel")
+}
+
+func TestCancelInFlightRace(t *testing.T) {
+	t.Parallel()
+
+	s := &Service{}
+	registered := make(chan struct{})
+
+	go func() {
+		s.cancelMutex.Lock()
+		defer s.cancelMutex.Unlock()
+		defer s.clearCancelFunc()
+
+		jobCtx, cancel := context.WithCancel(context.Background())
+		s.setCancelFunc(cancel)
+		close(registered)
+		<-jobCtx.Done()
+	}()
+
+	<-registered
+
+	var wg sync.WaitGroup
+	for i := 0; i < 20; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_ = s.cancelInFlight()
+		}()
+	}
+	wg.Wait()
+}
