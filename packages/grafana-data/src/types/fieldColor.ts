@@ -60,11 +60,26 @@ export interface FieldColor {
   seriesBy?: FieldColorSeriesByMode;
   /** Reverse the order of the colors in a by value color scheme */
   reverse?: boolean;
+  /**
+   * How a categorical palette assigns its colors. Defaults to the palette's own assignment.
+   * @alpha
+   */
+  assignment?: FieldColorAssignment;
 }
 
 /**
  * @beta
  */
 export type FieldColorSeriesByMode = 'min' | 'max' | 'last';
+
+/**
+ * How a categorical palette picks a color:
+ * - `seriesIndex`: by the position of the series
+ * - `seriesName`: by hashing the series name
+ * - `value`: by hashing each value, so the same value gets the same color everywhere
+ *
+ * @alpha
+ */
+export type FieldColorAssignment = 'seriesIndex' | 'seriesName' | 'value';
 
 export const FALLBACK_COLOR = '#808080';

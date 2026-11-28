@@ -138,6 +138,7 @@ export {
   getFieldColorModeForField,
   getFieldColorMode,
   isReversibleFieldColorMode,
+  supportsFieldColorAssignment,
   fieldColorModeRegistry,
   type FieldColorMode,
   /** @internal */
@@ -576,7 +577,13 @@ export type { TraceKeyValuePair, TraceLog, TraceSpanReference, TraceSpanRow } fr
 export type { FlotDataPoint } from './types/flot';
 export { type UserOrgDTO, OrgRole } from './types/orgs';
 export { GrafanaThemeType, type GrafanaThemeCommons, type GrafanaTheme } from './types/theme';
-export { FieldColorModeId, type FieldColor, type FieldColorSeriesByMode, FALLBACK_COLOR } from './types/fieldColor';
+export {
+  FieldColorModeId,
+  type FieldColor,
+  type FieldColorSeriesByMode,
+  type FieldColorAssignment,
+  FALLBACK_COLOR,
+} from './types/fieldColor';
 export {
   VariableRefresh,
   VariableSort,

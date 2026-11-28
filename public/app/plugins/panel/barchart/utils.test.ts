@@ -198,6 +198,36 @@ describe('BarChart utils', () => {
         expect(c2).toEqual('#F2495C');
       });
 
+      it('sets getColor from per-bar color when a palette assigns colors by value', () => {
+        const captured: { getColor?: BarsOptions['getColor'] } = {};
+        withGetConfigSpy(
+          (opts) => {
+            captured.getColor = opts.getColor;
+          },
+          () => {
+            const df = createFrameWithThresholds({ values: [10, 50, 10] });
+            df.fields[1].config.color = { mode: FieldColorModeId.PaletteClassic, assignment: 'value' };
+            const info = prepBarChartSeries([df]);
+            prepConfig(
+              createPrepConfigOpts({
+                series: info.series,
+                totalSeries: 1,
+              })
+            ).builder.getConfig();
+          }
+        );
+
+        const getColor = captured.getColor;
+        if (!getColor) {
+          throw new Error('Expected getColor to be defined');
+        }
+        const palette = createTheme().visualization.palette.map(createTheme().visualization.getColorByName);
+        const [c0, c1, c2] = [getColor(1, 0, 10), getColor(1, 1, 50), getColor(1, 2, 10)];
+        expect(palette).toContain(c0);
+        expect(c1).not.toEqual(c0);
+        expect(c2).toEqual(c0);
+      });
+
       it('sets getColor from per-bar color when field has value mappings with colors', () => {
         const captured: { getColor?: BarsOptions['getColor'] } = {};
         withGetConfigSpy(

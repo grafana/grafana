@@ -154,6 +154,8 @@ export const FlagKeys = {
   DatasourcesQuerierNewName: "datasources.querier.newName",
   /** Data source query gateway */
   DatasourcesQueryGateway: "datasources.queryGateway",
+  /** Enable the option to color categorical palettes by value */
+  DatavizColorByValue: "dataviz.colorByValue",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
   /** Enable the option to reverse by value color schemes */
@@ -1208,6 +1210,17 @@ export const useFlagDatasourcesQuerierNewName = (options?: ReactFlagEvaluationOp
  */
 export const useFlagDatasourcesQueryGateway = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("datasources.queryGateway", false, options).value;
+};
+
+/**
+ * Enable the option to color categorical palettes by value
+ *
+ * **Details:**
+ * - flag key: `dataviz.colorByValue`
+ * - default value: `false`
+ */
+export const useFlagDatavizColorByValue = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dataviz.colorByValue", false, options).value;
 };
 
 /**

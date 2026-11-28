@@ -2105,6 +2105,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "dataviz.colorByValue",
+			Description: "Enable the option to color categorical palettes by value",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDatavizSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "jaegerEnableGrpcEndpoint",
 			Description: "Enable querying trace data through Jaeger's gRPC endpoint (HTTP)",
 			Stage:       FeatureStageExperimental,
