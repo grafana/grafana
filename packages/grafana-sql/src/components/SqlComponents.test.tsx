@@ -102,4 +102,28 @@ describe('SQLWhereRow', () => {
 
     expect(exp.whereString).toBe("hostname IN ('${nonMultiHost}')");
   });
+
+  it('should only remove the quotes around the multi-value variable in a list of values', () => {
+    const exp: SQLExpression = {
+      whereString: "hostname IN ('$multiHost', 'web-1') AND region IN ('eu')",
+    };
+
+    const multiVar = makeVariable('multiVar', 'multiHost', { multi: true });
+
+    removeQuotesForMultiVariables(exp, [multiVar]);
+
+    expect(exp.whereString).toBe("hostname IN ($multiHost, 'web-1') AND region IN ('eu')");
+  });
+
+  it('should not remove quotes around a longer name that starts with a multi-value variable name', () => {
+    const exp: SQLExpression = {
+      whereString: "hostname IN ('$multiHostname', '${multiHost}')",
+    };
+
+    const multiVar = makeVariable('multiVar', 'multiHost', { multi: true });
+
+    removeQuotesForMultiVariables(exp, [multiVar]);
+
+    expect(exp.whereString).toBe("hostname IN ('$multiHostname', ${multiHost})");
+  });
 });
