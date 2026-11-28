@@ -601,7 +601,8 @@ func convertToRowsLayout(ctx context.Context, panels []interface{}, dsIndexProvi
 						element, name, err := buildElement(ctx, collapsedPanelMap, dsIndexProvider)
 						if err == nil {
 							elements[name] = element
-							rowElements = append(rowElements, buildGridItemKind(ctx, collapsedPanelMap, name, int64Ptr(yOffsetInRows(collapsedPanelMap, legacyRowY)), leIndexProvider))
+							// Collapsed row panels use coordinates relative to their row.
+							rowElements = append(rowElements, buildGridItemKind(ctx, collapsedPanelMap, name, nil, leIndexProvider))
 						}
 					}
 				}
