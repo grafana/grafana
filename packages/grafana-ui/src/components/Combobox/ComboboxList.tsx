@@ -230,16 +230,20 @@ const VirtualizedComboboxList = <T extends string | number>({
                 })}
               >
                 {isMultiSelect && (
-                  <div className={styles.optionAccessory}>
+                  // Keyboard selection goes through the combobox input, so this handler needs no key listener.
+                  // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+                  <div
+                    className={styles.optionAccessory}
+                    // The option row handles the click. Cancelling the default stops the checkbox label from
+                    // clicking and focusing its input, which would toggle the option twice or blur and close the menu.
+                    onClick={(e) => e.preventDefault()}
+                  >
                     {!item.infoOption && (
                       <Checkbox
                         key={itemId}
                         value={allItemsSelected || isOptionSelected(item)}
                         indeterminate={item.value === ALL_OPTION_VALUE && selectedItems.length > 0 && !allItemsSelected}
                         aria-labelledby={itemId}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                        }}
                         data-testid={`${itemId}-checkbox`}
                       />
                     )}
