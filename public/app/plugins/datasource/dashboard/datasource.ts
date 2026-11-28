@@ -36,6 +36,24 @@ import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
 
 import { type DashboardQuery } from './types';
 
+/**
+ * Copies a field's value buffers.
+ *
+ * The source panel keeps holding the frames this returns copies of, so the buffers cannot be
+ * shared. The panel renderer empties the previous render's buffers in place when a panel
+ * re-renders (scenes' `useClearPreviousData` sets `values.length = 0` on every array it no longer
+ * sees), so a shared buffer would be truncated to zero length in the source panel's own frames,
+ * which then read back as undefined until the source re-queries. Other in-place writers, such as a
+ * MutableDataFrame built from a frame, reach the source through the same alias.
+ */
+function copyFieldBuffers(field: Field): Field {
+  return {
+    ...field,
+    values: field.values.slice(),
+    ...(field.nanos && { nanos: field.nanos.slice() }),
+  };
+}
+
 function isSameRange(a: TimeRange | undefined, b: TimeRange | undefined): boolean {
   if (!a?.from || !a?.to || !b?.from || !b?.to) {
     return false;
@@ -168,6 +186,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       const annotations = data.annotations ?? [];
       return annotations.map((frame) => ({
         ...frame,
+        fields: frame.fields.map(copyFieldBuffers),
         meta: {
           ...frame.meta,
           dataTopic: DataTopic.Series,
@@ -182,7 +201,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         // Lets a panel reading several source panels tell their frames apart, since refIds can collide.
         meta: { ...s.meta, custom: { ...s.meta?.custom, dashboardSourcePanelId: query.panelId } },
         fields: s.fields.map((field: Field) => ({
-          ...field,
+          ...copyFieldBuffers(field),
           config: {
             ...field.config,
             // Enable AdHoc filtering for string and numeric fields only when per-panel setting is enabled
