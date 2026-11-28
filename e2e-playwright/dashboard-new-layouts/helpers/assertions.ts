@@ -129,17 +129,21 @@ export async function expectDashboardChangesToContain(
   await test.step('Expect JSON diff in save drawer to contain text', async () => {
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
 
-    await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Changes')).click();
+    const changesTab = dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Changes'));
+    await changesTab.click();
 
-    // The Monaco diff editor virtualizes its DOM, so assert against the loaded text models
-    // instead of the rendered text
-    await expect(page.locator('.monaco-diff-editor')).toBeVisible();
+    // CodeMirror only renders lines in the viewport, so read the modified document from the editor
+    // state instead of the rendered text
+    const saveDrawer = page.getByRole('dialog').filter({ has: changesTab });
+    const modifiedEditor = saveDrawer.getByRole('textbox', { name: 'Modified' });
+    await expect(modifiedEditor).toBeVisible();
     await expect
       .poll(() =>
-        page.evaluate(
-          (text) => window.monaco.editor.getModels().some((model) => model.getValue().includes(text)),
-          changeText
-        )
+        modifiedEditor.evaluate((content, text) => {
+          // cmTile is CodeMirror's back-reference from the content element to its editor view
+          const view = Reflect.get(content, 'cmTile')?.root?.view;
+          return Boolean(view?.state.doc.toString().includes(text));
+        }, changeText)
       )
       .toBe(true);
 

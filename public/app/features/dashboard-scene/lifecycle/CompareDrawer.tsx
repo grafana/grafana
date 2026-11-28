@@ -15,7 +15,7 @@ import {
   Text,
   useStyles2,
 } from '@grafana/ui';
-import { MonacoDiffEditor } from 'app/core/components/MonacoDiffEditor/MonacoDiffEditor';
+import { DiffViewer } from 'app/core/components/DiffViewer/DiffViewer';
 
 import { diffDashboardSpecs, type SpecChange } from './specDiff';
 
@@ -98,7 +98,7 @@ export function CompareDrawer({
           <ChangeList changes={changes} onSelectPanel={onSelectPanel} />
         ) : (
           <div className={styles.diff}>
-            <MonacoDiffEditor
+            <DiffViewer
               language="json"
               original={JSON.stringify(reference, null, 2)}
               modified={JSON.stringify(proposedSpec, null, 2)}
