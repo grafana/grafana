@@ -992,6 +992,23 @@ describe('getHistogramFields', () => {
     expect(result).toBeDefined();
     expect(result!.counts[0].values.every((v) => !isNaN(v))).toBe(true);
   });
+
+  it('returns undefined for heatmap-cells frames without yMax or a count field', () => {
+    const result = getHistogramFields(
+      toDataFrame({
+        meta: {
+          type: DataFrameType.HeatmapCells,
+        },
+        fields: [
+          { name: 'xMin', type: FieldType.time, values: [1000, 1000, 2000, 2000] },
+          { name: 'yMin', type: FieldType.number, values: [0, 10, 0, 10] },
+          { name: 'data', type: FieldType.number, values: [1, 2, 3, 4] },
+        ],
+      })
+    );
+
+    expect(result).toBeUndefined();
+  });
 });
 
 describe('joinHistograms', () => {

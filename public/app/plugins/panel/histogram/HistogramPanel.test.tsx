@@ -4,6 +4,7 @@ import {
   createDataFrame,
   createTheme,
   type DataFrame,
+  DataFrameType,
   FieldType,
   getDefaultTimeRange,
   getDisplayProcessor,
@@ -147,6 +148,21 @@ describe('HistogramPanel', () => {
     expect(screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper)).toBeVisible();
     expect(screen.getByText('Bucket')).toBeVisible();
     expect(screen.getByText('0 - 1')).toBeVisible();
+  });
+
+  it('does not crash on a heatmap-cells frame without yMax or a count field', () => {
+    const heatmapCellsFrame = createDataFrame({
+      meta: { type: DataFrameType.HeatmapCells },
+      fields: [
+        { name: 'xMin', type: FieldType.time, values: [1000, 1000, 2000, 2000] },
+        { name: 'yMin', type: FieldType.number, values: [0, 10, 0, 10] },
+        { name: 'data', type: FieldType.number, values: [1, 2, 3, 4] },
+      ],
+    });
+
+    setUp({ series: [heatmapCellsFrame] });
+
+    expect(screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container)).toBeVisible();
   });
 });
 
