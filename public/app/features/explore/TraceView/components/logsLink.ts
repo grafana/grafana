@@ -38,7 +38,8 @@ export function getTraceToLogsSpanQuery(
 
 /**
  * Builds a trace-to-logs query for the whole trace (no span id filter).
- * Uses the root span for tag mapping and collects service names across the trace for Loki job variants.
+ * Uses the root span for tag mapping, widened to every span of the trace for Loki, and collects service names across
+ * the trace for Loki job variants.
  */
 export function getTraceToLogsTraceQuery(
   trace: Trace,
@@ -51,14 +52,14 @@ export function getTraceToLogsTraceQuery(
   }
 
   const allTags = getSpanTags(rootSpan);
-  const serviceNames = getTraceServiceNames(trace);
   return getTraceToLogsQuery(
     allTags,
     logsDataSourceSettings,
     traceToLogsOptions,
     trace.traceID,
     undefined,
-    serviceNames
+    [],
+    trace.spans
   );
 }
 
@@ -92,21 +93,14 @@ function getRootSpan(spans: TraceSpan[]): TraceSpan | undefined {
   return candidateSpan;
 }
 
-function getTraceServiceNames(trace: Trace): string[] {
-  const names: string[] = [];
-  for (const span of trace.spans) {
-    names.push(...getServiceNames(getSpanTags(span), span.process.serviceName));
-  }
-  return [...new Set(names)];
-}
-
 export function getTraceToLogsQuery(
   allTags: TraceToLogsTag[],
   logsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData>,
   traceToLogsOptions: TraceToLogsOptionsV2,
   traceID: string,
   spanID?: string,
-  serviceNames: string[] = []
+  serviceNames: string[] = [],
+  traceSpans: TraceSpan[] = []
 ) {
   // Treat omitted customQuery + non-empty query as custom (provisioned V2); explicit false ignores leftover query text.
   const customQuery =
@@ -121,15 +115,17 @@ export function getTraceToLogsQuery(
   switch (logsDataSourceSettings?.type) {
     case 'loki':
       // Trace/OTel attributes use dots; Loki label names require underscores.
-      tags = getFormattedTags(allTags, tagsToUse, { normalizeLabelName: toLokiLabelName });
-      const tagMatchers = getFilteredTags(allTags, tagsToUse, { normalizeLabelName: toLokiLabelName });
+      const traceTags = traceSpans.length > 0 ? getLokiTraceTags(allTags, traceSpans, tagsToUse) : undefined;
+      const tagMatchers =
+        traceTags?.matchers ?? getFilteredTags(allTags, tagsToUse, { normalizeLabelName: toLokiLabelName });
+      tags = tagMatchers.join(', ');
       query = getQueryForLoki(
         traceID,
         spanID,
         tagMatchers,
         traceToLogsOptions,
         customQuery,
-        serviceNames.length > 0 ? serviceNames : getServiceNames(allTags)
+        serviceNames.length > 0 ? serviceNames : (traceTags?.serviceNames ?? getServiceNames(allTags))
       );
       break;
     case 'grafana-splunk-datasource':
@@ -161,20 +157,74 @@ export function getTraceToLogsQuery(
 }
 
 function getServiceNames(allTags: TraceToLogsTag[], processServiceName?: string): string[] {
-  const names = allTags
-    .filter((tag) => tag.key === 'service.name')
-    .map((tag) => String(tag.value))
-    .filter((name) => name.length > 0);
+  const names = new Set<string>();
+  addServiceNames(names, allTags, processServiceName);
+  return [...names];
+}
 
+function addServiceNames(names: Set<string>, tags: TraceToLogsTag[], processServiceName?: string) {
+  for (const tag of tags) {
+    if (tag.key === 'service.name' && String(tag.value).length > 0) {
+      names.add(String(tag.value));
+    }
+  }
   if (processServiceName) {
-    names.push(processServiceName);
+    names.add(processServiceName);
+  }
+}
+
+function getLokiTraceTags(rootTags: TraceToLogsTag[], traceSpans: TraceSpan[], tagsToUse: TraceToLogsTag[]) {
+  const labelNames = new Map<string, string>();
+  for (const { key, value } of tagsToUse) {
+    if (!labelNames.has(key)) {
+      labelNames.set(key, toLokiLabelName(value || key));
+    }
   }
 
-  return [...new Set(names)];
+  const valuesByLabel = new Map<string, Set<string>>();
+  for (const tag of rootTags) {
+    const labelName = labelNames.get(tag.key);
+    if (labelName !== undefined) {
+      valuesByLabel.set(labelName, (valuesByLabel.get(labelName) ?? new Set<string>()).add(String(tag.value)));
+    }
+  }
+
+  const serviceNames = new Set<string>();
+  const lastSpanWithLabel = new Map<string, number>();
+  traceSpans.forEach((span, spanIndex) => {
+    const spanTags = getSpanTags(span);
+    addServiceNames(serviceNames, spanTags, span.process.serviceName);
+    for (const tag of spanTags) {
+      const labelName = labelNames.get(tag.key);
+      const values = labelName === undefined ? undefined : valuesByLabel.get(labelName);
+      if (labelName !== undefined && values) {
+        values.add(String(tag.value));
+        lastSpanWithLabel.set(labelName, spanIndex);
+      }
+    }
+    for (const labelName of valuesByLabel.keys()) {
+      if (lastSpanWithLabel.get(labelName) !== spanIndex) {
+        valuesByLabel.delete(labelName);
+      }
+    }
+  });
+
+  const matchers = Array.from(valuesByLabel, ([labelName, values]) => {
+    const labelValues = [...values];
+    return labelValues.length === 1
+      ? `${labelName}="${labelValues[0]}"`
+      : `${labelName}=~"${labelValues.map(escapeLokiRegexValue).join('|')}"`;
+  });
+
+  return { matchers: matchers.length > 0 ? matchers : undefined, serviceNames: [...serviceNames] };
 }
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function escapeLokiRegexValue(value: string): string {
+  return escapeRegExp(value).replace(/[\\"]/g, '\\$&').replace(/\n/g, '\\n');
 }
 
 /** Field-name pairs used when probing which structured id labels exist in logs. */
@@ -218,7 +268,7 @@ function getQueryForLoki(
 
   const tagSelector = `{${tags.join(', ')}}`;
   const jobSelector =
-    serviceNames.length > 0 ? `{job=~"(.*/)?(${serviceNames.map(escapeRegExp).join('|')})"}` : undefined;
+    serviceNames.length > 0 ? `{job=~"(.*/)?(${serviceNames.map(escapeLokiRegexValue).join('|')})"}` : undefined;
 
   const queries: LokiQuery[] = [];
 

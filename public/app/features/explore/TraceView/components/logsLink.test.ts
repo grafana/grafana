@@ -239,17 +239,202 @@ describe('getTraceToLogsQuery loki alternatives', () => {
     const { query } = getTraceToLogsTraceQuery(trace, lokiSettings, defaultOptions);
     const queries = query as LokiQuery[];
 
-    expect(queries[0].expr).toBe(
-      '{cluster="cluster1", hostname="hostname1", service_namespace="namespace1"} | logfmt | json | drop __error__ | trace_id="7946b05c2e2e4e5a"'
-    );
+    expect(queries[0].expr).toBe('{cluster="cluster1"} | logfmt | json | drop __error__ | trace_id="7946b05c2e2e4e5a"');
     expect(queries[0].refId).toBe('t2l:default:trace_id');
     expect(queries.find((q) => q.refId === 't2l:job:trace_id')?.expr).toBe(
       '{job=~"(.*/)?(checkout|payments)"} | logfmt | json | drop __error__ | trace_id="7946b05c2e2e4e5a"'
     );
     expect(queries.at(-1)).toEqual({
-      expr: '{cluster="cluster1", hostname="hostname1", service_namespace="namespace1"} |= "7946b05c2e2e4e5a"',
+      expr: '{cluster="cluster1"} |= "7946b05c2e2e4e5a"',
       refId: 't2l:line-contains',
     });
+  });
+
+  it('escapes regex and string characters of service names in the job selector', () => {
+    const { query } = getTraceToLogsQuery(
+      [{ key: 'cluster', value: 'cluster1' }],
+      lokiSettings,
+      defaultOptions,
+      'trace1',
+      undefined,
+      ['api.gateway', 'orders(v2)']
+    );
+    const jobQuery = (query as LokiQuery[]).find((q) => q.refId === 't2l:job:trace_id');
+
+    expect(jobQuery?.expr).toBe(
+      String.raw`{job=~"(.*/)?(api\\.gateway|orders\\(v2\\))"} | logfmt | json | drop __error__ | trace_id="trace1"`
+    );
+  });
+});
+
+describe('getTraceToLogsTraceQuery loki tags', () => {
+  const traceID = '7946b05c2e2e4e5a';
+
+  function createServiceSpan(spanID: string, serviceName: string, parentSpanID?: string, namespace?: string) {
+    return createSpan({
+      spanID,
+      references: parentSpanID ? [{ refType: 'CHILD_OF', traceID, spanID: parentSpanID }] : [],
+      process: {
+        serviceName,
+        tags: [
+          { key: 'service.name', value: serviceName },
+          ...(namespace ? [{ key: 'service.namespace', value: namespace }] : []),
+        ],
+      },
+    });
+  }
+
+  function createTrace(spans: TraceSpan[]) {
+    return { traceID, spans, processes: {} } as unknown as Trace;
+  }
+
+  beforeEach(() => {
+    setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: true });
+  });
+
+  afterEach(() => {
+    setTestFlags({});
+  });
+
+  it('matches the services of every span, not only the root span service', () => {
+    const trace = createTrace([
+      createServiceSpan('root', 'load-generator', undefined, 'otel-demo'),
+      createServiceSpan('proxy', 'frontend-proxy', 'root', 'otel-demo'),
+      createServiceSpan('order', 'checkout', 'proxy', 'otel-demo'),
+      createServiceSpan('cart', 'cart', 'order', 'otel-demo'),
+      createServiceSpan('order2', 'checkout', 'proxy', 'otel-demo'),
+    ]);
+
+    const { query, tags } = getTraceToLogsTraceQuery(trace, lokiSettings, defaultOptions);
+    const queries = query as LokiQuery[];
+    const selector = '{service_name=~"load-generator|frontend-proxy|checkout|cart", service_namespace="otel-demo"}';
+
+    expect(tags).toBe('service_name=~"load-generator|frontend-proxy|checkout|cart", service_namespace="otel-demo"');
+    expect(queries[0]).toEqual({
+      expr: `${selector} | logfmt | json | drop __error__ | trace_id="${traceID}"`,
+      refId: 't2l:default:trace_id',
+    });
+    expect(queries.filter((q) => q.refId.startsWith('t2l:default:')).every((q) => q.expr.startsWith(selector))).toBe(
+      true
+    );
+    expect(queries.at(-1)).toEqual({ expr: `${selector} |= "${traceID}"`, refId: 't2l:line-contains' });
+    expect(queries.find((q) => q.refId === 't2l:job:trace_id')?.expr).toBe(
+      `{job=~"(.*/)?(load-generator|frontend-proxy|checkout|cart)"} | logfmt | json | drop __error__ | trace_id="${traceID}"`
+    );
+  });
+
+  it('starts from the root span tags when the root is not the first span', () => {
+    const trace = createTrace([
+      createServiceSpan('order', 'checkout', 'root', 'otel-demo'),
+      createServiceSpan('root', 'load-generator', undefined, 'otel-demo'),
+    ]);
+
+    const { tags } = getTraceToLogsTraceQuery(trace, lokiSettings, defaultOptions);
+
+    expect(tags).toBe('service_name=~"load-generator|checkout", service_namespace="otel-demo"');
+  });
+
+  it('leaves out tags that some spans of the trace do not have', () => {
+    const trace = createTrace([
+      createServiceSpan('root', 'frontend-web'),
+      createServiceSpan('order', 'checkout', 'root', 'otel-demo'),
+    ]);
+
+    const { tags } = getTraceToLogsTraceQuery(trace, lokiSettings, defaultOptions);
+
+    expect(tags).toBe('service_name=~"frontend-web|checkout"');
+  });
+
+  it('keeps exact matchers when every span has the same tag values', () => {
+    const trace = createTrace([
+      createServiceSpan('root', 'checkout', undefined, 'otel-demo'),
+      createServiceSpan('prepare', 'checkout', 'root', 'otel-demo'),
+    ]);
+
+    const { tags } = getTraceToLogsTraceQuery(trace, lokiSettings, defaultOptions);
+
+    expect(tags).toBe('service_name="checkout", service_namespace="otel-demo"');
+  });
+
+  it('uses the root span tags when the spans share no tag', () => {
+    const root = createSpan({
+      spanID: 'root',
+      process: { serviceName: 'gateway', tags: [{ key: 'hostname', value: 'host1' }] },
+    });
+    const trace = createTrace([root, createServiceSpan('order', 'checkout', 'root', 'otel-demo')]);
+
+    const { tags } = getTraceToLogsTraceQuery(trace, lokiSettings, defaultOptions);
+
+    expect(tags).toBe('hostname="host1"');
+  });
+
+  it('follows the configured tag mapping', () => {
+    const trace = createTrace([
+      createServiceSpan('root', 'load-generator', undefined, 'otel-demo'),
+      createServiceSpan('order', 'checkout', 'root', 'otel-demo'),
+    ]);
+
+    const { tags } = getTraceToLogsTraceQuery(trace, lokiSettings, {
+      ...defaultOptions,
+      tags: [{ key: 'service.name', value: 'app' }, { key: 'service.namespace' }],
+    });
+
+    expect(tags).toBe('app=~"load-generator|checkout", service_namespace="otel-demo"');
+  });
+
+  it('escapes regex and string characters in combined tag values', () => {
+    const trace = createTrace([
+      createServiceSpan('root', 'api.gateway'),
+      createServiceSpan('order', 'orders(v2)', 'root'),
+      createServiceSpan('quote', 'say "hi"', 'root'),
+      createServiceSpan('legacy', String.raw`win\svc`, 'root'),
+      createServiceSpan('batch', 'nightly\nbatch', 'root'),
+    ]);
+
+    const { tags } = getTraceToLogsTraceQuery(trace, lokiSettings, defaultOptions);
+
+    expect(tags).toBe(String.raw`service_name=~"api\\.gateway|orders\\(v2\\)|say \"hi\"|win\\\\svc|nightly\nbatch"`);
+  });
+
+  it('collects job service names from the tags and process of every span', () => {
+    const unnamed = createSpan({
+      spanID: 'unnamed',
+      references: [{ refType: 'CHILD_OF', traceID, spanID: 'root' }],
+      process: { serviceName: 'payments', tags: [{ key: 'service.name', value: '' }] },
+    });
+    const trace = createTrace([
+      createServiceSpan('root', 'checkout'),
+      unnamed,
+      createServiceSpan('order', 'checkout', 'root'),
+    ]);
+
+    const { query } = getTraceToLogsTraceQuery(trace, lokiSettings, defaultOptions);
+    const jobQuery = (query as LokiQuery[]).find((q) => q.refId === 't2l:job:trace_id');
+
+    expect(jobQuery?.expr.startsWith('{job=~"(.*/)?(checkout|payments)"}')).toBe(true);
+  });
+
+  it('combines tags for the legacy query when dynamic trace to logs is disabled', () => {
+    setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: false });
+    const trace = createTrace([
+      createServiceSpan('root', 'load-generator', undefined, 'otel-demo'),
+      createServiceSpan('order', 'checkout', 'root', 'otel-demo'),
+    ]);
+
+    const { query, tags } = getTraceToLogsTraceQuery(trace, lokiSettings, { ...defaultOptions, filterByTraceID: true });
+
+    expect(tags).toBe('service_name=~"load-generator|checkout", service_namespace="otel-demo"');
+    expect((query as LokiQuery).expr.startsWith('{${__tags}} | label_format log_line_contains_trace_id=')).toBe(true);
+  });
+
+  it('keeps the span query on the span tags', () => {
+    const { tags } = getTraceToLogsSpanQuery(
+      createServiceSpan('order', 'checkout', 'root', 'otel-demo'),
+      lokiSettings,
+      defaultOptions
+    );
+
+    expect(tags).toBe('service_name="checkout", service_namespace="otel-demo"');
   });
 });
 
