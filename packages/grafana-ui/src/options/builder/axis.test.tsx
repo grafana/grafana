@@ -30,6 +30,25 @@ describe('ScaleDistributionEditor', () => {
       expect(onChange).toHaveBeenCalledWith(origValue);
     });
 
+    it('warns on a negative threshold and accepts a positive fraction after correction', async () => {
+      const user = userEvent.setup();
+      const onChange = jest.fn();
+      const value = { type: ScaleDistribution.Symlog, log: 2 };
+      render(<ScaleDistributionEditor value={value} onChange={onChange} />);
+      const input = screen.getByRole('spinbutton', { name: 'Linear threshold' });
+
+      await user.click(input);
+      await user.paste('-0.1');
+      await user.tab();
+      expect(onChange).not.toHaveBeenCalled();
+      expect(screen.getByText('Linear threshold must be greater than zero')).toBeInTheDocument();
+
+      await user.clear(input);
+      await user.type(input, '0.3');
+      expect(onChange).toHaveBeenLastCalledWith({ ...value, linearThreshold: 0.3 });
+      expect(screen.queryByText('Linear threshold must be greater than zero')).not.toBeInTheDocument();
+    });
+
     it('updates the linear threshold input when its value is restored', async () => {
       const onChange = jest.fn();
       const user = userEvent.setup();

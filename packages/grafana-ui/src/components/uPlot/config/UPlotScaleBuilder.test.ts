@@ -101,6 +101,18 @@ describe('UPlotScaleBuilder', () => {
       expect(config['y'].asinh).toBe(1);
     });
 
+    it.each([-0.1, 0, NaN, Infinity])(
+      'uses the default for an invalid saved symlog threshold of %s',
+      (linearThreshold) => {
+        const config = new UPlotScaleBuilder({
+          ...baseProps,
+          distribution: ScaleDistribution.Symlog,
+          linearThreshold,
+        }).getConfig();
+        expect(config['y'].asinh).toBe(1);
+      }
+    );
+
     it('uses a provided custom range directly instead of a computed range function', () => {
       const customRange: uPlot.Range.MinMax = [-100, 200];
       const config = new UPlotScaleBuilder({ ...baseProps, range: customRange }).getConfig();

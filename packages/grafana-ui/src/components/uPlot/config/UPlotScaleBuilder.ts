@@ -57,6 +57,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       softMin,
       softMax,
       range,
+      linearThreshold = 1,
       direction,
       orientation,
       centeredZero,
@@ -79,11 +80,13 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     const distr = this.props.distribution;
     const safeLog = isValidLogBase(this.props.log) ? this.props.log : FALLBACK_LOG;
 
+    const safeThreshold = Number.isFinite(linearThreshold) && linearThreshold > 0 ? linearThreshold : 1;
+
     const distribution = !isTime
       ? {
           distr: distr ? DISTR_MAP[distr] : DISTR_MAP[ScaleDistribution.Linear],
           log: distr === ScaleDistribution.Log || distr === ScaleDistribution.Symlog ? safeLog : undefined,
-          asinh: distr === ScaleDistribution.Symlog ? (this.props.linearThreshold ?? 1) : undefined,
+          asinh: distr === ScaleDistribution.Symlog ? safeThreshold : undefined,
         }
       : {};
 
