@@ -9,6 +9,8 @@ import {
 } from './dataTransform';
 import { textToDataContainer } from './testHelpers';
 
+import { DataSourceType, FrameType } from '../types';
+
 describe('nestedSetToLevels', () => {
   it('converts nested set data frame to levels', () => {
     // [1------]
@@ -267,5 +269,66 @@ describe('CollapsedMap', () => {
     expect(collapsedMap.get(items[1][2])?.collapsed).toBe(true);
     expect(newMap.get(items[1][0])?.collapsed).toBe(false);
     expect(newMap.get(items[1][2])?.collapsed).toBe(false);
+  });
+});
+
+describe('FlameGraphDataContainer.getFrameType', () => {
+  function makeContainer(dataSource: DataSourceType, extraFields: Array<{ name: string; values: unknown[] }> = []) {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'level', values: [0, 1, 1] },
+        { name: 'value', values: [10, 5, 5] },
+        { name: 'label', values: ['root', 'a', 'b'], type: FieldType.string },
+        { name: 'self', values: [0, 5, 5] },
+        ...extraFields,
+      ],
+    });
+    return new FlameGraphDataContainer(frame, { collapsing: true }, undefined, dataSource);
+  }
+
+  it('classifies frames by filename for Pyroscope', () => {
+    const container = makeContainer(DataSourceType.PprofPyroscope, [
+      { name: 'filename', values: ['/usr/bin/app', '[kernel] vmlinux', ''] },
+    ]);
+
+    expect(container.getFrameType(0)).toBe(FrameType.User);
+    expect(container.getFrameType(1)).toBe(FrameType.Kernel);
+    expect(container.getFrameType(2)).toBe(FrameType.Unknown);
+  });
+
+  it('returns Unknown for Pyroscope when the filename field is missing', () => {
+    const container = makeContainer(DataSourceType.PprofPyroscope);
+
+    expect(() => container.getFrameType(0)).not.toThrow();
+    expect(container.getFrameType(0)).toBe(FrameType.Unknown);
+  });
+
+  it('returns Unknown for Pyroscope when a filename value is undefined', () => {
+    const container = makeContainer(DataSourceType.PprofPyroscope, [
+      { name: 'filename', values: [undefined, undefined, undefined] },
+    ]);
+
+    expect(container.getFrameType(0)).toBe(FrameType.Unknown);
+  });
+
+  it('ignores filename for other data sources', () => {
+    const container = makeContainer(DataSourceType.Unknown, [
+      { name: 'filename', values: ['[kernel] vmlinux', '[kernel] vmlinux', '[kernel] vmlinux'] },
+    ]);
+
+    expect(container.getFrameType(1)).toBe(FrameType.Unknown);
+  });
+
+  it('uses the frameType field for other data sources when it exists', () => {
+    const container = makeContainer(DataSourceType.Unknown, [
+      { name: 'frameType', values: [FrameType.User, FrameType.Kernel, FrameType.Unknown] },
+    ]);
+
+    expect(container.getFrameType(1)).toBe(FrameType.Kernel);
+  });
+
+  it('exposes the data source it was created with', () => {
+    expect(makeContainer(DataSourceType.PprofPyroscope).getDataSource()).toBe(DataSourceType.PprofPyroscope);
+    expect(makeContainer(DataSourceType.Unknown).getDataSource()).toBe(DataSourceType.Unknown);
   });
 });

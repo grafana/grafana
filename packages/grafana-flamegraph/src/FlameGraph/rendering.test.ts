@@ -1,5 +1,8 @@
 import { createDataFrame, FieldType } from '@grafana/data';
 
+import { DataSourceType, FrameType } from '../types';
+
+import { getBarColorBySpace } from './colors';
 import { FlameGraphDataContainer, type LevelItem } from './dataTransform';
 import { functionName, walkTree } from './rendering';
 import { textToDataContainer } from './testHelpers';
@@ -12,6 +15,23 @@ function makeDataFrame(fields: Record<string, Array<number | string>>) {
       type: typeof fields[key][0] === 'string' ? FieldType.string : FieldType.number,
     })),
   });
+}
+
+function makeSpaceContainer() {
+  return new FlameGraphDataContainer(
+    createDataFrame({
+      fields: [
+        { name: 'level', values: [0, 1, 1, 1] },
+        { name: 'value', values: [30, 10, 10, 10] },
+        { name: 'label', values: ['root', 'k', 'u', 'x'], type: FieldType.string },
+        { name: 'self', values: [0, 10, 10, 10] },
+        { name: 'filename', values: ['/bin/app', '[kernel]vmlinux', '/usr/lib/libc.so', ''], type: FieldType.string },
+      ],
+    }),
+    { collapsing: false },
+    undefined,
+    DataSourceType.PprofPyroscope
+  );
 }
 
 type RenderData = {
@@ -41,7 +61,7 @@ describe('walkTree', () => {
       1,
       100,
       container.getCollapsedMap(),
-      (item, x, y, width, height, label, collapsed) => {
+      (item, x, y, width, height, label, filename, collapsed) => {
         expect(item).toEqual(root);
         expect(x).toEqual(0);
         expect(y).toEqual(0);
@@ -78,7 +98,7 @@ describe('walkTree', () => {
       1,
       100,
       container.getCollapsedMap(),
-      (item, x, y, width, height, label, muted) => {
+      (item, x, y, width, height, label, filename, muted) => {
         renderData.push({ item, x, y, width, height, label, muted });
       }
     );
@@ -114,7 +134,7 @@ describe('walkTree', () => {
       1,
       100,
       container.getCollapsedMap(),
-      (item, x, y, width, height, label, muted) => {
+      (item, x, y, width, height, label, filename, muted) => {
         renderData.push({ item, x, y, width, height, label, muted });
       }
     );
@@ -150,7 +170,7 @@ describe('walkTree', () => {
       1,
       100,
       container.getCollapsedMap(),
-      (item, x, y, width, height, label, muted) => {
+      (item, x, y, width, height, label, filename, muted) => {
         renderData.push({ item, x, y, width, height, label, muted });
       }
     );
@@ -176,7 +196,7 @@ describe('walkTree', () => {
       1,
       14,
       container.getCollapsedMap(),
-      (item, x, y, width, height, label, muted) => {
+      (item, x, y, width, height, label, filename, muted) => {
         renderData.push({ item, x, y, width, height, label, muted });
       }
     );
@@ -186,6 +206,23 @@ describe('walkTree', () => {
       { item: root.children[1], width: 5, height: 22, x: 3, y: 22, muted: true, label: '3' },
       { item: root.children[2], width: 6, height: 22, x: 8, y: 22, muted: true, label: '4' },
     ]);
+  });
+
+  it('passes the frame type of each item to the render callback', () => {
+    const container = makeSpaceContainer();
+    const root = container.getLevels()[0][0];
+    const seen: Record<string, FrameType> = {};
+
+    walkTree(root, 'children', container, 30, 0, 1, 300, container.getCollapsedMap(), (item, x, y, w, h, label, frameType) => {
+      seen[label] = frameType;
+    });
+
+    expect(seen).toEqual({
+      root: FrameType.User,
+      k: FrameType.Kernel,
+      u: FrameType.User,
+      x: FrameType.Unknown,
+    });
   });
 });
 
@@ -213,7 +250,7 @@ describe('walkTree with HiDPI (devicePixelRatio=2)', () => {
       1,
       100,
       container.getCollapsedMap(),
-      (item, x, y, width, height, label, muted) => {
+      (item, x, y, width, height, label, filename, muted) => {
         renderData.push({ item, x, y, width, height, label, muted });
       },
       2
@@ -243,7 +280,7 @@ describe('walkTree with HiDPI (devicePixelRatio=2)', () => {
       1,
       100,
       container.getCollapsedMap(),
-      (item, x, y, width, height, label, muted) => {
+      (item, x, y, width, height, label, filename, muted) => {
         renderData.push({ item, x, y, width, height, label, muted });
       },
       2
@@ -272,7 +309,7 @@ describe('walkTree with HiDPI (devicePixelRatio=2)', () => {
         1,
         14,
         container.getCollapsedMap(),
-        (item, x, y, width, height, label, muted) => {
+        (item, x, y, width, height, label, filename, muted) => {
           data.push({ item, x, y, width, height, label, muted });
         },
         dpr
@@ -316,7 +353,7 @@ describe('walkTree with browser zoom (devicePixelRatio=1.5)', () => {
       1,
       100,
       container.getCollapsedMap(),
-      (item, x, y, width, height, label, muted) => {
+      (item, x, y, width, height, label, filename, muted) => {
         renderData.push({ item, x, y, width, height, label, muted });
       },
       1.5
@@ -325,6 +362,16 @@ describe('walkTree with browser zoom (devicePixelRatio=1.5)', () => {
     // height = 22 * 1.5 = 33, y values are multiples of 33
     expect(renderData[0]).toMatchObject({ y: 0, height: 33 });
     expect(renderData[1]).toMatchObject({ y: 33, height: 33 });
+  });
+});
+
+describe('getBarColorBySpace', () => {
+  it.each([
+    [FrameType.Kernel, 'rgb(231, 161, 81)'],
+    [FrameType.User, 'rgb(231, 231, 81)'],
+    [FrameType.Unknown, 'rgb(255, 182, 193)'],
+  ])('returns the expected color for %s', (frameType, expected) => {
+    expect(getBarColorBySpace(frameType).toRgbString()).toBe(expected);
   });
 });
 
