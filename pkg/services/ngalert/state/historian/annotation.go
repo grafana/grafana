@@ -198,7 +198,7 @@ func (h *AnnotationBackend) Query(ctx context.Context, query ngmodels.HistoryQue
 			logger.Error("Annotation service gave an annotation with unparseable data, skipping", "id", item.ID, "err", err)
 			continue
 		}
-		times = append(times, time.Unix(item.Time, 0))
+		times = append(times, time.UnixMilli(item.Time))
 		texts = append(texts, item.Text)
 		prevStates = append(prevStates, item.PrevState)
 		nextStates = append(nextStates, item.NewState)
