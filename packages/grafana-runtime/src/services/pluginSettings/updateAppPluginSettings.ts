@@ -27,16 +27,18 @@ function updateLegacySettings(pluginId: string, data: Partial<PluginMeta>): Prom
 
 async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<v0alpha1Settings> {
   const apiVersion = await getApiVersion();
-  const spec = settingsSpecMapper(data);
-  const secure = inlineSecureValuesMapper(data);
-  const update = {
-    apiVersion: `${pluginId}/${apiVersion}`,
-    kind: 'Settings',
-    spec,
-    secure,
-  };
-
   const { metadata, ...stored } = await refetchCachedAppSettings(pluginId, false, apiVersion);
+
+  // Merge the incoming partial update over the stored resource so that
+  // omitted fields are left unchanged; otherwise compare() emits a remove op
+  // for every stored field missing from the update. This matches the legacy
+  // endpoint: omitted fields stay unchanged, secureJsonData merges per key,
+  // and jsonData replaces as a whole.
+  const update = {
+    ...stored,
+    spec: { ...stored.spec, ...settingsSpecMapper(data) },
+    secure: { ...stored.secure, ...inlineSecureValuesMapper(data) },
+  };
   const test: Operation = { op: 'test', path: '/metadata/resourceVersion', value: metadata.resourceVersion };
   const patch = [test, ...compare(stored, update)];
   logPluginSettingsDebug('PluginSettings: updating plugin settings', { pluginId });
