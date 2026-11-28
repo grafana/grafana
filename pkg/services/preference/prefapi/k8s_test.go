@@ -278,6 +278,21 @@ func TestK8sHandler_GetPreferencesWithDefaults(t *testing.T) {
 		require.NotNil(t, got.JSONData)
 	})
 
+	t.Run("public dashboard uses defaults when merged preferences fail", func(t *testing.T) {
+		client := NewMockK8sClient(t)
+		client.EXPECT().GetMerged(mock.Anything).Return(nil, errors.New("namespace mismatch"))
+		defaults := preferences.PreferencesSpec{Theme: new("light")}
+
+		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t), defaults)
+		ctx := newAnonymousReqContext(6)
+		ctx.PublicDashboardAccessToken = "access-token"
+		got, err := h.GetPreferencesWithDefaults(ctx)
+		require.NoError(t, err)
+
+		assert.Equal(t, "light", got.Theme)
+		require.NotNil(t, got.JSONData)
+	})
+
 	t.Run("anonymous request goes through the merged API", func(t *testing.T) {
 		client := NewMockK8sClient(t)
 		client.EXPECT().GetMerged(mock.Anything).Return(&preferences.PreferencesSpec{
