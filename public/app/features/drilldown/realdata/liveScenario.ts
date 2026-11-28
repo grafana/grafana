@@ -1,0 +1,206 @@
+// The components import these names, and the page fills these bindings from the selected data sources before it
+// renders them.
+
+import { type Signal } from '../dataSources';
+
+import { type KgEntity } from './kgEntities';
+import { COLLECTOR_SPAN_METRICS, type SpanMetrics } from './spanMetrics';
+
+export type AppKey = 'metrics' | 'logs' | 'traces' | 'profiles' | 'sql';
+
+export type ScopeType = 'service' | 'environment' | 'namespace';
+
+export interface Scope {
+  type: ScopeType;
+  value: string;
+  env?: string;
+  namespace?: string;
+}
+
+export type HintSeverity = 'slow' | 'errors' | 'deploy';
+
+export interface HintEvidence {
+  signal: Extract<Signal, 'metrics' | 'logs' | 'traces'>;
+  datasourceUid: string;
+  query: string;
+  summary: string;
+  traceIds?: string[];
+}
+
+export interface Hint {
+  id: string;
+  severity: HintSeverity;
+  title: string;
+  description: string;
+  scope: Scope;
+  investigable: boolean;
+  trendLabel: string;
+  trend: number[];
+  evidence: HintEvidence[];
+  timeRange: { from: number; to: number };
+}
+
+// A data source that could not be measured, with why. It is reported instead of shown as a zero.
+export interface Note {
+  source: Signal;
+  message: string;
+}
+
+export interface SignalCoverage {
+  app: AppKey;
+  question: string;
+  covered: number;
+  total: number;
+  unit: 'services' | 'databases';
+  missing: string[];
+  // True when no data source of this signal exists, so there is nothing to count.
+  noSource?: boolean;
+  // True when the data source exists but was not measured, so the counts mean nothing.
+  notMeasured?: boolean;
+}
+
+export interface InsightSummary {
+  app: AppKey;
+  label: string;
+  value: string;
+  change: string;
+  trend: number[];
+  // Red for a change worth attention, neutral for a plain statement such as a missing data source.
+  tone?: 'bad' | 'neutral';
+}
+
+export type LogLevel = 'error' | 'warn' | 'info';
+
+export type SpanColor = 'blue' | 'orange' | 'green' | 'purple';
+
+export type FlameColor = 'blue' | 'orange' | 'purple' | 'red';
+
+export interface TraceSpan {
+  service: string;
+  operation: string;
+  depth: number;
+  startMs: number;
+  durationMs: number;
+  color: SpanColor;
+}
+
+export interface TraceView {
+  name: string;
+  durationMs: number;
+  axisTicks: string[];
+  summary: string;
+  spans: TraceSpan[];
+  slowThresholdMs: number;
+}
+
+export interface FlameGraphView {
+  levels: Array<Array<{ start: number; width: number; color: FlameColor; name: string }>>;
+  path: string[];
+}
+
+export interface DetectedScope {
+  namespace: string;
+  since: string;
+  likelyCause: string;
+}
+
+export interface EvidenceText {
+  impact: string;
+  requestCaption: string;
+  where: string;
+  why: string;
+}
+
+export interface Overview {
+  hints: Hint[];
+  topLogLabels: Array<{ label: string; bytes: number }>;
+  scopeValues: Record<ScopeType, string[]>;
+  trendMax: number;
+  // The service names Tempo holds, problem services first.
+  services: string[];
+  signals: SignalCoverage[];
+  exampleService: string;
+  notes: Note[];
+  entities: KgEntity[];
+  // How this stack names its span metrics, which each row's charts query.
+  spanMetrics: SpanMetrics;
+  // The values of service_name in Loki, which a row matches its Tempo name against.
+  logServiceNames: string[];
+  // The values of service_name in Pyroscope. The first row that asks lists them, and the rest share the answer.
+  profileServiceNames: () => Promise<string[]>;
+}
+
+export interface ScopeData {
+  detectionSteps: Array<{ app: AppKey; finding: string }>;
+  detectedScope: DetectedScope;
+  insights: InsightSummary[];
+  deployIndex: number;
+  deployLabel: string;
+  requestDuration: number[];
+  requestRoute: string;
+  requestStepMs: number;
+  logLines: Array<{ time: string; level: LogLevel; message: string }>;
+  trace: TraceView;
+  evidenceText: EvidenceText;
+}
+
+export let HINTS: Hint[] = [];
+export let TOP_LOG_LABELS: Overview['topLogLabels'] = [];
+export let SCOPE_VALUES: Record<ScopeType, string[]> = { service: [], environment: [], namespace: [] };
+export let TREND_MAX = 2;
+export let YOUR_SERVICES: string[] = [];
+export let SIGNALS: SignalCoverage[] = [];
+export let EXAMPLE_SERVICE = 'a service';
+export let NOTES: Note[] = [];
+// The knowledge graph entities the overview listed, which the scope step reads their insights from.
+export let ENTITIES: KgEntity[] = [];
+export let SPAN_METRICS: SpanMetrics = COLLECTOR_SPAN_METRICS;
+export let LOG_SERVICE_NAMES: string[] = [];
+export let PROFILE_SERVICE_NAMES: () => Promise<string[]> = async () => [];
+
+export let DETECTION_STEPS: Array<{ app: AppKey; finding: string }> = [];
+export let DETECTED_SCOPE: DetectedScope = { namespace: '', since: '', likelyCause: '' };
+export let INSIGHTS: InsightSummary[] = [];
+// Index of the point where a new service version first appears, or -1 when the range holds no version change.
+export let DEPLOY_INDEX = -1;
+export let DEPLOY_LABEL = '';
+export let REQUEST_DURATION: number[] = [];
+export let REQUEST_ROUTE = '';
+export let REQUEST_STEP_MS = 60_000;
+export let LOG_LINES: Array<{ time: string; level: LogLevel; message: string }> = [];
+export let TRACE: TraceView = { name: '', durationMs: 0, axisTicks: [], summary: '', spans: [], slowThresholdMs: 0 };
+export let EVIDENCE_TEXT: EvidenceText = { impact: '', requestCaption: '', where: '', why: '' };
+
+// Nothing queries a profiles or SQL data source yet, so these stay empty and their panels say so.
+export const FLAME_GRAPH: FlameGraphView = { levels: [], path: [] };
+export const FAILED_ORDERS: Array<{ orderId: string; amount: string; status: string; time: string }> = [];
+export const SLOW_QUERIES: Array<{ query: string; p95: string }> = [];
+
+export function setOverview(overview: Overview) {
+  HINTS = overview.hints;
+  TOP_LOG_LABELS = overview.topLogLabels;
+  SCOPE_VALUES = overview.scopeValues;
+  TREND_MAX = overview.trendMax;
+  YOUR_SERVICES = overview.services;
+  SIGNALS = overview.signals;
+  EXAMPLE_SERVICE = overview.exampleService;
+  NOTES = overview.notes;
+  ENTITIES = overview.entities;
+  SPAN_METRICS = overview.spanMetrics;
+  LOG_SERVICE_NAMES = overview.logServiceNames;
+  PROFILE_SERVICE_NAMES = overview.profileServiceNames;
+}
+
+export function setScopeData(data: ScopeData) {
+  DETECTION_STEPS = data.detectionSteps;
+  DETECTED_SCOPE = data.detectedScope;
+  INSIGHTS = data.insights;
+  DEPLOY_INDEX = data.deployIndex;
+  DEPLOY_LABEL = data.deployLabel;
+  REQUEST_DURATION = data.requestDuration;
+  REQUEST_ROUTE = data.requestRoute;
+  REQUEST_STEP_MS = data.requestStepMs;
+  LOG_LINES = data.logLines;
+  TRACE = data.trace;
+  EVIDENCE_TEXT = data.evidenceText;
+}
