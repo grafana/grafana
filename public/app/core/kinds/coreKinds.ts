@@ -137,9 +137,19 @@ export function coversGroup(kind: KindInfo, group: string): boolean {
   return kind.group === group || (kind.collectionGroup === true && group.endsWith(`.${kind.group}`));
 }
 
+/** Every kind: the ones Grafana serves itself, then the ones app plugins add. */
+export function getKinds(): KindInfo[] {
+  return [...kinds, ...appKinds.values()];
+}
+
 /** The kind an object of this API group and Kubernetes kind belongs to, among core and app kinds. */
 export function findKind(group: string, kind: string): KindInfo | undefined {
-  return [...kinds, ...appKinds.values()].find((row) => row.kind === kind && coversGroup(row, group));
+  return getKinds().find((row) => row.kind === kind && coversGroup(row, group));
+}
+
+/** The kind an object of this API group and plural resource name belongs to, among core and app kinds. */
+export function findKindByResource(group: string, resource: string): KindInfo | undefined {
+  return getKinds().find((row) => row.resource === resource && coversGroup(row, group));
 }
 
 /** The kinds that app plugins add. */
